@@ -27,9 +27,15 @@ enum AnalysisStores {
 #include "Analyses.def"
 NumStores
 };
+  
+enum AnalysisDiagClients {
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN) PD_##NAME,
+#include "Analyses.def"
+NUM_ANALYSIS_DIAG_CLIENTS
+};
 
 ASTConsumer* CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
-                                    AnalysisStores SM,
+                                    AnalysisStores SM, AnalysisDiagClients DC,
                                     Diagnostic &diags, Preprocessor* pp,
                                     PreprocessorFactory* ppf,
                                     const LangOptions& lopts,

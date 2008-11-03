@@ -24,6 +24,11 @@
 using namespace clang;
 typedef llvm::DenseMap<unsigned,unsigned> FIDMap;
 
+namespace clang {
+  class Preprocessor;
+  class PreprocessorFactory;
+}
+
 namespace {
   class VISIBILITY_HIDDEN PlistDiagnostics : public PathDiagnosticClient {
     llvm::sys::Path Directory, FilePrefix;
@@ -40,7 +45,9 @@ PlistDiagnostics::PlistDiagnostics(const std::string& prefix)
   FilePrefix.appendComponent("report"); // All Plist files begin with "report" 
 }
 
-PathDiagnosticClient* clang::CreatePlistDiagnosticClient(const std::string& s) {
+PathDiagnosticClient*
+clang::CreatePlistDiagnosticClient(const std::string& s,
+                                   Preprocessor*, PreprocessorFactory*) {
   return new PlistDiagnostics(s);
 }
 
@@ -118,7 +125,7 @@ static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
   
   // Output the text.
   Indent(o, indent) << "<key>message</key>\n";
-  Indent(o, indent) << "<string>" << P.getString() << "</string>";
+  Indent(o, indent) << "<string>" << P.getString() << "</string>\n";
   
   // Output the hint.
   Indent(o, indent) << "<key>displayhint</key>\n";
@@ -222,9 +229,9 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
   o << " </array>\n";
     
   // Output the bug type and bug category.  
-  o << " <key>description</key><string>" << D->getDescription() << "</string>\n"
-       " <key>category</key><string>" << D->getCategory() << "</string>\n";
+  o << " <key>description</key>\n <string>" << D->getDescription() << "</string>\n"
+       " <key>category</key>\n <string>" << D->getCategory() << "</string>\n";
 
   // Finish.
-  o << "</dict>\n";
+  o << "</dict>\n</plist>";
 }

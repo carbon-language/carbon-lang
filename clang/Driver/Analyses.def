@@ -15,10 +15,6 @@
 #define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)
 #endif
 
-#ifndef ANALYSIS_STORE
-#define ANALYSIS_STORE(NAME, CMDFLAG, DESC)
-#endif
-
 ANALYSIS(CFGDump, "cfg-dump",
          "Display Control-Flow Graphs", Code)
 
@@ -52,8 +48,22 @@ ANALYSIS(CheckerCFRef, "checker-cfref",
          "Run the [Core] Foundation reference count checker", Code)
 
 
+#ifndef ANALYSIS_STORE
+#define ANALYSIS_STORE(NAME, CMDFLAG, DESC)
+#endif
+
 ANALYSIS_STORE(BasicStore, "basic", "Use basic analyzer store")
 ANALYSIS_STORE(RegionStore, "region", "Use region-based analyzer store")
 
+#ifndef ANALYSIS_DIAGNOSTICS
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN)
+#endif
+
+ANALYSIS_DIAGNOSTICS(HTML,  "html",  "Output analysis results using HTML",   CreateHTMLDiagnosticClient)
+ANALYSIS_DIAGNOSTICS(PLIST, "plist", "Output analysis results using Plists", CreatePlistDiagnosticClient)
+
 #undef ANALYSIS
 #undef ANALYSIS_STORE
+#undef ANALYSIS_DIAGNOSTICS
+
+

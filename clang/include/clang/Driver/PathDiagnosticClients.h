@@ -26,7 +26,9 @@ PathDiagnosticClient* CreateHTMLDiagnosticClient(const std::string& prefix,
                                                  Preprocessor* PP,
                                                  PreprocessorFactory* PPF);
   
-PathDiagnosticClient* CreatePlistDiagnosticClient(const std::string& prefix);
+PathDiagnosticClient* CreatePlistDiagnosticClient(const std::string& prefix,
+                                                  Preprocessor* PP,
+                                                  PreprocessorFactory* PPF);
 }
 
 #endif

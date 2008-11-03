@@ -75,20 +75,21 @@ namespace {
     llvm::OwningPtr<PathDiagnosticClient> PD;
     bool AnalyzeAll;  
     AnalysisStores SM;
+    AnalysisDiagClients DC;
 
     AnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
                      PreprocessorFactory* ppf,
                      const LangOptions& lopts,
                      const std::string& fname,
                      const std::string& htmldir,
-                     AnalysisStores sm,
+                     AnalysisStores sm, AnalysisDiagClients dc,
                      bool visgraphviz, bool visubi, bool trim, bool analyzeAll) 
       : VisGraphviz(visgraphviz), VisUbigraph(visubi), TrimGraph(trim),
         LOpts(lopts), Diags(diags),
         Ctx(0), PP(pp), PPF(ppf),
         HTMLDir(htmldir),
         FName(fname),
-        AnalyzeAll(analyzeAll), SM(sm) {}
+        AnalyzeAll(analyzeAll), SM(sm), DC(dc) {}
     
     void addCodeAction(CodeAction action) {
       FunctionActions.push_back(action);
@@ -165,9 +166,14 @@ case NAME##Model: return Create##NAME##Manager;
     }
     
     virtual PathDiagnosticClient* getPathDiagnosticClient() {
-      if (C.PD.get() == 0 && !C.HTMLDir.empty())
-        C.PD.reset(CreateHTMLDiagnosticClient(C.HTMLDir, C.PP, C.PPF));
-      
+      if (C.PD.get() == 0 && !C.HTMLDir.empty()) {
+        switch (C.DC) {
+          default:
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN)\
+case PD_##NAME: C.PD.reset(CREATEFN(C.HTMLDir, C.PP, C.PPF)); break;
+#include "Analyses.def"
+        }
+      }
       return C.PD.get();      
     }
       
@@ -449,6 +455,7 @@ static void ActionWarnObjCMethSigs(AnalysisManager& mgr) {
 
 ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
                                            AnalysisStores SM,
+                                           AnalysisDiagClients DC,
                                            Diagnostic &diags, Preprocessor* pp,
                                            PreprocessorFactory* ppf,
                                            const LangOptions& lopts,
@@ -459,7 +466,7 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
                                            bool analyzeAll) {
   
   llvm::OwningPtr<AnalysisConsumer>
-  C(new AnalysisConsumer(diags, pp, ppf, lopts, fname, htmldir, SM,
+  C(new AnalysisConsumer(diags, pp, ppf, lopts, fname, htmldir, SM, DC,
                          VisGraphviz, VisUbi, trim, analyzeAll));
   
   for ( ; Beg != End ; ++Beg)

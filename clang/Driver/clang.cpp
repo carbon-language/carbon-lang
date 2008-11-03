@@ -220,6 +220,15 @@ clEnumValN(NAME##Model, "analyzer-store-" CMDFLAG, DESC),
 #include "Analyses.def"
 clEnumValEnd));
 
+static llvm::cl::opt<AnalysisDiagClients>
+AnalysisDiagOpt(llvm::cl::desc("SCA Output Options:"),
+                llvm::cl::init(PD_HTML),
+                llvm::cl::values(
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN)\
+clEnumValN(PD_##NAME, "analyzer-output-" CMDFLAG, DESC),
+#include "Analyses.def"
+clEnumValEnd));                                
+
 //===----------------------------------------------------------------------===//
 // Language Options
 //===----------------------------------------------------------------------===//
@@ -1224,7 +1233,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       assert (!AnalysisList.empty());
       return CreateAnalysisConsumer(&AnalysisList[0],
                                     &AnalysisList[0]+AnalysisList.size(),
-                                    AnalysisStoreOpt,
+                                    AnalysisStoreOpt, AnalysisDiagOpt,
                                     Diag, PP, PPF, LangOpts,
                                     AnalyzeSpecificFunction,
                                     OutputFile, VisualizeEGDot, VisualizeEGUbi,
