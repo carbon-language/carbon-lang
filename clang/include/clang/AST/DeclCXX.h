@@ -281,6 +281,10 @@ public:
   /// the constructors of this class.
   const OverloadedFunctionDecl *getConstructors() const { return &Constructors; }
 
+  /// hasConstCopyConstructor - Determines whether this class has a
+  /// copy constructor that accepts a const-qualified argument.
+  bool hasConstCopyConstructor(ASTContext &Context) const;
+
   /// addConstructor - Add another constructor to the list of constructors.
   void addConstructor(ASTContext &Context, CXXConstructorDecl *ConDecl);
 

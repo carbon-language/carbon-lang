@@ -799,6 +799,8 @@ public:
                                            Declarator &D, ExprTy *BitfieldWidth,
                                            ExprTy *Init, DeclTy *LastInGroup);
 
+  void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
+
   virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                                  DeclTy *TagDecl,
                                                  SourceLocation LBrac,

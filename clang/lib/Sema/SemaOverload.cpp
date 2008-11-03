@@ -350,24 +350,34 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
   ImplicitConversionSequence ICS;
   if (IsStandardConversion(From, ToType, ICS.Standard))
     ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
-  else if (IsUserDefinedConversion(From, ToType, ICS.UserDefined))
+  else if (IsUserDefinedConversion(From, ToType, ICS.UserDefined)) {
     ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
-  else {
-    // FIXME: This is a hack to allow a class type S to implicitly
-    // convert to another class type S, at least until we have proper
-    // support for implicitly-declared copy constructors.
-    QualType FromType = Context.getCanonicalType(From->getType());
-    ToType = Context.getCanonicalType(ToType);
-    if (FromType.getUnqualifiedType() == ToType.getUnqualifiedType()) {
-      ICS.Standard.setAsIdentityConversion();
-      ICS.Standard.FromTypePtr = From->getType().getAsOpaquePtr();
-      ICS.Standard.ToTypePtr = ToType.getAsOpaquePtr();
-      ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
-      return ICS;
+    // C++ [over.ics.user]p4:
+    //   A conversion of an expression of class type to the same class
+    //   type is given Exact Match rank, and a conversion of an
+    //   expression of class type to a base class of that type is
+    //   given Conversion rank, in spite of the fact that a copy
+    //   constructor (i.e., a user-defined conversion function) is
+    //   called for those cases.
+    if (CXXConstructorDecl *Constructor 
+          = dyn_cast<CXXConstructorDecl>(ICS.UserDefined.ConversionFunction)) {
+      if (Constructor->isCopyConstructor(Context)) {
+        // FIXME: This is a temporary hack to give copy-constructor
+        // calls the appropriate rank (Exact Match or Conversion) by
+        // making them into standard conversions. To really fix this, we
+        // need to tweak the rank-checking logic to deal with ranking
+        // different kinds of user conversions.
+        ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+        ICS.Standard.setAsIdentityConversion();
+        ICS.Standard.FromTypePtr = From->getType().getAsOpaquePtr();
+        ICS.Standard.ToTypePtr = ToType.getAsOpaquePtr();
+        if (IsDerivedFrom(From->getType().getUnqualifiedType(),
+                          ToType.getUnqualifiedType()))
+          ICS.Standard.Second = ICK_Derived_To_Base;
+      }
     }
-
+  } else
     ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
-  }
 
   return ICS;
 }

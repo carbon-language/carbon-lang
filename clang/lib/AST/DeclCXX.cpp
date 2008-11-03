@@ -59,6 +59,18 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     this->Bases[i] = *Bases[i];
 }
 
+bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
+  for (OverloadedFunctionDecl::function_const_iterator Con 
+         = Constructors.function_begin();
+       Con != Constructors.function_end(); ++Con) {
+    unsigned TypeQuals;
+    if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context, TypeQuals) &&
+        (TypeQuals & QualType::Const != 0))
+      return true;
+  }
+  return false;
+}
+
 void 
 CXXRecordDecl::addConstructor(ASTContext &Context, 
                               CXXConstructorDecl *ConDecl) {

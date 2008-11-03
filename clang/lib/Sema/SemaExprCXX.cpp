@@ -982,6 +982,13 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     ImpCastExprToType(From, FromType);
     break;
 
+  case ICK_Derived_To_Base:
+    // FIXME: This should never happen. It's a consequence of
+    // pretending that a user-defined conversion via copy constructor
+    // is actually a standard conversion.
+    ImpCastExprToType(From, ToType);
+    break;
+
   default:
     assert(false && "Improper second standard conversion");
     break;

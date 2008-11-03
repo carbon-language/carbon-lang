@@ -552,9 +552,115 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
               FieldCollector->getCurNumFields(), LBrac, RBrac, 0);
 }
 
+/// AddImplicitlyDeclaredMembersToClass - Adds any implicitly-declared
+/// special functions, such as the default constructor, copy
+/// constructor, or destructor, to the given C++ class (C++
+/// [special]p1).  This routine can only be executed just before the
+/// definition of the class is complete.
+void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
+  if (!ClassDecl->hasUserDeclaredConstructor()) {
+    // C++ [class.ctor]p5:
+    //   A default constructor for a class X is a constructor of class X
+    //   that can be called without an argument. If there is no
+    //   user-declared constructor for class X, a default constructor is
+    //   implicitly declared. An implicitly-declared default constructor
+    //   is an inline public member of its class.
+    CXXConstructorDecl *DefaultCon = 
+      CXXConstructorDecl::Create(Context, ClassDecl,
+                                 ClassDecl->getLocation(),
+                                 ClassDecl->getIdentifier(),
+                                 Context.getFunctionType(Context.VoidTy,
+                                                         0, 0, false, 0),
+                                 /*isExplicit=*/false,
+                                 /*isInline=*/true,
+                                 /*isImplicitlyDeclared=*/true);
+    DefaultCon->setAccess(AS_public);
+    ClassDecl->addConstructor(Context, DefaultCon);
+  }
+
+  if (!ClassDecl->hasUserDeclaredCopyConstructor()) {
+    // C++ [class.copy]p4:
+    //   If the class definition does not explicitly declare a copy
+    //   constructor, one is declared implicitly.
+
+    // C++ [class.copy]p5:
+    //   The implicitly-declared copy constructor for a class X will
+    //   have the form
+    //
+    //       X::X(const X&)
+    //
+    //   if
+    bool HasConstCopyConstructor = true;
+
+    //     -- each direct or virtual base class B of X has a copy
+    //        constructor whose first parameter is of type const B& or
+    //        const volatile B&, and
+    for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
+         HasConstCopyConstructor && Base != ClassDecl->bases_end(); ++Base) {
+      const CXXRecordDecl *BaseClassDecl
+        = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+      HasConstCopyConstructor 
+        = BaseClassDecl->hasConstCopyConstructor(Context);
+    }
+
+    //     -- for all the nonstatic data members of X that are of a
+    //        class type M (or array thereof), each such class type
+    //        has a copy constructor whose first parameter is of type
+    //        const M& or const volatile M&.
+    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin();
+         HasConstCopyConstructor && Field != ClassDecl->field_end(); ++Field) {
+      QualType FieldType = (*Field)->getType();
+      if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+        FieldType = Array->getElementType();
+      if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+        const CXXRecordDecl *FieldClassDecl 
+          = cast<CXXRecordDecl>(FieldClassType->getDecl());
+        HasConstCopyConstructor 
+          = FieldClassDecl->hasConstCopyConstructor(Context);
+      }
+    }
+
+    //  Otherwise, the implicitly declared copy constructor will have
+    //  the form
+    //
+    //       X::X(X&)
+    QualType ArgType = Context.getTypeDeclType(ClassDecl);
+    if (HasConstCopyConstructor)
+      ArgType = ArgType.withConst();
+    ArgType = Context.getReferenceType(ArgType);
+
+    //  An implicitly-declared copy constructor is an inline public
+    //  member of its class.
+    CXXConstructorDecl *CopyConstructor
+      = CXXConstructorDecl::Create(Context, ClassDecl,
+                                   ClassDecl->getLocation(),
+                                   ClassDecl->getIdentifier(),
+                                   Context.getFunctionType(Context.VoidTy,
+                                                           &ArgType, 1,
+                                                           false, 0),
+                                   /*isExplicit=*/false,
+                                   /*isInline=*/true,
+                                   /*isImplicitlyDeclared=*/true);
+    CopyConstructor->setAccess(AS_public);
+
+    // Add the parameter to the constructor.
+    ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
+                                                 ClassDecl->getLocation(),
+                                                 /*IdentifierInfo=*/0,
+                                                 ArgType, VarDecl::None, 0, 0);
+    CopyConstructor->setParams(&FromParam, 1);
+
+    ClassDecl->addConstructor(Context, CopyConstructor);
+  }
+
+  // FIXME: Implicit destructor
+  // FIXME: Implicit copy assignment operator
+}
+
 void Sema::ActOnFinishCXXClassDef(DeclTy *D) {
   CXXRecordDecl *Rec = cast<CXXRecordDecl>(static_cast<Decl *>(D));
   FieldCollector->FinishClass();
+  AddImplicitlyDeclaredMembersToClass(Rec);
   PopDeclContext();
 
   // Everything, including inline method definitions, have been parsed.
