@@ -875,7 +875,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     // Resolve the relocations to concrete pointers.
     for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
       MachineRelocation &MR = Relocations[i];
-      void *ResultPtr;
+      void *ResultPtr = 0;
       if (!MR.letTargetResolve()) {
         if (MR.isString()) {
           ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
