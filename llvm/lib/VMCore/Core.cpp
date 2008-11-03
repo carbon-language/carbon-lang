@@ -541,6 +541,20 @@ LLVMValueRef LLVMConstShuffleVector(LLVMValueRef VectorAConstant,
                                              unwrap<Constant>(MaskConstant)));
 }
 
+LLVMValueRef LLVMConstExtractValue(LLVMValueRef AggConstant, unsigned *IdxList,
+                                   unsigned NumIdx) {
+  return wrap(ConstantExpr::getExtractValue(unwrap<Constant>(AggConstant),
+                                            IdxList, NumIdx));
+}
+
+LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant,
+                                  LLVMValueRef ElementValueConstant,
+                                  unsigned *IdxList, unsigned NumIdx) {
+  return wrap(ConstantExpr::getInsertValue(unwrap<Constant>(AggConstant),
+                                         unwrap<Constant>(ElementValueConstant),
+                                           IdxList, NumIdx));
+}
+
 /*--.. Operations on global variables, functions, and aliases (globals) ....--*/
 
 LLVMModuleRef LLVMGetGlobalParent(LLVMValueRef Global) {
@@ -1324,6 +1338,18 @@ LLVMValueRef LLVMBuildShuffleVector(LLVMBuilderRef B, LLVMValueRef V1,
                                     const char *Name) {
   return wrap(unwrap(B)->CreateShuffleVector(unwrap(V1), unwrap(V2),
                                              unwrap(Mask), Name));
+}
+
+LLVMValueRef LLVMBuildExtractValue(LLVMBuilderRef B, LLVMValueRef AggVal,
+                                   unsigned Index, const char *Name) {
+  return wrap(unwrap(B)->CreateExtractValue(unwrap(AggVal), Index, Name));
+}
+
+LLVMValueRef LLVMBuildInsertValue(LLVMBuilderRef B, LLVMValueRef AggVal,
+                                  LLVMValueRef EltVal, unsigned Index,
+                                  const char *Name) {
+  return wrap(unwrap(B)->CreateInsertValue(unwrap(AggVal), unwrap(EltVal),
+                                           Index, Name));
 }
 
 
