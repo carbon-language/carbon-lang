@@ -310,10 +310,11 @@ def AddrMode2    : AddrMode<2>;
 def AddrMode3    : AddrMode<3>;
 def AddrMode4    : AddrMode<4>;
 def AddrMode5    : AddrMode<5>;
-def AddrModeT1   : AddrMode<6>;
-def AddrModeT2   : AddrMode<7>;
-def AddrModeT4   : AddrMode<8>;
-def AddrModeTs   : AddrMode<9>;
+def AddrMode6    : AddrMode<6>;
+def AddrModeT1   : AddrMode<7>;
+def AddrModeT2   : AddrMode<8>;
+def AddrModeT4   : AddrMode<9>;
+def AddrModeTs   : AddrMode<10>;
 
 // Instruction size.
 class SizeFlagVal<bits<3> val> {
@@ -910,49 +911,53 @@ def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
 //  Multiply Instructions.
 //
 
-def MUL  : AsI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
-               "mul", " $dst, $a, $b",
-               [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
+def MUL   : AsI6<0b0000, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
+                 "mul", " $dst, $a, $b",
+                 [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
 
-def MLA  : AsI<0x2, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-               MulFrm, "mla", " $dst, $a, $b, $c",
-               [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
+def MLA   : AsI6<0b0010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
+                 MulFrm, "mla", " $dst, $a, $b, $c",
+                 [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
 
 // Extra precision multiplies with low / high results
-def SMULL : AsI<0xC, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                MulFrm, "smull", " $ldst, $hdst, $a, $b", []>;
+def SMULL : AsI6<0b1100, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
+                 MulFrm, "smull", " $ldst, $hdst, $a, $b", []>;
 
-def UMULL : AsI<0x8, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                MulFrm, "umull", " $ldst, $hdst, $a, $b", []>;
+def UMULL : AsI6<0b1000, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
+                 MulFrm, "umull", " $ldst, $hdst, $a, $b", []>;
 
 // Multiply + accumulate
-def SMLAL : AsI<0xE, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                MulFrm, "smlal", " $ldst, $hdst, $a, $b", []>;
+def SMLAL : AsI6<0b1110, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
+                 MulFrm, "smlal", " $ldst, $hdst, $a, $b", []>;
 
-def UMLAL : AsI<0xA, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                MulFrm, "umlal", " $ldst, $hdst, $a, $b", []>;
+def UMLAL : AsI6<0b1010, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
+                 MulFrm, "umlal", " $ldst, $hdst, $a, $b", []>;
 
-def UMAAL : AI<0x0, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), MulFrm,
-               "umaal", " $ldst, $hdst, $a, $b", []>,
-            Requires<[IsARM, HasV6]>;
+def UMAAL : AI6 <0b0000, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), 
+                 MulFrm, "umaal", " $ldst, $hdst, $a, $b", []>,
+                 Requires<[IsARM, HasV6]>;
 
 // Most significant word multiply
+// FIXME: encoding
 def SMMUL : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
                "smmul", " $dst, $a, $b",
                [(set GPR:$dst, (mulhs GPR:$a, GPR:$b))]>,
             Requires<[IsARM, HasV6]>;
 
+// FIXME: encoding
 def SMMLA : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), MulFrm,
                "smmla", " $dst, $a, $b, $c",
                [(set GPR:$dst, (add (mulhs GPR:$a, GPR:$b), GPR:$c))]>,
             Requires<[IsARM, HasV6]>;
 
 
+// FIXME: encoding
 def SMMLS : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), MulFrm,
                "smmls", " $dst, $a, $b, $c",
                [(set GPR:$dst, (sub GPR:$c, (mulhs GPR:$a, GPR:$b)))]>,
                Requires<[IsARM, HasV6]>;
 
+// FIXME: encoding
 multiclass AI_smul<string opc, PatFrag opnode> {
   def BB : AI<0x8, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMUL,
               !strconcat(opc, "bb"), " $dst, $a, $b",
@@ -992,6 +997,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
 }
 
 
+// FIXME: encoding
 multiclass AI_smla<string opc, PatFrag opnode> {
   def BB : AI<0x8, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLA,
               !strconcat(opc, "bb"), " $dst, $a, $b, $acc",
@@ -1031,7 +1037,9 @@ multiclass AI_smla<string opc, PatFrag opnode> {
             Requires<[IsARM, HasV5TE]>;
 }
 
+// FIXME: encoding
 defm SMUL : AI_smul<"smul", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
+// FIXME: encoding
 defm SMLA : AI_smla<"smla", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 
 // TODO: Halfword multiple accumulate long: SMLAL<x><y>

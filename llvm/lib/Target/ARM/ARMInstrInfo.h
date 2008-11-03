@@ -30,8 +30,7 @@ namespace ARMII {
     // Instruction Flags.
 
     //===------------------------------------------------------------------===//
-    // This three-bit field describes the addressing mode used.  Zero is unused
-    // so that we can tell if we forgot to set a value.
+    // This four-bit field describes the addressing mode used.
 
     AddrModeMask  = 0xf,
     AddrModeNone  = 0,
@@ -40,10 +39,11 @@ namespace ARMII {
     AddrMode3     = 3,
     AddrMode4     = 4,
     AddrMode5     = 5,
-    AddrModeT1    = 6,
-    AddrModeT2    = 7,
-    AddrModeT4    = 8,
-    AddrModeTs    = 9,   // i8 * 4 for pc and sp relative data
+    AddrMode6     = 6,
+    AddrModeT1    = 7,
+    AddrModeT2    = 8,
+    AddrModeT4    = 9,
+    AddrModeTs    = 10,  // i8 * 4 for pc and sp relative data
 
     // Size* - Flags to keep track of the size of an instruction.
     SizeShift     = 4,
@@ -115,15 +115,17 @@ namespace ARMII {
 
     // Field shifts - such shifts are used to set field while generating
     // machine instructions.
-    RotImmShift = 8,
-    RegRsShift  = 8,
-    RegRdShift  = 12,
-    RegRnShift  = 16,
-    L_BitShift  = 20,
-    S_BitShift  = 20,
-    U_BitShift  = 23,
-    IndexShift  = 24,
-    I_BitShift  = 25
+    RotImmShift  = 8,
+    RegRsShift   = 8,
+    RegRdLoShift = 12,
+    RegRdShift   = 12,
+    RegRdHiShift = 16,
+    RegRnShift   = 16,
+    L_BitShift   = 20,
+    S_BitShift   = 20,
+    U_BitShift   = 23,
+    IndexShift   = 24,
+    I_BitShift   = 25
   };
 }
 

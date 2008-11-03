@@ -82,8 +82,8 @@ namespace {
                                     const TargetInstrDesc &TID,
                                     const MachineOperand &MO);
 
-    unsigned getAddrMode1SBit(const MachineInstr &MI,
-                              const TargetInstrDesc &TID) const;
+    unsigned getAddrModeSBit(const MachineInstr &MI,
+                             const TargetInstrDesc &TID) const;
 
     unsigned getAddrMode1InstrBinary(const MachineInstr &MI,
                                      const TargetInstrDesc &TID,
@@ -95,6 +95,9 @@ namespace {
                                      const TargetInstrDesc &TID,
                                      unsigned Binary);
     unsigned getAddrMode4InstrBinary(const MachineInstr &MI,
+                                     const TargetInstrDesc &TID,
+                                     unsigned Binary);
+    unsigned getAddrMode6InstrBinary(const MachineInstr &MI,
                                      const TargetInstrDesc &TID,
                                      unsigned Binary);
 
@@ -432,8 +435,8 @@ unsigned ARMCodeEmitter::getMachineSoImmOpValue(const MachineInstr &MI,
   return Binary;
 }
 
-unsigned ARMCodeEmitter::getAddrMode1SBit(const MachineInstr &MI,
-                                          const TargetInstrDesc &TID) const {
+unsigned ARMCodeEmitter::getAddrModeSBit(const MachineInstr &MI,
+                                         const TargetInstrDesc &TID) const {
   for (unsigned i = MI.getNumOperands(), e = TID.getNumOperands(); i != e; --i){
     const MachineOperand &MO = MI.getOperand(i-1);
     if (MO.isReg() && MO.isDef() && MO.getReg() == ARM::CPSR)
@@ -449,7 +452,7 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
   Binary |= II->getPredicate(&MI) << 28;
 
   // Encode S bit if MI modifies CPSR.
-  Binary |= getAddrMode1SBit(MI, TID);
+  Binary |= getAddrModeSBit(MI, TID);
 
   // Encode register def if there is one.
   unsigned NumDefs = TID.getNumDefs();
@@ -618,6 +621,33 @@ unsigned ARMCodeEmitter::getAddrMode4InstrBinary(const MachineInstr &MI,
   return Binary;
 }
 
+unsigned ARMCodeEmitter::getAddrMode6InstrBinary(const MachineInstr &MI,
+                                                 const TargetInstrDesc &TID,
+                                                 unsigned Binary) {
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << 28;
+
+  // Encode S bit if MI modifies CPSR.
+  Binary |= getAddrModeSBit(MI, TID);
+
+  // 32x32->64bit operations have two destination registers. The number
+  // of register definitions will tell us if that's what we're dealing with.
+  int OpIdx = 0;
+  if (TID.getNumDefs() == 2)
+    Binary |= getMachineOpValue (MI, OpIdx++) << ARMII::RegRdLoShift;
+
+  // Encode Rd
+  Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdHiShift;
+
+  // Encode Rm
+  Binary |= getMachineOpValue(MI, OpIdx++);
+
+  // Encode Rs
+  Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRsShift;
+
+  return Binary;
+}
+
 /// getInstrBinary - Return binary encoding for the specified
 /// machine instruction.
 unsigned ARMCodeEmitter::getInstrBinary(const MachineInstr &MI) {
@@ -636,6 +666,8 @@ unsigned ARMCodeEmitter::getInstrBinary(const MachineInstr &MI) {
     return getAddrMode3InstrBinary(MI, TID, Binary);
   case ARMII::AddrMode4:
     return getAddrMode4InstrBinary(MI, TID, Binary);
+  case ARMII::AddrMode6:
+    return getAddrMode6InstrBinary(MI, TID, Binary);
   }
 
   abort();

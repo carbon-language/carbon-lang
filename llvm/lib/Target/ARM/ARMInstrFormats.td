@@ -659,6 +659,28 @@ class AXI4st<bits<4> opcod, dag oops, dag iops, Format f, string asm,
   let Inst{27-25} = 0b100;
 }
 
+// addrmode6
+// Unsigned multiply, multiply-accumulate instructions.
+class AI6<bits<4> opcod, dag oops, dag iops, Format f, string opc,
+         string asm, list<dag> pattern>
+  : I<opcod, oops, iops, AddrMode6, Size4Bytes, IndexModeNone, f, opc,
+      asm,"",pattern>
+{
+  // FIXME: bits 7-4 should be a sub-mode (for SMLAxx, SMLAWy, ...)
+  let Inst{7-4}   = 0b1001;
+  let Inst{27-24} = 0b0000;
+  let Inst{23-20} = opcod;
+}
+class AsI6<bits<4> opcod, dag oops, dag iops, Format f, string opc,
+          string asm, list<dag> pattern>
+  : sI<opcod, oops, iops, AddrMode6, Size4Bytes, IndexModeNone, f, opc,
+       asm,"",pattern>
+{
+  // FIXME: bits 7-4 should be a sub-mode (for SMLAxx, SMLAWy, ...)
+  let Inst{7-4}   = 0b1001;
+  let Inst{27-24} = 0b0000;
+  let Inst{23-20} = opcod;
+}
 
 //===----------------------------------------------------------------------===//
 
