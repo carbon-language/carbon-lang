@@ -45,7 +45,7 @@ interesting benchmarks:
 
 <p>Measurements are done by serially processing each file in the
 respective benchmark, using Clang, gcc, and llvm-gcc as compilers. In
-order to track the performance of various subsystems, the timings have
+order to track the performance of various subsystems the timings have
 been broken down into separate stages where possible:
 
 <ul>
@@ -75,6 +75,12 @@ the difference of running with <tt>-fsyntax-only</tt> versus running
 with <tt>-parse-noop</tt> (for clang) or <tt>-MM</tt> with gcc and
 llvm-gcc. This amounts to a fairly accurate measure of only the time
 to perform semantic analysis (and parsing, in the case of gcc and llvm-gcc).</p>
+
+<p>These timings are chosen to break down the compilation process for
+clang as much as possible. The graphs below show these numbers
+combined so that it is easy to see how the time for a particular task
+is divided among various components. For example, <tt>-S -O0</tt>
+includes the time of <tt>-fsyntax-only</tt> and <tt>-emit-llvm -O0</tt>.</p>
 
 <p>Note that we already know that the LLVM optimizers are substantially (30-40%)
 faster than the GCC optimizers at a given -O level, so we only focus on -O0
