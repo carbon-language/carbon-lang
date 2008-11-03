@@ -3438,9 +3438,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       const Value *V = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
       SDValue VAList = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp2, V, 0);
       // Increment the pointer, VAList, to the next vaarg
-      Tmp3 = DAG.getNode(ISD::ADD, TLI.getPointerTy(), VAList, 
-                         DAG.getConstant(VT.getSizeInBits()/8,
-                                         TLI.getPointerTy()));
+      Tmp3 = DAG.getNode(ISD::ADD, TLI.getPointerTy(), VAList,
+        DAG.getConstant(TLI.getTargetData()->getABITypeSize(VT.getTypeForMVT()),
+                        TLI.getPointerTy()));
       // Store the incremented VAList to the legalized pointer
       Tmp3 = DAG.getStore(VAList.getValue(1), Tmp3, Tmp2, V, 0);
       // Load the actual argument out of the pointer VAList
