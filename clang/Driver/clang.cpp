@@ -25,7 +25,7 @@
 #include "clang.h"
 #include "ASTConsumers.h"
 #include "clang/Driver/CompileOptions.h"
-#include "clang/Driver/HTMLDiagnostics.h"
+#include "clang/Driver/PathDiagnosticClients.h"
 #include "clang/Driver/InitHeaderSearch.h"
 #include "clang/Driver/TextDiagnosticBuffer.h"
 #include "clang/Driver/TextDiagnosticPrinter.h"

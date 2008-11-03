@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTConsumers.h"
-#include "clang/Driver/HTMLDiagnostics.h"
+#include "clang/Driver/PathDiagnosticClients.h"
 #include "clang/AST/TranslationUnit.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
