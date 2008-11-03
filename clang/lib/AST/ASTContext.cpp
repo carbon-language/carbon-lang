@@ -1793,8 +1793,9 @@ void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
 }
 
 /// getFromTargetType - Given one of the integer types provided by
-/// TargetInfo, produce the corresponding type.
-QualType ASTContext::getFromTargetType(TargetInfo::IntType Type) const {
+/// TargetInfo, produce the corresponding type. The unsigned @p Type
+/// is actually a value of type @c TargetInfo::IntType.
+QualType ASTContext::getFromTargetType(unsigned Type) const {
   switch (Type) {
   case TargetInfo::NoInt: return QualType(); 
   case TargetInfo::SignedShort: return ShortTy;

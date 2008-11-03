@@ -15,7 +15,6 @@
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
 #include "clang/Basic/LangOptions.h"
-#include "clang/Basic/TargetInfo.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/Type.h"
@@ -36,6 +35,7 @@ namespace clang {
   class IdentifierTable;
   class SelectorTable;
   class SourceManager;
+  class TargetInfo;
   // Decls
   class Decl;
   class ObjCPropertyDecl;
@@ -319,12 +319,14 @@ public:
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
     
-  QualType getFromTargetType(TargetInfo::IntType Type) const;
+private:
+  QualType getFromTargetType(unsigned Type) const;
 
   //===--------------------------------------------------------------------===//
   //                         Type Predicates.
   //===--------------------------------------------------------------------===//
-  
+ 
+public:
   /// isObjCObjectPointerType - Returns true if type is an Objective-C pointer
   /// to an object type.  This includes "id" and "Class" (two 'special' pointers
   /// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
