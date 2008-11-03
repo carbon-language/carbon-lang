@@ -96,7 +96,7 @@ const GRState* GRStateManager::BindDecl(const GRState* St, const VarDecl* VD,
 ///  array of initializer values.
 const GRState*
 GRStateManager::BindCompoundLiteral(const GRState* state,
-                                    const CompoundLiteralRegion* R,                                    
+                                    const CompoundLiteralRegion* R,
                                     const SVal* BegInit, const SVal* EndInit) {
 
   Store oldStore = state->getStore();
@@ -239,7 +239,7 @@ GRStateManager::FindGDMContext(void* K,
   return p.first;
 }
 
-const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){  
+const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
   GRState::GenericDataMap M1 = St->getGDM();
   GRState::GenericDataMap M2 = GDMFactory.Add(M1, Key, Data);
   
