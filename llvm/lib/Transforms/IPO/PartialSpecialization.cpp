@@ -165,14 +165,16 @@ void PartSpec::scanForInterest(Function& F, SmallVector<int, 6>& args) {
   }
 }
 
+/// scanDistribution - Construct a histogram of constants for arg of F at arg
 int PartSpec::scanDistribution(Function& F, int arg, 
                                std::map<Constant*, int>& dist) {
   bool hasIndirect = false;
   int total = 0;
   for(Value::use_iterator ii = F.use_begin(), ee = F.use_end();
       ii != ee; ++ii)
-    if (CallInst* CI = dyn_cast<CallInst>(ii)) {
-      ++dist[dyn_cast<Constant>(CI->getOperand(arg + 1))];
+    if ((isa<CallInst>(ii) || isa<InvokeInst>(ii))
+        && ii->getOperand(0) == &F) {
+      ++dist[dyn_cast<Constant>(ii->getOperand(arg + 1))];
       ++total;
     } else
       hasIndirect = true;
