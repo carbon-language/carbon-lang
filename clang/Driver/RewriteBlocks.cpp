@@ -746,6 +746,9 @@ void RewriteBlocks::RewriteCastExpr(CastExpr *CE) {
   SourceLocation LocStart = CE->getLocStart();
   SourceLocation LocEnd = CE->getLocEnd();
   
+  if (!Rewriter::isRewritable(LocStart) || !Rewriter::isRewritable(LocEnd))
+    return;
+    
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
   

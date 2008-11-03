@@ -3570,6 +3570,9 @@ void RewriteObjC::RewriteCastExpr(CastExpr *CE) {
   // Need to avoid trying to rewrite synthesized casts.
   if (LocStart.isInvalid())
     return;
+  // Need to avoid trying to rewrite casts contained in macros.
+  if (!Rewriter::isRewritable(LocStart) || !Rewriter::isRewritable(LocEnd))
+    return;
     
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
