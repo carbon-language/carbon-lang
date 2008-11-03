@@ -84,8 +84,13 @@ namespace {
                        VDecl->getName(), DefaultArg->getSourceRange());
     }
 
-    // FIXME: when Clang has support for member functions, "this"
-    // will also need to be diagnosed.
+    // C++ [dcl.fct.default]p8:
+    //   The keyword this shall not be used in a default argument of a
+    //   member function.
+    // Note: this requirement is already diagnosed by
+    // Sema::ActOnCXXThis, because the use of "this" inside a default
+    // argument doesn't occur inside the body of a non-static member
+    // function.
 
     return false;
   }

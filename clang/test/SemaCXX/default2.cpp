@@ -36,3 +36,7 @@ void nondecl(int (*f)(int x = 5)) // {expected-error {{default arguments can onl
   void (*f2)(int = 17)  // {expected-error {{default arguments can only be specified}}}
     = (void (*)(int = 42))f; // {expected-error {{default arguments can only be specified}}}
 }
+
+class X {
+  void f(X* x = this); // expected-error{{invalid use of 'this' outside of a nonstatic member function}}
+};
