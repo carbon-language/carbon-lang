@@ -1,4 +1,4 @@
-//===--- HTMLPathDiagnostic.h - HTML Diagnostics for Paths ------*- C++ -*-===//
+//===--- PathDiagnosticClients.h - Path Diagnostic Clients ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the interface to create a HTMLPathDiagnostic object.
+//  This file defines the interface to create different path diagostic clients.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PATH_HTML_DIAGNOSTIC_H
-#define LLVM_CLANG_PATH_HTML_DIAGNOSTIC_H
+#ifndef LLVM_CLANG_PATH_DIAGNOSTIC_CLIENTS_H
+#define LLVM_CLANG_PATH_DIAGNOSTIC_CLiENTS_H
 
 #include <string>
 
@@ -22,10 +22,11 @@ class PathDiagnosticClient;
 class Preprocessor;
 class PreprocessorFactory;
 
-  
 PathDiagnosticClient* CreateHTMLDiagnosticClient(const std::string& prefix,
                                                  Preprocessor* PP,
                                                  PreprocessorFactory* PPF);
+  
+PathDiagnosticClient* CreatePlistDiagnosticClient(const std::string& prefix);
 }
 
 #endif
