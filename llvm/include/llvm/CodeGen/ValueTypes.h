@@ -26,7 +26,6 @@ namespace llvm {
 
   struct MVT { // MVT = Machine Value Type
   public:
-
     enum SimpleValueType {
       // If you change this numbering, you must change the values in
       // ValueTypes.td as well!
@@ -87,10 +86,14 @@ namespace llvm {
 
       // iPTR - An int value the size of the pointer of the current
       // target.  This should only be used internal to tblgen!
-      iPTR           =  255
+      iPTR           =  255,
+
+      // LastSimpleValueType - The greatest valid SimpleValueType value.
+      LastSimpleValueType = 255
     };
 
-    /// MVT - This type holds low-level value types. Valid values include any of
+  private:
+    /// This union holds low-level value types. Valid values include any of
     /// the values in the SimpleValueType enum, or any value returned from one
     /// of the MVT methods.  Any value type equal to one of the SimpleValueType
     /// enum values is a "simple" value type.  All others are "extended".
@@ -99,48 +102,22 @@ namespace llvm {
     /// All legal value types must be simple, but often there are some simple
     /// value types that are not legal.
     ///
-    /// @internal
-    /// Extended types are either vector types or arbitrary precision integers.
-    /// Arbitrary precision integers have iAny in the first SimpleTypeBits bits,
-    /// and the bit-width in the next PrecisionBits bits, offset by minus one.
-    /// Vector types are encoded by having the first
-    /// SimpleTypeBits+PrecisionBits bits encode the vector element type
-    /// (which must be a scalar type, possibly an arbitrary precision integer)
-    /// and the remaining VectorBits upper bits encode the vector length, offset
-    /// by one.
-    ///
-    /// 32--------------16-----------8-------------0
-    ///  | Vector length | Precision | Simple type |
-    ///  |               |      Vector element     |
-    ///
-
-  private:
-
-    static const int SimpleTypeBits = 8;
-    static const int PrecisionBits  = 8;
-    static const int VectorBits     = 32 - SimpleTypeBits - PrecisionBits;
-
-    static const uint32_t SimpleTypeMask =
-      (~uint32_t(0) << (32 - SimpleTypeBits)) >> (32 - SimpleTypeBits);
-
-    static const uint32_t PrecisionMask =
-      ((~uint32_t(0) << VectorBits) >> (32 - PrecisionBits)) << SimpleTypeBits;
-
-    static const uint32_t VectorMask =
-      (~uint32_t(0) >> (32 - VectorBits)) << (32 - VectorBits);
-
-    static const uint32_t ElementMask =
-      (~uint32_t(0) << VectorBits) >> VectorBits;
-
-    uint32_t V;
+    union {
+      uintptr_t V;
+      SimpleValueType SimpleTy;
+      const Type *LLVMTy;
+    };
 
   public:
-
     MVT() {}
     MVT(SimpleValueType S) : V(S) {}
 
-    bool operator== (const MVT VT) const { return V == VT.V; }
-    bool operator!= (const MVT VT) const { return V != VT.V; }
+    bool operator==(const MVT VT) const {
+      return getRawBits() == VT.getRawBits();
+    }
+    bool operator!=(const MVT VT) const {
+      return getRawBits() != VT.getRawBits();
+    }
 
     /// getFloatingPointVT - Returns the MVT that represents a floating point
     /// type with the given number of bits.  There are two floating point types
@@ -179,10 +156,7 @@ namespace llvm {
       case 128:
         return i128;
       }
-      MVT VT;
-      VT.V = iAny | (((BitWidth - 1) << SimpleTypeBits) & PrecisionMask);
-      assert(VT.getSizeInBits() == BitWidth && "Bad bit width!");
-      return VT;
+      return getExtendedIntegerVT(BitWidth);
     }
 
     /// getVectorVT - Returns the MVT that represents a vector NumElements in
@@ -217,13 +191,7 @@ namespace llvm {
         if (NumElements == 2)  return v2f64;
         break;
       }
-      MVT Result;
-      Result.V = VT.V | ((NumElements + 1) << (32 - VectorBits));
-      assert(Result.getVectorElementType() == VT &&
-             "Bad vector element type!");
-      assert(Result.getVectorNumElements() == NumElements &&
-             "Bad vector length!");
-      return Result;
+      return getExtendedVectorVT(VT, NumElements);
     }
 
     /// getIntVectorWithNumElements - Return any integer vector type that has
@@ -240,11 +208,10 @@ namespace llvm {
       }
     }
 
-
     /// isSimple - Test if the given MVT is simple (as opposed to being
     /// extended).
     bool isSimple() const {
-      return V <= SimpleTypeMask;
+      return V <= LastSimpleValueType;
     }
 
     /// isExtended - Test if the given MVT is extended (as opposed to
@@ -255,34 +222,43 @@ namespace llvm {
 
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
     bool isFloatingPoint() const {
-      uint32_t SVT = V & SimpleTypeMask;
-      return (SVT >= f32 && SVT <= ppcf128) || (SVT >= v2f32 && SVT <= v2f64);
+      return isSimple() ?
+             ((SimpleTy >= f32 && SimpleTy <= ppcf128) ||
+              (SimpleTy >= v2f32 && SimpleTy <= v2f64)) :
+             isExtendedFloatingPoint();
     }
 
     /// isInteger - Return true if this is an integer, or a vector integer type.
     bool isInteger() const {
-      uint32_t SVT = V & SimpleTypeMask;
-      return (SVT >= FIRST_INTEGER_VALUETYPE && SVT <= LAST_INTEGER_VALUETYPE) ||
-        (SVT >= v8i8 && SVT <= v2i64) || (SVT == iAny && (V & PrecisionMask));
+      return isSimple() ?
+             ((SimpleTy >= FIRST_INTEGER_VALUETYPE &&
+               SimpleTy <= LAST_INTEGER_VALUETYPE) ||
+              (SimpleTy >= v8i8 && SimpleTy <= v2i64)) :
+             isExtendedInteger();
     }
 
     /// isVector - Return true if this is a vector value type.
     bool isVector() const {
-      return (V >= FIRST_VECTOR_VALUETYPE && V <= LAST_VECTOR_VALUETYPE) ||
-             (V & VectorMask);
+      return isSimple() ?
+             (SimpleTy >= FIRST_VECTOR_VALUETYPE &&
+              SimpleTy <= LAST_VECTOR_VALUETYPE) :
+             isExtendedVector();
     }
 
     /// is64BitVector - Return true if this is a 64-bit vector type.
     bool is64BitVector() const {
-      return (V==v8i8 || V==v4i16 || V==v2i32 || V==v1i64 || V==v2f32 ||
-              (isExtended() && isVector() && getSizeInBits()==64));
+      return isSimple() ?
+             (SimpleTy==v8i8 || SimpleTy==v4i16 || SimpleTy==v2i32 ||
+              SimpleTy==v1i64 || SimpleTy==v2f32) :
+             isExtended64BitVector();
     }
 
     /// is128BitVector - Return true if this is a 128-bit vector type.
     bool is128BitVector() const {
-      return (V==v16i8 || V==v8i16 || V==v4i32 || V==v2i64 ||
-              V==v4f32 || V==v2f64 ||
-              (isExtended() && isVector() && getSizeInBits()==128));
+      return isSimple() ?
+             (SimpleTy==v16i8 || SimpleTy==v8i16 || SimpleTy==v4i32 ||
+              SimpleTy==v2i64 || SimpleTy==v4f32 || SimpleTy==v2f64) :
+             isExtended128BitVector();
     }
 
     /// isByteSized - Return true if the bit size is a multiple of 8.
@@ -321,7 +297,7 @@ namespace llvm {
     /// simple MVT.
     SimpleValueType getSimpleVT() const {
       assert(isSimple() && "Expected a SimpleValueType!");
-      return (SimpleValueType)V;
+      return SimpleTy;
     }
 
     /// getVectorElementType - Given a vector type, return the type of
@@ -329,12 +305,8 @@ namespace llvm {
     MVT getVectorElementType() const {
       assert(isVector() && "Invalid vector type!");
       switch (V) {
-      default: {
-        assert(isExtended() && "Unknown simple vector type!");
-        MVT VT;
-        VT.V = V & ElementMask;
-        return VT;
-      }
+      default:
+        return getExtendedVectorElementType();
       case v8i8 :
       case v16i8: return i8;
       case v4i16:
@@ -357,8 +329,7 @@ namespace llvm {
       assert(isVector() && "Invalid vector type!");
       switch (V) {
       default:
-        assert(isExtended() && "Unknown simple vector type!");
-        return ((V & VectorMask) >> (32 - VectorBits)) - 1;
+        return getExtendedVectorNumElements();
       case v16i8: return 16;
       case v8i8 :
       case v8i16: return 8;
@@ -379,13 +350,7 @@ namespace llvm {
     unsigned getSizeInBits() const {
       switch (V) {
       default:
-        assert(isExtended() && "MVT has no known size!");
-        if (isVector())
-          return getVectorElementType().getSizeInBits()*getVectorNumElements();
-        if (isInteger())
-          return ((V & PrecisionMask) >> SimpleTypeBits) + 1;
-        assert(false && "Unknown value type!");
-        return 0;
+        return getExtendedSizeInBits();
       case i1  :  return 1;
       case i8  :  return 8;
       case i16 :  return 16;
@@ -410,6 +375,12 @@ namespace llvm {
       case v2i64:
       case v4f32:
       case v2f64: return 128;
+      case iPTR:
+        assert(false && "Value type size is target-dependent. Ask TLI.");
+      case iPTRAny:
+      case iAny:
+      case fAny:
+        assert(false && "Value type is overloaded.");
       }
     }
 
@@ -461,7 +432,7 @@ namespace llvm {
     static MVT getMVT(const Type *Ty, bool HandleUnknown = false);
 
     /// getRawBits - Represent the type as a bunch of bits.
-    uint32_t getRawBits() const { return V; }
+    uintptr_t getRawBits() const { return V; }
 
     /// compareRawBits - A meaningless but well-behaved order, useful for
     /// constructing containers.
@@ -470,6 +441,21 @@ namespace llvm {
         return L.getRawBits() < R.getRawBits();
       }
     };
+
+  private:
+    // Methods for handling the Extended-type case in functions above.
+    // These are all out-of-line to prevent users of this header file
+    // from having a dependency on Type.h.
+    static MVT getExtendedIntegerVT(unsigned BitWidth);
+    static MVT getExtendedVectorVT(MVT VT, unsigned NumElements);
+    bool isExtendedFloatingPoint() const;
+    bool isExtendedInteger() const;
+    bool isExtendedVector() const;
+    bool isExtended64BitVector() const;
+    bool isExtended128BitVector() const;
+    MVT getExtendedVectorElementType() const;
+    unsigned getExtendedVectorNumElements() const;
+    unsigned getExtendedSizeInBits() const;
   };
 
 } // End llvm namespace
