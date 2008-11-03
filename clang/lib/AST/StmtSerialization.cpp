@@ -379,16 +379,18 @@ CaseStmt* CaseStmt::CreateImpl(Deserializer& D, ASTContext& C) {
 void CStyleCastExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
   S.Emit(getTypeAsWritten());
-  S.Emit(Loc);
+  S.Emit(LPLoc);
+  S.Emit(RPLoc);
   S.EmitOwnedPtr(getSubExpr());
 }
 
 CStyleCastExpr* CStyleCastExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType t = QualType::ReadVal(D);
   QualType writtenTy = QualType::ReadVal(D);
-  SourceLocation Loc = SourceLocation::ReadVal(D);
+  SourceLocation LPLoc = SourceLocation::ReadVal(D);
+  SourceLocation RPLoc = SourceLocation::ReadVal(D);
   Expr* Op = D.ReadOwnedPtr<Expr>(C);
-  return new CStyleCastExpr(t,Op,writtenTy,Loc);
+  return new CStyleCastExpr(t,Op,writtenTy,LPLoc,RPLoc);
 }
 
 void CharacterLiteral::EmitImpl(Serializer& S) const {

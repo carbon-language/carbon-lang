@@ -884,16 +884,19 @@ public:
 /// cast in C++ (C++ [expr.cast]), which uses the syntax
 /// (Type)expr. For example: @c (int)f.
 class CStyleCastExpr : public ExplicitCastExpr {
-  SourceLocation Loc; // the location of the left paren
+  SourceLocation LPLoc; // the location of the left paren
+  SourceLocation RPLoc; // the location of the right paren
 public:
   CStyleCastExpr(QualType exprTy, Expr *op, QualType writtenTy, 
-                    SourceLocation l) : 
-    ExplicitCastExpr(CStyleCastExprClass, exprTy, op, writtenTy), Loc(l) {}
+                    SourceLocation l, SourceLocation r) : 
+    ExplicitCastExpr(CStyleCastExprClass, exprTy, op, writtenTy), 
+    LPLoc(l), RPLoc(r) {}
 
-  SourceLocation getLParenLoc() const { return Loc; }
+  SourceLocation getLParenLoc() const { return LPLoc; }
+  SourceLocation getRParenLoc() const { return RPLoc; }
   
   virtual SourceRange getSourceRange() const {
-    return SourceRange(Loc, getSubExpr()->getSourceRange().getEnd());
+    return SourceRange(LPLoc, getSubExpr()->getSourceRange().getEnd());
   }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CStyleCastExprClass; 
