@@ -41,13 +41,23 @@ void FoldingSetNodeID::AddInteger(signed I) {
 void FoldingSetNodeID::AddInteger(unsigned I) {
   Bits.push_back(I);
 }
-void FoldingSetNodeID::AddInteger(int64_t I) {
-  AddInteger((uint64_t)I);
+void FoldingSetNodeID::AddInteger(long I) {
+  AddInteger((unsigned long)I);
 }
-void FoldingSetNodeID::AddInteger(uint64_t I) {
-  Bits.push_back(unsigned(I));
-  
-  // If the integer is small, encode it just as 32-bits.
+void FoldingSetNodeID::AddInteger(unsigned long I) {
+  if (sizeof(long) == sizeof(int))
+    AddInteger(unsigned(I));
+  else if (sizeof(long) == sizeof(long long)) {
+    AddInteger((unsigned long long)I);
+  } else {
+    assert(0 && "unexpected sizeof(long)");
+  }
+}
+void FoldingSetNodeID::AddInteger(long long I) {
+  AddInteger((unsigned long long)I);
+}
+void FoldingSetNodeID::AddInteger(unsigned long long I) {
+  AddInteger(unsigned(I));
   if ((uint64_t)(int)I != I)
     Bits.push_back(unsigned(I >> 32));
 }
