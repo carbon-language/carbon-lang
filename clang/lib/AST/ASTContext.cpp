@@ -1090,9 +1090,7 @@ QualType ASTContext::getTagDeclType(TagDecl *Decl) {
 /// of the sizeof operator (C99 6.5.3.4p4). The value is target dependent and 
 /// needs to agree with the definition in <stddef.h>. 
 QualType ASTContext::getSizeType() const {
-  // On Darwin, size_t is defined as a "long unsigned int". 
-  // FIXME: should derive from "Target".
-  return UnsignedLongTy; 
+  return getFromTargetType(Target.getSizeType());
 }
 
 /// getWCharType - Return the unique type for "wchar_t" (C99 7.17), the
@@ -1102,9 +1100,9 @@ QualType ASTContext::getWCharType() const {
   if (LangOpts.CPlusPlus)
     return WCharTy;
 
-  // On Darwin, wchar_t is defined as a "int". 
-  // FIXME: should derive from "Target".
-  return IntTy; 
+  // FIXME: In C, shouldn't WCharTy just be a typedef of the target's
+  // wide-character type?
+  return getFromTargetType(Target.getWCharType());
 }
 
 /// getSignedWCharType - Return the type of "signed wchar_t".
@@ -1124,9 +1122,7 @@ QualType ASTContext::getUnsignedWCharType() const {
 /// getPointerDiffType - Return the unique type for "ptrdiff_t" (ref?)
 /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
 QualType ASTContext::getPointerDiffType() const {
-  // On Darwin, ptrdiff_t is defined as a "int". This seems like a bug...
-  // FIXME: should derive from "Target".
-  return IntTy; 
+  return getFromTargetType(Target.getPtrDiffType(0));
 }
 
 //===----------------------------------------------------------------------===//
@@ -1796,6 +1792,23 @@ void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
   ObjCConstantStringType = getObjCInterfaceType(Decl);
 }
 
+/// getFromTargetType - Given one of the integer types provided by
+/// TargetInfo, produce the corresponding type.
+QualType ASTContext::getFromTargetType(TargetInfo::IntType Type) const {
+  switch (Type) {
+  case TargetInfo::NoInt: return QualType(); 
+  case TargetInfo::SignedShort: return ShortTy;
+  case TargetInfo::UnsignedShort: return UnsignedShortTy;
+  case TargetInfo::SignedInt: return IntTy;
+  case TargetInfo::UnsignedInt: return UnsignedIntTy;
+  case TargetInfo::SignedLong: return LongTy;
+  case TargetInfo::UnsignedLong: return UnsignedLongTy;
+  case TargetInfo::SignedLongLong: return LongLongTy;
+  case TargetInfo::UnsignedLongLong: return UnsignedLongLongTy;
+  }
+
+  assert(false && "Unhandled TargetInfo::IntType value");
+}
 
 //===----------------------------------------------------------------------===//
 //                        Type Predicates.

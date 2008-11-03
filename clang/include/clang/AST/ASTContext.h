@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/Type.h"
@@ -33,7 +34,6 @@ namespace clang {
   class ASTRecordLayout;
   class Expr;
   class IdentifierTable;
-  class TargetInfo;
   class SelectorTable;
   class SourceManager;
   // Decls
@@ -319,6 +319,8 @@ public:
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
     
+  QualType getFromTargetType(TargetInfo::IntType Type) const;
+
   //===--------------------------------------------------------------------===//
   //                         Type Predicates.
   //===--------------------------------------------------------------------===//
