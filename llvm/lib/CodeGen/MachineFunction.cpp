@@ -396,7 +396,8 @@ int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
 
 
 void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
-  int ValOffset = MF.getTarget().getFrameInfo()->getOffsetOfLocalArea();
+  const TargetFrameInfo *FI = MF.getTarget().getFrameInfo();
+  int ValOffset = (FI ? FI->getOffsetOfLocalArea() : 0);
 
   for (unsigned i = 0, e = Objects.size(); i != e; ++i) {
     const StackObject &SO = Objects[i];
