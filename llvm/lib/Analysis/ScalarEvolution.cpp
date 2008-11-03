@@ -2604,6 +2604,11 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
     // The divisions must be performed as signed divisions.
     APInt NegB(-B);
     APInt TwoA( A << 1 );
+    if (TwoA.isMinValue()) {
+      SCEV *CNC = new SCEVCouldNotCompute();
+      return std::make_pair(CNC, CNC);
+    }
+
     ConstantInt *Solution1 = ConstantInt::get((NegB + SqrtVal).sdiv(TwoA));
     ConstantInt *Solution2 = ConstantInt::get((NegB - SqrtVal).sdiv(TwoA));
 
