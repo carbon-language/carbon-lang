@@ -263,10 +263,18 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
     ExprResult SubElt;
     if (!MayBeDesignationStart(Tok.getKind(), PP))
       SubElt = ParseInitializer();
-    else
+    else {
       SubElt = ParseInitializerWithPotentialDesignator(InitExprDesignations,
                                                        InitExprs.size());
-
+      
+      // If we had an erroneous initializer, and we had a potentially valid
+      // designator, make sure to remove the designator from
+      // InitExprDesignations, otherwise we'll end up with a designator with no
+      // making initializer.
+      if (SubElt.isInvalid)
+        InitExprDesignations.EraseDesignation(InitExprs.size());
+    }
+    
     // If we couldn't parse the subelement, bail out.
     if (!SubElt.isInvalid) {
       InitExprs.push_back(SubElt.Val);

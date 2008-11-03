@@ -220,6 +220,17 @@ public:
         return &Designations[i];
     return 0;
   }
+
+  /// EraseDesignation - If there is a designator for the specified initializer
+  /// index, remove it.
+  void EraseDesignation(unsigned Idx) {
+    Designation *D =const_cast<Designation*>(getDesignationForInitializer(Idx));
+    if (D == 0) return;  // No designator.
+    
+    D->FreeExprs(Actions);
+    unsigned SlotNo = D-&Designations[0];
+    Designations.erase(Designations.begin()+SlotNo);
+  }
   
 };
 

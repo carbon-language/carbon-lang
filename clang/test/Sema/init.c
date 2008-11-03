@@ -67,3 +67,10 @@ int sym_fw1a_scr[] = {
            ((int)(&((struct sym_reg *)0)->nc_gpreg)) & 0,
            8 * ((int)(&((struct sym_reg *)0)->nc_gpreg))
 };
+
+// PR3001
+struct s1 s2 = {
+    .a = sizeof(struct s3), // expected-error {{invalid application of 'sizeof'}}
+    .b = bogus // expected-error {{use of undeclared identifier 'bogus'}}
+}
+
