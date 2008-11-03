@@ -24,8 +24,8 @@
 
 using namespace llvm;
 
-ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM) {
-  ETM = &TM;
+ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
+  : TargetAsmInfo(TM) {
 
   BSSSection_  = getUnnamedSection("\t.bss",
                                    SectionFlags::Writeable | SectionFlags::BSS);
@@ -102,7 +102,7 @@ ELFTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
 
 inline const Section*
 ELFTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
-  const TargetData *TD = ETM->getTargetData();
+  const TargetData *TD = TM.getTargetData();
 
   // FIXME: string here is temporary, until stuff will fully land in.
   // We cannot use {Four,Eight,Sixteen}ByteConstantSection here, since it's
@@ -121,7 +121,7 @@ ELFTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
 
 const Section*
 ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
-  const TargetData *TD = ETM->getTargetData();
+  const TargetData *TD = TM.getTargetData();
   Constant *C = cast<GlobalVariable>(GV)->getInitializer();
   const ConstantArray *CVA = cast<ConstantArray>(C);
   const Type *Ty = CVA->getType()->getElementType();
@@ -131,7 +131,6 @@ ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
     assert(getCStringSection() && "Should have string section prefix");
 
     // We also need alignment here
-    const TargetData *TD = ETM->getTargetData();
     unsigned Align = TD->getPrefTypeAlignment(Ty);
     if (Align < Size)
       Align = Size;

@@ -45,7 +45,7 @@ const char *const llvm::arm_asm_table[] = {
 
 ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
   ARMTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
-  Subtarget = &DTM->getSubtarget<ARMSubtarget>();
+  Subtarget = &TM.getSubtarget<ARMSubtarget>();
 
   GlobalPrefix = "_";
   PrivateGlobalPrefix = "L";
@@ -93,7 +93,7 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
 
 ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):
   ARMTargetAsmInfo<ELFTargetAsmInfo>(TM) {
-  Subtarget = &ETM->getSubtarget<ARMSubtarget>();
+  Subtarget = &TM.getSubtarget<ARMSubtarget>();
 
   NeedsSet = false;
   HasLEB128 = true;

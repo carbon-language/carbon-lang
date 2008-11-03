@@ -39,7 +39,7 @@ const char *const llvm::x86_asm_table[] = {
 
 X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo<DarwinTargetAsmInfo>(TM) {
-  const X86Subtarget* Subtarget = &DTM->getSubtarget<X86Subtarget>();
+  const X86Subtarget* Subtarget = &TM.getSubtarget<X86Subtarget>();
   bool is64Bit = Subtarget->is64Bit();
 
   AlignmentIsInBytes = false;
@@ -52,7 +52,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   LessPrivateGlobalPrefix = "l";  // Marker for some ObjC metadata
   BSSSection = 0;                       // no BSS section.
   ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
-  if (DTM->getRelocationModel() != Reloc::Static)
+  if (TM.getRelocationModel() != Reloc::Static)
     ConstantPoolSection = "\t.const_data";
   else
     ConstantPoolSection = "\t.const\n";
@@ -171,17 +171,17 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
 
   // On Linux we must declare when we can use a non-executable stack.
-  if (ETM->getSubtarget<X86Subtarget>().isLinux())
+  if (TM.getSubtarget<X86Subtarget>().isLinux())
     NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
 }
 
 unsigned
 X86ELFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const {
-  CodeModel::Model CM = ETM->getCodeModel();
-  bool is64Bit = ETM->getSubtarget<X86Subtarget>().is64Bit();
+  CodeModel::Model CM = TM.getCodeModel();
+  bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
 
-  if (ETM->getRelocationModel() == Reloc::PIC_) {
+  if (TM.getRelocationModel() == Reloc::PIC_) {
     unsigned Format = 0;
 
     if (!is64Bit)
@@ -216,7 +216,6 @@ X86ELFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 
 X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM):
   X86GenericTargetAsmInfo(TM) {
-  X86TM = &TM;
 
   GlobalPrefix = "_";
   LCOMMDirective = "\t.lcomm\t";
@@ -251,10 +250,10 @@ X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM):
 unsigned
 X86COFFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                             bool Global) const {
-  CodeModel::Model CM = X86TM->getCodeModel();
-  bool is64Bit = X86TM->getSubtarget<X86Subtarget>().is64Bit();
+  CodeModel::Model CM = TM.getCodeModel();
+  bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
 
-  if (X86TM->getRelocationModel() == Reloc::PIC_) {
+  if (TM.getRelocationModel() == Reloc::PIC_) {
     unsigned Format = 0;
 
     if (!is64Bit)

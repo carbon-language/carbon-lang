@@ -24,8 +24,8 @@
 
 using namespace llvm;
 
-DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) {
-  DTM = &TM;
+DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) 
+  : TargetAsmInfo(TM) {
 
   CStringSection_ = getUnnamedSection("\t.cstring",
                                 SectionFlags::Mergeable | SectionFlags::Strings);
@@ -76,7 +76,7 @@ const Section*
 DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
   bool isWeak = GV->mayBeOverridden();
-  bool isNonStatic = (DTM->getRelocationModel() != Reloc::Static);
+  bool isNonStatic = TM.getRelocationModel() != Reloc::Static;
 
   switch (Kind) {
    case SectionKind::Text:
@@ -112,13 +112,12 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
 
 const Section*
 DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
-  const TargetData *TD = DTM->getTargetData();
+  const TargetData *TD = TM.getTargetData();
   Constant *C = cast<GlobalVariable>(GV)->getInitializer();
   const Type *Type = cast<ConstantArray>(C)->getType()->getElementType();
 
   unsigned Size = TD->getABITypeSize(Type);
   if (Size) {
-    const TargetData *TD = DTM->getTargetData();
     unsigned Align = TD->getPreferredAlignment(GV);
     if (Align <= 32)
       return getCStringSection_();
@@ -136,7 +135,7 @@ DarwinTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
 
 inline const Section*
 DarwinTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
-  const TargetData *TD = DTM->getTargetData();
+  const TargetData *TD = TM.getTargetData();
 
   unsigned Size = TD->getABITypeSize(Ty);
   if (Size == 4)
@@ -155,7 +154,7 @@ DarwinTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
 
   // Handle weird special case, when compiling PIC stuff.
   if (S == getReadOnlySection() &&
-      DTM->getRelocationModel() != Reloc::Static)
+      TM.getRelocationModel() != Reloc::Static)
     return ConstDataSection;
 
   return S;

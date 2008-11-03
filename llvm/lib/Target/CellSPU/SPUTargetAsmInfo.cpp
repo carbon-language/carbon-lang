@@ -16,7 +16,8 @@
 #include "llvm/Function.h"
 using namespace llvm;
 
-SPUTargetAsmInfo::SPUTargetAsmInfo(const SPUTargetMachine &TM) {
+SPUTargetAsmInfo::SPUTargetAsmInfo(const SPUTargetMachine &TM)
+  : TargetAsmInfo(TM) {
   PCSymbol = ".";
   CommentString = "#";
   GlobalPrefix = "";

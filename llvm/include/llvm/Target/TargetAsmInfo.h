@@ -126,6 +126,9 @@ namespace llvm {
     mutable SectionFlags::FlagsStringsMapType FlagsStrings;
     void fillDefaultValues();
   protected:
+    /// TM - The current TargetMachine.
+    const TargetMachine &TM;
+
     //===------------------------------------------------------------------===//
     // Properties to be set by the target writer, used to configure asm printer.
     //
@@ -510,8 +513,7 @@ namespace llvm {
     const char *const *AsmTransCBE; // Defaults to empty
 
   public:
-    TargetAsmInfo();
-    TargetAsmInfo(const TargetMachine &TM);
+    explicit TargetAsmInfo(const TargetMachine &TM);
     virtual ~TargetAsmInfo();
 
     const Section* getNamedSection(const char *Name,

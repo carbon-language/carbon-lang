@@ -63,8 +63,6 @@ namespace llvm {
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
     virtual std::string printSectionFlags(unsigned flags) const;
-  protected:
-    const X86TargetMachine *X86TM;
   };
 
   struct X86WinTargetAsmInfo : public X86GenericTargetAsmInfo {

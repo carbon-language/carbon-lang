@@ -119,11 +119,8 @@ void TargetAsmInfo::fillDefaultValues() {
   DataSection = getUnnamedSection("\t.data", SectionFlags::Writeable);
 }
 
-TargetAsmInfo::TargetAsmInfo() {
-  fillDefaultValues();
-}
-
-TargetAsmInfo::TargetAsmInfo(const TargetMachine &TM) {
+TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) 
+  : TM(tm) {
   fillDefaultValues();
 }
 

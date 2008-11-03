@@ -44,8 +44,6 @@ namespace llvm {
     const Section* MergeableConstSection(const Type *Ty) const;
     const Section* MergeableStringSection(const GlobalVariable *GV) const;
     const Section* SelectSectionForMachineConst(const Type *Ty) const;
-  protected:
-    const TargetMachine* DTM;
   };
 }
 
