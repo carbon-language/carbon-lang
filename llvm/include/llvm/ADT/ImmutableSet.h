@@ -558,7 +558,7 @@ private:
       return Balance(Left(T), Value(T), Add_internal(V,Right(T)));
   }
   
-  /// Remove_interal - Creates a new tree that includes all the data
+  /// Remove_internal - Creates a new tree that includes all the data
   ///  from the original tree except the specified data.  If the
   ///  specified data did not exist in the original tree, the original
   ///  tree is returned.
