@@ -130,6 +130,9 @@ public:
   /// EmitGlobalVariable - Emit information about a global variable.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *decl);
  
+  
+private:
+  
   /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
   /// new one if necessary.
   llvm::CompileUnitDesc *getOrCreateCompileUnit(SourceLocation loc);
