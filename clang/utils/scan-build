@@ -932,9 +932,9 @@ sub HtmlEscape {
   # copy argument to new variable so we don't clobber the original
   my $arg = shift || '';
   my $tmp = $arg;
-
-  $tmp =~ s/([\<\>\'\"])/sprintf("&#%02x;", chr($1))/ge;
-
+  $tmp =~ s/&/&amp;/g;
+  $tmp =~ s/</&lt;/g;
+  $tmp =~ s/>/&gt;/g;
   return $tmp;
 }
 
@@ -945,11 +945,8 @@ sub HtmlEscape {
 sub ShellEscape {
   # copy argument to new variable so we don't clobber the original
   my $arg = shift || '';
-  my $tmp = $arg;
-
-  $tmp =~ s/([\!\;\\\'\"\`\<\>\|\s\(\)\[\]\?\#\$\^\&\*\=])/\\$1/g;
-
-  return $tmp;
+  if ($arg =~ /["\s]/) { return "'" . $arg . "'"; }
+  return $arg;
 }
 
 ##----------------------------------------------------------------------------##
