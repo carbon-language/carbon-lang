@@ -36,3 +36,13 @@ void test_copycon3(B b, const B bc) {
   int& i1 = copycon3(b);
   float& f1 = copycon3(bc);
 }
+
+
+class C : public B { };
+
+float& copycon4(A a);
+int& copycon4(B b);
+
+void test_copycon4(C c) {
+  int& i = copycon4(c);
+};

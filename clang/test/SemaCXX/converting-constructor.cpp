@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s 
+// RUN: clang -fsyntax-only -verify %s 
 class Z { };
 
 class Y { 
@@ -18,6 +18,6 @@ void g(short s, Y y, Z z) {
   f(s);
   f(1.0f);
   f(y);
-  f(z); // expected-error{{incompatible}}
+  f(z); // expected-error{{incompatible type passing 'class Z', expected 'class X'}}
 }
 

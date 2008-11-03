@@ -370,7 +370,9 @@ private:
   /// C++ Overloading.
   bool IsOverload(FunctionDecl *New, Decl* OldD, 
                   OverloadedFunctionDecl::function_iterator &MatchedDecl);
-  ImplicitConversionSequence TryImplicitConversion(Expr* From, QualType ToType);
+  ImplicitConversionSequence 
+  TryImplicitConversion(Expr* From, QualType ToType,
+                        bool SuppressUserConversions = false);
   bool IsStandardConversion(Expr *From, QualType ToType, 
                             StandardConversionSequence& SCS);
   bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);
@@ -398,7 +400,9 @@ private:
   CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
                                   const StandardConversionSequence& SCS2);
 
-  ImplicitConversionSequence TryCopyInitialization(Expr* From, QualType ToType);
+  ImplicitConversionSequence 
+  TryCopyInitialization(Expr* From, QualType ToType,
+                        bool SuppressUserConversions = false);
   bool PerformCopyInitialization(Expr *&From, QualType ToType, 
                                  const char *Flavor);
 
@@ -412,10 +416,12 @@ private:
 
   void AddOverloadCandidate(FunctionDecl *Function, 
                             Expr **Args, unsigned NumArgs,
-                            OverloadCandidateSet& CandidateSet);
+                            OverloadCandidateSet& CandidateSet,
+                            bool SuppressUserConversions = false);
   void AddOverloadCandidates(OverloadedFunctionDecl *Ovl, 
                              Expr **Args, unsigned NumArgs,
-                             OverloadCandidateSet& CandidateSet);
+                             OverloadCandidateSet& CandidateSet,
+                             bool SuppressUserConversions = false);
   bool isBetterOverloadCandidate(const OverloadCandidate& Cand1,
                                  const OverloadCandidate& Cand2);
   OverloadingResult BestViableFunction(OverloadCandidateSet& CandidateSet,
@@ -1165,7 +1171,8 @@ private:
                                                       bool& DerivedToBase);
 
   bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType &declType,
-                          ImplicitConversionSequence *ICS = 0);
+                          ImplicitConversionSequence *ICS = 0,
+                          bool SuppressUserConversions = false);
 
   /// CheckCastTypes - Check type constraints for casting between types.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr);

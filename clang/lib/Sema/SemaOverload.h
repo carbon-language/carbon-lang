@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
+  class CXXConstructorDecl;
   class FunctionDecl;
 
   /// ImplicitConversionKind - The kind of implicit conversion used to
@@ -113,6 +114,13 @@ namespace clang {
     /// ToType - The type that this conversion is converting to. This
     /// is an opaque pointer that can be translated into a QualType.
     void *ToTypePtr;
+
+    /// CopyConstructor - The copy constructor that is used to perform
+    /// this conversion, when the conversion is actually just the
+    /// initialization of an object via copy constructor. Such
+    /// conversions are either identity conversions or derived-to-base
+    /// conversions.
+    CXXConstructorDecl *CopyConstructor;
 
     void setAsIdentityConversion();        
     ImplicitConversionRank getRank() const;

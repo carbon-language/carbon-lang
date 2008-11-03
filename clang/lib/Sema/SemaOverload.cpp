@@ -99,6 +99,7 @@ void StandardConversionSequence::setAsIdentityConversion() {
   Deprecated = false;
   ReferenceBinding = false;
   DirectBinding = false;
+  CopyConstructor = 0;
 }
 
 /// getRank - Retrieve the rank of this standard conversion sequence
@@ -174,6 +175,14 @@ void StandardConversionSequence::DebugPrint() const {
       fprintf(stderr, " -> ");
     }
     fprintf(stderr, "%s", GetImplicitConversionName(Second));
+
+    if (CopyConstructor) {
+      fprintf(stderr, " (by copy constructor)");
+    } else if (DirectBinding) {
+      fprintf(stderr, " (direct reference binding)");
+    } else if (ReferenceBinding) {
+      fprintf(stderr, " (reference binding)");
+    }
     PrintedSomething = true;
   }
 
@@ -344,13 +353,18 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
 /// it will not produce any diagnostics if no conversion is available,
 /// but will instead return an implicit conversion sequence of kind
 /// "BadConversion".
+///
+/// If @p SuppressUserConversions, then user-defined conversions are
+/// not permitted.
 ImplicitConversionSequence
-Sema::TryImplicitConversion(Expr* From, QualType ToType)
+Sema::TryImplicitConversion(Expr* From, QualType ToType,
+                            bool SuppressUserConversions)
 {
   ImplicitConversionSequence ICS;
   if (IsStandardConversion(From, ToType, ICS.Standard))
     ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
-  else if (IsUserDefinedConversion(From, ToType, ICS.UserDefined)) {
+  else if (!SuppressUserConversions &&
+           IsUserDefinedConversion(From, ToType, ICS.UserDefined)) {
     ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
     // C++ [over.ics.user]p4:
     //   A conversion of an expression of class type to the same class
@@ -362,15 +376,13 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
     if (CXXConstructorDecl *Constructor 
           = dyn_cast<CXXConstructorDecl>(ICS.UserDefined.ConversionFunction)) {
       if (Constructor->isCopyConstructor(Context)) {
-        // FIXME: This is a temporary hack to give copy-constructor
-        // calls the appropriate rank (Exact Match or Conversion) by
-        // making them into standard conversions. To really fix this, we
-        // need to tweak the rank-checking logic to deal with ranking
-        // different kinds of user conversions.
+        // Turn this into a "standard" conversion sequence, so that it
+        // gets ranked with standard conversion sequences.
         ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
         ICS.Standard.setAsIdentityConversion();
         ICS.Standard.FromTypePtr = From->getType().getAsOpaquePtr();
         ICS.Standard.ToTypePtr = ToType.getAsOpaquePtr();
+        ICS.Standard.CopyConstructor = Constructor;
         if (IsDerivedFrom(From->getType().getUnqualifiedType(),
                           ToType.getUnqualifiedType()))
           ICS.Standard.Second = ICK_Derived_To_Base;
@@ -403,6 +415,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   // Standard conversions (C++ [conv])
   SCS.Deprecated = false;
   SCS.FromTypePtr = FromType.getAsOpaquePtr();
+  SCS.CopyConstructor = 0;
 
   // The first conversion can be an lvalue-to-rvalue conversion,
   // array-to-pointer conversion, or function-to-pointer conversion
@@ -536,13 +549,6 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     //   [...] Any difference in top-level cv-qualification is
     //   subsumed by the initialization itself and does not constitute
     //   a conversion. [...]
-
-    // C++ [dcl.init]p14 last bullet:
-    //   [ Note: an expression of type "cv1 T" can initialize an object
-    //   of type “cv2 T” independently of the cv-qualifiers cv1 and
-    //   cv2. -- end note]
-    //
-    // FIXME: Where is the normative text?
     CanonFrom = Context.getCanonicalType(FromType);
     CanonTo = Context.getCanonicalType(ToType);    
     if (CanonFrom.getUnqualifiedType() == CanonTo.getUnqualifiedType() &&
@@ -881,8 +887,8 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
          func != Constructors->function_end(); ++func) {
       CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*func);
       if (Constructor->isConvertingConstructor())
-        // FIXME: Suppress user-defined conversions in here!
-        AddOverloadCandidate(Constructor, &From, 1, CandidateSet);
+        AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
+                             /*SuppressUserConversions=*/true);
     }
   }
 
@@ -1259,9 +1265,9 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
         return ImplicitConversionSequence::Worse;
     }
 
-    //     -- binding of an expression of type B to a reference of type
-    //        A& is better than binding an expression of type C to a
-    //        reference of type A&,
+    //   -- binding of an expression of type B to a reference of type
+    //      A& is better than binding an expression of type C to a
+    //      reference of type A&,
     if (FromType1.getUnqualifiedType() != FromType2.getUnqualifiedType() &&
         ToType1.getUnqualifiedType() == ToType2.getUnqualifiedType()) {
       if (IsDerivedFrom(FromType2, FromType1))
@@ -1278,9 +1284,26 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
   // FIXME: conversion of B::* to C::* is better than conversion of
   // A::* to C::*, and
 
-  // FIXME: conversion of C to B is better than conversion of C to A,
+  if (SCS1.CopyConstructor && SCS2.CopyConstructor &&
+      SCS1.Second == ICK_Derived_To_Base) {
+    //   -- conversion of C to B is better than conversion of C to A,
+    if (FromType1.getUnqualifiedType() == FromType2.getUnqualifiedType() &&
+        ToType1.getUnqualifiedType() != ToType2.getUnqualifiedType()) {
+      if (IsDerivedFrom(ToType1, ToType2))
+        return ImplicitConversionSequence::Better;
+      else if (IsDerivedFrom(ToType2, ToType1))
+        return ImplicitConversionSequence::Worse;
+    }
 
-  // FIXME: conversion of B to A is better than conversion of C to A.
+    //   -- conversion of B to A is better than conversion of C to A.
+    if (FromType1.getUnqualifiedType() != FromType2.getUnqualifiedType() &&
+        ToType1.getUnqualifiedType() == ToType2.getUnqualifiedType()) {
+      if (IsDerivedFrom(FromType2, FromType1))
+        return ImplicitConversionSequence::Better;
+      else if (IsDerivedFrom(FromType1, FromType2))
+        return ImplicitConversionSequence::Worse;
+    }
+  }
 
   return ImplicitConversionSequence::Indistinguishable;
 }
@@ -1289,9 +1312,11 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
 /// ToType from the expression From. Return the implicit conversion
 /// sequence required to pass this argument, which may be a bad
 /// conversion sequence (meaning that the argument cannot be passed to
-/// a parameter of this type). This is user for argument passing, 
+/// a parameter of this type). If @p SuppressUserConversions, then we
+/// do not permit any user-defined conversion sequences.
 ImplicitConversionSequence 
-Sema::TryCopyInitialization(Expr *From, QualType ToType) {
+Sema::TryCopyInitialization(Expr *From, QualType ToType, 
+                            bool SuppressUserConversions) {
   if (!getLangOptions().CPlusPlus) {
     // In C, copy initialization is the same as performing an assignment.
     AssignConvertType ConvTy =
@@ -1305,10 +1330,10 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType) {
     return ICS;
   } else if (ToType->isReferenceType()) {
     ImplicitConversionSequence ICS;
-    CheckReferenceInit(From, ToType, &ICS);
+    CheckReferenceInit(From, ToType, &ICS, SuppressUserConversions);
     return ICS;
   } else {
-    return TryImplicitConversion(From, ToType);
+    return TryImplicitConversion(From, ToType, SuppressUserConversions);
   }
 }
 
@@ -1340,11 +1365,14 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
 }
 
 /// AddOverloadCandidate - Adds the given function to the set of
-/// candidate functions, using the given function call arguments.
+/// candidate functions, using the given function call arguments.  If
+/// @p SuppressUserConversions, then don't allow user-defined
+/// conversions via constructors or conversion operators.
 void 
 Sema::AddOverloadCandidate(FunctionDecl *Function, 
                            Expr **Args, unsigned NumArgs,
-                           OverloadCandidateSet& CandidateSet)
+                           OverloadCandidateSet& CandidateSet,
+                           bool SuppressUserConversions)
 {
   const FunctionTypeProto* Proto 
     = dyn_cast<FunctionTypeProto>(Function->getType()->getAsFunctionType());
@@ -1389,7 +1417,8 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       // parameter of F.
       QualType ParamType = Proto->getArgType(ArgIdx);
       Candidate.Conversions[ArgIdx] 
-        = TryCopyInitialization(Args[ArgIdx], ParamType);
+        = TryCopyInitialization(Args[ArgIdx], ParamType, 
+                                SuppressUserConversions);
       if (Candidate.Conversions[ArgIdx].ConversionKind 
             == ImplicitConversionSequence::BadConversion)
         Candidate.Viable = false;
@@ -1408,11 +1437,13 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
 void 
 Sema::AddOverloadCandidates(OverloadedFunctionDecl *Ovl, 
                             Expr **Args, unsigned NumArgs,
-                            OverloadCandidateSet& CandidateSet)
+                            OverloadCandidateSet& CandidateSet,
+                            bool SuppressUserConversions)
 {
   for (OverloadedFunctionDecl::function_iterator Func = Ovl->function_begin();
        Func != Ovl->function_end(); ++Func)
-    AddOverloadCandidate(*Func, Args, NumArgs, CandidateSet);
+    AddOverloadCandidate(*Func, Args, NumArgs, CandidateSet,
+                         SuppressUserConversions);
 }
 
 /// isBetterOverloadCandidate - Determines whether the first overload

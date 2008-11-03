@@ -931,9 +931,13 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2,
 /// errors are found. Either way, a return value of true indicates
 /// that there was a failure, a return value of false indicates that
 /// the reference initialization succeeded.
+///
+/// When @p SuppressUserConversions, user-defined conversions are
+/// suppressed.
 bool 
 Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, 
-                         ImplicitConversionSequence *ICS) {
+                         ImplicitConversionSequence *ICS,
+                         bool SuppressUserConversions) {
   assert(DeclType->isReferenceType() && "Reference init needs a reference");
 
   QualType T1 = DeclType->getAsReferenceType()->getPointeeType();
@@ -1114,7 +1118,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
     ///   the argument expression. Any difference in top-level
     ///   cv-qualification is subsumed by the initialization itself
     ///   and does not constitute a conversion.
-    *ICS = TryImplicitConversion(Init, T1);
+    *ICS = TryImplicitConversion(Init, T1, SuppressUserConversions);
     return ICS->ConversionKind == ImplicitConversionSequence::BadConversion;
   } else {
     return PerformImplicitConversion(Init, T1);

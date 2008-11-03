@@ -929,6 +929,13 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   // anything here.
   QualType FromType = From->getType();
 
+  if (SCS.CopyConstructor) {
+    // FIXME: Create a temporary object by calling the copy
+    // constructor.
+    ImpCastExprToType(From, ToType);
+    return false;
+  }
+
   // Perform the first implicit conversion.
   switch (SCS.First) {
   case ICK_Identity:
@@ -980,13 +987,6 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   case ICK_Boolean_Conversion:
     FromType = Context.BoolTy;
     ImpCastExprToType(From, FromType);
-    break;
-
-  case ICK_Derived_To_Base:
-    // FIXME: This should never happen. It's a consequence of
-    // pretending that a user-defined conversion via copy constructor
-    // is actually a standard conversion.
-    ImpCastExprToType(From, ToType);
     break;
 
   default:
