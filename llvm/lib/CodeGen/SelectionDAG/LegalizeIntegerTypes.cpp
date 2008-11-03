@@ -532,29 +532,37 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
   SDValue Ptr = N->getOperand(1); // Get the pointer.
   MVT VT = N->getValueType(0);
 
-  const Value *V = cast<SrcValueSDNode>(N->getOperand(2))->getValue();
-  SDValue VAList = DAG.getLoad(TLI.getPointerTy(), Chain, Ptr, V, 0);
+  MVT RegVT = TLI.getRegisterType(VT);
+  unsigned NumRegs = TLI.getNumRegisters(VT);
+  // The argument is passed as NumRegs registers of type RegVT.
 
-  // Increment the arg pointer, VAList, to the next vaarg
-  // FIXME: should the ABI size be used for the increment?  Think of
-  // x86 long double (10 bytes long, but aligned on 4 or 8 bytes) or
-  // integers of unusual size (such MVT::i1, which gives an increment
-  // of zero here!).
-  unsigned Increment = VT.getSizeInBits() / 8;
-  SDValue Tmp = DAG.getNode(ISD::ADD, TLI.getPointerTy(), VAList,
-                            DAG.getIntPtrConstant(Increment));
+  SmallVector<SDValue, 8> Parts(NumRegs);
+  for (unsigned i = 0; i < NumRegs; ++i) {
+    Parts[i] = DAG.getVAArg(RegVT, Chain, Ptr, N->getOperand(2));
+    Chain = Parts[i].getValue(1);
+  }
 
-  // Store the incremented VAList to the pointer.
-  Tmp = DAG.getStore(VAList.getValue(1), Tmp, Ptr, V, 0);
+  // Handle endianness of the load.
+  if (TLI.isBigEndian())
+    std::reverse(Parts.begin(), Parts.end());
 
-  // Load the actual argument out of the arg pointer VAList.
-  Tmp = DAG.getExtLoad(ISD::EXTLOAD, TLI.getTypeToTransformTo(VT), Tmp,
-                       VAList, NULL, 0, VT);
+  // Assemble the parts in the promoted type.
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDValue Res = DAG.getNode(ISD::ZERO_EXTEND, NVT, Parts[0]);
+  for (unsigned i = 1; i < NumRegs; ++i) {
+    SDValue Part = DAG.getNode(ISD::ZERO_EXTEND, NVT, Parts[i]);
+    // Shift it to the right position and "or" it in.
+    Part = DAG.getNode(ISD::SHL, NVT, Part,
+                       DAG.getConstant(i * RegVT.getSizeInBits(),
+                                       TLI.getShiftAmountTy()));
+    Res = DAG.getNode(ISD::OR, NVT, Res, Part);
+  }
 
-  // Legalized the chain result - switch anything that used the old chain to
+  // Modified the chain result - switch anything that used the old chain to
   // use the new one.
-  ReplaceValueWith(SDValue(N, 1), Tmp.getValue(1));
-  return Tmp;
+  ReplaceValueWith(SDValue(N, 1), Chain);
+
+  return Res;
 }
 
 
