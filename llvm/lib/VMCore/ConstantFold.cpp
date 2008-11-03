@@ -126,6 +126,7 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
     if (const VectorType *SrcTy = dyn_cast<VectorType>(V->getType())) {
       assert(DestPTy->getBitWidth() == SrcTy->getBitWidth() &&
              "Not cast between same sized vectors!");
+      SrcTy = NULL;
       // First, check for null.  Undef is already handled.
       if (isa<ConstantAggregateZero>(V))
         return Constant::getNullValue(DestTy);

@@ -1923,8 +1923,10 @@ Constant *ConstantExpr::getFPExtend(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getUIToFP(Constant *C, const Type *Ty) {
+#ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
+#endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
   assert(C->getType()->isIntOrIntVector() && Ty->isFPOrFPVector() &&
          "This is an illegal uint to floating point cast!");
@@ -1932,8 +1934,10 @@ Constant *ConstantExpr::getUIToFP(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getSIToFP(Constant *C, const Type *Ty) {
+#ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
+#endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
   assert(C->getType()->isIntOrIntVector() && Ty->isFPOrFPVector() &&
          "This is an illegal sint to floating point cast!");
@@ -1941,8 +1945,10 @@ Constant *ConstantExpr::getSIToFP(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getFPToUI(Constant *C, const Type *Ty) {
+#ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
+#endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
   assert(C->getType()->isFPOrFPVector() && Ty->isIntOrIntVector() &&
          "This is an illegal floating point to uint cast!");
@@ -1950,8 +1956,10 @@ Constant *ConstantExpr::getFPToUI(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getFPToSI(Constant *C, const Type *Ty) {
+#ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
+#endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
   assert(C->getType()->isFPOrFPVector() && Ty->isIntOrIntVector() &&
          "This is an illegal floating point to sint cast!");
@@ -1973,6 +1981,7 @@ Constant *ConstantExpr::getIntToPtr(Constant *C, const Type *DstTy) {
 Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
   // BitCast implies a no-op cast of type only. No bits change.  However, you 
   // can't cast pointers to anything but pointers.
+#ifndef NDEBUG
   const Type *SrcTy = C->getType();
   assert((isa<PointerType>(SrcTy) == isa<PointerType>(DstTy)) &&
          "BitCast cannot cast pointer to non-pointer and vice versa");
@@ -1982,6 +1991,7 @@ Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
   // destination bit widths are identical.
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DstBitSize = DstTy->getPrimitiveSizeInBits();
+#endif
   assert(SrcBitSize == DstBitSize && "BitCast requies types of same width");
   return getFoldedCast(Instruction::BitCast, C, DstTy);
 }
@@ -2365,8 +2375,10 @@ Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
          "Tried to create insertelement operation on non-first-class type!");
 
   const Type *ReqTy = Agg->getType();
+#ifndef NDEBUG
   const Type *ValTy =
     ExtractValueInst::getIndexedType(Agg->getType(), IdxList, IdxList+NumIdx);
+#endif
   assert(ValTy == Val->getType() && "insertvalue indices invalid!");
   return getInsertValueTy(ReqTy, Agg, Val, IdxList, NumIdx);
 }
