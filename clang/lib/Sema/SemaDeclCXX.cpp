@@ -848,14 +848,21 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
   // The form of initialization (using parentheses or '=') is generally
   // insignificant, but does matter when the entity being initialized has a
   // class type.
+  QualType DeclInitType = VDecl->getType();
+  if (const ArrayType *Array = Context.getAsArrayType(DeclInitType))
+    DeclInitType = Array->getElementType();
 
   if (VDecl->getType()->isRecordType()) {
-    // FIXME: When constructors for class types are supported, determine how 
-    // exactly semantic checking will be done for direct initializers.
-    unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
-                           "initialization for class types is not handled yet");
-    Diag(VDecl->getLocation(), DiagID);
-    RealDecl->setInvalidDecl();
+    CXXConstructorDecl *Constructor
+      = PerformDirectInitForClassType(DeclInitType, (Expr **)ExprTys, NumExprs,
+                                      VDecl->getLocation(),
+                                      SourceRange(VDecl->getLocation(),
+                                                  RParenLoc),
+                                      VDecl->getName(),
+                                      /*HasInitializer=*/true);
+    if (!Constructor) {
+      RealDecl->setInvalidDecl();
+    }
     return;
   }
 
@@ -872,6 +879,71 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
   assert(NumExprs == 1 && "Expected 1 expression");
   // Set the init expression, handles conversions.
   AddInitializerToDecl(Dcl, ExprTys[0]);
+}
+
+/// PerformDirectInitForClassType - Perform direct-initialization (C++
+/// [dcl.init]) for a value of the given class type with the given set
+/// of arguments (@p Args). @p Loc is the location in the source code
+/// where the initializer occurs (e.g., a declaration, member
+/// initializer, functional cast, etc.) while @p Range covers the
+/// whole initialization. @p HasInitializer is true if the initializer
+/// was actually written in the source code. When successful, returns
+/// the constructor that will be used to perform the initialization;
+/// when the initialization fails, emits a diagnostic and returns null.
+CXXConstructorDecl *
+Sema::PerformDirectInitForClassType(QualType ClassType,
+                                    Expr **Args, unsigned NumArgs,
+                                    SourceLocation Loc, SourceRange Range,
+                                    std::string InitEntity,
+                                    bool HasInitializer) {
+  const RecordType *ClassRec = ClassType->getAsRecordType();
+  assert(ClassRec && "Can only initialize a class type here");
+
+  // C++ [dcl.init]p14: 
+  //
+  //   If the initialization is direct-initialization, or if it is
+  //   copy-initialization where the cv-unqualified version of the
+  //   source type is the same class as, or a derived class of, the
+  //   class of the destination, constructors are considered. The
+  //   applicable constructors are enumerated (13.3.1.3), and the
+  //   best one is chosen through overload resolution (13.3). The
+  //   constructor so selected is called to initialize the object,
+  //   with the initializer expression(s) as its argument(s). If no
+  //   constructor applies, or the overload resolution is ambiguous,
+  //   the initialization is ill-formed.
+  //
+  // FIXME: We don't check cv-qualifiers on the class type, because we
+  // don't yet keep track of whether a class type is a POD class type
+  // (or a "trivial" class type, as is used in C++0x).
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(ClassRec->getDecl());
+  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet::iterator Best;
+  AddOverloadCandidates(ClassDecl->getConstructors(), Args, NumArgs,
+                        CandidateSet);
+  switch (BestViableFunction(CandidateSet, Best)) {
+  case OR_Success:
+    // We found a constructor. Return it.
+    return cast<CXXConstructorDecl>(Best->Function);
+    
+  case OR_No_Viable_Function:
+    if (CandidateSet.empty())
+      Diag(Loc, diag::err_ovl_no_viable_function_in_init, 
+           InitEntity, Range);
+    else {
+      Diag(Loc, diag::err_ovl_no_viable_function_in_init_with_cands, 
+           InitEntity, Range);
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+    }
+    return 0;
+    
+  case OR_Ambiguous:
+    Diag(Loc, diag::err_ovl_ambiguous_init, 
+         InitEntity, Range);
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+    return 0;
+  }
+  
+  return 0;
 }
 
 /// CompareReferenceRelationship - Compare the two types T1 and T2 to

@@ -418,7 +418,7 @@ private:
                             Expr **Args, unsigned NumArgs,
                             OverloadCandidateSet& CandidateSet,
                             bool SuppressUserConversions = false);
-  void AddOverloadCandidates(OverloadedFunctionDecl *Ovl, 
+  void AddOverloadCandidates(const OverloadedFunctionDecl *Ovl, 
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet,
                              bool SuppressUserConversions = false);
@@ -709,6 +709,12 @@ public:
                                              ExprTy **Exprs, unsigned NumExprs,
                                              SourceLocation *CommaLocs,
                                              SourceLocation RParenLoc);
+
+  CXXConstructorDecl *
+  PerformDirectInitForClassType(QualType ClassType,
+                                Expr **Args, unsigned NumArgs,
+                                SourceLocation Loc, SourceRange Range,
+                                std::string InitEntity, bool HasInitializer);
 
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual ExprResult ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,

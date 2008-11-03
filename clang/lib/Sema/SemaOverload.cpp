@@ -1435,12 +1435,13 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
 /// AddOverloadCandidates - Add all of the function overloads in Ovl
 /// to the candidate set.
 void 
-Sema::AddOverloadCandidates(OverloadedFunctionDecl *Ovl, 
+Sema::AddOverloadCandidates(const OverloadedFunctionDecl *Ovl, 
                             Expr **Args, unsigned NumArgs,
                             OverloadCandidateSet& CandidateSet,
                             bool SuppressUserConversions)
 {
-  for (OverloadedFunctionDecl::function_iterator Func = Ovl->function_begin();
+  for (OverloadedFunctionDecl::function_const_iterator Func 
+         = Ovl->function_begin();
        Func != Ovl->function_end(); ++Func)
     AddOverloadCandidate(*Func, Args, NumArgs, CandidateSet,
                          SuppressUserConversions);

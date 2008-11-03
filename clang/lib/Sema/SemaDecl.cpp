@@ -1621,11 +1621,37 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
     //   function return type, in the declaration of a class member
     //   within its class declaration (9.2), and where the extern
     //   specifier is explicitly used.
-    if (Type->isReferenceType() && Var->getStorageClass() != VarDecl::Extern)
+    if (Type->isReferenceType() && Var->getStorageClass() != VarDecl::Extern) {
       Diag(Var->getLocation(),
            diag::err_reference_var_requires_init,
            Var->getName(), 
            SourceRange(Var->getLocation(), Var->getLocation()));
+      Var->setInvalidDecl();
+      return;
+    }
+
+    // C++ [dcl.init]p9:
+    //
+    //   If no initializer is specified for an object, and the object
+    //   is of (possibly cv-qualified) non-POD class type (or array
+    //   thereof), the object shall be default-initialized; if the
+    //   object is of const-qualified type, the underlying class type
+    //   shall have a user-declared default constructor.
+    if (getLangOptions().CPlusPlus) {
+      QualType InitType = Type;
+      if (const ArrayType *Array = Context.getAsArrayType(Type))
+        InitType = Array->getElementType();
+      if (InitType->isRecordType()) {
+        CXXConstructorDecl *Constructor
+          = PerformDirectInitForClassType(InitType, 0, 0, Var->getLocation(),
+                                          SourceRange(Var->getLocation(),
+                                                      Var->getLocation()),
+                                          Var->getName(),
+                                          /*HasInitializer=*/false);
+        if (!Constructor)
+          Var->setInvalidDecl();
+      }
+    }
 
 #if 0
     // FIXME: Temporarily disabled because we are not properly parsing

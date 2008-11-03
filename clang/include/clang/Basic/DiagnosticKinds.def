@@ -835,6 +835,12 @@ DIAG(err_ovl_ambiguous_call, ERROR,
      "call to '%0' is ambiguous; candidates are:")
 DIAG(err_ovl_candidate, NOTE,
      "candidate function")
+DIAG(err_ovl_no_viable_function_in_init, ERROR,
+     "no matching constructor for initialization of '%0'.")
+DIAG(err_ovl_no_viable_function_in_init_with_cands, ERROR,
+     "no matching constructor for initialization of '%0'; candidates are:")
+DIAG(err_ovl_ambiguous_init, ERROR,
+     "call to constructor of '%0' is ambiguous; candidates are:")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%0': expected expression")
