@@ -531,8 +531,6 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
     }
   }
  
-  bool hasVector = false;
-  
   // Walk through the GEP type indices, checking the types that this indexes
   // into.
   for (; I != E; ++I) {
@@ -551,19 +549,13 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
       // integer. Specifically, consider A[0][i]. We cannot know that the user
       // isn't doing invalid things like allowing i to index an out-of-range
       // subscript that accesses A[1].  Because of this, we have to reject SROA
-      // of any accesses into structs where any of the components are variables.
+      // of any accesses into structs where any of the components are variables. 
       if (IdxVal->getZExtValue() >= AT->getNumElements())
         return MarkUnsafe(Info);
+    } else if (const VectorType *VT = dyn_cast<VectorType>(*I)) {
+      if (IdxVal->getZExtValue() >= VT->getNumElements())
+        return MarkUnsafe(Info);
     }
-  
-    // Note if we've seen a vector type yet
-    hasVector |= isa<VectorType>(*I);
-    
-    // Don't SROA pointers into vectors, unless all indices are zero. When all
-    // indices are zero, we only consider this GEP as a bitcast, but will still
-    // not consider breaking up the vector.
-    if (hasVector && !IsAllZeroIndices)
-      return MarkUnsafe(Info);
   }
   
   // If there are any non-simple uses of this getelementptr, make sure to reject
