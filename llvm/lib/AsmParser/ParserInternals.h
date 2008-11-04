@@ -152,6 +152,8 @@ struct ValID {
       delete IAD;
     else if (Type == ConstAPInt)
       delete ConstPoolInt;
+    else if (Type == ConstFPVal)
+      delete ConstPoolFP;
   }
 
   inline ValID copy() const {

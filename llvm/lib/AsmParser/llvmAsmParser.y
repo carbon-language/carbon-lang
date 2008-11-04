@@ -437,7 +437,11 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
       D.ConstPoolFP->convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven,
                              &ignored);
     }
-    return ConstantFP::get(*D.ConstPoolFP);
+    {
+      ConstantFP *tmp = ConstantFP::get(*D.ConstPoolFP);
+      D.destroy();
+      return tmp;
+    }
 
   case ValID::ConstNullVal:      // Is it a null value?
     if (!isa<PointerType>(Ty)) {
