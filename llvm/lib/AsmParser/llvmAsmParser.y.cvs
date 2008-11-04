@@ -418,6 +418,7 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
 
     {
       APSInt Tmp = *D.ConstPoolInt;
+      D.destroy();
       Tmp.extOrTrunc(Ty->getPrimitiveSizeInBits());
       return ConstantInt::get(Tmp);
     }
