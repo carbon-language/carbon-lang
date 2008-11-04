@@ -32,7 +32,12 @@ typedef __typeof__(sizeof(int)) size_t;
 typedef __typeof__(*L"") wchar_t;
 #endif
 
+#ifdef __cplusplus
+#define NULL (0)
+#else
 #define NULL ((void*)0)
+#endif
+
 #define offsetof(t, d) __builtin_offsetof(t, d)
 
 #endif /* __STDDEF_H */
