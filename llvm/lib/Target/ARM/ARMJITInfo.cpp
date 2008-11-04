@@ -111,7 +111,7 @@ extern "C" void ARMCompilationCallbackC(intptr_t StubAddr) {
   // stub with:
   //   ldr pc, [pc,#-4]
   //   <addr>
-  bool ok = sys::Memory::setRangeWritable ((void*)StubAddr, 8);
+  bool ok = sys::Memory::setRangeWritable((void*)StubAddr, 8);
   if (!ok)
     {
       cerr << "ERROR: Unable to mark stub writable\n";
@@ -119,7 +119,7 @@ extern "C" void ARMCompilationCallbackC(intptr_t StubAddr) {
     }
   *(intptr_t *)StubAddr = 0xe51ff004;
   *(intptr_t *)(StubAddr+4) = NewVal;
-  ok = sys::Memory::setRangeExecutable ((void*)StubAddr, 8);
+  ok = sys::Memory::setRangeExecutable((void*)StubAddr, 8);
   if (!ok)
     {
       cerr << "ERROR: Unable to mark stub executable\n";
