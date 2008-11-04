@@ -244,6 +244,9 @@ if (!defined($Analyses)) { $Analyses = '-checker-cfref'; }
 # Get the store model.
 my $StoreModel = $ENV{'CCC_ANALYZER_STORE_MODEL'};
 
+# Get the output format.
+my $OutputFormat = $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'};
+
 # Determine the level of verbosity.
 my $Verbose = 0;
 if (defined $ENV{CCC_ANALYZER_VERBOSE}) { $Verbose = 1; }
@@ -421,6 +424,10 @@ if ($Action eq 'compile' or $Action eq 'link') {
 
     if (defined $StoreModel) {
       push @AnalyzeArgs, $StoreModel;
+    }
+    
+    if (defined $OutputFormat) {
+      push @AnalyzeArgs, "-analyzer-output-" . $OutputFormat;
     }
 
     push @AnalyzeArgs,@CompileOpts;

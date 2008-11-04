@@ -856,7 +856,7 @@ OPTIONS:
                   will be created as needed to represent separate "runs" of
                   the analyzer.  If this option is not specified, a directory
                   is created in /tmp (TMPDIR on Mac OS X) to store the reports.
-
+                  
  -h             - Display this message.
  --help
 
@@ -867,6 +867,9 @@ OPTIONS:
 
  --html-title [title]       - Specify the title used on generated HTML pages.
  --html-title=[title]         If not specified, a default title will be used.
+
+ -plist         - By default the output of scan-build is a set of HTML files.
+                  This option outputs the results as a set of .plist files.
 
  --status-bugs  - By default, the exit status of $Prog is the same as the
                   executed build command.  Specifying this option causes the
@@ -960,6 +963,7 @@ my $ViewResults  = 0;  # View results when the build terminates.
 my $ExitStatusFoundBugs = 0; # Exit status reflects whether bugs were found
 my @AnalysesToRun;
 my $StoreModel;
+my $OutputFormat;
 
 if (!@ARGV) {
   DisplayHelp();
@@ -1079,6 +1083,12 @@ while (@ARGV) {
     next;
   }
   
+  if ($arg eq "-plist") {
+    shift @ARGV;
+    $OutputFormat = "plist";
+    next;
+  }
+  
   DieDiag("unrecognized option '$arg'\n") if ($arg =~ /^-/);
   
   last;
@@ -1146,23 +1156,34 @@ if (defined $StoreModel) {
   $ENV{'CCC_ANALYZER_STORE_MODEL'} = $StoreModel;
 }
 
+if (defined $OutputFormat) {
+  $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'} = $OutputFormat;
+}
+
+
 # Run the build.
 my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
 
-# Postprocess the HTML directory.
-my $NumBugs = Postprocess($HtmlDir, $BaseDir);
-
-if ($ViewResults and -r "$HtmlDir/index.html") {
+if ($OutputFormat eq "plist") {
   Diag "Analysis run complete.\n";
-  Diag "Viewing analysis results in '$HtmlDir' using scan-view.\n";
-  my $ScanView = Cwd::realpath("$RealBin/scan-view");
-  if (! -x $ScanView) { $ScanView = "scan-view"; }
-  exec $ScanView, "$HtmlDir";
+  Diag "Analysis results (plist files) deposited in '$HtmlDir'\n";
 }
+else {
+  # Postprocess the HTML directory.
+  my $NumBugs = Postprocess($HtmlDir, $BaseDir);
 
-if ($ExitStatusFoundBugs) {
-  exit 1 if ($NumBugs > 0);
-  exit 0;
+  if ($ViewResults and -r "$HtmlDir/index.html") {
+    Diag "Analysis run complete.\n";
+    Diag "Viewing analysis results in '$HtmlDir' using scan-view.\n";
+    my $ScanView = Cwd::realpath("$RealBin/scan-view");
+    if (! -x $ScanView) { $ScanView = "scan-view"; }
+    exec $ScanView, "$HtmlDir";
+  }
+
+  if ($ExitStatusFoundBugs) {
+    exit 1 if ($NumBugs > 0);
+    exit 0;
+  }
 }
 
 exit $ExitStatus;
