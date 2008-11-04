@@ -66,7 +66,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   }
   case Builtin::BI__builtin_va_copy: {
     // FIXME: This does not yet handle architectures where va_list is a struct.
-    Value *DstPtr = EmitScalarExpr(E->getArg(0));
+    Value *DstPtr = EmitLValue(E->getArg(0)).getAddress();
     Value *SrcValue = EmitScalarExpr(E->getArg(1));
     
     Value *SrcPtr = CreateTempAlloca(SrcValue->getType(), "dst_ptr");
