@@ -73,6 +73,21 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 add_definitions( -D__STDC_LIMIT_MACROS )
 add_definitions( -D__STDC_CONSTANT_MACROS )
 
+set(LLVM_PLO_FLAGS "" CACHE
+  STRING "Flags for creating partially linked objects.")
+
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
+  # TODO: support other platforms and toolchains.
+  option(BUILD_32_BITS "Build 32 bits executables and libraries." OFF)
+  if( BUILD_32_BITS )
+    message(STATUS "Building 32 bits executables and libraries.")
+    add_definitions( -m32 )
+    set( CMAKE_EXE_LINKER_FLAGS "-m32 ${CMAKE_EXE_LINKER_FLAGS}" )
+    set( CMAKE_LINK_LIBRARY_FLAG "-m32 ${CMAKE_LINK_LIBRARY_FLAG}" )
+    set( LLVM_PLO_FLAGS -melf_i386 ${LLVM_PLO_FLAGS} )
+  endif( BUILD_32_BITS )
+endif( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
+
 if( MSVC )
   add_definitions( -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS )
   add_definitions( -D_SCL_SECURE_NO_WARNINGS -DCRT_NONSTDC_NO_WARNINGS )
