@@ -41,10 +41,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
 
   if (Subtarget->isTargetDarwin()) {
-    // Don't have these.
-    setLibcallName(RTLIB::UINTTOFP_I64_F32, NULL);
-    setLibcallName(RTLIB::UINTTOFP_I64_F64, NULL);
-
     // Uses VFP for Thumb libfuncs if available.
     if (Subtarget->isThumb() && Subtarget->hasVFP2()) {
       // Single-precision floating-point arithmetic.
