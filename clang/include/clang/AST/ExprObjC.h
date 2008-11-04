@@ -416,6 +416,30 @@ public:
   static ObjCMessageExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// ObjCSuperExpr - Represents the "super" expression in Objective-C,
+/// which refers to the object on which the current method is executing.
+class ObjCSuperExpr : public Expr {
+  SourceLocation Loc;
+
+public:
+  ObjCSuperExpr(SourceLocation L, QualType Type) 
+    : Expr(ObjCSuperExprClass, Type), Loc(L) { }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ObjCSuperExprClass;
+  }
+  static bool classof(const ObjCSuperExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCSuperExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);  
+};
+
 }  // end namespace clang
 
 #endif

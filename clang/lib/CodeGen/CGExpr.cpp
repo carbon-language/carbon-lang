@@ -130,7 +130,9 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitObjCIvarRefLValue(cast<ObjCIvarRefExpr>(E));
   case Expr::ObjCPropertyRefExprClass:
     return EmitObjCPropertyRefLValue(cast<ObjCPropertyRefExpr>(E));
-    
+  case Expr::ObjCSuperExprClass:
+    return EmitObjCSuperExpr(cast<ObjCSuperExpr>(E));
+
   case Expr::UnaryOperatorClass: 
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
   case Expr::ArraySubscriptExprClass:
@@ -571,8 +573,6 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   case PredefinedExpr::Function:
   case PredefinedExpr::PrettyFunction:
     return EmitPredefinedFunctionName(E->getIdentType());
-  case PredefinedExpr::ObjCSuper:
-    return EmitUnsupportedLValue(E, "use of super");
   }
 }
 
@@ -873,6 +873,11 @@ CodeGenFunction::EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E) {
   // This is a special l-value that just issues sends when we load or
   // store through it.
   return LValue::MakePropertyRef(E, E->getType().getCVRQualifiers());
+}
+
+LValue
+CodeGenFunction::EmitObjCSuperExpr(const ObjCSuperExpr *E) {
+  return EmitUnsupportedLValue(E, "use of super");
 }
 
 RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType, 

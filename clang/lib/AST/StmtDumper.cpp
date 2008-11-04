@@ -130,8 +130,9 @@ namespace  {
     // C++
     void VisitCXXNamedCastExpr(CXXNamedCastExpr *Node);
     void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node);
+    void VisitCXXThisExpr(CXXThisExpr *Node);
     void VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node);
-
+    
     // ObjC
     void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
     void VisitObjCMessageExpr(ObjCMessageExpr* Node);
@@ -139,6 +140,7 @@ namespace  {
     void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
     void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
+    void VisitObjCSuperExpr(ObjCSuperExpr *Node);
   };
 }
 
@@ -312,7 +314,6 @@ void StmtDumper::VisitPredefinedExpr(PredefinedExpr *Node) {
   case PredefinedExpr::Func:           fprintf(F, " __func__"); break;
   case PredefinedExpr::Function:       fprintf(F, " __FUNCTION__"); break;
   case PredefinedExpr::PrettyFunction: fprintf(F, " __PRETTY_FUNCTION__");break;
-  case PredefinedExpr::ObjCSuper:      fprintf(F, "super"); break;
   }
 }
 
@@ -418,6 +419,11 @@ void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   fprintf(F, " %s", Node->getValue() ? "true" : "false");
 }
 
+void StmtDumper::VisitCXXThisExpr(CXXThisExpr *Node) {
+  DumpExpr(Node);
+  fprintf(F, " this");
+}
+
 void StmtDumper::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " functional cast to %s", 
@@ -469,6 +475,11 @@ void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   } else {
     fprintf(F, " Kind=PropertyRef Property=\"%s\"", Node->getProperty()->getName());
   }
+}
+
+void StmtDumper::VisitObjCSuperExpr(ObjCSuperExpr *Node) {
+  DumpExpr(Node);
+  fprintf(F, " super");
 }
 
 //===----------------------------------------------------------------------===//

@@ -30,9 +30,7 @@ static bool scan_dealloc(Stmt* S, Selector Dealloc) {
     if (ME->getSelector() == Dealloc)
       if(ME->getReceiver())
         if (Expr* Receiver = ME->getReceiver()->IgnoreParenCasts())
-          if (PredefinedExpr* E = dyn_cast<PredefinedExpr>(Receiver))
-            if (E->getIdentType() == PredefinedExpr::ObjCSuper)
-              return true;
+          return isa<ObjCSuperExpr>(Receiver);
 
   // Recurse to children.
 

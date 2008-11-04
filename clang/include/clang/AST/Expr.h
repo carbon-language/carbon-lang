@@ -222,8 +222,7 @@ public:
   enum IdentType {
     Func,
     Function,
-    PrettyFunction,
-    ObjCSuper // super
+    PrettyFunction
   };
   
 private:

@@ -1899,9 +1899,8 @@ ObjCInterfaceDecl *RewriteObjC::isSuperReceiver(Expr *recExpr) {
   // check if we are sending a message to 'super'
   if (!CurMethodDef || !CurMethodDef->isInstance()) return 0;
   
-  if (PredefinedExpr *PDE = dyn_cast<PredefinedExpr>(recExpr))
-    if (PDE->getIdentType() == PredefinedExpr::ObjCSuper) {
-      const PointerType *PT = PDE->getType()->getAsPointerType();
+  if (ObjCSuperExpr *Super = dyn_cast<ObjCSuperExpr>(recExpr)) {
+      const PointerType *PT = Super->getType()->getAsPointerType();
       assert(PT);
       ObjCInterfaceType *IT = cast<ObjCInterfaceType>(PT->getPointeeType());
       return IT->getDecl();

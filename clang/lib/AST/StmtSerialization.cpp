@@ -191,6 +191,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     case ObjCStringLiteralClass:
       return ObjCStringLiteral::CreateImpl(D, C);
       
+    case ObjCSuperExprClass:
+      return ObjCSuperExpr::CreateImpl(D, C);
+
     //==--------------------------------------==//
     //    C++
     //==--------------------------------------==//
@@ -1230,6 +1233,17 @@ ObjCStringLiteral* ObjCStringLiteral::CreateImpl(Deserializer& D, ASTContext& C)
   QualType T = QualType::ReadVal(D);
   StringLiteral* String = cast<StringLiteral>(D.ReadOwnedPtr<Stmt>(C));
   return new ObjCStringLiteral(String,T,L);
+}
+
+void ObjCSuperExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(Loc);
+}
+
+ObjCSuperExpr* ObjCSuperExpr::CreateImpl(llvm::Deserializer& D, ASTContext&) {
+  QualType Ty = QualType::ReadVal(D);
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  return new ObjCSuperExpr(Loc, Ty);
 }
 
 //===----------------------------------------------------------------------===//

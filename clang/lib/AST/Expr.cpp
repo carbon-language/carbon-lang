@@ -1311,6 +1311,10 @@ Stmt::child_iterator ObjCIvarRefExpr::child_end() { return &Base+1; }
 Stmt::child_iterator ObjCPropertyRefExpr::child_begin() { return &Base; }
 Stmt::child_iterator ObjCPropertyRefExpr::child_end() { return &Base+1; }
 
+// ObjCSuperExpr
+Stmt::child_iterator ObjCSuperExpr::child_begin() { return child_iterator(); }
+Stmt::child_iterator ObjCSuperExpr::child_end() { return child_iterator(); }
+
 // PredefinedExpr
 Stmt::child_iterator PredefinedExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator PredefinedExpr::child_end() { return child_iterator(); }

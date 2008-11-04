@@ -402,6 +402,7 @@ public:
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
   LValue EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E);
+  LValue EmitObjCSuperExpr(const ObjCSuperExpr *E);
 
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission

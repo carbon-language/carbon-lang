@@ -193,8 +193,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
     if (getCurMethodDecl()->isInstance()) {
       QualType superTy = Context.getObjCInterfaceType(ClassDecl);
       superTy = Context.getPointerType(superTy);
-      ExprResult ReceiverExpr = new PredefinedExpr(SourceLocation(), superTy,
-          PredefinedExpr::ObjCSuper);
+      ExprResult ReceiverExpr = new ObjCSuperExpr(SourceLocation(), superTy);
       // We are really in an instance method, redirect.
       return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
                                   Args, NumArgs);

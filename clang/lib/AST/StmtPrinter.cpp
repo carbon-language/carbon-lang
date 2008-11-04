@@ -515,9 +515,6 @@ void StmtPrinter::VisitPredefinedExpr(PredefinedExpr *Node) {
     case PredefinedExpr::PrettyFunction:
       OS << "__PRETTY_FUNCTION__";
       break;
-    case PredefinedExpr::ObjCSuper:
-      OS << "super";
-      break;
   }
 }
 
@@ -915,6 +912,10 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
     }
   }
   OS << "]";
+}
+
+void StmtPrinter::VisitObjCSuperExpr(ObjCSuperExpr *) {
+  OS << "super";
 }
 
 void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {

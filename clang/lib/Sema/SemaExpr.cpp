@@ -365,7 +365,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     if (SD == 0 && &II == SuperID) {
       QualType T = Context.getPointerType(Context.getObjCInterfaceType(
                      getCurMethodDecl()->getClassInterface()));
-      return new PredefinedExpr(Loc, T, PredefinedExpr::ObjCSuper);
+      return new ObjCSuperExpr(Loc, T);
     }
   }
   if (D == 0) {
