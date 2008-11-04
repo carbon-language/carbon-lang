@@ -5610,8 +5610,8 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
       Hi = Source;
     }
 
-    // Check to see if the target has a custom way to lower this.  If so, use it.
-    // (Note we've already expanded the operand in this case.)
+    // Check to see if the target has a custom way to lower this.  If so, use
+    // it.  (Note we've already expanded the operand in this case.)
     switch (TLI.getOperationAction(ISD::UINT_TO_FP, SourceVT)) {
     default: assert(0 && "This action not implemented for this operation!");
     case TargetLowering::Legal:
