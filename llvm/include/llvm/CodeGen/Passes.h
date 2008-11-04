@@ -191,7 +191,10 @@ namespace llvm {
 
   /// createStackSlotColoringPass - This pass performs stack slot coloring.
   FunctionPass *createStackSlotColoringPass();
-  
+
+  /// createStackProtectorPass - This pass adds stack protectors to functions.
+  FunctionPass *createStackProtectorPass(int Level);
+
 } // End llvm namespace
 
 #endif
