@@ -61,9 +61,17 @@ EnableFastISelOption("fast-isel", cl::Hidden,
   cl::desc("Enable the experimental \"fast\" instruction selector"));
 
 // Enable stack protectors.
-static cl::opt<int>
-EnableStackProtector("enable-stack-protector", cl::init(0),
-                     cl::desc("Use ProPolice as a stack protection method."));
+static cl::opt<SSP::StackProtectorLevel>
+EnableStackProtector("enable-stack-protector",
+                     cl::desc("Stack canary protection level: (default: off)"),
+                     cl::init(SSP::OFF),
+                     cl::values(clEnumValN(SSP::ALL,  "all",
+                                         "All functions get stack protectors."),
+                                clEnumValN(SSP::SOME, "some",
+                         "Only functions requiring stack protectors get them."),
+                                clEnumValN(SSP::OFF,  "off",
+                                          "No functions get stack protectors."),
+                                clEnumValEnd));
 
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
@@ -170,7 +178,8 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
   if (!Fast)
     PM.add(createCodeGenPreparePass(getTargetLowering()));
 
-  PM.add(createStackProtectorPass(EnableStackProtector));
+  if (EnableStackProtector != SSP::OFF)
+    PM.add(createStackProtectorPass(EnableStackProtector, getTargetLowering()));
 
   if (PrintISelInput)
     PM.add(createPrintFunctionPass("\n\n"
