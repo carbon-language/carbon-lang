@@ -1209,7 +1209,11 @@ private:
   bool ObjCQualifiedIdTypesAreCompatible(QualType LHS, QualType RHS,
                                          bool ForCompare);
 
-  
+  /// Checks that the Objective-C declaration is declared in the global scope.
+  /// Emits an error and marks the declaration as invalid if it's not declared
+  /// in the global scope.
+  bool CheckObjCDeclScope(Decl *D);
+
   void InitBuiltinVaListType();
 
   // Helper method to turn variable array types into

@@ -124,6 +124,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     IDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
     IDecl->setLocEnd(EndProtoLoc);
   }
+  
+  CheckObjCDeclScope(IDecl);
   return IDecl;
 }
 
@@ -163,7 +165,10 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
     ObjCCompatibleAliasDecl::Create(Context, AtLoc, AliasName, CDecl);
   
   ObjCAliasDecls[AliasName] = AliasDecl;
-  TUScope->AddDecl(AliasDecl);
+  
+  if (!CheckObjCDeclScope(AliasDecl))
+    TUScope->AddDecl(AliasDecl);
+  
   return AliasDecl;
 }
 
@@ -201,6 +206,8 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     PDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
     PDecl->setLocEnd(EndProtoLoc);
   }
+  
+  CheckObjCDeclScope(PDecl);  
   return PDecl;
 }
 
@@ -370,8 +377,13 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     
     Protocols.push_back(PDecl);
   }
-  return ObjCForwardProtocolDecl::Create(Context, AtProtocolLoc,
-                                         &Protocols[0], Protocols.size());
+  
+  ObjCForwardProtocolDecl *PDecl = 
+    ObjCForwardProtocolDecl::Create(Context, AtProtocolLoc,
+                                    &Protocols[0], Protocols.size());
+  
+  CheckObjCDeclScope(PDecl);
+  return PDecl;
 }
 
 Sema::DeclTy *Sema::
@@ -410,6 +422,8 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     CDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
     CDecl->setLocEnd(EndProtoLoc);
   }
+  
+  CheckObjCDeclScope(CDecl);
   return CDecl;
 }
 
@@ -430,6 +444,8 @@ Sema::DeclTy *Sema::ActOnStartCategoryImplementation(
   /// TODO: Check that CatName, category name, is not used in another
   // implementation.
   ObjCCategoryImpls.push_back(CDecl);
+  
+  CheckObjCDeclScope(CDecl);
   return CDecl;
 }
 
@@ -497,6 +513,9 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   ObjCImplementationDecl* IMPDecl = 
     ObjCImplementationDecl::Create(Context, AtClassImplLoc, ClassName, 
                                    IDecl, SDecl);
+  
+  if (CheckObjCDeclScope(IMPDecl))
+    return IMPDecl;
   
   // Check that there is no duplicate implementation of this class.
   if (ObjCImplementations[ClassName])
@@ -730,8 +749,12 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     Interfaces.push_back(IDecl);
   }
   
-  return ObjCClassDecl::Create(Context, AtClassLoc,
-                               &Interfaces[0], Interfaces.size());
+  ObjCClassDecl *CDecl = ObjCClassDecl::Create(Context, AtClassLoc,
+                                               &Interfaces[0],
+                                               Interfaces.size());
+  
+  CheckObjCDeclScope(CDecl);
+  return CDecl;  
 }
 
 
@@ -1326,4 +1349,15 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     CatImplClass->addPropertyImplementation(PIDecl);
     
   return PIDecl;
+}
+
+bool Sema::CheckObjCDeclScope(Decl *D)
+{
+  if (isa<TranslationUnitDecl>(CurContext))
+    return false;
+  
+  Diag(D->getLocation(), diag::err_objc_decls_may_only_appear_in_global_scope);
+  D->setInvalidDecl();
+  
+  return true;
 }
