@@ -1149,8 +1149,14 @@ Value *ScalarExprEmitter::VisitOverloadExpr(OverloadExpr *E) {
 Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   llvm::Value *ArgValue = EmitLValue(VE->getSubExpr()).getAddress();
 
-  llvm::Value *V = Builder.CreateVAArg(ArgValue, ConvertType(VE->getType()));  
-  return V;
+  llvm::Value *ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
+
+  // If EmitVAArg fails, we fall back to the LLVM instruction.
+  if (!ArgPtr) 
+    return Builder.CreateVAArg(ArgValue, ConvertType(VE->getType()));
+
+  // FIXME: volatile?
+  return Builder.CreateLoad(ArgPtr);
 }
 
 Value *ScalarExprEmitter::VisitObjCEncodeExpr(const ObjCEncodeExpr *E) {

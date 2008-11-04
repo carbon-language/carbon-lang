@@ -256,10 +256,14 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
 
 void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   llvm::Value *ArgValue = CGF.EmitLValue(VE->getSubExpr()).getAddress();
-  llvm::Value *V = Builder.CreateVAArg(ArgValue, CGF.ConvertType(VE->getType()));
+  llvm::Value *ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
+
+  if (!ArgPtr)
+    CGF.ErrorUnsupported(VE, "aggregate va_arg expression");
+  
   if (DestPtr)
     // FIXME: volatility
-    Builder.CreateStore(V, DestPtr);
+    CGF.EmitAggregateCopy(DestPtr, ArgPtr, VE->getType());
 }
 
 void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {

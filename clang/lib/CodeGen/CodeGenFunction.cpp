@@ -242,3 +242,38 @@ void CodeGenFunction::EmitIndirectSwitches() {
     }
   }         
 }
+
+llvm::Value *CodeGenFunction::EmitVAArg(llvm::Value *VAListAddr, QualType Ty)
+{
+  // FIXME: This entire method is hardcoded for 32-bit X86.
+  
+  const char *TargetPrefix = getContext().Target.getTargetPrefix();
+  
+  if (strcmp(TargetPrefix, "x86") != 0 ||
+      getContext().Target.getPointerWidth(0) != 32)
+    return 0;
+  
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
+
+  llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP, 
+                                                       "ap");
+  llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
+  llvm::Value *AddrTyped = 
+    Builder.CreateBitCast(Addr, 
+                          llvm::PointerType::getUnqual(ConvertType(Ty)));
+  
+  uint64_t SizeInBytes = getContext().getTypeSize(Ty) / 8;
+  const unsigned ArgumentSizeInBytes = 4;
+  if (SizeInBytes < ArgumentSizeInBytes)
+    SizeInBytes = ArgumentSizeInBytes;
+
+  llvm::Value *NextAddr = 
+    Builder.CreateGEP(Addr, 
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, SizeInBytes),
+                      "ap.next");
+  Builder.CreateStore(NextAddr, VAListAddrAsBPP);
+
+  return AddrTyped;
+}
+

@@ -281,6 +281,12 @@ public:
 
   /// EmitMemSetToZero - Generate code to memset a value of the given type to 0;
   void EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty);
+
+  // EmitVAArg - Generate code to get an argument from the passed in pointer
+  // and update it accordingly. The return value is a pointer to the argument.
+  // FIXME: We should be able to get rid of this method and use the va_arg
+  // instruction in LLVM instead once it works well enough.  
+  llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty);
   
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
