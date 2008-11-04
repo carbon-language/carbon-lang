@@ -214,7 +214,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
   if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb())
-    // Turn f64->i64 into FMRRD iff target supports vfp2.
+    // Turn f64->i64 into FMRRD, i64 -> f64 to FMDRR iff target supports vfp2.
     setOperationAction(ISD::BIT_CONVERT, MVT::i64, Custom);
 
   // We want to custom lower some of our intrinsics.
@@ -1349,13 +1349,19 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
 }
 
 static SDNode *ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
-  // Turn f64->i64 into FMRRD.
-  assert(N->getValueType(0) == MVT::i64 &&
-         N->getOperand(0).getValueType() == MVT::f64);
-  
   SDValue Op = N->getOperand(0);
+  if (N->getValueType(0) == MVT::f64) {
+    // Turn i64->f64 into FMDRR.
+    SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
+                             DAG.getConstant(0, MVT::i32));
+    SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
+                             DAG.getConstant(1, MVT::i32));
+    return DAG.getNode(ARMISD::FMDRR, MVT::f64, Lo, Hi).getNode();
+  }
+  
+  // Turn f64->i64 into FMRRD.
   SDValue Cvt = DAG.getNode(ARMISD::FMRRD, DAG.getVTList(MVT::i32, MVT::i32),
-                              &Op, 1);
+                            &Op, 1);
   
   // Merge the pieces into a single i64 value.
   return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Cvt, Cvt.getValue(1)).getNode();
@@ -1417,9 +1423,6 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::FRAMEADDR:     break;
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
-      
-      
-  // FIXME: Remove these when LegalizeDAGTypes lands.
   case ISD::BIT_CONVERT:   return SDValue(ExpandBIT_CONVERT(Op.getNode(), DAG), 0);
   case ISD::SRL:
   case ISD::SRA:           return SDValue(ExpandSRx(Op.getNode(), DAG,Subtarget),0);
