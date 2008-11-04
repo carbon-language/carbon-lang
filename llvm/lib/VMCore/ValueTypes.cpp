@@ -121,13 +121,8 @@ std::string MVT::getMVTString() const {
 const Type *MVT::getTypeForMVT() const {
   switch (V) {
   default:
-    if (isVector())
-      return VectorType::get(getVectorElementType().getTypeForMVT(),
-                             getVectorNumElements());
-    if (isInteger())
-      return IntegerType::get(getSizeInBits());
-    assert(0 && "MVT does not correspond to LLVM type!");
-    return Type::VoidTy;
+    assert(isExtended() && "Type is not extended!");
+    return LLVMTy;
   case MVT::isVoid:  return Type::VoidTy;
   case MVT::i1:      return Type::Int1Ty;
   case MVT::i8:      return Type::Int8Ty;
