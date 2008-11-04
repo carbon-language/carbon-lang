@@ -574,6 +574,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
 bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
 {
   const BuiltinType *To = ToType->getAsBuiltinType();
+  // All integers are built-in.
   if (!To) {
     return false;
   }

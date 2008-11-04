@@ -231,8 +231,6 @@ public:
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
             const std::string &Msg2);
-  bool Diag(SourceLocation Loc, unsigned DiagId, const std::string &Msg1,
-            const std::string &Msg2, const std::string &Msg3);
 
   /// More expressive diagnostic helpers for expressions (say that 6 times:-)
   bool Diag(SourceLocation Loc, unsigned DiagID, const SourceRange& R1);

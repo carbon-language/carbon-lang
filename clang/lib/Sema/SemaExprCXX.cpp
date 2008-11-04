@@ -98,16 +98,16 @@ Sema::CheckConstCast(Expr *&SrcExpr, QualType DestType,
     // Cannot cast to non-pointer, non-reference type. Note that, if DestType
     // was a reference type, we converted it to a pointer above.
     // C++ 5.2.11p3: For two pointer types [...]
-    Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest, OrigDestType.getAsString(),
-      DestRange);
+    Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest,
+      OrigDestType.getAsString(), DestRange);
     return;
   }
   if (DestType->isFunctionPointerType()) {
     // Cannot cast direct function pointers.
     // C++ 5.2.11p2: [...] where T is any object type or the void type [...]
     // T is the ultimate pointee of source and target type.
-    Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest, OrigDestType.getAsString(),
-      DestRange);
+    Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest,
+      OrigDestType.getAsString(), DestRange);
     return;
   }
   SrcType = Context.getCanonicalType(SrcType);
@@ -305,8 +305,6 @@ Sema::CastsAwayConstness(QualType SrcType, QualType DestType)
   // We piggyback on Sema::IsQualificationConversion for this, since the rules
   // are non-trivial. So first we construct Tcv *...cv* as described in
   // C++ 5.2.11p8.
-  SrcType  = Context.getCanonicalType(SrcType);
-  DestType = Context.getCanonicalType(DestType);
 
   QualType UnwrappedSrcType = SrcType, UnwrappedDestType = DestType;
   llvm::SmallVector<unsigned, 8> cv1, cv2;
@@ -342,8 +340,6 @@ void
 Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
                       const SourceRange &OpRange)
 {
-  QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
-
   // Conversions are tried roughly in the order the standard specifies them.
   // This is necessary because there are some conversions that can be
   // interpreted in more than one way, and the order disambiguates.
@@ -354,8 +350,6 @@ Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
   if (DestType->isVoidType()) {
     return;
   }
-
-  DestType = Context.getCanonicalType(DestType);
 
   // C++ 5.2.9p5, reference downcast.
   // See the function for details.
@@ -385,6 +379,7 @@ Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
 
   // The lvalue-to-rvalue, array-to-pointer and function-to-pointer conversions
   // are applied to the expression.
+  QualType OrigSrcType = SrcExpr->getType();
   DefaultFunctionArrayConversion(SrcExpr);
 
   QualType SrcType = Context.getCanonicalType(SrcExpr->getType());
@@ -438,7 +433,7 @@ Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
   // why every substep failed and, at the end, select the most specific and
   // report that.
   Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic, "static_cast",
-    OrigDestType.getAsString(), OrigSrcType.getAsString(), OpRange);
+    DestType.getAsString(), OrigSrcType.getAsString(), OpRange);
 }
 
 /// Tests whether a conversion according to C++ 5.2.9p5 is valid.
@@ -458,16 +453,13 @@ Sema::IsStaticReferenceDowncast(Expr *SrcExpr, QualType DestType)
     return false;
   }
 
-  DestType = Context.getCanonicalType(DestType);
   const ReferenceType *DestReference = DestType->getAsReferenceType();
   if (!DestReference) {
     return false;
   }
   QualType DestPointee = DestReference->getPointeeType();
 
-  QualType SrcType = Context.getCanonicalType(SrcExpr->getType());
-
-  return IsStaticDowncast(SrcType, DestPointee);
+  return IsStaticDowncast(SrcExpr->getType(), DestPointee);
 }
 
 /// Tests whether a conversion according to C++ 5.2.9p8 is valid.
@@ -482,13 +474,11 @@ Sema::IsStaticPointerDowncast(QualType SrcType, QualType DestType)
   // In addition, DR54 clarifies that the base must be accessible in the
   // current context.
 
-  SrcType = Context.getCanonicalType(SrcType);
   const PointerType *SrcPointer = SrcType->getAsPointerType();
   if (!SrcPointer) {
     return false;
   }
 
-  DestType = Context.getCanonicalType(DestType);
   const PointerType *DestPointer = DestType->getAsPointerType();
   if (!DestPointer) {
     return false;
@@ -504,14 +494,8 @@ Sema::IsStaticPointerDowncast(QualType SrcType, QualType DestType)
 bool
 Sema::IsStaticDowncast(QualType SrcType, QualType DestType)
 {
-  assert(SrcType->isCanonical());
-  assert(DestType->isCanonical());
-
-  if (!DestType->isRecordType()) {
-    return false;
-  }
-
-  if (!SrcType->isRecordType()) {
+  // Downcast can only happen in class hierarchies, so we need classes.
+  if (!DestType->isRecordType() || !SrcType->isRecordType()) {
     return false;
   }
 
@@ -590,8 +574,8 @@ Sema::CheckDynamicCast(Expr *&SrcExpr, QualType DestType,
   } else if (DestReference) {
     DestPointee = DestReference->getPointeeType();
   } else {
-    Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
-      OrigDestType.getAsString(), "not a reference or pointer", DestRange);
+    Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ref_or_ptr,
+      OrigDestType.getAsString(), DestRange);
     return;
   }
 
@@ -600,15 +584,13 @@ Sema::CheckDynamicCast(Expr *&SrcExpr, QualType DestType,
     assert(DestPointer && "Reference to void is not possible");
   } else if (DestRecord) {
     if (!DestRecord->getDecl()->isDefinition()) {
-      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
-        DestPointee.getUnqualifiedType().getAsString(),
-        "incomplete", DestRange);
+      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_incomplete,
+        DestPointee.getUnqualifiedType().getAsString(), DestRange);
       return;
     }
   } else {
-    Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
-      DestPointee.getUnqualifiedType().getAsString(),
-      "not a class", DestRange);
+    Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class,
+      DestPointee.getUnqualifiedType().getAsString(), DestRange);
     return;
   }
 
@@ -622,14 +604,14 @@ Sema::CheckDynamicCast(Expr *&SrcExpr, QualType DestType,
     if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
       SrcPointee = SrcPointer->getPointeeType();
     } else {
-      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
-        OrigSrcType.getAsString(), "not a pointer", SrcExpr->getSourceRange());
+      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ptr,
+        OrigSrcType.getAsString(), SrcExpr->getSourceRange());
       return;
     }
   } else {
     if (SrcExpr->isLvalue(Context) != Expr::LV_Valid) {
-      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
-        OrigDestType.getAsString(), "not an lvalue", SrcExpr->getSourceRange());
+      Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue, "dynamic_cast",
+        OrigDestType.getAsString(), OpRange);
     }
     SrcPointee = SrcType;
   }
@@ -637,22 +619,23 @@ Sema::CheckDynamicCast(Expr *&SrcExpr, QualType DestType,
   const RecordType *SrcRecord = SrcPointee->getAsRecordType();
   if (SrcRecord) {
     if (!SrcRecord->getDecl()->isDefinition()) {
-      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
-        SrcPointee.getUnqualifiedType().getAsString(), "incomplete",
+      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_incomplete,
+        SrcPointee.getUnqualifiedType().getAsString(),
         SrcExpr->getSourceRange());
       return;
     }
   } else {
-    Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
-      SrcPointee.getUnqualifiedType().getAsString(), "not a class",
+    Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class,
+      SrcPointee.getUnqualifiedType().getAsString(),
       SrcExpr->getSourceRange());
     return;
   }
 
-  // Assumptions to this point.
-  assert(DestPointer || DestReference);
-  assert(DestRecord || DestPointee->isVoidType());
-  assert(SrcRecord);
+  assert((DestPointer || DestReference) &&
+    "Bad destination non-ptr/ref slipped through.");
+  assert((DestRecord || DestPointee->isVoidType()) &&
+    "Bad destination pointee slipped through.");
+  assert(SrcRecord && "Bad source pointee slipped through.");
 
   // C++ 5.2.7p1: The dynamic_cast operator shall not cast away constness.
   if (!DestPointee.isAtLeastAsQualifiedAs(SrcPointee)) {
