@@ -25,6 +25,7 @@ namespace llvm {
 class Type {
 public:
   virtual unsigned getSizeInBits() const = 0;
+  virtual ~Type() {}
 };
 
 }
