@@ -1164,7 +1164,7 @@ if (defined $OutputFormat) {
 # Run the build.
 my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
 
-if ($OutputFormat eq "plist") {
+if (defined $OutputFormat and $OutputFormat eq "plist") {
   Diag "Analysis run complete.\n";
   Diag "Analysis results (plist files) deposited in '$HtmlDir'\n";
 }
