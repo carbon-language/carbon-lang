@@ -17,6 +17,7 @@
 #define DEBUG_TYPE "pre-alloc-split"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -89,6 +90,10 @@ namespace {
         AU.addPreservedID(StrongPHIEliminationID);
       else
         AU.addPreservedID(PHIEliminationID);
+      AU.addRequired<MachineDominatorTree>();
+      AU.addRequired<MachineLoopInfo>();
+      AU.addPreserved<MachineDominatorTree>();
+      AU.addPreserved<MachineLoopInfo>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
     
@@ -145,6 +150,9 @@ namespace {
     bool SplitRegLiveInterval(LiveInterval*);
 
     bool SplitRegLiveIntervals(const TargetRegisterClass **);
+    
+    bool createsNewJoin(LiveRange* LR, MachineBasicBlock* DefMBB,
+                        MachineBasicBlock* BarrierMBB);
   };
 } // end anonymous namespace
 
@@ -816,6 +824,71 @@ PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs) {
 
   return Change;
 }
+
+bool PreAllocSplitting::createsNewJoin(LiveRange* LR,
+                                       MachineBasicBlock* DefMBB,
+                                       MachineBasicBlock* BarrierMBB) {
+  if (DefMBB == BarrierMBB)
+    return false;
+  
+  if (LR->valno->hasPHIKill)
+    return false;
+  
+  unsigned MBBEnd = LIs->getMBBEndIdx(BarrierMBB);
+  if (LR->end < MBBEnd)
+    return false;
+  
+  MachineLoopInfo& MLI = getAnalysis<MachineLoopInfo>();
+  if (MLI.getLoopFor(DefMBB) != MLI.getLoopFor(BarrierMBB))
+    return true;
+  
+  MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
+  SmallPtrSet<MachineBasicBlock*, 4> Visited;
+  typedef std::pair<MachineBasicBlock*,
+                    MachineBasicBlock::succ_iterator> ItPair;
+  SmallVector<ItPair, 4> Stack;
+  Stack.push_back(std::make_pair(BarrierMBB, BarrierMBB->succ_begin()));
+  
+  while (!Stack.empty()) {
+    ItPair P = Stack.back();
+    Stack.pop_back();
+    
+    MachineBasicBlock* PredMBB = P.first;
+    MachineBasicBlock::succ_iterator S = P.second;
+    
+    if (S == PredMBB->succ_end())
+      continue;
+    else if (Visited.count(*S)) {
+      Stack.push_back(std::make_pair(PredMBB, ++S));
+      continue;
+    } else
+      Stack.push_back(std::make_pair(PredMBB, ++S));
+    
+    MachineBasicBlock* MBB = *S;
+    Visited.insert(MBB);
+    
+    if (MBB == BarrierMBB)
+      return true;
+    
+    MachineDomTreeNode* DefMDTN = MDT.getNode(DefMBB);
+    MachineDomTreeNode* BarrierMDTN = MDT.getNode(BarrierMBB);
+    MachineDomTreeNode* MDTN = MDT.getNode(MBB)->getIDom();
+    while (MDTN) {
+      if (MDTN == DefMDTN)
+        return true;
+      else if (MDTN == BarrierMDTN)
+        break;
+      MDTN = MDTN->getIDom();
+    }
+    
+    MBBEnd = LIs->getMBBEndIdx(MBB);
+    if (LR->end > MBBEnd)
+      Stack.push_back(std::make_pair(MBB, MBB->succ_begin()));
+  }
+  
+  return false;
+} 
+  
 
 bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   CurrMF = &MF;
