@@ -647,7 +647,6 @@ class AXI4ldpc<bits<4> opcod, dag oops, dag iops, Format f, string asm,
   : XI<opcod, oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, asm,
        "", pattern> {
   let Inst{20}    = 1; // L bit
-  let Inst{22}    = 1; // S bit
   let Inst{27-25} = 0b100;
 }
 class AXI4st<bits<4> opcod, dag oops, dag iops, Format f, string asm,
