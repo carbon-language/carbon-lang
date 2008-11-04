@@ -256,6 +256,10 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       Tokens.pop_back();
       BBInfo &BBI = Token->BBI;
       IfcvtKind Kind = Token->Kind;
+      unsigned NumDups = Token->NumDups;
+      unsigned NumDups2 = Token->NumDups;
+
+      delete Token;
 
       // If the block has been evicted out of the queue or it has already been
       // marked dead (due to it being predicated), then skip it.
@@ -323,7 +327,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
         DOUT << "Ifcvt (Diamond): BB#" << BBI.BB->getNumber() << " (T:"
              << BBI.TrueBB->getNumber() << ",F:"
              << BBI.FalseBB->getNumber() << ") ";
-        RetVal = IfConvertDiamond(BBI, Kind, Token->NumDups, Token->NumDups2);
+        RetVal = IfConvertDiamond(BBI, Kind, NumDups, NumDups2);
         DOUT << (RetVal ? "succeeded!" : "failed!") << "\n";
         if (RetVal) NumDiamonds++;
         break;
