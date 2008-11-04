@@ -52,7 +52,7 @@ namespace {
     AllocaInst *StackProtFrameSlot;
 
     /// StackGuardVar - The global variable for the stack guard.
-    GlobalVariable *StackGuardVar;
+    Constant *StackGuardVar;
 
     Function *F;
     Module *M;
@@ -115,14 +115,8 @@ void StackProtector::InsertStackProtectorPrologue() {
   BasicBlock &Entry = F->getEntryBlock();
   Instruction &InsertPt = Entry.front();
 
-  const char *StackGuardStr = "__stack_chk_guard";
-  StackGuardVar = M->getNamedGlobal(StackGuardStr);
-
-  if (!StackGuardVar)
-    StackGuardVar = new GlobalVariable(PointerType::getUnqual(Type::Int8Ty),
-                                       false, GlobalValue::ExternalLinkage,
-                                       0, StackGuardStr, M);
-
+  StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard",
+                                       PointerType::getUnqual(Type::Int8Ty));
   StackProtFrameSlot = new AllocaInst(PointerType::getUnqual(Type::Int8Ty),
                                       "StackProt_Frame", &InsertPt);
   LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, &InsertPt);
@@ -161,7 +155,7 @@ void StackProtector::InsertStackProtectorEpilogue() {
   //     %3 = cmp i1 %1, %2
   //     br i1 %3, label %SPRet, label %CallStackCheckFailBlk
   //
-  //   SPRet:
+  //   SP_return:
   //     ret ...
   //
   //   CallStackCheckFailBlk:
@@ -174,12 +168,15 @@ void StackProtector::InsertStackProtectorEpilogue() {
     ReturnInst *RI = cast<ReturnInst>(BB->getTerminator());
     Function::iterator InsPt = BB; ++InsPt; // Insertion point for new BB.
 
-    BasicBlock *NewBB = BasicBlock::Create("SPRet", F, InsPt);
+    // Split the basic block before the return instruction.
+    BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
 
-    // Move the return instruction into the new basic block.
-    RI->removeFromParent();
-    NewBB->getInstList().insert(NewBB->begin(), RI);
+    // Move the newly created basic block to the point right after the old basic
+    // block.
+    NewBB->removeFromParent();
+    F->getBasicBlockList().insert(InsPt, NewBB);
 
+    // Generate the stack protector instructions in the old basic block.
     LoadInst *LI2 = new LoadInst(StackGuardVar, "", false, BB);
     LoadInst *LI1 = new LoadInst(StackProtFrameSlot, "", true, BB);
     ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, LI1, LI2, "", BB);

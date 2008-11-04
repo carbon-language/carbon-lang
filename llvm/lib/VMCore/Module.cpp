@@ -224,6 +224,28 @@ GlobalVariable *Module::getGlobalVariable(const std::string &Name,
   return 0;
 }
 
+Constant *Module::getOrInsertGlobal(const std::string &Name, const Type *Ty) {
+  ValueSymbolTable &SymTab = getValueSymbolTable();
+
+  // See if we have a definition for the specified global already.
+  GlobalVariable *GV = dyn_cast_or_null<GlobalVariable>(SymTab.lookup(Name));
+  if (GV == 0) {
+    // Nope, add it
+    GlobalVariable *New =
+      new GlobalVariable(Ty, false, GlobalVariable::ExternalLinkage, 0, Name);
+    GlobalList.push_back(New);
+    return New;                    // Return the new declaration.
+  }
+
+  // If the variable exists but has the wrong type, return a bitcast to the
+  // right type.
+  if (GV->getType() != PointerType::getUnqual(Ty))
+    return ConstantExpr::getBitCast(GV, PointerType::getUnqual(Ty));
+  
+  // Otherwise, we just found the existing function or a prototype.
+  return GV;
+}
+
 //===----------------------------------------------------------------------===//
 // Methods for easy access to the global variables in the module.
 //
