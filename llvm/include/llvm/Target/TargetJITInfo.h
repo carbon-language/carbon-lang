@@ -110,6 +110,11 @@ namespace llvm {
     /// hasCustomConstantPool - Allows a target to specify that constant
     /// pool address resolution is handled by the target.
     virtual bool hasCustomConstantPool() const { return false; }
+
+    /// allocateSeparateGVMemory - If true, globals should be placed in
+    /// separately allocated heap memory rather than in the same
+    /// code memory allocated by MachineCodeEmitter.
+    virtual bool allocateSeparateGVMemory() const { return false; }
   protected:
     bool useGOT;
   };

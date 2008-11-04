@@ -565,6 +565,16 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     if (GV->isThreadLocal()) {
       MutexGuard locked(lock);
       Ptr = TJI.allocateThreadLocalMemory(S);
+    } else if (TJI.allocateSeparateGVMemory()) {
+      if (A <= 8) {
+        Ptr = malloc(S);
+      } else {
+        // Allocate S+A bytes of memory, then use an aligned pointer within that
+        // space.
+        Ptr = malloc(S+A);
+        unsigned MisAligned = ((intptr_t)Ptr & (A-1));
+        Ptr = (char*)Ptr + (MisAligned ? (A-MisAligned) : 0);
+      }
     } else {
       Ptr = MCE->allocateSpace(S, A);
     }

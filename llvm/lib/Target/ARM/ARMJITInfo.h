@@ -65,6 +65,17 @@ namespace llvm {
     /// pool address resolution is handled by the target.
     virtual bool hasCustomConstantPool() const { return true; }
 
+    /// allocateSeparateGVMemory - If true, globals should be placed in
+    /// separately allocated heap memory rather than in the same
+    /// code memory allocated by MachineCodeEmitter.
+    virtual bool allocateSeparateGVMemory() const {
+#ifdef __APPLE__
+      return true;
+#else
+      return false;
+#endif
+    }
+
     /// Initialize - Initialize internal stage. Get the list of constant pool
     /// Resize constant pool ids to CONSTPOOL_ENTRY addresses map.
     void Initialize(const std::vector<MachineConstantPoolEntry> *mcpes) {
