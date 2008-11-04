@@ -319,6 +319,12 @@ FunctionPass *createSimplifyLibCallsPass();
 
 //===----------------------------------------------------------------------===//
 //
+/// createSimplifyHalfPowrLibCallsPass - This is an experimental pass that
+/// optimizes specific half_pow functions.
+FunctionPass *createSimplifyHalfPowrLibCallsPass();
+
+//===----------------------------------------------------------------------===//
+//
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
 FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
