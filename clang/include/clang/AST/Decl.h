@@ -958,44 +958,6 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// LinkageSpecDecl - This represents a linkage specification.  For example:
-///   extern "C" void foo();
-///
-class LinkageSpecDecl : public Decl {
-public:
-  /// LanguageIDs - Used to represent the language in a linkage
-  /// specification.  The values are part of the serialization abi for
-  /// ASTs and cannot be changed without altering that abi.  To help
-  /// ensure a stable abi for this, we choose the DW_LANG_ encodings
-  /// from the dwarf standard.
-  enum LanguageIDs { lang_c = /* DW_LANG_C */ 0x0002,
-                     lang_cxx = /* DW_LANG_C_plus_plus */ 0x0004 };
-private:
-  /// Language - The language for this linkage specification.
-  LanguageIDs Language;
-  /// D - This is the Decl of the linkage specification.
-  Decl *D;
-  
-  LinkageSpecDecl(SourceLocation L, LanguageIDs lang, Decl *d)
-   : Decl(LinkageSpec, L), Language(lang), D(d) {}
-public:
-  static LinkageSpecDecl *Create(ASTContext &C, SourceLocation L,
-                                 LanguageIDs Lang, Decl *D);
-
-  LanguageIDs getLanguage() const { return Language; }
-  const Decl *getDecl() const { return D; }
-  Decl *getDecl() { return D; }
-    
-  static bool classof(const Decl *D) {
-    return D->getKind() == LinkageSpec;
-  }
-  static bool classof(const LinkageSpecDecl *D) { return true; }
-  
-protected:
-  void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
-};
-
 /// BlockDecl - This represents a block literal declaration, which is like an
 /// unnamed FunctionDecl.  For example:
 /// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }

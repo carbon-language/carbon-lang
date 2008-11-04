@@ -129,13 +129,6 @@ FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,
   return new (Mem) FileScopeAsmDecl(L, Str);
 }
 
-LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
-                                         SourceLocation L,
-                                         LanguageIDs Lang, Decl *D) {
-  void *Mem = C.getAllocator().Allocate<LinkageSpecDecl>();
-  return new (Mem) LinkageSpecDecl(L, Lang, D);
-}
-
 //===----------------------------------------------------------------------===//
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//

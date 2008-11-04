@@ -189,3 +189,11 @@ OverloadedFunctionDecl::Create(ASTContext &C, DeclContext *DC,
   void *Mem = C.getAllocator().Allocate<OverloadedFunctionDecl>();
   return new (Mem) OverloadedFunctionDecl(DC, Id);
 }
+
+LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
+                                         SourceLocation L,
+                                         LanguageIDs Lang, Decl *D) {
+  void *Mem = C.getAllocator().Allocate<LinkageSpecDecl>();
+  return new (Mem) LinkageSpecDecl(L, Lang, D);
+}
+
