@@ -715,8 +715,8 @@ static void StoreIntToMemory(const APInt &IntVal, uint8_t *Dst,
 /// is the address of the memory at which to store Val, cast to GenericValue *.
 /// It is not a pointer to a GenericValue containing the address at which to
 /// store Val.
-void ExecutionEngine::StoreValueToMemory(const GenericValue &Val, GenericValue *Ptr,
-                                         const Type *Ty) {
+void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
+                                         GenericValue *Ptr, const Type *Ty) {
   const unsigned StoreBytes = getTargetData()->getTypeStoreSize(Ty);
 
   switch (Ty->getTypeID()) {
