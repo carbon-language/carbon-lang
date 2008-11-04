@@ -157,6 +157,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Driver\PlistDiagnostics.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Driver\RewriteTest.cpp"
 				>
 			</File>
