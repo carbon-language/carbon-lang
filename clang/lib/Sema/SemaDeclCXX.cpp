@@ -46,7 +46,7 @@ namespace {
 
     bool VisitExpr(Expr *Node);
     bool VisitDeclRefExpr(DeclRefExpr *DRE);
-    bool VisitPredefinedExpr(PredefinedExpr *PE);
+    bool VisitCXXThisExpr(CXXThisExpr *ThisE);
   };
 
   /// VisitExpr - Visit all of the children of this expression.
@@ -88,18 +88,14 @@ namespace {
     return false;
   }
 
-  /// VisitPredefinedExpr - Visit a predefined expression, which could
-  /// refer to "this".
-  bool CheckDefaultArgumentVisitor::VisitPredefinedExpr(PredefinedExpr *PE) {
-    if (PE->getIdentType() == PredefinedExpr::CXXThis) {
-      // C++ [dcl.fct.default]p8:
-      //   The keyword this shall not be used in a default argument of a
-      //   member function.
-      return S->Diag(PE->getSourceRange().getBegin(),
-                     diag::err_param_default_argument_references_this,
-                     PE->getSourceRange());
-    }
-    return false;
+  /// VisitCXXThisExpr - Visit a C++ "this" expression.
+  bool CheckDefaultArgumentVisitor::VisitCXXThisExpr(CXXThisExpr *ThisE) {
+    // C++ [dcl.fct.default]p8:
+    //   The keyword this shall not be used in a default argument of a
+    //   member function.
+    return S->Diag(ThisE->getSourceRange().getBegin(),
+                   diag::err_param_default_argument_references_this,
+                   ThisE->getSourceRange());
   }
 }
 

@@ -417,9 +417,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   case ObjCPropertyRefExprClass: // FIXME: check if read-only property.
     return LV_Valid;
   case PredefinedExprClass:
-    return (cast<PredefinedExpr>(this)->getIdentType()
-               == PredefinedExpr::CXXThis
-            ? LV_InvalidExpression : LV_Valid);
+    return LV_Valid;
   case VAArgExprClass:
     return LV_Valid;
   case CXXDefaultArgExprClass:
@@ -439,6 +437,8 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     if (cast<ExplicitCastExpr>(this)->getTypeAsWritten()->isReferenceType())
       return LV_Valid;
     break;
+  case CXXThisExprClass:
+    return LV_InvalidExpression;
   default:
     break;
   }

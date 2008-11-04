@@ -708,8 +708,7 @@ Action::ExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
 
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext))
     if (MD->isInstance())
-      return new PredefinedExpr(ThisLoc, MD->getThisType(Context),
-                                PredefinedExpr::CXXThis);
+      return new CXXThisExpr(ThisLoc, MD->getThisType(Context));
 
   return Diag(ThisLoc, diag::err_invalid_this_use);
 }

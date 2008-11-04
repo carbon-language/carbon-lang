@@ -839,6 +839,10 @@ void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   OS << (Node->getValue() ? "true" : "false");
 }
 
+void StmtPrinter::VisitCXXThisExpr(CXXThisExpr *Node) {
+  OS << "this";
+}
+
 void StmtPrinter::VisitCXXThrowExpr(CXXThrowExpr *Node) {
   if (Node->getSubExpr() == 0)
     OS << "throw";

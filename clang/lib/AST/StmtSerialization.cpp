@@ -212,7 +212,10 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
 
     case CXXConstCastExprClass:
       return CXXConstCastExpr::CreateImpl(D, C, SC);
-      
+
+    case CXXThisExprClass:
+      return CXXThisExpr::CreateImpl(D, C);
+
     case CXXZeroInitValueExprClass:
       return CXXZeroInitValueExpr::CreateImpl(D, C);
   }
@@ -1327,6 +1330,17 @@ CXXNamedCastExpr::CreateImpl(Deserializer& D, ASTContext& C, StmtClass SC) {
     assert(false && "Unknown cast type!");
     return 0;
   }
+}
+
+void CXXThisExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(Loc);
+}
+
+CXXThisExpr* CXXThisExpr::CreateImpl(llvm::Deserializer& D, ASTContext&) {
+  QualType Ty = QualType::ReadVal(D);
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  return new CXXThisExpr(Loc, Ty);
 }
 
 void CXXZeroInitValueExpr::EmitImpl(Serializer& S) const {

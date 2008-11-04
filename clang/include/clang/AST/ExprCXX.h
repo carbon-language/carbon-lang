@@ -154,6 +154,39 @@ public:
   virtual child_iterator child_end();
 };
 
+/// CXXThisExpr - Represents the "this" expression in C++, which is a
+/// pointer to the object on which the current member function is
+/// executing (C++ [expr.prim]p3). Example:
+///
+/// @code
+/// class Foo {
+/// public:
+///   void bar();
+///   void test() { this->bar(); }
+/// };
+/// @endcode
+class CXXThisExpr : public Expr {
+  SourceLocation Loc;
+
+public:
+  CXXThisExpr(SourceLocation L, QualType Type) 
+    : Expr(CXXThisExprClass, Type), Loc(L) { }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXThisExprClass;
+  }
+  static bool classof(const CXXThisExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXThisExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);  
+};
+
 ///  CXXThrowExpr - [C++ 15] C++ Throw Expression.  This handles
 ///  'throw' and 'throw' assignment-expression.  When
 ///  assignment-expression isn't present, Op will be null.
