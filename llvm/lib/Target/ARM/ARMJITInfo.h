@@ -15,6 +15,8 @@
 #define ARMJITINFO_H
 
 #include "llvm/Target/TargetJITInfo.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
@@ -23,9 +25,16 @@ namespace llvm {
   class ARMJITInfo : public TargetJITInfo {
     ARMTargetMachine &TM;
 
+    // MCPEs - List of the constant pool entries for the current machine
+    // function that's being processed.
+    const std::vector<MachineConstantPoolEntry> *MCPEs;
+
     // ConstPoolId2AddrMap - A map from constant pool ids to the corresponding
     // CONSTPOOL_ENTRY addresses.
     SmallVector<intptr_t, 32> ConstPoolId2AddrMap;
+
+    // PCLabelMap - A map from PC labels to addresses.
+    DenseMap<unsigned, intptr_t> PCLabelMap;
 
   public:
     explicit ARMJITInfo(ARMTargetMachine &tm) : TM(tm) { useGOT = false; }
@@ -51,15 +60,16 @@ namespace llvm {
     /// referenced global symbols.
     virtual void relocate(void *Function, MachineRelocation *MR,
                           unsigned NumRelocs, unsigned char* GOTBase);
-  
+
     /// hasCustomConstantPool - Allows a target to specify that constant
     /// pool address resolution is handled by the target.
     virtual bool hasCustomConstantPool() const { return true; }
 
-    /// ResizeConstPoolMap - Resize constant pool ids to CONSTPOOL_ENTRY
-    /// addresses map.
-    void ResizeConstPoolMap(unsigned Size) {
-      ConstPoolId2AddrMap.resize(Size);
+    /// Initialize - Initialize internal stage. Get the list of constant pool
+    /// Resize constant pool ids to CONSTPOOL_ENTRY addresses map.
+    void Initialize(const std::vector<MachineConstantPoolEntry> *mcpes) {
+      MCPEs = mcpes;
+      ConstPoolId2AddrMap.resize(MCPEs->size());
     }
 
     /// getConstantPoolEntryAddr - The ARM target puts all constant
@@ -77,6 +87,24 @@ namespace llvm {
       assert(CPI < ConstPoolId2AddrMap.size());
       ConstPoolId2AddrMap[CPI] = Addr;
     }
+
+    /// getPCLabelAddr - Retrieve the address of the PC label of the specified id.
+    intptr_t getPCLabelAddr(unsigned Id) const {
+      DenseMap<unsigned, intptr_t>::const_iterator I = PCLabelMap.find(Id);
+      assert(I != PCLabelMap.end());
+      return I->second;
+    }
+
+    /// addPCLabelAddr - Remember the address of the specified PC label.
+    void addPCLabelAddr(unsigned Id, intptr_t Addr) {
+      PCLabelMap.insert(std::make_pair(Id, Addr));
+    }
+
+  private:
+    /// resolveRelocationAddr - Resolve the resulting address of the relocation
+    /// if it's not already solved. Constantpool entries must be resolved by
+    /// ARM target.
+    intptr_t resolveRelocationAddr(MachineRelocation *MR) const;
   };
 }
 

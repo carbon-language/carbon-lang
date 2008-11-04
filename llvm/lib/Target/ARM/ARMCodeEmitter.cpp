@@ -158,7 +158,7 @@ bool ARMCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   TD = ((ARMTargetMachine&)MF.getTarget()).getTargetData();
   JTI = ((ARMTargetMachine&)MF.getTarget()).getJITInfo();
   MCPEs = &MF.getConstantPool()->getConstants();
-  JTI->ResizeConstPoolMap(MCPEs->size());
+  JTI->Initialize(MCPEs);
 
   do {
     DOUT << "JITTing function '" << MF.getFunction()->getName() << "'\n";
@@ -257,7 +257,7 @@ void ARMCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB) {
 }
 
 void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
-  DOUT << "JIT: " << "0x" << MCE.getCurrentPCValue() << ":\t" << MI;
+  DOUT << "JIT: " << (void*)MCE.getCurrentPCValue() << ":\t" << MI;
 
   NumEmitted++;  // Keep track of the # of mi's emitted
   if ((MI.getDesc().TSFlags & ARMII::FormMask) == ARMII::Pseudo)
@@ -286,8 +286,10 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
     GlobalValue *GV = ACPV->getGV();
     if (GV) {
       assert(!ACPV->isStub() && "Don't know how to deal this yet!");
-      emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
-    } else  {
+      MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
+                                                ARM::reloc_arm_machine_cp_entry,
+                                                GV, CPIndex, false));
+     } else  {
       assert(!ACPV->isNonLazyPointer() && "Don't know how to deal this yet!");
       emitExternalSymbolAddress(ACPV->getSymbol(), ARM::reloc_arm_absolute);
     }
@@ -320,6 +322,12 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
     emitConstPoolInstruction(MI);
     break;
   case ARM::PICADD: {
+    // Remember of the address of the PC label for relocation later.
+    const MachineOperand &MO2 = MI.getOperand(2);
+    DOUT << "\t** LPC" << MO2.getImm() << " @ "
+         << (void*)MCE.getCurrentPCValue() << '\n';
+    JTI->addPCLabelAddr(MO2.getImm(), MCE.getCurrentPCValue());
+
     // PICADD is just an add instruction that implicitly read pc.
     unsigned Binary = getBinaryCodeForInstr(MI);
     const TargetInstrDesc &TID = MI.getDesc();

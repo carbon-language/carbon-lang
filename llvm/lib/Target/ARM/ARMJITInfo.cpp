@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "jit"
 #include "ARMJITInfo.h"
+#include "ARMConstantPoolValue.h"
 #include "ARMRelocations.h"
 #include "ARMSubtarget.h"
 #include "llvm/Function.h"
@@ -167,6 +168,25 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
   return MCE.finishFunctionStub(F);
 }
 
+intptr_t ARMJITInfo::resolveRelocationAddr(MachineRelocation *MR) const {
+  ARM::RelocationType RT = (ARM::RelocationType)MR->getRelocationType();
+  if (RT == ARM::reloc_arm_cp_entry)
+    return getConstantPoolEntryAddr(MR->getConstantPoolIndex());
+  else if (RT == ARM::reloc_arm_machine_cp_entry) {
+    const MachineConstantPoolEntry &MCPE = (*MCPEs)[MR->getConstantVal()];
+    assert(MCPE.isMachineConstantPoolEntry() &&
+           "Expecting a machine constant pool entry!");
+    ARMConstantPoolValue *ACPV =
+      static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
+    assert((!ACPV->hasModifier() && !ACPV->mustAddCurrentAddress()) &&
+           "Can't handle this machine constant pool entry yet!");
+    intptr_t Addr = (intptr_t)(MR->getResultPointer());
+    Addr -= getPCLabelAddr(ACPV->getLabelId()) + ACPV->getPCAdjustment();
+    return Addr;
+  }
+  return (intptr_t)(MR->getResultPointer());
+}
+
 /// relocate - Before the JIT can run a block of code that has been emitted,
 /// it must rewrite the code to contain the actual addresses of any
 /// referenced global symbols.
@@ -174,12 +194,9 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
                           unsigned NumRelocs, unsigned char* GOTBase) {
   for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
     void *RelocPos = (char*)Function + MR->getMachineCodeOffset();
-    ARM::RelocationType RT = (ARM::RelocationType)MR->getRelocationType();
     // If this is a constpool relocation, get the address of the
     // constpool_entry instruction.
-    intptr_t ResultPtr = (RT == ARM::reloc_arm_cp_entry)
-      ? getConstantPoolEntryAddr(MR->getConstantPoolIndex())
-      : (intptr_t)MR->getResultPointer();
+    intptr_t ResultPtr = resolveRelocationAddr(MR);
     switch ((ARM::RelocationType)MR->getRelocationType()) {
     case ARM::reloc_arm_cp_entry:
     case ARM::reloc_arm_relative: {
@@ -190,18 +207,20 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
       if (ResultPtr >= 0)
         *((unsigned*)RelocPos) |= 1 << 23;
       else {
-      // otherwise, obtain the absolute value and set
+      // Otherwise, obtain the absolute value and set
       // bit U(23) to 0.
         ResultPtr *= -1;
         *((unsigned*)RelocPos) &= 0xFF7FFFFF;
       }
-      // set the immed value calculated
+      // Set the immed value calculated.
       *((unsigned*)RelocPos) |= (unsigned)ResultPtr;
-      // set register Rn to PC
+      // Set register Rn to PC.
       *((unsigned*)RelocPos) |= 0xF << 16;
       break;
     }
+    case ARM::reloc_arm_machine_cp_entry:
     case ARM::reloc_arm_absolute: {
+      // These addresses have already been resolved.
       *((unsigned*)RelocPos) += (unsigned)ResultPtr;
       break;
     }

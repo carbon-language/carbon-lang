@@ -93,10 +93,8 @@ void ARMConstantPoolValue::print(raw_ostream &O) const {
   else if (isStub()) O << "$stub";
   if (Modifier) O << "(" << Modifier << ")";
   if (PCAdjust != 0) {
-    O << "-(LPIC" << LabelId << "+"
-      << (unsigned)PCAdjust;
-    if (AddCurrentAddress)
-      O << "-.";
+    O << "-(LPC" << LabelId << "+" << (unsigned)PCAdjust;
+    if (AddCurrentAddress) O << "-.";
     O << ")";
   }
 }
