@@ -812,6 +812,8 @@ DIAG(err_param_default_argument_references_param, ERROR,
      "default argument references parameter '%0'")
 DIAG(err_param_default_argument_references_local, ERROR,
      "default argument references local variable '%0' of enclosing function")
+DIAG(err_param_default_argument_references_this, ERROR,
+     "default argument references 'this'")
 DIAG(err_param_default_argument_nonfunc, ERROR,
      "default arguments can only be specified for parameters in a function"
      " declaration")

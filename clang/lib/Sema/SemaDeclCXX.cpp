@@ -46,6 +46,7 @@ namespace {
 
     bool VisitExpr(Expr *Node);
     bool VisitDeclRefExpr(DeclRefExpr *DRE);
+    bool VisitPredefinedExpr(PredefinedExpr *PE);
   };
 
   /// VisitExpr - Visit all of the children of this expression.
@@ -84,14 +85,20 @@ namespace {
                        VDecl->getName(), DefaultArg->getSourceRange());
     }
 
-    // C++ [dcl.fct.default]p8:
-    //   The keyword this shall not be used in a default argument of a
-    //   member function.
-    // Note: this requirement is already diagnosed by
-    // Sema::ActOnCXXThis, because the use of "this" inside a default
-    // argument doesn't occur inside the body of a non-static member
-    // function.
+    return false;
+  }
 
+  /// VisitPredefinedExpr - Visit a predefined expression, which could
+  /// refer to "this".
+  bool CheckDefaultArgumentVisitor::VisitPredefinedExpr(PredefinedExpr *PE) {
+    if (PE->getIdentType() == PredefinedExpr::CXXThis) {
+      // C++ [dcl.fct.default]p8:
+      //   The keyword this shall not be used in a default argument of a
+      //   member function.
+      return S->Diag(PE->getSourceRange().getBegin(),
+                     diag::err_param_default_argument_references_this,
+                     PE->getSourceRange());
+    }
     return false;
   }
 }

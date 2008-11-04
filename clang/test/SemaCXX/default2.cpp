@@ -39,4 +39,8 @@ void nondecl(int (*f)(int x = 5)) // {expected-error {{default arguments can onl
 
 class X {
   void f(X* x = this); // expected-error{{invalid use of 'this' outside of a nonstatic member function}}
+
+  void g() { 
+    int f(X* x = this); // expected-error{{default argument references 'this'}}
+  }
 };
