@@ -30,7 +30,11 @@ bool llvm::sys::hasDisassembler(void)
 {
 #if defined (__i386__) || defined (__amd64__) || defined (__x86_64__)
   // We have option to enable udis86 library.
+# if USE_UDIS86
   return true;
+#else
+  return false;
+#endif
 #else
   return false;
 #endif
