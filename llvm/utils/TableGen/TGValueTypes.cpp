@@ -69,6 +69,7 @@ MVT MVT::getExtendedIntegerVT(unsigned BitWidth) {
   if (!ET) ET = new ExtendedIntegerType(BitWidth);
   MVT VT;
   VT.LLVMTy = ET;
+  assert(VT.isExtended() && "Type is not extended!");
   return VT;
 }
 
@@ -78,6 +79,7 @@ MVT MVT::getExtendedVectorVT(MVT VT, unsigned NumElements) {
   if (!ET) ET = new ExtendedVectorType(VT, NumElements);
   MVT ResultVT;
   ResultVT.LLVMTy = ET;
+  assert(ResultVT.isExtended() && "Type is not extended!");
   return ResultVT;
 }
 

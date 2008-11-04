@@ -20,12 +20,14 @@ using namespace llvm;
 MVT MVT::getExtendedIntegerVT(unsigned BitWidth) {
   MVT VT;
   VT.LLVMTy = IntegerType::get(BitWidth);
+  assert(VT.isExtended() && "Type is not extended!");
   return VT;
 }
 
 MVT MVT::getExtendedVectorVT(MVT VT, unsigned NumElements) {
   MVT ResultVT;
   ResultVT.LLVMTy = VectorType::get(VT.getTypeForMVT(), NumElements);
+  assert(ResultVT.isExtended() && "Type is not extended!");
   return ResultVT;
 }
 
