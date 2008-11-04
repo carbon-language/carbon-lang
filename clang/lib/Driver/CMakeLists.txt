@@ -5,4 +5,5 @@ add_clang_library(clangDriver
   InitHeaderSearch.cpp
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp
+  PlistDiagnostics.cpp
   )
