@@ -114,11 +114,10 @@ bool StackProtector::runOnFunction(Function &Fn) {
 void StackProtector::InsertStackProtectorPrologue() {
   BasicBlock &Entry = F->getEntryBlock();
   Instruction &InsertPt = Entry.front();
+  const PointerType *GuardTy = PointerType::getUnqual(Type::Int8Ty);
 
-  StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard",
-                                       PointerType::getUnqual(Type::Int8Ty));
-  StackProtFrameSlot = new AllocaInst(PointerType::getUnqual(Type::Int8Ty),
-                                      "StackProt_Frame", &InsertPt);
+  StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", GuardTy);
+  StackProtFrameSlot = new AllocaInst(GuardTy, "StackProt_Frame", &InsertPt);
   LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, &InsertPt);
   new StoreInst(LI, StackProtFrameSlot, false, &InsertPt);
 }
