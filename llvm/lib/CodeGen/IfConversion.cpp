@@ -257,7 +257,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       BBInfo &BBI = Token->BBI;
       IfcvtKind Kind = Token->Kind;
       unsigned NumDups = Token->NumDups;
-      unsigned NumDups2 = Token->NumDups;
+      unsigned NumDups2 = Token->NumDups2;
 
       delete Token;
 
