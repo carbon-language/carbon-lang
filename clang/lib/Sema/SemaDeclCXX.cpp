@@ -126,22 +126,14 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
   //   the same semantic constraints as the initializer expression in
   //   a declaration of a variable of the parameter type, using the
   //   copy-initialization semantics (8.5).
-  //
-  // FIXME: CheckSingleAssignmentConstraints has the wrong semantics
-  // for C++ (since we want copy-initialization, not copy-assignment),
-  // but we don't have the right semantics implemented yet. Because of
-  // this, our error message is also very poor.
-  QualType DefaultArgType = DefaultArg->getType();   
   Expr *DefaultArgPtr = DefaultArg.get();
-  AssignConvertType ConvTy = CheckSingleAssignmentConstraints(ParamType,
-                                                              DefaultArgPtr);
+  bool DefaultInitFailed = PerformCopyInitialization(DefaultArgPtr, ParamType,
+                                                     "in default argument");
   if (DefaultArgPtr != DefaultArg.get()) {
     DefaultArg.take();
     DefaultArg.reset(DefaultArgPtr);
   }
-  if (DiagnoseAssignmentResult(ConvTy, DefaultArg->getLocStart(), 
-                               ParamType, DefaultArgType, DefaultArg.get(), 
-                               "in default argument")) {
+  if (DefaultInitFailed) {
     return;
   }
 

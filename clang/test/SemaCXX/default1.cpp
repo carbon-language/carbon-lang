@@ -15,3 +15,15 @@ void h(int i, int j = 2, int k = 3,
 
 struct S { } s;
 void i(int = s) { } // expected-error {{incompatible type}}
+
+struct X { 
+  X(int);
+};
+
+void j(X x = 17);
+
+struct Y {
+  explicit Y(int);
+};
+
+void k(Y y = 17); // expected-error{{incompatible type in default argument}}
