@@ -224,7 +224,7 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
     std::string targetTriple = _linker.getModule()->getTargetTriple();
     args.push_back(gcc.c_str());
     if ( targetTriple.find("darwin") != targetTriple.size() ) {
-        if (strncmp(targetTriple.c_str(), "i686-apple-", 11) == 0) {
+        if (strncmp(targetTriple.c_str(), "i386-apple-", 11) == 0) {
             args.push_back("-arch");
             args.push_back("i386");
         }
