@@ -71,6 +71,7 @@ unsigned MVT::getExtendedSizeInBits() const {
   if (const VectorType *VTy = dyn_cast<VectorType>(LLVMTy))
     return VTy->getBitWidth();
   assert(false && "Unrecognized extended type!");
+  return 0; // Suppress warnings.
 }
 
 /// getMVTString - This function returns value type as a string, e.g. "i32".
