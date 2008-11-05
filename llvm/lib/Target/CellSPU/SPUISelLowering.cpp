@@ -1332,7 +1332,7 @@ SDValue SPU::get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
       Value = Value >> 32;
     }
     if (Value <= 0x3ffff)
-      return DAG.getConstant(Value, ValueType);
+      return DAG.getTargetConstant(Value, ValueType);
   }
 
   return SDValue();
@@ -1354,7 +1354,7 @@ SDValue SPU::get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
       Value = Value >> 32;
     }
     if (Value >= -(1 << 15) && Value <= ((1 << 15) - 1)) {
-      return DAG.getConstant(Value, ValueType);
+      return DAG.getTargetConstant(Value, ValueType);
     }
   }
 
@@ -1377,7 +1377,7 @@ SDValue SPU::get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
       Value = Value >> 32;
     }
     if (isS10Constant(Value))
-      return DAG.getConstant(Value, ValueType);
+      return DAG.getTargetConstant(Value, ValueType);
   }
 
   return SDValue();
@@ -1397,10 +1397,10 @@ SDValue SPU::get_vec_i8imm(SDNode *N, SelectionDAG &DAG,
     if (ValueType == MVT::i16
         && Value <= 0xffff                 /* truncated from uint64_t */
         && ((short) Value >> 8) == ((short) Value & 0xff))
-      return DAG.getConstant(Value & 0xff, ValueType);
+      return DAG.getTargetConstant(Value & 0xff, ValueType);
     else if (ValueType == MVT::i8
              && (Value & 0xff) == Value)
-      return DAG.getConstant(Value, ValueType);
+      return DAG.getTargetConstant(Value, ValueType);
   }
 
   return SDValue();
@@ -1416,7 +1416,7 @@ SDValue SPU::get_ILHUvec_imm(SDNode *N, SelectionDAG &DAG,
     if ((ValueType == MVT::i32
           && ((unsigned) Value & 0xffff0000) == (unsigned) Value)
         || (ValueType == MVT::i64 && (Value & 0xffff0000) == Value))
-      return DAG.getConstant(Value >> 16, ValueType);
+      return DAG.getTargetConstant(Value >> 16, ValueType);
   }
 
   return SDValue();
@@ -1425,7 +1425,7 @@ SDValue SPU::get_ILHUvec_imm(SDNode *N, SelectionDAG &DAG,
 /// get_v4i32_imm - Catch-all for general 32-bit constant vectors
 SDValue SPU::get_v4i32_imm(SDNode *N, SelectionDAG &DAG) {
   if (ConstantSDNode *CN = getVecImm(N)) {
-    return DAG.getConstant((unsigned) CN->getZExtValue(), MVT::i32);
+    return DAG.getTargetConstant((unsigned) CN->getZExtValue(), MVT::i32);
   }
 
   return SDValue();
@@ -1434,7 +1434,7 @@ SDValue SPU::get_v4i32_imm(SDNode *N, SelectionDAG &DAG) {
 /// get_v4i32_imm - Catch-all for general 64-bit constant vectors
 SDValue SPU::get_v2i64_imm(SDNode *N, SelectionDAG &DAG) {
   if (ConstantSDNode *CN = getVecImm(N)) {
-    return DAG.getConstant((unsigned) CN->getZExtValue(), MVT::i64);
+    return DAG.getTargetConstant((unsigned) CN->getZExtValue(), MVT::i64);
   }
 
   return SDValue();
