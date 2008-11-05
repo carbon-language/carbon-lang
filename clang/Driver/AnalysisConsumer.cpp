@@ -112,8 +112,11 @@ namespace {
     
   
   class VISIBILITY_HIDDEN AnalysisManager : public BugReporterData {
-    Decl* D;
-    Stmt* Body;    
+    Decl* D; Stmt* Body; 
+    TranslationUnit* TU;
+    
+    enum AnalysisScope { ScopeTU, ScopeDecl } AScope;
+      
     AnalysisConsumer& C;
     bool DisplayedFunction;
     
@@ -123,11 +126,25 @@ namespace {
 
   public:
     AnalysisManager(AnalysisConsumer& c, Decl* d, Stmt* b) 
-    : D(d), Body(b), C(c), DisplayedFunction(false) {}
+    : D(d), Body(b), TU(0), AScope(ScopeDecl), C(c), DisplayedFunction(false) {}
     
+    AnalysisManager(AnalysisConsumer& c, TranslationUnit* tu) 
+    : D(0), Body(0), TU(tu), AScope(ScopeTU), C(c), DisplayedFunction(false) {}    
     
-    Decl* getCodeDecl() const { return D; }
-    Stmt* getBody() const { return Body; }
+    Decl* getCodeDecl() const { 
+      assert (AScope == ScopeDecl);
+      return D;
+    }
+    
+    Stmt* getBody() const {
+      assert (AScope == ScopeDecl);
+      return Body;
+    }
+    
+    TranslationUnit* getTranslationUnit() const {
+      assert (AScope == ScopeTU);
+      return TU;
+    }    
     
     GRStateManager::StoreManagerCreator getStoreManagerCreator() {
       switch (C.SM) {
