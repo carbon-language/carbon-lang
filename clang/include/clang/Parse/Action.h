@@ -58,6 +58,7 @@ public:
   typedef void TypeTy;
   typedef void AttrTy;
   typedef void BaseTy;
+  typedef void MemInitTy;
 
   /// ActionResult - This structure is used while parsing/acting on expressions,
   /// stmts, etc.  It encapsulates both the object returned by the action, plus
@@ -85,6 +86,7 @@ public:
   typedef ActionResult<1> StmtResult;
   typedef ActionResult<2> TypeResult;
   typedef ActionResult<3> BaseResult;
+  typedef ActionResult<4> MemInitResult;
 
   /// Deletion callbacks - Since the parser doesn't know the concrete types of
   /// the AST nodes being generated, it must do callbacks to delete objects when
@@ -685,6 +687,28 @@ public:
                                            Declarator &D, ExprTy *BitfieldWidth,
                                            ExprTy *Init, DeclTy *LastInGroup) {
     return 0;
+  }
+
+  virtual MemInitResult ActOnMemInitializer(DeclTy *ConstructorDecl,
+                                            Scope *S,
+                                            IdentifierInfo *MemberOrBase,
+                                            SourceLocation IdLoc,
+                                            SourceLocation LParenLoc,
+                                            ExprTy **Args, unsigned NumArgs,
+                                            SourceLocation *CommaLocs,
+                                            SourceLocation RParenLoc) {
+    return true;
+  }
+
+  /// ActOnMemInitializers - This is invoked when all of the member
+  /// initializers of a constructor have been parsed. ConstructorDecl
+  /// is the function declaration (which will be a C++ constructor in
+  /// a well-formed program), ColonLoc is the location of the ':' that
+  /// starts the constructor initializer, and MemInit/NumMemInits
+  /// contains the individual member (and base) initializers. 
+  virtual void ActOnMemInitializers(DeclTy *ConstructorDecl, 
+                                    SourceLocation ColonLoc,
+                                    MemInitTy **MemInits, unsigned NumMemInits) {
   }
 
   /// ActOnFinishCXXMemberSpecification - Invoked after all member declarators

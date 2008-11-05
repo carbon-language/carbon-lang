@@ -435,7 +435,8 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     }
 
     // function-definition:
-    if (Tok.is(tok::l_brace)) {
+    if (Tok.is(tok::l_brace)
+        || (DeclaratorInfo.isFunctionDeclarator() && Tok.is(tok::colon))) {
       if (!DeclaratorInfo.isFunctionDeclarator()) {
         Diag(Tok, diag::err_func_def_no_params);
         ConsumeBrace();
@@ -637,4 +638,98 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   ExitScope();
 
   Actions.ActOnFinishCXXClassDef(TagDecl);
+}
+
+/// ParseConstructorInitializer - Parse a C++ constructor initializer,
+/// which explicitly initializes the members or base classes of a
+/// class (C++ [class.base.init]). For example, the three initializers
+/// after the ':' in the Derived constructor below:
+///
+/// @code
+/// class Base { };
+/// class Derived : Base {
+///   int x;
+///   float f;
+/// public:
+///   Derived(float f) : Base(), x(17), f(f) { }
+/// };
+/// @endcode
+///
+/// [C++]  ctor-initializer: 
+///          ':' mem-initializer-list 
+///
+/// [C++]  mem-initializer-list: 
+///          mem-initializer 
+///          mem-initializer , mem-initializer-list 
+void Parser::ParseConstructorInitializer(DeclTy *ConstructorDecl) {
+  assert(Tok.is(tok::colon) && "Constructor initializer always starts with ':'");
+
+  SourceLocation ColonLoc = ConsumeToken();
+  
+  llvm::SmallVector<MemInitTy*, 4> MemInitializers;
+  
+  do {
+    MemInitResult MemInit = ParseMemInitializer(ConstructorDecl);
+    if (!MemInit.isInvalid)
+      MemInitializers.push_back(MemInit.Val);
+
+    if (Tok.is(tok::comma))
+      ConsumeToken();
+    else if (Tok.is(tok::l_brace))
+      break;
+    else {
+      // Skip over garbage, until we get to '{'.  Don't eat the '{'.
+      SkipUntil(tok::l_brace, true, true);
+      break;
+    }
+  } while (true);
+
+  Actions.ActOnMemInitializers(ConstructorDecl, ColonLoc, 
+                               &MemInitializers[0], MemInitializers.size());
+}
+
+/// ParseMemInitializer - Parse a C++ member initializer, which is
+/// part of a constructor initializer that explicitly initializes one
+/// member or base class (C++ [class.base.init]). See
+/// ParseConstructorInitializer for an example.
+///
+/// [C++] mem-initializer:
+///         mem-initializer-id '(' expression-list[opt] ')'
+/// 
+/// [C++] mem-initializer-id:
+///         '::'[opt] nested-name-specifier[opt] class-name
+///         identifier
+Parser::MemInitResult Parser::ParseMemInitializer(DeclTy *ConstructorDecl) {
+  // FIXME: parse '::'[opt] nested-name-specifier[opt]
+
+  if (Tok.isNot(tok::identifier)) {
+    Diag(Tok.getLocation(), diag::err_expected_member_or_base_name);
+    return true;
+  }
+
+  // Get the identifier. This may be a member name or a class name,
+  // but we'll let the semantic analysis determine which it is.
+  IdentifierInfo *II = Tok.getIdentifierInfo();
+  SourceLocation IdLoc = ConsumeToken();
+
+  // Parse the '('.
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(Tok.getLocation(), diag::err_expected_lparen);
+    return true;
+  }
+  SourceLocation LParenLoc = ConsumeParen();
+
+  // Parse the optional expression-list.
+  ExprListTy ArgExprs;
+  CommaLocsTy CommaLocs;
+  if (Tok.isNot(tok::r_paren) && ParseExpressionList(ArgExprs, CommaLocs)) {
+    SkipUntil(tok::r_paren);
+    return true;
+  }
+
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+  return Actions.ActOnMemInitializer(ConstructorDecl, CurScope, II, IdLoc, 
+                                     LParenLoc, &ArgExprs[0], ArgExprs.size(), 
+                                     &CommaLocs[0], RParenLoc);
 }

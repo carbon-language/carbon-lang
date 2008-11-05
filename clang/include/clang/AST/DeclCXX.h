@@ -395,6 +395,105 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// CXXBaseOrMemberInitializer - Represents a C++ base or member
+/// initializer, which is part of a constructor initializer that
+/// initializes one non-static member variable or one base class. For
+/// example, in the following, both 'A(a)' and 'f(3.14159)' are member
+/// initializers:
+///
+/// @code
+/// class A { };
+/// class B : public A {
+///   float f;
+/// public:
+///   B(A& a) : A(a), f(3.14159) { }
+/// };
+class CXXBaseOrMemberInitializer {
+  /// BaseOrMember - This points to the entity being initialized,
+  /// which is either a base class (a Type) or a non-static data
+  /// member (a CXXFieldDecl). When the low bit is 1, it's a base
+  /// class; when the low bit is 0, it's a member.
+  uintptr_t BaseOrMember;
+
+  /// Args - The arguments used to initialize the base or member.
+  Expr **Args;
+  unsigned NumArgs;
+
+public:
+  /// CXXBaseOrMemberInitializer - Creates a new base-class initializer.
+  explicit 
+  CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs);
+
+  /// CXXBaseOrMemberInitializer - Creates a new member initializer.
+  explicit 
+  CXXBaseOrMemberInitializer(CXXFieldDecl *Member, Expr **Args, unsigned NumArgs);
+
+  /// ~CXXBaseOrMemberInitializer - Destroy the base or member initializer.
+  ~CXXBaseOrMemberInitializer();
+
+  /// arg_iterator - Iterates through the member initialization
+  /// arguments.
+  typedef Expr **arg_iterator;
+
+  /// arg_const_iterator - Iterates through the member initialization
+  /// arguments.
+  typedef Expr * const * arg_const_iterator;
+
+  /// isBaseInitializer - Returns true when this initializer is
+  /// initializing a base class.
+  bool isBaseInitializer() const { return (BaseOrMember & 0x1) != 0; }
+
+  /// isMemberInitializer - Returns true when this initializer is
+  /// initializing a non-static data member.
+  bool isMemberInitializer() const { return (BaseOrMember & 0x1) == 0; }
+
+  /// getBaseClass - If this is a base class initializer, returns the
+  /// type used to specify the initializer. The resulting type will be
+  /// a class type or a typedef of a class type. If this is not a base
+  /// class initializer, returns NULL.
+  Type *getBaseClass() { 
+    if (isBaseInitializer()) 
+      return reinterpret_cast<Type*>(BaseOrMember & ~0x01);
+    else
+      return 0;
+  }
+
+  /// getBaseClass - If this is a base class initializer, returns the
+  /// type used to specify the initializer. The resulting type will be
+  /// a class type or a typedef of a class type. If this is not a base
+  /// class initializer, returns NULL.
+  const Type *getBaseClass() const { 
+    if (isBaseInitializer()) 
+      return reinterpret_cast<const Type*>(BaseOrMember & ~0x01);
+    else
+      return 0;
+  }
+
+  /// getMember - If this is a member initializer, returns the
+  /// declaration of the non-static data member being
+  /// initialized. Otherwise, returns NULL.
+  CXXFieldDecl *getMember() { 
+    if (isMemberInitializer())
+      return reinterpret_cast<CXXFieldDecl *>(BaseOrMember); 
+    else
+      return 0;
+  }
+
+  /// begin() - Retrieve an iterator to the first initializer argument.
+  arg_iterator       begin()       { return Args; }
+  /// begin() - Retrieve an iterator to the first initializer argument.
+  arg_const_iterator begin() const { return Args; }
+
+  /// end() - Retrieve an iterator past the last initializer argument.
+  arg_iterator       end()       { return Args + NumArgs; }
+  /// end() - Retrieve an iterator past the last initializer argument.
+  arg_const_iterator end() const { return Args + NumArgs; }
+
+  /// getNumArgs - Determine the number of arguments used to
+  /// initialize the member or base.
+  unsigned getNumArgs() const { return NumArgs; }
+};
+
 /// CXXConstructorDecl - Represents a C++ constructor within a
 /// class. For example:
 /// 

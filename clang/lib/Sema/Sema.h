@@ -809,6 +809,15 @@ public:
                                            Declarator &D, ExprTy *BitfieldWidth,
                                            ExprTy *Init, DeclTy *LastInGroup);
 
+  virtual MemInitResult ActOnMemInitializer(DeclTy *ConstructorD,
+                                            Scope *S,
+                                            IdentifierInfo *MemberOrBase,
+                                            SourceLocation IdLoc,
+                                            SourceLocation LParenLoc,
+                                            ExprTy **Args, unsigned NumArgs,
+                                            SourceLocation *CommaLocs,
+                                            SourceLocation RParenLoc);
+
   void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
 
   virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,

@@ -23,7 +23,8 @@ Parser::DeclTy *
 Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "This isn't a function declarator!");
-  assert(Tok.is(tok::l_brace) && "Current token not a '{'!");
+  assert((Tok.is(tok::l_brace) || Tok.is(tok::colon)) && 
+         "Current token not a '{' or ':'!");
 
   DeclTy *FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 0, 0, 0);
 
@@ -32,9 +33,16 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
   getCurTopClassStack().push(LexedMethod(FnD));
   TokensTy &Toks = getCurTopClassStack().top().Toks;
 
-  // Begin by storing the '{' token.
-  Toks.push_back(Tok);
-  ConsumeBrace();
+  // We may have a constructor initializer here.
+  if (Tok.is(tok::colon)) {
+    // Consume everything up to (and including) the left brace.
+    ConsumeAndStoreUntil(tok::l_brace, Toks);
+  } else {
+    // Begin by storing the '{' token. 
+    Toks.push_back(Tok);
+    ConsumeBrace();
+  }
+  // Consume everything up to (and including) the matching right brace.
   ConsumeAndStoreUntil(tok::r_brace, Toks);
 
   return FnD;
@@ -55,12 +63,16 @@ void Parser::ParseLexedMethodDefs() {
 
     // Consume the previously pushed token.
     ConsumeAnyToken();
-    assert(Tok.is(tok::l_brace) && "Inline method not starting with '{'");
+    assert((Tok.is(tok::l_brace) || Tok.is(tok::colon)) && 
+           "Inline method not starting with '{' or ':'");
 
     // Parse the method body. Function body parsing code is similar enough
     // to be re-used for method bodies as well.
     EnterScope(Scope::FnScope|Scope::DeclScope);
     Actions.ActOnStartOfFunctionDef(CurScope, LM.D);
+
+    if (Tok.is(tok::colon))
+      ParseConstructorInitializer(LM.D);
 
     ParseFunctionStatementBody(LM.D, Tok.getLocation(), Tok.getLocation());
 

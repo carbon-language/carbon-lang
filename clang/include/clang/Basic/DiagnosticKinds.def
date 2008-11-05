@@ -562,6 +562,8 @@ DIAG(warn_statement_disambiguation, WARNING,
      "statement was disambiguated as %0")
 DIAG(warn_parens_disambiguated_as_function_decl, WARNING,
      "parentheses were disambiguated as a function declarator")
+DIAG(err_expected_member_or_base_name, ERROR,
+     "expected class member or base class name")
 
 // Language specific pragmas
 
@@ -1239,6 +1241,14 @@ DIAG(err_expected_class_name, ERROR,
      "expected class name")
 DIAG(err_anon_type_definition, ERROR,
      "declaration of anonymous %0 must be a definition")
+
+// C++ member initializers.
+DIAG(err_mem_init_not_member_or_class, ERROR,
+     "member initializer '%0' does not name a non-static data member or base class")
+DIAG(err_base_init_does_not_name_class, ERROR,
+     "constructor initializer '%0' does not name a class")
+DIAG(err_base_init_direct_and_virtual, ERROR,
+     "base class initializer '%0' names both a direct base class and an inherited virtual base class")
 
 // Derived classes.
 DIAG(err_dup_virtual, ERROR,

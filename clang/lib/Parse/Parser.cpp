@@ -481,6 +481,10 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
 ///         decl-specs      declarator declaration-list[opt] compound-statement
 /// [C90] function-definition: [C99 6.7.1] - implicit int result
 /// [C90]   decl-specs[opt] declarator declaration-list[opt] compound-statement
+/// [C++] function-definition: [C++ 8.4]
+///         decl-specifier-seq[opt] declarator ctor-initializer[opt] function-body
+/// [C++] function-definition: [C++ 8.4]
+///         decl-specifier-seq[opt] declarator function-try-block [TODO]
 ///
 Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   const DeclaratorChunk &FnTypeInfo = D.getTypeObject(0);
@@ -504,8 +508,13 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   if (!FTI.hasPrototype && FTI.NumArgs != 0)
     ParseKNRParamDeclarations(D);
 
-  // We should have an opening brace now.
-  if (Tok.isNot(tok::l_brace)) {
+  if (getLang().CPlusPlus && Tok.is(tok::colon)) {
+    
+  }
+
+  // We should have either an opening brace or, in a C++ constructor,
+  // we may have a colon.
+  if (Tok.isNot(tok::l_brace) && Tok.isNot(tok::colon)) {
     Diag(Tok, diag::err_expected_fn_body);
 
     // Skip over garbage, until we get to '{'.  Don't eat the '{'.
@@ -516,8 +525,6 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
       return 0;
   }
 
-  SourceLocation BraceLoc = Tok.getLocation();
-
   // Enter a scope for the function body.
   EnterScope(Scope::FnScope|Scope::DeclScope);
 
@@ -525,6 +532,12 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   // specified Declarator for the function.
   DeclTy *Res = Actions.ActOnStartOfFunctionDef(CurScope, D);
 
+  // If we have a colon, then we're probably parsing a C++
+  // ctor-initializer.
+  if (Tok.is(tok::colon))
+    ParseConstructorInitializer(Res);
+
+  SourceLocation BraceLoc = Tok.getLocation();
   return ParseFunctionStatementBody(Res, BraceLoc, BraceLoc);
 }
 

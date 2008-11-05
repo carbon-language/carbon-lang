@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInherit.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/TypeOrdering.h"
@@ -542,6 +543,111 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   }
   return Member;
 }
+
+/// ActOnMemInitializer - Handle a C++ member initializer.
+Sema::MemInitResult 
+Sema::ActOnMemInitializer(DeclTy *ConstructorD,
+                          Scope *S,
+                          IdentifierInfo *MemberOrBase,
+                          SourceLocation IdLoc,
+                          SourceLocation LParenLoc,
+                          ExprTy **Args, unsigned NumArgs,
+                          SourceLocation *CommaLocs,
+                          SourceLocation RParenLoc) {
+  CXXConstructorDecl *Constructor 
+    = dyn_cast<CXXConstructorDecl>((Decl*)ConstructorD);
+  if (!Constructor) {
+    // The user wrote a constructor initializer on a function that is
+    // not a C++ constructor. Ignore the error for now, because we may
+    // have more member initializers coming; we'll diagnose it just
+    // once in ActOnMemInitializers.
+    return true;
+  }
+
+  CXXRecordDecl *ClassDecl = Constructor->getParent();
+
+  // C++ [class.base.init]p2:
+  //   Names in a mem-initializer-id are looked up in the scope of the
+  //   constructor’s class and, if not found in that scope, are looked
+  //   up in the scope containing the constructor’s
+  //   definition. [Note: if the constructor’s class contains a member
+  //   with the same name as a direct or virtual base class of the
+  //   class, a mem-initializer-id naming the member or base class and
+  //   composed of a single identifier refers to the class member. A
+  //   mem-initializer-id for the hidden base class may be specified
+  //   using a qualified name. ]
+  // Look for a member, first.
+  CXXFieldDecl *Member = ClassDecl->getMember(MemberOrBase);
+
+  // FIXME: Handle members of an anonymous union.
+
+  if (Member) {
+    // FIXME: Perform direct initialization of the member.
+    return new CXXBaseOrMemberInitializer(Member, (Expr **)Args, NumArgs);
+  }
+
+  // It didn't name a member, so see if it names a class.
+  TypeTy *BaseTy = isTypeName(*MemberOrBase, S);
+  if (!BaseTy)
+    return Diag(IdLoc, diag::err_mem_init_not_member_or_class,
+                MemberOrBase->getName(), SourceRange(IdLoc, RParenLoc));
+  
+  QualType BaseType = Context.getTypeDeclType((TypeDecl *)BaseTy);
+  if (!BaseType->isRecordType())
+    return Diag(IdLoc, diag::err_base_init_does_not_name_class,
+                BaseType.getAsString(), SourceRange(IdLoc, RParenLoc));
+
+  // C++ [class.base.init]p2:
+  //   [...] Unless the mem-initializer-id names a nonstatic data
+  //   member of the constructor’s class or a direct or virtual base
+  //   of that class, the mem-initializer is ill-formed. A
+  //   mem-initializer-list can initialize a base class using any
+  //   name that denotes that base class type.
+  
+  // First, check for a direct base class.
+  const CXXBaseSpecifier *DirectBaseSpec = 0;
+  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    if (Context.getCanonicalType(BaseType).getUnqualifiedType() == 
+        Context.getCanonicalType(Base->getType()).getUnqualifiedType()) {
+      // We found a direct base of this type. That's what we're
+      // initializing.
+      DirectBaseSpec = &*Base;
+      break;
+    }
+  }
+  
+  // Check for a virtual base class.
+  // FIXME: We might be able to short-circuit this if we know in
+  // advance that there are no virtual bases.
+  const CXXBaseSpecifier *VirtualBaseSpec = 0;
+  if (!DirectBaseSpec || !DirectBaseSpec->isVirtual()) {
+    // We haven't found a base yet; search the class hierarchy for a
+    // virtual base class.
+    BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
+                    /*DetectVirtual=*/false);
+    if (IsDerivedFrom(Context.getTypeDeclType(ClassDecl), BaseType, Paths)) {
+      for (BasePaths::paths_iterator Path = Paths.begin(); 
+           Path != Paths.end(); ++Path) {
+        if (Path->back().Base->isVirtual()) {
+          VirtualBaseSpec = Path->back().Base;
+          break;
+        }
+      }
+    }
+  }
+
+  // C++ [base.class.init]p2:
+  //   If a mem-initializer-id is ambiguous because it designates both
+  //   a direct non-virtual base class and an inherited virtual base
+  //   class, the mem-initializer is ill-formed.
+  if (DirectBaseSpec && VirtualBaseSpec)
+    return Diag(IdLoc, diag::err_base_init_direct_and_virtual,
+                MemberOrBase->getName(), SourceRange(IdLoc, RParenLoc));
+
+  return new CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, NumArgs);
+}
+
 
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                              DeclTy *TagDecl,

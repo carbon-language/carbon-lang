@@ -109,6 +109,39 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   return C.getPointerType(ClassTy).withConst();
 }
 
+CXXBaseOrMemberInitializer::
+CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs) 
+  : Args(0), NumArgs(0) {
+  BaseOrMember = reinterpret_cast<uintptr_t>(BaseType.getTypePtr());
+  assert((BaseOrMember & 0x01) == 0 && "Invalid base class type pointer");
+  BaseOrMember |= 0x01;
+  
+  if (NumArgs > 0) {
+    this->NumArgs = NumArgs;
+    this->Args = new Expr*[NumArgs];
+    for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
+      this->Args[Idx] = Args[Idx];
+  }
+}
+
+CXXBaseOrMemberInitializer::
+CXXBaseOrMemberInitializer(CXXFieldDecl *Member, Expr **Args, unsigned NumArgs)
+  : Args(0), NumArgs(0) {
+  BaseOrMember = reinterpret_cast<uintptr_t>(Member);
+  assert((BaseOrMember & 0x01) == 0 && "Invalid member pointer");  
+
+  if (NumArgs > 0) {
+    this->NumArgs = NumArgs;
+    this->Args = new Expr*[NumArgs];
+    for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
+      this->Args[Idx] = Args[Idx];
+  }
+}
+
+CXXBaseOrMemberInitializer::~CXXBaseOrMemberInitializer() {
+  delete [] Args;
+}
+
 CXXConstructorDecl *
 CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                            SourceLocation L, IdentifierInfo *Id,

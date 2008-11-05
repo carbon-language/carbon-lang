@@ -74,7 +74,8 @@ public:
   typedef Action::DeclTy DeclTy;
   typedef Action::TypeTy TypeTy;
   typedef Action::BaseTy BaseTy;
-  
+  typedef Action::MemInitTy MemInitTy;
+
   // Parsing methods.
   
   /// ParseTranslationUnit - All in one method that initializes parses, and
@@ -314,10 +315,11 @@ private:
   bool SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
                  bool StopAtSemi = true, bool DontConsume = false);
  
-  typedef Action::ExprResult ExprResult;
-  typedef Action::StmtResult StmtResult;
-  typedef Action::BaseResult BaseResult;
-    
+  typedef Action::ExprResult    ExprResult;
+  typedef Action::StmtResult    StmtResult;
+  typedef Action::BaseResult    BaseResult;
+  typedef Action::MemInitResult MemInitResult;
+
   //===--------------------------------------------------------------------===//
   // Lexing and parsing of C++ inline methods.
 
@@ -717,6 +719,8 @@ private:
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    DeclTy *TagDecl);
   DeclTy *ParseCXXClassMemberDeclaration(AccessSpecifier AS);
+  void ParseConstructorInitializer(DeclTy *ConstructorDecl);
+  MemInitResult ParseMemInitializer(DeclTy *ConstructorDecl);
 
   //===--------------------------------------------------------------------===//
   // C++ 10: Derived classes [class.derived]
