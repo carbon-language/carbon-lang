@@ -800,79 +800,16 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
 
     bool isInline = D.getDeclSpec().isInlineSpecified();
-    bool isVirtual = D.getDeclSpec().isVirtualSpecified();
+    // bool isVirtual = D.getDeclSpec().isVirtualSpecified();
     bool isExplicit = D.getDeclSpec().isExplicitSpecified();
 
     FunctionDecl *NewFD;
-    if (isCurrentClassName(*II, S)) {
+    if (D.getKind() == Declarator::DK_Constructor) {
       // This is a C++ constructor declaration.
       assert(D.getContext() == Declarator::MemberContext &&
              "Constructors can only be declared in a member context");
 
-      // C++ [class.ctor]p3:
-      //   A constructor shall not be virtual (10.3) or static (9.4). A
-      //   constructor can be invoked for a const, volatile or const
-      //   volatile object. A constructor shall not be declared const,
-      //   volatile, or const volatile (9.3.2).
-      if (isVirtual) {
-        Diag(D.getIdentifierLoc(),
-             diag::err_constructor_cannot_be,
-             "virtual",
-             SourceRange(D.getDeclSpec().getVirtualSpecLoc()),
-             SourceRange(D.getIdentifierLoc()));
-        isVirtual = false;
-      }
-      if (SC == FunctionDecl::Static) {
-        Diag(D.getIdentifierLoc(),
-             diag::err_constructor_cannot_be,
-             "static",
-             SourceRange(D.getDeclSpec().getStorageClassSpecLoc()),
-             SourceRange(D.getIdentifierLoc()));
-        isVirtual = false;
-      }
-      if (D.getDeclSpec().hasTypeSpecifier()) {
-        // Constructors don't have return types, but the parser will
-        // happily parse something like:
-        //
-        //   class X {
-        //     float X(float);
-        //   };
-        //
-        // The return type will be eliminated later.
-        Diag(D.getIdentifierLoc(),
-             diag::err_constructor_return_type,
-             SourceRange(D.getDeclSpec().getTypeSpecTypeLoc()),
-             SourceRange(D.getIdentifierLoc()));
-      } 
-      if (R->getAsFunctionTypeProto()->getTypeQuals() != 0) {
-        DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
-        if (FTI.TypeQuals & QualType::Const)
-          Diag(D.getIdentifierLoc(),
-               diag::err_invalid_qualified_constructor,
-               "const",
-               SourceRange(D.getIdentifierLoc()));
-        if (FTI.TypeQuals & QualType::Volatile)
-          Diag(D.getIdentifierLoc(),
-               diag::err_invalid_qualified_constructor,
-               "volatile",
-               SourceRange(D.getIdentifierLoc()));
-        if (FTI.TypeQuals & QualType::Restrict)
-          Diag(D.getIdentifierLoc(),
-               diag::err_invalid_qualified_constructor,
-               "restrict",
-               SourceRange(D.getIdentifierLoc()));
-      }
-      
-      // Rebuild the function type "R" without any type qualifiers (in
-      // case any of the errors above fired) and with "void" as the
-      // return type, since constructors don't have return types. We
-      // *always* have to do this, because GetTypeForDeclarator will
-      // put in a result type of "int" when none was specified.
-      const FunctionTypeProto *Proto = R->getAsFunctionTypeProto();
-      R = Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
-                                  Proto->getNumArgs(),
-                                  Proto->isVariadic(),
-                                  0);
+      bool isInvalidDecl = CheckConstructorDeclarator(D, R, SC);
 
       // Create the new declaration
       NewFD = CXXConstructorDecl::Create(Context, 
@@ -881,6 +818,23 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
                                          isExplicit, isInline,
                                          /*isImplicitlyDeclared=*/false);
 
+      if (isInvalidDecl)
+        NewFD->setInvalidDecl();
+    } else if (D.getKind() == Declarator::DK_Destructor) {
+      // This is a C++ destructor declaration.
+      assert(D.getContext() == Declarator::MemberContext &&
+             "Destructor can only be declared in a member context");
+
+      bool isInvalidDecl = CheckDestructorDeclarator(D, R, SC);
+
+      NewFD = CXXDestructorDecl::Create(Context,
+                                        cast<CXXRecordDecl>(CurContext),
+                                        D.getIdentifierLoc(), II, R, 
+                                        isInline,
+                                        /*isImplicitlyDeclared=*/false);
+
+      if (isInvalidDecl)
+        NewFD->setInvalidDecl();
     } else if (D.getContext() == Declarator::MemberContext) {
       // This is a C++ method declaration.
       NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
@@ -969,12 +923,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       }
     }
 
-    // C++ constructors are handled by a separate routine, since they
-    // don't require any declaration merging (C++ [class.mfct]p2) and
-    // they aren't ever pushed into scope, because they can't be found
-    // by name lookup anyway (C++ [class.ctor]p2).
-    if (CXXConstructorDecl *ConDecl = dyn_cast<CXXConstructorDecl>(NewFD))
-      return ActOnConstructorDeclarator(ConDecl);
+    // C++ constructors and destructors are handled by separate
+    // routines, since they don't require any declaration merging (C++
+    // [class.mfct]p2) and they aren't ever pushed into scope, because
+    // they can't be found by name lookup anyway (C++ [class.ctor]p2).
+    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD))
+      return ActOnConstructorDeclarator(Constructor);
+    else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(NewFD))
+      return ActOnDestructorDeclarator(Destructor);
 
     // Merge the decl with the existing one if appropriate. Since C functions
     // are in a flat namespace, make sure we consider decls in outer scopes.

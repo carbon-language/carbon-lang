@@ -238,6 +238,7 @@ void Decl::addDeclKind(Kind k) {
   // FIXME: Statistics for C++ decls.
   case CXXMethod:
   case CXXConstructor:
+  case CXXDestructor:
   case CXXClassVar:
     break;
   }

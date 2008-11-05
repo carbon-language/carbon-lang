@@ -20,6 +20,7 @@
 namespace clang {
 class CXXRecordDecl;
 class CXXConstructorDecl;
+class CXXDestructorDecl;
 
 /// OverloadedFunctionDecl - An instance of this class represents a
 /// set of overloaded functions. All of the functions have the same
@@ -230,11 +231,15 @@ class CXXRecordDecl : public RecordDecl, public DeclContext {
   /// CXXConstructorDecl.
   OverloadedFunctionDecl Constructors;
 
+  // Destructor - The destructor of this C++ class.
+  CXXDestructorDecl *Destructor;
+
   CXXRecordDecl(TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id) 
     : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord),
       UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
-      Aggregate(true), Bases(0), NumBases(0), Constructors(DC, Id) { }
+      Aggregate(true), Bases(0), NumBases(0), Constructors(DC, Id),
+      Destructor(0) { }
 
   ~CXXRecordDecl();
 
@@ -301,6 +306,15 @@ public:
   /// will be implicitly declared.
   bool hasUserDeclaredCopyConstructor() const {
     return UserDeclaredCopyConstructor;
+  }
+
+  /// getDestructor - Retrieve the destructor for this class. 
+  CXXDestructorDecl *getDestructor() const { return Destructor; }
+
+  /// setDestructor - Set the destructor for this class.
+  void setDestructor(CXXDestructorDecl *Destructor) {
+    assert(!this->Destructor && "Already have a destructor!");
+    this->Destructor = Destructor;
   }
 
   /// isAggregate - Whether this class is an aggregate (C++
@@ -618,6 +632,80 @@ public:
   /// CreateImpl - Deserialize a CXXConstructorDecl.  Called by Decl::Create.
   // FIXME: Implement this.
   static CXXConstructorDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// CXXDestructorDecl - Represents a C++ destructor within a
+/// class. For example:
+/// 
+/// @code
+/// class X {
+/// public:
+///   ~X(); // represented by a CXXDestructorDecl.
+/// };
+/// @endcode
+class CXXDestructorDecl : public CXXMethodDecl {
+  /// ImplicitlyDeclared - Whether this destructor was implicitly
+  /// declared. When false, the destructor was declared by the user.
+  bool ImplicitlyDeclared : 1;
+
+  /// ImplicitlyDefined - Whether this destructor was implicitly
+  /// defined by the compiler. When false, the destructor was defined
+  /// by the user. In C++03, this flag will have the same value as
+  /// ImplicitlyDeclared. In C++0x, however, a destructor that is
+  /// explicitly defaulted (i.e., defined with " = default") will have
+  /// @c !ImplicitlyDeclared && ImplicitlyDefined.
+  bool ImplicitlyDefined : 1;
+
+  CXXDestructorDecl(CXXRecordDecl *RD, SourceLocation L,
+                    IdentifierInfo *Id, QualType T,
+                    bool isInline, bool isImplicitlyDeclared)
+    : CXXMethodDecl(CXXDestructor, RD, L, Id, T, false, isInline, 
+                    /*PrevDecl=*/0),
+      ImplicitlyDeclared(isImplicitlyDeclared),
+      ImplicitlyDefined(false) { }
+
+public:
+  static CXXDestructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
+                                   SourceLocation L, IdentifierInfo *Id,
+                                   QualType T, bool isInline, 
+                                   bool isImplicitlyDeclared);
+
+  /// isImplicitlyDeclared - Whether this destructor was implicitly
+  /// declared. If false, then this destructor was explicitly
+  /// declared by the user.
+  bool isImplicitlyDeclared() const { return ImplicitlyDeclared; }
+
+  /// isImplicitlyDefined - Whether this destructor was implicitly
+  /// defined. If false, then this destructor was defined by the
+  /// user. This operation can only be invoked if the destructor has
+  /// already been defined.
+  bool isImplicitlyDefined() const { 
+    assert(getBody() != 0 && 
+           "Can only get the implicit-definition flag once the destructor has been defined");
+    return ImplicitlyDefined; 
+  }
+
+  /// setImplicitlyDefined - Set whether this destructor was
+  /// implicitly defined or not.
+  void setImplicitlyDefined(bool ID) { 
+    assert(getBody() != 0 && 
+           "Can only set the implicit-definition flag once the destructor has been defined");
+    ImplicitlyDefined = ID; 
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { 
+    return D->getKind() == CXXDestructor;
+  }
+  static bool classof(const CXXDestructorDecl *D) { return true; }
+
+  /// EmitImpl - Serialize this CXXDestructorDecl.  Called by Decl::Emit.
+  // FIXME: Implement this.
+  //virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize a CXXDestructorDecl.  Called by Decl::Create.
+  // FIXME: Implement this.
+  static CXXDestructorDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXClassVarDecl - Represents a static data member of a struct/union/class.

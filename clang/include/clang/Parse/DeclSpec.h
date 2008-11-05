@@ -604,11 +604,23 @@ public:
     ForContext,          // Declaration within first part of a for loop.
     ConditionContext     // Condition declaration in a C++ if/switch/while/for.
   };
+
+  /// DeclaratorKind - The kind of declarator this represents.
+  enum DeclaratorKind {
+    DK_Abstract,         // An abstract declarator (has no identifier)
+    DK_Normal,           // A normal declarator (has an identifier). 
+    DK_Constructor,      // A C++ constructor (identifier is the class name)
+    DK_Destructor        // A C++ destructor  (has no identifier)
+  };
+
 private:
   /// Context - Where we are parsing this declarator.
   ///
   TheContext Context;
-  
+
+  /// Kind - What kind of declarator this is.  
+  DeclaratorKind Kind;
+
   /// DeclTypeInfo - This holds each type that the declarator includes as it is
   /// parsed.  This is pushed from the identifier out, which means that element
   /// #0 will be the most closely bound to the identifier, and
@@ -626,11 +638,15 @@ private:
   
   /// AsmLabel - The asm label, if specified.
   Action::ExprTy *AsmLabel;
-  
+
+  // When Kind is DK_Constructor or DK_Destructor, the type associated
+  // with the constructor or destructor.
+  Action::TypeTy *Type;
+
 public:
   Declarator(const DeclSpec &ds, TheContext C)
-    : DS(ds), Identifier(0), Context(C), InvalidType(false),
-      GroupingParens(false), AttrList(0), AsmLabel(0) {
+    : DS(ds), Identifier(0), Context(C), Kind(DK_Abstract), InvalidType(false),
+      GroupingParens(false), AttrList(0), AsmLabel(0), Type(0) {
   }
   
   ~Declarator() {
@@ -649,7 +665,8 @@ public:
   DeclSpec &getMutableDeclSpec() { return const_cast<DeclSpec &>(DS); }
 
   TheContext getContext() const { return Context; }
-  
+  DeclaratorKind getKind() const { return Kind; }
+
   // getSourceRange - FIXME: This should be implemented.
   const SourceRange getSourceRange() const { return SourceRange(); }
   
@@ -657,7 +674,8 @@ public:
   void clear() {
     Identifier = 0;
     IdentifierLoc = SourceLocation();
-    
+    Kind = DK_Abstract;
+
     for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i) {
       if (DeclTypeInfo[i].Kind == DeclaratorChunk::Function)
         DeclTypeInfo[i].Fun.destroy();
@@ -676,6 +694,7 @@ public:
     delete AttrList;
     AttrList = 0;
     AsmLabel = 0;
+    Type = 0;
   }
   
   /// mayOmitIdentifier - Return true if the identifier is either optional or
@@ -710,8 +729,32 @@ public:
   void SetIdentifier(IdentifierInfo *ID, SourceLocation Loc) {
     Identifier = ID;
     IdentifierLoc = Loc;
+    if (ID)
+      Kind = DK_Normal;
+    else
+      Kind = DK_Abstract;
   }
   
+  /// SetConstructor - Set this declarator to be a C++ constructor
+  /// declarator.
+  void SetConstructor(Action::TypeTy *Ty, IdentifierInfo *ID, 
+                      SourceLocation Loc) {
+    Identifier = ID;
+    IdentifierLoc = Loc;
+    Kind = DK_Constructor;
+    Type = Ty;
+  }
+
+  /// SetDestructor - Set this declarator to be a C++ destructor
+  /// declarator.
+  void SetDestructor(Action::TypeTy *Ty, IdentifierInfo *ID, 
+                     SourceLocation Loc) {
+    Identifier = ID;
+    IdentifierLoc = Loc;
+    Kind = DK_Destructor;
+    Type = Ty;
+  }
+
   void AddTypeInfo(const DeclaratorChunk &TI) {
     DeclTypeInfo.push_back(TI);
   }
@@ -758,6 +801,8 @@ public:
 
   void setAsmLabel(Action::ExprTy *E) { AsmLabel = E; }
   Action::ExprTy *getAsmLabel() const { return AsmLabel; }
+
+  Action::TypeTy *getDeclaratorIdType() const { return Type; }
 
   void setInvalidType(bool flag) { InvalidType = flag; }
   bool getInvalidType() const { return InvalidType; }

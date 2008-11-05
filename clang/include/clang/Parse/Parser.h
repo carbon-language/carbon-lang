@@ -715,6 +715,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
+  TypeTy *ParseClassName();
   void ParseClassSpecifier(DeclSpec &DS);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    DeclTy *TagDecl);

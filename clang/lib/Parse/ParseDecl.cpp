@@ -1243,7 +1243,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
 
 /// ParseDirectDeclarator
 ///       direct-declarator: [C99 6.7.5]
-///         identifier
+/// [C99]   identifier
 ///         '(' declarator ')'
 /// [GNU]   '(' attributes declarator ')'
 /// [C90]   direct-declarator '[' constant-expression[opt] ']'
@@ -1258,16 +1258,53 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
 /// [C++]   direct-declarator '(' parameter-declaration-clause ')'
 ///                    cv-qualifier-seq[opt] exception-specification[opt]
 /// [C++]   declarator-id
-//
-//        declarator-id: [C++ 8]
-//          id-expression
-//          '::'[opt] nested-name-specifier[opt] type-name
+///
+///       declarator-id: [C++ 8]
+///         id-expression
+///         '::'[opt] nested-name-specifier[opt] type-name
+///
+///       id-expression: [C++ 5.1]
+///         unqualified-id
+///         qualified-id            [TODO]
+///
+///       unqualified-id: [C++ 5.1]
+///         identifier 
+///         operator-function-id    [TODO]
+///         conversion-function-id  [TODO]
+///          '~' class-name         
+///         template-id             [TODO]
 void Parser::ParseDirectDeclarator(Declarator &D) {
   // Parse the first direct-declarator seen.
   if (Tok.is(tok::identifier) && D.mayHaveIdentifier()) {
     assert(Tok.getIdentifierInfo() && "Not an identifier?");
-    D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
+    // Determine whether this identifier is a C++ constructor name or
+    // a normal identifier.
+    if (getLang().CPlusPlus && 
+        CurScope->isCXXClassScope() &&
+        Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope))
+      D.SetConstructor(Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope),
+                       Tok.getIdentifierInfo(), Tok.getLocation());
+    else
+      D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
     ConsumeToken();
+  } else if (getLang().CPlusPlus && Tok.is(tok::tilde) && 
+             CurScope->isCXXClassScope() && D.mayHaveIdentifier()) {
+    // This should be a C++ destructor.
+    SourceLocation TildeLoc = ConsumeToken();
+
+    // Use the next identifier and "~" to form a name for the
+    // destructor. This is useful both for diagnostics and for
+    // correctness of the parser, since we use presence/absence of the
+    // identifier to determine what we parsed.
+    // FIXME: We could end up with a template-id here, once we parse
+    // templates, and will have to do something different to form the
+    // name of the destructor.
+    assert(Tok.is(tok::identifier) && "Expected identifier");
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+    II = &PP.getIdentifierTable().get(std::string("~") + II->getName());
+
+    if (TypeTy *Type = ParseClassName())
+      D.SetDestructor(Type, II, TildeLoc);
   } else if (Tok.is(tok::l_paren)) {
     // direct-declarator: '(' declarator ')'
     // direct-declarator: '(' attributes declarator ')'

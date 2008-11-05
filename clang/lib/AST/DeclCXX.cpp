@@ -44,6 +44,10 @@ void CXXRecordDecl::Destroy(ASTContext &C) {
          = Constructors.function_begin();
        func != Constructors.function_end(); ++func)
     (*func)->Destroy(C);
+
+  if (isDefinition())
+    Destructor->Destroy(C);
+
   RecordDecl::Destroy(C);
 }
 
@@ -216,6 +220,16 @@ bool CXXConstructorDecl::isConvertingConstructor() const {
           getType()->getAsFunctionTypeProto()->isVariadic()) ||
          (getNumParams() == 1) ||
          (getNumParams() > 1 && getParamDecl(1)->getDefaultArg() != 0);
+}
+
+CXXDestructorDecl *
+CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
+                          SourceLocation L, IdentifierInfo *Id,
+                          QualType T, bool isInline, 
+                          bool isImplicitlyDeclared) {
+  void *Mem = C.getAllocator().Allocate<CXXDestructorDecl>();
+  return new (Mem) CXXDestructorDecl(RD, L, Id, T, isInline, 
+                                     isImplicitlyDeclared);
 }
 
 CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,

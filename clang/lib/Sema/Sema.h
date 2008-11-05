@@ -836,7 +836,13 @@ public:
 
   virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl);
   
-  virtual DeclTy *ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl);
+  
+  bool CheckConstructorDeclarator(Declarator &D, QualType &R,
+                                  FunctionDecl::StorageClass& SC);
+  bool CheckDestructorDeclarator(Declarator &D, QualType &R,
+                                 FunctionDecl::StorageClass& SC);
+  DeclTy *ActOnConstructorDeclarator(CXXConstructorDecl *Constructor);
+  DeclTy *ActOnDestructorDeclarator(CXXDestructorDecl *Destructor);
 
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes

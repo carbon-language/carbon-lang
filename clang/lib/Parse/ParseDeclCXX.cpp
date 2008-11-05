@@ -128,6 +128,37 @@ Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
   return Actions.ActOnLinkageSpec(Loc, LBrace, RBrace, LangBufPtr, StrSize, D);
 }
 
+/// ParseClassName - Parse a C++ class-name, which names a class. Note
+/// that we only check that the result names a type; semantic analysis
+/// will need to verify that the type names a class. The result is
+/// either a type or NULL, dependending on whether a type name was
+/// found.
+///
+///       class-name: [C++ 9.1]
+///         identifier
+///         template-id   [TODO]
+/// 
+Parser::TypeTy *Parser::ParseClassName() {
+  // Parse the class-name.
+  // FIXME: Alternatively, parse a simple-template-id.
+  if (Tok.isNot(tok::identifier)) {
+    Diag(Tok.getLocation(), diag::err_expected_class_name);
+    return 0;
+  }
+
+  // We have an identifier; check whether it is actually a type.
+  TypeTy *Type = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+  if (!Type) {
+    Diag(Tok.getLocation(), diag::err_expected_class_name);
+    return 0;
+  }
+
+  // Consume the identifier.
+  ConsumeToken();
+
+  return Type;
+}
+
 /// ParseClassSpecifier - Parse a C++ class-specifier [C++ class] or
 /// elaborated-type-specifier [C++ dcl.type.elab]; we can't tell which
 /// until we reach the start of a definition or see a token that
@@ -325,28 +356,16 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
 
   // FIXME: Parse optional '::' and optional nested-name-specifier.
 
-  // Parse the class-name.
-  // FIXME: Alternatively, parse a simple-template-id.
-  if (Tok.isNot(tok::identifier)) {
-    Diag(Tok.getLocation(), diag::err_expected_class_name);
-    return true;
-  }
-
-  // We have an identifier; check whether it is actually a type.
-  TypeTy *BaseType = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
-  if (!BaseType) {
-    Diag(Tok.getLocation(), diag::err_expected_class_name);
-    return true;
-  }
-
   // The location of the base class itself.
   SourceLocation BaseLoc = Tok.getLocation();
+
+  // Parse the class-name.
+  TypeTy *BaseType = ParseClassName();
+  if (!BaseType)
+    return true;
   
   // Find the complete source range for the base-specifier.  
   SourceRange Range(StartLoc, BaseLoc);
-  
-  // Consume the identifier token (finally!).
-  ConsumeToken();
   
   // Notify semantic analysis that we have parsed a complete
   // base-specifier.

@@ -383,6 +383,7 @@ void Sema::ActOnStartCXXClassDef(Scope *S, DeclTy *D, SourceLocation LBrace) {
     //   class itself; this is known as the injected-class-name. For
     //   purposes of access checking, the injected-class-name is treated
     //   as if it were a public member name.
+    // FIXME: this should probably have its own kind of type node.
     TypedefDecl *InjectedClassName 
       = TypedefDecl::Create(Context, Dcl, LBrace, Dcl->getIdentifier(),
                             Context.getTypeDeclType(Dcl), /*PrevDecl=*/0);
@@ -768,7 +769,25 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ClassDecl->addConstructor(Context, CopyConstructor);
   }
 
-  // FIXME: Implicit destructor
+  if (!ClassDecl->getDestructor()) {
+    // C++ [class.dtor]p2:
+    //   If a class has no user-declared destructor, a destructor is
+    //   declared implicitly. An implicitly-declared destructor is an
+    //   inline public member of its class.
+    std::string DestructorName = "~";
+    DestructorName += ClassDecl->getName();
+    CXXDestructorDecl *Destructor 
+      = CXXDestructorDecl::Create(Context, ClassDecl,
+                                  ClassDecl->getLocation(),
+                                  &PP.getIdentifierTable().get(DestructorName),
+                                  Context.getFunctionType(Context.VoidTy,
+                                                          0, 0, false, 0),
+                                  /*isInline=*/true,
+                                  /*isImplicitlyDeclared=*/true);
+    Destructor->setAccess(AS_public);
+    ClassDecl->setDestructor(Destructor);
+  }
+
   // FIXME: Implicit copy assignment operator
 }
 
@@ -781,6 +800,191 @@ void Sema::ActOnFinishCXXClassDef(DeclTy *D) {
   // Everything, including inline method definitions, have been parsed.
   // Let the consumer know of the new TagDecl definition.
   Consumer.HandleTagDeclDefinition(Rec);
+}
+
+/// CheckConstructorDeclarator - Called by ActOnDeclarator to check
+/// the well-formednes of the constructor declarator @p D with type @p
+/// R. If there are any errors in the declarator, this routine will
+/// emit diagnostics and return true. Otherwise, it will return
+/// false. Either way, the type @p R will be updated to reflect a
+/// well-formed type for the constructor.
+bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
+                                      FunctionDecl::StorageClass& SC) {
+  bool isVirtual = D.getDeclSpec().isVirtualSpecified();
+  bool isInvalid = false;
+
+  // C++ [class.ctor]p3:
+  //   A constructor shall not be virtual (10.3) or static (9.4). A
+  //   constructor can be invoked for a const, volatile or const
+  //   volatile object. A constructor shall not be declared const,
+  //   volatile, or const volatile (9.3.2).
+  if (isVirtual) {
+    Diag(D.getIdentifierLoc(),
+         diag::err_constructor_cannot_be,
+         "virtual",
+         SourceRange(D.getDeclSpec().getVirtualSpecLoc()),
+         SourceRange(D.getIdentifierLoc()));
+    isInvalid = true;
+  }
+  if (SC == FunctionDecl::Static) {
+    Diag(D.getIdentifierLoc(),
+         diag::err_constructor_cannot_be,
+         "static",
+         SourceRange(D.getDeclSpec().getStorageClassSpecLoc()),
+         SourceRange(D.getIdentifierLoc()));
+    isInvalid = true;
+    SC = FunctionDecl::None;
+  }
+  if (D.getDeclSpec().hasTypeSpecifier()) {
+    // Constructors don't have return types, but the parser will
+    // happily parse something like:
+    //
+    //   class X {
+    //     float X(float);
+    //   };
+    //
+    // The return type will be eliminated later.
+    Diag(D.getIdentifierLoc(),
+         diag::err_constructor_return_type,
+         SourceRange(D.getDeclSpec().getTypeSpecTypeLoc()),
+         SourceRange(D.getIdentifierLoc()));
+  } 
+  if (R->getAsFunctionTypeProto()->getTypeQuals() != 0) {
+    DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+    if (FTI.TypeQuals & QualType::Const)
+      Diag(D.getIdentifierLoc(),
+           diag::err_invalid_qualified_constructor,
+           "const",
+           SourceRange(D.getIdentifierLoc()));
+    if (FTI.TypeQuals & QualType::Volatile)
+      Diag(D.getIdentifierLoc(),
+           diag::err_invalid_qualified_constructor,
+           "volatile",
+           SourceRange(D.getIdentifierLoc()));
+    if (FTI.TypeQuals & QualType::Restrict)
+      Diag(D.getIdentifierLoc(),
+           diag::err_invalid_qualified_constructor,
+           "restrict",
+           SourceRange(D.getIdentifierLoc()));
+  }
+      
+  // Rebuild the function type "R" without any type qualifiers (in
+  // case any of the errors above fired) and with "void" as the
+  // return type, since constructors don't have return types. We
+  // *always* have to do this, because GetTypeForDeclarator will
+  // put in a result type of "int" when none was specified.
+  const FunctionTypeProto *Proto = R->getAsFunctionTypeProto();
+  R = Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
+                              Proto->getNumArgs(),
+                              Proto->isVariadic(),
+                              0);
+
+  return isInvalid;
+}
+
+/// CheckDestructorDeclarator - Called by ActOnDeclarator to check
+/// the well-formednes of the destructor declarator @p D with type @p
+/// R. If there are any errors in the declarator, this routine will
+/// emit diagnostics and return true. Otherwise, it will return
+/// false. Either way, the type @p R will be updated to reflect a
+/// well-formed type for the destructor.
+bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
+                                     FunctionDecl::StorageClass& SC) {
+  bool isInvalid = false;
+
+  // C++ [class.dtor]p1:
+  //   [...] A typedef-name that names a class is a class-name
+  //   (7.1.3); however, a typedef-name that names a class shall not
+  //   be used as the identifier in the declarator for a destructor
+  //   declaration.
+  TypeDecl *DeclaratorTypeD = (TypeDecl *)D.getDeclaratorIdType();
+  if (const TypedefDecl *TypedefD = dyn_cast<TypedefDecl>(DeclaratorTypeD)) {
+    if (TypedefD->getIdentifier() != 
+          cast<CXXRecordDecl>(CurContext)->getIdentifier()) {
+      // FIXME: This would be easier if we could just look at whether
+      // we found the injected-class-name.
+      Diag(D.getIdentifierLoc(), 
+           diag::err_destructor_typedef_name,
+           TypedefD->getName());
+      isInvalid = true;
+    }
+  }
+
+  // C++ [class.dtor]p2:
+  //   A destructor is used to destroy objects of its class type. A
+  //   destructor takes no parameters, and no return type can be
+  //   specified for it (not even void). The address of a destructor
+  //   shall not be taken. A destructor shall not be static. A
+  //   destructor can be invoked for a const, volatile or const
+  //   volatile object. A destructor shall not be declared const,
+  //   volatile or const volatile (9.3.2).
+  if (SC == FunctionDecl::Static) {
+    Diag(D.getIdentifierLoc(),
+         diag::err_destructor_cannot_be,
+         "static",
+         SourceRange(D.getDeclSpec().getStorageClassSpecLoc()),
+         SourceRange(D.getIdentifierLoc()));
+    isInvalid = true;
+    SC = FunctionDecl::None;
+  }
+  if (D.getDeclSpec().hasTypeSpecifier()) {
+    // Destructors don't have return types, but the parser will
+    // happily parse something like:
+    //
+    //   class X {
+    //     float ~X();
+    //   };
+    //
+    // The return type will be eliminated later.
+    Diag(D.getIdentifierLoc(),
+         diag::err_destructor_return_type,
+         SourceRange(D.getDeclSpec().getTypeSpecTypeLoc()),
+         SourceRange(D.getIdentifierLoc()));
+  }
+  if (R->getAsFunctionTypeProto()->getTypeQuals() != 0) {
+    DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+    if (FTI.TypeQuals & QualType::Const)
+      Diag(D.getIdentifierLoc(),
+           diag::err_invalid_qualified_destructor,
+           "const",
+           SourceRange(D.getIdentifierLoc()));
+    if (FTI.TypeQuals & QualType::Volatile)
+      Diag(D.getIdentifierLoc(),
+           diag::err_invalid_qualified_destructor,
+           "volatile",
+           SourceRange(D.getIdentifierLoc()));
+    if (FTI.TypeQuals & QualType::Restrict)
+      Diag(D.getIdentifierLoc(),
+           diag::err_invalid_qualified_destructor,
+           "restrict",
+           SourceRange(D.getIdentifierLoc()));
+  }
+
+  // Make sure we don't have any parameters.
+  if (R->getAsFunctionTypeProto()->getNumArgs() > 0) {
+    Diag(D.getIdentifierLoc(), diag::err_destructor_with_params);
+
+    // Delete the parameters.
+    DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+    if (FTI.NumArgs) {
+      delete [] FTI.ArgInfo;
+      FTI.NumArgs = 0;
+      FTI.ArgInfo = 0;
+    }
+  }
+
+  // Make sure the destructor isn't variadic.  
+  if (R->getAsFunctionTypeProto()->isVariadic())
+    Diag(D.getIdentifierLoc(), diag::err_destructor_variadic);
+
+  // Rebuild the function type "R" without any type qualifiers or
+  // parameters (in case any of the errors above fired) and with
+  // "void" as the return type, since destructors don't have return
+  // types. We *always* have to do this, because GetTypeForDeclarator
+  // will put in a result type of "int" when none was specified.
+  R = Context.getFunctionType(Context.VoidTy, 0, 0, false, 0);
+
+  return isInvalid;
 }
 
 /// ActOnConstructorDeclarator - Called by ActOnDeclarator to complete
@@ -837,7 +1041,7 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
            diag::err_constructor_byvalue_arg,
            SourceRange(ConDecl->getParamDecl(0)->getLocation()));
       ConDecl->setInvalidDecl();
-      return 0;
+      return ConDecl;
     }
   }
       
@@ -845,6 +1049,30 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
   // class.
   ClassDecl->addConstructor(Context, ConDecl);
   return (DeclTy *)ConDecl;
+}
+
+/// ActOnDestructorDeclarator - Called by ActOnDeclarator to complete
+/// the declaration of the given C++ @p Destructor. This routine is
+/// responsible for recording the destructor in the C++ class, if
+/// possible.
+Sema::DeclTy *Sema::ActOnDestructorDeclarator(CXXDestructorDecl *Destructor) {
+  assert(Destructor && "Expected to receive a destructor declaration");
+
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CurContext);
+
+  // Make sure we aren't redeclaring the destructor.
+  if (CXXDestructorDecl *PrevDestructor = ClassDecl->getDestructor()) {
+    Diag(Destructor->getLocation(), diag::err_destructor_redeclared);
+    Diag(PrevDestructor->getLocation(),
+         PrevDestructor->isThisDeclarationADefinition()?
+             diag::err_previous_definition
+           : diag::err_previous_declaration);
+    Destructor->setInvalidDecl();
+    return Destructor;
+  }
+
+  ClassDecl->setDestructor(Destructor);
+  return (DeclTy *)Destructor;
 }
 
 //===----------------------------------------------------------------------===//
