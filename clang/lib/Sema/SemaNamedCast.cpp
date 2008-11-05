@@ -216,7 +216,7 @@ Sema::CheckReinterpretCast(Expr *&SrcExpr, QualType DestType,
   // Note: Clang treats enumeration types as integral types. If this is ever
   // changed for C++, the additional check here will be redundant.
   if (DestType->isIntegralType() && !DestType->isEnumeralType()) {
-    assert(srcIsPtr);
+    assert(srcIsPtr && "One type must be a pointer");
     // C++ 5.2.10p4: A pointer can be explicitly converted to any integral
     //   type large enough to hold it.
     if (Context.getTypeSize(SrcType) > Context.getTypeSize(DestType)) {
@@ -227,7 +227,7 @@ Sema::CheckReinterpretCast(Expr *&SrcExpr, QualType DestType,
   }
 
   if (SrcType->isIntegralType() || SrcType->isEnumeralType()) {
-    assert(destIsPtr);
+    assert(destIsPtr && "One type must be a pointer");
     // C++ 5.2.10p5: A value of integral or enumeration type can be explicitly
     //   converted to a pointer.
     return;
