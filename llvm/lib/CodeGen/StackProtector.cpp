@@ -201,9 +201,9 @@ bool StackProtector::RequiresStackProtector() const {
              II = BB->begin(), IE = BB->end(); II != IE; ++II)
         if (AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
           if (ConstantInt *CI = dyn_cast<ConstantInt>(AI->getArraySize())) {
-            uint64_t Bytes = TD->getTypeSizeInBits(AI->getAllocatedType()) / 8;
-            const APInt &Size = CI->getValue();
-            StackSize += Bytes * Size.getZExtValue();
+            const Type *Ty = AI->getAllocatedType();
+            uint64_t TySize = TD->getABITypeSize(Ty);
+            StackSize += TySize * CI->getZExtValue(); // Total allocated size.
 
             if (SSPBufferSize <= StackSize)
               return true;
