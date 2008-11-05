@@ -648,6 +648,10 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   if (DefMI && LIs->isReMaterializable(*LI, ValNo, DefMI))
     return false;
 
+  // If this would create a new join point, do not split.
+  if (DefMI && createsNewJoin(LR, DefMI->getParent(), Barrier->getParent()))
+    return false;
+
   // Find all references in the barrier mbb.
   SmallPtrSet<MachineInstr*, 4> RefsInMBB;
   for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(CurrLI->reg),
@@ -862,7 +866,7 @@ bool PreAllocSplitting::createsNewJoin(LiveRange* LR,
       Stack.push_back(std::make_pair(PredMBB, ++S));
       continue;
     } else
-      Stack.push_back(std::make_pair(PredMBB, ++S));
+      Stack.push_back(std::make_pair(PredMBB, S+1));
     
     MachineBasicBlock* MBB = *S;
     Visited.insert(MBB);
