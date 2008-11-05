@@ -50,7 +50,10 @@ public:
   explicit ISelUpdater(SelectionDAG::allnodes_iterator &isp)
     : ISelPosition(isp) {}
   
-  /// NodeDeleted - remove node from the selection queue.
+  /// NodeDeleted - Handle nodes deleted from the graph. If the
+  /// node being deleted is the current ISelPosition node, update
+  /// ISelPosition.
+  ///
   virtual void NodeDeleted(SDNode *N, SDNode *E) {
     if (ISelPosition == SelectionDAG::allnodes_iterator(N))
       ++ISelPosition;
@@ -100,8 +103,10 @@ void SelectRoot(SelectionDAG &DAG) {
   HandleSDNode Dummy(CurDAG->getRoot());
   ISelPosition = next(SelectionDAG::allnodes_iterator(CurDAG->getRoot().getNode()));
 
-  // Select pending nodes from the instruction selection queue
-  // until no more nodes are left for selection.
+  // The AllNodes list is now topological-sorted. Visit the
+  // nodes by starting at the end of the list (the root of the
+  // graph) and preceding back toward the beginning (the entry
+  // node).
   while (ISelPosition != CurDAG->allnodes_begin()) {
     SDNode *Node = --ISelPosition;
 #if 0
