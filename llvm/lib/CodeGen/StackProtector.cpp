@@ -174,7 +174,6 @@ bool StackProtector::InsertStackProtectors() {
 /// check fails.
 BasicBlock *StackProtector::CreateFailBB() {
   BasicBlock *FailBB = BasicBlock::Create("CallStackCheckFailBlk", F);
-  std::vector<const Type*> Params;
   Constant *StackChkFail =
     M->getOrInsertFunction("__stack_chk_fail", Type::VoidTy, NULL);
   CallInst::Create(StackChkFail, "", FailBB);
