@@ -39,11 +39,10 @@ namespace ARMII {
     AddrMode3     = 3,
     AddrMode4     = 4,
     AddrMode5     = 5,
-    AddrMode6     = 6,
-    AddrModeT1    = 7,
-    AddrModeT2    = 8,
-    AddrModeT4    = 9,
-    AddrModeTs    = 10,  // i8 * 4 for pc and sp relative data
+    AddrModeT1    = 6,
+    AddrModeT2    = 7,
+    AddrModeT4    = 8,
+    AddrModeTs    = 9,  // i8 * 4 for pc and sp relative data
 
     // Size* - Flags to keep track of the size of an instruction.
     SizeShift     = 4,
@@ -63,56 +62,57 @@ namespace ARMII {
     // Opcode
     OpcodeShift   = 9,
     OpcodeMask    = 0xf << OpcodeShift,
-    
-    // Format
-    FormShift   = 13,
-    FormMask    = 31 << FormShift,
+
+    //===------------------------------------------------------------------===//
+    // Misc flags.
+
+    // UnaryDP - Indicates this is a unary data processing instruction, i.e.
+    // it doesn't have a Rn operand.
+    UnaryDP       = 1 << 13,
+
+    //===------------------------------------------------------------------===//
+    // Instruction encoding formats.
+    //
+    FormShift   = 14,
+    FormMask    = 0x1f << FormShift,
 
     // Pseudo instructions
     Pseudo      = 1 << FormShift,
 
     // Multiply instructions
-    MulFrm      = 2 << FormShift,
-    MulSMLAW    = 3 << FormShift,
-    MulSMULW    = 4 << FormShift,
-    MulSMLA     = 5 << FormShift,
-    MulSMUL     = 6 << FormShift,
+    MulFrm1     = 2 << FormShift,
+    MulFrm2     = 3 << FormShift,
+    MulSMLAW    = 4 << FormShift,
+    MulSMULW    = 5 << FormShift,
+    MulSMLA     = 6 << FormShift,
+    MulSMUL     = 7 << FormShift,
 
     // Branch instructions
-    Branch      = 7 << FormShift,
-    BranchMisc  = 8 << FormShift,
+    Branch      = 8 << FormShift,
+    BranchMisc  = 9 << FormShift,
 
     // Data Processing instructions
-    DPRdIm      = 9 << FormShift,
-    DPRdReg     = 10 << FormShift,
-    DPRdSoReg   = 11 << FormShift,
-    DPRdMisc    = 12 << FormShift,
-
-    DPRnIm      = 13 << FormShift,
-    DPRnReg     = 14 << FormShift,
-    DPRnSoReg   = 15 << FormShift,
-
-    DPRIm       = 16 << FormShift,
-    DPRReg      = 17 << FormShift,
-    DPRSoReg    = 18 << FormShift,
-
-    DPRImS      = 19 << FormShift,
-    DPRRegS     = 20 << FormShift,
-    DPRSoRegS   = 21 << FormShift,
+    DPFrm       = 10 << FormShift,
+    DPSoRegFrm  = 11 << FormShift,
 
     // Load and Store
-    LdFrm       = 22 << FormShift,
-    StFrm       = 23 << FormShift,
+    LdFrm       = 12 << FormShift,
+    StFrm       = 13 << FormShift,
+    LdMiscFrm   = 14 << FormShift,
+    StMiscFrm   = 15 << FormShift,
+    LdMulFrm    = 16 << FormShift,
+    StMulFrm    = 17 << FormShift,
 
     // Miscellaneous arithmetic instructions
-    ArithMisc   = 24 << FormShift,
+    ArithMisc   = 18 << FormShift,
 
     // Thumb format
-    ThumbFrm    = 25 << FormShift,
+    ThumbFrm    = 19 << FormShift,
 
     // VFP format
-    VPFFrm      = 26 << FormShift,
+    VPFFrm      = 20 << FormShift,
 
+    //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating
     // machine instructions.
     RotImmShift  = 8,

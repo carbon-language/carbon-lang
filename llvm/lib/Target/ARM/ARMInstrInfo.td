@@ -310,11 +310,10 @@ def AddrMode2    : AddrMode<2>;
 def AddrMode3    : AddrMode<3>;
 def AddrMode4    : AddrMode<4>;
 def AddrMode5    : AddrMode<5>;
-def AddrMode6    : AddrMode<6>;
-def AddrModeT1   : AddrMode<7>;
-def AddrModeT2   : AddrMode<8>;
-def AddrModeT4   : AddrMode<9>;
-def AddrModeTs   : AddrMode<10>;
+def AddrModeT1   : AddrMode<6>;
+def AddrModeT2   : AddrMode<7>;
+def AddrModeT4   : AddrMode<8>;
+def AddrModeTs   : AddrMode<9>;
 
 // Instruction size.
 class SizeFlagVal<bits<3> val> {
@@ -345,13 +344,13 @@ include "ARMInstrFormats.td"
 /// AsI1_bin_irs - Defines a set of (op r, {so_imm|r|so_reg}) patterns for a
 /// binop that produces a value.
 multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode> {
-  def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRIm,
+  def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
-  def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPRReg,
+  def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
                opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
-  def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoReg,
+  def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
 }
@@ -360,13 +359,13 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode> {
 /// instruction modifies the CSPR register.
 let Defs = [CPSR] in {
 multiclass ASI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode> {
-  def ri : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRImS,
+  def ri : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                opc, "s $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
-  def rr : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPRRegS,
+  def rr : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
                opc, "s $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
-  def rs : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoRegS,
+  def rs : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                opc, "s $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
 }
@@ -377,13 +376,13 @@ multiclass ASI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode> {
 /// a explicit result, only implicitly set CPSR.
 let Defs = [CPSR] in {
 multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode> {
-  def ri : AI1<opcod, (outs), (ins GPR:$a, so_imm:$b), DPRnIm,
+  def ri : AI1<opcod, (outs), (ins GPR:$a, so_imm:$b), DPFrm,
                opc, " $a, $b",
                [(opnode GPR:$a, so_imm:$b)]>;
-  def rr : AI1<opcod, (outs), (ins GPR:$a, GPR:$b), DPRnReg,
+  def rr : AI1<opcod, (outs), (ins GPR:$a, GPR:$b), DPFrm,
                opc, " $a, $b",
                [(opnode GPR:$a, GPR:$b)]>;
-  def rs : AI1<opcod, (outs), (ins GPR:$a, so_reg:$b), DPRnSoReg,
+  def rs : AI1<opcod, (outs), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                opc, " $a, $b",
                [(opnode GPR:$a, so_reg:$b)]>;
 }
@@ -420,13 +419,13 @@ multiclass AI_bin_rrot<bits<4> opcod, string opc, PatFrag opnode> {
 let Uses = [CPSR] in {
 multiclass AsXI1_bin_c_irs<bits<4> opcod, string opc, PatFrag opnode> {
   def ri : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b, cc_out:$s),
-                DPRIm, !strconcat(opc, "${s} $dst, $a, $b"),
+                DPFrm, !strconcat(opc, "${s} $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
   def rr : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b, cc_out:$s),
-                DPRReg, !strconcat(opc, "${s} $dst, $a, $b"),
+                DPFrm, !strconcat(opc, "${s} $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
   def rs : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b, cc_out:$s),
-                DPRSoReg, !strconcat(opc, "${s} $dst, $a, $b"),
+                DPSoRegFrm, !strconcat(opc, "${s} $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
 }
 }
@@ -533,7 +532,7 @@ let isReturn = 1, isTerminator = 1 in
 let isReturn = 1, isTerminator = 1 in
   def LDM_RET : AXI4ldpc<0x0, (outs),
                     (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
-                    LdFrm, "ldm${p}${addr:submode} $addr, $dst1",
+                    LdMulFrm, "ldm${p}${addr:submode} $addr, $dst1",
                     []>;
 
 let isCall = 1,
@@ -610,7 +609,7 @@ def LDRcp : AI2ldw<0x0, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                  "ldr", " $dst, $addr", []>;
 
 // Loads with zero extension
-def LDRH  : AI3ldh<0xB, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
+def LDRH  : AI3ldh<0xB, (outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                  "ldr", "h $dst, $addr",
                 [(set GPR:$dst, (zextloadi16 addrmode3:$addr))]>;
 
@@ -619,17 +618,17 @@ def LDRB  : AI2ldb<0x1, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                 [(set GPR:$dst, (zextloadi8 addrmode2:$addr))]>;
 
 // Loads with sign extension
-def LDRSH : AI3ldsh<0xE, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
+def LDRSH : AI3ldsh<0xE, (outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                  "ldr", "sh $dst, $addr",
                 [(set GPR:$dst, (sextloadi16 addrmode3:$addr))]>;
 
-def LDRSB : AI3ldsb<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
+def LDRSB : AI3ldsb<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                  "ldr", "sb $dst, $addr",
                 [(set GPR:$dst, (sextloadi8 addrmode3:$addr))]>;
 
 let mayLoad = 1 in {
 // Load doubleword
-def LDRD  : AI3ldd<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
+def LDRD  : AI3ldd<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                  "ldr", "d $dst, $addr",
                 []>, Requires<[IsARM, HasV5T]>;
 
@@ -643,11 +642,11 @@ def LDR_POST : AI2ldwpo<0x0, (outs GPR:$dst, GPR:$base_wb),
                      "ldr", " $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRH_PRE  : AI3ldhpr<0xB, (outs GPR:$dst, GPR:$base_wb),
-                     (ins addrmode3:$addr), LdFrm,
+                     (ins addrmode3:$addr), LdMiscFrm,
                      "ldr", "h $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRH_POST : AI3ldhpo<0xB, (outs GPR:$dst, GPR:$base_wb),
-                     (ins GPR:$base,am3offset:$offset), LdFrm,
+                     (ins GPR:$base,am3offset:$offset), LdMiscFrm,
                      "ldr", "h $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRB_PRE  : AI2ldbpr<0x1, (outs GPR:$dst, GPR:$base_wb),
@@ -659,19 +658,19 @@ def LDRB_POST : AI2ldbpo<0x1, (outs GPR:$dst, GPR:$base_wb),
                      "ldr", "b $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRSH_PRE : AI3ldshpr<0xE, (outs GPR:$dst, GPR:$base_wb),
-                      (ins addrmode3:$addr), LdFrm,
+                      (ins addrmode3:$addr), LdMiscFrm,
                       "ldr", "sh $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRSH_POST: AI3ldshpo<0xE, (outs GPR:$dst, GPR:$base_wb),
-                      (ins GPR:$base,am3offset:$offset), LdFrm,
+                      (ins GPR:$base,am3offset:$offset), LdMiscFrm,
                       "ldr", "sh $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRSB_PRE : AI3ldsbpr<0xD, (outs GPR:$dst, GPR:$base_wb),
-                      (ins addrmode3:$addr), LdFrm,
+                      (ins addrmode3:$addr), LdMiscFrm,
                       "ldr", "sb $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRSB_POST: AI3ldsbpo<0xD, (outs GPR:$dst, GPR:$base_wb),
-                      (ins GPR:$base,am3offset:$offset), LdFrm,
+                      (ins GPR:$base,am3offset:$offset), LdMiscFrm,
                       "ldr", "sb $dst, [$base], $offset", "$base = $base_wb", []>;
 }
 
@@ -681,7 +680,7 @@ def STR  : AI2stw<0x0, (outs), (ins GPR:$src, addrmode2:$addr), StFrm,
                [(store GPR:$src, addrmode2:$addr)]>;
 
 // Stores with truncate
-def STRH : AI3sth<0xB, (outs), (ins GPR:$src, addrmode3:$addr), StFrm,
+def STRH : AI3sth<0xB, (outs), (ins GPR:$src, addrmode3:$addr), StMiscFrm,
                "str", "h $src, $addr",
                [(truncstorei16 GPR:$src, addrmode3:$addr)]>;
 
@@ -691,7 +690,7 @@ def STRB : AI2stb<0x1, (outs), (ins GPR:$src, addrmode2:$addr), StFrm,
 
 // Store doubleword
 let mayStore = 1 in
-def STRD : AI3std<0xF, (outs), (ins GPR:$src, addrmode3:$addr), StFrm,
+def STRD : AI3std<0xF, (outs), (ins GPR:$src, addrmode3:$addr), StMiscFrm,
                "str", "d $src, $addr",
                []>, Requires<[IsARM, HasV5T]>;
 
@@ -709,13 +708,13 @@ def STR_POST : AI2stwpo<0x0, (outs GPR:$base_wb),
                       (post_store GPR:$src, GPR:$base, am2offset:$offset))]>;
 
 def STRH_PRE : AI3sthpr<0xB, (outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am3offset:$offset), StFrm,
+                     (ins GPR:$src, GPR:$base,am3offset:$offset), StMiscFrm,
                      "str", "h $src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (pre_truncsti16 GPR:$src, GPR:$base,am3offset:$offset))]>;
 
 def STRH_POST: AI3sthpo<0xB, (outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am3offset:$offset), StFrm,
+                     (ins GPR:$src, GPR:$base,am3offset:$offset), StMiscFrm,
                      "str", "h $src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti16 GPR:$src,
                                          GPR:$base, am3offset:$offset))]>;
@@ -740,42 +739,42 @@ def STRB_POST: AI2stbpo<0x1, (outs GPR:$base_wb),
 let mayLoad = 1 in
 def LDM : AXI4ld<0x0, (outs),
                (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
-               LdFrm, "ldm${p}${addr:submode} $addr, $dst1",
+               LdMulFrm, "ldm${p}${addr:submode} $addr, $dst1",
                []>;
 
 let mayStore = 1 in
 def STM : AXI4st<0x0, (outs),
                (ins addrmode4:$addr, pred:$p, reglist:$src1, variable_ops),
-               StFrm, "stm${p}${addr:submode} $addr, $src1",
+               StMulFrm, "stm${p}${addr:submode} $addr, $src1",
                []>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
 //
 
-def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPRdReg,
-                 "mov", " $dst, $src", []>;
-def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src), DPRdSoReg,
-                 "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>;
+def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
+                 "mov", " $dst, $src", []>, UnaryDP;
+def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src), DPSoRegFrm,
+                 "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>, UnaryDP;
 
 let isReMaterializable = 1 in
-def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPRdIm,
-                 "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>;
+def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPFrm,
+                 "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>, UnaryDP;
 
-def MOVrx : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
+def MOVrx : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
                  "mov", " $dst, $src, rrx",
-                 [(set GPR:$dst, (ARMrrx GPR:$src))]>;
+                 [(set GPR:$dst, (ARMrrx GPR:$src))]>, UnaryDP;
 
 // These aren't really mov instructions, but we have to define them this way
 // due to flag operands.
 
 let Defs = [CPSR] in {
-def MOVsrl_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
+def MOVsrl_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
                       "mov", "s $dst, $src, lsr #1",
-                      [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>;
-def MOVsra_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
+                      [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>, UnaryDP;
+def MOVsra_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
                       "mov", "s $dst, $src, asr #1",
-                      [(set GPR:$dst, (ARMsra_flag GPR:$src))]>;
+                      [(set GPR:$dst, (ARMsra_flag GPR:$src))]>, UnaryDP;
 }
 
 //===----------------------------------------------------------------------===//
@@ -839,20 +838,20 @@ defm SBC  : AsXI1_bin_c_irs<0b0110, "sbc",
                             BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
 // These don't define reg/reg forms, because they are handled above.
-def RSBri : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRIm,
+def RSBri : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                   "rsb", " $dst, $a, $b",
                   [(set GPR:$dst, (sub so_imm:$b, GPR:$a))]>;
 
-def RSBrs : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoReg,
+def RSBrs : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                   "rsb", " $dst, $a, $b",
                   [(set GPR:$dst, (sub so_reg:$b, GPR:$a))]>;
 
 // RSB with 's' bit set.
 let Defs = [CPSR] in {
-def RSBSri : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRIm,
+def RSBSri : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                  "rsb", "s $dst, $a, $b",
                  [(set GPR:$dst, (subc so_imm:$b, GPR:$a))]>;
-def RSBSrs : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoReg,
+def RSBSrs : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                  "rsb", "s $dst, $a, $b",
                  [(set GPR:$dst, (subc so_reg:$b, GPR:$a))]>;
 }
@@ -860,10 +859,10 @@ def RSBSrs : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoReg,
 // FIXME: Do not allow RSC to be predicated for now. But they can set CPSR.
 let Uses = [CPSR] in {
 def RSCri : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_imm:$b, cc_out:$s),
-                 DPRIm, "rsc${s} $dst, $a, $b",
+                 DPFrm, "rsc${s} $dst, $a, $b",
                  [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>;
 def RSCrs : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b, cc_out:$s),
-                 DPRSoReg, "rsc${s} $dst, $a, $b",
+                 DPSoRegFrm, "rsc${s} $dst, $a, $b",
                  [(set GPR:$dst, (sube so_reg:$b, GPR:$a))]>;
 }
 
@@ -896,13 +895,16 @@ defm EOR   : AsI1_bin_irs<0b0001, "eor",
 defm BIC   : AsI1_bin_irs<0b1110, "bic",
                           BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
-def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPRdReg,
-                  "mvn", " $dst, $src", [(set GPR:$dst, (not GPR:$src))]>;
-def  MVNs  : AsI1<0b1111, (outs GPR:$dst), (ins so_reg:$src), DPRdSoReg,
-                  "mvn", " $dst, $src", [(set GPR:$dst, (not so_reg:$src))]>;
+def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPFrm,
+                  "mvn", " $dst, $src",
+                  [(set GPR:$dst, (not GPR:$src))]>, UnaryDP;
+def  MVNs  : AsI1<0b1111, (outs GPR:$dst), (ins so_reg:$src), DPSoRegFrm,
+                  "mvn", " $dst, $src",
+                  [(set GPR:$dst, (not so_reg:$src))]>, UnaryDP;
 let isReMaterializable = 1 in
-def  MVNi  : AsI1<0b1111, (outs GPR:$dst), (ins so_imm:$imm), DPRdIm,
-                  "mvn", " $dst, $imm", [(set GPR:$dst, so_imm_not:$imm)]>;
+def  MVNi  : AsI1<0b1111, (outs GPR:$dst), (ins so_imm:$imm), DPFrm,
+                  "mvn", " $dst, $imm",
+                  [(set GPR:$dst, so_imm_not:$imm)]>,UnaryDP;
 
 def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
              (BICri GPR:$src, so_imm_not:$imm)>;
@@ -911,48 +913,48 @@ def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
 //  Multiply Instructions.
 //
 
-def MUL   : AsI6<0b0000, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
+def MUL   : AsMul1I<0b0000, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                  "mul", " $dst, $a, $b",
                  [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
 
-def MLA   : AsI6<0b0010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-                 MulFrm, "mla", " $dst, $a, $b, $c",
+def MLA   : AsMul1I<0b0010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
+                 "mla", " $dst, $a, $b, $c",
                  [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
 
 // Extra precision multiplies with low / high results
-def SMULL : AsI6<0b1100, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                 MulFrm, "smull", " $ldst, $hdst, $a, $b", []>;
+def SMULL : AsMul1I<0b1100, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
+                 "smull", " $ldst, $hdst, $a, $b", []>;
 
-def UMULL : AsI6<0b1000, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                 MulFrm, "umull", " $ldst, $hdst, $a, $b", []>;
+def UMULL : AsMul1I<0b1000, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
+                 "umull", " $ldst, $hdst, $a, $b", []>;
 
 // Multiply + accumulate
-def SMLAL : AsI6<0b1110, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                 MulFrm, "smlal", " $ldst, $hdst, $a, $b", []>;
+def SMLAL : AsMul1I<0b1110, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
+                 "smlal", " $ldst, $hdst, $a, $b", []>;
 
-def UMLAL : AsI6<0b1010, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                 MulFrm, "umlal", " $ldst, $hdst, $a, $b", []>;
+def UMLAL : AsMul1I<0b1010, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
+                 "umlal", " $ldst, $hdst, $a, $b", []>;
 
-def UMAAL : AI6 <0b0000, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), 
-                 MulFrm, "umaal", " $ldst, $hdst, $a, $b", []>,
-                 Requires<[IsARM, HasV6]>;
+def UMAAL : AMul1I<0b0000, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), 
+                   "umaal", " $ldst, $hdst, $a, $b", []>,
+                   Requires<[IsARM, HasV6]>;
 
 // Most significant word multiply
 // FIXME: encoding
-def SMMUL : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
+def SMMUL : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm2,
                "smmul", " $dst, $a, $b",
                [(set GPR:$dst, (mulhs GPR:$a, GPR:$b))]>,
             Requires<[IsARM, HasV6]>;
 
 // FIXME: encoding
-def SMMLA : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), MulFrm,
+def SMMLA : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), MulFrm2,
                "smmla", " $dst, $a, $b, $c",
                [(set GPR:$dst, (add (mulhs GPR:$a, GPR:$b), GPR:$c))]>,
             Requires<[IsARM, HasV6]>;
 
 
 // FIXME: encoding
-def SMMLS : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), MulFrm,
+def SMMLS : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), MulFrm2,
                "smmls", " $dst, $a, $b, $c",
                [(set GPR:$dst, (sub GPR:$c, (mulhs GPR:$a, GPR:$b)))]>,
                Requires<[IsARM, HasV6]>;
@@ -1133,20 +1135,20 @@ def : ARMPat<(ARMcmpNZ GPR:$src, so_imm_neg:$imm),
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :( 
-def MOVCCr : AI<0xD, (outs GPR:$dst), (ins GPR:$false, GPR:$true),
-                DPRdReg, "mov", " $dst, $true",
+def MOVCCr : AI<0xD, (outs GPR:$dst), (ins GPR:$false, GPR:$true), DPFrm,
+                "mov", " $dst, $true",
       [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $dst">;
 
-def MOVCCs : AI<0xD, (outs GPR:$dst), (ins GPR:$false, so_reg:$true),
-                DPRdSoReg, "mov", " $dst, $true",
+def MOVCCs : AI<0xD, (outs GPR:$dst), (ins GPR:$false, so_reg:$true), DPSoRegFrm,
+                "mov", " $dst, $true",
    [/*(set GPR:$dst, (ARMcmov GPR:$false, so_reg:$true, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $dst">;
+                RegConstraint<"$false = $dst">, UnaryDP;
 
-def MOVCCi : AI<0xD, (outs GPR:$dst), (ins GPR:$false, so_imm:$true),
-                DPRdIm, "mov", " $dst, $true",
+def MOVCCi : AI<0xD, (outs GPR:$dst), (ins GPR:$false, so_imm:$true), DPFrm,
+                "mov", " $dst, $true",
    [/*(set GPR:$dst, (ARMcmov GPR:$false, so_imm:$true, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $dst">;
+                RegConstraint<"$false = $dst">, UnaryDP;
 
 
 // LEApcrel - Load a pc-relative address into a register without offending the
@@ -1192,9 +1194,9 @@ def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 
 // Two piece so_imms.
 let isReMaterializable = 1 in
-def MOVi2pieces : AI1x2<0x0, (outs GPR:$dst), (ins so_imm2part:$src), DPRdMisc,
+def MOVi2pieces : AI1x2<0x0, (outs GPR:$dst), (ins so_imm2part:$src), DPFrm,
                          "mov", " $dst, $src",
-                         [(set GPR:$dst, so_imm2part:$src)]>;
+                         [(set GPR:$dst, so_imm2part:$src)]>, UnaryDP;
 
 def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),
               (ORRri (ORRri GPR:$LHS, (so_imm2part_1 imm:$RHS)),

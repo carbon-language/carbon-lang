@@ -20,35 +20,32 @@ class Format<bits<5> val> {
 }
 
 def Pseudo      : Format<1>;
-def MulFrm      : Format<2>;
-def MulSMLAW    : Format<3>;
-def MulSMULW    : Format<4>;
-def MulSMLA     : Format<5>;
-def MulSMUL     : Format<6>;
-def Branch      : Format<7>;
-def BranchMisc  : Format<8>;
+def MulFrm1     : Format<2>;
+def MulFrm2     : Format<3>;
+def MulSMLAW    : Format<4>;
+def MulSMULW    : Format<5>;
+def MulSMLA     : Format<6>;
+def MulSMUL     : Format<7>;
+def Branch      : Format<8>;
+def BranchMisc  : Format<9>;
 
-def DPRdIm      : Format<9>;
-def DPRdReg     : Format<10>;
-def DPRdSoReg   : Format<11>;
-def DPRdMisc    : Format<12>;
-def DPRnIm      : Format<13>;
-def DPRnReg     : Format<14>;
-def DPRnSoReg   : Format<15>;
-def DPRIm       : Format<16>;
-def DPRReg      : Format<17>;
-def DPRSoReg    : Format<18>;
-def DPRImS      : Format<19>;
-def DPRRegS     : Format<20>;
-def DPRSoRegS   : Format<21>;
+def DPFrm       : Format<10>;
+def DPSoRegFrm  : Format<11>;
 
-def LdFrm       : Format<22>;
-def StFrm       : Format<23>;
+def LdFrm       : Format<12>;
+def StFrm       : Format<13>;
+def LdMiscFrm   : Format<14>;
+def StMiscFrm   : Format<15>;
+def LdMulFrm    : Format<16>;
+def StMulFrm    : Format<17>;
 
-def ArithMisc   : Format<24>;
-def ThumbFrm    : Format<25>;
-def VFPFrm      : Format<26>;
+def ArithMisc   : Format<18>;
+def ThumbFrm    : Format<19>;
+def VFPFrm      : Format<20>;
 
+// Misc flag for data processing instructions that indicates whether
+// the instruction has a Rn register operand.
+class UnaryDP  { bit isUnaryDataProc = 1; }
 
 //===----------------------------------------------------------------------===//
 
@@ -63,6 +60,8 @@ class InstARM<bits<4> opcod, AddrMode am, SizeFlagVal sz, IndexMode im,
   let Namespace = "ARM";
 
   bits<4> Opcode = opcod;
+
+  // TSFlagsFields
   AddrMode AM = am;
   bits<4> AddrModeBits = AM.Value;
   
@@ -74,6 +73,11 @@ class InstARM<bits<4> opcod, AddrMode am, SizeFlagVal sz, IndexMode im,
   
   Format F = f;
   bits<5> Form = F.Value;
+
+  //
+  // Attributes specific to ARM instructions...
+  //
+  bit isUnaryDataProc = 0;
   
   let Constraints = cstr;
 }
@@ -658,23 +662,20 @@ class AXI4st<bits<4> opcod, dag oops, dag iops, Format f, string asm,
   let Inst{27-25} = 0b100;
 }
 
-// addrmode6
 // Unsigned multiply, multiply-accumulate instructions.
-class AI6<bits<4> opcod, dag oops, dag iops, Format f, string opc,
+class AMul1I<bits<4> opcod, dag oops, dag iops, string opc,
          string asm, list<dag> pattern>
-  : I<opcod, oops, iops, AddrMode6, Size4Bytes, IndexModeNone, f, opc,
-      asm,"",pattern>
-{
+  : I<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm1, opc,
+      asm,"",pattern> {
   // FIXME: bits 7-4 should be a sub-mode (for SMLAxx, SMLAWy, ...)
   let Inst{7-4}   = 0b1001;
   let Inst{27-24} = 0b0000;
   let Inst{23-20} = opcod;
 }
-class AsI6<bits<4> opcod, dag oops, dag iops, Format f, string opc,
+class AsMul1I<bits<4> opcod, dag oops, dag iops, string opc,
           string asm, list<dag> pattern>
-  : sI<opcod, oops, iops, AddrMode6, Size4Bytes, IndexModeNone, f, opc,
-       asm,"",pattern>
-{
+  : sI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm1, opc,
+       asm,"",pattern> {
   // FIXME: bits 7-4 should be a sub-mode (for SMLAxx, SMLAWy, ...)
   let Inst{7-4}   = 0b1001;
   let Inst{27-24} = 0b0000;
