@@ -43,42 +43,29 @@ namespace {
     /// target type sizes.
     const TargetLowering *TLI;
 
-    /// FailBB - Holds the basic block to jump to when the stack protector check
-    /// fails.
-    BasicBlock *FailBB;
-
-    /// StackProtFrameSlot - The place on the stack that the stack protector
-    /// guard is kept.
-    AllocaInst *StackProtFrameSlot;
-
-    /// StackGuardVar - The global variable for the stack guard.
-    Constant *StackGuardVar;
-
     Function *F;
     Module *M;
 
-    /// InsertStackProtectorPrologue - Insert code into the entry block that
-    /// stores the __stack_chk_guard variable onto the stack.
-    void InsertStackProtectorPrologue();
-
-    /// InsertStackProtectorEpilogue - Insert code before the return
-    /// instructions checking the stack value that was stored in the
-    /// prologue. If it isn't the same as the original value, then call a
-    /// "failure" function.
-    void InsertStackProtectorEpilogue();
+    /// InsertStackProtectors - Insert code into the prologue and epilogue of
+    /// the function.
+    ///
+    ///  - The prologue code loads and stores the stack guard onto the stack.
+    ///  - The epilogue checks the value stored in the prologue against the
+    ///    original value. It calls __stack_chk_fail if they differ.
+    bool InsertStackProtectors();
 
     /// CreateFailBB - Create a basic block to jump to when the stack protector
     /// check fails.
-    void CreateFailBB();
+    BasicBlock *CreateFailBB();
 
     /// RequiresStackProtector - Check whether or not this function needs a
     /// stack protector based upon the stack protector level.
     bool RequiresStackProtector() const;
   public:
     static char ID;             // Pass identification, replacement for typeid.
-    StackProtector() : FunctionPass(&ID), Level(SSP::OFF), TLI(0), FailBB(0) {}
+    StackProtector() : FunctionPass(&ID), Level(SSP::OFF), TLI(0) {}
     StackProtector(SSP::StackProtectorLevel lvl, const TargetLowering *tli)
-      : FunctionPass(&ID), Level(lvl), TLI(tli), FailBB(0) {}
+      : FunctionPass(&ID), Level(lvl), TLI(tli) {}
 
     virtual bool runOnFunction(Function &Fn);
   };
@@ -99,45 +86,42 @@ bool StackProtector::runOnFunction(Function &Fn) {
 
   if (!RequiresStackProtector()) return false;
   
-  InsertStackProtectorPrologue();
-  InsertStackProtectorEpilogue();
-
-  // Cleanup.
-  FailBB = 0;
-  StackProtFrameSlot = 0;
-  StackGuardVar = 0;
-  return true;
+  return InsertStackProtectors();
 }
 
-/// InsertStackProtectorPrologue - Insert code into the entry block that stores
-/// the __stack_chk_guard variable onto the stack.
-void StackProtector::InsertStackProtectorPrologue() {
-  BasicBlock &Entry = F->getEntryBlock();
-  Instruction &InsertPt = Entry.front();
-  const PointerType *GuardTy = PointerType::getUnqual(Type::Int8Ty);
-
-  StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", GuardTy);
-  StackProtFrameSlot = new AllocaInst(GuardTy, "StackProt_Frame", &InsertPt);
-  LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, &InsertPt);
-  new StoreInst(LI, StackProtFrameSlot, false, &InsertPt);
-}
-
-/// InsertStackProtectorEpilogue - Insert code before the return instructions
-/// checking the stack value that was stored in the prologue. If it isn't the
-/// same as the original value, then call a "failure" function.
-void StackProtector::InsertStackProtectorEpilogue() {
-  // Create the basic block to jump to when the guard check fails.
-  CreateFailBB();
-
-  Function::iterator I = F->begin(), E = F->end();
+/// InsertStackProtectors - Insert code into the prologue and epilogue of the
+/// function.
+///
+///  - The prologue code loads and stores the stack guard onto the stack.
+///  - The epilogue checks the value stored in the prologue against the original
+///    value. It calls __stack_chk_fail if they differ.
+bool StackProtector::InsertStackProtectors() {
   std::vector<BasicBlock*> ReturnBBs;
-  ReturnBBs.reserve(F->size());
 
-  for (; I != E; ++I)
+  for (Function::iterator I = F->begin(); I != F->end(); ++I)
     if (isa<ReturnInst>(I->getTerminator()))
       ReturnBBs.push_back(I);
 
-  if (ReturnBBs.empty()) return; // Odd, but could happen. . .
+  // If this function doesn't return, don't bother with stack protectors.
+  if (ReturnBBs.empty()) return false;
+
+  // Insert code into the entry block that stores the __stack_chk_guard variable
+  // onto the stack.
+  BasicBlock &Entry = F->getEntryBlock();
+  Instruction *InsertPt = &Entry.front();
+  const PointerType *GuardTy = PointerType::getUnqual(Type::Int8Ty);
+
+  // The global variable for the stack guard.
+  Constant *StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", GuardTy);
+
+  // The place on the stack that the stack protector guard is kept.
+  AllocaInst *StackProtFrameSlot =
+    new AllocaInst(GuardTy, "StackProt_Frame", InsertPt);
+  LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsertPt);
+  new StoreInst(LI, StackProtFrameSlot, false, InsertPt);
+
+  // Create the basic block to jump to when the guard check fails.
+  BasicBlock *FailBB = CreateFailBB();
 
   // Loop through the basic blocks that have return instructions. Convert this:
   //
@@ -162,8 +146,8 @@ void StackProtector::InsertStackProtectorEpilogue() {
   //     unreachable
   //
   for (std::vector<BasicBlock*>::iterator
-         II = ReturnBBs.begin(), IE = ReturnBBs.end(); II != IE; ++II) {
-    BasicBlock *BB = *II;
+         I = ReturnBBs.begin(), E = ReturnBBs.end(); I != E; ++I) {
+    BasicBlock *BB = *I;
     ReturnInst *RI = cast<ReturnInst>(BB->getTerminator());
     Function::iterator InsPt = BB; ++InsPt; // Insertion point for new BB.
 
@@ -171,7 +155,7 @@ void StackProtector::InsertStackProtectorEpilogue() {
     BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
 
     // Move the newly created basic block to the point right after the old basic
-    // block.
+    // block so that it's in the "fall through" position.
     NewBB->removeFromParent();
     F->getBasicBlockList().insert(InsPt, NewBB);
 
@@ -181,18 +165,20 @@ void StackProtector::InsertStackProtectorEpilogue() {
     ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, LI1, LI2, "", BB);
     BranchInst::Create(NewBB, FailBB, Cmp, BB);
   }
+
+  return true;
 }
 
 /// CreateFailBB - Create a basic block to jump to when the stack protector
 /// check fails.
-void StackProtector::CreateFailBB() {
-  assert(!FailBB && "Failure basic block already created?!");
-  FailBB = BasicBlock::Create("CallStackCheckFailBlk", F);
+BasicBlock *StackProtector::CreateFailBB() {
+  BasicBlock *FailBB = BasicBlock::Create("CallStackCheckFailBlk", F);
   std::vector<const Type*> Params;
   Constant *StackChkFail =
     M->getOrInsertFunction("__stack_chk_fail", Type::VoidTy, NULL);
   CallInst::Create(StackChkFail, "", FailBB);
   new UnreachableInst(FailBB);
+  return FailBB;
 }
 
 /// RequiresStackProtector - Check whether or not this function needs a stack
