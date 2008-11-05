@@ -697,6 +697,8 @@ DIAG(err_reference_var_requires_init, ERROR,
      "declaration of reference variable '%0' requires an initializer")
 DIAG(err_const_var_requires_init, ERROR,
      "declaration of const variable '%0' requires an initializer")
+DIAG(err_init_non_aggr_init_list, ERROR,
+     "initialization of non-aggregate type '%0' with an initializer list")
 
 // Objective-C++
 DIAG(err_objc_decls_may_only_appear_in_global_scope, ERROR,

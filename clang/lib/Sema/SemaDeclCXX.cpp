@@ -461,6 +461,15 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   // member decls.
   CXXClassMemberWrapper(Member).setAccess(AS);
 
+  // C++ [dcl.init.aggr]p1:
+  //   An aggregate is an array or a class (clause 9) with [...] no
+  //   private or protected non-static data members (clause 11).
+  if (isInstField && (AS == AS_private || AS == AS_protected))
+    cast<CXXRecordDecl>(CurContext)->setAggregate(false);
+
+  // FIXME: If the member is a virtual function, mark it its class as
+  // a non-aggregate.
+
   if (BitWidth) {
     // C++ 9.6p2: Only when declaring an unnamed bit-field may the
     // constant-expression be a value equal to zero.

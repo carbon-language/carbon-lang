@@ -50,6 +50,11 @@ void CXXRecordDecl::Destroy(ASTContext &C) {
 void 
 CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases, 
                         unsigned NumBases) {
+  // C++ [dcl.init.aggr]p1: 
+  //   An aggregate is an array or a class (clause 9) with [...]
+  //   no base classes [...].
+  Aggregate = false;
+
   if (this->Bases)
     delete [] this->Bases;
 
@@ -77,6 +82,11 @@ CXXRecordDecl::addConstructor(ASTContext &Context,
   if (!ConDecl->isImplicitlyDeclared()) {
     // Note that we have a user-declared constructor.
     UserDeclaredConstructor = true;
+
+    // C++ [dcl.init.aggr]p1: 
+    //   An aggregate is an array or a class (clause 9) with no
+    //   user-declared constructors (12.1) [...].
+    Aggregate = false;
 
     // Note when we have a user-declared copy constructor, which will
     // suppress the implicit declaration of a copy constructor.
@@ -154,9 +164,8 @@ CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 
 bool CXXConstructorDecl::isDefaultConstructor() const {
   // C++ [class.ctor]p5:
-  //
-  //     A default constructor for a class X is a constructor of class
-  //     X that can be called without an argument.
+  //   A default constructor for a class X is a constructor of class
+  //   X that can be called without an argument.
   return (getNumParams() == 0) ||
          (getNumParams() > 0 && getParamDecl(0)->getDefaultArg() != 0);
 }
@@ -165,10 +174,10 @@ bool
 CXXConstructorDecl::isCopyConstructor(ASTContext &Context, 
                                       unsigned &TypeQuals) const {
   // C++ [class.copy]p2:
-  //     A non-template constructor for class X is a copy constructor
-  //     if its first parameter is of type X&, const X&, volatile X& or
-  //     const volatile X&, and either there are no other parameters
-  //     or else all other parameters have default arguments (8.3.6).
+  //   A non-template constructor for class X is a copy constructor
+  //   if its first parameter is of type X&, const X&, volatile X& or
+  //   const volatile X&, and either there are no other parameters
+  //   or else all other parameters have default arguments (8.3.6).
   if ((getNumParams() < 1) ||
       (getNumParams() > 1 && getParamDecl(1)->getDefaultArg() == 0))
     return false;

@@ -215,6 +215,9 @@ class CXXRecordDecl : public RecordDecl, public DeclContext {
   /// user-defined copy constructor.
   bool UserDeclaredCopyConstructor : 1;
 
+  /// Aggregate - True when this class is an aggregate.
+  bool Aggregate : 1;
+
   /// Bases - Base classes of this class.
   /// FIXME: This is wasted space for a union.
   CXXBaseSpecifier *Bases;
@@ -230,8 +233,8 @@ class CXXRecordDecl : public RecordDecl, public DeclContext {
   CXXRecordDecl(TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id) 
     : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord),
-      UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false), 
-      Bases(0), NumBases(0), Constructors(DC, Id) { }
+      UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
+      Aggregate(true), Bases(0), NumBases(0), Constructors(DC, Id) { }
 
   ~CXXRecordDecl();
 
@@ -299,6 +302,16 @@ public:
   bool hasUserDeclaredCopyConstructor() const {
     return UserDeclaredCopyConstructor;
   }
+
+  /// isAggregate - Whether this class is an aggregate (C++
+  /// [dcl.init.aggr]), which is a class with no user-declared
+  /// constructors, no private or protected non-static data members,
+  /// no base classes, and no virtual functions (C++ [dcl.init.aggr]p1).
+  bool isAggregate() const { return Aggregate; }
+
+  /// setAggregate - Set whether this class is an aggregate (C++
+  /// [dcl.init.aggr]).
+  void setAggregate(bool Agg) { Aggregate = Agg; }
 
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
