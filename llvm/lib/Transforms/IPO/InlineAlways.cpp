@@ -45,6 +45,9 @@ namespace {
     float getInlineFudgeFactor(CallSite CS) {
       return CA.getInlineFudgeFactor(CS);
     }
+    virtual bool doFinalization(CallGraph &CG) { 
+      return removeDeadFunctions(CG, &NeverInline); 
+    }
     virtual bool doInitialization(CallGraph &CG);
   };
 }

@@ -204,6 +204,13 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
 // doFinalization - Remove now-dead linkonce functions at the end of
 // processing to avoid breaking the SCC traversal.
 bool Inliner::doFinalization(CallGraph &CG) {
+  return removeDeadFunctions(CG);
+}
+
+  /// removeDeadFunctions - Remove dead functions that are not included in
+  /// DNR (Do Not Remove) list.
+bool Inliner::removeDeadFunctions(CallGraph &CG, 
+                                 SmallPtrSet<const Function *, 16> *DNR) {
   std::set<CallGraphNode*> FunctionsToRemove;
 
   // Scan for all of the functions, looking for ones that should now be removed
@@ -214,6 +221,9 @@ bool Inliner::doFinalization(CallGraph &CG) {
       // If the only remaining users of the function are dead constants, remove
       // them.
       F->removeDeadConstantUsers();
+
+      if (DNR && DNR->count(F))
+        continue;
 
       if ((F->hasLinkOnceLinkage() || F->hasInternalLinkage()) &&
           F->use_empty()) {

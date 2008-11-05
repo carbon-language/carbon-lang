@@ -61,6 +61,10 @@ struct Inliner : public CallGraphSCCPass {
   ///
   virtual float getInlineFudgeFactor(CallSite CS) = 0;
 
+  /// removeDeadFunctions - Remove dead functions that are not included in
+  /// DNR (Do Not Remove) list.
+  bool removeDeadFunctions(CallGraph &CG, 
+                           SmallPtrSet<const Function *, 16> *DNR = NULL);
 private:
   // InlineThreshold - Cache the value here for easy access.
   unsigned InlineThreshold;
