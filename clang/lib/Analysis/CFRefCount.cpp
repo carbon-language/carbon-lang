@@ -787,7 +787,9 @@ static bool isRelease(FunctionDecl* FD, const char* FName) {
 
 RetainSummary* RetainSummaryManager::getCFSummary(FunctionDecl* FD,
                                                   const char* FName) {
-
+  if (FName[0] == 'C' && FName[1] == 'F')
+    FName += 2;
+  
   if (isRetain(FD, FName))
     return getUnarySummary(FD, cfretain);
   
@@ -802,6 +804,9 @@ RetainSummary* RetainSummaryManager::getCFSummary(FunctionDecl* FD,
 
 RetainSummary* RetainSummaryManager::getCGSummary(FunctionDecl* FD,
                                                   const char* FName) {
+  
+  if (FName[0] == 'C' && FName[1] == 'G')
+    FName += 2;
   
   if (isRelease(FD, FName))
     return getUnarySummary(FD, cfrelease);
