@@ -94,7 +94,7 @@ Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
 void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
   MutexGuard locked(lock);
 
-  DOUT << "Map " << *GV << " to " << Addr << "\n";  
+  DOUT << "Map \'" << GV->getNameStart() << "\' to " << Addr << "\n";  
   void *&CurVal = state.getGlobalAddressMap(locked)[GV];
   assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
   CurVal = Addr;
@@ -839,7 +839,7 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
 // specified memory location...
 //
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
-  DOUT << "Initializing " << Addr;
+  DOUT << "Initializing " << Addr << " ";
   DEBUG(Init->dump());
   if (isa<UndefValue>(Init)) {
     return;
