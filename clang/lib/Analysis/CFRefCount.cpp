@@ -57,7 +57,12 @@ static bool followsFundamentalRule(const char* s) {
   while (*s == '_') ++s;  
   return CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
   CStrInCStrNoCase(s, "new") == s || CStrInCStrNoCase(s, "alloc") == s;
-}  
+}
+
+static bool followsReturnRule(const char* s) {
+  while (*s == '_') ++s;  
+  return followsFundamentalRule(s) || CStrInCStrNoCase(s, "init") == s;
+}
 
 //===----------------------------------------------------------------------===//
 // Selector creation functions.
@@ -1878,7 +1883,7 @@ CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
   if (V.isReturnedOwned() && V.getCount() == 0)
     if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
       std::string s = MD->getSelector().getName();
-      if (!followsFundamentalRule(s.c_str())) {
+      if (!followsReturnRule(s.c_str())) {
         hasLeak = true;
         state = state.set<RefBindings>(sid, V ^ RefVal::ErrorLeakReturned);
         return std::make_pair(state, true);
