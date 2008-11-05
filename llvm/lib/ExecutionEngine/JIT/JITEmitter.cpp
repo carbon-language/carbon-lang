@@ -954,22 +954,9 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   MemMgr->setMemoryExecutable();
 
 #ifndef NDEBUG
-  {
-  DOUT << std::hex;
-  int i;
-  unsigned char* q = FnStart;
-  for (i=1; q!=FnEnd; q++, i++) {
-    if (i%8==1)
-      DOUT << "0x" << (long)q << ": ";
-    DOUT<< (unsigned short)*q << " ";
-    if (i%8==0)
-      DOUT<<"\n";
-  }
-  DOUT << std::dec;
   if (sys::hasDisassembler())
     DOUT << "Disassembled code:\n"
          << sys::disassembleBuffer(FnStart, FnEnd-FnStart, (uintptr_t)FnStart);
-  }
 #endif
   if (ExceptionHandling) {
     uintptr_t ActualSize = 0;
