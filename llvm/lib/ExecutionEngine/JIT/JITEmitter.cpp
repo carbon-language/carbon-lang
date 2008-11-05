@@ -59,9 +59,9 @@ namespace {
     /// corresponds to.
     std::map<void*, Function*> StubToFunctionMap;
 
-    /// GlobalToLazyPtrMap - Keep track of the lazy pointer created for a
+    /// GlobalToNonLazyPtrMap - Keep track of the lazy pointer created for a
     /// particular GlobalVariable so that we can reuse them if necessary.
-    std::map<GlobalValue*, void*> GlobalToLazyPtrMap;
+    std::map<GlobalValue*, void*> GlobalToNonLazyPtrMap;
 
   public:
     std::map<Function*, void*>& getFunctionToStubMap(const MutexGuard& locked) {
@@ -75,9 +75,9 @@ namespace {
     }
 
     std::map<GlobalValue*, void*>&
-    getGlobalToLazyPtrMap(const MutexGuard& locked) {
+    getGlobalToNonLazyPtrMap(const MutexGuard& locked) {
       assert(locked.holds(TheJIT->lock));
-      return GlobalToLazyPtrMap;
+      return GlobalToNonLazyPtrMap;
     }
   };
 
@@ -120,9 +120,9 @@ namespace {
     /// specified address, created lazily on demand.
     void *getExternalFunctionStub(void *FnAddr);
 
-    /// getGlobalValueLazyPtr - Return a lazy pointer containing the specified
-    /// GV address.
-    void *getGlobalValueLazyPtr(GlobalValue *V, void *GVAddress);
+    /// getGlobalValueNonLazyPtr - Return a non-lazy pointer containing the
+    /// specified GV address.
+    void *getGlobalValueNonLazyPtr(GlobalValue *V, void *GVAddress);
 
     /// AddCallbackAtLocation - If the target is capable of rewriting an
     /// instruction without the use of a stub, record the location of the use so
@@ -184,23 +184,23 @@ void *JITResolver::getFunctionStub(Function *F) {
   return Stub;
 }
 
-/// getGlobalValueLazyPtr - Return a lazy pointer containing the specified
+/// getGlobalValueNonLazyPtr - Return a lazy pointer containing the specified
 /// GV address.
-void *JITResolver::getGlobalValueLazyPtr(GlobalValue *GV, void *GVAddress) {
+void *JITResolver::getGlobalValueNonLazyPtr(GlobalValue *GV, void *GVAddress) {
   MutexGuard locked(TheJIT->lock);
 
   // If we already have a stub for this global variable, recycle it.
-  void *&LazyPtr = state.getGlobalToLazyPtrMap(locked)[GV];
-  if (LazyPtr) return LazyPtr;
+  void *&NonLazyPtr = state.getGlobalToNonLazyPtrMap(locked)[GV];
+  if (NonLazyPtr) return NonLazyPtr;
 
   // Otherwise, codegen a new lazy pointer.
-  LazyPtr = TheJIT->getJITInfo().emitGlobalValueLazyPtr(GV, GVAddress,
-                                                    *TheJIT->getCodeEmitter());
+  NonLazyPtr = TheJIT->getJITInfo().emitGlobalValueNonLazyPtr(GV, GVAddress,
+                                                     *TheJIT->getCodeEmitter());
 
-  DOUT << "JIT: Stub emitted at [" << LazyPtr << "] for GV '"
+  DOUT << "JIT: Stub emitted at [" << NonLazyPtr << "] for GV '"
        << GV->getName() << "'\n";
 
-  return LazyPtr;
+  return NonLazyPtr;
 }
 
 /// getExternalFunctionStub - Return a stub for the function at the
@@ -570,8 +570,8 @@ namespace {
 
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
-    void *getPointerToGVLazyPtr(GlobalValue *V, void *Reference,
-                                bool NoNeedStub);
+    void *getPointerToGVNonLazyPtr(GlobalValue *V, void *Reference,
+                                   bool NoNeedStub);
     unsigned addSizeOfGlobal(const GlobalVariable *GV, unsigned Size);
     unsigned addSizeOfGlobalsInConstantVal(const Constant *C, unsigned Size);
     unsigned addSizeOfGlobalsInInitializer(const Constant *Init, unsigned Size);
@@ -613,13 +613,13 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   return Resolver.getFunctionStub(F);
 }
 
-void *JITEmitter::getPointerToGVLazyPtr(GlobalValue *V, void *Reference,
+void *JITEmitter::getPointerToGVNonLazyPtr(GlobalValue *V, void *Reference,
                                         bool DoesntNeedStub) {
   // Make sure GV is emitted first.
   // FIXME: For now, if the GV is an external function we force the JIT to
-  // compile it so the lazy pointer will contain the fully resolved address.
+  // compile it so the non-lazy pointer will contain the fully resolved address.
   void *GVAddress = getPointerToGlobal(V, Reference, true);
-  return Resolver.getGlobalValueLazyPtr(V, GVAddress);
+  return Resolver.getGlobalValueNonLazyPtr(V, GVAddress);
 }
 
 static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP) {
@@ -887,8 +887,8 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
           ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
                                          BufferBegin+MR.getMachineCodeOffset(),
                                          MR.doesntNeedStub());
-        } else if (MR.isGlobalValueLazyPtr()) {
-          ResultPtr = getPointerToGVLazyPtr(MR.getGlobalValue(),
+        } else if (MR.isGlobalValueNonLazyPtr()) {
+          ResultPtr = getPointerToGVNonLazyPtr(MR.getGlobalValue(),
                                           BufferBegin+MR.getMachineCodeOffset(),
                                           MR.doesntNeedStub());
         } else if (MR.isBasicBlock()) {

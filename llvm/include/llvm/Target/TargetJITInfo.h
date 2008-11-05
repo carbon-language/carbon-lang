@@ -40,11 +40,12 @@ namespace llvm {
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New) = 0;
 
-    /// emitGlobalValueLazyPtr - Use the specified MachineCodeEmitter object to
-    /// emit a lazy pointer which contains the address of the specified ptr.
-    virtual void *emitGlobalValueLazyPtr(const GlobalValue* GV, void *ptr,
-                                         MachineCodeEmitter &MCE) {
-      assert(0 && "This target doesn't implement emitGlobalValueLazyPtr!");
+    /// emitGlobalValueNonLazyPtr - Use the specified MachineCodeEmitter object
+    /// to emit a Mac OS X non-lazy pointer which contains the address of the
+    /// specified ptr.
+    virtual void *emitGlobalValueNonLazyPtr(const GlobalValue* GV, void *ptr,
+                                            MachineCodeEmitter &MCE) {
+      assert(0 && "This target doesn't implement emitGlobalValueNonLazyPtr!");
       return 0;
     }
 
