@@ -21,6 +21,7 @@ typedef struct _NSZone NSZone;
 static __inline__ __attribute__((always_inline)) id NSMakeCollectable(CFTypeRef cf) {}
 @protocol NSObject  - (BOOL)isEqual:(id)object; - (oneway void)release; @end
 extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
+CFTypeRef CFMakeCollectable(CFTypeRef cf);
 
 //===----------------------------------------------------------------------===//
 // Test cases.
@@ -36,4 +37,16 @@ CFAbsoluteTime f1() {
   t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released.}}
   return t;
 }
+
+CFAbsoluteTime f1b() {
+  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+  CFDateRef date = CFDateCreate(0, t);
+  CFRetain(date);
+  [(id) CFMakeCollectable(date) release];
+  CFDateGetAbsoluteTime(date); // no-warning
+  t = CFDateGetAbsoluteTime(date);  // no-warning
+  CFRelease(date); // no-warning
+  return t;
+}
+
 
