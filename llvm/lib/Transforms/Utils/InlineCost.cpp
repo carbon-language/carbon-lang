@@ -182,11 +182,9 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
       // FIXME: We allow link-once linkage since in practice all versions of
       // the function have the same body (C++ ODR) - but the LLVM definition
       // of LinkOnceLinkage doesn't require this.
-      (Callee->mayBeOverridden() && !Callee->hasLinkOnceLinkage()
-       ) ||
-
+      (Callee->mayBeOverridden() && !Callee->hasLinkOnceLinkage()) ||
       // Don't inline functions marked noinline.
-      NeverInline.count(Callee))
+      Callee->hasFnAttr(Attribute::NoInline) || NeverInline.count(Callee))
     return llvm::InlineCost::getNever();
 
   // InlineCost - This value measures how good of an inline candidate this call
