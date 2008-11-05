@@ -224,6 +224,12 @@ GlobalVariable *Module::getGlobalVariable(const std::string &Name,
   return 0;
 }
 
+/// getOrInsertGlobal - Look up the specified global in the module symbol table.
+///   1. If it does not exist, add a declaration of the global and return it.
+///   2. Else, the global exists but has the wrong type: return the function
+///      with a constantexpr cast to the right type.
+///   3. Finally, if the existing global is the correct delclaration, return the
+///      existing global.
 Constant *Module::getOrInsertGlobal(const std::string &Name, const Type *Ty) {
   ValueSymbolTable &SymTab = getValueSymbolTable();
 
