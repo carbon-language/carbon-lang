@@ -113,7 +113,7 @@ void t_529_10()
 
   // Bad code below
 
-  (void)static_cast<int*>((const void*)0); // expected-error {{static_cast from 'void const *' to 'int *' is not allowed}}
+  (void)static_cast<int*>((const void*)0); // expected-error {{static_cast from 'void const *' to 'int *' casts away constness}}
   (void)static_cast<void (*)()>((void*)0); // expected-error {{static_cast from 'void *' to 'void (*)(void)' is not allowed}}
 }
 

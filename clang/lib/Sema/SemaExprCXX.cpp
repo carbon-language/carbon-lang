@@ -340,12 +340,18 @@ void
 Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
                       const SourceRange &OpRange)
 {
-  // Conversions are tried roughly in the order the standard specifies them.
-  // This is necessary because there are some conversions that can be
-  // interpreted in more than one way, and the order disambiguates.
-  // DR 427 specifies that paragraph 5 is to be applied before paragraph 2.
+  // The order the tests is not entirely arbitrary. There is one conversion
+  // that can be handled in two different ways. Given:
+  // struct A {};
+  // struct B : public A {
+  //   B(); B(const A&);
+  // };
+  // const A &a = B();
+  // the cast static_cast<const B&>(a) could be seen as either a static
+  // reference downcast, or an explicit invocation of the user-defined
+  // conversion using B's conversion constructor.
+  // DR 427 specifies that the downcast is to be applied here.
 
-  // This option is unambiguous and simple, so put it here.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
   if (DestType->isVoidType()) {
     return;
@@ -353,6 +359,7 @@ Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
 
   // C++ 5.2.9p5, reference downcast.
   // See the function for details.
+  // DR 427 specifies that this is to be applied before paragraph 2.
   if (IsStaticReferenceDowncast(SrcExpr, DestType)) {
     return;
   }
@@ -361,15 +368,17 @@ Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
   //   [...] if the declaration "T t(e);" is well-formed, [...].
   ImplicitConversionSequence ICS = TryDirectInitialization(SrcExpr, DestType);
   if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion) {
-    if (ICS.ConversionKind == ImplicitConversionSequence::StandardConversion &&
-        ICS.Standard.First != ICK_Identity)
-    {
+    assert(ICS.ConversionKind != ImplicitConversionSequence::EllipsisConversion
+      && "Direct initialization cannot result in ellipsis conversion");
+    // UserDefinedConversionSequence has a StandardConversionSequence as a
+    // prefix. Accessing Standard is therefore safe.
+    // FIXME: Of course, this is definitely not enough.
+    if(ICS.Standard.First != ICK_Identity) {
       DefaultFunctionArrayConversion(SrcExpr);
     }
+    // FIXME: Test the details, such as accessible base.
     return;
   }
-  // FIXME: Missing the validation of the conversion, e.g. for an accessible
-  // base.
 
   // C++ 5.2.9p6: May apply the reverse of any standard conversion, except
   // lvalue-to-rvalue, array-to-pointer, function-to-pointer, and boolean
@@ -419,9 +428,14 @@ Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
     if (SrcPointee->isVoidType()) {
       if (const PointerType *DestPointer = DestType->getAsPointerType()) {
         QualType DestPointee = DestPointer->getPointeeType();
-        if (DestPointee->isObjectType() &&
-            DestPointee.isAtLeastAsQualifiedAs(SrcPointee))
-        {
+        if (DestPointee->isObjectType()) {
+          // This is definitely the intended conversion, but it might fail due
+          // to a const violation.
+          if (!DestPointee.isAtLeastAsQualifiedAs(SrcPointee)) {
+            Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away,
+              "static_cast", DestType.getAsString(),
+              OrigSrcType.getAsString(), OpRange);
+          }
           return;
         }
       }
