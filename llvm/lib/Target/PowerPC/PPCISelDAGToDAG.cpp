@@ -1069,6 +1069,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
     return CurDAG->SelectNodeTo(N, SelectCCOp, N->getValueType(0), Ops, 4);
   }
   case PPCISD::COND_BRANCH: {
+    // Op #0 is the Chain.
     // Op #1 is the PPC::PRED_* number.
     // Op #2 is the CR#
     // Op #3 is the Dest MBB
