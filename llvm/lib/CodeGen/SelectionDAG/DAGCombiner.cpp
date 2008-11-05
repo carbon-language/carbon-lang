@@ -5155,6 +5155,7 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
       // Return the new VECTOR_SHUFFLE node.
       MVT EVT = RHS.getValueType().getVectorElementType();
       MVT VT = MVT::getVectorVT(EVT, NumElts);
+      MVT MaskVT = MVT::getVectorVT(TLI.getPointerTy(), NumElts);
       std::vector<SDValue> Ops;
       LHS = DAG.getNode(ISD::BIT_CONVERT, VT, LHS);
       Ops.push_back(LHS);
@@ -5162,7 +5163,7 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
       std::vector<SDValue> ZeroOps(NumElts, DAG.getConstant(0, EVT));
       Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, VT,
                                 &ZeroOps[0], ZeroOps.size()));
-      Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, VT,
+      Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                                 &IdxOps[0], IdxOps.size()));
       SDValue Result = DAG.getNode(ISD::VECTOR_SHUFFLE, VT,
                                      &Ops[0], Ops.size());
