@@ -2172,6 +2172,7 @@ CastInst::getCastOpcode(
     } else if (const VectorType *PTy = dyn_cast<VectorType>(SrcTy)) {
       assert(DestBits == PTy->getBitWidth() &&
                "Casting vector to integer of different width");
+      PTy = NULL;
       return BitCast;                             // Same size, no-op cast
     } else {
       assert(isa<PointerType>(SrcTy) &&
@@ -2195,7 +2196,8 @@ CastInst::getCastOpcode(
     } else if (const VectorType *PTy = dyn_cast<VectorType>(SrcTy)) {
       assert(DestBits == PTy->getBitWidth() &&
              "Casting vector to floating point of different width");
-        return BitCast;                             // same size, no-op cast
+      PTy = NULL;
+      return BitCast;                             // same size, no-op cast
     } else {
       assert(0 && "Casting pointer or non-first class to float");
     }
