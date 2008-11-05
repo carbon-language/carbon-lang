@@ -45,7 +45,6 @@ static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
 /// instruciton selection graph.
 class VISIBILITY_HIDDEN ISelUpdater : public SelectionDAG::DAGUpdateListener {
   SelectionDAG::allnodes_iterator &ISelPosition;
-  bool HadDelete; // Indicate if any deletions were done.
 public:
   explicit ISelUpdater(SelectionDAG::allnodes_iterator &isp)
     : ISelPosition(isp) {}
