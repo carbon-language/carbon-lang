@@ -108,6 +108,11 @@ void SelectRoot(SelectionDAG &DAG) {
   // node).
   while (ISelPosition != CurDAG->allnodes_begin()) {
     SDNode *Node = --ISelPosition;
+    // Skip dead nodes. DAGCombiner is expected to eliminate all dead nodes,
+    // but there are currently some corner cases that it misses. Also, this
+    // makes it theoretically possible to disable the DAGCombiner.
+    if (Node->use_empty())
+      continue;
 #if 0
     DAG.setSubgraphColor(Node, "red");
 #endif
