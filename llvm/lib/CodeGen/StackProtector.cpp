@@ -28,7 +28,8 @@
 #include "llvm/Target/TargetLowering.h"
 using namespace llvm;
 
-// Enable stack protectors.
+// SSPBufferSize - The lower bound for a buffer to be considered for stack
+// smashing protection.
 static cl::opt<unsigned>
 SSPBufferSize("stack-protector-buffer-size", cl::init(8),
               cl::desc("The lower bound for a buffer to be considered for "
