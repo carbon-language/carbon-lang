@@ -835,7 +835,6 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
   // Add this constructor to the set of constructors of the current
   // class.
   ClassDecl->addConstructor(Context, ConDecl);
-
   return (DeclTy *)ConDecl;
 }
 
@@ -960,15 +959,23 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
 
   if (VDecl->getType()->isRecordType()) {
     CXXConstructorDecl *Constructor
-      = PerformDirectInitForClassType(DeclInitType, (Expr **)ExprTys, NumExprs,
-                                      VDecl->getLocation(),
-                                      SourceRange(VDecl->getLocation(),
-                                                  RParenLoc),
-                                      VDecl->getName(),
-                                      /*HasInitializer=*/true);
+      = PerformInitializationByConstructor(DeclInitType, 
+                                           (Expr **)ExprTys, NumExprs,
+                                           VDecl->getLocation(),
+                                           SourceRange(VDecl->getLocation(),
+                                                       RParenLoc),
+                                           VDecl->getName(),
+                                           IK_Direct);
     if (!Constructor) {
       RealDecl->setInvalidDecl();
     }
+
+    // Let clients know that initialization was done with a direct
+    // initializer.
+    VDecl->setCXXDirectInitializer(true);
+
+    // FIXME: Add ExprTys and Constructor to the RealDecl as part of
+    // the initializer.
     return;
   }
 
@@ -987,21 +994,26 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
   AddInitializerToDecl(Dcl, ExprTys[0]);
 }
 
-/// PerformDirectInitForClassType - Perform direct-initialization (C++
-/// [dcl.init]) for a value of the given class type with the given set
-/// of arguments (@p Args). @p Loc is the location in the source code
-/// where the initializer occurs (e.g., a declaration, member
-/// initializer, functional cast, etc.) while @p Range covers the
-/// whole initialization. @p HasInitializer is true if the initializer
-/// was actually written in the source code. When successful, returns
+/// PerformInitializationByConstructor - Perform initialization by
+/// constructor (C++ [dcl.init]p14), which may occur as part of
+/// direct-initialization or copy-initialization. We are initializing
+/// an object of type @p ClassType with the given arguments @p
+/// Args. @p Loc is the location in the source code where the
+/// initializer occurs (e.g., a declaration, member initializer,
+/// functional cast, etc.) while @p Range covers the whole
+/// initialization. @p InitEntity is the entity being initialized,
+/// which may by the name of a declaration or a type. @p Kind is the
+/// kind of initialization we're performing, which affects whether
+/// explicit constructors will be considered. When successful, returns
 /// the constructor that will be used to perform the initialization;
-/// when the initialization fails, emits a diagnostic and returns null.
+/// when the initialization fails, emits a diagnostic and returns
+/// null.
 CXXConstructorDecl *
-Sema::PerformDirectInitForClassType(QualType ClassType,
-                                    Expr **Args, unsigned NumArgs,
-                                    SourceLocation Loc, SourceRange Range,
-                                    std::string InitEntity,
-                                    bool HasInitializer) {
+Sema::PerformInitializationByConstructor(QualType ClassType,
+                                         Expr **Args, unsigned NumArgs,
+                                         SourceLocation Loc, SourceRange Range,
+                                         std::string InitEntity,
+                                         InitializationKind Kind) {
   const RecordType *ClassRec = ClassType->getAsRecordType();
   assert(ClassRec && "Can only initialize a class type here");
 
@@ -1017,15 +1029,23 @@ Sema::PerformDirectInitForClassType(QualType ClassType,
   //   with the initializer expression(s) as its argument(s). If no
   //   constructor applies, or the overload resolution is ambiguous,
   //   the initialization is ill-formed.
-  //
-  // FIXME: We don't check cv-qualifiers on the class type, because we
-  // don't yet keep track of whether a class type is a POD class type
-  // (or a "trivial" class type, as is used in C++0x).
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(ClassRec->getDecl());
   OverloadCandidateSet CandidateSet;
+
+  // Add constructors to the overload set.
+  OverloadedFunctionDecl *Constructors 
+    = const_cast<OverloadedFunctionDecl *>(ClassDecl->getConstructors());
+  for (OverloadedFunctionDecl::function_iterator Con 
+         = Constructors->function_begin();
+       Con != Constructors->function_end(); ++Con) {
+    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+    if ((Kind == IK_Direct) ||
+        (Kind == IK_Copy && Constructor->isConvertingConstructor()) ||
+        (Kind == IK_Default && Constructor->isDefaultConstructor()))
+      AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
+  }
+
   OverloadCandidateSet::iterator Best;
-  AddOverloadCandidates(ClassDecl->getConstructors(), Args, NumArgs,
-                        CandidateSet);
   switch (BestViableFunction(CandidateSet, Best)) {
   case OR_Success:
     // We found a constructor. Return it.

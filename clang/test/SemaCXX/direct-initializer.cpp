@@ -20,9 +20,9 @@ public:
   X(float, Y); // expected-note{{candidate function}}
 };
 
-class Z { // expected-note{{candidate function}}
+class Z {
 public:
-  Z(int); // expected-note{{candidate function}}
+  Z(int);
 };
 
 void g() {
@@ -32,5 +32,5 @@ void g() {
   Y y(1.0);
   X x4(3.14, y);
 
-  Z z; // expected-error{{no matching constructor for initialization of 'z'; candidates are:}}
+  Z z; // expected-error{{no matching constructor for initialization of 'z'}}
 }

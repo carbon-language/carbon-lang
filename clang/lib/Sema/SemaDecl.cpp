@@ -627,7 +627,9 @@ StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
   return 0;
 }
 
-bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {  
+bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
+                                 SourceLocation InitLoc,
+                                 std::string InitEntity) {
   // C++ [dcl.init.ref]p1:
   //   A variable declared to be a T&, that is “reference to type T”
   //   (8.3.2), shall be initialized by an object, or function, of
@@ -638,7 +640,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
   if (const VariableArrayType *VAT = Context.getAsVariableArrayType(DeclType))
-    return Diag(VAT->getSizeExpr()->getLocStart(), 
+    return Diag(InitLoc, 
                 diag::err_variable_object_no_init, 
                 VAT->getSizeExpr()->getSourceRange());
   
@@ -647,6 +649,50 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
     // FIXME: Handle wide strings
     if (StringLiteral *strLiteral = IsStringLiteralInit(Init, DeclType))
       return CheckStringLiteralInit(strLiteral, DeclType);
+
+    // C++ [dcl.init]p14:
+    //   -- If the destination type is a (possibly cv-qualified) class
+    //      type:
+    if (getLangOptions().CPlusPlus && DeclType->isRecordType()) {
+      QualType DeclTypeC = Context.getCanonicalType(DeclType);
+      QualType InitTypeC = Context.getCanonicalType(Init->getType());
+
+      //   -- If the initialization is direct-initialization, or if it is
+      //      copy-initialization where the cv-unqualified version of the
+      //      source type is the same class as, or a derived class of, the
+      //      class of the destination, constructors are considered.
+      if ((DeclTypeC.getUnqualifiedType() == InitTypeC.getUnqualifiedType()) ||
+          IsDerivedFrom(InitTypeC, DeclTypeC)) {
+        CXXConstructorDecl *Constructor 
+          = PerformInitializationByConstructor(DeclType, &Init, 1,
+                                               InitLoc, Init->getSourceRange(),
+                                               InitEntity, IK_Copy);
+        return Constructor == 0;
+      }
+
+      //   -- Otherwise (i.e., for the remaining copy-initialization
+      //      cases), user-defined conversion sequences that can
+      //      convert from the source type to the destination type or
+      //      (when a conversion function is used) to a derived class
+      //      thereof are enumerated as described in 13.3.1.4, and the
+      //      best one is chosen through overload resolution
+      //      (13.3). If the conversion cannot be done or is
+      //      ambiguous, the initialization is ill-formed. The
+      //      function selected is called with the initializer
+      //      expression as its argument; if the function is a
+      //      constructor, the call initializes a temporary of the
+      //      destination type.
+      // FIXME: We're pretending to do copy elision here; return to
+      // this when we have ASTs for such things.
+      if (PerformImplicitConversion(Init, DeclType))
+        return Diag(InitLoc,
+                    diag::err_typecheck_convert_incompatible,
+                    DeclType.getAsString(), InitEntity,
+                    "initializing",
+                    Init->getSourceRange());
+      else
+        return false;
+    }
 
     // C99 6.7.8p16.
     if (DeclType->isArrayType())
@@ -1574,7 +1620,8 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
       Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
       VDecl->setInvalidDecl();
     } else if (!VDecl->isInvalidDecl()) {
-      if (CheckInitializerTypes(Init, DclT))
+      if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
+                                VDecl->getName()))
         VDecl->setInvalidDecl();
       
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.
@@ -1587,7 +1634,8 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
     if (VDecl->getStorageClass() == VarDecl::Extern)
       Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!VDecl->isInvalidDecl())
-      if (CheckInitializerTypes(Init, DclT))
+      if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
+                                VDecl->getName()))
         VDecl->setInvalidDecl();
     
     // C++ 3.6.2p2, allow dynamic initialization of static initializers.
@@ -1642,12 +1690,13 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
       if (const ArrayType *Array = Context.getAsArrayType(Type))
         InitType = Array->getElementType();
       if (InitType->isRecordType()) {
-        CXXConstructorDecl *Constructor
-          = PerformDirectInitForClassType(InitType, 0, 0, Var->getLocation(),
-                                          SourceRange(Var->getLocation(),
-                                                      Var->getLocation()),
-                                          Var->getName(),
-                                          /*HasInitializer=*/false);
+        const CXXConstructorDecl *Constructor
+          = PerformInitializationByConstructor(InitType, 0, 0, 
+                                               Var->getLocation(),
+                                               SourceRange(Var->getLocation(),
+                                                           Var->getLocation()),
+                                               Var->getName(),
+                                               IK_Default);
         if (!Constructor)
           Var->setInvalidDecl();
       }

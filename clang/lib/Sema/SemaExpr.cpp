@@ -1231,7 +1231,8 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
                             literalExpr->getSourceRange().getEnd()));
   }
 
-  if (CheckInitializerTypes(literalExpr, literalType))
+  if (CheckInitializerTypes(literalExpr, literalType, LParenLoc, 
+                            "temporary"))
     return true;
 
   bool isFileScope = !getCurFunctionDecl() && !getCurMethodDecl();

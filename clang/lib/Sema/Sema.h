@@ -708,11 +708,20 @@ public:
                                              SourceLocation *CommaLocs,
                                              SourceLocation RParenLoc);
 
+  /// InitializationKind - Represents which kind of C++ initialization
+  /// [dcl.init] a routine is to perform.
+  enum InitializationKind {
+    IK_Direct, ///< Direct initialization
+    IK_Copy,   ///< Copy initialization
+    IK_Default ///< Default initialization
+  };
+
   CXXConstructorDecl *
-  PerformDirectInitForClassType(QualType ClassType,
-                                Expr **Args, unsigned NumArgs,
-                                SourceLocation Loc, SourceRange Range,
-                                std::string InitEntity, bool HasInitializer);
+  PerformInitializationByConstructor(QualType ClassType,
+                                     Expr **Args, unsigned NumArgs,
+                                     SourceLocation Loc, SourceRange Range,
+                                     std::string InitEntity,
+                                     InitializationKind Kind);
 
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual ExprResult ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
@@ -1146,7 +1155,8 @@ private:
   
   /// type checking declaration initializers (C99 6.7.8)
   friend class InitListChecker;
-  bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType);
+  bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType,
+                             SourceLocation InitLoc, std::string InitEntity);
   bool CheckSingleInitializer(Expr *&simpleInit, QualType declType);
   bool CheckForConstantInitializer(Expr *e, QualType t);
   bool CheckArithmeticConstantExpression(const Expr* e);
