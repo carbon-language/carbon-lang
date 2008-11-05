@@ -65,7 +65,11 @@ namespace {
 
   private:
 
+    void emitWordLE(unsigned Binary);
+
     void emitConstPoolInstruction(const MachineInstr &MI);
+
+    void addPCLabel(unsigned LabelID);
 
     void emitPseudoInstruction(const MachineInstr &MI);
 
@@ -81,11 +85,14 @@ namespace {
     unsigned getAddrModeSBit(const MachineInstr &MI,
                              const TargetInstrDesc &TID) const;
 
-    void emitDataProcessingInstruction(const MachineInstr &MI);
+    void emitDataProcessingInstruction(const MachineInstr &MI,
+                                       unsigned ImplicitRn = 0);
 
-    void emitLoadStoreInstruction(const MachineInstr &MI);
+    void emitLoadStoreInstruction(const MachineInstr &MI,
+                                  unsigned ImplicitRn = 0);
 
-    void emitMiscLoadStoreInstruction(const MachineInstr &MI);
+    void emitMiscLoadStoreInstruction(const MachineInstr &MI,
+                                      unsigned ImplicitRn = 0);
 
     void emitLoadStoreMultipleInstruction(const MachineInstr &MI);
 
@@ -114,9 +121,9 @@ namespace {
       return (TID.TSFlags & ARMII::OpcodeMask) >> ARMII::OpcodeShift;
     }
 
-    /// getShiftOp - Return the shift opcode (bit[6:5]) of the machine operand.
+    /// getShiftOp - Return the shift opcode (bit[6:5]) of the immediate value.
     ///
-    unsigned getShiftOp(const MachineOperand &MO) const ;
+    unsigned getShiftOp(unsigned Imm) const ;
 
     /// Routines that handle operands which add machine relocations which are
     /// fixed up by the JIT fixup stage.
@@ -165,10 +172,10 @@ bool ARMCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-/// getShiftOp - Return the shift opcode (bit[6:5]) of the machine operand.
+/// getShiftOp - Return the shift opcode (bit[6:5]) of the immediate value.
 ///
-unsigned ARMCodeEmitter::getShiftOp(const MachineOperand &MO) const {
-  switch (ARM_AM::getAM2ShiftOpc(MO.getImm())) {
+unsigned ARMCodeEmitter::getShiftOp(unsigned Imm) const {
+  switch (ARM_AM::getAM2ShiftOpc(Imm)) {
   default: assert(0 && "Unknown shift opc!");
   case ARM_AM::asr: return 2;
   case ARM_AM::lsl: return 0;
@@ -246,6 +253,11 @@ void ARMCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB) {
                                              ARM::reloc_arm_branch, BB));
 }
 
+void ARMCodeEmitter::emitWordLE(unsigned Binary) {
+  DOUT << "\t" << (void*)Binary << "\n";
+  MCE.emitWordLE(Binary);
+}
+
 void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   DOUT << "JIT: " << (void*)MCE.getCurrentPCValue() << ":\t" << MI;
 
@@ -312,7 +324,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
       assert(!ACPV->isNonLazyPointer() && "Don't know how to deal this yet!");
       emitExternalSymbolAddress(ACPV->getSymbol(), ARM::reloc_arm_absolute);
     }
-    MCE.emitWordLE(0);
+    emitWordLE(0);
   } else {
     Constant *CV = MCPE.Val.ConstVal;
 
@@ -321,15 +333,21 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
 
     if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
       emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
-      MCE.emitWordLE(0);
+      emitWordLE(0);
     } else {
       assert(CV->getType()->isInteger() &&
              "Not expecting non-integer constpool entries yet!");
       const ConstantInt *CI = dyn_cast<ConstantInt>(CV);
       uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
-      MCE.emitWordLE(Val);
+      emitWordLE(Val);
     }
   }
+}
+
+void ARMCodeEmitter::addPCLabel(unsigned LabelID) {
+  DOUT << "\t** LPC" << LabelID << " @ "
+       << (void*)MCE.getCurrentPCValue() << '\n';
+  JTI->addPCLabelAddr(LabelID, MCE.getCurrentPCValue());
 }
 
 void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
@@ -342,13 +360,29 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
     break;
   case ARM::PICADD: {
     // Remember of the address of the PC label for relocation later.
-    const MachineOperand &MO2 = MI.getOperand(2);
-    DOUT << "\t** LPC" << MO2.getImm() << " @ "
-         << (void*)MCE.getCurrentPCValue() << '\n';
-    JTI->addPCLabelAddr(MO2.getImm(), MCE.getCurrentPCValue());
-
+    addPCLabel(MI.getOperand(2).getImm());
     // PICADD is just an add instruction that implicitly read pc.
-    emitDataProcessingInstruction(MI);
+    emitDataProcessingInstruction(MI, ARM::PC);
+    break;
+  }
+  case ARM::PICLDR:
+  case ARM::PICLDRB:
+  case ARM::PICSTR:
+  case ARM::PICSTRB: {
+    // Remember of the address of the PC label for relocation later.
+    addPCLabel(MI.getOperand(2).getImm());
+    // These are just load / store instructions that implicitly read pc.
+    emitLoadStoreInstruction(MI, ARM::PC);
+    break;
+  }
+  case ARM::PICLDRH:
+  case ARM::PICLDRSH:
+  case ARM::PICLDRSB:
+  case ARM::PICSTRH: {
+    // Remember of the address of the PC label for relocation later.
+    addPCLabel(MI.getOperand(2).getImm());
+    // These are just load / store instructions that implicitly read pc.
+    emitMiscLoadStoreInstruction(MI, ARM::PC);
     break;
   }
   }
@@ -434,7 +468,8 @@ unsigned ARMCodeEmitter::getAddrModeSBit(const MachineInstr &MI,
   return 0;
 }
 
-void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI) {
+void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
+                                                   unsigned ImplicitRn) {
   const TargetInstrDesc &TID = MI.getDesc();
   if (TID.getOpcode() == ARM::MOVi2pieces)
     abort(); // FIXME
@@ -459,9 +494,9 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI) {
   // Encode first non-shifter register operand if there is one.
   bool isUnary = TID.TSFlags & ARMII::UnaryDP;
   if (!isUnary) {
-    if (TID.getOpcode() == ARM::PICADD)
-      // Special handling for PICADD. It implicitly uses PC register.
-      Binary |= (ARMRegisterInfo::getRegisterNumbering(ARM::PC)
+    if (ImplicitRn)
+      // Special handling for implicit use (e.g. PC).
+      Binary |= (ARMRegisterInfo::getRegisterNumbering(ImplicitRn)
                  << ARMII::RegRnShift);
     else {
       Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
@@ -473,13 +508,13 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI) {
   const MachineOperand &MO = MI.getOperand(OpIdx);
   if ((TID.TSFlags & ARMII::FormMask) == ARMII::DPSoRegFrm) {
     // Encode SoReg.
-    MCE.emitWordLE(Binary | getMachineSoRegOpValue(MI, TID, MO, OpIdx));
+    emitWordLE(Binary | getMachineSoRegOpValue(MI, TID, MO, OpIdx));
     return;
   }
 
   if (MO.isReg()) {
     // Encode register Rm.
-    MCE.emitWordLE(Binary | ARMRegisterInfo::getRegisterNumbering(MO.getReg()));
+    emitWordLE(Binary | ARMRegisterInfo::getRegisterNumbering(MO.getReg()));
     return;
   }
 
@@ -488,10 +523,11 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI) {
   Binary |= 1 << ARMII::I_BitShift;
   Binary |= getMachineSoImmOpValue(MI, TID, MO);
 
-  MCE.emitWordLE(Binary);
+  emitWordLE(Binary);
 }
 
-void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI) {
+void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
+                                              unsigned ImplicitRn) {
   const TargetInstrDesc &TID = MI.getDesc();
 
   // Part of binary is determined by TableGn.
@@ -504,19 +540,28 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI) {
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
 
   // Set second operand
-  Binary |= getMachineOpValue(MI, 1) << ARMII::RegRnShift;
+  unsigned OpIdx = 1;
+  if (ImplicitRn)
+    // Special handling for implicit use (e.g. PC).
+    Binary |= (ARMRegisterInfo::getRegisterNumbering(ImplicitRn)
+               << ARMII::RegRnShift);
+  else {
+    Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
+    ++OpIdx;
+  }
 
-  const MachineOperand &MO2 = MI.getOperand(2);
-  const MachineOperand &MO3 = MI.getOperand(3);
+  const MachineOperand &MO2 = MI.getOperand(OpIdx);
+  unsigned AM2Opc = (OpIdx == TID.getNumOperands())
+    ? 0 : MI.getOperand(OpIdx+1).getImm();
 
   // Set bit U(23) according to sign of immed value (positive or negative).
-  Binary |= ((ARM_AM::getAM2Op(MO3.getImm()) == ARM_AM::add ? 1 : 0) <<
+  Binary |= ((ARM_AM::getAM2Op(AM2Opc) == ARM_AM::add ? 1 : 0) <<
              ARMII::U_BitShift);
   if (!MO2.getReg()) { // is immediate
-    if (ARM_AM::getAM2Offset(MO3.getImm()))
+    if (ARM_AM::getAM2Offset(AM2Opc))
       // Set the value of offset_12 field
-      Binary |= ARM_AM::getAM2Offset(MO3.getImm());
-    MCE.emitWordLE(Binary);
+      Binary |= ARM_AM::getAM2Offset(AM2Opc);
+    emitWordLE(Binary);
     return;
   }
 
@@ -528,15 +573,16 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI) {
 
   // if this instr is in scaled register offset/index instruction, set
   // shift_immed(bit[11:7]) and shift(bit[6:5]) fields.
-  if (unsigned ShImm = ARM_AM::getAM2Offset(MO3.getImm())) {
-    Binary |= getShiftOp(MO3) << 5;  // shift
-    Binary |= ShImm           << 7;  // shift_immed
+  if (unsigned ShImm = ARM_AM::getAM2Offset(AM2Opc)) {
+    Binary |= getShiftOp(AM2Opc) << 5;  // shift
+    Binary |= ShImm              << 7;  // shift_immed
   }
 
-  MCE.emitWordLE(Binary);
+  emitWordLE(Binary);
 }
 
-void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI) {
+void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
+                                                  unsigned ImplicitRn) {
   const TargetInstrDesc &TID = MI.getDesc();
 
   // Part of binary is determined by TableGn.
@@ -549,37 +595,44 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI) {
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
 
   // Set second operand
-  Binary |= getMachineOpValue(MI, 1) << ARMII::RegRnShift;
+  unsigned OpIdx = 1;
+  if (ImplicitRn)
+    // Special handling for implicit use (e.g. PC).
+    Binary |= (ARMRegisterInfo::getRegisterNumbering(ImplicitRn)
+               << ARMII::RegRnShift);
+  else {
+    Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
+    ++OpIdx;
+  }
 
-  const MachineOperand &MO2 = MI.getOperand(2);
-  const MachineOperand &MO3 = MI.getOperand(3);
+  const MachineOperand &MO2 = MI.getOperand(OpIdx);
+  unsigned AM3Opc = (OpIdx == TID.getNumOperands())
+    ? 0 : MI.getOperand(OpIdx+1).getImm();
 
   // Set bit U(23) according to sign of immed value (positive or negative)
-  Binary |= ((ARM_AM::getAM2Op(MO3.getImm()) == ARM_AM::add ? 1 : 0) <<
+  Binary |= ((ARM_AM::getAM3Op(AM3Opc) == ARM_AM::add ? 1 : 0) <<
              ARMII::U_BitShift);
 
   // If this instr is in register offset/index encoding, set bit[3:0]
   // to the corresponding Rm register.
   if (MO2.getReg()) {
     Binary |= ARMRegisterInfo::getRegisterNumbering(MO2.getReg());
-    MCE.emitWordLE(Binary);
+    emitWordLE(Binary);
     return;
   }
 
   // if this instr is in immediate offset/index encoding, set bit 22 to 1
-  if (unsigned ImmOffs = ARM_AM::getAM3Offset(MO3.getImm())) {
+  if (unsigned ImmOffs = ARM_AM::getAM3Offset(AM3Opc)) {
     Binary |= 1 << 22;
     // Set operands
     Binary |= (ImmOffs >> 4) << 8;  // immedH
     Binary |= (ImmOffs & ~0xF);     // immedL
   }
 
-  MCE.emitWordLE(Binary);
+  emitWordLE(Binary);
 }
 
 void ARMCodeEmitter::emitLoadStoreMultipleInstruction(const MachineInstr &MI) {
-  const TargetInstrDesc &TID = MI.getDesc();
-
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
@@ -619,7 +672,7 @@ void ARMCodeEmitter::emitLoadStoreMultipleInstruction(const MachineInstr &MI) {
     Binary |= 0x1 << RegNum;
   }
 
-  MCE.emitWordLE(Binary);
+  emitWordLE(Binary);
 }
 
 void ARMCodeEmitter::emitMulFrm1Instruction(const MachineInstr &MI) {
@@ -649,7 +702,7 @@ void ARMCodeEmitter::emitMulFrm1Instruction(const MachineInstr &MI) {
   // Encode Rs
   Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRsShift;
 
-  MCE.emitWordLE(Binary);
+  emitWordLE(Binary);
 }
 
 void ARMCodeEmitter::emitBranchInstruction(const MachineInstr &MI) {
@@ -670,7 +723,7 @@ void ARMCodeEmitter::emitBranchInstruction(const MachineInstr &MI) {
     Binary |= getMachineOpValue(MI, 1) << 28;  // set conditional field
   }
 
-  MCE.emitWordLE(Binary);
+  emitWordLE(Binary);
 }
 
 void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
@@ -691,7 +744,7 @@ void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
     // otherwise, set the return register
     Binary |= getMachineOpValue(MI, 0);
 
-  MCE.emitWordLE(Binary);
+  emitWordLE(Binary);
 }
 
 #include "ARMGenCodeEmitter.inc"
