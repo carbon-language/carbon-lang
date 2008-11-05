@@ -585,6 +585,15 @@ let AddedComplexity = 15 in {
            (MMX_MOVZDI2PDIrr GR32:$src)>; 
 }
 
+let AddedComplexity = 20 in {
+  def : Pat<(v8i8 (X86vzmovl (bc_v8i8 (load_mmx addr:$src)))),
+           (MMX_MOVZDI2PDIrm addr:$src)>; 
+  def : Pat<(v4i16 (X86vzmovl (bc_v4i16 (load_mmx addr:$src)))),
+           (MMX_MOVZDI2PDIrm addr:$src)>; 
+  def : Pat<(v2i32 (X86vzmovl (bc_v2i32 (load_mmx addr:$src)))),
+           (MMX_MOVZDI2PDIrm addr:$src)>; 
+}
+
 // Scalar to v4i16 / v8i8. The source may be a GR32, but only the lower
 // 8 or 16-bits matter.
 def : Pat<(bc_v8i8  (v2i32 (scalar_to_vector GR32:$src))),
