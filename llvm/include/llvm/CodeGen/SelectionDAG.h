@@ -693,6 +693,13 @@ public:
   /// topological order. Returns the number of nodes.
   unsigned AssignTopologicalOrder();
 
+  /// RepositionNode - Move node N in the AllNodes list to be immediately
+  /// before the given iterator Position. This may be used to update the
+  /// topological ordering when the list of nodes is modified.
+  void RepositionNode(allnodes_iterator Position, SDNode *N) {
+    AllNodes.insert(Position, AllNodes.remove(N));
+  }
+
   /// isCommutativeBinOp - Returns true if the opcode is a commutative binary
   /// operation.
   static bool isCommutativeBinOp(unsigned Opcode) {

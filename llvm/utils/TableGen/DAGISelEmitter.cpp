@@ -856,14 +856,12 @@ public:
         NodeOps.push_back(Val);
       } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, CGP))) {
         for (unsigned i = 0; i < CP->getNumOperands(); ++i) {
-          emitCode("AddToISelQueue(CPTmp" + utostr(i) + ");");
           NodeOps.push_back("CPTmp" + utostr(i));
         }
       } else {
         // This node, probably wrapped in a SDNodeXForm, behaves like a leaf
         // node even if it isn't one. Don't select it.
         if (!LikeLeaf) {
-          emitCode("AddToISelQueue(" + Val + ");");
           if (isRoot && N->isLeaf()) {
             emitCode("ReplaceUses(N, " + Val + ");");
             emitCode("return NULL;");
@@ -969,11 +967,9 @@ public:
         for (unsigned i = 0, e = OrigChains.size(); i < e; ++i) {
           emitCode("if (" + OrigChains[i].first + ".getNode() != " +
                    OrigChains[i].second + ".getNode()) {");
-          emitCode("  AddToISelQueue(" + OrigChains[i].first + ");");
           emitCode("  InChains.push_back(" + OrigChains[i].first + ");");
           emitCode("}");
         }
-        emitCode("AddToISelQueue(" + ChainName + ");");
         emitCode("InChains.push_back(" + ChainName + ");");
         emitCode(ChainName + " = CurDAG->getNode(ISD::TokenFactor, MVT::Other, "
                  "&InChains[0], InChains.size());");
@@ -1020,8 +1016,6 @@ public:
 
       // Emit all the chain and CopyToReg stuff.
       bool ChainEmitted = NodeHasChain;
-      if (NodeHasChain)
-        emitCode("AddToISelQueue(" + ChainName + ");");
       if (NodeHasInFlag || HasImpInputs)
         EmitInFlagSelectCode(Pattern, "N", ChainEmitted,
                              InFlagDecled, ResNodeDecled, true);
@@ -1033,7 +1027,6 @@ public:
         if (NodeHasOptInFlag) {
           emitCode("if (HasInFlag) {");
           emitCode("  InFlag = N.getOperand(N.getNumOperands()-1);");
-          emitCode("  AddToISelQueue(InFlag);");
           emitCode("}");
         }
       }
@@ -1098,7 +1091,6 @@ public:
         emitCode("for (unsigned i = NumInputRootOps + " + utostr(NodeHasChain) +
                  ", e = N.getNumOperands()" + EndAdjust + "; i != e; ++i) {");
 
-        emitCode("  AddToISelQueue(N.getOperand(i));");
         emitCode("  Ops" + utostr(OpsNo) + ".push_back(N.getOperand(i));");
         emitCode("}");
       }
@@ -1383,14 +1375,12 @@ private:
                 InFlagDecled = true;
               } else
                 emitCode("InFlag = " + RootName + utostr(OpNo) + ";");
-              emitCode("AddToISelQueue(InFlag);");
             } else {
               if (!ChainEmitted) {
                 emitCode("SDValue Chain = CurDAG->getEntryNode();");
                 ChainName = "Chain";
                 ChainEmitted = true;
               }
-              emitCode("AddToISelQueue(" + RootName + utostr(OpNo) + ");");
               if (!InFlagDecled) {
                 emitCode("SDValue InFlag(0, 0);");
                 InFlagDecled = true;
@@ -1416,7 +1406,6 @@ private:
       } else
         emitCode("InFlag = " + RootName +
                ".getOperand(" + utostr(OpNo) + ");");
-      emitCode("AddToISelQueue(InFlag);");
     }
   }
 };
@@ -1901,10 +1890,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  std::vector<SDValue> Ops(N.getNode()->op_begin(), N.getNode()->op_end());\n"
      << "  SelectInlineAsmMemoryOperands(Ops);\n\n"
     
-     << "  // Ensure that the asm operands are themselves selected.\n"
-     << "  for (unsigned j = 0, e = Ops.size(); j != e; ++j)\n"
-     << "    AddToISelQueue(Ops[j]);\n\n"
-    
      << "  std::vector<MVT> VTs;\n"
      << "  VTs.push_back(MVT::Other);\n"
      << "  VTs.push_back(MVT::Flag);\n"
@@ -1922,7 +1907,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  SDValue Chain = N.getOperand(0);\n"
      << "  unsigned C = cast<LabelSDNode>(N)->getLabelID();\n"
      << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
-     << "  AddToISelQueue(Chain);\n"
      << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::DBG_LABEL,\n"
      << "                              MVT::Other, Tmp, Chain);\n"
      << "}\n\n";
@@ -1931,7 +1915,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  SDValue Chain = N.getOperand(0);\n"
      << "  unsigned C = cast<LabelSDNode>(N)->getLabelID();\n"
      << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
-     << "  AddToISelQueue(Chain);\n"
      << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::EH_LABEL,\n"
      << "                              MVT::Other, Tmp, Chain);\n"
      << "}\n\n";
@@ -1949,7 +1932,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());\n"
      << "  SDValue Tmp2 = "
      << "CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());\n"
-     << "  AddToISelQueue(Chain);\n"
      << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::DECLARE,\n"
      << "                              MVT::Other, Tmp1, Tmp2, Chain);\n"
      << "}\n\n";
@@ -1959,7 +1941,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  SDValue N1 = N.getOperand(1);\n"
      << "  unsigned C = cast<ConstantSDNode>(N1)->getZExtValue();\n"
      << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
-     << "  AddToISelQueue(N0);\n"
      << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::EXTRACT_SUBREG,\n"
      << "                              N.getValueType(), N0, Tmp);\n"
      << "}\n\n";
@@ -1970,8 +1951,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  SDValue N2 = N.getOperand(2);\n"
      << "  unsigned C = cast<ConstantSDNode>(N2)->getZExtValue();\n"
      << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
-     << "  AddToISelQueue(N1);\n"
-     << "  AddToISelQueue(N0);\n"
      << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::INSERT_SUBREG,\n"
      << "                              N.getValueType(), N0, N1, Tmp);\n"
      << "}\n\n";
@@ -1985,6 +1964,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  switch (N.getOpcode()) {\n"
      << "  default: break;\n"
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
+     << "  case ISD::MEMOPERAND:\n"
      << "  case ISD::BasicBlock:\n"
      << "  case ISD::Register:\n"
      << "  case ISD::HANDLENODE:\n"
@@ -1995,20 +1975,15 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::TargetExternalSymbol:\n"
      << "  case ISD::TargetJumpTable:\n"
      << "  case ISD::TargetGlobalTLSAddress:\n"
-     << "  case ISD::TargetGlobalAddress: {\n"
+     << "  case ISD::TargetGlobalAddress:\n"
+     << "  case ISD::TokenFactor:\n"
+     << "  case ISD::CopyFromReg:\n"
+     << "  case ISD::CopyToReg: {\n"
      << "    return NULL;\n"
      << "  }\n"
      << "  case ISD::AssertSext:\n"
      << "  case ISD::AssertZext: {\n"
-     << "    AddToISelQueue(N.getOperand(0));\n"
      << "    ReplaceUses(N, N.getOperand(0));\n"
-     << "    return NULL;\n"
-     << "  }\n"
-     << "  case ISD::TokenFactor:\n"
-     << "  case ISD::CopyFromReg:\n"
-     << "  case ISD::CopyToReg: {\n"
-     << "    for (unsigned i = 0, e = N.getNumOperands(); i != e; ++i)\n"
-     << "      AddToISelQueue(N.getOperand(i));\n"
      << "    return NULL;\n"
      << "  }\n"
      << "  case ISD::INLINEASM: return Select_INLINEASM(N);\n"

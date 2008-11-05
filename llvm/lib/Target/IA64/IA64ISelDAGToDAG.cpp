@@ -106,10 +106,6 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
   SDValue Chain = N->getOperand(0);
   SDValue Tmp1 = N->getOperand(0);
   SDValue Tmp2 = N->getOperand(1);
-  AddToISelQueue(Chain);
-
-  AddToISelQueue(Tmp1);
-  AddToISelQueue(Tmp2);
 
   bool isFP=false;
 
@@ -312,10 +308,8 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     SDValue Chain = N->getOperand(0);
     SDValue InFlag;  // Null incoming flag value.
 
-    AddToISelQueue(Chain);
     if(N->getNumOperands()==3) { // we have an incoming chain, callee and flag
       InFlag = N->getOperand(2);
-      AddToISelQueue(InFlag);
     }
 
     unsigned CallOpcode;
@@ -336,7 +330,6 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     // load the branch target (function)'s entry point and GP,
     // branch (call) then restore the GP
     SDValue FnDescriptor = N->getOperand(1);
-    AddToISelQueue(FnDescriptor);
    
     // load the branch target's entry point [mem] and 
     // GP value [mem+8]
@@ -385,7 +378,6 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
   
   case IA64ISD::GETFD: {
     SDValue Input = N->getOperand(0);
-    AddToISelQueue(Input);
     return CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Input);
   } 
   
@@ -461,8 +453,6 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     LoadSDNode *LD = cast<LoadSDNode>(N);
     SDValue Chain = LD->getChain();
     SDValue Address = LD->getBasePtr();
-    AddToISelQueue(Chain);
-    AddToISelQueue(Address);
 
     MVT TypeBeingLoaded = LD->getMemoryVT();
     unsigned Opc;
@@ -501,8 +491,6 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     StoreSDNode *ST = cast<StoreSDNode>(N);
     SDValue Address = ST->getBasePtr();
     SDValue Chain = ST->getChain();
-    AddToISelQueue(Address);
-    AddToISelQueue(Chain);
    
     unsigned Opc;
     if (ISD::isNON_TRUNCStore(N)) {
@@ -515,7 +503,6 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
         Chain = Initial.getValue(1);
         // then load 1 into the same reg iff the predicate to store is 1
         SDValue Tmp = ST->getValue();
-        AddToISelQueue(Tmp);
         Tmp =
           SDValue(CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
                                           CurDAG->getTargetConstant(1,
@@ -538,16 +525,12 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     
     SDValue N1 = N->getOperand(1);
     SDValue N2 = N->getOperand(2);
-    AddToISelQueue(N1);
-    AddToISelQueue(N2);
     return CurDAG->SelectNodeTo(N, Opc, MVT::Other, N2, N1, Chain);
   }
 
   case ISD::BRCOND: {
     SDValue Chain = N->getOperand(0);
     SDValue CC = N->getOperand(1);
-    AddToISelQueue(Chain);
-    AddToISelQueue(CC);
     MachineBasicBlock *Dest =
       cast<BasicBlockSDNode>(N->getOperand(2))->getBasicBlock();
     //FIXME - we do NOT need long branches all the time
@@ -561,14 +544,12 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     unsigned Opc = N->getOpcode() == ISD::CALLSEQ_START ?
       IA64::ADJUSTCALLSTACKDOWN : IA64::ADJUSTCALLSTACKUP;
     SDValue N0 = N->getOperand(0);
-    AddToISelQueue(N0);
     return CurDAG->SelectNodeTo(N, Opc, MVT::Other, getI64Imm(Amt), N0);
   }
 
   case ISD::BR:
     // FIXME: we don't need long branches all the time!
     SDValue N0 = N->getOperand(0);
-    AddToISelQueue(N0);
     return CurDAG->SelectNodeTo(N, IA64::BRL_NOTCALL, MVT::Other, 
                                 N->getOperand(1), N0);
   }

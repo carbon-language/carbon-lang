@@ -777,9 +777,6 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     return true;
   }
 
-  int id = N.getNode()->getNodeId();
-  bool AlreadySelected = isSelected(id); // Already selected, not yet replaced.
-
   switch (N.getOpcode()) {
   default: break;
   case ISD::Constant: {
@@ -794,7 +791,6 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   case X86ISD::Wrapper: {
     DOUT << "Wrapper: 64bit " << is64Bit;
     DOUT << " AM "; DEBUG(AM.dump()); DOUT << "\n";
-    DOUT << "AlreadySelected " << AlreadySelected << "\n";
     // Under X86-64 non-small code model, GV (and friends) are 64-bits.
     // Also, base and index reg must be 0 in order to use rip as base.
     if (is64Bit && (TM.getCodeModel() != CodeModel::Small ||
@@ -805,7 +801,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     // If value is available in a register both base and index components have
     // been picked, we can't fit the result available in the register in the
     // addressing mode. Duplicate GlobalAddress or ConstantPool as displacement.
-    if (!AlreadySelected || (AM.Base.Reg.getNode() && AM.IndexReg.getNode())) {
+    {
       SDValue N0 = N.getOperand(0);
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
         if (!is64Bit || isInt32(AM.Disp + G->getOffset())) {
@@ -846,8 +842,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     break;
 
   case ISD::SHL:
-    if (AlreadySelected || AM.IndexReg.getNode() != 0
-        || AM.Scale != 1 || AM.isRIPRel)
+    if (AM.IndexReg.getNode() != 0 || AM.Scale != 1 || AM.isRIPRel)
       break;
       
     if (ConstantSDNode
@@ -885,8 +880,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     // FALL THROUGH
   case ISD::MUL:
     // X*[3,5,9] -> X+X*[2,4,8]
-    if (!AlreadySelected &&
-        AM.BaseType == X86ISelAddressMode::RegBase &&
+    if (AM.BaseType == X86ISelAddressMode::RegBase &&
         AM.Base.Reg.getNode() == 0 &&
         AM.IndexReg.getNode() == 0 &&
         !AM.isRIPRel) {
@@ -924,7 +918,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     break;
 
   case ISD::ADD:
-    if (!AlreadySelected) {
+    {
       X86ISelAddressMode Backup = AM;
       if (!MatchAddress(N.getNode()->getOperand(0), AM, false, Depth+1) &&
           !MatchAddress(N.getNode()->getOperand(1), AM, false, Depth+1))
@@ -939,8 +933,6 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
 
   case ISD::OR:
     // Handle "X | C" as "X + C" iff X is known to have C bits clear.
-    if (AlreadySelected) break;
-      
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       X86ISelAddressMode Backup = AM;
       // Start with the LHS as an addr mode.
@@ -961,10 +953,9 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   case ISD::AND: {
     // Handle "(x << C1) & C2" as "(X & (C2>>C1)) << C1" if safe and if this
     // allows us to fold the shift into this addressing mode.
-    if (AlreadySelected) break;
     SDValue Shift = N.getOperand(0);
     if (Shift.getOpcode() != ISD::SHL) break;
-    
+
     // Scale must not be used already.
     if (AM.IndexReg.getNode() != 0 || AM.Scale != 1) break;
 
@@ -987,14 +978,34 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
       break;
     
     // Get the new AND mask, this folds to a constant.
+    SDValue X = Shift.getOperand(0);
     SDValue NewANDMask = CurDAG->getNode(ISD::SRL, N.getValueType(),
                                          SDValue(C2, 0), SDValue(C1, 0));
-    SDValue NewAND = CurDAG->getNode(ISD::AND, N.getValueType(),
-                                     Shift.getOperand(0), NewANDMask);
+    SDValue NewAND = CurDAG->getNode(ISD::AND, N.getValueType(), X, NewANDMask);
     SDValue NewSHIFT = CurDAG->getNode(ISD::SHL, N.getValueType(),
                                        NewAND, SDValue(C1, 0));
-    NewAND.getNode()->setNodeId(Shift.getNode()->getNodeId());
-    NewSHIFT.getNode()->setNodeId(N.getNode()->getNodeId());
+
+    // Insert the new nodes into the topological ordering.
+    if (C1->getNodeId() > X.getNode()->getNodeId()) {
+      CurDAG->RepositionNode(X.getNode(), C1);
+      C1->setNodeId(X.getNode()->getNodeId());
+    }
+    if (NewANDMask.getNode()->getNodeId() == -1 ||
+        NewANDMask.getNode()->getNodeId() > X.getNode()->getNodeId()) {
+      CurDAG->RepositionNode(X.getNode(), NewANDMask.getNode());
+      NewANDMask.getNode()->setNodeId(X.getNode()->getNodeId());
+    }
+    if (NewAND.getNode()->getNodeId() == -1 ||
+        NewAND.getNode()->getNodeId() > Shift.getNode()->getNodeId()) {
+      CurDAG->RepositionNode(Shift.getNode(), NewAND.getNode());
+      NewAND.getNode()->setNodeId(Shift.getNode()->getNodeId());
+    }
+    if (NewSHIFT.getNode()->getNodeId() == -1 ||
+        NewSHIFT.getNode()->getNodeId() > N.getNode()->getNodeId()) {
+      CurDAG->RepositionNode(N.getNode(), NewSHIFT.getNode());
+      NewSHIFT.getNode()->setNodeId(N.getNode()->getNodeId());
+    }
+
     CurDAG->ReplaceAllUsesWith(N, NewSHIFT);
     
     AM.Scale = 1 << ShiftCst;
@@ -1212,14 +1223,6 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   if (!SelectAddr(In1, In1, Tmp0, Tmp1, Tmp2, Tmp3))
     return NULL;
   SDValue LSI = Node->getOperand(4);    // MemOperand
-  AddToISelQueue(Tmp0);
-  AddToISelQueue(Tmp1);
-  AddToISelQueue(Tmp2);
-  AddToISelQueue(Tmp3);
-  AddToISelQueue(In2L);
-  AddToISelQueue(In2H);
-  // For now, don't select the MemOperand object, we don't know how.
-  AddToISelQueue(Chain);
   const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, In2L, In2H, LSI, Chain };
   return CurDAG->getTargetNode(Opc, MVT::i32, MVT::i32, MVT::Other, Ops, 8);
 }
@@ -1308,16 +1311,10 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
           std::swap(N0, N1);
       }
 
-      AddToISelQueue(N0);
       SDValue InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), LoReg,
                                               N0, SDValue()).getValue(1);
 
       if (foldedLoad) {
-        AddToISelQueue(N1.getOperand(0));
-        AddToISelQueue(Tmp0);
-        AddToISelQueue(Tmp1);
-        AddToISelQueue(Tmp2);
-        AddToISelQueue(Tmp3);
         SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, N1.getOperand(0), InFlag };
         SDNode *CNode =
           CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Ops, 6);
@@ -1325,7 +1322,6 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         // Update the chain.
         ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
       } else {
-        AddToISelQueue(N1);
         InFlag =
           SDValue(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
@@ -1436,18 +1432,12 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         SDValue Tmp0, Tmp1, Tmp2, Tmp3, Move, Chain;
         if (TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3)) {
           SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, N0.getOperand(0) };
-          AddToISelQueue(N0.getOperand(0));
-          AddToISelQueue(Tmp0);
-          AddToISelQueue(Tmp1);
-          AddToISelQueue(Tmp2);
-          AddToISelQueue(Tmp3);
           Move =
             SDValue(CurDAG->getTargetNode(X86::MOVZX16rm8, MVT::i16, MVT::Other,
                                             Ops, 5), 0);
           Chain = Move.getValue(1);
           ReplaceUses(N0.getValue(1), Chain);
         } else {
-          AddToISelQueue(N0);
           Move =
             SDValue(CurDAG->getTargetNode(X86::MOVZX16rr8, MVT::i16, N0), 0);
           Chain = CurDAG->getEntryNode();
@@ -1455,7 +1445,6 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         Chain  = CurDAG->getCopyToReg(Chain, X86::AX, Move, SDValue());
         InFlag = Chain.getValue(1);
       } else {
-        AddToISelQueue(N0);
         InFlag =
           CurDAG->getCopyToReg(CurDAG->getEntryNode(),
                                LoReg, N0, SDValue()).getValue(1);
@@ -1472,11 +1461,6 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       }
 
       if (foldedLoad) {
-        AddToISelQueue(N1.getOperand(0));
-        AddToISelQueue(Tmp0);
-        AddToISelQueue(Tmp1);
-        AddToISelQueue(Tmp2);
-        AddToISelQueue(Tmp3);
         SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, N1.getOperand(0), InFlag };
         SDNode *CNode =
           CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Ops, 6);
@@ -1484,7 +1468,6 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         // Update the chain.
         ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
       } else {
-        AddToISelQueue(N1);
         InFlag =
           SDValue(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
@@ -1540,7 +1523,6 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       MVT SVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
       if (SVT == MVT::i8 && !Subtarget->is64Bit()) {
         SDValue N0 = Node->getOperand(0);
-        AddToISelQueue(N0);
       
         SDValue TruncOp = SDValue(getTruncateTo8Bit(N0), 0);
         unsigned Opc = 0;
@@ -1573,7 +1555,6 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
     case ISD::TRUNCATE: {
       if (NVT == MVT::i8 && !Subtarget->is64Bit()) {
         SDValue Input = Node->getOperand(0);
-        AddToISelQueue(Node->getOperand(0));
         SDNode *ResNode = getTruncateTo8Bit(Input);
       
 #ifndef NDEBUG
@@ -1605,7 +1586,6 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
           cast<GlobalAddressSDNode>(N2.getOperand(0))->getGlobal();
         SDValue Tmp1 = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
         SDValue Tmp2 = CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());
-        AddToISelQueue(Chain);
         SDValue Ops[] = { Tmp1, Tmp2, Chain };
         return CurDAG->getTargetNode(TargetInstrInfo::DECLARE,
                                      MVT::Other, Ops, 3);
@@ -1647,10 +1627,6 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   OutOps.push_back(Op1);
   OutOps.push_back(Op2);
   OutOps.push_back(Op3);
-  AddToISelQueue(Op0);
-  AddToISelQueue(Op1);
-  AddToISelQueue(Op2);
-  AddToISelQueue(Op3);
   return false;
 }
 

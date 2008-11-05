@@ -174,7 +174,6 @@ namespace {
       default: return true;
       case 'm':   // memory
         Op0 = Op;
-        AddToISelQueue(Op0);
         break;
       }
       
@@ -270,9 +269,6 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
     SDValue N0 = Op.getOperand(0);
     SDValue N1 = Op.getOperand(1);
     SDValue N2 = Op.getOperand(2);
-    AddToISelQueue(N0);
-    AddToISelQueue(N1);
-    AddToISelQueue(N2);
     Chain = CurDAG->getCopyToReg(Chain, Alpha::R24, N1, 
                                  SDValue(0,0));
     Chain = CurDAG->getCopyToReg(Chain, Alpha::R25, N2, 
@@ -289,7 +285,6 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
 
   case ISD::READCYCLECOUNTER: {
     SDValue Chain = N->getOperand(0);
-    AddToISelQueue(Chain); //Select chain
     return CurDAG->getTargetNode(Alpha::RPCC, MVT::i64, MVT::Other,
                                  Chain);
   }
@@ -368,8 +363,6 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
       };
       SDValue tmp1 = N->getOperand(rev?1:0);
       SDValue tmp2 = N->getOperand(rev?0:1);
-      AddToISelQueue(tmp1);
-      AddToISelQueue(tmp2);
       SDNode *cmp = CurDAG->getTargetNode(Opc, MVT::f64, tmp1, tmp2);
       if (inv) 
         cmp = CurDAG->getTargetNode(Alpha::CMPTEQ, MVT::f64, SDValue(cmp, 0), 
@@ -406,9 +399,6 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
       SDValue cond = N->getOperand(0);
       SDValue TV = N->getOperand(1);
       SDValue FV = N->getOperand(2);
-      AddToISelQueue(cond);
-      AddToISelQueue(TV);
-      AddToISelQueue(FV);
       
       SDNode* LD = CurDAG->getTargetNode(Alpha::ITOFT, MVT::f64, cond);
       return CurDAG->getTargetNode(isDouble?Alpha::FCMOVNET:Alpha::FCMOVNES,
@@ -436,7 +426,6 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
         mask = mask | dontcare;
       
       if (get_zapImm(mask)) {
-        AddToISelQueue(N->getOperand(0).getOperand(0));
         SDValue Z = 
           SDValue(CurDAG->getTargetNode(Alpha::ZAPNOTi, MVT::i64,
                                           N->getOperand(0).getOperand(0),
@@ -460,7 +449,6 @@ void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
   SDValue Chain = N->getOperand(0);
   SDValue Addr = N->getOperand(1);
   SDValue InFlag(0,0);  // Null incoming flag value.
-  AddToISelQueue(Chain);
 
    std::vector<SDValue> CallOperands;
    std::vector<MVT> TypeOperands;
@@ -468,7 +456,6 @@ void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
    //grab the arguments
    for(int i = 2, e = N->getNumOperands(); i < e; ++i) {
      TypeOperands.push_back(N->getOperand(i).getValueType());
-     AddToISelQueue(N->getOperand(i));
      CallOperands.push_back(N->getOperand(i));
    }
    int count = N->getNumOperands() - 2;
@@ -514,7 +501,6 @@ void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
      Chain = SDValue(CurDAG->getTargetNode(Alpha::BSR, MVT::Other, MVT::Flag, 
                                              Addr.getOperand(0), Chain, InFlag), 0);
    } else {
-     AddToISelQueue(Addr);
      Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr, InFlag);
      InFlag = Chain.getValue(1);
      Chain = SDValue(CurDAG->getTargetNode(Alpha::JSR, MVT::Other, MVT::Flag, 

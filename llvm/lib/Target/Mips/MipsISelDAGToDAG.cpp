@@ -236,8 +236,6 @@ Select(SDValue N)
 
       SDValue LHS = Node->getOperand(0);
       SDValue RHS = Node->getOperand(1);
-      AddToISelQueue(LHS);
-      AddToISelQueue(RHS);
 
       MVT VT = LHS.getValueType();
       SDNode *Carry = CurDAG->getTargetNode(Mips::SLTu, VT, Ops, 2);
@@ -255,8 +253,6 @@ Select(SDValue N)
     case ISD::UMUL_LOHI: {
       SDValue Op1 = Node->getOperand(0);
       SDValue Op2 = Node->getOperand(1);
-      AddToISelQueue(Op1);
-      AddToISelQueue(Op2);
 
       unsigned Op;
       if (Opcode == ISD::UMUL_LOHI || Opcode == ISD::SMUL_LOHI)
@@ -287,8 +283,6 @@ Select(SDValue N)
     case ISD::MULHU: {
       SDValue MulOp1 = Node->getOperand(0);
       SDValue MulOp2 = Node->getOperand(1);
-      AddToISelQueue(MulOp1);
-      AddToISelQueue(MulOp2);
 
       unsigned MulOp  = (Opcode == ISD::MULHU ? Mips::MULTu : Mips::MULT);
       SDNode *MulNode = CurDAG->getTargetNode(MulOp, MVT::Flag, MulOp1, MulOp2);
@@ -308,8 +302,6 @@ Select(SDValue N)
     case ISD::UDIV: {
       SDValue Op1 = Node->getOperand(0);
       SDValue Op2 = Node->getOperand(1);
-      AddToISelQueue(Op1);
-      AddToISelQueue(Op2);
 
       unsigned Op, MOp;
       if (Opcode == ISD::SDIV || Opcode == ISD::UDIV) {
@@ -341,7 +333,6 @@ Select(SDValue N)
         //bool isCodeLarge = (TM.getCodeModel() == CodeModel::Large);
         SDValue Chain  = Node->getOperand(0);
         SDValue Callee = Node->getOperand(1);
-        AddToISelQueue(Chain);
         SDValue T9Reg = CurDAG->getRegister(Mips::T9, MVT::i32);
         SDValue InFlag(0, 0);
 
@@ -356,15 +347,12 @@ Select(SDValue N)
           SDValue Load = SDValue(CurDAG->getTargetNode(Mips::LW, MVT::i32, 
                                      MVT::Other, Ops, 3), 0);
           Chain = Load.getValue(1);
-          AddToISelQueue(Chain);
 
           // Call target must be on T9
           Chain = CurDAG->getCopyToReg(Chain, T9Reg, Load, InFlag);
         } else 
           /// Indirect call
           Chain = CurDAG->getCopyToReg(Chain, T9Reg, Callee, InFlag);
-
-        AddToISelQueue(Chain);
 
         // Emit Jump and Link Register
         SDNode *ResNode = CurDAG->getTargetNode(Mips::JALR, MVT::Other,

@@ -151,8 +151,6 @@ SDNode *SparcDAGToDAGISel::Select(SDValue Op) {
     // FIXME: should use a custom expander to expose the SRA to the dag.
     SDValue DivLHS = N->getOperand(0);
     SDValue DivRHS = N->getOperand(1);
-    AddToISelQueue(DivLHS);
-    AddToISelQueue(DivRHS);
 
     // Set the Y register to the high-part.
     SDValue TopPart;
@@ -175,8 +173,6 @@ SDNode *SparcDAGToDAGISel::Select(SDValue Op) {
     // FIXME: Handle mul by immediate.
     SDValue MulLHS = N->getOperand(0);
     SDValue MulRHS = N->getOperand(1);
-    AddToISelQueue(MulLHS);
-    AddToISelQueue(MulRHS);
     unsigned Opcode = N->getOpcode() == ISD::MULHU ? SP::UMULrr : SP::SMULrr;
     SDNode *Mul = CurDAG->getTargetNode(Opcode, MVT::i32, MVT::Flag,
                                         MulLHS, MulRHS);

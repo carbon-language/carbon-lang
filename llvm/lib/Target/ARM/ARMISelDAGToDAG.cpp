@@ -599,8 +599,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       std::swap(LHSR, RHSR);
     }
     if (RHSR && RHSR->getReg() == ARM::SP) {
-      AddToISelQueue(N0);
-      AddToISelQueue(N1);
       return CurDAG->SelectNodeTo(N, ARM::tADDhirr, Op.getValueType(), N0, N1);
     }
     break;
@@ -613,7 +611,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       if (!RHSV) break;
       if (isPowerOf2_32(RHSV-1)) {  // 2^n+1?
         SDValue V = Op.getOperand(0);
-        AddToISelQueue(V);
         unsigned ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, Log2_32(RHSV-1));
         SDValue Ops[] = { V, V, CurDAG->getRegister(0, MVT::i32),
                             CurDAG->getTargetConstant(ShImm, MVT::i32),
@@ -623,7 +620,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       }
       if (isPowerOf2_32(RHSV+1)) {  // 2^n-1?
         SDValue V = Op.getOperand(0);
-        AddToISelQueue(V);
         unsigned ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, Log2_32(RHSV+1));
         SDValue Ops[] = { V, V, CurDAG->getRegister(0, MVT::i32),
                             CurDAG->getTargetConstant(ShImm, MVT::i32),
@@ -634,21 +630,16 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     }
     break;
   case ARMISD::FMRRD:
-    AddToISelQueue(Op.getOperand(0));
     return CurDAG->getTargetNode(ARM::FMRRD, MVT::i32, MVT::i32,
                                  Op.getOperand(0), getAL(CurDAG),
                                  CurDAG->getRegister(0, MVT::i32));
   case ISD::UMUL_LOHI: {
-    AddToISelQueue(Op.getOperand(0));
-    AddToISelQueue(Op.getOperand(1));
     SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
     return CurDAG->getTargetNode(ARM::UMULL, MVT::i32, MVT::i32, Ops, 5);
   }
   case ISD::SMUL_LOHI: {
-    AddToISelQueue(Op.getOperand(0));
-    AddToISelQueue(Op.getOperand(1));
     SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
@@ -690,9 +681,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       if (Match) {
         SDValue Chain = LD->getChain();
         SDValue Base = LD->getBasePtr();
-        AddToISelQueue(Chain);
-        AddToISelQueue(Base);
-        AddToISelQueue(Offset);
         SDValue Ops[]= { Base, Offset, AMOpc, getAL(CurDAG),
                            CurDAG->getRegister(0, MVT::i32), Chain };
         return CurDAG->getTargetNode(Opcode, MVT::i32, MVT::i32,
@@ -721,9 +709,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     assert(N2.getOpcode() == ISD::Constant);
     assert(N3.getOpcode() == ISD::Register);
 
-    AddToISelQueue(Chain);
-    AddToISelQueue(N1);
-    AddToISelQueue(InFlag);
     SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
                                cast<ConstantSDNode>(N2)->getZExtValue()),
                                MVT::i32);
@@ -756,11 +741,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     SDValue CPTmp2;
     if (!isThumb && VT == MVT::i32 &&
         SelectShifterOperandReg(Op, N1, CPTmp0, CPTmp1, CPTmp2)) {
-      AddToISelQueue(N0);
-      AddToISelQueue(CPTmp0);
-      AddToISelQueue(CPTmp1);
-      AddToISelQueue(CPTmp2);
-      AddToISelQueue(InFlag);
       SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
                                cast<ConstantSDNode>(N2)->getZExtValue()),
                                MVT::i32);
@@ -777,8 +757,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     if (VT == MVT::i32 &&
         N3.getOpcode() == ISD::Constant &&
         Predicate_so_imm(N3.getNode())) {
-      AddToISelQueue(N0);
-      AddToISelQueue(InFlag);
       SDValue Tmp1 = CurDAG->getTargetConstant(((unsigned)
                                cast<ConstantSDNode>(N1)->getZExtValue()),
                                MVT::i32);
@@ -799,9 +777,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     // Pattern complexity = 6  cost = 11  size = 0
     //
     // Also FCPYScc and FCPYDcc.
-    AddToISelQueue(N0);
-    AddToISelQueue(N1);
-    AddToISelQueue(InFlag);
     SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
                                cast<ConstantSDNode>(N2)->getZExtValue()),
                                MVT::i32);
@@ -832,9 +807,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     assert(N2.getOpcode() == ISD::Constant);
     assert(N3.getOpcode() == ISD::Register);
 
-    AddToISelQueue(N0);
-    AddToISelQueue(N1);
-    AddToISelQueue(InFlag);
     SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
                                cast<ConstantSDNode>(N2)->getZExtValue()),
                                MVT::i32);
