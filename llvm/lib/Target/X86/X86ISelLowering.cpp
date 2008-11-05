@@ -7516,7 +7516,7 @@ static SDValue PerformFANDCombine(SDNode *N, SelectionDAG &DAG) {
 
 
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
-                                               DAGCombinerInfo &DCI) const {
+                                             DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
   switch (N->getOpcode()) {
   default: break;
