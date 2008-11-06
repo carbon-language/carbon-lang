@@ -98,31 +98,8 @@ bool StackProtector::runOnFunction(Function &Fn) {
 ///  - The epilogue checks the value stored in the prologue against the original
 ///    value. It calls __stack_chk_fail if they differ.
 bool StackProtector::InsertStackProtectors() {
-  std::vector<BasicBlock*> ReturnBBs;
-
-  for (Function::iterator I = F->begin(); I != F->end(); ++I)
-    if (isa<ReturnInst>(I->getTerminator()))
-      ReturnBBs.push_back(I);
-
-  // If this function doesn't return, don't bother with stack protectors.
-  if (ReturnBBs.empty()) return false;
-
-  // Insert code into the entry block that stores the __stack_chk_guard variable
-  // onto the stack.
-  BasicBlock &Entry = F->getEntryBlock();
-  Instruction *InsertPt = &Entry.front();
-
-  const PointerType *GuardTy = PointerType::getUnqual(Type::Int8Ty);
-
-  // The global variable for the stack guard.
-  Constant *StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", GuardTy);
-  LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsertPt);
-  CallInst::
-    Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_create),
-           LI, "", InsertPt);
-
-  // Create the basic block to jump to when the guard check fails.
-  BasicBlock *FailBB = CreateFailBB();
+  Constant *StackGuardVar = 0;  // The global variable for the stack guard.
+  BasicBlock *FailBB = 0;       // The basic block to jump to if check fails.
 
   // Loop through the basic blocks that have return instructions. Convert this:
   //
@@ -146,28 +123,54 @@ bool StackProtector::InsertStackProtectors() {
   //     call void @__stack_chk_fail()
   //     unreachable
   //
-  for (std::vector<BasicBlock*>::iterator
-         I = ReturnBBs.begin(), E = ReturnBBs.end(); I != E; ++I) {
-    BasicBlock *BB = *I;
-    ReturnInst *RI = cast<ReturnInst>(BB->getTerminator());
-    Function::iterator InsPt = BB; ++InsPt; // Insertion point for new BB.
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+    BasicBlock *BB = I;
 
-    // Split the basic block before the return instruction.
-    BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
+    if (isa<ReturnInst>(BB->getTerminator())) {
+      // Create the basic block to jump to when the guard check fails.
+      if (!FailBB)
+        FailBB = CreateFailBB();
 
-    // Move the newly created basic block to the point right after the old basic
-    // block so that it's in the "fall through" position.
-    NewBB->removeFromParent();
-    F->getBasicBlockList().insert(InsPt, NewBB);
+      if (!StackGuardVar)
+        StackGuardVar =
+          M->getOrInsertGlobal("__stack_chk_guard",
+                               PointerType::getUnqual(Type::Int8Ty));
 
-    // Generate the stack protector instructions in the old basic block.
-    LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
-    CallInst *CI = CallInst::
-      Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_check),
-             "", BB);
-    ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, CI, LI1, "", BB);
-    BranchInst::Create(NewBB, FailBB, Cmp, BB);
+      ReturnInst *RI = cast<ReturnInst>(BB->getTerminator());
+      Function::iterator InsPt = BB; ++InsPt; // Insertion point for new BB.
+      ++I;
+
+      // Split the basic block before the return instruction.
+      BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
+
+      // Move the newly created basic block to the point right after the old basic
+      // block so that it's in the "fall through" position.
+      NewBB->removeFromParent();
+      F->getBasicBlockList().insert(InsPt, NewBB);
+
+      // Generate the stack protector instructions in the old basic block.
+      LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
+      CallInst *CI = CallInst::
+        Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_check),
+               "", BB);
+      ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, CI, LI1, "", BB);
+      BranchInst::Create(NewBB, FailBB, Cmp, BB);
+    }
   }
+
+  // Return if we didn't modify any basic blocks. I.e., there are no return
+  // statements in the function.
+  if (!FailBB) return false;
+
+  // Insert code into the entry block that stores the __stack_chk_guard variable
+  // onto the stack.
+  BasicBlock &Entry = F->getEntryBlock();
+  Instruction *InsertPt = &Entry.front();
+
+  LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsertPt);
+  CallInst::
+    Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_create),
+           LI, "", InsertPt);
 
   return true;
 }
