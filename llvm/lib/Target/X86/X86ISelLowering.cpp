@@ -523,7 +523,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::FEXP, MVT::f80, Expand);
   setOperationAction(ISD::FEXP2, MVT::f80, Expand);
 
-  // First set operation action for all vector types to either to promote
+  // First set operation action for all vector types to either promote
   // (for widening) or expand (for scalarization). Then we will selectively
   // turn on ones that can be effectively codegen'd.
   for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
@@ -544,8 +544,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT,(MVT::SimpleValueType)VT,Expand);
     setOperationAction(ISD::INSERT_VECTOR_ELT,(MVT::SimpleValueType)VT, Expand);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR,(MVT::SimpleValueType)VT, Expand);
-    setOperationAction(ISD::CONCAT_VECTORS,(MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FABS, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FSIN, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FCOS, (MVT::SimpleValueType)VT, Expand);
@@ -7852,7 +7850,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 /// getWidenVectorType: given a vector type, returns the type to widen
 /// to (e.g., v7i8 to v8i8). If the vector type is legal, it returns itself.
 /// If there is no vector type that we want to widen to, returns MVT::Other
-/// When and were to widen is target dependent based on the cost of
+/// When and where to widen is target dependent based on the cost of
 /// scalarizing vs using the wider vector type.
 
 MVT X86TargetLowering::getWidenVectorType(MVT VT) {

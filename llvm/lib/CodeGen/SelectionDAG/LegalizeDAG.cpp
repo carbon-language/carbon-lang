@@ -100,9 +100,9 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   /// processed to the result.
   std::map<SDValue, SDValue> ScalarizedNodes;
   
-  /// WidenNodes - For nodes that need to be widen from one vector type to
-  /// another, this contains the mapping of ones we have already widen.  This
-  /// allows us to avoid widening more than once.
+  /// WidenNodes - For nodes that need to be widened from one vector type to
+  /// another, this contains the mapping of those that we have already widen.
+  /// This allows us to avoid widening more than once.
   std::map<SDValue, SDValue> WidenNodes;
 
   void AddLegalizedOperand(SDValue From, SDValue To) {
@@ -117,7 +117,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
     // If someone requests legalization of the new node, return itself.
     LegalizedNodes.insert(std::make_pair(To, To));
   }
-  void AddWidenOperand(SDValue From, SDValue To) {
+  void AddWidenedOperand(SDValue From, SDValue To) {
     bool isNew = WidenNodes.insert(std::make_pair(From, To)).second;
     assert(isNew && "Got into the map somehow?");
     // If someone requests legalization of the new node, return itself.
@@ -180,13 +180,12 @@ private:
   /// types.
   void ExpandOp(SDValue O, SDValue &Lo, SDValue &Hi);
 
-  /// WidenVectorOp - Widen a vector operation in order to do the computation
-  /// in a wider type given to a wider type given by WidenVT (e.g., v3i32 to
-  /// v4i32).  The produced value will have the correct value for the existing
-  /// elements but no guarantee is made about the new elements at the end of
-  /// the vector: it may be zero, sign-extended, or garbage.  This is useful
-  /// when we have instruction operating on an illegal vector type and we want
-  /// to widen it to do the computation on a legal wider vector type.
+  /// WidenVectorOp - Widen a vector operation to a wider type given by WidenVT 
+  /// (e.g., v3i32 to v4i32).  The produced value will have the correct value
+  /// for the existing elements but no guarantee is made about the new elements
+  /// at the end of the vector: it may be zero, ones, or garbage. This is useful
+  /// when we have an instruction operating on an illegal vector type and we
+  /// want to widen it to do the computation on a legal wider vector type.
   SDValue WidenVectorOp(SDValue Op, MVT WidenVT);
 
   /// SplitVectorOp - Given an operand of vector type, break it down into
@@ -198,7 +197,7 @@ private:
   /// scalar (e.g. f32) value.
   SDValue ScalarizeVectorOp(SDValue O);
   
-  /// Useful 16 element vector used to pass operands for widening
+  /// Useful 16 element vector type that is used to pass operands for widening.
   typedef SmallVector<SDValue, 16> SDValueVector;  
   
   /// LoadWidenVectorOp - Load a vector for a wider type. Returns true if
@@ -7583,8 +7582,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   // the legal type, the resulting code will be more efficient.  If this is not
   // the case, the resulting code will preform badly as we end up generating
   // code to pack/unpack the results. It is the function that calls widen
-  // that is responsible for seeing this doesn't happen.  For some cases, we
-  // have decided that it is not worth widening so we just split the operation.
+  // that is responsible for seeing this doesn't happen.
   switch (Node->getOpcode()) {
   default: 
 #ifndef NDEBUG
@@ -8017,7 +8015,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   if (Result != Op)
     Result = LegalizeOp(Result);
 
-  AddWidenOperand(Op, Result);
+  AddWidenedOperand(Op, Result);
   return Result;
 }
 
