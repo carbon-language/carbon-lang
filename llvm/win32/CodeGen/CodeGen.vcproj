@@ -485,6 +485,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\StackProtector.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\StackSlotColoring.cpp"
 				>
 			</File>
