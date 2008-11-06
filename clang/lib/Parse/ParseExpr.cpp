@@ -319,8 +319,8 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     if (!LHS.isInvalid) {
       // Combine the LHS and RHS into the LHS (e.g. build AST).
       if (TernaryMiddle.isInvalid)
-        LHS = Actions.ActOnBinOp(OpToken.getLocation(), OpToken.getKind(),
-                                 LHS.Val, RHS.Val);
+        LHS = Actions.ActOnBinOp(CurScope, OpToken.getLocation(), 
+                                 OpToken.getKind(), LHS.Val, RHS.Val);
       else
         LHS = Actions.ActOnConditionalOp(OpToken.getLocation(), ColonLoc,
                                          LHS.Val, TernaryMiddle.Val, RHS.Val);

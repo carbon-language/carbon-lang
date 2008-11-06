@@ -2626,8 +2626,107 @@ static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
   return Opc;
 }
 
+/// CreateBuiltinBinOp - Creates a new built-in binary operation with
+/// operator @p Opc at location @c TokLoc. This routine only supports
+/// built-in operations; ActOnBinOp handles overloaded operators.
+Action::ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc, 
+                                            unsigned Op,
+                                            Expr *lhs, Expr *rhs) {
+  QualType ResultTy;  // Result type of the binary operator.
+  QualType CompTy;    // Computation type for compound assignments (e.g. '+=')
+  BinaryOperator::Opcode Opc = (BinaryOperator::Opcode)Op;
+
+  switch (Opc) {
+  default:
+    assert(0 && "Unknown binary expr!");
+  case BinaryOperator::Assign:
+    ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, QualType());
+    break;
+  case BinaryOperator::Mul: 
+  case BinaryOperator::Div:
+    ResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc);
+    break;
+  case BinaryOperator::Rem:
+    ResultTy = CheckRemainderOperands(lhs, rhs, OpLoc);
+    break;
+  case BinaryOperator::Add:
+    ResultTy = CheckAdditionOperands(lhs, rhs, OpLoc);
+    break;
+  case BinaryOperator::Sub:
+    ResultTy = CheckSubtractionOperands(lhs, rhs, OpLoc);
+    break;
+  case BinaryOperator::Shl: 
+  case BinaryOperator::Shr:
+    ResultTy = CheckShiftOperands(lhs, rhs, OpLoc);
+    break;
+  case BinaryOperator::LE:
+  case BinaryOperator::LT:
+  case BinaryOperator::GE:
+  case BinaryOperator::GT:
+    ResultTy = CheckCompareOperands(lhs, rhs, OpLoc, true);
+    break;
+  case BinaryOperator::EQ:
+  case BinaryOperator::NE:
+    ResultTy = CheckCompareOperands(lhs, rhs, OpLoc, false);
+    break;
+  case BinaryOperator::And:
+  case BinaryOperator::Xor:
+  case BinaryOperator::Or:
+    ResultTy = CheckBitwiseOperands(lhs, rhs, OpLoc);
+    break;
+  case BinaryOperator::LAnd:
+  case BinaryOperator::LOr:
+    ResultTy = CheckLogicalOperands(lhs, rhs, OpLoc);
+    break;
+  case BinaryOperator::MulAssign:
+  case BinaryOperator::DivAssign:
+    CompTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc, true);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    break;
+  case BinaryOperator::RemAssign:
+    CompTy = CheckRemainderOperands(lhs, rhs, OpLoc, true);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    break;
+  case BinaryOperator::AddAssign:
+    CompTy = CheckAdditionOperands(lhs, rhs, OpLoc, true);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    break;
+  case BinaryOperator::SubAssign:
+    CompTy = CheckSubtractionOperands(lhs, rhs, OpLoc, true);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    break;
+  case BinaryOperator::ShlAssign:
+  case BinaryOperator::ShrAssign:
+    CompTy = CheckShiftOperands(lhs, rhs, OpLoc, true);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    break;
+  case BinaryOperator::AndAssign:
+  case BinaryOperator::XorAssign:
+  case BinaryOperator::OrAssign:
+    CompTy = CheckBitwiseOperands(lhs, rhs, OpLoc, true);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    break;
+  case BinaryOperator::Comma:
+    ResultTy = CheckCommaOperands(lhs, rhs, OpLoc);
+    break;
+  }
+  if (ResultTy.isNull())
+    return true;
+  if (CompTy.isNull())
+    return new BinaryOperator(lhs, rhs, Opc, ResultTy, OpLoc);
+  else
+    return new CompoundAssignOperator(lhs, rhs, Opc, ResultTy, CompTy, OpLoc);  
+}
+
 // Binary Operators.  'Tok' is the token for the operator.
-Action::ExprResult Sema::ActOnBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
+Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc, 
+                                    tok::TokenKind Kind, 
                                     ExprTy *LHS, ExprTy *RHS) {
   BinaryOperator::Opcode Opc = ConvertTokenKindToBinaryOpcode(Kind);
   Expr *lhs = (Expr *)LHS, *rhs = (Expr*)RHS;
@@ -2635,95 +2734,104 @@ Action::ExprResult Sema::ActOnBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   assert((lhs != 0) && "ActOnBinOp(): missing left expression");
   assert((rhs != 0) && "ActOnBinOp(): missing right expression");
 
-  QualType ResultTy;  // Result type of the binary operator.
-  QualType CompTy;    // Computation type for compound assignments (e.g. '+=')
+  if (getLangOptions().CPlusPlus &&
+      (lhs->getType()->isRecordType() || lhs->getType()->isEnumeralType() ||
+       rhs->getType()->isRecordType() || rhs->getType()->isEnumeralType())) {
+    // C++ [over.binary]p1:
+    //   A binary operator shall be implemented either by a non-static
+    //   member function (9.3) with one parameter or by a non-member
+    //   function with two parameters. Thus, for any binary operator
+    //   @, x@y can be interpreted as either x.operator@(y) or
+    //   operator@(x,y). If both forms of the operator function have
+    //   been declared, the rules in 13.3.1.2 determines which, if
+    //   any, interpretation is used.
+    OverloadCandidateSet CandidateSet;
+    
+    // Determine which overloaded operator we're dealing with.
+    static const OverloadedOperatorKind OverOps[] = {
+      OO_Star, OO_Slash, OO_Percent,
+      OO_Plus, OO_Minus,
+      OO_LessLess, OO_GreaterGreater,
+      OO_Less, OO_Greater, OO_LessEqual, OO_GreaterEqual,
+      OO_EqualEqual, OO_ExclaimEqual,
+      OO_Amp,
+      OO_Caret,
+      OO_Pipe,
+      OO_AmpAmp,
+      OO_PipePipe,
+      OO_Equal, OO_StarEqual,
+      OO_SlashEqual, OO_PercentEqual,
+      OO_PlusEqual, OO_MinusEqual,
+      OO_LessLessEqual, OO_GreaterGreaterEqual,
+      OO_AmpEqual, OO_CaretEqual,
+      OO_PipeEqual,
+      OO_Comma
+    };
+    OverloadedOperatorKind OverOp = OverOps[Opc];
+
+    // Lookup this operator.
+    Decl *D = LookupDecl(&PP.getIdentifierTable().getOverloadedOperator(OverOp),
+                         Decl::IDNS_Ordinary, S);
+
+    // Add any overloaded operators we find to the overload set.
+    Expr *Args[2] = { lhs, rhs };
+    if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
+      AddOverloadCandidate(FD, Args, 2, CandidateSet);
+    else if (OverloadedFunctionDecl *Ovl 
+               = dyn_cast_or_null<OverloadedFunctionDecl>(D))
+      AddOverloadCandidates(Ovl, Args, 2, CandidateSet);
+
+    // FIXME: Add builtin overload candidates (C++ [over.built]).
+
+    // Perform overload resolution.
+    OverloadCandidateSet::iterator Best;
+    switch (BestViableFunction(CandidateSet, Best)) {
+    case OR_Success: {
+      // FIXME: We might find a built-in candidate here.
+      FunctionDecl *FnDecl = Best->Function;
+
+      // Convert the arguments.
+      // FIXME: Conversion will be different for member operators.
+      if (PerformCopyInitialization(lhs, FnDecl->getParamDecl(0)->getType(),
+                                    "passing") ||
+          PerformCopyInitialization(rhs, FnDecl->getParamDecl(1)->getType(),
+                                    "passing"))
+        return true;
+
+      // Determine the result type
+      QualType ResultTy 
+        = FnDecl->getType()->getAsFunctionType()->getResultType();
+      ResultTy = ResultTy.getNonReferenceType();
+
+      // Build the actual expression node.
+      // FIXME: We lose the fact that we have a function here!
+      if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign)
+        return new CompoundAssignOperator(lhs, rhs, Opc, ResultTy, ResultTy,
+                                          TokLoc);
+      else
+        return new BinaryOperator(lhs, rhs, Opc, ResultTy, TokLoc);
+    }
+
+    case OR_No_Viable_Function:
+      // No viable function; fall through to handling this as a
+      // built-in operator.
+      break;
+
+    case OR_Ambiguous:
+      Diag(TokLoc, 
+           diag::err_ovl_ambiguous_oper, 
+           BinaryOperator::getOpcodeStr(Opc), 
+           lhs->getSourceRange(), rhs->getSourceRange());
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return true;
+    }
+
+    // There was no viable overloaded operator; fall through.
+  } 
+
   
-  switch (Opc) {
-  default:
-    assert(0 && "Unknown binary expr!");
-  case BinaryOperator::Assign:
-    ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, QualType());
-    break;
-  case BinaryOperator::Mul: 
-  case BinaryOperator::Div:
-    ResultTy = CheckMultiplyDivideOperands(lhs, rhs, TokLoc);
-    break;
-  case BinaryOperator::Rem:
-    ResultTy = CheckRemainderOperands(lhs, rhs, TokLoc);
-    break;
-  case BinaryOperator::Add:
-    ResultTy = CheckAdditionOperands(lhs, rhs, TokLoc);
-    break;
-  case BinaryOperator::Sub:
-    ResultTy = CheckSubtractionOperands(lhs, rhs, TokLoc);
-    break;
-  case BinaryOperator::Shl: 
-  case BinaryOperator::Shr:
-    ResultTy = CheckShiftOperands(lhs, rhs, TokLoc);
-    break;
-  case BinaryOperator::LE:
-  case BinaryOperator::LT:
-  case BinaryOperator::GE:
-  case BinaryOperator::GT:
-    ResultTy = CheckCompareOperands(lhs, rhs, TokLoc, true);
-    break;
-  case BinaryOperator::EQ:
-  case BinaryOperator::NE:
-    ResultTy = CheckCompareOperands(lhs, rhs, TokLoc, false);
-    break;
-  case BinaryOperator::And:
-  case BinaryOperator::Xor:
-  case BinaryOperator::Or:
-    ResultTy = CheckBitwiseOperands(lhs, rhs, TokLoc);
-    break;
-  case BinaryOperator::LAnd:
-  case BinaryOperator::LOr:
-    ResultTy = CheckLogicalOperands(lhs, rhs, TokLoc);
-    break;
-  case BinaryOperator::MulAssign:
-  case BinaryOperator::DivAssign:
-    CompTy = CheckMultiplyDivideOperands(lhs, rhs, TokLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
-    break;
-  case BinaryOperator::RemAssign:
-    CompTy = CheckRemainderOperands(lhs, rhs, TokLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
-    break;
-  case BinaryOperator::AddAssign:
-    CompTy = CheckAdditionOperands(lhs, rhs, TokLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
-    break;
-  case BinaryOperator::SubAssign:
-    CompTy = CheckSubtractionOperands(lhs, rhs, TokLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
-    break;
-  case BinaryOperator::ShlAssign:
-  case BinaryOperator::ShrAssign:
-    CompTy = CheckShiftOperands(lhs, rhs, TokLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
-    break;
-  case BinaryOperator::AndAssign:
-  case BinaryOperator::XorAssign:
-  case BinaryOperator::OrAssign:
-    CompTy = CheckBitwiseOperands(lhs, rhs, TokLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
-    break;
-  case BinaryOperator::Comma:
-    ResultTy = CheckCommaOperands(lhs, rhs, TokLoc);
-    break;
-  }
-  if (ResultTy.isNull())
-    return true;
-  if (CompTy.isNull())
-    return new BinaryOperator(lhs, rhs, Opc, ResultTy, TokLoc);
-  else
-    return new CompoundAssignOperator(lhs, rhs, Opc, ResultTy, CompTy, TokLoc);
+  // Build a built-in binary operation.
+  return CreateBuiltinBinOp(TokLoc, Opc, lhs, rhs);
 }
 
 // Unary Operators.  'Tok' is the token for the operator.

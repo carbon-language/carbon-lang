@@ -630,9 +630,13 @@ public:
                                    InitListDesignations &Designators,
                                    SourceLocation RParenLoc);
                                    
-  virtual ExprResult ActOnBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
+  virtual ExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc, 
+                                tok::TokenKind Kind,
                                 ExprTy *LHS,ExprTy *RHS);
-  
+  ExprResult CreateBuiltinBinOp(SourceLocation TokLoc, 
+                                unsigned Opc,
+                                Expr *lhs, Expr *rhs);
+
   /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
   /// in the case of a the GNU conditional expr extension.
   virtual ExprResult ActOnConditionalOp(SourceLocation QuestionLoc, 

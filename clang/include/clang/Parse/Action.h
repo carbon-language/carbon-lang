@@ -482,7 +482,8 @@ public:
     return 0;
   }
   
-  virtual ExprResult ActOnBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
+  virtual ExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc, 
+                                tok::TokenKind Kind,
                                 ExprTy *LHS, ExprTy *RHS) {
     return 0;
   }
