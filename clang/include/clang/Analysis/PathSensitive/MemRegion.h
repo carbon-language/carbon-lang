@@ -401,6 +401,85 @@ public:
   }
 };
 
+/// RegionExtent - Represents the size, or extent, of an abstract memory chunk
+/// (a region).  Sizes are in bits.  RegionExtent is essentially a variant with
+/// three subclasses: UnknownExtent, FixedExtent, and SymbolicExtent.
+
+class RegionExtent {
+public:
+  enum Kind { Unknown = 0, Fixed = 0, Sym = 1 };
+
+protected:
+  const uintptr_t Raw;
+  RegionExtent(uintptr_t raw, Kind k) : Raw(raw | k) {}
+  uintptr_t getData() const { return Raw & ~0x1; }
+
+public:
+  // Folding-set profiling.
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ID.AddPointer((void*) Raw);
+  }
+  // Comparing extents.
+  bool operator==(const RegionExtent& R) const {
+    return Raw == R.Raw;
+  }
+  bool operator!=(const RegionExtent& R) const {
+    return Raw != R.Raw;
+  }
+  // Implement isa<T> support.
+  Kind getKind() const { return Kind(Raw & 0x1); }
+  uintptr_t getRaw() const { return Raw; }
+
+  static inline bool classof(const RegionExtent*) {
+    return true;
+  }
+};
+
+/// UnknownExtent - Represents a region extent with no available information
+///  about the size of the region.
+class UnknownExtent : public RegionExtent {
+public:
+  UnknownExtent() : RegionExtent(0,Unknown) {}
+
+  // Implement isa<T> support.
+  static inline bool classof(const RegionExtent* E) {
+    return E->getRaw() == 0;
+  }
+};
+
+/// FixedExtent - Represents a region extent with a known fixed size.
+///  Typically FixedExtents are used to represent the size of variables, but
+///  they can also be used to represent the size of a constant-sized array.
+class FixedExtent : public RegionExtent {
+public:
+  FixedExtent(const llvm::APSInt& X) : RegionExtent((uintptr_t) &X, Fixed) {}
+
+  const llvm::APSInt& getInt() const {
+    return *((llvm::APSInt*) getData());
+  }
+
+  // Implement isa<T> support.
+  static inline bool classof(const RegionExtent* E) {
+    return E->getKind() == Fixed && E->getRaw() != 0;
+  }
+};
+
+/// SymbolicExtent - Represents the extent of a region where the extent
+///  itself is a symbolic value.  These extents can be used to represent
+///  the sizes of dynamically allocated chunks of memory with variable size.
+class SymbolicExtent : public RegionExtent {
+public:
+  SymbolicExtent(SymbolID S) : RegionExtent(S.getNumber() << 1, Sym) {}
+
+  SymbolID getSymbol() const { return SymbolID(getData() >> 1); }
+
+  // Implement isa<T> support.
+  static inline bool classof(const RegionExtent* E) {
+    return E->getKind() == Sym;
+  }
+};
+
+
 //===----------------------------------------------------------------------===//
 // MemRegionManager - Factory object for creating regions.
 //===----------------------------------------------------------------------===//
