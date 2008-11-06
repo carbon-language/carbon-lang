@@ -7516,8 +7516,8 @@ SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
     break;
   }
   case ISD::EXTRACT_SUBVECTOR:
-    Result = Node->getOperand(0);
-    assert(Result.getValueType() == NewVT);
+    Result = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, NewVT, Node->getOperand(0),
+                          Node->getOperand(1));
     break;
   case ISD::BIT_CONVERT: {
     SDValue Op0 = Op.getOperand(0);
@@ -8174,7 +8174,7 @@ void SelectionDAGLegalize::genWidenVectorStores(SDValueVector& StChain,
 
   SDValue VecOp = DAG.getNode(ISD::BIT_CONVERT, VecEVT, ValOp);
   SDValue EOp = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EVT, VecOp,
-                                  DAG.getIntPtrConstant(0));
+                            DAG.getIntPtrConstant(0));
   SDValue StOp = DAG.getStore(Chain, EOp, BasePtr, SV, SVOffset,
                                isVolatile, Alignment);
   StChain.push_back(StOp);

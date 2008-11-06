@@ -1410,6 +1410,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
   } else if (isa<ConstantAggregateZero>(V)) {
     // Simplify the CAZ to a ConstantVector where the non-demanded elements are
     // set to undef.
+    
+    // Check if this is identity. If so, return 0 since we are not simplifying
+    // anything.
+    if (DemandedElts == ((1ULL << VWidth) -1))
+      return 0;
+    
     const Type *EltTy = cast<VectorType>(V->getType())->getElementType();
     Constant *Zero = Constant::getNullValue(EltTy);
     Constant *Undef = UndefValue::get(EltTy);
