@@ -970,9 +970,10 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
           DOUT << "0x" << (long)q << ": ";
         DOUT<< std::setw(2) << std::setfill('0') << (unsigned short)*q << " ";
         if (i%8==0)
-          DOUT<<"\n";
+          DOUT << '\n';
       }
       DOUT << std::dec;
+      DOUT<< '\n';
     }
   }
 #endif
