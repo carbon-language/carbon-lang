@@ -349,9 +349,14 @@ bool FastISel::SelectCall(User *I) {
       SubprogramDesc *Subprogram = cast<SubprogramDesc>(DD);
       const CompileUnitDesc *CompileUnit = Subprogram->getFile();
       unsigned SrcFile = MMI->RecordSource(CompileUnit);
-      // Record the source line but does create a label. It will be emitted
-      // at asm emission time.
-      MMI->RecordSourceLine(Subprogram->getLine(), 0, SrcFile);
+      // Record the source line but does not create a label for the normal
+      // function start. It will be emitted at asm emission time. However,
+      // create a label if this is a beginning of inlined function.
+      unsigned LabelID = MMI->RecordSourceLine(Subprogram->getLine(), 0, SrcFile);
+      if (MMI->getSourceLines().size() != 1) {
+        const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
+        BuildMI(MBB, II).addImm(LabelID);
+      }
     }
     return true;
   }
