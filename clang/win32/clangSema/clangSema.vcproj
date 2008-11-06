@@ -207,6 +207,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Sema\SemaNamedCast.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Sema\SemaOverload.cpp"
 				>
 			</File>

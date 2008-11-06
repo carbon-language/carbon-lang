@@ -95,6 +95,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="mkdir &quot;%DSTROOT%\AppleInternal\Bin&quot;&#x0D;&#x0A;copy &quot;$(TargetDir)$(TargetName).exe&quot; &quot;%DSTROOT%\AppleInternal\Bin&quot;"
 			/>
 		</Configuration>
 		<Configuration
