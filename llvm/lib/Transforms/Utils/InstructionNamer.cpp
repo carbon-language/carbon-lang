@@ -25,6 +25,10 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     InstNamer() : FunctionPass(&ID) {}
     
+    void getAnalysisUsage(AnalysisUsage &Info) const {
+      Info.setPreservesAll();
+    }
+
     bool runOnFunction(Function &F) {
       for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
         for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
