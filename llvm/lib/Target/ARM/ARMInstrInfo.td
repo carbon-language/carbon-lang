@@ -1195,9 +1195,9 @@ def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 
 // Two piece so_imms.
 let isReMaterializable = 1 in
-def MOVi2pieces : AI1x2<0x0, (outs GPR:$dst), (ins so_imm2part:$src), DPFrm,
+def MOVi2pieces : AI1x2<0x0, (outs GPR:$dst), (ins so_imm2part:$src), Pseudo,
                          "mov", " $dst, $src",
-                         [(set GPR:$dst, so_imm2part:$src)]>, UnaryDP;
+                         [(set GPR:$dst, so_imm2part:$src)]>;
 
 def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),
               (ORRri (ORRri GPR:$LHS, (so_imm2part_1 imm:$RHS)),

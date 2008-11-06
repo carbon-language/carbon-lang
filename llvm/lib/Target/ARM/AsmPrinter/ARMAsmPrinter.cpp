@@ -363,8 +363,8 @@ void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) {
   printSOImm(O, MO.getImm(), TAI);
 }
 
-/// printSOImm2PartOperand - SOImm is broken into two pieces using a mov
-/// followed by a or to materialize.
+/// printSOImm2PartOperand - SOImm is broken into two pieces using a 'mov'
+/// followed by an 'orr' to materialize.
 void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isImm() && "Not a valid so_imm value!");

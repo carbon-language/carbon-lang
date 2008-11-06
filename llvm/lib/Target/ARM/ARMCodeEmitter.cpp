@@ -69,6 +69,8 @@ namespace {
 
     void emitConstPoolInstruction(const MachineInstr &MI);
 
+    void emitMOVi2piecesInstruction(const MachineInstr &MI);
+
     void addPCLabel(unsigned LabelID);
 
     void emitPseudoInstruction(const MachineInstr &MI);
@@ -78,9 +80,7 @@ namespace {
                                     const MachineOperand &MO,
                                     unsigned OpIdx);
 
-    unsigned getMachineSoImmOpValue(const MachineInstr &MI,
-                                    const TargetInstrDesc &TID,
-                                    const MachineOperand &MO);
+    unsigned getMachineSoImmOpValue(unsigned SoImm);
 
     unsigned getAddrModeSBit(const MachineInstr &MI,
                              const TargetInstrDesc &TID) const;
@@ -344,6 +344,47 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
   }
 }
 
+void ARMCodeEmitter::emitMOVi2piecesInstruction(const MachineInstr &MI) {
+  const MachineOperand &MO0 = MI.getOperand(0);
+  const MachineOperand &MO1 = MI.getOperand(1);
+  assert(MO1.isImm() && "Not a valid so_imm value!");
+  unsigned V1 = ARM_AM::getSOImmTwoPartFirst(MO1.getImm());
+  unsigned V2 = ARM_AM::getSOImmTwoPartSecond(MO1.getImm());
+
+  // Emit the 'mov' instruction.
+  unsigned Binary = 0xd << 21;  // mov: Insts{24-21} = 0b1101
+
+  // Set the conditional execution predicate.
+  Binary |= II->getPredicate(&MI) << 28;
+
+  // Encode Rd.
+  Binary |= getMachineOpValue(MI, MO0) << ARMII::RegRdShift;
+
+  // Encode so_imm.
+  // Set bit I(25) to identify this is the immediate form of <shifter_op>
+  Binary |= 1 << ARMII::I_BitShift;
+  Binary |= getMachineSoImmOpValue(ARM_AM::getSOImmVal(V1));
+  emitWordLE(Binary);
+
+  // Now the 'orr' instruction.
+  Binary = 0xc << 21;  // orr: Insts{24-21} = 0b1100
+
+  // Set the conditional execution predicate.
+  Binary |= II->getPredicate(&MI) << 28;
+
+  // Encode Rd.
+  Binary |= getMachineOpValue(MI, MO0) << ARMII::RegRdShift;
+
+  // Encode Rn.
+  Binary |= getMachineOpValue(MI, MO0) << ARMII::RegRnShift;
+
+  // Encode so_imm.
+  // Set bit I(25) to identify this is the immediate form of <shifter_op>
+  Binary |= 1 << ARMII::I_BitShift;
+  Binary |= getMachineSoImmOpValue(ARM_AM::getSOImmVal(V2));
+  emitWordLE(Binary);
+}
+
 void ARMCodeEmitter::addPCLabel(unsigned LabelID) {
   DOUT << "\t** LPC" << LabelID << " @ "
        << (void*)MCE.getCurrentPCValue() << '\n';
@@ -385,6 +426,10 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
     emitMiscLoadStoreInstruction(MI, ARM::PC);
     break;
   }
+  case ARM::MOVi2pieces:
+    // Two instructions to materialize a constant.
+    emitMOVi2piecesInstruction(MI);
+    break;
   }
 }
 
@@ -447,14 +492,11 @@ unsigned ARMCodeEmitter::getMachineSoRegOpValue(const MachineInstr &MI,
   return Binary | ARM_AM::getSORegOffset(MO2.getImm()) << 7;
 }
 
-unsigned ARMCodeEmitter::getMachineSoImmOpValue(const MachineInstr &MI,
-                                                const TargetInstrDesc &TID,
-                                                const MachineOperand &MO) {
-  unsigned SoImm = MO.getImm();
+unsigned ARMCodeEmitter::getMachineSoImmOpValue(unsigned SoImm) {
   // Encode rotate_imm.
-  unsigned Binary = ARM_AM::getSOImmValRot(SoImm) << ARMII::RotImmShift;
+  unsigned Binary = (ARM_AM::getSOImmValRot(SoImm) >> 1) << ARMII::RotImmShift;
   // Encode immed_8.
-  Binary |= ARM_AM::getSOImmVal(SoImm);
+  Binary |= ARM_AM::getSOImmValImm(SoImm);
   return Binary;
 }
 
@@ -471,8 +513,6 @@ unsigned ARMCodeEmitter::getAddrModeSBit(const MachineInstr &MI,
 void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
                                                    unsigned ImplicitRn) {
   const TargetInstrDesc &TID = MI.getDesc();
-  if (TID.getOpcode() == ARM::MOVi2pieces)
-    abort(); // FIXME
 
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
@@ -521,7 +561,7 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
   // Encode so_imm.
   // Set bit I(25) to identify this is the immediate form of <shifter_op>
   Binary |= 1 << ARMII::I_BitShift;
-  Binary |= getMachineSoImmOpValue(MI, TID, MO);
+  Binary |= getMachineSoImmOpValue(MO.getImm());
 
   emitWordLE(Binary);
 }
