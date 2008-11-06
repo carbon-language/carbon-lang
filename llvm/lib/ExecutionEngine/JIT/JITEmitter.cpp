@@ -226,7 +226,7 @@ unsigned JITResolver::getGOTIndexForAddr(void* addr) {
   if (!idx) {
     idx = ++nextGOTIndex;
     revGOTMap[addr] = idx;
-    DOUT << "Adding GOT entry " << idx << " for addr " << addr << "\n";
+    DOUT << "JIT: Adding GOT entry " << idx << " for addr " << addr << "\n";
   }
   return idx;
 }
@@ -664,7 +664,7 @@ unsigned JITEmitter::addSizeOfGlobal(const GlobalVariable *GV, unsigned Size) {
   size_t GVSize = (size_t)TheJIT->getTargetData()->getABITypeSize(ElTy);
   size_t GVAlign = 
       (size_t)TheJIT->getTargetData()->getPreferredAlignment(GV);
-  DOUT << "Adding in size " << GVSize << " alignment " << GVAlign;
+  DOUT << "JIT: Adding in size " << GVSize << " alignment " << GVAlign;
   DEBUG(GV->dump());
   // Assume code section ends with worst possible alignment, so first
   // variable needs maximal padding.
@@ -787,7 +787,7 @@ unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
       }
     }
   }
-  DOUT << "About to look through initializers\n";
+  DOUT << "JIT: About to look through initializers\n";
   // Look for more globals that are referenced only from initializers.
   // GVSet.end is computed each time because the set can grow as we go.
   for (std::set<const GlobalVariable *>::iterator I = GVSet.begin(); 
@@ -801,11 +801,14 @@ unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
 }
 
 void JITEmitter::startFunction(MachineFunction &F) {
+  DOUT << "JIT: Starting CodeGen of Function "
+       << F.getFunction()->getName() << "\n";
+
   uintptr_t ActualSize = 0;
   // Set the memory writable, if it's not already
   MemMgr->setMemoryWritable();
   if (MemMgr->NeedsExactSize()) {
-    DOUT << "ExactSize\n";
+    DOUT << "JIT: ExactSize\n";
     const TargetInstrInfo* TII = F.getTarget().getInstrInfo();
     MachineJumpTableInfo *MJTI = F.getJumpTableInfo();
     MachineConstantPool *MCP = F.getConstantPool();
@@ -833,12 +836,12 @@ void JITEmitter::startFunction(MachineFunction &F) {
     // Add the function size
     ActualSize += TII->GetFunctionSizeInBytes(F);
 
-    DOUT << "ActualSize before globals " << ActualSize << "\n";
+    DOUT << "JIT: ActualSize before globals " << ActualSize << "\n";
     // Add the size of the globals that will be allocated after this function.
     // These are all the ones referenced from this function that were not
     // previously allocated.
     ActualSize += GetSizeOfGlobalsInBytes(F);
-    DOUT << "ActualSize after globals " << ActualSize << "\n";
+    DOUT << "JIT: ActualSize after globals " << ActualSize << "\n";
   }
 
   BufferBegin = CurBufferPtr = MemMgr->startFunctionBody(F.getFunction(),
@@ -912,7 +915,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
         unsigned idx = Resolver.getGOTIndexForAddr(ResultPtr);
         MR.setGOTIndex(idx);
         if (((void**)MemMgr->getGOTBase())[idx] != ResultPtr) {
-          DOUT << "GOT was out of date for " << ResultPtr
+          DOUT << "JIT: GOT was out of date for " << ResultPtr
                << " pointing at " << ((void**)MemMgr->getGOTBase())[idx]
                << "\n";
           ((void**)MemMgr->getGOTBase())[idx] = ResultPtr;
@@ -928,7 +931,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   if (MemMgr->isManagingGOT()) {
     unsigned idx = Resolver.getGOTIndexForAddr((void*)BufferBegin);
     if (((void**)MemMgr->getGOTBase())[idx] != (void*)BufferBegin) {
-      DOUT << "GOT was out of date for " << (void*)BufferBegin
+      DOUT << "JIT: GOT was out of date for " << (void*)BufferBegin
            << " pointing at " << ((void**)MemMgr->getGOTBase())[idx] << "\n";
       ((void**)MemMgr->getGOTBase())[idx] = (void*)BufferBegin;
     }
@@ -958,16 +961,16 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
 
 #ifndef NDEBUG
   {
+    DOUT << "JIT: Disassembled code:\n";
     if (sys::hasDisassembler())
-      DOUT << "Disassembled code:\n"
-           << sys::disassembleBuffer(FnStart, FnEnd-FnStart, (uintptr_t)FnStart);
+      DOUT << sys::disassembleBuffer(FnStart, FnEnd-FnStart, (uintptr_t)FnStart);
     else {
       DOUT << std::hex;
       int i;
       unsigned char* q = FnStart;
       for (i=1; q!=FnEnd; q++, i++) {
         if (i%8==1)
-          DOUT << "0x" << (long)q << ": ";
+          DOUT << "JIT: 0x" << (long)q << ": ";
         DOUT<< std::setw(2) << std::setfill('0') << (unsigned short)*q << " ";
         if (i%8==0)
           DOUT << '\n';

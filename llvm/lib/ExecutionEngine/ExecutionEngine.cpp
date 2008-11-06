@@ -94,7 +94,7 @@ Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
 void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
   MutexGuard locked(lock);
 
-  DOUT << "Map \'" << GV->getNameStart() << "\' to " << Addr << "\n";  
+  DOUT << "JIT: Map \'" << GV->getNameStart() << "\' to " << Addr << "\n";  
   void *&CurVal = state.getGlobalAddressMap(locked)[GV];
   assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
   CurVal = Addr;
@@ -211,13 +211,13 @@ static void *CreateArgv(ExecutionEngine *EE,
   unsigned PtrSize = EE->getTargetData()->getPointerSize();
   char *Result = new char[(InputArgv.size()+1)*PtrSize];
 
-  DOUT << "ARGV = " << (void*)Result << "\n";
+  DOUT << "JIT: ARGV = " << (void*)Result << "\n";
   const Type *SBytePtr = PointerType::getUnqual(Type::Int8Ty);
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
     char *Dest = new char[Size];
-    DOUT << "ARGV[" << i << "] = " << (void*)Dest << "\n";
+    DOUT << "JIT: ARGV[" << i << "] = " << (void*)Dest << "\n";
 
     std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
     Dest[Size-1] = 0;
@@ -839,7 +839,7 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
 // specified memory location...
 //
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
-  DOUT << "Initializing " << Addr << " ";
+  DOUT << "JIT: Initializing " << Addr << " ";
   DEBUG(Init->dump());
   if (isa<UndefValue>(Init)) {
     return;
@@ -989,7 +989,6 @@ void ExecutionEngine::emitGlobals() {
 // already in the map.
 void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   void *GA = getPointerToGlobalIfAvailable(GV);
-  DOUT << "Global '" << GV->getName() << "' -> " << GA << "\n";
 
   if (GA == 0) {
     // If it's not already specified, allocate memory for the global.
