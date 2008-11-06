@@ -20,6 +20,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/APInt.h"
@@ -110,16 +111,15 @@ bool StackProtector::InsertStackProtectors() {
   // onto the stack.
   BasicBlock &Entry = F->getEntryBlock();
   Instruction *InsertPt = &Entry.front();
+
   const PointerType *GuardTy = PointerType::getUnqual(Type::Int8Ty);
 
   // The global variable for the stack guard.
   Constant *StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", GuardTy);
-
-  // The place on the stack that the stack protector guard is kept.
-  AllocaInst *StackProtFrameSlot =
-    new AllocaInst(GuardTy, "StackProt_Frame", InsertPt);
   LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsertPt);
-  new StoreInst(LI, StackProtFrameSlot, false, InsertPt);
+  CallInst::
+    Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_prologue),
+           LI, "", InsertPt);
 
   // Create the basic block to jump to when the guard check fails.
   BasicBlock *FailBB = CreateFailBB();
@@ -137,7 +137,7 @@ bool StackProtector::InsertStackProtectors() {
   //     %1 = load __stack_chk_guard
   //     %2 = load <stored stack guard>
   //     %3 = cmp i1 %1, %2
-  //     br i1 %3, label %SPRet, label %CallStackCheckFailBlk
+  //     br i1 %3, label %SP_return, label %CallStackCheckFailBlk
   //
   //   SP_return:
   //     ret ...
@@ -161,9 +161,11 @@ bool StackProtector::InsertStackProtectors() {
     F->getBasicBlockList().insert(InsPt, NewBB);
 
     // Generate the stack protector instructions in the old basic block.
-    LoadInst *LI2 = new LoadInst(StackGuardVar, "", false, BB);
-    LoadInst *LI1 = new LoadInst(StackProtFrameSlot, "", true, BB);
-    ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, LI1, LI2, "", BB);
+    LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
+    CallInst *CI = CallInst::
+      Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_epilogue),
+             "", BB);
+    ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, CI, LI1, "", BB);
     BranchInst::Create(NewBB, FailBB, Cmp, BB);
   }
 

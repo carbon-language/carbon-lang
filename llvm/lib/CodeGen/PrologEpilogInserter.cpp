@@ -406,6 +406,33 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     }
   }
 
+  // Make sure that the stack protector comes before the local variables on the
+  // stack.
+  if (FFI->hasStackProtector()) {
+    int FI = FFI->getStackProtectorIndex();
+
+    // If stack grows down, we need to add size of find the lowest
+    // address of the object.
+    if (StackGrowsDown)
+      Offset += FFI->getObjectSize(FI);
+
+    unsigned Align = FFI->getObjectAlignment(FI);
+
+    // If the alignment of this object is greater than that of the stack, then
+    // increase the stack alignment to match.
+    MaxAlign = std::max(MaxAlign, Align);
+
+    // Adjust to alignment boundary.
+    Offset = (Offset + Align - 1) / Align * Align;
+
+    if (StackGrowsDown) {
+      FFI->setObjectOffset(FI, -Offset); // Set the computed offset
+    } else {
+      FFI->setObjectOffset(FI, Offset);
+      Offset += FFI->getObjectSize(FI);
+    }
+  }
+
   // Then assign frame offsets to stack objects that are not used to spill
   // callee saved registers.
   for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {

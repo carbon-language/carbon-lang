@@ -25,6 +25,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Module.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/GCMetadata.h"
@@ -34,6 +35,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -3791,6 +3793,47 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::stackrestore: {
     SDValue Tmp = getValue(I.getOperand(1));
     DAG.setRoot(DAG.getNode(ISD::STACKRESTORE, MVT::Other, getRoot(), Tmp));
+    return 0;
+  }
+  case Intrinsic::stackprotector_prologue: {
+    // Emit code into the DAG to store the stack guard onto the stack.
+    MachineFunction &MF = DAG.getMachineFunction();
+    MachineFrameInfo *MFI = MF.getFrameInfo();
+    MVT PtrTy = TLI.getPointerTy();
+
+    // Retrieve the stack protector guard's value.
+    SDValue Src = getValue(I.getOperand(1));
+
+    // Create a slot on the stack for the stack protector. It should go first
+    // before local variables are allocated.
+    unsigned Align =
+      TLI.getTargetData()->getPrefTypeAlignment(PtrTy.getTypeForMVT());
+    int FI = MFI->CreateStackObject(PtrTy.getSizeInBits() / 8, Align);
+
+    MFI->setStackProtector(true);
+    MFI->setStackProtectorIndex(FI);
+
+    SDValue FIN = DAG.getFrameIndex(FI, PtrTy);
+
+    // Store the stack protector onto the stack.
+    SDValue Result = DAG.getStore(getRoot(), Src, FIN,
+                                  PseudoSourceValue::getFixedStack(FI),
+                                  0, true);
+    setValue(&I, Result);
+    DAG.setRoot(Result);
+    return 0;
+  }
+  case Intrinsic::stackprotector_epilogue: {
+    // Emit code into the DAG to retrieve the stack guard off of the stack.
+    MachineFunction &MF = DAG.getMachineFunction();
+    MachineFrameInfo *MFI = MF.getFrameInfo();
+    MVT PtrTy = TLI.getPointerTy();
+
+    // Load the value stored on the stack.
+    int FI = MFI->getStackProtectorIndex();
+    SDValue FIN = DAG.getFrameIndex(MFI->getStackProtectorIndex(), PtrTy);
+    setValue(&I, DAG.getLoad(PtrTy, getRoot(), FIN,
+                             PseudoSourceValue::getFixedStack(FI), 0, true));
     return 0;
   }
   case Intrinsic::var_annotation:

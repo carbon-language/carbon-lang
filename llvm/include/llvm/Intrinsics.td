@@ -165,6 +165,7 @@ def int_stacksave     : Intrinsic<[llvm_ptr_ty]>,
                         GCCBuiltin<"__builtin_stack_save">;
 def int_stackrestore  : Intrinsic<[llvm_void_ty, llvm_ptr_ty]>,
                         GCCBuiltin<"__builtin_stack_restore">;
+
 // IntrWriteArgMem is more pessimistic than strictly necessary for prefetch,
 // however it does conveniently prevent the prefetch from being reordered
 // with respect to nearby accesses to the same memory.
@@ -174,6 +175,10 @@ def int_prefetch      : Intrinsic<[llvm_void_ty, llvm_ptr_ty,
 def int_pcmarker      : Intrinsic<[llvm_void_ty, llvm_i32_ty]>;
 
 def int_readcyclecounter : Intrinsic<[llvm_i64_ty]>;
+
+// Stack protector intrinsics.
+def int_stackprotector_prologue : Intrinsic<[llvm_void_ty, llvm_ptr_ty]>;
+def int_stackprotector_epilogue : Intrinsic<[llvm_ptr_ty]>;
 
 //===------------------- Standard C Library Intrinsics --------------------===//
 //

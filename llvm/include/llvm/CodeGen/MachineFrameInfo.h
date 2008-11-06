@@ -150,6 +150,12 @@ class MachineFrameInfo {
   /// only valid during and after prolog/epilog code insertion.
   bool HasCalls;
 
+  /// HasStackProtector - Set to true if this function has stack protectors.
+  bool HasStackProtector;
+
+  /// StackProtectorIdx - The frame index for the stack protector.
+  int StackProtectorIdx;
+
   /// MaxCallFrameSize - This contains the size of the largest call frame if the
   /// target uses frame setup/destroy pseudo instructions (as defined in the
   /// TargetFrameInfo class).  This information is important for frame pointer
@@ -180,6 +186,8 @@ public:
     HasVarSizedObjects = false;
     FrameAddressTaken = false;
     HasCalls = false;
+    HasStackProtector = false;
+    StackProtectorIdx = -1;
     MaxCallFrameSize = 0;
     MMI = 0;
   }
@@ -194,6 +202,17 @@ public:
   /// contains any variable sized objects.
   ///
   bool hasVarSizedObjects() const { return HasVarSizedObjects; }
+
+  /// hasStackProtector - Return true if the function has a stack protector.
+  ///
+  bool hasStackProtector() const { return HasStackProtector; }
+  void setStackProtector(bool T) { HasStackProtector = T; }
+
+  /// getStackProtectorIndex/setStackProtectorIndex - Return the index for the
+  /// stack protector object.
+  ///
+  int getStackProtectorIndex() const { return StackProtectorIdx; }
+  void setStackProtectorIndex(int I) { StackProtectorIdx = I; }
 
   /// isFrameAddressTaken - This method may be called any time after instruction
   /// selection is complete to determine if there is a call to
