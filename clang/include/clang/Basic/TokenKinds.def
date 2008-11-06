@@ -268,9 +268,19 @@ CXX_KEYWORD_OPERATOR(xor     , caret)
 CXX_KEYWORD_OPERATOR(xor_eq  , caretequal)
 
 // C++0x keywords
+KEYWORD(alignof                     , NOTC90|NOTC99|NOTCPP)
+KEYWORD(axiom                       , NOTC90|NOTC99|NOTCPP)
 KEYWORD(char16_t                    , NOTC90|NOTC99|NOTCPP)
 KEYWORD(char32_t                    , NOTC90|NOTC99|NOTCPP)
+KEYWORD(concept                     , NOTC90|NOTC99|NOTCPP)
+KEYWORD(concept_map                 , NOTC90|NOTC99|NOTCPP)
+KEYWORD(constexpr                   , NOTC90|NOTC99|NOTCPP)
+KEYWORD(decltype                    , NOTC90|NOTC99|NOTCPP)
+KEYWORD(late_check                  , NOTC90|NOTC99|NOTCPP)
+KEYWORD(nullptr                     , NOTC90|NOTC99|NOTCPP)
+KEYWORD(requires                    , NOTC90|NOTC99|NOTCPP)
 KEYWORD(static_assert               , NOTC90|NOTC99|NOTCPP)
+KEYWORD(thread_local                , NOTC90|NOTC99|NOTCPP)
 
 // GNU Extensions.
 KEYWORD(_Decimal32                  , EXTC90|EXTC99|EXTCPP|EXTCPP0x)

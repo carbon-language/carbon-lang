@@ -348,6 +348,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///         'sizeof' '(' type-name ')'
 /// [GNU]   '__alignof' unary-expression
 /// [GNU]   '__alignof' '(' type-name ')'
+/// [C++0x] 'alignof' '(' type-id ')'
 /// [GNU]   '&&' identifier
 ///
 ///       unary-operator: one of
@@ -530,8 +531,10 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   }
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
                            // unary-expression: 'sizeof' '(' type-name ')'
+  case tok::kw_alignof:
   case tok::kw___alignof:  // unary-expression: '__alignof' unary-expression
                            // unary-expression: '__alignof' '(' type-name ')'
+                           // unary-expression: 'alignof' '(' type-id ')'
     return ParseSizeofAlignofExpression();
   case tok::ampamp: {      // unary-expression: '&&' identifier
     SourceLocation AmpAmpLoc = ConsumeToken();
@@ -712,8 +715,10 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
 ///         'sizeof' '(' type-name ')'
 /// [GNU]   '__alignof' unary-expression
 /// [GNU]   '__alignof' '(' type-name ')'
+/// [C++0x] 'alignof' '(' type-id ')'
 Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
-  assert((Tok.is(tok::kw_sizeof) || Tok.is(tok::kw___alignof)) &&
+  assert((Tok.is(tok::kw_sizeof) || Tok.is(tok::kw___alignof)
+          || Tok.is(tok::kw_alignof)) &&
          "Not a sizeof/alignof expression!");
   Token OpTok = Tok;
   ConsumeToken();
