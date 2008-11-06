@@ -115,12 +115,6 @@ namespace {
       return getMachineOpValue(MI, MI.getOperand(OpIdx));
     }
 
-    /// getBaseOpcodeFor - Return the opcode value.
-    ///
-    unsigned getBaseOpcodeFor(const TargetInstrDesc &TID) const {
-      return (TID.TSFlags & ARMII::OpcodeMask) >> ARMII::OpcodeShift;
-    }
-
     /// getShiftOp - Return the shift opcode (bit[6:5]) of the immediate value.
     ///
     unsigned getShiftOp(unsigned Imm) const ;
@@ -531,6 +525,10 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
     ++OpIdx;
   }
 
+  // If this is a two-address operand, skip it. e.g. MOVCCr operand 1.
+  if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
+    ++OpIdx;
+
   // Encode first non-shifter register operand if there is one.
   bool isUnary = TID.TSFlags & ARMII::UnaryDP;
   if (!isUnary) {
@@ -591,7 +589,7 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
   }
 
   const MachineOperand &MO2 = MI.getOperand(OpIdx);
-  unsigned AM2Opc = (OpIdx == TID.getNumOperands())
+  unsigned AM2Opc = (ImplicitRn == ARM::PC)
     ? 0 : MI.getOperand(OpIdx+1).getImm();
 
   // Set bit U(23) according to sign of immed value (positive or negative).
@@ -646,7 +644,7 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
   }
 
   const MachineOperand &MO2 = MI.getOperand(OpIdx);
-  unsigned AM3Opc = (OpIdx == TID.getNumOperands())
+  unsigned AM3Opc = (ImplicitRn == ARM::PC)
     ? 0 : MI.getOperand(OpIdx+1).getImm();
 
   // Set bit U(23) according to sign of immed value (positive or negative)
@@ -661,9 +659,9 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
     return;
   }
 
-  // if this instr is in immediate offset/index encoding, set bit 22 to 1
+  // This instr is in immediate offset/index encoding, set bit 22 to 1.
+  Binary |= 1 << 22;
   if (unsigned ImmOffs = ARM_AM::getAM3Offset(AM3Opc)) {
-    Binary |= 1 << 22;
     // Set operands
     Binary |= (ImmOffs >> 4) << 8;  // immedH
     Binary |= (ImmOffs & ~0xF);     // immedL

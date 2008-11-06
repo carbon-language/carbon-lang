@@ -59,21 +59,17 @@ namespace ARMII {
     IndexModePre   = 1,
     IndexModePost  = 2,
     
-    // Opcode
-    OpcodeShift   = 9,
-    OpcodeMask    = 0xf << OpcodeShift,
-
     //===------------------------------------------------------------------===//
     // Misc flags.
 
     // UnaryDP - Indicates this is a unary data processing instruction, i.e.
     // it doesn't have a Rn operand.
-    UnaryDP       = 1 << 13,
+    UnaryDP       = 1 << 9,
 
     //===------------------------------------------------------------------===//
     // Instruction encoding formats.
     //
-    FormShift   = 14,
+    FormShift   = 10,
     FormMask    = 0xf << FormShift,
 
     // Pseudo instructions

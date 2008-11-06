@@ -17,49 +17,49 @@
 
 // ARM Float Instruction
 class ASI<dag outs, dag ins, string opc, string asm, list<dag> pattern>
-  : AI<0x0, outs, ins, VFPFrm, opc, asm, pattern> {
+  : AI<outs, ins, VFPFrm, opc, asm, pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
 }
 
 class ASI5<dag outs, dag ins, string opc, string asm, list<dag> pattern>
-  : I<0x0, outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
+  : I<outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
       VFPFrm, opc, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
 }
 
 // ARM Double Instruction
 class ADI<dag outs, dag ins, string opc, string asm, list<dag> pattern>
-  : AI<0x0, outs, ins, VFPFrm, opc, asm, pattern> {
+  : AI<outs, ins, VFPFrm, opc, asm, pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
 }
 
 class ADI5<dag outs, dag ins, string opc, string asm, list<dag> pattern>
-  : I<0x0, outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
+  : I<outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
       VFPFrm, opc, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
 }
 
 // Special cases.
 class AXSI<dag outs, dag ins, string asm, list<dag> pattern>
-  : XI<0x0, outs, ins, AddrModeNone, Size4Bytes, IndexModeNone,
+  : XI<outs, ins, AddrModeNone, Size4Bytes, IndexModeNone,
        VFPFrm, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
 }
 
 class AXSI5<dag outs, dag ins, string asm, list<dag> pattern>
-  : XI<0x0, outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
+  : XI<outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
        VFPFrm, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
 }
 
 class AXDI<dag outs, dag ins, string asm, list<dag> pattern>
-  : XI<0x0, outs, ins, AddrModeNone, Size4Bytes, IndexModeNone,
+  : XI<outs, ins, AddrModeNone, Size4Bytes, IndexModeNone,
        VFPFrm, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
 }
 
 class AXDI5<dag outs, dag ins, string asm, list<dag> pattern>
-  : XI<0x0, outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
+  : XI<outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
        VFPFrm, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
 }
