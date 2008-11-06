@@ -80,20 +80,15 @@ private:
       return Legal;
     case TargetLowering::Promote:
       // Promote can mean
-      //   1) On integers, use the promote integer type (e.g., i8 to i32)
-      //   2) For vectors, use the widen vector type returned by the target
-      //      (e.g., v3i32 to v4i32).  If the type is the same as the original
-      //      type, than expand the vector instead.
-      if (!VT.isVector()) {
+      //   1) For integers, use a larger integer type (e.g. i8 -> i32).
+      //   2) For vectors, use a wider vector type (e.g. v3i32 -> v4i32).
+      if (!VT.isVector())
         return PromoteInteger;
-      } else {
-        // TODO: move widen code to LegalizeType.
-        if (VT.getVectorNumElements() == 1) {
-          return ScalarizeVector;
-        } else {
-          return SplitVector;
-        }        
-      }
+      else if (VT.getVectorNumElements() == 1)
+        return ScalarizeVector;
+      else
+        // TODO: move widen code to LegalizeTypes.
+        return SplitVector;
     case TargetLowering::Expand:
       // Expand can mean
       // 1) split scalar in half, 2) convert a float to an integer,
