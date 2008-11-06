@@ -98,6 +98,8 @@ namespace {
 
     void emitMulFrmInstruction(const MachineInstr &MI);
 
+    void emitExtendInstruction(const MachineInstr &MI);
+
     void emitBranchInstruction(const MachineInstr &MI);
 
     void emitMiscBranchInstruction(const MachineInstr &MI);
@@ -282,6 +284,9 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   case ARMII::MulFrm:
     emitMulFrmInstruction(MI);
     break;
+  case ARMII::ExtFrm:
+    emitExtendInstruction(MI);
+    break;
   case ARMII::BrFrm:
     emitBranchInstruction(MI);
     break;
@@ -349,7 +354,7 @@ void ARMCodeEmitter::emitMOVi2piecesInstruction(const MachineInstr &MI) {
   unsigned Binary = 0xd << 21;  // mov: Insts{24-21} = 0b1101
 
   // Set the conditional execution predicate.
-  Binary |= II->getPredicate(&MI) << 28;
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
   // Encode Rd.
   Binary |= getMachineOpValue(MI, MO0) << ARMII::RegRdShift;
@@ -364,7 +369,7 @@ void ARMCodeEmitter::emitMOVi2piecesInstruction(const MachineInstr &MI) {
   Binary = 0xc << 21;  // orr: Insts{24-21} = 0b1100
 
   // Set the conditional execution predicate.
-  Binary |= II->getPredicate(&MI) << 28;
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
   // Encode Rd.
   Binary |= getMachineOpValue(MI, MO0) << ARMII::RegRdShift;
@@ -488,7 +493,9 @@ unsigned ARMCodeEmitter::getMachineSoRegOpValue(const MachineInstr &MI,
 
 unsigned ARMCodeEmitter::getMachineSoImmOpValue(unsigned SoImm) {
   // Encode rotate_imm.
-  unsigned Binary = (ARM_AM::getSOImmValRot(SoImm) >> 1) << ARMII::RotImmShift;
+  unsigned Binary = (ARM_AM::getSOImmValRot(SoImm) >> 1)
+    << ARMII::SoRotImmShift;
+
   // Encode immed_8.
   Binary |= ARM_AM::getSOImmValImm(SoImm);
   return Binary;
@@ -512,7 +519,7 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << 28;
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
   // Encode S bit if MI modifies CPSR.
   Binary |= getAddrModeSBit(MI, TID);
@@ -570,7 +577,7 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << 28;
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
@@ -623,7 +630,7 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << 28;
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
@@ -656,7 +663,7 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
   }
 
   // This instr is in immediate offset/index encoding, set bit 22 to 1.
-  Binary |= 1 << 22;
+  Binary |= 1 << ARMII::AM3_I_BitShift;
   if (unsigned ImmOffs = ARM_AM::getAM3Offset(AM3Opc)) {
     // Set operands
     Binary |= (ImmOffs >> 4) << 8;  // immedH
@@ -671,7 +678,7 @@ void ARMCodeEmitter::emitLoadStoreMultipleInstruction(const MachineInstr &MI) {
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << 28;
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRnShift;
@@ -686,14 +693,14 @@ void ARMCodeEmitter::emitLoadStoreMultipleInstruction(const MachineInstr &MI) {
   switch (Mode) {
   default: assert(0 && "Unknown addressing sub-mode!");
   case ARM_AM::da:                      break;
-  case ARM_AM::db: Binary |= 0x1 << 24; break;
-  case ARM_AM::ia: Binary |= 0x1 << 23; break;
-  case ARM_AM::ib: Binary |= 0x3 << 23; break;
+  case ARM_AM::db: Binary |= 0x1 << ARMII::P_BitShift; break;
+  case ARM_AM::ia: Binary |= 0x1 << ARMII::U_BitShift; break;
+  case ARM_AM::ib: Binary |= 0x3 << ARMII::U_BitShift; break;
   }
 
   // Set bit W(21)
   if (ARM_AM::getAM4WBFlag(MO.getImm()))
-    Binary |= 0x1 << 21;
+    Binary |= 0x1 << ARMII::W_BitShift;
 
   // Set registers
   for (unsigned i = 4, e = MI.getNumOperands(); i != e; ++i) {
@@ -716,14 +723,14 @@ void ARMCodeEmitter::emitMulFrmInstruction(const MachineInstr &MI) {
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << 28;
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
   // Encode S bit if MI modifies CPSR.
   Binary |= getAddrModeSBit(MI, TID);
 
   // 32x32->64bit operations have two destination registers. The number
   // of register definitions will tell us if that's what we're dealing with.
-  int OpIdx = 0;
+  unsigned OpIdx = 0;
   if (TID.getNumDefs() == 2)
     Binary |= getMachineOpValue (MI, OpIdx++) << ARMII::RegRdLoShift;
 
@@ -738,8 +745,47 @@ void ARMCodeEmitter::emitMulFrmInstruction(const MachineInstr &MI) {
 
   // Many multiple instructions (e.g. MLA) have three src operands. Encode
   // it as Rn (for multiply, that's in the same offset as RdLo.
-  if (TID.getNumOperands() - TID.getNumDefs() == 3)
-    Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdLoShift;
+  if (TID.getNumOperands() > OpIdx &&
+      !TID.OpInfo[OpIdx].isPredicate() &&
+      !TID.OpInfo[OpIdx].isOptionalDef())
+    Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRdLoShift;
+
+  emitWordLE(Binary);
+}
+
+void ARMCodeEmitter::emitExtendInstruction(const MachineInstr &MI) {
+  const TargetInstrDesc &TID = MI.getDesc();
+
+  // Part of binary is determined by TableGn.
+  unsigned Binary = getBinaryCodeForInstr(MI);
+
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
+
+  unsigned OpIdx = 0;
+
+  // Encode Rd
+  Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdShift;
+
+  const MachineOperand &MO1 = MI.getOperand(OpIdx++);
+  const MachineOperand &MO2 = MI.getOperand(OpIdx);
+  if (MO2.isReg()) {
+    // Two register operand form.
+    // Encode Rn.
+    Binary |= getMachineOpValue(MI, MO1) << ARMII::RegRnShift;
+
+    // Encode Rm.
+    Binary |= getMachineOpValue(MI, MO2);
+    ++OpIdx;
+  } else {
+    Binary |= getMachineOpValue(MI, MO1);
+  }
+
+  // Encode rot imm (0, 8, 16, or 24) if it has a rotate immediate operand.
+  if (MI.getOperand(OpIdx).isImm() &&
+      !TID.OpInfo[OpIdx].isPredicate() &&
+      !TID.OpInfo[OpIdx].isOptionalDef())
+    Binary |= (getMachineOpValue(MI, OpIdx) / 8) << ARMII::ExtRotImmShift;
 
   emitWordLE(Binary);
 }
@@ -754,16 +800,10 @@ void ARMCodeEmitter::emitBranchInstruction(const MachineInstr &MI) {
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << 28;
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
   // Set signed_immed_24 field
   Binary |= getMachineOpValue(MI, 0);
-
-  // if it is a conditional branch, set cond field
-  if (TID.Opcode == ARM::Bcc) {
-    Binary &= 0x0FFFFFFF;                      // clear conditional field
-    Binary |= getMachineOpValue(MI, 1) << 28;  // set conditional field
-  }
 
   emitWordLE(Binary);
 }
@@ -780,7 +820,7 @@ void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << 28;
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
   if (TID.Opcode == ARM::BX_RET)
     // The return register is LR.

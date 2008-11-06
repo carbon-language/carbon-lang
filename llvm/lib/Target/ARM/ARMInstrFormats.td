@@ -34,9 +34,10 @@ def StMiscFrm   : Format<10>;
 def LdMulFrm    : Format<11>;
 def StMulFrm    : Format<12>;
 
-def ArithMisc   : Format<13>;
-def ThumbFrm    : Format<14>;
-def VFPFrm      : Format<15>;
+def ArithMiscFrm: Format<13>;
+def ExtFrm      : Format<14>;
+def ThumbFrm    : Format<15>;
+def VFPFrm      : Format<16>;
 
 // Misc flag for data processing instructions that indicates whether
 // the instruction has a Rn register operand.
@@ -123,11 +124,11 @@ class XI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
 class AI<dag oops, dag iops, Format f, string opc,
          string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
-      asm,"",pattern>;
+      asm, "", pattern>;
 class AsI<dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : sI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
-       asm,"",pattern>;
+       asm, "", pattern>;
 class AXI<dag oops, dag iops, Format f, string asm,
           list<dag> pattern>
   : XI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
@@ -137,7 +138,7 @@ class AXI<dag oops, dag iops, Format f, string asm,
 class ABI<bits<4> opcod, dag oops, dag iops, string opc,
          string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, BrFrm, opc,
-      asm,"",pattern> {
+      asm, "", pattern> {
   let Inst{27-24} = opcod;
 }
 class ABXI<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
@@ -645,7 +646,7 @@ class AXI4st<dag oops, dag iops, Format f, string asm, list<dag> pattern>
 class AMul1I<bits<7> opcod, dag oops, dag iops, string opc,
          string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, opc,
-      asm,"",pattern> {
+      asm, "", pattern> {
   let Inst{7-4}   = 0b1001;
   let Inst{20}    = 0; // S bit
   let Inst{27-21} = opcod;
@@ -653,7 +654,7 @@ class AMul1I<bits<7> opcod, dag oops, dag iops, string opc,
 class AsMul1I<bits<7> opcod, dag oops, dag iops, string opc,
           string asm, list<dag> pattern>
   : sI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, opc,
-       asm,"",pattern> {
+       asm, "", pattern> {
   let Inst{7-4}   = 0b1001;
   let Inst{27-21} = opcod;
 }
@@ -662,7 +663,7 @@ class AsMul1I<bits<7> opcod, dag oops, dag iops, string opc,
 class AMul2I<bits<7> opcod, dag oops, dag iops, string opc,
          string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, opc,
-      asm,"",pattern> {
+      asm, "", pattern> {
   let Inst{7-4}   = 0b1001;
   let Inst{20}    = 1;
   let Inst{27-21} = opcod;
@@ -672,11 +673,20 @@ class AMul2I<bits<7> opcod, dag oops, dag iops, string opc,
 class AMulxyI<bits<7> opcod, dag oops, dag iops, string opc,
          string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, opc,
-      asm,"",pattern> {
+      asm, "", pattern> {
   let Inst{4}     = 0;
   let Inst{7}     = 1;
   let Inst{20}    = 0;
   let Inst{27-21} = opcod;
+}
+
+// Extend instructions.
+class AExtI<bits<8> opcod, dag oops, dag iops, string opc,
+            string asm, list<dag> pattern>
+  : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, ExtFrm, opc,
+      asm, "", pattern> {
+  let Inst{7-4}   = 0b0111;
+  let Inst{27-20} = opcod;
 }
 
 //===----------------------------------------------------------------------===//

@@ -95,28 +95,34 @@ namespace ARMII {
     StMulFrm    = 12 << FormShift,
 
     // Miscellaneous arithmetic instructions
-    ArithMisc   = 13 << FormShift,
+    ArithMiscFrm= 13 << FormShift,
+
+    // Extend instructions
+    ExtFrm      = 14 << FormShift,
 
     // Thumb format
-    ThumbFrm    = 14 << FormShift,
+    ThumbFrm    = 15 << FormShift,
 
     // VFP format
-    VPFFrm      = 15 << FormShift,
+    VPFFrm      = 16 << FormShift,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating
     // machine instructions.
-    RotImmShift  = 8,
-    RegRsShift   = 8,
-    RegRdLoShift = 12,
-    RegRdShift   = 12,
-    RegRdHiShift = 16,
-    RegRnShift   = 16,
-    L_BitShift   = 20,
-    S_BitShift   = 20,
-    U_BitShift   = 23,
-    IndexShift   = 24,
-    I_BitShift   = 25
+    SoRotImmShift  = 8,
+    RegRsShift     = 8,
+    ExtRotImmShift = 10,
+    RegRdLoShift   = 12,
+    RegRdShift     = 12,
+    RegRdHiShift   = 16,
+    RegRnShift     = 16,
+    S_BitShift     = 20,
+    W_BitShift     = 21,
+    AM3_I_BitShift = 22,
+    U_BitShift     = 23,
+    P_BitShift     = 24,
+    I_BitShift     = 25,
+    CondShift      = 28
   };
 }
 

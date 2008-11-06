@@ -390,25 +390,31 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode> {
 
 /// AI_unary_rrot - A unary operation with two forms: one whose operand is a
 /// register and one whose operand is a register rotated by 8/16/24.
-multiclass AI_unary_rrot<string opc, PatFrag opnode> {
-  def r     : AI<(outs GPR:$dst), (ins GPR:$Src), Pseudo,
+/// FIXME: Remove the 'r' variant. Its rot_imm is zero.
+multiclass AI_unary_rrot<bits<8> opcod, string opc, PatFrag opnode> {
+  def r     : AExtI<opcod, (outs GPR:$dst), (ins GPR:$Src),
                  opc, " $dst, $Src",
-                 [(set GPR:$dst, (opnode GPR:$Src))]>, Requires<[IsARM, HasV6]>;
-  def r_rot : AI<(outs GPR:$dst), (ins GPR:$Src, i32imm:$rot), Pseudo,
+                 [(set GPR:$dst, (opnode GPR:$Src))]>,
+              Requires<[IsARM, HasV6]> {
+                let Inst{19-16} = 0b1111;
+              }
+  def r_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$Src, i32imm:$rot),
                  opc, " $dst, $Src, ror $rot",
                  [(set GPR:$dst, (opnode (rotr GPR:$Src, rot_imm:$rot)))]>,
-              Requires<[IsARM, HasV6]>;
+              Requires<[IsARM, HasV6]> {
+                let Inst{19-16} = 0b1111;
+              }
 }
 
 /// AI_bin_rrot - A binary operation with two forms: one whose operand is a
 /// register and one whose operand is a register rotated by 8/16/24.
-multiclass AI_bin_rrot<string opc, PatFrag opnode> {
-  def rr     : AI<(outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS),
-                  Pseudo, opc, " $dst, $LHS, $RHS",
+multiclass AI_bin_rrot<bits<8> opcod, string opc, PatFrag opnode> {
+  def rr     : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS),
+                  opc, " $dst, $LHS, $RHS",
                   [(set GPR:$dst, (opnode GPR:$LHS, GPR:$RHS))]>,
                   Requires<[IsARM, HasV6]>;
-  def rr_rot : AI<(outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS, i32imm:$rot),
-                  Pseudo, opc, " $dst, $LHS, $RHS, ror $rot",
+  def rr_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS, i32imm:$rot),
+                  opc, " $dst, $LHS, $RHS, ror $rot",
                   [(set GPR:$dst, (opnode GPR:$LHS,
                                           (rotr GPR:$RHS, rot_imm:$rot)))]>,
                   Requires<[IsARM, HasV6]>;
@@ -781,31 +787,36 @@ def MOVsra_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
 
 // Sign extenders
 
-defm SXTB  : AI_unary_rrot<"sxtb", UnOpFrag<(sext_inreg node:$Src, i8)>>;
-defm SXTH  : AI_unary_rrot<"sxth", UnOpFrag<(sext_inreg node:$Src, i16)>>;
+defm SXTB  : AI_unary_rrot<0b01101010,
+                           "sxtb", UnOpFrag<(sext_inreg node:$Src, i8)>>;
+defm SXTH  : AI_unary_rrot<0b01101011,
+                           "sxth", UnOpFrag<(sext_inreg node:$Src, i16)>>;
 
-defm SXTAB : AI_bin_rrot<"sxtab",
-                        BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS, i8))>>;
-defm SXTAH : AI_bin_rrot<"sxtah",
-                        BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS,i16))>>;
+defm SXTAB : AI_bin_rrot<0b01101010,
+               "sxtab", BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS, i8))>>;
+defm SXTAH : AI_bin_rrot<0b01101011,
+               "sxtah", BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS,i16))>>;
 
 // TODO: SXT(A){B|H}16
 
 // Zero extenders
 
 let AddedComplexity = 16 in {
-defm UXTB   : AI_unary_rrot<"uxtb"  , UnOpFrag<(and node:$Src, 0x000000FF)>>;
-defm UXTH   : AI_unary_rrot<"uxth"  , UnOpFrag<(and node:$Src, 0x0000FFFF)>>;
-defm UXTB16 : AI_unary_rrot<"uxtb16", UnOpFrag<(and node:$Src, 0x00FF00FF)>>;
+defm UXTB   : AI_unary_rrot<0b01101110,
+                            "uxtb"  , UnOpFrag<(and node:$Src, 0x000000FF)>>;
+defm UXTH   : AI_unary_rrot<0b01101111,
+                            "uxth"  , UnOpFrag<(and node:$Src, 0x0000FFFF)>>;
+defm UXTB16 : AI_unary_rrot<0b01101100,
+                            "uxtb16", UnOpFrag<(and node:$Src, 0x00FF00FF)>>;
 
 def : ARMV6Pat<(and (shl GPR:$Src, 8), 0xFF00FF),
                (UXTB16r_rot GPR:$Src, 24)>;
 def : ARMV6Pat<(and (srl GPR:$Src, 8), 0xFF00FF),
                (UXTB16r_rot GPR:$Src, 8)>;
 
-defm UXTAB : AI_bin_rrot<"uxtab",
+defm UXTAB : AI_bin_rrot<0b01101110, "uxtab",
                         BinOpFrag<(add node:$LHS, (and node:$RHS, 0x00FF))>>;
-defm UXTAH : AI_bin_rrot<"uxtah",
+defm UXTAH : AI_bin_rrot<0b01101111, "uxtah",
                         BinOpFrag<(add node:$LHS, (and node:$RHS, 0xFFFF))>>;
 }
 
@@ -1090,15 +1101,15 @@ defm SMLA : AI_smla<"smla", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 //  Misc. Arithmetic Instructions.
 //
 
-def CLZ  : AI<(outs GPR:$dst), (ins GPR:$src), ArithMisc,
+def CLZ  : AI<(outs GPR:$dst), (ins GPR:$src), ArithMiscFrm,
               "clz", " $dst, $src",
               [(set GPR:$dst, (ctlz GPR:$src))]>, Requires<[IsARM, HasV5T]>;
 
-def REV  : AI<(outs GPR:$dst), (ins GPR:$src), ArithMisc,
+def REV  : AI<(outs GPR:$dst), (ins GPR:$src), ArithMiscFrm,
               "rev", " $dst, $src",
               [(set GPR:$dst, (bswap GPR:$src))]>, Requires<[IsARM, HasV6]>;
 
-def REV16 : AI<(outs GPR:$dst), (ins GPR:$src), ArithMisc,
+def REV16 : AI<(outs GPR:$dst), (ins GPR:$src), ArithMiscFrm,
                "rev16", " $dst, $src",
                [(set GPR:$dst,
                    (or (and (srl GPR:$src, 8), 0xFF),
@@ -1107,7 +1118,7 @@ def REV16 : AI<(outs GPR:$dst), (ins GPR:$src), ArithMisc,
                                (and (shl GPR:$src, 8), 0xFF000000)))))]>,
                Requires<[IsARM, HasV6]>;
 
-def REVSH : AI<(outs GPR:$dst), (ins GPR:$src), ArithMisc,
+def REVSH : AI<(outs GPR:$dst), (ins GPR:$src), ArithMiscFrm,
                "revsh", " $dst, $src",
                [(set GPR:$dst,
                   (sext_inreg
@@ -1116,7 +1127,7 @@ def REVSH : AI<(outs GPR:$dst), (ins GPR:$src), ArithMisc,
                Requires<[IsARM, HasV6]>;
 
 def PKHBT : AI<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
-               Pseudo, "pkhbt", " $dst, $src1, $src2, LSL $shamt",
+               ArithMiscFrm, "pkhbt", " $dst, $src1, $src2, LSL $shamt",
                [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF),
                                    (and (shl GPR:$src2, (i32 imm:$shamt)),
                                         0xFFFF0000)))]>,
@@ -1130,7 +1141,7 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF), (shl GPR:$src2, imm16_31:$shamt)),
 
 
 def PKHTB : AI<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
-               Pseudo, "pkhtb", " $dst, $src1, $src2, ASR $shamt",
+               ArithMiscFrm, "pkhtb", " $dst, $src1, $src2, ASR $shamt",
                [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF0000),
                                    (and (sra GPR:$src2, imm16_31:$shamt),
                                         0xFFFF)))]>, Requires<[IsARM, HasV6]>;
