@@ -671,7 +671,12 @@ Sema::CheckDynamicCast(Expr *&SrcExpr, QualType DestType,
   }
 
   // C++ 5.2.7p6: Otherwise, v shall be [polymorphic].
-  // FIXME: Information not yet available.
+  const RecordDecl *SrcDecl = SrcRecord->getDecl()->getDefinition(Context);
+  assert(SrcDecl && "Definition missing");
+  if (!cast<CXXRecordDecl>(SrcDecl)->isPolymorphic()) {
+    Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_polymorphic,
+      SrcPointee.getUnqualifiedType().getAsString(), SrcExpr->getSourceRange());
+  }
 
   // Done. Everything else is run-time checks.
 }

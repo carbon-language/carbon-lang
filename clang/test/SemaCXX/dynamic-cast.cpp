@@ -10,6 +10,15 @@ struct F : B, E {};
 
 struct Incomplete;
 
+struct Poly
+{
+  virtual void f();
+};
+
+struct PolyDerived : Poly
+{
+};
+
 void basic_bad()
 {
   // ptr -> nonptr
@@ -52,4 +61,14 @@ void up()
   (void)dynamic_cast<A&>(*((F*)0)); // expected-error {{ambiguous conversion from derived class 'struct F' to base class 'struct A':\n    struct F -> struct B -> struct A\n    struct F -> struct E -> struct A}}
 }
 
-// FIXME: Other test cases require recognition of polymorphic classes.
+void poly()
+{
+  (void)dynamic_cast<A*>((Poly*)0);
+  (void)dynamic_cast<A&>(*((Poly*)0));
+  (void)dynamic_cast<A*>((PolyDerived*)0);
+  (void)dynamic_cast<A&>(*((PolyDerived*)0));
+
+  // Not polymorphic source
+  (void)dynamic_cast<Poly*>((A*)0); // expected-error {{'struct A' is not polymorphic}}
+  (void)dynamic_cast<PolyDerived&>(*((A*)0)); // expected-error {{'struct A' is not polymorphic}}
+}

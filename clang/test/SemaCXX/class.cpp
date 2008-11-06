@@ -47,11 +47,15 @@ public:
   }
 
   int f1(int p) {
-   A z = 6;
-   return p + x + this->y + z;
+    A z = 6;
+    return p + x + this->y + z;
   }
 
   typedef int A;
+
+  virtual int vi; // expected-error {{error: 'virtual' can only appear on non-static member functions}}
+  virtual static int vsif(); // expected-error {{error: 'virtual' can only appear on non-static member functions}}
+  virtual int vif();
 
 private:
   int x,y;

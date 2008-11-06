@@ -667,6 +667,8 @@ DIAG(err_bad_language, ERROR,
 // C++ class members
 DIAG(err_storageclass_invalid_for_member, ERROR,
      "storage class specified for a member declaration")
+DIAG(err_virtual_non_function, ERROR,
+     "'virtual' can only appear on non-static member functions")
 DIAG(err_not_bitfield_type, ERROR,
      "cannot declare '%0' to be a bit-field type")
 DIAG(err_static_not_bitfield, ERROR,
@@ -1142,6 +1144,8 @@ DIAG(err_bad_dynamic_cast_incomplete, ERROR,
      "'%0' is incomplete")
 DIAG(err_bad_dynamic_cast_not_ptr, ERROR,
      "'%0' is not a pointer")
+DIAG(err_bad_dynamic_cast_not_polymorphic, ERROR,
+     "'%0' is not polymorphic")
 
 DIAG(err_invalid_use_of_function_type, ERROR,
      "a function type is not allowed here")

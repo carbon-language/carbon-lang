@@ -219,6 +219,10 @@ class CXXRecordDecl : public RecordDecl, public DeclContext {
   /// Aggregate - True when this class is an aggregate.
   bool Aggregate : 1;
 
+  /// Polymorphic - True when this class is polymorphic, i.e. has at least one
+  /// virtual member or derives from a polymorphic class.
+  bool Polymorphic : 1;
+
   /// Bases - Base classes of this class.
   /// FIXME: This is wasted space for a union.
   CXXBaseSpecifier *Bases;
@@ -238,8 +242,8 @@ class CXXRecordDecl : public RecordDecl, public DeclContext {
                 SourceLocation L, IdentifierInfo *Id) 
     : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord),
       UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
-      Aggregate(true), Bases(0), NumBases(0), Constructors(DC, Id),
-      Destructor(0) { }
+      Aggregate(true), Polymorphic(false), Bases(0), NumBases(0),
+      Constructors(DC, Id), Destructor(0) { }
 
   ~CXXRecordDecl();
 
@@ -326,6 +330,14 @@ public:
   /// setAggregate - Set whether this class is an aggregate (C++
   /// [dcl.init.aggr]).
   void setAggregate(bool Agg) { Aggregate = Agg; }
+
+  /// isPolymorphic - Whether this class is polymorphic (C++ [class.virtual]),
+  /// which means that the class contains or inherits a virtual function.
+  bool isPolymorphic() const { return Polymorphic; }
+
+  /// setPolymorphic - Set whether this class is polymorphic (C++
+  /// [class.virtual]).
+  void setPolymorphic(bool Poly) { Polymorphic = Poly; }
 
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using

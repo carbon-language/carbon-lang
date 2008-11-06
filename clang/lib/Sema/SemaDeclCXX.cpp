@@ -310,6 +310,15 @@ Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
     return true;
   }
 
+  // If the base class is polymorphic, the new one is, too.
+  RecordDecl *BaseDecl = BaseType->getAsRecordType()->getDecl();
+  assert(BaseDecl && "Record type has no declaration");
+  BaseDecl = BaseDecl->getDefinition(Context);
+  assert(BaseDecl && "Base type is not incomplete, but has no definition");
+  if (cast<CXXRecordDecl>(BaseDecl)->isPolymorphic()) {
+    cast<CXXRecordDecl>(Decl)->setPolymorphic(true);
+  }
+
   // Create the base specifier.
   return new CXXBaseSpecifier(SpecifierRange, Virtual, 
                               BaseType->isClassType(), Access, BaseType);
@@ -468,8 +477,16 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   if (isInstField && (AS == AS_private || AS == AS_protected))
     cast<CXXRecordDecl>(CurContext)->setAggregate(false);
 
-  // FIXME: If the member is a virtual function, mark it its class as
-  // a non-aggregate.
+  if (DS.isVirtualSpecified()) {
+    if (!isFunc || DS.getStorageClassSpec() == DeclSpec::SCS_static) {
+      Diag(DS.getVirtualSpecLoc(), diag::err_virtual_non_function);
+      InvalidDecl = true;
+    } else {
+      CXXRecordDecl *CurClass = cast<CXXRecordDecl>(CurContext);
+      CurClass->setAggregate(false);
+      CurClass->setPolymorphic(true);
+    }
+  }
 
   if (BitWidth) {
     // C++ 9.6p2: Only when declaring an unnamed bit-field may the
