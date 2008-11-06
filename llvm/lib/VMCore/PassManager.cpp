@@ -727,12 +727,12 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
         && std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
         PreservedSet.end()) {
       // Remove this analysis
-      AvailableAnalysis.erase(Info);
       if (PassDebugging >= Details) {
         Pass *S = Info->second;
         cerr << " -- '" <<  P->getPassName() << "' is not preserving '";
         cerr << S->getPassName() << "'\n";
       }
+      AvailableAnalysis.erase(Info);
     }
   }
 
