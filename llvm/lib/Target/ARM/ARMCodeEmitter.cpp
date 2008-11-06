@@ -248,7 +248,7 @@ void ARMCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB) {
 }
 
 void ARMCodeEmitter::emitWordLE(unsigned Binary) {
-  DOUT << "\t" << (void*)Binary << "\n";
+  DOUT << "  " << (void*)Binary << "\n";
   MCE.emitWordLE(Binary);
 }
 
@@ -282,10 +282,10 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   case ARMII::MulFrm:
     emitMulFrmInstruction(MI);
     break;
-  case ARMII::Branch:
+  case ARMII::BrFrm:
     emitBranchInstruction(MI);
     break;
-  case ARMII::BranchMisc:
+  case ARMII::BrMiscFrm:
     emitMiscBranchInstruction(MI);
     break;
   }
@@ -305,7 +305,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
     ARMConstantPoolValue *ACPV =
       static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
 
-    DOUT << "\t** ARM constant pool #" << CPI << " @ "
+    DOUT << "  ** ARM constant pool #" << CPI << " @ "
          << (void*)MCE.getCurrentPCValue() << " " << *ACPV << "\n";
 
     GlobalValue *GV = ACPV->getGV();
@@ -322,7 +322,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
   } else {
     Constant *CV = MCPE.Val.ConstVal;
 
-    DOUT << "\t** Constant pool #" << CPI << " @ "
+    DOUT << "  ** Constant pool #" << CPI << " @ "
          << (void*)MCE.getCurrentPCValue() << " " << *CV << "\n";
 
     if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
@@ -380,7 +380,7 @@ void ARMCodeEmitter::emitMOVi2piecesInstruction(const MachineInstr &MI) {
 }
 
 void ARMCodeEmitter::addPCLabel(unsigned LabelID) {
-  DOUT << "\t** LPC" << LabelID << " @ "
+  DOUT << "  ** LPC" << LabelID << " @ "
        << (void*)MCE.getCurrentPCValue() << '\n';
   JTI->addPCLabelAddr(LabelID, MCE.getCurrentPCValue());
 }
@@ -566,8 +566,6 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
 
 void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
                                               unsigned ImplicitRn) {
-  const TargetInstrDesc &TID = MI.getDesc();
-
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
@@ -621,8 +619,6 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
 
 void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
                                                   unsigned ImplicitRn) {
-  const TargetInstrDesc &TID = MI.getDesc();
-
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
@@ -751,6 +747,9 @@ void ARMCodeEmitter::emitMulFrmInstruction(const MachineInstr &MI) {
 void ARMCodeEmitter::emitBranchInstruction(const MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
 
+  if (TID.Opcode == ARM::TPsoft)
+    abort(); // FIXME
+
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
@@ -771,7 +770,10 @@ void ARMCodeEmitter::emitBranchInstruction(const MachineInstr &MI) {
 
 void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
-  if (TID.Opcode == ARM::BX)
+  if (TID.Opcode == ARM::BX ||
+      TID.Opcode == ARM::BR_JTr ||
+      TID.Opcode == ARM::BR_JTm ||
+      TID.Opcode == ARM::BR_JTadd)
     abort(); // FIXME
 
   // Part of binary is determined by TableGn.

@@ -445,7 +445,7 @@ multiclass AsXI1_bin_c_irs<bits<4> opcod, string opc, PatFrag opnode> {
 let isNotDuplicable = 1 in
 def CONSTPOOL_ENTRY :
 PseudoInst<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
-                        i32imm:$size),
+                    i32imm:$size),
            "${instid:label} ${cpidx:cpentry}", []>;
 
 let Defs = [SP], Uses = [SP] in {
@@ -465,6 +465,8 @@ PseudoInst<(outs), (ins i32imm:$line, i32imm:$col, i32imm:$file),
            ".loc $file, $line, $col",
            [(dwarf_loc (i32 imm:$line), (i32 imm:$col), (i32 imm:$file))]>;
 
+
+// Address computation and loads and stores in PIC mode.
 let isNotDuplicable = 1 in {
 def PICADD : AXI1<0b0100, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
                   Pseudo, "$cp:\n\tadd$p $dst, pc, $a",
@@ -505,14 +507,14 @@ def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
                Pseudo, "${addr:label}:\n\tstr${p}b $src, $addr",
                [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
 }
-}
+} // isNotDuplicable = 1
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.
 //
 
 let isReturn = 1, isTerminator = 1 in
-  def BX_RET : AI<(outs), (ins), BranchMisc, "bx", " lr", [(ARMretflag)]> {
+  def BX_RET : AI<(outs), (ins), BrMiscFrm, "bx", " lr", [(ARMretflag)]> {
   let Inst{7-4}   = 0b0001;
   let Inst{19-8}  = 0b111111111111;
   let Inst{27-20} = 0b00010010;
@@ -521,8 +523,9 @@ let isReturn = 1, isTerminator = 1 in
 // FIXME: remove when we have a way to marking a MI with these properties.
 // FIXME: $dst1 should be a def. But the extra ops must be in the end of the
 // operand list.
+// FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1 in
-  def LDM_RET : AXI4ldpc<(outs),
+  def LDM_RET : AXI4ld<(outs),
                     (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
                     LdMulFrm, "ldm${p}${addr:submode} $addr, $dst1",
                     []>;
@@ -530,16 +533,16 @@ let isReturn = 1, isTerminator = 1 in
 let isCall = 1,
   Defs = [R0, R1, R2, R3, R12, LR,
           D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
-  def BL  : ABLI<0b1011, (outs), (ins i32imm:$func, variable_ops), Branch,
+  def BL  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                 "bl ${func:call}",
                 [(ARMcall tglobaladdr:$func)]>;
 
-  def BL_pred : ABLpredI<0b1011, (outs), (ins i32imm:$func, variable_ops), Branch,
+  def BL_pred : ABI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                    "bl", " ${func:call}",
                    [(ARMcall_pred tglobaladdr:$func)]>;
 
   // ARMv5T and above
-  def BLX : AXI<(outs), (ins GPR:$func, variable_ops), BranchMisc,
+  def BLX : AXI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
                 "blx $func",
                 [(ARMcall GPR:$func)]>, Requires<[IsARM, HasV5T]> {
     let Inst{7-4}   = 0b0011;
@@ -549,9 +552,9 @@ let isCall = 1,
 
   let Uses = [LR] in {
     // ARMv4T
-    def BX : AXIx2<(outs), (ins GPR:$func, variable_ops),
-                   BranchMisc, "mov lr, pc\n\tbx $func",
-                   [(ARMcall_nolink GPR:$func)]>;
+    def BX : ABXIx2<(outs), (ins GPR:$func, variable_ops),
+                     "mov lr, pc\n\tbx $func",
+                    [(ARMcall_nolink GPR:$func)]>;
   }
 }
 
@@ -559,7 +562,7 @@ let isBranch = 1, isTerminator = 1 in {
   // B is "predicable" since it can be xformed into a Bcc.
   let isBarrier = 1 in {
     let isPredicable = 1 in
-    def B : ABI<0b1010, (outs), (ins brtarget:$target), Branch, "b $target",
+    def B : ABXI<0b1010, (outs), (ins brtarget:$target), "b $target",
                 [(br bb:$target)]>;
 
   let isNotDuplicable = 1, isIndirectBranch = 1 in {
@@ -583,7 +586,7 @@ let isBranch = 1, isTerminator = 1 in {
 
   // FIXME: should be able to write a pattern for ARMBrcond, but can't use
   // a two-value operand where a dag node expects two operands. :( 
-  def Bcc : ABccI<0b1010, (outs), (ins brtarget:$target), Branch,
+  def Bcc : ABI<0b1010, (outs), (ins brtarget:$target),
                "b", " $target",
                [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]>;
 }
@@ -909,12 +912,12 @@ def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
 //
 
 def MUL   : AsMul1I<0b0000000, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-                 "mul", " $dst, $a, $b",
-                 [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
+                    "mul", " $dst, $a, $b",
+                   [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
 
 def MLA   : AsMul1I<0b0000001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-                 "mla", " $dst, $a, $b, $c",
-                 [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
+                    "mla", " $dst, $a, $b, $c",
+                   [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
 
 // Extra precision multiplies with low / high results
 def SMULL : AsMul1I<0b0000110, (outs GPR:$ldst, GPR:$hdst),
@@ -963,7 +966,6 @@ def SMMLS : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
   let Inst{7-4}   = 0b1101;
 }
 
-// FIXME: encoding
 multiclass AI_smul<string opc, PatFrag opnode> {
   def BB : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "bb"), " $dst, $a, $b",
@@ -1021,7 +1023,6 @@ multiclass AI_smul<string opc, PatFrag opnode> {
 }
 
 
-// FIXME: encoding
 multiclass AI_smla<string opc, PatFrag opnode> {
   def BB : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "bb"), " $dst, $a, $b, $acc",
@@ -1142,7 +1143,6 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
                    (and (srl GPR:$src2, imm1_15:$shamt), 0xFFFF)),
                (PKHTB GPR:$src1, GPR:$src2, imm1_15:$shamt)>;
 
-
 //===----------------------------------------------------------------------===//
 //  Comparison Instructions...
 //
@@ -1215,7 +1215,7 @@ def LEApcrelJT : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, i32imm:$id, pred
 // __aeabi_read_tp preserves the registers r1-r3.
 let isCall = 1,
   Defs = [R0, R12, LR, CPSR] in {
-  def TPsoft : AXI<(outs), (ins), BranchMisc,
+  def TPsoft : ABXI<0b1011, (outs), (ins),
                "bl __aeabi_read_tp",
                [(set R0, ARMthread_pointer)]>;
 }

@@ -79,8 +79,8 @@ namespace ARMII {
     MulFrm      = 2 << FormShift,
 
     // Branch instructions
-    Branch      = 3 << FormShift,
-    BranchMisc  = 4 << FormShift,
+    BrFrm       = 3 << FormShift,
+    BrMiscFrm   = 4 << FormShift,
 
     // Data Processing instructions
     DPFrm       = 5 << FormShift,

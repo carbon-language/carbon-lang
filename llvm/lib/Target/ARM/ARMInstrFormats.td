@@ -21,8 +21,8 @@ class Format<bits<5> val> {
 
 def Pseudo      : Format<1>;
 def MulFrm      : Format<2>;
-def Branch      : Format<3>;
-def BranchMisc  : Format<4>;
+def BrFrm       : Format<3>;
+def BrMiscFrm   : Format<4>;
 
 def DPFrm       : Format<5>;
 def DPSoRegFrm  : Format<6>;
@@ -134,40 +134,25 @@ class AXI<dag oops, dag iops, Format f, string asm,
        "", pattern>;
 
 // Ctrl flow instructions
-class ABLpredI<bits<4> opcod, dag oops, dag iops, Format f, string opc,
+class ABI<bits<4> opcod, dag oops, dag iops, string opc,
          string asm, list<dag> pattern>
-  : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
+  : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, BrFrm, opc,
       asm,"",pattern> {
   let Inst{27-24} = opcod;
 }
-class ABLI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
-          list<dag> pattern>
-  : XI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
+class ABXI<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, BrFrm, asm,
        "", pattern> {
   let Inst{27-24} = opcod;
 }
-// FIXME: BX
-class AXIx2<dag oops, dag iops, Format f, string asm,
-            list<dag> pattern>
-  : XI<oops, iops, AddrModeNone, Size8Bytes, IndexModeNone, f, asm,
+class ABXIx2<dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<oops, iops, AddrModeNone, Size8Bytes, IndexModeNone, BrMiscFrm, asm,
        "", pattern>;
-class ABI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
-          list<dag> pattern>
-  : XI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
-       "", pattern> {
-  let Inst{27-24} = opcod;
-}
-class ABccI<bits<4> opcod, dag oops, dag iops, Format f, string opc,
-         string asm, list<dag> pattern>
-  : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
-      asm,"",pattern> {
-  let Inst{27-24} = opcod;
-}
 
 // BR_JT instructions
 // == mov pc
 class JTI<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrModeNone, SizeSpecial, IndexModeNone, BranchMisc,
+  : XI<oops, iops, AddrModeNone, SizeSpecial, IndexModeNone, BrMiscFrm,
        asm, "", pattern> {
   let Inst{20}    = 0; // S Bit
   let Inst{24-21} = opcod;
@@ -175,7 +160,7 @@ class JTI<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
 }
 // == add pc
 class JTI1<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode1, SizeSpecial, IndexModeNone, BranchMisc,
+  : XI<oops, iops, AddrMode1, SizeSpecial, IndexModeNone, BrMiscFrm,
        asm, "", pattern> {
   let Inst{20}    = 0; // S bit
   let Inst{24-21} = opcod;
@@ -183,7 +168,7 @@ class JTI1<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
 }
 // == ldr pc
 class JTI2<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode2, SizeSpecial, IndexModeNone, BranchMisc,
+  : XI<oops, iops, AddrMode2, SizeSpecial, IndexModeNone, BrMiscFrm,
        asm, "", pattern> {
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 0; // W bit
@@ -641,29 +626,14 @@ class AI3sthpo<dag oops, dag iops, Format f, string opc,
 
 
 // addrmode4 instructions
-class AI4<dag oops, dag iops, Format f, string opc,
-          string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, opc,
-      asm, "", pattern> {
-  let Inst{25-27} = {0,0,1};
-}
-class AXI4ld<dag oops, dag iops, Format f, string asm,
-           list<dag> pattern>
+class AXI4ld<dag oops, dag iops, Format f, string asm, list<dag> pattern>
   : XI<oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, asm,
        "", pattern> {
   let Inst{20}    = 1; // L bit
   let Inst{22}    = 0; // S bit
   let Inst{27-25} = 0b100;
 }
-class AXI4ldpc<dag oops, dag iops, Format f, string asm,
-           list<dag> pattern>
-  : XI<oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, asm,
-       "", pattern> {
-  let Inst{20}    = 1; // L bit
-  let Inst{27-25} = 0b100;
-}
-class AXI4st<dag oops, dag iops, Format f, string asm,
-           list<dag> pattern>
+class AXI4st<dag oops, dag iops, Format f, string asm, list<dag> pattern>
   : XI<oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, asm,
        "", pattern> {
   let Inst{20}    = 0; // L bit
