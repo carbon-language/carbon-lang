@@ -192,9 +192,6 @@ bool StackProtector::RequiresStackProtector() const {
   default: return false;
   case SSP::ALL: return true;
   case SSP::SOME: {
-    // If the size of the local variables allocated on the stack is greater than
-    // SSPBufferSize, then we require a stack protector.
-    uint64_t StackSize = 0;
     const TargetData *TD = TLI->getTargetData();
 
     for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
@@ -208,9 +205,10 @@ bool StackProtector::RequiresStackProtector() const {
           if (ConstantInt *CI = dyn_cast<ConstantInt>(AI->getArraySize())) {
             const Type *Ty = AI->getAllocatedType();
             uint64_t TySize = TD->getABITypeSize(Ty);
-            StackSize += TySize * CI->getZExtValue(); // Total allocated size.
 
-            if (SSPBufferSize <= StackSize)
+            // If an array has more than 8 bytes of allocated space, then we
+            // emit stack protectors.
+            if (SSPBufferSize <= TySize * CI->getZExtValue())
               return true;
           } else {
             // This is a call to alloca with a variable size. Default to adding
