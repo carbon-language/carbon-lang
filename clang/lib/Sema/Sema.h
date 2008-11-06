@@ -863,6 +863,12 @@ public:
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     SourceLocation Loc, SourceRange Range);
 
+  //===--------------------------------------------------------------------===//
+  // C++ Overloaded Operators [C++ 13.5]
+  //
+
+  bool CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl);
+
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                            IdentifierInfo *ClassName,

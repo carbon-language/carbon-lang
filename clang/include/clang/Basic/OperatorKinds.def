@@ -1,0 +1,68 @@
+//===--- OperatorKinds.def - C++ Overloaded Operator Database ---*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the OverloadedOperator database, which includes
+// all of the overloadable C++ operators.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef OVERLOADED_OPERATOR
+#  define OVERLOADED_OPERATOR(Name,Spelling,Token)
+#endif
+
+#ifndef OVERLOADED_OPERATOR_MULTI
+#  define OVERLOADED_OPERATOR_MULTI(Name,Spelling) \
+     OVERLOADED_OPERATOR(Name,Spelling,unknown)
+#endif
+
+OVERLOADED_OPERATOR_MULTI(New            , "operator new")
+OVERLOADED_OPERATOR_MULTI(Delete         , "operator delete")
+OVERLOADED_OPERATOR_MULTI(Array_New      , "operator new[]")
+OVERLOADED_OPERATOR_MULTI(Array_Delete   , "operator delete[]")
+OVERLOADED_OPERATOR(Plus                 , "operator+"   , plus)
+OVERLOADED_OPERATOR(Minus                , "operator-"   , minus)
+OVERLOADED_OPERATOR(Star                 , "operator*"   , star)
+OVERLOADED_OPERATOR(Slash                , "operator/"   , slash)
+OVERLOADED_OPERATOR(Percent              , "operator%"   , percent)
+OVERLOADED_OPERATOR(Caret                , "operator^"   , caret)
+OVERLOADED_OPERATOR(Amp                  , "operator&"   , amp)
+OVERLOADED_OPERATOR(Pipe                 , "operator|"   , pipe)
+OVERLOADED_OPERATOR(Tilde                , "operator~"   , tilde)
+OVERLOADED_OPERATOR(Exclaim              , "operator!"   , exclaim)
+OVERLOADED_OPERATOR(Equal                , "operator="   , equal)
+OVERLOADED_OPERATOR(Less                 , "operator<"   , less)
+OVERLOADED_OPERATOR(Greater              , "operator>"   , greater)
+OVERLOADED_OPERATOR(PlusEqual            , "operator+="  , plusequal)
+OVERLOADED_OPERATOR(MinusEqual           , "operator-="  , minusequal)
+OVERLOADED_OPERATOR(StarEqual            , "operator*="  , starequal)
+OVERLOADED_OPERATOR(SlashEqual           , "operator/="  , slashequal)
+OVERLOADED_OPERATOR(PercentEqual         , "operator%="  , percentequal)
+OVERLOADED_OPERATOR(CaretEqual           , "operator^="  , caretequal)
+OVERLOADED_OPERATOR(AmpEqual             , "operator&="  , ampequal)
+OVERLOADED_OPERATOR(PipeEqual            , "operator|="  , pipeequal)
+OVERLOADED_OPERATOR(LessLess             , "operator<<"  , lessless)
+OVERLOADED_OPERATOR(GreaterGreater       , "operator>>"  , greatergreater)
+OVERLOADED_OPERATOR(LessLessEqual        , "operator<<=" , lesslessequal)
+OVERLOADED_OPERATOR(GreaterGreaterEqual  , "operator>>=" , greatergreaterequal)
+OVERLOADED_OPERATOR(EqualEqual           , "operator=="  , equalequal)
+OVERLOADED_OPERATOR(ExclaimEqual         , "operator!="  , exclaimequal)
+OVERLOADED_OPERATOR(LessEqual            , "operator<="  , lessequal)
+OVERLOADED_OPERATOR(GreaterEqual         , "operator>="  , greaterequal)
+OVERLOADED_OPERATOR(AmpAmp               , "operator&&"  , ampamp)
+OVERLOADED_OPERATOR(PipePipe             , "operator||"  , pipepipe)
+OVERLOADED_OPERATOR(PlusPlus             , "operator++"  , plusplus)
+OVERLOADED_OPERATOR(MinusMinus           , "operator--"  , minusminus)
+OVERLOADED_OPERATOR(Comma                , "operator,"   , comma)
+OVERLOADED_OPERATOR(ArrowStar            , "operator->*" , arrowstar)
+OVERLOADED_OPERATOR(Arrow                , "operator->"  , arrow)
+OVERLOADED_OPERATOR_MULTI(Call           , "operator()")
+OVERLOADED_OPERATOR_MULTI(Subscript      , "operator[]")
+
+#undef OVERLOADED_OPERATOR_MULTI
+#undef OVERLOADED_OPERATOR

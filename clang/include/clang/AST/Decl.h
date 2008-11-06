@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_DECL_H
 #define LLVM_CLANG_AST_DECL_H
 
+#include "clang/Basic/OperatorKinds.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/Parse/AccessSpecifier.h"
 #include "llvm/ADT/SmallVector.h"
@@ -542,6 +543,14 @@ public:
   StorageClass getStorageClass() const { return StorageClass(SClass); }
   bool isInline() const { return IsInline; }
  
+  /// isOverloadedOperator - Whether this function declaration
+  /// represents an C++ overloaded operator, e.g., "operator+".
+  bool isOverloadedOperator() const { 
+    return getOverloadedOperator() != OO_None;
+  };
+
+  OverloadedOperatorKind getOverloadedOperator() const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= FunctionFirst && D->getKind() <= FunctionLast;

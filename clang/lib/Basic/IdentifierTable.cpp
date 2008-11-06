@@ -28,6 +28,7 @@ using namespace clang;
 IdentifierInfo::IdentifierInfo() {
   TokenID = tok::identifier;
   ObjCOrBuiltinID = 0;
+  OperatorID = 0;
   HasMacro = false;
   IsExtension = false;
   IsPoisoned = false;
@@ -46,6 +47,7 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts)
   // Populate the identifier table with info about keywords for the current
   // language.
   AddKeywords(LangOpts);
+  AddOverloadedOperators();
 }
 
 // This cstor is intended to be used only for serialization.
@@ -158,6 +160,15 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
   if (LangOpts.ObjC2)          \
     AddObjCKeyword(tok::objc_##NAME, #NAME, strlen(#NAME), *this);
 #include "clang/Basic/TokenKinds.def"
+}
+
+/// AddOverloadedOperators - Register the name of all C++ overloadable
+/// operators ("operator+", "operator[]", etc.)
+void IdentifierTable::AddOverloadedOperators() {
+#define OVERLOADED_OPERATOR(Name,Spelling,Token)                        \
+  OverloadedOperators[OO_##Name] = &get(Spelling);                      \
+  OverloadedOperators[OO_##Name]->setOverloadedOperatorID(OO_##Name);
+#include "clang/Basic/OperatorKinds.def"
 }
 
 tok::PPKeywordKind IdentifierInfo::getPPKeywordID() const {

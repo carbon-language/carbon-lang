@@ -1576,3 +1576,242 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
     return PerformImplicitConversion(Init, T1);
   }
 }
+
+/// CheckOverloadedOperatorDeclaration - Check whether the declaration
+/// of this overloaded operator is well-formed. If so, returns false;
+/// otherwise, emits appropriate diagnostics and returns true.
+bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
+  assert(FnDecl && FnDecl->getOverloadedOperator() != OO_None &&
+         "Expected an overloaded operator declaration");
+
+  bool IsInvalid = false;
+
+  OverloadedOperatorKind Op = FnDecl->getOverloadedOperator();
+
+  // C++ [over.oper]p5: 
+  //   The allocation and deallocation functions, operator new,
+  //   operator new[], operator delete and operator delete[], are
+  //   described completely in 3.7.3. The attributes and restrictions
+  //   found in the rest of this subclause do not apply to them unless
+  //   explicitly stated in 3.7.3.
+  // FIXME: Write a separate routine for checking this. For now, just 
+  // allow it.
+  if (Op == OO_New || Op == OO_Array_New ||
+      Op == OO_Delete || Op == OO_Array_Delete)
+    return false;
+
+  // C++ [over.oper]p6:
+  //   An operator function shall either be a non-static member
+  //   function or be a non-member function and have at least one
+  //   parameter whose type is a class, a reference to a class, an
+  //   enumeration, or a reference to an enumeration.
+  CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(FnDecl);
+  if (MethodDecl) {
+    if (MethodDecl->isStatic()) {
+      Diag(FnDecl->getLocation(),
+           diag::err_operator_overload_static,
+           FnDecl->getName(),
+           SourceRange(FnDecl->getLocation()));
+      IsInvalid = true;
+
+      // Pretend this isn't a member function; it'll supress
+      // additional, unnecessary error messages.
+      MethodDecl = 0;
+    }
+  } else {
+    bool ClassOrEnumParam = false;
+    for (FunctionDecl::param_iterator Param = FnDecl->param_begin();
+         Param != FnDecl->param_end(); ++Param) {
+      QualType ParamType = (*Param)->getType();
+      if (const ReferenceType *RefType = ParamType->getAsReferenceType())
+        ParamType = RefType->getPointeeType();
+      if (ParamType->isRecordType() || ParamType->isEnumeralType()) {
+        ClassOrEnumParam = true;
+        break;
+      }
+    }
+
+    if (!ClassOrEnumParam) {
+      Diag(FnDecl->getLocation(),
+           diag::err_operator_overload_needs_class_or_enum,
+           FnDecl->getName(),
+           SourceRange(FnDecl->getLocation()));
+      IsInvalid = true;
+    }
+  }
+
+  // C++ [over.oper]p8:
+  //   An operator function cannot have default arguments (8.3.6),
+  //   except where explicitly stated below.
+  //
+  // Only the function-call operator allows default arguments 
+  // (C++ [over.call]p1).
+  if (Op != OO_Call) {
+    for (FunctionDecl::param_iterator Param = FnDecl->param_begin();
+         Param != FnDecl->param_end(); ++Param) {
+      if (Expr *DefArg = (*Param)->getDefaultArg()) {
+        Diag((*Param)->getLocation(),
+             diag::err_operator_overload_default_arg,
+             DefArg->getSourceRange());
+        IsInvalid = true;
+      }
+    }
+  }
+
+  bool CanBeUnaryOperator = false;
+  bool CanBeBinaryOperator = false;
+  bool MustBeMemberOperator = false;
+
+  switch (Op) {
+  case OO_New:
+  case OO_Delete:
+  case OO_Array_New:
+  case OO_Array_Delete:
+    assert(false && "Operators new, new[], delete, and delete[] handled above");
+    return true;
+
+  // Unary-only operators
+  case OO_Arrow:
+    MustBeMemberOperator = true;
+    // Fall through
+
+  case OO_Tilde:
+  case OO_Exclaim:
+    CanBeUnaryOperator = true;
+    break;
+
+  // Binary-only operators
+  case OO_Equal:
+  case OO_Subscript:
+    MustBeMemberOperator = true;
+    // Fall through
+
+  case OO_Slash:
+  case OO_Percent:
+  case OO_Caret:
+  case OO_Pipe:
+  case OO_Less:
+  case OO_Greater:
+  case OO_PlusEqual:
+  case OO_MinusEqual:
+  case OO_StarEqual:
+  case OO_SlashEqual:
+  case OO_PercentEqual:
+  case OO_CaretEqual:
+  case OO_AmpEqual:
+  case OO_PipeEqual:
+  case OO_LessLess:
+  case OO_GreaterGreater:
+  case OO_LessLessEqual:
+  case OO_GreaterGreaterEqual:
+  case OO_EqualEqual:
+  case OO_ExclaimEqual:
+  case OO_LessEqual:
+  case OO_GreaterEqual:
+  case OO_AmpAmp:
+  case OO_PipePipe:
+  case OO_Comma:
+    CanBeBinaryOperator = true;
+    break;
+
+  // Unary or binary operators
+  case OO_Amp:
+  case OO_Plus:
+  case OO_Minus:
+  case OO_Star:
+  case OO_PlusPlus:
+  case OO_MinusMinus:
+  case OO_ArrowStar:
+    CanBeUnaryOperator = true;
+    CanBeBinaryOperator = true;
+    break;
+
+  case OO_Call:
+    MustBeMemberOperator = true;
+    break;
+
+  case OO_None:
+  case NUM_OVERLOADED_OPERATORS:
+    assert(false && "Not an overloaded operator!");
+    return true;
+  }
+
+  // C++ [over.oper]p8:
+  //   [...] Operator functions cannot have more or fewer parameters
+  //   than the number required for the corresponding operator, as
+  //   described in the rest of this subclause.
+  unsigned NumParams = FnDecl->getNumParams() + (MethodDecl? 1 : 0);
+  if (Op != OO_Call &&
+      ((NumParams == 1 && !CanBeUnaryOperator) ||
+       (NumParams == 2 && !CanBeBinaryOperator) ||
+       (NumParams < 1) || (NumParams > 2))) {
+    // We have the wrong number of parameters.
+    std::string NumParamsStr = (llvm::APSInt(32) = NumParams).toString(10);
+    std::string NumParamsPlural;
+    if (NumParams != 1)
+      NumParamsPlural = "s";
+
+    diag::kind DK;
+
+    if (CanBeUnaryOperator && CanBeBinaryOperator)
+      DK = diag::err_operator_overload_must_be_unary_or_binary;
+    else if (CanBeUnaryOperator)
+      DK = diag::err_operator_overload_must_be_unary;
+    else if (CanBeBinaryOperator)
+      DK = diag::err_operator_overload_must_be_binary;
+    else
+      assert(false && "All non-call overloaded operators are unary or binary!");
+
+    Diag(FnDecl->getLocation(), DK,
+         FnDecl->getName(), NumParamsStr, NumParamsPlural,
+         SourceRange(FnDecl->getLocation()));
+    IsInvalid = true;
+  }
+      
+  // Overloaded operators cannot be variadic.
+  if (FnDecl->getType()->getAsFunctionTypeProto()->isVariadic()) {
+    Diag(FnDecl->getLocation(),
+         diag::err_operator_overload_variadic,
+         SourceRange(FnDecl->getLocation()));
+    IsInvalid = true;
+  }
+
+  // Some operators must be non-static member functions.
+  if (MustBeMemberOperator && !MethodDecl) {
+    Diag(FnDecl->getLocation(),
+         diag::err_operator_overload_must_be_member,
+         FnDecl->getName(),
+         SourceRange(FnDecl->getLocation()));
+    IsInvalid = true;
+  }
+
+  // C++ [over.inc]p1:
+  //   The user-defined function called operator++ implements the
+  //   prefix and postfix ++ operator. If this function is a member
+  //   function with no parameters, or a non-member function with one
+  //   parameter of class or enumeration type, it defines the prefix
+  //   increment operator ++ for objects of that type. If the function
+  //   is a member function with one parameter (which shall be of type
+  //   int) or a non-member function with two parameters (the second
+  //   of which shall be of type int), it defines the postfix
+  //   increment operator ++ for objects of that type.
+  if ((Op == OO_PlusPlus || Op == OO_MinusMinus) && NumParams == 2) {
+    ParmVarDecl *LastParam = FnDecl->getParamDecl(FnDecl->getNumParams() - 1);
+    bool ParamIsInt = false;
+    if (const BuiltinType *BT = LastParam->getType()->getAsBuiltinType())
+      ParamIsInt = BT->getKind() == BuiltinType::Int;
+
+    if (!ParamIsInt) {
+      Diag(LastParam->getLocation(),
+           diag::err_operator_overload_post_incdec_must_be_int,
+           MethodDecl? std::string() : std::string("second "),
+           (Op == OO_PlusPlus)? std::string("increment") 
+                              : std::string("decrement"),
+           Context.getCanonicalType(LastParam->getType()).getAsString(),
+           SourceRange(FnDecl->getLocation()));
+      IsInvalid = true;
+    }
+  }
+
+  return IsInvalid;
+}

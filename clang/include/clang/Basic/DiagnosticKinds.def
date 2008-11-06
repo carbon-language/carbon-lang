@@ -1288,6 +1288,28 @@ DIAG(err_duplicate_base_class, ERROR,
 DIAG(err_ambiguous_derived_to_base_conv, ERROR,
      "ambiguous conversion from derived class '%0' to base class '%1':%2")
 
+// C++ operator overloading
+DIAG(err_expected_operator, ERROR,
+     "expected 'operator' keyword")
+DIAG(err_operator_overload_needs_class_or_enum, ERROR,
+     "non-member overloaded operator '%0' must have at least one parameter of class or enumeration type (or reference thereof)")
+DIAG(err_operator_overload_variadic, ERROR,
+     "overloaded operator cannot be variadic")
+DIAG(err_operator_overload_static, ERROR,
+     "overloaded operator '%0' cannot be a static member function")
+DIAG(err_operator_overload_default_arg, ERROR,
+     "a parameter of an overloaded operator cannot have a default argument")
+DIAG(err_operator_overload_must_be_unary, ERROR,
+     "overloaded operator '%0' must be a unary operator (has %1 parameter%2)")
+DIAG(err_operator_overload_must_be_binary, ERROR,
+     "overloaded operator '%0' must be a binary operator (has %1 parameter%2)")
+DIAG(err_operator_overload_must_be_unary_or_binary, ERROR,
+     "overloaded operator '%0' must be a unary or binary operator (has %1 parameter%2)")
+DIAG(err_operator_overload_must_be_member, ERROR,
+     "overloaded operator '%0' must be a non-static member function")
+DIAG(err_operator_overload_post_incdec_must_be_int, ERROR,
+     "%0parameter of overloaded post-%1 operator must have type 'int' (not '%2')")
+
 DIAG(warn_not_compound_assign, WARNING,
      "use of unary operator that may be intended as compound assignment (%0=)")
 

@@ -291,3 +291,78 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
   ConsumeToken();
   DS.Finish(Diags, PP.getSourceManager(), getLang());
 }
+
+/// MaybeParseOperatorFunctionId - Attempts to parse a C++ overloaded
+/// operator name (C++ [over.oper]). If successful, returns the
+/// predefined identifier that corresponds to that overloaded
+/// operator. Otherwise, returns NULL and does not consume any tokens.
+///
+///       operator-function-id: [C++ 13.5]
+///         'operator' operator
+///
+/// operator: one of
+///            new   delete  new[]   delete[]
+///            +     -    *  /    %  ^    &   |   ~
+///            !     =    <  >    += -=   *=  /=  %=
+///            ^=    &=   |= <<   >> >>= <<=  ==  !=
+///            <=    >=   && ||   ++ --   ,   ->* ->
+///            ()    []
+IdentifierInfo *Parser::MaybeParseOperatorFunctionId() {
+  if (Tok.isNot(tok::kw_operator))
+    return 0;
+
+  OverloadedOperatorKind Op = OO_None;
+  switch (NextToken().getKind()) {
+  case tok::kw_new:
+    ConsumeToken(); // 'operator'
+    ConsumeToken(); // 'new'
+    if (Tok.is(tok::l_square)) {
+      ConsumeBracket(); // '['
+      ExpectAndConsume(tok::r_square, diag::err_expected_rsquare); // ']'
+      Op = OO_Array_New;
+    } else {
+      Op = OO_New;
+    }
+    return &PP.getIdentifierTable().getOverloadedOperator(Op);
+
+  case tok::kw_delete:
+    ConsumeToken(); // 'operator'
+    ConsumeToken(); // 'delete'
+    if (Tok.is(tok::l_square)) {
+      ConsumeBracket(); // '['
+      ExpectAndConsume(tok::r_square, diag::err_expected_rsquare); // ']'
+      Op = OO_Array_Delete;
+    } else {
+      Op = OO_Delete;
+    }
+    return &PP.getIdentifierTable().getOverloadedOperator(Op);
+
+#define OVERLOADED_OPERATOR(Name,Spelling,Token) \
+    case tok::Token:  Op = OO_##Name; break;
+#define OVERLOADED_OPERATOR_MULTI(Name,Spelling)
+#include "clang/Basic/OperatorKinds.def"
+
+  case tok::l_paren:
+    ConsumeToken(); // 'operator'
+    ConsumeParen(); // '('
+    ExpectAndConsume(tok::r_paren, diag::err_expected_rparen); // ')'
+    return &PP.getIdentifierTable().getOverloadedOperator(OO_Call);
+
+  case tok::l_square:
+    ConsumeToken(); // 'operator'
+    ConsumeBracket(); // '['
+    ExpectAndConsume(tok::r_square, diag::err_expected_rsquare); // ']'
+    return &PP.getIdentifierTable().getOverloadedOperator(OO_Subscript);
+
+  default:
+    break;
+  }
+
+  if (Op == OO_None)
+    return 0;
+  else {
+    ExpectAndConsume(tok::kw_operator, diag::err_expected_operator);
+    ConsumeAnyToken(); // the operator itself
+    return &PP.getIdentifierTable().getOverloadedOperator(Op);
+  }
+}

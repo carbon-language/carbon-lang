@@ -728,6 +728,10 @@ private:
   void ParseBaseClause(DeclTy *ClassDecl);
   BaseResult ParseBaseSpecifier(DeclTy *ClassDecl);
   AccessSpecifier getAccessSpecifierIfPresent() const;
+
+  //===--------------------------------------------------------------------===//
+  // C++ 13.5: Overloaded operators [over.oper]
+  IdentifierInfo *MaybeParseOperatorFunctionId();
 };
 
 }  // end namespace clang

@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_BASIC_IDENTIFIERTABLE_H
 #define LLVM_CLANG_BASIC_IDENTIFIERTABLE_H
 
+#include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallString.h"
@@ -49,11 +50,12 @@ class IdentifierInfo {
   // First NUM_OBJC_KEYWORDS values are for Objective-C, the remaining values
   // are for builtins.
   unsigned ObjCOrBuiltinID    :10; 
+  unsigned OperatorID         : 6; // C++ overloaded operator.
   bool HasMacro               : 1; // True if there is a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
-  // 10 bits left in 32-bit word.
+  // 4 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
   void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
@@ -120,6 +122,16 @@ public:
            && "ID too large for field!");
   }
   
+  /// getOverloadedOperatorID - Get the C++ overloaded operator that
+  /// corresponds to this identifier.
+  OverloadedOperatorKind getOverloadedOperatorID() const {
+    return OverloadedOperatorKind(OperatorID);
+  }
+  void setOverloadedOperatorID(OverloadedOperatorKind ID) {
+    OperatorID = ID;
+    assert(OperatorID == (unsigned)ID && "ID too large for field!");
+  }
+
   /// get/setExtension - Initialize information about whether or not this
   /// language token is an extension.  This controls extension warnings, and is
   /// only valid if a custom token ID is set.
@@ -161,6 +173,11 @@ class IdentifierTable {
   // BumpPtrAllocator!
   typedef llvm::StringMap<IdentifierInfo, llvm::BumpPtrAllocator> HashTableTy;
   HashTableTy HashTable;
+
+  /// OverloadedOperators - Identifiers corresponding to each of the
+  /// overloadable operators in C++.
+  IdentifierInfo *OverloadedOperators[NUM_OVERLOADED_OPERATORS];
+
 public:
   /// IdentifierTable ctor - Create the identifier table, populating it with
   /// info about the language keywords for the language specified by LangOpts.
@@ -180,7 +197,12 @@ public:
     const char *NameBytes = &Name[0];
     return get(NameBytes, NameBytes+Name.size());
   }
-  
+
+  /// getOverloadedOperator - Retrieve the identifier   
+  IdentifierInfo &getOverloadedOperator(OverloadedOperatorKind Op) {
+    return *OverloadedOperators[Op];
+  }
+
   typedef HashTableTy::const_iterator iterator;
   typedef HashTableTy::const_iterator const_iterator;
   
@@ -194,6 +216,7 @@ public:
   void PrintStats() const;
   
   void AddKeywords(const LangOptions &LangOpts);
+  void AddOverloadedOperators();
 
   /// Emit - Serialize this IdentifierTable to a bitstream.  This should
   ///  be called AFTER objects that externally reference the identifiers in the 

@@ -932,6 +932,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(NewFD))
       return ActOnDestructorDeclarator(Destructor);
 
+    // Extra checking for C++ overloaded operators (C++ [over.oper]).
+    if (NewFD->isOverloadedOperator() &&
+        CheckOverloadedOperatorDeclaration(NewFD))
+      NewFD->setInvalidDecl();
+    
     // Merge the decl with the existing one if appropriate. Since C functions
     // are in a flat namespace, make sure we consider decls in outer scopes.
     if (PrevDecl &&

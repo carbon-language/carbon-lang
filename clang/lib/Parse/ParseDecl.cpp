@@ -1305,6 +1305,15 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
     if (TypeTy *Type = ParseClassName())
       D.SetDestructor(Type, II, TildeLoc);
+  } else if (Tok.is(tok::kw_operator)) {
+    SourceLocation OperatorLoc = Tok.getLocation();
+
+    // First try the name of an overloaded operator
+    if (IdentifierInfo *II = MaybeParseOperatorFunctionId()) {
+      D.SetIdentifier(II, OperatorLoc);
+    } else {
+      // This must be a user-defined conversion.
+    }
   } else if (Tok.is(tok::l_paren)) {
     // direct-declarator: '(' declarator ')'
     // direct-declarator: '(' attributes declarator ')'

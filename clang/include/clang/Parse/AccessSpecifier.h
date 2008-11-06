@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines interfaces used for Declaration Specifiers and Declarators.
+// This file defines interfaces used for C++ access specifiers.
 //
 //===----------------------------------------------------------------------===//
 

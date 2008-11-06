@@ -356,7 +356,8 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [GNU]   '__extension__'  '__real'  '__imag'
 ///
 ///       primary-expression: [C99 6.5.1]
-///         identifier
+/// [C99]   identifier
+//  [C++]   id-expression
 ///         constant
 ///         string-literal
 /// [C++]   boolean-literal  [C++ 2.13.5]
@@ -390,6 +391,16 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///         enumeration-constant -> identifier
 ///         character-constant
 ///
+///       id-expression: [C++ 5.1]
+///                   unqualified-id
+///                   qualified-id           [TODO]
+///
+///       unqualified-id: [C++ 5.1]
+///                   identifier
+///                   operator-function-id
+///                   conversion-function-id [TODO]
+///                   '~' class-name         [TODO]
+///                   template-id            [TODO]
 Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   ExprResult Res;
   tok::TokenKind SavedKind = Tok.getKind();
@@ -461,6 +472,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     }
     
     // primary-expression: identifier
+    // unqualified-id: identifier
     // constant: enumeration-constant
 
     // Consume the identifier so that we can see if it is followed by a '('.
@@ -587,6 +599,17 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     Res = ParseCXXTypeConstructExpression(DS);
     // This can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);
+  }
+
+  case tok::kw_operator: {
+    SourceLocation OperatorLoc = Tok.getLocation();
+    if (IdentifierInfo *II = MaybeParseOperatorFunctionId()) {
+      Res = Actions.ActOnIdentifierExpr(CurScope, OperatorLoc, *II, 
+                                        Tok.is(tok::l_paren));
+      // These can be followed by postfix-expr pieces.
+      return ParsePostfixExpressionSuffix(Res);
+    }
+    break;
   }
 
   case tok::at: {

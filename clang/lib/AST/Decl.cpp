@@ -210,6 +210,15 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
   return NumRequiredArgs;
 }
 
+/// getOverloadedOperator - Which C++ overloaded operator this
+/// function represents, if any.
+OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
+  if (getIdentifier())
+    return getIdentifier()->getOverloadedOperatorID();
+  else
+    return OO_None;
+}
+
 //===----------------------------------------------------------------------===//
 // TagdDecl Implementation
 //===----------------------------------------------------------------------===//
