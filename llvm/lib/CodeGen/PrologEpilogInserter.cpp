@@ -442,6 +442,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       continue;
     if (FFI->isDeadObjectIndex(i))
       continue;
+    if (FFI->getStackProtectorIndex() == (int)i)
+      continue;
 
     // If stack grows down, we need to add size of find the lowest
     // address of the object.
