@@ -184,7 +184,9 @@ BasicBlock *StackProtector::CreateFailBB() {
 }
 
 /// RequiresStackProtector - Check whether or not this function needs a stack
-/// protector based upon the stack protector level.
+/// protector based upon the stack protector level. The heuristic we use is to
+/// add a guard variable to functions that call alloca, and functions with
+/// buffers larger than 8 bytes.
 bool StackProtector::RequiresStackProtector() const {
   switch (Level) {
   default: return false;
@@ -201,6 +203,8 @@ bool StackProtector::RequiresStackProtector() const {
       for (BasicBlock::iterator
              II = BB->begin(), IE = BB->end(); II != IE; ++II)
         if (AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
+          if (!AI->isArrayAllocation()) continue; // Only care about arrays.
+
           if (ConstantInt *CI = dyn_cast<ConstantInt>(AI->getArraySize())) {
             const Type *Ty = AI->getAllocatedType();
             uint64_t TySize = TD->getABITypeSize(Ty);
@@ -208,6 +212,10 @@ bool StackProtector::RequiresStackProtector() const {
 
             if (SSPBufferSize <= StackSize)
               return true;
+          } else {
+            // This is a call to alloca with a variable size. Default to adding
+            // stack protectors.
+            return true;
           }
         }
     }
