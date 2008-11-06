@@ -176,9 +176,12 @@ def int_pcmarker      : Intrinsic<[llvm_void_ty, llvm_i32_ty]>;
 
 def int_readcyclecounter : Intrinsic<[llvm_i64_ty]>;
 
-// Stack protector intrinsics.
-def int_stackprotector_prologue : Intrinsic<[llvm_void_ty, llvm_ptr_ty]>;
-def int_stackprotector_epilogue : Intrinsic<[llvm_ptr_ty]>;
+// Stack Protector Intrinsics - The stackprotector_create writes the stack guard
+// to the correct place on the stack frame. The stackprotector_check reads back
+// the stack guard that the stackprotector_create stored.
+def int_stackprotector_create : Intrinsic<[llvm_void_ty, llvm_ptr_ty],
+                                          [IntrWriteMem]>;
+def int_stackprotector_check  : Intrinsic<[llvm_ptr_ty], [IntrReadMem]>;
 
 //===------------------- Standard C Library Intrinsics --------------------===//
 //

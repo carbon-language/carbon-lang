@@ -408,7 +408,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Make sure that the stack protector comes before the local variables on the
   // stack.
-  if (FFI->hasStackProtector()) {
+  if (FFI->getStackProtectorIndex() >= 0) {
     int FI = FFI->getStackProtectorIndex();
 
     // If stack grows down, we need to add size of find the lowest

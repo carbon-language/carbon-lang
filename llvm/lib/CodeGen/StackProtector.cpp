@@ -118,7 +118,7 @@ bool StackProtector::InsertStackProtectors() {
   Constant *StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", GuardTy);
   LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsertPt);
   CallInst::
-    Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_prologue),
+    Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_create),
            LI, "", InsertPt);
 
   // Create the basic block to jump to when the guard check fails.
@@ -163,7 +163,7 @@ bool StackProtector::InsertStackProtectors() {
     // Generate the stack protector instructions in the old basic block.
     LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
     CallInst *CI = CallInst::
-      Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_epilogue),
+      Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_check),
              "", BB);
     ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, CI, LI1, "", BB);
     BranchInst::Create(NewBB, FailBB, Cmp, BB);

@@ -150,9 +150,6 @@ class MachineFrameInfo {
   /// only valid during and after prolog/epilog code insertion.
   bool HasCalls;
 
-  /// HasStackProtector - Set to true if this function has stack protectors.
-  bool HasStackProtector;
-
   /// StackProtectorIdx - The frame index for the stack protector.
   int StackProtectorIdx;
 
@@ -186,7 +183,6 @@ public:
     HasVarSizedObjects = false;
     FrameAddressTaken = false;
     HasCalls = false;
-    HasStackProtector = false;
     StackProtectorIdx = -1;
     MaxCallFrameSize = 0;
     MMI = 0;
@@ -202,11 +198,6 @@ public:
   /// contains any variable sized objects.
   ///
   bool hasVarSizedObjects() const { return HasVarSizedObjects; }
-
-  /// hasStackProtector - Return true if the function has a stack protector.
-  ///
-  bool hasStackProtector() const { return HasStackProtector; }
-  void setStackProtector(bool T) { HasStackProtector = T; }
 
   /// getStackProtectorIndex/setStackProtectorIndex - Return the index for the
   /// stack protector object.
