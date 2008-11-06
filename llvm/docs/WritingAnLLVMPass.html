@@ -492,7 +492,8 @@ refering to function bodies in no predictable order, or adding and removing
 functions.  Because nothing is known about the behavior of <tt>ModulePass</tt>
 subclasses, no optimization can be done for their execution. A module pass
 can use function level passes (e.g. dominators) using getAnalysis interface
-<tt> getAnalysis&lt;DominatorTree&gt;(Function)</tt>. </p> 
+<tt> getAnalysis&lt;DominatorTree&gt;(Function)</tt>, if the function pass
+does not require any module passes. </p> 
 
 <p>To write a correct <tt>ModulePass</tt> subclass, derive from
 <tt>ModulePass</tt> and overload the <tt>runOnModule</tt> method with the
