@@ -45,14 +45,15 @@ class IdentifierInfo {
   // Note: DON'T make TokenID a 'tok::TokenKind'; MSVC will treat it as a
   //       signed char and TokenKinds > 127 won't be handled correctly.
   unsigned TokenID            : 8; // Front-end token ID or tok::identifier. 
-  unsigned BuiltinID          :10; // ID if this is a builtin (__builtin_inf).
-  // NOTE: VC++ treats enums as signed, avoid using tok::ObjCKeywordKind enum
-  unsigned ObjCID             : 5; // ID for objc @ keyword like @'protocol'.
+  // Objective-C keyword ('protocol' in '@protocol') or builtin (__builtin_inf).
+  // First NUM_OBJC_KEYWORDS values are for Objective-C, the remaining values
+  // are for builtins.
+  unsigned ObjCOrBuiltinID    :10; 
   bool HasMacro               : 1; // True if there is a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
-  // 5 bits left in 32-bit word.
+  // 10 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
   void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
@@ -97,17 +98,26 @@ public:
   /// identifier.  For example, 'class' will return tok::objc_class if ObjC is
   /// enabled.
   tok::ObjCKeywordKind getObjCKeywordID() const {
-    return tok::ObjCKeywordKind(ObjCID);
+    if (ObjCOrBuiltinID < tok::NUM_OBJC_KEYWORDS) 
+      return tok::ObjCKeywordKind(ObjCOrBuiltinID);
+    else
+      return tok::objc_not_keyword;
   }
-  void setObjCKeywordID(tok::ObjCKeywordKind ID) { ObjCID = ID; }
+  void setObjCKeywordID(tok::ObjCKeywordKind ID) { ObjCOrBuiltinID = ID; }
   
   /// getBuiltinID - Return a value indicating whether this is a builtin
   /// function.  0 is not-built-in.  1 is builtin-for-some-nonprimary-target.
   /// 2+ are specific builtin functions.
-  unsigned getBuiltinID() const { return BuiltinID; }
+  unsigned getBuiltinID() const { 
+    if (ObjCOrBuiltinID >= tok::NUM_OBJC_KEYWORDS)
+      return ObjCOrBuiltinID - tok::NUM_OBJC_KEYWORDS; 
+    else
+      return 0;
+  }
   void setBuiltinID(unsigned ID) {
-    BuiltinID = ID;
-    assert(BuiltinID == ID && "ID too large for field!");
+    ObjCOrBuiltinID = ID + tok::NUM_OBJC_KEYWORDS;
+    assert(ObjCOrBuiltinID - tok::NUM_OBJC_KEYWORDS == ID 
+           && "ID too large for field!");
   }
   
   /// get/setExtension - Initialize information about whether or not this

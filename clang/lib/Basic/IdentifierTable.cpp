@@ -27,8 +27,7 @@ using namespace clang;
 
 IdentifierInfo::IdentifierInfo() {
   TokenID = tok::identifier;
-  ObjCID = tok::objc_not_keyword;
-  BuiltinID = 0;
+  ObjCOrBuiltinID = 0;
   HasMacro = false;
   IsExtension = false;
   IsPoisoned = false;
