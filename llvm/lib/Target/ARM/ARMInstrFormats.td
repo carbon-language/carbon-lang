@@ -21,26 +21,22 @@ class Format<bits<5> val> {
 
 def Pseudo      : Format<1>;
 def MulFrm      : Format<2>;
-def MulSMLAW    : Format<3>;
-def MulSMULW    : Format<4>;
-def MulSMLA     : Format<5>;
-def MulSMUL     : Format<6>;
-def Branch      : Format<7>;
-def BranchMisc  : Format<8>;
+def Branch      : Format<3>;
+def BranchMisc  : Format<4>;
 
-def DPFrm       : Format<9>;
-def DPSoRegFrm  : Format<10>;
+def DPFrm       : Format<5>;
+def DPSoRegFrm  : Format<6>;
 
-def LdFrm       : Format<11>;
-def StFrm       : Format<12>;
-def LdMiscFrm   : Format<13>;
-def StMiscFrm   : Format<14>;
-def LdMulFrm    : Format<15>;
-def StMulFrm    : Format<16>;
+def LdFrm       : Format<7>;
+def StFrm       : Format<8>;
+def LdMiscFrm   : Format<9>;
+def StMiscFrm   : Format<10>;
+def LdMulFrm    : Format<11>;
+def StMulFrm    : Format<12>;
 
-def ArithMisc   : Format<17>;
-def ThumbFrm    : Format<18>;
-def VFPFrm      : Format<19>;
+def ArithMisc   : Format<13>;
+def ThumbFrm    : Format<14>;
+def VFPFrm      : Format<15>;
 
 // Misc flag for data processing instructions that indicates whether
 // the instruction has a Rn register operand.
@@ -701,6 +697,17 @@ class AMul2I<bits<7> mulopc, dag oops, dag iops, string opc,
       asm,"",pattern> {
   let Inst{7-4}   = 0b1001;
   let Inst{20}    = 1;
+  let Inst{27-21} = mulopc;
+}
+
+// SMUL<x><y> / SMULW<y> / SMLA<x><y> / SMLAW<x><y>
+class AMulxyI<bits<7> mulopc, dag oops, dag iops, string opc,
+         string asm, list<dag> pattern>
+  : I<0, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, opc,
+      asm,"",pattern> {
+  let Inst{4}     = 0;
+  let Inst{7}     = 1;
+  let Inst{20}    = 0;
   let Inst{27-21} = mulopc;
 }
 

@@ -74,42 +74,38 @@ namespace ARMII {
     // Instruction encoding formats.
     //
     FormShift   = 14,
-    FormMask    = 0x1f << FormShift,
+    FormMask    = 0xf << FormShift,
 
     // Pseudo instructions
     Pseudo      = 1 << FormShift,
 
     // Multiply instructions
     MulFrm      = 2 << FormShift,
-    MulSMLAW    = 3 << FormShift,
-    MulSMULW    = 4 << FormShift,
-    MulSMLA     = 5 << FormShift,
-    MulSMUL     = 6 << FormShift,
 
     // Branch instructions
-    Branch      = 7 << FormShift,
-    BranchMisc  = 8 << FormShift,
+    Branch      = 3 << FormShift,
+    BranchMisc  = 4 << FormShift,
 
     // Data Processing instructions
-    DPFrm       = 9  << FormShift,
-    DPSoRegFrm  = 10 << FormShift,
+    DPFrm       = 5 << FormShift,
+    DPSoRegFrm  = 6 << FormShift,
 
     // Load and Store
-    LdFrm       = 11 << FormShift,
-    StFrm       = 12 << FormShift,
-    LdMiscFrm   = 13 << FormShift,
-    StMiscFrm   = 14 << FormShift,
-    LdMulFrm    = 15 << FormShift,
-    StMulFrm    = 16 << FormShift,
+    LdFrm       = 7  << FormShift,
+    StFrm       = 8  << FormShift,
+    LdMiscFrm   = 9  << FormShift,
+    StMiscFrm   = 10 << FormShift,
+    LdMulFrm    = 11 << FormShift,
+    StMulFrm    = 12 << FormShift,
 
     // Miscellaneous arithmetic instructions
-    ArithMisc   = 17 << FormShift,
+    ArithMisc   = 13 << FormShift,
 
     // Thumb format
-    ThumbFrm    = 18 << FormShift,
+    ThumbFrm    = 14 << FormShift,
 
     // VFP format
-    VPFFrm      = 19 << FormShift,
+    VPFFrm      = 15 << FormShift,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating

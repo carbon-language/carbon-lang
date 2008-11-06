@@ -962,87 +962,121 @@ def SMMLS : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
 
 // FIXME: encoding
 multiclass AI_smul<string opc, PatFrag opnode> {
-  def BB : AI<0x8, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMUL,
+  def BB : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "bb"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
                                       (sext_inreg GPR:$b, i16)))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 0;
+             let Inst{6} = 0;
+           }
 
-  def BT : AI<0xC, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMUL,
+  def BT : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "bt"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
                                       (sra GPR:$b, 16)))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 0;
+             let Inst{6} = 1;
+           }
 
-  def TB : AI<0xA, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMUL,
+  def TB : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "tb"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sra GPR:$a, 16),
                                       (sext_inreg GPR:$b, i16)))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 1;
+             let Inst{6} = 0;
+           }
 
-  def TT : AI<0xE, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMUL,
+  def TT : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "tt"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sra GPR:$a, 16),
                                       (sra GPR:$b, 16)))]>,
-            Requires<[IsARM, HasV5TE]>;
+            Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 1;
+             let Inst{6} = 1;
+           }
 
-  def WB : AI<0xA, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMULW,
+  def WB : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "wb"), " $dst, $a, $b",
               [(set GPR:$dst, (sra (opnode GPR:$a,
                                     (sext_inreg GPR:$b, i16)), 16))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 1;
+             let Inst{6} = 0;
+           }
 
-  def WT : AI<0xE, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMULW,
+  def WT : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "wt"), " $dst, $a, $b",
               [(set GPR:$dst, (sra (opnode GPR:$a,
                                     (sra GPR:$b, 16)), 16))]>,
-            Requires<[IsARM, HasV5TE]>;
+            Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 1;
+             let Inst{6} = 1;
+           }
 }
 
 
 // FIXME: encoding
 multiclass AI_smla<string opc, PatFrag opnode> {
-  def BB : AI<0x8, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLA,
+  def BB : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "bb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc,
                                (opnode (sext_inreg GPR:$a, i16),
                                        (sext_inreg GPR:$b, i16))))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 0;
+             let Inst{6} = 0;
+           }
 
-  def BT : AI<0xC, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLA,
+  def BT : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "bt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sext_inreg GPR:$a, i16),
                                                      (sra GPR:$b, 16))))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 0;
+             let Inst{6} = 1;
+           }
 
-  def TB : AI<0xA, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLA,
+  def TB : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "tb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
                                                  (sext_inreg GPR:$b, i16))))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 1;
+             let Inst{6} = 0;
+           }
 
-  def TT : AI<0xE, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLA,
+  def TT : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "tt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
                                                      (sra GPR:$b, 16))))]>,
-            Requires<[IsARM, HasV5TE]>;
+            Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 1;
+             let Inst{6} = 1;
+           }
 
-  def WB : AI<0xA, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLAW,
+  def WB : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "wb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
                                             (sext_inreg GPR:$b, i16)), 16)))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 0;
+             let Inst{6} = 0;
+           }
 
-  def WT : AI<0xE, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLAW,
+  def WT : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "wt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
                                                    (sra GPR:$b, 16)), 16)))]>,
-            Requires<[IsARM, HasV5TE]>;
+            Requires<[IsARM, HasV5TE]> {
+             let Inst{5} = 0;
+             let Inst{6} = 1;
+           }
 }
 
-// FIXME: encoding
 defm SMUL : AI_smul<"smul", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
-// FIXME: encoding
 defm SMLA : AI_smla<"smla", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 
 // TODO: Halfword multiple accumulate long: SMLAL<x><y>
