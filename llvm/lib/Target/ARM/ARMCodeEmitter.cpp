@@ -96,7 +96,7 @@ namespace {
 
     void emitLoadStoreMultipleInstruction(const MachineInstr &MI);
 
-    void emitMulFrm1Instruction(const MachineInstr &MI);
+    void emitMulFrmInstruction(const MachineInstr &MI);
 
     void emitBranchInstruction(const MachineInstr &MI);
 
@@ -285,8 +285,8 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   case ARMII::StMulFrm:
     emitLoadStoreMultipleInstruction(MI);
     break;
-  case ARMII::MulFrm1:
-    emitMulFrm1Instruction(MI);
+  case ARMII::MulFrm:
+    emitMulFrmInstruction(MI);
     break;
   case ARMII::Branch:
     emitBranchInstruction(MI);
@@ -675,7 +675,7 @@ void ARMCodeEmitter::emitLoadStoreMultipleInstruction(const MachineInstr &MI) {
   emitWordLE(Binary);
 }
 
-void ARMCodeEmitter::emitMulFrm1Instruction(const MachineInstr &MI) {
+void ARMCodeEmitter::emitMulFrmInstruction(const MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
 
   // Part of binary is determined by TableGn.
@@ -701,6 +701,11 @@ void ARMCodeEmitter::emitMulFrm1Instruction(const MachineInstr &MI) {
 
   // Encode Rs
   Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRsShift;
+
+  // Many multiple instructions (e.g. MLA) have three src operands. Encode
+  // it as Rn (for multiply, that's in the same offset as RdLo.
+  if (TID.getNumOperands() - TID.getNumDefs() == 3)
+    Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdLoShift;
 
   emitWordLE(Binary);
 }

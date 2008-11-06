@@ -80,37 +80,36 @@ namespace ARMII {
     Pseudo      = 1 << FormShift,
 
     // Multiply instructions
-    MulFrm1     = 2 << FormShift,
-    MulFrm2     = 3 << FormShift,
-    MulSMLAW    = 4 << FormShift,
-    MulSMULW    = 5 << FormShift,
-    MulSMLA     = 6 << FormShift,
-    MulSMUL     = 7 << FormShift,
+    MulFrm      = 2 << FormShift,
+    MulSMLAW    = 3 << FormShift,
+    MulSMULW    = 4 << FormShift,
+    MulSMLA     = 5 << FormShift,
+    MulSMUL     = 6 << FormShift,
 
     // Branch instructions
-    Branch      = 8 << FormShift,
-    BranchMisc  = 9 << FormShift,
+    Branch      = 7 << FormShift,
+    BranchMisc  = 8 << FormShift,
 
     // Data Processing instructions
-    DPFrm       = 10 << FormShift,
-    DPSoRegFrm  = 11 << FormShift,
+    DPFrm       = 9  << FormShift,
+    DPSoRegFrm  = 10 << FormShift,
 
     // Load and Store
-    LdFrm       = 12 << FormShift,
-    StFrm       = 13 << FormShift,
-    LdMiscFrm   = 14 << FormShift,
-    StMiscFrm   = 15 << FormShift,
-    LdMulFrm    = 16 << FormShift,
-    StMulFrm    = 17 << FormShift,
+    LdFrm       = 11 << FormShift,
+    StFrm       = 12 << FormShift,
+    LdMiscFrm   = 13 << FormShift,
+    StMiscFrm   = 14 << FormShift,
+    LdMulFrm    = 15 << FormShift,
+    StMulFrm    = 16 << FormShift,
 
     // Miscellaneous arithmetic instructions
-    ArithMisc   = 18 << FormShift,
+    ArithMisc   = 17 << FormShift,
 
     // Thumb format
-    ThumbFrm    = 19 << FormShift,
+    ThumbFrm    = 18 << FormShift,
 
     // VFP format
-    VPFFrm      = 20 << FormShift,
+    VPFFrm      = 19 << FormShift,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating

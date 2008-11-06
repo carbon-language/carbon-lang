@@ -20,28 +20,27 @@ class Format<bits<5> val> {
 }
 
 def Pseudo      : Format<1>;
-def MulFrm1     : Format<2>;
-def MulFrm2     : Format<3>;
-def MulSMLAW    : Format<4>;
-def MulSMULW    : Format<5>;
-def MulSMLA     : Format<6>;
-def MulSMUL     : Format<7>;
-def Branch      : Format<8>;
-def BranchMisc  : Format<9>;
+def MulFrm      : Format<2>;
+def MulSMLAW    : Format<3>;
+def MulSMULW    : Format<4>;
+def MulSMLA     : Format<5>;
+def MulSMUL     : Format<6>;
+def Branch      : Format<7>;
+def BranchMisc  : Format<8>;
 
-def DPFrm       : Format<10>;
-def DPSoRegFrm  : Format<11>;
+def DPFrm       : Format<9>;
+def DPSoRegFrm  : Format<10>;
 
-def LdFrm       : Format<12>;
-def StFrm       : Format<13>;
-def LdMiscFrm   : Format<14>;
-def StMiscFrm   : Format<15>;
-def LdMulFrm    : Format<16>;
-def StMulFrm    : Format<17>;
+def LdFrm       : Format<11>;
+def StFrm       : Format<12>;
+def LdMiscFrm   : Format<13>;
+def StMiscFrm   : Format<14>;
+def LdMulFrm    : Format<15>;
+def StMulFrm    : Format<16>;
 
-def ArithMisc   : Format<18>;
-def ThumbFrm    : Format<19>;
-def VFPFrm      : Format<20>;
+def ArithMisc   : Format<17>;
+def ThumbFrm    : Format<18>;
+def VFPFrm      : Format<19>;
 
 // Misc flag for data processing instructions that indicates whether
 // the instruction has a Rn register operand.
@@ -679,23 +678,30 @@ class AXI4st<bits<4> opcod, dag oops, dag iops, Format f, string asm,
 }
 
 // Unsigned multiply, multiply-accumulate instructions.
-class AMul1I<bits<4> opcod, dag oops, dag iops, string opc,
+class AMul1I<bits<7> mulopc, dag oops, dag iops, string opc,
          string asm, list<dag> pattern>
-  : I<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm1, opc,
+  : I<0, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, opc,
       asm,"",pattern> {
-  // FIXME: bits 7-4 should be a sub-mode (for SMLAxx, SMLAWy, ...)
   let Inst{7-4}   = 0b1001;
-  let Inst{27-24} = 0b0000;
-  let Inst{23-20} = opcod;
+  let Inst{20}    = 0; // S bit
+  let Inst{27-21} = mulopc;
 }
-class AsMul1I<bits<4> opcod, dag oops, dag iops, string opc,
+class AsMul1I<bits<7> mulopc, dag oops, dag iops, string opc,
           string asm, list<dag> pattern>
-  : sI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm1, opc,
+  : sI<0, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, opc,
        asm,"",pattern> {
-  // FIXME: bits 7-4 should be a sub-mode (for SMLAxx, SMLAWy, ...)
   let Inst{7-4}   = 0b1001;
-  let Inst{27-24} = 0b0000;
-  let Inst{23-20} = opcod;
+  let Inst{27-21} = mulopc;
+}
+
+// Most significant word multiply
+class AMul2I<bits<7> mulopc, dag oops, dag iops, string opc,
+         string asm, list<dag> pattern>
+  : I<0, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, opc,
+      asm,"",pattern> {
+  let Inst{7-4}   = 0b1001;
+  let Inst{20}    = 1;
+  let Inst{27-21} = mulopc;
 }
 
 //===----------------------------------------------------------------------===//

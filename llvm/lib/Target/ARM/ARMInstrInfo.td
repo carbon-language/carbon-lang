@@ -905,51 +905,60 @@ def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
 //  Multiply Instructions.
 //
 
-def MUL   : AsMul1I<0b0000, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+def MUL   : AsMul1I<0b0000000, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                  "mul", " $dst, $a, $b",
                  [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
 
-def MLA   : AsMul1I<0b0010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
+def MLA   : AsMul1I<0b0000001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
                  "mla", " $dst, $a, $b, $c",
                  [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
 
 // Extra precision multiplies with low / high results
-def SMULL : AsMul1I<0b1100, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                 "smull", " $ldst, $hdst, $a, $b", []>;
+def SMULL : AsMul1I<0b0000110, (outs GPR:$ldst, GPR:$hdst),
+                               (ins GPR:$a, GPR:$b),
+                    "smull", " $ldst, $hdst, $a, $b", []>;
 
-def UMULL : AsMul1I<0b1000, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                 "umull", " $ldst, $hdst, $a, $b", []>;
+def UMULL : AsMul1I<0b0000100, (outs GPR:$ldst, GPR:$hdst),
+                               (ins GPR:$a, GPR:$b),
+                    "umull", " $ldst, $hdst, $a, $b", []>;
 
 // Multiply + accumulate
-def SMLAL : AsMul1I<0b1110, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                 "smlal", " $ldst, $hdst, $a, $b", []>;
+def SMLAL : AsMul1I<0b0000111, (outs GPR:$ldst, GPR:$hdst),
+                               (ins GPR:$a, GPR:$b),
+                    "smlal", " $ldst, $hdst, $a, $b", []>;
 
-def UMLAL : AsMul1I<0b1010, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b),
-                 "umlal", " $ldst, $hdst, $a, $b", []>;
+def UMLAL : AsMul1I<0b0000101, (outs GPR:$ldst, GPR:$hdst),
+                               (ins GPR:$a, GPR:$b),
+                    "umlal", " $ldst, $hdst, $a, $b", []>;
 
-def UMAAL : AMul1I<0b0000, (outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), 
-                   "umaal", " $ldst, $hdst, $a, $b", []>,
-                   Requires<[IsARM, HasV6]>;
+def UMAAL : AMul1I <0b0000010, (outs GPR:$ldst, GPR:$hdst),
+                               (ins GPR:$a, GPR:$b),
+                    "umaal", " $ldst, $hdst, $a, $b", []>,
+                    Requires<[IsARM, HasV6]>;
 
 // Most significant word multiply
-// FIXME: encoding
-def SMMUL : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm2,
+def SMMUL : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                "smmul", " $dst, $a, $b",
                [(set GPR:$dst, (mulhs GPR:$a, GPR:$b))]>,
-            Requires<[IsARM, HasV6]>;
+            Requires<[IsARM, HasV6]> {
+  let Inst{7-4}   = 0b0001;
+  let Inst{15-12} = 0b1111;
+}
 
-// FIXME: encoding
-def SMMLA : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), MulFrm2,
+def SMMLA : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
                "smmla", " $dst, $a, $b, $c",
                [(set GPR:$dst, (add (mulhs GPR:$a, GPR:$b), GPR:$c))]>,
-            Requires<[IsARM, HasV6]>;
+            Requires<[IsARM, HasV6]> {
+  let Inst{7-4}   = 0b0001;
+}
 
 
-// FIXME: encoding
-def SMMLS : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), MulFrm2,
+def SMMLS : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
                "smmls", " $dst, $a, $b, $c",
                [(set GPR:$dst, (sub GPR:$c, (mulhs GPR:$a, GPR:$b)))]>,
-               Requires<[IsARM, HasV6]>;
+            Requires<[IsARM, HasV6]> {
+  let Inst{7-4}   = 0b1101;
+}
 
 // FIXME: encoding
 multiclass AI_smul<string opc, PatFrag opnode> {
