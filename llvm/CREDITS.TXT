@@ -219,6 +219,10 @@ N: Morten Ofstad
 E: morten@hue.no
 D: Visual C++ compatibility fixes 
 
+N: Richard Osborne
+E: richard@xmos.com
+D: XCore backend
+
 N: Devang Patel
 E: dpatel@apple.com
 D: LTO tool, PassManager rewrite, Loop Pass Manager, Loop Rotate
@@ -270,7 +274,3 @@ D: Machine LICM
 D: Darwin exception handling
 D: MMX & SSSE3 instructions
 D: SPEC2006 support
-
-N: Richard Osborne
-E: richard@xmos.com
-D: XCore backend
