@@ -36,7 +36,7 @@ SPUFrameInfo::getCalleeSaveSpillSlots(unsigned &NumEntries) const {
 const TargetAsmInfo *
 SPUTargetMachine::createTargetAsmInfo() const
 {
-  return new SPUTargetAsmInfo(*this);
+  return new SPULinuxTargetAsmInfo(*this);
 }
 
 unsigned

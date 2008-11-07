@@ -14,38 +14,28 @@
 #include "SPUTargetAsmInfo.h"
 #include "SPUTargetMachine.h"
 #include "llvm/Function.h"
+#include "llvm/Support/Compiler.h"
+
 using namespace llvm;
 
-SPUTargetAsmInfo::SPUTargetAsmInfo(const SPUTargetMachine &TM)
-  : TargetAsmInfo(TM) {
+SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
+    SPUTargetAsmInfo<ELFTargetAsmInfo>(TM) {
   PCSymbol = ".";
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
-  ZeroDirective = "\t.space\t";
-  SetDirective = "\t.set";
-  Data64bitsDirective = "\t.quad\t";  
-  AlignmentIsInBytes = false;
-  SwitchToSectionDirective = ".section\t";
-  ConstantPoolSection = "\t.const\t";
-  JumpTableDataSection = ".const";
-  CStringSection = "\t.cstring";
-  StaticCtorsSection = ".mod_init_func";
-  StaticDtorsSection = ".mod_term_func";
-  InlineAsmStart = "# InlineAsm Start";
-  InlineAsmEnd = "# InlineAsm End";
-  
-  NeedsSet = true;
-  /* FIXME: Need actual assembler syntax for DWARF info: */
-  DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
-  DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
-  DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
-  DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
-  DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
-  DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
-  DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
-  DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
-  DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
-  DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-  DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
 }
+
+/// PreferredEHDataFormat - This hook allows the target to select data
+/// format used for encoding pointers in exception handling data. Reason is
+/// 0 for data, 1 for code labels, 2 for function pointers. Global is true
+/// if the symbol can be relocated.
+unsigned
+SPULinuxTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
+                                             bool Global) const {
+  // We really need to write something here.
+  return TargetAsmInfo::PreferredEHDataFormat(Reason, Global);
+}
+
+// Instantiate default implementation.
+TEMPLATE_INSTANTIATION(class SPUTargetAsmInfo<TargetAsmInfo>);
