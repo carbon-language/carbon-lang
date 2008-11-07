@@ -950,10 +950,13 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
     assert(false && "Unsupported UINT_TO_FP!");
   case MVT::i32:
     Parts = TwoE32;
+    break;
   case MVT::i64:
     Parts = TwoE64;
+    break;
   case MVT::i128:
     Parts = TwoE128;
+    break;
   }
 
   Lo = DAG.getNode(ISD::FADD, VT, Hi,
