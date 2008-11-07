@@ -147,9 +147,9 @@ emitExternDirective(const std::string &name)
 void XCoreAsmPrinter::
 emitArrayBound(const std::string &name, const GlobalVariable *GV)
 {
-  assert((GV->hasExternalLinkage() ||
+  assert(((GV->hasExternalLinkage() ||
     GV->hasWeakLinkage()) ||
-    GV->hasLinkOnceLinkage() && "Unexpected linkage");
+    GV->hasLinkOnceLinkage()) && "Unexpected linkage");
   if (const ArrayType *ATy = dyn_cast<ArrayType>(
     cast<PointerType>(GV->getType())->getElementType()))
   {

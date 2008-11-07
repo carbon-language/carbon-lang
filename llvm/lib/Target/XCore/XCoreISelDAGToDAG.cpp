@@ -83,7 +83,7 @@ FunctionPass *llvm::createXCoreISelDag(XCoreTargetMachine &TM) {
 bool XCoreDAGToDAGISel::SelectADDRspii(SDValue Op, SDValue Addr,
                                   SDValue &Base, SDValue &Offset) {
   FrameIndexSDNode *FIN = 0;
-  if (FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
+  if ((FIN = dyn_cast<FrameIndexSDNode>(Addr))) {
     Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
     Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
