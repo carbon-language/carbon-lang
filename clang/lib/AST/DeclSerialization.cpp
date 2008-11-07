@@ -402,6 +402,7 @@ void FunctionDecl::EmitImpl(Serializer& S) const {
   
   if (ParamInfo != NULL) {
     S.EmitBool(true);
+    S.EmitInt(getNumParams());
     S.BatchEmitOwnedPtrs(getNumParams(),&ParamInfo[0], Body,
                          getNextDeclarator());
   }
@@ -425,14 +426,17 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 
   Decl* next_declarator;
   
+  int numParams;
   bool hasParamDecls = D.ReadBool();
+  if (hasParamDecls)
+    numParams = D.ReadInt();
     
   decl->ParamInfo = hasParamDecls
-                  ? new ParmVarDecl*[decl->getNumParams()] 
+                  ? new ParmVarDecl*[numParams] 
                   : NULL;  
   
   if (hasParamDecls)
-    D.BatchReadOwnedPtrs(decl->getNumParams(),
+    D.BatchReadOwnedPtrs(numParams,
                          reinterpret_cast<Decl**>(&decl->ParamInfo[0]),
                          decl->Body, next_declarator, C);
   else
