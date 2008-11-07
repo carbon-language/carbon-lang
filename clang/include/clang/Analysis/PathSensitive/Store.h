@@ -71,9 +71,7 @@ public:
   virtual SVal getLValueField(const GRState* St, SVal Base, 
                               const FieldDecl* D) = 0;
   
-  virtual SVal getLValueElement(const GRState* St, 
-                                   SVal Base, SVal Offset) = 0;
-  
+  virtual SVal getLValueElement(const GRState* St, SVal Base, SVal Offset) = 0;
   
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
