@@ -123,6 +123,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
     case bitc::MODULE_CODE_FUNCTION:    return "FUNCTION";
     case bitc::MODULE_CODE_ALIAS:       return "ALIAS";
     case bitc::MODULE_CODE_PURGEVALS:   return "PURGEVALS";
+    case bitc::MODULE_CODE_GCNAME:      return "GCNAME";
     }
   case bitc::PARAMATTR_BLOCK_ID:
     switch (CodeID) {
@@ -132,18 +133,21 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
   case bitc::TYPE_BLOCK_ID:
     switch (CodeID) {
     default: return 0;
-    case bitc::TYPE_CODE_NUMENTRY: return "NUMENTRY";
-    case bitc::TYPE_CODE_VOID:     return "VOID";
-    case bitc::TYPE_CODE_FLOAT:    return "FLOAT";
-    case bitc::TYPE_CODE_DOUBLE:   return "DOUBLE";
-    case bitc::TYPE_CODE_LABEL:    return "LABEL";
-    case bitc::TYPE_CODE_OPAQUE:   return "OPAQUE";
-    case bitc::TYPE_CODE_INTEGER:  return "INTEGER";
-    case bitc::TYPE_CODE_POINTER:  return "POINTER";
-    case bitc::TYPE_CODE_FUNCTION: return "FUNCTION";
-    case bitc::TYPE_CODE_STRUCT:   return "STRUCT";
-    case bitc::TYPE_CODE_ARRAY:    return "ARRAY";
-    case bitc::TYPE_CODE_VECTOR:   return "VECTOR";
+    case bitc::TYPE_CODE_NUMENTRY:  return "NUMENTRY";
+    case bitc::TYPE_CODE_VOID:      return "VOID";
+    case bitc::TYPE_CODE_FLOAT:     return "FLOAT";
+    case bitc::TYPE_CODE_DOUBLE:    return "DOUBLE";
+    case bitc::TYPE_CODE_LABEL:     return "LABEL";
+    case bitc::TYPE_CODE_OPAQUE:    return "OPAQUE";
+    case bitc::TYPE_CODE_INTEGER:   return "INTEGER";
+    case bitc::TYPE_CODE_POINTER:   return "POINTER";
+    case bitc::TYPE_CODE_FUNCTION:  return "FUNCTION";
+    case bitc::TYPE_CODE_STRUCT:    return "STRUCT";
+    case bitc::TYPE_CODE_ARRAY:     return "ARRAY";
+    case bitc::TYPE_CODE_VECTOR:    return "VECTOR";
+    case bitc::TYPE_CODE_X86_FP80:  return "X86_FP80";
+    case bitc::TYPE_CODE_FP128:     return "FP128";
+    case bitc::TYPE_CODE_PPC_FP128: return "PPC_FP128";
     }
     
   case bitc::CONSTANTS_BLOCK_ID:
@@ -199,6 +203,10 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
     case bitc::FUNC_CODE_INST_VAARG:       return "INST_VAARG";
     case bitc::FUNC_CODE_INST_STORE2:      return "INST_STORE2";
     case bitc::FUNC_CODE_INST_GETRESULT:   return "INST_GETRESULT";
+    case bitc::FUNC_CODE_INST_EXTRACTVAL:  return "INST_EXTRACTVAL";
+    case bitc::FUNC_CODE_INST_INSERTVAL:   return "INST_INSERTVAL";
+    case bitc::FUNC_CODE_INST_CMP2:        return "INST_CMP2";
+    case bitc::FUNC_CODE_INST_VSELECT:     return "INST_VSELECT";
     }
   case bitc::TYPE_SYMTAB_BLOCK_ID:
     switch (CodeID) {
