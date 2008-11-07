@@ -691,6 +691,8 @@ DIAG(err_constructor_byvalue_arg, ERROR,
      "copy constructor must pass its first argument by reference")
 
 // C++ destructors
+DIAG(err_destructor_not_member, ERROR,
+     "destructor must be a non-static member function")
 DIAG(err_destructor_cannot_be, ERROR,
      "destructor cannot be declared '%0'")
 DIAG(err_invalid_qualified_destructor, ERROR,

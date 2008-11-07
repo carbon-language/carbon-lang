@@ -310,6 +310,10 @@ public:
     }
   }
 
+  bool isCXXRecord() const {
+    return DeclKind == Decl::CXXRecord;
+  }
+
   const ScopedDecl *getDeclChain() const { return DeclChain; }
   ScopedDecl *getDeclChain() { return DeclChain; }
   void setDeclChain(ScopedDecl *D) { DeclChain = D; }

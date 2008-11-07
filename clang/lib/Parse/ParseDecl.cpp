@@ -1355,6 +1355,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D, bool PtrOperator) {
 ///         conversion-function-id  [TODO]
 ///          '~' class-name         
 ///         template-id             [TODO]
+///
 void Parser::ParseDirectDeclarator(Declarator &D) {
   // Parse the first direct-declarator seen.
   if (Tok.is(tok::identifier) && D.mayHaveIdentifier()) {
@@ -1362,31 +1363,35 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     // Determine whether this identifier is a C++ constructor name or
     // a normal identifier.
     if (getLang().CPlusPlus && 
-        CurScope->isCXXClassScope() &&
         Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope))
       D.SetConstructor(Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope),
                        Tok.getIdentifierInfo(), Tok.getLocation());
     else
       D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
     ConsumeToken();
-  } else if (getLang().CPlusPlus && Tok.is(tok::tilde) && 
-             CurScope->isCXXClassScope() && D.mayHaveIdentifier()) {
+  } else if (getLang().CPlusPlus &&
+             Tok.is(tok::tilde) && D.mayHaveIdentifier()) {
     // This should be a C++ destructor.
     SourceLocation TildeLoc = ConsumeToken();
+    if (Tok.is(tok::identifier)) {
+      // Use the next identifier and "~" to form a name for the
+      // destructor. This is useful both for diagnostics and for
+      // correctness of the parser, since we use presence/absence of the
+      // identifier to determine what we parsed.
+      // FIXME: We could end up with a template-id here, once we parse
+      // templates, and will have to do something different to form the
+      // name of the destructor.
+      IdentifierInfo *II = Tok.getIdentifierInfo();
+      II = &PP.getIdentifierTable().get(std::string("~") + II->getName());
 
-    // Use the next identifier and "~" to form a name for the
-    // destructor. This is useful both for diagnostics and for
-    // correctness of the parser, since we use presence/absence of the
-    // identifier to determine what we parsed.
-    // FIXME: We could end up with a template-id here, once we parse
-    // templates, and will have to do something different to form the
-    // name of the destructor.
-    assert(Tok.is(tok::identifier) && "Expected identifier");
-    IdentifierInfo *II = Tok.getIdentifierInfo();
-    II = &PP.getIdentifierTable().get(std::string("~") + II->getName());
-
-    if (TypeTy *Type = ParseClassName())
-      D.SetDestructor(Type, II, TildeLoc);
+      if (TypeTy *Type = ParseClassName())
+        D.SetDestructor(Type, II, TildeLoc);
+      else
+        D.SetIdentifier(0, TildeLoc);
+    } else {
+      Diag(Tok, diag::err_expected_class_name);
+      D.SetIdentifier(0, TildeLoc);
+    }
   } else if (Tok.is(tok::kw_operator)) {
     SourceLocation OperatorLoc = Tok.getLocation();
 

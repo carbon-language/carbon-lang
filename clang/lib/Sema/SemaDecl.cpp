@@ -811,7 +811,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     FunctionDecl *NewFD;
     if (D.getKind() == Declarator::DK_Constructor) {
       // This is a C++ constructor declaration.
-      assert(D.getContext() == Declarator::MemberContext &&
+      assert(CurContext->isCXXRecord() &&
              "Constructors can only be declared in a member context");
 
       bool isInvalidDecl = CheckConstructorDeclarator(D, R, SC);
@@ -827,21 +827,29 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         NewFD->setInvalidDecl();
     } else if (D.getKind() == Declarator::DK_Destructor) {
       // This is a C++ destructor declaration.
-      assert(D.getContext() == Declarator::MemberContext &&
-             "Destructor can only be declared in a member context");
+      if (CurContext->isCXXRecord()) {
+        bool isInvalidDecl = CheckDestructorDeclarator(D, R, SC);
 
-      bool isInvalidDecl = CheckDestructorDeclarator(D, R, SC);
+        NewFD = CXXDestructorDecl::Create(Context,
+                                          cast<CXXRecordDecl>(CurContext),
+                                          D.getIdentifierLoc(), II, R, 
+                                          isInline,
+                                          /*isImplicitlyDeclared=*/false);
 
-      NewFD = CXXDestructorDecl::Create(Context,
-                                        cast<CXXRecordDecl>(CurContext),
-                                        D.getIdentifierLoc(), II, R, 
-                                        isInline,
-                                        /*isImplicitlyDeclared=*/false);
-
-      if (isInvalidDecl)
+        if (isInvalidDecl)
+          NewFD->setInvalidDecl();
+      } else {
+        Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
+        // Create a FunctionDecl to satisfy the function definition parsing
+        // code path.
+        NewFD = FunctionDecl::Create(Context, CurContext, D.getIdentifierLoc(),
+                                     II, R, SC, isInline, LastDeclarator,
+                                     // FIXME: Move to DeclGroup...
+                                   D.getDeclSpec().getSourceRange().getBegin());
         NewFD->setInvalidDecl();
+      }
     } else if (D.getKind() == Declarator::DK_Conversion) {
-      if (D.getContext() != Declarator::MemberContext) {
+      if (!CurContext->isCXXRecord()) {
         Diag(D.getIdentifierLoc(),
              diag::err_conv_function_not_member);
         return 0;
@@ -856,7 +864,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         if (isInvalidDecl)
           NewFD->setInvalidDecl();
       }
-    } else if (D.getContext() == Declarator::MemberContext) {
+    } else if (CurContext->isCXXRecord()) {
       // This is a C++ method declaration.
       NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
                                     D.getIdentifierLoc(), II, R,
@@ -1037,7 +1045,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
     case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
     }    
-    if (D.getContext() == Declarator::MemberContext) {
+    if (CurContext->isCXXRecord()) {
       assert(SC == VarDecl::Static && "Invalid storage class for member!");
       // This is a static data member for a C++ class.
       NewVD = CXXClassVarDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
