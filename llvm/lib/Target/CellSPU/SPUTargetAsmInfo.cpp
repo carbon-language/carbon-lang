@@ -24,6 +24,7 @@ SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
+  CStringSection = ".rodata";
 }
 
 /// PreferredEHDataFormat - This hook allows the target to select data
