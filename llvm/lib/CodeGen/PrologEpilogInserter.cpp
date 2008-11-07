@@ -306,6 +306,32 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
     }
 }
 
+/// AdjustStackOffset - Helper function used to adjust the stack frame offset.
+static inline void
+AdjustStackOffset(MachineFrameInfo *FFI, int FrameIdx,
+                  bool StackGrowsDown, int64_t &Offset,
+                  unsigned &MaxAlign) {
+  // If stack grows down, we need to add size of find the lowest address of the
+  // object.
+  if (StackGrowsDown)
+    Offset += FFI->getObjectSize(FrameIdx);
+
+  unsigned Align = FFI->getObjectAlignment(FrameIdx);
+
+  // If the alignment of this object is greater than that of the stack, then
+  // increase the stack alignment to match.
+  MaxAlign = std::max(MaxAlign, Align);
+
+  // Adjust to alignment boundary.
+  Offset = (Offset + Align - 1) / Align * Align;
+
+  if (StackGrowsDown) {
+    FFI->setObjectOffset(FrameIdx, -Offset); // Set the computed offset
+  } else {
+    FFI->setObjectOffset(FrameIdx, Offset);
+    Offset += FFI->getObjectSize(FrameIdx);
+  }
+}
 
 /// calculateFrameObjectOffsets - Calculate actual frame offsets for all of the
 /// abstract stack objects.
@@ -387,51 +413,15 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   const TargetRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
   if (RS && RegInfo->hasFP(Fn)) {
     int SFI = RS->getScavengingFrameIndex();
-    if (SFI >= 0) {
-      // If stack grows down, we need to add size of the lowest
-      // address of the object.
-      if (StackGrowsDown)
-        Offset += FFI->getObjectSize(SFI);
-
-      unsigned Align = FFI->getObjectAlignment(SFI);
-      // Adjust to alignment boundary
-      Offset = (Offset+Align-1)/Align*Align;
-
-      if (StackGrowsDown) {
-        FFI->setObjectOffset(SFI, -Offset);        // Set the computed offset
-      } else {
-        FFI->setObjectOffset(SFI, Offset);
-        Offset += FFI->getObjectSize(SFI);
-      }
-    }
+    if (SFI >= 0)
+      AdjustStackOffset(FFI, SFI, StackGrowsDown, Offset, MaxAlign);
   }
 
   // Make sure that the stack protector comes before the local variables on the
   // stack.
-  if (FFI->getStackProtectorIndex() >= 0) {
-    int FI = FFI->getStackProtectorIndex();
-
-    // If stack grows down, we need to add size of find the lowest
-    // address of the object.
-    if (StackGrowsDown)
-      Offset += FFI->getObjectSize(FI);
-
-    unsigned Align = FFI->getObjectAlignment(FI);
-
-    // If the alignment of this object is greater than that of the stack, then
-    // increase the stack alignment to match.
-    MaxAlign = std::max(MaxAlign, Align);
-
-    // Adjust to alignment boundary.
-    Offset = (Offset + Align - 1) / Align * Align;
-
-    if (StackGrowsDown) {
-      FFI->setObjectOffset(FI, -Offset); // Set the computed offset
-    } else {
-      FFI->setObjectOffset(FI, Offset);
-      Offset += FFI->getObjectSize(FI);
-    }
-  }
+  if (FFI->getStackProtectorIndex() >= 0)
+    AdjustStackOffset(FFI, FFI->getStackProtectorIndex(), StackGrowsDown,
+                      Offset, MaxAlign);
 
   // Then assign frame offsets to stack objects that are not used to spill
   // callee saved registers.
@@ -445,50 +435,15 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     if (FFI->getStackProtectorIndex() == (int)i)
       continue;
 
-    // If stack grows down, we need to add size of find the lowest
-    // address of the object.
-    if (StackGrowsDown)
-      Offset += FFI->getObjectSize(i);
-
-    unsigned Align = FFI->getObjectAlignment(i);
-    // If the alignment of this object is greater than that of the stack, then
-    // increase the stack alignment to match.
-    MaxAlign = std::max(MaxAlign, Align);
-    // Adjust to alignment boundary
-    Offset = (Offset+Align-1)/Align*Align;
-
-    if (StackGrowsDown) {
-      FFI->setObjectOffset(i, -Offset);        // Set the computed offset
-    } else {
-      FFI->setObjectOffset(i, Offset);
-      Offset += FFI->getObjectSize(i);
-    }
+    AdjustStackOffset(FFI, i, StackGrowsDown, Offset, MaxAlign);
   }
 
   // Make sure the special register scavenging spill slot is closest to the
   // stack pointer.
   if (RS && !RegInfo->hasFP(Fn)) {
     int SFI = RS->getScavengingFrameIndex();
-    if (SFI >= 0) {
-      // If stack grows down, we need to add size of find the lowest
-      // address of the object.
-      if (StackGrowsDown)
-        Offset += FFI->getObjectSize(SFI);
-
-      unsigned Align = FFI->getObjectAlignment(SFI);
-      // If the alignment of this object is greater than that of the
-      // stack, then increase the stack alignment to match.
-      MaxAlign = std::max(MaxAlign, Align);
-      // Adjust to alignment boundary
-      Offset = (Offset+Align-1)/Align*Align;
-
-      if (StackGrowsDown) {
-        FFI->setObjectOffset(SFI, -Offset);        // Set the computed offset
-      } else {
-        FFI->setObjectOffset(SFI, Offset);
-        Offset += FFI->getObjectSize(SFI);
-      }
-    }
+    if (SFI >= 0)
+      AdjustStackOffset(FFI, SFI, StackGrowsDown, Offset, MaxAlign);
   }
 
   // Round up the size to a multiple of the alignment, but only if there are
