@@ -22,6 +22,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/ADT/DenseMap.h"
@@ -79,7 +80,18 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
       if (SI->isVolatile())
         return false;
     } else {
-      return false;   // Not a load or store.
+      const BitCastInst *BC = dyn_cast<BitCastInst>(*UI);
+      if (!BC) 
+        return false;   // Not a load or store or dbg intrinsic.
+      Value::use_const_iterator BCUI = BC->use_begin(), BCUE = BC->use_end();
+      if (BCUI == BCUE) 
+        return false; // Not a dbg intrinsic.
+      const DbgInfoIntrinsic *DI = dyn_cast<DbgInfoIntrinsic>(*BCUI);
+      if (!DI) 
+        return false; // Not a dbg intrinsic.
+      BCUI++; 
+      if (BCUI != BCUE) 
+        return false; // Not a dbg intrinsic use.
     }
 
   return true;
@@ -275,14 +287,21 @@ namespace {
     /// ivars.
     void AnalyzeAlloca(AllocaInst *AI) {
       clear();
-      
+
       // As we scan the uses of the alloca instruction, keep track of stores,
       // and decide whether all of the loads and stores to the alloca are within
       // the same basic block.
       for (Value::use_iterator U = AI->use_begin(), E = AI->use_end();
            U != E; ++U) {
         Instruction *User = cast<Instruction>(*U);
-        if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+        if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
+          // Remove dbg intrinsic uses now.
+          Value::use_iterator BCUI = BC->use_begin();
+          DbgInfoIntrinsic *DI = cast<DbgInfoIntrinsic>(*BCUI);
+          assert (BCUI + 1 == BC->use_end() && "Unexpected alloca uses!");
+          DI->eraseFromParent();
+          BC->eraseFromParent();
+        } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
           // Remember the basic blocks which define new values for the alloca
           DefiningBlocks.push_back(SI->getParent());
           AllocaPointerVal = SI->getOperand(0);
