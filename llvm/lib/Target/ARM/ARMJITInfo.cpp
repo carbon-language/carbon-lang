@@ -180,11 +180,7 @@ intptr_t ARMJITInfo::resolveRelocDestAddr(MachineRelocation *MR) const {
     // Constant pool entry address.
     return getConstantPoolEntryAddr(MR->getConstantPoolIndex());
   else if (RT == ARM::reloc_arm_machine_cp_entry) {
-    const MachineConstantPoolEntry &MCPE = (*MCPEs)[MR->getConstantVal()];
-    assert(MCPE.isMachineConstantPoolEntry() &&
-           "Expecting a machine constant pool entry!");
-    ARMConstantPoolValue *ACPV =
-      static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
+    ARMConstantPoolValue *ACPV = (ARMConstantPoolValue*)MR->getConstantVal();
     assert((!ACPV->hasModifier() && !ACPV->mustAddCurrentAddress()) &&
            "Can't handle this machine constant pool entry yet!");
     intptr_t Addr = (intptr_t)(MR->getResultPointer());

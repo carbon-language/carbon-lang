@@ -27,10 +27,6 @@ namespace llvm {
   class ARMJITInfo : public TargetJITInfo {
     ARMTargetMachine &TM;
 
-    // MCPEs - List of the constant pool entries for the current machine
-    // function that's being processed.
-    const std::vector<MachineConstantPoolEntry> *MCPEs;
-
     // ConstPoolId2AddrMap - A map from constant pool ids to the corresponding
     // CONSTPOOL_ENTRY addresses.
     SmallVector<intptr_t, 16> ConstPoolId2AddrMap;
@@ -89,8 +85,7 @@ namespace llvm {
     /// Initialize - Initialize internal stage. Get the list of constant pool
     /// Resize constant pool ids to CONSTPOOL_ENTRY addresses map.
     void Initialize(const MachineFunction &MF) {
-      MCPEs = &MF.getConstantPool()->getConstants();
-      ConstPoolId2AddrMap.resize(MCPEs->size());
+      ConstPoolId2AddrMap.resize(MF.getConstantPool()->getConstants().size());
       JumpTableId2AddrMap.resize(MF.getJumpTableInfo()->getJumpTables().size());
     }
 

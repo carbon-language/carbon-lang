@@ -140,7 +140,7 @@ namespace {
     /// Routines that handle operands which add machine relocations which are
     /// fixed up by the relocation stage.
     void emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
-                           bool NeedStub, unsigned CPIdx = 0);
+                           bool NeedStub, intptr_t ACPV = 0);
     void emitExternalSymbolAddress(const char *ES, unsigned Reloc);
     void emitConstPoolAddress(unsigned CPI, unsigned Reloc);
     void emitJumpTableAddress(unsigned JTIndex, unsigned Reloc);
@@ -225,11 +225,10 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 
 /// emitGlobalAddress - Emit the specified address to the code stream.
 ///
-void ARMCodeEmitter::emitGlobalAddress(GlobalValue *GV,
-                                       unsigned Reloc, bool NeedStub,
-                                       unsigned CPIdx) {
+void ARMCodeEmitter::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
+                                       bool NeedStub, intptr_t ACPV) {
   MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
-                                             Reloc, GV, CPIdx, NeedStub));
+                                             Reloc, GV, ACPV, NeedStub));
 }
 
 /// emitExternalSymbolAddress - Arrange for the address of an external symbol to
@@ -337,7 +336,8 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
     GlobalValue *GV = ACPV->getGV();
     if (GV) {
       assert(!ACPV->isStub() && "Don't know how to deal this yet!");
-      emitGlobalAddress(GV, ARM::reloc_arm_machine_cp_entry, false, CPIndex);
+      emitGlobalAddress(GV, ARM::reloc_arm_machine_cp_entry, false,
+                        (intptr_t)ACPV);
      } else  {
       assert(!ACPV->isNonLazyPointer() && "Don't know how to deal this yet!");
       emitExternalSymbolAddress(ACPV->getSymbol(), ARM::reloc_arm_absolute);
