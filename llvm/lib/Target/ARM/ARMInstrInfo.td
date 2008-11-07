@@ -1101,37 +1101,56 @@ defm SMLA : AI_smla<"smla", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 //  Misc. Arithmetic Instructions.
 //
 
-def CLZ  : AI<(outs GPR:$dst), (ins GPR:$src), ArithMiscFrm,
+def CLZ  : AMiscA1I<0b000010110, (outs GPR:$dst), (ins GPR:$src),
               "clz", " $dst, $src",
-              [(set GPR:$dst, (ctlz GPR:$src))]>, Requires<[IsARM, HasV5T]>;
+              [(set GPR:$dst, (ctlz GPR:$src))]>, Requires<[IsARM, HasV5T]> {
+  let Inst{7-4}   = 0b0001;
+  let Inst{11-8}  = 0b1111;
+  let Inst{19-16} = 0b1111;
+}
 
-def REV  : AI<(outs GPR:$dst), (ins GPR:$src), ArithMiscFrm,
+def REV  : AMiscA1I<0b01101011, (outs GPR:$dst), (ins GPR:$src),
               "rev", " $dst, $src",
-              [(set GPR:$dst, (bswap GPR:$src))]>, Requires<[IsARM, HasV6]>;
+              [(set GPR:$dst, (bswap GPR:$src))]>, Requires<[IsARM, HasV6]> {
+  let Inst{7-4}   = 0b0011;
+  let Inst{11-8}  = 0b1111;
+  let Inst{19-16} = 0b1111;
+}
 
-def REV16 : AI<(outs GPR:$dst), (ins GPR:$src), ArithMiscFrm,
+def REV16 : AMiscA1I<0b01101011, (outs GPR:$dst), (ins GPR:$src),
                "rev16", " $dst, $src",
                [(set GPR:$dst,
                    (or (and (srl GPR:$src, 8), 0xFF),
                        (or (and (shl GPR:$src, 8), 0xFF00),
                            (or (and (srl GPR:$src, 8), 0xFF0000),
                                (and (shl GPR:$src, 8), 0xFF000000)))))]>,
-               Requires<[IsARM, HasV6]>;
+               Requires<[IsARM, HasV6]> {
+  let Inst{7-4}   = 0b1011;
+  let Inst{11-8}  = 0b1111;
+  let Inst{19-16} = 0b1111;
+}
 
-def REVSH : AI<(outs GPR:$dst), (ins GPR:$src), ArithMiscFrm,
+def REVSH : AMiscA1I<0b01101111, (outs GPR:$dst), (ins GPR:$src),
                "revsh", " $dst, $src",
                [(set GPR:$dst,
                   (sext_inreg
                     (or (srl (and GPR:$src, 0xFF00), 8),
                         (shl GPR:$src, 8)), i16))]>,
-               Requires<[IsARM, HasV6]>;
+               Requires<[IsARM, HasV6]> {
+  let Inst{7-4}   = 0b1011;
+  let Inst{11-8}  = 0b1111;
+  let Inst{19-16} = 0b1111;
+}
 
-def PKHBT : AI<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
-               ArithMiscFrm, "pkhbt", " $dst, $src1, $src2, LSL $shamt",
+def PKHBT : AMiscA1I<0b01101000, (outs GPR:$dst),
+                                 (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
+               "pkhbt", " $dst, $src1, $src2, LSL $shamt",
                [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF),
                                    (and (shl GPR:$src2, (i32 imm:$shamt)),
                                         0xFFFF0000)))]>,
-               Requires<[IsARM, HasV6]>;
+               Requires<[IsARM, HasV6]> {
+  let Inst{6-4} = 0b001;
+}
 
 // Alternate cases for PKHBT where identities eliminate some nodes.
 def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF), (and GPR:$src2, 0xFFFF0000)),
@@ -1140,11 +1159,14 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF), (shl GPR:$src2, imm16_31:$shamt)),
                (PKHBT GPR:$src1, GPR:$src2, imm16_31:$shamt)>;
 
 
-def PKHTB : AI<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
-               ArithMiscFrm, "pkhtb", " $dst, $src1, $src2, ASR $shamt",
+def PKHTB : AMiscA1I<0b01101000, (outs GPR:$dst),
+                                 (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
+               "pkhtb", " $dst, $src1, $src2, ASR $shamt",
                [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF0000),
                                    (and (sra GPR:$src2, imm16_31:$shamt),
-                                        0xFFFF)))]>, Requires<[IsARM, HasV6]>;
+                                        0xFFFF)))]>, Requires<[IsARM, HasV6]> {
+  let Inst{6-4} = 0b101;
+}
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.

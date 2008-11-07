@@ -689,6 +689,14 @@ class AExtI<bits<8> opcod, dag oops, dag iops, string opc,
   let Inst{27-20} = opcod;
 }
 
+// Misc Arithmetic instructions.
+class AMiscA1I<bits<8> opcod, dag oops, dag iops, string opc,
+               string asm, list<dag> pattern>
+  : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, ArithMiscFrm, opc,
+      asm, "", pattern> {
+  let Inst{27-20} = opcod;
+}
+
 //===----------------------------------------------------------------------===//
 
 // ARMPat - Same as Pat<>, but requires that the compiler be in ARM mode.

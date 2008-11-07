@@ -100,6 +100,8 @@ namespace {
 
     void emitExtendInstruction(const MachineInstr &MI);
 
+    void emitMiscArithInstruction(const MachineInstr &MI);
+
     void emitBranchInstruction(const MachineInstr &MI);
 
     void emitMiscBranchInstruction(const MachineInstr &MI);
@@ -286,6 +288,9 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
     break;
   case ARMII::ExtFrm:
     emitExtendInstruction(MI);
+    break;
+  case ARMII::ArithMiscFrm:
+    emitMiscArithInstruction(MI);
     break;
   case ARMII::BrFrm:
     emitBranchInstruction(MI);
@@ -787,6 +792,44 @@ void ARMCodeEmitter::emitExtendInstruction(const MachineInstr &MI) {
       !TID.OpInfo[OpIdx].isOptionalDef())
     Binary |= (getMachineOpValue(MI, OpIdx) / 8) << ARMII::ExtRotImmShift;
 
+  emitWordLE(Binary);
+}
+
+void ARMCodeEmitter::emitMiscArithInstruction(const MachineInstr &MI) {
+  const TargetInstrDesc &TID = MI.getDesc();
+
+  // Part of binary is determined by TableGn.
+  unsigned Binary = getBinaryCodeForInstr(MI);
+
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
+
+  unsigned OpIdx = 0;
+
+  // Encode Rd
+  Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdShift;
+
+  const MachineOperand &MO = MI.getOperand(OpIdx++);
+  if (OpIdx == TID.getNumOperands() ||
+      TID.OpInfo[OpIdx].isPredicate() ||
+      TID.OpInfo[OpIdx].isOptionalDef()) {
+    // Encode Rm and it's done.
+    Binary |= getMachineOpValue(MI, MO);
+    emitWordLE(Binary);
+    return;
+  }
+
+  // Encode Rn.
+  Binary |= getMachineOpValue(MI, MO) << ARMII::RegRnShift;
+
+  // Encode Rm.
+  Binary |= getMachineOpValue(MI, OpIdx++);
+
+  // Encode shift_imm.
+  unsigned ShiftAmt = MI.getOperand(OpIdx).getImm();
+  assert(ShiftAmt < 32 && "shift_imm range is 0 to 31!");
+  Binary |= ShiftAmt << ARMII::ShiftShift;
+  
   emitWordLE(Binary);
 }
 

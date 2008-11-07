@@ -109,6 +109,7 @@ namespace ARMII {
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating
     // machine instructions.
+    ShiftShift     = 7,
     SoRotImmShift  = 8,
     RegRsShift     = 8,
     ExtRotImmShift = 10,
