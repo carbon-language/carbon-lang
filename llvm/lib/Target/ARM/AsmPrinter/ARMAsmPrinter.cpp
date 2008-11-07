@@ -263,6 +263,8 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // FIXME: Dwarf support.
   //DW.EndFunction();
 
+  O.flush();
+
   return false;
 }
 
