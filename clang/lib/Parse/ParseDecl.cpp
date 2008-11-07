@@ -397,7 +397,6 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 ///       declaration-specifiers: [C99 6.7]
 ///         storage-class-specifier declaration-specifiers[opt]
 ///         type-specifier declaration-specifiers[opt]
-///         type-qualifier declaration-specifiers[opt]
 /// [C99]   function-specifier declaration-specifiers[opt]
 /// [GNU]   attributes declaration-specifiers[opt]
 ///
@@ -408,34 +407,6 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 ///         'auto'
 ///         'register'
 /// [GNU]   '__thread'
-///       type-specifier: [C99 6.7.2]
-///         'void'
-///         'char'
-///         'short'
-///         'int'
-///         'long'
-///         'float'
-///         'double'
-///         'signed'
-///         'unsigned'
-///         struct-or-union-specifier
-///         enum-specifier
-///         typedef-name
-/// [C++]   'wchar_t'
-/// [C++]   'bool'
-/// [C99]   '_Bool'
-/// [C99]   '_Complex'
-/// [C99]   '_Imaginary'  // Removed in TC2?
-/// [GNU]   '_Decimal32'
-/// [GNU]   '_Decimal64'
-/// [GNU]   '_Decimal128'
-/// [GNU]   typeof-specifier
-/// [OBJC]  class-name objc-protocol-refs[opt]    [TODO]
-/// [OBJC]  typedef-name objc-protocol-refs[opt]  [TODO]
-///       type-qualifier:
-///         'const'
-///         'volatile'
-/// [C99]   'restrict'
 ///       function-specifier: [C99 6.7.4]
 /// [C99]   'inline'
 /// [C++]   'virtual'
@@ -447,9 +418,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     int isInvalid = false;
     const char *PrevSpec = 0;
     SourceLocation Loc = Tok.getLocation();
-    
+
     switch (Tok.getKind()) {
-    default:
+    default: 
+      // Try to parse a type-specifier; if we found one, continue.
+      if (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec))
+        continue;
+
     DoneWithDeclSpec:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
@@ -538,88 +513,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       isInvalid = DS.SetStorageClassSpecThread(Loc, PrevSpec)*2;
       break;
       
-    // type-specifiers
-    case tok::kw_short:
-      isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec);
-      break;
-    case tok::kw_long:
-      if (DS.getTypeSpecWidth() != DeclSpec::TSW_long)
-        isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_long, Loc, PrevSpec);
-      else
-        isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_longlong, Loc, PrevSpec);
-      break;
-    case tok::kw_signed:
-      isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_signed, Loc, PrevSpec);
-      break;
-    case tok::kw_unsigned:
-      isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_unsigned, Loc, PrevSpec);
-      break;
-    case tok::kw__Complex:
-      isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_complex, Loc, PrevSpec);
-      break;
-    case tok::kw__Imaginary:
-      isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_imaginary, Loc, PrevSpec);
-      break;
-    case tok::kw_void:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_void, Loc, PrevSpec);
-      break;
-    case tok::kw_char:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char, Loc, PrevSpec);
-      break;
-    case tok::kw_int:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec);
-      break;
-    case tok::kw_float:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec);
-      break;
-    case tok::kw_double:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec);
-      break;
-    case tok::kw_wchar_t:       // [C++ 2.11p1]
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec);
-      break;
-    case tok::kw_bool:          // [C++ 2.11p1]
-    case tok::kw__Bool:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec);
-      break;
-    case tok::kw__Decimal32:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal32, Loc, PrevSpec);
-      break;
-    case tok::kw__Decimal64:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal64, Loc, PrevSpec);
-      break;
-    case tok::kw__Decimal128:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, Loc, PrevSpec);
-      break;
-
-    case tok::kw_class:
-    case tok::kw_struct:
-    case tok::kw_union:
-      ParseClassSpecifier(DS);
       continue;
-    case tok::kw_enum:
-      ParseEnumSpecifier(DS);
-      continue;
-    
-    // GNU typeof support.
-    case tok::kw_typeof:
-      ParseTypeofSpecifier(DS);
-      continue;
-      
-    // type-qualifier
-    case tok::kw_const:
-      isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec,
-                                 getLang())*2;
-      break;
-    case tok::kw_volatile:
-      isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec,
-                                 getLang())*2;
-      break;
-    case tok::kw_restrict:
-      isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
-                                 getLang())*2;
-      break;
-      
+          
     // function-specifier
     case tok::kw_inline:
       isInvalid = DS.SetFunctionSpecInline(Loc, PrevSpec);
@@ -665,6 +560,181 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     DS.SetRangeEnd(Tok.getLocation());
     ConsumeToken();
   }
+}
+/// MaybeParseTypeSpecifier - Try to parse a single type-specifier. We
+/// primarily follow the C++ grammar with additions for C99 and GNU,
+/// which together subsume the C grammar. Note that the C++
+/// type-specifier also includes the C type-qualifier (for const,
+/// volatile, and C99 restrict). Returns true if a type-specifier was
+/// found (and parsed), false otherwise.
+///
+///       type-specifier: [C++ 7.1.5]
+///         simple-type-specifier
+///         class-specifier
+///         enum-specifier
+///         elaborated-type-specifier  [TODO]
+///         cv-qualifier
+///
+///       cv-qualifier: [C++ 7.1.5.1]
+///         'const'
+///         'volatile'
+/// [C99]   'restrict'
+///
+///       simple-type-specifier: [ C++ 7.1.5.2]
+///         '::'[opt] nested-name-specifier[opt] type-name [TODO]
+///         '::'[opt] nested-name-specifier 'template' template-id [TODO]
+///         'char'
+///         'wchar_t'
+///         'bool'
+///         'short'
+///         'int'
+///         'long'
+///         'signed'
+///         'unsigned'
+///         'float'
+///         'double'
+///         'void'
+/// [C99]   '_Bool'
+/// [C99]   '_Complex'
+/// [C99]   '_Imaginary'  // Removed in TC2?
+/// [GNU]   '_Decimal32'
+/// [GNU]   '_Decimal64'
+/// [GNU]   '_Decimal128'
+/// [GNU]   typeof-specifier
+/// [OBJC]  class-name objc-protocol-refs[opt]    [TODO]
+/// [OBJC]  typedef-name objc-protocol-refs[opt]  [TODO]
+bool Parser::MaybeParseTypeSpecifier(DeclSpec &DS, int& isInvalid,
+                                     const char *&PrevSpec) {
+  SourceLocation Loc = Tok.getLocation();
+
+  switch (Tok.getKind()) {
+  // simple-type-specifier:
+  case tok::identifier: {
+    TypeTy *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+    if (!TypeRep)
+      return false;
+
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
+                                   TypeRep);
+    DS.SetRangeEnd(Loc);
+    ConsumeToken(); // The identifier
+    
+    // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
+    // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
+    // Objective-C interface.  If we don't have Objective-C or a '<', this is
+    // just a normal reference to a typedef name.
+    if (!Tok.is(tok::less) || !getLang().ObjC1)
+      return true;
+    
+    SourceLocation EndProtoLoc;
+    llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
+    ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
+    DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
+    
+    DS.SetRangeEnd(EndProtoLoc);
+    return true;
+  }
+
+  case tok::kw_short:
+    isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec);
+    break;
+  case tok::kw_long:
+    if (DS.getTypeSpecWidth() != DeclSpec::TSW_long)
+      isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_long, Loc, PrevSpec);
+    else
+      isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_longlong, Loc, PrevSpec);
+    break;
+  case tok::kw_signed:
+    isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_signed, Loc, PrevSpec);
+    break;
+  case tok::kw_unsigned:
+    isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_unsigned, Loc, PrevSpec);
+    break;
+  case tok::kw__Complex:
+    isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_complex, Loc, PrevSpec);
+    break;
+  case tok::kw__Imaginary:
+    isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_imaginary, Loc, PrevSpec);
+    break;
+  case tok::kw_void:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_void, Loc, PrevSpec);
+    break;
+  case tok::kw_char:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char, Loc, PrevSpec);
+    break;
+  case tok::kw_int:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec);
+    break;
+  case tok::kw_float:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec);
+    break;
+  case tok::kw_double:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec);
+    break;
+  case tok::kw_wchar_t:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec);
+    break;
+  case tok::kw_bool:
+  case tok::kw__Bool:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec);
+    break;
+  case tok::kw__Decimal32:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal32, Loc, PrevSpec);
+    break;
+  case tok::kw__Decimal64:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal64, Loc, PrevSpec);
+    break;
+  case tok::kw__Decimal128:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, Loc, PrevSpec);
+    break;
+
+  // class-specifier:
+  case tok::kw_class:
+  case tok::kw_struct:
+  case tok::kw_union:
+    ParseClassSpecifier(DS);
+    return true;
+
+  // enum-specifier:
+  case tok::kw_enum:
+    ParseEnumSpecifier(DS);
+    return true;
+
+  // cv-qualifier:
+  case tok::kw_const:
+    isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec,
+                               getLang())*2;
+    break;
+  case tok::kw_volatile:
+    isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec,
+                               getLang())*2;
+    break;
+  case tok::kw_restrict:
+    isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
+                               getLang())*2;
+    break;
+
+  // GNU typeof support.
+  case tok::kw_typeof:
+    ParseTypeofSpecifier(DS);
+    return true;
+
+  default:
+    // Not a type-specifier; do nothing.
+    return false;
+  }
+
+  // If the specifier combination wasn't legal, issue a diagnostic.
+  if (isInvalid) {
+    assert(PrevSpec && "Method did not return previous specifier!");
+    if (isInvalid == 1)  // Error.
+      Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
+    else                 // extwarn.
+      Diag(Tok, diag::ext_duplicate_declspec, PrevSpec);
+  }
+  DS.SetRangeEnd(Tok.getLocation());
+  ConsumeToken(); // whatever we parsed above.
+  return true;
 }
 
 /// ParseStructDeclaration - Parse a struct declaration without the terminating

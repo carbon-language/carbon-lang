@@ -480,6 +480,9 @@ private:
   ExprResult ParseCXXCondition();
 
   //===--------------------------------------------------------------------===//
+  // C++ types
+
+  //===--------------------------------------------------------------------===//
   // C99 6.7.8: Initialization.
   
   /// ParseInitializer
@@ -565,6 +568,8 @@ private:
   DeclTy *ParseFunctionStatementBody(DeclTy *Decl, 
                                      SourceLocation L, SourceLocation R);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
+  bool MaybeParseTypeSpecifier(DeclSpec &DS, int &isInvalid, 
+                               const char *&PrevSpec);
   void ParseSpecifierQualifierList(DeclSpec &DS);
   
   void ParseObjCTypeQualifierList(ObjCDeclSpec &DS);
