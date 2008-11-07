@@ -118,7 +118,7 @@ public:
   }
   void setBuiltinID(unsigned ID) {
     ObjCOrBuiltinID = ID + tok::NUM_OBJC_KEYWORDS;
-    assert(ObjCOrBuiltinID - tok::NUM_OBJC_KEYWORDS == ID 
+    assert(ObjCOrBuiltinID - unsigned(tok::NUM_OBJC_KEYWORDS) == ID 
            && "ID too large for field!");
   }
   
