@@ -226,7 +226,7 @@ unsigned JITResolver::getGOTIndexForAddr(void* addr) {
   if (!idx) {
     idx = ++nextGOTIndex;
     revGOTMap[addr] = idx;
-    DOUT << "JIT: Adding GOT entry " << idx << " for addr " << addr << "\n";
+    DOUT << "JIT: Adding GOT entry " << idx << " for addr [" << addr << "]\n";
   }
   return idx;
 }
@@ -533,6 +533,8 @@ namespace {
       if (MBBLocations.size() <= (unsigned)MBB->getNumber())
         MBBLocations.resize((MBB->getNumber()+1)*2);
       MBBLocations[MBB->getNumber()] = getCurrentPCValue();
+      DOUT << "JIT: Emitting BB" << MBB->getNumber() << " at ["
+           << (void*) getCurrentPCValue() << "]\n";
     }
 
     virtual intptr_t getConstantPoolEntryAddress(unsigned Entry) const;
