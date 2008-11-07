@@ -1,7 +1,7 @@
 // RUN: clang -checker-simple -verify %s
 
 #include <stdlib.h>
-#include <malloc.h>
+#include <alloca.h>
 
 int* f1() {
   int x = 0;
