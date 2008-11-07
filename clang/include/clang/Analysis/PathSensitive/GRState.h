@@ -336,8 +336,7 @@ public:
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
   const GRState* BindCompoundLiteral(const GRState* state,
-                                     const CompoundLiteralRegion* R,
-                                     const SVal* BegInit, const SVal* EndInit);
+                                     const CompoundLiteralExpr* CL, SVal V);
 
   const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
                                        const LiveVariables& Liveness,
@@ -369,7 +368,11 @@ public:
   SVal GetLValue(const GRState* St, const StringLiteral* E) {
     return StoreMgr->getLValueString(St, E);
   }
-  
+
+  SVal GetLValue(const GRState* St, const CompoundLiteralExpr* CL) {
+    return StoreMgr->getLValueCompoundLiteral(St, CL);
+  }
+
   // Get the lvalue for an ivar reference.
   SVal GetLValue(const GRState* St, const ObjCIvarDecl* D, SVal Base) {
     return StoreMgr->getLValueIvar(St, D, Base);

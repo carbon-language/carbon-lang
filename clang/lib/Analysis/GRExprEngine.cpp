@@ -329,6 +329,10 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
     case Stmt::CompoundAssignOperatorClass:
       VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
       break;
+
+    case Stmt::CompoundLiteralExprClass:
+      VisitCompoundLiteralExpr(cast<CompoundLiteralExpr>(S), Pred, Dst, false);
+      break;
       
     case Stmt::ConditionalOperatorClass: { // '?' operator
       ConditionalOperator* C = cast<ConditionalOperator>(S);
@@ -435,7 +439,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
       return;
       
     case Stmt::CompoundLiteralExprClass:
-      VisitCompoundLiteralExpr(cast<CompoundLiteralExpr>(Ex), Pred, Dst);
+      VisitCompoundLiteralExpr(cast<CompoundLiteralExpr>(Ex), Pred, Dst, true);
       return;
       
     case Stmt::ObjCPropertyRefExprClass:
@@ -1575,31 +1579,21 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
 }
 
 void GRExprEngine::VisitCompoundLiteralExpr(CompoundLiteralExpr* CL,
-                                            NodeTy* Pred, NodeSet& Dst) {
-
-  // FIXME: Can getInitializer() be NULL?
+                                            NodeTy* Pred, NodeSet& Dst, 
+                                            bool asLValue) {
   InitListExpr* ILE = cast<InitListExpr>(CL->getInitializer()->IgnoreParens());
   NodeSet Tmp;
   Visit(ILE, Pred, Tmp);
   
   for (NodeSet::iterator I = Tmp.begin(), EI = Tmp.end(); I!=EI; ++I) {
-    // Retrieve the initializer values from the environment and store them
-    // into a vector that will then be handed off to the Store.    
-    const GRState* St = GetState(*I);    
-    llvm::SmallVector<SVal, 10> IVals;
-    IVals.reserve(ILE->getNumInits());
-    
-    for (Stmt::child_iterator J=ILE->child_begin(), EJ=ILE->child_end();
-          J!=EJ; ++J)
-      IVals.push_back(GetSVal(St, cast<Expr>(*J)));
+    const GRState* St = GetState(*I);
+    SVal ILV = GetSVal(St, ILE);
+    St = StateMgr.BindCompoundLiteral(St, CL, ILV);
 
-    const CompoundLiteralRegion* R = 
-      StateMgr.getRegionManager().getCompoundLiteralRegion(CL);
-    
-    assert (!IVals.empty() && "Initializer cannot be empty.");
-
-    St = StateMgr.BindCompoundLiteral(St, R, &IVals[0], &IVals[0]+IVals.size());
-    MakeNode(Dst, CL, *I, BindExpr(St, CL, loc::MemRegionVal(R)));
+    if (asLValue)
+      MakeNode(Dst, CL, *I, BindExpr(St, CL, StateMgr.GetLValue(St, CL)));
+    else
+      MakeNode(Dst, CL, *I, BindExpr(St, CL, ILV));
   }
 }
 

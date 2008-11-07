@@ -46,16 +46,11 @@ public:
     return Retrieve(St, loc::MemRegionVal(R));
   }
   
-  Store BindCompoundLiteral(Store store, const CompoundLiteralRegion* R,
-                            const SVal* BegInit, const SVal* EndInit) {
-    
-    // FIXME: Let's discuss how we want to do the mapping in RegionStore
-    //  from CompoundLiteralRegion to values.
-    assert (false && "Not yet implemented.");
-    return store;
-  }
+  Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL, SVal V);
 
   SVal getLValueString(const GRState* St, const StringLiteral* S);
+
+  SVal getLValueCompoundLiteral(const GRState* St, const CompoundLiteralExpr*);
 
   SVal getLValueVar(const GRState* St, const VarDecl* VD);
   
@@ -137,7 +132,12 @@ SVal RegionStoreManager::getLValueString(const GRState* St,
 SVal RegionStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
   return loc::MemRegionVal(MRMgr.getVarRegion(VD));
 }
-  
+
+SVal RegionStoreManager::getLValueCompoundLiteral(const GRState* St,
+                                                const CompoundLiteralExpr* CL) {
+  return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL));
+}
+
 SVal RegionStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
                                        SVal Base) {
   return UnknownVal();
@@ -421,6 +421,14 @@ Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
 
     // Other types of local variables are not handled yet.
   }
+  return store;
+}
+
+Store RegionStoreManager::BindCompoundLiteral(Store store, 
+                                              const CompoundLiteralExpr* CL, 
+                                              SVal V) {
+  CompoundLiteralRegion* R = MRMgr.getCompoundLiteralRegion(CL);
+  store = Bind(store, loc::MemRegionVal(R), V);
   return store;
 }
 

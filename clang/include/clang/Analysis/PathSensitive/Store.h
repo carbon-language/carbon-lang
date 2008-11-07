@@ -52,9 +52,8 @@ public:
   ///  in 'store' plus the bindings for the CompoundLiteral.  'R' is the region
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
-  virtual Store BindCompoundLiteral(Store store, const CompoundLiteralRegion* R,
-                                    const SVal* BegInit,
-                                    const SVal* EndInit) = 0;
+  virtual Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL,
+                                    SVal V) = 0;
   
   virtual Store getInitialStore() = 0;
   virtual MemRegionManager& getRegionManager() = 0;
@@ -62,6 +61,9 @@ public:
   virtual SVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;
 
   virtual SVal getLValueString(const GRState* St, const StringLiteral* S) = 0;
+
+  virtual SVal getLValueCompoundLiteral(const GRState* St, 
+                                        const CompoundLiteralExpr* CL) = 0;
   
   virtual SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
                              SVal Base) = 0;

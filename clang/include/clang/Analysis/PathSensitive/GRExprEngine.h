@@ -505,7 +505,7 @@ protected:
   
   /// VisitCompoundLiteralExpr - Transfer function logic for compound literals.
   void VisitCompoundLiteralExpr(CompoundLiteralExpr* CL, NodeTy* Pred,
-                                NodeSet& Dst);
+                                NodeSet& Dst, bool asLValue);
   
   /// VisitDeclRefExpr - Transfer function logic for DeclRefExprs.
   void VisitDeclRefExpr(DeclRefExpr* DR, NodeTy* Pred, NodeSet& Dst,

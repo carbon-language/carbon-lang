@@ -96,11 +96,10 @@ const GRState* GRStateManager::BindDecl(const GRState* St, const VarDecl* VD,
 ///  array of initializer values.
 const GRState*
 GRStateManager::BindCompoundLiteral(const GRState* state,
-                                    const CompoundLiteralRegion* R,
-                                    const SVal* BegInit, const SVal* EndInit) {
+                                    const CompoundLiteralExpr* CL, SVal ILV) {
 
   Store oldStore = state->getStore();
-  Store newStore = StoreMgr->BindCompoundLiteral(oldStore, R, BegInit, EndInit);
+  Store newStore = StoreMgr->BindCompoundLiteral(oldStore, CL, ILV);
   
   if (newStore == oldStore)
     return state;

@@ -46,13 +46,15 @@ public:
     return loc::MemRegionVal(MRMgr.getVarRegion(VD));
   }
   
-  Store BindCompoundLiteral(Store store, const CompoundLiteralRegion* R,
-                            const SVal* BegInit, const SVal* EndInit) {
+  Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL,
+                            SVal V) {
     return store;
   }
   
   SVal getLValueVar(const GRState* St, const VarDecl* VD);
   SVal getLValueString(const GRState* St, const StringLiteral* S);
+  SVal getLValueCompoundLiteral(const GRState* St, 
+                                const CompoundLiteralExpr* CL);
   SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
   SVal getLValueField(const GRState* St, SVal Base, const FieldDecl* D);  
   SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
@@ -99,7 +101,12 @@ SVal BasicStoreManager::getLValueString(const GRState* St,
                                         const StringLiteral* S) {
   return loc::MemRegionVal(MRMgr.getStringRegion(S));
 }
-  
+
+SVal BasicStoreManager::getLValueCompoundLiteral(const GRState* St,
+                                                 const CompoundLiteralExpr* CL){
+  return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL));
+}
+
 SVal BasicStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
                                       SVal Base) {
   return UnknownVal();
