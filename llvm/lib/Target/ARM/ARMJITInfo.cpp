@@ -170,9 +170,14 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
 
 intptr_t ARMJITInfo::resolveRelocDestAddr(MachineRelocation *MR) const {
   ARM::RelocationType RT = (ARM::RelocationType)MR->getRelocationType();
-  if (RT == ARM::reloc_arm_jt_base)
+  if (RT == ARM::reloc_arm_pic_jt)
+    // Destination address - jump table base.
+    return (intptr_t)(MR->getResultPointer()) - MR->getConstantVal();
+  else if (RT == ARM::reloc_arm_jt_base)
+    // Jump table base address.
     return getJumpTableBaseAddr(MR->getJumpTableIndex());
   else if (RT == ARM::reloc_arm_cp_entry)
+    // Constant pool entry address.
     return getConstantPoolEntryAddr(MR->getConstantPoolIndex());
   else if (RT == ARM::reloc_arm_machine_cp_entry) {
     const MachineConstantPoolEntry &MCPE = (*MCPEs)[MR->getConstantVal()];
@@ -196,8 +201,6 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
                           unsigned NumRelocs, unsigned char* GOTBase) {
   for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
     void *RelocPos = (char*)Function + MR->getMachineCodeOffset();
-    // If this is a constpool relocation, get the address of the
-    // constpool_entry instruction.
     intptr_t ResultPtr = resolveRelocDestAddr(MR);
     switch ((ARM::RelocationType)MR->getRelocationType()) {
     case ARM::reloc_arm_cp_entry:
@@ -220,6 +223,7 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
       *((unsigned*)RelocPos) |= 0xF << 16;
       break;
     }
+    case ARM::reloc_arm_pic_jt:
     case ARM::reloc_arm_machine_cp_entry:
     case ARM::reloc_arm_absolute: {
       // These addresses have already been resolved.
@@ -241,12 +245,6 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
     case ARM::reloc_arm_jt_base: {
       // JT base - (instruction addr + 8)
       ResultPtr = ResultPtr - (intptr_t)RelocPos - 8;
-      *((unsigned*)RelocPos) |= ResultPtr;
-      break;
-    }
-    case ARM::reloc_arm_pic_jt: {
-      // PIC JT entry is destination - JT base.
-      ResultPtr = ResultPtr - (intptr_t)RelocPos;
       *((unsigned*)RelocPos) |= ResultPtr;
       break;
     }

@@ -96,6 +96,7 @@ namespace {
                              const TargetInstrDesc &TID) const;
 
     void emitDataProcessingInstruction(const MachineInstr &MI,
+                                       unsigned ImplicitRd = 0,
                                        unsigned ImplicitRn = 0);
 
     void emitLoadStoreInstruction(const MachineInstr &MI,
@@ -115,7 +116,7 @@ namespace {
 
     void emitBranchInstruction(const MachineInstr &MI);
 
-    void emitInlineJumpTable(unsigned JTIndex, intptr_t JTBase);
+    void emitInlineJumpTable(unsigned JTIndex);
 
     void emitMiscBranchInstruction(const MachineInstr &MI);
 
@@ -137,16 +138,14 @@ namespace {
     unsigned getShiftOp(unsigned Imm) const ;
 
     /// Routines that handle operands which add machine relocations which are
-    /// fixed up by the JIT fixup stage.
+    /// fixed up by the relocation stage.
     void emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
-                           bool NeedStub);
+                           bool NeedStub, unsigned CPIdx = 0);
     void emitExternalSymbolAddress(const char *ES, unsigned Reloc);
-    void emitConstPoolAddress(unsigned CPI, unsigned Reloc,
-                              int Disp = 0, unsigned PCAdj = 0 );
-    void emitJumpTableAddress(unsigned JTIndex, unsigned Reloc,
-                              unsigned PCAdj = 0);
-    void emitGlobalConstant(const Constant *CV);
-    void emitMachineBasicBlock(MachineBasicBlock *BB, unsigned Reloc);
+    void emitConstPoolAddress(unsigned CPI, unsigned Reloc);
+    void emitJumpTableAddress(unsigned JTIndex, unsigned Reloc);
+    void emitMachineBasicBlock(MachineBasicBlock *BB, unsigned Reloc,
+                               intptr_t JTBase = 0);
   };
   char ARMCodeEmitter::ID = 0;
 }
@@ -227,9 +226,10 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 /// emitGlobalAddress - Emit the specified address to the code stream.
 ///
 void ARMCodeEmitter::emitGlobalAddress(GlobalValue *GV,
-                                       unsigned Reloc, bool NeedStub) {
+                                       unsigned Reloc, bool NeedStub,
+                                       unsigned CPIdx) {
   MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
-                                             Reloc, GV, 0, NeedStub));
+                                             Reloc, GV, CPIdx, NeedStub));
 }
 
 /// emitExternalSymbolAddress - Arrange for the address of an external symbol to
@@ -243,28 +243,25 @@ void ARMCodeEmitter::emitExternalSymbolAddress(const char *ES, unsigned Reloc) {
 /// emitConstPoolAddress - Arrange for the address of an constant pool
 /// to be emitted to the current location in the function, and allow it to be PC
 /// relative.
-void ARMCodeEmitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc,
-                                          int Disp /* = 0 */,
-                                          unsigned PCAdj /* = 0 */) {
+void ARMCodeEmitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc) {
   // Tell JIT emitter we'll resolve the address.
   MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
-                                                    Reloc, CPI, PCAdj, true));
+                                                    Reloc, CPI, 0, true));
 }
 
 /// emitJumpTableAddress - Arrange for the address of a jump table to
 /// be emitted to the current location in the function, and allow it to be PC
 /// relative.
-void ARMCodeEmitter::emitJumpTableAddress(unsigned JTIndex, unsigned Reloc,
-                                          unsigned PCAdj /* = 0 */) {
+void ARMCodeEmitter::emitJumpTableAddress(unsigned JTIndex, unsigned Reloc) {
   MCE.addRelocation(MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
-                                                  Reloc, JTIndex, PCAdj, true));
+                                                    Reloc, JTIndex, 0, true));
 }
 
 /// emitMachineBasicBlock - Emit the specified address basic block.
 void ARMCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB,
-                                           unsigned Reloc) {
+                                           unsigned Reloc, intptr_t JTBase) {
   MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
-                                             Reloc, BB));
+                                             Reloc, BB, JTBase));
 }
 
 void ARMCodeEmitter::emitWordLE(unsigned Binary) {
@@ -321,8 +318,8 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
 }
 
 void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
-  unsigned CPI = MI.getOperand(0).getImm();
-  unsigned CPIndex = MI.getOperand(1).getIndex();
+  unsigned CPI = MI.getOperand(0).getImm();       // CP instruction index.
+  unsigned CPIndex = MI.getOperand(1).getIndex(); // Actual cp entry index.
   const MachineConstantPoolEntry &MCPE = (*MCPEs)[CPIndex];
   
   // Remember the CONSTPOOL_ENTRY address for later relocation.
@@ -335,14 +332,12 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
       static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
 
     DOUT << "  ** ARM constant pool #" << CPI << " @ "
-         << (void*)MCE.getCurrentPCValue() << " " << *ACPV << "\n";
+         << (void*)MCE.getCurrentPCValue() << " " << *ACPV << '\n';
 
     GlobalValue *GV = ACPV->getGV();
     if (GV) {
       assert(!ACPV->isStub() && "Don't know how to deal this yet!");
-      MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
-                                                ARM::reloc_arm_machine_cp_entry,
-                                                GV, CPIndex, false));
+      emitGlobalAddress(GV, ARM::reloc_arm_machine_cp_entry, false, CPIndex);
      } else  {
       assert(!ACPV->isNonLazyPointer() && "Don't know how to deal this yet!");
       emitExternalSymbolAddress(ACPV->getSymbol(), ARM::reloc_arm_absolute);
@@ -352,7 +347,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
     Constant *CV = MCPE.Val.ConstVal;
 
     DOUT << "  ** Constant pool #" << CPI << " @ "
-         << (void*)MCE.getCurrentPCValue() << " " << *CV << "\n";
+         << (void*)MCE.getCurrentPCValue() << " " << *CV << '\n';
 
     if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
       emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
@@ -454,7 +449,7 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
     // Remember of the address of the PC label for relocation later.
     addPCLabel(MI.getOperand(2).getImm());
     // PICADD is just an add instruction that implicitly read pc.
-    emitDataProcessingInstruction(MI, ARM::PC);
+    emitDataProcessingInstruction(MI, 0, ARM::PC);
     break;
   }
   case ARM::PICLDR:
@@ -568,6 +563,7 @@ unsigned ARMCodeEmitter::getAddrModeSBit(const MachineInstr &MI,
 }
 
 void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
+                                                   unsigned ImplicitRd,
                                                    unsigned ImplicitRn) {
   const TargetInstrDesc &TID = MI.getDesc();
 
@@ -583,10 +579,12 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
   // Encode register def if there is one.
   unsigned NumDefs = TID.getNumDefs();
   unsigned OpIdx = 0;
-  if (NumDefs) {
-    Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRdShift;
-    ++OpIdx;
-  }
+  if (NumDefs)
+    Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdShift;
+  else if (ImplicitRd)
+    // Special handling for implicit use (e.g. PC).
+    Binary |= (ARMRegisterInfo::getRegisterNumbering(ImplicitRd)
+               << ARMII::RegRdShift);
 
   // If this is a two-address operand, skip it. e.g. MOVCCr operand 1.
   if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
@@ -904,17 +902,18 @@ void ARMCodeEmitter::emitBranchInstruction(const MachineInstr &MI) {
   emitWordLE(Binary);
 }
 
-void ARMCodeEmitter::emitInlineJumpTable(unsigned JTIndex, intptr_t JTBase) {
+void ARMCodeEmitter::emitInlineJumpTable(unsigned JTIndex) {
   // Remember the base address of the inline jump table.
-  JTI->addJumpTableBaseAddr(JTIndex, MCE.getCurrentPCValue());
+  intptr_t JTBase = MCE.getCurrentPCValue();
+  JTI->addJumpTableBaseAddr(JTIndex, JTBase);
+  DOUT << "  ** Jump Table #" << JTIndex << " @ " << (void*)JTBase << '\n';
 
   // Now emit the jump table entries.
   const std::vector<MachineBasicBlock*> &MBBs = (*MJTEs)[JTIndex].MBBs;
   for (unsigned i = 0, e = MBBs.size(); i != e; ++i) {
     if (IsPIC)
       // DestBB address - JT base.
-      MCE.addRelocation(MachineRelocation::getBB(JTBase, ARM::reloc_arm_pic_jt,
-                                                 MBBs[i]));
+      emitMachineBasicBlock(MBBs[i], ARM::reloc_arm_pic_jt, JTBase);
     else
       // Absolute DestBB address.
       emitMachineBasicBlock(MBBs[i], ARM::reloc_arm_absolute);
@@ -924,17 +923,23 @@ void ARMCodeEmitter::emitInlineJumpTable(unsigned JTIndex, intptr_t JTBase) {
 
 void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
-  if (TID.Opcode == ARM::BX ||
-      TID.Opcode == ARM::BR_JTr ||
-      TID.Opcode == ARM::BR_JTadd)
-    abort(); // FIXME
 
-  if (TID.Opcode == ARM::BR_JTm) {
+  // Handle jump tables.
+  if (TID.Opcode == ARM::BR_JTr || TID.Opcode == ARM::BR_JTadd) {
+    // First emit a ldr pc, [] instruction.
+    emitDataProcessingInstruction(MI, ARM::PC);
+
+    // Then emit the inline jump table.
+    unsigned JTIndex = (TID.Opcode == ARM::BR_JTr)
+      ? MI.getOperand(1).getIndex() : MI.getOperand(2).getIndex();
+    emitInlineJumpTable(JTIndex);
+    return;
+  } else if (TID.Opcode == ARM::BR_JTm) {
     // First emit a ldr pc, [] instruction.
     emitLoadStoreInstruction(MI, ARM::PC);
 
     // Then emit the inline jump table.
-    emitInlineJumpTable(MI.getOperand(3).getIndex(), MCE.getCurrentPCOffset());
+    emitInlineJumpTable(MI.getOperand(3).getIndex());
     return;
   }
 
