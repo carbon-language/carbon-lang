@@ -696,12 +696,25 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo) {
   assert(OpNo == 1 && "only know how to promote condition");
   SDValue Cond = GetPromotedInteger(N->getOperand(1));  // Promote condition.
 
-  // The top bits of the promoted condition are not necessarily zero, ensure
-  // that the value is properly zero extended.
-  unsigned BitWidth = Cond.getValueSizeInBits();
-  if (!DAG.MaskedValueIsZero(Cond,
-                             APInt::getHighBitsSet(BitWidth, BitWidth-1)))
-    Cond = DAG.getZeroExtendInReg(Cond, MVT::i1);
+  // Make sure the extra bits coming from type promotion conform to
+  // getSetCCResultContents.
+  unsigned CondBits = Cond.getValueSizeInBits();
+  switch (TLI.getSetCCResultContents()) {
+  default:
+    assert(false && "Unknown SetCCResultValue!");
+  case TargetLowering::UndefinedSetCCResult:
+    // The promoted value, which may contain rubbish in the upper bits, is fine.
+    break;
+  case TargetLowering::ZeroOrOneSetCCResult:
+    if (!DAG.MaskedValueIsZero(Cond,APInt::getHighBitsSet(CondBits,CondBits-1)))
+      Cond = DAG.getZeroExtendInReg(Cond, MVT::i1);
+    break;
+  case TargetLowering::ZeroOrNegativeOneSetCCResult:
+    if (DAG.ComputeNumSignBits(Cond) != CondBits)
+      Cond = DAG.getNode(ISD::SIGN_EXTEND_INREG, Cond.getValueType(), Cond,
+                         DAG.getValueType(MVT::i1));
+    break;
+  }
 
   // The chain (Op#0) and basic block destination (Op#2) are always legal types.
   return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0), Cond,

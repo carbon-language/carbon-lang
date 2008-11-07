@@ -468,10 +468,11 @@ namespace ISD {
     // BR_JT - Jumptable branch. The first operand is the chain, the second
     // is the jumptable index, the last one is the jumptable entry index.
     BR_JT,
-    
-    // BRCOND - Conditional branch.  The first operand is the chain,
-    // the second is the condition, the third is the block to branch
-    // to if the condition is true.
+
+    // BRCOND - Conditional branch.  The first operand is the chain, the
+    // second is the condition, the third is the block to branch to if the
+    // condition is true.  If the type of the condition is not i1, then the
+    // high bits must conform to getSetCCResultContents.
     BRCOND,
 
     // BR_CC - Conditional branch.  The behavior is like that of SELECT_CC, in
