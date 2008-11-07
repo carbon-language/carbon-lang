@@ -893,7 +893,20 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
     }
   }
 
-  // FIXME: Implement support for user-defined conversion operators.
+  if (const CXXRecordType *FromRecordType
+        = dyn_cast_or_null<CXXRecordType>(From->getType()->getAsRecordType())) {
+    // Add all of the conversion functions as candidates.
+    // FIXME: Look for conversions in base classes!
+    CXXRecordDecl *FromRecordDecl = FromRecordType->getDecl();
+    OverloadedFunctionDecl *Conversions 
+      = FromRecordDecl->getConversionFunctions();
+    for (OverloadedFunctionDecl::function_iterator Func 
+           = Conversions->function_begin();
+         Func != Conversions->function_end(); ++Func) {
+      CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+      AddConversionCandidate(Conv, From, ToType, CandidateSet);
+    }
+  }
 
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Best)) {
@@ -917,9 +930,30 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
           = ThisType->getAsPointerType()->getPointeeType().getAsOpaquePtr();
         User.After.ToTypePtr = ToType.getAsOpaquePtr();
         return true;
+      } else if (CXXConversionDecl *Conversion
+                   = dyn_cast<CXXConversionDecl>(Best->Function)) {
+        // C++ [over.ics.user]p1:
+        //
+        //   [...] If the user-defined conversion is specified by a
+        //   conversion function (12.3.2), the initial standard
+        //   conversion sequence converts the source type to the
+        //   implicit object parameter of the conversion function.
+        User.Before = Best->Conversions[0].Standard;
+        User.ConversionFunction = Conversion;
+        
+        // C++ [over.ics.user]p2: 
+        //   The second standard conversion sequence converts the
+        //   result of the user-defined conversion to the target type
+        //   for the sequence. Since an implicit conversion sequence
+        //   is an initialization, the special rules for
+        //   initialization by user-defined conversion apply when
+        //   selecting the best user-defined conversion for a
+        //   user-defined conversion sequence (see 13.3.3 and
+        //   13.3.3.1).
+        User.After = Best->FinalConversion;
+        return true;
       } else {
-        assert(false && 
-               "Cannot perform user-defined conversion via a conversion operator");
+        assert(false && "Not a constructor or conversion function?");
         return false;
       }
       
@@ -1378,6 +1412,8 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   const FunctionTypeProto* Proto 
     = dyn_cast<FunctionTypeProto>(Function->getType()->getAsFunctionType());
   assert(Proto && "Functions without a prototype cannot be overloaded");
+  assert(!isa<CXXConversionDecl>(Function) && 
+         "Use AddConversionCandidate for conversion functions");
 
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
@@ -1430,6 +1466,76 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       Candidate.Conversions[ArgIdx].ConversionKind 
         = ImplicitConversionSequence::EllipsisConversion;
     }
+  }
+}
+
+/// AddConversionCandidate - Add a C++ conversion function as a
+/// candidate in the candidate set (C++ [over.match.conv], 
+/// C++ [over.match.copy]). From is the expression we're converting from,
+/// and ToType is the type that we're eventually trying to convert to 
+/// (which may or may not be the same type as the type that the
+/// conversion function produces).
+void
+Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
+                             Expr *From, QualType ToType,
+                             OverloadCandidateSet& CandidateSet) {
+  // Add this candidate
+  CandidateSet.push_back(OverloadCandidate());
+  OverloadCandidate& Candidate = CandidateSet.back();
+  Candidate.Function = Conversion;
+  Candidate.FinalConversion.setAsIdentityConversion();
+  Candidate.FinalConversion.FromTypePtr 
+    = Conversion->getConversionType().getAsOpaquePtr();
+  Candidate.FinalConversion.ToTypePtr = ToType.getAsOpaquePtr();
+
+  // Determine the implicit conversion sequences for each of the
+  // arguments.
+  Candidate.Viable = true;
+  Candidate.Conversions.resize(1);
+
+  // FIXME: We need to follow the rules for the implicit object
+  // parameter.
+  QualType ImplicitObjectType 
+    = Context.getTypeDeclType(Conversion->getParent());
+  ImplicitObjectType 
+    = ImplicitObjectType.getQualifiedType(Conversion->getTypeQualifiers());
+  ImplicitObjectType = Context.getReferenceType(ImplicitObjectType);
+  Candidate.Conversions[0] = TryCopyInitialization(From, ImplicitObjectType, 
+                                                   true);
+  if (Candidate.Conversions[0].ConversionKind 
+      == ImplicitConversionSequence::BadConversion) {
+    Candidate.Viable = false;
+    return;
+  }
+
+  // To determine what the conversion from the result of calling the
+  // conversion function to the type we're eventually trying to
+  // convert to (ToType), we need to synthesize a call to the
+  // conversion function and attempt copy initialization from it. This
+  // makes sure that we get the right semantics with respect to
+  // lvalues/rvalues and the type. Fortunately, we can allocate this
+  // call on the stack and we don't need its arguments to be
+  // well-formed.
+  DeclRefExpr ConversionRef(Conversion, Conversion->getType(), 
+                            SourceLocation());
+  ImplicitCastExpr ConversionFn(Context.getPointerType(Conversion->getType()),
+                                &ConversionRef);
+  CallExpr Call(&ConversionFn, 0, 0, 
+                Conversion->getConversionType().getNonReferenceType(),
+                SourceLocation());
+  ImplicitConversionSequence ICS = TryCopyInitialization(&Call, ToType, true);
+  switch (ICS.ConversionKind) {
+  case ImplicitConversionSequence::StandardConversion:
+    Candidate.FinalConversion = ICS.Standard;
+    break;
+
+  case ImplicitConversionSequence::BadConversion:
+    Candidate.Viable = false;
+    break;
+
+  default:
+    assert(false && 
+           "Can only end up with a standard conversion sequence or failure");
   }
 }
 
@@ -1493,6 +1599,32 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
     return true;
 
   // FIXME: Several other bullets in (C++ 13.3.3p1) need to be implemented.
+
+  // C++ [over.match.best]p1b4:
+  //
+  //   -- the context is an initialization by user-defined conversion
+  //      (see 8.5, 13.3.1.5) and the standard conversion sequence
+  //      from the return type of F1 to the destination type (i.e.,
+  //      the type of the entity being initialized) is a better
+  //      conversion sequence than the standard conversion sequence
+  //      from the return type of F2 to the destination type.
+  if (isa<CXXConversionDecl>(Cand1.Function) && 
+      isa<CXXConversionDecl>(Cand2.Function)) {
+    switch (CompareStandardConversionSequences(Cand1.FinalConversion,
+                                               Cand2.FinalConversion)) {
+    case ImplicitConversionSequence::Better:
+      // Cand1 has a better conversion sequence.
+      return true;
+
+    case ImplicitConversionSequence::Worse:
+      // Cand1 can't be better than Cand2.
+      return false;
+
+    case ImplicitConversionSequence::Indistinguishable:
+      // Do nothing
+      break;
+    }
+  }
 
   return false;
 }

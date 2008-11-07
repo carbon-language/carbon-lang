@@ -207,6 +207,12 @@ namespace clang {
 
     /// Viable - True to indicate that this overload candidate is viable.
     bool Viable;
+
+    /// FinalConversion - For a conversion function (where Function is
+    /// a CXXConversionDecl), the standard conversion that occurs
+    /// after the call to the overload candidate to convert the result
+    /// of calling the conversion function to the required type.
+    StandardConversionSequence FinalConversion;
   };
 
   /// OverloadCandidateSet - A set of overload candidates, used in C++

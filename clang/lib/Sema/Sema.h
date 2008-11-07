@@ -417,6 +417,9 @@ private:
                             Expr **Args, unsigned NumArgs,
                             OverloadCandidateSet& CandidateSet,
                             bool SuppressUserConversions = false);
+  void AddConversionCandidate(CXXConversionDecl *Conversion,
+                              Expr *From, QualType ToType,
+                              OverloadCandidateSet& CandidateSet);
   void AddOverloadCandidates(const OverloadedFunctionDecl *Ovl, 
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet,
