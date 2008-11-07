@@ -587,28 +587,29 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
 
 static PPC::Predicate getPredicateForSetCC(ISD::CondCode CC) {
   switch (CC) {
-  default: assert(0 && "Unknown condition!"); abort();
-  case ISD::SETOEQ:    // FIXME: This is incorrect see PR642.
   case ISD::SETUEQ:
+  case ISD::SETONE:
+  case ISD::SETOLE:
+  case ISD::SETOGE:
+    assert(0 && "Should be lowered by legalize!");
+  default: assert(0 && "Unknown condition!"); abort();
+  case ISD::SETOEQ:
   case ISD::SETEQ:  return PPC::PRED_EQ;
-  case ISD::SETONE:    // FIXME: This is incorrect see PR642.
   case ISD::SETUNE:
   case ISD::SETNE:  return PPC::PRED_NE;
-  case ISD::SETOLT:    // FIXME: This is incorrect see PR642.
-  case ISD::SETULT:
+  case ISD::SETOLT:
   case ISD::SETLT:  return PPC::PRED_LT;
-  case ISD::SETOLE:    // FIXME: This is incorrect see PR642.
   case ISD::SETULE:
   case ISD::SETLE:  return PPC::PRED_LE;
-  case ISD::SETOGT:    // FIXME: This is incorrect see PR642.
-  case ISD::SETUGT:
+  case ISD::SETOGT:
   case ISD::SETGT:  return PPC::PRED_GT;
-  case ISD::SETOGE:    // FIXME: This is incorrect see PR642.
   case ISD::SETUGE:
   case ISD::SETGE:  return PPC::PRED_GE;
-    
   case ISD::SETO:   return PPC::PRED_NU;
   case ISD::SETUO:  return PPC::PRED_UN;
+    // These two are invalid for floating point.  Assume we have int.
+  case ISD::SETULT: return PPC::PRED_LT;
+  case ISD::SETUGT: return PPC::PRED_GT;
   }
 }
 
@@ -637,12 +638,14 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert, int &Other) {
   case ISD::SETUNE:
   case ISD::SETNE:  Invert = true; return 2;   // !Bit #2 = SETUNE
   case ISD::SETO:   Invert = true; return 3;   // !Bit #3 = SETO
-  case ISD::SETULT: Other = 0; return 3;       // SETOLT | SETUO
-  case ISD::SETUGT: Other = 1; return 3;       // SETOGT | SETUO
-  case ISD::SETUEQ: Other = 2; return 3;       // SETOEQ | SETUO
-  case ISD::SETOGE: Other = 1; return 2;       // SETOGT | SETOEQ
-  case ISD::SETOLE: Other = 0; return 2;       // SETOLT | SETOEQ
-  case ISD::SETONE: Other = 0; return 1;       // SETOLT | SETOGT
+  case ISD::SETUEQ: 
+  case ISD::SETOGE: 
+  case ISD::SETOLE: 
+  case ISD::SETONE:
+    assert(0 && "Invalid branch code: should be expanded by legalize");
+  // These are invalid for floating point.  Assume integer.
+  case ISD::SETULT: return 0;
+  case ISD::SETUGT: return 1;
   }
   return 0;
 }

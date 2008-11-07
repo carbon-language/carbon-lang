@@ -209,6 +209,20 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   
+  // Comparisons that require checking two conditions.
+  setCondCodeAction(ISD::SETULT, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETULT, MVT::f64, Expand);
+  setCondCodeAction(ISD::SETUGT, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETUGT, MVT::f64, Expand);
+  setCondCodeAction(ISD::SETUEQ, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETUEQ, MVT::f64, Expand);
+  setCondCodeAction(ISD::SETOGE, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETOGE, MVT::f64, Expand);
+  setCondCodeAction(ISD::SETOLE, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETOLE, MVT::f64, Expand);
+  setCondCodeAction(ISD::SETONE, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETONE, MVT::f64, Expand);
+    
   if (TM.getSubtarget<PPCSubtarget>().has64BitSupport()) {
     // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);

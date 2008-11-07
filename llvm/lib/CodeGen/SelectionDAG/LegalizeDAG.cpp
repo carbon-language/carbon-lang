@@ -2008,7 +2008,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Tmp3 = Node->getOperand(3);              // RHS
     Tmp4 = Node->getOperand(1);              // CC
 
-    LegalizeSetCC(Node->getValueType(0), Tmp2, Tmp3, Tmp4);
+    LegalizeSetCC(TLI.getSetCCResultType(Tmp2), Tmp2, Tmp3, Tmp4);
     LastCALLSEQ_END = DAG.getEntryNode();
 
     // If we didn't get both a LHS and RHS back from LegalizeSetCC,
@@ -2910,7 +2910,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Tmp4 = LegalizeOp(Node->getOperand(3));   // False
     SDValue CC = Node->getOperand(4);
     
-    LegalizeSetCC(Node->getValueType(0), Tmp1, Tmp2, CC);
+    LegalizeSetCC(TLI.getSetCCResultType(Tmp1), Tmp1, Tmp2, CC);
     
     // If we didn't get both a LHS and RHS back from LegalizeSetCC,
     // the LHS is a legal SETCC itself.  In this case, we need to compare
