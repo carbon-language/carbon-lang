@@ -1639,6 +1639,10 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
 void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
   Decl *RealDecl = static_cast<Decl *>(dcl);
 
+  // If there is no declaration, there was an error parsing it. Just ignore it.
+  if (RealDecl == 0)
+    return;
+
   if (VarDecl *Var = dyn_cast<VarDecl>(RealDecl)) {
     QualType Type = Var->getType();
     // C++ [dcl.init.ref]p3:

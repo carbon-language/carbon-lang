@@ -16,6 +16,7 @@ int *h = &x;
 int test() {
 int a[10];
 int b[10] = a; // expected-error {{initialization with "{...}" expected}}
+int +; // expected-error {{expected identifier or '('}} expected-error {{declarator requires an identifier}} expected-error {{parse error}}
 }
 
 
