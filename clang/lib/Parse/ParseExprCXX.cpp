@@ -292,6 +292,32 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
   DS.Finish(Diags, PP.getSourceManager(), getLang());
 }
 
+/// ParseCXXTypeSpecifierSeq - Parse a C++ type-specifier-seq (C++
+/// [dcl.name]), which is a non-empty sequence of type-specifiers,
+/// e.g., "const short int". Note that the DeclSpec is *not* finished
+/// by parsing the type-specifier-seq, because these sequences are
+/// typically followed by some form of declarator. Returns true and
+/// emits diagnostics if this is not a type-specifier-seq, false
+/// otherwise.
+///
+///   type-specifier-seq: [C++ 8.1]
+///     type-specifier type-specifier-seq[opt]
+///
+bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
+  DS.SetRangeStart(Tok.getLocation());
+  const char *PrevSpec = 0;
+  int isInvalid = 0;
+
+  // Parse one or more of the type specifiers.
+  if (!MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec)) {
+    Diag(Tok.getLocation(), diag::err_operator_missing_type_specifier);
+    return true;
+  }
+  while (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec));
+
+  return false;
+}
+
 /// MaybeParseOperatorFunctionId - Attempts to parse a C++ overloaded
 /// operator name (C++ [over.oper]). If successful, returns the
 /// predefined identifier that corresponds to that overloaded
@@ -364,4 +390,39 @@ IdentifierInfo *Parser::MaybeParseOperatorFunctionId() {
     ConsumeAnyToken(); // the operator itself
     return &PP.getIdentifierTable().getOverloadedOperator(Op);
   }
+}
+
+/// ParseConversionFunctionId - Parse a C++ conversion-function-id,
+/// which expresses the name of a user-defined conversion operator
+/// (C++ [class.conv.fct]p1). Returns the type that this operator is
+/// specifying a conversion for, or NULL if there was an error.
+///
+///        conversion-function-id: [C++ 12.3.2]
+///                   operator conversion-type-id
+///
+///        conversion-type-id:
+///                   type-specifier-seq conversion-declarator[opt]
+///
+///        conversion-declarator:
+///                   ptr-operator conversion-declarator[opt]
+Parser::TypeTy *Parser::ParseConversionFunctionId() {
+  assert(Tok.is(tok::kw_operator) && "Expected 'operator' keyword");
+  ConsumeToken(); // 'operator'
+
+  // Parse the type-specifier-seq.
+  DeclSpec DS;
+  if (ParseCXXTypeSpecifierSeq(DS))
+    return 0;
+
+  // Parse the conversion-declarator, which is merely a sequence of
+  // ptr-operators.
+  Declarator D(DS, Declarator::TypeNameContext);
+  ParseDeclaratorInternal(D, /*PtrOperator=*/true);
+
+  // Finish up the type.
+  Action::TypeResult Result = Actions.ActOnTypeName(CurScope, D);
+  if (Result.isInvalid)
+    return 0;
+  else
+    return Result.Val;
 }

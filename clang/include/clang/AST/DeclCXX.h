@@ -21,6 +21,7 @@ namespace clang {
 class CXXRecordDecl;
 class CXXConstructorDecl;
 class CXXDestructorDecl;
+class CXXConversionDecl;
 
 /// OverloadedFunctionDecl - An instance of this class represents a
 /// set of overloaded functions. All of the functions have the same
@@ -53,8 +54,9 @@ public:
   void addOverload(FunctionDecl *FD) {
     assert((!getNumFunctions() || (FD->getDeclContext() == getDeclContext())) &&
            "Overloaded functions must all be in the same context");
-    assert(FD->getIdentifier() == getIdentifier() &&
-           "Overloaded functions must have the same name.");
+    assert((FD->getIdentifier() == getIdentifier() ||
+            isa<CXXConversionDecl>(FD)) &&
+           "Overloaded functions must have the same name or be conversions.");
     Functions.push_back(FD);
   }
 
@@ -238,12 +240,18 @@ class CXXRecordDecl : public RecordDecl, public DeclContext {
   // Destructor - The destructor of this C++ class.
   CXXDestructorDecl *Destructor;
 
+  /// Conversions - Overload set containing the conversion functions
+  /// of this C++ class (but not its inherited conversion
+  /// functions). Each of the entries in this overload set is a
+  /// CXXConversionDecl.
+  OverloadedFunctionDecl Conversions;
+
   CXXRecordDecl(TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id) 
     : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord),
       UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
       Aggregate(true), Polymorphic(false), Bases(0), NumBases(0),
-      Constructors(DC, Id), Destructor(0) { }
+      Constructors(DC, Id), Destructor(0), Conversions(DC, Id) { }
 
   ~CXXRecordDecl();
 
@@ -320,6 +328,19 @@ public:
     assert(!this->Destructor && "Already have a destructor!");
     this->Destructor = Destructor;
   }
+
+  /// getConversions - Retrieve the overload set containing all of the
+  /// conversion functions in this class.
+  OverloadedFunctionDecl *getConversionFunctions() { 
+    return &Conversions; 
+  }
+  const OverloadedFunctionDecl *getConversionFunctions() const { 
+    return &Conversions; 
+  }
+
+  /// addConversionFunction - Add a new conversion function to the
+  /// list of conversion functions.
+  void addConversionFunction(ASTContext &Context, CXXConversionDecl *ConvDecl);
 
   /// isAggregate - Whether this class is an aggregate (C++
   /// [dcl.init.aggr]), which is a class with no user-declared
@@ -418,7 +439,7 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 
-    return D->getKind() >= CXXMethod && D->getKind() <= CXXConstructor;
+    return D->getKind() >= CXXMethod && D->getKind() <= CXXConversion;
   }
   static bool classof(const CXXMethodDecl *D) { return true; }
 
@@ -718,6 +739,60 @@ public:
   /// CreateImpl - Deserialize a CXXDestructorDecl.  Called by Decl::Create.
   // FIXME: Implement this.
   static CXXDestructorDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// CXXConversionDecl - Represents a C++ conversion function within a
+/// class. For example:
+/// 
+/// @code
+/// class X {
+/// public:
+///   operator bool();
+/// };
+/// @endcode
+class CXXConversionDecl : public CXXMethodDecl {
+  /// Explicit - Whether this conversion function is marked
+  /// "explicit", meaning that it can only be applied when the user
+  /// explicitly wrote a cast. This is a C++0x feature.
+  bool Explicit : 1;
+
+  CXXConversionDecl(CXXRecordDecl *RD, SourceLocation L,
+                    IdentifierInfo *Id, QualType T, 
+                    bool isInline, bool isExplicit)
+    : CXXMethodDecl(CXXConversion, RD, L, Id, T, false, isInline, 
+                    /*PrevDecl=*/0),
+      Explicit(isExplicit) { }
+
+public:
+  static CXXConversionDecl *Create(ASTContext &C, CXXRecordDecl *RD,
+                                   SourceLocation L, IdentifierInfo *Id,
+                                   QualType T, bool isInline, 
+                                   bool isExplicit);
+
+  /// isExplicit - Whether this is an explicit conversion operator
+  /// (C++0x only). Explicit conversion operators are only considered
+  /// when the user has explicitly written a cast.
+  bool isExplicit() const { return Explicit; }
+
+  /// getConversionType - Returns the type that this conversion
+  /// function is converting to.
+  QualType getConversionType() const { 
+    return getType()->getAsFunctionType()->getResultType(); 
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { 
+    return D->getKind() == CXXConversion;
+  }
+  static bool classof(const CXXConversionDecl *D) { return true; }
+
+  /// EmitImpl - Serialize this CXXConversionDecl.  Called by Decl::Emit.
+  // FIXME: Implement this.
+  //virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize a CXXConversionDecl.  Called by Decl::Create.
+  // FIXME: Implement this.
+  static CXXConversionDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXClassVarDecl - Represents a static data member of a struct/union/class.

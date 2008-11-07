@@ -475,6 +475,8 @@ private:
   /// simple-type-specifier.
   void ParseCXXSimpleTypeSpecifier(DeclSpec &DS);
 
+  bool ParseCXXTypeSpecifierSeq(DeclSpec &DS);
+
   //===--------------------------------------------------------------------===//
   // C++ if/switch/while/for condition expression.
   ExprResult ParseCXXCondition();
@@ -701,7 +703,7 @@ private:
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);
-  void ParseDeclaratorInternal(Declarator &D);
+  void ParseDeclaratorInternal(Declarator &D, bool PtrOperator = false);
   void ParseTypeQualifierListOpt(DeclSpec &DS);
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
@@ -737,6 +739,7 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 13.5: Overloaded operators [over.oper]
   IdentifierInfo *MaybeParseOperatorFunctionId();
+  TypeTy *ParseConversionFunctionId();
 };
 
 }  // end namespace clang

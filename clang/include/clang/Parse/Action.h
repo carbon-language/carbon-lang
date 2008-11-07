@@ -42,9 +42,10 @@ namespace clang {
 /// the parser has just done or is about to do when the method is called.  They
 /// are not requests that the actions module do the specified action.
 ///
-/// All of the methods here are optional except isTypeName(), which must be
-/// specified in order for the parse to complete accurately.  The MinimalAction
-/// class does this bare-minimum of tracking to implement this functionality.
+/// All of the methods here are optional except isTypeName() and
+/// isCurrentClassName(), which must be specified in order for the
+/// parse to complete accurately.  The MinimalAction class does this
+/// bare-minimum of tracking to implement this functionality.
 class Action {
 public:
   /// Out-of-line virtual destructor to provide home for this class.
@@ -107,6 +108,14 @@ public:
   /// isCurrentClassName - Return true if the specified name is the
   /// name of the innermost C++ class type currently being defined.
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S) = 0;
+
+  /// getTypeAsString - Returns a string that describes the given
+  /// type. This callback is used in C++ to form identifiers for
+  /// special declarations that otherwise don't have simple names,
+  /// such as constructors, destructors, and conversion functions.
+  virtual std::string getTypeAsString(TypeTy *Type) {
+    return "<unknown type>";
+  }
 
   /// ActOnDeclarator - This callback is invoked when a declarator is parsed and
   /// 'Init' specifies the initializer if any.  This is for things like:

@@ -68,6 +68,7 @@ public:
                  CXXMethod,
                    CXXConstructor,
                    CXXDestructor,
+                   CXXConversion,
                Var,
                  ImplicitParam,
                  CXXClassVar,
@@ -91,7 +92,7 @@ public:
     TagFirst       = Enum         , TagLast       = CXXRecord,
     RecordFirst    = Record       , RecordLast    = CXXRecord,
     ValueFirst     = EnumConstant , ValueLast     = ParmVar,
-    FunctionFirst  = Function     , FunctionLast  = CXXDestructor,
+    FunctionFirst  = Function     , FunctionLast  = CXXConversion,
     VarFirst       = Var          , VarLast       = ParmVar
   };
 

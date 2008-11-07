@@ -48,6 +48,11 @@ void CXXRecordDecl::Destroy(ASTContext &C) {
   if (isDefinition())
     Destructor->Destroy(C);
 
+  for (OverloadedFunctionDecl::function_iterator func 
+         = Conversions.function_begin();
+       func != Conversions.function_end(); ++func)
+    (*func)->Destroy(C);
+
   RecordDecl::Destroy(C);
 }
 
@@ -99,6 +104,11 @@ CXXRecordDecl::addConstructor(ASTContext &Context,
   }
 
   Constructors.addOverload(ConDecl);
+}
+
+void CXXRecordDecl::addConversionFunction(ASTContext &Context, 
+                                          CXXConversionDecl *ConvDecl) {
+  Conversions.addOverload(ConvDecl);
 }
 
 CXXMethodDecl *
@@ -230,6 +240,14 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   void *Mem = C.getAllocator().Allocate<CXXDestructorDecl>();
   return new (Mem) CXXDestructorDecl(RD, L, Id, T, isInline, 
                                      isImplicitlyDeclared);
+}
+
+CXXConversionDecl *
+CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
+                          SourceLocation L, IdentifierInfo *Id,
+                          QualType T, bool isInline, bool isExplicit) {
+  void *Mem = C.getAllocator().Allocate<CXXConversionDecl>();
+  return new (Mem) CXXConversionDecl(RD, L, Id, T, isInline, isExplicit);
 }
 
 CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,

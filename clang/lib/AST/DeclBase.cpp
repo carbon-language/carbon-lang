@@ -239,6 +239,7 @@ void Decl::addDeclKind(Kind k) {
   case CXXMethod:
   case CXXConstructor:
   case CXXDestructor:
+  case CXXConversion:
   case CXXClassVar:
     break;
   }

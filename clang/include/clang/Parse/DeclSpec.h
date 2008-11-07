@@ -610,7 +610,9 @@ public:
     DK_Abstract,         // An abstract declarator (has no identifier)
     DK_Normal,           // A normal declarator (has an identifier). 
     DK_Constructor,      // A C++ constructor (identifier is the class name)
-    DK_Destructor        // A C++ destructor  (has no identifier)
+    DK_Destructor,       // A C++ destructor  (identifier is ~class name)
+    DK_Conversion        // A C++ conversion function (identifier is 
+                         // "operator " then the type name)
   };
 
 private:
@@ -639,8 +641,9 @@ private:
   /// AsmLabel - The asm label, if specified.
   Action::ExprTy *AsmLabel;
 
-  // When Kind is DK_Constructor or DK_Destructor, the type associated
-  // with the constructor or destructor.
+  // When Kind is DK_Constructor, DK_Destructor, or DK_Conversion, the
+  // type associated with the constructor, destructor, or conversion
+  // operator.
   Action::TypeTy *Type;
 
 public:
@@ -752,6 +755,16 @@ public:
     Identifier = ID;
     IdentifierLoc = Loc;
     Kind = DK_Destructor;
+    Type = Ty;
+  }
+
+  // SetConversionFunction - Set this declarator to be a C++
+  // conversion function declarator.
+  void SetConversionFunction(Action::TypeTy *Ty, IdentifierInfo *ID, 
+                             SourceLocation Loc) {
+    Identifier = ID;
+    IdentifierLoc = Loc;
+    Kind = DK_Conversion;
     Type = Ty;
   }
 

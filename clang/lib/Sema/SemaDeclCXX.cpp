@@ -1004,6 +1004,82 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
   return isInvalid;
 }
 
+/// CheckConversionDeclarator - Called by ActOnDeclarator to check the
+/// well-formednes of the conversion function declarator @p D with
+/// type @p R. If there are any errors in the declarator, this routine
+/// will emit diagnostics and return true. Otherwise, it will return
+/// false. Either way, the type @p R will be updated to reflect a
+/// well-formed type for the conversion operator.
+bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
+                                     FunctionDecl::StorageClass& SC) {
+  bool isInvalid = false;
+
+  // C++ [class.conv.fct]p1:
+  //   Neither parameter types nor return type can be specified. The
+  //   type of a conversion function (8.3.5) is “function taking no
+  //   parameter returning conversion-type-id.” 
+  if (SC == FunctionDecl::Static) {
+    Diag(D.getIdentifierLoc(),
+         diag::err_conv_function_not_member,
+         "static",
+         SourceRange(D.getDeclSpec().getStorageClassSpecLoc()),
+         SourceRange(D.getIdentifierLoc()));
+    isInvalid = true;
+    SC = FunctionDecl::None;
+  }
+  if (D.getDeclSpec().hasTypeSpecifier()) {
+    // Conversion functions don't have return types, but the parser will
+    // happily parse something like:
+    //
+    //   class X {
+    //     float operator bool();
+    //   };
+    //
+    // The return type will be changed later anyway.
+    Diag(D.getIdentifierLoc(),
+         diag::err_conv_function_return_type,
+         SourceRange(D.getDeclSpec().getTypeSpecTypeLoc()),
+         SourceRange(D.getIdentifierLoc()));
+  }
+
+  // Make sure we don't have any parameters.
+  if (R->getAsFunctionTypeProto()->getNumArgs() > 0) {
+    Diag(D.getIdentifierLoc(), diag::err_conv_function_with_params);
+
+    // Delete the parameters.
+    DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+    if (FTI.NumArgs) {
+      delete [] FTI.ArgInfo;
+      FTI.NumArgs = 0;
+      FTI.ArgInfo = 0;
+    }
+  }
+
+  // Make sure the conversion function isn't variadic.  
+  if (R->getAsFunctionTypeProto()->isVariadic())
+    Diag(D.getIdentifierLoc(), diag::err_conv_function_variadic);
+
+  // C++ [class.conv.fct]p4:
+  //   The conversion-type-id shall not represent a function type nor
+  //   an array type.
+  QualType ConvType = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
+  if (ConvType->isArrayType()) {
+    Diag(D.getIdentifierLoc(), diag::err_conv_function_to_array);
+    ConvType = Context.getPointerType(ConvType);
+  } else if (ConvType->isFunctionType()) {
+    Diag(D.getIdentifierLoc(), diag::err_conv_function_to_function);
+    ConvType = Context.getPointerType(ConvType);
+  }
+
+  // Rebuild the function type "R" without any parameters (in case any
+  // of the errors above fired) and with the conversion type as the
+  // return type. 
+  R = Context.getFunctionType(ConvType, 0, 0, false, 
+                              R->getAsFunctionTypeProto()->getTypeQuals());
+
+  return isInvalid;
+}
+
 /// ActOnConstructorDeclarator - Called by ActOnDeclarator to complete
 /// the declaration of the given C++ constructor ConDecl that was
 /// built from declarator D. This routine is responsible for checking
@@ -1090,6 +1166,65 @@ Sema::DeclTy *Sema::ActOnDestructorDeclarator(CXXDestructorDecl *Destructor) {
 
   ClassDecl->setDestructor(Destructor);
   return (DeclTy *)Destructor;
+}
+
+/// ActOnConversionDeclarator - Called by ActOnDeclarator to complete
+/// the declaration of the given C++ conversion function. This routine
+/// is responsible for recording the conversion function in the C++
+/// class, if possible.
+Sema::DeclTy *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
+  assert(Conversion && "Expected to receive a conversion function declaration");
+
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CurContext);
+
+  // Make sure we aren't redeclaring the conversion function.
+  QualType ConvType = Context.getCanonicalType(Conversion->getConversionType());
+  OverloadedFunctionDecl *Conversions = ClassDecl->getConversionFunctions();
+  for (OverloadedFunctionDecl::function_iterator Func 
+         = Conversions->function_begin();
+       Func != Conversions->function_end(); ++Func) {
+    CXXConversionDecl *OtherConv = cast<CXXConversionDecl>(*Func);
+    if (ConvType == Context.getCanonicalType(OtherConv->getConversionType())) {
+      Diag(Conversion->getLocation(), diag::err_conv_function_redeclared);
+      Diag(OtherConv->getLocation(),
+           OtherConv->isThisDeclarationADefinition()?
+              diag::err_previous_definition
+            : diag::err_previous_declaration);
+      Conversion->setInvalidDecl();
+      return (DeclTy *)Conversion;      
+    }
+  }
+
+  // C++ [class.conv.fct]p1:
+  //   [...] A conversion function is never used to convert a
+  //   (possibly cv-qualified) object to the (possibly cv-qualified)
+  //   same object type (or a reference to it), to a (possibly
+  //   cv-qualified) base class of that type (or a reference to it),
+  //   or to (possibly cv-qualified) void.
+  // FIXME: Suppress this warning if the conversion function ends up
+  // being a virtual function that overrides a virtual function in a 
+  // base class.
+  QualType ClassType 
+    = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
+  if (const ReferenceType *ConvTypeRef = ConvType->getAsReferenceType())
+    ConvType = ConvTypeRef->getPointeeType();
+  if (ConvType->isRecordType()) {
+    ConvType = Context.getCanonicalType(ConvType).getUnqualifiedType();
+    if (ConvType == ClassType)
+      Diag(Conversion->getLocation(), diag::warn_conv_to_self_not_used,
+           ClassType.getAsString());
+    else if (IsDerivedFrom(ClassType, ConvType))
+      Diag(Conversion->getLocation(), diag::warn_conv_to_base_not_used,
+           ClassType.getAsString(),
+           ConvType.getAsString());
+  } else if (ConvType->isVoidType()) {
+    Diag(Conversion->getLocation(), diag::warn_conv_to_void_not_used,
+         ClassType.getAsString(), ConvType.getAsString());
+  }
+
+  ClassDecl->addConversionFunction(Context, Conversion);
+
+  return (DeclTy *)Conversion;
 }
 
 //===----------------------------------------------------------------------===//

@@ -38,6 +38,11 @@ Sema::TypeTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
   return 0;
 }
 
+std::string Sema::getTypeAsString(TypeTy *Type) {
+  QualType Ty = QualType::getFromOpaquePtr(Type);
+  return Ty.getAsString();
+}
+
 DeclContext *Sema::getDCParent(DeclContext *DC) {
   // If CurContext is a ObjC method, getParent() will return NULL.
   if (isa<ObjCMethodDecl>(DC))
@@ -835,6 +840,22 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 
       if (isInvalidDecl)
         NewFD->setInvalidDecl();
+    } else if (D.getKind() == Declarator::DK_Conversion) {
+      if (D.getContext() != Declarator::MemberContext) {
+        Diag(D.getIdentifierLoc(),
+             diag::err_conv_function_not_member);
+        return 0;
+      } else {
+        bool isInvalidDecl = CheckConversionDeclarator(D, R, SC);
+
+        NewFD = CXXConversionDecl::Create(Context, 
+                                          cast<CXXRecordDecl>(CurContext),
+                                          D.getIdentifierLoc(), II, R,
+                                          isInline, isExplicit);
+        
+        if (isInvalidDecl)
+          NewFD->setInvalidDecl();
+      }
     } else if (D.getContext() == Declarator::MemberContext) {
       // This is a C++ method declaration.
       NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
@@ -931,6 +952,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       return ActOnConstructorDeclarator(Constructor);
     else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(NewFD))
       return ActOnDestructorDeclarator(Destructor);
+    else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(NewFD))
+      return ActOnConversionDeclarator(Conversion);
 
     // Extra checking for C++ overloaded operators (C++ [over.oper]).
     if (NewFD->isOverloadedOperator() &&

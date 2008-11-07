@@ -1229,7 +1229,11 @@ void Parser::ParseDeclarator(Declarator &D) {
   ParseDeclaratorInternal(D);
 }
 
-/// ParseDeclaratorInternal
+/// ParseDeclaratorInternal - Parse a C or C++ declarator. If
+/// PtrOperator is true, then this routine won't parse the final
+/// direct-declarator; therefore, it effectively parses the C++
+/// ptr-operator production.
+///
 ///       declarator: [C99 6.7.5]
 ///         pointer[opt] direct-declarator
 /// [C++]   '&' declarator [C++ 8p4, dcl.decl]
@@ -1239,13 +1243,21 @@ void Parser::ParseDeclarator(Declarator &D) {
 ///         '*' type-qualifier-list[opt]
 ///         '*' type-qualifier-list[opt] pointer
 ///
-void Parser::ParseDeclaratorInternal(Declarator &D) {
+///       ptr-operator:
+///         '*' cv-qualifier-seq[opt]
+///         '&'
+/// [GNU]   '&' restrict[opt] attributes[opt]
+///         '::'[opt] nested-name-specifier '*' cv-qualifier-seq[opt] [TODO]
+void Parser::ParseDeclaratorInternal(Declarator &D, bool PtrOperator) {
   tok::TokenKind Kind = Tok.getKind();
 
   // Not a pointer, C++ reference, or block.
   if (Kind != tok::star && (Kind != tok::amp || !getLang().CPlusPlus) &&
-      (Kind != tok::caret || !getLang().Blocks))
-    return ParseDirectDeclarator(D);
+      (Kind != tok::caret || !getLang().Blocks)) {
+    if (!PtrOperator)
+      ParseDirectDeclarator(D);
+    return;
+  }
   
   // Otherwise, '*' -> pointer, '^' -> block, '&' -> reference.
   SourceLocation Loc = ConsumeToken();  // Eat the * or &.
@@ -1257,7 +1269,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
     ParseTypeQualifierListOpt(DS);
   
     // Recursively parse the declarator.
-    ParseDeclaratorInternal(D);
+    ParseDeclaratorInternal(D, PtrOperator);
     if (Kind == tok::star)
       // Remember that we parsed a pointer type, and remember the type-quals.
       D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc,
@@ -1290,7 +1302,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
     }
 
     // Recursively parse the declarator.
-    ParseDeclaratorInternal(D);
+    ParseDeclaratorInternal(D, PtrOperator);
 
     if (D.getNumTypeObjects() > 0) {
       // C++ [dcl.ref]p4: There shall be no references to references.
@@ -1382,7 +1394,13 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     if (IdentifierInfo *II = MaybeParseOperatorFunctionId()) {
       D.SetIdentifier(II, OperatorLoc);
     } else {
-      // This must be a user-defined conversion.
+      // This must be a conversion function (C++ [class.conv.fct]).
+      if (TypeTy *ConvType = ParseConversionFunctionId()) {
+        IdentifierInfo *II 
+          = &PP.getIdentifierTable().get(std::string("operator ") + 
+                                         Actions.getTypeAsString(ConvType));
+        D.SetConversionFunction(ConvType, II, OperatorLoc);
+      }
     }
   } else if (Tok.is(tok::l_paren)) {
     // direct-declarator: '(' declarator ')'

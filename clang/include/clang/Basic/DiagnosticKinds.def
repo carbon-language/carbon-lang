@@ -1309,6 +1309,31 @@ DIAG(err_operator_overload_must_be_member, ERROR,
      "overloaded operator '%0' must be a non-static member function")
 DIAG(err_operator_overload_post_incdec_must_be_int, ERROR,
      "%0parameter of overloaded post-%1 operator must have type 'int' (not '%2')")
+DIAG(err_operator_missing_type_specifier, ERROR,
+     "missing type specifier after 'operator'")
+
+// C++ conversion functions
+DIAG(err_conv_function_not_member, ERROR,
+     "conversion function must be a non-static member function")
+DIAG(err_conv_function_return_type, ERROR,
+     "conversion function cannot have a return type")
+DIAG(err_conv_function_with_params, ERROR,
+     "conversion function cannot have any parameters")
+DIAG(err_conv_function_variadic, ERROR,
+     "conversion function cannot be variadic")
+DIAG(err_conv_function_to_array, ERROR,
+     "conversion function cannot convert to an array type")
+DIAG(err_conv_function_to_function, ERROR,
+     "conversion function cannot convert to a function type")
+DIAG(err_conv_function_redeclared, ERROR,
+     "conversion function cannot be redeclared")
+DIAG(warn_conv_to_self_not_used, WARNING,
+     "conversion function converting '%0' to itself will never be used")
+DIAG(warn_conv_to_base_not_used, WARNING,
+     "conversion function converting '%0' to its base class '%1' will never be used")
+DIAG(warn_conv_to_void_not_used, WARNING,
+     "conversion function converting '%0' to '%1' will never be used")
+
 
 DIAG(warn_not_compound_assign, WARNING,
      "use of unary operator that may be intended as compound assignment (%0=)")

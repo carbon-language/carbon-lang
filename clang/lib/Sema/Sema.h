@@ -271,6 +271,7 @@ private:
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
   virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S);
+  virtual std::string getTypeAsString(TypeTy *Type);
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
@@ -845,8 +846,11 @@ public:
                                   FunctionDecl::StorageClass& SC);
   bool CheckDestructorDeclarator(Declarator &D, QualType &R,
                                  FunctionDecl::StorageClass& SC);
+  bool CheckConversionDeclarator(Declarator &D, QualType &R,
+                                 FunctionDecl::StorageClass& SC);
   DeclTy *ActOnConstructorDeclarator(CXXConstructorDecl *Constructor);
   DeclTy *ActOnDestructorDeclarator(CXXDestructorDecl *Destructor);
+  DeclTy *ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes
