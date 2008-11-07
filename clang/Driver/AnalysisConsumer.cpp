@@ -60,6 +60,7 @@ namespace {
     Actions FunctionActions;
     Actions ObjCMethodActions;
     Actions ObjCImplementationActions;
+    Actions TranslationUnitActions;
     
   public:
     const bool VisGraphviz;
@@ -98,6 +99,10 @@ namespace {
     
     void addObjCImplementationAction(CodeAction action) {
       ObjCImplementationActions.push_back(action);
+    }
+    
+    void addTranslationUnitAction(CodeAction action) {
+      TranslationUnitActions.push_back(action);
     }
     
     virtual void Initialize(ASTContext &Context) {
@@ -290,6 +295,13 @@ void AnalysisConsumer::HandleTopLevelDecl(Decl *D) {
 }
 
 void AnalysisConsumer::HandleTranslationUnit(TranslationUnit& TU) {
+
+  if(!TranslationUnitActions.empty()) {
+    AnalysisManager mgr(*this, &TU);
+    for (Actions::iterator I = TranslationUnitActions.begin(), 
+         E = TranslationUnitActions.end(); I != E; ++I)
+      (*I)(mgr);  
+  }
 
   if (ObjCImplementationActions.empty())
     return;
