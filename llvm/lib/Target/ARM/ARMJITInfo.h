@@ -16,6 +16,8 @@
 
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -31,7 +33,11 @@ namespace llvm {
 
     // ConstPoolId2AddrMap - A map from constant pool ids to the corresponding
     // CONSTPOOL_ENTRY addresses.
-    SmallVector<intptr_t, 32> ConstPoolId2AddrMap;
+    SmallVector<intptr_t, 16> ConstPoolId2AddrMap;
+
+    // JumpTableId2AddrMap - A map from inline jumptable ids to the
+    // corresponding inline jump table bases.
+    SmallVector<intptr_t, 16> JumpTableId2AddrMap;
 
     // PCLabelMap - A map from PC labels to addresses.
     DenseMap<unsigned, intptr_t> PCLabelMap;
@@ -65,6 +71,10 @@ namespace llvm {
     /// pool address resolution is handled by the target.
     virtual bool hasCustomConstantPool() const { return true; }
 
+    /// hasCustomJumpTables - Allows a target to specify that jumptables
+    /// are emitted by the target.
+    virtual bool hasCustomJumpTables() const { return true; }
+
     /// allocateSeparateGVMemory - If true, globals should be placed in
     /// separately allocated heap memory rather than in the same
     /// code memory allocated by MachineCodeEmitter.
@@ -78,25 +88,43 @@ namespace llvm {
 
     /// Initialize - Initialize internal stage. Get the list of constant pool
     /// Resize constant pool ids to CONSTPOOL_ENTRY addresses map.
-    void Initialize(const std::vector<MachineConstantPoolEntry> *mcpes) {
-      MCPEs = mcpes;
+    void Initialize(const MachineFunction &MF) {
+      MCPEs = &MF.getConstantPool()->getConstants();
       ConstPoolId2AddrMap.resize(MCPEs->size());
+      JumpTableId2AddrMap.resize(MF.getJumpTableInfo()->getJumpTables().size());
     }
 
     /// getConstantPoolEntryAddr - The ARM target puts all constant
-    /// pool entries into constant islands. Resolve the constant pool index
-    /// into the address where the constant is stored.
+    /// pool entries into constant islands. This returns the address of the
+    /// constant pool entry of the specified index.
     intptr_t getConstantPoolEntryAddr(unsigned CPI) const {
       assert(CPI < ConstPoolId2AddrMap.size());
       return ConstPoolId2AddrMap[CPI];
     }
 
-    /// addConstantPoolEntryAddr - Map a Constant Pool Index (CPI) to the address
+    /// addConstantPoolEntryAddr - Map a Constant Pool Index to the address
     /// where its associated value is stored. When relocations are processed,
     /// this value will be used to resolve references to the constant.
     void addConstantPoolEntryAddr(unsigned CPI, intptr_t Addr) {
       assert(CPI < ConstPoolId2AddrMap.size());
       ConstPoolId2AddrMap[CPI] = Addr;
+    }
+
+    /// getJumpTableBaseAddr - The ARM target inline all jump tables within
+    /// text section of the function. This returns the address of the base of
+    /// the jump table of the specified index.
+    intptr_t getJumpTableBaseAddr(unsigned JTI) const {
+      assert(JTI < JumpTableId2AddrMap.size());
+      return JumpTableId2AddrMap[JTI];
+    }
+
+    /// addJumpTableBaseAddr - Map a jump table index to the address where
+    /// the corresponding inline jump table is emitted. When relocations are
+    /// processed, this value will be used to resolve references to the
+    /// jump table.
+    void addJumpTableBaseAddr(unsigned JTI, intptr_t Addr) {
+      assert(JTI < JumpTableId2AddrMap.size());
+      JumpTableId2AddrMap[JTI] = Addr;
     }
 
     /// getPCLabelAddr - Retrieve the address of the PC label of the specified id.
@@ -112,10 +140,10 @@ namespace llvm {
     }
 
   private:
-    /// resolveRelocationAddr - Resolve the resulting address of the relocation
+    /// resolveRelocDestAddr - Resolve the resulting address of the relocation
     /// if it's not already solved. Constantpool entries must be resolved by
     /// ARM target.
-    intptr_t resolveRelocationAddr(MachineRelocation *MR) const;
+    intptr_t resolveRelocDestAddr(MachineRelocation *MR) const;
   };
 }
 

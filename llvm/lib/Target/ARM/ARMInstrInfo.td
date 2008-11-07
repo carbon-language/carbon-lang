@@ -572,23 +572,35 @@ let isBranch = 1, isTerminator = 1 in {
                 [(br bb:$target)]>;
 
   let isNotDuplicable = 1, isIndirectBranch = 1 in {
-  def BR_JTr : JTI<0b1101, (outs),
-                           (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
+  def BR_JTr : JTI<(outs), (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
                     "mov pc, $target \n$jt",
-                    [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]>;
-  def BR_JTm : JTI2<0, (outs),
-                       (ins addrmode2:$target, jtblock_operand:$jt, i32imm:$id),
-                     "ldr pc, $target \n$jt",
-                     [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
-                       imm:$id)]>;
-  def BR_JTadd : JTI1<0b0100, (outs),
-                              (ins GPR:$target, GPR:$idx, jtblock_operand:$jt,
-                      i32imm:$id),
-                      "add pc, $target, $idx \n$jt",
-                      [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
-                        imm:$id)]>;
+                    [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]> {
+    let Inst{20}    = 0; // S Bit
+    let Inst{24-21} = 0b1101;
+    let Inst{27-26} = {0,0};
   }
+  def BR_JTm : JTI<(outs),
+                   (ins addrmode2:$target, jtblock_operand:$jt, i32imm:$id),
+                   "ldr pc, $target \n$jt",
+                  [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
+                    imm:$id)]> {
+    let Inst{20}    = 1; // L bit
+    let Inst{21}    = 0; // W bit
+    let Inst{22}    = 0; // B bit
+    let Inst{24}    = 1; // P bit
+    let Inst{27-26} = {0,1};
   }
+  def BR_JTadd : JTI<(outs),
+                   (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
+                     "add pc, $target, $idx \n$jt",
+                    [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
+                      imm:$id)]> {
+    let Inst{20}    = 0; // S bit
+    let Inst{24-21} = 0b0100;
+    let Inst{27-26} = {0,0};
+  }
+  } // isNotDuplicable = 1, isIndirectBranch = 1
+  } // isBarrier = 1
 
   // FIXME: should be able to write a pattern for ARMBrcond, but can't use
   // a two-value operand where a dag node expects two operands. :( 

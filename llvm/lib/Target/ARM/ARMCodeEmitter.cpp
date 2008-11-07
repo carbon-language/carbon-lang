@@ -28,10 +28,14 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#ifndef NDEBUG
+#include <iomanip>
+#endif
 using namespace llvm;
 
 STATISTIC(NumEmitted, "Number of machine instructions emitted");
@@ -44,16 +48,20 @@ namespace {
     TargetMachine             &TM;
     MachineCodeEmitter        &MCE;
     const std::vector<MachineConstantPoolEntry> *MCPEs;
-    
+    const std::vector<MachineJumpTableEntry> *MJTEs;
+    bool IsPIC;
+
   public:
     static char ID;
     explicit ARMCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce)
       : MachineFunctionPass(&ID), JTI(0), II(0), TD(0), TM(tm),
-      MCE(mce), MCPEs(0) {}
+      MCE(mce), MCPEs(0), MJTEs(0),
+      IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
     ARMCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce,
             const ARMInstrInfo &ii, const TargetData &td)
       : MachineFunctionPass(&ID), JTI(0), II(&ii), TD(&td), TM(tm),
-      MCE(mce), MCPEs(0) {}
+      MCE(mce), MCPEs(0), MJTEs(0),
+      IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
@@ -70,6 +78,8 @@ namespace {
     void emitConstPoolInstruction(const MachineInstr &MI);
 
     void emitMOVi2piecesInstruction(const MachineInstr &MI);
+
+    void emitLEApcrelJTInstruction(const MachineInstr &MI);
 
     void addPCLabel(unsigned LabelID);
 
@@ -89,6 +99,7 @@ namespace {
                                        unsigned ImplicitRn = 0);
 
     void emitLoadStoreInstruction(const MachineInstr &MI,
+                                  unsigned ImplicitRd = 0,
                                   unsigned ImplicitRn = 0);
 
     void emitMiscLoadStoreInstruction(const MachineInstr &MI,
@@ -103,6 +114,8 @@ namespace {
     void emitMiscArithInstruction(const MachineInstr &MI);
 
     void emitBranchInstruction(const MachineInstr &MI);
+
+    void emitInlineJumpTable(unsigned JTIndex, intptr_t JTBase);
 
     void emitMiscBranchInstruction(const MachineInstr &MI);
 
@@ -133,7 +146,7 @@ namespace {
     void emitJumpTableAddress(unsigned JTIndex, unsigned Reloc,
                               unsigned PCAdj = 0);
     void emitGlobalConstant(const Constant *CV);
-    void emitMachineBasicBlock(MachineBasicBlock *BB);
+    void emitMachineBasicBlock(MachineBasicBlock *BB, unsigned Reloc);
   };
   char ARMCodeEmitter::ID = 0;
 }
@@ -153,7 +166,9 @@ bool ARMCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   TD = ((ARMTargetMachine&)MF.getTarget()).getTargetData();
   JTI = ((ARMTargetMachine&)MF.getTarget()).getJITInfo();
   MCPEs = &MF.getConstantPool()->getConstants();
-  JTI->Initialize(MCPEs);
+  MJTEs = &MF.getJumpTableInfo()->getJumpTables();
+  IsPIC = TM.getRelocationModel() == Reloc::PIC_;
+  JTI->Initialize(MF);
 
   do {
     DOUT << "JITTing function '" << MF.getFunction()->getName() << "'\n";
@@ -201,7 +216,7 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   else if (MO.isJTI())
     emitJumpTableAddress(MO.getIndex(), ARM::reloc_arm_relative);
   else if (MO.isMBB())
-    emitMachineBasicBlock(MO.getMBB());
+    emitMachineBasicBlock(MO.getMBB(), ARM::reloc_arm_branch);
   else {
     cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();
@@ -242,17 +257,21 @@ void ARMCodeEmitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc,
 void ARMCodeEmitter::emitJumpTableAddress(unsigned JTIndex, unsigned Reloc,
                                           unsigned PCAdj /* = 0 */) {
   MCE.addRelocation(MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
-                                                    Reloc, JTIndex, PCAdj));
+                                                  Reloc, JTIndex, PCAdj, true));
 }
 
 /// emitMachineBasicBlock - Emit the specified address basic block.
-void ARMCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB) {
+void ARMCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB,
+                                           unsigned Reloc) {
   MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
-                                             ARM::reloc_arm_branch, BB));
+                                             Reloc, BB));
 }
 
 void ARMCodeEmitter::emitWordLE(unsigned Binary) {
-  DOUT << "  " << (void*)Binary << "\n";
+#ifndef NDEBUG
+  DOUT << "  0x" << std::hex << std::setw(8) << std::setfill('0')
+       << Binary << std::dec << "\n";
+#endif
   MCE.emitWordLE(Binary);
 }
 
@@ -389,6 +408,34 @@ void ARMCodeEmitter::emitMOVi2piecesInstruction(const MachineInstr &MI) {
   emitWordLE(Binary);
 }
 
+void ARMCodeEmitter::emitLEApcrelJTInstruction(const MachineInstr &MI) {
+  // It's basically add r, pc, (LJTI - $+8)
+  
+  const TargetInstrDesc &TID = MI.getDesc();
+
+  // Emit the 'add' instruction.
+  unsigned Binary = 0x4 << 21;  // add: Insts{24-31} = 0b0100
+
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
+
+  // Encode S bit if MI modifies CPSR.
+  Binary |= getAddrModeSBit(MI, TID);
+
+  // Encode Rd.
+  Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
+
+  // Encode Rn which is PC.
+  Binary |= ARMRegisterInfo::getRegisterNumbering(ARM::PC) << ARMII::RegRnShift;
+
+  // Encode the displacement.
+  // Set bit I(25) to identify this is the immediate form of <shifter_op>.
+  Binary |= 1 << ARMII::I_BitShift;
+  emitJumpTableAddress(MI.getOperand(1).getIndex(), ARM::reloc_arm_jt_base);
+
+  emitWordLE(Binary);
+}
+
 void ARMCodeEmitter::addPCLabel(unsigned LabelID) {
   DOUT << "  ** LPC" << LabelID << " @ "
        << (void*)MCE.getCurrentPCValue() << '\n';
@@ -417,7 +464,7 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
     // Remember of the address of the PC label for relocation later.
     addPCLabel(MI.getOperand(2).getImm());
     // These are just load / store instructions that implicitly read pc.
-    emitLoadStoreInstruction(MI, ARM::PC);
+    emitLoadStoreInstruction(MI, 0, ARM::PC);
     break;
   }
   case ARM::PICLDRH:
@@ -433,6 +480,10 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
   case ARM::MOVi2pieces:
     // Two instructions to materialize a constant.
     emitMOVi2piecesInstruction(MI);
+    break;
+  case ARM::LEApcrelJT:
+    // Materialize jumptable address.
+    emitLEApcrelJTInstruction(MI);
     break;
   }
 }
@@ -569,7 +620,7 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
   }
 
   // Encode so_imm.
-  // Set bit I(25) to identify this is the immediate form of <shifter_op>
+  // Set bit I(25) to identify this is the immediate form of <shifter_op>.
   Binary |= 1 << ARMII::I_BitShift;
   Binary |= getMachineSoImmOpValue(MO.getImm());
 
@@ -577,6 +628,7 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
 }
 
 void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
+                                              unsigned ImplicitRd,
                                               unsigned ImplicitRn) {
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
@@ -585,18 +637,21 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
   // Set first operand
-  Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
+  unsigned OpIdx = 0;
+  if (ImplicitRd)
+    // Special handling for implicit use (e.g. PC).
+    Binary |= (ARMRegisterInfo::getRegisterNumbering(ImplicitRd)
+               << ARMII::RegRdShift);
+  else
+    Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdShift;
 
   // Set second operand
-  unsigned OpIdx = 1;
   if (ImplicitRn)
     // Special handling for implicit use (e.g. PC).
     Binary |= (ARMRegisterInfo::getRegisterNumbering(ImplicitRn)
                << ARMII::RegRnShift);
-  else {
-    Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
-    ++OpIdx;
-  }
+  else
+    Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
 
   const MachineOperand &MO2 = MI.getOperand(OpIdx);
   unsigned AM2Opc = (ImplicitRn == ARM::PC)
@@ -646,10 +701,8 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
     // Special handling for implicit use (e.g. PC).
     Binary |= (ARMRegisterInfo::getRegisterNumbering(ImplicitRn)
                << ARMII::RegRnShift);
-  else {
-    Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
-    ++OpIdx;
-  }
+  else
+    Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
 
   const MachineOperand &MO2 = MI.getOperand(OpIdx);
   unsigned AM3Opc = (ImplicitRn == ARM::PC)
@@ -851,13 +904,39 @@ void ARMCodeEmitter::emitBranchInstruction(const MachineInstr &MI) {
   emitWordLE(Binary);
 }
 
+void ARMCodeEmitter::emitInlineJumpTable(unsigned JTIndex, intptr_t JTBase) {
+  // Remember the base address of the inline jump table.
+  JTI->addJumpTableBaseAddr(JTIndex, MCE.getCurrentPCValue());
+
+  // Now emit the jump table entries.
+  const std::vector<MachineBasicBlock*> &MBBs = (*MJTEs)[JTIndex].MBBs;
+  for (unsigned i = 0, e = MBBs.size(); i != e; ++i) {
+    if (IsPIC)
+      // DestBB address - JT base.
+      MCE.addRelocation(MachineRelocation::getBB(JTBase, ARM::reloc_arm_pic_jt,
+                                                 MBBs[i]));
+    else
+      // Absolute DestBB address.
+      emitMachineBasicBlock(MBBs[i], ARM::reloc_arm_absolute);
+    emitWordLE(0);
+  }
+}
+
 void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
   if (TID.Opcode == ARM::BX ||
       TID.Opcode == ARM::BR_JTr ||
-      TID.Opcode == ARM::BR_JTm ||
       TID.Opcode == ARM::BR_JTadd)
     abort(); // FIXME
+
+  if (TID.Opcode == ARM::BR_JTm) {
+    // First emit a ldr pc, [] instruction.
+    emitLoadStoreInstruction(MI, ARM::PC);
+
+    // Then emit the inline jump table.
+    emitInlineJumpTable(MI.getOperand(3).getIndex(), MCE.getCurrentPCOffset());
+    return;
+  }
 
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);

@@ -151,33 +151,9 @@ class ABXIx2<dag oops, dag iops, string asm, list<dag> pattern>
        "", pattern>;
 
 // BR_JT instructions
-// == mov pc
-class JTI<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
+class JTI<dag oops, dag iops, string asm, list<dag> pattern>
   : XI<oops, iops, AddrModeNone, SizeSpecial, IndexModeNone, BrMiscFrm,
-       asm, "", pattern> {
-  let Inst{20}    = 0; // S Bit
-  let Inst{24-21} = opcod;
-  let Inst{27-26} = {0,0};
-}
-// == add pc
-class JTI1<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode1, SizeSpecial, IndexModeNone, BrMiscFrm,
-       asm, "", pattern> {
-  let Inst{20}    = 0; // S bit
-  let Inst{24-21} = opcod;
-  let Inst{27-26} = {0,0};
-}
-// == ldr pc
-class JTI2<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode2, SizeSpecial, IndexModeNone, BrMiscFrm,
-       asm, "", pattern> {
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 0; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = {0,1};
-}
-
+       asm, "", pattern>;
 
 // addrmode1 instructions
 class AI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,

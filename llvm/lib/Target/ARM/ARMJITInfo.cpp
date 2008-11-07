@@ -168,9 +168,11 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
   return MCE.finishFunctionStub(F);
 }
 
-intptr_t ARMJITInfo::resolveRelocationAddr(MachineRelocation *MR) const {
+intptr_t ARMJITInfo::resolveRelocDestAddr(MachineRelocation *MR) const {
   ARM::RelocationType RT = (ARM::RelocationType)MR->getRelocationType();
-  if (RT == ARM::reloc_arm_cp_entry)
+  if (RT == ARM::reloc_arm_jt_base)
+    return getJumpTableBaseAddr(MR->getJumpTableIndex());
+  else if (RT == ARM::reloc_arm_cp_entry)
     return getConstantPoolEntryAddr(MR->getConstantPoolIndex());
   else if (RT == ARM::reloc_arm_machine_cp_entry) {
     const MachineConstantPoolEntry &MCPE = (*MCPEs)[MR->getConstantVal()];
@@ -196,7 +198,7 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
     void *RelocPos = (char*)Function + MR->getMachineCodeOffset();
     // If this is a constpool relocation, get the address of the
     // constpool_entry instruction.
-    intptr_t ResultPtr = resolveRelocationAddr(MR);
+    intptr_t ResultPtr = resolveRelocDestAddr(MR);
     switch ((ARM::RelocationType)MR->getRelocationType()) {
     case ARM::reloc_arm_cp_entry:
     case ARM::reloc_arm_relative: {
@@ -221,7 +223,7 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
     case ARM::reloc_arm_machine_cp_entry:
     case ARM::reloc_arm_absolute: {
       // These addresses have already been resolved.
-      *((unsigned*)RelocPos) += (unsigned)ResultPtr;
+      *((unsigned*)RelocPos) |= (unsigned)ResultPtr;
       break;
     }
     case ARM::reloc_arm_branch: {
@@ -230,9 +232,21 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
       // byte offset, which must be inside the range -33554432 and +33554428.
       // Then, we set the signed_immed_24 field of the instruction to bits
       // [25:2] of the byte offset. More details ARM-ARM p. A4-11.
-      ResultPtr = ResultPtr-(intptr_t)RelocPos-8;
+      ResultPtr = ResultPtr - (intptr_t)RelocPos - 8;
       ResultPtr = (ResultPtr & 0x03FFFFFC) >> 2;
       assert(ResultPtr >= -33554432 && ResultPtr <= 33554428);
+      *((unsigned*)RelocPos) |= ResultPtr;
+      break;
+    }
+    case ARM::reloc_arm_jt_base: {
+      // JT base - (instruction addr + 8)
+      ResultPtr = ResultPtr - (intptr_t)RelocPos - 8;
+      *((unsigned*)RelocPos) |= ResultPtr;
+      break;
+    }
+    case ARM::reloc_arm_pic_jt: {
+      // PIC JT entry is destination - JT base.
+      ResultPtr = ResultPtr - (intptr_t)RelocPos;
       *((unsigned*)RelocPos) |= ResultPtr;
       break;
     }
