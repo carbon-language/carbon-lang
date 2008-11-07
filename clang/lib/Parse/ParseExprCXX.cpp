@@ -308,8 +308,7 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
 ///            <=    >=   && ||   ++ --   ,   ->* ->
 ///            ()    []
 IdentifierInfo *Parser::MaybeParseOperatorFunctionId() {
-  if (Tok.isNot(tok::kw_operator))
-    return 0;
+  assert(Tok.is(tok::kw_operator) && "Expected 'operator' keyword");
 
   OverloadedOperatorKind Op = OO_None;
   switch (NextToken().getKind()) {
@@ -361,7 +360,7 @@ IdentifierInfo *Parser::MaybeParseOperatorFunctionId() {
   if (Op == OO_None)
     return 0;
   else {
-    ExpectAndConsume(tok::kw_operator, diag::err_expected_operator);
+    ConsumeToken(); // 'operator'
     ConsumeAnyToken(); // the operator itself
     return &PP.getIdentifierTable().getOverloadedOperator(Op);
   }

@@ -1291,8 +1291,6 @@ DIAG(err_ambiguous_derived_to_base_conv, ERROR,
      "ambiguous conversion from derived class '%0' to base class '%1':%2")
 
 // C++ operator overloading
-DIAG(err_expected_operator, ERROR,
-     "expected 'operator' keyword")
 DIAG(err_operator_overload_needs_class_or_enum, ERROR,
      "non-member overloaded operator '%0' must have at least one parameter of class or enumeration type (or reference thereof)")
 DIAG(err_operator_overload_variadic, ERROR,
