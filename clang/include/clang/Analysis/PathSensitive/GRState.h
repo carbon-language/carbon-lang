@@ -325,6 +325,7 @@ public:
   LiveVariables& getLiveVariables() { return Liveness; }
   llvm::BumpPtrAllocator& getAllocator() { return Alloc; }
   MemRegionManager& getRegionManager() { return StoreMgr->getRegionManager(); }
+  StoreManager& getStoreManager() { return *StoreMgr; }
 
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
 
