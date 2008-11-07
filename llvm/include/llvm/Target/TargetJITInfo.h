@@ -112,6 +112,10 @@ namespace llvm {
     /// pool address resolution is handled by the target.
     virtual bool hasCustomConstantPool() const { return false; }
 
+    /// hasCustomJumpTables - Allows a target to specify that jumptables
+    /// are emitted by the target.
+    virtual bool hasCustomJumpTables() const { return false; }
+
     /// allocateSeparateGVMemory - If true, globals should be placed in
     /// separately allocated heap memory rather than in the same
     /// code memory allocated by MachineCodeEmitter.

@@ -35,9 +35,9 @@
 #include "llvm/System/Disassembler.h"
 #include "llvm/System/Memory.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
-#include <set>
 #ifndef NDEBUG
 #include <iomanip>
 #endif
@@ -485,7 +485,7 @@ namespace {
     MachineModuleInfo* MMI;
 
     // GVSet - a set to keep track of which globals have been seen
-    std::set<const GlobalVariable*> GVSet;
+    SmallPtrSet<const GlobalVariable*, 8> GVSet;
 
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit) {
@@ -728,7 +728,7 @@ unsigned JITEmitter::addSizeOfGlobalsInConstantVal(const Constant *C,
 
   if (C->getType()->getTypeID() == Type::PointerTyID)
     if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(C))
-      if (GVSet.insert(GV).second)
+      if (GVSet.insert(GV))
         Size = addSizeOfGlobal(GV, Size);
 
   return Size;
@@ -780,7 +780,7 @@ unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
           // assuming the addresses of the new globals in this module
           // start at 0 (or something) and adjusting them after codegen
           // complete.  Another possibility is to grab a marker bit in GV.
-          if (GVSet.insert(GV).second)
+          if (GVSet.insert(GV))
             // A variable as yet unseen.  Add in its size.
             Size = addSizeOfGlobal(GV, Size);
         }
@@ -790,7 +790,7 @@ unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
   DOUT << "JIT: About to look through initializers\n";
   // Look for more globals that are referenced only from initializers.
   // GVSet.end is computed each time because the set can grow as we go.
-  for (std::set<const GlobalVariable *>::iterator I = GVSet.begin(); 
+  for (SmallPtrSet<const GlobalVariable *, 8>::iterator I = GVSet.begin(); 
        I != GVSet.end(); I++) {
     const GlobalVariable* GV = *I;
     if (GV->hasInitializer())
@@ -1022,11 +1022,9 @@ void* JITEmitter::allocateSpace(intptr_t Size, unsigned Alignment) {
 }
 
 void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
-  if (TheJIT->getJITInfo().hasCustomConstantPool()) {
-    DOUT << "JIT: Target has custom constant pool handling. Omitting standard "
-            "constant pool\n";
+  if (TheJIT->getJITInfo().hasCustomConstantPool())
     return;
-  }
+
   const std::vector<MachineConstantPoolEntry> &Constants = MCP->getConstants();
   if (Constants.empty()) return;
 
@@ -1060,6 +1058,9 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
 }
 
 void JITEmitter::initJumpTableInfo(MachineJumpTableInfo *MJTI) {
+  if (TheJIT->getJITInfo().hasCustomJumpTables())
+    return;
+
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
   
@@ -1077,6 +1078,9 @@ void JITEmitter::initJumpTableInfo(MachineJumpTableInfo *MJTI) {
 }
 
 void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
+  if (TheJIT->getJITInfo().hasCustomJumpTables())
+    return;
+
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty() || JumpTableBase == 0) return;
   
