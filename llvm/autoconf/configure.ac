@@ -225,6 +225,7 @@ AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
   arm-*)                  llvm_cv_target_arch="ARM" ;;
   mips-*)                 llvm_cv_target_arch="Mips" ;;
   pic16-*)                llvm_cv_target_arch="PIC16" ;;
+  xcore-*)                llvm_cv_target_arch="XCore" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
 esac])
 
@@ -332,6 +333,7 @@ else
     ARM)     AC_SUBST(TARGET_HAS_JIT,0) ;;
     Mips)    AC_SUBST(TARGET_HAS_JIT,0) ;;
     PIC16)   AC_SUBST(TARGET_HAS_JIT,0) ;;
+    XCore)   AC_SUBST(TARGET_HAS_JIT,0) ;;
     *)       AC_SUBST(TARGET_HAS_JIT,0) ;;
   esac
 fi
@@ -381,7 +383,7 @@ AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all,host-only,{target-name} (default=all)]),,
     enableval=all)
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU PIC16 CBackend MSIL CppBackend" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU PIC16 XCore CBackend MSIL CppBackend" ;;
   host-only)
     case "$llvm_cv_target_arch" in
       x86)     TARGETS_TO_BUILD="X86" ;;
@@ -394,6 +396,7 @@ case "$enableval" in
       Mips)    TARGETS_TO_BUILD="Mips" ;;
       CellSPU|SPU) TARGETS_TO_BUILD="CellSPU" ;;
       PIC16)   TARGETS_TO_BUILD="PIC16" ;;
+      XCore)   TARGETS_TO_BUILD="XCore" ;;
       *)       AC_MSG_ERROR([Can not set target to build]) ;;
     esac
     ;;
@@ -409,6 +412,7 @@ case "$enableval" in
         mips)    TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
         spu)     TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
         pic16)   TARGETS_TO_BUILD="PIC16 $TARGETS_TO_BUILD" ;;
+        xcore)   TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
         cbe)     TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
         msil)    TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
         cpp)     TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
