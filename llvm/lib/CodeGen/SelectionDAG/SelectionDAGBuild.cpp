@@ -3801,14 +3801,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MachineFrameInfo *MFI = MF.getFrameInfo();
     MVT PtrTy = TLI.getPointerTy();
 
-    // Retrieve the stack protector guard's value.
-    SDValue Src = getValue(I.getOperand(1));
+    SDValue Src = getValue(I.getOperand(1));   // The guard's value.
+    AllocaInst *Slot = cast<AllocaInst>(I.getOperand(2));
 
-    // Create a slot on the stack for the stack protector. It should go first
-    // before local variables are allocated.
-    unsigned Align =
-      TLI.getTargetData()->getPrefTypeAlignment(PtrTy.getTypeForMVT());
-    int FI = MFI->CreateStackObject(PtrTy.getSizeInBits() / 8, Align);
+    int FI = FuncInfo.StaticAllocaMap[Slot];
     MFI->setStackProtectorIndex(FI);
 
     SDValue FIN = DAG.getFrameIndex(FI, PtrTy);

@@ -97,9 +97,6 @@ bool StackProtector::runOnFunction(Function &Fn) {
 ///  - The epilogue checks the value stored in the prologue against the original
 ///    value. It calls __stack_chk_fail if they differ.
 bool StackProtector::InsertStackProtectors() {
-  Constant *StackGuardVar = 0;  // The global variable for the stack guard.
-  BasicBlock *FailBB = 0;       // The basic block to jump to if check fails.
-
   // Loop through the basic blocks that have return instructions. Convert this:
   //
   //   return:
@@ -122,18 +119,34 @@ bool StackProtector::InsertStackProtectors() {
   //     call void @__stack_chk_fail()
   //     unreachable
   //
+  BasicBlock *FailBB = 0;       // The basic block to jump to if check fails.
+  AllocaInst *AI = 0;           // Place on stack that stores the stack guard.
+  Constant *StackGuardVar = 0;  // The stack guard variable.
+
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
     BasicBlock *BB = I;
 
     if (isa<ReturnInst>(BB->getTerminator())) {
-      // Create the basic block to jump to when the guard check fails.
-      if (!FailBB)
+      if (!FailBB) {
+        // Create the basic block to jump to when the guard check fails.
         FailBB = CreateFailBB();
 
-      if (!StackGuardVar)
-        StackGuardVar =
-          M->getOrInsertGlobal("__stack_chk_guard",
-                               PointerType::getUnqual(Type::Int8Ty));
+        // Insert code into the entry block that stores the __stack_chk_guard
+        // variable onto the stack.
+        PointerType *PtrTy = PointerType::getUnqual(Type::Int8Ty);
+        StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy);
+
+        BasicBlock &Entry = F->getEntryBlock();
+        Instruction *InsPt = &Entry.front();
+
+        AI = new AllocaInst(PtrTy, "StackGuardSlot", InsPt);
+        LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsPt);
+
+        Value *Args[] = { LI, AI };
+        CallInst::
+          Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_create),
+                 &Args[0], array_endof(Args), "", InsPt);
+      }
 
       ReturnInst *RI = cast<ReturnInst>(BB->getTerminator());
       Function::iterator InsPt = BB; ++InsPt; // Insertion point for new BB.
@@ -151,7 +164,7 @@ bool StackProtector::InsertStackProtectors() {
       LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
       CallInst *CI = CallInst::
         Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_check),
-               "", BB);
+               AI, "", BB);
       ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, CI, LI1, "", BB);
       BranchInst::Create(NewBB, FailBB, Cmp, BB);
     }
@@ -160,16 +173,6 @@ bool StackProtector::InsertStackProtectors() {
   // Return if we didn't modify any basic blocks. I.e., there are no return
   // statements in the function.
   if (!FailBB) return false;
-
-  // Insert code into the entry block that stores the __stack_chk_guard variable
-  // onto the stack.
-  BasicBlock &Entry = F->getEntryBlock();
-  Instruction *InsertPt = &Entry.front();
-
-  LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsertPt);
-  CallInst::
-    Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_create),
-           LI, "", InsertPt);
 
   return true;
 }
@@ -202,21 +205,16 @@ bool StackProtector::RequiresStackProtector() const {
       for (BasicBlock::iterator
              II = BB->begin(), IE = BB->end(); II != IE; ++II)
         if (AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
-          if (!AI->isArrayAllocation()) continue; // Only care about arrays.
+          if (AI->isArrayAllocation())
+            // This is a call to alloca with a variable size. Emit stack
+            // protectors.
+            return true;
 
-          if (ConstantInt *CI = dyn_cast<ConstantInt>(AI->getArraySize())) {
-            const Type *Ty = AI->getAllocatedType();
-            uint64_t TySize = TD->getABITypeSize(Ty);
-
+          if (const ArrayType *AT = dyn_cast<ArrayType>(AI->getAllocatedType()))
             // If an array has more than 8 bytes of allocated space, then we
             // emit stack protectors.
-            if (SSPBufferSize <= TySize * CI->getZExtValue())
+            if (SSPBufferSize <= TD->getABITypeSize(AT))
               return true;
-          } else {
-            // This is a call to alloca with a variable size. Default to adding
-            // stack protectors.
-            return true;
-          }
         }
     }
 
