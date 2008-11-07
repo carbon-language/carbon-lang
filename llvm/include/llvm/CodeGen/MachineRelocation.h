@@ -175,7 +175,8 @@ public:
   /// table entry.
   ///
   static MachineRelocation getJumpTable(intptr_t offset,unsigned RelocationType,
-                                        unsigned JTI, intptr_t cst = 0) {
+                                        unsigned JTI, intptr_t cst = 0,
+                                        bool letTargetResolve = false) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     MachineRelocation Result;
     Result.Offset = offset;
@@ -184,7 +185,7 @@ public:
     Result.AddrType = isJumpTable;
     Result.NeedStub = false;
     Result.GOTRelative = false;
-    Result.TargetResolve = false;
+    Result.TargetResolve = letTargetResolve;
     Result.Target.Index = JTI;
     return Result;
   }
