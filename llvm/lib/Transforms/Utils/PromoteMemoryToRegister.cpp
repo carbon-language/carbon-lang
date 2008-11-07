@@ -30,6 +30,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
@@ -298,7 +299,7 @@ namespace {
           // Remove dbg intrinsic uses now.
           Value::use_iterator BCUI = BC->use_begin();
           DbgInfoIntrinsic *DI = cast<DbgInfoIntrinsic>(*BCUI);
-          assert (BCUI + 1 == BC->use_end() && "Unexpected alloca uses!");
+          assert (next(BCUI) == BC->use_end() && "Unexpected alloca uses!");
           DI->eraseFromParent();
           BC->eraseFromParent();
         } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
