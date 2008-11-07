@@ -1352,6 +1352,52 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
                               Zero, Cond);
         }
       }
+
+      // If the LHS is '(and load, const)', the RHS is 0,
+      // the test is for equality or unsigned, and all 1 bits of the const are
+      // in the same partial word, see if we can shorten the load.
+      if (DCI.isBeforeLegalize() &&
+          N0.getOpcode() == ISD::AND && C1 == 0 &&
+          isa<LoadSDNode>(N0.getOperand(0)) &&
+          N0.getOperand(0).getNode()->hasOneUse() &&
+          isa<ConstantSDNode>(N0.getOperand(1))) {
+        LoadSDNode *Lod = cast<LoadSDNode>(N0.getOperand(0));
+        uint64_t Mask = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
+        unsigned bestWidth = 0, bestOffset = 0;
+        if (!Lod->isVolatile()) {
+          unsigned origWidth = N0.getValueType().getSizeInBits();
+          for (unsigned width = origWidth / 2; width>=8; width /= 2) {
+            uint64_t newMask = (1ULL << width) - 1;
+            for (unsigned offset=0; offset<origWidth/width; offset++) {
+              if ((newMask & Mask)==Mask) {
+                bestOffset = (uint64_t)offset * (width/8);
+                bestWidth = width;
+                break;
+              }
+              newMask = newMask << width;
+            }
+          }
+        }
+        if (bestWidth) {
+          MVT newVT = MVT::getIntegerVT(bestWidth);
+          if (newVT.isRound()) {
+            uint64_t bestMask = Mask >> (bestOffset * 8);
+            MVT PtrType = Lod->getOperand(1).getValueType();
+            SDValue Ptr = Lod->getBasePtr();
+            if (bestOffset != 0)
+              Ptr = DAG.getNode(ISD::ADD, PtrType, Lod->getBasePtr(),
+                                DAG.getConstant(bestOffset, PtrType));
+            unsigned NewAlign = MinAlign(Lod->getAlignment(), bestOffset);
+            SDValue NewLoad = DAG.getLoad(newVT, Lod->getChain(), Ptr,
+                                          Lod->getSrcValue(), 
+                                          Lod->getSrcValueOffset() + bestOffset,
+                                          false, NewAlign);
+            return DAG.getSetCC(VT, DAG.getNode(ISD::AND, newVT, NewLoad,
+                                            DAG.getConstant(bestMask, newVT)),
+                                    DAG.getConstant(0LL, newVT), Cond);
+          }
+        }
+      }
       
       // If the LHS is a ZERO_EXTEND, perform the comparison on the input.
       if (N0.getOpcode() == ISD::ZERO_EXTEND) {
