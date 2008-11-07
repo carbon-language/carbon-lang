@@ -17,6 +17,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
+#include <set>
 using namespace clang;
 
 /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
@@ -357,23 +358,14 @@ Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
   // C++ 5.2.9p5, reference downcast.
   // See the function for details.
   // DR 427 specifies that this is to be applied before paragraph 2.
-  if (IsStaticReferenceDowncast(SrcExpr, DestType)) {
+  if (TryStaticReferenceDowncast(SrcExpr, DestType, OpRange)
+      > TSC_NotApplicable) {
     return;
   }
 
   // C++ 5.2.9p2: An expression e can be explicitly converted to a type T
   //   [...] if the declaration "T t(e);" is well-formed, [...].
-  ImplicitConversionSequence ICS = TryDirectInitialization(SrcExpr, DestType);
-  if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion) {
-    assert(ICS.ConversionKind != ImplicitConversionSequence::EllipsisConversion
-      && "Direct initialization cannot result in ellipsis conversion");
-    // UserDefinedConversionSequence has a StandardConversionSequence as a
-    // prefix. Accessing Standard is therefore safe.
-    // FIXME: Of course, this is definitely not enough.
-    if(ICS.Standard.First != ICK_Identity) {
-      DefaultFunctionArrayConversion(SrcExpr);
-    }
-    // FIXME: Test the details, such as accessible base.
+  if (TryStaticImplicitCast(SrcExpr, DestType, OpRange) > TSC_NotApplicable) {
     return;
   }
 
@@ -408,7 +400,8 @@ Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
 
   // Reverse pointer upcast. C++ 4.10p3 specifies pointer upcast.
   // C++ 5.2.9p8 additionally disallows a cast path through virtual inheritance.
-  if (IsStaticPointerDowncast(SrcType, DestType)) {
+  if (TryStaticPointerDowncast(SrcType, DestType, OpRange)
+      > TSC_NotApplicable) {
     return;
   }
 
@@ -448,8 +441,9 @@ Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
 }
 
 /// Tests whether a conversion according to C++ 5.2.9p5 is valid.
-bool
-Sema::IsStaticReferenceDowncast(Expr *SrcExpr, QualType DestType)
+Sema::TryStaticCastResult
+Sema::TryStaticReferenceDowncast(Expr *SrcExpr, QualType DestType,
+                                const SourceRange &OpRange)
 {
   // C++ 5.2.9p5: An lvalue of type "cv1 B", where B is a class type, can be
   //   cast to type "reference to cv2 D", where D is a class derived from B,
@@ -461,21 +455,23 @@ Sema::IsStaticReferenceDowncast(Expr *SrcExpr, QualType DestType)
   // conversion as well.
 
   if (SrcExpr->isLvalue(Context) != Expr::LV_Valid) {
-    return false;
+    return TSC_NotApplicable;
   }
 
   const ReferenceType *DestReference = DestType->getAsReferenceType();
   if (!DestReference) {
-    return false;
+    return TSC_NotApplicable;
   }
   QualType DestPointee = DestReference->getPointeeType();
 
-  return IsStaticDowncast(SrcExpr->getType(), DestPointee);
+  return TryStaticDowncast(SrcExpr->getType(), DestPointee, OpRange,
+                          SrcExpr->getType(), DestType);
 }
 
 /// Tests whether a conversion according to C++ 5.2.9p8 is valid.
-bool
-Sema::IsStaticPointerDowncast(QualType SrcType, QualType DestType)
+Sema::TryStaticCastResult
+Sema::TryStaticPointerDowncast(QualType SrcType, QualType DestType,
+                              const SourceRange &OpRange)
 {
   // C++ 5.2.9p8: An rvalue of type "pointer to cv1 B", where B is a class
   //   type, can be converted to an rvalue of type "pointer to cv2 D", where D
@@ -487,80 +483,131 @@ Sema::IsStaticPointerDowncast(QualType SrcType, QualType DestType)
 
   const PointerType *SrcPointer = SrcType->getAsPointerType();
   if (!SrcPointer) {
-    return false;
+    return TSC_NotApplicable;
   }
 
   const PointerType *DestPointer = DestType->getAsPointerType();
   if (!DestPointer) {
-    return false;
+    return TSC_NotApplicable;
   }
 
-  return IsStaticDowncast(SrcPointer->getPointeeType(),
-                          DestPointer->getPointeeType());
+  return TryStaticDowncast(SrcPointer->getPointeeType(),
+                          DestPointer->getPointeeType(),
+                          OpRange, SrcType, DestType);
 }
 
-/// IsStaticDowncast - Common functionality of IsStaticReferenceDowncast and
-/// IsStaticPointerDowncast. Tests whether a static downcast from SrcType to
+/// TryStaticDowncast - Common functionality of TryStaticReferenceDowncast and
+/// TryStaticPointerDowncast. Tests whether a static downcast from SrcType to
 /// DestType, both of which must be canonical, is possible and allowed.
-bool
-Sema::IsStaticDowncast(QualType SrcType, QualType DestType)
+Sema::TryStaticCastResult
+Sema::TryStaticDowncast(QualType SrcType, QualType DestType,
+                       const SourceRange &OpRange, QualType OrigSrcType,
+                       QualType OrigDestType)
 {
   // Downcast can only happen in class hierarchies, so we need classes.
   if (!DestType->isRecordType() || !SrcType->isRecordType()) {
-    return false;
-  }
-
-  // Comparing cv is cheaper, so do it first.
-  if (!DestType.isAtLeastAsQualifiedAs(SrcType)) {
-    return false;
+    return TSC_NotApplicable;
   }
 
   BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
                   /*DetectVirtual=*/true);
   if (!IsDerivedFrom(DestType, SrcType, Paths)) {
-    return false;
+    return TSC_NotApplicable;
+  }
+
+  // Target type does derive from source type. Now we're serious. If an error
+  // appears now, it's not ignored.
+  // This may not be entirely in line with the standard. Take for example:
+  // struct A {};
+  // struct B : virtual A {
+  //   B(A&);
+  // };
+  // 
+  // void f()
+  // {
+  //   (void)static_cast<const B&>(*((A*)0));
+  // }
+  // As far as the standard is concerned, p5 does not apply (A is virtual), so
+  // p2 should be used instead - "const B& t(*((A*)0));" is perfectly valid.
+  // However, both GCC and Comeau reject this example, and accepting it would
+  // mean more complex code if we're to preserve the nice error message.
+  // FIXME: Being 100% compliant here would be nice to have.
+
+  // Must preserve cv, as always.
+  if (!DestType.isAtLeastAsQualifiedAs(SrcType)) {
+    Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away,
+      "static_cast", OrigDestType.getAsString(), OrigSrcType.getAsString(),
+      OpRange);
+    return TSC_Failed;
   }
 
   if (Paths.isAmbiguous(SrcType.getUnqualifiedType())) {
-    return false;
+    // This code is analoguous to that in CheckDerivedToBaseConversion, except
+    // that it builds the paths in reverse order.
+    // To sum up: record all paths to the base and build a nice string from
+    // them. Use it to spice up the error message.
+    Paths.clear();
+    Paths.setRecordingPaths(true);
+    IsDerivedFrom(DestType, SrcType, Paths);
+    std::string PathDisplayStr;
+    std::set<unsigned> DisplayedPaths;
+    for (BasePaths::paths_iterator Path = Paths.begin();
+         Path != Paths.end(); ++Path) {
+      if (DisplayedPaths.insert(Path->back().SubobjectNumber).second) {
+        // We haven't displayed a path to this particular base
+        // class subobject yet.
+        PathDisplayStr += "\n    ";
+        for (BasePath::const_reverse_iterator Element = Path->rbegin();
+             Element != Path->rend(); ++Element)
+          PathDisplayStr += Element->Base->getType().getAsString() + " -> ";
+        PathDisplayStr += DestType.getAsString();
+      }
+    }
+
+    Diag(OpRange.getBegin(), diag::err_ambiguous_base_to_derived_cast,
+      SrcType.getUnqualifiedType().getAsString(),
+      DestType.getUnqualifiedType().getAsString(),
+      PathDisplayStr, OpRange);
+    return TSC_Failed;
   }
 
   if (Paths.getDetectedVirtual() != 0) {
-    return false;
+    QualType VirtualBase(Paths.getDetectedVirtual(), 0);
+    Diag(OpRange.getBegin(), diag::err_static_downcast_via_virtual,
+      OrigSrcType.getAsString(), OrigDestType.getAsString(),
+      VirtualBase.getAsString(), OpRange);
+    return TSC_Failed;
   }
 
   // FIXME: Test accessibility.
 
-  return true;
+  return TSC_Success;
 }
 
-/// TryDirectInitialization - Attempt to direct-initialize a value of the
-/// given type (DestType) from the given expression (SrcExpr), as one would
-/// do when creating an object with new with parameters. This function returns
-/// an implicit conversion sequence that can be used to perform the
-/// initialization.
-/// This routine is very similar to TryCopyInitialization; the differences
-/// between the two (C++ 8.5p12 and C++ 8.5p14) are:
-/// 1) In direct-initialization, all constructors of the target type are
-///    considered, including those marked as explicit.
-/// 2) In direct-initialization, overload resolution is performed over the
-///    constructors of the target type. In copy-initialization, overload
-///    resolution is performed over all conversion functions that result in
-///    the target type. This can lead to different functions used.
-ImplicitConversionSequence
-Sema::TryDirectInitialization(Expr *SrcExpr, QualType DestType)
+/// TryStaticImplicitCast - Tests whether a conversion according to C++ 5.2.9p2
+/// is valid:
+///
+///   An expression e can be explicitly converted to a type T using a
+///   @c static_cast if the declaration "T t(e);" is well-formed [...].
+Sema::TryStaticCastResult
+Sema::TryStaticImplicitCast(Expr *SrcExpr, QualType DestType,
+                           const SourceRange &OpRange)
 {
-  if (!DestType->isRecordType()) {
-    // For non-class types, copy and direct initialization are identical.
-    // C++ 8.5p11
-    // FIXME: Those parts should be in a common function, actually.
-    return TryCopyInitialization(SrcExpr, DestType);
+  if (DestType->isReferenceType()) {
+    // At this point of CheckStaticCast, if the destination is a reference,
+    // this has to work. There is no other way that works.
+    return CheckReferenceInit(SrcExpr, DestType) ? TSC_Failed : TSC_Success;
+  }
+  if (DestType->isRecordType()) {
+    // FIXME: Use an implementation of C++ [over.match.ctor] for this.
+    return TSC_NotApplicable;
   }
 
-  // FIXME: Not enough support for the rest yet, actually.
-  ImplicitConversionSequence ICS;
-  ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
-  return ICS;
+  // FIXME: To get a proper error from invalid conversions here, we need to
+  // reimplement more of this.
+  ImplicitConversionSequence ICS = TryImplicitConversion(SrcExpr, DestType);
+  return ICS.ConversionKind == ImplicitConversionSequence::BadConversion ?
+    TSC_NotApplicable : TSC_Success;
 }
 
 /// CheckDynamicCast - Check that a dynamic_cast\<DestType\>(SrcExpr) is valid.

@@ -750,12 +750,27 @@ private:
   void CheckDynamicCast(Expr *&SrcExpr, QualType DestType,
                         const SourceRange &OpRange,
                         const SourceRange &DestRange);
+
+  enum TryStaticCastResult {
+    TSC_NotApplicable, ///< The cast method is not applicable.
+    TSC_Success,       ///< The cast method is appropriate and successful.
+    TSC_Failed         ///< The cast method is appropriate, but failed. A
+                       ///< diagnostic has been emitted.
+  };
+
   bool CastsAwayConstness(QualType SrcType, QualType DestType);
-  bool IsStaticReferenceDowncast(Expr *SrcExpr, QualType DestType);
-  bool IsStaticPointerDowncast(QualType SrcType, QualType DestType);
-  bool IsStaticDowncast(QualType SrcType, QualType DestType);
-  ImplicitConversionSequence TryDirectInitialization(Expr *SrcExpr,
-                                                     QualType DestType);
+  TryStaticCastResult TryStaticReferenceDowncast(Expr *SrcExpr,
+                                                QualType DestType,
+                                                const SourceRange &OpRange);
+  TryStaticCastResult TryStaticPointerDowncast(QualType SrcType,
+                                              QualType DestType,
+                                              const SourceRange &OpRange);
+  TryStaticCastResult TryStaticDowncast(QualType SrcType, QualType DestType,
+                                       const SourceRange &OpRange,
+                                       QualType OrigSrcType,
+                                       QualType OrigDestType);
+  TryStaticCastResult TryStaticImplicitCast(Expr *SrcExpr, QualType DestType,
+                                           const SourceRange &OpRange);
 
 public:
   //// ActOnCXXThis -  Parse 'this' pointer.

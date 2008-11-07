@@ -1150,6 +1150,10 @@ DIAG(err_bad_dynamic_cast_not_ptr, ERROR,
      "'%0' is not a pointer")
 DIAG(err_bad_dynamic_cast_not_polymorphic, ERROR,
      "'%0' is not polymorphic")
+DIAG(err_ambiguous_base_to_derived_cast, ERROR,
+     "ambiguous static_cast from base '%0' to derived '%1':%2")
+DIAG(err_static_downcast_via_virtual, ERROR,
+     "cannot cast '%0' to '%1' via virtual base '%2'")
 
 DIAG(err_invalid_use_of_function_type, ERROR,
      "a function type is not allowed here")

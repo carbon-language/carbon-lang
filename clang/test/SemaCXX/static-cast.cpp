@@ -37,7 +37,6 @@ void t_529_2()
   (void)static_cast<void*>((int*)0);
   (void)static_cast<volatile const void*>((const int*)0);
   (void)static_cast<A*>((B*)0);
-  // TryCopyInitialization doesn't handle references yet.
   (void)static_cast<A&>(*((B*)0));
   (void)static_cast<const B*>((C1*)0);
   (void)static_cast<B&>(*((C1*)0));
@@ -53,7 +52,7 @@ void t_529_2()
   //(void)static_cast<A*>((H*)0); // {{static_cast from 'struct H *' to 'struct A *' is not allowed}}
   (void)static_cast<int>((int*)0); // expected-error {{static_cast from 'int *' to 'int' is not allowed}}
   (void)static_cast<A**>((B**)0); // expected-error {{static_cast from 'struct B **' to 'struct A **' is not allowed}}
-  (void)static_cast<char&>(i); // expected-error {{static_cast from 'int' to 'char &' is not allowed}}
+  (void)static_cast<char&>(i); // expected-error {{non-const reference to type 'char' cannot be initialized with a value of type 'int'}}
 }
 
 // Anything to void
@@ -73,19 +72,19 @@ void t_529_5_8()
 
   // Bad code below
 
-  (void)static_cast<C1*>((A*)0); // expected-error {{static_cast from 'struct A *' to 'struct C1 *' is not allowed}}
-  (void)static_cast<C1&>(*((A*)0)); // expected-error {{static_cast from 'struct A' to 'struct C1 &' is not allowed}}
-  (void)static_cast<D*>((A*)0); // expected-error {{static_cast from 'struct A *' to 'struct D *' is not allowed}}
-  (void)static_cast<D&>(*((A*)0)); // expected-error {{static_cast from 'struct A' to 'struct D &' is not allowed}}
-  (void)static_cast<B*>((const A*)0); // expected-error {{static_cast from 'struct A const *' to 'struct B *' is not allowed}}
-  (void)static_cast<B&>(*((const A*)0)); // expected-error {{static_cast from 'struct A const' to 'struct B &' is not allowed}}
+  (void)static_cast<C1*>((A*)0); // expected-error {{cannot cast 'struct A *' to 'struct C1 *' via virtual base 'struct B'}}
+  (void)static_cast<C1&>(*((A*)0)); // expected-error {{cannot cast 'struct A' to 'struct C1 &' via virtual base 'struct B'}}
+  (void)static_cast<D*>((A*)0); // expected-error {{cannot cast 'struct A *' to 'struct D *' via virtual base 'struct B'}}
+  (void)static_cast<D&>(*((A*)0)); // expected-error {{cannot cast 'struct A' to 'struct D &' via virtual base 'struct B'}}
+  (void)static_cast<B*>((const A*)0); // expected-error {{static_cast from 'struct A const *' to 'struct B *' casts away constness}}
+  (void)static_cast<B&>(*((const A*)0)); // expected-error {{static_cast from 'struct A const' to 'struct B &' casts away constness}}
   // Accessibility is not yet tested
   //(void)static_cast<E*>((A*)0); // {{static_cast from 'struct A *' to 'struct E *' is not allowed}}
   //(void)static_cast<E&>(*((A*)0)); // {{static_cast from 'struct A' to 'struct E &' is not allowed}}
-  (void)static_cast<H*>((A*)0); // expected-error {{static_cast from 'struct A *' to 'struct H *' is not allowed}}
-  (void)static_cast<H&>(*((A*)0)); // expected-error {{static_cast from 'struct A' to 'struct H &' is not allowed}}
+  (void)static_cast<H*>((A*)0); // expected-error {{ambiguous static_cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
+  (void)static_cast<H&>(*((A*)0)); // expected-error {{ambiguous static_cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
   (void)static_cast<E*>((B*)0); // expected-error {{static_cast from 'struct B *' to 'struct E *' is not allowed}}
-  (void)static_cast<E&>(*((B*)0)); // expected-error {{static_cast from 'struct B' to 'struct E &' is not allowed}}
+  (void)static_cast<E&>(*((B*)0)); // expected-error {{non-const reference to type 'struct E' cannot be initialized with a value of type 'struct B'}}
 
   // TODO: Test inaccessible base in context where it's accessible, i.e.
   // member function and friend.
