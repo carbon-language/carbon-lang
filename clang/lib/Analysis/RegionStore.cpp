@@ -173,7 +173,7 @@ SVal RegionStoreManager::getLValueField(const GRState* St, SVal Base,
     return Base;
 
   default:
-    assert("Unhandled Base.");
+    assert(0 && "Unhandled Base.");
     return Base;
   }
 
