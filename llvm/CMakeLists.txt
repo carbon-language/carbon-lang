@@ -18,7 +18,7 @@ if( MSVC )
     CACHE STRING "Semicolon-separated list of targets to build")
 else( MSVC )
   set(LLVM_TARGETS_TO_BUILD
-    Alpha ARM CBackend CellSPU CppBackend IA64 Mips MSIL PIC16 PowerPC Sparc X86
+    Alpha ARM CBackend CellSPU CppBackend IA64 Mips MSIL PIC16 PowerPC Sparc X86 XCore
     CACHE STRING "Semicolon-separated list of targets to build")
 endif( MSVC )
 
