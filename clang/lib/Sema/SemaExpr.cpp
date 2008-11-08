@@ -335,12 +335,21 @@ static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
 /// ActOnIdentifierExpr - The parser read an identifier in expression context,
 /// validate it per-C99 6.5.1.  HasTrailingLParen indicates whether this
 /// identifier is used in a function call context.
+/// LookupCtx is only used for a C++ qualified-id (foo::bar) to indicate the
+/// class or namespace that the identifier must be a member of.
 Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                            IdentifierInfo &II,
                                            bool HasTrailingLParen,
                                            const CXXScopeSpec *SS) {
   // Could be enum-constant, value decl, instance variable, etc.
-  Decl *D = LookupDecl(&II, Decl::IDNS_Ordinary, S);
+  Decl *D;
+  if (SS && !SS->isEmpty()) {
+    DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
+    if (DC == 0)
+      return true;
+    D = LookupDecl(&II, Decl::IDNS_Ordinary, S, DC);
+  } else
+    D = LookupDecl(&II, Decl::IDNS_Ordinary, S);
   
   // If this reference is in an Objective-C method, then ivar lookup happens as
   // well.
@@ -378,7 +387,11 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     else {
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
-      return Diag(Loc, diag::err_undeclared_var_use, II.getName());
+      if (SS && !SS->isEmpty())
+        return Diag(Loc, diag::err_typecheck_no_member,
+                    II.getName(), SS->getRange());
+      else
+        return Diag(Loc, diag::err_undeclared_var_use, II.getName());
     }
   }
   

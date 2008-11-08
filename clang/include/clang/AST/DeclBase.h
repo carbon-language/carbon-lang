@@ -310,8 +310,19 @@ public:
     }
   }
 
+  bool isFileContext() const {
+    return DeclKind == Decl::TranslationUnit || DeclKind == Decl::Namespace;
+  }
+
   bool isCXXRecord() const {
     return DeclKind == Decl::CXXRecord;
+  }
+
+  bool Encloses(DeclContext *DC) const {
+    for (; DC; DC = DC->getParent())
+      if (DC == this)
+        return true;
+    return false;
   }
 
   const ScopedDecl *getDeclChain() const { return DeclChain; }

@@ -35,7 +35,7 @@ static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name)
 
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
-  CurContext = Context.getTranslationUnitDecl();
+  PushDeclContext(Context.getTranslationUnitDecl());
   if (!PP.getLangOptions().ObjC1) return;
   
   // Synthesize "typedef struct objc_selector *SEL;"
@@ -81,8 +81,8 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
-  : PP(pp), Context(ctxt), Consumer(consumer), CurContext(0), CurBlock(0),
-    PackContext(0), IdResolver(pp.getLangOptions()) {
+  : PP(pp), Context(ctxt), Consumer(consumer), CurContext(0),PreDeclaratorDC(0),
+    CurBlock(0), PackContext(0), IdResolver(pp.getLangOptions()) {
   
   // Get IdentifierInfo objects for known functions for which we
   // do extra checking.  

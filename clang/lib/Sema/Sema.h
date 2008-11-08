@@ -109,6 +109,14 @@ public:
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
 
+  /// LexicalFileContext - The current lexical file declaration context,
+  /// the translation unit or a namespace.
+  DeclContext *LexicalFileContext;
+
+  /// PreDeclaratorDC - Keeps the declaration context before switching to the
+  /// context of a declarator's nested-name-specifier.
+  DeclContext *PreDeclaratorDC;
+
   /// CurBlock - If inside of a block definition, this contains a pointer to
   /// the active block object that represents it.
   BlockSemaInfo *CurBlock;
@@ -332,7 +340,7 @@ public:
   virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
                              DeclTy **Elements, unsigned NumElements);
 
-  DeclContext *getDCParent(DeclContext *DC);
+  DeclContext *getContainingDC(DeclContext *DC);
 
   /// Set the current declaration context until it gets popped.
   void PushDeclContext(DeclContext *DC);
@@ -441,6 +449,7 @@ public:
 
   /// More parsing and symbol table subroutines...
   Decl *LookupDecl(const IdentifierInfo *II, unsigned NSI, Scope *S,
+                   DeclContext *LookupCtx = 0,
                    bool enableLazyBuiltinCreation = true);
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, 
@@ -772,6 +781,38 @@ public:
                                                       Declarator &D,
                                                       SourceLocation EqualLoc,
                                                       ExprTy *AssignExprVal);
+
+  /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
+  /// global scope ('::').
+  virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,
+                                                   SourceLocation CCLoc);
+
+  /// ActOnCXXNestedNameSpecifier - Called during parsing of a
+  /// nested-name-specifier. e.g. for "foo::bar::" we parsed "foo::" and now
+  /// we want to resolve "bar::". 'SS' is empty or the previously parsed
+  /// nested-name part ("foo::"), 'IdLoc' is the source location of 'bar',
+  /// 'CCLoc' is the location of '::' and 'II' is the identifier for 'bar'.
+  /// Returns a CXXScopeTy* object representing the C++ scope.
+  virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
+                                                  const CXXScopeSpec &SS,
+                                                  SourceLocation IdLoc,
+                                                  SourceLocation CCLoc,
+                                                  const IdentifierInfo &II);
+
+  /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
+  /// scope or nested-name-specifier) is parsed, part of a declarator-id.
+  /// After this method is called, according to [C++ 3.4.3p3], names should be
+  /// looked up in the declarator-id's scope, until the declarator is parsed and
+  /// ActOnCXXExitDeclaratorScope is called.
+  /// The 'SS' should be a non-empty valid CXXScopeSpec.
+  virtual void ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS);
+
+  /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
+  /// invoked ActOnCXXEnterDeclaratorScope(), is finished. 'SS' is the same
+  /// CXXScopeSpec that was passed to ActOnCXXEnterDeclaratorScope as well.
+  /// Used to indicate that names should revert to being looked up in the
+  /// defining scope.
+  virtual void ActOnCXXExitDeclaratorScope(const CXXScopeSpec &SS);
 
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs, 

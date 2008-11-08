@@ -264,7 +264,14 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
 /// the innermost class.
 bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *,
                               const CXXScopeSpec *SS) {
-  if (CXXRecordDecl *CurDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext))
+  CXXRecordDecl *CurDecl;
+  if (SS) {
+    DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
+    CurDecl = dyn_cast_or_null<CXXRecordDecl>(DC);
+  } else
+    CurDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext);
+
+  if (CurDecl)
     return &II == CurDecl->getIdentifier();
   else
     return false;
@@ -1253,7 +1260,7 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // in that declarative region, it is treated as an original-namespace-name.
 
     Decl *PrevDecl =
-        LookupDecl(II, Decl::IDNS_Tag | Decl::IDNS_Ordinary, DeclRegionScope,
+        LookupDecl(II, Decl::IDNS_Tag | Decl::IDNS_Ordinary, DeclRegionScope, 0,
                    /*enableLazyBuiltinCreation=*/false);
 
     if (PrevDecl && isDeclInScope(PrevDecl, CurContext, DeclRegionScope)) {

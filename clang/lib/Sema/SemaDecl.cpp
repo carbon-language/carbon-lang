@@ -30,7 +30,13 @@ using namespace clang;
 
 Sema::TypeTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S,
                                const CXXScopeSpec *SS) {
-  Decl *IIDecl = LookupDecl(&II, Decl::IDNS_Ordinary, S, false);
+  DeclContext *DC = 0;
+  if (SS) {
+    if (SS->isInvalid())
+      return 0;
+    DC = static_cast<DeclContext*>(SS->getScopeRep());
+  }
+  Decl *IIDecl = LookupDecl(&II, Decl::IDNS_Ordinary, S, DC, false);
 
   if (IIDecl && (isa<TypedefDecl>(IIDecl) || 
                  isa<ObjCInterfaceDecl>(IIDecl) ||
@@ -44,16 +50,16 @@ std::string Sema::getTypeAsString(TypeTy *Type) {
   return Ty.getAsString();
 }
 
-DeclContext *Sema::getDCParent(DeclContext *DC) {
-  // If CurContext is a ObjC method, getParent() will return NULL.
-  if (isa<ObjCMethodDecl>(DC))
-    return Context.getTranslationUnitDecl();
-
-  // A C++ inline method is parsed *after* the topmost class it was declared in
-  // is fully parsed (it's "complete").
-  // The parsing of a C++ inline method happens at the declaration context of
-  // the topmost (non-nested) class it is declared in.
+DeclContext *Sema::getContainingDC(DeclContext *DC) {
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC)) {
+    // A C++ out-of-line method will return to the file declaration context.
+    if (!MD->isInlineDefinition())
+      return LexicalFileContext;
+
+    // A C++ inline method is parsed *after* the topmost class it was declared in
+    // is fully parsed (it's "complete").
+    // The parsing of a C++ inline method happens at the declaration context of
+    // the topmost (non-nested) class it is declared in.
     assert(isa<CXXRecordDecl>(MD->getParent()) && "C++ method not in Record.");
     DC = MD->getParent();
     while (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC->getParent()))
@@ -64,18 +70,25 @@ DeclContext *Sema::getDCParent(DeclContext *DC) {
     return DC;
   }
 
+  if (isa<FunctionDecl>(DC) || isa<ObjCMethodDecl>(DC))
+    return LexicalFileContext;
+
   return DC->getParent();
 }
 
 void Sema::PushDeclContext(DeclContext *DC) {
-  assert(getDCParent(DC) == CurContext &&
+  assert(getContainingDC(DC) == CurContext &&
        "The next DeclContext should be directly contained in the current one.");
   CurContext = DC;
+  if (CurContext->isFileContext())
+    LexicalFileContext = CurContext;
 }
 
 void Sema::PopDeclContext() {
   assert(CurContext && "DeclContext imbalance!");
-  CurContext = getDCParent(CurContext);
+  CurContext = getContainingDC(CurContext);
+  if (CurContext->isFileContext())
+    LexicalFileContext = CurContext;
 }
 
 /// Add this decl to the scope shadowed decl chains.
@@ -180,18 +193,20 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
 
 /// LookupDecl - Look up the inner-most declaration in the specified
 /// namespace.
-Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI,
-                       Scope *S, bool enableLazyBuiltinCreation) {
+Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI, Scope *S,
+                       DeclContext *LookupCtx, bool enableLazyBuiltinCreation) {
   if (II == 0) return 0;
   unsigned NS = NSI;
   if (getLangOptions().CPlusPlus && (NS & Decl::IDNS_Ordinary))
     NS |= Decl::IDNS_Tag;
 
+  IdentifierResolver::iterator 
+    I = LookupCtx ? IdResolver.begin(II, LookupCtx, false/*LookInParentCtx*/) :
+                    IdResolver.begin(II, CurContext, true/*LookInParentCtx*/);
   // Scan up the scope chain looking for a decl that matches this identifier
   // that is in the appropriate namespace.  This search should not take long, as
   // shadowing of names is uncommon, and deep shadowing is extremely uncommon.
-  for (IdentifierResolver::iterator
-       I = IdResolver.begin(II, CurContext), E = IdResolver.end(); I != E; ++I)
+  for (; I != IdResolver.end(); ++I)
     if ((*I)->getIdentifierNamespace() & NS)
       return *I;
 
@@ -199,7 +214,8 @@ Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI,
   // corresponds to a compiler builtin, create the decl object for the builtin
   // now, injecting it into translation unit scope, and return it.
   if (NS & Decl::IDNS_Ordinary) {
-    if (enableLazyBuiltinCreation) {
+    if (enableLazyBuiltinCreation &&
+        (LookupCtx == 0 || isa<TranslationUnitDecl>(LookupCtx))) {
       // If this is a builtin on this (or all) targets, create the decl.
       if (unsigned BuiltinID = II->getBuiltinID())
         return LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID, S);
@@ -749,11 +765,45 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   while ((S->getFlags() & Scope::DeclScope) == 0)
     S = S->getParent();
   
-  // See if this is a redefinition of a variable in the same scope.
-  Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S);
+  DeclContext *DC;
+  Decl *PrevDecl;
   ScopedDecl *New;
   bool InvalidDecl = false;
  
+  // See if this is a redefinition of a variable in the same scope.
+  if (!D.getCXXScopeSpec().isSet()) {
+    DC = CurContext;
+    PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S);
+  } else { // Something like "int foo::x;"
+    DC = static_cast<DeclContext*>(D.getCXXScopeSpec().getScopeRep());
+    PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S, DC);
+
+    // C++ 7.3.1.2p2:
+    // Members (including explicit specializations of templates) of a named
+    // namespace can also be defined outside that namespace by explicit
+    // qualification of the name being defined, provided that the entity being
+    // defined was already declared in the namespace and the definition appears
+    // after the point of declaration in a namespace that encloses the
+    // declarations namespace.
+    //
+    if (PrevDecl == 0) {
+      // No previous declaration in the qualifying scope.
+      Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member,
+           II->getName(), D.getCXXScopeSpec().getRange());
+    } else if (!CurContext->Encloses(DC)) {
+      // The qualifying scope doesn't enclose the original declaration.
+      // Emit diagnostic based on current scope.
+      SourceLocation L = D.getIdentifierLoc();
+      SourceRange R = D.getCXXScopeSpec().getRange();
+      if (isa<FunctionDecl>(CurContext)) {
+        Diag(L, diag::err_invalid_declarator_in_function, II->getName(), R);
+      } else {
+      Diag(L, diag::err_invalid_declarator_scope, II->getName(),
+           cast<NamedDecl>(DC)->getName(), R);
+      }
+    }
+  }
+
   // In C++, the previous declaration we find might be a tag type
   // (class or enum). In this case, the new declaration will hide the
   // tag type. 
@@ -775,7 +825,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     ProcessDeclAttributes(NewTD, D);
     // Merge the decl with the existing one if appropriate. If the decl is
     // in an outer scope, it isn't the same thing.
-    if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)) {
+    if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
       NewTD = MergeTypeDefDecl(NewTD, PrevDecl);
       if (NewTD == 0) return 0;
     }
@@ -812,14 +862,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     FunctionDecl *NewFD;
     if (D.getKind() == Declarator::DK_Constructor) {
       // This is a C++ constructor declaration.
-      assert(CurContext->isCXXRecord() &&
+      assert(DC->isCXXRecord() &&
              "Constructors can only be declared in a member context");
 
       bool isInvalidDecl = CheckConstructorDeclarator(D, R, SC);
 
       // Create the new declaration
       NewFD = CXXConstructorDecl::Create(Context, 
-                                         cast<CXXRecordDecl>(CurContext),
+                                         cast<CXXRecordDecl>(DC),
                                          D.getIdentifierLoc(), II, R,
                                          isExplicit, isInline,
                                          /*isImplicitlyDeclared=*/false);
@@ -828,11 +878,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         NewFD->setInvalidDecl();
     } else if (D.getKind() == Declarator::DK_Destructor) {
       // This is a C++ destructor declaration.
-      if (CurContext->isCXXRecord()) {
+      if (DC->isCXXRecord()) {
         bool isInvalidDecl = CheckDestructorDeclarator(D, R, SC);
 
         NewFD = CXXDestructorDecl::Create(Context,
-                                          cast<CXXRecordDecl>(CurContext),
+                                          cast<CXXRecordDecl>(DC),
                                           D.getIdentifierLoc(), II, R, 
                                           isInline,
                                           /*isImplicitlyDeclared=*/false);
@@ -843,14 +893,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
         // Create a FunctionDecl to satisfy the function definition parsing
         // code path.
-        NewFD = FunctionDecl::Create(Context, CurContext, D.getIdentifierLoc(),
+        NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
                                      II, R, SC, isInline, LastDeclarator,
                                      // FIXME: Move to DeclGroup...
                                    D.getDeclSpec().getSourceRange().getBegin());
         NewFD->setInvalidDecl();
       }
     } else if (D.getKind() == Declarator::DK_Conversion) {
-      if (!CurContext->isCXXRecord()) {
+      if (!DC->isCXXRecord()) {
         Diag(D.getIdentifierLoc(),
              diag::err_conv_function_not_member);
         return 0;
@@ -858,21 +908,21 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         bool isInvalidDecl = CheckConversionDeclarator(D, R, SC);
 
         NewFD = CXXConversionDecl::Create(Context, 
-                                          cast<CXXRecordDecl>(CurContext),
+                                          cast<CXXRecordDecl>(DC),
                                           D.getIdentifierLoc(), II, R,
                                           isInline, isExplicit);
         
         if (isInvalidDecl)
           NewFD->setInvalidDecl();
       }
-    } else if (CurContext->isCXXRecord()) {
+    } else if (DC->isCXXRecord()) {
       // This is a C++ method declaration.
-      NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
+      NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                     D.getIdentifierLoc(), II, R,
                                     (SC == FunctionDecl::Static), isInline,
                                     LastDeclarator);
     } else {
-      NewFD = FunctionDecl::Create(Context, CurContext,
+      NewFD = FunctionDecl::Create(Context, DC,
                                    D.getIdentifierLoc(),
                                    II, R, SC, isInline, LastDeclarator,
                                    // FIXME: Move to DeclGroup...
@@ -943,7 +993,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         llvm::SmallVector<ParmVarDecl*, 16> Params;
         for (FunctionTypeProto::arg_type_iterator ArgType = FT->arg_type_begin();
              ArgType != FT->arg_type_end(); ++ArgType) {
-          Params.push_back(ParmVarDecl::Create(Context, CurContext,
+          Params.push_back(ParmVarDecl::Create(Context, DC,
                                                SourceLocation(), 0,
                                                *ArgType, VarDecl::None,
                                                0, 0));
@@ -972,7 +1022,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Merge the decl with the existing one if appropriate. Since C functions
     // are in a flat namespace, make sure we consider decls in outer scopes.
     if (PrevDecl &&
-        (!getLangOptions().CPlusPlus||isDeclInScope(PrevDecl, CurContext, S))) {
+        (!getLangOptions().CPlusPlus||isDeclInScope(PrevDecl, DC, S))) {
       bool Redeclaration = false;
 
       // If C++, determine whether NewFD is an overload of PrevDecl or
@@ -1046,10 +1096,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
     case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
     }    
-    if (CurContext->isCXXRecord()) {
+    if (DC->isCXXRecord()) {
       assert(SC == VarDecl::Static && "Invalid storage class for member!");
       // This is a static data member for a C++ class.
-      NewVD = CXXClassVarDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
+      NewVD = CXXClassVarDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                       D.getIdentifierLoc(), II,
                                       R, LastDeclarator);
     } else {
@@ -1063,7 +1113,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
           InvalidDecl = true;
         }
       }
-        NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(), 
+        NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
                                 II, R, SC, LastDeclarator,
                                 // FIXME: Move to DeclGroup...
                                 D.getDeclSpec().getSourceRange().getBegin());
@@ -1090,7 +1140,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
     // Merge the decl with the existing one if appropriate. If the decl is
     // in an outer scope, it isn't the same thing.
-    if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)) {
+    if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
       NewVD = MergeVarDecl(NewVD, PrevDecl);
       if (NewVD == 0) return 0;
     }
@@ -1824,6 +1874,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
 /// to introduce parameters into function prototype scope.
 Sema::DeclTy *
 Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
+  // FIXME: disallow CXXScopeSpec for param declarators.
   const DeclSpec &DS = D.getDeclSpec();
   
   // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
@@ -1952,6 +2003,10 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
          FD->getName());
     Diag(Definition->getLocation(), diag::err_previous_definition);
   }
+
+  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
+    if (isa<CXXRecordDecl>(CurContext))
+      MD->setInlineDefinition(true);
 
   PushDeclContext(FD);
     
@@ -2083,6 +2138,53 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
   case DeclSpec::TST_enum:   Kind = TagDecl::TK_enum; break;
   }
+
+  if (Name && SS.isNotEmpty()) {
+    DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
+    if (DC == 0) {
+      // Invalid C++ scope specifier.
+      Name = 0;
+      goto CreateNewDecl;
+    }
+
+    TagDecl *PrevDecl =
+          dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag, S, DC));
+    if (PrevDecl == 0) {
+      // No tag member found.
+      Diag(NameLoc, diag::err_not_tag_in_scope, Name->getName(),
+           SS.getRange());
+      Name = 0;
+      goto CreateNewDecl;
+    }
+
+    if (PrevDecl->getTagKind() != Kind) {
+      Diag(KWLoc, diag::err_use_with_wrong_tag, Name->getName());
+      Diag(PrevDecl->getLocation(), diag::err_previous_use);
+      // Recover by making this an anonymous redefinition.
+      Name = 0;
+      goto CreateNewDecl;
+    }
+
+    // If this is a use or a forward declaration, we're good.
+    if (TK != TK_Definition)
+      return PrevDecl;
+
+    // Diagnose attempts to redefine a tag.
+    if (PrevDecl->isDefinition()) {
+      Diag(NameLoc, diag::err_redefinition, Name->getName());
+      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+      // If this is a redefinition, recover by making this struct be
+      // anonymous, which will make any later references get the previous
+      // definition.
+      Name = 0;
+      goto CreateNewDecl;
+    }
+
+    // Okay, this is definition of a previously declared or referenced
+    // tag. Move the location of the decl to be the definition site.
+    PrevDecl->setLocation(NameLoc);
+    return PrevDecl;
+  }
   
   // Two code paths: a new one for structs/unions/classes where we create
   //   separate decls for forward declarations, and an old (eventually to
@@ -2090,6 +2192,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   if (Kind != TagDecl::TK_enum)
     return ActOnTagStruct(S, Kind, TK, KWLoc, Name, NameLoc, Attr);
   
+  {
+
   // If this is a named struct, check to see if there was a previous forward
   // declaration or definition.
   // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
@@ -2147,6 +2251,10 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       }
     }
   }
+
+  } // subscope in which an already declared tag is handled.
+
+  CreateNewDecl:
   
   // If there is an identifier, use the location of the identifier as the
   // location of the decl, otherwise use the location of the struct/union

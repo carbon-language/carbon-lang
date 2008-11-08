@@ -391,12 +391,14 @@ protected:
 /// CXXMethodDecl - Represents a static or instance method of a
 /// struct/union/class.
 class CXXMethodDecl : public FunctionDecl {
+  bool IsInlineDef : 1;
+
 protected:
   CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation L,
                 IdentifierInfo *Id, QualType T,
                 bool isStatic, bool isInline, ScopedDecl *PrevDecl)
     : FunctionDecl(DK, RD, L, Id, T, (isStatic ? Static : None),
-                   isInline, PrevDecl) {}
+                   isInline, PrevDecl), IsInlineDef(false) {}
 
 public:
   static CXXMethodDecl *Create(ASTContext &C, CXXRecordDecl *RD,
@@ -406,6 +408,10 @@ public:
   
   bool isStatic() const { return getStorageClass() == Static; }
   bool isInstance() const { return !isStatic(); }
+
+  bool isOutOfLineDefinition() const { return !isInlineDefinition(); }
+  bool isInlineDefinition() const { return IsInlineDef; }
+  void setInlineDefinition(bool flag) { IsInlineDef = flag; }
 
   void setAccess(AccessSpecifier AS) { Access = AS; }
   AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
