@@ -292,8 +292,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "clangRewrite", "..\tools\cl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "clangLibDriver", "..\tools\clang\win32\clangLibDriver\clangLibDriver.vcproj", "{AECB78DF-C319-4D49-B2FD-F98F62EBBDF4}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "clang", "clang\clang.vdproj", "{025666E2-60EA-4C49-8C68-49CEC99DD4B1}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Configure|Win32 = Configure|Win32
@@ -541,9 +539,6 @@ Global
 		{AECB78DF-C319-4D49-B2FD-F98F62EBBDF4}.Debug|Win32.Build.0 = Debug|Win32
 		{AECB78DF-C319-4D49-B2FD-F98F62EBBDF4}.Release|Win32.ActiveCfg = Release|Win32
 		{AECB78DF-C319-4D49-B2FD-F98F62EBBDF4}.Release|Win32.Build.0 = Release|Win32
-		{025666E2-60EA-4C49-8C68-49CEC99DD4B1}.Configure|Win32.ActiveCfg = Release
-		{025666E2-60EA-4C49-8C68-49CEC99DD4B1}.Debug|Win32.ActiveCfg = Debug
-		{025666E2-60EA-4C49-8C68-49CEC99DD4B1}.Release|Win32.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -589,7 +584,6 @@ Global
 		{6C98551A-4C36-4E74-8419-4D3EEEC9D8E0} = {DAC2AB11-F09C-454B-86FD-9BDBBA25827F}
 		{F9FBDDA2-9EE1-473C-A456-BE20B7B2439D} = {DAC2AB11-F09C-454B-86FD-9BDBBA25827F}
 		{AECB78DF-C319-4D49-B2FD-F98F62EBBDF4} = {DAC2AB11-F09C-454B-86FD-9BDBBA25827F}
-		{025666E2-60EA-4C49-8C68-49CEC99DD4B1} = {DAC2AB11-F09C-454B-86FD-9BDBBA25827F}
 	EndGlobalSection
 	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
 		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
