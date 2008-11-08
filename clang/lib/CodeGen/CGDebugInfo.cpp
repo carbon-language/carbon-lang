@@ -214,14 +214,10 @@ CGDebugInfo::getOrCreateCVRType(QualType type, llvm::CompileUnitDesc *Unit)
 /// getOrCreateBuiltinType - Get the Basic type from the cache or create a new
 /// one if necessary.
 llvm::TypeDesc *
-CGDebugInfo::getOrCreateBuiltinType(QualType type, llvm::CompileUnitDesc *Unit)
-{
-  assert (type->getTypeClass() == Type::Builtin);
-
-  const BuiltinType *BT = type->getAsBuiltinType(); 
-
+CGDebugInfo::getOrCreateBuiltinType(const BuiltinType *type, 
+                                    llvm::CompileUnitDesc *Unit) {
   unsigned Encoding = 0;
-  switch (BT->getKind())
+  switch (type->getKind())
   {
     case BuiltinType::Void:
       return NULL;
@@ -261,7 +257,7 @@ CGDebugInfo::getOrCreateBuiltinType(QualType type, llvm::CompileUnitDesc *Unit)
   llvm::BasicTypeDesc *BTy = new llvm::BasicTypeDesc();
 
   // Get the name and location early to assist debugging.
-  const char *TyName = BT->getName();
+  const char *TyName = type->getName();
 
   // Bit size, align and offset of the type.
   uint64_t Size = M->getContext().getTypeSize(type);
@@ -282,15 +278,14 @@ CGDebugInfo::getOrCreateBuiltinType(QualType type, llvm::CompileUnitDesc *Unit)
 }
 
 llvm::TypeDesc *
-CGDebugInfo::getOrCreatePointerType(QualType type, llvm::CompileUnitDesc *Unit)
-{
+CGDebugInfo::getOrCreatePointerType(const PointerType *type, 
+                                    llvm::CompileUnitDesc *Unit) {
   // type*
   llvm::DerivedTypeDesc *DTy =
     new llvm::DerivedTypeDesc(llvm::dwarf::DW_TAG_pointer_type);
 
   // Handle the derived type.
-  const PointerType *PTRT = type->getAsPointerType();
-  llvm::TypeDesc *FromTy = getOrCreateType(PTRT->getPointeeType(), Unit);
+  llvm::TypeDesc *FromTy = getOrCreateType(type->getPointeeType(), Unit);
  
   // Get the name and location early to assist debugging.
   SourceManager &SM = M->getContext().getSourceManager();
@@ -315,16 +310,15 @@ CGDebugInfo::getOrCreatePointerType(QualType type, llvm::CompileUnitDesc *Unit)
 }
 
 llvm::TypeDesc *
-CGDebugInfo::getOrCreateTypedefType(QualType type, llvm::CompileUnitDesc *Unit)
-{
+CGDebugInfo::getOrCreateTypedefType(const TypedefType *TDT, 
+                                    llvm::CompileUnitDesc *Unit) {
   // typedefs are derived from some other type.
   llvm::DerivedTypeDesc *DTy =
     new llvm::DerivedTypeDesc(llvm::dwarf::DW_TAG_typedef);
 
   // Handle derived type.
-  const TypedefType *TDT = type->getAsTypedefType();
   llvm::TypeDesc *FromTy = getOrCreateType(TDT->LookThroughTypedefs(),
-                                               Unit);
+                                           Unit);
 
   // Get the name and location early to assist debugging.
   const char *TyName = TDT->getDecl()->getName();
@@ -375,7 +369,7 @@ CGDebugInfo::getOrCreateFunctionType(QualType type, llvm::CompileUnitDesc *Unit)
 }
 
 /// getOrCreateRecordType - get structure or union type.
-void CGDebugInfo::getOrCreateRecordType(QualType type,
+void CGDebugInfo::getOrCreateRecordType(const RecordType *type,
                                         llvm::CompileUnitDesc *Unit,
                                         llvm::TypeDesc *&Slot)
 {
@@ -391,7 +385,7 @@ void CGDebugInfo::getOrCreateRecordType(QualType type,
   else
     return;
 
-  RecordDecl *RecDecl = type->getAsRecordType()->getDecl();
+  RecordDecl *RecDecl = type->getDecl();
   // We can not get the type for forward declarations. 
   // FIXME: What *should* we be doing here?
   if (!RecDecl->getDefinition(M->getContext()))
@@ -429,15 +423,12 @@ void CGDebugInfo::getOrCreateRecordType(QualType type,
 
 /// getOrCreateEnumType - get Enum type.
 llvm::TypeDesc *
-CGDebugInfo::getOrCreateEnumType(QualType type, llvm::CompileUnitDesc *Unit)
-{
+CGDebugInfo::getOrCreateEnumType(const EnumType *type, 
+                                 llvm::CompileUnitDesc *Unit) {
   llvm::CompositeTypeDesc *EnumTy 
     = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_enumeration_type);
 
-  EnumType *EType = dyn_cast<EnumType>(type);
-  if (!EType) return(NULL);
-
-  EnumDecl *EDecl = EType->getDecl();
+  EnumDecl *EDecl = type->getDecl();
   SourceManager &SM = M->getContext().getSourceManager();
   uint64_t Line = SM.getLogicalLineNumber(EDecl->getLocation());
 
@@ -481,8 +472,8 @@ CGDebugInfo::getOrCreateEnumType(QualType type, llvm::CompileUnitDesc *Unit)
 
 /// getOrCreateArrayType - get or create array types.
 llvm::TypeDesc *
-CGDebugInfo::getOrCreateArrayType(QualType type, llvm::CompileUnitDesc *Unit)
-{
+CGDebugInfo::getOrCreateArrayType(QualType type, 
+                                  llvm::CompileUnitDesc *Unit) {
   llvm::CompositeTypeDesc *ArrayTy 
     = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_array_type);
 
@@ -527,21 +518,19 @@ CGDebugInfo::getOrCreateArrayType(QualType type, llvm::CompileUnitDesc *Unit)
 
 
 /// getOrCreateTaggedType - get or create structure/union/Enum type.
-void CGDebugInfo::getOrCreateTaggedType(QualType type, 
+void CGDebugInfo::getOrCreateTagType(const TagType *type, 
                                         llvm::CompileUnitDesc *Unit,
-                                        llvm::TypeDesc *&Slot)
-{
-  if (type->isStructureType() || type->isUnionType())
-    getOrCreateRecordType(type, Unit, Slot);
-  else if (type->isEnumeralType())
-    Slot = getOrCreateEnumType(type, Unit);
+                                        llvm::TypeDesc *&Slot) {
+  if (const RecordType *RT = dyn_cast<RecordType>(type))
+    getOrCreateRecordType(RT, Unit, Slot);
+  else if (const EnumType *ET = dyn_cast<EnumType>(type))
+    Slot = getOrCreateEnumType(ET, Unit);
 }
   
 /// getOrCreateType - Get the type from the cache or create a new
 /// one if necessary.
 llvm::TypeDesc *
-CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
-{
+CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit) {
   if (type.isNull())
     return NULL;
 
@@ -571,7 +560,7 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
       return NULL;
 
     case Type::TypeName:
-      Slot = getOrCreateTypedefType(type, Unit);
+      Slot = getOrCreateTypedefType(cast<TypedefType>(type), Unit);
       break;
 
     case Type::FunctionProto:
@@ -580,15 +569,15 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
       break;
 
     case Type::Builtin:
-      Slot = getOrCreateBuiltinType(type, Unit);
+      Slot = getOrCreateBuiltinType(cast<BuiltinType>(type), Unit);
       break;
 
     case Type::Pointer:
-      Slot = getOrCreatePointerType(type, Unit);
+      Slot = getOrCreatePointerType(cast<PointerType>(type), Unit);
       break;
 
     case Type::Tagged:
-      getOrCreateTaggedType(type, Unit, Slot);
+      getOrCreateTagType(cast<TagType>(type), Unit, Slot);
       break;
 
     case Type::ConstantArray:

@@ -79,20 +79,20 @@ private:
   /// Helper functions for getOrCreateType.
   llvm::TypeDesc *getOrCreateCVRType(QualType type, 
                                      llvm::CompileUnitDesc *unit);
-  llvm::TypeDesc *getOrCreateBuiltinType(QualType type, 
+  llvm::TypeDesc *getOrCreateBuiltinType(const BuiltinType *type, 
                                          llvm::CompileUnitDesc *unit);
-  llvm::TypeDesc *getOrCreateTypedefType(QualType type, 
+  llvm::TypeDesc *getOrCreateTypedefType(const TypedefType *type, 
                                          llvm::CompileUnitDesc *unit);
-  llvm::TypeDesc *getOrCreatePointerType(QualType type, 
+  llvm::TypeDesc *getOrCreatePointerType(const PointerType *type, 
                                          llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateFunctionType(QualType type, 
                                           llvm::CompileUnitDesc *unit);
-  void getOrCreateRecordType(QualType type,
+  void getOrCreateRecordType(const RecordType *type,
                              llvm::CompileUnitDesc *unit,
                              llvm::TypeDesc *&Slot);
-  llvm::TypeDesc *getOrCreateEnumType(QualType type,
+  llvm::TypeDesc *getOrCreateEnumType(const EnumType *type,
                                       llvm::CompileUnitDesc *unit);
-  void getOrCreateTaggedType(QualType type,
+  void getOrCreateTagType(const TagType *type,
                              llvm::CompileUnitDesc *unit,
                              llvm::TypeDesc *&Slot);
   llvm::TypeDesc *getOrCreateArrayType(QualType type,
