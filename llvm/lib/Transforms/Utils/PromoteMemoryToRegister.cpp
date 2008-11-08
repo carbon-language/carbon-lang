@@ -80,19 +80,12 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
         return false;   // Don't allow a store OF the AI, only INTO the AI.
       if (SI->isVolatile())
         return false;
+    } else if (const BitCastInst *BC = dyn_cast<BitCastInst>(*UI)) {
+      // Uses by dbg info shouldn't inhibit promotion.
+      if (!BC->hasOneUse() || !isa<DbgInfoIntrinsic>(*BC->use_begin()))
+        return false;
     } else {
-      const BitCastInst *BC = dyn_cast<BitCastInst>(*UI);
-      if (!BC) 
-        return false;   // Not a load or store or dbg intrinsic.
-      Value::use_const_iterator BCUI = BC->use_begin(), BCUE = BC->use_end();
-      if (BCUI == BCUE) 
-        return false; // Not a dbg intrinsic.
-      const DbgInfoIntrinsic *DI = dyn_cast<DbgInfoIntrinsic>(*BCUI);
-      if (!DI) 
-        return false; // Not a dbg intrinsic.
-      BCUI++; 
-      if (BCUI != BCUE) 
-        return false; // Not a dbg intrinsic use.
+      return false;
     }
 
   return true;
@@ -284,6 +277,21 @@ namespace {
       AllocaPointerVal = 0;
     }
     
+    /// RemoveDebugUses - Remove uses of the alloca in DbgInfoInstrinsics.
+    void RemoveDebugUses(AllocaInst *AI) {
+      for (Value::use_iterator U = AI->use_begin(), E = AI->use_end();
+           U != E;) {
+        Instruction *User = cast<Instruction>(*U);
+        ++U;
+        if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
+          assert(BC->hasOneUse() && "Unexpected alloca uses!");
+          DbgInfoIntrinsic *DI = cast<DbgInfoIntrinsic>(*BC->use_begin());
+          DI->eraseFromParent();
+          BC->eraseFromParent();
+        } 
+      }
+    }
+
     /// AnalyzeAlloca - Scan the uses of the specified alloca, filling in our
     /// ivars.
     void AnalyzeAlloca(AllocaInst *AI) {
@@ -295,14 +303,7 @@ namespace {
       for (Value::use_iterator U = AI->use_begin(), E = AI->use_end();
            U != E; ++U) {
         Instruction *User = cast<Instruction>(*U);
-        if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
-          // Remove dbg intrinsic uses now.
-          Value::use_iterator BCUI = BC->use_begin();
-          DbgInfoIntrinsic *DI = cast<DbgInfoIntrinsic>(*BCUI);
-          assert (next(BCUI) == BC->use_end() && "Unexpected alloca uses!");
-          DI->eraseFromParent();
-          BC->eraseFromParent();
-        } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+        if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
           // Remember the basic blocks which define new values for the alloca
           DefiningBlocks.push_back(SI->getParent());
           AllocaPointerVal = SI->getOperand(0);
@@ -342,6 +343,9 @@ void PromoteMem2Reg::run() {
            "Cannot promote non-promotable alloca!");
     assert(AI->getParent()->getParent() == &F &&
            "All allocas should be in the same function, which is same as DF!");
+
+    // Remove any uses of this alloca in DbgInfoInstrinsics.
+    Info.RemoveDebugUses(AI);
 
     if (AI->use_empty()) {
       // If there are no uses of the alloca, just delete it now.
