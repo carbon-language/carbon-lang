@@ -1363,7 +1363,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     // Determine whether this identifier is a C++ constructor name or
     // a normal identifier.
     if (getLang().CPlusPlus && 
-        Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope))
+        Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope) &&
+        NextToken().is(tok::l_paren))
       D.SetConstructor(Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope),
                        Tok.getIdentifierInfo(), Tok.getLocation());
     else
