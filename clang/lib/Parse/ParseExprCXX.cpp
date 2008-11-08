@@ -313,7 +313,7 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
     Diag(Tok.getLocation(), diag::err_operator_missing_type_specifier);
     return true;
   }
-  while (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec));
+  while (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec)) ;
 
   return false;
 }
