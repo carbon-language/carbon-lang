@@ -754,8 +754,8 @@ private:
   /// enter a new C++ declarator scope and exit it when the function is
   /// finished.
   class DeclaratorScopeObj {
-    CXXScopeSpec &SS;
     Parser &P;
+    CXXScopeSpec &SS;
   public:
     DeclaratorScopeObj(Parser &p, CXXScopeSpec &ss) : P(p), SS(ss) {}
 
