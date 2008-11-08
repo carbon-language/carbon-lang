@@ -1133,10 +1133,6 @@ void JITEmitter::startGVStub(const GlobalValue* GV, unsigned StubSize,
 
 void *JITEmitter::finishGVStub(const GlobalValue* GV) {
   NumBytes += getCurrentPCOffset();
-
-  // Invalidate the icache if necessary.
-  sys::Memory::InvalidateInstructionCache(BufferBegin, NumBytes);
-
   std::swap(SavedBufferBegin, BufferBegin);
   BufferEnd = SavedBufferEnd;
   CurBufferPtr = SavedCurBufferPtr;
