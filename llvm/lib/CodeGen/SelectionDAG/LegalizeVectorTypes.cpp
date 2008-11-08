@@ -181,16 +181,34 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
-  MVT NewVT = N->getValueType(0).getVectorElementType();
   SDValue LHS = GetScalarizedVector(N->getOperand(0));
   SDValue RHS = GetScalarizedVector(N->getOperand(1));
-  LHS = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHS), LHS, RHS,
-                    N->getOperand(2));
-  return
-    DAG.getNode(ISD::SELECT, NewVT, LHS,
-                DAG.getConstant(APInt::getAllOnesValue(NewVT.getSizeInBits()),
-                                NewVT),
-                DAG.getConstant(0ULL, NewVT));
+  MVT NVT = N->getValueType(0).getVectorElementType();
+  MVT SVT = TLI.getSetCCResultType(LHS);
+
+  // Turn it into a scalar SETCC.
+  SDValue Res = DAG.getNode(ISD::SETCC, SVT, LHS, RHS, N->getOperand(2));
+
+  // VSETCC always returns a sign-extended value, while SETCC may not.  The
+  // SETCC result type may not match the vector element type.  Correct these.
+  if (NVT.getSizeInBits() <= SVT.getSizeInBits()) {
+    // The SETCC result type is bigger than the vector element type.
+    // Ensure the SETCC result is sign-extended.
+    if (TLI.getSetCCResultContents() !=
+        TargetLowering::ZeroOrNegativeOneSetCCResult)
+      Res = DAG.getNode(ISD::SIGN_EXTEND_INREG, SVT, Res,
+                        DAG.getValueType(MVT::i1));
+    // Truncate to the final type.
+    return DAG.getNode(ISD::TRUNCATE, NVT, Res);
+  } else {
+    // The SETCC result type is smaller than the vector element type.
+    // If the SetCC result is not sign-extended, chop it down to MVT::i1.
+    if (TLI.getSetCCResultContents() !=
+        TargetLowering::ZeroOrNegativeOneSetCCResult)
+      Res = DAG.getNode(ISD::TRUNCATE, MVT::i1, Res);
+    // Sign extend to the final type.
+    return DAG.getNode(ISD::SIGN_EXTEND, NVT, Res);
+  }
 }
 
 
