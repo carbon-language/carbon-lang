@@ -49,6 +49,12 @@ namespace llvm {
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New);
 
+    /// emitGlobalValueNonLazyPtr - Use the specified MachineCodeEmitter object
+    /// to emit a Mac OS X non-lazy pointer which contains the address of the
+    /// specified ptr.
+    virtual void *emitGlobalValueNonLazyPtr(const GlobalValue *GV, void *Ptr,
+                                            MachineCodeEmitter &MCE);
+
     /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.

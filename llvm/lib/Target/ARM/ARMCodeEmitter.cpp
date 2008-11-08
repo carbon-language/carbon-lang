@@ -336,8 +336,13 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
     GlobalValue *GV = ACPV->getGV();
     if (GV) {
       assert(!ACPV->isStub() && "Don't know how to deal this yet!");
-      emitGlobalAddress(GV, ARM::reloc_arm_machine_cp_entry, false,
-                        (intptr_t)ACPV);
+      if (ACPV->isNonLazyPointer())
+        MCE.addRelocation(MachineRelocation::getGVNonLazyPtr(
+                  MCE.getCurrentPCOffset(), ARM::reloc_arm_machine_cp_entry, GV,
+                  (intptr_t)ACPV, false));
+      else 
+        emitGlobalAddress(GV, ARM::reloc_arm_machine_cp_entry,
+                          ACPV->isStub(), (intptr_t)ACPV);
      } else  {
       assert(!ACPV->isNonLazyPointer() && "Don't know how to deal this yet!");
       emitExternalSymbolAddress(ACPV->getSymbol(), ARM::reloc_arm_absolute);

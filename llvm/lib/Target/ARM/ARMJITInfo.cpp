@@ -133,14 +133,21 @@ ARMJITInfo::getLazyResolverFunction(JITCompilerFn F) {
   return ARMCompilationCallback;
 }
 
+void *ARMJITInfo::emitGlobalValueNonLazyPtr(const GlobalValue *GV, void *Ptr,
+                                            MachineCodeEmitter &MCE) {
+  MCE.startFunctionStub(GV, 4, 4);  // FIXME: Rename this.
+  MCE.emitWordLE((intptr_t)Ptr);
+  return MCE.finishFunctionStub(GV);
+}
+
 void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                    MachineCodeEmitter &MCE) {
   unsigned addr = (intptr_t)Fn;
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)ARMCompilationCallback) {
-    // branch to the corresponding function addr
-    // the stub is 8-byte size and 4-aligned
+    // Branch to the corresponding function addr.
+    // The stub is 8-byte size and 4-aligned.
     MCE.startFunctionStub(F, 8, 4);
     MCE.emitWordLE(0xe51ff004); // LDR PC, [PC,#-4]
     MCE.emitWordLE(addr);       // addr of function
@@ -150,8 +157,8 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     // This stub sets the return address to restart the stub, so that
     // the new branch will be invoked when we come back.
     //
-    // branch and link to the compilation callback.
-    // the stub is 16-byte size and 4-byte aligned.
+    // Branch and link to the compilation callback.
+    // The stub is 16-byte size and 4-byte aligned.
     MCE.startFunctionStub(F, 16, 4);
     // Save LR so the callback can determine which stub called it.
     // The compilation callback is responsible for popping this prior
