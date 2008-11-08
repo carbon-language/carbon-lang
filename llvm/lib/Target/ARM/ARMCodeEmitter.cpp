@@ -633,6 +633,8 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
 void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
                                               unsigned ImplicitRd,
                                               unsigned ImplicitRn) {
+  const TargetInstrDesc &TID = MI.getDesc();
+
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
@@ -655,6 +657,10 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
                << ARMII::RegRnShift);
   else
     Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
+
+  // If this is a two-address operand, skip it. e.g. LDR_PRE.
+  if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
+    ++OpIdx;
 
   const MachineOperand &MO2 = MI.getOperand(OpIdx);
   unsigned AM2Opc = (ImplicitRn == ARM::PC)
@@ -689,6 +695,8 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
 
 void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
                                                   unsigned ImplicitRn) {
+  const TargetInstrDesc &TID = MI.getDesc();
+
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
@@ -706,6 +714,10 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
                << ARMII::RegRnShift);
   else
     Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
+
+  // If this is a two-address operand, skip it. e.g. LDRH_POST.
+  if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
+    ++OpIdx;
 
   const MachineOperand &MO2 = MI.getOperand(OpIdx);
   unsigned AM3Opc = (ImplicitRn == ARM::PC)
