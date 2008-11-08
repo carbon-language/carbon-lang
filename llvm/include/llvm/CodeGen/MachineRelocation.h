@@ -99,10 +99,10 @@ public:
   /// MachineRelocation::getGVNonLazyPtr - Return a relocation entry for a
   /// Mac OS X non-lazy GlobalValue indirect reference.
   static MachineRelocation getGVNonLazyPtr(intptr_t offset,
-                                 unsigned RelocationType, 
-                                 GlobalValue *GV, intptr_t cst = 0,
-                                 bool NeedStub = 0,
-                                 bool GOTrelative = 0) {
+                                           unsigned RelocationType, 
+                                           GlobalValue *GV, intptr_t cst = 0,
+                                           bool NeedStub = 0,
+                                           bool GOTrelative = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     MachineRelocation Result;
     Result.Offset = offset;
