@@ -363,6 +363,7 @@ CGDebugInfo::getOrCreateFunctionType(QualType type, llvm::CompileUnitDesc *Unit)
     for (unsigned int i =0; i < FTPro->getNumArgs(); i++) {
       QualType ParamType = FTPro->getArgType(i);
       ArgTy = getOrCreateType(ParamType, Unit);
+      // FIXME: Remove once we support all types.
       if (ArgTy) Elements.push_back(ArgTy);
     }
   }
@@ -407,8 +408,11 @@ void CGDebugInfo::getOrCreateRecordType(QualType type,
   for (int i = 0; i < NumMembers; i++) {
     FieldDecl *Member = RecDecl->getMember(i);
     llvm::TypeDesc *MemberTy = getOrCreateType(Member->getType(), Unit);
-    MemberTy->setOffset(RL.getFieldOffset(i));
-    Elements.push_back(MemberTy);
+    // FIXME: Remove once we support all types.
+    if (MemberTy) {
+      MemberTy->setOffset(RL.getFieldOffset(i));
+      Elements.push_back(MemberTy);
+    }
   }
 
   // Fill in the blanks.
