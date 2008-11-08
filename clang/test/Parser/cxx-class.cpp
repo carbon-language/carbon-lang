@@ -1,4 +1,5 @@
-// RUN: clang -parse-noop -verify %s 
+// RUN: clang -parse-noop -verify %s
+class C;
 class C {
 public:
 protected:
@@ -14,7 +15,14 @@ public:
   void m() {
     int l = 2;
   }
+  virtual int vf() const volatile = 0;
   
 private:
   int x,f(),y,g();
+  inline int h();
+  static const int sci = 10;
 };
+void glo()
+{
+  struct local {};
+}
