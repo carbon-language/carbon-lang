@@ -10,7 +10,8 @@
 LEVEL = ../../../..
 LIBRARYNAME = LLVMCellSPUAsmPrinter
 
-# Hack: we need to include 'main' x86 target directory to grab private headers 
+# Hack: we need to include 'main' CellSPU target directory to grab
+# private headers
 CPPFLAGS = -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
 include $(LEVEL)/Makefile.common
