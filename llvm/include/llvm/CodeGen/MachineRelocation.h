@@ -234,9 +234,9 @@ public:
     return AddrType == isBB;
   }
 
-  /// isString - Return true if this is a constant string.
+  /// isExternalSymbol - Return true if this is a constant string.
   ///
-  bool isString() const {
+  bool isExternalSymbol() const {
     return AddrType == isExtSym;
   }
 
@@ -287,8 +287,8 @@ public:
 
   /// getString - If this is a string value, return the string reference.
   ///
-  const char *getString() const {
-    assert(isString() && "This is not a string reference!");
+  const char *getExternalSymbol() const {
+    assert(isExternalSymbol() && "This is not an external symbol reference!");
     return Target.ExtSym;
   }
 

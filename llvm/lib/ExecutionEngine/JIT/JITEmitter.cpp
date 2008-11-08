@@ -885,9 +885,9 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       MachineRelocation &MR = Relocations[i];
       void *ResultPtr = 0;
       if (!MR.letTargetResolve()) {
-        if (MR.isString()) {
-          ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
-          DOUT << "JIT: Map \'" << MR.getString() << "\' to ["
+        if (MR.isExternalSymbol()) {
+          ResultPtr = TheJIT->getPointerToNamedFunction(MR.getExternalSymbol());
+          DOUT << "JIT: Map \'" << MR.getExternalSymbol() << "\' to ["
                << ResultPtr << "]\n";  
 
           // If the target REALLY wants a stub for this function, emit it now.
