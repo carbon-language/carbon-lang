@@ -266,7 +266,7 @@ public:
   bool UnwrapSimilarPointerTypes(QualType& T1, QualType& T2);
 
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
-private:
+
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
@@ -329,7 +329,7 @@ private:
                                     SourceLocation EqualLoc, ExprTy *Val);
   virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
                              DeclTy **Elements, unsigned NumElements);
-private:
+
   DeclContext *getDCParent(DeclContext *DC);
 
   /// Set the current declaration context until it gets popped.
@@ -738,41 +738,6 @@ public:
                                        SourceLocation LParenLoc, ExprTy *E,
                                        SourceLocation RParenLoc);
 
-private:
-  // Helpers for ActOnCXXCasts
-  void CheckConstCast(Expr *&SrcExpr, QualType DestType,
-                      const SourceRange &OpRange, const SourceRange &DestRange);
-  void CheckReinterpretCast(Expr *&SrcExpr, QualType DestType,
-                            const SourceRange &OpRange,
-                            const SourceRange &DestRange);
-  void CheckStaticCast(Expr *&SrcExpr, QualType DestType,
-                       const SourceRange &OpRange);
-  void CheckDynamicCast(Expr *&SrcExpr, QualType DestType,
-                        const SourceRange &OpRange,
-                        const SourceRange &DestRange);
-
-  enum TryStaticCastResult {
-    TSC_NotApplicable, ///< The cast method is not applicable.
-    TSC_Success,       ///< The cast method is appropriate and successful.
-    TSC_Failed         ///< The cast method is appropriate, but failed. A
-                       ///< diagnostic has been emitted.
-  };
-
-  bool CastsAwayConstness(QualType SrcType, QualType DestType);
-  TryStaticCastResult TryStaticReferenceDowncast(Expr *SrcExpr,
-                                                QualType DestType,
-                                                const SourceRange &OpRange);
-  TryStaticCastResult TryStaticPointerDowncast(QualType SrcType,
-                                              QualType DestType,
-                                              const SourceRange &OpRange);
-  TryStaticCastResult TryStaticDowncast(QualType SrcType, QualType DestType,
-                                       const SourceRange &OpRange,
-                                       QualType OrigSrcType,
-                                       QualType OrigDestType);
-  TryStaticCastResult TryStaticImplicitCast(Expr *SrcExpr, QualType DestType,
-                                           const SourceRange &OpRange);
-
-public:
   //// ActOnCXXThis -  Parse 'this' pointer.
   virtual ExprResult ActOnCXXThis(SourceLocation ThisLoc);
 
@@ -1022,7 +987,6 @@ public:
                                SourceLocation LParenLoc,
                                SourceLocation RParenLoc);
 
-private:
   /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit
   /// cast.  If there is already an implicit cast, merge into the existing one.
   void ImpCastExprToType(Expr *&Expr, QualType Type);
