@@ -1614,7 +1614,7 @@ class OurFunctionPass : public FunctionPass {
 
     virtual runOnFunction(Function&amp; F) {
       for (Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
-        for (BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {
+        for (BasicBlock::iterator i = b-&gt;begin(), ie = b-&gt;end(); i != ie; ++i) {
           if (<a href="#CallInst">CallInst</a>* callInst = <a href="#isa">dyn_cast</a>&lt;<a
  href="#CallInst">CallInst</a>&gt;(&amp;*i)) {
             // <i>We know we've encountered a call instruction, so we</i>
