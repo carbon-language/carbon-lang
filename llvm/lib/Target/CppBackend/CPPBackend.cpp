@@ -439,9 +439,9 @@ namespace {
       Out << "SmallVector<AttributeWithIndex, 4> Attrs;"; nl(Out);
       Out << "AttributeWithIndex PAWI;"; nl(Out);
       for (unsigned i = 0; i < PAL.getNumSlots(); ++i) {
-        uint16_t index = PAL.getSlot(i).Index;
+        unsigned index = PAL.getSlot(i).Index;
         Attributes attrs = PAL.getSlot(i).Attrs;
-        Out << "PAWI.Index = " << index << "; PAWI.Attrs = 0 ";
+        Out << "PAWI.Index = " << index << "U; PAWI.Attrs = 0 ";
         if (attrs & Attribute::SExt)
           Out << " | Attribute::SExt";
         if (attrs & Attribute::ZExt)
