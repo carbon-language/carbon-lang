@@ -1067,6 +1067,28 @@ const GRState* GRExprEngine::EvalLocation(Expr* Ex, NodeTy* Pred,
       else ExplicitNullDeref.insert(NullNode);
     }
   }
+
+  // Check for out-of-bound array access.
+  if (isFeasibleNotNull && isa<loc::MemRegionVal>(LV)) {
+    const MemRegion* R = cast<loc::MemRegionVal>(LV).getRegion();
+    if (const ElementRegion* ER = dyn_cast<ElementRegion>(R)) {
+      // Get the index of the accessed element.
+      SVal Idx = ER->getIndex();
+      // Get the extent of the array.
+      SVal NumElements = StateMgr.getStoreManager().getSizeInElements(StNotNull,
+                                                       ER->getSuperRegion());
+
+      bool isFeasibleInBound = false;
+      const GRState* StInBound = AssumeInBound(StNotNull, Idx, NumElements, 
+                                               true, isFeasibleInBound);
+
+      bool isFeasibleOutBound = false;
+      const GRState* StOutBound = AssumeInBound(StNotNull, Idx, NumElements, 
+                                                false, isFeasibleOutBound);
+
+      // Report warnings ...
+    }
+  }
   
   return isFeasibleNotNull ? StNotNull : NULL;
 }

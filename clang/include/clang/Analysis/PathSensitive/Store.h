@@ -72,7 +72,11 @@ public:
                               const FieldDecl* D) = 0;
   
   virtual SVal getLValueElement(const GRState* St, SVal Base, SVal Offset) = 0;
-  
+
+  virtual SVal getSizeInElements(const GRState* St, const MemRegion* R) {
+    return UnknownVal();
+  }
+
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
   virtual SVal ArrayToPointer(SVal Array) = 0;

@@ -455,6 +455,15 @@ protected:
     return StateMgr.Assume(St, Cond, Assumption, isFeasible);
   }
 
+  const GRState* AssumeInBound(const GRState* St, SVal Idx, SVal UpperBound,
+                               bool Assumption, bool& isFeasible) {
+    // FIXME: In this function, we will check if Idx can be in/out 
+    // [0, UpperBound) according to the assumption.  We can extend the 
+    // interface to include a LowerBound parameter.
+    isFeasible = true;
+    return St;
+  }
+
   NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, const GRState* St,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {
     assert (Builder && "GRStmtNodeBuilder not present.");
