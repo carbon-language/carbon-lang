@@ -117,7 +117,7 @@ CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       QualType T, bool isStatic, bool isInline,
                       ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<CXXMethodDecl>();
-  return new (Mem) CXXMethodDecl(RD, L, Id, T, isStatic, isInline, PrevDecl);
+  return new (Mem) CXXMethodDecl(CXXMethod, RD, L, Id, T, isStatic, isInline, PrevDecl);
 }
 
 QualType CXXMethodDecl::getThisType(ASTContext &C) const {

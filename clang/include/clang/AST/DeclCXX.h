@@ -391,12 +391,6 @@ protected:
 /// CXXMethodDecl - Represents a static or instance method of a
 /// struct/union/class.
 class CXXMethodDecl : public FunctionDecl {
-  CXXMethodDecl(CXXRecordDecl *RD, SourceLocation L,
-               IdentifierInfo *Id, QualType T,
-               bool isStatic, bool isInline, ScopedDecl *PrevDecl)
-    : FunctionDecl(CXXMethod, RD, L, Id, T, (isStatic ? Static : None),
-                   isInline, PrevDecl) {}
-
 protected:
   CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation L,
                 IdentifierInfo *Id, QualType T,
