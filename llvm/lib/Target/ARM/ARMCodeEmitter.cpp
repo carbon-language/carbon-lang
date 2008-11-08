@@ -167,7 +167,7 @@ bool ARMCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   MCPEs = &MF.getConstantPool()->getConstants();
   MJTEs = &MF.getJumpTableInfo()->getJumpTables();
   IsPIC = TM.getRelocationModel() == Reloc::PIC_;
-  JTI->Initialize(MF);
+  JTI->Initialize(MF, IsPIC);
 
   do {
     DOUT << "JITTing function '" << MF.getFunction()->getName() << "'\n";

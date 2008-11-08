@@ -26,8 +26,6 @@ namespace llvm {
   class ARMTargetMachine;
 
   class ARMJITInfo : public TargetJITInfo {
-    ARMTargetMachine &TM;
-
     // ConstPoolId2AddrMap - A map from constant pool ids to the corresponding
     // CONSTPOOL_ENTRY addresses.
     SmallVector<intptr_t, 16> ConstPoolId2AddrMap;
@@ -39,8 +37,12 @@ namespace llvm {
     // PCLabelMap - A map from PC labels to addresses.
     DenseMap<unsigned, intptr_t> PCLabelMap;
 
+    // IsPIC - True if the relocation model is PIC. This is used to determine
+    // how to codegen function stubs.
+    bool IsPIC;
+
   public:
-    explicit ARMJITInfo(ARMTargetMachine &tm) : TM(tm) { useGOT = false; }
+    explicit ARMJITInfo() : IsPIC(false) { useGOT = false; }
 
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by
@@ -89,12 +91,15 @@ namespace llvm {
 #endif
     }
 
-    /// Initialize - Initialize internal stage. Get the list of constant pool
-    /// Resize constant pool ids to CONSTPOOL_ENTRY addresses map.
-    void Initialize(const MachineFunction &MF) {
+    /// Initialize - Initialize internal stage for the function being JITted.
+    /// Resize constant pool ids to CONSTPOOL_ENTRY addresses map; resize
+    /// jump table ids to jump table bases map; remember if codegen relocation
+    /// model is PIC.
+    void Initialize(const MachineFunction &MF, bool isPIC) {
       const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
       ConstPoolId2AddrMap.resize(AFI->getNumConstPoolEntries());
       JumpTableId2AddrMap.resize(AFI->getNumJumpTables());
+      IsPIC = isPIC;
     }
 
     /// getConstantPoolEntryAddr - The ARM target puts all constant

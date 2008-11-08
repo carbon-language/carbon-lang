@@ -84,7 +84,7 @@ ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS,
            std::string("e-p:32:32-f64:64:64-i64:64:64"))),
     InstrInfo(Subtarget),
     FrameInfo(Subtarget),
-    JITInfo(*this),
+    JITInfo(),
     TLInfo(*this) {
   DefRelocModel = getRelocationModel();
 }
