@@ -1211,7 +1211,7 @@ void EmitGenerateActionMethod (const ToolProperties& P,
     << Indent2 << "const InputLanguagesSet& InLangs,\n"
     << Indent2 << "const LanguageMap& LangMap) const\n"
     << Indent1 << "{\n"
-    << Indent2 << "const char* cmd;\n"
+    << Indent2 << "std::string cmd;\n"
     << Indent2 << "std::vector<std::string> vec;\n";
 
   // cmd_line is either a string or a 'case' construct.
