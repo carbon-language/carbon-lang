@@ -44,6 +44,38 @@ def llvm_gcc_cpp : Tool<
  (sink)
 ]>;
 
+def llvm_gcc_m : Tool<
+[(in_language "objective-c"),
+ (out_language "llvm-bitcode"),
+ (output_suffix "bc"),
+ (cmd_line (case
+            (switch_on "E"),
+              (case (not_empty "o"),
+                    "llvm-gcc -E -x objective-c $INFILE -o $OUTFILE",
+                    (default),
+                    "llvm-gcc -E -x objective-c $INFILE"),
+            (default),
+              "llvm-gcc -c -x objective-c $INFILE -o $OUTFILE -emit-llvm")),
+ (switch_option "E", (stop_compilation)),
+ (sink)
+]>;
+
+def llvm_gcc_mxx : Tool<
+[(in_language "objective-c++"),
+ (out_language "llvm-bitcode"),
+ (output_suffix "bc"),
+ (cmd_line (case
+            (switch_on "E"),
+              (case (not_empty "o"),
+                    "llvm-gcc -E -x objective-c++ $INFILE -o $OUTFILE",
+                    (default),
+                    "llvm-gcc -E -x objective-c++ $INFILE"),
+            (default),
+              "llvm-gcc -c -x objective-c++ $INFILE -o $OUTFILE -emit-llvm")),
+ (switch_option "E", (stop_compilation)),
+ (sink)
+]>;
+
 def opt : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
@@ -109,6 +141,8 @@ def llvm_gcc_cpp_linker : Tool<
 def LanguageMap : LanguageMap<
     [LangToSuffixes<"c++", ["cc", "cp", "cxx", "cpp", "CPP", "c++", "C"]>,
      LangToSuffixes<"c", ["c"]>,
+     LangToSuffixes<"objective-c++", ["mm"]>,
+     LangToSuffixes<"objective-c", ["m"]>,
      LangToSuffixes<"assembler", ["s"]>,
      LangToSuffixes<"llvm-assembler", ["ll"]>,
      LangToSuffixes<"llvm-bitcode", ["bc"]>,
