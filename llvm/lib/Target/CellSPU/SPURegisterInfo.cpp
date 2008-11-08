@@ -438,7 +438,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
   assert((FrameSize & 0xf) == 0
          && "SPURegisterInfo::emitPrologue: FrameSize not aligned");
 
-  if (FrameSize > 0) {
+  if (FrameSize > 0 || MFI->hasCalls()) {
     FrameSize = -(FrameSize + SPUFrameInfo::minStackSize());
     if (hasDebugInfo) {
       // Mark effective beginning of when frame pointer becomes valid.
@@ -534,7 +534,7 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
          "Can only insert epilog into returning blocks");
   assert((FrameSize & 0xf) == 0
          && "SPURegisterInfo::emitEpilogue: FrameSize not aligned");
-  if (FrameSize > 0) {
+  if (FrameSize > 0 || MFI->hasCalls()) {
     FrameSize = FrameSize + SPUFrameInfo::minStackSize();
     if (isS10Constant(FrameSize + LinkSlotOffset)) {
       // Reload $lr, adjust $sp by required amount
