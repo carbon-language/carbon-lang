@@ -11,8 +11,7 @@ tablegen(SPUGenDAGISel.inc -gen-dag-isel)
 tablegen(SPUGenSubtarget.inc -gen-subtarget)
 tablegen(SPUGenCallingConv.inc -gen-callingconv)
 
-add_llvm_target(CellSPU
-  SPUAsmPrinter.cpp
+add_llvm_target(CellSPUCodeGen
   SPUFrameInfo.cpp
   SPUHazardRecognizers.cpp
   SPUInstrInfo.cpp
