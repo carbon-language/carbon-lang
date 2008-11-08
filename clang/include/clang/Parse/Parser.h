@@ -16,6 +16,7 @@
 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Action.h"
+#include "clang/Parse/DeclSpec.h"
 #include <stack>
 
 namespace clang {
@@ -75,6 +76,7 @@ public:
   typedef Action::TypeTy TypeTy;
   typedef Action::BaseTy BaseTy;
   typedef Action::MemInitTy MemInitTy;
+  typedef Action::CXXScopeTy CXXScopeTy;
 
   // Parsing methods.
   
@@ -114,7 +116,35 @@ private:
     return Tok.getKind() == tok::string_literal ||
            Tok.getKind() == tok::wide_string_literal;
   }
+
+  /// isTokenCXXScopeSpecifier - True if this token is '::', or identifier with
+  /// '::' as next token, or a 'C++ scope annotation' token.
+  /// When not in C++, always returns false.
+  ///
+  bool isTokenCXXScopeSpecifier() {
+    return getLang().CPlusPlus &&
+           (Tok.is(tok::coloncolon)     ||
+            Tok.is(tok::annot_cxxscope) ||
+            (Tok.is(tok::identifier) && NextToken().is(tok::coloncolon)));
+  }
   
+  /// isTokenUnqualifiedId - True if token is the start of C++ unqualified-id
+  /// or an identifier in C.
+  ///
+  ///       unqualified-id:
+  ///         identifier
+  /// [C++]   operator-function-id
+  /// [C++]   conversion-function-id
+  /// [C++]   '~' class-name
+  /// [C++]   template-id      [TODO]
+  ///
+  bool isTokenUnqualifiedId() const {
+    return Tok.is(tok::identifier)  ||   // identifier or template-id 
+           Tok.is(tok::kw_operator) ||   // operator/conversion-function-id or
+                                         // template-id
+           (Tok.is(tok::tilde) && getLang().CPlusPlus); // '~' class-name
+  }
+
   /// ConsumeToken - Consume the current 'peek token' and lex the next one.
   /// This does not work with all kinds of tokens: strings and specific other
   /// tokens must be consumed with custom methods below.  This returns the
@@ -214,6 +244,20 @@ private:
   const Token &NextToken() {
     return PP.LookAhead(0);
   }
+
+  /// TryAnnotateTypeOrScopeToken - If the current token position is on a
+  /// typename (possibly qualified in C++) or a C++ scope specifier not followed
+  /// by a typename, TryAnnotateTypeOrScopeToken will replace one or more tokens
+  /// with a single annotation token representing the typename or C++ scope
+  /// respectively.
+  /// This simplifies handling of C++ scope specifiers and allows efficient
+  /// backtracking without the need to re-parse and resolve nested-names and
+  /// typenames.
+  void TryAnnotateTypeOrScopeToken();
+
+  /// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only
+  /// annotates C++ scope specifiers.
+  void TryAnnotateScopeToken();
 
   /// TentativeParsingAction - An object that is used as a kind of "tentative
   /// parsing transaction". It gets instantiated to mark the token position and
@@ -449,6 +493,11 @@ private:
     return ParseParenExpression(Op, CastTy, RParenLoc);
   }
   ExprResult ParseStringLiteralExpression();
+
+  //===--------------------------------------------------------------------===//
+  // C++ Expressions
+  ExprResult ParseCXXIdExpression();
+  void ParseCXXScopeSpecifier(CXXScopeSpec &SS);
   
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts
@@ -583,8 +632,8 @@ private:
   void ParseStructDeclaration(DeclSpec &DS,
                               llvm::SmallVectorImpl<FieldDeclarator> &Fields);
                               
-  bool isDeclarationSpecifier() const;
-  bool isTypeSpecifierQualifier() const;
+  bool isDeclarationSpecifier();
+  bool isTypeSpecifierQualifier();
   bool isTypeQualifier() const;
 
   /// isDeclarationStatement - Disambiguates between a declaration or an
@@ -700,6 +749,26 @@ private:
   TypeTy *ParseTypeName();
   AttributeList *ParseAttributes();
   void ParseTypeofSpecifier(DeclSpec &DS);
+
+  /// DeclaratorScopeObj - RAII object used in Parser::ParseDirectDeclarator to
+  /// enter a new C++ declarator scope and exit it when the function is
+  /// finished.
+  class DeclaratorScopeObj {
+    CXXScopeSpec &SS;
+    Parser &P;
+  public:
+    DeclaratorScopeObj(Parser &p, CXXScopeSpec &ss) : P(p), SS(ss) {}
+
+    void EnterDeclaratorScope() {
+      if (SS.isSet())
+        P.Actions.ActOnCXXEnterDeclaratorScope(P.CurScope, SS);
+    }
+
+    ~DeclaratorScopeObj() {
+      if (SS.isSet())
+        P.Actions.ActOnCXXExitDeclaratorScope(SS);
+    }
+  };
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);
@@ -722,7 +791,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
-  TypeTy *ParseClassName();
+  TypeTy *ParseClassName(const CXXScopeSpec *SS = 0);
   void ParseClassSpecifier(DeclSpec &DS);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    DeclTy *TagDecl);

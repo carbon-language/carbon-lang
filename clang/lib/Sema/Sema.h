@@ -270,7 +270,8 @@ public:
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
-  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S);
+  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S,
+                             const CXXScopeSpec *SS);
   virtual std::string getTypeAsString(TypeTy *Type);
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
@@ -300,8 +301,9 @@ public:
   virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);  
   
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
-                           SourceLocation KWLoc, IdentifierInfo *Name,
-                           SourceLocation NameLoc, AttributeList *Attr);
+                           SourceLocation KWLoc, const CXXScopeSpec &SS,
+                           IdentifierInfo *Name, SourceLocation NameLoc,
+                           AttributeList *Attr);
   
   DeclTy* ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
                          SourceLocation KWLoc, IdentifierInfo *Name,
@@ -585,7 +587,8 @@ public:
   // Primary Expressions.
   virtual ExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                          IdentifierInfo &II,
-                                         bool HasTrailingLParen);
+                                         bool HasTrailingLParen,
+                                         const CXXScopeSpec *SS = 0);
   virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                          tok::TokenKind Kind);
   virtual ExprResult ActOnNumericConstant(const Token &);
@@ -797,7 +800,8 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Classes
   //
-  virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S);
+  virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
+                                  const CXXScopeSpec *SS);
   
   virtual void ActOnStartCXXClassDef(Scope *S, DeclTy *TagDecl,
                                      SourceLocation LBrace);

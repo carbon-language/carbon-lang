@@ -401,7 +401,14 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///                   conversion-function-id [TODO]
 ///                   '~' class-name         [TODO]
 ///                   template-id            [TODO]
+///
 Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
+  if (getLang().CPlusPlus) {
+    // Annotate typenames and C++ scope specifiers.
+    // Used only in C++; in C let the typedef name be handled as an identifier.
+    TryAnnotateTypeOrScopeToken();
+  }
+
   ExprResult Res;
   tok::TokenKind SavedKind = Tok.getKind();
   
@@ -463,17 +470,9 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_false:
     return ParseCXXBoolLiteral();
 
-  case tok::identifier: {
-    if (getLang().CPlusPlus &&
-        Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
-      // Handle C++ function-style cast, e.g. "T(4.5)" where T is a typedef for
-      // double.
-      goto HandleType;
-    }
-    
-    // primary-expression: identifier
-    // unqualified-id: identifier
-    // constant: enumeration-constant
+  case tok::identifier: {      // primary-expression: identifier
+                               // unqualified-id: identifier
+                               // constant: enumeration-constant
 
     // Consume the identifier so that we can see if it is followed by a '('.
     // Function designators are allowed to be undeclared (C99 6.5.1p2), so we
@@ -587,7 +586,8 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_typeof: {
     if (!getLang().CPlusPlus)
       goto UnhandledToken;
-  HandleType:
+  case tok::annot_qualtypename:
+    assert(getLang().CPlusPlus && "Expected C++");
     // postfix-expression: simple-type-specifier '(' expression-list[opt] ')'
     //
     DeclSpec DS;
@@ -601,16 +601,11 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     return ParsePostfixExpressionSuffix(Res);
   }
 
-  case tok::kw_operator: {
-    SourceLocation OperatorLoc = Tok.getLocation();
-    if (IdentifierInfo *II = MaybeParseOperatorFunctionId()) {
-      Res = Actions.ActOnIdentifierExpr(CurScope, OperatorLoc, *II, 
-                                        Tok.is(tok::l_paren));
-      // These can be followed by postfix-expr pieces.
-      return ParsePostfixExpressionSuffix(Res);
-    }
-    break;
-  }
+  case tok::annot_cxxscope: // [C++] id-expression: qualified-id
+  case tok::kw_operator: // [C++] id-expression: operator/conversion-function-id
+                         //                      template-id
+    Res = ParseCXXIdExpression();
+    return ParsePostfixExpressionSuffix(Res);
 
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();

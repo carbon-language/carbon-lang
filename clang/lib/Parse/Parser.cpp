@@ -706,3 +706,74 @@ Parser::ExprResult Parser::ParseSimpleAsm() {
   return Result;
 }
 
+/// TryAnnotateTypeOrScopeToken - If the current token position is on a
+/// typename (possibly qualified in C++) or a C++ scope specifier not followed
+/// by a typename, TryAnnotateTypeOrScopeToken will replace one or more tokens
+/// with a single annotation token representing the typename or C++ scope
+/// respectively.
+/// This simplifies handling of C++ scope specifiers and allows efficient
+/// backtracking without the need to re-parse and resolve nested-names and
+/// typenames.
+void Parser::TryAnnotateTypeOrScopeToken() {
+  if (Tok.is(tok::annot_qualtypename) || Tok.is(tok::annot_cxxscope))
+    return;
+
+  CXXScopeSpec SS;
+  if (isTokenCXXScopeSpecifier())
+    ParseCXXScopeSpecifier(SS);
+
+  if (Tok.is(tok::identifier)) {
+    TypeTy *Ty = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope, &SS);
+    if (Ty) {
+      // This is a typename. Replace the current token in-place with an
+      // annotation type token.
+      Tok.setKind(tok::annot_qualtypename);
+      Tok.setAnnotationValue(Ty);
+      Tok.setAnnotationEndLoc(Tok.getLocation());
+      if (SS.isNotEmpty()) // it was a C++ qualified type name.
+        Tok.setLocation(SS.getBeginLoc());
+
+      // In case the tokens were cached, have Preprocessor replace them with the
+      // annotation token.
+      PP.AnnotateCachedTokens(Tok);
+      return;
+    }
+  }
+
+  if (SS.isNotEmpty()) {
+    // A C++ scope specifier that isn't followed by a typename.
+    // Push the current token back into the token stream and use an annotation
+    // scope token for current token.
+    PP.EnterToken(Tok);
+    Tok.setKind(tok::annot_cxxscope);
+    Tok.setAnnotationValue(SS.getScopeRep());
+    Tok.setAnnotationRange(SS.getRange());
+
+    // In case the tokens were cached, have Preprocessor replace them with the
+    // annotation token.
+    PP.AnnotateCachedTokens(Tok);
+  }
+}
+
+/// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only
+/// annotates C++ scope specifiers.
+void Parser::TryAnnotateScopeToken() {
+  if (Tok.is(tok::annot_cxxscope))
+    return;
+
+  if (isTokenCXXScopeSpecifier()) {
+    CXXScopeSpec SS;
+    ParseCXXScopeSpecifier(SS);
+
+    // Push the current token back into the token stream and use an annotation
+    // scope token for current token.
+    PP.EnterToken(Tok);
+    Tok.setKind(tok::annot_cxxscope);
+    Tok.setAnnotationValue(SS.getScopeRep());
+    Tok.setAnnotationRange(SS.getRange());
+
+    // In case the tokens were cached, have Preprocessor replace them with the
+    // annotation token.
+    PP.AnnotateCachedTokens(Tok);
+  }
+}

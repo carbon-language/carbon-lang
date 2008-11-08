@@ -138,7 +138,7 @@ Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
 ///         identifier
 ///         template-id   [TODO]
 /// 
-Parser::TypeTy *Parser::ParseClassName() {
+Parser::TypeTy *Parser::ParseClassName(const CXXScopeSpec *SS) {
   // Parse the class-name.
   // FIXME: Alternatively, parse a simple-template-id.
   if (Tok.isNot(tok::identifier)) {
@@ -147,7 +147,7 @@ Parser::TypeTy *Parser::ParseClassName() {
   }
 
   // We have an identifier; check whether it is actually a type.
-  TypeTy *Type = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+  TypeTy *Type = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope, SS);
   if (!Type) {
     Diag(Tok.getLocation(), diag::err_expected_class_name);
     return 0;
@@ -216,7 +216,13 @@ void Parser::ParseClassSpecifier(DeclSpec &DS) {
   if (Tok.is(tok::kw___attribute))
     Attr = ParseAttributes();
 
-  // FIXME: Parse the (optional) nested-name-specifier.
+  // Parse the (optional) nested-name-specifier.
+  CXXScopeSpec SS;
+  if (isTokenCXXScopeSpecifier()) {
+    ParseCXXScopeSpecifier(SS);
+    if (Tok.isNot(tok::identifier))
+      Diag(Tok, diag::err_expected_ident);
+  }
 
   // Parse the (optional) class name.
   // FIXME: Alternatively, parse a simple-template-id.
@@ -250,7 +256,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS) {
   }
 
   // Parse the tag portion of this.
-  DeclTy *TagDecl = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, Name, 
+  DeclTy *TagDecl = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
                                      NameLoc, Attr);
 
   // Parse the optional base clause (C++ only).
@@ -354,13 +360,16 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
     IsVirtual = true;
   }
 
-  // FIXME: Parse optional '::' and optional nested-name-specifier.
+  // Parse optional '::' and optional nested-name-specifier.
+  CXXScopeSpec SS;
+  if (isTokenCXXScopeSpecifier())
+    ParseCXXScopeSpecifier(SS);
 
   // The location of the base class itself.
   SourceLocation BaseLoc = Tok.getLocation();
 
   // Parse the class-name.
-  TypeTy *BaseType = ParseClassName();
+  TypeTy *BaseType = ParseClassName(&SS);
   if (!BaseType)
     return true;
   

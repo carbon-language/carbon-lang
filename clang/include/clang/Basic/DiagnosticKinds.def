@@ -550,6 +550,8 @@ DIAG(warn_property_type, WARNING,
      "property type '%0' does not match property type inherited from '%1'")
 
 /// C++ parser diagnostics
+DIAG(err_expected_unqualified_id, ERROR,
+     "expected unqualified-id")
 DIAG(err_no_declarators, ERROR,
      "declaration does not declare anything")
 DIAG(err_func_def_no_params, ERROR,

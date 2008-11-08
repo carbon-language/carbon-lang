@@ -28,7 +28,8 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
-Sema::TypeTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
+Sema::TypeTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S,
+                               const CXXScopeSpec *SS) {
   Decl *IIDecl = LookupDecl(&II, Decl::IDNS_Ordinary, S, false);
 
   if (IIDecl && (isa<TypedefDecl>(IIDecl) || 
@@ -2067,8 +2068,9 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
 /// TagType indicates what kind of tag this is. TK indicates whether this is a
 /// reference/declaration/definition of a tag.
 Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
-                             SourceLocation KWLoc, IdentifierInfo *Name,
-                             SourceLocation NameLoc, AttributeList *Attr) {
+                             SourceLocation KWLoc, const CXXScopeSpec &SS,
+                             IdentifierInfo *Name, SourceLocation NameLoc,
+                             AttributeList *Attr) {
   // If this is a use of an existing tag, it must have a name.
   assert((Name != 0 || TK == TK_Definition) &&
          "Nameless record must be a definition!");

@@ -262,7 +262,8 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
 /// name of the class type currently being defined. In the case of
 /// nested classes, this will only return true if II is the name of
 /// the innermost class.
-bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *) {
+bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *,
+                              const CXXScopeSpec *SS) {
   if (CXXRecordDecl *CurDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext))
     return &II == CurDecl->getIdentifier();
   else
@@ -614,7 +615,7 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
   }
 
   // It didn't name a member, so see if it names a class.
-  TypeTy *BaseTy = isTypeName(*MemberOrBase, S);
+  TypeTy *BaseTy = isTypeName(*MemberOrBase, S, 0/*SS*/);
   if (!BaseTy)
     return Diag(IdLoc, diag::err_mem_init_not_member_or_class,
                 MemberOrBase->getName(), SourceRange(IdLoc, RParenLoc));

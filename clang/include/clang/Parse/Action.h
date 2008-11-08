@@ -22,6 +22,7 @@ namespace clang {
   // Semantic.
   class DeclSpec;
   class ObjCDeclSpec;
+  class CXXScopeSpec;
   class Declarator;
   class AttributeList;
   struct FieldDeclarator;
@@ -60,6 +61,7 @@ public:
   typedef void AttrTy;
   typedef void BaseTy;
   typedef void MemInitTy;
+  typedef void CXXScopeTy;
 
   /// ActionResult - This structure is used while parsing/acting on expressions,
   /// stmts, etc.  It encapsulates both the object returned by the action, plus
@@ -103,11 +105,54 @@ public:
   
   /// isTypeName - Return non-null if the specified identifier is a typedef name
   /// in the current scope.
-  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S) = 0;
+  /// An optional CXXScopeSpec can be passed to indicate the C++ scope (class or
+  /// namespace) that the identifier must be a member of.
+  /// i.e. for "foo::bar", 'II' will be "bar" and 'SS' will be "foo::".
+  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S,
+                             const CXXScopeSpec *SS = 0) = 0;
 
   /// isCurrentClassName - Return true if the specified name is the
   /// name of the innermost C++ class type currently being defined.
-  virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S) = 0;
+  virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
+                                  const CXXScopeSpec *SS = 0) = 0;
+
+  /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
+  /// global scope ('::').
+  virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,
+                                                   SourceLocation CCLoc) {
+    return 0;
+  }
+
+  /// ActOnCXXNestedNameSpecifier - Called during parsing of a
+  /// nested-name-specifier. e.g. for "foo::bar::" we parsed "foo::" and now
+  /// we want to resolve "bar::". 'SS' is empty or the previously parsed
+  /// nested-name part ("foo::"), 'IdLoc' is the source location of 'bar',
+  /// 'CCLoc' is the location of '::' and 'II' is the identifier for 'bar'.
+  /// Returns a CXXScopeTy* object representing the C++ scope.
+  virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
+                                                  const CXXScopeSpec &SS,
+                                                  SourceLocation IdLoc,
+                                                  SourceLocation CCLoc,
+                                                  const IdentifierInfo &II) {
+    return 0;
+  }
+
+  /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
+  /// scope or nested-name-specifier) is parsed, part of a declarator-id.
+  /// After this method is called, according to [C++ 3.4.3p3], names should be
+  /// looked up in the declarator-id's scope, until the declarator is parsed and
+  /// ActOnCXXExitDeclaratorScope is called.
+  /// The 'SS' should be a non-empty valid CXXScopeSpec.
+  virtual void ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
+  }
+
+  /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
+  /// invoked ActOnCXXEnterDeclaratorScope(), is finished. 'SS' is the same
+  /// CXXScopeSpec that was passed to ActOnCXXEnterDeclaratorScope as well.
+  /// Used to indicate that names should revert to being looked up in the
+  /// defining scope.
+  virtual void ActOnCXXExitDeclaratorScope(const CXXScopeSpec &SS) {
+  }
 
   /// getTypeAsString - Returns a string that describes the given
   /// type. This callback is used in C++ to form identifiers for
@@ -227,8 +272,9 @@ public:
     TK_Definition   // Definition of a tag: 'struct foo { int X; } Y;'
   };
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
-                           SourceLocation KWLoc, IdentifierInfo *Name,
-                           SourceLocation NameLoc, AttributeList *Attr) {
+                           SourceLocation KWLoc, const CXXScopeSpec &SS,
+                           IdentifierInfo *Name, SourceLocation NameLoc,
+                           AttributeList *Attr) {
     // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
     // is (struct/union/enum/class).
     return 0;
@@ -413,9 +459,13 @@ public:
   /// ActOnIdentifierExpr - Parse an identifier in expression context.
   /// 'HasTrailingLParen' indicates whether or not the identifier has a '('
   /// token immediately after it.
+  /// An optional CXXScopeSpec can be passed to indicate the C++ scope (class or
+  /// namespace) that the identifier must be a member of.
+  /// i.e. for "foo::bar", 'II' will be "bar" and 'SS' will be "foo::".
   virtual ExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                          IdentifierInfo &II,
-                                         bool HasTrailingLParen) {
+                                         bool HasTrailingLParen,
+                                         const CXXScopeSpec *SS = 0) {
     return 0;
   }
   
@@ -968,11 +1018,13 @@ public:
   
   /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
-  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S);
+  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S,
+                             const CXXScopeSpec *SS);
 
   /// isCurrentClassName - Always returns false, because MinimalAction
   /// does not support C++ classes with constructors.
-  virtual bool isCurrentClassName(const IdentifierInfo& II, Scope *S);
+  virtual bool isCurrentClassName(const IdentifierInfo& II, Scope *S,
+                                  const CXXScopeSpec *SS);
 
   /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is

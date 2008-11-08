@@ -337,7 +337,8 @@ static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
 /// identifier is used in a function call context.
 Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                            IdentifierInfo &II,
-                                           bool HasTrailingLParen) {
+                                           bool HasTrailingLParen,
+                                           const CXXScopeSpec *SS) {
   // Could be enum-constant, value decl, instance variable, etc.
   Decl *D = LookupDecl(&II, Decl::IDNS_Ordinary, S);
   

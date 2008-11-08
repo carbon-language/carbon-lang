@@ -569,6 +569,9 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
 /// [GNU]     restrict
 ///
 Parser::TPResult Parser::isCXXDeclarationSpecifier() {
+  // Annotate typenames and C++ scope specifiers.
+  TryAnnotateTypeOrScopeToken();
+
   switch (Tok.getKind()) {
     // decl-specifier:
     //   storage-class-specifier
@@ -634,11 +637,6 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
 
     // simple-type-specifier:
 
-  case tok::identifier:
-    if (!Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope))
-      return TPResult::False();
-    // FALL THROUGH.
-
   case tok::kw_char:
   case tok::kw_wchar_t:
   case tok::kw_bool:
@@ -650,6 +648,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw_float:
   case tok::kw_double:
   case tok::kw_void:
+  case tok::annot_qualtypename:
     if (NextToken().is(tok::l_paren))
       return TPResult::Ambiguous();
 

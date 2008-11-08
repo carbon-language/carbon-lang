@@ -55,8 +55,11 @@ void MinimalAction::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
 /// determine whether the name is a type name (objc class name or typedef) or
 /// not in this scope.
+///
+/// FIXME: Use the passed CXXScopeSpec for accurate C++ type checking.
 Action::TypeTy *
-MinimalAction::isTypeName(const IdentifierInfo &II, Scope *S) {
+MinimalAction::isTypeName(const IdentifierInfo &II, Scope *S,
+                          const CXXScopeSpec *SS) {
   if (TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>())
     if (TI->isTypeName)
       return TI;
@@ -65,7 +68,8 @@ MinimalAction::isTypeName(const IdentifierInfo &II, Scope *S) {
 
 /// isCurrentClassName - Always returns false, because MinimalAction
 /// does not support C++ classes with constructors.
-bool MinimalAction::isCurrentClassName(const IdentifierInfo &, Scope *) {
+bool MinimalAction::isCurrentClassName(const IdentifierInfo &, Scope *,
+                                       const CXXScopeSpec *) {
   return false;
 }
 

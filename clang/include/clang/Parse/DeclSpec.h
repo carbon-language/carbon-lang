@@ -385,6 +385,40 @@ private:
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
 };
+
+/// CXXScopeSpec - Represents a C++ nested-name-specifier or a global scope
+/// specifier.
+class CXXScopeSpec {
+  SourceRange Range;
+  Action::CXXScopeTy *ScopeRep;
+
+public:
+  CXXScopeSpec() : ScopeRep(0) {}
+
+  const SourceRange &getRange() const { return Range; }
+  void setRange(const SourceRange &R) { Range = R; }
+  void setBeginLoc(SourceLocation Loc) { Range.setBegin(Loc); }
+  void setEndLoc(SourceLocation Loc) { Range.setEnd(Loc); }
+  SourceLocation getBeginLoc() const { return Range.getBegin(); }
+  SourceLocation getEndLoc() const { return Range.getEnd(); }
+
+  Action::CXXScopeTy *getScopeRep() const { return ScopeRep; }
+  void setScopeRep(Action::CXXScopeTy *S) { ScopeRep = S; }
+
+  bool isEmpty() const { return !Range.isValid(); }
+  bool isNotEmpty() const { return !isEmpty(); }
+
+  /// isInvalid - An error occured during parsing of the scope specifier.
+  bool isInvalid() const { return isNotEmpty() && ScopeRep == 0; }
+
+  /// isSet - A scope specifier was resolved to a valid C++ scope.
+  bool isSet() const { return getScopeRep() != 0; }
+
+  void clear() {
+    Range = SourceRange();
+    ScopeRep = 0;
+  }
+};
   
 /// DeclaratorChunk - One instance of this struct is used for each type in a
 /// declarator that is parsed.
@@ -590,6 +624,7 @@ struct DeclaratorChunk {
 /// stack, not objects that are allocated in large quantities on the heap.
 class Declarator {
   const DeclSpec &DS;
+  CXXScopeSpec SS;
   IdentifierInfo *Identifier;
   SourceLocation IdentifierLoc;
   
@@ -667,6 +702,11 @@ public:
   /// be shared or when in error recovery etc.
   DeclSpec &getMutableDeclSpec() { return const_cast<DeclSpec &>(DS); }
 
+  /// getCXXScopeSpec - Return the C++ scope specifier (global scope or
+  /// nested-name-specifier) that is part of the declarator-id.
+  const CXXScopeSpec &getCXXScopeSpec() const { return SS; }
+  CXXScopeSpec &getCXXScopeSpec() { return SS; }
+
   TheContext getContext() const { return Context; }
   DeclaratorKind getKind() const { return Kind; }
 
@@ -675,6 +715,7 @@ public:
   
   /// clear - Reset the contents of this Declarator.
   void clear() {
+    SS.clear();
     Identifier = 0;
     IdentifierLoc = SourceLocation();
     Kind = DK_Abstract;

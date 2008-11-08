@@ -16,6 +16,154 @@
 #include "clang/Parse/DeclSpec.h"
 using namespace clang;
 
+/// ParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
+///
+///       '::'[opt] nested-name-specifier
+///       '::'
+///
+///       nested-name-specifier:
+///         type-name '::'
+///         namespace-name '::'
+///         nested-name-specifier identifier '::'
+///         nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
+///
+void Parser::ParseCXXScopeSpecifier(CXXScopeSpec &SS) {
+  assert(isTokenCXXScopeSpecifier() && "Not scope specifier!");
+
+  if (Tok.is(tok::annot_cxxscope)) {
+    SS.setScopeRep(Tok.getAnnotationValue());
+    SS.setRange(Tok.getAnnotationRange());
+    ConsumeToken();
+    return;
+  }
+
+  SS.setBeginLoc(Tok.getLocation());
+
+  // '::'
+
+  if (Tok.is(tok::coloncolon)) {
+    // Global scope.
+    SourceLocation CCLoc = ConsumeToken();
+    SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, CCLoc));
+    SS.setEndLoc(CCLoc);
+  }
+
+  // nested-name-specifier:
+  //   type-name '::'
+  //   namespace-name '::'
+  //   nested-name-specifier identifier '::'
+  //   nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
+
+  while (Tok.is(tok::identifier) && NextToken().is(tok::coloncolon)) {
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+    SourceLocation IdLoc = ConsumeToken();
+    assert(Tok.is(tok::coloncolon) &&
+           "NextToken() not working properly!");
+    SourceLocation CCLoc = ConsumeToken();
+    if (SS.isInvalid())
+      continue;
+
+    SS.setScopeRep(
+         Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, *II) );
+    SS.setEndLoc(CCLoc);
+  }
+}
+
+/// ParseCXXIdExpression - Handle id-expression.
+///
+///       id-expression:
+///         unqualified-id
+///         qualified-id
+///
+///       unqualified-id:
+///         identifier
+///         operator-function-id
+///         conversion-function-id                [TODO]
+///         '~' class-name                        [TODO]
+///         template-id                           [TODO]
+///
+///       qualified-id:
+///         '::'[opt] nested-name-specifier 'template'[opt] unqualified-id
+///         '::' identifier
+///         '::' operator-function-id
+///         '::' template-id                      [TODO]
+///
+///       nested-name-specifier:
+///         type-name '::'
+///         namespace-name '::'
+///         nested-name-specifier identifier '::'
+///         nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
+///
+/// NOTE: The standard specifies that, for qualified-id, the parser does not
+/// expect:
+///
+///   '::' conversion-function-id
+///   '::' '~' class-name
+///
+/// This may cause a slight inconsistency on diagnostics:
+///
+/// class C {};
+/// namespace A {}
+/// void f() {
+///   :: A :: ~ C(); // Some Sema error about using destructor with a
+///                  // namespace.
+///   :: ~ C(); // Some Parser error like 'unexpected ~'.
+/// }
+///
+/// We simplify the parser a bit and make it work like:
+///
+///       qualified-id:
+///         '::'[opt] nested-name-specifier 'template'[opt] unqualified-id
+///         '::' unqualified-id
+///
+/// That way Sema can handle and report similar errors for namespaces and the
+/// global scope.
+///
+Parser::ExprResult Parser::ParseCXXIdExpression() {
+  // qualified-id:
+  //   '::'[opt] nested-name-specifier 'template'[opt] unqualified-id
+  //   '::' unqualified-id
+  //
+  CXXScopeSpec SS;
+  if (isTokenCXXScopeSpecifier())
+    ParseCXXScopeSpecifier(SS);
+
+  // unqualified-id:
+  //   identifier
+  //   operator-function-id
+  //   conversion-function-id                [TODO]
+  //   '~' class-name                        [TODO]
+  //   template-id                           [TODO]
+  //
+  switch (Tok.getKind()) {
+  default:
+    return Diag(Tok, diag::err_expected_unqualified_id);
+
+  case tok::identifier: {
+    // Consume the identifier so that we can see if it is followed by a '('.
+    IdentifierInfo &II = *Tok.getIdentifierInfo();
+    SourceLocation L = ConsumeToken();
+    return Actions.ActOnIdentifierExpr(CurScope, L, II,
+                                       Tok.is(tok::l_paren), &SS);
+  }
+
+  case tok::kw_operator: {
+    SourceLocation OperatorLoc = Tok.getLocation();
+    if (IdentifierInfo *II = MaybeParseOperatorFunctionId()) {
+      return Actions.ActOnIdentifierExpr(CurScope, OperatorLoc, *II, 
+                                         Tok.is(tok::l_paren), &SS);
+    }
+    // FIXME: Handle conversion-function-id.
+    unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
+                                    "expected operator-function-id");
+    return Diag(Tok, DiagID);
+  }
+
+  } // switch.
+
+  assert(0 && "The switch was supposed to take care everything.");
+}
+
 /// ParseCXXCasts - This handles the various ways to cast expressions to another
 /// type.
 ///
@@ -207,7 +355,7 @@ Parser::ExprResult Parser::ParseCXXCondition() {
 /// simple-type-specifier.
 ///
 ///       simple-type-specifier:
-///         '::'[opt] nested-name-specifier[opt] type-name                [TODO]
+///         '::'[opt] nested-name-specifier[opt] type-name
 ///         '::'[opt] nested-name-specifier 'template' simple-template-id [TODO]
 ///         char
 ///         wchar_t
@@ -229,6 +377,9 @@ Parser::ExprResult Parser::ParseCXXCondition() {
 ///         typedef-name
 ///
 void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
+  // Annotate typenames and C++ scope specifiers.
+  TryAnnotateTypeOrScopeToken();
+
   DS.SetRangeStart(Tok.getLocation());
   const char *PrevSpec;
   SourceLocation Loc = Tok.getLocation();
@@ -239,10 +390,9 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
     abort();
       
   // type-name
-  case tok::identifier: {
-    TypeTy *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
-    assert(TypeRep && "Identifier wasn't a type-name!");
-    DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec, TypeRep);
+  case tok::annot_qualtypename: {
+    DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
+                       Tok.getAnnotationValue());
     break;
   }
     
@@ -287,7 +437,10 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
     DS.Finish(Diags, PP.getSourceManager(), getLang());
     return;
   }
-  DS.SetRangeEnd(Tok.getLocation());
+  if (Tok.is(tok::annot_qualtypename))
+    DS.SetRangeEnd(Tok.getAnnotationEndLoc());
+  else
+    DS.SetRangeEnd(Tok.getLocation());
   ConsumeToken();
   DS.Finish(Diags, PP.getSourceManager(), getLang());
 }
