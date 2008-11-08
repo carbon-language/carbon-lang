@@ -343,17 +343,26 @@ public:
   
   /// getTypeInfo - Get the size and alignment of the specified complete type in
   /// bits.
-  std::pair<uint64_t, unsigned> getTypeInfo(QualType T);
+  std::pair<uint64_t, unsigned> getTypeInfo(const Type *T);
+  std::pair<uint64_t, unsigned> getTypeInfo(QualType T) {
+    return getTypeInfo(T.getTypePtr());
+  }
   
   /// getTypeSize - Return the size of the specified type, in bits.  This method
   /// does not work on incomplete types.
   uint64_t getTypeSize(QualType T) {
     return getTypeInfo(T).first;
   }
+  uint64_t getTypeSize(const Type *T) {
+    return getTypeInfo(T).first;
+  }
   
   /// getTypeAlign - Return the alignment of the specified type, in bits.  This
   /// method does not work on incomplete types.
   unsigned getTypeAlign(QualType T) {
+    return getTypeInfo(T).second;
+  }
+  unsigned getTypeAlign(const Type *T) {
     return getTypeInfo(T).second;
   }
   
@@ -374,6 +383,9 @@ public:
   /// to be free of any of these, allowing two canonical types to be compared
   /// for exact equality with a simple pointer comparison.
   QualType getCanonicalType(QualType T);
+  const Type *getCanonicalType(const Type *T) {
+    return T->getCanonicalTypeInternal().getTypePtr();
+  }
   
   /// Type Query functions.  If the type is an instance of the specified class,
   /// return the Type pointer for the underlying maximally pretty type.  This

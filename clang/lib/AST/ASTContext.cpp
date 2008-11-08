@@ -223,7 +223,7 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
 /// getTypeSize - Return the size of the specified type, in bits.  This method
 /// does not work on incomplete types.
 std::pair<uint64_t, unsigned>
-ASTContext::getTypeInfo(QualType T) {
+ASTContext::getTypeInfo(const Type *T) {
   T = getCanonicalType(T);
   uint64_t Width;
   unsigned Align;
@@ -236,7 +236,7 @@ ASTContext::getTypeInfo(QualType T) {
   case Type::VariableArray:
     assert(0 && "VLAs not implemented yet!");
   case Type::ConstantArray: {
-    ConstantArrayType *CAT = cast<ConstantArrayType>(T);
+    const ConstantArrayType *CAT = cast<ConstantArrayType>(T);
     
     std::pair<uint64_t, unsigned> EltInfo = getTypeInfo(CAT->getElementType());
     Width = EltInfo.first*CAT->getSize().getZExtValue();
@@ -344,23 +344,25 @@ ASTContext::getTypeInfo(QualType T) {
     break;
   }
   case Type::ObjCInterface: {
-    ObjCInterfaceType *ObjCI = cast<ObjCInterfaceType>(T);
+    const ObjCInterfaceType *ObjCI = cast<ObjCInterfaceType>(T);
     const ASTRecordLayout &Layout = getASTObjCInterfaceLayout(ObjCI->getDecl());
     Width = Layout.getSize();
     Align = Layout.getAlignment();
     break;
   }
   case Type::Tagged: {
-    if (cast<TagType>(T)->getDecl()->isInvalidDecl()) {
+    const TagType *TT = cast<TagType>(T);
+
+    if (TT->getDecl()->isInvalidDecl()) {
       Width = 1;
       Align = 1;
       break;
     }
     
-    if (EnumType *ET = dyn_cast<EnumType>(cast<TagType>(T)))
+    if (const EnumType *ET = dyn_cast<EnumType>(TT))
       return getTypeInfo(ET->getDecl()->getIntegerType());
 
-    RecordType *RT = cast<RecordType>(T);
+    const RecordType *RT = cast<RecordType>(TT);
     const ASTRecordLayout &Layout = getASTRecordLayout(RT->getDecl());
     Width = Layout.getSize();
     Align = Layout.getAlignment();
