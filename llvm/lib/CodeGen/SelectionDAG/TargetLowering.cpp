@@ -1370,7 +1370,10 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
             uint64_t newMask = (1ULL << width) - 1;
             for (unsigned offset=0; offset<origWidth/width; offset++) {
               if ((newMask & Mask)==Mask) {
-                bestOffset = (uint64_t)offset * (width/8);
+                if (!TD->isLittleEndian())
+                  bestOffset = (origWidth/width - offset - 1) * (width/8);
+                else 
+                  bestOffset = (uint64_t)offset * (width/8);
                 bestWidth = width;
                 break;
               }
