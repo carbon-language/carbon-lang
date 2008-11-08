@@ -398,7 +398,10 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     }
     O << Name;
 
-    printOffset(MO.getOffset());
+    if (MO.getOffset() > 0)
+      O << "+" << MO.getOffset();
+    else if (MO.getOffset() < 0)
+      O << MO.getOffset();
 
     if (GV->hasExternalWeakLinkage())
       ExtWeakSymbols.insert(GV);

@@ -362,9 +362,6 @@ namespace llvm {
     /// this is suported by the target.
     void printVisibility(const std::string& Name, unsigned Visibility) const;
 
-    /// printOffset - This is just convenient handler for printing offsets.
-    void printOffset(int64_t Offset) const;
-
   private:
     const GlobalValue *findGlobalValue(const Constant* CV);
     void EmitLLVMUsedList(Constant *List);

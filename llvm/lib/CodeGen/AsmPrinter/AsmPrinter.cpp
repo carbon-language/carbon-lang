@@ -1520,13 +1520,6 @@ void AsmPrinter::printVisibility(const std::string& Name,
   }
 }
 
-void AsmPrinter::printOffset(int64_t Offset) const {
-  if (Offset > 0)
-    O << '+' << Offset;
-  else if (Offset < 0)
-    O << Offset;
-}
-
 GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
   if (!S->usesMetadata())
     return 0;

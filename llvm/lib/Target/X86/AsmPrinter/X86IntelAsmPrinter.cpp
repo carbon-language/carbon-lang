@@ -235,7 +235,11 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     if (!isMemOp) O << "OFFSET ";
     O << "[" << TAI->getPrivateGlobalPrefix() << "CPI"
       << getFunctionNumber() << "_" << MO.getIndex();
-    printOffset(MO.getOffset());
+    int Offset = MO.getOffset();
+    if (Offset > 0)
+      O << " + " << Offset;
+    else if (Offset < 0)
+      O << Offset;
     O << "]";
     return;
   }
@@ -254,7 +258,11 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
       O << "__imp_";
     }
     O << Name;
-    printOffset(MO.getOffset());
+    int Offset = MO.getOffset();
+    if (Offset > 0)
+      O << " + " << Offset;
+    else if (Offset < 0)
+      O << Offset;
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
