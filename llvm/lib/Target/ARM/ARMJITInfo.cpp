@@ -135,9 +135,9 @@ ARMJITInfo::getLazyResolverFunction(JITCompilerFn F) {
 
 void *ARMJITInfo::emitGlobalValueNonLazyPtr(const GlobalValue *GV, void *Ptr,
                                             MachineCodeEmitter &MCE) {
-  MCE.startFunctionStub(GV, 4, 4);  // FIXME: Rename this.
+  MCE.startGVStub(GV, 4, 4);
   MCE.emitWordLE((intptr_t)Ptr);
-  return MCE.finishFunctionStub(GV);
+  return MCE.finishGVStub(GV);
 }
 
 void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
@@ -148,7 +148,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
   if (Fn != (void*)(intptr_t)ARMCompilationCallback) {
     // Branch to the corresponding function addr.
     // The stub is 8-byte size and 4-aligned.
-    MCE.startFunctionStub(F, 8, 4);
+    MCE.startGVStub(F, 8, 4);
     MCE.emitWordLE(0xe51ff004); // LDR PC, [PC,#-4]
     MCE.emitWordLE(addr);       // addr of function
   } else {
@@ -159,7 +159,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     //
     // Branch and link to the compilation callback.
     // The stub is 16-byte size and 4-byte aligned.
-    MCE.startFunctionStub(F, 16, 4);
+    MCE.startGVStub(F, 16, 4);
     // Save LR so the callback can determine which stub called it.
     // The compilation callback is responsible for popping this prior
     // to returning.
@@ -172,7 +172,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     MCE.emitWordLE((intptr_t)ARMCompilationCallback);
   }
 
-  return MCE.finishFunctionStub(F);
+  return MCE.finishGVStub(F);
 }
 
 intptr_t ARMJITInfo::resolveRelocDestAddr(MachineRelocation *MR) const {

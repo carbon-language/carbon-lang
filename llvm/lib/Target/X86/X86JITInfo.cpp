@@ -416,14 +416,14 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
 void *X86JITInfo::emitGlobalValueNonLazyPtr(const GlobalValue* GV, void *ptr,
                                             MachineCodeEmitter &MCE) {
 #if defined (X86_64_JIT)
-  MCE.startFunctionStub(GV, 8, 8);
+  MCE.startGVStub(GV, 8, 8);
   MCE.emitWordLE((unsigned)(intptr_t)ptr);
   MCE.emitWordLE((unsigned)(((intptr_t)ptr) >> 32));
 #else
-  MCE.startFunctionStub(GV, 4, 4);
+  MCE.startGVStub(GV, 4, 4);
   MCE.emitWordLE((intptr_t)ptr);
 #endif
-  return MCE.finishFunctionStub(GV);
+  return MCE.finishGVStub(GV);
 }
 
 void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
@@ -438,7 +438,7 @@ void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
 #endif
   if (NotCC) {
 #if defined (X86_64_JIT)
-    MCE.startFunctionStub(F, 13, 4);
+    MCE.startGVStub(F, 13, 4);
     MCE.emitByte(0x49);          // REX prefix
     MCE.emitByte(0xB8+2);        // movabsq r10
     MCE.emitWordLE((unsigned)(intptr_t)Fn);
@@ -447,15 +447,15 @@ void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
     MCE.emitByte(0xFF);          // jmpq *r10
     MCE.emitByte(2 | (4 << 3) | (3 << 6));
 #else
-    MCE.startFunctionStub(F, 5, 4);
+    MCE.startGVStub(F, 5, 4);
     MCE.emitByte(0xE9);
     MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
 #endif
-    return MCE.finishFunctionStub(F);
+    return MCE.finishGVStub(F);
   }
 
 #if defined (X86_64_JIT)
-  MCE.startFunctionStub(F, 14, 4);
+  MCE.startGVStub(F, 14, 4);
   MCE.emitByte(0x49);          // REX prefix
   MCE.emitByte(0xB8+2);        // movabsq r10
   MCE.emitWordLE((unsigned)(intptr_t)Fn);
@@ -464,14 +464,14 @@ void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
   MCE.emitByte(0xFF);          // callq *r10
   MCE.emitByte(2 | (2 << 3) | (3 << 6));
 #else
-  MCE.startFunctionStub(F, 6, 4);
+  MCE.startGVStub(F, 6, 4);
   MCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
 
   MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
 #endif
 
   MCE.emitByte(0xCD);   // Interrupt - Just a marker identifying the stub!
-  return MCE.finishFunctionStub(F);
+  return MCE.finishGVStub(F);
 }
 
 /// getPICJumpTableEntry - Returns the value of the jumptable entry for the

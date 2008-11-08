@@ -195,13 +195,13 @@ void *AlphaJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                      MachineCodeEmitter &MCE) {
   //assert(Fn == AlphaCompilationCallback && "Where are you going?\n");
   //Do things in a stupid slow way!
-  MCE.startFunctionStub(F, 19*4);
+  MCE.startGVStub(F, 19*4);
   void* Addr = (void*)(intptr_t)MCE.getCurrentPCValue();
   for (int x = 0; x < 19; ++ x)
     MCE.emitWordLE(0);
   EmitBranchToAt(Addr, Fn);
   DOUT << "Emitting Stub to " << Fn << " at [" << Addr << "]\n";
-  return MCE.finishFunctionStub(F);
+  return MCE.finishGVStub(F);
 }
 
 TargetJITInfo::LazyResolverFn

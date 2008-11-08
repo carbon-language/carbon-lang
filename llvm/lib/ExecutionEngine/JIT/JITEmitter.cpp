@@ -517,9 +517,9 @@ namespace {
     void initJumpTableInfo(MachineJumpTableInfo *MJTI);
     void emitJumpTableInfo(MachineJumpTableInfo *MJTI);
     
-    virtual void startFunctionStub(const GlobalValue* F, unsigned StubSize,
+    virtual void startGVStub(const GlobalValue* GV, unsigned StubSize,
                                    unsigned Alignment = 1);
-    virtual void* finishFunctionStub(const GlobalValue *F);
+    virtual void* finishGVStub(const GlobalValue *GV);
 
     /// allocateSpace - Reserves space in the current block if any, or
     /// allocate a new one of the given size.
@@ -1121,17 +1121,17 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   }
 }
 
-void JITEmitter::startFunctionStub(const GlobalValue* F, unsigned StubSize,
-                                   unsigned Alignment) {
+void JITEmitter::startGVStub(const GlobalValue* GV, unsigned StubSize,
+                             unsigned Alignment) {
   SavedBufferBegin = BufferBegin;
   SavedBufferEnd = BufferEnd;
   SavedCurBufferPtr = CurBufferPtr;
   
-  BufferBegin = CurBufferPtr = MemMgr->allocateStub(F, StubSize, Alignment);
+  BufferBegin = CurBufferPtr = MemMgr->allocateStub(GV, StubSize, Alignment);
   BufferEnd = BufferBegin+StubSize+1;
 }
 
-void *JITEmitter::finishFunctionStub(const GlobalValue* F) {
+void *JITEmitter::finishGVStub(const GlobalValue* GV) {
   NumBytes += getCurrentPCOffset();
 
   // Invalidate the icache if necessary.

@@ -142,12 +142,12 @@ namespace llvm {
     virtual void setModuleInfo(llvm::MachineModuleInfo* MMI) { }
 
     /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
-    virtual void startFunctionStub(const GlobalValue* F, unsigned StubSize,
-                                   unsigned Alignment = 1) {
+    virtual void startGVStub(const GlobalValue* F, unsigned StubSize,
+                             unsigned Alignment = 1) {
       assert(0 && "JIT specific function called!");
       abort();
     }
-    virtual void *finishFunctionStub(const GlobalValue* F) {
+    virtual void *finishGVStub(const GlobalValue* F) {
       assert(0 && "JIT specific function called!");
       abort();
       return 0;

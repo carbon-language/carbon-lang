@@ -75,19 +75,16 @@ public:
   ///
   virtual bool finishFunction(MachineFunction &F) = 0;
   
-  /// startFunctionStub - This callback is invoked when the JIT needs the
-  /// address of a function that has not been code generated yet.  The StubSize
-  /// specifies the total size required by the stub.  Stubs are not allowed to
-  /// have constant pools, the can only use the other emitByte*/emitWord*
-  /// methods.
+  /// startGVStub - This callback is invoked when the JIT needs the
+  /// address of a GV (e.g. function) that has not been code generated yet.
+  /// The StubSize specifies the total size required by the stub.
   ///
-  virtual void startFunctionStub(const GlobalValue* F, unsigned StubSize,
-                                 unsigned Alignment = 1) = 0;
+  virtual void startGVStub(const GlobalValue* GV, unsigned StubSize,
+                           unsigned Alignment = 1) = 0;
 
-  /// finishFunctionStub - This callback is invoked to terminate a function
-  /// stub.
+  /// finishGVStub - This callback is invoked to terminate a GV stub.
   ///
-  virtual void *finishFunctionStub(const GlobalValue* F) = 0;
+  virtual void *finishGVStub(const GlobalValue* F) = 0;
 
   /// emitByte - This callback is invoked when a byte needs to be written to the
   /// output stream.

@@ -115,12 +115,12 @@ namespace llvm {
 
 
     /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
-    void startFunctionStub(const GlobalValue* F, unsigned StubSize,
-                           unsigned Alignment = 1) {
+    void startGVStub(const GlobalValue* F, unsigned StubSize,
+                     unsigned Alignment = 1) {
       assert(0 && "JIT specific function called!");
       abort();
     }
-    void *finishFunctionStub(const GlobalValue *F) {
+    void *finishGVStub(const GlobalValue *F) {
       assert(0 && "JIT specific function called!");
       abort();
       return 0;

@@ -335,7 +335,7 @@ void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)PPC32CompilationCallback && 
       Fn != (void*)(intptr_t)PPC64CompilationCallback) {
-    MCE.startFunctionStub(F, 7*4);
+    MCE.startGVStub(F, 7*4);
     intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
     MCE.emitWordBE(0);
     MCE.emitWordBE(0);
@@ -346,10 +346,10 @@ void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
     MCE.emitWordBE(0);
     EmitBranchToAt(Addr, (intptr_t)Fn, false, is64Bit);
     sys::Memory::InvalidateInstructionCache((void*)Addr, 7*4);
-    return MCE.finishFunctionStub(F);
+    return MCE.finishGVStub(F);
   }
 
-  MCE.startFunctionStub(F, 10*4);
+  MCE.startGVStub(F, 10*4);
   intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
   if (is64Bit) {
     MCE.emitWordBE(0xf821ffb1);     // stdu r1,-80(r1)
@@ -374,7 +374,7 @@ void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
   MCE.emitWordBE(0);
   EmitBranchToAt(BranchAddr, (intptr_t)Fn, true, is64Bit);
   sys::Memory::InvalidateInstructionCache((void*)Addr, 10*4);
-  return MCE.finishFunctionStub(F);
+  return MCE.finishGVStub(F);
 }
 
 
