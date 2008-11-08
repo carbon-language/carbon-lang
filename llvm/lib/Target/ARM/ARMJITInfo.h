@@ -14,10 +14,11 @@
 #ifndef ARMJITINFO_H
 #define ARMJITINFO_H
 
-#include "llvm/Target/TargetJITInfo.h"
+#include "ARMMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/Target/TargetJITInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -85,8 +86,9 @@ namespace llvm {
     /// Initialize - Initialize internal stage. Get the list of constant pool
     /// Resize constant pool ids to CONSTPOOL_ENTRY addresses map.
     void Initialize(const MachineFunction &MF) {
-      ConstPoolId2AddrMap.resize(MF.getConstantPool()->getConstants().size());
-      JumpTableId2AddrMap.resize(MF.getJumpTableInfo()->getJumpTables().size());
+      const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+      ConstPoolId2AddrMap.resize(AFI->getNumConstPoolEntries());
+      JumpTableId2AddrMap.resize(AFI->getNumJumpTables());
     }
 
     /// getConstantPoolEntryAddr - The ARM target puts all constant

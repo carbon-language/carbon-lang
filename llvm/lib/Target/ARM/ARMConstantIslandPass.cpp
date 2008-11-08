@@ -47,9 +47,6 @@ namespace {
   ///   CPE     - A constant pool entry that has been placed somewhere, which
   ///             tracks a list of users.
   class VISIBILITY_HIDDEN ARMConstantIslands : public MachineFunctionPass {
-    /// NextUID - Assign unique ID's to CPE's.
-    unsigned NextUID;
-
     /// BBSizes - The size of each MachineBasicBlock in bytes of code, indexed
     /// by MBB Number.  The two-byte pads required for Thumb alignment are
     /// counted as part of the following block (i.e., the offset and size for
@@ -237,7 +234,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   }
   
   /// The next UID to take is the first unused one.
-  NextUID = CPEMIs.size();
+  AFI->initConstPoolEntryUId(CPEMIs.size());
   
   // Do the initial scan of the function, building up information about the
   // sizes of each block, the location of all the water, and finding all of the
@@ -1019,7 +1016,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
 
   // No existing clone of this CPE is within range.
   // We will be generating a new clone.  Get a UID for it.
-  unsigned ID  = NextUID++;
+  unsigned ID  = AFI->createConstPoolEntryUId();
 
   // Look for water where we can place this CPE.  We look for the farthest one
   // away that will work.  Forward references only for now (although later
