@@ -7,16 +7,10 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
-LIBRARYNAME = LLVMCellSPUCodeGen
-TARGET = SPU
+LEVEL = ../../../..
+LIBRARYNAME = LLVMCellSPUAsmPrinter
 
-BUILT_SOURCES = SPUGenInstrNames.inc SPUGenRegisterNames.inc \
-		SPUGenAsmWriter.inc SPUGenCodeEmitter.inc \
-		SPUGenRegisterInfo.h.inc SPUGenRegisterInfo.inc \
-		SPUGenInstrInfo.inc SPUGenDAGISel.inc \
-		SPUGenSubtarget.inc SPUGenCallingConv.inc
-
-DIRS = AsmPrinter
+# Hack: we need to include 'main' x86 target directory to grab private headers 
+CPPFLAGS = -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
 include $(LEVEL)/Makefile.common
