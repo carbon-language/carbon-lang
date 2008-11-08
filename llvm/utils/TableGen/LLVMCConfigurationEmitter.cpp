@@ -162,8 +162,8 @@ struct OptionDescription {
       else if (cur_char == '+') {
         ret += "_plus_";
       }
-      else if (cur_char == ',') {
-        ret += "_comma_";
+      else if (cur_char == '-') {
+        ret += "_dash_";
       }
       else {
         ret.push_back(cur_char);
