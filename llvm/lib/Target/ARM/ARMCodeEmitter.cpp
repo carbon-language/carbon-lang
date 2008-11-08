@@ -209,7 +209,7 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   else if (MO.isGlobal())
     emitGlobalAddress(MO.getGlobal(), ARM::reloc_arm_branch, true);
   else if (MO.isSymbol())
-    emitExternalSymbolAddress(MO.getSymbolName(), ARM::reloc_arm_relative);
+    emitExternalSymbolAddress(MO.getSymbolName(), ARM::reloc_arm_branch);
   else if (MO.isCPI())
     emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_cp_entry);
   else if (MO.isJTI())
