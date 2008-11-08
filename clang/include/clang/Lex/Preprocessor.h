@@ -352,6 +352,28 @@ public:
     else
       return PeekAhead(N+1);
   }
+
+  /// EnterToken - Enters a token in the token stream to be lexed next. If
+  /// BackTrack() is called afterwards, the token will remain at the insertion
+  /// point.
+  void EnterToken(const Token &Tok) {
+    EnterCachingLexMode();
+    CachedTokens.insert(CachedTokens.begin()+CachedLexPos, Tok);
+  }
+
+  /// AnnotateCachedTokens - We notify the Preprocessor that if it is caching
+  /// tokens (because backtrack is enabled) it should replace the most recent
+  /// cached tokens with the given annotation token. This function has no effect
+  /// if backtracking is not enabled.
+  ///
+  /// Note that the use of this function is just for optimization; so that the
+  /// cached tokens doesn't get re-parsed and re-resolved after a backtrack is
+  /// invoked.
+  void AnnotateCachedTokens(const Token &Tok) {
+    assert(Tok.isAnnotationToken() && "Expected annotation token");
+    if (CachedLexPos != 0 && InCachingLexMode())
+      AnnotatePreviousCachedTokens(Tok);
+  }
   
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
@@ -559,6 +581,7 @@ private:
       RemoveTopOfLexerStack();
   }
   const Token &PeekAhead(unsigned N);
+  void AnnotatePreviousCachedTokens(const Token &Tok);
 
   //===--------------------------------------------------------------------===//
   /// Handle*Directive - implement the various preprocessor directives.  These

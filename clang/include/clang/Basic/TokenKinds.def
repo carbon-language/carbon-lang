@@ -35,6 +35,9 @@
 #ifndef OBJC2_AT_KEYWORD
 #define OBJC2_AT_KEYWORD(X)
 #endif
+#ifndef ANNOTATION
+#define ANNOTATION(X) TOK(annot_ ## X)
+#endif
 
 //===----------------------------------------------------------------------===//
 // Preprocessor keywords.
@@ -365,6 +368,11 @@ OBJC2_AT_KEYWORD(dynamic)
 // TODO: What to do about context-sensitive keywords like:
 //       bycopy/byref/in/inout/oneway/out?
 
+ANNOTATION(cxxscope)     // annotation for a C++ scope spec, e.g. "::foo::bar::"
+ANNOTATION(qualtypename) // annotation for a C typedef name, or a C++ (possibly
+                         // qualified) typename, e.g. "foo::MyClass"
+
+#undef ANNOTATION
 #undef OBJC2_AT_KEYWORD
 #undef OBJC1_AT_KEYWORD
 #undef CXX_KEYWORD_OPERATOR

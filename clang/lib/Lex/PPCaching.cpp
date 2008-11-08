@@ -93,3 +93,27 @@ const Token &Preprocessor::PeekAhead(unsigned N) {
   EnterCachingLexMode();
   return CachedTokens.back();
 }
+
+void Preprocessor::AnnotatePreviousCachedTokens(const Token &Tok) {
+  assert(Tok.isAnnotationToken() && "Expected annotation token");
+  assert(CachedLexPos != 0 && "Expected to have some cached tokens");
+  assert(CachedTokens[CachedLexPos-1].getLocation() == Tok.getAnnotationEndLoc()
+         && "The annotation should be until the most recent cached token");
+
+  // Start from the end of the cached tokens list and look for the token
+  // that is the beginning of the annotation token.
+  for (CachedTokensTy::size_type i = CachedLexPos; i != 0; --i) {
+    CachedTokensTy::iterator AnnotBegin = CachedTokens.begin() + i-1;
+    if (AnnotBegin->getLocation() == Tok.getLocation()) {
+      assert((BacktrackPositions.empty() || BacktrackPositions.back() < i) &&
+             "The backtrack pos points inside the annotated tokens!");
+      // Replace the cached tokens with the single annotation token.
+      CachedTokens.erase(AnnotBegin + 1, CachedTokens.begin() + CachedLexPos);
+      *AnnotBegin = Tok;
+      CachedLexPos = i;
+      return;
+    }
+  }
+
+  assert(0&&"Didn't find the first token represented by the annotation token!");
+}

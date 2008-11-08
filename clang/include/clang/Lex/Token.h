@@ -25,14 +25,31 @@ class IdentifierInfo;
 /// It is not intended to be space efficient, it is intended to return as much
 /// information as possible about each returned token.  This is expected to be
 /// compressed into a smaller form if memory footprint is important.
+///
+/// The parser can create a special "annotation token" representing a stream of
+/// tokens that were parsed and semantically resolved, e.g.: "foo::MyClass<int>"
+/// can be represented by a single typename annotation token that carries
+/// information about the SourceRange of the tokens and the type object.
 class Token {
-  /// The location and length of the token text itself.
+  /// The location of the token.
   SourceLocation Loc;
-  unsigned Length;
+
+  union {
+    /// The end of the SourceRange of an annotation token.
+    unsigned AnnotEndLocID;
+
+    /// The length of the token text itself.
+    unsigned Length;
+  };
   
-  /// IdentifierInfo - If this was an identifier, this points to the uniqued
-  /// information about this identifier.
-  IdentifierInfo *IdentInfo;
+  union {
+    /// IdentifierInfo - If this was an identifier, this points to the uniqued
+    /// information about this identifier.
+    IdentifierInfo *IdentInfo;
+
+    /// AnnotVal - Information specific to an annotation token.
+    void *AnnotVal;
+  };
 
   /// Kind - The actual flavor of token this is.
   ///
@@ -60,13 +77,39 @@ public:
   bool is(tok::TokenKind K) const { return Kind == (unsigned) K; }
   bool isNot(tok::TokenKind K) const { return Kind != (unsigned) K; }
 
+  bool isAnnotationToken() const { 
+    return is(tok::annot_qualtypename) || is(tok::annot_cxxscope);
+  }
+
   /// getLocation - Return a source location identifier for the specified
   /// offset in the current file.
   SourceLocation getLocation() const { return Loc; }
-  unsigned getLength() const { return Length; }
+  unsigned getLength() const {
+    assert(!isAnnotationToken() && "Used Length on annotation token");
+    return Length;
+  }
 
   void setLocation(SourceLocation L) { Loc = L; }
   void setLength(unsigned Len) { Length = Len; }
+
+  SourceLocation getAnnotationEndLoc() const {
+    assert(isAnnotationToken() && "Used AnnotEndLocID on non-annotation token");
+    return SourceLocation::getFromRawEncoding(AnnotEndLocID);
+  }
+  void setAnnotationEndLoc(SourceLocation L) {
+    assert(isAnnotationToken() && "Used AnnotEndLocID on non-annotation token");
+    AnnotEndLocID = L.getRawEncoding();
+  }
+
+  /// getAnnotationRange - SourceRange of the group of tokens that this
+  /// annotation token represents.
+  SourceRange getAnnotationRange() const {
+    return SourceRange(getLocation(), getAnnotationEndLoc());
+  }
+  void setAnnotationRange(SourceRange R) {
+    setLocation(R.getBegin());
+    setAnnotationEndLoc(R.getEnd());
+  }
   
   const char *getName() const {
     return tok::getTokenName( (tok::TokenKind) Kind);
@@ -80,9 +123,21 @@ public:
     Loc = SourceLocation();
   }
   
-  IdentifierInfo *getIdentifierInfo() const { return IdentInfo; }
+  IdentifierInfo *getIdentifierInfo() const {
+    assert(!isAnnotationToken() && "Used IdentInfo on annotation token");
+    return IdentInfo;
+  }
   void setIdentifierInfo(IdentifierInfo *II) {
     IdentInfo = II;
+  }
+
+  void *getAnnotationValue() const {
+    assert(isAnnotationToken() && "Used AnnotVal on non-annotation token");
+    return AnnotVal;
+  }
+  void setAnnotationValue(void *val) {
+    assert(isAnnotationToken() && "Used AnnotVal on non-annotation token");
+    AnnotVal = val;
   }
   
   /// setFlag - Set the specified flag.
