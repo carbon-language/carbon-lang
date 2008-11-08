@@ -887,6 +887,8 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       if (!MR.letTargetResolve()) {
         if (MR.isString()) {
           ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
+          DOUT << "JIT: Map \'" << MR.getString() << "\' to ["
+               << ResultPtr << "]\n";  
 
           // If the target REALLY wants a stub for this function, emit it now.
           if (!MR.doesntNeedStub())
