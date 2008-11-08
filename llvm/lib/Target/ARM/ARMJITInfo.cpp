@@ -111,20 +111,16 @@ extern "C" void ARMCompilationCallbackC(intptr_t StubAddr) {
   // stub with:
   //   ldr pc, [pc,#-4]
   //   <addr>
-  bool ok = sys::Memory::setRangeWritable((void*)StubAddr, 8);
-  if (!ok)
-    {
-      cerr << "ERROR: Unable to mark stub writable\n";
-      abort();
-    }
-  *(intptr_t *)StubAddr = 0xe51ff004;
+  if (!sys::Memory::setRangeWritable((void*)StubAddr, 8)) {
+    cerr << "ERROR: Unable to mark stub writable\n";
+    abort();
+  }
+  *(intptr_t *)StubAddr = 0xe51ff004;  // ldr pc, [pc, #-4]
   *(intptr_t *)(StubAddr+4) = NewVal;
-  ok = sys::Memory::setRangeExecutable((void*)StubAddr, 8);
-  if (!ok)
-    {
-      cerr << "ERROR: Unable to mark stub executable\n";
-      abort();
-    }
+  if (!sys::Memory::setRangeExecutable((void*)StubAddr, 8)) {
+    cerr << "ERROR: Unable to mark stub executable\n";
+    abort();
+  }
 }
 
 TargetJITInfo::LazyResolverFn
@@ -142,15 +138,16 @@ void *ARMJITInfo::emitGlobalValueNonLazyPtr(const GlobalValue *GV, void *Ptr,
 
 void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                    MachineCodeEmitter &MCE) {
-  unsigned addr = (intptr_t)Fn;
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)ARMCompilationCallback) {
     // Branch to the corresponding function addr.
     // The stub is 8-byte size and 4-aligned.
     MCE.startGVStub(F, 8, 4);
-    MCE.emitWordLE(0xe51ff004); // LDR PC, [PC,#-4]
-    MCE.emitWordLE(addr);       // addr of function
+    intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
+    MCE.emitWordLE(0xe51ff004);    // ldr pc, [pc, #-4]
+    MCE.emitWordLE((intptr_t)Fn);  // addr of function
+    sys::Memory::InvalidateInstructionCache((void*)Addr, 8);
   } else {
     // The compilation callback will overwrite the first two words of this
     // stub with indirect branch instructions targeting the compiled code. 
@@ -160,16 +157,18 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     // Branch and link to the compilation callback.
     // The stub is 16-byte size and 4-byte aligned.
     MCE.startGVStub(F, 16, 4);
+    intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
     // Save LR so the callback can determine which stub called it.
     // The compilation callback is responsible for popping this prior
     // to returning.
-    MCE.emitWordLE(0xe92d4000); // PUSH {lr}
-    // Set the return address to go back to the start of this stub
-    MCE.emitWordLE(0xe24fe00c); // SUB LR, PC, #12
-    // Invoke the compilation callback
-    MCE.emitWordLE(0xe51ff004); // LDR PC, [PC,#-4]
-    // The address of the compilation callback
+    MCE.emitWordLE(0xe92d4000); // push {lr}
+    // Set the return address to go back to the start of this stub.
+    MCE.emitWordLE(0xe24fe00c); // sub lr, pc, #12
+    // Invoke the compilation callback.
+    MCE.emitWordLE(0xe51ff004); // ldr pc, [pc, #-4]
+    // The address of the compilation callback.
     MCE.emitWordLE((intptr_t)ARMCompilationCallback);
+    sys::Memory::InvalidateInstructionCache((void*)Addr, 16);
   }
 
   return MCE.finishGVStub(F);
