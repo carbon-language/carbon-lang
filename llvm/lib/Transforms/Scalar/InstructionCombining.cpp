@@ -4352,55 +4352,62 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
     }
 
+#define SELECT_MATCH(Val) \
+    m_Select(m_Value(Val), m_ConstantInt(0), m_ConstantInt(-1))
+#define GET_SELECT_COND(Val) \
+    cast<User>(Val)->getOperand(0)
+
     // (A & (C0?-1:0)) | (B & ~(C0?-1:0)) ->  C0 ? A : B, and commuted variants
     if (match(A, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
-      if (match(D, m_Not(m_Value(A))))
-        return SelectInst::Create(cast<User>(A)->getOperand(0), C, B);
-      if (match(B, m_Not(m_Value(A))))
-        return SelectInst::Create(cast<User>(A)->getOperand(0), C, D);
+      if (match(D, m_Not(SELECT_MATCH(A))))
+        return SelectInst::Create(GET_SELECT_COND(D), C, B);
+      if (match(B, m_Not(SELECT_MATCH(A))))
+        return SelectInst::Create(GET_SELECT_COND(B), C, D);
     }
     if (match(B, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
-      if (match(C, m_Not(m_Value(B))))
-        return SelectInst::Create(cast<User>(B)->getOperand(0), A, D);
-      if (match(A, m_Not(m_Value(B))))
-        return SelectInst::Create(cast<User>(B)->getOperand(0), C, D);
+      if (match(C, m_Not(SELECT_MATCH(B))))
+        return SelectInst::Create(GET_SELECT_COND(C), A, D);
+      if (match(A, m_Not(SELECT_MATCH(B))))
+        return SelectInst::Create(GET_SELECT_COND(A), C, D);
     }
     if (match(C, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
-      if (match(D, m_Not(m_Value(C))))
-        return SelectInst::Create(cast<User>(C)->getOperand(0), A, B);
-      if (match(B, m_Not(m_Value(C))))
-        return SelectInst::Create(cast<User>(C)->getOperand(0), A, D);
+      if (match(D, m_Not(SELECT_MATCH(C))))
+        return SelectInst::Create(GET_SELECT_COND(D), A, B);
+      if (match(B, m_Not(SELECT_MATCH(C))))
+        return SelectInst::Create(GET_SELECT_COND(B), A, D);
     }
     if (match(D, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
-      if (match(C, m_Not(m_Value(D))))
-        return SelectInst::Create(cast<User>(D)->getOperand(0), A, B);
-      if (match(A, m_Not(m_Value(D))))
-        return SelectInst::Create(cast<User>(D)->getOperand(0), C, B);
+      if (match(C, m_Not(SELECT_MATCH(D))))
+        return SelectInst::Create(GET_SELECT_COND(C), A, B);
+      if (match(A, m_Not(SELECT_MATCH(D))))
+        return SelectInst::Create(GET_SELECT_COND(A), C, B);
     }
     if (match(A, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
-      if (match(D, m_Not(m_Value(A))))
-        return SelectInst::Create(cast<User>(A)->getOperand(0), B, C);
-      if (match(B, m_Not(m_Value(A))))
-        return SelectInst::Create(cast<User>(A)->getOperand(0), D, C);
+      if (match(D, m_Not(SELECT_MATCH(A))))
+        return SelectInst::Create(GET_SELECT_COND(D), B, C);
+      if (match(B, m_Not(SELECT_MATCH(A))))
+        return SelectInst::Create(GET_SELECT_COND(B), D, C);
     }
     if (match(B, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
-      if (match(C, m_Not(m_Value(B))))
-        return SelectInst::Create(cast<User>(B)->getOperand(0), D, A);
-      if (match(A, m_Not(m_Value(B))))
-        return SelectInst::Create(cast<User>(B)->getOperand(0), D, C);
+      if (match(C, m_Not(SELECT_MATCH(B))))
+        return SelectInst::Create(GET_SELECT_COND(C), D, A);
+      if (match(A, m_Not(SELECT_MATCH(B))))
+        return SelectInst::Create(GET_SELECT_COND(A), D, C);
     }
     if (match(C, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
-      if (match(D, m_Not(m_Value(C))))
-        return SelectInst::Create(cast<User>(C)->getOperand(0), B, A);
-      if (match(B, m_Not(m_Value(C))))
-        return SelectInst::Create(cast<User>(C)->getOperand(0), D, A);
+      if (match(D, m_Not(SELECT_MATCH(C))))
+        return SelectInst::Create(GET_SELECT_COND(D), B, A);
+      if (match(B, m_Not(SELECT_MATCH(C))))
+        return SelectInst::Create(GET_SELECT_COND(B), D, A);
     }
     if (match(D, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
-      if (match(C, m_Not(m_Value(D))))
-        return SelectInst::Create(cast<User>(D)->getOperand(0), B, A);
-      if (match(A, m_Not(m_Value(D))))
-        return SelectInst::Create(cast<User>(D)->getOperand(0), B, C);
+      if (match(C, m_Not(SELECT_MATCH(D))))
+        return SelectInst::Create(GET_SELECT_COND(C), B, A);
+      if (match(A, m_Not(SELECT_MATCH(D))))
+        return SelectInst::Create(GET_SELECT_COND(A), B, C);
     }
+#undef SELECT_MATCH
+#undef GET_SELECT_COND
   }
   
   // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
