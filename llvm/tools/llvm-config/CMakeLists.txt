@@ -67,8 +67,10 @@ if( CMAKE_CROSSCOMPILING )
   set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 endif()
 
+find_program(NM_PATH nm PATH_SUFFIXES /bin)
+
 if( NOT NM_PATH )
-  message(FATAL_ERROR "`nm' was not found")
+  message(FATAL_ERROR "`nm' not found")
 endif()
 
 add_custom_command(OUTPUT ${LIBDEPS_TMP}
