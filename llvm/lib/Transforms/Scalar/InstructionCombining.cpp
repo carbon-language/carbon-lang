@@ -5317,7 +5317,8 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   unsigned InputSize = LHSI->getOperand(0)->getType()->getPrimitiveSizeInBits();
   
   // If this is a uitofp instruction, we need an extra bit to hold the sign.
-  if (isa<UIToFPInst>(LHSI))
+  bool LHSUnsigned = isa<UIToFPInst>(LHSI);
+  if (LHSUnsigned)
     ++InputSize;
   
   // If the conversion would lose info, don't hack on this.
@@ -5333,17 +5334,29 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   switch (I.getPredicate()) {
   default: assert(0 && "Unexpected predicate!");
   case FCmpInst::FCMP_UEQ:
-  case FCmpInst::FCMP_OEQ: Pred = ICmpInst::ICMP_EQ; break;
+  case FCmpInst::FCMP_OEQ:
+    Pred = ICmpInst::ICMP_EQ;
+    break;
   case FCmpInst::FCMP_UGT:
-  case FCmpInst::FCMP_OGT: Pred = ICmpInst::ICMP_SGT; break;
+  case FCmpInst::FCMP_OGT:
+    Pred = LHSUnsigned ? ICmpInst::ICMP_UGT : ICmpInst::ICMP_SGT;
+    break;
   case FCmpInst::FCMP_UGE:
-  case FCmpInst::FCMP_OGE: Pred = ICmpInst::ICMP_SGE; break;
+  case FCmpInst::FCMP_OGE:
+    Pred = LHSUnsigned ? ICmpInst::ICMP_UGE : ICmpInst::ICMP_SGE;
+    break;
   case FCmpInst::FCMP_ULT:
-  case FCmpInst::FCMP_OLT: Pred = ICmpInst::ICMP_SLT; break;
+  case FCmpInst::FCMP_OLT:
+    Pred = LHSUnsigned ? ICmpInst::ICMP_ULT : ICmpInst::ICMP_SLT;
+    break;
   case FCmpInst::FCMP_ULE:
-  case FCmpInst::FCMP_OLE: Pred = ICmpInst::ICMP_SLE; break;
+  case FCmpInst::FCMP_OLE:
+    Pred = LHSUnsigned ? ICmpInst::ICMP_ULE : ICmpInst::ICMP_SLE;
+    break;
   case FCmpInst::FCMP_UNE:
-  case FCmpInst::FCMP_ONE: Pred = ICmpInst::ICMP_NE; break;
+  case FCmpInst::FCMP_ONE:
+    Pred = ICmpInst::ICMP_NE;
+    break;
   case FCmpInst::FCMP_ORD:
     return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
   case FCmpInst::FCMP_UNO:
@@ -5358,50 +5371,79 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   // comparing an i8 to 300.0.
   unsigned IntWidth = IntTy->getPrimitiveSizeInBits();
   
-  // If the RHS value is > SignedMax, fold the comparison.  This handles +INF
-  // and large values. 
-  APFloat SMax(RHS.getSemantics(), APFloat::fcZero, false);
-  SMax.convertFromAPInt(APInt::getSignedMaxValue(IntWidth), true,
-                        APFloat::rmNearestTiesToEven);
-  if (SMax.compare(RHS) == APFloat::cmpLessThan) {  // smax < 13123.0
-    if (Pred == ICmpInst::ICMP_NE || Pred == ICmpInst::ICMP_SLT ||
-        Pred == ICmpInst::ICMP_SLE)
-      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
-    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+  if (!LHSUnsigned) {
+    // If the RHS value is > SignedMax, fold the comparison.  This handles +INF
+    // and large values.
+    APFloat SMax(RHS.getSemantics(), APFloat::fcZero, false);
+    SMax.convertFromAPInt(APInt::getSignedMaxValue(IntWidth), true,
+                          APFloat::rmNearestTiesToEven);
+    if (SMax.compare(RHS) == APFloat::cmpLessThan) {  // smax < 13123.0
+      if (Pred == ICmpInst::ICMP_NE  || Pred == ICmpInst::ICMP_SLT ||
+          Pred == ICmpInst::ICMP_SLE)
+        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+    }
+  } else {
+    // If the RHS value is > UnsignedMax, fold the comparison. This handles
+    // +INF and large values.
+    APFloat UMax(RHS.getSemantics(), APFloat::fcZero, false);
+    UMax.convertFromAPInt(APInt::getMaxValue(IntWidth), false,
+                          APFloat::rmNearestTiesToEven);
+    if (UMax.compare(RHS) == APFloat::cmpLessThan) {  // umax < 13123.0
+      if (Pred == ICmpInst::ICMP_NE  || Pred == ICmpInst::ICMP_ULT ||
+          Pred == ICmpInst::ICMP_ULE)
+        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+    }
   }
   
-  // See if the RHS value is < SignedMin.
-  APFloat SMin(RHS.getSemantics(), APFloat::fcZero, false);
-  SMin.convertFromAPInt(APInt::getSignedMinValue(IntWidth), true,
-                        APFloat::rmNearestTiesToEven);
-  if (SMin.compare(RHS) == APFloat::cmpGreaterThan) { // smin > 12312.0
-    if (Pred == ICmpInst::ICMP_NE || Pred == ICmpInst::ICMP_SGT ||
-        Pred == ICmpInst::ICMP_SGE)
-      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
-    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+  if (!LHSUnsigned) {
+    // See if the RHS value is < SignedMin.
+    APFloat SMin(RHS.getSemantics(), APFloat::fcZero, false);
+    SMin.convertFromAPInt(APInt::getSignedMinValue(IntWidth), true,
+                          APFloat::rmNearestTiesToEven);
+    if (SMin.compare(RHS) == APFloat::cmpGreaterThan) { // smin > 12312.0
+      if (Pred == ICmpInst::ICMP_NE || Pred == ICmpInst::ICMP_SGT ||
+          Pred == ICmpInst::ICMP_SGE)
+        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+    }
   }
 
-  // Okay, now we know that the FP constant fits in the range [SMIN, SMAX] but
-  // it may still be fractional.  See if it is fractional by casting the FP
-  // value to the integer value and back, checking for equality.  Don't do this
-  // for zero, because -0.0 is not fractional.
+  // Okay, now we know that the FP constant fits in the range [SMIN, SMAX] or
+  // [0, UMAX], but it may still be fractional.  See if it is fractional by
+  // casting the FP value to the integer value and back, checking for equality.
+  // Don't do this for zero, because -0.0 is not fractional.
   Constant *RHSInt = ConstantExpr::getFPToSI(RHSC, IntTy);
   if (!RHS.isZero() &&
       ConstantExpr::getSIToFP(RHSInt, RHSC->getType()) != RHSC) {
-    // If we had a comparison against a fractional value, we have to adjust
-    // the compare predicate and sometimes the value.  RHSC is rounded towards
-    // zero at this point.
+    // If we had a comparison against a fractional value, we have to adjust the
+    // compare predicate and sometimes the value.  RHSC is rounded towards zero
+    // at this point.
     switch (Pred) {
     default: assert(0 && "Unexpected integer comparison!");
     case ICmpInst::ICMP_NE:  // (float)int != 4.4   --> true
       return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
     case ICmpInst::ICMP_EQ:  // (float)int == 4.4   --> false
       return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+    case ICmpInst::ICMP_ULE:
+      // (float)int <= 4.4   --> int <= 4
+      // (float)int <= -4.4  --> false
+      if (RHS.isNegative())
+        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+      break;
     case ICmpInst::ICMP_SLE:
       // (float)int <= 4.4   --> int <= 4
       // (float)int <= -4.4  --> int < -4
       if (RHS.isNegative())
         Pred = ICmpInst::ICMP_SLT;
+      break;
+    case ICmpInst::ICMP_ULT:
+      // (float)int < -4.4   --> false
+      // (float)int < 4.4    --> int <= 4
+      if (RHS.isNegative())
+        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+      Pred = ICmpInst::ICMP_ULE;
       break;
     case ICmpInst::ICMP_SLT:
       // (float)int < -4.4   --> int < -4
@@ -5409,11 +5451,24 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
       if (!RHS.isNegative())
         Pred = ICmpInst::ICMP_SLE;
       break;
+    case ICmpInst::ICMP_UGT:
+      // (float)int > 4.4    --> int > 4
+      // (float)int > -4.4   --> true
+      if (RHS.isNegative())
+        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+      break;
     case ICmpInst::ICMP_SGT:
       // (float)int > 4.4    --> int > 4
       // (float)int > -4.4   --> int >= -4
       if (RHS.isNegative())
         Pred = ICmpInst::ICMP_SGE;
+      break;
+    case ICmpInst::ICMP_UGE:
+      // (float)int >= -4.4   --> true
+      // (float)int >= 4.4    --> int > 4
+      if (!RHS.isNegative())
+        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+      Pred = ICmpInst::ICMP_UGT;
       break;
     case ICmpInst::ICMP_SGE:
       // (float)int >= -4.4   --> int >= -4
