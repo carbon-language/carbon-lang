@@ -63,8 +63,16 @@ set(LLVM_CONFIG_IN ${CMAKE_CURRENT_BINARY_DIR}/llvm-config.in)
 # set(LIBDEPS_TMP LibDeps.txt.tmp)
 # set(FINAL_LIBDEPS FinalLibDeps.txt)
 
+if( CMAKE_CROSSCOMPILING )
+  set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
+endif()
+
+if( NOT NM_PATH )
+  message(FATAL_ERROR "`nm' was not found")
+endif()
+
 add_custom_command(OUTPUT ${LIBDEPS_TMP}
-  COMMAND ${PERL_EXECUTABLE} ${LLVM_MAIN_SRC_DIR}/utils/GenLibDeps.pl -flat ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} > ${LIBDEPS_TMP}
+  COMMAND ${PERL_EXECUTABLE} ${LLVM_MAIN_SRC_DIR}/utils/GenLibDeps.pl -flat ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} ${NM_PATH} > ${LIBDEPS_TMP}
   COMMENT "Regenerating ${LIBDEPS_TMP}")
 
 add_custom_command(OUTPUT ${LIBDEPS}

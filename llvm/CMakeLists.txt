@@ -111,10 +111,17 @@ add_subdirectory(lib/System)
 # Everything else depends on Support and System:
 set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${LLVM_LIBS} )
 
+set(LLVM_TABLEGEN "tblgen" CACHE
+  STRING "Native TableGen executable.")
+
+if( CMAKE_CROSSCOMPILING )
+  include( CrossCompileLLVM )
+endif( CMAKE_CROSSCOMPILING )
+
 add_subdirectory(utils/TableGen)
 
 add_custom_command(OUTPUT ${llvm_builded_incs_dir}/Intrinsics.gen
-  COMMAND tblgen -gen-intrinsic -I ${LLVM_MAIN_INCLUDE_DIR} ${LLVM_MAIN_INCLUDE_DIR}/llvm/Intrinsics.td -o ${llvm_builded_incs_dir}/Intrinsics.gen
+  COMMAND ${LLVM_TABLEGEN} -gen-intrinsic -I ${LLVM_MAIN_INCLUDE_DIR} ${LLVM_MAIN_INCLUDE_DIR}/llvm/Intrinsics.td -o ${llvm_builded_incs_dir}/Intrinsics.gen
   DEPENDS tblgen
   COMMENT "Building intrinsics.gen...")
 
