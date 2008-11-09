@@ -1269,7 +1269,7 @@ namespace {
     }
     case Instruction::Store: {
       const StoreInst* store = cast<StoreInst>(I);
-      Out << " = new StoreInst("
+      Out << " new StoreInst("
           << opNames[0] << ", "
           << opNames[1] << ", "
           << (store->isVolatile() ? "true" : "false")
