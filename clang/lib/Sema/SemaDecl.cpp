@@ -2138,68 +2138,41 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
   case DeclSpec::TST_enum:   Kind = TagDecl::TK_enum; break;
   }
-
-  if (Name && SS.isNotEmpty()) {
-    DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
-    if (DC == 0) {
-      // Invalid C++ scope specifier.
-      Name = 0;
-      goto CreateNewDecl;
-    }
-
-    TagDecl *PrevDecl =
-          dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag, S, DC));
-    if (PrevDecl == 0) {
-      // No tag member found.
-      Diag(NameLoc, diag::err_not_tag_in_scope, Name->getName(),
-           SS.getRange());
-      Name = 0;
-      goto CreateNewDecl;
-    }
-
-    if (PrevDecl->getTagKind() != Kind) {
-      Diag(KWLoc, diag::err_use_with_wrong_tag, Name->getName());
-      Diag(PrevDecl->getLocation(), diag::err_previous_use);
-      // Recover by making this an anonymous redefinition.
-      Name = 0;
-      goto CreateNewDecl;
-    }
-
-    // If this is a use or a forward declaration, we're good.
-    if (TK != TK_Definition)
-      return PrevDecl;
-
-    // Diagnose attempts to redefine a tag.
-    if (PrevDecl->isDefinition()) {
-      Diag(NameLoc, diag::err_redefinition, Name->getName());
-      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
-      // If this is a redefinition, recover by making this struct be
-      // anonymous, which will make any later references get the previous
-      // definition.
-      Name = 0;
-      goto CreateNewDecl;
-    }
-
-    // Okay, this is definition of a previously declared or referenced
-    // tag. Move the location of the decl to be the definition site.
-    PrevDecl->setLocation(NameLoc);
-    return PrevDecl;
-  }
   
   // Two code paths: a new one for structs/unions/classes where we create
   //   separate decls for forward declarations, and an old (eventually to
   //   be removed) code path for enums.
   if (Kind != TagDecl::TK_enum)
-    return ActOnTagStruct(S, Kind, TK, KWLoc, Name, NameLoc, Attr);
+    return ActOnTagStruct(S, Kind, TK, KWLoc, SS, Name, NameLoc, Attr);
   
-  {
+  ScopedDecl *PrevDecl;
 
-  // If this is a named struct, check to see if there was a previous forward
-  // declaration or definition.
-  // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
-  ScopedDecl *PrevDecl = 
-    dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag, S));
-  
+  if (Name && SS.isNotEmpty()) {
+    // We have a nested-name tag ('struct foo::bar').
+
+    // Check for invalid 'foo::'.
+    DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
+    if (DC == 0) {
+      Name = 0;
+      goto CreateNewDecl;
+    }
+
+    PrevDecl = dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag,S,DC));
+
+    // A tag 'foo::bar' must already exist.
+    if (PrevDecl == 0) {
+      Diag(NameLoc, diag::err_not_tag_in_scope, Name->getName(),
+           SS.getRange());
+      Name = 0;
+      goto CreateNewDecl;
+    }
+  } else {
+    // If this is a named struct, check to see if there was a previous forward
+    // declaration or definition.
+    // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
+    PrevDecl = dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S));
+  }
+
   if (PrevDecl) {    
     assert((isa<TagDecl>(PrevDecl) || isa<NamespaceDecl>(PrevDecl)) &&
             "unexpected Decl type");
@@ -2252,8 +2225,6 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     }
   }
 
-  } // subscope in which an already declared tag is handled.
-
   CreateNewDecl:
   
   // If there is an identifier, use the location of the identifier as the
@@ -2301,14 +2272,36 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
 ///  the logic for enums, we create separate decls for forward declarations.
 ///  This is called by ActOnTag, but eventually will replace its logic.
 Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
-                             SourceLocation KWLoc, IdentifierInfo *Name,
-                             SourceLocation NameLoc, AttributeList *Attr) {
-  
-  // If this is a named struct, check to see if there was a previous forward
-  // declaration or definition.
-  // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
-  ScopedDecl *PrevDecl = 
-    dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag, S));
+                             SourceLocation KWLoc, const CXXScopeSpec &SS,
+                             IdentifierInfo *Name, SourceLocation NameLoc,
+                             AttributeList *Attr) {
+  ScopedDecl *PrevDecl;
+
+  if (Name && SS.isNotEmpty()) {
+    // We have a nested-name tag ('struct foo::bar').
+
+    // Check for invalid 'foo::'.
+    DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
+    if (DC == 0) {
+      Name = 0;
+      goto CreateNewDecl;
+    }
+
+    PrevDecl = dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag,S,DC));
+
+    // A tag 'foo::bar' must already exist.
+    if (PrevDecl == 0) {
+      Diag(NameLoc, diag::err_not_tag_in_scope, Name->getName(),
+           SS.getRange());
+      Name = 0;
+      goto CreateNewDecl;
+    }
+  } else {
+    // If this is a named struct, check to see if there was a previous forward
+    // declaration or definition.
+    // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
+    PrevDecl = dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S));
+  }
   
   if (PrevDecl) {    
     assert((isa<TagDecl>(PrevDecl) || isa<NamespaceDecl>(PrevDecl)) &&
@@ -2375,7 +2368,9 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
       }
     }
   }
-  
+
+  CreateNewDecl:
+
   // If there is an identifier, use the location of the identifier as the
   // location of the decl, otherwise use the location of the struct/union
   // keyword.

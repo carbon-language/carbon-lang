@@ -314,8 +314,9 @@ public:
                            AttributeList *Attr);
   
   DeclTy* ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
-                         SourceLocation KWLoc, IdentifierInfo *Name,
-                         SourceLocation NameLoc, AttributeList *Attr);  
+                         SourceLocation KWLoc, const CXXScopeSpec &SS,
+                         IdentifierInfo *Name, SourceLocation NameLoc,
+                         AttributeList *Attr);  
   
   virtual void ActOnDefs(Scope *S, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,
