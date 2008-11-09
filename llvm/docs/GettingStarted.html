@@ -119,8 +119,7 @@ and performance.
       <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt></li>
       <li><tt>gunzip --stdout llvm-gcc.<i>platform</i>.tar.gz | tar -xvf -</tt>
       </li>
-      <ul><li>If the binary extension is ".bz" use bunzip2 instead of gunzip.</li>
-      </ul>
+      <li>Note: If the binary extension is ".bz" use bunzip2 instead of gunzip.</li>
       <li>Add llvm-gcc's "bin" directory to your PATH variable.</li>
     </ol></li>
 
@@ -320,10 +319,10 @@ project.</li>
     future. We highly recommend that you rebuild your current binutils with the
     patch from <a href="http://sourceware.org/bugzilla/show_bug.cgi?id=2659">
     Binutils bugzilla</a>, if it wasn't already applied.</li>
-<li><a name="pf_9">XCode 2.5 and gcc 4.0.1 (Apple Build 5370) will trip
+<li><a name="pf_9">XCode 2.5 and gcc 4.0.1</a> (Apple Build 5370) will trip
     internal LLVM assert messages when compiled for Release at optimization
-    levels greater than 0 (i.e., <i>&ldquo;-O1&rdquo;</i> and higher).
-    Add <i>OPTIMIZE_OPTION=&quot;-O0&quot;</i> to the build command line
+    levels greater than 0 (i.e., <i>"-O1"</i> and higher).
+    Add <i>OPTIMIZE_OPTION="-O0"</i> to the build command line
     if compiling for LLVM Release or bootstrapping the LLVM toolchain.</li>
 </ol>
 </div>
