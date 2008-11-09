@@ -4,16 +4,16 @@
 ; RUN: grep ila     %t1.s | count 1
 ; RUN: grep rotqbyi %t1.s | count 4
 ; RUN: grep lqa     %t1.s | count 1
-; RUN: grep lqd     %t1.s | count 11
-; RUN: grep dispatch_tab %t1.s | count 6
+; RUN: grep lqd     %t1.s | count 12
+; RUN: grep dispatch_tab %t1.s | count 5
 ; RUN: grep bisl    %t2.s | count 7
 ; RUN: grep ilhu    %t2.s | count 2
 ; RUN: grep iohl    %t2.s | count 2
 ; RUN: grep rotqby  %t2.s | count 6
-; RUN: grep lqd     %t2.s | count 17
+; RUN: grep lqd     %t2.s | count 18
 ; RUN: grep il      %t2.s | count 2
-; RUN: grep ai      %t2.s | count 7
-; RUN: grep dispatch_tab %t2.s | count 7
+; RUN: grep ai      %t2.s | count 9
+; RUN: grep dispatch_tab %t2.s | count 6
 
 ; ModuleID = 'call_indirect.bc'
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128"
