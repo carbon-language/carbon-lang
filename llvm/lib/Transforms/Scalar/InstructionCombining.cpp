@@ -4352,59 +4352,67 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
     }
 
-#define SELECT_MATCH(Val) \
-    m_Select(m_Value(Val), m_ConstantInt(0), m_ConstantInt(-1))
 #define GET_SELECT_COND(Val) \
     cast<User>(Val)->getOperand(0)
+#define SELECT_MATCH(Val) \
+    m_Select(m_Value(Val), m_ConstantInt(0), m_ConstantInt(-1))
 
     // (A & (C0?-1:0)) | (B & ~(C0?-1:0)) ->  C0 ? A : B, and commuted variants
     if (match(A, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
-      if (match(D, m_Not(SELECT_MATCH(A))))
-        return SelectInst::Create(GET_SELECT_COND(D), C, B);
-      if (match(B, m_Not(SELECT_MATCH(A))))
-        return SelectInst::Create(GET_SELECT_COND(B), C, D);
+      Value *Cond = GET_SELECT_COND(A);
+      if (match(D, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, C, B);
+      if (match(B, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, C, D);
     }
     if (match(B, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
-      if (match(C, m_Not(SELECT_MATCH(B))))
-        return SelectInst::Create(GET_SELECT_COND(C), A, D);
-      if (match(A, m_Not(SELECT_MATCH(B))))
-        return SelectInst::Create(GET_SELECT_COND(A), C, D);
+      Value *Cond = GET_SELECT_COND(B);
+      if (match(C, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, A, D);
+      if (match(A, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, C, D);
     }
     if (match(C, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
-      if (match(D, m_Not(SELECT_MATCH(C))))
-        return SelectInst::Create(GET_SELECT_COND(D), A, B);
-      if (match(B, m_Not(SELECT_MATCH(C))))
-        return SelectInst::Create(GET_SELECT_COND(B), A, D);
+      Value *Cond = GET_SELECT_COND(C);
+      if (match(D, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, A, B);
+      if (match(B, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, A, D);
     }
     if (match(D, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
-      if (match(C, m_Not(SELECT_MATCH(D))))
-        return SelectInst::Create(GET_SELECT_COND(C), A, B);
-      if (match(A, m_Not(SELECT_MATCH(D))))
-        return SelectInst::Create(GET_SELECT_COND(A), C, B);
+      Value *Cond = GET_SELECT_COND(D);
+      if (match(C, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, A, B);
+      if (match(A, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, C, B);
     }
     if (match(A, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
-      if (match(D, m_Not(SELECT_MATCH(A))))
-        return SelectInst::Create(GET_SELECT_COND(D), B, C);
-      if (match(B, m_Not(SELECT_MATCH(A))))
-        return SelectInst::Create(GET_SELECT_COND(B), D, C);
+      Value *Cond = GET_SELECT_COND(A);
+      if (match(D, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, B, C);
+      if (match(B, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, D, C);
     }
     if (match(B, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
-      if (match(C, m_Not(SELECT_MATCH(B))))
-        return SelectInst::Create(GET_SELECT_COND(C), D, A);
-      if (match(A, m_Not(SELECT_MATCH(B))))
-        return SelectInst::Create(GET_SELECT_COND(A), D, C);
+      Value *Cond = GET_SELECT_COND(B);
+      if (match(C, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, D, A);
+      if (match(A, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, D, C);
     }
     if (match(C, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
-      if (match(D, m_Not(SELECT_MATCH(C))))
-        return SelectInst::Create(GET_SELECT_COND(D), B, A);
-      if (match(B, m_Not(SELECT_MATCH(C))))
-        return SelectInst::Create(GET_SELECT_COND(B), D, A);
+      Value *Cond = GET_SELECT_COND(C);
+      if (match(D, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, B, A);
+      if (match(B, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, D, A);
     }
     if (match(D, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
-      if (match(C, m_Not(SELECT_MATCH(D))))
-        return SelectInst::Create(GET_SELECT_COND(C), B, A);
-      if (match(A, m_Not(SELECT_MATCH(D))))
-        return SelectInst::Create(GET_SELECT_COND(A), B, C);
+      Value *Cond = GET_SELECT_COND(D);
+      if (match(C, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, B, A);
+      if (match(A, m_Not(SELECT_MATCH(Cond))))
+        return SelectInst::Create(Cond, B, C);
     }
 #undef SELECT_MATCH
 #undef GET_SELECT_COND
