@@ -623,8 +623,16 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   CaseRangeBlock = SavedCRBlock;
 }
 
-static std::string ConvertAsmString(const char *Start, unsigned NumOperands,
-                                    bool IsSimple, bool &Failed) {
+static std::string ConvertAsmString(const AsmStmt& S, bool &Failed)
+{
+  // FIXME: No need to create new std::string here, we could just make sure
+  // that we don't read past the end of the string data.
+  std::string str(S.getAsmString()->getStrData(),
+                  S.getAsmString()->getByteLength());
+  const char *Start = str.c_str();
+  
+  unsigned NumOperands = S.getNumOutputs() + S.getNumInputs();
+  bool IsSimple = S.isSimple();
   Failed = false;
 
   static unsigned AsmCounter = 0;
@@ -697,6 +705,46 @@ static std::string ConvertAsmString(const char *Start, unsigned NumOperands,
         
         Result += "${" + llvm::utostr(n) + ':' + EscapedChar + '}';
         Start = End - 1;
+      } else if (EscapedChar == '[') {
+        std::string SymbolicName;
+        
+        Start++;
+        
+        while (*Start && *Start != ']') {
+          SymbolicName += *Start;
+          
+          Start++;
+        }
+        
+        if (!Start) {
+          // FIXME: Should be caught by sema.
+          assert(0 && "Could not parse symbolic name");
+        }
+        
+        assert(*Start == ']' && "Error parsing symbolic name");
+        
+        int Index = -1;
+        
+        // Check if this is an output operand.
+        for (unsigned i = 0; i < S.getNumOutputs(); i++) {
+          if (S.getOutputName(i) == SymbolicName) {
+            Index = i;
+            break;
+          }
+        }
+        
+        if (Index == -1) {
+          for (unsigned i = 0; i < S.getNumInputs(); i++) {
+            if (S.getInputName(i) == SymbolicName) {
+              Index = S.getNumOutputs() + i;
+            }
+          }
+        }
+        
+        assert(Index != -1 && "Did not find right operand!");
+       
+        Result += '$' + llvm::utostr(Index);
+
       } else {
         Failed = true;
         return "";
@@ -736,10 +784,7 @@ static std::string SimplifyConstraint(const char* Constraint,
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   bool Failed;
   std::string AsmString = 
-    ConvertAsmString(std::string(S.getAsmString()->getStrData(),
-                                 S.getAsmString()->getByteLength()).c_str(),
-                     S.getNumOutputs() + S.getNumInputs(), S.isSimple(),
-                     Failed);
+    ConvertAsmString(S, Failed);
 
   if (Failed) {
     ErrorUnsupported(&S, "asm string");
