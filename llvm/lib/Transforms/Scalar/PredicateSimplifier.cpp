@@ -2465,6 +2465,7 @@ namespace {
     delete DTDFS;
     delete VR;
     delete IG;
+    delete VN;
 
     modified |= UB.kill();
 
