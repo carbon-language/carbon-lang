@@ -42,6 +42,15 @@ struct A::C c2;
 struct S : public A::C {};
 struct A::undef; // expected-error {{'undef' does not name a tag member in the specified scope}}
 
+namespace A2 {
+  typedef int INT;
+  struct RC;
+}
+
+struct A2::RC {
+  INT x;
+};
+
 void f3() {
   N::x = 0; // expected-error {{use of undeclared identifier 'N'}}
   int N;

@@ -140,6 +140,29 @@ const char *NamedDecl::getName() const {
 }
 
 //===----------------------------------------------------------------------===//
+// ScopedDecl Implementation
+//===----------------------------------------------------------------------===//
+
+void ScopedDecl::setLexicalDeclContext(DeclContext *DC) {
+  if (DC == getLexicalDeclContext())
+    return;
+
+  if (isInSemaDC()) {
+    MultipleDC *MDC = new MultipleDC();
+    MDC->SemanticDC = getDeclContext();
+    MDC->LexicalDC = DC;
+    DeclCtx = reinterpret_cast<uintptr_t>(MDC) | 0x1;
+  } else {
+    getMultipleDC()->LexicalDC = DC;
+  }
+}
+
+ScopedDecl::~ScopedDecl() {
+  if (isOutOfSemaDC())
+    delete getMultipleDC();
+}
+
+//===----------------------------------------------------------------------===//
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//
 

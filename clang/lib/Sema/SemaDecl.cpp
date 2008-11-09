@@ -53,8 +53,8 @@ std::string Sema::getTypeAsString(TypeTy *Type) {
 DeclContext *Sema::getContainingDC(DeclContext *DC) {
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC)) {
     // A C++ out-of-line method will return to the file declaration context.
-    if (!MD->isInlineDefinition())
-      return LexicalFileContext;
+    if (MD->isOutOfLineDefinition())
+      return MD->getLexicalDeclContext();
 
     // A C++ inline method is parsed *after* the topmost class it was declared in
     // is fully parsed (it's "complete").
@@ -70,25 +70,24 @@ DeclContext *Sema::getContainingDC(DeclContext *DC) {
     return DC;
   }
 
-  if (isa<FunctionDecl>(DC) || isa<ObjCMethodDecl>(DC))
-    return LexicalFileContext;
+  if (isa<ObjCMethodDecl>(DC))
+    return Context.getTranslationUnitDecl();
+
+  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(DC))
+    return SD->getLexicalDeclContext();
 
   return DC->getParent();
 }
 
 void Sema::PushDeclContext(DeclContext *DC) {
   assert(getContainingDC(DC) == CurContext &&
-       "The next DeclContext should be directly contained in the current one.");
+       "The next DeclContext should be lexically contained in the current one.");
   CurContext = DC;
-  if (CurContext->isFileContext())
-    LexicalFileContext = CurContext;
 }
 
 void Sema::PopDeclContext() {
   assert(CurContext && "DeclContext imbalance!");
   CurContext = getContainingDC(CurContext);
-  if (CurContext->isFileContext())
-    LexicalFileContext = CurContext;
 }
 
 /// Add this decl to the scope shadowed decl chains.
@@ -1147,6 +1146,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     New = NewVD;
   }
   
+  // Set the lexical context. If the declarator has a C++ scope specifier, the
+  // lexical context will be different from the semantic context.
+  New->setLexicalDeclContext(CurContext);
+
   // If this has an identifier, add it to the scope stack.
   if (II)
     PushOnScopeChains(New, S);
@@ -2004,10 +2007,6 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
     Diag(Definition->getLocation(), diag::err_previous_definition);
   }
 
-  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
-    if (isa<CXXRecordDecl>(CurContext))
-      MD->setInlineDefinition(true);
-
   PushDeclContext(FD);
     
   // Check the validity of our function parameters
@@ -2267,6 +2266,11 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   
   if (Attr)
     ProcessDeclAttributeList(New, Attr);
+
+  // Set the lexical context. If the tag has a C++ scope specifier, the
+  // lexical context will be different from the semantic context.
+  New->setLexicalDeclContext(CurContext);
+
   return New;
 }
 
@@ -2420,6 +2424,10 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
   
   if (Attr)
     ProcessDeclAttributeList(New, Attr);
+
+  // Set the lexical context. If the tag has a C++ scope specifier, the
+  // lexical context will be different from the semantic context.
+  New->setLexicalDeclContext(CurContext);
 
   return New;
 }

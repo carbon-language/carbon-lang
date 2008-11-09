@@ -145,15 +145,31 @@ void ScopedDecl::EmitInRec(Serializer& S) const {
   NamedDecl::EmitInRec(S);
   S.EmitPtr(getNext());                     // From ScopedDecl.  
   S.EmitPtr(cast_or_null<Decl>(getDeclContext()));  // From ScopedDecl.
+  S.EmitPtr(cast_or_null<Decl>(getLexicalDeclContext()));  // From ScopedDecl.
 }
 
 void ScopedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
   NamedDecl::ReadInRec(D, C);
   D.ReadPtr(Next);                                  // From ScopedDecl.
-  
-  assert(DeclCtx == 0);   // Allow back-patching.  Observe that we register
-  D.ReadPtr(DeclCtx);     // the variable of the *object* for back-patching.
-                          // Its actual value will get filled in later.
+
+  assert(DeclCtx == 0);
+
+  const SerializedPtrID &SemaDCPtrID = D.ReadPtrID();
+  const SerializedPtrID &LexicalDCPtrID = D.ReadPtrID();
+
+  if (SemaDCPtrID == LexicalDCPtrID) {
+    // Allow back-patching.  Observe that we register the variable of the
+    // *object* for back-patching. Its actual value will get filled in later.
+    D.ReadUIntPtr(DeclCtx, SemaDCPtrID); 
+  }
+  else {
+    MultipleDC *MDC = new MultipleDC();
+    DeclCtx = reinterpret_cast<uintptr_t>(MDC) | 0x1;
+    // Allow back-patching.  Observe that we register the variable of the
+    // *object* for back-patching. Its actual value will get filled in later.
+    D.ReadUIntPtr(reinterpret_cast<uintptr_t&>(MDC->SemanticDC), SemaDCPtrID);
+    D.ReadUIntPtr(reinterpret_cast<uintptr_t&>(MDC->LexicalDC), LexicalDCPtrID);
+  }
 }
     
   //===------------------------------------------------------------===//

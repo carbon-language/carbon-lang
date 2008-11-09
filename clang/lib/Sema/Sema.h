@@ -109,10 +109,6 @@ public:
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
 
-  /// LexicalFileContext - The current lexical file declaration context,
-  /// the translation unit or a namespace.
-  DeclContext *LexicalFileContext;
-
   /// PreDeclaratorDC - Keeps the declaration context before switching to the
   /// context of a declarator's nested-name-specifier.
   DeclContext *PreDeclaratorDC;

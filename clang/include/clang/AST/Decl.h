@@ -92,16 +92,72 @@ class ScopedDecl : public NamedDecl {
   ///
   ScopedDecl *Next;
 
-  DeclContext *DeclCtx;
+  /// DeclCtx - Holds either a DeclContext* or a MultipleDC*.
+  /// For declarations that don't contain C++ scope specifiers, it contains
+  /// the DeclContext where the ScopedDecl was declared.
+  /// For declarations with C++ scope specifiers, it contains a MultipleDC*
+  /// with the context where it semantically belongs (SemanticDC) and the
+  /// context where it was lexically declared (LexicalDC).
+  /// e.g.:
+  ///
+  ///   namespace A {
+  ///      void f(); // SemanticDC == LexicalDC == 'namespace A'
+  ///   }
+  ///   void A::f(); // SemanticDC == namespace 'A'
+  ///                // LexicalDC == global namespace
+  uintptr_t DeclCtx;
+
+  struct MultipleDC {
+    DeclContext *SemanticDC;
+    DeclContext *LexicalDC;
+  };
+
+  inline bool isInSemaDC() const { return (DeclCtx & 0x1) == 0; }
+  inline bool isOutOfSemaDC() const { return (DeclCtx & 0x1) != 0; }
+  inline MultipleDC *getMultipleDC() const {
+    return reinterpret_cast<MultipleDC*>(DeclCtx & ~0x1);
+  }
 
 protected:
   ScopedDecl(Kind DK, DeclContext *DC, SourceLocation L,
              IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : NamedDecl(DK, L, Id), NextDeclarator(PrevDecl), Next(0), DeclCtx(DC) {}
+    : NamedDecl(DK, L, Id), NextDeclarator(PrevDecl), Next(0),
+      DeclCtx(reinterpret_cast<uintptr_t>(DC)) {}
+
+  virtual ~ScopedDecl();
   
 public:
-  const DeclContext *getDeclContext() const { return DeclCtx; }
-  DeclContext *getDeclContext() { return DeclCtx; }
+  const DeclContext *getDeclContext() const {
+    if (isInSemaDC())
+      return reinterpret_cast<DeclContext*>(DeclCtx);
+    return getMultipleDC()->SemanticDC;
+  }
+  DeclContext *getDeclContext() {
+    return const_cast<DeclContext*>(
+                         const_cast<const ScopedDecl*>(this)->getDeclContext());
+  }
+
+  /// getLexicalDeclContext - The declaration context where this ScopedDecl was
+  /// lexically declared (LexicalDC). May be different from
+  /// getDeclContext() (SemanticDC).
+  /// e.g.:
+  ///
+  ///   namespace A {
+  ///      void f(); // SemanticDC == LexicalDC == 'namespace A'
+  ///   }
+  ///   void A::f(); // SemanticDC == namespace 'A'
+  ///                // LexicalDC == global namespace
+  const DeclContext *getLexicalDeclContext() const {
+    if (isInSemaDC())
+      return reinterpret_cast<DeclContext*>(DeclCtx);
+    return getMultipleDC()->LexicalDC;
+  }
+  DeclContext *getLexicalDeclContext() {
+    return const_cast<DeclContext*>(
+                  const_cast<const ScopedDecl*>(this)->getLexicalDeclContext());
+  }
+
+  void setLexicalDeclContext(DeclContext *DC);
 
   ScopedDecl *getNext() const { return Next; }
   void setNext(ScopedDecl *N) { Next = N; }
