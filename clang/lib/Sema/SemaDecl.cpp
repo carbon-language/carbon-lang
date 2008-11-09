@@ -2145,18 +2145,20 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   if (Kind != TagDecl::TK_enum)
     return ActOnTagStruct(S, Kind, TK, KWLoc, SS, Name, NameLoc, Attr);
   
-  ScopedDecl *PrevDecl;
+  DeclContext *DC = CurContext;
+  ScopedDecl *PrevDecl = 0;
 
   if (Name && SS.isNotEmpty()) {
     // We have a nested-name tag ('struct foo::bar').
 
     // Check for invalid 'foo::'.
-    DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
-    if (DC == 0) {
+    if (SS.isInvalid()) {
       Name = 0;
       goto CreateNewDecl;
     }
 
+    DC = static_cast<DeclContext*>(SS.getScopeRep());
+    // Look-up name inside 'foo::'.
     PrevDecl = dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag,S,DC));
 
     // A tag 'foo::bar' must already exist.
@@ -2180,7 +2182,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
       // rementions the tag), reuse the decl.
-      if (TK == TK_Reference || isDeclInScope(PrevDecl, CurContext, S)) {
+      if (TK == TK_Reference || isDeclInScope(PrevDecl, DC, S)) {
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
@@ -2215,7 +2217,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       // type.
     } else {
       // PrevDecl is a namespace.
-      if (isDeclInScope(PrevDecl, CurContext, S)) {
+      if (isDeclInScope(PrevDecl, DC, S)) {
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
         Diag(NameLoc, diag::err_redefinition_different_kind, Name->getName());
@@ -2237,7 +2239,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   if (Kind == TagDecl::TK_enum) {
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // enum X { A, B, C } D;    D should chain to X.
-    New = EnumDecl::Create(Context, CurContext, Loc, Name, 0);
+    New = EnumDecl::Create(Context, DC, Loc, Name, 0);
     // If this is an undefined enum, warn.
     if (TK != TK_Definition) Diag(Loc, diag::ext_forward_ref_enum);
   } else {
@@ -2247,9 +2249,9 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     // struct X { int A; } D;    D should chain to X.
     if (getLangOptions().CPlusPlus)
       // FIXME: Look for a way to use RecordDecl for simple structs.
-      New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name);
+      New = CXXRecordDecl::Create(Context, Kind, DC, Loc, Name);
     else
-      New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name);
+      New = RecordDecl::Create(Context, Kind, DC, Loc, Name);
   }
   
   // If this has an identifier, add it to the scope stack.
@@ -2275,18 +2277,20 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr) {
-  ScopedDecl *PrevDecl;
+  DeclContext *DC = CurContext;
+  ScopedDecl *PrevDecl = 0;
 
   if (Name && SS.isNotEmpty()) {
     // We have a nested-name tag ('struct foo::bar').
 
     // Check for invalid 'foo::'.
-    DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
-    if (DC == 0) {
+    if (SS.isInvalid()) {
       Name = 0;
       goto CreateNewDecl;
     }
 
+    DC = static_cast<DeclContext*>(SS.getScopeRep());
+    // Look-up name inside 'foo::'.
     PrevDecl = dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag,S,DC));
 
     // A tag 'foo::bar' must already exist.
@@ -2311,7 +2315,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
       // rementions the tag), reuse the decl.
-      if (TK == TK_Reference || isDeclInScope(PrevDecl, CurContext, S)) {
+      if (TK == TK_Reference || isDeclInScope(PrevDecl, DC, S)) {
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
@@ -2359,7 +2363,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
       }
     } else {
       // PrevDecl is a namespace.
-      if (isDeclInScope(PrevDecl, CurContext, S)) {
+      if (isDeclInScope(PrevDecl, DC, S)) {
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
         Diag(NameLoc, diag::err_redefinition_different_kind, Name->getName());
@@ -2383,10 +2387,10 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
   // struct X { int A; } D;    D should chain to X.
   if (getLangOptions().CPlusPlus)
     // FIXME: Look for a way to use RecordDecl for simple structs.
-    New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name,
+    New = CXXRecordDecl::Create(Context, Kind, DC, Loc, Name,
                                 dyn_cast_or_null<CXXRecordDecl>(PrevDecl));
   else
-    New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name,
+    New = RecordDecl::Create(Context, Kind, DC, Loc, Name,
                              dyn_cast_or_null<RecordDecl>(PrevDecl));
   
   // If this has an identifier, add it to the scope stack.
