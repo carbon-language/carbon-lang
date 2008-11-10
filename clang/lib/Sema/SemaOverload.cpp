@@ -426,7 +426,8 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   //   converted to an rvalue.
   Expr::isLvalueResult argIsLvalue = From->isLvalue(Context);
   if (argIsLvalue == Expr::LV_Valid && 
-      !FromType->isFunctionType() && !FromType->isArrayType()) {
+      !FromType->isFunctionType() && !FromType->isArrayType() &&
+      !FromType->isOverloadType()) {
     SCS.First = ICK_Lvalue_To_Rvalue;
 
     // If T is a non-class type, the type of the rvalue is the
@@ -465,9 +466,20 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // type "pointer to T." The result is a pointer to the
     // function. (C++ 4.3p1).
     FromType = Context.getPointerType(FromType);
-
-    // FIXME: Deal with overloaded functions here (C++ 4.3p2).
   } 
+  // Address of overloaded function (C++ [over.over]).
+  else if (FunctionDecl *Fn 
+             = ResolveAddressOfOverloadedFunction(From, ToType, false)) {
+    SCS.First = ICK_Function_To_Pointer;
+
+    // We were able to resolve the address of the overloaded function,
+    // so we can convert to the type of that function.
+    FromType = Fn->getType();
+    if (ToType->isReferenceType())
+      FromType = Context.getReferenceType(FromType);
+    else
+      FromType = Context.getPointerType(FromType);
+  }
   // We don't require any conversions for the first step.
   else {
     SCS.First = ICK_Identity;
@@ -1678,6 +1690,103 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
   for (; Cand != LastCand; ++Cand) {
     if (Cand->Viable ||!OnlyViable)
       Diag(Cand->Function->getLocation(), diag::err_ovl_candidate);
+  }
+}
+
+/// ResolveAddressOfOverloadedFunction - Try to resolve the address of
+/// an overloaded function (C++ [over.over]), where @p From is an
+/// expression with overloaded function type and @p ToType is the type
+/// we're trying to resolve to. For example:
+///
+/// @code
+/// int f(double);
+/// int f(int);
+///                          
+/// int (*pfd)(double) = f; // selects f(double)
+/// @endcode
+///
+/// This routine returns the resulting FunctionDecl if it could be
+/// resolved, and NULL otherwise. When @p Complain is true, this
+/// routine will emit diagnostics if there is an error.
+FunctionDecl *
+Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType, 
+                                         bool Complain) {
+  QualType FunctionType = ToType;
+  if (const PointerLikeType *ToTypePtr = ToType->getAsPointerLikeType())
+    FunctionType = ToTypePtr->getPointeeType();
+
+  // We only look at pointers or references to functions.
+  if (!FunctionType->isFunctionType()) 
+    return 0;
+
+  // Find the actual overloaded function declaration.
+  OverloadedFunctionDecl *Ovl = 0;
+  
+  // C++ [over.over]p1:
+  //   [...] [Note: any redundant set of parentheses surrounding the
+  //   overloaded function name is ignored (5.1). ]
+  Expr *OvlExpr = From->IgnoreParens();
+
+  // C++ [over.over]p1:
+  //   [...] The overloaded function name can be preceded by the &
+  //   operator.
+  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(OvlExpr)) {
+    if (UnOp->getOpcode() == UnaryOperator::AddrOf)
+      OvlExpr = UnOp->getSubExpr()->IgnoreParens();
+  }
+
+  // Try to dig out the overloaded function.
+  if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(OvlExpr))
+    Ovl = dyn_cast<OverloadedFunctionDecl>(DR->getDecl());
+
+  // If there's no overloaded function declaration, we're done.
+  if (!Ovl)
+    return 0;
+ 
+  // Look through all of the overloaded functions, searching for one
+  // whose type matches exactly.
+  // FIXME: When templates or using declarations come along, we'll actually
+  // have to deal with duplicates, partial ordering, etc. For now, we 
+  // can just do a simple search.
+  FunctionType = Context.getCanonicalType(FunctionType.getUnqualifiedType());
+  for (OverloadedFunctionDecl::function_iterator Fun = Ovl->function_begin();
+       Fun != Ovl->function_end(); ++Fun) {
+    // C++ [over.over]p3:
+    //   Non-member functions and static member functions match
+    //   targets of type “pointer-to-function”or
+    //   “reference-to-function.”
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Fun))
+      if (!Method->isStatic())
+        continue;
+
+    if (FunctionType == Context.getCanonicalType((*Fun)->getType()))
+      return *Fun;
+  }
+
+  return 0;
+}
+
+/// FixOverloadedFunctionReference - E is an expression that refers to
+/// a C++ overloaded function (possibly with some parentheses and
+/// perhaps a '&' around it). We have resolved the overloaded function
+/// to the function declaration Fn, so patch up the expression E to
+/// refer (possibly indirectly) to Fn.
+void Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
+  if (ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
+    FixOverloadedFunctionReference(PE->getSubExpr(), Fn);
+    E->setType(PE->getSubExpr()->getType());
+  } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(E)) {
+    assert(UnOp->getOpcode() == UnaryOperator::AddrOf && 
+           "Can only take the address of an overloaded function");
+    FixOverloadedFunctionReference(UnOp->getSubExpr(), Fn);
+    E->setType(Context.getPointerType(E->getType()));
+  } else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E)) {
+    assert(isa<OverloadedFunctionDecl>(DR->getDecl()) && 
+           "Expected overloaded function");
+    DR->setDecl(Fn);
+    E->setType(Fn->getType());
+  } else {
+    assert(false && "Invalid reference to overloaded function");
   }
 }
 

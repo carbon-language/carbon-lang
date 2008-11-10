@@ -280,7 +280,16 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Array_To_Pointer:
-    FromType = Context.getArrayDecayedType(FromType);
+    if (FromType->isOverloadType()) {
+      FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(From, ToType, true);
+      if (!Fn)
+        return true;
+
+      FixOverloadedFunctionReference(From, Fn);
+      FromType = From->getType();
+    } else {
+      FromType = Context.getArrayDecayedType(FromType);
+    }
     ImpCastExprToType(From, FromType);
     break;
 

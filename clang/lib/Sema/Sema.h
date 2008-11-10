@@ -438,6 +438,10 @@ public:
   void PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                                bool OnlyViable);
                                
+  FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
+                                                   bool Complain);
+  void FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
+
 
   /// Helpers for dealing with function parameters
   bool CheckParmsForFunctionDef(FunctionDecl *FD);

@@ -1529,6 +1529,22 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   QualType T1 = DeclType->getAsReferenceType()->getPointeeType();
   QualType T2 = Init->getType();
 
+  // If the initializer is the address of an overloaded function, try
+  // to resolve the overloaded function. If all goes well, T2 is the
+  // type of the resulting function.
+  if (T2->isOverloadType()) {
+    FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(Init, DeclType, 
+                                                          ICS != 0);
+    if (Fn) {
+      // Since we're performing this reference-initialization for
+      // real, update the initializer with the resulting function.
+      if (!ICS)
+        FixOverloadedFunctionReference(Init, Fn);
+
+      T2 = Fn->getType();
+    }
+  }
+
   // Compute some basic properties of the types and the initializer.
   bool DerivedToBase = false;
   Expr::isLvalueResult InitLvalue = Init->isLvalue(Context);

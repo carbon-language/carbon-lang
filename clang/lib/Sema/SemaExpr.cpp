@@ -2511,6 +2511,8 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
 /// object cannot be declared with storage class register or be a bit field.
 /// Note: The usual conversions are *not* applied to the operand of the & 
 /// operator (C99 6.3.2.1p[2-4]), and its result is never an lvalue.
+/// In C++, the operand might be an overloaded function name, in which case 
+/// we allow the '&' but retain the overloaded-function type.
 QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   if (getLangOptions().C99) {
     // Implement C99-only parts of addressof rules.
@@ -2554,7 +2556,9 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
              std::string("register variable"), op->getSourceRange());
         return QualType();
       }
-    } else 
+    } else if (isa<OverloadedFunctionDecl>(dcl))
+      return Context.OverloadTy;
+    else 
       assert(0 && "Unknown/unexpected decl type");
   }
   

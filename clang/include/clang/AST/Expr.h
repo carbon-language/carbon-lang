@@ -198,9 +198,10 @@ public:
   
   NamedDecl *getDecl() { return D; }
   const NamedDecl *getDecl() const { return D; }
+  void setDecl(NamedDecl *NewD) { D = NewD; }
+
   SourceLocation getLocation() const { return Loc; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
-  
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DeclRefExprClass ||

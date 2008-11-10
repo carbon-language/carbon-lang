@@ -356,6 +356,7 @@ public:
   bool isObjCInterfaceType() const;             // NSString or NSString<foo>
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
+  bool isOverloadType() const;                  // C++ overloaded function
   
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs and qualifiers, and return a pointer to
@@ -1478,6 +1479,13 @@ inline bool Type::isObjCQualifiedInterfaceType() const {
 inline bool Type::isObjCQualifiedIdType() const {
   return isa<ObjCQualifiedIdType>(CanonicalType.getUnqualifiedType());
 }
+inline bool Type::isOverloadType() const {
+  if (const BuiltinType *BT = getAsBuiltinType())
+    return BT->getKind() == BuiltinType::Overload;
+  else
+    return false;
+}
+
 }  // end namespace clang
 
 #endif
