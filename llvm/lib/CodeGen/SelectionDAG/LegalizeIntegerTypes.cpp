@@ -642,10 +642,9 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDValue &NewLHS,SDValue &NewRHS,
   NewLHS = GetPromotedInteger(NewLHS);
   NewRHS = GetPromotedInteger(NewRHS);
 
-  // Otherwise, we have to insert explicit sign or zero extends.  Note
-  // that we could insert sign extends for ALL conditions, but zero extend
-  // is cheaper on many machines (an AND instead of two shifts), so prefer
-  // it.
+  // We have to insert explicit sign or zero extends.  Note that we could
+  // insert sign extends for ALL conditions, but zero extend is cheaper on
+  // many machines (an AND instead of two shifts), so prefer it.
   switch (CCCode) {
   default: assert(0 && "Unknown integer comparison!");
   case ISD::SETEQ:

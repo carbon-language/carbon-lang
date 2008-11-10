@@ -303,7 +303,7 @@ void DAGTypeLegalizer::SplitRes_MERGE_VALUES(SDNode *N,
   // first illegal one needs to be expanded into Lo/Hi.
   unsigned i;
 
-  // The string of legal results gets turns into the input operands, which have
+  // The string of legal results gets turned into input operands, which have
   // the same type.
   for (i = 0; isTypeLegal(N->getValueType(i)); ++i)
     ReplaceValueWith(SDValue(N, i), SDValue(N->getOperand(i)));
