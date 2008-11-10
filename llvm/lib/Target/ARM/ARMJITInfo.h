@@ -37,6 +37,10 @@ namespace llvm {
     // PCLabelMap - A map from PC labels to addresses.
     DenseMap<unsigned, intptr_t> PCLabelMap;
 
+    // Sym2IndirectSymMap - A map from symbol (GlobalValue and ExternalSymbol)
+    // addresses to their indirect symbol addresses.
+    DenseMap<void*, intptr_t> Sym2IndirectSymMap;
+
     // IsPIC - True if the relocation model is PIC. This is used to determine
     // how to codegen function stubs.
     bool IsPIC;
@@ -145,6 +149,22 @@ namespace llvm {
     /// addPCLabelAddr - Remember the address of the specified PC label.
     void addPCLabelAddr(unsigned Id, intptr_t Addr) {
       PCLabelMap.insert(std::make_pair(Id, Addr));
+    }
+
+    /// getIndirectSymAddr - Retrieve the address of the indirect symbol of the
+    /// specified symbol located at address. Returns 0 if the indirect symbol
+    /// has not been emitted.
+    intptr_t getIndirectSymAddr(void *Addr) const {
+      DenseMap<void*,intptr_t>::const_iterator I= Sym2IndirectSymMap.find(Addr);
+      if (I != Sym2IndirectSymMap.end())
+        return I->second;
+      return 0;
+    }
+
+    /// addIndirectSymAddr - Add a mapping from address of an emitted symbol to
+    /// its indirect symbol address.
+    void addIndirectSymAddr(void *SymAddr, intptr_t IndSymAddr) {
+      Sym2IndirectSymMap.insert(std::make_pair(SymAddr, IndSymAddr));
     }
 
   private:

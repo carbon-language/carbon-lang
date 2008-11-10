@@ -19,6 +19,7 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Memory.h"
 #include <cstdlib>
@@ -133,7 +134,9 @@ void *ARMJITInfo::emitGlobalValueIndirectSym(const GlobalValue *GV, void *Ptr,
                                              MachineCodeEmitter &MCE) {
   MCE.startGVStub(GV, 4, 4);
   MCE.emitWordLE((intptr_t)Ptr);
-  return MCE.finishGVStub(GV);
+  void *PtrAddr = MCE.finishGVStub(GV);
+  addIndirectSymAddr(Ptr, (intptr_t)PtrAddr);
+  return PtrAddr;
 }
 
 void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
@@ -142,12 +145,34 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)ARMCompilationCallback) {
     // Branch to the corresponding function addr.
-    // The stub is 8-byte size and 4-aligned.
-    MCE.startGVStub(F, 8, 4);
-    intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
-    MCE.emitWordLE(0xe51ff004);    // ldr pc, [pc, #-4]
-    MCE.emitWordLE((intptr_t)Fn);  // addr of function
-    sys::Memory::InvalidateInstructionCache((void*)Addr, 8);
+    if (IsPIC) {
+      // The stub is 8-byte size and 4-aligned.
+      intptr_t LazyPtr = getIndirectSymAddr(Fn);
+      if (!LazyPtr) {
+        // In PIC mode, the function stub is loading a lazy-ptr.
+        LazyPtr= (intptr_t)emitGlobalValueIndirectSym((GlobalValue*)F, Fn, MCE);
+        if (F)
+          DOUT << "JIT: Indirect symbol emitted at [" << LazyPtr << "] for GV '"
+               << F->getName() << "'\n";
+        else
+          DOUT << "JIT: Stub emitted at [" << LazyPtr
+               << "] for external function at '" << Fn << "'\n";
+      }
+      MCE.startGVStub(F, 16, 4);
+      intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
+      MCE.emitWordLE(0xe59fc004);            // ldr pc, [pc, #+4]
+      MCE.emitWordLE(0xe08fc00c);            // L_func$scv: add ip, pc, ip
+      MCE.emitWordLE(0xe59cf000);            // ldr pc, [ip]
+      MCE.emitWordLE(LazyPtr - (Addr+4+8));  // func - (L_func$scv+8)
+      sys::Memory::InvalidateInstructionCache((void*)Addr, 16);
+    } else {
+      // The stub is 8-byte size and 4-aligned.
+      MCE.startGVStub(F, 8, 4);
+      intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
+      MCE.emitWordLE(0xe51ff004);    // ldr pc, [pc, #-4]
+      MCE.emitWordLE((intptr_t)Fn);  // addr of function
+      sys::Memory::InvalidateInstructionCache((void*)Addr, 8);
+    }
   } else {
     // The compilation callback will overwrite the first two words of this
     // stub with indirect branch instructions targeting the compiled code. 
