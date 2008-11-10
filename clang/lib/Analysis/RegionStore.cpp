@@ -83,10 +83,7 @@ public:
 
   Store RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
-                           LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) {
-    // FIXME: Implement this.
-    return store;
-  }
+                           LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
 
   Store BindDecl(Store store, const VarDecl* VD, Expr* Ex, SVal InitVal, 
                  unsigned Count);
@@ -429,6 +426,25 @@ Store RegionStoreManager::BindCompoundLiteral(Store store,
                                               SVal V) {
   CompoundLiteralRegion* R = MRMgr.getCompoundLiteralRegion(CL);
   store = Bind(store, loc::MemRegionVal(R), V);
+  return store;
+}
+
+Store RegionStoreManager::RemoveDeadBindings(Store store, Stmt* Loc, 
+                                             const LiveVariables& Live,
+                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
+                           LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) {
+
+  RegionBindingsTy B = GetRegionBindings(store);
+  typedef SVal::symbol_iterator symbol_iterator;
+
+  // FIXME: Mark all region binding value's symbol as live. We also omit symbols
+  // in SymbolicRegions.
+  for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    SVal X = I.getData();
+    for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
+      LSymbols.insert(*SI);
+  }
+
   return store;
 }
 
