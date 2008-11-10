@@ -192,9 +192,6 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
                                      llvm::DICompileUnit Unit) {
   const RecordDecl *Decl = Ty->getDecl();
   
-  if (!Decl->getDefinition(M->getContext()))
-    return llvm::DIType();
-  
   unsigned Tag;
   if (Decl->isStruct())
     Tag = llvm::dwarf::DW_TAG_structure_type;
@@ -244,7 +241,6 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     FieldDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
     
-#if 0
     const char *FieldName = Field->getName();
     if (FieldName == 0) FieldName = "";
 
@@ -265,7 +261,6 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
                                              FieldName, FieldDefUnit,
                                              FieldLine, FieldSize, FieldAlign,
                                              FieldOffset, 0, FieldTy);
-#endif
     EltTys.push_back(FieldTy);
   }
   
