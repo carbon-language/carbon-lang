@@ -56,7 +56,7 @@ static inline char *utohex_buffer(IntTy X, char *BufferEnd) {
   
 static inline std::string utohexstr(uint64_t X) {
   char Buffer[40];
-  return utohex_buffer(X, Buffer);
+  return utohex_buffer(X, Buffer+40);
 }
 
 static inline std::string utostr_32(uint32_t X, bool isNeg = false) {
