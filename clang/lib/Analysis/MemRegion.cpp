@@ -151,6 +151,10 @@ void CompoundLiteralRegion::print(llvm::raw_ostream& os) const {
   os << "{ " << (void*) CL <<  " }";
 }
 
+void StringRegion::print(llvm::raw_ostream& os) const {
+  os << "\"" << Str->getStrData() << "\"";
+}
+
 //===----------------------------------------------------------------------===//
 // MemRegionManager methods.
 //===----------------------------------------------------------------------===//

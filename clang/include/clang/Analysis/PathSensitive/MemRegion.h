@@ -194,6 +194,8 @@ public:
     ProfileRegion(ID, Str, superRegion);
   }
 
+  void print(llvm::raw_ostream& os) const;
+
   static bool classof(const MemRegion* R) {
     return R->getKind() == StringRegionKind;
   }
