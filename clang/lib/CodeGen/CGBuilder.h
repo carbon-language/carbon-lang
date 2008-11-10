@@ -14,7 +14,8 @@
 
 namespace clang {
 namespace CodeGen {
-  typedef llvm::IRBuilder<> CGBuilderTy;
+  // Don't preserve names on values by default.
+  typedef llvm::IRBuilder<false> CGBuilderTy;
 }  // end namespace CodeGen
 }  // end namespace clang
 
