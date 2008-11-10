@@ -3099,7 +3099,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
 
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-    
+
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     default: assert(0 && "BinOp legalize operation not supported");
     case TargetLowering::Legal: break;
@@ -7210,13 +7210,31 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
       Lo = Node->getOperand(0);
       Hi = Node->getOperand(1);
     } else {
-      SmallVector<SDValue, 8> LoOps(Node->op_begin(), 
-                                      Node->op_begin()+NewNumSubvectors);
+      SmallVector<SDValue, 8> LoOps(Node->op_begin(),
+                                    Node->op_begin()+NewNumSubvectors);
       Lo = DAG.getNode(ISD::CONCAT_VECTORS, NewVT_Lo, &LoOps[0], LoOps.size());
 
-      SmallVector<SDValue, 8> HiOps(Node->op_begin()+NewNumSubvectors, 
+      SmallVector<SDValue, 8> HiOps(Node->op_begin()+NewNumSubvectors,
                                       Node->op_end());
       Hi = DAG.getNode(ISD::CONCAT_VECTORS, NewVT_Hi, &HiOps[0], HiOps.size());
+    }
+    break;
+  }
+  case ISD::EXTRACT_SUBVECTOR: {
+    SDValue Vec = Op.getOperand(0);
+    SDValue Idx = Op.getOperand(1);
+    MVT     IdxVT = Idx.getValueType();
+
+    Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, NewVT_Lo, Vec, Idx);
+    ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Idx);
+    if (CIdx) {
+      Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, NewVT_Hi, Vec, 
+                       DAG.getConstant(CIdx->getZExtValue() + NewNumElts_Lo,
+                                       IdxVT));
+    } else {
+      Idx = DAG.getNode(ISD::ADD, IdxVT, Idx,
+                        DAG.getConstant(NewNumElts_Lo, IdxVT));
+      Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, NewVT_Hi, Vec, Idx);
     }
     break;
   }
@@ -7517,7 +7535,7 @@ SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
   }
   case ISD::EXTRACT_SUBVECTOR:
     Result = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, NewVT, Node->getOperand(0),
-                          Node->getOperand(1));
+                         Node->getOperand(1));
     break;
   case ISD::BIT_CONVERT: {
     SDValue Op0 = Op.getOperand(0);

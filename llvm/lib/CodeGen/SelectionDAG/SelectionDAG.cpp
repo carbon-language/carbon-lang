@@ -2697,7 +2697,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
     }
     break;
   case ISD::VECTOR_SHUFFLE:
-    assert(VT == N1.getValueType() && VT == N2.getValueType() &&
+    assert(N1.getValueType() == N2.getValueType() &&
+           N1.getValueType().isVector() &&
            VT.isVector() && N3.getValueType().isVector() &&
            N3.getOpcode() == ISD::BUILD_VECTOR &&
            VT.getVectorNumElements() == N3.getNumOperands() &&

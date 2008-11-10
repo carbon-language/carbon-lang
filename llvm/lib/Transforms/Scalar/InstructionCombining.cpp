@@ -1362,7 +1362,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
 }
 
 
-/// SimplifyDemandedVectorElts - The specified value producecs a vector with
+/// SimplifyDemandedVectorElts - The specified value produces a vector with
 /// 64 or fewer elements.  DemandedElts contains the set of elements that are
 /// actually used by the caller.  This method analyzes which elements of the
 /// operand are undef and returns that information in UndefElts.
@@ -1386,7 +1386,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     UndefElts = EltMask;
     return UndefValue::get(V->getType());
   }
-  
+
   UndefElts = 0;
   if (ConstantVector *CP = dyn_cast<ConstantVector>(V)) {
     const Type *EltTy = cast<VectorType>(V->getType())->getElementType();
@@ -1403,7 +1403,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
       } else {                               // Otherwise, defined.
         Elts.push_back(CP->getOperand(i));
       }
-        
+
     // If we changed the constant, return it.
     Constant *NewCP = ConstantVector::get(Elts);
     return NewCP != CP ? NewCP : 0;
@@ -1486,17 +1486,19 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
   }
   case Instruction::ShuffleVector: {
     ShuffleVectorInst *Shuffle = cast<ShuffleVectorInst>(I);
+    uint64_t LHSVWidth =
+      cast<VectorType>(Shuffle->getOperand(0)->getType())->getNumElements();
     uint64_t LeftDemanded = 0, RightDemanded = 0;
     for (unsigned i = 0; i < VWidth; i++) {
       if (DemandedElts & (1ULL << i)) {
         unsigned MaskVal = Shuffle->getMaskValue(i);
         if (MaskVal != -1u) {
-          assert(MaskVal < VWidth * 2 &&
+          assert(MaskVal < LHSVWidth * 2 &&
                  "shufflevector mask index out of range!");
-          if (MaskVal < VWidth)
+          if (MaskVal < LHSVWidth)
             LeftDemanded |= 1ULL << MaskVal;
           else
-            RightDemanded |= 1ULL << (MaskVal - VWidth);
+            RightDemanded |= 1ULL << (MaskVal - LHSVWidth);
         }
       }
     }
@@ -1516,12 +1518,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
       if (MaskVal == -1u) {
         uint64_t NewBit = 1ULL << i;
         UndefElts |= NewBit;
-      } else if (MaskVal < VWidth) {
+      } else if (MaskVal < LHSVWidth) {
         uint64_t NewBit = ((UndefElts2 >> MaskVal) & 1) << i;
         NewUndefElts |= NewBit;
         UndefElts |= NewBit;
       } else {
-        uint64_t NewBit = ((UndefElts3 >> (MaskVal - VWidth)) & 1) << i;
+        uint64_t NewBit = ((UndefElts3 >> (MaskVal - LHSVWidth)) & 1) << i;
         NewUndefElts |= NewBit;
         UndefElts |= NewBit;
       }
@@ -8398,8 +8400,10 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
       // Okay, we have (bitconvert (shuffle ..)).  Check to see if this is
       // a bitconvert to a vector with the same # elts.
       if (isa<VectorType>(DestTy) && 
-          cast<VectorType>(DestTy)->getNumElements() == 
-                SVI->getType()->getNumElements()) {
+          cast<VectorType>(DestTy)->getNumElements() ==
+                SVI->getType()->getNumElements() &&
+          SVI->getType()->getNumElements() ==
+            cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements()) {
         CastInst *Tmp;
         // If either of the operands is a cast from CI.getType(), then
         // evaluating the shuffle in the casted destination's type will allow
@@ -11456,11 +11460,13 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
     // vector input.
     return FindScalarElement(III->getOperand(0), EltNo);
   } else if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(V)) {
+    unsigned LHSWidth =
+      cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements();
     unsigned InEl = getShuffleMask(SVI)[EltNo];
-    if (InEl < Width)
+    if (InEl < LHSWidth)
       return FindScalarElement(SVI->getOperand(0), InEl);
-    else if (InEl < Width*2)
-      return FindScalarElement(SVI->getOperand(1), InEl - Width);
+    else if (InEl < LHSWidth*2)
+      return FindScalarElement(SVI->getOperand(1), InEl - LHSWidth);
     else
       return UndefValue::get(PTy->getElementType());
   }
@@ -11578,10 +11584,13 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       if (ConstantInt *Elt = dyn_cast<ConstantInt>(EI.getOperand(1))) {
         unsigned SrcIdx = getShuffleMask(SVI)[Elt->getZExtValue()];
         Value *Src;
-        if (SrcIdx < SVI->getType()->getNumElements())
+        unsigned LHSWidth =
+          cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements();
+
+        if (SrcIdx < LHSWidth)
           Src = SVI->getOperand(0);
-        else if (SrcIdx < SVI->getType()->getNumElements()*2) {
-          SrcIdx -= SVI->getType()->getNumElements();
+        else if (SrcIdx < LHSWidth*2) {
+          SrcIdx -= LHSWidth;
           Src = SVI->getOperand(1);
         } else {
           return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
@@ -11802,13 +11811,17 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   std::vector<unsigned> Mask = getShuffleMask(&SVI);
 
   bool MadeChange = false;
-  
+
   // Undefined shuffle mask -> undefined value.
   if (isa<UndefValue>(SVI.getOperand(2)))
     return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
 
   uint64_t UndefElts;
   unsigned VWidth = cast<VectorType>(SVI.getType())->getNumElements();
+
+  if (VWidth != cast<VectorType>(LHS->getType())->getNumElements())
+    return 0;
+
   uint64_t AllOnesEltMask = ~0ULL >> (64-VWidth);
   if (VWidth <= 64 &&
       SimplifyDemandedVectorElts(&SVI, AllOnesEltMask, UndefElts)) {

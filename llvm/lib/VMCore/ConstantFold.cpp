@@ -424,24 +424,25 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(const Constant *V1,
                                                      const Constant *Mask) {
   // Undefined shuffle mask -> undefined value.
   if (isa<UndefValue>(Mask)) return UndefValue::get(V1->getType());
-  
-  unsigned NumElts = cast<VectorType>(V1->getType())->getNumElements();
+
+  unsigned MaskNumElts = cast<VectorType>(Mask->getType())->getNumElements();
+  unsigned SrcNumElts = cast<VectorType>(V1->getType())->getNumElements();
   const Type *EltTy = cast<VectorType>(V1->getType())->getElementType();
-  
+
   // Loop over the shuffle mask, evaluating each element.
   SmallVector<Constant*, 32> Result;
-  for (unsigned i = 0; i != NumElts; ++i) {
+  for (unsigned i = 0; i != MaskNumElts; ++i) {
     Constant *InElt = GetVectorElement(Mask, i);
     if (InElt == 0) return 0;
-    
+
     if (isa<UndefValue>(InElt))
       InElt = UndefValue::get(EltTy);
     else if (ConstantInt *CI = dyn_cast<ConstantInt>(InElt)) {
       unsigned Elt = CI->getZExtValue();
-      if (Elt >= NumElts*2)
+      if (Elt >= SrcNumElts*2)
         InElt = UndefValue::get(EltTy);
-      else if (Elt >= NumElts)
-        InElt = GetVectorElement(V2, Elt-NumElts);
+      else if (Elt >= SrcNumElts)
+        InElt = GetVectorElement(V2, Elt - SrcNumElts);
       else
         InElt = GetVectorElement(V1, Elt);
       if (InElt == 0) return 0;
@@ -451,7 +452,7 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(const Constant *V1,
     }
     Result.push_back(InElt);
   }
-  
+
   return ConstantVector::get(&Result[0], Result.size());
 }
 

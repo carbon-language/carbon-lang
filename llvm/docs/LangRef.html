@@ -2932,23 +2932,25 @@ exceeds the length of <tt>val</tt>, the results are undefined.
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;result&gt; = shufflevector &lt;n x &lt;ty&gt;&gt; &lt;v1&gt;, &lt;n x &lt;ty&gt;&gt; &lt;v2&gt;, &lt;n x i32&gt; &lt;mask&gt;    <i>; yields &lt;n x &lt;ty&gt;&gt;</i>
+  &lt;result&gt; = shufflevector &lt;n x &lt;ty&gt;&gt; &lt;v1&gt;, &lt;n x &lt;ty&gt;&gt; &lt;v2&gt;, &lt;m x i32&gt; &lt;mask&gt;    <i>; yields &lt;m x &lt;ty&gt;&gt;</i>
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
 The '<tt>shufflevector</tt>' instruction constructs a permutation of elements
-from two input vectors, returning a vector of the same type.
+from two input vectors, returning a vector with the same element type as
+the input and length that is the same as the shuffle mask.
 </p>
 
 <h5>Arguments:</h5>
 
 <p>
-The first two operands of a '<tt>shufflevector</tt>' instruction are vectors
-with types that match each other and types that match the result of the
-instruction.  The third argument is a shuffle mask, which has the same number
-of elements as the other vector type, but whose element type is always 'i32'.
+The first two operands of a '<tt>shufflevector</tt>' instruction are vectors 
+with types that match each other. The third argument is a shuffle mask whose
+element type is always 'i32'.  The result of the instruction is a vector whose
+length is the same as the shuffle mask and whose element type is the same as
+the element type of the first two operands.
 </p>
 
 <p>
@@ -2961,7 +2963,7 @@ constant integer or undef values.
 <p>
 The elements of the two input vectors are numbered from left to right across
 both of the vectors.  The shuffle mask operand specifies, for each element of
-the result vector, which element of the two input registers the result element
+the result vector, which element of the two input vectors the result element
 gets.  The element selector may be undef (meaning "don't care") and the second
 operand may be undef if performing a shuffle from only one vector.
 </p>
@@ -2973,6 +2975,10 @@ operand may be undef if performing a shuffle from only one vector.
                           &lt;4 x i32&gt; &lt;i32 0, i32 4, i32 1, i32 5&gt;  <i>; yields &lt;4 x i32&gt;</i>
   %result = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; undef, 
                           &lt;4 x i32&gt; &lt;i32 0, i32 1, i32 2, i32 3&gt;  <i>; yields &lt;4 x i32&gt;</i> - Identity shuffle.
+  %result = shufflevector &lt;8 x i32&gt; %v1, &lt;8 x i32&gt; undef, 
+                          &lt;4 x i32&gt; &lt;i32 0, i32 1, i32 2, i32 3&gt;  <i>; yields &lt;4 x i32&gt;</i>
+  %result = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; %v2, 
+                          &lt;8 x i32&gt; &lt;i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7 &gt;  <i>; yields &lt;8 x i32&gt;</i>
 </pre>
 </div>
 

@@ -4997,6 +4997,12 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   SDValue ShufMask = N->getOperand(2);
   unsigned NumElts = ShufMask.getNumOperands();
 
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+
+  assert(N0.getValueType().getVectorNumElements() == NumElts &&
+        "Vector shuffle must be normalized in DAG");
+
   // If the shuffle mask is an identity operation on the LHS, return the LHS.
   bool isIdentity = true;
   for (unsigned i = 0; i != NumElts; ++i) {
@@ -5043,8 +5049,6 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       }
     }
 
-  SDValue N0 = N->getOperand(0);
-  SDValue N1 = N->getOperand(1);
   // Normalize unary shuffle so the RHS is undef.
   if (isUnary && VecNum == 1)
     std::swap(N0, N1);
