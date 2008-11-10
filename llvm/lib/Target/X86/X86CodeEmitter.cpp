@@ -401,7 +401,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
       else
         IndexRegNo = 4;   // For example [ESP+1*<noreg>+4]
       emitSIBByte(SS, IndexRegNo, 5);
-      } else {
+    } else {
       unsigned BaseRegNo = getX86RegNum(BaseReg);
       unsigned IndexRegNo;
       if (IndexReg.getReg())
