@@ -1085,6 +1085,7 @@ const GRState* GRExprEngine::EvalLocation(Expr* Ex, NodeTy* Pred,
       bool isFeasibleOutBound = false;
       const GRState* StOutBound = AssumeInBound(StNotNull, Idx, NumElements, 
                                                 false, isFeasibleOutBound);
+      StInBound = StOutBound = 0; // FIXME: squeltch warning.
 
       // Report warnings ...
     }
