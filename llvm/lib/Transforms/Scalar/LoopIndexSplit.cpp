@@ -1437,7 +1437,12 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
     if (ICMP->getPredicate() == ICmpInst::ICMP_EQ)
       return false;
   }
-  
+
+  // If the predicate sign does not match then skip.
+  ICmpInst *CI = dyn_cast<ICmpInst>(SD.SplitCondition);
+  if (CI && (ExitCondition->isSignedPredicate() != CI->isSignedPredicate()))
+    return false;
+
   BasicBlock *SplitCondBlock = SD.SplitCondition->getParent();
   
   // Unable to handle triangle loops at the moment.
