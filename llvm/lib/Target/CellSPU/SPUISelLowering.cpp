@@ -978,7 +978,6 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       case MVT::v8i16:
       case MVT::v16i8:
 	ArgRegClass = &SPU::VECREGRegClass;
-	++ArgRegIdx;
 	break;
       }
 
@@ -1034,7 +1033,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
 /// isLSAAddress - Return the immediate to use if the specified
 /// value is representable as a LSA address.
 static SDNode *isLSAAddress(SDValue Op, SelectionDAG &DAG) {
-  ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op);
+  ConstantSDNode *C = cast<ConstantSDNode>(Op);
   if (!C) return 0;
 
   int Addr = C->getZExtValue();
@@ -1148,7 +1147,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
   // node so that legalize doesn't hack it.
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+  if (GlobalAddressSDNode *G = cast<GlobalAddressSDNode>(Callee)) {
     GlobalValue *GV = G->getGlobal();
     MVT CalleeVT = Callee.getValueType();
     SDValue Zero = DAG.getConstant(0, PtrVT);
@@ -1173,7 +1172,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       // address pairs:
       Callee = DAG.getNode(SPUISD::IndirectAddr, PtrVT, GA, Zero);
     }
-  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+  } else if (ExternalSymbolSDNode *S = cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getExternalSymbol(S->getSymbol(), Callee.getValueType());
   else if (SDNode *Dest = isLSAAddress(Callee, DAG)) {
     // If this is an absolute destination address that appears to be a legal
@@ -1308,7 +1307,7 @@ getVecImm(SDNode *N) {
   }
 
   if (OpVal.getNode() != 0) {
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
+    if (ConstantSDNode *CN = cast<ConstantSDNode>(OpVal)) {
       return CN;
     }
   }
@@ -1462,9 +1461,9 @@ static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
       uint64_t EltUndefBits = ~0ULL >> (64-EltBitSize);
       UndefBits[PartNo] |= EltUndefBits << (SlotNo*EltBitSize);
       continue;
-    } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
+    } else if (ConstantSDNode *CN = cast<ConstantSDNode>(OpVal)) {
       EltBits = CN->getZExtValue() & (~0ULL >> (64-EltBitSize));
-    } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
+    } else if (ConstantFPSDNode *CN = cast<ConstantFPSDNode>(OpVal)) {
       const APFloat &apf = CN->getValueAPF();
       EltBits = (CN->getValueType(0) == MVT::f32
                  ? FloatToBits(apf.convertToFloat())
@@ -2040,7 +2039,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   SDValue N = Op.getOperand(0);
   SDValue Elt = Op.getOperand(1);
   SDValue ShufMask[16];
-  ConstantSDNode *C = dyn_cast<ConstantSDNode>(Elt);
+  ConstantSDNode *C = cast<ConstantSDNode>(Elt);
 
   assert(C != 0 && "LowerEXTRACT_VECTOR_ELT expecting constant SDNode");
 
@@ -2076,11 +2075,13 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     prefslot_begin = 2; prefslot_end = 3;
     break;
   }
-  case MVT::i32: {
+  case MVT::i32:
+  case MVT::f32: {
     prefslot_begin = 0; prefslot_end = 3;
     break;
   }
-  case MVT::i64: {
+  case MVT::i64:
+  case MVT::f64: {
     prefslot_begin = 0; prefslot_end = 7;
     break;
   }
@@ -2702,6 +2703,28 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   }
 
   return SDValue();
+}
+
+SDNode *SPUTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG)
+{
+#if 0
+  unsigned Opc = (unsigned) N->getOpcode();
+  MVT OpVT = N->getValueType(0);
+
+  switch (Opc) {
+  default: {
+    cerr << "SPUTargetLowering::ReplaceNodeResults(): need to fix this!\n";
+    cerr << "Op.getOpcode() = " << Opc << "\n";
+    cerr << "*Op.getNode():\n";
+    N->dump();
+    abort();
+    /*NOTREACHED*/
+  }
+  }
+#endif
+
+  /* Otherwise, return unchanged */
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//

@@ -111,9 +111,11 @@ namespace llvm {
     /// getSetCCResultType - Return the ValueType for ISD::SETCC
     virtual MVT getSetCCResultType(const SDValue &) const;
     
-    /// LowerOperation - Provide custom lowering hooks for some operations.
-    ///
+    //! Custom lowering hooks
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
+
+    //! Provide custom lowering hooks for nodes with illegal result types.
+    SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
     
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 

@@ -1372,6 +1372,13 @@ multiclass BitwiseOrByteImm
 
 defm ORBI : BitwiseOrByteImm;
 
+// Truncate i16 -> i8
+def ORBItrunc : ORBIInst<(outs R8C:$rT), (ins R16C:$rA, u10imm:$val),
+                         [/* empty */]>;
+
+def : Pat<(trunc R16C:$rSrc),
+          (ORBItrunc R16C:$rSrc, 0)>;
+
 // OR halfword immediate
 class ORHIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI10Form<0b10100000, OOL, IOL, "orhi\t$rT, $rA, $val",
@@ -1396,6 +1403,13 @@ multiclass BitwiseOrHalfwordImm
 }
 
 defm ORHI : BitwiseOrHalfwordImm;
+
+// Truncate i32 -> i16
+def ORHItrunc : ORHIInst<(outs R16C:$rT), (ins R32C:$rA, u10imm:$val),
+                         [/* empty */]>;
+
+def : Pat<(trunc R32C:$rSrc),
+          (ORHItrunc R32C:$rSrc, 0)>;
 
 class ORIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI10Form<0b00100000, OOL, IOL, "ori\t$rT, $rA, $val",
@@ -1430,6 +1444,13 @@ multiclass BitwiseOrImm
 }
 
 defm ORI : BitwiseOrImm;
+
+// Truncate i64 -> i32
+def ORItrunc : ORIInst<(outs R32C:$rT), (ins R64C:$rA, u10imm_i32:$val),
+                       [/* empty */]>;
+
+def : Pat<(trunc R64C:$rSrc),
+          (ORItrunc R64C:$rSrc, 0)>;
 
 // ORX: "or" across the vector: or's $rA's word slots leaving the result in
 // $rT[0], slots 1-3 are zeroed.
