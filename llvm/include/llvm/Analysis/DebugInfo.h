@@ -24,6 +24,7 @@ namespace llvm {
   class Function;
   class GlobalVariable;
   class Module;
+  class Type;
   class Value;
   
   class DIDescriptor {
@@ -71,9 +72,6 @@ namespace llvm {
     bool isNull() const { return GV == 0; }
 
     GlobalVariable *getGV() const { return GV; }
-    
-    /// getCastToEmpty - Return this descriptor as a Constant* with type '{}*'.
-    Constant *getCastToEmpty() const;
   };
   
   /// DIAnchor - A wrapper for various anchor descriptors.
@@ -259,6 +257,7 @@ namespace llvm {
     Module &M;
     // Cached values for uniquing and faster lookups.
     DIAnchor CompileUnitAnchor, SubProgramAnchor, GlobalVariableAnchor;
+    const Type *EmptyStructPtr; // "{}*".
     Function *StopPointFn;   // llvm.dbg.stoppoint
     Function *FuncStartFn;   // llvm.dbg.func.start
     Function *RegionStartFn; // llvm.dbg.region.start
@@ -270,9 +269,7 @@ namespace llvm {
     DIFactory(const DIFactory &);     // DO NOT IMPLEMENT
     void operator=(const DIFactory&); // DO NOT IMPLEMENT
   public:
-    explicit DIFactory(Module &m) : M(m) {
-      StopPointFn = FuncStartFn = RegionStartFn = RegionEndFn = DeclareFn = 0;
-    }
+    explicit DIFactory(Module &m);
     
     /// GetOrCreateCompileUnitAnchor - Return the anchor for compile units,
     /// creating a new one if there isn't already one in the module.
@@ -386,6 +383,9 @@ namespace llvm {
     Constant *GetTagConstant(unsigned TAG);
     Constant *GetStringConstant(const std::string &String);
     DIAnchor GetOrCreateAnchor(unsigned TAG, const char *Name);
+    
+    /// getCastToEmpty - Return the descriptor as a Constant* with type '{}*'.
+    Constant *getCastToEmpty(DIDescriptor D);
   };
   
   

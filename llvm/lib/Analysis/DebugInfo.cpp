@@ -80,14 +80,6 @@ GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
 
 
 
-/// getCastToEmpty - Return this descriptor as a Constant* with type '{}*'.
-/// This is only valid when the descriptor is non-null.
-Constant *DIDescriptor::getCastToEmpty() const {
-  const Type *DestTy = PointerType::getUnqual(StructType::get(NULL, NULL));
-  if (isNull()) return Constant::getNullValue(DestTy);
-  return ConstantExpr::getBitCast(GV, DestTy);
-}
-
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
@@ -179,6 +171,18 @@ DIVariable::DIVariable(GlobalVariable *GV) : DIDescriptor(GV) {
 // DIFactory: Basic Helpers
 //===----------------------------------------------------------------------===//
 
+DIFactory::DIFactory(Module &m) : M(m) {
+  StopPointFn = FuncStartFn = RegionStartFn = RegionEndFn = DeclareFn = 0;
+  EmptyStructPtr = PointerType::getUnqual(StructType::get(NULL, NULL));
+}
+
+/// getCastToEmpty - Return this descriptor as a Constant* with type '{}*'.
+/// This is only valid when the descriptor is non-null.
+Constant *DIFactory::getCastToEmpty(DIDescriptor D) {
+  if (D.isNull()) return Constant::getNullValue(EmptyStructPtr);
+  return ConstantExpr::getBitCast(D.getGV(), EmptyStructPtr);
+}
+
 Constant *DIFactory::GetTagConstant(unsigned TAG) {
   assert((TAG & DIDescriptor::VersionMask) == 0 &&
          "Tag too large for debug encoding!");
@@ -212,7 +216,7 @@ Constant *DIFactory::GetStringConstant(const std::string &String) {
 /// GetOrCreateAnchor - Look up an anchor for the specified tag and name.  If it
 /// already exists, return it.  If not, create a new one and return it.
 DIAnchor DIFactory::GetOrCreateAnchor(unsigned TAG, const char *Name) {
-  const Type *EltTy = StructType::get(Type::Int32Ty,  Type::Int32Ty, NULL);
+  const Type *EltTy = StructType::get(Type::Int32Ty, Type::Int32Ty, NULL);
   
   // Otherwise, create the global or return it if already in the module.
   Constant *C = M.getOrInsertGlobal(Name, EltTy);
@@ -280,11 +284,10 @@ DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
   SmallVector<Constant*, 16> Elts;
   
   for (unsigned i = 0; i != NumTys; ++i)
-    Elts.push_back(Tys[i].getCastToEmpty());
+    Elts.push_back(getCastToEmpty(Tys[i]));
   
-  const Type *EltTy = PointerType::getUnqual(StructType::get(NULL,NULL));
-  
-  Constant *Init = ConstantArray::get(ArrayType::get(EltTy, Elts.size()),
+  Constant *Init = ConstantArray::get(ArrayType::get(EmptyStructPtr,
+                                                     Elts.size()),
                                       &Elts[0], Elts.size());
   // If we already have this array, just return the uniqued version.
   DIDescriptor &Entry = SimpleConstantCache[Init];
@@ -333,7 +336,7 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
                                            const std::string &Producer) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_compile_unit),
-    GetOrCreateCompileUnitAnchor().getCastToEmpty(),
+    getCastToEmpty(GetOrCreateCompileUnitAnchor()),
     ConstantInt::get(Type::Int32Ty, LangID),
     GetStringConstant(Filename),
     GetStringConstant(Directory),
@@ -380,9 +383,9 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
                                        unsigned Encoding) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_base_type),
-    Context.getCastToEmpty(),
+    getCastToEmpty(Context),
     GetStringConstant(Name),
-    CompileUnit.getCastToEmpty(),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::Int32Ty, LineNumber),
     ConstantInt::get(Type::Int64Ty, SizeInBits),
     ConstantInt::get(Type::Int64Ty, AlignInBits),
@@ -415,15 +418,15 @@ DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
                                            DIType DerivedFrom) {
   Constant *Elts[] = {
     GetTagConstant(Tag),
-    Context.getCastToEmpty(),
+    getCastToEmpty(Context),
     GetStringConstant(Name),
-    CompileUnit.getCastToEmpty(),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::Int32Ty, LineNumber),
     ConstantInt::get(Type::Int64Ty, SizeInBits),
     ConstantInt::get(Type::Int64Ty, AlignInBits),
     ConstantInt::get(Type::Int64Ty, OffsetInBits),
     ConstantInt::get(Type::Int32Ty, Flags),
-    DerivedFrom.getCastToEmpty()
+    getCastToEmpty(DerivedFrom)
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
@@ -450,16 +453,16 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
                                                DIArray Elements) {
   Constant *Elts[] = {
     GetTagConstant(Tag),
-    Context.getCastToEmpty(),
+    getCastToEmpty(Context),
     GetStringConstant(Name),
-    CompileUnit.getCastToEmpty(),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::Int32Ty, LineNumber),
     ConstantInt::get(Type::Int64Ty, SizeInBits),
     ConstantInt::get(Type::Int64Ty, AlignInBits),
     ConstantInt::get(Type::Int64Ty, OffsetInBits),
     ConstantInt::get(Type::Int32Ty, Flags),
-    DerivedFrom.getCastToEmpty(),
-    Elements.getCastToEmpty()
+    getCastToEmpty(DerivedFrom),
+    getCastToEmpty(Elements)
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
@@ -486,14 +489,14 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
                                          bool isDefinition) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
-    GetOrCreateSubprogramAnchor().getCastToEmpty(),
-    Context.getCastToEmpty(),
+    getCastToEmpty(GetOrCreateSubprogramAnchor()),
+    getCastToEmpty(Context),
     GetStringConstant(Name),
     GetStringConstant(DisplayName),
     GetStringConstant(LinkageName),
-    CompileUnit.getCastToEmpty(),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::Int32Ty, LineNo),
-    Type.getCastToEmpty(),
+    getCastToEmpty(Type),
     ConstantInt::get(Type::Int1Ty, isLocalToUnit),
     ConstantInt::get(Type::Int1Ty, isDefinition)
   };
@@ -519,18 +522,17 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
   
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_variable),
-    GetOrCreateGlobalVariableAnchor().getCastToEmpty(),
-    Context.getCastToEmpty(),
+    getCastToEmpty(GetOrCreateGlobalVariableAnchor()),
+    getCastToEmpty(Context),
     GetStringConstant(Name),
     GetStringConstant(DisplayName),
     GetStringConstant(LinkageName),
-    CompileUnit.getCastToEmpty(),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::Int32Ty, LineNo),
-    Type.getCastToEmpty(),
+    getCastToEmpty(Type),
     ConstantInt::get(Type::Int1Ty, isLocalToUnit),
     ConstantInt::get(Type::Int1Ty, isDefinition),
-    ConstantExpr::getBitCast(Val, 
-                             PointerType::getUnqual(StructType::get(NULL,NULL)))
+    ConstantExpr::getBitCast(Val, EmptyStructPtr)
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
@@ -552,11 +554,11 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
   
   Constant *Elts[] = {
     GetTagConstant(Tag),
-    Context.getCastToEmpty(),
+    getCastToEmpty(Context),
     GetStringConstant(Name),
-    CompileUnit.getCastToEmpty(),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::Int32Ty, LineNo),
-    Type.getCastToEmpty(),
+    getCastToEmpty(Type),
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
@@ -575,7 +577,7 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
 DIBlock DIFactory::CreateBlock(DIDescriptor Context) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_lexical_block),
-    Context.getCastToEmpty()
+    getCastToEmpty(Context)
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
@@ -607,7 +609,7 @@ void DIFactory::InsertStopPoint(DICompileUnit CU, unsigned LineNo,
   Value *Args[] = {
     llvm::ConstantInt::get(llvm::Type::Int32Ty, LineNo),
     llvm::ConstantInt::get(llvm::Type::Int32Ty, ColNo),
-    CU.getCastToEmpty()
+    getCastToEmpty(CU)
   };
   CallInst::Create(StopPointFn, Args, Args+3, "", BB);
 }
@@ -621,7 +623,7 @@ void DIFactory::InsertSubprogramStart(DISubprogram SP, BasicBlock *BB) {
                                               llvm::Intrinsic::dbg_func_start);
   
   // Call llvm.dbg.func.start which also implicitly sets a stoppoint.
-  CallInst::Create(FuncStartFn, SP.getCastToEmpty(), "", BB);
+  CallInst::Create(FuncStartFn, getCastToEmpty(SP), "", BB);
 }
 
 /// InsertRegionStart - Insert a new llvm.dbg.region.start intrinsic call to
@@ -632,7 +634,7 @@ void DIFactory::InsertRegionStart(DIDescriptor D, BasicBlock *BB) {
     RegionStartFn = llvm::Intrinsic::getDeclaration(&M, 
                                             llvm::Intrinsic::dbg_region_start);
   // Call llvm.dbg.func.start.
-  CallInst::Create(RegionStartFn, D.getCastToEmpty(), "", BB);
+  CallInst::Create(RegionStartFn, getCastToEmpty(D), "", BB);
 }
 
 
@@ -644,19 +646,18 @@ void DIFactory::InsertRegionEnd(DIDescriptor D, BasicBlock *BB) {
     RegionEndFn = llvm::Intrinsic::getDeclaration(&M,
                                                llvm::Intrinsic::dbg_region_end);
   
-  CallInst::Create(RegionEndFn, D.getCastToEmpty(), "", BB);
+  CallInst::Create(RegionEndFn, getCastToEmpty(D), "", BB);
 }
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 void DIFactory::InsertDeclare(llvm::Value *Storage, DIVariable D,
                               BasicBlock *BB) {
   // Cast the storage to a {}* for the call to llvm.dbg.declare.
-  const Type *DestTy = PointerType::getUnqual(StructType::get(NULL, NULL));
-  Storage = new llvm::BitCastInst(Storage, DestTy, Storage->getName(), BB);
+  Storage = new llvm::BitCastInst(Storage, EmptyStructPtr, "", BB);
   
   if (!DeclareFn)
     DeclareFn = llvm::Intrinsic::getDeclaration(&M,
                                                 llvm::Intrinsic::dbg_declare);
-  Value *Args[] = { Storage, D.getCastToEmpty() };
+  Value *Args[] = { Storage, getCastToEmpty(D) };
   CallInst::Create(DeclareFn, Args, Args+2, "", BB);
 }
