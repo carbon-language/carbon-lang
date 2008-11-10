@@ -912,7 +912,6 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
   switch (BestViableFunction(CandidateSet, Best)) {
     case OR_Success:
       // Record the standard conversion we used and the conversion function.
-      // FIXME: Handle user-defined conversion operators.
       if (CXXConstructorDecl *Constructor 
             = dyn_cast<CXXConstructorDecl>(Best->Function)) {
         // C++ [over.ics.user]p1:
