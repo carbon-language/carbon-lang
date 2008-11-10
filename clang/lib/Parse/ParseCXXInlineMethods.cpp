@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
@@ -36,7 +37,19 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
   // We may have a constructor initializer here.
   if (Tok.is(tok::colon)) {
     // Consume everything up to (and including) the left brace.
-    ConsumeAndStoreUntil(tok::l_brace, Toks);
+    if (!ConsumeAndStoreUntil(tok::l_brace, Toks, tok::semi)) {
+      // We didn't find the left-brace we expected after the
+      // constructor initializer. 
+      if (Tok.is(tok::semi)) {
+        // We found a semicolon; complain, consume the semicolon, and
+        // don't try to parse this method later.
+        Diag(Tok.getLocation(), diag::err_expected_lbrace);
+        ConsumeAnyToken();
+        getCurTopClassStack().pop();
+        return FnD;
+      }
+    }
+
   } else {
     // Begin by storing the '{' token. 
     Toks.push_back(Tok);
@@ -82,9 +95,12 @@ void Parser::ParseLexedMethodDefs() {
 
 /// ConsumeAndStoreUntil - Consume and store the token at the passed token
 /// container until the token 'T' is reached (which gets consumed/stored too).
+/// If EarlyAbortIf is specified, then we will stop early if we find that
+/// token at the top level.
 /// Returns true if token 'T' was found.
 /// NOTE: This is a specialized version of Parser::SkipUntil.
-bool Parser::ConsumeAndStoreUntil(tok::TokenKind T, TokensTy &Toks) {
+bool Parser::ConsumeAndStoreUntil(tok::TokenKind T, TokensTy &Toks,
+                                  tok::TokenKind EarlyAbortIf) {
   // We always want this function to consume at least one token if the first
   // token isn't T and if not at EOF.
   bool isFirstTokenConsumed = true;
@@ -95,6 +111,10 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T, TokensTy &Toks) {
       ConsumeAnyToken();
       return true;
     }
+
+    // If we found the early-abort token, return.
+    if (Tok.is(EarlyAbortIf))
+      return false;
 
     switch (Tok.getKind()) {
     case tok::eof:

@@ -41,3 +41,7 @@ public:
   { 
   }
 };
+
+class G : A {
+  G() : A(10); // expected-error{{expected '{'}}
+};

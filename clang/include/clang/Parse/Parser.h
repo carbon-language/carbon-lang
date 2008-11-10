@@ -397,7 +397,8 @@ private:
 
   DeclTy *ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D);
   void ParseLexedMethodDefs();
-  bool ConsumeAndStoreUntil(tok::TokenKind T, TokensTy &Toks);
+  bool ConsumeAndStoreUntil(tok::TokenKind T, TokensTy &Toks,
+                            tok::TokenKind EarlyAbortIf = tok::unknown);
 
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
