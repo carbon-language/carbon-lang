@@ -123,14 +123,11 @@ bool StackProtector::InsertStackProtectors() {
   AllocaInst *AI = 0;           // Place on stack that stores the stack guard.
   Constant *StackGuardVar = 0;  // The stack guard variable.
 
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ) {
     BasicBlock *BB = I;
 
-    if (isa<ReturnInst>(BB->getTerminator())) {
+    if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
       if (!FailBB) {
-        // Create the basic block to jump to when the guard check fails.
-        FailBB = CreateFailBB();
-
         // Insert code into the entry block that stores the __stack_chk_guard
         // variable onto the stack.
         PointerType *PtrTy = PointerType::getUnqual(Type::Int8Ty);
@@ -146,11 +143,13 @@ bool StackProtector::InsertStackProtectors() {
         CallInst::
           Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_create),
                  &Args[0], array_endof(Args), "", InsPt);
+
+        // Create the basic block to jump to when the guard check fails.
+        FailBB = CreateFailBB();
       }
 
-      ReturnInst *RI = cast<ReturnInst>(BB->getTerminator());
       Function::iterator InsPt = BB; ++InsPt; // Insertion point for new BB.
-      ++I;
+      ++I; // Skip to the next block so that we don't resplit the return block.
 
       // Split the basic block before the return instruction.
       BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
@@ -167,6 +166,8 @@ bool StackProtector::InsertStackProtectors() {
                AI, "", BB);
       ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, CI, LI1, "", BB);
       BranchInst::Create(NewBB, FailBB, Cmp, BB);
+    } else {
+      ++I;
     }
   }
 
