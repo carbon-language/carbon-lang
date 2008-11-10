@@ -349,6 +349,12 @@ namespace llvm {
     /// getSizeInBits - Return the size of the specified value type in bits.
     unsigned getSizeInBits() const {
       switch (V) {
+      case iPTR:
+        assert(0 && "Value type size is target-dependent. Ask TLI.");
+      case iPTRAny:
+      case iAny:
+      case fAny:
+        assert(0 && "Value type is overloaded.");
       default:
         return getExtendedSizeInBits();
       case i1  :  return 1;
@@ -375,12 +381,6 @@ namespace llvm {
       case v2i64:
       case v4f32:
       case v2f64: return 128;
-      case iPTR:
-        assert(false && "Value type size is target-dependent. Ask TLI.");
-      case iPTRAny:
-      case iAny:
-      case fAny:
-        assert(false && "Value type is overloaded.");
       }
     }
 
