@@ -29,19 +29,34 @@ static inline char hexdigit(unsigned X) {
   return X < 10 ? '0' + X : 'A' + X - 10;
 }
 
-static inline std::string utohexstr(uint64_t X) {
-  char Buffer[40];
-  char *BufPtr = Buffer+39;
-
-  *BufPtr = 0;                  // Null terminate buffer...
-  if (X == 0) *--BufPtr = '0';  // Handle special case...
+/// utohex_buffer - Emit the specified number into the buffer specified by
+/// BufferEnd, returning a pointer to the start of the string.  This can be used
+/// like this: (note that the buffer must be large enough to handle any number):
+///    char Buffer[40];
+///    printf("0x%s", utohex_buffer(X, Buffer+40));
+///
+/// This should only be used with unsigned types.
+///
+template<typename IntTy>
+static inline char *utohex_buffer(IntTy X, char *BufferEnd) {
+  char *BufPtr = BufferEnd;
+  *--BufPtr = 0;      // Null terminate buffer.
+  if (X == 0) {
+    *--BufPtr = '0';  // Handle special case.
+    return BufPtr;
+  }
 
   while (X) {
     unsigned char Mod = static_cast<unsigned char>(X) & 15;
     *--BufPtr = hexdigit(Mod);
     X >>= 4;
   }
-  return std::string(BufPtr);
+  return BufPtr;
+}
+  
+static inline std::string utohexstr(uint64_t X) {
+  char Buffer[40];
+  return utohex_buffer(X, Buffer);
 }
 
 static inline std::string utostr_32(uint32_t X, bool isNeg = false) {
