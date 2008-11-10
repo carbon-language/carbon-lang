@@ -114,11 +114,12 @@ set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${LLVM_LIBS} )
 set(LLVM_TABLEGEN "tblgen" CACHE
   STRING "Native TableGen executable.")
 
+add_subdirectory(utils/TableGen)
+
 if( CMAKE_CROSSCOMPILING )
+  # This adds a dependency on target `tblgen', so must go after utils/TableGen
   include( CrossCompileLLVM )
 endif( CMAKE_CROSSCOMPILING )
-
-add_subdirectory(utils/TableGen)
 
 add_custom_command(OUTPUT ${llvm_builded_incs_dir}/Intrinsics.gen
   COMMAND ${LLVM_TABLEGEN} -gen-intrinsic -I ${LLVM_MAIN_INCLUDE_DIR} ${LLVM_MAIN_INCLUDE_DIR}/llvm/Intrinsics.td -o ${llvm_builded_incs_dir}/Intrinsics.gen
