@@ -258,8 +258,6 @@ BasicConstraintManager::AssumeSymInt(const GRState* St, bool Assumption,
   } // end switch
 }
 
-
-
 const GRState*
 BasicConstraintManager::AssumeSymNE(const GRState* St, SymbolID sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
@@ -481,7 +479,7 @@ void BasicConstraintManager::print(const GRState* St, std::ostream& Out,
         if (isFirst) isFirst = false;
         else Out << ", ";
       
-        Out << *J;
+        Out << (*J)->getSExtValue(); // Hack: should print to raw_ostream.
       }
     }
   }
