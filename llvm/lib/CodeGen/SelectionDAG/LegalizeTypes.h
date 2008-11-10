@@ -360,8 +360,7 @@ private:
   SDValue SoftenFloatRes_LOAD(SDNode *N);
   SDValue SoftenFloatRes_SELECT(SDNode *N);
   SDValue SoftenFloatRes_SELECT_CC(SDNode *N);
-  SDValue SoftenFloatRes_SINT_TO_FP(SDNode *N);
-  SDValue SoftenFloatRes_UINT_TO_FP(SDNode *N);
+  SDValue SoftenFloatRes_XINT_TO_FP(SDNode *N);
 
   // Operand Float to Integer Conversion.
   bool SoftenFloatOperand(SDNode *N, unsigned OpNo);

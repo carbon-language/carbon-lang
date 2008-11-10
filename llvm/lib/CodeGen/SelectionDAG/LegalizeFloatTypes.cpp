@@ -72,8 +72,8 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::LOAD:        R = SoftenFloatRes_LOAD(N); break;
     case ISD::SELECT:      R = SoftenFloatRes_SELECT(N); break;
     case ISD::SELECT_CC:   R = SoftenFloatRes_SELECT_CC(N); break;
-    case ISD::SINT_TO_FP:  R = SoftenFloatRes_SINT_TO_FP(N); break;
-    case ISD::UINT_TO_FP:  R = SoftenFloatRes_UINT_TO_FP(N); break;
+    case ISD::SINT_TO_FP:
+    case ISD::UINT_TO_FP:  R = SoftenFloatRes_XINT_TO_FP(N); break;
   }
 
   // If R is null, the sub-method took care of registering the result.
@@ -213,6 +213,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FPOW(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_FPOWI(SDNode *N) {
+  assert(N->getOperand(1).getValueType() == MVT::i32 &&
+         "Unsupported power type!");
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDValue Ops[2] = { GetSoftenedFloat(N->getOperand(0)), N->getOperand(1) };
   return MakeLibCall(GetFPLibCall(N->getValueType(0),
@@ -278,19 +280,28 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_SELECT_CC(SDNode *N) {
                      N->getOperand(1), LHS, RHS, N->getOperand(4));
 }
 
-SDValue DAGTypeLegalizer::SoftenFloatRes_SINT_TO_FP(SDNode *N) {
-  SDValue Op = N->getOperand(0);
+SDValue DAGTypeLegalizer::SoftenFloatRes_XINT_TO_FP(SDNode *N) {
+  bool Signed = N->getOpcode() == ISD::SINT_TO_FP;
+  MVT SVT = N->getOperand(0).getValueType();
   MVT RVT = N->getValueType(0);
-  RTLIB::Libcall LC = RTLIB::getSINTTOFP(Op.getValueType(), RVT);
-  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SINT_TO_FP!");
-  return MakeLibCall(LC, TLI.getTypeToTransformTo(RVT), &Op, 1, false);
-}
+  MVT NVT = MVT();
 
-SDValue DAGTypeLegalizer::SoftenFloatRes_UINT_TO_FP(SDNode *N) {
-  SDValue Op = N->getOperand(0);
-  MVT RVT = N->getValueType(0);
-  RTLIB::Libcall LC = RTLIB::getUINTTOFP(Op.getValueType(), RVT);
-  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported UINT_TO_FP!");
+  // If the input is not legal, eg: i1 -> fp, then it needs to be promoted to
+  // a larger type, eg: i8 -> fp.  Even if it is legal, no libcall may exactly
+  // match.  Look for an appropriate libcall.
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  for (unsigned t = MVT::FIRST_INTEGER_VALUETYPE;
+       t <= MVT::LAST_INTEGER_VALUETYPE && LC == RTLIB::UNKNOWN_LIBCALL; ++t) {
+    NVT = (MVT::SimpleValueType)t;
+    // The source needs to big enough to hold the operand.
+    if (NVT.bitsGE(SVT))
+      LC = Signed ? RTLIB::getSINTTOFP(NVT, RVT):RTLIB::getUINTTOFP (NVT, RVT);
+  }
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported XINT_TO_FP!");
+
+  // Sign/zero extend the argument if the libcall takes a larger type.
+  SDValue Op = DAG.getNode(Signed ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
+                           NVT, N->getOperand(0));
   return MakeLibCall(LC, TLI.getTypeToTransformTo(RVT), &Op, 1, false);
 }
 
