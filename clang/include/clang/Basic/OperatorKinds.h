@@ -20,7 +20,8 @@ namespace clang {
 /// C++ overloaded operators.
 enum OverloadedOperatorKind {
   OO_None,                //< Not an overloaded operator
-#define OVERLOADED_OPERATOR(Name,Spelling,Token) OO_##Name,
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
+  OO_##Name,
 #include "clang/Basic/OperatorKinds.def"
   NUM_OVERLOADED_OPERATORS
 };

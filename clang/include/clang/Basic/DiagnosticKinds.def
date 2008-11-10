@@ -1316,15 +1316,27 @@ DIAG(err_operator_overload_static, ERROR,
 DIAG(err_operator_overload_default_arg, ERROR,
      "a parameter of an overloaded operator cannot have a default argument")
 DIAG(err_operator_overload_must_be_unary, ERROR,
-     "overloaded operator '%0' must be a unary operator (has %1 parameter%2)")
+     "overloaded operator '%0' must be a unary operator (has %1 parameter)")
 DIAG(err_operator_overload_must_be_binary, ERROR,
-     "overloaded operator '%0' must be a binary operator (has %1 parameter%2)")
+     "overloaded operator '%0' must be a binary operator (has %1 parameter)")
 DIAG(err_operator_overload_must_be_unary_or_binary, ERROR,
-     "overloaded operator '%0' must be a unary or binary operator (has %1 parameter%2)")
+     "overloaded operator '%0' must be a unary or binary operator (has %1 parameter)")
+DIAG(err_operator_overload_must_be_unary_plural, ERROR,
+     "overloaded operator '%0' must be a unary operator (has %1 parameters)")
+DIAG(err_operator_overload_must_be_binary_plural, ERROR,
+     "overloaded operator '%0' must be a binary operator (has %1 parameters)")
+DIAG(err_operator_overload_must_be_unary_or_binary_plural, ERROR,
+     "overloaded operator '%0' must be a unary or binary operator (has %1 parameters)")
 DIAG(err_operator_overload_must_be_member, ERROR,
      "overloaded operator '%0' must be a non-static member function")
-DIAG(err_operator_overload_post_incdec_must_be_int, ERROR,
-     "%0parameter of overloaded post-%1 operator must have type 'int' (not '%2')")
+DIAG(err_operator_overload_post_inc_must_be_int, ERROR,
+     "second parameter of overloaded post-increment operator must have type 'int' (not '%0')")
+DIAG(err_operator_overload_post_dec_must_be_int, ERROR,
+     "second parameter of overloaded post-decrement operator must have type 'int' (not '%0')")
+DIAG(err_operator_overload_post_inc_must_be_int_member, ERROR,
+     "parameter of overloaded post-increment operator must have type 'int' (not '%0')")
+DIAG(err_operator_overload_post_dec_must_be_int_member, ERROR,
+     "parameter of overloaded post-decrement operator must have type 'int' (not '%0')")
 DIAG(err_operator_missing_type_specifier, ERROR,
      "missing type specifier after 'operator'")
 

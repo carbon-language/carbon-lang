@@ -165,7 +165,7 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
 /// AddOverloadedOperators - Register the name of all C++ overloadable
 /// operators ("operator+", "operator[]", etc.)
 void IdentifierTable::AddOverloadedOperators() {
-#define OVERLOADED_OPERATOR(Name,Spelling,Token)                        \
+#define OVERLOADED_OPERATOR(Name,Spelling,Token, Unary, Binary, MemberOnly) \
   OverloadedOperators[OO_##Name] = &get(Spelling);                      \
   OverloadedOperators[OO_##Name]->setOverloadedOperatorID(OO_##Name);
 #include "clang/Basic/OperatorKinds.def"

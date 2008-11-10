@@ -1801,83 +1801,16 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
     }
   }
 
-  bool CanBeUnaryOperator = false;
-  bool CanBeBinaryOperator = false;
-  bool MustBeMemberOperator = false;
+  static const bool OperatorUses[NUM_OVERLOADED_OPERATORS][3] = {
+    { false, false, false }
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
+    , { Unary, Binary, MemberOnly }
+#include "clang/Basic/OperatorKinds.def"
+  };
 
-  switch (Op) {
-  case OO_New:
-  case OO_Delete:
-  case OO_Array_New:
-  case OO_Array_Delete:
-    assert(false && "Operators new, new[], delete, and delete[] handled above");
-    return true;
-
-  // Unary-only operators
-  case OO_Arrow:
-    MustBeMemberOperator = true;
-    // Fall through
-
-  case OO_Tilde:
-  case OO_Exclaim:
-    CanBeUnaryOperator = true;
-    break;
-
-  // Binary-only operators
-  case OO_Equal:
-  case OO_Subscript:
-    MustBeMemberOperator = true;
-    // Fall through
-
-  case OO_Slash:
-  case OO_Percent:
-  case OO_Caret:
-  case OO_Pipe:
-  case OO_Less:
-  case OO_Greater:
-  case OO_PlusEqual:
-  case OO_MinusEqual:
-  case OO_StarEqual:
-  case OO_SlashEqual:
-  case OO_PercentEqual:
-  case OO_CaretEqual:
-  case OO_AmpEqual:
-  case OO_PipeEqual:
-  case OO_LessLess:
-  case OO_GreaterGreater:
-  case OO_LessLessEqual:
-  case OO_GreaterGreaterEqual:
-  case OO_EqualEqual:
-  case OO_ExclaimEqual:
-  case OO_LessEqual:
-  case OO_GreaterEqual:
-  case OO_AmpAmp:
-  case OO_PipePipe:
-  case OO_Comma:
-    CanBeBinaryOperator = true;
-    break;
-
-  // Unary or binary operators
-  case OO_Amp:
-  case OO_Plus:
-  case OO_Minus:
-  case OO_Star:
-  case OO_PlusPlus:
-  case OO_MinusMinus:
-  case OO_ArrowStar:
-    CanBeUnaryOperator = true;
-    CanBeBinaryOperator = true;
-    break;
-
-  case OO_Call:
-    MustBeMemberOperator = true;
-    break;
-
-  case OO_None:
-  case NUM_OVERLOADED_OPERATORS:
-    assert(false && "Not an overloaded operator!");
-    return true;
-  }
+  bool CanBeUnaryOperator = OperatorUses[Op][0];
+  bool CanBeBinaryOperator = OperatorUses[Op][1];
+  bool MustBeMemberOperator = OperatorUses[Op][2];
 
   // C++ [over.oper]p8:
   //   [...] Operator functions cannot have more or fewer parameters
@@ -1890,23 +1823,30 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
        (NumParams < 1) || (NumParams > 2))) {
     // We have the wrong number of parameters.
     std::string NumParamsStr = (llvm::APSInt(32) = NumParams).toString(10);
-    std::string NumParamsPlural;
-    if (NumParams != 1)
-      NumParamsPlural = "s";
 
     diag::kind DK;
 
-    if (CanBeUnaryOperator && CanBeBinaryOperator)
-      DK = diag::err_operator_overload_must_be_unary_or_binary;
-    else if (CanBeUnaryOperator)
-      DK = diag::err_operator_overload_must_be_unary;
-    else if (CanBeBinaryOperator)
-      DK = diag::err_operator_overload_must_be_binary;
-    else
+    if (CanBeUnaryOperator && CanBeBinaryOperator) {
+      if (NumParams == 1)
+        DK = diag::err_operator_overload_must_be_unary_or_binary;
+      else
+        DK = diag::err_operator_overload_must_be_unary_or_binary;
+    } else if (CanBeUnaryOperator) {
+      if (NumParams == 1)
+        DK = diag::err_operator_overload_must_be_unary;
+      else
+        DK = diag::err_operator_overload_must_be_unary_plural;
+    } else if (CanBeBinaryOperator) {
+      if (NumParams == 1)
+        DK = diag::err_operator_overload_must_be_binary;
+      else
+        DK = diag::err_operator_overload_must_be_binary_plural;
+    } else {
       assert(false && "All non-call overloaded operators are unary or binary!");
+    }
 
     Diag(FnDecl->getLocation(), DK,
-         FnDecl->getName(), NumParamsStr, NumParamsPlural,
+         FnDecl->getName(), NumParamsStr, 
          SourceRange(FnDecl->getLocation()));
     IsInvalid = true;
   }
@@ -1945,11 +1885,19 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
       ParamIsInt = BT->getKind() == BuiltinType::Int;
 
     if (!ParamIsInt) {
-      Diag(LastParam->getLocation(),
-           diag::err_operator_overload_post_incdec_must_be_int,
-           MethodDecl? std::string() : std::string("second "),
-           (Op == OO_PlusPlus)? std::string("increment") 
-                              : std::string("decrement"),
+      diag::kind DK;
+      if (Op == OO_PlusPlus) {
+        if (MethodDecl)
+          DK = diag::err_operator_overload_post_inc_must_be_int_member;
+        else
+          DK = diag::err_operator_overload_post_inc_must_be_int;
+      } else {
+        if (MethodDecl)
+          DK = diag::err_operator_overload_post_dec_must_be_int_member;
+        else
+          DK = diag::err_operator_overload_post_dec_must_be_int;
+      }
+      Diag(LastParam->getLocation(), DK,
            Context.getCanonicalType(LastParam->getType()).getAsString(),
            SourceRange(FnDecl->getLocation()));
       IsInvalid = true;

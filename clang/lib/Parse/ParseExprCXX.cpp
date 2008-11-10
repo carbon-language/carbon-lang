@@ -515,9 +515,9 @@ IdentifierInfo *Parser::MaybeParseOperatorFunctionId() {
     }
     return &PP.getIdentifierTable().getOverloadedOperator(Op);
 
-#define OVERLOADED_OPERATOR(Name,Spelling,Token) \
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly)  \
     case tok::Token:  Op = OO_##Name; break;
-#define OVERLOADED_OPERATOR_MULTI(Name,Spelling)
+#define OVERLOADED_OPERATOR_MULTI(Name,Spelling,Unary,Binary,MemberOnly)
 #include "clang/Basic/OperatorKinds.def"
 
   case tok::l_paren:

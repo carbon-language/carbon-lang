@@ -11,58 +11,93 @@
 // all of the overloadable C++ operators.
 //
 //===----------------------------------------------------------------------===//
+//
+/// @file OperatorKinds.def
+///
+/// In this file, each of the overloadable C++ operators is enumerated
+/// with either the OVERLOADED_OPERATOR or OVERLOADED_OPERATOR_MULTI
+/// macro, each of which can be specified by the code including this
+/// file. OVERLOADED_OPERATOR is used for single-token operators
+/// (e.g., "+"), and has six arguments:
+///
+/// Name: The name of the token. OO_Name will be the name of the
+/// corresponding enumerator in OverloadedOperatorKind in
+/// OperatorKinds.h.
+///
+/// Spelling: A string that provides a canonical spelling for the
+/// operator, e.g., "operator+".
+///
+/// Token: The name of the token that specifies the operator, e.g.,
+/// "plus" for operator+ or "greatergreaterequal" for
+/// "operator>>=". With a "kw_" prefix, the token name can be used as
+/// an enumerator into the TokenKind enumeration.
+///
+/// Unary: True if the operator can be declared as a unary operator.
+///
+/// Binary: True if the operator can be declared as a binary
+/// operator. Note that some operators (e.g., "operator+" and
+/// "operator*") can be both unary and binary.
+///
+/// MemberOnly: True if this operator can only be declared as a
+/// non-static member function. False if the operator can be both a
+/// non-member function and a non-static member function.
+///
+/// OVERLOADED_OPERATOR_MULTI is used to enumerate the multi-token
+/// overloaded operator names, e.g., "operator delete []". The macro
+/// has all of the parameters of OVERLOADED_OPERATOR except Token,
+/// which is omitted.
 
 #ifndef OVERLOADED_OPERATOR
-#  define OVERLOADED_OPERATOR(Name,Spelling,Token)
+#  define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly)
 #endif
 
 #ifndef OVERLOADED_OPERATOR_MULTI
-#  define OVERLOADED_OPERATOR_MULTI(Name,Spelling) \
-     OVERLOADED_OPERATOR(Name,Spelling,unknown)
+#  define OVERLOADED_OPERATOR_MULTI(Name,Spelling,Unary,Binary,MemberOnly) \
+    OVERLOADED_OPERATOR(Name,Spelling,unknown,Unary,Binary,MemberOnly)
 #endif
 
-OVERLOADED_OPERATOR_MULTI(New            , "operator new")
-OVERLOADED_OPERATOR_MULTI(Delete         , "operator delete")
-OVERLOADED_OPERATOR_MULTI(Array_New      , "operator new[]")
-OVERLOADED_OPERATOR_MULTI(Array_Delete   , "operator delete[]")
-OVERLOADED_OPERATOR(Plus                 , "operator+"   , plus)
-OVERLOADED_OPERATOR(Minus                , "operator-"   , minus)
-OVERLOADED_OPERATOR(Star                 , "operator*"   , star)
-OVERLOADED_OPERATOR(Slash                , "operator/"   , slash)
-OVERLOADED_OPERATOR(Percent              , "operator%"   , percent)
-OVERLOADED_OPERATOR(Caret                , "operator^"   , caret)
-OVERLOADED_OPERATOR(Amp                  , "operator&"   , amp)
-OVERLOADED_OPERATOR(Pipe                 , "operator|"   , pipe)
-OVERLOADED_OPERATOR(Tilde                , "operator~"   , tilde)
-OVERLOADED_OPERATOR(Exclaim              , "operator!"   , exclaim)
-OVERLOADED_OPERATOR(Equal                , "operator="   , equal)
-OVERLOADED_OPERATOR(Less                 , "operator<"   , less)
-OVERLOADED_OPERATOR(Greater              , "operator>"   , greater)
-OVERLOADED_OPERATOR(PlusEqual            , "operator+="  , plusequal)
-OVERLOADED_OPERATOR(MinusEqual           , "operator-="  , minusequal)
-OVERLOADED_OPERATOR(StarEqual            , "operator*="  , starequal)
-OVERLOADED_OPERATOR(SlashEqual           , "operator/="  , slashequal)
-OVERLOADED_OPERATOR(PercentEqual         , "operator%="  , percentequal)
-OVERLOADED_OPERATOR(CaretEqual           , "operator^="  , caretequal)
-OVERLOADED_OPERATOR(AmpEqual             , "operator&="  , ampequal)
-OVERLOADED_OPERATOR(PipeEqual            , "operator|="  , pipeequal)
-OVERLOADED_OPERATOR(LessLess             , "operator<<"  , lessless)
-OVERLOADED_OPERATOR(GreaterGreater       , "operator>>"  , greatergreater)
-OVERLOADED_OPERATOR(LessLessEqual        , "operator<<=" , lesslessequal)
-OVERLOADED_OPERATOR(GreaterGreaterEqual  , "operator>>=" , greatergreaterequal)
-OVERLOADED_OPERATOR(EqualEqual           , "operator=="  , equalequal)
-OVERLOADED_OPERATOR(ExclaimEqual         , "operator!="  , exclaimequal)
-OVERLOADED_OPERATOR(LessEqual            , "operator<="  , lessequal)
-OVERLOADED_OPERATOR(GreaterEqual         , "operator>="  , greaterequal)
-OVERLOADED_OPERATOR(AmpAmp               , "operator&&"  , ampamp)
-OVERLOADED_OPERATOR(PipePipe             , "operator||"  , pipepipe)
-OVERLOADED_OPERATOR(PlusPlus             , "operator++"  , plusplus)
-OVERLOADED_OPERATOR(MinusMinus           , "operator--"  , minusminus)
-OVERLOADED_OPERATOR(Comma                , "operator,"   , comma)
-OVERLOADED_OPERATOR(ArrowStar            , "operator->*" , arrowstar)
-OVERLOADED_OPERATOR(Arrow                , "operator->"  , arrow)
-OVERLOADED_OPERATOR_MULTI(Call           , "operator()")
-OVERLOADED_OPERATOR_MULTI(Subscript      , "operator[]")
+OVERLOADED_OPERATOR_MULTI(New            , "operator new"                     , true , true , false)
+OVERLOADED_OPERATOR_MULTI(Delete         , "operator delete"                  , true , true , false)
+OVERLOADED_OPERATOR_MULTI(Array_New      , "operator new[]"                   , true , true , false)
+OVERLOADED_OPERATOR_MULTI(Array_Delete   , "operator delete[]"                , true , true , false)
+OVERLOADED_OPERATOR(Plus                 , "operator+"   , plus               , true , true , false)
+OVERLOADED_OPERATOR(Minus                , "operator-"   , minus              , true , true , false)
+OVERLOADED_OPERATOR(Star                 , "operator*"   , star               , true , true , false)
+OVERLOADED_OPERATOR(Slash                , "operator/"   , slash              , false, true , false)
+OVERLOADED_OPERATOR(Percent              , "operator%"   , percent            , false, true , false)
+OVERLOADED_OPERATOR(Caret                , "operator^"   , caret              , false, true , false)
+OVERLOADED_OPERATOR(Amp                  , "operator&"   , amp                , true , true , false)
+OVERLOADED_OPERATOR(Pipe                 , "operator|"   , pipe               , false, true , false)
+OVERLOADED_OPERATOR(Tilde                , "operator~"   , tilde              , true , false, false)
+OVERLOADED_OPERATOR(Exclaim              , "operator!"   , exclaim            , true , false, false)
+OVERLOADED_OPERATOR(Equal                , "operator="   , equal              , false, true , true)
+OVERLOADED_OPERATOR(Less                 , "operator<"   , less               , false, true , false)
+OVERLOADED_OPERATOR(Greater              , "operator>"   , greater            , false, true , false)
+OVERLOADED_OPERATOR(PlusEqual            , "operator+="  , plusequal          , false, true , false)
+OVERLOADED_OPERATOR(MinusEqual           , "operator-="  , minusequal         , false, true , false)
+OVERLOADED_OPERATOR(StarEqual            , "operator*="  , starequal          , false, true , false)
+OVERLOADED_OPERATOR(SlashEqual           , "operator/="  , slashequal         , false, true , false)
+OVERLOADED_OPERATOR(PercentEqual         , "operator%="  , percentequal       , false, true , false)
+OVERLOADED_OPERATOR(CaretEqual           , "operator^="  , caretequal         , false, true , false)
+OVERLOADED_OPERATOR(AmpEqual             , "operator&="  , ampequal           , false, true , false)
+OVERLOADED_OPERATOR(PipeEqual            , "operator|="  , pipeequal          , false, true , false)
+OVERLOADED_OPERATOR(LessLess             , "operator<<"  , lessless           , false, true , false)
+OVERLOADED_OPERATOR(GreaterGreater       , "operator>>"  , greatergreater     , false, true , false)
+OVERLOADED_OPERATOR(LessLessEqual        , "operator<<=" , lesslessequal      , false, true , false)
+OVERLOADED_OPERATOR(GreaterGreaterEqual  , "operator>>=" , greatergreaterequal, false, true , false)
+OVERLOADED_OPERATOR(EqualEqual           , "operator=="  , equalequal         , false, true , false)
+OVERLOADED_OPERATOR(ExclaimEqual         , "operator!="  , exclaimequal       , false, true , false)
+OVERLOADED_OPERATOR(LessEqual            , "operator<="  , lessequal          , false, true , false)
+OVERLOADED_OPERATOR(GreaterEqual         , "operator>="  , greaterequal       , false, true , false)
+OVERLOADED_OPERATOR(AmpAmp               , "operator&&"  , ampamp             , false, true , false)
+OVERLOADED_OPERATOR(PipePipe             , "operator||"  , pipepipe           , false, true , false)
+OVERLOADED_OPERATOR(PlusPlus             , "operator++"  , plusplus           , true , true , false)
+OVERLOADED_OPERATOR(MinusMinus           , "operator--"  , minusminus         , true , true , false)
+OVERLOADED_OPERATOR(Comma                , "operator,"   , comma              , false, true , false)
+OVERLOADED_OPERATOR(ArrowStar            , "operator->*" , arrowstar          , false, true , false)
+OVERLOADED_OPERATOR(Arrow                , "operator->"  , arrow              , true , false, true)
+OVERLOADED_OPERATOR_MULTI(Call           , "operator()"                       , true , true , true)
+OVERLOADED_OPERATOR_MULTI(Subscript      , "operator[]"                       , false, true , true)
 
 #undef OVERLOADED_OPERATOR_MULTI
 #undef OVERLOADED_OPERATOR
