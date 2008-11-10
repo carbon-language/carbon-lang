@@ -196,7 +196,7 @@ void *JITResolver::getGlobalValueIndirectSym(GlobalValue *GV, void *GVAddress) {
   void *&IndirectSym = state.getGlobalToIndirectSymMap(locked)[GV];
   if (IndirectSym) return IndirectSym;
 
-  // Otherwise, codegen a new lazy pointer.
+  // Otherwise, codegen a new indirect symbol.
   IndirectSym = TheJIT->getJITInfo().emitGlobalValueIndirectSym(GV, GVAddress,
                                                      *TheJIT->getCodeEmitter());
 
@@ -576,7 +576,7 @@ namespace {
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
     void *getPointerToGVIndirectSym(GlobalValue *V, void *Reference,
-                                   bool NoNeedStub);
+                                    bool NoNeedStub);
     unsigned addSizeOfGlobal(const GlobalVariable *GV, unsigned Size);
     unsigned addSizeOfGlobalsInConstantVal(const Constant *C, unsigned Size);
     unsigned addSizeOfGlobalsInInitializer(const Constant *Init, unsigned Size);
@@ -619,7 +619,7 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
 }
 
 void *JITEmitter::getPointerToGVIndirectSym(GlobalValue *V, void *Reference,
-                                        bool DoesntNeedStub) {
+                                            bool NoNeedStub) {
   // Make sure GV is emitted first.
   // FIXME: For now, if the GV is an external function we force the JIT to
   // compile it so the indirect symbol will contain the fully resolved address.
