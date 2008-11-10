@@ -1353,7 +1353,6 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
         }
       }
 
-#if 0
       // If the LHS is '(and load, const)', the RHS is 0,
       // the test is for equality or unsigned, and all 1 bits of the const are
       // in the same partial word, see if we can shorten the load.
@@ -1364,17 +1363,23 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
           isa<ConstantSDNode>(N0.getOperand(1))) {
         LoadSDNode *Lod = cast<LoadSDNode>(N0.getOperand(0));
         uint64_t Mask = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
+        uint64_t bestMask = 0;
         unsigned bestWidth = 0, bestOffset = 0;
-        if (!Lod->isVolatile()) {
+        if (!Lod->isVolatile() && Lod->isUnindexed()) {
           unsigned origWidth = N0.getValueType().getSizeInBits();
+          // We can narrow (e.g.) 16-bit extending loads on 32-bit target to 
+          // 8 bits, but have to be careful...
+          if (Lod->getExtensionType() != ISD::NON_EXTLOAD)
+            origWidth = Lod->getMemoryVT().getSizeInBits();
           for (unsigned width = origWidth / 2; width>=8; width /= 2) {
             uint64_t newMask = (1ULL << width) - 1;
             for (unsigned offset=0; offset<origWidth/width; offset++) {
               if ((newMask & Mask)==Mask) {
                 if (!TD->isLittleEndian())
                   bestOffset = (origWidth/width - offset - 1) * (width/8);
-                else 
+                else
                   bestOffset = (uint64_t)offset * (width/8);
+                bestMask = Mask >> (offset * 8);
                 bestWidth = width;
                 break;
               }
@@ -1385,7 +1390,6 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
         if (bestWidth) {
           MVT newVT = MVT::getIntegerVT(bestWidth);
           if (newVT.isRound()) {
-            uint64_t bestMask = Mask >> (bestOffset * 8);
             MVT PtrType = Lod->getOperand(1).getValueType();
             SDValue Ptr = Lod->getBasePtr();
             if (bestOffset != 0)
@@ -1402,7 +1406,6 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
           }
         }
       }
-#endif
      
       // If the LHS is a ZERO_EXTEND, perform the comparison on the input.
       if (N0.getOpcode() == ISD::ZERO_EXTEND) {
