@@ -301,7 +301,7 @@ nicely.  They now print as "<tt>%3 = add i32 %A, 4</tt>" instead of
 <li>LLVM 2.4 includes some changes for better vector support.  First, the shift
 operations (<tt>shl</tt>, <tt>ashr</tt>, and <tt>lshr</tt>) now all support
 vectors and do an element-by-element shift (shifts of the whole vector can be
-accomplished by bitcasting the vector to &lt;1 x i128&gt;, for example). Second,
+accomplished by bitcasting the vector to <tt>&lt;1 x i128&gt;</tt>, for example). Second,
 there is initial support in development for vector comparisons with the
 <tt><a href="LangRef.html#i_fcmp">fcmp</a>/<a href="LangRef.html#i_icmp">icmp</a></tt>
 instructions.  These instructions compare two vectors and return a vector of
@@ -475,12 +475,12 @@ faster:</p>
     build your own tools based on it.</li>
 
 <li>LLVM 2.4 includes a number of new generic algorithms and data structures,
-    include a scoped hash table, 'immutable' data structures, a simple
+    including a scoped hash table, 'immutable' data structures, a simple
     free-list manager, and a <tt>raw_ostream</tt> class.
     The <tt>raw_ostream</tt> class and
     <tt>format</tt> allow for efficient file output, and various pieces of LLVM
     have switched over to use it.   The eventual goal is to eliminate
-    std::ostream in favor of it.</li>
+    use of <tt>std::ostream</tt> in favor of it.</li>
 
 <li>LLVM 2.4 includes an optional build system based on CMake. It
     still is in its early stages but can be useful for Visual C++
@@ -521,7 +521,7 @@ API changes are:</p>
 
 <li>Now, function attributes and return value attributes are managed 
 separately. Interface exported by <tt>ParameterAttributes.h</tt> header is now
-experted by <tt>Attributes.h</tt> header. The new attributes interface changes are:
+exported by <tt>Attributes.h</tt> header. The new attributes interface changes are:
 <ul>
 <li><tt>getParamAttrs</tt> method is now replaced by 
 <tt>getParamAttributes</tt>, <tt>getRetAttributes</tt> and 
@@ -545,7 +545,7 @@ converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via
 <li>The APIs to create various instructions have changed from lower case
    "create" methods to upper case "Create" methods (e.g. 
    <tt>BinaryOperator::create</tt>).  LLVM 2.4 includes both cases, but the
-   lower case ones are removed in mainline, please migrate.</li>
+   lower case ones are removed in mainline (2.5 and later), please migrate.</li>
 
 <li>Various header files like "<tt>llvm/ADT/iterator</tt>" were given a ".h" suffix.
     Change your code to #include "<tt>llvm/ADT/iterator.h</tt>" instead.</li>
@@ -580,10 +580,10 @@ converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via
 <p>LLVM is known to work on the following platforms:</p>
 
 <ul>
-<li>Intel and AMD machines (IA32) running Red Hat Linux, Fedora Core and FreeBSD
-      (and probably other unix-like systems).</li>
-<li>PowerPC and X86-based Mac OS X systems, running 10.3 and above in 32-bit and
-    64-bit modes.</li>
+<li>Intel and AMD machines (IA32, X86-64, AMD64, EMT-64) running Red Hat 
+Linux, Fedora Core and FreeBSD (and probably other unix-like systems).</li>
+<li>PowerPC and X86-based Mac OS X systems, running 10.3 and above in 32-bit 
+and 64-bit modes.</li>
 <li>Intel and AMD machines running on Win32 using MinGW libraries (native).</li>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries (limited
     support is available for native builds with Visual C++).</li>
@@ -607,9 +607,8 @@ portability patches and reports of successful builds or error messages.</p>
 
 <div class="doc_text">
 
-<p>This section contains all known problems with the LLVM system, listed by
-component.  As new problems are discovered, they will be added to these
-sections.  If you run into a problem, please check the <a
+<p>This section contains significant known problems with the LLVM system, 
+listed by component.  If you run into a problem, please check the <a
 href="http://llvm.org/bugs/">LLVM bug database</a> and submit a bug if
 there isn't already one.</p>
 
@@ -810,7 +809,7 @@ itself, Qt, Mozilla, etc.</p>
 
 <ul>
 <li>Exception handling works well on the X86 and PowerPC targets. Currently
-  only linux and darwin targets are supported (both 32 and 64 bit).</li>
+  only Linux and Darwin targets are supported (both 32 and 64 bit).</li>
 </ul>
 
 </div>
