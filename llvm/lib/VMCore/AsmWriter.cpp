@@ -662,7 +662,8 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
       // output the string in hexadecimal format!
       assert(sizeof(double) == sizeof(uint64_t) &&
              "assuming that double is 64 bits!");
-      Out << "0x" << utohexstr(DoubleToBits(Val));
+      char Buffer[40];
+      Out << "0x" << utohex_buffer(uint64_t(DoubleToBits(Val)), Buffer+40);
       return;
     }
     

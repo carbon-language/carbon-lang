@@ -564,7 +564,9 @@ void AsmPrinter::PrintSLEB128(int Value) const {
 /// PrintHex - Print a value as a hexidecimal value.
 ///
 void AsmPrinter::PrintHex(int Value) const { 
-  O << "0x" << utohexstr(static_cast<unsigned>(Value));
+  char Buffer[20];
+  
+  O << "0x" << utohex_buffer(static_cast<unsigned>(Value), Buffer+20);
 }
 
 /// EOL - Print a newline character to asm stream.  If a comment is present
