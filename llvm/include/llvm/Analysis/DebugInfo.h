@@ -191,7 +191,7 @@ namespace llvm {
   /// DIGlobal - This is a common class for global variables and subprograms.
   class DIGlobal : public DIDescriptor {
   protected:
-    explicit DIGlobal(GlobalVariable *GV = 0, unsigned RequiredTag)
+    explicit DIGlobal(GlobalVariable *GV, unsigned RequiredTag)
       : DIDescriptor(GV, RequiredTag) {}
   public:
     
