@@ -171,6 +171,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Sema\SemaCXXScopeSpec.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Sema\SemaDecl.cpp"
 				>
 			</File>
