@@ -39,7 +39,7 @@ class MachineRelocation {
   enum AddressType {
     isResult,         // Relocation has be transformed into its result pointer.
     isGV,             // The Target.GV field is valid.
-    isGVNonLazyPtr,   // Relocation of a Mac OS X NonLazy indirect reference.
+    isIndirectSym,    // Relocation of an indirect symbol.
     isBB,             // Relocation of BB address.
     isExtSym,         // The Target.ExtSym field is valid.
     isConstPool,      // Relocation of constant pool address.
@@ -56,7 +56,7 @@ class MachineRelocation {
 
   union {
     void *Result;           // If this has been resolved to a resolved pointer
-    GlobalValue *GV;        // If this is a pointer to a GV or a GV nonlazy ptr
+    GlobalValue *GV;        // If this is a pointer to a GV or an indirect ref.
     MachineBasicBlock *MBB; // If this is a pointer to a LLVM BB
     const char *ExtSym;     // If this is a pointer to a named symbol
     unsigned Index;         // Constant pool / jump table index
@@ -96,19 +96,19 @@ public:
     return Result;
   }
 
-  /// MachineRelocation::getGVNonLazyPtr - Return a relocation entry for a
-  /// Mac OS X non-lazy GlobalValue indirect reference.
-  static MachineRelocation getGVNonLazyPtr(intptr_t offset,
-                                           unsigned RelocationType, 
-                                           GlobalValue *GV, intptr_t cst = 0,
-                                           bool NeedStub = 0,
-                                           bool GOTrelative = 0) {
+  /// MachineRelocation::getIndirectSymbol - Return a relocation entry for an
+  /// indirect symbol.
+  static MachineRelocation getIndirectSymbol(intptr_t offset,
+                                             unsigned RelocationType, 
+                                             GlobalValue *GV, intptr_t cst = 0,
+                                             bool NeedStub = 0,
+                                             bool GOTrelative = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     MachineRelocation Result;
     Result.Offset = offset;
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
-    Result.AddrType = isGVNonLazyPtr;
+    Result.AddrType = isIndirectSym;
     Result.NeedStub = NeedStub;
     Result.GOTRelative = GOTrelative;
     Result.TargetResolve = false;
@@ -222,10 +222,10 @@ public:
     return AddrType == isGV;
   }
 
-  /// isGlobalValueNonLazyPtr - Return true if this relocation is the address
-  /// of a Mac OS X non-lazy indirect reference.
-  bool isGlobalValueNonLazyPtr() const {
-    return AddrType == isGVNonLazyPtr;
+  /// isIndirectSymbol - Return true if this relocation is the address an
+  /// indirect symbol
+  bool isIndirectSymbol() const {
+    return AddrType == isIndirectSym;
   }
 
   /// isBasicBlock - Return true if this relocation is a basic block reference.
@@ -275,7 +275,7 @@ public:
   /// getGlobalValue - If this is a global value reference, return the
   /// referenced global.
   GlobalValue *getGlobalValue() const {
-    assert((isGlobalValue() || isGlobalValueNonLazyPtr()) &&
+    assert((isGlobalValue() || isIndirectSymbol()) &&
            "This is not a global value reference!");
     return Target.GV;
   }

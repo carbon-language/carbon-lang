@@ -413,8 +413,8 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   return X86CompilationCallback;
 }
 
-void *X86JITInfo::emitGlobalValueNonLazyPtr(const GlobalValue* GV, void *ptr,
-                                            MachineCodeEmitter &MCE) {
+void *X86JITInfo::emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
+                                             MachineCodeEmitter &MCE) {
 #if defined (X86_64_JIT)
   MCE.startGVStub(GV, 8, 8);
   MCE.emitWordLE((unsigned)(intptr_t)ptr);

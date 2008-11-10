@@ -73,7 +73,7 @@ namespace {
     void emitPCRelativeBlockAddress(MachineBasicBlock *MBB);
     void emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
                            intptr_t Disp = 0, intptr_t PCAdj = 0,
-                           bool NeedStub = false, bool IsNonLazy = false);
+                           bool NeedStub = false, bool Indirect = false);
     void emitExternalSymbolAddress(const char *ES, unsigned Reloc);
     void emitConstPoolAddress(unsigned CPI, unsigned Reloc, intptr_t Disp = 0,
                               intptr_t PCAdj = 0);
@@ -155,15 +155,15 @@ void Emitter::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
                                 intptr_t Disp /* = 0 */,
                                 intptr_t PCAdj /* = 0 */,
                                 bool NeedStub /* = false */,
-                                bool isNonLazy /* = false */) {
+                                bool Indirect /* = false */) {
   intptr_t RelocCST = 0;
   if (Reloc == X86::reloc_picrel_word)
     RelocCST = PICBaseOffset;
   else if (Reloc == X86::reloc_pcrel_word)
     RelocCST = PCAdj;
-  MachineRelocation MR = isNonLazy 
-    ? MachineRelocation::getGVNonLazyPtr(MCE.getCurrentPCOffset(), Reloc,
-                                         GV, RelocCST, NeedStub)
+  MachineRelocation MR = Indirect
+    ? MachineRelocation::getIndirectSymbol(MCE.getCurrentPCOffset(), Reloc,
+                                           GV, RelocCST, NeedStub)
     : MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
                                GV, RelocCST, NeedStub);
   MCE.addRelocation(MR);
@@ -289,9 +289,9 @@ void Emitter::emitDisplacementField(const MachineOperand *RelocOp,
     unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
       : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
     bool NeedStub = isa<Function>(RelocOp->getGlobal());
-    bool isNonLazy = gvNeedsNonLazyPtr(RelocOp->getGlobal());
+    bool Indirect = gvNeedsNonLazyPtr(RelocOp->getGlobal());
     emitGlobalAddress(RelocOp->getGlobal(), rt, RelocOp->getOffset(),
-                      PCAdj, NeedStub, isNonLazy);
+                      PCAdj, NeedStub, Indirect);
   } else if (RelocOp->isCPI()) {
     unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_picrel_word;
     emitConstPoolAddress(RelocOp->getIndex(), rt,
@@ -610,9 +610,9 @@ void Emitter::emitInstruction(const MachineInstr &MI,
           rt = X86::reloc_absolute_dword;  // FIXME: add X86II flag?
         if (MO1.isGlobal()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
-          bool isNonLazy = gvNeedsNonLazyPtr(MO1.getGlobal());
+          bool Indirect = gvNeedsNonLazyPtr(MO1.getGlobal());
           emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
-                            NeedStub, isNonLazy);
+                            NeedStub, Indirect);
         } else if (MO1.isSymbol())
           emitExternalSymbolAddress(MO1.getSymbolName(), rt);
         else if (MO1.isCPI())
@@ -688,9 +688,9 @@ void Emitter::emitInstruction(const MachineInstr &MI,
           rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
         if (MO1.isGlobal()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
-          bool isNonLazy = gvNeedsNonLazyPtr(MO1.getGlobal());
+          bool Indirect = gvNeedsNonLazyPtr(MO1.getGlobal());
           emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
-                            NeedStub, isNonLazy);
+                            NeedStub, Indirect);
         } else if (MO1.isSymbol())
           emitExternalSymbolAddress(MO1.getSymbolName(), rt);
         else if (MO1.isCPI())
@@ -726,9 +726,9 @@ void Emitter::emitInstruction(const MachineInstr &MI,
           rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
         if (MO.isGlobal()) {
           bool NeedStub = isa<Function>(MO.getGlobal());
-          bool isNonLazy = gvNeedsNonLazyPtr(MO.getGlobal());
+          bool Indirect = gvNeedsNonLazyPtr(MO.getGlobal());
           emitGlobalAddress(MO.getGlobal(), rt, MO.getOffset(), 0,
-                            NeedStub, isNonLazy);
+                            NeedStub, Indirect);
         } else if (MO.isSymbol())
           emitExternalSymbolAddress(MO.getSymbolName(), rt);
         else if (MO.isCPI())

@@ -129,8 +129,8 @@ ARMJITInfo::getLazyResolverFunction(JITCompilerFn F) {
   return ARMCompilationCallback;
 }
 
-void *ARMJITInfo::emitGlobalValueNonLazyPtr(const GlobalValue *GV, void *Ptr,
-                                            MachineCodeEmitter &MCE) {
+void *ARMJITInfo::emitGlobalValueIndirectSym(const GlobalValue *GV, void *Ptr,
+                                             MachineCodeEmitter &MCE) {
   MCE.startGVStub(GV, 4, 4);
   MCE.emitWordLE((intptr_t)Ptr);
   return MCE.finishGVStub(GV);

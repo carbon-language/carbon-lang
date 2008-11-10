@@ -337,7 +337,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
     if (GV) {
       assert(!ACPV->isStub() && "Don't know how to deal this yet!");
       if (ACPV->isNonLazyPointer())
-        MCE.addRelocation(MachineRelocation::getGVNonLazyPtr(
+        MCE.addRelocation(MachineRelocation::getIndirectSymbol(
                   MCE.getCurrentPCOffset(), ARM::reloc_arm_machine_cp_entry, GV,
                   (intptr_t)ACPV, false));
       else 
