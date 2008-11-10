@@ -13,14 +13,41 @@ set(LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(LLVM_TOOLS_BINARY_DIR ${LLVM_BINARY_DIR}/bin)
 set(LLVM_EXAMPLES_BINARY_DIR ${LLVM_BINARY_DIR}/examples)
 
+set(LLVM_ALL_TARGETS
+  Alpha
+  ARM
+  CBackend
+  CellSPU
+  CppBackend
+  IA64
+  Mips
+  MSIL
+  PIC16
+  PowerPC
+  Sparc
+  X86
+  XCore
+  )
+
 if( MSVC )
   set(LLVM_TARGETS_TO_BUILD X86
-    CACHE STRING "Semicolon-separated list of targets to build")
+    CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
 else( MSVC )
-  set(LLVM_TARGETS_TO_BUILD
-    Alpha ARM CBackend CellSPU CppBackend IA64 Mips MSIL PIC16 PowerPC Sparc X86 XCore
-    CACHE STRING "Semicolon-separated list of targets to build")
+  set(LLVM_TARGETS_TO_BUILD ${LLVM_ALL_TARGETS}
+    CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
 endif( MSVC )
+
+if( LLVM_TARGETS_TO_BUILD STREQUAL "all" )
+  set( LLVM_TARGETS_TO_BUILD ${LLVM_ALL_TARGETS} )
+endif()
+
+foreach(c ${LLVM_TARGETS_TO_BUILD})
+  list(FIND LLVM_ALL_TARGETS ${c} idx)
+  if( idx LESS 0 )
+    message(FATAL_ERROR "The target `${c}' does not exists.
+    It should be one of\n${LLVM_ALL_TARGETS}")
+  endif()
+endforeach(c)
 
 set(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm)
 
