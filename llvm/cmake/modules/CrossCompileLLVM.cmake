@@ -1,8 +1,8 @@
 
 if( ${LLVM_TABLEGEN} STREQUAL "tblgen" )
+  set(CX_NATIVE_TG_DIR "${CMAKE_BINARY_DIR}/native")
   set(LLVM_TABLEGEN "${CX_NATIVE_TG_DIR}/bin/tblgen")
 
-  message(STATUS "CX_NATIVE_TG_DIR : ${CX_NATIVE_TG_DIR}")
   add_custom_command(OUTPUT ${CX_NATIVE_TG_DIR}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CX_NATIVE_TG_DIR}
     COMMENT "Creating ${CX_NATIVE_TG_DIR}...")
@@ -22,10 +22,5 @@ if( ${LLVM_TABLEGEN} STREQUAL "tblgen" )
 
   add_dependencies(tblgen NativeTableGen)
 
-  # TODO: We should clean the native build when the `clean target
-  # is invoked. This doesn't work.
-  # add_custom_command(TARGET clean
-  #   COMMAND ${CMAKE_BUILD_TOOL} -C ${CX_NATIVE_TG_DIR}/utils/TableGen clean
-  #   POST_BUILD
-  #   COMMENT "Cleaning native TableGen...")
+  set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${CX_NATIVE_TG_DIR})
 endif()
