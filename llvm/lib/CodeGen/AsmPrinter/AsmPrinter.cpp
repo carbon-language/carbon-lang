@@ -532,11 +532,12 @@ void AsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
 /// PrintULEB128 - Print a series of hexidecimal values (separated by commas)
 /// representing an unsigned leb128 value.
 void AsmPrinter::PrintULEB128(unsigned Value) const {
+  char Buffer[20];
   do {
-    unsigned Byte = Value & 0x7f;
+    unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
     Value >>= 7;
     if (Value) Byte |= 0x80;
-    O << "0x" <<  utohexstr(Byte);
+    O << "0x" << utohex_buffer(Byte, Buffer+20);
     if (Value) O << ", ";
   } while (Value);
 }
@@ -546,13 +547,14 @@ void AsmPrinter::PrintULEB128(unsigned Value) const {
 void AsmPrinter::PrintSLEB128(int Value) const {
   int Sign = Value >> (8 * sizeof(Value) - 1);
   bool IsMore;
+  char Buffer[20];
 
   do {
-    unsigned Byte = Value & 0x7f;
+    unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
     Value >>= 7;
     IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
     if (IsMore) Byte |= 0x80;
-    O << "0x" << utohexstr(Byte);
+    O << "0x" << utohex_buffer(Byte, Buffer+20);
     if (IsMore) O << ", ";
   } while (IsMore);
 }
@@ -565,7 +567,6 @@ void AsmPrinter::PrintSLEB128(int Value) const {
 ///
 void AsmPrinter::PrintHex(int Value) const { 
   char Buffer[20];
-  
   O << "0x" << utohex_buffer(static_cast<unsigned>(Value), Buffer+20);
 }
 
@@ -749,7 +750,10 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
 
   unsigned FillValue = TAI->getTextAlignFillValue();
   UseFillExpr &= IsInTextSection && FillValue;
-  if (UseFillExpr) O << ",0x" << utohexstr(FillValue);
+  if (UseFillExpr) {
+    O << ',';
+    PrintHex(FillValue);
+  }
   O << '\n';
 }
 
