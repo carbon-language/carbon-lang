@@ -139,7 +139,7 @@ add_subdirectory(lib/System)
 set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${LLVM_LIBS} )
 
 set(LLVM_TABLEGEN "tblgen" CACHE
-  STRING "Native TableGen executable.")
+  STRING "Native TableGen executable. Saves building one when cross-compiling.")
 
 add_subdirectory(utils/TableGen)
 
