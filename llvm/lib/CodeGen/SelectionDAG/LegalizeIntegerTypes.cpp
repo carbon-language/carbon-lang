@@ -206,7 +206,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
   case Legal:
     break;
   case PromoteInteger:
-    if (OutVT.getSizeInBits() == NInVT.getSizeInBits())
+    if (OutVT.bitsEq(NInVT))
       // The input promotes to the same size.  Convert the promoted value.
       return DAG.getNode(ISD::BIT_CONVERT, OutVT, GetPromotedInteger(InOp));
     break;
@@ -340,8 +340,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_VECTOR_ELT(SDNode *N) {
   // Hi if it was odd.
   SDValue Lo = Elt;
   SDValue Hi = DAG.getNode(ISD::SRL, NewVT, Elt,
-                             DAG.getConstant(OldVT.getSizeInBits(),
-                                             TLI.getShiftAmountTy()));
+                           DAG.getConstant(OldVT.getSizeInBits(),
+                                           TLI.getShiftAmountTy()));
   if (TLI.isBigEndian())
     std::swap(Lo, Hi);
 
@@ -378,8 +378,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_INT_EXTEND(SDNode *N) {
 
   if (getTypeAction(N->getOperand(0).getValueType()) == PromoteInteger) {
     SDValue Res = GetPromotedInteger(N->getOperand(0));
-    assert(Res.getValueType().getSizeInBits() <= NVT.getSizeInBits() &&
-           "Extension doesn't make sense!");
+    assert(Res.getValueType().bitsLE(NVT) && "Extension doesn't make sense!");
 
     // If the result and operand types are the same after promotion, simplify
     // to an in-register extension.
@@ -451,8 +450,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
 
   // Convert to the expected type.
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  assert(NVT.getSizeInBits() <= SVT.getSizeInBits() &&
-         "Integer type overpromoted?");
+  assert(NVT.bitsLE(SVT) && "Integer type overpromoted?");
   return DAG.getNode(ISD::TRUNCATE, NVT, SetCC);
 }
 
@@ -494,6 +492,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SRL(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_TRUNCATE(SDNode *N) {
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDValue Res;
 
   switch (getTypeAction(N->getOperand(0).getValueType())) {
@@ -506,12 +505,6 @@ SDValue DAGTypeLegalizer::PromoteIntRes_TRUNCATE(SDNode *N) {
     Res = GetPromotedInteger(N->getOperand(0));
     break;
   }
-
-  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  assert(Res.getValueType().getSizeInBits() >= NVT.getSizeInBits() &&
-         "Truncation doesn't make sense!");
-  if (Res.getValueType() == NVT)
-    return Res;
 
   // Truncate to NVT instead of VT
   return DAG.getNode(ISD::TRUNCATE, NVT, Res);
@@ -845,8 +838,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
   // around the problem.
   MVT SVT = TLI.getSetCCResultType(N->getOperand(1));
   assert(isTypeLegal(SVT) && "Illegal SetCC type!");
-  assert(Cond.getValueSizeInBits() <= SVT.getSizeInBits() &&
-         "Unexpected SetCC type!");
+  assert(Cond.getValueType().bitsLE(SVT) && "Unexpected SetCC type!");
 
   // Make sure the extra bits conform to getSetCCResultContents.  There are
   // two sets of extra bits: those in Cond, which come from type promotion,

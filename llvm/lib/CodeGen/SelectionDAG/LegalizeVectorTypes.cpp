@@ -191,7 +191,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
 
   // VSETCC always returns a sign-extended value, while SETCC may not.  The
   // SETCC result type may not match the vector element type.  Correct these.
-  if (NVT.getSizeInBits() <= SVT.getSizeInBits()) {
+  if (NVT.bitsLE(SVT)) {
     // The SETCC result type is bigger than the vector element type.
     // Ensure the SETCC result is sign-extended.
     if (TLI.getSetCCResultContents() !=

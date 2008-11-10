@@ -272,6 +272,11 @@ namespace llvm {
       return BitSize >= 8 && !(BitSize & (BitSize - 1));
     }
 
+    /// bitsEq - Return true if this has the same number of bits as VT.
+    bool bitsEq(MVT VT) const {
+      return getSizeInBits() == VT.getSizeInBits();
+    }
+
     /// bitsGT - Return true if this has more bits than VT.
     bool bitsGT(MVT VT) const {
       return getSizeInBits() > VT.getSizeInBits();
