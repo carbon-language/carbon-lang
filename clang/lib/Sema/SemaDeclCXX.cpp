@@ -400,11 +400,7 @@ void Sema::ActOnStartCXXClassDef(Scope *S, DeclTy *D, SourceLocation LBrace) {
     //   class itself; this is known as the injected-class-name. For
     //   purposes of access checking, the injected-class-name is treated
     //   as if it were a public member name.
-    // FIXME: this should probably have its own kind of type node.
-    TypedefDecl *InjectedClassName 
-      = TypedefDecl::Create(Context, Dcl, LBrace, Dcl->getIdentifier(),
-                            Context.getTypeDeclType(Dcl), /*PrevDecl=*/0);
-    PushOnScopeChains(InjectedClassName, S);
+    PushOnScopeChains(Dcl, S);
   }
 }
 
@@ -924,15 +920,10 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
   //   declaration.
   TypeDecl *DeclaratorTypeD = (TypeDecl *)D.getDeclaratorIdType();
   if (const TypedefDecl *TypedefD = dyn_cast<TypedefDecl>(DeclaratorTypeD)) {
-    if (TypedefD->getIdentifier() != 
-          cast<CXXRecordDecl>(CurContext)->getIdentifier()) {
-      // FIXME: This would be easier if we could just look at whether
-      // we found the injected-class-name.
-      Diag(D.getIdentifierLoc(), 
-           diag::err_destructor_typedef_name,
-           TypedefD->getName());
-      isInvalid = true;
-    }
+    Diag(D.getIdentifierLoc(), 
+         diag::err_destructor_typedef_name,
+         TypedefD->getName());
+    isInvalid = true;
   }
 
   // C++ [class.dtor]p2:
