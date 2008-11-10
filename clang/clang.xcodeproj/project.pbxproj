@@ -498,6 +498,7 @@
 		DE85CDAB0D838C120070E26E /* PPMacroExpansion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPMacroExpansion.cpp; sourceTree = "<group>"; };
 		DE85CDAF0D838C390070E26E /* PPDirectives.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPDirectives.cpp; sourceTree = "<group>"; };
 		DE85CDB50D839BAE0070E26E /* PPLexerChange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPLexerChange.cpp; sourceTree = "<group>"; };
+		DE8822350EC80C0A00CBC30A /* CGBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGBuilder.h; path = lib/CodeGen/CGBuilder.h; sourceTree = "<group>"; };
 		DE928B120C05659200231DA4 /* ModuleBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ModuleBuilder.cpp; path = lib/CodeGen/ModuleBuilder.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE928B1F0C0565B000231DA4 /* ModuleBuilder.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ModuleBuilder.h; path = clang/CodeGen/ModuleBuilder.h; sourceTree = "<group>"; };
 		DE928B7C0C0A615100231DA4 /* CodeGenModule.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CodeGenModule.h; path = lib/CodeGen/CodeGenModule.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -865,16 +866,10 @@
 		DE927FCC0C0557CD00231DA4 /* CodeGen */ = {
 			isa = PBXGroup;
 			children = (
-				35475B220E7997680000BFE4 /* CGCall.h */,
-				35475B230E7997680000BFE4 /* CGValue.h */,
-				35475B1F0E79973F0000BFE4 /* CGCall.cpp */,
-				DE928B800C0A615B00231DA4 /* CodeGenFunction.h */,
-				DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */,
-				DE928B7C0C0A615100231DA4 /* CodeGenModule.h */,
-				DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */,
-				DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */,
-				DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */,
+				DE8822350EC80C0A00CBC30A /* CGBuilder.h */,
 				1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */,
+				35475B220E7997680000BFE4 /* CGCall.h */,
+				35475B1F0E79973F0000BFE4 /* CGCall.cpp */,
 				1A5D5E570E5E81010023C059 /* CGCXX.cpp */,
 				35A3E7000DD3874400757F74 /* CGDebugInfo.cpp */,
 				35A3E7010DD3874400757F74 /* CGDebugInfo.h */,
@@ -889,6 +884,13 @@
 				DE38CD4F0D794D0100A273B6 /* CGObjCGNU.cpp */,
 				3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */,
 				DE4772F90C10EAE5002239E8 /* CGStmt.cpp */,
+				35475B230E7997680000BFE4 /* CGValue.h */,
+				DE928B800C0A615B00231DA4 /* CodeGenFunction.h */,
+				DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */,
+				DE928B7C0C0A615100231DA4 /* CodeGenModule.h */,
+				DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */,
+				DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */,
+				DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */,
 				DE928B120C05659200231DA4 /* ModuleBuilder.cpp */,
 			);
 			name = CodeGen;
