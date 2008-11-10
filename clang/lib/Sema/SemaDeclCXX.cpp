@@ -1591,9 +1591,69 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   //          92) (this conversion is selected by enumerating the
   //          applicable conversion functions (13.3.1.6) and choosing
   //          the best one through overload resolution (13.3)),
-  // FIXME: Implement this second bullet, once we have conversion
-  //        functions. Also remember C++ [over.ics.ref]p1, second part.
+  if (!SuppressUserConversions && T2->isRecordType()) {
+    // FIXME: Look for conversions in base classes!
+    CXXRecordDecl *T2RecordDecl 
+      = dyn_cast<CXXRecordDecl>(T2->getAsRecordType()->getDecl());
 
+    OverloadCandidateSet CandidateSet;
+    OverloadedFunctionDecl *Conversions 
+      = T2RecordDecl->getConversionFunctions();
+    for (OverloadedFunctionDecl::function_iterator Func 
+           = Conversions->function_begin();
+         Func != Conversions->function_end(); ++Func) {
+      CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+      
+      // If the conversion function doesn't return a reference type,
+      // it can't be considered for this conversion.
+      // FIXME: This will change when we support rvalue references.
+      if (Conv->getConversionType()->isReferenceType())
+        AddConversionCandidate(Conv, Init, DeclType, CandidateSet);
+    }
+
+    OverloadCandidateSet::iterator Best;
+    switch (BestViableFunction(CandidateSet, Best)) {
+    case OR_Success:
+      // This is a direct binding.
+      BindsDirectly = true;
+
+      if (ICS) {
+        // C++ [over.ics.ref]p1:
+        //
+        //   [...] If the parameter binds directly to the result of
+        //   applying a conversion function to the argument
+        //   expression, the implicit conversion sequence is a
+        //   user-defined conversion sequence (13.3.3.1.2), with the
+        //   second standard conversion sequence either an identity
+        //   conversion or, if the conversion function returns an
+        //   entity of a type that is a derived class of the parameter
+        //   type, a derived-to-base Conversion.
+        ICS->ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
+        ICS->UserDefined.Before = Best->Conversions[0].Standard;
+        ICS->UserDefined.After = Best->FinalConversion;
+        ICS->UserDefined.ConversionFunction = Best->Function;
+        assert(ICS->UserDefined.After.ReferenceBinding &&
+               ICS->UserDefined.After.DirectBinding &&
+               "Expected a direct reference binding!");
+        return false;
+      } else {
+        // Perform the conversion.
+        // FIXME: Binding to a subobject of the lvalue is going to require
+        // more AST annotation than this.
+        ImpCastExprToType(Init, T1);
+      }
+      break;
+
+    case OR_Ambiguous:
+      assert(false && "Ambiguous reference binding conversions not implemented.");
+      return true;
+      
+    case OR_No_Viable_Function:
+      // There was no suitable conversion; continue with other checks.
+      break;
+    }
+  }
+      
   if (BindsDirectly) {
     // C++ [dcl.init.ref]p4:
     //   [...] In all cases where the reference-related or
