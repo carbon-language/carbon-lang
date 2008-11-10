@@ -16,30 +16,13 @@
 
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include <map>
-#include <vector>
 
 #include "CGBuilder.h"
 
-namespace llvm {
-  class Function;
-  class DISerializer;
-  class CompileUnitDesc;
-  class BasicBlock;
-  class AnchorDesc;
-  class DebugInfoDesc;
-  class Value;
-  class TypeDesc;
-  class VariableDesc;
-  class SubprogramDesc;
-  class GlobalVariable;
-  class GlobalVariableDesc;
-  class EnumeratorDesc;
-  class SubrangeDesc;
-}
-
 namespace clang {
-  class FunctionDecl;
   class VarDecl;
 
 namespace CodeGen {
@@ -49,54 +32,30 @@ namespace CodeGen {
 /// and is responsible for emitting to llvm globals or pass directly to 
 /// the backend.
 class CGDebugInfo {
-private:
   CodeGenModule *M;
-  llvm::DISerializer *SR;
-  SourceLocation CurLoc;
-  SourceLocation PrevLoc;
+  llvm::DIFactory DebugFactory;
+  
+  SourceLocation CurLoc, PrevLoc;
 
   /// CompileUnitCache - Cache of previously constructed CompileUnits.
-  std::map<const FileEntry*, llvm::CompileUnitDesc *> CompileUnitCache;
+  llvm::DenseMap<const FileEntry*, llvm::DICompileUnit> CompileUnitCache;
 
   /// TypeCache - Cache of previously constructed Types.
-  std::map<void *, llvm::TypeDesc *> TypeCache;
+  // FIXME: Eliminate this map.  Be careful of iterator invalidation.
+  std::map<void *, llvm::DIType> TypeCache;
   
-  llvm::Function *StopPointFn;
-  llvm::Function *FuncStartFn;
-  llvm::Function *DeclareFn;
-  llvm::Function *RegionStartFn;
-  llvm::Function *RegionEndFn;
-  llvm::AnchorDesc *CompileUnitAnchor;
-  llvm::AnchorDesc *SubprogramAnchor;
-  llvm::AnchorDesc *GlobalVariableAnchor;
-  std::vector<llvm::DebugInfoDesc *> RegionStack;
-  std::vector<llvm::VariableDesc *> VariableDescList;
-  std::vector<llvm::GlobalVariableDesc *> GlobalVarDescList;
-  std::vector<llvm::EnumeratorDesc *> EnumDescList;
-  std::vector<llvm::SubrangeDesc *> SubrangeDescList;
-  llvm::SubprogramDesc *Subprogram;
+  std::vector<llvm::DIDescriptor> RegionStack;
 
   /// Helper functions for getOrCreateType.
-  llvm::TypeDesc *getOrCreateCVRType(QualType type, 
-                                     llvm::CompileUnitDesc *unit);
-  llvm::TypeDesc *getOrCreateBuiltinType(const BuiltinType *type, 
-                                         llvm::CompileUnitDesc *unit);
-  llvm::TypeDesc *getOrCreateTypedefType(const TypedefType *type, 
-                                         llvm::CompileUnitDesc *unit);
-  llvm::TypeDesc *getOrCreatePointerType(const PointerType *type, 
-                                         llvm::CompileUnitDesc *unit);
-  llvm::TypeDesc *getOrCreateFunctionType(QualType type, 
-                                          llvm::CompileUnitDesc *unit);
-  void getOrCreateRecordType(const RecordType *type,
-                             llvm::CompileUnitDesc *unit,
-                             llvm::TypeDesc *&Slot);
-  llvm::TypeDesc *getOrCreateEnumType(const EnumType *type,
-                                      llvm::CompileUnitDesc *unit);
-  void getOrCreateTagType(const TagType *type,
-                             llvm::CompileUnitDesc *unit,
-                             llvm::TypeDesc *&Slot);
-  llvm::TypeDesc *getOrCreateArrayType(QualType type,
-                                       llvm::CompileUnitDesc *unit);
+  llvm::DIType CreateType(const BuiltinType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateCVRType(QualType Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const TypedefType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const PointerType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const FunctionType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const TagType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const RecordType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const EnumType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const ArrayType *Ty, llvm::DICompileUnit U);
 
 public:
   CGDebugInfo(CodeGenModule *m);
@@ -104,7 +63,7 @@ public:
 
   /// setLocation - Update the current source location. If \arg loc is
   /// invalid it is ignored.
-  void setLocation(SourceLocation loc);
+  void setLocation(SourceLocation Loc);
 
   /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of
   /// source line.
@@ -123,31 +82,33 @@ public:
   /// block.
   void EmitRegionEnd(llvm::Function *Fn, CGBuilderTy &Builder);
 
-  /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
-  void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
-                   CGBuilderTy &Builder);
+  /// EmitDeclareOfAutoVariable - Emit call to llvm.dbg.declare for an automatic
+  /// variable declaration.
+  void EmitDeclareOfAutoVariable(const VarDecl *Decl, llvm::Value *AI,
+                                 CGBuilderTy &Builder);
 
+  /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
+  /// variable declaration.
+  void EmitDeclareOfArgVariable(const VarDecl *Decl, llvm::Value *AI,
+                                CGBuilderTy &Builder);
+  
   /// EmitGlobalVariable - Emit information about a global variable.
-  void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *decl);
+  void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *Decl);
  
   
 private:
+  /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
+  void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
+                   CGBuilderTy &Builder);
+  
   
   /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
   /// new one if necessary.
-  llvm::CompileUnitDesc *getOrCreateCompileUnit(SourceLocation loc);
+  llvm::DICompileUnit getOrCreateCompileUnit(SourceLocation Loc);
 
   /// getOrCreateType - Get the type from the cache or create a new type if
   /// necessary.
-  llvm::TypeDesc *getOrCreateType(QualType type, llvm::CompileUnitDesc *unit);
-
-  /// getCastValueFor - Return a llvm representation for a given debug
-  /// information descriptor cast to an empty struct pointer.
-  llvm::Value *getCastValueFor(llvm::DebugInfoDesc *DD);
-
-  /// getValueFor - Return a llvm representation for a given debug information
-  /// descriptor.
-  llvm::Value *getValueFor(llvm::DebugInfoDesc *DD);
+  llvm::DIType getOrCreateType(QualType Ty, llvm::DICompileUnit Unit);
 };
 } // namespace CodeGen
 } // namespace clang

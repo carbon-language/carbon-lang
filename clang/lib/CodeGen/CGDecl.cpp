@@ -21,7 +21,6 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Type.h"
-#include "llvm/Support/Dwarf.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -174,11 +173,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   DMEntry = DeclPtr;
 
   // Emit debug info for local var declaration.
-  CGDebugInfo *DI = CGM.getDebugInfo();
-  if(DI) {
+  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
     DI->setLocation(D.getLocation());
-    DI->EmitDeclare(&D, llvm::dwarf::DW_TAG_auto_variable,
-                    DeclPtr, Builder);
+    DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
   }
 
   // If this local has an initializer, emit it now.
@@ -231,12 +228,9 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
   DMEntry = DeclPtr;
 
   // Emit debug info for param declaration.
-  CGDebugInfo *DI = CGM.getDebugInfo();
-  if(DI) {
+  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
     DI->setLocation(D.getLocation());
-    DI->EmitDeclare(&D, llvm::dwarf::DW_TAG_arg_variable,
-                    DeclPtr, Builder);
+    DI->EmitDeclareOfArgVariable(&D, DeclPtr, Builder);
   }
-
 }
 
