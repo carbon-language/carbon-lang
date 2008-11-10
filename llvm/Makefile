@@ -17,19 +17,20 @@ LEVEL := .
 #   5. Build llvm-config, which determines inter-lib dependencies for tools.
 #   6. Build tools, runtime, docs.
 #
-DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-config \
-        tools runtime docs
+# When cross-compiling, there are some things (tablegen) that need to
+# be build for the build system first.
+ifeq ($(BUILD_DIRS_ONLY),1)
+  DIRS := lib/System lib/Support utils
+  OPTIONAL_DIRS :=
+else
+  DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-config \
+          tools runtime docs
+  OPTIONAL_DIRS := examples projects bindings
+endif
 
-OPTIONAL_DIRS := examples projects bindings
 EXTRA_DIST := test llvm.spec include win32 Xcode
 
 include $(LEVEL)/Makefile.config 
-
-# When cross-compiling, there are some things (tablegen) that need to
-# be build for the build system.
-ifeq ($(LLVM_CROSS_COMPILING),1)
-  BUILD_TARGET_DIRS := lib/System lib/Support utils
-endif
 
 # llvm-gcc4 doesn't need runtime libs.  llvm-gcc4 is the only supported one.
 # FIXME: Remove runtime entirely once we have an understanding of where
@@ -58,6 +59,23 @@ endif
 ifeq ($(MAKECMDGOALS),install)
   DIRS := $(filter-out utils, $(DIRS))
   OPTIONAL_DIRS := $(filter bindings, $(OPTIONAL_DIRS))
+endif
+
+# If we're cross-compiling, build the build-hosted tools first
+ifeq ($(LLVM_CROSS_COMPILING),1)
+all:: cross-compile-build-tools
+
+clean::
+	$(Verb) rm -rf BuildTools
+
+cross-compile-build-tools:
+	$(Verb) if [ ! -f BuildTools/Makefile ]; then \
+          $(MKDIR) BuildTools; \
+	  cd BuildTools ; \
+	  $(PROJ_SRC_DIR)/configure ; \
+	  cd .. ; \
+	fi; \
+        ($(MAKE) -C BuildTools BUILD_DIRS_ONLY=1 ) || exit 1;
 endif
 
 # Include the main makefile machinery.
@@ -114,6 +132,7 @@ $(FilesToConfigPATH) : $(LLVM_OBJ_ROOT)/% : $(LLVM_SRC_ROOT)/%.in
 
 # NOTE: This needs to remain as the last target definition in this file so
 # that it gets executed last.
+ifneq ($(BUILD_DIRS_ONLY),1)
 all:: 
 	$(Echo) '*****' Completed $(BuildMode)$(AssertMode) Build
 ifeq ($(BuildMode),Debug)
@@ -121,6 +140,7 @@ ifeq ($(BuildMode),Debug)
 	$(Echo) '*****' optimized build. Use 'make ENABLE_OPTIMIZED=1' to
 	$(Echo) '*****' make an optimized build. Alternatively you can
 	$(Echo) '*****' configure with --enable-optimized.
+endif
 endif
 
 check-llvm2cpp:
