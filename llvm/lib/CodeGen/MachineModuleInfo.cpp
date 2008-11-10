@@ -363,7 +363,7 @@ public:
     Field.resize(0);
     Constant *C = CI->getOperand(I++);
     GlobalVariable *GV = getGlobalVariable(C);
-    if (GV->hasInitializer()) {
+    if (GV && GV->hasInitializer()) {
       if (ConstantArray *CA = dyn_cast<ConstantArray>(GV->getInitializer())) {
         for (unsigned i = 0, N = CA->getNumOperands(); i < N; ++i) {
           GlobalVariable *GVE = getGlobalVariable(CA->getOperand(i));
