@@ -267,7 +267,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Constant(SDNode *N) {
   // matter in theory which one we pick, but this tends to give better code?
   unsigned Opc = VT.isByteSized() ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
   SDValue Result = DAG.getNode(Opc, TLI.getTypeToTransformTo(VT),
-                                 SDValue(N, 0));
+                               SDValue(N, 0));
   assert(isa<ConstantSDNode>(Result) && "Didn't constant fold ext?");
   return Result;
 }
@@ -350,22 +350,27 @@ SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_VECTOR_ELT(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_FP_TO_XINT(SDNode *N) {
-  unsigned NewOpc = N->getOpcode();
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  unsigned NewOpc = N->getOpcode();
 
   // If we're promoting a UINT to a larger size, check to see if the new node
   // will be legal.  If it isn't, check to see if FP_TO_SINT is legal, since
   // we can use that instead.  This allows us to generate better code for
   // FP_TO_UINT for small destination sizes on targets where FP_TO_UINT is not
   // legal, such as PowerPC.
-  if (N->getOpcode() == ISD::FP_TO_UINT) {
-    if (!TLI.isOperationLegal(ISD::FP_TO_UINT, NVT) &&
-        (TLI.isOperationLegal(ISD::FP_TO_SINT, NVT) ||
-         TLI.getOperationAction(ISD::FP_TO_SINT, NVT)==TargetLowering::Custom))
-      NewOpc = ISD::FP_TO_SINT;
-  }
+  if (N->getOpcode() == ISD::FP_TO_UINT &&
+      !TLI.isOperationLegal(ISD::FP_TO_UINT, NVT) &&
+      TLI.isOperationLegal(ISD::FP_TO_SINT, NVT))
+    NewOpc = ISD::FP_TO_SINT;
 
-  return DAG.getNode(NewOpc, NVT, N->getOperand(0));
+  SDValue Res = DAG.getNode(NewOpc, NVT, N->getOperand(0));
+
+  // Assert that the converted value fits in the original type.  If it doesn't
+  // (eg: because the value being converted is too big), then the result of the
+  // original operation was undefined anyway, so the assert is still correct.
+  return DAG.getNode(N->getOpcode() == ISD::FP_TO_UINT ?
+                     ISD::AssertZext : ISD::AssertSext,
+                     NVT, Res, DAG.getValueType(N->getValueType(0)));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_INT_EXTEND(SDNode *N) {

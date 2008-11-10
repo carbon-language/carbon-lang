@@ -2,7 +2,7 @@
 ; sure only the LSBit survives. Test that this is the case both for a returned
 ; value and as the operand of a branch.
 ; RUN: llvm-as < %s | llc -march=x86 | grep {\\(and\\)\\|\\(test.*\\\$1\\)} | \
-; RUN:   count 6
+; RUN:   count 5
 
 define i1 @test1(i32 %X) zeroext {
     %Y = trunc i32 %X to i1
@@ -33,15 +33,6 @@ cond_false:
 
 define i32 @test4(i8* %ptr) {
     %tmp = ptrtoint i8* %ptr to i1
-    br i1 %tmp, label %cond_true, label %cond_false
-cond_true:
-    ret i32 21
-cond_false:
-    ret i32 42
-}
-
-define i32 @test5(float %f) {
-    %tmp = fptoui float %f to i1
     br i1 %tmp, label %cond_true, label %cond_false
 cond_true:
     ret i32 21
