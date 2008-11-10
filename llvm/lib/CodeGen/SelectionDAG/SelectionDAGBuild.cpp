@@ -3859,6 +3859,38 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
 
+  case Intrinsic::convertff:
+  case Intrinsic::convertfsi:
+  case Intrinsic::convertfui:
+  case Intrinsic::convertsif:
+  case Intrinsic::convertuif:
+  case Intrinsic::convertss:
+  case Intrinsic::convertsu:
+  case Intrinsic::convertus:
+  case Intrinsic::convertuu: {
+    ISD::CvtCode Code = ISD::CVT_INVALID;
+    switch (Intrinsic) {
+    case Intrinsic::convertff:  Code = ISD::CVT_FF; break;
+    case Intrinsic::convertfsi: Code = ISD::CVT_FS; break;
+    case Intrinsic::convertfui: Code = ISD::CVT_FU; break;
+    case Intrinsic::convertsif: Code = ISD::CVT_SF; break;
+    case Intrinsic::convertuif: Code = ISD::CVT_UF; break;
+    case Intrinsic::convertss:  Code = ISD::CVT_SS; break;
+    case Intrinsic::convertsu:  Code = ISD::CVT_SU; break;
+    case Intrinsic::convertus:  Code = ISD::CVT_US; break;
+    case Intrinsic::convertuu:  Code = ISD::CVT_UU; break;
+    }
+    MVT DestVT = TLI.getValueType(I.getType());
+    Value* Op1 = I.getOperand(1);
+    setValue(&I, DAG.getConvertRndSat(DestVT, getValue(Op1),
+                                DAG.getValueType(DestVT),
+                                DAG.getValueType(getValue(Op1).getValueType()),
+                                getValue(I.getOperand(2)),
+                                getValue(I.getOperand(3)),
+                                Code));
+    return 0;
+  }
+
   case Intrinsic::sqrt:
     setValue(&I, DAG.getNode(ISD::FSQRT,
                              getValue(I.getOperand(1)).getValueType(),

@@ -431,6 +431,18 @@ namespace ISD {
     // conversions, but that is a noop, deleted by getNode().
     BIT_CONVERT,
     
+    // CONVERT_RNDSAT - This operator is used to support various conversions
+    // between various types (float, signed, unsigned) with rounding and
+    // saturation. NOTE: Avoid using this operator as most target don't support
+    // it and they might be removed. It takes the following arguments:
+    //   0) value
+    //   1) dest type (type to convert to)
+    //   2) src type (type to convert from)
+    //   3) rounding imm
+    //   4) saturation imm
+    //   5) ISD::CvtCode indicating the type of conversion to do
+    CONVERT_RNDSAT,
+    
     // FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
     // FLOG, FLOG2, FLOG10, FEXP, FEXP2,
     // FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR - Perform various unary floating
@@ -831,6 +843,22 @@ namespace ISD {
   /// function returns SETCC_INVALID if it is not possible to represent the
   /// resultant comparison.
   CondCode getSetCCAndOperation(CondCode Op1, CondCode Op2, bool isInteger);
+
+  //===--------------------------------------------------------------------===//
+  /// CvtCode enum - This enum defines the various converts CONVERT_RNDSAT 
+  /// supports.
+  enum CvtCode {
+    CVT_FF,     // Float from Float
+    CVT_FS,     // Float from Signed
+    CVT_FU,     // Float from Unsigned
+    CVT_SF,     // Signed from Float
+    CVT_UF,     // Unsigned from Float
+    CVT_SS,     // Signed from Signed
+    CVT_SU,     // Signed from Unsigned
+    CVT_US,     // Unsigned from Signed
+    CVT_UU,     // Unsigned from Unsigned
+    CVT_INVALID // Marker - Invalid opcode
+  };
 }  // end llvm::ISD namespace
 
 
@@ -2122,6 +2150,27 @@ public:
   static bool classof(const CondCodeSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::CONDCODE;
+  }
+};
+
+/// CvtRndSatSDNode - NOTE: avoid using this node as this may disappear in the
+/// future and most targets don't support it.
+class CvtRndSatSDNode : public SDNode {
+  ISD::CvtCode CvtCode;
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+protected:
+  friend class SelectionDAG;
+  explicit CvtRndSatSDNode(MVT VT, const SDValue *Ops, unsigned NumOps,
+                           ISD::CvtCode Code)
+    : SDNode(ISD::CONVERT_RNDSAT, getSDVTList(VT), Ops, NumOps), CvtCode(Code) {
+    assert(NumOps == 5 && "wrong number of operations");
+  }
+public:
+  ISD::CvtCode getCvtCode() const { return CvtCode; }
+
+  static bool classof(const CvtRndSatSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::CONVERT_RNDSAT;
   }
 };
 

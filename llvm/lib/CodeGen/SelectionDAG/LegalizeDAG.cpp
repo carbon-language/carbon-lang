@@ -3816,7 +3816,49 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       }
     }
     break;
-      
+  case ISD::CONVERT_RNDSAT: {
+    ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(Node)->getCvtCode();
+    switch (CvtCode) {
+    default: assert(0 && "Unknown cvt code!");
+    case ISD::CVT_SF:
+    case ISD::CVT_UF:
+      break;
+    case ISD::CVT_FF:
+    case ISD::CVT_FS:
+    case ISD::CVT_FU:
+    case ISD::CVT_SS:
+    case ISD::CVT_SU:
+    case ISD::CVT_US:
+    case ISD::CVT_UU: {
+      SDValue DTyOp = Node->getOperand(1);
+      SDValue STyOp = Node->getOperand(2);
+      SDValue RndOp = Node->getOperand(3);
+      SDValue SatOp = Node->getOperand(4);
+      switch (getTypeAction(Node->getOperand(0).getValueType())) {
+      case Expand: assert(0 && "Shouldn't need to expand other operators here!");
+      case Legal:
+        Tmp1 = LegalizeOp(Node->getOperand(0));
+        Result = DAG.UpdateNodeOperands(Result, Tmp1, DTyOp, STyOp,
+                                        RndOp, SatOp);
+        if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) ==
+            TargetLowering::Custom) {
+          Tmp1 = TLI.LowerOperation(Result, DAG);
+          if (Tmp1.getNode()) Result = Tmp1;
+        }
+        break;
+      case Promote:
+        Result = PromoteOp(Node->getOperand(0));
+        // For FP, make Op1 a i32
+        
+        Result = DAG.getConvertRndSat(Result.getValueType(), Result,
+                                      DTyOp, STyOp, RndOp, SatOp, CvtCode);
+        break;
+      }
+      break;
+    }
+    } // end switch CvtCode
+    break;
+  }
     // Conversion operators.  The source and destination have different types.
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP: {
@@ -4234,6 +4276,19 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
       break;
     }
     break;
+  case ISD::CONVERT_RNDSAT: {
+    ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(Node)->getCvtCode();
+    assert ((CvtCode == ISD::CVT_SS || CvtCode == ISD::CVT_SU ||
+             CvtCode == ISD::CVT_US || CvtCode == ISD::CVT_UU ||
+             CvtCode == ISD::CVT_SF || CvtCode == ISD::CVT_UF) &&
+            "can only promote integers");
+    Result = DAG.getConvertRndSat(NVT, Node->getOperand(0),
+                                  Node->getOperand(1), Node->getOperand(2),
+                                  Node->getOperand(3), Node->getOperand(4),
+                                  CvtCode);
+    break;
+
+  }
   case ISD::BIT_CONVERT:
     Result = EmitStackConvert(Node->getOperand(0), Node->getValueType(0),
                               Node->getValueType(0));
@@ -7344,6 +7399,24 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
     Hi = DAG.getNode(Node->getOpcode(), NewVT_Hi, H);
     break;
   }
+  case ISD::CONVERT_RNDSAT: {
+    ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(Node)->getCvtCode();
+    SDValue L, H;
+    SplitVectorOp(Node->getOperand(0), L, H);
+    SDValue DTyOpL =  DAG.getValueType(NewVT_Lo);
+    SDValue DTyOpH =  DAG.getValueType(NewVT_Hi);
+    SDValue STyOpL =  DAG.getValueType(L.getValueType());
+    SDValue STyOpH =  DAG.getValueType(H.getValueType());
+
+    SDValue RndOp = Node->getOperand(3);
+    SDValue SatOp = Node->getOperand(4);
+
+    Lo = DAG.getConvertRndSat(NewVT_Lo, L, DTyOpL, STyOpL,
+                              RndOp, SatOp, CvtCode);
+    Hi = DAG.getConvertRndSat(NewVT_Hi, H, DTyOpH, STyOpH,
+                              RndOp, SatOp, CvtCode);
+    break;
+  }
   case ISD::LOAD: {
     LoadSDNode *LD = cast<LoadSDNode>(Node);
     SDValue Ch = LD->getChain();
@@ -7482,6 +7555,16 @@ SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
                          NewVT, 
                          ScalarizeVectorOp(Node->getOperand(0)));
     break;
+  case ISD::CONVERT_RNDSAT: {
+    SDValue Op0 = ScalarizeVectorOp(Node->getOperand(0));
+    Result = DAG.getConvertRndSat(NewVT, Op0,
+                                  DAG.getValueType(NewVT),
+                                  DAG.getValueType(Op0.getValueType()),
+                                  Node->getOperand(3),
+                                  Node->getOperand(4),
+                                  cast<CvtRndSatSDNode>(Node)->getCvtCode());
+    break;
+  }
   case ISD::FPOWI:
   case ISD::FP_ROUND:
     Result = DAG.getNode(Node->getOpcode(),
@@ -7773,6 +7856,44 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
         break;
     case TargetLowering::Promote:
         // We defer the promotion to when we legalize the op
+      break;
+    case TargetLowering::Expand:
+      // Expand the operation into a bunch of nasty scalar code.
+      Result = LegalizeOp(UnrollVectorOp(Result));
+      break;
+    }
+    break;
+  }
+  case ISD::CONVERT_RNDSAT: {
+    SDValue RndOp = Node->getOperand(3);
+    SDValue SatOp = Node->getOperand(4);
+
+    TargetLowering::LegalizeAction action =
+      TLI.getOperationAction(Node->getOpcode(), WidenVT);
+
+    SDValue SrcOp = Node->getOperand(0);
+
+    // Converts between two different types so we need to determine
+    // the correct widen type for the input operand.
+    MVT SVT = SrcOp.getValueType();
+    assert(SVT.isVector() && "can not widen non vector type");
+    MVT SEVT = SVT.getVectorElementType();
+    MVT SWidenVT =  MVT::getVectorVT(SEVT, NewNumElts);
+
+    SrcOp = WidenVectorOp(SrcOp, SWidenVT);
+    assert(SrcOp.getValueType() == WidenVT);
+    SDValue DTyOp = DAG.getValueType(WidenVT);
+    SDValue STyOp = DAG.getValueType(SrcOp.getValueType());
+    ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(Node)->getCvtCode();
+
+    Result = DAG.getConvertRndSat(WidenVT, SrcOp, DTyOp, STyOp,
+                                  RndOp, SatOp, CvtCode);
+    switch (action)  {
+    default: assert(0 && "action not supported");
+    case TargetLowering::Legal:
+      break;
+    case TargetLowering::Promote:
+      // We defer the promotion to when we legalize the op
       break;
     case TargetLowering::Expand:
       // Expand the operation into a bunch of nasty scalar code.

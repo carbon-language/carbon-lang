@@ -259,6 +259,7 @@ private:
   SDValue PromoteIntOp_BR_CC(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_BUILD_VECTOR(SDNode *N);
+  SDValue PromoteIntOp_CONVERT_RNDSAT(SDNode *N);
   SDValue PromoteIntOp_FP_EXTEND(SDNode *N);
   SDValue PromoteIntOp_FP_ROUND(SDNode *N);
   SDValue PromoteIntOp_INT_TO_FP(SDNode *N);
@@ -442,6 +443,7 @@ private:
   SDValue ScalarizeVecRes_UnaryOp(SDNode *N);
 
   SDValue ScalarizeVecRes_BIT_CONVERT(SDNode *N);
+  SDValue ScalarizeVecRes_CONVERT_RNDSAT(SDNode *N);
   SDValue ScalarizeVecRes_EXTRACT_SUBVECTOR(SDNode *N);
   SDValue ScalarizeVecRes_FPOWI(SDNode *N);
   SDValue ScalarizeVecRes_INSERT_VECTOR_ELT(SDNode *N);
@@ -475,6 +477,7 @@ private:
   void SplitVecRes_BUILD_PAIR(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_BUILD_VECTOR(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_CONCAT_VECTORS(SDNode *N, SDValue &Lo, SDValue &Hi);
+  void SplitVecRes_CONVERT_RNDSAT(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_EXTRACT_SUBVECTOR(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_FPOWI(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo, SDValue &Hi);

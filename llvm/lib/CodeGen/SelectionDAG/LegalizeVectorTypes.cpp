@@ -43,6 +43,7 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
 
   case ISD::BIT_CONVERT:    R = ScalarizeVecRes_BIT_CONVERT(N); break;
   case ISD::BUILD_VECTOR:   R = N->getOperand(0); break;
+  case ISD::CONVERT_RNDSAT: R = ScalarizeVecRes_CONVERT_RNDSAT(N); break;
   case ISD::EXTRACT_SUBVECTOR: R = ScalarizeVecRes_EXTRACT_SUBVECTOR(N); break;
   case ISD::FPOWI:          R = ScalarizeVecRes_FPOWI(N); break;
   case ISD::INSERT_VECTOR_ELT: R = ScalarizeVecRes_INSERT_VECTOR_ELT(N); break;
@@ -104,6 +105,16 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_BinOp(SDNode *N) {
 SDValue DAGTypeLegalizer::ScalarizeVecRes_BIT_CONVERT(SDNode *N) {
   MVT NewVT = N->getValueType(0).getVectorElementType();
   return DAG.getNode(ISD::BIT_CONVERT, NewVT, N->getOperand(0));
+}
+
+SDValue DAGTypeLegalizer::ScalarizeVecRes_CONVERT_RNDSAT(SDNode *N) {
+  MVT NewVT = N->getValueType(0).getVectorElementType();
+  SDValue Op0 = GetScalarizedVector(N->getOperand(0));
+  return DAG.getConvertRndSat(NewVT, Op0, DAG.getValueType(NewVT),
+                              DAG.getValueType(Op0.getValueType()),
+                              N->getOperand(3),
+                              N->getOperand(4),
+                              cast<CvtRndSatSDNode>(N)->getCvtCode());
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_EXTRACT_SUBVECTOR(SDNode *N) {
@@ -339,6 +350,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::BIT_CONVERT:       SplitVecRes_BIT_CONVERT(N, Lo, Hi); break;
   case ISD::BUILD_VECTOR:      SplitVecRes_BUILD_VECTOR(N, Lo, Hi); break;
   case ISD::CONCAT_VECTORS:    SplitVecRes_CONCAT_VECTORS(N, Lo, Hi); break;
+  case ISD::CONVERT_RNDSAT:    SplitVecRes_CONVERT_RNDSAT(N, Lo, Hi); break;
   case ISD::EXTRACT_SUBVECTOR: SplitVecRes_EXTRACT_SUBVECTOR(N, Lo, Hi); break;
   case ISD::FPOWI:             SplitVecRes_FPOWI(N, Lo, Hi); break;
   case ISD::INSERT_VECTOR_ELT: SplitVecRes_INSERT_VECTOR_ELT(N, Lo, Hi); break;
@@ -485,6 +497,25 @@ void DAGTypeLegalizer::SplitVecRes_CONCAT_VECTORS(SDNode *N, SDValue &Lo,
 
   SmallVector<SDValue, 8> HiOps(N->op_begin()+NumSubvectors, N->op_end());
   Hi = DAG.getNode(ISD::CONCAT_VECTORS, HiVT, &HiOps[0], HiOps.size());
+}
+
+void DAGTypeLegalizer::SplitVecRes_CONVERT_RNDSAT(SDNode *N, SDValue &Lo,
+                                                  SDValue &Hi) {
+  MVT LoVT, HiVT;
+  GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
+  SDValue VLo, VHi;
+  GetSplitVector(N->getOperand(0), VLo, VHi);
+  SDValue DTyOpLo =  DAG.getValueType(LoVT);
+  SDValue DTyOpHi =  DAG.getValueType(HiVT);
+  SDValue STyOpLo =  DAG.getValueType(VLo.getValueType());
+  SDValue STyOpHi =  DAG.getValueType(VHi.getValueType());
+
+  SDValue RndOp = N->getOperand(3);
+  SDValue SatOp = N->getOperand(4);
+  ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(N)->getCvtCode();
+
+  Lo = DAG.getConvertRndSat(LoVT, VLo, DTyOpLo, STyOpLo, RndOp, SatOp, CvtCode);
+  Hi = DAG.getConvertRndSat(HiVT, VHi, DTyOpHi, STyOpHi, RndOp, SatOp, CvtCode);
 }
 
 void DAGTypeLegalizer::SplitVecRes_EXTRACT_SUBVECTOR(SDNode *N, SDValue &Lo,

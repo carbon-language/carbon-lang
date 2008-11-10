@@ -200,6 +200,10 @@ def STDAtomic2 : SDTypeProfile<1, 2, [
   SDTCisSameAs<0,2>, SDTCisInt<0>, SDTCisPtrTy<1>
 ]>;
 
+def SDTConvertOp : SDTypeProfile<1, 5, [ //cvtss, su, us, uu, ff, fs, fu, sf, su
+  SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>, SDTCisPtrTy<4>, SDTCisPtrTy<5>
+]>;
+
 class SDCallSeqStart<list<SDTypeConstraint> constraints> :
         SDTypeProfile<0, 1, constraints>;
 class SDCallSeqEnd<list<SDTypeConstraint> constraints> :
@@ -490,6 +494,8 @@ def intrinsic_w_chain : SDNode<"ISD::INTRINSIC_W_CHAIN",
 def intrinsic_wo_chain : SDNode<"ISD::INTRINSIC_WO_CHAIN", 
                                 SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>, []>;
 
+// Do not use cvt directly. Use cvt forms below
+def cvt : SDNode<"ISD::CONVERT_RNDSAT", SDTConvertOp>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Condition Codes
@@ -787,6 +793,54 @@ def setle  : PatFrag<(ops node:$lhs, node:$rhs),
                      (setcc node:$lhs, node:$rhs, SETLE)>;
 def setne  : PatFrag<(ops node:$lhs, node:$rhs),
                      (setcc node:$lhs, node:$rhs, SETNE)>;
+
+//===----------------------------------------------------------------------===//
+// Selection DAG CONVERT_RNDSAT patterns
+
+def cvtff : PatFrag<(ops node:$val, node:$dty, node:$sty, node:$rd, node:$sat),
+    (cvt node:$val, node:$dty, node:$sty, node:$rd, node:$sat), [{
+       return cast<CvtRndSatSDNode>(N)->getCvtCode() == ISD::CVT_FF;
+    }]>;
+
+def cvtss : PatFrag<(ops node:$val, node:$dty, node:$sty, node:$rd, node:$sat),
+    (cvt node:$val, node:$dty, node:$sty, node:$rd, node:$sat), [{
+       return cast<CvtRndSatSDNode>(N)->getCvtCode() == ISD::CVT_SS;
+    }]>;
+
+def cvtsu : PatFrag<(ops node:$val, node:$dty, node:$sty, node:$rd, node:$sat),
+    (cvt node:$val, node:$dty, node:$sty, node:$rd, node:$sat), [{
+       return cast<CvtRndSatSDNode>(N)->getCvtCode() == ISD::CVT_SU;
+    }]>;
+
+def cvtus : PatFrag<(ops node:$val, node:$dty, node:$sty, node:$rd, node:$sat),
+    (cvt node:$val, node:$dty, node:$sty, node:$rd, node:$sat), [{
+       return cast<CvtRndSatSDNode>(N)->getCvtCode() == ISD::CVT_US;
+    }]>;
+
+def cvtuu : PatFrag<(ops node:$val, node:$dty, node:$sty, node:$rd, node:$sat),
+    (cvt node:$val, node:$dty, node:$sty, node:$rd, node:$sat), [{
+       return cast<CvtRndSatSDNode>(N)->getCvtCode() == ISD::CVT_UU;
+    }]>;
+
+def cvtsf : PatFrag<(ops node:$val, node:$dty, node:$sty, node:$rd, node:$sat),
+    (cvt node:$val, node:$dty, node:$sty, node:$rd, node:$sat), [{
+       return cast<CvtRndSatSDNode>(N)->getCvtCode() == ISD::CVT_SF;
+    }]>;
+
+def cvtuf : PatFrag<(ops node:$val, node:$dty, node:$sty, node:$rd, node:$sat),
+    (cvt node:$val, node:$dty, node:$sty, node:$rd, node:$sat), [{
+       return cast<CvtRndSatSDNode>(N)->getCvtCode() == ISD::CVT_UF;
+    }]>;
+
+def cvtfs : PatFrag<(ops node:$val, node:$dty, node:$sty, node:$rd, node:$sat),
+    (cvt node:$val, node:$dty, node:$sty, node:$rd, node:$sat), [{
+       return cast<CvtRndSatSDNode>(N)->getCvtCode() == ISD::CVT_FS;
+    }]>;
+
+def cvtfu : PatFrag<(ops node:$val, node:$dty, node:$sty, node:$rd, node:$sat),
+    (cvt node:$val, node:$dty, node:$sty, node:$rd, node:$sat), [{
+       return cast<CvtRndSatSDNode>(N)->getCvtCode() == ISD::CVT_FU;
+    }]>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Pattern Support.

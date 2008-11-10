@@ -343,6 +343,11 @@ public:
 
   SDValue getCondCode(ISD::CondCode Cond);
 
+  /// Returns the ConvertRndSat Note: Avoid using this node because it may
+  /// disappear in the future and most targets don't support it.
+  SDValue getConvertRndSat(MVT VT, SDValue Val, SDValue DTy, SDValue STy,
+                           SDValue Rnd, SDValue Sat, ISD::CvtCode Code);
+
   /// getZeroExtendInReg - Return the expression required to zero extend the Op
   /// value assuming it was the smaller SrcTy value.
   SDValue getZeroExtendInReg(SDValue Op, MVT SrcTy);

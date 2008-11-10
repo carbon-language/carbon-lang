@@ -1137,6 +1137,21 @@ SDValue SelectionDAG::getCondCode(ISD::CondCode Cond) {
   return SDValue(CondCodeNodes[Cond], 0);
 }
 
+SDValue SelectionDAG::getConvertRndSat(MVT VT, SDValue Val, SDValue DTy,
+                                       SDValue STy, SDValue Rnd, SDValue Sat,
+                                       ISD::CvtCode Code) {
+  FoldingSetNodeID ID;
+  void* IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDValue(E, 0);
+  CvtRndSatSDNode *N = NodeAllocator.Allocate<CvtRndSatSDNode>();
+  SDValue Ops[] = { Val, DTy, STy, Rnd, Sat };
+  new (N) CvtRndSatSDNode(VT, Ops, 5, Code);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDValue(N, 0);
+}
+
 SDValue SelectionDAG::getRegister(unsigned RegNo, MVT VT) {
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::Register, getVTList(VT), 0, 0);
@@ -4727,6 +4742,7 @@ void StoreSDNode::ANCHOR() {}
 void AtomicSDNode::ANCHOR() {}
 void MemIntrinsicSDNode::ANCHOR() {}
 void CallSDNode::ANCHOR() {}
+void CvtRndSatSDNode::ANCHOR() {}
 
 HandleSDNode::~HandleSDNode() {
   DropOperands();
@@ -5160,6 +5176,21 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FP_TO_SINT:  return "fp_to_sint";
   case ISD::FP_TO_UINT:  return "fp_to_uint";
   case ISD::BIT_CONVERT: return "bit_convert";
+  
+  case ISD::CONVERT_RNDSAT: {
+    switch (cast<CvtRndSatSDNode>(this)->getCvtCode()) {
+    default: assert(0 && "Unknown cvt code!");
+    case ISD::CVT_FF:  return "cvt_ff";
+    case ISD::CVT_FS:  return "cvt_fs";
+    case ISD::CVT_FU:  return "cvt_fu";
+    case ISD::CVT_SF:  return "cvt_sf";
+    case ISD::CVT_UF:  return "cvt_uf";
+    case ISD::CVT_SS:  return "cvt_ss";
+    case ISD::CVT_SU:  return "cvt_su";
+    case ISD::CVT_US:  return "cvt_us";
+    case ISD::CVT_UU:  return "cvt_uu";
+    }
+  }
 
     // Control flow instructions
   case ISD::BR:      return "br";
