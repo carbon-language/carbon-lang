@@ -148,16 +148,15 @@ bool StackProtector::InsertStackProtectors() {
         FailBB = CreateFailBB();
       }
 
-      Function::iterator InsPt = BB; ++InsPt; // Insertion point for new BB.
       ++I; // Skip to the next block so that we don't resplit the return block.
 
       // Split the basic block before the return instruction.
       BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
 
-      // Move the newly created basic block to the point right after the old basic
-      // block so that it's in the "fall through" position.
+      // Move the newly created basic block to the point right after the old
+      // basic block so that it's in the "fall through" position.
       NewBB->removeFromParent();
-      F->getBasicBlockList().insert(InsPt, NewBB);
+      F->getBasicBlockList().insert(I, NewBB);
 
       // Generate the stack protector instructions in the old basic block.
       LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
