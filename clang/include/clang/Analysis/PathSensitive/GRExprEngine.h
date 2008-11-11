@@ -552,9 +552,9 @@ protected:
   /// VisitReturnStmt - Transfer function logic for return statements.
   void VisitReturnStmt(ReturnStmt* R, NodeTy* Pred, NodeSet& Dst);
   
-  /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
-  void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex, NodeTy* Pred,
-                                  NodeSet& Dst);
+  /// VisitSizeOfAlignOfExpr - Transfer function for sizeof.
+  void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex, NodeTy* Pred,
+                              NodeSet& Dst);
     
   /// VisitUnaryOperator - Transfer function logic for unary operators.
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst,

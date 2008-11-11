@@ -624,9 +624,11 @@ public:
   virtual ExprResult ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
                                   ExprTy *Input);
   virtual ExprResult 
-    ActOnSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
-                               SourceLocation LParenLoc, TypeTy *Ty,
-                               SourceLocation RParenLoc);
+    ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
+                           void *TyOrEx, const SourceRange &ArgRange);
+
+  bool CheckSizeOfAlignOfOperand(QualType type, SourceLocation OpLoc,
+                                 const SourceRange &R, bool isSizeof);
   
   virtual ExprResult ActOnPostfixUnaryOp(SourceLocation OpLoc, 
                                          tok::TokenKind Kind, ExprTy *Input);
@@ -1208,8 +1210,6 @@ public:
   QualType CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc);   
   QualType CheckAddressOfOperand(Expr *op, SourceLocation OpLoc);
   QualType CheckIndirectionOperand(Expr *op, SourceLocation OpLoc);
-  QualType CheckSizeOfAlignOfOperand(QualType type, SourceLocation OpLoc, 
-                                     const SourceRange &R, bool isSizeof);
   QualType CheckRealImagOperand(Expr *&Op, SourceLocation OpLoc);
   
   /// type checking primary expressions.

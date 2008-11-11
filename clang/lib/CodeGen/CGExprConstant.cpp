@@ -384,8 +384,8 @@ public:
     return 0;
   }
 
-  llvm::Constant *VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
-    return EmitSizeAlignOf(E->getArgumentType(), E->getType(), E->isSizeOf());
+  llvm::Constant *VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
+    return EmitSizeAlignOf(E->getTypeOfArgument(), E->getType(), E->isSizeOf());
   }
 
   llvm::Constant *VisitAddrLabelExpr(const AddrLabelExpr *E) {
@@ -425,12 +425,6 @@ public:
     }
 
     return llvm::ConstantExpr::getZExt(SubExpr, ConvertType(E->getType()));
-  }
-  llvm::Constant *VisitUnarySizeOf(const UnaryOperator *E) {
-    return EmitSizeAlignOf(E->getSubExpr()->getType(), E->getType(), true);
-  }
-  llvm::Constant *VisitUnaryAlignOf(const UnaryOperator *E) {
-    return EmitSizeAlignOf(E->getSubExpr()->getType(), E->getType(), false);
   }
   llvm::Constant *VisitUnaryAddrOf(const UnaryOperator *E) {
     return EmitLValue(E->getSubExpr());

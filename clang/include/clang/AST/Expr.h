@@ -431,8 +431,8 @@ public:
 };
 
 
-/// UnaryOperator - This represents the unary-expression's (except sizeof of
-/// types), the postinc/postdec operators from postfix-expression, and various
+/// UnaryOperator - This represents the unary-expression's (except sizeof and
+/// alignof), the postinc/postdec operators from postfix-expression, and various
 /// extensions.
 ///
 /// Notes on various nodes:
@@ -454,7 +454,6 @@ public:
     AddrOf, Deref,    // [C99 6.5.3.2] Address and indirection operators.
     Plus, Minus,      // [C99 6.5.3.3] Unary arithmetic operators.
     Not, LNot,        // [C99 6.5.3.3] Unary arithmetic operators.
-    SizeOf, AlignOf,  // [C99 6.5.3.4] Sizeof (expr, not type) operator.
     Real, Imag,       // "__real expr"/"__imag expr" Extension.
     Extension,        // __extension__ marker.
     OffsetOf          // __builtin_offsetof
@@ -484,7 +483,6 @@ public:
   bool isPostfix() const { return isPostfix(Opc); }
   bool isIncrementOp() const {return Opc==PreInc || Opc==PostInc; }
   bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
-  bool isSizeOfAlignOfOp() const { return Opc == SizeOf || Opc == AlignOf; }
   bool isOffsetOfOp() const { return Opc == OffsetOf; }
   static bool isArithmeticOp(Opcode Op) { return Op >= Plus && Op <= LNot; }
   
@@ -515,23 +513,39 @@ public:
   static UnaryOperator* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// SizeOfAlignOfTypeExpr - [C99 6.5.3.4] - This is only for sizeof/alignof of
-/// *types*.  sizeof(expr) is handled by UnaryOperator.
-class SizeOfAlignOfTypeExpr : public Expr {
-  bool isSizeof;  // true if sizeof, false if alignof.
-  QualType Ty;
+/// SizeOfAlignOfExpr - [C99 6.5.3.4] - This is for sizeof/alignof, both of
+/// types and expressions.
+class SizeOfAlignOfExpr : public Expr {
+  bool isSizeof : 1;  // true if sizeof, false if alignof.
+  bool isType : 1;    // true if operand is a type, false if an expression
+  void *Argument;
   SourceLocation OpLoc, RParenLoc;
 public:
-  SizeOfAlignOfTypeExpr(bool issizeof, QualType argType, QualType resultType,
-                        SourceLocation op, SourceLocation rp) : 
-    Expr(SizeOfAlignOfTypeExprClass, resultType),
-    isSizeof(issizeof), Ty(argType), OpLoc(op), RParenLoc(rp) {}
-  
+  SizeOfAlignOfExpr(bool issizeof, bool istype, void *argument,
+                    QualType resultType, SourceLocation op,
+                    SourceLocation rp) :
+    Expr(SizeOfAlignOfExprClass, resultType),
+    isSizeof(issizeof), isType(istype), Argument(argument),
+    OpLoc(op), RParenLoc(rp) {}
+
   virtual void Destroy(ASTContext& C);
 
   bool isSizeOf() const { return isSizeof; }
-  QualType getArgumentType() const { return Ty; }
-  
+  bool isArgumentType() const { return isType; }
+  QualType getArgumentType() const {
+    assert(isArgumentType() && "calling getArgumentType() when arg is expr");
+    return QualType::getFromOpaquePtr(Argument);
+  }
+  Expr* getArgumentExpr() const {
+    assert(!isArgumentType() && "calling getArgumentExpr() when arg is type");
+    return (Expr *)Argument;
+  }
+  /// Gets the argument type, or the type of the argument expression, whichever
+  /// is appropriate.
+  QualType getTypeOfArgument() const {
+    return isArgumentType() ? getArgumentType() : getArgumentExpr()->getType();
+  }
+
   SourceLocation getOperatorLoc() const { return OpLoc; }
 
   virtual SourceRange getSourceRange() const {
@@ -539,16 +553,16 @@ public:
   }
 
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == SizeOfAlignOfTypeExprClass; 
+    return T->getStmtClass() == SizeOfAlignOfExprClass; 
   }
-  static bool classof(const SizeOfAlignOfTypeExpr *) { return true; }
+  static bool classof(const SizeOfAlignOfExpr *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static SizeOfAlignOfTypeExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+  static SizeOfAlignOfExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 //===----------------------------------------------------------------------===//

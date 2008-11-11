@@ -620,11 +620,9 @@ void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
   if (!Node->isPostfix()) {
     OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
     
-    // Print a space if this is an "identifier operator" like sizeof or __real.
+    // Print a space if this is an "identifier operator" like __real.
     switch (Node->getOpcode()) {
     default: break;
-    case UnaryOperator::SizeOf:
-    case UnaryOperator::AlignOf:
     case UnaryOperator::Real:
     case UnaryOperator::Imag:
     case UnaryOperator::Extension:
@@ -663,9 +661,14 @@ void StmtPrinter::VisitUnaryOffsetOf(UnaryOperator *Node) {
   OS << ")";
 }
 
-void StmtPrinter::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
-  OS << (Node->isSizeOf() ? "sizeof(" : "__alignof(");
-  OS << Node->getArgumentType().getAsString() << ")";
+void StmtPrinter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
+  OS << (Node->isSizeOf() ? "sizeof" : "__alignof");
+  if (Node->isArgumentType())
+    OS << "(" << Node->getArgumentType().getAsString() << ")";
+  else {
+    OS << " ";
+    PrintExpr(Node->getArgumentExpr());
+  }
 }
 void StmtPrinter::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
   PrintExpr(Node->getLHS());

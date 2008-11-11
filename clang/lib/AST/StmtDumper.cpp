@@ -119,7 +119,7 @@ namespace  {
     void VisitFloatingLiteral(FloatingLiteral *Node);
     void VisitStringLiteral(StringLiteral *Str);
     void VisitUnaryOperator(UnaryOperator *Node);
-    void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node);
+    void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node);
     void VisitMemberExpr(MemberExpr *Node);
     void VisitExtVectorElementExpr(ExtVectorElementExpr *Node);
     void VisitBinaryOperator(BinaryOperator *Node);
@@ -363,10 +363,11 @@ void StmtDumper::VisitUnaryOperator(UnaryOperator *Node) {
   fprintf(F, " %s '%s'", Node->isPostfix() ? "postfix" : "prefix",
           UnaryOperator::getOpcodeStr(Node->getOpcode()));
 }
-void StmtDumper::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
+void StmtDumper::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " %s ", Node->isSizeOf() ? "sizeof" : "alignof");
-  DumpType(Node->getArgumentType());
+  if (Node->isArgumentType())
+    DumpType(Node->getArgumentType());
 }
 
 void StmtDumper::VisitMemberExpr(MemberExpr *Node) {

@@ -136,8 +136,8 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     case ReturnStmtClass:
       return ReturnStmt::CreateImpl(D, C);
     
-    case SizeOfAlignOfTypeExprClass:
-      return SizeOfAlignOfTypeExpr::CreateImpl(D, C);
+    case SizeOfAlignOfExprClass:
+      return SizeOfAlignOfExpr::CreateImpl(D, C);
       
     case StmtExprClass:
       return StmtExpr::CreateImpl(D, C);
@@ -795,22 +795,33 @@ ReturnStmt* ReturnStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   return new ReturnStmt(RetLoc,RetExpr);
 }
 
-void SizeOfAlignOfTypeExpr::EmitImpl(Serializer& S) const {
+void SizeOfAlignOfExpr::EmitImpl(Serializer& S) const {
   S.EmitBool(isSizeof);
-  S.Emit(Ty);
+  S.EmitBool(isType);
+  if (isType)
+    S.Emit(getArgumentType());
+  else
+    S.EmitOwnedPtr(getArgumentExpr());
   S.Emit(getType());
   S.Emit(OpLoc);
   S.Emit(RParenLoc);
 }
 
-SizeOfAlignOfTypeExpr* SizeOfAlignOfTypeExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+SizeOfAlignOfExpr*
+SizeOfAlignOfExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   bool isSizeof = D.ReadBool();
-  QualType Ty = QualType::ReadVal(D);
+  bool isType = D.ReadBool();
+  void *Argument;
+  if (isType)
+    Argument = QualType::ReadVal(D).getAsOpaquePtr();
+  else
+    Argument = D.ReadOwnedPtr<Expr>(C);
   QualType Res = QualType::ReadVal(D);
   SourceLocation OpLoc = SourceLocation::ReadVal(D);
   SourceLocation RParenLoc = SourceLocation::ReadVal(D);
   
-  return new SizeOfAlignOfTypeExpr(isSizeof,Ty,Res,OpLoc,RParenLoc);  
+  return new SizeOfAlignOfExpr(isSizeof, isType, Argument, Res,
+                               OpLoc, RParenLoc);
 }
 
 void StmtExpr::EmitImpl(Serializer& S) const {

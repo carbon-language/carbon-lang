@@ -404,29 +404,21 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
     case Stmt::StmtExprClass:
       return WalkAST_VisitStmtExpr(cast<StmtExpr>(Terminator));
 
-    case Stmt::SizeOfAlignOfTypeExprClass: {
-      SizeOfAlignOfTypeExpr* E = cast<SizeOfAlignOfTypeExpr>(Terminator);
+    case Stmt::SizeOfAlignOfExprClass: {
+      SizeOfAlignOfExpr* E = cast<SizeOfAlignOfExpr>(Terminator);
 
       // VLA types have expressions that must be evaluated.
-      for (VariableArrayType* VA = FindVA(E->getArgumentType().getTypePtr());
-           VA != 0; VA = FindVA(VA->getElementType().getTypePtr()))
-        addStmt(VA->getSizeExpr());
+      if (E->isArgumentType()) {
+        for (VariableArrayType* VA = FindVA(E->getArgumentType().getTypePtr());
+             VA != 0; VA = FindVA(VA->getElementType().getTypePtr()))
+          addStmt(VA->getSizeExpr());
+      }
+      // Expressions in sizeof/alignof are not evaluated and thus have no
+      // control flow.
+      else
+        Block->appendStmt(Terminator);
 
       return Block;
-    }
-      
-    case Stmt::UnaryOperatorClass: {
-      UnaryOperator* U = cast<UnaryOperator>(Terminator);
-      
-      // sizeof(expressions).  For such expressions,
-      // the subexpression is not really evaluated, so
-      // we don't care about control-flow within the sizeof.
-      if (U->getOpcode() == UnaryOperator::SizeOf) {
-        Block->appendStmt(Terminator);
-        return Block;
-      }
-      
-      break;
     }
       
     case Stmt::BinaryOperatorClass: {

@@ -222,14 +222,10 @@ public:
   bool VisitCastExpr(CastExpr* E) {
     return HandleCast(E->getLocStart(), E->getSubExpr(), E->getType());
   }
-  bool VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
-    return EvaluateSizeAlignOf(E->isSizeOf(), E->getArgumentType(),
-                               E->getType());
-  }
-    
+  bool VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
+
 private:
   bool HandleCast(SourceLocation CastLoc, Expr *SubExpr, QualType DestType);
-  bool EvaluateSizeAlignOf(bool isSizeOf, QualType SrcTy, QualType DstTy);
 };
 } // end anonymous namespace
 
@@ -426,13 +422,15 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   return true;
 }
 
-/// EvaluateSizeAlignOf - Evaluate sizeof(SrcTy) or alignof(SrcTy) with a result
-/// as a DstTy type.
-bool IntExprEvaluator::EvaluateSizeAlignOf(bool isSizeOf, QualType SrcTy,
-                                           QualType DstTy) {
+/// VisitSizeAlignOfExpr - Evaluate a sizeof or alignof with a result as the
+/// expression's type.
+bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
+  QualType DstTy = E->getType();
   // Return the result in the right width.
   Result.zextOrTrunc(getIntTypeSizeInBits(DstTy));
   Result.setIsUnsigned(DstTy->isUnsignedIntegerType());
+
+  QualType SrcTy = E->getTypeOfArgument();
 
   // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
   if (SrcTy->isVoidType())
@@ -443,6 +441,8 @@ bool IntExprEvaluator::EvaluateSizeAlignOf(bool isSizeOf, QualType SrcTy,
     // FIXME: Should we attempt to evaluate this?
     return false;
   }
+
+  bool isSizeOf = E->isSizeOf();
   
   // GCC extension: sizeof(function) = 1.
   if (SrcTy->isFunctionType()) {
@@ -469,10 +469,6 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
     return true;
   }
-  
-  if (E->isSizeOfAlignOfOp())
-    return EvaluateSizeAlignOf(E->getOpcode() == UnaryOperator::SizeOf,
-                               E->getSubExpr()->getType(), E->getType());
   
   // Get the operand value into 'Result'.
   if (!Visit(E->getSubExpr()))

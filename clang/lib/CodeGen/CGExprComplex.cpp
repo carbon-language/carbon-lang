@@ -117,7 +117,7 @@ public:
   }
   ComplexPairTy VisitUnaryMinus    (const UnaryOperator *E);
   ComplexPairTy VisitUnaryNot      (const UnaryOperator *E);
-  // LNot,SizeOf,AlignOf,Real,Imag never return complex.
+  // LNot,Real,Imag never return complex.
   ComplexPairTy VisitUnaryExtension(const UnaryOperator *E) {
     return Visit(E->getSubExpr());
   }

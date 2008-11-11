@@ -380,8 +380,8 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       VisitReturnStmt(cast<ReturnStmt>(S), Pred, Dst);
       break;
       
-    case Stmt::SizeOfAlignOfTypeExprClass:
-      VisitSizeOfAlignOfTypeExpr(cast<SizeOfAlignOfTypeExpr>(S), Pred, Dst);
+    case Stmt::SizeOfAlignOfExprClass:
+      VisitSizeOfAlignOfExpr(cast<SizeOfAlignOfExpr>(S), Pred, Dst);
       break;
       
     case Stmt::StmtExprClass: {
@@ -1749,11 +1749,11 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
   assert(0 && "unprocessed InitListExpr type");
 }
 
-/// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
-void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
-                                              NodeTy* Pred,
-                                              NodeSet& Dst) {
-  QualType T = Ex->getArgumentType();
+/// VisitSizeOfAlignOfExpr - Transfer function for sizeof(type).
+void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
+                                          NodeTy* Pred,
+                                          NodeSet& Dst) {
+  QualType T = Ex->getTypeOfArgument();
   uint64_t amt;  
   
   if (Ex->isSizeOf()) {
@@ -1970,40 +1970,6 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         MakeNode(Dst, U, *I, St);
       }
       
-      return;
-    }
-     
-    case UnaryOperator::AlignOf: {
-      
-      QualType T = U->getSubExpr()->getType();
-      
-      // FIXME: Add support for VLAs.
-      
-      if (!T.getTypePtr()->isConstantSizeType())
-        return;
-      
-      uint64_t size = getContext().getTypeAlign(T) / 8;                
-      const GRState* St = GetState(Pred);
-      St = BindExpr(St, U, NonLoc::MakeVal(getBasicVals(), size, U->getType()));
-      
-      MakeNode(Dst, U, Pred, St);
-      return;
-    }
-      
-    case UnaryOperator::SizeOf: {
-            
-      QualType T = U->getSubExpr()->getType();
-        
-      // FIXME: Add support for VLAs.
-      
-      if (!T.getTypePtr()->isConstantSizeType())
-        return;
-        
-      uint64_t size = getContext().getTypeSize(T) / 8;                
-      const GRState* St = GetState(Pred);
-      St = BindExpr(St, U, NonLoc::MakeVal(getBasicVals(), size, U->getType()));
-        
-      MakeNode(Dst, U, Pred, St);
       return;
     }
   }

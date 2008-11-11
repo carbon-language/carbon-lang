@@ -117,9 +117,7 @@ public:
                                   CGF.getContext().typesAreCompatible(
                                     E->getArgType1(), E->getArgType2()));
   }
-  Value *VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
-    return EmitSizeAlignOf(E->getArgumentType(), E->getType(), E->isSizeOf());
-  }
+  Value *VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
   Value *VisitAddrLabelExpr(const AddrLabelExpr *E) {
     llvm::Value *V = 
       llvm::ConstantInt::get(llvm::Type::Int32Ty,
@@ -235,14 +233,6 @@ public:
   Value *VisitUnaryMinus    (const UnaryOperator *E);
   Value *VisitUnaryNot      (const UnaryOperator *E);
   Value *VisitUnaryLNot     (const UnaryOperator *E);
-  Value *VisitUnarySizeOf   (const UnaryOperator *E) {
-    return EmitSizeAlignOf(E->getSubExpr()->getType(), E->getType(), true);
-  }
-  Value *VisitUnaryAlignOf  (const UnaryOperator *E) {
-    return EmitSizeAlignOf(E->getSubExpr()->getType(), E->getType(), false);
-  }
-  Value *EmitSizeAlignOf(QualType TypeToSize, QualType RetType,
-                         bool isSizeOf);
   Value *VisitUnaryReal     (const UnaryOperator *E);
   Value *VisitUnaryImag     (const UnaryOperator *E);
   Value *VisitUnaryExtension(const UnaryOperator *E) {
@@ -653,14 +643,16 @@ Value *ScalarExprEmitter::VisitUnaryLNot(const UnaryOperator *E) {
   return Builder.CreateZExt(BoolVal, CGF.LLVMIntTy, "lnot.ext");
 }
 
-/// EmitSizeAlignOf - Return the size or alignment of the 'TypeToSize' type as
-/// an integer (RetType).
-Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize, 
-                                          QualType RetType,bool isSizeOf){
+/// VisitSizeOfAlignOfExpr - Return the size or alignment of the type of
+/// argument of the sizeof expression as an integer.
+Value *
+ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
+  QualType RetType = E->getType();
   assert(RetType->isIntegerType() && "Result type must be an integer!");
   uint32_t ResultWidth = 
     static_cast<uint32_t>(CGF.getContext().getTypeSize(RetType));
 
+  QualType TypeToSize = E->getTypeOfArgument();
   // sizeof(void) and __alignof__(void) = 1 as a gcc extension. Also
   // for function types.
   // FIXME: what is alignof a function type in gcc?
@@ -670,7 +662,7 @@ Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize,
   /// FIXME: This doesn't handle VLAs yet!
   std::pair<uint64_t, unsigned> Info = CGF.getContext().getTypeInfo(TypeToSize);
   
-  uint64_t Val = isSizeOf ? Info.first : Info.second;
+  uint64_t Val = E->isSizeOf() ? Info.first : Info.second;
   Val /= 8;  // Return size in bytes, not bits.
   
   return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));

@@ -1470,11 +1470,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     default:
       InitializerElementNotConstant(Init);
       return true;
-    case UnaryOperator::SizeOf:
-    case UnaryOperator::AlignOf:
     case UnaryOperator::OffsetOf:
-      // sizeof(E) is a constantexpr if and only if E is not evaluted.
-      // See C99 6.5.3.4p2 and 6.6p3.
       if (Exp->getSubExpr()->getType()->isConstantSizeType())
         return false;
       InitializerElementNotConstant(Init);
@@ -1487,14 +1483,14 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
       return CheckArithmeticConstantExpression(Exp->getSubExpr());
     }
   }
-  case Expr::SizeOfAlignOfTypeExprClass: {
-    const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(Init);
+  case Expr::SizeOfAlignOfExprClass: {
+    const SizeOfAlignOfExpr *Exp = cast<SizeOfAlignOfExpr>(Init);
     // Special check for void types, which are allowed as an extension
-    if (Exp->getArgumentType()->isVoidType())
+    if (Exp->getTypeOfArgument()->isVoidType())
       return false;
     // alignof always evaluates to a constant.
     // FIXME: is sizeof(int[3.0]) a constant expression?
-    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType()) {
+    if (Exp->isSizeOf() && !Exp->getTypeOfArgument()->isConstantSizeType()) {
       InitializerElementNotConstant(Init);
       return true;
     }

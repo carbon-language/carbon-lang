@@ -92,8 +92,6 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   case LNot:    return "!";
   case Real:    return "__real";
   case Imag:    return "__imag";
-  case SizeOf:  return "sizeof";
-  case AlignOf: return "alignof";
   case Extension: return "__extension__";
   case OffsetOf: return "__builtin_offsetof";
   }
@@ -608,8 +606,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
 
     // Get the operand value.  If this is sizeof/alignof, do not evalute the
     // operand.  This affects C99 6.6p3.
-    if (!Exp->isSizeOfAlignOfOp() && 
-        Exp->getOpcode() != UnaryOperator::OffsetOf &&
+    if (Exp->getOpcode() != UnaryOperator::OffsetOf &&
         !Exp->getSubExpr()->isConstantExpr(Ctx, Loc))
       return false;
   
@@ -621,10 +618,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
       return false;
     case UnaryOperator::Extension:
       return true;  // FIXME: this is wrong.
-    case UnaryOperator::SizeOf:
-    case UnaryOperator::AlignOf:
     case UnaryOperator::OffsetOf:
-      // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
       if (!Exp->getSubExpr()->getType()->isConstantSizeType()) {
         if (Loc) *Loc = Exp->getOperatorLoc();
         return false;
@@ -637,13 +631,15 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
       return true;
     }
   }
-  case SizeOfAlignOfTypeExprClass: {
-    const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
+  case SizeOfAlignOfExprClass: {
+    const SizeOfAlignOfExpr *Exp = cast<SizeOfAlignOfExpr>(this);
     // alignof always evaluates to a constant.
-    if (Exp->isSizeOf() && !Exp->getArgumentType()->isVoidType() &&
-        !Exp->getArgumentType()->isConstantSizeType()) {
-      if (Loc) *Loc = Exp->getOperatorLoc();
-      return false;
+    if (Exp->isSizeOf()) {
+      QualType ArgTy = Exp->getTypeOfArgument();
+      if (!ArgTy->isVoidType() && !ArgTy->isConstantSizeType()) {
+        if (Loc) *Loc = Exp->getOperatorLoc();
+        return false;
+      }
     }
     return true;
   }
@@ -784,10 +780,10 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   case UnaryOperatorClass: {
     const UnaryOperator *Exp = cast<UnaryOperator>(this);
     
-    // Get the operand value.  If this is sizeof/alignof, do not evalute the
+    // Get the operand value.  If this is offsetof, do not evalute the
     // operand.  This affects C99 6.6p3.
-    if (!Exp->isSizeOfAlignOfOp() && !Exp->isOffsetOfOp() &&
-        !Exp->getSubExpr()->isIntegerConstantExpr(Result, Ctx, Loc,isEvaluated))
+    if (!Exp->isOffsetOfOp() && !Exp->getSubExpr()->
+                        isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
       return false;
 
     switch (Exp->getOpcode()) {
@@ -798,35 +794,6 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       return false;
     case UnaryOperator::Extension:
       return true;  // FIXME: this is wrong.
-    case UnaryOperator::SizeOf:
-    case UnaryOperator::AlignOf:
-      // Return the result in the right width.
-      Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
-        
-      // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
-      if (Exp->getSubExpr()->getType()->isVoidType()) {
-        Result = 1;
-        break;
-      }
-        
-      // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
-      if (!Exp->getSubExpr()->getType()->isConstantSizeType()) {
-        if (Loc) *Loc = Exp->getOperatorLoc();
-        return false;
-      }
-      
-      // Get information about the size or align.
-      if (Exp->getSubExpr()->getType()->isFunctionType()) {
-        // GCC extension: sizeof(function) = 1.
-        Result = Exp->getOpcode() == UnaryOperator::AlignOf ? 4 : 1;
-      } else {
-        unsigned CharSize = Ctx.Target.getCharWidth();
-        if (Exp->getOpcode() == UnaryOperator::AlignOf)
-          Result = Ctx.getTypeAlign(Exp->getSubExpr()->getType()) / CharSize;
-        else
-          Result = Ctx.getTypeSize(Exp->getSubExpr()->getType()) / CharSize;
-      }
-      break;
     case UnaryOperator::LNot: {
       bool Val = Result == 0;
       Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
@@ -847,34 +814,35 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     }
     break;
   }
-  case SizeOfAlignOfTypeExprClass: {
-    const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
+  case SizeOfAlignOfExprClass: {
+    const SizeOfAlignOfExpr *Exp = cast<SizeOfAlignOfExpr>(this);
     
     // Return the result in the right width.
     Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
     
+    QualType ArgTy = Exp->getTypeOfArgument();
     // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
-    if (Exp->getArgumentType()->isVoidType()) {
+    if (ArgTy->isVoidType()) {
       Result = 1;
       break;
     }
     
     // alignof always evaluates to a constant, sizeof does if arg is not VLA.
-    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType()) {
+    if (Exp->isSizeOf() && !ArgTy->isConstantSizeType()) {
       if (Loc) *Loc = Exp->getOperatorLoc();
       return false;
     }
 
     // Get information about the size or align.
-    if (Exp->getArgumentType()->isFunctionType()) {
+    if (ArgTy->isFunctionType()) {
       // GCC extension: sizeof(function) = 1.
       Result = Exp->isSizeOf() ? 1 : 4;
     } else { 
       unsigned CharSize = Ctx.Target.getCharWidth();
       if (Exp->isSizeOf())
-        Result = Ctx.getTypeSize(Exp->getArgumentType()) / CharSize;
+        Result = Ctx.getTypeSize(ArgTy) / CharSize;
       else
-        Result = Ctx.getTypeAlign(Exp->getArgumentType()) / CharSize;
+        Result = Ctx.getTypeAlign(ArgTy) / CharSize;
     }
     break;
   }
@@ -1280,9 +1248,18 @@ int64_t UnaryOperator::evaluateOffsetOf(ASTContext& C) const
   return ::evaluateOffsetOf(C, cast<Expr>(Val)) / CharSize;
 }
 
-void SizeOfAlignOfTypeExpr::Destroy(ASTContext& C) {
-  // Override default behavior of traversing children. We do not want
-  // to delete the type.
+void SizeOfAlignOfExpr::Destroy(ASTContext& C) {
+  // Override default behavior of traversing children. If this has a type
+  // operand and the type is a variable-length array, the child iteration
+  // will iterate over the size expression. However, this expression belongs
+  // to the type, not to this, so we don't want to delete it.
+  // We still want to delete this expression.
+  // FIXME: Same as in Stmt::Destroy - will be eventually in ASTContext's
+  // pool allocator.
+  if (isArgumentType())
+    delete this;
+  else
+    Expr::Destroy(C);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1350,17 +1327,23 @@ Stmt::child_iterator ParenExpr::child_end() { return &Val+1; }
 Stmt::child_iterator UnaryOperator::child_begin() { return &Val; }
 Stmt::child_iterator UnaryOperator::child_end() { return &Val+1; }
 
-// SizeOfAlignOfTypeExpr
-Stmt::child_iterator SizeOfAlignOfTypeExpr::child_begin() { 
-  // If the type is a VLA type (and not a typedef), the size expression of the
-  // VLA needs to be treated as an executable expression.
-  if (VariableArrayType* T = dyn_cast<VariableArrayType>(Ty.getTypePtr()))
-    return child_iterator(T);
-  else
-    return child_iterator(); 
+// SizeOfAlignOfExpr
+Stmt::child_iterator SizeOfAlignOfExpr::child_begin() { 
+  // If this is of a type and the type is a VLA type (and not a typedef), the
+  // size expression of the VLA needs to be treated as an executable expression.
+  // Why isn't this weirdness documented better in StmtIterator?
+  if (isArgumentType()) {
+    if (VariableArrayType* T = dyn_cast<VariableArrayType>(
+                                   getArgumentType().getTypePtr()))
+      return child_iterator(T);
+    return child_iterator();
+  }
+  return child_iterator((Stmt**)&Argument);
 }
-Stmt::child_iterator SizeOfAlignOfTypeExpr::child_end() {
-  return child_iterator(); 
+Stmt::child_iterator SizeOfAlignOfExpr::child_end() {
+  if (isArgumentType())
+    return child_iterator();
+  return child_iterator((Stmt**)&Argument + 1);
 }
 
 // ArraySubscriptExpr

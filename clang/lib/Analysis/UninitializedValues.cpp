@@ -171,9 +171,6 @@ bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
       break;
     }
     
-    case UnaryOperator::SizeOf:
-      return Initialized;
-      
     default:
       break;
   }

@@ -520,9 +520,8 @@ public:
     return 0;
   }
   virtual ExprResult 
-    ActOnSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
-                               SourceLocation LParenLoc, TypeTy *Ty,
-                               SourceLocation RParenLoc) {
+    ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
+                           void *TyOrEx, const SourceRange &ArgRange) {
     return 0;
   }
   

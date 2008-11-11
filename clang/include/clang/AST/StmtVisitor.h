@@ -91,8 +91,6 @@ public:
       case UnaryOperator::Minus:        DISPATCH(UnaryMinus,     UnaryOperator);
       case UnaryOperator::Not:          DISPATCH(UnaryNot,       UnaryOperator);
       case UnaryOperator::LNot:         DISPATCH(UnaryLNot,      UnaryOperator);
-      case UnaryOperator::SizeOf:       DISPATCH(UnarySizeOf,    UnaryOperator);
-      case UnaryOperator::AlignOf:      DISPATCH(UnaryAlignOf,   UnaryOperator);
       case UnaryOperator::Real:         DISPATCH(UnaryReal,      UnaryOperator);
       case UnaryOperator::Imag:         DISPATCH(UnaryImag,      UnaryOperator);
       case UnaryOperator::Extension:    DISPATCH(UnaryExtension, UnaryOperator);
@@ -158,7 +156,6 @@ public:
   
   UNARYOP_FALLBACK(Plus)      UNARYOP_FALLBACK(Minus)
   UNARYOP_FALLBACK(Not)       UNARYOP_FALLBACK(LNot)
-  UNARYOP_FALLBACK(SizeOf)    UNARYOP_FALLBACK(AlignOf)
   UNARYOP_FALLBACK(Real)      UNARYOP_FALLBACK(Imag)
   UNARYOP_FALLBACK(Extension) UNARYOP_FALLBACK(OffsetOf)
 #undef UNARYOP_FALLBACK

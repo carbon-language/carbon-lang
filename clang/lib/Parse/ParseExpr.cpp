@@ -764,9 +764,10 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
     // If ParseParenExpression parsed a '(typename)' sequence only, the this is
     // sizeof/alignof a type.  Otherwise, it is sizeof/alignof an expression.
     if (ExprType == CastExpr)
-      return Actions.ActOnSizeOfAlignOfTypeExpr(OpTok.getLocation(),
-                                                OpTok.is(tok::kw_sizeof),
-                                                LParenLoc, CastTy, RParenLoc);
+      return Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
+                                            OpTok.is(tok::kw_sizeof),
+                                            /*isType=*/true, CastTy,
+                                            SourceRange(LParenLoc, RParenLoc));
     
     // If this is a parenthesized expression, it is the start of a 
     // unary-expression, but doesn't include any postfix pieces.  Parse these
@@ -776,8 +777,10 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
   
   // If we get here, the operand to the sizeof/alignof was an expresion.
   if (!Operand.isInvalid)
-    Operand = Actions.ActOnUnaryOp(OpTok.getLocation(), OpTok.getKind(),
-                                   Operand.Val);
+    Operand = Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
+                                             OpTok.is(tok::kw_sizeof),
+                                             /*isType=*/false, Operand.Val,
+                                             SourceRange());
   return Operand;
 }
 

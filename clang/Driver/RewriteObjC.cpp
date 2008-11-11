@@ -2254,9 +2254,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                   FT->getResultType(), SourceLocation());
     
     // Build sizeof(returnType)
-    SizeOfAlignOfTypeExpr *sizeofExpr = new SizeOfAlignOfTypeExpr(true, 
-                                          returnType, Context->getSizeType(), 
-                                          SourceLocation(), SourceLocation());
+    SizeOfAlignOfExpr *sizeofExpr = new SizeOfAlignOfExpr(true, true,
+                                      returnType.getAsOpaquePtr(),
+                                      Context->getSizeType(),
+                                      SourceLocation(), SourceLocation());
     // (sizeof(returnType) <= 8 ? objc_msgSend(...) : objc_msgSend_stret(...))
     // FIXME: Value of 8 is base on ppc32/x86 ABI for the most common cases.
     // For X86 it is more complicated and some kind of target specific routine

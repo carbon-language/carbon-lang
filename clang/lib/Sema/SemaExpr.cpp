@@ -654,10 +654,10 @@ Action::ExprResult Sema::ActOnParenExpr(SourceLocation L, SourceLocation R,
 
 /// The UsualUnaryConversions() function is *not* called by this routine.
 /// See C99 6.3.2.1p[2-4] for more details.
-QualType Sema::CheckSizeOfAlignOfOperand(QualType exprType, 
-                                         SourceLocation OpLoc,
-                                         const SourceRange &ExprRange,
-                                         bool isSizeof) {
+bool Sema::CheckSizeOfAlignOfOperand(QualType exprType, 
+                                     SourceLocation OpLoc,
+                                     const SourceRange &ExprRange,
+                                     bool isSizeof) {
   // C99 6.5.3.4p1:
   if (isa<FunctionType>(exprType) && isSizeof)
     // alignof(function) is allowed.
@@ -669,28 +669,40 @@ QualType Sema::CheckSizeOfAlignOfOperand(QualType exprType,
     Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
                            diag::err_alignof_incomplete_type,
          exprType.getAsString(), ExprRange);
-    return QualType(); // error
+    return true; // error
   }
-  // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
-  return Context.getSizeType();
+
+  return false;
 }
 
-Action::ExprResult Sema::
-ActOnSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
-                           SourceLocation LPLoc, TypeTy *Ty,
-                           SourceLocation RPLoc) {
+/// ActOnSizeOfAlignOfExpr - Handle @c sizeof(type) and @c sizeof @c expr and
+/// the same for @c alignof and @c __alignof
+/// Note that the ArgRange is invalid if isType is false.
+Action::ExprResult
+Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
+                             void *TyOrEx, const SourceRange &ArgRange) {
   // If error parsing type, ignore.
-  if (Ty == 0) return true;
-  
-  // Verify that this is a valid expression.
-  QualType ArgTy = QualType::getFromOpaquePtr(Ty);
-  
-  QualType resultType =
-    CheckSizeOfAlignOfOperand(ArgTy, OpLoc, SourceRange(LPLoc, RPLoc),isSizeof);
+  if (TyOrEx == 0) return true;
 
-  if (resultType.isNull())
+  QualType ArgTy;
+  SourceRange Range;
+  if (isType) {
+    ArgTy = QualType::getFromOpaquePtr(TyOrEx);
+    Range = ArgRange;
+  } else {
+    // Get the end location.
+    Expr *ArgEx = (Expr *)TyOrEx;
+    Range = ArgEx->getSourceRange();
+    ArgTy = ArgEx->getType();
+  }
+
+  // Verify that the operand is valid.
+  if (CheckSizeOfAlignOfOperand(ArgTy, OpLoc, Range, isSizeof))
     return true;
-  return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy, resultType, OpLoc, RPLoc);
+
+  // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
+  return new SizeOfAlignOfExpr(isSizeof, isType, TyOrEx, Context.getSizeType(),
+                               OpLoc, Range.getEnd());
 }
 
 QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc) {
@@ -2635,8 +2647,6 @@ static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
   case tok::minus:        Opc = UnaryOperator::Minus; break;
   case tok::tilde:        Opc = UnaryOperator::Not; break;
   case tok::exclaim:      Opc = UnaryOperator::LNot; break;
-  case tok::kw_sizeof:    Opc = UnaryOperator::SizeOf; break;
-  case tok::kw___alignof: Opc = UnaryOperator::AlignOf; break;
   case tok::kw___real:    Opc = UnaryOperator::Real; break;
   case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
   case tok::kw___extension__: Opc = UnaryOperator::Extension; break;
@@ -2901,14 +2911,6 @@ Action::ExprResult Sema::ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
                   resultType.getAsString());
     // LNot always has type int. C99 6.5.3.3p5.
     resultType = Context.IntTy;
-    break;
-  case UnaryOperator::SizeOf:
-    resultType = CheckSizeOfAlignOfOperand(Input->getType(), OpLoc,
-                                           Input->getSourceRange(), true);
-    break;
-  case UnaryOperator::AlignOf:
-    resultType = CheckSizeOfAlignOfOperand(Input->getType(), OpLoc,
-                                           Input->getSourceRange(), false);
     break;
   case UnaryOperator::Real:
   case UnaryOperator::Imag:
