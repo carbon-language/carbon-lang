@@ -200,13 +200,6 @@ Pass *createAddReadAttrsPass();
 ///
 ModulePass *createMergeFunctionsPass();
 
-//===----------------------------------------------------------------------===//
-//
-// RemoveDbgInfoPass - This pass removes debug info. intrinsics.
-//
-ModulePass *createRemoveDbgInfoPass();
-
-
 } // End llvm namespace
 
 #endif
