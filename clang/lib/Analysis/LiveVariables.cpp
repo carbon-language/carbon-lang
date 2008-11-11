@@ -176,18 +176,24 @@ void TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
   else VisitStmt(B);
 }
 
-void TransferFuncs::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
-  Stmt* Element = S->getElement();
-  
-  if (DeclStmt* DS = dyn_cast<DeclStmt>(Element)) {
-    VisitDeclStmt(DS);
-    return;
-  }
+void TransferFuncs::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {  
+  // This represents a 'use' of the collection.
+  Visit(S->getCollection());
   
   // This represents a 'kill' for the variable.
-  DeclRefExpr* DR = cast<DeclRefExpr>(Element);
-  LiveState(cast<VarDecl>(DR->getDecl()), AD) = Dead;
-  if (AD.Observer) { AD.Observer->ObserverKill(DR); }
+  Stmt* Element = S->getElement();
+  DeclRefExpr *DR;
+  VarDecl* VD = 0;
+  
+  if (DeclStmt* DS = dyn_cast<DeclStmt>(Element))
+    VD = cast<VarDecl>(DS->getSolitaryDecl());
+  else {
+    DR = cast<DeclRefExpr>(Element);
+    VD = cast<VarDecl>(DR->getDecl());
+  }
+
+  LiveState(VD, AD) = Dead;
+  if (AD.Observer && DR) { AD.Observer->ObserverKill(DR); }
 }
 
   
