@@ -1717,7 +1717,7 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   
   CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
   CGF.Builder.CreateUnreachable();
-  CGF.EmitBlock(CGF.createBasicBlock("bb"));
+  CGF.EmitDummyBlock();
 }
 
 void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,

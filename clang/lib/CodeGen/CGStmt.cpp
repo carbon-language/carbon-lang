@@ -167,6 +167,10 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB) {
   Builder.SetInsertPoint(BB);
 }
 
+void CodeGenFunction::EmitDummyBlock() {
+  EmitBlock(createBasicBlock());
+}
+
 void CodeGenFunction::EmitLabel(const LabelStmt &S) {
   llvm::BasicBlock *NextBB = getBasicBlockForLabel(&S);
   EmitBlock(NextBB);
@@ -189,7 +193,7 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
   
   // Emit a block after the branch so that dead code after a goto has some place
   // to go.
-  Builder.SetInsertPoint(createBasicBlock("", CurFn));
+  EmitDummyBlock();
 }
 
 void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
@@ -210,7 +214,7 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
 
   // Emit a block after the branch so that dead code after a goto has some place
   // to go.
-  Builder.SetInsertPoint(createBasicBlock("", CurFn));
+  EmitDummyBlock();
 }
 
 void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
@@ -433,7 +437,7 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
 
   // Emit a block after the branch so that dead code after a return has some
   // place to go.
-  EmitBlock(createBasicBlock());
+  EmitDummyBlock();
 }
 
 /// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
@@ -473,7 +477,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   
   // Emit a block after the branch so that dead code after a return has some
   // place to go.
-  EmitBlock(createBasicBlock());
+  EmitDummyBlock();
 }
 
 void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
@@ -487,7 +491,7 @@ void CodeGenFunction::EmitBreakStmt() {
 
   llvm::BasicBlock *Block = BreakContinueStack.back().BreakBlock;
   Builder.CreateBr(Block);
-  EmitBlock(createBasicBlock());
+  EmitDummyBlock();
 }
 
 void CodeGenFunction::EmitContinueStmt() {
@@ -495,7 +499,7 @@ void CodeGenFunction::EmitContinueStmt() {
 
   llvm::BasicBlock *Block = BreakContinueStack.back().ContinueBlock;
   Builder.CreateBr(Block);
-  EmitBlock(createBasicBlock());
+  EmitDummyBlock();
 }
 
 /// EmitCaseStmtRange - If case statement range is not too big then

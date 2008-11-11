@@ -225,6 +225,11 @@ public:
   llvm::BasicBlock *getBasicBlockForLabel(const LabelStmt *S);
   
   void EmitBlock(llvm::BasicBlock *BB);
+
+  /// EmitDummyBlock - Emit a new block which will never be branched
+  /// to. This is used to satisfy the invariant that codegen always
+  /// has an active unterminated block to dump code into.
+  void EmitDummyBlock();
   
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified stmt yet.
