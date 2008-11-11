@@ -97,6 +97,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::SUBE     , MVT::i64, Expand);
 
   setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
 
 
   // We don't support sin/cos/sqrt/pow
