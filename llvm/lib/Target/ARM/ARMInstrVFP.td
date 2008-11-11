@@ -35,20 +35,20 @@ def arm_fmdrr  : SDNode<"ARMISD::FMDRR",  SDT_FMDRR>;
 //
 
 let isSimpleLoad = 1 in {
-def FLDD  : ADI5<(outs DPR:$dst), (ins addrmode5:$addr),
+def FLDD  : ADI5<0b1101, 0b01, (outs DPR:$dst), (ins addrmode5:$addr),
                  "fldd", " $dst, $addr",
                  [(set DPR:$dst, (load addrmode5:$addr))]>;
 
-def FLDS  : ASI5<(outs SPR:$dst), (ins addrmode5:$addr),
+def FLDS  : ASI5<0b1101, 0b01, (outs SPR:$dst), (ins addrmode5:$addr),
                  "flds", " $dst, $addr",
                  [(set SPR:$dst, (load addrmode5:$addr))]>;
 } // isSimpleLoad
 
-def FSTD  : ADI5<(outs), (ins DPR:$src, addrmode5:$addr),
+def FSTD  : ADI5<0b1101, 0b00, (outs), (ins DPR:$src, addrmode5:$addr),
                  "fstd", " $src, $addr",
                  [(store DPR:$src, addrmode5:$addr)]>;
 
-def FSTS  : ASI5<(outs), (ins SPR:$src, addrmode5:$addr),
+def FSTS  : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
                  "fsts", " $src, $addr",
                  [(store SPR:$src, addrmode5:$addr)]>;
 
@@ -60,24 +60,32 @@ let mayLoad = 1 in {
 def FLDMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
                            variable_ops),
                   "fldm${addr:submode}d${p} ${addr:base}, $dst1",
-                  []>;
+                  []> {
+  let Inst{20} = 1;
+}
 
 def FLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
                            variable_ops),
                   "fldm${addr:submode}s${p} ${addr:base}, $dst1",
-                  []>;
+                  []> {
+  let Inst{20} = 1;
+}
 }
 
 let mayStore = 1 in {
 def FSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,
                            variable_ops),
                  "fstm${addr:submode}d${p} ${addr:base}, $src1",
-                 []>;
+                 []> {
+  let Inst{20} = 0;
+}
 
 def FSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,
                            variable_ops),
                  "fstm${addr:submode}s${p} ${addr:base}, $src1",
-                 []>;
+                 []> {
+  let Inst{20} = 0;
+}
 } // mayStore
 
 // FLDMX, FSTMX - mixing S/D registers for pre-armv6 cores
@@ -384,4 +392,11 @@ def FNEGScc  : ASuI<0b11101011, 0b0001, 0b0100,
 //
 
 let Defs = [CPSR] in
-def FMSTAT : ASI<(outs), (ins), "fmstat", "", [(arm_fmstat)]>;
+def FMSTAT : AI<(outs), (ins), VFPMiscFrm, "fmstat", "", [(arm_fmstat)]> {
+  let Inst{27-20} = 0b11101111;
+  let Inst{19-16} = 0b0001;
+  let Inst{15-12} = 0b1111;
+  let Inst{11-8}  = 0b1010;
+  let Inst{7}     = 0;
+  let Inst{4}     = 1;
+}

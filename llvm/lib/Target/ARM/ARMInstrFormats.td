@@ -19,29 +19,33 @@ class Format<bits<5> val> {
   bits<5> Value = val;
 }
 
-def Pseudo      : Format<1>;
-def MulFrm      : Format<2>;
-def BrFrm       : Format<3>;
-def BrMiscFrm   : Format<4>;
+def Pseudo        : Format<1>;
+def MulFrm        : Format<2>;
+def BrFrm         : Format<3>;
+def BrMiscFrm     : Format<4>;
 
-def DPFrm       : Format<5>;
-def DPSoRegFrm  : Format<6>;
+def DPFrm         : Format<5>;
+def DPSoRegFrm    : Format<6>;
 
-def LdFrm       : Format<7>;
-def StFrm       : Format<8>;
-def LdMiscFrm   : Format<9>;
-def StMiscFrm   : Format<10>;
-def LdMulFrm    : Format<11>;
-def StMulFrm    : Format<12>;
+def LdFrm         : Format<7>;
+def StFrm         : Format<8>;
+def LdMiscFrm     : Format<9>;
+def StMiscFrm     : Format<10>;
+def LdMulFrm      : Format<11>;
+def StMulFrm      : Format<12>;
 
-def ArithMiscFrm: Format<13>;
-def ExtFrm      : Format<14>;
-def VFPFrm      : Format<15>;
-def VFPUnaryFrm : Format<16>;
-def VFPBinaryFrm: Format<17>;
-def VFPConv1Frm : Format<18>;
-def VFPConv2Frm : Format<19>;
-def ThumbFrm    : Format<20>;
+def ArithMiscFrm  : Format<13>;
+def ExtFrm        : Format<14>;
+
+def VFPUnaryFrm   : Format<15>;
+def VFPBinaryFrm  : Format<16>;
+def VFPConv1Frm   : Format<17>;
+def VFPConv2Frm   : Format<18>;
+def VFPLdStFrm    : Format<19>;
+def VFPLdStMulFrm : Format<20>;
+def VFPMiscFrm    : Format<21>;
+
+def ThumbFrm      : Format<22>;
 
 // Misc flag for data processing instructions that indicates whether
 // the instruction has a Rn register operand.
@@ -738,29 +742,44 @@ class TJTI<dag outs, dag ins, string asm, list<dag> pattern>
 // ARM VFP Instruction templates.
 //
 
-// ARM Float Instruction
-class ASI<dag oops, dag iops, string opc, string asm, list<dag> pattern>
-  : AI<oops, iops, VFPFrm, opc, asm, pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-class ASI5<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+// ARM VFP addrmode5 loads and stores
+class ADI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
+           string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
-      VFPFrm, opc, asm, "", pattern> {
+      VFPLdStFrm, opc, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
+  let Inst{27-24} = opcod1;
+  let Inst{21-20} = opcod2;
+  let Inst{11-8}  = 0b1011;
 }
 
-// ARM Double Instruction
-class ADI<dag oops, dag iops, string opc, string asm, list<dag> pattern>
-  : AI<oops, iops, VFPFrm, opc, asm, pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-class ADI5<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
+           string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
-      VFPFrm, opc, asm, "", pattern> {
+      VFPLdStFrm, opc, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
+  let Inst{27-24} = opcod1;
+  let Inst{21-20} = opcod2;
+  let Inst{11-8}  = 0b1010;
 }
+
+// Load / store multiple
+class AXSI5<dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
+       VFPLdStMulFrm, asm, "", pattern> {
+  // TODO: Mark the instructions with the appropriate subtarget info.
+  let Inst{27-25} = 0b110;
+  let Inst{11-8}  = 0b1011;
+}
+
+class AXDI5<dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
+       VFPLdStMulFrm, asm, "", pattern> {
+  // TODO: Mark the instructions with the appropriate subtarget info.
+  let Inst{27-25} = 0b110;
+  let Inst{11-8}  = 0b1010;
+}
+
 
 // Double precision, unary
 class ADuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
@@ -816,32 +835,6 @@ class AVConv2I<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
   let Inst{11-8}  = opcod3;
   let Inst{6}     = 1;
 }
-
-// Special cases.
-class AXSI<dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone,
-       VFPFrm, asm, "", pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-class AXSI5<dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
-       VFPFrm, asm, "", pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-class AXDI<dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone,
-       VFPFrm, asm, "", pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-class AXDI5<dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
-       VFPFrm, asm, "", pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
 
 //===----------------------------------------------------------------------===//
 

@@ -69,46 +69,48 @@ namespace ARMII {
     //===------------------------------------------------------------------===//
     // Instruction encoding formats.
     //
-    FormShift   = 10,
-    FormMask    = 0x1f << FormShift,
+    FormShift     = 10,
+    FormMask      = 0x1f << FormShift,
 
     // Pseudo instructions
-    Pseudo      = 1 << FormShift,
+    Pseudo        = 1 << FormShift,
 
     // Multiply instructions
-    MulFrm      = 2 << FormShift,
+    MulFrm        = 2 << FormShift,
 
     // Branch instructions
-    BrFrm       = 3 << FormShift,
-    BrMiscFrm   = 4 << FormShift,
+    BrFrm         = 3 << FormShift,
+    BrMiscFrm     = 4 << FormShift,
 
     // Data Processing instructions
-    DPFrm       = 5 << FormShift,
-    DPSoRegFrm  = 6 << FormShift,
+    DPFrm         = 5 << FormShift,
+    DPSoRegFrm    = 6 << FormShift,
 
     // Load and Store
-    LdFrm       = 7  << FormShift,
-    StFrm       = 8  << FormShift,
-    LdMiscFrm   = 9  << FormShift,
-    StMiscFrm   = 10 << FormShift,
-    LdMulFrm    = 11 << FormShift,
-    StMulFrm    = 12 << FormShift,
+    LdFrm         = 7  << FormShift,
+    StFrm         = 8  << FormShift,
+    LdMiscFrm     = 9  << FormShift,
+    StMiscFrm     = 10 << FormShift,
+    LdMulFrm      = 11 << FormShift,
+    StMulFrm      = 12 << FormShift,
 
     // Miscellaneous arithmetic instructions
-    ArithMiscFrm= 13 << FormShift,
+    ArithMiscFrm  = 13 << FormShift,
 
     // Extend instructions
-    ExtFrm      = 14 << FormShift,
+    ExtFrm        = 14 << FormShift,
 
     // VFP formats
-    VPFFrm       = 15 << FormShift,
-    VFPUnaryFrm  = 16 << FormShift,
-    VFPBinaryFrm = 17 << FormShift,
-    VFPConv1Frm  = 18 << FormShift,
-    VFPConv2Frm  = 19 << FormShift,
+    VFPUnaryFrm   = 15 << FormShift,
+    VFPBinaryFrm  = 16 << FormShift,
+    VFPConv1Frm   = 17 << FormShift,
+    VFPConv2Frm   = 18 << FormShift,
+    VFPLdStFrm    = 19 << FormShift,
+    VFPLdStMulFrm = 20 << FormShift,
+    VFPMiscFrm    = 21 << FormShift,
 
     // Thumb format
-    ThumbFrm     = 20 << FormShift,
+    ThumbFrm      = 22 << FormShift,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating
