@@ -103,22 +103,23 @@ public:
   // Visitors to walk an AST and construct the CFG.  Called by
   // buildCFG.  Do not call directly!
   
-  CFGBlock* VisitStmt(Stmt* Statement);
-  CFGBlock* VisitNullStmt(NullStmt* Statement);
-  CFGBlock* VisitCompoundStmt(CompoundStmt* C);
-  CFGBlock* VisitIfStmt(IfStmt* I);
-  CFGBlock* VisitReturnStmt(ReturnStmt* R);
-  CFGBlock* VisitLabelStmt(LabelStmt* L);
-  CFGBlock* VisitGotoStmt(GotoStmt* G);
-  CFGBlock* VisitForStmt(ForStmt* F);
-  CFGBlock* VisitWhileStmt(WhileStmt* W);
-  CFGBlock* VisitDoStmt(DoStmt* D);
-  CFGBlock* VisitContinueStmt(ContinueStmt* C);
   CFGBlock* VisitBreakStmt(BreakStmt* B);
-  CFGBlock* VisitSwitchStmt(SwitchStmt* Terminator);
   CFGBlock* VisitCaseStmt(CaseStmt* Terminator);
+  CFGBlock* VisitCompoundStmt(CompoundStmt* C);
+  CFGBlock* VisitContinueStmt(ContinueStmt* C);
   CFGBlock* VisitDefaultStmt(DefaultStmt* D);
+  CFGBlock* VisitDoStmt(DoStmt* D);
+  CFGBlock* VisitForStmt(ForStmt* F);
+  CFGBlock* VisitGotoStmt(GotoStmt* G);
+  CFGBlock* VisitIfStmt(IfStmt* I);
   CFGBlock* VisitIndirectGotoStmt(IndirectGotoStmt* I);
+  CFGBlock* VisitLabelStmt(LabelStmt* L);
+  CFGBlock* VisitNullStmt(NullStmt* Statement);
+  CFGBlock* VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
+  CFGBlock* VisitReturnStmt(ReturnStmt* R);
+  CFGBlock* VisitStmt(Stmt* Statement);
+  CFGBlock* VisitSwitchStmt(SwitchStmt* Terminator);
+  CFGBlock* VisitWhileStmt(WhileStmt* W);
   
   // FIXME: Add support for ObjC-specific control-flow structures.
   
@@ -128,7 +129,6 @@ public:
     return Block;
   }
   
-  CFGBlock* VisitObjCForCollectionStmt(ObjCForCollectionStmt* S){ return NYS();}
   CFGBlock* VisitObjCAtTryStmt(ObjCAtTryStmt* S) { return NYS(); }
   CFGBlock* VisitObjCAtCatchStmt(ObjCAtCatchStmt* S) { return NYS(); }
   CFGBlock* VisitObjCAtFinallyStmt(ObjCAtFinallyStmt* S) { return NYS(); }
@@ -797,6 +797,70 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     return EntryConditionBlock;
   }
 }
+
+CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
+  // Objective-C fast enumeration 'for' statements:
+  //  http://developer.apple.com/documentation/Cocoa/Conceptual/ObjectiveC
+  //
+  //  for ( Type newVariable in collection_expression ) { statements }
+  //
+  //  becomes:
+  //
+  //   prologue:
+  //     1. collection_expression
+  //     T. jump to loop_entry
+  //   loop_entry:
+  //     1. ObjCForCollectionStmt [performs binding to newVariable]
+  //     T. ObjCForCollectionStmt  TB, FB  [jumps to TB if newVariable != nil]
+  //   TB:
+  //     statements
+  //     T. jump to loop_entry
+  //   FB:
+  //     what comes after
+  //
+  //  and
+  //
+  //  Type existingItem;
+  //  for ( existingItem in expression ) { statements }
+  //
+  //  becomes:
+  //
+  //   the same with newVariable replaced with existingItem; the binding
+  //   works the same except that for one ObjCForCollectionStmt::getElement()
+  //   returns a DeclStmt and the other returns a DeclRefExpr.
+  //
+  
+  CFGBlock* LoopSuccessor = 0;
+  
+  if (Block) {
+    FinishBlock(Block);
+    LoopSuccessor = Block;
+    Block = 0;
+  }
+  else LoopSuccessor = Succ;
+  
+  // Build the condition block.  The condition has no short-circuit evaluation,
+  // so we don't need multiple blocks like other control-flow structures with
+  // conditions.
+  CFGBlock* ConditionBlock = createBlock(false);
+  ConditionBlock->appendStmt(S);
+  ConditionBlock->setTerminator(S); // No need to call FinishBlock; 1 stmt
+  
+  // Now create the true branch.
+  Succ = ConditionBlock;
+  CFGBlock* BodyBlock = addStmt(S->getBody());
+  FinishBlock(BodyBlock);
+  
+  // Connect up the condition block
+  ConditionBlock->addSuccessor(Block);
+  ConditionBlock->addSuccessor(LoopSuccessor);
+  
+  // Now create a prologue block to contain the collection expression.
+  Block = 0;
+  Succ = ConditionBlock;
+  return addStmt(S->getCollection());
+}    
+
 
 CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   // "while" is a control-flow statement.  Thus we stop processing the
