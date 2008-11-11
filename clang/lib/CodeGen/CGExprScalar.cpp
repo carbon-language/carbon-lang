@@ -1028,6 +1028,20 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   Value *LHSCond = CGF.EvaluateExprAsBool(E->getLHS());
   
+  if (llvm::ConstantInt *LHSCst = dyn_cast<llvm::ConstantInt>(LHSCond)) {
+    // If we have 0 && RHS, see if we can elide RHS, if so, just return LHSCond.
+    if (LHSCst->getZExtValue() == 0) {
+      if (!CGF.ContainsLabel(E->getRHS()))
+        // Elide RHS, return 0
+        return llvm::Constant::getNullValue(CGF.LLVMIntTy);
+    } else {
+      // If we have 1 && X, just emit X without inserting the control flow.
+      Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
+      // ZExt result to int.
+      return Builder.CreateZExt(RHSCond, CGF.LLVMIntTy, "land.ext");
+    }
+  }
+  
   llvm::BasicBlock *ContBlock = llvm::BasicBlock::Create("land_cont");
   llvm::BasicBlock *RHSBlock = llvm::BasicBlock::Create("land_rhs");
   
@@ -1054,6 +1068,20 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
 
 Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   Value *LHSCond = CGF.EvaluateExprAsBool(E->getLHS());
+  
+  if (llvm::ConstantInt *LHSCst = dyn_cast<llvm::ConstantInt>(LHSCond)) {
+    // If we have 1 || RHS, see if we can elide RHS, if so, just return LHSCond.
+    if (LHSCst->getZExtValue() != 0) {
+      if (!CGF.ContainsLabel(E->getRHS()))
+        // Elide RHS, return 1
+        return llvm::ConstantInt::get(CGF.LLVMIntTy, 1);
+    } else {
+      // If we have 0 || X, just emit X without inserting the control flow.
+      Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
+      // ZExt result to int.
+      return Builder.CreateZExt(RHSCond, CGF.LLVMIntTy, "lor.ext");
+    }
+  }
   
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("lor_cont");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("lor_rhs");

@@ -163,6 +163,36 @@ bool CodeGenFunction::isDummyBlock(const llvm::BasicBlock *BB) {
   return false;
 }
 
+/// ContainsLabel - Return true if the statement contains a label in it.  If
+/// this statement is not executed normally, it not containing a label means
+/// that we can just remove the code.
+bool CodeGenFunction::ContainsLabel(const Stmt *S, bool IgnoreCaseStmts) {
+  // Null statement, not a label!
+  if (S == 0) return false;
+  
+  // If this is a label, we have to emit the code, consider something like:
+  // if (0) {  ...  foo:  bar(); }  goto foo;
+  if (isa<LabelStmt>(S))
+    return true;
+  
+  // If this is a case/default statement, and we haven't seen a switch, we have
+  // to emit the code.
+  if (isa<SwitchCase>(S) && !IgnoreCaseStmts)
+    return true;
+  
+  // If this is a switch statement, we want to ignore cases below it.
+  if (isa<SwitchStmt>(S))
+    IgnoreCaseStmts = true;
+  
+  // Scan subexpressions for verboten labels.
+  for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end();
+       I != E; ++I)
+    if (ContainsLabel(*I, IgnoreCaseStmts))
+      return true;
+  
+  return false;
+}
+
 /// getCGRecordLayout - Return record layout info.
 const CGRecordLayout *CodeGenFunction::getCGRecordLayout(CodeGenTypes &CGT,
                                                          QualType Ty) {

@@ -513,7 +513,13 @@ public:
   //                             Internal Helpers
   //===--------------------------------------------------------------------===//
  
+  /// ContainsLabel - Return true if the statement contains a label in it.  If
+  /// this statement is not executed normally, it not containing a label means
+  /// that we can just remove the code.
+  static bool ContainsLabel(const Stmt *S, bool IgnoreCaseStmts = false);
+  
 private:
+  
   /// EmitIndirectSwitches - Emit code for all of the switch
   /// instructions in IndirectSwitches.
   void EmitIndirectSwitches();
