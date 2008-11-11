@@ -32,6 +32,11 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   )
 
+install(DIRECTORY include
+  DESTINATION .
+  PATTERN ".svn" EXCLUDE
+  )
+
 add_definitions( -D_GNU_SOURCE )
 
 add_subdirectory(lib)
