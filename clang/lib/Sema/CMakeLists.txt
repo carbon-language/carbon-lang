@@ -5,6 +5,7 @@ add_clang_library(clangSema
   ParseAST.cpp
   SemaChecking.cpp
   Sema.cpp
+  SemaCXXScopeSpec.cpp
   SemaDeclAttr.cpp
   SemaDecl.cpp
   SemaDeclCXX.cpp
@@ -14,6 +15,7 @@ add_clang_library(clangSema
   SemaExprObjC.cpp
   SemaInherit.cpp
   SemaInit.cpp
+  SemaNamedCast.cpp
   SemaOverload.cpp
   SemaStmt.cpp
   SemaType.cpp
