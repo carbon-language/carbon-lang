@@ -1055,8 +1055,8 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
 Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   Value *LHSCond = CGF.EvaluateExprAsBool(E->getLHS());
   
-  llvm::BasicBlock *ContBlock = llvm::BasicBlock::Create("lor_cont");
-  llvm::BasicBlock *RHSBlock = llvm::BasicBlock::Create("lor_rhs");
+  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("lor_cont");
+  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("lor_rhs");
   
   llvm::BasicBlock *OrigBlock = Builder.GetInsertBlock();
   Builder.CreateCondBr(LHSCond, ContBlock, RHSBlock);
@@ -1090,9 +1090,9 @@ Value *ScalarExprEmitter::VisitBinComma(const BinaryOperator *E) {
 
 Value *ScalarExprEmitter::
 VisitConditionalOperator(const ConditionalOperator *E) {
-  llvm::BasicBlock *LHSBlock = llvm::BasicBlock::Create("cond.?");
-  llvm::BasicBlock *RHSBlock = llvm::BasicBlock::Create("cond.:");
-  llvm::BasicBlock *ContBlock = llvm::BasicBlock::Create("cond.cont");
+  llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.?");
+  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.:");
+  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.cont");
   
   // Evaluate the conditional, then convert it to bool.  We do this explicitly
   // because we need the unconverted value if this is a GNU ?: expression with

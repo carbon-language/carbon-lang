@@ -389,9 +389,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::Value *LimitPtr = CreateTempAlloca(UnsignedLongLTy, "limit.ptr");
   Builder.CreateStore(CountRV.getScalarVal(), LimitPtr);
   
-  llvm::BasicBlock *NoElements = llvm::BasicBlock::Create("noelements");
-  llvm::BasicBlock *SetStartMutations = 
-    llvm::BasicBlock::Create("setstartmutations");
+  llvm::BasicBlock *NoElements = createBasicBlock("noelements");
+  llvm::BasicBlock *SetStartMutations = createBasicBlock("setstartmutations");
   
   llvm::Value *Limit = Builder.CreateLoad(LimitPtr);
   llvm::Value *Zero = llvm::Constant::getNullValue(UnsignedLongLTy);
@@ -414,13 +413,13 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   
   Builder.CreateStore(StateMutations, StartMutationsPtr);
   
-  llvm::BasicBlock *LoopStart = llvm::BasicBlock::Create("loopstart");
+  llvm::BasicBlock *LoopStart = createBasicBlock("loopstart");
   EmitBlock(LoopStart);
 
   llvm::Value *CounterPtr = CreateTempAlloca(UnsignedLongLTy, "counter.ptr");
   Builder.CreateStore(Zero, CounterPtr);
   
-  llvm::BasicBlock *LoopBody = llvm::BasicBlock::Create("loopbody"); 
+  llvm::BasicBlock *LoopBody = createBasicBlock("loopbody"); 
   EmitBlock(LoopBody);
 
   StateMutationsPtr = Builder.CreateLoad(StateMutationsPtrPtr, "mutationsptr");
@@ -433,8 +432,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
                                                      "tobool");
   
   
-  llvm::BasicBlock *WasMutated = llvm::BasicBlock::Create("wasmutated");
-  llvm::BasicBlock *WasNotMutated = llvm::BasicBlock::Create("wasnotmutated");
+  llvm::BasicBlock *WasMutated = createBasicBlock("wasmutated");
+  llvm::BasicBlock *WasNotMutated = createBasicBlock("wasnotmutated");
   
   Builder.CreateCondBr(MutationsEqual, WasNotMutated, WasMutated);
   
@@ -477,8 +476,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
                               llvm::ConstantInt::get(UnsignedLongLTy, 1));
   Builder.CreateStore(Counter, CounterPtr);
   
-  llvm::BasicBlock *LoopEnd = llvm::BasicBlock::Create("loopend");
-  llvm::BasicBlock *AfterBody = llvm::BasicBlock::Create("afterbody");
+  llvm::BasicBlock *LoopEnd = createBasicBlock("loopend");
+  llvm::BasicBlock *AfterBody = createBasicBlock("afterbody");
   
   BreakContinueStack.push_back(BreakContinue(LoopEnd, AfterBody));
 
@@ -488,7 +487,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   
   EmitBlock(AfterBody);
   
-  llvm::BasicBlock *FetchMore = llvm::BasicBlock::Create("fetchmore");
+  llvm::BasicBlock *FetchMore = createBasicBlock("fetchmore");
   
   llvm::Value *IsLess = Builder.CreateICmpULT(Counter, Limit, "isless");
   Builder.CreateCondBr(IsLess, LoopBody, FetchMore);

@@ -189,7 +189,7 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
   
   // Emit a block after the branch so that dead code after a goto has some place
   // to go.
-  Builder.SetInsertPoint(llvm::BasicBlock::Create("", CurFn));
+  Builder.SetInsertPoint(createBasicBlock("", CurFn));
 }
 
 void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
@@ -210,7 +210,7 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
 
   // Emit a block after the branch so that dead code after a goto has some place
   // to go.
-  Builder.SetInsertPoint(llvm::BasicBlock::Create("", CurFn));
+  Builder.SetInsertPoint(createBasicBlock("", CurFn));
 }
 
 void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
@@ -221,12 +221,12 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // unequal to 0.  The condition must be a scalar type.
   llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
   
-  llvm::BasicBlock *ContBlock = llvm::BasicBlock::Create("ifend");
-  llvm::BasicBlock *ThenBlock = llvm::BasicBlock::Create("ifthen");
+  llvm::BasicBlock *ContBlock = createBasicBlock("ifend");
+  llvm::BasicBlock *ThenBlock = createBasicBlock("ifthen");
   llvm::BasicBlock *ElseBlock = ContBlock;
   
   if (S.getElse())
-    ElseBlock = llvm::BasicBlock::Create("ifelse");
+    ElseBlock = createBasicBlock("ifelse");
   
   // Insert the conditional branch.
   Builder.CreateCondBr(BoolCondVal, ThenBlock, ElseBlock);
@@ -262,7 +262,7 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
 void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   // Emit the header for the loop, insert it, which will create an uncond br to
   // it.
-  llvm::BasicBlock *LoopHeader = llvm::BasicBlock::Create("whilecond");
+  llvm::BasicBlock *LoopHeader = createBasicBlock("whilecond");
   EmitBlock(LoopHeader);
   
   // Evaluate the conditional in the while header.  C99 6.8.5.1: The evaluation
@@ -279,8 +279,8 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   
   // Create an exit block for when the condition fails, create a block for the
   // body of the loop.
-  llvm::BasicBlock *ExitBlock = llvm::BasicBlock::Create("whileexit");
-  llvm::BasicBlock *LoopBody  = llvm::BasicBlock::Create("whilebody");
+  llvm::BasicBlock *ExitBlock = createBasicBlock("whileexit");
+  llvm::BasicBlock *LoopBody  = createBasicBlock("whilebody");
   
   // As long as the condition is true, go to the loop body.
   if (EmitBoolCondBranch)
@@ -313,11 +313,11 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
 void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
   // Emit the body for the loop, insert it, which will create an uncond br to
   // it.
-  llvm::BasicBlock *LoopBody = llvm::BasicBlock::Create("dobody");
-  llvm::BasicBlock *AfterDo = llvm::BasicBlock::Create("afterdo");
+  llvm::BasicBlock *LoopBody = createBasicBlock("dobody");
+  llvm::BasicBlock *AfterDo = createBasicBlock("afterdo");
   EmitBlock(LoopBody);
 
-  llvm::BasicBlock *DoCond = llvm::BasicBlock::Create("docond");
+  llvm::BasicBlock *DoCond = createBasicBlock("docond");
   
   // Store the blocks to use for break and continue.
   BreakContinueStack.push_back(BreakContinue(AfterDo, DoCond));
@@ -371,8 +371,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     EmitStmt(S.getInit());
 
   // Start the loop with a block that tests the condition.
-  llvm::BasicBlock *CondBlock = llvm::BasicBlock::Create("forcond");
-  llvm::BasicBlock *AfterFor = llvm::BasicBlock::Create("afterfor");
+  llvm::BasicBlock *CondBlock = createBasicBlock("forcond");
+  llvm::BasicBlock *AfterFor = createBasicBlock("afterfor");
 
   EmitBlock(CondBlock);
 
@@ -384,7 +384,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
     
     // As long as the condition is true, iterate the loop.
-    llvm::BasicBlock *ForBody = llvm::BasicBlock::Create("forbody");
+    llvm::BasicBlock *ForBody = createBasicBlock("forbody");
     Builder.CreateCondBr(BoolCondVal, ForBody, AfterFor);
     EmitBlock(ForBody);    
   } else {
@@ -396,7 +396,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   // condition as the continue block.
   llvm::BasicBlock *ContinueBlock;
   if (S.getInc())
-    ContinueBlock = llvm::BasicBlock::Create("forinc");
+    ContinueBlock = createBasicBlock("forinc");
   else
     ContinueBlock = CondBlock;  
   
@@ -433,7 +433,7 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
 
   // Emit a block after the branch so that dead code after a return has some
   // place to go.
-  EmitBlock(llvm::BasicBlock::Create());
+  EmitBlock(createBasicBlock());
 }
 
 /// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
@@ -463,7 +463,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   if (!ObjCEHStack.empty()) {
     for (ObjCEHStackType::reverse_iterator i = ObjCEHStack.rbegin(), 
            e = ObjCEHStack.rend(); i != e; ++i) {
-      llvm::BasicBlock *ReturnPad = llvm::BasicBlock::Create("return.pad");
+      llvm::BasicBlock *ReturnPad = createBasicBlock("return.pad");
       EmitJumpThroughFinally(*i, ReturnPad);
       EmitBlock(ReturnPad);
     }
@@ -473,7 +473,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   
   // Emit a block after the branch so that dead code after a return has some
   // place to go.
-  EmitBlock(llvm::BasicBlock::Create());
+  EmitBlock(createBasicBlock());
 }
 
 void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
@@ -487,7 +487,7 @@ void CodeGenFunction::EmitBreakStmt() {
 
   llvm::BasicBlock *Block = BreakContinueStack.back().BreakBlock;
   Builder.CreateBr(Block);
-  EmitBlock(llvm::BasicBlock::Create());
+  EmitBlock(createBasicBlock());
 }
 
 void CodeGenFunction::EmitContinueStmt() {
@@ -495,7 +495,7 @@ void CodeGenFunction::EmitContinueStmt() {
 
   llvm::BasicBlock *Block = BreakContinueStack.back().ContinueBlock;
   Builder.CreateBr(Block);
-  EmitBlock(llvm::BasicBlock::Create());
+  EmitBlock(createBasicBlock());
 }
 
 /// EmitCaseStmtRange - If case statement range is not too big then
@@ -537,7 +537,7 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   // in the default basic block). The switch's default will be changed
   // to the top of this chain after switch emission is complete.
   llvm::BasicBlock *FalseDest = CaseRangeBlock;
-  CaseRangeBlock = llvm::BasicBlock::Create("sw.caserange");
+  CaseRangeBlock = createBasicBlock("sw.caserange");
 
   CurFn->getBasicBlockList().push_back(CaseRangeBlock);
   Builder.SetInsertPoint(CaseRangeBlock);
@@ -563,14 +563,14 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   StartBlock("sw.bb");
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
   llvm::APSInt CaseVal = S.getLHS()->getIntegerConstantExprValue(getContext());
-  SwitchInsn->addCase(llvm::ConstantInt::get(CaseVal), 
-                      CaseDest);
+  SwitchInsn->addCase(llvm::ConstantInt::get(CaseVal), CaseDest);
   EmitStmt(S.getSubStmt());
 }
 
 void CodeGenFunction::EmitDefaultStmt(const DefaultStmt &S) {
   llvm::BasicBlock *DefaultBlock = SwitchInsn->getDefaultDest();
-  assert(DefaultBlock->empty() && "EmitDefaultStmt: Default block already defined?");
+  assert(DefaultBlock->empty() && 
+         "EmitDefaultStmt: Default block already defined?");
   EmitBlock(DefaultBlock);
   EmitStmt(S.getSubStmt());
 }
@@ -586,8 +586,8 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   // statement. We also need to create a default block now so that
   // explicit case ranges tests can have a place to jump to on
   // failure.
-  llvm::BasicBlock *NextBlock = llvm::BasicBlock::Create("sw.epilog");
-  llvm::BasicBlock *DefaultBlock = llvm::BasicBlock::Create("sw.default");
+  llvm::BasicBlock *NextBlock = createBasicBlock("sw.epilog");
+  llvm::BasicBlock *DefaultBlock = createBasicBlock("sw.default");
   SwitchInsn = Builder.CreateSwitch(CondV, DefaultBlock);
   CaseRangeBlock = DefaultBlock;
 

@@ -466,9 +466,9 @@ ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
 
 ComplexPairTy ComplexExprEmitter::
 VisitConditionalOperator(const ConditionalOperator *E) {
-  llvm::BasicBlock *LHSBlock = llvm::BasicBlock::Create("cond.?");
-  llvm::BasicBlock *RHSBlock = llvm::BasicBlock::Create("cond.:");
-  llvm::BasicBlock *ContBlock = llvm::BasicBlock::Create("cond.cont");
+  llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.?");
+  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.:");
+  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.cont");
   
   llvm::Value *Cond = CGF.EvaluateExprAsBool(E->getCond());
   Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);

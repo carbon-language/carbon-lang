@@ -38,7 +38,7 @@ llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
   if (BB) return BB;
   
   // Create, but don't insert, the new block.
-  return BB = llvm::BasicBlock::Create(S->getName());
+  return BB = createBasicBlock(S->getName());
 }
 
 llvm::Constant *
@@ -98,7 +98,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   CurFn = Fn;
   assert(CurFn->isDeclaration() && "Function already has body?");
 
-  llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);
+  llvm::BasicBlock *EntryBB = createBasicBlock("entry", CurFn);
 
   // Create a marker to make it easy to insert allocas into the entryblock
   // later.  Don't create this with the builder, because we don't want it
@@ -107,7 +107,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "allocapt",
                                          EntryBB);
 
-  ReturnBlock = llvm::BasicBlock::Create("return");
+  ReturnBlock = createBasicBlock("return");
   ReturnValue = 0;
   if (!RetTy->isVoidType())
     ReturnValue = CreateTempAlloca(ConvertType(RetTy), "retval");
@@ -168,7 +168,7 @@ bool CodeGenFunction::isDummyBlock(const llvm::BasicBlock *BB) {
 void CodeGenFunction::StartBlock(const char *N) {
   llvm::BasicBlock *BB = Builder.GetInsertBlock();
   if (!isDummyBlock(BB))
-    EmitBlock(llvm::BasicBlock::Create(N));
+    EmitBlock(createBasicBlock(N));
   else
     BB->setName(N);
 }
@@ -225,7 +225,7 @@ void CodeGenFunction::EmitIndirectSwitches() {
   } else {
     // No possible targets for indirect goto, just emit an infinite
     // loop.
-    Default = llvm::BasicBlock::Create("indirectgoto.loop", CurFn);
+    Default = createBasicBlock("indirectgoto.loop", CurFn);
     llvm::BranchInst::Create(Default, Default);
   }
 

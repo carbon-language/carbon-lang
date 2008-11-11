@@ -212,11 +212,17 @@ public:
   /// hasAggregateLLVMType - Return true if the specified AST type will map into
   /// an aggregate LLVM type or is void.
   static bool hasAggregateLLVMType(QualType T);
-  
+
+  /// createBasicBlock - Create an LLVM basic block.
+  llvm::BasicBlock *createBasicBlock(const char *Name="", 
+                                     llvm::Function *Parent=0,
+                                     llvm::BasicBlock *InsertBefore=0) {
+    return llvm::BasicBlock::Create(Name, Parent, InsertBefore);
+  }
+                                    
   /// getBasicBlockForLabel - Return the LLVM basicblock that the specified
   /// label maps to.
   llvm::BasicBlock *getBasicBlockForLabel(const LabelStmt *S);
-  
   
   void EmitBlock(llvm::BasicBlock *BB);
   

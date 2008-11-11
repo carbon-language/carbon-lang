@@ -1523,16 +1523,16 @@ destination.
 void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
                             const ObjCAtTryStmt &S) {
   // Create various blocks we refer to for handling @finally.
-  llvm::BasicBlock *FinallyBlock = llvm::BasicBlock::Create("finally");
-  llvm::BasicBlock *FinallyNoExit = llvm::BasicBlock::Create("finally.noexit");
-  llvm::BasicBlock *FinallyRethrow = llvm::BasicBlock::Create("finally.throw");
-  llvm::BasicBlock *FinallyEnd = llvm::BasicBlock::Create("finally.end");
+  llvm::BasicBlock *FinallyBlock = CGF.createBasicBlock("finally");
+  llvm::BasicBlock *FinallyNoExit = CGF.createBasicBlock("finally.noexit");
+  llvm::BasicBlock *FinallyRethrow = CGF.createBasicBlock("finally.throw");
+  llvm::BasicBlock *FinallyEnd = CGF.createBasicBlock("finally.end");
   llvm::Value *DestCode = 
     CGF.CreateTempAlloca(llvm::Type::Int32Ty, "finally.dst");
 
   // Generate jump code. Done here so we can directly add things to
   // the switch instruction.
-  llvm::BasicBlock *FinallyJump = llvm::BasicBlock::Create("finally.jump");
+  llvm::BasicBlock *FinallyJump = CGF.createBasicBlock("finally.jump");
   llvm::SwitchInst *FinallySwitch = 
     llvm::SwitchInst::Create(new llvm::LoadInst(DestCode, "", FinallyJump), 
                              FinallyEnd, 10, FinallyJump);
@@ -1557,8 +1557,8 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
                                                      JmpBufPtr, "result");
 
-  llvm::BasicBlock *TryBlock = llvm::BasicBlock::Create("try");
-  llvm::BasicBlock *TryHandler = llvm::BasicBlock::Create("try.handler");
+  llvm::BasicBlock *TryBlock = CGF.createBasicBlock("try");
+  llvm::BasicBlock *TryHandler = CGF.createBasicBlock("try.handler");
   CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNotNull(SetJmpResult, "threw"), 
                            TryHandler, TryBlock);
 
@@ -1585,8 +1585,8 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
                                                        JmpBufPtr, "result");
     llvm::Value *Threw = CGF.Builder.CreateIsNotNull(SetJmpResult, "threw");
 
-    llvm::BasicBlock *CatchBlock = llvm::BasicBlock::Create("catch");
-    llvm::BasicBlock *CatchHandler = llvm::BasicBlock::Create("catch.handler");
+    llvm::BasicBlock *CatchBlock = CGF.createBasicBlock("catch");
+    llvm::BasicBlock *CatchHandler = CGF.createBasicBlock("catch.handler");
     CGF.Builder.CreateCondBr(Threw, CatchHandler, CatchBlock);
     
     CGF.EmitBlock(CatchBlock);
@@ -1596,7 +1596,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
     // so.
     bool AllMatched = false;
     for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
-      llvm::BasicBlock *NextCatchBlock = llvm::BasicBlock::Create("catch");
+      llvm::BasicBlock *NextCatchBlock = CGF.createBasicBlock("catch");
 
       const DeclStmt *CatchParam = 
         cast_or_null<DeclStmt>(CatchStmt->getCatchParamStmt());
@@ -1640,7 +1640,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       llvm::Value *Match = CGF.Builder.CreateCall2(ObjCTypes.ExceptionMatchFn,
                                                    Class, Caught, "match");
       
-      llvm::BasicBlock *MatchedBlock = llvm::BasicBlock::Create("matched");
+      llvm::BasicBlock *MatchedBlock = CGF.createBasicBlock("matched");
       
       CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNotNull(Match, "matched"), 
                                MatchedBlock, NextCatchBlock);
@@ -1717,7 +1717,7 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   
   CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
   CGF.Builder.CreateUnreachable();
-  CGF.EmitBlock(llvm::BasicBlock::Create("bb"));
+  CGF.EmitBlock(CGF.createBasicBlock("bb"));
 }
 
 void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,

@@ -115,8 +115,8 @@ CodeGenFunction::GenerateStaticCXXBlockVarDecl(const VarDecl &D)
   llvm::Value *nullValue = llvm::Constant::getNullValue(llvm::Type::Int8Ty);
   llvm::Value *ICmp = Builder.CreateICmpEQ(V, nullValue , "tobool");
   
-  llvm::BasicBlock *InitBlock = llvm::BasicBlock::Create("init");
-  llvm::BasicBlock *EndBlock = llvm::BasicBlock::Create("initend");
+  llvm::BasicBlock *InitBlock = createBasicBlock("init");
+  llvm::BasicBlock *EndBlock = createBasicBlock("initend");
 
   // If the guard variable is 0, jump to the initializer code.
   Builder.CreateCondBr(ICmp, InitBlock, EndBlock);
