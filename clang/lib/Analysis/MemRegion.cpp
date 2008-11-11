@@ -152,7 +152,23 @@ void CompoundLiteralRegion::print(llvm::raw_ostream& os) const {
 }
 
 void StringRegion::print(llvm::raw_ostream& os) const {
-  os << "\"" << Str->getStrData() << "\"";
+  if (Str->isWide()) os << 'L';
+  os << '"';
+
+  // FIXME: this doesn't print wstrings right.
+  for (unsigned i = 0, e = Str->getByteLength(); i != e; ++i) {
+    switch (Str->getStrData()[i]) {
+    default: os << Str->getStrData()[i]; break;
+    // Handle some common ones to make dumps prettier.
+    case '\\': os << "\\\\"; break;
+    case '"': os << "\\\""; break;
+    case '\n': os << "\\n"; break;
+    case '\t': os << "\\t"; break;
+    case '\a': os << "\\a"; break;
+    case '\b': os << "\\b"; break;
+    }
+  }
+  os << '"';
 }
 
 //===----------------------------------------------------------------------===//
