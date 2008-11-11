@@ -41,7 +41,7 @@ namespace {
   private:
     std::set<GlobalValue*> AliveGlobals;
 
-    /// MarkGlobalIsNeeded - the specific global value as needed, and
+    /// GlobalIsNeeded - the specific global value as needed, and
     /// recursively mark anything that it uses as also needed.
     void GlobalIsNeeded(GlobalValue *GV);
     void MarkUsedGlobalsAsNeeded(Constant *C);
@@ -131,7 +131,7 @@ bool GlobalDCE::runOnModule(Module &M) {
   return Changed;
 }
 
-/// MarkGlobalIsNeeded - the specific global value as needed, and
+/// GlobalIsNeeded - the specific global value as needed, and
 /// recursively mark anything that it uses as also needed.
 void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
   std::set<GlobalValue*>::iterator I = AliveGlobals.find(G);
