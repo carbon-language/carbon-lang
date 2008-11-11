@@ -10,10 +10,9 @@ tablegen(SparcGenDAGISel.inc -gen-dag-isel)
 tablegen(SparcGenSubtarget.inc -gen-subtarget)
 tablegen(SparcGenCallingConv.inc -gen-callingconv)
 
-add_llvm_target(Sparc
+add_llvm_target(SparcCodeGen
   DelaySlotFiller.cpp
   FPMover.cpp
-  SparcAsmPrinter.cpp
   SparcInstrInfo.cpp
   SparcISelDAGToDAG.cpp
   SparcISelLowering.cpp

@@ -10,8 +10,7 @@ tablegen(AlphaGenAsmWriter.inc -gen-asm-writer)
 tablegen(AlphaGenDAGISel.inc -gen-dag-isel)
 tablegen(AlphaGenSubtarget.inc -gen-subtarget)
 
-add_llvm_target(Alpha
-  AlphaAsmPrinter.cpp
+add_llvm_target(AlphaCodeGen
   AlphaBranchSelector.cpp
   AlphaCodeEmitter.cpp
   AlphaInstrInfo.cpp
