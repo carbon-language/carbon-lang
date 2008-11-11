@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = LLVMAlpha
+LIBRARYNAME = LLVMAlphaCodeGen
 TARGET = Alpha
 
 # Make sure that tblgen is run, first thing.
@@ -16,5 +16,7 @@ BUILT_SOURCES = AlphaGenRegisterInfo.h.inc AlphaGenRegisterNames.inc \
                 AlphaGenInstrInfo.inc AlphaGenCodeEmitter.inc \
                 AlphaGenAsmWriter.inc AlphaGenDAGISel.inc \
                 AlphaGenSubtarget.inc
+
+DIRS = AsmPrinter
 
 include $(LEVEL)/Makefile.common
