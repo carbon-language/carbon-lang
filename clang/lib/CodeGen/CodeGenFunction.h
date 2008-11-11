@@ -229,6 +229,10 @@ public:
   /// EmitBranch - Emit a branch to the specified basic block from the
   /// current insert block, taking care to avoid creation of branches
   /// from dummy blocks.
+  ///
+  /// This function clears the current insertion point. The caller
+  /// should follow calls to this function with calls to Emit*Block
+  /// prior to generation new code.
   void EmitBranch(llvm::BasicBlock *Block);
 
   /// EmitDummyBlock - Emit a new block which will never be branched

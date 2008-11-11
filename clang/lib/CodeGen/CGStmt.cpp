@@ -168,11 +168,12 @@ void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
     // If the last block was an empty placeholder, remove it now.
     // TODO: cache and reuse these.
     CurBB->eraseFromParent();
-    Builder.ClearInsertionPoint();
   } else {
     // Otherwise, create a fall-through branch.
     Builder.CreateBr(Target);
   }
+
+  Builder.ClearInsertionPoint();
 }
 
 void CodeGenFunction::EmitDummyBlock() {
