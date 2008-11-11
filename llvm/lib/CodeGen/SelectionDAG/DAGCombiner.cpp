@@ -892,16 +892,18 @@ SDValue combineShlAddConstant(SDValue N0, SDValue N1, SelectionDAG &DAG) {
 
 static
 SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
-                            SelectionDAG &DAG) {
+                            SelectionDAG &DAG, const TargetLowering &TLI,
+                            bool AfterLegalize) {
   MVT VT = N->getValueType(0);
   unsigned Opc = N->getOpcode();
   bool isSlctCC = Slct.getOpcode() == ISD::SELECT_CC;
   SDValue LHS = isSlctCC ? Slct.getOperand(2) : Slct.getOperand(1);
   SDValue RHS = isSlctCC ? Slct.getOperand(3) : Slct.getOperand(2);
   ISD::CondCode CC = ISD::SETCC_INVALID;
-  if (isSlctCC)
+
+  if (isSlctCC) {
     CC = cast<CondCodeSDNode>(Slct.getOperand(4))->get();
-  else {
+  } else {
     SDValue CCOp = Slct.getOperand(0);
     if (CCOp.getOpcode() == ISD::SETCC)
       CC = cast<CondCodeSDNode>(CCOp.getOperand(2))->get();
@@ -911,17 +913,23 @@ SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
   bool InvCC = false;
   assert ((Opc == ISD::ADD || (Opc == ISD::SUB && Slct == N->getOperand(1))) &&
           "Bad input!");
+
   if (LHS.getOpcode() == ISD::Constant &&
-      cast<ConstantSDNode>(LHS)->isNullValue())
+      cast<ConstantSDNode>(LHS)->isNullValue()) {
     DoXform = true;
-  else if (CC != ISD::SETCC_INVALID &&
-           RHS.getOpcode() == ISD::Constant &&
-           cast<ConstantSDNode>(RHS)->isNullValue()) {
+  } else if (CC != ISD::SETCC_INVALID &&
+             RHS.getOpcode() == ISD::Constant &&
+             cast<ConstantSDNode>(RHS)->isNullValue()) {
     std::swap(LHS, RHS);
     SDValue Op0 = Slct.getOperand(0);
-    bool isInt = (isSlctCC ? Op0.getValueType() :
-                  Op0.getOperand(0).getValueType()).isInteger();
+    MVT OpVT = isSlctCC ? Op0.getValueType() :
+                          Op0.getOperand(0).getValueType();
+    bool isInt = OpVT.isInteger();
     CC = ISD::getSetCCInverse(CC, isInt);
+
+    if (AfterLegalize && !TLI.isCondCodeLegal(CC, OpVT))
+      return SDValue();         // Inverse operator isn't legal.
+
     DoXform = true;
     InvCC = true;
   }
@@ -1029,11 +1037,11 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
 
   // fold (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
   if (N0.getOpcode() == ISD::SELECT && N0.getNode()->hasOneUse()) {
-    SDValue Result = combineSelectAndUse(N, N0, N1, DAG);
+    SDValue Result = combineSelectAndUse(N, N0, N1, DAG, TLI, AfterLegalize);
     if (Result.getNode()) return Result;
   }
   if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
-    SDValue Result = combineSelectAndUse(N, N1, N0, DAG);
+    SDValue Result = combineSelectAndUse(N, N1, N0, DAG, TLI, AfterLegalize);
     if (Result.getNode()) return Result;
   }
 
@@ -1131,7 +1139,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     return N0.getOperand(0);
   // fold (sub x, (select cc, 0, c)) -> (select cc, x, (sub, x, c))
   if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
-    SDValue Result = combineSelectAndUse(N, N1, N0, DAG);
+    SDValue Result = combineSelectAndUse(N, N1, N0, DAG, TLI, AfterLegalize);
     if (Result.getNode()) return Result;
   }
   // If either operand of a sub is undef, the result is undef
@@ -2156,18 +2164,27 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
   SDValue RXOR = ReassociateOps(ISD::XOR, N0, N1);
   if (RXOR.getNode() != 0)
     return RXOR;
+
   // fold !(x cc y) -> (x !cc y)
   if (N1C && N1C->getAPIntValue() == 1 && isSetCCEquivalent(N0, LHS, RHS, CC)) {
     bool isInt = LHS.getValueType().isInteger();
     ISD::CondCode NotCC = ISD::getSetCCInverse(cast<CondCodeSDNode>(CC)->get(),
                                                isInt);
-    if (N0.getOpcode() == ISD::SETCC)
-      return DAG.getSetCC(VT, LHS, RHS, NotCC);
-    if (N0.getOpcode() == ISD::SELECT_CC)
-      return DAG.getSelectCC(LHS, RHS, N0.getOperand(2),N0.getOperand(3),NotCC);
-    assert(0 && "Unhandled SetCC Equivalent!");
-    abort();
+
+    if (!AfterLegalize || TLI.isCondCodeLegal(NotCC, LHS.getValueType())) {
+      switch (N0.getOpcode()) {
+      default:
+        assert(0 && "Unhandled SetCC Equivalent!");
+        abort();
+      case ISD::SETCC:
+        return DAG.getSetCC(VT, LHS, RHS, NotCC);
+      case ISD::SELECT_CC:
+        return DAG.getSelectCC(LHS, RHS, N0.getOperand(2),
+                               N0.getOperand(3), NotCC);
+      }
+    }
   }
+
   // fold (not (zext (setcc x, y))) -> (zext (not (setcc x, y)))
   if (N1C && N1C->getAPIntValue() == 1 && N0.getOpcode() == ISD::ZERO_EXTEND &&
       N0.getNode()->hasOneUse() &&
