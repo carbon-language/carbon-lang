@@ -21,35 +21,35 @@
     <li><a href="#Preliminaries">Preliminaries</a></li>
   </ul>
   <li><a href="#TargetMachine">Target Machine</a></li>
-  <li><a href="#RegisterSet">Register Set and Register Classes</a></li>  
+  <li><a href="#RegisterSet">Register Set and Register Classes</a>
   <ul>
     <li><a href="#RegisterDef">Defining a Register</a></li>
     <li><a href="#RegisterClassDef">Defining a Register Class</a></li>
     <li><a href="#implementRegister">Implement a subclass of TargetRegisterInfo</a></li>
-  </ul>
-  <li><a href="#InstructionSet">Instruction Set</a></li>  
+  </ul></li>
+  <li><a href="#InstructionSet">Instruction Set</a>
   <ul>  
     <li><a href="#implementInstr">Implement a subclass of TargetInstrInfo</a></li>
     <li><a href="#branchFolding">Branch Folding and If Conversion</a></li>
-  </ul>      
-  <li><a href="#InstructionSelector">Instruction Selector</a></li> 
+  </ul></li>
+  <li><a href="#InstructionSelector">Instruction Selector</a>
   <ul>
-    <li><a href="#LegalizePhase">The SelectionDAG Legalize Phase</a></li>   
+    <li><a href="#LegalizePhase">The SelectionDAG Legalize Phase</a>
     <ul>
       <li><a href="#promote">Promote</a></li> 
       <li><a href="#expand">Expand</a></li> 
       <li><a href="#custom">Custom</a></li> 
       <li><a href="#legal">Legal</a></li>       
-    </ul>    
+    </ul></li>
     <li><a href="#callingConventions">Calling Conventions</a></li>     
-  </ul>  
+  </ul></li>
   <li><a href="#assemblyPrinter">Assembly Printer</a></li> 
   <li><a href="#subtargetSupport">Subtarget Support</a></li> 
-  <li><a href="#jitSupport">JIT Support</a></li>   
+  <li><a href="#jitSupport">JIT Support</a>
   <ul>  
     <li><a href="#mce">Machine Code Emitter</a></li>   
     <li><a href="#targetJITInfo">Target JIT Info</a></li>   
-  </ul>  
+  </ul></li>
 </ol>
 
 <div class="doc_author">    
@@ -99,7 +99,7 @@ LLVM backend to generate code for a specific hardware or software target.</p>
 These essential documents must be read before reading this document:  
 <ul>
 <li>
-<it><a href="http://www.llvm.org/docs/LangRef.html">LLVM Language Reference Manual</a></it> - 
+<i><a href="http://www.llvm.org/docs/LangRef.html">LLVM Language Reference Manual</a></i> - 
 a reference manual for the LLVM assembly language
 </li>
 <li>
