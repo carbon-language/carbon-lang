@@ -18,7 +18,6 @@
 ; RUN: grep 11544  %t1.s | count 1
 ; RUN: grep 1311768467750121234 %t1.s | count 1
 ; RUN: grep lqd    %t2.s | count 6
-; XFAIL: *
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128"
 target triple = "spu-unknown-elf"
