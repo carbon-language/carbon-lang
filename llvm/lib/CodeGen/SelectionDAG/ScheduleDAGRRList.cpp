@@ -666,6 +666,23 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     DAG.ReplaceAllUsesOfValueWith(SDValue(SU->Node, OldNumVals-1),
                                   SDValue(LoadNode, 1));
 
+    // LoadNode may already exist. This can happen when there is another
+    // load from the same location and producing the same type of value
+    // but it has different alignment or volatileness.
+    bool isNewLoad = true;
+    SUnit *LoadSU;
+    if (LoadNode->getNodeId() != -1) {
+      LoadSU = &SUnits[LoadNode->getNodeId()];
+      isNewLoad = false;
+    } else {
+      LoadSU = CreateNewSUnit(LoadNode);
+      LoadNode->setNodeId(LoadSU->NodeNum);
+
+      LoadSU->Depth = SU->Depth;
+      LoadSU->Height = SU->Height;
+      ComputeLatency(LoadSU);
+    }
+
     SUnit *NewSU = CreateNewSUnit(N);
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NewSU->NodeNum);
@@ -683,23 +700,6 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     NewSU->Depth = SU->Depth;
     NewSU->Height = SU->Height;
     ComputeLatency(NewSU);
-
-    // LoadNode may already exist. This can happen when there is another
-    // load from the same location and producing the same type of value
-    // but it has different alignment or volatileness.
-    bool isNewLoad = true;
-    SUnit *LoadSU;
-    if (LoadNode->getNodeId() != -1) {
-      LoadSU = &SUnits[LoadNode->getNodeId()];
-      isNewLoad = false;
-    } else {
-      LoadSU = CreateNewSUnit(LoadNode);
-      LoadNode->setNodeId(LoadSU->NodeNum);
-
-      LoadSU->Depth = SU->Depth;
-      LoadSU->Height = SU->Height;
-      ComputeLatency(LoadSU);
-    }
 
     SUnit *ChainPred = NULL;
     SmallVector<SDep, 4> ChainSuccs;
