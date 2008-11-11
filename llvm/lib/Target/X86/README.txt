@@ -1773,3 +1773,20 @@ gcc 4.3 generates:
         movl    12(%ebp), %eax
         popl    %ebp
         ret
+
+//===---------------------------------------------------------------------===//
+
+Teach tblgen not to check bitconvert source type in some cases. This allows us
+to consolidate the following patterns in X86InstrMMX.td:
+
+def : Pat<(v2i32 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
+                                                  (iPTR 0))))),
+          (v2i32 (MMX_MOVDQ2Qrr VR128:$src))>;
+def : Pat<(v4i16 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
+                                                  (iPTR 0))))),
+          (v4i16 (MMX_MOVDQ2Qrr VR128:$src))>;
+def : Pat<(v8i8 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
+                                                  (iPTR 0))))),
+          (v8i8 (MMX_MOVDQ2Qrr VR128:$src))>;
+
+There are other cases in various td files.
