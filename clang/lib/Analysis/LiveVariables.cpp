@@ -121,8 +121,9 @@ public:
   void VisitBinaryOperator(BinaryOperator* B);
   void VisitAssign(BinaryOperator* B);
   void VisitDeclStmt(DeclStmt* DS);
+  void VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
   void VisitUnaryOperator(UnaryOperator* U);
-  void Visit(Stmt *S);  
+  void Visit(Stmt *S);    
   void VisitTerminator(CFGBlock* B); 
   
   void SetTopValue(LiveVariables::ValTy& V) {
@@ -175,6 +176,21 @@ void TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
   else VisitStmt(B);
 }
 
+void TransferFuncs::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
+  Stmt* Element = S->getElement();
+  
+  if (DeclStmt* DS = dyn_cast<DeclStmt>(Element)) {
+    VisitDeclStmt(DS);
+    return;
+  }
+  
+  // This represents a 'kill' for the variable.
+  DeclRefExpr* DR = cast<DeclRefExpr>(Element);
+  LiveState(cast<VarDecl>(DR->getDecl()), AD) = Dead;
+  if (AD.Observer) { AD.Observer->ObserverKill(DR); }
+}
+
+  
 void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   Expr *E = U->getSubExpr();
   
