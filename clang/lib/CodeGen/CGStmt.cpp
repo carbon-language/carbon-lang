@@ -27,6 +27,13 @@ using namespace CodeGen;
 
 void CodeGenFunction::EmitStmt(const Stmt *S) {
   assert(S && "Null statement?");
+
+  // If we happen to be at an unreachable point just create a dummy
+  // basic block to hold the code. We could change parts of irgen to
+  // simply not generate this code, but this situation is rare and
+  // probably not worth the effort.
+  // FIXME: Verify previous performance/effort claim.
+  EnsureInsertPoint();
   
   // Generate stoppoints if we are emitting debug info.
   // Beginning of a Compound Statement (e.g. an opening '{') does not produce 
@@ -128,6 +135,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     EmitStmt(*I);
 
   if (DI) {
+    EnsureInsertPoint();
     DI->setLocation(S.getRBracLoc());
     DI->EmitRegionEnd(CurFn, Builder);
   }
@@ -145,6 +153,8 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     LastStmt = LS->getSubStmt();
   }
   
+  EnsureInsertPoint();
+
   return EmitAnyExpr(cast<Expr>(LastStmt), AggLoc);
 }
 
@@ -164,20 +174,12 @@ void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
   if (!CurBB || CurBB->getTerminator()) {
     // If there is no insert point or the previous block is already
     // terminated, don't touch it.
-  } else if (isDummyBlock(CurBB)) {
-    // If the last block was an empty placeholder, remove it now.
-    // TODO: cache and reuse these.
-    CurBB->eraseFromParent();
   } else {
     // Otherwise, create a fall-through branch.
     Builder.CreateBr(Target);
   }
 
   Builder.ClearInsertionPoint();
-}
-
-void CodeGenFunction::EmitDummyBlock() {
-  EmitBlock(createBasicBlock());
 }
 
 void CodeGenFunction::EmitLabel(const LabelStmt &S) {
@@ -199,10 +201,6 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
   }
 
   EmitBranch(getBasicBlockForLabel(S.getLabel()));
-  
-  // Emit a block after the branch so that dead code after a goto has some place
-  // to go.
-  EmitDummyBlock();
 }
 
 void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
@@ -221,9 +219,8 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
   llvm::SwitchInst *I = Builder.CreateSwitch(V, Builder.GetInsertBlock());
   IndirectSwitches.push_back(I);
 
-  // Emit a block after the branch so that dead code after a goto has some place
-  // to go.
-  EmitDummyBlock();
+  // Clear the insertion point to indicate we are in unreachable code.
+  Builder.ClearInsertionPoint();
 }
 
 void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
@@ -445,10 +442,6 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
     StoreComplexToAddr(RV.getComplexVal(), ReturnValue, false);
   }
   EmitBranch(ReturnBlock);
-
-  // Emit a block after the branch so that dead code after a return has some
-  // place to go.
-  EmitDummyBlock();
 }
 
 /// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
@@ -485,10 +478,6 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } 
 
   EmitBranch(ReturnBlock);
-  
-  // Emit a block after the branch so that dead code after a return has some
-  // place to go.
-  EmitDummyBlock();
 }
 
 void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
@@ -502,7 +491,6 @@ void CodeGenFunction::EmitBreakStmt() {
 
   llvm::BasicBlock *Block = BreakContinueStack.back().BreakBlock;
   EmitBranch(Block);
-  EmitDummyBlock();
 }
 
 void CodeGenFunction::EmitContinueStmt() {
@@ -510,7 +498,6 @@ void CodeGenFunction::EmitContinueStmt() {
 
   llvm::BasicBlock *Block = BreakContinueStack.back().ContinueBlock;
   EmitBranch(Block);
-  EmitDummyBlock();
 }
 
 /// EmitCaseStmtRange - If case statement range is not too big then
@@ -566,7 +553,10 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   Builder.CreateCondBr(Cond, CaseDest, FalseDest);
 
   // Restore the appropriate insertion point.
-  Builder.SetInsertPoint(RestoreBB);
+  if (RestoreBB)
+    Builder.SetInsertPoint(RestoreBB);
+  else
+    Builder.ClearInsertionPoint();
 }
 
 void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {

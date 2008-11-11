@@ -156,14 +156,6 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
   }
 }
 
-/// isDummyBlock - Return true if BB is an empty basic block
-/// with no predecessors.
-bool CodeGenFunction::isDummyBlock(const llvm::BasicBlock *BB) {
-  if (BB->empty() && pred_begin(BB) == pred_end(BB) && !BB->hasName()) 
-    return true;
-  return false;
-}
-
 /// ContainsLabel - Return true if the statement contains a label in it.  If
 /// this statement is not executed normally, it not containing a label means
 /// that we can just remove the code.

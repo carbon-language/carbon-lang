@@ -461,6 +461,7 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 
 ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
   CGF.EmitStmt(E->getLHS());
+  CGF.EnsureInsertPoint();
   return Visit(E->getRHS());
 }
 

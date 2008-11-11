@@ -1621,6 +1621,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       if (AllMatched) {   
         if (CatchParam) {
           CGF.EmitStmt(CatchParam);
+          assert(CGF.HaveInsertPoint() && "DeclStmt destroyed insert point?");
           CGF.Builder.CreateStore(Caught, CGF.GetAddrOfLocalVar(VD));
         }
         
@@ -1648,6 +1649,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       // Emit the @catch block.
       CGF.EmitBlock(MatchedBlock);
       CGF.EmitStmt(CatchParam);
+      assert(CGF.HaveInsertPoint() && "DeclStmt destroyed insert point?");
 
       llvm::Value *Tmp = 
         CGF.Builder.CreateBitCast(Caught, CGF.ConvertType(VD->getType()), 
@@ -1717,15 +1719,15 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   
   CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
   CGF.Builder.CreateUnreachable();
-  CGF.EmitDummyBlock();
+
+  // Clear the insertion point to indicate we are in unreachable code.
+  CGF.Builder.ClearInsertionPoint();
 }
 
 void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
                                              llvm::BasicBlock *Dst,
                                              bool ExecuteTryExit) {
-  llvm::BasicBlock *Src = Builder.GetInsertBlock();
-    
-  if (!Src || isDummyBlock(Src))
+  if (!HaveInsertPoint())
     return;
   
   // Find the destination code for this block. We always use 0 for the
@@ -1746,7 +1748,7 @@ void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
 
   // Set the destination code and branch.
   Builder.CreateStore(ID, E->DestCode);
-  Builder.CreateBr(ExecuteTryExit ? E->FinallyBlock : E->FinallyNoExit);
+  EmitBranch(ExecuteTryExit ? E->FinallyBlock : E->FinallyNoExit);
 }
 
 /* *** Private Interface *** */

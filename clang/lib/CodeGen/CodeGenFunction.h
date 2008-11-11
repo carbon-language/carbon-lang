@@ -119,7 +119,8 @@ public:
 
   /// EmitJumpThroughFinally - Emit a branch from the current insert
   /// point through the finally handling code for \arg Entry and then
-  /// on to \arg Dest.
+  /// on to \arg Dest. It is legal to call this function even if there
+  /// is no current insertion point.
   ///
   /// \param ExecuteTryExit - When true, the try_exit runtime function
   /// should be called prior to executing the finally code.
@@ -186,6 +187,10 @@ public:
                      llvm::Function *Fn,
                      const FunctionArgList &Args,
                      SourceLocation StartLoc);
+
+  /// FinishFunction - Complete IR generation of the current
+  /// function. It is legal to call this function even if there is no
+  /// current insertion point.
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
   /// EmitFunctionProlog - Emit the target specific LLVM code to load
@@ -224,21 +229,38 @@ public:
   /// label maps to.
   llvm::BasicBlock *getBasicBlockForLabel(const LabelStmt *S);
   
+  /// EmitBlock - Emit the given block \arg BB and set it as the
+  /// insert point, adding a fall-through branch from the current
+  /// insert block if necessary. It is legal to call this function
+  /// even if there is no current insertion point.
   void EmitBlock(llvm::BasicBlock *BB);
 
   /// EmitBranch - Emit a branch to the specified basic block from the
   /// current insert block, taking care to avoid creation of branches
-  /// from dummy blocks.
+  /// from dummy blocks. It is legal to call this function even if
+  /// there is no current insertion point.
   ///
   /// This function clears the current insertion point. The caller
   /// should follow calls to this function with calls to Emit*Block
   /// prior to generation new code.
   void EmitBranch(llvm::BasicBlock *Block);
 
-  /// EmitDummyBlock - Emit a new block which will never be branched
-  /// to. This is used to satisfy the invariant that codegen always
-  /// has an active unterminated block to dump code into.
-  void EmitDummyBlock();
+  /// HaveInsertPoint - True if an insertion point is defined. If not,
+  /// this indicates that the current code being emitted is
+  /// unreachable.
+  bool HaveInsertPoint() const { 
+    return Builder.GetInsertBlock() != 0;
+  }
+
+  /// EnsureInsertPoint - Ensure that an insertion point is defined so
+  /// that emitted IR has a place to go. Note that by definition, if
+  /// this function creates a block then that block is unreachable;
+  /// callers may do better to detect when no insertion point is
+  /// defined and simply skip IR generation.
+  void EnsureInsertPoint() {
+    if (!HaveInsertPoint())
+      EmitBlock(createBasicBlock());
+  }
   
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified stmt yet.
@@ -275,10 +297,6 @@ public:
                          QualType EltTy);
 
   void EmitAggregateClear(llvm::Value *DestPtr, QualType Ty);
-
-  /// isDummyBlock - Return true if BB is an empty basic block
-  /// with no predecessors.
-  static bool isDummyBlock(const llvm::BasicBlock *BB);
 
   /// StartBlock - Start new block named N. If insert block is a dummy block
   /// then reuse it.
@@ -324,10 +342,24 @@ public:
   //                             Statement Emission
   //===--------------------------------------------------------------------===//
 
+  /// EmitStmt - Emit the code for the statement \arg S. It is legal
+  /// to call this function even if there is no current insertion
+  /// point.
+  /// 
+  /// This function may clear the current insertion point; callers
+  /// should use EnsureInsertPoint if they wish to subsequently
+  /// generate code without first calling EmitBlock, EmitBranch, or
+  /// EmitStmt.
   void EmitStmt(const Stmt *S);
+
   RValue EmitCompoundStmt(const CompoundStmt &S, bool GetLast = false,
                           llvm::Value *AggLoc = 0, bool isAggVol = false);
+
+  /// EmitLabel - Emit the block for the given label. It is legal
+  /// to call this function even if there is no current insertion
+  /// point.
   void EmitLabel(const LabelStmt &S); // helper for EmitLabelStmt.
+
   void EmitLabelStmt(const LabelStmt &S);
   void EmitGotoStmt(const GotoStmt &S);
   void EmitIndirectGotoStmt(const IndirectGotoStmt &S);
