@@ -1811,6 +1811,7 @@ QualType ASTContext::getFromTargetType(unsigned Type) const {
   }
 
   assert(false && "Unhandled TargetInfo::IntType value");
+  return QualType();
 }
 
 //===----------------------------------------------------------------------===//
