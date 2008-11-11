@@ -86,10 +86,19 @@ struct DeclBitVector_Types {
     llvm::BitVector DeclBV;
   public:
     
-    void resetValues(AnalysisDataTy& AD) {
+    void resetDeclValues(AnalysisDataTy& AD) {
       DeclBV.resize(AD.getNumDecls()); 
       DeclBV.reset();
     }
+
+    void setDeclValues(AnalysisDataTy& AD) {
+      DeclBV.resize(AD.getNumDecls()); 
+      DeclBV.set();
+    }
+    
+    void resetValues(AnalysisDataTy& AD) {
+      resetDeclValues(AD);
+    }    
     
     bool operator==(const ValTy& RHS) const { 
       assert (sizesEqual(RHS));
@@ -200,10 +209,20 @@ struct ExprDeclBitVector_Types {
     
   public:
     
-    void resetValues(AnalysisDataTy& AD) {
-      ParentRef(*this).resetValues(AD);
+    
+    void resetExprValues(AnalysisDataTy& AD) {
       ExprBV.resize(AD.getNumExprs());
       ExprBV.reset();
+    }
+    
+    void setExprValues(AnalysisDataTy& AD) {
+      ExprBV.resize(AD.getNumExprs());
+      ExprBV.set();
+    }
+    
+    void resetValues(AnalysisDataTy& AD) {
+      resetDeclValues(AD);
+      resetExprValues(AD);
     }
     
     bool operator==(const ValTy& RHS) const { 
