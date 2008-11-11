@@ -342,6 +342,7 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
     break;
   case ARMII::VFPConv1Frm:
   case ARMII::VFPConv2Frm:
+  case ARMII::VFPConv3Frm:
     emitVFPConversionInstruction(MI);
     break;
   case ARMII::VFPLdStFrm:
@@ -1080,27 +1081,41 @@ void ARMCodeEmitter::emitVFPConversionInstruction(const MachineInstr &MI) {
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
-  unsigned OpIdx = 0;
+  // FMDRR encodes registers in reverse order.
+  unsigned Form = TID.TSFlags & ARMII::FormMask;
+  unsigned OpIdx = (Form == ARMII::VFPConv2Frm) ? 2 : 0;
 
   // Encode Dd / Sd.
-  unsigned RegD = getMachineOpValue(MI, OpIdx++);
+  unsigned RegD = getMachineOpValue(MI, OpIdx);
   Binary |= (RegD & 0x0f) << ARMII::RegRdShift;
   Binary |= (RegD & 0x10) << ARMII::D_BitShift;
+  if (Form == ARMII::VFPConv2Frm)
+    --OpIdx;
+  else
+    ++OpIdx;
 
   // Encode Dn / Sn.
-  if ((TID.TSFlags & ARMII::FormMask) == ARMII::VFPConv1Frm) {
-    unsigned RegN = getMachineOpValue(MI, OpIdx++);
+  if (Form == ARMII::VFPConv1Frm || Form == ARMII::VFPConv2Frm) {
+    unsigned RegN = getMachineOpValue(MI, OpIdx);
     Binary |= (RegN & 0x0f) << ARMII::RegRnShift;
     Binary |= (RegN & 0x10) << ARMII::N_BitShift;
+    if (Form == ARMII::VFPConv2Frm)
+      --OpIdx;
+    else
+      ++OpIdx;
 
     // FMRS / FMSR do not have Rm.
-    if (!TID.OpInfo[2].isPredicate()) {
-      unsigned RegM = getMachineOpValue(MI, OpIdx++);
+    if (TID.getNumOperands() > OpIdx && MI.getOperand(OpIdx).isReg()) {
+      unsigned RegM = getMachineOpValue(MI, OpIdx);
       Binary |= (RegM & 0x0f);
       Binary |= (RegM & 0x10) << ARMII::M_BitShift;
+    } else if (Form == ARMII::VFPConv2Frm) {
+      // FMDRR encodes definition register in Dm field.
+      Binary |= getMachineOpValue(MI, 0);
     }
   } else {
-    unsigned RegM = getMachineOpValue(MI, OpIdx++);
+    assert(Form == ARMII::VFPConv3Frm && "Unsupported format!");
+    unsigned RegM = getMachineOpValue(MI, OpIdx);
     Binary |= (RegM & 0x0f);
     Binary |= (RegM & 0x10) << ARMII::M_BitShift;
   }

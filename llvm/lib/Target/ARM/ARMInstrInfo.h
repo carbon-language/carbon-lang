@@ -105,12 +105,13 @@ namespace ARMII {
     VFPBinaryFrm  = 16 << FormShift,
     VFPConv1Frm   = 17 << FormShift,
     VFPConv2Frm   = 18 << FormShift,
-    VFPLdStFrm    = 19 << FormShift,
-    VFPLdStMulFrm = 20 << FormShift,
-    VFPMiscFrm    = 21 << FormShift,
+    VFPConv3Frm   = 19 << FormShift,
+    VFPLdStFrm    = 20 << FormShift,
+    VFPLdStMulFrm = 21 << FormShift,
+    VFPMiscFrm    = 22 << FormShift,
 
     // Thumb format
-    ThumbFrm      = 22 << FormShift,
+    ThumbFrm      = 23 << FormShift,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating

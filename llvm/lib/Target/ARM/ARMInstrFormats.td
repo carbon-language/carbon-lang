@@ -41,11 +41,12 @@ def VFPUnaryFrm   : Format<15>;
 def VFPBinaryFrm  : Format<16>;
 def VFPConv1Frm   : Format<17>;
 def VFPConv2Frm   : Format<18>;
-def VFPLdStFrm    : Format<19>;
-def VFPLdStMulFrm : Format<20>;
-def VFPMiscFrm    : Format<21>;
+def VFPConv3Frm   : Format<19>;
+def VFPLdStFrm    : Format<20>;
+def VFPLdStMulFrm : Format<21>;
+def VFPMiscFrm    : Format<22>;
 
-def ThumbFrm      : Format<22>;
+def ThumbFrm      : Format<23>;
 
 // Misc flag for data processing instructions that indicates whether
 // the instruction has a Rn register operand.
@@ -827,9 +828,17 @@ class AVConv1I<bits<8> opcod1, bits<4> opcod2, dag oops, dag iops, string opc,
   let Inst{4}     = 1;
 }
 
-class AVConv2I<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
+class AVConv2I<bits<8> opcod1, bits<4> opcod2, dag oops, dag iops, string opc,
+           string asm, list<dag> pattern>
+  : AI<oops, iops, VFPConv2Frm, opc, asm, pattern> {
+  let Inst{27-20} = opcod1;
+  let Inst{11-8}  = opcod2;
+  let Inst{4}     = 1;
+}
+
+class AVConv3I<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
                dag oops, dag iops, string opc, string asm, list<dag> pattern>
-  : AI<oops, iops, VFPConv1Frm, opc, asm, pattern> {
+  : AI<oops, iops, VFPConv3Frm, opc, asm, pattern> {
   let Inst{27-20} = opcod1;
   let Inst{19-16} = opcod2;
   let Inst{11-8}  = opcod3;
