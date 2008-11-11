@@ -1494,6 +1494,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     else
       Diag(Tok, diag::err_expected_ident_lparen); // Expected identifier or '('.
     D.SetIdentifier(0, Tok.getLocation());
+    D.setInvalidType(true);
   }
   
   assert(D.isPastIdentifier() &&

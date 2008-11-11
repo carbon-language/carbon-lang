@@ -753,9 +753,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   // All of these full declarators require an identifier.  If it doesn't have
   // one, the ParsedFreeStandingDeclSpec action should be used.
   if (II == 0) {
-    Diag(D.getDeclSpec().getSourceRange().getBegin(),
-         diag::err_declarator_need_ident,
-         D.getDeclSpec().getSourceRange(), D.getSourceRange());
+    if (!D.getInvalidType())  // Reject this if we think it is valid.
+      Diag(D.getDeclSpec().getSourceRange().getBegin(),
+           diag::err_declarator_need_ident,
+           D.getDeclSpec().getSourceRange(), D.getSourceRange());
     return 0;
   }
   

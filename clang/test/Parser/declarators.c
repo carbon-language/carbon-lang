@@ -32,3 +32,7 @@ int test3(x,
 
 int test4(x, x) int x; {} /* expected-error {{redefinition of parameter 'x'}} */
 
+
+// PR3031
+int (test5), ;  // expected-error {{expected identifier or '('}}
+
