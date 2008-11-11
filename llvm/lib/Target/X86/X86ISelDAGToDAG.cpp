@@ -66,7 +66,7 @@ namespace {
     bool isRIPRel;     // RIP as base?
     unsigned Scale;
     SDValue IndexReg; 
-    unsigned Disp;
+    int32_t Disp;
     GlobalValue *GV;
     Constant *CP;
     const char *ES;
@@ -201,7 +201,7 @@ namespace {
       else if (AM.JT != -1)
         Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i32);
       else
-        Disp = getI32Imm(AM.Disp);
+        Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
     }
 
     /// getI8Imm - Return a target constant with the specified value, of type
@@ -768,7 +768,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   // RIP relative addressing: %rip + 32-bit displacement!
   if (AM.isRIPRel) {
     if (!AM.ES && AM.JT != -1 && N.getOpcode() == ISD::Constant) {
-      int64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
+      uint64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
       if (!is64Bit || isInt32(AM.Disp + Val)) {
         AM.Disp += Val;
         return false;
@@ -780,7 +780,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   switch (N.getOpcode()) {
   default: break;
   case ISD::Constant: {
-    int64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
+    uint64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
     if (!is64Bit || isInt32(AM.Disp + Val)) {
       AM.Disp += Val;
       return false;
@@ -804,18 +804,20 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     {
       SDValue N0 = N.getOperand(0);
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
-        if (!is64Bit || isInt32(AM.Disp + G->getOffset())) {
+        uint64_t Offset = G->getOffset();
+        if (!is64Bit || isInt32(AM.Disp + Offset)) {
           GlobalValue *GV = G->getGlobal();
           AM.GV = GV;
-          AM.Disp += G->getOffset();
+          AM.Disp += Offset;
           AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
           return false;
         }
       } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
-        if (!is64Bit || isInt32(AM.Disp + CP->getOffset())) {
+        uint64_t Offset = CP->getOffset();
+        if (!is64Bit || isInt32(AM.Disp + Offset)) {
           AM.CP = CP->getConstVal();
           AM.Align = CP->getAlignment();
-          AM.Disp += CP->getOffset();
+          AM.Disp += Offset;
           AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
           return false;
         }
@@ -935,15 +937,16 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     // Handle "X | C" as "X + C" iff X is known to have C bits clear.
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       X86ISelAddressMode Backup = AM;
+      uint64_t Offset = CN->getSExtValue();
       // Start with the LHS as an addr mode.
       if (!MatchAddress(N.getOperand(0), AM, false) &&
           // Address could not have picked a GV address for the displacement.
           AM.GV == NULL &&
           // On x86-64, the resultant disp must fit in 32-bits.
-          (!is64Bit || isInt32(AM.Disp + CN->getSExtValue())) &&
+          (!is64Bit || isInt32(AM.Disp + Offset)) &&
           // Check to see if the LHS & C is zero.
           CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getAPIntValue())) {
-        AM.Disp += CN->getZExtValue();
+        AM.Disp += Offset;
         return false;
       }
       AM = Backup;
