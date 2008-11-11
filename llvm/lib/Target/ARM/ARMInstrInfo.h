@@ -100,26 +100,33 @@ namespace ARMII {
     // Extend instructions
     ExtFrm      = 14 << FormShift,
 
-    // Thumb format
-    ThumbFrm    = 15 << FormShift,
+    // VFP formats
+    VPFFrm       = 15 << FormShift,
+    VFPUnaryFrm  = 16 << FormShift,
+    VFPBinaryFrm = 17 << FormShift,
 
-    // VFP format
-    VPFFrm      = 16 << FormShift,
+    // Thumb format
+    ThumbFrm     = 18 << FormShift,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating
     // machine instructions.
+    M_BitShift     = 5,
     ShiftShift     = 7,
+    N_BitShift     = 7,
     SoRotImmShift  = 8,
     RegRsShift     = 8,
     ExtRotImmShift = 10,
     RegRdLoShift   = 12,
     RegRdShift     = 12,
+    RegFdShift     = 12,
     RegRdHiShift   = 16,
     RegRnShift     = 16,
+    RegFnShift     = 16,
     S_BitShift     = 20,
     W_BitShift     = 21,
     AM3_I_BitShift = 22,
+    D_BitShift     = 22,
     U_BitShift     = 23,
     P_BitShift     = 24,
     I_BitShift     = 25,

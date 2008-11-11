@@ -11,60 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-// ARM VFP Instruction templates.
-//
-
-// ARM Float Instruction
-class ASI<dag outs, dag ins, string opc, string asm, list<dag> pattern>
-  : AI<outs, ins, VFPFrm, opc, asm, pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-class ASI5<dag outs, dag ins, string opc, string asm, list<dag> pattern>
-  : I<outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
-      VFPFrm, opc, asm, "", pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-// ARM Double Instruction
-class ADI<dag outs, dag ins, string opc, string asm, list<dag> pattern>
-  : AI<outs, ins, VFPFrm, opc, asm, pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-class ADI5<dag outs, dag ins, string opc, string asm, list<dag> pattern>
-  : I<outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
-      VFPFrm, opc, asm, "", pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-// Special cases.
-class AXSI<dag outs, dag ins, string asm, list<dag> pattern>
-  : XI<outs, ins, AddrModeNone, Size4Bytes, IndexModeNone,
-       VFPFrm, asm, "", pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-class AXSI5<dag outs, dag ins, string asm, list<dag> pattern>
-  : XI<outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
-       VFPFrm, asm, "", pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-class AXDI<dag outs, dag ins, string asm, list<dag> pattern>
-  : XI<outs, ins, AddrModeNone, Size4Bytes, IndexModeNone,
-       VFPFrm, asm, "", pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-class AXDI5<dag outs, dag ins, string asm, list<dag> pattern>
-  : XI<outs, ins, AddrMode5, Size4Bytes, IndexModeNone,
-       VFPFrm, asm, "", pattern> {
-  // TODO: Mark the instructions with the appropriate subtarget info.
-}
-
-
 def SDT_FTOI :
 SDTypeProfile<1, 1, [SDTCisVT<0, f32>, SDTCisFP<1>]>;
 def SDT_ITOF :
@@ -75,14 +21,14 @@ def SDT_FMDRR :
 SDTypeProfile<1, 2, [SDTCisVT<0, f64>, SDTCisVT<1, i32>,
                      SDTCisSameAs<1, 2>]>;
 
-def arm_ftoui  : SDNode<"ARMISD::FTOUI", SDT_FTOI>;
-def arm_ftosi  : SDNode<"ARMISD::FTOSI", SDT_FTOI>;
-def arm_sitof  : SDNode<"ARMISD::SITOF", SDT_ITOF>;
-def arm_uitof  : SDNode<"ARMISD::UITOF", SDT_ITOF>;
+def arm_ftoui  : SDNode<"ARMISD::FTOUI",  SDT_FTOI>;
+def arm_ftosi  : SDNode<"ARMISD::FTOSI",  SDT_FTOI>;
+def arm_sitof  : SDNode<"ARMISD::SITOF",  SDT_ITOF>;
+def arm_uitof  : SDNode<"ARMISD::UITOF",  SDT_ITOF>;
 def arm_fmstat : SDNode<"ARMISD::FMSTAT", SDTNone, [SDNPInFlag,SDNPOutFlag]>;
-def arm_cmpfp  : SDNode<"ARMISD::CMPFP", SDT_ARMCmp, [SDNPOutFlag]>;
-def arm_cmpfp0 : SDNode<"ARMISD::CMPFPw0", SDT_CMPFP0, [SDNPOutFlag]>;
-def arm_fmdrr  : SDNode<"ARMISD::FMDRR", SDT_FMDRR>;
+def arm_cmpfp  : SDNode<"ARMISD::CMPFP",  SDT_ARMCmp, [SDNPOutFlag]>;
+def arm_cmpfp0 : SDNode<"ARMISD::CMPFPw0",SDT_CMPFP0, [SDNPOutFlag]>;
+def arm_fmdrr  : SDNode<"ARMISD::FMDRR",  SDT_FMDRR>;
 
 //===----------------------------------------------------------------------===//
 //  Load / store Instructions.
@@ -140,45 +86,55 @@ def FSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,
 // FP Binary Operations.
 //
 
-def FADDD  : ADI<(outs DPR:$dst), (ins DPR:$a, DPR:$b),
+def FADDD  : ADbI<0b11100011, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  "faddd", " $dst, $a, $b",
                  [(set DPR:$dst, (fadd DPR:$a, DPR:$b))]>;
 
-def FADDS  : ASI<(outs SPR:$dst), (ins SPR:$a, SPR:$b),
+def FADDS  : ASbI<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                  "fadds", " $dst, $a, $b",
                  [(set SPR:$dst, (fadd SPR:$a, SPR:$b))]>;
 
-def FCMPED : ADI<(outs), (ins DPR:$a, DPR:$b),
+def FCMPED : ADbI<0b11101011, (outs), (ins DPR:$a, DPR:$b),
                  "fcmped", " $a, $b",
-                 [(arm_cmpfp DPR:$a, DPR:$b)]>;
+                 [(arm_cmpfp DPR:$a, DPR:$b)]> {
+  let Inst{19-16} = 0b0100;
+  let Inst{7-6}   = 0b11;
+}
 
-def FCMPES : ASI<(outs), (ins SPR:$a, SPR:$b),
+def FCMPES : ASbI<0b11101011, (outs), (ins SPR:$a, SPR:$b),
                  "fcmpes", " $a, $b",
-                 [(arm_cmpfp SPR:$a, SPR:$b)]>;
+                 [(arm_cmpfp SPR:$a, SPR:$b)]> {
+  let Inst{19-16} = 0b0100;
+  let Inst{7-6}   = 0b11;
+}
 
-def FDIVD  : ADI<(outs DPR:$dst), (ins DPR:$a, DPR:$b),
+def FDIVD  : ADbI<0b11101000, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  "fdivd", " $dst, $a, $b",
                  [(set DPR:$dst, (fdiv DPR:$a, DPR:$b))]>;
 
-def FDIVS  : ASI<(outs SPR:$dst), (ins SPR:$a, SPR:$b),
+def FDIVS  : ASbI<0b11101000, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                  "fdivs", " $dst, $a, $b",
                  [(set SPR:$dst, (fdiv SPR:$a, SPR:$b))]>;
 
-def FMULD  : ADI<(outs DPR:$dst), (ins DPR:$a, DPR:$b),
+def FMULD  : ADbI<0b11100010, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  "fmuld", " $dst, $a, $b",
                  [(set DPR:$dst, (fmul DPR:$a, DPR:$b))]>;
 
-def FMULS  : ASI<(outs SPR:$dst), (ins SPR:$a, SPR:$b),
+def FMULS  : ASbI<0b11100010, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                  "fmuls", " $dst, $a, $b",
                  [(set SPR:$dst, (fmul SPR:$a, SPR:$b))]>;
                  
-def FNMULD  : ADI<(outs DPR:$dst), (ins DPR:$a, DPR:$b),
+def FNMULD  : ADbI<0b11100010, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                   "fnmuld", " $dst, $a, $b",
-                  [(set DPR:$dst, (fneg (fmul DPR:$a, DPR:$b)))]>;
+                  [(set DPR:$dst, (fneg (fmul DPR:$a, DPR:$b)))]> {
+  let Inst{6} = 1;
+}
 
-def FNMULS  : ASI<(outs SPR:$dst), (ins SPR:$a, SPR:$b),
+def FNMULS  : ASbI<0b11100010, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                   "fnmuls", " $dst, $a, $b",
-                  [(set SPR:$dst, (fneg (fmul SPR:$a, SPR:$b)))]>;
+                  [(set SPR:$dst, (fneg (fmul SPR:$a, SPR:$b)))]> {
+  let Inst{6} = 1;
+}
 
 // Match reassociated forms only if not sign dependent rounding.
 def : Pat<(fmul (fneg DPR:$a), DPR:$b),
@@ -187,11 +143,11 @@ def : Pat<(fmul (fneg SPR:$a), SPR:$b),
           (FNMULS SPR:$a, SPR:$b)>, Requires<[NoHonorSignDependentRounding]>;
 
 
-def FSUBD  : ADI<(outs DPR:$dst), (ins DPR:$a, DPR:$b),
+def FSUBD  : ADbI<0b11100011, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  "fsubd", " $dst, $a, $b",
                  [(set DPR:$dst, (fsub DPR:$a, DPR:$b))]>;
 
-def FSUBS  : ASI<(outs SPR:$dst), (ins SPR:$a, SPR:$b),
+def FSUBS  : ASbI<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                  "fsubs", " $dst, $a, $b",
                  [(set SPR:$dst, (fsub SPR:$a, SPR:$b))]>;
 
@@ -199,49 +155,55 @@ def FSUBS  : ASI<(outs SPR:$dst), (ins SPR:$a, SPR:$b),
 // FP Unary Operations.
 //
 
-def FABSD  : ADI<(outs DPR:$dst), (ins DPR:$a),
+def FABSD  : ADuI<0b11101011, 0b0000, 0b1100, (outs DPR:$dst), (ins DPR:$a),
                  "fabsd", " $dst, $a",
                  [(set DPR:$dst, (fabs DPR:$a))]>;
 
-def FABSS  : ASI<(outs SPR:$dst), (ins SPR:$a),
+def FABSS  : ASuI<0b11101011, 0b0000, 0b1100, (outs SPR:$dst), (ins SPR:$a),
                  "fabss", " $dst, $a",
                  [(set SPR:$dst, (fabs SPR:$a))]>;
 
-def FCMPEZD : ADI<(outs), (ins DPR:$a),
+def FCMPEZD : ADuI<0b11101011, 0b0101, 0b1100, (outs), (ins DPR:$a),
                   "fcmpezd", " $a",
                   [(arm_cmpfp0 DPR:$a)]>;
 
-def FCMPEZS : ASI<(outs), (ins SPR:$a),
+def FCMPEZS : ASuI<0b11101011, 0b0101, 0b1100, (outs), (ins SPR:$a),
                   "fcmpezs", " $a",
                   [(arm_cmpfp0 SPR:$a)]>;
 
-def FCVTDS : ADI<(outs DPR:$dst), (ins SPR:$a),
+def FCVTDS : ASuI<0b11101011, 0b0111, 0b1100, (outs DPR:$dst), (ins SPR:$a),
                  "fcvtds", " $dst, $a",
                  [(set DPR:$dst, (fextend SPR:$a))]>;
 
-def FCVTSD : ADI<(outs SPR:$dst), (ins DPR:$a),
+// Special case encoding: bits 11-8 is 0b1011.
+def FCVTSD : AI<(outs SPR:$dst), (ins DPR:$a), VFPUnaryFrm,
                  "fcvtsd", " $dst, $a",
-                 [(set SPR:$dst, (fround DPR:$a))]>;
+                 [(set SPR:$dst, (fround DPR:$a))]> {
+  let Inst{27-23} = 0b11101;
+  let Inst{21-16} = 0b110111;
+  let Inst{11-8}  = 0b1011;
+  let Inst{7-4}   = 0b1100;
+}
 
-def FCPYD  : ADI<(outs DPR:$dst), (ins DPR:$a),
+def FCPYD  : ADuI<0b11101011, 0b0000, 0b0100, (outs DPR:$dst), (ins DPR:$a),
                  "fcpyd", " $dst, $a", []>;
 
-def FCPYS  : ASI<(outs SPR:$dst), (ins SPR:$a),
+def FCPYS  : ASuI<0b11101011, 0b0000, 0b0100, (outs SPR:$dst), (ins SPR:$a),
                  "fcpys", " $dst, $a", []>;
 
-def FNEGD  : ADI<(outs DPR:$dst), (ins DPR:$a),
+def FNEGD  : ADuI<0b11101011, 0b0001, 0b0100, (outs DPR:$dst), (ins DPR:$a),
                  "fnegd", " $dst, $a",
                  [(set DPR:$dst, (fneg DPR:$a))]>;
 
-def FNEGS  : ASI<(outs SPR:$dst), (ins SPR:$a),
+def FNEGS  : ASuI<0b11101011, 0b0001, 0b0100, (outs SPR:$dst), (ins SPR:$a),
                  "fnegs", " $dst, $a",
                  [(set SPR:$dst, (fneg SPR:$a))]>;
 
-def FSQRTD  : ADI<(outs DPR:$dst), (ins DPR:$a),
+def FSQRTD  : ADuI<0b11101011, 0b0001, 0b1100, (outs DPR:$dst), (ins DPR:$a),
                  "fsqrtd", " $dst, $a",
                  [(set DPR:$dst, (fsqrt DPR:$a))]>;
 
-def FSQRTS  : ASI<(outs SPR:$dst), (ins SPR:$a),
+def FSQRTS  : ASuI<0b11101011, 0b0001, 0b1100, (outs SPR:$dst), (ins SPR:$a),
                  "fsqrts", " $dst, $a",
                  [(set SPR:$dst, (fsqrt SPR:$a))]>;
 
@@ -323,45 +285,53 @@ def FTOUIZS : ASI<(outs SPR:$dst), (ins SPR:$a),
 // FP FMA Operations.
 //
 
-def FMACD : ADI<(outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
+def FMACD : ADbI<0b11100000, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                 "fmacd", " $dst, $a, $b",
                 [(set DPR:$dst, (fadd (fmul DPR:$a, DPR:$b), DPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst">;
 
-def FMACS : ASI<(outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
+def FMACS : ASbI<0b11100000, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
                 "fmacs", " $dst, $a, $b",
                 [(set SPR:$dst, (fadd (fmul SPR:$a, SPR:$b), SPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst">;
 
-def FMSCD : ADI<(outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
+def FMSCD : ADbI<0b11100001, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                 "fmscd", " $dst, $a, $b",
                 [(set DPR:$dst, (fsub (fmul DPR:$a, DPR:$b), DPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst">;
 
-def FMSCS : ASI<(outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
+def FMSCS : ASbI<0b11100001, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
                 "fmscs", " $dst, $a, $b",
                 [(set SPR:$dst, (fsub (fmul SPR:$a, SPR:$b), SPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst">;
 
-def FNMACD : ADI<(outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
+def FNMACD : ADbI<0b11100000, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                  "fnmacd", " $dst, $a, $b",
              [(set DPR:$dst, (fadd (fneg (fmul DPR:$a, DPR:$b)), DPR:$dstin))]>,
-                RegConstraint<"$dstin = $dst">;
+                RegConstraint<"$dstin = $dst"> {
+  let Inst{6} = 1;
+}
 
-def FNMACS : ASI<(outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
+def FNMACS : ASbI<0b11100000, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
                 "fnmacs", " $dst, $a, $b",
              [(set SPR:$dst, (fadd (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin))]>,
-                RegConstraint<"$dstin = $dst">;
+                RegConstraint<"$dstin = $dst"> {
+  let Inst{6} = 1;
+}
 
-def FNMSCD : ADI<(outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
+def FNMSCD : ADbI<0b11100001, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                  "fnmscd", " $dst, $a, $b",
              [(set DPR:$dst, (fsub (fneg (fmul DPR:$a, DPR:$b)), DPR:$dstin))]>,
-                RegConstraint<"$dstin = $dst">;
+                RegConstraint<"$dstin = $dst"> {
+  let Inst{6} = 1;
+}
 
-def FNMSCS : ASI<(outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
+def FNMSCS : ASbI<0b11100001, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
                 "fnmscs", " $dst, $a, $b",
              [(set SPR:$dst, (fsub (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin))]>,
-                RegConstraint<"$dstin = $dst">;
+                RegConstraint<"$dstin = $dst"> {
+  let Inst{6} = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // FP Conditional moves.

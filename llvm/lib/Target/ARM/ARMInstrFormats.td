@@ -36,8 +36,10 @@ def StMulFrm    : Format<12>;
 
 def ArithMiscFrm: Format<13>;
 def ExtFrm      : Format<14>;
-def ThumbFrm    : Format<15>;
-def VFPFrm      : Format<16>;
+def VFPFrm      : Format<15>;
+def VFPUnaryFrm : Format<16>;
+def VFPBinaryFrm: Format<17>;
+def ThumbFrm    : Format<18>;
 
 // Misc flag for data processing instructions that indicates whether
 // the instruction has a Rn register operand.
@@ -726,6 +728,100 @@ class TIx2<dag outs, dag ins, string asm, list<dag> pattern>
 // BR_JT instructions
 class TJTI<dag outs, dag ins, string asm, list<dag> pattern>
   : ThumbI<outs, ins, AddrModeNone, SizeSpecial, asm, "", pattern>;
+
+
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// ARM VFP Instruction templates.
+//
+
+// ARM Float Instruction
+class ASI<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : AI<oops, iops, VFPFrm, opc, asm, pattern> {
+  // TODO: Mark the instructions with the appropriate subtarget info.
+}
+
+class ASI5<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : I<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
+      VFPFrm, opc, asm, "", pattern> {
+  // TODO: Mark the instructions with the appropriate subtarget info.
+}
+
+// ARM Double Instruction
+class ADI<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : AI<oops, iops, VFPFrm, opc, asm, pattern> {
+  // TODO: Mark the instructions with the appropriate subtarget info.
+}
+
+class ADI5<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : I<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
+      VFPFrm, opc, asm, "", pattern> {
+  // TODO: Mark the instructions with the appropriate subtarget info.
+}
+
+// Double precision, unary
+class ADuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
+           string opc, string asm, list<dag> pattern>
+  : AI<oops, iops, VFPUnaryFrm, opc, asm, pattern> {
+  let Inst{27-20} = opcod1;
+  let Inst{19-16} = opcod2;
+  let Inst{11-8}  = 0b1011;
+  let Inst{7-4}   = opcod3;
+}
+
+// Double precision, binary
+class ADbI<bits<8> opcod, dag oops, dag iops, string opc,
+           string asm, list<dag> pattern>
+  : AI<oops, iops, VFPBinaryFrm, opc, asm, pattern> {
+  let Inst{27-20} = opcod;
+  let Inst{11-8}  = 0b1011;
+}
+
+// Single precision, unary
+class ASuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
+           string opc, string asm, list<dag> pattern>
+  : AI<oops, iops, VFPUnaryFrm, opc, asm, pattern> {
+  // Bits 22 (D bit) and 5 (M bit) will be changed during instruction encoding.
+  let Inst{27-20} = opcod1;
+  let Inst{19-16} = opcod2;
+  let Inst{11-8}  = 0b1010;
+  let Inst{7-4}   = opcod3;
+}
+
+// Single precision, binary
+class ASbI<bits<8> opcod, dag oops, dag iops, string opc,
+           string asm, list<dag> pattern>
+  : AI<oops, iops, VFPBinaryFrm, opc, asm, pattern> {
+  // Bit 22 (D bit) can be changed during instruction encoding.
+  let Inst{27-20} = opcod;
+  let Inst{11-8}  = 0b1010;
+}
+
+// Special cases.
+class AXSI<dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone,
+       VFPFrm, asm, "", pattern> {
+  // TODO: Mark the instructions with the appropriate subtarget info.
+}
+
+class AXSI5<dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
+       VFPFrm, asm, "", pattern> {
+  // TODO: Mark the instructions with the appropriate subtarget info.
+}
+
+class AXDI<dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone,
+       VFPFrm, asm, "", pattern> {
+  // TODO: Mark the instructions with the appropriate subtarget info.
+}
+
+class AXDI5<dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
+       VFPFrm, asm, "", pattern> {
+  // TODO: Mark the instructions with the appropriate subtarget info.
+}
 
 
 //===----------------------------------------------------------------------===//
