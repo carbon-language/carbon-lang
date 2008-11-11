@@ -1363,6 +1363,9 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   // files.
   if (ClearSourceMgr)
     PP.getSourceManager().clearIDTables();
+
+  if (DisableFree)
+    Consumer.take();
 }
 
 static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,

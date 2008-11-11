@@ -89,9 +89,6 @@ namespace {
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {}
 
     ~BackendConsumer() {
-      // FIXME: Move out of destructor.
-      EmitAssembly();
-
       delete AsmOutStream;
       delete TheTargetData;
       delete ModuleProvider;
@@ -115,6 +112,11 @@ namespace {
     
     virtual void HandleTranslationUnit(TranslationUnit& TU) {
       Gen->HandleTranslationUnit(TU);
+
+      EmitAssembly();      
+      // Force a flush here in case we never get released.
+      if (AsmOutStream)
+        AsmOutStream->flush();
     }
     
     virtual void HandleTagDeclDefinition(TagDecl *D) {
