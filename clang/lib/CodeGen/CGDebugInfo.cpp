@@ -15,6 +15,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
@@ -382,8 +383,6 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::ObjCInterface:
   case Type::ObjCQualifiedInterface:
   case Type::ObjCQualifiedId:
-  case Type::TypeOfExp:
-  case Type::TypeOfTyp:
   default:
     return llvm::DIType();
 
@@ -393,14 +392,18 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::Tagged: Slot = CreateType(cast<TagType>(Ty), Unit); break;
   case Type::FunctionProto:
   case Type::FunctionNoProto:
-    Slot = CreateType(cast<FunctionType>(Ty), Unit);
-    break;
+    return Slot = CreateType(cast<FunctionType>(Ty), Unit);
     
   case Type::ConstantArray:
   case Type::VariableArray:
   case Type::IncompleteArray:
-    Slot = CreateType(cast<ArrayType>(Ty), Unit);
-    break;
+    return Slot = CreateType(cast<ArrayType>(Ty), Unit);
+  case Type::TypeOfExp:
+    return Slot = getOrCreateType(cast<TypeOfExpr>(Ty)->getUnderlyingExpr()
+                                  ->getType(), Unit);
+  case Type::TypeOfTyp:
+    return Slot = getOrCreateType(cast<TypeOfType>(Ty)->getUnderlyingType(),
+                                  Unit);
   }
   
   return Slot;
