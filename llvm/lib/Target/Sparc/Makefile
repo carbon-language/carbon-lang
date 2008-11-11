@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = LLVMSparc
+LIBRARYNAME = LLVMSparcCodeGen
 TARGET = Sparc
 
 # Make sure that tblgen is run, first thing.
@@ -15,6 +15,8 @@ BUILT_SOURCES = SparcGenRegisterInfo.h.inc SparcGenRegisterNames.inc \
                 SparcGenRegisterInfo.inc SparcGenInstrNames.inc \
                 SparcGenInstrInfo.inc SparcGenAsmWriter.inc \
                 SparcGenDAGISel.inc SparcGenSubtarget.inc SparcGenCallingConv.inc
+
+DIRS = AsmPrinter
 
 include $(LEVEL)/Makefile.common
 
