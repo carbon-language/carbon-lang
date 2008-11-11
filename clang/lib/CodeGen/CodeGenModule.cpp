@@ -252,7 +252,10 @@ void CodeGenModule::SetFunctionAttributes(const Decl *D,
 
   // Set the appropriate calling convention for the Function.
   if (D->getAttr<FastCallAttr>())
-    F->setCallingConv(llvm::CallingConv::Fast);
+    F->setCallingConv(llvm::CallingConv::X86_FastCall);
+
+  if (D->getAttr<StdCallAttr>())
+    F->setCallingConv(llvm::CallingConv::X86_StdCall);
 }
 
 /// SetFunctionAttributesForDefinition - Set function attributes
