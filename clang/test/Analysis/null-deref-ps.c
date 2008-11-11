@@ -1,4 +1,4 @@
-// RUN: clang -std=gnu99 -checker-simple -verify %s
+// RUN: clang -std=gnu99 -checker-simple -verify %s &&
 // RUN: clang -std=gnu99 -checker-simple -analyzer-store-region -verify %s
 
 #include<stdint.h>
