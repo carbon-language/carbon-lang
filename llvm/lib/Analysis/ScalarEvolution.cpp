@@ -1406,6 +1406,7 @@ namespace {
     void setSCEV(Value *V, const SCEVHandle &H) {
       bool isNew = Scalars.insert(std::make_pair(V, H)).second;
       assert(isNew && "This entry already existed!");
+      isNew = false;
     }
 
 
