@@ -155,7 +155,7 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB) {
   
   if (LastBB->getTerminator()) {
     // If the previous block is already terminated, don't touch it.
-  } else if (LastBB->empty() && isDummyBlock(LastBB)) {
+  } else if (isDummyBlock(LastBB)) {
     // If the last block was an empty placeholder, remove it now.
     // TODO: cache and reuse these.
     LastBB->eraseFromParent();
@@ -510,7 +510,7 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   // Emit the code for this case. We do this first to make sure it is
   // properly chained from our predecessor before generating the
   // switch machinery to enter this block.
-  StartBlock("sw.bb");
+  EmitBlock(createBasicBlock("sw.bb"));
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
   EmitStmt(S.getSubStmt());
 
@@ -560,7 +560,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
     return;
   }
     
-  StartBlock("sw.bb");
+  EmitBlock(createBasicBlock("sw.bb"));
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
   llvm::APSInt CaseVal = S.getLHS()->getIntegerConstantExprValue(getContext());
   SwitchInsn->addCase(llvm::ConstantInt::get(CaseVal), CaseDest);
@@ -592,7 +592,7 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   CaseRangeBlock = DefaultBlock;
 
   // Create basic block for body of switch
-  StartBlock("sw.body");
+  EmitBlock(createBasicBlock("sw.body"));
 
   // All break statements jump to NextBlock. If BreakContinueStack is non empty
   // then reuse last ContinueBlock.
