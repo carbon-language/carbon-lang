@@ -75,6 +75,7 @@ endif()
 
 add_custom_command(OUTPUT ${LIBDEPS_TMP}
   COMMAND ${PERL_EXECUTABLE} ${LLVM_MAIN_SRC_DIR}/utils/GenLibDeps.pl -flat ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} ${NM_PATH} > ${LIBDEPS_TMP}
+  DEPENDS ${llvm_libs}
   COMMENT "Regenerating ${LIBDEPS_TMP}")
 
 add_custom_command(OUTPUT ${LIBDEPS}
