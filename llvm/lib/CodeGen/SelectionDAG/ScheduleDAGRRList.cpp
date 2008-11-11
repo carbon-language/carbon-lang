@@ -1881,27 +1881,29 @@ void TDRegReductionPriorityQueue::CalculateSethiUllmanNumbers() {
 
 llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
                                                     SelectionDAG *DAG,
+                                                    const TargetMachine *TM,
                                                     MachineBasicBlock *BB,
                                                     bool Fast) {
   if (Fast)
-    return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), true, true,
+    return new ScheduleDAGRRList(*DAG, BB, *TM, true, true,
                                  new BURegReductionFastPriorityQueue());
 
-  const TargetInstrInfo *TII = DAG->getTarget().getInstrInfo();
-  const TargetRegisterInfo *TRI = DAG->getTarget().getRegisterInfo();
+  const TargetInstrInfo *TII = TM->getInstrInfo();
+  const TargetRegisterInfo *TRI = TM->getRegisterInfo();
   
   BURegReductionPriorityQueue *PQ = new BURegReductionPriorityQueue(TII, TRI);
 
   ScheduleDAGRRList *SD =
-    new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(),true,false, PQ);
+    new ScheduleDAGRRList(*DAG, BB, *TM, true, false, PQ);
   PQ->setScheduleDAG(SD);
   return SD;  
 }
 
 llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
                                                     SelectionDAG *DAG,
+                                                    const TargetMachine *TM,
                                                     MachineBasicBlock *BB,
                                                     bool Fast) {
-  return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), false, Fast,
+  return new ScheduleDAGRRList(*DAG, BB, *TM, false, Fast,
                                new TDRegReductionPriorityQueue());
 }

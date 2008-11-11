@@ -133,16 +133,17 @@ namespace llvm {
   /// for the target.
   ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
                                       SelectionDAG *DAG,
+                                      const TargetMachine *TM,
                                       MachineBasicBlock *BB,
                                       bool Fast) {
     TargetLowering &TLI = IS->getTargetLowering();
     
     if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency) {
-      return createTDListDAGScheduler(IS, DAG, BB, Fast);
+      return createTDListDAGScheduler(IS, DAG, TM, BB, Fast);
     } else {
       assert(TLI.getSchedulingPreference() ==
            TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
-      return createBURRListDAGScheduler(IS, DAG, BB, Fast);
+      return createBURRListDAGScheduler(IS, DAG, TM, BB, Fast);
     }
   }
 }
@@ -1053,7 +1054,8 @@ ScheduleDAG *SelectionDAGISel::Schedule() {
     RegisterScheduler::setDefault(Ctor);
   }
   
-  ScheduleDAG *Scheduler = Ctor(this, CurDAG, BB, Fast);
+  TargetMachine &TM = getTargetLowering().getTargetMachine();
+  ScheduleDAG *Scheduler = Ctor(this, CurDAG, &TM, BB, Fast);
   Scheduler->Run();
 
   return Scheduler;

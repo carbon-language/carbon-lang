@@ -541,8 +541,9 @@ void LatencyPriorityQueue::AdjustPriorityOfUnscheduledPreds(SUnit *SU) {
 /// recognizer and deletes it when done.
 ScheduleDAG* llvm::createTDListDAGScheduler(SelectionDAGISel *IS,
                                             SelectionDAG *DAG,
+                                            const TargetMachine *TM,
                                             MachineBasicBlock *BB, bool Fast) {
-  return new ScheduleDAGList(*DAG, BB, DAG->getTarget(),
+  return new ScheduleDAGList(*DAG, BB, *TM,
                              new LatencyPriorityQueue(),
                              IS->CreateTargetHazardRecognizer());
 }

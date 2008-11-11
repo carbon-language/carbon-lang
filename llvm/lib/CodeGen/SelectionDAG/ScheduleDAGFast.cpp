@@ -652,6 +652,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
 
 llvm::ScheduleDAG* llvm::createFastDAGScheduler(SelectionDAGISel *IS,
                                                 SelectionDAG *DAG,
+                                                const TargetMachine *TM,
                                                 MachineBasicBlock *BB, bool) {
-  return new ScheduleDAGFast(*DAG, BB, DAG->getTarget());
+  return new ScheduleDAGFast(*DAG, BB, *TM);
 }

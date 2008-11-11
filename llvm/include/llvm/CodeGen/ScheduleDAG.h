@@ -395,6 +395,7 @@ namespace llvm {
   /// reduction list scheduler.
   ScheduleDAG* createBURRListDAGScheduler(SelectionDAGISel *IS,
                                           SelectionDAG *DAG,
+                                          const TargetMachine *TM,
                                           MachineBasicBlock *BB,
                                           bool Fast);
   
@@ -402,6 +403,7 @@ namespace llvm {
   /// reduction list scheduler.
   ScheduleDAG* createTDRRListDAGScheduler(SelectionDAGISel *IS,
                                           SelectionDAG *DAG,
+                                          const TargetMachine *TM,
                                           MachineBasicBlock *BB,
                                           bool Fast);
   
@@ -409,6 +411,7 @@ namespace llvm {
   /// a hazard recognizer.
   ScheduleDAG* createTDListDAGScheduler(SelectionDAGISel *IS,
                                         SelectionDAG *DAG,
+                                        const TargetMachine *TM,
                                         MachineBasicBlock *BB,
                                         bool Fast);
                                         
@@ -416,6 +419,7 @@ namespace llvm {
   ///
   ScheduleDAG *createFastDAGScheduler(SelectionDAGISel *IS,
                                       SelectionDAG *DAG,
+                                      const TargetMachine *TM,
                                       MachineBasicBlock *BB,
                                       bool Fast);
 
@@ -423,6 +427,7 @@ namespace llvm {
   /// for the target.
   ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
                                       SelectionDAG *DAG,
+                                      const TargetMachine *TM,
                                       MachineBasicBlock *BB,
                                       bool Fast);
 
