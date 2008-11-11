@@ -1,8 +1,8 @@
-// RUN: clang -emit-llvm < %s 2>&1 | grep '@foo.*global.*addrspace(1)' &&
-// RUN: clang -emit-llvm < %s 2>&1 | grep '@ban.*global.*addrspace(1)' &&
-// RUN: clang -emit-llvm < %s 2>&1 | grep 'load.*addrspace(1)' | count 2 &&
-// RUN: clang -emit-llvm < %s 2>&1 | grep 'load.*addrspace(2).. @A' &&
-// RUN: clang -emit-llvm < %s 2>&1 | grep 'load.*addrspace(2).. @B'
+// RUN: clang -emit-llvm < %s | grep '@foo.*global.*addrspace(1)' &&
+// RUN: clang -emit-llvm < %s | grep '@ban.*global.*addrspace(1)' &&
+// RUN: clang -emit-llvm < %s | grep 'load.*addrspace(1)' | count 2 &&
+// RUN: clang -emit-llvm < %s | grep 'load.*addrspace(2).. @A' &&
+// RUN: clang -emit-llvm < %s | grep 'load.*addrspace(2).. @B'
 
 int foo __attribute__((address_space(1)));
 int ban[10] __attribute__((address_space(1)));
