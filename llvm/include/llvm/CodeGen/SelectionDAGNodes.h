@@ -432,9 +432,10 @@ namespace ISD {
     BIT_CONVERT,
     
     // CONVERT_RNDSAT - This operator is used to support various conversions
-    // between various types (float, signed, unsigned) with rounding and
-    // saturation. NOTE: Avoid using this operator as most target don't support
-    // it and they might be removed. It takes the following arguments:
+    // between various types (float, signed, unsigned and vectors of those
+    // types) with rounding and saturation. NOTE: Avoid using this operator as
+    // most target don't support it and the operator might be removed in the
+    // future. It takes the following arguments:
     //   0) value
     //   1) dest type (type to convert to)
     //   2) src type (type to convert from)

@@ -59,6 +59,8 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::BSWAP:       Result = PromoteIntRes_BSWAP(N); break;
   case ISD::BUILD_PAIR:  Result = PromoteIntRes_BUILD_PAIR(N); break;
   case ISD::Constant:    Result = PromoteIntRes_Constant(N); break;
+  case ISD::CONVERT_RNDSAT:
+                         Result = PromoteIntRes_CONVERT_RNDSAT(N); break;
   case ISD::CTLZ:        Result = PromoteIntRes_CTLZ(N); break;
   case ISD::CTPOP:       Result = PromoteIntRes_CTPOP(N); break;
   case ISD::CTTZ:        Result = PromoteIntRes_CTTZ(N); break;
@@ -271,6 +273,41 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Constant(SDNode *N) {
   assert(isa<ConstantSDNode>(Result) && "Didn't constant fold ext?");
   return Result;
 }
+
+SDValue DAGTypeLegalizer::PromoteIntRes_CONVERT_RNDSAT(SDNode *N) {
+  ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(N)->getCvtCode();
+  assert ((CvtCode == ISD::CVT_SS || CvtCode == ISD::CVT_SU ||
+           CvtCode == ISD::CVT_US || CvtCode == ISD::CVT_UU ||
+           CvtCode == ISD::CVT_SF || CvtCode == ISD::CVT_UF) &&
+          "can only promote integers");
+  SDValue InOp = N->getOperand(0);
+
+  MVT InVT = InOp.getValueType();
+  MVT OutVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  switch (getTypeAction(InVT)) {
+  default:
+    assert(false && "Unknown type action!");
+    break;
+  case Legal:
+    break;
+  case PromoteInteger:
+    return DAG.getConvertRndSat(OutVT, GetPromotedInteger(InOp),
+                                N->getOperand(1), N->getOperand(2),
+                                N->getOperand(3), N->getOperand(4), CvtCode);
+    break;
+  case SoftenFloat:
+  case ExpandInteger:
+  case ExpandFloat:
+    break;
+  case ScalarizeVector:
+  case SplitVector:
+    assert(false && "can not convert a vector to a scalar!");
+  }
+  return DAG.getConvertRndSat(OutVT, InOp,
+                              N->getOperand(1), N->getOperand(2),
+                              N->getOperand(3), N->getOperand(4), CvtCode);
+}
+
 
 SDValue DAGTypeLegalizer::PromoteIntRes_CTLZ(SDNode *N) {
   SDValue Op = GetPromotedInteger(N->getOperand(0));
@@ -610,8 +647,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
     case ISD::ZERO_EXTEND:  Res = PromoteIntOp_ZERO_EXTEND(N); break;
 
     case ISD::SINT_TO_FP:
-    case ISD::UINT_TO_FP:      Res = PromoteIntOp_INT_TO_FP(N); break;
-    case ISD::CONVERT_RNDSAT:  Res = PromoteIntOp_CONVERT_RNDSAT(N); break;
+    case ISD::UINT_TO_FP:     Res = PromoteIntOp_INT_TO_FP(N); break;
     }
   }
 
@@ -813,21 +849,6 @@ SDValue DAGTypeLegalizer::PromoteIntOp_INT_TO_FP(SDNode *N) {
 
   return DAG.UpdateNodeOperands(SDValue(N, 0), In);
 }
-
-SDValue DAGTypeLegalizer::PromoteIntOp_CONVERT_RNDSAT(SDNode *N) {
-  MVT OutVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(N)->getCvtCode();
-  assert ((CvtCode == ISD::CVT_SS || CvtCode == ISD::CVT_SU ||
-           CvtCode == ISD::CVT_US || CvtCode == ISD::CVT_UU ||
-           CvtCode == ISD::CVT_SF || CvtCode == ISD::CVT_UF) &&
-          "can only promote integers");
-  SDValue In = DAG.getConvertRndSat(OutVT,N->getOperand(0),
-                                    N->getOperand(1), N->getOperand(2),
-                                    N->getOperand(3), N->getOperand(4), CvtCode);
-  return DAG.UpdateNodeOperands(SDValue(N, 0), In);
-}
-
-
 
 SDValue DAGTypeLegalizer::PromoteIntOp_MEMBARRIER(SDNode *N) {
   SDValue NewOps[6];

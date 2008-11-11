@@ -231,6 +231,7 @@ private:
   SDValue PromoteIntRes_BSWAP(SDNode *N);
   SDValue PromoteIntRes_BUILD_PAIR(SDNode *N);
   SDValue PromoteIntRes_Constant(SDNode *N);
+  SDValue PromoteIntRes_CONVERT_RNDSAT(SDNode *N);
   SDValue PromoteIntRes_CTLZ(SDNode *N);
   SDValue PromoteIntRes_CTPOP(SDNode *N);
   SDValue PromoteIntRes_CTTZ(SDNode *N);
@@ -259,7 +260,6 @@ private:
   SDValue PromoteIntOp_BR_CC(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_BUILD_VECTOR(SDNode *N);
-  SDValue PromoteIntOp_CONVERT_RNDSAT(SDNode *N);
   SDValue PromoteIntOp_FP_EXTEND(SDNode *N);
   SDValue PromoteIntOp_FP_ROUND(SDNode *N);
   SDValue PromoteIntOp_INT_TO_FP(SDNode *N);
