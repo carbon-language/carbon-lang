@@ -64,7 +64,8 @@ public:
   CFG& getCFG() { return AD.getCFG(); }
   
   void SetTopValue(UninitializedValues::ValTy& X) {
-    X.resetValues(AD);
+    X.setDeclValues(AD);
+    X.resetExprValues(AD);
   }
     
   bool VisitDeclRefExpr(DeclRefExpr* DR);
@@ -74,6 +75,7 @@ public:
   bool VisitCallExpr(CallExpr* C);
   bool VisitDeclStmt(DeclStmt* D);
   bool VisitConditionalOperator(ConditionalOperator* C);
+  bool VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
   
   bool Visit(Stmt *S);
   bool BlockStmt_VisitExpr(Expr* E);
@@ -81,8 +83,8 @@ public:
   void VisitTerminator(CFGBlock* B) { }
 };
   
-static const bool Initialized = true;
-static const bool Uninitialized = false;  
+static const bool Initialized = false;
+static const bool Uninitialized = true;  
 
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   
@@ -178,6 +180,27 @@ bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   return Visit(U->getSubExpr());
 }
   
+bool TransferFuncs::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
+  // This represents a use of the 'collection'
+  bool x = Visit(S->getCollection());
+
+  if (x == Uninitialized)
+    return Uninitialized;
+
+  // This represents an initialization of the 'element' value.
+  Stmt* Element = S->getElement();
+  VarDecl* VD = 0;
+
+  if (DeclStmt* DS = dyn_cast<DeclStmt>(Element))
+    VD = cast<VarDecl>(DS->getSolitaryDecl());
+  else
+    VD = cast<VarDecl>(cast<DeclRefExpr>(Element)->getDecl());
+
+  V(VD,AD) = Initialized;
+  return Initialized;
+}
+  
+  
 bool TransferFuncs::VisitConditionalOperator(ConditionalOperator* C) {
   Visit(C->getCond());
 
@@ -227,7 +250,7 @@ bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
 //===----------------------------------------------------------------------===//      
 
 namespace {
-  typedef ExprDeclBitVector_Types::Intersect Merge;
+  typedef ExprDeclBitVector_Types::Union Merge;
   typedef DataflowSolver<UninitializedValues,TransferFuncs,Merge> Solver;
 }
 
