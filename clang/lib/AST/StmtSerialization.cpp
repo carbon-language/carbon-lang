@@ -216,6 +216,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     case CXXConstCastExprClass:
       return CXXConstCastExpr::CreateImpl(D, C, SC);
 
+    case CXXTypeidExprClass:
+      return CXXTypeidExpr::CreateImpl(D, C);
+
     case CXXThisExprClass:
       return CXXThisExpr::CreateImpl(D, C);
 
@@ -1344,6 +1347,31 @@ CXXNamedCastExpr::CreateImpl(Deserializer& D, ASTContext& C, StmtClass SC) {
     assert(false && "Unknown cast type!");
     return 0;
   }
+}
+
+void CXXTypeidExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(isTypeOperand());
+  if (isTypeOperand()) {
+    S.Emit(getTypeOperand());
+  } else {
+    S.EmitOwnedPtr(getExprOperand());
+  }
+  S.Emit(Range);
+}
+
+CXXTypeidExpr*
+CXXTypeidExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  QualType Ty = QualType::ReadVal(D);
+  bool isTypeOp = D.ReadBool();
+  void *Operand;
+  if (isTypeOp) {
+    Operand = QualType::ReadVal(D).getAsOpaquePtr();
+  } else {
+    Operand = D.ReadOwnedPtr<Expr>(C);
+  }
+  SourceRange Range = SourceRange::ReadVal(D);
+  return new CXXTypeidExpr(isTypeOp, Operand, Ty, Range);
 }
 
 void CXXThisExpr::EmitImpl(llvm::Serializer& S) const {

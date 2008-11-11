@@ -243,7 +243,7 @@ void IdentifierResolver::RemoveDecl(NamedDecl *D) {
 /// declaration context 'Ctx'. If 'LookInParentCtx' is true, it will walk the
 /// decls of parent declaration contexts too.
 IdentifierResolver::iterator
-IdentifierResolver::begin(const IdentifierInfo *II, DeclContext *Ctx,
+IdentifierResolver::begin(const IdentifierInfo *II, const DeclContext *Ctx,
                           bool LookInParentCtx) {
   assert(Ctx && "null param passed");
 

@@ -216,6 +216,54 @@ Parser::ExprResult Parser::ParseCXXCasts() {
   return Result;
 }
 
+/// ParseCXXTypeid - This handles the C++ typeid expression.
+///
+///       postfix-expression: [C++ 5.2p1]
+///         'typeid' '(' expression ')'
+///         'typeid' '(' type-id ')'
+///
+Parser::ExprResult Parser::ParseCXXTypeid() {
+  assert(Tok.is(tok::kw_typeid) && "Not 'typeid'!");
+
+  SourceLocation OpLoc = ConsumeToken();
+  SourceLocation LParenLoc = Tok.getLocation();
+  SourceLocation RParenLoc;
+
+  // typeid expressions are always parenthesized.
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
+      "typeid"))
+    return ExprResult(true);
+
+  Parser::ExprResult Result;
+
+  if (isTypeIdInParens()) {
+    TypeTy *Ty = ParseTypeName();
+
+    // Match the ')'.
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+    if (!Ty)
+      return ExprResult(true);
+
+    Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/true,
+                                    Ty, RParenLoc);
+  } else {
+    Result = ParseExpression();
+
+    // Match the ')'.
+    if (Result.isInvalid)
+      SkipUntil(tok::r_paren);
+    else {
+      MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+      Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/false,
+                                      Result.Val, RParenLoc);
+    }
+  }
+
+  return Result;
+}
+
 /// ParseCXXBoolLiteral - This handles the C++ Boolean literals.
 ///
 ///       boolean-literal: [C++ 2.13.5]

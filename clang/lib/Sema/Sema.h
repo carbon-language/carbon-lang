@@ -199,10 +199,18 @@ public:
   IdentifierInfo *Ident_id, *Ident_Class;     // "id", "Class"
   IdentifierInfo *Ident_SEL, *Ident_Protocol; // "SEL", "Protocol"
 
+  /// Identifiers used by the C++ language
+  IdentifierInfo *Ident_StdNs; // "std"
+  IdentifierInfo *Ident_TypeInfo; // "type_info" - lazily created
+
   /// Translation Unit Scope - useful to Objective-C actions that need
   /// to lookup file scope declarations in the "ordinary" C decl namespace.
   /// For example, user-defined classes, built-in "id" type, etc.
   Scope *TUScope;
+
+  /// The C++ "std" namespace, where the standard library resides. Cached here
+  /// by GetStdNamespace
+  NamespaceDecl *StdNamespace;
   
   /// ObjCMethodList - a linked list of methods with different signatures.
   struct ObjCMethodList {
@@ -450,7 +458,7 @@ public:
 
   /// More parsing and symbol table subroutines...
   Decl *LookupDecl(const IdentifierInfo *II, unsigned NSI, Scope *S,
-                   DeclContext *LookupCtx = 0,
+                   const DeclContext *LookupCtx = 0,
                    bool enableLazyBuiltinCreation = true);
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, 
@@ -463,6 +471,8 @@ public:
 
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);
+
+  NamespaceDecl *GetStdNamespace();
                            
   /// CheckProtocolMethodDefs - This routine checks unimpletented
   /// methods declared in protocol, and those referenced by it.
@@ -750,6 +760,11 @@ public:
                                        SourceLocation RAngleBracketLoc,
                                        SourceLocation LParenLoc, ExprTy *E,
                                        SourceLocation RParenLoc);
+
+  /// ActOnCXXTypeidOfType - Parse typeid( type-id ).
+  virtual ExprResult ActOnCXXTypeid(SourceLocation OpLoc,
+                                    SourceLocation LParenLoc, bool isType,
+                                    void *TyOrExpr, SourceLocation RParenLoc);
 
   //// ActOnCXXThis -  Parse 'this' pointer.
   virtual ExprResult ActOnCXXThis(SourceLocation ThisLoc);

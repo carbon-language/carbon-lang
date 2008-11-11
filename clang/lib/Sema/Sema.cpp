@@ -113,6 +113,10 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   Ident_SEL = &IT.get("SEL");
   Ident_Protocol = &IT.get("Protocol");
 
+  Ident_StdNs = &IT.get("std");
+  Ident_TypeInfo = 0;
+  StdNamespace = 0;
+
   TUScope = 0;
   if (getLangOptions().CPlusPlus)
     FieldCollector.reset(new CXXFieldCollector());

@@ -31,7 +31,7 @@ class IdentifierResolver {
   /// ScopedDecls, LookupContext can be used with all decls (assumes
   /// translation unit context for non ScopedDecls).
   class LookupContext {
-    DeclContext *Ctx;
+    const DeclContext *Ctx;
 
     /// TUCtx - Provides a common value for translation unit context for all
     /// decls.
@@ -49,7 +49,7 @@ class IdentifierResolver {
     LookupContext(Decl *D) {
       Ctx = getContext(D);
     }
-    LookupContext(DeclContext *DC) {
+    LookupContext(const DeclContext *DC) {
       if (!DC || isa<TranslationUnitDecl>(DC))
         Ctx = TUCtx();
       else
@@ -196,7 +196,7 @@ public:
   /// declaration context 'Ctx'. If 'LookInParentCtx' is true, it will walk the
   /// decls of parent declaration contexts too.
   /// Default for 'LookInParentCtx is true.
-  static iterator begin(const IdentifierInfo *II, DeclContext *Ctx,
+  static iterator begin(const IdentifierInfo *II, const DeclContext *Ctx,
                         bool LookInParentCtx = true);
 
   /// end - Returns an iterator that has 'finished'.

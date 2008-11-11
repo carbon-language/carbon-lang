@@ -24,6 +24,13 @@ void CXXConditionDeclExpr::Destroy(ASTContext& C) {
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//
 
+// CXXTypeidExpr - has child iterators if the operand is an expression
+Stmt::child_iterator CXXTypeidExpr::child_begin() {
+  return isTypeOperand() ? child_iterator() : (Stmt**)&Operand;
+}
+Stmt::child_iterator CXXTypeidExpr::child_end() {
+  return isTypeOperand() ? child_iterator() : (Stmt**)&Operand+1;
+}
 
 // CXXBoolLiteralExpr
 Stmt::child_iterator CXXBoolLiteralExpr::child_begin() { 

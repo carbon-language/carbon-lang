@@ -154,6 +154,47 @@ public:
   virtual child_iterator child_end();
 };
 
+/// CXXTypeidExpr - A C++ @c typeid expression (C++ [expr.typeid]), which gets
+/// the type_info that corresponds to the supplied type, or the (possibly
+/// dynamic) type of the supplied expression.
+///
+/// This represents code like @c typeid(int) or @c typeid(*objPtr)
+class CXXTypeidExpr : public Expr {
+private:
+  bool isTypeOp : 1;
+  void *Operand;
+  SourceRange Range;
+
+public:
+  CXXTypeidExpr(bool isTypeOp, void *op, QualType Ty, const SourceRange r) :
+    Expr(CXXTypeidExprClass, Ty), isTypeOp(isTypeOp), Operand(op), Range(r) {}
+
+  bool isTypeOperand() const { return isTypeOp; }
+  QualType getTypeOperand() const {
+    assert(isTypeOperand() && "Cannot call getTypeOperand for typeid(expr)");
+    return QualType::getFromOpaquePtr(Operand);
+  }
+  Expr* getExprOperand() const {
+    assert(!isTypeOperand() && "Cannot call getExprOperand for typeid(type)");
+    return static_cast<Expr*>(Operand);
+  }
+
+  virtual SourceRange getSourceRange() const {
+    return Range;
+  }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXTypeidExprClass;
+  }
+  static bool classof(const CXXTypeidExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXTypeidExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
 /// CXXThisExpr - Represents the "this" expression in C++, which is a
 /// pointer to the object on which the current member function is
 /// executing (C++ [expr.prim]p3). Example:

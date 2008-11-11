@@ -19,6 +19,34 @@
 #include "clang/Basic/Diagnostic.h"
 using namespace clang;
 
+
+/// ActOnCXXTypeidOfType - Parse typeid( type-id ).
+Action::ExprResult
+Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
+                     bool isType, void *TyOrExpr, SourceLocation RParenLoc) {
+  const NamespaceDecl *StdNs = GetStdNamespace();
+  if (!StdNs) {
+    Diag(OpLoc, diag::err_need_header_before_typeid);
+    return ExprResult(true);
+  }
+  if (!Ident_TypeInfo) {
+    Ident_TypeInfo = &PP.getIdentifierTable().get("type_info");
+  }
+  Decl *TypeInfoDecl = LookupDecl(Ident_TypeInfo,
+                                  Decl::IDNS_Tag | Decl::IDNS_Ordinary,
+                                  0, StdNs, /*createBuiltins=*/false);
+  RecordDecl *TypeInfoRecordDecl = dyn_cast_or_null<RecordDecl>(TypeInfoDecl);
+  if (!TypeInfoRecordDecl) {
+    Diag(OpLoc, diag::err_need_header_before_typeid);
+    return ExprResult(true);
+  }
+
+  QualType TypeInfoType = Context.getTypeDeclType(TypeInfoRecordDecl);
+
+  return new CXXTypeidExpr(isType, TyOrExpr, TypeInfoType.withConst(),
+                           SourceRange(OpLoc, RParenLoc));
+}
+
 /// ActOnCXXBoolLiteral - Parse {true,false} literals.
 Action::ExprResult
 Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {

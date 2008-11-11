@@ -193,7 +193,8 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
 /// LookupDecl - Look up the inner-most declaration in the specified
 /// namespace.
 Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI, Scope *S,
-                       DeclContext *LookupCtx, bool enableLazyBuiltinCreation) {
+                       const DeclContext *LookupCtx,
+                       bool enableLazyBuiltinCreation) {
   if (II == 0) return 0;
   unsigned NS = NSI;
   if (getLangOptions().CPlusPlus && (NS & Decl::IDNS_Ordinary))
@@ -276,6 +277,18 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   // TUScope is the translation-unit scope to insert this function into.
   PushOnScopeChains(New, TUScope);
   return New;
+}
+
+/// GetStdNamespace - This method gets the C++ "std" namespace. This is where
+/// everything from the standard library is defined.
+NamespaceDecl *Sema::GetStdNamespace() {
+  if (!StdNamespace) {
+    DeclContext *Global = Context.getTranslationUnitDecl();
+    Decl *Std = LookupDecl(Ident_StdNs, Decl::IDNS_Tag | Decl::IDNS_Ordinary,
+                           0, Global, /*enableLazyBuiltinCreation=*/false);
+    StdNamespace = dyn_cast_or_null<NamespaceDecl>(Std);
+  }
+  return StdNamespace;
 }
 
 /// MergeTypeDefDecl - We just parsed a typedef 'New' which has the same name

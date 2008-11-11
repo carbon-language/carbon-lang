@@ -437,6 +437,9 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     if (cast<ExplicitCastExpr>(this)->getTypeAsWritten()->isReferenceType())
       return LV_Valid;
     break;
+  case CXXTypeidExprClass:
+    // C++ 5.2.8p1: The result of a typeid expression is an lvalue of ...
+    return LV_Valid;
   case CXXThisExprClass:
     return LV_InvalidExpression;
   default:

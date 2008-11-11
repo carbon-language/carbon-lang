@@ -832,6 +832,16 @@ void StmtPrinter::VisitCXXConstCastExpr(CXXConstCastExpr *Node) {
   VisitCXXNamedCastExpr(Node);
 }
 
+void StmtPrinter::VisitCXXTypeidExpr(CXXTypeidExpr *Node) {
+  OS << "typeid(";
+  if (Node->isTypeOperand()) {
+    OS << Node->getTypeOperand().getAsString();
+  } else {
+    PrintExpr(Node->getExprOperand());
+  }
+  OS << ")";
+}
+
 void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   OS << (Node->getValue() ? "true" : "false");
 }

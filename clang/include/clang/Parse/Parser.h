@@ -505,6 +505,10 @@ private:
   ExprResult ParseCXXCasts();
 
   //===--------------------------------------------------------------------===//
+  // C++ 5.2p1: C++ Type Identification
+  ExprResult ParseCXXTypeid();
+
+  //===--------------------------------------------------------------------===//
   // C++ 9.3.2: C++ 'this' pointer
   ExprResult ParseCXXThis();
 

@@ -357,7 +357,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///
 ///       primary-expression: [C99 6.5.1]
 /// [C99]   identifier
-//  [C++]   id-expression
+/// [C++]   id-expression
 ///         constant
 ///         string-literal
 /// [C++]   boolean-literal  [C++ 2.13.5]
@@ -382,6 +382,8 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [C++]   'dynamic_cast' '<' type-name '>' '(' expression ')'     [C++ 5.2p1]
 /// [C++]   'reinterpret_cast' '<' type-name '>' '(' expression ')' [C++ 5.2p1]
 /// [C++]   'static_cast' '<' type-name '>' '(' expression ')'      [C++ 5.2p1]
+/// [C++]   'typeid' '(' expression ')'                             [C++ 5.2p1]
+/// [C++]   'typeid' '(' type-id ')'                                [C++ 5.2p1]
 /// [C++]   'this'          [C++ 9.3.2]
 /// [clang] '^' block-literal
 ///
@@ -566,6 +568,10 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_static_cast:
     Res = ParseCXXCasts();
     // These can be followed by postfix-expr pieces.
+    return ParsePostfixExpressionSuffix(Res);
+  case tok::kw_typeid:
+    Res = ParseCXXTypeid();
+    // This can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);
   case tok::kw_this:
     Res = ParseCXXThis();

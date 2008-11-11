@@ -1157,6 +1157,10 @@ DIAG(err_ambiguous_base_to_derived_cast, ERROR,
 DIAG(err_static_downcast_via_virtual, ERROR,
      "cannot cast '%0' to '%1' via virtual base '%2'")
 
+// Other C++ expressions
+DIAG(err_need_header_before_typeid, ERROR,
+     "you need to include <typeinfo> before using the 'typeid' operator")
+
 DIAG(err_invalid_use_of_function_type, ERROR,
      "a function type is not allowed here")
 DIAG(err_invalid_use_of_array_type, ERROR,

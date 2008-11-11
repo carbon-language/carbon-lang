@@ -676,6 +676,13 @@ public:
     return 0;
   }
 
+  /// ActOnCXXTypeidOfType - Parse typeid( type-id ).
+  virtual ExprResult ActOnCXXTypeid(SourceLocation OpLoc,
+                                    SourceLocation LParenLoc, bool isType,
+                                    void *TyOrExpr, SourceLocation RParenLoc) {
+    return 0;
+  }
+
   /// ActOnCXXThis - Parse the C++ 'this' pointer.
   virtual ExprResult ActOnCXXThis(SourceLocation ThisLoc) {
     return 0;
