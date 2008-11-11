@@ -27,9 +27,6 @@ macro(add_llvm_executable name)
     target_link_libraries(${name} ${llvm_libs})
   else( MSVC )
     add_dependencies(${name} llvm-config.target)
-    set_target_properties(${name}
-      PROPERTIES
-      LINK_FLAGS "-L ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
     if( MINGW )
       target_link_libraries(${name} DbgHelp psapi)
     elseif( CMAKE_HOST_UNIX )
