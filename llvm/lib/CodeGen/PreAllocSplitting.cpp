@@ -618,6 +618,8 @@ PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo, MachineBasicBlock *MBB,
       // Pred is the def bb and the def reaches other val#s, we must
       // allow the value to be live out of the bb.
       continue;
+    if (!CurrLI->liveAt(LIs->getMBBEndIdx(Pred)-1))
+      return;
     ShrinkWrapLiveInterval(ValNo, Pred, MBB, DefMBB, Visited,
                            Uses, UseMIs, UseMBBs);
   }
