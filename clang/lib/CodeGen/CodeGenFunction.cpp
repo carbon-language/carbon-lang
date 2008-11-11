@@ -70,18 +70,19 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // Finish emission of indirect switches.
   EmitIndirectSwitches();
 
-  // Emit debug descriptor for function end.
-  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
-    DI->setLocation(EndLoc);
-    DI->EmitRegionEnd(CurFn, Builder);
-  }
- 
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
 
   // Emit function epilog (to return). This has the nice side effect
   // of also automatically handling code that falls off the end.
   EmitBlock(ReturnBlock);
+
+  // Emit debug descriptor for function end.
+  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
+    DI->setLocation(EndLoc);
+    DI->EmitRegionEnd(CurFn, Builder);
+  }
+
   EmitFunctionEpilog(FnRetTy, ReturnValue);
 
   // Remove the AllocaInsertPt instruction, which is just a convenience for us.
