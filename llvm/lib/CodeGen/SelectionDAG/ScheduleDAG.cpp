@@ -24,10 +24,10 @@ ScheduleDAG::ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
                          const TargetMachine &tm)
   : DAG(dag), BB(bb), TM(tm), MRI(BB->getParent()->getRegInfo()) {
   TII = TM.getInstrInfo();
-  MF  = &DAG.getMachineFunction();
+  MF  = BB->getParent();
   TRI = TM.getRegisterInfo();
-  TLI = &DAG.getTargetLoweringInfo();
-  ConstPool = BB->getParent()->getConstantPool();
+  TLI = TM.getTargetLowering();
+  ConstPool = MF->getConstantPool();
 }
 
 /// CheckForPhysRegDependency - Check if the dependency between def and use of
