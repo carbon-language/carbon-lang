@@ -93,7 +93,8 @@ def immSExt16int  : PatLeaf<(imm), [{ //(int)imm fits in a 16 bit sign extended 
 }], SExt16>;
 
 def zappat : PatFrag<(ops node:$LHS), (and node:$LHS, imm:$L), [{
-  ConstantSDNode *RHS = cast<ConstantSDNode>(N->getOperand(1));
+  ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N->getOperand(1));
+  if (!RHS) return 0;
   uint64_t build = get_zapImm(N->getOperand(0), (uint64_t)RHS->getZExtValue());
   return build != 0;
 }]>;
