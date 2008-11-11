@@ -1033,7 +1033,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
 /// isLSAAddress - Return the immediate to use if the specified
 /// value is representable as a LSA address.
 static SDNode *isLSAAddress(SDValue Op, SelectionDAG &DAG) {
-  ConstantSDNode *C = cast<ConstantSDNode>(Op);
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op);
   if (!C) return 0;
 
   int Addr = C->getZExtValue();
@@ -1147,7 +1147,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
   // node so that legalize doesn't hack it.
-  if (GlobalAddressSDNode *G = cast<GlobalAddressSDNode>(Callee)) {
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     GlobalValue *GV = G->getGlobal();
     MVT CalleeVT = Callee.getValueType();
     SDValue Zero = DAG.getConstant(0, PtrVT);
@@ -1172,7 +1172,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       // address pairs:
       Callee = DAG.getNode(SPUISD::IndirectAddr, PtrVT, GA, Zero);
     }
-  } else if (ExternalSymbolSDNode *S = cast<ExternalSymbolSDNode>(Callee))
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getExternalSymbol(S->getSymbol(), Callee.getValueType());
   else if (SDNode *Dest = isLSAAddress(Callee, DAG)) {
     // If this is an absolute destination address that appears to be a legal
@@ -1307,7 +1307,7 @@ getVecImm(SDNode *N) {
   }
 
   if (OpVal.getNode() != 0) {
-    if (ConstantSDNode *CN = cast<ConstantSDNode>(OpVal)) {
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
       return CN;
     }
   }
@@ -1461,9 +1461,9 @@ static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
       uint64_t EltUndefBits = ~0ULL >> (64-EltBitSize);
       UndefBits[PartNo] |= EltUndefBits << (SlotNo*EltBitSize);
       continue;
-    } else if (ConstantSDNode *CN = cast<ConstantSDNode>(OpVal)) {
+    } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
       EltBits = CN->getZExtValue() & (~0ULL >> (64-EltBitSize));
-    } else if (ConstantFPSDNode *CN = cast<ConstantFPSDNode>(OpVal)) {
+    } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
       const APFloat &apf = CN->getValueAPF();
       EltBits = (CN->getValueType(0) == MVT::f32
                  ? FloatToBits(apf.convertToFloat())
@@ -2039,7 +2039,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   SDValue N = Op.getOperand(0);
   SDValue Elt = Op.getOperand(1);
   SDValue ShufMask[16];
-  ConstantSDNode *C = cast<ConstantSDNode>(Elt);
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(Elt);
 
   assert(C != 0 && "LowerEXTRACT_VECTOR_ELT expecting constant SDNode");
 
