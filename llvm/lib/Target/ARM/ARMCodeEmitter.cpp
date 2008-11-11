@@ -75,6 +75,8 @@ namespace {
 
     void emitWordLE(unsigned Binary);
 
+    void emitDWordLE(uint64_t Binary);
+
     void emitConstPoolInstruction(const MachineInstr &MI);
 
     void emitMOVi2piecesInstruction(const MachineInstr &MI);
@@ -281,6 +283,16 @@ void ARMCodeEmitter::emitWordLE(unsigned Binary) {
   MCE.emitWordLE(Binary);
 }
 
+void ARMCodeEmitter::emitDWordLE(uint64_t Binary) {
+#ifndef NDEBUG
+  DOUT << "  0x" << std::hex << std::setw(8) << std::setfill('0')
+       << (unsigned)Binary << std::dec << "\n";
+  DOUT << "  0x" << std::hex << std::setw(8) << std::setfill('0')
+       << (unsigned)(Binary >> 32) << std::dec << "\n";
+#endif
+  MCE.emitDWordLE(Binary);
+}
+
 void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   DOUT << "JIT: " << (void*)MCE.getCurrentPCValue() << ":\t" << MI;
 
@@ -385,12 +397,21 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
     if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
       emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
       emitWordLE(0);
-    } else {
-      assert(CV->getType()->isInteger() &&
-             "Not expecting non-integer constpool entries yet!");
-      const ConstantInt *CI = dyn_cast<ConstantInt>(CV);
+    } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
       emitWordLE(Val);
+    } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
+      if (CFP->getType() == Type::FloatTy)
+        emitWordLE(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
+      else if (CFP->getType() == Type::DoubleTy)
+        emitDWordLE(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
+      else {
+        assert(0 && "Unable to handle this constantpool entry!");
+        abort();
+      }
+    } else {
+      assert(0 && "Unable to handle this constantpool entry!");
+      abort();
     }
   }
 }
