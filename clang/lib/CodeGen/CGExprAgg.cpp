@@ -242,14 +242,12 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   assert(E->getLHS() && "Must have LHS for aggregate value");
 
   Visit(E->getLHS());
-  Builder.CreateBr(ContBlock);
-  LHSBlock = Builder.GetInsertBlock();
+  CGF.EmitBranch(ContBlock);
   
   CGF.EmitBlock(RHSBlock);
   
   Visit(E->getRHS());
-  Builder.CreateBr(ContBlock);
-  RHSBlock = Builder.GetInsertBlock();
+  CGF.EmitBranch(ContBlock);
   
   CGF.EmitBlock(ContBlock);
 }

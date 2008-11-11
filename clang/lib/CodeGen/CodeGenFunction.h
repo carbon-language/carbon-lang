@@ -226,6 +226,11 @@ public:
   
   void EmitBlock(llvm::BasicBlock *BB);
 
+  /// EmitBranch - Emit a branch to the specified basic block from the
+  /// current insert block, taking care to avoid creation of branches
+  /// from dummy blocks.
+  void EmitBranch(llvm::BasicBlock *Block);
+
   /// EmitDummyBlock - Emit a new block which will never be branched
   /// to. This is used to satisfy the invariant that codegen always
   /// has an active unterminated block to dump code into.

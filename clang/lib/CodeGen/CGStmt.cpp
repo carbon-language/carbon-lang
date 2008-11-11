@@ -149,22 +149,30 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
 }
 
 void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB) {
-  // Emit a branch from this block to the next one if this was a real block.  If
-  // this was just a fall-through block after a terminator, don't emit it.
-  llvm::BasicBlock *LastBB = Builder.GetInsertBlock();
-  
-  if (LastBB->getTerminator()) {
-    // If the previous block is already terminated, don't touch it.
-  } else if (isDummyBlock(LastBB)) {
-    // If the last block was an empty placeholder, remove it now.
-    // TODO: cache and reuse these.
-    LastBB->eraseFromParent();
-  } else {
-    // Otherwise, create a fall-through branch.
-    Builder.CreateBr(BB);
-  }
+  // Fall out of the current block (if necessary).
+  EmitBranch(BB);
   CurFn->getBasicBlockList().push_back(BB);
   Builder.SetInsertPoint(BB);
+}
+
+void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
+  // Emit a branch from the current block to the target one if this
+  // was a real block.  If this was just a fall-through block after a
+  // terminator, don't emit it.
+  llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
+
+  if (!CurBB || CurBB->getTerminator()) {
+    // If there is no insert point or the previous block is already
+    // terminated, don't touch it.
+  } else if (isDummyBlock(CurBB)) {
+    // If the last block was an empty placeholder, remove it now.
+    // TODO: cache and reuse these.
+    CurBB->eraseFromParent();
+    Builder.ClearInsertionPoint();
+  } else {
+    // Otherwise, create a fall-through branch.
+    Builder.CreateBr(Target);
+  }
 }
 
 void CodeGenFunction::EmitDummyBlock() {
@@ -189,7 +197,7 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
     return;
   }
 
-  Builder.CreateBr(getBasicBlockForLabel(S.getLabel()));
+  EmitBranch(getBasicBlockForLabel(S.getLabel()));
   
   // Emit a block after the branch so that dead code after a goto has some place
   // to go.
@@ -252,25 +260,13 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // Emit the 'then' code.
   EmitBlock(ThenBlock);
   EmitStmt(S.getThen());
-  llvm::BasicBlock *BB = Builder.GetInsertBlock();
-  if (isDummyBlock(BB)) {
-    BB->eraseFromParent();
-    Builder.SetInsertPoint(ThenBlock);
-  } else {
-    Builder.CreateBr(ContBlock);
-  }
+  EmitBranch(ContBlock);
   
   // Emit the 'else' code if present.
   if (const Stmt *Else = S.getElse()) {
     EmitBlock(ElseBlock);
     EmitStmt(Else);
-    llvm::BasicBlock *BB = Builder.GetInsertBlock();
-    if (isDummyBlock(BB)) {
-      BB->eraseFromParent();
-      Builder.SetInsertPoint(ElseBlock);
-    } else {
-      Builder.CreateBr(ContBlock);
-    }
+    EmitBranch(ContBlock);
   }
   
   // Emit the continuation block for code after the if.
@@ -314,7 +310,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   BreakContinueStack.pop_back();
   
   // Cycle to the condition.
-  Builder.CreateBr(LoopHeader);
+  EmitBranch(LoopHeader);
   
   // Emit the exit block.
   EmitBlock(ExitBlock);
@@ -433,7 +429,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   }
       
   // Finally, branch back up to the condition for the next iteration.
-  Builder.CreateBr(CondBlock);
+  EmitBranch(CondBlock);
 
   // Emit the fall-through block.
   EmitBlock(AfterFor);
@@ -447,7 +443,7 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
   } else {
     StoreComplexToAddr(RV.getComplexVal(), ReturnValue, false);
   }
-  Builder.CreateBr(ReturnBlock);
+  EmitBranch(ReturnBlock);
 
   // Emit a block after the branch so that dead code after a return has some
   // place to go.
@@ -487,7 +483,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     }
   } 
 
-  Builder.CreateBr(ReturnBlock);
+  EmitBranch(ReturnBlock);
   
   // Emit a block after the branch so that dead code after a return has some
   // place to go.
@@ -504,7 +500,7 @@ void CodeGenFunction::EmitBreakStmt() {
   assert(!BreakContinueStack.empty() && "break stmt not in a loop or switch!");
 
   llvm::BasicBlock *Block = BreakContinueStack.back().BreakBlock;
-  Builder.CreateBr(Block);
+  EmitBranch(Block);
   EmitDummyBlock();
 }
 
@@ -512,7 +508,7 @@ void CodeGenFunction::EmitContinueStmt() {
   assert(!BreakContinueStack.empty() && "continue stmt not in a loop!");
 
   llvm::BasicBlock *Block = BreakContinueStack.back().ContinueBlock;
-  Builder.CreateBr(Block);
+  EmitBranch(Block);
   EmitDummyBlock();
 }
 

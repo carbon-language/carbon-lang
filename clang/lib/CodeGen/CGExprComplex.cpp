@@ -479,14 +479,14 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   assert(E->getLHS() && "Must have LHS for complex value");
 
   ComplexPairTy LHS = Visit(E->getLHS());
-  Builder.CreateBr(ContBlock);
   LHSBlock = Builder.GetInsertBlock();
+  CGF.EmitBranch(ContBlock);
   
   CGF.EmitBlock(RHSBlock);
   
   ComplexPairTy RHS = Visit(E->getRHS());
-  Builder.CreateBr(ContBlock);
   RHSBlock = Builder.GetInsertBlock();
+  CGF.EmitBranch(ContBlock);
   
   CGF.EmitBlock(ContBlock);
   

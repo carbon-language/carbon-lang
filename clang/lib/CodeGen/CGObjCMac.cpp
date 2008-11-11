@@ -1725,7 +1725,7 @@ void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
                                              bool ExecuteTryExit) {
   llvm::BasicBlock *Src = Builder.GetInsertBlock();
     
-  if (isDummyBlock(Src))
+  if (!Src || isDummyBlock(Src))
     return;
   
   // Find the destination code for this block. We always use 0 for the

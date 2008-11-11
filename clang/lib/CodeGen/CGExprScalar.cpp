@@ -1139,14 +1139,14 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   else    // Perform promotions, to handle cases like "short ?: int"
     LHS = EmitScalarConversion(CondVal, E->getCond()->getType(), E->getType());
   
-  Builder.CreateBr(ContBlock);
   LHSBlock = Builder.GetInsertBlock();
+  CGF.EmitBranch(ContBlock);
   
   CGF.EmitBlock(RHSBlock);
   
   Value *RHS = Visit(E->getRHS());
-  Builder.CreateBr(ContBlock);
   RHSBlock = Builder.GetInsertBlock();
+  CGF.EmitBranch(ContBlock);
   
   CGF.EmitBlock(ContBlock);
   
