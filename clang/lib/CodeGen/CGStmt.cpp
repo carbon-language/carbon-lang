@@ -217,13 +217,55 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
   EmitDummyBlock();
 }
 
-void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
-  // FIXME: It would probably be nice for us to skip emission of if
-  // (0) code here.
+/// ContainsLabel - Return true if the statement contains a label in it.  If
+/// this statement is not executed normally, it not containing a label means
+/// that we can just remove the code.
+static bool ContainsLabel(const Stmt *S, bool IgnoreCaseStmts = false) {
+  // If this is a label, we have to emit the code, consider something like:
+  // if (0) {  ...  foo:  bar(); }  goto foo;
+  if (isa<LabelStmt>(S))
+    return true;
+  
+  // If this is a case/default statement, and we haven't seen a switch, we have
+  // to emit the code.
+  if (isa<SwitchCase>(S) && !IgnoreCaseStmts)
+    return true;
 
+  // If this is a switch statement, we want to ignore cases below it.
+  if (isa<SwitchStmt>(S))
+    IgnoreCaseStmts = true;
+  
+  // Scan subexpressions for verboten labels.
+  for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end();
+       I != E; ++I)
+    if (ContainsLabel(*I, IgnoreCaseStmts))
+      return true;
+
+  return false;
+}
+
+
+void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // C99 6.8.4.1: The first substatement is executed if the expression compares
   // unequal to 0.  The condition must be a scalar type.
   llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
+  
+  // If we constant folded the condition to true or false, try to avoid emitting
+  // the dead arm at all.
+  if (llvm::ConstantInt *CondCst = dyn_cast<llvm::ConstantInt>(BoolCondVal)) {
+    // Figure out which block (then or else) is executed.
+    const Stmt *Executed = S.getThen(), *Skipped  = S.getElse();
+    if (!CondCst->getZExtValue())
+      std::swap(Executed, Skipped);
+
+    // If the skipped block has no labels in it, just emit the executed block.
+    // This avoids emitting dead code and simplifies the CFG substantially.
+    if (Skipped == 0 || !ContainsLabel(Skipped)) {
+      if (Executed)
+        EmitStmt(Executed);
+      return;
+    }
+  }
   
   llvm::BasicBlock *ContBlock = createBasicBlock("ifend");
   llvm::BasicBlock *ThenBlock = createBasicBlock("ifthen");
@@ -851,7 +893,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         if (ConvertType(InputExpr->getType())->isSingleValueType()) {
           Arg = EmitScalarExpr(InputExpr);
         } else {
-          ErrorUnsupported(&S, "asm statement passing multiple-value types as inputs");
+          ErrorUnsupported(&S,
+                      "asm statement passing multiple-value types as inputs");
         }
       } else {
         LValue Dest = EmitLValue(InputExpr);
@@ -891,7 +934,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       if (ConvertType(InputExpr->getType())->isSingleValueType()) {
         Arg = EmitScalarExpr(InputExpr);
       } else {
-        ErrorUnsupported(&S, "asm statement passing multiple-value types as inputs");
+        ErrorUnsupported(&S,
+                        "asm statement passing multiple-value types as inputs");
       }
     } else {
       LValue Dest = EmitLValue(InputExpr);
