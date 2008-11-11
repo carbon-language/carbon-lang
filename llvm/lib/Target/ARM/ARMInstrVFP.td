@@ -211,23 +211,23 @@ def FSQRTS  : ASuI<0b11101011, 0b0001, 0b1100, (outs SPR:$dst), (ins SPR:$a),
 // FP <-> GPR Copies.  Int <-> FP Conversions.
 //
 
-def FMRS   : ASI<(outs GPR:$dst), (ins SPR:$src),
+def FMRS   : AVConv1I<0b11100001, 0b1010, (outs GPR:$dst), (ins SPR:$src),
                  "fmrs", " $dst, $src",
                  [(set GPR:$dst, (bitconvert SPR:$src))]>;
 
-def FMSR   : ASI<(outs SPR:$dst), (ins GPR:$src),
+def FMSR   : AVConv1I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
                  "fmsr", " $dst, $src",
                  [(set SPR:$dst, (bitconvert GPR:$src))]>;
 
-
-def FMRRD  : ADI<(outs GPR:$dst1, GPR:$dst2), (ins DPR:$src),
+def FMRRD  : AVConv1I<0b11000101, 0b1011,
+                      (outs GPR:$dst1, GPR:$dst2), (ins DPR:$src),
                  "fmrrd", " $dst1, $dst2, $src",
                  [/* FIXME: Can't write pattern for multiple result instr*/]>;
 
 // FMDHR: GPR -> SPR
 // FMDLR: GPR -> SPR
 
-def FMDRR : ADI<(outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
+def FMDRR : AVConv1I<0b11000100, 0b1011, (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
                 "fmdrr", " $dst, $src1, $src2",
                 [(set DPR:$dst, (arm_fmdrr GPR:$src1, GPR:$src2))]>;
 
@@ -238,48 +238,65 @@ def FMDRR : ADI<(outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
 
 // FMSRR: GPR -> SPR
 
-let Defs = [CPSR] in
-def FMSTAT : ASI<(outs), (ins), "fmstat", "", [(arm_fmstat)]>;
-
 // FMXR: GPR -> VFP Sstem reg
 
 
 // Int to FP:
 
-def FSITOD : ADI<(outs DPR:$dst), (ins SPR:$a),
+def FSITOD : AVConv2I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
                  "fsitod", " $dst, $a",
-                 [(set DPR:$dst, (arm_sitof SPR:$a))]>;
+                 [(set DPR:$dst, (arm_sitof SPR:$a))]> {
+  let Inst{7} = 1; // Z bit
+}
 
-def FSITOS : ASI<(outs SPR:$dst), (ins SPR:$a),
+def FSITOS : AVConv2I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
                  "fsitos", " $dst, $a",
-                 [(set SPR:$dst, (arm_sitof SPR:$a))]>;
+                 [(set SPR:$dst, (arm_sitof SPR:$a))]> {
+  let Inst{7} = 1; // Z bit
+}
 
-def FUITOD : ADI<(outs DPR:$dst), (ins SPR:$a),
+def FUITOD : AVConv2I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
                  "fuitod", " $dst, $a",
-                 [(set DPR:$dst, (arm_uitof SPR:$a))]>;
+                 [(set DPR:$dst, (arm_uitof SPR:$a))]> {
+  let Inst{7} = 0; // Z bit
+}
 
-def FUITOS : ASI<(outs SPR:$dst), (ins SPR:$a),
+def FUITOS : AVConv2I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
                  "fuitos", " $dst, $a",
-                 [(set SPR:$dst, (arm_uitof SPR:$a))]>;
+                 [(set SPR:$dst, (arm_uitof SPR:$a))]> {
+  let Inst{7} = 1; // Z bit
+}
 
 // FP to Int:
 // Always set Z bit in the instruction, i.e. "round towards zero" variants.
 
-def FTOSIZD : ADI<(outs SPR:$dst), (ins DPR:$a),
+def FTOSIZD : AVConv2I<0b11101011, 0b1101, 0b1011,
+                       (outs SPR:$dst), (ins DPR:$a),
                  "ftosizd", " $dst, $a",
-                 [(set SPR:$dst, (arm_ftosi DPR:$a))]>;
+                 [(set SPR:$dst, (arm_ftosi DPR:$a))]> {
+  let Inst{7} = 1; // Z bit
+}
 
-def FTOSIZS : ASI<(outs SPR:$dst), (ins SPR:$a),
+def FTOSIZS : AVConv2I<0b11101011, 0b1101, 0b1010,
+                       (outs SPR:$dst), (ins SPR:$a),
                  "ftosizs", " $dst, $a",
-                 [(set SPR:$dst, (arm_ftosi SPR:$a))]>;
+                 [(set SPR:$dst, (arm_ftosi SPR:$a))]> {
+  let Inst{7} = 1; // Z bit
+}
 
-def FTOUIZD : ADI<(outs SPR:$dst), (ins DPR:$a),
+def FTOUIZD : AVConv2I<0b11101011, 0b1100, 0b1011,
+                       (outs SPR:$dst), (ins DPR:$a),
                  "ftouizd", " $dst, $a",
-                 [(set SPR:$dst, (arm_ftoui DPR:$a))]>;
+                 [(set SPR:$dst, (arm_ftoui DPR:$a))]> {
+  let Inst{7} = 1; // Z bit
+}
 
-def FTOUIZS : ASI<(outs SPR:$dst), (ins SPR:$a),
+def FTOUIZS : AVConv2I<0b11101011, 0b1100, 0b1010,
+                       (outs SPR:$dst), (ins SPR:$a),
                  "ftouizs", " $dst, $a",
-                 [(set SPR:$dst, (arm_ftoui SPR:$a))]>;
+                 [(set SPR:$dst, (arm_ftoui SPR:$a))]> {
+  let Inst{7} = 1; // Z bit
+}
 
 //===----------------------------------------------------------------------===//
 // FP FMA Operations.
@@ -337,22 +354,34 @@ def FNMSCS : ASbI<0b11100001, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
 // FP Conditional moves.
 //
 
-def FCPYDcc  : ADI<(outs DPR:$dst), (ins DPR:$false, DPR:$true),
+def FCPYDcc  : ADuI<0b11101011, 0b0000, 0b0100,
+                    (outs DPR:$dst), (ins DPR:$false, DPR:$true),
                     "fcpyd", " $dst, $true",
                 [/*(set DPR:$dst, (ARMcmov DPR:$false, DPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
 
-def FCPYScc  : ASI<(outs SPR:$dst), (ins SPR:$false, SPR:$true),
+def FCPYScc  : ASuI<0b11101011, 0b0000, 0b0100,
+                    (outs SPR:$dst), (ins SPR:$false, SPR:$true),
                     "fcpys", " $dst, $true",
                 [/*(set SPR:$dst, (ARMcmov SPR:$false, SPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
 
-def FNEGDcc  : ADI<(outs DPR:$dst), (ins DPR:$false, DPR:$true),
+def FNEGDcc  : ADuI<0b11101011, 0b0001, 0b0100,
+                    (outs DPR:$dst), (ins DPR:$false, DPR:$true),
                     "fnegd", " $dst, $true",
                 [/*(set DPR:$dst, (ARMcneg DPR:$false, DPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
 
-def FNEGScc  : ASI<(outs SPR:$dst), (ins SPR:$false, SPR:$true),
+def FNEGScc  : ASuI<0b11101011, 0b0001, 0b0100,
+                    (outs SPR:$dst), (ins SPR:$false, SPR:$true),
                     "fnegs", " $dst, $true",
                 [/*(set SPR:$dst, (ARMcneg SPR:$false, SPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
+
+
+//===----------------------------------------------------------------------===//
+// Misc.
+//
+
+let Defs = [CPSR] in
+def FMSTAT : ASI<(outs), (ins), "fmstat", "", [(arm_fmstat)]>;

@@ -70,7 +70,7 @@ namespace ARMII {
     // Instruction encoding formats.
     //
     FormShift   = 10,
-    FormMask    = 0xf << FormShift,
+    FormMask    = 0x1f << FormShift,
 
     // Pseudo instructions
     Pseudo      = 1 << FormShift,
@@ -104,9 +104,11 @@ namespace ARMII {
     VPFFrm       = 15 << FormShift,
     VFPUnaryFrm  = 16 << FormShift,
     VFPBinaryFrm = 17 << FormShift,
+    VFPConv1Frm  = 18 << FormShift,
+    VFPConv2Frm  = 19 << FormShift,
 
     // Thumb format
-    ThumbFrm     = 18 << FormShift,
+    ThumbFrm     = 20 << FormShift,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating
@@ -119,10 +121,8 @@ namespace ARMII {
     ExtRotImmShift = 10,
     RegRdLoShift   = 12,
     RegRdShift     = 12,
-    RegFdShift     = 12,
     RegRdHiShift   = 16,
     RegRnShift     = 16,
-    RegFnShift     = 16,
     S_BitShift     = 20,
     W_BitShift     = 21,
     AM3_I_BitShift = 22,

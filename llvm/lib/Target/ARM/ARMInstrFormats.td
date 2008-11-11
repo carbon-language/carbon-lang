@@ -39,7 +39,9 @@ def ExtFrm      : Format<14>;
 def VFPFrm      : Format<15>;
 def VFPUnaryFrm : Format<16>;
 def VFPBinaryFrm: Format<17>;
-def ThumbFrm    : Format<18>;
+def VFPConv1Frm : Format<18>;
+def VFPConv2Frm : Format<19>;
+def ThumbFrm    : Format<20>;
 
 // Misc flag for data processing instructions that indicates whether
 // the instruction has a Rn register operand.
@@ -796,6 +798,23 @@ class ASbI<bits<8> opcod, dag oops, dag iops, string opc,
   // Bit 22 (D bit) can be changed during instruction encoding.
   let Inst{27-20} = opcod;
   let Inst{11-8}  = 0b1010;
+}
+
+class AVConv1I<bits<8> opcod1, bits<4> opcod2, dag oops, dag iops, string opc,
+           string asm, list<dag> pattern>
+  : AI<oops, iops, VFPConv1Frm, opc, asm, pattern> {
+  let Inst{27-20} = opcod1;
+  let Inst{11-8}  = opcod2;
+  let Inst{4}     = 1;
+}
+
+class AVConv2I<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
+               dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : AI<oops, iops, VFPConv1Frm, opc, asm, pattern> {
+  let Inst{27-20} = opcod1;
+  let Inst{19-16} = opcod2;
+  let Inst{11-8}  = opcod3;
+  let Inst{6}     = 1;
 }
 
 // Special cases.
