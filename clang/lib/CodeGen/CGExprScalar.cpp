@@ -1110,14 +1110,31 @@ Value *ScalarExprEmitter::VisitBinComma(const BinaryOperator *E) {
 
 Value *ScalarExprEmitter::
 VisitConditionalOperator(const ConditionalOperator *E) {
-  llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.?");
-  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.:");
-  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.cont");
-  
   // Evaluate the conditional, then convert it to bool.  We do this explicitly
   // because we need the unconverted value if this is a GNU ?: expression with
   // missing middle value.
   Value *CondVal = CGF.EmitScalarExpr(E->getCond());
+
+  // If the condition folded to a constant, try to elide the dead side.  We
+  // can't do this if the dead side contains a label.
+  if (llvm::ConstantInt *CondCI = dyn_cast<llvm::ConstantInt>(CondVal)) {
+    Expr *Live = E->getLHS(), *Dead = E->getRHS();
+    if (CondCI->getZExtValue() == 0)
+      std::swap(Live, Dead);
+    if (!Dead || !CGF.ContainsLabel(Dead)) {
+      // Emit the live side.
+      if (Live)
+        return Visit(Live);
+      // Perform promotions, to handle cases like "short ?: int"
+      return EmitScalarConversion(CondVal, E->getCond()->getType(),
+                                  E->getType());
+    }   
+  }
+  
+  llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.?");
+  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.:");
+  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.cont");
+  
   Value *CondBoolVal =CGF.EmitScalarConversion(CondVal, E->getCond()->getType(),
                                                CGF.getContext().BoolTy);
   Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
