@@ -1353,7 +1353,6 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
         }
       }
 
-#if 0
       // If the LHS is '(and load, const)', the RHS is 0,
       // the test is for equality or unsigned, and all 1 bits of the const are
       // in the same partial word, see if we can shorten the load.
@@ -1380,7 +1379,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
                   bestOffset = (origWidth/width - offset - 1) * (width/8);
                 else
                   bestOffset = (uint64_t)offset * (width/8);
-                bestMask = Mask >> (offset * 8);
+                bestMask = Mask >> (offset * (width/8) * 8);
                 bestWidth = width;
                 break;
               }
@@ -1407,7 +1406,6 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
           }
         }
       }
-#endif
 
       // If the LHS is a ZERO_EXTEND, perform the comparison on the input.
       if (N0.getOpcode() == ISD::ZERO_EXTEND) {
