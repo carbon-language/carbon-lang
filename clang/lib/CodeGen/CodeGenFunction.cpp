@@ -263,7 +263,12 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
       return;
     }
-    
+  }
+  
+  if (const UnaryOperator *CondUOp = dyn_cast<UnaryOperator>(Cond)) {
+    // br(!x, t, f) -> br(x, f, t)
+    if (CondUOp->getOpcode() == UnaryOperator::LNot)
+      return EmitBranchOnBoolExpr(CondUOp->getSubExpr(), FalseBlock, TrueBlock);
   }
   
   // Emit the code with the fully general case.
