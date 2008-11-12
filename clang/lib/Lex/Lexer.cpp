@@ -1066,27 +1066,6 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
 // Primary Lexing Entry Points
 //===----------------------------------------------------------------------===//
 
-/// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
-/// (potentially) macro expand the filename.
-void Lexer::LexIncludeFilename(Token &FilenameTok) {
-  assert(ParsingPreprocessorDirective &&
-         ParsingFilename == false &&
-         "Must be in a preprocessing directive!");
-
-  // We are now parsing a filename!
-  ParsingFilename = true;
-  
-  // Lex the filename.
-  Lex(FilenameTok);
-
-  // We should have obtained the filename now.
-  ParsingFilename = false;
-  
-  // No filename?
-  if (FilenameTok.is(tok::eom))
-    Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
-}
-
 /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
 /// uninterpreted string.  This switches the lexer out of directive mode.
 std::string Lexer::ReadToEndOfLine() {
