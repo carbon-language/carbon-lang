@@ -840,9 +840,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
 void
 SelectionDAGISel::FinishBasicBlock() {
 
-  // Perform target specific isel post processing.
-  InstructionSelectPostProcessing();
-  
   DOUT << "Target-post-processed machine code:\n";
   DEBUG(BB->dump());
 

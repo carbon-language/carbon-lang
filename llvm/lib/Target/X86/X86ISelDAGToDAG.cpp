@@ -41,7 +41,6 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-STATISTIC(NumFPKill   , "Number of FP_REG_KILL instructions added");
 STATISTIC(NumLoadMoved, "Number of loads moved below TokenFactor");
 
 //===----------------------------------------------------------------------===//
@@ -139,10 +138,6 @@ namespace {
     /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelect();
-
-    /// InstructionSelectPostProcessing - Post processing of selected and
-    /// scheduled basic blocks.
-    virtual void InstructionSelectPostProcessing();
 
     virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF);
 
@@ -661,81 +656,6 @@ void X86DAGToDAGISel::InstructionSelect() {
 #endif
 
   CurDAG->RemoveDeadNodes();
-}
-
-void X86DAGToDAGISel::InstructionSelectPostProcessing() {
-  // If we are emitting FP stack code, scan the basic block to determine if this
-  // block defines any FP values.  If so, put an FP_REG_KILL instruction before
-  // the terminator of the block.
-
-  // Note that FP stack instructions are used in all modes for long double,
-  // so we always need to do this check.
-  // Also note that it's possible for an FP stack register to be live across
-  // an instruction that produces multiple basic blocks (SSE CMOV) so we
-  // must check all the generated basic blocks.
-
-  // Scan all of the machine instructions in these MBBs, checking for FP
-  // stores.  (RFP32 and RFP64 will not exist in SSE mode, but RFP80 might.)
-  MachineFunction::iterator MBBI = CurBB;
-  MachineFunction::iterator EndMBB = BB; ++EndMBB;
-  for (; MBBI != EndMBB; ++MBBI) {
-    MachineBasicBlock *MBB = MBBI;
-    
-    // If this block returns, ignore it.  We don't want to insert an FP_REG_KILL
-    // before the return.
-    if (!MBB->empty()) {
-      MachineBasicBlock::iterator EndI = MBB->end();
-      --EndI;
-      if (EndI->getDesc().isReturn())
-        continue;
-    }
-    
-    bool ContainsFPCode = false;
-    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
-         !ContainsFPCode && I != E; ++I) {
-      if (I->getNumOperands() != 0 && I->getOperand(0).isReg()) {
-        const TargetRegisterClass *clas;
-        for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
-          if (I->getOperand(op).isReg() && I->getOperand(op).isDef() &&
-            TargetRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
-              ((clas = RegInfo->getRegClass(I->getOperand(0).getReg())) == 
-                 X86::RFP32RegisterClass ||
-               clas == X86::RFP64RegisterClass ||
-               clas == X86::RFP80RegisterClass)) {
-            ContainsFPCode = true;
-            break;
-          }
-        }
-      }
-    }
-    // Check PHI nodes in successor blocks.  These PHI's will be lowered to have
-    // a copy of the input value in this block.  In SSE mode, we only care about
-    // 80-bit values.
-    if (!ContainsFPCode) {
-      // Final check, check LLVM BB's that are successors to the LLVM BB
-      // corresponding to BB for FP PHI nodes.
-      const BasicBlock *LLVMBB = BB->getBasicBlock();
-      const PHINode *PN;
-      for (succ_const_iterator SI = succ_begin(LLVMBB), E = succ_end(LLVMBB);
-           !ContainsFPCode && SI != E; ++SI) {
-        for (BasicBlock::const_iterator II = SI->begin();
-             (PN = dyn_cast<PHINode>(II)); ++II) {
-          if (PN->getType()==Type::X86_FP80Ty ||
-              (!Subtarget->hasSSE1() && PN->getType()->isFloatingPoint()) ||
-              (!Subtarget->hasSSE2() && PN->getType()==Type::DoubleTy)) {
-            ContainsFPCode = true;
-            break;
-          }
-        }
-      }
-    }
-    // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
-    if (ContainsFPCode) {
-      BuildMI(*MBB, MBBI->getFirstTerminator(),
-              TM.getInstrInfo()->get(X86::FP_REG_KILL));
-      ++NumFPKill;
-    }
-  }
 }
 
 /// EmitSpecialCodeForMain - Emit any code that needs to be executed only in

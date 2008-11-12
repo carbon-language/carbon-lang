@@ -16,6 +16,7 @@ add_llvm_target(X86CodeGen
   X86CodeEmitter.cpp
   X86ELFWriterInfo.cpp
   X86FloatingPoint.cpp
+  X86FloatingPointRegKill.cpp
   X86ISelDAGToDAG.cpp
   X86ISelLowering.cpp
   X86InstrInfo.cpp

@@ -35,6 +35,11 @@ FunctionPass *createX86ISelDag(X86TargetMachine &TM, bool Fast);
 ///
 FunctionPass *createX86FloatingPointStackifierPass();
 
+/// createX87FPRegKillInserterPass - This function returns a pass which
+/// inserts FP_REG_KILL instructions where needed.
+///
+FunctionPass *createX87FPRegKillInserterPass();
+
 /// createX86CodePrinterPass - Returns a pass that prints the X86
 /// assembly code for a MachineFunction to the given output stream,
 /// using the given target machine description.
