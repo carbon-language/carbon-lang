@@ -1119,6 +1119,30 @@ Value *ScalarExprEmitter::VisitBinComma(const BinaryOperator *E) {
 //                             Other Operators
 //===----------------------------------------------------------------------===//
 
+/// isCheapEnoughToEvaluateUnconditionally - Return true if the specified
+/// expression is cheap enough and side-effect-free enough to evaluate
+/// unconditionally instead of conditionally.  This is used to convert control
+/// flow into selects in some cases.
+static bool isCheapEnoughToEvaluateUnconditionally(const Expr *E) {
+  if (const ParenExpr *PE = dyn_cast<ParenExpr>(E))
+    return isCheapEnoughToEvaluateUnconditionally(PE->getSubExpr());
+  
+  // TODO: Allow anything we can constant fold to an integer or fp constant.
+  if (isa<IntegerLiteral>(E) || isa<CharacterLiteral>(E) ||
+      isa<FloatingLiteral>(E))
+    return true;
+  
+  // Non-volatile automatic variables too, to get "cond ? X : Y" where
+  // X and Y are local variables.
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
+      if (VD->hasLocalStorage() && !VD->getType().isVolatileQualified())
+        return true;
+  
+  return false;
+}
+
+
 Value *ScalarExprEmitter::
 VisitConditionalOperator(const ConditionalOperator *E) {
   // If the condition constant folds and can be elided, try to avoid emitting
@@ -1135,6 +1159,19 @@ VisitConditionalOperator(const ConditionalOperator *E) {
         Live)                                   // Live part isn't missing.
       return Visit(Live);
   }
+  
+  
+  // If this is a really simple expression (like x ? 4 : 5), emit this as a
+  // select instead of as control flow.  We can only do this if it is cheap and
+  // safe to 
+  if (E->getLHS() && isCheapEnoughToEvaluateUnconditionally(E->getLHS()) &&
+      isCheapEnoughToEvaluateUnconditionally(E->getRHS())) {
+    llvm::Value *CondV = CGF.EvaluateExprAsBool(E->getCond());
+    llvm::Value *LHS = Visit(E->getLHS());
+    llvm::Value *RHS = Visit(E->getRHS());
+    return Builder.CreateSelect(CondV, LHS, RHS, "cond");
+  }
+  
   
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.?");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.:");
