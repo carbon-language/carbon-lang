@@ -1228,7 +1228,6 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
   GetExpandedInteger(N->getOperand(1), RHSL, RHSH);
 
   MVT NVT = LHSL.getValueType();
-  SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
   SDValue LoOps[2] = { LHSL, RHSL };
   SDValue HiOps[3] = { LHSH, RHSH };
 
@@ -1242,6 +1241,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
                          TLI.getTypeToExpandTo(NVT));
 
   if (hasCarry) {
+    SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
     if (N->getOpcode() == ISD::ADD) {
       Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
       HiOps[2] = Lo.getValue(1);
@@ -1253,8 +1253,8 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
     }
   } else {
     if (N->getOpcode() == ISD::ADD) {
-      Lo = DAG.getNode(ISD::ADD, VTList, LoOps, 2);
-      Hi = DAG.getNode(ISD::ADD, VTList, HiOps, 2);
+      Lo = DAG.getNode(ISD::ADD, NVT, LoOps, 2);
+      Hi = DAG.getNode(ISD::ADD, NVT, HiOps, 2);
       SDValue Cmp1 = DAG.getSetCC(TLI.getSetCCResultType(Lo), Lo, LoOps[0],
                                   ISD::SETULT);
       SDValue Carry1 = DAG.getNode(ISD::SELECT, NVT, Cmp1,
@@ -1266,9 +1266,10 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
                                    DAG.getConstant(1, NVT), Carry1);
       Hi = DAG.getNode(ISD::ADD, NVT, Hi, Carry2);
     } else {
-      Lo = DAG.getNode(ISD::SUB, VTList, LoOps, 2);
-      Hi = DAG.getNode(ISD::SUB, VTList, HiOps, 2);
-      SDValue Cmp = DAG.getSetCC(NVT, LoOps[0], LoOps[1], ISD::SETULT);
+      Lo = DAG.getNode(ISD::SUB, NVT, LoOps, 2);
+      Hi = DAG.getNode(ISD::SUB, NVT, HiOps, 2);
+      SDValue Cmp = DAG.getSetCC(TLI.getSetCCResultType(LoOps[0]),
+                                 LoOps[0], LoOps[1], ISD::SETULT);
       SDValue Borrow = DAG.getNode(ISD::SELECT, NVT, Cmp,
                                    DAG.getConstant(1, NVT),
                                    DAG.getConstant(0, NVT));
