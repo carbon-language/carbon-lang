@@ -1595,26 +1595,33 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
 {
   ListInit* edges = CompilationGraph->getValueAsListInit("edges");
 
-  // Generate code
   O << "namespace {\n\n";
   O << "void PopulateCompilationGraphLocal(CompilationGraph& G) {\n";
 
-  // Insert vertices
+  // Insert vertices.
+  // Only tools mentioned in the graph definition are inserted.
 
-  RecordVector Tools = Records.getAllDerivedDefinitions("Tool");
-  if (Tools.empty())
-    throw std::string("No tool definitions found!");
+  llvm::StringSet<> ToolsInGraph;
 
-  for (RecordVector::iterator B = Tools.begin(), E = Tools.end(); B != E; ++B) {
-    const std::string& Name = (*B)->getName();
-    if (Name != "root")
-      O << Indent1 << "G.insertNode(new "
-        << Name << "());\n";
+  for (unsigned i = 0; i < edges->size(); ++i) {
+    Record* Edge = edges->getElementAsRecord(i);
+    Record* A = Edge->getValueAsDef("a");
+    Record* B = Edge->getValueAsDef("b");
+
+    if (A->getName() != "root")
+      ToolsInGraph.insert(A->getName());
+    if (B->getName() != "root")
+      ToolsInGraph.insert(B->getName());
   }
+
+  for (llvm::StringSet<>::iterator B = ToolsInGraph.begin(),
+         E = ToolsInGraph.end(); B != E; ++B)
+    O << Indent1 << "G.insertNode(new " << B->first() << "());\n";
 
   O << '\n';
 
-  // Insert edges
+  // Insert edges.
+
   for (unsigned i = 0; i < edges->size(); ++i) {
     Record* Edge = edges->getElementAsRecord(i);
     Record* A = Edge->getValueAsDef("a");
