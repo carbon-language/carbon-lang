@@ -575,7 +575,7 @@ public:
   /// that we can just remove the code.
   static bool ContainsLabel(const Stmt *S, bool IgnoreCaseStmts = false);
   
-  /// ConstantFoldsToSimpleInteger - If the sepcified expression does not fold
+  /// ConstantFoldsToSimpleInteger - If the specified expression does not fold
   /// to a constant, or if it does but contains a label, return 0.  If it
   /// constant folds to 'true' and does not contain a label, return 1, if it
   /// constant folds to 'false' and does not contain a label, return -1.
@@ -586,7 +586,7 @@ public:
   /// try to simplify the codegen of the conditional based on the branch.
   ///
   void EmitBranchOnBoolExpr(const Expr *Cond, llvm::BasicBlock *TrueBlock,
-                          llvm::BasicBlock *FalseBlock);
+                            llvm::BasicBlock *FalseBlock);
 private:
   
   /// EmitIndirectSwitches - Emit code for all of the switch
