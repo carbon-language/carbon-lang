@@ -194,8 +194,11 @@ bool CodeGenFunction::ContainsLabel(const Stmt *S, bool IgnoreCaseStmts) {
 /// to 'false' and does not contain a label, return -1.
 int CodeGenFunction::ConstantFoldsToSimpleInteger(const Expr *Cond) {
   APValue V;
-  if (!Cond->tryEvaluate(V, getContext()))
-    return 0;  // Not foldable.
+  
+  // FIXME: Rename and handle conversion of other evaluatable things
+  // to bool.
+  if (!Cond->tryEvaluate(V, getContext()) || !V.isInt())
+    return 0;  // Not foldable or not integer.
   
   if (CodeGenFunction::ContainsLabel(Cond))
     return 0;  // Contains a label.
