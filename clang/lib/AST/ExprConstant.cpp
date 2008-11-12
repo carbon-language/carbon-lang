@@ -13,6 +13,7 @@
 
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
@@ -62,9 +63,110 @@ struct EvalInfo {
 };
 
 
+static bool EvaluateLValue(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
 static bool EvaluateFloat(const Expr *E, APFloat &Result, EvalInfo &Info);
+
+//===----------------------------------------------------------------------===//
+// Misc utilities
+//===----------------------------------------------------------------------===//
+
+static bool HandleConversionToBool(Expr* E, bool& Result, EvalInfo &Info) {
+  if (E->getType()->isIntegralType()) {
+    APSInt IntResult;
+    if (!EvaluateInteger(E, IntResult, Info))
+      return false;
+    Result = IntResult != 0;
+    return true;
+  } else if (E->getType()->isRealFloatingType()) {
+    APFloat FloatResult(0.0);
+    if (!EvaluateFloat(E, FloatResult, Info))
+      return false;
+    Result = !FloatResult.isZero();
+    return true;
+  } else if (E->getType()->isPointerType()) {
+    APValue PointerResult;
+    if (!EvaluatePointer(E, PointerResult, Info))
+      return false;
+    // FIXME: Is this accurate for all kinds of bases?  If not, what would
+    // the check look like?
+    Result = PointerResult.getLValueBase() || PointerResult.getLValueOffset();
+    return true;
+  }
+
+  return false;
+}
+
+//===----------------------------------------------------------------------===//
+// LValue Evaluation
+//===----------------------------------------------------------------------===//
+namespace {
+class VISIBILITY_HIDDEN LValueExprEvaluator
+  : public StmtVisitor<LValueExprEvaluator, APValue> {
+  EvalInfo &Info;
+public:
+    
+  LValueExprEvaluator(EvalInfo &info) : Info(info) {}
+
+  APValue VisitStmt(Stmt *S) {
+    // FIXME: Remove this when we support more expressions.
+    printf("Unhandled pointer statement\n");
+    S->dump();  
+    return APValue();
+  }
+
+  APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  APValue VisitDeclRefExpr(DeclRefExpr *E) { return APValue(E, 0); }
+  APValue VisitPredefinedExpr(PredefinedExpr *E) { return APValue(E, 0); }
+  APValue VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
+  APValue VisitMemberExpr(MemberExpr *E);
+  APValue VisitStringLiteral(StringLiteral *E) { return APValue(E, 0); }
+};
+} // end anonymous namespace
+
+static bool EvaluateLValue(const Expr* E, APValue& Result, EvalInfo &Info) {
+  Result = LValueExprEvaluator(Info).Visit(const_cast<Expr*>(E));
+  return Result.isLValue();
+}
+
+APValue LValueExprEvaluator::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+  if (E->isFileScope())
+    return APValue(E, 0);
+  return APValue();
+}
+
+APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
+  APValue result;
+  QualType Ty;
+  if (E->isArrow()) {
+    if (!EvaluatePointer(E->getBase(), result, Info))
+      return APValue();
+    Ty = E->getBase()->getType()->getAsPointerType()->getPointeeType();
+  } else {
+    result = Visit(E->getBase());
+    if (result.isUninit())
+      return APValue();
+    Ty = E->getBase()->getType();
+  }
+
+  RecordDecl *RD = Ty->getAsRecordType()->getDecl();
+  const ASTRecordLayout &RL = Info.Ctx.getASTRecordLayout(RD);
+  FieldDecl *FD = E->getMemberDecl();
+    
+  // FIXME: This is linear time.
+  unsigned i = 0, e = 0;
+  for (i = 0, e = RD->getNumMembers(); i != e; i++) {
+    if (RD->getMember(i) == FD)
+      break;
+  }
+
+  result.setLValue(result.getLValueBase(),
+                   result.getLValueOffset() + RL.getFieldOffset(i) / 8);
+
+  return result;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Pointer Evaluation
@@ -86,6 +188,10 @@ public:
 
   APValue VisitBinaryOperator(const BinaryOperator *E);
   APValue VisitCastExpr(const CastExpr* E);
+  APValue VisitUnaryOperator(const UnaryOperator *E);
+  APValue VisitObjCStringLiteral(ObjCStringLiteral *E)
+      { return APValue(E, 0); }
+  APValue VisitConditionalOperator(ConditionalOperator *E);
 };
 } // end anonymous namespace
 
@@ -114,13 +220,32 @@ APValue PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (!EvaluateInteger(IExp, AdditionalOffset, Info))
     return APValue();
 
+  QualType PointeeType = PExp->getType()->getAsPointerType()->getPointeeType();
+  uint64_t SizeOfPointee = Info.Ctx.getTypeSize(PointeeType) / 8;
+
   uint64_t Offset = ResultLValue.getLValueOffset();
+
   if (E->getOpcode() == BinaryOperator::Add)
-    Offset += AdditionalOffset.getZExtValue();
+    Offset += AdditionalOffset.getLimitedValue() * SizeOfPointee;
   else
-    Offset -= AdditionalOffset.getZExtValue();
-    
+    Offset -= AdditionalOffset.getLimitedValue() * SizeOfPointee;
+
   return APValue(ResultLValue.getLValueBase(), Offset);
+}
+
+APValue PointerExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
+  if (E->getOpcode() == UnaryOperator::Extension) {
+    // FIXME: Deal with warnings?
+    return Visit(E->getSubExpr());
+  }
+
+  if (E->getOpcode() == UnaryOperator::AddrOf) {
+    APValue result;
+    if (EvaluateLValue(E->getSubExpr(), result, Info))
+      return result;
+  }
+
+  return APValue();
 }
   
 
@@ -142,11 +267,31 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
       return APValue(0, Result.getZExtValue());
     }
   }
-  
-  assert(0 && "Unhandled cast");
+
+  if (SubExpr->getType()->isFunctionType() ||
+      SubExpr->getType()->isArrayType()) {
+    APValue Result;
+    if (EvaluateLValue(SubExpr, Result, Info))
+      return Result;
+    return APValue();
+  }
+
+  //assert(0 && "Unhandled cast");
   return APValue();
 }  
 
+APValue PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
+  bool BoolResult;
+  if (!HandleConversionToBool(E->getCond(), BoolResult, Info))
+    return APValue();
+
+  Expr* EvalExpr = BoolResult ? E->getTrueExpr() : E->getFalseExpr();
+
+  APValue Result;
+  if (EvaluatePointer(EvalExpr, Result, Info))
+    return Result;
+  return APValue();
+}
 
 //===----------------------------------------------------------------------===//
 // Integer Evaluation
@@ -349,8 +494,8 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       return false;
     
     // X && 0 -> 0, X || 1 -> 1.
-    if (E->getOpcode() == BinaryOperator::LAnd && RHS == 0 ||
-        E->getOpcode() == BinaryOperator::LOr  && RHS != 0) {
+    if ((E->getOpcode() == BinaryOperator::LAnd && RHS == 0) ||
+        (E->getOpcode() == BinaryOperator::LOr  && RHS != 0)) {
       Result = RHS != 0;
       Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
       Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
@@ -470,10 +615,13 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   QualType SrcTy = E->getTypeOfArgument();
 
   // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
-  if (SrcTy->isVoidType())
+  if (SrcTy->isVoidType()) {
     Result = 1;
+    return true;
+  }
   
   // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
+  // FIXME: But alignof(vla) is!
   if (!SrcTy->isConstantSizeType()) {
     // FIXME: Should we attempt to evaluate this?
     return false;
@@ -491,7 +639,7 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   // Get information about the size or align.
   unsigned CharSize = Info.Ctx.Target.getCharWidth();
   if (isSizeOf)
-    Result = getIntTypeSizeInBits(SrcTy) / CharSize;
+    Result = Info.Ctx.getTypeSize(SrcTy) / CharSize;
   else
     Result = Info.Ctx.getTypeAlign(SrcTy) / CharSize;
   return true;
@@ -547,6 +695,16 @@ bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
                                   Expr *SubExpr, QualType DestType) {
   unsigned DestWidth = getIntTypeSizeInBits(DestType);
 
+  if (DestType->isBooleanType()) {
+    bool BoolResult;
+    if (!HandleConversionToBool(SubExpr, BoolResult, Info))
+      return false;
+    Result.zextOrTrunc(DestWidth);
+    Result.setIsUnsigned(DestType->isUnsignedIntegerType());
+    Result = BoolResult;
+    return true;
+  }
+
   // Handle simple integer->integer casts.
   if (SubExpr->getType()->isIntegerType()) {
     if (!Visit(SubExpr))
@@ -554,12 +712,7 @@ bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
     
     // Figure out if this is a truncate, extend or noop cast.
     // If the input is signed, do a sign extend, noop, or truncate.
-    if (DestType->isBooleanType()) {
-      // Conversion to bool compares against zero.
-      Result = Result != 0;
-      Result.zextOrTrunc(DestWidth);
-    } else
-      Result.extOrTrunc(DestWidth);
+    Result.extOrTrunc(DestWidth);
     Result.setIsUnsigned(DestType->isUnsignedIntegerType());
     return true;
   }
@@ -569,29 +722,22 @@ bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
     APValue LV;
     if (!EvaluatePointer(SubExpr, LV, Info))
       return false;
+
     if (LV.getLValueBase())
       return false;
-    
+
     Result.extOrTrunc(DestWidth);
     Result = LV.getLValueOffset();
     Result.setIsUnsigned(DestType->isUnsignedIntegerType());
     return true;
   }
-  
+
   if (!SubExpr->getType()->isRealFloatingType())
     return Error(CastLoc, diag::err_expr_not_constant, DestType);
 
   APFloat F(0.0);
   if (!EvaluateFloat(SubExpr, F, Info))
     return Error(CastLoc, diag::err_expr_not_constant, DestType);
-
-  // If the destination is boolean, compare against zero.
-  if (DestType->isBooleanType()) {
-    Result = !F.isZero();
-    Result.zextOrTrunc(DestWidth);
-    Result.setIsUnsigned(DestType->isUnsignedIntegerType());
-    return true;
-  }     
   
   // Determine whether we are converting to unsigned or signed.
   bool DestSigned = DestType->isSignedIntegerType();
@@ -629,6 +775,8 @@ public:
   bool VisitUnaryOperator(const UnaryOperator *E);
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitFloatingLiteral(const FloatingLiteral *E);
+  bool VisitCastExpr(CastExpr *E);
+  bool VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
 };
 } // end anonymous namespace
 
@@ -735,6 +883,35 @@ bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
 bool FloatExprEvaluator::VisitFloatingLiteral(const FloatingLiteral *E) {
   Result = E->getValue();
+  return true;
+}
+
+bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
+  Expr* SubExpr = E->getSubExpr();
+  const llvm::fltSemantics& destSemantics =
+      Info.Ctx.getFloatTypeSemantics(E->getType());
+  if (SubExpr->getType()->isIntegralType()) {
+    APSInt IntResult;
+    if (!EvaluateInteger(E, IntResult, Info))
+      return false;
+    Result = APFloat(destSemantics, 1);
+    Result.convertFromAPInt(IntResult, IntResult.isSigned(),
+                            APFloat::rmNearestTiesToEven);
+    return true;
+  }
+  if (SubExpr->getType()->isRealFloatingType()) {
+    if (!Visit(SubExpr))
+      return false;
+    bool ignored;
+    Result.convert(destSemantics, APFloat::rmNearestTiesToEven, &ignored);
+    return true;
+  }
+
+  return false;
+}
+
+bool FloatExprEvaluator::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
+  Result = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(E->getType()));
   return true;
 }
 
