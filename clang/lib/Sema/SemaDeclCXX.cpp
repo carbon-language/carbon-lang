@@ -705,7 +705,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     CXXConstructorDecl *DefaultCon = 
       CXXConstructorDecl::Create(Context, ClassDecl,
                                  ClassDecl->getLocation(),
-                                 ClassDecl->getIdentifier(),
+                                 &Context.Idents.getConstructorId(),
                                  Context.getFunctionType(Context.VoidTy,
                                                          0, 0, false, 0),
                                  /*isExplicit=*/false,
@@ -771,7 +771,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     CXXConstructorDecl *CopyConstructor
       = CXXConstructorDecl::Create(Context, ClassDecl,
                                    ClassDecl->getLocation(),
-                                   ClassDecl->getIdentifier(),
+                                   &Context.Idents.getConstructorId(),
                                    Context.getFunctionType(Context.VoidTy,
                                                            &ArgType, 1,
                                                            false, 0),
@@ -795,12 +795,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     //   If a class has no user-declared destructor, a destructor is
     //   declared implicitly. An implicitly-declared destructor is an
     //   inline public member of its class.
-    std::string DestructorName = "~";
-    DestructorName += ClassDecl->getName();
     CXXDestructorDecl *Destructor 
       = CXXDestructorDecl::Create(Context, ClassDecl,
                                   ClassDecl->getLocation(),
-                                  &PP.getIdentifierTable().get(DestructorName),
+                                  &Context.Idents.getConstructorId(),
                                   Context.getFunctionType(Context.VoidTy,
                                                           0, 0, false, 0),
                                   /*isInline=*/true,

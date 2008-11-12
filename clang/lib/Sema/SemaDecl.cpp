@@ -45,11 +45,6 @@ Sema::TypeTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S,
   return 0;
 }
 
-std::string Sema::getTypeAsString(TypeTy *Type) {
-  QualType Ty = QualType::getFromOpaquePtr(Type);
-  return Ty.getAsString();
-}
-
 DeclContext *Sema::getContainingDC(DeclContext *DC) {
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC)) {
     // A C++ out-of-line method will return to the file declaration context.

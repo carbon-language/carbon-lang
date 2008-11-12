@@ -42,7 +42,8 @@ IdentifierInfo::IdentifierInfo() {
 
 IdentifierTable::IdentifierTable(const LangOptions &LangOpts)
   // Start with space for 8K identifiers.
-  : HashTable(8192) {
+  : HashTable(8192), 
+    ConstructorId(0), DestructorId(0), ConversionFunctionId(0) {
 
   // Populate the identifier table with info about keywords for the current
   // language.
@@ -51,7 +52,33 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts)
 }
 
 // This cstor is intended to be used only for serialization.
-IdentifierTable::IdentifierTable() : HashTable(8192) {}
+IdentifierTable::IdentifierTable() 
+  : HashTable(8192), 
+    ConstructorId(0), DestructorId(0), ConversionFunctionId(0) { }
+
+/// getConstructorId - Return a placeholder identifier for a C++
+/// constructor.
+IdentifierInfo &IdentifierTable::getConstructorId() {
+  if (!ConstructorId)
+    ConstructorId = &get("<constructor>");
+  return *ConstructorId;
+}
+
+/// getDestructorId - Return a placeholder identifier for a C++
+/// destructor.
+IdentifierInfo &IdentifierTable::getDestructorId() {
+  if (!DestructorId)
+    DestructorId = &get("<destructor>");
+  return *DestructorId;
+}
+
+/// getConversionFunctionId - Return a placeholder identifier for a
+/// C++ conversion function.
+IdentifierInfo &IdentifierTable::getConversionFunctionId() {
+  if (!ConversionFunctionId)
+    ConversionFunctionId = &get("<conversion function>");
+  return *ConversionFunctionId;
+}
 
 //===----------------------------------------------------------------------===//
 // Language Keyword Implementation

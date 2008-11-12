@@ -13,6 +13,7 @@
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/Basic/IdentifierTable.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -26,11 +27,20 @@ CXXFieldDecl *CXXFieldDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   return new (Mem) CXXFieldDecl(RD, L, Id, T, BW);
 }
 
+CXXRecordDecl::CXXRecordDecl(ASTContext &C, TagKind TK, DeclContext *DC,
+                             SourceLocation L, IdentifierInfo *Id) 
+  : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord),
+    UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
+    Aggregate(true), Polymorphic(false), Bases(0), NumBases(0),
+    Constructors(DC, &C.Idents.getConstructorId()), 
+    Destructor(0), 
+    Conversions(DC, &C.Idents.getConversionFunctionId()) { }
+
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
                                      CXXRecordDecl* PrevDecl) {
   void *Mem = C.getAllocator().Allocate<CXXRecordDecl>();
-  CXXRecordDecl* R = new (Mem) CXXRecordDecl(TK, DC, L, Id);
+  CXXRecordDecl* R = new (Mem) CXXRecordDecl(C, TK, DC, L, Id);
   C.getTypeDeclType(R, PrevDecl);  
   return R;
 }
@@ -232,6 +242,10 @@ bool CXXConstructorDecl::isConvertingConstructor() const {
          (getNumParams() > 1 && getParamDecl(1)->getDefaultArg() != 0);
 }
 
+const char *CXXConstructorDecl::getName() const { 
+  return getParent()->getName();
+}
+
 CXXDestructorDecl *
 CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           SourceLocation L, IdentifierInfo *Id,
@@ -240,6 +254,34 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   void *Mem = C.getAllocator().Allocate<CXXDestructorDecl>();
   return new (Mem) CXXDestructorDecl(RD, L, Id, T, isInline, 
                                      isImplicitlyDeclared);
+}
+
+CXXDestructorDecl::~CXXDestructorDecl() {
+  delete [] Name;
+}
+
+const char *CXXDestructorDecl::getName() const {
+  if (!Name) {
+    std::string Builder = "~";
+    Builder += getParent()->getName();
+    Name = new char[Builder.size()+1];
+    strcpy(Name, Builder.c_str());
+  }
+  return Name;
+}
+
+CXXConversionDecl::~CXXConversionDecl() {
+  delete [] Name;
+}
+
+const char *CXXConversionDecl::getName() const {
+  if (!Name) {
+    std::string Builder = "operator ";
+    Builder += getConversionType().getAsString();
+    Name = new char[Builder.size()+1];
+    strcpy(Name, Builder.c_str());    
+  }
+  return Name;
 }
 
 CXXConversionDecl *

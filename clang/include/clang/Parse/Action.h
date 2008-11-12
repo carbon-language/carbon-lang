@@ -154,14 +154,6 @@ public:
   virtual void ActOnCXXExitDeclaratorScope(const CXXScopeSpec &SS) {
   }
 
-  /// getTypeAsString - Returns a string that describes the given
-  /// type. This callback is used in C++ to form identifiers for
-  /// special declarations that otherwise don't have simple names,
-  /// such as constructors, destructors, and conversion functions.
-  virtual std::string getTypeAsString(TypeTy *Type) {
-    return "<unknown type>";
-  }
-
   /// ActOnDeclarator - This callback is invoked when a declarator is parsed and
   /// 'Init' specifies the initializer if any.  This is for things like:
   /// "int X = 4" or "typedef int foo".

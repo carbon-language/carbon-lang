@@ -1437,7 +1437,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     if (getLang().CPlusPlus && 
         Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope))
       D.SetConstructor(Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope),
-                       Tok.getIdentifierInfo(), Tok.getLocation());
+                       &PP.getIdentifierTable().getConstructorId(), 
+                       Tok.getLocation());
     else
       D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
     ConsumeToken();
@@ -1446,18 +1447,9 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     // This should be a C++ destructor.
     SourceLocation TildeLoc = ConsumeToken();
     if (Tok.is(tok::identifier)) {
-      // Use the next identifier and "~" to form a name for the
-      // destructor. This is useful both for diagnostics and for
-      // correctness of the parser, since we use presence/absence of the
-      // identifier to determine what we parsed.
-      // FIXME: We could end up with a template-id here, once we parse
-      // templates, and will have to do something different to form the
-      // name of the destructor.
-      IdentifierInfo *II = Tok.getIdentifierInfo();
-      II = &PP.getIdentifierTable().get(std::string("~") + II->getName());
-
       if (TypeTy *Type = ParseClassName())
-        D.SetDestructor(Type, II, TildeLoc);
+        D.SetDestructor(Type, &PP.getIdentifierTable().getDestructorId(), 
+                        TildeLoc);
       else
         D.SetIdentifier(0, TildeLoc);
     } else {
@@ -1473,10 +1465,9 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     } else {
       // This must be a conversion function (C++ [class.conv.fct]).
       if (TypeTy *ConvType = ParseConversionFunctionId()) {
-        IdentifierInfo *II 
-          = &PP.getIdentifierTable().get(std::string("operator ") + 
-                                         Actions.getTypeAsString(ConvType));
-        D.SetConversionFunction(ConvType, II, OperatorLoc);
+        D.SetConversionFunction(ConvType, 
+                                &PP.getIdentifierTable().getConversionFunctionId(), 
+                                OperatorLoc);
       }
     }
   } else if (Tok.is(tok::l_paren) && SS.isEmpty()) {

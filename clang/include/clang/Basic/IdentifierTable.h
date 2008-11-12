@@ -178,6 +178,16 @@ class IdentifierTable {
   /// overloadable operators in C++.
   IdentifierInfo *OverloadedOperators[NUM_OVERLOADED_OPERATORS];
 
+  /// ConstructorId - Placeholder identifier for C++ constructors.
+  IdentifierInfo *ConstructorId;
+
+  /// DestructorId - Placeholder identifier for C++ destructor.
+  IdentifierInfo *DestructorId;
+
+  /// ConversionFunctionId - Placeholder identifier for a C++
+  /// conversion function.
+  IdentifierInfo *ConversionFunctionId;
+
 public:
   /// IdentifierTable ctor - Create the identifier table, populating it with
   /// info about the language keywords for the language specified by LangOpts.
@@ -202,6 +212,18 @@ public:
   IdentifierInfo &getOverloadedOperator(OverloadedOperatorKind Op) {
     return *OverloadedOperators[Op];
   }
+
+  /// getConstructorId - Return a placeholder identifier for a C++
+  /// constructor.
+  IdentifierInfo &getConstructorId();
+
+  /// getDestructorId - Return a placeholder identifier for a C++
+  /// destructor.
+  IdentifierInfo &getDestructorId();
+
+  /// getConversionFunctionId - Return a placeholder identifier for a
+  /// C++ conversion function.
+  IdentifierInfo &getConversionFunctionId();
 
   typedef HashTableTy::const_iterator iterator;
   typedef HashTableTy::const_iterator const_iterator;

@@ -67,7 +67,7 @@ public:
    : Decl(DK, L), Identifier(Id) {}
   
   IdentifierInfo *getIdentifier() const { return Identifier; }
-  const char *getName() const;
+  virtual const char *getName() const;
     
   static bool classof(const Decl *D) {
     return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;

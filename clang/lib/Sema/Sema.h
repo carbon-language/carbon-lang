@@ -284,7 +284,6 @@ public:
   //
   virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S,
                              const CXXScopeSpec *SS);
-  virtual std::string getTypeAsString(TypeTy *Type);
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
