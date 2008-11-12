@@ -75,7 +75,7 @@ public:
   bool VisitCallExpr(CallExpr* C);
   bool VisitDeclStmt(DeclStmt* D);
   bool VisitConditionalOperator(ConditionalOperator* C);
-  bool VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
+  bool BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
   
   bool Visit(Stmt *S);
   bool BlockStmt_VisitExpr(Expr* E);
@@ -180,7 +180,8 @@ bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   return Visit(U->getSubExpr());
 }
   
-bool TransferFuncs::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
+bool
+TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   // This represents a use of the 'collection'
   bool x = Visit(S->getCollection());
 

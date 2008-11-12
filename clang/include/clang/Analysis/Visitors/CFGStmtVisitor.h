@@ -68,7 +68,8 @@ public:
 
       DISPATCH_CASE(StmtExpr)
       DISPATCH_CASE(ConditionalOperator)
-
+      DISPATCH_CASE(ObjCForCollectionStmt)
+        
       case Stmt::BinaryOperatorClass: {
         BinaryOperator* B = cast<BinaryOperator>(S);
         if (B->isLogicalOp())
@@ -89,6 +90,10 @@ public:
 
   DEFAULT_BLOCKSTMT_VISIT(StmtExpr)
   DEFAULT_BLOCKSTMT_VISIT(ConditionalOperator)
+  
+  RetTy BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
+    return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(S);
+  }
   
   RetTy BlockStmt_VisitImplicitControlFlowExpr(Expr* E) {
     return static_cast<ImplClass*>(this)->BlockStmt_VisitExpr(E);

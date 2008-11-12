@@ -121,7 +121,7 @@ public:
   void VisitBinaryOperator(BinaryOperator* B);
   void VisitAssign(BinaryOperator* B);
   void VisitDeclStmt(DeclStmt* DS);
-  void VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
+  void BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
   void VisitUnaryOperator(UnaryOperator* U);
   void Visit(Stmt *S);    
   void VisitTerminator(CFGBlock* B); 
@@ -176,7 +176,9 @@ void TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
   else VisitStmt(B);
 }
 
-void TransferFuncs::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {  
+void
+TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
+  
   // This represents a 'use' of the collection.
   Visit(S->getCollection());
   
