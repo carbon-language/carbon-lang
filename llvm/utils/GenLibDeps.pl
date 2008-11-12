@@ -48,7 +48,7 @@ if (!defined($nmPath) || $nmPath eq "") {
 opendir DIR,$Directory;
 my @files = readdir DIR;
 closedir DIR;
-my @libs = grep(/libLLVM.*\.a$/,sort(@files));
+my @libs = grep(/libLLVM.*\.(dylib|so|a)$/,sort(@files));
 my @objs = grep(/LLVM.*\.o$/,sort(@files));
 
 # Declare the hashes we will use to keep track of the library and object file
