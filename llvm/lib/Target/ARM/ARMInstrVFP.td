@@ -223,7 +223,7 @@ def FMRS   : AVConv1I<0b11100001, 0b1010, (outs GPR:$dst), (ins SPR:$src),
                  "fmrs", " $dst, $src",
                  [(set GPR:$dst, (bitconvert SPR:$src))]>;
 
-def FMSR   : AVConv1I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
+def FMSR   : AVConv2I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
                  "fmsr", " $dst, $src",
                  [(set SPR:$dst, (bitconvert GPR:$src))]>;
 

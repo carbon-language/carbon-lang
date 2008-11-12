@@ -1053,9 +1053,16 @@ void ARMCodeEmitter::emitVFPArithInstruction(const MachineInstr &MI) {
          (Binary & ARMII::M_BitShift) == 0 && "VFP encoding bug!");
 
   // Encode Dd / Sd.
-  unsigned RegD = getMachineOpValue(MI, OpIdx++);
-  Binary |= (RegD & 0x0f) << ARMII::RegRdShift;
-  Binary |= (RegD & 0x10) << ARMII::D_BitShift;
+  unsigned RegD = MI.getOperand(OpIdx++).getReg();
+  bool isSPVFP = false;
+  RegD = ARMRegisterInfo::getRegisterNumbering(RegD, isSPVFP);
+  if (!isSPVFP)
+    Binary |=   RegD               << ARMII::RegRdShift;
+  else {
+    Binary |= ((RegD & 0x1E) >> 1) << ARMII::RegRdShift;
+    Binary |=  (RegD & 0x01)       << ARMII::D_BitShift;
+  }
+    
 
   // If this is a two-address operand, skip it, e.g. FMACD.
   if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
@@ -1063,15 +1070,27 @@ void ARMCodeEmitter::emitVFPArithInstruction(const MachineInstr &MI) {
 
   // Encode Dn / Sn.
   if ((TID.TSFlags & ARMII::FormMask) == ARMII::VFPBinaryFrm) {
-    unsigned RegN = getMachineOpValue(MI, OpIdx++);
-    Binary |= (RegN & 0x0f) << ARMII::RegRnShift;
-    Binary |= (RegN & 0x10) << ARMII::N_BitShift;
+    unsigned RegN = MI.getOperand(OpIdx++).getReg();
+    isSPVFP = false;
+    RegN = ARMRegisterInfo::getRegisterNumbering(RegN, isSPVFP);
+    if (!isSPVFP)
+      Binary |=   RegN               << ARMII::RegRnShift;
+    else {
+      Binary |= ((RegN & 0x1E) >> 1) << ARMII::RegRnShift;
+      Binary |=  (RegN & 0x01)       << ARMII::N_BitShift;
+    }
   }
 
   // Encode Dm / Sm.
-  unsigned RegM = getMachineOpValue(MI, OpIdx++);
-  Binary |= (RegM & 0x0f);
-  Binary |= (RegM & 0x10) << ARMII::M_BitShift;
+  unsigned RegM = MI.getOperand(OpIdx++).getReg();
+  isSPVFP = false;
+  RegM = ARMRegisterInfo::getRegisterNumbering(RegM, isSPVFP);
+  if (!isSPVFP)
+    Binary |=   RegM;
+  else {
+    Binary |= ((RegM & 0x1E) >> 1);
+    Binary |=  (RegM & 0x01)       << ARMII::M_BitShift;
+  }
   
   emitWordLE(Binary);
 }
@@ -1087,41 +1106,65 @@ void ARMCodeEmitter::emitVFPConversionInstruction(const MachineInstr &MI) {
 
   // FMDRR encodes registers in reverse order.
   unsigned Form = TID.TSFlags & ARMII::FormMask;
-  unsigned OpIdx = (Form == ARMII::VFPConv2Frm) ? 2 : 0;
+  unsigned OpIdx = (Form == ARMII::VFPConv2Frm)
+    ? MI.findFirstPredOperandIdx()-1 : 0;
 
   // Encode Dd / Sd.
-  unsigned RegD = getMachineOpValue(MI, OpIdx);
-  Binary |= (RegD & 0x0f) << ARMII::RegRdShift;
-  Binary |= (RegD & 0x10) << ARMII::D_BitShift;
+  unsigned RegD = MI.getOperand(OpIdx).getReg();
+  bool isSPVFP = false;
+  RegD = ARMRegisterInfo::getRegisterNumbering(RegD, isSPVFP);
+  if (!isSPVFP)
+    Binary |=   RegD               << ARMII::RegRdShift;
+  else {
+    Binary |= ((RegD & 0x1E) >> 1) << ARMII::RegRdShift;
+    Binary |=  (RegD & 0x01)       << ARMII::D_BitShift;
+  }
   if (Form == ARMII::VFPConv2Frm)
     --OpIdx;
   else
     ++OpIdx;
 
-  // Encode Dn / Sn.
-  if (Form == ARMII::VFPConv1Frm || Form == ARMII::VFPConv2Frm) {
-    unsigned RegN = getMachineOpValue(MI, OpIdx);
-    Binary |= (RegN & 0x0f) << ARMII::RegRnShift;
-    Binary |= (RegN & 0x10) << ARMII::N_BitShift;
-    if (Form == ARMII::VFPConv2Frm)
-      --OpIdx;
-    else
-      ++OpIdx;
-
-    // FMRS / FMSR do not have Rm.
-    if (TID.getNumOperands() > OpIdx && MI.getOperand(OpIdx).isReg()) {
-      unsigned RegM = getMachineOpValue(MI, OpIdx);
-      Binary |= (RegM & 0x0f);
-      Binary |= (RegM & 0x10) << ARMII::M_BitShift;
-    } else if (Form == ARMII::VFPConv2Frm) {
-      // FMDRR encodes definition register in Dm field.
-      Binary |= getMachineOpValue(MI, 0);
+  if (Form == ARMII::VFPConv3Frm) {
+    unsigned RegM = MI.getOperand(OpIdx).getReg();
+    isSPVFP = false;
+    RegM = ARMRegisterInfo::getRegisterNumbering(RegM, isSPVFP);
+    if (!isSPVFP)
+      Binary |=   RegM;
+    else {
+      Binary |= ((RegM & 0x1E) >> 1);
+      Binary |=  (RegM & 0x01)       << ARMII::M_BitShift;
     }
-  } else {
-    assert(Form == ARMII::VFPConv3Frm && "Unsupported format!");
-    unsigned RegM = getMachineOpValue(MI, OpIdx);
-    Binary |= (RegM & 0x0f);
-    Binary |= (RegM & 0x10) << ARMII::M_BitShift;
+
+    emitWordLE(Binary);
+    return;
+  }
+
+  // Encode Dn / Sn.
+  unsigned RegN = MI.getOperand(OpIdx).getReg();
+  isSPVFP = false;
+  RegN = ARMRegisterInfo::getRegisterNumbering(RegN, isSPVFP);
+  if (!isSPVFP)
+    Binary |=   RegN               << ARMII::RegRnShift;
+  else {
+    Binary |= ((RegN & 0x1E) >> 1) << ARMII::RegRnShift;
+    Binary |=  (RegN & 0x01)       << ARMII::N_BitShift;
+  }
+  if (Form == ARMII::VFPConv2Frm)
+    --OpIdx;
+  else
+    ++OpIdx;
+
+  // FMRS / FMSR do not have Rm.
+  if (TID.getNumOperands() > OpIdx && MI.getOperand(OpIdx).isReg()) {
+    unsigned RegM = MI.getOperand(OpIdx).getReg();
+    isSPVFP = false;
+    RegM = ARMRegisterInfo::getRegisterNumbering(RegM, isSPVFP);
+    if (!isSPVFP)
+      Binary |=   RegM;
+    else {
+      Binary |= ((RegM & 0x1E) >> 1);
+      Binary |=  (RegM & 0x01)       << ARMII::M_BitShift;
+    }
   }
 
   emitWordLE(Binary);
@@ -1137,9 +1180,15 @@ void ARMCodeEmitter::emitVFPLoadStoreInstruction(const MachineInstr &MI) {
   unsigned OpIdx = 0;
 
   // Encode Dd / Sd.
-  unsigned RegD = getMachineOpValue(MI, OpIdx++);
-  Binary |= (RegD & 0x0f) << ARMII::RegRdShift;
-  Binary |= (RegD & 0x10) << ARMII::D_BitShift;
+  unsigned RegD = MI.getOperand(OpIdx++).getReg();
+  bool isSPVFP = false;
+  RegD = ARMRegisterInfo::getRegisterNumbering(RegD, isSPVFP);
+  if (!isSPVFP)
+    Binary |=   RegD               << ARMII::RegRdShift;
+  else {
+    Binary |= ((RegD & 0x1E) >> 1) << ARMII::RegRdShift;
+    Binary |=  (RegD & 0x01)       << ARMII::D_BitShift;
+  }
 
   // Encode address base.
   const MachineOperand &Base = MI.getOperand(OpIdx++);
@@ -1184,8 +1233,15 @@ ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(const MachineInstr &MI) {
     Binary |= 0x1 << ARMII::W_BitShift;
 
   // First register is encoded in Dd.
-  unsigned FirstReg = MI.getOperand(4).getReg();
-  Binary |= ARMRegisterInfo::getRegisterNumbering(FirstReg)<< ARMII::RegRdShift;
+  unsigned RegD = MI.getOperand(4).getReg();
+  bool isSPVFP = false;
+  RegD = ARMRegisterInfo::getRegisterNumbering(RegD, isSPVFP);
+  if (!isSPVFP)
+    Binary |=   RegD               << ARMII::RegRdShift;
+  else {
+    Binary |= ((RegD & 0x1E) >> 1) << ARMII::RegRdShift;
+    Binary |=  (RegD & 0x01)       << ARMII::D_BitShift;
+  }
 
   // Number of registers are encoded in offset field.
   unsigned NumRegs = 1;
