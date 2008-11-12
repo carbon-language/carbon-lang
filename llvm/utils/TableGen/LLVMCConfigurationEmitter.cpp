@@ -1121,9 +1121,9 @@ std::string SubstituteSpecialCommands(const std::string& cmd) {
     if (cmd.size() == 5)
       throw std::string("$ENV invocation: empty argument list!");
 
-    ret += "std::getenv(\"";
+    ret += "checkCString(std::getenv(\"";
     ret += std::string(cmd.begin() + 5, cmd.begin() + cparen);
-    ret += "\")";
+    ret += "\"))";
   }
   else {
     throw "Unknown special command: " + cmd;
@@ -1729,7 +1729,8 @@ void EmitRegisterPlugin(std::ostream& O) {
     << "static llvmc::RegisterPlugin<Plugin> RP;\n\n}\n\n";
 }
 
-/// EmitInclude - Emit necessary #include directives.
+/// EmitIncludes - Emit necessary #include directives and some
+/// additional declarations.
 void EmitIncludes(std::ostream& O) {
   O << "#include \"llvm/CompilerDriver/CompilationGraph.h\"\n"
     << "#include \"llvm/CompilerDriver/Plugin.h\"\n"
@@ -1744,7 +1745,10 @@ void EmitIncludes(std::ostream& O) {
     << "using namespace llvm;\n"
     << "using namespace llvmc;\n\n"
 
-    << "extern cl::opt<std::string> OutputFilename;\n\n";
+    << "extern cl::opt<std::string> OutputFilename;\n\n"
+
+    << "inline const char* checkCString(const char* s)\n"
+    << "{ return s == NULL ? \"\" : s; }\n\n";
 }
 
 // End of anonymous namespace
