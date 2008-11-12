@@ -219,15 +219,15 @@ def FSQRTS  : ASuI<0b11101011, 0b0001, 0b1100, (outs SPR:$dst), (ins SPR:$a),
 // FP <-> GPR Copies.  Int <-> FP Conversions.
 //
 
-def FMRS   : AVConv1I<0b11100001, 0b1010, (outs GPR:$dst), (ins SPR:$src),
+def FMRS   : AVConv2I<0b11100001, 0b1010, (outs GPR:$dst), (ins SPR:$src),
                  "fmrs", " $dst, $src",
                  [(set GPR:$dst, (bitconvert SPR:$src))]>;
 
-def FMSR   : AVConv2I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
+def FMSR   : AVConv4I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
                  "fmsr", " $dst, $src",
                  [(set SPR:$dst, (bitconvert GPR:$src))]>;
 
-def FMRRD  : AVConv1I<0b11000101, 0b1011,
+def FMRRD  : AVConv3I<0b11000101, 0b1011,
                       (outs GPR:$dst1, GPR:$dst2), (ins DPR:$src),
                  "fmrrd", " $dst1, $dst2, $src",
                  [/* FIXME: Can't write pattern for multiple result instr*/]>;
@@ -235,7 +235,7 @@ def FMRRD  : AVConv1I<0b11000101, 0b1011,
 // FMDHR: GPR -> SPR
 // FMDLR: GPR -> SPR
 
-def FMDRR : AVConv2I<0b11000100, 0b1011, (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
+def FMDRR : AVConv5I<0b11000100, 0b1011, (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
                 "fmdrr", " $dst, $src1, $src2",
                 [(set DPR:$dst, (arm_fmdrr GPR:$src1, GPR:$src2))]>;
 
@@ -251,25 +251,25 @@ def FMDRR : AVConv2I<0b11000100, 0b1011, (outs DPR:$dst), (ins GPR:$src1, GPR:$s
 
 // Int to FP:
 
-def FSITOD : AVConv3I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
+def FSITOD : AVConv1I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
                  "fsitod", " $dst, $a",
                  [(set DPR:$dst, (arm_sitof SPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
 
-def FSITOS : AVConv3I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
+def FSITOS : AVConv1I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
                  "fsitos", " $dst, $a",
                  [(set SPR:$dst, (arm_sitof SPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
 
-def FUITOD : AVConv3I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
+def FUITOD : AVConv1I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
                  "fuitod", " $dst, $a",
                  [(set DPR:$dst, (arm_uitof SPR:$a))]> {
   let Inst{7} = 0; // Z bit
 }
 
-def FUITOS : AVConv3I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
+def FUITOS : AVConv1I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
                  "fuitos", " $dst, $a",
                  [(set SPR:$dst, (arm_uitof SPR:$a))]> {
   let Inst{7} = 1; // Z bit
@@ -278,28 +278,28 @@ def FUITOS : AVConv3I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
 // FP to Int:
 // Always set Z bit in the instruction, i.e. "round towards zero" variants.
 
-def FTOSIZD : AVConv3I<0b11101011, 0b1101, 0b1011,
+def FTOSIZD : AVConv1I<0b11101011, 0b1101, 0b1011,
                        (outs SPR:$dst), (ins DPR:$a),
                  "ftosizd", " $dst, $a",
                  [(set SPR:$dst, (arm_ftosi DPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
 
-def FTOSIZS : AVConv3I<0b11101011, 0b1101, 0b1010,
+def FTOSIZS : AVConv1I<0b11101011, 0b1101, 0b1010,
                        (outs SPR:$dst), (ins SPR:$a),
                  "ftosizs", " $dst, $a",
                  [(set SPR:$dst, (arm_ftosi SPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
 
-def FTOUIZD : AVConv3I<0b11101011, 0b1100, 0b1011,
+def FTOUIZD : AVConv1I<0b11101011, 0b1100, 0b1011,
                        (outs SPR:$dst), (ins DPR:$a),
                  "ftouizd", " $dst, $a",
                  [(set SPR:$dst, (arm_ftoui DPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
 
-def FTOUIZS : AVConv3I<0b11101011, 0b1100, 0b1010,
+def FTOUIZS : AVConv1I<0b11101011, 0b1100, 0b1010,
                        (outs SPR:$dst), (ins SPR:$a),
                  "ftouizs", " $dst, $a",
                  [(set SPR:$dst, (arm_ftoui SPR:$a))]> {

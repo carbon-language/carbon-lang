@@ -347,6 +347,8 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   case ARMII::VFPConv1Frm:
   case ARMII::VFPConv2Frm:
   case ARMII::VFPConv3Frm:
+  case ARMII::VFPConv4Frm:
+  case ARMII::VFPConv5Frm:
     emitVFPConversionInstruction(MI);
     break;
   case ARMII::VFPLdStFrm:
@@ -1095,22 +1097,9 @@ void ARMCodeEmitter::emitVFPArithInstruction(const MachineInstr &MI) {
   emitWordLE(Binary);
 }
 
-void ARMCodeEmitter::emitVFPConversionInstruction(const MachineInstr &MI) {
-  const TargetInstrDesc &TID = MI.getDesc();
-
-  // Part of binary is determined by TableGn.
-  unsigned Binary = getBinaryCodeForInstr(MI);
-
-  // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
-
-  // FMDRR encodes registers in reverse order.
-  unsigned Form = TID.TSFlags & ARMII::FormMask;
-  unsigned OpIdx = (Form == ARMII::VFPConv2Frm)
-    ? MI.findFirstPredOperandIdx()-1 : 0;
-
-  // Encode Dd / Sd.
+static unsigned encodeVFPRd(const MachineInstr &MI, unsigned OpIdx) {
   unsigned RegD = MI.getOperand(OpIdx).getReg();
+  unsigned Binary = 0;
   bool isSPVFP = false;
   RegD = ARMRegisterInfo::getRegisterNumbering(RegD, isSPVFP);
   if (!isSPVFP)
@@ -1119,29 +1108,13 @@ void ARMCodeEmitter::emitVFPConversionInstruction(const MachineInstr &MI) {
     Binary |= ((RegD & 0x1E) >> 1) << ARMII::RegRdShift;
     Binary |=  (RegD & 0x01)       << ARMII::D_BitShift;
   }
-  if (Form == ARMII::VFPConv2Frm)
-    --OpIdx;
-  else
-    ++OpIdx;
+  return Binary;
+}
 
-  if (Form == ARMII::VFPConv3Frm) {
-    unsigned RegM = MI.getOperand(OpIdx).getReg();
-    isSPVFP = false;
-    RegM = ARMRegisterInfo::getRegisterNumbering(RegM, isSPVFP);
-    if (!isSPVFP)
-      Binary |=   RegM;
-    else {
-      Binary |= ((RegM & 0x1E) >> 1);
-      Binary |=  (RegM & 0x01)       << ARMII::M_BitShift;
-    }
-
-    emitWordLE(Binary);
-    return;
-  }
-
-  // Encode Dn / Sn.
+static unsigned encodeVFPRn(const MachineInstr &MI, unsigned OpIdx) {
   unsigned RegN = MI.getOperand(OpIdx).getReg();
-  isSPVFP = false;
+  unsigned Binary = 0;
+  bool isSPVFP = false;
   RegN = ARMRegisterInfo::getRegisterNumbering(RegN, isSPVFP);
   if (!isSPVFP)
     Binary |=   RegN               << ARMII::RegRnShift;
@@ -1149,23 +1122,74 @@ void ARMCodeEmitter::emitVFPConversionInstruction(const MachineInstr &MI) {
     Binary |= ((RegN & 0x1E) >> 1) << ARMII::RegRnShift;
     Binary |=  (RegN & 0x01)       << ARMII::N_BitShift;
   }
-  if (Form == ARMII::VFPConv2Frm)
-    --OpIdx;
-  else
-    ++OpIdx;
+  return Binary;
+}
 
-  // FMRS / FMSR do not have Rm.
-  if (TID.getNumOperands() > OpIdx && MI.getOperand(OpIdx).isReg()) {
-    unsigned RegM = MI.getOperand(OpIdx).getReg();
-    isSPVFP = false;
-    RegM = ARMRegisterInfo::getRegisterNumbering(RegM, isSPVFP);
-    if (!isSPVFP)
-      Binary |=   RegM;
-    else {
-      Binary |= ((RegM & 0x1E) >> 1);
-      Binary |=  (RegM & 0x01)       << ARMII::M_BitShift;
-    }
+static unsigned encodeVFPRm(const MachineInstr &MI, unsigned OpIdx) {
+  unsigned RegM = MI.getOperand(OpIdx).getReg();
+  unsigned Binary = 0;
+  bool isSPVFP = false;
+  RegM = ARMRegisterInfo::getRegisterNumbering(RegM, isSPVFP);
+  if (!isSPVFP)
+    Binary |=   RegM;
+  else {
+    Binary |= ((RegM & 0x1E) >> 1);
+    Binary |=  (RegM & 0x01)       << ARMII::M_BitShift;
   }
+  return Binary;
+}
+
+void ARMCodeEmitter::emitVFPConversionInstruction(const MachineInstr &MI) {
+  const TargetInstrDesc &TID = MI.getDesc();
+  unsigned Form = TID.TSFlags & ARMII::FormMask;
+
+  // Part of binary is determined by TableGn.
+  unsigned Binary = getBinaryCodeForInstr(MI);
+
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
+
+  switch (Form) {
+  default: break;
+  case ARMII::VFPConv1Frm:
+  case ARMII::VFPConv2Frm:
+  case ARMII::VFPConv3Frm:
+    // Encode Dd / Sd.
+    Binary |= encodeVFPRd(MI, 0);
+    break;
+  case ARMII::VFPConv4Frm:
+    // Encode Dn / Sn.
+    Binary |= encodeVFPRn(MI, 0);
+    break;
+  case ARMII::VFPConv5Frm:
+    // Encode Dm / Sm.
+    Binary |= encodeVFPRm(MI, 0);
+    break;
+  }
+
+  switch (Form) {
+  default: break;
+  case ARMII::VFPConv1Frm:
+    // Encode Dm / Sm.
+    Binary |= encodeVFPRm(MI, 1);
+  case ARMII::VFPConv2Frm:
+  case ARMII::VFPConv3Frm:
+    // Encode Dn / Sn.
+    Binary |= encodeVFPRn(MI, 1);
+    break;
+  case ARMII::VFPConv4Frm:
+  case ARMII::VFPConv5Frm:
+    // Encode Dd / Sd.
+    Binary |= encodeVFPRd(MI, 1);
+    break;
+  }
+
+  if (Form == ARMII::VFPConv5Frm)
+    // Encode Dn / Sn.
+    Binary |= encodeVFPRn(MI, 2);
+  else if (Form == ARMII::VFPConv3Frm)
+    // Encode Dm / Sm.
+    Binary |= encodeVFPRm(MI, 2);
 
   emitWordLE(Binary);
 }
