@@ -419,7 +419,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           }
 
           MachineBasicBlock::iterator prevMi = prior(mi);
-          DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(*cerr.stream(), &TM));
 
           // Update live variables for regB.
           if (LV) {
@@ -434,6 +433,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             if (LV->removeVirtualRegisterDead(regB, mi))
               LV->addVirtualRegisterDead(regB, prevMi);
           }
+
+          DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(*cerr.stream(), &TM));
           
           // Replace all occurences of regB with regA.
           for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
