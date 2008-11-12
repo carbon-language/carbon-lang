@@ -42,7 +42,8 @@ namespace llvm {
     }
 
     static unsigned getHashValue(clang::QualType Val) {
-      return (unsigned)Val.getAsOpaquePtr();
+      return (unsigned)Val.getAsOpaquePtr() ^
+             ((unsigned)Val.getAsOpaquePtr() >> 9);
     }
 
     static bool isEqual(clang::QualType LHS, clang::QualType RHS) {
