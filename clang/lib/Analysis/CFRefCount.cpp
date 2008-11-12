@@ -1609,17 +1609,17 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
             SymbolID NewSym =
               Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
             
-            state = state.SetSVal(*MR,
+            state = state.BindLoc(*MR,
                                   Loc::IsLocType(T)
                                   ? cast<SVal>(loc::SymbolVal(NewSym))
                                   : cast<SVal>(nonloc::SymbolVal(NewSym)));
           }
           else {
-            state = state.SetSVal(*MR, UnknownVal());
+            state = state.BindLoc(*MR, UnknownVal());
           }
         }
         else
-          state = state.SetSVal(*MR, UnknownVal());
+          state = state.BindLoc(*MR, UnknownVal());
       }
       else {
         // Nuke all other arguments passed by reference.
@@ -1677,7 +1677,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                ? cast<SVal>(loc::SymbolVal(Sym)) 
                : cast<SVal>(nonloc::SymbolVal(Sym));
         
-        state = state.SetSVal(Ex, X, false);
+        state = state.BindExpr(Ex, X, false);
       }      
       
       break;
@@ -1688,14 +1688,14 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       assert (arg_end >= arg_beg);
       assert (idx < (unsigned) (arg_end - arg_beg));
       SVal V = state.GetSVal(*(arg_beg+idx));
-      state = state.SetSVal(Ex, V, false);
+      state = state.BindExpr(Ex, V, false);
       break;
     }
       
     case RetEffect::ReceiverAlias: {
       assert (Receiver);
       SVal V = state.GetSVal(Receiver);
-      state = state.SetSVal(Ex, V, false);
+      state = state.BindExpr(Ex, V, false);
       break;
     }
       
@@ -1706,7 +1706,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
       state = state.set<RefBindings>(Sym, RefVal::makeOwned(RetT));
-      state = state.SetSVal(Ex, loc::SymbolVal(Sym), false);
+      state = state.BindExpr(Ex, loc::SymbolVal(Sym), false);
 
 #if 0
       RefBindings B = GetRefBindings(StImpl);
@@ -1726,7 +1726,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
       state = state.set<RefBindings>(Sym, RefVal::makeNotOwned(RetT));
-      state = state.SetSVal(Ex, loc::SymbolVal(Sym), false);
+      state = state.BindExpr(Ex, loc::SymbolVal(Sym), false);
       break;
     }
   }
@@ -1852,7 +1852,7 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
       // To test (3), generate a new state with the binding removed.  If it is
       // the same state, then it escapes (since the store cannot represent
       // the binding).
-      GRStateRef stateNew = state.SetSVal(cast<Loc>(TargetLV), Val);
+      GRStateRef stateNew = state.BindLoc(cast<Loc>(TargetLV), Val);
       escapes = (stateNew == state);
     }
   }
