@@ -277,7 +277,10 @@ def int_eh_dwarf_cfa  : Intrinsic<[llvm_ptr_ty, llvm_i32_ty]>;
 def int_var_annotation : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty,
                                     llvm_ptr_ty, llvm_i32_ty], 
                                     [], "llvm.var.annotation">;
-                                    
+def int_ptr_annotation : Intrinsic<[LLVMAnyPointerType<llvm_anyint_ty>, 
+                                LLVMMatchType<0>, 
+                                llvm_ptr_ty, llvm_ptr_ty, llvm_i32_ty], 
+                                [], "llvm.ptr.annotation">;
 def int_annotation : Intrinsic<[llvm_anyint_ty, LLVMMatchType<0>, llvm_ptr_ty,
                                 llvm_ptr_ty, llvm_i32_ty], 
                                 [], "llvm.annotation">;
