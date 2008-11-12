@@ -1018,27 +1018,26 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 }
 
 Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
-  Value *LHSCond = CGF.EvaluateExprAsBool(E->getLHS());
-  
-  if (llvm::ConstantInt *LHSCst = dyn_cast<llvm::ConstantInt>(LHSCond)) {
-    // If we have 0 && RHS, see if we can elide RHS, if so, just return LHSCond.
-    if (LHSCst->isZero()) {
-      if (!CGF.ContainsLabel(E->getRHS()))
-        // Elide RHS, return 0
-        return llvm::Constant::getNullValue(CGF.LLVMIntTy);
-    } else {
-      // If we have 1 && X, just emit X without inserting the control flow.
+  // If we have 0 && RHS, see if we can elide RHS, if so, just return 0.
+  // If we have 1 && X, just emit X without inserting the control flow.
+  if (int Cond = CGF.ConstantFoldsToSimpleInteger(E->getLHS())) {
+    if (Cond == 1) { // If we have 1 && X, just emit X.
       Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
       // ZExt result to int.
       return Builder.CreateZExt(RHSCond, CGF.LLVMIntTy, "land.ext");
     }
+    
+    // 0 && RHS: If it is safe, just elide the RHS, and return 0.
+    if (!CGF.ContainsLabel(E->getRHS()))
+      return llvm::Constant::getNullValue(CGF.LLVMIntTy);
   }
   
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("land_cont");
-  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("land_rhs");
-  
-  llvm::BasicBlock *OrigBlock = Builder.GetInsertBlock();
+  llvm::BasicBlock *RHSBlock  = CGF.createBasicBlock("land_rhs");
+
+  Value *LHSCond = CGF.EvaluateExprAsBool(E->getLHS());
   Builder.CreateCondBr(LHSCond, RHSBlock, ContBlock);
+  llvm::BasicBlock *OrigBlock = Builder.GetInsertBlock();
   
   CGF.EmitBlock(RHSBlock);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
@@ -1059,27 +1058,26 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
 }
 
 Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
-  Value *LHSCond = CGF.EvaluateExprAsBool(E->getLHS());
-  
-  if (llvm::ConstantInt *LHSCst = dyn_cast<llvm::ConstantInt>(LHSCond)) {
-    // If we have 1 || RHS, see if we can elide RHS, if so, just return LHSCond.
-    if (!LHSCst->isZero()) {
-      if (!CGF.ContainsLabel(E->getRHS()))
-        // Elide RHS, return 1
-        return llvm::ConstantInt::get(CGF.LLVMIntTy, 1);
-    } else {
-      // If we have 0 || X, just emit X without inserting the control flow.
+  // If we have 1 || RHS, see if we can elide RHS, if so, just return 1.
+  // If we have 0 || X, just emit X without inserting the control flow.
+  if (int Cond = CGF.ConstantFoldsToSimpleInteger(E->getLHS())) {
+    if (Cond == -1) { // If we have 0 || X, just emit X.
       Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
       // ZExt result to int.
       return Builder.CreateZExt(RHSCond, CGF.LLVMIntTy, "lor.ext");
     }
+    
+    // 1 || RHS: If it is safe, just elide the RHS, and return 0.
+    if (!CGF.ContainsLabel(E->getRHS()))
+      return llvm::Constant::getNullValue(CGF.LLVMIntTy);
   }
   
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("lor_cont");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("lor_rhs");
   
-  llvm::BasicBlock *OrigBlock = Builder.GetInsertBlock();
+  Value *LHSCond = CGF.EvaluateExprAsBool(E->getLHS());
   Builder.CreateCondBr(LHSCond, ContBlock, RHSBlock);
+  llvm::BasicBlock *OrigBlock = Builder.GetInsertBlock();
   
   CGF.EmitBlock(RHSBlock);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
