@@ -61,6 +61,8 @@ protected:
   
   PreprocessorLexer() {}
   
+  virtual void IndirectLex(Token& Result) = 0;
+  
 protected:
   
   //===--------------------------------------------------------------------===//
@@ -99,7 +101,15 @@ protected:
     return ConditionalStack.back();
   }
   
-  unsigned getConditionalStackDepth() const { return ConditionalStack.size(); }    
+  unsigned getConditionalStackDepth() const { return ConditionalStack.size(); } 
+  
+  //===--------------------------------------------------------------------===//
+  // Misc. lexing methods.
+  
+  /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
+  /// (potentially) macro expand the filename.  If the sequence parsed is not
+  /// lexically legal, emit a diagnostic and return a result EOM token.
+  void LexIncludeFilename(Token &Result);
 };
 
 }  // end namespace clang
