@@ -153,9 +153,9 @@ public:
   Stmt* getTerminator() { return Terminator; }
   const Stmt* getTerminator() const { return Terminator; }
   
-  Expr* getTerminatorCondition();
+  Stmt* getTerminatorCondition();
   
-  const Expr* getTerminatorCondition() const {
+  const Stmt* getTerminatorCondition() const {
     return const_cast<CFGBlock*>(this)->getTerminatorCondition();
   }
   

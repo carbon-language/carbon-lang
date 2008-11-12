@@ -1259,11 +1259,11 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
     
     // Look at terminators.  The condition is a block-level expression.
     
-    Expr* Exp = I->getTerminatorCondition();
+    Stmt* S = I->getTerminatorCondition();
     
-    if (Exp && M->find(Exp) == M->end()) {
+    if (S && M->find(S) == M->end()) {
         unsigned x = M->size();
-        (*M)[Exp] = x;
+        (*M)[S] = x;
     }
   }
     
@@ -1608,7 +1608,7 @@ void CFGBlock::printTerminator(llvm::raw_ostream& OS) const {
   TPrinter.Visit(const_cast<Stmt*>(getTerminator()));
 }
 
-Expr* CFGBlock::getTerminatorCondition() {
+Stmt* CFGBlock::getTerminatorCondition() {
   
   if (!Terminator)
     return NULL;
@@ -1653,7 +1653,10 @@ Expr* CFGBlock::getTerminatorCondition() {
       
     case Stmt::BinaryOperatorClass: // '&&' and '||'
       E = cast<BinaryOperator>(Terminator)->getLHS();
-      break;      
+      break;
+      
+    case Stmt::ObjCForCollectionStmtClass:
+      return Terminator;      
   }
   
   return E ? E->IgnoreParens() : NULL;
