@@ -9,7 +9,7 @@ int ary2[] = { x, y, z }; // expected-error{{initializer element is not a compil
 
 extern int fileScopeExtern[3] = { 1, 3, 5 }; // expected-warning{{'extern' variable has an initializer}}
 
-static int ary3[] = { 1, "abc", 3, 4 }; // expected-warning{{incompatible pointer to integer conversion initializing 'char [4]', expected 'int'}}
+static long ary3[] = { 1, "abc", 3, 4 }; // expected-warning{{incompatible pointer to integer conversion initializing 'char [4]', expected 'long'}}
 
 void func() {
   int x = 1;
@@ -48,7 +48,7 @@ void func() {
   
   extern int blockScopeExtern[3] = { 1, 3, 5 }; // expected-error{{'extern' variable cannot have an initializer}}
   
-  static int x2[3] = { 1.0, "abc" , 5.8 }; // expected-warning{{incompatible pointer to integer conversion initializing 'char [4]', expected 'int'}}
+  static long x2[3] = { 1.0, "abc" , 5.8 }; // expected-warning{{incompatible pointer to integer conversion initializing 'char [4]', expected 'long'}}
 }
 
 void test() {
@@ -225,15 +225,15 @@ int noNamedImplicitCheck[sizeof(noNamedImplicit) == 3 * sizeof(*noNamedImplicit)
 
 // ptrs are constant
 struct soft_segment_descriptor {
-	int ssd_base;
+	long ssd_base;
 };
 static int dblfault_tss;
 
 union uniao { int ola; } xpto[1];
 
 struct soft_segment_descriptor gdt_segs[] = {
-	{(int) &dblfault_tss},
-	{ (int)xpto},
+	{(long) &dblfault_tss},
+	{ (long)xpto},
 };
 
 static void sppp_ipv6cp_up();

@@ -9,7 +9,7 @@ static int *p = (int []){2,4};
 static int x = (int){1}; // -expected-warning{{braces around scalar initializer}}
 
 static int *p2 = (int []){2,x}; // -expected-error {{initializer element is not a compile-time constant}}
-static int *p3 = (int []){2,"x"}; // -expected-warning {{incompatible pointer to integer conversion initializing 'char [2]', expected 'int'}}
+static long *p3 = (long []){2,"x"}; // -expected-warning {{incompatible pointer to integer conversion initializing 'char [2]', expected 'long'}}
 
 typedef struct { } cache_t; // -expected-warning{{use of empty struct extension}}
 static cache_t clo_I1_cache = ((cache_t) { } ); // -expected-warning{{use of GNU empty initializer extension}}
