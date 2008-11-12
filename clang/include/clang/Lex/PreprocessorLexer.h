@@ -60,6 +60,7 @@ protected:
   friend class Preprocessor;
   
   PreprocessorLexer() {}
+  virtual ~PreprocessorLexer();
   
   virtual void IndirectLex(Token& Result) = 0;
   

@@ -18,6 +18,8 @@
 
 using namespace clang;
 
+PreprocessorLexer::~PreprocessorLexer() {}
+
 /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
 /// (potentially) macro expand the filename.
 void PreprocessorLexer::LexIncludeFilename(Token &FilenameTok) {
