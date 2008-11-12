@@ -22,6 +22,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/CFG.h"
 #include <cstdarg>
 
 using namespace clang;
@@ -1035,22 +1036,27 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("land_cont");
   llvm::BasicBlock *RHSBlock  = CGF.createBasicBlock("land_rhs");
 
-  Value *LHSCond = CGF.EvaluateExprAsBool(E->getLHS());
-  Builder.CreateCondBr(LHSCond, RHSBlock, ContBlock);
-  llvm::BasicBlock *OrigBlock = Builder.GetInsertBlock();
+  // Branch on the LHS first.  If it is false, go to the failure (cont) block.
+  CGF.EmitBranchOnBoolExpr(E->getLHS(), RHSBlock, ContBlock);
+
+  // Any edges into the ContBlock are now from an (indeterminate number of)
+  // edges from this first condition.  All of these values will be false.  Start
+  // setting up the PHI node in the Cont Block for this.
+  llvm::PHINode *PN = llvm::PHINode::Create(llvm::Type::Int1Ty, "", ContBlock);
+  PN->reserveOperandSpace(2);  // Normal case, two inputs.
+  for (llvm::pred_iterator PI = pred_begin(ContBlock), PE = pred_end(ContBlock);
+       PI != PE; ++PI)
+    PN->addIncoming(llvm::ConstantInt::getFalse(), *PI);
   
   CGF.EmitBlock(RHSBlock);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
   
   // Reaquire the RHS block, as there may be subblocks inserted.
   RHSBlock = Builder.GetInsertBlock();
+
+  // Emit an unconditional branch from this block to ContBlock.  Insert an entry
+  // into the phi node for the edge with the value of RHSCond.
   CGF.EmitBlock(ContBlock);
-  
-  // Create a PHI node.  If we just evaluted the LHS condition, the result is
-  // false.  If we evaluated both, the result is the RHS condition.
-  llvm::PHINode *PN = Builder.CreatePHI(llvm::Type::Int1Ty, "land");
-  PN->reserveOperandSpace(2);
-  PN->addIncoming(llvm::ConstantInt::getFalse(), OrigBlock);
   PN->addIncoming(RHSCond, RHSBlock);
   
   // ZExt result to int.
@@ -1075,22 +1081,28 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("lor_cont");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("lor_rhs");
   
-  Value *LHSCond = CGF.EvaluateExprAsBool(E->getLHS());
-  Builder.CreateCondBr(LHSCond, ContBlock, RHSBlock);
-  llvm::BasicBlock *OrigBlock = Builder.GetInsertBlock();
-  
+  // Branch on the LHS first.  If it is true, go to the success (cont) block.
+  CGF.EmitBranchOnBoolExpr(E->getLHS(), ContBlock, RHSBlock);
+
+  // Any edges into the ContBlock are now from an (indeterminate number of)
+  // edges from this first condition.  All of these values will be true.  Start
+  // setting up the PHI node in the Cont Block for this.
+  llvm::PHINode *PN = llvm::PHINode::Create(llvm::Type::Int1Ty, "", ContBlock);
+  PN->reserveOperandSpace(2);  // Normal case, two inputs.
+  for (llvm::pred_iterator PI = pred_begin(ContBlock), PE = pred_end(ContBlock);
+       PI != PE; ++PI)
+    PN->addIncoming(llvm::ConstantInt::getTrue(), *PI);
+
+  // Emit the RHS condition as a bool value.
   CGF.EmitBlock(RHSBlock);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
   
   // Reaquire the RHS block, as there may be subblocks inserted.
   RHSBlock = Builder.GetInsertBlock();
-  CGF.EmitBlock(ContBlock);
   
-  // Create a PHI node.  If we just evaluted the LHS condition, the result is
-  // true.  If we evaluated both, the result is the RHS condition.
-  llvm::PHINode *PN = Builder.CreatePHI(llvm::Type::Int1Ty, "lor");
-  PN->reserveOperandSpace(2);
-  PN->addIncoming(llvm::ConstantInt::getTrue(), OrigBlock);
+  // Emit an unconditional branch from this block to ContBlock.  Insert an entry
+  // into the phi node for the edge with the value of RHSCond.
+  CGF.EmitBlock(ContBlock);
   PN->addIncoming(RHSCond, RHSBlock);
   
   // ZExt result to int.
