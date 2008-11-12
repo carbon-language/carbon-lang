@@ -12,3 +12,7 @@ add_llvm_library(LLVMSystem
   Signals.cpp
   TimeValue.cpp
   )
+
+if( BUILD_SHARED_LIBS AND NOT WIN32 )
+  target_link_libraries(LLVMSystem dl)
+endif()
