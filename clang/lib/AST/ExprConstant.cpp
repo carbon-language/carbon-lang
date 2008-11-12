@@ -110,9 +110,11 @@ public:
   LValueExprEvaluator(EvalInfo &info) : Info(info) {}
 
   APValue VisitStmt(Stmt *S) {
+#if 0
     // FIXME: Remove this when we support more expressions.
     printf("Unhandled pointer statement\n");
     S->dump();  
+#endif
     return APValue();
   }
 
