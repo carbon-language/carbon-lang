@@ -564,6 +564,8 @@ public:
   static bool ContainsLabel(const Stmt *S, bool IgnoreCaseStmts = false);
   
 private:
+  void EmitBranchOnBoolExpr(const Expr *Cond, llvm::BasicBlock *TrueBlock,
+                            llvm::BasicBlock *FalseBlock);
   
   /// EmitIndirectSwitches - Emit code for all of the switch
   /// instructions in IndirectSwitches.
