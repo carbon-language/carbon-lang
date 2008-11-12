@@ -15,6 +15,7 @@
 #include "CodeGenModule.h"
 #include "CGDebugInfo.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "llvm/Support/CFG.h"
@@ -184,6 +185,90 @@ bool CodeGenFunction::ContainsLabel(const Stmt *S, bool IgnoreCaseStmts) {
       return true;
   
   return false;
+}
+
+
+/// ConstantFoldsToSimpleInteger - If the sepcified expression does not fold to
+/// a constant, or if it does but contains a label, return 0.  If it constant
+/// folds to 'true' and does not contain a label, return 1, if it constant folds
+/// to 'false' and does not contain a label, return -1.
+int CodeGenFunction::ConstantFoldsToSimpleInteger(const Expr *Cond) {
+  APValue V;
+  if (!Cond->tryEvaluate(V, getContext()))
+    return 0;  // Not foldable.
+  
+  if (CodeGenFunction::ContainsLabel(Cond))
+    return 0;  // Contains a label.
+  
+  return V.getInt().getBoolValue() ? 1 : -1;
+}
+
+
+/// EmitBranchOnBoolExpr - Emit a branch on a boolean condition (e.g. for an if
+/// statement) to the specified blocks.  Based on the condition, this might try
+/// to simplify the codegen of the conditional based on the branch.
+///
+void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
+                                           llvm::BasicBlock *TrueBlock,
+                                           llvm::BasicBlock *FalseBlock) {
+  if (const ParenExpr *PE = dyn_cast<ParenExpr>(Cond))
+    return EmitBranchOnBoolExpr(PE->getSubExpr(), TrueBlock, FalseBlock);
+  
+  if (const BinaryOperator *CondBOp = dyn_cast<BinaryOperator>(Cond)) {
+    // Handle X && Y in a condition.
+    if (CondBOp->getOpcode() == BinaryOperator::LAnd) {
+      // If we have "1 && X", simplify the code.  "0 && X" would have constant
+      // folded if the case was simple enough.
+      if (ConstantFoldsToSimpleInteger(CondBOp->getLHS()) == 1) {
+        // br(1 && X) -> br(X).
+        return EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
+      }
+      
+      // If we have "X && 1", simplify the code to use an uncond branch.
+      // "X && 0" would have been constant folded to 0.
+      if (ConstantFoldsToSimpleInteger(CondBOp->getRHS()) == 1) {
+        // br(X && 1) -> br(X).
+        return EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, FalseBlock);
+      }
+      
+      // Emit the LHS as a conditional.  If the LHS conditional is false, we
+      // want to jump to the FalseBlock.
+      llvm::BasicBlock *LHSTrue = createBasicBlock("land_lhs_true");
+      EmitBranchOnBoolExpr(CondBOp->getLHS(), LHSTrue, FalseBlock);
+      EmitBlock(LHSTrue);
+      
+      EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
+      return;
+    } else if (CondBOp->getOpcode() == BinaryOperator::LOr) {
+      // If we have "0 || X", simplify the code.  "1 || X" would have constant
+      // folded if the case was simple enough.
+      if (ConstantFoldsToSimpleInteger(CondBOp->getLHS()) == -1) {
+        // br(0 || X) -> br(X).
+        return EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
+      }
+      
+      // If we have "X || 0", simplify the code to use an uncond branch.
+      // "X || 1" would have been constant folded to 1.
+      if (ConstantFoldsToSimpleInteger(CondBOp->getRHS()) == -1) {
+        // br(X || 0) -> br(X).
+        return EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, FalseBlock);
+      }
+      
+      // Emit the LHS as a conditional.  If the LHS conditional is true, we
+      // want to jump to the TrueBlock.
+      llvm::BasicBlock *LHSFalse = createBasicBlock("lor_lhs_false");
+      EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, LHSFalse);
+      EmitBlock(LHSFalse);
+      
+      EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
+      return;
+    }
+    
+  }
+  
+  // Emit the code with the fully general case.
+  llvm::Value *CondV = EvaluateExprAsBool(Cond);
+  Builder.CreateCondBr(CondV, TrueBlock, FalseBlock);
 }
 
 /// getCGRecordLayout - Return record layout info.

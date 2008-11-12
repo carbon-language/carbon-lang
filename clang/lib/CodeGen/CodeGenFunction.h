@@ -563,9 +563,19 @@ public:
   /// that we can just remove the code.
   static bool ContainsLabel(const Stmt *S, bool IgnoreCaseStmts = false);
   
-private:
+  /// ConstantFoldsToSimpleInteger - If the sepcified expression does not fold
+  /// to a constant, or if it does but contains a label, return 0.  If it
+  /// constant folds to 'true' and does not contain a label, return 1, if it
+  /// constant folds to 'false' and does not contain a label, return -1.
+  int ConstantFoldsToSimpleInteger(const Expr *Cond);
+    
+  /// EmitBranchOnBoolExpr - Emit a branch on a boolean condition (e.g. for an
+  /// if statement) to the specified blocks.  Based on the condition, this might
+  /// try to simplify the codegen of the conditional based on the branch.
+  ///
   void EmitBranchOnBoolExpr(const Expr *Cond, llvm::BasicBlock *TrueBlock,
-                            llvm::BasicBlock *FalseBlock);
+                          llvm::BasicBlock *FalseBlock);
+private:
   
   /// EmitIndirectSwitches - Emit code for all of the switch
   /// instructions in IndirectSwitches.

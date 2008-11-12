@@ -14,7 +14,6 @@
 #include "CGDebugInfo.h"
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
-#include "clang/AST/APValue.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/InlineAsm.h"
@@ -224,98 +223,13 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
   Builder.ClearInsertionPoint();
 }
 
-
-/// ConstantFoldsToSimpleInteger - If the sepcified expression does not fold to
-/// a constant, or if it does but contains a label, return 0.  If it constant
-/// folds to 'true' and does not contain a label, return 1, if it constant folds
-/// to 'false' and does not contain a label, return -1.
-static int ConstantFoldsToSimpleInteger(const Expr *Cond, ASTContext &Ctx) {
-  APValue V;
-  if (!Cond->tryEvaluate(V, Ctx))
-    return 0;  // Not foldable.
-  
-  if (CodeGenFunction::ContainsLabel(Cond))
-    return 0;  // Contains a label.
-  
-  return V.getInt().getBoolValue() ? 1 : -1;
-}
-
-
-/// EmitBranchOnBoolExpr - Emit a branch on a boolean condition (e.g. for an if
-/// statement) to the specified blocks.  Based on the condition, this might try
-/// to simplify the codegen of the conditional based on the branch.
-///
-void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
-                                           llvm::BasicBlock *TrueBlock,
-                                           llvm::BasicBlock *FalseBlock) {
-  if (const ParenExpr *PE = dyn_cast<ParenExpr>(Cond))
-    return EmitBranchOnBoolExpr(PE->getSubExpr(), TrueBlock, FalseBlock);
-  
-  if (const BinaryOperator *CondBOp = dyn_cast<BinaryOperator>(Cond)) {
-    // Handle X && Y in a condition.
-    if (CondBOp->getOpcode() == BinaryOperator::LAnd) {
-      // If we have "1 && X", simplify the code.  "0 && X" would have constant
-      // folded if the case was simple enough.
-      if (ConstantFoldsToSimpleInteger(CondBOp->getLHS(), getContext()) == 1) {
-        // br(1 && X) -> br(X).
-        return EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
-      }
-      
-      // If we have "X && 1", simplify the code to use an uncond branch.
-      // "X && 0" would have been constant folded to 0.
-      if (ConstantFoldsToSimpleInteger(CondBOp->getRHS(), getContext()) == 1) {
-        // br(X && 1) -> br(X).
-        return EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, FalseBlock);
-      }
-      
-      // Emit the LHS as a conditional.  If the LHS conditional is false, we
-      // want to jump to the FalseBlock.
-      llvm::BasicBlock *LHSTrue = createBasicBlock("land_lhs_true");
-      EmitBranchOnBoolExpr(CondBOp->getLHS(), LHSTrue, FalseBlock);
-      EmitBlock(LHSTrue);
-      
-      EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
-      return;
-    } else if (CondBOp->getOpcode() == BinaryOperator::LOr) {
-      // If we have "0 || X", simplify the code.  "1 || X" would have constant
-      // folded if the case was simple enough.
-      if (ConstantFoldsToSimpleInteger(CondBOp->getLHS(), getContext()) == -1) {
-        // br(0 || X) -> br(X).
-        return EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
-      }
-      
-      // If we have "X || 0", simplify the code to use an uncond branch.
-      // "X || 1" would have been constant folded to 1.
-      if (ConstantFoldsToSimpleInteger(CondBOp->getRHS(), getContext()) == -1) {
-        // br(X || 0) -> br(X).
-        return EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, FalseBlock);
-      }
-      
-      // Emit the LHS as a conditional.  If the LHS conditional is true, we
-      // want to jump to the TrueBlock.
-      llvm::BasicBlock *LHSFalse = createBasicBlock("lor_lhs_false");
-      EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, LHSFalse);
-      EmitBlock(LHSFalse);
-      
-      EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
-      return;
-    }
-    
-  }
-
-  // Emit the code with the fully general case.
-  llvm::Value *CondV = EvaluateExprAsBool(Cond);
-  Builder.CreateCondBr(CondV, TrueBlock, FalseBlock);
-}
-
-
 void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // C99 6.8.4.1: The first substatement is executed if the expression compares
   // unequal to 0.  The condition must be a scalar type.
   
   // If the condition constant folds and can be elided, try to avoid emitting
   // the condition and the dead arm of the if/else.
-  if (int Cond = ConstantFoldsToSimpleInteger(S.getCond(), getContext())) {
+  if (int Cond = ConstantFoldsToSimpleInteger(S.getCond())) {
     // Figure out which block (then or else) is executed.
     const Stmt *Executed = S.getThen(), *Skipped  = S.getElse();
     if (Cond == -1)  // Condition false?
@@ -382,7 +296,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   // As long as the condition is true, go to the loop body.
   if (EmitBoolCondBranch)
     Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
-
+  
   // Store the blocks to use for break and continue.
   BreakContinueStack.push_back(BreakContinue(ExitBlock, LoopHeader));
   
@@ -476,13 +390,13 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   // Evaluate the condition if present.  If not, treat it as a non-zero-constant
   // according to 6.8.5.3p2, aka, true.
   if (S.getCond()) {
-    // C99 6.8.5p2/p4: The first substatement is executed if the expression
-    // compares unequal to 0.  The condition must be a scalar type.
-    llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
-    
     // As long as the condition is true, iterate the loop.
     llvm::BasicBlock *ForBody = createBasicBlock("forbody");
-    Builder.CreateCondBr(BoolCondVal, ForBody, AfterFor);
+    
+    // C99 6.8.5p2/p4: The first substatement is executed if the expression
+    // compares unequal to 0.  The condition must be a scalar type.
+    EmitBranchOnBoolExpr(S.getCond(), ForBody, AfterFor);
+    
     EmitBlock(ForBody);    
   } else {
     // Treat it as a non-zero constant.  Don't even create a new block for the

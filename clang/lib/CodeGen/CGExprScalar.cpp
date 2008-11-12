@@ -1111,31 +1111,29 @@ Value *ScalarExprEmitter::VisitBinComma(const BinaryOperator *E) {
 
 Value *ScalarExprEmitter::
 VisitConditionalOperator(const ConditionalOperator *E) {
-  // Evaluate the conditional, then convert it to bool.  We do this explicitly
-  // because we need the unconverted value if this is a GNU ?: expression with
-  // missing middle value.
-  Value *CondVal = CGF.EmitScalarExpr(E->getCond());
-
-  // If the condition folded to a constant, try to elide the dead side.  We
-  // can't do this if the dead side contains a label.
-  if (llvm::ConstantInt *CondCI = dyn_cast<llvm::ConstantInt>(CondVal)) {
+  // If the condition constant folds and can be elided, try to avoid emitting
+  // the condition and the dead arm.
+  if (int Cond = CGF.ConstantFoldsToSimpleInteger(E->getCond())){
     Expr *Live = E->getLHS(), *Dead = E->getRHS();
-    if (CondCI->isZero())
+    if (Cond == -1)
       std::swap(Live, Dead);
-    if (!Dead || !CGF.ContainsLabel(Dead)) {
-      // Emit the live side.
-      if (Live)
-        return Visit(Live);
-      // Perform promotions, to handle cases like "short ?: int"
-      return EmitScalarConversion(CondVal, E->getCond()->getType(),
-                                  E->getType());
-    }   
+    
+    // If the dead side doesn't have labels we need, and if the Live side isn't
+    // the gnu missing ?: extension (which we could handle, but don't bother
+    // to), just emit the Live part.
+    if ((!Dead || !CGF.ContainsLabel(Dead)) &&  // No labels in dead part
+        Live)                                   // Live part isn't missing.
+      return Visit(Live);
   }
   
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.?");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.:");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.cont");
-  
+
+  // Evaluate the conditional, then convert it to bool.  We do this explicitly
+  // because we need the unconverted value if this is a GNU ?: expression with
+  // missing middle value.
+  Value *CondVal = CGF.EmitScalarExpr(E->getCond());
   Value *CondBoolVal =CGF.EmitScalarConversion(CondVal, E->getCond()->getType(),
                                                CGF.getContext().BoolTy);
   Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
