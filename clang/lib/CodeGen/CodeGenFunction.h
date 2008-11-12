@@ -222,7 +222,11 @@ public:
   llvm::BasicBlock *createBasicBlock(const char *Name="", 
                                      llvm::Function *Parent=0,
                                      llvm::BasicBlock *InsertBefore=0) {
+#ifdef NDEBUG
+    return llvm::BasicBlock::Create("", Parent, InsertBefore);
+#else
     return llvm::BasicBlock::Create(Name, Parent, InsertBefore);
+#endif
   }
                                     
   /// getBasicBlockForLabel - Return the LLVM basicblock that the specified
