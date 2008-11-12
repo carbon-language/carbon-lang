@@ -271,6 +271,23 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       return EmitBranchOnBoolExpr(CondUOp->getSubExpr(), FalseBlock, TrueBlock);
   }
   
+  if (const ConditionalOperator *CondOp = dyn_cast<ConditionalOperator>(Cond)) {
+    // Handle ?: operator.
+
+    // Just ignore GNU ?: extension.
+    if (CondOp->getLHS()) {
+      // br(c ? x : y, t, f) -> br(c, br(x, t, f), br(y, t, f))
+      llvm::BasicBlock *LHSBlock = createBasicBlock("cond.true");
+      llvm::BasicBlock *RHSBlock = createBasicBlock("cond.false");
+      EmitBranchOnBoolExpr(CondOp->getCond(), LHSBlock, RHSBlock);
+      EmitBlock(LHSBlock);
+      EmitBranchOnBoolExpr(CondOp->getLHS(), TrueBlock, FalseBlock);
+      EmitBlock(RHSBlock);
+      EmitBranchOnBoolExpr(CondOp->getRHS(), TrueBlock, FalseBlock);
+      return;
+    }
+  }
+
   // Emit the code with the fully general case.
   llvm::Value *CondV = EvaluateExprAsBool(Cond);
   Builder.CreateCondBr(CondV, TrueBlock, FalseBlock);
