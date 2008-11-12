@@ -76,10 +76,7 @@ void Preprocessor::EnterCachingLexMode() {
   if (InCachingLexMode())
     return;
 
-  IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
-                                               CurTokenLexer));
-  CurLexer = 0;
-  CurTokenLexer = 0;
+  PushIncludeMacroStack();
 }
 
 
