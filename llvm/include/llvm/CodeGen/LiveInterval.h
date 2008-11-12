@@ -198,7 +198,7 @@ namespace llvm {
       return VNI;
     }
 
-    /// addKillForValNum - Add a kill instruction index to the specified value
+    /// addKill - Add a kill instruction index to the specified value
     /// number.
     static void addKill(VNInfo *VNI, unsigned KillIdx) {
       SmallVector<unsigned, 4> &kills = VNI->kills;
