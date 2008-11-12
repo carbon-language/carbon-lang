@@ -346,6 +346,10 @@ public:
   //                             Statement Emission
   //===--------------------------------------------------------------------===//
 
+  /// EmitStopPoint - Emit a debug stoppoint if we are emitting debug
+  /// info.
+  void EmitStopPoint(const Stmt *S);
+
   /// EmitStmt - Emit the code for the statement \arg S. It is legal
   /// to call this function even if there is no current insertion
   /// point.
@@ -355,6 +359,14 @@ public:
   /// generate code without first calling EmitBlock, EmitBranch, or
   /// EmitStmt.
   void EmitStmt(const Stmt *S);
+
+  /// EmitSimpleStmt - Try to emit a "simple" statement which does not
+  /// necessarily require an insertion point or debug information;
+  /// typically because the statement amounts to a jump or a container
+  /// of other statements.
+  ///
+  /// \return True if the statement was handled.
+  bool EmitSimpleStmt(const Stmt *S);
 
   RValue EmitCompoundStmt(const CompoundStmt &S, bool GetLast = false,
                           llvm::Value *AggLoc = 0, bool isAggVol = false);
@@ -373,8 +385,8 @@ public:
   void EmitForStmt(const ForStmt &S);
   void EmitReturnStmt(const ReturnStmt &S);
   void EmitDeclStmt(const DeclStmt &S);
-  void EmitBreakStmt();
-  void EmitContinueStmt();
+  void EmitBreakStmt(const BreakStmt &S);
+  void EmitContinueStmt(const ContinueStmt &S);
   void EmitSwitchStmt(const SwitchStmt &S);
   void EmitDefaultStmt(const DefaultStmt &S);
   void EmitCaseStmt(const CaseStmt &S);

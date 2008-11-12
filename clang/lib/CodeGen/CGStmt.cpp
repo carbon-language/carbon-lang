@@ -25,8 +25,20 @@ using namespace CodeGen;
 //                              Statement Emission
 //===----------------------------------------------------------------------===//
 
+void CodeGenFunction::EmitStopPoint(const Stmt *S) {
+  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
+    DI->setLocation(S->getLocStart());
+    DI->EmitStopPoint(CurFn, Builder);
+  }
+}
+
 void CodeGenFunction::EmitStmt(const Stmt *S) {
   assert(S && "Null statement?");
+
+  // Check if we can handle this without bothering to generate an
+  // insert point or debug info.
+  if (EmitSimpleStmt(S))
+    return;
 
   // If we happen to be at an unreachable point just create a dummy
   // basic block to hold the code. We could change parts of irgen to
@@ -35,14 +47,8 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   // FIXME: Verify previous performance/effort claim.
   EnsureInsertPoint();
   
-  // Generate stoppoints if we are emitting debug info.
-  // Beginning of a Compound Statement (e.g. an opening '{') does not produce 
-  // executable code. So do not generate a stoppoint for that.
-  CGDebugInfo *DI = CGM.getDebugInfo();
-  if (DI && S->getStmtClass() != Stmt::CompoundStmtClass) {
-    DI->setLocation(S->getLocStart());
-    DI->EmitStopPoint(CurFn, Builder);
-  }
+  // Generate a stoppoint if we are emitting debug info.
+  EmitStopPoint(S);
 
   switch (S->getStmtClass()) {
   default:
@@ -59,10 +65,6 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
       ErrorUnsupported(S, "statement");
     }
     break;
-  case Stmt::NullStmtClass: break;
-  case Stmt::CompoundStmtClass: EmitCompoundStmt(cast<CompoundStmt>(*S)); break;
-  case Stmt::LabelStmtClass:    EmitLabelStmt(cast<LabelStmt>(*S));       break;
-  case Stmt::GotoStmtClass:     EmitGotoStmt(cast<GotoStmt>(*S));         break;
   case Stmt::IndirectGotoStmtClass:  
     EmitIndirectGotoStmt(cast<IndirectGotoStmt>(*S)); break;
 
@@ -73,28 +75,8 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     
   case Stmt::ReturnStmtClass:   EmitReturnStmt(cast<ReturnStmt>(*S));     break;
   case Stmt::DeclStmtClass:     EmitDeclStmt(cast<DeclStmt>(*S));         break;
-      
-  case Stmt::BreakStmtClass:    
-    // FIXME: Implement break in @try or @catch blocks.
-    if (!ObjCEHStack.empty()) {
-      CGM.ErrorUnsupported(S, "continue inside an Obj-C exception block");
-      return;
-    }
-    EmitBreakStmt();                          
-    break;
-
-  case Stmt::ContinueStmtClass: 
-    // FIXME: Implement continue in @try or @catch blocks.
-    if (!ObjCEHStack.empty()) {
-      CGM.ErrorUnsupported(S, "continue inside an Obj-C exception block");
-      return;
-    }
-    EmitContinueStmt();                       
-    break;
 
   case Stmt::SwitchStmtClass:   EmitSwitchStmt(cast<SwitchStmt>(*S));     break;
-  case Stmt::DefaultStmtClass:  EmitDefaultStmt(cast<DefaultStmt>(*S));   break;
-  case Stmt::CaseStmtClass:     EmitCaseStmt(cast<CaseStmt>(*S));         break;
   case Stmt::AsmStmtClass:      EmitAsmStmt(cast<AsmStmt>(*S));           break;
 
   case Stmt::ObjCAtTryStmtClass:
@@ -118,6 +100,22 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   }
 }
 
+bool CodeGenFunction::EmitSimpleStmt(const Stmt *S) {
+  switch (S->getStmtClass()) {
+  default: return false;
+  case Stmt::NullStmtClass: break;
+  case Stmt::CompoundStmtClass: EmitCompoundStmt(cast<CompoundStmt>(*S)); break;
+  case Stmt::LabelStmtClass:    EmitLabelStmt(cast<LabelStmt>(*S));       break;
+  case Stmt::GotoStmtClass:     EmitGotoStmt(cast<GotoStmt>(*S));         break;
+  case Stmt::BreakStmtClass:    EmitBreakStmt(cast<BreakStmt>(*S));       break;
+  case Stmt::ContinueStmtClass: EmitContinueStmt(cast<ContinueStmt>(*S)); break;
+  case Stmt::DefaultStmtClass:  EmitDefaultStmt(cast<DefaultStmt>(*S));   break;
+  case Stmt::CaseStmtClass:     EmitCaseStmt(cast<CaseStmt>(*S));         break;
+  }
+
+  return true;
+}
+
 /// EmitCompoundStmt - Emit a compound statement {..} node.  If GetLast is true,
 /// this captures the expression result of the last sub-statement and returns it
 /// (for use by the statement expression extension).
@@ -126,6 +124,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   // FIXME: handle vla's etc.
   CGDebugInfo *DI = CGM.getDebugInfo();
   if (DI) {
+    EnsureInsertPoint();
     DI->setLocation(S.getLBracLoc());
     DI->EmitRegionStart(CurFn, Builder);
   }
@@ -200,6 +199,11 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
     return;
   }
 
+  // If this code is reachable then emit a stop point (if generating
+  // debug info). We have to do this ourselves because we are on the
+  // "simple" statement path.
+  if (HaveInsertPoint())
+    EmitStopPoint(&S);
   EmitBranch(getBasicBlockForLabel(S.getLabel()));
 }
 
@@ -485,16 +489,38 @@ void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
     EmitDecl(**I);
 }
 
-void CodeGenFunction::EmitBreakStmt() {
+void CodeGenFunction::EmitBreakStmt(const BreakStmt &S) {
   assert(!BreakContinueStack.empty() && "break stmt not in a loop or switch!");
 
+  // FIXME: Implement break in @try or @catch blocks.
+  if (!ObjCEHStack.empty()) {
+    CGM.ErrorUnsupported(&S, "continue inside an Obj-C exception block");
+    return;
+  }
+
+  // If this code is reachable then emit a stop point (if generating
+  // debug info). We have to do this ourselves because we are on the
+  // "simple" statement path.
+  if (HaveInsertPoint())
+    EmitStopPoint(&S);
   llvm::BasicBlock *Block = BreakContinueStack.back().BreakBlock;
   EmitBranch(Block);
 }
 
-void CodeGenFunction::EmitContinueStmt() {
+void CodeGenFunction::EmitContinueStmt(const ContinueStmt &S) {
   assert(!BreakContinueStack.empty() && "continue stmt not in a loop!");
 
+  // FIXME: Implement continue in @try or @catch blocks.
+  if (!ObjCEHStack.empty()) {
+    CGM.ErrorUnsupported(&S, "continue inside an Obj-C exception block");
+    return;
+  }
+
+  // If this code is reachable then emit a stop point (if generating
+  // debug info). We have to do this ourselves because we are on the
+  // "simple" statement path.
+  if (HaveInsertPoint())
+    EmitStopPoint(&S);
   llvm::BasicBlock *Block = BreakContinueStack.back().ContinueBlock;
   EmitBranch(Block);
 }
@@ -595,8 +621,8 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   SwitchInsn = Builder.CreateSwitch(CondV, DefaultBlock);
   CaseRangeBlock = DefaultBlock;
 
-  // Create basic block for body of switch
-  EmitBlock(createBasicBlock("sw.body"));
+  // Clear the insertion point to indicate we are in unreachable code.
+  Builder.ClearInsertionPoint();
 
   // All break statements jump to NextBlock. If BreakContinueStack is non empty
   // then reuse last ContinueBlock.
