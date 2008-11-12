@@ -115,6 +115,10 @@ public:
     LexTokenInternal(Result);
   }
   
+  /// IndirectLex - An indirect call to 'Lex' that can be invoked via
+  ///  the PreprocessorLexer interface.
+  void IndirectLex(Token &Result) { Lex(Result); }
+  
   /// LexFromRawLexer - Lex a token from a designated raw lexer (one with no
   /// associated preprocessor object.  Return true if the 'next character to
   /// read' pointer points and the end of the lexer buffer, false otherwise.
@@ -331,11 +335,6 @@ private:
   bool SkipBCPLComment       (Token &Result, const char *CurPtr);
   bool SkipBlockComment      (Token &Result, const char *CurPtr);
   bool SaveBCPLComment       (Token &Result, const char *CurPtr);
-  
-  /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
-  /// (potentially) macro expand the filename.  If the sequence parsed is not
-  /// lexically legal, emit a diagnostic and return a result EOM token.
-  void LexIncludeFilename(Token &Result);
 };
 
 
