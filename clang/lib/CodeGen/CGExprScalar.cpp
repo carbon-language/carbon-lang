@@ -1034,8 +1034,8 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
     }
   }
   
-  llvm::BasicBlock *ContBlock = llvm::BasicBlock::Create("land_cont");
-  llvm::BasicBlock *RHSBlock = llvm::BasicBlock::Create("land_rhs");
+  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("land_cont");
+  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("land_rhs");
   
   llvm::BasicBlock *OrigBlock = Builder.GetInsertBlock();
   Builder.CreateCondBr(LHSCond, RHSBlock, ContBlock);
