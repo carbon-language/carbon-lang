@@ -20,12 +20,14 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Streams.h"
+
 #include <algorithm>
 #include <cassert>
 #include <functional>
 #include <stdexcept>
 #include <string>
 #include <typeinfo>
+
 using namespace llvm;
 
 namespace {

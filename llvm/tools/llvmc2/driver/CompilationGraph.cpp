@@ -109,12 +109,8 @@ CompilationGraph::getToolsVector(const std::string& LangName) const
 }
 
 void CompilationGraph::insertNode(Tool* V) {
-  if (NodesMap.count(V->Name()) == 0) {
-    Node N;
-    N.OwningGraph = this;
-    N.ToolPtr = V;
-    NodesMap[V->Name()] = N;
-  }
+  if (NodesMap.count(V->Name()) == 0)
+    NodesMap[V->Name()] = Node(this, V);
 }
 
 void CompilationGraph::insertEdge(const std::string& A, Edge* Edg) {
