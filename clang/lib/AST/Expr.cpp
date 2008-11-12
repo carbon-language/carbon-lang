@@ -389,8 +389,28 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
         cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Extension)
       return cast<UnaryOperator>(this)->getSubExpr()->isLvalue(Ctx);  // GNU.
     break;
+  case ImplicitCastExprClass:
+    return cast<ImplicitCastExpr>(this)->isLvalueCast()? LV_Valid 
+                                                       : LV_InvalidExpression;
   case ParenExprClass: // C99 6.5.1p5
     return cast<ParenExpr>(this)->getSubExpr()->isLvalue(Ctx);
+  case BinaryOperatorClass:
+  case CompoundAssignOperatorClass: {
+    const BinaryOperator *BinOp = cast<BinaryOperator>(this);
+    if (BinOp->isAssignmentOp()) {
+      if (Ctx.getLangOptions().CPlusPlus)
+        // C++ [expr.ass]p1: 
+        //   The result of an assignment operation [...] is an lvalue.
+        return LV_Valid;
+      else 
+        // C99 6.5.16:
+        //   An assignment expression [...] is not an lvalue.
+        return LV_InvalidExpression;
+    } else
+      return LV_InvalidExpression;
+
+    break;
+  }
   case CallExprClass: {
     // C++ [expr.call]p10:
     //   A function call is an lvalue if and only if the result type

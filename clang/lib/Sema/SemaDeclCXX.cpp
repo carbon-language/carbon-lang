@@ -1597,7 +1597,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
       // Perform the conversion.
       // FIXME: Binding to a subobject of the lvalue is going to require
       // more AST annotation than this.
-      ImpCastExprToType(Init, T1);    
+      ImpCastExprToType(Init, T1, /*isLvalue=*/true);    
     }
   }
 
@@ -1656,7 +1656,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
         // Perform the conversion.
         // FIXME: Binding to a subobject of the lvalue is going to require
         // more AST annotation than this.
-        ImpCastExprToType(Init, T1);
+        ImpCastExprToType(Init, T1, /*isLvalue=*/true);
       }
       break;
 
@@ -1741,7 +1741,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
     } else {
       // FIXME: Binding to a subobject of the rvalue is going to require
       // more AST annotation than this.
-      ImpCastExprToType(Init, T1);
+      ImpCastExprToType(Init, T1, /*isLvalue=*/true);
     }
     return false;
   }

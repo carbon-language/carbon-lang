@@ -662,12 +662,14 @@ ImaginaryLiteral* ImaginaryLiteral::CreateImpl(Deserializer& D, ASTContext& C) {
 void ImplicitCastExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
   S.EmitOwnedPtr(getSubExpr());
+  S.Emit(LvalueCast);
 }
 
 ImplicitCastExpr* ImplicitCastExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType t = QualType::ReadVal(D);
   Expr* Op = D.ReadOwnedPtr<Expr>(C);
-  return new ImplicitCastExpr(t,Op);
+  bool isLvalue = D.ReadBool();
+  return new ImplicitCastExpr(t,Op,isLvalue);
 }
 
 void IndirectGotoStmt::EmitImpl(Serializer& S) const {

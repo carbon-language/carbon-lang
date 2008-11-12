@@ -99,13 +99,47 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     UsualUnaryConversions(lhsExpr);
     UsualUnaryConversions(rhsExpr);
   }
+
   // For conversion purposes, we ignore any qualifiers. 
   // For example, "const float" and "float" are equivalent.
   QualType lhs =
     Context.getCanonicalType(lhsExpr->getType()).getUnqualifiedType();
   QualType rhs = 
     Context.getCanonicalType(rhsExpr->getType()).getUnqualifiedType();
-  
+
+  // If both types are identical, no conversion is needed.
+  if (lhs == rhs)
+    return lhs;
+
+  // If either side is a non-arithmetic type (e.g. a pointer), we are done.
+  // The caller can deal with this (e.g. pointer + int).
+  if (!lhs->isArithmeticType() || !rhs->isArithmeticType())
+    return lhs;
+
+  QualType destType = UsualArithmeticConversionsType(lhs, rhs);
+  if (!isCompAssign) {
+    ImpCastExprToType(lhsExpr, destType);
+    ImpCastExprToType(rhsExpr, destType);
+  }
+  return destType;
+}
+
+QualType Sema::UsualArithmeticConversionsType(QualType lhs, QualType rhs) {
+  // Perform the usual unary conversions. We do this early so that
+  // integral promotions to "int" can allow us to exit early, in the
+  // lhs == rhs check. Also, for conversion purposes, we ignore any
+  // qualifiers.  For example, "const float" and "float" are
+  // equivalent.
+  if (lhs->isPromotableIntegerType())
+    lhs = Context.IntTy;
+  else
+    lhs = Context.getCanonicalType(lhs).getUnqualifiedType();
+
+  if (rhs->isPromotableIntegerType())
+    rhs = Context.IntTy;
+  else
+    rhs = Context.getCanonicalType(rhs).getUnqualifiedType();
+
   // If both types are identical, no conversion is needed.
   if (lhs == rhs)
     return lhs;
@@ -122,12 +156,10 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     // if we have an integer operand, the result is the complex type.
     if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
       // convert the rhs to the lhs complex type.
-      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
       return lhs;
     }
     if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
       // convert the lhs to the rhs complex type.
-      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
       return rhs;
     }
     // This handles complex/complex, complex/float, or float/complex.
@@ -144,24 +176,16 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     
     if (result > 0) { // The left side is bigger, convert rhs. 
       rhs = Context.getFloatingTypeOfSizeWithinDomain(lhs, rhs);
-      if (!isCompAssign)
-        ImpCastExprToType(rhsExpr, rhs);
     } else if (result < 0) { // The right side is bigger, convert lhs. 
       lhs = Context.getFloatingTypeOfSizeWithinDomain(rhs, lhs);
-      if (!isCompAssign)
-        ImpCastExprToType(lhsExpr, lhs);
     } 
     // At this point, lhs and rhs have the same rank/size. Now, make sure the
     // domains match. This is a requirement for our implementation, C99
     // does not require this promotion.
     if (lhs != rhs) { // Domains don't match, we have complex/float mix.
       if (lhs->isRealFloatingType()) { // handle "double, _Complex double".
-        if (!isCompAssign)
-          ImpCastExprToType(lhsExpr, rhs);
         return rhs;
       } else { // handle "_Complex double, double".
-        if (!isCompAssign)
-          ImpCastExprToType(rhsExpr, lhs);
         return lhs;
       }
     }
@@ -172,12 +196,10 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     // if we have an integer operand, the result is the real floating type.
     if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
       // convert rhs to the lhs floating point type.
-      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
       return lhs;
     }
     if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
       // convert lhs to the rhs floating point type.
-      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
       return rhs;
     }
     // We have two real floating types, float/complex combos were handled above.
@@ -185,14 +207,12 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     int result = Context.getFloatingTypeOrder(lhs, rhs);
     
     if (result > 0) { // convert the rhs
-      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
       return lhs;
     }
     if (result < 0) { // convert the lhs
-      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs); // convert the lhs
       return rhs;
     }
-    assert(0 && "Sema::UsualArithmeticConversions(): illegal float comparison");
+    assert(0 && "Sema::UsualArithmeticConversionsType(): illegal float comparison");
   }
   if (lhs->isComplexIntegerType() || rhs->isComplexIntegerType()) {
     // Handle GCC complex int extension.
@@ -203,19 +223,14 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
       if (Context.getIntegerTypeOrder(lhsComplexInt->getElementType(), 
                                       rhsComplexInt->getElementType()) >= 0) {
         // convert the rhs
-        if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
         return lhs;
       }
-      if (!isCompAssign) 
-        ImpCastExprToType(lhsExpr, rhs); // convert the lhs
       return rhs;
     } else if (lhsComplexInt && rhs->isIntegerType()) {
       // convert the rhs to the lhs complex type.
-      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
       return lhs;
     } else if (rhsComplexInt && lhs->isIntegerType()) {
       // convert the lhs to the rhs complex type.
-      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
       return rhs;
     }
   }
@@ -243,10 +258,6 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     // on most 32-bit systems).  Use the unsigned type corresponding
     // to the signed type.
     destType = Context.getCorrespondingUnsignedType(lhsSigned ? lhs : rhs);
-  }
-  if (!isCompAssign) {
-    ImpCastExprToType(lhsExpr, destType);
-    ImpCastExprToType(rhsExpr, destType);
   }
   return destType;
 }
@@ -2765,6 +2776,14 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
   if (getLangOptions().CPlusPlus &&
       (lhs->getType()->isRecordType() || lhs->getType()->isEnumeralType() ||
        rhs->getType()->isRecordType() || rhs->getType()->isEnumeralType())) {
+    // If this is one of the assignment operators, we only perform
+    // overload resolution if the left-hand side is a class or
+    // enumeration type (C++ [expr.ass]p3).
+    if (Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign &&
+        !(lhs->getType()->isRecordType() || lhs->getType()->isEnumeralType())) {
+      return CreateBuiltinBinOp(TokLoc, Opc, lhs, rhs);
+    }
+
     // C++ [over.binary]p1:
     //   A binary operator shall be implemented either by a non-static
     //   member function (9.3) with one parameter or by a non-member
@@ -2809,40 +2828,57 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
                = dyn_cast_or_null<OverloadedFunctionDecl>(D))
       AddOverloadCandidates(Ovl, Args, 2, CandidateSet);
 
-    // FIXME: Add builtin overload candidates (C++ [over.built]).
+    // Add builtin overload candidates (C++ [over.built]).
+    AddBuiltinBinaryOperatorCandidates(OverOp, Args, CandidateSet);
 
     // Perform overload resolution.
     OverloadCandidateSet::iterator Best;
     switch (BestViableFunction(CandidateSet, Best)) {
     case OR_Success: {
-      // FIXME: We might find a built-in candidate here.
+      // We found a built-in operator or an overloaded operator.
       FunctionDecl *FnDecl = Best->Function;
 
-      // Convert the arguments.
-      // FIXME: Conversion will be different for member operators.
-      if (PerformCopyInitialization(lhs, FnDecl->getParamDecl(0)->getType(),
-                                    "passing") ||
-          PerformCopyInitialization(rhs, FnDecl->getParamDecl(1)->getType(),
-                                    "passing"))
-        return true;
+      if (FnDecl) {
+        // We matched an overloaded operator. Build a call to that
+        // operator.
 
-      // Determine the result type
-      QualType ResultTy 
-        = FnDecl->getType()->getAsFunctionType()->getResultType();
-      ResultTy = ResultTy.getNonReferenceType();
+        // Convert the arguments.
+        // FIXME: Conversion will be different for member operators.
+        if (PerformCopyInitialization(lhs, FnDecl->getParamDecl(0)->getType(),
+                                      "passing") ||
+            PerformCopyInitialization(rhs, FnDecl->getParamDecl(1)->getType(),
+                                      "passing"))
+          return true;
 
-      // Build the actual expression node.
-      // FIXME: We lose the fact that we have a function here!
-      if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign)
-        return new CompoundAssignOperator(lhs, rhs, Opc, ResultTy, ResultTy,
-                                          TokLoc);
-      else
-        return new BinaryOperator(lhs, rhs, Opc, ResultTy, TokLoc);
+        // Determine the result type
+        QualType ResultTy 
+          = FnDecl->getType()->getAsFunctionType()->getResultType();
+        ResultTy = ResultTy.getNonReferenceType();
+        
+        // Build the actual expression node.
+        // FIXME: We lose the fact that we have a function here!
+        if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign)
+          return new CompoundAssignOperator(lhs, rhs, Opc, ResultTy, ResultTy,
+                                            TokLoc);
+        else
+          return new BinaryOperator(lhs, rhs, Opc, ResultTy, TokLoc);
+      } else {
+        // We matched a built-in operator. Convert the arguments, then
+        // break out so that we will build the appropriate built-in
+        // operator node.
+        if (PerformCopyInitialization(lhs, Best->BuiltinTypes.ParamTypes[0],
+                                      "passing") ||
+            PerformCopyInitialization(rhs, Best->BuiltinTypes.ParamTypes[1],
+                                      "passing"))
+          return true;
+
+        break;
+      } 
     }
 
     case OR_No_Viable_Function:
       // No viable function; fall through to handling this as a
-      // built-in operator.
+      // built-in operator, which will produce an error message for us.
       break;
 
     case OR_Ambiguous:
@@ -2854,7 +2890,9 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
       return true;
     }
 
-    // There was no viable overloaded operator; fall through.
+    // Either we found no viable overloaded operator or we matched a
+    // built-in operator. In either case, fall through to trying to
+    // build a built-in operation.
   } 
 
   

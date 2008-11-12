@@ -435,6 +435,12 @@ public:
   void AddConversionCandidate(CXXConversionDecl *Conversion,
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet);
+  void AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys, 
+                           Expr **Args, unsigned NumArgs,
+                           OverloadCandidateSet& CandidateSet);
+  void AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op, 
+                                          Expr **Args, 
+                                          OverloadCandidateSet& CandidateSet);
   void AddOverloadCandidates(const OverloadedFunctionDecl *Ovl, 
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet,
@@ -1052,16 +1058,13 @@ public:
 
   /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit
   /// cast.  If there is already an implicit cast, merge into the existing one.
-  void ImpCastExprToType(Expr *&Expr, QualType Type);
+  /// If isLvalue, the result of the cast is an lvalue.
+  void ImpCastExprToType(Expr *&Expr, QualType Type, bool isLvalue = false);
 
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1).
   Expr *UsualUnaryConversions(Expr *&expr); 
 
-  // UsualUnaryConversionType - Same as UsualUnaryConversions, but works
-  // on types instead of expressions
-  QualType UsualUnaryConversionType(QualType Ty); 
-  
   // DefaultFunctionArrayConversion - converts functions and arrays
   // to their respective pointers (C99 6.3.2.1). 
   void DefaultFunctionArrayConversion(Expr *&expr);
@@ -1079,6 +1082,12 @@ public:
   QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr,
                                       bool isCompAssign = false);
   
+  /// UsualArithmeticConversionsType - handles the various conversions
+  /// that are common to binary operators (C99 6.3.1.8, C++ [expr]p9)
+  /// and returns the result type of that conversion.
+  QualType UsualArithmeticConversionsType(QualType lhs, QualType rhs);
+                                          
+
   /// AssignConvertType - All of the 'assignment' semantic checks return this
   /// enum to indicate whether the assignment was allowed.  These checks are
   /// done for simple assignments, as well as initialization, return from

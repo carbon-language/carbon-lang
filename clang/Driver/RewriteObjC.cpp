@@ -1519,7 +1519,8 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
                                      
   // Now, we cast the reference to a pointer to the objc_msgSend type.
   QualType pToFunc = Context->getPointerType(msgSendType);
-  ImplicitCastExpr *ICE = new ImplicitCastExpr(pToFunc, DRE);
+  ImplicitCastExpr *ICE = new ImplicitCastExpr(pToFunc, DRE, 
+                                               /*isLvalue=*/false);
   
   const FunctionType *FT = msgSendType->getAsFunctionType();
   

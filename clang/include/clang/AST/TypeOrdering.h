@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file provides a function object that gives a total ordering
-//  on QualType values, so that they can be sorted, used in std::maps
-//  and std::sets, and so on.
+//  This file provides a function objects and specializations that
+//  allow QualType values to be sorted, used in std::maps, std::sets,
+//  llvm::DenseMaps, and llvm::DenseSets.
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,6 +17,7 @@
 #define LLVM_CLANG_TYPE_ORDERING_H
 
 #include "clang/AST/Type.h"
+#include "llvm/ADT/DenseMap.h"
 #include <functional>
 
 namespace clang {
@@ -29,6 +30,32 @@ struct QualTypeOrdering : std::binary_function<QualType, QualType, bool> {
   }
 };
 
+}
+
+namespace llvm {
+  template<> struct DenseMapInfo<clang::QualType> {
+    static inline clang::QualType getEmptyKey() { return clang::QualType(); }
+
+    static inline clang::QualType getTombstoneKey() { 
+      using clang::QualType;
+      return QualType::getFromOpaquePtr(reinterpret_cast<clang::Type *>(-1));
+    }
+
+    static unsigned getHashValue(clang::QualType Val) {
+      return (unsigned)Val.getAsOpaquePtr();
+    }
+
+    static bool isEqual(clang::QualType LHS, clang::QualType RHS) {
+      return LHS == RHS;
+    }
+
+    static bool isPod() { 
+      // QualType isn't *technically* a POD type. However, we can get
+      // away with calling it a POD type since its copy constructor,
+      // copy assignment operator, and destructor are all trivial.
+      return true; 
+    }
+  };
 }
 
 #endif

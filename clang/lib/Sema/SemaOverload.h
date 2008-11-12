@@ -198,8 +198,16 @@ namespace clang {
 
   /// OverloadCandidate - A single candidate in an overload set (C++ 13.3).
   struct OverloadCandidate {
-    /// Function - The actual function that this candidate represents.
+    /// Function - The actual function that this candidate
+    /// represents. When NULL, this is a built-in candidate.
     FunctionDecl *Function;
+    
+    // BuiltinTypes - Provides the return and parameter types of a
+    // built-in overload candidate. Only valid when Function is NULL.
+    struct {
+      QualType ResultTy;
+      QualType ParamTypes[3];
+    } BuiltinTypes;
 
     /// Conversions - The conversion sequences used to convert the
     /// function arguments to the function parameters.
@@ -217,7 +225,7 @@ namespace clang {
 
   /// OverloadCandidateSet - A set of overload candidates, used in C++
   /// overload resolution (C++ 13.3).
-  typedef llvm::SmallVector<OverloadCandidate, 4> OverloadCandidateSet;
+  typedef llvm::SmallVector<OverloadCandidate, 16> OverloadCandidateSet;
 } // end namespace clang
 
 #endif // LLVM_CLANG_SEMA_OVERLOAD_H

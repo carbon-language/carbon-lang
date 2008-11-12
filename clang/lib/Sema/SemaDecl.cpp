@@ -3021,7 +3021,8 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     ECD->setInitVal(InitVal);
     
     // Adjust the Expr initializer and type.
-    ECD->setInitExpr(new ImplicitCastExpr(NewTy, ECD->getInitExpr()));
+    ECD->setInitExpr(new ImplicitCastExpr(NewTy, ECD->getInitExpr(), 
+                                          /*isLvalue=*/false));
     ECD->setType(NewTy);
   }
   

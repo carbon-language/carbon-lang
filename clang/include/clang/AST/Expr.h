@@ -834,13 +834,22 @@ public:
 /// (*f)(), float->double, short->int, etc.
 ///
 class ImplicitCastExpr : public CastExpr {
+  /// LvalueCast - Whether this cast produces an lvalue.
+  bool LvalueCast;
+
 public:
-  ImplicitCastExpr(QualType ty, Expr *op) : 
-    CastExpr(ImplicitCastExprClass, ty, op) {}
+  ImplicitCastExpr(QualType ty, Expr *op, bool Lvalue) : 
+    CastExpr(ImplicitCastExprClass, ty, op), LvalueCast(Lvalue) {}
 
   virtual SourceRange getSourceRange() const {
     return getSubExpr()->getSourceRange();
   }
+
+  /// isLvalueCast - Whether this cast produces an lvalue.
+  bool isLvalueCast() const { return LvalueCast; }
+
+  /// setLvalueCast - Set whether this cast produces an lvalue.
+  void setLvalueCast(bool Lvalue) { LvalueCast = Lvalue; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ImplicitCastExprClass; 
