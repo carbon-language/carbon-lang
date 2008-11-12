@@ -76,7 +76,7 @@ protected:
   void HandlePostStmt(const PostStmt& S, CFGBlock* B,
                       unsigned StmtIdx, ExplodedNodeImpl *Pred);
   
-  void HandleBranch(Expr* Cond, Stmt* Term, CFGBlock* B,
+  void HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock* B,
                     ExplodedNodeImpl* Pred);  
   
   virtual void ProcessEndPath(GREndPathNodeBuilderImpl& Builder) = 0;  
@@ -86,7 +86,7 @@ protected:
 
   virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& Builder) = 0;
 
-  virtual void ProcessBranch(Expr* Condition, Stmt* Terminator,
+  virtual void ProcessBranch(Stmt* Condition, Stmt* Terminator,
                              GRBranchNodeBuilderImpl& Builder) = 0;
 
   virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& Builder) = 0;
@@ -593,7 +593,7 @@ protected:
                                           BC);
   }
 
-  virtual void ProcessBranch(Expr* Condition, Stmt* Terminator,
+  virtual void ProcessBranch(Stmt* Condition, Stmt* Terminator,
                              GRBranchNodeBuilderImpl& BuilderImpl) {
     GRBranchNodeBuilder<StateTy> Builder(BuilderImpl);
     SubEngine.ProcessBranch(Condition, Terminator, Builder);    

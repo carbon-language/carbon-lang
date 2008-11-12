@@ -368,7 +368,7 @@ public:
   
   /// ProcessBranch - Called by GRCoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
-  void ProcessBranch(Expr* Condition, Stmt* Term, BranchNodeBuilder& builder);
+  void ProcessBranch(Stmt* Condition, Stmt* Term, BranchNodeBuilder& builder);
   
   /// ProcessIndirectGoto - Called by GRCoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a computed goto jump.
@@ -423,17 +423,17 @@ protected:
     return StateMgr.BindLoc(St, LV, V);
   }
   
-  SVal GetSVal(const GRState* St, Expr* Ex) {
+  SVal GetSVal(const GRState* St, Stmt* Ex) {
     return StateMgr.GetSVal(St, Ex);
   }
     
-  SVal GetSVal(const GRState* St, const Expr* Ex) {
-    return GetSVal(St, const_cast<Expr*>(Ex));
+  SVal GetSVal(const GRState* St, const Stmt* Ex) {
+    return GetSVal(St, const_cast<Stmt*>(Ex));
   }
   
-  SVal GetBlkExprSVal(const GRState* St, Expr* Ex) {
+  SVal GetBlkExprSVal(const GRState* St, Stmt* Ex) {
     return StateMgr.GetBlkExprSVal(St, Ex);
-  }  
+  }
     
   SVal GetSVal(const GRState* St, Loc LV, QualType T = QualType()) {    
     return StateMgr.GetSVal(St, LV, T);
@@ -537,6 +537,11 @@ protected:
   /// VisitObjCIvarRefExpr - Transfer function logic for ObjCIvarRefExprs.
   void VisitObjCIvarRefExpr(ObjCIvarRefExpr* DR, NodeTy* Pred, NodeSet& Dst,
                             bool asLValue); 
+
+  /// VisitObjCForCollectionStmt - Transfer function logic for
+  ///  ObjCForCollectionStmt.
+  void VisitObjCForCollectionStmt(ObjCForCollectionStmt* S, NodeTy* Pred,
+                                  NodeSet& Dst);
   
   /// VisitObjCMessageExpr - Transfer function for ObjC message expressions.
   void VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred, NodeSet& Dst);

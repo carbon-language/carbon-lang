@@ -1,4 +1,4 @@
-//==- GRCoreEngine.cpp - Path-Sensitive Dataflow Engine ----------------*- C++ -*-//
+//==- GRCoreEngine.cpp - Path-Sensitive Dataflow Engine ------------*- C++ -*-//
 //             
 //                     The LLVM Compiler Infrastructure
 //
@@ -212,6 +212,21 @@ void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
         return;
       }
         
+      case Stmt::ObjCForCollectionStmtClass: {
+        // In the case of ObjCForCollectionStmt, it appears twice in a CFG:
+        //
+        //  (1) inside a basic block, which represents the binding of the
+        //      'element' variable to a value.
+        //  (2) in a terminator, which represents the branch.
+        //
+        // For (1), subengines will bind a value (i.e., 0 or 1) indicating
+        // whether or not collection contains any more elements.  We cannot
+        // just test to see if the element is nil because a container can
+        // contain nil elements.
+        HandleBranch(Term, Term, B, Pred);
+        return;
+      }
+        
       case Stmt::SwitchStmtClass: {
         GRSwitchNodeBuilderImpl builder(Pred, B,
                                         cast<SwitchStmt>(Term)->getCond(),
@@ -233,8 +248,8 @@ void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
   GenerateNode(BlockEdge(B, *(B->succ_begin())), Pred->State, Pred);
 }
 
-void GRCoreEngineImpl::HandleBranch(Expr* Cond, Stmt* Term, CFGBlock * B,
-                                ExplodedNodeImpl* Pred) {
+void GRCoreEngineImpl::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
+                                    ExplodedNodeImpl* Pred) {
   assert (B->succ_size() == 2);
 
   GRBranchNodeBuilderImpl Builder(B, *(B->succ_begin()), *(B->succ_begin()+1),

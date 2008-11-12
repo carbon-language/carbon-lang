@@ -366,6 +366,10 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
     case Stmt::ObjCIvarRefExprClass:
       VisitObjCIvarRefExpr(cast<ObjCIvarRefExpr>(S), Pred, Dst, false);
       break;
+
+    case Stmt::ObjCForCollectionStmtClass:
+      VisitObjCForCollectionStmt(cast<ObjCForCollectionStmt>(S), Pred, Dst);
+      break;
       
     case Stmt::ObjCMessageExprClass: {
       VisitObjCMessageExpr(cast<ObjCMessageExpr>(S), Pred, Dst);
@@ -547,7 +551,7 @@ const GRState* GRExprEngine::MarkBranch(const GRState* St,
   }
 }
 
-void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
+void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
                                  BranchNodeBuilder& builder) {
 
   // Remove old bindings for subexpressions.
@@ -1346,6 +1350,79 @@ void GRExprEngine::VisitObjCIvarRefExpr(ObjCIvarRefExpr* Ex,
 }
 
 //===----------------------------------------------------------------------===//
+// Transfer function: Objective-C fast enumeration 'for' statements.
+//===----------------------------------------------------------------------===//
+
+void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
+                                              NodeTy* Pred, NodeSet& Dst) {
+    
+  // ObjCForCollectionStmts are processed in two places.  This method
+  // handles the case where an ObjCForCollectionStmt* occurs as one of the
+  // statements within a basic block.  This transfer function does two things:
+  //
+  //  (1) binds the next container value to 'element'.  This creates a new
+  //      node in the ExplodedGraph.
+  //
+  //  (2) binds the value 0/1 to the ObjCForCollectionStmt* itself, indicating
+  //      whether or not the container has any more elements.  This value
+  //      will be tested in ProcessBranch.  We need to explicitly bind
+  //      this value because a container can contain nil elements.
+  //  
+  // FIXME: Eventually this logic should actually do dispatches to
+  //   'countByEnumeratingWithState:objects:count:' (NSFastEnumeration).
+  //   This will require simulating a temporary NSFastEnumerationState, either
+  //   through an SVal or through the use of MemRegions.  This value can
+  //   be affixed to the ObjCForCollectionStmt* instead of 0/1; when the loop
+  //   terminates we reclaim the temporary (it goes out of scope) and we
+  //   we can test if the SVal is 0 or if the MemRegion is null (depending
+  //   on what approach we take).
+  //
+  //  For now: simulate (1) by assigning either a symbol or nil if the
+  //    container is empty.  Thus this transfer function will by default
+  //    result in state splitting.
+  
+  Stmt* elem = S->getElement();  
+  VarDecl* ElemD;
+  bool bindDecl = false;
+    
+  if (DeclStmt* DS = dyn_cast<DeclStmt>(elem)) {
+    ElemD = cast<VarDecl>(DS->getSolitaryDecl());
+    assert (ElemD->getInit() == 0);
+    bindDecl = true;
+  }
+  else
+    ElemD = cast<VarDecl>(cast<DeclRefExpr>(elem)->getDecl());
+  
+  
+  // Get the current state, as well as the QualType for 'int' and the
+  // type of the element.
+  GRStateRef state = GRStateRef(GetState(Pred), getStateManager());
+  QualType IntTy = getContext().IntTy;
+  QualType ElemTy = ElemD->getType();
+  
+  // Handle the case where the container still has elements.
+  SVal TrueV = NonLoc::MakeVal(getBasicVals(), 1, IntTy);
+  GRStateRef hasElems = state.BindExpr(S, TrueV);
+  
+  assert (Loc::IsLocType(ElemTy));
+  unsigned Count = Builder->getCurrentBlockCount();
+  loc::SymbolVal SymV(SymMgr.getConjuredSymbol(elem, ElemTy, Count));
+  
+  if (bindDecl)
+    hasElems = hasElems.BindDecl(ElemD, &SymV, Count);
+  else
+    hasElems = hasElems.BindLoc(hasElems.GetLValue(ElemD), SymV);
+  
+  
+  // Handle the case where the container has no elements.
+  
+    
+  
+  
+  
+}
+
+//===----------------------------------------------------------------------===//
 // Transfer function: Objective-C message expressions.
 //===----------------------------------------------------------------------===//
 
@@ -1630,21 +1707,44 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
   
   const VarDecl* VD = dyn_cast<VarDecl>(D);
   
-  Expr* Ex = const_cast<Expr*>(VD->getInit());
+  Expr* InitEx = const_cast<Expr*>(VD->getInit());
 
   // FIXME: static variables may have an initializer, but the second
   //  time a function is called those values may not be current.
   NodeSet Tmp;
 
-  if (Ex)
-    Visit(Ex, Pred, Tmp);
+  if (InitEx)
+    Visit(InitEx, Pred, Tmp);
 
   if (Tmp.empty())
     Tmp.Add(Pred);
   
   for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
     const GRState* St = GetState(*I);
-    St = StateMgr.BindDecl(St, VD, Ex, Builder->getCurrentBlockCount());
+    unsigned Count = Builder->getCurrentBlockCount();
+        
+    if (InitEx) {
+      SVal InitVal = GetSVal(St, InitEx);
+      QualType T = VD->getType();
+      
+      // Recover some path-sensitivity if a scalar value evaluated to
+      // UnknownVal.
+      if (InitVal.isUnknown()) {
+        if (Loc::IsLocType(T)) {
+          SymbolID Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
+          InitVal = loc::SymbolVal(Sym);
+        }
+        else if (T->isIntegerType()) {
+          SymbolID Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
+          InitVal = nonloc::SymbolVal(Sym);                    
+        }
+      }        
+      
+      St = StateMgr.BindDecl(St, VD, &InitVal, Count);
+    }
+    else
+      St = StateMgr.BindDecl(St, VD, 0, Count);
+
     MakeNode(Dst, DS, *I, St);
   }
 }
