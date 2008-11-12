@@ -485,7 +485,7 @@ private:
   
   void PushIncludeMacroStack() {
     IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
-                                                 CurTokenLexer) {
+                                                 CurTokenLexer));
     CurLexer = 0;
     CurTokenLexer = 0;
   }
