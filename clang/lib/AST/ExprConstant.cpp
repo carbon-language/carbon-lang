@@ -323,8 +323,28 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   // The LHS of a constant expr is always evaluated and needed.
   llvm::APSInt RHS(32);
-  if (!Visit(E->getLHS()))
+  if (!Visit(E->getLHS())) {
+    // If the LHS is unfoldable, we generally can't fold this.  However, if this
+    // is a logical operator like &&/||, and if we know that the RHS determines
+    // the outcome of the result (e.g. X && 0), return the outcome.
+    if (!E->isLogicalOp())
+      return false;
+
+    // If this is a logical op, see if the RHS determines the outcome.
+    EvalInfo Info2(Info.Ctx);
+    if (!EvaluateInteger(E->getRHS(), RHS, Info2))
+      return false;
+    
+    // X && 0 -> 0, X || 1 -> 1.
+    if (E->getOpcode() == BinaryOperator::LAnd && RHS == 0 ||
+        E->getOpcode() == BinaryOperator::LOr  && RHS != 0) {
+      Result = RHS != 0;
+      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+      return true;
+    }
+    
     return false; // error in subexpression.
+  }
   
   bool OldEval = Info.isEvaluated;
 
