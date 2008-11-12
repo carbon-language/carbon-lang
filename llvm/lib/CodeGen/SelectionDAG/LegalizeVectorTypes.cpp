@@ -355,8 +355,8 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FPOWI:             SplitVecRes_FPOWI(N, Lo, Hi); break;
   case ISD::INSERT_VECTOR_ELT: SplitVecRes_INSERT_VECTOR_ELT(N, Lo, Hi); break;
   case ISD::LOAD:           SplitVecRes_LOAD(cast<LoadSDNode>(N), Lo, Hi);break;
-  case ISD::VECTOR_SHUFFLE: SplitVecRes_VECTOR_SHUFFLE(N, Lo, Hi); break;
-  case ISD::VSETCC:         SplitVecRes_VSETCC(N, Lo, Hi); break;
+  case ISD::VECTOR_SHUFFLE:    SplitVecRes_VECTOR_SHUFFLE(N, Lo, Hi); break;
+  case ISD::VSETCC:            SplitVecRes_VSETCC(N, Lo, Hi); break;
 
   case ISD::CTTZ:
   case ISD::CTLZ:
@@ -520,28 +520,20 @@ void DAGTypeLegalizer::SplitVecRes_CONVERT_RNDSAT(SDNode *N, SDValue &Lo,
 
 void DAGTypeLegalizer::SplitVecRes_EXTRACT_SUBVECTOR(SDNode *N, SDValue &Lo,
                                                      SDValue &Hi) {
-  MVT LoVT, HiVT;
-  GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
-  unsigned LoNumElts = LoVT.getVectorNumElements();
-
   SDValue Vec = N->getOperand(0);
   SDValue Idx = N->getOperand(1);
-  MVT     IdxVT = Idx.getValueType();
-  Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, LoVT, Vec, Idx);
+  MVT IdxVT = Idx.getValueType();
 
-  ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Idx);
-  if (CIdx) {
-    unsigned IdxVal = CIdx->getZExtValue();
-    assert (IdxVal % LoVT.getVectorNumElements() == 0 &&
-           (IdxVal+LoNumElts) % HiVT.getVectorNumElements()==0 &&
-            "Index must be a multiple of the result type");
-    Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, HiVT, Vec,
-                     DAG.getConstant(IdxVal + LoNumElts, IdxVT));
-  } else {
-    assert(LoVT == HiVT && "Low and High value type should be the same");
-    Idx = DAG.getNode(ISD::ADD, IdxVT, Idx, DAG.getConstant(LoNumElts, IdxVT));
-    Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, HiVT, Vec, Idx);
-  }
+  MVT LoVT, HiVT;
+  GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
+  // The indices are not guaranteed to be a multiple of the new vector
+  // size unless the original vector type was split in two.
+  assert(LoVT == HiVT && "Non power-of-two vectors not supported!");
+
+  Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, LoVT, Vec, Idx);
+  Idx = DAG.getNode(ISD::ADD, IdxVT, Idx,
+                    DAG.getConstant(LoVT.getVectorNumElements(), IdxVT));
+  Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, HiVT, Vec, Idx);
 }
 
 void DAGTypeLegalizer::SplitVecRes_FPOWI(SDNode *N, SDValue &Lo,
