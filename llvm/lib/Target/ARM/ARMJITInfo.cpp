@@ -246,8 +246,7 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
         *((intptr_t*)RelocPos) |= 1 << ARMII::U_BitShift;
       else {
         // Otherwise, obtain the absolute value and set bit U(23) to 0.
-        assert((*((intptr_t*)RelocPos) & (1 << ARMII::U_BitShift)) == 0 &&
-               "U bit is not zero?");
+        *((intptr_t*)RelocPos) &= ~(1 << ARMII::U_BitShift);
         ResultPtr = - ResultPtr;
       }
       // Set the immed value calculated.
