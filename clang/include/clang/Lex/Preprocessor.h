@@ -327,7 +327,7 @@ public:
       Lex(Result);
     while (Result.getKind() == tok::comment);
   }
-  
+
   /// LexUnexpandedToken - This is just like Lex, but this disables macro
   /// expansion of identifier tokens.
   void LexUnexpandedToken(Token &Result) {
@@ -482,6 +482,21 @@ public:
   /// not, emit a diagnostic and consume up until the eom.
   void CheckEndOfDirective(const char *Directive);
 private:
+  
+  void PushIncludeMacroStack() {
+    IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
+                                                 CurTokenLexer) {
+    CurLexer = 0;
+    CurTokenLexer = 0;
+  }
+  
+  void PopIncludeMacroStack() {
+    CurLexer      = IncludeMacroStack.back().TheLexer;
+    CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
+    CurTokenLexer = IncludeMacroStack.back().TheTokenLexer;
+    IncludeMacroStack.pop_back();
+  }
+  
   /// isInPrimaryFile - Return true if we're in the top-level file, not in a
   /// #include.
   bool isInPrimaryFile() const;
