@@ -2482,16 +2482,19 @@ QualType Sema::TryFixInvalidVariablyModifiedType(QualType T) {
   // array even when the size isn't an ICE.  This is necessary
   // for compatibility with code that depends on gcc's buggy
   // constant expression folding, like struct {char x[(int)(char*)2];}
-  if (const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T)) {
-    APValue Result;
-    if (VLATy->getSizeExpr() &&
-        VLATy->getSizeExpr()->tryEvaluate(Result, Context) && Result.isInt()) {
-      llvm::APSInt &Res = Result.getInt();
-      if (Res > llvm::APSInt(Res.getBitWidth(), Res.isUnsigned()))
-        return Context.getConstantArrayType(VLATy->getElementType(),
-                                            Res, ArrayType::Normal, 0);
-    }
-  }
+  const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T);
+  if (!VLATy) return QualType();
+  
+  APValue Result;
+  if (!VLATy->getSizeExpr() ||
+      !VLATy->getSizeExpr()->tryEvaluate(Result, Context))
+    return QualType();
+    
+  assert(Result.isInt() && "Size expressions must be integers!");
+  llvm::APSInt &Res = Result.getInt();
+  if (Res > llvm::APSInt(Res.getBitWidth(), Res.isUnsigned()))
+    return Context.getConstantArrayType(VLATy->getElementType(),
+                                        Res, ArrayType::Normal, 0);
   return QualType();
 }
 
