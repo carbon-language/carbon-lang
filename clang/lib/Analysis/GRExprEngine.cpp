@@ -1383,12 +1383,12 @@ void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
   
   Stmt* elem = S->getElement();  
   VarDecl* ElemD;
-  bool bindDecl = false;
+  bool newDecl = false;
     
   if (DeclStmt* DS = dyn_cast<DeclStmt>(elem)) {
     ElemD = cast<VarDecl>(DS->getSolitaryDecl());
     assert (ElemD->getInit() == 0);
-    bindDecl = true;
+    newDecl = true;
   }
   else
     ElemD = cast<VarDecl>(cast<DeclRefExpr>(elem)->getDecl());
@@ -1408,18 +1408,26 @@ void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
   unsigned Count = Builder->getCurrentBlockCount();
   loc::SymbolVal SymV(SymMgr.getConjuredSymbol(elem, ElemTy, Count));
   
-  if (bindDecl)
+  if (newDecl)
     hasElems = hasElems.BindDecl(ElemD, &SymV, Count);
   else
     hasElems = hasElems.BindLoc(hasElems.GetLValue(ElemD), SymV);
   
-  
   // Handle the case where the container has no elements.
-  
-    
-  
-  
-  
+  SVal FalseV = NonLoc::MakeVal(getBasicVals(), 0, IntTy);
+  GRStateRef noElems = state.BindExpr(S, FalseV);
+
+  if (!newDecl) {
+    // We only need to bind nil to an existing variable, since out of the
+    // loop the VarDecl won't exist and there will be no chance to get it's
+    // address via the '&' operator.
+    SVal nilV = loc::ConcreteInt(getBasicVals().getValue(0, ElemTy));
+    noElems.BindLoc(noElems.GetLValue(ElemD), nilV);
+  }
+
+  // Create the new nodes.
+  MakeNode(Dst, S, Pred, hasElems);
+  MakeNode(Dst, S, Pred, noElems);
 }
 
 //===----------------------------------------------------------------------===//
