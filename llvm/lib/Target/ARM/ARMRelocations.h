@@ -31,6 +31,10 @@ namespace llvm {
       // addresses are kept locally in a map.
       reloc_arm_cp_entry,
 
+      // reloc_arm_vfp_cp_entry - Same as reloc_arm_cp_entry except the offset
+      // should be divided by 4.
+      reloc_arm_vfp_cp_entry,
+
       // reloc_arm_machine_cp_entry - Relocation of a ARM machine constantpool
       // entry.
       reloc_arm_machine_cp_entry,

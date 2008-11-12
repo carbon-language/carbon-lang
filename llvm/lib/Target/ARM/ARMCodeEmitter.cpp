@@ -222,9 +222,13 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     emitGlobalAddress(MO.getGlobal(), ARM::reloc_arm_branch, true);
   else if (MO.isSymbol())
     emitExternalSymbolAddress(MO.getSymbolName(), ARM::reloc_arm_branch);
-  else if (MO.isCPI())
-    emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_cp_entry);
-  else if (MO.isJTI())
+  else if (MO.isCPI()) {
+    const TargetInstrDesc &TID = MI.getDesc();
+    // For VFP load, the immediate offset is multiplied by 4.
+    unsigned Reloc =  ((TID.TSFlags & ARMII::FormMask) == ARMII::VFPLdStFrm)
+      ? ARM::reloc_arm_vfp_cp_entry : ARM::reloc_arm_cp_entry;
+    emitConstPoolAddress(MO.getIndex(), Reloc);
+  } else if (MO.isJTI())
     emitJumpTableAddress(MO.getIndex(), ARM::reloc_arm_relative);
   else if (MO.isMBB())
     emitMachineBasicBlock(MO.getMBB(), ARM::reloc_arm_branch);

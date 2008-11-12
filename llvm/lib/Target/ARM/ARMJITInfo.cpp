@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "jit"
 #include "ARMJITInfo.h"
+#include "ARMInstrInfo.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMRelocations.h"
 #include "ARMSubtarget.h"
@@ -201,16 +202,20 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
 
 intptr_t ARMJITInfo::resolveRelocDestAddr(MachineRelocation *MR) const {
   ARM::RelocationType RT = (ARM::RelocationType)MR->getRelocationType();
-  if (RT == ARM::reloc_arm_pic_jt)
+  switch (RT) {
+  default:
+    return (intptr_t)(MR->getResultPointer());
+  case ARM::reloc_arm_pic_jt:
     // Destination address - jump table base.
     return (intptr_t)(MR->getResultPointer()) - MR->getConstantVal();
-  else if (RT == ARM::reloc_arm_jt_base)
+  case ARM::reloc_arm_jt_base:
     // Jump table base address.
     return getJumpTableBaseAddr(MR->getJumpTableIndex());
-  else if (RT == ARM::reloc_arm_cp_entry)
+  case ARM::reloc_arm_cp_entry:
+  case ARM::reloc_arm_vfp_cp_entry:
     // Constant pool entry address.
     return getConstantPoolEntryAddr(MR->getConstantPoolIndex());
-  else if (RT == ARM::reloc_arm_machine_cp_entry) {
+  case ARM::reloc_arm_machine_cp_entry: {
     ARMConstantPoolValue *ACPV = (ARMConstantPoolValue*)MR->getConstantVal();
     assert((!ACPV->hasModifier() && !ACPV->mustAddCurrentAddress()) &&
            "Can't handle this machine constant pool entry yet!");
@@ -218,7 +223,7 @@ intptr_t ARMJITInfo::resolveRelocDestAddr(MachineRelocation *MR) const {
     Addr -= getPCLabelAddr(ACPV->getLabelId()) + ACPV->getPCAdjustment();
     return Addr;
   }
-  return (intptr_t)(MR->getResultPointer());
+  }
 }
 
 /// relocate - Before the JIT can run a block of code that has been emitted,
@@ -231,30 +236,35 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
     intptr_t ResultPtr = resolveRelocDestAddr(MR);
     switch ((ARM::RelocationType)MR->getRelocationType()) {
     case ARM::reloc_arm_cp_entry:
+    case ARM::reloc_arm_vfp_cp_entry:
     case ARM::reloc_arm_relative: {
       // It is necessary to calculate the correct PC relative value. We
       // subtract the base addr from the target addr to form a byte offset.
-      ResultPtr = ResultPtr-(intptr_t)RelocPos-8;
+      ResultPtr = ResultPtr - (intptr_t)RelocPos - 8;
       // If the result is positive, set bit U(23) to 1.
       if (ResultPtr >= 0)
-        *((unsigned*)RelocPos) |= 1 << 23;
+        *((intptr_t*)RelocPos) |= 1 << ARMII::U_BitShift;
       else {
-      // Otherwise, obtain the absolute value and set
-      // bit U(23) to 0.
-        ResultPtr *= -1;
-        *((unsigned*)RelocPos) &= 0xFF7FFFFF;
+        // Otherwise, obtain the absolute value and set bit U(23) to 0.
+        assert((*((intptr_t*)RelocPos) & (1 << ARMII::U_BitShift)) == 0 &&
+               "U bit is not zero?");
+        ResultPtr = - ResultPtr;
       }
       // Set the immed value calculated.
-      *((unsigned*)RelocPos) |= (unsigned)ResultPtr;
+      // VFP immediate offset is multiplied by 4.
+      if (MR->getRelocationType() == ARM::reloc_arm_vfp_cp_entry)
+        ResultPtr = ResultPtr >> 2;
+      *((intptr_t*)RelocPos) |= ResultPtr;
       // Set register Rn to PC.
-      *((unsigned*)RelocPos) |= 0xF << 16;
+      *((intptr_t*)RelocPos) |=
+        ARMRegisterInfo::getRegisterNumbering(ARM::PC) << ARMII::RegRnShift;
       break;
     }
     case ARM::reloc_arm_pic_jt:
     case ARM::reloc_arm_machine_cp_entry:
     case ARM::reloc_arm_absolute: {
       // These addresses have already been resolved.
-      *((unsigned*)RelocPos) |= (unsigned)ResultPtr;
+      *((intptr_t*)RelocPos) |= (intptr_t)ResultPtr;
       break;
     }
     case ARM::reloc_arm_branch: {
@@ -266,13 +276,13 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
       ResultPtr = ResultPtr - (intptr_t)RelocPos - 8;
       ResultPtr = (ResultPtr & 0x03FFFFFC) >> 2;
       assert(ResultPtr >= -33554432 && ResultPtr <= 33554428);
-      *((unsigned*)RelocPos) |= ResultPtr;
+      *((intptr_t*)RelocPos) |= ResultPtr;
       break;
     }
     case ARM::reloc_arm_jt_base: {
       // JT base - (instruction addr + 8)
       ResultPtr = ResultPtr - (intptr_t)RelocPos - 8;
-      *((unsigned*)RelocPos) |= ResultPtr;
+      *((intptr_t*)RelocPos) |= ResultPtr;
       break;
     }
     }
