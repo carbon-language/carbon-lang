@@ -51,13 +51,16 @@ public:
   /// throughout, the set of blocks in which the instruction is actually used,
   /// and the set of non-phi instructions that are the last users of the value.
   ///
-  /// If the value is live throughout any blocks, these blocks are listed in
-  /// AliveBlocks.  Blocks where the liveness range ends are not included in
-  /// AliveBlocks, instead being captured by the Kills set.  In these blocks,
-  /// the value is live into the block (unless the value is defined and killed
-  /// in the same block) and lives until the specified instruction.  Note that
-  /// there cannot ever be a value whose Kills set contains two instructions
-  /// from the same basic block.
+  /// In the common case where a value is defined and killed in the same block,
+  /// There is one killing instruction, and AliveBlocks is empty.
+  ///
+  /// Otherwise, the value is live out of the block.  If the value is live
+  /// throughout any blocks, these blocks are listed in AliveBlocks.  Blocks
+  /// where the liveness range ends are not included in AliveBlocks, instead
+  /// being captured by the Kills set.  In these blocks, the value is live into
+  /// the block (unless the value is defined and killed in the same block) and
+  /// lives until the specified instruction.  Note that there cannot ever be a
+  /// value whose Kills set contains two instructions from the same basic block.
   ///
   /// PHI nodes complicate things a bit.  If a PHI node is the last user of a
   /// value in one of its predecessor blocks, it is not listed in the kills set,
