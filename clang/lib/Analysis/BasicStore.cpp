@@ -76,8 +76,7 @@ public:
 
   void iterBindings(Store store, BindingsHandler& f);
 
-  Store BindDecl(Store store, const VarDecl* VD, Expr* Ex,
-                 SVal InitVal = UndefinedVal(), unsigned Count = 0);
+  Store BindDecl(Store store, const VarDecl* VD, SVal* InitVal, unsigned Count);
 
   static inline VarBindingsTy GetVarBindings(Store store) {
     return VarBindingsTy(static_cast<const VarBindingsTy::TreeTy*>(store));
@@ -358,11 +357,11 @@ Store BasicStoreManager::getInitialStore() {
   return St;
 }
 
-Store BasicStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
-                                  SVal InitVal, unsigned Count) {
+Store BasicStoreManager::BindDecl(Store store, const VarDecl* VD,
+                                  SVal* InitVal, unsigned Count) {
+                 
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
-  SymbolManager& SymMgr = StateMgr.getSymbolManager();
-  
+                 
   // BasicStore does not model arrays and structs.
   if (VD->getType()->isArrayType() || VD->getType()->isStructureType())
     return store;
@@ -386,7 +385,7 @@ Store BasicStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
       //   —if it has pointer type, it is initialized to a null pointer; 
       //   —if it has arithmetic type, it is initialized to (positive or 
       //     unsigned) zero;
-      if (!Ex) {
+      if (!InitVal) {
         QualType T = VD->getType();
         if (Loc::IsLocType(T))
           store = Bind(store, getLoc(VD),
@@ -398,24 +397,14 @@ Store BasicStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
           // assert(0 && "ignore other types of variables");
         }
       } else {
-        store = Bind(store, getLoc(VD), InitVal);
+        store = Bind(store, getLoc(VD), *InitVal);
       }
     }
   } else {
     // Process local scalar variables.
     QualType T = VD->getType();
     if (Loc::IsLocType(T) || T->isIntegerType()) {
-      SVal V = Ex ? InitVal : UndefinedVal();
-
-      if (Ex && InitVal.isUnknown()) {
-        // EXPERIMENTAL: "Conjured" symbols.
-        SymbolID Sym = SymMgr.getConjuredSymbol(Ex, Count);
-
-        V = Loc::IsLocType(Ex->getType())
-          ? cast<SVal>(loc::SymbolVal(Sym))
-          : cast<SVal>(nonloc::SymbolVal(Sym));
-      }
-
+      SVal V = InitVal ? *InitVal : UndefinedVal();
       store = Bind(store, getLoc(VD), V);
     }
   }

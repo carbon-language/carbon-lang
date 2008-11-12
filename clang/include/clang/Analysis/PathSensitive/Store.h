@@ -91,10 +91,8 @@ public:
                      llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                      LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) = 0;
 
-  virtual Store BindDecl(Store store,
-                         const VarDecl* VD, Expr* Ex, 
-                         SVal InitVal = UndefinedVal(), 
-                         unsigned Count = 0) = 0;
+  virtual Store BindDecl(Store store, const VarDecl* VD, SVal* InitVal,
+                         unsigned Count) = 0;
 
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep) = 0;

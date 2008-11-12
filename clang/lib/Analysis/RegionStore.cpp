@@ -85,8 +85,7 @@ public:
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                            LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
 
-  Store BindDecl(Store store, const VarDecl* VD, Expr* Ex, SVal InitVal, 
-                 unsigned Count);
+  Store BindDecl(Store store, const VarDecl* VD, SVal* InitVal, unsigned Count);
 
   static inline RegionBindingsTy GetRegionBindings(Store store) {
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
@@ -356,10 +355,10 @@ Store RegionStoreManager::getInitialStore() {
   return St;
 }
 
-Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
-                                   SVal InitVal, unsigned Count) {
+Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD,
+                                   SVal* InitVal, unsigned Count) {
+  
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
-  SymbolManager& SymMgr = StateMgr.getSymbolManager();
 
   if (VD->hasGlobalStorage()) {
     // Static global variables should not be visited here.
@@ -367,7 +366,7 @@ Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
              VD->isFileVarDecl()));
     // Process static variables.
     if (VD->getStorageClass() == VarDecl::Static) {
-      if (!Ex) {
+      if (!InitVal) {
         // Only handle pointer and integer static variables.
 
         QualType T = VD->getType();
@@ -382,7 +381,7 @@ Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
 
         // Other types of static local variables are not handled yet.
       } else {
-        store = Bind(store, getVarLoc(VD), InitVal);
+        store = Bind(store, getVarLoc(VD), *InitVal);
       }
     }
   } else {
@@ -393,27 +392,20 @@ Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
     VarRegion* VR = MRMgr.getVarRegion(VD);
 
     if (Loc::IsLocType(T) || T->isIntegerType()) {
-      SVal V = Ex ? InitVal : UndefinedVal();
-      if (Ex && InitVal.isUnknown()) {
-        // "Conjured" symbols.
-        SymbolID Sym = SymMgr.getConjuredSymbol(Ex, Count);
-        V = Loc::IsLocType(Ex->getType())
-          ? cast<SVal>(loc::SymbolVal(Sym))
-          : cast<SVal>(nonloc::SymbolVal(Sym));
-      }
+      SVal V = InitVal ? *InitVal : UndefinedVal();
       store = Bind(store, loc::MemRegionVal(VR), V);
-
-    } else if (T->isArrayType()) {
-      if (!Ex)
+    }
+    else if (T->isArrayType()) {
+      if (!InitVal)
         store = BindArrayToVal(store, VR, UndefinedVal());
       else
-        store = InitializeArray(store, VR, InitVal);
-
-    } else if (T->isStructureType()) {
-      if (!Ex)
+        store = InitializeArray(store, VR, *InitVal);
+    }
+    else if (T->isStructureType()) {
+      if (!InitVal)
         store = BindStructToVal(store, VR, UndefinedVal());
       else
-        store = InitializeStruct(store, VR, InitVal);
+        store = InitializeStruct(store, VR, *InitVal);
     }
 
     // Other types of local variables are not handled yet.
