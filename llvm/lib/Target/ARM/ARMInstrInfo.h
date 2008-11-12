@@ -116,8 +116,10 @@ namespace ARMII {
     // Field shifts - such shifts are used to set field while generating
     // machine instructions.
     M_BitShift     = 5,
+    ShiftImmShift  = 5,
     ShiftShift     = 7,
     N_BitShift     = 7,
+    ImmHiShift     = 8,
     SoRotImmShift  = 8,
     RegRsShift     = 8,
     ExtRotImmShift = 10,

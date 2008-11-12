@@ -736,11 +736,11 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
   // Set bit[3:0] to the corresponding Rm register
   Binary |= ARMRegisterInfo::getRegisterNumbering(MO2.getReg());
 
-  // if this instr is in scaled register offset/index instruction, set
+  // If this instr is in scaled register offset/index instruction, set
   // shift_immed(bit[11:7]) and shift(bit[6:5]) fields.
   if (unsigned ShImm = ARM_AM::getAM2Offset(AM2Opc)) {
-    Binary |= getShiftOp(AM2Opc) << 5;  // shift
-    Binary |= ShImm              << 7;  // shift_immed
+    Binary |= getShiftOp(AM2Opc) << ARMII::ShiftImmShift;  // shift
+    Binary |= ShImm              << ARMII::ShiftShift;     // shift_immed
   }
 
   emitWordLE(Binary);
@@ -792,8 +792,8 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
   Binary |= 1 << ARMII::AM3_I_BitShift;
   if (unsigned ImmOffs = ARM_AM::getAM3Offset(AM3Opc)) {
     // Set operands
-    Binary |= (ImmOffs >> 4) << 8;  // immedH
-    Binary |= (ImmOffs & ~0xF);     // immedL
+    Binary |= (ImmOffs >> 4) << ARMII::ImmHiShift;  // immedH
+    Binary |= (ImmOffs & 0xF);                      // immedL
   }
 
   emitWordLE(Binary);
