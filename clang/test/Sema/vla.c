@@ -13,3 +13,6 @@ void f (unsigned int m)
   e[0][0] = 0;
 }
 
+// PR3048
+int x = sizeof(struct{char qq[x];}); // expected-error {{fields must have a constant size}}
+

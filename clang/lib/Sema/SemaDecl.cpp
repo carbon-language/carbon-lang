@@ -2541,8 +2541,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
       Diag(Loc, diag::warn_illegal_constant_array_size, Loc);
       T = FixedTy;
     } else {
-      // FIXME: This diagnostic needs work
-      Diag(Loc, diag::err_typecheck_illegal_vla, Loc);
+      Diag(Loc, diag::err_typecheck_field_variable_size, Loc);
       T = Context.IntTy;
       InvalidDecl = true;
     }

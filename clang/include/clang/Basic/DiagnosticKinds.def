@@ -922,6 +922,8 @@ DIAG(warn_illegal_constant_array_size, EXTENSION,
      "size of static array must be an integer constant expression")
 DIAG(err_typecheck_illegal_vla, ERROR,
      "arrays with static storage duration must have constant integer length")
+DIAG(err_typecheck_field_variable_size, ERROR,
+     "fields must have a constant size")
 DIAG(err_typecheck_negative_array_size, ERROR,
      "array size is negative")
 DIAG(warn_typecheck_function_qualifiers, WARNING,
