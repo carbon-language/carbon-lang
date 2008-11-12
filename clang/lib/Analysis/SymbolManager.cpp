@@ -73,7 +73,7 @@ SymbolID SymbolManager::getContentsOfSymbol(SymbolID sym) {
   return SymbolCounter++;
 }
   
-SymbolID SymbolManager::getConjuredSymbol(Expr* E, QualType T, unsigned Count) {
+SymbolID SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count) {
   
   llvm::FoldingSetNodeID profile;
   SymbolConjured::Profile(profile, E, T, Count);

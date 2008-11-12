@@ -166,30 +166,29 @@ public:
 };
   
 class SymbolConjured : public SymbolData {
-  Expr* E;
+  Stmt* S;
   QualType T;
   unsigned Count;
 
 public:
-  SymbolConjured(SymbolID Sym, Expr* exp, QualType t, unsigned count)
-    : SymbolData(ConjuredKind, Sym), E(exp), T(t), Count(count) {}
+  SymbolConjured(SymbolID Sym, Stmt* s, QualType t, unsigned count)
+    : SymbolData(ConjuredKind, Sym), S(s), T(t), Count(count) {}
   
-  Expr* getExpr() const { return E; }
-  unsigned getCount() const { return Count; }  
-  
+  Stmt* getStmt() const { return S; }
+  unsigned getCount() const { return Count; }    
   QualType getType() const { return T; }
   
   static void Profile(llvm::FoldingSetNodeID& profile,
-                      Expr* E, QualType T, unsigned Count) {
+                      Stmt* S, QualType T, unsigned Count) {
     
     profile.AddInteger((unsigned) ConjuredKind);
-    profile.AddPointer(E);
+    profile.AddPointer(S);
     profile.Add(T);
     profile.AddInteger(Count);
   }
   
   virtual void Profile(llvm::FoldingSetNodeID& profile) {
-    Profile(profile, E, T, Count);
+    Profile(profile, S, T, Count);
   }
   
   // Implement isa<T> support.
@@ -247,7 +246,7 @@ public:
   
   SymbolID getSymbol(VarDecl* D);
   SymbolID getContentsOfSymbol(SymbolID sym);
-  SymbolID getConjuredSymbol(Expr* E, QualType T, unsigned VisitCount);
+  SymbolID getConjuredSymbol(Stmt* E, QualType T, unsigned VisitCount);
   SymbolID getConjuredSymbol(Expr* E, unsigned VisitCount) {
     return getConjuredSymbol(E, E->getType(), VisitCount);
   }
