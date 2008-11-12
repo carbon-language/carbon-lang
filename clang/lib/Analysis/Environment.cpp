@@ -1,4 +1,4 @@
-//== Environment.cpp - Map from Expr* to Locations/Values -------*- C++ -*--==//
+//== Environment.cpp - Map from Stmt* to Locations/Values -------*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,7 +18,7 @@
 
 using namespace clang;
 
-SVal Environment::GetSVal(Expr* E, BasicValueFactory& BasicVals) const {
+SVal Environment::GetSVal(Stmt* E, BasicValueFactory& BasicVals) const {
   
   for (;;) {
     
@@ -58,7 +58,7 @@ SVal Environment::GetSVal(Expr* E, BasicValueFactory& BasicVals) const {
         break;
       }
         
-        // Handle all other Expr* using a lookup.
+        // Handle all other Stmt* using a lookup.
         
       default:
         break;
@@ -70,26 +70,30 @@ SVal Environment::GetSVal(Expr* E, BasicValueFactory& BasicVals) const {
   return LookupExpr(E);
 }
 
-SVal Environment::GetBlkExprSVal(Expr* E, BasicValueFactory& BasicVals) const {
+SVal Environment::GetBlkExprSVal(Stmt* E, BasicValueFactory& BasicVals) const {
   
-  E = E->IgnoreParens();
-  
-  switch (E->getStmtClass()) {
-    case Stmt::CharacterLiteralClass: {
-      CharacterLiteral* C = cast<CharacterLiteral>(E);
-      return NonLoc::MakeVal(BasicVals, C->getValue(), C->getType());
+  while (1) {
+    switch (E->getStmtClass()) {
+      case Stmt::ParenExprClass:
+        E = cast<ParenExpr>(E)->getSubExpr();
+        continue;
+        
+      case Stmt::CharacterLiteralClass: {
+        CharacterLiteral* C = cast<CharacterLiteral>(E);
+        return NonLoc::MakeVal(BasicVals, C->getValue(), C->getType());
+      }
+        
+      case Stmt::IntegerLiteralClass: {
+        return NonLoc::MakeVal(BasicVals, cast<IntegerLiteral>(E));
+      }
+        
+      default:
+        return LookupBlkExpr(E);
     }
-      
-    case Stmt::IntegerLiteralClass: {
-      return NonLoc::MakeVal(BasicVals, cast<IntegerLiteral>(E));
-    }
-      
-    default:
-      return LookupBlkExpr(E);
   }
 }
 
-Environment EnvironmentManager::BindExpr(const Environment& Env, Expr* E,SVal V,
+Environment EnvironmentManager::BindExpr(const Environment& Env, Stmt* E,SVal V,
                                          bool isBlkExpr, bool Invalidate) {  
   assert (E);
   
@@ -115,7 +119,7 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
   // Iterate over the block-expr bindings.
   for (Environment::beb_iterator I = Env.beb_begin(), E = Env.beb_end(); 
        I != E; ++I) {
-    Expr* BlkExpr = I.getKey();
+    Stmt* BlkExpr = I.getKey();
 
     if (Liveness.isLive(Loc, BlkExpr)) {
       SVal X = I.getData();

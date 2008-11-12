@@ -73,15 +73,10 @@ const GRState* GRStateManager::BindLoc(const GRState* St, Loc LV, SVal V) {
 }
 
 const GRState* GRStateManager::BindDecl(const GRState* St, const VarDecl* VD, 
-                                        Expr* Ex, unsigned Count) {
+                                        SVal* InitVal, unsigned Count) {
   Store OldStore = St->getStore();
-  Store NewStore;
+  Store NewStore = StoreMgr->BindDecl(OldStore, VD, InitVal, Count);
 
-  if (Ex)
-    NewStore = StoreMgr->BindDecl(OldStore, VD, Ex, GetSVal(St, Ex), Count);
-  else
-    NewStore = StoreMgr->BindDecl(OldStore, VD, Ex);
-                              
   if (NewStore == OldStore)
     return St;
   

@@ -1,4 +1,4 @@
-//== Environment.h - Map from Expr* to Locations/Values ---------*- C++ -*--==//
+//== Environment.h - Map from Stmt* to Locations/Values ---------*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -36,7 +36,7 @@ private:
   friend class EnvironmentManager;
   
   // Type definitions.
-  typedef llvm::ImmutableMap<Expr*,SVal> BindingsTy;
+  typedef llvm::ImmutableMap<Stmt*,SVal> BindingsTy;
 
   // Data.
   BindingsTy SubExprBindings;
@@ -55,28 +55,25 @@ public:
   beb_iterator beb_begin() const { return BlkExprBindings.begin(); }
   beb_iterator beb_end() const { return BlkExprBindings.end(); }      
   
-  SVal LookupSubExpr(Expr* E) const {
-    const SVal* X = SubExprBindings.lookup(E);
+  SVal LookupSubExpr(Stmt* E) const {
+    const SVal* X = SubExprBindings.lookup(cast<Expr>(E));
     return X ? *X : UnknownVal();
   }
   
-  SVal LookupBlkExpr(Expr* E) const {
+  SVal LookupBlkExpr(Stmt* E) const {
     const SVal* X = BlkExprBindings.lookup(E);
     return X ? *X : UnknownVal();
   }
   
-  SVal LookupExpr(Expr* E) const {
+  SVal LookupExpr(Stmt* E) const {
     const SVal* X = SubExprBindings.lookup(E);
     if (X) return *X;
     X = BlkExprBindings.lookup(E);
     return X ? *X : UnknownVal();
   }
   
-  SVal GetSVal(Expr* Ex, BasicValueFactory& BasicVals) const;
-  SVal GetSVal(const Expr* Ex, BasicValueFactory& BasicVals) const {
-    return GetSVal(const_cast<Expr*>(Ex), BasicVals);
-  }
-  SVal GetBlkExprSVal(Expr* Ex, BasicValueFactory& BasicVals) const; 
+  SVal GetSVal(Stmt* Ex, BasicValueFactory& BasicVals) const;
+  SVal GetBlkExprSVal(Stmt* Ex, BasicValueFactory& BasicVals) const; 
   
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.
@@ -108,23 +105,23 @@ public:
   ~EnvironmentManager() {}
 
   /// RemoveBlkExpr - Return a new environment object with the same bindings as
-  ///  the provided environment except with any bindings for the provided Expr*
+  ///  the provided environment except with any bindings for the provided Stmt*
   ///  removed.  This method only removes bindings for block-level expressions.
   ///  Using this method on a non-block level expression will return the
   ///  same environment object.
-  Environment RemoveBlkExpr(const Environment& Env, Expr* E) {
+  Environment RemoveBlkExpr(const Environment& Env, Stmt* E) {
     return Environment(Env.SubExprBindings, F.Remove(Env.BlkExprBindings, E));
   }
   
-  Environment RemoveSubExpr(const Environment& Env, Expr* E) {
+  Environment RemoveSubExpr(const Environment& Env, Stmt* E) {
     return Environment(F.Remove(Env.SubExprBindings, E), Env.BlkExprBindings);
   }
   
-  Environment AddBlkExpr(const Environment& Env, Expr* E, SVal V) {
+  Environment AddBlkExpr(const Environment& Env, Stmt* E, SVal V) {
     return Environment(Env.SubExprBindings, F.Add(Env.BlkExprBindings, E, V));
   }
   
-  Environment AddSubExpr(const Environment& Env, Expr* E, SVal V) {
+  Environment AddSubExpr(const Environment& Env, Stmt* E, SVal V) {
     return Environment(F.Add(Env.SubExprBindings, E, V), Env.BlkExprBindings);
   }
   
@@ -139,7 +136,7 @@ public:
     return Environment(F.GetEmptyMap(), F.GetEmptyMap());
   }
   
-  Environment BindExpr(const Environment& Env, Expr* E, SVal V,
+  Environment BindExpr(const Environment& Env, Stmt* E, SVal V,
                        bool isBlkExpr, bool Invalidate);
 
   Environment RemoveDeadBindings(Environment Env, Stmt* Loc,

@@ -329,7 +329,7 @@ public:
 
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
 
-  const GRState* BindDecl(const GRState* St, const VarDecl* VD, Expr* Ex, 
+  const GRState* BindDecl(const GRState* St, const VarDecl* VD, SVal* IVal,
                           unsigned Count);
   
   /// BindCompoundLiteral - Return the state that has the bindings currently
@@ -391,19 +391,19 @@ public:
 
   // Methods that query & manipulate the Environment.
   
-  SVal GetSVal(const GRState* St, Expr* Ex) {
+  SVal GetSVal(const GRState* St, Stmt* Ex) {
     return St->getEnvironment().GetSVal(Ex, BasicVals);
   }
 
-  SVal GetSVal(const GRState* St, const Expr* Ex) {
-    return St->getEnvironment().GetSVal(Ex, BasicVals);
+  SVal GetSVal(const GRState* St, const Stmt* Ex) {
+    return St->getEnvironment().GetSVal(const_cast<Stmt*>(Ex), BasicVals);
   }
   
-  SVal GetBlkExprSVal(const GRState* St, Expr* Ex) {
+  SVal GetBlkExprSVal(const GRState* St, Stmt* Ex) {
     return St->getEnvironment().GetBlkExprSVal(Ex, BasicVals);
   }
   
-  const GRState* BindExpr(const GRState* St, Expr* Ex, SVal V,
+  const GRState* BindExpr(const GRState* St, Stmt* Ex, SVal V,
                           bool isBlkExpr, bool Invalidate) {
     
     const Environment& OldEnv = St->getEnvironment();
@@ -417,7 +417,7 @@ public:
     return getPersistentState(NewSt);
   }
   
-  const GRState* BindExpr(const GRState* St, Expr* Ex, SVal V,
+  const GRState* BindExpr(const GRState* St, Stmt* Ex, SVal V,
                           bool Invalidate = true) {
     
     bool isBlkExpr = false;
@@ -562,19 +562,28 @@ public:
     return Mgr->GetSVal(St, R);
   }
   
-  GRStateRef SetSVal(Expr* Ex, SVal V, bool isBlkExpr, bool Invalidate) {
+  GRStateRef BindExpr(Stmt* Ex, SVal V, bool isBlkExpr, bool Invalidate) {
     return GRStateRef(Mgr->BindExpr(St, Ex, V, isBlkExpr, Invalidate), *Mgr);
   }
   
-  GRStateRef SetSVal(Expr* Ex, SVal V, bool Invalidate = true) {
+  GRStateRef BindExpr(Stmt* Ex, SVal V, bool Invalidate = true) {
     return GRStateRef(Mgr->BindExpr(St, Ex, V, Invalidate), *Mgr);
   }
+    
+  GRStateRef BindDecl(const VarDecl* VD, SVal* InitVal, unsigned Count) {
+    return GRStateRef(Mgr->BindDecl(St, VD, InitVal, Count), *Mgr);
+  }
   
-  GRStateRef SetSVal(Loc LV, SVal V) {
+  GRStateRef BindLoc(Loc LV, SVal V) {
     GRState StImpl = *St;
     Mgr->BindLoc(StImpl, LV, V);    
     return GRStateRef(Mgr->getPersistentState(StImpl), *Mgr);
   }
+  
+  GRStateRef BindLoc(SVal LV, SVal V) {
+    if (!isa<Loc>(LV)) return *this;
+    return BindLoc(cast<Loc>(LV), V);
+  }    
   
   GRStateRef Unbind(Loc LV) {
     return GRStateRef(Mgr->Unbind(St, LV), *Mgr);
