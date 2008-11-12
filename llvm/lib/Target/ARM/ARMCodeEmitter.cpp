@@ -1102,7 +1102,7 @@ void ARMCodeEmitter::emitVFPArithInstruction(const MachineInstr &MI) {
 
   // Encode Dn / Sn.
   if ((TID.TSFlags & ARMII::FormMask) == ARMII::VFPBinaryFrm)
-    Binary |= encodeVFPRn(MI, OpIdx);
+    Binary |= encodeVFPRn(MI, OpIdx++);
 
   if (OpIdx == TID.getNumOperands() ||
       TID.OpInfo[OpIdx].isPredicate() ||
