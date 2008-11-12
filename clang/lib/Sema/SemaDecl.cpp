@@ -2477,7 +2477,11 @@ void Sema::ActOnDefs(Scope *S, SourceLocation DeclStart,
   CollectIvars(Class, Context, Decls);
 }
 
-QualType Sema::TryFixInvalidVariablyModifiedType(QualType T) {
+/// TryToFixInvalidVariablyModifiedType - Helper method to turn variable array
+/// types into constant array types in certain situations which would otherwise
+/// be errors (for GCC compatibility).
+static QualType TryToFixInvalidVariablyModifiedType(QualType T,
+                                                    ASTContext &Context) {
   // This method tries to turn a variable array into a constant
   // array even when the size isn't an ICE.  This is necessary
   // for compatibility with code that depends on gcc's buggy
@@ -2532,7 +2536,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
   if (T->isVariablyModifiedType()) {
-    QualType FixedTy = TryFixInvalidVariablyModifiedType(T);
+    QualType FixedTy = TryToFixInvalidVariablyModifiedType(T, Context);
     if (!FixedTy.isNull()) {
       Diag(Loc, diag::warn_illegal_constant_array_size, Loc);
       T = FixedTy;
