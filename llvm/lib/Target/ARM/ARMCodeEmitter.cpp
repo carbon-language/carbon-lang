@@ -312,16 +312,13 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   case ARMII::DPSoRegFrm:
     emitDataProcessingInstruction(MI);
     break;
-  case ARMII::LdFrm:
-  case ARMII::StFrm:
+  case ARMII::LdStFrm:
     emitLoadStoreInstruction(MI);
     break;
-  case ARMII::LdMiscFrm:
-  case ARMII::StMiscFrm:
+  case ARMII::LdStMiscFrm:
     emitMiscLoadStoreInstruction(MI);
     break;
-  case ARMII::LdMulFrm:
-  case ARMII::StMulFrm:
+  case ARMII::LdStMulFrm:
     emitLoadStoreMultipleInstruction(MI);
     break;
   case ARMII::MulFrm:
@@ -1040,63 +1037,6 @@ void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
   emitWordLE(Binary);
 }
 
-void ARMCodeEmitter::emitVFPArithInstruction(const MachineInstr &MI) {
-  const TargetInstrDesc &TID = MI.getDesc();
-
-  // Part of binary is determined by TableGn.
-  unsigned Binary = getBinaryCodeForInstr(MI);
-
-  // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
-
-  unsigned OpIdx = 0;
-  assert((Binary & ARMII::D_BitShift) == 0 &&
-         (Binary & ARMII::N_BitShift) == 0 &&
-         (Binary & ARMII::M_BitShift) == 0 && "VFP encoding bug!");
-
-  // Encode Dd / Sd.
-  unsigned RegD = MI.getOperand(OpIdx++).getReg();
-  bool isSPVFP = false;
-  RegD = ARMRegisterInfo::getRegisterNumbering(RegD, isSPVFP);
-  if (!isSPVFP)
-    Binary |=   RegD               << ARMII::RegRdShift;
-  else {
-    Binary |= ((RegD & 0x1E) >> 1) << ARMII::RegRdShift;
-    Binary |=  (RegD & 0x01)       << ARMII::D_BitShift;
-  }
-    
-
-  // If this is a two-address operand, skip it, e.g. FMACD.
-  if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
-    ++OpIdx;
-
-  // Encode Dn / Sn.
-  if ((TID.TSFlags & ARMII::FormMask) == ARMII::VFPBinaryFrm) {
-    unsigned RegN = MI.getOperand(OpIdx++).getReg();
-    isSPVFP = false;
-    RegN = ARMRegisterInfo::getRegisterNumbering(RegN, isSPVFP);
-    if (!isSPVFP)
-      Binary |=   RegN               << ARMII::RegRnShift;
-    else {
-      Binary |= ((RegN & 0x1E) >> 1) << ARMII::RegRnShift;
-      Binary |=  (RegN & 0x01)       << ARMII::N_BitShift;
-    }
-  }
-
-  // Encode Dm / Sm.
-  unsigned RegM = MI.getOperand(OpIdx++).getReg();
-  isSPVFP = false;
-  RegM = ARMRegisterInfo::getRegisterNumbering(RegM, isSPVFP);
-  if (!isSPVFP)
-    Binary |=   RegM;
-  else {
-    Binary |= ((RegM & 0x1E) >> 1);
-    Binary |=  (RegM & 0x01)       << ARMII::M_BitShift;
-  }
-  
-  emitWordLE(Binary);
-}
-
 static unsigned encodeVFPRd(const MachineInstr &MI, unsigned OpIdx) {
   unsigned RegD = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
@@ -1137,6 +1077,45 @@ static unsigned encodeVFPRm(const MachineInstr &MI, unsigned OpIdx) {
     Binary |=  (RegM & 0x01)       << ARMII::M_BitShift;
   }
   return Binary;
+}
+
+void ARMCodeEmitter::emitVFPArithInstruction(const MachineInstr &MI) {
+  const TargetInstrDesc &TID = MI.getDesc();
+
+  // Part of binary is determined by TableGn.
+  unsigned Binary = getBinaryCodeForInstr(MI);
+
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
+
+  unsigned OpIdx = 0;
+  assert((Binary & ARMII::D_BitShift) == 0 &&
+         (Binary & ARMII::N_BitShift) == 0 &&
+         (Binary & ARMII::M_BitShift) == 0 && "VFP encoding bug!");
+
+  // Encode Dd / Sd.
+  Binary |= encodeVFPRd(MI, OpIdx++);
+
+  // If this is a two-address operand, skip it, e.g. FMACD.
+  if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
+    ++OpIdx;
+
+  // Encode Dn / Sn.
+  if ((TID.TSFlags & ARMII::FormMask) == ARMII::VFPBinaryFrm)
+    Binary |= encodeVFPRn(MI, OpIdx);
+
+  if (OpIdx == TID.getNumOperands() ||
+      TID.OpInfo[OpIdx].isPredicate() ||
+      TID.OpInfo[OpIdx].isOptionalDef()) {
+    // FCMPEZD etc. has only one operand.
+    emitWordLE(Binary);
+    return;
+  }
+
+  // Encode Dm / Sm.
+  Binary |= encodeVFPRm(MI, OpIdx);
+  
+  emitWordLE(Binary);
 }
 
 void ARMCodeEmitter::emitVFPConversionInstruction(const MachineInstr &MI) {
@@ -1204,15 +1183,7 @@ void ARMCodeEmitter::emitVFPLoadStoreInstruction(const MachineInstr &MI) {
   unsigned OpIdx = 0;
 
   // Encode Dd / Sd.
-  unsigned RegD = MI.getOperand(OpIdx++).getReg();
-  bool isSPVFP = false;
-  RegD = ARMRegisterInfo::getRegisterNumbering(RegD, isSPVFP);
-  if (!isSPVFP)
-    Binary |=   RegD               << ARMII::RegRdShift;
-  else {
-    Binary |= ((RegD & 0x1E) >> 1) << ARMII::RegRdShift;
-    Binary |=  (RegD & 0x01)       << ARMII::D_BitShift;
-  }
+  Binary |= encodeVFPRd(MI, OpIdx++);
 
   // Encode address base.
   const MachineOperand &Base = MI.getOperand(OpIdx++);
@@ -1257,15 +1228,7 @@ ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(const MachineInstr &MI) {
     Binary |= 0x1 << ARMII::W_BitShift;
 
   // First register is encoded in Dd.
-  unsigned RegD = MI.getOperand(4).getReg();
-  bool isSPVFP = false;
-  RegD = ARMRegisterInfo::getRegisterNumbering(RegD, isSPVFP);
-  if (!isSPVFP)
-    Binary |=   RegD               << ARMII::RegRdShift;
-  else {
-    Binary |= ((RegD & 0x1E) >> 1) << ARMII::RegRdShift;
-    Binary |=  (RegD & 0x01)       << ARMII::D_BitShift;
-  }
+  Binary |= encodeVFPRd(MI, 4);
 
   // Number of registers are encoded in offset field.
   unsigned NumRegs = 1;

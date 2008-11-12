@@ -102,19 +102,14 @@ def FADDS  : ASbI<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                  "fadds", " $dst, $a, $b",
                  [(set SPR:$dst, (fadd SPR:$a, SPR:$b))]>;
 
-def FCMPED : ADbI<0b11101011, (outs), (ins DPR:$a, DPR:$b),
+// These are encoded as unary instructions.
+def FCMPED : ADuI<0b11101011, 0b0100, 0b1100, (outs), (ins DPR:$a, DPR:$b),
                  "fcmped", " $a, $b",
-                 [(arm_cmpfp DPR:$a, DPR:$b)]> {
-  let Inst{19-16} = 0b0100;
-  let Inst{7-6}   = 0b11;
-}
+                 [(arm_cmpfp DPR:$a, DPR:$b)]>;
 
-def FCMPES : ASbI<0b11101011, (outs), (ins SPR:$a, SPR:$b),
+def FCMPES : ASuI<0b11101011, 0b0100, 0b1100, (outs), (ins SPR:$a, SPR:$b),
                  "fcmpes", " $a, $b",
-                 [(arm_cmpfp SPR:$a, SPR:$b)]> {
-  let Inst{19-16} = 0b0100;
-  let Inst{7-6}   = 0b11;
-}
+                 [(arm_cmpfp SPR:$a, SPR:$b)]>;
 
 def FDIVD  : ADbI<0b11101000, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  "fdivd", " $dst, $a, $b",
