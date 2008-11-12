@@ -12,12 +12,12 @@ int f0() {
 }
 
 int f1(int *a) {
-  int b = a - (int*) 1;
+  long b = a - (int*) 1;
   a -= (int*) 1;
-  return b == (int) a;
+  return b == (long) a;
 }
 
-int f2(int n) {
+int f2(long n) {
   int *b = n + (int*) 1;
   n += (int*) 1;
   return b == (int*) n;
