@@ -157,7 +157,7 @@ void TransferFuncs::Visit(Stmt *S) {
   
 void TransferFuncs::VisitTerminator(CFGBlock* B) {
     
-  const Expr* E = B->getTerminatorCondition();
+  const Stmt* E = B->getTerminatorCondition();
 
   if (!E)
     return;
