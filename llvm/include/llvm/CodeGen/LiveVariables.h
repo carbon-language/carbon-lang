@@ -47,20 +47,17 @@ public:
 
   /// VarInfo - This represents the regions where a virtual register is live in
   /// the program.  We represent this with three different pieces of
-  /// information: the instruction that uniquely defines the value, the set of
-  /// blocks the instruction is live into and live out of, and the set of 
-  /// non-phi instructions that are the last users of the value.
+  /// information: the set of blocks in which the instruction is live
+  /// throughout, the set of blocks in which the instruction is actually used,
+  /// and the set of non-phi instructions that are the last users of the value.
   ///
-  /// In the common case where a value is defined and killed in the same block,
-  /// There is one killing instruction, and  AliveBlocks is empty.
-  ///
-  /// Otherwise, the value is live out of the block.  If the value is live
-  /// across any blocks, these blocks are listed in AliveBlocks.  Blocks where
-  /// the liveness range ends are not included in AliveBlocks, instead being
-  /// captured by the Kills set.  In these blocks, the value is live into the
-  /// block (unless the value is defined and killed in the same block) and lives
-  /// until the specified instruction.  Note that there cannot ever be a value
-  /// whose Kills set contains two instructions from the same basic block.
+  /// If the value is live throughout any blocks, these blocks are listed in
+  /// AliveBlocks.  Blocks where the liveness range ends are not included in
+  /// AliveBlocks, instead being captured by the Kills set.  In these blocks,
+  /// the value is live into the block (unless the value is defined and killed
+  /// in the same block) and lives until the specified instruction.  Note that
+  /// there cannot ever be a value whose Kills set contains two instructions
+  /// from the same basic block.
   ///
   /// PHI nodes complicate things a bit.  If a PHI node is the last user of a
   /// value in one of its predecessor blocks, it is not listed in the kills set,
@@ -72,13 +69,13 @@ public:
   /// included). This is sensical because the value must be live to the end of
   /// the block, but is not live in any successor blocks.
   struct VarInfo {
-    /// AliveBlocks - Set of blocks of which this value is alive completely
+    /// AliveBlocks - Set of blocks in which this value is alive completely
     /// through.  This is a bit set which uses the basic block number as an
     /// index.
     ///
     BitVector AliveBlocks;
 
-    /// UsedBlocks - Set of blocks of which this value is actually used. This
+    /// UsedBlocks - Set of blocks in which this value is actually used. This
     /// is a bit set which uses the basic block number as an index.
     BitVector UsedBlocks;
 
