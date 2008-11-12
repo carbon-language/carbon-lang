@@ -2536,6 +2536,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
     } else {
       // FIXME: This diagnostic needs work
       Diag(Loc, diag::err_typecheck_illegal_vla, Loc);
+      T = Context.IntTy;
       InvalidDecl = true;
     }
   }
