@@ -54,7 +54,6 @@ static cl::opt<bool> EnableFastSpilling("fast-spill",
                                         cl::init(false), cl::Hidden);
 
 STATISTIC(numIntervals, "Number of original intervals");
-STATISTIC(numIntervalsAfter, "Number of intervals after coalescing");
 STATISTIC(numFolds    , "Number of loads/stores folded into instructions");
 STATISTIC(numSplits   , "Number of intervals split");
 
@@ -260,13 +259,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
   numIntervals += getNumIntervals();
 
-  DOUT << "********** INTERVALS **********\n";
-  for (iterator I = begin(), E = end(); I != E; ++I) {
-    I->second->print(DOUT, tri_);
-    DOUT << "\n";
-  }
-
-  numIntervalsAfter += getNumIntervals();
   DEBUG(dump());
   return true;
 }
