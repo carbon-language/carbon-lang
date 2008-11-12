@@ -1195,8 +1195,7 @@ void ARMCodeEmitter::emitVFPLoadStoreInstruction(const MachineInstr &MI) {
     if (unsigned ImmOffs = ARM_AM::getAM5Offset(Offset.getImm())) {
       if (ARM_AM::getAM5Op(Offset.getImm()) == ARM_AM::add)
         Binary |= 1 << ARMII::U_BitShift;
-      // Immediate offset is multiplied by 4.
-      Binary |= ImmOffs >> 2;
+      Binary |= ImmOffs;
       emitWordLE(Binary);
       return;
     }
