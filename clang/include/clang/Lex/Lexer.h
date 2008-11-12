@@ -36,7 +36,6 @@ class Lexer : public PreprocessorLexer {
   const char *BufferStart;       // Start of the buffer.
   const char *BufferEnd;         // End of the buffer.
   SourceLocation FileLoc;        // Location for start of file.
-  Preprocessor *PP;              // Preprocessor object controlling lexing.
   LangOptions Features;          // Features enabled by this language (cache).
   bool Is_PragmaLexer;           // True if lexer for _Pragma handling.
   
@@ -170,8 +169,6 @@ public:
   /// Diag - Forwarding function for diagnostics.  This translate a source
   /// position in the current buffer into a SourceLocation object for rendering.
   void Diag(const char *Loc, unsigned DiagID,
-            const std::string &Msg = std::string()) const;
-  void Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string()) const;
 
   /// getSourceLocation - Return a source location identifier for the specified

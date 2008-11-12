@@ -20,7 +20,8 @@ using namespace clang;
 
 PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc,
                    const Token *TokArray, unsigned NumToks)
-  : PP(pp), FileLoc(fileloc), Tokens(TokArray), NumTokens(NumToks), CurToken(0){
+  : PreprocessorLexer(&pp), FileLoc(fileloc), Tokens(TokArray),
+    NumTokens(NumToks), CurToken(0) {
 
   assert (Tokens[NumTokens-1].is(tok::eof));
   --NumTokens;
@@ -46,7 +47,7 @@ void PTHLexer::Lex(Token& Tok) {
       // FIXME: eom handling?
     }
     else
-      PP.HandleEndOfFile(Tok, false);
+      PP->HandleEndOfFile(Tok, false);
     
     return;
   }
@@ -65,8 +66,8 @@ void PTHLexer::Lex(Token& Tok) {
     ++CurToken;
 
   if (Tok.isAtStartOfLine() && Tok.is(tok::hash) && !LexingRawMode) {
-    PP.HandleDirective(Tok);
-    PP.Lex(Tok);
+    PP->HandleDirective(Tok);
+    PP->Lex(Tok);
     return;
   }
     

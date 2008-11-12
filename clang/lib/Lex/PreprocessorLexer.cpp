@@ -20,6 +20,13 @@ using namespace clang;
 
 PreprocessorLexer::~PreprocessorLexer() {}
 
+void PreprocessorLexer::Diag(SourceLocation Loc, unsigned DiagID,
+                             const std::string &Msg) const {
+  if (LexingRawMode && Diagnostic::isBuiltinNoteWarningOrExtension(DiagID))
+    return;
+  PP->Diag(Loc, DiagID, Msg);
+}
+
 /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
 /// (potentially) macro expand the filename.
 void PreprocessorLexer::LexIncludeFilename(Token &FilenameTok) {

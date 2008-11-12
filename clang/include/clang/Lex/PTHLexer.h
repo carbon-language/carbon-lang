@@ -19,10 +19,6 @@
 namespace clang {
   
 class PTHLexer : public PreprocessorLexer {
-
-  /// PP - Preprocessor.
-  Preprocessor& PP;
-  
   /// FileLoc - Location for the start of the file.
   ///
   SourceLocation FileLoc;

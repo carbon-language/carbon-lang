@@ -63,7 +63,7 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
 /// outlive it, so it doesn't take ownership of either of them.
 Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
              const char *BufStart, const char *BufEnd)
-  : FileLoc(fileloc), PP(&pp), Features(pp.getLangOptions()) {
+  : PreprocessorLexer(&pp), FileLoc(fileloc), Features(pp.getLangOptions()) {
       
   SourceManager &SourceMgr = PP->getSourceManager();
   unsigned InputFileID = SourceMgr.getPhysicalLoc(FileLoc).getFileID();
@@ -110,7 +110,7 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
 Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
              const char *BufStart, const char *BufEnd,
              const llvm::MemoryBuffer *FromFile)
-  : FileLoc(fileloc), PP(0), Features(features) {
+  : PreprocessorLexer(0), FileLoc(fileloc), Features(features) {
   Is_PragmaLexer = false;
   InitCharacterInfo();
   
@@ -312,13 +312,6 @@ void Lexer::Diag(const char *Loc, unsigned DiagID,
     return;
   PP->Diag(getSourceLocation(Loc), DiagID, Msg);
 }
-void Lexer::Diag(SourceLocation Loc, unsigned DiagID,
-                 const std::string &Msg) const {
-  if (LexingRawMode && Diagnostic::isBuiltinNoteWarningOrExtension(DiagID))
-    return;
-  PP->Diag(Loc, DiagID, Msg);
-}
-
 
 //===----------------------------------------------------------------------===//
 // Trigraph and Escaped Newline Handling Code.
@@ -1138,7 +1131,9 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
 
   // If we are in a #if directive, emit an error.
   while (!ConditionalStack.empty()) {
-    Diag(ConditionalStack.back().IfLoc, diag::err_pp_unterminated_conditional);
+    PreprocessorLexer::Diag(ConditionalStack.back().IfLoc,
+                            diag::err_pp_unterminated_conditional);
+    
     ConditionalStack.pop_back();
   }
   

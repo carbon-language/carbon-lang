@@ -17,14 +17,19 @@
 #include "clang/Lex/MultipleIncludeOpt.h"
 #include "clang/Lex/Token.h"
 #include <vector>
-
+#include <string>
+	
 namespace clang {
 
 class Preprocessor;
 
 class PreprocessorLexer {
-protected:  
+protected:
+  Preprocessor *PP;              // Preprocessor object controlling lexing.
+  
+  //===--------------------------------------------------------------------===//
   // Context-specific lexing flags set by the preprocessor.
+  //===--------------------------------------------------------------------===//
   
   /// ParsingPreprocessorDirective - This is true when parsing #XXX.  This turns
   /// '\n' into a tok::eom token.
@@ -59,12 +64,15 @@ protected:
   void operator=(const PreprocessorLexer&); // DO NOT IMPLEMENT
   friend class Preprocessor;
   
-  PreprocessorLexer() {}
+  PreprocessorLexer(Preprocessor* pp) : PP(pp) {}
   virtual ~PreprocessorLexer();
   
   virtual void IndirectLex(Token& Result) = 0;
   
-protected:
+  /// Diag - Forwarding function for diagnostics.  This translate a source
+  /// position in the current buffer into a SourceLocation object for rendering.
+  void Diag(SourceLocation Loc, unsigned DiagID,
+            const std::string &Msg = std::string()) const;
   
   //===--------------------------------------------------------------------===//
   // #if directive handling.
