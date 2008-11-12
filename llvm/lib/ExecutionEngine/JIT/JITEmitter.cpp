@@ -965,18 +965,30 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
 
 #ifndef NDEBUG
   {
-    DOUT << "JIT: Disassembled code:\n";
-    if (sys::hasDisassembler())
+    if (sys::hasDisassembler()) {
+      DOUT << "JIT: Disassembled code:\n";
       DOUT << sys::disassembleBuffer(FnStart, FnEnd-FnStart, (uintptr_t)FnStart);
-    else {
+    } else {
+      DOUT << "JIT: Binary code:\n";
       DOUT << std::hex;
-      int i;
       unsigned char* q = FnStart;
-      for (i=1; q!=FnEnd; q++, i++) {
-        if (i%8==1)
-          DOUT << "JIT: 0x" << (long)q << ": ";
-        DOUT<< std::setw(2) << std::setfill('0') << (unsigned short)*q << " ";
-        if (i%8==0)
+      for (int i = 0; q < FnEnd; q += 4, ++i) {
+        if (i == 4)
+          i = 0;
+        if (i == 0)
+          DOUT << "JIT: " << std::setw(8) << std::setfill('0')
+               << (long)(q - FnStart) << ": ";
+        bool Done = false;
+        for (int j = 3; j >= 0; --j) {
+          if (q + j >= FnEnd)
+            Done = true;
+          else
+            DOUT << std::setw(2) << std::setfill('0') << (unsigned short)q[j];
+        }
+        if (Done)
+          break;
+        DOUT << ' ';
+        if (i == 3)
           DOUT << '\n';
       }
       DOUT << std::dec;
