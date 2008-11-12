@@ -233,7 +233,7 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   if (llvm::ConstantInt *CondCst = dyn_cast<llvm::ConstantInt>(BoolCondVal)) {
     // Figure out which block (then or else) is executed.
     const Stmt *Executed = S.getThen(), *Skipped  = S.getElse();
-    if (!CondCst->getZExtValue())
+    if (CondCst->isZero())
       std::swap(Executed, Skipped);
 
     // If the skipped block has no labels in it, just emit the executed block.

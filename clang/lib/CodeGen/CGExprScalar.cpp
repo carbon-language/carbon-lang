@@ -1022,7 +1022,7 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   
   if (llvm::ConstantInt *LHSCst = dyn_cast<llvm::ConstantInt>(LHSCond)) {
     // If we have 0 && RHS, see if we can elide RHS, if so, just return LHSCond.
-    if (LHSCst->getZExtValue() == 0) {
+    if (LHSCst->isZero()) {
       if (!CGF.ContainsLabel(E->getRHS()))
         // Elide RHS, return 0
         return llvm::Constant::getNullValue(CGF.LLVMIntTy);
@@ -1063,7 +1063,7 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   
   if (llvm::ConstantInt *LHSCst = dyn_cast<llvm::ConstantInt>(LHSCond)) {
     // If we have 1 || RHS, see if we can elide RHS, if so, just return LHSCond.
-    if (LHSCst->getZExtValue() != 0) {
+    if (!LHSCst->isZero()) {
       if (!CGF.ContainsLabel(E->getRHS()))
         // Elide RHS, return 1
         return llvm::ConstantInt::get(CGF.LLVMIntTy, 1);
@@ -1120,7 +1120,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   // can't do this if the dead side contains a label.
   if (llvm::ConstantInt *CondCI = dyn_cast<llvm::ConstantInt>(CondVal)) {
     Expr *Live = E->getLHS(), *Dead = E->getRHS();
-    if (CondCI->getZExtValue() == 0)
+    if (CondCI->isZero())
       std::swap(Live, Dead);
     if (!Dead || !CGF.ContainsLabel(Dead)) {
       // Emit the live side.
