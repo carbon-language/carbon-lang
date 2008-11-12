@@ -1173,8 +1173,8 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   }
   
   
-  llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.?");
-  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.:");
+  llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.true");
+  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.cont");
   Value *CondVal = 0;
 
