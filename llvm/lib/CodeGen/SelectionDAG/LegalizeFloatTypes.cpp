@@ -919,17 +919,22 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
   MVT NVT = TLI.getTypeToTransformTo(VT);
   SDValue Src = N->getOperand(0);
   MVT SrcVT = Src.getValueType();
+  bool isSigned = N->getOpcode() == ISD::SINT_TO_FP;
 
   // First do an SINT_TO_FP, whether the original was signed or unsigned.
+  // When promoting partial word types to i32 we must honor the signedness,
+  // though.
   if (SrcVT.bitsLE(MVT::i32)) {
     // The integer can be represented exactly in an f64.
-    Src = DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Src);
+    Src = DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND, 
+                      MVT::i32, Src);
     Lo = DAG.getConstantFP(APFloat(APInt(NVT.getSizeInBits(), 0)), NVT);
     Hi = DAG.getNode(ISD::SINT_TO_FP, NVT, Src);
   } else {
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
     if (SrcVT.bitsLE(MVT::i64)) {
-      Src = DAG.getNode(ISD::SIGN_EXTEND, MVT::i64, Src);
+      Src = DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND, 
+                        MVT::i64, Src);
       LC = RTLIB::SINTTOFP_I64_PPCF128;
     } else if (SrcVT.bitsLE(MVT::i128)) {
       Src = DAG.getNode(ISD::SIGN_EXTEND, MVT::i128, Src);
@@ -943,7 +948,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
     Lo = Hi.getOperand(0); Hi = Hi.getOperand(1);
   }
 
-  if (N->getOpcode() == ISD::SINT_TO_FP)
+  if (isSigned)
     return;
 
   // Unsigned - fix up the SINT_TO_FP value just calculated.
