@@ -1129,14 +1129,23 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.?");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.:");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.cont");
+  Value *CondVal = 0;
 
-  // Evaluate the conditional, then convert it to bool.  We do this explicitly
-  // because we need the unconverted value if this is a GNU ?: expression with
-  // missing middle value.
-  Value *CondVal = CGF.EmitScalarExpr(E->getCond());
-  Value *CondBoolVal =CGF.EmitScalarConversion(CondVal, E->getCond()->getType(),
-                                               CGF.getContext().BoolTy);
-  Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
+  // If we have the GNU missing condition extension, evaluate the conditional
+  // and then convert it to bool the hard way.  We do this explicitly
+  // because we need the unconverted value for the missing middle value of
+  // the ?:.
+  if (E->getLHS() == 0) {
+    CondVal = CGF.EmitScalarExpr(E->getCond());
+    Value *CondBoolVal =
+      CGF.EmitScalarConversion(CondVal, E->getCond()->getType(),
+                               CGF.getContext().BoolTy);
+    Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
+  } else {
+    // Otherwise, just use EmitBranchOnBoolExpr to get small and simple code for
+    // the branch on bool.
+    CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
+  }
   
   CGF.EmitBlock(LHSBlock);
   
