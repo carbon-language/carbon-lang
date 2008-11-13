@@ -105,8 +105,18 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 
 QualType ElementRegion::getType(ASTContext& C) const {
   QualType T = cast<TypedRegion>(superRegion)->getType(C);
-  ArrayType* AT = cast<ArrayType>(T.getTypePtr());
-  return AT->getElementType();
+
+  if (isa<ArrayType>(T.getTypePtr())) {
+    ArrayType* AT = cast<ArrayType>(T.getTypePtr());
+    return AT->getElementType();
+  }
+  else if (isa<AllocaRegion>(superRegion)) {
+    PointerType* PtrT = cast<PointerType>(T.getTypePtr());
+    QualType PTy = PtrT->getPointeeType();
+    return C.getCanonicalType(PTy);
+  }
+  else
+    assert(0 && "SuperRegion type unsupported.");
 }
 
 //===----------------------------------------------------------------------===//
