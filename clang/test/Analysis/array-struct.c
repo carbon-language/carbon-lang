@@ -59,3 +59,8 @@ void f7() {
   struct s2 *p = __builtin_alloca(10);
   g2(p);
 }
+
+void f8() {
+  int a[10];
+  a[sizeof(a) - 1] = 1;
+}
