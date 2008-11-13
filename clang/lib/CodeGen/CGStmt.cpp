@@ -250,13 +250,12 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
 
   // Otherwise, the condition did not fold, or we couldn't elide it.  Just emit
   // the conditional branch.
-  llvm::BasicBlock *ThenBlock = createBasicBlock("ifthen");
-  llvm::BasicBlock *ElseBlock = createBasicBlock("ifelse");
-  EmitBranchOnBoolExpr(S.getCond(), ThenBlock, ElseBlock);
-  
-  llvm::BasicBlock *ContBlock = ElseBlock;
+  llvm::BasicBlock *ThenBlock = createBasicBlock("if.then");
+  llvm::BasicBlock *ContBlock = createBasicBlock("if.end");
+  llvm::BasicBlock *ElseBlock = ContBlock;
   if (S.getElse())
-    ContBlock = createBasicBlock("ifend");
+    ElseBlock = createBasicBlock("if.else");
+  EmitBranchOnBoolExpr(S.getCond(), ThenBlock, ElseBlock);
   
   // Emit the 'then' code.
   EmitBlock(ThenBlock);
