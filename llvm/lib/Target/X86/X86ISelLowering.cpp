@@ -7542,6 +7542,7 @@ X86TargetLowering::getConstraintType(const std::string &Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'A':
+      return C_Register;
     case 'f':
     case 'r':
     case 'R':
@@ -7671,10 +7672,6 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
     // FIXME: not handling fp-stack yet!
     switch (Constraint[0]) {      // GCC X86 Constraint Letters
     default: break;  // Unknown constraint letter
-    case 'A':   // EAX/EDX
-      if (VT == MVT::i32 || VT == MVT::i64)
-        return make_vector<unsigned>(X86::EAX, X86::EDX, 0);
-      break;
     case 'q':   // Q_REGS (GENERAL_REGS in 64-bit mode)
     case 'Q':   // Q_REGS
       if (VT == MVT::i32)
@@ -7762,7 +7759,11 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       Res.first = X86::ST0;
       Res.second = X86::RFP80RegisterClass;
     }
-
+    // 'A' means EAX + EDX.
+    if (Constraint == "A") {
+      Res.first = X86::EAX;
+      Res.second = X86::GRADRegisterClass;
+    }
     return Res;
   }
 

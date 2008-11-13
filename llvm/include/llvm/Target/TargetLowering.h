@@ -1207,8 +1207,8 @@ public:
   //
   
   enum ConstraintType {
-    C_Register,            // Constraint represents a single register.
-    C_RegisterClass,       // Constraint represents one or more registers.
+    C_Register,            // Constraint represents specific register(s).
+    C_RegisterClass,       // Constraint represents any of register(s) in class.
     C_Memory,              // Memory constraint.
     C_Other,               // Something else.
     C_Unknown              // Unsupported constraint.
