@@ -301,7 +301,13 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R, SVal V){
 
   const RecordType* RT = cast<RecordType>(T.getTypePtr());
   RecordDecl* RD = RT->getDecl();
-  assert(RD->isDefinition());
+
+  if (!RD->isDefinition()) {
+    // This can only occur when a pointer of imcomplete struct type is used as a
+    // function argument.
+    assert(V.isUnknown());
+    return store;
+  }
 
   RegionBindingsTy B = GetRegionBindings(store);
 
