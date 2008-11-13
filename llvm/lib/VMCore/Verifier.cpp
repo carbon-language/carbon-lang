@@ -266,6 +266,8 @@ namespace {
     void visitInsertValueInst(InsertValueInst &IVI);
 
     void VerifyCallSite(CallSite CS);
+    bool PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
+                          int VT, unsigned ArgNo, std::string &Suffix);
     void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
                                   unsigned Count, ...);
     void VerifyAttrs(Attributes Attrs, const Type *Ty,
@@ -1375,6 +1377,133 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   }
 }
 
+bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
+                                int VT, unsigned ArgNo, std::string &Suffix) {
+  const FunctionType *FTy = F->getFunctionType();
+
+  unsigned NumElts = 0;
+  const Type *EltTy = Ty;
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+    EltTy = VTy->getElementType();
+    NumElts = VTy->getNumElements();
+  }
+
+  if (VT < 0) {
+    int Match = ~VT;
+    if (Match == 0) {
+      if (Ty != FTy->getReturnType()) {
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo - 1) + " does not "
+                    "match return type.", F);
+        return false;
+      }
+    } else {
+      if (Ty != FTy->getParamType(Match - 1)) {
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo - 1) + " does not "
+                    "match parameter %" + utostr(Match - 1) + ".", F);
+        return false;
+      }
+    }
+  } else if (VT == MVT::iAny) {
+    if (!EltTy->isInteger()) {
+      if (ArgNo == 0)
+        CheckFailed("Intrinsic result type is not an integer type.", F);
+      else
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo - 1) + " is not "
+                    "an integer type.", F);
+
+      return false;
+    }
+
+    unsigned GotBits = cast<IntegerType>(EltTy)->getBitWidth();
+    Suffix += ".";
+
+    if (EltTy != Ty)
+      Suffix += "v" + utostr(NumElts);
+
+    Suffix += "i" + utostr(GotBits);;
+
+    // Check some constraints on various intrinsics.
+    switch (ID) {
+    default: break; // Not everything needs to be checked.
+    case Intrinsic::bswap:
+      if (GotBits < 16 || GotBits % 16 != 0)
+        CheckFailed("Intrinsic requires even byte width argument", F);
+      break;
+    }
+  } else if (VT == MVT::fAny) {
+    if (!EltTy->isFloatingPoint()) {
+      if (ArgNo == 0)
+        CheckFailed("Intrinsic result type is not a floating-point type.", F);
+      else
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo - 1) + " is not "
+                    "a floating-point type.", F);
+      return false;
+    }
+
+    Suffix += ".";
+
+    if (EltTy != Ty)
+      Suffix += "v" + utostr(NumElts);
+
+    Suffix += MVT::getMVT(EltTy).getMVTString();
+  } else if (VT == MVT::iPTR) {
+    if (!isa<PointerType>(Ty)) {
+      if (ArgNo == 0)
+        CheckFailed("Intrinsic result type is not a "
+                    "pointer and a pointer is required.", F);
+      else
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo - 1) + " is not a "
+                    "pointer and a pointer is required.", F);
+    }
+  } else if (VT == MVT::iPTRAny) {
+    // Outside of TableGen, we don't distinguish iPTRAny (to any address space)
+    // and iPTR. In the verifier, we can not distinguish which case we have so
+    // allow either case to be legal.
+    if (const PointerType* PTyp = dyn_cast<PointerType>(Ty)) {
+      Suffix += ".p" + utostr(PTyp->getAddressSpace()) + 
+        MVT::getMVT(PTyp->getElementType()).getMVTString();
+    } else {
+      if (ArgNo == 0)
+        CheckFailed("Intrinsic result type is not a "
+                    "pointer and a pointer is required.", F);
+      else
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not a "
+                    "pointer and a pointer is required.", F);
+      return false;
+    }
+  } else if (MVT((MVT::SimpleValueType)VT).isVector()) {
+    MVT VVT = MVT((MVT::SimpleValueType)VT);
+
+    // If this is a vector argument, verify the number and type of elements.
+    if (VVT.getVectorElementType() != MVT::getMVT(EltTy)) {
+      CheckFailed("Intrinsic prototype has incorrect vector element type!", F);
+      return false;
+    }
+
+    if (VVT.getVectorNumElements() != NumElts) {
+      CheckFailed("Intrinsic prototype has incorrect number of "
+                  "vector elements!", F);
+      return false;
+    }
+  } else if (MVT((MVT::SimpleValueType)VT).getTypeForMVT() != EltTy) {
+    if (ArgNo == 0)
+      CheckFailed("Intrinsic prototype has incorrect result type!", F);
+    else
+      CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is wrong!",F);
+
+    return false;
+  } else if (EltTy != Ty) {
+    if (ArgNo == 0)
+      CheckFailed("Intrinsic result type is vector "
+                  "and a scalar is required.", F);
+    else
+      CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is vector "
+                  "and a scalar is required.", F);
+  }
+
+  return true;
+}
+
 /// VerifyIntrinsicPrototype - TableGen emits calls to this function into
 /// Intrinsics.gen.  This implements a little state machine that verifies the
 /// prototype of intrinsics.
@@ -1405,123 +1534,11 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
       break;
     }
 
-    const Type *Ty;
-    if (ArgNo == 0)
-      Ty = FTy->getReturnType();
-    else
-      Ty = FTy->getParamType(ArgNo-1);
+    const Type *Ty = (ArgNo == 0) ?
+      FTy->getReturnType() : FTy->getParamType(ArgNo - 1);
 
-    unsigned NumElts = 0;
-    const Type *EltTy = Ty;
-    if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
-      EltTy = VTy->getElementType();
-      NumElts = VTy->getNumElements();
-    }
-
-    if (VT < 0) {
-      int Match = ~VT;
-      if (Match == 0) {
-        if (Ty != FTy->getReturnType()) {
-          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " does not "
-                      "match return type.", F);
-          break;
-        }
-      } else {
-        if (Ty != FTy->getParamType(Match-1)) {
-          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " does not "
-                      "match parameter %" + utostr(Match-1) + ".", F);
-          break;
-        }
-      }
-    } else if (VT == MVT::iAny) {
-      if (!EltTy->isInteger()) {
-        if (ArgNo == 0)
-          CheckFailed("Intrinsic result type is not "
-                      "an integer type.", F);
-        else
-          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not "
-                      "an integer type.", F);
-        break;
-      }
-      unsigned GotBits = cast<IntegerType>(EltTy)->getBitWidth();
-      Suffix += ".";
-      if (EltTy != Ty)
-        Suffix += "v" + utostr(NumElts);
-      Suffix += "i" + utostr(GotBits);;
-      // Check some constraints on various intrinsics.
-      switch (ID) {
-        default: break; // Not everything needs to be checked.
-        case Intrinsic::bswap:
-          if (GotBits < 16 || GotBits % 16 != 0)
-            CheckFailed("Intrinsic requires even byte width argument", F);
-          break;
-      }
-    } else if (VT == MVT::fAny) {
-      if (!EltTy->isFloatingPoint()) {
-        if (ArgNo == 0)
-          CheckFailed("Intrinsic result type is not "
-                      "a floating-point type.", F);
-        else
-          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not "
-                      "a floating-point type.", F);
-        break;
-      }
-      Suffix += ".";
-      if (EltTy != Ty)
-        Suffix += "v" + utostr(NumElts);
-      Suffix += MVT::getMVT(EltTy).getMVTString();
-    } else if (VT == MVT::iPTR) {
-      if (!isa<PointerType>(Ty)) {
-        if (ArgNo == 0)
-          CheckFailed("Intrinsic result type is not a "
-                      "pointer and a pointer is required.", F);
-        else
-          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not a "
-                      "pointer and a pointer is required.", F);
-      }        
-    } else if (VT == MVT::iPTRAny) {
-      // Outside of TableGen, we don't distinguish iPTRAny (to any address
-      // space) and iPTR. In the verifier, we can not distinguish which case
-      // we have so allow either case to be legal.
-      if (const PointerType* PTyp = dyn_cast<PointerType>(Ty)) {
-        Suffix += ".p" + utostr(PTyp->getAddressSpace()) + 
-        MVT::getMVT(PTyp->getElementType()).getMVTString();
-      } else {
-        if (ArgNo == 0)
-          CheckFailed("Intrinsic result type is not a "
-                      "pointer and a pointer is required.", F);
-        else
-          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not a "
-                      "pointer and a pointer is required.", F);
-        break;
-      }
-    } else if (MVT((MVT::SimpleValueType)VT).isVector()) {
-      MVT VVT = MVT((MVT::SimpleValueType)VT);
-      // If this is a vector argument, verify the number and type of elements.
-      if (VVT.getVectorElementType() != MVT::getMVT(EltTy)) {
-        CheckFailed("Intrinsic prototype has incorrect vector element type!",
-                    F);
-        break;
-      }
-      if (VVT.getVectorNumElements() != NumElts) {
-        CheckFailed("Intrinsic prototype has incorrect number of "
-                    "vector elements!",F);
-        break;
-      }
-    } else if (MVT((MVT::SimpleValueType)VT).getTypeForMVT() != EltTy) {
-      if (ArgNo == 0)
-        CheckFailed("Intrinsic prototype has incorrect result type!", F);
-      else
-        CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is wrong!",F);
+    if (!PerformTypeCheck(ID, F, Ty, VT, ArgNo, Suffix))
       break;
-    } else if (EltTy != Ty) {
-      if (ArgNo == 0)
-        CheckFailed("Intrinsic result type is vector "
-                    "and a scalar is required.", F);
-      else
-        CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is vector "
-                    "and a scalar is required.", F);
-    }
   }
 
   va_end(VA);
