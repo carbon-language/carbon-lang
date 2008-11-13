@@ -111,8 +111,8 @@ namespace llvm {
     unsigned NodeNum;                   // Entry # of node in the node vector.
     unsigned NodeQueueId;               // Queue id of node.
     unsigned short Latency;             // Node latency.
-    short NumPreds;                     // # of preds.
-    short NumSuccs;                     // # of sucss.
+    short NumPreds;                     // # of non-control preds.
+    short NumSuccs;                     // # of non-control sucss.
     short NumPredsLeft;                 // # of preds not scheduled.
     short NumSuccsLeft;                 // # of succs not scheduled.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
