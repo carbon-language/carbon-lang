@@ -186,6 +186,14 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
 
   loc::MemRegionVal& BaseL = cast<loc::MemRegionVal>(Base);
 
+  // Pointer of any type can be cast and used as array base. We do not support
+  // that case yet.
+  if (!isa<ElementRegion>(BaseL.getRegion())) {
+    // Record what we have seen in real code.
+    assert(isa<FieldRegion>(BaseL.getRegion()));
+    return UnknownVal();
+  }
+
   // We expect BaseR is an ElementRegion, not a base VarRegion.
 
   const ElementRegion* ElemR = cast<ElementRegion>(BaseL.getRegion());
