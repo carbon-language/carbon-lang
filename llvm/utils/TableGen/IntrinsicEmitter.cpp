@@ -152,10 +152,12 @@ static void EmitTypeGenerate(std::ostream &OS,
   OS << "StructType::get(";
 
   for (std::vector<Record*>::const_iterator
-         I = ArgTypes.begin(), E = ArgTypes.end(); I != E; ++I)
+         I = ArgTypes.begin(), E = ArgTypes.end(); I != E; ++I) {
     EmitTypeGenerate(OS, *I, ArgNo);
+    OS << ", ";
+  }
 
-  OS << ", NULL)";
+  OS << " NULL)";
 }
 
 static void EmitTypeGenerate(std::ostream &OS, const Record *ArgType,
