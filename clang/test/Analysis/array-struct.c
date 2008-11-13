@@ -50,3 +50,12 @@ void f6() {
   p = __builtin_alloca(10); 
   p[1] = 'a';
 }
+
+struct s2;
+
+void g2(struct s2 *p);
+
+void f7() {
+  struct s2 *p = __builtin_alloca(10);
+  g2(p);
+}
