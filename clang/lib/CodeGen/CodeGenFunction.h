@@ -237,7 +237,12 @@ public:
   /// insert point, adding a fall-through branch from the current
   /// insert block if necessary. It is legal to call this function
   /// even if there is no current insertion point.
-  void EmitBlock(llvm::BasicBlock *BB);
+  ///
+  /// IsFinished - If true, indicates that the caller has finished
+  /// emitting branches to the given block and does not expect to emit
+  /// code into it. This means the block can be ignored if it is
+  /// unreachable.
+  void EmitBlock(llvm::BasicBlock *BB, bool IsFinished=false);
 
   /// EmitBranch - Emit a branch to the specified basic block from the
   /// current insert block, taking care to avoid creation of branches

@@ -157,9 +157,15 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   return EmitAnyExpr(cast<Expr>(LastStmt), AggLoc);
 }
 
-void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB) {
+void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {
   // Fall out of the current block (if necessary).
   EmitBranch(BB);
+
+  if (IsFinished && BB->use_empty()) {
+    delete BB;
+    return;
+  }
+
   CurFn->getBasicBlockList().push_back(BB);
   Builder.SetInsertPoint(BB);
 }
