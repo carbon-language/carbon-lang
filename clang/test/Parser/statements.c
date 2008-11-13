@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s
+// RUN: clang -fsyntax-only -verify %s
 
 int test1() {
   { ; {  ;;}} ;;
@@ -31,19 +31,19 @@ int test3() {
 }
 
 int test4() {
-  if (0);
+  if (0);  // expected-warning {{if statement has empty body}}
   
   int X;  // declaration in a block.
   
-foo:  if (0);
+foo:  if (0); // expected-warning {{if statement has empty body}}
 }
 
 typedef int t;
 void test5() {
-  if (0);
+  if (0);   // expected-warning {{if statement has empty body}}
 
-  //t x = 0;      // FIXME: Enable when handling of typedef names is impl.
+  t x = 0;
 
-  if (0);
+  if (0);  // expected-warning {{if statement has empty body}}
 }
 
