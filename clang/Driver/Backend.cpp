@@ -170,8 +170,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
       OutputFile = Path.toString();
     }
 
-    // FIXME: Should be binary.
-    AsmOutStream = new raw_fd_ostream(OutputFile.c_str(), Error);
+    AsmOutStream = new raw_fd_ostream(OutputFile.c_str(), true, Error);
     if (!Error.empty())
       return false;
   }

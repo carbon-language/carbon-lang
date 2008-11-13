@@ -195,7 +195,7 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
   
   // Now create the plist file.
   std::string ErrMsg;
-  llvm::raw_fd_ostream o(H.toString().c_str(), ErrMsg);
+  llvm::raw_fd_ostream o(H.toString().c_str(), false, ErrMsg);
   
   if (!ErrMsg.empty()) {
     llvm::errs() << "warning: could not creat file: " << H.toString() << '\n';

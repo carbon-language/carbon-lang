@@ -149,7 +149,7 @@ void CXXRecordDecl::viewInheritance(ASTContext& Context) const {
 
   llvm::errs() << "Writing '" << Filename.c_str() << "'... ";
 
-  llvm::raw_fd_ostream O(Filename.c_str(), ErrMsg);
+  llvm::raw_fd_ostream O(Filename.c_str(), false, ErrMsg);
 
   if (ErrMsg.empty()) {
     InheritanceHierarchyWriter Writer(Context, O);

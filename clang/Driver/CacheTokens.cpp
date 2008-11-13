@@ -115,7 +115,7 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
   uint32_t idcount = 0;
   
   std::string ErrMsg;
-  llvm::raw_fd_ostream Out(OutFile.c_str(), ErrMsg);
+  llvm::raw_fd_ostream Out(OutFile.c_str(), true, ErrMsg);
   
   if (!ErrMsg.empty()) {
     os << "PCH error: " << ErrMsg << "\n";

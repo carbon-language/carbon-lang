@@ -4107,7 +4107,7 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
     OutFile = &llvm::outs();
   } else if (!OutFileName.empty()) {
     std::string Err;
-    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), Err);
+    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), false, Err);
     OwnedStream.reset(OutFile);
   } else if (InFileName == "-") {
     OutFile = &llvm::outs();
@@ -4116,7 +4116,7 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
     Path.eraseSuffix();
     Path.appendSuffix("cpp");
     std::string Err;
-    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), Err);
+    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), false, Err);
     OwnedStream.reset(OutFile);
   }
   

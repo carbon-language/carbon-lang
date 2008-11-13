@@ -65,7 +65,7 @@ bool SerializationTest::Serialize(llvm::sys::Path& Filename,
   { 
     // Pretty-print the decls to a temp file.
     std::string Err;
-    llvm::raw_fd_ostream DeclPP(FNameDeclPrint.c_str(), Err);
+    llvm::raw_fd_ostream DeclPP(FNameDeclPrint.c_str(), true, Err);
     assert (Err.empty() && "Could not open file for printing out decls.");
     llvm::OwningPtr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     
@@ -89,7 +89,7 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
   {
     // Pretty-print the deserialized decls to a temp file.
     std::string Err;
-    llvm::raw_fd_ostream DeclPP(FNameDeclPrint.c_str(), Err);
+    llvm::raw_fd_ostream DeclPP(FNameDeclPrint.c_str(), true, Err);
     assert (Err.empty() && "Could not open file for printing out decls.");
     llvm::OwningPtr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     

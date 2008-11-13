@@ -476,7 +476,7 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
   
   // Open the output buffer.
   std::string Err;
-  llvm::raw_fd_ostream OS(OutFile.empty() ? "-" : OutFile.c_str(), Err);
+  llvm::raw_fd_ostream OS(OutFile.empty() ? "-" : OutFile.c_str(), false, Err);
   if (!Err.empty()) {
     fprintf(stderr, "%s\n", Err.c_str());
     exit(1);
