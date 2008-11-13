@@ -1175,6 +1175,7 @@ void ARMCodeEmitter::emitVFPConversionInstruction(const MachineInstr &MI) {
   case ARMII::VFPConv1Frm:
     // Encode Dm / Sm.
     Binary |= encodeVFPRm(MI, 1);
+    break;
   case ARMII::VFPConv2Frm:
   case ARMII::VFPConv3Frm:
     // Encode Dn / Sn.
