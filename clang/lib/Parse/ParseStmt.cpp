@@ -170,9 +170,10 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   // If we reached this code, the statement must end in a semicolon.
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-  } else {
+  } else if (!Res.isInvalid) {
     Diag(Tok, diag::err_expected_semi_after, SemiError);
-    SkipUntil(tok::semi);
+    // Skip until we see a } or ;, but don't eat it.
+    SkipUntil(tok::r_brace, true, true);
   }
   return Res;
 }
@@ -717,8 +718,8 @@ Parser::StmtResult Parser::ParseDoStatement() {
   // The substatement in an iteration-statement implicitly defines a local scope
   // which is entered and exited each time through the loop.
   //
-  bool NeedsInnerScope = (getLang().C99 || getLang().CPlusPlus) &&
-                         Tok.isNot(tok::l_brace);
+  bool NeedsInnerScope =
+    (getLang().C99 || getLang().CPlusPlus) && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
@@ -729,9 +730,11 @@ Parser::StmtResult Parser::ParseDoStatement() {
 
   if (Tok.isNot(tok::kw_while)) {
     ExitScope();
-    Diag(Tok, diag::err_expected_while);
-    Diag(DoLoc, diag::err_matching, "do");
-    SkipUntil(tok::semi);
+    if (!Body.isInvalid) {
+      Diag(Tok, diag::err_expected_while);
+      Diag(DoLoc, diag::err_matching, "do");
+      SkipUntil(tok::semi, false, true);
+    }
     return true;
   }
   SourceLocation WhileLoc = ConsumeToken();
@@ -739,7 +742,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   if (Tok.isNot(tok::l_paren)) {
     ExitScope();
     Diag(Tok, diag::err_expected_lparen_after, "do/while");
-    SkipUntil(tok::semi);
+    SkipUntil(tok::semi, false, true);
     return true;
   }
   

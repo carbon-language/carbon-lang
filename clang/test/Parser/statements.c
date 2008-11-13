@@ -47,3 +47,10 @@ void test5() {
   if (0);  // expected-warning {{if statement has empty body}}
 }
 
+
+void test6(void) { 
+  do 
+    .           // expected-error {{expected expression}}
+   while (0);
+}
+
