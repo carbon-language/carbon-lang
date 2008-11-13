@@ -192,9 +192,11 @@
      OPTSIZE = 408,
      NOINLINE = 409,
      ALWAYSINLINE = 410,
-     DEFAULT = 411,
-     HIDDEN = 412,
-     PROTECTED = 413
+     SSP = 411,
+     SSPREQ = 412,
+     DEFAULT = 413,
+     HIDDEN = 414,
+     PROTECTED = 415
    };
 #endif
 /* Tokens.  */
@@ -351,16 +353,18 @@
 #define OPTSIZE 408
 #define NOINLINE 409
 #define ALWAYSINLINE 410
-#define DEFAULT 411
-#define HIDDEN 412
-#define PROTECTED 413
+#define SSP 411
+#define SSPREQ 412
+#define DEFAULT 413
+#define HIDDEN 414
+#define PROTECTED 415
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 986 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 986 "/Volumes/Gir/devel/llvm/llvm.src/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -408,8 +412,8 @@ typedef union YYSTYPE
   llvm::ICmpInst::Predicate         IPredicate;
   llvm::FCmpInst::Predicate         FPredicate;
 }
-/* Line 1489 of yacc.c.  */
-#line 413 "llvmAsmParser.tab.h"
+/* Line 1529 of yacc.c.  */
+#line 417 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
