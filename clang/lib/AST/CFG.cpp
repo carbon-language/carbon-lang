@@ -840,7 +840,7 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   
   // Now create the true branch.
   Succ = ConditionBlock;
-  CFGBlock* BodyBlock = addStmt(S->getBody());
+  CFGBlock* BodyBlock = Visit(S->getBody());
   FinishBlock(BodyBlock);
   
   // Connect up the condition block
