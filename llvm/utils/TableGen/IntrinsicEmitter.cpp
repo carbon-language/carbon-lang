@@ -222,7 +222,7 @@ namespace {
           return (*LHSVec)[i]->getName() < (*RHSVec)[i]->getName();
       } while (++i != LHSSize);
 
-      if (i != RHSSize) return false;
+      if (i != RHSSize) return true;
 
       i = 0;
       LHSVec = &LHS.second;
