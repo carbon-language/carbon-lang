@@ -1308,6 +1308,15 @@ public:
     SDVTList X = { ValueList, NumValues };
     return X;
   };
+
+  /// getFlaggedNode - If this node has a flag operand, return the node
+  /// to which the flag operand points. Otherwise return NULL.
+  SDNode *getFlaggedNode() const {
+    if (getNumOperands() != 0 &&
+        getOperand(getNumOperands()-1).getValueType() == MVT::Flag)
+      return getOperand(getNumOperands()-1).getNode();
+    return 0;
+  }
   
   /// getNumValues - Return the number of values defined/returned by this
   /// operator.

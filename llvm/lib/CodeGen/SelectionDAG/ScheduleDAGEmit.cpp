@@ -684,8 +684,13 @@ MachineBasicBlock *ScheduleDAG::EmitSchedule() {
       EmitNoop();
       continue;
     }
-    for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; ++j)
-      EmitNode(SU->FlaggedNodes[j], SU->OrigNode != SU, VRBaseMap);
+    SmallVector<SDNode *, 4> FlaggedNodes;
+    for (SDNode *N = SU->getNode()->getFlaggedNode(); N; N = N->getFlaggedNode())
+      FlaggedNodes.push_back(N);
+    while (!FlaggedNodes.empty()) {
+      EmitNode(FlaggedNodes.back(), SU->OrigNode != SU, VRBaseMap);
+      FlaggedNodes.pop_back();
+    }
     if (!SU->getNode())
       EmitCrossRCCopy(SU, CopyVRBaseMap);
     else

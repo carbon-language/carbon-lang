@@ -95,7 +95,6 @@ namespace llvm {
   private:
     SDNode *Node;                       // Representative node.
   public:
-    SmallVector<SDNode*,4> FlaggedNodes;// All nodes flagged to Node.
     SUnit *OrigNode;                    // If not this, the node from which
                                         // this node was cloned.
     

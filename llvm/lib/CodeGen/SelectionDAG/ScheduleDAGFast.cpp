@@ -221,7 +221,7 @@ bool ScheduleDAGFast::RemovePred(SUnit *M, SUnit *N,
 /// CopyAndMoveSuccessors - Clone the specified node and move its scheduled
 /// successors to the newly created node.
 SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
-  if (SU->FlaggedNodes.size())
+  if (SU->getNode()->getFlaggedNode())
     return NULL;
 
   SDNode *N = SU->getNode();
@@ -485,9 +485,8 @@ bool ScheduleDAGFast::DelayForLiveRegsBottomUp(SUnit *SU,
     }
   }
 
-  for (unsigned i = 0, e = SU->FlaggedNodes.size()+1; i != e; ++i) {
-    SDNode *Node = (i == 0) ? SU->getNode() : SU->FlaggedNodes[i-1];
-    if (!Node || !Node->isMachineOpcode())
+  for (SDNode *Node = SU->getNode(); Node; Node = Node->getFlaggedNode()) {
+    if (!Node->isMachineOpcode())
       continue;
     const TargetInstrDesc &TID = TII->get(Node->getMachineOpcode());
     if (!TID.ImplicitDefs)

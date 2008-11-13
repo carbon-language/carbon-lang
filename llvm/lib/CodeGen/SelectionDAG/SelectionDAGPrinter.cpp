@@ -433,15 +433,18 @@ std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
                                                        const ScheduleDAG *G) {
   std::string Op;
 
-  for (unsigned i = 0; i < SU->FlaggedNodes.size(); ++i) {
-    Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(SU->FlaggedNodes[i],
-                                                      G->DAG) + "\n";
+  if (!SU->getNode())
+    Op = "<CROSS RC COPY>";
+  else {
+    SmallVector<SDNode *, 4> FlaggedNodes;
+    for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
+      FlaggedNodes.push_back(N);
+    while (!FlaggedNodes.empty()) {
+      Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(FlaggedNodes.back(),
+                                                        G->DAG) + "\n";
+      FlaggedNodes.pop_back();
+    }
   }
-
-  if (SU->getNode())
-    Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(SU->getNode(), G->DAG);
-  else
-    Op += "<CROSS RC COPY>";
 
   return Op;
 }

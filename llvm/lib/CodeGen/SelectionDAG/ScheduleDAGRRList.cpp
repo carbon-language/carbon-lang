@@ -626,7 +626,7 @@ void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, unsigned BtCycle,
 /// CopyAndMoveSuccessors - Clone the specified node and move its scheduled
 /// successors to the newly created node.
 SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
-  if (SU->FlaggedNodes.size())
+  if (SU->getNode()->getFlaggedNode())
     return NULL;
 
   SDNode *N = SU->getNode();
@@ -903,9 +903,8 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
     }
   }
 
-  for (unsigned i = 0, e = SU->FlaggedNodes.size()+1; i != e; ++i) {
-    SDNode *Node = (i == 0) ? SU->getNode() : SU->FlaggedNodes[i-1];
-    if (!Node || !Node->isMachineOpcode())
+  for (SDNode *Node = SU->getNode(); Node; Node = Node->getFlaggedNode()) {
+    if (!Node->isMachineOpcode())
       continue;
     const TargetInstrDesc &TID = TII->get(Node->getMachineOpcode());
     if (!TID.ImplicitDefs)
@@ -1736,7 +1735,7 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
       continue;
 
     SDNode *Node = SU->getNode();
-    if (!Node || !Node->isMachineOpcode() || SU->FlaggedNodes.size() > 0)
+    if (!Node || !Node->isMachineOpcode() || SU->getNode()->getFlaggedNode())
       continue;
 
     unsigned Opc = Node->getMachineOpcode();
