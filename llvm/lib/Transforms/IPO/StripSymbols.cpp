@@ -56,13 +56,23 @@ ModulePass *llvm::createStripSymbolsPass(bool OnlyDebugInfo) {
   return new StripSymbols(OnlyDebugInfo);
 }
 
+/// OnlyUsedBy - Return true if V is only used by Usr.
+static bool OnlyUsedBy(Value *V, Value *Usr) {
+  for(Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I) {
+    User *U = *I;
+    if (U != Usr)
+      return false;
+  }
+  return true;
+}
+
 static void RemoveDeadConstant(Constant *C) {
   assert(C->use_empty() && "Constant is not dead!");
-  std::vector<Constant*> Operands;
+  SmallPtrSet<Constant *, 4> Operands;
   for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
     if (isa<DerivedType>(C->getOperand(i)->getType()) &&
-        C->getOperand(i)->hasOneUse())
-      Operands.push_back(C->getOperand(i));
+        OnlyUsedBy(C->getOperand(i), C)) 
+      Operands.insert(C->getOperand(i));
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
     if (!GV->hasInternalLinkage()) return;   // Don't delete non static globals.
     GV->eraseFromParent();
@@ -71,10 +81,9 @@ static void RemoveDeadConstant(Constant *C) {
     C->destroyConstant();
 
   // If the constant referenced anything, see if we can delete it as well.
-  while (!Operands.empty()) {
-    RemoveDeadConstant(Operands.back());
-    Operands.pop_back();
-  }
+  for (SmallPtrSet<Constant *, 4>::iterator OI = Operands.begin(),
+         OE = Operands.end(); OI != OE; ++OI)
+    RemoveDeadConstant(*OI);
 }
 
 // Strip the symbol table of its names.
@@ -145,8 +154,6 @@ bool StripSymbols::runOnModule(Module &M) {
   Function *RegionStart = M.getFunction("llvm.dbg.region.start");
   Function *RegionEnd = M.getFunction("llvm.dbg.region.end");
   Function *Declare = M.getFunction("llvm.dbg.declare");
-  if (!FuncStart && !StopPoint && !RegionStart && !RegionEnd && !Declare)
-    return true;
 
   std::vector<GlobalVariable*> DeadGlobals;
 
@@ -213,8 +220,30 @@ bool StripSymbols::runOnModule(Module &M) {
     Declare->eraseFromParent();
   }
 
-  // Finally, delete any internal globals that were only used by the debugger
-  // intrinsics.
+  // llvm.dbg.compile_units and llvm.dbg.subprograms are marked as linkonce
+  // but since we are removing all debug information, make them internal now.
+  if (Constant *C = M.getNamedGlobal("llvm.dbg.compile_units"))
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+      GV->setLinkage(GlobalValue::InternalLinkage);
+
+  if (Constant *C = M.getNamedGlobal("llvm.dbg.subprograms"))
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+      GV->setLinkage(GlobalValue::InternalLinkage);
+
+  // Delete all dbg variables.
+  const Type *DbgVTy = M.getTypeByName("llvm.dbg.variable.type");
+  const Type *DbgGVTy = M.getTypeByName("llvm.dbg.global_variable.type");
+  if (DbgVTy || DbgGVTy)
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
+         I != E; ++I) 
+      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(I))
+        if (GV->hasName() && GV->use_empty()
+            && !strncmp(GV->getNameStart(), "llvm.dbg", 8)
+            && (GV->getType()->getElementType() == DbgVTy
+                || GV->getType()->getElementType() == DbgGVTy))
+          DeadGlobals.push_back(GV);
+
+  // Delete any internal globals that were only used by the debugger intrinsics.
   while (!DeadGlobals.empty()) {
     GlobalVariable *GV = DeadGlobals.back();
     DeadGlobals.pop_back();
@@ -222,5 +251,17 @@ bool StripSymbols::runOnModule(Module &M) {
       RemoveDeadConstant(GV);
   }
 
+  // Remove all llvm.dbg types.
+  TypeSymbolTable &ST = M.getTypeSymbolTable();
+  TypeSymbolTable::iterator TI = ST.begin();
+  TypeSymbolTable::iterator TE = ST.end();
+  while ( TI != TE ) {
+    const std::string &Name = TI->first;
+    if (!strncmp(Name.c_str(), "llvm.dbg.", 9))
+      ST.remove(TI++);
+    else 
+      ++TI;
+  }
+  
   return true;
 }
