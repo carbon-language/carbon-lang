@@ -851,7 +851,7 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   FinishBlock(BodyBlock);
   
   // Connect up the condition block
-  ConditionBlock->addSuccessor(Block);
+  ConditionBlock->addSuccessor(BodyBlock);
   ConditionBlock->addSuccessor(LoopSuccessor);
   
   // Now create a prologue block to contain the collection expression.
