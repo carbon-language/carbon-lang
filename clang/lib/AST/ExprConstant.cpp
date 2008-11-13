@@ -376,6 +376,7 @@ public:
   }
   bool VisitDeclRefExpr(const DeclRefExpr *E);
   bool VisitCallExpr(const CallExpr *E);
+  bool VisitBinOpComma(const BinaryOperator *E);
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
 
@@ -480,7 +481,37 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   }
 }
 
+bool IntExprEvaluator::VisitBinOpComma(const BinaryOperator *E) {
+  llvm::APSInt RHS(32);
+
+  // Require that we be able to evaluate the LHS.
+  if (!E->getLHS()->isEvaluatable(Info.Ctx))
+    return false;
+
+  bool OldEval = Info.isEvaluated;
+  if (!EvaluateInteger(E->getRHS(), RHS, Info))
+    return false;
+  Info.isEvaluated = OldEval;
+
+  // Result of the comma is just the result of the RHS.
+  Result = RHS;
+  
+  // C99 6.6p3: "shall not contain assignment, ..., or comma operators,
+  // *except* when they are contained within a subexpression that is not
+  // evaluated".  Note that Assignment can never happen due to constraints
+  // on the LHS subexpr, so we don't need to check it here.
+  if (!Info.isEvaluated)
+    return true;
+
+  // If the value is evaluated, we can accept it as an extension.
+  return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr);
+}
+
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
+  // Comma operator requires special handling.
+  if (E->getOpcode() == BinaryOperator::Comma)
+    return VisitBinOpComma(E);
+  
   // The LHS of a constant expr is always evaluated and needed.
   llvm::APSInt RHS(32);
   if (!Visit(E->getLHS())) {
@@ -585,22 +616,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     Result = Result != 0 || RHS != 0;
     Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
     break;
-      
-    
-  case BinaryOperator::Comma:
-    // Result of the comma is just the result of the RHS.
-    Result = RHS;
-
-    // C99 6.6p3: "shall not contain assignment, ..., or comma operators,
-    // *except* when they are contained within a subexpression that is not
-    // evaluated".  Note that Assignment can never happen due to constraints
-    // on the LHS subexpr, so we don't need to check it here.
-    if (!Info.isEvaluated)
-      return true;
-      
-    // If the value is evaluated, we can accept it as an extension.
-    return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr);
-  }
+}
 
   Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
   return true;

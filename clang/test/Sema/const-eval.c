@@ -11,3 +11,5 @@ struct y {int x,y;};
 EVAL_EXPR(6, (int)(1+(struct y*)0))
 EVAL_EXPR(7, (int)&((struct y*)0)->y)
 EVAL_EXPR(8, (_Bool)"asdf")
+void g0(void);
+EVAL_EXPR(9, (g0(), 12)) // expected-error {{fields must have a constant size}}
