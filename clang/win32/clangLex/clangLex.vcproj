@@ -207,6 +207,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Lex\PreprocessorLexer.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Lex\ScratchBuffer.cpp"
 				>
 			</File>
