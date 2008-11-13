@@ -60,6 +60,9 @@ extern "C" {
     // whole compilation callback doesn't exist as far as the caller is
     // concerned, so we can't just preserve the callee saved regs.
     "stmdb sp!, {r0, r1, r2, r3, lr}\n"
+#ifdef __APPLE__ 
+    "fstmfdd sp!, {d0, d1, d2, d3, d4, d5, d6, d7}\n"
+#endif
     // The LR contains the address of the stub function on entry.
     // pass it as the argument to the C part of the callback
     "mov  r0, lr\n"
@@ -77,7 +80,13 @@ extern "C" {
     //      +--------+    
     //   1  | LR     | Stub address (start of stub)
     // 2-5  | R3..R0 | Saved registers (we need to preserve all regs)
+    // 6-20 | D0..D7 | Saved VFP registers
     //      +--------+    
+    //
+#ifdef __APPLE__ 
+    // Restore VFP caller-saved registers.
+    "fldmfdd sp!, {d0, d1, d2, d3, d4, d5, d6, d7}\n"
+#endif
     //
     //      We need to exchange the values in slots 0 and 1 so we can
     //      return to the address in slot 1 with the address in slot 0
