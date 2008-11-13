@@ -610,6 +610,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Utils\DbgInfoUtils.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Utils\DemoteRegToStack.cpp"
 					>
 				</File>
