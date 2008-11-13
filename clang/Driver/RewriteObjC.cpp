@@ -3731,7 +3731,7 @@ void RewriteObjC::CollectBlockDeclRefInfo(BlockExpr *Exp) {
     // Find any imported blocks...they will need special attention.
     for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
       if (isBlockPointerType(BlockDeclRefs[i]->getType())) {
-        GetBlockCallExprs(Blocks[i]);
+        GetBlockCallExprs(BlockDeclRefs[i]);
         ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
       }
   }
