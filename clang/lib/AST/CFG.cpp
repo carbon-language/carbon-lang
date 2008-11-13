@@ -839,7 +839,14 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   ConditionBlock->setTerminator(S); // No need to call FinishBlock; 1 stmt
   
   // Now create the true branch.
+  // Save the current values for the continue and break targets
+  SaveAndRestore<CFGBlock*> save_continue(ContinueTargetBlock),
+                            save_break(BreakTargetBlock); 
+  
+  BreakTargetBlock = LoopSuccessor;
+  ContinueTargetBlock = ConditionBlock;  
   Succ = ConditionBlock;
+  
   CFGBlock* BodyBlock = Visit(S->getBody());
   FinishBlock(BodyBlock);
   
