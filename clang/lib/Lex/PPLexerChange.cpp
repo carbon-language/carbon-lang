@@ -86,12 +86,10 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
     
   // Add the current lexer to the include stack.
   if (CurLexer || CurTokenLexer)
-    IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
-                                                 CurTokenLexer));
-  
+    PushIncludeMacroStack();
+
   CurLexer = TheLexer;
   CurDirLookup = CurDir;
-  CurTokenLexer = 0;
   
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks && !CurLexer->Is_PragmaLexer) {
@@ -108,9 +106,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
 /// tokens from it instead of the current buffer.
 void Preprocessor::EnterMacro(Token &Tok, MacroArgs *Args) {
-  IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
-                                               CurTokenLexer));
-  CurLexer     = 0;
+  PushIncludeMacroStack();
   CurDirLookup = 0;
   
   if (NumCachedTokenLexers == 0) {
@@ -137,9 +133,7 @@ void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks,
                                     bool DisableMacroExpansion,
                                     bool OwnsTokens) {
   // Save our current state.
-  IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
-                                               CurTokenLexer));
-  CurLexer     = 0;
+  PushIncludeMacroStack();
   CurDirLookup = 0;
 
   // Create a macro expander to expand from the specified token stream.
@@ -257,10 +251,8 @@ void Preprocessor::RemoveTopOfLexerStack() {
   } else {
     delete CurLexer;
   }
-  CurLexer      = IncludeMacroStack.back().TheLexer;
-  CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
-  CurTokenLexer = IncludeMacroStack.back().TheTokenLexer;
-  IncludeMacroStack.pop_back();
+  
+  PopIncludeMacroStack();
 }
 
 /// HandleMicrosoftCommentPaste - When the macro expander pastes together a
