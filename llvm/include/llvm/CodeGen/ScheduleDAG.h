@@ -239,7 +239,7 @@ namespace llvm {
 
   class ScheduleDAG {
   public:
-    SelectionDAG &DAG;                    // DAG of the current basic block
+    SelectionDAG *DAG;                    // DAG of the current basic block
     MachineBasicBlock *BB;                // Current basic block
     const TargetMachine &TM;              // Target processor
     const TargetInstrInfo *TII;           // Target instruction information
@@ -253,7 +253,7 @@ namespace llvm {
     std::vector<SUnit> SUnits;            // The scheduling units.
     SmallSet<SDNode*, 16> CommuteSet;     // Nodes that should be commuted.
 
-    ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
+    ScheduleDAG(SelectionDAG *dag, MachineBasicBlock *bb,
                 const TargetMachine &tm);
 
     virtual ~ScheduleDAG() {}

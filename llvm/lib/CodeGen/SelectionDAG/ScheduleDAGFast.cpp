@@ -71,7 +71,7 @@ private:
   std::vector<unsigned> LiveRegCycles;
 
 public:
-  ScheduleDAGFast(SelectionDAG &dag, MachineBasicBlock *bb,
+  ScheduleDAGFast(SelectionDAG *dag, MachineBasicBlock *bb,
                   const TargetMachine &tm)
     : ScheduleDAG(dag, bb, tm) {}
 
@@ -125,7 +125,7 @@ void ScheduleDAGFast::Schedule() {
   BuildSchedUnits();
 
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
-          SUnits[su].dumpAll(&DAG));
+          SUnits[su].dumpAll(DAG));
 
   // Execute the actual scheduling loop.
   ListScheduleBottomUp();
@@ -150,7 +150,7 @@ void ScheduleDAGFast::ReleasePred(SUnit *PredSU, bool isChain,
 #ifndef NDEBUG
   if (PredSU->NumSuccsLeft < 0) {
     cerr << "*** List scheduling failed! ***\n";
-    PredSU->dump(&DAG);
+    PredSU->dump(DAG);
     cerr << " has been released too many times!\n";
     assert(0);
   }
@@ -167,7 +167,7 @@ void ScheduleDAGFast::ReleasePred(SUnit *PredSU, bool isChain,
 /// the Available queue.
 void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
-  DEBUG(SU->dump(&DAG));
+  DEBUG(SU->dump(DAG));
   SU->Cycle = CurCycle;
 
   // Bottom up: release predecessors
@@ -246,7 +246,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
 
   if (TryUnfold) {
     SmallVector<SDNode*, 2> NewNodes;
-    if (!TII->unfoldMemoryOperand(DAG, N, NewNodes))
+    if (!TII->unfoldMemoryOperand(*DAG, N, NewNodes))
       return NULL;
 
     DOUT << "Unfolding SU # " << SU->NodeNum << "\n";
@@ -257,9 +257,9 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     unsigned NumVals = N->getNumValues();
     unsigned OldNumVals = SU->Node->getNumValues();
     for (unsigned i = 0; i != NumVals; ++i)
-      DAG.ReplaceAllUsesOfValueWith(SDValue(SU->Node, i), SDValue(N, i));
-    DAG.ReplaceAllUsesOfValueWith(SDValue(SU->Node, OldNumVals-1),
-                                  SDValue(LoadNode, 1));
+      DAG->ReplaceAllUsesOfValueWith(SDValue(SU->Node, i), SDValue(N, i));
+    DAG->ReplaceAllUsesOfValueWith(SDValue(SU->Node, OldNumVals-1),
+                                   SDValue(LoadNode, 1));
 
     SUnit *NewSU = CreateNewSUnit(N);
     assert(N->getNodeId() == -1 && "Node already inserted!");
@@ -515,7 +515,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
   unsigned CurCycle = 0;
   // Add root to Available queue.
   if (!SUnits.empty()) {
-    SUnit *RootSU = &SUnits[DAG.getRoot().getNode()->getNodeId()];
+    SUnit *RootSU = &SUnits[DAG->getRoot().getNode()->getNodeId()];
     assert(RootSU->Succs.empty() && "Graph root shouldn't have successors!");
     RootSU->isAvailable = true;
     AvailableQueue.push(RootSU);
@@ -625,14 +625,14 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
       }
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(&DAG);
+      SUnits[i].dump(DAG);
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
     if (SUnits[i].NumSuccsLeft != 0) {
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(&DAG);
+      SUnits[i].dump(DAG);
       cerr << "has successors left!\n";
       AnyNotSched = true;
     }
@@ -654,5 +654,5 @@ llvm::ScheduleDAG* llvm::createFastDAGScheduler(SelectionDAGISel *IS,
                                                 SelectionDAG *DAG,
                                                 const TargetMachine *TM,
                                                 MachineBasicBlock *BB, bool) {
-  return new ScheduleDAGFast(*DAG, BB, *TM);
+  return new ScheduleDAGFast(DAG, BB, *TM);
 }

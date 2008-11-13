@@ -74,7 +74,7 @@ private:
   std::vector<unsigned> LiveRegCycles;
 
 public:
-  ScheduleDAGRRList(SelectionDAG &dag, MachineBasicBlock *bb,
+  ScheduleDAGRRList(SelectionDAG *dag, MachineBasicBlock *bb,
                     const TargetMachine &tm, bool isbottomup, bool f,
                     SchedulingPriorityQueue *availqueue)
     : ScheduleDAG(dag, bb, tm), isBottomUp(isbottomup), Fast(f),
@@ -186,7 +186,7 @@ void ScheduleDAGRRList::Schedule() {
   BuildSchedUnits();
 
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
-          SUnits[su].dumpAll(&DAG));
+          SUnits[su].dumpAll(DAG));
   if (!Fast) {
     CalculateDepths();
     CalculateHeights();
@@ -278,7 +278,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain,
 #ifndef NDEBUG
   if (PredSU->NumSuccsLeft < 0) {
     cerr << "*** List scheduling failed! ***\n";
-    PredSU->dump(&DAG);
+    PredSU->dump(DAG);
     cerr << " has been released too many times!\n";
     assert(0);
   }
@@ -295,7 +295,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain,
 /// the Available queue.
 void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
-  DEBUG(SU->dump(&DAG));
+  DEBUG(SU->dump(DAG));
   SU->Cycle = CurCycle;
 
   AvailableQueue->ScheduledNode(SU);
@@ -362,7 +362,7 @@ void ScheduleDAGRRList::CapturePred(SUnit *PredSU, SUnit *SU, bool isChain) {
 /// its predecessor states to reflect the change.
 void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   DOUT << "*** Unscheduling [" << SU->Cycle << "]: ";
-  DEBUG(SU->dump(&DAG));
+  DEBUG(SU->dump(DAG));
 
   AvailableQueue->UnscheduledNode(SU);
 
@@ -651,7 +651,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
 
   if (TryUnfold) {
     SmallVector<SDNode*, 2> NewNodes;
-    if (!TII->unfoldMemoryOperand(DAG, N, NewNodes))
+    if (!TII->unfoldMemoryOperand(*DAG, N, NewNodes))
       return NULL;
 
     DOUT << "Unfolding SU # " << SU->NodeNum << "\n";
@@ -662,9 +662,9 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     unsigned NumVals = N->getNumValues();
     unsigned OldNumVals = SU->Node->getNumValues();
     for (unsigned i = 0; i != NumVals; ++i)
-      DAG.ReplaceAllUsesOfValueWith(SDValue(SU->Node, i), SDValue(N, i));
-    DAG.ReplaceAllUsesOfValueWith(SDValue(SU->Node, OldNumVals-1),
-                                  SDValue(LoadNode, 1));
+      DAG->ReplaceAllUsesOfValueWith(SDValue(SU->Node, i), SDValue(N, i));
+    DAG->ReplaceAllUsesOfValueWith(SDValue(SU->Node, OldNumVals-1),
+                                   SDValue(LoadNode, 1));
 
     // LoadNode may already exist. This can happen when there is another
     // load from the same location and producing the same type of value
@@ -933,7 +933,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   unsigned CurCycle = 0;
   // Add root to Available queue.
   if (!SUnits.empty()) {
-    SUnit *RootSU = &SUnits[DAG.getRoot().getNode()->getNodeId()];
+    SUnit *RootSU = &SUnits[DAG->getRoot().getNode()->getNodeId()];
     assert(RootSU->Succs.empty() && "Graph root shouldn't have successors!");
     RootSU->isAvailable = true;
     AvailableQueue->push(RootSU);
@@ -1079,14 +1079,14 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
       }
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(&DAG);
+      SUnits[i].dump(DAG);
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
     if (SUnits[i].NumSuccsLeft != 0) {
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(&DAG);
+      SUnits[i].dump(DAG);
       cerr << "has successors left!\n";
       AnyNotSched = true;
     }
@@ -1119,7 +1119,7 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SuccSU, bool isChain,
 #ifndef NDEBUG
   if (SuccSU->NumPredsLeft < 0) {
     cerr << "*** List scheduling failed! ***\n";
-    SuccSU->dump(&DAG);
+    SuccSU->dump(DAG);
     cerr << " has been released too many times!\n";
     assert(0);
   }
@@ -1137,7 +1137,7 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SuccSU, bool isChain,
 /// the Available queue.
 void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
-  DEBUG(SU->dump(&DAG));
+  DEBUG(SU->dump(DAG));
   SU->Cycle = CurCycle;
 
   AvailableQueue->ScheduledNode(SU);
@@ -1201,14 +1201,14 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
       }
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(&DAG);
+      SUnits[i].dump(DAG);
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
     if (SUnits[i].NumPredsLeft != 0) {
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(&DAG);
+      SUnits[i].dump(DAG);
       cerr << "has predecessors left!\n";
       AnyNotSched = true;
     }
@@ -1885,7 +1885,7 @@ llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
                                                     MachineBasicBlock *BB,
                                                     bool Fast) {
   if (Fast)
-    return new ScheduleDAGRRList(*DAG, BB, *TM, true, true,
+    return new ScheduleDAGRRList(DAG, BB, *TM, true, true,
                                  new BURegReductionFastPriorityQueue());
 
   const TargetInstrInfo *TII = TM->getInstrInfo();
@@ -1894,7 +1894,7 @@ llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
   BURegReductionPriorityQueue *PQ = new BURegReductionPriorityQueue(TII, TRI);
 
   ScheduleDAGRRList *SD =
-    new ScheduleDAGRRList(*DAG, BB, *TM, true, false, PQ);
+    new ScheduleDAGRRList(DAG, BB, *TM, true, false, PQ);
   PQ->setScheduleDAG(SD);
   return SD;  
 }
@@ -1904,6 +1904,6 @@ llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
                                                     const TargetMachine *TM,
                                                     MachineBasicBlock *BB,
                                                     bool Fast) {
-  return new ScheduleDAGRRList(*DAG, BB, *TM, false, Fast,
+  return new ScheduleDAGRRList(DAG, BB, *TM, false, Fast,
                                new TDRegReductionPriorityQueue());
 }

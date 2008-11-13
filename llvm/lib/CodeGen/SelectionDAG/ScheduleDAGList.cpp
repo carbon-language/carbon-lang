@@ -62,7 +62,7 @@ private:
   HazardRecognizer *HazardRec;
 
 public:
-  ScheduleDAGList(SelectionDAG &dag, MachineBasicBlock *bb,
+  ScheduleDAGList(SelectionDAG *dag, MachineBasicBlock *bb,
                   const TargetMachine &tm,
                   SchedulingPriorityQueue *availqueue,
                   HazardRecognizer *HR)
@@ -142,7 +142,7 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
 /// the Available queue.
 void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
-  DEBUG(SU->dump(&DAG));
+  DEBUG(SU->dump(DAG));
   
   Sequence.push_back(SU);
   SU->Cycle = CurCycle;
@@ -264,7 +264,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
     if (SUnits[i].NumPredsLeft != 0) {
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(&DAG);
+      SUnits[i].dump(DAG);
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
@@ -543,7 +543,7 @@ ScheduleDAG* llvm::createTDListDAGScheduler(SelectionDAGISel *IS,
                                             SelectionDAG *DAG,
                                             const TargetMachine *TM,
                                             MachineBasicBlock *BB, bool Fast) {
-  return new ScheduleDAGList(*DAG, BB, *TM,
+  return new ScheduleDAGList(DAG, BB, *TM,
                              new LatencyPriorityQueue(),
                              IS->CreateTargetHazardRecognizer());
 }

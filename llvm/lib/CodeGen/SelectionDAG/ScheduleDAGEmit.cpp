@@ -260,7 +260,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
       if (RC && VRC != RC) {
         cerr << "Register class of operand and regclass of use don't agree!\n";
         cerr << "Operand = " << IIOpNum << "\n";
-        cerr << "Op->Val = "; Op.getNode()->dump(&DAG); cerr << "\n";
+        cerr << "Op->Val = "; Op.getNode()->dump(DAG); cerr << "\n";
         cerr << "MI = "; MI->print(cerr);
         cerr << "VReg = " << VReg << "\n";
         cerr << "VReg RegClass     size = " << VRC->getSize()
@@ -540,7 +540,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
   switch (Node->getOpcode()) {
   default:
 #ifndef NDEBUG
-    Node->dump(&DAG);
+    Node->dump(DAG);
 #endif
     assert(0 && "This target-independent node should have been selected!");
     break;

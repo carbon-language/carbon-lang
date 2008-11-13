@@ -20,7 +20,7 @@
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
-ScheduleDAG::ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
+ScheduleDAG::ScheduleDAG(SelectionDAG *dag, MachineBasicBlock *bb,
                          const TargetMachine &tm)
   : DAG(dag), BB(bb), TM(tm), MRI(BB->getParent()->getRegInfo()) {
   TII = TM.getInstrInfo();
@@ -76,17 +76,17 @@ void ScheduleDAG::BuildSchedUnits() {
   // Reserve entries in the vector for each of the SUnits we are creating.  This
   // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
   // invalidated.
-  SUnits.reserve(DAG.allnodes_size());
+  SUnits.reserve(DAG->allnodes_size());
   
   // During scheduling, the NodeId field of SDNode is used to map SDNodes
   // to their associated SUnits by holding SUnits table indices. A value
   // of -1 means the SDNode does not yet have an associated SUnit.
-  for (SelectionDAG::allnodes_iterator NI = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); NI != E; ++NI)
+  for (SelectionDAG::allnodes_iterator NI = DAG->allnodes_begin(),
+       E = DAG->allnodes_end(); NI != E; ++NI)
     NI->setNodeId(-1);
 
-  for (SelectionDAG::allnodes_iterator NI = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); NI != E; ++NI) {
+  for (SelectionDAG::allnodes_iterator NI = DAG->allnodes_begin(),
+       E = DAG->allnodes_end(); NI != E; ++NI) {
     if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
       continue;
     
@@ -376,7 +376,7 @@ unsigned ScheduleDAG::ComputeMemOperandsEnd(SDNode *Node) {
 void ScheduleDAG::dumpSchedule() const {
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i])
-      SU->dump(&DAG);
+      SU->dump(DAG);
     else
       cerr << "**** NOOP ****\n";
   }

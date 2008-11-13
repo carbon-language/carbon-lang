@@ -387,7 +387,7 @@ namespace llvm {
   template<>
   struct DOTGraphTraits<ScheduleDAG*> : public DefaultDOTGraphTraits {
     static std::string getGraphName(const ScheduleDAG *G) {
-      return DOTGraphTraits<SelectionDAG*>::getGraphName(&G->DAG);
+      return DOTGraphTraits<SelectionDAG*>::getGraphName(G->DAG);
     }
 
     static bool renderGraphFromBottomUp() {
@@ -421,7 +421,7 @@ namespace llvm {
     static void addCustomGraphFeatures(ScheduleDAG *G,
                                        GraphWriter<ScheduleDAG*> &GW) {
       GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
-      const SDNode *N = G->DAG.getRoot().getNode();
+      const SDNode *N = G->DAG->getRoot().getNode();
       if (N && N->getNodeId() != -1)
         GW.emitEdge(0, -1, &G->SUnits[N->getNodeId()], -1,
                     "color=blue,style=dashed");
@@ -435,11 +435,11 @@ std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
 
   for (unsigned i = 0; i < SU->FlaggedNodes.size(); ++i) {
     Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(SU->FlaggedNodes[i],
-                                                      &G->DAG) + "\n";
+                                                      G->DAG) + "\n";
   }
 
   if (SU->Node)
-    Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(SU->Node, &G->DAG);
+    Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(SU->Node, G->DAG);
   else
     Op += "<CROSS RC COPY>";
 
