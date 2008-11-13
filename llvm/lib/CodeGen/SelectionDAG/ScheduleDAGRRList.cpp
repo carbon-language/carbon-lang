@@ -215,9 +215,9 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
   for (unsigned i = Sequence.size(); i != 0; ) {
     --i;
     SUnit *SU = Sequence[i];
-    if (!SU || !SU->Node) continue;
+    if (!SU || !SU->getNode()) continue;
     if (SU->isCommutable) {
-      unsigned Opc = SU->Node->getMachineOpcode();
+      unsigned Opc = SU->getNode()->getMachineOpcode();
       const TargetInstrDesc &TID = TII->get(Opc);
       unsigned NumRes = TID.getNumDefs();
       unsigned NumOps = TID.getNumOperands() - NumRes;
@@ -225,7 +225,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
         if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) == -1)
           continue;
 
-        SDNode *OpN = SU->Node->getOperand(j).getNode();
+        SDNode *OpN = SU->getNode()->getOperand(j).getNode();
         SUnit *OpSU = isPassiveNode(OpN) ? NULL : &SUnits[OpN->getNodeId()];
         if (OpSU && OperandSeen.count(OpSU) == 1) {
           // Ok, so SU is not the last use of OpSU, but SU is two-address so
@@ -234,7 +234,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
           bool DoCommute = true;
           for (unsigned k = 0; k < NumOps; ++k) {
             if (k != j) {
-              OpN = SU->Node->getOperand(k).getNode();
+              OpN = SU->getNode()->getOperand(k).getNode();
               OpSU = isPassiveNode(OpN) ? NULL : &SUnits[OpN->getNodeId()];
               if (OpSU && OperandSeen.count(OpSU) == 1) {
                 DoCommute = false;
@@ -243,7 +243,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
             }
           }
           if (DoCommute)
-            CommuteSet.insert(SU->Node);
+            CommuteSet.insert(SU->getNode());
         }
 
         // Only look at the first use&def node for now.
@@ -629,7 +629,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   if (SU->FlaggedNodes.size())
     return NULL;
 
-  SDNode *N = SU->Node;
+  SDNode *N = SU->getNode();
   if (!N)
     return NULL;
 
@@ -660,10 +660,10 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     N = NewNodes[1];
     SDNode *LoadNode = NewNodes[0];
     unsigned NumVals = N->getNumValues();
-    unsigned OldNumVals = SU->Node->getNumValues();
+    unsigned OldNumVals = SU->getNode()->getNumValues();
     for (unsigned i = 0; i != NumVals; ++i)
-      DAG->ReplaceAllUsesOfValueWith(SDValue(SU->Node, i), SDValue(N, i));
-    DAG->ReplaceAllUsesOfValueWith(SDValue(SU->Node, OldNumVals-1),
+      DAG->ReplaceAllUsesOfValueWith(SDValue(SU->getNode(), i), SDValue(N, i));
+    DAG->ReplaceAllUsesOfValueWith(SDValue(SU->getNode(), OldNumVals-1),
                                    SDValue(LoadNode, 1));
 
     // LoadNode may already exist. This can happen when there is another
@@ -710,7 +710,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
          I != E; ++I) {
       if (I->isCtrl)
         ChainPred = I->Dep;
-      else if (I->Dep->Node && I->Dep->Node->isOperandOf(LoadNode))
+      else if (I->Dep->getNode() && I->Dep->getNode()->isOperandOf(LoadNode))
         LoadPreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false));
       else
         NodePreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false));
@@ -904,7 +904,7 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
   }
 
   for (unsigned i = 0, e = SU->FlaggedNodes.size()+1; i != e; ++i) {
-    SDNode *Node = (i == 0) ? SU->Node : SU->FlaggedNodes[i-1];
+    SDNode *Node = (i == 0) ? SU->getNode() : SU->FlaggedNodes[i-1];
     if (!Node || !Node->isMachineOpcode())
       continue;
     const TargetInstrDesc &TID = TII->get(Node->getMachineOpcode());
@@ -1014,7 +1014,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
         SUnit *NewDef = CopyAndMoveSuccessors(LRDef);
         if (!NewDef) {
           // Issue expensive cross register class copies.
-          MVT VT = getPhysicalRegisterVT(LRDef->Node, Reg, TII);
+          MVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
           const TargetRegisterClass *RC =
             TRI->getPhysicalRegisterRegClass(Reg, VT);
           const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);
@@ -1263,7 +1263,7 @@ namespace {
 }  // end anonymous namespace
 
 static inline bool isCopyFromLiveIn(const SUnit *SU) {
-  SDNode *N = SU->Node;
+  SDNode *N = SU->getNode();
   return N && N->getOpcode() == ISD::CopyFromReg &&
     N->getOperand(N->getNumOperands()-1).getValueType() != MVT::Flag;
 }
@@ -1305,7 +1305,7 @@ CalcNodeTDSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
 
-  unsigned Opc = SU->Node ? SU->Node->getOpcode() : 0;
+  unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
   if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
     SethiUllmanNumber = 0xffff;
   else if (SU->NumSuccsLeft == 0)
@@ -1434,7 +1434,7 @@ namespace {
 
     unsigned getNodePriority(const SUnit *SU) const {
       assert(SU->NodeNum < SethiUllmanNumbers.size());
-      unsigned Opc = SU->Node ? SU->Node->getOpcode() : 0;
+      unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
       if (Opc == ISD::CopyFromReg && !isCopyFromLiveIn(SU))
         // CopyFromReg should be close to its def because it restricts
         // allocation choices. But if it is a livein then perhaps we want it
@@ -1569,7 +1569,7 @@ static unsigned closestSucc(const SUnit *SU) {
     unsigned Cycle = I->Dep->Cycle;
     // If there are bunch of CopyToRegs stacked up, they should be considered
     // to be at the same position.
-    if (I->Dep->Node && I->Dep->Node->getOpcode() == ISD::CopyToReg)
+    if (I->Dep->getNode() && I->Dep->getNode()->getOpcode() == ISD::CopyToReg)
       Cycle = closestSucc(I->Dep)+1;
     if (Cycle > MaxCycle)
       MaxCycle = Cycle;
@@ -1585,13 +1585,13 @@ static unsigned calcMaxScratches(const SUnit *SU) {
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     if (I->isCtrl) continue;  // ignore chain preds
-    if (!I->Dep->Node || I->Dep->Node->getOpcode() != ISD::CopyFromReg)
+    if (!I->Dep->getNode() || I->Dep->getNode()->getOpcode() != ISD::CopyFromReg)
       Scratches++;
   }
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->isCtrl) continue;  // ignore chain succs
-    if (!I->Dep->Node || I->Dep->Node->getOpcode() != ISD::CopyToReg)
+    if (!I->Dep->getNode() || I->Dep->getNode()->getOpcode() != ISD::CopyToReg)
       Scratches += 10;
   }
   return Scratches;
@@ -1663,13 +1663,13 @@ bu_ls_rr_fast_sort::operator()(const SUnit *left, const SUnit *right) const {
 bool
 BURegReductionPriorityQueue::canClobber(const SUnit *SU, const SUnit *Op) {
   if (SU->isTwoAddress) {
-    unsigned Opc = SU->Node->getMachineOpcode();
+    unsigned Opc = SU->getNode()->getMachineOpcode();
     const TargetInstrDesc &TID = TII->get(Opc);
     unsigned NumRes = TID.getNumDefs();
     unsigned NumOps = TID.getNumOperands() - NumRes;
     for (unsigned i = 0; i != NumOps; ++i) {
       if (TID.getOperandConstraint(i+NumRes, TOI::TIED_TO) != -1) {
-        SDNode *DU = SU->Node->getOperand(i).getNode();
+        SDNode *DU = SU->getNode()->getOperand(i).getNode();
         if (DU->getNodeId() != -1 &&
             Op->OrigNode == &(*SUnits)[DU->getNodeId()])
           return true;
@@ -1687,7 +1687,7 @@ static bool hasCopyToRegUse(const SUnit *SU) {
        I != E; ++I) {
     if (I->isCtrl) continue;
     const SUnit *SuccSU = I->Dep;
-    if (SuccSU->Node && SuccSU->Node->getOpcode() == ISD::CopyToReg)
+    if (SuccSU->getNode() && SuccSU->getNode()->getOpcode() == ISD::CopyToReg)
       return true;
   }
   return false;
@@ -1698,12 +1698,12 @@ static bool hasCopyToRegUse(const SUnit *SU) {
 static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
                                   const TargetInstrInfo *TII,
                                   const TargetRegisterInfo *TRI) {
-  SDNode *N = SuccSU->Node;
+  SDNode *N = SuccSU->getNode();
   unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
   const unsigned *ImpDefs = TII->get(N->getMachineOpcode()).getImplicitDefs();
   assert(ImpDefs && "Caller should check hasPhysRegDefs");
   const unsigned *SUImpDefs =
-    TII->get(SU->Node->getMachineOpcode()).getImplicitDefs();
+    TII->get(SU->getNode()->getMachineOpcode()).getImplicitDefs();
   if (!SUImpDefs)
     return false;
   for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
@@ -1735,7 +1735,7 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
     if (!SU->isTwoAddress)
       continue;
 
-    SDNode *Node = SU->Node;
+    SDNode *Node = SU->getNode();
     if (!Node || !Node->isMachineOpcode() || SU->FlaggedNodes.size() > 0)
       continue;
 
@@ -1745,7 +1745,7 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
     unsigned NumOps = TID.getNumOperands() - NumRes;
     for (unsigned j = 0; j != NumOps; ++j) {
       if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) != -1) {
-        SDNode *DU = SU->Node->getOperand(j).getNode();
+        SDNode *DU = SU->getNode()->getOperand(j).getNode();
         if (DU->getNodeId() == -1)
           continue;
         const SUnit *DUSU = &(*SUnits)[DU->getNodeId()];
@@ -1760,7 +1760,7 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
           // depth and height.
           if (SuccSU->Height < SU->Height && (SU->Height - SuccSU->Height) > 1)
             continue;
-          if (!SuccSU->Node || !SuccSU->Node->isMachineOpcode())
+          if (!SuccSU->getNode() || !SuccSU->getNode()->isMachineOpcode())
             continue;
           // Don't constrain nodes with physical register defs if the
           // predecessor can clobber them.
@@ -1770,7 +1770,7 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
           }
           // Don't constraint extract_subreg / insert_subreg these may be
           // coalesced away. We don't them close to their uses.
-          unsigned SuccOpc = SuccSU->Node->getMachineOpcode();
+          unsigned SuccOpc = SuccSU->getNode()->getMachineOpcode();
           if (SuccOpc == TargetInstrInfo::EXTRACT_SUBREG ||
               SuccOpc == TargetInstrInfo::INSERT_SUBREG)
             continue;
@@ -1828,8 +1828,8 @@ static unsigned LimitedSumOfUnscheduledPredsOfSuccs(const SUnit *SU,
 bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
-  bool LIsTarget = left->Node && left->Node->isMachineOpcode();
-  bool RIsTarget = right->Node && right->Node->isMachineOpcode();
+  bool LIsTarget = left->getNode() && left->getNode()->isMachineOpcode();
+  bool RIsTarget = right->getNode() && right->getNode()->isMachineOpcode();
   bool LIsFloater = LIsTarget && left->NumPreds == 0;
   bool RIsFloater = RIsTarget && right->NumPreds == 0;
   unsigned LBonus = (LimitedSumOfUnscheduledPredsOfSuccs(left,1) == 1) ? 2 : 0;

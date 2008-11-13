@@ -224,7 +224,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   if (SU->FlaggedNodes.size())
     return NULL;
 
-  SDNode *N = SU->Node;
+  SDNode *N = SU->getNode();
   if (!N)
     return NULL;
 
@@ -255,10 +255,10 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     N = NewNodes[1];
     SDNode *LoadNode = NewNodes[0];
     unsigned NumVals = N->getNumValues();
-    unsigned OldNumVals = SU->Node->getNumValues();
+    unsigned OldNumVals = SU->getNode()->getNumValues();
     for (unsigned i = 0; i != NumVals; ++i)
-      DAG->ReplaceAllUsesOfValueWith(SDValue(SU->Node, i), SDValue(N, i));
-    DAG->ReplaceAllUsesOfValueWith(SDValue(SU->Node, OldNumVals-1),
+      DAG->ReplaceAllUsesOfValueWith(SDValue(SU->getNode(), i), SDValue(N, i));
+    DAG->ReplaceAllUsesOfValueWith(SDValue(SU->getNode(), OldNumVals-1),
                                    SDValue(LoadNode, 1));
 
     SUnit *NewSU = CreateNewSUnit(N);
@@ -305,7 +305,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
          I != E; ++I) {
       if (I->isCtrl)
         ChainPred = I->Dep;
-      else if (I->Dep->Node && I->Dep->Node->isOperandOf(LoadNode))
+      else if (I->Dep->getNode() && I->Dep->getNode()->isOperandOf(LoadNode))
         LoadPreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false));
       else
         NodePreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false));
@@ -486,7 +486,7 @@ bool ScheduleDAGFast::DelayForLiveRegsBottomUp(SUnit *SU,
   }
 
   for (unsigned i = 0, e = SU->FlaggedNodes.size()+1; i != e; ++i) {
-    SDNode *Node = (i == 0) ? SU->Node : SU->FlaggedNodes[i-1];
+    SDNode *Node = (i == 0) ? SU->getNode() : SU->FlaggedNodes[i-1];
     if (!Node || !Node->isMachineOpcode())
       continue;
     const TargetInstrDesc &TID = TII->get(Node->getMachineOpcode());
@@ -560,7 +560,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
         SUnit *NewDef = CopyAndMoveSuccessors(LRDef);
         if (!NewDef) {
           // Issue expensive cross register class copies.
-          MVT VT = getPhysicalRegisterVT(LRDef->Node, Reg, TII);
+          MVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
           const TargetRegisterClass *RC =
             TRI->getPhysicalRegisterRegClass(Reg, VT);
           const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);

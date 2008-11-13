@@ -438,8 +438,8 @@ std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
                                                       G->DAG) + "\n";
   }
 
-  if (SU->Node)
-    Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(SU->Node, G->DAG);
+  if (SU->getNode())
+    Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(SU->getNode(), G->DAG);
   else
     Op += "<CROSS RC COPY>";
 

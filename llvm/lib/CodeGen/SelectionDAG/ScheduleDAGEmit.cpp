@@ -643,7 +643,7 @@ void ScheduleDAG::EmitCrossRCCopy(SUnit *SU,
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     if (I->isCtrl) continue;  // ignore chain preds
-    if (!I->Dep->Node) {
+    if (!I->Dep->getNode()) {
       // Copy to physical register.
       DenseMap<SUnit*, unsigned>::iterator VRI = VRBaseMap.find(I->Dep);
       assert(VRI != VRBaseMap.end() && "Node emitted out of order - late");
@@ -686,10 +686,10 @@ MachineBasicBlock *ScheduleDAG::EmitSchedule() {
     }
     for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; ++j)
       EmitNode(SU->FlaggedNodes[j], SU->OrigNode != SU, VRBaseMap);
-    if (!SU->Node)
+    if (!SU->getNode())
       EmitCrossRCCopy(SU, CopyVRBaseMap);
     else
-      EmitNode(SU->Node, SU->OrigNode != SU, VRBaseMap);
+      EmitNode(SU->getNode(), SU->OrigNode != SU, VRBaseMap);
   }
 
   return BB;

@@ -201,7 +201,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       SUnit *CurSUnit = AvailableQueue->pop();
       
       // Get the node represented by this SUnit.
-      FoundNode = CurSUnit->Node;
+      FoundNode = CurSUnit->getNode();
       
       // If this is a pseudo op, like copyfromreg, look to see if there is a
       // real target node flagged to it.  If so, use the target node.

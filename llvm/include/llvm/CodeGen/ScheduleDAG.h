@@ -92,7 +92,9 @@ namespace llvm {
   /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
   /// a group of nodes flagged together.
   struct SUnit {
+  private:
     SDNode *Node;                       // Representative node.
+  public:
     SmallVector<SDNode*,4> FlaggedNodes;// All nodes flagged to Node.
     SUnit *OrigNode;                    // If not this, the node from which
                                         // this node was cloned.
@@ -134,6 +136,12 @@ namespace llvm {
         isPending(false), isAvailable(false), isScheduled(false),
         CycleBound(0), Cycle(0), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
+
+    /// setNode - Assign the representative SDNode for this SUnit.
+    void setNode(SDNode *N) { Node = N; }
+
+    /// getNode - Return the representative SDNode for this SUnit.
+    SDNode *getNode() const { return Node; }
 
     /// addPred - This adds the specified node as a pred of the current node if
     /// not already.  This returns true if this is a new pred.

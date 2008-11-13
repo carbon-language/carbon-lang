@@ -58,7 +58,7 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
 }
 
 SUnit *ScheduleDAG::Clone(SUnit *Old) {
-  SUnit *SU = NewSUnit(Old->Node);
+  SUnit *SU = NewSUnit(Old->getNode());
   SU->OrigNode = Old->OrigNode;
   SU->FlaggedNodes = Old->FlaggedNodes;
   SU->Latency = Old->Latency;
@@ -137,7 +137,7 @@ void ScheduleDAG::BuildSchedUnits() {
     
     // Now all flagged nodes are in FlaggedNodes and N is the bottom-most node.
     // Update the SUnit
-    NodeSUnit->Node = N;
+    NodeSUnit->setNode(N);
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NodeSUnit->NodeNum);
 
@@ -147,7 +147,7 @@ void ScheduleDAG::BuildSchedUnits() {
   // Pass 2: add the preds, succs, etc.
   for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
     SUnit *SU = &SUnits[su];
-    SDNode *MainNode = SU->Node;
+    SDNode *MainNode = SU->getNode();
     
     if (MainNode->isMachineOpcode()) {
       unsigned Opc = MainNode->getMachineOpcode();
@@ -209,8 +209,8 @@ void ScheduleDAG::ComputeLatency(SUnit *SU) {
   }
 
   SU->Latency = 0;
-  if (SU->Node->isMachineOpcode()) {
-    unsigned SchedClass = TII->get(SU->Node->getMachineOpcode()).getSchedClass();
+  if (SU->getNode()->isMachineOpcode()) {
+    unsigned SchedClass = TII->get(SU->getNode()->getMachineOpcode()).getSchedClass();
     const InstrStage *S = InstrItins.begin(SchedClass);
     const InstrStage *E = InstrItins.end(SchedClass);
     for (; S != E; ++S)
