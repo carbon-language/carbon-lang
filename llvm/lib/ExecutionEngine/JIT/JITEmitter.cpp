@@ -115,6 +115,10 @@ namespace {
       TheJITResolver = 0;
     }
 
+    /// getFunctionStubIfAvailable - This returns a pointer to a function stub
+    /// if it has already been created.
+    void *getFunctionStubIfAvailable(Function *F);
+
     /// getFunctionStub - This returns a pointer to a function stub, creating
     /// one on demand as needed.
     void *getFunctionStub(Function *F);
@@ -150,6 +154,16 @@ namespace {
 }
 
 JITResolver *JITResolver::TheJITResolver = 0;
+
+/// getFunctionStubIfAvailable - This returns a pointer to a function stub
+/// if it has already been created.
+void *JITResolver::getFunctionStubIfAvailable(Function *F) {
+  MutexGuard locked(TheJIT->lock);
+
+  // If we already have a stub for this function, recycle it.
+  void *&Stub = state.getFunctionToStubMap(locked)[F];
+  return Stub;
+}
 
 /// getFunctionStub - This returns a pointer to a function stub, creating
 /// one on demand as needed.
@@ -596,7 +610,12 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
 
   // If we have already compiled the function, return a pointer to its body.
   Function *F = cast<Function>(V);
-  void *ResultPtr = TheJIT->getPointerToGlobalIfAvailable(F);
+  void *ResultPtr;
+  if (!DoesntNeedStub)
+    // Return the function stub if it's already created.
+    ResultPtr = Resolver.getFunctionStubIfAvailable(F);
+  else
+    ResultPtr = TheJIT->getPointerToGlobalIfAvailable(F);
   if (ResultPtr) return ResultPtr;
 
   if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode()) {
