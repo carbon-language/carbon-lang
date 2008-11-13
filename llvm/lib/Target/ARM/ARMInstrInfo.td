@@ -615,134 +615,134 @@ let isBranch = 1, isTerminator = 1 in {
 
 // Load
 let isSimpleLoad = 1 in 
-def LDR  : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdStFrm,
+def LDR  : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                "ldr", " $dst, $addr",
                [(set GPR:$dst, (load addrmode2:$addr))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
 let isSimpleLoad = 1, mayLoad = 1, isReMaterializable = 1 in
-def LDRcp : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdStFrm,
+def LDRcp : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                  "ldr", " $dst, $addr", []>;
 
 // Loads with zero extension
-def LDRH  : AI3ldh<(outs GPR:$dst), (ins addrmode3:$addr), LdStMiscFrm,
+def LDRH  : AI3ldh<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                  "ldr", "h $dst, $addr",
                 [(set GPR:$dst, (zextloadi16 addrmode3:$addr))]>;
 
-def LDRB  : AI2ldb<(outs GPR:$dst), (ins addrmode2:$addr), LdStFrm,
+def LDRB  : AI2ldb<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                  "ldr", "b $dst, $addr",
                 [(set GPR:$dst, (zextloadi8 addrmode2:$addr))]>;
 
 // Loads with sign extension
-def LDRSH : AI3ldsh<(outs GPR:$dst), (ins addrmode3:$addr), LdStMiscFrm,
+def LDRSH : AI3ldsh<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                  "ldr", "sh $dst, $addr",
                 [(set GPR:$dst, (sextloadi16 addrmode3:$addr))]>;
 
-def LDRSB : AI3ldsb<(outs GPR:$dst), (ins addrmode3:$addr), LdStMiscFrm,
+def LDRSB : AI3ldsb<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                  "ldr", "sb $dst, $addr",
                 [(set GPR:$dst, (sextloadi8 addrmode3:$addr))]>;
 
 let mayLoad = 1 in {
 // Load doubleword
-def LDRD  : AI3ldd<(outs GPR:$dst), (ins addrmode3:$addr), LdStMiscFrm,
+def LDRD  : AI3ldd<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                  "ldr", "d $dst, $addr",
                 []>, Requires<[IsARM, HasV5T]>;
 
 // Indexed loads
 def LDR_PRE  : AI2ldwpr<(outs GPR:$dst, GPR:$base_wb),
-                     (ins addrmode2:$addr), LdStFrm,
+                     (ins addrmode2:$addr), LdFrm,
                      "ldr", " $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDR_POST : AI2ldwpo<(outs GPR:$dst, GPR:$base_wb),
-                     (ins GPR:$base, am2offset:$offset), LdStFrm,
+                     (ins GPR:$base, am2offset:$offset), LdFrm,
                      "ldr", " $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRH_PRE  : AI3ldhpr<(outs GPR:$dst, GPR:$base_wb),
-                     (ins addrmode3:$addr), LdStMiscFrm,
+                     (ins addrmode3:$addr), LdMiscFrm,
                      "ldr", "h $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRH_POST : AI3ldhpo<(outs GPR:$dst, GPR:$base_wb),
-                     (ins GPR:$base,am3offset:$offset), LdStMiscFrm,
+                     (ins GPR:$base,am3offset:$offset), LdMiscFrm,
                      "ldr", "h $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRB_PRE  : AI2ldbpr<(outs GPR:$dst, GPR:$base_wb),
-                     (ins addrmode2:$addr), LdStFrm,
+                     (ins addrmode2:$addr), LdFrm,
                      "ldr", "b $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRB_POST : AI2ldbpo<(outs GPR:$dst, GPR:$base_wb),
-                     (ins GPR:$base,am2offset:$offset), LdStFrm,
+                     (ins GPR:$base,am2offset:$offset), LdFrm,
                      "ldr", "b $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRSH_PRE : AI3ldshpr<(outs GPR:$dst, GPR:$base_wb),
-                      (ins addrmode3:$addr), LdStMiscFrm,
+                      (ins addrmode3:$addr), LdMiscFrm,
                       "ldr", "sh $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRSH_POST: AI3ldshpo<(outs GPR:$dst, GPR:$base_wb),
-                      (ins GPR:$base,am3offset:$offset), LdStMiscFrm,
-                      "ldr", "sh $dst, [$base], $offset", "$base = $base_wb", []>;
+                      (ins GPR:$base,am3offset:$offset), LdMiscFrm,
+                    "ldr", "sh $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRSB_PRE : AI3ldsbpr<(outs GPR:$dst, GPR:$base_wb),
-                      (ins addrmode3:$addr), LdStMiscFrm,
+                      (ins addrmode3:$addr), LdMiscFrm,
                       "ldr", "sb $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRSB_POST: AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
-                      (ins GPR:$base,am3offset:$offset), LdStMiscFrm,
+                      (ins GPR:$base,am3offset:$offset), LdMiscFrm,
                       "ldr", "sb $dst, [$base], $offset", "$base = $base_wb", []>;
 }
 
 // Store
-def STR  : AI2stw<(outs), (ins GPR:$src, addrmode2:$addr), LdStFrm,
+def STR  : AI2stw<(outs), (ins GPR:$src, addrmode2:$addr), StFrm,
                "str", " $src, $addr",
                [(store GPR:$src, addrmode2:$addr)]>;
 
 // Stores with truncate
-def STRH : AI3sth<(outs), (ins GPR:$src, addrmode3:$addr), LdStMiscFrm,
+def STRH : AI3sth<(outs), (ins GPR:$src, addrmode3:$addr), StMiscFrm,
                "str", "h $src, $addr",
                [(truncstorei16 GPR:$src, addrmode3:$addr)]>;
 
-def STRB : AI2stb<(outs), (ins GPR:$src, addrmode2:$addr), LdStFrm,
+def STRB : AI2stb<(outs), (ins GPR:$src, addrmode2:$addr), StFrm,
                "str", "b $src, $addr",
                [(truncstorei8 GPR:$src, addrmode2:$addr)]>;
 
 // Store doubleword
 let mayStore = 1 in
-def STRD : AI3std<(outs), (ins GPR:$src, addrmode3:$addr), LdStMiscFrm,
+def STRD : AI3std<(outs), (ins GPR:$src, addrmode3:$addr), StMiscFrm,
                "str", "d $src, $addr",
                []>, Requires<[IsARM, HasV5T]>;
 
 // Indexed stores
 def STR_PRE  : AI2stwpr<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base, am2offset:$offset), LdStFrm,
+                     (ins GPR:$src, GPR:$base, am2offset:$offset), StFrm,
                     "str", " $src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (pre_store GPR:$src, GPR:$base, am2offset:$offset))]>;
 
 def STR_POST : AI2stwpo<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am2offset:$offset), LdStFrm,
+                     (ins GPR:$src, GPR:$base,am2offset:$offset), StFrm,
                     "str", " $src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (post_store GPR:$src, GPR:$base, am2offset:$offset))]>;
 
 def STRH_PRE : AI3sthpr<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am3offset:$offset), LdStMiscFrm,
+                     (ins GPR:$src, GPR:$base,am3offset:$offset), StMiscFrm,
                      "str", "h $src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (pre_truncsti16 GPR:$src, GPR:$base,am3offset:$offset))]>;
 
 def STRH_POST: AI3sthpo<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am3offset:$offset), LdStMiscFrm,
+                     (ins GPR:$src, GPR:$base,am3offset:$offset), StMiscFrm,
                      "str", "h $src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti16 GPR:$src,
                                          GPR:$base, am3offset:$offset))]>;
 
 def STRB_PRE : AI2stbpr<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am2offset:$offset), LdStFrm,
+                     (ins GPR:$src, GPR:$base,am2offset:$offset), StFrm,
                      "str", "b $src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb, (pre_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;
 
 def STRB_POST: AI2stbpo<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am2offset:$offset), LdStFrm,
+                     (ins GPR:$src, GPR:$base,am2offset:$offset), StFrm,
                      "str", "b $src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;

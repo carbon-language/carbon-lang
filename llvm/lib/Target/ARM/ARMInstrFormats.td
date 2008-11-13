@@ -27,25 +27,27 @@ def BrMiscFrm     : Format<4>;
 def DPFrm         : Format<5>;
 def DPSoRegFrm    : Format<6>;
 
-def LdStFrm       : Format<7>;
-def LdStMiscFrm   : Format<8>;
-def LdStMulFrm    : Format<9>;
+def LdFrm         : Format<7>;
+def StFrm         : Format<8>;
+def LdMiscFrm     : Format<9>;
+def StMiscFrm     : Format<10>;
+def LdStMulFrm    : Format<11>;
 
-def ArithMiscFrm  : Format<10>;
-def ExtFrm        : Format<11>;
+def ArithMiscFrm  : Format<12>;
+def ExtFrm        : Format<13>;
 
-def VFPUnaryFrm   : Format<12>;
-def VFPBinaryFrm  : Format<13>;
-def VFPConv1Frm   : Format<14>;
-def VFPConv2Frm   : Format<15>;
-def VFPConv3Frm   : Format<16>;
-def VFPConv4Frm   : Format<17>;
-def VFPConv5Frm   : Format<18>;
-def VFPLdStFrm    : Format<19>;
-def VFPLdStMulFrm : Format<20>;
-def VFPMiscFrm    : Format<21>;
+def VFPUnaryFrm   : Format<14>;
+def VFPBinaryFrm  : Format<15>;
+def VFPConv1Frm   : Format<16>;
+def VFPConv2Frm   : Format<17>;
+def VFPConv3Frm   : Format<18>;
+def VFPConv4Frm   : Format<19>;
+def VFPConv5Frm   : Format<20>;
+def VFPLdStFrm    : Format<21>;
+def VFPLdStMulFrm : Format<22>;
+def VFPMiscFrm    : Format<23>;
 
-def ThumbFrm      : Format<22>;
+def ThumbFrm      : Format<24>;
 
 // Misc flag for data processing instructions that indicates whether
 // the instruction has a Rn register operand.

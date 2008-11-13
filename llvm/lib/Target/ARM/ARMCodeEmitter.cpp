@@ -312,10 +312,12 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   case ARMII::DPSoRegFrm:
     emitDataProcessingInstruction(MI);
     break;
-  case ARMII::LdStFrm:
+  case ARMII::LdFrm:
+  case ARMII::StFrm:
     emitLoadStoreInstruction(MI);
     break;
-  case ARMII::LdStMiscFrm:
+  case ARMII::LdMiscFrm:
+  case ARMII::StMiscFrm:
     emitMiscLoadStoreInstruction(MI);
     break;
   case ARMII::LdStMulFrm:
@@ -687,6 +689,8 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
                                               unsigned ImplicitRd,
                                               unsigned ImplicitRn) {
   const TargetInstrDesc &TID = MI.getDesc();
+  unsigned Form = TID.TSFlags & ARMII::FormMask;
+  bool IsPrePost = (TID.TSFlags & ARMII::IndexModeMask) != 0;
 
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
@@ -694,8 +698,17 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
-  // Set first operand
   unsigned OpIdx = 0;
+
+  // Operand 0 of a pre- and post-indexed store is the address base
+  // writeback. Skip it.
+  bool Skipped = false;
+  if (IsPrePost && Form == ARMII::StFrm) {
+    ++OpIdx;
+    Skipped = true;
+  }
+
+  // Set first operand
   if (ImplicitRd)
     // Special handling for implicit use (e.g. PC).
     Binary |= (ARMRegisterInfo::getRegisterNumbering(ImplicitRd)
@@ -712,7 +725,7 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
     Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
 
   // If this is a two-address operand, skip it. e.g. LDR_PRE.
-  if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
+  if (!Skipped && TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
     ++OpIdx;
 
   const MachineOperand &MO2 = MI.getOperand(OpIdx);
@@ -749,6 +762,8 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
 void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
                                                   unsigned ImplicitRn) {
   const TargetInstrDesc &TID = MI.getDesc();
+  unsigned Form = TID.TSFlags & ARMII::FormMask;
+  bool IsPrePost = (TID.TSFlags & ARMII::IndexModeMask) != 0;
 
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
@@ -756,11 +771,20 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
+  unsigned OpIdx = 0;
+
+  // Operand 0 of a pre- and post-indexed store is the address base
+  // writeback. Skip it.
+  bool Skipped = false;
+  if (IsPrePost && Form == ARMII::StMiscFrm) {
+    ++OpIdx;
+    Skipped = true;
+  }
+
   // Set first operand
-  Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
+  Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdShift;
 
   // Set second operand
-  unsigned OpIdx = 1;
   if (ImplicitRn)
     // Special handling for implicit use (e.g. PC).
     Binary |= (ARMRegisterInfo::getRegisterNumbering(ImplicitRn)
@@ -769,7 +793,7 @@ void ARMCodeEmitter::emitMiscLoadStoreInstruction(const MachineInstr &MI,
     Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
 
   // If this is a two-address operand, skip it. e.g. LDRH_POST.
-  if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
+  if (!Skipped && TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
     ++OpIdx;
 
   const MachineOperand &MO2 = MI.getOperand(OpIdx);

@@ -87,30 +87,32 @@ namespace ARMII {
     DPSoRegFrm    = 6  << FormShift,
 
     // Load and Store
-    LdStFrm       = 7  << FormShift,
-    LdStMiscFrm   = 8  << FormShift,
-    LdStMulFrm    = 9  << FormShift,
+    LdFrm         = 7  << FormShift,
+    StFrm         = 8  << FormShift,
+    LdMiscFrm     = 9  << FormShift,
+    StMiscFrm     = 10 << FormShift,
+    LdStMulFrm    = 11 << FormShift,
 
     // Miscellaneous arithmetic instructions
-    ArithMiscFrm  = 10 << FormShift,
+    ArithMiscFrm  = 12 << FormShift,
 
     // Extend instructions
-    ExtFrm        = 11 << FormShift,
+    ExtFrm        = 13 << FormShift,
 
     // VFP formats
-    VFPUnaryFrm   = 12 << FormShift,
-    VFPBinaryFrm  = 13 << FormShift,
-    VFPConv1Frm   = 14 << FormShift,
-    VFPConv2Frm   = 15 << FormShift,
-    VFPConv3Frm   = 16 << FormShift,
-    VFPConv4Frm   = 17 << FormShift,
-    VFPConv5Frm   = 18 << FormShift,
-    VFPLdStFrm    = 19 << FormShift,
-    VFPLdStMulFrm = 20 << FormShift,
-    VFPMiscFrm    = 21 << FormShift,
+    VFPUnaryFrm   = 14 << FormShift,
+    VFPBinaryFrm  = 15 << FormShift,
+    VFPConv1Frm   = 16 << FormShift,
+    VFPConv2Frm   = 17 << FormShift,
+    VFPConv3Frm   = 18 << FormShift,
+    VFPConv4Frm   = 19 << FormShift,
+    VFPConv5Frm   = 20 << FormShift,
+    VFPLdStFrm    = 21 << FormShift,
+    VFPLdStMulFrm = 22 << FormShift,
+    VFPMiscFrm    = 23 << FormShift,
 
     // Thumb format
-    ThumbFrm      = 22 << FormShift,
+    ThumbFrm      = 24 << FormShift,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating
