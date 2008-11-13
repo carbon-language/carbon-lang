@@ -214,8 +214,9 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
   llvm::Value *Val = Builder.CreateLoad(Ptr, LV.isVolatileQualified(), "tmp");
   
   // Shift to proper location.
-  Val = Builder.CreateLShr(Val, llvm::ConstantInt::get(EltTy, StartBit), 
-                           "bf.lo");
+  if (StartBit)
+    Val = Builder.CreateLShr(Val, llvm::ConstantInt::get(EltTy, StartBit), 
+                             "bf.lo");
   
   // Mask off unused bits.
   llvm::Constant *LowMask = 
