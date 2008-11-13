@@ -245,7 +245,8 @@ namespace {
     void SynthesizeIvarOffsetComputation(ObjCImplementationDecl *IDecl, 
                                          ObjCIvarDecl *ivar, 
                                          std::string &Result);
-    void RewriteImplementations(std::string &Result);
+    void RewriteImplementations();
+    void SynthesizeMetaDataIntoBuffer(std::string &Result);
     
     // Block rewriting.
     void RewriteBlocksInFunctionTypeProto(QualType funcType, NamedDecl *D);  
@@ -836,7 +837,7 @@ void RewriteObjC::RewriteImplementationDecl(NamedDecl *OID) {
     InsertText(IMD->getLocStart(), "// ", 3);
   else
     InsertText(CID->getLocStart(), "// ", 3);
-  
+      
   for (ObjCCategoryImplDecl::instmeth_iterator
        I = IMD ? IMD->instmeth_begin() : CID->instmeth_begin(),
        E = IMD ? IMD->instmeth_end() : CID->instmeth_end(); I != E; ++I) {
@@ -3071,7 +3072,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
 /// RewriteImplementations - This routine rewrites all method implementations
 /// and emits meta-data.
 
-void RewriteObjC::RewriteImplementations(std::string &Result) {
+void RewriteObjC::RewriteImplementations() {
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
   
@@ -3083,7 +3084,12 @@ void RewriteObjC::RewriteImplementations(std::string &Result) {
   
   for (int i = 0; i < CatDefCount; i++)
     RewriteImplementationDecl(CategoryImplementation[i]);
+}
   
+void RewriteObjC::SynthesizeMetaDataIntoBuffer(std::string &Result) {
+  int ClsDefCount = ClassImplementation.size();
+  int CatDefCount = CategoryImplementation.size();
+
   // This is needed for determining instance variable offsets.
   Result += "\n#define __OFFSETOFIVAR__(TYPE, MEMBER) ((int) &((TYPE *)0)->MEMBER)\n";   
   // For each implemented class, write out all its meta data.
@@ -4125,9 +4131,7 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
   InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
              Preamble.c_str(), Preamble.size(), false);
   
-  // Rewrite Objective-c meta data*
-  std::string ResultStr;
-  RewriteImplementations(ResultStr);
+  RewriteImplementations();
   
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
   // we are done.
@@ -4138,6 +4142,11 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
   } else {
     fprintf(stderr, "No changes\n");
   }
+
+  // Rewrite Objective-c meta data*
+  std::string ResultStr;
+  SynthesizeMetaDataIntoBuffer(ResultStr);
+
   // Emit metadata.
   *OutFile << ResultStr;
   OutFile->flush();
