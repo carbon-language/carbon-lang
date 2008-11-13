@@ -269,7 +269,7 @@ namespace {
     bool PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
                           int VT, unsigned ArgNo, std::string &Suffix);
     void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
-                                  unsigned Count, ...);
+                                  unsigned RetNum, unsigned ParamNum, ...);
     void VerifyAttrs(Attributes Attrs, const Type *Ty,
                      bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(const FunctionType *FT, const AttrListPtr &Attrs,
@@ -1507,11 +1507,11 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
 /// VerifyIntrinsicPrototype - TableGen emits calls to this function into
 /// Intrinsics.gen.  This implements a little state machine that verifies the
 /// prototype of intrinsics.
-void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
-                                        Function *F,
-                                        unsigned Count, ...) {
+void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
+                                        unsigned RetNum,
+                                        unsigned ParamNum, ...) {
   va_list VA;
-  va_start(VA, Count);
+  va_start(VA, ParamNum);
   const FunctionType *FTy = F->getFunctionType();
   
   // For overloaded intrinsics, the Suffix of the function name must match the
@@ -1519,13 +1519,31 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
   // suffix, to be checked at the end.
   std::string Suffix;
 
-  if (FTy->getNumParams() + FTy->isVarArg() != Count - 1) {
+  if (FTy->getNumParams() + FTy->isVarArg() != ParamNum) {
     CheckFailed("Intrinsic prototype has incorrect number of arguments!", F);
     return;
   }
 
-  // Note that "arg#0" is the return type.
-  for (unsigned ArgNo = 0; ArgNo < Count; ++ArgNo) {
+  const Type *Ty = FTy->getReturnType();
+  const StructType *ST = dyn_cast<StructType>(Ty);
+
+  // Verify the return types.
+  if (ST && ST->getNumElements() != RetNum) {
+    CheckFailed("Intrinsic prototype has incorrect number of return types!", F);
+    return;
+  }
+
+  for (unsigned ArgNo = 0; ArgNo < RetNum; ++ArgNo) {
+    int VT = va_arg(VA, int); // An MVT::SimpleValueType when non-negative.
+
+    if (ST) Ty = ST->getElementType(ArgNo);
+
+    if (!PerformTypeCheck(ID, F, Ty, VT, ArgNo, Suffix))
+      break;
+  }
+
+  // Verify the parameter types.
+  for (unsigned ArgNo = 0; ArgNo < ParamNum; ++ArgNo) {
     int VT = va_arg(VA, int); // An MVT::SimpleValueType when non-negative.
 
     if (VT == MVT::isVoid && ArgNo > 0) {
@@ -1534,10 +1552,7 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
       break;
     }
 
-    const Type *Ty = (ArgNo == 0) ?
-      FTy->getReturnType() : FTy->getParamType(ArgNo - 1);
-
-    if (!PerformTypeCheck(ID, F, Ty, VT, ArgNo, Suffix))
+    if (!PerformTypeCheck(ID, F, FTy->getParamType(ArgNo), VT, ArgNo, Suffix))
       break;
   }
 

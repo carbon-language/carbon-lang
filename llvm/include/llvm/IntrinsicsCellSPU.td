@@ -25,77 +25,77 @@ def llvm_i128_ty : LLVMType<i128>;
 
 class v16i8_u7imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, cell_i7_ty],
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, cell_i7_ty],
             [IntrNoMem]>;
 
 class v16i8_u8imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_i8_ty],
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_i8_ty],
             [IntrNoMem]>;
 
 class v16i8_s10imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_i16_ty],
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_i16_ty],
             [IntrNoMem]>;
 
 class v16i8_u16imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_i16_ty],
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_i16_ty],
             [IntrNoMem]>;
 
 class v16i8_rr<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty],
+  Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty],
             [IntrNoMem]>;
 
 class v8i16_s10imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_i16_ty],
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_i16_ty],
             [IntrNoMem]>;
 
 class v8i16_u16imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_i16_ty],
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_i16_ty],
             [IntrNoMem]>;
 
 class v8i16_rr<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+  Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty],
             [IntrNoMem]>;
 
 class v4i32_rr<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty],
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty],
             [IntrNoMem]>;
 
 class v4i32_u7imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, cell_i7_ty],
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, cell_i7_ty],
             [IntrNoMem]>;
 
 class v4i32_s10imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_i16_ty],
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_i16_ty],
             [IntrNoMem]>;
 
 class v4i32_u16imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_i16_ty],
+  Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_i16_ty],
             [IntrNoMem]>;
 
 class v4f32_rr<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty],
+  Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, llvm_v4f32_ty],
             [IntrNoMem]>;
 
 class v4f32_rrr<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty],
+  Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty],
             [IntrNoMem]>;
 
 class v2f64_rr<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty, llvm_v2f64_ty],
+  Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty, llvm_v2f64_ty],
             [IntrNoMem]>;
 
 // All Cell SPU intrinsics start with "llvm.spu.".
@@ -117,60 +117,60 @@ let TargetPrefix = "spu" in {
   def int_spu_si_bgx    : v4i32_rr<"bgx">;
   def int_spu_si_mpy    : // This is special:
     GCCBuiltin<"__builtin_si_mpy">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty, llvm_v8i16_ty],
               [IntrNoMem]>;
   def int_spu_si_mpyu   : // This is special:
     GCCBuiltin<"__builtin_si_mpyu">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty, llvm_v8i16_ty],
               [IntrNoMem]>;
   def int_spu_si_mpyi   : // This is special:
     GCCBuiltin<"__builtin_si_mpyi">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty, llvm_i16_ty],
               [IntrNoMem]>;
   def int_spu_si_mpyui  : // This is special:
     GCCBuiltin<"__builtin_si_mpyui">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty, llvm_i16_ty],
               [IntrNoMem]>;
   def int_spu_si_mpya   : // This is special:
     GCCBuiltin<"__builtin_si_mpya">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty],
               [IntrNoMem]>;
   def int_spu_si_mpyh   : // This is special:
     GCCBuiltin<"__builtin_si_mpyh">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v8i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v8i16_ty],
               [IntrNoMem]>;
   def int_spu_si_mpys   : // This is special:
     GCCBuiltin<"__builtin_si_mpys">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty, llvm_v8i16_ty],
               [IntrNoMem]>;
   def int_spu_si_mpyhh  : // This is special:
     GCCBuiltin<"__builtin_si_mpyhh">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty, llvm_v8i16_ty],
               [IntrNoMem]>;
   def int_spu_si_mpyhha : // This is special:
     GCCBuiltin<"__builtin_si_mpyhha">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty, llvm_v8i16_ty],
               [IntrNoMem]>;
   def int_spu_si_mpyhhu : // This is special:
     GCCBuiltin<"__builtin_si_mpyhhu">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty, llvm_v8i16_ty],
               [IntrNoMem]>;
   def int_spu_si_mpyhhau : // This is special:
     GCCBuiltin<"__builtin_si_mpyhhau">,
-    Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+    Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty, llvm_v8i16_ty],
               [IntrNoMem]>;
 
   def int_spu_si_shli:          v4i32_u7imm<"shli">;
 
   def int_spu_si_shlqbi:
     GCCBuiltin<!strconcat("__builtin_si_", "shlqbi")>,
-    Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_i32_ty],
+    Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_i32_ty],
               [IntrNoMem]>;
 
   def int_spu_si_shlqbii:       v16i8_u7imm<"shlqbii">;
   def int_spu_si_shlqby:
     GCCBuiltin<!strconcat("__builtin_si_", "shlqby")>,
-    Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_i32_ty],
+    Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_i32_ty],
               [IntrNoMem]>;
   def int_spu_si_shlqbyi:       v16i8_u7imm<"shlqbyi">;
   

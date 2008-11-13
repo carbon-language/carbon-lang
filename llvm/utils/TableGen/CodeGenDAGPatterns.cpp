@@ -471,7 +471,8 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
   }
 
   if (getExtTypeNum(0) == MVT::iPTR || getExtTypeNum(0) == MVT::iPTRAny) {
-    if (ExtVTs[0] == MVT::iPTR || ExtVTs[0] == MVT::iPTRAny || ExtVTs[0] == EMVT::isInt)
+    if (ExtVTs[0] == MVT::iPTR || ExtVTs[0] == MVT::iPTRAny ||
+        ExtVTs[0] == EMVT::isInt)
       return false;
     if (EMVT::isExtIntegerInVTs(ExtVTs)) {
       std::vector<unsigned char> FVTs = FilterEVTs(ExtVTs, isInteger);
@@ -885,18 +886,22 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     bool MadeChange = false;
 
     // Apply the result type to the node.
-    MadeChange = UpdateNodeType(Int->ArgVTs[0], TP);
+    unsigned NumRetVTs = Int->IS.RetVTs.size();
+    unsigned NumParamVTs = Int->IS.ParamVTs.size();
 
-    if (getNumChildren() != Int->ArgVTs.size())
+    for (unsigned i = 0, e = NumRetVTs; i != e; ++i)
+      MadeChange |= UpdateNodeType(Int->IS.RetVTs[i], TP);
+
+    if (getNumChildren() != NumParamVTs + NumRetVTs)
       TP.error("Intrinsic '" + Int->Name + "' expects " +
-               utostr(Int->ArgVTs.size()-1) + " operands, not " +
-               utostr(getNumChildren()-1) + " operands!");
+               utostr(NumParamVTs + NumRetVTs - 1) + " operands, not " +
+               utostr(getNumChildren() - 1) + " operands!");
 
     // Apply type info to the intrinsic ID.
     MadeChange |= getChild(0)->UpdateNodeType(MVT::iPTR, TP);
     
-    for (unsigned i = 1, e = getNumChildren(); i != e; ++i) {
-      MVT::SimpleValueType OpVT = Int->ArgVTs[i];
+    for (unsigned i = NumRetVTs, e = getNumChildren(); i != e; ++i) {
+      MVT::SimpleValueType OpVT = Int->IS.ParamVTs[i - NumRetVTs];
       MadeChange |= getChild(i)->UpdateNodeType(OpVT, TP);
       MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     }
@@ -1232,7 +1237,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
 
     // If this intrinsic returns void, it must have side-effects and thus a
     // chain.
-    if (Int.ArgVTs[0] == MVT::isVoid) {
+    if (Int.IS.RetVTs[0] == MVT::isVoid) {
       Operator = getDAGPatterns().get_intrinsic_void_sdnode();
     } else if (Int.ModRef != CodeGenIntrinsic::NoMem) {
       // Has side-effects, requires chain.

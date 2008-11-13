@@ -17,5 +17,5 @@
 
 let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
   def int_arm_thread_pointer : GCCBuiltin<"__builtin_thread_pointer">,
-              Intrinsic<[llvm_ptr_ty],[IntrNoMem]>;
+              Intrinsic<[llvm_ptr_ty], [], [IntrNoMem]>;
 }

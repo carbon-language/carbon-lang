@@ -138,7 +138,27 @@ static void EmitTypeForValueType(std::ostream &OS, MVT::SimpleValueType VT) {
   }
 }
 
-static void EmitTypeGenerate(std::ostream &OS, Record *ArgType, 
+static void EmitTypeGenerate(std::ostream &OS, const Record *ArgType,
+                             unsigned &ArgNo);
+
+static void EmitTypeGenerate(std::ostream &OS,
+                             const std::vector<Record*> &ArgTypes,
+                             unsigned &ArgNo) {
+  if (ArgTypes.size() == 1) {
+    EmitTypeGenerate(OS, ArgTypes.front(), ArgNo);
+    return;
+  }
+
+  OS << "StructType::get(";
+
+  for (std::vector<Record*>::const_iterator
+         I = ArgTypes.begin(), E = ArgTypes.end(); I != E; ++I)
+    EmitTypeGenerate(OS, *I, ArgNo);
+
+  OS << ", NULL)";
+}
+
+static void EmitTypeGenerate(std::ostream &OS, const Record *ArgType,
                              unsigned &ArgNo) {
   MVT::SimpleValueType VT = getValueType(ArgType->getValueAsDef("VT"));
 
@@ -184,17 +204,37 @@ static void EmitTypeGenerate(std::ostream &OS, Record *ArgType,
 /// RecordListComparator - Provide a determinstic comparator for lists of
 /// records.
 namespace {
+  typedef std::pair<std::vector<Record*>, std::vector<Record*> > RecPair;
   struct RecordListComparator {
-    bool operator()(const std::vector<Record*> &LHS,
-                    const std::vector<Record*> &RHS) const {
+    bool operator()(const RecPair &LHS,
+                    const RecPair &RHS) const {
       unsigned i = 0;
+      const std::vector<Record*> *LHSVec = &LHS.first;
+      const std::vector<Record*> *RHSVec = &RHS.first;
+      unsigned RHSSize = RHSVec->size();
+      unsigned LHSSize = LHSVec->size();
+
       do {
-        if (i == RHS.size()) return false;  // RHS is shorter than LHS.
-        if (LHS[i] != RHS[i])
-          return LHS[i]->getName() < RHS[i]->getName();
-      } while (++i != LHS.size());
-      
-      return i != RHS.size();
+        if (i == RHSSize) return false;  // RHS is shorter than LHS.
+        if ((*LHSVec)[i] != (*RHSVec)[i])
+          return (*LHSVec)[i]->getName() < (*RHSVec)[i]->getName();
+      } while (++i != LHSSize);
+
+      if (i != RHSSize) return false;
+
+      i = 0;
+      LHSVec = &LHS.second;
+      RHSVec = &RHS.second;
+      RHSSize = RHSVec->size();
+      LHSSize = LHSVec->size();
+
+      for (i = 0; i != LHSSize; ++i) {
+        if (i == RHSSize) return false;  // RHS is shorter than LHS.
+        if ((*LHSVec)[i] != (*RHSVec)[i])
+          return (*LHSVec)[i]->getName() < (*RHSVec)[i]->getName();
+      }
+
+      return i != RHSSize;
     }
   };
 }
@@ -209,26 +249,33 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
   // This checking can emit a lot of very common code.  To reduce the amount of
   // code that we emit, batch up cases that have identical types.  This avoids
   // problems where GCC can run out of memory compiling Verifier.cpp.
-  typedef std::map<std::vector<Record*>, std::vector<unsigned>, 
-    RecordListComparator> MapTy;
+  typedef std::map<RecPair, std::vector<unsigned>, RecordListComparator> MapTy;
   MapTy UniqueArgInfos;
   
   // Compute the unique argument type info.
   for (unsigned i = 0, e = Ints.size(); i != e; ++i)
-    UniqueArgInfos[Ints[i].ArgTypeDefs].push_back(i);
+    UniqueArgInfos[make_pair(Ints[i].IS.RetTypeDefs,
+                             Ints[i].IS.ParamTypeDefs)].push_back(i);
 
   // Loop through the array, emitting one comparison for each batch.
   for (MapTy::iterator I = UniqueArgInfos.begin(),
        E = UniqueArgInfos.end(); I != E; ++I) {
-    for (unsigned i = 0, e = I->second.size(); i != e; ++i) {
+    for (unsigned i = 0, e = I->second.size(); i != e; ++i)
       OS << "  case Intrinsic::" << Ints[I->second[i]].EnumName << ":\t\t// "
          << Ints[I->second[i]].Name << "\n";
-    }
     
-    const std::vector<Record*> &ArgTypes = I->first;
-    OS << "    VerifyIntrinsicPrototype(ID, IF, " << ArgTypes.size() << ", ";
-    for (unsigned j = 0; j != ArgTypes.size(); ++j) {
-      Record *ArgType = ArgTypes[j];
+    const RecPair &ArgTypes = I->first;
+    const std::vector<Record*> &RetTys = ArgTypes.first;
+    const std::vector<Record*> &ParamTys = ArgTypes.second;
+
+    OS << "    VerifyIntrinsicPrototype(ID, IF, " << RetTys.size() << ", "
+       << ParamTys.size();
+
+    // Emit return types.
+    for (unsigned j = 0, je = RetTys.size(); j != je; ++j) {
+      Record *ArgType = RetTys[j];
+      OS << ", ";
+
       if (ArgType->isSubClassOf("LLVMMatchType")) {
         unsigned Number = ArgType->getValueAsInt("Number");
         assert(Number < j && "Invalid matching number!");
@@ -236,11 +283,28 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
       } else {
         MVT::SimpleValueType VT = getValueType(ArgType->getValueAsDef("VT"));
         OS << getEnumName(VT);
-        if (VT == MVT::isVoid && j != 0 && j != ArgTypes.size()-1)
+
+        if (VT == MVT::isVoid && j != 0 && j != je - 1)
           throw "Var arg type not last argument";
       }
-      if (j != ArgTypes.size()-1)
-        OS << ", ";
+    }
+
+    // Emit the parameter types.
+    for (unsigned j = 0, je = ParamTys.size(); j != je; ++j) {
+      Record *ArgType = ParamTys[j];
+      OS << ", ";
+
+      if (ArgType->isSubClassOf("LLVMMatchType")) {
+        unsigned Number = ArgType->getValueAsInt("Number");
+        assert(Number < j + RetTys.size() && "Invalid matching number!");
+        OS << "~" << Number;
+      } else {
+        MVT::SimpleValueType VT = getValueType(ArgType->getValueAsDef("VT"));
+        OS << getEnumName(VT);
+
+        if (VT == MVT::isVoid && j != 0 && j != je - 1)
+          throw "Var arg type not last argument";
+      }
     }
       
     OS << ");\n";
@@ -259,43 +323,47 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   
   // Similar to GET_INTRINSIC_VERIFIER, batch up cases that have identical
   // types.
-  typedef std::map<std::vector<Record*>, std::vector<unsigned>, 
-    RecordListComparator> MapTy;
+  typedef std::map<RecPair, std::vector<unsigned>, RecordListComparator> MapTy;
   MapTy UniqueArgInfos;
   
   // Compute the unique argument type info.
   for (unsigned i = 0, e = Ints.size(); i != e; ++i)
-    UniqueArgInfos[Ints[i].ArgTypeDefs].push_back(i);
+    UniqueArgInfos[make_pair(Ints[i].IS.RetTypeDefs,
+                             Ints[i].IS.ParamTypeDefs)].push_back(i);
 
   // Loop through the array, emitting one generator for each batch.
   for (MapTy::iterator I = UniqueArgInfos.begin(),
        E = UniqueArgInfos.end(); I != E; ++I) {
-    for (unsigned i = 0, e = I->second.size(); i != e; ++i) {
+    for (unsigned i = 0, e = I->second.size(); i != e; ++i)
       OS << "  case Intrinsic::" << Ints[I->second[i]].EnumName << ":\t\t// "
          << Ints[I->second[i]].Name << "\n";
-    }
     
-    const std::vector<Record*> &ArgTypes = I->first;
-    unsigned N = ArgTypes.size();
+    const RecPair &ArgTypes = I->first;
+    const std::vector<Record*> &RetTys = ArgTypes.first;
+    const std::vector<Record*> &ParamTys = ArgTypes.second;
+
+    unsigned N = ParamTys.size();
 
     if (N > 1 &&
-        getValueType(ArgTypes[N-1]->getValueAsDef("VT")) == MVT::isVoid) {
+        getValueType(ParamTys[N - 1]->getValueAsDef("VT")) == MVT::isVoid) {
       OS << "    IsVarArg = true;\n";
       --N;
     }
-    
+
     unsigned ArgNo = 0;
     OS << "    ResultTy = ";
-    EmitTypeGenerate(OS, ArgTypes[0], ArgNo);
+    EmitTypeGenerate(OS, RetTys, ArgNo);
     OS << ";\n";
     
-    for (unsigned j = 1; j != N; ++j) {
+    for (unsigned j = 0; j != N; ++j) {
       OS << "    ArgTys.push_back(";
-      EmitTypeGenerate(OS, ArgTypes[j], ArgNo);
+      EmitTypeGenerate(OS, ParamTys[j], ArgNo);
       OS << ");\n";
     }
+
     OS << "    break;\n";
   }
+
   OS << "  }\n";
   OS << "#endif\n\n";
 }

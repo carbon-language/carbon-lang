@@ -438,25 +438,27 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   isCommutative = false;
   
   if (DefName.size() <= 4 || 
-      std::string(DefName.begin(), DefName.begin()+4) != "int_")
+      std::string(DefName.begin(), DefName.begin() + 4) != "int_")
     throw "Intrinsic '" + DefName + "' does not start with 'int_'!";
+
   EnumName = std::string(DefName.begin()+4, DefName.end());
+
   if (R->getValue("GCCBuiltinName"))  // Ignore a missing GCCBuiltinName field.
     GCCBuiltinName = R->getValueAsString("GCCBuiltinName");
-  TargetPrefix   = R->getValueAsString("TargetPrefix");
+
+  TargetPrefix = R->getValueAsString("TargetPrefix");
   Name = R->getValueAsString("LLVMName");
+
   if (Name == "") {
     // If an explicit name isn't specified, derive one from the DefName.
     Name = "llvm.";
+
     for (unsigned i = 0, e = EnumName.size(); i != e; ++i)
-      if (EnumName[i] == '_')
-        Name += '.';
-      else
-        Name += EnumName[i];
+      Name += (EnumName[i] == '_') ? '.' : EnumName[i];
   } else {
     // Verify it starts with "llvm.".
     if (Name.size() <= 5 || 
-        std::string(Name.begin(), Name.begin()+5) != "llvm.")
+        std::string(Name.begin(), Name.begin() + 5) != "llvm.")
       throw "Intrinsic '" + DefName + "'s name does not start with 'llvm.'!";
   }
   
@@ -464,26 +466,37 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   // "llvm.<targetprefix>.".
   if (!TargetPrefix.empty()) {
     if (Name.size() < 6+TargetPrefix.size() ||
-        std::string(Name.begin()+5, Name.begin()+6+TargetPrefix.size()) 
-        != (TargetPrefix+"."))
-      throw "Intrinsic '" + DefName + "' does not start with 'llvm." + 
+        std::string(Name.begin() + 5, Name.begin() + 6 + TargetPrefix.size())
+        != (TargetPrefix + "."))
+      throw "Intrinsic '" + DefName + "' does not start with 'llvm." +
         TargetPrefix + ".'!";
   }
   
-  // Parse the list of argument types.
-  ListInit *TypeList = R->getValueAsListInit("Types");
+  // Parse the list of return types.
+  ListInit *TypeList = R->getValueAsListInit("RetTypes");
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     MVT::SimpleValueType VT = getValueType(TyEl->getValueAsDef("VT"));
     isOverloaded |= VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny;
-    ArgVTs.push_back(VT);
-    ArgTypeDefs.push_back(TyEl);
+    IS.RetVTs.push_back(VT);
+    IS.RetTypeDefs.push_back(TyEl);
   }
-  if (ArgVTs.size() == 0)
+
+  if (IS.RetVTs.size() == 0)
     throw "Intrinsic '"+DefName+"' needs at least a type for the ret value!";
 
-  
+  // Parse the list of parameter types.
+  TypeList = R->getValueAsListInit("ParamTypes");
+  for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
+    Record *TyEl = TypeList->getElementAsRecord(i);
+    assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
+    MVT::SimpleValueType VT = getValueType(TyEl->getValueAsDef("VT"));
+    isOverloaded |= VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny;
+    IS.ParamVTs.push_back(VT);
+    IS.ParamTypeDefs.push_back(TyEl);
+  }
+
   // Parse the intrinsic properties.
   ListInit *PropList = R->getValueAsListInit("Properties");
   for (unsigned i = 0, e = PropList->getSize(); i != e; ++i) {

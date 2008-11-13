@@ -14,6 +14,5 @@
 
 let TargetPrefix = "alpha" in {  // All intrinsics start with "llvm.alpha.".
   def int_alpha_umulh : GCCBuiltin<"__builtin_alpha_umulh">,
-              Intrinsic<[llvm_i64_ty, llvm_i64_ty, llvm_i64_ty], [IntrNoMem]>;
-
+              Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i64_ty], [IntrNoMem]>;
 }

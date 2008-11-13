@@ -30,16 +30,34 @@ namespace llvm {
     std::string GCCBuiltinName;// Name of the corresponding GCC builtin, or "".
     std::string TargetPrefix;  // Target prefix, e.g. "ppc" for t-s intrinsics.
 
-    /// ArgVTs - The MVT::SimpleValueType for each argument type.  Note that
-    /// this list is only populated when in the context of a target .td file.
-    /// When building Intrinsics.td, this isn't available, because we don't know
-    /// the target pointer size.
-    std::vector<MVT::SimpleValueType> ArgVTs;
+    /// IntrinsicSignature - This structure holds the return values and
+    /// parameter values of an intrinsic. If the number of return values is > 1,
+    /// then the intrinsic implicitly returns a first-class aggregate. The
+    /// numbering of the types starts at 0 with the first return value and
+    /// continues from there throug the parameter list. This is useful for
+    /// "matching" types.
+    struct IntrinsicSignature {
+      /// RetVTs - The MVT::SimpleValueType for each return type. Note that this
+      /// list is only populated when in the context of a target .td file. When
+      /// building Intrinsics.td, this isn't available, because we don't know
+      /// the target pointer size.
+      std::vector<MVT::SimpleValueType> RetVTs;
 
-    /// ArgTypeDefs - The records for each argument type.
-    ///
-    std::vector<Record*> ArgTypeDefs;
-    
+      /// RetTypeDefs - The records for each return type.
+      std::vector<Record*> RetTypeDefs;
+
+      /// ParamVTs - The MVT::SimpleValueType for each parameter type. Note that
+      /// this list is only populated when in the context of a target .td file.
+      /// When building Intrinsics.td, this isn't available, because we don't
+      /// know the target pointer size.
+      std::vector<MVT::SimpleValueType> ParamVTs;
+
+      /// ParamTypeDefs - The records for each parameter type.
+      std::vector<Record*> ParamTypeDefs;
+    };
+
+    IntrinsicSignature IS;
+
     // Memory mod/ref behavior of this intrinsic.
     enum {
       NoMem, ReadArgMem, ReadMem, WriteArgMem, WriteMem
