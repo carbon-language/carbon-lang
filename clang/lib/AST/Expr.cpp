@@ -870,26 +870,10 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     const BinaryOperator *Exp = cast<BinaryOperator>(this);
     llvm::APSInt LHS, RHS;
 
-    // Comma operator requires special handling.
-    if (Exp->getOpcode() == BinaryOperator::Comma) {
-      // C99 6.6p3: "shall not contain assignment, ..., or comma operators,
-      // *except* when they are contained within a subexpression that is not
-      // evaluated".  Note that Assignment can never happen due to constraints
-      // on the LHS subexpr, so we don't need to check it here.
-      if (isEvaluated) {
-        if (Loc) *Loc = getLocStart();
-        return false;
-      }
-
-      // The result of the constant expr is the RHS.
-      return Exp->getRHS()->isIntegerConstantExpr(Result, Ctx, Loc, 
-                                                  isEvaluated);
-    }
-    
     // Initialize result to have correct signedness and width.
     Result = llvm::APSInt(static_cast<uint32_t>(Ctx.getTypeSize(getType())),
-                          !getType()->isSignedIntegerType());
-
+                          !getType()->isSignedIntegerType());                          
+    
     // The LHS of a constant expr is always evaluated and needed.
     if (!Exp->getLHS()->isIntegerConstantExpr(LHS, Ctx, Loc, isEvaluated))
       return false;
@@ -961,6 +945,20 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     case BinaryOperator::LOr:
       Result = LHS != 0 || RHS != 0;
       break;
+      
+    case BinaryOperator::Comma:
+      // C99 6.6p3: "shall not contain assignment, ..., or comma operators,
+      // *except* when they are contained within a subexpression that is not
+      // evaluated".  Note that Assignment can never happen due to constraints
+      // on the LHS subexpr, so we don't need to check it here.
+      if (isEvaluated) {
+        if (Loc) *Loc = getLocStart();
+        return false;
+      }
+      
+      // The result of the constant expr is the RHS.
+      Result = RHS;
+      return true;
     }
     
     assert(!Exp->isAssignmentOp() && "LHS can't be a constant expr!");
