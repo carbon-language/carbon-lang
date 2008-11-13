@@ -2533,10 +2533,10 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
   if (T->isVariablyModifiedType()) {
     QualType FixedTy = TryToFixInvalidVariablyModifiedType(T, Context);
     if (!FixedTy.isNull()) {
-      Diag(Loc, diag::warn_illegal_constant_array_size, Loc);
+      Diag(Loc, diag::warn_illegal_constant_array_size);
       T = FixedTy;
     } else {
-      Diag(Loc, diag::err_typecheck_field_variable_size, Loc);
+      Diag(Loc, diag::err_typecheck_field_variable_size);
       T = Context.IntTy;
       InvalidDecl = true;
     }
