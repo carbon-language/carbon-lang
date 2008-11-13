@@ -1033,8 +1033,8 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
       return llvm::Constant::getNullValue(CGF.LLVMIntTy);
   }
   
-  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("land_cont");
-  llvm::BasicBlock *RHSBlock  = CGF.createBasicBlock("land_rhs");
+  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("land.end");
+  llvm::BasicBlock *RHSBlock  = CGF.createBasicBlock("land.rhs");
 
   // Branch on the LHS first.  If it is false, go to the failure (cont) block.
   CGF.EmitBranchOnBoolExpr(E->getLHS(), RHSBlock, ContBlock);
@@ -1078,8 +1078,8 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
       return llvm::Constant::getNullValue(CGF.LLVMIntTy);
   }
   
-  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("lor_cont");
-  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("lor_rhs");
+  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("lor.end");
+  llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("lor.rhs");
   
   // Branch on the LHS first.  If it is true, go to the success (cont) block.
   CGF.EmitBranchOnBoolExpr(E->getLHS(), ContBlock, RHSBlock);
@@ -1175,7 +1175,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.true");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
-  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.cont");
+  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
   Value *CondVal = 0;
 
   // If we have the GNU missing condition extension, evaluate the conditional

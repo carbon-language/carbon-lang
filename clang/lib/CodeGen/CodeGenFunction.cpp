@@ -236,7 +236,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       
       // Emit the LHS as a conditional.  If the LHS conditional is false, we
       // want to jump to the FalseBlock.
-      llvm::BasicBlock *LHSTrue = createBasicBlock("land_lhs_true");
+      llvm::BasicBlock *LHSTrue = createBasicBlock("land.lhs.true");
       EmitBranchOnBoolExpr(CondBOp->getLHS(), LHSTrue, FalseBlock);
       EmitBlock(LHSTrue);
       
@@ -259,7 +259,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       
       // Emit the LHS as a conditional.  If the LHS conditional is true, we
       // want to jump to the TrueBlock.
-      llvm::BasicBlock *LHSFalse = createBasicBlock("lor_lhs_false");
+      llvm::BasicBlock *LHSFalse = createBasicBlock("lor.lhs.false");
       EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, LHSFalse);
       EmitBlock(LHSFalse);
       

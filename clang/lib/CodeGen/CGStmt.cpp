@@ -282,7 +282,7 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
 void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   // Emit the header for the loop, insert it, which will create an uncond br to
   // it.
-  llvm::BasicBlock *LoopHeader = createBasicBlock("whilecond");
+  llvm::BasicBlock *LoopHeader = createBasicBlock("while.cond");
   EmitBlock(LoopHeader);
   
   // Evaluate the conditional in the while header.  C99 6.8.5.1: The evaluation
@@ -299,8 +299,8 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   
   // Create an exit block for when the condition fails, create a block for the
   // body of the loop.
-  llvm::BasicBlock *ExitBlock = createBasicBlock("whileexit");
-  llvm::BasicBlock *LoopBody  = createBasicBlock("whilebody");
+  llvm::BasicBlock *ExitBlock = createBasicBlock("while.exit");
+  llvm::BasicBlock *LoopBody  = createBasicBlock("while.body");
   
   // As long as the condition is true, go to the loop body.
   if (EmitBoolCondBranch)
@@ -333,11 +333,11 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
 void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
   // Emit the body for the loop, insert it, which will create an uncond br to
   // it.
-  llvm::BasicBlock *LoopBody = createBasicBlock("dobody");
-  llvm::BasicBlock *AfterDo = createBasicBlock("afterdo");
+  llvm::BasicBlock *LoopBody = createBasicBlock("do.body");
+  llvm::BasicBlock *AfterDo = createBasicBlock("do.end");
   EmitBlock(LoopBody);
 
-  llvm::BasicBlock *DoCond = createBasicBlock("docond");
+  llvm::BasicBlock *DoCond = createBasicBlock("do.cond");
   
   // Store the blocks to use for break and continue.
   BreakContinueStack.push_back(BreakContinue(AfterDo, DoCond));
@@ -391,8 +391,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     EmitStmt(S.getInit());
 
   // Start the loop with a block that tests the condition.
-  llvm::BasicBlock *CondBlock = createBasicBlock("forcond");
-  llvm::BasicBlock *AfterFor = createBasicBlock("afterfor");
+  llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
+  llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
 
   EmitBlock(CondBlock);
 
@@ -400,7 +400,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   // according to 6.8.5.3p2, aka, true.
   if (S.getCond()) {
     // As long as the condition is true, iterate the loop.
-    llvm::BasicBlock *ForBody = createBasicBlock("forbody");
+    llvm::BasicBlock *ForBody = createBasicBlock("for.body");
     
     // C99 6.8.5p2/p4: The first substatement is executed if the expression
     // compares unequal to 0.  The condition must be a scalar type.
@@ -416,7 +416,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   // condition as the continue block.
   llvm::BasicBlock *ContinueBlock;
   if (S.getInc())
-    ContinueBlock = createBasicBlock("forinc");
+    ContinueBlock = createBasicBlock("for.inc");
   else
     ContinueBlock = CondBlock;  
   
