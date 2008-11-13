@@ -148,11 +148,15 @@ def : Pat<(fmul (fneg SPR:$a), SPR:$b),
 
 def FSUBD  : ADbI<0b11100011, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  "fsubd", " $dst, $a, $b",
-                 [(set DPR:$dst, (fsub DPR:$a, DPR:$b))]>;
+                 [(set DPR:$dst, (fsub DPR:$a, DPR:$b))]> {
+  let Inst{6} = 1;
+}
 
 def FSUBS  : ASbI<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                  "fsubs", " $dst, $a, $b",
-                 [(set SPR:$dst, (fsub SPR:$a, SPR:$b))]>;
+                 [(set SPR:$dst, (fsub SPR:$a, SPR:$b))]> {
+  let Inst{6} = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // FP Unary Operations.
