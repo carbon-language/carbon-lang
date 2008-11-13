@@ -1137,7 +1137,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 
 // Function Attributes
 %token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS BYVAL NEST
-%token READNONE READONLY GC OPTSIZE NOINLINE ALWAYSINLINE
+%token READNONE READONLY GC OPTSIZE NOINLINE ALWAYSINLINE SSP SSPREQ
 
 // Visibility Styles
 %token DEFAULT HIDDEN PROTECTED
@@ -1305,7 +1305,9 @@ FuncAttr      : NORETURN { $$ = Attribute::NoReturn; }
               | READONLY { $$ = Attribute::ReadOnly; }
               | NOINLINE { $$ = Attribute::NoInline; }
               | ALWAYSINLINE { $$ = Attribute::AlwaysInline; }
-              | OPTSIZE { $$ = Attribute::OptimizeForSize; }
+              | OPTSIZE  { $$ = Attribute::OptimizeForSize; }
+              | SSP      { $$ = Attribute::StackProtect; }
+              | SSPREQ   { $$ = Attribute::StackProtectReq; }
               ;
 
 OptFuncAttrs  : /* empty */ { $$ = Attribute::None; }

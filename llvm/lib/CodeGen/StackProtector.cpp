@@ -16,6 +16,7 @@
 
 #define DEBUG_TYPE "stack-protector"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Attributes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -37,9 +38,6 @@ SSPBufferSize("stack-protector-buffer-size", cl::init(8),
 
 namespace {
   class VISIBILITY_HIDDEN StackProtector : public FunctionPass {
-    /// Level - The level of stack protection.
-    SSP::StackProtectorLevel Level;
-
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// target type sizes.
     const TargetLowering *TLI;
@@ -64,9 +62,9 @@ namespace {
     bool RequiresStackProtector() const;
   public:
     static char ID;             // Pass identification, replacement for typeid.
-    StackProtector() : FunctionPass(&ID), Level(SSP::OFF), TLI(0) {}
-    StackProtector(SSP::StackProtectorLevel lvl, const TargetLowering *tli)
-      : FunctionPass(&ID), Level(lvl), TLI(tli) {}
+    StackProtector() : FunctionPass(&ID), TLI(0) {}
+    StackProtector(const TargetLowering *tli)
+      : FunctionPass(&ID), TLI(tli) {}
 
     virtual bool runOnFunction(Function &Fn);
   };
@@ -76,9 +74,8 @@ char StackProtector::ID = 0;
 static RegisterPass<StackProtector>
 X("stack-protector", "Insert stack protectors");
 
-FunctionPass *llvm::createStackProtectorPass(SSP::StackProtectorLevel lvl,
-                                             const TargetLowering *tli) {
-  return new StackProtector(lvl, tli);
+FunctionPass *llvm::createStackProtectorPass(const TargetLowering *tli) {
+  return new StackProtector(tli);
 }
 
 bool StackProtector::runOnFunction(Function &Fn) {
@@ -193,10 +190,10 @@ BasicBlock *StackProtector::CreateFailBB() {
 /// add a guard variable to functions that call alloca, and functions with
 /// buffers larger than 8 bytes.
 bool StackProtector::RequiresStackProtector() const {
-  switch (Level) {
-  default: return false;
-  case SSP::ALL: return true;
-  case SSP::SOME: {
+  if (F->hasFnAttr(Attribute::StackProtectReq))
+      return true;
+
+  if (F->hasFnAttr(Attribute::StackProtect)) {
     const TargetData *TD = TLI->getTargetData();
 
     for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
@@ -220,5 +217,6 @@ bool StackProtector::RequiresStackProtector() const {
 
     return false;
   }
-  }
+
+  return false;
 }

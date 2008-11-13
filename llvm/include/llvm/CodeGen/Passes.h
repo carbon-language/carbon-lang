@@ -26,16 +26,6 @@ namespace llvm {
   class TargetLowering;
   class RegisterCoalescer;
 
-  /// StackProtectorLevel - An enumeration for when to determin when to turn
-  /// stack smashing protection (SSP) on.
-  namespace SSP {
-    enum StackProtectorLevel {
-      OFF,          // Stack protectors are off.
-      SOME,         // Stack protectors on only for functions that require them.
-      ALL           // Stack protectors on for all functions.
-    };
-  } // end SSP namespace
-
   /// createUnreachableBlockEliminationPass - The LLVM code generator does not
   /// work well with unreachable basic blocks (what live ranges make sense for a
   /// block that cannot be reached?).  As such, a code generator should either
@@ -204,8 +194,7 @@ namespace llvm {
   FunctionPass *createStackSlotColoringPass();
 
   /// createStackProtectorPass - This pass adds stack protectors to functions.
-  FunctionPass *createStackProtectorPass(SSP::StackProtectorLevel lvl,
-                                         const TargetLowering *tli);
+  FunctionPass *createStackProtectorPass(const TargetLowering *tli);
 
 } // End llvm namespace
 

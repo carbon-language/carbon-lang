@@ -53,6 +53,10 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "noinline ";
   if (Attrs & Attribute::AlwaysInline)
     Result += "alwaysinline ";
+  if (Attrs & Attribute::StackProtect)
+    Result += "ssp ";
+  if (Attrs & Attribute::StackProtectReq)
+    Result += "sspreq ";
   if (Attrs & Attribute::Alignment) {
     Result += "align ";
     Result += utostr((Attrs & Attribute::Alignment) >> 16);

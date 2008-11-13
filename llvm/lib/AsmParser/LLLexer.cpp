@@ -499,6 +499,8 @@ int LLLexer::LexIdentifier() {
   KEYWORD("noinline", NOINLINE);
   KEYWORD("alwaysinline", ALWAYSINLINE);
   KEYWORD("optsize", OPTSIZE);
+  KEYWORD("ssp", SSP);
+  KEYWORD("sspreq", SSPREQ);
 
   KEYWORD("type", TYPE);
   KEYWORD("opaque", OPAQUE);

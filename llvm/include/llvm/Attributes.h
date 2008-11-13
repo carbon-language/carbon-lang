@@ -47,6 +47,8 @@ const Attributes ReadOnly  = 1<<10; ///< Function only reads from memory
 const Attributes NoInline        = 1<<11; // inline=never 
 const Attributes AlwaysInline    = 1<<12; // inline=always
 const Attributes OptimizeForSize = 1<<13; // opt_size
+const Attributes StackProtect    = 1<<14; // Stack protection.
+const Attributes StackProtectReq = 1<<15; // Stack protection required.
 const Attributes Alignment = 0xffff<<16; ///< Alignment of parameter (16 bits)
                                     // 0 = unknown, else in clear (not log)
                                     
@@ -55,7 +57,7 @@ const Attributes ParameterOnly = ByVal | Nest | StructRet;
 
 /// @brief Attributes that only apply to function.
 const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly | 
-  NoInline | AlwaysInline | OptimizeForSize;
+  NoInline | AlwaysInline | OptimizeForSize | StackProtect | StackProtectReq;
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
 const Attributes VarArgsIncompatible = StructRet;
