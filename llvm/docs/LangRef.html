@@ -985,6 +985,18 @@ caller functions.  It may dereference pointer arguments and read state that may
 be set in the caller.  A readonly function always returns the same value (or
 throws the same exception) when called with the same set of arguments and global
 state.</dd>
+
+<dt><tt><a name="ssp">ssp</a></tt></dt>
+<dd>This attribute indicates that the function should emit a stack smashing
+protector. It is in the form of a "canary"&mdash;a random value placed on the
+stack before the local variables that's checked upon return from the function to
+see if it has been overwritten. A heuristic is used to determine if a function
+needs stack protectors or not.</dd>
+
+<dt><tt>ssp-req</tt></dt>
+<dd>This attribute indicates that the function should <em>always</em> emit a
+stack smashing protector. This overrides the <tt><a href="#ssp">ssp</a></tt>
+function attribute.</dd>
 </dl>
 
 </div>
