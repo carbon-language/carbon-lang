@@ -11,3 +11,9 @@ struct y {int x,y;};
 EVAL_EXPR(6, (int)(1+(struct y*)0))
 EVAL_EXPR(7, (int)&((struct y*)0)->y)
 EVAL_EXPR(8, (_Bool)"asdf")
+EVAL_EXPR(9, !!&x)
+EVAL_EXPR(10, ((void)1, 12))
+void g0(void);
+EVAL_EXPR(11, (g0(), 12)) // FIXME: This should give an error
+EVAL_EXPR(12, 1.0&&2.0)
+EVAL_EXPR(13, x || 3.0)

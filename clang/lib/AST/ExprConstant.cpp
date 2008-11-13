@@ -481,39 +481,67 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
 }
 
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
+  if (E->getOpcode() == BinaryOperator::Comma) {
+    // Evaluate the side that actually matters; this needs to be
+    // handled specially because calling Visit() on the LHS can
+    // have strange results when it doesn't have an integral type.
+    Visit(E->getRHS());
+
+    // Check for isEvaluated; the idea is that this might eventually
+    // be useful for isICE and other similar uses that care about
+    // whether a comma is evaluated.  This isn't really used yet, though,
+    // and I'm not sure it really works as intended.
+    if (!Info.isEvaluated)
+      return true;
+
+    return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr);
+  }
+
+  if (E->isLogicalOp()) {
+    // These need to be handled specially because the operands aren't
+    // necessarily integral
+    bool bres;
+    if (!HandleConversionToBool(E->getLHS(), bres, Info)) {
+      // We can't evaluate the LHS; however, sometimes the result
+      // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
+      if (HandleConversionToBool(E->getRHS(), bres, Info) &&
+          bres == (E->getOpcode() == BinaryOperator::LOr)) {
+        Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+        Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+        Result = bres;
+        return true;
+      }
+
+      // Really can't evaluate
+      return false;
+    }
+
+    bool bres2;
+    if (HandleConversionToBool(E->getRHS(), bres2, Info)) {
+      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+      if (E->getOpcode() == BinaryOperator::LOr)
+        Result = bres || bres2;
+      else
+        Result = bres && bres2;
+      return true;
+    }
+    return false;
+  }
+
+  if (!E->getLHS()->getType()->isIntegralType() ||
+      !E->getRHS()->getType()->isIntegralType()) {
+    // We can't continue from here for non-integral types, and they
+    // could potentially confuse the following operations.
+    // FIXME: Deal with EQ and friends.
+    return false;
+  }
+
   // The LHS of a constant expr is always evaluated and needed.
   llvm::APSInt RHS(32);
   if (!Visit(E->getLHS())) {
-    // If the LHS is unfoldable, we generally can't fold this.  However, if this
-    // is a logical operator like &&/||, and if we know that the RHS determines
-    // the outcome of the result (e.g. X && 0), return the outcome.
-    if (!E->isLogicalOp())
-      return false;
-
-    // If this is a logical op, see if the RHS determines the outcome.
-    EvalInfo Info2(Info.Ctx);
-    if (!EvaluateInteger(E->getRHS(), RHS, Info2))
-      return false;
-    
-    // X && 0 -> 0, X || 1 -> 1.
-    if ((E->getOpcode() == BinaryOperator::LAnd && RHS == 0) ||
-        (E->getOpcode() == BinaryOperator::LOr  && RHS != 0)) {
-      Result = RHS != 0;
-      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-      return true;
-    }
-    
     return false; // error in subexpression.
   }
-  
-  bool OldEval = Info.isEvaluated;
-
-  // The short-circuiting &&/|| operators don't necessarily evaluate their
-  // RHS.  Make sure to pass isEvaluated down correctly.
-  if ((E->getOpcode() == BinaryOperator::LAnd && Result == 0) ||
-      (E->getOpcode() == BinaryOperator::LOr  && Result != 0))
-    Info.isEvaluated = false;
 
   // FIXME: Handle pointer subtraction
 
@@ -522,8 +550,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   // For example, see http://llvm.org/bugs/show_bug.cgi?id=2525 
   if (!EvaluateInteger(E->getRHS(), RHS, Info))
     return false;
-  Info.isEvaluated = OldEval;
-  
+
   switch (E->getOpcode()) {
   default:
     return Error(E->getOperatorLoc(), diag::err_expr_not_constant,E->getType());
@@ -585,21 +612,6 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     Result = Result != 0 || RHS != 0;
     Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
     break;
-      
-    
-  case BinaryOperator::Comma:
-    // Result of the comma is just the result of the RHS.
-    Result = RHS;
-
-    // C99 6.6p3: "shall not contain assignment, ..., or comma operators,
-    // *except* when they are contained within a subexpression that is not
-    // evaluated".  Note that Assignment can never happen due to constraints
-    // on the LHS subexpr, so we don't need to check it here.
-    if (!Info.isEvaluated)
-      return true;
-      
-    // If the value is evaluated, we can accept it as an extension.
-    return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr);
   }
 
   Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
@@ -656,7 +668,18 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
     return true;
   }
-  
+
+  if (E->getOpcode() == UnaryOperator::LNot) {
+    // LNot's operand isn't necessarily an integer, so we handle it specially.
+    bool bres;
+    if (!HandleConversionToBool(E->getSubExpr(), bres, Info))
+      return false;
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    Result = !bres;
+    return true;
+  }
+
   // Get the operand value into 'Result'.
   if (!Visit(E->getSubExpr()))
     return false;
@@ -667,12 +690,6 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     // See C99 6.6p3.
     return Error(E->getOperatorLoc(), diag::err_expr_not_constant,
                  E->getType());
-  case UnaryOperator::LNot: {
-    bool Val = Result == 0;
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    Result = Val;
-    break;
-  }
   case UnaryOperator::Extension:
     // FIXME: Should extension allow i-c-e extension expressions in its scope?
     // If so, we could clear the diagnostic ID.
@@ -708,7 +725,7 @@ bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
   }
 
   // Handle simple integer->integer casts.
-  if (SubExpr->getType()->isIntegerType()) {
+  if (SubExpr->getType()->isIntegralType()) {
     if (!Visit(SubExpr))
       return false;
     

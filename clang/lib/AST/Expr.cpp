@@ -733,6 +733,12 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
 /// cast+dereference.
 bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
                                  SourceLocation *Loc, bool isEvaluated) const {
+  // Pretest for integral type; some parts of the code crash for types that
+  // can't be sized.
+  if (!getType()->isIntegralType()) {
+    if (Loc) *Loc = getLocStart();
+    return false;
+  }
   switch (getStmtClass()) {
   default:
     if (Loc) *Loc = getLocStart();
