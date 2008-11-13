@@ -399,14 +399,13 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // Iterate over all of the blocks that the variable is completely
     // live in, adding [insrtIndex(begin), instrIndex(end)+4) to the
     // live interval.
-    for (unsigned i = 0, e = vi.AliveBlocks.size(); i != e; ++i) {
-      if (vi.AliveBlocks[i]) {
-        LiveRange LR(getMBBStartIdx(i),
-                     getMBBEndIdx(i)+1,  // MBB ends at -1.
-                     ValNo);
-        interval.addRange(LR);
-        DOUT << " +" << LR;
-      }
+    for (int i = vi.AliveBlocks.find_first(); i != -1;
+         i = vi.AliveBlocks.find_next(i)) {
+      LiveRange LR(getMBBStartIdx(i),
+                   getMBBEndIdx(i)+1,  // MBB ends at -1.
+                   ValNo);
+      interval.addRange(LR);
+      DOUT << " +" << LR;
     }
 
     // Finally, this virtual register is live from the start of any killing

@@ -52,11 +52,11 @@ void LiveVariables::getAnalysisUsage(AnalysisUsage &AU) const {
 
 void LiveVariables::VarInfo::dump() const {
   cerr << "  Alive in blocks: ";
-  for (unsigned i = 0, e = AliveBlocks.size(); i != e; ++i)
-    if (AliveBlocks[i]) cerr << i << ", ";
+  for (int i = AliveBlocks.find_first(); i != -1; i = AliveBlocks.find_next(i))
+    cerr << i << ", ";
   cerr << "  Used in blocks: ";
-  for (unsigned i = 0, e = UsedBlocks.size(); i != e; ++i)
-    if (UsedBlocks[i]) cerr << i << ", ";
+  for (int i = UsedBlocks.find_first(); i != -1; i = UsedBlocks.find_next(i))
+    cerr << i << ", ";
   cerr << "\n  Killed by:";
   if (Kills.empty())
     cerr << " No instructions.\n";
