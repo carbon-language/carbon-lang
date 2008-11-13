@@ -387,7 +387,7 @@ namespace llvm {
   template<>
   struct DOTGraphTraits<ScheduleDAG*> : public DefaultDOTGraphTraits {
     static std::string getGraphName(const ScheduleDAG *G) {
-      return DOTGraphTraits<SelectionDAG*>::getGraphName(G->DAG);
+      return G->MF->getFunction()->getName();
     }
 
     static bool renderGraphFromBottomUp() {
