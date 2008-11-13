@@ -197,6 +197,18 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   // Only handle integer indices for now.
   if ((CI1 = dyn_cast<nonloc::ConcreteInt>(&Idx)) &&
       (CI2 = dyn_cast<nonloc::ConcreteInt>(&Offset))) {
+
+    // Temporary SVal to hold a potential signed APSInt.
+    SVal SignedInt;
+
+    // Index might be unsigned. We have to convert it to signed.
+    if (CI2->getValue().isUnsigned()) {
+      llvm::APSInt SI = CI2->getValue();
+      SI.setIsSigned(true);
+      SignedInt = nonloc::ConcreteInt(getBasicVals().getValue(SI));
+      CI2 = cast<nonloc::ConcreteInt>(&SignedInt);
+    }
+
     SVal NewIdx = CI1->EvalBinOp(StateMgr.getBasicVals(), BinaryOperator::Add,
                                  *CI2);
     return loc::MemRegionVal(MRMgr.getElementRegion(NewIdx, 
