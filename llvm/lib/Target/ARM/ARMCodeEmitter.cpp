@@ -388,7 +388,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
                   (intptr_t)ACPV, false));
       else 
         emitGlobalAddress(GV, ARM::reloc_arm_machine_cp_entry,
-                          ACPV->isStub(), (intptr_t)ACPV);
+                          ACPV->isStub() || isa<Function>(GV), (intptr_t)ACPV);
      } else  {
       assert(!ACPV->isNonLazyPointer() && "Don't know how to deal this yet!");
       emitExternalSymbolAddress(ACPV->getSymbol(), ARM::reloc_arm_absolute);
@@ -397,11 +397,18 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
   } else {
     Constant *CV = MCPE.Val.ConstVal;
 
+#ifndef NDEBUG
     DOUT << "  ** Constant pool #" << CPI << " @ "
-         << (void*)MCE.getCurrentPCValue() << " " << *CV << '\n';
+         << (void*)MCE.getCurrentPCValue() << " ";
+    if (const Function *F = dyn_cast<Function>(CV))
+      DOUT << F->getName();
+    else
+      DOUT << *CV;
+    DOUT << '\n';
+#endif
 
     if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
-      emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
+      emitGlobalAddress(GV, ARM::reloc_arm_absolute, isa<Function>(GV));
       emitWordLE(0);
     } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
