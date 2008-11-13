@@ -233,13 +233,13 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
                                     unsigned &RestoreIndex) {
   // FIXME: Allow spill to be inserted to the beginning of the mbb. Update mbb
   // begin index accordingly.
-  MachineBasicBlock::iterator Pt = MBB->end();
+  MachineBasicBlock::iterator Pt = MBB->getFirstTerminator();
   unsigned EndIdx = LIs->getMBBEndIdx(MBB);
 
   // Go bottom up if RefsInMBB is empty and the end of the mbb isn't beyond
   // the last index in the live range.
   if (RefsInMBB.empty() && LastIdx >= EndIdx) {
-    MachineBasicBlock::iterator MII = MBB->end();
+    MachineBasicBlock::iterator MII = MBB->getFirstTerminator();
     MachineBasicBlock::iterator EndPt = MI;
     --MII;
     do {
