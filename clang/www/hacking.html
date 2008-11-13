@@ -17,26 +17,24 @@
   
   <p>This document provides some hints for how to get started hacking
   on Clang for developers who are new to the Clang and/or LLVM
-  codebases.
+  codebases.</p>
     <ul>
       <li><a href="#docs">Developer Documentation</a></li>
       <li><a href="#debugging">Debugging</a></li>
       <li><a href="#irgen">LLVM IR Generation</a></li>
     </ul>
-  </p>
     
   <!--=====================================================================-->
-  <h2 id="debugging">Developer Documentation</h2>
+  <h2 id="docs">Developer Documentation</h2>
   <!--=====================================================================-->
   
   <p>Both Clang and LLVM use doxygen to provide API documentation. Their
-  respective web pages (generated nightly) are here:
+  respective web pages (generated nightly) are here:</p>
     <ul>
       <li><a href="http://clang.llvm.org/doxygen">Clang</a></li>
       <li><a href="http://llvm.org/doxygen">LLVM</a></li>
     </ul>
-  </p>
-  
+      
   <p>For work on the LLVM IR generation, the LLVM assembly language
   <a href="http://llvm.org/docs/LangRef.html">reference manual</a> is
   also useful.</p>
@@ -45,7 +43,7 @@
   <h2 id="debugging">Debugging</h2>
   <!--=====================================================================-->
   
-  <p>Inspecting data structures in a debugger:
+  <p>Inspecting data structures in a debugger:</p>
     <ul>
       <li>Many LLVM and Clang data structures provide
         a <tt>dump()</tt> method which will print a description of the
@@ -57,7 +55,6 @@
       qualifiers, and the <tt>getTypePtr()</tt> method to get the
       wrapped <tt>Type*</tt> which you can then dump.</li>
     </ul>
-  </p>
   
   <!--=====================================================================-->
   <h2 id="irgen">LLVM IR Generation</h2>
@@ -74,7 +71,7 @@
     can also use <tt>-emit-llvm-bc</tt> to write an LLVM bitcode file
     which can be processed by the suite of LLVM tools
     like <tt>llvm-dis</tt>, <tt>llvm-nm</tt>, etc. See the LLVM
-    <a href="http://llvm.org/docs/CommandGuide/">Command Guide</tt>
+    <a href="http://llvm.org/docs/CommandGuide/">Command Guide</a>
     for more information.</p>
 
 </div>
