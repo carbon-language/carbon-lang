@@ -61,6 +61,17 @@ void checkaccess_union() {
 
 typedef float __m128 __attribute__((__vector_size__(16), __may_alias__));
 __m128 return128() {
+  // This compound literal has a Vector type.  We currently just
+  // return UnknownVal.
   return __extension__(__m128) { 0.0f, 0.0f, 0.0f, 0.0f };
 }
+
+typedef long long __v2di __attribute__ ((__vector_size__ (16)));
+typedef long long __m128i __attribute__ ((__vector_size__ (16), __may_alias__));
+__m128i vec128i(long long __q1, long long __q0) {
+  // This compound literal returns true for both isVectorType() and 
+  // isIntegerType().
+  return __extension__ (__m128i)(__v2di){ __q0, __q1 };
+}
+
 

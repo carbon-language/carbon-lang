@@ -1742,7 +1742,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
           SymbolID Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
           InitVal = loc::SymbolVal(Sym);
         }
-        else if (T->isIntegerType()) {
+        else if (T->isIntegerType() && T->isScalarType()) {
           SymbolID Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
           InitVal = nonloc::SymbolVal(Sym);                    
         }
@@ -1835,6 +1835,13 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
     return;
   }
 
+  if (T->isUnionType() || T->isVectorType()) {
+    // FIXME: to be implemented.
+    // Note: That vectors can return true for T->isIntegerType()
+    MakeNode(Dst, E, Pred, state);
+    return;
+  }
+  
   if (Loc::IsLocType(T) || T->isIntegerType()) {
     assert (E->getNumInits() == 1);
     NodeSet Tmp;
@@ -1847,11 +1854,6 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
     return;
   }
 
-  if (T->isUnionType() || T->isVectorType()) {
-    // FIXME: to be implemented.
-    MakeNode(Dst, E, Pred, state);
-    return;
-  }
 
   printf("InitListExpr type = %s\n", T.getAsString().c_str());
   assert(0 && "unprocessed InitListExpr type");
@@ -2338,11 +2340,12 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // FIXME: Handle structs.
           QualType T = RHS->getType();
           
-          if (RightV.isUnknown() && (T->isIntegerType() || Loc::IsLocType(T))) {
+          if (RightV.isUnknown() && (Loc::IsLocType(T) || 
+                                  (T->isScalarType() && T->isIntegerType()))) {
             unsigned Count = Builder->getCurrentBlockCount();
             SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
             
-            RightV = Loc::IsLocType(B->getRHS()->getType()) 
+            RightV = Loc::IsLocType(T) 
                    ? cast<SVal>(loc::SymbolVal(Sym)) 
                    : cast<SVal>(nonloc::SymbolVal(Sym));            
           }
@@ -2358,7 +2361,9 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         case BinaryOperator::Rem:
           
           // Special checking for integer denominators.          
-          if (RHS->getType()->isIntegerType()) {
+          if (RHS->getType()->isIntegerType() && 
+              RHS->getType()->isScalarType()) {
+            
             St = CheckDivideZero(B, St, *I2, RightV);
             if (!St) continue;
           }
@@ -2429,7 +2434,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
         // Check for divide-by-zero.
         if ((Op == BinaryOperator::Div || Op == BinaryOperator::Rem)
-            && RHS->getType()->isIntegerType()) {
+            && RHS->getType()->isIntegerType()
+            && RHS->getType()->isScalarType()) {
           
           // CheckDivideZero returns a new state where the denominator
           // is assumed to be non-zero.
@@ -2489,8 +2495,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
         // EXPERIMENTAL: "Conjured" symbols.
         // FIXME: Handle structs.
-        if (Result.isUnknown() &&
-            (CTy->isIntegerType() || Loc::IsLocType(CTy))) {
+        if (Result.isUnknown() && (Loc::IsLocType(CTy) ||
+                                 (CTy->isScalarType() && CTy->isIntegerType()))) {
           
           unsigned Count = Builder->getCurrentBlockCount();
           SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);

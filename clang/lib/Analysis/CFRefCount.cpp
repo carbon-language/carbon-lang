@@ -1605,7 +1605,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           QualType T = R->getType(Ctx);
           
           // FIXME: handle structs.
-          if (T->isIntegerType() || Loc::IsLocType(T)) {
+          if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
             SymbolID NewSym =
               Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
             
@@ -1669,7 +1669,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       
       QualType T = Ex->getType();
       
-      if (T->isIntegerType() || Loc::IsLocType(T)) {
+      if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
         unsigned Count = Builder.getCurrentBlockCount();
         SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
         

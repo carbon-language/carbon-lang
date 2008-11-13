@@ -381,7 +381,7 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
   // FIXME: We eventually should handle structs and other compound types
   // that are returned by value.
   QualType T = CE->getType();  
-  if (T->isIntegerType() || Loc::IsLocType(T)) {    
+  if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {    
     unsigned Count = Builder.getCurrentBlockCount();
     SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
         
