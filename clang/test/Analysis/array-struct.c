@@ -44,3 +44,9 @@ void f5() {
   struct s data;
   g1(&data);
 }
+
+void f6() {
+  char *p;
+  p = __builtin_alloca(10); 
+  p[1] = 'a';
+}
