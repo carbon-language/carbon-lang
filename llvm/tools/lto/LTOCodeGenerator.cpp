@@ -165,7 +165,7 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     // generate assembly code
     bool genResult = false;
     {
-      raw_fd_ostream asmFile(uniqueAsmPath.c_str(), errMsg);
+      raw_fd_ostream asmFile(uniqueAsmPath.c_str(), false, errMsg);
       if (!errMsg.empty())
         return NULL;
       genResult = this->generateAssemblyCode(asmFile, errMsg);

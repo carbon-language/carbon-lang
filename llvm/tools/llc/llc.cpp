@@ -125,7 +125,7 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
     sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
     std::string error;
-    raw_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), error);
+    raw_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), true, error);
     if (!error.empty()) {
       std::cerr << error << '\n';
       delete Out;
@@ -142,6 +142,7 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
 
   OutputFilename = GetFileNameRoot(InputFilename);
     
+  bool Binary = false;
   switch (FileType) {
   case TargetMachine::AssemblyFile:
     if (MArch->Name[0] == 'c') {
@@ -156,9 +157,11 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
     break;
   case TargetMachine::ObjectFile:
     OutputFilename += ".o";
+    Binary = true;
     break;
   case TargetMachine::DynamicLibrary:
     OutputFilename += LTDL_SHLIB_EXT;
+    Binary = true;
     break;
   }
   
@@ -175,7 +178,7 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
   sys::RemoveFileOnSignal(sys::Path(OutputFilename));
   
   std::string error;
-  raw_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), error);
+  raw_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), Binary, error);
   if (!error.empty()) {
     std::cerr << error << '\n';
     delete Out;

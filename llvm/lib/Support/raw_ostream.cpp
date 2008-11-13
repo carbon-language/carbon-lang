@@ -13,6 +13,7 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
+#include "llvm/System/Program.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/config.h"
 #include <ostream>
@@ -200,17 +201,27 @@ void format_object_base::home() {
 /// occurs, information about the error is put into ErrorInfo, and the
 /// stream should be immediately destroyed; the string will be empty
 /// if no error occurred.
-raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo) {
+raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary,
+                               std::string &ErrorInfo) {
   ErrorInfo.clear();
 
   // Handle "-" as stdout.
   if (Filename[0] == '-' && Filename[1] == 0) {
     FD = STDOUT_FILENO;
+    // If user requested binary then put stdout into binary mode if
+    // possible.
+    if (Binary)
+      sys::Program::ChangeStdoutToBinary();
     ShouldClose = false;
     return;
   }
   
-  FD = open(Filename, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+  int Flags = O_WRONLY|O_CREAT|O_TRUNC;
+#ifdef O_BINARY
+  if (Binary)
+    Flags |= O_BINARY;
+#endif
+  FD = open(Filename, Flags, 0644);
   if (FD < 0) {
     ErrorInfo = "Error opening output file '" + std::string(Filename) + "'";
     ShouldClose = false;
