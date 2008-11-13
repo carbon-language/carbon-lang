@@ -276,7 +276,7 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   }
   
   // Emit the continuation block for code after the if.
-  EmitBlock(ContBlock);
+  EmitBlock(ContBlock, true);
 }
 
 void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
@@ -299,7 +299,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   
   // Create an exit block for when the condition fails, create a block for the
   // body of the loop.
-  llvm::BasicBlock *ExitBlock = createBasicBlock("while.exit");
+  llvm::BasicBlock *ExitBlock = createBasicBlock("while.end");
   llvm::BasicBlock *LoopBody  = createBasicBlock("while.body");
   
   // As long as the condition is true, go to the loop body.
@@ -319,7 +319,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   EmitBranch(LoopHeader);
   
   // Emit the exit block.
-  EmitBlock(ExitBlock);
+  EmitBlock(ExitBlock, true);
 
   // If LoopHeader is a simple forwarding block then eliminate it.
   if (!EmitBoolCondBranch 
@@ -369,7 +369,7 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
     Builder.CreateCondBr(BoolCondVal, LoopBody, AfterDo);
   
   // Emit the exit block.
-  EmitBlock(AfterDo);
+  EmitBlock(AfterDo, true);
 
   // If DoCond is a simple forwarding block then eliminate it.
   if (!EmitBoolCondBranch && &DoCond->front() == DoCond->getTerminator()) {
@@ -382,9 +382,6 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
 void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   // FIXME: What do we do if the increment (f.e.) contains a stmt expression,
   // which contains a continue/break?
-  // TODO: We could keep track of whether the loop body contains any
-  // break/continue statements and not create unnecessary blocks (like
-  // "afterfor" for a condless loop) if it doesn't.
 
   // Evaluate the first part before the loop.
   if (S.getInit())
@@ -438,7 +435,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   EmitBranch(CondBlock);
 
   // Emit the fall-through block.
-  EmitBlock(AfterFor);
+  EmitBlock(AfterFor, true);
 }
 
 void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
@@ -652,7 +649,7 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   }
 
   // Emit continuation.
-  EmitBlock(NextBlock);
+  EmitBlock(NextBlock, true);
 
   SwitchInsn = SavedSwitchInsn;
   CaseRangeBlock = SavedCRBlock;
