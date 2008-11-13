@@ -87,9 +87,6 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
 Preprocessor::~Preprocessor() {
   assert(BacktrackPositions.empty() && "EnableBacktrack/Backtrack imbalance!");
 
-  // Free any active lexers.
-  delete CurLexer;
-  
   while (!IncludeMacroStack.empty()) {
     delete IncludeMacroStack.back().TheLexer;
     delete IncludeMacroStack.back().TheTokenLexer;

@@ -20,6 +20,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
   
@@ -93,7 +94,7 @@ class Preprocessor {
   
   /// CurLexer - This is the current top of the stack that we're lexing from if
   /// not expanding a macro.  One of CurLexer and CurTokenLexer must be null.
-  Lexer *CurLexer;
+  llvm::OwningPtr<Lexer> CurLexer;
   
   /// CurLookup - The DirectoryLookup structure used to find the current
   /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to
@@ -102,7 +103,7 @@ class Preprocessor {
 
   /// CurTokenLexer - This is the current macro we are expanding, if we are
   /// expanding a macro.  One of CurLexer and CurTokenLexer must be null.
-  TokenLexer *CurTokenLexer;
+  llvm::OwningPtr<TokenLexer> CurTokenLexer;
   
   /// IncludeMacroStack - This keeps track of the stack of files currently
   /// #included, and macros currently being expanded from, not counting
@@ -191,7 +192,7 @@ public:
   /// isCurrentLexer - Return true if we are lexing directly from the specified
   /// lexer.
   bool isCurrentLexer(const Lexer *L) const {
-    return CurLexer == L;
+    return CurLexer.get() == L;
   }
   
   /// getCurrentLexer - Return the current file lexer being lexed from.  Note
@@ -484,16 +485,14 @@ public:
 private:
   
   void PushIncludeMacroStack() {
-    IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
-                                                 CurTokenLexer));
-    CurLexer = 0;
-    CurTokenLexer = 0;
+    IncludeMacroStack.push_back(IncludeStackInfo(CurLexer.take(), CurDirLookup,
+                                                 CurTokenLexer.take()));
   }
   
   void PopIncludeMacroStack() {
-    CurLexer      = IncludeMacroStack.back().TheLexer;
+    CurLexer.reset(IncludeMacroStack.back().TheLexer);
     CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
-    CurTokenLexer = IncludeMacroStack.back().TheTokenLexer;
+    CurTokenLexer.reset(IncludeMacroStack.back().TheTokenLexer);
     IncludeMacroStack.pop_back();
   }
   

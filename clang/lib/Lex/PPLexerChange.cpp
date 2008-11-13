@@ -48,7 +48,7 @@ bool Preprocessor::isInPrimaryFile() const {
 /// that this ignores any potentially active macro expansions and _Pragma
 /// expansions going on at the time.
 Lexer *Preprocessor::getCurrentFileLexer() const {
-  if (CurLexer && !CurLexer->Is_PragmaLexer) return CurLexer;
+  if (CurLexer && !CurLexer->Is_PragmaLexer) return CurLexer.get();
   
   // Look for a stacked lexer.
   for (unsigned i = IncludeMacroStack.size(); i != 0; --i) {
@@ -88,7 +88,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
   if (CurLexer || CurTokenLexer)
     PushIncludeMacroStack();
 
-  CurLexer = TheLexer;
+  CurLexer.reset(TheLexer);
   CurDirLookup = CurDir;
   
   // Notify the client, if desired, that we are in a new source file.
@@ -110,9 +110,9 @@ void Preprocessor::EnterMacro(Token &Tok, MacroArgs *Args) {
   CurDirLookup = 0;
   
   if (NumCachedTokenLexers == 0) {
-    CurTokenLexer = new TokenLexer(Tok, Args, *this);
+    CurTokenLexer.reset(new TokenLexer(Tok, Args, *this));
   } else {
-    CurTokenLexer = TokenLexerCache[--NumCachedTokenLexers];
+    CurTokenLexer.reset(TokenLexerCache[--NumCachedTokenLexers]);
     CurTokenLexer->Init(Tok, Args);
   }
 }
@@ -138,10 +138,10 @@ void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks,
 
   // Create a macro expander to expand from the specified token stream.
   if (NumCachedTokenLexers == 0) {
-    CurTokenLexer = new TokenLexer(Toks, NumToks, DisableMacroExpansion,
-                                   OwnsTokens, *this);
+    CurTokenLexer.reset(new TokenLexer(Toks, NumToks, DisableMacroExpansion,
+                                       OwnsTokens, *this));
   } else {
-    CurTokenLexer = TokenLexerCache[--NumCachedTokenLexers];
+    CurTokenLexer.reset(TokenLexerCache[--NumCachedTokenLexers]);
     CurTokenLexer->Init(Toks, NumToks, DisableMacroExpansion, OwnsTokens);
   }
 }
@@ -204,8 +204,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   CurLexer->FormTokenWithChars(Result, EndPos, tok::eof);
   
   // We're done with the #included file.
-  delete CurLexer;
-  CurLexer = 0;
+  CurLexer.reset();
 
   // This is the end of the top-level file.  If the diag::pp_macro_not_used
   // diagnostic is enabled, look for macros that have not been used.
@@ -227,12 +226,11 @@ bool Preprocessor::HandleEndOfTokenLexer(Token &Result) {
 
   // Delete or cache the now-dead macro expander.
   if (NumCachedTokenLexers == TokenLexerCacheSize)
-    delete CurTokenLexer;
+    CurTokenLexer.reset();
   else
-    TokenLexerCache[NumCachedTokenLexers++] = CurTokenLexer;
+    TokenLexerCache[NumCachedTokenLexers++] = CurTokenLexer.take();
 
   // Handle this like a #include file being popped off the stack.
-  CurTokenLexer = 0;
   return HandleEndOfFile(Result, true);
 }
 
@@ -245,11 +243,11 @@ void Preprocessor::RemoveTopOfLexerStack() {
   if (CurTokenLexer) {
     // Delete or cache the now-dead macro expander.
     if (NumCachedTokenLexers == TokenLexerCacheSize)
-      delete CurTokenLexer;
+      CurTokenLexer.reset();
     else
-      TokenLexerCache[NumCachedTokenLexers++] = CurTokenLexer;
+      TokenLexerCache[NumCachedTokenLexers++] = CurTokenLexer.take();
   } else {
-    delete CurLexer;
+    CurLexer.reset();
   }
   
   PopIncludeMacroStack();
