@@ -1681,26 +1681,6 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       continue;
     }
 
-    // Cast alloca'ed pointer to typed pointer.
-    if (isa<loc::MemRegionVal>(V)) {
-      if (const AllocaRegion* AR = 
-          dyn_cast<AllocaRegion>(cast<loc::MemRegionVal>(V).getRegion())) {
-
-        // Set the AllocaRegion's type.
-        const_cast<AllocaRegion*>(AR)->setType(T);
-
-        // Set the CastExpr's value to a pointer to the first element.
-        MemRegionManager& RM = getStateManager().getRegionManager();
-
-        llvm::APSInt Zero(llvm::APInt::getNullValue(32), false);
-        SVal ZeroIdx(nonloc::ConcreteInt(getBasicVals().getValue(Zero)));
-        const ElementRegion* ER = RM.getElementRegion(ZeroIdx, AR);
-
-        MakeNode(Dst, CastE, N, BindExpr(St, CastE, loc::MemRegionVal(ER)));
-        continue;
-      }
-    }
-
     // All other cases.
     MakeNode(Dst, CastE, N, BindExpr(St, CastE, EvalCast(V, CastE->getType())));
   }

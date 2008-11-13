@@ -37,9 +37,9 @@ class MemRegionManager;
 class MemRegion : public llvm::FoldingSetNode {
 public:
   enum Kind { MemSpaceRegionKind, SymbolicRegionKind,
+              AllocaRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
-               AllocaRegionKind,
                CompoundLiteralRegionKind,
                StringRegionKind, ElementRegionKind,
                // Decl Regions.
@@ -102,6 +102,34 @@ public:
   }
 };
   
+/// AllocaRegion - A region that represents an untyped blob of bytes created
+///  by a call to 'alloca'.
+class AllocaRegion : public SubRegion {
+  friend class MemRegionManager;
+protected:
+  unsigned Cnt; // Block counter.  Used to distinguish different pieces of
+                // memory allocated by alloca at the same call site.
+  const Expr* Ex;
+
+  AllocaRegion(const Expr* ex, unsigned cnt, const MemRegion* superRegion)
+    : SubRegion(superRegion, AllocaRegionKind), Cnt(cnt), Ex(ex) {}
+  
+public:
+  
+  const Expr* getExpr() const { return Ex; }
+  
+  void Profile(llvm::FoldingSetNodeID& ID) const;
+
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Expr* Ex,
+                            unsigned Cnt);
+  
+  void print(llvm::raw_ostream& os) const;
+  
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == AllocaRegionKind;
+  }
+};    
+  
 /// SymbolicRegion - A special, "non-concrete" region. Unlike other region
 ///  clases, SymbolicRegion represents a region that serves as an alias for
 ///  either a real region, a NULL pointer, etc.  It essentially is used to
@@ -141,42 +169,6 @@ public:
     return k > BEG_TYPED_REGIONS && k < END_TYPED_REGIONS;
   }
 };
-
-/// AllocaRegion - A region that represents an untyped blob of bytes created
-///  by a call to 'alloca'.
-class AllocaRegion : public TypedRegion {
-  friend class MemRegionManager;
-protected:
-  unsigned Cnt; // Block counter.  Used to distinguish different pieces of
-                // memory allocated by alloca at the same call site.
-  const Expr* Ex;
-
-  QualType T;
-
-  AllocaRegion(const Expr* ex, unsigned cnt, const MemRegion* superRegion)
-    : TypedRegion(superRegion, AllocaRegionKind), Cnt(cnt), Ex(ex) {}
-  
-public:
-  
-  const Expr* getExpr() const { return Ex; }
-
-  void setType(QualType t) { T = t; }
-
-  QualType getType(ASTContext& C) const {
-    return C.getCanonicalType(T);
-  }
-
-  void Profile(llvm::FoldingSetNodeID& ID) const;
-
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Expr* Ex,
-                            unsigned Cnt);
-  
-  void print(llvm::raw_ostream& os) const;
-  
-  static bool classof(const MemRegion* R) {
-    return R->getKind() == AllocaRegionKind;
-  }
-};    
 
 /// StringRegion - Region associated with a StringLiteral.
 class StringRegion : public TypedRegion {
