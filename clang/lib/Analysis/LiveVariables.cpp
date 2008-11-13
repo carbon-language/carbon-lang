@@ -184,7 +184,7 @@ TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   
   // This represents a 'kill' for the variable.
   Stmt* Element = S->getElement();
-  DeclRefExpr *DR;
+  DeclRefExpr *DR = 0;
   VarDecl* VD = 0;
   
   if (DeclStmt* DS = dyn_cast<DeclStmt>(Element))
