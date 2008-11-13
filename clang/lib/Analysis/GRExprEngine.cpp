@@ -1777,7 +1777,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
                                      NodeSet& Dst) {
 
   const GRState* state = GetState(Pred);
-  QualType T = E->getType();
+  QualType T = getContext().getCanonicalType(E->getType());
   unsigned NumInitElements = E->getNumInits();  
 
   if (T->isArrayType() || T->isStructureType()) {
@@ -1847,7 +1847,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
     return;
   }
 
-  if (T->isUnionType()) {
+  if (T->isUnionType() || T->isVectorType()) {
     // FIXME: to be implemented.
     MakeNode(Dst, E, Pred, state);
     return;

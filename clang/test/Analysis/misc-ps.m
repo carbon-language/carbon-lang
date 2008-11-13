@@ -56,3 +56,11 @@ void checkaccess_union() {
       ).__i))) & 0xff00) >> 8) == 1)
         ret = 1;
 }
+
+// InitListExpr processing
+
+typedef float __m128 __attribute__((__vector_size__(16), __may_alias__));
+__m128 return128() {
+  return __extension__(__m128) { 0.0f, 0.0f, 0.0f, 0.0f };
+}
+
