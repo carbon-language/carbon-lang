@@ -397,19 +397,18 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   case BinaryOperatorClass:
   case CompoundAssignOperatorClass: {
     const BinaryOperator *BinOp = cast<BinaryOperator>(this);
-    if (BinOp->isAssignmentOp()) {
-      if (Ctx.getLangOptions().CPlusPlus)
-        // C++ [expr.ass]p1: 
-        //   The result of an assignment operation [...] is an lvalue.
-        return LV_Valid;
-      else 
-        // C99 6.5.16:
-        //   An assignment expression [...] is not an lvalue.
-        return LV_InvalidExpression;
-    } else
+    if (!BinOp->isAssignmentOp())
       return LV_InvalidExpression;
 
-    break;
+    if (Ctx.getLangOptions().CPlusPlus)
+      // C++ [expr.ass]p1: 
+      //   The result of an assignment operation [...] is an lvalue.
+      return LV_Valid;
+
+
+    // C99 6.5.16:
+    //   An assignment expression [...] is not an lvalue.
+    return LV_InvalidExpression;
   }
   case CallExprClass: {
     // C++ [expr.call]p10:

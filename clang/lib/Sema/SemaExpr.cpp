@@ -130,15 +130,10 @@ QualType Sema::UsualArithmeticConversionsType(QualType lhs, QualType rhs) {
   // lhs == rhs check. Also, for conversion purposes, we ignore any
   // qualifiers.  For example, "const float" and "float" are
   // equivalent.
-  if (lhs->isPromotableIntegerType())
-    lhs = Context.IntTy;
-  else
-    lhs = Context.getCanonicalType(lhs).getUnqualifiedType();
-
-  if (rhs->isPromotableIntegerType())
-    rhs = Context.IntTy;
-  else
-    rhs = Context.getCanonicalType(rhs).getUnqualifiedType();
+  if (lhs->isPromotableIntegerType()) lhs = Context.IntTy;
+  else                                lhs = lhs.getUnqualifiedType();
+  if (rhs->isPromotableIntegerType()) rhs = Context.IntTy;
+  else                                rhs = rhs.getUnqualifiedType();
 
   // If both types are identical, no conversion is needed.
   if (lhs == rhs)

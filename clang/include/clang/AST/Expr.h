@@ -833,6 +833,17 @@ public:
 /// source code. For example: converting T[]->T*, void f()->void
 /// (*f)(), float->double, short->int, etc.
 ///
+/// In C, implicit casts always produce rvalues. However, in C++, an
+/// implicit cast whose result is being bound to a reference will be
+/// an lvalue. For example:
+///
+/// @code
+/// class Base { };
+/// class Derived : public Base { };
+/// void f(Derived d) { 
+///   Base& b = d; // initializer is an ImplicitCastExpr to an lvalue of type Base
+/// }
+/// @endcode
 class ImplicitCastExpr : public CastExpr {
   /// LvalueCast - Whether this cast produces an lvalue.
   bool LvalueCast;

@@ -17,7 +17,6 @@
 #define LLVM_CLANG_TYPE_ORDERING_H
 
 #include "clang/AST/Type.h"
-#include "llvm/ADT/DenseMap.h"
 #include <functional>
 
 namespace clang {
@@ -33,6 +32,8 @@ struct QualTypeOrdering : std::binary_function<QualType, QualType, bool> {
 }
 
 namespace llvm {
+  template<class> struct DenseMapInfo;
+
   template<> struct DenseMapInfo<clang::QualType> {
     static inline clang::QualType getEmptyKey() { return clang::QualType(); }
 
