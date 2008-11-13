@@ -35,7 +35,6 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
-#include <fstream> // FIXME: Remove
 
 using namespace clang;
 using namespace llvm;
@@ -308,10 +307,7 @@ void BackendConsumer::CreatePasses() {
     if (CompileOpts.OptimizationLevel > 1 && CompileOpts.UnitAtATime)
       PM->add(createConstantMergePass());         // Merge dup global constants 
   } else {
-    // FIXME: Remove this once LLVM doesn't break when inlining
-    // functions with debug info.
-    if (!GenerateDebugInfo)
-      PM->add(createAlwaysInlinerPass());  
+    PM->add(createAlwaysInlinerPass());  
   }
 }
 
