@@ -73,46 +73,46 @@ namespace ARMII {
     FormMask      = 0x1f << FormShift,
 
     // Pseudo instructions
-    Pseudo        = 1  << FormShift,
+    Pseudo        = 0  << FormShift,
 
     // Multiply instructions
-    MulFrm        = 2  << FormShift,
+    MulFrm        = 1  << FormShift,
 
     // Branch instructions
-    BrFrm         = 3  << FormShift,
-    BrMiscFrm     = 4  << FormShift,
+    BrFrm         = 2  << FormShift,
+    BrMiscFrm     = 3  << FormShift,
 
     // Data Processing instructions
-    DPFrm         = 5  << FormShift,
-    DPSoRegFrm    = 6  << FormShift,
+    DPFrm         = 4  << FormShift,
+    DPSoRegFrm    = 5  << FormShift,
 
     // Load and Store
-    LdFrm         = 7  << FormShift,
-    StFrm         = 8  << FormShift,
-    LdMiscFrm     = 9  << FormShift,
-    StMiscFrm     = 10 << FormShift,
-    LdStMulFrm    = 11 << FormShift,
+    LdFrm         = 6  << FormShift,
+    StFrm         = 7  << FormShift,
+    LdMiscFrm     = 8  << FormShift,
+    StMiscFrm     = 9  << FormShift,
+    LdStMulFrm    = 10 << FormShift,
 
     // Miscellaneous arithmetic instructions
-    ArithMiscFrm  = 12 << FormShift,
+    ArithMiscFrm  = 11 << FormShift,
 
     // Extend instructions
-    ExtFrm        = 13 << FormShift,
+    ExtFrm        = 12 << FormShift,
 
     // VFP formats
-    VFPUnaryFrm   = 14 << FormShift,
-    VFPBinaryFrm  = 15 << FormShift,
-    VFPConv1Frm   = 16 << FormShift,
-    VFPConv2Frm   = 17 << FormShift,
-    VFPConv3Frm   = 18 << FormShift,
-    VFPConv4Frm   = 19 << FormShift,
-    VFPConv5Frm   = 20 << FormShift,
-    VFPLdStFrm    = 21 << FormShift,
-    VFPLdStMulFrm = 22 << FormShift,
-    VFPMiscFrm    = 23 << FormShift,
+    VFPUnaryFrm   = 13 << FormShift,
+    VFPBinaryFrm  = 14 << FormShift,
+    VFPConv1Frm   = 15 << FormShift,
+    VFPConv2Frm   = 16 << FormShift,
+    VFPConv3Frm   = 17 << FormShift,
+    VFPConv4Frm   = 18 << FormShift,
+    VFPConv5Frm   = 19 << FormShift,
+    VFPLdStFrm    = 20 << FormShift,
+    VFPLdStMulFrm = 21 << FormShift,
+    VFPMiscFrm    = 22 << FormShift,
 
     // Thumb format
-    ThumbFrm      = 24 << FormShift,
+    ThumbFrm      = 23 << FormShift,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating

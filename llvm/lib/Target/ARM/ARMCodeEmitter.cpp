@@ -302,9 +302,10 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
 
   NumEmitted++;  // Keep track of the # of mi's emitted
   switch (MI.getDesc().TSFlags & ARMII::FormMask) {
-  default:
+  default: {
     assert(0 && "Unhandled instruction encoding format!");
     break;
+  }
   case ARMII::Pseudo:
     emitPseudoInstruction(MI);
     break;
@@ -509,6 +510,22 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
   switch (Opcode) {
   default:
     abort(); // FIXME:
+  case TargetInstrInfo::INLINEASM: {
+    const char* Value = MI.getOperand(0).getSymbolName();
+    /* We allow inline assembler nodes with empty bodies - they can
+       implicitly define registers, which is ok for JIT. */
+    assert((Value[0] == 0) && "JIT does not support inline asm!\n");
+    break;
+  }
+  case TargetInstrInfo::DBG_LABEL:
+  case TargetInstrInfo::EH_LABEL:
+    MCE.emitLabel(MI.getOperand(0).getImm());
+    break;
+  case TargetInstrInfo::IMPLICIT_DEF:
+  case TargetInstrInfo::DECLARE:
+  case ARM::DWARF_LOC:
+    // Do nothing.
+    break;
   case ARM::CONSTPOOL_ENTRY:
     emitConstPoolInstruction(MI);
     break;
