@@ -83,6 +83,8 @@ namespace {
 
     void emitLEApcrelJTInstruction(const MachineInstr &MI);
 
+    void emitPseudoMoveInstruction(const MachineInstr &MI);
+
     void addPCLabel(unsigned LabelID);
 
     void emitPseudoInstruction(const MachineInstr &MI);
@@ -499,6 +501,45 @@ void ARMCodeEmitter::emitLEApcrelJTInstruction(const MachineInstr &MI) {
   emitWordLE(Binary);
 }
 
+void ARMCodeEmitter::emitPseudoMoveInstruction(const MachineInstr &MI) {
+  unsigned Opcode = MI.getDesc().Opcode;
+
+  // Part of binary is determined by TableGn.
+  unsigned Binary = getBinaryCodeForInstr(MI);
+
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
+
+  // Encode S bit if MI modifies CPSR.
+  if (Opcode == ARM::MOVsrl_flag || Opcode == ARM::MOVsra_flag)
+    Binary |= 1 << ARMII::S_BitShift;
+
+  // Encode register def if there is one.
+  Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
+
+  // Encode the shift operation.
+  switch (Opcode) {
+  default: break;
+  case ARM::MOVrx:
+    // rrx
+    Binary |= 0x6 << 4;
+    break;
+  case ARM::MOVsrl_flag:
+    // lsr #1
+    Binary |= (0x2 << 4) | (1 << 7);
+    break;
+  case ARM::MOVsra_flag:
+    // asr #1
+    Binary |= (0x4 << 4) | (1 << 7);
+    break;
+  }
+
+  // Encode register Rm.
+  Binary |= getMachineOpValue(MI, 1);
+
+  emitWordLE(Binary);
+}
+
 void ARMCodeEmitter::addPCLabel(unsigned LabelID) {
   DOUT << "  ** LPC" << LabelID << " @ "
        << (void*)MCE.getCurrentPCValue() << '\n';
@@ -563,6 +604,11 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
   case ARM::LEApcrelJT:
     // Materialize jumptable address.
     emitLEApcrelJTInstruction(MI);
+    break;
+  case ARM::MOVrx:
+  case ARM::MOVsrl_flag:
+  case ARM::MOVsra_flag:
+    emitPseudoMoveInstruction(MI);
     break;
   }
 }
@@ -638,7 +684,9 @@ unsigned ARMCodeEmitter::getMachineSoImmOpValue(unsigned SoImm) {
 
 unsigned ARMCodeEmitter::getAddrModeSBit(const MachineInstr &MI,
                                          const TargetInstrDesc &TID) const {
-  for (unsigned i = MI.getNumOperands(), e = TID.getNumOperands(); i != e; --i){
+  unsigned e = TID.getNumOperands();
+  if (e) --e; // Looks at the last non-implicit operand as well.
+  for (unsigned i = MI.getNumOperands(); i != e; --i) {
     const MachineOperand &MO = MI.getOperand(i-1);
     if (MO.isReg() && MO.isDef() && MO.getReg() == ARM::CPSR)
       return 1 << ARMII::S_BitShift;

@@ -777,7 +777,7 @@ let isReMaterializable = 1 in
 def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPFrm,
                  "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>, UnaryDP;
 
-def MOVrx : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
+def MOVrx : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo,
                  "mov", " $dst, $src, rrx",
                  [(set GPR:$dst, (ARMrrx GPR:$src))]>, UnaryDP;
 
@@ -785,10 +785,10 @@ def MOVrx : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
 // due to flag operands.
 
 let Defs = [CPSR] in {
-def MOVsrl_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
+def MOVsrl_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo,
                       "mov", "s $dst, $src, lsr #1",
                       [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>, UnaryDP;
-def MOVsra_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
+def MOVsra_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo,
                       "mov", "s $dst, $src, asr #1",
                       [(set GPR:$dst, (ARMsra_flag GPR:$src))]>, UnaryDP;
 }
