@@ -167,8 +167,8 @@ void ScopedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
     DeclCtx = reinterpret_cast<uintptr_t>(MDC) | 0x1;
     // Allow back-patching.  Observe that we register the variable of the
     // *object* for back-patching. Its actual value will get filled in later.
-    D.ReadUIntPtr(reinterpret_cast<uintptr_t&>(MDC->SemanticDC), SemaDCPtrID);
-    D.ReadUIntPtr(reinterpret_cast<uintptr_t&>(MDC->LexicalDC), LexicalDCPtrID);
+    D.ReadPtr(MDC->SemanticDC, SemaDCPtrID);
+    D.ReadPtr(MDC->LexicalDC, LexicalDCPtrID);
   }
 }
     
