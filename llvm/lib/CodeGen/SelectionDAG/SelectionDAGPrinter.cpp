@@ -462,7 +462,7 @@ std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
   } else {
     std::string s;
     raw_string_ostream oss(s);
-    SU->MI->print(oss);
+    SU->getInstr()->print(oss);
     Op += oss.str();
   }
 
