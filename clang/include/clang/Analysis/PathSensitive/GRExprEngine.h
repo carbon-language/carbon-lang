@@ -386,6 +386,8 @@ public:
   
   GRStateManager& getStateManager() { return StateMgr; }
   const GRStateManager& getStateManger() const { return StateMgr; }
+
+  StoreManager& getStoreManager() { return StateMgr.getStoreManager(); }
   
   BasicValueFactory& getBasicVals() {
     return StateMgr.getBasicVals();
