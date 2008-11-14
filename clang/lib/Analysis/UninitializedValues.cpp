@@ -65,7 +65,7 @@ public:
   
   void SetTopValue(UninitializedValues::ValTy& X) {
     X.setDeclValues(AD);
-    X.resetExprValues(AD);
+    X.resetBlkExprValues(AD);
   }
     
   bool VisitDeclRefExpr(DeclRefExpr* DR);
@@ -251,7 +251,7 @@ bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
 //===----------------------------------------------------------------------===//      
 
 namespace {
-  typedef ExprDeclBitVector_Types::Union Merge;
+  typedef StmtDeclBitVector_Types::Union Merge;
   typedef DataflowSolver<UninitializedValues,TransferFuncs,Merge> Solver;
 }
 

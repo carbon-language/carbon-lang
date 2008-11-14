@@ -15,7 +15,7 @@
 #define LLVM_CLANG_LIVEVARIABLES_H
 
 #include "clang/AST/Decl.h"
-#include "clang/Analysis/Support/ExprDeclBitVector.h"
+#include "clang/Analysis/Support/BlkExprDeclBitVector.h"
 #include "clang/Analysis/FlowSensitive/DataflowValues.h"
 
 namespace clang {
@@ -29,14 +29,14 @@ struct LiveVariables_ValueTypes {
   struct ObserverTy;
 
   // We keep dataflow state for declarations and block-level expressions;
-  typedef ExprDeclBitVector_Types::ValTy ValTy;
+  typedef StmtDeclBitVector_Types::ValTy ValTy;
 
   // We need to keep track of both declarations and CFGBlock-level expressions,
   // (so that we don't explore such expressions twice).  We also want
   // to compute liveness information for block-level expressions, since these
   // act as "temporary" values.
   
-  struct AnalysisDataTy : public ExprDeclBitVector_Types::AnalysisDataTy {
+  struct AnalysisDataTy : public StmtDeclBitVector_Types::AnalysisDataTy {
     ObserverTy* Observer;
     ValTy AlwaysLive;
     

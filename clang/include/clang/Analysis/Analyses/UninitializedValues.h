@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_UNITVALS_H
 #define LLVM_CLANG_UNITVALS_H
 
-#include "clang/Analysis/Support/ExprDeclBitVector.h"
+#include "clang/Analysis/Support/BlkExprDeclBitVector.h"
 #include "clang/Analysis/FlowSensitive/DataflowValues.h"
 
 namespace clang {
@@ -33,7 +33,7 @@ public:
 
   struct ObserverTy;
   
-  struct AnalysisDataTy : public ExprDeclBitVector_Types::AnalysisDataTy {    
+  struct AnalysisDataTy : public StmtDeclBitVector_Types::AnalysisDataTy {    
     AnalysisDataTy() : Observer(NULL), FullUninitTaint(true) {}
     virtual ~AnalysisDataTy() {};
     
@@ -41,7 +41,7 @@ public:
     bool FullUninitTaint;
   };
   
-  typedef ExprDeclBitVector_Types::ValTy ValTy;
+  typedef StmtDeclBitVector_Types::ValTy ValTy;
   
   //===--------------------------------------------------------------------===//
   // ObserverTy - Observer for querying DeclRefExprs that use an uninitalized

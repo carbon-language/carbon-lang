@@ -276,11 +276,11 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
 namespace {
 
 struct Merge {
-  typedef ExprDeclBitVector_Types::ValTy ValTy; 
+  typedef StmtDeclBitVector_Types::ValTy ValTy; 
     
   void operator()(ValTy& Dst, const ValTy& Src) {
     Dst.OrDeclBits(Src);
-    Dst.AndExprBits(Src);
+    Dst.AndBlkExprBits(Src);
   }
 };
   
