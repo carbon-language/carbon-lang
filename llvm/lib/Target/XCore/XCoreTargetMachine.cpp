@@ -20,7 +20,7 @@ using namespace llvm;
 
 namespace {
   // Register the target.
-  RegisterTarget<XCoreTargetMachine> X("xcore", "  XCore");
+  RegisterTarget<XCoreTargetMachine> X("xcore", "XCore");
 }
 
 const TargetAsmInfo *XCoreTargetMachine::createTargetAsmInfo() const {
