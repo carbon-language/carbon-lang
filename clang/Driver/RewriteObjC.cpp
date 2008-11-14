@@ -3833,6 +3833,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
       Exp = new UnaryOperator(Exp, UnaryOperator::AddrOf,
                               Context->getPointerType(Exp->getType()), 
                               SourceLocation());
+      InitExprs.push_back(Exp); 
     }
   }
   NewRep = new CallExpr(DRE, &InitExprs[0], InitExprs.size(),
