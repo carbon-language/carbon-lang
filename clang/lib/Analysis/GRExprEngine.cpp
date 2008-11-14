@@ -306,18 +306,18 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
         MakeNode(Dst, B, Pred, BindExpr(St, B, GetSVal(St, B->getRHS())));
         break;
       }
-      
+
       VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
       break;
     }
-      
+
     case Stmt::CallExprClass:
     case Stmt::CXXOperatorCallExprClass: {
       CallExpr* C = cast<CallExpr>(S);
       VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst);
-      break;      
+      break;
     }
-      
+
       // FIXME: ChooseExpr is really a constant.  We need to fix
       //        the CFG do not model them as explicit control-flow.
       
@@ -1010,7 +1010,7 @@ void GRExprEngine::EvalStore(NodeSet& Dst, Expr* Ex, Expr* StoreE, NodeTy* Pred,
     MakeNode(Dst, Ex, *I, (*I)->getState());
 }
 
-const GRState* GRExprEngine::EvalLocation(Expr* Ex, NodeTy* Pred,
+const GRState* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
                                           const GRState* St,
                                           SVal location, bool isLoad) {
   
@@ -1382,50 +1382,67 @@ void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
   //    container is empty.  Thus this transfer function will by default
   //    result in state splitting.
   
-  Stmt* elem = S->getElement();  
-  VarDecl* ElemD;
-  bool newDecl = false;
+  Stmt* elem = S->getElement();
+  SVal ElementV;
     
   if (DeclStmt* DS = dyn_cast<DeclStmt>(elem)) {
-    ElemD = cast<VarDecl>(DS->getSolitaryDecl());
+    VarDecl* ElemD = cast<VarDecl>(DS->getSolitaryDecl());
     assert (ElemD->getInit() == 0);
-    newDecl = true;
+    ElementV = getStateManager().GetLValue(GetState(Pred), ElemD);
+    VisitObjCForCollectionStmtAux(S, Pred, Dst, ElementV);
+    return;
   }
-  else
-    ElemD = cast<VarDecl>(cast<DeclRefExpr>(elem)->getDecl());
+
+  NodeSet Tmp;
+  VisitLValue(cast<Expr>(elem), Pred, Tmp);
   
+  for (NodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I!=E; ++I) {
+    const GRState* state = GetState(*I);
+    VisitObjCForCollectionStmtAux(S, *I, Dst, GetSVal(state, elem));
+  }
+}
+
+void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
+                                                 NodeTy* Pred, NodeSet& Dst,
+                                                 SVal ElementV) {
+    
+
   
-  // Get the current state, as well as the QualType for 'int' and the
-  // type of the element.
-  GRStateRef state = GRStateRef(GetState(Pred), getStateManager());
-  QualType IntTy = getContext().IntTy;
-  QualType ElemTy = ElemD->getType();
+  // Get the current state.  Use 'EvalLocation' to determine if it is a null
+  // pointer, etc.
+  Stmt* elem = S->getElement();
+  GRStateRef state = GRStateRef(EvalLocation(elem, Pred, GetState(Pred),
+                                             ElementV, false),
+                                getStateManager());
   
+  if (!state)
+    return;
+
   // Handle the case where the container still has elements.
+  QualType IntTy = getContext().IntTy;
   SVal TrueV = NonLoc::MakeVal(getBasicVals(), 1, IntTy);
   GRStateRef hasElems = state.BindExpr(S, TrueV);
-  
-  assert (Loc::IsLocType(ElemTy));
-  unsigned Count = Builder->getCurrentBlockCount();
-  loc::SymbolVal SymV(SymMgr.getConjuredSymbol(elem, ElemTy, Count));
-  
-  if (newDecl)
-    hasElems = hasElems.BindDecl(ElemD, &SymV, Count);
-  else
-    hasElems = hasElems.BindLoc(hasElems.GetLValue(ElemD), SymV);
   
   // Handle the case where the container has no elements.
   SVal FalseV = NonLoc::MakeVal(getBasicVals(), 0, IntTy);
   GRStateRef noElems = state.BindExpr(S, FalseV);
+  
+  if (loc::MemRegionVal* MV = dyn_cast<loc::MemRegionVal>(&ElementV))
+    if (const TypedRegion* R = dyn_cast<TypedRegion>(MV->getRegion())) {
+      // FIXME: The proper thing to do is to really iterate over the
+      //  container.  We will do this with dispatch logic to the store.
+      //  For now, just 'conjure' up a symbolic value.
+      QualType T = R->getType(getContext());
+      assert (Loc::IsLocType(T));
+      unsigned Count = Builder->getCurrentBlockCount();
+      loc::SymbolVal SymV(SymMgr.getConjuredSymbol(elem, T, Count));
+      hasElems = hasElems.BindLoc(ElementV, SymV);
 
-  if (!newDecl) {
-    // We only need to bind nil to an existing variable, since out of the
-    // loop the VarDecl won't exist and there will be no chance to get it's
-    // address via the '&' operator.
-    SVal nilV = loc::ConcreteInt(getBasicVals().getValue(0, ElemTy));
-    noElems.BindLoc(noElems.GetLValue(ElemD), nilV);
-  }
-
+      // Bind the location to 'nil' on the false branch.
+      SVal nilV = loc::ConcreteInt(getBasicVals().getValue(0, T));      
+      noElems = noElems.BindLoc(ElementV, nilV);      
+    }
+  
   // Create the new nodes.
   MakeNode(Dst, S, Pred, hasElems);
   MakeNode(Dst, S, Pred, noElems);

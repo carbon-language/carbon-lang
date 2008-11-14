@@ -543,6 +543,9 @@ protected:
   void VisitObjCForCollectionStmt(ObjCForCollectionStmt* S, NodeTy* Pred,
                                   NodeSet& Dst);
   
+  void VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S, NodeTy* Pred,
+                                     NodeSet& Dst, SVal ElementV);
+  
   /// VisitObjCMessageExpr - Transfer function for ObjC message expressions.
   void VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred, NodeSet& Dst);
   
@@ -656,7 +659,7 @@ protected:
   void EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
                 const GRState* St, SVal location, bool CheckOnly = false);
   
-  const GRState* EvalLocation(Expr* Ex, NodeTy* Pred,
+  const GRState* EvalLocation(Stmt* Ex, NodeTy* Pred,
                               const GRState* St, SVal location,
                               bool isLoad = false);
   
