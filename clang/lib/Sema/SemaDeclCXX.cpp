@@ -425,13 +425,43 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   Expr *Init = static_cast<Expr*>(InitExpr);
   SourceLocation Loc = D.getIdentifierLoc();
 
+  bool isFunc = D.isFunctionDeclarator();
+
   // C++ 9.2p6: A member shall not be declared to have automatic storage
   // duration (auto, register) or with the extern storage-class-specifier.
+  // C++ 7.1.1p8: The mutable specifier can be applied only to names of class
+  // data members and cannot be applied to names declared const or static,
+  // and cannot be applied to reference members.
   switch (DS.getStorageClassSpec()) {
     case DeclSpec::SCS_unspecified:
     case DeclSpec::SCS_typedef:
     case DeclSpec::SCS_static:
       // FALL THROUGH.
+      break;
+    case DeclSpec::SCS_mutable:
+      if (isFunc) {
+        if (DS.getStorageClassSpecLoc().isValid())
+          Diag(DS.getStorageClassSpecLoc(),
+               diag::err_mutable_function);
+        else
+          Diag(DS.getThreadSpecLoc(),
+               diag::err_mutable_function);
+        D.getMutableDeclSpec().ClearStorageClassSpecs();
+      } else {
+        QualType T = GetTypeForDeclarator(D, S);
+        diag::kind err = static_cast<diag::kind>(0);
+        if (T->isReferenceType())
+          err = diag::err_mutable_reference;
+        else if (T.isConstQualified())
+          err = diag::err_mutable_const;
+        if (err != 0) {
+          if (DS.getStorageClassSpecLoc().isValid())
+            Diag(DS.getStorageClassSpecLoc(), err);
+          else
+            Diag(DS.getThreadSpecLoc(), err);
+          D.getMutableDeclSpec().ClearStorageClassSpecs();
+        }
+      }
       break;
     default:
       if (DS.getStorageClassSpecLoc().isValid())
@@ -442,7 +472,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       D.getMutableDeclSpec().ClearStorageClassSpecs();
   }
 
-  bool isFunc = D.isFunctionDeclarator();
   if (!isFunc &&
       D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_typedef &&
       D.getNumTypeObjects() == 0) {
@@ -455,7 +484,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     isFunc = Context.getTypeDeclType(cast<TypeDecl>(TD))->isFunctionType();
   }
 
-  bool isInstField = (DS.getStorageClassSpec() == DeclSpec::SCS_unspecified &&
+  bool isInstField = ((DS.getStorageClassSpec() == DeclSpec::SCS_unspecified ||
+                       DS.getStorageClassSpec() == DeclSpec::SCS_mutable) &&
                       !isFunc);
 
   Decl *Member;

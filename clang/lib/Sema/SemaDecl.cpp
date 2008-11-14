@@ -853,6 +853,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       default: assert(0 && "Unknown storage class!");
       case DeclSpec::SCS_auto:        
       case DeclSpec::SCS_register:
+      case DeclSpec::SCS_mutable:
         Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func,
              R.getAsString());
         InvalidDecl = true;
@@ -1103,7 +1104,12 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     case DeclSpec::SCS_auto:           SC = VarDecl::Auto; break;
     case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
     case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
-    }    
+    case DeclSpec::SCS_mutable:
+      // mutable can only appear on non-static class members, so it's always
+      // an error here
+      Diag(D.getIdentifierLoc(), diag::err_mutable_nonmember);
+      InvalidDecl = true;
+    }
     if (DC->isCXXRecord()) {
       assert(SC == VarDecl::Static && "Invalid storage class for member!");
       // This is a static data member for a C++ class.
@@ -1121,11 +1127,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
           InvalidDecl = true;
         }
       }
-        NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
-                                II, R, SC, LastDeclarator,
-                                // FIXME: Move to DeclGroup...
-                                D.getDeclSpec().getSourceRange().getBegin());
-        NewVD->setThreadSpecified(ThreadSpecified);
+      NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
+                              II, R, SC, LastDeclarator,
+                              // FIXME: Move to DeclGroup...
+                              D.getDeclSpec().getSourceRange().getBegin());
+      NewVD->setThreadSpecified(ThreadSpecified);
     }
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     ProcessDeclAttributes(NewVD, D);

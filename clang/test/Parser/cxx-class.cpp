@@ -21,6 +21,7 @@ private:
   int x,f(),y,g();
   inline int h();
   static const int sci = 10;
+  mutable int mi;
 };
 void glo()
 {

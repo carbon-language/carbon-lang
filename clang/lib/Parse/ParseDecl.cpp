@@ -405,6 +405,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 ///         'static'
 ///         'auto'
 ///         'register'
+/// [C++]   'mutable'
 /// [GNU]   '__thread'
 ///       function-specifier: [C99 6.7.4]
 /// [C99]   'inline'
@@ -549,6 +550,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       break;
     case tok::kw_register:
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_register, Loc, PrevSpec);
+      break;
+    case tok::kw_mutable:
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_mutable, Loc, PrevSpec);
       break;
     case tok::kw___thread:
       isInvalid = DS.SetStorageClassSpecThread(Loc, PrevSpec)*2;

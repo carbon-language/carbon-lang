@@ -44,6 +44,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::SCS S) {
   case DeclSpec::SCS_static:      return "static";
   case DeclSpec::SCS_auto:        return "auto";
   case DeclSpec::SCS_register:    return "register";
+  case DeclSpec::SCS_mutable:     return "mutable";
   }
 }
 
@@ -126,6 +127,7 @@ bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
     return BadSpecifier( (SCS)StorageClassSpec, PrevSpec);
   StorageClassSpec = S;
   StorageClassSpecLoc = Loc;
+  assert((unsigned)S == StorageClassSpec && "SCS constants overflow bitfield");
   return false;
 }
 

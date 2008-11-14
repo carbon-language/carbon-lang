@@ -36,7 +36,8 @@ public:
     SCS_static,
     SCS_auto,
     SCS_register,
-    SCS_private_extern
+    SCS_private_extern,
+    SCS_mutable
   };
   
   // type-specifier

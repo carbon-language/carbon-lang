@@ -669,6 +669,14 @@ DIAG(err_bad_language, ERROR,
 // C++ class members
 DIAG(err_storageclass_invalid_for_member, ERROR,
      "storage class specified for a member declaration")
+DIAG(err_mutable_function, ERROR,
+     "'mutable' cannot be applied to functions")
+DIAG(err_mutable_reference, ERROR,
+     "'mutable' cannot be applied to references")
+DIAG(err_mutable_const, ERROR,
+     "'mutable' and 'const' cannot be mixed")
+DIAG(err_mutable_nonmember, ERROR,
+     "'mutable' can only be applied to member variables")
 DIAG(err_virtual_non_function, ERROR,
      "'virtual' can only appear on non-static member functions")
 DIAG(err_not_bitfield_type, ERROR,

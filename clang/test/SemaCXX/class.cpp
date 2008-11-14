@@ -61,6 +61,11 @@ private:
   int x,y;
   static int sx;
 
+  mutable int mi;
+  mutable int &mir; // expected-error {{error: 'mutable' cannot be applied to references}}
+  mutable void mfn(); // expected-error {{error: 'mutable' cannot be applied to functions}}
+  mutable const int mci; // expected-error {{error: 'mutable' and 'const' cannot be mixed}}
+
   static const int number = 50;
   static int arr[number];
 };
@@ -76,3 +81,11 @@ class C2 {
     };
   }
 };
+
+// Play with mutable a bit more, to make sure it doesn't crash anything.
+mutable int gi; // expected-error {{error: 'mutable' can only be applied to member variables}}
+mutable void gfn(); // expected-error {{illegal storage class on function}}
+void ogfn()
+{
+  mutable int ml; // expected-error {{error: 'mutable' can only be applied to member variables}}
+}
