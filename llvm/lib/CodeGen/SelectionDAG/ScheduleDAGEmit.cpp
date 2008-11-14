@@ -675,6 +675,12 @@ void ScheduleDAG::EmitCrossRCCopy(SUnit *SU,
 
 /// EmitSchedule - Emit the machine code in scheduled order.
 MachineBasicBlock *ScheduleDAG::EmitSchedule() {
+  // For post-regalloc scheduling, we're rescheduling the instructions in the
+  // block, so start by removing them from the block.
+  if (!DAG)
+    while (!BB->empty())
+      BB->remove(BB->begin());
+
   DenseMap<SDValue, unsigned> VRBaseMap;
   DenseMap<SUnit*, unsigned> CopyVRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
