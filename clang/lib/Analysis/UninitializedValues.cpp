@@ -194,9 +194,16 @@ TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
 
   if (DeclStmt* DS = dyn_cast<DeclStmt>(Element))
     VD = cast<VarDecl>(DS->getSolitaryDecl());
-  else
-    VD = cast<VarDecl>(cast<DeclRefExpr>(Element)->getDecl());
+  else {
+    Expr* ElemExpr = cast<Expr>(Element)->IgnoreParens();
 
+    // Initialize the value of the reference variable.
+    if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(ElemExpr))
+      VD = cast<VarDecl>(DR->getDecl());
+    else
+      return Visit(ElemExpr);
+  }
+      
   V(VD,AD) = Initialized;
   return Initialized;
 }
