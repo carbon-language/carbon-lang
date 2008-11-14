@@ -184,18 +184,21 @@ TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   
   // This represents a 'kill' for the variable.
   Stmt* Element = S->getElement();
-  DeclRefExpr *DR = 0;
+  DeclRefExpr* DR = 0;
   VarDecl* VD = 0;
   
   if (DeclStmt* DS = dyn_cast<DeclStmt>(Element))
     VD = cast<VarDecl>(DS->getSolitaryDecl());
   else {
-    DR = cast<DeclRefExpr>(Element);
-    VD = cast<VarDecl>(DR->getDecl());
+    Expr* ElemExpr = cast<Expr>(Element)->IgnoreParens();    
+    if ((DR = dyn_cast<DeclRefExpr>(ElemExpr)))
+      VD = cast<VarDecl>(DR->getDecl());
   }
 
-  LiveState(VD, AD) = Dead;
-  if (AD.Observer && DR) { AD.Observer->ObserverKill(DR); }
+  if (VD) {
+    LiveState(VD, AD) = Dead;
+    if (AD.Observer && DR) { AD.Observer->ObserverKill(DR); }
+  }
 }
 
   
