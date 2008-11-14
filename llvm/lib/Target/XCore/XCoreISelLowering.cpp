@@ -88,9 +88,10 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
   
   // 64bit
-  setOperationAction(ISD::ADD, MVT::i64, Custom);
-  setOperationAction(ISD::SUB, MVT::i64, Custom);
-  
+  if (!Subtarget.isXS1A()) {
+    setOperationAction(ISD::ADD, MVT::i64, Custom);
+    setOperationAction(ISD::SUB, MVT::i64, Custom);
+  }
   if (Subtarget.isXS1A()) {
     setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
   }
@@ -161,7 +162,6 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   // FIXME: Remove these when LegalizeDAGTypes lands.
   case ISD::ADD:
   case ISD::SUB:              return SDValue(ExpandADDSUB(Op.getNode(), DAG),0);
-  
   case ISD::FRAMEADDR:        return LowerFRAMEADDR(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
@@ -169,15 +169,16 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   }
 }
 
+/// ReplaceNodeResults - Provide custom lowering hooks for nodes with illegal
+/// result types.
 SDNode *XCoreTargetLowering::
-ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
+ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
   switch (N->getOpcode()) {
-  case ISD::SUB:
-  case ISD::ADD:
-    return ExpandADDSUB(N, DAG);
   default:
-    assert(0 && "Wasn't expecting to be able to lower this!");
+    assert(0 && "Don't know how to custom expand this!");
     return NULL;
+  case ISD::ADD:
+  case ISD::SUB: return ExpandADDSUB(N, DAG);
   }
 }
 
@@ -301,6 +302,7 @@ ExpandADDSUB(SDNode *N, SelectionDAG &DAG)
   assert(N->getValueType(0) == MVT::i64 &&
          (N->getOpcode() == ISD::ADD || N->getOpcode() == ISD::SUB) &&
         "Unknown operand to lower!");
+  assert(!Subtarget.isXS1A() && "Cannot custom lower ADD/SUB on xs1a");
   
   // Extract components
   SDValue LHSL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, N->getOperand(0),
@@ -313,18 +315,6 @@ ExpandADDSUB(SDNode *N, SelectionDAG &DAG)
                              DAG.getConstant(1, MVT::i32));
   
   // Expand
-  if (Subtarget.isXS1A()) {
-    SDValue Lo = DAG.getNode(N->getOpcode(), MVT::i32, LHSL, RHSL);
-    
-    ISD::CondCode CarryCC = (N->getOpcode() == ISD::ADD) ? ISD::SETULT :
-                                                           ISD::SETUGT;
-    SDValue Carry = DAG.getSetCC(MVT::i32, Lo, LHSL, CarryCC);
-    
-    SDValue Hi = DAG.getNode(N->getOpcode(), MVT::i32, LHSH, Carry);
-    Hi = DAG.getNode(N->getOpcode(), MVT::i32, Hi, RHSH);
-    // Merge the pieces
-    return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi).getNode();
-  }
   unsigned Opcode = (N->getOpcode() == ISD::ADD) ? XCoreISD::LADD :
                                                    XCoreISD::LSUB;
   SDValue Zero = DAG.getConstant(0, MVT::i32);

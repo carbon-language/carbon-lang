@@ -67,8 +67,8 @@ namespace llvm {
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
-  
-    virtual SDNode *ExpandOperationResult(SDNode *N, SelectionDAG &DAG);
+
+    virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
 
     /// getTargetNodeName - This method returns the name of a target specific 
     //  DAG node.
