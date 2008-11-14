@@ -334,6 +334,14 @@ namespace llvm {
       return &SUnits.back();
     }
 
+    /// NewSUnit - Creates a new SUnit and return a ptr to it.
+    ///
+    SUnit *NewSUnit(MachineInstr *MI) {
+      SUnits.push_back(SUnit(MI, (unsigned)SUnits.size()));
+      SUnits.back().OrigNode = &SUnits.back();
+      return &SUnits.back();
+    }
+
     /// Clone - Creates a clone of the specified SUnit. It does not copy the
     /// predecessors / successors info nor the temporary scheduling states.
     SUnit *Clone(SUnit *N);
