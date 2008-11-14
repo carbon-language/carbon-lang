@@ -29,9 +29,9 @@ static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
 
   // Intialize the table on the first use.
   Initialized = true;
-#define STMT(N, CLASS, PARENT) \
-  StmtClassInfo[N].Name = #CLASS; \
-  StmtClassInfo[N].Size = sizeof(CLASS);
+#define STMT(CLASS, PARENT) \
+  StmtClassInfo[(unsigned)Stmt::CLASS##Class].Name = #CLASS;    \
+  StmtClassInfo[(unsigned)Stmt::CLASS##Class].Size = sizeof(CLASS);
 #include "clang/AST/StmtNodes.def"
 
   return StmtClassInfo[E];

@@ -92,11 +92,12 @@ namespace clang {
 class Stmt {
 public:
   enum StmtClass {
-#define STMT(N, CLASS, PARENT) CLASS##Class = N,
-#define FIRST_STMT(N) firstStmtConstant = N,
-#define LAST_STMT(N) lastStmtConstant = N,
-#define FIRST_EXPR(N) firstExprConstant = N,
-#define LAST_EXPR(N) lastExprConstant = N
+    NoStmtClass = 0,
+#define STMT(CLASS, PARENT) CLASS##Class,
+#define FIRST_STMT(CLASS) firstStmtConstant = CLASS##Class,
+#define LAST_STMT(CLASS) lastStmtConstant = CLASS##Class,
+#define FIRST_EXPR(CLASS) firstExprConstant = CLASS##Class,
+#define LAST_EXPR(CLASS) lastExprConstant = CLASS##Class
 #include "clang/AST/StmtNodes.def"
 };
 private:

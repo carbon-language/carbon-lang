@@ -76,7 +76,7 @@ namespace  {
     }
     
     void VisitStmt(Stmt *Node);
-#define STMT(N, CLASS, PARENT) \
+#define STMT(CLASS, PARENT) \
     void Visit##CLASS(CLASS *Node);
 #include "clang/AST/StmtNodes.def"
   };
