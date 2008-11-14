@@ -40,6 +40,14 @@ namespace {
     explicit StripSymbols(bool ODI = false) 
       : ModulePass(&ID), OnlyDebugInfo(ODI) {}
 
+    /// StripSymbolNames - Strip symbol names.
+    bool StripSymbolNames(Module &M);
+
+    // StripDebugInfo - Strip debug info in the module if it exists.  
+    // To do this, we remove llvm.dbg.func.start, llvm.dbg.stoppoint, and 
+    // llvm.dbg.region.end calls, and any globals they point to if now dead.
+    bool StripDebugInfo(Module &M);
+
     virtual bool runOnModule(Module &M);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -99,56 +107,68 @@ static void StripSymtab(ValueSymbolTable &ST) {
   }
 }
 
+bool StripSymbols::runOnModule(Module &M) {
+  bool Changed = false;
+  Changed |= StripDebugInfo(M);
+  Changed |= StripSymbolNames(M);
+  return Changed;
+}
+
+
 // Strip the symbol table of its names.
 static void StripTypeSymtab(TypeSymbolTable &ST) {
   for (TypeSymbolTable::iterator TI = ST.begin(), E = ST.end(); TI != E; )
     ST.remove(TI++);
 }
 
+/// StripSymbolNames - Strip symbol names.
+bool StripSymbols::StripSymbolNames(Module &M) {
 
+  if (OnlyDebugInfo)
+    return false;
 
-bool StripSymbols::runOnModule(Module &M) {
-  // If we're not just stripping debug info, strip all symbols from the
-  // functions and the names from any internal globals.
-  if (!OnlyDebugInfo) {
-    SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
-    if (GlobalVariable *LLVMUsed = M.getGlobalVariable("llvm.used")) {
-      llvmUsedValues.insert(LLVMUsed);
-      // Collect values that are preserved as per explicit request.
-      // llvm.used is used to list these values.
-      if (ConstantArray *Inits = 
-            dyn_cast<ConstantArray>(LLVMUsed->getInitializer())) {
-        for (unsigned i = 0, e = Inits->getNumOperands(); i != e; ++i) {
-          if (GlobalValue *GV = dyn_cast<GlobalValue>(Inits->getOperand(i)))
-            llvmUsedValues.insert(GV);
-          else if (ConstantExpr *CE =
-                       dyn_cast<ConstantExpr>(Inits->getOperand(i)))
-            if (CE->getOpcode() == Instruction::BitCast)
-              if (GlobalValue *GV = dyn_cast<GlobalValue>(CE->getOperand(0)))
-                llvmUsedValues.insert(GV);
-        }
+  SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
+  if (GlobalVariable *LLVMUsed = M.getGlobalVariable("llvm.used")) {
+    llvmUsedValues.insert(LLVMUsed);
+    // Collect values that are preserved as per explicit request.
+    // llvm.used is used to list these values.
+    if (ConstantArray *Inits = 
+        dyn_cast<ConstantArray>(LLVMUsed->getInitializer())) {
+      for (unsigned i = 0, e = Inits->getNumOperands(); i != e; ++i) {
+        if (GlobalValue *GV = dyn_cast<GlobalValue>(Inits->getOperand(i)))
+          llvmUsedValues.insert(GV);
+        else if (ConstantExpr *CE =
+                 dyn_cast<ConstantExpr>(Inits->getOperand(i)))
+          if (CE->getOpcode() == Instruction::BitCast)
+            if (GlobalValue *GV = dyn_cast<GlobalValue>(CE->getOperand(0)))
+              llvmUsedValues.insert(GV);
       }
     }
-
-    for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-         I != E; ++I) {
-      if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
-        I->setName("");     // Internal symbols can't participate in linkage
-    }
-
-    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-      if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
-        I->setName("");     // Internal symbols can't participate in linkage
-      StripSymtab(I->getValueSymbolTable());
-    }
-    
-    // Remove all names from types.
-    StripTypeSymtab(M.getTypeSymbolTable());
   }
+  
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
+    if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
+      I->setName("");     // Internal symbols can't participate in linkage
+  }
+  
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
+      I->setName("");     // Internal symbols can't participate in linkage
+    StripSymtab(I->getValueSymbolTable());
+  }
+  
+  // Remove all names from types.
+  StripTypeSymtab(M.getTypeSymbolTable());
 
-  // Strip debug info in the module if it exists.  To do this, we remove
-  // llvm.dbg.func.start, llvm.dbg.stoppoint, and llvm.dbg.region.end calls, and
-  // any globals they point to if now dead.
+  return true;
+}
+
+// StripDebugInfo - Strip debug info in the module if it exists.  
+// To do this, we remove llvm.dbg.func.start, llvm.dbg.stoppoint, and 
+// llvm.dbg.region.end calls, and any globals they point to if now dead.
+bool StripSymbols::StripDebugInfo(Module &M) {
+
   Function *FuncStart = M.getFunction("llvm.dbg.func.start");
   Function *StopPoint = M.getFunction("llvm.dbg.stoppoint");
   Function *RegionStart = M.getFunction("llvm.dbg.region.start");
@@ -242,6 +262,9 @@ bool StripSymbols::runOnModule(Module &M) {
             && (GV->getType()->getElementType() == DbgVTy
                 || GV->getType()->getElementType() == DbgGVTy))
           DeadGlobals.push_back(GV);
+
+  if (DeadGlobals.empty())
+    return false;
 
   // Delete any internal globals that were only used by the debugger intrinsics.
   while (!DeadGlobals.empty()) {
