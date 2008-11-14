@@ -684,6 +684,16 @@ MachineBasicBlock *ScheduleDAG::EmitSchedule() {
       EmitNoop();
       continue;
     }
+
+    // For post-regalloc scheduling, we already have the instruction;
+    // just append it to the block.
+    if (!DAG) {
+      BB->push_back(SU->getInstr());
+      continue;
+    }
+
+    // For pre-regalloc scheduling, create instructions corresponding to the
+    // SDNode and any flagged SDNodes and append them to the block.
     SmallVector<SDNode *, 4> FlaggedNodes;
     for (SDNode *N = SU->getNode()->getFlaggedNode(); N; N = N->getFlaggedNode())
       FlaggedNodes.push_back(N);

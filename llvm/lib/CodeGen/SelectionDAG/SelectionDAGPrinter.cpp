@@ -420,11 +420,24 @@ namespace llvm {
 
     static void addCustomGraphFeatures(ScheduleDAG *G,
                                        GraphWriter<ScheduleDAG*> &GW) {
+      // Draw a special "GraphRoot" node to indicate the root of the graph.
       GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
-      const SDNode *N = G->DAG->getRoot().getNode();
-      if (N && N->getNodeId() != -1)
-        GW.emitEdge(0, -1, &G->SUnits[N->getNodeId()], -1,
-                    "color=blue,style=dashed");
+      if (G->DAG) {
+        // For an SDNode-based ScheduleDAG, point to the root of the ScheduleDAG.
+        const SDNode *N = G->DAG->getRoot().getNode();
+        if (N && N->getNodeId() != -1)
+          GW.emitEdge(0, -1, &G->SUnits[N->getNodeId()], -1,
+                      "color=blue,style=dashed");
+      } else {
+        // For a MachineInstr-based ScheduleDAG, find a root to point to.
+        for (unsigned i = 0, e = G->SUnits.size(); i != e; ++i) {
+          if (G->SUnits[i].Succs.empty()) {
+            GW.emitEdge(0, -1, &G->SUnits[i], -1,
+                        "color=blue,style=dashed");
+            break;
+          }
+        }
+      }
     }
   };
 }

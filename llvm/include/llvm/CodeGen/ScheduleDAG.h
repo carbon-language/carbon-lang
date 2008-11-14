@@ -94,6 +94,7 @@ namespace llvm {
   struct SUnit {
   private:
     SDNode *Node;                       // Representative node.
+    MachineInstr *Instr;                // Alternatively, a MachineInstr.
   public:
     SUnit *OrigNode;                    // If not this, the node from which
                                         // this node was cloned.
@@ -128,19 +129,53 @@ namespace llvm {
     const TargetRegisterClass *CopyDstRC; // Is a special copy node if not null.
     const TargetRegisterClass *CopySrcRC;
     
+    /// SUnit - Construct an SUnit for pre-regalloc scheduling to represent
+    /// an SDNode and any nodes flagged to it.
     SUnit(SDNode *node, unsigned nodenum)
-      : Node(node), OrigNode(0), NodeNum(nodenum), NodeQueueId(0), Latency(0),
-        NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
+      : Node(node), Instr(0), OrigNode(0), NodeNum(nodenum), NodeQueueId(0),
+        Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
+        isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
+        isPending(false), isAvailable(false), isScheduled(false),
+        CycleBound(0), Cycle(0), Depth(0), Height(0),
+        CopyDstRC(NULL), CopySrcRC(NULL) {}
+
+    /// SUnit - Construct an SUnit for post-regalloc scheduling to represent
+    /// a MachineInstr.
+    SUnit(MachineInstr *instr, unsigned nodenum)
+      : Node(0), Instr(instr), OrigNode(0), NodeNum(nodenum), NodeQueueId(0),
+        Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
         CycleBound(0), Cycle(0), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
     /// setNode - Assign the representative SDNode for this SUnit.
-    void setNode(SDNode *N) { Node = N; }
+    /// This may be used during pre-regalloc scheduling.
+    void setNode(SDNode *N) {
+      assert(!Instr && "Setting SDNode of SUnit with MachineInstr!");
+      Node = N;
+    }
 
     /// getNode - Return the representative SDNode for this SUnit.
-    SDNode *getNode() const { return Node; }
+    /// This may be used during pre-regalloc scheduling.
+    SDNode *getNode() const {
+      assert(!Instr && "Reading SDNode of SUnit with MachineInstr!");
+      return Node;
+    }
+
+    /// setInstr - Assign the instruction for the SUnit.
+    /// This may be used during post-regalloc scheduling.
+    void setInstr(MachineInstr *MI) {
+      assert(!Node && "Setting MachineInstr of SUnit with SDNode!");
+      Instr = MI;
+    }
+
+    /// getInstr - Return the representative MachineInstr for this SUnit.
+    /// This may be used during post-regalloc scheduling.
+    MachineInstr *getInstr() const {
+      assert(!Node && "Reading MachineInstr of SUnit with SDNode!");
+      return Instr;
+    }
 
     /// addPred - This adds the specified node as a pred of the current node if
     /// not already.  This returns true if this is a new pred.
