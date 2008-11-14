@@ -1,3 +1,4 @@
+include(LLVMProcessSources)
 
 macro(target_name_of_partially_linked_object lib var)
   if( MSVC )
@@ -15,6 +16,7 @@ macro(add_partially_linked_object lib)
     set(pll ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${lib}.o)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/temp_lib)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/temp_lib)
+    llvm_process_sources( ${ARGN} )
     add_library( ${lib} STATIC ${ARGN})
     if( LLVM_COMMON_DEPENDS )
       add_dependencies( ${lib} ${LLVM_COMMON_DEPENDS} )

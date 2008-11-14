@@ -1,6 +1,8 @@
+include(LLVMProcessSources)
 include(LLVMConfig)
 
 macro(add_llvm_library name)
+  llvm_process_sources( ${ARGN} )
   add_library( ${name} ${ARGN} )
   set( llvm_libs ${llvm_libs} ${name} PARENT_SCOPE)
   set( llvm_lib_targets ${llvm_lib_targets} ${name} PARENT_SCOPE )
@@ -14,6 +16,7 @@ endmacro(add_llvm_library name)
 
 
 macro(add_llvm_executable name)
+  llvm_process_sources( ${ARGN} )
   add_executable(${name} ${ARGN})
   if( LLVM_USED_LIBS )
     foreach(lib ${LLVM_USED_LIBS})
