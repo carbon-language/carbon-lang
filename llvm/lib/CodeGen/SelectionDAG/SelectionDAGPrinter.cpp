@@ -446,17 +446,24 @@ std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
                                                        const ScheduleDAG *G) {
   std::string Op;
 
-  if (!SU->getNode())
-    Op = "<CROSS RC COPY>";
-  else {
-    SmallVector<SDNode *, 4> FlaggedNodes;
-    for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
-      FlaggedNodes.push_back(N);
-    while (!FlaggedNodes.empty()) {
-      Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(FlaggedNodes.back(),
-                                                        G->DAG) + "\n";
-      FlaggedNodes.pop_back();
+  if (G->DAG) {
+    if (!SU->getNode())
+      Op = "<CROSS RC COPY>";
+    else {
+      SmallVector<SDNode *, 4> FlaggedNodes;
+      for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
+        FlaggedNodes.push_back(N);
+      while (!FlaggedNodes.empty()) {
+        Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(FlaggedNodes.back(),
+                                                          G->DAG) + "\n";
+        FlaggedNodes.pop_back();
+      }
     }
+  } else {
+    std::string s;
+    raw_string_ostream oss(s);
+    SU->MI->print(oss);
+    Op += oss.str();
   }
 
   return Op;
