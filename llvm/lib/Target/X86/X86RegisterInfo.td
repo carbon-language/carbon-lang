@@ -441,25 +441,7 @@ def GR32_ : RegisterClass<"X86", [i32], 32, [EAX, ECX, EDX, EBX]> {
 }
 
 // A class to support the 'A' assembler constraint: EAX then EDX.
-def GRAD : RegisterClass<"X86", [i32], 32, [EAX, EDX]> {
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  
-  let MethodBodies = [{
-     static const unsigned X86_GRAD_AO[] = {X86::EAX, X86::EDX};
-   GRADClass::iterator
-    GRADClass::allocation_order_begin(const MachineFunction &MF) const {
-      return X86_GRAD_AO;
-    }
-
-    GRADClass::iterator
-    GRADClass::allocation_order_end(const MachineFunction &MF) const {
-      return X86_GRAD_AO + (sizeof(X86_GRAD_AO) / sizeof(unsigned));
-    }
-  }];
-}
+def GRAD : RegisterClass<"X86", [i32], 32, [EAX, EDX]>;
 
 // Scalar SSE2 floating point registers.
 def FR32 : RegisterClass<"X86", [f32], 32,
