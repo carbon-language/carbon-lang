@@ -179,6 +179,9 @@ void TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
 void
 TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   
+  // This is a block-level expression.  Its value is 'dead' before this point.
+  LiveState(S, AD) = Dead;
+
   // This represents a 'use' of the collection.
   Visit(S->getCollection());
   
@@ -193,6 +196,10 @@ TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
     Expr* ElemExpr = cast<Expr>(Element)->IgnoreParens();    
     if ((DR = dyn_cast<DeclRefExpr>(ElemExpr)))
       VD = cast<VarDecl>(DR->getDecl());
+    else {
+      Visit(ElemExpr);
+      return;
+    }
   }
 
   if (VD) {
