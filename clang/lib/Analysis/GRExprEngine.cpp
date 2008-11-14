@@ -1672,7 +1672,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
         continue;
       }
 
-    // StoreManager casts array to different values.
+    // Check for casts from array type to pointer type.
     if (ExTy->isArrayType()) {
       assert(T->isPointerType() || T->isReferenceType());
 
