@@ -802,6 +802,7 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   //     1. collection_expression
   //     T. jump to loop_entry
   //   loop_entry:
+  //     1. side-effects of element expression
   //     1. ObjCForCollectionStmt [performs binding to newVariable]
   //     T. ObjCForCollectionStmt  TB, FB  [jumps to TB if newVariable != nil]
   //   TB:
@@ -831,32 +832,55 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   }
   else LoopSuccessor = Succ;
   
-  // Build the condition block.  The condition has no short-circuit evaluation,
-  // so we don't need multiple blocks like other control-flow structures with
-  // conditions.
-  CFGBlock* ConditionBlock = createBlock(false);
-  ConditionBlock->appendStmt(S);
-  ConditionBlock->setTerminator(S); // No need to call FinishBlock; 1 stmt
+  // Build the condition blocks.
+  CFGBlock* ExitConditionBlock = createBlock(false);
+  CFGBlock* EntryConditionBlock = ExitConditionBlock;
+  
+  // Set the terminator for the "exit" condition block.
+  ExitConditionBlock->setTerminator(S);  
+  
+  // The last statement in the block should be the ObjCForCollectionStmt,
+  // which performs the actual binding to 'element' and determines if there
+  // are any more items in the collection.
+  ExitConditionBlock->appendStmt(S);
+  Block = ExitConditionBlock;
+  
+  // Walk the 'element' expression to see if there are any side-effects.  We
+  // generate new blocks as necesary.  We DON'T add the statement by default
+  // to the CFG unless it contains control-flow.
+  EntryConditionBlock = WalkAST(S->getElement(), false);
+  if (Block) { FinishBlock(EntryConditionBlock); Block = 0; }
+  
+  // The condition block is the implicit successor for the loop body as
+  // well as any code above the loop.
+  Succ = EntryConditionBlock;
   
   // Now create the true branch.
-  // Save the current values for the continue and break targets
-  SaveAndRestore<CFGBlock*> save_continue(ContinueTargetBlock),
-                            save_break(BreakTargetBlock); 
+  { 
+    // Save the current values for Succ, continue and break targets.
+    SaveAndRestore<CFGBlock*> save_Succ(Succ),
+      save_continue(ContinueTargetBlock), save_break(BreakTargetBlock); 
+    
+    BreakTargetBlock = LoopSuccessor;
+    ContinueTargetBlock = EntryConditionBlock;  
+    
+    CFGBlock* BodyBlock = Visit(S->getBody());
+    
+    if (!BodyBlock)
+      BodyBlock = EntryConditionBlock; // can happen for "for (X in Y) ;"
+    else if (Block)
+      FinishBlock(BodyBlock);
+                  
+    // This new body block is a successor to our "exit" condition block.
+    ExitConditionBlock->addSuccessor(BodyBlock);
+  }
   
-  BreakTargetBlock = LoopSuccessor;
-  ContinueTargetBlock = ConditionBlock;  
-  Succ = ConditionBlock;
-  
-  CFGBlock* BodyBlock = Visit(S->getBody());
-  FinishBlock(BodyBlock);
-  
-  // Connect up the condition block
-  ConditionBlock->addSuccessor(BodyBlock);
-  ConditionBlock->addSuccessor(LoopSuccessor);
-  
+  // Link up the condition block with the code that follows the loop.
+  // (the false branch).
+  ExitConditionBlock->addSuccessor(LoopSuccessor);
+
   // Now create a prologue block to contain the collection expression.
-  Block = 0;
-  Succ = ConditionBlock;
+  Block = createBlock();
   return addStmt(S->getCollection());
 }    
 
