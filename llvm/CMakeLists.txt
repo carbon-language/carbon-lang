@@ -5,6 +5,15 @@ set(PACKAGE_NAME llvm)
 set(PACKAGE_VERSION svn)
 set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
+  message(FATAL_ERROR "In-source builds are not allowed.
+CMake would overwrite the makefiles distributed with LLVM.
+Please create a directory and run cmake from there, passing the path
+to this source directory as the last argument.
+This process created the file `CMakeCache.txt' and the directory `CMakeFiles'.
+Please delete them.")
+endif()
+
 include(FindPerl)
 
 set(LLVM_MAIN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
