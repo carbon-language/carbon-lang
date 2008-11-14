@@ -2851,12 +2851,12 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
         ResultTy = ResultTy.getNonReferenceType();
         
         // Build the actual expression node.
-        // FIXME: We lose the fact that we have a function here!
-        if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign)
-          return new CompoundAssignOperator(lhs, rhs, Opc, ResultTy, ResultTy,
-                                            TokLoc);
-        else
-          return new BinaryOperator(lhs, rhs, Opc, ResultTy, TokLoc);
+        Expr *FnExpr = new DeclRefExpr(FnDecl, FnDecl->getType(), 
+                                       SourceLocation());
+        UsualUnaryConversions(FnExpr);
+
+        Expr *Args[2] = { lhs, rhs };
+        return new CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, TokLoc);
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in

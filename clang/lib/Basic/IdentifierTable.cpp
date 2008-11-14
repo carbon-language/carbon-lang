@@ -189,11 +189,22 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
 #include "clang/Basic/TokenKinds.def"
 }
 
+/// addOperatorPrefix - Add the prefix "operator" (possible with a
+/// space after it) to the given operator symbol, and return the
+/// result.
+static std::string addOperatorPrefix(const char* Symbol) {
+  std::string result = "operator";
+  if (Symbol[0] >= 'a' && Symbol[0] <= 'z')
+    result += ' ';
+  result += Symbol;
+  return result;
+}
+
 /// AddOverloadedOperators - Register the name of all C++ overloadable
 /// operators ("operator+", "operator[]", etc.)
 void IdentifierTable::AddOverloadedOperators() {
 #define OVERLOADED_OPERATOR(Name,Spelling,Token, Unary, Binary, MemberOnly) \
-  OverloadedOperators[OO_##Name] = &get(Spelling);                      \
+  OverloadedOperators[OO_##Name] = &get(addOperatorPrefix(Spelling));   \
   OverloadedOperators[OO_##Name]->setOverloadedOperatorID(OO_##Name);
 #include "clang/Basic/OperatorKinds.def"
 }

@@ -101,6 +101,15 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 // Postfix Operators.
 //===----------------------------------------------------------------------===//
 
+CallExpr::CallExpr(StmtClass SC, Expr *fn, Expr **args, unsigned numargs, 
+                   QualType t, SourceLocation rparenloc)
+  : Expr(SC, t), NumArgs(numargs) {
+  SubExprs = new Stmt*[numargs+1];
+  SubExprs[FN] = fn;
+  for (unsigned i = 0; i != numargs; ++i)
+    SubExprs[i+ARGS_START] = args[i];
+  RParenLoc = rparenloc;
+}
 
 CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
                    SourceLocation rparenloc)
@@ -285,6 +294,7 @@ bool Expr::hasLocalSideEffect() const {
     return getType().isVolatileQualified();
 
   case CallExprClass:
+  case CXXOperatorCallExprClass:
     // TODO: check attributes for pure/const.   "void foo() { strlen("bar"); }"
     // should warn.
     return true;
@@ -410,7 +420,8 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     //   An assignment expression [...] is not an lvalue.
     return LV_InvalidExpression;
   }
-  case CallExprClass: {
+  case CallExprClass: 
+  case CXXOperatorCallExprClass: {
     // C++ [expr.call]p10:
     //   A function call is an lvalue if and only if the result type
     //   is a reference.
@@ -586,7 +597,8 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case CXXBoolLiteralExprClass:
   case AddrLabelExprClass:
     return true;
-  case CallExprClass: {
+  case CallExprClass: 
+  case CXXOperatorCallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
 
     // Allow any constant foldable calls to builtins.
@@ -777,7 +789,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
                                     T1.getUnqualifiedType());
     break;
   }
-  case CallExprClass: {
+  case CallExprClass: 
+  case CXXOperatorCallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
     Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
     

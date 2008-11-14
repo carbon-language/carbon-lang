@@ -633,8 +633,12 @@ public:
 };
 
 
-/// CallExpr - [C99 6.5.2.2] Function Calls.
-///
+/// CallExpr - Represents a function call (C99 6.5.2.2, C++ [expr.call]).
+/// CallExpr itself represents a normal function call, e.g., "f(x, 2)", 
+/// while its subclasses may represent alternative syntax that (semantically)
+/// results in a function call. For example, CXXOperatorCallExpr is 
+/// a subclass for overloaded operator calls that use operator syntax, e.g.,
+/// "str1 + str2" to resolve to a function call.
 class CallExpr : public Expr {
   enum { FN=0, ARGS_START=1 };
   Stmt **SubExprs;
@@ -642,10 +646,15 @@ class CallExpr : public Expr {
   SourceLocation RParenLoc;
   
   // This version of the ctor is for deserialization.
-  CallExpr(Stmt** subexprs, unsigned numargs, QualType t, 
+  CallExpr(StmtClass SC, Stmt** subexprs, unsigned numargs, QualType t, 
            SourceLocation rparenloc)
-  : Expr(CallExprClass,t), SubExprs(subexprs), 
+  : Expr(SC,t), SubExprs(subexprs), 
     NumArgs(numargs), RParenLoc(rparenloc) {}
+
+protected:
+  // This version of the constructor is for derived classes.
+  CallExpr(StmtClass SC, Expr *fn, Expr **args, unsigned numargs, QualType t, 
+           SourceLocation rparenloc);
   
 public:
   CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t, 
@@ -705,7 +714,8 @@ public:
   }
   
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == CallExprClass; 
+    return T->getStmtClass() == CallExprClass ||
+           T->getStmtClass() == CXXOperatorCallExprClass; 
   }
   static bool classof(const CallExpr *) { return true; }
   
@@ -714,7 +724,8 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static CallExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+  static CallExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C, 
+                              StmtClass SC);
 };
 
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.

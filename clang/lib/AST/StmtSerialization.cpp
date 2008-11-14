@@ -53,7 +53,7 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
       return BreakStmt::CreateImpl(D, C);
      
     case CallExprClass:
-      return CallExpr::CreateImpl(D, C);
+      return CallExpr::CreateImpl(D, C, CallExprClass);
       
     case CaseStmtClass:
       return CaseStmt::CreateImpl(D, C);
@@ -198,6 +198,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     //    C++
     //==--------------------------------------==//
       
+    case CXXOperatorCallExprClass:
+      return CXXOperatorCallExpr::CreateImpl(D, C, CXXOperatorCallExprClass);
+
     case CXXDefaultArgExprClass:
       return CXXDefaultArgExpr::CreateImpl(D, C);      
 
@@ -361,14 +364,14 @@ void CallExpr::EmitImpl(Serializer& S) const {
   S.BatchEmitOwnedPtrs(NumArgs+1, SubExprs);  
 }
 
-CallExpr* CallExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+CallExpr* CallExpr::CreateImpl(Deserializer& D, ASTContext& C, StmtClass SC) {
   QualType t = QualType::ReadVal(D);
   SourceLocation L = SourceLocation::ReadVal(D);
   unsigned NumArgs = D.ReadInt();
   Stmt** SubExprs = new Stmt*[NumArgs+1];
   D.BatchReadOwnedPtrs(NumArgs+1, SubExprs, C);
 
-  return new CallExpr(SubExprs,NumArgs,t,L);  
+  return new CallExpr(SC, SubExprs,NumArgs,t,L);  
 }
 
 void CaseStmt::EmitImpl(Serializer& S) const {

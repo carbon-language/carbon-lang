@@ -1237,6 +1237,7 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
   case Expr::ObjCStringLiteralClass:
     return false;
   case Expr::CallExprClass:
+  case Expr::CXXOperatorCallExprClass:
     // __builtin___CFStringMakeConstantString is a valid constant l-value.
     if (cast<CallExpr>(Init)->isBuiltinCall() == 
            Builtin::BI__builtin___CFStringMakeConstantString)
@@ -1432,7 +1433,8 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
   case Expr::TypesCompatibleExprClass:
   case Expr::CXXBoolLiteralExprClass:
     return false;
-  case Expr::CallExprClass: {
+  case Expr::CallExprClass: 
+  case Expr::CXXOperatorCallExprClass: {
     const CallExpr *CE = cast<CallExpr>(Init);
 
     // Allow any constant foldable calls to builtins.

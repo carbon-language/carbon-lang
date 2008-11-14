@@ -23,6 +23,35 @@ namespace clang {
 // C++ Expressions.
 //===--------------------------------------------------------------------===//
 
+/// CXXOperatorCallExpr - Represents a call to an overloaded operator
+/// written using operator syntax, e.g., "x + y" or "*p". While
+/// semantically equivalent to a normal call, this AST node provides
+/// better information about the syntactic representation of the call.
+class CXXOperatorCallExpr : public CallExpr {
+public:
+  CXXOperatorCallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
+                      SourceLocation operatorloc)
+    : CallExpr(CXXOperatorCallExprClass, fn, args, numargs, t, operatorloc) { }
+
+  /// getOperator - Returns the kind of overloaded operator that this
+  /// expression refers to.
+  OverloadedOperatorKind getOperator() const;
+
+  /// getOperatorLoc - Returns the location of the operator symbol in
+  /// the expression. When @c getOperator()==OO_Call, this is the
+  /// location of the right parentheses; when @c
+  /// getOperator()==OO_Subscript, this is the location of the right
+  /// bracket.
+  SourceLocation getOperatorLoc() const { return getRParenLoc(); }
+
+  virtual SourceRange getSourceRange() const;
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXOperatorCallExprClass; 
+  }
+  static bool classof(const CXXOperatorCallExpr *) { return true; }
+};
+
 /// CXXNamedCastExpr - Abstract class common to all of the C++ "named"
 /// casts, @c static_cast, @c dynamic_cast, @c reinterpret_cast, or @c
 /// const_cast.

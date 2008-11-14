@@ -90,6 +90,7 @@ STMT(TypesCompatibleExpr  , Expr)
 STMT(ChooseExpr           , Expr)
 
 // C++ Expressions.
+STMT(CXXOperatorCallExpr    , CallExpr)
 STMT(CXXNamedCastExpr       , ExplicitCastExpr)
 STMT(CXXStaticCastExpr      , CXXNamedCastExpr)
 STMT(CXXDynamicCastExpr     , CXXNamedCastExpr)

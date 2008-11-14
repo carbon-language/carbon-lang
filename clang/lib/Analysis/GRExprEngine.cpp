@@ -311,7 +311,8 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       break;
     }
       
-    case Stmt::CallExprClass: {
+    case Stmt::CallExprClass:
+    case Stmt::CXXOperatorCallExprClass: {
       CallExpr* C = cast<CallExpr>(S);
       VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst);
       break;      
