@@ -750,7 +750,7 @@ def MKMSK_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$size),
 // getd, testlcl, tinitlr, getps, setps
 def BITREV_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
                  "bitrev $dst, $src",
-                 []>;
+                 [(set GRRegs:$dst, (int_xcore_bitrev GRRegs:$src))]>;
 
 def BYTEREV_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
                  "byterev $dst, $src",
@@ -790,7 +790,7 @@ def BLA_1r : _F1R<(outs), (ins GRRegs:$addr, variable_ops),
 let Defs = [R11] in
 def GETID_0R : _F0R<(outs), (ins),
                  "get r11, id",
-                 []>;
+                 [(set R11, (int_xcore_getid))]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

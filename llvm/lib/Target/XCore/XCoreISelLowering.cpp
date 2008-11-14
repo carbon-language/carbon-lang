@@ -226,9 +226,8 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
 }
 
 static inline SDValue BuildGetId(SelectionDAG &DAG) {
-  // TODO
-  assert(0 && "Unimplemented");
-  return SDValue();
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, MVT::i32,
+                     DAG.getConstant(Intrinsic::xcore_getid, MVT::i32));
 }
 
 static inline bool isZeroLengthArray(const Type *Ty) {
