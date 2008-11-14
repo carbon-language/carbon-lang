@@ -3076,8 +3076,6 @@ void RewriteObjC::RewriteImplementations() {
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
   
-  if (ClsDefCount == 0 && CatDefCount == 0)
-    return;
   // Rewrite implemented methods
   for (int i = 0; i < ClsDefCount; i++)
     RewriteImplementationDecl(ClassImplementation[i]);
@@ -4131,7 +4129,8 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
   InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
              Preamble.c_str(), Preamble.size(), false);
   
-  RewriteImplementations();
+  if (ClassImplementation.size() || CategoryImplementation.size())
+    RewriteImplementations();
   
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
   // we are done.
@@ -4143,12 +4142,13 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
     fprintf(stderr, "No changes\n");
   }
 
-  // Rewrite Objective-c meta data*
-  std::string ResultStr;
-  SynthesizeMetaDataIntoBuffer(ResultStr);
-
-  // Emit metadata.
-  *OutFile << ResultStr;
+  if (ClassImplementation.size() || CategoryImplementation.size()) {
+    // Rewrite Objective-c meta data*
+    std::string ResultStr;
+    SynthesizeMetaDataIntoBuffer(ResultStr);
+    // Emit metadata.
+    *OutFile << ResultStr;
+  }
   OutFile->flush();
 }
 
