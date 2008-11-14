@@ -127,23 +127,6 @@ private:
             Tok.is(tok::annot_cxxscope) ||
             (Tok.is(tok::identifier) && NextToken().is(tok::coloncolon)));
   }
-  
-  /// isTokenUnqualifiedId - True if token is the start of C++ unqualified-id
-  /// or an identifier in C.
-  ///
-  ///       unqualified-id:
-  ///         identifier
-  /// [C++]   operator-function-id
-  /// [C++]   conversion-function-id
-  /// [C++]   '~' class-name
-  /// [C++]   template-id      [TODO]
-  ///
-  bool isTokenUnqualifiedId() const {
-    return Tok.is(tok::identifier)  ||   // identifier or template-id 
-           Tok.is(tok::kw_operator) ||   // operator/conversion-function-id or
-                                         // template-id
-           (Tok.is(tok::tilde) && getLang().CPlusPlus); // '~' class-name
-  }
 
   /// ConsumeToken - Consume the current 'peek token' and lex the next one.
   /// This does not work with all kinds of tokens: strings and specific other
