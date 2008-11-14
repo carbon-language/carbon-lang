@@ -1,4 +1,4 @@
-//=- ExprDeclBitVector.h - Dataflow types for Bitvector Analysis --*- C++ --*-//
+// BlkExprDeclBitVector.h - Dataflow types for Bitvector Analysis --*- C++ --*--
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_EXPRDECLBVDVAL_H
-#define LLVM_CLANG_EXPRDECLBVDVAL_H
+#ifndef LLVM_CLANG_STMTDECLBVDVAL_H
+#define LLVM_CLANG_STMTDECLBVDVAL_H
 
 #include "clang/AST/CFG.h"
 #include "clang/AST/Decl.h" // for ScopedDecl* -> NamedDecl* conversion
@@ -24,7 +24,7 @@
 
 namespace clang {
   
-  class Expr;
+  class Stmt;
 
 struct DeclBitVector_Types {
   
@@ -163,7 +163,7 @@ struct DeclBitVector_Types {
 };
 
 
-struct ExprDeclBitVector_Types {
+struct StmtDeclBitVector_Types {
   
   //===--------------------------------------------------------------------===//
   // AnalysisDataTy - Whole-function meta data.
@@ -183,12 +183,12 @@ struct ExprDeclBitVector_Types {
 
     unsigned getIdx(const Stmt* S) const {
       CFG::BlkExprNumTy I = cfg->getBlkExprNum(S);
-      assert(I && "expression not tracked for bitvector.");
+      assert(I && "Stmtession not tracked for bitvector.");
       return I;
     }
     using DeclBitVector_Types::AnalysisDataTy::getIdx;
     
-    unsigned getNumExprs() const { return cfg->getNumBlkExprs(); }
+    unsigned getNumBlkExprs() const { return cfg->getNumBlkExprs(); }
   };
 
   //===--------------------------------------------------------------------===//
@@ -196,7 +196,7 @@ struct ExprDeclBitVector_Types {
   //===--------------------------------------------------------------------===//
 
   class ValTy : public DeclBitVector_Types::ValTy {
-    llvm::BitVector ExprBV;
+    llvm::BitVector BlkExprBV;
     typedef DeclBitVector_Types::ValTy ParentTy;
     
     static inline ParentTy& ParentRef(ValTy& X) {
@@ -210,34 +210,34 @@ struct ExprDeclBitVector_Types {
   public:
     
     
-    void resetExprValues(AnalysisDataTy& AD) {
-      ExprBV.resize(AD.getNumExprs());
-      ExprBV.reset();
+    void resetBlkExprValues(AnalysisDataTy& AD) {
+      BlkExprBV.resize(AD.getNumBlkExprs());
+      BlkExprBV.reset();
     }
     
-    void setExprValues(AnalysisDataTy& AD) {
-      ExprBV.resize(AD.getNumExprs());
-      ExprBV.set();
+    void setBlkExprValues(AnalysisDataTy& AD) {
+      BlkExprBV.resize(AD.getNumBlkExprs());
+      BlkExprBV.set();
     }
     
     void resetValues(AnalysisDataTy& AD) {
       resetDeclValues(AD);
-      resetExprValues(AD);
+      resetBlkExprValues(AD);
     }
     
     bool operator==(const ValTy& RHS) const { 
       return ParentRef(*this) == ParentRef(RHS) 
-          && ExprBV == RHS.ExprBV;
+          && BlkExprBV == RHS.BlkExprBV;
     }
     
     void copyValues(const ValTy& RHS) {
       ParentRef(*this).copyValues(ParentRef(RHS));
-      ExprBV = RHS.ExprBV;
+      BlkExprBV = RHS.BlkExprBV;
     }
         
     llvm::BitVector::reference
     operator()(const Stmt* S, const AnalysisDataTy& AD) {
-      return ExprBV[AD.getIdx(S)];      
+      return BlkExprBV[AD.getIdx(S)];      
     }    
     const llvm::BitVector::reference
     operator()(const Stmt* S, const AnalysisDataTy& AD) const {
@@ -247,38 +247,38 @@ struct ExprDeclBitVector_Types {
     using DeclBitVector_Types::ValTy::operator();
 
     
-    llvm::BitVector::reference getExprBit(unsigned i) { return ExprBV[i]; }    
-    const llvm::BitVector::reference getExprBit(unsigned i) const {
-      return const_cast<llvm::BitVector&>(ExprBV)[i];
+    llvm::BitVector::reference getStmtBit(unsigned i) { return BlkExprBV[i]; }    
+    const llvm::BitVector::reference getStmtBit(unsigned i) const {
+      return const_cast<llvm::BitVector&>(BlkExprBV)[i];
     }
     
-    ValTy& OrExprBits(const ValTy& RHS) {
-      ExprBV |= RHS.ExprBV;
+    ValTy& OrBlkExprBits(const ValTy& RHS) {
+      BlkExprBV |= RHS.BlkExprBV;
       return *this;
     }
     
-    ValTy& AndExprBits(const ValTy& RHS) {
-      ExprBV &= RHS.ExprBV;
+    ValTy& AndBlkExprBits(const ValTy& RHS) {
+      BlkExprBV &= RHS.BlkExprBV;
       return *this;
     }
     
     ValTy& operator|=(const ValTy& RHS) {
       assert (sizesEqual(RHS));
       ParentRef(*this) |= ParentRef(RHS);
-      ExprBV |= RHS.ExprBV;
+      BlkExprBV |= RHS.BlkExprBV;
       return *this;
     }
     
     ValTy& operator&=(const ValTy& RHS) {
       assert (sizesEqual(RHS));
       ParentRef(*this) &= ParentRef(RHS);
-      ExprBV &= RHS.ExprBV;
+      BlkExprBV &= RHS.BlkExprBV;
       return *this;
     }
     
     bool sizesEqual(const ValTy& RHS) const {
       return ParentRef(*this).sizesEqual(ParentRef(RHS))
-          && ExprBV.size() == RHS.ExprBV.size();
+          && BlkExprBV.size() == RHS.BlkExprBV.size();
     }
   };
   
