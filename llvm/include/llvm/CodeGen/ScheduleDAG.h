@@ -439,6 +439,11 @@ namespace llvm {
     /// and if it has live ins that need to be copied into vregs, emit the
     /// copies into the top of the block.
     void EmitLiveInCopies(MachineBasicBlock *MBB);
+
+    /// BuildSchedUnitsFromMBB - Build SUnits from the MachineBasicBlock.
+    /// This SUnit graph is similar to the pre-regalloc SUnit graph, but represents
+    /// MachineInstrs directly instead of SDNodes.
+    void BuildSchedUnitsFromMBB();
   };
 
   /// createBURRListDAGScheduler - This creates a bottom up register usage

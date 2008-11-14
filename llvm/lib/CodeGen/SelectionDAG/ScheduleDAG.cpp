@@ -72,6 +72,13 @@ SUnit *ScheduleDAG::Clone(SUnit *Old) {
 /// This SUnit graph is similar to the SelectionDAG, but represents flagged
 /// together nodes with a single SUnit.
 void ScheduleDAG::BuildSchedUnits() {
+  // For post-regalloc scheduling, build the SUnits from the MachineInstrs
+  // in the MachineBasicBlock.
+  if (!DAG) {
+    BuildSchedUnitsFromMBB();
+    return;
+  }
+
   // Reserve entries in the vector for each of the SUnits we are creating.  This
   // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
   // invalidated.
@@ -182,6 +189,83 @@ void ScheduleDAG::BuildSchedUnits() {
         SU->addPred(OpSU, isChain, false, PhysReg, Cost);
       }
     }
+  }
+}
+
+void ScheduleDAG::BuildSchedUnitsFromMBB() {
+  SUnits.clear();
+  SUnits.reserve(BB->size());
+
+  std::vector<SUnit *> PendingLoads;
+  SUnit *Terminator = 0;
+  SUnit *Chain = 0;
+  SUnit *Defs[TargetRegisterInfo::FirstVirtualRegister] = {};
+  std::vector<SUnit *> Uses[TargetRegisterInfo::FirstVirtualRegister] = {};
+  int Cost = 1; // FIXME
+
+  for (MachineBasicBlock::iterator MII = BB->end(), MIE = BB->begin();
+       MII != MIE; --MII) {
+    MachineInstr *MI = prior(MII);
+    SUnit *SU = NewSUnit(MI);
+
+    for (unsigned j = 0, n = MI->getNumOperands(); j != n; ++j) {
+      const MachineOperand &MO = MI->getOperand(j);
+      if (!MO.isReg()) continue;
+      unsigned Reg = MO.getReg();
+      if (Reg == 0) continue;
+
+      assert(TRI->isPhysicalRegister(Reg) && "Virtual register encountered!");
+      std::vector<SUnit *> &UseList = Uses[Reg];
+      SUnit *&Def = Defs[Reg];
+      // Optionally add output and anti dependences
+      if (Def && Def != SU)
+        Def->addPred(SU, /*isCtrl=*/true, /*isSpecial=*/false,
+                     /*PhyReg=*/Reg, Cost);
+      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+        SUnit *&Def = Defs[*Alias];
+        if (Def && Def != SU)
+          Def->addPred(SU, /*isCtrl=*/true, /*isSpecial=*/false,
+                       /*PhyReg=*/*Alias, Cost);
+      }
+
+      if (MO.isDef()) {
+        // Add any data dependencies.
+        for (unsigned i = 0, e = UseList.size(); i != e; ++i)
+          if (UseList[i] != SU)
+            UseList[i]->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false,
+                                /*PhysReg=*/Reg, Cost);
+        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+          std::vector<SUnit *> &UseList = Uses[*Alias];
+          for (unsigned i = 0, e = UseList.size(); i != e; ++i)
+            if (UseList[i] != SU)
+              UseList[i]->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false,
+                                  /*PhysReg=*/*Alias, Cost);
+        }
+
+        UseList.clear();
+        Def = SU;
+      } else {
+        UseList.push_back(SU);
+      }
+    }
+    bool False = false;
+    bool True = true;
+    if (!MI->isSafeToMove(TII, False)) {
+      if (Chain)
+        Chain->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false);
+      for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
+        PendingLoads[k]->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false);
+      PendingLoads.clear();
+      Chain = SU;
+    } else if (!MI->isSafeToMove(TII, True)) {
+      if (Chain)
+        Chain->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false);
+      PendingLoads.push_back(SU);
+    }
+    if (Terminator && SU->Succs.empty())
+      Terminator->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false);
+    if (MI->getDesc().isTerminator())
+      Terminator = SU;
   }
 }
 
