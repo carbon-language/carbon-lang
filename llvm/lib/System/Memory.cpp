@@ -35,26 +35,28 @@ extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 void llvm::sys::Memory::InvalidateInstructionCache(const void *Addr,
                                                    size_t Len) {
   
-// icache invalidation for PPC.
+// icache invalidation for PPC and ARM.
+#if defined(__APPLE__)
 #if (defined(__POWERPC__) || defined (__ppc__) || \
-     defined(_POWER) || defined(_ARCH_PPC))
-   #if defined(__APPLE__)
-       sys_icache_invalidate(Addr, Len);
-   #elif defined(__GNUC__)
-        const size_t LineSize = 32;
+     defined(_POWER) || defined(_ARCH_PPC)) || defined(__arm__)
+  sys_icache_invalidate(Addr, Len);
+#endif
+#else
+#if (defined(__POWERPC__) || defined (__ppc__) || \
+     defined(_POWER) || defined(_ARCH_PPC)) && defined(__GNUC__)
+  const size_t LineSize = 32;
 
-        const intptr_t Mask = ~(LineSize - 1);
-        const intptr_t StartLine = ((intptr_t) Addr) & Mask;
-        const intptr_t EndLine = ((intptr_t) Addr + Len + LineSize - 1) & Mask;
+  const intptr_t Mask = ~(LineSize - 1);
+  const intptr_t StartLine = ((intptr_t) Addr) & Mask;
+  const intptr_t EndLine = ((intptr_t) Addr + Len + LineSize - 1) & Mask;
 
-        for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
-          asm volatile("dcbf 0, %0" : : "r"(Line));
-        asm volatile("sync");
+  for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
+    asm volatile("dcbf 0, %0" : : "r"(Line));
+  asm volatile("sync");
 
-        for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
-          asm volatile("icbi 0, %0" : : "r"(Line));
-        asm volatile("isync");
-   #endif
-#endif  // end PPC
-
+  for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
+    asm volatile("icbi 0, %0" : : "r"(Line));
+  asm volatile("isync");
+#endif
+#endif  // end apple
 }
