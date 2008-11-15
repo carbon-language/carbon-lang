@@ -639,7 +639,7 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
   unsigned N = RI.getNumOperands();
   if (F->getReturnType() == Type::VoidTy) 
     Assert2(N == 0,
-            "Found return instr that returns void in Function of non-void "
+            "Found return instr that returns non-void in Function of void "
             "return type!", &RI, F->getReturnType());
   else if (N == 1 && F->getReturnType() == RI.getOperand(0)->getType()) {
     // Exactly one return value and it matches the return type. Good.
