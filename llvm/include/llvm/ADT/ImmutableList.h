@@ -123,6 +123,10 @@ public:
   ImmutableList getTail() {
     return X ? X->getTail() : 0;
   }  
+
+  void Profile(FoldingSetNodeID& ID) const {
+    ID.AddPointer(X);
+  }
 };
   
 template <typename T>
