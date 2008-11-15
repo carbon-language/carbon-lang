@@ -751,7 +751,12 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
     
     switch (RetAI.getKind()) {
     case ABIArgInfo::StructRet:
-      EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
+        if (RetTy->isAnyComplexType()) {
+          // FIXME: Volatile
+          ComplexPairTy RT = LoadComplexFromAddr(ReturnValue, false);
+          StoreComplexToAddr(RT, ReturnValue, false);
+        } else
+          EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
       break;
 
     case ABIArgInfo::Default:
