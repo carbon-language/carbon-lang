@@ -7692,8 +7692,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
       assert(0 && "Unexpected operation in WidenVectorOp!");
       break;
   case ISD::CopyFromReg:
-    assert(0 && "CopyFromReg must be legal!");
-  case ISD::UNDEF:
+    assert(0 && "CopyFromReg doesn't need widening!");
   case ISD::Constant:
   case ISD::ConstantFP:
     // To build a vector of these elements, clients should call BuildVector
@@ -7702,6 +7701,9 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   case ISD::VAARG:
     // Variable Arguments with vector types doesn't make any sense to me
     assert(0 && "Unexpected operation in WidenVectorOp!");
+    break;
+  case ISD::UNDEF:
+    Result = DAG.getNode(ISD::UNDEF, WidenVT);
     break;
   case ISD::BUILD_VECTOR: {
     // Build a vector with undefined for the new nodes
@@ -7841,7 +7843,10 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   case ISD::FNEG:
   case ISD::FSQRT:
   case ISD::FSIN:
-  case ISD::FCOS: {
+  case ISD::FCOS:
+  case ISD::CTPOP:
+  case ISD::CTTZ:
+  case ISD::CTLZ: {
     // Unary op widening
     SDValue Tmp1;    
     TargetLowering::LegalizeAction action =
@@ -7996,15 +8001,38 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
     break;
   }
   case ISD::EXTRACT_SUBVECTOR: {
-    SDValue Tmp1;
-
-    // The incoming vector might already be the proper type
-    if (Node->getOperand(0).getValueType() != WidenVT)
-      Tmp1 = WidenVectorOp(Node->getOperand(0), WidenVT);
-    else
-      Tmp1 = Node->getOperand(0);
-    assert(Tmp1.getValueType() == WidenVT);
-    Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1, Node->getOperand(1));
+    SDValue Tmp1 = Node->getOperand(0);
+    SDValue Idx = Node->getOperand(1);
+    ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Idx);
+    if (CIdx && CIdx->getZExtValue() == 0) {
+      // Since we are access the start of the vector, the incoming
+      // vector type might be the proper.
+      MVT Tmp1VT = Tmp1.getValueType();
+      if (Tmp1VT == WidenVT)
+        return Tmp1;
+      else {
+        unsigned Tmp1VTNumElts = Tmp1VT.getVectorNumElements();
+        if (Tmp1VTNumElts < NewNumElts)
+          Result = WidenVectorOp(Tmp1, WidenVT);
+        else
+          Result = DAG.getNode(ISD::EXTRACT_SUBVECTOR, WidenVT, Tmp1, Idx);
+      }
+    } else if (NewNumElts % NumElts == 0) {
+      // Widen the extracted subvector.
+      unsigned NumConcat = NewNumElts / NumElts;
+      SDValue UndefVal = DAG.getNode(ISD::UNDEF, VT);
+      SmallVector<SDValue, 8> MOps;
+      MOps.push_back(Op);
+      for (unsigned i = 1; i != NumConcat; ++i) {
+        MOps.push_back(UndefVal);
+      }
+      Result = LegalizeOp(DAG.getNode(ISD::CONCAT_VECTORS, WidenVT,
+                                      &MOps[0], MOps.size()));
+    } else {
+      assert(0 && "can not widen extract subvector");
+     // This could be implemented using insert and build vector but I would
+     // like to see when this happens.
+    }
     break;
   }
 
@@ -8233,7 +8261,7 @@ SDValue SelectionDAGLegalize::genWidenVectorLoads(SDValueVector& LdChain,
       FindWidenVecType(TLI, LdWidth, ResType, EVT, VecEVT);
       EVTWidth = EVT.getSizeInBits();
       // Readjust position and vector position based on new load type
-      Idx = Idx * (oEVTWidth/EVTWidth)+1;
+      Idx = Idx * (oEVTWidth/EVTWidth);
       VecOp = DAG.getNode(ISD::BIT_CONVERT, VecEVT, VecOp);
     }
       
@@ -8298,7 +8326,7 @@ void SelectionDAGLegalize::genWidenVectorStores(SDValueVector& StChain,
                                                 int         SVOffset,
                                                 unsigned    Alignment,
                                                 bool        isVolatile,
-                                                SDValue   ValOp,
+                                                SDValue     ValOp,
                                                 unsigned    StWidth) {
   // Breaks the stores into a series of power of 2 width stores.  For any
   // width, we convert the vector to the vector of element size that we
@@ -8340,12 +8368,12 @@ void SelectionDAGLegalize::genWidenVectorStores(SDValueVector& StChain,
       FindWidenVecType(TLI, StWidth, VVT, EVT, VecEVT);
       EVTWidth = EVT.getSizeInBits();
       // Readjust position and vector position based on new load type
-      Idx = Idx * (oEVTWidth/EVTWidth)+1;
+      Idx = Idx * (oEVTWidth/EVTWidth);
       VecOp = DAG.getNode(ISD::BIT_CONVERT, VecEVT, VecOp);
     }
     
     EOp = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EVT, VecOp,
-                      DAG.getIntPtrConstant(Idx));
+                      DAG.getIntPtrConstant(Idx++));
     StChain.push_back(DAG.getStore(Chain, EOp, BasePtr, SV,
                                    SVOffset + Offset, isVolatile,
                                    MinAlign(Alignment, Offset)));
