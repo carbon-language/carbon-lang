@@ -69,20 +69,21 @@ SVal GRSimpleVals::EvalCast(GRExprEngine& Eng, Loc X, QualType T) {
   //   can be introduced by the frontend for corner cases, e.g
   //   casting from va_list* to __builtin_va_list&.
   //
+  assert (!X.isUnknownOrUndef());
+  
   if (Loc::IsLocType(T) || T->isReferenceType())
     return X;
   
   assert (T->isIntegerType());
-  
-  if (!isa<loc::ConcreteInt>(X))
-    return UnknownVal();
-  
   BasicValueFactory& BasicVals = Eng.getBasicVals();
+  unsigned BitWidth = Eng.getContext().getTypeSize(T);
+
+  if (!isa<loc::ConcreteInt>(X))
+    return nonloc::LocAsInteger::Make(BasicVals, X, BitWidth);
   
   llvm::APSInt V = cast<loc::ConcreteInt>(X).getValue();
   V.setIsUnsigned(T->isUnsignedIntegerType() || Loc::IsLocType(T));
-  V.extOrTrunc(Eng.getContext().getTypeSize(T));
-
+  V.extOrTrunc(BitWidth);
   return nonloc::ConcreteInt(BasicVals.getValue(V));
 }
 
@@ -123,11 +124,11 @@ static unsigned char LNotOpMap[] = {
   (unsigned char) BinaryOperator::EQ   /* NE => EQ */
 };
 
-SVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
+SVal GRSimpleVals::DetermEvalBinOpNN(GRExprEngine& Eng,
                                      BinaryOperator::Opcode Op,
                                      NonLoc L, NonLoc R)  {
 
-  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
+  BasicValueFactory& BasicVals = Eng.getBasicVals();
   unsigned subkind = L.getSubKind();
   
   while (1) {
@@ -135,6 +136,37 @@ SVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
     switch (subkind) {
       default:
         return UnknownVal();
+        
+      case nonloc::LocAsIntegerKind: {
+        Loc LL = cast<nonloc::LocAsInteger>(L).getLoc();        
+        
+        switch (R.getSubKind()) {
+          case nonloc::LocAsIntegerKind:
+            return EvalBinOp(Eng, Op, LL,
+                             cast<nonloc::LocAsInteger>(R).getLoc());
+            
+          case nonloc::ConcreteIntKind: {
+            // Transform the integer into a location and compare.
+            ASTContext& Ctx = Eng.getContext();
+            llvm::APSInt V = cast<nonloc::ConcreteInt>(R).getValue();
+            V.setIsUnsigned(true);
+            V.extOrTrunc(Ctx.getTypeSize(Ctx.VoidPtrTy));
+            return EvalBinOp(Eng, Op, LL,
+                             loc::ConcreteInt(BasicVals.getValue(V)));
+          }
+          
+          default: 
+            switch (Op) {
+              case BinaryOperator::EQ:
+                return NonLoc::MakeIntTruthVal(BasicVals, false);
+              case BinaryOperator::NE:
+                return NonLoc::MakeIntTruthVal(BasicVals, true);
+              default:
+                // This case also handles pointer arithmetic.
+                return UnknownVal();
+            }
+        }
+      }
         
       case nonloc::SymIntConstraintValKind: {
         

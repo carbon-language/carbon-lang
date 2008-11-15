@@ -39,10 +39,10 @@ void GRTransferFuncs::EvalStore(ExplodedNodeSet<GRState>& Dst,
 }
 
 void GRTransferFuncs::EvalBinOpNN(GRStateSet& OStates,
-                                  GRStateManager& StateMgr,
+                                  GRExprEngine& Eng,
                                   const GRState *St, Expr* Ex,
                                   BinaryOperator::Opcode Op,
                                   NonLoc L, NonLoc R) {
   
-  OStates.Add(StateMgr.BindExpr(St, Ex, DetermEvalBinOpNN(StateMgr, Op, L, R)));
+  OStates.Add(Eng.getStateManager().BindExpr(St, Ex, DetermEvalBinOpNN(Eng, Op, L, R)));
 }

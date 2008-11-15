@@ -27,7 +27,7 @@ class ASTContext;
 class GRSimpleVals : public GRTransferFuncs {
 protected:
   
-  virtual SVal DetermEvalBinOpNN(GRStateManager& StateMgr,
+  virtual SVal DetermEvalBinOpNN(GRExprEngine& Eng,
                                  BinaryOperator::Opcode Op,
                                  NonLoc L, NonLoc R);
   

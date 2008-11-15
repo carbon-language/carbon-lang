@@ -2044,10 +2044,16 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         // Get the value of the subexpression.
         SVal V = GetSVal(St, Ex);
 
-        // Perform promotions.
-        // FIXME: This is the right thing to do, but it currently breaks
-        //  a bunch of tests.
-        // V = EvalCast(V, U->getType()); 
+        if (V.isUnknownOrUndef()) {
+          MakeNode(Dst, U, *I, BindExpr(St, U, V));
+          continue;
+        }
+        
+        QualType DstT = getContext().getCanonicalType(U->getType());
+        QualType SrcT = getContext().getCanonicalType(Ex->getType());
+        
+        if (DstT != SrcT) // Perform promotions.
+          V = EvalCast(V, DstT); 
         
         if (V.isUnknownOrUndef()) {
           MakeNode(Dst, U, *I, BindExpr(St, U, V));
@@ -2551,7 +2557,7 @@ void GRExprEngine::EvalBinOp(GRStateSet& OStates, const GRState* St,
                              NonLoc L, NonLoc R) {
   
   GRStateSet::AutoPopulate AP(OStates, St);
-  if (R.isValid()) getTF().EvalBinOpNN(OStates, StateMgr, St, Ex, Op, L, R);
+  if (R.isValid()) getTF().EvalBinOpNN(OStates, *this, St, Ex, Op, L, R);
 }
 
 //===----------------------------------------------------------------------===//

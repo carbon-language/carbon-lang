@@ -592,12 +592,12 @@ protected:
   }
   
   SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, NonLoc R) {
-    return R.isValid() ? getTF().DetermEvalBinOpNN(getStateManager(), Op, L, R)
+    return R.isValid() ? getTF().DetermEvalBinOpNN(*this, Op, L, R)
                        : R;
   }
 
   SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, SVal R) {
-    return R.isValid() ? getTF().DetermEvalBinOpNN(getStateManager(), Op, L,
+    return R.isValid() ? getTF().DetermEvalBinOpNN(*this, Op, L,
                                                    cast<NonLoc>(R)) : R;
   }
   
@@ -634,7 +634,7 @@ protected:
                                cast<NonLoc>(L));
     }
     else
-      return getTF().DetermEvalBinOpNN(getStateManager(), Op, cast<NonLoc>(L),
+      return getTF().DetermEvalBinOpNN(*this, Op, cast<NonLoc>(L),
                                        cast<NonLoc>(R));
   }
   

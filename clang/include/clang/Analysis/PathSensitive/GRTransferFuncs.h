@@ -32,7 +32,7 @@ class GRTransferFuncs {
 protected:
   
   
-  virtual SVal DetermEvalBinOpNN(GRStateManager& StateMgr,
+  virtual SVal DetermEvalBinOpNN(GRExprEngine& Eng,
                                  BinaryOperator::Opcode Op,
                                  NonLoc L, NonLoc R) {
     return UnknownVal();
@@ -58,7 +58,9 @@ public:
   virtual SVal EvalComplement(GRExprEngine& Engine, NonLoc X) = 0;
 
   // Binary Operators.
-  virtual void EvalBinOpNN(GRStateSet& OStates, GRStateManager& StateMgr,
+  // FIXME: We're moving back towards using GREXprEngine directly.  No need
+  // for OStates
+  virtual void EvalBinOpNN(GRStateSet& OStates, GRExprEngine& Eng,
                            const GRState* St, Expr* Ex,
                            BinaryOperator::Opcode Op, NonLoc L, NonLoc R);
   
