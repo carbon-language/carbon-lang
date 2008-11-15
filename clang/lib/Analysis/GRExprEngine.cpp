@@ -1686,8 +1686,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
 
     // Check for casts from array type to pointer type.
     if (ExTy->isArrayType()) {
-      assert(T->isPointerType() || T->isReferenceType());
-
+      assert(T->isPointerType());
       V = StateMgr.ArrayToPointer(V);
       MakeNode(Dst, CastE, N, BindExpr(St, CastE, V));
       continue;
