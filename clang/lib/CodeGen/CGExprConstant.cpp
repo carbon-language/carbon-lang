@@ -836,12 +836,41 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                                 CodeGenFunction *CGF) {
   QualType type = Context.getCanonicalType(E->getType());
 
+#ifdef USE_TRY_EVALUATE
+  APValue V;
+  if (E->tryEvaluate(V, Context)) {
+    // FIXME: Assert that the value doesn't have any side effects.
+    switch (V.getKind()) {
+    default: assert(0 && "unhandled value kind!");
+    case APValue::LValue: {
+      if (V.getLValueBase())
+        break;
+      
+      llvm::Constant *C = llvm::ConstantInt::get(llvm::Type::Int64Ty,
+                                                 V.getLValueOffset());
+      
+      return llvm::ConstantExpr::getIntToPtr(C, getTypes().ConvertType(type));
+    }
+    case APValue::Int:
+      llvm::Constant *C = llvm::ConstantInt::get(V.getInt());
+      
+      if (C->getType() == llvm::Type::Int1Ty) {
+        const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
+        C = llvm::ConstantExpr::getZExt(C, BoolTy);
+      }
+      return C;
+    case APValue::Float:
+      return llvm::ConstantFP::get(V.getFloat());
+    }
+  }
+#else
   if (type->isIntegerType()) {
     llvm::APSInt Value(static_cast<uint32_t>(Context.getTypeSize(type)));
     if (E->isIntegerConstantExpr(Value, Context)) {
       return llvm::ConstantInt::get(Value);
     } 
   }
+#endif
 
   llvm::Constant* C = ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
   if (C->getType() == llvm::Type::Int1Ty) {
