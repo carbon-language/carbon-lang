@@ -2043,16 +2043,16 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
           continue;
         }
         
-        QualType DstT = getContext().getCanonicalType(U->getType());
-        QualType SrcT = getContext().getCanonicalType(Ex->getType());
-        
-        if (DstT != SrcT) // Perform promotions.
-          V = EvalCast(V, DstT); 
-        
-        if (V.isUnknownOrUndef()) {
-          MakeNode(Dst, U, *I, BindExpr(St, U, V));
-          continue;
-        }
+//        QualType DstT = getContext().getCanonicalType(U->getType());
+//        QualType SrcT = getContext().getCanonicalType(Ex->getType());
+//        
+//        if (DstT != SrcT) // Perform promotions.
+//          V = EvalCast(V, DstT); 
+//        
+//        if (V.isUnknownOrUndef()) {
+//          MakeNode(Dst, U, *I, BindExpr(St, U, V));
+//          continue;
+//        }
         
         switch (U->getOpcode()) {
           default:
@@ -2082,7 +2082,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
               St = BindExpr(St, U, Result);
             }
             else {
-              nonloc::ConcreteInt X(getBasicVals().getValue(0, U->getType()));
+              nonloc::ConcreteInt X(getBasicVals().getValue(0, Ex->getType()));
 #if 0            
               SVal Result = EvalBinOp(BinaryOperator::EQ, cast<NonLoc>(V), X);
               St = SetSVal(St, U, Result);
@@ -2483,10 +2483,14 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         
         // Get the computation type.
         QualType CTy = cast<CompoundAssignOperator>(B)->getComputationType();
+        CTy = getContext().getCanonicalType(CTy);
+        
+        QualType LTy = getContext().getCanonicalType(LHS->getType());
+        QualType RTy = getContext().getCanonicalType(RHS->getType());
           
         // Perform promotions.
-        V = EvalCast(V, CTy);
-        RightV = EvalCast(RightV, CTy);
+        if (LTy != CTy) V = EvalCast(V, CTy);
+        if (RTy != CTy) RightV = EvalCast(RightV, CTy);
           
         // Evaluate operands and promote to result type.                    
         if (RightV.isUndef()) {            
@@ -2495,36 +2499,46 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           continue;
         }
       
-        // Compute the result of the operation.
-      
+        // Compute the result of the operation.      
         SVal Result = EvalCast(EvalBinOp(Op, V, RightV), B->getType());
           
         if (Result.isUndef()) {
-            
           // The operands were not undefined, but the result is undefined.
-          
           if (NodeTy* UndefNode = Builder->generateNode(B, St, *I3)) {
             UndefNode->markAsSink();            
             UndefResults.insert(UndefNode);
           }
-          
           continue;
         }
 
         // EXPERIMENTAL: "Conjured" symbols.
         // FIXME: Handle structs.
+        
+        SVal LHSVal;
+        
         if (Result.isUnknown() && (Loc::IsLocType(CTy) ||
                                  (CTy->isScalarType() && CTy->isIntegerType()))) {
           
           unsigned Count = Builder->getCurrentBlockCount();
-          SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
           
-          Result = Loc::IsLocType(CTy) 
+          // The symbolic value is actually for the type of the left-hand side
+          // expression, not the computation type, as this is the value the
+          // LValue on the LHS will bind to.
+          SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), LTy, Count);
+          LHSVal = Loc::IsLocType(LTy) 
                  ? cast<SVal>(loc::SymbolVal(Sym)) 
-                 : cast<SVal>(nonloc::SymbolVal(Sym));            
+                 : cast<SVal>(nonloc::SymbolVal(Sym));
+          
+          // However, we need to convert the symbol to the computation type.          
+          Result = (LTy == CTy) ? LHSVal : EvalCast(LHSVal,CTy);
         }
- 
-        EvalStore(Dst, B, LHS, *I3, BindExpr(St, B, Result), location, Result);
+        else {
+          // The left-hand side may bind to a different value then the
+          // computation type.
+          LHSVal = (LTy == CTy) ? Result : EvalCast(Result,LTy);
+        }
+          
+        EvalStore(Dst, B, LHS, *I3, BindExpr(St, B, Result), location, LHSVal);
       }
     }
   }
