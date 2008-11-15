@@ -287,7 +287,7 @@ Loc Loc::MakeVal(AddrLabelExpr* E) { return loc::GotoLabel(E->getLabel()); }
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//
 
-void SVal::printStdErr() const { print(llvm::errs()); }
+void SVal::printStdErr() const { print(llvm::errs()); llvm::errs().flush(); }
 
 void SVal::print(std::ostream& Out) const {
   llvm::raw_os_ostream out(Out);
