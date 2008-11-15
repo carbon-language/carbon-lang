@@ -95,8 +95,6 @@ endif(WIN32)
 if( EXISTS ${LLVM_TOOLS_BINARY_DIR}/llvm-config )
   set(HAVE_LLVM_CONFIG 1)
 endif( EXISTS ${LLVM_TOOLS_BINARY_DIR}/llvm-config )
-# find_file(HAVE_LLVM_CONFIG llvm-config ${LLVM_TOOLS_BINARY_DIR})
-# message(STATUS ${HAVE_LLVM_CONFIG})
 
 include(config-ix)
 
@@ -133,9 +131,6 @@ if( MSVC )
 endif( MSVC )
 
 include_directories( ${LLVM_BINARY_DIR}/include ${LLVM_MAIN_INCLUDE_DIR})
-#link_directories( d:/dev/lib )
-
-#add_subdirectory(lib)
 
 include(AddLLVM)
 include(AddPartiallyLinkedObject)

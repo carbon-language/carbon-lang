@@ -10,8 +10,6 @@ set(PREFIX ${LLVM_BINARY_DIR}) # TODO: Root for `make install'.
 execute_process(COMMAND date
   OUTPUT_VARIABLE LLVM_CONFIGTIME
   OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(abs_top_srcdir ${LLVM_MAIN_SRC_DIR})
-set(abs_top_builddir ${LLVM_BINARY_DIR})
 # LLVM_ON_UNIX and LLVM_ON_WIN32 already set.
 # those are set to blank by `autoconf' on MinGW, so it seems they are not required:
 #set(LLVMGCCDIR "")
@@ -59,10 +57,6 @@ set(FINAL_LIBDEPS ${CMAKE_CURRENT_BINARY_DIR}/FinalLibDeps.txt)
 set(LLVM_CONFIG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/llvm-config)
 set(LLVM_CONFIG_IN ${CMAKE_CURRENT_BINARY_DIR}/llvm-config.in)
 
-# set(LIBDEPS LibDeps.txt)
-# set(LIBDEPS_TMP LibDeps.txt.tmp)
-# set(FINAL_LIBDEPS FinalLibDeps.txt)
-
 if( CMAKE_CROSSCOMPILING )
   set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 endif()
@@ -79,8 +73,9 @@ add_custom_command(OUTPUT ${LIBDEPS_TMP}
   COMMENT "Regenerating ${LIBDEPS_TMP}")
 
 add_custom_command(OUTPUT ${LIBDEPS}
-  COMMAND cmp -s ${LIBDEPS_TMP} ${LIBDEPS} || \( cp ${LIBDEPS_TMP} ${LIBDEPS} && echo "Updated ${LIBDEPS} because dependencies changed" \)
-  DEPENDS ${LIBDEPS_TMP})
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LIBDEPS_TMP} ${LIBDEPS}
+  DEPENDS ${LIBDEPS_TMP}
+  COMMENT "Updated ${LIBDEPS} because dependencies changed")
 
 add_custom_command(OUTPUT ${FINAL_LIBDEPS}
   COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/find-cycles.pl < ${LIBDEPS} > ${FINAL_LIBDEPS} || rm -f ${FINAL_LIBDEPS}
