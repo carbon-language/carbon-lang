@@ -38,6 +38,7 @@ namespace CodeGen {
 
   class ObjCAtTryStmt;
   class ObjCAtThrowStmt;
+  class ObjCAtSynchronizedStmt;
   class ObjCCategoryImplDecl;
   class ObjCImplementationDecl;
   class ObjCInterfaceDecl;
@@ -142,6 +143,8 @@ public:
                            const ObjCAtTryStmt &S) = 0;
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                              const ObjCAtThrowStmt &S) = 0;
+  virtual void EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                    const ObjCAtSynchronizedStmt &S) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.  

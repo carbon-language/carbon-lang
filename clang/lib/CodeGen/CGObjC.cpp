@@ -533,4 +533,10 @@ void CodeGenFunction::EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S)
   CGM.getObjCRuntime().EmitThrowStmt(*this, S);
 }
 
+void CodeGenFunction::EmitObjCAtSynchronizedStmt(
+                                              const ObjCAtSynchronizedStmt &S)
+{
+  CGM.getObjCRuntime().EmitSynchronizedStmt(*this, S);
+}
+
 CGObjCRuntime::~CGObjCRuntime() {}

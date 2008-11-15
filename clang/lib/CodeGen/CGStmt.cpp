@@ -92,7 +92,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     EmitObjCAtThrowStmt(cast<ObjCAtThrowStmt>(*S));
     break;
   case Stmt::ObjCAtSynchronizedStmtClass:
-    ErrorUnsupported(S, "@synchronized statement");
+    EmitObjCAtSynchronizedStmt(cast<ObjCAtSynchronizedStmt>(*S));
     break;
   case Stmt::ObjCForCollectionStmtClass: 
     EmitObjCForCollectionStmt(cast<ObjCForCollectionStmt>(*S));

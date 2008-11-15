@@ -128,6 +128,8 @@ public:
                            const ObjCAtTryStmt &S);
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                              const ObjCAtThrowStmt &S);
+  virtual void EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                    const ObjCAtSynchronizedStmt &S);
 };
 } // end anonymous namespace
 
@@ -959,6 +961,11 @@ void CGObjCGNU::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
 void CGObjCGNU::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                               const ObjCAtThrowStmt &S) {
   CGF.ErrorUnsupported(&S, "@throw statement");
+}
+
+void CGObjCGNU::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                     const ObjCAtSynchronizedStmt &S) {
+  CGF.ErrorUnsupported(&S, "@synchronized statement");
 }
 
 CodeGen::CGObjCRuntime *CodeGen::CreateGNUObjCRuntime(CodeGen::CodeGenModule &CGM){

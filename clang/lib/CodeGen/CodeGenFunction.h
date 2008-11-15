@@ -401,6 +401,7 @@ public:
   void EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S);
   void EmitObjCAtTryStmt(const ObjCAtTryStmt &S);
   void EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S);
+  void EmitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt &S);
   
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission

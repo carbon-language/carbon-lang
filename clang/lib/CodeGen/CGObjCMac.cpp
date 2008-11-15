@@ -155,7 +155,13 @@ public:
   
   /// SetJmpFn - LLVM _setjmp function.
   llvm::Function *SetJmpFn;
-
+  
+  /// SyncEnterFn - LLVM object_sync_enter function.
+  llvm::Function *SyncEnterFn;
+  
+  /// SyncExitFn - LLVM object_sync_exit function.
+  llvm::Function *SyncExitFn;
+  
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCTypesHelper();
@@ -430,6 +436,8 @@ public:
                            const ObjCAtTryStmt &S);
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                              const ObjCAtThrowStmt &S);
+  virtual void EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                    const ObjCAtSynchronizedStmt &S);
   
 };
 } // end anonymous namespace
@@ -1751,6 +1759,96 @@ void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
   EmitBranch(ExecuteTryExit ? E->FinallyBlock : E->FinallyNoExit);
 }
 
+/// EmitSynchronizedStmt - Code gen for @synchronized(expr) stmt;
+/// Effectively generating code for:
+/// objc_sync_enter(expr);
+/// @try stmt @finally { objc_sync_exit(expr); }
+void CGObjCMac::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                     const ObjCAtSynchronizedStmt &S) {
+  // Create various blocks we refer to for handling @finally.
+  llvm::BasicBlock *FinallyBlock = CGF.createBasicBlock("finally");
+  llvm::BasicBlock *FinallyNoExit = CGF.createBasicBlock("finally.noexit");
+  llvm::BasicBlock *FinallyRethrow = CGF.createBasicBlock("finally.throw");
+  llvm::BasicBlock *FinallyEnd = CGF.createBasicBlock("finally.end");
+  llvm::Value *DestCode = 
+  CGF.CreateTempAlloca(llvm::Type::Int32Ty, "finally.dst");
+  
+  // Generate jump code. Done here so we can directly add things to
+  // the switch instruction.
+  llvm::BasicBlock *FinallyJump = CGF.createBasicBlock("finally.jump");
+  llvm::SwitchInst *FinallySwitch = 
+  llvm::SwitchInst::Create(new llvm::LoadInst(DestCode, "", FinallyJump), 
+                           FinallyEnd, 10, FinallyJump);
+  
+  // Push an EH context entry, used for handling rethrows and jumps
+  // through finally.
+  CodeGenFunction::ObjCEHEntry EHEntry(FinallyBlock, FinallyNoExit,
+                                       FinallySwitch, DestCode);
+  CGF.ObjCEHStack.push_back(&EHEntry);
+  
+  // Allocate memory for the exception data and rethrow pointer.
+  llvm::Value *ExceptionData = CGF.CreateTempAlloca(ObjCTypes.ExceptionDataTy,
+                                                    "exceptiondata.ptr");
+  llvm::Value *RethrowPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy, 
+                                                 "_rethrow");
+  // Call objc_sync_enter(sync.expr)
+  CGF.Builder.CreateCall(ObjCTypes.SyncEnterFn,
+                         CGF.EmitScalarExpr(S.getSynchExpr()));
+  
+  // Enter a new try block and call setjmp.
+  CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
+  llvm::Value *JmpBufPtr = CGF.Builder.CreateStructGEP(ExceptionData, 0, 
+                                                       "jmpbufarray");
+  JmpBufPtr = CGF.Builder.CreateStructGEP(JmpBufPtr, 0, "tmp");
+  llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
+                                                     JmpBufPtr, "result");
+  
+  llvm::BasicBlock *TryBlock = CGF.createBasicBlock("try");
+  llvm::BasicBlock *TryHandler = CGF.createBasicBlock("try.handler");
+  CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNotNull(SetJmpResult, "threw"), 
+                           TryHandler, TryBlock);
+  
+  // Emit the @try block.
+  CGF.EmitBlock(TryBlock);
+  CGF.EmitStmt(S.getSynchBody());
+  CGF.EmitJumpThroughFinally(&EHEntry, FinallyEnd);
+  
+  // Emit the "exception in @try" block.
+  CGF.EmitBlock(TryHandler);
+  
+  // Retrieve the exception object.  We may emit multiple blocks but
+  // nothing can cross this so the value is already in SSA form.
+  llvm::Value *Caught = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
+                                               ExceptionData,
+                                               "caught");
+  EHEntry.Exception = Caught;
+  CGF.Builder.CreateStore(Caught, RethrowPtr);
+  CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);    
+  
+  // Pop the exception-handling stack entry. It is important to do
+  // this now, because the code in the @finally block is not in this
+  // context.
+  CGF.ObjCEHStack.pop_back();
+  
+  // Emit the @finally block.
+  CGF.EmitBlock(FinallyBlock);
+  CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn, ExceptionData);
+  
+  CGF.EmitBlock(FinallyNoExit);
+  // objc_sync_exit(expr); As finally's sole statement.
+  CGF.Builder.CreateCall(ObjCTypes.SyncExitFn,
+                         CGF.EmitScalarExpr(S.getSynchExpr()));
+  
+  CGF.EmitBlock(FinallyJump);
+  
+  CGF.EmitBlock(FinallyRethrow);
+  CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, 
+                         CGF.Builder.CreateLoad(RethrowPtr));
+  CGF.Builder.CreateUnreachable();
+  
+  CGF.EmitBlock(FinallyEnd);  
+}
+
 /* *** Private Interface *** */
 
 /// EmitImageInfo - Emit the image info marker used to encode some module
@@ -2415,6 +2513,23 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                       Params,
                                                       false),
                               "objc_exception_match");
+  
+  // synchronized APIs
+  // void objc_sync_enter (id)
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  SyncEnterFn =
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                    Params,
+                                                    false),
+                            "objc_sync_enter");
+  // void objc_sync_exit (id)
+  SyncExitFn =
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                    Params,
+                                                    false),
+                            "objc_sync_exit");
+  
 
   Params.clear();
   Params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int32Ty));
