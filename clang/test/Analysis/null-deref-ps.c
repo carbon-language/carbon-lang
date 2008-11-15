@@ -114,3 +114,23 @@ int f9b(unsigned len) {
   return *p++; // no-warning
 }
 
+int* f10(int* p, signed char x, int y) {
+  // This line tests symbolication with compound assignments where the
+  // LHS and RHS have different bitwidths.  The new symbolic value
+  // for 'x' should have a bitwidth of 8.
+  x &= y;
+  
+  // This tests that our symbolication worked, and that we correctly test
+  // x against 0 (with the same bitwidth).
+  if (!x) {
+    if (!p) return;
+    *p = 10;
+  }
+  else p = 0;
+
+  if (!x)
+    *p = 5; // no-warning
+
+  return p;
+}
+
