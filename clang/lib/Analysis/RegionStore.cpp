@@ -232,8 +232,7 @@ SVal RegionStoreManager::ArrayToPointer(SVal Array) {
   const MemRegion* ArrayR = cast<loc::MemRegionVal>(&Array)->getRegion();
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
 
-  // FIXME: Find a better way to get bit width.
-  nonloc::ConcreteInt Idx(BasicVals.getValue(0, 32, false));
+  nonloc::ConcreteInt Idx(BasicVals.getZeroWithPtrWidth(false));
   ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
   
   return loc::MemRegionVal(ER);                    
