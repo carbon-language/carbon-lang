@@ -31,7 +31,10 @@ class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   
 public:
   BasicStoreManager(GRStateManager& mgr)
-    : StateMgr(mgr), MRMgr(StateMgr.getAllocator()), SelfRegion(0) {}
+    : VBFactory(mgr.getAllocator()), 
+      StateMgr(mgr), 
+      MRMgr(StateMgr.getAllocator()), 
+      SelfRegion(0) {}
   
   ~BasicStoreManager() {}
 
