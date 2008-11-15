@@ -2,6 +2,7 @@ add_llvm_library(LLVMSelectionDAG
   CallingConvLower.cpp
   DAGCombiner.cpp
   FastISel.cpp
+  LatencyPriorityQueue.cpp
   LegalizeDAG.cpp
   LegalizeFloatTypes.cpp
   LegalizeIntegerTypes.cpp
