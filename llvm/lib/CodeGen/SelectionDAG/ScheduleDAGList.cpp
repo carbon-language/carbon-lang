@@ -148,7 +148,7 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   Sequence.push_back(SU);
   SU->Cycle = CurCycle;
   
-  // Bottom up: release successors.
+  // Top down: release successors.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
     ReleaseSucc(I->Dep, I->isCtrl);
