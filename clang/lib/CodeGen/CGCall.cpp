@@ -754,7 +754,7 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
         if (RetTy->isAnyComplexType()) {
           // FIXME: Volatile
           ComplexPairTy RT = LoadComplexFromAddr(ReturnValue, false);
-          StoreComplexToAddr(RT, ReturnValue, false);
+          StoreComplexToAddr(RT, CurFn->arg_begin(), false);
         } else
           EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
       break;
