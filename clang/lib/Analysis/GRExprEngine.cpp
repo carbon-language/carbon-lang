@@ -870,13 +870,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
     return;
 
   } else if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
-    // FIXME: Does this need to be revised?  We were getting cases in
-    //  real code that did this.
-
-    // FIXME: This is not a valid assertion.  Produce a test case that
-    // refutes it.
-    // assert(asLValue); // Can we assume this?
-
+    assert(asLValue);
     SVal V = loc::FuncVal(FD);
     MakeNode(Dst, Ex, Pred, BindExpr(St, Ex, V));
     return;
