@@ -253,26 +253,22 @@ def FMDRR : AVConv5I<0b11000100, 0b1011, (outs DPR:$dst), (ins GPR:$src1, GPR:$s
 def FSITOD : AVConv1I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
                  "fsitod", " $dst, $a",
                  [(set DPR:$dst, (arm_sitof SPR:$a))]> {
-  let Inst{7} = 1; // Z bit
+  let Inst{7} = 1;
 }
 
 def FSITOS : AVConv1I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
                  "fsitos", " $dst, $a",
                  [(set SPR:$dst, (arm_sitof SPR:$a))]> {
-  let Inst{7} = 1; // Z bit
+  let Inst{7} = 1;
 }
 
 def FUITOD : AVConv1I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
                  "fuitod", " $dst, $a",
-                 [(set DPR:$dst, (arm_uitof SPR:$a))]> {
-  let Inst{7} = 0; // Z bit
-}
+                 [(set DPR:$dst, (arm_uitof SPR:$a))]>;
 
 def FUITOS : AVConv1I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
                  "fuitos", " $dst, $a",
-                 [(set SPR:$dst, (arm_uitof SPR:$a))]> {
-  let Inst{7} = 1; // Z bit
-}
+                 [(set SPR:$dst, (arm_uitof SPR:$a))]>;
 
 // FP to Int:
 // Always set Z bit in the instruction, i.e. "round towards zero" variants.
