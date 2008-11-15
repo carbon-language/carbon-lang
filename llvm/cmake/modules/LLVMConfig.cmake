@@ -10,19 +10,40 @@ endmacro(llvm_config executable link_components)
 function(msvc_llvm_config executable link_components)
   foreach(c ${link_components})
     if( c STREQUAL "jit" )
-      set_target_properties(${executable}
-	PROPERTIES
-	LINK_FLAGS "/INCLUDE:_X86TargetMachineModule")
+      set(lfgs "${lfgs} /INCLUDE:_X86TargetMachineModule")
     endif( c STREQUAL "jit" )
+    list(FIND LLVM_TARGETS_TO_BUILD ${c} idx)
+    if( NOT idx LESS 0 )
+      set(lfgs "${lfgs} /INCLUDE:_${c}TargetMachineModule")
+      list(FIND LLVM_ASMPRINTERS_FORCE_LINK ${c} idx)
+      if( NOT idx LESS 0 )
+	set(lfgs "${lfgs} /INCLUDE:_${c}AsmPrinterForceLink")
+      endif()
+    endif()
   endforeach(c)
+
   msvc_map_components_to_libraries(${link_components} LIBRARIES)
   target_link_libraries(${executable} ${LIBRARIES})
+
+  if( lfgs )
+    set_target_properties(${executable}
+      PROPERTIES
+      LINK_FLAGS ${lfgs})
+  endif()
 endfunction(msvc_llvm_config executable link_components)
 
 
 function(msvc_map_components_to_libraries link_components out_libs)
   foreach(c ${link_components})
-    if( c STREQUAL "native" )
+    # add codegen/asmprinter
+    list(FIND LLVM_TARGETS_TO_BUILD ${c} idx)
+    if( NOT idx LESS 0 )
+      list(APPEND expanded_components "LLVM${c}CodeGen")
+      list(FIND llvm_libs "LLVM${c}AsmPrinter" asmidx)
+      if( NOT asmidx LESS 0 )
+        list(APPEND expanded_components "LLVM${c}AsmPrinter")
+      endif()
+    elseif( c STREQUAL "native" )
       # TODO: we assume ARCH is X86. In this case, we must use nativecodegen
       # component instead. Do nothing, as in llvm-config script.
     elseif( c STREQUAL "nativecodegen" )
@@ -33,15 +54,11 @@ function(msvc_map_components_to_libraries link_components out_libs)
     elseif( c STREQUAL "engine" )
       # TODO: as we assume we are on X86, this is `jit'.
       list(APPEND expanded_components "LLVMJIT")
-    elseif( c STREQUAL "X86" )
-      # TODO: we assume we are on X86.
-      list(APPEND expanded_components "LLVMX86CodeGen")
-      list(APPEND expanded_components "LLVMX86AsmPrinter")
     elseif( c STREQUAL "all" )
       list(APPEND expanded_components ${llvm_libs})
-    else( c STREQUAL "native" )
+    else( NOT idx LESS 0 )
       list(APPEND expanded_components LLVM${c})
-    endif( c STREQUAL "native" )
+    endif( NOT idx LESS 0 )
   endforeach(c)
   # We must match capitalization.
   string(TOUPPER "${llvm_libs}" capitalized_libs)

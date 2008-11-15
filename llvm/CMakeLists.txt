@@ -38,6 +38,10 @@ set(LLVM_ALL_TARGETS
   XCore
   )
 
+# List of targets whose asmprinters need to be forced to link
+# into executables on some platforms (i.e. Windows):
+set(LLVM_ASMPRINTERS_FORCE_LINK X86 PowerPC)
+
 if( MSVC )
   set(LLVM_TARGETS_TO_BUILD X86
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
