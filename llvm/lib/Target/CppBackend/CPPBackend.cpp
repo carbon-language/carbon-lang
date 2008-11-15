@@ -71,6 +71,14 @@ static cl::opt<std::string> NameToGenerate("cppfor", cl::Optional,
   cl::desc("Specify the name of the thing to generate"),
   cl::init("!bad!"));
 
+/// CppBackendTargetMachineModule - Note that this is used on hosts
+/// that cannot link in a library unless there are references into the
+/// library.  In particular, it seems that it is not possible to get
+/// things to work on Win32 without this.  Though it is unused, do not
+/// remove it.
+extern "C" int CppBackendTargetMachineModule;
+int CppBackendTargetMachineModule = 0;
+
 // Register the target.
 static RegisterTarget<CPPTargetMachine> X("cpp", "C++ backend");
 

@@ -19,6 +19,14 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
 
+/// MipsTargetMachineModule - Note that this is used on hosts that
+/// cannot link in a library unless there are references into the
+/// library.  In particular, it seems that it is not possible to get
+/// things to work on Win32 without this.  Though it is unused, do not
+/// remove it.
+extern "C" int MipsTargetMachineModule;
+int MipsTargetMachineModule = 0;
+
 // Register the target.
 static RegisterTarget<MipsTargetMachine>    X("mips", "Mips");
 static RegisterTarget<MipselTargetMachine>  Y("mipsel", "Mipsel");

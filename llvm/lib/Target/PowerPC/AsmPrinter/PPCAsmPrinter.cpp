@@ -1112,3 +1112,6 @@ namespace {
     }
   } Registrator;
 }
+
+extern "C" int PowerPCAsmPrinterForceLink;
+int PowerPCAsmPrinterForceLink = 0;

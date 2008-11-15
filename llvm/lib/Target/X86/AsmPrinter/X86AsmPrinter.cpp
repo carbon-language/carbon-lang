@@ -41,3 +41,6 @@ namespace {
     }
   } Registrator;
 }
+
+extern "C" int X86AsmPrinterForceLink;
+int X86AsmPrinterForceLink = 0;

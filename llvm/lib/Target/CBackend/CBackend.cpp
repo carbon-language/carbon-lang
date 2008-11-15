@@ -48,6 +48,14 @@
 #include <sstream>
 using namespace llvm;
 
+/// CBackendTargetMachineModule - Note that this is used on hosts that
+/// cannot link in a library unless there are references into the
+/// library.  In particular, it seems that it is not possible to get
+/// things to work on Win32 without this.  Though it is unused, do not
+/// remove it.
+extern "C" int CBackendTargetMachineModule;
+int CBackendTargetMachineModule = 0;
+
 // Register the target.
 static RegisterTarget<CTargetMachine> X("c", "C backend");
 

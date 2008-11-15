@@ -28,6 +28,13 @@ static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
 static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
                               cl::desc("Disable if-conversion pass"));
 
+/// ARMTargetMachineModule - Note that this is used on hosts that cannot link
+/// in a library unless there are references into the library.  In particular,
+/// it seems that it is not possible to get things to work on Win32 without
+/// this.  Though it is unused, do not remove it.
+extern "C" int ARMTargetMachineModule;
+int ARMTargetMachineModule = 0;
+
 // Register the target.
 static RegisterTarget<ARMTargetMachine>   X("arm",   "ARM");
 static RegisterTarget<ThumbTargetMachine> Y("thumb", "Thumb");
