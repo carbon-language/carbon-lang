@@ -299,9 +299,8 @@ public:
     return Insert(new StoreInst(Val, Ptr, isVolatile));
   }
   template<typename InputIterator>
-  Value *CreateGEP(Value *Ptr, InputIterator IdxBegin,
-                               InputIterator IdxEnd, const char *Name = "") {
-
+  Value *CreateGEP(Value *Ptr, InputIterator IdxBegin, InputIterator IdxEnd,
+                   const char *Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr)) {
       // Every index must be constant.
       InputIterator i;
@@ -395,7 +394,7 @@ public:
   }
 
   Value *CreateCast(Instruction::CastOps Op, Value *V, const Type *DestTy,
-                     const char *Name = "") {
+                    const char *Name = "") {
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
@@ -403,7 +402,7 @@ public:
     return Insert(CastInst::Create(Op, V, DestTy), Name);
   }
   Value *CreateIntCast(Value *V, const Type *DestTy, bool isSigned,
-                        const char *Name = "") {
+                       const char *Name = "") {
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
@@ -569,7 +568,7 @@ public:
   }
 
   Value *CreateExtractElement(Value *Vec, Value *Idx,
-                                         const char *Name = "") {
+                              const char *Name = "") {
     if (Constant *VC = dyn_cast<Constant>(Vec))
       if (Constant *IC = dyn_cast<Constant>(Idx))
         return Folder.CreateExtractElement(VC, IC);
@@ -586,7 +585,7 @@ public:
   }
 
   Value *CreateShuffleVector(Value *V1, Value *V2, Value *Mask,
-                                       const char *Name = "") {
+                             const char *Name = "") {
     if (Constant *V1C = dyn_cast<Constant>(V1))
       if (Constant *V2C = dyn_cast<Constant>(V2))
         if (Constant *MC = dyn_cast<Constant>(Mask))
