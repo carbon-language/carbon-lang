@@ -157,15 +157,7 @@ if( CMAKE_CROSSCOMPILING )
   include( CrossCompileLLVM )
 endif( CMAKE_CROSSCOMPILING )
 
-add_custom_command(OUTPUT ${llvm_builded_incs_dir}/Intrinsics.gen
-  COMMAND ${LLVM_TABLEGEN} -gen-intrinsic -I ${LLVM_MAIN_INCLUDE_DIR} ${LLVM_MAIN_INCLUDE_DIR}/llvm/Intrinsics.td -o ${llvm_builded_incs_dir}/Intrinsics.gen
-  DEPENDS tblgen
-  COMMENT "Building intrinsics.gen...")
-
-add_custom_target(intrinsics_gen ALL
-  DEPENDS ${llvm_builded_incs_dir}/Intrinsics.gen)
-
-set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} intrinsics_gen )
+add_subdirectory(include/llvm)
 
 add_subdirectory(lib/VMCore)
 add_subdirectory(lib/CodeGen)
