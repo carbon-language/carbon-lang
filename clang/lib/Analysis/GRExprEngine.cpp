@@ -2088,7 +2088,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
               St = BindExpr(St, U, Result);
             }
             else {
-              nonloc::ConcreteInt X(getBasicVals().getValue(0, Ex->getType()));
+              nonloc::ConcreteInt X(getBasicVals().getValue(0, U->getType()));
 #if 0            
               SVal Result = EvalBinOp(BinaryOperator::EQ, cast<NonLoc>(V), X);
               St = SetSVal(St, U, Result);
