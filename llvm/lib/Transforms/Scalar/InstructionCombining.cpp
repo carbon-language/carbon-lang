@@ -2245,23 +2245,23 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   // add (select X 0 (sub n A)) A  -->  select X A n
   {
     SelectInst *SI = dyn_cast<SelectInst>(LHS);
-    Value *Other = RHS;
+    Value *A = RHS;
     if (!SI) {
       SI = dyn_cast<SelectInst>(RHS);
-      Other = LHS;
+      A = LHS;
     }
     if (SI && SI->hasOneUse()) {
       Value *TV = SI->getTrueValue();
       Value *FV = SI->getFalseValue();
-      Value *A, *N;
+      Value *N;
 
       // Can we fold the add into the argument of the select?
       // We check both true and false select arguments for a matching subtract.
-      if (match(FV, m_Zero()) && match(TV, m_Sub(m_Value(N), m_Value(A))) &&
-          A == Other)  // Fold the add into the true select value.
+      if (match(FV, m_Zero()) && match(TV, m_Sub(m_Value(N), m_Specific(A))))
+        // Fold the add into the true select value.
         return SelectInst::Create(SI->getCondition(), N, A);
-      if (match(TV, m_Zero()) && match(FV, m_Sub(m_Value(N), m_Value(A))) && 
-          A == Other)  // Fold the add into the false select value.
+      if (match(TV, m_Zero()) && match(FV, m_Sub(m_Value(N), m_Specific(A))))
+        // Fold the add into the false select value.
         return SelectInst::Create(SI->getCondition(), A, N);
     }
   }
@@ -3790,14 +3790,13 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (Instruction *R = AssociativeOpt(I, FoldICmpLogical(*this, RHS)))
       return R;
 
-    Value *LHSVal, *RHSVal;
+    Value *Val;
     ConstantInt *LHSCst, *RHSCst;
     ICmpInst::Predicate LHSCC, RHSCC;
-    if (match(Op0, m_ICmp(LHSCC, m_Value(LHSVal), m_ConstantInt(LHSCst))))
-      if (match(RHS, m_ICmp(RHSCC, m_Value(RHSVal), m_ConstantInt(RHSCst))))
-        if (LHSVal == RHSVal &&    // Found (X icmp C1) & (X icmp C2)
-            // ICMP_[GL]E X, CST is folded to ICMP_[GL]T elsewhere.
-            LHSCC != ICmpInst::ICMP_UGE && LHSCC != ICmpInst::ICMP_ULE &&
+    if (match(Op0, m_ICmp(LHSCC, m_Value(Val), m_ConstantInt(LHSCst))))
+      if (match(RHS, m_ICmp(RHSCC, m_Specific(Val), m_ConstantInt(RHSCst))))
+        // ICMP_[GL]E X, CST is folded to ICMP_[GL]T elsewhere.
+        if (LHSCC != ICmpInst::ICMP_UGE && LHSCC != ICmpInst::ICMP_ULE &&
             RHSCC != ICmpInst::ICMP_UGE && RHSCC != ICmpInst::ICMP_ULE &&
             LHSCC != ICmpInst::ICMP_SGE && LHSCC != ICmpInst::ICMP_SLE &&
             RHSCC != ICmpInst::ICMP_SGE && RHSCC != ICmpInst::ICMP_SLE &&
@@ -3850,11 +3849,11 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             default: assert(0 && "Unknown integer condition code!");
             case ICmpInst::ICMP_ULT:
               if (LHSCst == SubOne(RHSCst)) // (X != 13 & X u< 14) -> X < 13
-                return new ICmpInst(ICmpInst::ICMP_ULT, LHSVal, LHSCst);
+                return new ICmpInst(ICmpInst::ICMP_ULT, Val, LHSCst);
               break;                        // (X != 13 & X u< 15) -> no change
             case ICmpInst::ICMP_SLT:
               if (LHSCst == SubOne(RHSCst)) // (X != 13 & X s< 14) -> X < 13
-                return new ICmpInst(ICmpInst::ICMP_SLT, LHSVal, LHSCst);
+                return new ICmpInst(ICmpInst::ICMP_SLT, Val, LHSCst);
               break;                        // (X != 13 & X s< 15) -> no change
             case ICmpInst::ICMP_EQ:         // (X != 13 & X == 15) -> X == 15
             case ICmpInst::ICMP_UGT:        // (X != 13 & X u> 15) -> X u> 15
@@ -3863,8 +3862,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             case ICmpInst::ICMP_NE:
               if (LHSCst == SubOne(RHSCst)){// (X != 13 & X != 14) -> X-13 >u 1
                 Constant *AddCST = ConstantExpr::getNeg(LHSCst);
-                Instruction *Add = BinaryOperator::CreateAdd(LHSVal, AddCST,
-                                                      LHSVal->getName()+".off");
+                Instruction *Add = BinaryOperator::CreateAdd(Val, AddCST,
+                                                      Val->getName()+".off");
                 InsertNewInstBefore(Add, I);
                 return new ICmpInst(ICmpInst::ICMP_UGT, Add,
                                     ConstantInt::get(Add->getType(), 1));
@@ -3912,10 +3911,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
               break;
             case ICmpInst::ICMP_NE:
               if (RHSCst == AddOne(LHSCst)) // (X u> 13 & X != 14) -> X u> 14
-                return new ICmpInst(LHSCC, LHSVal, RHSCst);
+                return new ICmpInst(LHSCC, Val, RHSCst);
               break;                        // (X u> 13 & X != 15) -> no change
             case ICmpInst::ICMP_ULT:        // (X u> 13 & X u< 15) ->(X-14) <u 1
-              return InsertRangeTest(LHSVal, AddOne(LHSCst), RHSCst, false, 
+              return InsertRangeTest(Val, AddOne(LHSCst), RHSCst, false, 
                                      true, I);
             case ICmpInst::ICMP_SLT:        // (X u> 13 & X s< 15) -> no change
               break;
@@ -3931,11 +3930,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
               break;
             case ICmpInst::ICMP_NE:
               if (RHSCst == AddOne(LHSCst)) // (X s> 13 & X != 14) -> X s> 14
-                return new ICmpInst(LHSCC, LHSVal, RHSCst);
+                return new ICmpInst(LHSCC, Val, RHSCst);
               break;                        // (X s> 13 & X != 15) -> no change
             case ICmpInst::ICMP_SLT:        // (X s> 13 & X s< 15) ->(X-14) s< 1
-              return InsertRangeTest(LHSVal, AddOne(LHSCst), RHSCst, true, 
-                                     true, I);
+              return InsertRangeTest(Val, AddOne(LHSCst), RHSCst, true, true,I);
             case ICmpInst::ICMP_ULT:        // (X s> 13 & X u< 15) -> no change
               break;
             }
@@ -4211,19 +4209,19 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
 static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
                                          Value *C, Value *D) {
   // If A is not a select of -1/0, this cannot match.
-  Value *Cond = 0, *Cond2 = 0;
+  Value *Cond = 0;
   if (!match(A, m_SelectCst(m_Value(Cond), -1, 0)))
     return 0;
 
   // ((cond?-1:0)&C) | (B&(cond?0:-1)) -> cond ? C : B.
-  if (match(D, m_SelectCst(m_Value(Cond2), 0, -1)) && Cond2 == Cond)
+  if (match(D, m_SelectCst(m_Specific(Cond), 0, -1)))
     return SelectInst::Create(Cond, C, B);
-  if (match(D, m_Not(m_SelectCst(m_Value(Cond2), -1, 0))) && Cond2 == Cond)
+  if (match(D, m_Not(m_SelectCst(m_Specific(Cond), -1, 0))))
     return SelectInst::Create(Cond, C, B);
   // ((cond?-1:0)&C) | ((cond?0:-1)&D) -> cond ? C : D.
-  if (match(B, m_SelectCst(m_Value(Cond2), 0, -1)) && Cond2 == Cond)
+  if (match(B, m_SelectCst(m_Specific(Cond), 0, -1)))
     return SelectInst::Create(Cond, C, D);
-  if (match(B, m_Not(m_SelectCst(m_Value(Cond2), -1, 0))) && Cond2 == Cond)
+  if (match(B, m_Not(m_SelectCst(m_Specific(Cond), -1, 0))))
     return SelectInst::Create(Cond, C, D);
   return 0;
 }
@@ -4426,14 +4424,13 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (Instruction *R = AssociativeOpt(I, FoldICmpLogical(*this, RHS)))
       return R;
 
-    Value *LHSVal, *RHSVal;
+    Value *Val;
     ConstantInt *LHSCst, *RHSCst;
     ICmpInst::Predicate LHSCC, RHSCC;
-    if (match(Op0, m_ICmp(LHSCC, m_Value(LHSVal), m_ConstantInt(LHSCst))))
-      if (match(RHS, m_ICmp(RHSCC, m_Value(RHSVal), m_ConstantInt(RHSCst))))
-        if (LHSVal == RHSVal &&    // Found (X icmp C1) | (X icmp C2)
-            // icmp [us][gl]e x, cst is folded to icmp [us][gl]t elsewhere.
-            LHSCC != ICmpInst::ICMP_UGE && LHSCC != ICmpInst::ICMP_ULE &&
+    if (match(Op0, m_ICmp(LHSCC, m_Value(Val), m_ConstantInt(LHSCst))))
+      if (match(RHS, m_ICmp(RHSCC, m_Specific(Val), m_ConstantInt(RHSCst))))
+        // icmp [us][gl]e x, cst is folded to icmp [us][gl]t elsewhere.
+        if (LHSCC != ICmpInst::ICMP_UGE && LHSCC != ICmpInst::ICMP_ULE &&
             RHSCC != ICmpInst::ICMP_UGE && RHSCC != ICmpInst::ICMP_ULE &&
             LHSCC != ICmpInst::ICMP_SGE && LHSCC != ICmpInst::ICMP_SLE &&
             RHSCC != ICmpInst::ICMP_SGE && RHSCC != ICmpInst::ICMP_SLE &&
@@ -4470,8 +4467,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
             case ICmpInst::ICMP_EQ:
               if (LHSCst == SubOne(RHSCst)) {// (X == 13 | X == 14) -> X-13 <u 2
                 Constant *AddCST = ConstantExpr::getNeg(LHSCst);
-                Instruction *Add = BinaryOperator::CreateAdd(LHSVal, AddCST,
-                                                      LHSVal->getName()+".off");
+                Instruction *Add = BinaryOperator::CreateAdd(Val, AddCST,
+                                                      Val->getName()+".off");
                 InsertNewInstBefore(Add, I);
                 AddCST = Subtract(AddOne(RHSCst), LHSCst);
                 return new ICmpInst(ICmpInst::ICMP_ULT, Add, AddCST);
@@ -4509,7 +4506,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
               // this can cause overflow.
               if (RHSCst->isMaxValue(false))
                 return ReplaceInstUsesWith(I, LHS);
-              return InsertRangeTest(LHSVal, LHSCst, AddOne(RHSCst), false, 
+              return InsertRangeTest(Val, LHSCst, AddOne(RHSCst), false, 
                                      false, I);
             case ICmpInst::ICMP_SGT:        // (X u< 13 | X s> 15) -> no change
               break;
@@ -4530,7 +4527,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
               // this can cause overflow.
               if (RHSCst->isMaxValue(true))
                 return ReplaceInstUsesWith(I, LHS);
-              return InsertRangeTest(LHSVal, LHSCst, AddOne(RHSCst), true, 
+              return InsertRangeTest(Val, LHSCst, AddOne(RHSCst), true, 
                                      false, I);
             case ICmpInst::ICMP_UGT:        // (X s< 13 | X u> 15) -> no change
               break;
