@@ -173,47 +173,10 @@ public:
     ((LV*)(void*)Data)->Offset = O;
   }
   
-  const APValue &operator=(const APValue &RHS) {
-    if (Kind != RHS.Kind) {
-      MakeUninit();
-      if (RHS.isInt())
-        MakeInt();
-      else if (RHS.isFloat())
-        MakeFloat();
-      else if (RHS.isComplexInt())
-        MakeComplexInt();
-      else if (RHS.isComplexFloat())
-        MakeComplexFloat();
-      else if (RHS.isLValue())
-        MakeLValue();
-    }
-    if (isInt())
-      setInt(RHS.getInt());
-    else if (isFloat())
-      setFloat(RHS.getFloat());
-    else if (isComplexInt())
-      setComplexInt(RHS.getComplexIntReal(), RHS.getComplexIntImag());
-    else if (isComplexFloat())
-      setComplexFloat(RHS.getComplexFloatReal(), RHS.getComplexFloatImag());
-    else if (isLValue())
-      setLValue(RHS.getLValueBase(), RHS.getLValueOffset());
-    return *this;
-  }
+  const APValue &operator=(const APValue &RHS);
   
 private:
-  void MakeUninit() {
-    if (Kind == Int)
-      ((APSInt*)(void*)Data)->~APSInt();
-    else if (Kind == Float)
-      ((APFloat*)(void*)Data)->~APFloat();
-    else if (Kind == ComplexInt)
-      ((ComplexAPSInt*)(void*)Data)->~ComplexAPSInt();
-    else if (Kind == ComplexFloat)
-      ((ComplexAPFloat*)(void*)Data)->~ComplexAPFloat();
-    else if (Kind == LValue) {
-      ((LV*)(void*)Data)->~LV();
-    }
-  }
+  void MakeUninit();
   void MakeInt() {
     assert(isUninit() && "Bad state change");
     new ((void*)Data) APSInt(1);
