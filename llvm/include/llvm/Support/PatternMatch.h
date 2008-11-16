@@ -100,6 +100,21 @@ inline bind_ty<Value> m_Value(Value *&V) { return V; }
 
 /// m_ConstantInt - Match a ConstantInt, capturing the value if we match.
 inline bind_ty<ConstantInt> m_ConstantInt(ConstantInt *&CI) { return CI; }
+  
+/// specificval_ty - Match a specified Value*.
+struct specificval_ty {
+  const Value *Val;
+  specificval_ty(const Value *V) : Val(V) {}
+  
+  template<typename ITy>
+  bool match(ITy *V) {
+    return V == Val;
+  }
+};
+  
+/// m_Specific - Match if we have a specific specified value.
+inline specificval_ty m_Specific(const Value *V) { return V; }
+  
 
 //===----------------------------------------------------------------------===//
 // Matchers for specific binary operators.
