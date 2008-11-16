@@ -4212,23 +4212,19 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
                                          Value *C, Value *D) {
   // If A is not a select of -1/0, this cannot match.
   Value *Cond = 0, *Cond2 = 0;
-  if (!match(A, m_Select(m_Value(Cond), m_ConstantInt(-1), m_ConstantInt(0))))
+  if (!match(A, m_SelectCst(m_Value(Cond), -1, 0)))
     return 0;
 
-#define SELECT_MATCH(Val, I1, I2) \
-  m_Select(m_Value(Val), m_ConstantInt(I1), m_ConstantInt(I2))
-  
   // ((cond?-1:0)&C) | (B&(cond?0:-1)) -> cond ? C : B.
-  if (match(D, SELECT_MATCH(Cond2, 0, -1)) && Cond2 == Cond)
+  if (match(D, m_SelectCst(m_Value(Cond2), 0, -1)) && Cond2 == Cond)
     return SelectInst::Create(Cond, C, B);
-  if (match(D, m_Not(SELECT_MATCH(Cond2, -1, 0))) && Cond2 == Cond)
+  if (match(D, m_Not(m_SelectCst(m_Value(Cond2), -1, 0))) && Cond2 == Cond)
     return SelectInst::Create(Cond, C, B);
   // ((cond?-1:0)&C) | ((cond?0:-1)&D) -> cond ? C : D.
-  if (match(B, SELECT_MATCH(Cond2, 0, -1)) && Cond2 == Cond)
+  if (match(B, m_SelectCst(m_Value(Cond2), 0, -1)) && Cond2 == Cond)
     return SelectInst::Create(Cond, C, D);
-  if (match(B, m_Not(SELECT_MATCH(Cond2, -1, 0))) && Cond2 == Cond)
+  if (match(B, m_Not(m_SelectCst(m_Value(Cond2), -1, 0))) && Cond2 == Cond)
     return SelectInst::Create(Cond, C, D);
-#undef SELECT_MATCH
   return 0;
 }
 
