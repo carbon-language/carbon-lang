@@ -1084,6 +1084,24 @@ public:
     return APValue(APFloat(0.0), Result);
   }
 
+  APValue VisitCastExpr(CastExpr *E) {
+    Expr* SubExpr = E->getSubExpr();
+
+    if (SubExpr->getType()->isRealFloatingType()) {
+      APFloat Result(0.0);
+                     
+      if (!EvaluateFloat(SubExpr, Result, Info))
+        return APValue();
+      
+      return APValue(Result, APFloat(0.0));
+    }
+
+    // FIXME: Handle more casts.
+    return APValue();
+  }
+  
+  APValue VisitBinaryOperator(const BinaryOperator *E);
+
 };
 } // end anonymous namespace
 
@@ -1091,6 +1109,33 @@ static bool EvaluateComplexFloat(const Expr *E, APValue &Result, EvalInfo &Info)
 {
   Result = ComplexFloatExprEvaluator(Info).Visit(const_cast<Expr*>(E));
   return Result.isComplexFloat();
+}
+
+APValue ComplexFloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
+{
+  APValue Result, RHS;
+  
+  if (!EvaluateComplexFloat(E->getLHS(), Result, Info))
+    return APValue();
+  
+  if (!EvaluateComplexFloat(E->getRHS(), RHS, Info))
+    return APValue();
+  
+  switch (E->getOpcode()) {
+  default: return APValue();
+  case BinaryOperator::Add:
+    Result.getComplexFloatReal().add(RHS.getComplexFloatReal(),
+                                     APFloat::rmNearestTiesToEven);
+    Result.getComplexFloatImag().add(RHS.getComplexFloatImag(),
+                                     APFloat::rmNearestTiesToEven);
+  case BinaryOperator::Sub:
+    Result.getComplexFloatReal().subtract(RHS.getComplexFloatReal(),
+                                          APFloat::rmNearestTiesToEven);
+    Result.getComplexFloatImag().subtract(RHS.getComplexFloatImag(),
+                                          APFloat::rmNearestTiesToEven);
+  }
+
+  return Result;
 }
 
 //===----------------------------------------------------------------------===//
