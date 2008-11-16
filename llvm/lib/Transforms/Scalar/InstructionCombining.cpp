@@ -4205,6 +4205,33 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   return CallInst::Create(F, V);
 }
 
+/// MatchSelectFromAndOr - We have an expression of the form (A&C)|(B&D).  Check
+/// If A is (cond?-1:0) and either B or D is ~(cond?-1,0) or (cond?0,-1), then
+/// we can simplify this expression to "cond ? C : D or B".
+static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
+                                         Value *C, Value *D) {
+  // If A is not a select of constants, this can't match.
+  Value *Cond = 0, *Cond2 = 0;
+  ConstantInt *C1, *C2;
+  if (!match(A, m_Select(m_Value(Cond), m_ConstantInt(C1), m_ConstantInt(C2))))
+    return 0;
+
+#define SELECT_MATCH(Val, I1, I2) \
+  m_Select(m_Value(Val), m_ConstantInt(I1), m_ConstantInt(I2))
+  
+  // Handle "cond ? -1 : 0".
+  if (C1->isAllOnesValue() && C2->isZero()) {
+    // ((cond?-1:0)&C) | (B&(cond?0:-1)) -> cond ? C : B.
+    if (match(D, m_Not(SELECT_MATCH(Cond2, -1, 0))) && Cond2 == Cond)
+      return SelectInst::Create(Cond, C, B);
+    // ((cond?-1:0)&C) | ((cond?0:-1)&D) -> cond ? C : D.
+    if (match(B, m_Not(SELECT_MATCH(Cond2, -1, 0))) && Cond2 == Cond)
+      return SelectInst::Create(Cond, C, D);
+  }
+#undef SELECT_MATCH
+
+  return 0;
+}
 
 Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
@@ -4354,68 +4381,15 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
     }
 
-#define SELECT_MATCH(Val, I1, I2) \
-    m_Select(m_Value(Val), m_ConstantInt(I1), m_ConstantInt(I2))
-
     // (A & (C0?-1:0)) | (B & ~(C0?-1:0)) ->  C0 ? A : B, and commuted variants
-    Value *C0 = 0;
-    if (match(A, SELECT_MATCH(C0, -1, 0))) {
-      Value *C1 = 0;
-      if (match(D, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, C, B);
-      if (match(B, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, C, D);
-    }
-    if (match(A, SELECT_MATCH(C0, 0, -1))) {
-      Value *C1 = 0;
-      if (match(D, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
-        return SelectInst::Create(C1, B, C);
-      if (match(B, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
-        return SelectInst::Create(C1, D, C);
-    }
-    if (match(B, SELECT_MATCH(C0, -1, 0))) {
-      Value *C1 = 0;
-      if (match(C, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, A, D);
-      if (match(A, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, C, D);
-    }
-    if (match(B, SELECT_MATCH(C0, 0, -1))) {
-      Value *C1 = 0;
-      if (match(C, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
-        return SelectInst::Create(C1, D, A);
-      if (match(A, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
-        return SelectInst::Create(C1, D, C);
-    }
-    if (match(C, SELECT_MATCH(C0, -1, 0))) {
-      Value *C1 = 0;
-      if (match(D, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, A, B);
-      if (match(B, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, A, D);
-    }
-    if (match(C, SELECT_MATCH(C0, 0, -1))) {
-      Value *C1 = 0;
-      if (match(D, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
-        return SelectInst::Create(C1, B, A);
-      if (match(B, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
-        return SelectInst::Create(C1, D, A);
-    }
-    if (match(D, SELECT_MATCH(C0, -1, 0))) {
-      Value *C1 = 0;
-      if (match(C, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, A, B);
-      if (match(A, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, C, B);
-    }
-    if (match(D, SELECT_MATCH(C0, 0, -1))) {
-      Value *C1 = 0;
-      if (match(C, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
-        return SelectInst::Create(C1, B, A);
-      if (match(A, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
-        return SelectInst::Create(C1, B, C);
-    }
-#undef SELECT_MATCH
+    if (Instruction *Match = MatchSelectFromAndOr(A, B, C, D))
+      return Match;
+    if (Instruction *Match = MatchSelectFromAndOr(B, A, D, C))
+      return Match;
+    if (Instruction *Match = MatchSelectFromAndOr(C, B, A, D))
+      return Match;
+    if (Instruction *Match = MatchSelectFromAndOr(D, A, B, C))
+      return Match;
   }
   
   // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
