@@ -407,6 +407,7 @@ public:
   bool VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
 
   bool VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) {
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
     Result = E->getValue();
     Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
     return true;
@@ -578,7 +579,9 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       return false;
     
     APFloat::cmpResult CR = LHS.compare(RHS);
-    
+
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+
     switch (E->getOpcode()) {
     default:
       assert(0 && "Invalid binary operator!");
@@ -602,20 +605,12 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       break;
     }
     
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
     Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
     return true;
   }
   
   if (E->getOpcode() == BinaryOperator::Sub) {
-    if (LHSTy->isPointerType()) {
-      if (RHSTy->isIntegralType()) {
-        // pointer - int.
-        // FIXME: Implement.
-      }
-      
-      assert(RHSTy->isPointerType() && "RHS not pointer!");
-
+    if (LHSTy->isPointerType() && RHSTy->isPointerType()) {
       APValue LHSValue;
       if (!EvaluatePointer(E->getLHS(), LHSValue, Info))
         return false;
@@ -634,8 +629,8 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       uint64_t D = LHSValue.getLValueOffset() - RHSValue.getLValueOffset();
       D /= Info.Ctx.getTypeSize(ElementType) / 8;
       
-      Result = D;
       Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+      Result = D;
       Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
     
       return true;
