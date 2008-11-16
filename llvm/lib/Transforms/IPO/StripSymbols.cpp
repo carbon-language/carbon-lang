@@ -276,11 +276,8 @@ bool StripSymbols::StripDebugInfo(Module &M) {
 
   // Remove all llvm.dbg types.
   TypeSymbolTable &ST = M.getTypeSymbolTable();
-  TypeSymbolTable::iterator TI = ST.begin();
-  TypeSymbolTable::iterator TE = ST.end();
-  while ( TI != TE ) {
-    const std::string &Name = TI->first;
-    if (!strncmp(Name.c_str(), "llvm.dbg.", 9))
+  for (TypeSymbolTable::iterator TI = ST.begin(), TE = ST.end(); TI != TE; ) {
+    if (!strncmp(TI->first.c_str(), "llvm.dbg.", 9))
       ST.remove(TI++);
     else 
       ++TI;
