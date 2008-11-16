@@ -2967,27 +2967,6 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     }
   }
 
-  // Fallback, if this is a general polynomial, figure out the progression
-  // through brute force: evaluate until we find an iteration that fails the
-  // test.  This is likely to be slow, but getting an accurate trip count is
-  // incredibly important, we will be able to simplify the exit test a lot, and
-  // we are almost guaranteed to get a trip count in this case.
-  ConstantInt *TestVal = ConstantInt::get(getType(), 0);
-  ConstantInt *EndVal  = TestVal;  // Stop when we wrap around.
-  do {
-    ++NumBruteForceEvaluations;
-    SCEVHandle Val = evaluateAtIteration(SE.getConstant(TestVal), SE);
-    if (!isa<SCEVConstant>(Val))  // This shouldn't happen.
-      return new SCEVCouldNotCompute();
-
-    // Check to see if we found the value!
-    if (!Range.contains(cast<SCEVConstant>(Val)->getValue()->getValue()))
-      return SE.getConstant(TestVal);
-
-    // Increment to test the next index.
-    TestVal = ConstantInt::get(TestVal->getValue()+1);
-  } while (TestVal != EndVal);
-
   return new SCEVCouldNotCompute();
 }
 
