@@ -2292,8 +2292,8 @@ void SelectionDAGLowering::visitExtractElement(User &I) {
 // Utility for visitShuffleVector - Returns true if the mask is mask starting
 // from SIndx and increasing to the element length (undefs are allowed).
 static bool SequentialMask(SDValue Mask, unsigned SIndx) {
-  unsigned NumElems = Mask.getNumOperands();
-  for (unsigned i = 0; i != NumElems; ++i) {
+  unsigned MaskNumElts = Mask.getNumOperands();
+  for (unsigned i = 0; i != MaskNumElts; ++i) {
     if (Mask.getOperand(i).getOpcode() != ISD::UNDEF) {
       unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
       if (Idx != i + SIndx)
@@ -2304,161 +2304,187 @@ static bool SequentialMask(SDValue Mask, unsigned SIndx) {
 }
 
 void SelectionDAGLowering::visitShuffleVector(User &I) {
-  SDValue V1   = getValue(I.getOperand(0));
-  SDValue V2   = getValue(I.getOperand(1));
+  SDValue Srcs[2];
+  Srcs[0] = getValue(I.getOperand(0));
+  Srcs[1] = getValue(I.getOperand(1));
   SDValue Mask = getValue(I.getOperand(2));
 
   MVT VT = TLI.getValueType(I.getType());
-  MVT VT1 = V1.getValueType();
-  unsigned MaskNumElts = Mask.getNumOperands();
-  unsigned Src1NumElts = VT1.getVectorNumElements();
+  MVT SrcVT = Srcs[0].getValueType();
+  int MaskNumElts = Mask.getNumOperands();
+  int SrcNumElts = SrcVT.getVectorNumElements();
 
-  if (Src1NumElts == MaskNumElts) {
-    setValue(&I, DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask));
+  if (SrcNumElts == MaskNumElts) {
+    setValue(&I, DAG.getNode(ISD::VECTOR_SHUFFLE, VT, Srcs[0], Srcs[1], Mask));
     return;
   }
 
   // Normalize the shuffle vector since mask and vector length don't match.
-  if (Src1NumElts < MaskNumElts && MaskNumElts % Src1NumElts == 0) {
-    // We can concat vectors to make the mask and input vector match.
-    if (Src1NumElts*2 == MaskNumElts && SequentialMask(Mask, 0)) {
-      // The shuffle is concatenating two vectors.
-      setValue(&I, DAG.getNode(ISD::CONCAT_VECTORS, VT, V1, V2));
+  MVT MaskEltVT = Mask.getValueType().getVectorElementType();
+
+  if (SrcNumElts < MaskNumElts && MaskNumElts % SrcNumElts == 0) {
+    // Mask is longer than the source vectors and is a multiple of the source
+    // vectors.  We can use concatenate vector to make the mask and vectors
+    // length match.
+    if (SrcNumElts*2 == MaskNumElts && SequentialMask(Mask, 0)) {
+      // The shuffle is concatenating two vectors together.
+      setValue(&I, DAG.getNode(ISD::CONCAT_VECTORS, VT, Srcs[0], Srcs[1]));
       return;
     }
 
-    // Pad both vectors with undefs to the same size as the mask.
-    unsigned NumConcat = MaskNumElts / Src1NumElts;
-    std::vector<SDValue> UnOps(Src1NumElts,
-                               DAG.getNode(ISD::UNDEF, 
-                                           VT1.getVectorElementType()));
-    SDValue UndefVal = DAG.getNode(ISD::BUILD_VECTOR, VT1,
-                                   &UnOps[0], UnOps.size());
+    // Pad both vectors with undefs to make them the same length as the mask.
+    unsigned NumConcat = MaskNumElts / SrcNumElts;
+    SDValue UndefVal = DAG.getNode(ISD::UNDEF, SrcVT);
 
     SmallVector<SDValue, 8> MOps1, MOps2;
-    MOps1.push_back(V1);
-    MOps2.push_back(V2);
+    MOps1.push_back(Srcs[0]);
+    MOps2.push_back(Srcs[1]);
     for (unsigned i = 1; i != NumConcat; ++i) {
       MOps1.push_back(UndefVal);
       MOps2.push_back(UndefVal);
     }
-    V1 = DAG.getNode(ISD::CONCAT_VECTORS, VT, &MOps1[0], MOps1.size());
-    V2 = DAG.getNode(ISD::CONCAT_VECTORS, VT, &MOps2[0], MOps2.size());
+    Srcs[0] = DAG.getNode(ISD::CONCAT_VECTORS, VT, &MOps1[0], MOps1.size());
+    Srcs[1] = DAG.getNode(ISD::CONCAT_VECTORS, VT, &MOps2[0], MOps2.size());
     
     // Readjust mask for new input vector length.
     SmallVector<SDValue, 8> MappedOps;
-    for (unsigned i = 0; i != MaskNumElts; ++i) {
+    for (int i = 0; i != MaskNumElts; ++i) {
       if (Mask.getOperand(i).getOpcode() == ISD::UNDEF) {
         MappedOps.push_back(Mask.getOperand(i));
       } else {
-        unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
-        if (Idx < Src1NumElts) {
-          MappedOps.push_back(DAG.getConstant(Idx,
-                                           Mask.getOperand(i).getValueType()));
-        } else {
-          MappedOps.push_back(DAG.getConstant(Idx + MaskNumElts - Src1NumElts,
-                                           Mask.getOperand(i).getValueType()));
-        } 
+        int Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
+        if (Idx < SrcNumElts)
+          MappedOps.push_back(DAG.getConstant(Idx, MaskEltVT));
+        else
+          MappedOps.push_back(DAG.getConstant(Idx + MaskNumElts - SrcNumElts,
+                                              MaskEltVT));
       }
     }
     Mask = DAG.getNode(ISD::BUILD_VECTOR, Mask.getValueType(),
                        &MappedOps[0], MappedOps.size());
 
-    setValue(&I, DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask));
+    setValue(&I, DAG.getNode(ISD::VECTOR_SHUFFLE, VT, Srcs[0], Srcs[1], Mask));
     return;
   }
 
-  if (Src1NumElts > MaskNumElts) {
+  if (SrcNumElts > MaskNumElts) {
     // Resulting vector is shorter than the incoming vector.
-    if (Src1NumElts == MaskNumElts && SequentialMask(Mask,0)) {
+    if (SrcNumElts == MaskNumElts && SequentialMask(Mask,0)) {
       // Shuffle extracts 1st vector.
-      setValue(&I, V1);
+      setValue(&I, Srcs[0]);
       return;
     }
 
-    if (Src1NumElts == MaskNumElts && SequentialMask(Mask,MaskNumElts)) {
+    if (SrcNumElts == MaskNumElts && SequentialMask(Mask,MaskNumElts)) {
       // Shuffle extracts 2nd vector.
-      setValue(&I, V2);
+      setValue(&I, Srcs[1]);
       return;
     }
 
-    // Analyze the access pattern of the vector to see if we can extract each
-    // subvector and then do the shuffle. The analysis is done by calculating
-    // the range of elements the mask access on both vectors. If it is useful,
-    // we could do better by considering separate what elements are accessed
-    // in each vector (i.e., have min/max for each vector).
-    int MinRange = Src1NumElts+1;
-    int MaxRange = -1;
-    for (unsigned i = 0; i != MaskNumElts; ++i) {
+    // Analyze the access pattern of the vector to see if we can extract
+    // two subvectors and do the shuffle. The analysis is done by calculating
+    // the range of elements the mask access on both vectors.
+    int MinRange[2] = { SrcNumElts+1, SrcNumElts+1};
+    int MaxRange[2] = {-1, -1};
+
+    for (int i = 0; i != MaskNumElts; ++i) {
       SDValue Arg = Mask.getOperand(i);
       if (Arg.getOpcode() != ISD::UNDEF) {
         assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-        int Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
-        if (Idx > (int) Src1NumElts)
-          Idx -= Src1NumElts;
-        if (Idx > MaxRange)
-          MaxRange = Idx;
-        if (Idx < MinRange)
-          MinRange = Idx;
+        int Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
+        int Input = 0;
+        if (Idx >= SrcNumElts) {
+          Input = 1;
+          Idx -= SrcNumElts;
+        }
+        if (Idx > MaxRange[Input])
+          MaxRange[Input] = Idx;
+        if (Idx < MinRange[Input])
+          MinRange[Input] = Idx;
       }
     }
-    // Adjust MinRange to start at an even boundary since this give us
-    // better quality splits later.
-    if ((unsigned) MinRange < Src1NumElts && MinRange%2 != 0)
-      MinRange = MinRange - 1;
-    if (MaxRange - MinRange < (int) MaskNumElts) {
-      // Extract subvector because the range is less than the new vector length
-      unsigned StartIdx = (MinRange/MaskNumElts)*MaskNumElts;
-      if (MaxRange - StartIdx < MaskNumElts) {
-        V1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, VT, V1,
-                         DAG.getIntPtrConstant(MinRange));
-        V2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, VT, V2,
-                         DAG.getIntPtrConstant(MinRange));
-        // Readjust mask for new input vector length.
-        SmallVector<SDValue, 8> MappedOps;
-        for (unsigned i = 0; i != MaskNumElts; ++i) {
-          if (Mask.getOperand(i).getOpcode() == ISD::UNDEF) {
-            MappedOps.push_back(Mask.getOperand(i));
-          } else {
-            unsigned Idx =
-              cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
-            if (Idx < Src1NumElts) {
-              MappedOps.push_back(DAG.getConstant(Idx - StartIdx,
-                                         Mask.getOperand(i).getValueType()));
-            } else {
-              Idx = Idx - Src1NumElts - StartIdx + MaskNumElts;
-              MappedOps.push_back(DAG.getConstant(Idx,
-                                        Mask.getOperand(i).getValueType()));
-            } 
-          }
-        }
-        Mask = DAG.getNode(ISD::BUILD_VECTOR, Mask.getValueType(),
-                           &MappedOps[0], MappedOps.size());
 
-        setValue(&I, DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask));
-        return;
+    // Check if the access is smaller than the vector size and can we find
+    // a reasonable extract index.
+    int RangeUse[2];  // 0 = Unused, 1 = Extract, 2 = Can not Extract.
+    int StartIdx[2];  // StartIdx to extract from
+    for (int Input=0; Input < 2; ++Input) {
+      if (MinRange[Input] == SrcNumElts+1 && MaxRange[Input] == -1) {
+        RangeUse[Input] = 0; // Unused
+        StartIdx[Input] = 0;
+      } else if (MaxRange[Input] - MinRange[Input] < MaskNumElts) {
+        // Fits within range but we should see if we can find a good
+        // start index that a multiple of the mask length.
+        if (MaxRange[Input] < MaskNumElts) {
+          RangeUse[Input] = 1; // Extract from beginning of the vector
+          StartIdx[Input] = 0;
+        } else {
+          StartIdx[Input] = (MinRange[Input]/MaskNumElts)*MaskNumElts;
+          if (MaxRange[Input] - StartIdx[Input] < MaskNumElts) 
+            RangeUse[Input] = 1; // Extract from a multiple of the mask length.
+          else
+            RangeUse[Input] = 2; // Can not extract
+        }
+      } else
+        RangeUse[Input] = 2;  // Access doesn't fit within range
+    }
+
+    if (RangeUse[0] == 0 && RangeUse[0] == 0) {
+      setValue(&I, DAG.getNode(ISD::UNDEF, VT));  // Vectors are not used.
+      return;
+    }
+    else if (RangeUse[0] < 2 && RangeUse[1] < 2) {
+      // Extract appropriate subvector and generate a vector shuffle
+      for (int Input=0; Input < 2; ++Input) {
+        if (RangeUse[Input] == 0) {
+          Srcs[Input] = DAG.getNode(ISD::UNDEF, VT);
+        } else {
+          Srcs[Input] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, VT, Srcs[Input],
+                                    DAG.getIntPtrConstant(StartIdx[Input]));
+        }
       }
+      // Calculate new mask.
+      SmallVector<SDValue, 8> MappedOps;
+      for (int i = 0; i != MaskNumElts; ++i) {
+        SDValue Arg = Mask.getOperand(i);
+        if (Arg.getOpcode() == ISD::UNDEF) {
+          MappedOps.push_back(Arg);
+        } else {
+          int Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
+          if (Idx < SrcNumElts)
+            MappedOps.push_back(DAG.getConstant(Idx - StartIdx[0], MaskEltVT));
+          else {
+            Idx = Idx - SrcNumElts - StartIdx[1] + MaskNumElts;
+            MappedOps.push_back(DAG.getConstant(Idx, MaskEltVT));
+          } 
+        }
+      }
+      Mask = DAG.getNode(ISD::BUILD_VECTOR, Mask.getValueType(),
+                         &MappedOps[0], MappedOps.size());
+      setValue(&I, DAG.getNode(ISD::VECTOR_SHUFFLE, VT, Srcs[0], Srcs[1], Mask));
+      return;
     }
   }
 
-  // We can't use either concat vectors or extract subvectors so we fall back
-  // to insert and extracts.
+  // We can't use either concat vectors or extract subvectors so fall back to
+  // replacing the shuffle with extract and build vector.
+  // to insert and build vector.
   MVT EltVT = VT.getVectorElementType();
   MVT PtrVT = TLI.getPointerTy();
   SmallVector<SDValue,8> Ops;
-  for (unsigned i = 0; i != MaskNumElts; ++i) {
+  for (int i = 0; i != MaskNumElts; ++i) {
     SDValue Arg = Mask.getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) {
       Ops.push_back(DAG.getNode(ISD::UNDEF, EltVT));
     } else {
       assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-      unsigned Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
-      if (Idx < Src1NumElts)
-        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, V1,
+      int Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
+      if (Idx < SrcNumElts)
+        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, Srcs[0],
                                   DAG.getConstant(Idx, PtrVT)));
       else
-        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, V2,
-                                  DAG.getConstant(Idx - Src1NumElts, PtrVT)));
+        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, Srcs[1],
+                                  DAG.getConstant(Idx - SrcNumElts, PtrVT)));
     }
   }
   setValue(&I, DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size()));
