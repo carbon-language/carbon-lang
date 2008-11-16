@@ -517,16 +517,17 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     // Evaluate the side that actually matters; this needs to be
     // handled specially because calling Visit() on the LHS can
     // have strange results when it doesn't have an integral type.
-    Visit(E->getRHS());
+    if (Visit(E->getRHS()))
+      return true;
 
     // Check for isEvaluated; the idea is that this might eventually
     // be useful for isICE and other similar uses that care about
     // whether a comma is evaluated.  This isn't really used yet, though,
     // and I'm not sure it really works as intended.
     if (!Info.isEvaluated)
-      return true;
+      return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr);
 
-    return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr);
+    return false;
   }
 
   if (E->isLogicalOp()) {

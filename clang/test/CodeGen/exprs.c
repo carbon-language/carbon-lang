@@ -39,3 +39,9 @@ int test5(const float x, float float_number) {
   return __builtin_isless(x, float_number);
 }
 
+// this one shouldn't fold
+int ola() {
+  int a=2;
+  if ((0, (int)a) & 2) { return 1; }
+  return 2;
+}
