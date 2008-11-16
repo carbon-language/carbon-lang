@@ -25,3 +25,12 @@ void f3(float a, ...)
     __builtin_va_start(ap, a);
     __builtin_va_start(ap, (a));
 }
+
+
+// stdarg: PR3075
+void f4(const char *msg, ...) {
+ __builtin_va_list ap;
+ __builtin_stdarg_start((ap), (msg));
+ __builtin_va_end (ap);
+}
+
