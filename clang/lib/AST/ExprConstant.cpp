@@ -529,8 +529,51 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     return false;
   }
 
-  if (!E->getLHS()->getType()->isIntegralType() ||
-      !E->getRHS()->getType()->isIntegralType()) {
+  QualType LHSTy = E->getLHS()->getType();
+  QualType RHSTy = E->getRHS()->getType();
+  
+  if (LHSTy->isRealFloatingType() &&
+      RHSTy->isRealFloatingType()) {
+    APFloat RHS(0.0), LHS(0.0);
+    
+    if (!EvaluateFloat(E->getRHS(), RHS, Info))
+      return false;
+    
+    if (!EvaluateFloat(E->getLHS(), LHS, Info))
+      return false;
+    
+    APFloat::cmpResult CR = LHS.compare(RHS);
+    
+    switch (E->getOpcode()) {
+    default:
+      assert(0 && "Invalid binary operator!");
+    case BinaryOperator::LT:
+      Result = CR == APFloat::cmpLessThan;
+      break;
+    case BinaryOperator::GT:
+      Result = CR == APFloat::cmpGreaterThan;
+      break;
+    case BinaryOperator::LE:
+      Result = CR == APFloat::cmpLessThan || CR == APFloat::cmpEqual;
+      break;
+    case BinaryOperator::GE:
+      Result = CR == APFloat::cmpGreaterThan || CR == APFloat::cmpEqual;
+      break;
+    case BinaryOperator::EQ:
+      Result = CR == APFloat::cmpEqual;
+      break;
+    case BinaryOperator::NE:
+      Result = CR == APFloat::cmpGreaterThan || CR == APFloat::cmpLessThan;
+      break;
+    }
+    
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    return true;
+  }
+  
+  if (!LHSTy->isIntegralType() ||
+      !RHSTy->isIntegralType()) {
     // We can't continue from here for non-integral types, and they
     // could potentially confuse the following operations.
     // FIXME: Deal with EQ and friends.
