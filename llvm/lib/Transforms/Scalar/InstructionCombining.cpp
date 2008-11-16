@@ -4366,33 +4366,19 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       if (match(B, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
         return SelectInst::Create(C1, C, D);
     }
-    if (match(B, SELECT_MATCH(C0, -1, 0))) {
-      Value *C1 = 0;
-      if (match(C, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, A, D);
-      if (match(A, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, C, D);
-    }
-    if (match(C, SELECT_MATCH(C0, -1, 0))) {
-      Value *C1 = 0;
-      if (match(D, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, A, B);
-      if (match(B, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, A, D);
-    }
-    if (match(D, SELECT_MATCH(C0, -1, 0))) {
-      Value *C1 = 0;
-      if (match(C, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, A, B);
-      if (match(A, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
-        return SelectInst::Create(C1, C, B);
-    }
     if (match(A, SELECT_MATCH(C0, 0, -1))) {
       Value *C1 = 0;
       if (match(D, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
         return SelectInst::Create(C1, B, C);
       if (match(B, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
         return SelectInst::Create(C1, D, C);
+    }
+    if (match(B, SELECT_MATCH(C0, -1, 0))) {
+      Value *C1 = 0;
+      if (match(C, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
+        return SelectInst::Create(C1, A, D);
+      if (match(A, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
+        return SelectInst::Create(C1, C, D);
     }
     if (match(B, SELECT_MATCH(C0, 0, -1))) {
       Value *C1 = 0;
@@ -4401,12 +4387,26 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       if (match(A, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
         return SelectInst::Create(C1, D, C);
     }
+    if (match(C, SELECT_MATCH(C0, -1, 0))) {
+      Value *C1 = 0;
+      if (match(D, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
+        return SelectInst::Create(C1, A, B);
+      if (match(B, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
+        return SelectInst::Create(C1, A, D);
+    }
     if (match(C, SELECT_MATCH(C0, 0, -1))) {
       Value *C1 = 0;
       if (match(D, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
         return SelectInst::Create(C1, B, A);
       if (match(B, m_Not(SELECT_MATCH(C1, 0, -1))) && C1 == C0)
         return SelectInst::Create(C1, D, A);
+    }
+    if (match(D, SELECT_MATCH(C0, -1, 0))) {
+      Value *C1 = 0;
+      if (match(C, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
+        return SelectInst::Create(C1, A, B);
+      if (match(A, m_Not(SELECT_MATCH(C1, -1, 0))) && C1 == C0)
+        return SelectInst::Create(C1, C, B);
     }
     if (match(D, SELECT_MATCH(C0, 0, -1))) {
       Value *C1 = 0;
