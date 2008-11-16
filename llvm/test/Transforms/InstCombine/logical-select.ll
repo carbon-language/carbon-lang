@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis > %t
-; RUN grep select %t | count 4
-; RUN not grep and %t
-; RUN not grep or %t
+; RUN: grep select %t | count 4
+; RUN: not grep and %t
+; RUN: not grep or %t
 
 define i32 @foo(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
   %e = icmp slt i32 %a, %b
@@ -31,7 +31,6 @@ entry:
   %3 = or i32 %1, %2
   ret i32 %3
 }
-
 define i32 @par(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
 entry:
   %0 = icmp slt i32 %a, %b
