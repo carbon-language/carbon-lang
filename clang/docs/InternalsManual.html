@@ -38,6 +38,7 @@
   <li><a href="#Type">The Type class and its subclasses</a></li>
   <li><a href="#QualType">The QualType class</a></li>
   <li><a href="#CFG">The CFG class</a></li>
+  <li><a href="#Constants">Constant Folding in the Clang AST</a></li>
   </ul>
 </li>
 </ul>
@@ -618,6 +619,120 @@ statements in an AST: loops are not transformed into guarded gotos,
 short-circuit operations are not converted to a set of if-statements,
 and so on.</p>
 -->
+
+
+<!-- ======================================================================= -->
+<h3 id="Constants">Constant Folding in the Clang AST</h3>
+<!-- ======================================================================= -->
+
+<p>There are several places where constants and constant folding matter a lot to
+the Clang front-end.  First, in general, we prefer the AST to retain the source
+code as close to how the user wrote it as possible.  This means that if they
+wrote "5+4", we want to keep the addition and two constants in the AST, we don't
+want to fold to "9".  This means that constant folding in various ways turns
+into a tree walk that needs to handle the various cases.</p>
+
+<p>However, there are places in both C and C++ that require constants to be
+folded.  For example, the C standard defines what an "integer constant
+expression" (i-c-e) is with very precise and specific requirements.  The
+language then requires i-c-e's in a lot of places (for example, the size of a
+bitfield, the value for a case statement, etc).  For these, we have to be able
+to constant fold the constants, to do semantic checks (e.g. verify bitfield size
+is non-negative and that case statements aren't duplicated).  We aim for Clang
+to be very pedantic about this, diagnosing cases when the code does not use an
+i-c-e where one is required, but accepting the code unless running with
+<tt>-pedantic-errors</tt>.</p>
+
+<p>Things get a little bit more tricky when it comes to compatibility with
+real-world source code.  Specifically, GCC has historically accepted a huge
+superset of expressions as i-c-e's, and a lot of real world code depends on this
+unfortuate accident of history (including, e.g., the glibc system headers).  GCC
+accepts anything its "fold" optimizer is capable of reducing to an integer
+constant, which means that the definition of what it accepts changes as its
+optimizer does.  One example is that GCC accepts things like "case X-X:" even
+when X is a variable, because it can fold this to 0.</p>
+
+<p>Another issue are how constants interact with the extensions we support, such
+as __builtin_constant_p, __builtin_inf, __extension__ and many others.  C99
+obviously does not specify the semantics of any of these extensions, and the
+definition of i-c-e does not include them.  However, these extensions are often
+used in real code, and we have to have a way to reason about them.</p>
+
+<p>Finally, this is not just a problem for semantic analysis.  The code
+generator and other clients have to be able to fold constants (e.g. to
+initialize global variables) and has to handle a superset of what C99 allows.
+Further, these clients can benefit from extended information.  For example, we
+know that "foo()||1" always evaluates to true, but we can't replace the
+expression with true because it has side effects.</p>
+
+<!-- ======================= -->
+<h4>Implementation Approach</h4>
+<!-- ======================= -->
+
+<p>After trying several different approaches, we've finally converged on a
+design (Note, at the time of this writing, not all of this has been implemented,
+consider this a design goal!).  Our basic approach is to define a single
+recursive method evaluation method (<tt>Expr::Evaluate</tt>), which is
+implemented in <tt>AST/ExprConstant.cpp</tt>.  Given an expression with 'scalar'
+type (integer, fp, complex, or pointer) this method returns the following
+information:</p>
+
+<ul>
+<li>Whether the expression is an integer constant expression, a general
+    constant that was folded but has no side effects, a general constant that
+    was folded but that does have side effects, or an uncomputable/unfoldable
+    value.
+</li>
+<li>If the expression was computable in any way, this method returns the APValue
+    for the result of the expression.</li>
+<li>If the expression is not evaluatable at all, this method returns
+    information on one of the problems with the expression.  This includes a
+    SourceLocation for where the problem is, and a diagnostic ID that explains
+    the problem.  The diagnostic should be have ERROR type.</li>
+<li>If the expression is not an integer constant expression, this method returns
+    information on one of the problems with the expression.  This includes a
+    SourceLocation for where the problem is, and a diagnostic ID that explains
+    the problem.  The diagnostic should be have EXTENSION type.</li>
+</ul>
+
+<p>This information gives various clients the flexibility that they want, and we
+will eventually have some helper methods for various extensions.  For example,
+Sema should have a <tt>Sema::VerifyIntegerConstantExpression</tt> method, which
+calls Evaluate on the expression.  If the expression is not foldable, the error
+is emitted, and it would return true.  If the expression is not an i-c-e, the
+EXTENSION diagnostic is emitted.  Finally it would return false to indicate that
+the AST is ok.</p>
+
+<p>Other clients can use the information in other ways, for example, codegen can
+just use expressions that are foldable in any way.</p>
+
+<!-- ========== -->
+<h4>Extensions</h4>
+<!-- ========== -->
+
+<p>This section describes how some of the various extensions clang supports 
+interacts with constant evaluation:</p>
+
+<ul>
+<li><b><tt>__extension__</tt></b>: The expression form of this extension causes
+    any evaluatable subexpression to be accepted as an integer constant
+    expression.</li>
+<li><b><tt>__builtin_constant_p</tt></b>: This returns true (as a integer
+    constant expression) if the operand is any evaluatable constant.</li>
+<li><b><tt>__builtin_choose_expr</tt></b>: The condition is required to be an
+    integer constant expression, but we accept any constant as an "extension of
+    an extension".  This only evaluates one operand depending on which way the
+    condition evaluates.</li>
+<li><b><tt>__builtin_classify_type</tt></b>: This always returns an integer
+    constant expression.</li>
+<li><b><tt>__builtin_inf,nan,..</tt></b>: These are treated just like a
+    floating-point literal.</li>
+<li><b><tt>__builtin_abs,copysign,..</tt></b>: These are constant folded as
+    general constant expressions.</li>
+</ul>
+
+
+
 
 </div>
 </body>
