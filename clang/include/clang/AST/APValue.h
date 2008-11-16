@@ -92,6 +92,9 @@ public:
   bool isComplexFloat() const { return Kind == ComplexFloat; }
   bool isLValue() const { return Kind == LValue; }
   
+  void print(llvm::raw_ostream &OS) const;
+  void dump() const;
+  
   APSInt &getInt() {
     assert(isInt() && "Invalid accessor");
     return *(APSInt*)(void*)Data;
@@ -204,6 +207,11 @@ private:
   }
 };
 
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const APValue &V) {
+  V.print(OS);
+  return OS;
 }
+  
+} // end namespace clang.
 
 #endif
