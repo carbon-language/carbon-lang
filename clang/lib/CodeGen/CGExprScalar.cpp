@@ -1163,7 +1163,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   
   // If this is a really simple expression (like x ? 4 : 5), emit this as a
   // select instead of as control flow.  We can only do this if it is cheap and
-  // safe to 
+  // safe to evaluate the LHS and RHS unconditionally.
   if (E->getLHS() && isCheapEnoughToEvaluateUnconditionally(E->getLHS()) &&
       isCheapEnoughToEvaluateUnconditionally(E->getRHS())) {
     llvm::Value *CondV = CGF.EvaluateExprAsBool(E->getCond());
