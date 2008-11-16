@@ -182,6 +182,7 @@ namespace {
     Instruction *visitFDiv(BinaryOperator &I);
     Instruction *FoldAndOfICmps(Instruction &I, ICmpInst *LHS, ICmpInst *RHS);
     Instruction *visitAnd(BinaryOperator &I);
+    Instruction *FoldOrOfICmps(Instruction &I, ICmpInst *LHS, ICmpInst *RHS);
     Instruction *visitOr (BinaryOperator &I);
     Instruction *visitXor(BinaryOperator &I);
     Instruction *visitShl(BinaryOperator &I);
@@ -3695,7 +3696,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
       if (RHSCst == AddOne(LHSCst)) // (X u> 13 & X != 14) -> X u> 14
         return new ICmpInst(LHSCC, Val, RHSCst);
       break;                        // (X u> 13 & X != 15) -> no change
-    case ICmpInst::ICMP_ULT:        // (X u> 13 & X u< 15) ->(X-14) <u 1
+    case ICmpInst::ICMP_ULT:        // (X u> 13 & X u< 15) -> (X-14) <u 1
       return InsertRangeTest(Val, AddOne(LHSCst), RHSCst, false, true, I);
     case ICmpInst::ICMP_SLT:        // (X u> 13 & X s< 15) -> no change
       break;
@@ -3713,15 +3714,13 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
       if (RHSCst == AddOne(LHSCst)) // (X s> 13 & X != 14) -> X s> 14
         return new ICmpInst(LHSCC, Val, RHSCst);
       break;                        // (X s> 13 & X != 15) -> no change
-    case ICmpInst::ICMP_SLT:        // (X s> 13 & X s< 15) ->(X-14) s< 1
+    case ICmpInst::ICMP_SLT:        // (X s> 13 & X s< 15) -> (X-14) s< 1
       return InsertRangeTest(Val, AddOne(LHSCst), RHSCst, true, true, I);
     case ICmpInst::ICMP_ULT:        // (X s> 13 & X u< 15) -> no change
       break;
     }
     break;
   }
-
-  
  
   return 0;
 }
@@ -4237,6 +4236,167 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
   return 0;
 }
 
+/// FoldOrOfICmps - Fold (icmp)|(icmp) if possible.
+Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
+                                         ICmpInst *LHS, ICmpInst *RHS) {
+  Value *Val, *Val2;
+  ConstantInt *LHSCst, *RHSCst;
+  ICmpInst::Predicate LHSCC, RHSCC;
+  
+  // This only handles icmp of constants: (icmp1 A, C1) | (icmp2 B, C2).
+  if (!match(LHS, m_ICmp(LHSCC, m_Value(Val), m_ConstantInt(LHSCst))) ||
+      !match(RHS, m_ICmp(RHSCC, m_Value(Val2), m_ConstantInt(RHSCst))))
+    return 0;
+  
+  // From here on, we only handle:
+  //    (icmp1 A, C1) | (icmp2 A, C2) --> something simpler.
+  if (Val != Val2) return 0;
+  
+  // ICMP_[US][GL]E X, CST is folded to ICMP_[US][GL]T elsewhere.
+  if (LHSCC == ICmpInst::ICMP_UGE || LHSCC == ICmpInst::ICMP_ULE ||
+      RHSCC == ICmpInst::ICMP_UGE || RHSCC == ICmpInst::ICMP_ULE ||
+      LHSCC == ICmpInst::ICMP_SGE || LHSCC == ICmpInst::ICMP_SLE ||
+      RHSCC == ICmpInst::ICMP_SGE || RHSCC == ICmpInst::ICMP_SLE)
+    return 0;
+  
+  // We can't fold (ugt x, C) | (sgt x, C2).
+  if (!PredicatesFoldable(LHSCC, RHSCC))
+    return 0;
+  
+  // Ensure that the larger constant is on the RHS.
+  bool ShouldSwap;
+  if (ICmpInst::isSignedPredicate(LHSCC) ||
+      (ICmpInst::isEquality(LHSCC) && 
+       ICmpInst::isSignedPredicate(RHSCC)))
+    ShouldSwap = LHSCst->getValue().sgt(RHSCst->getValue());
+  else
+    ShouldSwap = LHSCst->getValue().ugt(RHSCst->getValue());
+  
+  if (ShouldSwap) {
+    std::swap(LHS, RHS);
+    std::swap(LHSCst, RHSCst);
+    std::swap(LHSCC, RHSCC);
+  }
+  
+  // At this point, we know we have have two icmp instructions
+  // comparing a value against two constants and or'ing the result
+  // together.  Because of the above check, we know that we only have
+  // ICMP_EQ, ICMP_NE, ICMP_LT, and ICMP_GT here. We also know (from the
+  // FoldICmpLogical check above), that the two constants are not
+  // equal.
+  assert(LHSCst != RHSCst && "Compares not folded above?");
+
+  switch (LHSCC) {
+  default: assert(0 && "Unknown integer condition code!");
+  case ICmpInst::ICMP_EQ:
+    switch (RHSCC) {
+    default: assert(0 && "Unknown integer condition code!");
+    case ICmpInst::ICMP_EQ:
+      if (LHSCst == SubOne(RHSCst)) { // (X == 13 | X == 14) -> X-13 <u 2
+        Constant *AddCST = ConstantExpr::getNeg(LHSCst);
+        Instruction *Add = BinaryOperator::CreateAdd(Val, AddCST,
+                                                     Val->getName()+".off");
+        InsertNewInstBefore(Add, I);
+        AddCST = Subtract(AddOne(RHSCst), LHSCst);
+        return new ICmpInst(ICmpInst::ICMP_ULT, Add, AddCST);
+      }
+      break;                         // (X == 13 | X == 15) -> no change
+    case ICmpInst::ICMP_UGT:         // (X == 13 | X u> 14) -> no change
+    case ICmpInst::ICMP_SGT:         // (X == 13 | X s> 14) -> no change
+      break;
+    case ICmpInst::ICMP_NE:          // (X == 13 | X != 15) -> X != 15
+    case ICmpInst::ICMP_ULT:         // (X == 13 | X u< 15) -> X u< 15
+    case ICmpInst::ICMP_SLT:         // (X == 13 | X s< 15) -> X s< 15
+      return ReplaceInstUsesWith(I, RHS);
+    }
+    break;
+  case ICmpInst::ICMP_NE:
+    switch (RHSCC) {
+    default: assert(0 && "Unknown integer condition code!");
+    case ICmpInst::ICMP_EQ:          // (X != 13 | X == 15) -> X != 13
+    case ICmpInst::ICMP_UGT:         // (X != 13 | X u> 15) -> X != 13
+    case ICmpInst::ICMP_SGT:         // (X != 13 | X s> 15) -> X != 13
+      return ReplaceInstUsesWith(I, LHS);
+    case ICmpInst::ICMP_NE:          // (X != 13 | X != 15) -> true
+    case ICmpInst::ICMP_ULT:         // (X != 13 | X u< 15) -> true
+    case ICmpInst::ICMP_SLT:         // (X != 13 | X s< 15) -> true
+      return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+    }
+    break;
+  case ICmpInst::ICMP_ULT:
+    switch (RHSCC) {
+    default: assert(0 && "Unknown integer condition code!");
+    case ICmpInst::ICMP_EQ:         // (X u< 13 | X == 14) -> no change
+      break;
+    case ICmpInst::ICMP_UGT:        // (X u< 13 | X u> 15) -> (X-13) u> 2
+      // If RHSCst is [us]MAXINT, it is always false.  Not handling
+      // this can cause overflow.
+      if (RHSCst->isMaxValue(false))
+        return ReplaceInstUsesWith(I, LHS);
+      return InsertRangeTest(Val, LHSCst, AddOne(RHSCst), false, false, I);
+    case ICmpInst::ICMP_SGT:        // (X u< 13 | X s> 15) -> no change
+      break;
+    case ICmpInst::ICMP_NE:         // (X u< 13 | X != 15) -> X != 15
+    case ICmpInst::ICMP_ULT:        // (X u< 13 | X u< 15) -> X u< 15
+      return ReplaceInstUsesWith(I, RHS);
+    case ICmpInst::ICMP_SLT:        // (X u< 13 | X s< 15) -> no change
+      break;
+    }
+    break;
+  case ICmpInst::ICMP_SLT:
+    switch (RHSCC) {
+    default: assert(0 && "Unknown integer condition code!");
+    case ICmpInst::ICMP_EQ:         // (X s< 13 | X == 14) -> no change
+      break;
+    case ICmpInst::ICMP_SGT:        // (X s< 13 | X s> 15) -> (X-13) s> 2
+      // If RHSCst is [us]MAXINT, it is always false.  Not handling
+      // this can cause overflow.
+      if (RHSCst->isMaxValue(true))
+        return ReplaceInstUsesWith(I, LHS);
+      return InsertRangeTest(Val, LHSCst, AddOne(RHSCst), true, false, I);
+    case ICmpInst::ICMP_UGT:        // (X s< 13 | X u> 15) -> no change
+      break;
+    case ICmpInst::ICMP_NE:         // (X s< 13 | X != 15) -> X != 15
+    case ICmpInst::ICMP_SLT:        // (X s< 13 | X s< 15) -> X s< 15
+      return ReplaceInstUsesWith(I, RHS);
+    case ICmpInst::ICMP_ULT:        // (X s< 13 | X u< 15) -> no change
+      break;
+    }
+    break;
+  case ICmpInst::ICMP_UGT:
+    switch (RHSCC) {
+    default: assert(0 && "Unknown integer condition code!");
+    case ICmpInst::ICMP_EQ:         // (X u> 13 | X == 15) -> X u> 13
+    case ICmpInst::ICMP_UGT:        // (X u> 13 | X u> 15) -> X u> 13
+      return ReplaceInstUsesWith(I, LHS);
+    case ICmpInst::ICMP_SGT:        // (X u> 13 | X s> 15) -> no change
+      break;
+    case ICmpInst::ICMP_NE:         // (X u> 13 | X != 15) -> true
+    case ICmpInst::ICMP_ULT:        // (X u> 13 | X u< 15) -> true
+      return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+    case ICmpInst::ICMP_SLT:        // (X u> 13 | X s< 15) -> no change
+      break;
+    }
+    break;
+  case ICmpInst::ICMP_SGT:
+    switch (RHSCC) {
+    default: assert(0 && "Unknown integer condition code!");
+    case ICmpInst::ICMP_EQ:         // (X s> 13 | X == 15) -> X > 13
+    case ICmpInst::ICMP_SGT:        // (X s> 13 | X s> 15) -> X > 13
+      return ReplaceInstUsesWith(I, LHS);
+    case ICmpInst::ICMP_UGT:        // (X s> 13 | X u> 15) -> no change
+      break;
+    case ICmpInst::ICMP_NE:         // (X s> 13 | X != 15) -> true
+    case ICmpInst::ICMP_SLT:        // (X s> 13 | X s< 15) -> true
+      return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+    case ICmpInst::ICMP_ULT:        // (X s> 13 | X u< 15) -> no change
+      break;
+    }
+    break;
+  }
+  return 0;
+}
+
 Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -4435,153 +4595,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (Instruction *R = AssociativeOpt(I, FoldICmpLogical(*this, RHS)))
       return R;
 
-    Value *Val;
-    ConstantInt *LHSCst, *RHSCst;
-    ICmpInst::Predicate LHSCC, RHSCC;
-    // (icmp1 A, C1) | (icmp2 A, C2) --> something simpler.
-    if (match(Op0, m_ICmp(LHSCC, m_Value(Val), m_ConstantInt(LHSCst))) &&
-        match(RHS, m_ICmp(RHSCC, m_Specific(Val), m_ConstantInt(RHSCst))) &&
-        
-        // ICMP_[US][GL]E X, CST is folded to ICMP_[US][GL]T elsewhere.
-        LHSCC != ICmpInst::ICMP_UGE && LHSCC != ICmpInst::ICMP_ULE &&
-        RHSCC != ICmpInst::ICMP_UGE && RHSCC != ICmpInst::ICMP_ULE &&
-        LHSCC != ICmpInst::ICMP_SGE && LHSCC != ICmpInst::ICMP_SLE &&
-        RHSCC != ICmpInst::ICMP_SGE && RHSCC != ICmpInst::ICMP_SLE &&
-        
-        // We can't fold (ugt x, C) | (sgt x, C2).
-        PredicatesFoldable(LHSCC, RHSCC)) {
-      // Ensure that the larger constant is on the RHS.
-      ICmpInst *LHS = cast<ICmpInst>(Op0);
-      bool NeedsSwap;
-      if (ICmpInst::isEquality(LHSCC) ? ICmpInst::isSignedPredicate(RHSCC)
-                                      : ICmpInst::isSignedPredicate(LHSCC))
-        NeedsSwap = LHSCst->getValue().sgt(RHSCst->getValue());
-      else
-        NeedsSwap = LHSCst->getValue().ugt(RHSCst->getValue());
-        
-      if (NeedsSwap) {
-        std::swap(LHS, RHS);
-        std::swap(LHSCst, RHSCst);
-        std::swap(LHSCC, RHSCC);
-      }
-
-      // At this point, we know we have have two icmp instructions
-      // comparing a value against two constants and or'ing the result
-      // together.  Because of the above check, we know that we only have
-      // ICMP_EQ, ICMP_NE, ICMP_LT, and ICMP_GT here. We also know (from the
-      // FoldICmpLogical check above), that the two constants are not
-      // equal.
-      assert(LHSCst != RHSCst && "Compares not folded above?");
-
-      switch (LHSCC) {
-      default: assert(0 && "Unknown integer condition code!");
-      case ICmpInst::ICMP_EQ:
-        switch (RHSCC) {
-        default: assert(0 && "Unknown integer condition code!");
-        case ICmpInst::ICMP_EQ:
-          if (LHSCst == SubOne(RHSCst)) { // (X == 13 | X == 14) -> X-13 <u 2
-            Constant *AddCST = ConstantExpr::getNeg(LHSCst);
-            Instruction *Add = BinaryOperator::CreateAdd(Val, AddCST,
-                                                         Val->getName()+".off");
-            InsertNewInstBefore(Add, I);
-            AddCST = Subtract(AddOne(RHSCst), LHSCst);
-            return new ICmpInst(ICmpInst::ICMP_ULT, Add, AddCST);
-          }
-          break;                         // (X == 13 | X == 15) -> no change
-        case ICmpInst::ICMP_UGT:         // (X == 13 | X u> 14) -> no change
-        case ICmpInst::ICMP_SGT:         // (X == 13 | X s> 14) -> no change
-          break;
-        case ICmpInst::ICMP_NE:          // (X == 13 | X != 15) -> X != 15
-        case ICmpInst::ICMP_ULT:         // (X == 13 | X u< 15) -> X u< 15
-        case ICmpInst::ICMP_SLT:         // (X == 13 | X s< 15) -> X s< 15
-          return ReplaceInstUsesWith(I, RHS);
-        }
-        break;
-      case ICmpInst::ICMP_NE:
-        switch (RHSCC) {
-        default: assert(0 && "Unknown integer condition code!");
-        case ICmpInst::ICMP_EQ:          // (X != 13 | X == 15) -> X != 13
-        case ICmpInst::ICMP_UGT:         // (X != 13 | X u> 15) -> X != 13
-        case ICmpInst::ICMP_SGT:         // (X != 13 | X s> 15) -> X != 13
-          return ReplaceInstUsesWith(I, LHS);
-        case ICmpInst::ICMP_NE:          // (X != 13 | X != 15) -> true
-        case ICmpInst::ICMP_ULT:         // (X != 13 | X u< 15) -> true
-        case ICmpInst::ICMP_SLT:         // (X != 13 | X s< 15) -> true
-          return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        }
-        break;
-      case ICmpInst::ICMP_ULT:
-        switch (RHSCC) {
-        default: assert(0 && "Unknown integer condition code!");
-        case ICmpInst::ICMP_EQ:         // (X u< 13 | X == 14) -> no change
-          break;
-        case ICmpInst::ICMP_UGT:        // (X u< 13 | X u> 15) -> (X-13) u> 2
-          // If RHSCst is [us]MAXINT, it is always false.  Not handling
-          // this can cause overflow.
-          if (RHSCst->isMaxValue(false))
-            return ReplaceInstUsesWith(I, LHS);
-          return InsertRangeTest(Val, LHSCst, AddOne(RHSCst), false, false, I);
-        case ICmpInst::ICMP_SGT:        // (X u< 13 | X s> 15) -> no change
-          break;
-        case ICmpInst::ICMP_NE:         // (X u< 13 | X != 15) -> X != 15
-        case ICmpInst::ICMP_ULT:        // (X u< 13 | X u< 15) -> X u< 15
-          return ReplaceInstUsesWith(I, RHS);
-        case ICmpInst::ICMP_SLT:        // (X u< 13 | X s< 15) -> no change
-          break;
-        }
-        break;
-      case ICmpInst::ICMP_SLT:
-        switch (RHSCC) {
-        default: assert(0 && "Unknown integer condition code!");
-        case ICmpInst::ICMP_EQ:         // (X s< 13 | X == 14) -> no change
-          break;
-        case ICmpInst::ICMP_SGT:        // (X s< 13 | X s> 15) -> (X-13) s> 2
-          // If RHSCst is [us]MAXINT, it is always false.  Not handling
-          // this can cause overflow.
-          if (RHSCst->isMaxValue(true))
-            return ReplaceInstUsesWith(I, LHS);
-          return InsertRangeTest(Val, LHSCst, AddOne(RHSCst), true, false, I);
-        case ICmpInst::ICMP_UGT:        // (X s< 13 | X u> 15) -> no change
-          break;
-        case ICmpInst::ICMP_NE:         // (X s< 13 | X != 15) -> X != 15
-        case ICmpInst::ICMP_SLT:        // (X s< 13 | X s< 15) -> X s< 15
-          return ReplaceInstUsesWith(I, RHS);
-        case ICmpInst::ICMP_ULT:        // (X s< 13 | X u< 15) -> no change
-          break;
-        }
-        break;
-      case ICmpInst::ICMP_UGT:
-        switch (RHSCC) {
-        default: assert(0 && "Unknown integer condition code!");
-        case ICmpInst::ICMP_EQ:         // (X u> 13 | X == 15) -> X u> 13
-        case ICmpInst::ICMP_UGT:        // (X u> 13 | X u> 15) -> X u> 13
-          return ReplaceInstUsesWith(I, LHS);
-        case ICmpInst::ICMP_SGT:        // (X u> 13 | X s> 15) -> no change
-          break;
-        case ICmpInst::ICMP_NE:         // (X u> 13 | X != 15) -> true
-        case ICmpInst::ICMP_ULT:        // (X u> 13 | X u< 15) -> true
-          return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        case ICmpInst::ICMP_SLT:        // (X u> 13 | X s< 15) -> no change
-          break;
-        }
-        break;
-      case ICmpInst::ICMP_SGT:
-        switch (RHSCC) {
-        default: assert(0 && "Unknown integer condition code!");
-        case ICmpInst::ICMP_EQ:         // (X s> 13 | X == 15) -> X > 13
-        case ICmpInst::ICMP_SGT:        // (X s> 13 | X s> 15) -> X > 13
-          return ReplaceInstUsesWith(I, LHS);
-        case ICmpInst::ICMP_UGT:        // (X s> 13 | X u> 15) -> no change
-          break;
-        case ICmpInst::ICMP_NE:         // (X s> 13 | X != 15) -> true
-        case ICmpInst::ICMP_SLT:        // (X s> 13 | X s< 15) -> true
-          return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        case ICmpInst::ICMP_ULT:        // (X s> 13 | X u< 15) -> no change
-          break;
-        }
-        break;
-      }
-    }
+    if (ICmpInst *LHS = dyn_cast<ICmpInst>(I.getOperand(0)))
+      if (Instruction *Res = FoldOrOfICmps(I, LHS, RHS))
+        return Res;
   }
     
   // fold (or (cast A), (cast B)) -> (cast (or A, B))
