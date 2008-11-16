@@ -3590,16 +3590,15 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     return 0;
     
   // Ensure that the larger constant is on the RHS.
-  ICmpInst::Predicate GT;
+  bool ShouldSwap;
   if (ICmpInst::isSignedPredicate(LHSCC) ||
       (ICmpInst::isEquality(LHSCC) && 
        ICmpInst::isSignedPredicate(RHSCC)))
-    GT = ICmpInst::ICMP_SGT;
+    ShouldSwap = LHSCst->getValue().sgt(RHSCst->getValue());
   else
-    GT = ICmpInst::ICMP_UGT;
-  
-  Constant *Cmp = ConstantExpr::getICmp(GT, LHSCst, RHSCst);
-  if (cast<ConstantInt>(Cmp)->getZExtValue()) {
+    ShouldSwap = LHSCst->getValue().ugt(RHSCst->getValue());
+    
+  if (ShouldSwap) {
     std::swap(LHS, RHS);
     std::swap(LHSCst, RHSCst);
     std::swap(LHSCC, RHSCC);
