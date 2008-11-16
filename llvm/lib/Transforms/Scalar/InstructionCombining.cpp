@@ -4222,9 +4222,13 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
   // Handle "cond ? -1 : 0".
   if (C1->isAllOnesValue() && C2->isZero()) {
     // ((cond?-1:0)&C) | (B&(cond?0:-1)) -> cond ? C : B.
+    if (match(D, SELECT_MATCH(Cond2, 0, -1)) && Cond2 == Cond)
+      return SelectInst::Create(Cond, C, B);
     if (match(D, m_Not(SELECT_MATCH(Cond2, -1, 0))) && Cond2 == Cond)
       return SelectInst::Create(Cond, C, B);
     // ((cond?-1:0)&C) | ((cond?0:-1)&D) -> cond ? C : D.
+    if (match(B, SELECT_MATCH(Cond2, 0, -1)) && Cond2 == Cond)
+      return SelectInst::Create(Cond, C, D);
     if (match(B, m_Not(SELECT_MATCH(Cond2, -1, 0))) && Cond2 == Cond)
       return SelectInst::Create(Cond, C, D);
   }
