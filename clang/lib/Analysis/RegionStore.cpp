@@ -16,26 +16,46 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
+#include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 
 #include "llvm/ADT/ImmutableMap.h"
+#include "llvm/ADT/ImmutableList.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
 typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionBindingsTy;
+typedef llvm::ImmutableList<const MemRegion*> RegionViewTy;
+typedef llvm::ImmutableMap<const MemRegion*, RegionViewTy> RegionViewMapTy;
+
+static int RegionViewMapTyIndex = 0;
+
+namespace clang {
+template<> struct GRStateTrait<RegionViewMapTy> 
+  : public GRStatePartialTrait<RegionViewMapTy> {
+  static void* GDMIndex() { return &RegionViewMapTyIndex; }
+};
+}
 
 namespace {
 
 class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   RegionBindingsTy::Factory RBFactory;
+  RegionViewTy::Factory RVFactory;
+  RegionViewMapTy::Factory RVMFactory;
+
   GRStateManager& StateMgr;
   MemRegionManager MRMgr;
 
 public:
   RegionStoreManager(GRStateManager& mgr) 
-    : StateMgr(mgr), MRMgr(StateMgr.getAllocator()) {}
+    : RBFactory(mgr.getAllocator()),
+      RVFactory(mgr.getAllocator()),
+      RVMFactory(mgr.getAllocator()),
+      StateMgr(mgr), 
+      MRMgr(StateMgr.getAllocator()) {}
 
   virtual ~RegionStoreManager() {}
 
@@ -61,6 +81,9 @@ public:
   SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
 
   SVal ArrayToPointer(SVal Array);
+
+  const GRState* CastRegion(const GRState* St, SVal VoidPtr, 
+                            QualType CastToTy, Stmt* CastE);
 
   SVal Retrieve(Store S, Loc L, QualType T = QualType());
 
@@ -112,6 +135,9 @@ private:
   // Utility methods.
   BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
   ASTContext& getContext() { return StateMgr.getContext(); }
+
+  const GRState* AddRegionView(const GRState* St,
+                               const MemRegion* View, const MemRegion* Base);
 };
 
 } // end anonymous namespace
@@ -236,6 +262,30 @@ SVal RegionStoreManager::ArrayToPointer(SVal Array) {
   ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
   
   return loc::MemRegionVal(ER);                    
+}
+
+const GRState* RegionStoreManager::CastRegion(const GRState* St,
+                                              SVal VoidPtr, 
+                                              QualType CastToTy,
+                                              Stmt* CastE) {
+  if (const AllocaRegion* AR =
+      dyn_cast<AllocaRegion>(cast<loc::MemRegionVal>(VoidPtr).getRegion())) {
+
+    // Create a new region to attach type information to it.
+    const AnonTypedRegion* TR = MRMgr.getAnonTypedRegion(CastToTy, AR);
+
+    // Get the pointer to the first element.
+    nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
+    const ElementRegion* ER = MRMgr.getElementRegion(Idx, TR);
+
+    St = StateMgr.BindExpr(St, CastE, loc::MemRegionVal(ER));
+
+    // Add a RegionView to base region.
+    return AddRegionView(St, TR, AR);
+  }
+
+  // Default case.
+  return St;
 }
 
 SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
@@ -599,4 +649,20 @@ Store RegionStoreManager::BindStructToVal(Store store, const TypedRegion* BaseR,
   }
 
   return store;
+}
+
+const GRState* RegionStoreManager::AddRegionView(const GRState* St,
+                                                 const MemRegion* View,
+                                                 const MemRegion* Base) {
+  GRStateRef state(St, StateMgr);
+
+  // First, retrieve the region view of the base region.
+  RegionViewMapTy::data_type* d = state.get<RegionViewMapTy>(Base);
+  RegionViewTy L = d ? *d : RVFactory.GetEmptyList();
+
+  // Now add View to the region view.
+  L = RVFactory.Add(View, L);
+
+  // Create a new state with the new region view.
+  return state.set<RegionViewMapTy>(Base, L);
 }

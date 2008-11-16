@@ -23,6 +23,8 @@
 #include "clang/AST/ASTContext.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/ImmutableList.h"
+#include "llvm/ADT/ImmutableMap.h"
 #include "llvm/Support/Allocator.h"
 #include <string>
 
@@ -42,12 +44,13 @@ public:
               BEG_TYPED_REGIONS,
                CompoundLiteralRegionKind,
                StringRegionKind, ElementRegionKind,
+               AnonTypedRegionKind,
+               AnonPointeeRegionKind,
                // Decl Regions.
                  BEG_DECL_REGIONS,
                   VarRegionKind, FieldRegionKind,
                   ObjCIvarRegionKind, ObjCObjectRegionKind,
                  END_DECL_REGIONS,
-               AnonPointeeRegionKind,
               END_TYPED_REGIONS };  
 private:
   const Kind kind;
@@ -198,6 +201,32 @@ public:
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == StringRegionKind;
+  }
+};
+
+class AnonTypedRegion : public TypedRegion {
+  friend class MemRegionManager;
+
+  QualType T;
+
+  AnonTypedRegion(QualType t, const MemRegion* sreg)
+    : TypedRegion(sreg, AnonTypedRegionKind), T(t) {}
+
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T, 
+                            const MemRegion* superRegion);
+
+public:
+
+  QualType getType(ASTContext& C) const {
+    return T;
+  }
+
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ProfileRegion(ID, T, superRegion);
+  }
+
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == AnonTypedRegionKind;
   }
 };
 
@@ -494,7 +523,7 @@ class MemRegionManager {
   MemSpaceRegion* stack;
   MemSpaceRegion* heap;
   MemSpaceRegion* unknown;
-  
+
 public:
   MemRegionManager(llvm::BumpPtrAllocator& a)
   : A(a), globals(0), stack(0), heap(0) {}
@@ -559,10 +588,12 @@ public:
   ObjCIvarRegion* getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                     const MemRegion* superRegion);
 
+  AnonTypedRegion* getAnonTypedRegion(QualType t, const MemRegion* superRegion);
+
   AnonPointeeRegion* getAnonPointeeRegion(const VarDecl* d);
 
   bool hasStackStorage(const MemRegion* R);
-  
+
 private:
   MemSpaceRegion* LazyAllocate(MemSpaceRegion*& region);
 };

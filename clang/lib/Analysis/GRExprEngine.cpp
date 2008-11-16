@@ -1692,6 +1692,21 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       continue;
     }
 
+    // Check for casts from AllocaRegion pointer to typed pointer.
+    if (isa<loc::MemRegionVal>(V)) {
+      assert(Loc::IsLocType(T));
+      assert(Loc::IsLocType(ExTy));
+
+      // Delegate to store manager.
+      const GRState* NewSt = getStoreManager().CastRegion(St, V, T, CastE);
+
+      // If no new region is created, fall through to the default case.
+      if (NewSt != St) {
+        MakeNode(Dst, CastE, N, NewSt);
+        continue;
+      }
+    }
+
     // All other cases.
     MakeNode(Dst, CastE, N, BindExpr(St, CastE, EvalCast(V, CastE->getType())));
   }

@@ -80,6 +80,9 @@ public:
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
   virtual SVal ArrayToPointer(SVal Array) = 0;
+
+  virtual const GRState* CastRegion(const GRState* St, SVal VoidPtr, 
+                                    QualType CastToTy, Stmt* CastE) = 0;
   
   /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
   ///  'this' object (C++).  When used when analyzing a normal function this
