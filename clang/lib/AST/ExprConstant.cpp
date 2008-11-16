@@ -397,6 +397,7 @@ public:
   bool VisitCallExpr(const CallExpr *E);
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
+  bool VisitConditionalOperator(const ConditionalOperator *E);
 
   bool VisitCastExpr(CastExpr* E) {
     return HandleCast(E->getLocStart(), E->getSubExpr(), E->getType());
@@ -723,6 +724,14 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
   Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
   return true;
+}
+
+bool IntExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
+  llvm::APSInt Cond(32);
+  if (!EvaluateInteger(E->getCond(), Cond, Info))
+    return false;
+
+  return Visit(Cond != 0 ? E->getTrueExpr() : E->getFalseExpr());
 }
 
 /// VisitSizeAlignOfExpr - Evaluate a sizeof or alignof with a result as the
