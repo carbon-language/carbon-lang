@@ -743,6 +743,7 @@ public:
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
   }
 
+public:
   llvm::Constant *EmitLValue(Expr *E) {
     switch (E->getStmtClass()) {
     default: break;
@@ -798,6 +799,13 @@ public:
     }
     case Expr::StringLiteralClass:
       return CGM.GetAddrOfConstantStringFromLiteral(cast<StringLiteral>(E));
+    case Expr::ObjCStringLiteralClass: {
+      ObjCStringLiteral* SL = cast<ObjCStringLiteral>(E);
+      std::string S(SL->getString()->getStrData(), 
+                    SL->getString()->getByteLength());
+      llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(S);
+      return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
+    }
     case Expr::UnaryOperatorClass: {
       UnaryOperator *Exp = cast<UnaryOperator>(E);
       switch (Exp->getOpcode()) {
@@ -831,7 +839,6 @@ public:
   
 }  // end anonymous namespace.
 
-
 llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                                 CodeGenFunction *CGF) {
   QualType type = Context.getCanonicalType(E->getType());
@@ -843,13 +850,18 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
     switch (V.getKind()) {
     default: assert(0 && "unhandled value kind!");
     case APValue::LValue: {
-      if (V.getLValueBase())
-        break;
+      llvm::Constant *Offset = llvm::ConstantInt::get(llvm::Type::Int64Ty,
+                                                      V.getLValueOffset());
       
-      llvm::Constant *C = llvm::ConstantInt::get(llvm::Type::Int64Ty,
-                                                 V.getLValueOffset());
+      if (const Expr *LVBase = V.getLValueBase()) {
+        llvm::Constant *Base = 
+          ConstExprEmitter(*this, CGF).EmitLValue(const_cast<Expr*>(LVBase));
+
+        return llvm::ConstantExpr::getGetElementPtr(Base, &Offset, 1);
+      }
       
-      return llvm::ConstantExpr::getIntToPtr(C, getTypes().ConvertType(type));
+      return llvm::ConstantExpr::getIntToPtr(Offset, 
+                                             getTypes().ConvertType(type));
     }
     case APValue::Int:
       llvm::Constant *C = llvm::ConstantInt::get(V.getInt());
