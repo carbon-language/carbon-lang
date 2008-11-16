@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-pc-linux-gnu -regalloc=pbqp -stats |& grep {Number of dead stores elided} | grep 2
+; XFAIL: *
 ; PR2898
 
 	%struct.BiContextType = type { i16, i8 }
