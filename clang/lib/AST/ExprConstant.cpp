@@ -124,6 +124,7 @@ public:
   APValue VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   APValue VisitMemberExpr(MemberExpr *E);
   APValue VisitStringLiteral(StringLiteral *E) { return APValue(E, 0); }
+  APValue VisitArraySubscriptExpr(ArraySubscriptExpr *E);
 };
 } // end anonymous namespace
 
@@ -169,6 +170,24 @@ APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
   return result;
 }
 
+APValue LValueExprEvaluator::VisitArraySubscriptExpr(ArraySubscriptExpr *E)
+{
+  APValue Result;
+  
+  if (!EvaluatePointer(E->getBase(), Result, Info))
+    return APValue();
+  
+  APSInt Index;
+  if (!EvaluateInteger(E->getIdx(), Index, Info))
+    return APValue();
+
+  uint64_t ElementSize = Info.Ctx.getTypeSize(E->getType()) / 8;
+
+  uint64_t Offset = Index.getSExtValue() * ElementSize;
+  Result.setLValue(Result.getLValueBase(), 
+                   Result.getLValueOffset() + Offset);
+  return Result;
+}
 
 //===----------------------------------------------------------------------===//
 // Pointer Evaluation
@@ -384,6 +403,18 @@ public:
   }
   bool VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
 
+  bool VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) {
+    Result = E->getValue();
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    return true;
+  }
+  
+  bool VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
+    Result = APSInt::getNullValue(getIntTypeSizeInBits(E->getType()));
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    return true;
+  }
+
 private:
   bool HandleCast(SourceLocation CastLoc, Expr *SubExpr, QualType DestType);
 };
@@ -572,6 +603,40 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     return true;
   }
   
+  if (E->getOpcode() == BinaryOperator::Sub) {
+    if (LHSTy->isPointerType()) {
+      if (RHSTy->isIntegralType()) {
+        // pointer - int.
+        // FIXME: Implement.
+      }
+      
+      assert(RHSTy->isPointerType() && "RHS not pointer!");
+
+      APValue LHSValue;
+      if (!EvaluatePointer(E->getLHS(), LHSValue, Info))
+        return false;
+      
+      APValue RHSValue;
+      if (!EvaluatePointer(E->getRHS(), RHSValue, Info))
+        return false;
+      
+      // FIXME: Is this correct? What if only one of the operands has a base?
+      if (LHSValue.getLValueBase() || RHSValue.getLValueBase())
+        return false;
+      
+      const QualType Type = E->getLHS()->getType();
+      const QualType ElementType = Type->getAsPointerType()->getPointeeType();
+
+      uint64_t D = LHSValue.getLValueOffset() - RHSValue.getLValueOffset();
+      D /= Info.Ctx.getTypeSize(ElementType) / 8;
+      
+      Result = D;
+      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    
+      return true;
+    }
+  }
   if (!LHSTy->isIntegralType() ||
       !RHSTy->isIntegralType()) {
     // We can't continue from here for non-integral types, and they
@@ -586,7 +651,6 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     return false; // error in subexpression.
   }
 
-  // FIXME: Handle pointer subtraction
 
   // FIXME Maybe we want to succeed even where we can't evaluate the
   // right side of LAnd/LOr?
