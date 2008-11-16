@@ -234,7 +234,7 @@ void Diagnostic::Report(DiagnosticClient* C,
   if (SuppressSystemWarnings &&
       DiagID < diag::NUM_BUILTIN_DIAGNOSTICS &&
       getBuiltinDiagClass(DiagID) != ERROR &&
-      Loc.isValid() && Loc.isFileID() && Loc.isInSystemHeader())
+      Loc.isValid() && Loc.getPhysicalLoc().isInSystemHeader())
     return;
   
   if (DiagLevel >= Diagnostic::Error) {
