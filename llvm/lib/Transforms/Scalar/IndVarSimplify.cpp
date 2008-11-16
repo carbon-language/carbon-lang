@@ -53,6 +53,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -87,12 +88,12 @@ namespace {
   private:
 
     void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
-                                    std::set<Instruction*> &DeadInsts);
+                                    SmallPtrSet<Instruction*, 16> &DeadInsts);
     Instruction *LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
                                            SCEVExpander &RW);
     void RewriteLoopExitValues(Loop *L, SCEV *IterationCount);
 
-    void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
+    void DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*, 16> &Insts);
 
     void OptimizeCanonicalIVType(Loop *L);
     void HandleFloatingPointIV(Loop *L);
@@ -111,10 +112,10 @@ Pass *llvm::createIndVarSimplifyPass() {
 /// specified set are trivially dead, delete them and see if this makes any of
 /// their operands subsequently dead.
 void IndVarSimplify::
-DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
+DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*, 16> &Insts) {
   while (!Insts.empty()) {
     Instruction *I = *Insts.begin();
-    Insts.erase(Insts.begin());
+    Insts.erase(I);
     if (isInstructionTriviallyDead(I)) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
@@ -133,7 +134,7 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
 /// analysis by the SCEV routines.
 void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
                                                 BasicBlock *Preheader,
-                                            std::set<Instruction*> &DeadInsts) {
+                                     SmallPtrSet<Instruction*, 16> &DeadInsts) {
   assert(PN->getNumIncomingValues() == 2 && "Noncanonicalized loop!");
   unsigned PreheaderIdx = PN->getBasicBlockIndex(Preheader);
   unsigned BackedgeIdx = PreheaderIdx^1;
@@ -326,7 +327,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *IterationCount) {
 
   bool HasConstantItCount = isa<SCEVConstant>(IterationCount);
 
-  std::set<Instruction*> InstructionsToDelete;
+  SmallPtrSet<Instruction*, 16> InstructionsToDelete;
   std::map<Instruction*, Value*> ExitValues;
 
   // Find all values that are computed inside the loop, but used outside of it.
@@ -427,7 +428,7 @@ bool IndVarSimplify::doInitialization(Loop *L, LPPassManager &LPM) {
   BasicBlock *Preheader = L->getLoopPreheader();
   SE = &LPM.getAnalysis<ScalarEvolution>();
 
-  std::set<Instruction*> DeadInsts;
+  SmallPtrSet<Instruction*, 16> DeadInsts;
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
     if (isa<PointerType>(PN->getType()))
@@ -448,7 +449,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   Changed = false;
   BasicBlock *Header    = L->getHeader();
-  std::set<Instruction*> DeadInsts;
+  SmallPtrSet<Instruction*, 16> DeadInsts;
   
   // Verify the input to the pass in already in LCSSA form.
   assert(L->isLCSSAForm());
@@ -495,7 +496,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
                                                      IterationCount->getType());
       if (Instruction *I = LinearFunctionTestReplace(L, IterationCount,
                                                      Rewriter)) {
-        std::set<Instruction*> InstructionsToDelete;
+        SmallPtrSet<Instruction*, 16> InstructionsToDelete;
         InstructionsToDelete.insert(I);
         DeleteTriviallyDeadInstructions(InstructionsToDelete);
       }
