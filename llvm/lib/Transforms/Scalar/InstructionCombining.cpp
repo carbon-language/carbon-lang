@@ -3556,15 +3556,28 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
 /// FoldAndOfICmps - Fold (icmp)&(icmp) if possible.
 Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
                                           ICmpInst *LHS, ICmpInst *RHS) {
-  Value *Val;
+  Value *Val, *Val2;
   ConstantInt *LHSCst, *RHSCst;
   ICmpInst::Predicate LHSCC, RHSCC;
   
-  // (icmp1 A, C1) & (icmp2 A, C2) --> something simpler.
+  // This only handles icmp of constants: (icmp1 A, C1) & (icmp2 B, C2).
   if (!match(LHS, m_ICmp(LHSCC, m_Value(Val), m_ConstantInt(LHSCst))) ||
-      !match(RHS, m_ICmp(RHSCC, m_Specific(Val), m_ConstantInt(RHSCst))))
+      !match(RHS, m_ICmp(RHSCC, m_Value(Val2), m_ConstantInt(RHSCst))))
     return 0;
-    
+  
+  // (icmp ult A, C) & (icmp ult B, C) --> (icmp ult (A|B), C)
+  // where C is a power of 2
+  if (LHSCst == RHSCst && LHSCC == RHSCC && LHSCC == ICmpInst::ICMP_ULT &&
+      LHSCst->getValue().isPowerOf2()) {
+    Instruction *NewOr = BinaryOperator::CreateOr(Val, Val2);
+    InsertNewInstBefore(NewOr, I);
+    return new ICmpInst(LHSCC, NewOr, LHSCst);
+  }
+  
+  // From here on, we only handle:
+  //    (icmp1 A, C1) & (icmp2 A, C2) --> something simpler.
+  if (Val != Val2) return 0;
+  
   // ICMP_[US][GL]E X, CST is folded to ICMP_[US][GL]T elsewhere.
   if (LHSCC == ICmpInst::ICMP_UGE || LHSCC == ICmpInst::ICMP_ULE ||
       RHSCC == ICmpInst::ICMP_UGE || RHSCC == ICmpInst::ICMP_ULE ||
@@ -3929,22 +3942,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         return BinaryOperator::CreateAnd(A, NotB);
       }
     }
-  }
-  
-  { // (icmp ult A, C) & (icmp ult B, C) --> (icmp ult (A|B), C)
-    // where C is a power of 2
-    Value *A, *B;
-    ConstantInt *C1, *C2;
-    ICmpInst::Predicate LHSCC = ICmpInst::BAD_ICMP_PREDICATE;
-    ICmpInst::Predicate RHSCC = ICmpInst::BAD_ICMP_PREDICATE;
-    if (match(&I, m_And(m_ICmp(LHSCC, m_Value(A), m_ConstantInt(C1)),
-                        m_ICmp(RHSCC, m_Value(B), m_ConstantInt(C2)))))
-      if (C1 == C2 && LHSCC == RHSCC && LHSCC == ICmpInst::ICMP_ULT &&
-          C1->getValue().isPowerOf2()) {
-        Instruction *NewOr = BinaryOperator::CreateOr(A, B);
-        InsertNewInstBefore(NewOr, I);
-        return new ICmpInst(LHSCC, NewOr, C1);
-      }
   }
   
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1)) {
