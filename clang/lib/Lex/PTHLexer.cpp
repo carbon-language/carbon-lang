@@ -13,9 +13,7 @@
 
 #include "clang/Lex/PTHLexer.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/Token.h"
 #include "clang/Basic/TokenKinds.h"
-
 using namespace clang;
 
 PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc,
