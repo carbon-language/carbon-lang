@@ -1560,11 +1560,11 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     // specified arm of the conditional to be a constant.  This is a horrible
     // hack, but is require by real world code that uses __builtin_constant_p.
     APValue Val;
-    if (!Exp->getCond()->tryEvaluate(Val, Context)) {
-      // If the tryEvaluate couldn't fold it, CheckArithmeticConstantExpression
+    if (!Exp->getCond()->Evaluate(Val, Context)) {
+      // If Evaluate couldn't fold it, CheckArithmeticConstantExpression
       // won't be able to either.  Use it to emit the diagnostic though.
       bool Res = CheckArithmeticConstantExpression(Exp->getCond());
-      assert(Res && "tryEvaluate couldn't evaluate this constant?");
+      assert(Res && "Evaluate couldn't evaluate this constant?");
       return Res;
     }
     
@@ -2494,7 +2494,7 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
   
   APValue Result;
   if (!VLATy->getSizeExpr() ||
-      !VLATy->getSizeExpr()->tryEvaluate(Result, Context))
+      !VLATy->getSizeExpr()->Evaluate(Result, Context))
     return QualType();
     
   assert(Result.isInt() && "Size expressions must be integers!");

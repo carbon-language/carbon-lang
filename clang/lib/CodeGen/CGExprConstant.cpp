@@ -610,7 +610,7 @@ public:
 
   llvm::Constant *VisitCallExpr(const CallExpr *E) {
     APValue Result;
-    if (E->tryEvaluate(Result, CGM.getContext())) {
+    if (E->Evaluate(Result, CGM.getContext())) {
       if (Result.isInt())
         return llvm::ConstantInt::get(Result.getInt());
       if (Result.isFloat())
@@ -845,7 +845,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 
 #ifdef USE_TRY_EVALUATE
   APValue V;
-  if (E->tryEvaluate(V, Context)) {
+  if (E->Evaluate(V, Context)) {
     // FIXME: Assert that the value doesn't have any side effects.
     switch (V.getKind()) {
     default: assert(0 && "unhandled value kind!");

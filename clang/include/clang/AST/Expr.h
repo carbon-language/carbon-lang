@@ -134,13 +134,13 @@ public:
   /// isConstantExpr - Return true if this expression is a valid constant expr.
   bool isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const;
   
-  /// tryEvaluate - Return true if this is a constant which we can fold using
+  /// Evaluate - Return true if this is a constant which we can fold using
   /// any crazy technique (that has nothing to do with language standards) that
   /// we want to.  If this function returns true, it returns the folded constant
   /// in Result.
-  bool tryEvaluate(APValue& Result, ASTContext &Ctx) const;
+  bool Evaluate(APValue& Result, ASTContext &Ctx) const;
   
-  /// isEvaluatable - Call tryEvaluate to see if this expression can be constant
+  /// isEvaluatable - Call Evaluate to see if this expression can be constant
   /// folded, but discard the result.
   bool isEvaluatable(ASTContext &Ctx) const;
 

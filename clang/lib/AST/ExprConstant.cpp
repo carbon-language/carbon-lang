@@ -508,7 +508,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     // __builtin_constant_p always has one operand: it returns true if that
     // operand can be folded, false otherwise.
     APValue Res;
-    Result = E->getArg(0)->tryEvaluate(Res, Info.Ctx);
+    Result = E->getArg(0)->Evaluate(Res, Info.Ctx);
     return true;
   }
   }
@@ -1094,14 +1094,14 @@ static bool EvaluateComplexFloat(const Expr *E, APValue &Result, EvalInfo &Info)
 }
 
 //===----------------------------------------------------------------------===//
-// Top level TryEvaluate.
+// Top level Expr::Evaluate method.
 //===----------------------------------------------------------------------===//
 
-/// tryEvaluate - Return true if this is a constant which we can fold using
+/// Evaluate - Return true if this is a constant which we can fold using
 /// any crazy technique (that has nothing to do with language standards) that
 /// we want to.  If this function returns true, it returns the folded constant
 /// in Result.
-bool Expr::tryEvaluate(APValue &Result, ASTContext &Ctx) const {
+bool Expr::Evaluate(APValue &Result, ASTContext &Ctx) const {
   EvalInfo Info(Ctx);
   if (getType()->isIntegerType()) {
     llvm::APSInt sInt(32);
@@ -1127,9 +1127,9 @@ bool Expr::tryEvaluate(APValue &Result, ASTContext &Ctx) const {
   return false;
 }
 
-/// isEvaluatable - Call tryEvaluate to see if this expression can be constant
+/// isEvaluatable - Call Evaluate to see if this expression can be constant
 /// folded, but discard the result.
 bool Expr::isEvaluatable(ASTContext &Ctx) const {
   APValue V;
-  return tryEvaluate(V, Ctx);
+  return Evaluate(V, Ctx);
 }

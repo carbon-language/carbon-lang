@@ -798,7 +798,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     // reject it.
     if (CE->isBuiltinCall()) {
       APValue ResultAP;
-      if (CE->tryEvaluate(ResultAP, Ctx)) {
+      if (CE->Evaluate(ResultAP, Ctx)) {
         Result = ResultAP.getInt();
         break;  // It is a constant, expand it.
       }
