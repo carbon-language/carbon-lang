@@ -82,8 +82,8 @@ public:
 
   SVal ArrayToPointer(SVal Array);
 
-  const GRState* CastRegion(const GRState* St, SVal VoidPtr, 
-                            QualType CastToTy, Stmt* CastE);
+  std::pair<const GRState*, SVal>
+  CastRegion(const GRState* St, SVal VoidPtr, QualType CastToTy, Stmt* CastE);
 
   SVal Retrieve(Store S, Loc L, QualType T = QualType());
 
@@ -264,10 +264,9 @@ SVal RegionStoreManager::ArrayToPointer(SVal Array) {
   return loc::MemRegionVal(ER);                    
 }
 
-const GRState* RegionStoreManager::CastRegion(const GRState* St,
-                                              SVal VoidPtr, 
-                                              QualType CastToTy,
-                                              Stmt* CastE) {
+std::pair<const GRState*, SVal>
+RegionStoreManager::CastRegion(const GRState* St, SVal VoidPtr, 
+                               QualType CastToTy, Stmt* CastE) {
   if (const AllocaRegion* AR =
       dyn_cast<AllocaRegion>(cast<loc::MemRegionVal>(VoidPtr).getRegion())) {
 
@@ -278,14 +277,13 @@ const GRState* RegionStoreManager::CastRegion(const GRState* St,
     nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
     const ElementRegion* ER = MRMgr.getElementRegion(Idx, TR);
 
-    St = StateMgr.BindExpr(St, CastE, loc::MemRegionVal(ER));
-
     // Add a RegionView to base region.
-    return AddRegionView(St, TR, AR);
+    return std::pair<const GRState*, SVal>(AddRegionView(St, TR, AR), 
+                                           loc::MemRegionVal(ER));
   }
 
   // Default case.
-  return St;
+  return std::pair<const GRState*, SVal>(St, UnknownVal());
 }
 
 SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {

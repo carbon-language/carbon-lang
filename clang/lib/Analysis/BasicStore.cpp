@@ -66,9 +66,9 @@ public:
   ///  conversions between arrays and pointers.
   SVal ArrayToPointer(SVal Array) { return Array; }
 
-  const GRState* CastRegion(const GRState* St, SVal VoidPtr, QualType CastToTy,
-                            Stmt* CastE) {
-    return St;
+  std::pair<const GRState*, SVal> 
+  CastRegion(const GRState* St, SVal VoidPtr, QualType CastToTy, Stmt* CastE) {
+    return std::pair<const GRState*, SVal>(St, UnknownVal());
   }
 
   

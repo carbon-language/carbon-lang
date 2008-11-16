@@ -1698,11 +1698,15 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       assert(Loc::IsLocType(ExTy));
 
       // Delegate to store manager.
-      const GRState* NewSt = getStoreManager().CastRegion(St, V, T, CastE);
+      std::pair<const GRState*, SVal> Res =  
+        getStoreManager().CastRegion(St, V, T, CastE);
+
+      const GRState* NewSt = Res.first;
+      SVal NewPtr = Res.second;
 
       // If no new region is created, fall through to the default case.
       if (NewSt != St) {
-        MakeNode(Dst, CastE, N, NewSt);
+        MakeNode(Dst, CastE, N, BindExpr(NewSt, CastE, NewPtr));
         continue;
       }
     }
