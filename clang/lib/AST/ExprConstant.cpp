@@ -67,6 +67,8 @@ static bool EvaluateLValue(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
 static bool EvaluateFloat(const Expr *E, APFloat &Result, EvalInfo &Info);
+static bool EvaluateComplexFloat(const Expr *E, APValue &Result, 
+                                 EvalInfo &Info);
 
 //===----------------------------------------------------------------------===//
 // Misc utilities
@@ -1052,6 +1054,46 @@ bool FloatExprEvaluator::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
 }
 
 //===----------------------------------------------------------------------===//
+// Complex Float Evaluation
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN ComplexFloatExprEvaluator
+  : public StmtVisitor<ComplexFloatExprEvaluator, APValue> {
+  EvalInfo &Info;
+  
+public:
+  ComplexFloatExprEvaluator(EvalInfo &info) : Info(info) {}
+  
+  //===--------------------------------------------------------------------===//
+  //                            Visitor Methods
+  //===--------------------------------------------------------------------===//
+
+  APValue VisitStmt(Stmt *S) {
+    assert(0 && "This should be called on complex floats");
+    return APValue();
+  }
+    
+  APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+
+  APValue VisitImaginaryLiteral(ImaginaryLiteral *E) {
+    APFloat Result(0.0);
+    if (!EvaluateFloat(E->getSubExpr(), Result, Info))
+      return APValue();
+    
+    return APValue(APFloat(0.0), Result);
+  }
+
+};
+} // end anonymous namespace
+
+static bool EvaluateComplexFloat(const Expr *E, APValue &Result, EvalInfo &Info)
+{
+  Result = ComplexFloatExprEvaluator(Info).Visit(const_cast<Expr*>(E));
+  return Result.isComplexFloat();
+}
+
+//===----------------------------------------------------------------------===//
 // Top level TryEvaluate.
 //===----------------------------------------------------------------------===//
 
@@ -1077,7 +1119,10 @@ bool Expr::tryEvaluate(APValue &Result, ASTContext &Ctx) const {
       Result = APValue(f);
       return true;
     }
-  }
+  } else if (getType()->isComplexType()) {
+    if (EvaluateComplexFloat(this, Result, Info))
+      return true;
+  }    
       
   return false;
 }
