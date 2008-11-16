@@ -4210,30 +4210,25 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
 /// we can simplify this expression to "cond ? C : D or B".
 static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
                                          Value *C, Value *D) {
-  // If A is not a select of constants, this can't match.
+  // If A is not a select of -1/0, this cannot match.
   Value *Cond = 0, *Cond2 = 0;
-  ConstantInt *C1, *C2;
-  if (!match(A, m_Select(m_Value(Cond), m_ConstantInt(C1), m_ConstantInt(C2))))
+  if (!match(A, m_Select(m_Value(Cond), m_ConstantInt(-1), m_ConstantInt(0))))
     return 0;
 
 #define SELECT_MATCH(Val, I1, I2) \
   m_Select(m_Value(Val), m_ConstantInt(I1), m_ConstantInt(I2))
   
-  // Handle "cond ? -1 : 0".
-  if (C1->isAllOnesValue() && C2->isZero()) {
-    // ((cond?-1:0)&C) | (B&(cond?0:-1)) -> cond ? C : B.
-    if (match(D, SELECT_MATCH(Cond2, 0, -1)) && Cond2 == Cond)
-      return SelectInst::Create(Cond, C, B);
-    if (match(D, m_Not(SELECT_MATCH(Cond2, -1, 0))) && Cond2 == Cond)
-      return SelectInst::Create(Cond, C, B);
-    // ((cond?-1:0)&C) | ((cond?0:-1)&D) -> cond ? C : D.
-    if (match(B, SELECT_MATCH(Cond2, 0, -1)) && Cond2 == Cond)
-      return SelectInst::Create(Cond, C, D);
-    if (match(B, m_Not(SELECT_MATCH(Cond2, -1, 0))) && Cond2 == Cond)
-      return SelectInst::Create(Cond, C, D);
-  }
+  // ((cond?-1:0)&C) | (B&(cond?0:-1)) -> cond ? C : B.
+  if (match(D, SELECT_MATCH(Cond2, 0, -1)) && Cond2 == Cond)
+    return SelectInst::Create(Cond, C, B);
+  if (match(D, m_Not(SELECT_MATCH(Cond2, -1, 0))) && Cond2 == Cond)
+    return SelectInst::Create(Cond, C, B);
+  // ((cond?-1:0)&C) | ((cond?0:-1)&D) -> cond ? C : D.
+  if (match(B, SELECT_MATCH(Cond2, 0, -1)) && Cond2 == Cond)
+    return SelectInst::Create(Cond, C, D);
+  if (match(B, m_Not(SELECT_MATCH(Cond2, -1, 0))) && Cond2 == Cond)
+    return SelectInst::Create(Cond, C, D);
 #undef SELECT_MATCH
-
   return 0;
 }
 
