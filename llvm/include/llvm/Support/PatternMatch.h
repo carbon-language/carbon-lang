@@ -367,6 +367,17 @@ m_Select(const Cond &C, const LHS &L, const RHS &R) {
   return SelectClass_match<Cond, LHS, RHS>(C, L, R);
 }
 
+/// m_SelectCst - This matches a select of two constants, e.g.:
+///    m_SelectCst(m_Value(V), -1, 0)
+template<typename Cond>
+inline SelectClass_match<Cond, constantint_ty, constantint_ty>
+m_SelectCst(const Cond &C, int64_t L, int64_t R) {
+  return SelectClass_match<Cond, constantint_ty, 
+                           constantint_ty>(C, m_ConstantInt(L),
+                                           m_ConstantInt(R));
+}
+
+
 //===----------------------------------------------------------------------===//
 // Matchers for CastInst classes
 //
