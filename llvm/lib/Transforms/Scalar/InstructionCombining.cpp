@@ -4858,11 +4858,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         I.swapOperands();     // Simplified below.
         std::swap(Op0, Op1);
       }
-    } else if (match(Op1I, m_Xor(m_Value(A), m_Value(B)))) {
-      if (Op0 == A)                                          // A^(A^B) == B
-        return ReplaceInstUsesWith(I, B);
-      else if (Op0 == B)                                     // A^(B^A) == B
-        return ReplaceInstUsesWith(I, A);
+    } else if (match(Op1I, m_Xor(m_Specific(Op0), m_Value(B)))) {
+      return ReplaceInstUsesWith(I, B);                      // A^(A^B) == B
+    } else if (match(Op1I, m_Xor(m_Value(A), m_Specific(Op0)))) {
+      return ReplaceInstUsesWith(I, A);                      // A^(B^A) == B
     } else if (match(Op1I, m_And(m_Value(A), m_Value(B))) && Op1I->hasOneUse()){
       if (A == Op0) {                                      // A^(A&B) -> A^(B&A)
         Op1I->swapOperands();
@@ -4886,11 +4885,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           InsertNewInstBefore(BinaryOperator::CreateNot(Op1, "tmp"), I);
         return BinaryOperator::CreateAnd(A, NotB);
       }
-    } else if (match(Op0I, m_Xor(m_Value(A), m_Value(B)))) {
-      if (Op1 == A)                                          // (A^B)^A == B
-        return ReplaceInstUsesWith(I, B);
-      else if (Op1 == B)                                     // (B^A)^A == B
-        return ReplaceInstUsesWith(I, A);
+    } else if (match(Op0I, m_Xor(m_Specific(Op1), m_Value(B)))) {
+      return ReplaceInstUsesWith(I, B);                      // (A^B)^A == B
+    } else if (match(Op0I, m_Xor(m_Value(A), m_Specific(Op1)))) {
+      return ReplaceInstUsesWith(I, A);                      // (B^A)^A == B
     } else if (match(Op0I, m_And(m_Value(A), m_Value(B))) && Op0I->hasOneUse()){
       if (A == Op1)                                        // (A&B)^A -> (B&A)^A
         std::swap(A, B);
@@ -6008,14 +6006,14 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
       if (match(Op1, m_Xor(m_Value(C), m_Value(D)))) {
         // A^c1 == C^c2 --> A == C^(c1^c2)
-        if (ConstantInt *C1 = dyn_cast<ConstantInt>(B))
-          if (ConstantInt *C2 = dyn_cast<ConstantInt>(D))
-            if (Op1->hasOneUse()) {
-              Constant *NC = ConstantInt::get(C1->getValue() ^ C2->getValue());
-              Instruction *Xor = BinaryOperator::CreateXor(C, NC, "tmp");
-              return new ICmpInst(I.getPredicate(), A,
-                                  InsertNewInstBefore(Xor, I));
-            }
+        ConstantInt *C1, *C2;
+        if (match(B, m_ConstantInt(C1)) &&
+            match(D, m_ConstantInt(C2)) && Op1->hasOneUse()) {
+          Constant *NC = ConstantInt::get(C1->getValue() ^ C2->getValue());
+          Instruction *Xor = BinaryOperator::CreateXor(C, NC, "tmp");
+          return new ICmpInst(I.getPredicate(), A,
+                              InsertNewInstBefore(Xor, I));
+        }
         
         // A^B == A^D -> B == D
         if (A == C) return new ICmpInst(I.getPredicate(), B, D);
@@ -6032,16 +6030,16 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(I.getPredicate(), OtherVal,
                           Constant::getNullValue(A->getType()));
     }
-    if (match(Op0, m_Sub(m_Value(A), m_Value(B))) && A == Op1) {
-      // (A-B) == A  ->  B == 0
+
+    // (A-B) == A  ->  B == 0
+    if (match(Op0, m_Sub(m_Specific(Op1), m_Value(B))))
+      return new ICmpInst(I.getPredicate(), B, 
+                          Constant::getNullValue(B->getType()));
+
+    // A == (A-B)  ->  B == 0
+    if (match(Op1, m_Sub(m_Specific(Op0), m_Value(B))))
       return new ICmpInst(I.getPredicate(), B,
                           Constant::getNullValue(B->getType()));
-    }
-    if (match(Op1, m_Sub(m_Value(A), m_Value(B))) && A == Op0) {
-      // A == (A-B)  ->  B == 0
-      return new ICmpInst(I.getPredicate(), B,
-                          Constant::getNullValue(B->getType()));
-    }
     
     // (X&Z) == (Y&Z) -> (X^Y) & Z == 0
     if (Op0->hasOneUse() && Op1->hasOneUse() &&
@@ -6973,8 +6971,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           // These operators commute.
           // Turn (Y + (X >> C)) << C  ->  (X + (Y << C)) & (~0 << C)
           if (isLeftShift && Op0BO->getOperand(1)->hasOneUse() &&
-              match(Op0BO->getOperand(1),
-                    m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == Op1) {
+              match(Op0BO->getOperand(1), m_Shr(m_Value(V1), m_Specific(Op1)))){
             Instruction *YS = BinaryOperator::CreateShl(
                                             Op0BO->getOperand(0), Op1,
                                             Op0BO->getName());
@@ -6992,9 +6989,9 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           Value *Op0BOOp1 = Op0BO->getOperand(1);
           if (isLeftShift && Op0BOOp1->hasOneUse() &&
               match(Op0BOOp1, 
-                    m_And(m_Shr(m_Value(V1), m_Value(V2)),m_ConstantInt(CC))) &&
-              cast<BinaryOperator>(Op0BOOp1)->getOperand(0)->hasOneUse() &&
-              V2 == Op1) {
+                    m_And(m_Shr(m_Value(V1), m_Specific(Op1)),
+                          m_ConstantInt(CC))) &&
+              cast<BinaryOperator>(Op0BOOp1)->getOperand(0)->hasOneUse()) {
             Instruction *YS = BinaryOperator::CreateShl(
                                                      Op0BO->getOperand(0), Op1,
                                                      Op0BO->getName());
@@ -7012,8 +7009,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         case Instruction::Sub: {
           // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
           if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
-              match(Op0BO->getOperand(0),
-                    m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == Op1) {
+              match(Op0BO->getOperand(0), m_Shr(m_Value(V1), m_Specific(Op1)))){
             Instruction *YS = BinaryOperator::CreateShl(
                                                      Op0BO->getOperand(1), Op1,
                                                      Op0BO->getName());
@@ -8600,13 +8596,14 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
 
       // (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed
       // (x >s -1) ? -1 : 0 -> ashr x, 31  -> all ones if not signed
-      CmpInst::Predicate Pred = ICI->getPredicate();
-      if (match(TrueVal, m_ConstantInt(0)) &&
-          match(FalseVal, m_ConstantInt(-1)))
-        Pred = CmpInst::getInversePredicate(Pred);
-      else if (!match(TrueVal, m_ConstantInt(-1)) ||
-               !match(FalseVal, m_ConstantInt(0)))
-        Pred = CmpInst::BAD_ICMP_PREDICATE;
+      CmpInst::Predicate Pred = CmpInst::BAD_ICMP_PREDICATE;
+      if (match(TrueVal, m_ConstantInt(-1)) &&
+          match(FalseVal, m_ConstantInt(0)))
+        Pred = ICI->getPredicate();
+      else if (match(TrueVal, m_ConstantInt(0)) &&
+               match(FalseVal, m_ConstantInt(-1)))
+        Pred = CmpInst::getInversePredicate(ICI->getPredicate());
+      
       if (Pred != CmpInst::BAD_ICMP_PREDICATE) {
         // If we are just checking for a icmp eq of a single bit and zext'ing it
         // to an integer, then shift the bit to the appropriate place and then
@@ -8616,7 +8613,7 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
         // sext (x <s  0) to i32 --> x>>s31      true if signbit set.
         // sext (x >s -1) to i32 --> (x>>s31)^-1  true if signbit clear.
         if ((Pred == ICmpInst::ICMP_SLT && Op1CV == 0) ||
-            (Pred == ICmpInst::ICMP_SGT &&Op1CV.isAllOnesValue())) {
+            (Pred == ICmpInst::ICMP_SGT && Op1CV.isAllOnesValue())) {
           Value *In = ICI->getOperand(0);
           Value *Sh = ConstantInt::get(In->getType(),
                                        In->getType()->getPrimitiveSizeInBits()-1);
