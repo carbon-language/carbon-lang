@@ -730,11 +730,11 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 }
 
 bool IntExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
-  llvm::APSInt Cond(32);
-  if (!EvaluateInteger(E->getCond(), Cond, Info))
+  bool Cond;
+  if (!HandleConversionToBool(E->getCond(), Cond, Info))
     return false;
 
-  return Visit(Cond != 0 ? E->getTrueExpr() : E->getFalseExpr());
+  return Visit(Cond ? E->getTrueExpr() : E->getFalseExpr());
 }
 
 /// VisitSizeAlignOfExpr - Evaluate a sizeof or alignof with a result as the
