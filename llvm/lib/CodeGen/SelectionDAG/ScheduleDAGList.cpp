@@ -164,7 +164,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
     // It is available if it has no predecessors.
     if (SUnits[i].Preds.empty()) {
       AvailableQueue->push(&SUnits[i]);
-      SUnits[i].isAvailable = SUnits[i].isPending = true;
+      SUnits[i].isAvailable = true;
     }
   }
   

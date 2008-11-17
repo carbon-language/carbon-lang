@@ -150,7 +150,7 @@ void LatencyPriorityQueue::ScheduledNode(SUnit *SU) {
 /// scheduled will make this node available, so it is better than some other
 /// node of the same priority that will not make a node available.
 void LatencyPriorityQueue::AdjustPriorityOfUnscheduledPreds(SUnit *SU) {
-  if (SU->isPending) return;  // All preds scheduled.
+  if (SU->isAvailable) return;  // All preds scheduled.
   
   SUnit *OnlyAvailablePred = getSingleUnscheduledPred(SU);
   if (OnlyAvailablePred == 0 || !OnlyAvailablePred->isAvailable) return;
