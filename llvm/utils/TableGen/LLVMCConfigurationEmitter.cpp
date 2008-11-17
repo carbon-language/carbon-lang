@@ -750,7 +750,7 @@ void CollectToolProperties (RecordVector::const_iterator B,
 {
   // Iterate over a properties list of every Tool definition
   for (;B!=E;++B) {
-    Record* T = *B;
+    const Record* T = *B;
     // Throws an exception if the value does not exist.
     ListInit* PropList = T->getValueAsListInit("properties");
 
@@ -1453,7 +1453,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
   O << "void PopulateLanguageMapLocal(LanguageMap& langMap) {\n";
 
   // Get the relevant field out of RecordKeeper
-  Record* LangMapRecord = Records.getDef("LanguageMap");
+  const Record* LangMapRecord = Records.getDef("LanguageMap");
 
   // It is allowed for a plugin to have no language map.
   if (LangMapRecord) {
@@ -1463,7 +1463,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
       throw std::string("Error in the language map definition!");
 
     for (unsigned i = 0; i < LangsToSuffixesList->size(); ++i) {
-      Record* LangToSuffixes = LangsToSuffixesList->getElementAsRecord(i);
+      const Record* LangToSuffixes = LangsToSuffixesList->getElementAsRecord(i);
 
       const std::string& Lang = LangToSuffixes->getValueAsString("lang");
       const ListInit* Suffixes = LangToSuffixes->getValueAsListInit("suffixes");
@@ -1499,7 +1499,7 @@ void FillInToolToLang (const ToolPropertiesList& TPList,
 /// plugins).
 // TODO: add a --check-graph switch to llvmc2. It would also make it
 // possible to detect cycles and multiple default edges.
-void TypecheckGraph (Record* CompilationGraph,
+void TypecheckGraph (const Record* CompilationGraph,
                      const ToolPropertiesList& TPList) {
   StringMap<StringSet<> > ToolToInLang;
   StringMap<std::string> ToolToOutLang;
@@ -1510,7 +1510,7 @@ void TypecheckGraph (Record* CompilationGraph,
   StringMap<StringSet<> >::iterator IBE = ToolToInLang.end();
 
   for (unsigned i = 0; i < edges->size(); ++i) {
-    Record* Edge = edges->getElementAsRecord(i);
+    const Record* Edge = edges->getElementAsRecord(i);
     const std::string& A = Edge->getValueAsString("a");
     const std::string& B = Edge->getValueAsString("b");
     StringMap<std::string>::iterator IA = ToolToOutLang.find(A);
@@ -1571,13 +1571,13 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
 }
 
 /// EmitEdgeClasses - Emit Edge* classes that represent graph edges.
-void EmitEdgeClasses (Record* CompilationGraph,
+void EmitEdgeClasses (const Record* CompilationGraph,
                       const GlobalOptionDescriptions& OptDescs,
                       std::ostream& O) {
   ListInit* edges = CompilationGraph->getValueAsListInit("edges");
 
   for (unsigned i = 0; i < edges->size(); ++i) {
-    Record* Edge = edges->getElementAsRecord(i);
+    const Record* Edge = edges->getElementAsRecord(i);
     const std::string& B = Edge->getValueAsString("b");
     DagInit* Weight = Edge->getValueAsDag("weight");
 
@@ -1590,7 +1590,8 @@ void EmitEdgeClasses (Record* CompilationGraph,
 
 /// EmitPopulateCompilationGraph - Emit the PopulateCompilationGraph()
 /// function.
-void EmitPopulateCompilationGraph (Record* CompilationGraph,
+void EmitPopulateCompilationGraph (const Record* CompilationGraph,
+                                   const ToolPropertiesList& ToolProps,
                                    std::ostream& O)
 {
   ListInit* edges = CompilationGraph->getValueAsListInit("edges");
@@ -1598,31 +1599,16 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
   O << "namespace {\n\n";
   O << "void PopulateCompilationGraphLocal(CompilationGraph& G) {\n";
 
-  // Insert vertices.
-  // Only tools mentioned in the graph definition are inserted.
-
-  llvm::StringSet<> ToolsInGraph;
-
-  for (unsigned i = 0; i < edges->size(); ++i) {
-    Record* Edge = edges->getElementAsRecord(i);
-    const std::string& A = Edge->getValueAsString("a");
-    const std::string& B = Edge->getValueAsString("b");
-
-    if (A != "root")
-      ToolsInGraph.insert(A);
-    ToolsInGraph.insert(B);
-  }
-
-  for (llvm::StringSet<>::iterator B = ToolsInGraph.begin(),
-         E = ToolsInGraph.end(); B != E; ++B)
-    O << Indent1 << "G.insertNode(new " << B->first() << "());\n";
+  for (ToolPropertiesList::const_iterator B = ToolProps.begin(),
+         E = ToolProps.end(); B != E; ++B)
+    O << Indent1 << "G.insertNode(new " << (*B)->Name << "());\n";
 
   O << '\n';
 
   // Insert edges.
 
   for (unsigned i = 0; i < edges->size(); ++i) {
-    Record* Edge = edges->getElementAsRecord(i);
+    const Record* Edge = edges->getElementAsRecord(i);
     const std::string& A = Edge->getValueAsString("a");
     const std::string& B = Edge->getValueAsString("b");
     DagInit* Weight = Edge->getValueAsDag("weight");
@@ -1750,6 +1736,47 @@ void EmitIncludes(std::ostream& O) {
     << "{ return s == NULL ? \"\" : s; }\n\n";
 }
 
+/// NotInGraph - Helper function object for FilterNotInGraph.
+struct NotInGraph {
+private:
+  const llvm::StringSet<>& ToolsInGraph_;
+
+public:
+  NotInGraph(const llvm::StringSet<>& ToolsInGraph)
+  : ToolsInGraph_(ToolsInGraph)
+  {}
+
+  bool operator()(const IntrusiveRefCntPtr<ToolProperties>& x) {
+    return (ToolsInGraph_.count(x->Name) == 0);
+  }
+};
+
+/// FilterNotInGraph - Filter out from ToolProps all Tools not
+/// mentioned in the compilation graph definition.
+void FilterNotInGraph (const Record* CompilationGraph,
+                       ToolPropertiesList& ToolProps) {
+
+  // List all tools mentioned in the graph.
+  llvm::StringSet<> ToolsInGraph;
+  ListInit* edges = CompilationGraph->getValueAsListInit("edges");
+
+  for (unsigned i = 0; i < edges->size(); ++i) {
+    const Record* Edge = edges->getElementAsRecord(i);
+    const std::string& A = Edge->getValueAsString("a");
+    const std::string& B = Edge->getValueAsString("b");
+
+    if (A != "root")
+      ToolsInGraph.insert(A);
+    ToolsInGraph.insert(B);
+  }
+
+  // Filter ToolPropertiesList.
+  ToolPropertiesList::iterator new_end =
+    std::remove_if(ToolProps.begin(), ToolProps.end(),
+                   NotInGraph(ToolsInGraph));
+  ToolProps.erase(new_end, ToolProps.end());
+}
+
 // End of anonymous namespace
 }
 
@@ -1768,48 +1795,50 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
     throw std::string("No tool definitions found!");
 
   // Gather information from the Tool description dags.
-  ToolPropertiesList tool_props;
-  GlobalOptionDescriptions opt_descs;
-  CollectToolProperties(Tools.begin(), Tools.end(), tool_props, opt_descs);
+  ToolPropertiesList ToolProps;
+  GlobalOptionDescriptions OptDescs;
+  CollectToolProperties(Tools.begin(), Tools.end(), ToolProps, OptDescs);
 
   RecordVector OptionLists = Records.getAllDerivedDefinitions("OptionList");
   CollectPropertiesFromOptionLists(OptionLists.begin(), OptionLists.end(),
-                                   opt_descs);
+                                   OptDescs);
+
+  // TOTHINK: Nothing actually prevents us from having multiple
+  // compilation graphs in a single plugin; OTOH, I do not see how
+  // that could be useful.
+  const Record* CompilationGraphRecord = Records.getDef("CompilationGraph");
+  if (!CompilationGraphRecord)
+    throw std::string("Compilation graph description not found!");
+
+  FilterNotInGraph(CompilationGraphRecord, ToolProps);
+
+  // Typecheck the compilation graph.
+  TypecheckGraph(CompilationGraphRecord, ToolProps);
 
   // Check that there are no options without side effects (specified
   // only in the OptionList).
-  CheckForSuperfluousOptions(tool_props, opt_descs);
+  CheckForSuperfluousOptions(ToolProps, OptDescs);
 
   // Emit global option registration code.
-  EmitOptionDescriptions(opt_descs, O);
+  EmitOptionDescriptions(OptDescs, O);
 
   // Emit hook declarations.
-  EmitHookDeclarations(tool_props, O);
+  EmitHookDeclarations(ToolProps, O);
 
   // Emit PopulateLanguageMap() function
   // (a language map maps from file extensions to language names).
   EmitPopulateLanguageMap(Records, O);
 
   // Emit Tool classes.
-  for (ToolPropertiesList::const_iterator B = tool_props.begin(),
-         E = tool_props.end(); B!=E; ++B)
-    EmitToolClassDefinition(*(*B), opt_descs, O);
-
-  // TOTHINK: Nothing actually prevents us from having multiple
-  // compilation graphs in a single plugin; OTOH, I do not see how
-  // that could be useful.
-  Record* CompilationGraphRecord = Records.getDef("CompilationGraph");
-  if (!CompilationGraphRecord)
-    throw std::string("Compilation graph description not found!");
-
-  // Typecheck the compilation graph.
-  TypecheckGraph(CompilationGraphRecord, tool_props);
+  for (ToolPropertiesList::const_iterator B = ToolProps.begin(),
+         E = ToolProps.end(); B!=E; ++B)
+    EmitToolClassDefinition(*(*B), OptDescs, O);
 
   // Emit Edge# classes.
-  EmitEdgeClasses(CompilationGraphRecord, opt_descs, O);
+  EmitEdgeClasses(CompilationGraphRecord, OptDescs, O);
 
   // Emit PopulateCompilationGraph() function.
-  EmitPopulateCompilationGraph(CompilationGraphRecord, O);
+  EmitPopulateCompilationGraph(CompilationGraphRecord, ToolProps, O);
 
   // Emit code for plugin registration.
   EmitRegisterPlugin(O);
