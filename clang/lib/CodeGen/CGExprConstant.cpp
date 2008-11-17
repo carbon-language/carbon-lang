@@ -106,7 +106,7 @@ public:
     unsigned i = 0;
     bool RewriteType = false;
     for (; i < NumInitableElts; ++i) {
-      llvm::Constant *C = Visit(ILE->getInit(i));
+      llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(i), CGF);
       RewriteType |= (C->getType() != ElemTy);
       Elts.push_back(C);
     }
@@ -130,7 +130,7 @@ public:
   void InsertBitfieldIntoStruct(std::vector<llvm::Constant*>& Elts,
                                 FieldDecl* Field, Expr* E) {
     // Calculate the value to insert
-    llvm::Constant *C = Visit(E);
+    llvm::Constant *C = CGM.EmitConstantExpr(E, CGF);
     llvm::ConstantInt *CI = dyn_cast<llvm::ConstantInt>(C);
     if (!CI) {
       CGM.ErrorUnsupported(E, "bitfield initialization");
@@ -213,7 +213,7 @@ public:
         InsertBitfieldIntoStruct(Elts, curField, ILE->getInit(EltNo));
       } else {
         unsigned FieldNo = CGM.getTypes().getLLVMFieldNo(curField);
-        llvm::Constant* C = Visit(ILE->getInit(EltNo));
+        llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(EltNo), CGF);
         RewriteType |= (C->getType() != Elts[FieldNo]->getType());
         Elts[FieldNo] = C;
       }
@@ -261,7 +261,7 @@ public:
       return llvm::ConstantArray::get(RetTy, Elts);
     }
 
-    llvm::Constant *C = Visit(ILE->getInit(0));
+    llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(0), CGF);
 
     // Build a struct with the union sub-element as the first member,
     // and padded to the appropriate size
@@ -296,7 +296,7 @@ public:
     // Copy initializer elements.
     unsigned i = 0;
     for (; i < NumInitableElts; ++i) {
-      llvm::Constant *C = Visit(ILE->getInit(i));
+      llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(i), CGF);
       Elts.push_back(C);
     }
 
@@ -310,7 +310,7 @@ public:
     if (ILE->getType()->isScalarType()) {
       // We have a scalar in braces. Just use the first element.
       if (ILE->getNumInits() > 0)
-        return Visit(ILE->getInit(0));
+        return CGM.EmitConstantExpr(ILE->getInit(0), CGF);
 
       const llvm::Type* RetTy = CGM.getTypes().ConvertType(ILE->getType());
       return llvm::Constant::getNullValue(RetTy);
@@ -854,10 +854,19 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                                       V.getLValueOffset());
       
       if (const Expr *LVBase = V.getLValueBase()) {
-        llvm::Constant *Base = 
+        llvm::Constant *C = 
           ConstExprEmitter(*this, CGF).EmitLValue(const_cast<Expr*>(LVBase));
 
-        return llvm::ConstantExpr::getGetElementPtr(Base, &Offset, 1);
+        const llvm::Type *Type = 
+          llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+        const llvm::Type *DestType = C->getType();
+        
+        // FIXME: It's a little ugly that we need to cast to a pointer,
+        // apply the GEP and then cast back.
+        C = llvm::ConstantExpr::getBitCast(C, Type);
+        C = llvm::ConstantExpr::getGetElementPtr(C, &Offset, 1);
+        
+        return llvm::ConstantExpr::getBitCast(C, DestType);
       }
       
       return llvm::ConstantExpr::getIntToPtr(Offset, 
@@ -873,6 +882,14 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       return C;
     case APValue::Float:
       return llvm::ConstantFP::get(V.getFloat());
+    case APValue::ComplexFloat: {
+      llvm::Constant *Complex[2];
+      
+      Complex[0] = llvm::ConstantFP::get(V.getComplexFloatReal());
+      Complex[1] = llvm::ConstantFP::get(V.getComplexFloatImag());
+      
+      return llvm::ConstantStruct::get(Complex, 2);
+    }
     }
   }
 #else
