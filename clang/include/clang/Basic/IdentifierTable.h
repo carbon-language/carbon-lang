@@ -29,10 +29,11 @@ namespace llvm {
 
 namespace clang {
   struct LangOptions;
-  class MultiKeywordSelector; // a private class used by Selector.
   class IdentifierInfo;
   class SourceLocation;
-  
+  class MultiKeywordSelector; // private class used by Selector
+  class DeclarationName;      // AST class that stores declaration names
+
   /// IdentifierLocPair - A simple pair of identifier info and location.
   typedef std::pair<IdentifierInfo*, SourceLocation> IdentifierLocPair;
   
@@ -281,8 +282,9 @@ class Selector {
   }
   Selector(uintptr_t V) : InfoPtr(V) {}
 public:
-  friend class SelectorTable; // only the SelectorTable can create these.
-  
+  friend class SelectorTable; // only the SelectorTable can create these
+  friend class DeclarationName; // and the AST's DeclarationName.
+
   /// The default ctor should only be used when creating data structures that
   ///  will contain selectors.
   Selector() : InfoPtr(0) {}
@@ -362,12 +364,35 @@ public:
   static SelectorTable* CreateAndRegister(llvm::Deserializer& D);
 };
 
+/// DeclarationNameExtra - Common base of the MultiKeywordSelector and
+/// CXXSpecialName classes, both of which are private classes that can
+/// be stored by the AST's DeclarationName class.
+class DeclarationNameExtra {
+public:
+  /// ExtraKind - The kind of "extra" information stored in the
+  /// DeclarationName. See @c ExtraKindOrNumArgs for an explanation of
+  /// how these enumerator values are used.
+  enum ExtraKind {
+    CXXConstructor = 0,
+    CXXDestructor,
+    CXXConversionFunction,
+    NUM_EXTRA_KINDS
+  };
+
+  /// ExtraKindOrNumArgs - Either the kind of C++ special name (if the
+  /// value is one of the CXX* enumerators of ExtraKind), in which
+  /// case the DeclarationNameExtra is also a CXXSpecialName, or
+  /// NUM_EXTRA_KINDS+NumArgs, where NumArgs is the number of
+  /// arguments in the Objective-C selector, in which case the
+  /// DeclarationNameExtra is also a MultiKeywordSelector.
+  unsigned ExtraKindOrNumArgs;
+};
+
 }  // end namespace clang
 
-
+namespace llvm {
 /// Define DenseMapInfo so that Selectors can be used as keys in DenseMap and
 /// DenseSets.
-namespace llvm {
 template <>
 struct DenseMapInfo<clang::Selector> {
   static inline clang::Selector getEmptyKey() {
@@ -385,6 +410,6 @@ struct DenseMapInfo<clang::Selector> {
   
   static bool isPod() { return true; }
 };
-}  // end namespace llvm
 
+}  // end namespace llvm
 #endif

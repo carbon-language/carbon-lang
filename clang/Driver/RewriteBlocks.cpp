@@ -618,7 +618,7 @@ void RewriteBlocks::SynthesizeBlockLiterals(SourceLocation FunLocStart,
 
 void RewriteBlocks::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
   SourceLocation FunLocStart = FD->getTypeSpecStartLoc();
-  const char *FuncName = FD->getName();
+  const char *FuncName = FD->getIdentifierName();
   
   SynthesizeBlockLiterals(FunLocStart, FuncName);
 }
@@ -675,13 +675,13 @@ std::string RewriteBlocks::SynthesizeBlockCall(CallExpr *Exp) {
   const BlockPointerType *CPT = 0;
   
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp->getCallee())) {
-    closureName = DRE->getDecl()->getName();
+    closureName = DRE->getDecl()->getIdentifierName();
     CPT = DRE->getType()->getAsBlockPointerType();
   } else if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(Exp->getCallee())) {
-    closureName = CDRE->getDecl()->getName();
+    closureName = CDRE->getDecl()->getIdentifierName();
     CPT = CDRE->getType()->getAsBlockPointerType();
   } else if (MemberExpr *MExpr = dyn_cast<MemberExpr>(Exp->getCallee())) {
-    closureName = MExpr->getMemberDecl()->getName();
+    closureName = MExpr->getMemberDecl()->getIdentifierName();
     CPT = MExpr->getType()->getAsBlockPointerType();
   } else {
     assert(1 && "RewriteBlockClass: Bad type");
@@ -1109,7 +1109,8 @@ void RewriteBlocks::HandleDeclInMainFile(Decl *D) {
           std::string Init = SynthesizeBlockInitExpr(CBE, VD);
           // Do the rewrite, using S.size() which contains the rewritten size.
           ReplaceText(CBE->getLocStart(), S.size(), Init.c_str(), Init.size());
-          SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(), VD->getName());
+          SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(), 
+                                  VD->getIdentifierName());
         } else if (CastExpr *CE = dyn_cast<CastExpr>(VD->getInit())) {
           RewriteCastExpr(CE);
         }

@@ -14,8 +14,10 @@
 #ifndef LLVM_CLANG_AST_ASTCONTEXT_H
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/AST/Builtins.h"
+#include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
@@ -110,7 +112,8 @@ public:
   TargetInfo &Target;
   IdentifierTable &Idents;
   SelectorTable &Selectors;
-  
+  DeclarationNameTable DeclarationNames;
+
   SourceManager& getSourceManager() { return SourceMgr; }
   llvm::MallocAllocator &getAllocator() { return Allocator; }  
   const LangOptions& getLangOptions() const { return LangOpts; }

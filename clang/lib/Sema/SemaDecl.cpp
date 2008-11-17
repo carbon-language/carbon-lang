@@ -877,9 +877,13 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       bool isInvalidDecl = CheckConstructorDeclarator(D, R, SC);
 
       // Create the new declaration
+      QualType ClassType = Context.getTypeDeclType(cast<CXXRecordDecl>(DC));
+      ClassType = Context.getCanonicalType(ClassType);
+      DeclarationName ConName
+        = Context.DeclarationNames.getCXXConstructorName(ClassType);
       NewFD = CXXConstructorDecl::Create(Context, 
                                          cast<CXXRecordDecl>(DC),
-                                         D.getIdentifierLoc(), II, R,
+                                         D.getIdentifierLoc(), ConName, R,
                                          isExplicit, isInline,
                                          /*isImplicitlyDeclared=*/false);
 
@@ -890,9 +894,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       if (DC->isCXXRecord()) {
         bool isInvalidDecl = CheckDestructorDeclarator(D, R, SC);
 
+        QualType ClassType = Context.getTypeDeclType(cast<CXXRecordDecl>(DC));
+        ClassType = Context.getCanonicalType(ClassType);
+        DeclarationName DesName
+          = Context.DeclarationNames.getCXXDestructorName(ClassType);
+
         NewFD = CXXDestructorDecl::Create(Context,
                                           cast<CXXRecordDecl>(DC),
-                                          D.getIdentifierLoc(), II, R, 
+                                          D.getIdentifierLoc(), DesName, R, 
                                           isInline,
                                           /*isImplicitlyDeclared=*/false);
 
@@ -916,9 +925,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       } else {
         bool isInvalidDecl = CheckConversionDeclarator(D, R, SC);
 
+        QualType ConvType = R->getAsFunctionType()->getResultType();
+        ConvType = Context.getCanonicalType(ConvType);
+        DeclarationName ConvName
+          = Context.DeclarationNames.getCXXConversionFunctionName(ConvType);
+
         NewFD = CXXConversionDecl::Create(Context, 
                                           cast<CXXRecordDecl>(DC),
-                                          D.getIdentifierLoc(), II, R,
+                                          D.getIdentifierLoc(), ConvName, R,
                                           isInline, isExplicit);
         
         if (isInvalidDecl)

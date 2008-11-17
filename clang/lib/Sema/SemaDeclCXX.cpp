@@ -725,6 +725,9 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
 /// [special]p1).  This routine can only be executed just before the
 /// definition of the class is complete.
 void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
+  QualType ClassType = Context.getTypeDeclType(ClassDecl);
+  ClassType = Context.getCanonicalType(ClassType);
+
   if (!ClassDecl->hasUserDeclaredConstructor()) {
     // C++ [class.ctor]p5:
     //   A default constructor for a class X is a constructor of class X
@@ -732,10 +735,11 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     //   user-declared constructor for class X, a default constructor is
     //   implicitly declared. An implicitly-declared default constructor
     //   is an inline public member of its class.
+    DeclarationName Name 
+      = Context.DeclarationNames.getCXXConstructorName(ClassType);
     CXXConstructorDecl *DefaultCon = 
       CXXConstructorDecl::Create(Context, ClassDecl,
-                                 ClassDecl->getLocation(),
-                                 &Context.Idents.getConstructorId(),
+                                 ClassDecl->getLocation(), Name,
                                  Context.getFunctionType(Context.VoidTy,
                                                          0, 0, false, 0),
                                  /*isExplicit=*/false,
@@ -798,10 +802,11 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
 
     //  An implicitly-declared copy constructor is an inline public
     //  member of its class.
+    DeclarationName Name 
+      = Context.DeclarationNames.getCXXConstructorName(ClassType);
     CXXConstructorDecl *CopyConstructor
       = CXXConstructorDecl::Create(Context, ClassDecl,
-                                   ClassDecl->getLocation(),
-                                   &Context.Idents.getConstructorId(),
+                                   ClassDecl->getLocation(), Name,
                                    Context.getFunctionType(Context.VoidTy,
                                                            &ArgType, 1,
                                                            false, 0),
@@ -825,10 +830,11 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     //   If a class has no user-declared destructor, a destructor is
     //   declared implicitly. An implicitly-declared destructor is an
     //   inline public member of its class.
+    DeclarationName Name 
+      = Context.DeclarationNames.getCXXDestructorName(ClassType);
     CXXDestructorDecl *Destructor 
       = CXXDestructorDecl::Create(Context, ClassDecl,
-                                  ClassDecl->getLocation(),
-                                  &Context.Idents.getConstructorId(),
+                                  ClassDecl->getLocation(), Name,
                                   Context.getFunctionType(Context.VoidTy,
                                                           0, 0, false, 0),
                                   /*isInline=*/true,

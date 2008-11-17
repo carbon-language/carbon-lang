@@ -33,7 +33,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        unsigned size_reserve) : 
   CFConstantStringTypeDecl(0), ObjCFastEnumerationStateTypeDecl(0),
   SourceMgr(SM), LangOpts(LOpts), Target(t), 
-  Idents(idents), Selectors(sels) 
+  Idents(idents), Selectors(sels)
 {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
   InitBuiltinTypes();
@@ -996,7 +996,7 @@ QualType ASTContext::getObjCInterfaceType(ObjCInterfaceDecl *Decl) {
 /// alphabetically.
 static bool CmpProtocolNames(const ObjCProtocolDecl *LHS,
                             const ObjCProtocolDecl *RHS) {
-  return strcmp(LHS->getName(), RHS->getName()) < 0;
+  return LHS->getDeclName() < RHS->getDeclName();
 }
 
 static void SortAndUniqueProtocols(ObjCProtocolDecl **&Protocols,
@@ -1449,7 +1449,7 @@ QualType ASTContext::getObjCFastEnumerationStateType()
 // typedef <type> BOOL;
 static bool isTypeTypedefedAsBOOL(QualType T) {
   if (const TypedefType *TT = dyn_cast<TypedefType>(T))
-    return !strcmp(TT->getDecl()->getName(), "BOOL");
+    return !strcmp(TT->getDecl()->getIdentifierName(), "BOOL");
         
   return false;
 }
@@ -2260,7 +2260,8 @@ ASTContext* ASTContext::Create(llvm::Deserializer& D) {
 
   unsigned size_reserve = D.ReadInt();
   
-  ASTContext* A = new ASTContext(LOpts, SM, t, idents, sels, size_reserve);
+  ASTContext* A = new ASTContext(LOpts, SM, t, idents, sels,
+                                 size_reserve);
   
   for (unsigned i = 0; i < size_reserve; ++i)
     Type::Create(*A,i,D);

@@ -129,12 +129,58 @@ void DeclContext::ReadOutRec(Deserializer& D, ASTContext& C) {
 
 void NamedDecl::EmitInRec(Serializer& S) const {
   Decl::EmitInRec(S);
-  S.EmitPtr(getIdentifier());               // From NamedDecl.
+  S.EmitInt(Name.getNameKind());
+
+  switch (Name.getNameKind()) {
+  case DeclarationName::Identifier:
+    S.EmitPtr(Name.getAsIdentifierInfo());
+    break;
+
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    Name.getObjCSelector().Emit(S);
+    break;
+
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+    Name.getCXXNameType().Emit(S);
+    break;
+  }
 }
 
 void NamedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
   Decl::ReadInRec(D, C);
-  D.ReadPtr(Identifier);                            // From NamedDecl.  
+
+  DeclarationName::NameKind Kind 
+    = static_cast<DeclarationName::NameKind>(D.ReadInt());
+  switch (Kind) {
+  case DeclarationName::Identifier: {
+    IdentifierInfo *Identifier;
+    D.ReadPtr(Identifier);
+    Name = Identifier;
+    break;
+  }
+
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    Name = Selector::ReadVal(D);
+    break;
+
+  case DeclarationName::CXXConstructorName:
+    Name = C.DeclarationNames.getCXXConstructorName(QualType::ReadVal(D));
+    break;
+                                                    
+  case DeclarationName::CXXDestructorName:
+    Name = C.DeclarationNames.getCXXDestructorName(QualType::ReadVal(D));
+    break;
+
+  case DeclarationName::CXXConversionFunctionName:
+    Name = C.DeclarationNames.getCXXConversionFunctionName(QualType::ReadVal(D));
+    break;
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -434,7 +480,7 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   
   void *Mem = C.getAllocator().Allocate<FunctionDecl>();
   FunctionDecl* decl = new (Mem)
-    FunctionDecl(Function, 0, SourceLocation(), NULL,
+    FunctionDecl(Function, 0, SourceLocation(), DeclarationName(),
                  QualType(), SClass, IsInline, 0);
   
   decl->ValueDecl::ReadInRec(D, C);
@@ -495,7 +541,7 @@ OverloadedFunctionDecl *
 OverloadedFunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   void *Mem = C.getAllocator().Allocate<OverloadedFunctionDecl>();
   OverloadedFunctionDecl* decl = new (Mem)
-    OverloadedFunctionDecl(0, NULL);
+    OverloadedFunctionDecl(0, DeclarationName());
   
   decl->NamedDecl::ReadInRec(D, C);
 

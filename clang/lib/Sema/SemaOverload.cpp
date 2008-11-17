@@ -209,7 +209,7 @@ void UserDefinedConversionSequence::DebugPrint() const {
     Before.DebugPrint();
     fprintf(stderr, " -> ");
   }
-  fprintf(stderr, "'%s'", ConversionFunction->getName());
+  fprintf(stderr, "'%s'", ConversionFunction->getName().c_str());
   if (After.First || After.Second || After.Third) {
     fprintf(stderr, " -> ");
     After.DebugPrint();

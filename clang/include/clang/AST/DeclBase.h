@@ -52,6 +52,7 @@ public:
            ObjCCategory,
            ObjCCategoryImpl,
            ObjCImplementation,
+           ObjCMethod,  // [DeclContext]
            ObjCProtocol,
            ObjCProperty,
     //     ScopedDecl
@@ -75,7 +76,6 @@ public:
                  ParmVar,
            ObjCInterface,  // [DeclContext]
            ObjCCompatibleAlias,
-           ObjCMethod,  // [DeclContext]
            ObjCClass,
            ObjCForwardProtocol,
            ObjCPropertyImpl,

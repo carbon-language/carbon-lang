@@ -152,7 +152,7 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
   
   // We don't set size information, but do specify where the typedef was
   // declared.
-  const char *TyName = Ty->getDecl()->getName();
+  const char *TyName = Ty->getDecl()->getIdentifierName();
   SourceLocation DefLoc = Ty->getDecl()->getLocation();
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
 
@@ -206,7 +206,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   SourceManager &SM = M->getContext().getSourceManager();
 
   // Get overall information about the record type for the debug info.
-  const char *Name = Decl->getName();
+  const char *Name = Decl->getIdentifierName();
   if (Name == 0) Name = "";
 
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(Decl->getLocation());
@@ -242,7 +242,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     FieldDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
     
-    const char *FieldName = Field->getName();
+    const char *FieldName = Field->getIdentifierName();
     if (FieldName == 0) FieldName = "";
 
     // Get the location for the field.
@@ -301,7 +301,8 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   llvm::DIArray EltArray =
     DebugFactory.GetOrCreateArray(&Enumerators[0], Enumerators.size());
 
-  const char *EnumName = Decl->getName() ? Decl->getName() : "";
+  const char *EnumName 
+    = Decl->getIdentifierName() ? Decl->getIdentifierName() : "";
   SourceLocation DefLoc = Decl->getLocation();
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
   SourceManager &SM = M->getContext().getSourceManager();
@@ -515,7 +516,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
   SourceManager &SM = M->getContext().getSourceManager();
   uint64_t LineNo = SM.getLogicalLineNumber(Decl->getLocation());
-  const char *Name = Decl->getName();
+  const char *Name = Decl->getIdentifierName();
   
   DebugFactory.CreateGlobalVariable(Unit, Name, Name, "", Unit, LineNo,
                                     getOrCreateType(Decl->getType(), Unit),

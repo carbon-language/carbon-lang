@@ -302,7 +302,8 @@ Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
          E = IDecl->classprop_end(); I != E; ++I) {
       ObjCPropertyDecl *PDecl = (*I);
       if (SuperPDecl->getIdentifier() == PDecl->getIdentifier())
-          DiagnosePropertyMismatch(PDecl, SuperPDecl, SDecl->getName());
+          DiagnosePropertyMismatch(PDecl, SuperPDecl, 
+                                   SDecl->getIdentifierName());
     }
   }
 }
@@ -329,7 +330,7 @@ Sema::MergeOneProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
       mergeProperties.push_back(Pr);
     else
       // Property protocol already exist in class. Diagnose any mismatch.
-      DiagnosePropertyMismatch((*CP), Pr, PDecl->getName());
+      DiagnosePropertyMismatch((*CP), Pr, PDecl->getIdentifierName());
     }
   IDecl->mergeProperties(&mergeProperties[0], mergeProperties.size());
 }

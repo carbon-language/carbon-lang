@@ -14,7 +14,9 @@
 #ifndef LLVM_CLANG_AST_DECL_H
 #define LLVM_CLANG_AST_DECL_H
 
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/OperatorKinds.h"
+#include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/Parse/AccessSpecifier.h"
 #include "llvm/ADT/SmallVector.h"
@@ -24,7 +26,6 @@ class Expr;
 class Stmt;
 class CompoundStmt;
 class StringLiteral;
-class IdentifierInfo;
 
 /// TranslationUnitDecl - The top declaration context.
 /// FIXME: The TranslationUnit class should probably be modified to serve as
@@ -56,19 +57,51 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// NamedDecl - This represents a decl with an identifier for a name.  Many
+/// NamedDecl - This represents a decl with a name.  Many
 /// decls have names, but not ObjCMethodDecl, @class, etc.
 class NamedDecl : public Decl {
-  /// Identifier - The identifier for this declaration (e.g. the name for the
-  /// variable, the tag for a struct).
-  IdentifierInfo *Identifier;
+  /// Name - The name of this declaration, which is typically a normal
+  /// identifier but may also be a special kind of name (C++
+  /// constructor, Objective-C selector, etc.)
+  DeclarationName Name;
+
+protected:
+  NamedDecl(Kind DK, SourceLocation L, DeclarationName N)
+    : Decl(DK, L), Name(N) {}
+  
 public:
   NamedDecl(Kind DK, SourceLocation L, IdentifierInfo *Id)
-   : Decl(DK, L), Identifier(Id) {}
+    : Decl(DK, L), Name(Id) {}
+
+  /// getIdentifier - Get the identifier that names this declaration,
+  /// if there is one. This will return NULL if this declaration has
+  /// no name (e.g., for an unnamed class) or if the name is a special
+  /// name (C++ constructor, Objective-C selector, etc.).
+  IdentifierInfo *getIdentifier() const { return Name.getAsIdentifierInfo(); }
+
+  /// getIdentifierName - Get the name of identifier for this
+  /// declaration as a string. If the declaration has no name, or if
+  /// the name is a special name (C++ constructor, Objective-C
+  /// selector, etc.), returns NULL.
+  const char *getIdentifierName() const {
+    if (IdentifierInfo *II = getIdentifier())
+      return II->getName();
+    else
+      return 0;
+  }
+
+  /// getDeclName - Get the actual, stored name of the declaration,
+  /// which may be a special name.
+  DeclarationName getDeclName() const { return Name; }
+
+  /// getName - Get a human-readable name for the declaration, even if
+  /// it is one of the special kinds of names (C++ constructor,
+  /// Objective-C selector, etc.). Creating this name requires some
+  /// expensive string manipulation, so it should be called only when
+  /// absolutely critical. For simple declarations, @c
+  /// getIdentifierName() should suffice.
+  std::string getName() const;
   
-  IdentifierInfo *getIdentifier() const { return Identifier; }
-  virtual const char *getName() const;
-    
   static bool classof(const Decl *D) {
     return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;
   }
@@ -120,8 +153,8 @@ class ScopedDecl : public NamedDecl {
 
 protected:
   ScopedDecl(Kind DK, DeclContext *DC, SourceLocation L,
-             IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : NamedDecl(DK, L, Id), NextDeclarator(PrevDecl), Next(0),
+             DeclarationName N, ScopedDecl *PrevDecl)
+    : NamedDecl(DK, L, N), NextDeclarator(PrevDecl), Next(0),
       DeclCtx(reinterpret_cast<uintptr_t>(DC)) {}
 
   virtual ~ScopedDecl();
@@ -272,8 +305,8 @@ class ValueDecl : public ScopedDecl {
 
 protected:
   ValueDecl(Kind DK, DeclContext *DC, SourceLocation L,
-            IdentifierInfo *Id, QualType T, ScopedDecl *PrevDecl) 
-    : ScopedDecl(DK, DC, L, Id, PrevDecl), DeclType(T) {}
+            DeclarationName N, QualType T, ScopedDecl *PrevDecl) 
+    : ScopedDecl(DK, DC, L, N, PrevDecl), DeclType(T) {}
 public:
   QualType getType() const { return DeclType; }
   void setType(QualType newType) { DeclType = newType; }
@@ -512,10 +545,10 @@ private:
   SourceLocation TypeSpecStartLoc;
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
-               IdentifierInfo *Id, QualType T,
+               DeclarationName N, QualType T,
                StorageClass S, bool isInline, ScopedDecl *PrevDecl,
                SourceLocation TSSL = SourceLocation())
-    : ValueDecl(DK, DC, L, Id, T, PrevDecl), 
+    : ValueDecl(DK, DC, L, N, T, PrevDecl), 
       DeclContext(DK),
       ParamInfo(0), Body(0), PreviousDeclaration(0),
       SClass(S), IsInline(isInline), IsImplicit(0), TypeSpecStartLoc(TSSL) {}

@@ -27,20 +27,20 @@ CXXFieldDecl *CXXFieldDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   return new (Mem) CXXFieldDecl(RD, L, Id, T, BW);
 }
 
-CXXRecordDecl::CXXRecordDecl(ASTContext &C, TagKind TK, DeclContext *DC,
+CXXRecordDecl::CXXRecordDecl(TagKind TK, DeclContext *DC,
                              SourceLocation L, IdentifierInfo *Id) 
   : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord),
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     Aggregate(true), Polymorphic(false), Bases(0), NumBases(0),
-    Constructors(DC, &C.Idents.getConstructorId()), 
+    Constructors(DC, DeclarationName()),
     Destructor(0), 
-    Conversions(DC, &C.Idents.getConversionFunctionId()) { }
+    Conversions(DC, DeclarationName()) { }
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
                                      CXXRecordDecl* PrevDecl) {
   void *Mem = C.getAllocator().Allocate<CXXRecordDecl>();
-  CXXRecordDecl* R = new (Mem) CXXRecordDecl(C, TK, DC, L, Id);
+  CXXRecordDecl* R = new (Mem) CXXRecordDecl(TK, DC, L, Id);
   C.getTypeDeclType(R, PrevDecl);  
   return R;
 }
@@ -178,11 +178,13 @@ CXXBaseOrMemberInitializer::~CXXBaseOrMemberInitializer() {
 
 CXXConstructorDecl *
 CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
-                           SourceLocation L, IdentifierInfo *Id,
+                           SourceLocation L, DeclarationName N,
                            QualType T, bool isExplicit,
                            bool isInline, bool isImplicitlyDeclared) {
+  assert(N.getNameKind() == DeclarationName::CXXConstructorName &&
+         "Name must refer to a constructor");
   void *Mem = C.getAllocator().Allocate<CXXConstructorDecl>();
-  return new (Mem) CXXConstructorDecl(RD, L, Id, T, isExplicit, isInline,
+  return new (Mem) CXXConstructorDecl(RD, L, N, T, isExplicit, isInline,
                                       isImplicitlyDeclared);
 }
 
@@ -242,54 +244,26 @@ bool CXXConstructorDecl::isConvertingConstructor() const {
          (getNumParams() > 1 && getParamDecl(1)->getDefaultArg() != 0);
 }
 
-const char *CXXConstructorDecl::getName() const { 
-  return getParent()->getName();
-}
-
 CXXDestructorDecl *
 CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
-                          SourceLocation L, IdentifierInfo *Id,
+                          SourceLocation L, DeclarationName N,
                           QualType T, bool isInline, 
                           bool isImplicitlyDeclared) {
+  assert(N.getNameKind() == DeclarationName::CXXDestructorName &&
+         "Name must refer to a destructor");
   void *Mem = C.getAllocator().Allocate<CXXDestructorDecl>();
-  return new (Mem) CXXDestructorDecl(RD, L, Id, T, isInline, 
+  return new (Mem) CXXDestructorDecl(RD, L, N, T, isInline, 
                                      isImplicitlyDeclared);
-}
-
-CXXDestructorDecl::~CXXDestructorDecl() {
-  delete [] Name;
-}
-
-const char *CXXDestructorDecl::getName() const {
-  if (!Name) {
-    std::string Builder = "~";
-    Builder += getParent()->getName();
-    Name = new char[Builder.size()+1];
-    strcpy(Name, Builder.c_str());
-  }
-  return Name;
-}
-
-CXXConversionDecl::~CXXConversionDecl() {
-  delete [] Name;
-}
-
-const char *CXXConversionDecl::getName() const {
-  if (!Name) {
-    std::string Builder = "operator ";
-    Builder += getConversionType().getAsString();
-    Name = new char[Builder.size()+1];
-    strcpy(Name, Builder.c_str());    
-  }
-  return Name;
 }
 
 CXXConversionDecl *
 CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
-                          SourceLocation L, IdentifierInfo *Id,
+                          SourceLocation L, DeclarationName N,
                           QualType T, bool isInline, bool isExplicit) {
+  assert(N.getNameKind() == DeclarationName::CXXConversionFunctionName &&
+         "Name must refer to a conversion function");
   void *Mem = C.getAllocator().Allocate<CXXConversionDecl>();
-  return new (Mem) CXXConversionDecl(RD, L, Id, T, isInline, isExplicit);
+  return new (Mem) CXXConversionDecl(RD, L, N, T, isInline, isExplicit);
 }
 
 CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,
@@ -301,9 +275,9 @@ CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 
 OverloadedFunctionDecl *
 OverloadedFunctionDecl::Create(ASTContext &C, DeclContext *DC,
-                               IdentifierInfo *Id) {
+                               DeclarationName N) {
   void *Mem = C.getAllocator().Allocate<OverloadedFunctionDecl>();
-  return new (Mem) OverloadedFunctionDecl(DC, Id);
+  return new (Mem) OverloadedFunctionDecl(DC, N);
 }
 
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,

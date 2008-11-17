@@ -5,6 +5,7 @@ add_clang_library(clangAST
   ASTContext.cpp
   Builtins.cpp
   CFG.cpp
+  DeclarationName.cpp
   DeclBase.cpp
   Decl.cpp
   DeclCXX.cpp

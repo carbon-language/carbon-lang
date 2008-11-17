@@ -561,7 +561,7 @@ llvm::Value *CGObjCGNU::GenerateProtocolRef(CGBuilderTy &Builder,
 
 void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   ASTContext &Context = CGM.getContext();
-  const char *ProtocolName = PD->getName();
+  const char *ProtocolName = PD->getIdentifierName();
   llvm::SmallVector<std::string, 16> Protocols;
   for (ObjCProtocolDecl::protocol_iterator PI = PD->protocol_begin(),
        E = PD->protocol_end(); PI != E; ++PI)
@@ -616,8 +616,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
 }
 
 void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
-  const char *ClassName = OCD->getClassInterface()->getName();
-  const char *CategoryName = OCD->getName();
+  const char *ClassName = OCD->getClassInterface()->getIdentifierName();
+  const char *CategoryName = OCD->getIdentifierName();
   // Collect information about instance methods
   llvm::SmallVector<Selector, 16> InstanceMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
@@ -675,12 +675,12 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     OID->getClassInterface()->getSuperClass();
   const char * SuperClassName = NULL;
   if (SuperClassDecl) {
-    SuperClassName = SuperClassDecl->getName();
+    SuperClassName = SuperClassDecl->getIdentifierName();
   }
 
   // Get the class name
   ObjCInterfaceDecl * ClassDecl = (ObjCInterfaceDecl*)OID->getClassInterface();
-  const char * ClassName = ClassDecl->getName();
+  const char * ClassName = ClassDecl->getIdentifierName();
 
   // Get the size of instances.  For runtimes that support late-bound instances
   // this should probably be something different (size just of instance

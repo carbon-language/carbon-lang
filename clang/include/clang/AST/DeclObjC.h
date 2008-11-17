@@ -91,7 +91,7 @@ public:
 /// A selector represents a unique name for a method. The selector names for
 /// the above methods are setMenu:, menu, replaceSubview:with:, and defaultMenu.
 ///
-class ObjCMethodDecl : public Decl, public DeclContext {
+class ObjCMethodDecl : public NamedDecl, public DeclContext {
 public:
   enum ImplementationControl { None, Required, Optional };
 private:
@@ -114,9 +114,6 @@ private:
   
   // Context this method is declared in.
   NamedDecl *MethodContext;
-  
-  // A unigue name for this method.
-  Selector SelName;
   
   // Type of this method.
   QualType MethodDeclType;
@@ -146,13 +143,13 @@ private:
                  bool isVariadic = false,
                  bool isSynthesized = false,
                  ImplementationControl impControl = None)
-  : Decl(ObjCMethod, beginLoc),
+  : NamedDecl(ObjCMethod, beginLoc, SelInfo),
     DeclContext(ObjCMethod),
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     MethodContext(static_cast<NamedDecl*>(contextDecl)),
-    SelName(SelInfo), MethodDeclType(T), 
+    MethodDeclType(T), 
     ParamInfo(0), NumMethodParams(0), 
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
 
@@ -191,7 +188,7 @@ public:
     return const_cast<ObjCMethodDecl*>(this)->getClassInterface();
   }
   
-  Selector getSelector() const { return SelName; }
+  Selector getSelector() const { return getDeclName().getObjCSelector(); }
   unsigned getSynthesizedMethodSize() const;
   QualType getResultType() const { return MethodDeclType; }
   

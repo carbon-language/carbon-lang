@@ -37,6 +37,7 @@
   <ul>
   <li><a href="#Type">The Type class and its subclasses</a></li>
   <li><a href="#QualType">The QualType class</a></li>
+  <li><a href="#DeclarationName">Declaration names</a></li>
   <li><a href="#CFG">The CFG class</a></li>
   <li><a href="#Constants">Constant Folding in the Clang AST</a></li>
   </ul>
@@ -441,6 +442,107 @@ uniquing types (<a href="#Type">Type</a> does not even contain qualifiers).</p>
 the low bit of the pointer to the Type object.  This means that QualType is
 exactly the same size as a pointer, and this works fine on any system where
 malloc'd objects are at least 8 byte aligned.</p>
+
+<!-- ======================================================================= -->
+<h3 id="DeclarationName">Declaration names</h3>
+<!-- ======================================================================= -->
+
+<p>The <tt>DeclarationName</tt> class represents the name of a
+  declaration in Clang. Declarations in the C family of languages can
+  take several different forms. Most declarations are named by are
+  simple identifiers, e.g., "<code>f</code>" and "<code>x</code>" in
+  the function declaration <code>f(int x)</code>. In C++, declaration
+  names can also name class constructors ("<code>Class</code>"
+  in <code>struct Class { Class(); }</code>), class destructors
+  ("<code>~Class</code>"), overloaded operator names ("operator+"),
+  and conversion functions ("<code>operator void const *</code>"). In
+  Objective-C, declaration names can refer to the names of Objective-C
+  methods, which involve the method name and the parameters,
+  collectively called a <i>selector</i>, e.g..,
+  "<code>setWidth:height:</code>". Since all of these kinds of
+  entities--variables, functions, Objective-C methods, C++
+  constructors, destructors, and operators---are represented as
+  subclasses of Clang's common <code>NamedDecl</code>
+  class, <code>DeclarationName</code> is designed to efficiently
+  represent any kind of name.</p>
+
+<p>Given
+  a <code>DeclarationName</code> <code>N</code>, <code>N.getNameKind()</code>
+  will produce a valid that describes what kind of name <code>N</code>
+  stores. There are 7 options (all of the names are inside
+  the <code>DeclarationName</code> class)</p>
+<dl>
+  <dt>Identifier</dt>
+  <dd>The name is a simple
+  identifier. Use <code>N.getAsIdentifierInfo()</code> to retrieve the
+  corresponding <code>IdentifierInfo*</code> pointing to the actual
+  identifier. Note that C++ overloaded operators (e.g.,
+  "<code>operator+</code>") are represented as special kinds of
+  identifiers. Use <code>IdentifierInfo</code>'s <code>getOverloadedOperatorID</code>
+  function to determine whether an identifier is an overloaded
+  operator name.</dd>
+
+  <dt>ObjCZeroArgSelector, ObjCOneArgSelector,
+  ObjCMultiArgSelector</dt>
+  <dd>The name is an Objective-C selector, which can be retrieved as a
+    <code>Selector</code> instance
+    via <code>N.getObjCSelector()</code>. The three possible name
+    kinds for Objective-C reflect an optimization within
+    the <code>DeclarationName</code> class: both zero- and
+    one-argument selectors are stored as a
+    masked <code>IdentifierInfo</code> pointer, and therefore require
+    very little space, since zero- and one-argument selectors are far
+    more common than multi-argument selectors (which use a different
+    structure).</dd>
+
+  <dt>CXXConstructorName</dt>
+  <dd>The name is a C++ constructor
+    name. Use <code>N.getCXXNameType()</code> to retrieve
+    the <a href="#QualType">type</a> that this constructor is meant to
+    construct. The type is always the canonical type, since all
+    constructors for a given type have the same name.</dd>
+
+  <dt>CXXDestructorName</dt>
+  <dd>The name is a C++ destructor
+    name. Use <code>N.getCXXNameType()</code> to retrieve
+    the <a href="#QualType">type</a> whose destructor is being
+    named. This type is always a canonical type.</dd>
+
+  <dt>CXXConversionFunctionName</dt>
+  <dd>The name is a C++ conversion function. Conversion functions are
+  named according to the type they convert to, e.g., "<code>operator void
+      const *</code>". Use <code>N.getCXXNameType()</code> to retrieve
+  the type that this conversion function converts to. This type is
+    always a canonical type.</dd>
+</dl>
+
+<p><code>DeclarationName</code>s are cheap to create, copy, and
+  compare. They require only a single pointer's worth of storage in
+  the common cases (identifiers, C++ overloaded operator names, zero-
+  and one-argument Objective-C selectors) and use dense, uniqued
+  storage for the other kinds of
+  names. Two <code>DeclarationName</code>s can be compared for
+  equality (<code>==</code>, <code>!=</code>) using a simple bitwise
+  comparison, can be ordered
+  with <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>,
+  and <code>&gt;=</code> (which provide a lexicographical ordering for
+  normal identifiers but an unspecified ordering for other kinds of
+  names), and can be placed into LLVM <code>DenseMap</code>s
+  and <code>DenseSet</code>s.</p>
+
+<p><code>DeclarationName</code> instances can be created in different
+  ways depending on what kind of name the instance will store. Normal
+  identifiers (<code>IdentifierInfo</code> pointers), including
+  overloaded operator names, and Objective-C selectors
+  (<code>Selector</code>) can be implicitly converted
+  to <code>DeclarationName</code>s. Names for C++ constructors,
+  destructors, and conversion functions can be retrieved from
+  the <code>DeclarationNameTable</code>, an instance of which is
+  available as <code>ASTContext::DeclarationNames</code>. The member
+  functions <code>getCXXConstructorName</code>, <code>getCXXDestructorName</code>,
+  and <code>getCXXConversionFunctionName</code>, respectively,
+  return <code>DeclarationName</code> instances for the three kinds of
+  C++ special function names.</p>
 
 <!-- ======================================================================= -->
 <h3 id="CFG">The <tt>CFG</tt> class</h3>

@@ -1,0 +1,294 @@
+//===-- DeclarationName.h - Representation of declaration names -*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file declares the DeclarationName and DeclarationNameTable classes.
+//
+//===----------------------------------------------------------------------===//
+#ifndef LLVM_CLANG_AST_DECLARATIONNAME_H
+#define LLVM_CLANG_AST_DECLARATIONNAME_H
+
+#include "clang/Basic/IdentifierTable.h"
+#include "clang/AST/Type.h"
+#include "llvm/Bitcode/SerializationFwd.h"
+
+namespace llvm {
+  template <typename T> struct DenseMapInfo;
+}
+
+namespace clang {
+  class CXXSpecialName;       // a private class used by DeclarationName
+  class DeclarationNameExtra; // a private class used by DeclarationName
+  class IdentifierInfo;
+  class MultiKeywordSelector; // a private class used by Selector and DeclarationName
+
+/// DeclarationName - The name of a declaration. In the common case,
+/// this just stores an IdentifierInfo pointer to a normal
+/// name. However, it also provides encodings for Objective-C
+/// selectors (optimizing zero- and one-argument selectors, which make
+/// up 78% percent of all selectors in Cocoa.h) and special C++ names
+/// for constructors, destructors, and conversion functions.
+class DeclarationName {
+public:
+  /// NameKind - The kind of name this object contains.
+  enum NameKind {
+    Identifier,
+    ObjCZeroArgSelector,
+    ObjCOneArgSelector,
+    ObjCMultiArgSelector,
+    CXXConstructorName,
+    CXXDestructorName,
+    CXXConversionFunctionName
+  };
+
+private:
+  /// StoredNameKind - The kind of name that is actually stored in the
+  /// upper bits of the Ptr field. This is only used internally.
+  enum StoredNameKind {
+    StoredIdentifier = 0,
+    StoredObjCZeroArgSelector,
+    StoredObjCOneArgSelector,
+    StoredObjCMultiArgSelectorOrCXXName,
+    PtrMask = 0x03
+  };
+
+  /// Ptr - The lowest two bits are used to express what kind of name
+  /// we're actually storing, using the values of NameKind. Depending
+  /// on the kind of name this is, the upper bits of Ptr may have one
+  /// of several different meanings:
+  ///
+  ///   Identifier - The name is a normal identifier, and Ptr is a
+  ///   normal IdentifierInfo pointer.  
+  ///
+  ///   ObjCZeroArgSelector - The name is an Objective-C selector with
+  ///   zero arguments, and Ptr is an IdentifierInfo pointer pointing
+  ///   to the selector name.
+  ///
+  ///   ObjCOneArgSelector - The name is an Objective-C selector with
+  ///   one argument, and Ptr is an IdentifierInfo pointer pointing to
+  ///   the selector name.
+  ///
+  ///   ObjCMultiArgSelectorOrCXXName - This is either an Objective-C
+  ///   selector with two or more arguments or it is a C++ name. Ptr
+  ///   is actually a DeclarationNameExtra structure, whose first
+  ///   value will tell us whether this is an Objective-C selector or
+  ///   special C++ name.
+  uintptr_t Ptr;
+
+  /// getStoredNameKind - Return the kind of object that is stored in
+  /// Ptr.
+  StoredNameKind getStoredNameKind() const {
+    return static_cast<StoredNameKind>(Ptr & PtrMask);
+  }
+
+  /// getExtra - Get the "extra" information associated with this
+  /// multi-argument selector or C++ special name.
+  DeclarationNameExtra *getExtra() const {
+    assert(getStoredNameKind() == StoredObjCMultiArgSelectorOrCXXName &&
+           "Declaration name does not store an Extra structure");
+    return reinterpret_cast<DeclarationNameExtra *>(Ptr & ~PtrMask);
+  }
+
+  /// getAsCXXSpecialName - If the stored pointer is actually a
+  /// CXXSpecialName, returns a pointer to it. Otherwise, returns
+  /// a NULL pointer.
+  CXXSpecialName *getAsCXXSpecialName() const {
+    if (getNameKind() >= CXXConstructorName && 
+        getNameKind() <= CXXConversionFunctionName)
+      return reinterpret_cast<CXXSpecialName *>(Ptr & ~PtrMask);
+    else
+      return 0;
+  }
+
+  // Construct a declaration name from the name of a C++ constructor,
+  // destructor, or conversion function.
+  DeclarationName(CXXSpecialName *Name) 
+    : Ptr(reinterpret_cast<uintptr_t>(Name)) { 
+    assert((Ptr & PtrMask) == 0 && "Improperly aligned CXXSpecialName");
+    Ptr |= StoredObjCMultiArgSelectorOrCXXName;
+  }
+
+  // Construct a declaration name from a zero- or one-argument
+  // Objective-C selector.
+  DeclarationName(IdentifierInfo *II, unsigned numArgs) 
+    : Ptr(reinterpret_cast<uintptr_t>(II)) {
+    assert((Ptr & PtrMask) == 0 && "Improperly aligned IdentifierInfo");
+    assert(numArgs < 2 && "Use MultiKeywordSelector for >= 2 arguments");
+    if (numArgs == 0)
+      Ptr |= StoredObjCZeroArgSelector;
+    else
+      Ptr |= StoredObjCOneArgSelector;
+  }
+
+  // Construct a declaration name from an Objective-C multiple-keyword
+  // selector.
+  DeclarationName(MultiKeywordSelector *SI)
+    : Ptr(reinterpret_cast<uintptr_t>(SI)) {
+    assert((Ptr & PtrMask) == 0 && "Improperly aligned MultiKeywordSelector");
+    Ptr |= StoredObjCMultiArgSelectorOrCXXName;
+  }
+
+  /// Construct a declaration name from a raw pointer.
+  DeclarationName(uintptr_t Ptr) : Ptr(Ptr) { }
+
+  friend class DeclarationNameTable;
+
+public:
+  /// DeclarationName - Used to create an empty selector.
+  DeclarationName() : Ptr(0) { }
+
+  // Construct a declaration name from an IdentifierInfo *.
+  DeclarationName(IdentifierInfo *II) : Ptr(reinterpret_cast<uintptr_t>(II)) { 
+    assert((Ptr & PtrMask) == 0 && "Improperly aligned IdentifierInfo");
+  }
+
+  // Construct a declaration name from an Objective-C selector.
+  DeclarationName(Selector Sel);
+
+  /// getNameKind - Determine what kind of name this is.
+  NameKind getNameKind() const;
+
+  /// getAsIdentifierInfo - Retrieve the IdentifierInfo * stored in
+  /// this declaration name, or NULL if this declaration name isn't a
+  /// simple identifier.
+  IdentifierInfo *getAsIdentifierInfo() const { 
+    if (getNameKind() == Identifier)
+      return reinterpret_cast<IdentifierInfo *>(Ptr);
+    else
+      return 0;
+  }
+
+  /// getAsOpaqueInteger - Get the representation of this declaration
+  /// name as an opaque integer.
+  uintptr_t getAsOpaqueInteger() const { return Ptr; }
+
+  /// getCXXNameType - If this name is one of the C++ names (of a
+  /// constructor, destructor, or conversion function), return the
+  /// type associated with that name.
+  QualType getCXXNameType() const;
+
+  /// getObjCSelector - Get the Objective-C selector stored in this
+  /// declaration name.
+  Selector getObjCSelector() const;
+
+  /// operator== - Determine whether the specified names are identical..
+  friend bool operator==(DeclarationName LHS, DeclarationName RHS) {
+    return LHS.Ptr == RHS.Ptr;
+  }
+
+  /// operator!= - Determine whether the specified names are different.
+  friend bool operator!=(DeclarationName LHS, DeclarationName RHS) {
+    return LHS.Ptr != RHS.Ptr;
+  }
+
+  static DeclarationName getEmptyMarker() {
+    return DeclarationName(uintptr_t(-1));
+  }
+
+  static DeclarationName getTombstoneMarker() {
+    return DeclarationName(uintptr_t(-2));
+  }
+};
+
+/// Ordering on two declaration names. If both names are identifiers,
+/// this provides a lexicographical ordering.
+bool operator<(DeclarationName LHS, DeclarationName RHS);
+
+/// Ordering on two declaration names. If both names are identifiers,
+/// this provides a lexicographical ordering.
+inline bool operator>(DeclarationName LHS, DeclarationName RHS) {
+  return RHS < LHS;
+}
+
+/// Ordering on two declaration names. If both names are identifiers,
+/// this provides a lexicographical ordering.
+inline bool operator<=(DeclarationName LHS, DeclarationName RHS) {
+  return !(RHS < LHS);
+}
+
+/// Ordering on two declaration names. If both names are identifiers,
+/// this provides a lexicographical ordering.
+inline bool operator>=(DeclarationName LHS, DeclarationName RHS) {
+  return !(LHS < RHS);
+}
+
+/// DeclarationNameTable - Used to store and retrieve DeclarationName
+/// instances for the various kinds of declaration names, e.g., normal
+/// identifiers, C++ constructor names, etc. This class contains
+/// uniqued versions of each of the C++ special names, which can be
+/// retrieved using its member functions (e.g.,
+/// getCXXConstructorName).
+class DeclarationNameTable {
+  void *CXXSpecialNamesImpl; // Actually a FoldingSet<CXXSpecialName> *
+
+  DeclarationNameTable(const DeclarationNameTable&);            // NONCOPYABLE
+  DeclarationNameTable& operator=(const DeclarationNameTable&); // NONCOPYABLE
+
+public:
+  DeclarationNameTable();
+  ~DeclarationNameTable();
+
+  /// getIdentifier - Create a declaration name that is a simple
+  /// identifier.
+  DeclarationName getIdentifier(IdentifierInfo *ID) {
+    return DeclarationName(ID);
+  }
+
+  /// getCXXConstructorName - Returns the name of a C++ constructor
+  /// for the given Type.
+  DeclarationName getCXXConstructorName(QualType Ty) {
+    return getCXXSpecialName(DeclarationName::CXXConstructorName, Ty);
+  }
+
+  /// getCXXDestructorName - Returns the name of a C++ destructor
+  /// for the given Type.
+  DeclarationName getCXXDestructorName(QualType Ty) {
+    return getCXXSpecialName(DeclarationName::CXXDestructorName, Ty);
+  }
+
+  /// getCXXConversionFunctionName - Returns the name of a C++
+  /// conversion function for the given Type.
+  DeclarationName getCXXConversionFunctionName(QualType Ty) {
+    return getCXXSpecialName(DeclarationName::CXXConversionFunctionName, Ty);
+  }
+
+  /// getCXXSpecialName - Returns a declaration name for special kind
+  /// of C++ name, e.g., for a constructor, destructor, or conversion
+  /// function.
+  DeclarationName getCXXSpecialName(DeclarationName::NameKind Kind, 
+                                    QualType Ty);
+};  
+
+}  // end namespace clang
+
+namespace llvm {
+/// Define DenseMapInfo so that DeclarationNames can be used as keys
+/// in DenseMap and DenseSets.
+template<>
+struct DenseMapInfo<clang::DeclarationName> {
+  static inline clang::DeclarationName getEmptyKey() {
+    return clang::DeclarationName::getEmptyMarker();
+  }
+
+  static inline clang::DeclarationName getTombstoneKey() {
+    return clang::DeclarationName::getTombstoneMarker();
+  }
+
+  static unsigned getHashValue(clang::DeclarationName);
+
+  static inline bool 
+  isEqual(clang::DeclarationName LHS, clang::DeclarationName RHS) {
+    return LHS == RHS;
+  }
+
+  static inline bool isPod() { return true; }
+};
+
+}  // end namespace llvm
+
+#endif

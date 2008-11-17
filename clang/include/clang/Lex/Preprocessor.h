@@ -87,7 +87,7 @@ class Preprocessor {
   /// FIXME: Make sure the lifetime of Identifiers/Selectors *isn't* tied to
   /// the lifetime fo the preprocessor.
   SelectorTable Selectors;
-  
+
   /// PragmaHandlers - This tracks all of the pragmas that the client registered
   /// with this preprocessor.
   PragmaNamespace *PragmaHandlers;
@@ -175,7 +175,7 @@ public:
 
   IdentifierTable &getIdentifierTable() { return Identifiers; }
   SelectorTable &getSelectorTable() { return Selectors; }
-  
+
   inline FullSourceLoc getFullLoc(SourceLocation Loc) const {
     return FullSourceLoc(Loc, getSourceManager());
   }

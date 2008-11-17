@@ -202,7 +202,7 @@ void StmtDumper::DumpDeclarator(Decl *D) {
   if (TypedefDecl *localType = dyn_cast<TypedefDecl>(D)) {
     fprintf(F, "\"typedef %s %s\"",
             localType->getUnderlyingType().getAsString().c_str(),
-            localType->getName());
+            localType->getIdentifierName());
   } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     fprintf(F, "\"");
     // Emit storage class for vardecls.
@@ -295,14 +295,16 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
     default: fprintf(F,"Decl"); break;
   }
   
-  fprintf(F, "='%s' %p", Node->getDecl()->getName(), (void*)Node->getDecl());
+  fprintf(F, "='%s' %p", Node->getDecl()->getName().c_str(), 
+          (void*)Node->getDecl());
 }
 
 void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   DumpExpr(Node);
 
   fprintf(F, " %sDecl='%s' %p", Node->getDecl()->getDeclKindName(), 
-                            Node->getDecl()->getName(), (void*)Node->getDecl());
+                            Node->getDecl()->getIdentifierName(), 
+          (void*)Node->getDecl());
   if (Node->isFreeIvar())
     fprintf(F, " isFreeIvar");
 }
@@ -373,7 +375,8 @@ void StmtDumper::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
 void StmtDumper::VisitMemberExpr(MemberExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " %s%s %p", Node->isArrow() ? "->" : ".",
-          Node->getMemberDecl()->getName(), (void*)Node->getMemberDecl());
+          Node->getMemberDecl()->getName().c_str(), 
+          (void*)Node->getMemberDecl());
 }
 void StmtDumper::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
   DumpExpr(Node);
@@ -461,7 +464,7 @@ void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
   DumpExpr(Node);
   
   fprintf(F, " ");
-  fprintf(F, "%s", Node->getProtocol()->getName());
+  fprintf(F, "%s", Node->getProtocol()->getIdentifierName());
 }
 
 void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
@@ -474,7 +477,8 @@ void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
             Getter->getSelector().getName().c_str(),
             Setter ? Setter->getSelector().getName().c_str() : "(null)");
   } else {
-    fprintf(F, " Kind=PropertyRef Property=\"%s\"", Node->getProperty()->getName());
+    fprintf(F, " Kind=PropertyRef Property=\"%s\"", 
+            Node->getProperty()->getIdentifierName());
   }
 }
 

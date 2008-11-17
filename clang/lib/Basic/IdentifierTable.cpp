@@ -297,22 +297,22 @@ unsigned llvm::DenseMapInfo<clang::Selector>::getHashValue(clang::Selector S) {
   return DenseMapInfo<void*>::getHashValue(S.getAsOpaquePtr());
 }
 
-
+namespace clang {
 /// MultiKeywordSelector - One of these variable length records is kept for each
 /// selector containing more than one keyword. We use a folding set
 /// to unique aggregate names (keyword selectors in ObjC parlance). Access to 
 /// this class is provided strictly through Selector.
-namespace clang {
-class MultiKeywordSelector : public llvm::FoldingSetNode {
+class MultiKeywordSelector 
+  : public DeclarationNameExtra, public llvm::FoldingSetNode {
   friend SelectorTable* SelectorTable::CreateAndRegister(llvm::Deserializer&);
-  MultiKeywordSelector(unsigned nKeys) : NumArgs(nKeys) {}
+  MultiKeywordSelector(unsigned nKeys) {
+    ExtraKindOrNumArgs = NUM_EXTRA_KINDS + nKeys;
+  }
 public:  
-  unsigned NumArgs;
-
   // Constructor for keyword selectors.
   MultiKeywordSelector(unsigned nKeys, IdentifierInfo **IIV) {
     assert((nKeys > 1) && "not a multi-keyword selector");
-    NumArgs = nKeys;
+    ExtraKindOrNumArgs = NUM_EXTRA_KINDS + nKeys;
     
     // Fill in the trailing keyword array.
     IdentifierInfo **KeyInfo = reinterpret_cast<IdentifierInfo **>(this+1);
@@ -323,17 +323,17 @@ public:
   // getName - Derive the full selector name and return it.
   std::string getName() const;
     
-  unsigned getNumArgs() const { return NumArgs; }
+  unsigned getNumArgs() const { return ExtraKindOrNumArgs - NUM_EXTRA_KINDS; }
   
   typedef IdentifierInfo *const *keyword_iterator;
   keyword_iterator keyword_begin() const {
     return reinterpret_cast<keyword_iterator>(this+1);
   }
   keyword_iterator keyword_end() const { 
-    return keyword_begin()+NumArgs; 
+    return keyword_begin()+getNumArgs(); 
   }
   IdentifierInfo *getIdentifierInfoForSlot(unsigned i) const {
-    assert(i < NumArgs && "getIdentifierInfoForSlot(): illegal index");
+    assert(i < getNumArgs() && "getIdentifierInfoForSlot(): illegal index");
     return keyword_begin()[i];
   }
   static void Profile(llvm::FoldingSetNodeID &ID, 
@@ -343,7 +343,7 @@ public:
       ID.AddPointer(ArgTys[i]);
   }
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, keyword_begin(), NumArgs);
+    Profile(ID, keyword_begin(), getNumArgs());
   }
 };
 } // end namespace clang.

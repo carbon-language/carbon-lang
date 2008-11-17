@@ -133,9 +133,47 @@ FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
 
-const char *NamedDecl::getName() const {
-  if (const IdentifierInfo *II = getIdentifier())
-    return II->getName();
+std::string NamedDecl::getName() const {
+  switch (Name.getNameKind()) {
+  case DeclarationName::Identifier:
+    if (const IdentifierInfo *II = Name.getAsIdentifierInfo())
+      return II->getName();
+    return "";
+
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    return Name.getObjCSelector().getName();
+
+  case DeclarationName::CXXConstructorName: {
+    QualType ClassType = Name.getCXXNameType();
+    if (const RecordType *ClassRec = ClassType->getAsRecordType())
+      return ClassRec->getDecl()->getName();
+    return ClassType.getAsString();
+  }
+
+  case DeclarationName::CXXDestructorName: {
+    std::string Result = "~";
+    QualType Type = Name.getCXXNameType();
+    if (const RecordType *Rec = Type->getAsRecordType())
+      Result += Rec->getDecl()->getName();
+    else
+      Result += Type.getAsString();
+    return Result;
+  }
+
+  case DeclarationName::CXXConversionFunctionName: {
+    std::string Result = "operator ";
+    QualType Type = Name.getCXXNameType();
+    if (const RecordType *Rec = Type->getAsRecordType())
+      Result += Rec->getDecl()->getName();
+    else
+      Result += Type.getAsString();
+    return Result;
+  }
+  }
+
+  assert(false && "Unexpected declaration name kind");
   return "";
 }
 

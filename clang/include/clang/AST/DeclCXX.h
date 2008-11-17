@@ -34,8 +34,8 @@ class CXXConversionDecl;
 /// overloaded functions for name lookup.
 class OverloadedFunctionDecl : public NamedDecl {
 protected:
-  OverloadedFunctionDecl(DeclContext *DC, IdentifierInfo *Id)
-    : NamedDecl(OverloadedFunction, SourceLocation(), Id) { }
+  OverloadedFunctionDecl(DeclContext *DC, DeclarationName N)
+    : NamedDecl(OverloadedFunction, SourceLocation(), N) { }
 
   /// Functions - the set of overloaded functions contained in this
   /// overload set.
@@ -47,16 +47,16 @@ public:
     function_const_iterator;
 
   static OverloadedFunctionDecl *Create(ASTContext &C, DeclContext *DC,
-                                        IdentifierInfo *Id);
+                                        DeclarationName N);
 
   /// addOverload - Add an overloaded function FD to this set of
   /// overloaded functions.
   void addOverload(FunctionDecl *FD) {
     assert((!getNumFunctions() || (FD->getDeclContext() == getDeclContext())) &&
            "Overloaded functions must all be in the same context");
-    assert((FD->getIdentifier() == getIdentifier() ||
-            isa<CXXConversionDecl>(FD)) &&
-           "Overloaded functions must have the same name or be conversions.");
+    assert((FD->getDeclName() == getDeclName() ||
+            isa<CXXConversionDecl>(FD) || isa<CXXConstructorDecl>(FD)) &&
+           "Overloaded functions must have the same name");
     Functions.push_back(FD);
   }
 
@@ -246,7 +246,7 @@ class CXXRecordDecl : public RecordDecl, public DeclContext {
   /// CXXConversionDecl.
   OverloadedFunctionDecl Conversions;
 
-  CXXRecordDecl(ASTContext &C, TagKind TK, DeclContext *DC,
+  CXXRecordDecl(TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id);
 
   ~CXXRecordDecl();
@@ -389,9 +389,9 @@ protected:
 class CXXMethodDecl : public FunctionDecl {
 protected:
   CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation L,
-                IdentifierInfo *Id, QualType T,
+                DeclarationName N, QualType T,
                 bool isStatic, bool isInline, ScopedDecl *PrevDecl)
-    : FunctionDecl(DK, RD, L, Id, T, (isStatic ? Static : None),
+    : FunctionDecl(DK, RD, L, N, T, (isStatic ? Static : None),
                    isInline, PrevDecl) {}
 
 public:
@@ -576,20 +576,18 @@ class CXXConstructorDecl : public CXXMethodDecl {
   /// FIXME: Add support for base and member initializers.
 
   CXXConstructorDecl(CXXRecordDecl *RD, SourceLocation L,
-                     IdentifierInfo *Id, QualType T,
+                     DeclarationName N, QualType T,
                      bool isExplicit, bool isInline, bool isImplicitlyDeclared)
-    : CXXMethodDecl(CXXConstructor, RD, L, Id, T, false, isInline, /*PrevDecl=*/0),
+    : CXXMethodDecl(CXXConstructor, RD, L, N, T, false, isInline, 
+                    /*PrevDecl=*/0),
       Explicit(isExplicit), ImplicitlyDeclared(isImplicitlyDeclared),
       ImplicitlyDefined(false) { }
 
 public:
   static CXXConstructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
-                                    SourceLocation L, IdentifierInfo *Id,
+                                    SourceLocation L, DeclarationName N,
                                     QualType T, bool isExplicit,
                                     bool isInline, bool isImplicitlyDeclared);
-
-  /// getName - Returns a human-readable name for this constructor.
-  virtual const char *getName() const;
 
   /// isExplicit - Whether this constructor was marked "explicit" or not.  
   bool isExplicit() const { return Explicit; }
@@ -686,28 +684,19 @@ class CXXDestructorDecl : public CXXMethodDecl {
   /// @c !ImplicitlyDeclared && ImplicitlyDefined.
   bool ImplicitlyDefined : 1;
 
-  /// Name - The formatted name of this destructor. This will be
-  /// generated when getName() is called.
-  mutable char *Name;
-
   CXXDestructorDecl(CXXRecordDecl *RD, SourceLocation L,
-                    IdentifierInfo *Id, QualType T,
+                    DeclarationName N, QualType T,
                     bool isInline, bool isImplicitlyDeclared)
-    : CXXMethodDecl(CXXDestructor, RD, L, Id, T, false, isInline, 
+    : CXXMethodDecl(CXXDestructor, RD, L, N, T, false, isInline, 
                     /*PrevDecl=*/0),
       ImplicitlyDeclared(isImplicitlyDeclared),
-      ImplicitlyDefined(false), Name(0) { }
+      ImplicitlyDefined(false) { }
 
 public:
   static CXXDestructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
-                                   SourceLocation L, IdentifierInfo *Id,
+                                   SourceLocation L, DeclarationName N,
                                    QualType T, bool isInline, 
                                    bool isImplicitlyDeclared);
-
-  virtual ~CXXDestructorDecl();
-
-  /// getName - Returns a human-readable name for this destructor.
-  virtual const char *getName() const;
 
   /// isImplicitlyDeclared - Whether this destructor was implicitly
   /// declared. If false, then this destructor was explicitly
@@ -762,28 +751,18 @@ class CXXConversionDecl : public CXXMethodDecl {
   /// explicitly wrote a cast. This is a C++0x feature.
   bool Explicit : 1;
 
-  /// Name - The formatted name of this conversion function. This will
-  /// be generated when getName() is called.
-  mutable char *Name;
-
   CXXConversionDecl(CXXRecordDecl *RD, SourceLocation L,
-                    IdentifierInfo *Id, QualType T, 
+                    DeclarationName N, QualType T, 
                     bool isInline, bool isExplicit)
-    : CXXMethodDecl(CXXConversion, RD, L, Id, T, false, isInline, 
+    : CXXMethodDecl(CXXConversion, RD, L, N, T, false, isInline, 
                     /*PrevDecl=*/0),
-      Explicit(isExplicit), Name(0) { }
+      Explicit(isExplicit) { }
 
 public:
   static CXXConversionDecl *Create(ASTContext &C, CXXRecordDecl *RD,
-                                   SourceLocation L, IdentifierInfo *Id,
+                                   SourceLocation L, DeclarationName N,
                                    QualType T, bool isInline, 
                                    bool isExplicit);
-
-  virtual ~CXXConversionDecl();
-
-  /// getName - Returns a human-readable name for this conversion
-  /// function.
-  virtual const char *getName() const;
 
   /// isExplicit - Whether this is an explicit conversion operator
   /// (C++0x only). Explicit conversion operators are only considered
