@@ -277,21 +277,6 @@ namespace {
       AllocaPointerVal = 0;
     }
     
-    /// RemoveDebugUses - Remove uses of the alloca in DbgInfoInstrinsics.
-    void RemoveDebugUses(AllocaInst *AI) {
-      for (Value::use_iterator U = AI->use_begin(), E = AI->use_end();
-           U != E;) {
-        Instruction *User = cast<Instruction>(*U);
-        ++U;
-        if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
-          assert(BC->hasOneUse() && "Unexpected alloca uses!");
-          DbgInfoIntrinsic *DI = cast<DbgInfoIntrinsic>(*BC->use_begin());
-          DI->eraseFromParent();
-          BC->eraseFromParent();
-        } 
-      }
-    }
-
     /// AnalyzeAlloca - Scan the uses of the specified alloca, filling in our
     /// ivars.
     void AnalyzeAlloca(AllocaInst *AI) {
@@ -301,9 +286,18 @@ namespace {
       // and decide whether all of the loads and stores to the alloca are within
       // the same basic block.
       for (Value::use_iterator U = AI->use_begin(), E = AI->use_end();
-           U != E; ++U) {
+           U != E;)  {
         Instruction *User = cast<Instruction>(*U);
-        if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+        ++U;
+        if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
+          // Remove any uses of this alloca in DbgInfoInstrinsics.
+          assert(BC->hasOneUse() && "Unexpected alloca uses!");
+          DbgInfoIntrinsic *DI = cast<DbgInfoIntrinsic>(*BC->use_begin());
+          DI->eraseFromParent();
+          BC->eraseFromParent();
+          continue;
+        } 
+        else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
           // Remember the basic blocks which define new values for the alloca
           DefiningBlocks.push_back(SI->getParent());
           AllocaPointerVal = SI->getOperand(0);
@@ -343,9 +337,6 @@ void PromoteMem2Reg::run() {
            "Cannot promote non-promotable alloca!");
     assert(AI->getParent()->getParent() == &F &&
            "All allocas should be in the same function, which is same as DF!");
-
-    // Remove any uses of this alloca in DbgInfoInstrinsics.
-    Info.RemoveDebugUses(AI);
 
     if (AI->use_empty()) {
       // If there are no uses of the alloca, just delete it now.
