@@ -752,3 +752,48 @@ LBB2_1:	; bb
 The 'mr' could be eliminated to folding the add into the cmp better.
 
 //===---------------------------------------------------------------------===//
+Codegen for the following (low-probability) case deteriorated considerably 
+when the correctness fixes for unordered comparisons went in (PR 642, 58871).
+It should be possible to recover the code quality described in the comments.
+
+; RUN: llvm-as < %s | llc -march=ppc32  | grep or | count 3
+; This should produce one 'or' or 'cror' instruction per function.
+
+; RUN: llvm-as < %s | llc -march=ppc32  | grep mfcr | count 3
+; PR2964
+
+define i32 @test(double %x, double %y) nounwind  {
+entry:
+	%tmp3 = fcmp ole double %x, %y		; <i1> [#uses=1]
+	%tmp345 = zext i1 %tmp3 to i32		; <i32> [#uses=1]
+	ret i32 %tmp345
+}
+
+define i32 @test2(double %x, double %y) nounwind  {
+entry:
+	%tmp3 = fcmp one double %x, %y		; <i1> [#uses=1]
+	%tmp345 = zext i1 %tmp3 to i32		; <i32> [#uses=1]
+	ret i32 %tmp345
+}
+
+define i32 @test3(double %x, double %y) nounwind  {
+entry:
+	%tmp3 = fcmp ugt double %x, %y		; <i1> [#uses=1]
+	%tmp34 = zext i1 %tmp3 to i32		; <i32> [#uses=1]
+	ret i32 %tmp34
+}
+//===----------------------------------------------------------------------===//
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep fneg
+
+; This could generate FSEL with appropriate flags (FSEL is not IEEE-safe, and 
+; should not be generated except with -enable-finite-only-fp-math or the like).
+; With the correctness fixes for PR642 (58871) LowerSELECT_CC would need to
+; recognize a more elaborate tree than a simple SETxx.
+
+define double @test_FNEG_sel(double %A, double %B, double %C) {
+        %D = sub double -0.000000e+00, %A               ; <double> [#uses=1]
+        %Cond = fcmp ugt double %D, -0.000000e+00               ; <i1> [#uses=1]
+        %E = select i1 %Cond, double %B, double %C              ; <double> [#uses=1]
+        ret double %E
+}
+
