@@ -1137,15 +1137,17 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SuccSU, bool isChain,
 void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
   DEBUG(SU->dump(DAG));
-  SU->Cycle = CurCycle;
 
-  AvailableQueue->ScheduledNode(SU);
+  SU->Cycle = CurCycle;
+  Sequence.push_back(SU);
 
   // Top down: release successors
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
     ReleaseSucc(I->Dep, I->isCtrl, CurCycle);
+
   SU->isScheduled = true;
+  AvailableQueue->ScheduledNode(SU);
 }
 
 /// ListScheduleTopDown - The main loop of list scheduling for top-down
@@ -1181,7 +1183,6 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
       Sequence.push_back(0);
     else {
       ScheduleNodeTopDown(CurSU, CurCycle);
-      Sequence.push_back(CurSU);
     }
     ++CurCycle;
   }

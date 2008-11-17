@@ -148,11 +148,14 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   
   Sequence.push_back(SU);
   SU->Cycle = CurCycle;
-  
+
   // Top down: release successors.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
     ReleaseSucc(I->Dep, I->isCtrl);
+
+  SU->isScheduled = true;
+  AvailableQueue->ScheduledNode(SU);
 }
 
 /// ListScheduleTopDown - The main loop of list scheduling for top-down
@@ -235,8 +238,6 @@ void ScheduleDAGList::ListScheduleTopDown() {
     if (FoundSUnit) {
       ScheduleNodeTopDown(FoundSUnit, CurCycle);
       HazardRec->EmitInstruction(FoundNode);
-      FoundSUnit->isScheduled = true;
-      AvailableQueue->ScheduledNode(FoundSUnit);
 
       // If this is a pseudo-op node, we don't want to increment the current
       // cycle.
