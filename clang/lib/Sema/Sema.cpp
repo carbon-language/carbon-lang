@@ -241,5 +241,8 @@ const LangOptions &Sema::getLangOptions() const {
 }
 
 ObjCMethodDecl *Sema::getCurMethodDecl() {
-  return dyn_cast<ObjCMethodDecl>(CurContext);
+  DeclContext *DC = CurContext;
+  while (isa<BlockDecl>(DC))
+    DC = DC->getParent();
+  return dyn_cast<ObjCMethodDecl>(DC);
 }
