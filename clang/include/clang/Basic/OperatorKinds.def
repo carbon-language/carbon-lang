@@ -56,10 +56,10 @@
     OVERLOADED_OPERATOR(Name,Spelling,unknown,Unary,Binary,MemberOnly)
 #endif
 
-OVERLOADED_OPERATOR_MULTI(New            , "new"                     , true , true , false)
-OVERLOADED_OPERATOR_MULTI(Delete         , "delete"                  , true , true , false)
-OVERLOADED_OPERATOR_MULTI(Array_New      , "new[]"                   , true , true , false)
-OVERLOADED_OPERATOR_MULTI(Array_Delete   , "delete[]"                , true , true , false)
+OVERLOADED_OPERATOR_MULTI(New            , "new"                      , true , true , false)
+OVERLOADED_OPERATOR_MULTI(Delete         , "delete"                   , true , true , false)
+OVERLOADED_OPERATOR_MULTI(Array_New      , "new[]"                    , true , true , false)
+OVERLOADED_OPERATOR_MULTI(Array_Delete   , "delete[]"                 , true , true , false)
 OVERLOADED_OPERATOR(Plus                 , "+"   , plus               , true , true , false)
 OVERLOADED_OPERATOR(Minus                , "-"   , minus              , true , true , false)
 OVERLOADED_OPERATOR(Star                 , "*"   , star               , true , true , false)
