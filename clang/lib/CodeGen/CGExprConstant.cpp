@@ -859,7 +859,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 
         const llvm::Type *Type = 
           llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-        const llvm::Type *DestType = C->getType();
+        const llvm::Type *DestType = getTypes().ConvertTypeForMem(E->getType());
         
         // FIXME: It's a little ugly that we need to cast to a pointer,
         // apply the GEP and then cast back.
@@ -872,7 +872,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       return llvm::ConstantExpr::getIntToPtr(Offset, 
                                              getTypes().ConvertType(type));
     }
-    case APValue::Int:
+    case APValue::Int: {
       llvm::Constant *C = llvm::ConstantInt::get(V.getInt());
       
       if (C->getType() == llvm::Type::Int1Ty) {
@@ -880,6 +880,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
         C = llvm::ConstantExpr::getZExt(C, BoolTy);
       }
       return C;
+    }
     case APValue::Float:
       return llvm::ConstantFP::get(V.getFloat());
     case APValue::ComplexFloat: {
