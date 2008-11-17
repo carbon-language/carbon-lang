@@ -278,7 +278,23 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
 
   QualType ReceiverCType =
     Context.getCanonicalType(RExpr->getType()).getUnqualifiedType();
-  
+
+  // Handle messages to 'super'.
+  if (isa<ObjCSuperExpr>(RExpr)) {
+    ObjCMethodDecl *Method = 0;
+    if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
+      // If we have an interface in scope, check 'super' methods.
+      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
+        if (ObjCInterfaceDecl *SuperDecl = ClassDecl->getSuperClass())
+          Method = SuperDecl->lookupInstanceMethod(Sel);
+    }
+    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
+                                  lbrac, rbrac, returnType))
+      return true;
+    return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
+                               ArgExprs, NumArgs);
+  }
+
   // Handle messages to id.
   if (ReceiverCType == Context.getCanonicalType(Context.getObjCIdType()) ||
       ReceiverCType->getAsBlockPointerType()) {

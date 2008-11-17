@@ -5,6 +5,7 @@
 
 @interface NSObject
 - (void)release;
+- dealloc;
 @end
 
 @interface MyClass : NSObject {
