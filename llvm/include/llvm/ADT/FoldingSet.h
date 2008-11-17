@@ -449,6 +449,12 @@ template<typename T> struct FoldingSetTrait<T*> {
   }
 };
 
+template<typename T> struct FoldingSetTrait<const T*> {
+  static inline void Profile(const T* X, FoldingSetNodeID& ID) {
+    ID.AddPointer(X);
+  }
+};
+
 } // End of namespace llvm.
 
 

@@ -194,11 +194,6 @@ public:
 //===----------------------------------------------------------------------===//
 // Partially-specialized Traits.
 //===----------------------------------------------------------------------===//
-template<typename T> struct FoldingSetTrait<const T*> {
-  static inline void Profile(const T* X, FoldingSetNodeID& ID) {
-    ID.AddPointer(X);
-  }
-};
 
 template<typename T> struct DenseMapInfo;
 template<typename T> struct DenseMapInfo<ImmutableList<T> > {
