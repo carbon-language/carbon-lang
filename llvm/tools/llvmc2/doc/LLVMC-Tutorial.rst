@@ -66,7 +66,7 @@ Contents of the file ``Simple.td`` look like this::
     def LanguageMap : LanguageMap<[LangToSuffixes<"c", ["c"]>]>;
 
     // Compilation graph
-    def CompilationGraph : CompilationGraph<[Edge<root, gcc>]>;
+    def CompilationGraph : CompilationGraph<[Edge<"root", "gcc">]>;
 
 As you can see, this file consists of three parts: tool descriptions,
 language map, and the compilation graph definition.

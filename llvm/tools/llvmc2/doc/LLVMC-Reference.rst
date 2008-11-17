@@ -158,7 +158,7 @@ definitions::
    include "llvm/CompilerDriver/Common.td"
    // And optionally:
    // include "llvm/CompilerDriver/Tools.td"
-   // which contains tool definitions.
+   // which contains some useful tool definitions.
 
 Internally, LLVMC stores information about possible source
 transformations in form of a graph. Nodes in this graph represent
@@ -171,19 +171,19 @@ The definition of the compilation graph (see file
 ``plugins/Base/Base.td`` for an example) is just a list of edges::
 
     def CompilationGraph : CompilationGraph<[
-        Edge<root, llvm_gcc_c>,
-        Edge<root, llvm_gcc_assembler>,
+        Edge<"root", "llvm_gcc_c">,
+        Edge<"root", "llvm_gcc_assembler">,
         ...
 
-        Edge<llvm_gcc_c, llc>,
-        Edge<llvm_gcc_cpp, llc>,
+        Edge<"llvm_gcc_c", "llc">,
+        Edge<"llvm_gcc_cpp", "llc">,
         ...
 
-        OptionalEdge<llvm_gcc_c, opt, [(switch_on "opt")]>,
-        OptionalEdge<llvm_gcc_cpp, opt, [(switch_on "opt")]>,
+        OptionalEdge<"llvm_gcc_c", "opt", [(switch_on "opt")]>,
+        OptionalEdge<"llvm_gcc_cpp", "opt", [(switch_on "opt")]>,
         ...
 
-        OptionalEdge<llvm_gcc_assembler, llvm_gcc_cpp_linker,
+        OptionalEdge<"llvm_gcc_assembler", "llvm_gcc_cpp_linker",
             (case (input_languages_contain "c++"), (inc_weight),
                   (or (parameter_equals "linker", "g++"),
                       (parameter_equals "linker", "c++")), (inc_weight))>,
@@ -193,7 +193,10 @@ The definition of the compilation graph (see file
 
 As you can see, the edges can be either default or optional, where
 optional edges are differentiated by an additional ``case`` expression
-used to calculate the weight of this edge.
+used to calculate the weight of this edge. Notice also that we refer
+to tools via their names (as strings). This allows us to add edges to
+an existing compilation graph without having to include all tool
+definitions that it uses.
 
 The default edges are assigned a weight of 1, and optional edges get a
 weight of 0 + 2*N where N is the number of tests that evaluated to

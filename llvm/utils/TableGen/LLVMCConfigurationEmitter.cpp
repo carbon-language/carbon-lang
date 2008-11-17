@@ -764,11 +764,11 @@ void CollectToolProperties (RecordVector::const_iterator B,
 }
 
 
-/// CollectPropertiesFromOptionList - Gather information about
-/// *global* option properties from the OptionList.
-void CollectPropertiesFromOptionList (RecordVector::const_iterator B,
-                                      RecordVector::const_iterator E,
-                                      GlobalOptionDescriptions& OptDescs)
+/// CollectPropertiesFromOptionLists - Gather information about
+/// *global* option properties from all OptionLists.
+void CollectPropertiesFromOptionLists (RecordVector::const_iterator B,
+                                       RecordVector::const_iterator E,
+                                       GlobalOptionDescriptions& OptDescs)
 {
   // Iterate over a properties list of every Tool definition
   for (;B!=E;++B) {
@@ -805,7 +805,7 @@ void CheckForSuperfluousOptions (const ToolPropertiesList& TPList,
     const GlobalOptionDescription& Val = B->second;
     if (!nonSuperfluousOptions.count(Val.Name)
         && Val.Type != OptionType::Alias)
-      cerr << "Warning: option '-" << Val.Name << "' has no effect! "
+      llvm::cerr << "Warning: option '-" << Val.Name << "' has no effect! "
         "Probable cause: this option is specified only in the OptionList.\n";
   }
 }
@@ -1448,29 +1448,31 @@ void EmitOptionDescriptions (const GlobalOptionDescriptions& descs,
 /// EmitPopulateLanguageMap - Emit the PopulateLanguageMap() function.
 void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
 {
-  // Get the relevant field out of RecordKeeper
-  Record* LangMapRecord = Records.getDef("LanguageMap");
-  if (!LangMapRecord)
-    throw std::string("Language map definition not found!");
-
-  ListInit* LangsToSuffixesList = LangMapRecord->getValueAsListInit("map");
-  if (!LangsToSuffixesList)
-    throw std::string("Error in the language map definition!");
-
   // Generate code
   O << "namespace {\n\n";
   O << "void PopulateLanguageMapLocal(LanguageMap& langMap) {\n";
 
-  for (unsigned i = 0; i < LangsToSuffixesList->size(); ++i) {
-    Record* LangToSuffixes = LangsToSuffixesList->getElementAsRecord(i);
+  // Get the relevant field out of RecordKeeper
+  Record* LangMapRecord = Records.getDef("LanguageMap");
 
-    const std::string& Lang = LangToSuffixes->getValueAsString("lang");
-    const ListInit* Suffixes = LangToSuffixes->getValueAsListInit("suffixes");
+  // It is allowed for a plugin to have no language map.
+  if (LangMapRecord) {
 
-    for (unsigned i = 0; i < Suffixes->size(); ++i)
-      O << Indent1 << "langMap[\""
-        << InitPtrToString(Suffixes->getElement(i))
-        << "\"] = \"" << Lang << "\";\n";
+    ListInit* LangsToSuffixesList = LangMapRecord->getValueAsListInit("map");
+    if (!LangsToSuffixesList)
+      throw std::string("Error in the language map definition!");
+
+    for (unsigned i = 0; i < LangsToSuffixesList->size(); ++i) {
+      Record* LangToSuffixes = LangsToSuffixesList->getElementAsRecord(i);
+
+      const std::string& Lang = LangToSuffixes->getValueAsString("lang");
+      const ListInit* Suffixes = LangToSuffixes->getValueAsListInit("suffixes");
+
+      for (unsigned i = 0; i < Suffixes->size(); ++i)
+        O << Indent1 << "langMap[\""
+          << InitPtrToString(Suffixes->getElement(i))
+          << "\"] = \"" << Lang << "\";\n";
+    }
   }
 
   O << "}\n\n}\n\n";
@@ -1492,13 +1494,11 @@ void FillInToolToLang (const ToolPropertiesList& TPList,
 }
 
 /// TypecheckGraph - Check that names for output and input languages
-/// on all edges do match.
-// TOFIX: It would be nice if this function also checked for cycles
-// and multiple default edges in the graph (better error
-// reporting). Unfortunately, it is awkward to do right now because
-// our intermediate representation is not sufficiently
-// sophisticated. Algorithms like these require a real graph instead of
-// an AST.
+/// on all edges do match. This doesn't do much when the information
+/// about the whole graph is not available (i.e. when compiling most
+/// plugins).
+// TODO: add a --check-graph switch to llvmc2. It would also make it
+// possible to detect cycles and multiple default edges.
 void TypecheckGraph (Record* CompilationGraph,
                      const ToolPropertiesList& TPList) {
   StringMap<StringSet<> > ToolToInLang;
@@ -1511,18 +1511,18 @@ void TypecheckGraph (Record* CompilationGraph,
 
   for (unsigned i = 0; i < edges->size(); ++i) {
     Record* Edge = edges->getElementAsRecord(i);
-    Record* A = Edge->getValueAsDef("a");
-    Record* B = Edge->getValueAsDef("b");
-    StringMap<std::string>::iterator IA = ToolToOutLang.find(A->getName());
-    StringMap<StringSet<> >::iterator IB = ToolToInLang.find(B->getName());
-    if (IA == IAE)
-      throw A->getName() + ": no such tool!";
-    if (IB == IBE)
-      throw B->getName() + ": no such tool!";
-    if (A->getName() != "root" && IB->second.count(IA->second) == 0)
-      throw "Edge " + A->getName() + "->" + B->getName()
-        + ": output->input language mismatch";
-    if (B->getName() == "root")
+    const std::string& A = Edge->getValueAsString("a");
+    const std::string& B = Edge->getValueAsString("b");
+    StringMap<std::string>::iterator IA = ToolToOutLang.find(A);
+    StringMap<StringSet<> >::iterator IB = ToolToInLang.find(B);
+
+    if (A != "root") {
+      if (IA != IAE && IB != IBE && IB->second.count(IA->second) == 0)
+        throw "Edge " + A + "->" + B
+          + ": output->input language mismatch";
+    }
+
+    if (B == "root")
       throw std::string("Edges back to the root are not allowed!");
   }
 }
@@ -1578,13 +1578,13 @@ void EmitEdgeClasses (Record* CompilationGraph,
 
   for (unsigned i = 0; i < edges->size(); ++i) {
     Record* Edge = edges->getElementAsRecord(i);
-    Record* B = Edge->getValueAsDef("b");
+    const std::string& B = Edge->getValueAsString("b");
     DagInit* Weight = Edge->getValueAsDag("weight");
 
     if (isDagEmpty(Weight))
       continue;
 
-    EmitEdgeClass(i, B->getName(), Weight, OptDescs, O);
+    EmitEdgeClass(i, B, Weight, OptDescs, O);
   }
 }
 
@@ -1605,13 +1605,12 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
 
   for (unsigned i = 0; i < edges->size(); ++i) {
     Record* Edge = edges->getElementAsRecord(i);
-    Record* A = Edge->getValueAsDef("a");
-    Record* B = Edge->getValueAsDef("b");
+    const std::string& A = Edge->getValueAsString("a");
+    const std::string& B = Edge->getValueAsString("b");
 
-    if (A->getName() != "root")
-      ToolsInGraph.insert(A->getName());
-    if (B->getName() != "root")
-      ToolsInGraph.insert(B->getName());
+    if (A != "root")
+      ToolsInGraph.insert(A);
+    ToolsInGraph.insert(B);
   }
 
   for (llvm::StringSet<>::iterator B = ToolsInGraph.begin(),
@@ -1624,14 +1623,14 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
 
   for (unsigned i = 0; i < edges->size(); ++i) {
     Record* Edge = edges->getElementAsRecord(i);
-    Record* A = Edge->getValueAsDef("a");
-    Record* B = Edge->getValueAsDef("b");
+    const std::string& A = Edge->getValueAsString("a");
+    const std::string& B = Edge->getValueAsString("b");
     DagInit* Weight = Edge->getValueAsDag("weight");
 
-    O << Indent1 << "G.insertEdge(\"" << A->getName() << "\", ";
+    O << Indent1 << "G.insertEdge(\"" << A << "\", ";
 
     if (isDagEmpty(Weight))
-      O << "new SimpleEdge(\"" << B->getName() << "\")";
+      O << "new SimpleEdge(\"" << B << "\")";
     else
       O << "new Edge" << i << "()";
 
@@ -1763,6 +1762,7 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
   EmitIncludes(O);
 
   // Get a list of all defined Tools.
+
   RecordVector Tools = Records.getAllDerivedDefinitions("Tool");
   if (Tools.empty())
     throw std::string("No tool definitions found!");
@@ -1773,8 +1773,8 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
   CollectToolProperties(Tools.begin(), Tools.end(), tool_props, opt_descs);
 
   RecordVector OptionLists = Records.getAllDerivedDefinitions("OptionList");
-  CollectPropertiesFromOptionList(OptionLists.begin(), OptionLists.end(),
-                                  opt_descs);
+  CollectPropertiesFromOptionLists(OptionLists.begin(), OptionLists.end(),
+                                   opt_descs);
 
   // Check that there are no options without side effects (specified
   // only in the OptionList).
@@ -1795,6 +1795,9 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
          E = tool_props.end(); B!=E; ++B)
     EmitToolClassDefinition(*(*B), opt_descs, O);
 
+  // TOTHINK: Nothing actually prevents us from having multiple
+  // compilation graphs in a single plugin; OTOH, I do not see how
+  // that could be useful.
   Record* CompilationGraphRecord = Records.getDef("CompilationGraph");
   if (!CompilationGraphRecord)
     throw std::string("Compilation graph description not found!");

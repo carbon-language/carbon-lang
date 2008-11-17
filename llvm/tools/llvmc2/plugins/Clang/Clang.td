@@ -76,11 +76,11 @@ def LanguageMap : LanguageMap<
 // Compilation graph
 
 def CompilationGraph : CompilationGraph<[
-    Edge<root, clang_c>,
-    Edge<root, clang_cpp>,
-    Edge<root, clang_objective_c>,
-    Edge<clang_c, llvm_ld>,
-    Edge<clang_cpp, llvm_ld>,
-    Edge<clang_objective_c, llvm_ld>
+    Edge<"root", "clang_c">,
+    Edge<"root", "clang_cpp">,
+    Edge<"root", "clang_objective_c">,
+    Edge<"clang_c", "llvm_ld">,
+    Edge<"clang_cpp", "llvm_ld">,
+    Edge<"clang_objective_c", "llvm_ld">
     ]>;
 

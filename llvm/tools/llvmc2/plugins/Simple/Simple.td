@@ -27,4 +27,4 @@ def gcc : Tool<
 
 def LanguageMap : LanguageMap<[LangToSuffixes<"c", ["c"]>]>;
 
-def CompilationGraph : CompilationGraph<[Edge<root, gcc>]>;
+def CompilationGraph : CompilationGraph<[Edge<"root", "gcc">]>;

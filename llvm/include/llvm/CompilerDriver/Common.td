@@ -15,10 +15,6 @@ class Tool<list<dag> l> {
       list<dag> properties = l;
 }
 
-// Special Tool instance - the root node of the compilation graph.
-
-def root : Tool<[]>;
-
 // Possible Tool properties
 
 def in_language;
@@ -87,19 +83,19 @@ class LanguageMap<list<LangToSuffixes> lst> {
 
 // Compilation graph
 
-class EdgeBase<Tool t1, Tool t2, dag d> {
-      Tool a = t1;
-      Tool b = t2;
+class EdgeBase<string t1, string t2, dag d> {
+      string a = t1;
+      string b = t2;
       dag weight = d;
 }
 
-class Edge<Tool t1, Tool t2> : EdgeBase<t1, t2, (empty)>;
+class Edge<string t1, string t2> : EdgeBase<t1, t2, (empty)>;
 
 // Edge and SimpleEdge are synonyms.
-class SimpleEdge<Tool t1, Tool t2> : EdgeBase<t1, t2, (empty)>;
+class SimpleEdge<string t1, string t2> : EdgeBase<t1, t2, (empty)>;
 
 // Optionally enabled edge.
-class OptionalEdge<Tool t1, Tool t2, dag props> : EdgeBase<t1, t2, props>;
+class OptionalEdge<string t1, string t2, dag props> : EdgeBase<t1, t2, props>;
 
 class CompilationGraph<list<EdgeBase> lst> {
       list<EdgeBase> edges = lst;
