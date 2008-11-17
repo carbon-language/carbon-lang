@@ -260,6 +260,7 @@ private:
   SDValue PromoteIntOp_BR_CC(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_BUILD_VECTOR(SDNode *N);
+  SDValue PromoteIntOp_CONVERT_RNDSAT(SDNode *N);
   SDValue PromoteIntOp_FP_EXTEND(SDNode *N);
   SDValue PromoteIntOp_FP_ROUND(SDNode *N);
   SDValue PromoteIntOp_INT_TO_FP(SDNode *N);
