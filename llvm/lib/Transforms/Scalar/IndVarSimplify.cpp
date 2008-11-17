@@ -446,7 +446,6 @@ bool IndVarSimplify::doInitialization(Loop *L, LPPassManager &LPM) {
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
-
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
 
@@ -723,6 +722,19 @@ void IndVarSimplify::OptimizeCanonicalIVType(Loop *L) {
   Incr->eraseFromParent();
 }
 
+static bool convertToInt(const APFloat &APF, uint64_t *intVal) {
+
+  bool isExact = false;
+  if (APF.convertToInteger(intVal, 32, APF.isNegative(), 
+                           APFloat::rmTowardZero, &isExact)
+      != APFloat::opOK)
+    return false;
+  if (!isExact) 
+    return false;
+  return true;
+
+}
+
 /// HandleFloatingPointIV - If the loop has floating induction variable
 /// then insert corresponding integer induction variable if possible.
 /// For example,
@@ -739,12 +751,14 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
   unsigned BackEdge     = IncomingEdge^1;
   
   // Check incoming value.
-  ConstantFP *CZ = dyn_cast<ConstantFP>(PH->getIncomingValue(IncomingEdge));
-  if (!CZ) return;
-  APFloat PHInit = CZ->getValueAPF();
-  if (!PHInit.isPosZero()) return;
-  
-  // Check IV increment.
+  ConstantFP *InitValue = dyn_cast<ConstantFP>(PH->getIncomingValue(IncomingEdge));
+  if (!InitValue) return;
+  uint64_t newInitValue = Type::Int32Ty->getPrimitiveSizeInBits();
+  if (!convertToInt(InitValue->getValueAPF(), &newInitValue))
+    return;
+
+  // Check IV increment. Reject this PH if increement operation is not
+  // an add or increment value can not be represented by an integer.
   BinaryOperator *Incr = 
     dyn_cast<BinaryOperator>(PH->getIncomingValue(BackEdge));
   if (!Incr) return;
@@ -755,11 +769,12 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
     IncrVIndex = 0;
   IncrValue = dyn_cast<ConstantFP>(Incr->getOperand(IncrVIndex));
   if (!IncrValue) return;
-  APFloat IVAPF = IncrValue->getValueAPF();
-  APFloat One = APFloat(IVAPF.getSemantics(), 1);
-  if (!IVAPF.bitwiseIsEqual(One)) return;
+  uint64_t newIncrValue = Type::Int32Ty->getPrimitiveSizeInBits();
+  if (!convertToInt(IncrValue->getValueAPF(), &newIncrValue))
+    return;
   
-  // Check Incr uses.
+  // Check Incr uses. One user is PH and the other users is exit condition used
+  // by the conditional terminator.
   Value::use_iterator IncrUse = Incr->use_begin();
   Instruction *U1 = cast<Instruction>(IncrUse++);
   if (IncrUse == Incr->use_end()) return;
@@ -777,23 +792,17 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
     if (BI->getCondition() != EC) return;
   }
 
-  // Find exit value.
+  // Find exit value. If exit value can not be represented as an interger then
+  // do not handle this floating point PH.
   ConstantFP *EV = NULL;
   unsigned EVIndex = 1;
   if (EC->getOperand(1) == Incr)
     EVIndex = 0;
   EV = dyn_cast<ConstantFP>(EC->getOperand(EVIndex));
   if (!EV) return;
-  APFloat EVAPF = EV->getValueAPF();
-  if (EVAPF.isNegative()) return;
-  
-  // Find corresponding integer exit value.
   uint64_t intEV = Type::Int32Ty->getPrimitiveSizeInBits();
-  bool isExact = false;
-  if (EVAPF.convertToInteger(&intEV, 32, false, APFloat::rmTowardZero, &isExact)
-      != APFloat::opOK)
+  if (!convertToInt(EV->getValueAPF(), &intEV))
     return;
-  if (!isExact) return;
   
   // Find new predicate for integer comparison.
   CmpInst::Predicate NewPred = CmpInst::BAD_ICMP_PREDICATE;
@@ -826,11 +835,12 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
   // Insert new integer induction variable.
   PHINode *NewPHI = PHINode::Create(Type::Int32Ty,
                                     PH->getName()+".int", PH);
-  NewPHI->addIncoming(Constant::getNullValue(NewPHI->getType()),
+  NewPHI->addIncoming(ConstantInt::get(Type::Int32Ty, newInitValue),
                       PH->getIncomingBlock(IncomingEdge));
 
   Value *NewAdd = BinaryOperator::CreateAdd(NewPHI, 
-                                            ConstantInt::get(Type::Int32Ty, 1),
+                                            ConstantInt::get(Type::Int32Ty, 
+                                                             newIncrValue),
                                             Incr->getName()+".int", Incr);
   NewPHI->addIncoming(NewAdd, PH->getIncomingBlock(BackEdge));
 
@@ -849,9 +859,16 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
   DeadInsts.insert(Incr);
   
   // Replace floating induction variable.
-  UIToFPInst *Conv = new UIToFPInst(NewPHI, PH->getType(), "indvar.conv", 
-                                    PH->getParent()->getFirstNonPHI());
-  PH->replaceAllUsesWith(Conv);
+  if (EV->getValueAPF().isNegative()
+      || InitValue->getValueAPF().isNegative()) {
+    SIToFPInst *Conv = new SIToFPInst(NewPHI, PH->getType(), "indvar.conv", 
+                                      PH->getParent()->getFirstNonPHI());
+    PH->replaceAllUsesWith(Conv);
+  } else {
+    UIToFPInst *Conv = new UIToFPInst(NewPHI, PH->getType(), "indvar.conv", 
+                                      PH->getParent()->getFirstNonPHI());
+    PH->replaceAllUsesWith(Conv);
+  }
   DeadInsts.insert(PH);
 }
 
