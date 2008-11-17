@@ -55,9 +55,8 @@ private:
   /// PendingQueue - This contains all of the instructions whose operands have
   /// been issued, but their results are not ready yet (due to the latency of
   /// the operation).  Once the operands becomes available, the instruction is
-  /// added to the AvailableQueue.  This keeps track of each SUnit and the
-  /// number of cycles left to execute before the operation is available.
-  std::vector<std::pair<unsigned, SUnit*> > PendingQueue;
+  /// added to the AvailableQueue.
+  std::vector<SUnit*> PendingQueue;
 
   /// HazardRec - The hazard recognizer to use.
   HazardRecognizer *HazardRec;
@@ -134,7 +133,9 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
       AvailableCycle = std::max(AvailableCycle, PredDoneCycle);
     }
     
-    PendingQueue.push_back(std::make_pair(AvailableCycle, SuccSU));
+    assert(SuccSU->CycleBound == 0 && "CycleBound already assigned!");
+    SuccSU->CycleBound = AvailableCycle;
+    PendingQueue.push_back(SuccSU);
   }
 }
 
@@ -176,14 +177,14 @@ void ScheduleDAGList::ListScheduleTopDown() {
     // Check to see if any of the pending instructions are ready to issue.  If
     // so, add them to the available queue.
     for (unsigned i = 0, e = PendingQueue.size(); i != e; ++i) {
-      if (PendingQueue[i].first == CurCycle) {
-        AvailableQueue->push(PendingQueue[i].second);
-        PendingQueue[i].second->isAvailable = true;
+      if (PendingQueue[i]->CycleBound == CurCycle) {
+        AvailableQueue->push(PendingQueue[i]);
+        PendingQueue[i]->isAvailable = true;
         PendingQueue[i] = PendingQueue.back();
         PendingQueue.pop_back();
         --i; --e;
       } else {
-        assert(PendingQueue[i].first > CurCycle && "Negative latency?");
+        assert(PendingQueue[i]->CycleBound > CurCycle && "Negative latency?");
       }
     }
     
