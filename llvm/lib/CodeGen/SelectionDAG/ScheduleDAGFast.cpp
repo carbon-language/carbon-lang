@@ -139,12 +139,6 @@ void ScheduleDAGFast::Schedule() {
 /// the AvailableQueue if the count reaches zero. Also update its cycle bound.
 void ScheduleDAGFast::ReleasePred(SUnit *PredSU, bool isChain, 
                                   unsigned CurCycle) {
-  // FIXME: the distance between two nodes is not always == the predecessor's
-  // latency. For example, the reader can very well read the register written
-  // by the predecessor later than the issue cycle. It also depends on the
-  // interrupt model (drain vs. freeze).
-  PredSU->CycleBound = std::max(PredSU->CycleBound, CurCycle + PredSU->Latency);
-
   --PredSU->NumSuccsLeft;
   
 #ifndef NDEBUG
@@ -277,7 +271,6 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     // FIXME: Calculate height / depth and propagate the changes?
     NewSU->Depth = SU->Depth;
     NewSU->Height = SU->Height;
-    ComputeLatency(NewSU);
 
     // LoadNode may already exist. This can happen when there is another
     // load from the same location and producing the same type of value
@@ -293,7 +286,6 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
 
       LoadSU->Depth = SU->Depth;
       LoadSU->Height = SU->Height;
-      ComputeLatency(LoadSU);
     }
 
     SUnit *ChainPred = NULL;
@@ -530,13 +522,11 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
     LRegsMap.clear();
     SUnit *CurSU = AvailableQueue.pop();
     while (CurSU) {
-      if (CurSU->CycleBound <= CurCycle) {
-        SmallVector<unsigned, 4> LRegs;
-        if (!DelayForLiveRegsBottomUp(CurSU, LRegs))
-          break;
-        Delayed = true;
-        LRegsMap.insert(std::make_pair(CurSU, LRegs));
-      }
+      SmallVector<unsigned, 4> LRegs;
+      if (!DelayForLiveRegsBottomUp(CurSU, LRegs))
+        break;
+      Delayed = true;
+      LRegsMap.insert(std::make_pair(CurSU, LRegs));
 
       CurSU->isPending = true;  // This SU is not in AvailableQueue right now.
       NotReady.push_back(CurSU);
