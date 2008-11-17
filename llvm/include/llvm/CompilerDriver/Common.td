@@ -65,6 +65,11 @@ def or;
 def inc_weight;
 def dec_weight;
 
+// Used to specify plugin priority.
+class PluginPriority<int p> {
+      int priority = p;
+}
+
 // Option list - used to specify aliases and sometimes help strings.
 class OptionList<list<dag> l> {
       list<dag> options = l;

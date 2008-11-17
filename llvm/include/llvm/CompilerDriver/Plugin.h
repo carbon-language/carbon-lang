@@ -24,6 +24,11 @@ namespace llvmc {
   /// BasePlugin - An abstract base class for all LLVMC plugins.
   struct BasePlugin {
 
+    /// Priority - Plugin priority, useful for handling dependencies
+    /// between plugins. Plugins with lower priorities are loaded
+    /// first.
+    virtual int Priority() const = 0;
+
     /// PopulateLanguageMap - The auto-generated function that fills in
     /// the language map (map from file extensions to language names).
     virtual void PopulateLanguageMap(LanguageMap&) const = 0;

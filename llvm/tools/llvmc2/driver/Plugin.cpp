@@ -13,6 +13,7 @@
 
 #include "llvm/CompilerDriver/Plugin.h"
 
+#include <algorithm>
 #include <vector>
 
 namespace {
@@ -27,6 +28,13 @@ namespace {
   static bool pluginListInitialized = false;
   typedef std::vector<const llvmc::BasePlugin*> PluginList;
   static PluginList Plugins;
+
+  struct ByPriority {
+    bool operator()(const llvmc::BasePlugin* lhs,
+                    const llvmc::BasePlugin* rhs) {
+      return lhs->Priority() < rhs->Priority();
+    }
+  };
 }
 
 namespace llvmc {
@@ -36,6 +44,7 @@ namespace llvmc {
       for (PluginRegistry::iterator B = PluginRegistry::begin(),
              E = PluginRegistry::end(); B != E; ++B)
         Plugins.push_back(B->instantiate());
+      std::sort(Plugins.begin(), Plugins.end(), ByPriority());
     }
     pluginListInitialized = true;
   }

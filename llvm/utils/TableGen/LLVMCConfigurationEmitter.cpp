@@ -771,7 +771,7 @@ void CollectPropertiesFromOptionLists (RecordVector::const_iterator B,
                                        GlobalOptionDescriptions& OptDescs)
 {
   // Iterate over a properties list of every Tool definition
-  for (;B!=E;++B) {
+  for (; B!=E; ++B) {
     RecordVector::value_type T = *B;
     // Throws an exception if the value does not exist.
     ListInit* PropList = T->getValueAsListInit("options");
@@ -1701,9 +1701,10 @@ void EmitHookDeclarations(const ToolPropertiesList& ToolProps,
 }
 
 /// EmitRegisterPlugin - Emit code to register this plugin.
-void EmitRegisterPlugin(std::ostream& O) {
+void EmitRegisterPlugin(int Priority, std::ostream& O) {
   O << "namespace {\n\n"
-    << "struct Plugin : public llvmc::BasePlugin {\n"
+    << "struct Plugin : public llvmc::BasePlugin {\n\n"
+    << Indent1 << "int Priority() const { return " << Priority << "; }\n\n"
     << Indent1 << "void PopulateLanguageMap(LanguageMap& langMap) const\n"
     << Indent1 << "{ PopulateLanguageMapLocal(langMap); }\n\n"
     << Indent1
@@ -1777,6 +1778,15 @@ void FilterNotInGraph (const Record* CompilationGraph,
   ToolProps.erase(new_end, ToolProps.end());
 }
 
+int CalculatePriority(RecordVector::const_iterator B,
+                      RecordVector::const_iterator E) {
+  int total = 0;
+  for (; B!=E; ++B) {
+    total += static_cast<int>((*B)->getValueAsInt("priority"));
+  }
+  return total;
+}
+
 // End of anonymous namespace
 }
 
@@ -1799,7 +1809,8 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
   GlobalOptionDescriptions OptDescs;
   CollectToolProperties(Tools.begin(), Tools.end(), ToolProps, OptDescs);
 
-  RecordVector OptionLists = Records.getAllDerivedDefinitions("OptionList");
+  const RecordVector& OptionLists =
+    Records.getAllDerivedDefinitions("OptionList");
   CollectPropertiesFromOptionLists(OptionLists.begin(), OptionLists.end(),
                                    OptDescs);
 
@@ -1841,7 +1852,10 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
   EmitPopulateCompilationGraph(CompilationGraphRecord, ToolProps, O);
 
   // Emit code for plugin registration.
-  EmitRegisterPlugin(O);
+  const RecordVector& Priorities =
+    Records.getAllDerivedDefinitions("PluginPriority");
+  EmitRegisterPlugin(CalculatePriority(Priorities.begin(), Priorities.end()),
+                     O);
 
   // EOF
   } catch (std::exception& Error) {
