@@ -26,7 +26,7 @@ extern NSString * const NSTaskDidTerminateNotification;
 @implementation XCPropertyExpansionContext
 - (NSString *)expandedValueForProperty:(NSString *)property {
   id <XCPropertyValues> cachedValueNode = [_propNamesToPropValuesCache objectForKey:property]; // expected-warning {{method '-objectForKey:' not found (return type defaults to 'id')}}
-  if (cachedValueNode == ((void *)0)) { } // expected-warning {{comparison of distinct pointer types ('id<XCPropertyValues>' and 'void *')}}
+  if (cachedValueNode == ((void *)0)) { }
   NSString * expandedValue = [cachedValueNode evaluateAsStringInContext:self withNestingState:((void *)0)];
   return expandedValue;
 }

@@ -2182,7 +2182,15 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
 
   if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())) {
     if (lType->isPointerType() || rType->isPointerType()) {
-      if (!Context.typesAreCompatible(lType, rType)) {
+      const PointerType *LPT = lType->getAsPointerType();
+      const PointerType *RPT = rType->getAsPointerType();
+      bool LPtrToVoid = LPT ? 
+        Context.getCanonicalType(LPT->getPointeeType())->isVoidType() : false;
+      bool RPtrToVoid = RPT ? 
+        Context.getCanonicalType(RPT->getPointeeType())->isVoidType() : false;
+        
+      if (!LPtrToVoid && !RPtrToVoid &&
+          !Context.typesAreCompatible(lType, rType)) {
         Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
              lType.getAsString(), rType.getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
