@@ -164,6 +164,9 @@ public:
   /// getNameKind - Determine what kind of name this is.
   NameKind getNameKind() const;
 
+  /// getName - Retrieve the human-readable string for this name.
+  std::string getAsString() const;
+
   /// getAsIdentifierInfo - Retrieve the IdentifierInfo * stored in
   /// this declaration name, or NULL if this declaration name isn't a
   /// simple identifier.

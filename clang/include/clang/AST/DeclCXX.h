@@ -58,6 +58,11 @@ public:
             isa<CXXConversionDecl>(FD) || isa<CXXConstructorDecl>(FD)) &&
            "Overloaded functions must have the same name");
     Functions.push_back(FD);
+
+    // An overloaded function declaration always has the location of
+    // the most-recently-added function declaration.
+    if (FD->getLocation().isValid())
+      this->setLocation(FD->getLocation());
   }
 
   function_iterator function_begin() { return Functions.begin(); }
@@ -396,7 +401,7 @@ protected:
 
 public:
   static CXXMethodDecl *Create(ASTContext &C, CXXRecordDecl *RD,
-                              SourceLocation L, IdentifierInfo *Id,
+                              SourceLocation L, DeclarationName N,
                               QualType T, bool isStatic = false,
                               bool isInline = false,  ScopedDecl *PrevDecl = 0);
   

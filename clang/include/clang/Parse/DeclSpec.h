@@ -767,7 +767,12 @@ public:
   /// isPastIdentifier - Return true if we have parsed beyond the point where
   /// the
   bool isPastIdentifier() const { return IdentifierLoc.isValid(); }
-  
+
+  /// hasName - Whether this declarator has a name, which might be an
+  /// identifier (accessible via getIdentifier()) or some kind of
+  /// special C++ name (constructor, destructor, etc.).
+  bool hasName() const { return getKind() != DK_Abstract; }
+
   IdentifierInfo *getIdentifier() const { return Identifier; }
   SourceLocation getIdentifierLoc() const { return IdentifierLoc; }
   
@@ -780,31 +785,26 @@ public:
       Kind = DK_Abstract;
   }
   
-  /// SetConstructor - Set this declarator to be a C++ constructor
+  /// setConstructor - Set this declarator to be a C++ constructor
   /// declarator.
-  void SetConstructor(Action::TypeTy *Ty, IdentifierInfo *ID, 
-                      SourceLocation Loc) {
-    Identifier = ID;
+  void setConstructor(Action::TypeTy *Ty, SourceLocation Loc) {
     IdentifierLoc = Loc;
     Kind = DK_Constructor;
     Type = Ty;
   }
 
-  /// SetDestructor - Set this declarator to be a C++ destructor
+  /// setDestructor - Set this declarator to be a C++ destructor
   /// declarator.
-  void SetDestructor(Action::TypeTy *Ty, IdentifierInfo *ID, 
-                     SourceLocation Loc) {
-    Identifier = ID;
+  void setDestructor(Action::TypeTy *Ty, SourceLocation Loc) {
     IdentifierLoc = Loc;
     Kind = DK_Destructor;
     Type = Ty;
   }
 
-  // SetConversionFunction - Set this declarator to be a C++
+  // setConversionFunction - Set this declarator to be a C++
   // conversion function declarator.
-  void SetConversionFunction(Action::TypeTy *Ty, IdentifierInfo *ID, 
-                             SourceLocation Loc) {
-    Identifier = ID;
+  void setConversionFunction(Action::TypeTy *Ty, SourceLocation Loc) {
+    Identifier = 0;
     IdentifierLoc = Loc;
     Kind = DK_Conversion;
     Type = Ty;

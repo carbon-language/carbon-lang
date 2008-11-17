@@ -660,6 +660,8 @@ DIAG(ext_anon_param_requires_type_specifier, EXTENSION,
      "type specifier required for unnamed parameter, defaults to int")
 DIAG(err_missing_param, ERROR,
      "expected parameter declarator")
+DIAG(err_bad_variable_name, ERROR,
+     "'%0' cannot be the name of a variable or data member")
 
 DIAG(err_declarator_need_ident, ERROR,
      "declarator requires an identifier")

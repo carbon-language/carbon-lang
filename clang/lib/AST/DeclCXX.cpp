@@ -123,11 +123,12 @@ void CXXRecordDecl::addConversionFunction(ASTContext &Context,
 
 CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
-                      SourceLocation L, IdentifierInfo *Id,
+                      SourceLocation L, DeclarationName N,
                       QualType T, bool isStatic, bool isInline,
                       ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<CXXMethodDecl>();
-  return new (Mem) CXXMethodDecl(CXXMethod, RD, L, Id, T, isStatic, isInline, PrevDecl);
+  return new (Mem) CXXMethodDecl(CXXMethod, RD, L, N, T, isStatic, isInline, 
+                                 PrevDecl);
 }
 
 QualType CXXMethodDecl::getThisType(ASTContext &C) const {

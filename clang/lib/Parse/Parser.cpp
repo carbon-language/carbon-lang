@@ -424,7 +424,7 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   Declarator DeclaratorInfo(DS, Declarator::FileContext);
   ParseDeclarator(DeclaratorInfo);
   // Error parsing the declarator?
-  if (DeclaratorInfo.getIdentifier() == 0) {
+  if (!DeclaratorInfo.hasName()) {
     // If so, skip until the semi-colon or a }.
     SkipUntil(tok::r_brace, true);
     if (Tok.is(tok::semi))

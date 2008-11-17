@@ -754,14 +754,49 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   return CheckInitList.HadError();
 }
 
+/// GetNameForDeclarator - Determine the full declaration name for the
+/// given Declarator.
+DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
+  switch (D.getKind()) {
+  case Declarator::DK_Abstract:
+    assert(D.getIdentifier() == 0 && "abstract declarators have no name");
+    return DeclarationName();
+
+  case Declarator::DK_Normal:
+    assert (D.getIdentifier() != 0 && "normal declarators have an identifier");
+    return DeclarationName(D.getIdentifier());
+
+  case Declarator::DK_Constructor: {
+    QualType Ty = Context.getTypeDeclType((TypeDecl *)D.getDeclaratorIdType());
+    Ty = Context.getCanonicalType(Ty);
+    return Context.DeclarationNames.getCXXConstructorName(Ty);
+  }
+
+  case Declarator::DK_Destructor: {
+    QualType Ty = Context.getTypeDeclType((TypeDecl *)D.getDeclaratorIdType());
+    Ty = Context.getCanonicalType(Ty);
+    return Context.DeclarationNames.getCXXDestructorName(Ty);
+  }
+
+  case Declarator::DK_Conversion: {
+    QualType Ty = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
+    Ty = Context.getCanonicalType(Ty);
+    return Context.DeclarationNames.getCXXConversionFunctionName(Ty);
+  }
+  }
+
+  assert(false && "Unknown name kind");
+  return DeclarationName();
+}
+
 Sema::DeclTy *
 Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
-  IdentifierInfo *II = D.getIdentifier();
-  
+  DeclarationName Name = GetNameForDeclarator(D);
+
   // All of these full declarators require an identifier.  If it doesn't have
   // one, the ParsedFreeStandingDeclSpec action should be used.
-  if (II == 0) {
+  if (!Name) {
     if (!D.getInvalidType())  // Reject this if we think it is valid.
       Diag(D.getDeclSpec().getSourceRange().getBegin(),
            diag::err_declarator_need_ident,
@@ -782,10 +817,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   // See if this is a redefinition of a variable in the same scope.
   if (!D.getCXXScopeSpec().isSet()) {
     DC = CurContext;
-    PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S);
+    PrevDecl = LookupDecl(Name, Decl::IDNS_Ordinary, S);
   } else { // Something like "int foo::x;"
     DC = static_cast<DeclContext*>(D.getCXXScopeSpec().getScopeRep());
-    PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S, DC);
+    PrevDecl = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
 
     // C++ 7.3.1.2p2:
     // Members (including explicit specializations of templates) of a named
@@ -798,16 +833,17 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     if (PrevDecl == 0) {
       // No previous declaration in the qualifying scope.
       Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member,
-           II->getName(), D.getCXXScopeSpec().getRange());
+           Name.getAsString(), D.getCXXScopeSpec().getRange());
     } else if (!CurContext->Encloses(DC)) {
       // The qualifying scope doesn't enclose the original declaration.
       // Emit diagnostic based on current scope.
       SourceLocation L = D.getIdentifierLoc();
       SourceRange R = D.getCXXScopeSpec().getRange();
       if (isa<FunctionDecl>(CurContext)) {
-        Diag(L, diag::err_invalid_declarator_in_function, II->getName(), R);
+        Diag(L, diag::err_invalid_declarator_in_function, Name.getAsString(), 
+             R);
       } else {
-      Diag(L, diag::err_invalid_declarator_scope, II->getName(),
+      Diag(L, diag::err_invalid_declarator_scope, Name.getAsString(),
            cast<NamedDecl>(DC)->getName(), R);
       }
     }
@@ -878,13 +914,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       bool isInvalidDecl = CheckConstructorDeclarator(D, R, SC);
 
       // Create the new declaration
-      QualType ClassType = Context.getTypeDeclType(cast<CXXRecordDecl>(DC));
-      ClassType = Context.getCanonicalType(ClassType);
-      DeclarationName ConName
-        = Context.DeclarationNames.getCXXConstructorName(ClassType);
       NewFD = CXXConstructorDecl::Create(Context, 
                                          cast<CXXRecordDecl>(DC),
-                                         D.getIdentifierLoc(), ConName, R,
+                                         D.getIdentifierLoc(), Name, R,
                                          isExplicit, isInline,
                                          /*isImplicitlyDeclared=*/false);
 
@@ -895,14 +927,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       if (DC->isCXXRecord()) {
         bool isInvalidDecl = CheckDestructorDeclarator(D, R, SC);
 
-        QualType ClassType = Context.getTypeDeclType(cast<CXXRecordDecl>(DC));
-        ClassType = Context.getCanonicalType(ClassType);
-        DeclarationName DesName
-          = Context.DeclarationNames.getCXXDestructorName(ClassType);
-
         NewFD = CXXDestructorDecl::Create(Context,
                                           cast<CXXRecordDecl>(DC),
-                                          D.getIdentifierLoc(), DesName, R, 
+                                          D.getIdentifierLoc(), Name, R, 
                                           isInline,
                                           /*isImplicitlyDeclared=*/false);
 
@@ -913,7 +940,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         // Create a FunctionDecl to satisfy the function definition parsing
         // code path.
         NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
-                                     II, R, SC, isInline, LastDeclarator,
+                                     Name, R, SC, isInline, LastDeclarator,
                                      // FIXME: Move to DeclGroup...
                                    D.getDeclSpec().getSourceRange().getBegin());
         NewFD->setInvalidDecl();
@@ -926,14 +953,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       } else {
         bool isInvalidDecl = CheckConversionDeclarator(D, R, SC);
 
-        QualType ConvType = R->getAsFunctionType()->getResultType();
-        ConvType = Context.getCanonicalType(ConvType);
-        DeclarationName ConvName
-          = Context.DeclarationNames.getCXXConversionFunctionName(ConvType);
-
         NewFD = CXXConversionDecl::Create(Context, 
                                           cast<CXXRecordDecl>(DC),
-                                          D.getIdentifierLoc(), ConvName, R,
+                                          D.getIdentifierLoc(), Name, R,
                                           isInline, isExplicit);
         
         if (isInvalidDecl)
@@ -942,13 +964,13 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     } else if (DC->isCXXRecord()) {
       // This is a C++ method declaration.
       NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                    D.getIdentifierLoc(), II, R,
+                                    D.getIdentifierLoc(), Name, R,
                                     (SC == FunctionDecl::Static), isInline,
                                     LastDeclarator);
     } else {
       NewFD = FunctionDecl::Create(Context, DC,
                                    D.getIdentifierLoc(),
-                                   II, R, SC, isInline, LastDeclarator,
+                                   Name, R, SC, isInline, LastDeclarator,
                                    // FIXME: Move to DeclGroup...
                                    D.getDeclSpec().getSourceRange().getBegin());
     }
@@ -1128,6 +1150,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       Diag(D.getIdentifierLoc(), diag::err_mutable_nonmember);
       InvalidDecl = true;
     }
+
+    IdentifierInfo *II = Name.getAsIdentifierInfo();
+    if (!II) {
+      Diag(D.getIdentifierLoc(), diag::err_bad_variable_name,
+           Name.getAsString());
+      return 0;
+    }
+
     if (DC->isCXXRecord()) {
       assert(SC == VarDecl::Static && "Invalid storage class for member!");
       // This is a static data member for a C++ class.
@@ -1184,7 +1214,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   New->setLexicalDeclContext(CurContext);
 
   // If this has an identifier, add it to the scope stack.
-  if (II)
+  if (Name)
     PushOnScopeChains(New, S);
   // If any semantic error occurred, mark the decl as invalid.
   if (D.getInvalidType() || InvalidDecl)

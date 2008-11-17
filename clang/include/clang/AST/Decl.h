@@ -100,7 +100,7 @@ public:
   /// expensive string manipulation, so it should be called only when
   /// absolutely critical. For simple declarations, @c
   /// getIdentifierName() should suffice.
-  std::string getName() const;
+  std::string getName() const { return Name.getAsString(); }
   
   static bool classof(const Decl *D) {
     return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;
@@ -558,7 +558,7 @@ protected:
 
 public:
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                              IdentifierInfo *Id, QualType T, 
+                              DeclarationName N, QualType T, 
                               StorageClass S = None, bool isInline = false, 
                               ScopedDecl *PrevDecl = 0,
                               SourceLocation TSStartLoc = SourceLocation());  

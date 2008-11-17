@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/AST/DeclarationName.h"
+#include "clang/AST/Type.h"
+#include "clang/AST/Decl.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Bitcode/Serialize.h"
@@ -92,6 +94,50 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
 
   // Can't actually get here.
   return Identifier;
+}
+
+std::string DeclarationName::getAsString() const {
+  switch (getNameKind()) {
+  case Identifier:
+    if (const IdentifierInfo *II = getAsIdentifierInfo())
+      return II->getName();
+    return "";
+
+  case ObjCZeroArgSelector:
+  case ObjCOneArgSelector:
+  case ObjCMultiArgSelector:
+    return getObjCSelector().getName();
+
+  case CXXConstructorName: {
+    QualType ClassType = getCXXNameType();
+    if (const RecordType *ClassRec = ClassType->getAsRecordType())
+      return ClassRec->getDecl()->getName();
+    return ClassType.getAsString();
+  }
+
+  case CXXDestructorName: {
+    std::string Result = "~";
+    QualType Type = getCXXNameType();
+    if (const RecordType *Rec = Type->getAsRecordType())
+      Result += Rec->getDecl()->getName();
+    else
+      Result += Type.getAsString();
+    return Result;
+  }
+
+  case CXXConversionFunctionName: {
+    std::string Result = "operator ";
+    QualType Type = getCXXNameType();
+    if (const RecordType *Rec = Type->getAsRecordType())
+      Result += Rec->getDecl()->getName();
+    else
+      Result += Type.getAsString();
+    return Result;
+  }
+  }
+
+  assert(false && "Unexpected declaration name kind");
+  return "";
 }
 
 QualType DeclarationName::getCXXNameType() const {

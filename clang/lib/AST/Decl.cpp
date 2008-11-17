@@ -67,12 +67,12 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, 
-                                   IdentifierInfo *Id, QualType T, 
+                                   DeclarationName N, QualType T, 
                                    StorageClass S, bool isInline, 
                                    ScopedDecl *PrevDecl,
                                    SourceLocation TypeSpecStartLoc) {
   void *Mem = C.getAllocator().Allocate<FunctionDecl>();
-  return new (Mem) FunctionDecl(Function, DC, L, Id, T, S, isInline, PrevDecl,
+  return new (Mem) FunctionDecl(Function, DC, L, N, T, S, isInline, PrevDecl,
                                 TypeSpecStartLoc);
 }
 
@@ -127,54 +127,6 @@ FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,
                                            StringLiteral *Str) {
   void *Mem = C.getAllocator().Allocate<FileScopeAsmDecl>();
   return new (Mem) FileScopeAsmDecl(L, Str);
-}
-
-//===----------------------------------------------------------------------===//
-// NamedDecl Implementation
-//===----------------------------------------------------------------------===//
-
-std::string NamedDecl::getName() const {
-  switch (Name.getNameKind()) {
-  case DeclarationName::Identifier:
-    if (const IdentifierInfo *II = Name.getAsIdentifierInfo())
-      return II->getName();
-    return "";
-
-  case DeclarationName::ObjCZeroArgSelector:
-  case DeclarationName::ObjCOneArgSelector:
-  case DeclarationName::ObjCMultiArgSelector:
-    return Name.getObjCSelector().getName();
-
-  case DeclarationName::CXXConstructorName: {
-    QualType ClassType = Name.getCXXNameType();
-    if (const RecordType *ClassRec = ClassType->getAsRecordType())
-      return ClassRec->getDecl()->getName();
-    return ClassType.getAsString();
-  }
-
-  case DeclarationName::CXXDestructorName: {
-    std::string Result = "~";
-    QualType Type = Name.getCXXNameType();
-    if (const RecordType *Rec = Type->getAsRecordType())
-      Result += Rec->getDecl()->getName();
-    else
-      Result += Type.getAsString();
-    return Result;
-  }
-
-  case DeclarationName::CXXConversionFunctionName: {
-    std::string Result = "operator ";
-    QualType Type = Name.getCXXNameType();
-    if (const RecordType *Rec = Type->getAsRecordType())
-      Result += Rec->getDecl()->getName();
-    else
-      Result += Type.getAsString();
-    return Result;
-  }
-  }
-
-  assert(false && "Unexpected declaration name kind");
-  return "";
 }
 
 //===----------------------------------------------------------------------===//

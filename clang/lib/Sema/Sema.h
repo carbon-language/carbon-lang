@@ -272,7 +272,8 @@ public:
   QualType ConvertDeclSpecToType(const DeclSpec &DS);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
-  
+  DeclarationName GetNameForDeclarator(Declarator &D);
+
   QualType ObjCGetTypeForMethodDefinition(DeclTy *D);
 
   bool UnwrapSimilarPointerTypes(QualType& T1, QualType& T2);

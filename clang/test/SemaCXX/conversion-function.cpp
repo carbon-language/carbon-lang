@@ -15,6 +15,8 @@ public:
 
 operator int(); // expected-error{{conversion function must be a non-static member function}}
 
+operator int; // expected-error{{'operator int' cannot be the name of a variable or data member}}
+
 typedef int func_type(int);
 typedef int array_type[10];
 

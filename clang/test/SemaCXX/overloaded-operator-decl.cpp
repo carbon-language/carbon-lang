@@ -20,7 +20,8 @@ void f(X x) {
   x = operator+(x, x);
 }
 
-X operator+(int, float); // expected-error{{overloaded 'operator+' must have at least one parameter of class or enumeration type}}
+X operator+(int, float); // expected-error{{overloaded 'operator+' must have at least one parameter of class or enumeration type}} \
+                         // expected-error{{previous definition is here}}
 
 X operator*(X, X = 5); // expected-error{{parameter of overloaded 'operator*' cannot have a default argument}}
 
@@ -35,3 +36,5 @@ typedef float FLOAT;
 Y& operator++(Y&);
 Y operator++(Y&, INT);
 X operator++(X&, FLOAT); // expected-error{{parameter of overloaded post-increment operator must have type 'int' (not 'float')}}
+
+int operator+; // expected-error{{redefinition of 'operator+' as different kind of symbol}}

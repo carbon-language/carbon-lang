@@ -1440,8 +1440,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     // a normal identifier.
     if (getLang().CPlusPlus && 
         Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope))
-      D.SetConstructor(Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope),
-                       &PP.getIdentifierTable().getConstructorId(), 
+      D.setConstructor(Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope),
                        Tok.getLocation());
     else
       D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
@@ -1452,8 +1451,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     SourceLocation TildeLoc = ConsumeToken();
     if (Tok.is(tok::identifier)) {
       if (TypeTy *Type = ParseClassName())
-        D.SetDestructor(Type, &PP.getIdentifierTable().getDestructorId(), 
-                        TildeLoc);
+        D.setDestructor(Type, TildeLoc);
       else
         D.SetIdentifier(0, TildeLoc);
     } else {
@@ -1469,9 +1467,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     } else {
       // This must be a conversion function (C++ [class.conv.fct]).
       if (TypeTy *ConvType = ParseConversionFunctionId()) {
-        D.SetConversionFunction(ConvType, 
-                                &PP.getIdentifierTable().getConversionFunctionId(), 
-                                OperatorLoc);
+        D.setConversionFunction(ConvType, OperatorLoc);
       }
     }
   } else if (Tok.is(tok::l_paren) && SS.isEmpty()) {

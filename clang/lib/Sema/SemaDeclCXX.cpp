@@ -421,7 +421,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                ExprTy *BW, ExprTy *InitExpr,
                                DeclTy *LastInGroup) {
   const DeclSpec &DS = D.getDeclSpec();
-  IdentifierInfo *II = D.getIdentifier();
+  DeclarationName Name = GetNameForDeclarator(D);
   Expr *BitWidth = static_cast<Expr*>(BW);
   Expr *Init = static_cast<Expr*>(InitExpr);
   SourceLocation Loc = D.getIdentifierLoc();
@@ -499,7 +499,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   if (!Member) return LastInGroup;
 
-  assert((II || isInstField) && "No identifier for non-field ?");
+  assert((Name || isInstField) && "No identifier for non-field ?");
 
   // set/getAccess is not part of Decl's interface to avoid bloating it with C++
   // specific methods. Use a wrapper class that can be used with all C++ class
@@ -532,14 +532,14 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       // FIXME: Emit diagnostic about only constructors taking base initializers
       // or something similar, when constructor support is in place.
       Diag(Loc, diag::err_not_bitfield_type,
-           II->getName(), BitWidth->getSourceRange());
+           Name.getAsString(), BitWidth->getSourceRange());
       InvalidDecl = true;
 
     } else if (isInstField) {
       // C++ 9.6p3: A bit-field shall have integral or enumeration type.
       if (!cast<FieldDecl>(Member)->getType()->isIntegralType()) {
         Diag(Loc, diag::err_not_integral_type_bitfield,
-             II->getName(), BitWidth->getSourceRange());
+             Name.getAsString(), BitWidth->getSourceRange());
         InvalidDecl = true;
       }
 
@@ -547,12 +547,12 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       // A function typedef ("typedef int f(); f a;").
       // C++ 9.6p3: A bit-field shall have integral or enumeration type.
       Diag(Loc, diag::err_not_integral_type_bitfield,
-           II->getName(), BitWidth->getSourceRange());
+           Name.getAsString(), BitWidth->getSourceRange());
       InvalidDecl = true;
 
     } else if (isa<TypedefDecl>(Member)) {
       // "cannot declare 'A' to be a bit-field type"
-      Diag(Loc, diag::err_not_bitfield_type, II->getName(), 
+      Diag(Loc, diag::err_not_bitfield_type, Name.getAsString(), 
            BitWidth->getSourceRange());
       InvalidDecl = true;
 
@@ -561,7 +561,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
              "Didn't we cover all member kinds?");
       // C++ 9.6p3: A bit-field shall not be a static member.
       // "static member 'A' cannot be a bit-field"
-      Diag(Loc, diag::err_static_not_bitfield, II->getName(), 
+      Diag(Loc, diag::err_static_not_bitfield, Name.getAsString(), 
            BitWidth->getSourceRange());
       InvalidDecl = true;
     }
@@ -584,14 +584,14 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       } else {
         // not const integral.
         Diag(Loc, diag::err_member_initialization,
-             II->getName(), Init->getSourceRange());
+             Name.getAsString(), Init->getSourceRange());
         InvalidDecl = true;
       }
 
     } else {
       // not static member.
       Diag(Loc, diag::err_member_initialization,
-           II->getName(), Init->getSourceRange());
+           Name.getAsString(), Init->getSourceRange());
       InvalidDecl = true;
     }
   }
