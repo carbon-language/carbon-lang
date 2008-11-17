@@ -795,7 +795,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 13.5: Overloaded operators [over.oper]
-  IdentifierInfo *MaybeParseOperatorFunctionId();
+  IdentifierInfo *TryParseOperatorFunctionId();
   TypeTy *ParseConversionFunctionId();
 };
 

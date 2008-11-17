@@ -20,6 +20,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm> // for std::equal
 #include <map>
@@ -1825,10 +1826,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
 /// of this overloaded operator is well-formed. If so, returns false;
 /// otherwise, emits appropriate diagnostics and returns true.
 bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
-  assert(FnDecl && FnDecl->getOverloadedOperator() != OO_None &&
+  assert(FnDecl && FnDecl->isOverloadedOperator() &&
          "Expected an overloaded operator declaration");
-
-  bool IsInvalid = false;
 
   OverloadedOperatorKind Op = FnDecl->getOverloadedOperator();
 
@@ -1849,39 +1848,27 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   //   function or be a non-member function and have at least one
   //   parameter whose type is a class, a reference to a class, an
   //   enumeration, or a reference to an enumeration.
-  CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(FnDecl);
-  if (MethodDecl) {
-    if (MethodDecl->isStatic()) {
-      Diag(FnDecl->getLocation(),
-           diag::err_operator_overload_static,
-           FnDecl->getName(),
-           SourceRange(FnDecl->getLocation()));
-      IsInvalid = true;
-
-      // Pretend this isn't a member function; it'll supress
-      // additional, unnecessary error messages.
-      MethodDecl = 0;
-    }
+  if (CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(FnDecl)) {
+    if (MethodDecl->isStatic())
+      return Diag(FnDecl->getLocation(),
+                  diag::err_operator_overload_static,
+                  FnDecl->getName());
   } else {
     bool ClassOrEnumParam = false;
-    for (FunctionDecl::param_iterator Param = FnDecl->param_begin();
-         Param != FnDecl->param_end(); ++Param) {
-      QualType ParamType = (*Param)->getType();
-      if (const ReferenceType *RefType = ParamType->getAsReferenceType())
-        ParamType = RefType->getPointeeType();
+    for (FunctionDecl::param_iterator Param = FnDecl->param_begin(),
+                                   ParamEnd = FnDecl->param_end();
+         Param != ParamEnd; ++Param) {
+      QualType ParamType = (*Param)->getType().getNonReferenceType();
       if (ParamType->isRecordType() || ParamType->isEnumeralType()) {
         ClassOrEnumParam = true;
         break;
       }
     }
 
-    if (!ClassOrEnumParam) {
-      Diag(FnDecl->getLocation(),
-           diag::err_operator_overload_needs_class_or_enum,
-           FnDecl->getName(),
-           SourceRange(FnDecl->getLocation()));
-      IsInvalid = true;
-    }
+    if (!ClassOrEnumParam)
+      return Diag(FnDecl->getLocation(),
+                  diag::err_operator_overload_needs_class_or_enum,
+                  FnDecl->getName());
   }
 
   // C++ [over.oper]p8:
@@ -1893,12 +1880,10 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   if (Op != OO_Call) {
     for (FunctionDecl::param_iterator Param = FnDecl->param_begin();
          Param != FnDecl->param_end(); ++Param) {
-      if (Expr *DefArg = (*Param)->getDefaultArg()) {
-        Diag((*Param)->getLocation(),
-             diag::err_operator_overload_default_arg,
-             DefArg->getSourceRange());
-        IsInvalid = true;
-      }
+      if (Expr *DefArg = (*Param)->getDefaultArg())
+        return Diag((*Param)->getLocation(),
+                    diag::err_operator_overload_default_arg,
+                    FnDecl->getName(), DefArg->getSourceRange());
     }
   }
 
@@ -1917,13 +1902,14 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   //   [...] Operator functions cannot have more or fewer parameters
   //   than the number required for the corresponding operator, as
   //   described in the rest of this subclause.
-  unsigned NumParams = FnDecl->getNumParams() + (MethodDecl? 1 : 0);
+  unsigned NumParams = FnDecl->getNumParams() 
+                     + (isa<CXXMethodDecl>(FnDecl)? 1 : 0);
   if (Op != OO_Call &&
       ((NumParams == 1 && !CanBeUnaryOperator) ||
        (NumParams == 2 && !CanBeBinaryOperator) ||
        (NumParams < 1) || (NumParams > 2))) {
     // We have the wrong number of parameters.
-    std::string NumParamsStr = (llvm::APSInt(32) = NumParams).toString(10);
+    std::string NumParamsStr = llvm::utostr(NumParams);
 
     diag::kind DK;
 
@@ -1946,27 +1932,23 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
       assert(false && "All non-call overloaded operators are unary or binary!");
     }
 
-    Diag(FnDecl->getLocation(), DK,
-         FnDecl->getName(), NumParamsStr, 
-         SourceRange(FnDecl->getLocation()));
-    IsInvalid = true;
+    return Diag(FnDecl->getLocation(), DK,
+                FnDecl->getName(), NumParamsStr);
   }
       
-  // Overloaded operators cannot be variadic.
-  if (FnDecl->getType()->getAsFunctionTypeProto()->isVariadic()) {
-    Diag(FnDecl->getLocation(),
-         diag::err_operator_overload_variadic,
-         SourceRange(FnDecl->getLocation()));
-    IsInvalid = true;
+  // Overloaded operators other than operator() cannot be variadic.
+  if (Op != OO_Call &&
+      FnDecl->getType()->getAsFunctionTypeProto()->isVariadic()) {
+    return Diag(FnDecl->getLocation(),
+                diag::err_operator_overload_variadic,
+                FnDecl->getName());
   }
 
   // Some operators must be non-static member functions.
-  if (MustBeMemberOperator && !MethodDecl) {
-    Diag(FnDecl->getLocation(),
-         diag::err_operator_overload_must_be_member,
-         FnDecl->getName(),
-         SourceRange(FnDecl->getLocation()));
-    IsInvalid = true;
+  if (MustBeMemberOperator && !isa<CXXMethodDecl>(FnDecl)) {
+    return Diag(FnDecl->getLocation(),
+                diag::err_operator_overload_must_be_member,
+                FnDecl->getName());
   }
 
   // C++ [over.inc]p1:
@@ -1991,12 +1973,10 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
         DK = diag::err_operator_overload_post_inc_must_be_int;
       else
         DK = diag::err_operator_overload_post_dec_must_be_int;
-      Diag(LastParam->getLocation(), DK,
-           Context.getCanonicalType(LastParam->getType()).getAsString(),
-           SourceRange(FnDecl->getLocation()));
-      IsInvalid = true;
+      return Diag(LastParam->getLocation(), DK,
+                  Context.getCanonicalType(LastParam->getType()).getAsString());
     }
   }
 
-  return IsInvalid;
+  return false;
 }

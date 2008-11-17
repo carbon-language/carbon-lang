@@ -1464,7 +1464,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     SourceLocation OperatorLoc = Tok.getLocation();
 
     // First try the name of an overloaded operator
-    if (IdentifierInfo *II = MaybeParseOperatorFunctionId()) {
+    if (IdentifierInfo *II = TryParseOperatorFunctionId()) {
       D.SetIdentifier(II, OperatorLoc);
     } else {
       // This must be a conversion function (C++ [class.conv.fct]).

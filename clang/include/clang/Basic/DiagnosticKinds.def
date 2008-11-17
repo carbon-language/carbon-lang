@@ -1324,31 +1324,34 @@ DIAG(err_ambiguous_derived_to_base_conv, ERROR,
 
 // C++ operator overloading
 DIAG(err_operator_overload_needs_class_or_enum, ERROR,
-     "non-member overloaded operator '%0' must have at least one parameter of class or enumeration type (or reference thereof)")
+     "overloaded '%0' must have at least one parameter of class "
+     "or enumeration type")
 DIAG(err_operator_overload_variadic, ERROR,
-     "overloaded operator cannot be variadic")
+     "overloaded '%0' cannot be variadic")
 DIAG(err_operator_overload_static, ERROR,
-     "overloaded operator '%0' cannot be a static member function")
+     "overloaded '%0' cannot be a static member function")
 DIAG(err_operator_overload_default_arg, ERROR,
-     "a parameter of an overloaded operator cannot have a default argument")
+     "parameter of overloaded '%0' cannot have a default argument")
 DIAG(err_operator_overload_must_be_unary, ERROR,
-     "overloaded operator '%0' must be a unary operator (has %1 parameter)")
+     "overloaded '%0' must be a unary operator (has %1 parameter)")
 DIAG(err_operator_overload_must_be_binary, ERROR,
-     "overloaded operator '%0' must be a binary operator (has %1 parameter)")
+     "overloaded '%0' must be a binary operator (has %1 parameter)")
 DIAG(err_operator_overload_must_be_unary_or_binary, ERROR,
-     "overloaded operator '%0' must be a unary or binary operator (has %1 parameter)")
+     "overloaded '%0' must be a unary or binary operator (has %1 parameter)")
 DIAG(err_operator_overload_must_be_unary_plural, ERROR,
-     "overloaded operator '%0' must be a unary operator (has %1 parameters)")
+     "overloaded '%0' must be a unary operator (has %1 parameters)")
 DIAG(err_operator_overload_must_be_binary_plural, ERROR,
-     "overloaded operator '%0' must be a binary operator (has %1 parameters)")
+     "overloaded '%0' must be a binary operator (has %1 parameters)")
 DIAG(err_operator_overload_must_be_unary_or_binary_plural, ERROR,
-     "overloaded operator '%0' must be a unary or binary operator (has %1 parameters)")
+     "overloaded '%0' must be a unary or binary operator (has %1 parameters)")
 DIAG(err_operator_overload_must_be_member, ERROR,
-     "overloaded operator '%0' must be a non-static member function")
+     "overloaded '%0' must be a non-static member function")
 DIAG(err_operator_overload_post_inc_must_be_int, ERROR,
-     "parameter of overloaded post-increment operator must have type 'int' (not '%0')")
+     "parameter of overloaded post-increment operator must have type 'int' "
+     "(not '%0')")
 DIAG(err_operator_overload_post_dec_must_be_int, ERROR,
-     "parameter of overloaded post-decrement operator must have type 'int' (not '%0')")
+     "parameter of overloaded post-decrement operator must have type 'int' "
+     "(not '%0')")
 DIAG(err_operator_missing_type_specifier, ERROR,
      "missing type specifier after 'operator'")
 

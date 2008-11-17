@@ -149,7 +149,7 @@ Parser::ExprResult Parser::ParseCXXIdExpression() {
 
   case tok::kw_operator: {
     SourceLocation OperatorLoc = Tok.getLocation();
-    if (IdentifierInfo *II = MaybeParseOperatorFunctionId()) {
+    if (IdentifierInfo *II = TryParseOperatorFunctionId()) {
       return Actions.ActOnIdentifierExpr(CurScope, OperatorLoc, *II, 
                                          Tok.is(tok::l_paren), &SS);
     }
@@ -519,7 +519,7 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
   return false;
 }
 
-/// MaybeParseOperatorFunctionId - Attempts to parse a C++ overloaded
+/// TryParseOperatorFunctionId - Attempts to parse a C++ overloaded
 /// operator name (C++ [over.oper]). If successful, returns the
 /// predefined identifier that corresponds to that overloaded
 /// operator. Otherwise, returns NULL and does not consume any tokens.
@@ -534,7 +534,7 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
 ///            ^=    &=   |= <<   >> >>= <<=  ==  !=
 ///            <=    >=   && ||   ++ --   ,   ->* ->
 ///            ()    []
-IdentifierInfo *Parser::MaybeParseOperatorFunctionId() {
+IdentifierInfo *Parser::TryParseOperatorFunctionId() {
   assert(Tok.is(tok::kw_operator) && "Expected 'operator' keyword");
 
   OverloadedOperatorKind Op = OO_None;
@@ -581,16 +581,12 @@ IdentifierInfo *Parser::MaybeParseOperatorFunctionId() {
     return &PP.getIdentifierTable().getOverloadedOperator(OO_Subscript);
 
   default:
-    break;
+    return 0;
   }
 
-  if (Op == OO_None)
-    return 0;
-  else {
-    ConsumeToken(); // 'operator'
-    ConsumeAnyToken(); // the operator itself
-    return &PP.getIdentifierTable().getOverloadedOperator(Op);
-  }
+  ConsumeToken(); // 'operator'
+  ConsumeAnyToken(); // the operator itself
+  return &PP.getIdentifierTable().getOverloadedOperator(Op);
 }
 
 /// ParseConversionFunctionId - Parse a C++ conversion-function-id,
