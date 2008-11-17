@@ -1073,7 +1073,8 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
     } else if (Amt == NVTBits) {
       Lo = DAG.getConstant(0, NVT);
       Hi = InL;
-    } else if (Amt == 1) {
+    } else if (Amt == 1 &&
+               TLI.isOperationLegal(ISD::ADDC, TLI.getTypeToExpandTo(NVT))) {
       // Emit this X << 1 as X+X.
       SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
       SDValue LoOps[2] = { InL, InL };
