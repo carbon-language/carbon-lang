@@ -447,6 +447,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
         else
           Diag(DS.getThreadSpecLoc(),
                diag::err_mutable_function);
+        // FIXME: It would be nicer if the keyword was ignored only for this
+        // declarator. Otherwise we could get follow-up errors.
         D.getMutableDeclSpec().ClearStorageClassSpecs();
       } else {
         QualType T = GetTypeForDeclarator(D, S);
@@ -460,6 +462,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
             Diag(DS.getStorageClassSpecLoc(), err);
           else
             Diag(DS.getThreadSpecLoc(), err);
+          // FIXME: It would be nicer if the keyword was ignored only for this
+          // declarator. Otherwise we could get follow-up errors.
           D.getMutableDeclSpec().ClearStorageClassSpecs();
         }
       }

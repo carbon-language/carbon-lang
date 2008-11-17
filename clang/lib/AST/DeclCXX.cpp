@@ -22,9 +22,9 @@ using namespace clang;
  
 CXXFieldDecl *CXXFieldDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, IdentifierInfo *Id,
-                                   QualType T, Expr *BW) {
+                                   QualType T, bool Mut, Expr *BW) {
   void *Mem = C.getAllocator().Allocate<CXXFieldDecl>();
-  return new (Mem) CXXFieldDecl(RD, L, Id, T, BW);
+  return new (Mem) CXXFieldDecl(RD, L, Id, T, Mut, BW);
 }
 
 CXXRecordDecl::CXXRecordDecl(TagKind TK, DeclContext *DC,

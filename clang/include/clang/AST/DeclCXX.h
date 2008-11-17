@@ -112,17 +112,20 @@ protected:
 /// CXXFieldDecl - Represents an instance field of a C++ struct/union/class.
 class CXXFieldDecl : public FieldDecl {
   CXXRecordDecl *Parent;
+  bool Mutable;
 
   CXXFieldDecl(CXXRecordDecl *RD, SourceLocation L, IdentifierInfo *Id,
-               QualType T, Expr *BW = NULL)
-    : FieldDecl(CXXField, L, Id, T, BW), Parent(RD) {}
+               QualType T, bool Mut, Expr *BW = NULL)
+    : FieldDecl(CXXField, L, Id, T, BW), Parent(RD), Mutable(Mut) {}
 public:
   static CXXFieldDecl *Create(ASTContext &C, CXXRecordDecl *RD,SourceLocation L,
-                              IdentifierInfo *Id, QualType T, Expr *BW = NULL);
+                              IdentifierInfo *Id, QualType T, bool Mut,
+                              Expr *BW = NULL);
 
   void setAccess(AccessSpecifier AS) { Access = AS; }
   AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
   CXXRecordDecl *getParent() const { return Parent; }
+  bool isMutable() const { return Mutable; }
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == CXXField; }

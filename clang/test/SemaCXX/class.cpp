@@ -82,6 +82,18 @@ class C2 {
   }
 };
 
+struct C3 {
+  int i;
+  mutable int j;
+};
+void f()
+{
+  const C3 c3 = { 1, 2 };
+  (void)static_cast<int*>(&c3.i); // expected-error {{static_cast from 'int const *' to 'int *' is not allowed}}
+  // but no error here
+  (void)static_cast<int*>(&c3.j);
+}
+
 // Play with mutable a bit more, to make sure it doesn't crash anything.
 mutable int gi; // expected-error {{error: 'mutable' can only be applied to member variables}}
 mutable void gfn(); // expected-error {{illegal storage class on function}}

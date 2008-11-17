@@ -1149,6 +1149,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       // an error here
       Diag(D.getIdentifierLoc(), diag::err_mutable_nonmember);
       InvalidDecl = true;
+      break;
     }
 
     IdentifierInfo *II = Name.getAsIdentifierInfo();
@@ -2603,7 +2604,9 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
   if (getLangOptions().CPlusPlus) {
     // FIXME: Replace CXXFieldDecls with FieldDecls for simple structs.
     NewFD = CXXFieldDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
-                                 Loc, II, T, BitWidth);
+                                 Loc, II, T,
+                                 D.getDeclSpec().getStorageClassSpec() ==
+                                   DeclSpec::SCS_mutable, BitWidth);
     if (II)
       PushOnScopeChains(NewFD, S);
   }

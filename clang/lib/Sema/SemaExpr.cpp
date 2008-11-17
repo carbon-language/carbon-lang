@@ -951,6 +951,10 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     QualType MemberType = MemberDecl->getType();
     unsigned combinedQualifiers =
         MemberType.getCVRQualifiers() | BaseType.getCVRQualifiers();
+    if (CXXFieldDecl *CXXMember = dyn_cast<CXXFieldDecl>(MemberDecl)) {
+      if (CXXMember->isMutable())
+        combinedQualifiers &= ~QualType::Const;
+    }
     MemberType = MemberType.getQualifiedType(combinedQualifiers);
 
     return new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberDecl,
