@@ -511,6 +511,8 @@
 		DE8822350EC80C0A00CBC30A /* CGBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGBuilder.h; path = lib/CodeGen/CGBuilder.h; sourceTree = "<group>"; };
 		DE8823CA0ED0046600CBC30A /* APValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = APValue.cpp; path = lib/AST/APValue.cpp; sourceTree = "<group>"; };
 		DE8823DE0ED0B78600CBC30A /* PTHLexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTHLexer.h; sourceTree = "<group>"; };
+		DE8824530ED1243E00CBC30A /* OperatorKinds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OperatorKinds.h; sourceTree = "<group>"; };
+		DE8824560ED1244600CBC30A /* OperatorKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = OperatorKinds.def; sourceTree = "<group>"; };
 		DE928B120C05659200231DA4 /* ModuleBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ModuleBuilder.cpp; path = lib/CodeGen/ModuleBuilder.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE928B1F0C0565B000231DA4 /* ModuleBuilder.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ModuleBuilder.h; path = clang/CodeGen/ModuleBuilder.h; sourceTree = "<group>"; };
 		DE928B7C0C0A615100231DA4 /* CodeGenModule.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CodeGenModule.h; path = lib/CodeGen/CodeGenModule.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -1035,6 +1037,8 @@
 				DED7D7330A524295003AD0FB /* FileManager.h */,
 				DE3986EF0CB8D4B300223765 /* IdentifierTable.h */,
 				DE06B73D0A8307640050E87E /* LangOptions.h */,
+				DE8824560ED1244600CBC30A /* OperatorKinds.def */,
+				DE8824530ED1243E00CBC30A /* OperatorKinds.h */,
 				DED7D7350A524295003AD0FB /* SourceLocation.h */,
 				DED7D7360A524295003AD0FB /* SourceManager.h */,
 				DE46BF270AE0A82D00CC047C /* TargetInfo.h */,
