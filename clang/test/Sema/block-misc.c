@@ -30,7 +30,7 @@ int test1() {
 
 int test2(double (^S)()) {
    double (^I)(int)  = (void*) S;
-   (void*)I = (void *)S; 	// expected-error {{expression is not assignable}}
+   (void*)I = (void *)S; 	// expected-error {{assignment to cast is illegal, lvalue casts are not supported}}
 
    void *pv = I;
 

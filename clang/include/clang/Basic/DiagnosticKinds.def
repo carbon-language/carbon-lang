@@ -1225,6 +1225,8 @@ DIAG(err_typecheck_expression_not_modifiable_lvalue, ERROR,
      "expression is not assignable")
 DIAG(err_typecheck_incomplete_type_not_modifiable_lvalue, ERROR,
      "incomplete type '%0' is not assignable")
+DIAG(err_typecheck_lvalue_casts_not_supported, ERROR,
+     "assignment to cast is illegal, lvalue casts are not supported")
 
 DIAG(err_typecheck_duplicate_vector_components_not_mlvalue, ERROR,
      "vector is not assignable (contains duplicate components)")

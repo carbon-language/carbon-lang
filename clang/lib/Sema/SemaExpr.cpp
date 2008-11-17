@@ -2345,6 +2345,10 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
     Diag(loc, diag::err_typecheck_non_object_not_modifiable_lvalue,
          lhsType.getAsString(), lex->getSourceRange());
     return QualType();
+  case Expr::MLV_LValueCast:
+    Diag(loc, diag::err_typecheck_lvalue_casts_not_supported, 
+         lex->getSourceRange());
+    return QualType();
   case Expr::MLV_InvalidExpression:
     Diag(loc, diag::err_typecheck_expression_not_modifiable_lvalue,
          lex->getSourceRange());

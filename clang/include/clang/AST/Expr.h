@@ -99,6 +99,7 @@ public:
     MLV_IncompleteVoidType,
     MLV_DuplicateVectorComponents,
     MLV_InvalidExpression,
+    MLV_LValueCast,           // Specialized form of MLV_InvalidExpression.
     MLV_IncompleteType,
     MLV_ConstQualified,
     MLV_ArrayType,

@@ -495,7 +495,15 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
   case LV_NotObjectType: return MLV_NotObjectType;
   case LV_IncompleteVoidType: return MLV_IncompleteVoidType;
   case LV_DuplicateVectorComponents: return MLV_DuplicateVectorComponents;
-  case LV_InvalidExpression: return MLV_InvalidExpression;
+  case LV_InvalidExpression:
+    // If the top level is a C-style cast, and the subexpression is a valid
+    // lvalue, then this is probably a use of the old-school "cast as lvalue"
+    // GCC extension.  We don't support it, but we want to produce good
+    // diagnostics when it happens so that the user knows why.
+    if (const CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(this))
+      if (CE->getSubExpr()->isLvalue(Ctx) == LV_Valid)
+        return MLV_LValueCast;
+    return MLV_InvalidExpression;
   }
   
   QualType CT = Ctx.getCanonicalType(getType());
