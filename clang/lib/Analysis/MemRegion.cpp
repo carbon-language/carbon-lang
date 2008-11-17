@@ -117,13 +117,12 @@ QualType ElementRegion::getType(ASTContext& C) const {
     ArrayType* AT = cast<ArrayType>(T.getTypePtr());
     return AT->getElementType();
   }
-  else if (isa<AnonTypedRegion>(superRegion)) {
+  else {
+    assert (isa<AnonTypedRegion>(superRegion));
     PointerType* PtrT = cast<PointerType>(T.getTypePtr());
     QualType PTy = PtrT->getPointeeType();
     return C.getCanonicalType(PTy);
   }
-  else
-    assert(0 && "SuperRegion type unsupported.");
 }
 
 //===----------------------------------------------------------------------===//
