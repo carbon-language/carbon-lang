@@ -1346,12 +1346,8 @@ DIAG(err_operator_overload_must_be_unary_or_binary_plural, ERROR,
 DIAG(err_operator_overload_must_be_member, ERROR,
      "overloaded operator '%0' must be a non-static member function")
 DIAG(err_operator_overload_post_inc_must_be_int, ERROR,
-     "second parameter of overloaded post-increment operator must have type 'int' (not '%0')")
-DIAG(err_operator_overload_post_dec_must_be_int, ERROR,
-     "second parameter of overloaded post-decrement operator must have type 'int' (not '%0')")
-DIAG(err_operator_overload_post_inc_must_be_int_member, ERROR,
      "parameter of overloaded post-increment operator must have type 'int' (not '%0')")
-DIAG(err_operator_overload_post_dec_must_be_int_member, ERROR,
+DIAG(err_operator_overload_post_dec_must_be_int, ERROR,
      "parameter of overloaded post-decrement operator must have type 'int' (not '%0')")
 DIAG(err_operator_missing_type_specifier, ERROR,
      "missing type specifier after 'operator'")

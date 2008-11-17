@@ -1987,17 +1987,10 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
 
     if (!ParamIsInt) {
       diag::kind DK;
-      if (Op == OO_PlusPlus) {
-        if (MethodDecl)
-          DK = diag::err_operator_overload_post_inc_must_be_int_member;
-        else
-          DK = diag::err_operator_overload_post_inc_must_be_int;
-      } else {
-        if (MethodDecl)
-          DK = diag::err_operator_overload_post_dec_must_be_int_member;
-        else
-          DK = diag::err_operator_overload_post_dec_must_be_int;
-      }
+      if (Op == OO_PlusPlus)
+        DK = diag::err_operator_overload_post_inc_must_be_int;
+      else
+        DK = diag::err_operator_overload_post_dec_must_be_int;
       Diag(LastParam->getLocation(), DK,
            Context.getCanonicalType(LastParam->getType()).getAsString(),
            SourceRange(FnDecl->getLocation()));
