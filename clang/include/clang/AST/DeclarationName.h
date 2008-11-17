@@ -138,6 +138,10 @@ private:
 
   friend class DeclarationNameTable;
 
+  /// getFETokenInfoAsVoid - Retrieves the front end-specified pointer
+  /// for this name as a void pointer.
+  void *getFETokenInfoAsVoid() const;
+
 public:
   /// DeclarationName - Used to create an empty selector.
   DeclarationName() : Ptr(0) { }
@@ -149,6 +153,13 @@ public:
 
   // Construct a declaration name from an Objective-C selector.
   DeclarationName(Selector Sel);
+
+  // operator bool() - Evaluates true when this declaration name is
+  // non-empty.
+  operator bool() const { 
+    return ((Ptr & PtrMask) != 0) || 
+           (reinterpret_cast<IdentifierInfo *>(Ptr & ~PtrMask));
+  }
 
   /// getNameKind - Determine what kind of name this is.
   NameKind getNameKind() const;
@@ -175,6 +186,15 @@ public:
   /// getObjCSelector - Get the Objective-C selector stored in this
   /// declaration name.
   Selector getObjCSelector() const;
+
+  /// getFETokenInfo/setFETokenInfo - The language front-end is
+  /// allowed to associate arbitrary metadata with some kinds of
+  /// declaration names, including normal identifiers and C++
+  /// constructors, destructors, and conversion functions.
+  template<typename T>
+  T *getFETokenInfo() const { return static_cast<T*>(getFETokenInfoAsVoid()); }
+
+  void setFETokenInfo(void *T);
 
   /// operator== - Determine whether the specified names are identical..
   friend bool operator==(DeclarationName LHS, DeclarationName RHS) {

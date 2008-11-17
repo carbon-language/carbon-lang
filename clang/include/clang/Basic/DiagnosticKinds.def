@@ -1375,9 +1375,12 @@ DIAG(err_conv_function_redeclared, ERROR,
 DIAG(warn_conv_to_self_not_used, WARNING,
      "conversion function converting '%0' to itself will never be used")
 DIAG(warn_conv_to_base_not_used, WARNING,
-     "conversion function converting '%0' to its base class '%1' will never be used")
+     "conversion function converting '%0' to its base class '%1' will never "
+     "be used")
 DIAG(warn_conv_to_void_not_used, WARNING,
      "conversion function converting '%0' to '%1' will never be used")
+DIAG(err_no_conv_function, ERROR,
+     "no conversion function to type '%0'")
 
 
 DIAG(warn_not_compound_assign, WARNING,

@@ -282,7 +282,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
-  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S,
+  virtual TypeTy *isTypeName(IdentifierInfo &II, Scope *S,
                              const CXXScopeSpec *SS);
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
@@ -462,7 +462,7 @@ public:
   void CheckExtraCXXDefaultArguments(Declarator &D);
 
   /// More parsing and symbol table subroutines...
-  Decl *LookupDecl(const IdentifierInfo *II, unsigned NSI, Scope *S,
+  Decl *LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                    const DeclContext *LookupCtx = 0,
                    bool enableLazyBuiltinCreation = true);
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
@@ -614,6 +614,11 @@ public:
                                          IdentifierInfo &II,
                                          bool HasTrailingLParen,
                                          const CXXScopeSpec *SS = 0);
+  virtual ExprResult ActOnConversionFunctionExpr(Scope *S, 
+                                                 SourceLocation OperatorLoc,
+                                                 TypeTy *Ty,
+                                                 bool HasTrailingLParen,
+                                                 const CXXScopeSpec *SS);
   virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                          tok::TokenKind Kind);
   virtual ExprResult ActOnNumericConstant(const Token &);
@@ -820,7 +825,7 @@ public:
                                                   const CXXScopeSpec &SS,
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
-                                                  const IdentifierInfo &II);
+                                                  IdentifierInfo &II);
 
   /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
   /// scope or nested-name-specifier) is parsed, part of a declarator-id.

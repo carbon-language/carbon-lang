@@ -131,7 +131,7 @@ Parser::ExprResult Parser::ParseCXXIdExpression() {
   // unqualified-id:
   //   identifier
   //   operator-function-id
-  //   conversion-function-id                [TODO]
+  //   conversion-function-id
   //   '~' class-name                        [TODO]
   //   template-id                           [TODO]
   //
@@ -152,11 +152,15 @@ Parser::ExprResult Parser::ParseCXXIdExpression() {
     if (IdentifierInfo *II = TryParseOperatorFunctionId()) {
       return Actions.ActOnIdentifierExpr(CurScope, OperatorLoc, *II, 
                                          Tok.is(tok::l_paren), &SS);
+    } else if (TypeTy *Type = ParseConversionFunctionId()) {
+      return Actions.ActOnConversionFunctionExpr(CurScope, OperatorLoc,
+                                                 Type, Tok.is(tok::l_paren), 
+                                                 &SS);
     }
-    // FIXME: Handle conversion-function-id.
-    unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
-                                    "expected operator-function-id");
-    return Diag(Tok, DiagID);
+     
+    // We already complained about a bad conversion-function-id,
+    // above.
+    return true;
   }
 
   } // switch.

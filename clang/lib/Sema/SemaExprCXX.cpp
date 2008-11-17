@@ -19,6 +19,56 @@
 #include "clang/Basic/Diagnostic.h"
 using namespace clang;
 
+/// ActOnConversionFunctionExpr - Parse a C++ conversion function
+/// name (e.g., operator void const *) as an expression. This is
+/// very similar to ActOnIdentifierExpr, except that instead of
+/// providing an identifier the parser provides the type of the
+/// conversion function.
+Sema::ExprResult Sema::ActOnConversionFunctionExpr(Scope *S, 
+                                                   SourceLocation OperatorLoc,
+                                                   TypeTy *Ty,
+                                                   bool HasTrailingLParen,
+                                                   const CXXScopeSpec *SS) {
+  QualType ConvType = QualType::getFromOpaquePtr(Ty);
+  QualType ConvTypeCanon = Context.getCanonicalType(ConvType);
+  DeclarationName ConvName 
+    = Context.DeclarationNames.getCXXConversionFunctionName(ConvTypeCanon);
+
+  // We only expect to find a CXXConversionDecl.
+  Decl *D;
+  if (SS && !SS->isEmpty()) {
+    DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
+    if (DC == 0)
+      return true;
+    D = LookupDecl(ConvName, Decl::IDNS_Ordinary, S, DC);
+  } else
+    D = LookupDecl(ConvName, Decl::IDNS_Ordinary, S);
+  
+  if (D == 0) {
+    // If there is no conversion function that converts to this type,
+    // diagnose the problem.
+    if (SS && !SS->isEmpty())
+      return Diag(OperatorLoc, diag::err_typecheck_no_member,
+                  ConvType.getAsString(), SS->getRange());
+    else
+      return Diag(OperatorLoc, diag::err_no_conv_function, 
+                  ConvType.getAsString());
+  }
+  
+  assert(isa<CXXConversionDecl>(D) && "we had to find a conversion function");
+  CXXConversionDecl *Conversion = cast<CXXConversionDecl>(D);
+
+  // check if referencing a declaration with __attribute__((deprecated)).
+  if (Conversion->getAttr<DeprecatedAttr>())
+    Diag(OperatorLoc, diag::warn_deprecated, Conversion->getName());
+
+  // Only create DeclRefExpr's for valid Decl's.
+  if (Conversion->isInvalidDecl())
+    return true;
+  
+  // Create a normal DeclRefExpr.
+  return new DeclRefExpr(Conversion, Conversion->getType(), OperatorLoc);
+}
 
 /// ActOnCXXTypeidOfType - Parse typeid( type-id ).
 Action::ExprResult

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements the IdentifierResolver class, which is used for lexical
-// scoped lookup, based on identifier.
+// scoped lookup, based on declaration names.
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,7 +23,7 @@ using namespace clang;
 // IdDeclInfoMap class
 //===----------------------------------------------------------------------===//
 
-/// IdDeclInfoMap - Associates IdDeclInfos with Identifiers.
+/// IdDeclInfoMap - Associates IdDeclInfos with declaration names.
 /// Allocates 'pools' (vectors of IdDeclInfos) to avoid allocating each
 /// individual IdDeclInfo to heap.
 class IdentifierResolver::IdDeclInfoMap {
@@ -36,9 +36,9 @@ class IdentifierResolver::IdDeclInfoMap {
 public:
   IdDeclInfoMap() : CurIndex(VECTOR_SIZE) {}
 
-  /// Returns the IdDeclInfo associated to the IdentifierInfo.
+  /// Returns the IdDeclInfo associated to the DeclarationName.
   /// It creates a new IdDeclInfo if one was not created before for this id.
-  IdDeclInfo &operator[](IdentifierInfo *II);
+  IdDeclInfo &operator[](DeclarationName Name);
 };
 
 
@@ -173,19 +173,19 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
 
 /// AddDecl - Link the decl to its shadowed decl chain.
 void IdentifierResolver::AddDecl(NamedDecl *D) {
-  IdentifierInfo *II = D->getIdentifier();
-  void *Ptr = II->getFETokenInfo<void>();
+  DeclarationName Name = D->getDeclName();
+  void *Ptr = Name.getFETokenInfo<void>();
 
   if (!Ptr) {
-    II->setFETokenInfo(D);
+    Name.setFETokenInfo(D);
     return;
   }
 
   IdDeclInfo *IDI;
 
   if (isDeclPtr(Ptr)) {
-    II->setFETokenInfo(NULL);
-    IDI = &(*IdDeclInfos)[II];
+    Name.setFETokenInfo(NULL);
+    IDI = &(*IdDeclInfos)[Name];
     NamedDecl *PrevD = static_cast<NamedDecl*>(Ptr);
     IDI->AddDecl(PrevD);
   } else
@@ -198,18 +198,18 @@ void IdentifierResolver::AddDecl(NamedDecl *D) {
 /// after the decl that the iterator points to, thus the 'Shadow' decl will be
 /// encountered before the 'D' decl.
 void IdentifierResolver::AddShadowedDecl(NamedDecl *D, NamedDecl *Shadow) {
-  assert(D->getIdentifier() == Shadow->getIdentifier() && "Different ids!");
+  assert(D->getDeclName() == Shadow->getDeclName() && "Different ids!");
   assert(LookupContext(D) == LookupContext(Shadow) && "Different context!");
 
-  IdentifierInfo *II = D->getIdentifier();
-  void *Ptr = II->getFETokenInfo<void>();
+  DeclarationName Name = D->getDeclName();
+  void *Ptr = Name.getFETokenInfo<void>();
   assert(Ptr && "No decl from Ptr ?");
 
   IdDeclInfo *IDI;
 
   if (isDeclPtr(Ptr)) {
-    II->setFETokenInfo(NULL);
-    IDI = &(*IdDeclInfos)[II];
+    Name.setFETokenInfo(NULL);
+    IDI = &(*IdDeclInfos)[Name];
     NamedDecl *PrevD = static_cast<NamedDecl*>(Ptr);
     assert(PrevD == Shadow && "Invalid shadow decl ?");
     IDI->AddDecl(D);
@@ -225,29 +225,29 @@ void IdentifierResolver::AddShadowedDecl(NamedDecl *D, NamedDecl *Shadow) {
 /// The decl must already be part of the decl chain.
 void IdentifierResolver::RemoveDecl(NamedDecl *D) {
   assert(D && "null param passed");
-  IdentifierInfo *II = D->getIdentifier();
-  void *Ptr = II->getFETokenInfo<void>();
+  DeclarationName Name = D->getDeclName();
+  void *Ptr = Name.getFETokenInfo<void>();
 
   assert(Ptr && "Didn't find this decl on its identifier's chain!");
 
   if (isDeclPtr(Ptr)) {
     assert(D == Ptr && "Didn't find this decl on its identifier's chain!");
-    II->setFETokenInfo(NULL);
+    Name.setFETokenInfo(NULL);
     return;
   }
   
   return toIdDeclInfo(Ptr)->RemoveDecl(D);
 }
 
-/// begin - Returns an iterator for decls of identifier 'II', starting at
+/// begin - Returns an iterator for decls with name 'Name', starting at
 /// declaration context 'Ctx'. If 'LookInParentCtx' is true, it will walk the
 /// decls of parent declaration contexts too.
 IdentifierResolver::iterator
-IdentifierResolver::begin(const IdentifierInfo *II, const DeclContext *Ctx,
+IdentifierResolver::begin(DeclarationName Name, const DeclContext *Ctx,
                           bool LookInParentCtx) {
   assert(Ctx && "null param passed");
 
-  void *Ptr = II->getFETokenInfo<void>();
+  void *Ptr = Name.getFETokenInfo<void>();
   if (!Ptr) return end();
 
   LookupContext LC(Ctx);
@@ -284,7 +284,7 @@ IdentifierResolver::begin(const IdentifierInfo *II, const DeclContext *Ctx,
 void IdentifierResolver::iterator::PreIncIter() {
   NamedDecl *D = **this;
   LookupContext Ctx(D);
-  void *InfoPtr = D->getIdentifier()->getFETokenInfo<void>();
+  void *InfoPtr = D->getDeclName().getFETokenInfo<void>();
   assert(!isDeclPtr(InfoPtr) && "Decl with wrong id ?");
   IdDeclInfo *Info = toIdDeclInfo(InfoPtr);
 
@@ -310,12 +310,11 @@ void IdentifierResolver::iterator::PreIncIter() {
 // IdDeclInfoMap Implementation
 //===----------------------------------------------------------------------===//
 
-/// Returns the IdDeclInfo associated to the IdentifierInfo.
+/// Returns the IdDeclInfo associated to the DeclarationName.
 /// It creates a new IdDeclInfo if one was not created before for this id.
 IdentifierResolver::IdDeclInfo &
-IdentifierResolver::IdDeclInfoMap::operator[](IdentifierInfo *II) {
-  assert (II && "null IdentifierInfo passed");
-  void *Ptr = II->getFETokenInfo<void>();
+IdentifierResolver::IdDeclInfoMap::operator[](DeclarationName Name) {
+  void *Ptr = Name.getFETokenInfo<void>();
 
   if (Ptr) return *toIdDeclInfo(Ptr);
 
@@ -327,7 +326,7 @@ IdentifierResolver::IdDeclInfoMap::operator[](IdentifierInfo *II) {
     CurIndex = 0;
   }
   IdDeclInfo *IDI = &IDIVecs.back()[CurIndex];
-  II->setFETokenInfo(reinterpret_cast<void*>(
+  Name.setFETokenInfo(reinterpret_cast<void*>(
                               reinterpret_cast<uintptr_t>(IDI) | 0x1)
                                                                      );
   ++CurIndex;

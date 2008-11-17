@@ -25,7 +25,12 @@ namespace clang {
 class CXXSpecialName 
   : public DeclarationNameExtra, public llvm::FoldingSetNode {
 public:
+  /// Type - The type associated with this declaration name.
   QualType Type;
+
+  /// FETokenInfo - Extra information associated with this declaration
+  /// name that can be used by the front end.
+  void *FETokenInfo;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     ID.AddInteger(ExtraKindOrNumArgs);
@@ -114,6 +119,39 @@ Selector DeclarationName::getObjCSelector() const {
   return Selector();
 }
 
+void *DeclarationName::getFETokenInfoAsVoid() const {
+  switch (getNameKind()) {
+  case Identifier:
+    return getAsIdentifierInfo()->getFETokenInfo<void>();
+
+  case CXXConstructorName:
+  case CXXDestructorName:
+  case CXXConversionFunctionName:
+    return getAsCXXSpecialName()->FETokenInfo;
+
+  default:
+    assert(false && "Declaration name has no FETokenInfo");
+  }
+  return 0;
+}
+
+void DeclarationName::setFETokenInfo(void *T) {
+  switch (getNameKind()) {
+  case Identifier:
+    getAsIdentifierInfo()->setFETokenInfo(T);
+    break;
+
+  case CXXConstructorName:
+  case CXXDestructorName:
+  case CXXConversionFunctionName:
+    getAsCXXSpecialName()->FETokenInfo = T;
+    break;
+
+  default:
+    assert(false && "Declaration name has no FETokenInfo");
+  }
+}
+
 DeclarationNameTable::DeclarationNameTable() {
   CXXSpecialNamesImpl = new llvm::FoldingSet<CXXSpecialName>;
 }
@@ -159,6 +197,7 @@ DeclarationNameTable::getCXXSpecialName(DeclarationName::NameKind Kind,
   CXXSpecialName *SpecialName = new CXXSpecialName;
   SpecialName->ExtraKindOrNumArgs = EKind;
   SpecialName->Type = Ty;
+  SpecialName->FETokenInfo = 0;
 
   SpecialNames->InsertNode(SpecialName, InsertPos);
   return DeclarationName(SpecialName);

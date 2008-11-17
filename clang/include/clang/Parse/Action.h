@@ -108,7 +108,7 @@ public:
   /// An optional CXXScopeSpec can be passed to indicate the C++ scope (class or
   /// namespace) that the identifier must be a member of.
   /// i.e. for "foo::bar", 'II' will be "bar" and 'SS' will be "foo::".
-  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S,
+  virtual TypeTy *isTypeName(IdentifierInfo &II, Scope *S,
                              const CXXScopeSpec *SS = 0) = 0;
 
   /// isCurrentClassName - Return true if the specified name is the
@@ -133,7 +133,7 @@ public:
                                                   const CXXScopeSpec &SS,
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
-                                                  const IdentifierInfo &II) {
+                                                  IdentifierInfo &II) {
     return 0;
   }
 
@@ -461,6 +461,19 @@ public:
     return 0;
   }
   
+  /// ActOnConversionFunctionExpr - Parse a C++ conversion function
+  /// name (e.g., operator void const *) as an expression. This is
+  /// very similar to ActOnIdentifierExpr, except that instead of
+  /// providing an identifier the parser provides the type of the
+  /// conversion function.
+  virtual ExprResult ActOnConversionFunctionExpr(Scope *S, 
+                                                 SourceLocation OperatorLoc,
+                                                 TypeTy *Type,
+                                                 bool HasTrailingLParen,
+                                                 const CXXScopeSpec *SS = 0) {
+    return 0;
+  }
+
   virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                          tok::TokenKind Kind) {
     return 0;
@@ -1016,7 +1029,7 @@ public:
   
   /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
-  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S,
+  virtual TypeTy *isTypeName(IdentifierInfo &II, Scope *S,
                              const CXXScopeSpec *SS);
 
   /// isCurrentClassName - Always returns false, because MinimalAction

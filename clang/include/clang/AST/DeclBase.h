@@ -185,6 +185,7 @@ public:
     case OverloadedFunction:
     case CXXField:
     case CXXMethod:
+    case CXXConversion:
     case CXXClassVar:
       return IDNS_Ordinary;
     case Record:

@@ -20,9 +20,9 @@ using namespace clang;
 
 namespace {
   Decl *LookupNestedName(DeclContext *LookupCtx, bool LookInParentCtx,
-                         const IdentifierInfo &II, bool &IdIsUndeclared) {
+                         DeclarationName Name, bool &IdIsUndeclared) {
     IdentifierResolver::iterator
-      I = IdentifierResolver::begin(&II, LookupCtx, LookInParentCtx),
+      I = IdentifierResolver::begin(Name, LookupCtx, LookInParentCtx),
       E = IdentifierResolver::end();
 
     if (I == E) {
@@ -67,15 +67,16 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     const CXXScopeSpec &SS,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
-                                                    const IdentifierInfo &II) {
+                                                    IdentifierInfo &II) {
   DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
   Decl *SD;
   bool IdIsUndeclared;
 
   if (DC)
-    SD = LookupNestedName(DC, false/*LookInParentCtx*/, II, IdIsUndeclared);
+    SD = LookupNestedName(DC, false/*LookInParentCtx*/, &II, IdIsUndeclared);
   else
-    SD = LookupNestedName(CurContext, true/*LookInParent*/, II, IdIsUndeclared);
+    SD = LookupNestedName(CurContext, true/*LookInParent*/, &II, 
+                          IdIsUndeclared);
 
   if (SD) {
     if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {

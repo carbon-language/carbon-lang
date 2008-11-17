@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the IdentifierResolver class, which is used for lexical
-// scoped lookup, based on identifier.
+// scoped lookup, based on declaration names.
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,13 +18,14 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Parse/Scope.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclCXX.h"
 
 namespace clang {
 
-/// IdentifierResolver - Keeps track of shadowed decls on enclosing scopes.
-/// It manages the shadowing chains of identifiers and implements efficent decl
-/// lookup based on an identifier.
+/// IdentifierResolver - Keeps track of shadowed decls on enclosing
+/// scopes.  It manages the shadowing chains of declaration names and
+/// implements efficent decl lookup based on a declaration name.
 class IdentifierResolver {
 
   /// LookupContext - A wrapper for DeclContext. DeclContext is only part of
@@ -79,10 +80,10 @@ class IdentifierResolver {
     }
   };
 
-  /// IdDeclInfo - Keeps track of information about decls associated to a
-  /// particular identifier. IdDeclInfos are lazily constructed and assigned
-  /// to an identifier the first time a decl with that identifier is shadowed
-  /// in some scope.
+  /// IdDeclInfo - Keeps track of information about decls associated
+  /// to a particular declaration name. IdDeclInfos are lazily
+  /// constructed and assigned to a declaration name the first time a
+  /// decl with that declaration name is shadowed in some scope.
   class IdDeclInfo {
   public:
     typedef llvm::SmallVector<NamedDecl*, 2> DeclsTy;
@@ -123,7 +124,7 @@ class IdentifierResolver {
 
 public:
 
-  /// iterator - Iterate over the decls of a specified identifier.
+  /// iterator - Iterate over the decls of a specified declaration name.
   /// It will walk or not the parent declaration contexts depending on how
   /// it was instantiated.
   class iterator {
@@ -192,11 +193,11 @@ public:
     void PreIncIter();
   };
 
-  /// begin - Returns an iterator for decls of identifier 'II', starting at
+  /// begin - Returns an iterator for decls with the name 'Name', starting at
   /// declaration context 'Ctx'. If 'LookInParentCtx' is true, it will walk the
   /// decls of parent declaration contexts too.
   /// Default for 'LookInParentCtx is true.
-  static iterator begin(const IdentifierInfo *II, const DeclContext *Ctx,
+  static iterator begin(DeclarationName Name, const DeclContext *Ctx,
                         bool LookInParentCtx = true);
 
   /// end - Returns an iterator that has 'finished'.
@@ -230,12 +231,12 @@ private:
   class IdDeclInfoMap;
   IdDeclInfoMap *IdDeclInfos;
 
-  /// Identifier's FETokenInfo contains a Decl pointer if lower bit == 0.
+  /// FETokenInfo contains a Decl pointer if lower bit == 0.
   static inline bool isDeclPtr(void *Ptr) {
     return (reinterpret_cast<uintptr_t>(Ptr) & 0x1) == 0;
   }
 
-  /// Identifier's FETokenInfo contains a IdDeclInfo pointer if lower bit == 1.
+  /// FETokenInfo contains a IdDeclInfo pointer if lower bit == 1.
   static inline IdDeclInfo *toIdDeclInfo(void *Ptr) {
     assert((reinterpret_cast<uintptr_t>(Ptr) & 0x1) == 1
           && "Ptr not a IdDeclInfo* !");

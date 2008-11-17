@@ -29,7 +29,12 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
   llvm::OwningPtr<CallExpr> TheCall(TheCallRaw);
   // Get the IdentifierInfo* for the called function.
   IdentifierInfo *FnInfo = FDecl->getIdentifier();
-  
+
+  // None of the checks below are needed for functions that don't have
+  // simple names (e.g., C++ conversion functions).
+  if (!FnInfo)
+    return TheCall.take();
+
   switch (FnInfo->getBuiltinID()) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&

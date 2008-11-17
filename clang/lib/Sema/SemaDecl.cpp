@@ -28,7 +28,7 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
-Sema::TypeTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S,
+Sema::TypeTy *Sema::isTypeName(IdentifierInfo &II, Scope *S,
                                const CXXScopeSpec *SS) {
   DeclContext *DC = 0;
   if (SS) {
@@ -113,7 +113,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
     // We are pushing the name of a function, which might be an
     // overloaded name.
     IdentifierResolver::iterator
-        I = IdResolver.begin(FD->getIdentifier(),
+        I = IdResolver.begin(FD->getDeclName(),
                              FD->getDeclContext(), false/*LookInParentCtx*/);
     if (I != IdResolver.end() &&
         IdResolver.isDeclInScope(*I, FD->getDeclContext(), S) &&
@@ -126,7 +126,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
         // FunctionDecl and put it into an OverloadedFunctionDecl.
         Ovl = OverloadedFunctionDecl::Create(Context, 
                                              FD->getDeclContext(),
-                                             FD->getIdentifier());
+                                             FD->getDeclName());
         Ovl->addOverload(dyn_cast<FunctionDecl>(*I));
         
         // Remove the name binding to the existing FunctionDecl...
@@ -187,17 +187,17 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
 
 /// LookupDecl - Look up the inner-most declaration in the specified
 /// namespace.
-Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI, Scope *S,
+Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                        const DeclContext *LookupCtx,
                        bool enableLazyBuiltinCreation) {
-  if (II == 0) return 0;
+  if (!Name) return 0;
   unsigned NS = NSI;
   if (getLangOptions().CPlusPlus && (NS & Decl::IDNS_Ordinary))
     NS |= Decl::IDNS_Tag;
 
   IdentifierResolver::iterator 
-    I = LookupCtx ? IdResolver.begin(II, LookupCtx, false/*LookInParentCtx*/) :
-                    IdResolver.begin(II, CurContext, true/*LookInParentCtx*/);
+    I = LookupCtx ? IdResolver.begin(Name, LookupCtx, false/*LookInParentCtx*/)
+                  : IdResolver.begin(Name, CurContext, true/*LookInParentCtx*/);
   // Scan up the scope chain looking for a decl that matches this identifier
   // that is in the appropriate namespace.  This search should not take long, as
   // shadowing of names is uncommon, and deep shadowing is extremely uncommon.
@@ -209,13 +209,14 @@ Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI, Scope *S,
   // corresponds to a compiler builtin, create the decl object for the builtin
   // now, injecting it into translation unit scope, and return it.
   if (NS & Decl::IDNS_Ordinary) {
-    if (enableLazyBuiltinCreation &&
+    IdentifierInfo *II = Name.getAsIdentifierInfo();
+    if (enableLazyBuiltinCreation && II &&
         (LookupCtx == 0 || isa<TranslationUnitDecl>(LookupCtx))) {
       // If this is a builtin on this (or all) targets, create the decl.
       if (unsigned BuiltinID = II->getBuiltinID())
         return LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID, S);
     }
-    if (getLangOptions().ObjC1) {
+    if (getLangOptions().ObjC1 && II) {
       // @interface and @compatibility_alias introduce typedef-like names.
       // Unlike typedef's, they can only be introduced at file-scope (and are 
       // therefore not scoped decls). They can, however, be shadowed by
@@ -1034,8 +1035,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       return ActOnConstructorDeclarator(Constructor);
     else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(NewFD))
       return ActOnDestructorDeclarator(Destructor);
-    else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(NewFD))
-      return ActOnConversionDeclarator(Conversion);
+    
+    // Extra checking for conversion functions, including recording
+    // the conversion function in its class.
+    if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(NewFD))
+      ActOnConversionDeclarator(Conversion);
 
     // Extra checking for C++ overloaded operators (C++ [over.oper]).
     if (NewFD->isOverloadedOperator() &&

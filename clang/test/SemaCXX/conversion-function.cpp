@@ -3,6 +3,14 @@ class X {
 public:
   operator bool();
   operator int() const;
+
+  bool f() {
+    return operator bool();
+  }
+
+  float g() {
+    return operator float(); // expected-error{{no conversion function to type 'float'}}
+  }
 };
 
 operator int(); // expected-error{{conversion function must be a non-static member function}}
