@@ -413,6 +413,10 @@ public:
   bool PerformCopyInitialization(Expr *&From, QualType ToType, 
                                  const char *Flavor);
 
+  ImplicitConversionSequence
+  TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method);
+  bool PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method);
+
   /// OverloadingResult - Capture the result of performing overload
   /// resolution.
   enum OverloadingResult {
@@ -425,9 +429,16 @@ public:
                             Expr **Args, unsigned NumArgs,
                             OverloadCandidateSet& CandidateSet,
                             bool SuppressUserConversions = false);
+  void AddMethodCandidate(CXXMethodDecl *Method,
+                          Expr *Object, Expr **Args, unsigned NumArgs,
+                          OverloadCandidateSet& CandidateSet,
+                          bool SuppressUserConversions = true);
   void AddConversionCandidate(CXXConversionDecl *Conversion,
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet);
+  void AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
+                             Expr **Args, unsigned NumArgs,
+                             OverloadCandidateSet& CandidateSet);
   void AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys, 
                            Expr **Args, unsigned NumArgs,
                            OverloadCandidateSet& CandidateSet);

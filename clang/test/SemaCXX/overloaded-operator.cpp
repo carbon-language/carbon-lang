@@ -27,4 +27,24 @@ void g(Y y, Z z) {
   bool b = y - z; // expected-error{{use of overloaded operator '-' is ambiguous; candidates are:}}
 }
 
+struct A {
+  bool operator==(Z&); // expected-note{{candidate function}}
+};
 
+A make_A();
+
+bool operator==(A&, Z&); // expected-note{{candidate function}}
+
+void h(A a, const A ac, Z z) {
+  make_A() == z;
+  a == z; // expected-error{{use of overloaded operator '==' is ambiguous; candidates are:}}
+  ac == z; // expected-error{{invalid operands to binary expression ('struct A const' and 'struct Z')}}
+}
+
+struct B {
+  bool operator==(const B&) const;
+
+  void test(Z z) {
+    make_A() == z;
+  }
+};

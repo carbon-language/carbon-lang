@@ -1413,6 +1413,86 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
   }
 }
 
+/// TryObjectArgumentInitialization - Try to initialize the object
+/// parameter of the given member function (@c Method) from the
+/// expression @p From.
+ImplicitConversionSequence
+Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
+  QualType ClassType = Context.getTypeDeclType(Method->getParent());
+  unsigned MethodQuals = Method->getTypeQualifiers();
+  QualType ImplicitParamType = ClassType.getQualifiedType(MethodQuals);
+
+  // Set up the conversion sequence as a "bad" conversion, to allow us
+  // to exit early.
+  ImplicitConversionSequence ICS;
+  ICS.Standard.setAsIdentityConversion();
+  ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+
+  // We need to have an object of class type.
+  QualType FromType = From->getType();
+  if (!FromType->isRecordType())
+    return ICS;
+
+  // The implicit object parmeter is has the type "reference to cv X",
+  // where X is the class of which the function is a member
+  // (C++ [over.match.funcs]p4). However, when finding an implicit
+  // conversion sequence for the argument, we are not allowed to
+  // create temporaries or perform user-defined conversions 
+  // (C++ [over.match.funcs]p5). We perform a simplified version of
+  // reference binding here, that allows class rvalues to bind to
+  // non-constant references.
+
+  // First check the qualifiers. We don't care about lvalue-vs-rvalue
+  // with the implicit object parameter (C++ [over.match.funcs]p5).
+  QualType FromTypeCanon = Context.getCanonicalType(FromType);
+  if (ImplicitParamType.getCVRQualifiers() != FromType.getCVRQualifiers() &&
+      !ImplicitParamType.isAtLeastAsQualifiedAs(FromType))
+    return ICS;
+
+  // Check that we have either the same type or a derived type. It
+  // affects the conversion rank.
+  QualType ClassTypeCanon = Context.getCanonicalType(ClassType);
+  if (ClassTypeCanon == FromTypeCanon.getUnqualifiedType())
+    ICS.Standard.Second = ICK_Identity;
+  else if (IsDerivedFrom(FromType, ClassType))
+    ICS.Standard.Second = ICK_Derived_To_Base;
+  else
+    return ICS;
+
+  // Success. Mark this as a reference binding.
+  ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+  ICS.Standard.FromTypePtr = FromType.getAsOpaquePtr();
+  ICS.Standard.ToTypePtr = ImplicitParamType.getAsOpaquePtr();
+  ICS.Standard.ReferenceBinding = true;
+  ICS.Standard.DirectBinding = true;
+  return ICS;
+}
+
+/// PerformObjectArgumentInitialization - Perform initialization of
+/// the implicit object parameter for the given Method with the given
+/// expression.
+bool
+Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
+  QualType ImplicitParamType
+    = Method->getThisType(Context)->getAsPointerType()->getPointeeType();
+  ImplicitConversionSequence ICS 
+    = TryObjectArgumentInitialization(From, Method);
+  if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion)
+    return Diag(From->getSourceRange().getBegin(),
+                diag::err_implicit_object_parameter_init,
+                ImplicitParamType.getAsString(), From->getType().getAsString(),
+                From->getSourceRange());
+
+  if (ICS.Standard.Second == ICK_Derived_To_Base &&
+      CheckDerivedToBaseConversion(From->getType(), ImplicitParamType,
+                                   From->getSourceRange().getBegin(),
+                                   From->getSourceRange()))
+    return true;
+
+  ImpCastExprToType(From, ImplicitParamType, /*isLvalue=*/true);
+  return false;
+}
+
 /// AddOverloadCandidate - Adds the given function to the set of
 /// candidate functions, using the given function call arguments.  If
 /// @p SuppressUserConversions, then don't allow user-defined
@@ -1471,13 +1551,100 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
         = TryCopyInitialization(Args[ArgIdx], ParamType, 
                                 SuppressUserConversions);
       if (Candidate.Conversions[ArgIdx].ConversionKind 
-            == ImplicitConversionSequence::BadConversion)
+            == ImplicitConversionSequence::BadConversion) {
         Candidate.Viable = false;
+        break;
+      }
     } else {
       // (C++ 13.3.2p2): For the purposes of overload resolution, any
       // argument for which there is no corresponding parameter is
       // considered to ""match the ellipsis" (C+ 13.3.3.1.3).
       Candidate.Conversions[ArgIdx].ConversionKind 
+        = ImplicitConversionSequence::EllipsisConversion;
+    }
+  }
+}
+
+/// AddMethodCandidate - Adds the given C++ member function to the set
+/// of candidate functions, using the given function call arguments
+/// and the object argument (@c Object). For example, in a call
+/// @c o.f(a1,a2), @c Object will contain @c o and @c Args will contain
+/// both @c a1 and @c a2. If @p SuppressUserConversions, then don't
+/// allow user-defined conversions via constructors or conversion
+/// operators.
+void 
+Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
+                         Expr **Args, unsigned NumArgs,
+                         OverloadCandidateSet& CandidateSet,
+                         bool SuppressUserConversions)
+{
+  const FunctionTypeProto* Proto 
+    = dyn_cast<FunctionTypeProto>(Method->getType()->getAsFunctionType());
+  assert(Proto && "Methods without a prototype cannot be overloaded");
+  assert(!isa<CXXConversionDecl>(Method) && 
+         "Use AddConversionCandidate for conversion functions");
+
+  // Add this candidate
+  CandidateSet.push_back(OverloadCandidate());
+  OverloadCandidate& Candidate = CandidateSet.back();
+  Candidate.Function = Method;
+
+  unsigned NumArgsInProto = Proto->getNumArgs();
+
+  // (C++ 13.3.2p2): A candidate function having fewer than m
+  // parameters is viable only if it has an ellipsis in its parameter
+  // list (8.3.5).
+  if (NumArgs > NumArgsInProto && !Proto->isVariadic()) {
+    Candidate.Viable = false;
+    return;
+  }
+
+  // (C++ 13.3.2p2): A candidate function having more than m parameters
+  // is viable only if the (m+1)st parameter has a default argument
+  // (8.3.6). For the purposes of overload resolution, the
+  // parameter list is truncated on the right, so that there are
+  // exactly m parameters.
+  unsigned MinRequiredArgs = Method->getMinRequiredArguments();
+  if (NumArgs < MinRequiredArgs) {
+    // Not enough arguments.
+    Candidate.Viable = false;
+    return;
+  }
+
+  Candidate.Viable = true;
+  Candidate.Conversions.resize(NumArgs + 1);
+
+  // Determine the implicit conversion sequence for the object
+  // parameter.
+  Candidate.Conversions[0] = TryObjectArgumentInitialization(Object, Method);
+  if (Candidate.Conversions[0].ConversionKind 
+        == ImplicitConversionSequence::BadConversion) {
+    Candidate.Viable = false;
+    return;
+  }
+
+  // Determine the implicit conversion sequences for each of the
+  // arguments.
+  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+    if (ArgIdx < NumArgsInProto) {
+      // (C++ 13.3.2p3): for F to be a viable function, there shall
+      // exist for each argument an implicit conversion sequence
+      // (13.3.3.1) that converts that argument to the corresponding
+      // parameter of F.
+      QualType ParamType = Proto->getArgType(ArgIdx);
+      Candidate.Conversions[ArgIdx + 1] 
+        = TryCopyInitialization(Args[ArgIdx], ParamType, 
+                                SuppressUserConversions);
+      if (Candidate.Conversions[ArgIdx + 1].ConversionKind 
+            == ImplicitConversionSequence::BadConversion) {
+        Candidate.Viable = false;
+        break;
+      }
+    } else {
+      // (C++ 13.3.2p2): For the purposes of overload resolution, any
+      // argument for which there is no corresponding parameter is
+      // considered to ""match the ellipsis" (C+ 13.3.3.1.3).
+      Candidate.Conversions[ArgIdx + 1].ConversionKind 
         = ImplicitConversionSequence::EllipsisConversion;
     }
   }
@@ -1502,20 +1669,12 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     = Conversion->getConversionType().getAsOpaquePtr();
   Candidate.FinalConversion.ToTypePtr = ToType.getAsOpaquePtr();
 
-  // Determine the implicit conversion sequences for each of the
-  // arguments.
+  // Determine the implicit conversion sequence for the implicit
+  // object parameter.
   Candidate.Viable = true;
   Candidate.Conversions.resize(1);
+  Candidate.Conversions[0] = TryObjectArgumentInitialization(From, Conversion);
 
-  // FIXME: We need to follow the rules for the implicit object
-  // parameter.
-  QualType ImplicitObjectType 
-    = Context.getTypeDeclType(Conversion->getParent());
-  ImplicitObjectType 
-    = ImplicitObjectType.getQualifiedType(Conversion->getTypeQualifiers());
-  ImplicitObjectType = Context.getReferenceType(ImplicitObjectType);
-  Candidate.Conversions[0] = TryCopyInitialization(From, ImplicitObjectType, 
-                                                   true);
   if (Candidate.Conversions[0].ConversionKind 
       == ImplicitConversionSequence::BadConversion) {
     Candidate.Viable = false;
@@ -1553,6 +1712,104 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   }
 }
 
+/// AddOperatorCandidates - Add the overloaded operator candidates for
+/// the operator Op that was used in an operator expression such as "x
+/// Op y". S is the scope in which the expression occurred (used for
+/// name lookup of the operator), Args/NumArgs provides the operator
+/// arguments, and CandidateSet will store the added overload
+/// candidates. (C++ [over.match.oper]).
+void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
+                                 Expr **Args, unsigned NumArgs,
+                                 OverloadCandidateSet& CandidateSet) {
+  DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
+
+  // C++ [over.match.oper]p3:
+  //   For a unary operator @ with an operand of a type whose
+  //   cv-unqualified version is T1, and for a binary operator @ with
+  //   a left operand of a type whose cv-unqualified version is T1 and
+  //   a right operand of a type whose cv-unqualified version is T2,
+  //   three sets of candidate functions, designated member
+  //   candidates, non-member candidates and built-in candidates, are
+  //   constructed as follows:
+  QualType T1 = Args[0]->getType();
+  QualType T2;
+  if (NumArgs > 1)
+    T2 = Args[1]->getType();
+
+  //     -- If T1 is a class type, the set of member candidates is the
+  //        result of the qualified lookup of T1::operator@
+  //        (13.3.1.1.1); otherwise, the set of member candidates is
+  //        empty.
+  if (const RecordType *T1Rec = T1->getAsRecordType()) {
+    IdentifierResolver::iterator I 
+      = IdResolver.begin(OpName, cast<CXXRecordType>(T1Rec)->getDecl(), 
+                         /*LookInParentCtx=*/false);
+    NamedDecl *MemberOps = (I == IdResolver.end())? 0 : *I;
+    if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
+      AddMethodCandidate(Method, Args[0], Args+1, NumArgs - 1, CandidateSet,
+                         /*SuppressUserConversions=*/false);
+    else if (OverloadedFunctionDecl *Ovl 
+               = dyn_cast_or_null<OverloadedFunctionDecl>(MemberOps)) {
+      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                  FEnd = Ovl->function_end();
+           F != FEnd; ++F) {
+        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*F))
+          AddMethodCandidate(Method, Args[0], Args+1, NumArgs - 1, CandidateSet,
+                             /*SuppressUserConversions=*/false);
+      }
+    }
+  }
+
+  //     -- The set of non-member candidates is the result of the
+  //        unqualified lookup of operator@ in the context of the
+  //        expression according to the usual rules for name lookup in
+  //        unqualified function calls (3.4.2) except that all member
+  //        functions are ignored. However, if no operand has a class
+  //        type, only those non-member functions in the lookup set
+  //        that have a first parameter of type T1 or “reference to
+  //        (possibly cv-qualified) T1”, when T1 is an enumeration
+  //        type, or (if there is a right operand) a second parameter
+  //        of type T2 or “reference to (possibly cv-qualified) T2”,
+  //        when T2 is an enumeration type, are candidate functions.
+  {
+    NamedDecl *NonMemberOps = 0;
+    for (IdentifierResolver::iterator I 
+           = IdResolver.begin(OpName, CurContext, true/*LookInParentCtx*/);
+         I != IdResolver.end(); ++I) {
+      // We don't need to check the identifier namespace, because
+      // operator names can only be ordinary identifiers.
+
+      // Ignore member functions. 
+      if (ScopedDecl *SD = dyn_cast<ScopedDecl>(*I)) {
+        if (SD->getDeclContext()->isCXXRecord())
+          continue;
+      } 
+
+      // We found something with this name. We're done.
+      NonMemberOps = *I;
+      break;
+    }
+
+    // FIXME: check that strange "However" condition above. It's going
+    // to need a special test.
+    if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(NonMemberOps))
+      AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
+                           /*SuppressUserConversions=*/false);
+    else if (OverloadedFunctionDecl *Ovl
+               = dyn_cast_or_null<OverloadedFunctionDecl>(NonMemberOps)) {
+      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                  FEnd = Ovl->function_end();
+           F != FEnd; ++F)
+        AddOverloadCandidate(*F, Args, NumArgs, CandidateSet, 
+                             /*SuppressUserConversions=*/false);
+    }
+  }
+
+  // Add builtin overload candidates (C++ [over.built]).
+  if (NumArgs == 2)
+    return AddBuiltinBinaryOperatorCandidates(Op, Args, CandidateSet);
+}
+
 /// AddBuiltinCandidate - Add a candidate for a built-in
 /// operator. ResultTy and ParamTys are the result and parameter types
 /// of the built-in candidate, respectively. Args and NumArgs are the
@@ -1576,8 +1833,10 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
     Candidate.Conversions[ArgIdx] 
       = TryCopyInitialization(Args[ArgIdx], ParamTys[ArgIdx], false);
     if (Candidate.Conversions[ArgIdx].ConversionKind 
-        == ImplicitConversionSequence::BadConversion)
+        == ImplicitConversionSequence::BadConversion) {
       Candidate.Viable = false;
+      break;
+    }
   }
 }
 

@@ -2863,20 +2863,10 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
     };
     OverloadedOperatorKind OverOp = OverOps[Opc];
 
-    // Lookup this operator.
-    Decl *D = LookupDecl(Context.DeclarationNames.getCXXOperatorName(OverOp),
-                         Decl::IDNS_Ordinary, S);
-
-    // Add any overloaded operators we find to the overload set.
+    // Add the appropriate overloaded operators (C++ [over.match.oper]) 
+    // to the candidate set.
     Expr *Args[2] = { lhs, rhs };
-    if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
-      AddOverloadCandidate(FD, Args, 2, CandidateSet);
-    else if (OverloadedFunctionDecl *Ovl 
-               = dyn_cast_or_null<OverloadedFunctionDecl>(D))
-      AddOverloadCandidates(Ovl, Args, 2, CandidateSet);
-
-    // Add builtin overload candidates (C++ [over.built]).
-    AddBuiltinBinaryOperatorCandidates(OverOp, Args, CandidateSet);
+    AddOperatorCandidates(OverOp, S, Args, 2, CandidateSet);
 
     // Perform overload resolution.
     OverloadCandidateSet::iterator Best;
@@ -2890,12 +2880,19 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
         // operator.
 
         // Convert the arguments.
-        // FIXME: Conversion will be different for member operators.
-        if (PerformCopyInitialization(lhs, FnDecl->getParamDecl(0)->getType(),
-                                      "passing") ||
-            PerformCopyInitialization(rhs, FnDecl->getParamDecl(1)->getType(),
-                                      "passing"))
-          return true;
+        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
+          if (PerformObjectArgumentInitialization(lhs, Method) ||
+              PerformCopyInitialization(rhs, FnDecl->getParamDecl(0)->getType(),
+                                        "passing"))
+            return true;
+        } else {
+          // Convert the arguments.
+          if (PerformCopyInitialization(lhs, FnDecl->getParamDecl(0)->getType(),
+                                        "passing") ||
+              PerformCopyInitialization(rhs, FnDecl->getParamDecl(1)->getType(),
+                                        "passing"))
+            return true;
+        }
 
         // Determine the result type
         QualType ResultTy 
