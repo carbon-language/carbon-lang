@@ -282,15 +282,38 @@ void RegScavenger::backward() {
   MBBI = prior(MBBI);
 
   MachineInstr *MI = MBBI;
-  // Process defs first.
   const TargetInstrDesc &TID = MI->getDesc();
+
+  // Separate register operands into 3 classes: uses, defs, earlyclobbers.
+  SmallVector<std::pair<const MachineOperand*,unsigned>, 4> UseMOs;
+  SmallVector<std::pair<const MachineOperand*,unsigned>, 4> DefMOs;
+  SmallVector<std::pair<const MachineOperand*,unsigned>, 4> EarlyClobberMOs;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.isDef())
+    if (!MO.isReg() || MO.getReg() == 0)
       continue;
+    if (MO.isUse())
+      UseMOs.push_back(std::make_pair(&MO,i));
+    else if (MO.isEarlyClobber())
+      EarlyClobberMOs.push_back(std::make_pair(&MO,i));
+    else
+      DefMOs.push_back(std::make_pair(&MO,i));
+  }
+
+
+  // Process defs first.
+  unsigned NumECs = EarlyClobberMOs.size();
+  unsigned NumDefs = DefMOs.size();
+  for (unsigned i = 0, e = NumECs + NumDefs; i != e; ++i) {
+    const MachineOperand &MO = (i < NumDefs)
+      ? *DefMOs[i].first : *EarlyClobberMOs[i-NumDefs].first;
+    unsigned Idx = (i < NumECs)
+      ? DefMOs[i].second : EarlyClobberMOs[i-NumDefs].second;
+
     // Skip two-address destination operand.
-    if (TID.findTiedToSrcOperand(i) != -1)
+    if (TID.findTiedToSrcOperand(Idx) != -1)
       continue;
+
     unsigned Reg = MO.getReg();
     assert(isUsed(Reg));
     if (!isReserved(Reg))
@@ -299,13 +322,9 @@ void RegScavenger::backward() {
 
   // Process uses.
   BitVector UseRegs(NumPhysRegs);
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.isUse())
-      continue;
+  for (unsigned i = 0, e = UseMOs.size(); i != e; ++i) {
+    const MachineOperand MO = *UseMOs[i].first;
     unsigned Reg = MO.getReg();
-    if (Reg == 0)
-      continue;
     assert(isUnused(Reg) || isReserved(Reg));
     UseRegs.set(Reg);
 
