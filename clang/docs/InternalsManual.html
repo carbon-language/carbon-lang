@@ -469,7 +469,7 @@ malloc'd objects are at least 8 byte aligned.</p>
 <p>Given
   a <code>DeclarationName</code> <code>N</code>, <code>N.getNameKind()</code>
   will produce a value that describes what kind of name <code>N</code>
-  stores. There are 7 options (all of the names are inside
+  stores. There are 8 options (all of the names are inside
   the <code>DeclarationName</code> class)</p>
 <dl>
   <dt>Identifier</dt>
@@ -514,11 +514,19 @@ malloc'd objects are at least 8 byte aligned.</p>
       const *</code>". Use <code>N.getCXXNameType()</code> to retrieve
   the type that this conversion function converts to. This type is
     always a canonical type.</dd>
+
+  <dt>CXXOperatorName</dt>
+  <dd>The name is a C++ overloaded operator name. Overloaded operators
+  are named according to their spelling, e.g.,
+  "<code>operator+</code>" or "<code>operator new
+  []</code>". Use <code>N.getCXXOverloadedOperator()</code> to
+  retrieve the overloaded operator (a value of
+    type <code>OverloadedOperatorKind</code>).</dd>
 </dl>
 
 <p><code>DeclarationName</code>s are cheap to create, copy, and
   compare. They require only a single pointer's worth of storage in
-  the common cases (identifiers, C++ overloaded operator names, zero-
+  the common cases (identifiers, zero-
   and one-argument Objective-C selectors) and use dense, uniqued
   storage for the other kinds of
   names. Two <code>DeclarationName</code>s can be compared for
@@ -532,16 +540,15 @@ malloc'd objects are at least 8 byte aligned.</p>
 
 <p><code>DeclarationName</code> instances can be created in different
   ways depending on what kind of name the instance will store. Normal
-  identifiers (<code>IdentifierInfo</code> pointers), including
-  overloaded operator names, and Objective-C selectors
+  identifiers (<code>IdentifierInfo</code> pointers) and Objective-C selectors
   (<code>Selector</code>) can be implicitly converted
   to <code>DeclarationName</code>s. Names for C++ constructors,
-  destructors, and conversion functions can be retrieved from
+  destructors, conversion functions, and overloaded operators can be retrieved from
   the <code>DeclarationNameTable</code>, an instance of which is
   available as <code>ASTContext::DeclarationNames</code>. The member
   functions <code>getCXXConstructorName</code>, <code>getCXXDestructorName</code>,
-  and <code>getCXXConversionFunctionName</code>, respectively,
-  return <code>DeclarationName</code> instances for the three kinds of
+  <code>getCXXConversionFunctionName</code>, and <code>getCXXOperatorName</code>, respectively,
+  return <code>DeclarationName</code> instances for the four kinds of
   C++ special function names.</p>
 
 <!-- ======================================================================= -->

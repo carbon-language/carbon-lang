@@ -789,7 +789,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 13.5: Overloaded operators [over.oper]
-  IdentifierInfo *TryParseOperatorFunctionId();
+  OverloadedOperatorKind TryParseOperatorFunctionId();
   TypeTy *ParseConversionFunctionId();
 };
 

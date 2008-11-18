@@ -147,6 +147,10 @@ void NamedDecl::EmitInRec(Serializer& S) const {
   case DeclarationName::CXXConversionFunctionName:
     Name.getCXXNameType().Emit(S);
     break;
+
+  case DeclarationName::CXXOperatorName:
+    S.EmitInt(Name.getCXXOverloadedOperator());
+    break;
   }
 }
 
@@ -178,8 +182,16 @@ void NamedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
     break;
 
   case DeclarationName::CXXConversionFunctionName:
-    Name = C.DeclarationNames.getCXXConversionFunctionName(QualType::ReadVal(D));
+    Name 
+      = C.DeclarationNames.getCXXConversionFunctionName(QualType::ReadVal(D));
     break;
+
+  case DeclarationName::CXXOperatorName: {
+    OverloadedOperatorKind Op 
+      = static_cast<OverloadedOperatorKind>(D.ReadInt());
+    Name = C.DeclarationNames.getCXXOperatorName(Op);
+    break;
+  }
   }
 }
 

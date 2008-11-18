@@ -647,6 +647,7 @@ public:
     DK_Normal,           // A normal declarator (has an identifier). 
     DK_Constructor,      // A C++ constructor (identifier is the class name)
     DK_Destructor,       // A C++ destructor  (identifier is ~class name)
+    DK_Operator,         // A C++ overloaded operator name
     DK_Conversion        // A C++ conversion function (identifier is 
                          // "operator " then the type name)
   };
@@ -677,10 +678,16 @@ private:
   /// AsmLabel - The asm label, if specified.
   Action::ExprTy *AsmLabel;
 
-  // When Kind is DK_Constructor, DK_Destructor, or DK_Conversion, the
-  // type associated with the constructor, destructor, or conversion
-  // operator.
-  Action::TypeTy *Type;
+  union {
+    // When Kind is DK_Constructor, DK_Destructor, or DK_Conversion, the
+    // type associated with the constructor, destructor, or conversion
+    // operator.
+    Action::TypeTy *Type;
+
+    /// When Kind is DK_Operator, this is the actual overloaded
+    /// operator that this declarator names.
+    OverloadedOperatorKind OperatorKind;
+  };
 
 public:
   Declarator(const DeclSpec &ds, TheContext C)
@@ -802,7 +809,7 @@ public:
   }
 
   // setConversionFunction - Set this declarator to be a C++
-  // conversion function declarator.
+  // conversion function declarator (e.g., @c operator int const *).
   void setConversionFunction(Action::TypeTy *Ty, SourceLocation Loc) {
     Identifier = 0;
     IdentifierLoc = Loc;
@@ -810,6 +817,14 @@ public:
     Type = Ty;
   }
 
+  // setOverloadedOperator - Set this declaration to be a C++
+  // overloaded operator declarator (e.g., @c operator+).
+  void setOverloadedOperator(OverloadedOperatorKind Op, SourceLocation Loc) {
+    IdentifierLoc = Loc;
+    Kind = DK_Operator;
+    OperatorKind = Op;
+  }
+ 
   void AddTypeInfo(const DeclaratorChunk &TI) {
     DeclTypeInfo.push_back(TI);
   }
@@ -858,6 +873,8 @@ public:
   Action::ExprTy *getAsmLabel() const { return AsmLabel; }
 
   Action::TypeTy *getDeclaratorIdType() const { return Type; }
+
+  OverloadedOperatorKind getOverloadedOperator() const { return OperatorKind; }
 
   void setInvalidType(bool flag) { InvalidType = flag; }
   bool getInvalidType() const { return InvalidType; }

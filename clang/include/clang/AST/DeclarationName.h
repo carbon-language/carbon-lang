@@ -23,6 +23,7 @@ namespace llvm {
 
 namespace clang {
   class CXXSpecialName;       // a private class used by DeclarationName
+  class CXXOperatorIdName;    // a private class used by DeclarationName
   class DeclarationNameExtra; // a private class used by DeclarationName
   class IdentifierInfo;
   class MultiKeywordSelector; // a private class used by Selector and DeclarationName
@@ -43,7 +44,8 @@ public:
     ObjCMultiArgSelector,
     CXXConstructorName,
     CXXDestructorName,
-    CXXConversionFunctionName
+    CXXConversionFunctionName,
+    CXXOperatorName
   };
 
 private:
@@ -53,7 +55,7 @@ private:
     StoredIdentifier = 0,
     StoredObjCZeroArgSelector,
     StoredObjCOneArgSelector,
-    StoredObjCMultiArgSelectorOrCXXName,
+    StoredDeclarationNameExtra,
     PtrMask = 0x03
   };
 
@@ -62,22 +64,21 @@ private:
   /// on the kind of name this is, the upper bits of Ptr may have one
   /// of several different meanings:
   ///
-  ///   Identifier - The name is a normal identifier, and Ptr is a
-  ///   normal IdentifierInfo pointer.  
+  ///   StoredIdentifier - The name is a normal identifier, and Ptr is
+  ///   a normal IdentifierInfo pointer.
   ///
-  ///   ObjCZeroArgSelector - The name is an Objective-C selector with
-  ///   zero arguments, and Ptr is an IdentifierInfo pointer pointing
-  ///   to the selector name.
+  ///   StoredObjCZeroArgSelector - The name is an Objective-C
+  ///   selector with zero arguments, and Ptr is an IdentifierInfo
+  ///   pointer pointing to the selector name.
   ///
-  ///   ObjCOneArgSelector - The name is an Objective-C selector with
-  ///   one argument, and Ptr is an IdentifierInfo pointer pointing to
-  ///   the selector name.
+  ///   StoredObjCOneArgSelector - The name is an Objective-C selector
+  ///   with one argument, and Ptr is an IdentifierInfo pointer
+  ///   pointing to the selector name.
   ///
-  ///   ObjCMultiArgSelectorOrCXXName - This is either an Objective-C
-  ///   selector with two or more arguments or it is a C++ name. Ptr
-  ///   is actually a DeclarationNameExtra structure, whose first
-  ///   value will tell us whether this is an Objective-C selector or
-  ///   special C++ name.
+  ///   StoredDeclarationNameExtra - Ptr is actually a pointer to a
+  ///   DeclarationNameExtra structure, whose first value will tell us
+  ///   whether this is an Objective-C selector, C++ operator-id name,
+  ///   or special C++ name.
   uintptr_t Ptr;
 
   /// getStoredNameKind - Return the kind of object that is stored in
@@ -89,7 +90,7 @@ private:
   /// getExtra - Get the "extra" information associated with this
   /// multi-argument selector or C++ special name.
   DeclarationNameExtra *getExtra() const {
-    assert(getStoredNameKind() == StoredObjCMultiArgSelectorOrCXXName &&
+    assert(getStoredNameKind() == StoredDeclarationNameExtra &&
            "Declaration name does not store an Extra structure");
     return reinterpret_cast<DeclarationNameExtra *>(Ptr & ~PtrMask);
   }
@@ -105,12 +106,28 @@ private:
       return 0;
   }
 
+  /// getAsCXXOperatorIdName
+  CXXOperatorIdName *getAsCXXOperatorIdName() const {
+    if (getNameKind() == CXXOperatorName)
+      return reinterpret_cast<CXXOperatorIdName *>(Ptr & ~PtrMask);
+    else
+      return 0;
+  }
+
   // Construct a declaration name from the name of a C++ constructor,
   // destructor, or conversion function.
   DeclarationName(CXXSpecialName *Name) 
     : Ptr(reinterpret_cast<uintptr_t>(Name)) { 
     assert((Ptr & PtrMask) == 0 && "Improperly aligned CXXSpecialName");
-    Ptr |= StoredObjCMultiArgSelectorOrCXXName;
+    Ptr |= StoredDeclarationNameExtra;
+  }
+
+  // Construct a declaration name from the name of a C++ overloaded
+  // operator.
+  DeclarationName(CXXOperatorIdName *Name) 
+    : Ptr(reinterpret_cast<uintptr_t>(Name)) { 
+    assert((Ptr & PtrMask) == 0 && "Improperly aligned CXXOperatorId");
+    Ptr |= StoredDeclarationNameExtra;
   }
 
   // Construct a declaration name from a zero- or one-argument
@@ -130,7 +147,7 @@ private:
   DeclarationName(MultiKeywordSelector *SI)
     : Ptr(reinterpret_cast<uintptr_t>(SI)) {
     assert((Ptr & PtrMask) == 0 && "Improperly aligned MultiKeywordSelector");
-    Ptr |= StoredObjCMultiArgSelectorOrCXXName;
+    Ptr |= StoredDeclarationNameExtra;
   }
 
   /// Construct a declaration name from a raw pointer.
@@ -185,6 +202,11 @@ public:
   /// constructor, destructor, or conversion function), return the
   /// type associated with that name.
   QualType getCXXNameType() const;
+
+  /// getCXXOverloadedOperator - If this name is the name of an
+  /// overloadable operator in C++ (e.g., @c operator+), retrieve the
+  /// kind of overloaded operator.
+  OverloadedOperatorKind getCXXOverloadedOperator() const;
 
   /// getObjCSelector - Get the Objective-C selector stored in this
   /// declaration name.
@@ -248,6 +270,7 @@ inline bool operator>=(DeclarationName LHS, DeclarationName RHS) {
 /// getCXXConstructorName).
 class DeclarationNameTable {
   void *CXXSpecialNamesImpl; // Actually a FoldingSet<CXXSpecialName> *
+  CXXOperatorIdName *CXXOperatorNames; // Operator names
 
   DeclarationNameTable(const DeclarationNameTable&);            // NONCOPYABLE
   DeclarationNameTable& operator=(const DeclarationNameTable&); // NONCOPYABLE
@@ -285,6 +308,10 @@ public:
   /// function.
   DeclarationName getCXXSpecialName(DeclarationName::NameKind Kind, 
                                     QualType Ty);
+
+  /// getCXXOperatorName - Get the name of the overloadable C++
+  /// operator corresponding to Op.
+  DeclarationName getCXXOperatorName(OverloadedOperatorKind Op);
 };  
 
 }  // end namespace clang

@@ -90,10 +90,10 @@ OverloadedOperatorKind CXXOperatorCallExpr::getOperator() const {
     return OO_None;
   
   if (const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRE->getDecl()))
-    return FDecl->getIdentifier()->getOverloadedOperatorID();  
+    return FDecl->getDeclName().getCXXOverloadedOperator();  
   else if (const OverloadedFunctionDecl *Ovl 
              = dyn_cast<OverloadedFunctionDecl>(DRE->getDecl()))
-    return Ovl->getIdentifier()->getOverloadedOperatorID();
+    return Ovl->getDeclName().getCXXOverloadedOperator();
   else
     return OO_None;
 }

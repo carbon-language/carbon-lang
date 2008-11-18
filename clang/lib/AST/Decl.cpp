@@ -226,8 +226,8 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
 /// getOverloadedOperator - Which C++ overloaded operator this
 /// function represents, if any.
 OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
-  if (getIdentifier())
-    return getIdentifier()->getOverloadedOperatorID();
+  if (getDeclName().getNameKind() == DeclarationName::CXXOperatorName)
+    return getDeclName().getCXXOverloadedOperator();
   else
     return OO_None;
 }

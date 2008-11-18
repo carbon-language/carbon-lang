@@ -783,6 +783,11 @@ DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
     Ty = Context.getCanonicalType(Ty);
     return Context.DeclarationNames.getCXXConversionFunctionName(Ty);
   }
+
+  case Declarator::DK_Operator:
+    assert(D.getIdentifier() == 0 && "operator names have no identifier");
+    return Context.DeclarationNames.getCXXOperatorName(
+                                                D.getOverloadedOperator());
   }
 
   assert(false && "Unknown name kind");

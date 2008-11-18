@@ -51,12 +51,11 @@ class IdentifierInfo {
   // First NUM_OBJC_KEYWORDS values are for Objective-C, the remaining values
   // are for builtins.
   unsigned ObjCOrBuiltinID    :10; 
-  unsigned OperatorID         : 6; // C++ overloaded operator.
   bool HasMacro               : 1; // True if there is a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
-  // 4 bits left in 32-bit word.
+  // 10 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
   void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
@@ -123,16 +122,6 @@ public:
            && "ID too large for field!");
   }
   
-  /// getOverloadedOperatorID - Get the C++ overloaded operator that
-  /// corresponds to this identifier.
-  OverloadedOperatorKind getOverloadedOperatorID() const {
-    return OverloadedOperatorKind(OperatorID);
-  }
-  void setOverloadedOperatorID(OverloadedOperatorKind ID) {
-    OperatorID = ID;
-    assert(OperatorID == (unsigned)ID && "ID too large for field!");
-  }
-
   /// get/setExtension - Initialize information about whether or not this
   /// language token is an extension.  This controls extension warnings, and is
   /// only valid if a custom token ID is set.
@@ -175,10 +164,6 @@ class IdentifierTable {
   typedef llvm::StringMap<IdentifierInfo, llvm::BumpPtrAllocator> HashTableTy;
   HashTableTy HashTable;
 
-  /// OverloadedOperators - Identifiers corresponding to each of the
-  /// overloadable operators in C++.
-  IdentifierInfo *OverloadedOperators[NUM_OVERLOADED_OPERATORS];
-
 public:
   /// IdentifierTable ctor - Create the identifier table, populating it with
   /// info about the language keywords for the language specified by LangOpts.
@@ -199,11 +184,6 @@ public:
     return get(NameBytes, NameBytes+Name.size());
   }
 
-  /// getOverloadedOperator - Retrieve the identifier   
-  IdentifierInfo &getOverloadedOperator(OverloadedOperatorKind Op) {
-    return *OverloadedOperators[Op];
-  }
-
   typedef HashTableTy::const_iterator iterator;
   typedef HashTableTy::const_iterator const_iterator;
   
@@ -217,7 +197,6 @@ public:
   void PrintStats() const;
   
   void AddKeywords(const LangOptions &LangOpts);
-  void AddOverloadedOperators();
 
   /// Emit - Serialize this IdentifierTable to a bitstream.  This should
   ///  be called AFTER objects that externally reference the identifiers in the 
@@ -342,9 +321,9 @@ public:
   static SelectorTable* CreateAndRegister(llvm::Deserializer& D);
 };
 
-/// DeclarationNameExtra - Common base of the MultiKeywordSelector and
-/// CXXSpecialName classes, both of which are private classes that can
-/// be stored by the AST's DeclarationName class.
+/// DeclarationNameExtra - Common base of the MultiKeywordSelector,
+/// CXXSpecialName, and CXXOperatorIdName classes, all of which are
+/// private classes that describe different kinds of names.
 class DeclarationNameExtra {
 public:
   /// ExtraKind - The kind of "extra" information stored in the
@@ -354,12 +333,17 @@ public:
     CXXConstructor = 0,
     CXXDestructor,
     CXXConversionFunction,
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
+    CXXOperator##Name,
+#include "clang/Basic/OperatorKinds.def"
     NUM_EXTRA_KINDS
   };
 
-  /// ExtraKindOrNumArgs - Either the kind of C++ special name (if the
-  /// value is one of the CXX* enumerators of ExtraKind), in which
-  /// case the DeclarationNameExtra is also a CXXSpecialName, or
+  /// ExtraKindOrNumArgs - Either the kind of C++ special name or
+  /// operator-id (if the value is one of the CXX* enumerators of
+  /// ExtraKind), in which case the DeclarationNameExtra is also a
+  /// CXXSpecialName (for CXXConstructor, CXXDestructor, or
+  /// CXXConversionFunction) or CXXOperatorIdName, otherwise it is
   /// NUM_EXTRA_KINDS+NumArgs, where NumArgs is the number of
   /// arguments in the Objective-C selector, in which case the
   /// DeclarationNameExtra is also a MultiKeywordSelector.

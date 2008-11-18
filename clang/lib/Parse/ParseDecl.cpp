@@ -1460,8 +1460,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     SourceLocation OperatorLoc = Tok.getLocation();
 
     // First try the name of an overloaded operator
-    if (IdentifierInfo *II = TryParseOperatorFunctionId()) {
-      D.SetIdentifier(II, OperatorLoc);
+    if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
+      D.setOverloadedOperator(Op, OperatorLoc);
     } else {
       // This must be a conversion function (C++ [class.conv.fct]).
       if (TypeTy *ConvType = ParseConversionFunctionId()) {

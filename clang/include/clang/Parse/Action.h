@@ -463,9 +463,22 @@ public:
                                          const CXXScopeSpec *SS = 0) {
     return 0;
   }
+
+  /// ActOnOperatorFunctionIdExpr - Parse a C++ overloaded operator
+  /// name (e.g., @c operator+ ) as an expression. This is very
+  /// similar to ActOnIdentifierExpr, except that instead of providing
+  /// an identifier the parser provides the kind of overloaded
+  /// operator that was parsed.
+  virtual ExprResult ActOnOperatorFunctionIdExpr(Scope *S, 
+                                                 SourceLocation OperatorLoc,
+                                                 OverloadedOperatorKind Op,
+                                                 bool HasTrailingLParen,
+                                                 const CXXScopeSpec *SS = 0) {
+    return 0;
+  }
   
   /// ActOnConversionFunctionExpr - Parse a C++ conversion function
-  /// name (e.g., operator void const *) as an expression. This is
+  /// name (e.g., @c operator void const *) as an expression. This is
   /// very similar to ActOnIdentifierExpr, except that instead of
   /// providing an identifier the parser provides the type of the
   /// conversion function.

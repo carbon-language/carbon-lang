@@ -40,6 +40,15 @@ public:
   }
 };
 
+/// CXXOperatorIdName - Contains extra information for the name of an
+/// overloaded operator in C++, such as "operator+. 
+class CXXOperatorIdName : public DeclarationNameExtra {
+public:
+  /// FETokenInfo - Extra information associated with this operator
+  /// name that can be used by the front end.
+  void *FETokenInfo;
+};
+
 bool operator<(DeclarationName LHS, DeclarationName RHS) {
   if (IdentifierInfo *LhsId = LHS.getAsIdentifierInfo())
     if (IdentifierInfo *RhsId = RHS.getAsIdentifierInfo())
@@ -64,7 +73,7 @@ DeclarationName::DeclarationName(Selector Sel) {
 
   default:
     Ptr = Sel.InfoPtr & ~Selector::ArgFlags;
-    Ptr |= StoredObjCMultiArgSelectorOrCXXName;
+    Ptr |= StoredDeclarationNameExtra;
     break;
   }
 }
@@ -75,7 +84,7 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
   case StoredObjCZeroArgSelector: return ObjCZeroArgSelector;
   case StoredObjCOneArgSelector:  return ObjCOneArgSelector;
 
-  case StoredObjCMultiArgSelectorOrCXXName:
+  case StoredDeclarationNameExtra:
     switch (getExtra()->ExtraKindOrNumArgs) {
     case DeclarationNameExtra::CXXConstructor: 
       return CXXConstructorName;
@@ -87,6 +96,11 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
       return CXXConversionFunctionName;
 
     default:
+      // Check if we have one of the CXXOperator* enumeration values.
+      if (getExtra()->ExtraKindOrNumArgs < 
+            DeclarationNameExtra::NUM_EXTRA_KINDS)
+        return CXXOperatorName;
+
       return ObjCMultiArgSelector;
     }
     break;
@@ -125,6 +139,23 @@ std::string DeclarationName::getAsString() const {
     return Result;
   }
 
+  case CXXOperatorName: {
+    static const char *OperatorNames[NUM_OVERLOADED_OPERATORS] = {
+      0,
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
+      Spelling,
+#include "clang/Basic/OperatorKinds.def"
+    };
+    const char *OpName = OperatorNames[getCXXOverloadedOperator()];
+    assert(OpName && "not an overloaded operator");
+      
+    std::string Result = "operator";
+    if (OpName[0] >= 'a' && OpName[0] <= 'z')
+      Result += ' ';
+    Result += OpName;
+    return Result;
+  }
+
   case CXXConversionFunctionName: {
     std::string Result = "operator ";
     QualType Type = getCXXNameType();
@@ -145,6 +176,16 @@ QualType DeclarationName::getCXXNameType() const {
     return CXXName->Type;
   else
     return QualType();
+}
+
+OverloadedOperatorKind DeclarationName::getCXXOverloadedOperator() const {
+  if (CXXOperatorIdName *CXXOp = getAsCXXOperatorIdName()) {
+    unsigned value 
+      = CXXOp->ExtraKindOrNumArgs - DeclarationNameExtra::CXXConversionFunction;
+    return static_cast<OverloadedOperatorKind>(value);
+  } else {
+    return OO_None;
+  }
 }
 
 Selector DeclarationName::getObjCSelector() const {
@@ -175,6 +216,9 @@ void *DeclarationName::getFETokenInfoAsVoid() const {
   case CXXConversionFunctionName:
     return getAsCXXSpecialName()->FETokenInfo;
 
+  case CXXOperatorName:
+    return getAsCXXOperatorIdName()->FETokenInfo;
+
   default:
     assert(false && "Declaration name has no FETokenInfo");
   }
@@ -193,6 +237,10 @@ void DeclarationName::setFETokenInfo(void *T) {
     getAsCXXSpecialName()->FETokenInfo = T;
     break;
 
+  case CXXOperatorName:
+    getAsCXXOperatorIdName()->FETokenInfo = T;
+    break;
+
   default:
     assert(false && "Declaration name has no FETokenInfo");
   }
@@ -200,10 +248,19 @@ void DeclarationName::setFETokenInfo(void *T) {
 
 DeclarationNameTable::DeclarationNameTable() {
   CXXSpecialNamesImpl = new llvm::FoldingSet<CXXSpecialName>;
+
+  // Initialize the overloaded operator names.
+  CXXOperatorNames = new CXXOperatorIdName[NUM_OVERLOADED_OPERATORS];
+  for (unsigned Op = 0; Op < NUM_OVERLOADED_OPERATORS; ++Op) {
+    CXXOperatorNames[Op].ExtraKindOrNumArgs 
+      = Op + DeclarationNameExtra::CXXConversionFunction;
+    CXXOperatorNames[Op].FETokenInfo = 0;
+  }
 }
 
 DeclarationNameTable::~DeclarationNameTable() {
   delete static_cast<llvm::FoldingSet<CXXSpecialName>*>(CXXSpecialNamesImpl);
+  delete [] CXXOperatorNames;
 }
 
 DeclarationName 
@@ -247,5 +304,10 @@ DeclarationNameTable::getCXXSpecialName(DeclarationName::NameKind Kind,
 
   SpecialNames->InsertNode(SpecialName, InsertPos);
   return DeclarationName(SpecialName);
+}
+
+DeclarationName 
+DeclarationNameTable::getCXXOperatorName(OverloadedOperatorKind Op) {
+  return DeclarationName(&CXXOperatorNames[(unsigned)Op]);
 }
 

@@ -70,6 +70,52 @@ Sema::ExprResult Sema::ActOnConversionFunctionExpr(Scope *S,
   return new DeclRefExpr(Conversion, Conversion->getType(), OperatorLoc);
 }
 
+/// ActOnOperatorFunctionIdExpr - Parse a C++ overloaded operator
+/// name (e.g., @c operator+ ) as an expression. This is very
+/// similar to ActOnIdentifierExpr, except that instead of providing
+/// an identifier the parser provides the kind of overloaded
+/// operator that was parsed.
+Sema::ExprResult Sema::ActOnOperatorFunctionIdExpr(Scope *S, 
+                                                   SourceLocation OperatorLoc,
+                                                   OverloadedOperatorKind Op,
+                                                   bool HasTrailingLParen,
+                                                   const CXXScopeSpec *SS) {
+  DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(Op);
+  
+  Decl *D;
+  if (SS && !SS->isEmpty()) {
+    DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
+    if (DC == 0)
+      return true;
+    D = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
+  } else
+    D = LookupDecl(Name, Decl::IDNS_Ordinary, S);
+  
+  if (D == 0) {
+    // If there is no conversion function that converts to this type,
+    // diagnose the problem.
+    if (SS && !SS->isEmpty())
+      return Diag(OperatorLoc, diag::err_typecheck_no_member,
+                  Name.getAsString(), SS->getRange());
+    else
+      return Diag(OperatorLoc, diag::err_undeclared_var_use,
+                  Name.getAsString());
+  }
+  
+  ValueDecl *VD = cast<ValueDecl>(D);
+
+  // check if referencing a declaration with __attribute__((deprecated)).
+  if (VD->getAttr<DeprecatedAttr>())
+    Diag(OperatorLoc, diag::warn_deprecated, Name.getAsString());
+
+  // Only create DeclRefExpr's for valid Decl's.
+  if (VD->isInvalidDecl())
+    return true;
+  
+  // Create a normal DeclRefExpr.
+  return new DeclRefExpr(VD, VD->getType(), OperatorLoc);
+}
+
 /// ActOnCXXTypeidOfType - Parse typeid( type-id ).
 Action::ExprResult
 Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,

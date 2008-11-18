@@ -149,9 +149,9 @@ Parser::ExprResult Parser::ParseCXXIdExpression() {
 
   case tok::kw_operator: {
     SourceLocation OperatorLoc = Tok.getLocation();
-    if (IdentifierInfo *II = TryParseOperatorFunctionId()) {
-      return Actions.ActOnIdentifierExpr(CurScope, OperatorLoc, *II, 
-                                         Tok.is(tok::l_paren), &SS);
+    if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
+      return Actions.ActOnOperatorFunctionIdExpr(CurScope, OperatorLoc, Op, 
+                                                 Tok.is(tok::l_paren), &SS);
     } else if (TypeTy *Type = ParseConversionFunctionId()) {
       return Actions.ActOnConversionFunctionExpr(CurScope, OperatorLoc,
                                                  Type, Tok.is(tok::l_paren), 
@@ -534,7 +534,7 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
 ///            ^=    &=   |= <<   >> >>= <<=  ==  !=
 ///            <=    >=   && ||   ++ --   ,   ->* ->
 ///            ()    []
-IdentifierInfo *Parser::TryParseOperatorFunctionId() {
+OverloadedOperatorKind Parser::TryParseOperatorFunctionId() {
   assert(Tok.is(tok::kw_operator) && "Expected 'operator' keyword");
 
   OverloadedOperatorKind Op = OO_None;
@@ -549,7 +549,7 @@ IdentifierInfo *Parser::TryParseOperatorFunctionId() {
     } else {
       Op = OO_New;
     }
-    return &PP.getIdentifierTable().getOverloadedOperator(Op);
+    return Op;
 
   case tok::kw_delete:
     ConsumeToken(); // 'operator'
@@ -561,7 +561,7 @@ IdentifierInfo *Parser::TryParseOperatorFunctionId() {
     } else {
       Op = OO_Delete;
     }
-    return &PP.getIdentifierTable().getOverloadedOperator(Op);
+    return Op;
 
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly)  \
     case tok::Token:  Op = OO_##Name; break;
@@ -572,21 +572,21 @@ IdentifierInfo *Parser::TryParseOperatorFunctionId() {
     ConsumeToken(); // 'operator'
     ConsumeParen(); // '('
     ExpectAndConsume(tok::r_paren, diag::err_expected_rparen); // ')'
-    return &PP.getIdentifierTable().getOverloadedOperator(OO_Call);
+    return OO_Call;
 
   case tok::l_square:
     ConsumeToken(); // 'operator'
     ConsumeBracket(); // '['
     ExpectAndConsume(tok::r_square, diag::err_expected_rsquare); // ']'
-    return &PP.getIdentifierTable().getOverloadedOperator(OO_Subscript);
+    return OO_Subscript;
 
   default:
-    return 0;
+    return OO_None;
   }
 
   ConsumeToken(); // 'operator'
   ConsumeAnyToken(); // the operator itself
-  return &PP.getIdentifierTable().getOverloadedOperator(Op);
+  return Op;
 }
 
 /// ParseConversionFunctionId - Parse a C++ conversion-function-id,

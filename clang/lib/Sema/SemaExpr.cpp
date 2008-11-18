@@ -2839,7 +2839,7 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
     OverloadedOperatorKind OverOp = OverOps[Opc];
 
     // Lookup this operator.
-    Decl *D = LookupDecl(&PP.getIdentifierTable().getOverloadedOperator(OverOp),
+    Decl *D = LookupDecl(Context.DeclarationNames.getCXXOperatorName(OverOp),
                          Decl::IDNS_Ordinary, S);
 
     // Add any overloaded operators we find to the overload set.
