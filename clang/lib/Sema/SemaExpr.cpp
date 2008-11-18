@@ -1866,14 +1866,14 @@ Sema::CheckCompoundAssignmentConstraints(QualType lhsType, QualType rhsType) {
   return CheckAssignmentConstraints(lhsType, rhsType);
 }
 
-QualType Sema::InvalidOperands(SourceLocation loc, Expr *&lex, Expr *&rex) {
-  Diag(loc, diag::err_typecheck_invalid_operands, 
+QualType Sema::InvalidOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
+  Diag(Loc, diag::err_typecheck_invalid_operands, 
        lex->getType().getAsString(), rex->getType().getAsString(),
        lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
-inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex, 
+inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, 
                                                               Expr *&rex) {
   // For conversion purposes, we ignore any qualifiers. 
   // For example, "const float" and "float" are equivalent.
@@ -1922,29 +1922,29 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
   }
 
   // You cannot convert between vector values of different size.
-  Diag(loc, diag::err_typecheck_vector_not_convertable, 
+  Diag(Loc, diag::err_typecheck_vector_not_convertable, 
        lex->getType().getAsString(), rex->getType().getAsString(),
        lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }    
 
 inline QualType Sema::CheckMultiplyDivideOperands(
-  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) 
+  Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
 
   if (lhsType->isVectorType() || rhsType->isVectorType())
-    return CheckVectorOperands(loc, lex, rex);
+    return CheckVectorOperands(Loc, lex, rex);
     
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
     return compType;
-  return InvalidOperands(loc, lex, rex);
+  return InvalidOperands(Loc, lex, rex);
 }
 
 inline QualType Sema::CheckRemainderOperands(
-  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) 
+  Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
 
@@ -1952,14 +1952,14 @@ inline QualType Sema::CheckRemainderOperands(
   
   if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
     return compType;
-  return InvalidOperands(loc, lex, rex);
+  return InvalidOperands(Loc, lex, rex);
 }
 
 inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
-  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) 
+  Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) 
 {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
-    return CheckVectorOperands(loc, lex, rex);
+    return CheckVectorOperands(Loc, lex, rex);
 
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
 
@@ -1977,10 +1977,10 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
       // Check for arithmetic on pointers to incomplete types
       if (!PTy->getPointeeType()->isObjectType()) {
         if (PTy->getPointeeType()->isVoidType()) {
-          Diag(loc, diag::ext_gnu_void_ptr, 
+          Diag(Loc, diag::ext_gnu_void_ptr, 
                lex->getSourceRange(), rex->getSourceRange());
         } else {
-          Diag(loc, diag::err_typecheck_arithmetic_incomplete_type,
+          Diag(Loc, diag::err_typecheck_arithmetic_incomplete_type,
                lex->getType().getAsString(), lex->getSourceRange());
           return QualType();
         }
@@ -1989,14 +1989,14 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
     }
   }
 
-  return InvalidOperands(loc, lex, rex);
+  return InvalidOperands(Loc, lex, rex);
 }
 
 // C99 6.5.6
 QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
-                                        SourceLocation loc, bool isCompAssign) {
+                                        SourceLocation Loc, bool isCompAssign) {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
-    return CheckVectorOperands(loc, lex, rex);
+    return CheckVectorOperands(Loc, lex, rex);
     
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
@@ -2014,10 +2014,10 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
     if (!lpointee->isObjectType()) {
       // Handle the GNU void* extension.
       if (lpointee->isVoidType()) {
-        Diag(loc, diag::ext_gnu_void_ptr, 
+        Diag(Loc, diag::ext_gnu_void_ptr, 
              lex->getSourceRange(), rex->getSourceRange());
       } else {
-        Diag(loc, diag::err_typecheck_sub_ptr_object,
+        Diag(Loc, diag::err_typecheck_sub_ptr_object,
              lex->getType().getAsString(), lex->getSourceRange());
         return QualType();
       }
@@ -2036,10 +2036,10 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
         // Handle the GNU void* extension.
         if (rpointee->isVoidType()) {
           if (!lpointee->isVoidType())
-            Diag(loc, diag::ext_gnu_void_ptr, 
+            Diag(Loc, diag::ext_gnu_void_ptr, 
                  lex->getSourceRange(), rex->getSourceRange());
         } else {
-          Diag(loc, diag::err_typecheck_sub_ptr_object,
+          Diag(Loc, diag::err_typecheck_sub_ptr_object,
                rex->getType().getAsString(), rex->getSourceRange());
           return QualType();
         }
@@ -2049,7 +2049,7 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
       if (!Context.typesAreCompatible(
               Context.getCanonicalType(lpointee).getUnqualifiedType(), 
               Context.getCanonicalType(rpointee).getUnqualifiedType())) {
-        Diag(loc, diag::err_typecheck_sub_ptr_compatible,
+        Diag(Loc, diag::err_typecheck_sub_ptr_compatible,
              lex->getType().getAsString(), rex->getType().getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
         return QualType();
@@ -2059,15 +2059,15 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
     }
   }
   
-  return InvalidOperands(loc, lex, rex);
+  return InvalidOperands(Loc, lex, rex);
 }
 
 // C99 6.5.7
-QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
+QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                   bool isCompAssign) {
   // C99 6.5.7p2: Each of the operands shall have integer type.
   if (!lex->getType()->isIntegerType() || !rex->getType()->isIntegerType())
-    return InvalidOperands(loc, lex, rex);
+    return InvalidOperands(Loc, lex, rex);
   
   // Shifts don't perform usual arithmetic conversions, they just do integer
   // promotions on each operand. C99 6.5.7p3
@@ -2095,10 +2095,10 @@ static bool areComparableObjCInterfaces(QualType LHS, QualType RHS,
 }
 
 // C99 6.5.8
-QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
+QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                     bool isRelational) {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
-    return CheckVectorCompareOperands(lex, rex, loc, isRelational);
+    return CheckVectorCompareOperands(lex, rex, Loc, isRelational);
   
   // C99 6.5.8p3 / C99 6.5.9p4
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
@@ -2117,7 +2117,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex->IgnoreParens()))
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex->IgnoreParens()))
         if (DRL->getDecl() == DRR->getDecl())
-          Diag(loc, diag::warn_selfcomparison);      
+          Diag(Loc, diag::warn_selfcomparison);      
   }
   
   if (isRelational) {
@@ -2127,7 +2127,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     // Check for comparisons of floating point operands using != and ==.
     if (lType->isFloatingType()) {
       assert (rType->isFloatingType());
-      CheckFloatComparison(loc,lex,rex);
+      CheckFloatComparison(Loc,lex,rex);
     }
     
     if (lType->isArithmeticType() && rType->isArithmeticType())
@@ -2151,7 +2151,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
         !Context.typesAreCompatible(LCanPointeeTy.getUnqualifiedType(),
                                     RCanPointeeTy.getUnqualifiedType()) &&
         !areComparableObjCInterfaces(LCanPointeeTy, RCanPointeeTy, Context)) {
-      Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
+      Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
     }
@@ -2165,7 +2165,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     
     if (!LHSIsNull && !RHSIsNull &&
         !Context.typesAreBlockCompatible(lpointee, rpointee)) {
-      Diag(loc, diag::err_typecheck_comparison_of_distinct_blocks,
+      Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
     }
@@ -2176,7 +2176,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
   if ((lType->isBlockPointerType() && rType->isPointerType()) ||
       (lType->isPointerType() && rType->isBlockPointerType())) {
     if (!LHSIsNull && !RHSIsNull) {
-      Diag(loc, diag::err_typecheck_comparison_of_distinct_blocks,
+      Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
     }
@@ -2195,7 +2195,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
         
       if (!LPtrToVoid && !RPtrToVoid &&
           !Context.typesAreCompatible(lType, rType)) {
-        Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
+        Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers,
              lType.getAsString(), rType.getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
         ImpCastExprToType(rex, lType);
@@ -2209,7 +2209,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
       return Context.IntTy;
     } else {
       if ((lType->isObjCQualifiedIdType() && rType->isObjCQualifiedIdType())) {
-        Diag(loc, diag::warn_incompatible_qualified_id_operands, 
+        Diag(Loc, diag::warn_incompatible_qualified_id_operands, 
              lType.getAsString(), rType.getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
         ImpCastExprToType(rex, lType);
@@ -2220,7 +2220,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
   if ((lType->isPointerType() || lType->isObjCQualifiedIdType()) && 
        rType->isIntegerType()) {
     if (!RHSIsNull)
-      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
     ImpCastExprToType(rex, lType); // promote the integer to pointer
@@ -2229,7 +2229,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
   if (lType->isIntegerType() && 
       (rType->isPointerType() || rType->isObjCQualifiedIdType())) {
     if (!LHSIsNull)
-      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
     ImpCastExprToType(lex, rType); // promote the integer to pointer
@@ -2238,7 +2238,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
   // Handle block pointers.
   if (lType->isBlockPointerType() && rType->isIntegerType()) {
     if (!RHSIsNull)
-      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
     ImpCastExprToType(rex, lType); // promote the integer to pointer
@@ -2246,13 +2246,13 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
   }
   if (lType->isIntegerType() && rType->isBlockPointerType()) {
     if (!LHSIsNull)
-      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
     ImpCastExprToType(lex, rType); // promote the integer to pointer
     return Context.IntTy;
   }
-  return InvalidOperands(loc, lex, rex);
+  return InvalidOperands(Loc, lex, rex);
 }
 
 /// CheckVectorCompareOperands - vector comparisons are a clang extension that
@@ -2260,11 +2260,11 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
 /// like a scalar comparison, a vector comparison produces a vector of integer
 /// types.
 QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
-                                          SourceLocation loc,
+                                          SourceLocation Loc,
                                           bool isRelational) {
   // Check to make sure we're operating on vectors of the same type and width,
   // Allowing one side to be a scalar of element type.
-  QualType vType = CheckVectorOperands(loc, lex, rex);
+  QualType vType = CheckVectorOperands(Loc, lex, rex);
   if (vType.isNull())
     return vType;
   
@@ -2278,13 +2278,13 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex->IgnoreParens()))
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex->IgnoreParens()))
         if (DRL->getDecl() == DRR->getDecl())
-          Diag(loc, diag::warn_selfcomparison);      
+          Diag(Loc, diag::warn_selfcomparison);      
   }
   
   // Check for comparisons of floating point operands using != and ==.
   if (!isRelational && lType->isFloatingType()) {
     assert (rType->isFloatingType());
-    CheckFloatComparison(loc,lex,rex);
+    CheckFloatComparison(Loc,lex,rex);
   }
   
   // Return the type for the comparison, which is the same as vector type for
@@ -2305,27 +2305,27 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
 }
 
 inline QualType Sema::CheckBitwiseOperands(
-  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) 
+  Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) 
 {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
-    return CheckVectorOperands(loc, lex, rex);
+    return CheckVectorOperands(Loc, lex, rex);
 
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
   if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
     return compType;
-  return InvalidOperands(loc, lex, rex);
+  return InvalidOperands(Loc, lex, rex);
 }
 
 inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
-  Expr *&lex, Expr *&rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation Loc) 
 {
   UsualUnaryConversions(lex);
   UsualUnaryConversions(rex);
   
   if (lex->getType()->isScalarType() && rex->getType()->isScalarType())
     return Context.IntTy;
-  return InvalidOperands(loc, lex, rex);
+  return InvalidOperands(Loc, lex, rex);
 }
 
 /// CheckForModifiableLvalue - Verify that E is a modifiable lvalue.  If not,
@@ -2377,43 +2377,44 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
 
 
 // C99 6.5.16.1
-QualType Sema::CheckAssignmentOperands(Expr *lex, Expr *&rex,SourceLocation loc,
-                                       QualType compoundType) {
-  QualType lhsType = lex->getType();
-  QualType rhsType = compoundType.isNull() ? rex->getType() : compoundType;
-
-  // Verify that lex is a modifiable lvalue, and emit error if not.
-  if (CheckForModifiableLvalue(lex, loc, *this))
+QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
+                                       SourceLocation Loc,
+                                       QualType CompoundType) {
+  // Verify that LHS is a modifiable lvalue, and emit error if not.
+  if (CheckForModifiableLvalue(LHS, Loc, *this))
     return QualType();
+
+  QualType LHSType = LHS->getType();
+  QualType RHSType = CompoundType.isNull() ? RHS->getType() : CompoundType;
   
   AssignConvertType ConvTy;
-  if (compoundType.isNull()) {
+  if (CompoundType.isNull()) {
     // Simple assignment "x = y".
-    ConvTy = CheckSingleAssignmentConstraints(lhsType, rex);
+    ConvTy = CheckSingleAssignmentConstraints(LHSType, RHS);
     
     // If the RHS is a unary plus or minus, check to see if they = and + are
     // right next to each other.  If so, the user may have typo'd "x =+ 4"
     // instead of "x += 4".
-    Expr *RHSCheck = rex;
+    Expr *RHSCheck = RHS;
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(RHSCheck))
       RHSCheck = ICE->getSubExpr();
     if (UnaryOperator *UO = dyn_cast<UnaryOperator>(RHSCheck)) {
       if ((UO->getOpcode() == UnaryOperator::Plus ||
            UO->getOpcode() == UnaryOperator::Minus) &&
-          loc.isFileID() && UO->getOperatorLoc().isFileID() &&
+          Loc.isFileID() && UO->getOperatorLoc().isFileID() &&
           // Only if the two operators are exactly adjacent.
-          loc.getFileLocWithOffset(1) == UO->getOperatorLoc())
-        Diag(loc, diag::warn_not_compound_assign,
+          Loc.getFileLocWithOffset(1) == UO->getOperatorLoc())
+        Diag(Loc, diag::warn_not_compound_assign,
              UO->getOpcode() == UnaryOperator::Plus ? "+" : "-",
              SourceRange(UO->getOperatorLoc(), UO->getOperatorLoc()));
     }
   } else {
     // Compound assignment "x += y"
-    ConvTy = CheckCompoundAssignmentConstraints(lhsType, rhsType);
+    ConvTy = CheckCompoundAssignmentConstraints(LHSType, RHSType);
   }
 
-  if (DiagnoseAssignmentResult(ConvTy, loc, lhsType, rhsType,
-                               rex, "assigning"))
+  if (DiagnoseAssignmentResult(ConvTy, Loc, LHSType, RHSType,
+                               RHS, "assigning"))
     return QualType();
   
   // C99 6.5.16p3: The type of an assignment expression is the type of the
@@ -2423,15 +2424,16 @@ QualType Sema::CheckAssignmentOperands(Expr *lex, Expr *&rex,SourceLocation loc,
   // is converted to the type of the assignment expression (above).
   // C++ 5.17p1: the type of the assignment expression is that of its left
   // oprdu.
-  return lhsType.getUnqualifiedType();
+  return LHSType.getUnqualifiedType();
 }
 
-inline QualType Sema::CheckCommaOperands( // C99 6.5.17
-  Expr *&lex, Expr *&rex, SourceLocation loc) {
+// C99 6.5.17
+QualType Sema::CheckCommaOperands(Expr *LHS, Expr *&RHS, SourceLocation Loc) {
+  // FIXME: what is required for LHS?
   
   // Comma performs lvalue conversion (C99 6.3.2.1), but not unary conversions.
-  DefaultFunctionArrayConversion(rex);
-  return rex->getType();
+  DefaultFunctionArrayConversion(RHS);
+  return RHS->getType();
 }
 
 /// CheckIncrementDecrementOperand - unlike most "Check" methods, this routine

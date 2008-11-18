@@ -1210,7 +1210,7 @@ public:
   inline QualType CheckAssignmentOperands( // C99 6.5.16.[1,2]
     Expr *lex, Expr *&rex, SourceLocation OpLoc, QualType convertedType);
   inline QualType CheckCommaOperands( // C99 6.5.17
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
+    Expr *lex, Expr *&rex, SourceLocation OpLoc);
   inline QualType CheckConditionalOperands( // C99 6.5.15
     Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
 
