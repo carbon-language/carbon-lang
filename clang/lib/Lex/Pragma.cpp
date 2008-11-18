@@ -89,7 +89,7 @@ void Preprocessor::HandlePragmaDirective() {
   PragmaHandlers->HandlePragma(*this, Tok);
   
   // If the pragma handler didn't read the rest of the line, consume it now.
-  if (CurLexer->ParsingPreprocessorDirective)
+  if (CurPPLexer->ParsingPreprocessorDirective)
     DiscardUntilEndOfDirective();
 }
 
@@ -203,9 +203,9 @@ void Preprocessor::HandlePragmaPoison(Token &PoisonTok) {
     // This avoids errors on code like:
     //   #pragma GCC poison X
     //   #pragma GCC poison X
-    if (CurLexer) CurLexer->LexingRawMode = true;
+    if (CurPPLexer) CurPPLexer->LexingRawMode = true;
     LexUnexpandedToken(Tok);
-    if (CurLexer) CurLexer->LexingRawMode = false;
+    if (CurPPLexer) CurPPLexer->LexingRawMode = false;
     
     // If we reached the end of line, we're done.
     if (Tok.is(tok::eom)) return;
@@ -257,7 +257,7 @@ void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
 ///
 void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
   Token FilenameTok;
-  CurLexer->LexIncludeFilename(FilenameTok);
+  CurPPLexer->LexIncludeFilename(FilenameTok);
 
   // If the token kind is EOM, the error has already been diagnosed.
   if (FilenameTok.is(tok::eom))

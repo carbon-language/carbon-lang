@@ -148,7 +148,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   // If this is a macro exapnsion in the "#if !defined(x)" line for the file,
   // then the macro could expand to different things in other contexts, we need
   // to disable the optimization in this case.
-  if (CurLexer) CurLexer->MIOpt.ExpandedMacro();
+  if (CurPPLexer) CurPPLexer->MIOpt.ExpandedMacro();
   
   // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
   if (MI->isBuiltinMacro()) {
