@@ -508,6 +508,7 @@ private:
                                                  CurPPLexer,
                                                  CurTokenLexer.take(),
                                                  CurDirLookup));
+    CurPPLexer = 0;
   }
   
   void PopIncludeMacroStack() {
