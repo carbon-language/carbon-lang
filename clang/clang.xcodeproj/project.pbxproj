@@ -812,8 +812,8 @@
 				DE345FFF0AFDCC1900DBC861 /* ParseObjc.cpp */,
 				3551068F0E9A857C006A4E44 /* ParsePragma.h */,
 				3551068A0E9A8546006A4E44 /* ParsePragma.cpp */,
-				3551068B0E9A8546006A4E44 /* ParseTentative.cpp */,
 				DE34600A0AFDCCBF00DBC861 /* ParseStmt.cpp */,
+				3551068B0E9A8546006A4E44 /* ParseTentative.cpp */,
 			);
 			name = Parse;
 			sourceTree = "<group>";
