@@ -569,7 +569,10 @@ Store RegionStoreManager::BindArrayToVal(Store store, const TypedRegion* BaseR,
 
       ElementRegion* ER = MRMgr.getElementRegion(Idx, BaseR);
 
-      store = Bind(store, loc::MemRegionVal(ER), V);
+      if (CAT->getElementType()->isStructureType())
+        store = BindStructToVal(store, ER, V);
+      else
+        store = Bind(store, loc::MemRegionVal(ER), V);
     }
   }
 
