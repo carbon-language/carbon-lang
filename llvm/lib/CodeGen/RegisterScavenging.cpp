@@ -193,25 +193,25 @@ void RegScavenger::forward() {
   bool IsImpDef = MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF;
 
   // Separate register operands into 3 classes: uses, defs, earlyclobbers.
-  SmallVector<const MachineOperand*, 4> UseMOs;
-  SmallVector<const MachineOperand*, 4> DefMOs;
-  SmallVector<const MachineOperand*, 4> EarlyClobberMOs;
+  SmallVector<std::pair<const MachineOperand*,unsigned>, 4> UseMOs;
+  SmallVector<std::pair<const MachineOperand*,unsigned>, 4> DefMOs;
+  SmallVector<std::pair<const MachineOperand*,unsigned>, 4> EarlyClobberMOs;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || MO.getReg() == 0)
       continue;
     if (MO.isUse())
-      UseMOs.push_back(&MO);
+      UseMOs.push_back(std::make_pair(&MO,i));
     else if (MO.isEarlyClobber())
-      EarlyClobberMOs.push_back(&MO);
+      EarlyClobberMOs.push_back(std::make_pair(&MO,i));
     else
-      DefMOs.push_back(&MO);
+      DefMOs.push_back(std::make_pair(&MO,i));
   }
 
   // Process uses first.
   BitVector UseRegs(NumPhysRegs);
   for (unsigned i = 0, e = UseMOs.size(); i != e; ++i) {
-    const MachineOperand &MO = *UseMOs[i];
+    const MachineOperand MO = *UseMOs[i].first;
     unsigned Reg = MO.getReg();
 
     if (!isUsed(Reg)) {
@@ -244,7 +244,9 @@ void RegScavenger::forward() {
 
   for (unsigned i = 0, e = NumECs + NumDefs; i != e; ++i) {
     const MachineOperand &MO = (i < NumECs)
-      ? *EarlyClobberMOs[i] : *DefMOs[i-NumECs];
+      ? *EarlyClobberMOs[i].first : *DefMOs[i-NumECs].first;
+    unsigned Idx = (i < NumECs)
+      ? EarlyClobberMOs[i].second : DefMOs[i-NumECs].second;
     unsigned Reg = MO.getReg();
 
     // If it's dead upon def, then it is now free.
@@ -254,7 +256,7 @@ void RegScavenger::forward() {
     }
 
     // Skip two-address destination operand.
-    if (TID.findTiedToSrcOperand(i) != -1) {
+    if (TID.findTiedToSrcOperand(Idx) != -1) {
       assert(isUsed(Reg) && "Using an undefined register!");
       continue;
     }
