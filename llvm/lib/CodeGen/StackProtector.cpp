@@ -177,7 +177,7 @@ bool StackProtector::InsertStackProtectors() {
     //   return:
     //     ...
     //     %1 = load __stack_chk_guard
-    //     %2 = call i8* @llvm.stackprotect.check(StackGuardSlot)
+    //     %2 = load StackGuardSlot
     //     %3 = cmp i1 %1, %2
     //     br i1 %3, label %SP_return, label %CallStackCheckFailBlk
     //
@@ -196,11 +196,9 @@ bool StackProtector::InsertStackProtectors() {
     NewBB->moveAfter(BB);
 
     // Generate the stack protector instructions in the old basic block.
-    LoadInst *LI = new LoadInst(StackGuardVar, "", false, BB);
-    CallInst *CI = CallInst::
-      Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_check),
-             AI, "", BB);
-    ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, CI, LI, "", BB);
+    LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
+    LoadInst *LI2 = new LoadInst(AI, "", true, BB);
+    ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, LI1, LI2, "", BB);
     BranchInst::Create(NewBB, FailBB, Cmp, BB);
   }
 

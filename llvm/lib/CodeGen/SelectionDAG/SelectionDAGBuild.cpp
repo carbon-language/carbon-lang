@@ -4041,19 +4041,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Result);
     return 0;
   }
-  case Intrinsic::stackprotector_check: {
-    // Emit code into the DAG to retrieve the stack guard off of the stack.
-    MachineFunction &MF = DAG.getMachineFunction();
-    MachineFrameInfo *MFI = MF.getFrameInfo();
-    MVT PtrTy = TLI.getPointerTy();
-
-    // Load the value stored on the stack.
-    int FI = MFI->getStackProtectorIndex();
-    SDValue FIN = DAG.getFrameIndex(MFI->getStackProtectorIndex(), PtrTy);
-    setValue(&I, DAG.getLoad(PtrTy, getRoot(), FIN,
-                             PseudoSourceValue::getFixedStack(FI), 0, true));
-    return 0;
-  }
   case Intrinsic::var_annotation:
     // Discard annotate attributes
     return 0;
