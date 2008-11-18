@@ -170,14 +170,6 @@ public:
     Report(NULL, Pos, DiagID, Strs, NumStrs, Ranges, NumRanges);
   }                                                                      
   
-  /// Report - Issue the message to the client.  DiagID is a member of the
-  /// diag::kind enum.  
-  void Report(unsigned DiagID,
-              const std::string **Strs = 0, unsigned NumStrs = 0,
-              const SourceRange *Ranges = 0, unsigned NumRanges = 0) {
-    Report(FullSourceLoc(), DiagID, Strs, NumStrs, Ranges, NumRanges);
-  }
-  
   /// Report - Issue the message to the specified client. 
   ///  DiagID is a member of the diag::kind enum.
   void Report(DiagnosticClient* C, FullSourceLoc Pos, unsigned DiagID,
