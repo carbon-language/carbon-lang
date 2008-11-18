@@ -118,12 +118,12 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   assert(CurTokenLexer == 0 && CurLexer &&
          "Lexing a macro, not a file?");
 
-  CurLexer->pushConditionalLevel(IfTokenLoc, /*isSkipping*/false,
+  CurPPLexer->pushConditionalLevel(IfTokenLoc, /*isSkipping*/false,
                                  FoundNonSkipPortion, FoundElse);
   
   // Enter raw mode to disable identifier lookup (and thus macro expansion),
   // disabling warnings, etc.
-  CurLexer->LexingRawMode = true;
+  CurPPLexer->LexingRawMode = true;
   Token Tok;
   while (1) {
     CurLexer->Lex(Tok);
@@ -132,10 +132,10 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     if (Tok.is(tok::eof)) {
       // Emit errors for each unterminated conditional on the stack, including
       // the current one.
-      while (!CurLexer->ConditionalStack.empty()) {
-        Diag(CurLexer->ConditionalStack.back().IfLoc,
+      while (!CurPPLexer->ConditionalStack.empty()) {
+        Diag(CurPPLexer->ConditionalStack.back().IfLoc,
              diag::err_pp_unterminated_conditional);
-        CurLexer->ConditionalStack.pop_back();
+        CurPPLexer->ConditionalStack.pop_back();
       }  
       
       // Just return and let the caller lex after this #include.
@@ -149,7 +149,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // We just parsed a # character at the start of a line, so we're in
     // directive mode.  Tell the lexer this so any newlines we see will be
     // converted into an EOM token (this terminates the macro).
-    CurLexer->ParsingPreprocessorDirective = true;
+    CurPPLexer->ParsingPreprocessorDirective = true;
     CurLexer->SetCommentRetentionState(false);
 
     
@@ -159,7 +159,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // If this isn't an identifier directive (e.g. is "# 1\n" or "#\n", or
     // something bogus), skip it.
     if (Tok.isNot(tok::identifier)) {
-      CurLexer->ParsingPreprocessorDirective = false;
+      CurPPLexer->ParsingPreprocessorDirective = false;
       // Restore comment saving mode.
       CurLexer->SetCommentRetentionState(KeepComments);
       continue;
@@ -174,7 +174,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     char FirstChar = RawCharData[0];
     if (FirstChar >= 'a' && FirstChar <= 'z' && 
         FirstChar != 'i' && FirstChar != 'e') {
-      CurLexer->ParsingPreprocessorDirective = false;
+      CurPPLexer->ParsingPreprocessorDirective = false;
       // Restore comment saving mode.
       CurLexer->SetCommentRetentionState(KeepComments);
       continue;
@@ -195,7 +195,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       std::string DirectiveStr = getSpelling(Tok);
       IdLen = DirectiveStr.size();
       if (IdLen >= 20) {
-        CurLexer->ParsingPreprocessorDirective = false;
+        CurPPLexer->ParsingPreprocessorDirective = false;
         // Restore comment saving mode.
         CurLexer->SetCommentRetentionState(KeepComments);
         continue;
@@ -211,7 +211,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         // We know the entire #if/#ifdef/#ifndef block will be skipped, don't
         // bother parsing the condition.
         DiscardUntilEndOfDirective();
-        CurLexer->pushConditionalLevel(Tok.getLocation(), /*wasskipping*/true,
+        CurPPLexer->pushConditionalLevel(Tok.getLocation(), /*wasskipping*/true,
                                        /*foundnonskip*/false,
                                        /*fnddelse*/false);
       }
@@ -220,7 +220,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         CheckEndOfDirective("#endif");
         PPConditionalInfo CondInfo;
         CondInfo.WasSkipping = true; // Silence bogus warning.
-        bool InCond = CurLexer->popConditionalLevel(CondInfo);
+        bool InCond = CurPPLexer->popConditionalLevel(CondInfo);
         InCond = InCond;  // Silence warning in no-asserts mode.
         assert(!InCond && "Can't be skipping if not in a conditional!");
         
@@ -232,7 +232,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         // skipping conditional, and if #else hasn't already been seen, enter it
         // as a non-skipping conditional.
         CheckEndOfDirective("#else");
-        PPConditionalInfo &CondInfo = CurLexer->peekConditionalLevel();
+        PPConditionalInfo &CondInfo = CurPPLexer->peekConditionalLevel();
         
         // If this is a #else with a #else before it, report the error.
         if (CondInfo.FoundElse) Diag(Tok, diag::pp_err_else_after_else);
@@ -247,7 +247,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
           break;
         }
       } else if (IdLen == 4 && !strcmp(Directive+1, "lif")) {  // "elif".
-        PPConditionalInfo &CondInfo = CurLexer->peekConditionalLevel();
+        PPConditionalInfo &CondInfo = CurPPLexer->peekConditionalLevel();
 
         bool ShouldEnter;
         // If this is in a skipping block or if we're already handled this #if
@@ -258,11 +258,11 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         } else {
           // Restore the value of LexingRawMode so that identifiers are
           // looked up, etc, inside the #elif expression.
-          assert(CurLexer->LexingRawMode && "We have to be skipping here!");
-          CurLexer->LexingRawMode = false;
+          assert(CurPPLexer->LexingRawMode && "We have to be skipping here!");
+          CurPPLexer->LexingRawMode = false;
           IdentifierInfo *IfNDefMacro = 0;
           ShouldEnter = EvaluateDirectiveExpression(IfNDefMacro);
-          CurLexer->LexingRawMode = true;
+          CurPPLexer->LexingRawMode = true;
         }
         
         // If this is a #elif with a #else before it, report the error.
@@ -276,7 +276,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       }
     }
     
-    CurLexer->ParsingPreprocessorDirective = false;
+    CurPPLexer->ParsingPreprocessorDirective = false;
     // Restore comment saving mode.
     CurLexer->SetCommentRetentionState(KeepComments);
   }
@@ -284,7 +284,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   // Finally, if we are out of the conditional (saw an #endif or ran off the end
   // of the file, just stop skipping and return to lexing whatever came after
   // the #if block.
-  CurLexer->LexingRawMode = false;
+  CurPPLexer->LexingRawMode = false;
 }
 
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
@@ -350,14 +350,14 @@ void Preprocessor::HandleDirective(Token &Result) {
   // We just parsed a # character at the start of a line, so we're in directive
   // mode.  Tell the lexer this so any newlines we see will be converted into an
   // EOM token (which terminates the directive).
-  CurLexer->ParsingPreprocessorDirective = true;
+  CurPPLexer->ParsingPreprocessorDirective = true;
   
   ++NumDirectives;
   
   // We are about to read a token.  For the multiple-include optimization FA to
   // work, we have to remember if we had read any tokens *before* this 
   // pp-directive.
-  bool ReadAnyTokensBeforeDirective = CurLexer->MIOpt.getHasReadAnyTokensVal();
+  bool ReadAnyTokensBeforeDirective = CurPPLexer->MIOpt.getHasReadAnyTokensVal();
   
   // Read the next token, the directive flavor.  This isn't expanded due to
   // C99 6.10.3p8.
@@ -607,7 +607,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
                                           bool isImport) {
 
   Token FilenameTok;
-  CurLexer->LexIncludeFilename(FilenameTok);
+  CurPPLexer->LexIncludeFilename(FilenameTok);
   
   // Reserve a buffer to get the spelling.
   llvm::SmallVector<char, 128> FilenameBuffer;
@@ -848,7 +848,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
       // Forget about MI.
       delete MI;
       // Throw away the rest of the line.
-      if (CurLexer->ParsingPreprocessorDirective)
+      if (CurPPLexer->ParsingPreprocessorDirective)
         DiscardUntilEndOfDirective();
       return;
     }
@@ -1027,13 +1027,13 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   // Check to see if this is the last token on the #if[n]def line.
   CheckEndOfDirective(isIfndef ? "#ifndef" : "#ifdef");
 
-  if (CurLexer->getConditionalStackDepth() == 0) {
+  if (CurPPLexer->getConditionalStackDepth() == 0) {
     // If the start of a top-level #ifdef, inform MIOpt.
     if (!ReadAnyTokensBeforeDirective) {
       assert(isIfndef && "#ifdef shouldn't reach here");
-      CurLexer->MIOpt.EnterTopLevelIFNDEF(MacroNameTok.getIdentifierInfo());
+      CurPPLexer->MIOpt.EnterTopLevelIFNDEF(MacroNameTok.getIdentifierInfo());
     } else
-      CurLexer->MIOpt.EnterTopLevelConditional();
+      CurPPLexer->MIOpt.EnterTopLevelConditional();
   }
 
   IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
@@ -1046,7 +1046,7 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   // Should we include the stuff contained by this directive?
   if (!MI == isIfndef) {
     // Yes, remember that we are inside a conditional, then lex the next token.
-    CurLexer->pushConditionalLevel(DirectiveTok.getLocation(), /*wasskip*/false,
+    CurPPLexer->pushConditionalLevel(DirectiveTok.getLocation(), /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
   } else {
     // No, skip the contents of this block and return the first token after it.
@@ -1069,17 +1069,17 @@ void Preprocessor::HandleIfDirective(Token &IfToken,
 
   // If this condition is equivalent to #ifndef X, and if this is the first
   // directive seen, handle it for the multiple-include optimization.
-  if (CurLexer->getConditionalStackDepth() == 0) {
+  if (CurPPLexer->getConditionalStackDepth() == 0) {
     if (!ReadAnyTokensBeforeDirective && IfNDefMacro)
-      CurLexer->MIOpt.EnterTopLevelIFNDEF(IfNDefMacro);
+      CurPPLexer->MIOpt.EnterTopLevelIFNDEF(IfNDefMacro);
     else
-      CurLexer->MIOpt.EnterTopLevelConditional();
+      CurPPLexer->MIOpt.EnterTopLevelConditional();
   }
 
   // Should we include the stuff contained by this directive?
   if (ConditionalTrue) {
     // Yes, remember that we are inside a conditional, then lex the next token.
-    CurLexer->pushConditionalLevel(IfToken.getLocation(), /*wasskip*/false,
+    CurPPLexer->pushConditionalLevel(IfToken.getLocation(), /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
   } else {
     // No, skip the contents of this block and return the first token after it.
@@ -1097,16 +1097,16 @@ void Preprocessor::HandleEndifDirective(Token &EndifToken) {
   CheckEndOfDirective("#endif");
   
   PPConditionalInfo CondInfo;
-  if (CurLexer->popConditionalLevel(CondInfo)) {
+  if (CurPPLexer->popConditionalLevel(CondInfo)) {
     // No conditionals on the stack: this is an #endif without an #if.
     return Diag(EndifToken, diag::err_pp_endif_without_if);
   }
   
   // If this the end of a top-level #endif, inform MIOpt.
-  if (CurLexer->getConditionalStackDepth() == 0)
-    CurLexer->MIOpt.ExitTopLevelConditional();
+  if (CurPPLexer->getConditionalStackDepth() == 0)
+    CurPPLexer->MIOpt.ExitTopLevelConditional();
   
-  assert(!CondInfo.WasSkipping && !CurLexer->LexingRawMode &&
+  assert(!CondInfo.WasSkipping && !CurPPLexer->LexingRawMode &&
          "This code should only be reachable in the non-skipping case!");
 }
 
@@ -1118,12 +1118,12 @@ void Preprocessor::HandleElseDirective(Token &Result) {
   CheckEndOfDirective("#else");
   
   PPConditionalInfo CI;
-  if (CurLexer->popConditionalLevel(CI))
+  if (CurPPLexer->popConditionalLevel(CI))
     return Diag(Result, diag::pp_err_else_without_if);
   
   // If this is a top-level #else, inform the MIOpt.
-  if (CurLexer->getConditionalStackDepth() == 0)
-    CurLexer->MIOpt.EnterTopLevelConditional();
+  if (CurPPLexer->getConditionalStackDepth() == 0)
+    CurPPLexer->MIOpt.EnterTopLevelConditional();
 
   // If this is a #else with a #else before it, report the error.
   if (CI.FoundElse) Diag(Result, diag::pp_err_else_after_else);
@@ -1143,12 +1143,12 @@ void Preprocessor::HandleElifDirective(Token &ElifToken) {
   DiscardUntilEndOfDirective();
 
   PPConditionalInfo CI;
-  if (CurLexer->popConditionalLevel(CI))
+  if (CurPPLexer->popConditionalLevel(CI))
     return Diag(ElifToken, diag::pp_err_elif_without_if);
   
   // If this is a top-level #elif, inform the MIOpt.
-  if (CurLexer->getConditionalStackDepth() == 0)
-    CurLexer->MIOpt.EnterTopLevelConditional();
+  if (CurPPLexer->getConditionalStackDepth() == 0)
+    CurPPLexer->MIOpt.EnterTopLevelConditional();
   
   // If this is a #elif with a #else before it, report the error.
   if (CI.FoundElse) Diag(ElifToken, diag::pp_err_elif_after_else);
