@@ -2368,7 +2368,7 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   }
 
   if (NeedType)
-    S.Diag(Loc, Diag, E->getType().getAsString(), SR);
+    S.Diag(Loc, Diag, E->getType().getAsString(), E->getSourceRange());
   else
     S.Diag(Loc, Diag, E->getSourceRange());
   return true;
@@ -2463,13 +2463,8 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
   }
   // At this point, we know we have a real, complex or pointer type. 
   // Now make sure the operand is a modifiable lvalue.
-  Expr::isModifiableLvalueResult mlval = op->isModifiableLvalue(Context);
-  if (mlval != Expr::MLV_Valid) {
-    // FIXME: emit a more precise diagnostic...
-    Diag(OpLoc, diag::err_typecheck_invalid_lvalue_incr_decr,
-         op->getSourceRange());
+  if (CheckForModifiableLvalue(op, OpLoc, *this))
     return QualType();
-  }
   return resType;
 }
 

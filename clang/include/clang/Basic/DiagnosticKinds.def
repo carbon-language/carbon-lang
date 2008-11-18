@@ -1086,8 +1086,6 @@ DIAG(err_typecheck_no_member, ERROR,
      "no member named '%0'")
 DIAG(err_typecheck_illegal_increment_decrement, ERROR,
      "cannot modify value of type '%0'")
-DIAG(err_typecheck_invalid_lvalue_incr_decr, ERROR,
-     "invalid lvalue in increment/decrement expression")
 DIAG(err_typecheck_arithmetic_incomplete_type, ERROR,
      "arithmetic on pointer to incomplete type '%0'")
 DIAG(err_typecheck_decl_incomplete_type, ERROR,

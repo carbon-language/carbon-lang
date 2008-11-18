@@ -7,8 +7,8 @@ void f() {
 
   // Expressions.
   T(a)->m = 7;
-  int(a)++; // expected-error {{invalid lvalue in increment/decrement expression}}
-  __extension__ int(a)++; // expected-error {{invalid lvalue in increment/decrement expression}}
+  int(a)++; // expected-error {{expression is not assignable}}
+  __extension__ int(a)++; // expected-error {{expression is not assignable}}
   typeof(int)(a,5)<<a; // expected-error {{function-style cast to a builtin type can only take one argument}}
   void(a), ++a; // expected-warning {{statement was disambiguated as expression}} expected-warning {{expression result unused}}
   if (int(a)+1) {}
