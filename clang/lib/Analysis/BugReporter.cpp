@@ -576,9 +576,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
 
                 // FIXME: Maybe this should be an assertion.  Are there cases
                 // were it is not an EnumConstantDecl?
-                
-                EnumConstantDecl* D = dyn_cast<EnumConstantDecl>(DR->getDecl());                
-                
+                EnumConstantDecl* D = dyn_cast<EnumConstantDecl>(DR->getDecl());
                 if (D) {
                   GetRawInt = false;
                   os << D->getName();
@@ -806,9 +804,13 @@ void BugReporter::EmitBasicReport(const char* name, const char* category,
   SimpleBugType BT(name, category, 0);
   DiagCollector C(BT);
   Diagnostic& Diag = getDiagnostic();
-  Diag.Report(&C, getContext().getFullLoc(Loc),
+  
+  DiagnosticClient *OldClient = Diag.getClient();
+  Diag.setClient(&C);
+  Diag.Report(getContext().getFullLoc(Loc),
               Diag.getCustomDiagID(Diagnostic::Warning, str),
               0, 0, RBeg, NumRanges);
+  Diag.setClient(OldClient);
   
   for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
     EmitWarning(*I);
