@@ -492,8 +492,14 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       return LValue::MakeAddr(V, E->getType().getCVRQualifiers());
     }
   } else if (VD && VD->isFileVarDecl()) {
-    return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
-                            E->getType().getCVRQualifiers());
+    LValue LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
+                                 E->getType().getCVRQualifiers());
+    if (VD->getAttr<ObjCGCAttr>())
+    {
+      ObjCGCAttr::GCAttrTypes attrType = (VD->getAttr<ObjCGCAttr>())->getType();
+      LValue::SetObjCGCAttrs(attrType == ObjCGCAttr::Weak, attrType == ObjCGCAttr::Strong, LV);
+    }
+    return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     return LValue::MakeAddr(CGM.GetAddrOfFunction(FD),
                             E->getType().getCVRQualifiers());

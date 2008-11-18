@@ -51,6 +51,10 @@ public:
 
   /// ObjectPtrTy - LLVM type for object handles (typeof(id))
   const llvm::Type *ObjectPtrTy;
+  
+  /// PtrObjectPtrTy - LLVM type for id *
+  const llvm::Type *PtrObjectPtrTy;
+  
   /// SelectorPtrTy - LLVM type for selector handles (typeof(SEL))
   const llvm::Type *SelectorPtrTy;
   /// ProtocolPtrTy - LLVM type for external protocol handles
@@ -161,6 +165,18 @@ public:
   
   /// SyncExitFn - LLVM object_sync_exit function.
   llvm::Function *SyncExitFn;
+  
+  /// GcReadWeakFn -- LLVM objc_read_weak (id *src) function.
+  llvm::Function *GcReadWeakFn;
+  
+  /// GcAssignWeakFn -- LLVM objc_assign_weak function.
+  llvm::Function *GcAssignWeakFn;
+  
+  /// GcAssignGlobalFn -- LLVM objc_assign_global function.
+  llvm::Function *GcAssignGlobalFn;
+  
+  /// GcAssignStrongCastFn -- LLVM objc_assign_strongCast function.
+  llvm::Function *GcAssignStrongCastFn;
   
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
@@ -2191,6 +2207,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   Int8PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   
   ObjectPtrTy = Types.ConvertType(Ctx.getObjCIdType());
+  PtrObjectPtrTy = llvm::PointerType::getUnqual(ObjectPtrTy);
   SelectorPtrTy = Types.ConvertType(Ctx.getObjCSelType());
   
   // FIXME: It would be nice to unify this with the opaque type, so
@@ -2538,6 +2555,36 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                       Params,
                                                       false),
                               "_setjmp");
+  
+  // gc's API
+  // id objc_read_weak (id *)
+  Params.clear();
+  Params.push_back(PtrObjectPtrTy);
+  GcReadWeakFn =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      false),
+                              "objc_read_weak");
+  // id objc_assign_weak (id, id *)                                      
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(PtrObjectPtrTy);
+  GcAssignWeakFn = 
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                    Params,
+                                                    false),
+                           "objc_assign_weak");
+  GcAssignGlobalFn =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      false),
+                           "objc_assign_global");
+  GcAssignStrongCastFn =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      false),
+                           "objc_assign_strongCast");
+  
 }
 
 ObjCTypesHelper::~ObjCTypesHelper() {

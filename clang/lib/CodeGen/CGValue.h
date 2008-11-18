@@ -130,13 +130,16 @@ class LValue {
   bool Volatile:1;
   // FIXME: set but never used, what effect should it have?
   bool Restrict:1;
+  
+  bool ObjcWeak:1;
+  bool ObjcStrong:1;
 
 private:
   static void SetQualifiers(unsigned Qualifiers, LValue& R) {
     R.Volatile = (Qualifiers&QualType::Volatile)!=0;
     R.Restrict = (Qualifiers&QualType::Restrict)!=0;
   }
-
+  
 public:
   bool isSimple() const { return LVType == Simple; }
   bool isVectorElt() const { return LVType == VectorElt; }
@@ -146,7 +149,15 @@ public:
 
   bool isVolatileQualified() const { return Volatile; }
   bool isRestrictQualified() const { return Restrict; }
-
+  
+  bool isObjcWeak() const { return ObjcWeak; }
+  bool isObjcStrong() const { return ObjcStrong; }
+  
+  static void SetObjCGCAttrs(unsigned Weak, unsigned Strong, LValue& R) {
+    R.ObjcWeak = Weak;
+    R.ObjcStrong = Strong;
+  }
+  
   // simple lvalue
   llvm::Value *getAddress() const { assert(isSimple()); return V; }
   // vector elt lvalue
