@@ -54,7 +54,7 @@ private:
   
   /// PendingQueue - This contains all of the instructions whose operands have
   /// been issued, but their results are not ready yet (due to the latency of
-  /// the operation).  Once the operands becomes available, the instruction is
+  /// the operation).  Once the operands become available, the instruction is
   /// added to the AvailableQueue.
   std::vector<SUnit*> PendingQueue;
 
