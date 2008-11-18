@@ -150,7 +150,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // directive mode.  Tell the lexer this so any newlines we see will be
     // converted into an EOM token (this terminates the macro).
     CurPPLexer->ParsingPreprocessorDirective = true;
-    CurLexer->SetCommentRetentionState(false);
+    if (CurLexer) CurLexer->SetCommentRetentionState(false);
 
     
     // Read the next token, the directive flavor.
@@ -161,7 +161,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     if (Tok.isNot(tok::identifier)) {
       CurPPLexer->ParsingPreprocessorDirective = false;
       // Restore comment saving mode.
-      CurLexer->SetCommentRetentionState(KeepComments);
+      if (CurLexer) CurLexer->SetCommentRetentionState(KeepComments);
       continue;
     }
 
@@ -176,7 +176,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         FirstChar != 'i' && FirstChar != 'e') {
       CurPPLexer->ParsingPreprocessorDirective = false;
       // Restore comment saving mode.
-      CurLexer->SetCommentRetentionState(KeepComments);
+      if (CurLexer) CurLexer->SetCommentRetentionState(KeepComments);
       continue;
     }
     
@@ -197,7 +197,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       if (IdLen >= 20) {
         CurPPLexer->ParsingPreprocessorDirective = false;
         // Restore comment saving mode.
-        CurLexer->SetCommentRetentionState(KeepComments);
+        if (CurLexer) CurLexer->SetCommentRetentionState(KeepComments);
         continue;
       }
       memcpy(Directive, &DirectiveStr[0], IdLen);
@@ -278,7 +278,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     
     CurPPLexer->ParsingPreprocessorDirective = false;
     // Restore comment saving mode.
-    CurLexer->SetCommentRetentionState(KeepComments);
+    if (CurLexer) CurLexer->SetCommentRetentionState(KeepComments);
   }
 
   // Finally, if we are out of the conditional (saw an #endif or ran off the end
@@ -828,7 +828,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
 
   // If we are supposed to keep comments in #defines, reenable comment saving
   // mode.
-  CurLexer->SetCommentRetentionState(KeepMacroComments);
+  if (CurLexer) CurLexer->SetCommentRetentionState(KeepMacroComments);
   
   // Create the new macro.
   MacroInfo *MI = new MacroInfo(MacroNameTok.getLocation());
