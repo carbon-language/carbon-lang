@@ -207,7 +207,7 @@ private:
 /// this reason, we stick state in the Diagnostic class, see the comment there
 /// for more info.
 class DiagnosticInfo {
-  Diagnostic *DiagObj;
+  mutable Diagnostic *DiagObj;
   FullSourceLoc Loc;
   unsigned DiagID;
   void operator=(const DiagnosticInfo&); // DO NOT IMPLEMENT
@@ -221,7 +221,7 @@ public:
   
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
   /// input and neuters it.
-  DiagnosticInfo(DiagnosticInfo &D) {
+  DiagnosticInfo(const DiagnosticInfo &D) {
     DiagObj = D.DiagObj;
     Loc = D.Loc;
     DiagID = D.DiagID;
@@ -262,7 +262,7 @@ public:
     assert(Idx < DiagObj->NumDiagRanges && "Invalid diagnostic range index!");
     return *DiagObj->DiagRanges[Idx];
   }
-
+  
   DiagnosticInfo &operator<<(const std::string &S) {
     assert((unsigned)DiagObj->NumDiagArgs < 
            sizeof(DiagObj->DiagArguments)/sizeof(DiagObj->DiagArguments[0]) &&
