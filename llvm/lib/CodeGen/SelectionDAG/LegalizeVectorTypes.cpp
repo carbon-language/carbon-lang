@@ -41,18 +41,19 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
     assert(0 && "Do not know how to scalarize the result of this operator!");
     abort();
 
-  case ISD::BIT_CONVERT:    R = ScalarizeVecRes_BIT_CONVERT(N); break;
-  case ISD::BUILD_VECTOR:   R = N->getOperand(0); break;
-  case ISD::CONVERT_RNDSAT: R = ScalarizeVecRes_CONVERT_RNDSAT(N); break;
+  case ISD::BIT_CONVERT:       R = ScalarizeVecRes_BIT_CONVERT(N); break;
+  case ISD::BUILD_VECTOR:      R = N->getOperand(0); break;
+  case ISD::CONVERT_RNDSAT:    R = ScalarizeVecRes_CONVERT_RNDSAT(N); break;
   case ISD::EXTRACT_SUBVECTOR: R = ScalarizeVecRes_EXTRACT_SUBVECTOR(N); break;
-  case ISD::FPOWI:          R = ScalarizeVecRes_FPOWI(N); break;
+  case ISD::FPOWI:             R = ScalarizeVecRes_FPOWI(N); break;
   case ISD::INSERT_VECTOR_ELT: R = ScalarizeVecRes_INSERT_VECTOR_ELT(N); break;
   case ISD::LOAD:           R = ScalarizeVecRes_LOAD(cast<LoadSDNode>(N));break;
-  case ISD::SELECT:         R = ScalarizeVecRes_SELECT(N); break;
-  case ISD::SELECT_CC:      R = ScalarizeVecRes_SELECT_CC(N); break;
-  case ISD::UNDEF:          R = ScalarizeVecRes_UNDEF(N); break;
-  case ISD::VECTOR_SHUFFLE: R = ScalarizeVecRes_VECTOR_SHUFFLE(N); break;
-  case ISD::VSETCC:         R = ScalarizeVecRes_VSETCC(N); break;
+  case ISD::SCALAR_TO_VECTOR:  R = ScalarizeVecRes_SCALAR_TO_VECTOR(N); break;
+  case ISD::SELECT:            R = ScalarizeVecRes_SELECT(N); break;
+  case ISD::SELECT_CC:         R = ScalarizeVecRes_SELECT_CC(N); break;
+  case ISD::UNDEF:             R = ScalarizeVecRes_UNDEF(N); break;
+  case ISD::VECTOR_SHUFFLE:    R = ScalarizeVecRes_VECTOR_SHUFFLE(N); break;
+  case ISD::VSETCC:            R = ScalarizeVecRes_VSETCC(N); break;
 
   case ISD::CTLZ:
   case ISD::CTPOP:
@@ -164,8 +165,8 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_UnaryOp(SDNode *N) {
   return DAG.getNode(N->getOpcode(), DestVT, Op);
 }
 
-SDValue DAGTypeLegalizer::ScalarizeVecRes_UNDEF(SDNode *N) {
-  return DAG.getNode(ISD::UNDEF, N->getValueType(0).getVectorElementType());
+SDValue DAGTypeLegalizer::ScalarizeVecRes_SCALAR_TO_VECTOR(SDNode *N) {
+  return N->getOperand(0);
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
@@ -180,6 +181,10 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT_CC(SDNode *N) {
                      N->getOperand(0), N->getOperand(1),
                      LHS, GetScalarizedVector(N->getOperand(3)),
                      N->getOperand(4));
+}
+
+SDValue DAGTypeLegalizer::ScalarizeVecRes_UNDEF(SDNode *N) {
+  return DAG.getNode(ISD::UNDEF, N->getValueType(0).getVectorElementType());
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N) {
@@ -354,6 +359,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::EXTRACT_SUBVECTOR: SplitVecRes_EXTRACT_SUBVECTOR(N, Lo, Hi); break;
   case ISD::FPOWI:             SplitVecRes_FPOWI(N, Lo, Hi); break;
   case ISD::INSERT_VECTOR_ELT: SplitVecRes_INSERT_VECTOR_ELT(N, Lo, Hi); break;
+  case ISD::SCALAR_TO_VECTOR:  SplitVecRes_SCALAR_TO_VECTOR(N, Lo, Hi); break;
   case ISD::LOAD:           SplitVecRes_LOAD(cast<LoadSDNode>(N), Lo, Hi);break;
   case ISD::VECTOR_SHUFFLE:    SplitVecRes_VECTOR_SHUFFLE(N, Lo, Hi); break;
   case ISD::VSETCC:            SplitVecRes_VSETCC(N, Lo, Hi); break;
@@ -577,6 +583,14 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
 
   // Split it.
   SplitVecRes_LOAD(cast<LoadSDNode>(Load.getNode()), Lo, Hi);
+}
+
+void DAGTypeLegalizer::SplitVecRes_SCALAR_TO_VECTOR(SDNode *N, SDValue &Lo,
+                                                    SDValue &Hi) {
+  MVT LoVT, HiVT;
+  GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
+  Lo = DAG.getNode(ISD::SCALAR_TO_VECTOR, LoVT, N->getOperand(0));
+  Hi = DAG.getNode(ISD::UNDEF, HiVT);
 }
 
 void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
