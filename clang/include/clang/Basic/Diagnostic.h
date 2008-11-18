@@ -214,6 +214,7 @@ class DiagnosticInfo {
 public:
   DiagnosticInfo(Diagnostic *diagObj, FullSourceLoc loc, unsigned diagID) :
     DiagObj(diagObj), Loc(loc), DiagID(diagID) {
+    if (DiagObj == 0) return;
     assert(DiagObj->NumDiagArgs == -1 &&
            "Multiple diagnostics in flight at once!");
     DiagObj->NumDiagArgs = DiagObj->NumDiagRanges = 0;
