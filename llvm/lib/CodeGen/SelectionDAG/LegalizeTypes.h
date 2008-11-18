@@ -205,6 +205,15 @@ private:
   // Integer Promotion Support: LegalizeIntegerTypes.cpp
   //===--------------------------------------------------------------------===//
 
+  /// GetPromotedInteger - Given a processed operand Op which was promoted to a
+  /// larger integer type, this returns the promoted value.  The bits of the
+  /// promoted value corresponding to the original type are exactly equal to Op.
+  /// The extra bits contain rubbish, so the promoted value may need to be zero-
+  /// or sign-extended from the original type before it is usable (the helpers
+  /// SExtPromotedInteger and ZExtPromotedInteger can do this for you).
+  /// For example, if Op is an i16 and was promoted to an i32, then this method
+  /// returns an i32, the lower 16 bits of which coincide with Op, and the upper
+  /// 16 bits of which contain rubbish.
   SDValue GetPromotedInteger(SDValue Op) {
     SDValue &PromotedOp = PromotedIntegers[Op];
     RemapValue(PromotedOp);
@@ -212,6 +221,15 @@ private:
     return PromotedOp;
   }
   void SetPromotedInteger(SDValue Op, SDValue Result);
+
+  /// SExtPromotedInteger - Get a promoted operand and sign extend it to the
+  /// final size.
+  SDValue SExtPromotedInteger(SDValue Op) {
+    MVT OldVT = Op.getValueType();
+    Op = GetPromotedInteger(Op);
+    return DAG.getNode(ISD::SIGN_EXTEND_INREG, Op.getValueType(), Op,
+                       DAG.getValueType(OldVT));
+  }
 
   /// ZExtPromotedInteger - Get a promoted operand and zero extend it to the
   /// final size.
@@ -263,15 +281,16 @@ private:
   SDValue PromoteIntOp_CONVERT_RNDSAT(SDNode *N);
   SDValue PromoteIntOp_FP_EXTEND(SDNode *N);
   SDValue PromoteIntOp_FP_ROUND(SDNode *N);
-  SDValue PromoteIntOp_INT_TO_FP(SDNode *N);
   SDValue PromoteIntOp_INSERT_VECTOR_ELT(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_MEMBARRIER(SDNode *N);
   SDValue PromoteIntOp_SELECT(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_SELECT_CC(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_SETCC(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_SIGN_EXTEND(SDNode *N);
+  SDValue PromoteIntOp_SINT_TO_FP(SDNode *N);
   SDValue PromoteIntOp_STORE(StoreSDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_TRUNCATE(SDNode *N);
+  SDValue PromoteIntOp_UINT_TO_FP(SDNode *N);
   SDValue PromoteIntOp_ZERO_EXTEND(SDNode *N);
 
   void PromoteSetCCOperands(SDValue &LHS,SDValue &RHS, ISD::CondCode Code);
