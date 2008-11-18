@@ -1477,7 +1477,7 @@ namespace {
     /// specified less-than comparison will execute.  If not computable, return
     /// UnknownValue. isSigned specifies whether the less-than is signed.
     SCEVHandle HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
-                                bool isSigned);
+                                bool isSigned, bool trueWhenEqual);
 
     /// getPredecessorWithUniqueSuccessorForBB - Return a predecessor of BB
     /// (which may not be an immediate predecessor) which has exactly one
@@ -1487,7 +1487,13 @@ namespace {
 
     /// executesAtLeastOnce - Test whether entry to the loop is protected by
     /// a conditional between LHS and RHS.
-    bool executesAtLeastOnce(const Loop *L, bool isSigned, SCEV *LHS, SCEV *RHS);
+    bool executesAtLeastOnce(const Loop *L, bool isSigned, bool trueWhenEqual,
+                             SCEV *LHS, SCEV *RHS);
+
+    /// potentialInfiniteLoop - Test whether the loop might jump over the exit value
+    /// due to wrapping.
+    bool potentialInfiniteLoop(SCEV *Stride, SCEV *RHS, bool isSigned,
+                               bool trueWhenEqual);
 
     /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
     /// in the header of its containing loop, we know the loop executes a
@@ -2025,24 +2031,46 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
     break;
   }
   case ICmpInst::ICMP_SLT: {
-    SCEVHandle TC = HowManyLessThans(LHS, RHS, L, true);
+    SCEVHandle TC = HowManyLessThans(LHS, RHS, L, true, false);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
   case ICmpInst::ICMP_SGT: {
     SCEVHandle TC = HowManyLessThans(SE.getNotSCEV(LHS),
-                                     SE.getNotSCEV(RHS), L, true);
+                                     SE.getNotSCEV(RHS), L, true, false);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
   case ICmpInst::ICMP_ULT: {
-    SCEVHandle TC = HowManyLessThans(LHS, RHS, L, false);
+    SCEVHandle TC = HowManyLessThans(LHS, RHS, L, false, false);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
   case ICmpInst::ICMP_UGT: {
     SCEVHandle TC = HowManyLessThans(SE.getNotSCEV(LHS),
-                                     SE.getNotSCEV(RHS), L, false);
+                                     SE.getNotSCEV(RHS), L, false, false);
+    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    break;
+  }
+  case ICmpInst::ICMP_SLE: {
+    SCEVHandle TC = HowManyLessThans(LHS, RHS, L, true, true);
+    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    break;
+  }
+  case ICmpInst::ICMP_SGE: {
+    SCEVHandle TC = HowManyLessThans(SE.getNotSCEV(LHS),
+                                     SE.getNotSCEV(RHS), L, true, true);
+    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    break;
+  }
+  case ICmpInst::ICMP_ULE: {
+    SCEVHandle TC = HowManyLessThans(LHS, RHS, L, false, true);
+    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    break;
+  }
+  case ICmpInst::ICMP_UGE: {
+    SCEVHandle TC = HowManyLessThans(SE.getNotSCEV(LHS),
+                                     SE.getNotSCEV(RHS), L, false, true);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
@@ -2738,6 +2766,7 @@ ScalarEvolutionsImpl::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
 /// executesAtLeastOnce - Test whether entry to the loop is protected by
 /// a conditional between LHS and RHS.
 bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
+                                               bool trueWhenEqual,
                                                SCEV *LHS, SCEV *RHS) {
   BasicBlock *Preheader = L->getLoopPreheader();
   BasicBlock *PreheaderDest = L->getHeader();
@@ -2770,20 +2799,36 @@ bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
 
     switch (Cond) {
     case ICmpInst::ICMP_UGT:
-      if (isSigned) continue;
+      if (isSigned || trueWhenEqual) continue;
       std::swap(PreCondLHS, PreCondRHS);
       Cond = ICmpInst::ICMP_ULT;
       break;
     case ICmpInst::ICMP_SGT:
-      if (!isSigned) continue;
+      if (!isSigned || trueWhenEqual) continue;
       std::swap(PreCondLHS, PreCondRHS);
       Cond = ICmpInst::ICMP_SLT;
       break;
     case ICmpInst::ICMP_ULT:
-      if (isSigned) continue;
+      if (isSigned || trueWhenEqual) continue;
       break;
     case ICmpInst::ICMP_SLT:
-      if (!isSigned) continue;
+      if (!isSigned || trueWhenEqual) continue;
+      break;
+    case ICmpInst::ICMP_UGE:
+      if (isSigned || !trueWhenEqual) continue;
+      std::swap(PreCondLHS, PreCondRHS);
+      Cond = ICmpInst::ICMP_ULE;
+      break;
+    case ICmpInst::ICMP_SGE:
+      if (!isSigned || !trueWhenEqual) continue;
+      std::swap(PreCondLHS, PreCondRHS);
+      Cond = ICmpInst::ICMP_SLE;
+      break;
+    case ICmpInst::ICMP_ULE:
+      if (isSigned || !trueWhenEqual) continue;
+      break;
+    case ICmpInst::ICMP_SLE:
+      if (!isSigned || !trueWhenEqual) continue;
       break;
     default:
       continue;
@@ -2802,11 +2847,46 @@ bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
   return false;
 }
 
+/// potentialInfiniteLoop - Test whether the loop might jump over the exit value
+/// due to wrapping around 2^n.
+bool ScalarEvolutionsImpl::potentialInfiniteLoop(SCEV *Stride, SCEV *RHS,
+                                                 bool isSigned, bool trueWhenEqual) {
+  // Return true when the distance from RHS to maxint > Stride.
+
+  if (!isa<SCEVConstant>(Stride))
+    return true;
+  SCEVConstant *SC = cast<SCEVConstant>(Stride);
+
+  if (SC->getValue()->isZero())
+    return true;
+  if (!trueWhenEqual && SC->getValue()->isOne())
+    return false;
+
+  if (!isa<SCEVConstant>(RHS))
+    return true;
+  SCEVConstant *R = cast<SCEVConstant>(RHS);
+
+  if (isSigned)
+    return true;  // XXX: because we don't have an sdiv scev.
+
+  // If negative, it wraps around every iteration, but we don't care about that.
+  APInt S = SC->getValue()->getValue().abs();
+
+  APInt Dist = APInt::getMaxValue(R->getValue()->getBitWidth()) -
+               R->getValue()->getValue();
+
+  if (trueWhenEqual)
+    return !S.ult(Dist);
+  else
+    return !S.ule(Dist);
+}
+
 /// HowManyLessThans - Return the number of times a backedge containing the
 /// specified less-than comparison will execute.  If not computable, return
 /// UnknownValue.
 SCEVHandle ScalarEvolutionsImpl::
-HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
+HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
+                 bool isSigned, bool trueWhenEqual) {
   // Only handle:  "ADDREC < LoopInvariant".
   if (!RHS->isLoopInvariant(L)) return UnknownValue;
 
@@ -2815,34 +2895,50 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
     return UnknownValue;
 
   if (AddRec->isAffine()) {
-    // FORNOW: We only support unit strides.
-    SCEVHandle One = SE.getIntegerSCEV(1, RHS->getType());
-    if (AddRec->getOperand(1) != One)
+    SCEVHandle Stride = AddRec->getOperand(1);
+    if (potentialInfiniteLoop(Stride, RHS, isSigned, trueWhenEqual))
       return UnknownValue;
 
-    // We know the LHS is of the form {n,+,1} and the RHS is some loop-invariant
-    // m.  So, we count the number of iterations in which {n,+,1} < m is true.
-    // Note that we cannot simply return max(m-n,0) because it's not safe to
+    // We know the LHS is of the form {n,+,s} and the RHS is some loop-invariant
+    // m.  So, we count the number of iterations in which {n,+,s} < m is true.
+    // Note that we cannot simply return max(m-n,0)/s because it's not safe to
     // treat m-n as signed nor unsigned due to overflow possibility.
 
     // First, we get the value of the LHS in the first iteration: n
     SCEVHandle Start = AddRec->getOperand(0);
 
-    if (executesAtLeastOnce(L, isSigned,
-                            SE.getMinusSCEV(AddRec->getOperand(0), One), RHS)) {
-      // Since we know that the condition is true in order to enter the loop,
-      // we know that it will run exactly m-n times.
-      return SE.getMinusSCEV(RHS, Start);
-    } else {
-      // Then, we get the value of the LHS in the first iteration in which the
-      // above condition doesn't hold.  This equals to max(m,n).
-      SCEVHandle End = isSigned ? SE.getSMaxExpr(RHS, Start)
-                                : SE.getUMaxExpr(RHS, Start);
+    SCEVHandle One = SE.getIntegerSCEV(1, RHS->getType());
 
-      // Finally, we subtract these two values to get the number of times the
-      // backedge is executed: max(m,n)-n.
-      return SE.getMinusSCEV(End, Start);
+    // Assuming that the loop will run at least once, we know that it will
+    // run (m-n)/s times.
+    SCEVHandle End = RHS;
+
+    if (!executesAtLeastOnce(L, isSigned, trueWhenEqual,
+                             SE.getMinusSCEV(Start, One), RHS)) {
+      // If not, we get the value of the LHS in the first iteration in which
+      // the above condition doesn't hold.  This equals to max(m,n).
+      End = isSigned ? SE.getSMaxExpr(RHS, Start)
+                     : SE.getUMaxExpr(RHS, Start);
     }
+
+    // If the expression is less-than-or-equal to, we need to extend the
+    // loop by one iteration.
+    //
+    // The loop won't actually run (m-n)/s times because the loop iterations
+    // won't divide evenly. For example, if you have {2,+,5} u< 10 the
+    // division would equal one, but the loop runs twice putting the
+    // induction variable at 12.
+
+    if (!trueWhenEqual)
+      // (Stride - 1) is correct only because we know it's unsigned.
+      // What we really want is to decrease the magnitude of Stride by one.
+      Start = SE.getMinusSCEV(Start, SE.getMinusSCEV(Stride, One));
+    else
+      Start = SE.getMinusSCEV(Start, Stride);
+
+    // Finally, we subtract these two values to get the number of times the
+    // backedge is executed: max(m,n)-n.
+    return SE.getUDivExpr(SE.getMinusSCEV(End, Start), Stride);
   }
 
   return UnknownValue;
