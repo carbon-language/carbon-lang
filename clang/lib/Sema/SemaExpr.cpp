@@ -1521,9 +1521,9 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         }
       } else if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
                                              rhptee.getUnqualifiedType())) {
-        Diag(questionLoc, diag::warn_typecheck_cond_incompatible_pointers,
-             lexT.getAsString(), rexT.getAsString(),
-             lex->getSourceRange(), rex->getSourceRange());
+        Diag(questionLoc, diag::warn_typecheck_cond_incompatible_pointers)
+          << lexT.getAsString() << rexT.getAsString()
+          << lex->getSourceRange() << rex->getSourceRange();
         // In this situation, we assume void* type. No especially good
         // reason, but this is what gcc does, and we do have to pick
         // to get a consistent AST.
@@ -1575,9 +1575,9 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     return lexT;
 
   // Otherwise, the operands are not compatible.
-  Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
-       lexT.getAsString(), rexT.getAsString(),
-       lex->getSourceRange(), rex->getSourceRange());
+  Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands)
+    << lexT.getAsString() << rexT.getAsString()
+    << lex->getSourceRange() << rex->getSourceRange();
   return QualType();
 }
 
@@ -1892,9 +1892,9 @@ Sema::CheckCompoundAssignmentConstraints(QualType lhsType, QualType rhsType) {
 }
 
 QualType Sema::InvalidOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
-  Diag(Loc, diag::err_typecheck_invalid_operands, 
-       lex->getType().getAsString(), rex->getType().getAsString(),
-       lex->getSourceRange(), rex->getSourceRange());
+  Diag(Loc, diag::err_typecheck_invalid_operands)
+    << lex->getType().getAsString() << rex->getType().getAsString()
+    << lex->getSourceRange() << rex->getSourceRange();
   return QualType();
 }
 
@@ -1947,9 +1947,9 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
   }
 
   // You cannot convert between vector values of different size.
-  Diag(Loc, diag::err_typecheck_vector_not_convertable, 
-       lex->getType().getAsString(), rex->getType().getAsString(),
-       lex->getSourceRange(), rex->getSourceRange());
+  Diag(Loc, diag::err_typecheck_vector_not_convertable)
+    << lex->getType().getAsString() << rex->getType().getAsString()
+    << lex->getSourceRange() << rex->getSourceRange();
   return QualType();
 }    
 
@@ -2074,9 +2074,9 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
       if (!Context.typesAreCompatible(
               Context.getCanonicalType(lpointee).getUnqualifiedType(), 
               Context.getCanonicalType(rpointee).getUnqualifiedType())) {
-        Diag(Loc, diag::err_typecheck_sub_ptr_compatible,
-             lex->getType().getAsString(), rex->getType().getAsString(),
-             lex->getSourceRange(), rex->getSourceRange());
+        Diag(Loc, diag::err_typecheck_sub_ptr_compatible)
+          << lex->getType().getAsString() << rex->getType().getAsString()
+          << lex->getSourceRange() << rex->getSourceRange();
         return QualType();
       }
       
@@ -2176,9 +2176,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         !Context.typesAreCompatible(LCanPointeeTy.getUnqualifiedType(),
                                     RCanPointeeTy.getUnqualifiedType()) &&
         !areComparableObjCInterfaces(LCanPointeeTy, RCanPointeeTy, Context)) {
-      Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
+      Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
+        << lType.getAsString() << rType.getAsString()
+        << lex->getSourceRange() << rex->getSourceRange();
     }
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return Context.IntTy;
@@ -2190,9 +2190,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     
     if (!LHSIsNull && !RHSIsNull &&
         !Context.typesAreBlockCompatible(lpointee, rpointee)) {
-      Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
+      Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
+        << lType.getAsString() << rType.getAsString()
+        << lex->getSourceRange() << rex->getSourceRange();
     }
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return Context.IntTy;
@@ -2201,9 +2201,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   if ((lType->isBlockPointerType() && rType->isPointerType()) ||
       (lType->isPointerType() && rType->isBlockPointerType())) {
     if (!LHSIsNull && !RHSIsNull) {
-      Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
+      Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
+        << lType.getAsString() << rType.getAsString()
+        << lex->getSourceRange() << rex->getSourceRange();
     }
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return Context.IntTy;
@@ -2220,9 +2220,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         
       if (!LPtrToVoid && !RPtrToVoid &&
           !Context.typesAreCompatible(lType, rType)) {
-        Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers,
-             lType.getAsString(), rType.getAsString(),
-             lex->getSourceRange(), rex->getSourceRange());
+        Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
+          << lType.getAsString() << rType.getAsString()
+          << lex->getSourceRange() << rex->getSourceRange();
         ImpCastExprToType(rex, lType);
         return Context.IntTy;
       }
@@ -2234,9 +2234,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       return Context.IntTy;
     } else {
       if ((lType->isObjCQualifiedIdType() && rType->isObjCQualifiedIdType())) {
-        Diag(Loc, diag::warn_incompatible_qualified_id_operands, 
-             lType.getAsString(), rType.getAsString(),
-             lex->getSourceRange(), rex->getSourceRange());
+        Diag(Loc, diag::warn_incompatible_qualified_id_operands)
+          << lType.getAsString() << rType.getAsString()
+          << lex->getSourceRange() << rex->getSourceRange();
         ImpCastExprToType(rex, lType);
         return Context.IntTy;
       }
@@ -2245,35 +2245,35 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   if ((lType->isPointerType() || lType->isObjCQualifiedIdType()) && 
        rType->isIntegerType()) {
     if (!RHSIsNull)
-      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
+      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
+        << lType.getAsString() << rType.getAsString()
+        << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(rex, lType); // promote the integer to pointer
     return Context.IntTy;
   }
   if (lType->isIntegerType() && 
       (rType->isPointerType() || rType->isObjCQualifiedIdType())) {
     if (!LHSIsNull)
-      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
+      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
+        << lType.getAsString() << rType.getAsString()
+        << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(lex, rType); // promote the integer to pointer
     return Context.IntTy;
   }
   // Handle block pointers.
   if (lType->isBlockPointerType() && rType->isIntegerType()) {
     if (!RHSIsNull)
-      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
+      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
+        << lType.getAsString() << rType.getAsString()
+        << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(rex, lType); // promote the integer to pointer
     return Context.IntTy;
   }
   if (lType->isIntegerType() && rType->isBlockPointerType()) {
     if (!LHSIsNull)
-      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
+      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
+        << lType.getAsString() << rType.getAsString()
+        << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(lex, rType); // promote the integer to pointer
     return Context.IntTy;
   }
@@ -3445,7 +3445,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   }
   
-  Diag(Loc, DiagKind, DstType.getAsString(), SrcType.getAsString(), Flavor,
-       SrcExpr->getSourceRange());
+  Diag(Loc, DiagKind) << DstType.getAsString() << SrcType.getAsString()
+    << Flavor << SrcExpr->getSourceRange();
   return isInvalid;
 }

@@ -714,14 +714,12 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       //      destination type.
       // FIXME: We're pretending to do copy elision here; return to
       // this when we have ASTs for such things.
-      if (PerformImplicitConversion(Init, DeclType))
-        return Diag(InitLoc,
-                    diag::err_typecheck_convert_incompatible,
-                    DeclType.getAsString(), InitEntity,
-                    "initializing",
-                    Init->getSourceRange());
-      else
+      if (!PerformImplicitConversion(Init, DeclType))
         return false;
+      
+      return Diag(InitLoc, diag::err_typecheck_convert_incompatible)
+        << DeclType.getAsString() << InitEntity << "initializing"
+        << Init->getSourceRange();
     }
 
     // C99 6.7.8p16.

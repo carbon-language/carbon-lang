@@ -108,8 +108,9 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   if (const ReferenceType *DestTypeTmp = DestType->getAsReferenceType()) {
     if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
       // Cannot cast non-lvalue to reference type.
-      Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue,
-        "const_cast", OrigDestType.getAsString(), SrcExpr->getSourceRange());
+      Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue)
+        << "const_cast" << OrigDestType.getAsString()
+        << SrcExpr->getSourceRange();
       return;
     }
 
@@ -129,16 +130,16 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     // Cannot cast to non-pointer, non-reference type. Note that, if DestType
     // was a reference type, we converted it to a pointer above.
     // C++ 5.2.11p3: For two pointer types [...]
-    Self.Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest,
-      OrigDestType.getAsString(), DestRange);
+    Self.Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest)
+      << OrigDestType.getAsString() << DestRange;
     return;
   }
   if (DestType->isFunctionPointerType()) {
     // Cannot cast direct function pointers.
     // C++ 5.2.11p2: [...] where T is any object type or the void type [...]
     // T is the ultimate pointee of source and target type.
-    Self.Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest,
-      OrigDestType.getAsString(), DestRange);
+    Self.Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest)
+      << OrigDestType.getAsString() << DestRange;
     return;
   }
   SrcType = Self.Context.getCanonicalType(SrcType);
@@ -169,9 +170,9 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   {
     if (SrcTypeArr->getSize() != DestTypeArr->getSize()) {
       // Different array sizes.
-      Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic,
-        "const_cast", OrigDestType.getAsString(), OrigSrcType.getAsString(),
-        OpRange);
+      Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic)
+        << "const_cast" << OrigDestType.getAsString()
+        << OrigSrcType.getAsString() << OpRange;
       return;
     }
     SrcType = SrcTypeArr->getElementType().getUnqualifiedType();
@@ -182,8 +183,9 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // Since we're dealing in canonical types, the remainder must be the same.
   if (SrcType != DestType) {
     // Cast between unrelated types.
-    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic, "const_cast",
-      OrigDestType.getAsString(), OrigSrcType.getAsString(), OpRange);
+    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic)
+      << "const_cast" << OrigDestType.getAsString()
+      << OrigSrcType.getAsString() << OpRange;
     return;
   }
 }
@@ -204,9 +206,9 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   if (const ReferenceType *DestTypeTmp = DestType->getAsReferenceType()) {
     if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
       // Cannot cast non-lvalue to reference type.
-      Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue,
-        "reinterpret_cast", OrigDestType.getAsString(),
-        SrcExpr->getSourceRange());
+      Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue)
+        << "reinterpret_cast" << OrigDestType.getAsString()
+        << SrcExpr->getSourceRange();
       return;
     }
 
@@ -233,9 +235,9 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     // Except for std::nullptr_t->integer, which is not supported yet, and
     // lvalue->reference, which is handled above, at least one of the two
     // arguments must be a pointer.
-    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic,
-      "reinterpret_cast", OrigDestType.getAsString(), OrigSrcType.getAsString(),
-      OpRange);
+    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic)
+      << "reinterpret_cast" << OrigDestType.getAsString()
+      << OrigSrcType.getAsString() << OpRange;
     return;
   }
 
@@ -257,8 +259,8 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     //   type large enough to hold it.
     if (Self.Context.getTypeSize(SrcType) >
         Self.Context.getTypeSize(DestType)) {
-      Self.Diag(OpRange.getBegin(), diag::err_bad_reinterpret_cast_small_int,
-        OrigDestType.getAsString(), DestRange);
+      Self.Diag(OpRange.getBegin(), diag::err_bad_reinterpret_cast_small_int)
+        << OrigDestType.getAsString() << DestRange;
     }
     return;
   }
@@ -273,17 +275,17 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   if (!destIsPtr || !srcIsPtr) {
     // With the valid non-pointer conversions out of the way, we can be even
     // more stringent.
-    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic,
-      "reinterpret_cast", OrigDestType.getAsString(), OrigSrcType.getAsString(),
-      OpRange);
+    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic)
+      << "reinterpret_cast" << OrigDestType.getAsString()
+      << OrigSrcType.getAsString() << OpRange;
     return;
   }
 
   // C++ 5.2.10p2: The reinterpret_cast operator shall not cast away constness.
   if (CastsAwayConstness(Self, SrcType, DestType)) {
-    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away,
-      "reinterpret_cast", OrigDestType.getAsString(), OrigSrcType.getAsString(),
-      OpRange);
+    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away)
+      << "reinterpret_cast" << OrigDestType.getAsString()
+      << OrigSrcType.getAsString() << OpRange;
     return;
   }
 
@@ -306,7 +308,8 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     // FIXME: Conditionally-supported behavior should be configurable in the
     // TargetInfo or similar.
     if (!Self.getLangOptions().CPlusPlus0x) {
-      Self.Diag(OpRange.getBegin(), diag::ext_reinterpret_cast_fn_obj, OpRange);
+      Self.Diag(OpRange.getBegin(), diag::ext_reinterpret_cast_fn_obj)
+        << OpRange;
     }
     return;
   }
@@ -316,7 +319,8 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   if (DestType->isFunctionPointerType()) {
     // See above.
     if (!Self.getLangOptions().CPlusPlus0x) {
-      Self.Diag(OpRange.getBegin(), diag::ext_reinterpret_cast_fn_obj, OpRange);
+      Self.Diag(OpRange.getBegin(), diag::ext_reinterpret_cast_fn_obj)
+        << OpRange;
     }
     return;
   }
@@ -462,9 +466,9 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
           // This is definitely the intended conversion, but it might fail due
           // to a const violation.
           if (!DestPointee.isAtLeastAsQualifiedAs(SrcPointee)) {
-            Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away,
-              "static_cast", DestType.getAsString(),
-              OrigSrcType.getAsString(), OpRange);
+            Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away)
+              << "static_cast" << DestType.getAsString()
+              << OrigSrcType.getAsString() << OpRange;
           }
           return;
         }
@@ -476,8 +480,9 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // FIXME: Error reporting could be a lot better. Should store the reason
   // why every substep failed and, at the end, select the most specific and
   // report that.
-  Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic, "static_cast",
-    DestType.getAsString(), OrigSrcType.getAsString(), OpRange);
+  Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic)
+    << "static_cast" << DestType.getAsString() << OrigSrcType.getAsString()
+    << OpRange;
 }
 
 /// Tests whether a conversion according to C++ 5.2.9p5 is valid.
@@ -575,9 +580,9 @@ TryStaticDowncast(Sema &Self, QualType SrcType, QualType DestType,
 
   // Must preserve cv, as always.
   if (!DestType.isAtLeastAsQualifiedAs(SrcType)) {
-    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away,
-      "static_cast", OrigDestType.getAsString(), OrigSrcType.getAsString(),
-      OpRange);
+    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away)
+      << "static_cast" << OrigDestType.getAsString()
+      << OrigSrcType.getAsString() << OpRange;
     return TSC_Failed;
   }
 
@@ -604,18 +609,18 @@ TryStaticDowncast(Sema &Self, QualType SrcType, QualType DestType,
       }
     }
 
-    Self.Diag(OpRange.getBegin(), diag::err_ambiguous_base_to_derived_cast,
-      SrcType.getUnqualifiedType().getAsString(),
-      DestType.getUnqualifiedType().getAsString(),
-      PathDisplayStr, OpRange);
+    Self.Diag(OpRange.getBegin(), diag::err_ambiguous_base_to_derived_cast)
+      << SrcType.getUnqualifiedType().getAsString()
+      << DestType.getUnqualifiedType().getAsString()
+      << PathDisplayStr << OpRange;
     return TSC_Failed;
   }
 
   if (Paths.getDetectedVirtual() != 0) {
     QualType VirtualBase(Paths.getDetectedVirtual(), 0);
-    Self.Diag(OpRange.getBegin(), diag::err_static_downcast_via_virtual,
-      OrigSrcType.getAsString(), OrigDestType.getAsString(),
-      VirtualBase.getAsString(), OpRange);
+    Self.Diag(OpRange.getBegin(), diag::err_static_downcast_via_virtual)
+      << OrigSrcType.getAsString() << OrigDestType.getAsString()
+      << VirtualBase.getAsString() << OpRange;
     return TSC_Failed;
   }
 
@@ -674,8 +679,8 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   } else if (DestReference) {
     DestPointee = DestReference->getPointeeType();
   } else {
-    Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ref_or_ptr,
-      OrigDestType.getAsString(), DestRange);
+    Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ref_or_ptr)
+      << OrigDestType.getAsString() << DestRange;
     return;
   }
 
@@ -684,13 +689,13 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     assert(DestPointer && "Reference to void is not possible");
   } else if (DestRecord) {
     if (!DestRecord->getDecl()->isDefinition()) {
-      Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_incomplete,
-        DestPointee.getUnqualifiedType().getAsString(), DestRange);
+      Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_incomplete)
+        << DestPointee.getUnqualifiedType().getAsString() << DestRange;
       return;
     }
   } else {
-    Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class,
-      DestPointee.getUnqualifiedType().getAsString(), DestRange);
+    Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class)
+      << DestPointee.getUnqualifiedType().getAsString() << DestRange;
     return;
   }
 
@@ -704,14 +709,14 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
       SrcPointee = SrcPointer->getPointeeType();
     } else {
-      Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ptr,
-        OrigSrcType.getAsString(), SrcExpr->getSourceRange());
+      Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ptr)
+        << OrigSrcType.getAsString() << SrcExpr->getSourceRange();
       return;
     }
   } else {
     if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
-      Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue,
-        "dynamic_cast", OrigDestType.getAsString(), OpRange);
+      Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue)
+        << "dynamic_cast" << OrigDestType.getAsString() << OpRange;
     }
     SrcPointee = SrcType;
   }
@@ -719,9 +724,9 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   const RecordType *SrcRecord = SrcPointee->getAsRecordType();
   if (SrcRecord) {
     if (!SrcRecord->getDecl()->isDefinition()) {
-      Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_incomplete,
-        SrcPointee.getUnqualifiedType().getAsString(),
-        SrcExpr->getSourceRange());
+      Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_incomplete)
+        << SrcPointee.getUnqualifiedType().getAsString()
+        << SrcExpr->getSourceRange();
       return;
     }
   } else {
@@ -739,9 +744,9 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 
   // C++ 5.2.7p1: The dynamic_cast operator shall not cast away constness.
   if (!DestPointee.isAtLeastAsQualifiedAs(SrcPointee)) {
-    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away,
-      "dynamic_cast", OrigDestType.getAsString(), OrigSrcType.getAsString(),
-      OpRange);
+    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away)
+      << "dynamic_cast" << OrigDestType.getAsString()
+      << OrigSrcType.getAsString() << OpRange;
     return;
   }
 

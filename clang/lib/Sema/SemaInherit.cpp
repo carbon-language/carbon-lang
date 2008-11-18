@@ -204,8 +204,8 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
     }
   }
   
-  Diag(Loc, diag::err_ambiguous_derived_to_base_conv,
-       Derived.getAsString(), Base.getAsString(), PathDisplayStr, Range);
+  Diag(Loc, diag::err_ambiguous_derived_to_base_conv)
+    << Derived.getAsString() << Base.getAsString() << PathDisplayStr << Range;
   return true;
 }
 

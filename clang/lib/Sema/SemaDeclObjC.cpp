@@ -256,34 +256,28 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
                Property->getName(), inheritedName);
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_copy)
       != (SAttr & ObjCPropertyDecl::OBJC_PR_copy))
-    Diag(Property->getLocation(), diag::warn_property_attribute,
-         Property->getName(), "copy", inheritedName, 
-         SourceRange());
+    Diag(Property->getLocation(), diag::warn_property_attribute)
+      << Property->getName() << "copy" << inheritedName;
   else if ((CAttr & ObjCPropertyDecl::OBJC_PR_retain)
            != (SAttr & ObjCPropertyDecl::OBJC_PR_retain))
-    Diag(Property->getLocation(), diag::warn_property_attribute,
-         Property->getName(), "retain", inheritedName, 
-         SourceRange());
+    Diag(Property->getLocation(), diag::warn_property_attribute)
+      << Property->getName() << "retain" << inheritedName;
   
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_nonatomic)
       != (SAttr & ObjCPropertyDecl::OBJC_PR_nonatomic))
-    Diag(Property->getLocation(), diag::warn_property_attribute,
-         Property->getName(), "atomic", inheritedName, 
-         SourceRange());
+    Diag(Property->getLocation(), diag::warn_property_attribute)
+      << Property->getName() << "atomic" << inheritedName;
   if (Property->getSetterName() != SuperProperty->getSetterName())
-    Diag(Property->getLocation(), diag::warn_property_attribute,
-         Property->getName(), "setter", inheritedName, 
-         SourceRange());
+    Diag(Property->getLocation(), diag::warn_property_attribute)
+      << Property->getName() << "setter" << inheritedName; 
   if (Property->getGetterName() != SuperProperty->getGetterName())
-    Diag(Property->getLocation(), diag::warn_property_attribute,
-         Property->getName(), "getter", inheritedName, 
-         SourceRange());
+    Diag(Property->getLocation(), diag::warn_property_attribute)
+      << Property->getName() << "getter" << inheritedName;
   
   if (Context.getCanonicalType(Property->getType()) != 
           Context.getCanonicalType(SuperProperty->getType()))
-    Diag(Property->getLocation(), diag::warn_property_type,
-         Property->getType().getAsString(),  
-         inheritedName);
+    Diag(Property->getLocation(), diag::warn_property_type)
+      << Property->getType().getAsString() << inheritedName;
   
 }
 

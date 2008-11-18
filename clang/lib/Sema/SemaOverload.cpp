@@ -1405,10 +1405,9 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
   } else {
     if (PerformImplicitConversion(From, ToType))
       return Diag(From->getSourceRange().getBegin(),
-                  diag::err_typecheck_convert_incompatible,
-                  ToType.getAsString(), From->getType().getAsString(),
-                  Flavor,
-                  From->getSourceRange());
+                  diag::err_typecheck_convert_incompatible)
+        << ToType.getAsString() << From->getType().getAsString()
+        << Flavor << From->getSourceRange();
     else
       return false;
   }
