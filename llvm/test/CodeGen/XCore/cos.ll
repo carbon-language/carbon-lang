@@ -1,7 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=xcore > %t1.s
 ; RUN: grep "bl cosf" %t1.s | count 1
 ; RUN: grep "bl cos" %t1.s | count 2
-; XFAIL: *
 declare double @llvm.cos.f64(double)
 
 define double @test(double %F) {

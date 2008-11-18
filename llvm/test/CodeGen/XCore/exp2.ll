@@ -1,7 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=xcore > %t1.s
 ; RUN: grep "bl exp2f" %t1.s | count 1
 ; RUN: grep "bl exp2" %t1.s | count 2
-; XFAIL: *
 declare double @llvm.exp2.f64(double)
 
 define double @test(double %F) {
