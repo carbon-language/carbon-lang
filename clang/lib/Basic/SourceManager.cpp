@@ -238,7 +238,7 @@ static void ComputeLineNumbers(ContentCache* FI) {
 /// for the position indicated.  This requires building and caching a table of
 /// line offsets for the MemoryBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
-unsigned SourceManager::getLineNumber(SourceLocation Loc) {
+unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
   unsigned FileID = Loc.getFileID();
   if (FileID == 0) return 0;
 

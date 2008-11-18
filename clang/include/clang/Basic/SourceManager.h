@@ -237,10 +237,10 @@ class SourceManager {
   
   /// LastLineNo - These ivars serve as a cache used in the getLineNumber
   /// method which is used to speedup getLineNumber calls to nearby locations.
-  unsigned LastLineNoFileIDQuery;
-  SrcMgr::ContentCache *LastLineNoContentCache;
-  unsigned LastLineNoFilePos;
-  unsigned LastLineNoResult;
+  mutable unsigned LastLineNoFileIDQuery;
+  mutable SrcMgr::ContentCache *LastLineNoContentCache;
+  mutable unsigned LastLineNoFilePos;
+  mutable unsigned LastLineNoResult;
   
   /// MainFileID - The file ID for the main source file of the translation unit.
   unsigned MainFileID;
@@ -344,12 +344,12 @@ public:
   /// for the position indicated.  This requires building and caching a table of
   /// line offsets for the MemoryBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
-  unsigned getLineNumber(SourceLocation Loc);
+  unsigned getLineNumber(SourceLocation Loc) const;
 
-  unsigned getLogicalLineNumber(SourceLocation Loc) {
+  unsigned getLogicalLineNumber(SourceLocation Loc) const {
     return getLineNumber(getLogicalLoc(Loc));
   }
-  unsigned getPhysicalLineNumber(SourceLocation Loc) {
+  unsigned getPhysicalLineNumber(SourceLocation Loc) const {
     return getLineNumber(getPhysicalLoc(Loc));
   }
   
