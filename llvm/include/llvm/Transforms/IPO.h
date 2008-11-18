@@ -34,6 +34,13 @@ class GlobalValue;
 ModulePass *createStripSymbolsPass(bool OnlyDebugInfo = false);
 
 //===----------------------------------------------------------------------===//
+//
+// These functions removes symbols from functions and modules.  
+// Only debugging information is not removed.
+//
+ModulePass *createStripNonDebugSymbolsPass();
+
+//===----------------------------------------------------------------------===//
 /// createLowerSetJmpPass - This function lowers the setjmp/longjmp intrinsics
 /// to invoke/unwind instructions.  This should really be part of the C/C++
 /// front-end, but it's so much easier to write transformations in LLVM proper.

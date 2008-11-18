@@ -102,6 +102,7 @@ namespace {
       (void) llvm::createSimplifyHalfPowrLibCallsPass();
       (void) llvm::createSingleLoopExtractorPass();
       (void) llvm::createStripSymbolsPass();
+      (void) llvm::createStripNonDebugSymbolsPass();
       (void) llvm::createStripDeadPrototypesPass();
       (void) llvm::createTailCallEliminationPass();
       (void) llvm::createTailDuplicationPass();

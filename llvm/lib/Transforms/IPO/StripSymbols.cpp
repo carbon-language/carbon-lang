@@ -40,13 +40,18 @@ namespace {
     explicit StripSymbols(bool ODI = false) 
       : ModulePass(&ID), OnlyDebugInfo(ODI) {}
 
-    /// StripSymbolNames - Strip symbol names.
-    bool StripSymbolNames(Module &M);
+    virtual bool runOnModule(Module &M);
 
-    // StripDebugInfo - Strip debug info in the module if it exists.  
-    // To do this, we remove llvm.dbg.func.start, llvm.dbg.stoppoint, and 
-    // llvm.dbg.region.end calls, and any globals they point to if now dead.
-    bool StripDebugInfo(Module &M);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+  };
+
+  class VISIBILITY_HIDDEN StripNonDebugSymbols : public ModulePass {
+  public:
+    static char ID; // Pass identification, replacement for typeid
+    explicit StripNonDebugSymbols()
+      : ModulePass(&ID) {}
 
     virtual bool runOnModule(Module &M);
 
@@ -62,6 +67,14 @@ X("strip", "Strip all symbols from a module");
 
 ModulePass *llvm::createStripSymbolsPass(bool OnlyDebugInfo) {
   return new StripSymbols(OnlyDebugInfo);
+}
+
+char StripNonDebugSymbols::ID = 0;
+static RegisterPass<StripNonDebugSymbols>
+Y("strip-nondebug", "Strip all symbols, except dbg symbols, from a module");
+
+ModulePass *llvm::createStripNonDebugSymbolsPass() {
+  return new StripNonDebugSymbols();
 }
 
 /// OnlyUsedBy - Return true if V is only used by Usr.
@@ -96,28 +109,26 @@ static void RemoveDeadConstant(Constant *C) {
 
 // Strip the symbol table of its names.
 //
-static void StripSymtab(ValueSymbolTable &ST) {
+static void StripSymtab(ValueSymbolTable &ST, bool PreserveDbgInfo) {
   for (ValueSymbolTable::iterator VI = ST.begin(), VE = ST.end(); VI != VE; ) {
     Value *V = VI->getValue();
     ++VI;
     if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()) {
-      // Set name to "", removing from symbol table!
-      V->setName("");
+      if (!PreserveDbgInfo || strncmp(V->getNameStart(), "llvm.dbg", 8))
+        // Set name to "", removing from symbol table!
+        V->setName("");
     }
   }
 }
 
-bool StripSymbols::runOnModule(Module &M) {
-  bool Changed = false;
-  Changed |= StripDebugInfo(M);
-  Changed |= StripSymbolNames(M);
-  return Changed;
-}
-
 // Strip the symbol table of its names.
-static void StripTypeSymtab(TypeSymbolTable &ST) {
-  for (TypeSymbolTable::iterator TI = ST.begin(), E = ST.end(); TI != E; )
-    ST.remove(TI++);
+static void StripTypeSymtab(TypeSymbolTable &ST, bool PreserveDbgInfo) {
+  for (TypeSymbolTable::iterator TI = ST.begin(), E = ST.end(); TI != E; ) {
+    if (PreserveDbgInfo && strncmp(TI->first.c_str(), "llvm.dbg", 8) == 0)
+      ++TI;
+    else
+      ST.remove(TI++);
+  }
 }
 
 /// Find values that are marked as llvm.used.
@@ -143,10 +154,7 @@ void findUsedValues(Module &M,
 }
 
 /// StripSymbolNames - Strip symbol names.
-bool StripSymbols::StripSymbolNames(Module &M) {
-
-  if (OnlyDebugInfo)
-    return false;
+bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
 
   SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
   findUsedValues(M, llvmUsedValues);
@@ -154,17 +162,19 @@ bool StripSymbols::StripSymbolNames(Module &M) {
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
-      I->setName("");     // Internal symbols can't participate in linkage
+      if (!PreserveDbgInfo || strncmp(I->getNameStart(), "llvm.dbg", 8))
+        I->setName("");     // Internal symbols can't participate in linkage
   }
   
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
-      I->setName("");     // Internal symbols can't participate in linkage
-    StripSymtab(I->getValueSymbolTable());
+      if (!PreserveDbgInfo || strncmp(I->getNameStart(), "llvm.dbg", 8))
+        I->setName("");     // Internal symbols can't participate in linkage
+    StripSymtab(I->getValueSymbolTable(), PreserveDbgInfo);
   }
   
   // Remove all names from types.
-  StripTypeSymtab(M.getTypeSymbolTable());
+  StripTypeSymtab(M.getTypeSymbolTable(), PreserveDbgInfo);
 
   return true;
 }
@@ -172,7 +182,7 @@ bool StripSymbols::StripSymbolNames(Module &M) {
 // StripDebugInfo - Strip debug info in the module if it exists.  
 // To do this, we remove llvm.dbg.func.start, llvm.dbg.stoppoint, and 
 // llvm.dbg.region.end calls, and any globals they point to if now dead.
-bool StripSymbols::StripDebugInfo(Module &M) {
+bool StripDebugInfo(Module &M) {
 
   Function *FuncStart = M.getFunction("llvm.dbg.func.start");
   Function *StopPoint = M.getFunction("llvm.dbg.stoppoint");
@@ -302,3 +312,16 @@ bool StripSymbols::StripDebugInfo(Module &M) {
   
   return true;
 }
+
+bool StripSymbols::runOnModule(Module &M) {
+  bool Changed = false;
+  Changed |= StripDebugInfo(M);
+  if (!OnlyDebugInfo)
+    Changed |= StripSymbolNames(M, false);
+  return Changed;
+}
+
+bool StripNonDebugSymbols::runOnModule(Module &M) {
+  return StripSymbolNames(M, true);
+}
+
