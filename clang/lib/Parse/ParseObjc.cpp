@@ -319,8 +319,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
         FieldDeclarator &FD = FieldDeclarators[i];
         if (FD.D.getIdentifier() == 0) {
-          Diag(AtLoc, diag::err_objc_property_requires_field_name,
-               FD.D.getSourceRange());
+          Diag(AtLoc, diag::err_objc_property_requires_field_name)
+            << FD.D.getSourceRange();
           continue;
         }
         

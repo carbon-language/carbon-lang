@@ -315,9 +315,6 @@ private:
     
   DiagnosticInfo Diag(SourceLocation Loc, unsigned DiagID);
   DiagnosticInfo Diag(const Token &Tok, unsigned DiagID);
-  bool Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R);
-  bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
-            const SourceRange& R1);
   
   /// SkipUntil - Read tokens until we get to the specified token, then consume
   /// it (unless DontConsume is true).  Because we cannot guarantee that the

@@ -49,18 +49,6 @@ DiagnosticInfo Parser::Diag(const Token &Tok, unsigned DiagID) {
   return Diag(Tok.getLocation(), DiagID);
 }
 
-bool Parser::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
-                  const SourceRange& Range) {
-  Diags.Report(PP.getFullLoc(Loc), DiagID) << Msg << Range;
-  return true;
-}
-
-bool Parser::Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R) {
-  Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID) << R;
-  return true;
-}
-
-
 /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),
 /// this helper function matches and consumes the specified RHS token if
 /// present.  If not present, it emits the specified diagnostic indicating
