@@ -722,6 +722,23 @@ void IndVarSimplify::OptimizeCanonicalIVType(Loop *L) {
   Incr->eraseFromParent();
 }
 
+/// Return true if it is OK to use SIToFPInst for an inducation variable
+/// with given inital and exit values.
+static bool useSIToFPInst(ConstantFP &InitV, ConstantFP &ExitV,
+                          uint64_t intIV, uint64_t intEV) {
+
+  if (InitV.getValueAPF().isNegative() || ExitV.getValueAPF().isNegative()) 
+    return true;
+
+  // If the iteration range can be handled by SIToFPInst then use it.
+  APInt Max = APInt::getSignedMaxValue(32);
+  if (Max.getZExtValue() > abs(intEV - intIV))
+    return true;
+  
+  return false;
+}
+
+/// convertToInt - Convert APF to an integer, if possible.
 static bool convertToInt(const APFloat &APF, uint64_t *intVal) {
 
   bool isExact = false;
@@ -858,9 +875,9 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
   Incr->replaceAllUsesWith(UndefValue::get(Incr->getType()));
   DeadInsts.insert(Incr);
   
-  // Replace floating induction variable.
-  if (EV->getValueAPF().isNegative()
-      || InitValue->getValueAPF().isNegative()) {
+  // Replace floating induction variable. Give SIToFPInst preference over
+  // UIToFPInst because it is faster on platforms that are widely used.
+  if (useSIToFPInst(*InitValue, *EV, newInitValue, intEV)) {
     SIToFPInst *Conv = new SIToFPInst(NewPHI, PH->getType(), "indvar.conv", 
                                       PH->getParent()->getFirstNonPHI());
     PH->replaceAllUsesWith(Conv);
