@@ -1,4 +1,4 @@
-// BugReporter.h - Generate PathDiagnostics  ----------*- C++ -*--//
+//===---  BugReporter.h - Generate PathDiagnostics ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -21,7 +21,6 @@
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
-#include <vector>
 #include <list>
 
 namespace clang {
