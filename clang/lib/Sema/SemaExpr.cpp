@@ -2328,50 +2328,64 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   return InvalidOperands(loc, lex, rex);
 }
 
-inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
-  Expr *lex, Expr *&rex, SourceLocation loc, QualType compoundType) 
-{
-  QualType lhsType = lex->getType();
-  QualType rhsType = compoundType.isNull() ? rex->getType() : compoundType;
-  Expr::isModifiableLvalueResult mlval = lex->isModifiableLvalue(Context); 
-
-  switch (mlval) { // C99 6.5.16p2
-  case Expr::MLV_Valid: 
-    break;
-  case Expr::MLV_ConstQualified:
-    Diag(loc, diag::err_typecheck_assign_const, lex->getSourceRange());
-    return QualType();
+/// CheckForModifiableLvalue - Verify that E is a modifiable lvalue.  If not,
+/// emit an error and return true.  If so, return false.
+static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
+  Expr::isModifiableLvalueResult IsLV = E->isModifiableLvalue(S.Context); 
+  if (IsLV == Expr::MLV_Valid)
+    return false;
+  
+  unsigned Diag = 0;
+  bool NeedType = false;
+  switch (IsLV) { // C99 6.5.16p2
+  default: assert(0 && "Unknown result from isModifiableLvalue!");
+  case Expr::MLV_ConstQualified: Diag = diag::err_typecheck_assign_const; break;
   case Expr::MLV_ArrayType: 
-    Diag(loc, diag::err_typecheck_array_not_modifiable_lvalue,
-         lhsType.getAsString(), lex->getSourceRange());
-    return QualType(); 
+    Diag = diag::err_typecheck_array_not_modifiable_lvalue;
+    NeedType = true;
+    break;
   case Expr::MLV_NotObjectType: 
-    Diag(loc, diag::err_typecheck_non_object_not_modifiable_lvalue,
-         lhsType.getAsString(), lex->getSourceRange());
-    return QualType();
+    Diag = diag::err_typecheck_non_object_not_modifiable_lvalue;
+    NeedType = true;
+    break;
   case Expr::MLV_LValueCast:
-    Diag(loc, diag::err_typecheck_lvalue_casts_not_supported, 
-         lex->getSourceRange());
-    return QualType();
+    Diag = diag::err_typecheck_lvalue_casts_not_supported;
+    break;
   case Expr::MLV_InvalidExpression:
-    Diag(loc, diag::err_typecheck_expression_not_modifiable_lvalue,
-         lex->getSourceRange());
-    return QualType();
+    Diag = diag::err_typecheck_expression_not_modifiable_lvalue;
+    break;
   case Expr::MLV_IncompleteType:
   case Expr::MLV_IncompleteVoidType:
-    Diag(loc, diag::err_typecheck_incomplete_type_not_modifiable_lvalue,
-         lhsType.getAsString(), lex->getSourceRange());
-    return QualType();
+    Diag = diag::err_typecheck_incomplete_type_not_modifiable_lvalue;
+    NeedType = true;
+    break;
   case Expr::MLV_DuplicateVectorComponents:
-    Diag(loc, diag::err_typecheck_duplicate_vector_components_not_mlvalue,
-         lex->getSourceRange());
-    return QualType();
+    Diag = diag::err_typecheck_duplicate_vector_components_not_mlvalue;
+    break;
   case Expr::MLV_NotBlockQualified:
-    Diag(loc, diag::err_block_decl_ref_not_modifiable_lvalue,
-         lex->getSourceRange());
-    return QualType();
+    Diag = diag::err_block_decl_ref_not_modifiable_lvalue;
+    break;
   }
 
+  if (NeedType)
+    S.Diag(Loc, Diag, E->getType().getAsString(), SR);
+  else
+    S.Diag(Loc, Diag, E->getSourceRange());
+  return true;
+}
+
+
+
+// C99 6.5.16.1
+QualType Sema::CheckAssignmentOperands(Expr *lex, Expr *&rex,SourceLocation loc,
+                                       QualType compoundType) {
+  QualType lhsType = lex->getType();
+  QualType rhsType = compoundType.isNull() ? rex->getType() : compoundType;
+
+  // Verify that lex is a modifiable lvalue, and emit error if not.
+  if (CheckForModifiableLvalue(lex, loc, *this))
+    return QualType();
+  
   AssignConvertType ConvTy;
   if (compoundType.isNull()) {
     // Simple assignment "x = y".
