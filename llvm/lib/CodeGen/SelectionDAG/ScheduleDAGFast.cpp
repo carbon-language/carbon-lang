@@ -161,7 +161,9 @@ void ScheduleDAGFast::ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain) {
 void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
   DEBUG(SU->dump(this));
+
   SU->Cycle = CurCycle;
+  Sequence.push_back(SU);
 
   // Bottom up: release predecessors
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
@@ -589,10 +591,8 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
 
     if (!CurSU)
       Sequence.push_back(0);
-    else {
+    else
       ScheduleNodeBottomUp(CurSU, CurCycle);
-      Sequence.push_back(CurSU);
-    }
     ++CurCycle;
   }
 
