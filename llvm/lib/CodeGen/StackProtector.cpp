@@ -159,7 +159,7 @@ bool StackProtector::InsertStackProtectors() {
 
       Value *Args[] = { LI, AI };
       CallInst::
-        Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector_create),
+        Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector),
                &Args[0], array_endof(Args), "", InsPt);
 
       // Create the basic block to jump to when the guard check fails.
