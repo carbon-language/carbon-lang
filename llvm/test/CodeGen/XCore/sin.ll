@@ -1,6 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=xcore > %t1.s
 ; RUN: grep "bl sinf" %t1.s | count 1
 ; RUN: grep "bl sin" %t1.s | count 2
+; XFAIL: *
 declare double @llvm.sin.f64(double)
 
 define double @test(double %F) {
