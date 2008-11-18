@@ -1,6 +1,7 @@
 // RUN: clang -fsyntax-only -verify %s
 
-@interface Super @end
+// Note: GCC doesn't produce any of the following errors.
+@interface Super @end // expected-error {{previous definition is here}}
 
 @interface MyWpModule @end
 
@@ -11,6 +12,6 @@
 @interface MyAlias : AliasForSuper // expected-error {{duplicate interface declaration for class 'MyWpModule'}}
 @end
 
-@implementation MyAlias : AliasForSuper
+@implementation MyAlias : AliasForSuper // expected-error {{conflicting super class name 'Super'}}
 @end
 

@@ -75,9 +75,12 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   ObjCInterfaceDecl* IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
   if (IDecl) {
     // Class already seen. Is it a forward declaration?
-    if (!IDecl->isForwardDecl())
+    if (!IDecl->isForwardDecl()) {
       Diag(AtInterfaceLoc, diag::err_duplicate_class_def, IDecl->getName());
-    else {
+      // Return the previous class interface.
+      // FIXME: don't leak the objects passed in!
+      return IDecl;
+    } else {
       IDecl->setLocation(AtInterfaceLoc);
       IDecl->setForwardDecl(false);
     }
@@ -119,7 +122,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     IDecl->setLocEnd(ClassLoc);
   }
   
-  /// Check then save referenced protocols
+  /// Check then save referenced protocols.
   if (NumProtoRefs) {
     IDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
     IDecl->setLocEnd(EndProtoLoc);
