@@ -22,7 +22,6 @@
 #include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
-  struct InstrStage;
   struct SUnit;
   class MachineConstantPool;
   class MachineFunction;
