@@ -58,7 +58,7 @@ namespace {
     bool doInitialization(Module &M);
 
     virtual bool doInitialization(Function &F) {
-      return BasicBlockPass::doInitialization(F);
+      return doInitialization(*F.getParent());
     }
 
     /// runOnBasicBlock - This method does the actual work of converting
