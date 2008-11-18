@@ -93,8 +93,17 @@ endif( NOT MSVC )
 # FIXME: Signal handler return type, currently hardcoded to 'void'
 set(RETSIGTYPE void)
 
-# Disable multithreading for now
-set(ENABLE_THREADS 0)
+if( LLVM_ENABLE_THREADS )
+  if( HAVE_PTHREAD_H OR WIN32 )
+    set(ENABLE_THREADS 1)
+  endif()
+endif()
+
+if( ENABLE_THREADS )
+  message(STATUS "Threads enabled.")
+else( ENABLE_THREADS )
+  message(STATUS "Threads disabled.")
+endif()
 
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/config.h.cmake
