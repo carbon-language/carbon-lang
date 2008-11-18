@@ -114,20 +114,15 @@ bool StripSymbols::runOnModule(Module &M) {
   return Changed;
 }
 
-
 // Strip the symbol table of its names.
 static void StripTypeSymtab(TypeSymbolTable &ST) {
   for (TypeSymbolTable::iterator TI = ST.begin(), E = ST.end(); TI != E; )
     ST.remove(TI++);
 }
 
-/// StripSymbolNames - Strip symbol names.
-bool StripSymbols::StripSymbolNames(Module &M) {
-
-  if (OnlyDebugInfo)
-    return false;
-
-  SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
+/// Find values that are marked as llvm.used.
+void findUsedValues(Module &M,
+                    SmallPtrSet<const GlobalValue*, 8>& llvmUsedValues) {
   if (GlobalVariable *LLVMUsed = M.getGlobalVariable("llvm.used")) {
     llvmUsedValues.insert(LLVMUsed);
     // Collect values that are preserved as per explicit request.
@@ -145,7 +140,17 @@ bool StripSymbols::StripSymbolNames(Module &M) {
       }
     }
   }
-  
+}
+
+/// StripSymbolNames - Strip symbol names.
+bool StripSymbols::StripSymbolNames(Module &M) {
+
+  if (OnlyDebugInfo)
+    return false;
+
+  SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
+  findUsedValues(M, llvmUsedValues);
+
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
@@ -175,7 +180,7 @@ bool StripSymbols::StripDebugInfo(Module &M) {
   Function *RegionEnd = M.getFunction("llvm.dbg.region.end");
   Function *Declare = M.getFunction("llvm.dbg.declare");
 
-  std::vector<GlobalVariable*> DeadGlobals;
+  std::vector<Constant*> DeadConstants;
 
   // Remove all of the calls to the debugger intrinsics, and remove them from
   // the module.
@@ -186,8 +191,8 @@ bool StripSymbols::StripDebugInfo(Module &M) {
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg->use_empty())
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg))
-          DeadGlobals.push_back(GV);
+        if (Constant *C = dyn_cast<Constant>(Arg)) 
+          DeadConstants.push_back(C);
     }
     FuncStart->eraseFromParent();
   }
@@ -198,8 +203,8 @@ bool StripSymbols::StripDebugInfo(Module &M) {
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg->use_empty())
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg))
-          DeadGlobals.push_back(GV);
+        if (Constant *C = dyn_cast<Constant>(Arg)) 
+          DeadConstants.push_back(C);
     }
     StopPoint->eraseFromParent();
   }
@@ -210,8 +215,8 @@ bool StripSymbols::StripDebugInfo(Module &M) {
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg->use_empty())
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg))
-          DeadGlobals.push_back(GV);
+        if (Constant *C = dyn_cast<Constant>(Arg)) 
+          DeadConstants.push_back(C);
     }
     RegionStart->eraseFromParent();
   }
@@ -222,8 +227,8 @@ bool StripSymbols::StripDebugInfo(Module &M) {
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg->use_empty())
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg))
-          DeadGlobals.push_back(GV);
+        if (Constant *C = dyn_cast<Constant>(Arg)) 
+          DeadConstants.push_back(C);
     }
     RegionEnd->eraseFromParent();
   }
@@ -234,11 +239,14 @@ bool StripSymbols::StripDebugInfo(Module &M) {
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg->use_empty())
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg))
-          DeadGlobals.push_back(GV);
+        if (Constant *C = dyn_cast<GlobalVariable>(Arg)) 
+          DeadConstants.push_back(C);
     }
     Declare->eraseFromParent();
   }
+
+  SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
+  findUsedValues(M, llvmUsedValues);
 
   // llvm.dbg.compile_units and llvm.dbg.subprograms are marked as linkonce
   // but since we are removing all debug information, make them internal now.
@@ -249,29 +257,38 @@ bool StripSymbols::StripDebugInfo(Module &M) {
   if (Constant *C = M.getNamedGlobal("llvm.dbg.subprograms"))
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
       GV->setLinkage(GlobalValue::InternalLinkage);
+ 
+  if (Constant *C = M.getNamedGlobal("llvm.dbg.global_variables"))
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+      GV->setLinkage(GlobalValue::InternalLinkage);
 
   // Delete all dbg variables.
   const Type *DbgVTy = M.getTypeByName("llvm.dbg.variable.type");
   const Type *DbgGVTy = M.getTypeByName("llvm.dbg.global_variable.type");
   if (DbgVTy || DbgGVTy)
     for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
-         I != E; ++I) 
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(I))
-        if (GV->hasName() && GV->use_empty()
-            && !strncmp(GV->getNameStart(), "llvm.dbg", 8)
-            && (GV->getType()->getElementType() == DbgVTy
-                || GV->getType()->getElementType() == DbgGVTy))
-          DeadGlobals.push_back(GV);
+         I != E; ++I) {
+      GlobalVariable *GV = dyn_cast<GlobalVariable>(I);
+      if (!GV) continue;
+      if (GV->use_empty() && llvmUsedValues.count(I) == 0
+          && (!GV->hasSection() 
+              || strcmp(GV->getSection().c_str(), "llvm.metadata") == 0))
+          DeadConstants.push_back(GV);
+    }
 
-  if (DeadGlobals.empty())
+  if (DeadConstants.empty())
     return false;
 
   // Delete any internal globals that were only used by the debugger intrinsics.
-  while (!DeadGlobals.empty()) {
-    GlobalVariable *GV = DeadGlobals.back();
-    DeadGlobals.pop_back();
-    if (GV->hasInternalLinkage())
-      RemoveDeadConstant(GV);
+  while (!DeadConstants.empty()) {
+    Constant *C = DeadConstants.back();
+    DeadConstants.pop_back();
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
+      if (GV->hasInternalLinkage())
+        RemoveDeadConstant(GV);
+    }
+    else
+      RemoveDeadConstant(C);
   }
 
   // Remove all llvm.dbg types.
