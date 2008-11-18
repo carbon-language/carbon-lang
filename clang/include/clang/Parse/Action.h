@@ -34,6 +34,8 @@ namespace clang {
   // Lex.
   class Preprocessor;
   class Token;
+  // Basic.
+  class DiagnosticInfo;
 
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input
@@ -74,6 +76,7 @@ public:
     ActionResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
     template<typename ActualExprTy>
     ActionResult(ActualExprTy *val) : Val(val), isInvalid(false) {}
+    ActionResult(const DiagnosticInfo &) : Val(0), isInvalid(true) {}
     
     const ActionResult &operator=(void *RHS) {
       Val = RHS;
