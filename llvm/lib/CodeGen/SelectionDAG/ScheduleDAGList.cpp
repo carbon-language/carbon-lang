@@ -119,9 +119,8 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
   }
 #endif
   
-  // Compute how many cycles it will be before this actually becomes
-  // available.  This is the max of the start time of all predecessors plus
-  // their latencies.
+  // Compute the cycle when this SUnit actually becomes available.  This
+  // is the max of the start time of all predecessors plus their latencies.
   // If this is a token edge, we don't need to wait for the latency of the
   // preceeding instruction (e.g. a long-latency load) unless there is also
   // some other data dependence.
