@@ -407,7 +407,7 @@ def main(args):
                 files[i] = out
         if not output:
             output = 'a.out'
-        args = ['-o', output] + link_opts + files
+        args = ['-o', output] + files + link_opts
         link(args, native)
 
 if __name__ == '__main__':
