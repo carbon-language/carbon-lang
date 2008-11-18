@@ -1374,6 +1374,11 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             "invalid arguments to llvm.prefetch",
             &CI);
     break;
+  case Intrinsic::stackprotector:
+    Assert1(isa<AllocaInst>(CI.getOperand(2)),
+            "llvm.stackprotector parameter #2 must resolve to an alloca.",
+            &CI);
+    break;
   }
 }
 
