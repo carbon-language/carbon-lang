@@ -330,6 +330,8 @@ public:
   void Lex(Token &Result) {
     if (CurLexer)
       CurLexer->Lex(Result);
+    else if (CurPTHLexer)
+      CurPTHLexer->Lex(Result);
     else if (CurTokenLexer)
       CurTokenLexer->Lex(Result);
     else

@@ -115,8 +115,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
                                                 bool FoundNonSkipPortion,
                                                 bool FoundElse) {
   ++NumSkipped;
-  assert(CurTokenLexer == 0 && CurLexer &&
-         "Lexing a macro, not a file?");
+  assert(CurTokenLexer == 0 && CurPPLexer && "Lexing a macro, not a file?");
 
   CurPPLexer->pushConditionalLevel(IfTokenLoc, /*isSkipping*/false,
                                  FoundNonSkipPortion, FoundElse);
@@ -126,7 +125,10 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   CurPPLexer->LexingRawMode = true;
   Token Tok;
   while (1) {
-    CurLexer->Lex(Tok);
+    if (CurLexer)
+      CurLexer->Lex(Tok);
+    else
+      CurPTHLexer->Lex(Tok);
     
     // If this is the end of the buffer, we have an error.
     if (Tok.is(tok::eof)) {
