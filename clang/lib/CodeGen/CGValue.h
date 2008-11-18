@@ -138,6 +138,10 @@ private:
   static void SetQualifiers(unsigned Qualifiers, LValue& R) {
     R.Volatile = (Qualifiers&QualType::Volatile)!=0;
     R.Restrict = (Qualifiers&QualType::Restrict)!=0;
+    // FIXME: Convenient place to set objc flags to 0. This
+    // should really be done in a user-defined constructor instead.
+    R.ObjcWeak = 0;
+    R.ObjcStrong = 0;
   }
   
 public:

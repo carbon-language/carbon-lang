@@ -130,6 +130,8 @@ public:
                              const ObjCAtThrowStmt &S);
   virtual void EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                     const ObjCAtSynchronizedStmt &S);
+  virtual llvm::Value * EmitObjCWeakCall(CodeGen::CodeGenFunction &CGF,
+                                         llvm::Value *AddrWeakObj);
 };
 } // end anonymous namespace
 
@@ -966,6 +968,12 @@ void CGObjCGNU::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
 void CGObjCGNU::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                      const ObjCAtSynchronizedStmt &S) {
   CGF.ErrorUnsupported(&S, "@synchronized statement");
+}
+
+llvm::Value * CGObjCGNU::EmitObjCWeakCall(CodeGen::CodeGenFunction &CGF,
+                                          llvm::Value *AddrWeakObj)
+{
+  return 0;
 }
 
 CodeGen::CGObjCRuntime *CodeGen::CreateGNUObjCRuntime(CodeGen::CodeGenModule &CGM){

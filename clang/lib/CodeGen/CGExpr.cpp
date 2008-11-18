@@ -151,6 +151,14 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 /// this method emits the address of the lvalue, then loads the result as an
 /// rvalue, returning the rvalue.
 RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
+  if (LV.isObjcWeak()) {
+    // load of a __weak object. 
+    llvm::Value *AddrWeakObj = LV.getAddress();
+    llvm::Value *read_weak = CGM.getObjCRuntime().EmitObjCWeakCall(*this, 
+                                                                   AddrWeakObj);
+    return RValue::get(read_weak);
+  }
+      
   if (LV.isSimple()) {
     llvm::Value *Ptr = LV.getAddress();
     const llvm::Type *EltTy =

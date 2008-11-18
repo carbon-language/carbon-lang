@@ -454,7 +454,8 @@ public:
                              const ObjCAtThrowStmt &S);
   virtual void EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                     const ObjCAtSynchronizedStmt &S);
-  
+  virtual llvm::Value * EmitObjCWeakCall(CodeGen::CodeGenFunction &CGF,
+                                         llvm::Value *AddrWeakObj); 
 };
 } // end anonymous namespace
 
@@ -1773,6 +1774,17 @@ void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
   // Set the destination code and branch.
   Builder.CreateStore(ID, E->DestCode);
   EmitBranch(ExecuteTryExit ? E->FinallyBlock : E->FinallyNoExit);
+}
+
+/// EmitObjCWeakCall - Code gen for loading value of a __weak
+/// object: objc_read_weak (id *src)
+///
+llvm::Value * CGObjCMac::EmitObjCWeakCall(CodeGen::CodeGenFunction &CGF,
+                                          llvm::Value *AddrWeakObj)
+{
+  llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.GcReadWeakFn,
+                                                  AddrWeakObj, "weakobj");
+  return read_weak;
 }
 
 /// EmitSynchronizedStmt - Code gen for @synchronized(expr) stmt;
