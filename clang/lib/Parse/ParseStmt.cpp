@@ -171,7 +171,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   if (Tok.is(tok::semi)) {
     ConsumeToken();
   } else if (!Res.isInvalid) {
-    Diag(Tok, diag::err_expected_semi_after, SemiError);
+    Diag(Tok, diag::err_expected_semi_after) << SemiError;
     // Skip until we see a } or ;, but don't eat it.
     SkipUntil(tok::r_brace, true, true);
   }
@@ -246,7 +246,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
   }
   
   if (Tok.isNot(tok::colon)) {
-    Diag(Tok, diag::err_expected_colon_after, "'case'");
+    Diag(Tok, diag::err_expected_colon_after) << "'case'";
     SkipUntil(tok::colon);
     return true;
   }
@@ -279,7 +279,7 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
   SourceLocation DefaultLoc = ConsumeToken();  // eat the 'default'.
 
   if (Tok.isNot(tok::colon)) {
-    Diag(Tok, diag::err_expected_colon_after, "'default'");
+    Diag(Tok, diag::err_expected_colon_after) << "'default'";
     SkipUntil(tok::colon);
     return true;
   }
@@ -424,7 +424,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
   SourceLocation IfLoc = ConsumeToken();  // eat the 'if'.
 
   if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, "if");
+    Diag(Tok, diag::err_expected_lparen_after) << "if";
     SkipUntil(tok::semi);
     return true;
   }
@@ -552,7 +552,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   SourceLocation SwitchLoc = ConsumeToken();  // eat the 'switch'.
 
   if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, "switch");
+    Diag(Tok, diag::err_expected_lparen_after) << "switch";
     SkipUntil(tok::semi);
     return true;
   }
@@ -633,7 +633,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   ConsumeToken();  // eat the 'while'.
   
   if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, "while");
+    Diag(Tok, diag::err_expected_lparen_after) << "while";
     SkipUntil(tok::semi);
     return true;
   }
@@ -732,7 +732,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
     ExitScope();
     if (!Body.isInvalid) {
       Diag(Tok, diag::err_expected_while);
-      Diag(DoLoc, diag::err_matching, "do");
+      Diag(DoLoc, diag::err_matching) << "do";
       SkipUntil(tok::semi, false, true);
     }
     return true;
@@ -741,7 +741,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   
   if (Tok.isNot(tok::l_paren)) {
     ExitScope();
-    Diag(Tok, diag::err_expected_lparen_after, "do/while");
+    Diag(Tok, diag::err_expected_lparen_after) << "do/while";
     SkipUntil(tok::semi, false, true);
     return true;
   }
@@ -774,7 +774,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   SourceLocation ForLoc = ConsumeToken();  // eat the 'for'.
   
   if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, "for");
+    Diag(Tok, diag::err_expected_lparen_after) << "for";
     SkipUntil(tok::semi);
     return true;
   }
@@ -1064,15 +1064,15 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   
   // GNU asms accept, but warn, about type-qualifiers other than volatile.
   if (DS.getTypeQualifiers() & DeclSpec::TQ_const)
-    Diag(Loc, diag::w_asm_qualifier_ignored, "const");
+    Diag(Loc, diag::w_asm_qualifier_ignored) << "const";
   if (DS.getTypeQualifiers() & DeclSpec::TQ_restrict)
-    Diag(Loc, diag::w_asm_qualifier_ignored, "restrict");
+    Diag(Loc, diag::w_asm_qualifier_ignored) << "restrict";
   
   // Remember if this was a volatile asm.
   bool isVolatile = DS.getTypeQualifiers() & DeclSpec::TQ_volatile;
   bool isSimple = false;
   if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, "asm");
+    Diag(Tok, diag::err_expected_lparen_after) << "asm";
     SkipUntil(tok::r_paren);
     return true;
   }
@@ -1191,7 +1191,7 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
     Constraints.push_back(Constraint.Val);
 
     if (Tok.isNot(tok::l_paren)) {
-      Diag(Tok, diag::err_expected_lparen_after, "asm operand");
+      Diag(Tok, diag::err_expected_lparen_after) << "asm operand";
       SkipUntil(tok::r_paren);
       return true;
     }

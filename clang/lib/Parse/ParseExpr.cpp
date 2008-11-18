@@ -270,7 +270,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
       
       if (Tok.isNot(tok::colon)) {
         Diag(Tok, diag::err_expected_colon);
-        Diag(OpToken, diag::err_matching, "?");
+        Diag(OpToken, diag::err_matching) << "?";
         Actions.DeleteExpr(LHS.Val);
         Actions.DeleteExpr(TernaryMiddle.Val);
         return ExprResult(true);
@@ -599,8 +599,8 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     DeclSpec DS;
     ParseCXXSimpleTypeSpecifier(DS);
     if (Tok.isNot(tok::l_paren))
-      return Diag(Tok.getLocation(), diag::err_expected_lparen_after_type,
-                  DS.getSourceRange());
+      return Diag(Tok, diag::err_expected_lparen_after_type)
+              << DS.getSourceRange();
 
     Res = ParseCXXTypeConstructExpression(DS);
     // This can be followed by postfix-expr pieces.
@@ -808,7 +808,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
 
   // All of these start with an open paren.
   if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, BuiltinII->getName());
+    Diag(Tok, diag::err_expected_lparen_after) << BuiltinII->getName();
     return ExprResult(true);
   }
   

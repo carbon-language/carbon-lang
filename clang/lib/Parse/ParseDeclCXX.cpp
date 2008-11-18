@@ -83,9 +83,8 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
     return NamespcDecl;
     
   } else {
-    unsigned D = Ident ? diag::err_expected_lbrace : 
-                         diag::err_expected_ident_lbrace;
-    Diag(Tok.getLocation(), D);
+    Diag(Tok, Ident ? diag::err_expected_lbrace : 
+                      diag::err_expected_ident_lbrace);
   }
   
   return 0;
@@ -142,14 +141,14 @@ Parser::TypeTy *Parser::ParseClassName(const CXXScopeSpec *SS) {
   // Parse the class-name.
   // FIXME: Alternatively, parse a simple-template-id.
   if (Tok.isNot(tok::identifier)) {
-    Diag(Tok.getLocation(), diag::err_expected_class_name);
+    Diag(Tok, diag::err_expected_class_name);
     return 0;
   }
 
   // We have an identifier; check whether it is actually a type.
   TypeTy *Type = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope, SS);
   if (!Type) {
-    Diag(Tok.getLocation(), diag::err_expected_class_name);
+    Diag(Tok, diag::err_expected_class_name);
     return 0;
   }
 
@@ -247,8 +246,8 @@ void Parser::ParseClassSpecifier(DeclSpec &DS) {
 
   if (!Name && TK != Action::TK_Definition) {
     // We have a declaration or reference to an anonymous class.
-    Diag(StartLoc, diag::err_anon_type_definition, 
-         DeclSpec::getSpecifierName(TagType));
+    Diag(StartLoc, diag::err_anon_type_definition)
+      << DeclSpec::getSpecifierName(TagType);
 
     // Skip the rest of this declarator, up until the comma or semicolon.
     SkipUntil(tok::comma, true);
@@ -273,12 +272,12 @@ void Parser::ParseClassSpecifier(DeclSpec &DS) {
   else if (TK == Action::TK_Definition) {
     // FIXME: Complain that we have a base-specifier list but no
     // definition.
-    Diag(Tok.getLocation(), diag::err_expected_lbrace);
+    Diag(Tok, diag::err_expected_lbrace);
   }
 
   const char *PrevSpec = 0;
   if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, TagDecl))
-    Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+    Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 }
 
 /// ParseBaseClause - Parse the base-clause of a C++ class [C++ class.derived]. 
@@ -353,8 +352,8 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
     SourceLocation VirtualLoc = ConsumeToken();
     if (IsVirtual) {
       // Complain about duplicate 'virtual'
-      Diag(VirtualLoc, diag::err_dup_virtual, 
-           SourceRange(VirtualLoc, VirtualLoc));
+      Diag(VirtualLoc, diag::err_dup_virtual)
+        << SourceRange(VirtualLoc, VirtualLoc);
     }
 
     IsVirtual = true;
@@ -731,7 +730,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclTy *ConstructorDecl) {
   // FIXME: parse '::'[opt] nested-name-specifier[opt]
 
   if (Tok.isNot(tok::identifier)) {
-    Diag(Tok.getLocation(), diag::err_expected_member_or_base_name);
+    Diag(Tok, diag::err_expected_member_or_base_name);
     return true;
   }
 
@@ -742,7 +741,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclTy *ConstructorDecl) {
 
   // Parse the '('.
   if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok.getLocation(), diag::err_expected_lparen);
+    Diag(Tok, diag::err_expected_lparen);
     return true;
   }
   SourceLocation LParenLoc = ConsumeParen();

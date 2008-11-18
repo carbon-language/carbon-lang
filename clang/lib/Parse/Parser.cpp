@@ -41,10 +41,12 @@ Parser::Parser(Preprocessor &pp, Action &actions)
 Action::~Action() {}
 
 
-bool Parser::Diag(SourceLocation Loc, unsigned DiagID,
-                  const std::string &Msg) {
-  Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID) << Msg;
-  return true;
+DiagnosticInfo Parser::Diag(SourceLocation Loc, unsigned DiagID) {
+  return Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID);
+}
+
+DiagnosticInfo Parser::Diag(const Token &Tok, unsigned DiagID) {
+  return Diag(Tok.getLocation(), DiagID);
 }
 
 bool Parser::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
@@ -81,7 +83,7 @@ SourceLocation Parser::MatchRHSPunctuation(tok::TokenKind RHSTok,
   case tok::greater:  LHSName = "<"; DID = diag::err_expected_greater; break;
   }
   Diag(Tok, DID);
-  Diag(LHSLoc, diag::err_matching, LHSName);
+  Diag(LHSLoc, diag::err_matching) << LHSName;
   SkipUntil(RHSTok);
   return R;
 }
@@ -99,7 +101,7 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
     return false;
   }
 
-  Diag(Tok, DiagID, Msg);
+  Diag(Tok, DiagID) << Msg;
   if (SkipToTok != tok::unknown)
     SkipUntil(SkipToTok);
   return true;
@@ -405,7 +407,7 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
     }
     const char *PrevSpec = 0;
     if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec))
-      Diag(AtLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+      Diag(AtLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
     if (Tok.isObjCAtKeyword(tok::objc_protocol))
       return ParseObjCAtProtocolDeclaration(AtLoc, DS.getAttributes());
     return ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes());
@@ -609,8 +611,8 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
           // C99 6.9.1p6: those declarators shall declare only identifiers from
           // the identifier list.
           if (i == FTI.NumArgs) {
-            Diag(ParmDeclarator.getIdentifierLoc(), diag::err_no_matching_param,
-                 ParmDeclarator.getIdentifier()->getName());
+            Diag(ParmDeclarator.getIdentifierLoc(), diag::err_no_matching_param)
+              << ParmDeclarator.getIdentifier()->getName();
             break;
           }
 
@@ -618,8 +620,8 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
             // Reject redefinitions of parameters.
             if (FTI.ArgInfo[i].Param) {
               Diag(ParmDeclarator.getIdentifierLoc(),
-                   diag::err_param_redefinition,
-                   ParmDeclarator.getIdentifier()->getName());
+                   diag::err_param_redefinition)
+                 << ParmDeclarator.getIdentifier()->getName();
             } else {
               FTI.ArgInfo[i].Param = Param;
             }
@@ -689,7 +691,7 @@ Parser::ExprResult Parser::ParseSimpleAsm() {
   SourceLocation Loc = ConsumeToken();
 
   if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, "asm");
+    Diag(Tok, diag::err_expected_lparen_after) << "asm";
     return true;
   }
 

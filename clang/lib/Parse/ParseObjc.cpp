@@ -412,7 +412,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
         return;
       
       if (Tok.isNot(tok::identifier)) {
-        Diag(Tok.getLocation(), diag::err_expected_ident);
+        Diag(Tok, diag::err_expected_ident);
         SkipUntil(tok::r_paren);
         return;
       }
@@ -431,7 +431,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
         ConsumeToken();  // consume method name
       }
     } else {
-      Diag(AttrName, diag::err_objc_expected_property_attr, II->getName());
+      Diag(AttrName, diag::err_objc_expected_property_attr) << II->getName();
       SkipUntil(tok::r_paren);
       return;
     }
@@ -625,7 +625,7 @@ Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS) {
     ConsumeParen();
   else if (Tok.getLocation() == TypeStartLoc) {
     // If we didn't eat any tokens, then this isn't a type.
-    Diag(Tok.getLocation(), diag::err_expected_type);
+    Diag(Tok, diag::err_expected_type);
     SkipUntil(tok::r_paren);
   } else {
     // Otherwise, we found *something*, but didn't get a ')' in the right
@@ -678,8 +678,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   IdentifierInfo *SelIdent = ParseObjCSelector(selLoc);
 
   if (!SelIdent) { // missing selector name.
-    Diag(Tok.getLocation(), diag::err_expected_selector_for_method,
-         SourceRange(mLoc, Tok.getLocation()));
+    Diag(Tok, diag::err_expected_selector_for_method)
+      << SourceRange(mLoc, Tok.getLocation());
     // Skip until we get a ; or {}.
     SkipUntil(tok::r_brace);
     return 0;
@@ -1089,7 +1089,7 @@ Parser::DeclTy *Parser::ParseObjCAtAliasDeclaration(SourceLocation atLoc) {
   IdentifierInfo *classId = Tok.getIdentifierInfo();
   SourceLocation classLoc = ConsumeToken(); // consume class-name;
   if (Tok.isNot(tok::semi)) {
-    Diag(Tok, diag::err_expected_semi_after, "@compatibility_alias");
+    Diag(Tok, diag::err_expected_semi_after) << "@compatibility_alias";
     return 0;
   }
   DeclTy *ClsType = Actions.ActOnCompatiblityAlias(atLoc, 
@@ -1138,7 +1138,7 @@ Parser::DeclTy *Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
     ConsumeToken(); // consume ','
   }
   if (Tok.isNot(tok::semi))
-    Diag(Tok, diag::err_expected_semi_after, "@synthesize");
+    Diag(Tok, diag::err_expected_semi_after) << "@synthesize";
   return 0;
 }
 
@@ -1168,7 +1168,7 @@ Parser::DeclTy *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
     ConsumeToken(); // consume ','
   }
   if (Tok.isNot(tok::semi))
-    Diag(Tok, diag::err_expected_semi_after, "@dynamic");
+    Diag(Tok, diag::err_expected_semi_after) << "@dynamic";
   return 0;
 }
  
@@ -1195,7 +1195,7 @@ Parser::StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
 Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   ConsumeToken(); // consume synchronized
   if (Tok.isNot(tok::l_paren)) {
-    Diag (Tok, diag::err_expected_lparen_after, "@synchronized");
+    Diag(Tok, diag::err_expected_lparen_after) << "@synchronized";
     return true;
   }
   ConsumeParen();  // '('
@@ -1205,12 +1205,12 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
     return true;
   }
   if (Tok.isNot(tok::r_paren)) {
-    Diag (Tok, diag::err_expected_lbrace);
+    Diag(Tok, diag::err_expected_lbrace);
     return true;
   }
   ConsumeParen();  // ')'
   if (Tok.isNot(tok::l_brace)) {
-    Diag (Tok, diag::err_expected_lbrace);
+    Diag(Tok, diag::err_expected_lbrace);
     return true;
   }
   // Enter a scope to hold everything within the compound stmt.  Compound
@@ -1241,7 +1241,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   
   ConsumeToken(); // consume try
   if (Tok.isNot(tok::l_brace)) {
-    Diag (Tok, diag::err_expected_lbrace);
+    Diag(Tok, diag::err_expected_lbrace);
     return true;
   }
   StmtResult CatchStmts;
@@ -1299,8 +1299,8 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
           FirstPart, CatchBody.Val, CatchStmts.Val);
         ExitScope();
       } else {
-        Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after, 
-             "@catch clause");
+        Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)
+          << "@catch clause";
         return true;
       }
       catch_or_finally_seen = true;
@@ -1411,7 +1411,7 @@ Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
     case tok::objc_selector:
       return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression(AtLoc));
     default:
-      return Diag(AtLoc, diag::err_unexpected_at);
+        return Diag(AtLoc, diag::err_unexpected_at);
     }
   }
 }
@@ -1604,7 +1604,7 @@ Parser::ExprResult Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
   SourceLocation EncLoc = ConsumeToken();
   
   if (Tok.isNot(tok::l_paren))
-    return Diag(Tok, diag::err_expected_lparen_after, "@encode");
+    return Diag(Tok, diag::err_expected_lparen_after) << "@encode";
    
   SourceLocation LParenLoc = ConsumeParen();
   
@@ -1619,12 +1619,11 @@ Parser::ExprResult Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
 ///     objc-protocol-expression
 ///       @protocol ( protocol-name )
 
-Parser::ExprResult Parser::ParseObjCProtocolExpression(SourceLocation AtLoc)
-{
+Parser::ExprResult Parser::ParseObjCProtocolExpression(SourceLocation AtLoc) {
   SourceLocation ProtoLoc = ConsumeToken();
   
   if (Tok.isNot(tok::l_paren))
-    return Diag(Tok, diag::err_expected_lparen_after, "@protocol");
+    return Diag(Tok, diag::err_expected_lparen_after) << "@protocol";
   
   SourceLocation LParenLoc = ConsumeParen();
   
@@ -1642,12 +1641,11 @@ Parser::ExprResult Parser::ParseObjCProtocolExpression(SourceLocation AtLoc)
 
 ///     objc-selector-expression
 ///       @selector '(' objc-keyword-selector ')'
-Parser::ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc)
-{
+Parser::ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
   SourceLocation SelectorLoc = ConsumeToken();
   
   if (Tok.isNot(tok::l_paren))
-    return Diag(Tok, diag::err_expected_lparen_after, "@selector");
+    return Diag(Tok, diag::err_expected_lparen_after) << "@selector";
   
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   SourceLocation LParenLoc = ConsumeParen();

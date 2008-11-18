@@ -198,17 +198,13 @@ Parser::ExprResult Parser::ParseCXXCasts() {
   TypeTy *CastTy = ParseTypeName();
   SourceLocation RAngleBracketLoc = Tok.getLocation();
 
-  if (ExpectAndConsume(tok::greater, diag::err_expected_greater)) {
-    Diag(LAngleBracketLoc, diag::err_matching, "<");
-    return ExprResult(true);
-  }
+  if (ExpectAndConsume(tok::greater, diag::err_expected_greater))
+    return Diag(LAngleBracketLoc, diag::err_matching) << "<";
 
   SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
 
-  if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, CastName);
-    return ExprResult(true);
-  }
+  if (Tok.isNot(tok::l_paren))
+    return Diag(Tok, diag::err_expected_lparen_after) << CastName;
 
   ExprResult Result = ParseSimpleParenExpression(RParenLoc);
 
@@ -515,7 +511,7 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
 
   // Parse one or more of the type specifiers.
   if (!MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec)) {
-    Diag(Tok.getLocation(), diag::err_operator_missing_type_specifier);
+    Diag(Tok, diag::err_operator_missing_type_specifier);
     return true;
   }
   while (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec)) ;

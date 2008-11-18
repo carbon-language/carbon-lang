@@ -533,7 +533,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       break;
     case tok::kw_extern:
       if (DS.isThreadSpecified())
-        Diag(Tok, diag::ext_thread_before, "extern");
+        Diag(Tok, diag::ext_thread_before) << "extern";
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_extern, Loc, PrevSpec);
       break;
     case tok::kw___private_extern__:
@@ -542,7 +542,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       break;
     case tok::kw_static:
       if (DS.isThreadSpecified())
-        Diag(Tok, diag::ext_thread_before, "static");
+        Diag(Tok, diag::ext_thread_before) << "static";
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_static, Loc, PrevSpec);
       break;
     case tok::kw_auto:
@@ -587,8 +587,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
         DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
         DS.SetRangeEnd(EndProtoLoc);
 
-        Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id,
-             SourceRange(Loc, EndProtoLoc));
+        Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id)
+          << SourceRange(Loc, EndProtoLoc);
         // Need to support trailing type qualifiers (e.g. "id<p> const").
         // If a type specifier follows, it will be diagnosed elsewhere.
         continue;
@@ -597,10 +597,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     // If the specifier combination wasn't legal, issue a diagnostic.
     if (isInvalid) {
       assert(PrevSpec && "Method did not return previous specifier!");
-      if (isInvalid == 1)  // Error.
-        Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
-      else                 // extwarn.
-        Diag(Tok, diag::ext_duplicate_declspec, PrevSpec);
+      // Pick between error or extwarn.
+      unsigned DiagID = isInvalid == 1 ? diag::err_invalid_decl_spec_combination
+                                       : diag::ext_duplicate_declspec;
+      Diag(Tok, DiagID) << PrevSpec;
     }
     DS.SetRangeEnd(Tok.getLocation());
     ConsumeToken();
@@ -771,10 +771,10 @@ bool Parser::MaybeParseTypeSpecifier(DeclSpec &DS, int& isInvalid,
   // If the specifier combination wasn't legal, issue a diagnostic.
   if (isInvalid) {
     assert(PrevSpec && "Method did not return previous specifier!");
-    if (isInvalid == 1)  // Error.
-      Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
-    else                 // extwarn.
-      Diag(Tok, diag::ext_duplicate_declspec, PrevSpec);
+    // Pick between error or extwarn.
+    unsigned DiagID = isInvalid == 1 ? diag::err_invalid_decl_spec_combination
+                                     : diag::ext_duplicate_declspec;
+    Diag(Tok, DiagID) << PrevSpec;
   }
   DS.SetRangeEnd(Tok.getLocation());
   ConsumeToken(); // whatever we parsed above.
@@ -875,8 +875,8 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
   // C++.
   if (Tok.is(tok::r_brace) && !getLang().CPlusPlus)
-    Diag(Tok, diag::ext_empty_struct_union_enum, 
-         DeclSpec::getSpecifierName((DeclSpec::TST)TagType));
+    Diag(Tok, diag::ext_empty_struct_union_enum)
+      << DeclSpec::getSpecifierName((DeclSpec::TST)TagType);
 
   llvm::SmallVector<DeclTy*, 32> FieldDecls;
   llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
@@ -932,7 +932,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     if (Tok.is(tok::semi)) {
       ConsumeToken();
     } else if (Tok.is(tok::r_brace)) {
-      Diag(Tok.getLocation(), diag::ext_expected_semi_decl_list);
+      Diag(Tok, diag::ext_expected_semi_decl_list);
       break;
     } else {
       Diag(Tok, diag::err_expected_semi_decl_list);
@@ -1033,7 +1033,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   // TODO: semantic analysis on the declspec for enums.
   const char *PrevSpec = 0;
   if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc, PrevSpec, TagDecl))
-    Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+    Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 }
 
 /// ParseEnumBody - Parse a {} enclosed enumerator-list.
@@ -1051,7 +1051,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
   
   // C does not allow an empty enumerator-list, C++ does [dcl.enum].
   if (Tok.is(tok::r_brace) && !getLang().CPlusPlus)
-    Diag(Tok, diag::ext_empty_struct_union_enum, "enum");
+    Diag(Tok, diag::ext_empty_struct_union_enum) << "enum";
   
   llvm::SmallVector<DeclTy*, 32> EnumConstantDecls;
 
@@ -1277,10 +1277,10 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
     // If the specifier combination wasn't legal, issue a diagnostic.
     if (isInvalid) {
       assert(PrevSpec && "Method did not return previous specifier!");
-      if (isInvalid == 1)  // Error.
-        Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
-      else                 // extwarn.
-        Diag(Tok, diag::ext_duplicate_declspec, PrevSpec);
+      // Pick between error or extwarn.
+      unsigned DiagID = isInvalid == 1 ? diag::err_invalid_decl_spec_combination
+                                      : diag::ext_duplicate_declspec;
+      Diag(Tok, DiagID) << PrevSpec;
     }
     ConsumeToken();
   }
@@ -1359,12 +1359,10 @@ void Parser::ParseDeclaratorInternal(Declarator &D, bool PtrOperator) {
     if (DS.getTypeQualifiers() != DeclSpec::TQ_unspecified) {
       if (DS.getTypeQualifiers() & DeclSpec::TQ_const)
         Diag(DS.getConstSpecLoc(),
-             diag::err_invalid_reference_qualifier_application,
-             "const");
+             diag::err_invalid_reference_qualifier_application) << "const";
       if (DS.getTypeQualifiers() & DeclSpec::TQ_volatile)
         Diag(DS.getVolatileSpecLoc(),
-             diag::err_invalid_reference_qualifier_application,
-             "volatile");
+             diag::err_invalid_reference_qualifier_application) << "volatile";
     }
 
     // Recursively parse the declarator.
@@ -1374,8 +1372,8 @@ void Parser::ParseDeclaratorInternal(Declarator &D, bool PtrOperator) {
       // C++ [dcl.ref]p4: There shall be no references to references.
       DeclaratorChunk& InnerChunk = D.getTypeObject(D.getNumTypeObjects() - 1);
       if (InnerChunk.Kind == DeclaratorChunk::Reference) {
-        Diag(InnerChunk.Loc, diag::err_illegal_decl_reference_to_reference,
-             D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
+        Diag(InnerChunk.Loc, diag::err_illegal_decl_reference_to_reference)
+           << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
 
         // Once we've complained about the reference-to-referwnce, we
         // can go ahead and build the (technically ill-formed)
@@ -1483,7 +1481,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     if (getLang().CPlusPlus)
       Diag(Tok, diag::err_expected_unqualified_id);
     else
-      Diag(Tok, diag::err_expected_ident_lparen); // Expected identifier or '('.
+      Diag(Tok, diag::err_expected_ident_lparen);
     D.SetIdentifier(0, Tok.getLocation());
     D.setInvalidType(true);
   }
@@ -1636,7 +1634,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   // This parameter list may be empty.
   if (Tok.is(tok::r_paren)) {
     if (RequiresArg) {
-      Diag(Tok.getLocation(), diag::err_argument_required_after_attribute);
+      Diag(Tok, diag::err_argument_required_after_attribute);
       delete AttrList;
     }
 
@@ -1666,7 +1664,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       // C99 6.7.5.3p11.
       !Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
     if (RequiresArg) {
-      Diag(Tok.getLocation(), diag::err_argument_required_after_attribute);
+      Diag(Tok, diag::err_argument_required_after_attribute);
       delete AttrList;
     }
     
@@ -1834,11 +1832,11 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
 
     // Reject 'typedef int y; int test(x, y)', but continue parsing.
     if (Actions.isTypeName(*ParmII, CurScope))
-      Diag(Tok, diag::err_unexpected_typedef_ident, ParmII->getName());
+      Diag(Tok, diag::err_unexpected_typedef_ident) << ParmII->getName();
     
     // Verify that the argument identifier has not already been mentioned.
     if (!ParamsSoFar.insert(ParmII)) {
-      Diag(Tok.getLocation(), diag::err_param_redefinition, ParmII->getName());
+      Diag(Tok, diag::err_param_redefinition) <<ParmII->getName();
     } else {
       // Remember this identifier in ParamInfo.
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
@@ -1938,7 +1936,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
 
   if (Tok.isNot(tok::l_paren)) {
     if (!getLang().CPlusPlus) {
-      Diag(Tok, diag::err_expected_lparen_after, BuiltinII->getName());
+      Diag(Tok, diag::err_expected_lparen_after) << BuiltinII->getName();
       return;
     }
 
@@ -1950,7 +1948,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     // Check for duplicate type specifiers.
     if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
                            Result.Val))
-      Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+      Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 
     // FIXME: Not accurate, the range gets one token more than it should.
     DS.SetRangeEnd(Tok.getLocation());
@@ -1972,7 +1970,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     const char *PrevSpec = 0;
     // Check for duplicate type specifiers (e.g. "int typeof(int)").
     if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec, Ty))
-      Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+      Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
   } else { // we have an expression.
     ExprResult Result = ParseExpression();
     
@@ -1985,7 +1983,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     // Check for duplicate type specifiers (e.g. "int typeof(int)").
     if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
                            Result.Val))
-      Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+      Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
   }
   DS.SetRangeEnd(RParenLoc);
 }
