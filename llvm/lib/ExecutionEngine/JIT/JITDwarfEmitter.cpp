@@ -89,11 +89,7 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
     // Advance row if new location.
     if (BaseLabelPtr && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
       MCE->emitByte(dwarf::DW_CFA_advance_loc4);
-      if (PointerSize == 8) {
-        MCE->emitInt64(LabelPtr - BaseLabelPtr);
-      } else {
-        MCE->emitInt32(LabelPtr - BaseLabelPtr);
-      }
+      MCE->emitInt32(LabelPtr - BaseLabelPtr);
       
       BaseLabelID = LabelID; 
       BaseLabelPtr = LabelPtr;
@@ -435,46 +431,28 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
 
     if (!S.BeginLabel) {
       BeginLabelPtr = (intptr_t)StartFunction;
-      if (TD->getPointerSize() == sizeof(int32_t))
-        MCE->emitInt32(0);
-      else
-        MCE->emitInt64(0);
+      MCE->emitInt32(0);
     } else {
       BeginLabelPtr = MCE->getLabelAddress(S.BeginLabel);
-      if (TD->getPointerSize() == sizeof(int32_t))
-        MCE->emitInt32(BeginLabelPtr - (intptr_t)StartFunction);
-      else
-        MCE->emitInt64(BeginLabelPtr - (intptr_t)StartFunction);
+      MCE->emitInt32(BeginLabelPtr - (intptr_t)StartFunction);
     }
 
     // Asm->EOL("Region start");
 
     if (!S.EndLabel) {
       EndLabelPtr = (intptr_t)EndFunction;
-      if (TD->getPointerSize() == sizeof(int32_t))
-        MCE->emitInt32((intptr_t)EndFunction - BeginLabelPtr);
-      else
-        MCE->emitInt64((intptr_t)EndFunction - BeginLabelPtr);
+      MCE->emitInt32((intptr_t)EndFunction - BeginLabelPtr);
     } else {
       EndLabelPtr = MCE->getLabelAddress(S.EndLabel);
-      if (TD->getPointerSize() == sizeof(int32_t))
-        MCE->emitInt32(EndLabelPtr - BeginLabelPtr);
-      else
-        MCE->emitInt64(EndLabelPtr - BeginLabelPtr);
+      MCE->emitInt32(EndLabelPtr - BeginLabelPtr);
     }
     //Asm->EOL("Region length");
 
     if (!S.PadLabel) {
-      if (TD->getPointerSize() == sizeof(int32_t))
-        MCE->emitInt32(0);
-      else
-        MCE->emitInt64(0);
+      MCE->emitInt32(0);
     } else {
       unsigned PadLabelPtr = MCE->getLabelAddress(S.PadLabel);
-      if (TD->getPointerSize() == sizeof(int32_t))
-        MCE->emitInt32(PadLabelPtr - (intptr_t)StartFunction);
-      else
-        MCE->emitInt64(PadLabelPtr - (intptr_t)StartFunction);
+      MCE->emitInt32(PadLabelPtr - (intptr_t)StartFunction);
     }
     // Asm->EOL("Landing pad");
 
@@ -531,7 +509,7 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
   
   unsigned char* StartCommonPtr = (unsigned char*)MCE->getCurrentPCValue();
   // EH Common Frame header
-  MCE->allocateSpace(PointerSize, 0);
+  MCE->allocateSpace(4, 0);
   unsigned char* FrameCommonBeginPtr = (unsigned char*)MCE->getCurrentPCValue();
   MCE->emitInt32((int)0);
   MCE->emitByte(dwarf::DW_CIE_VERSION);
@@ -543,15 +521,12 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
   if (Personality) {
     MCE->emitULEB128Bytes(7);
     
-    // Direct encoding, because we use the function pointer.
-    MCE->emitByte(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-    
-    if (PointerSize == 8)
-      MCE->emitInt64((intptr_t)Jit.getPointerToGlobal(Personality) - 
-                MCE->getCurrentPCValue());
-    else
-      MCE->emitInt32((intptr_t)Jit.getPointerToGlobal(Personality) - 
-                MCE->getCurrentPCValue());
+    // Direct encoding, because we use the function pointer. Not relative,
+    // because the current PC value may be bigger than the personality
+    // function pointer.
+    MCE->emitByte(dwarf::DW_EH_PE_sdata4);
+     
+    MCE->emitInt32(((intptr_t)Jit.getPointerToGlobal(Personality)));
     
     MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
     MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
@@ -564,9 +539,9 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
   std::vector<MachineMove> Moves;
   RI->getInitialFrameState(Moves);
   EmitFrameMoves(0, Moves);
-  MCE->emitAlignment(4);
+  MCE->emitAlignment(PointerSize);
   
-  MCE->emitAt((uintptr_t*)StartCommonPtr, 
+  MCE->emitInt32At((uintptr_t*)StartCommonPtr, 
               (uintptr_t)((unsigned char*)MCE->getCurrentPCValue() - 
                           FrameCommonBeginPtr));
 
@@ -584,18 +559,12 @@ JITDwarfEmitter::EmitEHFrame(const Function* Personality,
   
   // EH frame header.
   unsigned char* StartEHPtr = (unsigned char*)MCE->getCurrentPCValue();
-  MCE->allocateSpace(PointerSize, 0);
+  MCE->allocateSpace(4, 0);
   unsigned char* FrameBeginPtr = (unsigned char*)MCE->getCurrentPCValue();
   // FDE CIE Offset
-  if (PointerSize == 8) {
-    MCE->emitInt64(FrameBeginPtr - StartCommonPtr);
-    MCE->emitInt64(StartFunction - (unsigned char*)MCE->getCurrentPCValue());
-    MCE->emitInt64(EndFunction - StartFunction);
-  } else {
-    MCE->emitInt32(FrameBeginPtr - StartCommonPtr);
-    MCE->emitInt32(StartFunction - (unsigned char*)MCE->getCurrentPCValue());
-    MCE->emitInt32(EndFunction - StartFunction);
-  }
+  MCE->emitInt32(FrameBeginPtr - StartCommonPtr);
+  MCE->emitInt32(StartFunction - (unsigned char*)MCE->getCurrentPCValue());
+  MCE->emitInt32(EndFunction - StartFunction);
 
   // If there is a personality and landing pads then point to the language
   // specific data area in the exception table.
@@ -603,12 +572,7 @@ JITDwarfEmitter::EmitEHFrame(const Function* Personality,
     MCE->emitULEB128Bytes(4);
         
     if (!MMI->getLandingPads().empty()) {
-      if (PointerSize == 8)
-        MCE->emitInt64(ExceptionTable - (unsigned char*)MCE->getCurrentPCValue());
-      else
-        MCE->emitInt32(ExceptionTable - (unsigned char*)MCE->getCurrentPCValue());
-    } else if (PointerSize == 8) {
-      MCE->emitInt64((int)0);
+      MCE->emitInt32(ExceptionTable - (unsigned char*)MCE->getCurrentPCValue());
     } else {
       MCE->emitInt32((int)0);
     }
@@ -620,10 +584,10 @@ JITDwarfEmitter::EmitEHFrame(const Function* Personality,
   // frame.
   EmitFrameMoves((intptr_t)StartFunction, MMI->getFrameMoves());
       
-  MCE->emitAlignment(4);
+  MCE->emitAlignment(PointerSize);
   
   // Indicate the size of the table
-  MCE->emitAt((uintptr_t*)StartEHPtr, 
+  MCE->emitInt32At((uintptr_t*)StartEHPtr, 
               (uintptr_t)((unsigned char*)MCE->getCurrentPCValue() - 
                           StartEHPtr));
   
@@ -655,9 +619,11 @@ unsigned JITDwarfEmitter::GetDwarfTableSizeInBytes(MachineFunction& F,
   FinalSize += GetExceptionTableSizeInBytes(&F);
       
   const std::vector<Function *> Personalities = MMI->getPersonalities();
-  FinalSize += GetCommonEHFrameSizeInBytes(Personalities[MMI->getPersonalityIndex()]);
+  FinalSize += 
+    GetCommonEHFrameSizeInBytes(Personalities[MMI->getPersonalityIndex()]);
 
-  FinalSize += GetEHFrameSizeInBytes(Personalities[MMI->getPersonalityIndex()], StartFunction);
+  FinalSize += GetEHFrameSizeInBytes(Personalities[MMI->getPersonalityIndex()],
+                                     StartFunction);
   
   return FinalSize;
 }

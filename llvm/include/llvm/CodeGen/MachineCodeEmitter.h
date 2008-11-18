@@ -228,11 +228,18 @@ public:
     }
   }
   
-  /// emitAt - Emit Value in Addr
-  void emitAt(uintptr_t *Addr, uintptr_t Value) {
+  /// emitInt32At - Emit the Int32 Value in Addr.
+  void emitInt32At(uintptr_t *Addr, uintptr_t Value) {
     if (Addr >= (uintptr_t*)BufferBegin && Addr < (uintptr_t*)BufferEnd)
-      (*Addr) = Value;
+      (*(uint32_t*)Addr) = (uint32_t)Value;
   }
+  
+  /// emitInt64At - Emit the Int64 Value in Addr.
+  void emitInt64At(uintptr_t *Addr, uintptr_t Value) {
+    if (Addr >= (uintptr_t*)BufferBegin && Addr < (uintptr_t*)BufferEnd)
+      (*(uint64_t*)Addr) = (uint64_t)Value;
+  }
+  
   
   /// emitLabel - Emits a label
   virtual void emitLabel(uint64_t LabelID) = 0;
