@@ -1766,7 +1766,7 @@ class MemIntrinsicSDNode : public MemSDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.  
   bool ReadMem;  // Intrinsic reads memory
   bool WriteMem; // Intrinsic writes memory
-  public:
+public:
   MemIntrinsicSDNode(unsigned Opc, SDVTList VTs,
                      const SDValue *Ops, unsigned NumOps,
                      MVT MemoryVT, const Value *srcValue, int SVO,
