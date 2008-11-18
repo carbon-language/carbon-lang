@@ -190,47 +190,61 @@ void RegScavenger::forward() {
   if (TID.isTerminator())
     restoreScavengedReg();
 
-  // Process uses first.
-  BitVector ChangedRegs(NumPhysRegs);
+  bool IsImpDef = MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF;
+
+  // Separate register operands into 3 classes: uses, defs, earlyclobbers.
+  SmallVector<const MachineOperand*, 4> UseMOs;
+  SmallVector<const MachineOperand*, 4> DefMOs;
+  SmallVector<const MachineOperand*, 4> EarlyClobberMOs;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.isUse())
+    if (!MO.isReg() || MO.getReg() == 0)
       continue;
+    if (MO.isUse())
+      UseMOs.push_back(&MO);
+    else if (MO.isEarlyClobber())
+      EarlyClobberMOs.push_back(&MO);
+    else
+      DefMOs.push_back(&MO);
+  }
 
+  // Process uses first.
+  BitVector UseRegs(NumPhysRegs);
+  for (unsigned i = 0, e = UseMOs.size(); i != e; ++i) {
+    const MachineOperand &MO = *UseMOs[i];
     unsigned Reg = MO.getReg();
-    if (Reg == 0) continue;
 
     if (!isUsed(Reg)) {
       // Register has been scavenged. Restore it!
-      if (Reg != ScavengedReg)
-        assert(false && "Using an undefined register!");
-      else
+      if (Reg == ScavengedReg)
         restoreScavengedReg();
+      else
+        assert(false && "Using an undefined register!");
     }
 
     if (MO.isKill() && !isReserved(Reg)) {
-      ChangedRegs.set(Reg);
+      UseRegs.set(Reg);
 
-      // Mark sub-registers as changed if they aren't defined in the same
-      // instruction.
+      // Mark sub-registers as used.
       for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
            unsigned SubReg = *SubRegs; ++SubRegs)
-        ChangedRegs.set(SubReg);
+        UseRegs.set(SubReg);
     }
   }
 
   // Change states of all registers after all the uses are processed to guard
   // against multiple uses.
-  setUnused(ChangedRegs);
+  setUnused(UseRegs);
 
-  // Process defs.
-  bool IsImpDef = MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF;
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
+  // Process early clobber defs then process defs. We can have a early clobber
+  // that is dead, it should not conflict with a def that happens one "slot"
+  // (see InstrSlots in LiveIntervalAnalysis.h) later.
+  unsigned NumECs = EarlyClobberMOs.size();
+  unsigned NumDefs = DefMOs.size();
 
-    if (!MO.isReg() || !MO.isDef())
-      continue;
-
+  for (unsigned i = 0, e = NumECs + NumDefs; i != e; ++i) {
+    const MachineOperand &MO = (i < NumECs)
+      ? *EarlyClobberMOs[i] : *DefMOs[i-NumECs];
     unsigned Reg = MO.getReg();
 
     // If it's dead upon def, then it is now free.
@@ -282,7 +296,7 @@ void RegScavenger::backward() {
   }
 
   // Process uses.
-  BitVector ChangedRegs(NumPhysRegs);
+  BitVector UseRegs(NumPhysRegs);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || !MO.isUse())
@@ -291,14 +305,14 @@ void RegScavenger::backward() {
     if (Reg == 0)
       continue;
     assert(isUnused(Reg) || isReserved(Reg));
-    ChangedRegs.set(Reg);
+    UseRegs.set(Reg);
 
     // Set the sub-registers as "used".
     for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
          unsigned SubReg = *SubRegs; ++SubRegs)
-      ChangedRegs.set(SubReg);
+      UseRegs.set(SubReg);
   }
-  setUsed(ChangedRegs);
+  setUsed(UseRegs);
 }
 
 void RegScavenger::getRegsUsed(BitVector &used, bool includeReserved) {
