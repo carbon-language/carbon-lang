@@ -398,35 +398,34 @@ public:
   SDValue getNode(unsigned Opcode, SDVTList VTs, SDValue N);
   SDValue getNode(unsigned Opcode, SDVTList VTs, SDValue N1, SDValue N2);
   SDValue getNode(unsigned Opcode, SDVTList VTs,
-                    SDValue N1, SDValue N2, SDValue N3);
+                  SDValue N1, SDValue N2, SDValue N3);
   SDValue getNode(unsigned Opcode, SDVTList VTs,
-                    SDValue N1, SDValue N2, SDValue N3, SDValue N4);
+                  SDValue N1, SDValue N2, SDValue N3, SDValue N4);
   SDValue getNode(unsigned Opcode, SDVTList VTs,
-                    SDValue N1, SDValue N2, SDValue N3, SDValue N4,
-                    SDValue N5);
+                  SDValue N1, SDValue N2, SDValue N3, SDValue N4,
+                  SDValue N5);
   SDValue getNode(unsigned Opcode, SDVTList VTs,
-                    const SDValue *Ops, unsigned NumOps);
+                  const SDValue *Ops, unsigned NumOps);
 
   SDValue getMemcpy(SDValue Chain, SDValue Dst, SDValue Src,
-                      SDValue Size, unsigned Align,
-                      bool AlwaysInline,
-                      const Value *DstSV, uint64_t DstSVOff,
-                      const Value *SrcSV, uint64_t SrcSVOff);
+                    SDValue Size, unsigned Align, bool AlwaysInline,
+                    const Value *DstSV, uint64_t DstSVOff,
+                    const Value *SrcSV, uint64_t SrcSVOff);
 
   SDValue getMemmove(SDValue Chain, SDValue Dst, SDValue Src,
-                       SDValue Size, unsigned Align,
-                       const Value *DstSV, uint64_t DstOSVff,
-                       const Value *SrcSV, uint64_t SrcSVOff);
+                     SDValue Size, unsigned Align,
+                     const Value *DstSV, uint64_t DstOSVff,
+                     const Value *SrcSV, uint64_t SrcSVOff);
 
   SDValue getMemset(SDValue Chain, SDValue Dst, SDValue Src,
-                      SDValue Size, unsigned Align,
-                      const Value *DstSV, uint64_t DstSVOff);
+                    SDValue Size, unsigned Align,
+                    const Value *DstSV, uint64_t DstSVOff);
 
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDValue.
   ///
   SDValue getSetCC(MVT VT, SDValue LHS, SDValue RHS,
-                     ISD::CondCode Cond) {
+                   ISD::CondCode Cond) {
     return getNode(ISD::SETCC, VT, LHS, RHS, getCondCode(Cond));
   }
 
@@ -434,7 +433,7 @@ public:
   /// if you just have an ISD::CondCode instead of an SDValue.
   ///
   SDValue getVSetCC(MVT VT, SDValue LHS, SDValue RHS,
-                      ISD::CondCode Cond) {
+                    ISD::CondCode Cond) {
     return getNode(ISD::VSETCC, VT, LHS, RHS, getCondCode(Cond));
   }
 
@@ -442,7 +441,7 @@ public:
   /// just have an ISD::CondCode instead of an SDValue.
   ///
   SDValue getSelectCC(SDValue LHS, SDValue RHS,
-                        SDValue True, SDValue False, ISD::CondCode Cond) {
+                      SDValue True, SDValue False, ISD::CondCode Cond) {
     return getNode(ISD::SELECT_CC, True.getValueType(), LHS, RHS, True, False,
                    getCondCode(Cond));
   }
@@ -450,19 +449,19 @@ public:
   /// getVAArg - VAArg produces a result and token chain, and takes a pointer
   /// and a source value as input.
   SDValue getVAArg(MVT VT, SDValue Chain, SDValue Ptr,
-                     SDValue SV);
+                   SDValue SV);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain and 
   /// takes 3 operands
   SDValue getAtomic(unsigned Opcode, SDValue Chain, SDValue Ptr, 
-                      SDValue Cmp, SDValue Swp, const Value* PtrVal,
-                      unsigned Alignment=0);
+                    SDValue Cmp, SDValue Swp, const Value* PtrVal,
+                    unsigned Alignment=0);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain and
   /// takes 2 operands.
   SDValue getAtomic(unsigned Opcode, SDValue Chain, SDValue Ptr, 
-                      SDValue Val, const Value* PtrVal,
-                      unsigned Alignment = 0);
+                    SDValue Val, const Value* PtrVal,
+                    unsigned Alignment = 0);
 
   /// getMemIntrinsicNode - Creates a MemIntrinsicNode that may produce a
   /// result and takes a list of operands.
@@ -482,7 +481,7 @@ public:
   /// getMergeValues - Create a MERGE_VALUES node from the given operands.
   /// Allowed to return something different (and simpler) if Simplify is true.
   SDValue getMergeValues(const SDValue *Ops, unsigned NumOps,
-                           bool Simplify = true);
+                         bool Simplify = true);
 
   /// getMergeValues - Create a MERGE_VALUES node from the given types and ops.
   /// Allowed to return something different (and simpler) if Simplify is true.
