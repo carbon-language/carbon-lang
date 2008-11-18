@@ -64,3 +64,7 @@ void f8() {
   int a[10];
   a[sizeof(a) - 1] = 1;
 }
+
+void f9() {
+  struct s a[10];
+}
