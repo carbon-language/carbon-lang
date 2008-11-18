@@ -405,9 +405,6 @@ public:
   void Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R);
   void Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R1,
             const SourceRange &R2);
-  void Diag(const Token &Tok, unsigned DiagID, const std::string &Msg) {
-    Diag(Tok.getLocation(), DiagID, Msg);
-  }
   
   /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
   /// token is the characters used to represent the token in the source file

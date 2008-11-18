@@ -287,9 +287,11 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
   const DirectoryLookup *CurDir;
   const FileEntry *File = LookupFile(FilenameStart, FilenameEnd,
                                      isAngled, 0, CurDir);
-  if (File == 0)
-    return Diag(FilenameTok, diag::err_pp_file_not_found,
-                std::string(FilenameStart, FilenameEnd));
+  if (File == 0) {
+    Diag(FilenameTok, diag::err_pp_file_not_found)
+      << std::string(FilenameStart, FilenameEnd);
+    return;
+  }
   
   SourceLocation FileLoc = getCurrentFileLexer()->getFileLoc();
   const FileEntry *CurFile = SourceMgr.getFileEntryForLoc(FileLoc);
@@ -305,7 +307,7 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
     }
     
     Message.erase(Message.end()-1);
-    Diag(FilenameTok, diag::pp_out_of_date_dependency, Message);
+    Diag(FilenameTok, diag::pp_out_of_date_dependency) << Message;
   }
 }
 

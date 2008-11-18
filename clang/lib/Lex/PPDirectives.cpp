@@ -59,7 +59,7 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
     if (isCXXNamedOperator(Spelling))
       // C++ 2.5p2: Alternative tokens behave the same as its primary token
       // except for their spellings.
-      Diag(MacroNameTok, diag::err_pp_operator_used_as_macro_name, Spelling);
+      Diag(MacroNameTok, diag::err_pp_operator_used_as_macro_name) << Spelling;
     else
       Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
     // Fall through on error.
@@ -98,7 +98,7 @@ void Preprocessor::CheckEndOfDirective(const char *DirType) {
     LexUnexpandedToken(Tmp);
   
   if (Tmp.isNot(tok::eom)) {
-    Diag(Tmp, diag::ext_pp_extra_tokens_at_eol, DirType);
+    Diag(Tmp, diag::ext_pp_extra_tokens_at_eol) << DirType;
     DiscardUntilEndOfDirective();
   }
 }
@@ -476,7 +476,7 @@ void Preprocessor::HandleUserDiagnosticDirective(Token &Tok,
   std::string Message = CurLexer->ReadToEndOfLine();
 
   unsigned DiagID = isWarning ? diag::pp_hash_warning : diag::err_pp_hash_error;
-  return Diag(Tok, DiagID, Message);
+  Diag(Tok, DiagID) << Message;
 }
 
 /// HandleIdentSCCSDirective - Handle a #ident/#sccs directive.
@@ -692,9 +692,11 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   // Look up the file, create a File ID for it.
   unsigned FileID = SourceMgr.createFileID(File, FilenameTok.getLocation(),
                                            FileCharacter);
-  if (FileID == 0)
-    return Diag(FilenameTok, diag::err_pp_file_not_found,
-                std::string(FilenameStart, FilenameEnd));
+  if (FileID == 0) {
+    Diag(FilenameTok, diag::err_pp_file_not_found)
+      << std::string(FilenameStart, FilenameEnd);
+    return;
+  }
 
   // Finally, if all is good, enter the new file!
   EnterSourceFile(FileID, CurDir);
@@ -786,7 +788,7 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
       // #define X(A,A.
       if (std::find(Arguments.begin(), Arguments.end(), II) != 
           Arguments.end()) {  // C99 6.10.3p6
-        Diag(Tok, diag::err_pp_duplicate_name_in_arg_list, II->getName());
+        Diag(Tok, diag::err_pp_duplicate_name_in_arg_list) << II->getName();
         return true;
       }
         
