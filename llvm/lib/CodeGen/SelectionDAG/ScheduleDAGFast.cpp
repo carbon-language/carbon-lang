@@ -88,7 +88,7 @@ public:
   bool RemovePred(SUnit *M, SUnit *N, bool isCtrl, bool isSpecial);
 
 private:
-  void ReleasePred(SUnit*, bool, unsigned);
+  void ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain);
   void ScheduleNodeBottomUp(SUnit*, unsigned);
   SUnit *CopyAndMoveSuccessors(SUnit*);
   void InsertCCCopiesAndMoveSuccs(SUnit*, unsigned,
@@ -137,13 +137,12 @@ void ScheduleDAGFast::Schedule() {
 
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the AvailableQueue if the count reaches zero. Also update its cycle bound.
-void ScheduleDAGFast::ReleasePred(SUnit *PredSU, bool isChain, 
-                                  unsigned CurCycle) {
+void ScheduleDAGFast::ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain) {
   --PredSU->NumSuccsLeft;
   
 #ifndef NDEBUG
   if (PredSU->NumSuccsLeft < 0) {
-    cerr << "*** List scheduling failed! ***\n";
+    cerr << "*** Scheduling failed! ***\n";
     PredSU->dump(DAG);
     cerr << " has been released too many times!\n";
     assert(0);
@@ -167,7 +166,7 @@ void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   // Bottom up: release predecessors
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
-    ReleasePred(I->Dep, I->isCtrl, CurCycle);
+    ReleasePred(SU, I->Dep, I->isCtrl);
     if (I->Cost < 0)  {
       // This is a physical register dependency and it's impossible or
       // expensive to copy the register. Make sure nothing that can 

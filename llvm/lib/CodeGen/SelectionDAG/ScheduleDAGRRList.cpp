@@ -106,8 +106,8 @@ public:
   bool RemovePred(SUnit *M, SUnit *N, bool isCtrl, bool isSpecial);
 
 private:
-  void ReleasePred(SUnit*, bool, unsigned);
-  void ReleaseSucc(SUnit*, bool isChain, unsigned);
+  void ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain);
+  void ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain);
   void CapturePred(SUnit*, SUnit*, bool);
   void ScheduleNodeBottomUp(SUnit*, unsigned);
   void ScheduleNodeTopDown(SUnit*, unsigned);
@@ -265,25 +265,31 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
 
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the AvailableQueue if the count reaches zero. Also update its cycle bound.
-void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain, 
-                                    unsigned CurCycle) {
-  // FIXME: the distance between two nodes is not always == the predecessor's
-  // latency. For example, the reader can very well read the register written
-  // by the predecessor later than the issue cycle. It also depends on the
-  // interrupt model (drain vs. freeze).
-  PredSU->CycleBound = std::max(PredSU->CycleBound, CurCycle + PredSU->Latency);
-
+void ScheduleDAGRRList::ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain) {
   --PredSU->NumSuccsLeft;
   
 #ifndef NDEBUG
   if (PredSU->NumSuccsLeft < 0) {
-    cerr << "*** List scheduling failed! ***\n";
+    cerr << "*** Scheduling failed! ***\n";
     PredSU->dump(DAG);
     cerr << " has been released too many times!\n";
     assert(0);
   }
 #endif
   
+  // Compute how many cycles it will be before this actually becomes
+  // available.  This is the max of the start time of all predecessors plus
+  // their latencies.
+  // If this is a token edge, we don't need to wait for the latency of the
+  // preceeding instruction (e.g. a long-latency load) unless there is also
+  // some other data dependence.
+  unsigned PredDoneCycle = SU->Cycle;
+  if (!isChain)
+    PredDoneCycle += PredSU->Latency;
+  else if (SU->Latency)
+    PredDoneCycle += 1;
+  PredSU->CycleBound = std::max(PredSU->CycleBound, PredDoneCycle);
+
   if (PredSU->NumSuccsLeft == 0) {
     PredSU->isAvailable = true;
     AvailableQueue->push(PredSU);
@@ -303,7 +309,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   // Bottom up: release predecessors
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
-    ReleasePred(I->Dep, I->isCtrl, CurCycle);
+    ReleasePred(SU, I->Dep, I->isCtrl);
     if (I->Cost < 0)  {
       // This is a physical register dependency and it's impossible or
       // expensive to copy the register. Make sure nothing that can 
@@ -1105,25 +1111,31 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
 /// the AvailableQueue if the count reaches zero. Also update its cycle bound.
-void ScheduleDAGRRList::ReleaseSucc(SUnit *SuccSU, bool isChain, 
-                                    unsigned CurCycle) {
-  // FIXME: the distance between two nodes is not always == the predecessor's
-  // latency. For example, the reader can very well read the register written
-  // by the predecessor later than the issue cycle. It also depends on the
-  // interrupt model (drain vs. freeze).
-  SuccSU->CycleBound = std::max(SuccSU->CycleBound, CurCycle + SuccSU->Latency);
-
+void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
   --SuccSU->NumPredsLeft;
   
 #ifndef NDEBUG
   if (SuccSU->NumPredsLeft < 0) {
-    cerr << "*** List scheduling failed! ***\n";
+    cerr << "*** Scheduling failed! ***\n";
     SuccSU->dump(DAG);
     cerr << " has been released too many times!\n";
     assert(0);
   }
 #endif
   
+  // Compute how many cycles it will be before this actually becomes
+  // available.  This is the max of the start time of all predecessors plus
+  // their latencies.
+  // If this is a token edge, we don't need to wait for the latency of the
+  // preceeding instruction (e.g. a long-latency load) unless there is also
+  // some other data dependence.
+  unsigned PredDoneCycle = SU->Cycle;
+  if (!isChain)
+    PredDoneCycle += SU->Latency;
+  else if (SU->Latency)
+    PredDoneCycle += 1;
+  SuccSU->CycleBound = std::max(SuccSU->CycleBound, PredDoneCycle);
+
   if (SuccSU->NumPredsLeft == 0) {
     SuccSU->isAvailable = true;
     AvailableQueue->push(SuccSU);
@@ -1144,7 +1156,7 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   // Top down: release successors
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
-    ReleaseSucc(I->Dep, I->isCtrl, CurCycle);
+    ReleaseSucc(SU, I->Dep, I->isCtrl);
 
   SU->isScheduled = true;
   AvailableQueue->ScheduledNode(SU);

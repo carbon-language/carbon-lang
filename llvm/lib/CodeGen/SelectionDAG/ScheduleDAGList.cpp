@@ -78,7 +78,7 @@ public:
   void Schedule();
 
 private:
-  void ReleaseSucc(SUnit *SuccSU, bool isChain);
+  void ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain);
   void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
   void ListScheduleTopDown();
 };
@@ -106,35 +106,33 @@ void ScheduleDAGList::Schedule() {
 //===----------------------------------------------------------------------===//
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
-/// the PendingQueue if the count reaches zero.
-void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
-  SuccSU->NumPredsLeft--;
+/// the PendingQueue if the count reaches zero. Also update its cycle bound.
+void ScheduleDAGList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
+  --SuccSU->NumPredsLeft;
   
-  assert(SuccSU->NumPredsLeft >= 0 &&
-         "List scheduling internal error");
+#ifndef NDEBUG
+  if (SuccSU->NumPredsLeft < 0) {
+    cerr << "*** Scheduling failed! ***\n";
+    SuccSU->dump(DAG);
+    cerr << " has been released too many times!\n";
+    assert(0);
+  }
+#endif
+  
+  // Compute how many cycles it will be before this actually becomes
+  // available.  This is the max of the start time of all predecessors plus
+  // their latencies.
+  // If this is a token edge, we don't need to wait for the latency of the
+  // preceeding instruction (e.g. a long-latency load) unless there is also
+  // some other data dependence.
+  unsigned PredDoneCycle = SU->Cycle;
+  if (!isChain)
+    PredDoneCycle += SU->Latency;
+  else if (SU->Latency)
+    PredDoneCycle += 1;
+  SuccSU->CycleBound = std::max(SuccSU->CycleBound, PredDoneCycle);
   
   if (SuccSU->NumPredsLeft == 0) {
-    // Compute how many cycles it will be before this actually becomes
-    // available.  This is the max of the start time of all predecessors plus
-    // their latencies.
-    unsigned AvailableCycle = 0;
-    for (SUnit::pred_iterator I = SuccSU->Preds.begin(),
-         E = SuccSU->Preds.end(); I != E; ++I) {
-      // If this is a token edge, we don't need to wait for the latency of the
-      // preceeding instruction (e.g. a long-latency load) unless there is also
-      // some other data dependence.
-      SUnit &Pred = *I->Dep;
-      unsigned PredDoneCycle = Pred.Cycle;
-      if (!I->isCtrl)
-        PredDoneCycle += Pred.Latency;
-      else if (Pred.Latency)
-        PredDoneCycle += 1;
-
-      AvailableCycle = std::max(AvailableCycle, PredDoneCycle);
-    }
-    
-    assert(SuccSU->CycleBound == 0 && "CycleBound already assigned!");
-    SuccSU->CycleBound = AvailableCycle;
     PendingQueue.push_back(SuccSU);
   }
 }
@@ -152,7 +150,7 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   // Top down: release successors.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
-    ReleaseSucc(I->Dep, I->isCtrl);
+    ReleaseSucc(SU, I->Dep, I->isCtrl);
 
   SU->isScheduled = true;
   AvailableQueue->ScheduledNode(SU);
