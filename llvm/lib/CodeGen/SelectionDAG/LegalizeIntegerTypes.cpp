@@ -591,8 +591,6 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
     case ISD::BUILD_VECTOR: Res = PromoteIntOp_BUILD_VECTOR(N); break;
     case ISD::CONVERT_RNDSAT:
                             Res = PromoteIntOp_CONVERT_RNDSAT(N); break;
-    case ISD::FP_EXTEND:    Res = PromoteIntOp_FP_EXTEND(N); break;
-    case ISD::FP_ROUND:     Res = PromoteIntOp_FP_ROUND(N); break;
     case ISD::INSERT_VECTOR_ELT:
                             Res = PromoteIntOp_INSERT_VECTOR_ELT(N, OpNo);break;
     case ISD::MEMBARRIER:   Res = PromoteIntOp_MEMBARRIER(N); break;
@@ -762,17 +760,6 @@ SDValue DAGTypeLegalizer::PromoteIntOp_CONVERT_RNDSAT(SDNode *N) {
   return DAG.getConvertRndSat(N->getValueType(0), InOp,
                               N->getOperand(1), N->getOperand(2),
                               N->getOperand(3), N->getOperand(4), CvtCode);
-}
-
-SDValue DAGTypeLegalizer::PromoteIntOp_FP_EXTEND(SDNode *N) {
-  SDValue Op = GetPromotedInteger(N->getOperand(0));
-  return DAG.getNode(ISD::FP_EXTEND, N->getValueType(0), Op);
-}
-
-SDValue DAGTypeLegalizer::PromoteIntOp_FP_ROUND(SDNode *N) {
-  SDValue Op = GetPromotedInteger(N->getOperand(0));
-  return DAG.getNode(ISD::FP_ROUND, N->getValueType(0), Op,
-                     DAG.getIntPtrConstant(0));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_INSERT_VECTOR_ELT(SDNode *N,
