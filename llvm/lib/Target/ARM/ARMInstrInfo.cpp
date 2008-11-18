@@ -73,7 +73,8 @@ bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
   }
 }
 
-unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const{
+unsigned ARMInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
+                                           int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
   case ARM::LDR:
@@ -107,7 +108,8 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
   return 0;
 }
 
-unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
+unsigned ARMInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
+                                          int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
   case ARM::STR:

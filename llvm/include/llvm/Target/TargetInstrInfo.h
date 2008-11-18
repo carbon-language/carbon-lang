@@ -101,7 +101,8 @@ public:
   /// the destination along with the FrameIndex of the loaded stack slot.  If
   /// not, return 0.  This predicate must return 0 if the instruction has
   /// any side effects other than loading from the stack slot.
-  virtual unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const{
+  virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
+                                       int &FrameIndex) const {
     return 0;
   }
   
@@ -110,7 +111,8 @@ public:
   /// the source reg along with the FrameIndex of the loaded stack slot.  If
   /// not, return 0.  This predicate must return 0 if the instruction has
   /// any side effects other than storing to the stack slot.
-  virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
+  virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
+                                      int &FrameIndex) const {
     return 0;
   }
 
@@ -127,7 +129,7 @@ public:
   /// from the argument area of a function if it does not change.  This should
   /// only return true of *all* loads the instruction does are invariant (if it
   /// does multiple loads).
-  virtual bool isInvariantLoad(MachineInstr *MI) const {
+  virtual bool isInvariantLoad(const MachineInstr *MI) const {
     return false;
   }
   

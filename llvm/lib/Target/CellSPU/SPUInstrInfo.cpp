@@ -119,7 +119,8 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
 }
 
 unsigned
-SPUInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
+SPUInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
+                                  int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
   case SPU::LQDv16i8:
@@ -147,7 +148,8 @@ SPUInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
 }
 
 unsigned
-SPUInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
+SPUInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
+                                 int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
   case SPU::STQDv16i8:

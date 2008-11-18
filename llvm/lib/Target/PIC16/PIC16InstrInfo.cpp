@@ -38,7 +38,7 @@ static bool isZeroImm(const MachineOperand &op) {
 /// not, return 0.  This predicate must return 0 if the instruction has
 /// any side effects other than loading from the stack slot.
 unsigned PIC16InstrInfo::
-isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const 
+isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const 
 {
   if (MI->getOpcode() == PIC16::MOVF) {
     if ((MI->getOperand(2).isFI()) && // is a stack slot
@@ -58,7 +58,7 @@ isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const
 /// not, return 0.  This predicate must return 0 if the instruction has
 /// any side effects other than storing to the stack slot.
 unsigned PIC16InstrInfo::
-isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const 
+isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const 
 {
   if (MI->getOpcode() == PIC16::MOVWF) {
     if ((MI->getOperand(0).isFI()) && // is a stack slot

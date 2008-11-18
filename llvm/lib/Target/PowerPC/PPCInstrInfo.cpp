@@ -98,7 +98,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
   return false;
 }
 
-unsigned PPCInstrInfo::isLoadFromStackSlot(MachineInstr *MI, 
+unsigned PPCInstrInfo::isLoadFromStackSlot(const MachineInstr *MI, 
                                            int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
@@ -116,7 +116,7 @@ unsigned PPCInstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   return 0;
 }
 
-unsigned PPCInstrInfo::isStoreToStackSlot(MachineInstr *MI, 
+unsigned PPCInstrInfo::isStoreToStackSlot(const MachineInstr *MI, 
                                           int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;

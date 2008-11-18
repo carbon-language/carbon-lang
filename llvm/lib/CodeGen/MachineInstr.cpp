@@ -728,7 +728,7 @@ bool MachineInstr::isSafeToReMat(const TargetInstrInfo *TII,
       !isSafeToMove(TII, SawStore))
     return false;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = getOperand(i);
+    const MachineOperand &MO = getOperand(i);
     if (!MO.isReg())
       continue;
     // FIXME: For now, do not remat any instruction with register operands.

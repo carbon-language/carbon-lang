@@ -49,7 +49,8 @@ bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
 }
 
 unsigned 
-AlphaInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
+AlphaInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
+                                    int &FrameIndex) const {
   switch (MI->getOpcode()) {
   case Alpha::LDL:
   case Alpha::LDQ:
@@ -67,7 +68,8 @@ AlphaInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
 }
 
 unsigned 
-AlphaInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
+AlphaInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
+                                   int &FrameIndex) const {
   switch (MI->getOpcode()) {
   case Alpha::STL:
   case Alpha::STQ:

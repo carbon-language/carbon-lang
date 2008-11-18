@@ -688,7 +688,7 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   }
 }
 
-unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI, 
+unsigned X86InstrInfo::isLoadFromStackSlot(const MachineInstr *MI, 
                                            int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
@@ -718,7 +718,7 @@ unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   return 0;
 }
 
-unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
+unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                           int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
@@ -936,7 +936,7 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
 /// from the argument area of a function if it does not change.  This should
 /// only return true of *all* loads the instruction does are invariant (if it
 /// does multiple loads).
-bool X86InstrInfo::isInvariantLoad(MachineInstr *MI) const {
+bool X86InstrInfo::isInvariantLoad(const MachineInstr *MI) const {
   // This code cares about loads from three cases: constant pool entries,
   // invariant argument slots, and global stubs.  In order to handle these cases
   // for all of the myriad of X86 instructions, we just scan for a CP/FI/GV

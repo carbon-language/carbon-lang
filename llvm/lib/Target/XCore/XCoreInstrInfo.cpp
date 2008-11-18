@@ -75,7 +75,7 @@ bool XCoreInstrInfo::isMoveInstr(const MachineInstr &MI,
 /// not, return 0.  This predicate must return 0 if the instruction has
 /// any side effects other than loading from the stack slot.
 unsigned
-XCoreInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const{
+XCoreInstrInfo::isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const{
   int Opcode = MI->getOpcode();
   if (Opcode == XCore::LDWSP_ru6 || Opcode == XCore::LDWSP_lru6) 
   {
@@ -96,7 +96,8 @@ XCoreInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const{
   /// not, return 0.  This predicate must return 0 if the instruction has
   /// any side effects other than storing to the stack slot.
 unsigned
-XCoreInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
+XCoreInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
+                                   int &FrameIndex) const {
   int Opcode = MI->getOpcode();
   if (Opcode == XCore::STWSP_ru6 || Opcode == XCore::STWSP_lru6) 
   {
@@ -126,7 +127,7 @@ XCoreInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
 /// only return true of *all* loads the instruction does are invariant (if it
 /// does multiple loads).
 bool
-XCoreInstrInfo::isInvariantLoad(MachineInstr *MI) const {
+XCoreInstrInfo::isInvariantLoad(const MachineInstr *MI) const {
   // Loads from constants pools and loads from invariant argument slots are
   // invariant
   int Opcode = MI->getOpcode();

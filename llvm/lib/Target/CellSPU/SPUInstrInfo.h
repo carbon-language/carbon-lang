@@ -43,8 +43,10 @@ namespace llvm {
                              unsigned& sourceReg,
                              unsigned& destReg) const;
 
-    unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
-    unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
+    unsigned isLoadFromStackSlot(const MachineInstr *MI,
+                                 int &FrameIndex) const;
+    unsigned isStoreToStackSlot(const MachineInstr *MI,
+                                int &FrameIndex) const;
     
     virtual bool copyRegToReg(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MI,

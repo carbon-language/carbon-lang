@@ -75,7 +75,7 @@ isMoveInstr(const MachineInstr &MI, unsigned &SrcReg, unsigned &DstReg) const
 /// not, return 0.  This predicate must return 0 if the instruction has
 /// any side effects other than loading from the stack slot.
 unsigned MipsInstrInfo::
-isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const 
+isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const 
 {
   if ((MI->getOpcode() == Mips::LW) || (MI->getOpcode() == Mips::LWC1) ||
       (MI->getOpcode() == Mips::LWC1A) || (MI->getOpcode() == Mips::LDC1)) {
@@ -96,7 +96,7 @@ isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const
 /// not, return 0.  This predicate must return 0 if the instruction has
 /// any side effects other than storing to the stack slot.
 unsigned MipsInstrInfo::
-isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const 
+isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const 
 {
   if ((MI->getOpcode() == Mips::SW) || (MI->getOpcode() == Mips::SWC1) ||
       (MI->getOpcode() == Mips::SWC1A) || (MI->getOpcode() == Mips::SDC1)) {

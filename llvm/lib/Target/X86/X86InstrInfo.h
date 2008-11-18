@@ -290,14 +290,14 @@ public:
   //
   bool isMoveInstr(const MachineInstr& MI, unsigned& sourceReg,
                    unsigned& destReg) const;
-  unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
-  unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
+  unsigned isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const;
+  unsigned isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const;
 
   bool isReallyTriviallyReMaterializable(const MachineInstr *MI) const;
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;
 
-  bool isInvariantLoad(MachineInstr *MI) const;
+  bool isInvariantLoad(const MachineInstr *MI) const;
 
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target

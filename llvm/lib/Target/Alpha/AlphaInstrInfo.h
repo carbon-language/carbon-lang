@@ -36,8 +36,10 @@ public:
   virtual bool isMoveInstr(const MachineInstr &MI,
                            unsigned &SrcReg, unsigned &DstReg) const;
   
-  virtual unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
-  virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
+  virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
+                                       int &FrameIndex) const;
+  virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
+                                      int &FrameIndex) const;
   
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
