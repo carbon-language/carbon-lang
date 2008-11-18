@@ -21,6 +21,7 @@
     <ul>
       <li><a href="#docs">Developer Documentation</a></li>
       <li><a href="#debugging">Debugging</a></li>
+      <li><a href="#testing">Testing</a></li>
       <li><a href="#irgen">LLVM IR Generation</a></li>
     </ul>
     
@@ -56,6 +57,24 @@
       wrapped <tt>Type*</tt> which you can then dump.</li>
     </ul>
   
+  <!--=====================================================================-->
+  <h2 id="testing">Testing</h2>
+  <!--=====================================================================-->
+  
+  <p>Clang includes a basic regression suite in the tree which can be
+  run with <tt>make test</tt> from the top-level clang directory, or
+  just <tt>make</tt> in the <em>test</em> sub-directory. <tt>make
+  report</tt> can be used after running the tests to summarize the
+  results, and <tt>make VERBOSE=1</tt> can be used to show more detail
+  about what is being run.</p>
+
+  <p>For more intensive changes, running
+  the <a href="http://llvm.org/docs/TestingGuide.html#testsuiterun">LLVM
+  Test Suite</a> with clang is recommended. Currently the best way to
+  override LLVMGCC, as in: <tt>make LLVMGCC="ccc -std=gnu89"
+  TEST=nightly report</tt> (make sure ccc is in your PATH or use the
+  full path).</p>
+
   <!--=====================================================================-->
   <h2 id="irgen">LLVM IR Generation</h2>
   <!--=====================================================================-->
