@@ -33,22 +33,18 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic &Diags,
   
   PathDiagnostic* D = new PathDiagnostic();
   
-  std::ostringstream os;
-  
+  const char *LevelStr;
   switch (DiagLevel) {
-    default: assert(0 && "Unknown diagnostic type!");
-    case Diagnostic::Note:    os << "note: "; break;
-    case Diagnostic::Warning: os << "warning: "; break;
-    case Diagnostic::Error:   os << "error: "; break;
-    case Diagnostic::Fatal:   os << "fatal error: "; break;
-      break;
+  default: assert(0 && "Unknown diagnostic type!");
+  case Diagnostic::Note:    LevelStr = "note: "; break;
+  case Diagnostic::Warning: LevelStr = "warning: "; break;
+  case Diagnostic::Error:   LevelStr = "error: "; break;
+  case Diagnostic::Fatal:   LevelStr = "fatal error: "; break;
   }
 
   std::string Msg = FormatDiagnostic(Diags, DiagLevel, ID, Strs, NumStrs);
   
-  os << Msg;
-  
-  PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, os.str());
+  PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, LevelStr+Msg);
   
   while (NumRanges) {
     P->addRange(*Ranges);
