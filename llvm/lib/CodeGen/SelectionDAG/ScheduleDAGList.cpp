@@ -113,7 +113,7 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
 #ifndef NDEBUG
   if (SuccSU->NumPredsLeft < 0) {
     cerr << "*** Scheduling failed! ***\n";
-    SuccSU->dump(DAG);
+    SuccSU->dump(this);
     cerr << " has been released too many times!\n";
     assert(0);
   }
@@ -142,7 +142,7 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
 /// the Available queue.
 void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
-  DEBUG(SU->dump(DAG));
+  DEBUG(SU->dump(this));
   
   Sequence.push_back(SU);
   SU->Cycle = CurCycle;
@@ -267,7 +267,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
     if (SUnits[i].NumPredsLeft != 0) {
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(DAG);
+      SUnits[i].dump(this);
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }

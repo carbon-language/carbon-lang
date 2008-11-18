@@ -29,6 +29,7 @@ namespace llvm {
   class MachineRegisterInfo;
   class MachineInstr;
   class TargetRegisterInfo;
+  class ScheduleDAG;
   class SelectionDAG;
   class SelectionDAGISel;
   class TargetInstrInfo;
@@ -239,8 +240,8 @@ namespace llvm {
       return false;
     }
     
-    void dump(const SelectionDAG *G) const;
-    void dumpAll(const SelectionDAG *G) const;
+    void dump(const ScheduleDAG *G) const;
+    void dumpAll(const ScheduleDAG *G) const;
   };
 
   //===--------------------------------------------------------------------===//

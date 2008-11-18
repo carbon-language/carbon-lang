@@ -186,7 +186,7 @@ void ScheduleDAGRRList::Schedule() {
   BuildSchedUnits();
 
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
-          SUnits[su].dumpAll(DAG));
+          SUnits[su].dumpAll(this));
   if (!Fast) {
     CalculateDepths();
     CalculateHeights();
@@ -271,7 +271,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain) {
 #ifndef NDEBUG
   if (PredSU->NumSuccsLeft < 0) {
     cerr << "*** Scheduling failed! ***\n";
-    PredSU->dump(DAG);
+    PredSU->dump(this);
     cerr << " has been released too many times!\n";
     assert(0);
   }
@@ -301,7 +301,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain) {
 /// the Available queue.
 void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
-  DEBUG(SU->dump(DAG));
+  DEBUG(SU->dump(this));
   SU->Cycle = CurCycle;
 
   AvailableQueue->ScheduledNode(SU);
@@ -368,7 +368,7 @@ void ScheduleDAGRRList::CapturePred(SUnit *PredSU, SUnit *SU, bool isChain) {
 /// its predecessor states to reflect the change.
 void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   DOUT << "*** Unscheduling [" << SU->Cycle << "]: ";
-  DEBUG(SU->dump(DAG));
+  DEBUG(SU->dump(this));
 
   AvailableQueue->UnscheduledNode(SU);
 
@@ -1084,14 +1084,14 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
       }
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(DAG);
+      SUnits[i].dump(this);
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
     if (SUnits[i].NumSuccsLeft != 0) {
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(DAG);
+      SUnits[i].dump(this);
       cerr << "has successors left!\n";
       AnyNotSched = true;
     }
@@ -1117,7 +1117,7 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
 #ifndef NDEBUG
   if (SuccSU->NumPredsLeft < 0) {
     cerr << "*** Scheduling failed! ***\n";
-    SuccSU->dump(DAG);
+    SuccSU->dump(this);
     cerr << " has been released too many times!\n";
     assert(0);
   }
@@ -1148,7 +1148,7 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
 /// the Available queue.
 void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
-  DEBUG(SU->dump(DAG));
+  DEBUG(SU->dump(this));
 
   SU->Cycle = CurCycle;
   Sequence.push_back(SU);
@@ -1213,14 +1213,14 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
       }
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(DAG);
+      SUnits[i].dump(this);
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
     if (SUnits[i].NumPredsLeft != 0) {
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(DAG);
+      SUnits[i].dump(this);
       cerr << "has predecessors left!\n";
       AnyNotSched = true;
     }

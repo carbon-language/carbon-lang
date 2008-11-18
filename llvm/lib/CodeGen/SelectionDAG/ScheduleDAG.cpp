@@ -440,7 +440,7 @@ unsigned ScheduleDAG::ComputeMemOperandsEnd(SDNode *Node) {
 void ScheduleDAG::dumpSchedule() const {
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i])
-      SU->dump(DAG);
+      SU->dump(this);
     else
       cerr << "**** NOOP ****\n";
   }
@@ -459,10 +459,10 @@ void ScheduleDAG::Run() {
 
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
 /// a group of nodes flagged together.
-void SUnit::dump(const SelectionDAG *G) const {
+void SUnit::dump(const ScheduleDAG *G) const {
   cerr << "SU(" << NodeNum << "): ";
   if (getNode())
-    getNode()->dump(G);
+    getNode()->dump(G->DAG);
   else
     cerr << "CROSS RC COPY ";
   cerr << "\n";
@@ -471,13 +471,13 @@ void SUnit::dump(const SelectionDAG *G) const {
     FlaggedNodes.push_back(N);
   while (!FlaggedNodes.empty()) {
     cerr << "    ";
-    FlaggedNodes.back()->dump(G);
+    FlaggedNodes.back()->dump(G->DAG);
     cerr << "\n";
     FlaggedNodes.pop_back();
   }
 }
 
-void SUnit::dumpAll(const SelectionDAG *G) const {
+void SUnit::dumpAll(const ScheduleDAG *G) const {
   dump(G);
 
   cerr << "  # preds left       : " << NumPredsLeft << "\n";

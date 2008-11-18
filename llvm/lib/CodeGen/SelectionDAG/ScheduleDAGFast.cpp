@@ -125,7 +125,7 @@ void ScheduleDAGFast::Schedule() {
   BuildSchedUnits();
 
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
-          SUnits[su].dumpAll(DAG));
+          SUnits[su].dumpAll(this));
 
   // Execute the actual scheduling loop.
   ListScheduleBottomUp();
@@ -143,7 +143,7 @@ void ScheduleDAGFast::ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain) {
 #ifndef NDEBUG
   if (PredSU->NumSuccsLeft < 0) {
     cerr << "*** Scheduling failed! ***\n";
-    PredSU->dump(DAG);
+    PredSU->dump(this);
     cerr << " has been released too many times!\n";
     assert(0);
   }
@@ -160,7 +160,7 @@ void ScheduleDAGFast::ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain) {
 /// the Available queue.
 void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
-  DEBUG(SU->dump(DAG));
+  DEBUG(SU->dump(this));
   SU->Cycle = CurCycle;
 
   // Bottom up: release predecessors
@@ -613,14 +613,14 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
       }
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(DAG);
+      SUnits[i].dump(this);
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
     if (SUnits[i].NumSuccsLeft != 0) {
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(DAG);
+      SUnits[i].dump(this);
       cerr << "has successors left!\n";
       AnyNotSched = true;
     }
