@@ -20,14 +20,8 @@ PathDiagnostic::~PathDiagnostic() {
   for (iterator I = begin(), E = end(); I != E; ++I) delete &*I;
 }
 
-void PathDiagnosticClient::HandleDiagnostic(Diagnostic &Diags, 
-                                            Diagnostic::Level DiagLevel,
-                                            FullSourceLoc Pos,
-                                            diag::kind ID,
-                                            const std::string **Strs,
-                                            unsigned NumStrs,
-                                            const SourceRange *Ranges, 
-                                            unsigned NumRanges) {
+void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
+                                            const DiagnosticInfo &Info) {
   
   // Create a PathDiagnostic with a single piece.
   
@@ -42,16 +36,13 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic &Diags,
   case Diagnostic::Fatal:   LevelStr = "fatal error: "; break;
   }
 
-  std::string Msg = FormatDiagnostic(Diags, DiagLevel, ID, Strs, NumStrs);
+  std::string Msg = FormatDiagnostic(Info);
   
-  PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, LevelStr+Msg);
+  PathDiagnosticPiece *P =
+    new PathDiagnosticPiece(Info.getLocation(), LevelStr+Msg);
   
-  while (NumRanges) {
-    P->addRange(*Ranges);
-    --NumRanges;
-    ++Ranges;
-  }
-  
+  for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
+    P->addRange(Info.getRange(i));
   D->push_front(P);
 
   HandlePathDiagnostic(D);  

@@ -18,11 +18,9 @@
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
-
 using namespace clang;
 
-static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name)
-{
+static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name) {
   if (C.getLangOptions().CPlusPlus)
     return CXXRecordDecl::Create(C, TagDecl::TK_struct, 
                                  C.getTranslationUnitDecl(),
@@ -176,66 +174,58 @@ bool Sema::Diag(SourceLocation Loc, unsigned DiagID) {
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
-  const std::string *Strs[] = { &Msg };
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, Strs, 1);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Msg;
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
                 const std::string &Msg2) {
-  const std::string *MsgArr[] = { &Msg1, &Msg2 };
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID,  MsgArr, 2);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Msg1 << Msg2;
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const SourceRange& Range) {
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, 0, 0, &Range,1);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Range;
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
                 const SourceRange& Range) {
-  const std::string *Strs[] = { &Msg };
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, Strs, 1, &Range,1);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Msg << Range;
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
-                const std::string &Msg2, const SourceRange& Range) {
-  const std::string *MsgArr[] = { &Msg1, &Msg2 };
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, MsgArr, 2, &Range, 1);
+                const std::string &Msg2, const SourceRange &R) {
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Msg1 << Msg2 << R;
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1, 
                 const std::string &Msg2, const std::string &Msg3, 
                 const SourceRange &R1) {
-  const std::string *MsgArr[] = { &Msg1, &Msg2, &Msg3 };
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, MsgArr, 3, &R1, 1);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID)
+    << Msg1 << Msg2 << Msg3 << R1;
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID,
                 const SourceRange& R1, const SourceRange& R2) {
-  SourceRange RangeArr[] = { R1, R2 };
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, 0, 0, RangeArr, 2);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << R1 << R2;
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
                 const SourceRange& R1, const SourceRange& R2) {
-  SourceRange RangeArr[] = { R1, R2 };
-  const std::string *Strs[] = { &Msg };
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, Strs, 1, RangeArr, 2);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Msg << R1 << R2;
   return true;
 }
 
 bool Sema::Diag(SourceLocation Range, unsigned DiagID, const std::string &Msg1,
                 const std::string &Msg2, const SourceRange& R1,
                 const SourceRange& R2) {
-  const std::string *MsgArr[] = { &Msg1, &Msg2 };
-  SourceRange RangeArr[] = { R1, R2 };
-  PP.getDiagnostics().Report(PP.getFullLoc(Range),DiagID, MsgArr,2,RangeArr, 2);
+  PP.getDiagnostics().Report(PP.getFullLoc(Range),DiagID)
+    << Msg1 << Msg2 << R1 << R2;
   return true;
 }
 

@@ -132,9 +132,8 @@ namespace {
       if (!Rewrite.ReplaceStmt(Old, New) || SilenceRewriteMacroWarning)
         return;
 
-      SourceRange Range = Old->getSourceRange();
-      Diags.Report(Context->getFullLoc(Old->getLocStart()), RewriteFailedDiag,
-                   0, 0, &Range, 1);
+      Diags.Report(Context->getFullLoc(Old->getLocStart()), RewriteFailedDiag)
+                   << Old->getSourceRange();
     }
     
     void InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen,

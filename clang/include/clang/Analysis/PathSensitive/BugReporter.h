@@ -303,26 +303,20 @@ public:
   
   virtual ~DiagCollector() {}
   
-  virtual void HandleDiagnostic(Diagnostic &Diags, 
-                                Diagnostic::Level DiagLevel,
-                                FullSourceLoc Pos,
-                                diag::kind ID,
-                                const std::string **Strs,
-                                unsigned NumStrs,
-                                const SourceRange *Ranges, 
-                                unsigned NumRanges) {
+  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+                                const DiagnosticInfo &Info) {
     
     // FIXME: Use a map from diag::kind to BugType, instead of having just
     //  one BugType.
-    
-    Reports.push_back(DiagBugReport(Diags.getDescription(ID), D, Pos));
+    const char *Desc = Info.getDiags()->getDescription(Info.getID());
+    Reports.push_back(DiagBugReport(Desc, D, Info.getLocation()));
     DiagBugReport& R = Reports.back();
     
-    for ( ; NumRanges ; --NumRanges, ++Ranges)
-      R.addRange(*Ranges);
+    for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
+      R.addRange(Info.getRange(i));
     
-    for ( ; NumStrs ; --NumStrs, ++Strs)
-      R.addString(**Strs);    
+    for (unsigned i = 0, e = Info.getNumArgs(); i != e; ++i)
+      R.addString(Info.getArgStr(i));
   }
   
   // Iterators.

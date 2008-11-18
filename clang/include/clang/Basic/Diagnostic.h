@@ -22,6 +22,7 @@ namespace clang {
   class DiagnosticClient;
   class SourceRange;
   class SourceManager;
+  class DiagnosticInfo;
   
   // Import the diagnostic enums themselves.
   namespace diag {
@@ -150,7 +151,7 @@ public:
 
   /// getDescription - Given a diagnostic ID, return a description of the
   /// issue.
-  const char *getDescription(unsigned DiagID);
+  const char *getDescription(unsigned DiagID) const;
   
   /// isBuiltinNoteWarningOrExtension - Return true if the unmapped diagnostic
   /// level of the specified diagnostic ID is a Note, Warning, or Extension.
@@ -162,41 +163,146 @@ public:
   /// the DiagnosticClient.
   Level getDiagnosticLevel(unsigned DiagID) const;
   
-  /// Report - Issue the message to the client.  DiagID is a member of the
-  /// diag::kind enum.  
-  void Report(FullSourceLoc Pos, unsigned DiagID,
-              const std::string **Strs = 0, unsigned NumStrs = 0,
-              const SourceRange *Ranges = 0, unsigned NumRanges = 0) {
-    Report(NULL, Pos, DiagID, Strs, NumStrs, Ranges, NumRanges);
-  }                                                                      
   
-  /// Report - Issue the message to the specified client. 
-  ///  DiagID is a member of the diag::kind enum.
-  void Report(DiagnosticClient* C, FullSourceLoc Pos, unsigned DiagID,
-              const std::string **Strs = 0, unsigned NumStrs = 0,
-              const SourceRange *Ranges = 0, unsigned NumRanges = 0);
+  /// Report - Issue the message to the client.  DiagID is a member of the
+  /// diag::kind enum.  This actually returns a new instance of DiagnosticInfo
+  /// which emits the diagnostics (through ProcessDiag) when it is destroyed.
+  inline DiagnosticInfo Report(FullSourceLoc Pos, unsigned DiagID);
+  
+private:
+  // This is private state used by DiagnosticInfo.  We put it here instead of
+  // in DiagnosticInfo in order to keep DiagnosticInfo a small light-weight
+  // object.  This implementation choice means that we can only have one
+  // diagnostic "in flight" at a time, but this seems to be a reasonable
+  // tradeoff to keep these objects small.  Assertions verify that only one
+  // diagnostic is in flight at a time.
+  friend class DiagnosticInfo;
+  
+  /// DiagArguments - The values for the various substitution positions.  It
+  /// currently only support 10 arguments (%0-%9).
+  const std::string *DiagArguments[10];
+  /// DiagRanges - The list of ranges added to this diagnostic.  It currently
+  /// only support 10 ranges, could easily be extended if needed.
+  const SourceRange *DiagRanges[10];
+  
+  /// NumDiagArgs - This is set to -1 when no diag is in flight.  Otherwise it
+  /// is the number of entries in Arguments.
+  signed char NumDiagArgs;
+  /// NumRanges - This is the number of ranges in the DiagRanges array.
+  unsigned char NumDiagRanges;
+  
+  /// ProcessDiag - This is the method used to report a diagnostic that is
+  /// finally fully formed.
+  void ProcessDiag(const DiagnosticInfo &Info);
 };
+  
+/// DiagnosticInfo - This is a little helper class used to produce diagnostics.
+/// This is constructed with an ID and location, and then has some number of
+/// arguments (for %0 substitution) and SourceRanges added to it with the
+/// overloaded operator<<.  Once it is destroyed, it emits the diagnostic with
+/// the accumulated information.
+///
+/// Note that many of these will be created as temporary objects (many call
+/// sites), so we want them to be small to reduce stack space usage etc.  For
+/// this reason, we stick state in the Diagnostic class, see the comment there
+/// for more info.
+class DiagnosticInfo {
+  Diagnostic *DiagObj;
+  FullSourceLoc Loc;
+  unsigned DiagID;
+  void operator=(const DiagnosticInfo&); // DO NOT IMPLEMENT
+public:
+  DiagnosticInfo(Diagnostic *diagObj, FullSourceLoc loc, unsigned diagID) :
+    DiagObj(diagObj), Loc(loc), DiagID(diagID) {
+    assert(DiagObj->NumDiagArgs == -1 &&
+           "Multiple diagnostics in flight at once!");
+    DiagObj->NumDiagArgs = DiagObj->NumDiagRanges = 0;
+  }
+  
+  /// Copy constructor.  When copied, this "takes" the diagnostic info from the
+  /// input and neuters it.
+  DiagnosticInfo(DiagnosticInfo &D) {
+    DiagObj = D.DiagObj;
+    Loc = D.Loc;
+    DiagID = D.DiagID;
+    D.DiagObj = 0;
+  }
+  
+  /// Destructor - The dtor emits the diagnostic.
+  ~DiagnosticInfo() {
+    // If DiagObj is null, then its soul was stolen by the copy ctor.
+    if (!DiagObj) return;
+    
+    DiagObj->ProcessDiag(*this);
+
+    // This diagnostic is no longer in flight.
+    DiagObj->NumDiagArgs = -1;
+  }
+  
+  const Diagnostic *getDiags() const { return DiagObj; }
+  unsigned getID() const { return DiagID; }
+  const FullSourceLoc &getLocation() const { return Loc; }
+
+  unsigned getNumArgs() const { return DiagObj->NumDiagArgs; }
+  
+  /// getArgStr - Return the provided argument string specified by Idx.
+  const std::string &getArgStr(unsigned Idx) const {
+    assert((signed char)Idx < DiagObj->NumDiagArgs &&
+           "Argument out of range!");
+    return *DiagObj->DiagArguments[Idx];
+  }
+  
+  /// getNumRanges - Return the number of source ranges associated with this
+  /// diagnostic.
+  unsigned getNumRanges() const {
+    return DiagObj->NumDiagRanges;
+  }
+  
+  const SourceRange &getRange(unsigned Idx) const {
+    assert(Idx < DiagObj->NumDiagRanges && "Invalid diagnostic range index!");
+    return *DiagObj->DiagRanges[Idx];
+  }
+
+  DiagnosticInfo &operator<<(const std::string &S) {
+    assert((unsigned)DiagObj->NumDiagArgs < 
+           sizeof(DiagObj->DiagArguments)/sizeof(DiagObj->DiagArguments[0]) &&
+           "Too many arguments to diagnostic!");
+    DiagObj->DiagArguments[DiagObj->NumDiagArgs++] = &S;
+    return *this;
+  }
+  
+  DiagnosticInfo &operator<<(const SourceRange &R) {
+    assert((unsigned)DiagObj->NumDiagArgs < 
+           sizeof(DiagObj->DiagRanges)/sizeof(DiagObj->DiagRanges[0]) &&
+           "Too many arguments to diagnostic!");
+    DiagObj->DiagRanges[DiagObj->NumDiagRanges++] = &R;
+    return *this;
+  }
+  
+};
+
+
+/// Report - Issue the message to the client.  DiagID is a member of the
+/// diag::kind enum.  This actually returns a new instance of DiagnosticInfo
+/// which emits the diagnostics (through ProcessDiag) when it is destroyed.
+inline DiagnosticInfo Diagnostic::Report(FullSourceLoc Pos, unsigned DiagID) {
+  DiagnosticInfo D(this, Pos, DiagID);
+  return D;
+}
+  
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
 class DiagnosticClient {
 protected:
-  std::string FormatDiagnostic(Diagnostic &Diags, Diagnostic::Level Level,
-                               diag::kind ID,
-                               const std::string **Strs, unsigned NumStrs);
+  std::string FormatDiagnostic(const DiagnosticInfo &Info);
 public:
   virtual ~DiagnosticClient();
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
-  virtual void HandleDiagnostic(Diagnostic &Diags, 
-                                Diagnostic::Level DiagLevel,
-                                FullSourceLoc Pos,
-                                diag::kind ID,
-                                const std::string **Strs,
-                                unsigned NumStrs,
-                                const SourceRange *Ranges, 
-                                unsigned NumRanges) = 0;
+  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+                                const DiagnosticInfo &Info) = 0;
 };
 
 }  // end namespace clang

@@ -39,14 +39,8 @@ public:
   const_iterator note_begin() const { return Notes.begin(); }
   const_iterator note_end() const   { return Notes.end(); }
 
-  virtual void HandleDiagnostic(Diagnostic &Diags,
-                                Diagnostic::Level DiagLevel,
-                                FullSourceLoc Pos,
-                                diag::kind ID,
-                                const std::string **Strs,
-                                unsigned NumStrs,
-                                const SourceRange *Ranges, 
-                                unsigned NumRanges);
+  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+                                const DiagnosticInfo &Info);
 };
 
 } // end namspace clang

@@ -34,7 +34,7 @@ PrintIncludeStack(FullSourceLoc Pos) {
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
 /// any characters in LineNo that intersect the SourceRange.
 void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
-                                           SourceManager& SourceMgr,
+                                           const SourceManager& SourceMgr,
                                            unsigned LineNo, unsigned FileID,
                                            std::string &CaretLine,
                                            const std::string &SourceLine) {
@@ -92,17 +92,12 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     CaretLine[i] = '~';
 }
 
-void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
-                                             Diagnostic::Level Level, 
-                                             FullSourceLoc Pos,
-                                             diag::kind ID,
-                                             const std::string **Strs,
-                                             unsigned NumStrs,
-                                             const SourceRange *Ranges,
-                                             unsigned NumRanges) {
+void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
+                                             const DiagnosticInfo &Info) {
   unsigned LineNo = 0, ColNo = 0;
   unsigned FileID = 0;
   const char *LineStart = 0, *LineEnd = 0;
+  const FullSourceLoc &Pos = Info.getLocation();
   
   if (Pos.isValid()) {
     FullSourceLoc LPos = Pos.getLogicalLoc();
@@ -146,9 +141,10 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
     break;
   }
   
-  OS << FormatDiagnostic(Diags, Level, ID, Strs, NumStrs) << "\n";
+  OS << FormatDiagnostic(Info) << "\n";
   
-  if (CaretDiagnostics && Pos.isValid() && ((LastLoc != Pos) || Ranges)) {
+  if (CaretDiagnostics && Pos.isValid() && ((LastLoc != Pos) ||
+                                            Info.getNumRanges())) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = Pos;
     
@@ -160,8 +156,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
     std::string CaretLine(LineEnd-LineStart, ' ');
     
     // Highlight all of the characters covered by Ranges with ~ characters.
-    for (unsigned i = 0; i != NumRanges; ++i)
-      HighlightRange(Ranges[i], Pos.getManager(), LineNo, FileID,
+    for (unsigned i = 0; i != Info.getNumRanges(); ++i)
+      HighlightRange(Info.getRange(i), Pos.getManager(), LineNo, FileID,
                      CaretLine, SourceLine);
     
     // Next, insert the caret itself.

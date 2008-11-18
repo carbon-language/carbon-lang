@@ -124,28 +124,24 @@ void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID) {
 
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID, 
                         const std::string &Msg) {
-  const std::string *Strs[] = { &Msg };
-  Diags.Report(getFullLoc(Loc), DiagID, Strs, 1);
+  Diags.Report(getFullLoc(Loc), DiagID) << Msg;
 }
 
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID,
                         const std::string &Msg,
                         const SourceRange &R1, const SourceRange &R2) {
-  const std::string *Strs[] = { &Msg };
-  SourceRange R[] = {R1, R2};
-  Diags.Report(getFullLoc(Loc), DiagID, Strs, 1, R, 2);
+  Diags.Report(getFullLoc(Loc), DiagID) << Msg << R1 << R2;
 }
 
 
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID,
                         const SourceRange &R) {
-  Diags.Report(getFullLoc(Loc), DiagID, 0, 0, &R, 1);
+  Diags.Report(getFullLoc(Loc), DiagID) << R;
 }
 
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID,
                         const SourceRange &R1, const SourceRange &R2) {
-  SourceRange R[] = {R1, R2};
-  Diags.Report(getFullLoc(Loc), DiagID, 0, 0, R, 2);
+  Diags.Report(getFullLoc(Loc), DiagID) << R1 << R2;
 }
 
 

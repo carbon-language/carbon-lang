@@ -773,21 +773,26 @@ void BugReporter::EmitWarning(BugReport& R) {
 
     D->push_back(piece);
     PD->HandlePathDiagnostic(D.take());
+    return;
   }
   else {
-    std::ostringstream os;
+    std::string str;
 
     if (D->empty())
-      os << R.getDescription();
+      str = R.getDescription();
     else
-      os << D->back()->getString();
-
+      str = D->back()->getString();
 
     Diagnostic& Diag = getDiagnostic();
-    unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
-                                              os.str().c_str());
+    unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, str.c_str());
 
-    Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);
+    switch (End-Beg) {
+    default: assert(0 && "Don't handle this many ranges yet!");
+    case 0: Diag.Report(L, ErrorDiag); break;
+    case 1: Diag.Report(L, ErrorDiag) << Beg[0]; break;
+    case 2: Diag.Report(L, ErrorDiag) << Beg[0] << Beg[1]; break;
+    case 3: Diag.Report(L, ErrorDiag) << Beg[0] << Beg[1] << Beg[2]; break;
+    }
   }
 }
 
@@ -807,9 +812,17 @@ void BugReporter::EmitBasicReport(const char* name, const char* category,
   
   DiagnosticClient *OldClient = Diag.getClient();
   Diag.setClient(&C);
-  Diag.Report(getContext().getFullLoc(Loc),
-              Diag.getCustomDiagID(Diagnostic::Warning, str),
-              0, 0, RBeg, NumRanges);
+  FullSourceLoc L = getContext().getFullLoc(Loc);
+  unsigned DiagID = Diag.getCustomDiagID(Diagnostic::Warning, str);
+  
+  switch (NumRanges) {
+  default: assert(0 && "Don't handle this many ranges yet!");
+  case 0: Diag.Report(L, DiagID); break;
+  case 1: Diag.Report(L, DiagID) << RBeg[0]; break;
+  case 2: Diag.Report(L, DiagID) << RBeg[0] << RBeg[1]; break;
+  case 3: Diag.Report(L, DiagID) << RBeg[0] << RBeg[1] << RBeg[2]; break;
+  }
+  
   Diag.setClient(OldClient);
   
   for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)

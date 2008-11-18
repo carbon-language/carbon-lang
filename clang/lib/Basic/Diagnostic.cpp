@@ -127,6 +127,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   NumDiagnostics = 0;
   NumErrors = 0;
   CustomDiagInfo = 0;
+  NumDiagArgs = -1;
 }
 
 Diagnostic::~Diagnostic() {
@@ -154,7 +155,7 @@ bool Diagnostic::isBuiltinNoteWarningOrExtension(unsigned DiagID) {
 
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
-const char *Diagnostic::getDescription(unsigned DiagID) {
+const char *Diagnostic::getDescription(unsigned DiagID) const {
   if (DiagID < diag::NUM_BUILTIN_DIAGNOSTICS)
     return DiagnosticText[DiagID];
   else 
@@ -210,66 +211,51 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
   }
 }
 
-/// Report - Issue the message to the client.
-///  DiagID is a member of the diag::kind enum.  
-void Diagnostic::Report(DiagnosticClient* C,
-                        FullSourceLoc Loc, unsigned DiagID,
-                        const std::string **Strs, unsigned NumStrs,
-                        const SourceRange *Ranges, unsigned NumRanges) {
-  
+/// ProcessDiag - This is the method used to report a diagnostic that is
+/// finally fully formed.
+void Diagnostic::ProcessDiag(const DiagnosticInfo &Info) {
   // Figure out the diagnostic level of this message.
-  Diagnostic::Level DiagLevel = getDiagnosticLevel(DiagID);
+  Diagnostic::Level DiagLevel = getDiagnosticLevel(Info.getID());
   
   // If the client doesn't care about this message, don't issue it.
   if (DiagLevel == Diagnostic::Ignored)
     return;
 
-  // Set the diagnostic client if it isn't set already.
-  if (!C) C = Client;
-
   // If this is not an error and we are in a system header, ignore it.  We
-  // have to check on the original DiagID here, because we also want to
+  // have to check on the original Diag ID here, because we also want to
   // ignore extensions and warnings in -Werror and -pedantic-errors modes,
   // which *map* warnings/extensions to errors.
   if (SuppressSystemWarnings &&
-      DiagID < diag::NUM_BUILTIN_DIAGNOSTICS &&
-      getBuiltinDiagClass(DiagID) != ERROR &&
-      Loc.isValid() && Loc.getPhysicalLoc().isInSystemHeader())
+      Info.getID() < diag::NUM_BUILTIN_DIAGNOSTICS &&
+      getBuiltinDiagClass(Info.getID()) != ERROR &&
+      Info.getLocation().isValid() &&
+      Info.getLocation().getPhysicalLoc().isInSystemHeader())
     return;
   
   if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
 
-    if (C != 0 && C == Client)
-      ++NumErrors;
+    ++NumErrors;
   }
 
   // Finally, report it.
- 
-  if (C != 0)
-    C->HandleDiagnostic(*this, DiagLevel, Loc, (diag::kind)DiagID,
-                        Strs, NumStrs, Ranges, NumRanges);
-
-  if (C != 0 && C == Client)
-    ++NumDiagnostics;
+  Client->HandleDiagnostic(DiagLevel, Info);
+  ++NumDiagnostics;
 }
 
 
 DiagnosticClient::~DiagnosticClient() {}
 
-std::string DiagnosticClient::FormatDiagnostic(Diagnostic &Diags,
-                                               Diagnostic::Level Level,
-                                               diag::kind ID,
-                                               const std::string **Strs,
-                                               unsigned NumStrs) {
-  std::string Msg = Diags.getDescription(ID);
+std::string DiagnosticClient::FormatDiagnostic(const DiagnosticInfo &Info) {
+  std::string Msg = Info.getDiags()->getDescription(Info.getID());
   
-  // Replace all instances of %0 in Msg with 'Extra'.
+  // Replace all instances of %0 in Msg with 'Extra'.  This is a pretty horrible
+  // and inefficient way to do this, we could improve this a lot if we care.
   for (unsigned i = 0; i < Msg.size() - 1; ++i) {
     if (Msg[i] == '%' && isdigit(Msg[i + 1])) {
       unsigned StrNo = Msg[i + 1] - '0';
       Msg = std::string(Msg.begin(), Msg.begin() + i) +
-            (StrNo < NumStrs ? *Strs[StrNo] : "<<<INTERNAL ERROR>>>") +
+            Info.getArgStr(StrNo) +
             std::string(Msg.begin() + i + 2, Msg.end());
     }
   }

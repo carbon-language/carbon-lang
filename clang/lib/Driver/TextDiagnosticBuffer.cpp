@@ -17,30 +17,21 @@ using namespace clang;
 /// HandleDiagnostic - Store the errors, warnings, and notes that are
 /// reported.
 /// 
-void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic &Diags,
-                                            Diagnostic::Level Level,
-                                            FullSourceLoc Pos,
-                                            diag::kind ID,
-                                            const std::string **Strs,
-                                            unsigned NumStrs,
-                                            const SourceRange *,
-                                            unsigned) {
+void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic::Level Level,
+                                            const DiagnosticInfo &Info) {
   switch (Level) {
   default: assert(0 && "Diagnostic not handled during diagnostic buffering!");
   case Diagnostic::Note:
-    Notes.push_back(std::make_pair(Pos.getLocation(),
-                                   FormatDiagnostic(Diags, Level, ID, 
-                                                    Strs, NumStrs)));
+    Notes.push_back(std::make_pair(Info.getLocation().getLocation(),
+                                   FormatDiagnostic(Info)));
     break;
   case Diagnostic::Warning:
-    Warnings.push_back(std::make_pair(Pos.getLocation(),
-                                      FormatDiagnostic(Diags, Level, ID, 
-                                                       Strs, NumStrs)));
+    Warnings.push_back(std::make_pair(Info.getLocation().getLocation(),
+                                      FormatDiagnostic(Info)));
     break;
   case Diagnostic::Error:
-    Errors.push_back(std::make_pair(Pos.getLocation(),
-                                    FormatDiagnostic(Diags, Level, ID,
-                                                     Strs, NumStrs)));
+    Errors.push_back(std::make_pair(Info.getLocation().getLocation(),
+                                    FormatDiagnostic(Info)));
     break;
   }
 }

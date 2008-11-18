@@ -303,10 +303,9 @@ void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
       S = Setter->getSelector();
     } else {
       // FIXME: This should be diagnosed by sema.
-      SourceRange Range = E->getSourceRange();
       CGM.getDiags().Report(getContext().getFullLoc(E->getLocStart()),
-                            diag::err_typecheck_assign_const, 0, 0,
-                            &Range, 1);
+                            diag::err_typecheck_assign_const)
+        << E->getSourceRange();
       return;
     }
   } else {
