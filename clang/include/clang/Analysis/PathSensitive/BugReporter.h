@@ -1,4 +1,4 @@
-//===---  BugReporter.h - Generate PathDiagnostics ---------------*- C++ -*-===//
+//===---  BugReporter.h - Generate PathDiagnostics --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
