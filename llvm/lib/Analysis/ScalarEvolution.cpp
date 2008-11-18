@@ -83,9 +83,6 @@
 #include <cmath>
 using namespace llvm;
 
-STATISTIC(NumBruteForceEvaluations,
-          "Number of brute force evaluations needed to "
-          "calculate high-order polynomial exit values");
 STATISTIC(NumArrayLenItCounts,
           "Number of trip counts computed with array length");
 STATISTIC(NumTripCountsComputed,
