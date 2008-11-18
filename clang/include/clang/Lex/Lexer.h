@@ -113,6 +113,9 @@ public:
     // file is reached.
     LexTokenInternal(Result);
   }
+
+  /// isPragmaLexer - Returns true if this Lexer is being used to lex a pragma.
+  bool isPragmaLexer() const { return Is_PragmaLexer; }
   
   /// IndirectLex - An indirect call to 'Lex' that can be invoked via
   ///  the PreprocessorLexer interface.
