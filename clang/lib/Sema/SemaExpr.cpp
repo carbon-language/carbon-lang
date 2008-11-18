@@ -347,19 +347,41 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                            IdentifierInfo &II,
                                            bool HasTrailingLParen,
                                            const CXXScopeSpec *SS) {
+  return ActOnDeclarationNameExpr(S, Loc, &II, HasTrailingLParen, SS);
+}
+
+/// ActOnDeclarationNameExpr - The parser has read some kind of name
+/// (e.g., a C++ id-expression (C++ [expr.prim]p1)). This routine
+/// performs lookup on that name and returns an expression that refers
+/// to that name. This routine isn't directly called from the parser,
+/// because the parser doesn't know about DeclarationName. Rather,
+/// this routine is called by ActOnIdentifierExpr,
+/// ActOnOperatorFunctionIdExpr, and ActOnConversionFunctionExpr,
+/// which form the DeclarationName from the corresponding syntactic
+/// forms.
+///
+/// HasTrailingLParen indicates whether this identifier is used in a
+/// function call context.  LookupCtx is only used for a C++
+/// qualified-id (foo::bar) to indicate the class or namespace that
+/// the identifier must be a member of.
+Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
+                                                DeclarationName Name,
+                                                bool HasTrailingLParen,
+                                                const CXXScopeSpec *SS) {
   // Could be enum-constant, value decl, instance variable, etc.
   Decl *D;
   if (SS && !SS->isEmpty()) {
     DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
     if (DC == 0)
       return true;
-    D = LookupDecl(&II, Decl::IDNS_Ordinary, S, DC);
+    D = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
   } else
-    D = LookupDecl(&II, Decl::IDNS_Ordinary, S);
+    D = LookupDecl(Name, Decl::IDNS_Ordinary, S);
   
   // If this reference is in an Objective-C method, then ivar lookup happens as
   // well.
-  if (getCurMethodDecl()) {
+  IdentifierInfo *II = Name.getAsIdentifierInfo();
+  if (II && getCurMethodDecl()) {
     ScopedDecl *SD = dyn_cast_or_null<ScopedDecl>(D);
     // There are two cases to handle here.  1) scoped lookup could have failed,
     // in which case we should look for an ivar.  2) scoped lookup could have
@@ -368,7 +390,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     // name, if the lookup suceeds, we replace it our current decl.
     if (SD == 0 || SD->isDefinedOutsideFunctionOrMethod()) {
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
-      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&II)) {
+      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II)) {
         // FIXME: This should use a new expr for a direct reference, don't turn
         // this into Self->ivar, just return a BareIVarExpr or something.
         IdentifierInfo &II = Context.Idents.get("self");
@@ -378,7 +400,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
       }
     }
     // Needed to implement property "super.method" notation.
-    if (SD == 0 && &II == SuperID) {
+    if (SD == 0 && II == SuperID) {
       QualType T = Context.getPointerType(Context.getObjCInterfaceType(
                      getCurMethodDecl()->getClassInterface()));
       return new ObjCSuperExpr(Loc, T);
@@ -387,17 +409,20 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   if (D == 0) {
     // Otherwise, this could be an implicitly declared function reference (legal
     // in C90, extension in C99).
-    if (HasTrailingLParen &&
+    if (HasTrailingLParen && II &&
         !getLangOptions().CPlusPlus) // Not in C++.
-      D = ImplicitlyDefineFunction(Loc, II, S);
+      D = ImplicitlyDefineFunction(Loc, *II, S);
     else {
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
       if (SS && !SS->isEmpty())
         return Diag(Loc, diag::err_typecheck_no_member,
-                    II.getName(), SS->getRange());
+                    Name.getAsString(), SS->getRange());
+      else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
+               Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
+        return Diag(Loc, diag::err_undeclared_use, Name.getAsString());
       else
-        return Diag(Loc, diag::err_undeclared_var_use, II.getName());
+        return Diag(Loc, diag::err_undeclared_var_use, Name.getAsString());
     }
   }
   
@@ -423,11 +448,11 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     return Diag(Loc, diag::err_invalid_non_static_member_use, FD->getName());
   }
   if (isa<TypedefDecl>(D))
-    return Diag(Loc, diag::err_unexpected_typedef, II.getName());
+    return Diag(Loc, diag::err_unexpected_typedef, Name.getAsString());
   if (isa<ObjCInterfaceDecl>(D))
-    return Diag(Loc, diag::err_unexpected_interface, II.getName());
+    return Diag(Loc, diag::err_unexpected_interface, Name.getAsString());
   if (isa<NamespaceDecl>(D))
-    return Diag(Loc, diag::err_unexpected_namespace, II.getName());
+    return Diag(Loc, diag::err_unexpected_namespace, Name.getAsString());
 
   // Make the DeclRefExpr or BlockDeclRefExpr for the decl.
   if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))

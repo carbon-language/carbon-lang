@@ -625,6 +625,12 @@ public:
                                                  TypeTy *Ty,
                                                  bool HasTrailingLParen,
                                                  const CXXScopeSpec *SS);
+  ExprResult ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
+                                      DeclarationName Name,
+                                      bool HasTrailingLParen,
+                                      const CXXScopeSpec *SS);
+                                      
+
   virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                          tok::TokenKind Kind);
   virtual ExprResult ActOnNumericConstant(const Token &);

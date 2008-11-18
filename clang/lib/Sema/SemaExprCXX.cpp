@@ -33,41 +33,8 @@ Sema::ExprResult Sema::ActOnConversionFunctionExpr(Scope *S,
   QualType ConvTypeCanon = Context.getCanonicalType(ConvType);
   DeclarationName ConvName 
     = Context.DeclarationNames.getCXXConversionFunctionName(ConvTypeCanon);
-
-  // We only expect to find a CXXConversionDecl.
-  Decl *D;
-  if (SS && !SS->isEmpty()) {
-    DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
-    if (DC == 0)
-      return true;
-    D = LookupDecl(ConvName, Decl::IDNS_Ordinary, S, DC);
-  } else
-    D = LookupDecl(ConvName, Decl::IDNS_Ordinary, S);
-  
-  if (D == 0) {
-    // If there is no conversion function that converts to this type,
-    // diagnose the problem.
-    if (SS && !SS->isEmpty())
-      return Diag(OperatorLoc, diag::err_typecheck_no_member,
-                  ConvType.getAsString(), SS->getRange());
-    else
-      return Diag(OperatorLoc, diag::err_no_conv_function, 
-                  ConvType.getAsString());
-  }
-  
-  assert(isa<CXXConversionDecl>(D) && "we had to find a conversion function");
-  CXXConversionDecl *Conversion = cast<CXXConversionDecl>(D);
-
-  // check if referencing a declaration with __attribute__((deprecated)).
-  if (Conversion->getAttr<DeprecatedAttr>())
-    Diag(OperatorLoc, diag::warn_deprecated, Conversion->getName());
-
-  // Only create DeclRefExpr's for valid Decl's.
-  if (Conversion->isInvalidDecl())
-    return true;
-  
-  // Create a normal DeclRefExpr.
-  return new DeclRefExpr(Conversion, Conversion->getType(), OperatorLoc);
+  return ActOnDeclarationNameExpr(S, OperatorLoc, ConvName, HasTrailingLParen, 
+                                  SS);
 }
 
 /// ActOnOperatorFunctionIdExpr - Parse a C++ overloaded operator
@@ -81,39 +48,7 @@ Sema::ExprResult Sema::ActOnOperatorFunctionIdExpr(Scope *S,
                                                    bool HasTrailingLParen,
                                                    const CXXScopeSpec *SS) {
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(Op);
-  
-  Decl *D;
-  if (SS && !SS->isEmpty()) {
-    DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
-    if (DC == 0)
-      return true;
-    D = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
-  } else
-    D = LookupDecl(Name, Decl::IDNS_Ordinary, S);
-  
-  if (D == 0) {
-    // If there is no conversion function that converts to this type,
-    // diagnose the problem.
-    if (SS && !SS->isEmpty())
-      return Diag(OperatorLoc, diag::err_typecheck_no_member,
-                  Name.getAsString(), SS->getRange());
-    else
-      return Diag(OperatorLoc, diag::err_undeclared_var_use,
-                  Name.getAsString());
-  }
-  
-  ValueDecl *VD = cast<ValueDecl>(D);
-
-  // check if referencing a declaration with __attribute__((deprecated)).
-  if (VD->getAttr<DeprecatedAttr>())
-    Diag(OperatorLoc, diag::warn_deprecated, Name.getAsString());
-
-  // Only create DeclRefExpr's for valid Decl's.
-  if (VD->isInvalidDecl())
-    return true;
-  
-  // Create a normal DeclRefExpr.
-  return new DeclRefExpr(VD, VD->getType(), OperatorLoc);
+  return ActOnDeclarationNameExpr(S, OperatorLoc, Name, HasTrailingLParen, SS);
 }
 
 /// ActOnCXXTypeidOfType - Parse typeid( type-id ).

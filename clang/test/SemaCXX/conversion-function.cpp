@@ -9,7 +9,7 @@ public:
   }
 
   float g() {
-    return operator float(); // expected-error{{no conversion function to type 'float'}}
+    return operator float(); // expected-error{{use of undeclared 'operator float'}}
   }
 };
 
