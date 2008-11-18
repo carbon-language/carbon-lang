@@ -243,6 +243,11 @@ public:
   const Diagnostic *getDiags() const { return DiagObj; }
   unsigned getID() const { return DiagID; }
   const FullSourceLoc &getLocation() const { return Loc; }
+  
+  /// Operator bool: conversion of DiagnosticInfo to bool always returns true.
+  /// This allows is to be used in boolean error contexts like:
+  /// return Diag(...);
+  operator bool() const { return true; }
 
   unsigned getNumArgs() const { return DiagObj->NumDiagArgs; }
   
