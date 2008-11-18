@@ -15,6 +15,7 @@
 #define LLVM_CLANG_LEX_PREPROCESSOR_H
 
 #include "clang/Lex/Lexer.h"
+#include "clang/Lex/PTHLexer.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/TokenLexer.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -93,8 +94,19 @@ class Preprocessor {
   PragmaNamespace *PragmaHandlers;
   
   /// CurLexer - This is the current top of the stack that we're lexing from if
-  /// not expanding a macro.  One of CurLexer and CurTokenLexer must be null.
+  /// not expanding a macro and we are lexing directly from source code.
+  ///  Only one of CurLexer, CurPTHLexer, or CurTokenLexer will be non-null.
   llvm::OwningPtr<Lexer> CurLexer;
+  
+  /// CurPTHLexer - This is the current top of stack that we're lexing from if
+  ///  not expanding from a macro and we are lexing from a PTH cache.
+  ///  Only one of CurLexer, CurPTHLexer, or CurTokenLexer will be non-null.
+  llvm::OwningPtr<PTHLexer> CurPTHLexer;
+  
+  /// CurPPLexer - This is the current top of the stack what we're lexing from
+  ///  if not expanding a macro.  This is an alias for either CurLexer or
+  ///  CurPTHLexer.
+  PreprocessorLexer* CurPPLexer;
   
   /// CurLookup - The DirectoryLookup structure used to find the current
   /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to
@@ -109,12 +121,16 @@ class Preprocessor {
   /// #included, and macros currently being expanded from, not counting
   /// CurLexer/CurTokenLexer.
   struct IncludeStackInfo {
-    Lexer *TheLexer;
+    Lexer                 *TheLexer;
+    PTHLexer              *ThePTHLexer;
+    PreprocessorLexer     *ThePPLexer;
+    TokenLexer            *TheTokenLexer;    
     const DirectoryLookup *TheDirLookup;
-    TokenLexer *TheTokenLexer;
-    IncludeStackInfo(Lexer *L, const DirectoryLookup *D, TokenLexer *TL)
-      : TheLexer(L), TheDirLookup(D), TheTokenLexer(TL) {
-    }
+
+    IncludeStackInfo(Lexer *L, PTHLexer* P, PreprocessorLexer* PPL,
+                     TokenLexer* TL, const DirectoryLookup *D)
+      : TheLexer(L), ThePTHLexer(P), ThePPLexer(PPL), TheTokenLexer(TL),
+        TheDirLookup(D) {}
   };
   std::vector<IncludeStackInfo> IncludeMacroStack;
   
@@ -485,14 +501,19 @@ public:
 private:
   
   void PushIncludeMacroStack() {
-    IncludeMacroStack.push_back(IncludeStackInfo(CurLexer.take(), CurDirLookup,
-                                                 CurTokenLexer.take()));
+    IncludeMacroStack.push_back(IncludeStackInfo(CurLexer.take(),
+                                                 CurPTHLexer.take(),
+                                                 CurPPLexer,
+                                                 CurTokenLexer.take(),
+                                                 CurDirLookup));
   }
   
   void PopIncludeMacroStack() {
     CurLexer.reset(IncludeMacroStack.back().TheLexer);
-    CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
+    CurPTHLexer.reset(IncludeMacroStack.back().ThePTHLexer);
+    CurPPLexer = IncludeMacroStack.back().ThePPLexer;
     CurTokenLexer.reset(IncludeMacroStack.back().TheTokenLexer);
+    CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
     IncludeMacroStack.pop_back();
   }
   

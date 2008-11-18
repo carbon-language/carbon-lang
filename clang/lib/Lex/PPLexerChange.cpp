@@ -89,6 +89,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
     PushIncludeMacroStack();
 
   CurLexer.reset(TheLexer);
+  CurPPLexer = TheLexer;
   CurDirLookup = CurDir;
   
   // Notify the client, if desired, that we are in a new source file.
