@@ -307,7 +307,7 @@ public:
                                 Diagnostic::Level DiagLevel,
                                 FullSourceLoc Pos,
                                 diag::kind ID,
-                                const std::string *Strs,
+                                const std::string **Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 
                                 unsigned NumRanges) {
@@ -322,7 +322,7 @@ public:
       R.addRange(*Ranges);
     
     for ( ; NumStrs ; --NumStrs, ++Strs)
-      R.addString(*Strs);    
+      R.addString(**Strs);    
   }
   
   // Iterators.

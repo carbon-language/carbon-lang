@@ -165,7 +165,7 @@ public:
   /// Report - Issue the message to the client.  DiagID is a member of the
   /// diag::kind enum.  
   void Report(FullSourceLoc Pos, unsigned DiagID,
-              const std::string *Strs = 0, unsigned NumStrs = 0,
+              const std::string **Strs = 0, unsigned NumStrs = 0,
               const SourceRange *Ranges = 0, unsigned NumRanges = 0) {
     Report(NULL, Pos, DiagID, Strs, NumStrs, Ranges, NumRanges);
   }                                                                      
@@ -173,7 +173,7 @@ public:
   /// Report - Issue the message to the client.  DiagID is a member of the
   /// diag::kind enum.  
   void Report(unsigned DiagID,
-              const std::string *Strs = 0, unsigned NumStrs = 0,
+              const std::string **Strs = 0, unsigned NumStrs = 0,
               const SourceRange *Ranges = 0, unsigned NumRanges = 0) {
     Report(FullSourceLoc(), DiagID, Strs, NumStrs, Ranges, NumRanges);
   }
@@ -181,7 +181,7 @@ public:
   /// Report - Issue the message to the specified client. 
   ///  DiagID is a member of the diag::kind enum.
   void Report(DiagnosticClient* C, FullSourceLoc Pos, unsigned DiagID,
-              const std::string *Strs = 0, unsigned NumStrs = 0,
+              const std::string **Strs = 0, unsigned NumStrs = 0,
               const SourceRange *Ranges = 0, unsigned NumRanges = 0);
 };
 
@@ -191,8 +191,7 @@ class DiagnosticClient {
 protected:
   std::string FormatDiagnostic(Diagnostic &Diags, Diagnostic::Level Level,
                                diag::kind ID,
-                               const std::string *Strs,
-                               unsigned NumStrs);
+                               const std::string **Strs, unsigned NumStrs);
 public:
   virtual ~DiagnosticClient();
 
@@ -202,7 +201,7 @@ public:
                                 Diagnostic::Level DiagLevel,
                                 FullSourceLoc Pos,
                                 diag::kind ID,
-                                const std::string *Strs,
+                                const std::string **Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 
                                 unsigned NumRanges) = 0;

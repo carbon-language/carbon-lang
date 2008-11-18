@@ -214,7 +214,7 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
 ///  DiagID is a member of the diag::kind enum.  
 void Diagnostic::Report(DiagnosticClient* C,
                         FullSourceLoc Loc, unsigned DiagID,
-                        const std::string *Strs, unsigned NumStrs,
+                        const std::string **Strs, unsigned NumStrs,
                         const SourceRange *Ranges, unsigned NumRanges) {
   
   // Figure out the diagnostic level of this message.
@@ -260,7 +260,7 @@ DiagnosticClient::~DiagnosticClient() {}
 std::string DiagnosticClient::FormatDiagnostic(Diagnostic &Diags,
                                                Diagnostic::Level Level,
                                                diag::kind ID,
-                                               const std::string *Strs,
+                                               const std::string **Strs,
                                                unsigned NumStrs) {
   std::string Msg = Diags.getDescription(ID);
   
@@ -269,7 +269,7 @@ std::string DiagnosticClient::FormatDiagnostic(Diagnostic &Diags,
     if (Msg[i] == '%' && isdigit(Msg[i + 1])) {
       unsigned StrNo = Msg[i + 1] - '0';
       Msg = std::string(Msg.begin(), Msg.begin() + i) +
-            (StrNo < NumStrs ? Strs[StrNo] : "<<<INTERNAL ERROR>>>") +
+            (StrNo < NumStrs ? *Strs[StrNo] : "<<<INTERNAL ERROR>>>") +
             std::string(Msg.begin() + i + 2, Msg.end());
     }
   }

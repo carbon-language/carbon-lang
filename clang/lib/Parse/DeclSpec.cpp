@@ -311,6 +311,7 @@ void DeclSpec::Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr,
 }
   
 void DeclSpec::Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr,
-          unsigned DiagID, const std::string &info) {
-  D.Report(FullSourceLoc(Loc,SrcMgr), DiagID, &info, 1);
+          unsigned DiagID, const std::string &Info) {
+  const std::string *Strs[] = { &Info };
+  D.Report(FullSourceLoc(Loc,SrcMgr), DiagID, Strs, 1);
 }

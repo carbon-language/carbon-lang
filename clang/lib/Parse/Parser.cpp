@@ -43,13 +43,15 @@ Action::~Action() {}
 
 bool Parser::Diag(SourceLocation Loc, unsigned DiagID,
                   const std::string &Msg) {
-  Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID, &Msg, 1);
+  const std::string *Strs[] = { &Msg };
+  Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID, Strs, 1);
   return true;
 }
 
 bool Parser::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
                   const SourceRange& Range) {
-  Diags.Report(PP.getFullLoc(Loc), DiagID, &Msg, 1, &Range,1);
+  const std::string *Strs[] = { &Msg };
+  Diags.Report(PP.getFullLoc(Loc), DiagID, Strs, 1, &Range,1);
   return true;
 }
 

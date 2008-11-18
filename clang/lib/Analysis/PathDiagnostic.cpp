@@ -24,7 +24,7 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic &Diags,
                                             Diagnostic::Level DiagLevel,
                                             FullSourceLoc Pos,
                                             diag::kind ID,
-                                            const std::string *Strs,
+                                            const std::string **Strs,
                                             unsigned NumStrs,
                                             const SourceRange *Ranges, 
                                             unsigned NumRanges) {

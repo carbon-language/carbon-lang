@@ -21,7 +21,7 @@ void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic &Diags,
                                             Diagnostic::Level Level,
                                             FullSourceLoc Pos,
                                             diag::kind ID,
-                                            const std::string *Strs,
+                                            const std::string **Strs,
                                             unsigned NumStrs,
                                             const SourceRange *,
                                             unsigned) {

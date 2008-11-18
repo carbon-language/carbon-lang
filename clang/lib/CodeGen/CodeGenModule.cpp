@@ -108,8 +108,9 @@ void CodeGenModule::ErrorUnsupported(const Stmt *S, const char *Type,
                                                "cannot codegen this %0 yet");
   SourceRange Range = S->getSourceRange();
   std::string Msg = Type;
+  const std::string *Strs[] = { &Msg };
   getDiags().Report(Context.getFullLoc(S->getLocStart()), DiagID,
-                    &Msg, 1, &Range, 1);
+                    Strs, 1, &Range, 1);
 }
 
 /// ErrorUnsupported - Print out an error that codegen doesn't support the
@@ -121,8 +122,8 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
   unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Error, 
                                                "cannot codegen this %0 yet");
   std::string Msg = Type;
-  getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID,
-                    &Msg, 1);
+  const std::string *Strs[] = { &Msg };
+  getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID, Strs, 1);
 }
 
 /// setGlobalVisibility - Set the visibility for the given LLVM
