@@ -53,7 +53,7 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     ResultChar = 8;
     break;
   case 'e':
-    PP.Diag(Loc, diag::ext_nonstandard_escape, "e");
+    PP.Diag(Loc, diag::ext_nonstandard_escape) << "e";
     ResultChar = 27;
     break;
   case 'f':
@@ -135,16 +135,16 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
   case '(': case '{': case '[': case '%':
     // GCC accepts these as extensions.  We warn about them as such though.
     if (!PP.getLangOptions().NoExtensions) {
-      PP.Diag(Loc, diag::ext_nonstandard_escape,
-              std::string()+(char)ResultChar);
+      PP.Diag(Loc, diag::ext_nonstandard_escape)
+        << std::string()+(char)ResultChar;
       break;
     }
     // FALL THROUGH.
   default:
     if (isgraph(ThisTokBuf[0])) {
-      PP.Diag(Loc, diag::ext_unknown_escape, std::string()+(char)ResultChar);
+      PP.Diag(Loc, diag::ext_unknown_escape) << std::string()+(char)ResultChar;
     } else {
-      PP.Diag(Loc, diag::ext_unknown_escape, "x"+llvm::utohexstr(ResultChar));
+      PP.Diag(Loc, diag::ext_unknown_escape) << "x"+llvm::utohexstr(ResultChar);
     }
     break;
   }
@@ -531,8 +531,8 @@ GetFloatValue(const llvm::fltSemantics &Format, bool* isExact) {
 }
 
 void NumericLiteralParser::Diag(SourceLocation Loc, unsigned DiagID, 
-          const std::string &M) {
-  PP.Diag(Loc, DiagID, M);
+                                const std::string &M) {
+  PP.Diag(Loc, DiagID) << M;
   hadError = true;
 }
 

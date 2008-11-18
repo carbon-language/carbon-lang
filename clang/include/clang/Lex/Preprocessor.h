@@ -399,12 +399,6 @@ public:
   /// position in the current buffer into a SourcePosition object for rendering.
   DiagnosticInfo Diag(SourceLocation Loc, unsigned DiagID);  
   DiagnosticInfo Diag(const Token &Tok, unsigned DiagID);
-  void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
-  void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
-            const SourceRange &R1, const SourceRange &R2);
-  void Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R);
-  void Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R1,
-            const SourceRange &R2);
   
   /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
   /// token is the characters used to represent the token in the source file

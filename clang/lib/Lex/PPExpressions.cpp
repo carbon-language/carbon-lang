@@ -137,7 +137,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     if (LParenLoc.isValid()) {
       if (PeekTok.isNot(tok::r_paren)) {
         PP.Diag(PeekTok.getLocation(), diag::err_pp_missing_rparen);
-        PP.Diag(LParenLoc, diag::err_matching, "(");
+        PP.Diag(LParenLoc, diag::err_matching) << "(";
         return true;
       }
       // Consume the ).
@@ -259,9 +259,9 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
         return true;
       
       if (PeekTok.isNot(tok::r_paren)) {
-        PP.Diag(PeekTok.getLocation(), diag::err_pp_expected_rparen,
-                Result.getRange());
-        PP.Diag(Start, diag::err_matching, "(");
+        PP.Diag(PeekTok.getLocation(), diag::err_pp_expected_rparen)
+          << Result.getRange();
+        PP.Diag(Start, diag::err_matching) << "(";
         return true;
       }
       DT.State = DefinedTracker::Unknown;
@@ -292,7 +292,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       
     // If this operator is live and overflowed, report the issue.
     if (Overflow && ValueLive)
-      PP.Diag(Loc, diag::warn_pp_expr_overflow, Result.getRange());
+      PP.Diag(Loc, diag::warn_pp_expr_overflow) << Result.getRange();
     
     DT.State = DefinedTracker::Unknown;
     return false;
@@ -379,8 +379,8 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
   unsigned PeekPrec = getPrecedence(PeekTok.getKind());
   // If this token isn't valid, report the error.
   if (PeekPrec == ~0U) {
-    PP.Diag(PeekTok.getLocation(), diag::err_pp_expr_bad_token_binop,
-            LHS.getRange());
+    PP.Diag(PeekTok.getLocation(), diag::err_pp_expr_bad_token_binop)
+      << LHS.getRange();
     return true;
   }
   
@@ -423,8 +423,8 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
 
     // If this token isn't valid, report the error.
     if (PeekPrec == ~0U) {
-      PP.Diag(PeekTok.getLocation(), diag::err_pp_expr_bad_token_binop,
-              RHS.getRange());
+      PP.Diag(PeekTok.getLocation(), diag::err_pp_expr_bad_token_binop)
+        << RHS.getRange();
       return true;
     }
     
@@ -469,15 +469,15 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       // value was negative, warn about it.
       if (ValueLive && Res.isUnsigned()) {
         if (!LHS.isUnsigned() && LHS.Val.isNegative())
-          PP.Diag(OpLoc, diag::warn_pp_convert_lhs_to_positive,
-                  LHS.Val.toString(10, true) + " to " +
-                  LHS.Val.toString(10, false),
-                  LHS.getRange(), RHS.getRange());
+          PP.Diag(OpLoc, diag::warn_pp_convert_lhs_to_positive)
+            << LHS.Val.toString(10, true) + " to " +
+               LHS.Val.toString(10, false)
+            << LHS.getRange() << RHS.getRange();
         if (!RHS.isUnsigned() && RHS.Val.isNegative())
-          PP.Diag(OpLoc, diag::warn_pp_convert_rhs_to_positive,
-                  RHS.Val.toString(10, true) + " to " +
-                  RHS.Val.toString(10, false),
-                  LHS.getRange(), RHS.getRange());
+          PP.Diag(OpLoc, diag::warn_pp_convert_rhs_to_positive)
+            << RHS.Val.toString(10, true) + " to " +
+               RHS.Val.toString(10, false)
+            << LHS.getRange() << RHS.getRange();
       }
       LHS.Val.setIsUnsigned(Res.isUnsigned());
       RHS.Val.setIsUnsigned(Res.isUnsigned());
@@ -491,8 +491,8 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       if (RHS.Val != 0)
         Res = LHS.Val % RHS.Val;
       else if (ValueLive) {
-        PP.Diag(OpLoc, diag::err_pp_remainder_by_zero, LHS.getRange(),
-                RHS.getRange());
+        PP.Diag(OpLoc, diag::err_pp_remainder_by_zero)
+          << LHS.getRange() << RHS.getRange();
         return true;
       }
       break;
@@ -502,8 +502,8 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
         if (LHS.Val.isSigned())   // MININT/-1  -->  overflow.
           Overflow = LHS.Val.isMinSignedValue() && RHS.Val.isAllOnesValue();
       } else if (ValueLive) {
-        PP.Diag(OpLoc, diag::err_pp_division_by_zero, LHS.getRange(),
-                RHS.getRange());
+        PP.Diag(OpLoc, diag::err_pp_division_by_zero)
+          << LHS.getRange() << RHS.getRange();
         return true;
       }
       break;
@@ -597,15 +597,16 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       // Comma is invalid in pp expressions in c89/c++ mode, but is valid in C99
       // if not being evaluated.
       if (!PP.getLangOptions().C99 || ValueLive)
-        PP.Diag(OpLoc, diag::ext_pp_comma_expr, LHS.getRange(), RHS.getRange());
+        PP.Diag(OpLoc, diag::ext_pp_comma_expr)
+          << LHS.getRange() << RHS.getRange();
       Res = RHS.Val; // LHS = LHS,RHS -> RHS.
       break; 
     case tok::question: {
       // Parse the : part of the expression.
       if (PeekTok.isNot(tok::colon)) {
-        PP.Diag(PeekTok.getLocation(), diag::err_expected_colon,
-                LHS.getRange(), RHS.getRange());
-        PP.Diag(OpLoc, diag::err_matching, "?");
+        PP.Diag(PeekTok.getLocation(), diag::err_expected_colon)
+          << LHS.getRange(), RHS.getRange();
+        PP.Diag(OpLoc, diag::err_matching) << "?";
         return true;
       }
       // Consume the :.
@@ -638,15 +639,15 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
     }
     case tok::colon:
       // Don't allow :'s to float around without being part of ?: exprs.
-      PP.Diag(OpLoc, diag::err_pp_colon_without_question, LHS.getRange(),
-        RHS.getRange());
+      PP.Diag(OpLoc, diag::err_pp_colon_without_question)
+        << LHS.getRange() << RHS.getRange();
       return true;
     }
 
     // If this operator is live and overflowed, report the issue.
     if (Overflow && ValueLive)
-      PP.Diag(OpLoc, diag::warn_pp_expr_overflow,
-              LHS.getRange(), RHS.getRange());
+      PP.Diag(OpLoc, diag::warn_pp_expr_overflow)
+        << LHS.getRange() << RHS.getRange();
     
     // Put the result back into 'LHS' for our next iteration.
     LHS.Val = Res;
