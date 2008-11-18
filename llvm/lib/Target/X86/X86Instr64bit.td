@@ -474,7 +474,6 @@ def IMUL64rmi8 : RIi8<0x6B, MRMSrcMem,                      // GR64 = [mem64]*I8
 } // Defs = [EFLAGS]
 
 // Unsigned division / remainder
-let neverHasSideEffects = 1 in {
 let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in {
 def DIV64r : RI<0xF7, MRM6r, (outs), (ins GR64:$src),        // RDX:RAX/r64 = RAX,RDX
                 "div{q}\t$src", []>;
@@ -486,7 +485,6 @@ def DIV64m : RI<0xF7, MRM6m, (outs), (ins i64mem:$src),      // RDX:RAX/[mem64] 
                 "div{q}\t$src", []>;
 def IDIV64m: RI<0xF7, MRM7m, (outs), (ins i64mem:$src),      // RDX:RAX/[mem64] = RAX,RDX
                 "idiv{q}\t$src", []>;
-}
 }
 }
 

@@ -747,6 +747,7 @@ let Defs = [EAX,EDX], Uses = [EAX] in
 def IMUL32m : I<0xF7, MRM5m, (outs), (ins i32mem:$src),
                 "imul{l}\t$src", []>;  // EAX,EDX = EAX*[mem32]
 }
+} // neverHasSideEffects
 
 // unsigned division/remainder
 let Defs = [AL,AH,EFLAGS], Uses = [AX] in
@@ -791,7 +792,6 @@ let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def IDIV32m: I<0xF7, MRM7m, (outs), (ins i32mem:$src),     // EDX:EAX/[mem32] = EAX,EDX
                "idiv{l}\t$src", []>;
 }
-} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 //  Two address Instructions.
