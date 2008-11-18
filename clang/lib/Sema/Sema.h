@@ -237,9 +237,8 @@ public:
   
   const LangOptions &getLangOptions() const;
   
-  /// The primitive diagnostic helpers - always returns true, which simplifies 
-  /// error handling (i.e. less code).
-  bool Diag(SourceLocation Loc, unsigned DiagID);
+  /// The primitive diagnostic helpers.
+  DiagnosticInfo Diag(SourceLocation Loc, unsigned DiagID);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
             const std::string &Msg2);

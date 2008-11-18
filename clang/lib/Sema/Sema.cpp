@@ -168,9 +168,9 @@ void Sema::ActOnEndOfTranslationUnit() {
 // Helper functions.
 //===----------------------------------------------------------------------===//
 
-bool Sema::Diag(SourceLocation Loc, unsigned DiagID) {
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID);
-  return true;
+DiagnosticInfo Sema::Diag(SourceLocation Loc, unsigned DiagID) {
+  return PP.getDiagnostics().Report(FullSourceLoc(Loc, PP.getSourceManager()),
+                                    DiagID);
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
