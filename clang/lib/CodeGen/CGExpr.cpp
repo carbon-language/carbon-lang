@@ -154,7 +154,7 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
   if (LV.isObjcWeak()) {
     // load of a __weak object. 
     llvm::Value *AddrWeakObj = LV.getAddress();
-    llvm::Value *read_weak = CGM.getObjCRuntime().EmitObjCWeakCall(*this, 
+    llvm::Value *read_weak = CGM.getObjCRuntime().EmitObjCWeakRead(*this, 
                                                                    AddrWeakObj);
     return RValue::get(read_weak);
   }
@@ -335,6 +335,14 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
 /// is 'Ty'.
 void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst, 
                                              QualType Ty) {
+  if (Dst.isObjcWeak()) {
+    // load of a __weak object. 
+    llvm::Value *LvalueDst = Dst.getAddress();
+    llvm::Value *src = Src.getScalarVal();
+    CGM.getObjCRuntime().EmitObjCWeakAssign(*this, src, LvalueDst);
+    return;
+  }
+  
   if (!Dst.isSimple()) {
     if (Dst.isVectorElt()) {
       // Read/modify/write the vector, inserting the new element.

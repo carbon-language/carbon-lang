@@ -145,8 +145,10 @@ public:
                              const ObjCAtThrowStmt &S) = 0;
   virtual void EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                     const ObjCAtSynchronizedStmt &S) = 0;
-  virtual llvm::Value * EmitObjCWeakCall(CodeGen::CodeGenFunction &CGF,
+  virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
 					 llvm::Value *AddrWeakObj) = 0;
+  virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
+                                  llvm::Value *src, llvm::Value *dest) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.  

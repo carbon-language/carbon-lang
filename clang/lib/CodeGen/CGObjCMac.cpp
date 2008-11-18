@@ -454,8 +454,10 @@ public:
                              const ObjCAtThrowStmt &S);
   virtual void EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                     const ObjCAtSynchronizedStmt &S);
-  virtual llvm::Value * EmitObjCWeakCall(CodeGen::CodeGenFunction &CGF,
+  virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *AddrWeakObj); 
+  virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
+                                  llvm::Value *src, llvm::Value *dst); 
 };
 } // end anonymous namespace
 
@@ -1776,15 +1778,26 @@ void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
   EmitBranch(ExecuteTryExit ? E->FinallyBlock : E->FinallyNoExit);
 }
 
-/// EmitObjCWeakCall - Code gen for loading value of a __weak
+/// EmitObjCWeakRead - Code gen for loading value of a __weak
 /// object: objc_read_weak (id *src)
 ///
-llvm::Value * CGObjCMac::EmitObjCWeakCall(CodeGen::CodeGenFunction &CGF,
+llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
                                           llvm::Value *AddrWeakObj)
 {
   llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.GcReadWeakFn,
-                                                  AddrWeakObj, "weakobj");
+                                                  AddrWeakObj, "weakread");
   return read_weak;
+}
+
+/// EmitObjCWeakAssign - Code gen for assigning to a __weak object.
+/// objc_assign_weak (id src, id *dst)
+///
+void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
+                                   llvm::Value *src, llvm::Value *dst)
+{
+  CGF.Builder.CreateCall2(ObjCTypes.GcAssignWeakFn,
+                          src, dst, "weakassign");
+  return;
 }
 
 /// EmitSynchronizedStmt - Code gen for @synchronized(expr) stmt;
