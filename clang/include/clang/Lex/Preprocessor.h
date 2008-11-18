@@ -397,16 +397,14 @@ public:
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
-  void Diag(SourceLocation Loc, unsigned DiagID);  
+  DiagnosticInfo Diag(SourceLocation Loc, unsigned DiagID);  
+  DiagnosticInfo Diag(const Token &Tok, unsigned DiagID);
   void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
   void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
             const SourceRange &R1, const SourceRange &R2);
   void Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R);
   void Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R1,
             const SourceRange &R2);
-  void Diag(const Token &Tok, unsigned DiagID) {
-    Diag(Tok.getLocation(), DiagID);
-  }
   void Diag(const Token &Tok, unsigned DiagID, const std::string &Msg) {
     Diag(Tok.getLocation(), DiagID, Msg);
   }

@@ -118,9 +118,14 @@ Preprocessor::~Preprocessor() {
 /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
 /// the specified Token's location, translating the token's start
 /// position in the current buffer into a SourcePosition object for rendering.
-void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID) {
-  Diags.Report(getFullLoc(Loc), DiagID);
+DiagnosticInfo Preprocessor::Diag(SourceLocation Loc, unsigned DiagID) {
+  return Diags.Report(getFullLoc(Loc), DiagID);
 }
+
+DiagnosticInfo Preprocessor::Diag(const Token &Tok, unsigned DiagID) {
+  return Diags.Report(getFullLoc(Tok.getLocation()), DiagID);
+}
+
 
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID, 
                         const std::string &Msg) {

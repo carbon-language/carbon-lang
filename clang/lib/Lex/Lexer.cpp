@@ -306,11 +306,10 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
 
 /// Diag - Forwarding function for diagnostics.  This translate a source
 /// position in the current buffer into a SourceLocation object for rendering.
-void Lexer::Diag(const char *Loc, unsigned DiagID,
-                 const std::string &Msg) const {
+DiagnosticInfo Lexer::Diag(const char *Loc, unsigned DiagID) const {
   if (LexingRawMode && Diagnostic::isBuiltinNoteWarningOrExtension(DiagID))
-    return;
-  PP->Diag(getSourceLocation(Loc), DiagID, Msg);
+    return DiagnosticInfo(0, FullSourceLoc(), 0);
+  return PP->Diag(getSourceLocation(Loc), DiagID);
 }
 
 //===----------------------------------------------------------------------===//
@@ -340,14 +339,14 @@ static char GetTrigraphCharForLetter(char Letter) {
 /// whether trigraphs are enabled or not.
 static char DecodeTrigraphChar(const char *CP, Lexer *L) {
   char Res = GetTrigraphCharForLetter(*CP);
-  if (Res && L) {
-    if (!L->getFeatures().Trigraphs) {
-      L->Diag(CP-2, diag::trigraph_ignored);
-      return 0;
-    } else {
-      L->Diag(CP-2, diag::trigraph_converted, std::string()+Res);
-    }
+  if (!Res || !L) return Res;
+  
+  if (!L->getFeatures().Trigraphs) {
+    L->Diag(CP-2, diag::trigraph_ignored);
+    return 0;
   }
+    
+  L->Diag(CP-2, diag::trigraph_converted) << std::string()+Res;
   return Res;
 }
 

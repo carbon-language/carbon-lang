@@ -48,8 +48,10 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
   LexUnexpandedToken(MacroNameTok);
   
   // Missing macro name?
-  if (MacroNameTok.is(tok::eom))
-    return Diag(MacroNameTok, diag::err_pp_missing_macro_name);
+  if (MacroNameTok.is(tok::eom)) {
+    Diag(MacroNameTok, diag::err_pp_missing_macro_name);
+    return;
+  }
   
   IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
   if (II == 0) {
@@ -489,8 +491,10 @@ void Preprocessor::HandleIdentSCCSDirective(Token &Tok) {
   
   // If the token kind isn't a string, it's a malformed directive.
   if (StrTok.isNot(tok::string_literal) &&
-      StrTok.isNot(tok::wide_string_literal))
-    return Diag(StrTok, diag::err_pp_malformed_ident);
+      StrTok.isNot(tok::wide_string_literal)) {
+    Diag(StrTok, diag::err_pp_malformed_ident);
+    return;
+  }
   
   // Verify that there is nothing after the string, other than EOM.
   CheckEndOfDirective("#ident");
@@ -658,16 +662,20 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   CheckEndOfDirective("#include");
 
   // Check that we don't have infinite #include recursion.
-  if (IncludeMacroStack.size() == MaxAllowedIncludeStackDepth-1)
-    return Diag(FilenameTok, diag::err_pp_include_too_deep);
+  if (IncludeMacroStack.size() == MaxAllowedIncludeStackDepth-1) {
+    Diag(FilenameTok, diag::err_pp_include_too_deep);
+    return;
+  }
   
   // Search include directories.
   const DirectoryLookup *CurDir;
   const FileEntry *File = LookupFile(FilenameStart, FilenameEnd,
                                      isAngled, LookupFrom, CurDir);
-  if (File == 0)
-    return Diag(FilenameTok, diag::err_pp_file_not_found,
-                std::string(FilenameStart, FilenameEnd));
+  if (File == 0) {
+    Diag(FilenameTok, diag::err_pp_file_not_found)
+       << std::string(FilenameStart, FilenameEnd);
+    return;
+  }
   
   // Ask HeaderInfo if we should enter this #include file.  If not, #including
   // this file will have no effect.
@@ -1101,7 +1109,8 @@ void Preprocessor::HandleEndifDirective(Token &EndifToken) {
   PPConditionalInfo CondInfo;
   if (CurPPLexer->popConditionalLevel(CondInfo)) {
     // No conditionals on the stack: this is an #endif without an #if.
-    return Diag(EndifToken, diag::err_pp_endif_without_if);
+    Diag(EndifToken, diag::err_pp_endif_without_if);
+    return;
   }
   
   // If this the end of a top-level #endif, inform MIOpt.
@@ -1120,8 +1129,10 @@ void Preprocessor::HandleElseDirective(Token &Result) {
   CheckEndOfDirective("#else");
   
   PPConditionalInfo CI;
-  if (CurPPLexer->popConditionalLevel(CI))
-    return Diag(Result, diag::pp_err_else_without_if);
+  if (CurPPLexer->popConditionalLevel(CI)) {
+    Diag(Result, diag::pp_err_else_without_if);
+    return;
+  }
   
   // If this is a top-level #else, inform the MIOpt.
   if (CurPPLexer->getConditionalStackDepth() == 0)
@@ -1145,8 +1156,10 @@ void Preprocessor::HandleElifDirective(Token &ElifToken) {
   DiscardUntilEndOfDirective();
 
   PPConditionalInfo CI;
-  if (CurPPLexer->popConditionalLevel(CI))
-    return Diag(ElifToken, diag::pp_err_elif_without_if);
+  if (CurPPLexer->popConditionalLevel(CI)) {
+    Diag(ElifToken, diag::pp_err_elif_without_if);
+    return;
+  }
   
   // If this is a top-level #elif, inform the MIOpt.
   if (CurPPLexer->getConditionalStackDepth() == 0)

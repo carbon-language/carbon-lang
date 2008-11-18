@@ -102,13 +102,17 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   
   // Read the '('.
   Lex(Tok);
-  if (Tok.isNot(tok::l_paren))
-    return Diag(PragmaLoc, diag::err__Pragma_malformed);
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(PragmaLoc, diag::err__Pragma_malformed);
+    return;
+  }
 
   // Read the '"..."'.
   Lex(Tok);
-  if (Tok.isNot(tok::string_literal) && Tok.isNot(tok::wide_string_literal))
-    return Diag(PragmaLoc, diag::err__Pragma_malformed);
+  if (Tok.isNot(tok::string_literal) && Tok.isNot(tok::wide_string_literal)) {
+    Diag(PragmaLoc, diag::err__Pragma_malformed);
+    return;
+  }
   
   // Remember the string.
   std::string StrVal = getSpelling(Tok);
@@ -116,8 +120,10 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
 
   // Read the ')'.
   Lex(Tok);
-  if (Tok.isNot(tok::r_paren))
-    return Diag(PragmaLoc, diag::err__Pragma_malformed);
+  if (Tok.isNot(tok::r_paren)) {
+    Diag(PragmaLoc, diag::err__Pragma_malformed);
+    return;
+  }
   
   // The _Pragma is lexically sound.  Destringize according to C99 6.10.9.1.
   if (StrVal[0] == 'L')  // Remove L prefix.
