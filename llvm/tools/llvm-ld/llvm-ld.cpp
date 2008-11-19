@@ -108,6 +108,9 @@ static cl::opt<bool> CO7("start-group", cl::Hidden,
 static cl::opt<bool> CO8("end-group", cl::Hidden, 
   cl::desc("Compatibility option: ignored"));
 
+static cl::opt<std::string> CO9("m", cl::Hidden, 
+  cl::desc("Compatibility option: ignored"));
+
 /// This is just for convenience so it doesn't have to be passed around
 /// everywhere.
 static std::string progname;
