@@ -353,10 +353,10 @@ DeclContext *Decl::castToDeclContext(const Decl *D) {
 // DeclContext Implementation
 //===----------------------------------------------------------------------===//
 
-DeclContext *DeclContext::getParent() {
-  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
+const DeclContext *DeclContext::getParent() const {
+  if (const ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
     return SD->getDeclContext();
-  else if (BlockDecl *BD = dyn_cast<BlockDecl>(this))
+  else if (const BlockDecl *BD = dyn_cast<BlockDecl>(this))
     return BD->getParentContext();
   else
     return NULL;
