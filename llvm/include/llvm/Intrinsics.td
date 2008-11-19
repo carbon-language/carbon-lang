@@ -190,18 +190,27 @@ def int_stackprotector : Intrinsic<[llvm_void_ty],
 //
 
 let Properties = [IntrWriteArgMem] in {
+  def int_memcpy_i16  : Intrinsic<[llvm_void_ty],
+                                  [llvm_ptr_ty, llvm_ptr_ty,
+                                   llvm_i16_ty, llvm_i16_ty]>;
   def int_memcpy_i32  : Intrinsic<[llvm_void_ty],
                                   [llvm_ptr_ty, llvm_ptr_ty,
                                    llvm_i32_ty, llvm_i32_ty]>;
   def int_memcpy_i64  : Intrinsic<[llvm_void_ty],
                                   [llvm_ptr_ty, llvm_ptr_ty,
                                    llvm_i64_ty, llvm_i32_ty]>;
+  def int_memmove_i16 : Intrinsic<[llvm_void_ty],
+                                  [llvm_ptr_ty, llvm_ptr_ty,
+                                   llvm_i16_ty, llvm_i16_ty]>;
   def int_memmove_i32 : Intrinsic<[llvm_void_ty],
                                   [llvm_ptr_ty, llvm_ptr_ty,
                                    llvm_i32_ty, llvm_i32_ty]>;
   def int_memmove_i64 : Intrinsic<[llvm_void_ty],
                                   [llvm_ptr_ty, llvm_ptr_ty,
                                    llvm_i64_ty, llvm_i32_ty]>;
+  def int_memset_i16  : Intrinsic<[llvm_void_ty],
+                                  [llvm_ptr_ty, llvm_i8_ty,
+                                   llvm_i16_ty, llvm_i16_ty]>;
   def int_memset_i32  : Intrinsic<[llvm_void_ty],
                                   [llvm_ptr_ty, llvm_i8_ty,
                                    llvm_i32_ty, llvm_i32_ty]>;
