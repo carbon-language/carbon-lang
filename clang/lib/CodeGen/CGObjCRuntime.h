@@ -149,6 +149,10 @@ public:
 					 llvm::Value *AddrWeakObj) = 0;
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                   llvm::Value *src, llvm::Value *dest) = 0;
+  virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
+                                    llvm::Value *src, llvm::Value *dest) = 0;
+  virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
+                                        llvm::Value *src, llvm::Value *dest) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.  

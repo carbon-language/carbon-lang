@@ -151,7 +151,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 /// this method emits the address of the lvalue, then loads the result as an
 /// rvalue, returning the rvalue.
 RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
-  if (LV.isObjcWeak()) {
+  if (LV.ObjcWeak()) {
     // load of a __weak object. 
     llvm::Value *AddrWeakObj = LV.getAddress();
     llvm::Value *read_weak = CGM.getObjCRuntime().EmitObjCWeakRead(*this, 
@@ -335,11 +335,19 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
 /// is 'Ty'.
 void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst, 
                                              QualType Ty) {
-  if (Dst.isObjcWeak()) {
+  if (Dst.ObjcWeak()) {
     // load of a __weak object. 
     llvm::Value *LvalueDst = Dst.getAddress();
     llvm::Value *src = Src.getScalarVal();
     CGM.getObjCRuntime().EmitObjCWeakAssign(*this, src, LvalueDst);
+    return;
+  }
+  
+  if (Dst.ObjcStrong()) {
+    // load of a __strong object. 
+    llvm::Value *LvalueDst = Dst.getAddress();
+    llvm::Value *src = Src.getScalarVal();
+    CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
     return;
   }
   
@@ -510,10 +518,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   } else if (VD && VD->isFileVarDecl()) {
     LValue LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
                                  E->getType().getCVRQualifiers());
-    if (VD->getAttr<ObjCGCAttr>())
-    {
-      ObjCGCAttr::GCAttrTypes attrType = (VD->getAttr<ObjCGCAttr>())->getType();
-      LValue::SetObjCGCAttrs(attrType == ObjCGCAttr::Weak, attrType == ObjCGCAttr::Strong, LV);
+    if (const ObjCGCAttr *A = VD->getAttr<ObjCGCAttr>()) {
+      ObjCGCAttr::GCAttrTypes attrType = A->getType();
+      LValue::SetObjCType(attrType == ObjCGCAttr::Weak, attrType == ObjCGCAttr::Strong, LV);
     }
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {

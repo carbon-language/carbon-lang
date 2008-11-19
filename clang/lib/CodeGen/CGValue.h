@@ -106,6 +106,12 @@ class LValue {
     PropertyRef   // This is an Objective-C property reference, use
                   // getPropertyRefExpr
   } LVType;
+
+  enum ObjCType {
+    None = 0,	// object with no gc attribute.
+    Weak,	// __weak object expression
+    Strong      // __strong object expression
+  };
   
   llvm::Value *V;
   
@@ -130,9 +136,9 @@ class LValue {
   bool Volatile:1;
   // FIXME: set but never used, what effect should it have?
   bool Restrict:1;
-  
-  bool ObjcWeak:1;
-  bool ObjcStrong:1;
+
+  // objective-c's gc attributes
+  unsigned ObjCType : 2;  
 
 private:
   static void SetQualifiers(unsigned Qualifiers, LValue& R) {
@@ -140,8 +146,7 @@ private:
     R.Restrict = (Qualifiers&QualType::Restrict)!=0;
     // FIXME: Convenient place to set objc flags to 0. This
     // should really be done in a user-defined constructor instead.
-    R.ObjcWeak = 0;
-    R.ObjcStrong = 0;
+    R.ObjCType = None;
   }
   
 public:
@@ -154,12 +159,14 @@ public:
   bool isVolatileQualified() const { return Volatile; }
   bool isRestrictQualified() const { return Restrict; }
   
-  bool isObjcWeak() const { return ObjcWeak; }
-  bool isObjcStrong() const { return ObjcStrong; }
+  bool ObjcWeak() const { return ObjCType == Weak; }
+  bool ObjcStrong() const { return ObjCType == Strong; }
   
-  static void SetObjCGCAttrs(unsigned Weak, unsigned Strong, LValue& R) {
-    R.ObjcWeak = Weak;
-    R.ObjcStrong = Strong;
+  static void SetObjCType(unsigned WeakVal, unsigned StrongVal, LValue& R) {
+    if (WeakVal)
+      R.ObjCType = Weak;
+    else if (StrongVal)
+      R.ObjCType = Strong;
   }
   
   // simple lvalue

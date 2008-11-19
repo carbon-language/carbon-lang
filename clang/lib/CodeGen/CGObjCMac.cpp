@@ -458,6 +458,10 @@ public:
                                          llvm::Value *AddrWeakObj); 
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                   llvm::Value *src, llvm::Value *dst); 
+  virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
+                                    llvm::Value *src, llvm::Value *dest);
+  virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
+                                        llvm::Value *src, llvm::Value *dest);
 };
 } // end anonymous namespace
 
@@ -1796,6 +1800,28 @@ void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
 {
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignWeakFn,
+                          src, dst, "weakassign");
+  return;
+}
+
+/// EmitObjCGlobalAssign - Code gen for assigning to a __strong object.
+/// objc_assign_global (id src, id *dst)
+///
+void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
+                                     llvm::Value *src, llvm::Value *dst)
+{
+  CGF.Builder.CreateCall2(ObjCTypes.GcAssignGlobalFn,
+                          src, dst, "globalassign");
+  return;
+}
+
+/// EmitObjCStrongCastAssign - Code gen for assigning to a __strong cast object.
+/// objc_assign_strongCast (id src, id *dst)
+///
+void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
+                                         llvm::Value *src, llvm::Value *dst)
+{
+  CGF.Builder.CreateCall2(ObjCTypes.GcAssignStrongCastFn,
                           src, dst, "weakassign");
   return;
 }

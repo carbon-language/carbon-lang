@@ -134,6 +134,10 @@ public:
                                          llvm::Value *AddrWeakObj);
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                   llvm::Value *src, llvm::Value *dst);
+  virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
+                                    llvm::Value *src, llvm::Value *dest);
+  virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
+                                        llvm::Value *src, llvm::Value *dest);
 };
 } // end anonymous namespace
 
@@ -980,6 +984,18 @@ llvm::Value * CGObjCGNU::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
 
 void CGObjCGNU::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
+{
+  return;
+}
+
+void CGObjCGNU::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
+                                     llvm::Value *src, llvm::Value *dst)
+{
+  return;
+}
+
+void CGObjCGNU::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
+                                         llvm::Value *src, llvm::Value *dst)
 {
   return;
 }
