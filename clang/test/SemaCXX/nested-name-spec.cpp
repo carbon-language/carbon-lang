@@ -63,3 +63,6 @@ void f3() {
   { typedef A::C A;  A::ax = 0; } // expected-error {{no member named 'ax'}}
   { typedef A::C A;  A::cx = 0; }
 }
+
+// make sure the following doesn't hit any asserts
+void f4(undef::C); // expected-error {{use of undeclared identifier 'undef'}} // expected-error {{expected ')'}} expected-error {{to match this '('}} // expected-error {{variable has incomplete type 'void'}}

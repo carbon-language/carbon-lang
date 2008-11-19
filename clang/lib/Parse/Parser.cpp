@@ -731,9 +731,12 @@ void Parser::TryAnnotateTypeOrScopeToken() {
 
   if (SS.isNotEmpty()) {
     // A C++ scope specifier that isn't followed by a typename.
-    // Push the current token back into the token stream and use an annotation
-    // scope token for current token.
-    PP.EnterToken(Tok);
+    // Push the current token back into the token stream (or revert it if it is
+    // cached) and use an annotation scope token for current token.
+    if (PP.isBacktrackEnabled())
+      PP.RevertCachedTokens(1);
+    else
+      PP.EnterToken(Tok);
     Tok.setKind(tok::annot_cxxscope);
     Tok.setAnnotationValue(SS.getScopeRep());
     Tok.setAnnotationRange(SS.getRange());
@@ -754,9 +757,12 @@ void Parser::TryAnnotateScopeToken() {
     CXXScopeSpec SS;
     ParseCXXScopeSpecifier(SS);
 
-    // Push the current token back into the token stream and use an annotation
-    // scope token for current token.
-    PP.EnterToken(Tok);
+    // Push the current token back into the token stream (or revert it if it is
+    // cached) and use an annotation scope token for current token.
+    if (PP.isBacktrackEnabled())
+      PP.RevertCachedTokens(1);
+    else
+      PP.EnterToken(Tok);
     Tok.setKind(tok::annot_cxxscope);
     Tok.setAnnotationValue(SS.getScopeRep());
     Tok.setAnnotationRange(SS.getRange());

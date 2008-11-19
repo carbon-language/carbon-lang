@@ -369,6 +369,20 @@ public:
       return PeekAhead(N+1);
   }
 
+  /// RevertCachedTokens - When backtracking is enabled and tokens are cached,
+  /// this allows to revert a specific number of tokens.
+  /// Note that the number of tokens being reverted should be up to the last
+  /// backtrack position, not more.
+  void RevertCachedTokens(unsigned N) {
+    assert(isBacktrackEnabled() &&
+           "Should only be called when tokens are cached for backtracking");
+    assert(signed(CachedLexPos) - signed(N) >= signed(BacktrackPositions.back())
+         && "Should revert tokens up to the last backtrack position, not more");
+    assert(signed(CachedLexPos) - signed(N) >= 0 &&
+           "Corrupted backtrack positions ?");
+    CachedLexPos -= N;
+  }
+
   /// EnterToken - Enters a token in the token stream to be lexed next. If
   /// BackTrack() is called afterwards, the token will remain at the insertion
   /// point.
