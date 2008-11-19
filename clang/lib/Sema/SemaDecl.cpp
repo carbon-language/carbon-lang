@@ -53,10 +53,10 @@ DeclContext *Sema::getContainingDC(DeclContext *DC) {
     // A C++ inline method is parsed *after* the topmost class it was declared in
     // is fully parsed (it's "complete").
     // The parsing of a C++ inline method happens at the declaration context of
-    // the topmost (non-nested) class it is declared in.
+    // the topmost (non-nested) class it is lexically declared in.
     assert(isa<CXXRecordDecl>(MD->getParent()) && "C++ method not in Record.");
     DC = MD->getParent();
-    while (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC->getParent()))
+    while (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC->getLexicalParent()))
       DC = RD;
 
     // Return the declaration context of the topmost class the inline method is
@@ -70,7 +70,7 @@ DeclContext *Sema::getContainingDC(DeclContext *DC) {
   if (ScopedDecl *SD = dyn_cast<ScopedDecl>(DC))
     return SD->getLexicalDeclContext();
 
-  return DC->getParent();
+  return DC->getLexicalParent();
 }
 
 void Sema::PushDeclContext(DeclContext *DC) {

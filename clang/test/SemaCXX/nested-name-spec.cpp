@@ -45,10 +45,17 @@ struct A::undef; // expected-error {{'undef' does not name a tag member in the s
 namespace A2 {
   typedef int INT;
   struct RC;
+  struct CC {
+    struct NC;
+  };
 }
 
 struct A2::RC {
   INT x;
+};
+
+struct A2::CC::NC {
+  void m() {}
 };
 
 void f3() {

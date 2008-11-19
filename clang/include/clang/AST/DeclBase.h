@@ -300,6 +300,21 @@ public:
                              const_cast<const DeclContext*>(this)->getParent());
   }
 
+  /// getLexicalParent - Returns the containing lexical DeclContext. May be
+  /// different from getParent, e.g.:
+  ///
+  ///   namespace A {
+  ///      struct S;
+  ///   }
+  ///   struct A::S {}; // getParent() == namespace 'A'
+  ///                   // getLexicalParent() == translation unit
+  ///
+  const DeclContext *getLexicalParent() const;
+  DeclContext *getLexicalParent() {
+    return const_cast<DeclContext*>(
+                      const_cast<const DeclContext*>(this)->getLexicalParent());
+  }
+
   bool isFunctionOrMethod() const {
     switch (DeclKind) {
       case Decl::Block:
