@@ -387,20 +387,19 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
     
     SourceLocation AttrName = ConsumeToken(); // consume last attribute name
     
-    if (!strcmp(II->getName(), "readonly"))
+    if (II->isName("readonly"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readonly);
-    else if (!strcmp(II->getName(), "assign"))
+    else if (II->isName("assign"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_assign);
-    else if (!strcmp(II->getName(), "readwrite"))
+    else if (II->isName("readwrite"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readwrite);
-    else if (!strcmp(II->getName(), "retain"))
+    else if (II->isName("retain"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_retain);
-    else if (!strcmp(II->getName(), "copy"))
+    else if (II->isName("copy"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_copy);
-    else if (!strcmp(II->getName(), "nonatomic"))
+    else if (II->isName("nonatomic"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
-    else if (!strcmp(II->getName(), "getter") || 
-             !strcmp(II->getName(), "setter")) {
+    else if (II->isName("getter") || II->isName("setter")) {
       // getter/setter require extra treatment.
       if (ExpectAndConsume(tok::equal, diag::err_objc_expected_equal, "",
                            tok::r_paren))
@@ -426,7 +425,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
         ConsumeToken();  // consume method name
       }
     } else {
-      Diag(AttrName, diag::err_objc_expected_property_attr) << II->getName();
+      Diag(AttrName, diag::err_objc_expected_property_attr) << II;
       SkipUntil(tok::r_paren);
       return;
     }
