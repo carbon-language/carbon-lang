@@ -76,3 +76,10 @@ void PTHLexer::setEOF(Token& Tok) {
   Tok = Tokens[NumTokens]; // NumTokens is already adjusted, so this isn't
                            // an overflow.
 }
+
+void PTHLexer::DiscardToEndOfLine() {
+  assert(ParsingPreprocessorDirective && ParsingFilename == false &&
+         "Must be in a preprocessing directive!");
+  
+  assert (0 && "Not implemented.");
+}

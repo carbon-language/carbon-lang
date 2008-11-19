@@ -473,10 +473,15 @@ void Preprocessor::HandleUserDiagnosticDirective(Token &Tok,
   // tokens.  For example, this is allowed: "#warning `   'foo".  GCC does
   // collapse multiple consequtive white space between tokens, but this isn't
   // specified by the standard.
-  std::string Message = CurLexer->ReadToEndOfLine();
-
-  unsigned DiagID = isWarning ? diag::pp_hash_warning : diag::err_pp_hash_error;
-  Diag(Tok, DiagID) << Message;
+  
+  if (CurLexer) {
+    std::string Message = CurLexer->ReadToEndOfLine();
+    unsigned DiagID = isWarning ? diag::pp_hash_warning : diag::err_pp_hash_error;
+    Diag(Tok, DiagID) << Message;
+  }
+  else {
+    CurPTHLexer->DiscardToEndOfLine();
+  }    
 }
 
 /// HandleIdentSCCSDirective - Handle a #ident/#sccs directive.

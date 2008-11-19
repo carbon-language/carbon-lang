@@ -56,6 +56,10 @@ public:
   /// the virtual location encodes where we should *claim* the characters came
   /// from.  Currently this is only used by _Pragma handling.
   SourceLocation getFileLoc() const { return FileLoc; }
+  
+  /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
+  /// uninterpreted string.  This switches the lexer out of directive mode.
+  void DiscardToEndOfLine();
 };
 
 }  // end namespace clang

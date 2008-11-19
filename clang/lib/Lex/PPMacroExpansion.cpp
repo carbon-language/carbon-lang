@@ -111,7 +111,7 @@ bool Preprocessor::isNextPPTokenLParen() {
     // We have run off the end.  If it's a source file we don't
     // examine enclosing ones (C99 5.1.1.2p4).  Otherwise walk up the
     // macro stack.
-    if (CurLexer)
+    if (CurPPLexer)
       return false;
     for (unsigned i = IncludeMacroStack.size(); i != 0; --i) {
       IncludeStackInfo &Entry = IncludeMacroStack[i-1];

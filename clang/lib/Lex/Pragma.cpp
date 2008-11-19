@@ -193,8 +193,9 @@ void Preprocessor::HandlePragmaOnce(Token &OnceTok) {
 }
 
 void Preprocessor::HandlePragmaMark() {
-  assert(CurLexer && "No current lexer?");
-  CurLexer->ReadToEndOfLine();
+  assert(CurPPLexer && "No current lexer?");
+  if (CurLexer) CurLexer->ReadToEndOfLine();
+  else CurPTHLexer->DiscardToEndOfLine();
 }
 
 
