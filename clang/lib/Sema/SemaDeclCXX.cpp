@@ -20,7 +20,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm> // for std::equal
 #include <map>
@@ -1876,10 +1875,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
        (NumParams == 2 && !CanBeBinaryOperator) ||
        (NumParams < 1) || (NumParams > 2))) {
     // We have the wrong number of parameters.
-    std::string NumParamsStr = llvm::utostr(NumParams);
-
     diag::kind DK;
-
     if (CanBeUnaryOperator && CanBeBinaryOperator) {
       if (NumParams == 1)
         DK = diag::err_operator_overload_must_be_unary_or_binary;
@@ -1899,8 +1895,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
       assert(false && "All non-call overloaded operators are unary or binary!");
     }
 
-    return Diag(FnDecl->getLocation(), DK,
-                FnDecl->getName(), NumParamsStr);
+    return Diag(FnDecl->getLocation(), DK) << FnDecl->getName() << NumParams;
   }
       
   // Overloaded operators other than operator() cannot be variadic.

@@ -25,7 +25,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h" 
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
 Sema::TypeTy *Sema::isTypeName(IdentifierInfo &II, Scope *S,
@@ -3150,7 +3149,7 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
     // FIXME: This should come from the target.
     if (AlignmentVal == 0)
       AlignmentVal = 8;
-    Diag(PragmaLoc, diag::warn_pragma_pack_show, llvm::utostr(AlignmentVal));
+    Diag(PragmaLoc, diag::warn_pragma_pack_show) << AlignmentVal;
     break;
 
   case Action::PPK_Push: // pack(push [, id] [, [n])
