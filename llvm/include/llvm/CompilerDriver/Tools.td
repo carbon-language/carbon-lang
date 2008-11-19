@@ -21,10 +21,16 @@ def llvm_gcc_c : Tool<
                     "llvm-gcc -E -x c++ $INFILE -o $OUTFILE",
                     (default),
                     "llvm-gcc -E -x c++ $INFILE"),
+            (switch_on "fsyntax-only"),
+              "llvm-gcc -c -x c $INFILE",
             (default),
               "llvm-gcc -c -x c $INFILE -o $OUTFILE -emit-llvm")),
  (switch_option "E", (stop_compilation),
    (help "Stop after the preprocessing stage, do not run the compiler")),
+ (switch_option "fsyntax-only", (stop_compilation),
+   (help "Stop after checking the input for syntax errors")),
+ (parameter_list_option "include", (forward),
+   (help "Include the named file prior to preprocessing")),
  (sink)
 ]>;
 
