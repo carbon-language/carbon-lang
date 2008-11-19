@@ -131,6 +131,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   addRegisterClass(MVT::i128, SPU::GPRCRegisterClass);
 
   // SPU has no sign or zero extended loads for i1, i8, i16:
+#if 0
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
@@ -139,6 +140,11 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setTruncStoreAction(MVT::i32, MVT::i1, Custom);
   setTruncStoreAction(MVT::i64, MVT::i1, Custom);
   setTruncStoreAction(MVT::i128, MVT::i1, Custom);
+#else
+  setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD,  MVT::i1, Promote);
+  setTruncStoreAction(MVT::i8, MVT::i1, Promote);
+#endif
 
   setLoadExtAction(ISD::EXTLOAD,  MVT::i8, Custom);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Custom);
@@ -702,11 +708,12 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
     // The vector type we really want to load from the 16-byte chunk, except
     // in the case of MVT::i1, which has to be v16i8.
-    MVT vecVT, stVecVT = MVT::v16i8;
+    MVT vecVT = MVT::v16i8, stVecVT = MVT::v16i8;
 
-    if (StVT != MVT::i1)
+    if (StVT != MVT::i1) {
       stVecVT = MVT::getVectorVT(StVT, (128 / StVT.getSizeInBits()));
-    vecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
+      vecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
+    }
 
     SDValue alignLoadVec =
       AlignedLoad(Op, DAG, ST, SN, alignment,
@@ -733,7 +740,6 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
     SDValue insertEltOffs = DAG.getConstant(chunk_offset, PtrVT);
     SDValue insertEltPtr;
-    SDValue insertEltOp;
 
     // If the base pointer is already a D-form address, then just create
     // a new D-form address with a slot offset and the orignal base pointer.
@@ -751,16 +757,43 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       insertEltPtr = DAG.getNode(ISD::ADD, PtrVT, basePtr, insertEltOffs);
     }
 
-    insertEltOp = DAG.getNode(SPUISD::INSERT_MASK, stVecVT, insertEltPtr);
-    result = DAG.getNode(SPUISD::SHUFB, vecVT,
-                         DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, theValue),
-                         alignLoadVec,
+    SDValue insertEltOp =
+            DAG.getNode(SPUISD::INSERT_MASK, stVecVT, insertEltPtr);
+    SDValue vectorizeOp;
+
+#if 0
+    if (VT == MVT::i1 || StVT != VT) {
+      MVT toVT = (VT != MVT::i1) ? VT : MVT::i8;
+      if (toVT.bitsGT(VT)) {
+        vectorizeOp = DAG.getNode(ISD::ANY_EXTEND, toVT, theValue);
+      } else if (StVT.bitsLT(VT)) {
+        vectorizeOp = DAG.getNode(ISD::TRUNCATE, toVT, theValue);
+      }
+
+      vectorizeOp = DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, vectorizeOp);
+    } else
+#endif
+      vectorizeOp = DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, theValue);
+
+    result = DAG.getNode(SPUISD::SHUFB, vecVT, vectorizeOp, alignLoadVec,
                          DAG.getNode(ISD::BIT_CONVERT, vecVT, insertEltOp));
 
     result = DAG.getStore(the_chain, result, basePtr,
                           LN->getSrcValue(), LN->getSrcValueOffset(),
                           LN->isVolatile(), LN->getAlignment());
 
+#ifndef NDEBUG
+    if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
+      const SDValue &currentRoot = DAG.getRoot();
+
+      DAG.setRoot(result);
+      cerr << "------- CellSPU:LowerStore result:\n";
+      DAG.dump();
+      cerr << "-------\n";
+      DAG.setRoot(currentRoot);
+    }
+#endif
+    
     return result;
     /*UNREACHED*/
   }
