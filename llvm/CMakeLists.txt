@@ -118,14 +118,14 @@ set(LLVM_PLO_FLAGS "" CACHE
 
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
   # TODO: support other platforms and toolchains.
-  option(BUILD_32_BITS "Build 32 bits executables and libraries." OFF)
-  if( BUILD_32_BITS )
+  option(LLVM_BUILD_32_BITS "Build 32 bits executables and libraries." OFF)
+  if( LLVM_BUILD_32_BITS )
     message(STATUS "Building 32 bits executables and libraries.")
     add_definitions( -m32 )
-    set( CMAKE_EXE_LINKER_FLAGS "-m32 ${CMAKE_EXE_LINKER_FLAGS}" )
-    set( CMAKE_LINK_LIBRARY_FLAG "-m32 ${CMAKE_LINK_LIBRARY_FLAG}" )
+    list(APPEND CMAKE_EXE_LINKER_FLAGS -m32)
+    list(APPEND CMAKE_SHARED_LINKER_FLAGS -m32)
     set( LLVM_PLO_FLAGS -melf_i386 ${LLVM_PLO_FLAGS} )
-  endif( BUILD_32_BITS )
+  endif( LLVM_BUILD_32_BITS )
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
 
 if( MSVC )
