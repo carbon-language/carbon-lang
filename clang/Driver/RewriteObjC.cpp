@@ -1572,9 +1572,21 @@ bool RewriteObjC::needToScanForQualifiers(QualType T) {
 void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Expr *E) {
   QualType Type = E->getType();
   if (needToScanForQualifiers(Type)) {
-    SourceLocation Loc = E->getLocStart();
+    SourceLocation Loc, EndLoc;
+    
+    if (const CStyleCastExpr *ECE = dyn_cast<CStyleCastExpr>(E)) {
+      Loc = ECE->getLParenLoc();
+      EndLoc = ECE->getRParenLoc();
+    } else {
+      Loc = E->getLocStart();
+      EndLoc = E->getLocEnd();
+    }
+    // This will defend against trying to rewrite synthesized expressions.
+    if (Loc.isInvalid() || EndLoc.isInvalid())
+      return;
+
     const char *startBuf = SM->getCharacterData(Loc);
-    const char *endBuf = SM->getCharacterData(E->getLocEnd());
+    const char *endBuf = SM->getCharacterData(EndLoc);
     const char *startRef = 0, *endRef = 0;
     if (scanForProtocolRefs(startBuf, endBuf, startRef, endRef)) {
       // Get the locations of the startRef, endRef.

@@ -12,3 +12,14 @@ int main() {
     return 0;
 }
 
+// rdar://6291588
+@protocol A
+@end
+
+@interface Foo
+@end
+
+void func() {
+  id <A> obj = (id <A>)[Foo bar];
+}
+
