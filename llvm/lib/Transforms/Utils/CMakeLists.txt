@@ -7,7 +7,6 @@ add_llvm_library(LLVMTransformUtils
   CloneModule.cpp
   CloneTrace.cpp
   CodeExtractor.cpp
-  DbgInfoUtils.cpp
   DemoteRegToStack.cpp
   InlineCost.cpp
   InlineFunction.cpp
