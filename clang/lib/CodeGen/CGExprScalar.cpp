@@ -787,7 +787,9 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   Result = EmitScalarConversion(Result, ResultTy, LHSTy);
   
   // Store the result value into the LHS lvalue. Bit-fields are
-  // handled specially because the result is altered by the store.
+  // handled specially because the result is altered by the store,
+  // i.e., [C99 6.5.16p1] 'An assignment expression has the value of
+  // the left operand after the assignment...'.
   if (LHSLV.isBitfield())
     CGF.EmitStoreThroughBitfieldLValue(RValue::get(Result), LHSLV, LHSTy,
                                        &Result);
@@ -1003,7 +1005,9 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   Value *RHS = Visit(E->getRHS());
   
   // Store the value into the LHS.  Bit-fields are handled specially
-  // because the result is altered by the store.
+  // because the result is altered by the store, i.e., [C99 6.5.16p1]
+  // 'An assignment expression has the value of the left operand after
+  // the assignment...'.  
   // FIXME: Volatility!
   if (LHS.isBitfield())
     CGF.EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, E->getType(),
