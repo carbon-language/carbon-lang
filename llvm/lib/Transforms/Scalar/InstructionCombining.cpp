@@ -11966,7 +11966,8 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
     
     // We have now visited this block!  If we've already been here, ignore it.
     if (!Visited.insert(BB)) continue;
-    
+
+    DbgInfoIntrinsic *DBI_Prev = NULL;
     for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
       Instruction *Inst = BBI++;
       
@@ -11987,6 +11988,20 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
         continue;
       }
      
+      // If there are two consecutive llvm.dbg.stoppoint calls then
+      // it is likely that the optimizer deleted code in between these
+      // two intrinsics. 
+      DbgInfoIntrinsic *DBI_Next = dyn_cast<DbgInfoIntrinsic>(Inst);
+      if (DBI_Next) {
+        if (DBI_Prev
+            && DBI_Prev->getIntrinsicID() == llvm::Intrinsic::dbg_stoppoint
+            && DBI_Next->getIntrinsicID() == llvm::Intrinsic::dbg_stoppoint) {
+          IC.RemoveFromWorkList(DBI_Prev);
+          DBI_Prev->eraseFromParent();
+        }
+        DBI_Prev = DBI_Next;
+      }
+
       IC.AddToWorkList(Inst);
     }
 
