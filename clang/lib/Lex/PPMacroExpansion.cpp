@@ -104,6 +104,8 @@ bool Preprocessor::isNextPPTokenLParen() {
   unsigned Val;
   if (CurLexer)
     Val = CurLexer->isNextPPTokenLParen();
+  else if (CurPTHLexer)
+    Val = CurPTHLexer->isNextPPTokenLParen();
   else
     Val = CurTokenLexer->isNextTokenLParen();
   

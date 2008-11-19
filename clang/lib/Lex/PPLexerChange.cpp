@@ -151,12 +151,12 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
          "Ending a file when currently in a macro!");
   
   // See if this file had a controlling macro.
-  if (CurLexer) {  // Not ending a macro, ignore it.
+  if (CurPPLexer) {  // Not ending a macro, ignore it.
     if (const IdentifierInfo *ControllingMacro = 
-          CurLexer->MIOpt.GetControllingMacroAtEndOfFile()) {
+          CurPPLexer->MIOpt.GetControllingMacroAtEndOfFile()) {
       // Okay, this has a controlling macro, remember in PerFileInfo.
       if (const FileEntry *FE = 
-            SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc()))
+            SourceMgr.getFileEntryForID(CurPPLexer->getFileID()))
         HeaderInfo.SetFileControllingMacro(FE, ControllingMacro);
     }
   }
@@ -168,12 +168,14 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     RemoveTopOfLexerStack();
 
     // Notify the client, if desired, that we are in a new source file.
-    if (Callbacks && !isEndOfMacro && CurLexer) {
+    if (Callbacks && !isEndOfMacro && CurPPLexer) {
       SrcMgr::CharacteristicKind FileType =
-        SourceMgr.getFileCharacteristic(CurLexer->getFileLoc());
+        SourceMgr.getFileCharacteristic(CurPPLexer->getFileID());
       
-      Callbacks->FileChanged(CurLexer->getSourceLocation(CurLexer->BufferPtr),
-                             PPCallbacks::ExitFile, FileType);
+      if (CurLexer)
+        Callbacks->FileChanged(CurLexer->getSourceLocation(CurLexer->BufferPtr),
+                               PPCallbacks::ExitFile, FileType);
+      // FIXME: Add callback support for PTHLexer.
     }
 
     // Client should lex another token.
@@ -184,24 +186,31 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   // rather than "on the line following it", which doesn't exist.  This makes
   // diagnostics relating to the end of file include the last file that the user
   // actually typed, which is goodness.
-  const char *EndPos = CurLexer->BufferEnd;
-  if (EndPos != CurLexer->BufferStart && 
-      (EndPos[-1] == '\n' || EndPos[-1] == '\r')) {
-    --EndPos;
-    
-    // Handle \n\r and \r\n:
+  if (CurLexer) {
+    const char *EndPos = CurLexer->BufferEnd;
     if (EndPos != CurLexer->BufferStart && 
-        (EndPos[-1] == '\n' || EndPos[-1] == '\r') &&
-        EndPos[-1] != EndPos[0])
+        (EndPos[-1] == '\n' || EndPos[-1] == '\r')) {
       --EndPos;
+      
+      // Handle \n\r and \r\n:
+      if (EndPos != CurLexer->BufferStart && 
+          (EndPos[-1] == '\n' || EndPos[-1] == '\r') &&
+          EndPos[-1] != EndPos[0])
+        --EndPos;
+    }
+    
+    Result.startToken();
+    CurLexer->BufferPtr = EndPos;
+    CurLexer->FormTokenWithChars(Result, EndPos, tok::eof);
+    
+    // We're done with the #included file.
+    CurLexer.reset();
+  }
+  else {
+    CurPTHLexer->setEOF(Result);
+    CurPTHLexer.reset();
   }
   
-  Result.startToken();
-  CurLexer->BufferPtr = EndPos;
-  CurLexer->FormTokenWithChars(Result, EndPos, tok::eof);
-  
-  // We're done with the #included file.
-  CurLexer.reset();
   CurPPLexer = 0;
 
   // This is the end of the top-level file.  If the diag::pp_macro_not_used
@@ -219,7 +228,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
 /// HandleEndOfTokenLexer - This callback is invoked when the current TokenLexer
 /// hits the end of its token stream.
 bool Preprocessor::HandleEndOfTokenLexer(Token &Result) {
-  assert(CurTokenLexer && !CurLexer &&
+  assert(CurTokenLexer && !CurPPLexer &&
          "Ending a macro when currently in a #include file!");
 
   // Delete or cache the now-dead macro expander.
@@ -255,17 +264,17 @@ void Preprocessor::RemoveTopOfLexerStack() {
 /// comment (/##/) in microsoft mode, this method handles updating the current
 /// state, returning the token on the next source line.
 void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
-  assert(CurTokenLexer && !CurLexer &&
+  assert(CurTokenLexer && !CurPPLexer &&
          "Pasted comment can only be formed from macro");
   
   // We handle this by scanning for the closest real lexer, switching it to
   // raw mode and preprocessor mode.  This will cause it to return \n as an
   // explicit EOM token.
-  Lexer *FoundLexer = 0;
+  PreprocessorLexer *FoundLexer = 0;
   bool LexerWasInPPMode = false;
   for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
     IncludeStackInfo &ISI = *(IncludeMacroStack.end()-i-1);
-    if (ISI.TheLexer == 0) continue;  // Scan for a real lexer.
+    if (ISI.ThePPLexer == 0) continue;  // Scan for a real lexer.
     
     // Once we find a real lexer, mark it as raw mode (disabling macro
     // expansions) and preprocessor mode (return EOM).  We know that the lexer
@@ -273,7 +282,7 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
     // from was expanded.  However, it could have already been in preprocessor
     // mode (#if COMMENT) in which case we have to return it to that mode and
     // return EOM.
-    FoundLexer = ISI.TheLexer;
+    FoundLexer = ISI.ThePPLexer;
     FoundLexer->LexingRawMode = true;
     LexerWasInPPMode = FoundLexer->ParsingPreprocessorDirective;
     FoundLexer->ParsingPreprocessorDirective = true;

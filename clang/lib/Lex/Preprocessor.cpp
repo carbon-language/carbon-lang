@@ -722,7 +722,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
 
   // If this identifier was poisoned, and if it was not produced from a macro
   // expansion, emit an error.
-  if (II.isPoisoned() && CurLexer) {
+  if (II.isPoisoned() && CurPPLexer) {
     if (&II != Ident__VA_ARGS__)   // We warn about __VA_ARGS__ with poisoning.
       Diag(Identifier, diag::err_pp_used_poisoned_id);
     else
