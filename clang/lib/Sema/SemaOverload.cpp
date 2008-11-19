@@ -637,7 +637,7 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
       Context.IntTy, Context.UnsignedIntTy, 
       Context.LongTy, Context.UnsignedLongTy 
     };
-    for (int Idx = 0; Idx < 0; ++Idx) {
+    for (int Idx = 0; Idx < 4; ++Idx) {
       uint64_t ToSize = Context.getTypeSize(PromoteTypes[Idx]);
       if (FromSize < ToSize ||
           (FromSize == ToSize && 
@@ -1712,6 +1712,42 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   }
 }
 
+/// IsAcceptableNonMemberOperatorCandidate - Determine whether Fn is
+/// an acceptable non-member overloaded operator for a call whose
+/// arguments have types T1 (and, if non-empty, T2). This routine
+/// implements the check in C++ [over.match.oper]p3b2 concerning
+/// enumeration types.
+static bool 
+IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
+                                       QualType T1, QualType T2,
+                                       ASTContext &Context) {
+  if (T1->isRecordType() || (!T2.isNull() && T2->isRecordType()))
+    return true;
+
+  const FunctionTypeProto *Proto = Fn->getType()->getAsFunctionTypeProto();
+  if (Proto->getNumArgs() < 1)
+    return false;
+
+  if (T1->isEnumeralType()) {
+    QualType ArgType = Proto->getArgType(0).getNonReferenceType();
+    if (Context.getCanonicalType(T1).getUnqualifiedType()
+          == Context.getCanonicalType(ArgType).getUnqualifiedType())
+      return true;
+  }
+
+  if (Proto->getNumArgs() < 2)
+    return false;
+
+  if (!T2.isNull() && T2->isEnumeralType()) {
+    QualType ArgType = Proto->getArgType(1).getNonReferenceType();
+    if (Context.getCanonicalType(T2).getUnqualifiedType()
+          == Context.getCanonicalType(ArgType).getUnqualifiedType())
+      return true;
+  }
+
+  return false;
+}
+
 /// AddOperatorCandidates - Add the overloaded operator candidates for
 /// the operator Op that was used in an operator expression such as "x
 /// Op y". S is the scope in which the expression occurred (used for
@@ -1790,18 +1826,19 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
       break;
     }
 
-    // FIXME: check that strange "However" condition above. It's going
-    // to need a special test.
-    if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(NonMemberOps))
-      AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
-                           /*SuppressUserConversions=*/false);
-    else if (OverloadedFunctionDecl *Ovl
-               = dyn_cast_or_null<OverloadedFunctionDecl>(NonMemberOps)) {
+    if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(NonMemberOps)) {
+      if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
+        AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
+                             /*SuppressUserConversions=*/false);
+    } else if (OverloadedFunctionDecl *Ovl
+                 = dyn_cast_or_null<OverloadedFunctionDecl>(NonMemberOps)) {
       for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
                                                   FEnd = Ovl->function_end();
-           F != FEnd; ++F)
-        AddOverloadCandidate(*F, Args, NumArgs, CandidateSet, 
-                             /*SuppressUserConversions=*/false);
+           F != FEnd; ++F) {
+        if (IsAcceptableNonMemberOperatorCandidate(*F, T1, T2, Context)) 
+          AddOverloadCandidate(*F, Args, NumArgs, CandidateSet, 
+                               /*SuppressUserConversions=*/false);
+      }
     }
   }
 
@@ -2476,7 +2513,8 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
   //      the type of the entity being initialized) is a better
   //      conversion sequence than the standard conversion sequence
   //      from the return type of F2 to the destination type.
-  if (isa<CXXConversionDecl>(Cand1.Function) && 
+  if (Cand1.Function && Cand2.Function && 
+      isa<CXXConversionDecl>(Cand1.Function) && 
       isa<CXXConversionDecl>(Cand2.Function)) {
     switch (CompareStandardConversionSequences(Cand1.FinalConversion,
                                                Cand2.FinalConversion)) {

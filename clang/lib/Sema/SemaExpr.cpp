@@ -2145,9 +2145,12 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
           Diag(Loc, diag::warn_selfcomparison);      
   }
   
+  // The result of comparisons is 'bool' in C++, 'int' in C.
+  QualType ResultTy = getLangOptions().CPlusPlus? Context.BoolTy : Context.IntTy;
+
   if (isRelational) {
     if (lType->isRealType() && rType->isRealType())
-      return Context.IntTy;
+      return ResultTy;
   } else {
     // Check for comparisons of floating point operands using != and ==.
     if (lType->isFloatingType()) {
@@ -2156,7 +2159,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     }
     
     if (lType->isArithmeticType() && rType->isArithmeticType())
-      return Context.IntTy;
+      return ResultTy;
   }
   
   bool LHSIsNull = lex->isNullPointerConstant(Context);
@@ -2181,7 +2184,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         << lex->getSourceRange() << rex->getSourceRange();
     }
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
-    return Context.IntTy;
+    return ResultTy;
   }
   // Handle block pointer types.
   if (lType->isBlockPointerType() && rType->isBlockPointerType()) {
@@ -2195,7 +2198,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         << lex->getSourceRange() << rex->getSourceRange();
     }
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
-    return Context.IntTy;
+    return ResultTy;
   }
   // Allow block pointers to be compared with null pointer constants.
   if ((lType->isBlockPointerType() && rType->isPointerType()) ||
@@ -2206,7 +2209,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         << lex->getSourceRange() << rex->getSourceRange();
     }
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
-    return Context.IntTy;
+    return ResultTy;
   }
 
   if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())) {
@@ -2224,21 +2227,21 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
           << lType.getAsString() << rType.getAsString()
           << lex->getSourceRange() << rex->getSourceRange();
         ImpCastExprToType(rex, lType);
-        return Context.IntTy;
+        return ResultTy;
       }
       ImpCastExprToType(rex, lType);
-      return Context.IntTy;
+      return ResultTy;
     }
     if (ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
       ImpCastExprToType(rex, lType);
-      return Context.IntTy;
+      return ResultTy;
     } else {
       if ((lType->isObjCQualifiedIdType() && rType->isObjCQualifiedIdType())) {
         Diag(Loc, diag::warn_incompatible_qualified_id_operands)
           << lType.getAsString() << rType.getAsString()
           << lex->getSourceRange() << rex->getSourceRange();
         ImpCastExprToType(rex, lType);
-        return Context.IntTy;
+        return ResultTy;
       }
     }
   }
@@ -2249,7 +2252,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         << lType.getAsString() << rType.getAsString()
         << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(rex, lType); // promote the integer to pointer
-    return Context.IntTy;
+    return ResultTy;
   }
   if (lType->isIntegerType() && 
       (rType->isPointerType() || rType->isObjCQualifiedIdType())) {
@@ -2258,7 +2261,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         << lType.getAsString() << rType.getAsString()
         << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(lex, rType); // promote the integer to pointer
-    return Context.IntTy;
+    return ResultTy;
   }
   // Handle block pointers.
   if (lType->isBlockPointerType() && rType->isIntegerType()) {
@@ -2267,7 +2270,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         << lType.getAsString() << rType.getAsString()
         << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(rex, lType); // promote the integer to pointer
-    return Context.IntTy;
+    return ResultTy;
   }
   if (lType->isIntegerType() && rType->isBlockPointerType()) {
     if (!LHSIsNull)
@@ -2275,7 +2278,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         << lType.getAsString() << rType.getAsString()
         << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(lex, rType); // promote the integer to pointer
-    return Context.IntTy;
+    return ResultTy;
   }
   return InvalidOperands(Loc, lex, rex);
 }

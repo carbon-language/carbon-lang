@@ -48,3 +48,24 @@ struct B {
     make_A() == z;
   }
 };
+
+enum Enum1 { };
+enum Enum2 { };
+
+struct E1 {
+  E1(Enum1) { }
+};
+
+struct E2 {
+  E2(Enum2);
+};
+
+// C++ [over.match.oper]p3 - enum restriction.
+float& operator==(E1, E2); 
+
+void enum_test(Enum1 enum1, Enum2 enum2, E1 e1, E2 e2) {
+  float &f1 = (e1 == e2);
+  float &f2 = (enum1 == e2); 
+  float &f3 = (e1 == enum2); 
+  float &f4 = (enum1 == enum2);  // expected-error{{non-const reference to type 'float' cannot be initialized with a temporary of type '_Bool'}}
+}
