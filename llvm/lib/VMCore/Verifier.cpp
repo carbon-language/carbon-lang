@@ -1375,7 +1375,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             &CI);
     break;
   case Intrinsic::stackprotector:
-    Assert1(isa<AllocaInst>(CI.getOperand(2)),
+    Assert1(isa<AllocaInst>(CI.getOperand(2)->stripPointerCasts()),
             "llvm.stackprotector parameter #2 must resolve to an alloca.",
             &CI);
     break;
