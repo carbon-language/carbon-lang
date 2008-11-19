@@ -3197,7 +3197,7 @@ bool PragmaPackStack::pop(IdentifierInfo *Name) {
   // Otherwise, find the named record.
   for (unsigned i = Stack.size(); i != 0; ) {
     --i;
-    if (Name->isName(Stack[i].second.c_str())) {
+    if (Stack[i].second == Name) {
       // Found it, pop up to and including this record.
       Alignment = Stack[i].first;
       Stack.erase(Stack.begin() + i, Stack.end());

@@ -71,12 +71,13 @@ namespace clang {
 /// PragmaPackStack - Simple class to wrap the stack used by #pragma
 /// pack.
 class PragmaPackStack {
-  typedef std::vector< std::pair<unsigned, std::string> > stack_ty;
+  typedef std::vector< std::pair<unsigned, IdentifierInfo*> > stack_ty;
 
   /// Alignment - The current user specified alignment.
   unsigned Alignment;
 
-  /// Stack - Entries in the #pragma pack stack. 
+  /// Stack - Entries in the #pragma pack stack, consisting of saved
+  /// alignments and optional names.
   stack_ty Stack;
   
 public:  
@@ -86,11 +87,9 @@ public:
   unsigned getAlignment() { return Alignment; }
 
   /// push - Push the current alignment onto the stack, optionally
-  /// using the given \arg Name for the record, if non-zero,
+  /// using the given \arg Name for the record, if non-zero.
   void push(IdentifierInfo *Name) {
-    // FIXME: Why does this push 'Name' as an std::string??
-    Stack.push_back(std::make_pair(Alignment,
-                                   std::string(Name ? Name->getName() : "")));
+    Stack.push_back(std::make_pair(Alignment, Name));
   }
 
   /// pop - Pop a record from the stack and restore the current
