@@ -461,20 +461,20 @@ void ScheduleDAG::Run() {
 /// a group of nodes flagged together.
 void SUnit::dump(const ScheduleDAG *G) const {
   cerr << "SU(" << NodeNum << "): ";
-  if (getNode())
-    getNode()->dump(G->DAG);
-  else
+  if (getNode()) {
+    SmallVector<SDNode *, 4> FlaggedNodes;
+    for (SDNode *N = getNode(); N; N = N->getFlaggedNode())
+      FlaggedNodes.push_back(N);
+    while (!FlaggedNodes.empty()) {
+      cerr << "    ";
+      FlaggedNodes.back()->dump(G->DAG);
+      cerr << "\n";
+      FlaggedNodes.pop_back();
+    }
+  } else {
     cerr << "CROSS RC COPY ";
-  cerr << "\n";
-  SmallVector<SDNode *, 4> FlaggedNodes;
-  for (SDNode *N = getNode()->getFlaggedNode(); N; N = N->getFlaggedNode())
-    FlaggedNodes.push_back(N);
-  while (!FlaggedNodes.empty()) {
-    cerr << "    ";
-    FlaggedNodes.back()->dump(G->DAG);
-    cerr << "\n";
-    FlaggedNodes.pop_back();
   }
+  cerr << "\n";
 }
 
 void SUnit::dumpAll(const ScheduleDAG *G) const {
