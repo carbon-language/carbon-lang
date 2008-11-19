@@ -128,15 +128,15 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
   SourceLocation ExpLoc;
   // C99 6.8.4.2p3: The expression shall be an integer constant.
   if (!LHSVal->isIntegerConstantExpr(Context, &ExpLoc)) {
-    Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
-         LHSVal->getSourceRange());
+    Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr)
+      << LHSVal->getSourceRange();
     return SubStmt;
   }
 
   // GCC extension: The expression shall be an integer constant.
   if (RHSVal && !RHSVal->isIntegerConstantExpr(Context, &ExpLoc)) {
-    Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
-         RHSVal->getSourceRange());
+    Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr)
+      << RHSVal->getSourceRange();
     RHSVal = 0;  // Recover by just forgetting about it.
   }
   
@@ -458,9 +458,9 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
       
       // If the low value is bigger than the high value, the case is empty.
       if (CaseRanges[i].first > HiVal) {
-        Diag(CR->getLHS()->getLocStart(), diag::warn_case_empty_range,
-             SourceRange(CR->getLHS()->getLocStart(),
-                         CR->getRHS()->getLocEnd()));
+        Diag(CR->getLHS()->getLocStart(), diag::warn_case_empty_range)
+          << SourceRange(CR->getLHS()->getLocStart(),
+                         CR->getRHS()->getLocEnd());
         CaseRanges.erase(CaseRanges.begin()+i);
         --i, --e;
         continue;
@@ -625,21 +625,21 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
       Expr::isLvalueResult lval = cast<Expr>(First)->isLvalue(Context);
       
       if (lval != Expr::LV_Valid)
-        return Diag(First->getLocStart(), diag::err_selector_element_not_lvalue,
-                    First->getSourceRange());
+        return Diag(First->getLocStart(), diag::err_selector_element_not_lvalue)
+          << First->getSourceRange();
 
       FirstType = static_cast<Expr*>(first)->getType();        
     }
     if (!Context.isObjCObjectPointerType(FirstType))
-        Diag(ForLoc, diag::err_selector_element_type,
-             FirstType.getAsString(), First->getSourceRange());          
+        Diag(ForLoc, diag::err_selector_element_type)
+          << FirstType.getAsString() << First->getSourceRange();
   }
   if (Second) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
     if (!Context.isObjCObjectPointerType(SecondType))
-      Diag(ForLoc, diag::err_collection_expr_type,
-           SecondType.getAsString(), Second->getSourceRange());
+      Diag(ForLoc, diag::err_collection_expr_type)
+        << SecondType.getAsString() << Second->getSourceRange();
   }
   return new ObjCForCollectionStmt(First, Second, Body, ForLoc, RParenLoc);
 }
@@ -814,16 +814,16 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
   // The parser verifies that there is a string literal here.
   if (AsmString->isWide())
     // FIXME: We currently leak memory here.
-    return Diag(AsmString->getLocStart(), diag::err_asm_wide_character,
-                AsmString->getSourceRange());
+    return Diag(AsmString->getLocStart(), diag::err_asm_wide_character)
+      << AsmString->getSourceRange();
   
   
   for (unsigned i = 0; i != NumOutputs; i++) {
     StringLiteral *Literal = Constraints[i];
     if (Literal->isWide())
       // FIXME: We currently leak memory here.
-      return Diag(Literal->getLocStart(), diag::err_asm_wide_character,
-                  Literal->getSourceRange());
+      return Diag(Literal->getLocStart(), diag::err_asm_wide_character)
+        << Literal->getSourceRange();
     
     std::string OutputConstraint(Literal->getStrData(), 
                                  Literal->getByteLength());
@@ -840,8 +840,8 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     if (Result != Expr::LV_Valid) {
       // FIXME: We currently leak memory here.
       return Diag(OutputExpr->getSubExpr()->getLocStart(), 
-                  diag::err_asm_invalid_lvalue_in_output,
-                  OutputExpr->getSubExpr()->getSourceRange());
+                  diag::err_asm_invalid_lvalue_in_output)
+        << OutputExpr->getSubExpr()->getSourceRange();
     }
   }
   
@@ -849,8 +849,8 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     StringLiteral *Literal = Constraints[i];
     if (Literal->isWide())
       // FIXME: We currently leak memory here.
-      return Diag(Literal->getLocStart(), diag::err_asm_wide_character,
-                  Literal->getSourceRange());
+      return Diag(Literal->getLocStart(), diag::err_asm_wide_character)
+        << Literal->getSourceRange();
     
     std::string InputConstraint(Literal->getStrData(), 
                                 Literal->getByteLength());
@@ -860,7 +860,7 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                                                 NumOutputs, info)) {
       // FIXME: We currently leak memory here.
       return Diag(Literal->getLocStart(),
-                  diag::err_asm_invalid_input_constraint, InputConstraint);
+                  diag::err_asm_invalid_input_constraint) << InputConstraint;
     }
     
     // Check that the input exprs aren't of type void.
@@ -880,8 +880,8 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     StringLiteral *Literal = Clobbers[i];
     if (Literal->isWide())
       // FIXME: We currently leak memory here.
-      return Diag(Literal->getLocStart(), diag::err_asm_wide_character,
-                  Literal->getSourceRange());
+      return Diag(Literal->getLocStart(), diag::err_asm_wide_character)
+        << Literal->getSourceRange();
     
     llvm::SmallString<16> Clobber(Literal->getStrData(), 
                                   Literal->getStrData() + 

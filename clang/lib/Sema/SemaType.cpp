@@ -405,14 +405,14 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         // have a value greater than zero.
         if (ConstVal.isSigned()) {
           if (ConstVal.isNegative()) {
-            Diag(ArraySize->getLocStart(), 
-                 diag::err_typecheck_negative_array_size,
-                 ArraySize->getSourceRange());
+            Diag(ArraySize->getLocStart(),
+                 diag::err_typecheck_negative_array_size)
+              << ArraySize->getSourceRange();
             D.setInvalidType(true);
           } else if (ConstVal == 0) {
             // GCC accepts zero sized static arrays.
-            Diag(ArraySize->getLocStart(), diag::ext_typecheck_zero_array_size,
-                 ArraySize->getSourceRange());
+            Diag(ArraySize->getLocStart(), diag::ext_typecheck_zero_array_size)
+              << ArraySize->getSourceRange();
           }
         } 
         T = Context.getConstantArrayType(T, ConstVal, ASM, ATI.TypeQuals);
@@ -663,8 +663,8 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   Expr *ASArgExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt addrSpace(32);
   if (!ASArgExpr->isIntegerConstantExpr(addrSpace, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_address_space_not_int,
-           ASArgExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_address_space_not_int)
+      << ASArgExpr->getSourceRange();
     return;
   }
 

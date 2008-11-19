@@ -156,8 +156,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   // be a class with a suitably declared constructor.
   //
   if (NumExprs > 1)
-    return Diag(CommaLocs[0], diag::err_builtin_func_cast_more_than_one_arg,
-                FullRange);
+    return Diag(CommaLocs[0], diag::err_builtin_func_cast_more_than_one_arg)
+      << FullRange;
 
   assert(NumExprs == 0 && "Expected 0 expressions");
 
@@ -167,10 +167,10 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   // rvalue of the specified type, which is value-initialized.
   //
   if (Ty->isArrayType())
-    return Diag(TyBeginLoc, diag::err_value_init_for_array_type, FullRange);
+    return Diag(TyBeginLoc, diag::err_value_init_for_array_type) << FullRange;
   if (Ty->isIncompleteType() && !Ty->isVoidType())
-    return Diag(TyBeginLoc, diag::err_invalid_incomplete_type_use,
-                Ty.getAsString(), FullRange);
+    return Diag(TyBeginLoc, diag::err_invalid_incomplete_type_use) 
+      << Ty.getAsString() << FullRange;
 
   return new CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc);
 }
@@ -199,11 +199,11 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
   if (Ty->isFunctionType()) { // The declarator shall not specify a function...
     // We exit without creating a CXXConditionDeclExpr because a FunctionDecl
     // would be created and CXXConditionDeclExpr wants a VarDecl.
-    return Diag(StartLoc, diag::err_invalid_use_of_function_type,
-                SourceRange(StartLoc, EqualLoc));
+    return Diag(StartLoc, diag::err_invalid_use_of_function_type)
+      << SourceRange(StartLoc, EqualLoc);
   } else if (Ty->isArrayType()) { // ...or an array.
-    Diag(StartLoc, diag::err_invalid_use_of_array_type,
-         SourceRange(StartLoc, EqualLoc));
+    Diag(StartLoc, diag::err_invalid_use_of_array_type)
+      << SourceRange(StartLoc, EqualLoc);
   } else if (const RecordType *RT = Ty->getAsRecordType()) {
     RecordDecl *RD = RT->getDecl();
     // The type-specifier-seq shall not declare a new class...

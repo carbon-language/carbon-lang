@@ -110,20 +110,20 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
         SemaRef->IsStringLiteralInit(IList->getInit(Index), T)) {
       // Special-case
       SemaRef->Diag(IList->getInit(Index)->getLocStart(),
-                    diag::err_excess_initializers_in_char_array_initializer,
-                    IList->getInit(Index)->getSourceRange());
+                    diag::err_excess_initializers_in_char_array_initializer)
+        << IList->getInit(Index)->getSourceRange();
       hadError = true; 
     } else if (!T->isIncompleteType()) {
       // Don't warn for incomplete types, since we'll get an error elsewhere
       SemaRef->Diag(IList->getInit(Index)->getLocStart(), 
-                    diag::warn_excess_initializers, 
-                    IList->getInit(Index)->getSourceRange());
+                    diag::warn_excess_initializers)
+        << IList->getInit(Index)->getSourceRange();
     }
   }
 
   if (T->isScalarType())
-    SemaRef->Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
-                  IList->getSourceRange());
+    SemaRef->Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init)
+      << IList->getSourceRange();
 }
 
 void InitListChecker::CheckListElementTypes(InitListExpr *IList,
@@ -185,8 +185,8 @@ void InitListChecker::CheckScalarType(InitListExpr *IList, QualType &DeclType,
     Expr* expr = IList->getInit(Index);
     if (isa<InitListExpr>(expr)) {
       SemaRef->Diag(IList->getLocStart(),
-                    diag::err_many_braces_around_scalar_init, 
-                    IList->getSourceRange());
+                    diag::err_many_braces_around_scalar_init)
+        << IList->getSourceRange();
       hadError = true;
       ++Index;
       return;
@@ -199,9 +199,8 @@ void InitListChecker::CheckScalarType(InitListExpr *IList, QualType &DeclType,
       IList->setInit(Index, expr);
     ++Index;
   } else {
-    SemaRef->Diag(IList->getLocStart(),
-                  diag::err_empty_scalar_initializer, 
-                  IList->getSourceRange());
+    SemaRef->Diag(IList->getLocStart(), diag::err_empty_scalar_initializer)
+      << IList->getSourceRange();
     hadError = true;
     return;
   }
@@ -240,8 +239,8 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
     // earlier, but I don't know where clang accepts VLAs (gcc accepts
     // them in all sorts of strange places).
     SemaRef->Diag(VAT->getSizeExpr()->getLocStart(),
-                  diag::err_variable_object_no_init,
-                  VAT->getSizeExpr()->getSourceRange());
+                  diag::err_variable_object_no_init)
+      << VAT->getSizeExpr()->getSourceRange();
     hadError = true;
     return;
   }

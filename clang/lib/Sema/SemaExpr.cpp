@@ -1421,11 +1421,11 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   // The following || allows only one side to be void (a GCC-ism).
   if (lexT->isVoidType() || rexT->isVoidType()) {
     if (!lexT->isVoidType())
-      Diag(rex->getLocStart(), diag::ext_typecheck_cond_one_void, 
-           rex->getSourceRange());
+      Diag(rex->getLocStart(), diag::ext_typecheck_cond_one_void)
+        << rex->getSourceRange();
     if (!rexT->isVoidType())
-      Diag(lex->getLocStart(), diag::ext_typecheck_cond_one_void,
-           lex->getSourceRange());
+      Diag(lex->getLocStart(), diag::ext_typecheck_cond_one_void)
+        << lex->getSourceRange();
     ImpCastExprToType(lex, Context.VoidTy);
     ImpCastExprToType(rex, Context.VoidTy);
     return Context.VoidTy;
@@ -2387,9 +2387,9 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   }
 
   if (NeedType)
-    S.Diag(Loc, Diag, E->getType().getAsString(), E->getSourceRange());
+    S.Diag(Loc, Diag) << E->getType().getAsString() << E->getSourceRange();
   else
-    S.Diag(Loc, Diag, E->getSourceRange());
+    S.Diag(Loc, Diag) << E->getSourceRange();
   return true;
 }
 
@@ -2464,21 +2464,21 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
   // C99 6.5.2.4p1: We allow complex as a GCC extension.
   if (const PointerType *pt = resType->getAsPointerType()) {
     if (pt->getPointeeType()->isVoidType()) {
-      Diag(OpLoc, diag::ext_gnu_void_ptr, op->getSourceRange());
+      Diag(OpLoc, diag::ext_gnu_void_ptr) << op->getSourceRange();
     } else if (!pt->getPointeeType()->isObjectType()) {
       // C99 6.5.2.4p2, 6.5.6p2
-      Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type,
-           resType.getAsString(), op->getSourceRange());
+      Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type)
+        << resType.getAsString() << op->getSourceRange();
       return QualType();
     }
   } else if (!resType->isRealType()) {
     if (resType->isComplexType()) 
       // C99 does not support ++/-- on complex types.
-      Diag(OpLoc, diag::ext_integer_increment_complex,
-           resType.getAsString(), op->getSourceRange());
+      Diag(OpLoc, diag::ext_integer_increment_complex)
+        << resType.getAsString() << op->getSourceRange();
     else {
-      Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement,
-           resType.getAsString(), op->getSourceRange());
+      Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement)
+        << resType.getAsString() << op->getSourceRange();
       return QualType();
     }
   }
@@ -2595,8 +2595,8 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   if (lval != Expr::LV_Valid) { // C99 6.5.3.2p1
     if (!dcl || !isa<FunctionDecl>(dcl)) {// allow function designators
       // FIXME: emit more specific diag...
-      Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof, 
-           op->getSourceRange());
+      Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
+        << op->getSourceRange();
       return QualType();
     }
   } else if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(op)) { // C99 6.5.3.2p1
@@ -3069,8 +3069,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
   // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
   // GCC extension, diagnose them.
   if (NumComponents != 1)
-    Diag(BuiltinLoc, diag::ext_offsetof_extended_field_designator,
-         SourceRange(CompPtr[1].LocStart, CompPtr[NumComponents-1].LocEnd));
+    Diag(BuiltinLoc, diag::ext_offsetof_extended_field_designator)
+      << SourceRange(CompPtr[1].LocStart, CompPtr[NumComponents-1].LocEnd);
   
   for (unsigned i = 0; i != NumComponents; ++i) {
     const OffsetOfComponent &OC = CompPtr[i];
@@ -3088,8 +3088,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
       // C99 6.5.2.1p1
       Expr *Idx = static_cast<Expr*>(OC.U.E);
       if (!Idx->getType()->isIntegerType())
-        return Diag(Idx->getLocStart(), diag::err_typecheck_subscript,
-                    Idx->getSourceRange());
+        return Diag(Idx->getLocStart(), diag::err_typecheck_subscript)
+          << Idx->getSourceRange();
       
       Res = new ArraySubscriptExpr(Res, Idx, AT->getElementType(), OC.LocEnd);
       continue;
@@ -3147,8 +3147,8 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
   llvm::APSInt condEval(32);
   SourceLocation ExpLoc;
   if (!CondExpr->isIntegerConstantExpr(condEval, Context, &ExpLoc))
-    return Diag(ExpLoc, diag::err_typecheck_choose_expr_requires_constant,
-                 CondExpr->getSourceRange());
+    return Diag(ExpLoc, diag::err_typecheck_choose_expr_requires_constant)
+      << CondExpr->getSourceRange();
 
   // If the condition is > zero, then the AST type is the same as the LSHExpr.
   QualType resType = condEval.getZExtValue() ? LHSExpr->getType() : 
@@ -3277,8 +3277,8 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
                                          SourceLocation RParenLoc) {
   // __builtin_overload requires at least 2 arguments
   if (NumArgs < 2)
-    return Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
-                SourceRange(BuiltinLoc, RParenLoc));
+    return Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
+      << SourceRange(BuiltinLoc, RParenLoc);
 
   // The first argument is required to be a constant expression.  It tells us
   // the number of arguments to pass to each of the functions to be overloaded.
@@ -3287,18 +3287,18 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
   llvm::APSInt constEval(32);
   SourceLocation ExpLoc;
   if (!NParamsExpr->isIntegerConstantExpr(constEval, Context, &ExpLoc))
-    return Diag(ExpLoc, diag::err_overload_expr_requires_non_zero_constant,
-                NParamsExpr->getSourceRange());
+    return Diag(ExpLoc, diag::err_overload_expr_requires_non_zero_constant)
+      << NParamsExpr->getSourceRange();
   
   // Verify that the number of parameters is > 0
   unsigned NumParams = constEval.getZExtValue();
   if (NumParams == 0)
-    return Diag(ExpLoc, diag::err_overload_expr_requires_non_zero_constant,
-                NParamsExpr->getSourceRange());
+    return Diag(ExpLoc, diag::err_overload_expr_requires_non_zero_constant)
+      << NParamsExpr->getSourceRange();
   // Verify that we have at least 1 + NumParams arguments to the builtin.
   if ((NumParams + 1) > NumArgs)
-    return Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
-                SourceRange(BuiltinLoc, RParenLoc));
+    return Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
+      << SourceRange(BuiltinLoc, RParenLoc);
 
   // Figure out the return type, by matching the args to one of the functions
   // listed after the parameters.
@@ -3315,16 +3315,16 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
     // parameters, and the number of parameters must match the value passed to
     // the builtin.
     if (!FnType || (FnType->getNumArgs() != NumParams))
-      return Diag(Fn->getExprLoc(), diag::err_overload_incorrect_fntype, 
-                  Fn->getSourceRange());
+      return Diag(Fn->getExprLoc(), diag::err_overload_incorrect_fntype)
+        << Fn->getSourceRange();
 
     // Scan the parameter list for the FunctionType, checking the QualType of
     // each parameter against the QualTypes of the arguments to the builtin.
     // If they match, return a new OverloadExpr.
     if (ExprsMatchFnType(Args+1, FnType, Context)) {
       if (OE)
-        return Diag(Fn->getExprLoc(), diag::err_overload_multiple_match,
-                    OE->getFn()->getSourceRange());
+        return Diag(Fn->getExprLoc(), diag::err_overload_multiple_match)
+          << OE->getFn()->getSourceRange();
       // Remember our match, and continue processing the remaining arguments
       // to catch any errors.
       OE = new OverloadExpr(Args, NumArgs, i, 

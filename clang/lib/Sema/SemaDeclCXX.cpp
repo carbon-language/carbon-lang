@@ -1370,8 +1370,8 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
   }
 
   if (NumExprs > 1) {
-    Diag(CommaLocs[0], diag::err_builtin_direct_init_more_than_one_arg,
-         SourceRange(VDecl->getLocation(), RParenLoc));
+    Diag(CommaLocs[0], diag::err_builtin_direct_init_more_than_one_arg)
+      << SourceRange(VDecl->getLocation(), RParenLoc);
     RealDecl->setInvalidDecl();
     return;
   }

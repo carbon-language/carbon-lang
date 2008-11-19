@@ -414,8 +414,8 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
 
   // CHECK: printf-like function is called with no format string.  
   if (format_idx >= TheCall->getNumArgs()) {
-    Diag(TheCall->getRParenLoc(), diag::warn_printf_missing_format_string, 
-         Fn->getSourceRange());
+    Diag(TheCall->getRParenLoc(), diag::warn_printf_missing_format_string)
+      << Fn->getSourceRange();
     return;
   }
   
@@ -466,16 +466,16 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
           return;
     
     Diag(TheCall->getArg(format_idx)->getLocStart(), 
-         diag::warn_printf_not_string_constant,
-         OrigFormatExpr->getSourceRange());
+         diag::warn_printf_not_string_constant)
+      << OrigFormatExpr->getSourceRange();
     return;
   }
 
   // CHECK: is the format string a wide literal?
   if (FExpr->isWide()) {
     Diag(FExpr->getLocStart(),
-         diag::warn_printf_format_string_is_wide_literal,
-         OrigFormatExpr->getSourceRange());
+         diag::warn_printf_format_string_is_wide_literal)
+      << OrigFormatExpr->getSourceRange();
     return;
   }
 
@@ -486,8 +486,8 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
   const unsigned StrLen = FExpr->getByteLength();
   
   if (StrLen == 0) {
-    Diag(FExpr->getLocStart(), diag::warn_printf_empty_format_string,
-         OrigFormatExpr->getSourceRange());
+    Diag(FExpr->getLocStart(), diag::warn_printf_empty_format_string)
+      << OrigFormatExpr->getSourceRange();
     return;
   }
 
@@ -526,8 +526,8 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
       // The string returned by getStrData() is not null-terminated,
       // so the presence of a null character is likely an error.
       Diag(PP.AdvanceToTokenCharacter(FExpr->getLocStart(), StrIdx+1),
-           diag::warn_printf_format_string_contains_null_char,
-           OrigFormatExpr->getSourceRange());
+           diag::warn_printf_format_string_contains_null_char)
+        <<  OrigFormatExpr->getSourceRange();
       return;
     }
     
@@ -551,11 +551,11 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
         Loc = PP.AdvanceToTokenCharacter(Loc, StrIdx+1);
 
         if (Str[StrIdx-1] == '.')
-          Diag(Loc, diag::warn_printf_asterisk_precision_missing_arg,
-               OrigFormatExpr->getSourceRange());
+          Diag(Loc, diag::warn_printf_asterisk_precision_missing_arg)
+            << OrigFormatExpr->getSourceRange();
         else
-          Diag(Loc, diag::warn_printf_asterisk_width_missing_arg,
-               OrigFormatExpr->getSourceRange());
+          Diag(Loc, diag::warn_printf_asterisk_width_missing_arg)
+            << OrigFormatExpr->getSourceRange();
         
         // Don't do any more checking.  We'll just emit spurious errors.
         return;
@@ -571,11 +571,11 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
         PP.AdvanceToTokenCharacter(FExpr->getLocStart(), StrIdx+1);
       
       if (Str[StrIdx-1] == '.')
-        Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type,
-             E->getType().getAsString(), E->getSourceRange());
+        Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type)
+          << E->getType().getAsString() << E->getSourceRange();
       else
-        Diag(Loc, diag::warn_printf_asterisk_width_wrong_type,
-             E->getType().getAsString(), E->getSourceRange());
+        Diag(Loc, diag::warn_printf_asterisk_width_wrong_type)
+          << E->getType().getAsString() << E->getSourceRange();
       
       break;
     }
@@ -618,7 +618,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
       SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
                                                       LastConversionIdx+1);
                                    
-      Diag(Loc, diag::warn_printf_write_back, OrigFormatExpr->getSourceRange());
+      Diag(Loc, diag::warn_printf_write_back)<<OrigFormatExpr->getSourceRange();
       break;
     }
              
@@ -690,15 +690,15 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
       SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
                                                       LastConversionIdx);
                                    
-      Diag(Loc, diag::warn_printf_insufficient_data_args,
-           OrigFormatExpr->getSourceRange());
+      Diag(Loc, diag::warn_printf_insufficient_data_args)
+        << OrigFormatExpr->getSourceRange();
     }
     // CHECK: Does the number of data arguments exceed the number of
     //        format conversions in the format string?
     else if (numConversions < numDataArgs)
       Diag(TheCall->getArg(format_idx+numConversions+1)->getLocStart(),
-           diag::warn_printf_too_many_data_args,
-           OrigFormatExpr->getSourceRange());
+           diag::warn_printf_too_many_data_args)
+        << OrigFormatExpr->getSourceRange();
   }
 }
 
@@ -726,16 +726,16 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
       RetValExp = IcExpr->getSubExpr();
 
     if (BlockExpr *C = dyn_cast_or_null<BlockExpr>(RetValExp))
-      Diag(C->getLocStart(), diag::err_ret_local_block,
-           C->getSourceRange());
+      Diag(C->getLocStart(), diag::err_ret_local_block)
+        << C->getSourceRange();
   }
   // Perform checking for stack values returned by reference.
   else if (lhsType->isReferenceType()) {
     // Check for a reference to the stack
     if (DeclRefExpr *DR = EvalVal(RetValExp))
-      Diag(DR->getLocStart(), diag::warn_ret_stack_ref,
-           DR->getDecl()->getIdentifier()->getName(),
-           RetValExp->getSourceRange());
+      Diag(DR->getLocStart(), diag::warn_ret_stack_ref)
+        << DR->getDecl()->getIdentifier()->getName()
+        << RetValExp->getSourceRange();
   }
 }
 

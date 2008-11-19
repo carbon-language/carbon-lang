@@ -640,8 +640,8 @@ bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
     // FIXME: Avoid truncation for 64-bit length strings.
     if (strLiteral->getByteLength() > (unsigned)CAT->getSize().getZExtValue())
       Diag(strLiteral->getSourceRange().getBegin(),
-           diag::warn_initializer_string_for_char_array_too_long,
-           strLiteral->getSourceRange());
+           diag::warn_initializer_string_for_char_array_too_long)
+        << strLiteral->getSourceRange();
   }
   // Set type from "char *" to "constant array of char".
   strLiteral->setType(DeclT);
@@ -670,9 +670,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
   if (const VariableArrayType *VAT = Context.getAsVariableArrayType(DeclType))
-    return Diag(InitLoc, 
-                diag::err_variable_object_no_init, 
-                VAT->getSizeExpr()->getSourceRange());
+    return Diag(InitLoc,  diag::err_variable_object_no_init)
+      << VAT->getSizeExpr()->getSourceRange();
   
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList) {
@@ -724,9 +723,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
 
     // C99 6.7.8p16.
     if (DeclType->isArrayType())
-      return Diag(Init->getLocStart(),
-                  diag::err_array_init_list_required, 
-                  Init->getSourceRange());
+      return Diag(Init->getLocStart(), diag::err_array_init_list_required)
+        << Init->getSourceRange();
 
     return CheckSingleInitializer(Init, DeclType);
   } else if (getLangOptions().CPlusPlus) {
@@ -741,10 +739,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
     if (const RecordType *ClassRec = DeclType->getAsRecordType()) {
       const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(ClassRec->getDecl());
       if (!ClassDecl->isAggregate())
-        return Diag(InitLoc,
-                    diag::err_init_non_aggr_init_list,
-                    DeclType.getAsString(),
-                    Init->getSourceRange());
+        return Diag(InitLoc, diag::err_init_non_aggr_init_list)
+           << DeclType.getAsString() << Init->getSourceRange();
     }
   }
 
@@ -1228,8 +1224,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 }
 
 void Sema::InitializerElementNotConstant(const Expr *Init) {
-  Diag(Init->getExprLoc(),
-       diag::err_init_element_not_constant, Init->getSourceRange());
+  Diag(Init->getExprLoc(), diag::err_init_element_not_constant)
+    << Init->getSourceRange();
 }
 
 bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
@@ -1633,8 +1629,8 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     // emit a warning that this is a GNU extension.
     if (FalseSide && !FalseSide->isEvaluatable(Context))
       Diag(Init->getExprLoc(), 
-           diag::ext_typecheck_expression_not_constant_but_accepted,
-           FalseSide->getSourceRange());
+           diag::ext_typecheck_expression_not_constant_but_accepted)
+        << FalseSide->getSourceRange();
     return false;
   }
   }
@@ -2673,7 +2669,7 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
   // than a variably modified type.
   if (T->isVariablyModifiedType()) {
     // FIXME: This diagnostic needs work
-    Diag(Loc, diag::err_typecheck_illegal_vla, Loc);
+    Diag(Loc, diag::err_typecheck_illegal_vla) << SourceRange(Loc);
     InvalidDecl = true;
   }
   

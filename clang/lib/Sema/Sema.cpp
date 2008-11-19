@@ -137,8 +137,8 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty, bool isLvalue) {
     QualType BaseType =
       cast<PointerType>(TypeTy.getUnqualifiedType())->getPointeeType();
     if (ExprBaseType.getAddressSpace() != BaseType.getAddressSpace()) {
-      Diag(Expr->getExprLoc(), diag::err_implicit_pointer_address_space_cast,
-           Expr->getSourceRange());
+      Diag(Expr->getExprLoc(), diag::err_implicit_pointer_address_space_cast)
+        << Expr->getSourceRange();
     }
   }
   
@@ -181,11 +181,6 @@ bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
                 const std::string &Msg2) {
   PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Msg1 << Msg2;
-  return true;
-}
-
-bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const SourceRange& Range) {
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Range;
   return true;
 }
 
