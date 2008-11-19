@@ -1754,44 +1754,44 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
     unsigned NumRes = TID.getNumDefs();
     unsigned NumOps = TID.getNumOperands() - NumRes;
     for (unsigned j = 0; j != NumOps; ++j) {
-      if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) != -1) {
-        SDNode *DU = SU->getNode()->getOperand(j).getNode();
-        if (DU->getNodeId() == -1)
+      if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) == -1)
+        continue;
+      SDNode *DU = SU->getNode()->getOperand(j).getNode();
+      if (DU->getNodeId() == -1)
+        continue;
+      const SUnit *DUSU = &(*SUnits)[DU->getNodeId()];
+      if (!DUSU) continue;
+      for (SUnit::const_succ_iterator I = DUSU->Succs.begin(),
+           E = DUSU->Succs.end(); I != E; ++I) {
+        if (I->isCtrl) continue;
+        SUnit *SuccSU = I->Dep;
+        if (SuccSU == SU)
           continue;
-        const SUnit *DUSU = &(*SUnits)[DU->getNodeId()];
-        if (!DUSU) continue;
-        for (SUnit::const_succ_iterator I = DUSU->Succs.begin(),
-             E = DUSU->Succs.end(); I != E; ++I) {
-          if (I->isCtrl) continue;
-          SUnit *SuccSU = I->Dep;
-          if (SuccSU == SU)
+        // Be conservative. Ignore if nodes aren't at roughly the same
+        // depth and height.
+        if (SuccSU->Height < SU->Height && (SU->Height - SuccSU->Height) > 1)
+          continue;
+        if (!SuccSU->getNode() || !SuccSU->getNode()->isMachineOpcode())
+          continue;
+        // Don't constrain nodes with physical register defs if the
+        // predecessor can clobber them.
+        if (SuccSU->hasPhysRegDefs) {
+          if (canClobberPhysRegDefs(SuccSU, SU, TII, TRI))
             continue;
-          // Be conservative. Ignore if nodes aren't at roughly the same
-          // depth and height.
-          if (SuccSU->Height < SU->Height && (SU->Height - SuccSU->Height) > 1)
-            continue;
-          if (!SuccSU->getNode() || !SuccSU->getNode()->isMachineOpcode())
-            continue;
-          // Don't constrain nodes with physical register defs if the
-          // predecessor can clobber them.
-          if (SuccSU->hasPhysRegDefs) {
-            if (canClobberPhysRegDefs(SuccSU, SU, TII, TRI))
-              continue;
-          }
-          // Don't constraint extract_subreg / insert_subreg these may be
-          // coalesced away. We don't them close to their uses.
-          unsigned SuccOpc = SuccSU->getNode()->getMachineOpcode();
-          if (SuccOpc == TargetInstrInfo::EXTRACT_SUBREG ||
-              SuccOpc == TargetInstrInfo::INSERT_SUBREG)
-            continue;
-          if ((!canClobber(SuccSU, DUSU) ||
-               (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||
-               (!SU->isCommutable && SuccSU->isCommutable)) &&
-              !scheduleDAG->IsReachable(SuccSU, SU)) {
-            DOUT << "Adding an edge from SU # " << SU->NodeNum
-                 << " to SU #" << SuccSU->NodeNum << "\n";
-            scheduleDAG->AddPred(SU, SuccSU, true, true);
-          }
+        }
+        // Don't constraint extract_subreg / insert_subreg these may be
+        // coalesced away. We don't them close to their uses.
+        unsigned SuccOpc = SuccSU->getNode()->getMachineOpcode();
+        if (SuccOpc == TargetInstrInfo::EXTRACT_SUBREG ||
+            SuccOpc == TargetInstrInfo::INSERT_SUBREG)
+          continue;
+        if ((!canClobber(SuccSU, DUSU) ||
+             (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||
+             (!SU->isCommutable && SuccSU->isCommutable)) &&
+            !scheduleDAG->IsReachable(SuccSU, SU)) {
+          DOUT << "Adding an edge from SU # " << SU->NodeNum
+               << " to SU #" << SuccSU->NodeNum << "\n";
+          scheduleDAG->AddPred(SU, SuccSU, true, true);
         }
       }
     }
