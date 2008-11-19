@@ -365,8 +365,5 @@ const DeclContext *DeclContext::getParent() const {
 const DeclContext *DeclContext::getLexicalParent() const {
   if (const ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
     return SD->getLexicalDeclContext();
-  else if (const BlockDecl *BD = dyn_cast<BlockDecl>(this))
-    return BD->getParentContext();
-  else
-    return NULL;
+  return getParent();
 }
