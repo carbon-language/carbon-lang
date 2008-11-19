@@ -25,10 +25,10 @@ static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name) {
     return CXXRecordDecl::Create(C, TagDecl::TK_struct, 
                                  C.getTranslationUnitDecl(),
                                  SourceLocation(), &C.Idents.get(Name));
-  else
-    return RecordDecl::Create(C, TagDecl::TK_struct, 
-                              C.getTranslationUnitDecl(),
-                              SourceLocation(), &C.Idents.get(Name));
+
+  return RecordDecl::Create(C, TagDecl::TK_struct, 
+                            C.getTranslationUnitDecl(),
+                            SourceLocation(), &C.Idents.get(Name));
 }
 
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
@@ -192,23 +192,6 @@ bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const SourceRange& Range) {
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
                 const SourceRange& Range) {
   PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Msg << Range;
-  return true;
-}
-
-bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
-                const std::string &Msg2, const SourceRange &R) {
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Msg1 << Msg2 << R;
-  return true;
-}
-bool Sema::Diag(SourceLocation Loc, unsigned DiagID,
-                const SourceRange& R1, const SourceRange& R2) {
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << R1 << R2;
-  return true;
-}
-
-bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
-                const SourceRange& R1, const SourceRange& R2) {
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Msg << R1 << R2;
   return true;
 }
 

@@ -1479,9 +1479,9 @@ Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
     = TryObjectArgumentInitialization(From, Method);
   if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion)
     return Diag(From->getSourceRange().getBegin(),
-                diag::err_implicit_object_parameter_init,
-                ImplicitParamType.getAsString(), From->getType().getAsString(),
-                From->getSourceRange());
+                diag::err_implicit_object_parameter_init)
+       << ImplicitParamType.getAsString() << From->getType().getAsString()
+       << From->getSourceRange();
 
   if (ICS.Standard.Second == ICK_Derived_To_Base &&
       CheckDerivedToBaseConversion(From->getType(), ImplicitParamType,
@@ -2597,8 +2597,8 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                                     Cand->Conversions.size(),
                                     false, 0);
 
-        Diag(SourceLocation(), diag::err_ovl_builtin_candidate,
-             FnType.getAsString());
+        Diag(SourceLocation(), diag::err_ovl_builtin_candidate)
+          << FnType.getAsString();
       }
     }
   }

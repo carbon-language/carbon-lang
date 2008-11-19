@@ -145,22 +145,21 @@ static void HandleExtVectorTypeAttr(Decl *d, const AttributeList &Attr,
   QualType curType = tDecl->getUnderlyingType();
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "1";
     return;
   }
   Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
-           "ext_vector_type", sizeExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      << "ext_vector_type" << sizeExpr->getSourceRange();
     return;
   }
   // unlike gcc's vector_size attribute, we do not allow vectors to be defined
   // in conjunction with complex types (pointers, arrays, functions, etc.).
   if (!curType->isIntegerType() && !curType->isRealFloatingType()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type,
-           curType.getAsString());
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type)
+      << curType.getAsString();
     return;
   }
   // unlike gcc's vector_size attribute, the size is specified as the 
@@ -168,8 +167,8 @@ static void HandleExtVectorTypeAttr(Decl *d, const AttributeList &Attr,
   unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue()); 
   
   if (vectorSize == 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_zero_size,
-           sizeExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_zero_size)
+      << sizeExpr->getSourceRange();
     return;
   }
   // Instantiate/Install the vector type, the number of elements is > 0.
@@ -194,23 +193,21 @@ static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D))
     CurType = TD->getUnderlyingType();
   else {
-    S.Diag(D->getLocation(), diag::err_attr_wrong_decl,
-           std::string("vector_size"),
-           SourceRange(Attr.getLoc(), Attr.getLoc()));
+    S.Diag(D->getLocation(), diag::err_attr_wrong_decl)
+      << "vector_size" << SourceRange(Attr.getLoc(), Attr.getLoc());
     return;
   }
     
   // Check the attribute arugments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "1";
     return;
   }
   Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
-           "vector_size", sizeExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      << "vector_size" << sizeExpr->getSourceRange();
     return;
   }
   // navigate to the base type - we need to provide for vector pointers, 
@@ -232,8 +229,8 @@ static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
   // the base type must be integer or float.
   if (!CurType->isIntegerType() && !CurType->isRealFloatingType()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type,
-           CurType.getAsString());
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type)
+      << CurType.getAsString();
     return;
   }
   unsigned typeSize = static_cast<unsigned>(S.Context.getTypeSize(CurType));
@@ -242,13 +239,13 @@ static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   
   // the vector size needs to be an integral multiple of the type size.
   if (vectorSize % typeSize) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_size,
-           sizeExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_size)
+      << sizeExpr->getSourceRange();
     return;
   }
   if (vectorSize == 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_zero_size,
-           sizeExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_zero_size)
+      << sizeExpr->getSourceRange();
     return;
   }
   
@@ -265,8 +262,7 @@ static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -277,21 +273,19 @@ static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     // has no effect.
     if (!FD->getType()->isIncompleteType() &&
         S.Context.getTypeAlign(FD->getType()) <= 8)
-      S.Diag(Attr.getLoc(), 
-             diag::warn_attribute_ignored_for_field_of_type,
-             Attr.getName()->getName(), FD->getType().getAsString());
+      S.Diag(Attr.getLoc(), diag::warn_attribute_ignored_for_field_of_type)
+        << Attr.getName()->getName() << FD->getType().getAsString();
     else
       FD->addAttr(new PackedAttr(1));
   } else
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored,
-           Attr.getName()->getName());
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored)
+      << Attr.getName()->getName();
 }
 
 static void HandleIBOutletAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -307,8 +301,8 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // GCC ignores the nonnull attribute on K&R style function
   // prototypes, so we ignore it as well
   if (!isFunctionOrMethod(d) || !hasFunctionProto(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-           "nonnull", "function");
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "nonnull" << "function";
     return;
   }
   
@@ -325,16 +319,16 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     Expr *Ex = static_cast<Expr *>(Attr.getArg(0));
     llvm::APSInt ArgNum(32);
     if (!Ex->isIntegerConstantExpr(ArgNum, S.Context)) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
-             "nonnull", Ex->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+        << "nonnull" << Ex->getSourceRange();
       return;
     }
     
     unsigned x = (unsigned) ArgNum.getZExtValue();
         
     if (x < 1 || x > NumArgs) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds,
-             "nonnull", llvm::utostr_32(I.getArgNum()), Ex->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
+       << "nonnull" << llvm::utostr_32(I.getArgNum()) << Ex->getSourceRange();
       return;
     }
     
@@ -344,8 +338,8 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     QualType T = getFunctionOrMethodArgType(d, x);    
     if (!T->isPointerType() && !T->isBlockPointerType()) {
       // FIXME: Should also highlight argument in decl.
-      S.Diag(Attr.getLoc(), diag::err_nonnull_pointers_only,
-             "nonnull", Ex->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_nonnull_pointers_only)
+        << "nonnull" << Ex->getSourceRange();
       continue;
     }
     
@@ -376,8 +370,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "1";
     return;
   }
   
@@ -386,8 +379,8 @@ static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
   
   if (Str == 0 || Str->isWide()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
-           "alias", std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "alias" << "1";
     return;
   }
   
@@ -403,8 +396,7 @@ static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
                                    Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -414,14 +406,13 @@ static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
 
   if (!isFunctionOrMethod(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-           "noreturn", "function");
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "noreturn" << "function";
     return;
   }
   
@@ -431,14 +422,13 @@ static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
   if (!isa<VarDecl>(d) && !isFunctionOrMethod(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-           "unused", "variable and function");
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "unused" << "variable and function";
     return;
   }
   
@@ -448,7 +438,8 @@ static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0 && Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments, "0 or 1");
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << "0 or 1";
     return;
   } 
 
@@ -457,8 +448,8 @@ static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     Expr *E = static_cast<Expr *>(Attr.getArg(0));
     llvm::APSInt Idx(32);
     if (!E->isIntegerConstantExpr(Idx, S.Context)) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
-             "constructor", "1", E->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
+        << "constructor" << "1" << E->getSourceRange();
       return;
     }
     priority = Idx.getZExtValue();
@@ -466,8 +457,8 @@ static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   
   FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
   if (!Fn) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-           "constructor", "function");
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "constructor" << "function";
     return;
   }
 
@@ -477,7 +468,8 @@ static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0 && Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments, "0 or 1");
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+       << "0 or 1";
     return;
   } 
 
@@ -486,16 +478,16 @@ static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     Expr *E = static_cast<Expr *>(Attr.getArg(0));
     llvm::APSInt Idx(32);
     if (!E->isIntegerConstantExpr(Idx, S.Context)) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
-             "destructor", "1", E->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
+        << "destructor" << "1" << E->getSourceRange();
       return;
     }
     priority = Idx.getZExtValue();
   }
   
   if (!isa<FunctionDecl>(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-           "destructor", "function");
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "destructor" << "function";
     return;
   }
 
@@ -505,8 +497,7 @@ static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -516,8 +507,7 @@ static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "1";
     return;
   }
   
@@ -526,8 +516,8 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
   
   if (Str == 0 || Str->isWide()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
-           "visibility", std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "visibility" << "1";
     return;
   }
   
@@ -544,8 +534,8 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   else if (TypeLen == 9 && !memcmp(TypeStr, "protected", 9))
     type = VisibilityAttr::ProtectedVisibility;
   else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
-           "visibility", TypeStr);
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
+      << "visibility" << TypeStr;
     return;
   }
   
@@ -554,14 +544,14 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
 static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (!Attr.getParameterName()) {    
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
-           "objc_gc", std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "objc_gc" << "1";
     return;
   }
   
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << "1";
     return;
   }
   
@@ -575,8 +565,8 @@ static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   else if (TypeLen == 6 && !memcmp(TypeStr, "strong", 6))
     type = ObjCGCAttr::Strong;
   else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
-           "objc_gc", TypeStr);
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
+      << "objc_gc" << TypeStr;
     return;
   }
   
@@ -585,14 +575,14 @@ static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
 static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (!Attr.getParameterName()) {    
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
-           "blocks", std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "blocks" << "1";
     return;
   }
   
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << "1";
     return;
   }
   const char *TypeStr = Attr.getParameterName()->getName();
@@ -603,8 +593,8 @@ static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (TypeLen == 5 && !memcmp(TypeStr, "byref", 5))
     type = BlocksAttr::ByRef;
   else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
-           "blocks", TypeStr);
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
+      << "blocks" << TypeStr;
     return;
   }
   
@@ -614,7 +604,8 @@ static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 2) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments, "0, 1 or 2");
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << "0, 1 or 2";
     return;
   } 
   
@@ -623,15 +614,15 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     Expr *E = static_cast<Expr *>(Attr.getArg(0));
     llvm::APSInt Idx(32);
     if (!E->isIntegerConstantExpr(Idx, S.Context)) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
-             "sentinel", "1", E->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
+       << "sentinel" << "1" << E->getSourceRange();
       return;
     }
     sentinel = Idx.getZExtValue();
     
     if (sentinel < 0) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_sentinel_less_than_zero,
-             E->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_attribute_sentinel_less_than_zero)
+        << E->getSourceRange();
       return;
     }
   }
@@ -641,8 +632,8 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     Expr *E = static_cast<Expr *>(Attr.getArg(1));
     llvm::APSInt Idx(32);
     if (!E->isIntegerConstantExpr(Idx, S.Context)) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
-             "sentinel", "2", E->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
+        << "sentinel" << "2" << E->getSourceRange();
       return;
     }
     nullPos = Idx.getZExtValue();
@@ -650,8 +641,8 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     if (nullPos > 1 || nullPos < 0) {
       // FIXME: This error message could be improved, it would be nice
       // to say what the bounds actually are.
-      S.Diag(Attr.getLoc(), diag::err_attribute_sentinel_not_zero_or_one, 
-             E->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_attribute_sentinel_not_zero_or_one)
+        << E->getSourceRange();
       return;
     }
   }
@@ -668,8 +659,8 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       return;
     }    
   } else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-           "sentinel", "function or method");
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "sentinel" << "function or method";
     return;
   }
   
@@ -679,8 +670,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleWeakAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -690,8 +680,7 @@ static void HandleWeakAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleDLLImportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -701,8 +690,7 @@ static void HandleDLLImportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleDLLExportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -712,8 +700,7 @@ static void HandleDLLExportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -723,8 +710,7 @@ static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -734,8 +720,7 @@ static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleNothrowAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -745,8 +730,7 @@ static void HandleNothrowAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleConstAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -756,8 +740,7 @@ static void HandleConstAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandlePureAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
   
@@ -769,20 +752,19 @@ static void HandlePureAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   if (!Attr.getParameterName()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
-           "format", std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "format" << "1";
     return;
   }
 
   if (Attr.getNumArgs() != 2) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("3"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "3";
     return;
   }
 
   if (!isFunctionOrMethod(d) || !hasFunctionProto(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-           "format", "function");
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "format" << "function";
     return;
   }
 
@@ -820,8 +802,8 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
       
   if (!Supported) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
-           "format", Attr.getParameterName()->getName());
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
+      << "format" << Attr.getParameterName()->getName();
     return;
   }
 
@@ -829,14 +811,14 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   Expr *IdxExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt Idx(32);
   if (!IdxExpr->isIntegerConstantExpr(Idx, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
-           "format", std::string("2"), IdxExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
+      << "format" << "2" << IdxExpr->getSourceRange();
     return;
   }
 
   if (Idx.getZExtValue() < FirstIdx || Idx.getZExtValue() > NumArgs) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds,
-           "format", std::string("2"), IdxExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
+      << "format" << "2" << IdxExpr->getSourceRange();
     return;
   }
 
@@ -848,8 +830,8 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   if (is_CFString) {
     if (!isCFStringType(Ty, S.Context)) {
-      S.Diag(Attr.getLoc(), diag::err_format_attribute_not,
-             "a CFString", IdxExpr->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
+        << "a CFString" << IdxExpr->getSourceRange();
       return;
     }
   } else if (is_NSString) {
@@ -858,16 +840,16 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     if (!isNSStringType(Ty, S.Context)) {
       // FIXME: Should highlight the actual expression that has the
       // wrong type.
-      S.Diag(Attr.getLoc(), diag::err_format_attribute_not,
-             "an NSString", IdxExpr->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
+        << "an NSString" << IdxExpr->getSourceRange();
       return;
     }    
   } else if (!Ty->isPointerType() ||
              !Ty->getAsPointerType()->getPointeeType()->isCharType()) {
     // FIXME: Should highlight the actual expression that has the
     // wrong type.
-    S.Diag(Attr.getLoc(), diag::err_format_attribute_not,
-           "a string type", IdxExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
+      << "a string type" << IdxExpr->getSourceRange();
     return;
   }
 
@@ -875,8 +857,8 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   Expr *FirstArgExpr = static_cast<Expr *>(Attr.getArg(1));
   llvm::APSInt FirstArg(32);
   if (!FirstArgExpr->isIntegerConstantExpr(FirstArg, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
-           "format", std::string("3"), FirstArgExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
+      << "format" << "3" << FirstArgExpr->getSourceRange();
     return;
   }
 
@@ -894,14 +876,14 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // the input is just the current time + the format string
   if (is_strftime) {
     if (FirstArg != 0) {
-      S.Diag(Attr.getLoc(), diag::err_format_strftime_third_parameter,
-             FirstArgExpr->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_format_strftime_third_parameter)
+        << FirstArgExpr->getSourceRange();
       return;
     }
   // if 0 it disables parameter checking (to use with e.g. va_list)
   } else if (FirstArg != 0 && FirstArg != NumArgs) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds,
-           "format", std::string("3"), FirstArgExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
+      << "format" << "3" << FirstArgExpr->getSourceRange();
     return;
   }
 
@@ -913,16 +895,15 @@ static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
                                        Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
 
   // FIXME: This shouldn't be restricted to typedefs
   TypedefDecl *TD = dyn_cast<TypedefDecl>(d);
   if (!TD || !TD->getUnderlyingType()->isUnionType()) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-         "transparent_union", "union");
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "transparent_union" << "union";
     return;
   }
 
@@ -951,8 +932,7 @@ static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
 static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "1";
     return;
   }
   Expr *argExpr = static_cast<Expr *>(Attr.getArg(0));
@@ -971,8 +951,7 @@ static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "1";
     return;
   }
 
@@ -987,8 +966,8 @@ static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   Expr *alignmentExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt Alignment(32);
   if (!alignmentExpr->isIntegerConstantExpr(Alignment, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
-           "aligned", alignmentExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      << "aligned" << alignmentExpr->getSourceRange();
     return;
   }
   d->addAttr(new AlignedAttr(Alignment.getZExtValue() * 8));
@@ -1007,8 +986,7 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Check that there aren't any arguments
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0";
     return;
   }
 
@@ -1061,8 +1039,8 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   else if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
     OldTy = VD->getType();
   else {
-    S.Diag(D->getLocation(), diag::err_attr_wrong_decl, "mode",
-           SourceRange(Attr.getLoc(), Attr.getLoc()));
+    S.Diag(D->getLocation(), diag::err_attr_wrong_decl)
+      << "mode" << SourceRange(Attr.getLoc(), Attr.getLoc());
     return;
   }
   
@@ -1070,10 +1048,10 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   QualType NewTy;
   switch (DestWidth) {
   case 0:
-    S.Diag(Attr.getLoc(), diag::err_unknown_machine_mode, Name->getName());
+    S.Diag(Attr.getLoc(), diag::err_unknown_machine_mode) << Name->getName();
     return;
   default:
-    S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode, Name->getName());
+    S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) <<Name->getName();
     return;
   case 8:
     assert(IntegerMode);
@@ -1170,8 +1148,8 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   default:
 #if 0
     // TODO: when we have the full set of attributes, warn about unknown ones.
-    S.Diag(Attr->getLoc(), diag::warn_attribute_ignored,
-           Attr->getName()->getName());
+    S.Diag(Attr->getLoc(), diag::warn_attribute_ignored)
+        <<  Attr->getName()->getName();
 #endif
     break;
   }

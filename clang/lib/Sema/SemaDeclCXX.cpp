@@ -75,16 +75,16 @@ namespace {
       //   argument expression are in scope and can hide namespace and
       //   class member names.
       return S->Diag(DRE->getSourceRange().getBegin(), 
-                     diag::err_param_default_argument_references_param,
-                     Param->getName(), DefaultArg->getSourceRange());
+                     diag::err_param_default_argument_references_param)
+         << Param->getName() << DefaultArg->getSourceRange();
     } else if (VarDecl *VDecl = dyn_cast<VarDecl>(Decl)) {
       // C++ [dcl.fct.default]p7
       //   Local variables shall not be used in default argument
       //   expressions.
       if (VDecl->isBlockVarDecl())
         return S->Diag(DRE->getSourceRange().getBegin(), 
-                       diag::err_param_default_argument_references_local,
-                       VDecl->getName(), DefaultArg->getSourceRange());
+                       diag::err_param_default_argument_references_local)
+          << VDecl->getName() << DefaultArg->getSourceRange();
     }
 
     return false;
@@ -96,8 +96,8 @@ namespace {
     //   The keyword this shall not be used in a default argument of a
     //   member function.
     return S->Diag(ThisE->getSourceRange().getBegin(),
-                   diag::err_param_default_argument_references_this,
-                   ThisE->getSourceRange());
+                   diag::err_param_default_argument_references_this)
+               << ThisE->getSourceRange();
   }
 }
 
@@ -113,8 +113,8 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
 
   // Default arguments are only permitted in C++
   if (!getLangOptions().CPlusPlus) {
-    Diag(EqualLoc, diag::err_param_default_argument, 
-         DefaultArg->getSourceRange());
+    Diag(EqualLoc, diag::err_param_default_argument)
+      << DefaultArg->getSourceRange();
     return;
   }
 
@@ -163,8 +163,8 @@ void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
       for (unsigned argIdx = 0; argIdx < chunk.Fun.NumArgs; ++argIdx) {
         ParmVarDecl *Param = (ParmVarDecl *)chunk.Fun.ArgInfo[argIdx].Param;
         if (Param->getDefaultArg()) {
-          Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc,
-               Param->getDefaultArg()->getSourceRange());
+          Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc)
+            << Param->getDefaultArg()->getSourceRange();
           Param->setDefaultArg(0);
         }
       }
@@ -196,8 +196,8 @@ Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
 
     if(OldParam->getDefaultArg() && NewParam->getDefaultArg()) {
       Diag(NewParam->getLocation(), 
-           diag::err_param_default_argument_redefinition,
-           NewParam->getDefaultArg()->getSourceRange());
+           diag::err_param_default_argument_redefinition)
+        << NewParam->getDefaultArg()->getSourceRange();
       Diag(OldParam->getLocation(), diag::err_previous_definition);
     } else if (OldParam->getDefaultArg()) {
       // Merge the old default argument into the new parameter
@@ -234,8 +234,8 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
     if (!Param->getDefaultArg()) {
       if (Param->getIdentifier())
         Diag(Param->getLocation(), 
-             diag::err_param_default_argument_missing_name,
-             Param->getIdentifier()->getName());
+             diag::err_param_default_argument_missing_name)
+          << Param->getIdentifier()->getName();
       else
         Diag(Param->getLocation(), 
              diag::err_param_default_argument_missing);
@@ -291,42 +291,33 @@ Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
   QualType BaseType = Context.getTypeDeclType((TypeDecl*)basetype);
 
   // Base specifiers must be record types.
-  if (!BaseType->isRecordType()) {
-    Diag(BaseLoc, diag::err_base_must_be_class, SpecifierRange);
-    return true;
-  }
+  if (!BaseType->isRecordType())
+    return Diag(BaseLoc, diag::err_base_must_be_class) << SpecifierRange;
 
   // C++ [class.union]p1:
   //   A union shall not be used as a base class.
-  if (BaseType->isUnionType()) {
-    Diag(BaseLoc, diag::err_union_as_base_class, SpecifierRange);
-    return true;
-  }
+  if (BaseType->isUnionType())
+    return Diag(BaseLoc, diag::err_union_as_base_class) << SpecifierRange;
 
   // C++ [class.union]p1:
   //   A union shall not have base classes.
-  if (Decl->isUnion()) {
-    Diag(Decl->getLocation(), diag::err_base_clause_on_union,
-         SpecifierRange);
-    return true;
-  }
+  if (Decl->isUnion())
+    return Diag(Decl->getLocation(), diag::err_base_clause_on_union)
+              << SpecifierRange;
 
   // C++ [class.derived]p2:
   //   The class-name in a base-specifier shall not be an incompletely
   //   defined class.
-  if (BaseType->isIncompleteType()) {
-    Diag(BaseLoc, diag::err_incomplete_base_class, SpecifierRange);
-    return true;
-  }
+  if (BaseType->isIncompleteType())
+    return Diag(BaseLoc, diag::err_incomplete_base_class) << SpecifierRange;
 
   // If the base class is polymorphic, the new one is, too.
   RecordDecl *BaseDecl = BaseType->getAsRecordType()->getDecl();
   assert(BaseDecl && "Record type has no declaration");
   BaseDecl = BaseDecl->getDefinition(Context);
   assert(BaseDecl && "Base type is not incomplete, but has no definition");
-  if (cast<CXXRecordDecl>(BaseDecl)->isPolymorphic()) {
+  if (cast<CXXRecordDecl>(BaseDecl)->isPolymorphic())
     cast<CXXRecordDecl>(Decl)->setPolymorphic(true);
-  }
 
   // Create the base specifier.
   return new CXXBaseSpecifier(SpecifierRange, Virtual, 
@@ -360,9 +351,9 @@ void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases,
       //   A class shall not be specified as a direct base class of a
       //   derived class more than once.
       Diag(BaseSpecs[idx]->getSourceRange().getBegin(),
-           diag::err_duplicate_base_class, 
-           KnownBaseTypes[NewBaseType]->getType().getAsString(),
-           BaseSpecs[idx]->getSourceRange());
+           diag::err_duplicate_base_class)
+        << KnownBaseTypes[NewBaseType]->getType().getAsString()
+        << BaseSpecs[idx]->getSourceRange();
 
       // Delete the duplicate base class specifier; we're going to
       // overwrite its pointer later.
@@ -442,11 +433,10 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     case DeclSpec::SCS_mutable:
       if (isFunc) {
         if (DS.getStorageClassSpecLoc().isValid())
-          Diag(DS.getStorageClassSpecLoc(),
-               diag::err_mutable_function);
+          Diag(DS.getStorageClassSpecLoc(), diag::err_mutable_function);
         else
-          Diag(DS.getThreadSpecLoc(),
-               diag::err_mutable_function);
+          Diag(DS.getThreadSpecLoc(), diag::err_mutable_function);
+        
         // FIXME: It would be nicer if the keyword was ignored only for this
         // declarator. Otherwise we could get follow-up errors.
         D.getMutableDeclSpec().ClearStorageClassSpecs();
@@ -535,29 +525,29 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     if (D.isFunctionDeclarator()) {
       // FIXME: Emit diagnostic about only constructors taking base initializers
       // or something similar, when constructor support is in place.
-      Diag(Loc, diag::err_not_bitfield_type,
-           Name.getAsString(), BitWidth->getSourceRange());
+      Diag(Loc, diag::err_not_bitfield_type)
+        << Name.getAsString() << BitWidth->getSourceRange();
       InvalidDecl = true;
 
     } else if (isInstField) {
       // C++ 9.6p3: A bit-field shall have integral or enumeration type.
       if (!cast<FieldDecl>(Member)->getType()->isIntegralType()) {
-        Diag(Loc, diag::err_not_integral_type_bitfield,
-             Name.getAsString(), BitWidth->getSourceRange());
+        Diag(Loc, diag::err_not_integral_type_bitfield)
+          << Name.getAsString() << BitWidth->getSourceRange();
         InvalidDecl = true;
       }
 
     } else if (isa<FunctionDecl>(Member)) {
       // A function typedef ("typedef int f(); f a;").
       // C++ 9.6p3: A bit-field shall have integral or enumeration type.
-      Diag(Loc, diag::err_not_integral_type_bitfield,
-           Name.getAsString(), BitWidth->getSourceRange());
+      Diag(Loc, diag::err_not_integral_type_bitfield)
+        << Name.getAsString() << BitWidth->getSourceRange();
       InvalidDecl = true;
 
     } else if (isa<TypedefDecl>(Member)) {
       // "cannot declare 'A' to be a bit-field type"
-      Diag(Loc, diag::err_not_bitfield_type, Name.getAsString(), 
-           BitWidth->getSourceRange());
+      Diag(Loc, diag::err_not_bitfield_type)
+        << Name.getAsString() << BitWidth->getSourceRange();
       InvalidDecl = true;
 
     } else {
@@ -565,8 +555,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
              "Didn't we cover all member kinds?");
       // C++ 9.6p3: A bit-field shall not be a static member.
       // "static member 'A' cannot be a bit-field"
-      Diag(Loc, diag::err_static_not_bitfield, Name.getAsString(), 
-           BitWidth->getSourceRange());
+      Diag(Loc, diag::err_static_not_bitfield)
+        << Name.getAsString() << BitWidth->getSourceRange();
       InvalidDecl = true;
     }
   }
@@ -879,19 +869,15 @@ bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
   //   volatile object. A constructor shall not be declared const,
   //   volatile, or const volatile (9.3.2).
   if (isVirtual) {
-    Diag(D.getIdentifierLoc(),
-         diag::err_constructor_cannot_be,
-         "virtual",
-         SourceRange(D.getDeclSpec().getVirtualSpecLoc()),
-         SourceRange(D.getIdentifierLoc()));
+    Diag(D.getIdentifierLoc(), diag::err_constructor_cannot_be)
+      << "virtual" << SourceRange(D.getDeclSpec().getVirtualSpecLoc())
+      << SourceRange(D.getIdentifierLoc());
     isInvalid = true;
   }
   if (SC == FunctionDecl::Static) {
-    Diag(D.getIdentifierLoc(),
-         diag::err_constructor_cannot_be,
-         "static",
-         SourceRange(D.getDeclSpec().getStorageClassSpecLoc()),
-         SourceRange(D.getIdentifierLoc()));
+    Diag(D.getIdentifierLoc(), diag::err_constructor_cannot_be)
+      << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
+      << SourceRange(D.getIdentifierLoc());
     isInvalid = true;
     SC = FunctionDecl::None;
   }
@@ -904,28 +890,21 @@ bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
     //   };
     //
     // The return type will be eliminated later.
-    Diag(D.getIdentifierLoc(),
-         diag::err_constructor_return_type,
-         SourceRange(D.getDeclSpec().getTypeSpecTypeLoc()),
-         SourceRange(D.getIdentifierLoc()));
+    Diag(D.getIdentifierLoc(), diag::err_constructor_return_type)
+      << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
+      << SourceRange(D.getIdentifierLoc());
   } 
   if (R->getAsFunctionTypeProto()->getTypeQuals() != 0) {
     DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
     if (FTI.TypeQuals & QualType::Const)
-      Diag(D.getIdentifierLoc(),
-           diag::err_invalid_qualified_constructor,
-           "const",
-           SourceRange(D.getIdentifierLoc()));
+      Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_constructor)
+        << "const" << SourceRange(D.getIdentifierLoc());
     if (FTI.TypeQuals & QualType::Volatile)
-      Diag(D.getIdentifierLoc(),
-           diag::err_invalid_qualified_constructor,
-           "volatile",
-           SourceRange(D.getIdentifierLoc()));
+      Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_constructor)
+        << "volatile" << SourceRange(D.getIdentifierLoc());
     if (FTI.TypeQuals & QualType::Restrict)
-      Diag(D.getIdentifierLoc(),
-           diag::err_invalid_qualified_constructor,
-           "restrict",
-           SourceRange(D.getIdentifierLoc()));
+      Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_constructor)
+        << "restrict" << SourceRange(D.getIdentifierLoc());
   }
       
   // Rebuild the function type "R" without any type qualifiers (in
@@ -959,9 +938,8 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
   //   declaration.
   TypeDecl *DeclaratorTypeD = (TypeDecl *)D.getDeclaratorIdType();
   if (const TypedefDecl *TypedefD = dyn_cast<TypedefDecl>(DeclaratorTypeD)) {
-    Diag(D.getIdentifierLoc(), 
-         diag::err_destructor_typedef_name,
-         TypedefD->getName());
+    Diag(D.getIdentifierLoc(),  diag::err_destructor_typedef_name)
+      << TypedefD->getName();
     isInvalid = true;
   }
 
@@ -974,11 +952,9 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
   //   volatile object. A destructor shall not be declared const,
   //   volatile or const volatile (9.3.2).
   if (SC == FunctionDecl::Static) {
-    Diag(D.getIdentifierLoc(),
-         diag::err_destructor_cannot_be,
-         "static",
-         SourceRange(D.getDeclSpec().getStorageClassSpecLoc()),
-         SourceRange(D.getIdentifierLoc()));
+    Diag(D.getIdentifierLoc(), diag::err_destructor_cannot_be)
+      << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
+      << SourceRange(D.getIdentifierLoc());
     isInvalid = true;
     SC = FunctionDecl::None;
   }
@@ -991,28 +967,21 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
     //   };
     //
     // The return type will be eliminated later.
-    Diag(D.getIdentifierLoc(),
-         diag::err_destructor_return_type,
-         SourceRange(D.getDeclSpec().getTypeSpecTypeLoc()),
-         SourceRange(D.getIdentifierLoc()));
+    Diag(D.getIdentifierLoc(), diag::err_destructor_return_type)
+      << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
+      << SourceRange(D.getIdentifierLoc());
   }
   if (R->getAsFunctionTypeProto()->getTypeQuals() != 0) {
     DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
     if (FTI.TypeQuals & QualType::Const)
-      Diag(D.getIdentifierLoc(),
-           diag::err_invalid_qualified_destructor,
-           "const",
-           SourceRange(D.getIdentifierLoc()));
+      Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_destructor)
+        << "const" << SourceRange(D.getIdentifierLoc());
     if (FTI.TypeQuals & QualType::Volatile)
-      Diag(D.getIdentifierLoc(),
-           diag::err_invalid_qualified_destructor,
-           "volatile",
-           SourceRange(D.getIdentifierLoc()));
+      Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_destructor)
+        << "volatile" << SourceRange(D.getIdentifierLoc());
     if (FTI.TypeQuals & QualType::Restrict)
-      Diag(D.getIdentifierLoc(),
-           diag::err_invalid_qualified_destructor,
-           "restrict",
-           SourceRange(D.getIdentifierLoc()));
+      Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_destructor)
+        << "restrict" << SourceRange(D.getIdentifierLoc());
   }
 
   // Make sure we don't have any parameters.
@@ -1057,11 +1026,9 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   //   type of a conversion function (8.3.5) is “function taking no
   //   parameter returning conversion-type-id.” 
   if (SC == FunctionDecl::Static) {
-    Diag(D.getIdentifierLoc(),
-         diag::err_conv_function_not_member,
-         "static",
-         SourceRange(D.getDeclSpec().getStorageClassSpecLoc()),
-         SourceRange(D.getIdentifierLoc()));
+    Diag(D.getIdentifierLoc(), diag::err_conv_function_not_member)
+      << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
+      << SourceRange(D.getIdentifierLoc());
     isInvalid = true;
     SC = FunctionDecl::None;
   }
@@ -1074,10 +1041,9 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
     //   };
     //
     // The return type will be changed later anyway.
-    Diag(D.getIdentifierLoc(),
-         diag::err_conv_function_return_type,
-         SourceRange(D.getDeclSpec().getTypeSpecTypeLoc()),
-         SourceRange(D.getIdentifierLoc()));
+    Diag(D.getIdentifierLoc(), diag::err_conv_function_return_type)
+      << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
+      << SourceRange(D.getIdentifierLoc());
   }
 
   // Make sure we don't have any parameters.
@@ -1145,12 +1111,10 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
   // constructors.
   OverloadedFunctionDecl::function_iterator MatchedDecl;
   if (!IsOverload(ConDecl, ClassDecl->getConstructors(), MatchedDecl)) {
-    Diag(ConDecl->getLocation(),
-         diag::err_constructor_redeclared,
-         SourceRange(ConDecl->getLocation()));
-    Diag((*MatchedDecl)->getLocation(),
-         diag::err_previous_declaration,
-         SourceRange((*MatchedDecl)->getLocation()));
+    Diag(ConDecl->getLocation(), diag::err_constructor_redeclared)
+      << SourceRange(ConDecl->getLocation());
+    Diag((*MatchedDecl)->getLocation(), diag::err_previous_declaration)
+      << SourceRange((*MatchedDecl)->getLocation());
     ConDecl->setInvalidDecl();
     return ConDecl;
   }
@@ -1168,9 +1132,8 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
     QualType ClassTy = Context.getTagDeclType(
                          const_cast<CXXRecordDecl*>(ConDecl->getParent()));
     if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
-      Diag(ConDecl->getLocation(),
-           diag::err_constructor_byvalue_arg,
-           SourceRange(ConDecl->getParamDecl(0)->getLocation()));
+      Diag(ConDecl->getLocation(), diag::err_constructor_byvalue_arg)
+        << SourceRange(ConDecl->getParamDecl(0)->getLocation());
       ConDecl->setInvalidDecl();
       return ConDecl;
     }

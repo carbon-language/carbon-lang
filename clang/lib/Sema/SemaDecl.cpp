@@ -802,8 +802,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   if (!Name) {
     if (!D.getInvalidType())  // Reject this if we think it is valid.
       Diag(D.getDeclSpec().getSourceRange().getBegin(),
-           diag::err_declarator_need_ident,
-           D.getDeclSpec().getSourceRange(), D.getSourceRange());
+           diag::err_declarator_need_ident)
+        << D.getDeclSpec().getSourceRange() << D.getSourceRange();
     return 0;
   }
   
@@ -846,8 +846,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         Diag(L, diag::err_invalid_declarator_in_function, Name.getAsString(), 
              R);
       } else {
-      Diag(L, diag::err_invalid_declarator_scope, Name.getAsString(),
-           cast<NamedDecl>(DC)->getName(), R);
+      Diag(L, diag::err_invalid_declarator_scope)
+          << Name.getAsString() << cast<NamedDecl>(DC)->getName() << R;
       }
     }
   }

@@ -105,13 +105,13 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
     /// a context where the result is unused.  Emit a diagnostic to warn about
     /// this.
     if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E))
-      Diag(BO->getOperatorLoc(), diag::warn_unused_expr,
-           BO->getLHS()->getSourceRange(), BO->getRHS()->getSourceRange());
+      Diag(BO->getOperatorLoc(), diag::warn_unused_expr)
+        << BO->getLHS()->getSourceRange() << BO->getRHS()->getSourceRange();
     else if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E))
-      Diag(UO->getOperatorLoc(), diag::warn_unused_expr,
-           UO->getSubExpr()->getSourceRange());
+      Diag(UO->getOperatorLoc(), diag::warn_unused_expr)
+        << UO->getSubExpr()->getSourceRange();
     else 
-      Diag(E->getExprLoc(), diag::warn_unused_expr, E->getSourceRange());
+      Diag(E->getExprLoc(), diag::warn_unused_expr) << E->getSourceRange();
   }
   
   return new CompoundStmt(Elts, NumElts, L, R);
@@ -869,9 +869,9 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       
       // FIXME: We currently leak memory here.
       return Diag(InputExpr->getSubExpr()->getLocStart(),
-                  diag::err_asm_invalid_type_in_input,
-                  InputExpr->getType().getAsString(), InputConstraint,
-                  InputExpr->getSubExpr()->getSourceRange());
+                  diag::err_asm_invalid_type_in_input)
+        << InputExpr->getType().getAsString() << InputConstraint
+        << InputExpr->getSubExpr()->getSourceRange();
     }
   }
   

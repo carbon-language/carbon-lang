@@ -121,9 +121,8 @@ bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
   StringLiteral *Literal = dyn_cast<StringLiteral>(Arg);
 
   if (!Literal || Literal->isWide()) {
-    Diag(Arg->getLocStart(),
-         diag::err_cfstring_literal_not_string_constant,
-         Arg->getSourceRange());
+    Diag(Arg->getLocStart(), diag::err_cfstring_literal_not_string_constant)
+      << Arg->getSourceRange();
     return true;
   }
   
@@ -133,15 +132,15 @@ bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
   for (unsigned i = 0; i < Length; ++i) {
     if (!isascii(Data[i])) {
       Diag(PP.AdvanceToTokenCharacter(Arg->getLocStart(), i + 1),
-           diag::warn_cfstring_literal_contains_non_ascii_character,
-           Arg->getSourceRange());
+           diag::warn_cfstring_literal_contains_non_ascii_character)
+        << Arg->getSourceRange();
       break;
     }
     
     if (!Data[i]) {
       Diag(PP.AdvanceToTokenCharacter(Arg->getLocStart(), i + 1),
-           diag::warn_cfstring_literal_contains_nul_character,
-           Arg->getSourceRange());
+           diag::warn_cfstring_literal_contains_nul_character)
+        << Arg->getSourceRange();
       break;
     }
   }
@@ -155,9 +154,10 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   Expr *Fn = TheCall->getCallee();
   if (TheCall->getNumArgs() > 2) {
     Diag(TheCall->getArg(2)->getLocStart(), 
-         diag::err_typecheck_call_too_many_args, Fn->getSourceRange(),
-         SourceRange(TheCall->getArg(2)->getLocStart(), 
-                     (*(TheCall->arg_end()-1))->getLocEnd()));
+         diag::err_typecheck_call_too_many_args)
+      << Fn->getSourceRange()
+      << SourceRange(TheCall->getArg(2)->getLocStart(), 
+                     (*(TheCall->arg_end()-1))->getLocEnd());
     return true;
   }
   
@@ -205,9 +205,9 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args);
   if (TheCall->getNumArgs() > 2)
     return Diag(TheCall->getArg(2)->getLocStart(), 
-                diag::err_typecheck_call_too_many_args,
-                SourceRange(TheCall->getArg(2)->getLocStart(),
-                            (*(TheCall->arg_end()-1))->getLocEnd()));
+                diag::err_typecheck_call_too_many_args)
+      << SourceRange(TheCall->getArg(2)->getLocStart(),
+                     (*(TheCall->arg_end()-1))->getLocEnd());
   
   Expr *OrigArg0 = TheCall->getArg(0);
   Expr *OrigArg1 = TheCall->getArg(1);
@@ -220,10 +220,9 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   // invalid for this operation.
   if (!Res->isRealFloatingType())
     return Diag(OrigArg0->getLocStart(), 
-                diag::err_typecheck_call_invalid_ordered_compare,
-                OrigArg0->getType().getAsString(),
-                OrigArg1->getType().getAsString(),
-                SourceRange(OrigArg0->getLocStart(), OrigArg1->getLocEnd()));
+                diag::err_typecheck_call_invalid_ordered_compare)
+      << OrigArg0->getType().getAsString() << OrigArg1->getType().getAsString()
+      << SourceRange(OrigArg0->getLocStart(), OrigArg1->getLocEnd());
   
   return false;
 }
@@ -233,7 +232,7 @@ bool Sema::SemaBuiltinStackAddress(CallExpr *TheCall) {
   // to check is that the argument is a constant.
   SourceLocation Loc;
   if (!TheCall->getArg(0)->isIntegerConstantExpr(Context, &Loc))
-    return Diag(Loc, diag::err_stack_const_level, TheCall->getSourceRange());
+    return Diag(Loc, diag::err_stack_const_level) << TheCall->getSourceRange();
   
   return false;
 }
@@ -242,47 +241,47 @@ bool Sema::SemaBuiltinStackAddress(CallExpr *TheCall) {
 // This is declared to take (...), so we have to check everything.
 Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 3)
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args,
-                TheCall->getSourceRange());
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
+      << TheCall->getSourceRange();
 
   QualType FAType = TheCall->getArg(0)->getType();
   QualType SAType = TheCall->getArg(1)->getType();
 
   if (!FAType->isVectorType() || !SAType->isVectorType()) {
-    Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector,
-         SourceRange(TheCall->getArg(0)->getLocStart(), 
-                     TheCall->getArg(1)->getLocEnd()));
+    Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector)
+      << SourceRange(TheCall->getArg(0)->getLocStart(), 
+                     TheCall->getArg(1)->getLocEnd());
     return true;
   }
 
   if (Context.getCanonicalType(FAType).getUnqualifiedType() !=
       Context.getCanonicalType(SAType).getUnqualifiedType()) {
-    Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector,
-         SourceRange(TheCall->getArg(0)->getLocStart(), 
-                     TheCall->getArg(1)->getLocEnd()));
+    Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
+      << SourceRange(TheCall->getArg(0)->getLocStart(), 
+                     TheCall->getArg(1)->getLocEnd());
     return true;
   }
 
   unsigned numElements = FAType->getAsVectorType()->getNumElements();
   if (TheCall->getNumArgs() != numElements+2) {
     if (TheCall->getNumArgs() < numElements+2)
-      return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args,
-                  TheCall->getSourceRange());
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args,
-                TheCall->getSourceRange());
+      return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
+               << TheCall->getSourceRange();
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args)
+             << TheCall->getSourceRange();
   }
 
   for (unsigned i = 2; i < TheCall->getNumArgs(); i++) {
     llvm::APSInt Result(32);
     if (!TheCall->getArg(i)->isIntegerConstantExpr(Result, Context))
       return Diag(TheCall->getLocStart(),
-                  diag::err_shufflevector_nonconstant_argument,
-                  TheCall->getArg(i)->getSourceRange());
+                  diag::err_shufflevector_nonconstant_argument)
+                << TheCall->getArg(i)->getSourceRange();
     
     if (Result.getActiveBits() > 64 || Result.getZExtValue() >= numElements*2)
       return Diag(TheCall->getLocStart(),
-                  diag::err_shufflevector_argument_too_large,
-                  TheCall->getArg(i)->getSourceRange());
+                  diag::err_shufflevector_argument_too_large)
+               << TheCall->getArg(i)->getSourceRange();
   }
 
   llvm::SmallVector<Expr*, 32> exprs;
@@ -301,48 +300,40 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
 // This is declared to take (const void*, ...) and can take two
 // optional constant int args.
 bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
-  unsigned numArgs = TheCall->getNumArgs();
-  bool res = false;
+  unsigned NumArgs = TheCall->getNumArgs();
 
-  if (numArgs > 3) {
-    res |= Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args,
-                TheCall->getSourceRange());
-  }
+  if (NumArgs > 3)
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args)
+             << TheCall->getSourceRange();
 
   // Argument 0 is checked for us and the remaining arguments must be
   // constant integers.
-  for (unsigned i=1; i<numArgs; ++i) {
+  for (unsigned i = 1; i != NumArgs; ++i) {
     Expr *Arg = TheCall->getArg(i);
     QualType RWType = Arg->getType();
 
     const BuiltinType *BT = RWType->getAsBuiltinType();
     llvm::APSInt Result;
     if (!BT || BT->getKind() != BuiltinType::Int ||
-        !Arg->isIntegerConstantExpr(Result, Context)) {
-      if (Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_argument,
-               SourceRange(Arg->getLocStart(), Arg->getLocEnd()))) {
-        res = true;
-        continue;
-      }
-    }
+        !Arg->isIntegerConstantExpr(Result, Context))
+      return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_argument)
+              << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
     
     // FIXME: gcc issues a warning and rewrites these to 0. These
     // seems especially odd for the third argument since the default
     // is 3.
-    if (i==1) {
+    if (i == 1) {
       if (Result.getSExtValue() < 0 || Result.getSExtValue() > 1)
-        res |= Diag(TheCall->getLocStart(), diag::err_argument_invalid_range,
-                    "0", "1", 
-                    SourceRange(Arg->getLocStart(), Arg->getLocEnd()));
+        return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
+             << "0" << "1" << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
     } else {
       if (Result.getSExtValue() < 0 || Result.getSExtValue() > 3)
-        res |= Diag(TheCall->getLocStart(), diag::err_argument_invalid_range,
-                    "0", "3", 
-                    SourceRange(Arg->getLocStart(), Arg->getLocEnd()));
+        return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
+            << "0" << "3" << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
     }
   }
 
-  return res;
+  return false;
 }
 
 /// SemaBuiltinObjectSize - Handle __builtin_object_size(void *ptr,
@@ -355,14 +346,13 @@ bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
   llvm::APSInt Result(32);
   if (!BT || BT->getKind() != BuiltinType::Int ||
       !Arg->isIntegerConstantExpr(Result, Context)) {
-    return Diag(TheCall->getLocStart(), diag::err_object_size_invalid_argument,
-                SourceRange(Arg->getLocStart(), Arg->getLocEnd()));
+    return Diag(TheCall->getLocStart(), diag::err_object_size_invalid_argument)
+             << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
   }
 
   if (Result.getSExtValue() < 0 || Result.getSExtValue() > 3) {
-    return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range,
-                "0", "3", 
-                SourceRange(Arg->getLocStart(), Arg->getLocEnd()));
+    return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
+             << "0" << "3" << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
   }
 
   return false;
@@ -998,6 +988,6 @@ void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
   
   // Emit the diagnostic.
   if (EmitWarning)
-    Diag(loc, diag::warn_floatingpoint_eq,
-         lex->getSourceRange(),rex->getSourceRange());
+    Diag(loc, diag::warn_floatingpoint_eq)
+      << lex->getSourceRange() << rex->getSourceRange();
 }

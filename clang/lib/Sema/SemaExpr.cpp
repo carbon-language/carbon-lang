@@ -282,9 +282,9 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
 
   // Verify that pascal strings aren't too large.
   if (Literal.Pascal && Literal.GetStringLength() > 256)
-    return Diag(StringToks[0].getLocation(), diag::err_pascal_string_too_long,
-                SourceRange(StringToks[0].getLocation(),
-                            StringToks[NumStringToks-1].getLocation()));
+    return Diag(StringToks[0].getLocation(), diag::err_pascal_string_too_long)
+      << SourceRange(StringToks[0].getLocation(),
+                     StringToks[NumStringToks-1].getLocation());
   
   QualType StrTy = Context.CharTy;
   if (Literal.AnyWide) StrTy = Context.getWCharType();
@@ -420,9 +420,9 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                     Name.getAsString(), SS->getRange());
       else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
                Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
-        return Diag(Loc, diag::err_undeclared_use, Name.getAsString());
+        return Diag(Loc, diag::err_undeclared_use) << Name.getAsString();
       else
-        return Diag(Loc, diag::err_undeclared_var_use, Name.getAsString());
+        return Diag(Loc, diag::err_undeclared_var_use) << Name.getAsString();
     }
   }
   
@@ -430,12 +430,12 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
       if (MD->isStatic())
         // "invalid use of member 'x' in static member function"
-        return Diag(Loc, diag::err_invalid_member_use_in_static_method,
-                    FD->getName());
+        return Diag(Loc, diag::err_invalid_member_use_in_static_method)
+           << FD->getName();
       if (cast<CXXRecordDecl>(MD->getParent()) != FD->getParent())
         // "invalid use of nonstatic data member 'x'"
-        return Diag(Loc, diag::err_invalid_non_static_member_use,
-                    FD->getName());
+        return Diag(Loc, diag::err_invalid_non_static_member_use)
+          << FD->getName();
 
       if (FD->isInvalidDecl())
         return true;
@@ -445,14 +445,14 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         FD->getType().getWithAdditionalQualifiers(MD->getTypeQualifiers()),Loc);
     }
 
-    return Diag(Loc, diag::err_invalid_non_static_member_use, FD->getName());
+    return Diag(Loc, diag::err_invalid_non_static_member_use) << FD->getName();
   }
   if (isa<TypedefDecl>(D))
-    return Diag(Loc, diag::err_unexpected_typedef, Name.getAsString());
+    return Diag(Loc, diag::err_unexpected_typedef) << Name.getAsString();
   if (isa<ObjCInterfaceDecl>(D))
-    return Diag(Loc, diag::err_unexpected_interface, Name.getAsString());
+    return Diag(Loc, diag::err_unexpected_interface) << Name.getAsString();
   if (isa<NamespaceDecl>(D))
-    return Diag(Loc, diag::err_unexpected_namespace, Name.getAsString());
+    return Diag(Loc, diag::err_unexpected_namespace) << Name.getAsString();
 
   // Make the DeclRefExpr or BlockDeclRefExpr for the decl.
   if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
@@ -462,7 +462,7 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   
   // check if referencing an identifier with __attribute__((deprecated)).
   if (VD->getAttr<DeprecatedAttr>())
-    Diag(Loc, diag::warn_deprecated, VD->getName());
+    Diag(Loc, diag::warn_deprecated) << VD->getName();
 
   // Only create DeclRefExpr's for valid Decl's.
   if (VD->isInvalidDecl())
@@ -692,16 +692,14 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
   // C99 6.5.3.4p1:
   if (isa<FunctionType>(exprType) && isSizeof)
     // alignof(function) is allowed.
-    Diag(OpLoc, diag::ext_sizeof_function_type, ExprRange);
+    Diag(OpLoc, diag::ext_sizeof_function_type) << ExprRange;
   else if (exprType->isVoidType())
-    Diag(OpLoc, diag::ext_sizeof_void_type, isSizeof ? "sizeof" : "__alignof",
-         ExprRange);
-  else if (exprType->isIncompleteType()) {
-    Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
-                           diag::err_alignof_incomplete_type,
-         exprType.getAsString(), ExprRange);
-    return true; // error
-  }
+    Diag(OpLoc, diag::ext_sizeof_void_type)
+      << (isSizeof ? "sizeof" : "__alignof") << ExprRange;
+  else if (exprType->isIncompleteType())
+    return Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
+                                  diag::err_alignof_incomplete_type)
+      << exprType.getAsString() << ExprRange;
 
   return false;
 }
@@ -748,7 +746,7 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc) {
     return V->getType();
   
   // Reject anything else.
-  Diag(Loc, diag::err_realimag_invalid_type, V->getType().getAsString());
+  Diag(Loc, diag::err_realimag_invalid_type) << V->getType().getAsString();
   return QualType();
 }
 
@@ -804,18 +802,18 @@ ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     // Component access limited to variables (reject vec4.rg[1]).
     if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr) &&
         !isa<ExtVectorElementExpr>(BaseExpr))
-      return Diag(LLoc, diag::err_ext_vector_component_access, 
-                  SourceRange(LLoc, RLoc));
+      return Diag(LLoc, diag::err_ext_vector_component_access)
+        << SourceRange(LLoc, RLoc);
     // FIXME: need to deal with const...
     ResultType = VTy->getElementType();
   } else {
-    return Diag(LHSExp->getLocStart(), diag::err_typecheck_subscript_value, 
-                RHSExp->getSourceRange());
+    return Diag(LHSExp->getLocStart(), diag::err_typecheck_subscript_value)
+      << RHSExp->getSourceRange();
   }              
   // C99 6.5.2.1p1
   if (!IndexExpr->getType()->isIntegerType())
-    return Diag(IndexExpr->getLocStart(), diag::err_typecheck_subscript,
-                IndexExpr->getSourceRange());
+    return Diag(IndexExpr->getLocStart(), diag::err_typecheck_subscript)
+      << IndexExpr->getSourceRange();
 
   // C99 6.5.2.1p1: "shall have type "pointer to *object* type".  In practice,
   // the following check catches trying to index a pointer to a function (e.g.
@@ -823,8 +821,8 @@ ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   // objects in C99.
   if (!ResultType->isObjectType())
     return Diag(BaseExpr->getLocStart(), 
-                diag::err_typecheck_subscript_not_object,
-                BaseExpr->getType().getAsString(), BaseExpr->getSourceRange());
+                diag::err_typecheck_subscript_not_object)
+      << BaseExpr->getType().getAsString() << BaseExpr->getSourceRange();
 
   return new ArraySubscriptExpr(LHSExp, RHSExp, ResultType, RLoc);
 }
@@ -841,8 +839,8 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   // The vector accessor can't exceed the number of elements.
   const char *compStr = CompName.getName();
   if (strlen(compStr) > vecType->getNumElements()) {
-    Diag(OpLoc, diag::err_ext_vector_component_exceeds_length, 
-                baseType.getAsString(), SourceRange(CompLoc));
+    Diag(OpLoc, diag::err_ext_vector_component_exceeds_length)
+      << baseType.getAsString() << SourceRange(CompLoc);
     return QualType();
   }
 
@@ -868,8 +866,8 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   if (!SpecialComponent && *compStr) { 
     // We didn't get to the end of the string. This means the component names
     // didn't come from the same set *or* we encountered an illegal name.
-    Diag(OpLoc, diag::err_ext_vector_component_name_illegal, 
-         std::string(compStr,compStr+1), SourceRange(CompLoc));
+    Diag(OpLoc, diag::err_ext_vector_component_name_illegal)
+      << std::string(compStr,compStr+1) << SourceRange(CompLoc);
     return QualType();
   }
   // Each component accessor can't exceed the vector type.
@@ -883,8 +881,8 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   if (!SpecialComponent && *compStr) { 
     // We didn't get to the end of the string. This means a component accessor
     // exceeds the number of elements in the vector.
-    Diag(OpLoc, diag::err_ext_vector_component_exceeds_length, 
-                baseType.getAsString(), SourceRange(CompLoc));
+    Diag(OpLoc, diag::err_ext_vector_component_exceeds_length)
+      << baseType.getAsString() << SourceRange(CompLoc);
     return QualType();
   }
 
@@ -892,8 +890,8 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   // is an even number, since all special component names return exactly half
   // the elements.
   if (SpecialComponent && (vecType->getNumElements() & 1U)) {
-    Diag(OpLoc, diag::err_ext_vector_component_requires_even, 
-         baseType.getAsString(), SourceRange(CompLoc));
+    Diag(OpLoc, diag::err_ext_vector_component_requires_even)
+      << baseType.getAsString() << SourceRange(CompLoc);
     return QualType();
   }
   
@@ -954,8 +952,8 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     if (const PointerType *PT = BaseType->getAsPointerType())
       BaseType = PT->getPointeeType();
     else
-      return Diag(MemberLoc, diag::err_typecheck_member_reference_arrow,
-                  BaseType.getAsString(), BaseExpr->getSourceRange());
+      return Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
+        << BaseType.getAsString() << BaseExpr->getSourceRange();
   }
   
   // Handle field access to simple records.  This also handles access to fields
@@ -963,13 +961,13 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
   if (const RecordType *RTy = BaseType->getAsRecordType()) {
     RecordDecl *RDecl = RTy->getDecl();
     if (RTy->isIncompleteType())
-      return Diag(OpLoc, diag::err_typecheck_incomplete_tag, RDecl->getName(),
-                  BaseExpr->getSourceRange());
+      return Diag(OpLoc, diag::err_typecheck_incomplete_tag)
+               << RDecl->getName() << BaseExpr->getSourceRange();
     // The record definition is complete, now make sure the member is valid.
     FieldDecl *MemberDecl = RDecl->getMember(&Member);
     if (!MemberDecl)
-      return Diag(MemberLoc, diag::err_typecheck_no_member, Member.getName(),
-                  BaseExpr->getSourceRange());
+      return Diag(MemberLoc, diag::err_typecheck_no_member)
+               << Member.getName() << BaseExpr->getSourceRange();
 
     // Figure out the type of the member; see C99 6.5.2.3p3
     // FIXME: Handle address space modifiers
@@ -992,9 +990,9 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
                                  OpKind == tok::arrow);
-    return Diag(MemberLoc, diag::err_typecheck_member_reference_ivar,
-                IFTy->getDecl()->getName(), Member.getName(),
-                BaseExpr->getSourceRange());
+    return Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
+             << IFTy->getDecl()->getName() << Member.getName()
+             << BaseExpr->getSourceRange();
   }
   
   // Handle Objective-C property access, which is "Obj.property" where Obj is a
@@ -1078,16 +1076,16 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     // Component access limited to variables (reject vec4.rg.g).
     if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr) &&
         !isa<ExtVectorElementExpr>(BaseExpr))
-      return Diag(MemberLoc, diag::err_ext_vector_component_access, 
-                  BaseExpr->getSourceRange());
+      return Diag(MemberLoc, diag::err_ext_vector_component_access)
+               << BaseExpr->getSourceRange();
     QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
     if (ret.isNull())
       return true;
     return new ExtVectorElementExpr(ret, BaseExpr, Member, MemberLoc);
   }
   
-  return Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union,
-              BaseType.getAsString(), BaseExpr->getSourceRange());
+  return Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union)
+          << BaseType.getAsString() << BaseExpr->getSourceRange();
 }
 
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
@@ -1140,20 +1138,19 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     case OR_No_Viable_Function:
       if (CandidateSet.empty())
         Diag(Fn->getSourceRange().getBegin(), 
-             diag::err_ovl_no_viable_function_in_call, Ovl->getName(),
-             Fn->getSourceRange());
+             diag::err_ovl_no_viable_function_in_call)
+          << Ovl->getName() << Fn->getSourceRange();
       else {
         Diag(Fn->getSourceRange().getBegin(), 
-             diag::err_ovl_no_viable_function_in_call_with_cands, 
-             Ovl->getName(), Fn->getSourceRange());
+             diag::err_ovl_no_viable_function_in_call_with_cands)
+          << Ovl->getName() << Fn->getSourceRange();
         PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       }
       return true;
 
     case OR_Ambiguous:
-      Diag(Fn->getSourceRange().getBegin(), 
-           diag::err_ovl_ambiguous_call, Ovl->getName(), 
-           Fn->getSourceRange());
+      Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_ambiguous_call)
+        << Ovl->getName() << Fn->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
       return true;
     }
@@ -1172,16 +1169,16 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     // have type pointer to function".
     const PointerType *PT = Fn->getType()->getAsPointerType();
     if (PT == 0)
-      return Diag(LParenLoc, diag::err_typecheck_call_not_function,
-                  Fn->getSourceRange());
+      return Diag(LParenLoc, diag::err_typecheck_call_not_function)
+        << Fn->getSourceRange();
     FuncT = PT->getPointeeType()->getAsFunctionType();
   } else { // This is a block call.
     FuncT = Fn->getType()->getAsBlockPointerType()->getPointeeType()->
                 getAsFunctionType();
   }
   if (FuncT == 0)
-    return Diag(LParenLoc, diag::err_typecheck_call_not_function,
-                Fn->getSourceRange());
+    return Diag(LParenLoc, diag::err_typecheck_call_not_function)
+      << Fn->getSourceRange();
   
   // We know the result type of the call, set it.
   TheCall->setType(FuncT->getResultType().getNonReferenceType());
@@ -1203,8 +1200,8 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
         return Diag(RParenLoc, 
                     !Fn->getType()->isBlockPointerType()
                       ? diag::err_typecheck_call_too_few_args
-                      : diag::err_typecheck_block_too_few_args,
-                    Fn->getSourceRange());
+                      : diag::err_typecheck_block_too_few_args)
+          << Fn->getSourceRange();
     }
 
     // If too many are passed and not variadic, error on the extras and drop
@@ -1214,10 +1211,10 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
         Diag(Args[NumArgsInProto]->getLocStart(), 
                !Fn->getType()->isBlockPointerType()
                  ? diag::err_typecheck_call_too_many_args
-                 : diag::err_typecheck_block_too_many_args, 
-             Fn->getSourceRange(),
-             SourceRange(Args[NumArgsInProto]->getLocStart(),
-                         Args[NumArgs-1]->getLocEnd()));
+                 : diag::err_typecheck_block_too_many_args)
+          << Fn->getSourceRange()
+          << SourceRange(Args[NumArgsInProto]->getLocStart(),
+                         Args[NumArgs-1]->getLocEnd());
         // This deletes the extra arguments.
         TheCall->setNumArgs(NumArgsInProto);
       }
@@ -1280,16 +1277,12 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
 
   if (literalType->isArrayType()) {
     if (literalType->isVariableArrayType())
-      return Diag(LParenLoc,
-                  diag::err_variable_object_no_init,
-                  SourceRange(LParenLoc,
-                              literalExpr->getSourceRange().getEnd()));
+      return Diag(LParenLoc, diag::err_variable_object_no_init)
+        << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd());
   } else if (literalType->isIncompleteType()) {
-    return Diag(LParenLoc,
-                diag::err_typecheck_decl_incomplete_type,
-                literalType.getAsString(),
-                SourceRange(LParenLoc,
-                            literalExpr->getSourceRange().getEnd()));
+    return Diag(LParenLoc, diag::err_typecheck_decl_incomplete_type)
+      << literalType.getAsString()
+      << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd());
   }
 
   if (CheckInitializerTypes(literalExpr, literalType, LParenLoc, 
@@ -1334,18 +1327,18 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
         Context.getCanonicalType(castExpr->getType()) ||
         (!castType->isStructureType() && !castType->isUnionType())) {
       // Reject any other conversions to non-scalar types.
-      return Diag(TyR.getBegin(), diag::err_typecheck_cond_expect_scalar, 
-                  castType.getAsString(), castExpr->getSourceRange());
+      return Diag(TyR.getBegin(), diag::err_typecheck_cond_expect_scalar)
+        << castType.getAsString() << castExpr->getSourceRange();
     }
       
     // accept this, but emit an ext-warn.
-    Diag(TyR.getBegin(), diag::ext_typecheck_cast_nonscalar, 
-         castType.getAsString(), castExpr->getSourceRange());
+    Diag(TyR.getBegin(), diag::ext_typecheck_cast_nonscalar)
+      << castType.getAsString() << castExpr->getSourceRange();
   } else if (!castExpr->getType()->isScalarType() && 
              !castExpr->getType()->isVectorType()) {
-    return Diag(castExpr->getLocStart(), 
-                diag::err_typecheck_expect_scalar_operand, 
-                castExpr->getType().getAsString(),castExpr->getSourceRange());
+    return Diag(castExpr->getLocStart(),
+                diag::err_typecheck_expect_scalar_operand)
+      << castExpr->getType().getAsString() << castExpr->getSourceRange();
   } else if (castExpr->getType()->isVectorType()) {
     if (CheckVectorCast(TyR, castExpr->getType(), castType))
       return true;
@@ -1364,14 +1357,12 @@ bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty) {
       return Diag(R.getBegin(),
                   Ty->isVectorType() ? 
                   diag::err_invalid_conversion_between_vectors :
-                  diag::err_invalid_conversion_between_vector_and_integer,
-                  VectorTy.getAsString().c_str(),
-                  Ty.getAsString().c_str(), R);
+                  diag::err_invalid_conversion_between_vector_and_integer)
+        << VectorTy.getAsString() << Ty.getAsString() << R;
   } else
     return Diag(R.getBegin(),
-                diag::err_invalid_conversion_between_vector_and_scalar,
-                VectorTy.getAsString().c_str(),
-                Ty.getAsString().c_str(), R);
+                diag::err_invalid_conversion_between_vector_and_scalar)
+      << VectorTy.getAsString() << Ty.getAsString() << R;
   
   return false;
 }
@@ -2002,11 +1993,11 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
       // Check for arithmetic on pointers to incomplete types
       if (!PTy->getPointeeType()->isObjectType()) {
         if (PTy->getPointeeType()->isVoidType()) {
-          Diag(Loc, diag::ext_gnu_void_ptr, 
-               lex->getSourceRange(), rex->getSourceRange());
+          Diag(Loc, diag::ext_gnu_void_ptr)
+            << lex->getSourceRange() << rex->getSourceRange();
         } else {
-          Diag(Loc, diag::err_typecheck_arithmetic_incomplete_type,
-               lex->getType().getAsString(), lex->getSourceRange());
+          Diag(Loc, diag::err_typecheck_arithmetic_incomplete_type)
+            << lex->getType().getAsString() << lex->getSourceRange();
           return QualType();
         }
       }
@@ -2039,11 +2030,11 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
     if (!lpointee->isObjectType()) {
       // Handle the GNU void* extension.
       if (lpointee->isVoidType()) {
-        Diag(Loc, diag::ext_gnu_void_ptr, 
-             lex->getSourceRange(), rex->getSourceRange());
+        Diag(Loc, diag::ext_gnu_void_ptr)
+          << lex->getSourceRange() << rex->getSourceRange();
       } else {
-        Diag(Loc, diag::err_typecheck_sub_ptr_object,
-             lex->getType().getAsString(), lex->getSourceRange());
+        Diag(Loc, diag::err_typecheck_sub_ptr_object)
+          << lex->getType().getAsString() << lex->getSourceRange();
         return QualType();
       }
     }
@@ -2061,11 +2052,11 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
         // Handle the GNU void* extension.
         if (rpointee->isVoidType()) {
           if (!lpointee->isVoidType())
-            Diag(Loc, diag::ext_gnu_void_ptr, 
-                 lex->getSourceRange(), rex->getSourceRange());
+            Diag(Loc, diag::ext_gnu_void_ptr)
+              << lex->getSourceRange() << rex->getSourceRange();
         } else {
-          Diag(Loc, diag::err_typecheck_sub_ptr_object,
-               rex->getType().getAsString(), rex->getSourceRange());
+          Diag(Loc, diag::err_typecheck_sub_ptr_object)
+            << rex->getType().getAsString() << rex->getSourceRange();
           return QualType();
         }
       }
@@ -2929,10 +2920,9 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
       break;
 
     case OR_Ambiguous:
-      Diag(TokLoc, 
-           diag::err_ovl_ambiguous_oper, 
-           BinaryOperator::getOpcodeStr(Opc), 
-           lhs->getSourceRange(), rhs->getSourceRange());
+      Diag(TokLoc,  diag::err_ovl_ambiguous_oper)
+          << BinaryOperator::getOpcodeStr(Opc)
+          << lhs->getSourceRange() << rhs->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
       return true;
     }

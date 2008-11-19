@@ -96,7 +96,7 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
                                                    SourceLocation RParenLoc) {
   ObjCProtocolDecl* PDecl = ObjCProtocols[ProtocolId];
   if (!PDecl) {
-    Diag(ProtoLoc, diag::err_undeclared_protocol, ProtocolId->getName());
+    Diag(ProtoLoc, diag::err_undeclared_protocol) << ProtocolId->getName();
     return true;
   }
   
@@ -117,8 +117,8 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     for (unsigned i = 0; i != NumArgs; i++)
       DefaultArgumentPromotion(Args[i]);
 
-    Diag(lbrac, diag::warn_method_not_found, std::string(PrefixStr),
-         Sel.getName(), SourceRange(lbrac, rbrac));
+    Diag(lbrac, diag::warn_method_not_found)
+      << PrefixStr << Sel.getName() << SourceRange(lbrac, rbrac);
     ReturnType = Context.getObjCIdType();
     return false;
   } else {
@@ -160,10 +160,10 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     // Check for extra arguments to non-variadic methods.
     if (NumArgs != NumNamedArgs) {
       Diag(Args[NumNamedArgs]->getLocStart(), 
-           diag::err_typecheck_call_too_many_args,
-           Method->getSourceRange(),
-           SourceRange(Args[NumNamedArgs]->getLocStart(),
-                       Args[NumArgs-1]->getLocEnd()));
+           diag::err_typecheck_call_too_many_args)
+        << Method->getSourceRange()
+        << SourceRange(Args[NumNamedArgs]->getLocStart(),
+                       Args[NumArgs-1]->getLocEnd());
     }
   }
 
@@ -188,8 +188,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
     isSuper = true;
     ClassDecl = getCurMethodDecl()->getClassInterface()->getSuperClass();
     if (!ClassDecl)
-      return Diag(lbrac, diag::error_no_super_class,
-                  getCurMethodDecl()->getClassInterface()->getName());
+      return Diag(lbrac, diag::error_no_super_class)
+        << getCurMethodDecl()->getClassInterface()->getName();
     if (getCurMethodDecl()->isInstance()) {
       QualType superTy = Context.getObjCInterfaceType(ClassDecl);
       superTy = Context.getPointerType(superTy);
@@ -344,9 +344,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         break;
     }
     if (!Method)
-      Diag(lbrac, diag::warn_method_not_found_in_protocol, 
-           std::string("-"), Sel.getName(),
-           RExpr->getSourceRange());
+      Diag(lbrac, diag::warn_method_not_found_in_protocol)
+        << "-" << Sel.getName() << RExpr->getSourceRange();
   } else if (const ObjCInterfaceType *OCIReceiver = 
                 ReceiverCType->getAsPointerToObjCInterfaceType()) {
     // We allow sending a message to a pointer to an interface (an object).
@@ -367,12 +366,11 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     }
     
     if (!Method && !OCIReceiver->qual_empty())
-      Diag(lbrac, diag::warn_method_not_found_in_protocol, 
-           std::string("-"), Sel.getName(),
-           SourceRange(lbrac, rbrac));
+      Diag(lbrac, diag::warn_method_not_found_in_protocol)
+        << "-" << Sel.getName() << SourceRange(lbrac, rbrac);
   } else {
-    Diag(lbrac, diag::error_bad_receiver_type,
-         RExpr->getType().getAsString(), RExpr->getSourceRange());
+    Diag(lbrac, diag::error_bad_receiver_type)
+      << RExpr->getType().getAsString() << RExpr->getSourceRange();
     return true;
   }
   

@@ -67,8 +67,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   // Check for another declaration kind with the same name.
   Decl *PrevDecl = LookupDecl(ClassName, Decl::IDNS_Ordinary, TUScope);
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
-    Diag(ClassLoc, diag::err_redefinition_different_kind,
-         ClassName->getName());
+    Diag(ClassLoc, diag::err_redefinition_different_kind)
+      << ClassName->getName();
     Diag(PrevDecl->getLocation(), diag::err_previous_definition);
   }
   
@@ -76,7 +76,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   if (IDecl) {
     // Class already seen. Is it a forward declaration?
     if (!IDecl->isForwardDecl()) {
-      Diag(AtInterfaceLoc, diag::err_duplicate_class_def, IDecl->getName());
+      Diag(AtInterfaceLoc, diag::err_duplicate_class_def) << IDecl->getName();
       // Return the previous class interface.
       // FIXME: don't leak the objects passed in!
       return IDecl;
@@ -100,8 +100,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     // Check if a different kind of symbol declared in this scope.
     PrevDecl = LookupDecl(SuperName, Decl::IDNS_Ordinary, TUScope);
     if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
-      Diag(SuperLoc, diag::err_redefinition_different_kind,
-           SuperName->getName());
+      Diag(SuperLoc, diag::err_redefinition_different_kind)
+        << SuperName->getName();
       Diag(PrevDecl->getLocation(), diag::err_previous_definition);
     }
     else {
@@ -109,10 +109,10 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       SuperClassEntry = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
                               
       if (!SuperClassEntry || SuperClassEntry->isForwardDecl()) {
-        Diag(SuperLoc, diag::err_undef_superclass, 
-             SuperClassEntry ? SuperClassEntry->getName() 
-                             : SuperName->getName(),
-             ClassName->getName(), SourceRange(AtInterfaceLoc, ClassLoc));
+        Diag(SuperLoc, diag::err_undef_superclass)
+          << (SuperClassEntry ? SuperClassEntry->getName() 
+                              : SuperName->getName())
+          << ClassName->getName() << SourceRange(AtInterfaceLoc, ClassLoc);
       }
     }
     IDecl->setSuperClass(SuperClassEntry);
@@ -147,8 +147,8 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
       Diag(ADecl->getLocation(), diag::warn_previous_declaration);
     }
     else {
-      Diag(AliasLocation, diag::err_conflicting_aliasing_type,
-           AliasName->getName());
+      Diag(AliasLocation, diag::err_conflicting_aliasing_type)
+        << AliasName->getName();
       Diag(ADecl->getLocation(), diag::err_previous_declaration);
     }
     return 0;
@@ -157,7 +157,7 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   Decl *CDeclU = LookupDecl(ClassName, Decl::IDNS_Ordinary, TUScope);
   ObjCInterfaceDecl *CDecl = dyn_cast_or_null<ObjCInterfaceDecl>(CDeclU);
   if (CDecl == 0) {
-    Diag(ClassLocation, diag::warn_undef_interface, ClassName->getName());
+    Diag(ClassLocation, diag::warn_undef_interface) << ClassName->getName();
     if (CDeclU)
       Diag(CDeclU->getLocation(), diag::warn_previous_declaration);
     return 0;
@@ -189,8 +189,8 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
   if (PDecl) {
     // Protocol already seen. Better be a forward protocol declaration
     if (!PDecl->isForwardDecl()) {
-      Diag(ProtocolLoc, diag::err_duplicate_protocol_def, 
-           ProtocolName->getName());
+      Diag(ProtocolLoc, diag::err_duplicate_protocol_def)
+        << ProtocolName->getName();
       // Just return the protocol we already had.
       // FIXME: don't leak the objects passed in!
       return PDecl;
@@ -225,16 +225,16 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
   for (unsigned i = 0; i != NumProtocols; ++i) {
     ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolId[i].first];
     if (!PDecl) {
-      Diag(ProtocolId[i].second, diag::err_undeclared_protocol, 
-           ProtocolId[i].first->getName());
+      Diag(ProtocolId[i].second, diag::err_undeclared_protocol)
+        << ProtocolId[i].first->getName();
       continue;
     }
 
     // If this is a forward declaration and we are supposed to warn in this
     // case, do it.
     if (WarnOnDeclarations && PDecl->isForwardDecl())
-      Diag(ProtocolId[i].second, diag::warn_undef_protocolref,
-           ProtocolId[i].first->getName());
+      Diag(ProtocolId[i].second, diag::warn_undef_protocolref)
+        << ProtocolId[i].first->getName();
     Protocols.push_back(PDecl); 
   }
 }
@@ -252,8 +252,8 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
   SuperProperty->getPropertyAttributes();
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_readonly)
       && (SAttr & ObjCPropertyDecl::OBJC_PR_readwrite))
-    Diag(Property->getLocation(), diag::warn_readonly_property, 
-               Property->getName(), inheritedName);
+    Diag(Property->getLocation(), diag::warn_readonly_property)
+      << Property->getName() << inheritedName;
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_copy)
       != (SAttr & ObjCPropertyDecl::OBJC_PR_copy))
     Diag(Property->getLocation(), diag::warn_property_attribute)
@@ -400,15 +400,15 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
   
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl())
-    Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
+    Diag(ClassLoc, diag::err_undef_interface) << ClassName->getName();
   else {
     /// Check for duplicate interface declaration for this category
     ObjCCategoryDecl *CDeclChain;
     for (CDeclChain = IDecl->getCategoryList(); CDeclChain;
          CDeclChain = CDeclChain->getNextClassCategory()) {
       if (CategoryName && CDeclChain->getIdentifier() == CategoryName) {
-        Diag(CategoryLoc, diag::warn_dup_category_def, ClassName->getName(),
-             CategoryName->getName());
+        Diag(CategoryLoc, diag::warn_dup_category_def)
+          << ClassName->getName() << CategoryName->getName();
         break;
       }
     }
@@ -437,7 +437,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryImplementation(
     ObjCCategoryImplDecl::Create(Context, AtCatImplLoc, CatName, IDecl);
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl())
-    Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
+    Diag(ClassLoc, diag::err_undef_interface) << ClassName->getName();
 
   /// TODO: Check that CatName, category name, is not used in another
   // implementation.
@@ -464,7 +464,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
     // Is there an interface declaration of this class; if not, warn!
     IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
     if (!IDecl)
-      Diag(ClassLoc, diag::warn_undef_interface, ClassName->getName());
+      Diag(ClassLoc, diag::warn_undef_interface) << ClassName->getName();
   }
   
   // Check that super class name is valid class name
@@ -557,18 +557,18 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     assert (ClsIvar && "missing class ivar");
     if (Context.getCanonicalType(ImplIvar->getType()) !=
         Context.getCanonicalType(ClsIvar->getType())) {
-      Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_type,
-           ImplIvar->getIdentifier()->getName());
-      Diag(ClsIvar->getLocation(), diag::err_previous_definition,
-           ClsIvar->getIdentifier()->getName());
+      Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_type)
+        << ImplIvar->getIdentifier()->getName();
+      Diag(ClsIvar->getLocation(), diag::err_previous_definition)
+        << ClsIvar->getIdentifier()->getName();
     }
     // TODO: Two mismatched (unequal width) Ivar bitfields should be diagnosed 
     // as error.
     else if (ImplIvar->getIdentifier() != ClsIvar->getIdentifier()) {
-      Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_name,
-           ImplIvar->getIdentifier()->getName());
-      Diag(ClsIvar->getLocation(), diag::err_previous_definition,
-           ClsIvar->getIdentifier()->getName());
+      Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_name)
+        << ImplIvar->getIdentifier()->getName();
+      Diag(ClsIvar->getLocation(), diag::err_previous_definition)
+        << ClsIvar->getIdentifier()->getName();
       return;
     }
     --numIvars;
