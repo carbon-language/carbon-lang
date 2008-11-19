@@ -17,7 +17,10 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
-#include "llvm/Support/Streams.h"
+
+namespace llvm {
+  class raw_ostream;
+}
 
 namespace clang {
 class SourceManager;
@@ -25,12 +28,12 @@ class SourceManager;
 class TextDiagnosticPrinter : public DiagnosticClient {
   FullSourceLoc LastWarningLoc;
   FullSourceLoc LastLoc;
-  llvm::OStream OS;
+  llvm::raw_ostream &OS;
   bool ShowColumn;
   bool CaretDiagnostics;
 public:
-  TextDiagnosticPrinter(bool showColumn = true, bool caretDiagnistics = true,
-      llvm::OStream &os = llvm::cerr)
+  TextDiagnosticPrinter(llvm::raw_ostream &os, bool showColumn = true,
+                        bool caretDiagnistics = true)
     : OS(os), ShowColumn(showColumn), CaretDiagnostics(caretDiagnistics) {}
 
   void PrintIncludeStack(FullSourceLoc Pos);

@@ -14,6 +14,7 @@
 #include "clang/Driver/TextDiagnosticPrinter.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
@@ -29,7 +30,7 @@ PrintIncludeStack(FullSourceLoc Pos) {
   unsigned LineNo = Pos.getLineNumber();
   
   OS << "In file included from " << Pos.getSourceName()
-     << ":" << LineNo << ":\n";
+     << ':' << LineNo << ":\n";
 }
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
@@ -127,10 +128,10 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
            *LineEnd != '\n' && *LineEnd != '\r')
       ++LineEnd;
   
-    OS << Buffer->getBufferIdentifier() << ":" << LineNo << ":";
+    OS << Buffer->getBufferIdentifier() << ':' << LineNo << ':';
     if (ColNo && ShowColumn) 
-      OS << ColNo << ":";
-    OS << " ";
+      OS << ColNo << ':';
+    OS << ' ';
   }
   
   switch (Level) {
@@ -193,7 +194,9 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       CaretLine.erase(CaretLine.end()-1);
     
     // Emit what we have computed.
-    OS << SourceLine << "\n";
-    OS << CaretLine << "\n";
+    OS << SourceLine << '\n';
+    OS << CaretLine << '\n';
   }
+  
+  OS.flush();
 }

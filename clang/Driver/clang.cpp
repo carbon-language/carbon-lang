@@ -1443,7 +1443,8 @@ int main(int argc, char **argv) {
   
   if (!VerifyDiagnostics) {
     // Print diagnostics to stderr by default.
-    TextDiagClient = new TextDiagnosticPrinter(!NoShowColumn,
+    TextDiagClient = new TextDiagnosticPrinter(llvm::errs(),
+                                               !NoShowColumn,
                                                !NoCaretDiagnostics);
   } else {
     // When checking diagnostics, just buffer them up.
