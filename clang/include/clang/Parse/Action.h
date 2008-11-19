@@ -509,7 +509,7 @@ public:
   }
   
   // Postfix Expressions.
-  virtual ExprResult ActOnPostfixUnaryOp(SourceLocation OpLoc, 
+  virtual ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
                                          tok::TokenKind Kind, ExprTy *Input) {
     return 0;
   }
@@ -536,8 +536,8 @@ public:
   }
   
   // Unary Operators.  'Tok' is the token for the operator.
-  virtual ExprResult ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
-                                  ExprTy *Input) {
+  virtual ExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc, 
+                                  tok::TokenKind Op, ExprTy *Input) {
     return 0;
   }
   virtual ExprResult 

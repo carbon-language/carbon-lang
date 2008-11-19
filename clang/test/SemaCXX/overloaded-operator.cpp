@@ -69,3 +69,31 @@ void enum_test(Enum1 enum1, Enum2 enum2, E1 e1, E2 e2) {
   float &f3 = (e1 == enum2); 
   float &f4 = (enum1 == enum2);  // expected-error{{non-const reference to type 'float' cannot be initialized with a temporary of type '_Bool'}}
 }
+
+
+struct PostInc {
+  PostInc operator++(int);
+  PostInc& operator++();
+};
+
+struct PostDec {
+  PostDec operator--(int);
+  PostDec& operator--();
+};
+
+void incdec_test(PostInc pi, PostDec pd) {
+  const PostInc& pi1 = pi++;
+  const PostDec& pd1 = pd--;
+  PostInc &pi2 = ++pi;
+  PostDec &pd2 = --pd;
+}
+
+struct SmartPtr {
+  int& operator*();
+  // FIXME: spurious error:  long& operator*() const;
+};
+
+void test_smartptr(SmartPtr ptr, const SmartPtr cptr) {
+  int &ir = *ptr;
+  // FIXME: reinstate long &lr = *cptr;
+}

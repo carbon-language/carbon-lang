@@ -1843,8 +1843,7 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   }
 
   // Add builtin overload candidates (C++ [over.built]).
-  if (NumArgs == 2)
-    return AddBuiltinBinaryOperatorCandidates(Op, Args, CandidateSet);
+  AddBuiltinOperatorCandidates(Op, Args, NumArgs, CandidateSet);
 }
 
 /// AddBuiltinCandidate - Add a candidate for a built-in
@@ -2053,16 +2052,15 @@ void BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
   }
 }
 
-/// AddBuiltinCandidates - Add the appropriate built-in operator
-/// overloads to the candidate set (C++ [over.built]), based on the
-/// operator @p Op and the arguments given. For example, if the
-/// operator is a binary '+', this routine might add
-///   "int operator+(int, int)"
-/// to cover integer addition.
+/// AddBuiltinOperatorCandidates - Add the appropriate built-in
+/// operator overloads to the candidate set (C++ [over.built]), based
+/// on the operator @p Op and the arguments given. For example, if the
+/// operator is a binary '+', this routine might add "int
+/// operator+(int, int)" to cover integer addition.
 void
-Sema::AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op, 
-                                         Expr **Args, 
-                                         OverloadCandidateSet& CandidateSet) {
+Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op, 
+                                   Expr **Args, unsigned NumArgs,
+                                   OverloadCandidateSet& CandidateSet) {
   // The set of "promoted arithmetic types", which are the arithmetic
   // types are that preserved by promotion (C++ [over.built]p2). Note
   // that the first few of these types are the promoted integral
@@ -2090,10 +2088,11 @@ Sema::AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op,
   BuiltinCandidateTypeSet CandidateTypes(Context);
   if (Op == OO_Less || Op == OO_Greater || Op == OO_LessEqual ||
       Op == OO_GreaterEqual || Op == OO_EqualEqual || Op == OO_ExclaimEqual ||
-      Op == OO_Plus || Op == OO_Minus || Op == OO_Equal ||
+      Op == OO_Plus || (Op == OO_Minus && NumArgs == 2) || Op == OO_Equal ||
       Op == OO_PlusEqual || Op == OO_MinusEqual || Op == OO_Subscript ||
-      Op == OO_ArrowStar) {
-    for (unsigned ArgIdx = 0; ArgIdx < 2; ++ArgIdx)
+      Op == OO_ArrowStar || Op == OO_PlusPlus || Op == OO_MinusMinus ||
+      (Op == OO_Star && NumArgs == 1)) {
+    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
       CandidateTypes.AddTypesConvertedFrom(Args[ArgIdx]->getType());
   }
 
@@ -2104,24 +2103,184 @@ Sema::AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op,
     assert(false && "Expected an overloaded operator");
     break;
 
+  case OO_Star: // '*' is either unary or binary
+    if (NumArgs == 1) 
+      goto UnaryStar;
+    else
+      goto BinaryStar;
+    break;
+
+  case OO_Plus: // '+' is either unary or binary
+    if (NumArgs == 1)
+      goto UnaryPlus;
+    else
+      goto BinaryPlus;
+    break;
+
+  case OO_Minus: // '-' is either unary or binary
+    if (NumArgs == 1)
+      goto UnaryMinus;
+    else
+      goto BinaryMinus;
+    break;
+
+  case OO_Amp: // '&' is either unary or binary
+    if (NumArgs == 1)
+      goto UnaryAmp;
+    else
+      goto BinaryAmp;
+
+  case OO_PlusPlus:
+  case OO_MinusMinus:
+    // C++ [over.built]p3:
+    //
+    //   For every pair (T, VQ), where T is an arithmetic type, and VQ
+    //   is either volatile or empty, there exist candidate operator
+    //   functions of the form
+    //
+    //       VQ T&      operator++(VQ T&);
+    //       T          operator++(VQ T&, int);
+    //
+    // C++ [over.built]p4:
+    //
+    //   For every pair (T, VQ), where T is an arithmetic type other
+    //   than bool, and VQ is either volatile or empty, there exist
+    //   candidate operator functions of the form
+    //
+    //       VQ T&      operator--(VQ T&);
+    //       T          operator--(VQ T&, int);
+    for (unsigned Arith = (Op == OO_PlusPlus? 0 : 1); 
+         Arith < NumArithmeticTypes; ++Arith) {
+      QualType ArithTy = ArithmeticTypes[Arith];
+      QualType ParamTypes[2] 
+        = { Context.getReferenceType(ArithTy), Context.IntTy };
+
+      // Non-volatile version.
+      if (NumArgs == 1)
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
+      else
+        AddBuiltinCandidate(ArithTy, ParamTypes, Args, 2, CandidateSet);
+
+      // Volatile version
+      ParamTypes[0] = Context.getReferenceType(ArithTy.withVolatile());
+      if (NumArgs == 1)
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
+      else
+        AddBuiltinCandidate(ArithTy, ParamTypes, Args, 2, CandidateSet);
+    }
+
+    // C++ [over.built]p5:
+    //
+    //   For every pair (T, VQ), where T is a cv-qualified or
+    //   cv-unqualified object type, and VQ is either volatile or
+    //   empty, there exist candidate operator functions of the form
+    //
+    //       T*VQ&      operator++(T*VQ&);
+    //       T*VQ&      operator--(T*VQ&);
+    //       T*         operator++(T*VQ&, int);
+    //       T*         operator--(T*VQ&, int);
+    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
+         Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+      // Skip pointer types that aren't pointers to object types.
+      if (!(*Ptr)->getAsPointerType()->getPointeeType()->isObjectType())
+        continue;
+
+      QualType ParamTypes[2] = { 
+        Context.getReferenceType(*Ptr), Context.IntTy 
+      };
+      
+      // Without volatile
+      if (NumArgs == 1)
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
+      else
+        AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
+
+      if (!Context.getCanonicalType(*Ptr).isVolatileQualified()) {
+        // With volatile
+        ParamTypes[0] = Context.getReferenceType((*Ptr).withVolatile());
+        if (NumArgs == 1)
+          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
+        else
+          AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
+      }
+    }
+    break;
+
+  UnaryStar:
+    // C++ [over.built]p6:
+    //   For every cv-qualified or cv-unqualified object type T, there
+    //   exist candidate operator functions of the form
+    //
+    //       T&         operator*(T*);
+    //
+    // C++ [over.built]p7:
+    //   For every function type T, there exist candidate operator
+    //   functions of the form
+    //       T&         operator*(T*);
+    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
+         Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+      QualType ParamTy = *Ptr;
+      QualType PointeeTy = ParamTy->getAsPointerType()->getPointeeType();
+      AddBuiltinCandidate(Context.getReferenceType(PointeeTy), 
+                          &ParamTy, Args, 1, CandidateSet);
+    }
+    break;
+
+  UnaryPlus:
+    // C++ [over.built]p8:
+    //   For every type T, there exist candidate operator functions of
+    //   the form
+    //
+    //       T*         operator+(T*);
+    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
+         Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+      QualType ParamTy = *Ptr;
+      AddBuiltinCandidate(ParamTy, &ParamTy, Args, 1, CandidateSet);
+    }
+    
+    // Fall through
+
+  UnaryMinus:
+    // C++ [over.built]p9:
+    //  For every promoted arithmetic type T, there exist candidate
+    //  operator functions of the form
+    //
+    //       T         operator+(T);
+    //       T         operator-(T);
+    for (unsigned Arith = FirstPromotedArithmeticType; 
+         Arith < LastPromotedArithmeticType; ++Arith) {
+      QualType ArithTy = ArithmeticTypes[Arith];
+      AddBuiltinCandidate(ArithTy, &ArithTy, Args, 1, CandidateSet);
+    }
+    break;
+
+  case OO_Tilde:
+    // C++ [over.built]p10:
+    //   For every promoted integral type T, there exist candidate
+    //   operator functions of the form
+    //
+    //        T         operator~(T);
+    for (unsigned Int = FirstPromotedIntegralType; 
+         Int < LastPromotedIntegralType; ++Int) {
+      QualType IntTy = ArithmeticTypes[Int];
+      AddBuiltinCandidate(IntTy, &IntTy, Args, 1, CandidateSet);
+    }
+    break;
+
   case OO_New:
   case OO_Delete:
   case OO_Array_New:
   case OO_Array_Delete:
-  case OO_Tilde:
-  case OO_Exclaim:
-  case OO_PlusPlus:
-  case OO_MinusMinus:
-  case OO_Arrow:
   case OO_Call:
-    assert(false && "Expected a binary operator");
+    assert(false && "Special operators don't use AddBuiltinOperatorCandidates");
     break;
 
   case OO_Comma:
+  UnaryAmp:
+  case OO_Arrow:
     // C++ [over.match.oper]p3:
     //   -- For the operator ',', the unary operator '&', or the
     //      operator '->', the built-in candidates set is empty.
-    // We don't check '&' or '->' here, since they are unary operators.
     break;
 
   case OO_Less:
@@ -2156,8 +2315,8 @@ Sema::AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op,
     // Fall through.
     isComparison = true;
 
-  case OO_Plus:
-  case OO_Minus:
+  BinaryPlus:
+  BinaryMinus:
     if (!isComparison) {
       // We didn't fall through, so we must have OO_Plus or OO_Minus.
 
@@ -2201,8 +2360,8 @@ Sema::AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op,
     }
     // Fall through
 
-  case OO_Star:
   case OO_Slash:
+  BinaryStar:
     // C++ [over.built]p12:
     //
     //   For every pair of promoted arithmetic types L and R, there
@@ -2235,7 +2394,7 @@ Sema::AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op,
     break;
 
   case OO_Percent:
-  case OO_Amp:
+  BinaryAmp:
   case OO_Caret:
   case OO_Pipe:
   case OO_LessLess:
@@ -2285,10 +2444,12 @@ Sema::AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op,
       ParamTypes[1] = *Enum;
       AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
 
-      // volatile T& operator=(volatile T&, T)
-      ParamTypes[0] = Context.getReferenceType((*Enum).withVolatile());
-      ParamTypes[1] = *Enum;
-      AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+      if (!Context.getCanonicalType(*Enum).isVolatileQualified()) {
+        // volatile T& operator=(volatile T&, T)
+        ParamTypes[0] = Context.getReferenceType((*Enum).withVolatile());
+        ParamTypes[1] = *Enum;
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+      }
     }
     // Fall through.
 
@@ -2319,9 +2480,11 @@ Sema::AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op,
       ParamTypes[0] = Context.getReferenceType(*Ptr);
       AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
 
-      // volatile version
-      ParamTypes[0] = Context.getReferenceType((*Ptr).withVolatile());
-      AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+      if (!Context.getCanonicalType(*Ptr).isVolatileQualified()) {
+        // volatile version
+        ParamTypes[0] = Context.getReferenceType((*Ptr).withVolatile());
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+      }
     }
     // Fall through.
 
@@ -2396,13 +2559,26 @@ Sema::AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op,
     }
     break;
 
+  case OO_Exclaim: {
+    // C++ [over.operator]p23:
+    //
+    //   There also exist candidate operator functions of the form
+    //
+    //        bool        operator!(bool);            
+    //        bool        operator&&(bool, bool);     [BELOW]
+    //        bool        operator||(bool, bool);     [BELOW]
+    QualType ParamTy = Context.BoolTy;
+    AddBuiltinCandidate(ParamTy, &ParamTy, Args, 1, CandidateSet);
+    break;
+  }
+
   case OO_AmpAmp:
   case OO_PipePipe: {
     // C++ [over.operator]p23:
     //
     //   There also exist candidate operator functions of the form
     //
-    //        bool        operator!(bool);            [In Unary version]
+    //        bool        operator!(bool);            [ABOVE]
     //        bool        operator&&(bool, bool);
     //        bool        operator||(bool, bool);
     QualType ParamTypes[2] = { Context.BoolTy, Context.BoolTy };

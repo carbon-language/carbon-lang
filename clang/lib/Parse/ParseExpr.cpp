@@ -515,7 +515,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(true);
     if (!Res.isInvalid)
-      Res = Actions.ActOnUnaryOp(SavedLoc, SavedKind, Res.Val);
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.Val);
     return Res;
   }
   case tok::amp:           // unary-expression: '&' cast-expression
@@ -529,7 +529,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid)
-      Res = Actions.ActOnUnaryOp(SavedLoc, SavedKind, Res.Val);
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.Val);
     return Res;
   }    
       
@@ -539,7 +539,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid)
-      Res = Actions.ActOnUnaryOp(SavedLoc, SavedKind, Res.Val);
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.Val);
     return Res;
   }
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
@@ -724,8 +724,8 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     case tok::plusplus:    // postfix-expression: postfix-expression '++'
     case tok::minusminus:  // postfix-expression: postfix-expression '--'
       if (!LHS.isInvalid)
-        LHS = Actions.ActOnPostfixUnaryOp(Tok.getLocation(), Tok.getKind(),
-                                          LHS.Val);
+        LHS = Actions.ActOnPostfixUnaryOp(CurScope, Tok.getLocation(), 
+                                          Tok.getKind(), LHS.Val);
       ConsumeToken();
       break;
     }

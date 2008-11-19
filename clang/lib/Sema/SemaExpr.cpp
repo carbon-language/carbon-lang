@@ -752,19 +752,112 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc) {
 
 
 
-Action::ExprResult Sema::ActOnPostfixUnaryOp(SourceLocation OpLoc, 
+Action::ExprResult Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
                                              tok::TokenKind Kind,
                                              ExprTy *Input) {
+  Expr *Arg = (Expr *)Input;
+
   UnaryOperator::Opcode Opc;
   switch (Kind) {
   default: assert(0 && "Unknown unary op!");
   case tok::plusplus:   Opc = UnaryOperator::PostInc; break;
   case tok::minusminus: Opc = UnaryOperator::PostDec; break;
   }
-  QualType result = CheckIncrementDecrementOperand((Expr *)Input, OpLoc);
+  
+  if (getLangOptions().CPlusPlus &&
+      (Arg->getType()->isRecordType() || Arg->getType()->isEnumeralType())) {
+    // Which overloaded operator?
+    OverloadedOperatorKind OverOp = 
+      (Opc == UnaryOperator::PostInc)? OO_PlusPlus : OO_MinusMinus;
+
+    // C++ [over.inc]p1:
+    //
+    //     [...] If the function is a member function with one
+    //     parameter (which shall be of type int) or a non-member
+    //     function with two parameters (the second of which shall be
+    //     of type int), it defines the postfix increment operator ++
+    //     for objects of that type. When the postfix increment is
+    //     called as a result of using the ++ operator, the int
+    //     argument will have value zero.
+    Expr *Args[2] = { 
+      Arg, 
+      new IntegerLiteral(llvm::APInt(Context.Target.getIntWidth(), 0, 
+                                     /*isSigned=*/true), 
+                         Context.IntTy, SourceLocation())
+    };
+
+    // Build the candidate set for overloading
+    OverloadCandidateSet CandidateSet;
+    AddOperatorCandidates(OverOp, S, Args, 2, CandidateSet);
+
+    // Perform overload resolution.
+    OverloadCandidateSet::iterator Best;
+    switch (BestViableFunction(CandidateSet, Best)) {
+    case OR_Success: {
+      // We found a built-in operator or an overloaded operator.
+      FunctionDecl *FnDecl = Best->Function;
+
+      if (FnDecl) {
+        // We matched an overloaded operator. Build a call to that
+        // operator.
+
+        // Convert the arguments.
+        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
+          if (PerformObjectArgumentInitialization(Arg, Method))
+            return true;
+        } else {
+          // Convert the arguments.
+          if (PerformCopyInitialization(Arg, 
+                                        FnDecl->getParamDecl(0)->getType(),
+                                        "passing"))
+            return true;
+        }
+
+        // Determine the result type
+        QualType ResultTy 
+          = FnDecl->getType()->getAsFunctionType()->getResultType();
+        ResultTy = ResultTy.getNonReferenceType();
+        
+        // Build the actual expression node.
+        Expr *FnExpr = new DeclRefExpr(FnDecl, FnDecl->getType(), 
+                                       SourceLocation());
+        UsualUnaryConversions(FnExpr);
+
+        return new CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, OpLoc);
+      } else {
+        // We matched a built-in operator. Convert the arguments, then
+        // break out so that we will build the appropriate built-in
+        // operator node.
+        if (PerformCopyInitialization(Arg, Best->BuiltinTypes.ParamTypes[0],
+                                      "passing"))
+          return true;
+
+        break;
+      } 
+    }
+
+    case OR_No_Viable_Function:
+      // No viable function; fall through to handling this as a
+      // built-in operator, which will produce an error message for us.
+      break;
+
+    case OR_Ambiguous:
+      Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
+          << UnaryOperator::getOpcodeStr(Opc)
+          << Arg->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return true;
+    }
+
+    // Either we found no viable overloaded operator or we matched a
+    // built-in operator. In either case, fall through to trying to
+    // build a built-in operation.
+  }
+
+  QualType result = CheckIncrementDecrementOperand(Arg, OpLoc);
   if (result.isNull())
     return true;
-  return new UnaryOperator((Expr *)Input, Opc, result, OpLoc);
+  return new UnaryOperator(Arg, Opc, result, OpLoc);
 }
 
 Action::ExprResult Sema::
@@ -2819,16 +2912,6 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
         !(lhs->getType()->isRecordType() || lhs->getType()->isEnumeralType())) {
       return CreateBuiltinBinOp(TokLoc, Opc, lhs, rhs);
     }
-
-    // C++ [over.binary]p1:
-    //   A binary operator shall be implemented either by a non-static
-    //   member function (9.3) with one parameter or by a non-member
-    //   function with two parameters. Thus, for any binary operator
-    //   @, x@y can be interpreted as either x.operator@(y) or
-    //   operator@(x,y). If both forms of the operator function have
-    //   been declared, the rules in 13.3.1.2 determines which, if
-    //   any, interpretation is used.
-    OverloadCandidateSet CandidateSet;
     
     // Determine which overloaded operator we're dealing with.
     static const OverloadedOperatorKind OverOps[] = {
@@ -2854,6 +2937,7 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
 
     // Add the appropriate overloaded operators (C++ [over.match.oper]) 
     // to the candidate set.
+    OverloadCandidateSet CandidateSet;
     Expr *Args[2] = { lhs, rhs };
     AddOperatorCandidates(OverOp, S, Args, 2, CandidateSet);
 
@@ -2893,7 +2977,6 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                        SourceLocation());
         UsualUnaryConversions(FnExpr);
 
-        Expr *Args[2] = { lhs, rhs };
         return new CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, TokLoc);
       } else {
         // We matched a built-in operator. Convert the arguments, then
@@ -2933,10 +3016,98 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
 }
 
 // Unary Operators.  'Tok' is the token for the operator.
-Action::ExprResult Sema::ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
-                                      ExprTy *input) {
+Action::ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc, 
+                                      tok::TokenKind Op, ExprTy *input) {
   Expr *Input = (Expr*)input;
   UnaryOperator::Opcode Opc = ConvertTokenKindToUnaryOpcode(Op);
+
+  if (getLangOptions().CPlusPlus &&
+      (Input->getType()->isRecordType() 
+       || Input->getType()->isEnumeralType())) {
+    // Determine which overloaded operator we're dealing with.
+    static const OverloadedOperatorKind OverOps[] = {
+      OO_None, OO_None,
+      OO_PlusPlus, OO_MinusMinus,
+      OO_Amp, OO_Star,
+      OO_Plus, OO_Minus,
+      OO_Tilde, OO_Exclaim,
+      OO_None, OO_None,
+      OO_None, 
+      OO_None
+    };
+    OverloadedOperatorKind OverOp = OverOps[Opc];
+
+    // Add the appropriate overloaded operators (C++ [over.match.oper]) 
+    // to the candidate set.
+    OverloadCandidateSet CandidateSet;
+    if (OverOp != OO_None)
+      AddOperatorCandidates(OverOp, S, &Input, 1, CandidateSet);    
+
+    // Perform overload resolution.
+    OverloadCandidateSet::iterator Best;
+    switch (BestViableFunction(CandidateSet, Best)) {
+    case OR_Success: {
+      // We found a built-in operator or an overloaded operator.
+      FunctionDecl *FnDecl = Best->Function;
+
+      if (FnDecl) {
+        // We matched an overloaded operator. Build a call to that
+        // operator.
+
+        // Convert the arguments.
+        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
+          if (PerformObjectArgumentInitialization(Input, Method))
+            return true;
+        } else {
+          // Convert the arguments.
+          if (PerformCopyInitialization(Input, 
+                                        FnDecl->getParamDecl(0)->getType(),
+                                        "passing"))
+            return true;
+        }
+
+        // Determine the result type
+        QualType ResultTy 
+          = FnDecl->getType()->getAsFunctionType()->getResultType();
+        ResultTy = ResultTy.getNonReferenceType();
+        
+        // Build the actual expression node.
+        Expr *FnExpr = new DeclRefExpr(FnDecl, FnDecl->getType(), 
+                                       SourceLocation());
+        UsualUnaryConversions(FnExpr);
+
+        return new CXXOperatorCallExpr(FnExpr, &Input, 1, ResultTy, OpLoc);
+      } else {
+        // We matched a built-in operator. Convert the arguments, then
+        // break out so that we will build the appropriate built-in
+        // operator node.
+        if (PerformCopyInitialization(Input, Best->BuiltinTypes.ParamTypes[0],
+                                      "passing"))
+          return true;
+
+        break;
+      } 
+    }
+
+    case OR_No_Viable_Function:
+      // No viable function; fall through to handling this as a
+      // built-in operator, which will produce an error message for us.
+      break;
+
+    case OR_Ambiguous:
+      Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
+          << UnaryOperator::getOpcodeStr(Opc)
+          << Input->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return true;
+    }
+
+    // Either we found no viable overloaded operator or we matched a
+    // built-in operator. In either case, fall through to trying to
+    // build a built-in operation.    
+  }
+
+
   QualType resultType;
   switch (Opc) {
   default:
@@ -2956,10 +3127,18 @@ Action::ExprResult Sema::ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
   case UnaryOperator::Minus:
     UsualUnaryConversions(Input);
     resultType = Input->getType();
-    if (!resultType->isArithmeticType())  // C99 6.5.3.3p1
-      return Diag(OpLoc, diag::err_typecheck_unary_expr, 
-                  resultType.getAsString());
-    break;
+    if (resultType->isArithmeticType()) // C99 6.5.3.3p1
+      break;
+    else if (getLangOptions().CPlusPlus && // C++ [expr.unary.op]p6-7
+             resultType->isEnumeralType())
+      break;
+    else if (getLangOptions().CPlusPlus && // C++ [expr.unary.op]p6
+             Opc == UnaryOperator::Plus &&
+             resultType->isPointerType())
+      break;
+
+    return Diag(OpLoc, diag::err_typecheck_unary_expr, 
+                resultType.getAsString());
   case UnaryOperator::Not: // bitwise complement
     UsualUnaryConversions(Input);
     resultType = Input->getType();

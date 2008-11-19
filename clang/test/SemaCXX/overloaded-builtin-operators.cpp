@@ -25,6 +25,14 @@ yes& islong(unsigned long); // FIXME: shouldn't be needed
 no& islong(int);
 
 void f(Short s, Long l, Enum1 e1, Enum2 e2) {
+  // C++ [over.built]p8
+  int i1 = +e1;
+  int i2 = -e2;
+
+  // C++  [over.built]p10:
+  int i3 = ~s;
+  bool b1 = !s;
+
   // C++ [over.built]p12
   (void)static_cast<yes&>(islong(s + l));
   (void)static_cast<no&>(islong(s + s));
@@ -46,6 +54,12 @@ struct LongRef {
 };
 
 void g(ShortRef sr, LongRef lr) {
+  // C++ [over.built]p3
+  short s1 = sr++;
+
+  // C++ [over.built]p3
+  long l1 = lr--;
+
   // C++ [over.built]p18
   short& sr1 = (sr *= lr);
   volatile long& lr1 = (lr *= sr);
@@ -65,7 +79,16 @@ struct ConstIntPtr {
   operator int const *();
 };
 
-void test_with_ptrs(VolatileIntPtr vip, ConstIntPtr cip, ShortRef sr) {
+struct VolatileIntPtrRef {
+  operator int volatile *&();
+};
+
+struct ConstIntPtrRef {
+  operator int const *&();
+};
+
+void test_with_ptrs(VolatileIntPtr vip, ConstIntPtr cip, ShortRef sr,
+                    VolatileIntPtrRef vipr, ConstIntPtrRef cipr) {
 #if 0
   // FIXME: Enable these tests once we have operator overloading for
   // operator[].
@@ -76,4 +99,19 @@ void test_with_ptrs(VolatileIntPtr vip, ConstIntPtr cip, ShortRef sr) {
 #endif
   bool b1 = (vip == cip);
   long p1 = vip - cip;
+
+  // C++ [over.built]p5:
+  int volatile *vip1 = vipr++;
+  int const *cip1 = cipr++;
+  int volatile *&vipr1 = ++vipr;
+  int const *&cipr1 = --cipr;
+
+  // C++ [over.built]p6:
+  int volatile &ivr = *vip;
+
+  // C++ [over.built]p8:
+  int volatile *vip2 = +vip;
+  int i1 = +sr;
+  int i2 = -sr;
 }
+

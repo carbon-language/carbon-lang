@@ -398,6 +398,11 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
         cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Imag ||
         cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Extension)
       return cast<UnaryOperator>(this)->getSubExpr()->isLvalue(Ctx);  // GNU.
+
+    if (Ctx.getLangOptions().CPlusPlus && // C++ [expr.pre.incr]p1
+        (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::PreInc ||
+         cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::PreDec))
+      return LV_Valid;
     break;
   case ImplicitCastExprClass:
     return cast<ImplicitCastExpr>(this)->isLvalueCast()? LV_Valid 

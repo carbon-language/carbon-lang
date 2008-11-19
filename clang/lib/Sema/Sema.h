@@ -435,9 +435,9 @@ public:
   void AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys, 
                            Expr **Args, unsigned NumArgs,
                            OverloadCandidateSet& CandidateSet);
-  void AddBuiltinBinaryOperatorCandidates(OverloadedOperatorKind Op, 
-                                          Expr **Args, 
-                                          OverloadCandidateSet& CandidateSet);
+  void AddBuiltinOperatorCandidates(OverloadedOperatorKind Op, 
+                                    Expr **Args, unsigned NumArgs, 
+                                    OverloadCandidateSet& CandidateSet);
   void AddOverloadCandidates(const OverloadedFunctionDecl *Ovl, 
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet,
@@ -640,8 +640,8 @@ public:
   virtual ExprResult ActOnStringLiteral(const Token *Toks, unsigned NumToks);
     
   // Binary/Unary Operators.  'Tok' is the token for the operator.
-  virtual ExprResult ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
-                                  ExprTy *Input);
+  virtual ExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc, 
+                                  tok::TokenKind Op, ExprTy *Input);
   virtual ExprResult 
     ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
                            void *TyOrEx, const SourceRange &ArgRange);
@@ -649,7 +649,7 @@ public:
   bool CheckSizeOfAlignOfOperand(QualType type, SourceLocation OpLoc,
                                  const SourceRange &R, bool isSizeof);
   
-  virtual ExprResult ActOnPostfixUnaryOp(SourceLocation OpLoc, 
+  virtual ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
                                          tok::TokenKind Kind, ExprTy *Input);
   
   virtual ExprResult ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,

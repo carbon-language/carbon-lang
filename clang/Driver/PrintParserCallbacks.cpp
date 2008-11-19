@@ -436,7 +436,7 @@ namespace {
     }
   
     // Postfix Expressions.
-    virtual ExprResult ActOnPostfixUnaryOp(SourceLocation OpLoc, 
+    virtual ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
                                            tok::TokenKind Kind, ExprTy *Input) {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
@@ -467,8 +467,8 @@ namespace {
     }
   
     // Unary Operators.  'Tok' is the token for the operator.
-    virtual ExprResult ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
-                                    ExprTy *Input) {
+    virtual ExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc, 
+                                    tok::TokenKind Op, ExprTy *Input) {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }
