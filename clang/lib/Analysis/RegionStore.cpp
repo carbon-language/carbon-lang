@@ -315,7 +315,7 @@ SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
 
   default:
     assert(false && "Invalid Location");
-    break;
+    return L;
   }
 }
 
