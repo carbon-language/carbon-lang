@@ -412,6 +412,11 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   case BinaryOperatorClass:
   case CompoundAssignOperatorClass: {
     const BinaryOperator *BinOp = cast<BinaryOperator>(this);
+
+    if (Ctx.getLangOptions().CPlusPlus && // C++ [expr.comma]p1
+        BinOp->getOpcode() == BinaryOperator::Comma)
+      return BinOp->getRHS()->isLvalue(Ctx);
+
     if (!BinOp->isAssignmentOp())
       return LV_InvalidExpression;
 

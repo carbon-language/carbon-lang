@@ -97,3 +97,27 @@ void test_smartptr(SmartPtr ptr, const SmartPtr cptr) {
   int &ir = *ptr;
   // FIXME: reinstate long &lr = *cptr;
 }
+
+
+struct ArrayLike {
+  int& operator[](int);
+};
+
+void test_arraylike(ArrayLike a) {
+  int& ir = a[17];
+}
+
+struct SmartRef {
+  int* operator&();
+};
+
+void test_smartref(SmartRef r) {
+  int* ip = &r;
+}
+
+bool& operator,(X, Y);
+
+void test_comma(X x, Y y) {
+  bool& b1 = (x, y);
+  X& xr = (x, x);
+}

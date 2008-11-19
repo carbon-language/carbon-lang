@@ -861,9 +861,92 @@ Action::ExprResult Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
 }
 
 Action::ExprResult Sema::
-ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
+ActOnArraySubscriptExpr(Scope *S, ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
   Expr *LHSExp = static_cast<Expr*>(Base), *RHSExp = static_cast<Expr*>(Idx);
+
+  if (getLangOptions().CPlusPlus &&
+      LHSExp->getType()->isRecordType() || 
+      LHSExp->getType()->isEnumeralType() ||
+      RHSExp->getType()->isRecordType() ||
+      RHSExp->getType()->isRecordType()) {
+    // Add the appropriate overloaded operators (C++ [over.match.oper]) 
+    // to the candidate set.
+    OverloadCandidateSet CandidateSet;
+    Expr *Args[2] = { LHSExp, RHSExp };
+    AddOperatorCandidates(OO_Subscript, S, Args, 2, CandidateSet);
+    
+    // Perform overload resolution.
+    OverloadCandidateSet::iterator Best;
+    switch (BestViableFunction(CandidateSet, Best)) {
+    case OR_Success: {
+      // We found a built-in operator or an overloaded operator.
+      FunctionDecl *FnDecl = Best->Function;
+
+      if (FnDecl) {
+        // We matched an overloaded operator. Build a call to that
+        // operator.
+
+        // Convert the arguments.
+        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
+          if (PerformObjectArgumentInitialization(LHSExp, Method) ||
+              PerformCopyInitialization(RHSExp, 
+                                        FnDecl->getParamDecl(0)->getType(),
+                                        "passing"))
+            return true;
+        } else {
+          // Convert the arguments.
+          if (PerformCopyInitialization(LHSExp,
+                                        FnDecl->getParamDecl(0)->getType(),
+                                        "passing") ||
+              PerformCopyInitialization(RHSExp,
+                                        FnDecl->getParamDecl(1)->getType(),
+                                        "passing"))
+            return true;
+        }
+
+        // Determine the result type
+        QualType ResultTy 
+          = FnDecl->getType()->getAsFunctionType()->getResultType();
+        ResultTy = ResultTy.getNonReferenceType();
+        
+        // Build the actual expression node.
+        Expr *FnExpr = new DeclRefExpr(FnDecl, FnDecl->getType(), 
+                                       SourceLocation());
+        UsualUnaryConversions(FnExpr);
+
+        return new CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, LLoc);
+      } else {
+        // We matched a built-in operator. Convert the arguments, then
+        // break out so that we will build the appropriate built-in
+        // operator node.
+        if (PerformCopyInitialization(LHSExp, Best->BuiltinTypes.ParamTypes[0],
+                                      "passing") ||
+            PerformCopyInitialization(RHSExp, Best->BuiltinTypes.ParamTypes[1],
+                                      "passing"))
+          return true;
+
+        break;
+      }
+    }
+
+    case OR_No_Viable_Function:
+      // No viable function; fall through to handling this as a
+      // built-in operator, which will produce an error message for us.
+      break;
+
+    case OR_Ambiguous:
+      Diag(LLoc,  diag::err_ovl_ambiguous_oper)
+          << "[]"
+          << LHSExp->getSourceRange() << RHSExp->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return true;
+    }
+
+    // Either we found no viable overloaded operator or we matched a
+    // built-in operator. In either case, fall through to trying to
+    // build a built-in operation.
+  }
 
   // Perform default conversions.
   DefaultFunctionArrayConversion(LHSExp);
@@ -3009,7 +3092,6 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
     // built-in operator. In either case, fall through to trying to
     // build a built-in operation.
   } 
-
   
   // Build a built-in binary operation.
   return CreateBuiltinBinOp(TokLoc, Opc, lhs, rhs);

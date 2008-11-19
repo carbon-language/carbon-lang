@@ -113,5 +113,9 @@ void test_with_ptrs(VolatileIntPtr vip, ConstIntPtr cip, ShortRef sr,
   int volatile *vip2 = +vip;
   int i1 = +sr;
   int i2 = -sr;
+
+  // C++ [over.built]p13:
+  int volatile &ivr2 = vip[17];
+  int const &icr2 = 17[cip];
 }
 

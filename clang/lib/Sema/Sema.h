@@ -652,8 +652,9 @@ public:
   virtual ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
                                          tok::TokenKind Kind, ExprTy *Input);
   
-  virtual ExprResult ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
-                                             ExprTy *Idx, SourceLocation RLoc);
+  virtual ExprResult ActOnArraySubscriptExpr(Scope *S, ExprTy *Base, 
+                                             SourceLocation LLoc, ExprTy *Idx,
+                                             SourceLocation RLoc);
   virtual ExprResult ActOnMemberReferenceExpr(ExprTy *Base,SourceLocation OpLoc,
                                               tok::TokenKind OpKind,
                                               SourceLocation MemberLoc,

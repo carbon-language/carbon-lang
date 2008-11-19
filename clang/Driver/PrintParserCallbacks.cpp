@@ -441,8 +441,9 @@ namespace {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }
-    virtual ExprResult ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
-                                               ExprTy *Idx, SourceLocation RLoc) {
+    virtual ExprResult ActOnArraySubscriptExpr(Scope *S, ExprTy *Base, 
+                                               SourceLocation LLoc, ExprTy *Idx,
+                                               SourceLocation RLoc) {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }

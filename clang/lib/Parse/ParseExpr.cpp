@@ -672,7 +672,8 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       SourceLocation RLoc = Tok.getLocation();
       
       if (!LHS.isInvalid && !Idx.isInvalid && Tok.is(tok::r_square))
-        LHS = Actions.ActOnArraySubscriptExpr(LHS.Val, Loc, Idx.Val, RLoc);
+        LHS = Actions.ActOnArraySubscriptExpr(CurScope, LHS.Val, Loc, 
+                                              Idx.Val, RLoc);
       else 
         LHS = ExprResult(true);
 

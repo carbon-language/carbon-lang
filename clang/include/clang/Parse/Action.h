@@ -513,7 +513,8 @@ public:
                                          tok::TokenKind Kind, ExprTy *Input) {
     return 0;
   }
-  virtual ExprResult ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
+  virtual ExprResult ActOnArraySubscriptExpr(Scope *S,
+                                             ExprTy *Base, SourceLocation LLoc,
                                              ExprTy *Idx, SourceLocation RLoc) {
     return 0;
   }
