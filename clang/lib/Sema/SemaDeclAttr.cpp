@@ -328,7 +328,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
         
     if (x < 1 || x > NumArgs) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
-       << "nonnull" << llvm::utostr_32(I.getArgNum()) << Ex->getSourceRange();
+       << "nonnull" << I.getArgNum() << Ex->getSourceRange();
       return;
     }
     

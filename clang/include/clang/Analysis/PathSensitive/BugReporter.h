@@ -21,6 +21,7 @@
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/StringExtras.h"
 #include <list>
 
 namespace clang {
@@ -322,6 +323,14 @@ public:
         break;
       case DiagnosticInfo::ak_c_string:   
         R.addString(Info.getArgCStr(i));
+        break;
+      case DiagnosticInfo::ak_sint:
+        // FIXME: Optimize
+        R.addString(llvm::itostr(Info.getArgSInt(i)));
+        break;
+      case DiagnosticInfo::ak_uint:
+        // FIXME: Optimize
+        R.addString(llvm::utostr_32(Info.getArgUInt(i)));
         break;
       }
     }

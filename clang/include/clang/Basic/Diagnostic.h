@@ -238,7 +238,9 @@ class DiagnosticInfo {
 public:
   enum ArgumentKind {
     ak_std_string,   // std::string
-    ak_c_string      // const char *
+    ak_c_string,     // const char *
+    ak_sint,         // int
+    ak_uint          // unsigned
   };
   
   
@@ -302,6 +304,18 @@ public:
     return reinterpret_cast<const char*>(DiagObj->DiagArgumentsVal[Idx]);
   }
   
+  /// getArgSInt - Return the specified signed integer argument.
+  int getArgSInt(unsigned Idx) const {
+    assert(getArgKind(Idx) == ak_sint && "invalid argument accessor!");
+    return (int)DiagObj->DiagArgumentsVal[Idx];
+  }
+
+  /// getArgUInt - Return the specified unsigned integer argument.
+  unsigned getArgUInt(unsigned Idx) const {
+    assert(getArgKind(Idx) == ak_uint && "invalid argument accessor!");
+    return (unsigned)DiagObj->DiagArgumentsVal[Idx];
+  }
+  
   /// getNumRanges - Return the number of source ranges associated with this
   /// diagnostic.
   unsigned getNumRanges() const {
@@ -329,6 +343,23 @@ public:
       reinterpret_cast<intptr_t>(Str);
     return *this;
   }
+  
+  DiagnosticInfo &operator<<(int I) {
+    assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
+           "Too many arguments to diagnostic!");
+    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_sint;
+    DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] = I;
+    return *this;
+  }
+  
+  DiagnosticInfo &operator<<(unsigned I) {
+    assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
+           "Too many arguments to diagnostic!");
+    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_uint;
+    DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] = I;
+    return *this;
+  }
+  
   
   DiagnosticInfo &operator<<(const SourceRange &R) {
     assert((unsigned)DiagObj->NumDiagArgs < 

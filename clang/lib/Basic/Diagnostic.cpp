@@ -14,6 +14,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include <vector>
 #include <map>
 #include <cstring>
@@ -277,6 +278,18 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       case DiagnosticInfo::ak_c_string: {
         const char *S = getArgCStr(StrNo);
         OutStr.append(S, S + strlen(S));
+        break;
+      }
+      case DiagnosticInfo::ak_sint: {
+        // FIXME: Optimize
+        std::string S = llvm::itostr(getArgSInt(StrNo));
+        OutStr.append(S.begin(), S.end());
+        break;
+      }
+      case DiagnosticInfo::ak_uint: {
+        // FIXME: Optimize
+        std::string S = llvm::utostr_32(getArgUInt(StrNo));
+        OutStr.append(S.begin(), S.end());
         break;
       }
       }
