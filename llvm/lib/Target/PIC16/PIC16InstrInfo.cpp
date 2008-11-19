@@ -36,7 +36,7 @@ PIC16InstrInfo::PIC16InstrInfo(PIC16TargetMachine &tm)
 /// the source reg along with the FrameIndex of the loaded stack slot.  
 /// If not, return 0.  This predicate must return 0 if the instruction has
 /// any side effects other than storing to the stack slot.
-unsigned PIC16InstrInfo::isStoreToStackSlot(MachineInstr *MI,
+unsigned PIC16InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                             int &FrameIndex) const {
   if (MI->getOpcode() == PIC16::movwf 
       && MI->getOperand(0).isReg()
@@ -52,7 +52,7 @@ unsigned PIC16InstrInfo::isStoreToStackSlot(MachineInstr *MI,
 /// the dest reg along with the FrameIndex of the stack slot.  
 /// If not, return 0.  This predicate must return 0 if the instruction has
 /// any side effects other than storing to the stack slot.
-unsigned PIC16InstrInfo::isLoadFromStackSlot(MachineInstr *MI,
+unsigned PIC16InstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                             int &FrameIndex) const {
   if (MI->getOpcode() == PIC16::movf 
       && MI->getOperand(0).isReg()
