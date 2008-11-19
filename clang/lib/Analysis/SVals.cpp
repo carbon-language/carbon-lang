@@ -272,6 +272,22 @@ SVal SVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
   return nonloc::SymbolVal(SymMgr.getSymbol(D));
 }
 
+SVal SVal::getSymbolValue(SymbolManager& SymMgr, const MemRegion* R,
+                          const llvm::APSInt* Idx, QualType T) {
+  if (Loc::IsLocType(T))
+    return loc::SymbolVal(SymMgr.getElementSymbol(R, Idx));
+  else
+    return nonloc::SymbolVal(SymMgr.getElementSymbol(R, Idx));
+}
+
+SVal SVal::getSymbolValue(SymbolManager& SymMgr, const MemRegion* R,
+                          const FieldDecl* FD, QualType T) {
+  if (Loc::IsLocType(T))
+    return loc::SymbolVal(SymMgr.getFieldSymbol(R, FD));
+  else
+    return nonloc::SymbolVal(SymMgr.getFieldSymbol(R, FD));
+}
+
 nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,
                                                 unsigned Bits) {
   return LocAsInteger(Vals.getPersistentSValWithData(V, Bits));

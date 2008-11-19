@@ -51,6 +51,41 @@ SymbolID SymbolManager::getSymbol(VarDecl* D) {
   DataMap[SymbolCounter] = SD;
   return SymbolCounter++;
 }  
+
+SymbolID SymbolManager::getElementSymbol(const MemRegion* R, 
+                                         const llvm::APSInt* Idx){
+  llvm::FoldingSetNodeID ID;
+  SymbolDataElement::Profile(ID, R, Idx);
+  void* InsertPos;
+  SymbolData* SD = DataSet.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (SD)
+    return SD->getSymbol();
+
+  SD = (SymbolData*) BPAlloc.Allocate<SymbolDataElement>();
+  new (SD) SymbolDataElement(SymbolCounter, R, Idx);
+
+  DataSet.InsertNode(SD, InsertPos);
+  DataMap[SymbolCounter] = SD;
+  return SymbolCounter++;
+}
+
+SymbolID SymbolManager::getFieldSymbol(const MemRegion* R, const FieldDecl* D) {
+  llvm::FoldingSetNodeID ID;
+  SymbolDataField::Profile(ID, R, D);
+  void* InsertPos;
+  SymbolData* SD = DataSet.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (SD)
+    return SD->getSymbol();
+
+  SD = (SymbolData*) BPAlloc.Allocate<SymbolDataField>();
+  new (SD) SymbolDataField(SymbolCounter, R, D);
+
+  DataSet.InsertNode(SD, InsertPos);
+  DataMap[SymbolCounter] = SD;
+  return SymbolCounter++;
+}
  
 SymbolID SymbolManager::getContentsOfSymbol(SymbolID sym) {
   

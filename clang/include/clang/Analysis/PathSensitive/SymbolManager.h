@@ -24,7 +24,7 @@
 
 namespace clang {
   
-
+class MemRegion;
 class SymbolManager;
 
 class SymbolID {
@@ -69,7 +69,8 @@ namespace clang {
   
 class SymbolData : public llvm::FoldingSetNode {
 public:
-  enum Kind { UndefKind, ParmKind, GlobalKind, ContentsOfKind, ConjuredKind };
+  enum Kind { UndefKind, ParmKind, GlobalKind, ElementKind, FieldKind,
+              ContentsOfKind, ConjuredKind };
   
 private:
   Kind K;
@@ -138,6 +139,52 @@ public:
   // Implement isa<T> support.
   static inline bool classof(const SymbolData* D) {
     return D->getKind() == GlobalKind;
+  }
+};
+
+class SymbolDataElement : public SymbolData {
+  const MemRegion* R;
+  const llvm::APSInt* Idx;
+
+public:
+  SymbolDataElement(SymbolID MySym, const MemRegion* r, const llvm::APSInt* idx)
+    : SymbolData(ElementKind, MySym), R(r), Idx(idx) {}
+
+  static void Profile(llvm::FoldingSetNodeID& profile, const MemRegion* R, 
+                      const llvm::APSInt* Idx) {
+    profile.AddPointer(R);
+    profile.AddPointer(Idx);
+  }
+
+  void Profile(llvm::FoldingSetNodeID& profile) {
+    Profile(profile, R, Idx);
+  }
+
+  static bool classof(const SymbolData* D) {
+    return D->getKind() == ElementKind;
+  }
+};
+
+class SymbolDataField : public SymbolData {
+  const MemRegion* R;
+  const FieldDecl* D;
+
+public:
+  SymbolDataField(SymbolID MySym, const MemRegion* r, const FieldDecl* d)
+    : SymbolData(FieldKind, MySym), R(r), D(d) {}
+
+  static void Profile(llvm::FoldingSetNodeID& profile, const MemRegion* R,
+                      const FieldDecl* D) {
+    profile.AddPointer(R);
+    profile.AddPointer(D);
+  }
+
+  void Profile(llvm::FoldingSetNodeID& profile) {
+    Profile(profile, R, D);
+  }
+
+  static bool classof(const SymbolData* D) {
+    return D->getKind() == FieldKind;
   }
 };
 
@@ -245,6 +292,8 @@ public:
   ~SymbolManager();
   
   SymbolID getSymbol(VarDecl* D);
+  SymbolID getElementSymbol(const MemRegion* R, const llvm::APSInt* Idx);
+  SymbolID getFieldSymbol(const MemRegion* R, const FieldDecl* D);
   SymbolID getContentsOfSymbol(SymbolID sym);
   SymbolID getConjuredSymbol(Stmt* E, QualType T, unsigned VisitCount);
   SymbolID getConjuredSymbol(Expr* E, unsigned VisitCount) {

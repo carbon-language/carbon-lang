@@ -73,6 +73,10 @@ public:
   }
   
   static SVal GetSymbolValue(SymbolManager& SymMgr, VarDecl *D);
+  static SVal getSymbolValue(SymbolManager& SymMgr, const MemRegion* R,
+                             const llvm::APSInt* Idx, QualType T);
+  static SVal getSymbolValue(SymbolManager& SymMgr, const MemRegion* R,
+                             const FieldDecl* FD, QualType T);
   
   inline bool isUnknown() const {
     return getRawKind() == UnknownKind;
