@@ -199,15 +199,21 @@ namespace clang {
   /// OverloadCandidate - A single candidate in an overload set (C++ 13.3).
   struct OverloadCandidate {
     /// Function - The actual function that this candidate
-    /// represents. When NULL, this is a built-in candidate.
+    /// represents. When NULL, this is a built-in candidate 
+    /// (C++ [over.oper]) or a surrogate for a conversion to a 
+    /// function pointer or reference (C++ [over.call.object]).
     FunctionDecl *Function;
-    
+
     // BuiltinTypes - Provides the return and parameter types of a
     // built-in overload candidate. Only valid when Function is NULL.
     struct {
       QualType ResultTy;
       QualType ParamTypes[3];
     } BuiltinTypes;
+    
+    /// Surrogate - The conversion function for which this candidate
+    /// is a surrogate, but only if IsSurrogate is true.
+    CXXConversionDecl *Surrogate;
 
     /// Conversions - The conversion sequences used to convert the
     /// function arguments to the function parameters.
@@ -215,6 +221,11 @@ namespace clang {
 
     /// Viable - True to indicate that this overload candidate is viable.
     bool Viable;
+
+    /// IsSurrogate - True to indicate that this candidate is a
+    /// surrogate for a conversion to a function pointer or reference
+    /// (C++ [over.call.object]).
+    bool IsSurrogate;
 
     /// FinalConversion - For a conversion function (where Function is
     /// a CXXConversionDecl), the standard conversion that occurs

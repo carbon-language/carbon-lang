@@ -429,6 +429,10 @@ public:
   void AddConversionCandidate(CXXConversionDecl *Conversion,
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet);
+  void AddSurrogateCandidate(CXXConversionDecl *Conversion,
+                             const FunctionTypeProto *Proto,
+                             Expr *Object, Expr **Args, unsigned NumArgs,
+                             OverloadCandidateSet& CandidateSet);
   void AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet);

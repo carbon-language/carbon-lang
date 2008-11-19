@@ -134,3 +134,17 @@ void test_callable(Callable c) {
 
   c(); // expected-error{{no matching function for call to object of type 'struct Callable'; candidates are:}}
 }
+
+typedef int& Func1(float, double);
+typedef float& Func2(int, double);
+
+struct ConvertToFunc {
+  operator Func1*(); // expected-note{{conversion candidate of type 'int &(*)(float, double)'}}
+  operator Func2&(); // expected-note{{conversion candidate of type 'float &(&)(int, double)'}}
+};
+
+void test_funcptr_call(ConvertToFunc ctf) {
+  int &i1 = ctf(1.0f, 2.0);
+  float &f2 = ctf((short int)1, 1.0f);
+  ctf((long int)17, 2.0); // expected-error{{error: call to object of type 'struct ConvertToFunc' is ambiguous; candidates are:}}
+}

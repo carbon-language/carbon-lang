@@ -896,6 +896,8 @@ DIAG(err_ovl_no_viable_object_call_with_cands, ERROR,
      "no matching function for call to object of type '%0'; candidates are:")
 DIAG(err_ovl_ambiguous_object_call, ERROR,
      "call to object of type '%0' is ambiguous; candidates are:")
+DIAG(err_ovl_surrogate_cand, NOTE,
+     "conversion candidate of type '%0'")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%0': expected expression")

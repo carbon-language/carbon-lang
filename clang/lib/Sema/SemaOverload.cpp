@@ -1514,6 +1514,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
   Candidate.Function = Function;
+  Candidate.IsSurrogate = false;
 
   unsigned NumArgsInProto = Proto->getNumArgs();
 
@@ -1589,6 +1590,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
   Candidate.Function = Method;
+  Candidate.IsSurrogate = false;
 
   unsigned NumArgsInProto = Proto->getNumArgs();
 
@@ -1665,6 +1667,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
   Candidate.Function = Conversion;
+  Candidate.IsSurrogate = false;
   Candidate.FinalConversion.setAsIdentityConversion();
   Candidate.FinalConversion.FromTypePtr 
     = Conversion->getConversionType().getAsOpaquePtr();
@@ -1710,6 +1713,89 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   default:
     assert(false && 
            "Can only end up with a standard conversion sequence or failure");
+  }
+}
+
+/// AddSurrogateCandidate - Adds a "surrogate" candidate function that
+/// converts the given @c Object to a function pointer via the
+/// conversion function @c Conversion, and then attempts to call it
+/// with the given arguments (C++ [over.call.object]p2-4). Proto is
+/// the type of function that we'll eventually be calling.
+void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
+                                 const FunctionTypeProto *Proto,
+                                 Expr *Object, Expr **Args, unsigned NumArgs,
+                                 OverloadCandidateSet& CandidateSet) {
+  CandidateSet.push_back(OverloadCandidate());
+  OverloadCandidate& Candidate = CandidateSet.back();
+  Candidate.Function = 0;
+  Candidate.Surrogate = Conversion;
+  Candidate.Viable = true;
+  Candidate.IsSurrogate = true;
+  Candidate.Conversions.resize(NumArgs + 1);
+
+  // Determine the implicit conversion sequence for the implicit
+  // object parameter.
+  ImplicitConversionSequence ObjectInit 
+    = TryObjectArgumentInitialization(Object, Conversion);
+  if (ObjectInit.ConversionKind == ImplicitConversionSequence::BadConversion) {
+    Candidate.Viable = false;
+    return;
+  }
+
+  // The first conversion is actually a user-defined conversion whose
+  // first conversion is ObjectInit's standard conversion (which is
+  // effectively a reference binding). Record it as such.
+  Candidate.Conversions[0].ConversionKind 
+    = ImplicitConversionSequence::UserDefinedConversion;
+  Candidate.Conversions[0].UserDefined.Before = ObjectInit.Standard;
+  Candidate.Conversions[0].UserDefined.ConversionFunction = Conversion;
+  Candidate.Conversions[0].UserDefined.After 
+    = Candidate.Conversions[0].UserDefined.Before;
+  Candidate.Conversions[0].UserDefined.After.setAsIdentityConversion();
+
+  // Find the 
+  unsigned NumArgsInProto = Proto->getNumArgs();
+
+  // (C++ 13.3.2p2): A candidate function having fewer than m
+  // parameters is viable only if it has an ellipsis in its parameter
+  // list (8.3.5).
+  if (NumArgs > NumArgsInProto && !Proto->isVariadic()) {
+    Candidate.Viable = false;
+    return;
+  }
+
+  // Function types don't have any default arguments, so just check if
+  // we have enough arguments.
+  if (NumArgs < NumArgsInProto) {
+    // Not enough arguments.
+    Candidate.Viable = false;
+    return;
+  }
+
+  // Determine the implicit conversion sequences for each of the
+  // arguments.
+  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+    if (ArgIdx < NumArgsInProto) {
+      // (C++ 13.3.2p3): for F to be a viable function, there shall
+      // exist for each argument an implicit conversion sequence
+      // (13.3.3.1) that converts that argument to the corresponding
+      // parameter of F.
+      QualType ParamType = Proto->getArgType(ArgIdx);
+      Candidate.Conversions[ArgIdx + 1] 
+        = TryCopyInitialization(Args[ArgIdx], ParamType, 
+                                /*SuppressUserConversions=*/false);
+      if (Candidate.Conversions[ArgIdx + 1].ConversionKind 
+            == ImplicitConversionSequence::BadConversion) {
+        Candidate.Viable = false;
+        break;
+      }
+    } else {
+      // (C++ 13.3.2p2): For the purposes of overload resolution, any
+      // argument for which there is no corresponding parameter is
+      // considered to ""match the ellipsis" (C+ 13.3.3.1.3).
+      Candidate.Conversions[ArgIdx + 1].ConversionKind 
+        = ImplicitConversionSequence::EllipsisConversion;
+    }
   }
 }
 
@@ -2742,8 +2828,10 @@ Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
        Cand != CandidateSet.end(); ++Cand) {
     if (Cand->Viable && 
         Cand != Best &&
-        !isBetterOverloadCandidate(*Best, *Cand))
+        !isBetterOverloadCandidate(*Best, *Cand)) {
+      Best = CandidateSet.end();
       return OR_Ambiguous;
+    }
   }
   
   // Best is the best viable function.
@@ -2764,6 +2852,10 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
       if (Cand->Function) {
         // Normal function
         Diag(Cand->Function->getLocation(), diag::err_ovl_candidate);
+      } else if (Cand->IsSurrogate) {
+        Diag(Cand->Surrogate->getLocation(), diag::err_ovl_surrogate_cand)
+          << Context.getCanonicalType(Cand->Surrogate->getConversionType())
+               .getAsString();
       } else {
         // FIXME: We need to get the identifier in here
         // FIXME: Do we want the error message to point at the 
@@ -2893,14 +2985,48 @@ Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
     }
   }
 
-  CXXMethodDecl *Method = 0;
+  // C++ [over.call.object]p2:
+  //   In addition, for each conversion function declared in T of the
+  //   form
+  //
+  //        operator conversion-type-id () cv-qualifier;
+  //
+  //   where cv-qualifier is the same cv-qualification as, or a
+  //   greater cv-qualification than, cv, and where conversion-type-id
+  //   denotes the type “pointer to function of (P1,...,Pn) returning
+  //   R”, or the type “reference to pointer to function of
+  //   (P1,...,Pn) returning R”, or the type “reference to function
+  //   of (P1,...,Pn) returning R”, a surrogate call function [...]
+  //   is also considered as a candidate function. Similarly,
+  //   surrogate call functions are added to the set of candidate
+  //   functions for each conversion function declared in an
+  //   accessible base class provided the function is not hidden
+  //   within T by another intervening declaration.
+  //
+  // FIXME: Look in base classes for more conversion operators!
+  OverloadedFunctionDecl *Conversions 
+    = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
+  for (OverloadedFunctionDecl::function_iterator Func 
+         = Conversions->function_begin();
+       Func != Conversions->function_end(); ++Func) {
+    CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+
+    // Strip the reference type (if any) and then the pointer type (if
+    // any) to get down to what might be a function type.
+    QualType ConvType = Conv->getConversionType().getNonReferenceType();
+    if (const PointerType *ConvPtrType = ConvType->getAsPointerType())
+      ConvType = ConvPtrType->getPointeeType();
+
+    if (const FunctionTypeProto *Proto = ConvType->getAsFunctionTypeProto())
+      AddSurrogateCandidate(Conv, Proto, Object, Args, NumArgs, CandidateSet);
+  }
 
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Best)) {
   case OR_Success:
-    // We found a method. We'll build a call to it below.
-    Method = cast<CXXMethodDecl>(Best->Function);
+    // Overload resolution succeeded; we'll build the appropriate call
+    // below.
     break;
 
   case OR_No_Viable_Function:
@@ -2924,7 +3050,7 @@ Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
     break;
   }    
 
-  if (!Method) {
+  if (Best == CandidateSet.end()) {
     // We had an error; delete all of the subexpressions and return
     // the error.
     delete Object;
@@ -2933,9 +3059,28 @@ Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
     return true;
   }
 
-  // Build a CXXOperatorCallExpr that calls this method, using Object for
-  // the implicit object parameter and passing along the remaining
-  // arguments.
+  if (Best->Function == 0) {
+    // Since there is no function declaration, this is one of the
+    // surrogate candidates. Dig out the conversion function.
+    CXXConversionDecl *Conv 
+      = cast<CXXConversionDecl>(
+                         Best->Conversions[0].UserDefined.ConversionFunction);
+
+    // We selected one of the surrogate functions that converts the
+    // object parameter to a function pointer. Perform the conversion
+    // on the object argument, then let ActOnCallExpr finish the job.
+    // FIXME: Represent the user-defined conversion in the AST!
+    ImpCastExprToType(Object, 
+                      Conv->getConversionType().getNonReferenceType(),
+                      Conv->getConversionType()->isReferenceType());
+    return ActOnCallExpr((ExprTy*)Object, LParenLoc, (ExprTy**)Args, NumArgs,
+                         CommaLocs, RParenLoc);
+  }
+
+  // We found an overloaded operator(). Build a CXXOperatorCallExpr
+  // that calls this method, using Object for the implicit object
+  // parameter and passing along the remaining arguments.
+  CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
   const FunctionTypeProto *Proto = Method->getType()->getAsFunctionTypeProto();
 
   unsigned NumArgsInProto = Proto->getNumArgs();
