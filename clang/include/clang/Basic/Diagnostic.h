@@ -27,6 +27,7 @@ namespace clang {
   class SourceRange;
   class SourceManager;
   class DiagnosticInfo;
+  class IdentifierInfo;
   
   // Import the diagnostic enums themselves.
   namespace diag {
@@ -237,10 +238,11 @@ class DiagnosticInfo {
   void operator=(const DiagnosticInfo&); // DO NOT IMPLEMENT
 public:
   enum ArgumentKind {
-    ak_std_string,   // std::string
-    ak_c_string,     // const char *
-    ak_sint,         // int
-    ak_uint          // unsigned
+    ak_std_string,     // std::string
+    ak_c_string,       // const char *
+    ak_sint,           // int
+    ak_uint,           // unsigned
+    ak_identifierinfo  // IdentifierInfo
   };
   
   
@@ -316,6 +318,13 @@ public:
     return (unsigned)DiagObj->DiagArgumentsVal[Idx];
   }
   
+  /// getArgIdentifier - Return the specified IdentifierInfo argument.
+  const IdentifierInfo *getArgIdentifier(unsigned Idx) const {
+    assert(getArgKind(Idx) == ak_identifierinfo &&"invalid argument accessor!");
+    return reinterpret_cast<const IdentifierInfo*>(
+                                                DiagObj->DiagArgumentsVal[Idx]);
+  }
+  
   /// getNumRanges - Return the number of source ranges associated with this
   /// diagnostic.
   unsigned getNumRanges() const {
@@ -359,6 +368,17 @@ public:
     DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] = I;
     return *this;
   }
+  
+  DiagnosticInfo &operator<<(const IdentifierInfo *II) {
+    assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
+           "Too many arguments to diagnostic!");
+    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_identifierinfo;
+    DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] =
+    reinterpret_cast<intptr_t>(II);
+    return *this;
+  }
+  
+  
   
   
   DiagnosticInfo &operator<<(const SourceRange &R) {

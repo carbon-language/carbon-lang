@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -290,6 +291,11 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         // FIXME: Optimize
         std::string S = llvm::utostr_32(getArgUInt(StrNo));
         OutStr.append(S.begin(), S.end());
+        break;
+      }
+      case DiagnosticInfo::ak_identifierinfo: {
+        const IdentifierInfo *II = getArgIdentifier(StrNo);
+        OutStr.append(II->getName(), II->getName() + II->getLength());
         break;
       }
       }

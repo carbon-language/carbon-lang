@@ -234,7 +234,7 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
       if (Param->getIdentifier())
         Diag(Param->getLocation(), 
              diag::err_param_default_argument_missing_name)
-          << Param->getIdentifier()->getName();
+          << Param->getIdentifier();
       else
         Diag(Param->getLocation(), 
              diag::err_param_default_argument_missing);

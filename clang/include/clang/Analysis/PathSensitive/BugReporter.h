@@ -325,13 +325,15 @@ public:
         R.addString(Info.getArgCStr(i));
         break;
       case DiagnosticInfo::ak_sint:
-        // FIXME: Optimize
         R.addString(llvm::itostr(Info.getArgSInt(i)));
         break;
       case DiagnosticInfo::ak_uint:
-        // FIXME: Optimize
         R.addString(llvm::utostr_32(Info.getArgUInt(i)));
         break;
+      case DiagnosticInfo::ak_identifierinfo:
+        R.addString(Info.getArgIdentifier(i)->getName());
+        break;
+          
       }
     }
   }
