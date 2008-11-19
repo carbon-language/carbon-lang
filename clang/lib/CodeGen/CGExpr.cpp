@@ -392,7 +392,8 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
 }
 
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
-                                                     QualType Ty) {
+                                                     QualType Ty, 
+                                                     llvm::Value **Result) {
   unsigned StartBit = Dst.getBitfieldStartBit();
   unsigned BitfieldSize = Dst.getBitfieldSize();
   llvm::Value *Ptr = Dst.getBitfieldAddr();
@@ -403,11 +404,30 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
 
   // Get the new value, cast to the appropriate type and masked to
   // exactly the size of the bit-field.
-  llvm::Value *NewVal = Src.getScalarVal();
-  NewVal = Builder.CreateIntCast(NewVal, EltTy, false, "tmp");  
+  llvm::Value *SrcVal = Src.getScalarVal();
+  llvm::Value *NewVal = Builder.CreateIntCast(SrcVal, EltTy, false, "tmp");
   llvm::Constant *Mask = 
     llvm::ConstantInt::get(llvm::APInt::getLowBitsSet(EltTySize, BitfieldSize));
   NewVal = Builder.CreateAnd(NewVal, Mask, "bf.value");
+
+  // Return the new value of the bit-field, if requested.
+  if (Result) {
+    // Cast back to the proper type for result.
+    const llvm::Type *SrcTy = SrcVal->getType();
+    llvm::Value *SrcTrunc = Builder.CreateIntCast(NewVal, SrcTy, false,
+                                                  "bf.reload.val");
+
+    // Sign extend if necessary.
+    if (Dst.isBitfieldSigned()) {
+      unsigned SrcTySize = CGM.getTargetData().getTypeSizeInBits(SrcTy);
+      llvm::Value *ExtraBits = llvm::ConstantInt::get(SrcTy,
+                                                      SrcTySize - BitfieldSize);
+      SrcTrunc = Builder.CreateAShr(Builder.CreateShl(SrcTrunc, ExtraBits), 
+                                    ExtraBits, "bf.reload.sext");
+    }
+
+    *Result = SrcTrunc;
+  }
 
   // In some cases the bitfield may straddle two memory locations.
   // Emit the low part first and check to see if the high needs to be

@@ -786,15 +786,14 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   // Convert the result back to the LHS type.
   Result = EmitScalarConversion(Result, ResultTy, LHSTy);
   
-  // Store the result value into the LHS lvalue.
-  CGF.EmitStoreThroughLValue(RValue::get(Result), LHSLV, LHSTy);
-
-  // For bitfields, we need the value in the bitfield. Note that
-  // property references do not reload their value (even though the
-  // setter may have changed it).
-  // FIXME: This adds an extra bitfield load
+  // Store the result value into the LHS lvalue. Bit-fields are
+  // handled specially because the result is altered by the store.
   if (LHSLV.isBitfield())
-    Result = EmitLoadOfLValue(LHSLV, LHSTy);
+    CGF.EmitStoreThroughBitfieldLValue(RValue::get(Result), LHSLV, LHSTy,
+                                       &Result);
+  else
+    CGF.EmitStoreThroughLValue(RValue::get(Result), LHSLV, LHSTy);
+  
   return Result;
 }
 
@@ -1003,16 +1002,14 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   LValue LHS = EmitLValue(E->getLHS());
   Value *RHS = Visit(E->getRHS());
   
-  // Store the value into the LHS.
+  // Store the value into the LHS.  Bit-fields are handled specially
+  // because the result is altered by the store.
   // FIXME: Volatility!
-  CGF.EmitStoreThroughLValue(RValue::get(RHS), LHS, E->getType());
-
-  // For bitfields, we need the value in the bitfield. Note that
-  // property references do not reload their value (even though the
-  // setter may have changed it).
-  // FIXME: This adds an extra bitfield load
   if (LHS.isBitfield())
-    return EmitLoadOfLValue(LHS, E->getLHS()->getType());
+    CGF.EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, E->getType(),
+                                       &RHS);
+  else
+    CGF.EmitStoreThroughLValue(RValue::get(RHS), LHS, E->getType());
 
   // Return the RHS.
   return RHS;

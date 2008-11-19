@@ -32,6 +32,7 @@ namespace llvm {
   class BasicBlock;
   class Module;
   class SwitchInst;
+  class Value;
 }
 
 namespace clang {
@@ -446,8 +447,16 @@ public:
   void EmitStoreThroughLValue(RValue Src, LValue Dst, QualType Ty);
   void EmitStoreThroughExtVectorComponentLValue(RValue Src, LValue Dst,
                                                 QualType Ty);
-  void EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst, QualType Ty);
   void EmitStoreThroughPropertyRefLValue(RValue Src, LValue Dst, QualType Ty);
+
+  /// EmitStoreThroughLValue - Store Src into Dst with same
+  /// constraints as EmitStoreThroughLValue. 
+  ///
+  /// \param Result [out] - If non-null, this will be set to a Value*
+  /// for the bit-field contents after the store, appropriate for use
+  /// as the result of an assignment to the bit-field.
+  void EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst, QualType Ty,
+                                      llvm::Value **Result=0);
    
   // Note: only availabe for agg return types
   LValue EmitBinaryOperatorLValue(const BinaryOperator *E);

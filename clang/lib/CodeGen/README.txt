@@ -17,8 +17,3 @@ appropriately aligned then is is a lot shorter to just load the char
 directly.
 
 //===---------------------------------------------------------------------===//
-
-Bitfields should not reload the stored value just to return the
-correct result.
-
-//===---------------------------------------------------------------------===//

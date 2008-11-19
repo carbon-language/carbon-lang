@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm < %s | grep volatile | count 26
+// RUN: clang -emit-llvm < %s | grep volatile | count 25
 
 // The number 26 comes from the current codegen for volatile loads;
 // if this number changes, it's not necessarily something wrong, but
@@ -76,7 +76,7 @@ void main() {
   vpF2->x=i;
   vF3.x.y=i;
   BF.x=i;
-  vBF.x=i;  // FIXME: This generates an extra volatile load
+  vBF.x=i;
   V[3]=i;
   vV[3]=i;
 
