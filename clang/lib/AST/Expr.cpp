@@ -1141,9 +1141,9 @@ unsigned ExtVectorElementExpr::getNumElements() const {
 /// containsDuplicateElements - Return true if any element access is repeated.
 bool ExtVectorElementExpr::containsDuplicateElements() const {
   const char *compStr = Accessor.getName();
-  unsigned length = strlen(compStr);
+  unsigned length = Accessor.getLength();
   
-  for (unsigned i = 0; i < length-1; i++) {
+  for (unsigned i = 0; i != length-1; i++) {
     const char *s = compStr+i;
     for (const char c = *s++; *s; s++)
       if (c == *s) 
@@ -1155,13 +1155,12 @@ bool ExtVectorElementExpr::containsDuplicateElements() const {
 /// getEncodedElementAccess - We encode the fields as a llvm ConstantArray.
 void ExtVectorElementExpr::getEncodedElementAccess(
                                   llvm::SmallVectorImpl<unsigned> &Elts) const {
-  const char *compStr = Accessor.getName();
- 
-  bool isHi =   !strcmp(compStr, "hi");
-  bool isLo =   !strcmp(compStr, "lo");
-  bool isEven = !strcmp(compStr, "e");
-  bool isOdd  = !strcmp(compStr, "o");
+  bool isHi =   Accessor.isName("hi");
+  bool isLo =   Accessor.isName("lo");
+  bool isEven = Accessor.isName("e");
+  bool isOdd  = Accessor.isName("o");
     
+  const char *compStr = Accessor.getName();
   for (unsigned i = 0, e = getNumElements(); i != e; ++i) {
     uint64_t Index;
     
