@@ -273,18 +273,15 @@ bool StripDebugInfo(Module &M) {
       GV->setLinkage(GlobalValue::InternalLinkage);
 
   // Delete all dbg variables.
-  const Type *DbgVTy = M.getTypeByName("llvm.dbg.variable.type");
-  const Type *DbgGVTy = M.getTypeByName("llvm.dbg.global_variable.type");
-  if (DbgVTy || DbgGVTy)
-    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
-         I != E; ++I) {
-      GlobalVariable *GV = dyn_cast<GlobalVariable>(I);
-      if (!GV) continue;
-      if (GV->use_empty() && llvmUsedValues.count(I) == 0
-          && (!GV->hasSection() 
-              || strcmp(GV->getSection().c_str(), "llvm.metadata") == 0))
-          DeadConstants.push_back(GV);
-    }
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
+       I != E; ++I) {
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(I);
+    if (!GV) continue;
+    if (GV->use_empty() && llvmUsedValues.count(I) == 0
+        && (!GV->hasSection() 
+            || strcmp(GV->getSection().c_str(), "llvm.metadata") == 0))
+      DeadConstants.push_back(GV);
+  }
 
   if (DeadConstants.empty())
     return false;
