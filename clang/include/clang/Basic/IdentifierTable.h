@@ -62,6 +62,12 @@ class IdentifierInfo {
 public:
   IdentifierInfo();
 
+  /// isName - Return true if this is the identifier for the specified string.
+  bool isName(const char *Str) const {
+    unsigned Len = strlen(Str);
+    return getLength() == Len && !memcmp(getName(), Str, Len);
+  }
+  
   /// getName - Return the actual string for this identifier.  The returned 
   /// string is properly null terminated.
   ///
