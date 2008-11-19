@@ -203,15 +203,11 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
 /// has been capitalized.
 static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
                                            const IdentifierInfo *Name) {
-  unsigned N = Name->getLength();
-  char *SelectorName = new char[3 + N];
-  memcpy(SelectorName, "set", 3);
-  memcpy(&SelectorName[3], Name->getName(), N);
+  llvm::SmallString<100> SelectorName;
+  SelectorName += "set";
+  SelectorName.append(Name->getName(), Name->getName()+Name->getLength());
   SelectorName[3] = toupper(SelectorName[3]);
-
-  IdentifierInfo *Setter = &Idents.get(SelectorName, &SelectorName[3 + N]);
-  delete[] SelectorName;
-  return Setter;
+  return &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
 }
 
 ///   objc-interface-decl-list:
