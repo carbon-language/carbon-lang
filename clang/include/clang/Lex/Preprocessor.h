@@ -73,9 +73,6 @@ class Preprocessor {
   bool DisableMacroExpansion : 1;  // True if macro expansion is disabled.
   bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
 
-  /// CacheTokens - True when the lexed tokens are cached for backtracking.
-  bool CacheTokens : 1;
-
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   IdentifierTable Identifiers;
@@ -323,7 +320,7 @@ public:
 
   /// isBacktrackEnabled - True if EnableBacktrackAtThisPos() was called and
   /// caching of tokens is on.
-  bool isBacktrackEnabled() const { return CacheTokens; }
+  bool isBacktrackEnabled() const { return !BacktrackPositions.empty(); }
 
   /// Lex - To lex a token from the preprocessor, just pull a token from the
   /// current lexer or macro object.

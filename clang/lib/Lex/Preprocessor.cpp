@@ -69,7 +69,6 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   InMacroArgs = false;
   NumCachedTokenLexers = 0;
 
-  CacheTokens = false;
   CachedLexPos = 0;
 
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.

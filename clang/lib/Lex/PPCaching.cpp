@@ -24,7 +24,6 @@ using namespace clang;
 /// be called multiple times and CommitBacktrackedTokens/Backtrack calls will
 /// be combined with the EnableBacktrackAtThisPos calls in reverse order.
 void Preprocessor::EnableBacktrackAtThisPos() {
-  CacheTokens = true;
   BacktrackPositions.push_back(CachedLexPos);
   EnterCachingLexMode();
 }
@@ -34,7 +33,6 @@ void Preprocessor::CommitBacktrackedTokens() {
   assert(!BacktrackPositions.empty()
          && "EnableBacktrackAtThisPos was not called!");
   BacktrackPositions.pop_back();
-  CacheTokens = !BacktrackPositions.empty();
 }
 
 /// Backtrack - Make Preprocessor re-lex the tokens that were lexed since
@@ -44,7 +42,6 @@ void Preprocessor::Backtrack() {
          && "EnableBacktrackAtThisPos was not called!");
   CachedLexPos = BacktrackPositions.back();
   BacktrackPositions.pop_back();
-  CacheTokens = !BacktrackPositions.empty();
 }
 
 void Preprocessor::CachingLex(Token &Result) {
@@ -56,7 +53,7 @@ void Preprocessor::CachingLex(Token &Result) {
   ExitCachingLexMode();
   Lex(Result);
 
-  if (!CacheTokens) {
+  if (!isBacktrackEnabled()) {
     // All cached tokens were consumed.
     CachedTokens.clear();
     CachedLexPos = 0;
