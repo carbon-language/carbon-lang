@@ -26,7 +26,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Transforms/Utils/DbgInfoUtils.h"
 
 using namespace llvm;
 
@@ -88,13 +87,8 @@ bool ADCE::runOnFunction(Function& F) {
     NumRemoved++;
     (*I)->eraseFromParent();
   }
-    
-  if (!worklist.empty()) {
-    RemoveDeadDbgIntrinsics(F);
-    return true;
-  }
 
-  return false;
+  return !worklist.empty();
 }
 
 FunctionPass *llvm::createAggressiveDCEPass() {
