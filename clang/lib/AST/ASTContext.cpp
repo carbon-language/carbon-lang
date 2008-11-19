@@ -1471,8 +1471,7 @@ int ASTContext::getObjCEncodingTypeSize(QualType type) {
 /// getObjCEncodingForMethodDecl - Return the encoded type for this method
 /// declaration.
 void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl, 
-                                              std::string& S)
-{
+                                              std::string& S) {
   // FIXME: This is not very efficient.
   // Encode type qualifer, 'in', 'inout', etc. for the return type.
   getObjCEncodingForTypeQualifier(Decl->getObjCDeclQualifier(), S);
@@ -1517,8 +1516,7 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
 /// NULL when getting encodings for protocol properties.
 void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD, 
                                                 const Decl *Container,
-                                                std::string& S)
-{
+                                                std::string& S) {
   // Collect information from the property implementation decl(s).
   bool Dynamic = false;
   ObjCPropertyImplDecl *SynthesizePID = 0;
