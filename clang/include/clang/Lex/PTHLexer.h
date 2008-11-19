@@ -60,6 +60,11 @@ public:
   /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
   /// uninterpreted string.  This switches the lexer out of directive mode.
   void DiscardToEndOfLine();
+  
+  /// isNextPPTokenLParen - Return 1 if the next unexpanded token will return a
+  /// tok::l_paren token, 0 if it is something else and 2 if there are no more
+  /// tokens controlled by this lexer.
+  unsigned isNextPPTokenLParen();
 };
 
 }  // end namespace clang

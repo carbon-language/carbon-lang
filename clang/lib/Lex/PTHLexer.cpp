@@ -80,6 +80,11 @@ void PTHLexer::setEOF(Token& Tok) {
 void PTHLexer::DiscardToEndOfLine() {
   assert(ParsingPreprocessorDirective && ParsingFilename == false &&
          "Must be in a preprocessing directive!");
-  
   assert (0 && "Not implemented.");
 }
+
+unsigned PTHLexer::isNextPPTokenLParen() {
+  assert (0 && "Not implemented.");
+  return 0;
+}
+
