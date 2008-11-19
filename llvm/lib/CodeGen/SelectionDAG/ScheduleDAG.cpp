@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 ScheduleDAG::ScheduleDAG(SelectionDAG *dag, MachineBasicBlock *bb,
@@ -459,22 +460,25 @@ void ScheduleDAG::Run() {
 
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
 /// a group of nodes flagged together.
-void SUnit::dump(const ScheduleDAG *G) const {
-  cerr << "SU(" << NodeNum << "): ";
+void SUnit::print(raw_ostream &O, const ScheduleDAG *G) const {
+  O << "SU(" << NodeNum << "): ";
   if (getNode()) {
     SmallVector<SDNode *, 4> FlaggedNodes;
     for (SDNode *N = getNode(); N; N = N->getFlaggedNode())
       FlaggedNodes.push_back(N);
     while (!FlaggedNodes.empty()) {
-      cerr << "    ";
+      O << "    ";
       FlaggedNodes.back()->dump(G->DAG);
-      cerr << "\n";
+      O << "\n";
       FlaggedNodes.pop_back();
     }
   } else {
-    cerr << "CROSS RC COPY ";
+    O << "CROSS RC COPY\n";
   }
-  cerr << "\n";
+}
+
+void SUnit::dump(const ScheduleDAG *G) const {
+  print(errs(), G);
 }
 
 void SUnit::dumpAll(const ScheduleDAG *G) const {

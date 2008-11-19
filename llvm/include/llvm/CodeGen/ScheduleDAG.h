@@ -242,6 +242,7 @@ namespace llvm {
     
     void dump(const ScheduleDAG *G) const;
     void dumpAll(const ScheduleDAG *G) const;
+    void print(raw_ostream &O, const ScheduleDAG *G) const;
   };
 
   //===--------------------------------------------------------------------===//
