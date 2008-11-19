@@ -76,8 +76,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
             PP.Lex(Tok);
             
             if (Tok.isNot(tok::numeric_constant)) {
-              PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_malformed)
-                << II->getName();
+              PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_malformed)<<II;
               return;
             }
             
@@ -88,8 +87,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
             PP.Lex(Tok);
           }
         } else {
-          PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_malformed)
-            << II->getName();
+          PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_malformed) << II;
           return;
         }
       }

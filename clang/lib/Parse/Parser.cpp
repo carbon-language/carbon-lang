@@ -600,7 +600,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
           // the identifier list.
           if (i == FTI.NumArgs) {
             Diag(ParmDeclarator.getIdentifierLoc(), diag::err_no_matching_param)
-              << ParmDeclarator.getIdentifier()->getName();
+              << ParmDeclarator.getIdentifier();
             break;
           }
 
@@ -609,7 +609,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
             if (FTI.ArgInfo[i].Param) {
               Diag(ParmDeclarator.getIdentifierLoc(),
                    diag::err_param_redefinition)
-                 << ParmDeclarator.getIdentifier()->getName();
+                 << ParmDeclarator.getIdentifier();
             } else {
               FTI.ArgInfo[i].Param = Param;
             }
