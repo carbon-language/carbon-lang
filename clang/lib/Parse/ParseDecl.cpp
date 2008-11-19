@@ -1372,8 +1372,12 @@ void Parser::ParseDeclaratorInternal(Declarator &D, bool PtrOperator) {
       // C++ [dcl.ref]p4: There shall be no references to references.
       DeclaratorChunk& InnerChunk = D.getTypeObject(D.getNumTypeObjects() - 1);
       if (InnerChunk.Kind == DeclaratorChunk::Reference) {
-        Diag(InnerChunk.Loc, diag::err_illegal_decl_reference_to_reference)
-           << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
+        if (const IdentifierInfo *II = D.getIdentifier())
+          Diag(InnerChunk.Loc, diag::err_illegal_decl_reference_to_reference)
+           << II;
+        else
+          Diag(InnerChunk.Loc, diag::err_illegal_decl_reference_to_reference)
+            << "type name";
 
         // Once we've complained about the reference-to-referwnce, we
         // can go ahead and build the (technically ill-formed)
@@ -1832,11 +1836,11 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
 
     // Reject 'typedef int y; int test(x, y)', but continue parsing.
     if (Actions.isTypeName(*ParmII, CurScope))
-      Diag(Tok, diag::err_unexpected_typedef_ident) << ParmII->getName();
+      Diag(Tok, diag::err_unexpected_typedef_ident) << ParmII;
     
     // Verify that the argument identifier has not already been mentioned.
     if (!ParamsSoFar.insert(ParmII)) {
-      Diag(Tok, diag::err_param_redefinition) <<ParmII->getName();
+      Diag(Tok, diag::err_param_redefinition) << ParmII;
     } else {
       // Remember this identifier in ParamInfo.
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
@@ -1936,7 +1940,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
 
   if (Tok.isNot(tok::l_paren)) {
     if (!getLang().CPlusPlus) {
-      Diag(Tok, diag::err_expected_lparen_after) << BuiltinII->getName();
+      Diag(Tok, diag::err_expected_lparen_after) << BuiltinII;
       return;
     }
 

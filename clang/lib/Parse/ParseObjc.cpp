@@ -209,8 +209,7 @@ static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
   memcpy(&SelectorName[3], Name->getName(), N);
   SelectorName[3] = toupper(SelectorName[3]);
 
-  IdentifierInfo *Setter = 
-    &Idents.get(SelectorName, &SelectorName[3 + N]);
+  IdentifierInfo *Setter = &Idents.get(SelectorName, &SelectorName[3 + N]);
   delete[] SelectorName;
   return Setter;
 }
