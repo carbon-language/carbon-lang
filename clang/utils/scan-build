@@ -793,8 +793,15 @@ sub RunBuildCommand {
     $Cmd = $1;
   }
   
-  if ($Cmd eq "gcc" or $Cmd eq "cc" or $Cmd eq "llvm-gcc" 
-   or $Cmd eq "ccc-analyzer") {
+  if ($Cmd =~ /(.*\/?gcc[^\/]*$)/ or 
+      $Cmd =~ /(.*\/?cc[^\/]*$)/ or
+      $Cmd =~ /(.*\/?llvm-gcc[^\/]*$)/ or
+      $Cmd =~ /(.*\/?ccc-analyzer[^\/]*$)/) {
+
+    if (!($Cmd =~ /ccc-analyzer/) and !defined $ENV{"CCC_CC"}) {
+      $ENV{"CCC_CC"} = $1;
+    }
+        
     shift @$Args;
     unshift @$Args, $CCAnalyzer;
   }
