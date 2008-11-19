@@ -542,6 +542,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       ObjCGCAttr::GCAttrTypes attrType = A->getType();
       LValue::SetObjCType(attrType == ObjCGCAttr::Weak, attrType == ObjCGCAttr::Strong, LV);
     }
+    else if (CGM.getLangOptions().ObjC1 &&
+             CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
+      QualType ExprTy = E->getType();
+      if (getContext().isObjCObjectPointerType(ExprTy))
+        LValue::SetObjCType(false, true, LV);
+    }
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     return LValue::MakeAddr(CGM.GetAddrOfFunction(FD),

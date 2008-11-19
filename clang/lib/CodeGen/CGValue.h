@@ -162,10 +162,11 @@ public:
   bool isObjCWeak() const { return ObjCType == Weak; }
   bool isObjCStrong() const { return ObjCType == Strong; }
   
-  static void SetObjCType(unsigned WeakVal, unsigned StrongVal, LValue& R) {
-    if (WeakVal)
+  static void SetObjCType(bool isWeak, bool isStrong, LValue& R) {
+    assert(!(isWeak == true && isStrong == true));
+    if (isWeak)
       R.ObjCType = Weak;
-    else if (StrongVal)
+    else if (isStrong)
       R.ObjCType = Strong;
   }
   
