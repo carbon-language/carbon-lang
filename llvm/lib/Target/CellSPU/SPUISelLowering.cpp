@@ -131,20 +131,14 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   addRegisterClass(MVT::i128, SPU::GPRCRegisterClass);
 
   // SPU has no sign or zero extended loads for i1, i8, i16:
-#if 0
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setTruncStoreAction(MVT::i8, MVT::i1, Custom);
-  setTruncStoreAction(MVT::i16, MVT::i1, Custom);
-  setTruncStoreAction(MVT::i32, MVT::i1, Custom);
-  setTruncStoreAction(MVT::i64, MVT::i1, Custom);
-  setTruncStoreAction(MVT::i128, MVT::i1, Custom);
-#else
-  setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
-  setLoadExtAction(ISD::SEXTLOAD,  MVT::i1, Promote);
-  setTruncStoreAction(MVT::i8, MVT::i1, Promote);
-#endif
+  setTruncStoreAction(MVT::i8,    MVT::i1, Promote);
+  setTruncStoreAction(MVT::i16 ,  MVT::i1, Custom);
+  setTruncStoreAction(MVT::i32 ,  MVT::i1, Custom);
+  setTruncStoreAction(MVT::i64 ,  MVT::i1, Custom);
+  setTruncStoreAction(MVT::i128,  MVT::i1, Custom);
 
   setLoadExtAction(ISD::EXTLOAD,  MVT::i8, Custom);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Custom);
@@ -165,7 +159,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::ConstantFP, MVT::f64, Custom);
 
   // SPU's loads and stores have to be custom lowered:
-  for (unsigned sctype = (unsigned) MVT::i1; sctype < (unsigned) MVT::f128;
+  for (unsigned sctype = (unsigned) MVT::i8; sctype < (unsigned) MVT::f128;
        ++sctype) {
     MVT VT = (MVT::SimpleValueType)sctype;
 
@@ -708,12 +702,8 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
     // The vector type we really want to load from the 16-byte chunk, except
     // in the case of MVT::i1, which has to be v16i8.
-    MVT vecVT = MVT::v16i8, stVecVT = MVT::v16i8;
-
-    if (StVT != MVT::i1) {
-      stVecVT = MVT::getVectorVT(StVT, (128 / StVT.getSizeInBits()));
-      vecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
-    }
+    MVT vecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits())),
+        stVecVT = MVT::getVectorVT(StVT, (128 / StVT.getSizeInBits()));
 
     SDValue alignLoadVec =
       AlignedLoad(Op, DAG, ST, SN, alignment,
@@ -759,21 +749,8 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
     SDValue insertEltOp =
             DAG.getNode(SPUISD::INSERT_MASK, stVecVT, insertEltPtr);
-    SDValue vectorizeOp;
-
-#if 0
-    if (VT == MVT::i1 || StVT != VT) {
-      MVT toVT = (VT != MVT::i1) ? VT : MVT::i8;
-      if (toVT.bitsGT(VT)) {
-        vectorizeOp = DAG.getNode(ISD::ANY_EXTEND, toVT, theValue);
-      } else if (StVT.bitsLT(VT)) {
-        vectorizeOp = DAG.getNode(ISD::TRUNCATE, toVT, theValue);
-      }
-
-      vectorizeOp = DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, vectorizeOp);
-    } else
-#endif
-      vectorizeOp = DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, theValue);
+    SDValue vectorizeOp =
+            DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, theValue);
 
     result = DAG.getNode(SPUISD::SHUFB, vecVT, vectorizeOp, alignLoadVec,
                          DAG.getNode(ISD::BIT_CONVERT, vecVT, insertEltOp));
@@ -782,7 +759,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                           LN->getSrcValue(), LN->getSrcValueOffset(),
                           LN->isVolatile(), LN->getAlignment());
 
-#ifndef NDEBUG
+#if 0 && defined(NDEBUG)
     if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
       const SDValue &currentRoot = DAG.getRoot();
 
