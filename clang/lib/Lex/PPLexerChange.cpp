@@ -25,28 +25,19 @@ PPCallbacks::~PPCallbacks() {}
 // Miscellaneous Methods.
 //===----------------------------------------------------------------------===//
 
-static inline bool IsNonPragmaNonMacroLexer(const Lexer* L,
-                                            const PreprocessorLexer* P) {
-  if (L)
-    return !L->isPragmaLexer();
-  else
-    return P != 0;
-}
-
 /// isInPrimaryFile - Return true if we're in the top-level file, not in a
 /// #include.  This looks through macro expansions and active _Pragma lexers.
 bool Preprocessor::isInPrimaryFile() const {
-  if (IsNonPragmaNonMacroLexer(CurLexer.get(), CurPPLexer))
+  if (IsNonPragmaNonMacroLexer())
     return IncludeMacroStack.empty();
   
   // If there are any stacked lexers, we're in a #include.
-  assert(IsNonPragmaNonMacroLexer(IncludeMacroStack[0].TheLexer,
-                                  IncludeMacroStack[0].ThePPLexer) &&
+  assert(IsNonPragmaNonMacroLexer(IncludeMacroStack[0]) &&
          "Top level include stack isn't our primary lexer?");
   for (unsigned i = 1, e = IncludeMacroStack.size(); i != e; ++i)
-    if (IsNonPragmaNonMacroLexer(IncludeMacroStack[i].TheLexer,
-                                 IncludeMacroStack[i].ThePPLexer))
+    if (IsNonPragmaNonMacroLexer(IncludeMacroStack[i]))
       return false;
+
   return true;
 }
 
@@ -91,7 +82,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
                                             const DirectoryLookup *CurDir) {
     
   // Add the current lexer to the include stack.
-  if (CurLexer || CurTokenLexer)
+  if (CurPPLexer || CurTokenLexer)
     PushIncludeMacroStack();
 
   CurLexer.reset(TheLexer);

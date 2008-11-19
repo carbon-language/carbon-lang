@@ -598,6 +598,23 @@ private:
                               bool isAngled, const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir);
     
+  
+  static bool IsNonPragmaNonMacroLexer(const Lexer* L,
+                                       const PreprocessorLexer* P) {
+    if (L)
+      return !L->isPragmaLexer();
+    else
+      return P != 0;
+  }
+  
+  static bool IsNonPragmaNonMacroLexer(const IncludeStackInfo& I) {
+    return IsNonPragmaNonMacroLexer(I.TheLexer, I.ThePPLexer);
+  }
+  
+  bool IsNonPragmaNonMacroLexer() const {
+    return IsNonPragmaNonMacroLexer(CurLexer.get(), CurPPLexer);
+  }
+  
   //===--------------------------------------------------------------------===//
   // Caching stuff.
   void CachingLex(Token &Result);
