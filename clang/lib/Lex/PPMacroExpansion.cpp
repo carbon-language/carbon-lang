@@ -513,7 +513,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     Lexer *TheLexer = getCurrentFileLexer();
     
     if (TheLexer)
-      CurFile = SourceMgr.getFileEntryForLoc(TheLexer->getFileLoc());
+      CurFile = SourceMgr.getFileEntryForID(TheLexer->getFileID());
     
     // If this file is older than the file it depends on, emit a diagnostic.
     const char *Result;

@@ -692,7 +692,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   // header.
   SrcMgr::CharacteristicKind FileCharacter = 
     std::max(HeaderInfo.getFileDirFlavor(File),
-          SourceMgr.getFileCharacteristic(getCurrentFileLexer()->getFileLoc()));
+          SourceMgr.getFileCharacteristic(getCurrentFileLexer()->getFileID()));
   
   // Look up the file, create a File ID for it.
   unsigned FileID = SourceMgr.createFileID(File, FilenameTok.getLocation(),
