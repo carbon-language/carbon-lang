@@ -760,6 +760,7 @@ llvm::Function *CodeGenModule::getMemCpyFn() {
   llvm::Intrinsic::ID IID;
   switch (Context.Target.getPointerWidth(0)) {
   default: assert(0 && "Unknown ptr width");
+  case 16: IID = llvm::Intrinsic::memcpy_i16; break;
   case 32: IID = llvm::Intrinsic::memcpy_i32; break;
   case 64: IID = llvm::Intrinsic::memcpy_i64; break;
   }
@@ -771,6 +772,7 @@ llvm::Function *CodeGenModule::getMemMoveFn() {
   llvm::Intrinsic::ID IID;
   switch (Context.Target.getPointerWidth(0)) {
   default: assert(0 && "Unknown ptr width");
+  case 16: IID = llvm::Intrinsic::memmove_i16; break;
   case 32: IID = llvm::Intrinsic::memmove_i32; break;
   case 64: IID = llvm::Intrinsic::memmove_i64; break;
   }
@@ -782,6 +784,7 @@ llvm::Function *CodeGenModule::getMemSetFn() {
   llvm::Intrinsic::ID IID;
   switch (Context.Target.getPointerWidth(0)) {
   default: assert(0 && "Unknown ptr width");
+  case 16: IID = llvm::Intrinsic::memset_i16; break;
   case 32: IID = llvm::Intrinsic::memset_i32; break;
   case 64: IID = llvm::Intrinsic::memset_i64; break;
   }
