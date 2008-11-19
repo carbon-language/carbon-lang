@@ -214,11 +214,6 @@
           <li><a href="#int_it">'<tt>llvm.init.trampoline</tt>' Intrinsic</a></li>
         </ol>
       </li>
-      <li><a href="#int_stackprotect">Stack Protector Intrinsic</a>
-        <ol>
-          <li><a href="#int_ssp">'<tt>llvm.stackprotector</tt>' Intrinsic</a></li>
-        </ol>
-      </li>
       <li><a href="#int_atomics">Atomic intrinsics</a>
         <ol>
           <li><a href="#int_memory_barrier"><tt>llvm.memory_barrier</tt></a></li>
@@ -239,11 +234,13 @@
       <li><a href="#int_general">General intrinsics</a>
         <ol>
           <li><a href="#int_var_annotation">
-            <tt>llvm.var.annotation</tt>' Intrinsic</a></li>
+            '<tt>llvm.var.annotation</tt>' Intrinsic</a></li>
           <li><a href="#int_annotation">
-            <tt>llvm.annotation.*</tt>' Intrinsic</a></li>
+            '<tt>llvm.annotation.*</tt>' Intrinsic</a></li>
           <li><a href="#int_trap">
-            <tt>llvm.trap</tt>' Intrinsic</a></li>
+            '<tt>llvm.trap</tt>' Intrinsic</a></li>
+          <li><a href="#int_stackprotector">
+            '<tt>llvm.stackprotector</tt>' Intrinsic</a></li>
         </ol>
       </li>
     </ol>
@@ -5809,54 +5806,6 @@ declare i8* @llvm.init.trampoline(i8* &lt;tramp&gt;, i8* &lt;func&gt;, i8* &lt;n
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="int_stackprotect">Stack Protector Intrinsic</a>
-</div>
-
-<div class="doc_text">
-<p>
-  This intrinsic is used when stack protectors are required. LLVM generates a
-  call to load the randomized stack protector guard's value. The intrinsic is
-  used so that LLVM can ensure that the stack guard is placed onto the stack in
-  the appropriate place&mdash;before local variables are allocated on the stack.
-</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_ssp">'<tt>llvm.stackprotector</tt>' Intrinsic</a>
-</div>
-<div class="doc_text">
-<h5>Syntax:</h5>
-<pre>
-declare void @llvm.stackprotector( i8* &lt;guard&gt;, i8** &lt;slot&gt; )
-
-</pre>
-<h5>Overview:</h5>
-<p>
-  The <tt>llvm.stackprotector</tt> intrinsic takes the <tt>guard</tt> and stores
-  it onto the stack at <tt>slot</tt>. The stack slot is adjusted to ensure that
-  it's before local variables are allocated on the stack.
-</p>
-<h5>Arguments:</h5>
-<p>
-  The <tt>llvm.stackprotector</tt> intrinsic requires two pointer arguments. The
-  first argument is the value loaded from the stack guard
-  <tt>@__stack_chk_guard</tt>. The second variable is an <tt>alloca</tt> that
-  has enough space to hold the value of the guard.
-</p>
-<h5>Semantics:</h5>
-<p>
-  This intrinsic causes the prologue/epilogue inserter to force the position of
-  the <tt>AllocaInst</tt> stack slot to be before local variables on the
-  stack. This is to ensure that if a local variable on the stack is overwritten,
-  it will destroy the value of the guard. When the function exits, the guard on
-  the stack is checked against the original guard. If they're different, then
-  the program aborts by calling the <tt>__stack_chk_fail()</tt> function.
-</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
   <a name="int_atomics">Atomic Operations and Synchronization Intrinsics</a>
 </div>
 
@@ -6469,6 +6418,40 @@ None
 This intrinsics is lowered to the target dependent trap instruction. If the
 target does not have a trap instruction, this intrinsic will be lowered to the
 call of the abort() function.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_ssp">'<tt>llvm.stackprotector</tt>' Intrinsic</a>
+</div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>
+declare void @llvm.stackprotector( i8* &lt;guard&gt;, i8** &lt;slot&gt; )
+
+</pre>
+<h5>Overview:</h5>
+<p>
+  The <tt>llvm.stackprotector</tt> intrinsic takes the <tt>guard</tt> and stores
+  it onto the stack at <tt>slot</tt>. The stack slot is adjusted to ensure that
+  it is placed on the stack before local variables.
+</p>
+<h5>Arguments:</h5>
+<p>
+  The <tt>llvm.stackprotector</tt> intrinsic requires two pointer arguments. The
+  first argument is the value loaded from the stack guard
+  <tt>@__stack_chk_guard</tt>. The second variable is an <tt>alloca</tt> that
+  has enough space to hold the value of the guard.
+</p>
+<h5>Semantics:</h5>
+<p>
+  This intrinsic causes the prologue/epilogue inserter to force the position of
+  the <tt>AllocaInst</tt> stack slot to be before local variables on the
+  stack. This is to ensure that if a local variable on the stack is overwritten,
+  it will destroy the value of the guard. When the function exits, the guard on
+  the stack is checked against the original guard. If they're different, then
+  the program aborts by calling the <tt>__stack_chk_fail()</tt> function.
 </p>
 </div>
 
