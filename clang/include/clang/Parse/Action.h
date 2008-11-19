@@ -469,24 +469,24 @@ public:
   /// similar to ActOnIdentifierExpr, except that instead of providing
   /// an identifier the parser provides the kind of overloaded
   /// operator that was parsed.
-  virtual ExprResult ActOnOperatorFunctionIdExpr(Scope *S, 
-                                                 SourceLocation OperatorLoc,
-                                                 OverloadedOperatorKind Op,
-                                                 bool HasTrailingLParen,
-                                                 const CXXScopeSpec *SS = 0) {
+  virtual ExprResult ActOnCXXOperatorFunctionIdExpr(Scope *S, 
+                                                    SourceLocation OperatorLoc,
+                                                    OverloadedOperatorKind Op,
+                                                    bool HasTrailingLParen,
+                                                    const CXXScopeSpec &SS) {
     return 0;
   }
   
-  /// ActOnConversionFunctionExpr - Parse a C++ conversion function
+  /// ActOnCXXConversionFunctionExpr - Parse a C++ conversion function
   /// name (e.g., @c operator void const *) as an expression. This is
   /// very similar to ActOnIdentifierExpr, except that instead of
   /// providing an identifier the parser provides the type of the
   /// conversion function.
-  virtual ExprResult ActOnConversionFunctionExpr(Scope *S, 
-                                                 SourceLocation OperatorLoc,
-                                                 TypeTy *Type,
-                                                 bool HasTrailingLParen,
-                                                 const CXXScopeSpec *SS = 0) {
+  virtual ExprResult ActOnCXXConversionFunctionExpr(Scope *S, 
+                                                    SourceLocation OperatorLoc,
+                                                    TypeTy *Type,
+                                                    bool HasTrailingLParen,
+                                                    const CXXScopeSpec &SS) {
     return 0;
   }
 

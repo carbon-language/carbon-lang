@@ -19,36 +19,35 @@
 #include "clang/Basic/Diagnostic.h"
 using namespace clang;
 
-/// ActOnConversionFunctionExpr - Parse a C++ conversion function
+/// ActOnCXXConversionFunctionExpr - Parse a C++ conversion function
 /// name (e.g., operator void const *) as an expression. This is
 /// very similar to ActOnIdentifierExpr, except that instead of
 /// providing an identifier the parser provides the type of the
 /// conversion function.
-Sema::ExprResult Sema::ActOnConversionFunctionExpr(Scope *S, 
-                                                   SourceLocation OperatorLoc,
-                                                   TypeTy *Ty,
-                                                   bool HasTrailingLParen,
-                                                   const CXXScopeSpec *SS) {
+Sema::ExprResult 
+Sema::ActOnCXXConversionFunctionExpr(Scope *S, SourceLocation OperatorLoc,
+                                     TypeTy *Ty, bool HasTrailingLParen,
+                                     const CXXScopeSpec &SS) {
   QualType ConvType = QualType::getFromOpaquePtr(Ty);
   QualType ConvTypeCanon = Context.getCanonicalType(ConvType);
   DeclarationName ConvName 
     = Context.DeclarationNames.getCXXConversionFunctionName(ConvTypeCanon);
   return ActOnDeclarationNameExpr(S, OperatorLoc, ConvName, HasTrailingLParen, 
-                                  SS);
+                                  &SS);
 }
 
-/// ActOnOperatorFunctionIdExpr - Parse a C++ overloaded operator
+/// ActOnCXXOperatorFunctionIdExpr - Parse a C++ overloaded operator
 /// name (e.g., @c operator+ ) as an expression. This is very
 /// similar to ActOnIdentifierExpr, except that instead of providing
 /// an identifier the parser provides the kind of overloaded
 /// operator that was parsed.
-Sema::ExprResult Sema::ActOnOperatorFunctionIdExpr(Scope *S, 
-                                                   SourceLocation OperatorLoc,
-                                                   OverloadedOperatorKind Op,
-                                                   bool HasTrailingLParen,
-                                                   const CXXScopeSpec *SS) {
+Sema::ExprResult 
+Sema::ActOnCXXOperatorFunctionIdExpr(Scope *S, SourceLocation OperatorLoc,
+                                     OverloadedOperatorKind Op,
+                                     bool HasTrailingLParen,
+                                     const CXXScopeSpec &SS) {
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(Op);
-  return ActOnDeclarationNameExpr(S, OperatorLoc, Name, HasTrailingLParen, SS);
+  return ActOnDeclarationNameExpr(S, OperatorLoc, Name, HasTrailingLParen, &SS);
 }
 
 /// ActOnCXXTypeidOfType - Parse typeid( type-id ).

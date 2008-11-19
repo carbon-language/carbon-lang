@@ -150,12 +150,12 @@ Parser::ExprResult Parser::ParseCXXIdExpression() {
   case tok::kw_operator: {
     SourceLocation OperatorLoc = Tok.getLocation();
     if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
-      return Actions.ActOnOperatorFunctionIdExpr(CurScope, OperatorLoc, Op, 
-                                                 Tok.is(tok::l_paren), &SS);
+      return Actions.ActOnCXXOperatorFunctionIdExpr(CurScope, OperatorLoc, Op, 
+                                                    Tok.is(tok::l_paren), SS);
     } else if (TypeTy *Type = ParseConversionFunctionId()) {
-      return Actions.ActOnConversionFunctionExpr(CurScope, OperatorLoc,
-                                                 Type, Tok.is(tok::l_paren), 
-                                                 &SS);
+      return Actions.ActOnCXXConversionFunctionExpr(CurScope, OperatorLoc,
+                                                    Type, Tok.is(tok::l_paren), 
+                                                    SS);
     }
      
     // We already complained about a bad conversion-function-id,

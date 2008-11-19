@@ -612,16 +612,16 @@ public:
                                          IdentifierInfo &II,
                                          bool HasTrailingLParen,
                                          const CXXScopeSpec *SS = 0);
-  virtual ExprResult ActOnOperatorFunctionIdExpr(Scope *S, 
-                                                 SourceLocation OperatorLoc,
-                                                 OverloadedOperatorKind Op,
-                                                 bool HasTrailingLParen,
-                                                 const CXXScopeSpec *SS = 0);
-  virtual ExprResult ActOnConversionFunctionExpr(Scope *S, 
-                                                 SourceLocation OperatorLoc,
-                                                 TypeTy *Ty,
-                                                 bool HasTrailingLParen,
-                                                 const CXXScopeSpec *SS);
+  virtual ExprResult ActOnCXXOperatorFunctionIdExpr(Scope *S, 
+                                                    SourceLocation OperatorLoc,
+                                                    OverloadedOperatorKind Op,
+                                                    bool HasTrailingLParen,
+                                                    const CXXScopeSpec &SS);
+  virtual ExprResult ActOnCXXConversionFunctionExpr(Scope *S, 
+                                                    SourceLocation OperatorLoc,
+                                                    TypeTy *Ty,
+                                                    bool HasTrailingLParen,
+                                                    const CXXScopeSpec &SS);
   ExprResult ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                       DeclarationName Name,
                                       bool HasTrailingLParen,
