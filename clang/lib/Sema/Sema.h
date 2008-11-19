@@ -1050,7 +1050,7 @@ public:
   virtual ExprResult ActOnClassMessage(
     Scope *S,
     IdentifierInfo *receivingClassName, Selector Sel,
-    SourceLocation lbrac, SourceLocation rbrac, 
+    SourceLocation lbrac, SourceLocation receiverLoc, SourceLocation rbrac, 
     ExprTy **ArgExprs, unsigned NumArgs);
 
   // ActOnInstanceMessage - used for both unary and keyword messages.

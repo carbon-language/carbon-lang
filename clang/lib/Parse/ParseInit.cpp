@@ -134,8 +134,9 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
       }
       
       IdentifierInfo *Name = Tok.getIdentifierInfo();
-      ConsumeToken();
-      return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, Name, 0);
+      SourceLocation NameLoc = ConsumeToken();
+      return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, NameLoc,
+                                                         Name, 0);
     }
     
     // Note that we parse this as an assignment expression, not a constant
@@ -166,7 +167,9 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
           Diag(Tok, diag::err_expected_equal_designator);
       }
       
-      return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 0,Idx.Val);
+      return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
+                                                         SourceLocation(), 
+                                                         0, Idx.Val);
     }
 
     // Create designation if we haven't already.

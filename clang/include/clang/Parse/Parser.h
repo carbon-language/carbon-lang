@@ -556,9 +556,11 @@ private:
   ExprResult ParseObjCProtocolExpression(SourceLocation AtLoc);
   ExprResult ParseObjCMessageExpression();
   ExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
+                                            SourceLocation NameLoc,
                                             IdentifierInfo *ReceiverName,
                                             ExprTy *ReceiverExpr);
   ExprResult ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracloc,
+                                                         SourceLocation NameLoc,
                                                          IdentifierInfo *ReceiverName,
                                                          ExprTy *ReceiverExpr);
     

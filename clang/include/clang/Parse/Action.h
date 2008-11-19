@@ -939,7 +939,8 @@ public:
     Scope *S,
     IdentifierInfo *receivingClassName, 
     Selector Sel,
-    SourceLocation lbrac, 
+    SourceLocation lbrac,
+    SourceLocation receiverLoc,
     SourceLocation rbrac, 
     ExprTy **ArgExprs, unsigned NumArgs) {
     return 0;

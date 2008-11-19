@@ -23,3 +23,17 @@
   [super cMethod]; // expected-warning{{method '+cMethod' not found (return type defaults to 'id')}}
 }
 @end
+
+@interface XX
+- m;
+@end
+
+void f(id super) {
+  [super m];
+}
+void f0(int super) {
+  [super m]; // expected-error{{bad receiver type 'int'}}
+}
+void f1(int puper) {
+  [super m]; // expected-error{{use of undeclared identifier 'super'}}
+}

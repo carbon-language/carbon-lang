@@ -212,9 +212,10 @@ Parser::ExprResult Parser::ParseAssignmentExpression() {
 /// expressions and other binary operators for these expressions as well.
 Parser::ExprResult 
 Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
+                                                    SourceLocation NameLoc,
                                                    IdentifierInfo *ReceiverName,
                                                     ExprTy *ReceiverExpr) {
-  ExprResult R = ParseObjCMessageExpressionBody(LBracLoc, ReceiverName,
+  ExprResult R = ParseObjCMessageExpressionBody(LBracLoc, NameLoc, ReceiverName,
                                                 ReceiverExpr);
   if (R.isInvalid) return R;
   R = ParsePostfixExpressionSuffix(R);

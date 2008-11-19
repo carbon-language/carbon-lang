@@ -176,7 +176,8 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 Sema::ExprResult Sema::ActOnClassMessage(
   Scope *S,
   IdentifierInfo *receiverName, Selector Sel,
-  SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args, unsigned NumArgs)
+  SourceLocation lbrac, SourceLocation receiverLoc, SourceLocation rbrac, 
+  ExprTy **Args, unsigned NumArgs)
 {
   assert(receiverName && "missing receiver class name");
 
@@ -184,22 +185,38 @@ Sema::ExprResult Sema::ActOnClassMessage(
   ObjCInterfaceDecl* ClassDecl = 0;
   bool isSuper = false;
   
-  if (receiverName == SuperID && getCurMethodDecl()) {
-    isSuper = true;
-    ClassDecl = getCurMethodDecl()->getClassInterface()->getSuperClass();
-    if (!ClassDecl)
-      return Diag(lbrac, diag::error_no_super_class)
-        << getCurMethodDecl()->getClassInterface()->getName();
-    if (getCurMethodDecl()->isInstance()) {
-      QualType superTy = Context.getObjCInterfaceType(ClassDecl);
-      superTy = Context.getPointerType(superTy);
-      ExprResult ReceiverExpr = new ObjCSuperExpr(SourceLocation(), superTy);
-      // We are really in an instance method, redirect.
-      return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
-                                  Args, NumArgs);
-    }
-    // We are sending a message to 'super' within a class method. Do nothing,
-    // the receiver will pass through as 'super' (how convenient:-).
+  if (receiverName == SuperID) {
+    if (getCurMethodDecl()) {
+      isSuper = true;
+      ClassDecl = getCurMethodDecl()->getClassInterface()->getSuperClass();
+      if (!ClassDecl)
+        return Diag(lbrac, diag::error_no_super_class,
+                    getCurMethodDecl()->getClassInterface()->getName());
+      if (getCurMethodDecl()->isInstance()) {
+        QualType superTy = Context.getObjCInterfaceType(ClassDecl);
+        superTy = Context.getPointerType(superTy);
+        ExprResult ReceiverExpr = new ObjCSuperExpr(SourceLocation(), superTy);
+        // We are really in an instance method, redirect.
+        return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
+                                    Args, NumArgs);
+      }
+      // We are sending a message to 'super' within a class method. Do nothing,
+      // the receiver will pass through as 'super' (how convenient:-).
+    } else {
+      // 'super' has been used outside a method context. If a variable named
+      // 'super' has been declared, redirect. If not, produce a diagnostic.
+      Decl *SuperDecl = LookupDecl(receiverName, Decl::IDNS_Ordinary, S, false);
+      ValueDecl *VD = dyn_cast_or_null<ValueDecl>(SuperDecl);
+      if (VD) {
+        ExprResult ReceiverExpr = new DeclRefExpr(VD, VD->getType(), 
+                                                  receiverLoc);
+        // We are really in an instance method, redirect.
+        return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
+                                    Args, NumArgs);
+      }
+      return Diag(receiverLoc, diag::err_undeclared_var_use, 
+                  receiverName->getName());
+    }      
   } else
     ClassDecl = getObjCInterfaceDecl(receiverName);
   

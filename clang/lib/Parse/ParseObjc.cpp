@@ -1424,8 +1424,8 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   // Parse receiver
   if (isTokObjCMessageIdentifierReceiver()) {
     IdentifierInfo *ReceiverName = Tok.getIdentifierInfo();
-    ConsumeToken();
-    return ParseObjCMessageExpressionBody(LBracLoc, ReceiverName, 0);
+    SourceLocation NameLoc = ConsumeToken();
+    return ParseObjCMessageExpressionBody(LBracLoc, NameLoc, ReceiverName, 0);
   }
 
   ExprResult Res = ParseExpression();
@@ -1434,7 +1434,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     return Res;
   }
   
-  return ParseObjCMessageExpressionBody(LBracLoc, 0, Res.Val);
+  return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 0, Res.Val);
 }
   
 /// ParseObjCMessageExpressionBody - Having parsed "'[' objc-receiver", parse
@@ -1460,6 +1460,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
 ///   
 Parser::ExprResult
 Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
+                                       SourceLocation NameLoc,
                                        IdentifierInfo *ReceiverName,
                                        ExprTy *ReceiverExpr) {
   // Parse objc-selector
@@ -1548,7 +1549,8 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
   // We've just parsed a keyword message.
   if (ReceiverName) 
     return Actions.ActOnClassMessage(CurScope,
-                                     ReceiverName, Sel, LBracLoc, RBracLoc,
+                                     ReceiverName, Sel, 
+                                     LBracLoc, NameLoc, RBracLoc,
                                      &KeyExprs[0], KeyExprs.size());
   return Actions.ActOnInstanceMessage(ReceiverExpr, Sel, LBracLoc, RBracLoc,
                                       &KeyExprs[0], KeyExprs.size());
