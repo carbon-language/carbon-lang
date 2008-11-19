@@ -63,7 +63,8 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
 /// outlive it, so it doesn't take ownership of either of them.
 Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
              const char *BufStart, const char *BufEnd)
-  : PreprocessorLexer(&pp), FileLoc(fileloc), Features(pp.getLangOptions()) {
+  : PreprocessorLexer(&pp, fileloc), FileLoc(fileloc),
+    Features(pp.getLangOptions()) {
       
   SourceManager &SourceMgr = PP->getSourceManager();
   unsigned InputFileID = SourceMgr.getPhysicalLoc(FileLoc).getFileID();
@@ -110,7 +111,9 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
 Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
              const char *BufStart, const char *BufEnd,
              const llvm::MemoryBuffer *FromFile)
-  : PreprocessorLexer(0), FileLoc(fileloc), Features(features) {
+  : PreprocessorLexer(), FileLoc(fileloc),
+    Features(features) {
+      
   Is_PragmaLexer = false;
   InitCharacterInfo();
   

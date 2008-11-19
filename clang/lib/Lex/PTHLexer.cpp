@@ -18,8 +18,8 @@ using namespace clang;
 
 PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc,
                    const Token *TokArray, unsigned NumToks)
-  : PreprocessorLexer(&pp), FileLoc(fileloc), Tokens(TokArray),
-    NumTokens(NumToks), CurToken(0) {
+  : PreprocessorLexer(&pp, fileloc), FileLoc(fileloc),
+    Tokens(TokArray), NumTokens(NumToks), CurToken(0) {
 
   assert (Tokens[NumTokens-1].is(tok::eof));
   --NumTokens;

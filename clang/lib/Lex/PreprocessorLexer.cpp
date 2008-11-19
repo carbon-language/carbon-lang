@@ -18,6 +18,9 @@
 
 using namespace clang;
 
+PreprocessorLexer::PreprocessorLexer(Preprocessor* pp, SourceLocation L)
+  :  PP(pp), FileID(pp->getSourceManager().getPhysicalLoc(L).getFileID()) {}
+
 PreprocessorLexer::~PreprocessorLexer() {}
 
 void PreprocessorLexer::Diag(SourceLocation Loc, unsigned DiagID,

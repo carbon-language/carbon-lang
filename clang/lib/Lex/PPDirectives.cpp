@@ -303,8 +303,8 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
   // info about where the current file is.
   const FileEntry *CurFileEnt = 0;
   if (!FromDir) {
-    SourceLocation FileLoc = getCurrentFileLexer()->getFileLoc();
-    CurFileEnt = SourceMgr.getFileEntryForLoc(FileLoc);
+    unsigned FileID = getCurrentFileLexer()->getFileID();
+    CurFileEnt = SourceMgr.getFileEntryForID(FileID);
   }
   
   // Do a standard file entry lookup.
@@ -317,8 +317,8 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
   // Otherwise, see if this is a subframework header.  If so, this is relative
   // to one of the headers on the #include stack.  Walk the list of the current
   // headers on the #include stack and pass them to HeaderInfo.
-  if (CurLexer && !CurLexer->Is_PragmaLexer) {
-    if ((CurFileEnt = SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc())))
+  if (IsNonPragmaNonMacroLexer()) {
+    if ((CurFileEnt = SourceMgr.getFileEntryForID(CurPPLexer->getFileID())))
       if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart, FilenameEnd,
                                                     CurFileEnt)))
         return FE;
@@ -326,9 +326,9 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
   
   for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
     IncludeStackInfo &ISEntry = IncludeMacroStack[e-i-1];
-    if (ISEntry.TheLexer && !ISEntry.TheLexer->Is_PragmaLexer) {
+    if (IsNonPragmaNonMacroLexer(ISEntry)) {
       if ((CurFileEnt = 
-           SourceMgr.getFileEntryForLoc(ISEntry.TheLexer->getFileLoc())))
+           SourceMgr.getFileEntryForID(ISEntry.ThePPLexer->getFileID())))
         if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart,
                                                       FilenameEnd, CurFileEnt)))
           return FE;

@@ -26,6 +26,9 @@ class Preprocessor;
 class PreprocessorLexer {
 protected:
   Preprocessor *PP;              // Preprocessor object controlling lexing.
+
+  /// The SourceManager fileID corresponding to the file being lexed.
+  const unsigned FileID;
   
   //===--------------------------------------------------------------------===//
   // Context-specific lexing flags set by the preprocessor.
@@ -64,7 +67,9 @@ protected:
   void operator=(const PreprocessorLexer&); // DO NOT IMPLEMENT
   friend class Preprocessor;
   
-  PreprocessorLexer(Preprocessor* pp) : PP(pp) {}
+  PreprocessorLexer(Preprocessor* pp, SourceLocation L);
+  PreprocessorLexer() : PP(0), FileID(0) {}
+  
   virtual ~PreprocessorLexer();
   
   virtual void IndirectLex(Token& Result) = 0;
@@ -119,6 +124,13 @@ protected:
   /// (potentially) macro expand the filename.  If the sequence parsed is not
   /// lexically legal, emit a diagnostic and return a result EOM token.
   void LexIncludeFilename(Token &Result);
+  
+public:
+  unsigned getFileID() const { 
+    assert(PP &&
+      "PreprocessorLexer::getFileID() should only be used with a Preprocessor");
+    return FileID;
+  }
 };
 
 }  // end namespace clang
