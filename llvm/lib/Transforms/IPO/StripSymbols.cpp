@@ -249,7 +249,7 @@ bool StripDebugInfo(Module &M) {
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg->use_empty())
-        if (Constant *C = dyn_cast<GlobalVariable>(Arg)) 
+        if (Constant *C = dyn_cast<Constant>(Arg)) 
           DeadConstants.push_back(C);
     }
     Declare->eraseFromParent();
