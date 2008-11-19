@@ -972,6 +972,9 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
 }
 
 bool FloatExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
+  if (E->getOpcode() == UnaryOperator::Deref)
+    return false;
+
   if (!EvaluateFloat(E->getSubExpr(), Result, Info))
     return false;
 

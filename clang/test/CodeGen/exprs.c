@@ -45,3 +45,10 @@ int ola() {
   if ((0, (int)a) & 2) { return 1; }
   return 2;
 }
+
+// this one shouldn't fold as well
+void eMaisUma() {
+	double t[1];
+	if (*t)
+		return;
+}
