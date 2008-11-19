@@ -644,13 +644,13 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
   // It didn't name a member, so see if it names a class.
   TypeTy *BaseTy = isTypeName(*MemberOrBase, S, 0/*SS*/);
   if (!BaseTy)
-    return Diag(IdLoc, diag::err_mem_init_not_member_or_class,
-                MemberOrBase->getName(), SourceRange(IdLoc, RParenLoc));
+    return Diag(IdLoc, diag::err_mem_init_not_member_or_class)
+      << MemberOrBase << SourceRange(IdLoc, RParenLoc);
   
   QualType BaseType = Context.getTypeDeclType((TypeDecl *)BaseTy);
   if (!BaseType->isRecordType())
-    return Diag(IdLoc, diag::err_base_init_does_not_name_class,
-                BaseType.getAsString(), SourceRange(IdLoc, RParenLoc));
+    return Diag(IdLoc, diag::err_base_init_does_not_name_class)
+      << BaseType.getAsString() << SourceRange(IdLoc, RParenLoc);
 
   // C++ [class.base.init]p2:
   //   [...] Unless the mem-initializer-id names a nonstatic data
@@ -697,8 +697,8 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
   //   a direct non-virtual base class and an inherited virtual base
   //   class, the mem-initializer is ill-formed.
   if (DirectBaseSpec && VirtualBaseSpec)
-    return Diag(IdLoc, diag::err_base_init_direct_and_virtual,
-                MemberOrBase->getName(), SourceRange(IdLoc, RParenLoc));
+    return Diag(IdLoc, diag::err_base_init_direct_and_virtual)
+      << MemberOrBase << SourceRange(IdLoc, RParenLoc);
 
   return new CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, NumArgs);
 }

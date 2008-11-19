@@ -1127,8 +1127,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       CheckExtraCXXDefaultArguments(D);
 
     if (R.getTypePtr()->isObjCInterfaceType()) {
-      Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object,
-           D.getIdentifier()->getName());
+      Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object)
+        << D.getIdentifier();
       InvalidDecl = true;
     }
 
@@ -2032,8 +2032,8 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   if (!FTI.hasPrototype) {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
       if (FTI.ArgInfo[i].Param == 0) {
-        Diag(FTI.ArgInfo[i].IdentLoc, diag::ext_param_not_declared,
-             FTI.ArgInfo[i].Ident->getName());
+        Diag(FTI.ArgInfo[i].IdentLoc, diag::ext_param_not_declared)
+          << FTI.ArgInfo[i].Ident;
         // Implicitly declare the argument as type 'int' for lack of a better
         // type.
         DeclSpec DS;
@@ -2129,9 +2129,9 @@ ScopedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
                                            IdentifierInfo &II, Scope *S) {
   // Extension in C99.  Legal in C90, but warn about it.
   if (getLangOptions().C99)
-    Diag(Loc, diag::ext_implicit_function_decl, II.getName());
+    Diag(Loc, diag::ext_implicit_function_decl) << &II;
   else
-    Diag(Loc, diag::warn_implicit_function_decl, II.getName());
+    Diag(Loc, diag::warn_implicit_function_decl) << &II;
   
   // FIXME: handle stuff like:
   // void foo() { extern float X(); }
@@ -2222,8 +2222,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
 
     // A tag 'foo::bar' must already exist.
     if (PrevDecl == 0) {
-      Diag(NameLoc, diag::err_not_tag_in_scope, Name->getName(),
-           SS.getRange());
+      Diag(NameLoc, diag::err_not_tag_in_scope) << Name << SS.getRange();
       Name = 0;
       goto CreateNewDecl;
     }
@@ -2245,7 +2244,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
-          Diag(KWLoc, diag::err_use_with_wrong_tag, Name->getName());
+          Diag(KWLoc, diag::err_use_with_wrong_tag) << Name;
           Diag(PrevDecl->getLocation(), diag::err_previous_use);
           // Recover by making this an anonymous redefinition.
           Name = 0;
@@ -2257,7 +2256,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
 
           // Diagnose attempts to redefine a tag.
           if (PrevTagDecl->isDefinition()) {
-            Diag(NameLoc, diag::err_redefinition, Name->getName());
+            Diag(NameLoc, diag::err_redefinition) << Name;
             Diag(PrevDecl->getLocation(), diag::err_previous_definition);
             // If this is a redefinition, recover by making this struct be
             // anonymous, which will make any later references get the previous
@@ -2279,7 +2278,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       if (isDeclInScope(PrevDecl, DC, S)) {
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
-        Diag(NameLoc, diag::err_redefinition_different_kind, Name->getName());
+        Diag(NameLoc, diag::err_redefinition_different_kind) << Name;
         Diag(PrevDecl->getLocation(), diag::err_previous_definition);
         Name = 0;
       }
@@ -2359,8 +2358,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
 
     // A tag 'foo::bar' must already exist.
     if (PrevDecl == 0) {
-      Diag(NameLoc, diag::err_not_tag_in_scope, Name->getName(),
-           SS.getRange());
+      Diag(NameLoc, diag::err_not_tag_in_scope) << Name << SS.getRange();
       Name = 0;
       goto CreateNewDecl;
     }
@@ -2383,7 +2381,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
-          Diag(KWLoc, diag::err_use_with_wrong_tag, Name->getName());
+          Diag(KWLoc, diag::err_use_with_wrong_tag) << Name;
           Diag(PrevDecl->getLocation(), diag::err_previous_use);
           // Recover by making this an anonymous redefinition.
           Name = 0;
@@ -2403,7 +2401,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
             // Diagnose attempts to redefine a tag.
             if (RecordDecl* DefRecord =
                 cast<RecordDecl>(PrevTagDecl)->getDefinition(Context)) {
-              Diag(NameLoc, diag::err_redefinition, Name->getName());
+              Diag(NameLoc, diag::err_redefinition) << Name;
               Diag(DefRecord->getLocation(), diag::err_previous_definition);
               // If this is a redefinition, recover by making this struct be
               // anonymous, which will make any later references get the previous
@@ -2430,7 +2428,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
       if (isDeclInScope(PrevDecl, DC, S)) {
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
-        Diag(NameLoc, diag::err_redefinition_different_kind, Name->getName());
+        Diag(NameLoc, diag::err_redefinition_different_kind) << Name;
         Diag(PrevDecl->getLocation(), diag::err_previous_definition);
         Name = 0;
       }
@@ -2520,7 +2518,7 @@ void Sema::ActOnDefs(Scope *S, SourceLocation DeclStart,
   // Check that ClassName is a valid class
   ObjCInterfaceDecl *Class = getObjCInterfaceDecl(ClassName);
   if (!Class) {
-    Diag(DeclStart, diag::err_undef_interface, ClassName->getName());
+    Diag(DeclStart, diag::err_undef_interface) << ClassName;
     return;
   }
   // Collect the instance variables
@@ -2802,7 +2800,7 @@ void Sema::ActOnFields(Scope* S,
     if (IdentifierInfo *II = FD->getIdentifier()) {
       // Detect duplicate member names.
       if (!FieldIDs.insert(II)) {
-        Diag(FD->getLocation(), diag::err_duplicate_member, II->getName());
+        Diag(FD->getLocation(), diag::err_duplicate_member) << II;
         // Find the previous decl.
         SourceLocation PrevLoc;
         for (unsigned i = 0; ; ++i) {
@@ -2867,9 +2865,9 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
            "Received TagDecl when not in C++!");
     if (!isa<TagDecl>(PrevDecl) && isDeclInScope(PrevDecl, CurContext, S)) {
       if (isa<EnumConstantDecl>(PrevDecl))
-        Diag(IdLoc, diag::err_redefinition_of_enumerator, Id->getName());
+        Diag(IdLoc, diag::err_redefinition_of_enumerator) << Id;
       else
-        Diag(IdLoc, diag::err_redefinition, Id->getName());
+        Diag(IdLoc, diag::err_redefinition) << Id;
       Diag(PrevDecl->getLocation(), diag::err_previous_definition);
       delete Val;
       return 0;
@@ -2885,8 +2883,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
     // C99 6.7.2.2p2: Make sure we have an integer constant expression.
     SourceLocation ExpLoc;
     if (!Val->isIntegerConstantExpr(EnumVal, Context, &ExpLoc)) {
-      Diag(ExpLoc, diag::err_enum_value_not_integer_constant_expr, 
-           Id->getName());
+      Diag(ExpLoc, diag::err_enum_value_not_integer_constant_expr) << Id;
       delete Val;
       Val = 0;  // Just forget about it.
     } else {
@@ -3200,7 +3197,7 @@ bool PragmaPackStack::pop(IdentifierInfo *Name) {
   // Otherwise, find the named record.
   for (unsigned i = Stack.size(); i != 0; ) {
     --i;
-    if (strcmp(Stack[i].second.c_str(), Name->getName()) == 0) {
+    if (Name->isName(Stack[i].second.c_str())) {
       // Found it, pop up to and including this record.
       Alignment = Stack[i].first;
       Stack.erase(Stack.begin() + i, Stack.end());

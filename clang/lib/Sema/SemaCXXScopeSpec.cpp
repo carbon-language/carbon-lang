@@ -98,9 +98,9 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     DiagID = diag::err_undeclared_var_use;
 
   if (DC)
-    Diag(IdLoc, DiagID, II.getName(), SS.getRange());
+    Diag(IdLoc, DiagID) << &II << SS.getRange();
   else
-    Diag(IdLoc, DiagID, II.getName());
+    Diag(IdLoc, DiagID) << &II;
 
   return 0;
 }

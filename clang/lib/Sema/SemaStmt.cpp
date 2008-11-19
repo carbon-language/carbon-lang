@@ -756,26 +756,30 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
                                getCurMethodDecl()->getResultType();
 
   if (FnRetType->isVoidType()) {
-    if (RetValExp) // C99 6.8.6.4p1 (ext_ since GCC warns)
-      Diag(ReturnLoc, diag::ext_return_has_expr,
-           ( getCurFunctionDecl() ?
-                getCurFunctionDecl()->getIdentifier()->getName() :
-                getCurMethodDecl()->getSelector().getName()       ),
-           RetValExp->getSourceRange());
-    return new ReturnStmt(ReturnLoc, RetValExp);
-  } else {
-    if (!RetValExp) {
-      const char *funcName =
-                getCurFunctionDecl() ? 
-                   getCurFunctionDecl()->getIdentifier()->getName() :
-                   getCurMethodDecl()->getSelector().getName().c_str();
-      if (getLangOptions().C99)  // C99 6.8.6.4p1 (ext_ since GCC warns)
-        Diag(ReturnLoc, diag::ext_return_missing_expr, funcName);
-      else  // C90 6.6.6.4p4
-        Diag(ReturnLoc, diag::warn_return_missing_expr, funcName);
-      return new ReturnStmt(ReturnLoc, (Expr*)0);
+    if (RetValExp) {// C99 6.8.6.4p1 (ext_ since GCC warns)
+      if (FunctionDecl *FD = getCurFunctionDecl())
+        Diag(ReturnLoc, diag::ext_return_has_expr)
+          << FD->getIdentifier() << RetValExp->getSourceRange();
+      else 
+        Diag(ReturnLoc, diag::ext_return_has_expr)
+          << getCurMethodDecl()->getSelector().getName()
+          << RetValExp->getSourceRange();
     }
+    return new ReturnStmt(ReturnLoc, RetValExp);
   }
+  
+  if (!RetValExp) {
+    unsigned DiagID = diag::warn_return_missing_expr;  // C90 6.6.6.4p4
+    // C99 6.8.6.4p1 (ext_ since GCC warns)
+    if (getLangOptions().C99) DiagID = diag::ext_return_missing_expr;
+
+    if (FunctionDecl *FD = getCurFunctionDecl())
+      Diag(ReturnLoc, DiagID) << FD->getIdentifier();
+    else
+      Diag(ReturnLoc, DiagID) << getCurMethodDecl()->getSelector().getName();
+    return new ReturnStmt(ReturnLoc, (Expr*)0);
+  }
+  
   // we have a non-void function with an expression, continue checking
   QualType RetValType = RetValExp->getType();
 

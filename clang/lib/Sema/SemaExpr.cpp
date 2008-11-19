@@ -900,7 +900,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   // vec4.b is a float, vec4.xy is a vec2, vec4.rgb is a vec3, etc.
   // vec4.hi, vec4.lo, vec4.e, and vec4.o all return vec2.
   unsigned CompSize = SpecialComponent ? vecType->getNumElements() / 2
-                                       : strlen(CompName.getName());
+                                       : CompName.getLength();
   if (CompSize == 1)
     return vecType->getElementType();
     
@@ -921,16 +921,11 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
 // live?
 static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
                                            const IdentifierInfo *Name) {
-  unsigned N = Name->getLength();
-  char *SelectorName = new char[3 + N];
-  memcpy(SelectorName, "set", 3);
-  memcpy(&SelectorName[3], Name->getName(), N);
+  llvm::SmallString<100> SelectorName;
+  SelectorName += "set";
+  SelectorName.append(Name->getName(), Name->getName()+Name->getLength());
   SelectorName[3] = toupper(SelectorName[3]);
-
-  IdentifierInfo *Setter = 
-    &Idents.get(SelectorName, &SelectorName[3 + N]);
-  delete[] SelectorName;
-  return Setter;
+  return &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
 }
 
 Action::ExprResult Sema::
@@ -967,7 +962,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     FieldDecl *MemberDecl = RDecl->getMember(&Member);
     if (!MemberDecl)
       return Diag(MemberLoc, diag::err_typecheck_no_member)
-               << Member.getName() << BaseExpr->getSourceRange();
+               << &Member << BaseExpr->getSourceRange();
 
     // Figure out the type of the member; see C99 6.5.2.3p3
     // FIXME: Handle address space modifiers
@@ -991,7 +986,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
                                  OpKind == tok::arrow);
     return Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
-             << IFTy->getDecl()->getName() << Member.getName()
+             << IFTy->getDecl()->getName() << &Member
              << BaseExpr->getSourceRange();
   }
   
@@ -3106,9 +3101,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
     RecordDecl *RD = RC->getDecl();
     FieldDecl *MemberDecl = RD->getMember(OC.U.IdentInfo);
     if (!MemberDecl)
-      return Diag(BuiltinLoc, diag::err_typecheck_no_member,
-                  OC.U.IdentInfo->getName(),
-                  SourceRange(OC.LocStart, OC.LocEnd));
+      return Diag(BuiltinLoc, diag::err_typecheck_no_member)
+       << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd);
     
     // FIXME: C++: Verify that MemberDecl isn't a static field.
     // FIXME: Verify that MemberDecl isn't a bitfield.

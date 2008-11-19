@@ -88,6 +88,7 @@ public:
   /// push - Push the current alignment onto the stack, optionally
   /// using the given \arg Name for the record, if non-zero,
   void push(IdentifierInfo *Name) {
+    // FIXME: Why does this push 'Name' as an std::string??
     Stack.push_back(std::make_pair(Alignment,
                                    std::string(Name ? Name->getName() : "")));
   }

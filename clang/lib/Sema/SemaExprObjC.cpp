@@ -96,7 +96,7 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
                                                    SourceLocation RParenLoc) {
   ObjCProtocolDecl* PDecl = ObjCProtocols[ProtocolId];
   if (!PDecl) {
-    Diag(ProtoLoc, diag::err_undeclared_protocol) << ProtocolId->getName();
+    Diag(ProtoLoc, diag::err_undeclared_protocol) << ProtocolId;
     return true;
   }
   
