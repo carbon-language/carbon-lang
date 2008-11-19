@@ -1396,7 +1396,7 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
   if (VT < 0) {
     int Match = ~VT;
     const Type *RetTy = FTy->getReturnType();
-    const StructType *ST = cast<StructType>(RetTy);
+    const StructType *ST = dyn_cast<StructType>(RetTy);
     unsigned NumRets = 1;
 
     if (ST)
