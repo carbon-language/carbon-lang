@@ -64,6 +64,12 @@ namespace llvm {
       return *this;
     }
 
+    template <typename Ty>
+    BaseStream &write(const Ty &A, unsigned N) {
+      if (Stream) Stream->write(A, N);
+      return *this;
+    }
+    
     operator StreamTy* () { return Stream; }
 
     bool operator == (const StreamTy &S) { return &S == Stream; }
