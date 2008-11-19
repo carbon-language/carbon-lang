@@ -1291,8 +1291,8 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   // resolution to pick the function.
   if (Ovl) {
     OverloadCandidateSet CandidateSet;
-    OverloadCandidateSet::iterator Best;
     AddOverloadCandidates(Ovl, Args, NumArgs, CandidateSet);
+    OverloadCandidateSet::iterator Best;
     switch (BestViableFunction(CandidateSet, Best)) {
     case OR_Success: 
       {
@@ -1326,6 +1326,10 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
       return true;
     }
   }
+
+  if (getLangOptions().CPlusPlus && Fn->getType()->isRecordType())
+    return BuildCallToObjectOfClassType(Fn, LParenLoc, Args, NumArgs,
+                                        CommaLocs, RParenLoc);
 
   // Promote the function operand.
   UsualUnaryConversions(Fn);

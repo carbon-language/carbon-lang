@@ -17,6 +17,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeOrdering.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Compiler.h"
@@ -2851,6 +2852,155 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   }
 
   return 0;
+}
+
+/// BuildCallToObjectOfClassType - Build a call to an object of class
+/// type (C++ [over.call.object]), which can end up invoking an
+/// overloaded function call operator (@c operator()) or performing a
+/// user-defined conversion on the object argument.
+Action::ExprResult 
+Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
+                                   Expr **Args, unsigned NumArgs,
+                                   SourceLocation *CommaLocs, 
+                                   SourceLocation RParenLoc) {
+  assert(Object->getType()->isRecordType() && "Requires object type argument");
+  const RecordType *Record = Object->getType()->getAsRecordType();
+  
+  // C++ [over.call.object]p1:
+  //  If the primary-expression E in the function call syntax
+  //  evaluates to a class object of type “cv T”, then the set of
+  //  candidate functions includes at least the function call
+  //  operators of T. The function call operators of T are obtained by
+  //  ordinary lookup of the name operator() in the context of
+  //  (E).operator().
+  OverloadCandidateSet CandidateSet;
+  IdentifierResolver::iterator I 
+    = IdResolver.begin(Context.DeclarationNames.getCXXOperatorName(OO_Call), 
+                       cast<CXXRecordType>(Record)->getDecl(), 
+                       /*LookInParentCtx=*/false);
+  NamedDecl *MemberOps = (I == IdResolver.end())? 0 : *I;
+  if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
+    AddMethodCandidate(Method, Object, Args, NumArgs, CandidateSet,
+                       /*SuppressUserConversions=*/false);
+  else if (OverloadedFunctionDecl *Ovl 
+           = dyn_cast_or_null<OverloadedFunctionDecl>(MemberOps)) {
+    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+           FEnd = Ovl->function_end();
+         F != FEnd; ++F) {
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*F))
+        AddMethodCandidate(Method, Object, Args, NumArgs, CandidateSet,
+                           /*SuppressUserConversions=*/false);
+    }
+  }
+
+  CXXMethodDecl *Method = 0;
+
+  // Perform overload resolution.
+  OverloadCandidateSet::iterator Best;
+  switch (BestViableFunction(CandidateSet, Best)) {
+  case OR_Success:
+    // We found a method. We'll build a call to it below.
+    Method = cast<CXXMethodDecl>(Best->Function);
+    break;
+
+  case OR_No_Viable_Function:
+    if (CandidateSet.empty())
+      Diag(Object->getSourceRange().getBegin(), 
+           diag::err_ovl_no_viable_object_call)
+        << Object->getType().getAsString() << Object->getSourceRange();
+    else {
+      Diag(Object->getSourceRange().getBegin(), 
+           diag::err_ovl_no_viable_object_call_with_cands)
+        << Object->getType().getAsString() << Object->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+    }
+    break;
+
+  case OR_Ambiguous:
+    Diag(Object->getSourceRange().getBegin(),
+         diag::err_ovl_ambiguous_object_call)
+      << Object->getType().getAsString() << Object->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+    break;
+  }    
+
+  if (!Method) {
+    // We had an error; delete all of the subexpressions and return
+    // the error.
+    delete Object;
+    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
+      delete Args[ArgIdx];
+    return true;
+  }
+
+  // Build a CXXOperatorCallExpr that calls this method, using Object for
+  // the implicit object parameter and passing along the remaining
+  // arguments.
+  const FunctionTypeProto *Proto = Method->getType()->getAsFunctionTypeProto();
+
+  unsigned NumArgsInProto = Proto->getNumArgs();
+  unsigned NumArgsToCheck = NumArgs;
+
+  // Build the full argument list for the method call (the
+  // implicit object parameter is placed at the beginning of the
+  // list).
+  Expr **MethodArgs;
+  if (NumArgs < NumArgsInProto) {
+    NumArgsToCheck = NumArgsInProto;
+    MethodArgs = new Expr*[NumArgsInProto + 1];
+  } else {
+    MethodArgs = new Expr*[NumArgs + 1];
+  }
+  MethodArgs[0] = Object;
+  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
+    MethodArgs[ArgIdx + 1] = Args[ArgIdx];
+      
+  Expr *NewFn = new DeclRefExpr(Method, Method->getType(), 
+                                SourceLocation());
+  UsualUnaryConversions(NewFn);
+
+  // Once we've built TheCall, all of the expressions are properly
+  // owned.
+  QualType ResultTy = Method->getResultType().getNonReferenceType();
+  llvm::OwningPtr<CXXOperatorCallExpr> 
+    TheCall(new CXXOperatorCallExpr(NewFn, MethodArgs, NumArgs + 1,
+                                    ResultTy, RParenLoc));
+  delete [] MethodArgs;
+
+  // Initialize the implicit object parameter.
+  if (!PerformObjectArgumentInitialization(Object, Method))
+    return true;
+  TheCall->setArg(0, Object);
+
+  // Check the argument types.
+  for (unsigned i = 0; i != NumArgsToCheck; i++) {
+    QualType ProtoArgType = Proto->getArgType(i);
+
+    Expr *Arg;
+    if (i < NumArgs) 
+      Arg = Args[i];
+    else 
+      Arg = new CXXDefaultArgExpr(Method->getParamDecl(i));
+    QualType ArgType = Arg->getType();
+        
+    // Pass the argument.
+    if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
+      return true;
+
+    TheCall->setArg(i + 1, Arg);
+  }
+
+  // If this is a variadic call, handle args passed through "...".
+  if (Proto->isVariadic()) {
+    // Promote the arguments (C99 6.5.2.2p7).
+    for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
+      Expr *Arg = Args[i];
+      DefaultArgumentPromotion(Arg);
+      TheCall->setArg(i + 1, Arg);
+    }
+  }
+
+  return CheckFunctionCall(Method, TheCall.take());
 }
 
 /// FixOverloadedFunctionReference - E is an expression that refers to

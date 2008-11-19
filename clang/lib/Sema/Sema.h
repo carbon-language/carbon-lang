@@ -453,6 +453,11 @@ public:
                                                    bool Complain);
   void FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
 
+  ExprResult 
+  BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
+                               Expr **Args, unsigned NumArgs,
+                               SourceLocation *CommaLocs, 
+                               SourceLocation RParenLoc);
 
   /// Helpers for dealing with function parameters
   bool CheckParmsForFunctionDef(FunctionDecl *FD);

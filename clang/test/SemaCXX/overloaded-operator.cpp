@@ -121,3 +121,16 @@ void test_comma(X x, Y y) {
   bool& b1 = (x, y);
   X& xr = (x, x);
 }
+
+
+struct Callable {
+  int& operator()(int, double = 2.71828); // expected-note{{candidate function}}
+  float& operator()(int, double, long, ...); // expected-note{{candidate function}}
+};
+
+void test_callable(Callable c) {
+  int &ir = c(1);
+  float &fr = c(1, 3.14159, 17, 42);
+
+  c(); // expected-error{{no matching function for call to object of type 'struct Callable'; candidates are:}}
+}
