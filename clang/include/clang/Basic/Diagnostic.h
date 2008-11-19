@@ -180,7 +180,7 @@ private:
   
   /// DiagArguments - The values for the various substitution positions.  It
   /// currently only support 10 arguments (%0-%9).
-  const std::string *DiagArguments[10];
+  std::string DiagArguments[10];
   /// DiagRanges - The list of ranges added to this diagnostic.  It currently
   /// only support 10 ranges, could easily be extended if needed.
   const SourceRange *DiagRanges[10];
@@ -255,7 +255,7 @@ public:
   const std::string &getArgStr(unsigned Idx) const {
     assert((signed char)Idx < DiagObj->NumDiagArgs &&
            "Argument out of range!");
-    return *DiagObj->DiagArguments[Idx];
+    return DiagObj->DiagArguments[Idx];
   }
   
   /// getNumRanges - Return the number of source ranges associated with this
@@ -273,7 +273,7 @@ public:
     assert((unsigned)DiagObj->NumDiagArgs < 
            sizeof(DiagObj->DiagArguments)/sizeof(DiagObj->DiagArguments[0]) &&
            "Too many arguments to diagnostic!");
-    DiagObj->DiagArguments[DiagObj->NumDiagArgs++] = &S;
+    DiagObj->DiagArguments[DiagObj->NumDiagArgs++] = S;
     return *this;
   }
   
