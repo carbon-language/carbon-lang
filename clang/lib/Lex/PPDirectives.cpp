@@ -788,7 +788,7 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
       // #define X(A,A.
       if (std::find(Arguments.begin(), Arguments.end(), II) != 
           Arguments.end()) {  // C99 6.10.3p6
-        Diag(Tok, diag::err_pp_duplicate_name_in_arg_list) << II->getName();
+        Diag(Tok, diag::err_pp_duplicate_name_in_arg_list) << II;
         return true;
       }
         
@@ -971,7 +971,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     // must be the same.  C99 6.10.3.2.
     if (!MI->isIdenticalTo(*OtherMI, *this)) {
       Diag(MI->getDefinitionLoc(), diag::ext_pp_macro_redef)
-        << MacroNameTok.getIdentifierInfo()->getName();
+        << MacroNameTok.getIdentifierInfo();
       Diag(OtherMI->getDefinitionLoc(), diag::ext_pp_macro_redef2);
     }
     delete OtherMI;
