@@ -396,6 +396,10 @@ namespace llvm {
     ///
     virtual void Schedule() = 0;
 
+    /// getGraphpNodeLabel - Return a label for an SUnit node in a Graphviz or similar
+    /// graph visualization.
+    virtual std::string getGraphNodeLabel(const SUnit *SU) const;
+
   private:
     /// EmitSubregNode - Generate machine code for subreg nodes.
     ///

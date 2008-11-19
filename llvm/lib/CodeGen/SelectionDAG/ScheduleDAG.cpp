@@ -468,7 +468,7 @@ void SUnit::print(raw_ostream &O, const ScheduleDAG *G) const {
       FlaggedNodes.push_back(N);
     while (!FlaggedNodes.empty()) {
       O << "    ";
-      FlaggedNodes.back()->dump(G->DAG);
+      FlaggedNodes.back()->print(O, G->DAG);
       O << "\n";
       FlaggedNodes.pop_back();
     }

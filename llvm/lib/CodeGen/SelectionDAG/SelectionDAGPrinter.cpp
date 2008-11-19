@@ -444,31 +444,28 @@ namespace llvm {
 
 std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
                                                        const ScheduleDAG *G) {
-  std::string Op;
-
-  if (G->DAG) {
-    if (!SU->getNode())
-      Op = "<CROSS RC COPY>";
-    else {
-      SmallVector<SDNode *, 4> FlaggedNodes;
-      for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
-        FlaggedNodes.push_back(N);
-      while (!FlaggedNodes.empty()) {
-        Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(FlaggedNodes.back(),
-                                                          G->DAG) + "\n";
-        FlaggedNodes.pop_back();
-      }
-    }
-  } else {
-    std::string s;
-    raw_string_ostream oss(s);
-    SU->getInstr()->print(oss);
-    Op += oss.str();
-  }
-
-  return Op;
+  return G->getGraphNodeLabel(SU);
 }
 
+std::string ScheduleDAG::getGraphNodeLabel(const SUnit *SU) const {
+  std::string s;
+  raw_string_ostream O(s);
+  O << "SU(" << SU->NodeNum << "): ";
+  if (SU->getNode()) {
+    SmallVector<SDNode *, 4> FlaggedNodes;
+    for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
+      FlaggedNodes.push_back(N);
+    while (!FlaggedNodes.empty()) {
+      O << DOTGraphTraits<SelectionDAG*>::getNodeLabel(FlaggedNodes.back(), DAG);
+      FlaggedNodes.pop_back();
+      if (!FlaggedNodes.empty())
+        O << "\n    ";
+    }
+  } else {
+    O << "CROSS RC COPY";
+  }
+  return O.str();
+}
 
 /// viewGraph - Pop up a ghostview window with the reachable parts of the DAG
 /// rendered using 'dot'.
