@@ -72,6 +72,12 @@ void CodeGenModule::BindRuntimeFunctions() {
     llvm::Function *Fn = RuntimeFunctions[i].first;
     const std::string &Name = RuntimeFunctions[i].second;
     
+    // Discard unused runtime functions.
+    if (Fn->use_empty()) {
+      Fn->eraseFromParent();
+      continue;
+    }
+      
     // See if there is a conflict against a function.
     llvm::Function *Conflict = TheModule.getFunction(Name);
     if (Conflict) {
