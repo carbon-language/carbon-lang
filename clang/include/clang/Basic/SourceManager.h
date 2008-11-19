@@ -453,7 +453,10 @@ public:
   SrcMgr::CharacteristicKind getFileCharacteristic(SourceLocation Loc) const {
     return getFIDInfo(getPhysicalLoc(Loc).getFileID())->getFileCharacteristic();
   }
-
+  SrcMgr::CharacteristicKind getFileCharacteristic(unsigned FileID) const {
+    return getFIDInfo(FileID)->getFileCharacteristic();
+  }
+  
   // Iterators over FileIDs.
   
   class fileid_iterator {
