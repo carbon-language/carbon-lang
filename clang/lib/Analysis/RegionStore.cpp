@@ -125,10 +125,15 @@ private:
     return loc::MemRegionVal(MRMgr.getVarRegion(VD));
   }
 
+  SymbolManager& getSymbolManager() { return StateMgr.getSymbolManager(); }
+
   Store InitializeArray(Store store, const TypedRegion* R, SVal Init);
   Store BindArrayToVal(Store store, const TypedRegion* BaseR, SVal V);
+  Store BindArrayToSymVal(Store store, const TypedRegion* BaseR);
+
   Store InitializeStruct(Store store, const TypedRegion* R, SVal Init);
   Store BindStructToVal(Store store, const TypedRegion* BaseR, SVal V);
+  Store BindStructToSymVal(Store store, const TypedRegion* BaseR);
 
   SVal RetrieveStruct(Store store, const TypedRegion* R);
   Store BindStruct(Store store, const TypedRegion* R, SVal V);
@@ -370,7 +375,7 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R, SVal V){
   RecordDecl* RD = RT->getDecl();
 
   if (!RD->isDefinition()) {
-    // This can only occur when a pointer of imcomplete struct type is used as a
+    // This can only occur when a pointer of incomplete struct type is used as a
     // function argument.
     assert(V.isUnknown());
     return store;
@@ -411,6 +416,8 @@ Store RegionStoreManager::getInitialStore() {
       if (VD->getStorageClass() == VarDecl::Static)
         continue;
 
+      VarRegion* VR = MRMgr.getVarRegion(VD);
+
       QualType T = VD->getType();
       // Only handle pointers and integers for now.
       if (Loc::IsLocType(T) || T->isIntegerType()) {
@@ -422,6 +429,19 @@ Store RegionStoreManager::getInitialStore() {
                  : UndefinedVal();
 
         St = Bind(St, getVarLoc(VD), X);
+      } 
+      else if (T->isArrayType()) {
+        if (VD->hasGlobalStorage()) // Params cannot have array type.
+          St = BindArrayToSymVal(St, VR);
+        else
+          St = BindArrayToVal(St, VR, UndefinedVal());
+      }
+      else if (T->isStructureType()) {
+        if (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
+            isa<ImplicitParamDecl>(VD))
+          St = BindStructToSymVal(St, VR);
+        else
+          St = BindStructToVal(St, VR, UndefinedVal());
       }
     }
   }
@@ -579,6 +599,33 @@ Store RegionStoreManager::BindArrayToVal(Store store, const TypedRegion* BaseR,
   return store;
 }
 
+Store RegionStoreManager::BindArrayToSymVal(Store store, 
+                                            const TypedRegion* BaseR) {
+  QualType T = BaseR->getType(getContext());
+  assert(T->isArrayType());
+
+  if (ConstantArrayType* CAT = dyn_cast<ConstantArrayType>(T.getTypePtr())) {
+    llvm::APInt Size = CAT->getSize();
+    llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
+    for (; i != Size; ++i) {
+      nonloc::ConcreteInt Idx(getBasicVals().getValue(llvm::APSInt(i)));
+      
+      ElementRegion* ER = MRMgr.getElementRegion(Idx, BaseR);
+
+      if (CAT->getElementType()->isStructureType()) {
+        store = BindStructToSymVal(store, ER);
+      }
+      else {
+        SVal V = SVal::getSymbolValue(getSymbolManager(), BaseR, 
+                                      &Idx.getValue(), CAT->getElementType());
+        store = Bind(store, loc::MemRegionVal(ER), V);
+      }
+    }
+  }
+
+  return store;
+}
+
 Store RegionStoreManager::InitializeStruct(Store store, const TypedRegion* R, 
                                            SVal Init) {
   QualType T = R->getType(getContext());
@@ -646,6 +693,36 @@ Store RegionStoreManager::BindStructToVal(Store store, const TypedRegion* BaseR,
 
     } else if (FTy->isStructureType()) {
       store = BindStructToVal(store, FR, V);
+    }
+  }
+
+  return store;
+}
+
+Store RegionStoreManager::BindStructToSymVal(Store store, 
+                                             const TypedRegion* BaseR) {
+  QualType T = BaseR->getType(getContext());
+  assert(T->isStructureType());
+
+  const RecordType* RT = cast<RecordType>(T.getTypePtr());
+  RecordDecl* RD = RT->getDecl();
+  assert(RD->isDefinition());
+
+  RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+
+  for (; I != E; ++I) {
+    QualType FTy = (*I)->getType();
+    FieldRegion* FR = MRMgr.getFieldRegion(*I, BaseR);
+
+    if (Loc::IsLocType(FTy) || FTy->isIntegerType()) {
+      store = Bind(store, loc::MemRegionVal(FR), 
+                   SVal::getSymbolValue(getSymbolManager(), BaseR, *I, FTy));
+    } 
+    else if (FTy->isArrayType()) {
+      store = BindArrayToSymVal(store, FR);
+    } 
+    else if (FTy->isStructureType()) {
+      store = BindStructToSymVal(store, FR);
     }
   }
 
