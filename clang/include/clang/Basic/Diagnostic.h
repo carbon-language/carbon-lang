@@ -18,6 +18,10 @@
 #include <string>
 #include <cassert>
 
+namespace llvm {
+  template <typename T> class SmallVectorImpl;
+}
+
 namespace clang {
   class DiagnosticClient;
   class SourceRange;
@@ -334,6 +338,10 @@ public:
     return *this;
   }
   
+  /// FormatDiagnostic - Format this diagnostic into a string, substituting the
+  /// formal arguments into the %0 slots.  The result is appended onto the Str
+  /// array.
+  void FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const;
 };
 
 
@@ -341,16 +349,13 @@ public:
 /// diag::kind enum.  This actually returns a new instance of DiagnosticInfo
 /// which emits the diagnostics (through ProcessDiag) when it is destroyed.
 inline DiagnosticInfo Diagnostic::Report(FullSourceLoc Pos, unsigned DiagID) {
-  DiagnosticInfo D(this, Pos, DiagID);
-  return D;
+  return DiagnosticInfo(this, Pos, DiagID);
 }
   
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
 class DiagnosticClient {
-protected:
-  std::string FormatDiagnostic(const DiagnosticInfo &Info);
 public:
   virtual ~DiagnosticClient();
 

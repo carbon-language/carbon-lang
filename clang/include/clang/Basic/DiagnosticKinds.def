@@ -1392,11 +1392,11 @@ DIAG(warn_not_compound_assign, WARNING,
 DIAG(warn_printf_not_string_constant, WARNING,
      "format string is not a string literal (potentially insecure)")
 DIAG(warn_printf_write_back, WARNING,
-     "use of '%n' in format string discouraged (potentially insecure)")
+     "use of '%%n' in format string discouraged (potentially insecure)")
 DIAG(warn_printf_insufficient_data_args, WARNING,
-    "more '%' conversions than data arguments")
+    "more '%%' conversions than data arguments")
 DIAG(warn_printf_too_many_data_args, WARNING,
-    "more data arguments than '%' conversions")
+    "more data arguments than '%%' conversions")
 DIAG(warn_printf_invalid_conversion, WARNING,
     "invalid conversion '%0'")
 DIAG(warn_printf_missing_format_string, WARNING,

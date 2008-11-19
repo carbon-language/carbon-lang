@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathDiagnostic.h"
+#include "llvm/ADT/SmallString.h"
 #include <sstream>
-
 using namespace clang;
   
 PathDiagnostic::~PathDiagnostic() {
@@ -36,10 +36,13 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
   case Diagnostic::Fatal:   LevelStr = "fatal error: "; break;
   }
 
-  std::string Msg = FormatDiagnostic(Info);
+  llvm::SmallString<100> StrC;
+  StrC += LevelStr;
+  Info.FormatDiagnostic(StrC);
   
   PathDiagnosticPiece *P =
-    new PathDiagnosticPiece(Info.getLocation(), LevelStr+Msg);
+    new PathDiagnosticPiece(Info.getLocation(),
+                            std::string(StrC.begin(), StrC.end()));
   
   for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
     P->addRange(Info.getRange(i));

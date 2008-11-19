@@ -15,6 +15,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 void TextDiagnosticPrinter::
@@ -138,13 +139,15 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   case Diagnostic::Warning: OS << "warning: "; break;
   case Diagnostic::Error:   OS << "error: "; break;
   case Diagnostic::Fatal:   OS << "fatal error: "; break;
-    break;
   }
   
-  OS << FormatDiagnostic(Info) << "\n";
+  llvm::SmallString<100> OutStr;
+  Info.FormatDiagnostic(OutStr);
+  OS.write(OutStr.begin(), OutStr.size());
+  OS << '\n';
   
-  if (CaretDiagnostics && Pos.isValid() && ((LastLoc != Pos) ||
-                                            Info.getNumRanges())) {
+  if (CaretDiagnostics && Pos.isValid() &&
+      ((LastLoc != Pos) || Info.getNumRanges())) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = Pos;
     

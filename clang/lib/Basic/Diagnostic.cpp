@@ -13,7 +13,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
-#include <cassert>
+#include "llvm/ADT/SmallVector.h"
 #include <vector>
 #include <map>
 #include <cstring>
@@ -246,20 +246,41 @@ void Diagnostic::ProcessDiag(const DiagnosticInfo &Info) {
 
 DiagnosticClient::~DiagnosticClient() {}
 
-std::string DiagnosticClient::FormatDiagnostic(const DiagnosticInfo &Info) {
-  std::string Msg = Info.getDiags()->getDescription(Info.getID());
+
+/// FormatDiagnostic - Format this diagnostic into a string, substituting the
+/// formal arguments into the %0 slots.  The result is appended onto the Str
+/// array.
+void DiagnosticInfo::
+FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
+  const char *DiagStr = getDiags()->getDescription(getID());
+  const char *DiagEnd = DiagStr+strlen(DiagStr);
   
-  // Replace all instances of %0 in Msg with 'Extra'.  This is a pretty horrible
-  // and inefficient way to do this, we could improve this a lot if we care.
-  for (unsigned i = 0; i < Msg.size() - 1; ++i) {
-    if (Msg[i] == '%' && isdigit(Msg[i + 1])) {
-      unsigned StrNo = Msg[i + 1] - '0';
-      Msg = std::string(Msg.begin(), Msg.begin() + i) +
-      (Info.getArgKind(StrNo) == DiagnosticInfo::ak_std_string ? 
-      Info.getArgStdStr(StrNo) : std::string(Info.getArgCStr(StrNo))) +
-            std::string(Msg.begin() + i + 2, Msg.end());
+  while (DiagStr != DiagEnd) {
+    if (DiagStr[0] != '%') {
+      // Append non-%0 substrings to Str if we have one.
+      const char *StrEnd = std::find(DiagStr, DiagEnd, '%');
+      OutStr.append(DiagStr, StrEnd);
+      DiagStr = StrEnd;
+    } else if (DiagStr[1] == '%') {
+      OutStr.push_back('%');  // %% -> %.
+      DiagStr += 2;
+    } else {
+      assert(isdigit(DiagStr[1]) && "Must escape % with %%");
+      unsigned StrNo = DiagStr[1] - '0';
+
+      switch (getArgKind(StrNo)) {
+      case DiagnosticInfo::ak_std_string: {
+        const std::string &S = getArgStdStr(StrNo);
+        OutStr.append(S.begin(), S.end());
+        break;
+      }
+      case DiagnosticInfo::ak_c_string: {
+        const char *S = getArgCStr(StrNo);
+        OutStr.append(S, S + strlen(S));
+        break;
+      }
+      }
+      DiagStr += 2;
     }
   }
-
-  return Msg;
 }
