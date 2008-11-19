@@ -1395,8 +1395,18 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
 
   if (VT < 0) {
     int Match = ~VT;
-    if (Match == 0) {
-      if (Ty != FTy->getReturnType()) {
+    const Type *RetTy = FTy->getReturnType();
+    const StructType *ST = cast<StructType>(RetTy);
+    unsigned NumRets = 1;
+
+    if (ST)
+      NumRets = ST->getNumElements();
+
+    if (Match <= static_cast<int>(NumRets - 1)) {
+      if (ST)
+        RetTy = ST->getElementType(Match);
+
+      if (Ty != RetTy) {
         CheckFailed("Intrinsic parameter #" + utostr(ArgNo - 1) + " does not "
                     "match return type.", F);
         return false;
