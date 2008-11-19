@@ -97,18 +97,6 @@ private:
                                   SmallVector<SUnit*, 2>&);
   bool DelayForLiveRegsBottomUp(SUnit*, SmallVector<unsigned, 4>&);
   void ListScheduleBottomUp();
-
-  /// CreateNewSUnit - Creates a new SUnit and returns a pointer to it.
-  SUnit *CreateNewSUnit(SDNode *N) {
-    SUnit *NewNode = NewSUnit(N);
-    return NewNode;
-  }
-
-  /// CreateClone - Creates a new SUnit from an existing one.
-  SUnit *CreateClone(SUnit *N) {
-    SUnit *NewNode = Clone(N);
-    return NewNode;
-  }
 };
 }  // end anonymous namespace
 
@@ -256,7 +244,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     DAG->ReplaceAllUsesOfValueWith(SDValue(SU->getNode(), OldNumVals-1),
                                    SDValue(LoadNode, 1));
 
-    SUnit *NewSU = CreateNewSUnit(N);
+    SUnit *NewSU = NewSUnit(N);
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NewSU->NodeNum);
       
@@ -282,7 +270,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
       LoadSU = &SUnits[LoadNode->getNodeId()];
       isNewLoad = false;
     } else {
-      LoadSU = CreateNewSUnit(LoadNode);
+      LoadSU = NewSUnit(LoadNode);
       LoadNode->setNodeId(LoadSU->NodeNum);
 
       LoadSU->Depth = SU->Depth;
@@ -360,7 +348,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   }
 
   DOUT << "Duplicating SU # " << SU->NodeNum << "\n";
-  NewSU = CreateClone(SU);
+  NewSU = Clone(SU);
 
   // New SUnit has the exact same predecessors.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
@@ -399,11 +387,11 @@ void ScheduleDAGFast::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
                                               const TargetRegisterClass *DestRC,
                                               const TargetRegisterClass *SrcRC,
                                                SmallVector<SUnit*, 2> &Copies) {
-  SUnit *CopyFromSU = CreateNewSUnit(NULL);
+  SUnit *CopyFromSU = NewSUnit(static_cast<SDNode *>(NULL));
   CopyFromSU->CopySrcRC = SrcRC;
   CopyFromSU->CopyDstRC = DestRC;
 
-  SUnit *CopyToSU = CreateNewSUnit(NULL);
+  SUnit *CopyToSU = NewSUnit(static_cast<SDNode *>(NULL));
   CopyToSU->CopySrcRC = DestRC;
   CopyToSU->CopyDstRC = SrcRC;
 
