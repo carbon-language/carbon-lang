@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -pre-alloc-split -stats |& \
-; RUN:   not grep {pre-alloc-split}
+; RUN:   grep {pre-alloc-split} | count 2
 
 define i32 @t() {
 entry:
