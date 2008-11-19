@@ -1788,6 +1788,7 @@ void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
 llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
                                           llvm::Value *AddrWeakObj)
 {
+  AddrWeakObj = CGF.Builder.CreateBitCast(AddrWeakObj, ObjCTypes.PtrObjectPtrTy); 
   llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.GcReadWeakFn,
                                                   AddrWeakObj, "weakread");
   return read_weak;
@@ -1799,6 +1800,8 @@ llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
 {
+  src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
+  dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignWeakFn,
                           src, dst, "weakassign");
   return;
@@ -1810,6 +1813,8 @@ void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                      llvm::Value *src, llvm::Value *dst)
 {
+  src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
+  dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignGlobalFn,
                           src, dst, "globalassign");
   return;
@@ -1821,6 +1826,8 @@ void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *src, llvm::Value *dst)
 {
+  src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
+  dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignStrongCastFn,
                           src, dst, "weakassign");
   return;

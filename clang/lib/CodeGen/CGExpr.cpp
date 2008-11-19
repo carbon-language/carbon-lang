@@ -151,7 +151,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 /// this method emits the address of the lvalue, then loads the result as an
 /// rvalue, returning the rvalue.
 RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
-  if (LV.ObjcWeak()) {
+  if (LV.isObjCWeak()) {
     // load of a __weak object. 
     llvm::Value *AddrWeakObj = LV.getAddress();
     llvm::Value *read_weak = CGM.getObjCRuntime().EmitObjCWeakRead(*this, 
@@ -335,22 +335,6 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
 /// is 'Ty'.
 void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst, 
                                              QualType Ty) {
-  if (Dst.ObjcWeak()) {
-    // load of a __weak object. 
-    llvm::Value *LvalueDst = Dst.getAddress();
-    llvm::Value *src = Src.getScalarVal();
-    CGM.getObjCRuntime().EmitObjCWeakAssign(*this, src, LvalueDst);
-    return;
-  }
-  
-  if (Dst.ObjcStrong()) {
-    // load of a __strong object. 
-    llvm::Value *LvalueDst = Dst.getAddress();
-    llvm::Value *src = Src.getScalarVal();
-    CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
-    return;
-  }
-  
   if (!Dst.isSimple()) {
     if (Dst.isVectorElt()) {
       // Read/modify/write the vector, inserting the new element.
@@ -374,6 +358,22 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
       return EmitStoreThroughPropertyRefLValue(Src, Dst, Ty);
 
     assert(0 && "Unknown LValue type");
+  }
+  
+  if (Dst.isObjCWeak()) {
+    // load of a __weak object. 
+    llvm::Value *LvalueDst = Dst.getAddress();
+    llvm::Value *src = Src.getScalarVal();
+    CGM.getObjCRuntime().EmitObjCWeakAssign(*this, src, LvalueDst);
+    return;
+  }
+  
+  if (Dst.isObjCStrong()) {
+    // load of a __strong object. 
+    llvm::Value *LvalueDst = Dst.getAddress();
+    llvm::Value *src = Src.getScalarVal();
+    CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
+    return;
   }
   
   llvm::Value *DstAddr = Dst.getAddress();

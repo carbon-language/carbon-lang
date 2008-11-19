@@ -159,8 +159,8 @@ public:
   bool isVolatileQualified() const { return Volatile; }
   bool isRestrictQualified() const { return Restrict; }
   
-  bool ObjcWeak() const { return ObjCType == Weak; }
-  bool ObjcStrong() const { return ObjCType == Strong; }
+  bool isObjCWeak() const { return ObjCType == Weak; }
+  bool isObjCStrong() const { return ObjCType == Strong; }
   
   static void SetObjCType(unsigned WeakVal, unsigned StrongVal, LValue& R) {
     if (WeakVal)
