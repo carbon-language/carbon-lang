@@ -315,8 +315,16 @@ public:
     for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
       R.addRange(Info.getRange(i));
     
-    for (unsigned i = 0, e = Info.getNumArgs(); i != e; ++i)
-      R.addString(Info.getArgStr(i));
+    for (unsigned i = 0, e = Info.getNumArgs(); i != e; ++i) {
+      switch (Info.getArgKind(i)) {
+      case DiagnosticInfo::ak_std_string:   
+        R.addString(Info.getArgStdStr(i));
+        break;
+      case DiagnosticInfo::ak_c_string:   
+        R.addString(Info.getArgCStr(i));
+        break;
+      }
+    }
   }
   
   // Iterators.

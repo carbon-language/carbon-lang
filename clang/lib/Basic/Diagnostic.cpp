@@ -255,7 +255,8 @@ std::string DiagnosticClient::FormatDiagnostic(const DiagnosticInfo &Info) {
     if (Msg[i] == '%' && isdigit(Msg[i + 1])) {
       unsigned StrNo = Msg[i + 1] - '0';
       Msg = std::string(Msg.begin(), Msg.begin() + i) +
-            Info.getArgStr(StrNo) +
+      (Info.getArgKind(StrNo) == DiagnosticInfo::ak_std_string ? 
+      Info.getArgStdStr(StrNo) : std::string(Info.getArgCStr(StrNo))) +
             std::string(Msg.begin() + i + 2, Msg.end());
     }
   }

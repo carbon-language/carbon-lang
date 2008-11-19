@@ -178,9 +178,29 @@ private:
   // diagnostic is in flight at a time.
   friend class DiagnosticInfo;
   
-  /// DiagArguments - The values for the various substitution positions.  It
-  /// currently only support 10 arguments (%0-%9).
-  std::string DiagArguments[10];
+  enum {
+    /// MaxArguments - The maximum number of arguments we can hold. We currently
+    /// only support up to 10 arguments (%0-%9).  A single diagnostic with more
+    /// than that almost certainly has to be simplified anyway.
+    MaxArguments = 10
+  };
+  
+  /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
+  /// values, with one for each argument.  This specifies whether the argument
+  /// is in DiagArgumentsStr or in DiagArguments.
+  unsigned char DiagArgumentsKind[MaxArguments];
+  
+  /// DiagArgumentsStr - This holds the values of each string argument for the
+  /// current diagnostic.  This value is only used when the corresponding
+  /// ArgumentKind is ak_std_string.
+  std::string DiagArgumentsStr[MaxArguments];
+
+  /// DiagArgumentsVal - The values for the various substitution positions. This
+  /// is used when the argument is not an std::string.  The specific value is
+  /// mangled into an intptr_t and the intepretation depends on exactly what
+  /// sort of argument kind it is.
+  intptr_t DiagArgumentsVal[MaxArguments];
+  
   /// DiagRanges - The list of ranges added to this diagnostic.  It currently
   /// only support 10 ranges, could easily be extended if needed.
   const SourceRange *DiagRanges[10];
@@ -212,6 +232,12 @@ class DiagnosticInfo {
   unsigned DiagID;
   void operator=(const DiagnosticInfo&); // DO NOT IMPLEMENT
 public:
+  enum ArgumentKind {
+    ak_std_string,   // std::string
+    ak_c_string      // const char *
+  };
+  
+  
   DiagnosticInfo(Diagnostic *diagObj, FullSourceLoc loc, unsigned diagID) :
     DiagObj(diagObj), Loc(loc), DiagID(diagID) {
     if (DiagObj == 0) return;
@@ -251,11 +277,25 @@ public:
 
   unsigned getNumArgs() const { return DiagObj->NumDiagArgs; }
   
-  /// getArgStr - Return the provided argument string specified by Idx.
-  const std::string &getArgStr(unsigned Idx) const {
+  
+  /// getArgKind - Return the kind of the specified index.  Based on the kind
+  /// of argument, the accessors below can be used to get the value.
+  ArgumentKind getArgKind(unsigned Idx) const {
     assert((signed char)Idx < DiagObj->NumDiagArgs &&
-           "Argument out of range!");
-    return DiagObj->DiagArguments[Idx];
+           "Argument index out of range!");
+    return (ArgumentKind)DiagObj->DiagArgumentsKind[Idx];
+  }
+  
+  /// getArgStdStr - Return the provided argument string specified by Idx.
+  const std::string &getArgStdStr(unsigned Idx) const {
+    assert(getArgKind(Idx) == ak_std_string && "invalid argument accessor!");
+    return DiagObj->DiagArgumentsStr[Idx];
+  }
+
+  /// getArgCStr - Return the specified C string argument.
+  const char *getArgCStr(unsigned Idx) const {
+    assert(getArgKind(Idx) == ak_c_string && "invalid argument accessor!");
+    return reinterpret_cast<const char*>(DiagObj->DiagArgumentsVal[Idx]);
   }
   
   /// getNumRanges - Return the number of source ranges associated with this
@@ -270,10 +310,19 @@ public:
   }
   
   DiagnosticInfo &operator<<(const std::string &S) {
-    assert((unsigned)DiagObj->NumDiagArgs < 
-           sizeof(DiagObj->DiagArguments)/sizeof(DiagObj->DiagArguments[0]) &&
+    assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
            "Too many arguments to diagnostic!");
-    DiagObj->DiagArguments[DiagObj->NumDiagArgs++] = S;
+    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_std_string;
+    DiagObj->DiagArgumentsStr[DiagObj->NumDiagArgs++] = S;
+    return *this;
+  }
+  
+  DiagnosticInfo &operator<<(const char *Str) {
+    assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
+           "Too many arguments to diagnostic!");
+    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_c_string;
+    DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] =
+      reinterpret_cast<intptr_t>(Str);
     return *this;
   }
   
