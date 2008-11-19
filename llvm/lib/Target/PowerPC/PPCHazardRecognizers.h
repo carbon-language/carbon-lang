@@ -14,7 +14,7 @@
 #ifndef PPCHAZRECS_H
 #define PPCHAZRECS_H
 
-#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "PPCInstrInfo.h"
 
 namespace llvm {

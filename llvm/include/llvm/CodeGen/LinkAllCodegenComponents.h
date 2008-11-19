@@ -16,7 +16,7 @@
 #define LLVM_CODEGEN_LINKALLCODEGENCOMPONENTS_H
 
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/GCs.h"
 
 namespace {

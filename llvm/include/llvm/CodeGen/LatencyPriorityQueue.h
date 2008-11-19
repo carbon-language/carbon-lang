@@ -45,7 +45,7 @@ namespace llvm {
     std::vector<unsigned> NumNodesSolelyBlocking;
 
     PriorityQueue<SUnit*, std::vector<SUnit*>, latency_sort> Queue;
-  public:
+public:
     LatencyPriorityQueue() : Queue(latency_sort(this)) {
     }
     
@@ -113,7 +113,7 @@ namespace llvm {
     // the node available.
     void ScheduledNode(SUnit *Node);
 
-  private:
+private:
     void CalculatePriorities();
     int CalcLatency(const SUnit &SU);
     void AdjustPriorityOfUnscheduledPreds(SUnit *SU);

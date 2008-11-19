@@ -15,7 +15,7 @@
 #ifndef SPUHAZRECS_H
 #define SPUHAZRECS_H
 
-#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "SPUInstrInfo.h"
 
 namespace llvm {

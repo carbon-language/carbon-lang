@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-RA-sched"
-#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -58,7 +58,7 @@ namespace {
 //===----------------------------------------------------------------------===//
 /// ScheduleDAGFast - The actual "fast" list scheduler implementation.
 ///
-class VISIBILITY_HIDDEN ScheduleDAGFast : public ScheduleDAG {
+class VISIBILITY_HIDDEN ScheduleDAGFast : public ScheduleDAGSDNodes {
 private:
   /// AvailableQueue - The priority queue to use for the available SUnits.
   FastPriorityQueue AvailableQueue;
@@ -73,7 +73,7 @@ private:
 public:
   ScheduleDAGFast(SelectionDAG *dag, MachineBasicBlock *bb,
                   const TargetMachine &tm)
-    : ScheduleDAG(dag, bb, tm) {}
+    : ScheduleDAGSDNodes(dag, bb, tm) {}
 
   void Schedule();
 

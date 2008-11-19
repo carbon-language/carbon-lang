@@ -19,7 +19,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-RA-sched"
-#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/LatencyPriorityQueue.h"
+#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -30,7 +31,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/ADT/Statistic.h"
-#include "LatencyPriorityQueue.h"
 #include <climits>
 using namespace llvm;
 
@@ -46,7 +46,7 @@ namespace {
 /// ScheduleDAGList - The actual list scheduler implementation.  This supports
 /// top-down scheduling.
 ///
-class VISIBILITY_HIDDEN ScheduleDAGList : public ScheduleDAG {
+class VISIBILITY_HIDDEN ScheduleDAGList : public ScheduleDAGSDNodes {
 private:
   /// AvailableQueue - The priority queue to use for the available SUnits.
   ///
@@ -66,7 +66,7 @@ public:
                   const TargetMachine &tm,
                   SchedulingPriorityQueue *availqueue,
                   HazardRecognizer *HR)
-    : ScheduleDAG(dag, bb, tm),
+    : ScheduleDAGSDNodes(dag, bb, tm),
       AvailableQueue(availqueue), HazardRec(HR) {
     }
 
@@ -212,13 +212,13 @@ void ScheduleDAGList::ListScheduleTopDown() {
         if (!N) break;
         FoundNode = N;
       }
-      
+    
       HazardRecognizer::HazardType HT = HazardRec->getHazardType(FoundNode);
       if (HT == HazardRecognizer::NoHazard) {
         FoundSUnit = CurSUnit;
         break;
       }
-      
+    
       // Remember if this is a noop hazard.
       HasNoopHazards |= HT == HazardRecognizer::NoopHazard;
       

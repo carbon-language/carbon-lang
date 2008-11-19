@@ -15,7 +15,7 @@
 #include "llvm/Function.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -383,71 +383,7 @@ void SelectionDAG::setSubgraphColor(SDNode *N, const char *Color) {
 #endif
 }
 
-namespace llvm {
-  template<>
-  struct DOTGraphTraits<ScheduleDAG*> : public DefaultDOTGraphTraits {
-    static std::string getGraphName(const ScheduleDAG *G) {
-      return G->MF->getFunction()->getName();
-    }
-
-    static bool renderGraphFromBottomUp() {
-      return true;
-    }
-    
-    static bool hasNodeAddressLabel(const SUnit *Node,
-                                    const ScheduleDAG *Graph) {
-      return true;
-    }
-    
-    /// If you want to override the dot attributes printed for a particular
-    /// edge, override this method.
-    template<typename EdgeIter>
-    static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
-      if (EI.isSpecialDep())
-        return "color=cyan,style=dashed";
-      if (EI.isCtrlDep())
-        return "color=blue,style=dashed";
-      return "";
-    }
-    
-
-    static std::string getNodeLabel(const SUnit *Node,
-                                    const ScheduleDAG *Graph);
-    static std::string getNodeAttributes(const SUnit *N,
-                                         const ScheduleDAG *Graph) {
-      return "shape=Mrecord";
-    }
-
-    static void addCustomGraphFeatures(ScheduleDAG *G,
-                                       GraphWriter<ScheduleDAG*> &GW) {
-      // Draw a special "GraphRoot" node to indicate the root of the graph.
-      GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
-      if (G->DAG) {
-        // For an SDNode-based ScheduleDAG, point to the root of the ScheduleDAG.
-        const SDNode *N = G->DAG->getRoot().getNode();
-        if (N && N->getNodeId() != -1)
-          GW.emitEdge(0, -1, &G->SUnits[N->getNodeId()], -1,
-                      "color=blue,style=dashed");
-      } else {
-        // For a MachineInstr-based ScheduleDAG, find a root to point to.
-        for (unsigned i = 0, e = G->SUnits.size(); i != e; ++i) {
-          if (G->SUnits[i].Succs.empty()) {
-            GW.emitEdge(0, -1, &G->SUnits[i], -1,
-                        "color=blue,style=dashed");
-            break;
-          }
-        }
-      }
-    }
-  };
-}
-
-std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
-                                                       const ScheduleDAG *G) {
-  return G->getGraphNodeLabel(SU);
-}
-
-std::string ScheduleDAG::getGraphNodeLabel(const SUnit *SU) const {
+std::string ScheduleDAGSDNodes::getGraphNodeLabel(const SUnit *SU) const {
   std::string s;
   raw_string_ostream O(s);
   O << "SU(" << SU->NodeNum << "): ";
@@ -467,17 +403,13 @@ std::string ScheduleDAG::getGraphNodeLabel(const SUnit *SU) const {
   return O.str();
 }
 
-/// viewGraph - Pop up a ghostview window with the reachable parts of the DAG
-/// rendered using 'dot'.
-///
-void ScheduleDAG::viewGraph() {
-// This code is only for debugging!
-#ifndef NDEBUG
-  ViewGraph(this, "dag." + MF->getFunction()->getName(),
-            "Scheduling-Units Graph for " + MF->getFunction()->getName() + ':' +
-            BB->getBasicBlock()->getName());
-#else
-  cerr << "ScheduleDAG::viewGraph is only available in debug builds on "
-       << "systems with Graphviz or gv!\n";
-#endif  // NDEBUG
+void ScheduleDAGSDNodes::getCustomGraphFeatures(GraphWriter<ScheduleDAG*> &GW) const {
+  if (DAG) {
+    // Draw a special "GraphRoot" node to indicate the root of the graph.
+    GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
+    const SDNode *N = DAG->getRoot().getNode();
+    if (N && N->getNodeId() != -1)
+      GW.emitEdge(0, -1, &SUnits[N->getNodeId()], -1,
+                  "color=blue,style=dashed");
+  }
 }

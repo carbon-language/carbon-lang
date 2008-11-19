@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-RA-sched"
-#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -47,9 +47,9 @@ getInstrOperandRegClass(const TargetRegisterInfo *TRI,
 
 /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
 /// implicit physical register output.
-void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
-                                  bool IsClone, unsigned SrcReg,
-                                  DenseMap<SDValue, unsigned> &VRBaseMap) {
+void ScheduleDAGSDNodes::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
+                                         bool IsClone, unsigned SrcReg,
+                                         DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
     // Just use the input register directly!
@@ -142,8 +142,8 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
 
 /// getDstOfCopyToRegUse - If the only use of the specified result number of
 /// node is a CopyToReg, return its destination register. Return 0 otherwise.
-unsigned ScheduleDAG::getDstOfOnlyCopyToRegUse(SDNode *Node,
-                                               unsigned ResNo) const {
+unsigned ScheduleDAGSDNodes::getDstOfOnlyCopyToRegUse(SDNode *Node,
+                                                      unsigned ResNo) const {
   if (!Node->hasOneUse())
     return 0;
 
@@ -158,7 +158,7 @@ unsigned ScheduleDAG::getDstOfOnlyCopyToRegUse(SDNode *Node,
   return 0;
 }
 
-void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
+void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                  const TargetInstrDesc &II,
                                  DenseMap<SDValue, unsigned> &VRBaseMap) {
   assert(Node->getMachineOpcode() != TargetInstrInfo::IMPLICIT_DEF &&
@@ -202,8 +202,8 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
 
 /// getVR - Return the virtual register corresponding to the specified result
 /// of the specified node.
-unsigned ScheduleDAG::getVR(SDValue Op,
-                            DenseMap<SDValue, unsigned> &VRBaseMap) {
+unsigned ScheduleDAGSDNodes::getVR(SDValue Op,
+                                   DenseMap<SDValue, unsigned> &VRBaseMap) {
   if (Op.isMachineOpcode() &&
       Op.getMachineOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
     // Add an IMPLICIT_DEF instruction before every use.
@@ -228,10 +228,10 @@ unsigned ScheduleDAG::getVR(SDValue Op,
 /// specifies the instruction information for the node, and IIOpNum is the
 /// operand number (in the II) that we are adding. IIOpNum and II are used for 
 /// assertions only.
-void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
-                             unsigned IIOpNum,
-                             const TargetInstrDesc *II,
-                             DenseMap<SDValue, unsigned> &VRBaseMap) {
+void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
+                                    unsigned IIOpNum,
+                                    const TargetInstrDesc *II,
+                                    DenseMap<SDValue, unsigned> &VRBaseMap) {
   if (Op.isMachineOpcode()) {
     // Note that this case is redundant with the final else block, but we
     // include it because it is the most common and it makes the logic
@@ -328,10 +328,6 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
   }  
 }
 
-void ScheduleDAG::AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO) {
-  MI->addMemOperand(*MF, MO);
-}
-
 /// getSubRegisterRegClass - Returns the register class of specified register
 /// class' "SubIdx"'th sub-register class.
 static const TargetRegisterClass*
@@ -361,8 +357,8 @@ getSuperRegisterRegClass(const TargetRegisterClass *TRC,
 
 /// EmitSubregNode - Generate machine code for subreg nodes.
 ///
-void ScheduleDAG::EmitSubregNode(SDNode *Node, 
-                           DenseMap<SDValue, unsigned> &VRBaseMap) {
+void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node, 
+                                        DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   unsigned Opc = Node->getMachineOpcode();
   
@@ -456,8 +452,8 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
 
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
-void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
-                           DenseMap<SDValue, unsigned> &VRBaseMap) {
+void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone,
+                                  DenseMap<SDValue, unsigned> &VRBaseMap) {
   // If machine instruction
   if (Node->isMachineOpcode()) {
     unsigned Opc = Node->getMachineOpcode();
@@ -634,53 +630,8 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
   }
 }
 
-void ScheduleDAG::EmitNoop() {
-  TII->insertNoop(*BB, BB->end());
-}
-
-void ScheduleDAG::EmitCrossRCCopy(SUnit *SU,
-                                  DenseMap<SUnit*, unsigned> &VRBaseMap) {
-  for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I) {
-    if (I->isCtrl) continue;  // ignore chain preds
-    if (!I->Dep->getNode()) {
-      // Copy to physical register.
-      DenseMap<SUnit*, unsigned>::iterator VRI = VRBaseMap.find(I->Dep);
-      assert(VRI != VRBaseMap.end() && "Node emitted out of order - late");
-      // Find the destination physical register.
-      unsigned Reg = 0;
-      for (SUnit::const_succ_iterator II = SU->Succs.begin(),
-             EE = SU->Succs.end(); II != EE; ++II) {
-        if (I->Reg) {
-          Reg = I->Reg;
-          break;
-        }
-      }
-      assert(I->Reg && "Unknown physical register!");
-      TII->copyRegToReg(*BB, BB->end(), Reg, VRI->second,
-                        SU->CopyDstRC, SU->CopySrcRC);
-    } else {
-      // Copy from physical register.
-      assert(I->Reg && "Unknown physical register!");
-      unsigned VRBase = MRI.createVirtualRegister(SU->CopyDstRC);
-      bool isNew = VRBaseMap.insert(std::make_pair(SU, VRBase)).second;
-      isNew = isNew; // Silence compiler warning.
-      assert(isNew && "Node emitted out of order - early");
-      TII->copyRegToReg(*BB, BB->end(), VRBase, I->Reg,
-                        SU->CopyDstRC, SU->CopySrcRC);
-    }
-    break;
-  }
-}
-
 /// EmitSchedule - Emit the machine code in scheduled order.
-MachineBasicBlock *ScheduleDAG::EmitSchedule() {
-  // For post-regalloc scheduling, we're rescheduling the instructions in the
-  // block, so start by removing them from the block.
-  if (!DAG)
-    while (!BB->empty())
-      BB->remove(BB->begin());
-
+MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
   DenseMap<SDValue, unsigned> VRBaseMap;
   DenseMap<SUnit*, unsigned> CopyVRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
@@ -688,13 +639,6 @@ MachineBasicBlock *ScheduleDAG::EmitSchedule() {
     if (!SU) {
       // Null SUnit* is a noop.
       EmitNoop();
-      continue;
-    }
-
-    // For post-regalloc scheduling, we already have the instruction;
-    // just append it to the block.
-    if (!DAG) {
-      BB->push_back(SU->getInstr());
       continue;
     }
 

@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-RA-sched"
-#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -53,7 +53,7 @@ namespace {
 /// ScheduleDAGRRList - The actual register reduction list scheduler
 /// implementation.  This supports both top-down and bottom-up scheduling.
 ///
-class VISIBILITY_HIDDEN ScheduleDAGRRList : public ScheduleDAG {
+class VISIBILITY_HIDDEN ScheduleDAGRRList : public ScheduleDAGSDNodes {
 private:
   /// isBottomUp - This is true if the scheduling problem is bottom-up, false if
   /// it is top-down.
@@ -77,7 +77,7 @@ public:
   ScheduleDAGRRList(SelectionDAG *dag, MachineBasicBlock *bb,
                     const TargetMachine &tm, bool isbottomup, bool f,
                     SchedulingPriorityQueue *availqueue)
-    : ScheduleDAG(dag, bb, tm), isBottomUp(isbottomup), Fast(f),
+    : ScheduleDAGSDNodes(dag, bb, tm), isBottomUp(isbottomup), Fast(f),
       AvailableQueue(availqueue) {
     }
 

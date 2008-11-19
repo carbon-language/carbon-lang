@@ -8,6 +8,7 @@ add_llvm_library(LLVMCodeGen
   IfConversion.cpp
   IntrinsicLowering.cpp
   LLVMTargetMachine.cpp
+  LatencyPriorityQueue.cpp
   LiveInterval.cpp
   LiveIntervalAnalysis.cpp
   LiveStackAnalysis.cpp
@@ -40,6 +41,10 @@ add_llvm_library(LLVMCodeGen
   RegAllocSimple.cpp
   RegisterCoalescer.cpp
   RegisterScavenging.cpp
+  ScheduleDAG.cpp
+  ScheduleDAGEmit.cpp
+  ScheduleDAGInstrs.cpp
+  ScheduleDAGPrinter.cpp
   ShadowStackGC.cpp
   SimpleRegisterCoalescing.cpp
   StackProtector.cpp
