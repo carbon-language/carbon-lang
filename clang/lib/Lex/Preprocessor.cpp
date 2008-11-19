@@ -48,7 +48,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            HeaderSearch &Headers) 
   : Diags(diags), Features(opts), Target(target), FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), Identifiers(opts),
-    CurLexer(0), CurDirLookup(0), CurTokenLexer(0), Callbacks(0) {
+    CurPPLexer(0), CurDirLookup(0), Callbacks(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
 
   // Clear stats.
