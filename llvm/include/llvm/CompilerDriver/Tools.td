@@ -25,6 +25,8 @@ def llvm_gcc_c : Tool<
               "llvm-gcc -c -x c $INFILE",
             (default),
               "llvm-gcc -c -x c $INFILE -o $OUTFILE -emit-llvm")),
+ (switch_option "emit-llvm", (stop_compilation),
+   (help "Emit LLVM intermediate files instead of native object files")),
  (switch_option "E", (stop_compilation),
    (help "Stop after the preprocessing stage, do not run the compiler")),
  (switch_option "fsyntax-only", (stop_compilation),
