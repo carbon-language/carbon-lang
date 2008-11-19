@@ -24,54 +24,43 @@ namespace llvm {
 class PIC16InstrInfo : public TargetInstrInfoImpl 
 {
   PIC16TargetMachine &TM;
-  const PIC16RegisterInfo RI;
+  const PIC16RegisterInfo RegInfo;
 public:
   explicit PIC16InstrInfo(PIC16TargetMachine &TM);
 
-  /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
-  /// such, whenever a client has an instance of instruction info, it should
-  /// always be able to get register info as well (through this method).
-  ///
-  virtual const PIC16RegisterInfo &getRegisterInfo() const { return RI; }
+  virtual const PIC16RegisterInfo &getRegisterInfo() const { return RegInfo; }
 
-  
   /// isLoadFromStackSlot - If the specified machine instruction is a direct
   /// load from a stack slot, return the virtual or physical register number of
   /// the destination along with the FrameIndex of the loaded stack slot.  If
   /// not, return 0.  This predicate must return 0 if the instruction has
   /// any side effects other than loading from the stack slot.
-  virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
-                                       int &FrameIndex) const;
-  
+  virtual unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
+                                                                               
   /// isStoreToStackSlot - If the specified machine instruction is a direct
   /// store to a stack slot, return the virtual or physical register number of
   /// the source reg along with the FrameIndex of the loaded stack slot.  If
   /// not, return 0.  This predicate must return 0 if the instruction has
   /// any side effects other than storing to the stack slot.
-  virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
-                                      int &FrameIndex) const;
- 
-  /// Used for spilling a register
-  void storeRegToStackSlot(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator MI,
-                           unsigned SrcReg, bool isKill, int FrameIndex,
-                           const TargetRegisterClass *RC) const;
+  virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
 
-
-  void loadRegFromStackSlot(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MI,
-                            unsigned DestReg, int FrameIndex,
-                            const TargetRegisterClass *RC) const;
-
-  /// InsertBranch - Insert a branch into the end of the specified
-  /// MachineBasicBlock.  This operands to this method are the same as those
-  /// returned by AnalyzeBranch.  This is invoked in cases where AnalyzeBranch
-  /// returns success and when an unconditional branch (TBB is non-null, FBB is
-  /// null, Cond is empty) needs to be inserted. It returns the number of
-  /// instructions inserted.
-  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                            const SmallVectorImpl<MachineOperand> &Cond) const ; 
+  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MBBI,
+                                   unsigned SrcReg, bool isKill, int FrameIndex,
+                                   const TargetRegisterClass *RC) const;
+                                                                               
+  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator MBBI,
+                                    unsigned DestReg, int FrameIndex,
+                                    const TargetRegisterClass *RC) const;
+  virtual bool copyRegToReg(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MBBI,
+                            unsigned DestReg, unsigned SrcReg,
+                            const TargetRegisterClass *DestRC,
+                            const TargetRegisterClass *SrcRC) const;
+  virtual bool isMoveInstr(const MachineInstr &MI,
+                           unsigned &SrcReg,
+                           unsigned &DestReg) const;
 
 };
 

@@ -17,11 +17,15 @@
 using namespace llvm;
 
 PIC16TargetAsmInfo::
-PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
+PIC16TargetAsmInfo(const PIC16TargetMachine &TM) 
   : TargetAsmInfo(TM) {
-  Data16bitsDirective = "\t.half\t";
-  Data32bitsDirective = "\t.word\t";
   CommentString = ";";
-  COMMDirective = "\t";
-  COMMDirectiveTakesAlignment = 0;
+  Data8bitsDirective = " db ";
+  Data16bitsDirective = " db ";
+  Data32bitsDirective = " db ";
+  DataSectionStartSuffix = " IDATA ";
+  UDataSectionStartSuffix = " UDATA ";
+  TextSectionStartSuffix = " CODE ";
+  RomDataSectionStartSuffix = " ROMDATA ";
+  ZeroDirective = NULL;
 }

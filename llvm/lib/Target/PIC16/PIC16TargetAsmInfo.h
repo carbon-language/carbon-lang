@@ -23,6 +23,17 @@ namespace llvm {
 
   struct PIC16TargetAsmInfo : public TargetAsmInfo {
     PIC16TargetAsmInfo(const PIC16TargetMachine &TM);
+    const char *UDataSectionStartSuffix;
+    const char *RomDataSectionStartSuffix;
+    public :
+    const char *getUDataSectionStartSuffix() const {
+      return UDataSectionStartSuffix;
+    }
+    const char *getRomDataSectionStartSuffix() const {
+      return RomDataSectionStartSuffix;
+    }
+
+
   };
 
 } // namespace llvm

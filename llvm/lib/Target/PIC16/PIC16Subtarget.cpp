@@ -11,14 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PIC16.h"
 #include "PIC16Subtarget.h"
 #include "PIC16GenSubtarget.inc"
+
 using namespace llvm;
 
-PIC16Subtarget::PIC16Subtarget(const TargetMachine &TM, const Module &M, 
-                               const std::string &FS) 
-  :IsPIC16Old(false)
+PIC16Subtarget::PIC16Subtarget(const Module &M, const std::string &FS, 
+                               bool Cooper)
+  :IsCooper(Cooper)
 {
   std::string CPU = "generic";
 

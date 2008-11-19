@@ -20,65 +20,43 @@
 namespace llvm {
 
 // Forward Declarations.
-class TargetInstrInfo;
-class Type;
+  class PIC16Subtarget;
+  class TargetInstrInfo;
 
-struct PIC16RegisterInfo : public PIC16GenRegisterInfo {
-  const TargetInstrInfo &TII;
+class PIC16RegisterInfo : public PIC16GenRegisterInfo {
+  private:
+    const TargetInstrInfo &TII;
+    const PIC16Subtarget &ST;
   
-  explicit PIC16RegisterInfo(const TargetInstrInfo &tii);
+  public:
+    PIC16RegisterInfo(const TargetInstrInfo &tii, 
+                      const PIC16Subtarget &st);
 
-  /// getRegisterNumbering - Given the enum value for some register, e.g.
-  /// PIC16::RA, return the number that it corresponds to (e.g. 31).
-  static unsigned getRegisterNumbering(unsigned RegEnum);
 
-  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                     unsigned DestReg, const MachineInstr *Orig) const;
+  //------------------------------------------------------
+  // Pure virtual functions from TargetRegisterInfo
+  //------------------------------------------------------
 
-  MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
-                                  int FrameIndex) const;
+  // PIC16 callee saved registers
+  virtual const unsigned* 
+  getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
-  MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
-                                  MachineInstr* LoadMI) const {
-    return 0;
-  }
+  // PIC16 callee saved register classes
+  virtual const TargetRegisterClass* const *
+  getCalleeSavedRegClasses(const MachineFunction *MF) const;
 
-  void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                    unsigned DestReg, unsigned SrcReg,
-                    const TargetRegisterClass *RC) const;
-  
+  virtual BitVector getReservedRegs(const MachineFunction &MF) const;
+  virtual bool hasFP(const MachineFunction &MF) const;
 
-  const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
+  virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
+                        int SPAdj, RegScavenger *RS=NULL) const;
 
-  const TargetRegisterClass* const*
-  getCalleeSavedRegClasses(const MachineFunction* MF = 0) const;
+  virtual void emitPrologue(MachineFunction &MF) const;
+  virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const;
+  virtual unsigned getFrameRegister(MachineFunction &MF) const;
+  virtual unsigned getRARegister() const;
 
-  BitVector getReservedRegs(const MachineFunction &MF) const;
-
-  bool hasFP(const MachineFunction &MF) const;
-
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
-
-  /// Stack Frame Processing Methods.
-  void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           int SPAdj, RegScavenger *RS = NULL) const;
-
-  void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
-
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-  
-  /// Debug information queries.
-  unsigned getRARegister() const;
-  unsigned getFrameRegister(MachineFunction &MF) const;
-
-  /// Exception handling queries.
-  unsigned getEHExceptionRegister() const;
-  unsigned getEHHandlerRegister() const;
-
-  int getDwarfRegNum(unsigned RegNum, bool isEH) const;
 };
 
 } // end namespace llvm

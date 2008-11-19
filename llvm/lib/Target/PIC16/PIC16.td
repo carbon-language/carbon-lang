@@ -15,30 +15,24 @@
 
 include "../Target.td"
 
-//===----------------------------------------------------------------------===//
-// Descriptions
-//===----------------------------------------------------------------------===//
-
 include "PIC16RegisterInfo.td"
-include "PIC16CallingConv.td"
 include "PIC16InstrInfo.td"
 
-def PIC16InstrInfo : InstrInfo {
-  let TSFlagsFields = [];
-  let TSFlagsShifts = [];
-}
-
-
-
-// Not currently supported, but work as SubtargetFeature placeholder.
-def FeaturePIC16Old : SubtargetFeature<"pic16old", "IsPIC16Old", "true",
-                                       "PIC16 Old ISA Support">;
+//===----------------------------------------------------------------------===//
+// Subtarget Features. 
+//===----------------------------------------------------------------------===//
+def FeatureCooper : SubtargetFeature<"cooper", "IsCooper", "true",
+                                     "PIC16 Cooper ISA Support">;
 
 //===----------------------------------------------------------------------===//
-// PIC16 processors supported.
+// PIC16 supported processors.
 //===----------------------------------------------------------------------===//
 
 def : Processor<"generic", NoItineraries, []>;
+def : Processor<"cooper", NoItineraries, [FeatureCooper]>;
+
+
+def PIC16InstrInfo : InstrInfo {} 
 
 def PIC16 : Target {
   let InstructionSet = PIC16InstrInfo;

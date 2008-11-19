@@ -17,6 +17,7 @@
 
 #include "PIC16InstrInfo.h"
 #include "PIC16ISelLowering.h"
+#include "PIC16RegisterInfo.h"
 #include "PIC16Subtarget.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -31,31 +32,42 @@ class PIC16TargetMachine : public LLVMTargetMachine {
   const TargetData      DataLayout;       // Calculates type size & alignment
   PIC16InstrInfo        InstrInfo;
   PIC16TargetLowering   TLInfo;
+
+  // PIC16 does not have any call stack frame, therefore not having 
+  // any PIC16 specific FrameInfo class.
   TargetFrameInfo       FrameInfo;
 
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
-  
-public:
-  PIC16TargetMachine(const Module &M, const std::string &FS);
 
-  virtual const TargetFrameInfo *getFrameInfo() const 
-  { return &FrameInfo; }
-  virtual const PIC16InstrInfo *getInstrInfo() const 
-  { return &InstrInfo; }
-  virtual const TargetData *getTargetData() const    
-  { return &DataLayout; }
-  virtual PIC16TargetLowering *getTargetLowering() const 
-  { return const_cast<PIC16TargetLowering*>(&TLInfo); }
-  virtual const PIC16RegisterInfo *getRegisterInfo() const 
-  { return &InstrInfo.getRegisterInfo(); }
-  
+public:
+  PIC16TargetMachine(const Module &M, const std::string &FS, 
+                     bool Cooper = false);
+
+  virtual const TargetFrameInfo *getFrameInfo() const { return &FrameInfo; }
+  virtual const PIC16InstrInfo *getInstrInfo() const  { return &InstrInfo; }
+  virtual const TargetData *getTargetData() const     { return &DataLayout;}
+  virtual const PIC16Subtarget *getSubtargetImpl() const { return &Subtarget; }
+ 
+  virtual const PIC16RegisterInfo *getRegisterInfo() const { 
+    return &(InstrInfo.getRegisterInfo()); 
+  }
+
+  virtual PIC16TargetLowering *getTargetLowering() const { 
+    return const_cast<PIC16TargetLowering*>(&TLInfo); 
+  }
+
   virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
-  virtual bool addPrologEpilogInserter(PassManagerBase &PM, bool Fast);
-  virtual bool addPreEmitPass(PassManagerBase &PM, bool Fast);
-  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
+  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast,
                                   raw_ostream &Out);
-};
+}; // PIC16TargetMachine.
+
+/// CooperTargetMachine
+class CooperTargetMachine : public PIC16TargetMachine {
+public:
+  CooperTargetMachine(const Module &M, const std::string &FS);
+}; // CooperTargetMachine.
+
 } // end namespace llvm
 
 #endif

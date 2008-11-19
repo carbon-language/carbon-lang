@@ -16,6 +16,7 @@
 #include "PIC16TargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 
@@ -29,50 +30,42 @@ using namespace llvm;
 extern "C" int PIC16TargetMachineModule;
 int PIC16TargetMachineModule = 0;
 
-namespace {
-  // Register the targets
-  RegisterTarget<PIC16TargetMachine> X("pic16", "PIC16 14-bit [experimental]");
-}
 
-PIC16TargetMachine::
-PIC16TargetMachine(const Module &M, const std::string &FS) :
-  Subtarget(*this, M, FS), DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"), 
+// Register the targets
+static RegisterTarget<PIC16TargetMachine> 
+X("pic16", "PIC16 14-bit (experimental).");
+static RegisterTarget<CooperTargetMachine> 
+Y("cooper", "PIC16 Cooper (experimental).");
+
+// PIC16TargetMachine - Traditional PIC16 Machine.
+PIC16TargetMachine::PIC16TargetMachine(const Module &M, const std::string &FS,
+                                       bool Cooper)
+: Subtarget(M, FS, Cooper),
+  DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"), 
   InstrInfo(*this), TLInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0) { }
 
+// CooperTargetMachine - Uses the same PIC16TargetMachine, but makes IsCooper
+// as true.
+CooperTargetMachine::CooperTargetMachine(const Module &M, const std::string &FS)
+  : PIC16TargetMachine(M, FS, true) {}
 
-const TargetAsmInfo *PIC16TargetMachine::createTargetAsmInfo() const 
-{
+
+const TargetAsmInfo *PIC16TargetMachine::createTargetAsmInfo() const {
   return new PIC16TargetAsmInfo(*this);
 }
 
-//===----------------------------------------------------------------------===//
-// Pass Pipeline Configuration
-//===----------------------------------------------------------------------===//
-
-bool PIC16TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) 
-{
+bool PIC16TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   // Install an instruction selector.
   PM.add(createPIC16ISelDag(*this));
   return false;
 }
 
 bool PIC16TargetMachine::
-addPrologEpilogInserter(PassManagerBase &PM, bool Fast) 
-{
-  return false;
-}
-
-bool PIC16TargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) 
-{
-  return true;
-}
-
-bool PIC16TargetMachine::
-addAssemblyEmitter(PassManagerBase &PM, bool Fast, raw_ostream &Out) 
-{
+addAssemblyEmitter(PassManagerBase &PM, bool Fast, raw_ostream &Out) {
   // Output assembly language.
   PM.add(createPIC16CodePrinterPass(Out, *this));
   return false;
 }
+
 

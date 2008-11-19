@@ -1,4 +1,4 @@
-//===- PIC16InstrInfo.td - PIC16 Register defs ----------------*- tblgen-*-===//
+//===- PIC16InstrInfo.td - PIC16 Instruction defs -------------*- tblgen-*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,297 +6,302 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file describes the ARM instructions in TableGen format.
+//
+//===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// Instruction format superclass
+// PIC16 Specific Type Constraints.
+//===----------------------------------------------------------------------===//
+class SDTCisI8<int OpNum> : SDTCisVT<OpNum, i8>;
+class SDTCisI16<int OpNum> : SDTCisVT<OpNum, i16>;
+
+//===----------------------------------------------------------------------===//
+// PIC16 Specific Type Profiles.
 //===----------------------------------------------------------------------===//
 
+// Generic type profiles for i8/i16 unary/binary operations.
+// Taking one i8 or i16 and producing void.
+def SDTI8VoidOp : SDTypeProfile<0, 1, [SDTCisI8<0>]>;
+def SDTI16VoidOp : SDTypeProfile<0, 1, [SDTCisI16<0>]>;
+
+// Taking one value and producing an output of same type.
+def SDTI8UnaryOp : SDTypeProfile<1, 1, [SDTCisI8<0>, SDTCisI8<1>]>;
+def SDTI16UnaryOp : SDTypeProfile<1, 1, [SDTCisI16<0>, SDTCisI16<1>]>;
+
+// Taking two values and producing an output of same type.
+def SDTI8BinOp : SDTypeProfile<1, 2, [SDTCisI8<0>, SDTCisI8<1>, SDTCisI8<2>]>;
+def SDTI16BinOp : SDTypeProfile<1, 2, [SDTCisI16<0>, SDTCisI16<1>, 
+                                       SDTCisI16<2>]>;
+
+// Node specific type profiles.
+def SDT_PIC16Load : SDTypeProfile<1, 3, [SDTCisI8<0>, SDTCisI8<1>, 
+                                          SDTCisI8<2>, SDTCisI8<3>]>;
+def SDT_PIC16Store : SDTypeProfile<0, 4, [SDTCisI8<0>, SDTCisI8<1>, 
+                                          SDTCisI8<2>, SDTCisI8<3>]>;
+
+//===----------------------------------------------------------------------===//
+// PIC16 addressing modes matching via DAG.
+//===----------------------------------------------------------------------===//
+def diraddr : ComplexPattern<i8, 1, "SelectDirectAddr", [], []>;
+
+//===----------------------------------------------------------------------===//
+// PIC16 Specific Node Definitions.
+//===----------------------------------------------------------------------===//
+def PIC16callseq_start : SDNode<"ISD::CALLSEQ_START", SDTI8VoidOp,
+                                [SDNPHasChain, SDNPOutFlag]>;
+def PIC16callseq_end   : SDNode<"ISD::CALLSEQ_END", SDTI8VoidOp, 
+                                [SDNPHasChain, SDNPOutFlag]>;
+
+// Low 8-bits of GlobalAddress.
+def PIC16Lo : SDNode<"PIC16ISD::Lo", SDTI8UnaryOp>;  
+
+// High 8-bits of GlobalAddress.
+def PIC16Hi : SDNode<"PIC16ISD::Hi", SDTI8UnaryOp>;
+
+// The MTHI and MTLO nodes are used only to match them in the incoming 
+// DAG for replacement by corresponding set_fsrhi, set_fsrlo insntructions.
+// These nodes are not used for defining any instructions.
+def MTLO : SDNode<"PIC16ISD::MTLO", SDTI8UnaryOp>;
+def MTHI : SDNode<"PIC16ISD::MTHI", SDTI8UnaryOp>;
+
+// Node to generate Bank Select for a GlobalAddress.
+def Banksel : SDNode<"PIC16ISD::Banksel", SDTI8UnaryOp>;
+
+// Node to match a direct store operation.
+def PIC16Store : SDNode<"PIC16ISD::PIC16Store", SDT_PIC16Store, [SDNPHasChain]>;
+
+// Node to match a direct load operation.
+def PIC16Load : SDNode<"PIC16ISD::PIC16Load", SDT_PIC16Load, [SDNPHasChain]>;
+
+//===----------------------------------------------------------------------===//
+// PIC16 Operand Definitions.
+//===----------------------------------------------------------------------===//
+def i8mem : Operand<i8>;
+
+
+
+//===----------------------------------------------------------------------===//
+// PIC16 Instructions.
+//===----------------------------------------------------------------------===//
 include "PIC16InstrFormats.td"
 
-//===----------------------------------------------------------------------===//
-// PIC16 profiles and nodes
-//===----------------------------------------------------------------------===//
+// Pseudo-instructions.
+def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i8imm:$amt),
+                       "!ADJCALLSTACKDOWN $amt",
+                       [(PIC16callseq_start imm:$amt)]>;
 
-//===----------------------------------------------------------------------===//
-// PIC16 addressing mode. 
-//===----------------------------------------------------------------------===//
-// It matches address of globals as well as the stack slots
-// that are created for locals and temporaries. This addressing mode
-// converts the GlobalAddress and FrameIndex nodes to TargetGlobalAddress
-// and TargetFrameIndex nodes.
-def diraddrmode : ComplexPattern<i16, 2, "SelectDirectAM", [frameindex], []>;
-def dirloadmode : ComplexPattern<i16, 2, "LoadNothing", [frameindex], []>;
-def indirloadmode : ComplexPattern<i16, 2, "LoadFSR", [frameindex], []>;
+def ADJCALLSTACKUP : Pseudo<(outs), (ins i8imm:$amt),
+                       "!ADJCALLSTACKUP $amt", 
+                       [(PIC16callseq_end imm:$amt)]>;
 
-
-// Address operand.
-def mem : Operand<i16> {
-  let PrintMethod = "printAddrModeOperand";
-  let MIOperandInfo = (ops i16imm, PTRRegs);
-}
-
-// Instruction operand types
-def simm8      : Operand<i8>;
-
-
-// These are target-independent nodes, but have target-specific formats.
-def SDT_PIC16CallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i8> ]>;
-def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PIC16CallSeq,
-                           [SDNPHasChain, SDNPOutFlag]>;
-def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PIC16CallSeq,
-                           [SDNPHasChain, SDNPOutFlag]>;
-
-def PIC16Wrapper  : SDNode<"PIC16ISD::Wrapper", SDTIntUnaryOp>;
-
-// so_imm_XFORM - Return a so_imm value packed into the format described for
-// so_imm def below.
-def so_imm_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((int8_t)N->getZExtValue(), MVT::i32);
-}]>;
-
-def so_imm : Operand<i8>,
-             PatLeaf<(imm), [{}]> {
-  let PrintMethod = "printSOImmOperand";
-}
-
-
-
-// PIC16 Address Mode! SDNode frameindex could possibily be a match 
-// since load and store instructions from stack used it.
-def addr : Operand<i16>;
-
-// Arithmetic 2 register operands
-class ArithI<bits<6> op, string instr_asm, SDNode OpNode,
-             Operand Od> :
-  LiteralFormat< op,
-      (outs CPURegs:$dst),
-      (ins CPURegs:$b, Od:$c),
-      !strconcat(instr_asm, " $c"),
-      [(set CPURegs:$dst, (OpNode CPURegs:$b, Od:$c))]>;
-
-// Memory Load/Store. 
-class LoadDirect<bits<6> op, string instr_asm, PatFrag OpNode>:
-  ByteFormat< op,
-      (outs CPURegs:$dst),
-      (ins mem:$addr),
-      !strconcat(instr_asm, " $addr"),
-      [(set CPURegs:$dst, (OpNode diraddrmode:$addr))]>;
-
-class LoadInDirect<bits<6> op, string instr_asm, PatFrag OpNode>:
-  ByteFormat< op,
-      (outs PTRRegs:$dst),
-      (ins mem:$addr),
-      !strconcat(instr_asm, " $addr, $dst"),
-      [(set PTRRegs:$dst, (OpNode indirloadmode:$addr))]>;
-
-class StoreDirect<bits<6> op, string instr_asm, PatFrag OpNode>:
-  ByteFormat< op,
-      (outs),
-      (ins CPURegs:$src, mem:$addr),
-      !strconcat(instr_asm, " $addr"),
-      [(OpNode CPURegs:$src, diraddrmode:$addr)]>;
-
-class StoreInDirect<bits<6> op, string instr_asm, PatFrag OpNode>:
-  ByteFormat< op,
-      (outs),
-      (ins CPURegs:$src, PTRRegs:$fsr),
-      !strconcat(instr_asm, " $fsr"),
-      [(OpNode CPURegs:$src, PTRRegs:$fsr)]>;
-
-// Move.
-class MovLit<bits<6> op, string instr_asm>:
-  LiteralFormat< op,
-      (outs CPURegs:$dst),
-      (ins i8imm:$src),
-      !strconcat(instr_asm, " $src"),
-      [(set CPURegs:$dst, imm:$src)]>;
-
-
-// Arithmetic with memory store.
-// Arithmetic instrunctions involving W and memory location.
-// Since W is implicit, we only print the memory operand.
-class Arith1M<bits<6> op, string instr_asm, SDNode OpNode>:
-  ByteFormat< op,
-      (outs),
-      (ins CPURegs:$b, mem:$dst),
-      !strconcat(instr_asm, " $dst"),
-      [(store (OpNode (load diraddrmode:$dst), CPURegs:$b), diraddrmode:$dst),
-       (store (OpNode CPURegs:$b, (load diraddrmode:$dst)), diraddrmode:$dst)]>;
-
-// Arithmetic with memory load.
-// Arithmetic instrunctions involving W and memory location.
-// Since W is implicit, we only print the memory operand.
-class Arith1R<bits<6> op, string instr_asm, SDNode OpNode>:
-  ByteFormat< op,
-      (outs CPURegs:$dst),
-      (ins mem:$src1, CPURegs:$src2),
-      !strconcat(instr_asm, " $src1"),
-      [(set CPURegs:$dst, (OpNode (load diraddrmode:$src1), CPURegs:$src2))]>;
-
-// Arithmetic with memory load.
-// Arithmetic instrunctions involving W and memory location.
-// Since W is implicit, we only print the memory operand.
-class Arith2R<bits<6> op, string instr_asm, SDNode OpNode>:
-  ByteFormat< op,
-      (outs CPURegs:$dst),
-      (ins mem:$src1, CPURegs:$src2),
-      !strconcat(instr_asm, " $src1"),
-      [(set CPURegs:$dst, (OpNode CPURegs:$src2, (load diraddrmode:$src1)))]>;
-
-//===----------------------------------------------------------------------===//
-// Instruction definition
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// PIC16I Instructions
-//===----------------------------------------------------------------------===//
-
-// Arithmetic
-
-// ADDiu just accept 16-bit immediates but we handle this on Pat's.
-// immZExt32 is used here so it can match GlobalAddress immediates.
-// def ADDLW   : ArithI<0x09, "addlw", add, so_imm>;
-
+//-----------------------------------
+// Vaious movlw insn patterns.
+//-----------------------------------
 let isReMaterializable = 1 in {
-def MOVLW : MovLit<0x24, "movlw">;
+// Move 8-bit literal to W.
+def movlw : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src),
+                      "movlw $src",
+                      [(set GPR:$dst, (i8 imm:$src))]>;
+
+// Move a Lo(TGA) to W.
+def movlw_lo : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src),
+                      "movlw LOW(${src})",
+                      [(set GPR:$dst, (PIC16Lo tglobaladdr:$src))]>;
+
+// Move a Hi(TGA) to W.
+def movlw_hi : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src),
+                      "movlw HIGH(${src})",
+                      [(set GPR:$dst, (PIC16Hi tglobaladdr:$src))]>;
 }
 
-// Load/Store
-def LFSR1      : LoadInDirect        <0x4, "lfsr",  load>;
+//-------------------
+// FSR setting insns. 
+//-------------------
+// These insns are matched via a DAG replacement pattern.
+def set_fsrlo:
+  ByteFormat<0, (outs FSR16:$fsr), 
+             (ins GPR:$val),
+             "movwf ${fsr}L",
+             []>;
 
+let isTwoAddress = 1 in
+def set_fsrhi:
+  ByteFormat<0, (outs FSR16:$dst), 
+             (ins FSR16:$src, GPR:$val),
+             "movwf ${dst}H",
+             []>;
+
+def copy_fsr:
+  Pseudo<(outs FSR16:$dst), (ins FSR16:$src), "copy_fsr $dst, $src", []>;
+
+//--------------------------
+// Store to memory
+//-------------------------
+// Direct store.
+def movwf : 
+  ByteFormat<0, (outs), 
+             (ins GPR:$val, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
+             "movwf ${ptrlo} + ${offset}",
+             [(PIC16Store GPR:$val, tglobaladdr:$ptrlo, (i8 imm:$ptrhi), 
+               (i8 imm:$offset))]>;
+
+def movwf_1 : 
+  ByteFormat<0, (outs), 
+             (ins GPR:$val, i8mem:$ptrlo, i8imm:$ptrhi, i8imm:$offset),
+             "movwf ${ptrlo} + ${offset}",
+             [(PIC16Store GPR:$val, texternalsym:$ptrlo, (i8 imm:$ptrhi), 
+               (i8 imm:$offset))]>;
+
+// Indirect store. Matched via a DAG replacement pattern.
+def store_indirect : 
+  ByteFormat<0, (outs), 
+             (ins GPR:$val, FSR16:$fsr, i8imm:$offset),
+             "movwi $offset[$fsr]",
+             []>;
+
+//----------------------------
+// Load from memory
+//----------------------------
+// Direct load.
+def movf : 
+  ByteFormat<0, (outs GPR:$dst), 
+             (ins i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
+             "movf ${ptrlo} + ${offset}, W",
+             [(set GPR:$dst, 
+               (PIC16Load tglobaladdr:$ptrlo, (i8 imm:$ptrhi),
+               (i8 imm:$offset)))]>;
+
+def movf_1 : 
+  ByteFormat<0, (outs GPR:$dst), 
+             (ins i8mem:$ptrlo, i8imm:$ptrhi, i8imm:$offset),
+             "movf ${ptrlo} + ${offset}, W",
+             [(set GPR:$dst, 
+               (PIC16Load texternalsym:$ptrlo, (i8 imm:$ptrhi),
+               (i8 imm:$offset)))]>;
+
+// Indirect load. Matched via a DAG replacement pattern.
+def load_indirect : 
+  ByteFormat<0, (outs GPR:$dst), 
+             (ins FSR16:$fsr, i8imm:$offset),
+             "moviw $offset[$fsr]",
+             []>;
+
+//-------------------------
+// Various add/sub patterns.
+//-------------------------
+// W += [F] ; load from F and add the value to W. 
+class ADDFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
+  ByteFormat<OpCode, (outs GPR:$dst),
+             (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
+              !strconcat(OpcStr, " $ptrlo + $offset, W"),
+             [(set GPR:$dst, (OpNode GPR:$src, (PIC16Load diraddr:$ptrlo,
+                                             (i8 imm:$ptrhi),
+                                             (i8 imm:$offset))))]>;
+// let isTwoAddress = 1 in {
+def addfw_1: ADDFW<0, "addwf", add>;
+def addfw_2: ADDFW<0, "addwf", addc>;
+def addfwc: ADDFW<0, "addwfc", adde>;  // With Carry.
+// }
+
+// [F] += W ; add the value of  W to [F]. 
+class ADDWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
+  ByteFormat<OpCode, (outs),
+             (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
+              !strconcat(OpcStr, " $ptrlo + $offset"),
+             [(PIC16Store (OpNode GPR:$src, (PIC16Load diraddr:$ptrlo,
+                                             (i8 imm:$ptrhi),
+                                             (i8 imm:$offset))),
+                                             diraddr:$ptrlo, 
+                                             (i8 imm:$ptrhi), (i8 imm:$offset)
+                                             )]>;
+def addwf_1: ADDWF<0, "addwf", add>;
+def addwf_2: ADDWF<0, "addwf", addc>;
+def addwfc: ADDWF<0, "addwfc", adde>;  // With Carry.
+
+// W -= [F] ; load from F and sub the value from W.
+class SUBFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
+  ByteFormat<OpCode, (outs GPR:$dst),
+             (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
+              !strconcat(OpcStr, " $ptrlo + $offset, W"),
+             [(set GPR:$dst, (OpNode (PIC16Load diraddr:$ptrlo,
+                                      (i8 imm:$ptrhi), (i8 imm:$offset)),
+                                      GPR:$src))]>;
+//let isTwoAddress = 1 in {
+def subfw_1: SUBFW<0, "subwf", sub>;
+def subfw_2: SUBFW<0, "subwf", subc>;
+def subfwb: SUBFW<0, "subwfb", sube>;  // With Borrow.
+//}
+
+// [F] -= W ; 
+class SUBWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
+  ByteFormat<OpCode, (outs),
+             (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
+              !strconcat(OpcStr, " $ptrlo + $offset"),
+             [(PIC16Store (OpNode (PIC16Load diraddr:$ptrlo,
+                                      (i8 imm:$ptrhi), (i8 imm:$offset)),
+                                      GPR:$src), diraddr:$ptrlo,
+                                      (i8 imm:$ptrhi), (i8 imm:$offset))]>;
+
+def subwf_1: SUBWF<0, "subwf", sub>;
+def subwf_2: SUBWF<0, "subwf", subc>;
+def subwfb: SUBWF<0, "subwfb", sube>;  // With Borrow.
+
+// addlw 
+// W += C ; add literal to W. (Without carry). May Produce a carry.
+class ADDLW<bits<6> opcode, string OpcStr, SDNode OpNode> :
+  LiteralFormat<opcode, (outs GPR:$dst),
+                (ins GPR:$src, i8imm:$literal),
+                !strconcat(OpcStr, " $literal"),
+                [(set GPR:$dst, (OpNode GPR:$src, (i8 imm:$literal)))]>;
+
+// let isTwoAddress = 1 in {
+def addlw_1 : ADDLW<0, "addlw", add>;
+def addlw_2 : ADDLW<0, "addlw", addc>;
+def addlwc : ADDLW<0, "addlwc", adde>; // With Carry. (Assembler macro).
+//}
+
+// sublw 
+// W = C - W ; sub W from literal. (Without borrow).
+class SUBLW<bits<6> opcode, SDNode OpNode> :
+  LiteralFormat<opcode, (outs GPR:$dst),
+                (ins GPR:$src, i8imm:$literal),
+                "addlw $literal",
+                [(set GPR:$dst, (OpNode (i8 imm:$literal), GPR:$src))]>;
+
+//let isTwoAddress = 1 in {
+def sublw_1 : SUBLW<0, sub>;
+def sublw_2 : SUBLW<0, subc>;
+//}
+
+// Banksel.
 let isReMaterializable = 1 in {
-def MOVF       : LoadDirect <0x23, "movf",  load>;
+def banksel : 
+  Pseudo<(outs BSR:$dst),
+         (ins i8mem:$ptr),
+         "banksel $ptr",
+         [(set BSR:$dst, (Banksel tglobaladdr:$ptr))]>;
 }
 
-def MOVWF      : StoreDirect <0x2b, "movwf", store>;
-
-def MOVFSRINC  : StoreInDirect <0x5, "movfsrinc", store>;
-
-def RETURN     : ControlFormat<0x03, (outs), (ins), "return", []>;
-
-def ADDWF      : Arith1M<0x01, "addwf", add>; 
-def ADDFW      : Arith1R<0x02, "addfw", add>; 
-
-def ADDWFE     : Arith1M<0x03, "addwfe", adde>; 
-def ADDFWE     : Arith1R<0x04, "addfwe", adde>; 
-
-def ADDWFC     : Arith1M<0x05, "addwfc", addc>; 
-def ADDFWC     : Arith1R<0x06, "addfwc", addc>; 
-
-def SUBWF      : Arith1M<0x07, "subwf", sub>; 
-def SUBFW      : Arith1R<0x08, "subfw", sub>; 
-
-def SUBWFE     : Arith1M<0x09, "subwfe", sube>; 
-def SUBFWE     : Arith1R<0x0a, "subfwe", sube>; 
-
-def SUBWFC     : Arith1M<0x0b, "subwfc", subc>; 
-def SUBFWC     : Arith1R<0x0d, "subfwc", subc>; 
-
-def SUBRFW     : Arith2R<0x08, "subfw", sub>; 
-
-def SUBRFWE    : Arith2R<0x0a, "subfwe", sube>; 
-
-def SUBRFWC    : Arith2R<0x0d, "subfwc", subc>; 
-
-def brtarget   : Operand<OtherVT>;
-
-class UncondJump< bits<4> op, string instr_asm>:
-  BitFormat< op,
-             (outs),
-             (ins brtarget:$target),
-             !strconcat(instr_asm, " $target"),
-             [(br bb:$target)]>;
-
-def GOTO       : UncondJump<0x1, "goto">;
-
-class LogicM<bits<6> op, string instr_asm, SDNode OpNode> :
-  ByteFormat< op,
-      (outs),
-      (ins CPURegs:$b, mem:$dst),
-      !strconcat(instr_asm, " $dst"),
-      [(store (OpNode (load diraddrmode:$dst), CPURegs:$b), diraddrmode:$dst)]>;
-
-class LogicR<bits<6> op, string instr_asm, SDNode OpNode> :
-  ByteFormat< op,
-      (outs CPURegs:$dst),
-      (ins CPURegs:$b, mem:$c),
-      !strconcat(instr_asm, " $c"),
-      [(set CPURegs:$dst, (OpNode (load diraddrmode:$c), CPURegs:$b))]>;
-
-class LogicI<bits<6> op, string instr_asm, SDNode OpNode, Operand Od> :
-  LiteralFormat< op,
-      (outs CPURegs:$dst),
-      (ins CPURegs:$b, Od:$c),
-      !strconcat(instr_asm, " $c"),
-      [(set CPURegs:$dst, (OpNode CPURegs:$b, Od:$c ))]>;
-
-def XORWF : LogicM<0x1,"xorwf",xor>; 
-def XORFW : LogicR<0x1,"xorfw",xor>; 
-def XORLW : LogicI<0x1,"xorlw",xor, so_imm>;
-
-def ANDWF : LogicM<0x1,"andwf",and>; 
-def ANDFW : LogicR<0x1,"andfw",and>; 
-def ANDLW : LogicI<0x1,"andlw",and, so_imm>;
-
-def IORWF : LogicM<0x1,"iorwf",or>; 
-def IORFW : LogicR<0x1,"iorfw",or>; 
-def IORLW : LogicI<0x1,"iorlw",or, so_imm>;
-
-
-/* For comparison before branch */
-def SDT_PIC16Cmp  : SDTypeProfile<1, 3, [SDTCisSameAs<0,1>]>;
-def SDTIntBinOpPIC16 : SDTypeProfile<1, 2, [SDTCisSameAs<0,1>, 
-                                     SDTCisSameAs<1,2>, SDTCisInt<1>]>;
-
-def PIC16Cmp : SDNode<"PIC16ISD::Cmp",SDTIntBinOpPIC16, [SDNPOutFlag]>; 
-def PIC16XORCC : SDNode<"PIC16ISD::XORCC",SDTIntBinOpPIC16, [SDNPOutFlag]>; 
-def PIC16SUBCC : SDNode<"PIC16ISD::SUBCC",SDTIntBinOpPIC16, [SDNPOutFlag]>; 
-
-def XORFWCC : LogicR<0x1,"xorfw",PIC16XORCC>; 
-def XORLWCC : LogicI<0x1,"xorlw",PIC16XORCC, so_imm>; 
-def SUBFWCC : Arith1R<0x1,"subfw",PIC16SUBCC>; 
-def SUBLWCC : ArithI<0x1,"sublw",PIC16SUBCC, so_imm>; 
-
-
-/* For branch conditions */
-def SDT_PIC16Branch  : SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, 
-                                     SDTCisVT<1,i8>, SDTCisVT<2,i8>]>;
-
-def PIC16Branch : SDNode<"PIC16ISD::Branch",SDT_PIC16Branch, 
-                         [SDNPHasChain, SDNPInFlag]>; 
-
-def PIC16BTFSS  : SDNode<"PIC16ISD::BTFSS",SDT_PIC16Branch, 
-                         [SDNPHasChain, SDNPInFlag]>; 
-
-def PIC16BTFSC  : SDNode<"PIC16ISD::BTFSC",SDT_PIC16Branch, 
-                         [SDNPHasChain, SDNPInFlag]>; 
-
-class InstrBitTestCC<bits<4> op, string instr_asm,SDNode OpNode>:
-  BitFormat< op,
-             (outs),
-             (ins brtarget:$target ,so_imm:$i, STATUSRegs:$s ),
-                   !strconcat(instr_asm, " $s, $i, $target"),
-                   [(OpNode bb:$target, so_imm:$i, STATUSRegs:$s )]>;
-
-def BTFSS : InstrBitTestCC<0x1,"btfss",PIC16BTFSS>;
-def BTFSC : InstrBitTestCC<0x1,"btfsc",PIC16BTFSC>;
-
-
+// Return insn.
+def Return : 
+  ControlFormat<0, (outs), (ins), "return", [(ret)]>;
+                      
 //===----------------------------------------------------------------------===//
-// Pseudo instructions
+// PIC16 Replacment Patterns.
 //===----------------------------------------------------------------------===//
 
-let Defs = [STKPTR], Uses = [STKPTR] in {
-def ADJCALLSTACKDOWN : Pseudo<255, (outs), (ins i8imm:$amt),
-                               "!ADJCALLSTACKDOWN $amt",
-                               [(callseq_start imm:$amt)]>;
-def ADJCALLSTACKUP : Pseudo<254, (outs), (ins i8imm:$amt),
-                            "!ADJCALLSTACKUP $amt",
-                            [(callseq_end imm:$amt)]>;
-}
+// Identify an indirect store and select insns for it.
+def : Pat<(PIC16Store GPR:$val, (MTLO GPR:$loaddr), (MTHI GPR:$hiaddr), 
+           imm:$offset),
+          (store_indirect GPR:$val, 
+           (set_fsrhi (set_fsrlo GPR:$loaddr), GPR:$hiaddr),
+           imm:$offset)>;
 
+// Identify an indirect load and select insns for it.
+def : Pat<(PIC16Load (MTLO GPR:$loaddr), (MTHI GPR:$hiaddr), 
+           imm:$offset),
+          (load_indirect  (set_fsrhi (set_fsrlo GPR:$loaddr), GPR:$hiaddr),
+           imm:$offset)>;
 
-//===----------------------------------------------------------------------===//
-//  Arbitrary patterns that map to one or more instructions
-//===----------------------------------------------------------------------===//
-def : Pat<(ret), (RETURN)>;
