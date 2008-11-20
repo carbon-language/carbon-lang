@@ -25,7 +25,7 @@
 </ul>
 
 <div class="doc_author">
-<p>Written by <a href="mailto:ofv@wanadoo.es">Óscar Fuentes</a></p>
+<p>Written by <a href="mailto:ofv@wanadoo.es">Oscar Fuentes</a></p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -41,7 +41,14 @@
     the files needed by your build tool (GNU make, Visual Studio, etc) for
     building LLVM.</p>
 
-  <p>If you are really anxious
+  <p>If you are really anxious about getting a functional LLVM build,
+    go to the <a href="#quickstart">Quick start</a> section. If you
+    are a CMake novice, start on <a href="#usage">Basic CMake
+      usage</a> and then go back to the <a href="#quickstart">Quick
+      start</a> once you know what you are
+    doing. The <a href="#options">Options and variables</a> section
+    is a reference for customizing your build. If you already have
+    experience with CMake, this is the recommended starting point.
 </div>
 
 <!-- *********************************************************************** -->
@@ -105,7 +112,43 @@
 
 <div class="doc_text">
 
-<p>TODO</p>
+  <p>This section explains basic aspects of CMake, mostly for
+    explaining those options which you may need on your day-to-day
+    usage.</p>
+
+  <p>CMake comes with extensive documentation in the form of html
+    files and on the cmake executable itself. Execute <i>cmake
+    --help</i> for further help options.</p>
+
+  <p>CMake requires to know for which build tool it shall generate
+    files (GNU make, Visual Studio, Xcode, etc). If not specified on
+    the command line, it tries to guess it based on you
+    environment. Once identified the build tool, CMake uses the
+    corresponding <i>Generator</i> for creating files for your build
+    tool. You can explicitly specify the generator with the command
+    line option <i>-G "Name of the generator"</i>. For knowing the
+    available generators on your platform, execute</p>
+
+    <div class="doc_code">
+      <p><tt>cmake --help</tt></p>
+    </div>
+
+    <p>This will list the generator's names at the end of the help
+      text. Generator's names are case-sensitive. Example:</p>
+
+    <div class="doc_code">
+      <p><tt>cmake -G "Visual Studio 8 2005" path/to/llvm/source/root</tt></p>
+    </div>
+
+    <p>For a given development platform there can be more than one
+      adequate generator. If you use Visual Studio "NMake Makefiles"
+      is a generator you can use for building with NMake. By default,
+      CMake chooses the more specific generator supported by your
+      development environment. If you want an alternative generator,
+      you must tell this to CMake with the <i>-G</i> option.</p>
+
+    <p>TODO: explain variables and cache. Move explanation here from
+      #options section.</p>
 
 </div>
 
@@ -225,6 +268,8 @@
 
 <div class="doc_text">
 
+<p>LLVM testing is not supported on Visual Studio.</p>
+
 <p>TODO</p>
 
 </div>
@@ -262,7 +307,7 @@
   <a href="http://validator.w3.org/check/referer"><img
   src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
 
-  <a href="mailto:ofv@wanadoo.es">Óscar Fuentes</a><br>
+  <a href="mailto:ofv@wanadoo.es">Oscar Fuentes</a><br>
   <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br>
   Last modified: $Date: 2008-10-27 00:59:36 +0100 (Mon, 27 Oct 2008) $
 </address>
