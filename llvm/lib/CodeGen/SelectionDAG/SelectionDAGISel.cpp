@@ -138,13 +138,13 @@ namespace llvm {
                                       bool Fast) {
     TargetLowering &TLI = IS->getTargetLowering();
     
-    if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency) {
+    if (Fast)
+      return createFastDAGScheduler(IS, DAG, TM, BB, Fast);
+    if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
       return createTDListDAGScheduler(IS, DAG, TM, BB, Fast);
-    } else {
-      assert(TLI.getSchedulingPreference() ==
-           TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
-      return createBURRListDAGScheduler(IS, DAG, TM, BB, Fast);
-    }
+    assert(TLI.getSchedulingPreference() ==
+         TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
+    return createBURRListDAGScheduler(IS, DAG, TM, BB, Fast);
   }
 }
 

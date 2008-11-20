@@ -59,10 +59,6 @@ private:
   /// it is top-down.
   bool isBottomUp;
 
-  /// Fast - True if we are performing fast scheduling.
-  ///
-  bool Fast;
-  
   /// AvailableQueue - The priority queue to use for the available SUnits.
   SchedulingPriorityQueue *AvailableQueue;
 
@@ -75,9 +71,9 @@ private:
 
 public:
   ScheduleDAGRRList(SelectionDAG *dag, MachineBasicBlock *bb,
-                    const TargetMachine &tm, bool isbottomup, bool f,
+                    const TargetMachine &tm, bool isbottomup,
                     SchedulingPriorityQueue *availqueue)
-    : ScheduleDAGSDNodes(dag, bb, tm), isBottomUp(isbottomup), Fast(f),
+    : ScheduleDAGSDNodes(dag, bb, tm), isBottomUp(isbottomup),
       AvailableQueue(availqueue) {
     }
 
@@ -187,10 +183,8 @@ void ScheduleDAGRRList::Schedule() {
 
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
-  if (!Fast) {
-    CalculateDepths();
-    CalculateHeights();
-  }
+  CalculateDepths();
+  CalculateHeights();
   InitDAGTopologicalSorting();
 
   AvailableQueue->initNodes(SUnits);
@@ -203,8 +197,7 @@ void ScheduleDAGRRList::Schedule() {
   
   AvailableQueue->releaseState();
 
-  if (!Fast)
-    CommuteNodesToReducePressure();
+  CommuteNodesToReducePressure();
 }
 
 /// CommuteNodesToReducePressure - If a node is two-address and commutable, and
@@ -1431,48 +1424,6 @@ namespace {
   };
 
 
-  class VISIBILITY_HIDDEN BURegReductionFastPriorityQueue
-   : public RegReductionPriorityQueue<bu_ls_rr_fast_sort> {
-    // SethiUllmanNumbers - The SethiUllman number for each node.
-    std::vector<unsigned> SethiUllmanNumbers;
-
-  public:
-    BURegReductionFastPriorityQueue(const TargetInstrInfo *tii,
-                                    const TargetRegisterInfo *tri)
-      : RegReductionPriorityQueue<bu_ls_rr_fast_sort>(tii, tri) {}
-
-    void initNodes(std::vector<SUnit> &sunits) {
-      RegReductionPriorityQueue<bu_ls_rr_fast_sort>::initNodes(sunits);
-      // Calculate node priorities.
-      CalculateSethiUllmanNumbers();
-    }
-
-    void addNode(const SUnit *SU) {
-      unsigned SUSize = SethiUllmanNumbers.size();
-      if (SUnits->size() > SUSize)
-        SethiUllmanNumbers.resize(SUSize*2, 0);
-      CalcNodeBUSethiUllmanNumber(SU, SethiUllmanNumbers);
-    }
-
-    void updateNode(const SUnit *SU) {
-      SethiUllmanNumbers[SU->NodeNum] = 0;
-      CalcNodeBUSethiUllmanNumber(SU, SethiUllmanNumbers);
-    }
-
-    void releaseState() {
-      RegReductionPriorityQueue<bu_ls_rr_fast_sort>::releaseState();
-      SethiUllmanNumbers.clear();
-    }
-
-    unsigned getNodePriority(const SUnit *SU) const {
-      return SethiUllmanNumbers[SU->NodeNum];
-    }
-
-  private:
-    void CalculateSethiUllmanNumbers();
-  };
-
-
   class VISIBILITY_HIDDEN TDRegReductionPriorityQueue
    : public RegReductionPriorityQueue<td_ls_rr_sort> {
     // SethiUllmanNumbers - The SethiUllman number for each node.
@@ -1756,12 +1707,6 @@ void BURegReductionPriorityQueue::CalculateSethiUllmanNumbers() {
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
     CalcNodeBUSethiUllmanNumber(&(*SUnits)[i], SethiUllmanNumbers);
 }
-void BURegReductionFastPriorityQueue::CalculateSethiUllmanNumbers() {
-  SethiUllmanNumbers.assign(SUnits->size(), 0);
-  
-  for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-    CalcNodeBUSethiUllmanNumber(&(*SUnits)[i], SethiUllmanNumbers);
-}
 
 /// LimitedSumOfUnscheduledPredsOfSuccs - Compute the sum of the unscheduled
 /// predecessors of the successors of the SUnit SU. Stop when the provided
@@ -1843,18 +1788,14 @@ llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
                                                     SelectionDAG *DAG,
                                                     const TargetMachine *TM,
                                                     MachineBasicBlock *BB,
-                                                    bool Fast) {
+                                                    bool) {
   const TargetInstrInfo *TII = TM->getInstrInfo();
   const TargetRegisterInfo *TRI = TM->getRegisterInfo();
   
-  if (Fast)
-    return new ScheduleDAGRRList(DAG, BB, *TM, true, true,
-                                 new BURegReductionFastPriorityQueue(TII, TRI));
-
   BURegReductionPriorityQueue *PQ = new BURegReductionPriorityQueue(TII, TRI);
 
   ScheduleDAGRRList *SD =
-    new ScheduleDAGRRList(DAG, BB, *TM, true, false, PQ);
+    new ScheduleDAGRRList(DAG, BB, *TM, true, PQ);
   PQ->setScheduleDAG(SD);
   return SD;  
 }
@@ -1863,13 +1804,13 @@ llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
                                                     SelectionDAG *DAG,
                                                     const TargetMachine *TM,
                                                     MachineBasicBlock *BB,
-                                                    bool Fast) {
+                                                    bool) {
   const TargetInstrInfo *TII = TM->getInstrInfo();
   const TargetRegisterInfo *TRI = TM->getRegisterInfo();
   
   TDRegReductionPriorityQueue *PQ = new TDRegReductionPriorityQueue(TII, TRI);
 
-  ScheduleDAGRRList *SD = new ScheduleDAGRRList(DAG, BB, *TM, false, Fast, PQ);
+  ScheduleDAGRRList *SD = new ScheduleDAGRRList(DAG, BB, *TM, false, PQ);
   PQ->setScheduleDAG(SD);
   return SD;
 }
