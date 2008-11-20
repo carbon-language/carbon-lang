@@ -556,7 +556,7 @@ static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   
   ObjCGCAttr::GCAttrTypes type;
   if (Attr.getParameterName()->isStr("weak")) {
-    if (isa<FieldDecl>(d))
+    if (isa<FieldDecl>(d) && !isa<ObjCIvarDecl>(d))
       S.Diag(Attr.getLoc(), diag::warn_attribute_weak_on_field);
     type = ObjCGCAttr::Weak;
   }

@@ -5,6 +5,17 @@ struct S {
 	__strong id p1;
 };
 
+@interface I
+{
+   __weak id w;	// OK
+   __strong id LHS;
+}
+- (void) foo;
+@end
+@implementation I
+- (void) foo { w = 0; LHS = w; }
+@end
+
 int main ()
 {
 	struct I {
