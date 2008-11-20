@@ -58,18 +58,18 @@ struct InstrItineraryData {
   
   /// isEmpty - Returns true if there are no itineraries.
   ///
-  inline bool isEmpty() const { return Itineratries == 0; }
+  bool isEmpty() const { return Itineratries == 0; }
   
   /// begin - Return the first stage of the itinerary.
   /// 
-  inline const InstrStage *begin(unsigned ItinClassIndx) const {
+  const InstrStage *begin(unsigned ItinClassIndx) const {
     unsigned StageIdx = Itineratries[ItinClassIndx].First;
     return Stages + StageIdx;
   }
 
   /// end - Return the last+1 stage of the itinerary.
   /// 
-  inline const InstrStage *end(unsigned ItinClassIndx) const {
+  const InstrStage *end(unsigned ItinClassIndx) const {
     unsigned StageIdx = Itineratries[ItinClassIndx].Last;
     return Stages + StageIdx;
   }
