@@ -137,8 +137,12 @@ class LValue {
   // FIXME: set but never used, what effect should it have?
   bool Restrict:1;
 
+  // objective-c's ivar
+  bool Ivar:1;
+
   // objective-c's gc attributes
   unsigned ObjCType : 2;  
+  
 
 private:
   static void SetQualifiers(unsigned Qualifiers, LValue& R) {
@@ -147,6 +151,7 @@ private:
     // FIXME: Convenient place to set objc flags to 0. This
     // should really be done in a user-defined constructor instead.
     R.ObjCType = None;
+    R.Ivar = false;
   }
   
 public:
@@ -159,9 +164,14 @@ public:
   bool isVolatileQualified() const { return Volatile; }
   bool isRestrictQualified() const { return Restrict; }
   
+  bool isObjCIvar() const { return Ivar; }
   bool isObjCWeak() const { return ObjCType == Weak; }
   bool isObjCStrong() const { return ObjCType == Strong; }
   
+  static void SetObjCIvar(LValue& R) {
+    R.Ivar = true;
+  }
+    
   static void SetObjCType(bool isWeak, bool isStrong, LValue& R) {
     assert(!(isWeak == true && isStrong == true));
     if (isWeak)

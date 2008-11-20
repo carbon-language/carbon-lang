@@ -372,7 +372,10 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     // load of a __strong object. 
     llvm::Value *LvalueDst = Dst.getAddress();
     llvm::Value *src = Src.getScalarVal();
-    CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
+    if (Dst.isObjCIvar())
+      CGM.getObjCRuntime().EmitObjCIvarAssign(*this, src, LvalueDst);
+    else
+      CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
     return;
   }
   
@@ -523,7 +526,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
 
 /// SetVarDeclObjCAttribute - Set __weak/__strong attributes into the LValue
 /// object.
-static void SetVarDeclObjCAttribute(ASTContext &Ctx, const VarDecl *VD, 
+static void SetVarDeclObjCAttribute(ASTContext &Ctx, const Decl *VD, 
                                     const QualType &Ty, LValue &LV)
 {
   if (const ObjCGCAttr *A = VD->getAttr<ObjCGCAttr>()) {
@@ -932,7 +935,10 @@ LValue CodeGenFunction::EmitLValueForIvar(llvm::Value *BaseValue,
   unsigned Index = CGM.getTypes().getLLVMFieldNo(Ivar);
   
   llvm::Value *V = Builder.CreateStructGEP(BaseValue, Index, "tmp");
-  return LValue::MakeAddr(V, Ivar->getType().getCVRQualifiers()|CVRQualifiers);
+  LValue LV = LValue::MakeAddr(V, Ivar->getType().getCVRQualifiers()|CVRQualifiers);
+  SetVarDeclObjCAttribute(getContext(), Ivar, Ivar->getType(), LV);
+  LValue::SetObjCIvar(LV);
+  return LV;
 }
 
 LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
