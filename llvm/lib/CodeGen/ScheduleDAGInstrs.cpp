@@ -97,7 +97,7 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
     }
     if (Terminator && SU->Succs.empty())
       Terminator->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false);
-    if (MI->getDesc().isTerminator())
+    if (MI->getDesc().isTerminator() || MI->isLabel())
       Terminator = SU;
   }
 }
