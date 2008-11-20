@@ -80,11 +80,21 @@ void PTHLexer::setEOF(Token& Tok) {
 void PTHLexer::DiscardToEndOfLine() {
   assert(ParsingPreprocessorDirective && ParsingFilename == false &&
          "Must be in a preprocessing directive!");
-  assert (0 && "Not implemented.");
+
+  // Already at end-of-file?
+  if (CurToken == NumTokens)
+    return;
+
+  // Find the first token that is not the start of the *current* line.
+  for ( ++CurToken; CurToken != NumTokens ; ++CurToken )
+    if (Tokens[CurToken].isAtStartOfLine())
+      return;
 }
 
-unsigned PTHLexer::isNextPPTokenLParen() {
-  assert (0 && "Not implemented.");
-  return 0;
+unsigned PTHLexer::isNextPPTokenLParen() {  
+  if (CurToken == NumTokens)
+    return 2;
+  
+  return Tokens[CurToken].is(tok::l_paren);
 }
 
