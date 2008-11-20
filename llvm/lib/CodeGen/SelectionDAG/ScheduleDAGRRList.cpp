@@ -1111,7 +1111,6 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
   }
 }
 
-
 /// ScheduleNodeTopDown - Add the node to the schedule. Decrement the pending
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
@@ -1294,17 +1293,31 @@ namespace {
     PriorityQueue<SUnit*, std::vector<SUnit*>, SF> Queue;
     unsigned currentQueueId;
 
-  public:
-    RegReductionPriorityQueue() :
-    Queue(SF(this)), currentQueueId(0) {}
+  protected:
+    // SUnits - The SUnits for the current graph.
+    std::vector<SUnit> *SUnits;
     
-    virtual void initNodes(std::vector<SUnit> &sunits) = 0;
+    const TargetInstrInfo *TII;
+    const TargetRegisterInfo *TRI;
+    ScheduleDAGRRList *scheduleDAG;
+
+  public:
+    RegReductionPriorityQueue(const TargetInstrInfo *tii,
+                              const TargetRegisterInfo *tri) :
+    Queue(SF(this)), currentQueueId(0),
+    TII(tii), TRI(tri), scheduleDAG(NULL) {}
+    
+    void initNodes(std::vector<SUnit> &sunits) {
+      SUnits = &sunits;
+    }
 
     virtual void addNode(const SUnit *SU) = 0;
 
     virtual void updateNode(const SUnit *SU) = 0;
 
-    virtual void releaseState() = 0;
+    virtual void releaseState() {
+      SUnits = 0;
+    }
     
     virtual unsigned getNodePriority(const SUnit *SU) const = 0;
     
@@ -1337,27 +1350,28 @@ namespace {
       Queue.erase_one(SU);
       SU->NodeQueueId = 0;
     }
+
+    void setScheduleDAG(ScheduleDAGRRList *scheduleDag) { 
+      scheduleDAG = scheduleDag; 
+    }
+
+  protected:
+    bool canClobber(const SUnit *SU, const SUnit *Op);
+    void AddPseudoTwoAddrDeps();
   };
 
   class VISIBILITY_HIDDEN BURegReductionPriorityQueue
    : public RegReductionPriorityQueue<bu_ls_rr_sort> {
-    // SUnits - The SUnits for the current graph.
-    std::vector<SUnit> *SUnits;
-    
     // SethiUllmanNumbers - The SethiUllman number for each node.
     std::vector<unsigned> SethiUllmanNumbers;
 
-    const TargetInstrInfo *TII;
-    const TargetRegisterInfo *TRI;
-    ScheduleDAGRRList *scheduleDAG;
-
   public:
-    explicit BURegReductionPriorityQueue(const TargetInstrInfo *tii,
-                                         const TargetRegisterInfo *tri)
-      : TII(tii), TRI(tri), scheduleDAG(NULL) {}
+    BURegReductionPriorityQueue(const TargetInstrInfo *tii,
+                                const TargetRegisterInfo *tri)
+      : RegReductionPriorityQueue<bu_ls_rr_sort>(tii, tri) {}
 
     void initNodes(std::vector<SUnit> &sunits) {
-      SUnits = &sunits;
+      RegReductionPriorityQueue<bu_ls_rr_sort>::initNodes(sunits);
       // Add pseudo dependency edges for two-address nodes.
       AddPseudoTwoAddrDeps();
       // Calculate node priorities.
@@ -1377,7 +1391,7 @@ namespace {
     }
 
     void releaseState() {
-      SUnits = 0;
+      RegReductionPriorityQueue<bu_ls_rr_sort>::releaseState();
       SethiUllmanNumbers.clear();
     }
 
@@ -1412,29 +1426,23 @@ namespace {
         return SethiUllmanNumbers[SU->NodeNum];
     }
 
-    void setScheduleDAG(ScheduleDAGRRList *scheduleDag) { 
-      scheduleDAG = scheduleDag; 
-    }
-
   private:
-    bool canClobber(const SUnit *SU, const SUnit *Op);
-    void AddPseudoTwoAddrDeps();
     void CalculateSethiUllmanNumbers();
   };
 
 
   class VISIBILITY_HIDDEN BURegReductionFastPriorityQueue
    : public RegReductionPriorityQueue<bu_ls_rr_fast_sort> {
-    // SUnits - The SUnits for the current graph.
-    const std::vector<SUnit> *SUnits;
-    
     // SethiUllmanNumbers - The SethiUllman number for each node.
     std::vector<unsigned> SethiUllmanNumbers;
+
   public:
-    explicit BURegReductionFastPriorityQueue() {}
+    BURegReductionFastPriorityQueue(const TargetInstrInfo *tii,
+                                    const TargetRegisterInfo *tri)
+      : RegReductionPriorityQueue<bu_ls_rr_fast_sort>(tii, tri) {}
 
     void initNodes(std::vector<SUnit> &sunits) {
-      SUnits = &sunits;
+      RegReductionPriorityQueue<bu_ls_rr_fast_sort>::initNodes(sunits);
       // Calculate node priorities.
       CalculateSethiUllmanNumbers();
     }
@@ -1452,7 +1460,7 @@ namespace {
     }
 
     void releaseState() {
-      SUnits = 0;
+      RegReductionPriorityQueue<bu_ls_rr_fast_sort>::releaseState();
       SethiUllmanNumbers.clear();
     }
 
@@ -1467,17 +1475,18 @@ namespace {
 
   class VISIBILITY_HIDDEN TDRegReductionPriorityQueue
    : public RegReductionPriorityQueue<td_ls_rr_sort> {
-    // SUnits - The SUnits for the current graph.
-    const std::vector<SUnit> *SUnits;
-    
     // SethiUllmanNumbers - The SethiUllman number for each node.
     std::vector<unsigned> SethiUllmanNumbers;
 
   public:
-    TDRegReductionPriorityQueue() {}
+    TDRegReductionPriorityQueue(const TargetInstrInfo *tii,
+                                const TargetRegisterInfo *tri)
+      : RegReductionPriorityQueue<td_ls_rr_sort>(tii, tri) {}
 
     void initNodes(std::vector<SUnit> &sunits) {
-      SUnits = &sunits;
+      RegReductionPriorityQueue<td_ls_rr_sort>::initNodes(sunits);
+      // Add pseudo dependency edges for two-address nodes.
+      AddPseudoTwoAddrDeps();
       // Calculate node priorities.
       CalculateSethiUllmanNumbers();
     }
@@ -1495,7 +1504,7 @@ namespace {
     }
 
     void releaseState() {
-      SUnits = 0;
+      RegReductionPriorityQueue<td_ls_rr_sort>::releaseState();
       SethiUllmanNumbers.clear();
     }
 
@@ -1609,8 +1618,9 @@ bu_ls_rr_fast_sort::operator()(const SUnit *left, const SUnit *right) const {
   return (left->NodeQueueId > right->NodeQueueId);
 }
 
+template<class SF>
 bool
-BURegReductionPriorityQueue::canClobber(const SUnit *SU, const SUnit *Op) {
+RegReductionPriorityQueue<SF>::canClobber(const SUnit *SU, const SUnit *Op) {
   if (SU->isTwoAddress) {
     unsigned Opc = SU->getNode()->getMachineOpcode();
     const TargetInstrDesc &TID = TII->get(Opc);
@@ -1678,7 +1688,8 @@ static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
 /// one that has a CopyToReg use (more likely to be a loop induction update).
 /// If both are two-address, but one is commutable while the other is not
 /// commutable, favor the one that's not commutable.
-void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
+template<class SF>
+void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
     SUnit *SU = &(*SUnits)[i];
     if (!SU->isTwoAddress)
@@ -1833,13 +1844,13 @@ llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
                                                     const TargetMachine *TM,
                                                     MachineBasicBlock *BB,
                                                     bool Fast) {
-  if (Fast)
-    return new ScheduleDAGRRList(DAG, BB, *TM, true, true,
-                                 new BURegReductionFastPriorityQueue());
-
   const TargetInstrInfo *TII = TM->getInstrInfo();
   const TargetRegisterInfo *TRI = TM->getRegisterInfo();
   
+  if (Fast)
+    return new ScheduleDAGRRList(DAG, BB, *TM, true, true,
+                                 new BURegReductionFastPriorityQueue(TII, TRI));
+
   BURegReductionPriorityQueue *PQ = new BURegReductionPriorityQueue(TII, TRI);
 
   ScheduleDAGRRList *SD =
@@ -1853,6 +1864,12 @@ llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
                                                     const TargetMachine *TM,
                                                     MachineBasicBlock *BB,
                                                     bool Fast) {
-  return new ScheduleDAGRRList(DAG, BB, *TM, false, Fast,
-                               new TDRegReductionPriorityQueue());
+  const TargetInstrInfo *TII = TM->getInstrInfo();
+  const TargetRegisterInfo *TRI = TM->getRegisterInfo();
+  
+  TDRegReductionPriorityQueue *PQ = new TDRegReductionPriorityQueue(TII, TRI);
+
+  ScheduleDAGRRList *SD = new ScheduleDAGRRList(DAG, BB, *TM, false, Fast, PQ);
+  PQ->setScheduleDAG(SD);
+  return SD;
 }
