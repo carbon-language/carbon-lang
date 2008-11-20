@@ -229,8 +229,6 @@ public:
   /// The primitive diagnostic helpers.
   DiagnosticInfo Diag(SourceLocation Loc, unsigned DiagID);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
-  bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
-            const std::string &Msg2);
 
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);

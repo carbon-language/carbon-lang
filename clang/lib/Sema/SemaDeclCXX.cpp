@@ -1211,15 +1211,14 @@ Sema::DeclTy *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
   if (ConvType->isRecordType()) {
     ConvType = Context.getCanonicalType(ConvType).getUnqualifiedType();
     if (ConvType == ClassType)
-      Diag(Conversion->getLocation(), diag::warn_conv_to_self_not_used,
-           ClassType.getAsString());
+      Diag(Conversion->getLocation(), diag::warn_conv_to_self_not_used)
+        << ClassType.getAsString();
     else if (IsDerivedFrom(ClassType, ConvType))
-      Diag(Conversion->getLocation(), diag::warn_conv_to_base_not_used,
-           ClassType.getAsString(),
-           ConvType.getAsString());
+      Diag(Conversion->getLocation(), diag::warn_conv_to_base_not_used)
+        <<  ClassType.getAsString() << ConvType.getAsString();
   } else if (ConvType->isVoidType()) {
-    Diag(Conversion->getLocation(), diag::warn_conv_to_void_not_used,
-         ClassType.getAsString(), ConvType.getAsString());
+    Diag(Conversion->getLocation(), diag::warn_conv_to_void_not_used)
+      << ClassType.getAsString() << ConvType.getAsString();
   }
 
   ClassDecl->addConversionFunction(Context, Conversion);
@@ -1271,8 +1270,8 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
         // name to return the original namespace decl during a name lookup.
       } else {
         // This is an invalid name redefinition.
-        Diag(Namespc->getLocation(), diag::err_redefinition_different_kind,
-          Namespc->getName());
+        Diag(Namespc->getLocation(), diag::err_redefinition_different_kind)
+          << Namespc->getName();
         Diag(PrevDecl->getLocation(), diag::err_previous_definition);
         Namespc->setInvalidDecl();
         // Continue on to push Namespc as current DeclContext and return it.
@@ -1442,7 +1441,7 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
     
   case OR_No_Viable_Function:
     if (CandidateSet.empty())
-      Diag(Loc, diag::err_ovl_no_viable_function_in_init) << InitEntity, Range;
+      Diag(Loc, diag::err_ovl_no_viable_function_in_init) << InitEntity <<Range;
     else {
       Diag(Loc, diag::err_ovl_no_viable_function_in_init_with_cands)
         << InitEntity << Range;

@@ -324,8 +324,8 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   // Verify the old decl was also a typedef.
   TypedefDecl *Old = dyn_cast<TypedefDecl>(OldD);
   if (!Old) {
-    Diag(New->getLocation(), diag::err_redefinition_different_kind,
-         New->getName());
+    Diag(New->getLocation(), diag::err_redefinition_different_kind)
+      << New->getName();
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
@@ -335,9 +335,9 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   if (Old->getUnderlyingType() != New->getUnderlyingType() && 
       Context.getCanonicalType(Old->getUnderlyingType()) != 
       Context.getCanonicalType(New->getUnderlyingType())) {
-    Diag(New->getLocation(), diag::err_redefinition_different_typedef,
-         New->getUnderlyingType().getAsString(),
-         Old->getUnderlyingType().getAsString());
+    Diag(New->getLocation(), diag::err_redefinition_different_typedef)
+      << New->getUnderlyingType().getAsString()
+      << Old->getUnderlyingType().getAsString();
     Diag(Old->getLocation(), diag::err_previous_definition);
     return Old;
   }
@@ -357,7 +357,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
       return New;
   }
 
-  Diag(New->getLocation(), diag::err_redefinition, New->getName());
+  Diag(New->getLocation(), diag::err_redefinition) << New->getName();
   Diag(Old->getLocation(), diag::err_previous_definition);
   return New;
 }
@@ -410,8 +410,8 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   // Verify the old decl was also a function.
   FunctionDecl *Old = dyn_cast<FunctionDecl>(OldD);
   if (!Old) {
-    Diag(New->getLocation(), diag::err_redefinition_different_kind,
-         New->getName());
+    Diag(New->getLocation(), diag::err_redefinition_different_kind)
+      << New->getName();
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
@@ -485,7 +485,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
-  Diag(New->getLocation(), diag::err_conflicting_types, New->getName());
+  Diag(New->getLocation(), diag::err_conflicting_types) << New->getName();
   Diag(Old->getLocation(), PrevDiag);
   return New;
 }

@@ -904,8 +904,8 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                               : false;
       if (isInterfaceDeclKind && PrevMethod && !match 
           || checkIdenticalMethods && match) {
-          Diag(Method->getLocation(), diag::error_duplicate_method_decl,
-               Method->getSelector().getName());
+          Diag(Method->getLocation(), diag::error_duplicate_method_decl)
+            << Method->getSelector().getName();
           Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
       } else {
         insMethods.push_back(Method);
@@ -921,8 +921,8 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                               : false;
       if (isInterfaceDeclKind && PrevMethod && !match 
           || checkIdenticalMethods && match) {
-        Diag(Method->getLocation(), diag::error_duplicate_method_decl,
-             Method->getSelector().getName());
+        Diag(Method->getLocation(), diag::error_duplicate_method_decl)
+          << Method->getSelector().getName();
         Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
       } else {
         clsMethods.push_back(Method);
@@ -1114,8 +1114,8 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   }
   if (PrevMethod) {
     // You can never have two method definitions with the same name.
-    Diag(ObjCMethod->getLocation(), diag::error_duplicate_method_decl,
-        ObjCMethod->getSelector().getName());
+    Diag(ObjCMethod->getLocation(), diag::error_duplicate_method_decl)
+      << ObjCMethod->getSelector().getName();
     Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
   } 
   return ObjCMethod;
@@ -1129,36 +1129,36 @@ void Sema::CheckObjCPropertyAttributes(QualType PropertyTy,
   // readonly and readwrite conflict.
   if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
       (Attributes & ObjCDeclSpec::DQ_PR_readwrite)) {
-    Diag(Loc, diag::err_objc_property_attr_mutually_exclusive,
-         "readonly", "readwrite");
-    Attributes ^= ObjCDeclSpec::DQ_PR_readonly;
+    Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
+      << "readonly" << "readwrite";
+    Attributes &= ~ObjCDeclSpec::DQ_PR_readonly;
   }
 
   // Check for copy or retain on non-object types.
   if ((Attributes & (ObjCDeclSpec::DQ_PR_copy | ObjCDeclSpec::DQ_PR_retain)) &&
       !Context.isObjCObjectPointerType(PropertyTy)) {
-    Diag(Loc, diag::err_objc_property_requires_object,
-         Attributes & ObjCDeclSpec::DQ_PR_copy ? "copy" : "retain");
+    Diag(Loc, diag::err_objc_property_requires_object)
+      << (Attributes & ObjCDeclSpec::DQ_PR_copy ? "copy" : "retain");
     Attributes &= ~(ObjCDeclSpec::DQ_PR_copy | ObjCDeclSpec::DQ_PR_retain);
   }
 
   // Check for more than one of { assign, copy, retain }.
   if (Attributes & ObjCDeclSpec::DQ_PR_assign) {
     if (Attributes & ObjCDeclSpec::DQ_PR_copy) {
-      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive,
-           "assign", "copy");
-      Attributes ^= ObjCDeclSpec::DQ_PR_copy;
+      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
+        << "assign" << "copy";
+      Attributes &= ~ObjCDeclSpec::DQ_PR_copy;
     } 
     if (Attributes & ObjCDeclSpec::DQ_PR_retain) {
-      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive,
-           "assign", "retain");
-      Attributes ^= ObjCDeclSpec::DQ_PR_retain;
+      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
+        << "assign" << "retain";
+      Attributes &= ~ObjCDeclSpec::DQ_PR_retain;
     }
   } else if (Attributes & ObjCDeclSpec::DQ_PR_copy) {
     if (Attributes & ObjCDeclSpec::DQ_PR_retain) {
-      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive,
-           "copy", "retain");
-      Attributes ^= ObjCDeclSpec::DQ_PR_retain;
+      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
+        << "copy" << "retain";
+      Attributes &= ~ObjCDeclSpec::DQ_PR_retain;
     }
   }
 
@@ -1266,7 +1266,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     // Look for this property declaration in the @implementation's @interface
     property = IDecl->FindPropertyDeclaration(PropertyId);
     if (!property) {
-      Diag(PropertyLoc, diag::error_bad_property_decl, IDecl->getName());
+      Diag(PropertyLoc, diag::error_bad_property_decl) << IDecl->getName();
       return 0;
     }
   }
@@ -1290,8 +1290,8 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     // Look for this property declaration in @implementation's category
     property = Category->FindPropertyDeclaration(PropertyId);
     if (!property) {
-      Diag(PropertyLoc, diag::error_bad_category_property_decl, 
-           Category->getName());
+      Diag(PropertyLoc, diag::error_bad_category_property_decl)
+        << Category->getName();
       return 0;
     }
   }
@@ -1317,8 +1317,8 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     // Check that type of property and its ivar are type compatible.
     if (PropType != IvarType) {
       if (CheckAssignmentConstraints(PropType, IvarType) != Compatible) {
-        Diag(PropertyLoc, diag::error_property_ivar_type, property->getName(),
-            Ivar->getName());
+        Diag(PropertyLoc, diag::error_property_ivar_type)
+          << property->getName() << Ivar->getName();
         return 0;
       }
     }
