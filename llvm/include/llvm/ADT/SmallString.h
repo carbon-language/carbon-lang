@@ -46,6 +46,11 @@ public:
   }
   
   // Extra operators.
+  const SmallString &operator=(const char *RHS) {
+    this->clear();
+    return *this += RHS;
+  }
+  
   SmallString &operator+=(const char *RHS) {
     this->append(RHS, RHS+strlen(RHS));
     return *this;
