@@ -206,7 +206,7 @@ private:
   //===--------------------------------------------------------------------===//
 
   /// GetPromotedInteger - Given a processed operand Op which was promoted to a
-  /// larger integer type, this returns the promoted value.  The bits of the
+  /// larger integer type, this returns the promoted value.  The low bits of the
   /// promoted value corresponding to the original type are exactly equal to Op.
   /// The extra bits contain rubbish, so the promoted value may need to be zero-
   /// or sign-extended from the original type before it is usable (the helpers
@@ -297,6 +297,12 @@ private:
   // Integer Expansion Support: LegalizeIntegerTypes.cpp
   //===--------------------------------------------------------------------===//
 
+  /// GetExpandedInteger - Given a processed operand Op which was expanded into
+  /// two integers of half the size, this returns the two halves.  The low bits
+  /// of Op are exactly equal to the bits of Lo; the high bits exactly equal Hi.
+  /// For example, if Op is an i64 which was expanded into two i32's, then this
+  /// method returns the two i32's, with Lo being equal to the lower 32 bits of
+  /// Op, and Hi being equal to the upper 32 bits.
   void GetExpandedInteger(SDValue Op, SDValue &Lo, SDValue &Hi);
   void SetExpandedInteger(SDValue Op, SDValue Lo, SDValue Hi);
 
@@ -353,6 +359,11 @@ private:
   // Float to Integer Conversion Support: LegalizeFloatTypes.cpp
   //===--------------------------------------------------------------------===//
 
+  /// GetSoftenedFloat - Given a processed operand Op which was converted to an
+  /// integer of the same size, this returns the integer.  The integer contains
+  /// exactly the same bits as Op - only the type changed.  For example, if Op
+  /// is an f32 which was softened to an i32, then this method returns an i32,
+  /// the bits of which coincide with those of Op.
   SDValue GetSoftenedFloat(SDValue Op) {
     SDValue &SoftenedOp = SoftenedFloats[Op];
     RemapValue(SoftenedOp);
@@ -413,6 +424,12 @@ private:
   // Float Expansion Support: LegalizeFloatTypes.cpp
   //===--------------------------------------------------------------------===//
 
+  /// GetExpandedFloat - Given a processed operand Op which was expanded into
+  /// two floating point values of half the size, this returns the two halves.
+  /// The low bits of Op are exactly equal to the bits of Lo; the high bits
+  /// exactly equal Hi.  For example, if Op is a ppcf128 which was expanded
+  /// into two f64's, then this method returns the two f64's, with Lo being
+  /// equal to the lower 64 bits of Op, and Hi to the upper 64 bits.
   void GetExpandedFloat(SDValue Op, SDValue &Lo, SDValue &Hi);
   void SetExpandedFloat(SDValue Op, SDValue Lo, SDValue Hi);
 
@@ -461,6 +478,9 @@ private:
   // Scalarization Support: LegalizeVectorTypes.cpp
   //===--------------------------------------------------------------------===//
 
+  /// GetScalarizedVector - Given a processed one-element vector Op which was
+  /// scalarized to its element type, this returns the element.  For example,
+  /// if Op is a v1i32, Op = < i32 val >, this method returns val, an i32.
   SDValue GetScalarizedVector(SDValue Op) {
     SDValue &ScalarizedOp = ScalarizedVectors[Op];
     RemapValue(ScalarizedOp);
@@ -498,6 +518,13 @@ private:
   // Vector Splitting Support: LegalizeVectorTypes.cpp
   //===--------------------------------------------------------------------===//
 
+  /// GetSplitVector - Given a processed vector Op which was split into smaller
+  /// vectors, this method returns the smaller vectors.  The first elements of
+  /// Op coincide with the elements of Lo; the remaining elements of Op coincide
+  /// with the elements of Hi: Op is what you would get by concatenating Lo and
+  /// Hi.  For example, if Op is a v8i32 that was split into two v4i32's, then
+  /// this method returns the two v4i32's, with Lo corresponding to the first 4
+  /// elements of Op, and Hi to the last 4 elements.
   void GetSplitVector(SDValue Op, SDValue &Lo, SDValue &Hi);
   void SetSplitVector(SDValue Op, SDValue Lo, SDValue Hi);
 
