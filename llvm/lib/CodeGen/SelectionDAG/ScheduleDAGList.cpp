@@ -260,18 +260,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
   }
 
 #ifndef NDEBUG
-  // Verify that all SUnits were scheduled.
-  bool AnyNotSched = false;
-  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    if (SUnits[i].NumPredsLeft != 0) {
-      if (!AnyNotSched)
-        cerr << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(this);
-      cerr << "has not been scheduled!\n";
-      AnyNotSched = true;
-    }
-  }
-  assert(!AnyNotSched);
+  VerifySchedule(/*isBottomUp=*/false);
 #endif
 }
 

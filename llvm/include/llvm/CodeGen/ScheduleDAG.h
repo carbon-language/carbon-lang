@@ -96,7 +96,7 @@ namespace llvm {
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        CycleBound(0), Cycle(0), Depth(0), Height(0),
+        CycleBound(0), Cycle(~0u), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
     /// SUnit - Construct an SUnit for post-regalloc scheduling to represent
@@ -106,7 +106,7 @@ namespace llvm {
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        CycleBound(0), Cycle(0), Depth(0), Height(0),
+        CycleBound(0), Cycle(~0u), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
     /// setNode - Assign the representative SDNode for this SUnit.
@@ -307,6 +307,12 @@ namespace llvm {
     /// addCustomGraphFeatures - Add custom features for a visualization of
     /// the ScheduleDAG.
     virtual void addCustomGraphFeatures(GraphWriter<ScheduleDAG*> &GW) const {}
+
+#ifndef NDEBUG
+    /// VerifySchedule - Verify that all SUnits were scheduled and that
+    /// their state is consistent.
+    void VerifySchedule(bool isBottomUp);
+#endif
 
   protected:
     void AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO);

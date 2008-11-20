@@ -208,3 +208,57 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
   }
   cerr << "\n";
 }
+
+#ifndef NDEBUG
+/// VerifySchedule - Verify that all SUnits were scheduled and that
+/// their state is consistent.
+///
+void ScheduleDAG::VerifySchedule(bool isBottomUp) {
+  bool AnyNotSched = false;
+  unsigned DeadNodes = 0;
+  unsigned Noops = 0;
+  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
+    if (!SUnits[i].isScheduled) {
+      if (SUnits[i].NumPreds == 0 && SUnits[i].NumSuccs == 0) {
+        ++DeadNodes;
+        continue;
+      }
+      if (!AnyNotSched)
+        cerr << "*** Scheduling failed! ***\n";
+      SUnits[i].dump(this);
+      cerr << "has not been scheduled!\n";
+      AnyNotSched = true;
+    }
+    if (SUnits[i].isScheduled && SUnits[i].Cycle > (unsigned)INT_MAX) {
+      if (!AnyNotSched)
+        cerr << "*** Scheduling failed! ***\n";
+      SUnits[i].dump(this);
+      cerr << "has an unexpected Cycle value!\n";
+      AnyNotSched = true;
+    }
+    if (isBottomUp) {
+      if (SUnits[i].NumSuccsLeft != 0) {
+        if (!AnyNotSched)
+          cerr << "*** Scheduling failed! ***\n";
+        SUnits[i].dump(this);
+        cerr << "has successors left!\n";
+        AnyNotSched = true;
+      }
+    } else {
+      if (SUnits[i].NumPredsLeft != 0) {
+        if (!AnyNotSched)
+          cerr << "*** Scheduling failed! ***\n";
+        SUnits[i].dump(this);
+        cerr << "has predecessors left!\n";
+        AnyNotSched = true;
+      }
+    }
+  }
+  for (unsigned i = 0, e = Sequence.size(); i != e; ++i)
+    if (!Sequence[i])
+      ++Noops;
+  assert(!AnyNotSched);
+  assert(Sequence.size() + DeadNodes - Noops == SUnits.size() &&
+         "The number of nodes scheduled doesn't match the expected number!");
+}
+#endif
