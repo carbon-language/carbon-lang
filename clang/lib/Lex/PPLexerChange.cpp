@@ -173,10 +173,14 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
       SrcMgr::CharacteristicKind FileType =
         SourceMgr.getFileCharacteristic(CurPPLexer->getFileID());
       
-      if (CurLexer)
+      if (CurLexer) {
+        // FIXME: Should we use the location of 'Result'?
         Callbacks->FileChanged(CurLexer->getSourceLocation(CurLexer->BufferPtr),
                                PPCallbacks::ExitFile, FileType);
-      // FIXME: Add callback support for PTHLexer.
+      }
+      else {
+        assert (0 && "FIXME: Add callback support for PTHLexer.");
+      }
     }
 
     // Client should lex another token.
