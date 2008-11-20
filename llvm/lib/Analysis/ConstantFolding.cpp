@@ -281,7 +281,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
 Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     if (PN->getNumIncomingValues() == 0)
-      return Constant::getNullValue(PN->getType());
+      return UndefValue::get(PN->getType());
 
     Constant *Result = dyn_cast<Constant>(PN->getIncomingValue(0));
     if (Result == 0) return 0;
