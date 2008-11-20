@@ -17,6 +17,8 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/Support/MemoryBuffer.h"
+
 using namespace clang;
 
 PPCallbacks::~PPCallbacks() {}
@@ -72,8 +74,50 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   if (MaxIncludeStackDepth < IncludeMacroStack.size())
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
+#if 1
   Lexer *TheLexer = new Lexer(SourceLocation::getFileLoc(FileID, 0), *this);
   EnterSourceFileWithLexer(TheLexer, CurDir);
+#else
+  const llvm::MemoryBuffer* B = getSourceManager().getBuffer(FileID);
+  
+  // Create a raw lexer.
+  Lexer L(SourceLocation::getFileLoc(FileID, 0), getLangOptions(),
+          B->getBufferStart(), B->getBufferEnd(), B);
+  
+  // Ignore whitespace.
+  L.SetKeepWhitespaceMode(false);
+  L.SetCommentRetentionState(false);
+  
+  // Lex the file, populating our data structures.
+  std::vector<Token>* Tokens = new std::vector<Token>();
+  Token Tok;  
+  
+  do {
+    L.LexFromRawLexer(Tok);
+    
+    if (Tok.is(tok::identifier))
+      Tok.setIdentifierInfo(LookUpIdentifierInfo(Tok));
+    
+    // Store the token.
+    Tokens->push_back(Tok);
+  }
+  while (Tok.isNot(tok::eof));
+  
+  if (CurPPLexer || CurTokenLexer)
+    PushIncludeMacroStack();
+  
+  CurDirLookup = CurDir;
+  SourceLocation Loc = SourceLocation::getFileLoc(FileID, 0);
+  CurPTHLexer.reset(new PTHLexer(*this, Loc, &(*Tokens)[0], Tokens->size()));
+  CurPPLexer = CurPTHLexer.get();
+  
+  // Notify the client, if desired, that we are in a new source file.
+  if (Callbacks) {
+    SrcMgr::CharacteristicKind FileType =
+    SourceMgr.getFileCharacteristic(CurPPLexer->getFileID());    
+    Callbacks->FileChanged(Loc, PPCallbacks::EnterFile, FileType);
+  }
+#endif
 }  
 
 /// EnterSourceFile - Add a source file to the top of the include stack and
@@ -172,14 +216,15 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     if (Callbacks && !isEndOfMacro && CurPPLexer) {
       SrcMgr::CharacteristicKind FileType =
         SourceMgr.getFileCharacteristic(CurPPLexer->getFileID());
-      
+
       if (CurLexer) {
-        // FIXME: Should we use the location of 'Result'?
         Callbacks->FileChanged(CurLexer->getSourceLocation(CurLexer->BufferPtr),
                                PPCallbacks::ExitFile, FileType);
       }
       else {
-        assert (0 && "FIXME: Add callback support for PTHLexer.");
+        // FIXME: Is this okay to use the location of 'Result'?
+        Callbacks->FileChanged(Result.getLocation(), PPCallbacks::ExitFile,
+                               FileType);  
       }
     }
 
@@ -258,9 +303,7 @@ void Preprocessor::RemoveTopOfLexerStack() {
       CurTokenLexer.reset();
     else
       TokenLexerCache[NumCachedTokenLexers++] = CurTokenLexer.take();
-  } else {
-    CurLexer.reset();
-  }
+  }   
   
   PopIncludeMacroStack();
 }
