@@ -103,8 +103,6 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   KnownFunctionIDs[id_vsnprintf_chk] = &IT.get("__builtin___vsnprintf_chk");
   KnownFunctionIDs[id_vprintf]       = &IT.get("vprintf");
 
-  SuperID = &IT.get("super");
-
   // ObjC builtin typedef names.
   Ident_id = &IT.get("id");
   Ident_Class = &IT.get("Class");

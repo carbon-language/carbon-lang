@@ -185,7 +185,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   ObjCInterfaceDecl* ClassDecl = 0;
   bool isSuper = false;
   
-  if (receiverName == SuperID) {
+  if (receiverName->isStr("super")) {
     if (getCurMethodDecl()) {
       isSuper = true;
       ClassDecl = getCurMethodDecl()->getClassInterface()->getSuperClass();

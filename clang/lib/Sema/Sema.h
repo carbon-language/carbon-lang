@@ -192,9 +192,6 @@ public:
   /// This list is populated upon the creation of a Sema object.    
   IdentifierInfo* KnownFunctionIDs[id_num_known_functions];
 
-  /// SuperID - Identifier for "super" used for Objective-C checking.
-  IdentifierInfo* SuperID;
-
   /// Identifiers for builtin ObjC typedef names.
   IdentifierInfo *Ident_id, *Ident_Class;     // "id", "Class"
   IdentifierInfo *Ident_SEL, *Ident_Protocol; // "SEL", "Protocol"

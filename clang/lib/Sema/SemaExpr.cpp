@@ -400,7 +400,7 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       }
     }
     // Needed to implement property "super.method" notation.
-    if (SD == 0 && II == SuperID) {
+    if (SD == 0 && II->isStr("super")) {
       QualType T = Context.getPointerType(Context.getObjCInterfaceType(
                      getCurMethodDecl()->getClassInterface()));
       return new ObjCSuperExpr(Loc, T);
