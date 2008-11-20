@@ -1098,7 +1098,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
 static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
                                            const IdentifierInfo *Name) {
   llvm::SmallString<100> SelectorName;
-  SelectorName += "set";
+  SelectorName = "set";
   SelectorName.append(Name->getName(), Name->getName()+Name->getLength());
   SelectorName[3] = toupper(SelectorName[3]);
   return &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
