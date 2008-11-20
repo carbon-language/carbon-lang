@@ -523,18 +523,19 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
 
 /// SetVarDeclObjCAttribute - Set __weak/__strong attributes into the LValue
 /// object.
-void CodeGenFunction::SetVarDeclObjCAttribute(const VarDecl *VD, 
-                                              const QualType &Ty, 
-                                              LValue &LV)
+static void SetVarDeclObjCAttribute(ASTContext &Ctx, const VarDecl *VD, 
+                                    const QualType &Ty, LValue &LV)
 {
   if (const ObjCGCAttr *A = VD->getAttr<ObjCGCAttr>()) {
     ObjCGCAttr::GCAttrTypes attrType = A->getType();
     LValue::SetObjCType(attrType == ObjCGCAttr::Weak, 
                         attrType == ObjCGCAttr::Strong, LV);
   }
-  else if (CGM.getLangOptions().ObjC1 &&
-           CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
-    if (getContext().isObjCObjectPointerType(Ty))
+  else if (Ctx.getLangOptions().ObjC1 &&
+           Ctx.getLangOptions().getGCMode() != LangOptions::NonGC) {
+    // Default behavious under objective-c's gc is for objective-c pointers
+    // be treated as though they were declared as __strong.
+    if (Ctx.isObjCObjectPointerType(Ty))
       LValue::SetObjCType(false, true, LV);
   }  
 }
@@ -557,12 +558,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     if (VD->isBlockVarDecl() && 
         (VD->getStorageClass() == VarDecl::Static || 
          VD->getStorageClass() == VarDecl::Extern))
-      SetVarDeclObjCAttribute(VD, E->getType(), LV);
+      SetVarDeclObjCAttribute(getContext(), VD, E->getType(), LV);
     return LV;
   } else if (VD && VD->isFileVarDecl()) {
     LValue LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
                                  E->getType().getCVRQualifiers());
-    SetVarDeclObjCAttribute(VD, E->getType(), LV);
+    SetVarDeclObjCAttribute(getContext(), VD, E->getType(), LV);
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     return LValue::MakeAddr(CGM.GetAddrOfFunction(FD),
