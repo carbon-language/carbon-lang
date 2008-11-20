@@ -54,6 +54,10 @@ public:
   /// tok::l_paren token, 0 if it is something else and 2 if there are no more
   /// tokens controlled by this lexer.
   unsigned isNextPPTokenLParen();
+  
+  /// IndirectLex - An indirect call to 'Lex' that can be invoked via
+  ///  the PreprocessorLexer interface.
+  void IndirectLex(Token &Result) { Lex(Result); }
 };
 
 }  // end namespace clang
