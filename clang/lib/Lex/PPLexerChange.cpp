@@ -43,14 +43,15 @@ bool Preprocessor::isInPrimaryFile() const {
 /// getCurrentLexer - Return the current file lexer being lexed from.  Note
 /// that this ignores any potentially active macro expansions and _Pragma
 /// expansions going on at the time.
-Lexer *Preprocessor::getCurrentFileLexer() const {
-  if (CurLexer && !CurLexer->Is_PragmaLexer) return CurLexer.get();
+PreprocessorLexer *Preprocessor::getCurrentFileLexer() const {
+  if (IsNonPragmaNonMacroLexer())
+    return CurPPLexer;
   
   // Look for a stacked lexer.
   for (unsigned i = IncludeMacroStack.size(); i != 0; --i) {
-    Lexer *L = IncludeMacroStack[i-1].TheLexer;
-    if (L && !L->Is_PragmaLexer) // Ignore macro & _Pragma expansions.
-      return L;
+    const IncludeStackInfo& ISI = IncludeMacroStack[i-1];
+    if (IsNonPragmaNonMacroLexer(ISI))
+      return ISI.ThePPLexer;
   }
   return 0;
 }

@@ -211,7 +211,7 @@ public:
   /// getCurrentLexer - Return the current file lexer being lexed from.  Note
   /// that this ignores any potentially active macro expansions and _Pragma
   /// expansions going on at the time.
-  Lexer *getCurrentFileLexer() const;
+  PreprocessorLexer *getCurrentFileLexer() const;
   
   /// getPPCallbacks/setPPCallbacks - Accessors for preprocessor callbacks.
   /// Note that this class takes ownership of any PPCallbacks object given to
