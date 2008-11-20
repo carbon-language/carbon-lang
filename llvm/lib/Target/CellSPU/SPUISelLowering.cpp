@@ -134,7 +134,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setTruncStoreAction(MVT::i8,    MVT::i1, Promote);
+  setTruncStoreAction(MVT::i8,    MVT::i1, Custom);
   setTruncStoreAction(MVT::i16,   MVT::i1, Custom);
   setTruncStoreAction(MVT::i32,   MVT::i1, Custom);
   setTruncStoreAction(MVT::i64,   MVT::i1, Custom);

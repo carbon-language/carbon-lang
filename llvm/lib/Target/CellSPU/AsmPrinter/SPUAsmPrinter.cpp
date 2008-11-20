@@ -189,9 +189,10 @@ namespace {
       assert(MO.isImm() &&
              "printMemRegImmS10 first operand is not immedate");
       int64_t value = int64_t(MI->getOperand(OpNo).getImm());
-      assert((value >= -(1 << (9+4)) && value <= (1 << (9+4)) - 1)
+      int16_t value16 = int16_t(value);
+      assert((value16 >= -(1 << (9+4)) && value16 <= (1 << (9+4)) - 1)
              && "Invalid dform s10 offset argument");
-      O << value << "(";
+      O << value16 << "(";
       printOperand(MI, OpNo+1);
       O << ")";
     }
