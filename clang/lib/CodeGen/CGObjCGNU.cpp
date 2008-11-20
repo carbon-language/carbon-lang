@@ -136,6 +136,8 @@ public:
                                   llvm::Value *src, llvm::Value *dst);
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                     llvm::Value *src, llvm::Value *dest);
+  virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
+                                    llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
 };
@@ -990,6 +992,12 @@ void CGObjCGNU::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 
 void CGObjCGNU::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                      llvm::Value *src, llvm::Value *dst)
+{
+  return;
+}
+
+void CGObjCGNU::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
+                                   llvm::Value *src, llvm::Value *dst)
 {
   return;
 }

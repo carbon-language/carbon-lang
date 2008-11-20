@@ -175,6 +175,9 @@ public:
   /// GcAssignGlobalFn -- LLVM objc_assign_global function.
   llvm::Function *GcAssignGlobalFn;
   
+  /// GcAssignIvarFn -- LLVM objc_assign_ivar function.
+  llvm::Function *GcAssignIvarFn;
+  
   /// GcAssignStrongCastFn -- LLVM objc_assign_strongCast function.
   llvm::Function *GcAssignStrongCastFn;
   
@@ -460,6 +463,8 @@ public:
                                   llvm::Value *src, llvm::Value *dst); 
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                     llvm::Value *src, llvm::Value *dest);
+  virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
+                                  llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
 };
@@ -1820,6 +1825,19 @@ void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
   return;
 }
 
+/// EmitObjCIvarAssign - Code gen for assigning to a __strong object.
+/// objc_assign_ivar (id src, id *dst)
+///
+void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
+                                   llvm::Value *src, llvm::Value *dst)
+{
+  src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
+  dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
+  CGF.Builder.CreateCall2(ObjCTypes.GcAssignIvarFn,
+                          src, dst, "assignivar");
+  return;
+}
+
 /// EmitObjCStrongCastAssign - Code gen for assigning to a __strong cast object.
 /// objc_assign_strongCast (id src, id *dst)
 ///
@@ -2637,6 +2655,11 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                       Params,
                                                       false),
                            "objc_assign_global");
+  GcAssignIvarFn =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      false),
+                           "objc_assign_ivar");
   GcAssignStrongCastFn =
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
                                                       Params,
