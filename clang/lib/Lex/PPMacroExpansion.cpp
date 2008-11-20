@@ -119,6 +119,8 @@ bool Preprocessor::isNextPPTokenLParen() {
       IncludeStackInfo &Entry = IncludeMacroStack[i-1];
       if (Entry.TheLexer)
         Val = Entry.TheLexer->isNextPPTokenLParen();
+      else if (Entry.ThePTHLexer)
+        Val = Entry.ThePTHLexer->isNextPPTokenLParen();
       else
         Val = Entry.TheTokenLexer->isNextTokenLParen();
       
@@ -126,7 +128,7 @@ bool Preprocessor::isNextPPTokenLParen() {
         break;
       
       // Ran off the end of a source file?
-      if (Entry.TheLexer)
+      if (Entry.ThePPLexer)
         return false;
     }
   }
