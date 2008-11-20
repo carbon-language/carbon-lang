@@ -1185,15 +1185,6 @@ namespace {
     bool operator()(const SUnit* left, const SUnit* right) const;
   };
 
-  struct bu_ls_rr_fast_sort : public std::binary_function<SUnit*, SUnit*, bool>{
-    RegReductionPriorityQueue<bu_ls_rr_fast_sort> *SPQ;
-    bu_ls_rr_fast_sort(RegReductionPriorityQueue<bu_ls_rr_fast_sort> *spq)
-      : SPQ(spq) {}
-    bu_ls_rr_fast_sort(const bu_ls_rr_fast_sort &RHS) : SPQ(RHS.SPQ) {}
-    
-    bool operator()(const SUnit* left, const SUnit* right) const;
-  };
-
   struct td_ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     RegReductionPriorityQueue<td_ls_rr_sort> *SPQ;
     td_ls_rr_sort(RegReductionPriorityQueue<td_ls_rr_sort> *spq) : SPQ(spq) {}
@@ -1449,17 +1440,6 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (left->CycleBound != right->CycleBound)
     return left->CycleBound > right->CycleBound;
 
-  assert(left->NodeQueueId && right->NodeQueueId && 
-         "NodeQueueId cannot be zero");
-  return (left->NodeQueueId > right->NodeQueueId);
-}
-
-bool
-bu_ls_rr_fast_sort::operator()(const SUnit *left, const SUnit *right) const {
-  unsigned LPriority = SPQ->getNodePriority(left);
-  unsigned RPriority = SPQ->getNodePriority(right);
-  if (LPriority != RPriority)
-    return LPriority > RPriority;
   assert(left->NodeQueueId && right->NodeQueueId && 
          "NodeQueueId cannot be zero");
   return (left->NodeQueueId > right->NodeQueueId);
