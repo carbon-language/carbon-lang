@@ -3148,6 +3148,86 @@ Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
   return CheckFunctionCall(Method, TheCall.take());
 }
 
+/// BuildOverloadedArrowExpr - Build a call to an overloaded @c operator->
+///  (if one exists), where @c Base is an expression of class type and 
+/// @c Member is the name of the member we're trying to find.
+Action::ExprResult 
+Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
+                               SourceLocation MemberLoc,
+                               IdentifierInfo &Member) {
+  assert(Base->getType()->isRecordType() && "left-hand side must have class type");
+  
+  // C++ [over.ref]p1:
+  //
+  //   [...] An expression x->m is interpreted as (x.operator->())->m
+  //   for a class object x of type T if T::operator->() exists and if
+  //   the operator is selected as the best match function by the
+  //   overload resolution mechanism (13.3).
+  // FIXME: look in base classes.
+  DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Arrow);
+  OverloadCandidateSet CandidateSet;
+  const RecordType *BaseRecord = Base->getType()->getAsRecordType();
+  IdentifierResolver::iterator I
+    = IdResolver.begin(OpName, cast<CXXRecordType>(BaseRecord)->getDecl(),
+                       /*LookInParentCtx=*/false);
+  NamedDecl *MemberOps = (I == IdResolver.end())? 0 : *I;
+  if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
+    AddMethodCandidate(Method, Base, 0, 0, CandidateSet,
+                       /*SuppressUserConversions=*/false);
+  else if (OverloadedFunctionDecl *Ovl 
+             = dyn_cast_or_null<OverloadedFunctionDecl>(MemberOps)) {
+    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+           FEnd = Ovl->function_end();
+         F != FEnd; ++F) {
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*F))
+        AddMethodCandidate(Method, Base, 0, 0, CandidateSet,
+                           /*SuppressUserConversions=*/false);
+    }
+  }
+
+  // Perform overload resolution.
+  OverloadCandidateSet::iterator Best;
+  switch (BestViableFunction(CandidateSet, Best)) {
+  case OR_Success:
+    // Overload resolution succeeded; we'll build the call below.
+    break;
+
+  case OR_No_Viable_Function:
+    if (CandidateSet.empty())
+      Diag(OpLoc, diag::err_typecheck_member_reference_arrow)
+        << Base->getType().getAsString() << Base->getSourceRange();
+    else
+      Diag(OpLoc, diag::err_ovl_no_viable_oper)
+        << "operator->" << Base->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+    delete Base;
+    return true;
+
+  case OR_Ambiguous:
+    Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
+      << "operator->"
+      << Base->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+    delete Base;
+    return true;
+  }
+
+  // Convert the object parameter.
+  CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
+  if (PerformObjectArgumentInitialization(Base, Method)) {
+    delete Base;
+    return true;
+  }
+
+  // Build the operator call.
+  Expr *FnExpr = new DeclRefExpr(Method, Method->getType(), SourceLocation());
+  UsualUnaryConversions(FnExpr);
+  Base = new CXXOperatorCallExpr(FnExpr, &Base, 1, 
+                                 Method->getResultType().getNonReferenceType(),
+                                 OpLoc);
+  return ActOnMemberReferenceExpr(Base, OpLoc, tok::arrow, MemberLoc, Member);
+}
+
 /// FixOverloadedFunctionReference - E is an expression that refers to
 /// a C++ overloaded function (possibly with some parentheses and
 /// perhaps a '&' around it). We have resolved the overloaded function

@@ -444,6 +444,10 @@ public:
                                SourceLocation *CommaLocs, 
                                SourceLocation RParenLoc);
 
+  ExprResult BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
+                                      SourceLocation MemberLoc,
+                                      IdentifierInfo &Member);
+                                           
   /// Helpers for dealing with function parameters
   bool CheckParmsForFunctionDef(FunctionDecl *FD);
   void CheckCXXDefaultArguments(FunctionDecl *FD);

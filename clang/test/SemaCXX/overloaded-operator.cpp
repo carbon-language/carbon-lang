@@ -150,3 +150,21 @@ void test_funcptr_call(ConvertToFunc ctf) {
   ctf((long int)17, 2.0); // expected-error{{error: call to object of type 'struct ConvertToFunc' is ambiguous; candidates are:}}
   ctf();
 }
+
+struct HasMember {
+  int m;
+};
+
+struct Arrow1 {
+  HasMember* operator->();
+};
+
+struct Arrow2 {
+  Arrow1 operator->(); // expected-note{{candidate function}}
+};
+
+void test_arrow(Arrow1 a1, Arrow2 a2, const Arrow2 a3) {
+  int &i1 = a1->m;
+  int &i2 = a2->m;
+  a3->m; // expected-error{{no viable overloaded 'operator->'; candidates are}}
+}

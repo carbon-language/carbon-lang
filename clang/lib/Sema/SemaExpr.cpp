@@ -1122,6 +1122,8 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
   if (OpKind == tok::arrow) {
     if (const PointerType *PT = BaseType->getAsPointerType())
       BaseType = PT->getPointeeType();
+    else if (getLangOptions().CPlusPlus && BaseType->isRecordType())
+      return BuildOverloadedArrowExpr(BaseExpr, OpLoc, MemberLoc, Member);
     else
       return Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
         << BaseType.getAsString() << BaseExpr->getSourceRange();
