@@ -210,8 +210,8 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
     if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
       return true;
   } else if (!condType->isScalarType()) // C99 6.8.4.1p1
-    return Diag(IfLoc, diag::err_typecheck_statement_requires_scalar,
-             condType.getAsString(), condExpr->getSourceRange());
+    return Diag(IfLoc, diag::err_typecheck_statement_requires_scalar)
+      << condType.getAsString() << condExpr->getSourceRange();
 
   // Warn if the if block has a null body without an else value.
   // this helps prevent bugs due to typos, such as
@@ -275,7 +275,7 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     // If the input was signed and negative and the output is unsigned,
     // warn.
     if (!NewSign && OldVal.isSigned() && OldVal.isNegative())
-      Diag(Loc, DiagID, OldVal.toString(10), Val.toString(10));
+      Diag(Loc, DiagID) << OldVal.toString(10) << Val.toString(10);
     
     Val.setIsSigned(NewSign);
   } else if (NewWidth < Val.getBitWidth()) {
@@ -286,7 +286,7 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     ConvVal.extend(Val.getBitWidth());
     ConvVal.setIsSigned(Val.isSigned());
     if (ConvVal != Val)
-      Diag(Loc, DiagID, Val.toString(10), ConvVal.toString(10));
+      Diag(Loc, DiagID) << Val.toString(10) << ConvVal.toString(10);
     
     // Regardless of whether a diagnostic was emitted, really do the
     // truncation.
@@ -299,7 +299,7 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     Val.setIsSigned(NewSign);
     
     if (Val.isNegative())  // Sign bit changes meaning.
-      Diag(Loc, DiagID, OldVal.toString(10), Val.toString(10));
+      Diag(Loc, DiagID) << OldVal.toString(10) << Val.toString(10);
   }
 }
 
@@ -349,8 +349,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
   QualType CondType = CondExpr->getType();
   
   if (!CondType->isIntegerType()) { // C99 6.8.4.2p1
-    Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer,
-         CondType.getAsString(), CondExpr->getSourceRange());
+    Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer)
+      << CondType.getAsString() << CondExpr->getSourceRange();
     return true;
   }
   
@@ -422,7 +422,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
       if (CaseVals[i].first == CaseVals[i+1].first) {
         // If we have a duplicate, report it.
         Diag(CaseVals[i+1].second->getLHS()->getLocStart(),
-             diag::err_duplicate_case, CaseVals[i].first.toString(10));
+             diag::err_duplicate_case) << CaseVals[i].first.toString(10);
         Diag(CaseVals[i].second->getLHS()->getLocStart(), 
              diag::err_duplicate_case_prev);
         // FIXME: We really want to remove the bogus case stmt from the substmt,
@@ -505,8 +505,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
       
       if (OverlapStmt) {
         // If we have a duplicate, report it.
-        Diag(CR->getLHS()->getLocStart(),
-             diag::err_duplicate_case, OverlapVal.toString(10));
+        Diag(CR->getLHS()->getLocStart(), diag::err_duplicate_case)
+          << OverlapVal.toString(10);
         Diag(OverlapStmt->getLHS()->getLocStart(), 
              diag::err_duplicate_case_prev);
         // FIXME: We really want to remove the bogus case stmt from the substmt,
@@ -536,8 +536,8 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
     if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
       return true;
   } else if (!condType->isScalarType()) // C99 6.8.5p2
-    return Diag(WhileLoc, diag::err_typecheck_statement_requires_scalar,
-             condType.getAsString(), condExpr->getSourceRange());
+    return Diag(WhileLoc, diag::err_typecheck_statement_requires_scalar)
+      << condType.getAsString() << condExpr->getSourceRange();
 
   return new WhileStmt(condExpr, (Stmt*)Body, WhileLoc);
 }
@@ -555,8 +555,8 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,
     if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
       return true;
   } else if (!condType->isScalarType()) // C99 6.8.5p2
-    return Diag(DoLoc, diag::err_typecheck_statement_requires_scalar,
-             condType.getAsString(), condExpr->getSourceRange());
+    return Diag(DoLoc, diag::err_typecheck_statement_requires_scalar)
+      << condType.getAsString() << condExpr->getSourceRange();
 
   return new DoStmt((Stmt*)Body, condExpr, DoLoc);
 }
@@ -593,8 +593,8 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
       if (CheckCXXBooleanCondition(Second)) // C++ 6.4p4
         return true;
     } else if (!SecondType->isScalarType()) // C99 6.8.5p2
-      return Diag(ForLoc, diag::err_typecheck_statement_requires_scalar,
-                  SecondType.getAsString(), Second->getSourceRange());
+      return Diag(ForLoc, diag::err_typecheck_statement_requires_scalar)
+        << SecondType.getAsString() << Second->getSourceRange();
   }
   return new ForStmt(First, Second, Third, Body, ForLoc);
 }

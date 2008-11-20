@@ -125,8 +125,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
     // be complete.
     //
     if (!RT->getDecl()->isDefinition())
-      return Diag(TyBeginLoc, diag::err_invalid_incomplete_type_use,
-                  Ty.getAsString(), FullRange);
+      return Diag(TyBeginLoc, diag::err_invalid_incomplete_type_use)
+        << Ty.getAsString() << FullRange;
 
     unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
                                     "class constructors are not supported yet");
@@ -233,8 +233,8 @@ bool Sema::CheckCXXBooleanCondition(Expr *&CondExpr) {
   AssignConvertType
     ConvTy = CheckSingleAssignmentConstraints(Context.BoolTy, CondExpr);
   if (ConvTy == Incompatible)
-    return Diag(CondExpr->getLocStart(), diag::err_typecheck_bool_condition,
-                Ty.getAsString(), CondExpr->getSourceRange());
+    return Diag(CondExpr->getLocStart(), diag::err_typecheck_bool_condition)
+      << Ty.getAsString() << CondExpr->getSourceRange();
   return false;
 }
 

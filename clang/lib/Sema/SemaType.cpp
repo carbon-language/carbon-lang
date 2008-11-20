@@ -203,14 +203,14 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
         // incomplete type.
         if (!EltTy->isIncompleteOrObjectType()) {
           Diag(DS.getRestrictSpecLoc(),
-               diag::err_typecheck_invalid_restrict_invalid_pointee,
-               EltTy.getAsString(), DS.getSourceRange());
+               diag::err_typecheck_invalid_restrict_invalid_pointee)
+            << EltTy.getAsString() << DS.getSourceRange();
           TypeQuals &= ~QualType::Restrict; // Remove the restrict qualifier.
         }
       } else {
         Diag(DS.getRestrictSpecLoc(),
-             diag::err_typecheck_invalid_restrict_not_pointer,
-             Result.getAsString(), DS.getSourceRange());
+             diag::err_typecheck_invalid_restrict_not_pointer)
+          << Result.getAsString() << DS.getSourceRange();
         TypeQuals &= ~QualType::Restrict; // Remove the restrict qualifier.
       }
     }
@@ -228,8 +228,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
                "Has CV quals but not C or V?");
         Loc = DS.getVolatileSpecLoc();
       }
-      Diag(Loc, diag::warn_typecheck_function_qualifiers,
-           Result.getAsString(), DS.getSourceRange());
+      Diag(Loc, diag::warn_typecheck_function_qualifiers)
+        << Result.getAsString() << DS.getSourceRange();
     }
     
     // C++ [dcl.ref]p1:
@@ -275,8 +275,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
     case DeclaratorChunk::Pointer:
       if (T->isReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... pointers to references ...
-        Diag(DeclType.Loc, diag::err_illegal_decl_pointer_to_reference,
-             D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
+        Diag(DeclType.Loc, diag::err_illegal_decl_pointer_to_reference)
+         << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
         D.setInvalidType(true);
         T = Context.IntTy;
       }
@@ -285,9 +285,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // object or incomplete types shall not be restrict-qualified."
       if ((DeclType.Ptr.TypeQuals & QualType::Restrict) &&
           !T->isIncompleteOrObjectType()) {
-        Diag(DeclType.Loc,
-             diag::err_typecheck_invalid_restrict_invalid_pointee,
-             T.getAsString());
+        Diag(DeclType.Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
+          << T.getAsString();
         DeclType.Ptr.TypeQuals &= QualType::Restrict;
       }        
         
@@ -327,9 +326,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // object or incomplete types shall not be restrict-qualified."
       if (DeclType.Ref.HasRestrict &&
           !T->isIncompleteOrObjectType()) {
-        Diag(DeclType.Loc,
-             diag::err_typecheck_invalid_restrict_invalid_pointee,
-             T.getAsString());
+        Diag(DeclType.Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
+          << T.getAsString();
         DeclType.Ref.HasRestrict = false;
       }        
 
@@ -355,39 +353,39 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // C99 6.7.5.2p1: If the element type is an incomplete or function type, 
       // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
       if (T->isIncompleteType()) { 
-        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_incomplete_type,
-             T.getAsString());
+        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_incomplete_type)
+          << T.getAsString();
         T = Context.IntTy;
         D.setInvalidType(true);
       } else if (T->isFunctionType()) {
-        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,
-             D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
+        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions)
+          << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
         T = Context.getPointerType(T);
         D.setInvalidType(true);
       } else if (const ReferenceType *RT = T->getAsReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... arrays of references ...
-        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references,
-             D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
+        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references)
+          << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
         T = RT->getPointeeType();
         D.setInvalidType(true);
       } else if (const RecordType *EltTy = T->getAsRecordType()) {
         // If the element type is a struct or union that contains a variadic
         // array, reject it: C99 6.7.2.1p2.
         if (EltTy->getDecl()->hasFlexibleArrayMember()) {
-          Diag(DeclType.Loc, diag::err_flexible_array_in_array,
-               T.getAsString());
+          Diag(DeclType.Loc, diag::err_flexible_array_in_array)
+            << T.getAsString();
           T = Context.IntTy;
           D.setInvalidType(true);
         }
       } else if (T->isObjCInterfaceType()) {
-        Diag(DeclType.Loc, diag::warn_objc_array_of_interfaces,
-             T.getAsString());
+        Diag(DeclType.Loc, diag::warn_objc_array_of_interfaces)
+        << T.getAsString();
       }
       
       // C99 6.7.5.2p1: The size expression shall have integer type.
       if (ArraySize && !ArraySize->getType()->isIntegerType()) {
-        Diag(ArraySize->getLocStart(), diag::err_array_size_non_int, 
-             ArraySize->getType().getAsString(), ArraySize->getSourceRange());
+        Diag(ArraySize->getLocStart(), diag::err_array_size_non_int)
+          << ArraySize->getType().getAsString() << ArraySize->getSourceRange();
         D.setInvalidType(true);
         delete ArraySize;
         ATI.NumElts = ArraySize = 0;

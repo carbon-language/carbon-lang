@@ -632,10 +632,10 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
         SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
                                                     LastConversionIdx+1);
     
-        Diag(Loc, diag::warn_printf_invalid_conversion, 
-          std::string(Str+LastConversionIdx, 
-          Str+std::min(LastConversionIdx+2, StrLen)),
-          OrigFormatExpr->getSourceRange());
+        Diag(Loc, diag::warn_printf_invalid_conversion)
+          <<  std::string(Str+LastConversionIdx,
+                          Str+std::min(LastConversionIdx+2, StrLen))
+          << OrigFormatExpr->getSourceRange();
       }
       ++numConversions;
       break;
@@ -653,9 +653,9 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
         SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
                                                         LastConversionIdx+1);
             
-        Diag(Loc, diag::warn_printf_invalid_conversion, 
-             std::string(Str+LastConversionIdx, Str+StrIdx),
-             OrigFormatExpr->getSourceRange());
+        Diag(Loc, diag::warn_printf_invalid_conversion)
+          << std::string(Str+LastConversionIdx, Str+StrIdx)
+          << OrigFormatExpr->getSourceRange();
              
         // This conversion is broken.  Advance to the next format
         // conversion.
@@ -676,10 +676,10 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
     SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
                                                     LastConversionIdx+1);
     
-    Diag(Loc, diag::warn_printf_invalid_conversion,
-         std::string(Str+LastConversionIdx,
-                     Str+std::min(LastConversionIdx+2, StrLen)),
-         OrigFormatExpr->getSourceRange());
+    Diag(Loc, diag::warn_printf_invalid_conversion)
+      << std::string(Str+LastConversionIdx,
+                     Str+std::min(LastConversionIdx+2, StrLen))
+      << OrigFormatExpr->getSourceRange();
     return;
   }
   

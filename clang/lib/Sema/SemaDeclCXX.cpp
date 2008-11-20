@@ -576,15 +576,15 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
       } else {
         // not const integral.
-        Diag(Loc, diag::err_member_initialization,
-             Name.getAsString(), Init->getSourceRange());
+        Diag(Loc, diag::err_member_initialization)
+          << Name.getAsString() << Init->getSourceRange();
         InvalidDecl = true;
       }
 
     } else {
       // not static member.
-      Diag(Loc, diag::err_member_initialization,
-           Name.getAsString(), Init->getSourceRange());
+      Diag(Loc, diag::err_member_initialization)
+        << Name.getAsString() << Init->getSourceRange();
       InvalidDecl = true;
     }
   }
@@ -1442,18 +1442,16 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
     
   case OR_No_Viable_Function:
     if (CandidateSet.empty())
-      Diag(Loc, diag::err_ovl_no_viable_function_in_init, 
-           InitEntity, Range);
+      Diag(Loc, diag::err_ovl_no_viable_function_in_init) << InitEntity, Range;
     else {
-      Diag(Loc, diag::err_ovl_no_viable_function_in_init_with_cands, 
-           InitEntity, Range);
+      Diag(Loc, diag::err_ovl_no_viable_function_in_init_with_cands)
+        << InitEntity << Range;
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     }
     return 0;
     
   case OR_Ambiguous:
-    Diag(Loc, diag::err_ovl_ambiguous_init, 
-         InitEntity, Range);
+    Diag(Loc, diag::err_ovl_ambiguous_init) << InitEntity << Range;
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     return 0;
   }
@@ -1848,8 +1846,8 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
          Param != FnDecl->param_end(); ++Param) {
       if (Expr *DefArg = (*Param)->getDefaultArg())
         return Diag((*Param)->getLocation(),
-                    diag::err_operator_overload_default_arg,
-                    FnDecl->getName(), DefArg->getSourceRange());
+                    diag::err_operator_overload_default_arg)
+          << FnDecl->getName() << DefArg->getSourceRange();
     }
   }
 

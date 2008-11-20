@@ -581,7 +581,7 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
     Diag(ImpLoc, diag::warn_incomplete_impl);
     IncompleteImpl = true;
   }
-  Diag(ImpLoc, diag::warn_undef_method_impl, method->getSelector().getName());
+  Diag(ImpLoc, diag::warn_undef_method_impl) << method->getSelector().getName();
 }
 
 /// FIXME: Type hierarchies in Objective-C can be deep. We could most
@@ -824,7 +824,7 @@ ObjCMethodDecl *Sema::LookupInstanceMethodInGlobalPool(Selector Sel,
         issueWarning = true;
   }
   if (issueWarning && (MethList.Method && MethList.Next)) {
-    Diag(R.getBegin(), diag::warn_multiple_method_decl, Sel.getName(), R);
+    Diag(R.getBegin(), diag::warn_multiple_method_decl) << Sel.getName() << R;
     Diag(MethList.Method->getLocStart(), diag::warn_using_decl)
       << MethList.Method->getSourceRange();
     for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next)

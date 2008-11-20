@@ -841,16 +841,16 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     //
     if (PrevDecl == 0) {
       // No previous declaration in the qualifying scope.
-      Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member,
-           Name.getAsString(), D.getCXXScopeSpec().getRange());
+      Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
+        << Name.getAsString() << D.getCXXScopeSpec().getRange();
     } else if (!CurContext->Encloses(DC)) {
       // The qualifying scope doesn't enclose the original declaration.
       // Emit diagnostic based on current scope.
       SourceLocation L = D.getIdentifierLoc();
       SourceRange R = D.getCXXScopeSpec().getRange();
       if (isa<FunctionDecl>(CurContext)) {
-        Diag(L, diag::err_invalid_declarator_in_function, Name.getAsString(), 
-             R);
+        Diag(L, diag::err_invalid_declarator_in_function)
+          << Name.getAsString() << R;
       } else {
       Diag(L, diag::err_invalid_declarator_scope)
           << Name.getAsString() << cast<NamedDecl>(DC)->getName() << R;
@@ -1808,10 +1808,8 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
     //   within its class declaration (9.2), and where the extern
     //   specifier is explicitly used.
     if (Type->isReferenceType() && Var->getStorageClass() != VarDecl::Extern) {
-      Diag(Var->getLocation(),
-           diag::err_reference_var_requires_init,
-           Var->getName(), 
-           SourceRange(Var->getLocation(), Var->getLocation()));
+      Diag(Var->getLocation(), diag::err_reference_var_requires_init)
+       << Var->getName() << SourceRange(Var->getLocation(), Var->getLocation());
       Var->setInvalidDecl();
       return;
     }

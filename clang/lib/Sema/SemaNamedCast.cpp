@@ -730,9 +730,9 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
       return;
     }
   } else {
-    Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class,
-      SrcPointee.getUnqualifiedType().getAsString(),
-      SrcExpr->getSourceRange());
+    Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class)
+      << SrcPointee.getUnqualifiedType().getAsString()
+      << SrcExpr->getSourceRange();
     return;
   }
 
@@ -769,8 +769,9 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   const RecordDecl *SrcDecl = SrcRecord->getDecl()->getDefinition(Self.Context);
   assert(SrcDecl && "Definition missing");
   if (!cast<CXXRecordDecl>(SrcDecl)->isPolymorphic()) {
-    Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_polymorphic,
-      SrcPointee.getUnqualifiedType().getAsString(), SrcExpr->getSourceRange());
+    Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_polymorphic)
+      << SrcPointee.getUnqualifiedType().getAsString()
+      << SrcExpr->getSourceRange();
   }
 
   // Done. Everything else is run-time checks.

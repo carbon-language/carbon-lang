@@ -416,8 +416,8 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
       if (SS && !SS->isEmpty())
-        return Diag(Loc, diag::err_typecheck_no_member,
-                    Name.getAsString(), SS->getRange());
+        return Diag(Loc, diag::err_typecheck_no_member)
+          << Name.getAsString() << SS->getRange();
       else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
                Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
         return Diag(Loc, diag::err_undeclared_use) << Name.getAsString();
@@ -2598,9 +2598,9 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
           Loc.isFileID() && UO->getOperatorLoc().isFileID() &&
           // Only if the two operators are exactly adjacent.
           Loc.getFileLocWithOffset(1) == UO->getOperatorLoc())
-        Diag(Loc, diag::warn_not_compound_assign,
-             UO->getOpcode() == UnaryOperator::Plus ? "+" : "-",
-             SourceRange(UO->getOperatorLoc(), UO->getOperatorLoc()));
+        Diag(Loc, diag::warn_not_compound_assign)
+          << (UO->getOpcode() == UnaryOperator::Plus ? "+" : "-")
+          << SourceRange(UO->getOperatorLoc(), UO->getOperatorLoc());
     }
   } else {
     // Compound assignment "x += y"
@@ -2776,23 +2776,23 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     }
   } else if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(op)) { // C99 6.5.3.2p1
     if (MemExpr->getMemberDecl()->isBitField()) {
-      Diag(OpLoc, diag::err_typecheck_address_of, 
-           std::string("bit-field"), op->getSourceRange());
+      Diag(OpLoc, diag::err_typecheck_address_of)
+        << "bit-field" << op->getSourceRange();
       return QualType();
     }
   // Check for Apple extension for accessing vector components.
   } else if (isa<ArraySubscriptExpr>(op) &&
            cast<ArraySubscriptExpr>(op)->getBase()->getType()->isVectorType()) {
-    Diag(OpLoc, diag::err_typecheck_address_of, 
-         std::string("vector"), op->getSourceRange());
+    Diag(OpLoc, diag::err_typecheck_address_of)
+      << "vector" << op->getSourceRange();
     return QualType();
   } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared 
     // with the register storage-class specifier.
     if (const VarDecl *vd = dyn_cast<VarDecl>(dcl)) {
       if (vd->getStorageClass() == VarDecl::Register) {
-        Diag(OpLoc, diag::err_typecheck_address_of, 
-             std::string("register variable"), op->getSourceRange());
+        Diag(OpLoc, diag::err_typecheck_address_of)
+          << "register variable" << op->getSourceRange();
         return QualType();
       }
     } else if (isa<OverloadedFunctionDecl>(dcl))
@@ -2817,8 +2817,8 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
     // and such a warning is unlikely to catch any mistakes.
     return PT->getPointeeType();
   }
-  Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer, 
-       qType.getAsString(), op->getSourceRange());
+  Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer)
+    << qType.getAsString() << op->getSourceRange();
   return QualType();
 }
 
@@ -3223,27 +3223,27 @@ Action::ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
              resultType->isPointerType())
       break;
 
-    return Diag(OpLoc, diag::err_typecheck_unary_expr, 
-                resultType.getAsString());
+    return Diag(OpLoc, diag::err_typecheck_unary_expr)
+          << resultType.getAsString();
   case UnaryOperator::Not: // bitwise complement
     UsualUnaryConversions(Input);
     resultType = Input->getType();
     // C99 6.5.3.3p1. We allow complex int and float as a GCC extension.
     if (resultType->isComplexType() || resultType->isComplexIntegerType())
       // C99 does not support '~' for complex conjugation.
-      Diag(OpLoc, diag::ext_integer_complement_complex,
-           resultType.getAsString(), Input->getSourceRange());
+      Diag(OpLoc, diag::ext_integer_complement_complex)
+        << resultType.getAsString() << Input->getSourceRange();
     else if (!resultType->isIntegerType())
-      return Diag(OpLoc, diag::err_typecheck_unary_expr,
-                  resultType.getAsString(), Input->getSourceRange());
+      return Diag(OpLoc, diag::err_typecheck_unary_expr)
+        << resultType.getAsString() << Input->getSourceRange();
     break;
   case UnaryOperator::LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
     DefaultFunctionArrayConversion(Input);
     resultType = Input->getType();
     if (!resultType->isScalarType()) // C99 6.5.3.3p1
-      return Diag(OpLoc, diag::err_typecheck_unary_expr,
-                  resultType.getAsString());
+      return Diag(OpLoc, diag::err_typecheck_unary_expr)
+        << resultType.getAsString();
     // LNot always has type int. C99 6.5.3.3p5.
     resultType = Context.IntTy;
     break;
@@ -3320,7 +3320,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
   // one is known to be a field designator.  Verify that the ArgTy represents
   // a struct/union/class.
   if (!ArgTy->isRecordType())
-    return Diag(TypeLoc, diag::err_offsetof_record_type,ArgTy.getAsString());
+    return Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy.getAsString();
   
   // Otherwise, create a compound literal expression as the base, and
   // iteratively process the offsetof designators.
@@ -3339,8 +3339,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
       const ArrayType *AT = Context.getAsArrayType(Res->getType());
       if (!AT) {
         delete Res;
-        return Diag(OC.LocEnd, diag::err_offsetof_array_type,
-                    Res->getType().getAsString());
+        return Diag(OC.LocEnd, diag::err_offsetof_array_type)
+          << Res->getType().getAsString();
       }
       
       // FIXME: C++: Verify that operator[] isn't overloaded.
@@ -3358,8 +3358,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
     const RecordType *RC = Res->getType()->getAsRecordType();
     if (!RC) {
       delete Res;
-      return Diag(OC.LocEnd, diag::err_offsetof_record_type,
-                  Res->getType().getAsString());
+      return Diag(OC.LocEnd, diag::err_offsetof_record_type)
+        << Res->getType().getAsString();
     }
       
     // Get the decl corresponding to this.
@@ -3604,8 +3604,8 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
     typeNames += Args[i+1]->getType().getAsString();
   }
 
-  return Diag(BuiltinLoc, diag::err_overload_no_match, typeNames,
-              SourceRange(BuiltinLoc, RParenLoc));
+  return Diag(BuiltinLoc, diag::err_overload_no_match)
+    << typeNames << SourceRange(BuiltinLoc, RParenLoc);
 }
 
 Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
@@ -3628,9 +3628,8 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
 
   if (CheckAssignmentConstraints(VaListType, E->getType()) != Compatible)
     return Diag(E->getLocStart(),
-                diag::err_first_argument_to_va_arg_not_of_type_va_list,
-                E->getType().getAsString(),
-                E->getSourceRange());
+                diag::err_first_argument_to_va_arg_not_of_type_va_list)
+      << E->getType().getAsString() << E->getSourceRange();
   
   // FIXME: Warn if a non-POD type is passed in.
   
