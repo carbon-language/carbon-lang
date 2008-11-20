@@ -192,10 +192,6 @@ public:
   /// This list is populated upon the creation of a Sema object.    
   IdentifierInfo* KnownFunctionIDs[id_num_known_functions];
 
-  /// Identifiers for builtin ObjC typedef names.
-  IdentifierInfo *Ident_id, *Ident_Class;     // "id", "Class"
-  IdentifierInfo *Ident_SEL, *Ident_Protocol; // "SEL", "Protocol"
-
   /// Identifiers used by the C++ language
   IdentifierInfo *Ident_StdNs; // "std"
   IdentifierInfo *Ident_TypeInfo; // "type_info" - lazily created

@@ -294,17 +294,27 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   // Allow multiple definitions for ObjC built-in typedefs.
   // FIXME: Verify the underlying types are equivalent!
   if (getLangOptions().ObjC1) {
-    const IdentifierInfo *typeIdent = New->getIdentifier();
-    if (typeIdent == Ident_id) {
+    const IdentifierInfo *TypeID = New->getIdentifier();
+    switch (TypeID->getLength()) {
+    default: break;
+    case 2: 
+      if (!TypeID->isStr("id"))
+        break;
       Context.setObjCIdType(New);
       return New;
-    } else if (typeIdent == Ident_Class) {
+    case 5:
+      if (!TypeID->isStr("Class"))
+        break;
       Context.setObjCClassType(New);
       return New;
-    } else if (typeIdent == Ident_SEL) {
+    case 3:
+      if (!TypeID->isStr("SEL"))
+        break;
       Context.setObjCSelType(New);
       return New;
-    } else if (typeIdent == Ident_Protocol) {
+    case 8:
+      if (!TypeID->isStr("Protocol"))
+        break;
       Context.setObjCProtoType(New->getUnderlyingType());
       return New;
     }
