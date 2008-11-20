@@ -130,15 +130,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   addRegisterClass(MVT::f64,  SPU::R64FPRegisterClass);
   addRegisterClass(MVT::i128, SPU::GPRCRegisterClass);
 
+  // Initialize libcalls:
+  setLibcallName(RTLIB::MUL_I64, "__muldi3");
+
   // SPU has no sign or zero extended loads for i1, i8, i16:
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setTruncStoreAction(MVT::i8,    MVT::i1, Custom);
-  setTruncStoreAction(MVT::i16,   MVT::i1, Custom);
-  setTruncStoreAction(MVT::i32,   MVT::i1, Custom);
-  setTruncStoreAction(MVT::i64,   MVT::i1, Custom);
-  setTruncStoreAction(MVT::i128,  MVT::i1, Custom);
 
   setLoadExtAction(ISD::EXTLOAD,  MVT::i8, Custom);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Custom);
@@ -212,6 +210,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::ROTL, MVT::i32,    Legal);
   setOperationAction(ISD::ROTL, MVT::i16,    Legal);
   setOperationAction(ISD::ROTL, MVT::i8,     Custom);
+
   // SPU has no native version of shift left/right for i8
   setOperationAction(ISD::SHL,  MVT::i8,     Custom);
   setOperationAction(ISD::SRL,  MVT::i8,     Custom);
@@ -224,7 +223,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Custom lower i8, i32 and i64 multiplications
   setOperationAction(ISD::MUL,  MVT::i8,     Custom);
   setOperationAction(ISD::MUL,  MVT::i32,    Custom);
-  setOperationAction(ISD::MUL,  MVT::i64,    Custom);
+  setOperationAction(ISD::MUL,  MVT::i64,    Expand);
 
   // Need to custom handle (some) common i8, i64 math ops
   setOperationAction(ISD::ADD,  MVT::i64,    Custom);
