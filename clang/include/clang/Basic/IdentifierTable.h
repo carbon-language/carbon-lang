@@ -62,10 +62,11 @@ class IdentifierInfo {
 public:
   IdentifierInfo();
 
-  /// isName - Return true if this is the identifier for the specified string.
-  bool isName(const char *Str) const {
-    unsigned Len = strlen(Str);
-    return getLength() == Len && !memcmp(getName(), Str, Len);
+  /// isStr - Return true if this is the identifier for the specified string.
+  /// This is intended to be used for string literals only: II->isStr("foo").
+  template <std::size_t StrLen>
+  bool isStr(const char (&Str)[StrLen]) const {
+    return getLength() == StrLen-1 && !memcmp(getName(), Str, StrLen-1);
   }
   
   /// getName - Return the actual string for this identifier.  The returned 

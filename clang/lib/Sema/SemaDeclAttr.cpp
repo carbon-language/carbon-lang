@@ -555,12 +555,12 @@ static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   
   
   ObjCGCAttr::GCAttrTypes type;
-  if (Attr.getParameterName()->isName("weak")) {
+  if (Attr.getParameterName()->isStr("weak")) {
     if (isa<FieldDecl>(d))
       S.Diag(Attr.getLoc(), diag::warn_attribute_weak_on_field);
     type = ObjCGCAttr::Weak;
   }
-  else if (Attr.getParameterName()->isName("strong"))
+  else if (Attr.getParameterName()->isStr("strong"))
     type = ObjCGCAttr::Strong;
   else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
@@ -584,7 +584,7 @@ static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
   
   BlocksAttr::BlocksAttrTypes type;
-  if (Attr.getParameterName()->isName("byref"))
+  if (Attr.getParameterName()->isStr("byref"))
     type = BlocksAttr::ByRef;
   else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)

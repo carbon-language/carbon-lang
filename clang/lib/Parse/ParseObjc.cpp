@@ -387,19 +387,19 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
     
     SourceLocation AttrName = ConsumeToken(); // consume last attribute name
     
-    if (II->isName("readonly"))
+    if (II->isStr("readonly"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readonly);
-    else if (II->isName("assign"))
+    else if (II->isStr("assign"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_assign);
-    else if (II->isName("readwrite"))
+    else if (II->isStr("readwrite"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readwrite);
-    else if (II->isName("retain"))
+    else if (II->isStr("retain"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_retain);
-    else if (II->isName("copy"))
+    else if (II->isStr("copy"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_copy);
-    else if (II->isName("nonatomic"))
+    else if (II->isStr("nonatomic"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
-    else if (II->isName("getter") || II->isName("setter")) {
+    else if (II->isStr("getter") || II->isStr("setter")) {
       // getter/setter require extra treatment.
       if (ExpectAndConsume(tok::equal, diag::err_objc_expected_equal, "",
                            tok::r_paren))
