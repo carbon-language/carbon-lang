@@ -30,14 +30,14 @@ PPCallbacks::~PPCallbacks() {}
 /// isInPrimaryFile - Return true if we're in the top-level file, not in a
 /// #include.  This looks through macro expansions and active _Pragma lexers.
 bool Preprocessor::isInPrimaryFile() const {
-  if (IsNonPragmaNonMacroLexer())
+  if (IsFileLexer())
     return IncludeMacroStack.empty();
   
   // If there are any stacked lexers, we're in a #include.
-  assert(IsNonPragmaNonMacroLexer(IncludeMacroStack[0]) &&
+  assert(IsFileLexer(IncludeMacroStack[0]) &&
          "Top level include stack isn't our primary lexer?");
   for (unsigned i = 1, e = IncludeMacroStack.size(); i != e; ++i)
-    if (IsNonPragmaNonMacroLexer(IncludeMacroStack[i]))
+    if (IsFileLexer(IncludeMacroStack[i]))
       return false;
   return true;
 }
@@ -46,13 +46,13 @@ bool Preprocessor::isInPrimaryFile() const {
 /// that this ignores any potentially active macro expansions and _Pragma
 /// expansions going on at the time.
 PreprocessorLexer *Preprocessor::getCurrentFileLexer() const {
-  if (IsNonPragmaNonMacroLexer())
+  if (IsFileLexer())
     return CurPPLexer;
   
   // Look for a stacked lexer.
   for (unsigned i = IncludeMacroStack.size(); i != 0; --i) {
     const IncludeStackInfo& ISI = IncludeMacroStack[i-1];
-    if (IsNonPragmaNonMacroLexer(ISI))
+    if (IsFileLexer(ISI))
       return ISI.ThePPLexer;
   }
   return 0;

@@ -611,7 +611,7 @@ private:
 
   
 
-  static bool IsNonPragmaNonMacroLexer(const Lexer* L,
+  static bool IsFileLexer(const Lexer* L,
                                        const PreprocessorLexer* P) {
     if (L)
       return !L->isPragmaLexer();
@@ -619,12 +619,12 @@ private:
       return P != 0;
   }
 
-  static bool IsNonPragmaNonMacroLexer(const IncludeStackInfo& I) {
-    return IsNonPragmaNonMacroLexer(I.TheLexer, I.ThePPLexer);
+  static bool IsFileLexer(const IncludeStackInfo& I) {
+    return IsFileLexer(I.TheLexer, I.ThePPLexer);
   }
 
-  bool IsNonPragmaNonMacroLexer() const {
-    return IsNonPragmaNonMacroLexer(CurLexer.get(), CurPPLexer);
+  bool IsFileLexer() const {
+    return IsFileLexer(CurLexer.get(), CurPPLexer);
   }
   
   //===--------------------------------------------------------------------===//
