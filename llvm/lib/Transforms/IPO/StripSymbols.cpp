@@ -99,7 +99,8 @@ static void RemoveDeadConstant(Constant *C) {
     GV->eraseFromParent();
   }
   else if (!isa<Function>(C))
-    C->destroyConstant();
+    if (isa<CompositeType>(C->getType()))
+      C->destroyConstant();
 
   // If the constant referenced anything, see if we can delete it as well.
   for (SmallPtrSet<Constant *, 4>::iterator OI = Operands.begin(),
@@ -245,11 +246,18 @@ bool StripDebugInfo(Module &M) {
   if (Declare) {
     while (!Declare->use_empty()) {
       CallInst *CI = cast<CallInst>(Declare->use_back());
-      Value *Arg = CI->getOperand(2);
+      Value *Arg1 = CI->getOperand(1);
+      Value *Arg2 = CI->getOperand(2);
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
-      if (Arg->use_empty())
-        if (Constant *C = dyn_cast<Constant>(Arg)) 
+      if (Arg1->use_empty()) {
+        if (Constant *C = dyn_cast<Constant>(Arg1)) 
+          DeadConstants.push_back(C);
+        if (Instruction *I = dyn_cast<Instruction>(Arg1))
+          I->eraseFromParent();
+      }
+      if (Arg2->use_empty())
+        if (Constant *C = dyn_cast<Constant>(Arg2)) 
           DeadConstants.push_back(C);
     }
     Declare->eraseFromParent();
