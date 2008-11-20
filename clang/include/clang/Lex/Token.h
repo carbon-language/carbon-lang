@@ -34,22 +34,22 @@ class Token {
   /// The location of the token.
   SourceLocation Loc;
 
-  union {
-    /// The end of the SourceRange of an annotation token.
-    unsigned AnnotEndLocID;
+  // Conceptually these next two fields could be in a union with
+  // access depending on isAnnotationToken(). However, this causes gcc
+  // 4.2 to pessimize LexTokenInternal, a very performance critical
+  // routine. Keeping as separate members with casts until a more
+  // beautiful fix presents itself.
 
-    /// The length of the token text itself.
-    unsigned Length;
-  };
-  
-  union {
-    /// IdentifierInfo - If this was an identifier, this points to the uniqued
-    /// information about this identifier.
-    IdentifierInfo *IdentInfo;
+  /// UintData - This holds either the length of the token text, when
+  /// a normal token, or the end of the SourceRange when an annotation
+  /// token.
+  unsigned UintData;
 
-    /// AnnotVal - Information specific to an annotation token.
-    void *AnnotVal;
-  };
+  /// PtrData - For normal tokens, this points to the uniqued
+  /// information for the identifier (if an identifier token) or
+  /// null. For annotation tokens, this points to information specific
+  /// to the annotation token.
+  void *PtrData;
 
   /// Kind - The actual flavor of token this is.
   ///
@@ -86,19 +86,19 @@ public:
   SourceLocation getLocation() const { return Loc; }
   unsigned getLength() const {
     assert(!isAnnotationToken() && "Used Length on annotation token");
-    return Length;
+    return UintData;
   }
 
   void setLocation(SourceLocation L) { Loc = L; }
-  void setLength(unsigned Len) { Length = Len; }
+  void setLength(unsigned Len) { UintData = Len; }
 
   SourceLocation getAnnotationEndLoc() const {
     assert(isAnnotationToken() && "Used AnnotEndLocID on non-annotation token");
-    return SourceLocation::getFromRawEncoding(AnnotEndLocID);
+    return SourceLocation::getFromRawEncoding(UintData);
   }
   void setAnnotationEndLoc(SourceLocation L) {
     assert(isAnnotationToken() && "Used AnnotEndLocID on non-annotation token");
-    AnnotEndLocID = L.getRawEncoding();
+    UintData = L.getRawEncoding();
   }
 
   /// getAnnotationRange - SourceRange of the group of tokens that this
@@ -119,25 +119,25 @@ public:
   ///
   void startToken() {
     Flags = 0;
-    IdentInfo = 0;
+    PtrData = 0;
     Loc = SourceLocation();
   }
   
   IdentifierInfo *getIdentifierInfo() const {
     assert(!isAnnotationToken() && "Used IdentInfo on annotation token");
-    return IdentInfo;
+    return (IdentifierInfo*) PtrData;
   }
   void setIdentifierInfo(IdentifierInfo *II) {
-    IdentInfo = II;
+    PtrData = (void*) II;
   }
 
   void *getAnnotationValue() const {
     assert(isAnnotationToken() && "Used AnnotVal on non-annotation token");
-    return AnnotVal;
+    return PtrData;
   }
   void setAnnotationValue(void *val) {
     assert(isAnnotationToken() && "Used AnnotVal on non-annotation token");
-    AnnotVal = val;
+    PtrData = val;
   }
   
   /// setFlag - Set the specified flag.
