@@ -1209,10 +1209,10 @@ static inline bool isCopyFromLiveIn(const SUnit *SU) {
     N->getOperand(N->getNumOperands()-1).getValueType() != MVT::Flag;
 }
 
-/// CalcNodeBUSethiUllmanNumber - Compute Sethi Ullman number for bottom up
-/// scheduling. Smaller number is the higher priority.
+/// CalcNodeSethiUllmanNumber - Compute Sethi Ullman number.
+/// Smaller number is the higher priority.
 static unsigned
-CalcNodeBUSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
+CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
   unsigned &SethiUllmanNumber = SUNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
@@ -1222,7 +1222,7 @@ CalcNodeBUSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
        I != E; ++I) {
     if (I->isCtrl) continue;  // ignore chain preds
     SUnit *PredSU = I->Dep;
-    unsigned PredSethiUllman = CalcNodeBUSethiUllmanNumber(PredSU, SUNumbers);
+    unsigned PredSethiUllman = CalcNodeSethiUllmanNumber(PredSU, SUNumbers);
     if (PredSethiUllman > SethiUllmanNumber) {
       SethiUllmanNumber = PredSethiUllman;
       Extra = 0;
@@ -1237,47 +1237,6 @@ CalcNodeBUSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
   
   return SethiUllmanNumber;
 }
-
-/// CalcNodeTDSethiUllmanNumber - Compute Sethi Ullman number for top down
-/// scheduling. Smaller number is the higher priority.
-static unsigned
-CalcNodeTDSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
-  unsigned &SethiUllmanNumber = SUNumbers[SU->NodeNum];
-  if (SethiUllmanNumber != 0)
-    return SethiUllmanNumber;
-
-  unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
-  if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
-    SethiUllmanNumber = 0xffff;
-  else if (SU->NumSuccsLeft == 0)
-    // If SU does not have a use, i.e. it doesn't produce a value that would
-    // be consumed (e.g. store), then it terminates a chain of computation.
-    // Give it a small SethiUllman number so it will be scheduled right before
-    // its predecessors that it doesn't lengthen their live ranges.
-    SethiUllmanNumber = 0;
-  else if (SU->NumPredsLeft == 0 &&
-           (Opc != ISD::CopyFromReg || isCopyFromLiveIn(SU)))
-    SethiUllmanNumber = 0xffff;
-  else {
-    int Extra = 0;
-    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-         I != E; ++I) {
-      if (I->isCtrl) continue;  // ignore chain preds
-      SUnit *PredSU = I->Dep;
-      unsigned PredSethiUllman = CalcNodeTDSethiUllmanNumber(PredSU, SUNumbers);
-      if (PredSethiUllman > SethiUllmanNumber) {
-        SethiUllmanNumber = PredSethiUllman;
-        Extra = 0;
-      } else if (PredSethiUllman == SethiUllmanNumber && !I->isCtrl)
-        ++Extra;
-    }
-
-    SethiUllmanNumber += Extra;
-  }
-  
-  return SethiUllmanNumber;
-}
-
 
 namespace {
   template<class SF>
@@ -1294,6 +1253,9 @@ namespace {
     const TargetRegisterInfo *TRI;
     ScheduleDAGRRList *scheduleDAG;
 
+    // SethiUllmanNumbers - The SethiUllman number for each node.
+    std::vector<unsigned> SethiUllmanNumbers;
+
   public:
     RegReductionPriorityQueue(const TargetInstrInfo *tii,
                               const TargetRegisterInfo *tri) :
@@ -1302,17 +1264,59 @@ namespace {
     
     void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
+      // Add pseudo dependency edges for two-address nodes.
+      AddPseudoTwoAddrDeps();
+      // Calculate node priorities.
+      CalculateSethiUllmanNumbers();
     }
 
-    virtual void addNode(const SUnit *SU) = 0;
+    void addNode(const SUnit *SU) {
+      unsigned SUSize = SethiUllmanNumbers.size();
+      if (SUnits->size() > SUSize)
+        SethiUllmanNumbers.resize(SUSize*2, 0);
+      CalcNodeSethiUllmanNumber(SU, SethiUllmanNumbers);
+    }
 
-    virtual void updateNode(const SUnit *SU) = 0;
+    void updateNode(const SUnit *SU) {
+      SethiUllmanNumbers[SU->NodeNum] = 0;
+      CalcNodeSethiUllmanNumber(SU, SethiUllmanNumbers);
+    }
 
-    virtual void releaseState() {
+    void releaseState() {
       SUnits = 0;
+      SethiUllmanNumbers.clear();
     }
-    
-    virtual unsigned getNodePriority(const SUnit *SU) const = 0;
+
+    unsigned getNodePriority(const SUnit *SU) const {
+      assert(SU->NodeNum < SethiUllmanNumbers.size());
+      unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
+      if (Opc == ISD::CopyFromReg && !isCopyFromLiveIn(SU))
+        // CopyFromReg should be close to its def because it restricts
+        // allocation choices. But if it is a livein then perhaps we want it
+        // closer to its uses so it can be coalesced.
+        return 0xffff;
+      else if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
+        // CopyToReg should be close to its uses to facilitate coalescing and
+        // avoid spilling.
+        return 0;
+      else if (Opc == TargetInstrInfo::EXTRACT_SUBREG ||
+               Opc == TargetInstrInfo::INSERT_SUBREG)
+        // EXTRACT_SUBREG / INSERT_SUBREG should be close to its use to
+        // facilitate coalescing.
+        return 0;
+      else if (SU->NumSuccs == 0)
+        // If SU does not have a use, i.e. it doesn't produce a value that would
+        // be consumed (e.g. store), then it terminates a chain of computation.
+        // Give it a large SethiUllman number so it will be scheduled right
+        // before its predecessors that it doesn't lengthen their live ranges.
+        return 0xffff;
+      else if (SU->NumPreds == 0)
+        // If SU does not have a def, schedule it close to its uses because it
+        // does not lengthen any live ranges.
+        return 0;
+      else
+        return SethiUllmanNumbers[SU->NodeNum];
+    }
     
     unsigned size() const { return Queue.size(); }
 
@@ -1351,122 +1355,14 @@ namespace {
   protected:
     bool canClobber(const SUnit *SU, const SUnit *Op);
     void AddPseudoTwoAddrDeps();
-  };
-
-  class VISIBILITY_HIDDEN BURegReductionPriorityQueue
-   : public RegReductionPriorityQueue<bu_ls_rr_sort> {
-    // SethiUllmanNumbers - The SethiUllman number for each node.
-    std::vector<unsigned> SethiUllmanNumbers;
-
-  public:
-    BURegReductionPriorityQueue(const TargetInstrInfo *tii,
-                                const TargetRegisterInfo *tri)
-      : RegReductionPriorityQueue<bu_ls_rr_sort>(tii, tri) {}
-
-    void initNodes(std::vector<SUnit> &sunits) {
-      RegReductionPriorityQueue<bu_ls_rr_sort>::initNodes(sunits);
-      // Add pseudo dependency edges for two-address nodes.
-      AddPseudoTwoAddrDeps();
-      // Calculate node priorities.
-      CalculateSethiUllmanNumbers();
-    }
-
-    void addNode(const SUnit *SU) {
-      unsigned SUSize = SethiUllmanNumbers.size();
-      if (SUnits->size() > SUSize)
-        SethiUllmanNumbers.resize(SUSize*2, 0);
-      CalcNodeBUSethiUllmanNumber(SU, SethiUllmanNumbers);
-    }
-
-    void updateNode(const SUnit *SU) {
-      SethiUllmanNumbers[SU->NodeNum] = 0;
-      CalcNodeBUSethiUllmanNumber(SU, SethiUllmanNumbers);
-    }
-
-    void releaseState() {
-      RegReductionPriorityQueue<bu_ls_rr_sort>::releaseState();
-      SethiUllmanNumbers.clear();
-    }
-
-    unsigned getNodePriority(const SUnit *SU) const {
-      assert(SU->NodeNum < SethiUllmanNumbers.size());
-      unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
-      if (Opc == ISD::CopyFromReg && !isCopyFromLiveIn(SU))
-        // CopyFromReg should be close to its def because it restricts
-        // allocation choices. But if it is a livein then perhaps we want it
-        // closer to its uses so it can be coalesced.
-        return 0xffff;
-      else if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
-        // CopyToReg should be close to its uses to facilitate coalescing and
-        // avoid spilling.
-        return 0;
-      else if (Opc == TargetInstrInfo::EXTRACT_SUBREG ||
-               Opc == TargetInstrInfo::INSERT_SUBREG)
-        // EXTRACT_SUBREG / INSERT_SUBREG should be close to its use to
-        // facilitate coalescing.
-        return 0;
-      else if (SU->NumSuccs == 0)
-        // If SU does not have a use, i.e. it doesn't produce a value that would
-        // be consumed (e.g. store), then it terminates a chain of computation.
-        // Give it a large SethiUllman number so it will be scheduled right
-        // before its predecessors that it doesn't lengthen their live ranges.
-        return 0xffff;
-      else if (SU->NumPreds == 0)
-        // If SU does not have a def, schedule it close to its uses because it
-        // does not lengthen any live ranges.
-        return 0;
-      else
-        return SethiUllmanNumbers[SU->NodeNum];
-    }
-
-  private:
     void CalculateSethiUllmanNumbers();
   };
 
+  typedef RegReductionPriorityQueue<bu_ls_rr_sort>
+    BURegReductionPriorityQueue;
 
-  class VISIBILITY_HIDDEN TDRegReductionPriorityQueue
-   : public RegReductionPriorityQueue<td_ls_rr_sort> {
-    // SethiUllmanNumbers - The SethiUllman number for each node.
-    std::vector<unsigned> SethiUllmanNumbers;
-
-  public:
-    TDRegReductionPriorityQueue(const TargetInstrInfo *tii,
-                                const TargetRegisterInfo *tri)
-      : RegReductionPriorityQueue<td_ls_rr_sort>(tii, tri) {}
-
-    void initNodes(std::vector<SUnit> &sunits) {
-      RegReductionPriorityQueue<td_ls_rr_sort>::initNodes(sunits);
-      // Add pseudo dependency edges for two-address nodes.
-      AddPseudoTwoAddrDeps();
-      // Calculate node priorities.
-      CalculateSethiUllmanNumbers();
-    }
-
-    void addNode(const SUnit *SU) {
-      unsigned SUSize = SethiUllmanNumbers.size();
-      if (SUnits->size() > SUSize)
-        SethiUllmanNumbers.resize(SUSize*2, 0);
-      CalcNodeTDSethiUllmanNumber(SU, SethiUllmanNumbers);
-    }
-
-    void updateNode(const SUnit *SU) {
-      SethiUllmanNumbers[SU->NodeNum] = 0;
-      CalcNodeTDSethiUllmanNumber(SU, SethiUllmanNumbers);
-    }
-
-    void releaseState() {
-      RegReductionPriorityQueue<td_ls_rr_sort>::releaseState();
-      SethiUllmanNumbers.clear();
-    }
-
-    unsigned getNodePriority(const SUnit *SU) const {
-      assert(SU->NodeNum < SethiUllmanNumbers.size());
-      return SethiUllmanNumbers[SU->NodeNum];
-    }
-
-  private:
-    void CalculateSethiUllmanNumbers();
-  };
+  typedef RegReductionPriorityQueue<td_ls_rr_sort>
+    TDRegReductionPriorityQueue;
 }
 
 /// closestSucc - Returns the scheduled cycle of the successor which is
@@ -1701,11 +1597,12 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
 
 /// CalculateSethiUllmanNumbers - Calculate Sethi-Ullman numbers of all
 /// scheduling units.
-void BURegReductionPriorityQueue::CalculateSethiUllmanNumbers() {
+template<class SF>
+void RegReductionPriorityQueue<SF>::CalculateSethiUllmanNumbers() {
   SethiUllmanNumbers.assign(SUnits->size(), 0);
   
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-    CalcNodeBUSethiUllmanNumber(&(*SUnits)[i], SethiUllmanNumbers);
+    CalcNodeSethiUllmanNumber(&(*SUnits)[i], SethiUllmanNumbers);
 }
 
 /// LimitedSumOfUnscheduledPredsOfSuccs - Compute the sum of the unscheduled
@@ -1769,15 +1666,6 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   assert(left->NodeQueueId && right->NodeQueueId && 
          "NodeQueueId cannot be zero");
   return (left->NodeQueueId > right->NodeQueueId);
-}
-
-/// CalculateSethiUllmanNumbers - Calculate Sethi-Ullman numbers of all
-/// scheduling units.
-void TDRegReductionPriorityQueue::CalculateSethiUllmanNumbers() {
-  SethiUllmanNumbers.assign(SUnits->size(), 0);
-  
-  for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-    CalcNodeTDSethiUllmanNumber(&(*SUnits)[i], SethiUllmanNumbers);
 }
 
 //===----------------------------------------------------------------------===//
