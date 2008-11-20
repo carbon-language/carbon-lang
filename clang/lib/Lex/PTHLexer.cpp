@@ -23,51 +23,60 @@ PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc,
     LastToken(NumTokens - 1),
     CurToken(0) {
 
-  assert (NumTokens >= 1);
-  assert (Tokens[LastToken].is(tok::eof));
+  assert(NumTokens >= 1);
+  assert(Tokens[LastToken].is(tok::eof));
 }
 
 void PTHLexer::Lex(Token& Tok) {
-
-  if (CurToken == LastToken) {    
-    // If we hit the end of the file while parsing a preprocessor directive,
-    // end the preprocessor directive first.  The next token returned will
-    // then be the end of file.
-    //   OR
-    // If we are in raw mode, return this event as an EOF token.  Let the caller
-    // that put us in raw mode handle the event.
-    if (ParsingPreprocessorDirective || LexingRawMode) {
-      // Done parsing the "line".
+LexNextToken:
+  if (CurToken == LastToken) {
+    if (ParsingPreprocessorDirective) {
       ParsingPreprocessorDirective = false;
-      Tok = Tokens[CurToken]; // not an out-of-bound access
-      // FIXME: eom handling?
+      Tok = Tokens[LastToken];
+      Tok.setKind(tok::eom);
+      MIOpt.ReadToken();
+      return;
     }
-    else
-      PP->HandleEndOfFile(Tok, false);
     
+    assert(!LexingRawMode && "PTHLexer cannot lex in raw mode.");
+    
+    // FIXME: Issue diagnostics similar to Lexer.
+    PP->HandleEndOfFile(Tok, false);    
     return;
   }
 
   Tok = Tokens[CurToken];
   
-  if (ParsingPreprocessorDirective && Tok.isAtStartOfLine()) {
-    ParsingPreprocessorDirective = false; // Done parsing the "line".
+  // Don't advance to the next token yet.  Check if we are at the
+  // start of a new line and we're processing a directive.  If so, we
+  // consume this token twice, once as an tok::eom.
+  if (Tok.isAtStartOfLine() && ParsingPreprocessorDirective) {
+    ParsingPreprocessorDirective = false;
+    Tok.setKind(tok::eom);
     MIOpt.ReadToken();
-    // FIXME:  Need to replicate:
-    // FormTokenWithChars(Tok, CurPtr, tok::eom);
-    Tok.setKind(tok::eom);    
     return;
   }
-  else // Otherwise, advance to the next token.
-    ++CurToken;
-
-  if (Tok.isAtStartOfLine() && Tok.is(tok::hash) && !LexingRawMode) {
-    PP->HandleDirective(Tok);
-    PP->Lex(Tok);
-    return;
-  }
+  
+  // Advance to the next token.
+  ++CurToken;
     
+  if (Tok.is(tok::hash)) {    
+    if (Tok.isAtStartOfLine() && !LexingRawMode) {
+      PP->HandleDirective(Tok);
+
+      if (PP->isCurrentLexer(this))
+        goto LexNextToken;
+
+      return PP->Lex(Tok);
+    }
+  }
+
   MIOpt.ReadToken();
+  
+  if (Tok.is(tok::identifier)) {
+    if (LexingRawMode) return;
+    return PP->HandleIdentifier(Tok);
+  }  
 }
 
 void PTHLexer::setEOF(Token& Tok) {
