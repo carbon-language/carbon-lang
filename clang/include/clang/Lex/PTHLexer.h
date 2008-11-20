@@ -68,7 +68,7 @@ private:
   
   /// GetToken - Returns the next token.  This method does not advance the
   ///  PTHLexer to the next token.
-  Token GetToken() { return Tokens[CurTokenIdx]; }
+  Token GetToken();
   
   /// AdvanceToken - Advances the PTHLexer to the next token.
   void AdvanceToken() { ++CurTokenIdx; }

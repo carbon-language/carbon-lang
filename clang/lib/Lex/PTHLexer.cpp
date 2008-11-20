@@ -27,6 +27,18 @@ PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc,
   assert(Tokens[LastTokenIdx].is(tok::eof));
 }
 
+Token PTHLexer::GetToken() { 
+  Token Tok = Tokens[CurTokenIdx];
+  
+  // If we are in raw mode, zero out identifier pointers.  This is
+  // needed for 'pragma poison'.  Note that this requires that the Preprocessor
+  // can go back to the original source when it calls getSpelling().
+  if (LexingRawMode && Tok.is(tok::identifier))
+    Tok.setIdentifierInfo(0);
+
+  return Tok;
+}
+
 void PTHLexer::Lex(Token& Tok) {
 LexNextToken:
   if (AtLastToken()) {
