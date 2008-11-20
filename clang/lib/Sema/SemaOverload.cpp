@@ -2993,10 +2993,10 @@ Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
   //
   //   where cv-qualifier is the same cv-qualification as, or a
   //   greater cv-qualification than, cv, and where conversion-type-id
-  //   denotes the type “pointer to function of (P1,...,Pn) returning
-  //   R”, or the type “reference to pointer to function of
-  //   (P1,...,Pn) returning R”, or the type “reference to function
-  //   of (P1,...,Pn) returning R”, a surrogate call function [...]
+  //   denotes the type "pointer to function of (P1,...,Pn) returning
+  //   R", or the type "reference to pointer to function of
+  //   (P1,...,Pn) returning R", or the type "reference to function
+  //   of (P1,...,Pn) returning R", a surrogate call function [...]
   //   is also considered as a candidate function. Similarly,
   //   surrogate call functions are added to the set of candidate
   //   functions for each conversion function declared in an
