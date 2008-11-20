@@ -152,11 +152,14 @@ def int_vaend   : Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [], "llvm.va_end">;
 
 //===------------------- Garbage Collection Intrinsics --------------------===//
 //  
-def int_gcroot  : Intrinsic<[llvm_void_ty], [llvm_ptrptr_ty, llvm_ptr_ty]>;
-def int_gcread  : Intrinsic<[llvm_ptr_ty], [llvm_ptr_ty, llvm_ptrptr_ty],
+def int_gcroot  : Intrinsic<[llvm_void_ty],
+                            [llvm_ptrptr_ty, llvm_ptr_ty]>;
+def int_gcread  : Intrinsic<[llvm_ptr_ty],
+                            [llvm_ptr_ty, llvm_ptrptr_ty],
                             [IntrReadArgMem]>;
-def int_gcwrite : Intrinsic<[llvm_void_ty], [llvm_ptr_ty, llvm_ptr_ty,
-                             llvm_ptrptr_ty], [IntrWriteArgMem]>;
+def int_gcwrite : Intrinsic<[llvm_void_ty],
+                            [llvm_ptr_ty, llvm_ptr_ty, llvm_ptrptr_ty],
+                            [IntrWriteArgMem]>;
 
 //===--------------------- Code Generator Intrinsics ----------------------===//
 //  
@@ -251,11 +254,11 @@ let Properties = [IntrNoMem] in {
   def int_ctpop: Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>]>;
   def int_ctlz : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>]>;
   def int_cttz : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>]>;
-  def int_part_select : 
-     Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>, llvm_i32_ty, llvm_i32_ty]>;
-  def int_part_set :
-     Intrinsic<[llvm_anyint_ty],
-               [LLVMMatchType<0>, llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty]>;
+  def int_part_select : Intrinsic<[llvm_anyint_ty],
+                                  [LLVMMatchType<0>, llvm_i32_ty, llvm_i32_ty]>;
+  def int_part_set : Intrinsic<[llvm_anyint_ty],
+                               [LLVMMatchType<0>, llvm_anyint_ty,
+                                llvm_i32_ty, llvm_i32_ty]>;
 }
 
 //===------------------------ Debugger Intrinsics -------------------------===//
@@ -294,7 +297,7 @@ def int_eh_dwarf_cfa  : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty]>;
 def int_var_annotation : Intrinsic<[llvm_void_ty],
                                    [llvm_ptr_ty, llvm_ptr_ty,
                                     llvm_ptr_ty, llvm_i32_ty], 
-                                    [], "llvm.var.annotation">;
+                                   [], "llvm.var.annotation">;
 def int_ptr_annotation : Intrinsic<[LLVMAnyPointerType<llvm_anyint_ty>],
                                    [LLVMMatchType<0>, llvm_ptr_ty, llvm_ptr_ty,
                                     llvm_i32_ty], 
@@ -313,7 +316,8 @@ def int_init_trampoline : Intrinsic<[llvm_ptr_ty],
 
 //===------------------------- Atomic Intrinsics --------------------------===//
 //
-def int_memory_barrier : Intrinsic<[llvm_void_ty], [llvm_i1_ty, llvm_i1_ty,
+def int_memory_barrier : Intrinsic<[llvm_void_ty],
+                                   [llvm_i1_ty, llvm_i1_ty,
                                     llvm_i1_ty, llvm_i1_ty, llvm_i1_ty], []>,
                                     GCCBuiltin<"__builtin_llvm_memory_barrier">;
 
