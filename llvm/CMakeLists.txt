@@ -104,6 +104,17 @@ endif( EXISTS ${LLVM_TOOLS_BINARY_DIR}/llvm-config )
 
 include(config-ix)
 
+option(LLVM_ENABLE_PIC "Build Position-Independent Code" OFF)
+
+if( LLVM_ENABLE_PIC )
+  if( SUPPORTS_FPIC_FLAG )
+    message(STATUS "Building with -fPIC")
+    add_definitions(-fPIC)
+  else( SUPPORTS_FPIC_FLAG )
+    message(STATUS "Warning: -fPIC not supported.")
+  endif()
+endif()
+
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR} )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
