@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
+#include <climits>
 using namespace llvm;
 
 ScheduleDAG::ScheduleDAG(SelectionDAG *dag, MachineBasicBlock *bb,
