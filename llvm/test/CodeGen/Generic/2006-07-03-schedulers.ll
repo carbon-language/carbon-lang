@@ -2,6 +2,7 @@
 ; RUN: llvm-as < %s | llc -pre-RA-sched=list-td
 ; RUN: llvm-as < %s | llc -pre-RA-sched=list-tdrr
 ; RUN: llvm-as < %s | llc -pre-RA-sched=list-burr
+; RUN: llvm-as < %s | llc -pre-RA-sched=fast
 ; PR859
 
 declare i32 @printf(i8*, i32, float)
