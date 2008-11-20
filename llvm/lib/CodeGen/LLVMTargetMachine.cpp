@@ -226,8 +226,12 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
     PM.add(createMachineFunctionPrinterPass(cerr));
 
   // Second pass scheduler.
-  if (!Fast && !DisablePostRAScheduler)
+  if (!Fast && !DisablePostRAScheduler) {
     PM.add(createPostRAScheduler());
+
+    if (PrintMachineCode)
+      PM.add(createMachineFunctionPrinterPass(cerr));
+  }
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (!Fast)
