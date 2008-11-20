@@ -103,7 +103,6 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   KnownFunctionIDs[id_vsnprintf_chk] = &IT.get("__builtin___vsnprintf_chk");
   KnownFunctionIDs[id_vprintf]       = &IT.get("vprintf");
 
-  Ident_StdNs = &IT.get("std");
   Ident_TypeInfo = 0;
   StdNamespace = 0;
 

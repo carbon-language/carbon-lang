@@ -278,8 +278,9 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
 /// everything from the standard library is defined.
 NamespaceDecl *Sema::GetStdNamespace() {
   if (!StdNamespace) {
+    IdentifierInfo *StdIdent = &PP.getIdentifierTable().get("std");
     DeclContext *Global = Context.getTranslationUnitDecl();
-    Decl *Std = LookupDecl(Ident_StdNs, Decl::IDNS_Tag | Decl::IDNS_Ordinary,
+    Decl *Std = LookupDecl(StdIdent, Decl::IDNS_Tag | Decl::IDNS_Ordinary,
                            0, Global, /*enableLazyBuiltinCreation=*/false);
     StdNamespace = dyn_cast_or_null<NamespaceDecl>(Std);
   }

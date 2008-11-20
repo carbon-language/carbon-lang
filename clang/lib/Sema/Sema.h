@@ -193,7 +193,6 @@ public:
   IdentifierInfo* KnownFunctionIDs[id_num_known_functions];
 
   /// Identifiers used by the C++ language
-  IdentifierInfo *Ident_StdNs; // "std"
   IdentifierInfo *Ident_TypeInfo; // "type_info" - lazily created
 
   /// Translation Unit Scope - useful to Objective-C actions that need
