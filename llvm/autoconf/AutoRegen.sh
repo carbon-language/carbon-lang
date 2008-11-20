@@ -7,7 +7,7 @@ die () {
 ### NOTE: ############################################################"
 ### The below two variables specify the auto* versions
 ### periods should be escaped with backslash, for use by grep
-want_autoconf_version='2\.6[01]'
+want_autoconf_version='2\.60'
 want_autoheader_version=$want_autoconf_version
 ### END NOTE #########################################################"
 
@@ -22,7 +22,7 @@ test -d autoconf && test -f autoconf/$configfile && cd autoconf
 test -f $configfile || die "Can't find 'autoconf' dir; please cd into it first"
 autoconf --version | grep $want_autoconf_version > /dev/null
 test $? -eq 0 || die "Your autoconf was not detected as being $want_autoconf_version_clean"
-aclocal --version | grep '^aclocal.*\(1\.9\.6\|1\.10\)' > /dev/null
+aclocal --version | grep '^aclocal.*1\.9\.6' > /dev/null
 test $? -eq 0 || die "Your aclocal was not detected as being 1.9.6"
 autoheader --version | grep '^autoheader.*'$want_autoheader_version > /dev/null
 test $? -eq 0 || die "Your autoheader was not detected as being $want_autoheader_version_clean"
