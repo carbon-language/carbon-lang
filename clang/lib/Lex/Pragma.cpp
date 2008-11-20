@@ -248,7 +248,7 @@ void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
   }
   
   // Get the current file lexer we're looking at.  Ignore _Pragma 'files' etc.
-  Lexer *TheLexer = getCurrentFileLexer();
+  PreprocessorLexer *TheLexer = getCurrentFileLexer();
   
   // Mark the file as a system header.
   const FileEntry *File = SourceMgr.getFileEntryForID(TheLexer->getFileID());
@@ -256,7 +256,7 @@ void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
   
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks)
-    Callbacks->FileChanged(TheLexer->getSourceLocation(TheLexer->BufferPtr),
+    Callbacks->FileChanged(SysHeaderTok.getLocation(),
                            PPCallbacks::SystemHeaderPragma, SrcMgr::C_System);
 }
 
