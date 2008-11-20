@@ -26,10 +26,10 @@ class PTHLexer : public PreprocessorLexer {
   
   /// LastTokenIdx - The index of the last token in Tokens.  This token
   ///  will be an eof token.
-  unsigned LastToken;
+  unsigned LastTokenIdx;
   
-  /// CurToken - This is the index of the next token that Lex will return.
-  unsigned CurToken;
+  /// CurTokenIdx - This is the index of the next token that Lex will return.
+  unsigned CurTokenIdx;
         
   PTHLexer(const PTHLexer&);  // DO NOT IMPLEMENT
   void operator=(const PTHLexer&); // DO NOT IMPLEMENT
@@ -53,11 +53,25 @@ public:
   /// isNextPPTokenLParen - Return 1 if the next unexpanded token will return a
   /// tok::l_paren token, 0 if it is something else and 2 if there are no more
   /// tokens controlled by this lexer.
-  unsigned isNextPPTokenLParen();
-  
+  unsigned isNextPPTokenLParen() {
+    return AtLastToken() ? 2 : GetToken().is(tok::l_paren);
+  }
+
   /// IndirectLex - An indirect call to 'Lex' that can be invoked via
   ///  the PreprocessorLexer interface.
   void IndirectLex(Token &Result) { Lex(Result); }
+  
+private:
+  
+  /// AtLastToken - Returns true if the PTHLexer is at the last token.
+  bool AtLastToken() const { return CurTokenIdx == LastTokenIdx; }
+  
+  /// GetToken - Returns the next token.  This method does not advance the
+  ///  PTHLexer to the next token.
+  Token GetToken() { return Tokens[CurTokenIdx]; }
+  
+  /// AdvanceToken - Advances the PTHLexer to the next token.
+  void AdvanceToken() { ++CurTokenIdx; }
 };
 
 }  // end namespace clang

@@ -20,19 +20,19 @@ PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc,
                    const Token *TokArray, unsigned NumTokens)
   : PreprocessorLexer(&pp, fileloc),
     Tokens(TokArray),
-    LastToken(NumTokens - 1),
-    CurToken(0) {
+    LastTokenIdx(NumTokens - 1),
+    CurTokenIdx(0) {
 
   assert(NumTokens >= 1);
-  assert(Tokens[LastToken].is(tok::eof));
+  assert(Tokens[LastTokenIdx].is(tok::eof));
 }
 
 void PTHLexer::Lex(Token& Tok) {
 LexNextToken:
-  if (CurToken == LastToken) {
+  if (AtLastToken()) {
     if (ParsingPreprocessorDirective) {
       ParsingPreprocessorDirective = false;
-      Tok = Tokens[LastToken];
+      Tok = GetToken();
       Tok.setKind(tok::eom);
       MIOpt.ReadToken();
       return;
@@ -45,7 +45,7 @@ LexNextToken:
     return;
   }
 
-  Tok = Tokens[CurToken];
+  Tok = GetToken();
   
   // Don't advance to the next token yet.  Check if we are at the
   // start of a new line and we're processing a directive.  If so, we
@@ -58,7 +58,7 @@ LexNextToken:
   }
   
   // Advance to the next token.
-  ++CurToken;
+  AdvanceToken();
     
   if (Tok.is(tok::hash)) {    
     if (Tok.isAtStartOfLine() && !LexingRawMode) {
@@ -80,7 +80,7 @@ LexNextToken:
 }
 
 void PTHLexer::setEOF(Token& Tok) {
-  Tok = Tokens[LastToken];
+  Tok = Tokens[LastTokenIdx];
 }
 
 void PTHLexer::DiscardToEndOfLine() {
@@ -88,19 +88,11 @@ void PTHLexer::DiscardToEndOfLine() {
          "Must be in a preprocessing directive!");
 
   // Already at end-of-file?
-  if (CurToken == LastToken)
+  if (AtLastToken())
     return;
 
   // Find the first token that is not the start of the *current* line.
-  for ( ++CurToken; CurToken != LastToken ; ++CurToken )
-    if (Tokens[CurToken].isAtStartOfLine())
+  for (AdvanceToken(); !AtLastToken(); AdvanceToken())
+    if (GetToken().isAtStartOfLine())
       return;
 }
-
-unsigned PTHLexer::isNextPPTokenLParen() {  
-  if (CurToken == LastToken)
-    return 2;
-  
-  return Tokens[CurToken].is(tok::l_paren);
-}
-
