@@ -68,7 +68,12 @@ protected:
   friend class Preprocessor;
   
   PreprocessorLexer(Preprocessor* pp, SourceLocation L);
-  PreprocessorLexer() : PP(0), FileID(0) {}
+
+  PreprocessorLexer()
+    : PP(0), FileID(0),
+      ParsingPreprocessorDirective(false),
+      ParsingFilename(false),
+      LexingRawMode(false) {}
   
   virtual ~PreprocessorLexer();
   

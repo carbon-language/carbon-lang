@@ -17,21 +17,19 @@
 using namespace clang;
 
 PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc,
-                   const Token *TokArray, unsigned NumToks)
-  : PreprocessorLexer(&pp, fileloc), FileLoc(fileloc),
-    Tokens(TokArray), NumTokens(NumToks), CurToken(0) {
+                   const Token *TokArray, unsigned NumTokens)
+  : PreprocessorLexer(&pp, fileloc),
+    Tokens(TokArray),
+    LastToken(NumTokens - 1),
+    CurToken(0) {
 
-  assert (Tokens[NumTokens-1].is(tok::eof));
-  --NumTokens;
-    
-  LexingRawMode = false;
-  ParsingPreprocessorDirective = false;
-  ParsingFilename = false;
+  assert (NumTokens >= 1);
+  assert (Tokens[LastToken].is(tok::eof));
 }
 
 void PTHLexer::Lex(Token& Tok) {
 
-  if (CurToken == NumTokens) {    
+  if (CurToken == LastToken) {    
     // If we hit the end of the file while parsing a preprocessor directive,
     // end the preprocessor directive first.  The next token returned will
     // then be the end of file.
@@ -73,8 +71,7 @@ void PTHLexer::Lex(Token& Tok) {
 }
 
 void PTHLexer::setEOF(Token& Tok) {
-  Tok = Tokens[NumTokens]; // NumTokens is already adjusted, so this isn't
-                           // an overflow.
+  Tok = Tokens[LastToken];
 }
 
 void PTHLexer::DiscardToEndOfLine() {
@@ -82,17 +79,17 @@ void PTHLexer::DiscardToEndOfLine() {
          "Must be in a preprocessing directive!");
 
   // Already at end-of-file?
-  if (CurToken == NumTokens)
+  if (CurToken == LastToken)
     return;
 
   // Find the first token that is not the start of the *current* line.
-  for ( ++CurToken; CurToken != NumTokens ; ++CurToken )
+  for ( ++CurToken; CurToken != LastToken ; ++CurToken )
     if (Tokens[CurToken].isAtStartOfLine())
       return;
 }
 
 unsigned PTHLexer::isNextPPTokenLParen() {  
-  if (CurToken == NumTokens)
+  if (CurToken == LastToken)
     return 2;
   
   return Tokens[CurToken].is(tok::l_paren);

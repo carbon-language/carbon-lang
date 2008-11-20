@@ -19,7 +19,10 @@
 using namespace clang;
 
 PreprocessorLexer::PreprocessorLexer(Preprocessor* pp, SourceLocation L)
-  :  PP(pp), FileID(pp->getSourceManager().getPhysicalLoc(L).getFileID()) {}
+  :  PP(pp), FileID(pp->getSourceManager().getPhysicalLoc(L).getFileID()),
+     ParsingPreprocessorDirective(false),
+     ParsingFilename(false),
+     LexingRawMode(false) {}
 
 PreprocessorLexer::~PreprocessorLexer() {}
 
