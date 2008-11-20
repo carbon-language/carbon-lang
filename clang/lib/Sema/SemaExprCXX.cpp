@@ -55,21 +55,16 @@ Action::ExprResult
 Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
                      bool isType, void *TyOrExpr, SourceLocation RParenLoc) {
   const NamespaceDecl *StdNs = GetStdNamespace();
-  if (!StdNs) {
-    Diag(OpLoc, diag::err_need_header_before_typeid);
-    return ExprResult(true);
-  }
-  if (!Ident_TypeInfo) {
-    Ident_TypeInfo = &PP.getIdentifierTable().get("type_info");
-  }
-  Decl *TypeInfoDecl = LookupDecl(Ident_TypeInfo,
+  if (!StdNs)
+    return Diag(OpLoc, diag::err_need_header_before_typeid);
+  
+  IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
+  Decl *TypeInfoDecl = LookupDecl(TypeInfoII,
                                   Decl::IDNS_Tag | Decl::IDNS_Ordinary,
                                   0, StdNs, /*createBuiltins=*/false);
   RecordDecl *TypeInfoRecordDecl = dyn_cast_or_null<RecordDecl>(TypeInfoDecl);
-  if (!TypeInfoRecordDecl) {
-    Diag(OpLoc, diag::err_need_header_before_typeid);
-    return ExprResult(true);
-  }
+  if (!TypeInfoRecordDecl)
+    return Diag(OpLoc, diag::err_need_header_before_typeid);
 
   QualType TypeInfoType = Context.getTypeDeclType(TypeInfoRecordDecl);
 

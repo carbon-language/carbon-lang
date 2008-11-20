@@ -192,9 +192,6 @@ public:
   /// This list is populated upon the creation of a Sema object.    
   IdentifierInfo* KnownFunctionIDs[id_num_known_functions];
 
-  /// Identifiers used by the C++ language
-  IdentifierInfo *Ident_TypeInfo; // "type_info" - lazily created
-
   /// Translation Unit Scope - useful to Objective-C actions that need
   /// to lookup file scope declarations in the "ordinary" C decl namespace.
   /// For example, user-defined classes, built-in "id" type, etc.

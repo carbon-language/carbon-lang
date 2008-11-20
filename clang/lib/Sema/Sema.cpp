@@ -103,9 +103,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   KnownFunctionIDs[id_vsnprintf_chk] = &IT.get("__builtin___vsnprintf_chk");
   KnownFunctionIDs[id_vprintf]       = &IT.get("vprintf");
 
-  Ident_TypeInfo = 0;
   StdNamespace = 0;
-
   TUScope = 0;
   if (getLangOptions().CPlusPlus)
     FieldCollector.reset(new CXXFieldCollector());
