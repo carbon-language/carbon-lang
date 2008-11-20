@@ -204,8 +204,8 @@ public:
   
   /// isCurrentLexer - Return true if we are lexing directly from the specified
   /// lexer.
-  bool isCurrentLexer(const Lexer *L) const {
-    return CurLexer.get() == L;
+  bool isCurrentLexer(const PreprocessorLexer *L) const {
+    return CurPPLexer == L;
   }
   
   /// getCurrentLexer - Return the current file lexer being lexed from.  Note
