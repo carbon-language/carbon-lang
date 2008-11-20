@@ -109,6 +109,9 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   MBB = mbb;
   ScavengedReg = 0;
   ScavengedRC = NULL;
+  ScavengeRestore = NULL;
+  CurrDist = 0;
+  DistanceMap.clear();
 
   // All registers started out unused.
   RegsAvailable.set();
@@ -126,9 +129,6 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
 }
 
 void RegScavenger::restoreScavengedReg() {
-  if (!ScavengedReg)
-    return;
-
   TII->loadRegFromStackSlot(*MBB, MBBI, ScavengedReg,
                             ScavengingFrameIndex, ScavengedRC);
   MachineBasicBlock::iterator II = prior(MBBI);
@@ -183,12 +183,14 @@ void RegScavenger::forward() {
   }
 
   MachineInstr *MI = MBBI;
+  DistanceMap.insert(std::make_pair(MI, CurrDist++));
   const TargetInstrDesc &TID = MI->getDesc();
 
-  // Reaching a terminator instruction. Restore a scavenged register (which
-  // must be life out.
-  if (TID.isTerminator())
-    restoreScavengedReg();
+  if (MI == ScavengeRestore) {
+    ScavengedReg = 0;
+    ScavengedRC = NULL;
+    ScavengeRestore = NULL;
+  }
 
   bool IsImpDef = MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF;
 
@@ -214,13 +216,7 @@ void RegScavenger::forward() {
     const MachineOperand MO = *UseMOs[i].first;
     unsigned Reg = MO.getReg();
 
-    if (!isUsed(Reg)) {
-      // Register has been scavenged. Restore it!
-      if (Reg == ScavengedReg)
-        restoreScavengedReg();
-      else
-        assert(false && "Using an undefined register!");
-    }
+    assert(isUsed(Reg) && "Using an undefined register!");
 
     if (MO.isKill() && !isReserved(Reg)) {
       UseRegs.set(Reg);
@@ -282,6 +278,8 @@ void RegScavenger::backward() {
   MBBI = prior(MBBI);
 
   MachineInstr *MI = MBBI;
+  DistanceMap.erase(MI);
+  --CurrDist;
   const TargetInstrDesc &TID = MI->getDesc();
 
   // Separate register operands into 3 classes: uses, defs, earlyclobbers.
@@ -383,20 +381,37 @@ unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
   return (Reg == -1) ? 0 : Reg;
 }
 
-/// calcDistanceToUse - Calculate the distance to the first use of the
+/// findFirstUse - Calculate the distance to the first use of the
 /// specified register.
-static unsigned calcDistanceToUse(MachineBasicBlock *MBB,
-                                  MachineBasicBlock::iterator I, unsigned Reg,
-                                  const TargetRegisterInfo *TRI) {
-  unsigned Dist = 0;
-  I = next(I);
-  while (I != MBB->end()) {
-    Dist++;
-    if (I->readsRegister(Reg, TRI))
-        return Dist;
-    I = next(I);    
+MachineInstr*
+RegScavenger::findFirstUse(MachineBasicBlock *MBB,
+                           MachineBasicBlock::iterator I, unsigned Reg,
+                           unsigned &Dist) {
+  MachineInstr *UseMI = 0;
+  Dist = ~0U;
+  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(Reg),
+         RE = MRI->reg_end(); RI != RE; ++RI) {
+    MachineInstr *UDMI = &*RI;
+    if (UDMI->getParent() != MBB)
+      continue;
+    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UDMI);
+    if (DI == DistanceMap.end()) {
+      // If it's not in map, it's below current MI, let's initialize the
+      // map.
+      I = next(I);
+      unsigned Dist = CurrDist + 1;
+      while (I != MBB->end()) {
+        DistanceMap.insert(std::make_pair(I, Dist++));
+        I = next(I);
+      }
+    }
+    DI = DistanceMap.find(UDMI);
+    if (DI->second > CurrDist && DI->second < Dist) {
+      Dist = DI->second;
+      UseMI = UDMI;
+    }
   }
-  return Dist + 1;
+  return UseMI;
 }
 
 unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
@@ -420,27 +435,42 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   // Find the register whose use is furthest away.
   unsigned SReg = 0;
   unsigned MaxDist = 0;
+  MachineInstr *MaxUseMI = 0;
   int Reg = Candidates.find_first();
   while (Reg != -1) {
-    unsigned Dist = calcDistanceToUse(MBB, I, Reg, TRI);
+    unsigned Dist;
+    MachineInstr *UseMI = findFirstUse(MBB, I, Reg, Dist);
+    for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
+      unsigned AsDist;
+      MachineInstr *AsUseMI = findFirstUse(MBB, I, *AS, AsDist);
+      if (AsDist < Dist) {
+        Dist = AsDist;
+        UseMI = AsUseMI;
+      }
+    }
     if (Dist >= MaxDist) {
       MaxDist = Dist;
+      MaxUseMI = UseMI;
       SReg = Reg;
     }
     Reg = Candidates.find_next(Reg);
   }
 
   if (ScavengedReg != 0) {
-    // First restore previously scavenged register.
-    TII->loadRegFromStackSlot(*MBB, I, ScavengedReg,
-                              ScavengingFrameIndex, ScavengedRC);
-    MachineBasicBlock::iterator II = prior(I);
-    TRI->eliminateFrameIndex(II, SPAdj, this);
+    assert(0 && "Scavenger slot is live, unable to scavenge another register!");
+    abort();
   }
 
+  // Spill the scavenged register before I.
   TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
   MachineBasicBlock::iterator II = prior(I);
   TRI->eliminateFrameIndex(II, SPAdj, this);
+
+  // Restore the scavenged register before its use (or first terminator).
+  II = MaxUseMI
+    ? MachineBasicBlock::iterator(MaxUseMI) : MBB->getFirstTerminator();
+  TII->loadRegFromStackSlot(*MBB, II, SReg, ScavengingFrameIndex, RC);
+  ScavengeRestore = prior(II);
   ScavengedReg = SReg;
   ScavengedRC = RC;
 

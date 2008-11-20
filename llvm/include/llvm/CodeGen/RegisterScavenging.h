@@ -19,6 +19,7 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
@@ -28,6 +29,9 @@ class TargetInstrInfo;
 class TargetRegisterClass;
 
 class RegScavenger {
+  const TargetRegisterInfo *TRI;
+  const TargetInstrInfo *TII;
+  MachineRegisterInfo* MRI;
   MachineBasicBlock *MBB;
   MachineBasicBlock::iterator MBBI;
   unsigned NumPhysRegs;
@@ -48,6 +52,18 @@ class RegScavenger {
   ///
   const TargetRegisterClass *ScavengedRC;
 
+  /// ScavengeRestore - Instruction that restores the scavenged register from
+  /// stack.
+  const MachineInstr *ScavengeRestore;
+
+  /// CalleeSavedrRegs - A bitvector of callee saved registers for the target.
+  ///
+  BitVector CalleeSavedRegs;
+
+  /// ReservedRegs - A bitvector of reserved registers.
+  ///
+  BitVector ReservedRegs;
+
   /// RegsAvailable - The current state of all the physical registers immediately
   /// before MBBI. One bit per physical register. If bit is set that means it's
   /// available, unset means the register is currently being used.
@@ -56,6 +72,14 @@ class RegScavenger {
   /// ImplicitDefed - If bit is set that means the register is defined by an
   /// implicit_def instructions. That means it can be clobbered at will.
   BitVector ImplicitDefed;
+
+  /// CurrDist - Distance from MBB entry to the current instruction MBBI.
+  ///
+  unsigned CurrDist;
+
+  /// DistanceMap - Keep track the distance of a MI from the start of the
+  /// current basic block.
+  DenseMap<MachineInstr*, unsigned> DistanceMap;
 
 public:
   RegScavenger()
@@ -143,21 +167,13 @@ public:
   }
 
 private:
-  const TargetRegisterInfo *TRI;
-  const TargetInstrInfo *TII;
-  MachineRegisterInfo* MRI;
-
-  /// CalleeSavedrRegs - A bitvector of callee saved registers for the target.
-  ///
-  BitVector CalleeSavedRegs;
-
-  /// ReservedRegs - A bitvector of reserved registers.
-  ///
-  BitVector ReservedRegs;
-
   /// restoreScavengedReg - Restore scavenged by loading it back from the
   /// emergency spill slot. Mark it used.
   void restoreScavengedReg();
+
+  MachineInstr *findFirstUse(MachineBasicBlock *MBB,
+                             MachineBasicBlock::iterator I, unsigned Reg,
+                             unsigned &Dist);
 };
  
 } // End llvm namespace
