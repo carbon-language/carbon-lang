@@ -510,7 +510,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     // Get the file that we are lexing out of.  If we're currently lexing from
     // a macro, dig into the include stack.
     const FileEntry *CurFile = 0;
-    Lexer *TheLexer = getCurrentFileLexer();
+    PreprocessorLexer *TheLexer = getCurrentFileLexer();
     
     if (TheLexer)
       CurFile = SourceMgr.getFileEntryForID(TheLexer->getFileID());
