@@ -462,7 +462,8 @@ public:
   LValue EmitBinaryOperatorLValue(const BinaryOperator *E);
   // Note: only availabe for agg return types
   LValue EmitCallExprLValue(const CallExpr *E);
-  
+  void SetVarDeclObjCAttribute(const VarDecl *VD, const QualType &Ty, 
+                               LValue &LV);
   LValue EmitDeclRefLValue(const DeclRefExpr *E);
   LValue EmitStringLiteralLValue(const StringLiteral *E);
   LValue EmitPredefinedFunctionName(unsigned Type);

@@ -521,33 +521,48 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
   Builder.CreateStore(Vec, Dst.getExtVectorAddr(), Dst.isVolatileQualified());
 }
 
+/// SetVarDeclObjCAttribute - Set __weak/__strong attributes into the LValue
+/// object.
+void CodeGenFunction::SetVarDeclObjCAttribute(const VarDecl *VD, 
+                                              const QualType &Ty, 
+                                              LValue &LV)
+{
+  if (const ObjCGCAttr *A = VD->getAttr<ObjCGCAttr>()) {
+    ObjCGCAttr::GCAttrTypes attrType = A->getType();
+    LValue::SetObjCType(attrType == ObjCGCAttr::Weak, 
+                        attrType == ObjCGCAttr::Strong, LV);
+  }
+  else if (CGM.getLangOptions().ObjC1 &&
+           CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
+    if (getContext().isObjCObjectPointerType(Ty))
+      LValue::SetObjCType(false, true, LV);
+  }  
+}
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
   
   if (VD && (VD->isBlockVarDecl() || isa<ParmVarDecl>(VD) ||
         isa<ImplicitParamDecl>(VD))) {
-    if (VD->getStorageClass() == VarDecl::Extern)
-      return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
-                              E->getType().getCVRQualifiers());
+    LValue LV;
+    if (VD->getStorageClass() == VarDecl::Extern) {
+      LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
+                            E->getType().getCVRQualifiers());
+    }
     else {
       llvm::Value *V = LocalDeclMap[VD];
       assert(V && "BlockVarDecl not entered in LocalDeclMap?");
-      return LValue::MakeAddr(V, E->getType().getCVRQualifiers());
+      LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers());
     }
+    if (VD->isBlockVarDecl() && 
+        (VD->getStorageClass() == VarDecl::Static || 
+         VD->getStorageClass() == VarDecl::Extern))
+      SetVarDeclObjCAttribute(VD, E->getType(), LV);
+    return LV;
   } else if (VD && VD->isFileVarDecl()) {
     LValue LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
                                  E->getType().getCVRQualifiers());
-    if (const ObjCGCAttr *A = VD->getAttr<ObjCGCAttr>()) {
-      ObjCGCAttr::GCAttrTypes attrType = A->getType();
-      LValue::SetObjCType(attrType == ObjCGCAttr::Weak, attrType == ObjCGCAttr::Strong, LV);
-    }
-    else if (CGM.getLangOptions().ObjC1 &&
-             CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
-      QualType ExprTy = E->getType();
-      if (getContext().isObjCObjectPointerType(ExprTy))
-        LValue::SetObjCType(false, true, LV);
-    }
+    SetVarDeclObjCAttribute(VD, E->getType(), LV);
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     return LValue::MakeAddr(CGM.GetAddrOfFunction(FD),
@@ -767,7 +782,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
                                 Field->getType()->isSignedIntegerType(),
                             Field->getType().getCVRQualifiers()|CVRQualifiers);
   }
-
+  
   V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
 
   // Match union field type.
@@ -782,8 +797,21 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
                               "tmp");
   }
 
-  return LValue::MakeAddr(V, 
-                          Field->getType().getCVRQualifiers()|CVRQualifiers);
+  LValue LV =  
+    LValue::MakeAddr(V, 
+                     Field->getType().getCVRQualifiers()|CVRQualifiers);
+  if (const ObjCGCAttr *A = Field->getAttr<ObjCGCAttr>()) {
+    ObjCGCAttr::GCAttrTypes attrType = A->getType();
+    // __weak attribute on a field is ignored.
+    LValue::SetObjCType(false, attrType == ObjCGCAttr::Strong, LV);
+  }
+  else if (CGM.getLangOptions().ObjC1 &&
+           CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
+    QualType ExprTy = Field->getType();
+    if (getContext().isObjCObjectPointerType(ExprTy))
+      LValue::SetObjCType(false, true, LV);
+  }  
+  return LV;
 }
 
 LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E)
