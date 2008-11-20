@@ -182,7 +182,7 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
   // Otherwise, this label was either forward reference or multiply defined.  If
   // multiply defined, reject it now.
   if (LabelDecl->getSubStmt()) {
-    Diag(IdentLoc, diag::err_redefinition_of_label, LabelDecl->getName());
+    Diag(IdentLoc, diag::err_redefinition_of_label) << LabelDecl->getName();
     Diag(LabelDecl->getIdentLoc(), diag::err_previous_definition);
     return SubStmt;
   }
@@ -572,8 +572,9 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   
   if (!getLangOptions().CPlusPlus) {
     if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
-      // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
-      // identifiers for objects having storage class 'auto' or 'register'.
+      // C99 6.8.5p3: The declaration part of a 'for' statement shall only
+      // declare identifiers for objects having storage class 'auto' or
+      // 'register'.
       for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
            DI!=DE; ++DI) {
         VarDecl *VD = dyn_cast<VarDecl>(*DI);
@@ -616,8 +617,9 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
       
       ScopedDecl *D = DS->getSolitaryDecl();
       FirstType = cast<ValueDecl>(D)->getType();
-      // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
-      // identifiers for objects having storage class 'auto' or 'register'.
+      // C99 6.8.5p3: The declaration part of a 'for' statement shall only
+      // declare identifiers for objects having storage class 'auto' or
+      // 'register'.
       VarDecl *VD = cast<VarDecl>(D);
       if (VD->isBlockVarDecl() && !VD->hasLocalStorage())
         return Diag(VD->getLocation(), diag::err_non_variable_decl_in_for);
@@ -836,7 +838,7 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     if (!Context.Target.validateOutputConstraint(OutputConstraint.c_str(),info))
       // FIXME: We currently leak memory here.
       return Diag(Literal->getLocStart(),
-                  diag::err_asm_invalid_output_constraint, OutputConstraint);
+                  diag::err_asm_invalid_output_constraint) << OutputConstraint;
     
     // Check that the output exprs are valid lvalues.
     ParenExpr *OutputExpr = cast<ParenExpr>(Exprs[i]);
@@ -894,7 +896,7 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     if (!Context.Target.isValidGCCRegisterName(Clobber.c_str()))
       // FIXME: We currently leak memory here.
       return Diag(Literal->getLocStart(),
-                  diag::err_asm_unknown_register_name, Clobber.c_str());
+                  diag::err_asm_unknown_register_name) << Clobber.c_str();
   }
   
   return new AsmStmt(AsmLoc, IsSimple, IsVolatile, NumOutputs, NumInputs, 

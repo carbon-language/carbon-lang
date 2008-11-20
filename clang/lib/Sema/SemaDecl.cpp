@@ -530,7 +530,7 @@ void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
           OldDecl->getStorageClass() != VarDecl::PrivateExtern &&
           VD->getStorageClass() != VarDecl::Extern &&
           VD->getStorageClass() != VarDecl::PrivateExtern) {
-        Diag(VD->getLocation(), diag::err_redefinition, VD->getName());
+        Diag(VD->getLocation(), diag::err_redefinition) << VD->getName();
         Diag(OldDecl->getLocation(), diag::err_previous_definition);
       }
     }
@@ -549,8 +549,8 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   // Verify the old decl was also a variable.
   VarDecl *Old = dyn_cast<VarDecl>(OldD);
   if (!Old) {
-    Diag(New->getLocation(), diag::err_redefinition_different_kind,
-         New->getName());
+    Diag(New->getLocation(), diag::err_redefinition_different_kind)
+      << New->getName();
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
@@ -561,7 +561,7 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   QualType OldCType = Context.getCanonicalType(Old->getType());
   QualType NewCType = Context.getCanonicalType(New->getType());
   if (OldCType != NewCType && !Context.typesAreCompatible(OldCType, NewCType)) {
-    Diag(New->getLocation(), diag::err_redefinition, New->getName());
+    Diag(New->getLocation(), diag::err_redefinition) << New->getName();
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;
   }
@@ -569,20 +569,20 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   if (New->getStorageClass() == VarDecl::Static &&
       (Old->getStorageClass() == VarDecl::None ||
        Old->getStorageClass() == VarDecl::Extern)) {
-    Diag(New->getLocation(), diag::err_static_non_static, New->getName());
+    Diag(New->getLocation(), diag::err_static_non_static) << New->getName();
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;
   }
   // C99 6.2.2p4: Check if we have a non-static decl followed by a static.
   if (New->getStorageClass() != VarDecl::Static &&
       Old->getStorageClass() == VarDecl::Static) {
-    Diag(New->getLocation(), diag::err_non_static_static, New->getName());
+    Diag(New->getLocation(), diag::err_non_static_static) << New->getName();
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;
   }
   // Variables with external linkage are analyzed in FinalizeDeclaratorGroup.
   if (New->getStorageClass() != VarDecl::Extern && !New->isFileVarDecl()) {
-    Diag(New->getLocation(), diag::err_redefinition, New->getName());
+    Diag(New->getLocation(), diag::err_redefinition) << New->getName();
     Diag(Old->getLocation(), diag::err_previous_definition);
   }
   return New;
@@ -603,8 +603,8 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
     // that function shall not have incomplete type.
     if (Param->getType()->isIncompleteType() &&
         !Param->isInvalidDecl()) {
-      Diag(Param->getLocation(), diag::err_typecheck_decl_incomplete_type,
-           Param->getType().getAsString());
+      Diag(Param->getLocation(), diag::err_typecheck_decl_incomplete_type)
+        << Param->getType().getAsString();
       Param->setInvalidDecl();
       HasInvalidParm = true;
     }
@@ -900,8 +900,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       case DeclSpec::SCS_auto:        
       case DeclSpec::SCS_register:
       case DeclSpec::SCS_mutable:
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func,
-             R.getAsString());
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func)
+          << R.getAsString();
         InvalidDecl = true;
         break;
       case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
@@ -1163,8 +1163,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 
     IdentifierInfo *II = Name.getAsIdentifierInfo();
     if (!II) {
-      Diag(D.getIdentifierLoc(), diag::err_bad_variable_name,
-           Name.getAsString());
+      Diag(D.getIdentifierLoc(), diag::err_bad_variable_name)
+       << Name.getAsString();
       return 0;
     }
 
@@ -1180,8 +1180,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         // C99 6.9p2: The storage-class specifiers auto and register shall not
         // appear in the declaration specifiers in an external declaration.
         if (SC == VarDecl::Auto || SC == VarDecl::Register) {
-          Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope,
-               R.getAsString());
+          Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope)
+            << R.getAsString();
           InvalidDecl = true;
         }
       }
@@ -1864,10 +1864,9 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
     if (getLangOptions().CPlusPlus &&
         Context.getCanonicalType(Type).isConstQualified() &&
         Var->getStorageClass() != VarDecl::Extern)
-      Diag(Var->getLocation(), 
-           diag::err_const_var_requires_init, 
-           Var->getName(), 
-           SourceRange(Var->getLocation(), Var->getLocation()));
+      Diag(Var->getLocation(),  diag::err_const_var_requires_init)
+        << Var->getName()
+        << SourceRange(Var->getLocation(), Var->getLocation());
 #endif
   }
 }
@@ -1913,8 +1912,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     if (IDecl->isBlockVarDecl() && 
         IDecl->getStorageClass() != VarDecl::Extern) {
       if (T->isIncompleteType() && !IDecl->isInvalidDecl()) {
-        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
-             T.getAsString());
+        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type)
+          << T.getAsString();
         IDecl->setInvalidDecl();
       }
     }
@@ -1931,8 +1930,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
         // C99 6.9.2p3: If the declaration of an identifier for an object is
         // a tentative definition and has internal linkage (C99 6.2.2p3), the  
         // declared type shall not be an incomplete type.
-        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
-             T.getAsString());
+        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type)
+          << T.getAsString();
         IDecl->setInvalidDecl();
       }
     }
@@ -1982,8 +1981,8 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   IdentifierInfo *II = D.getIdentifier();
   if (Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S)) {
     if (S->isDeclScope(PrevDecl)) {
-      Diag(D.getIdentifierLoc(), diag::err_param_redefinition,
-           dyn_cast<NamedDecl>(PrevDecl)->getName());
+      Diag(D.getIdentifierLoc(), diag::err_param_redefinition)
+        << cast<NamedDecl>(PrevDecl)->getName();
 
       // Recover by removing the name
       II = 0;
@@ -2071,8 +2070,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   // See if this is a redefinition.
   const FunctionDecl *Definition;
   if (FD->getBody(Definition)) {
-    Diag(FD->getLocation(), diag::err_redefinition, 
-         FD->getName());
+    Diag(FD->getLocation(), diag::err_redefinition) << FD->getName();
     Diag(Definition->getLocation(), diag::err_previous_definition);
   }
 
@@ -2113,7 +2111,7 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
     if (I->second->getSubStmt() == 0) {
       LabelStmt *L = I->second;
       // Emit error.
-      Diag(L->getIdentLoc(), diag::err_undeclared_label_use, L->getName());
+      Diag(L->getIdentLoc(), diag::err_undeclared_label_use) << L->getName();
       
       // At this point, we have gotos that use the bogus label.  Stitch it into
       // the function body so that they aren't leaked and that the AST is well
@@ -2712,8 +2710,8 @@ void Sema::ActOnFields(Scope* S,
       //     struct S { struct S {} X; };
       // We discover this when we complete the outer S.  Reject and ignore the
       // outer S.
-      Diag(DefRecord->getLocation(), diag::err_nested_redefinition,
-           DefRecord->getKindName());
+      Diag(DefRecord->getLocation(), diag::err_nested_redefinition)
+        << DefRecord->getKindName();
       Diag(RecLoc, diag::err_previous_definition);
       Record->setInvalidDecl();
       return;
@@ -2737,8 +2735,8 @@ void Sema::ActOnFields(Scope* S,
       
     // C99 6.7.2.1p2 - A field may not be a function type.
     if (FDTy->isFunctionType()) {
-      Diag(FD->getLocation(), diag::err_field_declared_as_function, 
-           FD->getName());
+      Diag(FD->getLocation(), diag::err_field_declared_as_function)
+        << FD->getName();
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
       continue;
@@ -2746,7 +2744,7 @@ void Sema::ActOnFields(Scope* S,
     // C99 6.7.2.1p2 - A field may not be an incomplete type except...
     if (FDTy->isIncompleteType()) {
       if (!Record) {  // Incomplete ivar type is always an error.
-        Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
+        Diag(FD->getLocation(), diag::err_field_incomplete) << FD->getName();
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
         continue;
@@ -2754,14 +2752,14 @@ void Sema::ActOnFields(Scope* S,
       if (i != NumFields-1 ||                   // ... that the last member ...
           !Record->isStruct() ||  // ... of a structure ...
           !FDTy->isArrayType()) {         //... may have incomplete array type.
-        Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
+        Diag(FD->getLocation(), diag::err_field_incomplete) << FD->getName();
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
         continue;
       }
       if (NumNamedMembers < 1) {  //... must have more than named member ...
-        Diag(FD->getLocation(), diag::err_flexible_array_empty_struct,
-             FD->getName());
+        Diag(FD->getLocation(), diag::err_flexible_array_empty_struct)
+          << FD->getName();
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
         continue;
@@ -2782,16 +2780,16 @@ void Sema::ActOnFields(Scope* S,
           // it.  Note that GCC supports variable sized arrays in the middle of
           // structures.
           if (i != NumFields-1) {
-            Diag(FD->getLocation(), diag::err_variable_sized_type_in_struct,
-                 FD->getName());
+            Diag(FD->getLocation(), diag::err_variable_sized_type_in_struct)
+              << FD->getName();
             FD->setInvalidDecl();
             EnclosingDecl->setInvalidDecl();
             continue;
           }
           // We support flexible arrays at the end of structs in other structs
           // as an extension.
-          Diag(FD->getLocation(), diag::ext_flexible_array_in_struct,
-               FD->getName());
+          Diag(FD->getLocation(), diag::ext_flexible_array_in_struct)
+            << FD->getName();
           if (Record)
             Record->setHasFlexibleArrayMember(true);
         }
@@ -2799,8 +2797,8 @@ void Sema::ActOnFields(Scope* S,
     }
     /// A field cannot be an Objective-c object
     if (FDTy->isObjCInterfaceType()) {
-      Diag(FD->getLocation(), diag::err_statically_allocated_object,
-           FD->getName());
+      Diag(FD->getLocation(), diag::err_statically_allocated_object)
+        << FD->getName();
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
       continue;
@@ -2939,8 +2937,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     //   enum e0 {
     //     E0 = sizeof(enum e0 { E1 })
     //   };
-    Diag(Enum->getLocation(), diag::err_nested_redefinition,
-         Enum->getName());
+    Diag(Enum->getLocation(), diag::err_nested_redefinition) << Enum->getName();
     Diag(EnumLoc, diag::err_previous_definition);
     Enum->setInvalidDecl();
     return;
@@ -2973,8 +2970,8 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
       V.trunc(IntWidth);
       V.extend(InitVal.getBitWidth());
       if (V != InitVal)
-        Diag(ECD->getLocation(), diag::ext_enum_value_not_int,
-             InitVal.toString(10));
+        Diag(ECD->getLocation(), diag::ext_enum_value_not_int)
+          << InitVal.toString(10);
     }
     
     // Keep track of the size of positive and negative values.
@@ -3176,8 +3173,8 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
       // If a name was specified then failure indicates the name
       // wasn't found. Otherwise failure indicates the stack was
       // empty.
-      Diag(PragmaLoc, diag::warn_pragma_pack_pop_failed, 
-           Name ? "no record matching name" : "stack empty");
+      Diag(PragmaLoc, diag::warn_pragma_pack_pop_failed)
+        << (Name ? "no record matching name" : "stack empty");
 
       // FIXME: Warn about popping named records as MSVC does.
     } else {

@@ -1568,8 +1568,8 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
 
   // first, check the condition.
   if (!condT->isScalarType()) { // C99 6.5.15p2
-    Diag(cond->getLocStart(), diag::err_typecheck_cond_expect_scalar, 
-         condT.getAsString());
+    Diag(cond->getLocStart(), diag::err_typecheck_cond_expect_scalar)
+      << condT.getAsString();
     return QualType();
   }
   

@@ -46,14 +46,14 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     if (DS.getTypeSpecSign() == DeclSpec::TSS_unspecified)
       Result = Context.WCharTy;
     else if (DS.getTypeSpecSign() == DeclSpec::TSS_signed) {
-      Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec,
-           DS.getSpecifierName(DS.getTypeSpecType()));
+      Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec)
+        << DS.getSpecifierName(DS.getTypeSpecType());
       Result = Context.getSignedWCharType();
     } else {
       assert(DS.getTypeSpecSign() == DeclSpec::TSS_unsigned &&
         "Unknown TSS value");
-      Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec,
-           DS.getSpecifierName(DS.getTypeSpecType()));
+      Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec)
+        << DS.getSpecifierName(DS.getTypeSpecType());
       Result = Context.getUnsignedWCharType();
     }
     break;
@@ -430,8 +430,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       
       // C99 6.7.5.3p1: The return type may not be a function or array type.
       if (T->isArrayType() || T->isFunctionType()) {
-        Diag(DeclType.Loc, diag::err_func_returning_array_function,
-             T.getAsString());
+        Diag(DeclType.Loc, diag::err_func_returning_array_function)
+          << T.getAsString();
         T = Context.IntTy;
         D.setInvalidType(true);
       }
@@ -654,8 +654,7 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   
   // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-           std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
   Expr *ASArgExpr = static_cast<Expr *>(Attr.getArg(0));

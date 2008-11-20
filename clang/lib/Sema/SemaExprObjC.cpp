@@ -190,8 +190,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
       isSuper = true;
       ClassDecl = getCurMethodDecl()->getClassInterface()->getSuperClass();
       if (!ClassDecl)
-        return Diag(lbrac, diag::error_no_super_class,
-                    getCurMethodDecl()->getClassInterface()->getName());
+        return Diag(lbrac, diag::error_no_super_class)
+          << getCurMethodDecl()->getClassInterface()->getName();
       if (getCurMethodDecl()->isInstance()) {
         QualType superTy = Context.getObjCInterfaceType(ClassDecl);
         superTy = Context.getPointerType(superTy);
@@ -214,8 +214,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
         return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
                                     Args, NumArgs);
       }
-      return Diag(receiverLoc, diag::err_undeclared_var_use, 
-                  receiverName->getName());
+      return Diag(receiverLoc, diag::err_undeclared_var_use)
+        << receiverName->getName();
     }      
   } else
     ClassDecl = getObjCInterfaceDecl(receiverName);

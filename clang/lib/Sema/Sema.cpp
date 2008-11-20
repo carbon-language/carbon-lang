@@ -162,11 +162,6 @@ DiagnosticInfo Sema::Diag(SourceLocation Loc, unsigned DiagID) {
                                     DiagID);
 }
 
-bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
-  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID) << Msg;
-  return true;
-}
-
 const LangOptions &Sema::getLangOptions() const {
   return PP.getLangOptions();
 }

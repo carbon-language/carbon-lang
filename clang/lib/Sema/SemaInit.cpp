@@ -143,8 +143,8 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
   } else if (DeclType->isVoidType() || DeclType->isFunctionType()) {
     // This type is invalid, issue a diagnostic.
     Index++;
-    SemaRef->Diag(IList->getLocStart(), diag::err_illegal_initializer_type,
-                  DeclType.getAsString());
+    SemaRef->Diag(IList->getLocStart(), diag::err_illegal_initializer_type)
+      << DeclType.getAsString();
     hadError = true;
   } else {
     // In C, all types are either scalars or aggregates, but

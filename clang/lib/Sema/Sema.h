@@ -23,7 +23,6 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
-#include <string>
 #include <vector>
 
 namespace llvm {
@@ -228,7 +227,6 @@ public:
   
   /// The primitive diagnostic helpers.
   DiagnosticInfo Diag(SourceLocation Loc, unsigned DiagID);
-  bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
 
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);

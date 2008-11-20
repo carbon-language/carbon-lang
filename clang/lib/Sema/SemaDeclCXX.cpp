@@ -1814,8 +1814,8 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   if (CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(FnDecl)) {
     if (MethodDecl->isStatic())
       return Diag(FnDecl->getLocation(),
-                  diag::err_operator_overload_static,
-                  FnDecl->getName());
+                  diag::err_operator_overload_static)
+        << FnDecl->getName();
   } else {
     bool ClassOrEnumParam = false;
     for (FunctionDecl::param_iterator Param = FnDecl->param_begin(),
@@ -1830,8 +1830,8 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
 
     if (!ClassOrEnumParam)
       return Diag(FnDecl->getLocation(),
-                  diag::err_operator_overload_needs_class_or_enum,
-                  FnDecl->getName());
+                  diag::err_operator_overload_needs_class_or_enum)
+        << FnDecl->getName();
   }
 
   // C++ [over.oper]p8:
@@ -1898,16 +1898,15 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   // Overloaded operators other than operator() cannot be variadic.
   if (Op != OO_Call &&
       FnDecl->getType()->getAsFunctionTypeProto()->isVariadic()) {
-    return Diag(FnDecl->getLocation(),
-                diag::err_operator_overload_variadic,
-                FnDecl->getName());
+    return Diag(FnDecl->getLocation(), diag::err_operator_overload_variadic)
+      << FnDecl->getName();
   }
 
   // Some operators must be non-static member functions.
   if (MustBeMemberOperator && !isa<CXXMethodDecl>(FnDecl)) {
     return Diag(FnDecl->getLocation(),
-                diag::err_operator_overload_must_be_member,
-                FnDecl->getName());
+                diag::err_operator_overload_must_be_member)
+      << FnDecl->getName();
   }
 
   // C++ [over.inc]p1:
@@ -1932,8 +1931,8 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
         DK = diag::err_operator_overload_post_inc_must_be_int;
       else
         DK = diag::err_operator_overload_post_dec_must_be_int;
-      return Diag(LastParam->getLocation(), DK,
-                  Context.getCanonicalType(LastParam->getType()).getAsString());
+      return Diag(LastParam->getLocation(), DK)
+        << Context.getCanonicalType(LastParam->getType()).getAsString();
     }
   }
 
