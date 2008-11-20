@@ -236,14 +236,14 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.HTMLDir, C.PP, C.PPF)); break;
       DisplayedFunction = true;
       
       if (FunctionDecl *FD = dyn_cast<FunctionDecl>(getCodeDecl())) {
-        llvm::cout << "ANALYZE: "
+        llvm::cerr << "ANALYZE: "
         << getContext().getSourceManager().getSourceName(FD->getLocation())
         << ' '
         << FD->getIdentifier()->getName()
         << '\n';
       }
       else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(getCodeDecl())) {
-        llvm::cout << "ANALYZE (ObjC Method): "
+        llvm::cerr << "ANALYZE (ObjC Method): "
         << getContext().getSourceManager().getSourceName(MD->getLocation())
         << " '"
         << MD->getSelector().getName() << "'\n";
