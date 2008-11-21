@@ -2204,6 +2204,7 @@ CastInst::getCastOpcode(
     if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {
       assert(DestPTy->getBitWidth() == SrcPTy->getBitWidth() &&
              "Casting vector to vector of different widths");
+      SrcPTy = NULL;
       return BitCast;                             // vector -> vector
     } else if (DestPTy->getBitWidth() == SrcBits) {
       return BitCast;                               // float/int -> vector

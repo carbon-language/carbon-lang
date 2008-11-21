@@ -53,6 +53,7 @@ namespace {
   }
 }
 
+#ifndef DEBUG
 /// PrintOps - Print out the expression identified in the Ops list.
 ///
 static void PrintOps(Instruction *I, const std::vector<ValueEntry> &Ops) {
@@ -64,6 +65,7 @@ static void PrintOps(Instruction *I, const std::vector<ValueEntry> &Ops) {
     cerr << "," << Ops[i].Rank;
   }
 }
+#endif
   
 namespace {
   class VISIBILITY_HIDDEN Reassociate : public FunctionPass {
@@ -282,6 +284,7 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
       std::swap(LHS, RHS);
       bool Success = !I->swapOperands();
       assert(Success && "swapOperands failed");
+      Success = false;
       MadeChange = true;
     }
   } else if (RHSBO) {

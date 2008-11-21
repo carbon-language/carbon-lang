@@ -125,6 +125,7 @@ void LiveIntervals::computeNumbering() {
          I != E; ++I) {
       bool inserted = mi2iMap_.insert(std::make_pair(I, MIIndex)).second;
       assert(inserted && "multiple MachineInstr -> index mappings");
+      inserted = true;
       i2miMap_.push_back(I);
       MIIndex += InstrSlots::NUM;
       FunctionSize++;

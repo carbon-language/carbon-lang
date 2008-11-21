@@ -152,7 +152,9 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
           MI->getOperand(3).isImm() && "Invalid insert_subreg");
           
   unsigned DstReg = MI->getOperand(0).getReg();
+#ifndef NDEBUG
   unsigned SrcReg = MI->getOperand(1).getReg();
+#endif
   unsigned InsReg = MI->getOperand(2).getReg();
   unsigned SubIdx = MI->getOperand(3).getImm();     
 

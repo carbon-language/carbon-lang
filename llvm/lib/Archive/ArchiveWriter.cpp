@@ -306,8 +306,10 @@ Archive::writeSymbolTable(std::ofstream& ARFile) {
   // Write the header
   ARFile.write((char*)&Hdr, sizeof(Hdr));
 
+#ifndef NDEBUG
   // Save the starting position of the symbol tables data content.
   unsigned startpos = ARFile.tellp();
+#endif
 
   // Write out the symbols sequentially
   for ( Archive::SymTabType::iterator I = symTab.begin(), E = symTab.end();
@@ -321,8 +323,10 @@ Archive::writeSymbolTable(std::ofstream& ARFile) {
     ARFile.write(I->first.data(), I->first.length());
   }
 
+#ifndef NDEBUG
   // Now that we're done with the symbol table, get the ending file position
   unsigned endpos = ARFile.tellp();
+#endif
 
   // Make sure that the amount we wrote is what we pre-computed. This is
   // critical for file integrity purposes.

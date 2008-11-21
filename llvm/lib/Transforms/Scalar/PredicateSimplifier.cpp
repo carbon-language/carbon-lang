@@ -341,6 +341,7 @@ namespace {
     UGE = UGT | EQ_BIT
   };
 
+#ifndef NDEBUG
   /// validPredicate - determines whether a given value is actually a lattice
   /// value. Only used in assertions or debugging.
   static bool validPredicate(LatticeVal LV) {
@@ -355,6 +356,7 @@ namespace {
         return false;
     }
   }
+#endif
 
   /// reversePredicate - reverse the direction of the inequality
   static LatticeVal reversePredicate(LatticeVal LV) {
