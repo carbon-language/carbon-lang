@@ -53,7 +53,7 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
       // Optionally add output and anti dependences.
       if (Def && Def != SU)
         Def->addPred(SU, /*isCtrl=*/true, /*isSpecial=*/false,
-                     /*PhyReg=*/Reg, Cost);
+                     /*PhyReg=*/Reg, Cost, /*isAntiDep=*/MO.isUse());
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         SUnit *&Def = Defs[*Alias];
         if (Def && Def != SU)
