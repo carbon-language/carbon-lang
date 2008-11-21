@@ -3205,6 +3205,8 @@ Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
     }
   }
 
+  llvm::OwningPtr<Expr> BasePtr(Base);
+
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Best)) {
@@ -3215,29 +3217,28 @@ Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
   case OR_No_Viable_Function:
     if (CandidateSet.empty())
       Diag(OpLoc, diag::err_typecheck_member_reference_arrow)
-        << Base->getType().getAsString() << Base->getSourceRange();
+        << BasePtr->getType().getAsString() << BasePtr->getSourceRange();
     else
       Diag(OpLoc, diag::err_ovl_no_viable_oper)
-        << "operator->" << Base->getSourceRange();
+        << "operator->" << BasePtr->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
-    delete Base;
     return true;
 
   case OR_Ambiguous:
     Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
       << "operator->"
-      << Base->getSourceRange();
+      << BasePtr->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-    delete Base;
     return true;
   }
 
   // Convert the object parameter.
   CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
-  if (PerformObjectArgumentInitialization(Base, Method)) {
-    delete Base;
+  if (PerformObjectArgumentInitialization(Base, Method))
     return true;
-  }
+
+  // No concerns about early exits now.
+  BasePtr.take();
 
   // Build the operator call.
   Expr *FnExpr = new DeclRefExpr(Method, Method->getType(), SourceLocation());
