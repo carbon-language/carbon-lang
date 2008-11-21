@@ -193,15 +193,17 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
   }
 
   SU->Latency = 0;
-  for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode()) {
+  bool SawMachineOpcode = false;
+  for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
     if (N->isMachineOpcode()) {
-      unsigned SchedClass = TII->get(N->getMachineOpcode()).getSchedClass();
-      const InstrStage *S = InstrItins.begin(SchedClass);
-      const InstrStage *E = InstrItins.end(SchedClass);
-      for (; S != E; ++S)
-        SU->Latency += S->Cycles;
+      SawMachineOpcode = true;
+      SU->Latency +=
+        InstrItins.getLatency(TII->get(N->getMachineOpcode()).getSchedClass());
     }
-  }
+
+  // Ensure that CopyToReg and similar nodes have a non-zero latency.
+  if (!SawMachineOpcode)
+    SU->Latency = 1;
 }
 
 /// CountResults - The results of target nodes have register or immediate

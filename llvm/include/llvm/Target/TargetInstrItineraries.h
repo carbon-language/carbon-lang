@@ -73,6 +73,24 @@ struct InstrItineraryData {
     unsigned StageIdx = Itineratries[ItinClassIndx].Last;
     return Stages + StageIdx;
   }
+
+  /// getLatency - Return the scheduling latency of the given class.  A
+  /// simple latency value for an instruction is an over-simplification
+  /// for some architectures, but it's a reasonable first approximation.
+  ///
+  unsigned getLatency(unsigned ItinClassIndx) const {
+    // If the target doesn't provide latency information, use a simple
+    // non-zero default value for all instructions.
+    if (isEmpty())
+      return 1;
+
+    // Just sum the cycle count for each stage.
+    unsigned Latency = 0;
+    for (const InstrStage *IS = begin(ItinClassIndx), *E = end(ItinClassIndx);
+         IS != E; ++IS)
+      Latency += IS->Cycles;
+    return Latency;
+  }
 };
 
 

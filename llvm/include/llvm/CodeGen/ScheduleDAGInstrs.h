@@ -53,6 +53,10 @@ namespace llvm {
     /// input.
     virtual void BuildSchedUnits();
 
+    /// ComputeLatency - Compute node latency.
+    ///
+    virtual void ComputeLatency(SUnit *SU);
+
     virtual MachineBasicBlock *EmitSchedule();
 
     /// Schedule - Order nodes according to selected style, filling

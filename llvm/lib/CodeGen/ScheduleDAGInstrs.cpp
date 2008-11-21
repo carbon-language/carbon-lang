@@ -50,7 +50,7 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
       assert(TRI->isPhysicalRegister(Reg) && "Virtual register encountered!");
       std::vector<SUnit *> &UseList = Uses[Reg];
       SUnit *&Def = Defs[Reg];
-      // Optionally add output and anti dependences
+      // Optionally add output and anti dependences.
       if (Def && Def != SU)
         Def->addPred(SU, /*isCtrl=*/true, /*isSpecial=*/false,
                      /*PhyReg=*/Reg, Cost);
@@ -100,6 +100,15 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
     if (MI->getDesc().isTerminator() || MI->isLabel())
       Terminator = SU;
   }
+}
+
+void ScheduleDAGInstrs::ComputeLatency(SUnit *SU) {
+  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
+
+  // Compute the latency for the node.  We use the sum of the latencies for
+  // all nodes flagged together into this SUnit.
+  SU->Latency =
+    InstrItins.getLatency(SU->getInstr()->getDesc().getSchedClass());
 }
 
 void ScheduleDAGInstrs::dumpNode(const SUnit *SU) const {
