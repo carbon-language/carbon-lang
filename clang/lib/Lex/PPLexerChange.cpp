@@ -74,7 +74,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   if (MaxIncludeStackDepth < IncludeMacroStack.size())
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
-#if 1
+#if 0
   Lexer *TheLexer = new Lexer(SourceLocation::getFileLoc(FileID, 0), *this);
   EnterSourceFileWithLexer(TheLexer, CurDir);
 #else
@@ -122,6 +122,9 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
         L.ParsingPreprocessorDirective = true;
         L.LexIncludeFilename(Tok); 
         L.ParsingPreprocessorDirective = false;
+        
+        if (Tok.is(tok::identifier))
+          Tok.setIdentifierInfo(LookUpIdentifierInfo(Tok));
       }
     }    
   }
