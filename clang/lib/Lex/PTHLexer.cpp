@@ -116,7 +116,8 @@ void PTHLexer::DiscardToEndOfLine() {
     return;
 
   // Find the first token that is not the start of the *current* line.
-  for (AdvanceToken(); !AtLastToken(); AdvanceToken())
+  Token T;
+  for (Lex(T); !AtLastToken(); Lex(T))
     if (GetToken().isAtStartOfLine())
       return;
 }
