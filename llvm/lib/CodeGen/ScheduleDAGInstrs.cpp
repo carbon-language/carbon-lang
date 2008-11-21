@@ -99,6 +99,9 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
       Terminator->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false);
     if (MI->getDesc().isTerminator() || MI->isLabel())
       Terminator = SU;
+
+    // Assign the Latency field of SU using target-provided information.
+    ComputeLatency(SU);
   }
 }
 

@@ -132,6 +132,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NodeSUnit->NodeNum);
 
+    // Assign the Latency field of NodeSUnit using target-provided information.
     ComputeLatency(NodeSUnit);
   }
   
