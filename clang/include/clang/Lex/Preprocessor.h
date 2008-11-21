@@ -611,12 +611,10 @@ private:
 
   
 
-  static bool IsFileLexer(const Lexer* L,
-                                       const PreprocessorLexer* P) {
-    if (L)
-      return !L->isPragmaLexer();
-    else
-      return P != 0;
+  /// IsFileLexer - Returns true if we are lexing from a file and not a
+  ///  pragma or a macro.
+  static bool IsFileLexer(const Lexer* L, const PreprocessorLexer* P) {
+    return L ? !L->isPragmaLexer() : P != 0;
   }
 
   static bool IsFileLexer(const IncludeStackInfo& I) {
