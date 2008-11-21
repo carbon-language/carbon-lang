@@ -757,38 +757,20 @@ llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,
 
 llvm::Function *CodeGenModule::getMemCpyFn() {
   if (MemCpyFn) return MemCpyFn;
-  llvm::Intrinsic::ID IID;
-  switch (Context.Target.getPointerWidth(0)) {
-  default: assert(0 && "Unknown ptr width");
-  case 16: IID = llvm::Intrinsic::memcpy_i16; break;
-  case 32: IID = llvm::Intrinsic::memcpy_i32; break;
-  case 64: IID = llvm::Intrinsic::memcpy_i64; break;
-  }
-  return MemCpyFn = getIntrinsic(IID);
+  const llvm::Type *IntPtr = TheTargetData.getIntPtrType();
+  return MemCpyFn = getIntrinsic(llvm::Intrinsic::memcpy, &IntPtr, 1);
 }
 
 llvm::Function *CodeGenModule::getMemMoveFn() {
   if (MemMoveFn) return MemMoveFn;
-  llvm::Intrinsic::ID IID;
-  switch (Context.Target.getPointerWidth(0)) {
-  default: assert(0 && "Unknown ptr width");
-  case 16: IID = llvm::Intrinsic::memmove_i16; break;
-  case 32: IID = llvm::Intrinsic::memmove_i32; break;
-  case 64: IID = llvm::Intrinsic::memmove_i64; break;
-  }
-  return MemMoveFn = getIntrinsic(IID);
+  const llvm::Type *IntPtr = TheTargetData.getIntPtrType();
+  return MemMoveFn = getIntrinsic(llvm::Intrinsic::memmove, &IntPtr, 1);
 }
 
 llvm::Function *CodeGenModule::getMemSetFn() {
   if (MemSetFn) return MemSetFn;
-  llvm::Intrinsic::ID IID;
-  switch (Context.Target.getPointerWidth(0)) {
-  default: assert(0 && "Unknown ptr width");
-  case 16: IID = llvm::Intrinsic::memset_i16; break;
-  case 32: IID = llvm::Intrinsic::memset_i32; break;
-  case 64: IID = llvm::Intrinsic::memset_i64; break;
-  }
-  return MemSetFn = getIntrinsic(IID);
+  const llvm::Type *IntPtr = TheTargetData.getIntPtrType();
+  return MemSetFn = getIntrinsic(llvm::Intrinsic::memset, &IntPtr, 1);
 }
 
 static void appendFieldAndPadding(CodeGenModule &CGM,
