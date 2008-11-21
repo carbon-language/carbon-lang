@@ -89,14 +89,10 @@ struct ConstIntPtrRef {
 
 void test_with_ptrs(VolatileIntPtr vip, ConstIntPtr cip, ShortRef sr,
                     VolatileIntPtrRef vipr, ConstIntPtrRef cipr) {
-#if 0
-  // FIXME: Enable these tests once we have operator overloading for
-  // operator[].
   const int& cir1 = cip[sr];
   const int& cir2 = sr[cip];
   volatile int& vir1 = vip[sr];
   volatile int& vir2 = sr[vip];
-#endif
   bool b1 = (vip == cip);
   long p1 = vip - cip;
 

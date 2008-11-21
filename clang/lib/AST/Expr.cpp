@@ -168,6 +168,9 @@ unsigned CallExpr::isBuiltinCall() const {
   if (!FDecl)
     return 0;
   
+  if (!FDecl->getIdentifier())
+    return 0;
+
   return FDecl->getIdentifier()->getBuiltinID();
 }
 
