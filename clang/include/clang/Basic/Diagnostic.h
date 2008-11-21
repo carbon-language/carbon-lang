@@ -182,7 +182,14 @@ private:
   // tradeoff to keep these objects small.  Assertions verify that only one
   // diagnostic is in flight at a time.
   friend class DiagnosticInfo;
+
+  /// CurDiagLoc - This is the location of the current diagnostic that is in
+  /// flight.
+  FullSourceLoc CurDiagLoc;
   
+  /// CurDiagID - This is the ID of the current diagnostic that is in flight.
+  unsigned CurDiagID;
+
   enum {
     /// MaxArguments - The maximum number of arguments we can hold. We currently
     /// only support up to 10 arguments (%0-%9).  A single diagnostic with more
@@ -233,8 +240,6 @@ private:
 /// for more info.
 class DiagnosticInfo {
   mutable Diagnostic *DiagObj;
-  FullSourceLoc Loc;
-  unsigned DiagID;
   void operator=(const DiagnosticInfo&); // DO NOT IMPLEMENT
 public:
   enum ArgumentKind {
@@ -246,20 +251,20 @@ public:
   };
   
   
-  DiagnosticInfo(Diagnostic *diagObj, FullSourceLoc loc, unsigned diagID) :
-    DiagObj(diagObj), Loc(loc), DiagID(diagID) {
+  DiagnosticInfo(Diagnostic *diagObj, FullSourceLoc Loc, unsigned DiagID) :
+    DiagObj(diagObj) {
     if (DiagObj == 0) return;
     assert(DiagObj->NumDiagArgs == -1 &&
            "Multiple diagnostics in flight at once!");
     DiagObj->NumDiagArgs = DiagObj->NumDiagRanges = 0;
+    DiagObj->CurDiagLoc = Loc;
+    DiagObj->CurDiagID = DiagID;
   }
   
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
   /// input and neuters it.
   DiagnosticInfo(const DiagnosticInfo &D) {
     DiagObj = D.DiagObj;
-    Loc = D.Loc;
-    DiagID = D.DiagID;
     D.DiagObj = 0;
   }
   
@@ -275,8 +280,8 @@ public:
   }
   
   const Diagnostic *getDiags() const { return DiagObj; }
-  unsigned getID() const { return DiagID; }
-  const FullSourceLoc &getLocation() const { return Loc; }
+  unsigned getID() const { return DiagObj->CurDiagID; }
+  const FullSourceLoc &getLocation() const { return DiagObj->CurDiagLoc; }
   
   /// Operator bool: conversion of DiagnosticInfo to bool always returns true.
   /// This allows is to be used in boolean error contexts like:
