@@ -732,6 +732,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   bool isUnion = false;
+  bool isIvar = false;
   Expr *BaseExpr = E->getBase();
   llvm::Value *BaseValue = NULL;
   unsigned CVRQualifiers=0;
@@ -747,6 +748,8 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   }
   else {
     LValue BaseLV = EmitLValue(BaseExpr);
+    if (BaseLV.isObjCIvar())
+      isIvar = true;
     // FIXME: this isn't right for bitfields.
     BaseValue = BaseLV.getAddress();
     if (BaseExpr->getType()->isUnionType())
@@ -755,7 +758,9 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   }
 
   FieldDecl *Field = E->getMemberDecl();
-  return EmitLValueForField(BaseValue, Field, isUnion, CVRQualifiers);
+  LValue MemExpLV =  EmitLValueForField(BaseValue, Field, isUnion, CVRQualifiers);
+  LValue::SetObjCIvar(MemExpLV, isIvar);
+  return MemExpLV;
 }
 
 LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
@@ -937,7 +942,7 @@ LValue CodeGenFunction::EmitLValueForIvar(llvm::Value *BaseValue,
   llvm::Value *V = Builder.CreateStructGEP(BaseValue, Index, "tmp");
   LValue LV = LValue::MakeAddr(V, Ivar->getType().getCVRQualifiers()|CVRQualifiers);
   SetVarDeclObjCAttribute(getContext(), Ivar, Ivar->getType(), LV);
-  LValue::SetObjCIvar(LV);
+  LValue::SetObjCIvar(LV, true);
   return LV;
 }
 

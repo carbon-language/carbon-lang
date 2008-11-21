@@ -168,8 +168,8 @@ public:
   bool isObjCWeak() const { return ObjCType == Weak; }
   bool isObjCStrong() const { return ObjCType == Strong; }
   
-  static void SetObjCIvar(LValue& R) {
-    R.Ivar = true;
+  static void SetObjCIvar(LValue& R, bool iValue) {
+    R.Ivar = iValue;
   }
     
   static void SetObjCType(bool isWeak, bool isStrong, LValue& R) {
