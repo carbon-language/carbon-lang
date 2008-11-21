@@ -1788,6 +1788,7 @@ bool IPSCCP::runOnModule(Module &M) {
           // The constant folder may not have been able to fold the terminator
           // if this is a branch or switch on undef.  Fold it manually as a
           // branch to the first successor.
+#ifndef NDEBUG
           if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
             assert(BI->isConditional() && isa<UndefValue>(BI->getCondition()) &&
                    "Branch should be foldable!");
@@ -1796,6 +1797,7 @@ bool IPSCCP::runOnModule(Module &M) {
           } else {
             assert(0 && "Didn't fold away reference to block!");
           }
+#endif
           
           // Make this an uncond branch to the first successor.
           TerminatorInst *TI = I->getParent()->getTerminator();
