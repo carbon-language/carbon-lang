@@ -5174,7 +5174,7 @@ SDValue DAGCombiner::visitSADDO(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitUADDO(SDNode *N) {
-  return SDValue();
+  return visitSADDO(N);
 }
 
 /// XformToShuffleWithZero - Returns a vector_shuffle if it able to transform
