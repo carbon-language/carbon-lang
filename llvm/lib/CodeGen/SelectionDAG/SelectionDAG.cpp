@@ -4647,8 +4647,8 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
   // it is at the end of the list.
   allnodes_iterator SortedPos = allnodes_begin();
 
-  // Visit all the nodes. Add nodes with no operands to the TopOrder result
-  // array immediately. Annotate nodes that do have operands with their
+  // Visit all the nodes. Move nodes with no operands to the front of
+  // the list immediately. Annotate nodes that do have operands with their
   // operand count. Before we do this, the Node Id fields of the nodes
   // may contain arbitrary values. After, the Node Id fields for nodes
   // before SortedPos will contain the topological sort index, and the
@@ -4704,7 +4704,7 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
          "Last node in topologic sort has unexpected id!");
   assert(AllNodes.back().use_empty() &&
          "Last node in topologic sort has users!");
-  assert(DAGSize == allnodes_size() && "TopOrder result count mismatch!");
+  assert(DAGSize == allnodes_size() && "Node count mismatch!");
   return DAGSize;
 }
 
