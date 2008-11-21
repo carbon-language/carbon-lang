@@ -4095,21 +4095,17 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
   case Intrinsic::sadd_with_overflow: {
     // Convert to "ISD::SADDO" instruction.
-    SDValue Chain = getRoot();
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
     MVT Ty = Op1.getValueType();
 
-    MVT ValueVTs[] = { Ty, MVT::i1, MVT::Other };
-    SDValue Ops[] = { Op1, Op2, Chain };
+    MVT ValueVTs[] = { Ty, MVT::i1 };
+    SDValue Ops[] = { Op1, Op2 };
 
-    SDValue Result = DAG.getNode(ISD::SADDO, DAG.getVTList(&ValueVTs[0], 3),
-                                 &Ops[0], 3);
+    SDValue Result = DAG.getNode(ISD::SADDO, DAG.getVTList(&ValueVTs[0], 2),
+                                 &Ops[0], 2);
 
     setValue(&I, Result);
-
-    unsigned NumArgRegs = Result.getNode()->getNumValues() - 1;
-    DAG.setRoot(SDValue(Result.getNode(), NumArgRegs));
     return 0;
   }
   case Intrinsic::uadd_with_overflow: {

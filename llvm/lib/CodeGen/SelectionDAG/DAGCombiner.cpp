@@ -5148,7 +5148,6 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitSADDO(SDNode *N) {
-  SDValue Chain = N->getOperand(2);
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
 
@@ -5157,17 +5156,16 @@ SDValue DAGCombiner::visitSADDO(SDNode *N) {
   SDValue Cmp = DAG.getSetCC(MVT::i1, Sum, LHS, ISD::SETLT);
   AddToWorkList(Cmp.getNode());
 
-  MVT ValueVTs[] = { LHS.getValueType(), MVT::i1, MVT::Other };
-  SDValue Ops[] = { Sum, Cmp, Chain };
+  MVT ValueVTs[] = { LHS.getValueType(), MVT::i1 };
+  SDValue Ops[] = { Sum, Cmp };
 
-  SDValue Merge = DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], 3),
-                                     &Ops[0], 3);
+  SDValue Merge = DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], 2),
+                                     &Ops[0], 2);
   SDNode *MNode = Merge.getNode();
 
   AddToWorkList(MNode);
   DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), SDValue(MNode, 0));
   DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), SDValue(MNode, 1));
-  DAG.ReplaceAllUsesOfValueWith(SDValue(N, 2), SDValue(MNode, 2));
 
   // Since the node is now dead, remove it from the graph.
   removeFromWorkList(N);
