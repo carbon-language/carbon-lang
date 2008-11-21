@@ -74,7 +74,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   if (MaxIncludeStackDepth < IncludeMacroStack.size())
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
-#if 0
+#if 1
   Lexer *TheLexer = new Lexer(SourceLocation::getFileLoc(FileID, 0), *this);
   EnterSourceFileWithLexer(TheLexer, CurDir);
 #else
