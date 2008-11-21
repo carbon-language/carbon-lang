@@ -451,12 +451,10 @@ public:
   virtual llvm::Function *GetPropertySetFunction();
   virtual llvm::Function *EnumerationMutationFunction();
   
-  virtual void EmitTryStmt(CodeGen::CodeGenFunction &CGF,
-                           const ObjCAtTryStmt &S);
+  virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                         const Stmt &S);
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                              const ObjCAtThrowStmt &S);
-  virtual void EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
-                                    const ObjCAtSynchronizedStmt &S);
   virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *AddrWeakObj); 
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
@@ -1553,11 +1551,16 @@ arbitrarily assign an ID to each destination and store the ID for the
 destination in a variable prior to entering the finally block. At the
 end of the finally block we simply create a switch to the proper
 destination.
-
+ 
+Code gen for @synchronized(expr) stmt;
+Effectively generating code for:
+objc_sync_enter(expr);
+@try stmt @finally { objc_sync_exit(expr); }
 */
 
-void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
-                            const ObjCAtTryStmt &S) {
+void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                          const Stmt &S) {
+  bool isTry = isa<ObjCAtTryStmt>(S);
   // Create various blocks we refer to for handling @finally.
   llvm::BasicBlock *FinallyBlock = CGF.createBasicBlock("finally");
   llvm::BasicBlock *FinallyNoExit = CGF.createBasicBlock("finally.noexit");
@@ -1584,6 +1587,12 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
                                                     "exceptiondata.ptr");
   llvm::Value *RethrowPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy, 
                                                  "_rethrow");
+  if (!isTry) {
+    // For @synchronized, call objc_sync_enter(sync.expr)
+    CGF.Builder.CreateCall(ObjCTypes.SyncEnterFn,
+                           CGF.EmitScalarExpr(
+                              cast<ObjCAtSynchronizedStmt>(S).getSynchExpr()));
+  }
   
   // Enter a new try block and call setjmp.
   CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
@@ -1600,7 +1609,8 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
 
   // Emit the @try block.
   CGF.EmitBlock(TryBlock);
-  CGF.EmitStmt(S.getTryBody());
+  CGF.EmitStmt(isTry ? cast<ObjCAtTryStmt>(S).getTryBody() 
+                     : cast<ObjCAtSynchronizedStmt>(S).getSynchBody());
   CGF.EmitJumpThroughFinally(&EHEntry, FinallyEnd);
   
   // Emit the "exception in @try" block.
@@ -1612,7 +1622,14 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
                                                ExceptionData,
                                                "caught");
   EHEntry.Exception = Caught;
-  if (const ObjCAtCatchStmt* CatchStmt = S.getCatchStmts()) {    
+  if (!isTry)
+  {
+    CGF.Builder.CreateStore(Caught, RethrowPtr);
+    CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);    
+  }
+  else if (const ObjCAtCatchStmt* CatchStmt = 
+           cast<ObjCAtTryStmt>(S).getCatchStmts()) 
+  {    
     // Enter a new exception try block (in case a @catch block throws
     // an exception).
     CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
@@ -1726,8 +1743,16 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn, ExceptionData);
 
   CGF.EmitBlock(FinallyNoExit);
-  if (const ObjCAtFinallyStmt* FinallyStmt = S.getFinallyStmt())
-    CGF.EmitStmt(FinallyStmt->getFinallyBody());
+  if (isTry) {
+    if (const ObjCAtFinallyStmt* FinallyStmt = 
+          cast<ObjCAtTryStmt>(S).getFinallyStmt())
+      CGF.EmitStmt(FinallyStmt->getFinallyBody());
+  }
+  else
+    // For @synchronized objc_sync_exit(expr); As finally's sole statement.
+    CGF.Builder.CreateCall(ObjCTypes.SyncExitFn,
+                           CGF.EmitScalarExpr(
+                             cast<ObjCAtSynchronizedStmt>(S).getSynchExpr()));
 
   CGF.EmitBlock(FinallyJump);
  
@@ -1849,96 +1874,6 @@ void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignStrongCastFn,
                           src, dst, "weakassign");
   return;
-}
-
-/// EmitSynchronizedStmt - Code gen for @synchronized(expr) stmt;
-/// Effectively generating code for:
-/// objc_sync_enter(expr);
-/// @try stmt @finally { objc_sync_exit(expr); }
-void CGObjCMac::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
-                                     const ObjCAtSynchronizedStmt &S) {
-  // Create various blocks we refer to for handling @finally.
-  llvm::BasicBlock *FinallyBlock = CGF.createBasicBlock("finally");
-  llvm::BasicBlock *FinallyNoExit = CGF.createBasicBlock("finally.noexit");
-  llvm::BasicBlock *FinallyRethrow = CGF.createBasicBlock("finally.throw");
-  llvm::BasicBlock *FinallyEnd = CGF.createBasicBlock("finally.end");
-  llvm::Value *DestCode = 
-  CGF.CreateTempAlloca(llvm::Type::Int32Ty, "finally.dst");
-  
-  // Generate jump code. Done here so we can directly add things to
-  // the switch instruction.
-  llvm::BasicBlock *FinallyJump = CGF.createBasicBlock("finally.jump");
-  llvm::SwitchInst *FinallySwitch = 
-  llvm::SwitchInst::Create(new llvm::LoadInst(DestCode, "", FinallyJump), 
-                           FinallyEnd, 10, FinallyJump);
-  
-  // Push an EH context entry, used for handling rethrows and jumps
-  // through finally.
-  CodeGenFunction::ObjCEHEntry EHEntry(FinallyBlock, FinallyNoExit,
-                                       FinallySwitch, DestCode);
-  CGF.ObjCEHStack.push_back(&EHEntry);
-  
-  // Allocate memory for the exception data and rethrow pointer.
-  llvm::Value *ExceptionData = CGF.CreateTempAlloca(ObjCTypes.ExceptionDataTy,
-                                                    "exceptiondata.ptr");
-  llvm::Value *RethrowPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy, 
-                                                 "_rethrow");
-  // Call objc_sync_enter(sync.expr)
-  CGF.Builder.CreateCall(ObjCTypes.SyncEnterFn,
-                         CGF.EmitScalarExpr(S.getSynchExpr()));
-  
-  // Enter a new try block and call setjmp.
-  CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
-  llvm::Value *JmpBufPtr = CGF.Builder.CreateStructGEP(ExceptionData, 0, 
-                                                       "jmpbufarray");
-  JmpBufPtr = CGF.Builder.CreateStructGEP(JmpBufPtr, 0, "tmp");
-  llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
-                                                     JmpBufPtr, "result");
-  
-  llvm::BasicBlock *TryBlock = CGF.createBasicBlock("try");
-  llvm::BasicBlock *TryHandler = CGF.createBasicBlock("try.handler");
-  CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNotNull(SetJmpResult, "threw"), 
-                           TryHandler, TryBlock);
-  
-  // Emit the @try block.
-  CGF.EmitBlock(TryBlock);
-  CGF.EmitStmt(S.getSynchBody());
-  CGF.EmitJumpThroughFinally(&EHEntry, FinallyEnd);
-  
-  // Emit the "exception in @try" block.
-  CGF.EmitBlock(TryHandler);
-  
-  // Retrieve the exception object.  We may emit multiple blocks but
-  // nothing can cross this so the value is already in SSA form.
-  llvm::Value *Caught = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
-                                               ExceptionData,
-                                               "caught");
-  EHEntry.Exception = Caught;
-  CGF.Builder.CreateStore(Caught, RethrowPtr);
-  CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);    
-  
-  // Pop the exception-handling stack entry. It is important to do
-  // this now, because the code in the @finally block is not in this
-  // context.
-  CGF.ObjCEHStack.pop_back();
-  
-  // Emit the @finally block.
-  CGF.EmitBlock(FinallyBlock);
-  CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn, ExceptionData);
-  
-  CGF.EmitBlock(FinallyNoExit);
-  // objc_sync_exit(expr); As finally's sole statement.
-  CGF.Builder.CreateCall(ObjCTypes.SyncExitFn,
-                         CGF.EmitScalarExpr(S.getSynchExpr()));
-  
-  CGF.EmitBlock(FinallyJump);
-  
-  CGF.EmitBlock(FinallyRethrow);
-  CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, 
-                         CGF.Builder.CreateLoad(RethrowPtr));
-  CGF.Builder.CreateUnreachable();
-  
-  CGF.EmitBlock(FinallyEnd);  
 }
 
 /* *** Private Interface *** */

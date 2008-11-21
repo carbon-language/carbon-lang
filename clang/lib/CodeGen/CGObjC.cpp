@@ -524,7 +524,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
 
 void CodeGenFunction::EmitObjCAtTryStmt(const ObjCAtTryStmt &S)
 {
-  CGM.getObjCRuntime().EmitTryStmt(*this, S);
+  CGM.getObjCRuntime().EmitTryOrSynchronizedStmt(*this, S);
 }
 
 void CodeGenFunction::EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S)
@@ -535,7 +535,7 @@ void CodeGenFunction::EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S)
 void CodeGenFunction::EmitObjCAtSynchronizedStmt(
                                               const ObjCAtSynchronizedStmt &S)
 {
-  CGM.getObjCRuntime().EmitSynchronizedStmt(*this, S);
+  CGM.getObjCRuntime().EmitTryOrSynchronizedStmt(*this, S);
 }
 
 CGObjCRuntime::~CGObjCRuntime() {}

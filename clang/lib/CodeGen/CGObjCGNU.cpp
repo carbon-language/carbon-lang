@@ -124,12 +124,10 @@ public:
   virtual llvm::Function *GetPropertySetFunction();
   virtual llvm::Function *EnumerationMutationFunction();
   
-  virtual void EmitTryStmt(CodeGen::CodeGenFunction &CGF,
-                           const ObjCAtTryStmt &S);
+  virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                         const Stmt &S);
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                              const ObjCAtThrowStmt &S);
-  virtual void EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
-                                    const ObjCAtSynchronizedStmt &S);
   virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *AddrWeakObj);
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
@@ -963,19 +961,14 @@ llvm::Function *CGObjCGNU::EnumerationMutationFunction() {
   return 0;
 }
 
-void CGObjCGNU::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
-                            const ObjCAtTryStmt &S) {
-  CGF.ErrorUnsupported(&S, "@try statement");
+void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                          const Stmt &S) {
+  CGF.ErrorUnsupported(&S, "@try/@synchronized statement");
 }
 
 void CGObjCGNU::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                               const ObjCAtThrowStmt &S) {
   CGF.ErrorUnsupported(&S, "@throw statement");
-}
-
-void CGObjCGNU::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
-                                     const ObjCAtSynchronizedStmt &S) {
-  CGF.ErrorUnsupported(&S, "@synchronized statement");
 }
 
 llvm::Value * CGObjCGNU::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
