@@ -249,7 +249,14 @@ namespace ISD {
     // to them to be chained together for add and sub of arbitrarily large
     // values.
     ADDE, SUBE,
-    
+
+    // Overflow-aware nodes for arithmetic operations. These nodes take two
+    // operands: the normal lhs and rhs to the add. They produce two results:
+    // the normal result of the add, and a flag indicating whether an overflow
+    // occured. These nodes are generated from the llvm.[su]add.with.overflow
+    // intrinsics. They are lowered by target-dependent code.
+    SADDO, UADDO,
+
     // Simple binary floating point operators.
     FADD, FSUB, FMUL, FDIV, FREM,
 

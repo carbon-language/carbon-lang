@@ -5151,6 +5151,8 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::CARRY_FALSE:         return "carry_false";
   case ISD::ADDC:        return "addc";
   case ISD::ADDE:        return "adde";
+  case ISD::SADDO:       return "saddo";
+  case ISD::UADDO:       return "uaddo";
   case ISD::SUBC:        return "subc";
   case ISD::SUBE:        return "sube";
   case ISD::SHL_PARTS:   return "shl_parts";
