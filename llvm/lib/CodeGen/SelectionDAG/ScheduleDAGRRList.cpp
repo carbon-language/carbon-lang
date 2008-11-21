@@ -94,12 +94,12 @@ public:
   /// the current node Y if not already.
   /// This returns true if this is a new predecessor.
   /// Updates the topological ordering if required.
-  bool AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isSpecial,
+  bool AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isArtificial,
                unsigned PhyReg = 0, int Cost = 1);
 
   /// RemovePred - This removes the specified node N from the predecessors of 
   /// the current node M. Updates the topological ordering if required.
-  bool RemovePred(SUnit *M, SUnit *N, bool isCtrl, bool isSpecial);
+  bool RemovePred(SUnit *M, SUnit *N, bool isCtrl, bool isArtificial);
 
 private:
   void ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain);
@@ -482,8 +482,8 @@ void ScheduleDAGRRList::InitDAGTopologicalSorting() {
 
 /// AddPred - adds an edge from SUnit X to SUnit Y.
 /// Updates the topological ordering if required.
-bool ScheduleDAGRRList::AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isSpecial,
-                 unsigned PhyReg, int Cost) {
+bool ScheduleDAGRRList::AddPred(SUnit *Y, SUnit *X, bool isCtrl,
+                 bool isArtificial, unsigned PhyReg, int Cost) {
   int UpperBound, LowerBound;
   LowerBound = Node2Index[Y->NodeNum];
   UpperBound = Node2Index[X->NodeNum];
@@ -498,15 +498,15 @@ bool ScheduleDAGRRList::AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isSpecial,
     Shift(Visited, LowerBound, UpperBound);
   }
   // Now really insert the edge.
-  return Y->addPred(X, isCtrl, isSpecial, PhyReg, Cost);
+  return Y->addPred(X, isCtrl, isArtificial, PhyReg, Cost);
 }
 
 /// RemovePred - This removes the specified node N from the predecessors of 
 /// the current node M. Updates the topological ordering if required.
 bool ScheduleDAGRRList::RemovePred(SUnit *M, SUnit *N, 
-                                   bool isCtrl, bool isSpecial) {
+                                   bool isCtrl, bool isArtificial) {
   // InitDAGTopologicalSorting();
-  return M->removePred(N, isCtrl, isSpecial);
+  return M->removePred(N, isCtrl, isArtificial);
 }
 
 /// DFS - Make a DFS traversal to mark all nodes reachable from SU and mark
@@ -696,10 +696,10 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
          I != E; ++I) {
       if (I->isCtrl)
         ChainSuccs.push_back(SDep(I->Dep, I->Reg, I->Cost,
-                                  I->isCtrl, I->isSpecial));
+                                  I->isCtrl, I->isArtificial));
       else
         NodeSuccs.push_back(SDep(I->Dep, I->Reg, I->Cost,
-                                 I->isCtrl, I->isSpecial));
+                                 I->isCtrl, I->isArtificial));
     }
 
     if (ChainPred) {
@@ -709,29 +709,29 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     }
     for (unsigned i = 0, e = LoadPreds.size(); i != e; ++i) {
       SDep *Pred = &LoadPreds[i];
-      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isSpecial);
+      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isArtificial);
       if (isNewLoad) {
-        AddPred(LoadSU, Pred->Dep, Pred->isCtrl, Pred->isSpecial,
+        AddPred(LoadSU, Pred->Dep, Pred->isCtrl, Pred->isArtificial,
                 Pred->Reg, Pred->Cost);
       }
     }
     for (unsigned i = 0, e = NodePreds.size(); i != e; ++i) {
       SDep *Pred = &NodePreds[i];
-      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isSpecial);
-      AddPred(NewSU, Pred->Dep, Pred->isCtrl, Pred->isSpecial,
+      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isArtificial);
+      AddPred(NewSU, Pred->Dep, Pred->isCtrl, Pred->isArtificial,
               Pred->Reg, Pred->Cost);
     }
     for (unsigned i = 0, e = NodeSuccs.size(); i != e; ++i) {
       SDep *Succ = &NodeSuccs[i];
-      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isSpecial);
-      AddPred(Succ->Dep, NewSU, Succ->isCtrl, Succ->isSpecial,
+      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isArtificial);
+      AddPred(Succ->Dep, NewSU, Succ->isCtrl, Succ->isArtificial,
               Succ->Reg, Succ->Cost);
     }
     for (unsigned i = 0, e = ChainSuccs.size(); i != e; ++i) {
       SDep *Succ = &ChainSuccs[i];
-      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isSpecial);
+      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isArtificial);
       if (isNewLoad) {
-        AddPred(Succ->Dep, LoadSU, Succ->isCtrl, Succ->isSpecial,
+        AddPred(Succ->Dep, LoadSU, Succ->isCtrl, Succ->isArtificial,
                 Succ->Reg, Succ->Cost);
       }
     } 
@@ -758,7 +758,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   // New SUnit has the exact same predecessors.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I)
-    if (!I->isSpecial) {
+    if (!I->isArtificial) {
       AddPred(NewSU, I->Dep, I->isCtrl, false, I->Reg, I->Cost);
       NewSU->Depth = std::max(NewSU->Depth, I->Dep->Depth+1);
     }
@@ -768,7 +768,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   SmallVector<std::pair<SUnit*, bool>, 4> DelDeps;
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    if (I->isSpecial)
+    if (I->isArtificial)
       continue;
     if (I->Dep->isScheduled) {
       NewSU->Height = std::max(NewSU->Height, I->Dep->Height+1);
@@ -810,7 +810,7 @@ void ScheduleDAGRRList::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
   SmallVector<std::pair<SUnit*, bool>, 4> DelDeps;
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    if (I->isSpecial)
+    if (I->isArtificial)
       continue;
     if (I->Dep->isScheduled) {
       CopyToSU->Height = std::max(CopyToSU->Height, I->Dep->Height+1);

@@ -42,12 +42,14 @@ namespace llvm {
   /// cost of the depdenency, etc.
   struct SDep {
     SUnit    *Dep;           // Dependent - either a predecessor or a successor.
-    unsigned  Reg;           // If non-zero, this dep is a phy register dependency.
+    unsigned  Reg;           // If non-zero, this dep is a physreg dependency.
     int       Cost;          // Cost of the dependency.
     bool      isCtrl    : 1; // True iff it's a control dependency.
-    bool      isSpecial : 1; // True iff it's a special ctrl dep added during sched.
-    SDep(SUnit *d, unsigned r, int t, bool c, bool s)
-      : Dep(d), Reg(r), Cost(t), isCtrl(c), isSpecial(s) {}
+    bool      isArtificial : 1; // True iff it's an artificial ctrl dep added
+                                // during sched that may be safely deleted if
+                                // necessary.
+    SDep(SUnit *d, unsigned r, int t, bool c, bool a)
+      : Dep(d), Reg(r), Cost(t), isCtrl(c), isArtificial(a) {}
   };
 
   /// SUnit - Scheduling unit. This is a node in the scheduling DAG.
@@ -139,14 +141,14 @@ namespace llvm {
 
     /// addPred - This adds the specified node as a pred of the current node if
     /// not already.  This returns true if this is a new pred.
-    bool addPred(SUnit *N, bool isCtrl, bool isSpecial,
+    bool addPred(SUnit *N, bool isCtrl, bool isArtificial,
                  unsigned PhyReg = 0, int Cost = 1) {
       for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
         if (Preds[i].Dep == N &&
-            Preds[i].isCtrl == isCtrl && Preds[i].isSpecial == isSpecial)
+            Preds[i].isCtrl == isCtrl && Preds[i].isArtificial == isArtificial)
           return false;
-      Preds.push_back(SDep(N, PhyReg, Cost, isCtrl, isSpecial));
-      N->Succs.push_back(SDep(this, PhyReg, Cost, isCtrl, isSpecial));
+      Preds.push_back(SDep(N, PhyReg, Cost, isCtrl, isArtificial));
+      N->Succs.push_back(SDep(this, PhyReg, Cost, isCtrl, isArtificial));
       if (!isCtrl) {
         ++NumPreds;
         ++N->NumSuccs;
@@ -158,15 +160,15 @@ namespace llvm {
       return true;
     }
 
-    bool removePred(SUnit *N, bool isCtrl, bool isSpecial) {
+    bool removePred(SUnit *N, bool isCtrl, bool isArtificial) {
       for (SmallVector<SDep, 4>::iterator I = Preds.begin(), E = Preds.end();
            I != E; ++I)
-        if (I->Dep == N && I->isCtrl == isCtrl && I->isSpecial == isSpecial) {
+        if (I->Dep == N && I->isCtrl == isCtrl && I->isArtificial == isArtificial) {
           bool FoundSucc = false;
           for (SmallVector<SDep, 4>::iterator II = N->Succs.begin(),
                  EE = N->Succs.end(); II != EE; ++II)
             if (II->Dep == this &&
-                II->isCtrl == isCtrl && II->isSpecial == isSpecial) {
+                II->isCtrl == isCtrl && II->isArtificial == isArtificial) {
               FoundSucc = true;
               N->Succs.erase(II);
               break;
@@ -373,7 +375,7 @@ namespace llvm {
     unsigned getOperand() const { return Operand; }
     const SUnit *getNode() const { return Node; }
     bool isCtrlDep() const { return Node->Preds[Operand].isCtrl; }
-    bool isSpecialDep() const { return Node->Preds[Operand].isSpecial; }
+    bool isArtificialDep() const { return Node->Preds[Operand].isArtificial; }
   };
 
   template <> struct GraphTraits<SUnit*> {

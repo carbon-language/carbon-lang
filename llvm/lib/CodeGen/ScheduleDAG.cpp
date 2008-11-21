@@ -188,7 +188,7 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
       else
         cerr << "   val #";
       cerr << I->Dep << " - SU(" << I->Dep->NodeNum << ")";
-      if (I->isSpecial)
+      if (I->isArtificial)
         cerr << " *";
       cerr << "\n";
     }
@@ -202,7 +202,7 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
       else
         cerr << "   val #";
       cerr << I->Dep << " - SU(" << I->Dep->NodeNum << ")";
-      if (I->isSpecial)
+      if (I->isArtificial)
         cerr << " *";
       cerr << "\n";
     }

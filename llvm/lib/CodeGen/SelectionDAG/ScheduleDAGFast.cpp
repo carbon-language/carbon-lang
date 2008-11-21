@@ -80,12 +80,12 @@ public:
   /// AddPred - This adds the specified node X as a predecessor of 
   /// the current node Y if not already.
   /// This returns true if this is a new predecessor.
-  bool AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isSpecial,
+  bool AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isArtificial,
                unsigned PhyReg = 0, int Cost = 1);
 
   /// RemovePred - This removes the specified node N from the predecessors of 
   /// the current node M.
-  bool RemovePred(SUnit *M, SUnit *N, bool isCtrl, bool isSpecial);
+  bool RemovePred(SUnit *M, SUnit *N, bool isCtrl, bool isArtificial);
 
 private:
   void ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain);
@@ -189,16 +189,16 @@ void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
 }
 
 /// AddPred - adds an edge from SUnit X to SUnit Y.
-bool ScheduleDAGFast::AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isSpecial,
-                              unsigned PhyReg, int Cost) {
-  return Y->addPred(X, isCtrl, isSpecial, PhyReg, Cost);
+bool ScheduleDAGFast::AddPred(SUnit *Y, SUnit *X, bool isCtrl,
+                              bool isArtificial, unsigned PhyReg, int Cost) {
+  return Y->addPred(X, isCtrl, isArtificial, PhyReg, Cost);
 }
 
 /// RemovePred - This removes the specified node N from the predecessors of 
 /// the current node M.
 bool ScheduleDAGFast::RemovePred(SUnit *M, SUnit *N, 
-                                 bool isCtrl, bool isSpecial) {
-  return M->removePred(N, isCtrl, isSpecial);
+                                 bool isCtrl, bool isArtificial) {
+  return M->removePred(N, isCtrl, isArtificial);
 }
 
 /// CopyAndMoveSuccessors - Clone the specified node and move its scheduled
@@ -295,10 +295,10 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
          I != E; ++I) {
       if (I->isCtrl)
         ChainSuccs.push_back(SDep(I->Dep, I->Reg, I->Cost,
-                                  I->isCtrl, I->isSpecial));
+                                  I->isCtrl, I->isArtificial));
       else
         NodeSuccs.push_back(SDep(I->Dep, I->Reg, I->Cost,
-                                 I->isCtrl, I->isSpecial));
+                                 I->isCtrl, I->isArtificial));
     }
 
     if (ChainPred) {
@@ -308,29 +308,29 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     }
     for (unsigned i = 0, e = LoadPreds.size(); i != e; ++i) {
       SDep *Pred = &LoadPreds[i];
-      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isSpecial);
+      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isArtificial);
       if (isNewLoad) {
-        AddPred(LoadSU, Pred->Dep, Pred->isCtrl, Pred->isSpecial,
+        AddPred(LoadSU, Pred->Dep, Pred->isCtrl, Pred->isArtificial,
                 Pred->Reg, Pred->Cost);
       }
     }
     for (unsigned i = 0, e = NodePreds.size(); i != e; ++i) {
       SDep *Pred = &NodePreds[i];
-      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isSpecial);
-      AddPred(NewSU, Pred->Dep, Pred->isCtrl, Pred->isSpecial,
+      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isArtificial);
+      AddPred(NewSU, Pred->Dep, Pred->isCtrl, Pred->isArtificial,
               Pred->Reg, Pred->Cost);
     }
     for (unsigned i = 0, e = NodeSuccs.size(); i != e; ++i) {
       SDep *Succ = &NodeSuccs[i];
-      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isSpecial);
-      AddPred(Succ->Dep, NewSU, Succ->isCtrl, Succ->isSpecial,
+      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isArtificial);
+      AddPred(Succ->Dep, NewSU, Succ->isCtrl, Succ->isArtificial,
               Succ->Reg, Succ->Cost);
     }
     for (unsigned i = 0, e = ChainSuccs.size(); i != e; ++i) {
       SDep *Succ = &ChainSuccs[i];
-      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isSpecial);
+      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isArtificial);
       if (isNewLoad) {
-        AddPred(Succ->Dep, LoadSU, Succ->isCtrl, Succ->isSpecial,
+        AddPred(Succ->Dep, LoadSU, Succ->isCtrl, Succ->isArtificial,
                 Succ->Reg, Succ->Cost);
       }
     } 
@@ -353,7 +353,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   // New SUnit has the exact same predecessors.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I)
-    if (!I->isSpecial) {
+    if (!I->isArtificial) {
       AddPred(NewSU, I->Dep, I->isCtrl, false, I->Reg, I->Cost);
       NewSU->Depth = std::max(NewSU->Depth, I->Dep->Depth+1);
     }
@@ -363,7 +363,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   SmallVector<std::pair<SUnit*, bool>, 4> DelDeps;
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    if (I->isSpecial)
+    if (I->isArtificial)
       continue;
     if (I->Dep->isScheduled) {
       NewSU->Height = std::max(NewSU->Height, I->Dep->Height+1);
@@ -400,7 +400,7 @@ void ScheduleDAGFast::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
   SmallVector<std::pair<SUnit*, bool>, 4> DelDeps;
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    if (I->isSpecial)
+    if (I->isArtificial)
       continue;
     if (I->Dep->isScheduled) {
       AddPred(I->Dep, CopyToSU, I->isCtrl, false, I->Reg, I->Cost);
