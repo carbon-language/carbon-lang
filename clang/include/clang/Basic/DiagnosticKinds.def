@@ -1252,13 +1252,9 @@ DIAG(err_block_decl_ref_not_modifiable_lvalue, ERROR,
 DIAG(err_typecheck_call_not_function, ERROR,
      "called object type '%0' is not a function or function pointer")
 DIAG(err_typecheck_call_too_few_args, ERROR,
-     "too few arguments to function")
-DIAG(err_typecheck_block_too_few_args, ERROR,
-     "too few arguments to block")
+     "too few arguments to %select{function|block|method}0 call")
 DIAG(err_typecheck_call_too_many_args, ERROR,
-     "too many arguments to function")
-DIAG(err_typecheck_block_too_many_args, ERROR,
-     "too many arguments to block call")
+     "too many arguments to %select{function|block|method}0 call")
 DIAG(err_typecheck_closure_too_many_args, ERROR,
      "too many arguments to closure call")
 DIAG(err_typecheck_call_invalid_ordered_compare, ERROR,

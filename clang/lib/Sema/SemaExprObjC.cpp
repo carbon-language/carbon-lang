@@ -161,7 +161,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     if (NumArgs != NumNamedArgs) {
       Diag(Args[NumNamedArgs]->getLocStart(), 
            diag::err_typecheck_call_too_many_args)
-        << Method->getSourceRange()
+        << 2 /*method*/ << Method->getSourceRange()
         << SourceRange(Args[NumNamedArgs]->getLocStart(),
                        Args[NumArgs-1]->getLocEnd());
     }

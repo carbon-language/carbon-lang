@@ -1369,27 +1369,21 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     // If too few arguments are available (and we don't have default
     // arguments for the remaining parameters), don't make the call.
     if (NumArgs < NumArgsInProto) {
-      if (FDecl && NumArgs >= FDecl->getMinRequiredArguments()) {
-        // Use default arguments for missing arguments
-        NumArgsToCheck = NumArgsInProto;
-        TheCall->setNumArgs(NumArgsInProto);
-      } else
-        return Diag(RParenLoc, 
-                    !Fn->getType()->isBlockPointerType()
-                      ? diag::err_typecheck_call_too_few_args
-                      : diag::err_typecheck_block_too_few_args)
-          << Fn->getSourceRange();
+      if (!FDecl || NumArgs < FDecl->getMinRequiredArguments())
+        return Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
+          << Fn->getType()->isBlockPointerType() << Fn->getSourceRange();
+      // Use default arguments for missing arguments
+      NumArgsToCheck = NumArgsInProto;
+      TheCall->setNumArgs(NumArgsInProto);
     }
 
     // If too many are passed and not variadic, error on the extras and drop
     // them.
     if (NumArgs > NumArgsInProto) {
       if (!Proto->isVariadic()) {
-        Diag(Args[NumArgsInProto]->getLocStart(), 
-               !Fn->getType()->isBlockPointerType()
-                 ? diag::err_typecheck_call_too_many_args
-                 : diag::err_typecheck_block_too_many_args)
-          << Fn->getSourceRange()
+        Diag(Args[NumArgsInProto]->getLocStart(),
+             diag::err_typecheck_call_too_many_args)
+          << Fn->getType()->isBlockPointerType() << Fn->getSourceRange()
           << SourceRange(Args[NumArgsInProto]->getLocStart(),
                          Args[NumArgs-1]->getLocEnd());
         // This deletes the extra arguments.

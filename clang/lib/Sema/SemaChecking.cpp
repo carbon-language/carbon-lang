@@ -153,9 +153,9 @@ bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
 bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   Expr *Fn = TheCall->getCallee();
   if (TheCall->getNumArgs() > 2) {
-    Diag(TheCall->getArg(2)->getLocStart(), 
+    Diag(TheCall->getArg(2)->getLocStart(),
          diag::err_typecheck_call_too_many_args)
-      << Fn->getSourceRange()
+      << 0 /*function call*/ << Fn->getSourceRange()
       << SourceRange(TheCall->getArg(2)->getLocStart(), 
                      (*(TheCall->arg_end()-1))->getLocEnd());
     return true;
@@ -202,10 +202,12 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
 /// friends.  This is declared to take (...), so we have to check everything.
 bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 2)
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args);
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
+      << 0 /*function call*/;
   if (TheCall->getNumArgs() > 2)
     return Diag(TheCall->getArg(2)->getLocStart(), 
                 diag::err_typecheck_call_too_many_args)
+      << 0 /*function call*/
       << SourceRange(TheCall->getArg(2)->getLocStart(),
                      (*(TheCall->arg_end()-1))->getLocEnd());
   
@@ -242,7 +244,7 @@ bool Sema::SemaBuiltinStackAddress(CallExpr *TheCall) {
 Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 3)
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-      << TheCall->getSourceRange();
+      << 0 /*function call*/ << TheCall->getSourceRange();
 
   QualType FAType = TheCall->getArg(0)->getType();
   QualType SAType = TheCall->getArg(1)->getType();
@@ -266,9 +268,9 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   if (TheCall->getNumArgs() != numElements+2) {
     if (TheCall->getNumArgs() < numElements+2)
       return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-               << TheCall->getSourceRange();
+               << 0 /*function call*/ << TheCall->getSourceRange();
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args)
-             << TheCall->getSourceRange();
+             << 0 /*function call*/ << TheCall->getSourceRange();
   }
 
   for (unsigned i = 2; i < TheCall->getNumArgs(); i++) {
@@ -304,7 +306,7 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
 
   if (NumArgs > 3)
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args)
-             << TheCall->getSourceRange();
+             << 0 /*function call*/ << TheCall->getSourceRange();
 
   // Argument 0 is checked for us and the remaining arguments must be
   // constant integers.
