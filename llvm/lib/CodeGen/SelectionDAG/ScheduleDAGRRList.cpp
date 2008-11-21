@@ -1052,9 +1052,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
     }
     NotReady.clear();
 
-    if (!CurSU)
-      Sequence.push_back(0);
-    else
+    if (CurSU)
       ScheduleNodeBottomUp(CurSU, CurCycle);
     ++CurCycle;
   }
@@ -1152,9 +1150,7 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
     AvailableQueue->push_all(NotReady);
     NotReady.clear();
 
-    if (!CurSU)
-      Sequence.push_back(0);
-    else
+    if (CurSU)
       ScheduleNodeTopDown(CurSU, CurCycle);
     ++CurCycle;
   }

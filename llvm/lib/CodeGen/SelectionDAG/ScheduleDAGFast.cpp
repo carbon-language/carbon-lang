@@ -577,9 +577,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
     }
     NotReady.clear();
 
-    if (!CurSU)
-      Sequence.push_back(0);
-    else
+    if (CurSU)
       ScheduleNodeBottomUp(CurSU, CurCycle);
     ++CurCycle;
   }
