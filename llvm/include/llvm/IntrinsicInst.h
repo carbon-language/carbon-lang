@@ -208,12 +208,9 @@ namespace llvm {
     static inline bool classof(const MemIntrinsic *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       switch (I->getIntrinsicID()) {
-      case Intrinsic::memcpy_i32:
-      case Intrinsic::memcpy_i64:
-      case Intrinsic::memmove_i32:
-      case Intrinsic::memmove_i64:
-      case Intrinsic::memset_i32:
-      case Intrinsic::memset_i64:
+      case Intrinsic::memcpy:
+      case Intrinsic::memmove:
+      case Intrinsic::memset:
         return true;
       default: return false;
       }
@@ -246,8 +243,7 @@ namespace llvm {
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const MemCpyInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
-      return I->getIntrinsicID() == Intrinsic::memcpy_i32 ||
-             I->getIntrinsicID() == Intrinsic::memcpy_i64;
+      return I->getIntrinsicID() == Intrinsic::memcpy;
     }
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
@@ -275,8 +271,7 @@ namespace llvm {
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const MemMoveInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
-      return I->getIntrinsicID() == Intrinsic::memmove_i32 ||
-             I->getIntrinsicID() == Intrinsic::memmove_i64;
+      return I->getIntrinsicID() == Intrinsic::memmove;
     }
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
@@ -299,8 +294,7 @@ namespace llvm {
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const MemSetInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
-      return I->getIntrinsicID() == Intrinsic::memset_i32 ||
-             I->getIntrinsicID() == Intrinsic::memset_i64;
+      return I->getIntrinsicID() == Intrinsic::memset;
     }
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
