@@ -344,7 +344,14 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   
   if (getLangOptions().Microsoft) return New;
 
-  // Redeclaration of a type is a constraint violation (6.7.2.3p1).
+  // C++ [dcl.typedef]p2:
+  //   In a given non-class scope, a typedef specifier can be used to
+  //   redefine the name of any type declared in that scope to refer
+  //   to the type to which it already refers.
+  if (getLangOptions().CPlusPlus && !isa<CXXRecordDecl>(CurContext))
+    return New;
+
+  // In C, redeclaration of a type is a constraint violation (6.7.2.3p1).
   // Apparently GCC, Intel, and Sun all silently ignore the redeclaration if
   // *either* declaration is in a system header. The code below implements
   // this adhoc compatibility rule. FIXME: The following code will not
