@@ -2634,36 +2634,39 @@ QualType Sema::CheckCommaOperands(Expr *LHS, Expr *&RHS, SourceLocation Loc) {
 
 /// CheckIncrementDecrementOperand - unlike most "Check" methods, this routine
 /// doesn't need to call UsualUnaryConversions or UsualArithmeticConversions.
-QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
-  QualType resType = op->getType();
-  assert(!resType.isNull() && "no type for increment/decrement expression");
+QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc) {
+  QualType ResType = Op->getType();
+  assert(!ResType.isNull() && "no type for increment/decrement expression");
 
   // C99 6.5.2.4p1: We allow complex as a GCC extension.
-  if (const PointerType *pt = resType->getAsPointerType()) {
-    if (pt->getPointeeType()->isVoidType()) {
-      Diag(OpLoc, diag::ext_gnu_void_ptr) << op->getSourceRange();
-    } else if (!pt->getPointeeType()->isObjectType()) {
-      // C99 6.5.2.4p2, 6.5.6p2
+  if (ResType->isRealType()) {
+    // OK!
+  } else if (const PointerType *PT = ResType->getAsPointerType()) {
+    // C99 6.5.2.4p2, 6.5.6p2
+    if (PT->getPointeeType()->isObjectType()) {
+      // Pointer to object is ok!
+    } else if (PT->getPointeeType()->isVoidType()) {
+      // Pointer to void is extension.
+      Diag(OpLoc, diag::ext_gnu_void_ptr) << Op->getSourceRange();
+    } else {
       Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type)
-        << resType.getAsString() << op->getSourceRange();
+        << ResType.getAsString() << Op->getSourceRange();
       return QualType();
     }
-  } else if (!resType->isRealType()) {
-    if (resType->isComplexType()) 
-      // C99 does not support ++/-- on complex types.
-      Diag(OpLoc, diag::ext_integer_increment_complex)
-        << resType.getAsString() << op->getSourceRange();
-    else {
-      Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement)
-        << resType.getAsString() << op->getSourceRange();
-      return QualType();
-    }
+  } else if (ResType->isComplexType()) {
+    // C99 does not support ++/-- on complex types, we allow as an extension.
+    Diag(OpLoc, diag::ext_integer_increment_complex)
+      << ResType.getAsString() << Op->getSourceRange();
+  } else {
+    Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement)
+      << ResType.getAsString() << Op->getSourceRange();
+    return QualType();
   }
   // At this point, we know we have a real, complex or pointer type. 
   // Now make sure the operand is a modifiable lvalue.
-  if (CheckForModifiableLvalue(op, OpLoc, *this))
+  if (CheckForModifiableLvalue(Op, OpLoc, *this))
     return QualType();
-  return resType;
+  return ResType;
 }
 
 /// getPrimaryDecl - Helper function for CheckAddressOfOperand().
