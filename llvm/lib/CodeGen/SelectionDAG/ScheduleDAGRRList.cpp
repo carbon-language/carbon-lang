@@ -270,19 +270,6 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain) {
   }
 #endif
   
-  // Compute how many cycles it will be before this actually becomes
-  // available.  This is the max of the start time of all predecessors plus
-  // their latencies.
-  // If this is a token edge, we don't need to wait for the latency of the
-  // preceeding instruction (e.g. a long-latency load) unless there is also
-  // some other data dependence.
-  unsigned PredDoneCycle = SU->Cycle;
-  if (!isChain)
-    PredDoneCycle += PredSU->Latency;
-  else if (SU->Latency)
-    PredDoneCycle += 1;
-  PredSU->CycleBound = std::max(PredSU->CycleBound, PredDoneCycle);
-
   if (PredSU->NumSuccsLeft == 0) {
     PredSU->isAvailable = true;
     AvailableQueue->push(PredSU);
@@ -339,22 +326,12 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
 /// unscheduled, incrcease the succ left count of its predecessors. Remove
 /// them from AvailableQueue if necessary.
 void ScheduleDAGRRList::CapturePred(SUnit *PredSU, SUnit *SU, bool isChain) {  
-  unsigned CycleBound = 0;
-  for (SUnit::succ_iterator I = PredSU->Succs.begin(), E = PredSU->Succs.end();
-       I != E; ++I) {
-    if (I->Dep == SU)
-      continue;
-    CycleBound = std::max(CycleBound,
-                          I->Dep->Cycle + PredSU->Latency);
-  }
-
   if (PredSU->isAvailable) {
     PredSU->isAvailable = false;
     if (!PredSU->isPending)
       AvailableQueue->remove(PredSU);
   }
 
-  PredSU->CycleBound = CycleBound;
   ++PredSU->NumSuccsLeft;
 }
 
@@ -948,13 +925,11 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
     LRegsMap.clear();
     SUnit *CurSU = AvailableQueue->pop();
     while (CurSU) {
-      if (CurSU->CycleBound <= CurCycle) {
-        SmallVector<unsigned, 4> LRegs;
-        if (!DelayForLiveRegsBottomUp(CurSU, LRegs))
-          break;
-        Delayed = true;
-        LRegsMap.insert(std::make_pair(CurSU, LRegs));
-      }
+      SmallVector<unsigned, 4> LRegs;
+      if (!DelayForLiveRegsBottomUp(CurSU, LRegs))
+        break;
+      Delayed = true;
+      LRegsMap.insert(std::make_pair(CurSU, LRegs));
 
       CurSU->isPending = true;  // This SU is not in AvailableQueue right now.
       NotReady.push_back(CurSU);
@@ -1083,19 +1058,6 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
   }
 #endif
   
-  // Compute how many cycles it will be before this actually becomes
-  // available.  This is the max of the start time of all predecessors plus
-  // their latencies.
-  // If this is a token edge, we don't need to wait for the latency of the
-  // preceeding instruction (e.g. a long-latency load) unless there is also
-  // some other data dependence.
-  unsigned PredDoneCycle = SU->Cycle;
-  if (!isChain)
-    PredDoneCycle += SU->Latency;
-  else if (SU->Latency)
-    PredDoneCycle += 1;
-  SuccSU->CycleBound = std::max(SuccSU->CycleBound, PredDoneCycle);
-
   if (SuccSU->NumPredsLeft == 0) {
     SuccSU->isAvailable = true;
     AvailableQueue->push(SuccSU);
@@ -1137,19 +1099,10 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
   
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
-  std::vector<SUnit*> NotReady;
   Sequence.reserve(SUnits.size());
   while (!AvailableQueue->empty()) {
     SUnit *CurSU = AvailableQueue->pop();
-    while (CurSU && CurSU->CycleBound > CurCycle) {
-      NotReady.push_back(CurSU);
-      CurSU = AvailableQueue->pop();
-    }
     
-    // Add the nodes that aren't ready back onto the available list.
-    AvailableQueue->push_all(NotReady);
-    NotReady.clear();
-
     if (CurSU)
       ScheduleNodeTopDown(CurSU, CurCycle);
     ++CurCycle;
@@ -1433,9 +1386,6 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (left->Depth != right->Depth)
     return left->Depth < right->Depth;
 
-  if (left->CycleBound != right->CycleBound)
-    return left->CycleBound > right->CycleBound;
-
   assert(left->NodeQueueId && right->NodeQueueId && 
          "NodeQueueId cannot be zero");
   return (left->NodeQueueId > right->NodeQueueId);
@@ -1635,9 +1585,6 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 
   if (left->NumSuccsLeft != right->NumSuccsLeft)
     return left->NumSuccsLeft > right->NumSuccsLeft;
-
-  if (left->CycleBound != right->CycleBound)
-    return left->CycleBound > right->CycleBound;
 
   assert(left->NodeQueueId && right->NodeQueueId && 
          "NodeQueueId cannot be zero");
