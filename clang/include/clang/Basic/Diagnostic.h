@@ -336,58 +336,26 @@ public:
     return *DiagObj->DiagRanges[Idx];
   }
   
-  DiagnosticInfo &operator<<(const std::string &S) {
+  void AddString(const std::string &S) const {
     assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
            "Too many arguments to diagnostic!");
     DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_std_string;
     DiagObj->DiagArgumentsStr[DiagObj->NumDiagArgs++] = S;
-    return *this;
   }
   
-  DiagnosticInfo &operator<<(const char *Str) {
+  void AddTaggedVal(intptr_t V, ArgumentKind Kind) const {
     assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
            "Too many arguments to diagnostic!");
-    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_c_string;
-    DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] =
-      reinterpret_cast<intptr_t>(Str);
-    return *this;
+    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = Kind;
+    DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] = V;
   }
   
-  DiagnosticInfo &operator<<(int I) {
-    assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
-           "Too many arguments to diagnostic!");
-    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_sint;
-    DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] = I;
-    return *this;
-  }
-  
-  DiagnosticInfo &operator<<(unsigned I) {
-    assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
-           "Too many arguments to diagnostic!");
-    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_uint;
-    DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] = I;
-    return *this;
-  }
-  
-  DiagnosticInfo &operator<<(const IdentifierInfo *II) {
-    assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
-           "Too many arguments to diagnostic!");
-    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_identifierinfo;
-    DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] =
-    reinterpret_cast<intptr_t>(II);
-    return *this;
-  }
-  
-  
-  
-  
-  DiagnosticInfo &operator<<(const SourceRange &R) {
+  void AddSourceRange(const SourceRange &R) const {
     assert((unsigned)DiagObj->NumDiagArgs < 
            sizeof(DiagObj->DiagRanges)/sizeof(DiagObj->DiagRanges[0]) &&
            "Too many arguments to diagnostic!");
     DiagObj->DiagRanges[DiagObj->NumDiagRanges++] = &R;
-    return *this;
-  }
+  }    
   
   /// FormatDiagnostic - Format this diagnostic into a string, substituting the
   /// formal arguments into the %0 slots.  The result is appended onto the Str
@@ -395,6 +363,41 @@ public:
   void FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const;
 };
 
+inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI,
+                                        const std::string &S) {
+  DI.AddString(S);
+  return DI;
+}
+
+inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI,
+                                        const char *Str) {
+  DI.AddTaggedVal(reinterpret_cast<intptr_t>(Str), DiagnosticInfo::ak_c_string);
+  return DI;
+}
+
+inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI, int I) {
+  DI.AddTaggedVal(I, DiagnosticInfo::ak_sint);
+  return DI;
+}
+
+inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI, unsigned I) {
+  DI.AddTaggedVal(I, DiagnosticInfo::ak_uint);
+  return DI;
+}
+
+inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI,
+                                        const IdentifierInfo *II){
+  DI.AddTaggedVal(reinterpret_cast<intptr_t>(II),
+                  DiagnosticInfo::ak_identifierinfo);
+  return DI;
+}
+  
+inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI,
+                                        const SourceRange &R) {
+  DI.AddSourceRange(R);
+  return DI;
+}
+  
 
 /// Report - Issue the message to the client.  DiagID is a member of the
 /// diag::kind enum.  This actually returns a new instance of DiagnosticInfo
