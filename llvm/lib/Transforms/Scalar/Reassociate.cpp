@@ -53,7 +53,7 @@ namespace {
   }
 }
 
-#ifndef DEBUG
+#ifndef NDEBUG
 /// PrintOps - Print out the expression identified in the Ops list.
 ///
 static void PrintOps(Instruction *I, const std::vector<ValueEntry> &Ops) {
