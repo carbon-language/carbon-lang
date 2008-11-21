@@ -98,7 +98,7 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
 ///         'extern' string-literal declaration
 ///
 Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
-  assert(Tok.is(tok::string_literal) && "Not a stringliteral!");
+  assert(Tok.is(tok::string_literal) && "Not a string literal!");
   llvm::SmallVector<char, 8> LangBuffer;
   // LangBuffer is guaranteed to be big enough.
   LangBuffer.resize(Tok.getLength());
@@ -110,7 +110,7 @@ Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
   SourceLocation LBrace, RBrace;
   
   if (Tok.isNot(tok::l_brace)) {
-    D = ParseDeclaration(Context);
+    D = ParseDeclarationOrFunctionDefinition();
   } else {
     LBrace = ConsumeBrace();
     while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {

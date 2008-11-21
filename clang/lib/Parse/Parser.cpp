@@ -295,7 +295,7 @@ void Parser::ParseTranslationUnit() {
 }
 
 /// ParseExternalDeclaration:
-///       external-declaration: [C99 6.9]
+///       external-declaration: [C99 6.9], declaration: [C++ dcl.dcl]
 ///         function-definition
 ///         declaration
 /// [EXT]   ';'
@@ -307,7 +307,7 @@ void Parser::ParseTranslationUnit() {
 /// [OBJC]  objc-protocol-definition
 /// [OBJC]  objc-method-definition
 /// [OBJC]  @end
-///
+/// [C++]   linkage-specification
 /// [GNU] asm-definition:
 ///         simple-asm-expr ';'
 ///
