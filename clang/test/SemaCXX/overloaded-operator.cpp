@@ -90,12 +90,14 @@ void incdec_test(PostInc pi, PostDec pd) {
 
 struct SmartPtr {
   int& operator*();
-  // FIXME: spurious error:  long& operator*() const;
+  long& operator*() const volatile;
 };
 
-void test_smartptr(SmartPtr ptr, const SmartPtr cptr) {
+void test_smartptr(SmartPtr ptr, const SmartPtr cptr, 
+                   const volatile SmartPtr cvptr) {
   int &ir = *ptr;
-  // FIXME: reinstate long &lr = *cptr;
+  long &lr = *cptr;
+  long &lr2 = *cvptr;
 }
 
 

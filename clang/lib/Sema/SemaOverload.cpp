@@ -326,7 +326,7 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
     CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
     if (OldMethod && NewMethod && 
         !OldMethod->isStatic() && !NewMethod->isStatic() &&
-        OldQType.getCVRQualifiers() != NewQType.getCVRQualifiers())
+        OldMethod->getTypeQualifiers() != NewMethod->getTypeQualifiers())
       return true;
 
     // The signatures match; this is not an overload.

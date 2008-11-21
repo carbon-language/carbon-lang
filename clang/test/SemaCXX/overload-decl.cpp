@@ -16,9 +16,7 @@ int g(); // expected-error {{error: functions that differ only in their return t
 class X {
   void f();
   void f(int);
-
-  // FIXME: can't test this until we can handle const methods.
-  //   void f() const;
+  void f() const;
 
   void g(int); // expected-error {{error: previous declaration is here}}
   void g(int, float); // expected-error {{error: previous declaration is here}}
