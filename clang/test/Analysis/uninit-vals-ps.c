@@ -43,3 +43,10 @@ int f3(void) {
     return 1;
 }
 
+int ret_uninit() {
+  int i;
+  int *p = &i;
+  return *p;  // expected-warning{{Uninitialized or undefined return value returned to caller.}}
+}
+
+
