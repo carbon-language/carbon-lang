@@ -79,18 +79,6 @@ required to build LLVM, plus the following:</p>
 <dt><a href="http://www.tcl.tk/software/tcltk/">tcl</a></dt>
 <dd>Tcl is required by DejaGNU. </dd>
 
-<dt><a href="http://www.netlib.org/f2c">F2C</a></dt>
-<dd>For now, LLVM does not have a Fortran front-end, but using F2C, we can run
-Fortran benchmarks.  F2C support must be enabled via <tt>configure</tt> if not
-installed in a standard place.  F2C requires three items: the <tt>f2c</tt>
-executable, <tt>f2c.h</tt> to compile the generated code, and <tt>libf2c.a</tt>
-to link generated code.  By default, given an F2C directory <tt>$DIR</tt>, the
-configure script will search <tt>$DIR/bin</tt> for <tt>f2c</tt>,
-<tt>$DIR/include</tt> for <tt>f2c.h</tt>, and <tt>$DIR/lib</tt> for
-<tt>libf2c.a</tt>.  The default <tt>$DIR</tt> values are: <tt>/usr</tt>,
-<tt>/usr/local</tt>, <tt>/sw</tt>, and <tt>/opt</tt>.  If you installed F2C in a
-different location, you must tell <tt>configure</tt>:
-
 <ul>
 <li><tt>./configure --with-f2c=$DIR</tt><br>
 This will specify a new <tt>$DIR</tt> for the above-described search
