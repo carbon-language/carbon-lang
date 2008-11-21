@@ -250,6 +250,7 @@ namespace ISD {
     // values.
     ADDE, SUBE,
 
+    // RESULT, OVERFLOW_FLAG, OUTCHAIN = [SU]ADDO(INCHAIN, LHS, RHS) -
     // Overflow-aware nodes for arithmetic operations. These nodes take two
     // operands: the normal lhs and rhs to the add. They produce two results:
     // the normal result of the add, and a flag indicating whether an overflow
