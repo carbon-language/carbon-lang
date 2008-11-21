@@ -208,6 +208,24 @@ elimination and inlining), but you might lose the ability to modify the program
 and call functions where were optimized out of the program, or inlined away
 completely.</p>
 
+<p> <a href=http://llvm.org/docs/TestingGuide.html#quicktestsuite> 
+LLVM test suite </a> provides a framework to test optimizer's handling of
+debugging information. It can be run like this:</p>
+
+<div class="doc_code">
+<pre>
+% cd llvm/projects/test-suite/MultiSource/Benchmarks  # or some other level
+% make TEST=dbgopt
+</pre>
+</div>
+
+<p>
+This will test impact of debugging information on optimization passes. If
+debugging information influences optimization passes then it will be reported
+as a failure. See <a href=//llvm.org/docs/TestingGuide.html> TestingGuide</a>
+for more information on LLVM test infratsture and how to run various tests.
+</p>
+
 </div>
 
 <!-- *********************************************************************** -->
