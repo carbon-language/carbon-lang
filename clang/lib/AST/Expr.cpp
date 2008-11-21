@@ -329,7 +329,13 @@ bool Expr::hasLocalSideEffect() const {
 
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->hasLocalSideEffect();
-  }     
+
+  case CXXNewExprClass:
+    // FIXME: In theory, there might be new expressions that don't have side
+    // effects (e.g. a placement new with an uninitialized POD).
+  case CXXDeleteExprClass:
+    return true;
+  }
 }
 
 /// DeclCanBeLvalue - Determine whether the given declaration can be
@@ -481,8 +487,6 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   case CXXTypeidExprClass:
     // C++ 5.2.8p1: The result of a typeid expression is an lvalue of ...
     return LV_Valid;
-  case CXXThisExprClass:
-    return LV_InvalidExpression;
   default:
     break;
   }

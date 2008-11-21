@@ -238,14 +238,16 @@ public:
   //
   QualType ConvertDeclSpecToType(const DeclSpec &DS);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
-  QualType GetTypeForDeclarator(Declarator &D, Scope *S);
+  QualType GetTypeForDeclarator(Declarator &D, Scope *S,
+                                bool CXXNewMode = false);
   DeclarationName GetNameForDeclarator(Declarator &D);
 
   QualType ObjCGetTypeForMethodDefinition(DeclTy *D);
 
   bool UnwrapSimilarPointerTypes(QualType& T1, QualType& T2);
 
-  virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
+  virtual TypeResult ActOnTypeName(Scope *S, Declarator &D,
+                                   bool CXXNewMode = false);
 
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
@@ -804,6 +806,23 @@ public:
                                                unsigned NumExprs,
                                                SourceLocation *CommaLocs,
                                                SourceLocation RParenLoc);
+
+  /// ActOnCXXNew - Parsed a C++ 'new' expression.
+  virtual ExprResult ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
+                                 SourceLocation PlacementLParen,
+                                 ExprTy **PlacementArgs, unsigned NumPlaceArgs,
+                                 SourceLocation PlacementRParen,
+                                 bool ParenTypeId, SourceLocation TyStart,
+                                 TypeTy *Ty, SourceLocation TyEnd,
+                                 SourceLocation ConstructorLParen,
+                                 ExprTy **ConstructorArgs, unsigned NumConsArgs,
+                                 SourceLocation ConstructorRParen);
+  bool CheckAllocatedType(QualType AllocType, SourceLocation StartLoc,
+                          const SourceRange &TyR);
+
+  /// ActOnCXXDelete - Parsed a C++ 'delete' expression
+  virtual ExprResult ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
+                                    bool ArrayForm, ExprTy *Operand);
 
   /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
   /// C++ if/switch/while/for statement.

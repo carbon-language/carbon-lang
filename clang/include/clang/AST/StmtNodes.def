@@ -104,6 +104,8 @@ STMT(CXXThrowExpr           , Expr)
 STMT(CXXDefaultArgExpr      , Expr)
 STMT(CXXZeroInitValueExpr   , Expr)
 STMT(CXXConditionDeclExpr   , DeclRefExpr)
+STMT(CXXNewExpr             , Expr)
+STMT(CXXDeleteExpr          , Expr)
 
 // Obj-C Expressions.
 STMT(ObjCStringLiteral    , Expr)

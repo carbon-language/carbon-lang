@@ -614,7 +614,7 @@ Parser::TypeTy *Parser::ParseConversionFunctionId() {
   // Parse the conversion-declarator, which is merely a sequence of
   // ptr-operators.
   Declarator D(DS, Declarator::TypeNameContext);
-  ParseDeclaratorInternal(D, /*PtrOperator=*/true);
+  ParseDeclaratorInternal(D, /*DirectDeclParser=*/0);
 
   // Finish up the type.
   Action::TypeResult Result = Actions.ActOnTypeName(CurScope, D);
@@ -622,4 +622,230 @@ Parser::TypeTy *Parser::ParseConversionFunctionId() {
     return 0;
   else
     return Result.Val;
+}
+
+/// ParseCXXNewExpression - Parse a C++ new-expression. New is used to allocate
+/// memory in a typesafe manner and call constructors.
+///
+///        new-expression:
+///                   '::'[opt] 'new' new-placement[opt] new-type-id
+///                                     new-initializer[opt]
+///                   '::'[opt] 'new' new-placement[opt] '(' type-id ')'
+///                                     new-initializer[opt]
+///
+///        new-placement:
+///                   '(' expression-list ')'
+///
+///        new-initializer:
+///                   '(' expression-list[opt] ')'
+/// [C++0x]           braced-init-list                                   [TODO]
+///
+Parser::ExprResult Parser::ParseCXXNewExpression()
+{
+  assert((Tok.is(tok::coloncolon) || Tok.is(tok::kw_new)) &&
+         "Expected :: or 'new' keyword");
+
+  SourceLocation Start = Tok.getLocation();
+  bool UseGlobal = false;
+  if (Tok.is(tok::coloncolon)) {
+    UseGlobal = true;
+    ConsumeToken();
+  }
+
+  assert(Tok.is(tok::kw_new) && "Lookahead should have ensured 'new'");
+  // Consume 'new'
+  ConsumeToken();
+
+  // A '(' now can be a new-placement or the '(' wrapping the type-id in the
+  // second form of new-expression. It can't be a new-type-id.
+
+  ExprListTy PlacementArgs;
+  SourceLocation PlacementLParen, PlacementRParen;
+
+  TypeTy *Ty = 0;
+  SourceLocation TyStart, TyEnd;
+  bool ParenTypeId;
+  if (Tok.is(tok::l_paren)) {
+    // If it turns out to be a placement, we change the type location.
+    PlacementLParen = ConsumeParen();
+    TyStart = Tok.getLocation();
+    if (ParseExpressionListOrTypeId(PlacementArgs, Ty))
+      return true;
+    TyEnd = Tok.getLocation();
+
+    PlacementRParen = MatchRHSPunctuation(tok::r_paren, PlacementLParen);
+    if (PlacementRParen.isInvalid())
+      return true;
+
+    if (Ty) {
+      // Reset the placement locations. There was no placement.
+      PlacementLParen = PlacementRParen = SourceLocation();
+      ParenTypeId = true;
+    } else {
+      // We still need the type.
+      if (Tok.is(tok::l_paren)) {
+        ConsumeParen();
+        TyStart = Tok.getLocation();
+        Ty = ParseTypeName(/*CXXNewMode=*/true);
+        ParenTypeId = true;
+      } else {
+        TyStart = Tok.getLocation();
+        Ty = ParseNewTypeId();
+        ParenTypeId = false;
+      }
+      if (!Ty)
+        return true;
+      TyEnd = Tok.getLocation();
+    }
+  } else {
+    TyStart = Tok.getLocation();
+    Ty = ParseNewTypeId();
+    if (!Ty)
+      return true;
+    TyEnd = Tok.getLocation();
+    ParenTypeId = false;
+  }
+
+  ExprListTy ConstructorArgs;
+  SourceLocation ConstructorLParen, ConstructorRParen;
+
+  if (Tok.is(tok::l_paren)) {
+    ConstructorLParen = ConsumeParen();
+    if (Tok.isNot(tok::r_paren)) {
+      CommaLocsTy CommaLocs;
+      if (ParseExpressionList(ConstructorArgs, CommaLocs))
+        return true;
+    }
+    ConstructorRParen = MatchRHSPunctuation(tok::r_paren, ConstructorLParen);
+    if (ConstructorRParen.isInvalid())
+      return true;
+  }
+
+  return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
+                             &PlacementArgs[0], PlacementArgs.size(),
+                             PlacementRParen, ParenTypeId, TyStart, Ty, TyEnd,
+                             ConstructorLParen, &ConstructorArgs[0],
+                             ConstructorArgs.size(), ConstructorRParen);
+}
+
+/// ParseNewTypeId - Parses a type ID as it appears in a new expression.
+/// The most interesting part of this is the new-declarator, which can be a
+/// multi-dimensional array, of which the first has a non-constant expression as
+/// the size, e.g.
+/// @code new int[runtimeSize()][2][2] @endcode
+///
+///        new-type-id:
+///                   type-specifier-seq new-declarator[opt]
+///
+///        new-declarator:
+///                   ptr-operator new-declarator[opt]
+///                   direct-new-declarator
+///
+Parser::TypeTy * Parser::ParseNewTypeId()
+{
+  DeclSpec DS;
+  if (ParseCXXTypeSpecifierSeq(DS))
+    return 0;
+
+  // A new-declarator is a simplified version of a declarator. We use
+  // ParseDeclaratorInternal, but pass our own direct declarator parser,
+  // one that parses a direct-new-declarator.
+  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+  ParseDeclaratorInternal(DeclaratorInfo, &Parser::ParseDirectNewDeclarator);
+
+  TypeTy *Ty = Actions.ActOnTypeName(CurScope, DeclaratorInfo,
+                                     /*CXXNewMode=*/true).Val;
+  return DeclaratorInfo.getInvalidType() ? 0 : Ty;
+}
+
+/// ParseDirectNewDeclarator - Parses a direct-new-declarator. Intended to be
+/// passed to ParseDeclaratorInternal.
+///
+///        direct-new-declarator:
+///                   '[' expression ']'
+///                   direct-new-declarator '[' constant-expression ']'
+///
+void Parser::ParseDirectNewDeclarator(Declarator &D)
+{
+  // Parse the array dimensions.
+  bool first = true;
+  while (Tok.is(tok::l_square)) {
+    SourceLocation LLoc = ConsumeBracket();
+    ExprResult Size = first ? ParseExpression() : ParseConstantExpression();
+    if (Size.isInvalid) {
+      // Recover
+      SkipUntil(tok::r_square);
+      return;
+    }
+    first = false;
+
+    D.AddTypeInfo(DeclaratorChunk::getArray(0, /*static=*/false, /*star=*/false,
+                                            Size.Val, LLoc));
+
+    if (MatchRHSPunctuation(tok::r_square, LLoc).isInvalid())
+      return;
+  }
+}
+
+/// ParseExpressionListOrTypeId - Parse either an expression-list or a type-id.
+/// This ambiguity appears in the syntax of the C++ new operator.
+///
+///        new-expression:
+///                   '::'[opt] 'new' new-placement[opt] '(' type-id ')'
+///                                     new-initializer[opt]
+///
+///        new-placement:
+///                   '(' expression-list ')'
+///
+bool Parser::ParseExpressionListOrTypeId(ExprListTy &PlacementArgs, TypeTy *&Ty)
+{
+  // The '(' was already consumed.
+  if (isTypeIdInParens()) {
+    Ty = ParseTypeName(/*CXXNewMode=*/true);
+    return Ty == 0;
+  }
+
+  // It's not a type, it has to be an expression list.
+  // Discard the comma locations - ActOnCXXNew has enough parameters.
+  CommaLocsTy CommaLocs;
+  return ParseExpressionList(PlacementArgs, CommaLocs);
+}
+
+/// ParseCXXDeleteExpression - Parse a C++ delete-expression. Delete is used
+/// to free memory allocated by new.
+///
+///        delete-expression:
+///                   '::'[opt] 'delete' cast-expression
+///                   '::'[opt] 'delete' '[' ']' cast-expression
+Parser::ExprResult Parser::ParseCXXDeleteExpression()
+{
+  assert((Tok.is(tok::coloncolon) || Tok.is(tok::kw_delete)) &&
+         "Expected :: or 'delete' keyword");
+
+  SourceLocation Start = Tok.getLocation();
+  bool UseGlobal = false;
+  if (Tok.is(tok::coloncolon)) {
+    UseGlobal = true;
+    ConsumeToken();
+  }
+
+  assert(Tok.is(tok::kw_delete) && "Lookahead should have ensured 'delete'");
+  // Consume 'delete'
+  ConsumeToken();
+
+  // Array delete?
+  bool ArrayDelete = false;
+  if (Tok.is(tok::l_square)) {
+    ArrayDelete = true;
+    SourceLocation LHS = ConsumeBracket();
+    SourceLocation RHS = MatchRHSPunctuation(tok::r_square, LHS);
+    if (RHS.isInvalid())
+      return true;
+  }
+
+  ExprResult Operand = ParseCastExpression(false);
+  if (Operand.isInvalid)
+    return Operand;
+
+  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, Operand.Val);
 }

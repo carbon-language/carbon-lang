@@ -19,6 +19,8 @@
 
 namespace clang {
 
+  class CXXConstructorDecl;
+
 //===--------------------------------------------------------------------===//
 // C++ Expressions.
 //===--------------------------------------------------------------------===//
@@ -431,6 +433,184 @@ public:
   //virtual void EmitImpl(llvm::Serializer& S) const;
   //static CXXConditionDeclExpr *
   //    CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// CXXNewExpr - A new expression for memory allocation and constructor calls,
+/// e.g: "new CXXNewExpr(foo)".
+class CXXNewExpr : public Expr {
+  // Was the usage ::new, i.e. is the global new to be used?
+  bool GlobalNew : 1;
+  // Was the form (type-id) used? Otherwise, it was new-type-id.
+  bool ParenTypeId : 1;
+  // Is there an initializer? If not, built-ins are uninitialized, else they're
+  // value-initialized.
+  bool Initializer : 1;
+  // The number of placement new arguments.
+  unsigned NumPlacementArgs : 14;
+  // The number of constructor arguments. This may be 1 even for non-class
+  // types; use the pseudo copy constructor.
+  unsigned NumConstructorArgs : 15;
+  // Contains any number of optional placement arguments, and any number of
+  // optional constructor arguments, in that order.
+  Stmt **SubExprs;
+  // Points to the allocation function used.
+  FunctionDecl *OperatorNew;
+  // Points to the deallocation function used in case of error. May be null.
+  FunctionDecl *OperatorDelete;
+  // Points to the constructor used. Cannot be null if AllocType is a record;
+  // it would still point at the default constructor (even an implicit one).
+  // Must be null for all other types.
+  CXXConstructorDecl *Constructor;
+  // The type to be allocated. Is either *ty or a VLA of that type.
+  QualType AllocType;
+
+  SourceLocation StartLoc;
+  SourceLocation EndLoc;
+
+  // Deserialization constructor
+  CXXNewExpr(QualType ty, QualType alloc, bool globalNew, bool parenTypeId,
+             bool initializer, unsigned numPlacementArgs,
+             unsigned numConstructorArgs, Stmt **subExprs,
+             FunctionDecl *operatorNew, FunctionDecl *operatorDelete,
+             CXXConstructorDecl *constructor, SourceLocation startLoc,
+             SourceLocation endLoc)
+    : Expr(CXXNewExprClass, ty), GlobalNew(globalNew), ParenTypeId(parenTypeId),
+      Initializer(initializer), NumPlacementArgs(numPlacementArgs),
+      NumConstructorArgs(numConstructorArgs), SubExprs(subExprs),
+      OperatorNew(operatorNew), OperatorDelete(operatorDelete),
+      Constructor(constructor), AllocType(alloc),
+      StartLoc(startLoc), EndLoc(endLoc)
+  { }
+public:
+  CXXNewExpr(bool globalNew, FunctionDecl *operatorNew, Expr **placementArgs,
+             unsigned numPlaceArgs, bool ParenTypeId, QualType alloc,
+             CXXConstructorDecl *constructor, bool initializer,
+             Expr **constructorArgs, unsigned numConsArgs,
+             FunctionDecl *operatorDelete, QualType ty,
+             SourceLocation startLoc, SourceLocation endLoc);
+  ~CXXNewExpr() {
+    delete[] SubExprs;
+  }
+
+  QualType getAllocatedType() const { return AllocType; }
+
+  FunctionDecl *getOperatorNew() const { return OperatorNew; }
+  FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
+  CXXConstructorDecl *getConstructor() const { return Constructor; }
+
+  unsigned getNumPlacementArgs() const { return NumPlacementArgs; }
+  Expr *getPlacementArg(unsigned i) {
+    assert(i < NumPlacementArgs && "Index out of range");
+    return cast<Expr>(SubExprs[i]);
+  }
+  const Expr *getPlacementArg(unsigned i) const {
+    assert(i < NumPlacementArgs && "Index out of range");
+    return cast<Expr>(SubExprs[i]);
+  }
+
+  bool isGlobalNew() const { return GlobalNew; }
+  bool isParenTypeId() const { return ParenTypeId; }
+  bool hasInitializer() const { return Initializer; }
+
+  unsigned getNumConstructorArgs() const { return NumConstructorArgs; }
+  Expr *getConstructorArg(unsigned i) {
+    assert(i < NumConstructorArgs && "Index out of range");
+    return cast<Expr>(SubExprs[NumPlacementArgs + i]);
+  }
+  const Expr *getConstructorArg(unsigned i) const {
+    assert(i < NumConstructorArgs && "Index out of range");
+    return cast<Expr>(SubExprs[NumPlacementArgs + i]);
+  }
+
+  typedef ExprIterator arg_iterator;
+  typedef ConstExprIterator const_arg_iterator;
+
+  arg_iterator placement_arg_begin() {
+    return SubExprs;
+  }
+  arg_iterator placement_arg_end() {
+    return SubExprs + getNumPlacementArgs();
+  }
+  const_arg_iterator placement_arg_begin() const {
+    return SubExprs;
+  }
+  const_arg_iterator placement_arg_end() const {
+    return SubExprs + getNumPlacementArgs();
+  }
+
+  arg_iterator constructor_arg_begin() {
+    return SubExprs + getNumPlacementArgs();
+  }
+  arg_iterator constructor_arg_end() {
+    return SubExprs + getNumPlacementArgs() + getNumConstructorArgs();
+  }
+  const_arg_iterator constructor_arg_begin() const {
+    return SubExprs + getNumPlacementArgs();
+  }
+  const_arg_iterator constructor_arg_end() const {
+    return SubExprs + getNumPlacementArgs() + getNumConstructorArgs();
+  }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(StartLoc, EndLoc);
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXNewExprClass;
+  }
+  static bool classof(const CXXNewExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXNewExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// CXXDeleteExpr - A delete expression for memory deallocation and destructor
+/// calls, e.g. "delete[] pArray".
+class CXXDeleteExpr : public Expr {
+  // Is this a forced global delete, i.e. "::delete"?
+  bool GlobalDelete : 1;
+  // Is this the array form of delete, i.e. "delete[]"?
+  bool ArrayForm : 1;
+  // Points to the operator delete overload that is used. Could be a member.
+  FunctionDecl *OperatorDelete;
+  // The pointer expression to be deleted.
+  Stmt *Argument;
+  // Location of the expression.
+  SourceLocation Loc;
+public:
+  CXXDeleteExpr(QualType ty, bool globalDelete, bool arrayForm,
+                FunctionDecl *operatorDelete, Expr *arg, SourceLocation loc)
+    : Expr(CXXDeleteExprClass, ty), GlobalDelete(globalDelete),
+      ArrayForm(arrayForm), OperatorDelete(operatorDelete), Argument(arg),
+      Loc(loc) { }
+
+  bool isGlobalDelete() const { return GlobalDelete; }
+  bool isArrayForm() const { return ArrayForm; }
+
+  FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
+
+  Expr *getArgument() { return cast<Expr>(Argument); }
+  const Expr *getArgument() const { return cast<Expr>(Argument); }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(Loc, Argument->getLocEnd());
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXDeleteExprClass;
+  }
+  static bool classof(const CXXDeleteExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXDeleteExpr * CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 }  // end namespace clang

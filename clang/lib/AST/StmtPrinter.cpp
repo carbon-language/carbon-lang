@@ -925,6 +925,49 @@ StmtPrinter::VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E) {
   PrintRawDecl(E->getVarDecl());
 }
 
+void StmtPrinter::VisitCXXNewExpr(CXXNewExpr *E) {
+  if (E->isGlobalNew())
+    OS << "::";
+  OS << "new ";
+  unsigned NumPlace = E->getNumPlacementArgs();
+  if (NumPlace > 0) {
+    OS << "(";
+    PrintExpr(E->getPlacementArg(0));
+    for (unsigned i = 1; i < NumPlace; ++i) {
+      OS << ", ";
+      PrintExpr(E->getPlacementArg(i));
+    }
+    OS << ") ";
+  }
+  if (E->isParenTypeId())
+    OS << "(";
+  OS << E->getAllocatedType().getAsString();
+  if (E->isParenTypeId())
+    OS << ")";
+
+  if (E->hasInitializer()) {
+    OS << "(";
+    unsigned NumCons = E->getNumConstructorArgs();
+    if (NumCons > 0) {
+      PrintExpr(E->getConstructorArg(0));
+      for (unsigned i = 1; i < NumCons; ++i) {
+        OS << ", ";
+        PrintExpr(E->getConstructorArg(i));
+      }
+    }
+    OS << ")";
+  }
+}
+
+void StmtPrinter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
+  if (E->isGlobalDelete())
+    OS << "::";
+  OS << "delete ";
+  if (E->isArrayForm())
+    OS << "[] ";
+  PrintExpr(E->getArgument());
+}
+
 // Obj-C 
 
 void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {

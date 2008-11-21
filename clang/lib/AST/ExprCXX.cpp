@@ -77,6 +77,39 @@ Stmt::child_iterator CXXConditionDeclExpr::child_end() {
   return child_iterator();
 }
 
+// CXXNewExpr
+CXXNewExpr::CXXNewExpr(bool globalNew, FunctionDecl *operatorNew,
+                       Expr **placementArgs, unsigned numPlaceArgs,
+                       bool parenTypeId, QualType alloc,
+                       CXXConstructorDecl *constructor, bool initializer,
+                       Expr **constructorArgs, unsigned numConsArgs,
+                       FunctionDecl *operatorDelete, QualType ty,
+                       SourceLocation startLoc, SourceLocation endLoc)
+  : Expr(CXXNewExprClass, ty), GlobalNew(globalNew), ParenTypeId(parenTypeId),
+    Initializer(initializer), NumPlacementArgs(numPlaceArgs),
+    NumConstructorArgs(numConsArgs), OperatorNew(operatorNew),
+    OperatorDelete(operatorDelete), Constructor(constructor), AllocType(alloc),
+    StartLoc(startLoc), EndLoc(endLoc)
+{
+  unsigned TotalSize = NumPlacementArgs + NumConstructorArgs;
+  SubExprs = new Stmt*[TotalSize];
+  unsigned i = 0;
+  for(unsigned j = 0; j < NumPlacementArgs; ++j)
+    SubExprs[i++] = placementArgs[j];
+  for(unsigned j = 0; j < NumConstructorArgs; ++j)
+    SubExprs[i++] = constructorArgs[j];
+  assert(i == TotalSize);
+}
+
+Stmt::child_iterator CXXNewExpr::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator CXXNewExpr::child_end() {
+  return &SubExprs[0] + getNumPlacementArgs() + getNumConstructorArgs();
+}
+
+// CXXDeleteExpr
+Stmt::child_iterator CXXDeleteExpr::child_begin() { return &Argument; }
+Stmt::child_iterator CXXDeleteExpr::child_end() { return &Argument+1; }
+
 OverloadedOperatorKind CXXOperatorCallExpr::getOperator() const {
   // All simple function calls (e.g. func()) are implicitly cast to pointer to
   // function. As a result, we try and obtain the DeclRefExpr from the 

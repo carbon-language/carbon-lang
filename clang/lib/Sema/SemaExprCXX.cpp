@@ -170,6 +170,200 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
 }
 
 
+/// ActOnCXXNew - Parsed a C++ 'new' expression (C++ 5.3.4), as in e.g.:
+/// @code new (memory) int[size][4] @endcode
+/// or
+/// @code ::new Foo(23, "hello") @endcode
+/// For the interpretation of this heap of arguments, consult the base version.
+Action::ExprResult
+Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
+                  SourceLocation PlacementLParen,
+                  ExprTy **PlacementArgs, unsigned NumPlaceArgs,
+                  SourceLocation PlacementRParen, bool ParenTypeId,
+                  SourceLocation TyStart, TypeTy *Ty, SourceLocation TyEnd,
+                  SourceLocation ConstructorLParen,
+                  ExprTy **ConstructorArgs, unsigned NumConsArgs,
+                  SourceLocation ConstructorRParen)
+{
+  QualType AllocType = QualType::getFromOpaquePtr(Ty);
+  QualType CheckType = AllocType;
+  // To leverage the existing parser as much as possible, array types are
+  // parsed as VLAs. Unwrap for checking.
+  if (const VariableArrayType *VLA = Context.getAsVariableArrayType(AllocType)){
+    CheckType = VLA->getElementType();
+  }
+
+  // Validate the type, and unwrap an array if any.
+  if (CheckAllocatedType(CheckType, StartLoc, SourceRange(TyStart, TyEnd)))
+    return true;
+
+  QualType ResultType = Context.getPointerType(CheckType);
+
+  // That every array dimension except the first is constant was already
+  // checked by the type check above.
+  // C++ 5.3.4p6: "The expression in a direct-new-declarator shall have integral
+  //   or enumeration type with a non-negative value."
+  // This was checked by ActOnTypeName, since C99 has the same restriction on
+  // VLA expressions.
+
+  // --- Choosing an allocation function ---
+  // C++ 5.3.4p8 - 14 & 18
+  // 1) If UseGlobal is true, only look in the global scope. Else, also look
+  //   in the scope of the allocated class.
+  // 2) If an array size is given, look for operator new[], else look for
+  //   operator new.
+  // 3) The first argument is always size_t. Append the arguments from the
+  //   placement form.
+  // FIXME: Find the correct overload of operator new.
+  // FIXME: Also find the corresponding overload of operator delete.
+  FunctionDecl *OperatorNew = 0;
+  FunctionDecl *OperatorDelete = 0;
+  Expr **PlaceArgs = (Expr**)PlacementArgs;
+
+  bool Init = ConstructorLParen.isValid();
+  // --- Choosing a constructor ---
+  // C++ 5.3.4p15
+  // 1) If T is a POD and there's no initializer (ConstructorLParen is invalid)
+  //   the object is not initialized. If the object, or any part of it, is
+  //   const-qualified, it's an error.
+  // 2) If T is a POD and there's an empty initializer, the object is value-
+  //   initialized.
+  // 3) If T is a POD and there's one initializer argument, the object is copy-
+  //   constructed.
+  // 4) If T is a POD and there's more initializer arguments, it's an error.
+  // 5) If T is not a POD, the initializer arguments are used as constructor
+  //   arguments.
+  //
+  // Or by the C++0x formulation:
+  // 1) If there's no initializer, the object is default-initialized according
+  //    to C++0x rules.
+  // 2) Otherwise, the object is direct-initialized.
+  CXXConstructorDecl *Constructor = 0;
+  Expr **ConsArgs = (Expr**)ConstructorArgs;
+  if (CheckType->isRecordType()) {
+    // FIXME: This is incorrect for when there is an empty initializer and
+    // no user-defined constructor. Must zero-initialize, not default-construct.
+    Constructor = PerformInitializationByConstructor(
+                      CheckType, ConsArgs, NumConsArgs,
+                      TyStart, SourceRange(TyStart, ConstructorRParen),
+                      CheckType.getAsString(),
+                      NumConsArgs != 0 ? IK_Direct : IK_Default);
+    if (!Constructor)
+      return true;
+  } else {
+    if (!Init) {
+      // FIXME: Check that no subpart is const.
+      if (CheckType.isConstQualified()) {
+        Diag(StartLoc, diag::err_new_uninitialized_const)
+          << SourceRange(StartLoc, TyEnd);
+        return true;
+      }
+    } else if (NumConsArgs == 0) {
+      // Object is value-initialized. Do nothing.
+    } else if (NumConsArgs == 1) {
+      // Object is direct-initialized.
+      if (CheckInitializerTypes(ConsArgs[0], CheckType, StartLoc,
+                                CheckType.getAsString()))
+        return true;
+    } else {
+      Diag(StartLoc, diag::err_builtin_direct_init_more_than_one_arg)
+        << SourceRange(ConstructorLParen, ConstructorRParen);
+    }
+  }
+
+  // FIXME: Also check that the destructor is accessible. (C++ 5.3.4p16)
+
+  return new CXXNewExpr(UseGlobal, OperatorNew, PlaceArgs, NumPlaceArgs,
+                        ParenTypeId, AllocType, Constructor, Init,
+                        ConsArgs, NumConsArgs, OperatorDelete, ResultType,
+                        StartLoc, Init ? ConstructorRParen : TyEnd);
+}
+
+/// CheckAllocatedType - Checks that a type is suitable as the allocated type
+/// in a new-expression.
+/// dimension off and stores the size expression in ArraySize.
+bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation StartLoc,
+                              const SourceRange &TyR)
+{
+  // C++ 5.3.4p1: "[The] type shall be a complete object type, but not an
+  //   abstract class type or array thereof.
+  // FIXME: We don't have abstract types yet.
+  // FIXME: Under C++ semantics, an incomplete object type is still an object
+  // type. This code assumes the C semantics, where it's not.
+  if (!AllocType->isObjectType()) {
+    diag::kind msg;
+    if (AllocType->isFunctionType()) {
+      msg = diag::err_new_function;
+    } else if(AllocType->isIncompleteType()) {
+      msg = diag::err_new_incomplete;
+    } else if(AllocType->isReferenceType()) {
+      msg = diag::err_new_reference;
+    } else {
+      assert(false && "Unexpected type class");
+      return true;
+    }
+    Diag(StartLoc, msg) << AllocType.getAsString() << TyR;
+    return true;
+  }
+
+  // Every dimension beyond the first shall be of constant size.
+  while (const ArrayType *Array = Context.getAsArrayType(AllocType)) {
+    if (!Array->isConstantArrayType()) {
+      // FIXME: Might be nice to get a better source range from somewhere.
+      Diag(StartLoc, diag::err_new_array_nonconst) << TyR;
+      return true;
+    }
+    AllocType = Array->getElementType();
+  }
+
+  return false;
+}
+
+/// ActOnCXXDelete - Parsed a C++ 'delete' expression (C++ 5.3.5), as in:
+/// @code ::delete ptr; @endcode
+/// or
+/// @code delete [] ptr; @endcode
+Action::ExprResult
+Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
+                     bool ArrayForm, ExprTy *Operand)
+{
+  // C++ 5.3.5p1: "The operand shall have a pointer type, or a class type
+  //   having a single conversion function to a pointer type. The result has
+  //   type void."
+  // DR599 amends "pointer type" to "pointer to object type" in both cases.
+
+  Expr *Ex = (Expr *)Operand;
+  QualType Type = Ex->getType();
+
+  if (Type->isRecordType()) {
+    // FIXME: Find that one conversion function and amend the type.
+  }
+
+  if (!Type->isPointerType()) {
+    Diag(StartLoc, diag::err_delete_operand)
+      << Type.getAsString() << Ex->getSourceRange();
+    return true;
+  }
+
+  QualType Pointee = Type->getAsPointerType()->getPointeeType();
+  if (Pointee->isIncompleteType() && !Pointee->isVoidType())
+    Diag(StartLoc, diag::warn_delete_incomplete)
+      << Pointee.getAsString() << Ex->getSourceRange();
+  else if (!Pointee->isObjectType()) {
+    Diag(StartLoc, diag::err_delete_operand)
+      << Type.getAsString() << Ex->getSourceRange();
+    return true;
+  }
+
+  // FIXME: Look up the correct operator delete overload and pass a pointer
+  // along.
+  // FIXME: Check access and ambiguity of operator delete and destructor.
+
+  return new CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm, 0, Ex,
+                           StartLoc);
+}
+
+
 /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
 /// C++ if/switch/while/for statement.
 /// e.g: "if (int x = f()) {...}"

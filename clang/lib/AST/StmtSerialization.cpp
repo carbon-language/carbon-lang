@@ -227,6 +227,12 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
 
     case CXXZeroInitValueExprClass:
       return CXXZeroInitValueExpr::CreateImpl(D, C);
+
+    case CXXNewExprClass:
+      return CXXNewExpr::CreateImpl(D, C);
+
+    case CXXDeleteExprClass:
+      return CXXDeleteExpr::CreateImpl(D, C);
   }
 }
 
@@ -1413,4 +1419,67 @@ CXXZeroInitValueExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation TyBeginLoc = SourceLocation::ReadVal(D);
   SourceLocation RParenLoc = SourceLocation::ReadVal(D);
   return new CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc);
+}
+
+void CXXNewExpr::EmitImpl(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(Initializer);
+  S.Emit(NumPlacementArgs);
+  S.Emit(NumConstructorArgs);
+  S.BatchEmitOwnedPtrs(NumPlacementArgs + NumConstructorArgs, SubExprs);
+  assert((OperatorNew == 0 || S.isRegistered(OperatorNew)) &&
+         (OperatorDelete == 0 || S.isRegistered(OperatorDelete)) &&
+         (Constructor == 0 || S.isRegistered(Constructor)) &&
+         "CXXNewExpr cannot own declarations");
+  S.EmitPtr(OperatorNew);
+  S.EmitPtr(OperatorDelete);
+  S.EmitPtr(Constructor);
+  S.Emit(AllocType);
+  S.Emit(StartLoc);
+  S.Emit(EndLoc);
+}
+
+CXXNewExpr *
+CXXNewExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+  QualType T = QualType::ReadVal(D);
+  bool GlobalNew = D.ReadBool();
+  bool ParenTypeId = D.ReadBool();
+  bool Initializer = D.ReadBool();
+  unsigned NumPlacementArgs = D.ReadInt();
+  unsigned NumConstructorArgs = D.ReadInt();
+  unsigned TotalExprs = NumPlacementArgs + NumConstructorArgs;
+  Stmt** SubExprs = new Stmt*[TotalExprs];
+  D.BatchReadOwnedPtrs(TotalExprs, SubExprs, C);
+  FunctionDecl *OperatorNew = D.ReadPtr<FunctionDecl>();
+  FunctionDecl *OperatorDelete = D.ReadPtr<FunctionDecl>();
+  CXXConstructorDecl *Constructor = D.ReadPtr<CXXConstructorDecl>();
+  QualType AllocType = QualType::ReadVal(D);
+  SourceLocation StartLoc = SourceLocation::ReadVal(D);
+  SourceLocation EndLoc = SourceLocation::ReadVal(D);
+
+  return new CXXNewExpr(T, AllocType, GlobalNew, ParenTypeId, Initializer,
+                        NumPlacementArgs, NumConstructorArgs, SubExprs,
+                        OperatorNew, OperatorDelete, Constructor, StartLoc,
+                        EndLoc);
+}
+
+void CXXDeleteExpr::EmitImpl(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(GlobalDelete);
+  S.Emit(ArrayForm);
+  S.EmitPtr(OperatorDelete);
+  S.EmitOwnedPtr(Argument);
+  S.Emit(Loc);
+}
+
+CXXDeleteExpr *
+CXXDeleteExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+  QualType Ty = QualType::ReadVal(D);
+  bool GlobalDelete = D.ReadBool();
+  bool ArrayForm = D.ReadBool();
+  FunctionDecl *OperatorDelete = D.ReadPtr<FunctionDecl>();
+  Stmt *Argument = D.ReadOwnedPtr<Stmt>(C);
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  return new CXXDeleteExpr(Ty, GlobalDelete, ArrayForm, OperatorDelete,
+                           cast<Expr>(Argument), Loc);
 }

@@ -509,6 +509,14 @@ private:
   bool ParseCXXTypeSpecifierSeq(DeclSpec &DS);
 
   //===--------------------------------------------------------------------===//
+  // C++ 5.3.4 and 5.3.5: C++ new and delete
+  ExprResult ParseCXXNewExpression();
+  TypeTy *ParseNewTypeId();
+  bool ParseExpressionListOrTypeId(ExprListTy &Exprs, TypeTy *&Ty);
+  void ParseDirectNewDeclarator(Declarator &D);
+  ExprResult ParseCXXDeleteExpression();
+
+  //===--------------------------------------------------------------------===//
   // C++ if/switch/while/for condition expression.
   ExprResult ParseCXXCondition();
 
@@ -730,7 +738,7 @@ private:
   TPResult TryParseBracketDeclarator();
 
 
-  TypeTy *ParseTypeName();
+  TypeTy *ParseTypeName(bool CXXNewMode = false);
   AttributeList *ParseAttributes();
   void ParseTypeofSpecifier(DeclSpec &DS);
 
@@ -756,7 +764,10 @@ private:
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);
-  void ParseDeclaratorInternal(Declarator &D, bool PtrOperator = false);
+  /// A function that parses a variant of direct-declarator.
+  typedef void (Parser::*DirectDeclParseFunction)(Declarator&);
+  void ParseDeclaratorInternal(Declarator &D,
+                               DirectDeclParseFunction DirectDeclParser);
   void ParseTypeQualifierListOpt(DeclSpec &DS);
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);

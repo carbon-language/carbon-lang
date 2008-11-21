@@ -168,7 +168,7 @@ namespace {
     // Type Parsing Callbacks.
     //===--------------------------------------------------------------------===//
   
-    virtual TypeResult ActOnTypeName(Scope *S, Declarator &D) {
+    virtual TypeResult ActOnTypeName(Scope *S, Declarator &D, bool CXXNewMode) {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }

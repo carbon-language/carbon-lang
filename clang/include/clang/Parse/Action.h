@@ -256,8 +256,12 @@ public:
   //===--------------------------------------------------------------------===//
   // Type Parsing Callbacks.
   //===--------------------------------------------------------------------===//
-  
-  virtual TypeResult ActOnTypeName(Scope *S, Declarator &D) {
+
+  /// ActOnTypeName - A type-name (type-id in C++) was parsed.
+  /// CXXNewMode is a flag passed by the parser of C++ new-expressions. It
+  /// specifies that the outermost array (if any) must be treated as a VLA.
+  virtual TypeResult ActOnTypeName(Scope *S, Declarator &D,
+                                   bool CXXNewMode = false) {
     return 0;
   }
   
@@ -743,6 +747,36 @@ public:
                                                       Declarator &D,
                                                       SourceLocation EqualLoc,
                                                       ExprTy *AssignExprVal) {
+    return 0;
+  }
+
+  /// ActOnCXXNew - Parsed a C++ 'new' expression. UseGlobal is true if the
+  /// new was qualified (::new). In a full new like
+  /// @code new (p1, p2) type(c1, c2) @endcode
+  /// the p1 and p2 expressions will be in PlacementArgs and the c1 and c2
+  /// expressions in ConstructorArgs. If the type is a dynamic array, Ty will
+  /// be a variable-length array type, with the outermost dimension to be
+  /// allocated dynamically.
+  /// Example:
+  /// @code new int*[rand()][3] @endcode
+  /// Here, Ty will be a VLA with size "rand()" and element type "int*[3]".
+  virtual ExprResult ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
+                                 SourceLocation PlacementLParen,
+                                 ExprTy **PlacementArgs, unsigned NumPlaceArgs,
+                                 SourceLocation PlacementRParen,
+                                 bool ParenTypeId, SourceLocation TyStart,
+                                 TypeTy *Ty, SourceLocation TyEnd,
+                                 SourceLocation ConstructorLParen,
+                                 ExprTy **ConstructorArgs, unsigned NumConsArgs,
+                                 SourceLocation ConstructorRParen) {
+    return 0;
+  }
+
+  /// ActOnCXXDelete - Parsed a C++ 'delete' expression. UseGlobal is true if
+  /// the delete was qualified (::delete). ArrayForm is true if the array form
+  /// was used (delete[]).
+  virtual ExprResult ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
+                                    bool ArrayForm, ExprTy *Operand) {
     return 0;
   }
 

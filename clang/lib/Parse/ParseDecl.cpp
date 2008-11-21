@@ -25,7 +25,11 @@ using namespace clang;
 /// ParseTypeName
 ///       type-name: [C99 6.7.6]
 ///         specifier-qualifier-list abstract-declarator[opt]
-Parser::TypeTy *Parser::ParseTypeName() {
+///
+/// Called type-id in C++.
+/// CXXNewMode is a special flag used by the parser of C++ new-expressions. It
+/// is simply passed on to ActOnTypeName.
+Parser::TypeTy *Parser::ParseTypeName(bool CXXNewMode) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseSpecifierQualifierList(DS);
@@ -34,7 +38,7 @@ Parser::TypeTy *Parser::ParseTypeName() {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParseDeclarator(DeclaratorInfo);
   
-  return Actions.ActOnTypeName(CurScope, DeclaratorInfo).Val;
+  return Actions.ActOnTypeName(CurScope, DeclaratorInfo, CXXNewMode).Val;
 }
 
 /// ParseAttributes - Parse a non-empty attributes list.
@@ -1292,12 +1296,12 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
 void Parser::ParseDeclarator(Declarator &D) {
   /// This implements the 'declarator' production in the C grammar, then checks
   /// for well-formedness and issues diagnostics.
-  ParseDeclaratorInternal(D);
+  ParseDeclaratorInternal(D, &Parser::ParseDirectDeclarator);
 }
 
-/// ParseDeclaratorInternal - Parse a C or C++ declarator. If
-/// PtrOperator is true, then this routine won't parse the final
-/// direct-declarator; therefore, it effectively parses the C++
+/// ParseDeclaratorInternal - Parse a C or C++ declarator. The direct-declarator
+/// is parsed by the function passed to it. Pass null, and the direct-declarator
+/// isn't parsed at all, making this function effectively parse the C++
 /// ptr-operator production.
 ///
 ///       declarator: [C99 6.7.5]
@@ -1314,14 +1318,15 @@ void Parser::ParseDeclarator(Declarator &D) {
 ///         '&'
 /// [GNU]   '&' restrict[opt] attributes[opt]
 ///         '::'[opt] nested-name-specifier '*' cv-qualifier-seq[opt] [TODO]
-void Parser::ParseDeclaratorInternal(Declarator &D, bool PtrOperator) {
+void Parser::ParseDeclaratorInternal(Declarator &D,
+                                     DirectDeclParseFunction DirectDeclParser) {
   tok::TokenKind Kind = Tok.getKind();
 
   // Not a pointer, C++ reference, or block.
   if (Kind != tok::star && (Kind != tok::amp || !getLang().CPlusPlus) &&
       (Kind != tok::caret || !getLang().Blocks)) {
-    if (!PtrOperator)
-      ParseDirectDeclarator(D);
+    if (DirectDeclParser)
+      (this->*DirectDeclParser)(D);
     return;
   }
   
@@ -1335,7 +1340,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D, bool PtrOperator) {
     ParseTypeQualifierListOpt(DS);
   
     // Recursively parse the declarator.
-    ParseDeclaratorInternal(D, PtrOperator);
+    ParseDeclaratorInternal(D, DirectDeclParser);
     if (Kind == tok::star)
       // Remember that we parsed a pointer type, and remember the type-quals.
       D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc,
@@ -1366,7 +1371,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D, bool PtrOperator) {
     }
 
     // Recursively parse the declarator.
-    ParseDeclaratorInternal(D, PtrOperator);
+    ParseDeclaratorInternal(D, DirectDeclParser);
 
     if (D.getNumTypeObjects() > 0) {
       // C++ [dcl.ref]p4: There shall be no references to references.
@@ -1379,7 +1384,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D, bool PtrOperator) {
           Diag(InnerChunk.Loc, diag::err_illegal_decl_reference_to_reference)
             << "type name";
 
-        // Once we've complained about the reference-to-referwnce, we
+        // Once we've complained about the reference-to-reference, we
         // can go ahead and build the (technically ill-formed)
         // declarator: reference collapsing will take care of it.
       }
@@ -1581,7 +1586,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     if (AttrList)
       D.AddAttributes(AttrList);
 
-    ParseDeclaratorInternal(D);
+    ParseDeclaratorInternal(D, &Parser::ParseDirectDeclarator);
     // Match the ')'.
     MatchRHSPunctuation(tok::r_paren, StartLoc);
 

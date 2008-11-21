@@ -351,6 +351,8 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [GNU]   '__alignof' '(' type-name ')'
 /// [C++0x] 'alignof' '(' type-id ')'
 /// [GNU]   '&&' identifier
+/// [C++]   new-expression
+/// [C++]   delete-expression
 ///
 ///       unary-operator: one of
 ///         '&'  '*'  '+'  '-'  '~'  '!'
@@ -404,6 +406,16 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///                   conversion-function-id [TODO]
 ///                   '~' class-name         [TODO]
 ///                   template-id            [TODO]
+///
+///       new-expression: [C++ 5.3.4]
+///                   '::'[opt] 'new' new-placement[opt] new-type-id
+///                                     new-initializer[opt]
+///                   '::'[opt] 'new' new-placement[opt] '(' type-id ')'
+///                                     new-initializer[opt]
+///
+///       delete-expression: [C++ 5.3.5]
+///                   '::'[opt] 'delete' cast-expression
+///                   '::'[opt] 'delete' '[' ']' cast-expression
 ///
 Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   if (getLang().CPlusPlus) {
@@ -613,6 +625,13 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
                          //                      template-id
     Res = ParseCXXIdExpression();
     return ParsePostfixExpressionSuffix(Res);
+
+  case tok::kw_new: // [C++] new-expression
+    // FIXME: ParseCXXIdExpression currently steals :: tokens.
+    return ParseCXXNewExpression();
+
+  case tok::kw_delete: // [C++] delete-expression
+    return ParseCXXDeleteExpression();
 
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();
