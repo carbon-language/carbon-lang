@@ -314,6 +314,15 @@ def int_init_trampoline : Intrinsic<[llvm_ptr_ty],
                                     []>,
                           GCCBuiltin<"__builtin_init_trampoline">;
 
+//===------------------------ Overflow Intrinsics -------------------------===//
+//
+
+// Expose the carry flag from add operations on two integrals.
+def int_sadd_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
+                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+def int_uadd_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
+                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+
 //===------------------------- Atomic Intrinsics --------------------------===//
 //
 def int_memory_barrier : Intrinsic<[llvm_void_ty],
