@@ -190,7 +190,8 @@ namespace {
     SDValue visitBUILD_VECTOR(SDNode *N);
     SDValue visitCONCAT_VECTORS(SDNode *N);
     SDValue visitVECTOR_SHUFFLE(SDNode *N);
-    SDValue visitADDO(SDNode *N);
+    SDValue visitSADDO(SDNode *N);
+    SDValue visitUADDO(SDNode *N);
 
     SDValue XformToShuffleWithZero(SDNode *N);
     SDValue ReassociateOps(unsigned Opc, SDValue LHS, SDValue RHS);
@@ -728,7 +729,8 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::BUILD_VECTOR:       return visitBUILD_VECTOR(N);
   case ISD::CONCAT_VECTORS:     return visitCONCAT_VECTORS(N);
   case ISD::VECTOR_SHUFFLE:     return visitVECTOR_SHUFFLE(N);
-  case ISD::ADDO:               return visitADDO(N);
+  case ISD::SADDO:              return visitSADDO(N);
+  case ISD::UADDO:              return visitUADDO(N);
   }
   return SDValue();
 }
@@ -5145,7 +5147,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   return SDValue();
 }
 
-SDValue DAGCombiner::visitADDO(SDNode *N) {
+SDValue DAGCombiner::visitSADDO(SDNode *N) {
   SDValue Chain = N->getOperand(2);
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
@@ -5171,6 +5173,10 @@ SDValue DAGCombiner::visitADDO(SDNode *N) {
   removeFromWorkList(N);
   DAG.DeleteNode(N);
   return SDValue(N, 0);
+}
+
+SDValue DAGCombiner::visitUADDO(SDNode *N) {
+  return SDValue();
 }
 
 /// XformToShuffleWithZero - Returns a vector_shuffle if it able to transform

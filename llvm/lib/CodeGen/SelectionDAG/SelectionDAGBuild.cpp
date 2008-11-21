@@ -4094,7 +4094,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
 
   case Intrinsic::sadd_with_overflow: {
-    // Convert to "ISD::ADDO" instruction.
+    // Convert to "ISD::SADDO" instruction.
     SDValue Chain = getRoot();
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
@@ -4103,7 +4103,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MVT ValueVTs[] = { Ty, MVT::i1, MVT::Other };
     SDValue Ops[] = { Op1, Op2, Chain };
 
-    SDValue Result = DAG.getNode(ISD::ADDO, DAG.getVTList(&ValueVTs[0], 3),
+    SDValue Result = DAG.getNode(ISD::SADDO, DAG.getVTList(&ValueVTs[0], 3),
                                  &Ops[0], 3);
 
     setValue(&I, Result);
@@ -4113,7 +4113,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::uadd_with_overflow: {
-    // TODO: Convert to "ISD::ADDC" instruction.
+    // TODO: Convert to "ISD::UADDO" instruction.
     return 0;
   }
 
