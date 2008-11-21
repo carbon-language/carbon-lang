@@ -1,4 +1,5 @@
-// RUN: clang -checker-simple -verify %s
+// RUN: clang -checker-simple -verify %s &&
+// RUN: clang -checker-simple -analyzer-store-region -verify %s
 
 struct FPRec {
   void (*my_func)(int * x);  
