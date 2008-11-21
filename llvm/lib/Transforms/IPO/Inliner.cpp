@@ -54,11 +54,12 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
                                  const std::set<Function*> &SCCFunctions,
                                  const TargetData &TD) {
   Function *Callee = CS.getCalledFunction();
+  Function *Caller = CS.getCaller();
+
   if (!InlineFunction(CS, &CG, &TD)) return false;
 
   // If the inlined function had a higher stack protection level than the
   // calling function, then bump up the caller's stack protection level.
-  Function *Caller = CS.getCaller();
   if (Callee->hasFnAttr(Attribute::StackProtectReq))
     Caller->addFnAttr(Attribute::StackProtectReq);
   else if (Callee->hasFnAttr(Attribute::StackProtect) &&
