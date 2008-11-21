@@ -93,28 +93,29 @@ static void FindExpectedDiags(Preprocessor &PP,
                               DiagList &ExpectedErrors,
                               DiagList &ExpectedWarnings,
                               DiagList &ExpectedNotes) {
-  // Return comments as tokens, this is how we find expected diagnostics.
-  PP.SetCommentRetentionState(true, true);
-
-  // Enter the cave.
-  PP.EnterMainSourceFile();
-
-  // Turn off all warnings from relexing or preprocessing.
-  PP.getDiagnostics().setWarnOnExtensions(false);
-  PP.getDiagnostics().setErrorOnExtensions(false);
-  for (unsigned i = 0; i != diag::NUM_BUILTIN_DIAGNOSTICS; ++i)
-    if (PP.getDiagnostics().isBuiltinNoteWarningOrExtension((diag::kind)i))
-      PP.getDiagnostics().setDiagnosticMapping((diag::kind)i, diag::MAP_IGNORE);
+  // Create a raw lexer to pull all the comments out of the main file.  We don't
+  // want to look in #include'd headers for expected-error strings.
   
+  unsigned FileID = PP.getSourceManager().getMainFileID();
+  std::pair<const char*,const char*> File =
+    PP.getSourceManager().getBufferData(FileID);
+  
+  // Create a lexer to lex all the tokens of the main file in raw mode.
+  Lexer RawLex(SourceLocation::getFileLoc(FileID, 0),
+               PP.getLangOptions(), File.first, File.second);
+  
+  // Return comments as tokens, this is how we find expected diagnostics.
+  RawLex.SetCommentRetentionState(true);
+
   Token Tok;
   do {
-    PP.Lex(Tok);
+    RawLex.Lex(Tok);
 
     if (Tok.is(tok::comment)) {
       std::string Comment = PP.getSpelling(Tok);
 
       // Find all expected errors
-      FindDiagnostics(Comment, ExpectedErrors,PP.getSourceManager(),
+      FindDiagnostics(Comment, ExpectedErrors, PP.getSourceManager(),
                       Tok.getLocation(), ExpectedErrStr);
 
       // Find all expected warnings
@@ -126,8 +127,6 @@ static void FindExpectedDiags(Preprocessor &PP,
                       Tok.getLocation(), ExpectedNoteStr);
     }
   } while (Tok.isNot(tok::eof));
-
-  PP.SetCommentRetentionState(false, false);
 }
 
 /// PrintProblem - This takes a diagnostic map of the delta between expected and
