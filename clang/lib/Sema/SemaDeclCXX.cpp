@@ -1872,18 +1872,19 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
        (NumParams == 2 && !CanBeBinaryOperator) ||
        (NumParams < 1) || (NumParams > 2))) {
     // We have the wrong number of parameters.
-    diag::kind DK;
+    unsigned ErrorKind;
     if (CanBeUnaryOperator && CanBeBinaryOperator) {
-      DK = diag::err_operator_overload_must_be_unary_or_binaryx;
+      ErrorKind = 2;  // 2 -> unary or binary.
     } else if (CanBeUnaryOperator) {
-      DK = diag::err_operator_overload_must_be_unaryx;
+      ErrorKind = 0;  // 0 -> unary
     } else {
       assert(CanBeBinaryOperator &&
              "All non-call overloaded operators are unary or binary!");
-      DK = diag::err_operator_overload_must_be_binaryx;
+      ErrorKind = 1;  // 1 -> binary
     }
 
-    return Diag(FnDecl->getLocation(), DK) << FnDecl->getName() << NumParams;
+    return Diag(FnDecl->getLocation(), diag::err_operator_overload_must_be)
+      << FnDecl->getName() << NumParams << ErrorKind;
   }
       
   // Overloaded operators other than operator() cannot be variadic.

@@ -1351,12 +1351,9 @@ DIAG(err_operator_overload_static, ERROR,
      "overloaded '%0' cannot be a static member function")
 DIAG(err_operator_overload_default_arg, ERROR,
      "parameter of overloaded '%0' cannot have a default argument")
-DIAG(err_operator_overload_must_be_unaryx, ERROR,
-     "overloaded '%0' must be a unary operator (has %1 parameter%s1)")
-DIAG(err_operator_overload_must_be_binaryx, ERROR,
-     "overloaded '%0' must be a binary operator (has %1 parameter%s1)")
-DIAG(err_operator_overload_must_be_unary_or_binaryx, ERROR,
-     "overloaded '%0' must be a unary or binary operator (has %1 parameter%s1)")
+DIAG(err_operator_overload_must_be, ERROR,
+     "overloaded '%0' must be a %select{unary|binary|unary or binary}2 operator"
+     " (has %1 parameter%s1)")
 DIAG(err_operator_overload_must_be_member, ERROR,
      "overloaded '%0' must be a non-static member function")
 DIAG(err_operator_overload_post_incdec_must_be_int, ERROR,
