@@ -86,7 +86,7 @@ void (^global_block)(void) = ^{ printf("global x is %d\n", global_x); };
 void test_byref() {
   int i;
   
-  X = ^{| g |};  // expected-error {{use of undeclared identifier 'g'}}
+  X = ^{| g |};  // error {{use of undeclared identifier 'g'}}
 
   X = ^{| i,i,i | };
 
@@ -102,11 +102,11 @@ void *B = ^(int){ A = 0; };
 // Closures can not take return types at this point.
 void test_retvals() {
   // Explicit return value.
-  ^int{};   // expected-error {{closure with explicit return type requires argument list}}
+  ^int{};   // error {{closure with explicit return type requires argument list}}
   X = ^void(){};
 
   // Optional specification of return type.
-  X = ^char{ return 'x'; };  // expected-error {{closure with explicit return type requires argument list}}
+  X = ^char{ return 'x'; };  // error {{closure with explicit return type requires argument list}}
 
   X = ^/*missing declspec*/ *() { return (void*)0; };
   X = ^void*() { return (void*)0; };
