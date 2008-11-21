@@ -50,14 +50,14 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
       assert(TRI->isPhysicalRegister(Reg) && "Virtual register encountered!");
       std::vector<SUnit *> &UseList = Uses[Reg];
       SUnit *&Def = Defs[Reg];
-      // Optionally add output and anti dependences.
+      // Optionally add output and anti dependencies.
       if (Def && Def != SU)
-        Def->addPred(SU, /*isCtrl=*/true, /*isSpecial=*/false,
+        Def->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false,
                      /*PhyReg=*/Reg, Cost, /*isAntiDep=*/MO.isUse());
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         SUnit *&Def = Defs[*Alias];
         if (Def && Def != SU)
-          Def->addPred(SU, /*isCtrl=*/true, /*isSpecial=*/false,
+          Def->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false,
                        /*PhyReg=*/*Alias, Cost);
       }
 
@@ -65,13 +65,13 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
         // Add any data dependencies.
         for (unsigned i = 0, e = UseList.size(); i != e; ++i)
           if (UseList[i] != SU)
-            UseList[i]->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false,
+            UseList[i]->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false,
                                 /*PhysReg=*/Reg, Cost);
         for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
           std::vector<SUnit *> &UseList = Uses[*Alias];
           for (unsigned i = 0, e = UseList.size(); i != e; ++i)
             if (UseList[i] != SU)
-              UseList[i]->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false,
+              UseList[i]->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false,
                                   /*PhysReg=*/*Alias, Cost);
         }
 
@@ -85,18 +85,18 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
     bool True = true;
     if (!MI->isSafeToMove(TII, False)) {
       if (Chain)
-        Chain->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false);
+        Chain->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false);
       for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
-        PendingLoads[k]->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false);
+        PendingLoads[k]->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false);
       PendingLoads.clear();
       Chain = SU;
     } else if (!MI->isSafeToMove(TII, True)) {
       if (Chain)
-        Chain->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false);
+        Chain->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false);
       PendingLoads.push_back(SU);
     }
     if (Terminator && SU->Succs.empty())
-      Terminator->addPred(SU, /*isCtrl=*/false, /*isSpecial=*/false);
+      Terminator->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false);
     if (MI->getDesc().isTerminator() || MI->isLabel())
       Terminator = SU;
 
