@@ -2477,17 +2477,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         Constant *CP1 = Subtract(ConstantInt::get(I.getType(), 1), C2);
         return BinaryOperator::CreateMul(Op0, CP1);
       }
-
-      // X - ((X / Y) * Y) --> X % Y
-      if (Op1I->getOpcode() == Instruction::Mul)
-        if (Instruction *I = dyn_cast<Instruction>(Op1I->getOperand(0)))
-          if (Op0 == I->getOperand(0) &&
-              Op1I->getOperand(1) == I->getOperand(1)) {
-            if (I->getOpcode() == Instruction::SDiv)
-              return BinaryOperator::CreateSRem(Op0, Op1I->getOperand(1));
-            if (I->getOpcode() == Instruction::UDiv)
-              return BinaryOperator::CreateURem(Op0, Op1I->getOperand(1));
-          }
     }
   }
 
@@ -2621,6 +2610,40 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   if (Value *Op0v = dyn_castNegVal(Op0))     // -X * -Y = X*Y
     if (Value *Op1v = dyn_castNegVal(I.getOperand(1)))
       return BinaryOperator::CreateMul(Op0v, Op1v);
+
+  // (X / Y) *  Y = X - (X % Y)
+  // (X / Y) * -Y = (X % Y) - X
+  {
+    Value *Op1 = I.getOperand(1);
+    BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0);
+    if (!BO ||
+        (BO->getOpcode() != Instruction::UDiv && 
+         BO->getOpcode() != Instruction::SDiv)) {
+      Op1 = Op0;
+      BO = dyn_cast<BinaryOperator>(I.getOperand(1));
+    }
+    Value *Neg = dyn_castNegVal(Op1);
+    if (BO && BO->hasOneUse() &&
+        (BO->getOperand(1) == Op1 || BO->getOperand(1) == Neg) &&
+        (BO->getOpcode() == Instruction::UDiv ||
+         BO->getOpcode() == Instruction::SDiv)) {
+      Value *Op0BO = BO->getOperand(0), *Op1BO = BO->getOperand(1);
+
+      Instruction *Rem;
+      if (BO->getOpcode() == Instruction::UDiv)
+        Rem = BinaryOperator::CreateURem(Op0BO, Op1BO);
+      else
+        Rem = BinaryOperator::CreateSRem(Op0BO, Op1BO);
+
+      InsertNewInstBefore(Rem, I);
+      Rem->takeName(BO);
+
+      if (Op1BO == Op1)
+        return BinaryOperator::CreateSub(Op0BO, Rem);
+      else
+        return BinaryOperator::CreateSub(Rem, Op0BO);
+    }
+  }
 
   if (I.getType() == Type::Int1Ty)
     return BinaryOperator::CreateAnd(Op0, I.getOperand(1));
