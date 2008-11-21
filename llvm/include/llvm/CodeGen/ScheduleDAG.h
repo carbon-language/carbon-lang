@@ -48,8 +48,10 @@ namespace llvm {
     bool      isArtificial : 1; // True iff it's an artificial ctrl dep added
                                 // during sched that may be safely deleted if
                                 // necessary.
-    SDep(SUnit *d, unsigned r, int t, bool c, bool a)
-      : Dep(d), Reg(r), Cost(t), isCtrl(c), isArtificial(a) {}
+    bool      isAntiDep : 1; // True iff it's an anti-dependency (on a physical
+                             // register.
+    SDep(SUnit *d, unsigned r, int t, bool c, bool a, bool anti)
+      : Dep(d), Reg(r), Cost(t), isCtrl(c), isArtificial(a), isAntiDep(anti) {}
   };
 
   /// SUnit - Scheduling unit. This is a node in the scheduling DAG.
@@ -140,15 +142,17 @@ namespace llvm {
     }
 
     /// addPred - This adds the specified node as a pred of the current node if
-    /// not already.  This returns true if this is a new pred.
+    /// not already.  It also adds the current node as a successor of the
+    /// specified node.  This returns true if this is a new pred.
     bool addPred(SUnit *N, bool isCtrl, bool isArtificial,
-                 unsigned PhyReg = 0, int Cost = 1) {
+                 unsigned PhyReg = 0, int Cost = 1, bool isAntiDep = false) {
       for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
         if (Preds[i].Dep == N &&
             Preds[i].isCtrl == isCtrl && Preds[i].isArtificial == isArtificial)
           return false;
-      Preds.push_back(SDep(N, PhyReg, Cost, isCtrl, isArtificial));
-      N->Succs.push_back(SDep(this, PhyReg, Cost, isCtrl, isArtificial));
+      Preds.push_back(SDep(N, PhyReg, Cost, isCtrl, isArtificial, isAntiDep));
+      N->Succs.push_back(SDep(this, PhyReg, Cost, isCtrl,
+                              isArtificial, isAntiDep));
       if (!isCtrl) {
         ++NumPreds;
         ++N->NumSuccs;

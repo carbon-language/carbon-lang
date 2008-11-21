@@ -287,18 +287,18 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
       if (I->isCtrl)
         ChainPred = I->Dep;
       else if (I->Dep->getNode() && I->Dep->getNode()->isOperandOf(LoadNode))
-        LoadPreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false));
+        LoadPreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false, false));
       else
-        NodePreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false));
+        NodePreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false, false));
     }
     for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
          I != E; ++I) {
       if (I->isCtrl)
         ChainSuccs.push_back(SDep(I->Dep, I->Reg, I->Cost,
-                                  I->isCtrl, I->isArtificial));
+                                  I->isCtrl, I->isArtificial, I->isAntiDep));
       else
         NodeSuccs.push_back(SDep(I->Dep, I->Reg, I->Cost,
-                                 I->isCtrl, I->isArtificial));
+                                 I->isCtrl, I->isArtificial, I->isAntiDep));
     }
 
     if (ChainPred) {
