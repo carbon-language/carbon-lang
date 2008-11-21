@@ -249,6 +249,48 @@ void Diagnostic::ProcessDiag(const DiagnosticInfo &Info) {
 DiagnosticClient::~DiagnosticClient() {}
 
 
+/// ModifierIs - Return true if the specified modifier matches specified string.
+template <std::size_t StrLen>
+static bool ModifierIs(const char *Modifier, unsigned ModifierLen,
+                       const char (&Str)[StrLen]) {
+  return StrLen-1 == ModifierLen && !memcmp(Modifier, Str, StrLen-1);
+}
+
+/// HandleSelectModifier - Handle the integer 'select' modifier.  This is used
+/// like this:  %select{foo|bar|baz}2.  This means that the integer argument
+/// "%2" has a value from 0-2.  If the value is 0, the diagnostic prints 'foo'.
+/// If the value is 1, it prints 'bar'.  If it has the value 2, it prints 'baz'.
+/// This is very useful for certain classes of variant diagnostics.
+static void HandleSelectModifier(unsigned ValNo,
+                                 const char *Argument, unsigned ArgumentLen,
+                                 llvm::SmallVectorImpl<char> &OutStr) {
+  const char *ArgumentEnd = Argument+ArgumentLen;
+  
+  // Skip over 'ValNo' |'s.
+  while (ValNo) {
+    const char *NextVal = std::find(Argument, ArgumentEnd, '|');
+    assert(NextVal != ArgumentEnd && "Value for integer select modifier was"
+           " larger than the number of options in the diagnostic string!");
+    Argument = NextVal+1;  // Skip this string.
+    --ValNo;
+  }
+  
+  // Get the end of the value.  This is either the } or the |.
+  const char *EndPtr = std::find(Argument, ArgumentEnd, '|');
+  // Add the value to the output string.
+  OutStr.append(Argument, EndPtr);
+}
+
+/// HandleIntegerSModifier - Handle the integer 's' modifier.  This adds the
+/// letter 's' to the string if the value is not 1.  This is used in cases like
+/// this:  "you idiot, you have %4 parameter%s4!".
+static void HandleIntegerSModifier(unsigned ValNo,
+                                   llvm::SmallVectorImpl<char> &OutStr) {
+  if (ValNo != 1)
+    OutStr.push_back('s');
+}
+
+
 /// FormatDiagnostic - Format this diagnostic into a string, substituting the
 /// formal arguments into the %0 slots.  The result is appended onto the Str
 /// array.
@@ -263,43 +305,97 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       const char *StrEnd = std::find(DiagStr, DiagEnd, '%');
       OutStr.append(DiagStr, StrEnd);
       DiagStr = StrEnd;
+      continue;
     } else if (DiagStr[1] == '%') {
       OutStr.push_back('%');  // %% -> %.
       DiagStr += 2;
-    } else {
-      assert(isdigit(DiagStr[1]) && "Must escape % with %%");
-      unsigned StrNo = DiagStr[1] - '0';
+      continue;
+    }
+    
+    // Skip the %.
+    ++DiagStr;
+    
+    // This must be a placeholder for a diagnostic argument.  The format for a
+    // placeholder is one of "%0", "%modifier0", or "%modifier{arguments}0".
+    // The digit is a number from 0-9 indicating which argument this comes from.
+    // The modifier is a string of digits from the set [-a-z]+, arguments is a
+    // brace enclosed string.
+    const char *Modifier = 0, *Argument = 0;
+    unsigned ModifierLen = 0, ArgumentLen = 0;
+    
+    // Check to see if we have a modifier.  If so eat it.
+    if (!isdigit(DiagStr[0])) {
+      Modifier = DiagStr;
+      while (DiagStr[0] == '-' ||
+             (DiagStr[0] >= 'a' && DiagStr[0] <= 'z'))
+        ++DiagStr;
+      ModifierLen = DiagStr-Modifier;
 
-      switch (getArgKind(StrNo)) {
-      case DiagnosticInfo::ak_std_string: {
-        const std::string &S = getArgStdStr(StrNo);
-        OutStr.append(S.begin(), S.end());
-        break;
+      // If we have an argument, get it next.
+      if (DiagStr[0] == '{') {
+        ++DiagStr; // Skip {.
+        Argument = DiagStr;
+        
+        for (; DiagStr[0] != '}'; ++DiagStr)
+          assert(DiagStr[0] && "Mismatched {}'s in diagnostic string!");
+        ArgumentLen = DiagStr-Argument;
+        ++DiagStr;  // Skip }.
       }
-      case DiagnosticInfo::ak_c_string: {
-        const char *S = getArgCStr(StrNo);
-        OutStr.append(S, S + strlen(S));
-        break;
-      }
-      case DiagnosticInfo::ak_sint: {
+    }
+      
+    assert(isdigit(*DiagStr) && "Invalid format for argument in diagnostic");
+    unsigned StrNo = *DiagStr++ - '0';
+
+    switch (getArgKind(StrNo)) {
+    case DiagnosticInfo::ak_std_string: {
+      const std::string &S = getArgStdStr(StrNo);
+      assert(ModifierLen == 0 && "No modifiers for strings yet");
+      OutStr.append(S.begin(), S.end());
+      break;
+    }
+    case DiagnosticInfo::ak_c_string: {
+      const char *S = getArgCStr(StrNo);
+      assert(ModifierLen == 0 && "No modifiers for strings yet");
+      OutStr.append(S, S + strlen(S));
+      break;
+    }
+    case DiagnosticInfo::ak_identifierinfo: {
+      const IdentifierInfo *II = getArgIdentifier(StrNo);
+      assert(ModifierLen == 0 && "No modifiers for strings yet");
+      OutStr.append(II->getName(), II->getName() + II->getLength());
+      break;
+    }
+    case DiagnosticInfo::ak_sint: {
+      int Val = getArgSInt(StrNo);
+      
+      if (ModifierIs(Modifier, ModifierLen, "select")) {
+        HandleSelectModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
+      } else if (ModifierIs(Modifier, ModifierLen, "s")) {
+        HandleIntegerSModifier(Val, OutStr);
+      } else {
+        assert(ModifierLen == 0 && "Unknown integer modifier");
         // FIXME: Optimize
-        std::string S = llvm::itostr(getArgSInt(StrNo));
+        std::string S = llvm::itostr(Val);
         OutStr.append(S.begin(), S.end());
-        break;
       }
-      case DiagnosticInfo::ak_uint: {
+      break;
+    }
+    case DiagnosticInfo::ak_uint: {
+      unsigned Val = getArgUInt(StrNo);
+      
+      if (ModifierIs(Modifier, ModifierLen, "select")) {
+        HandleSelectModifier(Val, Argument, ArgumentLen, OutStr);
+      } else if (ModifierIs(Modifier, ModifierLen, "s")) {
+        HandleIntegerSModifier(Val, OutStr);
+      } else {
+        assert(ModifierLen == 0 && "Unknown integer modifier");
+        
         // FIXME: Optimize
-        std::string S = llvm::utostr_32(getArgUInt(StrNo));
+        std::string S = llvm::utostr_32(Val);
         OutStr.append(S.begin(), S.end());
         break;
       }
-      case DiagnosticInfo::ak_identifierinfo: {
-        const IdentifierInfo *II = getArgIdentifier(StrNo);
-        OutStr.append(II->getName(), II->getName() + II->getLength());
-        break;
-      }
-      }
-      DiagStr += 2;
+    }
     }
   }
 }

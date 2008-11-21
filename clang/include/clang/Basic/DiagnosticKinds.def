@@ -1351,26 +1351,17 @@ DIAG(err_operator_overload_static, ERROR,
      "overloaded '%0' cannot be a static member function")
 DIAG(err_operator_overload_default_arg, ERROR,
      "parameter of overloaded '%0' cannot have a default argument")
-DIAG(err_operator_overload_must_be_unary, ERROR,
-     "overloaded '%0' must be a unary operator (has %1 parameter)")
-DIAG(err_operator_overload_must_be_binary, ERROR,
-     "overloaded '%0' must be a binary operator (has %1 parameter)")
-DIAG(err_operator_overload_must_be_unary_or_binary, ERROR,
-     "overloaded '%0' must be a unary or binary operator (has %1 parameter)")
-DIAG(err_operator_overload_must_be_unary_plural, ERROR,
-     "overloaded '%0' must be a unary operator (has %1 parameters)")
-DIAG(err_operator_overload_must_be_binary_plural, ERROR,
-     "overloaded '%0' must be a binary operator (has %1 parameters)")
-DIAG(err_operator_overload_must_be_unary_or_binary_plural, ERROR,
-     "overloaded '%0' must be a unary or binary operator (has %1 parameters)")
+DIAG(err_operator_overload_must_be_unaryx, ERROR,
+     "overloaded '%0' must be a unary operator (has %1 parameter%s1)")
+DIAG(err_operator_overload_must_be_binaryx, ERROR,
+     "overloaded '%0' must be a binary operator (has %1 parameter%s1)")
+DIAG(err_operator_overload_must_be_unary_or_binaryx, ERROR,
+     "overloaded '%0' must be a unary or binary operator (has %1 parameter%s1)")
 DIAG(err_operator_overload_must_be_member, ERROR,
      "overloaded '%0' must be a non-static member function")
-DIAG(err_operator_overload_post_inc_must_be_int, ERROR,
-     "parameter of overloaded post-increment operator must have type 'int' "
-     "(not '%0')")
-DIAG(err_operator_overload_post_dec_must_be_int, ERROR,
-     "parameter of overloaded post-decrement operator must have type 'int' "
-     "(not '%0')")
+DIAG(err_operator_overload_post_incdec_must_be_int, ERROR,
+     "parameter of overloaded post-%select{increment|decrement}1 operator must"
+     " have type 'int' (not '%0')")
 DIAG(err_operator_missing_type_specifier, ERROR,
      "missing type specifier after 'operator'")
 

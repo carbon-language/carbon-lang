@@ -1874,22 +1874,13 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
     // We have the wrong number of parameters.
     diag::kind DK;
     if (CanBeUnaryOperator && CanBeBinaryOperator) {
-      if (NumParams == 1)
-        DK = diag::err_operator_overload_must_be_unary_or_binary;
-      else
-        DK = diag::err_operator_overload_must_be_unary_or_binary;
+      DK = diag::err_operator_overload_must_be_unary_or_binaryx;
     } else if (CanBeUnaryOperator) {
-      if (NumParams == 1)
-        DK = diag::err_operator_overload_must_be_unary;
-      else
-        DK = diag::err_operator_overload_must_be_unary_plural;
-    } else if (CanBeBinaryOperator) {
-      if (NumParams == 1)
-        DK = diag::err_operator_overload_must_be_binary;
-      else
-        DK = diag::err_operator_overload_must_be_binary_plural;
+      DK = diag::err_operator_overload_must_be_unaryx;
     } else {
-      assert(false && "All non-call overloaded operators are unary or binary!");
+      assert(CanBeBinaryOperator &&
+             "All non-call overloaded operators are unary or binary!");
+      DK = diag::err_operator_overload_must_be_binaryx;
     }
 
     return Diag(FnDecl->getLocation(), DK) << FnDecl->getName() << NumParams;
@@ -1925,15 +1916,10 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
     if (const BuiltinType *BT = LastParam->getType()->getAsBuiltinType())
       ParamIsInt = BT->getKind() == BuiltinType::Int;
 
-    if (!ParamIsInt) {
-      diag::kind DK;
-      if (Op == OO_PlusPlus)
-        DK = diag::err_operator_overload_post_inc_must_be_int;
-      else
-        DK = diag::err_operator_overload_post_dec_must_be_int;
-      return Diag(LastParam->getLocation(), DK) 
-        << LastParam->getType().getAsString();
-    }
+    if (!ParamIsInt)
+      return Diag(LastParam->getLocation(),
+                  diag::err_operator_overload_post_incdec_must_be_int) 
+        << LastParam->getType().getAsString() << (Op == OO_MinusMinus);
   }
 
   return false;
