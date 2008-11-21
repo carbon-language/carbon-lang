@@ -197,6 +197,12 @@ private:
     MaxArguments = 10
   };
   
+  /// NumDiagArgs - This is set to -1 when no diag is in flight.  Otherwise it
+  /// is the number of entries in Arguments.
+  signed char NumDiagArgs;
+  /// NumRanges - This is the number of ranges in the DiagRanges array.
+  unsigned char NumDiagRanges;
+  
   /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
   /// values, with one for each argument.  This specifies whether the argument
   /// is in DiagArgumentsStr or in DiagArguments.
@@ -216,12 +222,6 @@ private:
   /// DiagRanges - The list of ranges added to this diagnostic.  It currently
   /// only support 10 ranges, could easily be extended if needed.
   const SourceRange *DiagRanges[10];
-  
-  /// NumDiagArgs - This is set to -1 when no diag is in flight.  Otherwise it
-  /// is the number of entries in Arguments.
-  signed char NumDiagArgs;
-  /// NumRanges - This is the number of ranges in the DiagRanges array.
-  unsigned char NumDiagRanges;
   
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.
