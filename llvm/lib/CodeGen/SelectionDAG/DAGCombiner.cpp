@@ -190,6 +190,7 @@ namespace {
     SDValue visitBUILD_VECTOR(SDNode *N);
     SDValue visitCONCAT_VECTORS(SDNode *N);
     SDValue visitVECTOR_SHUFFLE(SDNode *N);
+    SDValue visitADDO(SDNode *N);
 
     SDValue XformToShuffleWithZero(SDNode *N);
     SDValue ReassociateOps(unsigned Opc, SDValue LHS, SDValue RHS);
@@ -727,6 +728,7 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::BUILD_VECTOR:       return visitBUILD_VECTOR(N);
   case ISD::CONCAT_VECTORS:     return visitCONCAT_VECTORS(N);
   case ISD::VECTOR_SHUFFLE:     return visitVECTOR_SHUFFLE(N);
+  case ISD::ADDO:               return visitADDO(N);
   }
   return SDValue();
 }
@@ -5141,6 +5143,34 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   }
  
   return SDValue();
+}
+
+SDValue DAGCombiner::visitADDO(SDNode *N) {
+  SDValue Chain = N->getOperand(2);
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+
+  SDValue Sum = DAG.getNode(ISD::ADD, LHS.getValueType(), LHS, RHS);
+  AddToWorkList(Sum.getNode());
+  SDValue Cmp = DAG.getSetCC(MVT::i1, Sum, LHS, ISD::SETLT);
+  AddToWorkList(Cmp.getNode());
+
+  MVT ValueVTs[] = { LHS.getValueType(), MVT::i1, MVT::Other };
+  SDValue Ops[] = { Sum, Cmp, Chain };
+
+  SDValue Merge = DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], 3),
+                                     &Ops[0], 3);
+  SDNode *MNode = Merge.getNode();
+
+  AddToWorkList(MNode);
+  DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), SDValue(MNode, 0));
+  DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), SDValue(MNode, 1));
+  DAG.ReplaceAllUsesOfValueWith(SDValue(N, 2), SDValue(MNode, 2));
+
+  // Since the node is now dead, remove it from the graph.
+  removeFromWorkList(N);
+  DAG.DeleteNode(N);
+  return SDValue(N, 0);
 }
 
 /// XformToShuffleWithZero - Returns a vector_shuffle if it able to transform
