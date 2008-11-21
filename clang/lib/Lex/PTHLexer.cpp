@@ -41,23 +41,17 @@ Token PTHLexer::GetToken() {
 
 void PTHLexer::Lex(Token& Tok) {
 LexNextToken:
-  if (AtLastToken()) {
-    if (ParsingPreprocessorDirective) {
-      ParsingPreprocessorDirective = false;
-      Tok = GetToken();
-      Tok.setKind(tok::eom);
-      MIOpt.ReadToken();
-      return;
-    }
-    
-    assert(!LexingRawMode && "PTHLexer cannot lex in raw mode.");
-    
-    // FIXME: Issue diagnostics similar to Lexer.
-    PP->HandleEndOfFile(Tok, false);    
-    return;
-  }
-
   Tok = GetToken();
+  
+  if (AtLastToken()) {
+    Preprocessor *PPCache = PP;
+
+    if (LexEndOfFile(Tok))
+      return;
+
+    assert(PPCache && "Raw buffer::LexEndOfFile should return a token");
+    return PPCache->Lex(Tok);
+  }
   
   // Don't advance to the next token yet.  Check if we are at the
   // start of a new line and we're processing a directive.  If so, we
@@ -89,6 +83,24 @@ LexNextToken:
     if (LexingRawMode) return;
     return PP->HandleIdentifier(Tok);
   }  
+}
+
+bool PTHLexer::LexEndOfFile(Token &Tok) {
+  
+  if (ParsingPreprocessorDirective) {
+    ParsingPreprocessorDirective = false;
+    Tok.setKind(tok::eom);
+    MIOpt.ReadToken();
+    return true; // Have a token.
+  }
+  
+  if (LexingRawMode) {
+    MIOpt.ReadToken();
+    return true;  // Have an eof token.
+  }
+  
+  // FIXME: Issue diagnostics similar to Lexer.
+  return PP->HandleEndOfFile(Tok, false);
 }
 
 void PTHLexer::setEOF(Token& Tok) {

@@ -72,6 +72,8 @@ private:
   
   /// AdvanceToken - Advances the PTHLexer to the next token.
   void AdvanceToken() { ++CurTokenIdx; }
+  
+  bool LexEndOfFile(Token &Result);
 };
 
 }  // end namespace clang
