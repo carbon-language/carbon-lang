@@ -85,18 +85,18 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
     bool True = true;
     if (!MI->isSafeToMove(TII, False)) {
       if (Chain)
-        Chain->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false);
+        Chain->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
       for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
-        PendingLoads[k]->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false);
+        PendingLoads[k]->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
       PendingLoads.clear();
       Chain = SU;
     } else if (!MI->isSafeToMove(TII, True)) {
       if (Chain)
-        Chain->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false);
+        Chain->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
       PendingLoads.push_back(SU);
     }
     if (Terminator && SU->Succs.empty())
-      Terminator->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false);
+      Terminator->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
     if (MI->getDesc().isTerminator() || MI->isLabel())
       Terminator = SU;
 
