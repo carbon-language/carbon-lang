@@ -56,6 +56,15 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
   Function *Callee = CS.getCalledFunction();
   if (!InlineFunction(CS, &CG, &TD)) return false;
 
+  // If the inlined function had a higher stack protection level than the
+  // calling function, then bump up the caller's stack protection level.
+  Function *Caller = CS.getCaller();
+  if (Callee->hasFnAttr(Attribute::StackProtectReq))
+    Caller->addFnAttr(Attribute::StackProtectReq);
+  else if (Callee->hasFnAttr(Attribute::StackProtect) &&
+           !Caller->hasFnAttr(Attribute::StackProtectReq))
+    Caller->addFnAttr(Attribute::StackProtect);
+
   // If we inlined the last possible call site to the function, delete the
   // function body now.
   if (Callee->use_empty() && Callee->hasInternalLinkage() &&
