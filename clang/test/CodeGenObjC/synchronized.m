@@ -3,10 +3,30 @@
 
 #include <stdio.h>
 
+@interface MyClass
+{
+}
+- (void)method;
+@end
+
+@implementation MyClass
+
+- (void)method
+{
+	@synchronized(self)
+	{
+		NSLog(@"sync");
+	}
+}
+
+@end
+
 void foo(id a) {
   @synchronized(a) {
     printf("Swimming? No.");
     return;
   }
 }
+
+
 

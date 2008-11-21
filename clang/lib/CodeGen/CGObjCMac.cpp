@@ -1589,9 +1589,10 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                                  "_rethrow");
   if (!isTry) {
     // For @synchronized, call objc_sync_enter(sync.expr)
-    CGF.Builder.CreateCall(ObjCTypes.SyncEnterFn,
-                           CGF.EmitScalarExpr(
-                              cast<ObjCAtSynchronizedStmt>(S).getSynchExpr()));
+    llvm::Value *Arg = CGF.EmitScalarExpr(
+                         cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
+    Arg = CGF.Builder.CreateBitCast(Arg, ObjCTypes.ObjectPtrTy);
+    CGF.Builder.CreateCall(ObjCTypes.SyncEnterFn, Arg);
   }
   
   // Enter a new try block and call setjmp.
@@ -1748,11 +1749,14 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
           cast<ObjCAtTryStmt>(S).getFinallyStmt())
       CGF.EmitStmt(FinallyStmt->getFinallyBody());
   }
-  else
+  else {
     // For @synchronized objc_sync_exit(expr); As finally's sole statement.
-    CGF.Builder.CreateCall(ObjCTypes.SyncExitFn,
-                           CGF.EmitScalarExpr(
-                             cast<ObjCAtSynchronizedStmt>(S).getSynchExpr()));
+    // For @synchronized, call objc_sync_enter(sync.expr)
+    llvm::Value *Arg = CGF.EmitScalarExpr(
+                         cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
+    Arg = CGF.Builder.CreateBitCast(Arg, ObjCTypes.ObjectPtrTy);
+    CGF.Builder.CreateCall(ObjCTypes.SyncExitFn, Arg);
+  }
 
   CGF.EmitBlock(FinallyJump);
  
