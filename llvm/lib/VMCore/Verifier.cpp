@@ -1336,9 +1336,12 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   switch (ID) {
   default:
     break;
-  case Intrinsic::memcpy:
-  case Intrinsic::memmove:
-  case Intrinsic::memset:
+  case Intrinsic::memcpy_i32:
+  case Intrinsic::memcpy_i64:
+  case Intrinsic::memmove_i32:
+  case Intrinsic::memmove_i64:
+  case Intrinsic::memset_i32:
+  case Intrinsic::memset_i64:
     Assert1(isa<ConstantInt>(CI.getOperand(4)),
             "alignment argument of memory intrinsics must be a constant int",
             &CI);

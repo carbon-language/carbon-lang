@@ -257,10 +257,8 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
         Value *NewAlloca = new AllocaInst(AggTy, 0, Align, I->getName(),
                                           Caller->begin()->begin());
         // Emit a memcpy.
-        const Type *Tys[] = { Type::Int64Ty };
         Function *MemCpyFn = Intrinsic::getDeclaration(Caller->getParent(),
-                                                       Intrinsic::memcpy, 
-                                                       Tys, 1);
+                                                       Intrinsic::memcpy_i64);
         Value *DestCast = new BitCastInst(NewAlloca, VoidPtrTy, "tmp", TheCall);
         Value *SrcCast = new BitCastInst(*AI, VoidPtrTy, "tmp", TheCall);
 

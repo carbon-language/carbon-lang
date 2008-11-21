@@ -3663,7 +3663,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::longjmp:
     return "_longjmp"+!TLI.usesUnderscoreLongJmp();
     break;
-  case Intrinsic::memcpy: {
+  case Intrinsic::memcpy_i32:
+  case Intrinsic::memcpy_i64: {
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
     SDValue Op3 = getValue(I.getOperand(3));
@@ -3672,7 +3673,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                               I.getOperand(1), 0, I.getOperand(2), 0));
     return 0;
   }
-  case Intrinsic::memset: {
+  case Intrinsic::memset_i32:
+  case Intrinsic::memset_i64: {
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
     SDValue Op3 = getValue(I.getOperand(3));
@@ -3681,7 +3683,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                               I.getOperand(1), 0));
     return 0;
   }
-  case Intrinsic::memmove: {
+  case Intrinsic::memmove_i32:
+  case Intrinsic::memmove_i64: {
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
     SDValue Op3 = getValue(I.getOperand(3));

@@ -427,12 +427,9 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
     // instruction needed by the start of the block.
     BasicBlock::iterator InsertPt = BI;
   
-    if (MemSetF == 0) {
-      const Type *Tys[] = {Type::Int64Ty};
+    if (MemSetF == 0)
       MemSetF = Intrinsic::getDeclaration(SI->getParent()->getParent()
-                                          ->getParent(), Intrinsic::memset,
-                                          Tys, 1);
-   }
+                                          ->getParent(), Intrinsic::memset_i64);
     
     // Get the starting pointer of the block.
     StartPtr = Range.StartPtr;
@@ -674,11 +671,9 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
     return false;
   
   // If all checks passed, then we can transform these memcpy's
-  const Type *Tys[1];
-  Tys[0] = M->getLength()->getType();
   Function* MemCpyFun = Intrinsic::getDeclaration(
                                  M->getParent()->getParent()->getParent(),
-                                 M->getIntrinsicID(), Tys, 1);
+                                 M->getIntrinsicID());
     
   std::vector<Value*> args;
   args.push_back(M->getRawDest());

@@ -5070,13 +5070,7 @@ for more efficient code generation.
 <div class="doc_text">
 
 <h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use llvm.memcpy on any integer bit
-width. Not all targets support all bit widths however.</p>
 <pre>
-  declare void @llvm.memcpy.i8(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                i8 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memcpy.i16(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                i16 &lt;len&gt;, i32 &lt;align&gt;)
   declare void @llvm.memcpy.i32(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
                                 i32 &lt;len&gt;, i32 &lt;align&gt;)
   declare void @llvm.memcpy.i64(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
@@ -5130,13 +5124,7 @@ be set to 0 or 1.
 <div class="doc_text">
 
 <h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use llvm.memmove on any integer bit
-width. Not all targets support all bit widths however.</p>
 <pre>
-  declare void @llvm.memmove.i8(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                 i8 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memmove.i16(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
-                                 i16 &lt;len&gt;, i32 &lt;align&gt;)
   declare void @llvm.memmove.i32(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
                                  i32 &lt;len&gt;, i32 &lt;align&gt;)
   declare void @llvm.memmove.i64(i8 * &lt;dest&gt;, i8 * &lt;src&gt;,
@@ -5191,13 +5179,7 @@ be set to 0 or 1.
 <div class="doc_text">
 
 <h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use llvm.memset on any integer bit
-width. Not all targets support all bit widths however.</p>
 <pre>
-  declare void @llvm.memset.i8(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
-                                i8 &lt;len&gt;, i32 &lt;align&gt;)
-  declare void @llvm.memset.i16(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
-                                i16 &lt;len&gt;, i32 &lt;align&gt;)
   declare void @llvm.memset.i32(i8 * &lt;dest&gt;, i8 &lt;val&gt;,
                                 i32 &lt;len&gt;, i32 &lt;align&gt;)
   declare void @llvm.memset.i64(i8 * &lt;dest&gt;, i8 &lt;val&gt;,

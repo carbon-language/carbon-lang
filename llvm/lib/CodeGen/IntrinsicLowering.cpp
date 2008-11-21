@@ -98,19 +98,22 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
         EnsureFunctionExists(M, "abort", I->arg_end(), I->arg_end(),
                              Type::VoidTy);
         break;
-      case Intrinsic::memcpy:
+      case Intrinsic::memcpy_i32:
+      case Intrinsic::memcpy_i64:
         M.getOrInsertFunction("memcpy", PointerType::getUnqual(Type::Int8Ty),
                               PointerType::getUnqual(Type::Int8Ty), 
                               PointerType::getUnqual(Type::Int8Ty), 
                               TD.getIntPtrType(), (Type *)0);
         break;
-      case Intrinsic::memmove:
+      case Intrinsic::memmove_i32:
+      case Intrinsic::memmove_i64:
         M.getOrInsertFunction("memmove", PointerType::getUnqual(Type::Int8Ty),
                               PointerType::getUnqual(Type::Int8Ty), 
                               PointerType::getUnqual(Type::Int8Ty), 
                               TD.getIntPtrType(), (Type *)0);
         break;
-      case Intrinsic::memset:
+      case Intrinsic::memset_i32:
+      case Intrinsic::memset_i64:
         M.getOrInsertFunction("memset", PointerType::getUnqual(Type::Int8Ty),
                               PointerType::getUnqual(Type::Int8Ty), 
                               Type::Int32Ty, 
@@ -781,7 +784,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::var_annotation:
     break;   // Strip out annotate intrinsic
     
-  case Intrinsic::memcpy: {
+  case Intrinsic::memcpy_i32:
+  case Intrinsic::memcpy_i64: {
     static Constant *MemcpyFCache = 0;
     Value *Size = CI->getOperand(3);
     const Type *IntPtr = TD.getIntPtrType();
@@ -799,7 +803,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     MemcpyFCache);
     break;
   }
-  case Intrinsic::memmove: {
+  case Intrinsic::memmove_i32: 
+  case Intrinsic::memmove_i64: {
     static Constant *MemmoveFCache = 0;
     Value *Size = CI->getOperand(3);
     const Type *IntPtr = TD.getIntPtrType();
@@ -817,7 +822,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     MemmoveFCache);
     break;
   }
-  case Intrinsic::memset: {
+  case Intrinsic::memset_i32:
+  case Intrinsic::memset_i64: {
     static Constant *MemsetFCache = 0;
     Value *Size = CI->getOperand(3);
     const Type *IntPtr = TD.getIntPtrType();

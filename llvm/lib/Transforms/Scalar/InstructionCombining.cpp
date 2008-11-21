@@ -9200,11 +9200,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (GlobalVariable *GVSrc = dyn_cast<GlobalVariable>(MMI->getSource()))
         if (GVSrc->isConstant()) {
           Module *M = CI.getParent()->getParent()->getParent();
-          Intrinsic::ID MemCpyID = Intrinsic::memcpy;
-          const Type *Tys[1];
-          Tys[0] = CI.getOperand(3)->getType();
-          CI.setOperand(0, 
-                        Intrinsic::getDeclaration(M, MemCpyID, Tys, 1));
+          Intrinsic::ID MemCpyID;
+          if (CI.getOperand(3)->getType() == Type::Int32Ty)
+            MemCpyID = Intrinsic::memcpy_i32;
+          else
+            MemCpyID = Intrinsic::memcpy_i64;
+          CI.setOperand(0, Intrinsic::getDeclaration(M, MemCpyID));
           Changed = true;
         }
 

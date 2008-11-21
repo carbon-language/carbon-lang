@@ -53,9 +53,7 @@ void BrainF::header() {
   //Function prototypes
 
   //declare void @llvm.memset.i32(i8 *, i8, i32, i32)
-  const Type *Tys[] = { Type::Int32Ty };
-  Function *memset_func = Intrinsic::getDeclaration(module, Intrinsic::memset,
-                                                    Tys, 1);
+  Function *memset_func = Intrinsic::getDeclaration(module, Intrinsic::memset_i32);
 
   //declare i32 @getchar()
   getchar_func = cast<Function>(module->
