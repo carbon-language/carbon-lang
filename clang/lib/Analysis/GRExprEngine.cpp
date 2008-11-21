@@ -2246,47 +2246,37 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt* S, NodeTy* Pred, NodeSet& Dst) {
     return;
   }
 
-  NodeSet DstRet;
-  QualType T = R->getType();
-  
-  if (T->isPointerLikeType()) {
-    
-    // Check if any of the return values return the address of a stack variable.
-    
-    NodeSet Tmp;
-    Visit(R, Pred, Tmp);
-    
-    for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-      SVal X = GetSVal((*I)->getState(), R);
+  NodeSet Tmp;
+  Visit(R, Pred, Tmp);
 
-      if (isa<loc::MemRegionVal>(X)) {
-        
-        // Determine if the value is on the stack.
-        const MemRegion* R = cast<loc::MemRegionVal>(&X)->getRegion();
-
-        if (R && getStateManager().hasStackStorage(R)) {
-        
-          // Create a special node representing the v
-          
-          NodeTy* RetStackNode = Builder->generateNode(S, GetState(*I), *I);
-          
-          if (RetStackNode) {
-            RetStackNode->markAsSink();
-            RetsStackAddr.insert(RetStackNode);
-          }
-          
-          continue;
-        }
-      }
+  for (NodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E; ++I) {
+    SVal X = GetSVal((*I)->getState(), R);
+    
+    // Check if we return the address of a stack variable.
+    if (isa<loc::MemRegionVal>(X)) {
+      // Determine if the value is on the stack.
+      const MemRegion* R = cast<loc::MemRegionVal>(&X)->getRegion();
       
-      DstRet.Add(*I);
+      if (R && getStateManager().hasStackStorage(R)) {
+        // Create a special node representing the error.
+        if (NodeTy* N = Builder->generateNode(S, GetState(*I), *I)) {
+          N->markAsSink();
+          RetsStackAddr.insert(N);
+        }
+        continue;
+      }
     }
-  }
-  else
-    Visit(R, Pred, DstRet);
-  
-  for (NodeSet::iterator I=DstRet.begin(), E=DstRet.end(); I!=E; ++I)
+    // Check if we return an undefined value.
+    else if (X.isUndef()) {
+      if (NodeTy* N = Builder->generateNode(S, GetState(*I), *I)) {
+        N->markAsSink();
+        RetsUndef.insert(N);
+      }
+      continue;
+    }
+    
     EvalReturn(Dst, S, *I);
+  }
 }
 
 //===----------------------------------------------------------------------===//

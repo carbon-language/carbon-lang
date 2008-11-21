@@ -104,12 +104,17 @@ public:
   typedef llvm::SmallPtrSet<NodeTy*,2> NoReturnCallsTy;  
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefResultsTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> RetsStackAddrTy;
+  typedef llvm::SmallPtrSet<NodeTy*,2> RetsUndefTy;
   
 protected:
 
   /// RetsStackAddr - Nodes in the ExplodedGraph that result from returning
   ///  the address of a stack variable.
   RetsStackAddrTy RetsStackAddr;
+
+  /// RetsUndef - Nodes in the ExplodedGraph that result from returning
+  ///  an undefined value.
+  RetsUndefTy RetsUndef;
   
   /// UndefBranches - Nodes in the ExplodedGraph that result from
   ///  taking a branch based on an undefined value.
@@ -287,6 +292,10 @@ public:
   typedef RetsStackAddrTy::iterator ret_stackaddr_iterator;
   ret_stackaddr_iterator ret_stackaddr_begin() { return RetsStackAddr.begin(); }
   ret_stackaddr_iterator ret_stackaddr_end() { return RetsStackAddr.end(); }  
+  
+  typedef RetsUndefTy::iterator ret_undef_iterator;
+  ret_undef_iterator ret_undef_begin() { return RetsUndef.begin(); }
+  ret_undef_iterator ret_undef_end() { return RetsUndef.end(); }
   
   typedef UndefBranchesTy::iterator undef_branch_iterator;
   undef_branch_iterator undef_branches_begin() { return UndefBranches.begin(); }

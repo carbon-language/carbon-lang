@@ -180,7 +180,7 @@ public:
     }    
   }
 };
-  
+
 class VISIBILITY_HIDDEN RetStack : public BuiltinBug {
 public:
   RetStack() : BuiltinBug("return of stack address") {}
@@ -239,7 +239,16 @@ public:
     }
   }
 };
-
+  
+class VISIBILITY_HIDDEN RetUndef : public BuiltinBug {
+public:
+  RetUndef() : BuiltinBug("uninitialized return value",
+              "Uninitialized or undefined return value returned to caller.") {}
+  
+  virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) {
+    Emit(BR, Eng.ret_undef_begin(), Eng.ret_undef_end());
+  }
+};
 
 class VISIBILITY_HIDDEN UndefBranch : public BuiltinBug {
   struct VISIBILITY_HIDDEN FindUndefExpr {
@@ -379,6 +388,7 @@ void GRExprEngine::RegisterInternalChecks() {
   Register(new UndefResult());
   Register(new BadCall());
   Register(new RetStack());
+  Register(new RetUndef());
   Register(new BadArg());
   Register(new BadMsgExprArg());
   Register(new BadReceiver());
