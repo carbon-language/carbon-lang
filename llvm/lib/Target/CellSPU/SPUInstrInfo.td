@@ -3494,26 +3494,62 @@ def FIf32 :
       "fi\t$rT, $rA, $rB", SPrecFP,
       [(set R32FP:$rT, (SPUinterpolate R32FP:$rA, R32FP:$rB))]>;
 
-// Floating Compare Equal
+//--------------------------------------------------------------------------
+// Basic single precision floating point comparisons:
+//
+// Note: There is no support on SPU for single precision NaN. Consequently,
+// ordered and unordered comparisons are the same.
+//--------------------------------------------------------------------------
+
 def FCEQf32 :
     RRForm<0b01000011110, (outs R32C:$rT), (ins R32FP:$rA, R32FP:$rB),
       "fceq\t$rT, $rA, $rB", SPrecFP,
-      [(set R32C:$rT, (setoeq R32FP:$rA, R32FP:$rB))]>;
+      [(set R32C:$rT, (setueq R32FP:$rA, R32FP:$rB))]>;
+
+def : Pat<(setoeq R32FP:$rA, R32FP:$rB),
+          (FCEQf32 R32FP:$rA, R32FP:$rB)>;
 
 def FCMEQf32 :
     RRForm<0b01010011110, (outs R32C:$rT), (ins R32FP:$rA, R32FP:$rB),
       "fcmeq\t$rT, $rA, $rB", SPrecFP,
-      [(set R32C:$rT, (setoeq (fabs R32FP:$rA), (fabs R32FP:$rB)))]>;
+      [(set R32C:$rT, (setueq (fabs R32FP:$rA), (fabs R32FP:$rB)))]>;
+
+def : Pat<(setoeq (fabs R32FP:$rA), (fabs R32FP:$rB)),
+          (FCMEQf32 R32FP:$rA, R32FP:$rB)>;
 
 def FCGTf32 :
     RRForm<0b01000011010, (outs R32C:$rT), (ins R32FP:$rA, R32FP:$rB),
       "fcgt\t$rT, $rA, $rB", SPrecFP,
-      [(set R32C:$rT, (setogt R32FP:$rA, R32FP:$rB))]>;
+      [(set R32C:$rT, (setugt R32FP:$rA, R32FP:$rB))]>;
+
+def : Pat<(setugt R32FP:$rA, R32FP:$rB),
+          (FCGTf32 R32FP:$rA, R32FP:$rB)>;
 
 def FCMGTf32 :
     RRForm<0b01010011010, (outs R32C:$rT), (ins R32FP:$rA, R32FP:$rB),
       "fcmgt\t$rT, $rA, $rB", SPrecFP,
-      [(set R32C:$rT, (setogt (fabs R32FP:$rA), (fabs R32FP:$rB)))]>;
+      [(set R32C:$rT, (setugt (fabs R32FP:$rA), (fabs R32FP:$rB)))]>;
+
+def : Pat<(setugt (fabs R32FP:$rA), (fabs R32FP:$rB)),
+          (FCMGTf32 R32FP:$rA, R32FP:$rB)>;
+
+//--------------------------------------------------------------------------
+// Single precision floating point comparisons and SETCC equivalents:
+//--------------------------------------------------------------------------
+
+def : SETCCNegCondReg<setune, R32FP, i32, XORIr32, FCEQf32>;
+def : SETCCNegCondReg<setone, R32FP, i32, XORIr32, FCEQf32>;
+
+def : SETCCBinOpReg<setuge, R32FP, ORr32, FCGTf32, FCEQf32>;
+def : SETCCBinOpReg<setoge, R32FP, ORr32, FCGTf32, FCEQf32>;
+
+def : SETCCBinOpReg<setult, R32FP, NORr32, FCGTf32, FCEQf32>;
+def : SETCCBinOpReg<setolt, R32FP, NORr32, FCGTf32, FCEQf32>;
+
+def : Pat<(setule R32FP:$rA, R32FP:$rB),
+          (XORIr32 (FCGTf32 R32FP:$rA, R32FP:$rB), 0xffffffff)>;
+def : Pat<(setole R32FP:$rA, R32FP:$rB),
+          (XORIr32 (FCGTf32 R32FP:$rA, R32FP:$rB), 0xffffffff)>;
 
 // FP Status and Control Register Write
 // Why isn't rT a don't care in the ISA?

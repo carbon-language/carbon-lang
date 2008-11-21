@@ -165,8 +165,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setOperationAction(ISD::STORE, VT, Custom);
   }
 
-  // Custom lower BRCOND for i1, i8 to "promote" the result to
-  // i32 and i16, respectively.
+  // Custom lower BRCOND for i8 to "promote" the result to i16
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
 
   // Expand the jumptable branches
@@ -215,7 +214,8 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::SHL,  MVT::i8,     Custom);
   setOperationAction(ISD::SRL,  MVT::i8,     Custom);
   setOperationAction(ISD::SRA,  MVT::i8,     Custom);
-  // And SPU needs custom lowering for shift left/right for i64
+
+  // SPU needs custom lowering for shift left/right for i64
   setOperationAction(ISD::SHL,  MVT::i64,    Custom);
   setOperationAction(ISD::SRL,  MVT::i64,    Custom);
   setOperationAction(ISD::SRA,  MVT::i64,    Custom);
@@ -223,7 +223,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Custom lower i8, i32 and i64 multiplications
   setOperationAction(ISD::MUL,  MVT::i8,     Custom);
   setOperationAction(ISD::MUL,  MVT::i32,    Custom);
-  setOperationAction(ISD::MUL,  MVT::i64,    Expand);
+  setOperationAction(ISD::MUL,  MVT::i64,    Expand);   // libcall
+
+  // SMUL_LOHI, UMUL_LOHI
+  setOperationAction(ISD::SMUL_LOHI, MVT::i32, Custom);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Custom);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Custom);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Custom);
 
   // Need to custom handle (some) common i8, i64 math ops
   setOperationAction(ISD::ADD,  MVT::i64,    Custom);
@@ -247,13 +253,11 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   // SPU has a version of select that implements (a&~c)|(b&c), just like
   // select ought to work:
-  setOperationAction(ISD::SELECT, MVT::i1,   Promote);
   setOperationAction(ISD::SELECT, MVT::i8,   Legal);
   setOperationAction(ISD::SELECT, MVT::i16,  Legal);
   setOperationAction(ISD::SELECT, MVT::i32,  Legal);
   setOperationAction(ISD::SELECT, MVT::i64,  Expand);
 
-  setOperationAction(ISD::SETCC, MVT::i1,    Promote);
   setOperationAction(ISD::SETCC, MVT::i8,    Legal);
   setOperationAction(ISD::SETCC, MVT::i16,   Legal);
   setOperationAction(ISD::SETCC, MVT::i32,   Legal);
@@ -299,7 +303,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   // We want to legalize GlobalAddress and ConstantPool nodes into the
   // appropriate instructions to materialize the address.
-  for (unsigned sctype = (unsigned) MVT::i1; sctype < (unsigned) MVT::f128;
+  for (unsigned sctype = (unsigned) MVT::i8; sctype < (unsigned) MVT::f128;
        ++sctype) {
     MVT VT = (MVT::SimpleValueType)sctype;
 
@@ -699,8 +703,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     int chunk_offset, slot_offset;
     bool was16aligned;
 
-    // The vector type we really want to load from the 16-byte chunk, except
-    // in the case of MVT::i1, which has to be v16i8.
+    // The vector type we really want to load from the 16-byte chunk.
     MVT vecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits())),
         stVecVT = MVT::getVectorVT(StVT, (128 / StVT.getSizeInBits()));
 
@@ -908,7 +911,7 @@ LowerConstantFP(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
-//! Lower MVT::i1, MVT::i8 brcond to a promoted type (MVT::i32, MVT::i16)
+//! Lower MVT::i8 brcond to a promoted type (MVT::i32, MVT::i16)
 static SDValue
 LowerBRCOND(SDValue Op, SelectionDAG &DAG)
 {
@@ -916,8 +919,8 @@ LowerBRCOND(SDValue Op, SelectionDAG &DAG)
   MVT CondVT = Cond.getValueType();
   MVT CondNVT;
 
-  if (CondVT == MVT::i1 || CondVT == MVT::i8) {
-    CondNVT = (CondVT == MVT::i1 ? MVT::i32 : MVT::i16);
+  if (CondVT == MVT::i8) {
+    CondNVT = MVT::i16;
     return DAG.getNode(ISD::BRCOND, Op.getValueType(),
                       Op.getOperand(0),
                       DAG.getNode(ISD::ZERO_EXTEND, CondNVT, Op.getOperand(1)),
@@ -957,37 +960,37 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
 
       switch (ObjectVT.getSimpleVT()) {
       default: {
-	cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-	     << ObjectVT.getMVTString()
-	     << "\n";
-	abort();
+        cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
+             << ObjectVT.getMVTString()
+             << "\n";
+        abort();
       }
       case MVT::i8:
-	ArgRegClass = &SPU::R8CRegClass;
-	break;
+        ArgRegClass = &SPU::R8CRegClass;
+        break;
       case MVT::i16:
-	ArgRegClass = &SPU::R16CRegClass;
-	break;
+        ArgRegClass = &SPU::R16CRegClass;
+        break;
       case MVT::i32:
-	ArgRegClass = &SPU::R32CRegClass;
-	break;
+        ArgRegClass = &SPU::R32CRegClass;
+        break;
       case MVT::i64:
-	ArgRegClass = &SPU::R64CRegClass;
-	break;
+        ArgRegClass = &SPU::R64CRegClass;
+        break;
       case MVT::f32:
-	ArgRegClass = &SPU::R32FPRegClass;
-	break;
+        ArgRegClass = &SPU::R32FPRegClass;
+        break;
       case MVT::f64:
-	ArgRegClass = &SPU::R64FPRegClass;
-	break;
+        ArgRegClass = &SPU::R64FPRegClass;
+        break;
       case MVT::v2f64:
       case MVT::v4f32:
       case MVT::v2i64:
       case MVT::v4i32:
       case MVT::v8i16:
       case MVT::v16i8:
-	ArgRegClass = &SPU::VECREGRegClass;
-	break;
+        ArgRegClass = &SPU::VECREGRegClass;
+        break;
       }
 
       unsigned VReg = RegInfo.createVirtualRegister(ArgRegClass);
@@ -2103,7 +2106,6 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     // zero fill uppper part of preferred slot, don't care about the
     // other slots:
     unsigned int mask_val;
-
     if (i <= prefslot_end) {
       mask_val =
         ((i < prefslot_begin)
@@ -2884,7 +2886,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   }
   }
   // Otherwise, return unchanged.
-#if 1
+#ifdef NDEBUG
   if (Result.getNode()) {
     DEBUG(cerr << "\nReplace.SPU: ");
     DEBUG(N->dump(&DAG));

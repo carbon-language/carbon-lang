@@ -430,8 +430,8 @@ bool
 SPUDAGToDAGISel::SelectDFormAddr(SDValue Op, SDValue N, SDValue &Base,
                                  SDValue &Index) {
   return DFormAddressPredicate(Op, N, Base, Index,
-                              SPUFrameInfo::minFrameOffset(),
-                              SPUFrameInfo::maxFrameOffset());
+                               SPUFrameInfo::minFrameOffset(),
+                               SPUFrameInfo::maxFrameOffset());
 }
 
 bool
@@ -544,7 +544,35 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
     Base = CurDAG->getTargetConstant(0, N.getValueType());
     Index = N;
     return true;
+  } else if (Opc == ISD::Register || Opc == ISD::CopyFromReg) {
+    unsigned OpOpc = Op.getOpcode();
+
+    if (OpOpc == ISD::STORE || OpOpc == ISD::LOAD) {
+      // Direct load/store without getelementptr
+      SDValue Addr, Offs;
+
+      // Get the register from CopyFromReg
+      if (Opc == ISD::CopyFromReg)
+        Addr = N.getOperand(1);
+      else
+        Addr = N;                       // Register
+
+      if (OpOpc == ISD::STORE)
+        Offs = Op.getOperand(3);
+      else
+        Offs = Op.getOperand(2);        // LOAD
+
+      if (Offs.getOpcode() == ISD::Constant || Offs.getOpcode() == ISD::UNDEF) {
+        if (Offs.getOpcode() == ISD::UNDEF)
+          Offs = CurDAG->getTargetConstant(0, Offs.getValueType());
+
+        Base = Offs;
+        Index = Addr;
+        return true;
+      }
+    }
   }
+
   return false;
 }
 
@@ -554,21 +582,27 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
   \arg Base The base pointer operand
   \arg Index The offset/index operand
 
-  If the address \a N can be expressed as a [r + s10imm] address, returns false.
-  Otherwise, creates two operands, Base and Index that will become the [r+r]
-  address.
+  If the address \a N can be expressed as an A-form or D-form address, returns
+  false.  Otherwise, creates two operands, Base and Index that will become the
+  (r)(r) X-form address.
 */
 bool
 SPUDAGToDAGISel::SelectXFormAddr(SDValue Op, SDValue N, SDValue &Base,
                                  SDValue &Index) {
-  if (SelectAFormAddr(Op, N, Base, Index)
-      || SelectDFormAddr(Op, N, Base, Index))
-    return false;
+  if (!SelectAFormAddr(Op, N, Base, Index)
+      && !SelectDFormAddr(Op, N, Base, Index)) {
+    // default form of a X-form address is r(r) in operands 0 and 1:
+    SDValue Op0 = N.getOperand(0);
+    SDValue Op1 = N.getOperand(1);
 
-  // All else fails, punt and use an X-form address:
-  Base = N.getOperand(0);
-  Index = N.getOperand(1);
-  return true;
+    if (Op0.getOpcode() == ISD::Register && Op1.getOpcode() == ISD::Register) {
+      Base = Op0;
+      Index = Op1;
+      return true;
+    }
+  }
+
+  return false;
 }
 
 //! Convert the operand from a target-independent to a target-specific node

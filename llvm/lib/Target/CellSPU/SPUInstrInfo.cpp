@@ -161,7 +161,7 @@ SPUInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   case SPU::STQDr64:
   case SPU::STQDr32:
   case SPU::STQDr16:
-    // case SPU::STQDr8:
+  case SPU::STQDr8:
   case SPU::STQXv16i8:
   case SPU::STQXv8i16:
   case SPU::STQXv4i32:
@@ -171,7 +171,7 @@ SPUInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   case SPU::STQXr64:
   case SPU::STQXr32:
   case SPU::STQXr16:
-    // case SPU::STQXr8:
+  case SPU::STQXr8:
     if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
         MI->getOperand(2).isFI()) {
       FrameIndex = MI->getOperand(2).getIndex();
