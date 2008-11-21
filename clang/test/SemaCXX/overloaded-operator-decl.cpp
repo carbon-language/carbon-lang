@@ -34,6 +34,6 @@ typedef int INT;
 typedef float FLOAT;
 Y& operator++(Y&);
 Y operator++(Y&, INT);
-X operator++(X&, FLOAT); // expected-error{{parameter of overloaded post-increment operator must have type 'int' (not 'float')}}
+X operator++(X&, FLOAT); // expected-error{{parameter of overloaded post-increment operator must have type 'int' (not 'FLOAT')}}
 
 int operator+; // expected-error{{'operator+' cannot be the name of a variable or data member}}

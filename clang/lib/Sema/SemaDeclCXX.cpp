@@ -1931,8 +1931,8 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
         DK = diag::err_operator_overload_post_inc_must_be_int;
       else
         DK = diag::err_operator_overload_post_dec_must_be_int;
-      return Diag(LastParam->getLocation(), DK)
-        << Context.getCanonicalType(LastParam->getType()).getAsString();
+      return Diag(LastParam->getLocation(), DK) 
+        << LastParam->getType().getAsString();
     }
   }
 

@@ -2853,9 +2853,28 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         // Normal function
         Diag(Cand->Function->getLocation(), diag::err_ovl_candidate);
       } else if (Cand->IsSurrogate) {
+        // Desugar the type of the surrogate down to a function type,
+        // retaining as many typedefs as possible while still showing
+        // the function type (and, therefore, its parameter types).
+        QualType FnType = Cand->Surrogate->getConversionType();
+        bool isReference = false;
+        bool isPointer = false;
+        if (const ReferenceType *FnTypeRef = FnType->getAsReferenceType()) {
+          FnType = FnTypeRef->getPointeeType();
+          isReference = true;
+        }
+        if (const PointerType *FnTypePtr = FnType->getAsPointerType()) {
+          FnType = FnTypePtr->getPointeeType();
+          isPointer = true;
+        }
+        // Desugar down to a function type.
+        FnType = QualType(FnType->getAsFunctionType(), 0);
+        // Reconstruct the pointer/reference as appropriate.
+        if (isPointer) FnType = Context.getPointerType(FnType);
+        if (isReference) FnType = Context.getReferenceType(FnType);
+
         Diag(Cand->Surrogate->getLocation(), diag::err_ovl_surrogate_cand)
-          << Context.getCanonicalType(Cand->Surrogate->getConversionType())
-               .getAsString();
+          << FnType.getAsString();
       } else {
         // FIXME: We need to get the identifier in here
         // FIXME: Do we want the error message to point at the 
@@ -3006,9 +3025,10 @@ Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
   // FIXME: Look in base classes for more conversion operators!
   OverloadedFunctionDecl *Conversions 
     = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
-  for (OverloadedFunctionDecl::function_iterator Func 
-         = Conversions->function_begin();
-       Func != Conversions->function_end(); ++Func) {
+  for (OverloadedFunctionDecl::function_iterator 
+         Func = Conversions->function_begin(),
+         FuncEnd = Conversions->function_end();
+       Func != FuncEnd; ++Func) {
     CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
 
     // Strip the reference type (if any) and then the pointer type (if

@@ -135,11 +135,13 @@ void test_callable(Callable c) {
   c(); // expected-error{{no matching function for call to object of type 'struct Callable'; candidates are:}}
 }
 
-typedef int& Func1(float, double);
+typedef float FLOAT;
+typedef int& INTREF;
+typedef INTREF Func1(FLOAT, double);
 typedef float& Func2(int, double);
 
 struct ConvertToFunc {
-  operator Func1*(); // expected-note{{conversion candidate of type 'int &(*)(float, double)'}}
+  operator Func1*(); // expected-note{{conversion candidate of type 'INTREF (*)(FLOAT, double)'}}
   operator Func2&(); // expected-note{{conversion candidate of type 'float &(&)(int, double)'}}
   void operator()();
 };
