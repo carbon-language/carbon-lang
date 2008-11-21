@@ -29,3 +29,7 @@ void test5(int *X, float *P) {
   (float*)X = P;   // expected-error {{assignment to cast is illegal, lvalue casts are not supported}}
 }
 
+void test6() {
+  int X;
+  X();  // expected-error {{called object type 'int' is not a function or function pointer}}
+}

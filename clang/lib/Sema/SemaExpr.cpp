@@ -1347,7 +1347,7 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     const PointerType *PT = Fn->getType()->getAsPointerType();
     if (PT == 0)
       return Diag(LParenLoc, diag::err_typecheck_call_not_function)
-        << Fn->getSourceRange();
+        << Fn->getType().getAsString() << Fn->getSourceRange();
     FuncT = PT->getPointeeType()->getAsFunctionType();
   } else { // This is a block call.
     FuncT = Fn->getType()->getAsBlockPointerType()->getPointeeType()->
@@ -1355,7 +1355,7 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   }
   if (FuncT == 0)
     return Diag(LParenLoc, diag::err_typecheck_call_not_function)
-      << Fn->getSourceRange();
+      << Fn->getType().getAsString() << Fn->getSourceRange();
   
   // We know the result type of the call, set it.
   TheCall->setType(FuncT->getResultType().getNonReferenceType());
