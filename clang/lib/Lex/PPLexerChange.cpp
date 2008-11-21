@@ -90,18 +90,42 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   
   // Lex the file, populating our data structures.
   std::vector<Token>* Tokens = new std::vector<Token>();
-  Token Tok;  
+  Token Tok;
   
   do {
     L.LexFromRawLexer(Tok);
     
-    if (Tok.is(tok::identifier))
+    if (Tok.is(tok::identifier)) {
       Tok.setIdentifierInfo(LookUpIdentifierInfo(Tok));
-    
-    // Store the token.
-    Tokens->push_back(Tok);
+    }
+    else if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
+      // Special processing for #include.  Store the '#' token and lex
+      // the next token.
+      Tokens->push_back(Tok);
+      L.LexFromRawLexer(Tok);
+      
+      // Did we see 'include'/'import'/'include_next'?
+      if (!Tok.is(tok::identifier))
+        continue;
+
+      IdentifierInfo* II = LookUpIdentifierInfo(Tok);
+      Tok.setIdentifierInfo(II);
+      tok::PPKeywordKind K = II->getPPKeywordID();
+      
+      if (K == tok::pp_include || K == tok::pp_import || 
+          K == tok::pp_include_next) {
+        
+        // Save the 'include' token.
+        Tokens->push_back(Tok);
+        
+        // Lex the next token as an include string.
+        L.ParsingPreprocessorDirective = true;
+        L.LexIncludeFilename(Tok); 
+        L.ParsingPreprocessorDirective = false;
+      }
+    }    
   }
-  while (Tok.isNot(tok::eof));
+  while (Tokens->push_back(Tok), Tok.isNot(tok::eof));
   
   if (CurPPLexer || CurTokenLexer)
     PushIncludeMacroStack();
