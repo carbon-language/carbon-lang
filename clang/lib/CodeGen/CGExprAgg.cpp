@@ -327,7 +327,7 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
     // There's a potential optimization opportunity in combining
     // memsets; that would be easy for arrays, but relatively
     // difficult for structures with the current code.
-    llvm::Value *MemSet = CGF.CGM.getIntrinsic(llvm::Intrinsic::memset_i64);
+    llvm::Value *MemSet = CGF.CGM.getIntrinsic(llvm::Intrinsic::memset);
     uint64_t Size = CGF.getContext().getTypeSize(T);
     
     const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
