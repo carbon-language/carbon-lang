@@ -130,9 +130,10 @@ Value *LibCallOptimization::EmitStrLen(Value *Ptr, IRBuilder<> &B) {
 Value *LibCallOptimization::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
                                        unsigned Align, IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Intrinsic::ID IID = Len->getType() == Type::Int32Ty ?
-                           Intrinsic::memcpy_i32 : Intrinsic::memcpy_i64;
-  Value *MemCpy = Intrinsic::getDeclaration(M, IID);
+  Intrinsic::ID IID = Intrinsic::memcpy;
+  const Type *Tys[1];
+  Tys[0] = Len->getType();
+  Value *MemCpy = Intrinsic::getDeclaration(M, IID, Tys, 1);
   return B.CreateCall4(MemCpy, CastToCStr(Dst, B), CastToCStr(Src, B), Len,
                        ConstantInt::get(Type::Int32Ty, Align));
 }
