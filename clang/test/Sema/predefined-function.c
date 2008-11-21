@@ -26,8 +26,8 @@ int bar() // expected-error {{redefinition of 'bar'}}
 }
 
 #if 0
-int foobar(int); // expected-error {{previous declaration is here}}
-int foobar() // expected-error {{conflicting types for 'foobar'}}
+int foobar(int); // error {{previous declaration is here}}
+int foobar() // error {{conflicting types for 'foobar'}}
 {
 	return 0;
 }
