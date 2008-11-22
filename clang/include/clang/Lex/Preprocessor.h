@@ -628,7 +628,7 @@ private:
   //===--------------------------------------------------------------------===//
   // Caching stuff.
   void CachingLex(Token &Result);
-  bool InCachingLexMode() const { return CurLexer == 0 && CurTokenLexer == 0; }
+  bool InCachingLexMode() const { return CurPPLexer == 0 && CurTokenLexer == 0;}
   void EnterCachingLexMode();
   void ExitCachingLexMode() {
     if (InCachingLexMode())
