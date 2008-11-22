@@ -249,13 +249,22 @@ Clang:</p>
     useful when producing English diagnostics.  When the integer is 1, it prints
     as nothing.  When the integer is not 1, it prints as "s".  This allows some
     simple grammar to be to be handled correctly, and eliminates the need to use
-    gross things like <tt>"rewrite %1 parameter(s)"</tt>.</td></tr>
+    gross things like <tt>"requires %1 parameter(s)"</tt>.</td></tr>
 
 <tr><td colspan="2"><b>"select" format</b></td></tr>
 <tr><td>Example:</td><td><tt>"must be a %select{unary|binary|unary or binary}2
      operator"</tt></td></tr>
 <tr><td>Classes:</td><td>Integers</td></tr>
-<tr><td>Description:</td><td>...</td></tr>
+<tr><td>Description:</td><td>This format specifier is used to merge multiple
+    related diagnostics together into one common one, without requiring the
+    different to be specified as an English string argument.  Instead of
+    specifying the string, the diagnostic gets an integer argument and the
+    format string selects the numbered option.  In this case, the "%2" value
+    must be an integer in the range [0..2].  If it is 0, it prints 'unary', if
+    it is 1 it prints 'binary' if it is 2, it prints 'unary or binary'.  This
+    allows other language translations to substitute reasonable words (or entire
+    phrases) based on the semantics of the diagnostic instead of having to do
+    things textually.</td></tr>
 
 <tr><td colspan="2"><b>"plural" format</b></td></tr>
 <tr><td>Example:</td><td><tt>"you have %1 %plural{1:mouse|:mice}1 connected to
@@ -286,8 +295,12 @@ Clang:</p>
 	abort, as will a failure to match the argument against any
 	expression.</p></td></tr>
 
-
 </table>
+
+<p>It is really easy to add format specifiers to the Clang diagnostics system,
+but they should be discussed before they are added.  If you're creating a lot
+of repetitive diagnostics and/or have an idea for a useful formater, please
+bring it up on the cfe-dev mainling list.</p>
 
 
 
