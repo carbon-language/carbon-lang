@@ -189,10 +189,6 @@ public:
   IdentifierTable &getIdentifierTable() { return Identifiers; }
   SelectorTable &getSelectorTable() { return Selectors; }
 
-  inline FullSourceLoc getFullLoc(SourceLocation Loc) const {
-    return FullSourceLoc(Loc, getSourceManager());
-  }
-  
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
   /// comments in output.
   void SetCommentRetentionState(bool KeepComments, bool KeepMacroComments) {
