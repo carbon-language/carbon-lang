@@ -1176,7 +1176,8 @@ bool Expr::Evaluate(APValue &Result, ASTContext &Ctx, bool *isEvaluated) const {
   } else if (getType()->isComplexType()) {
     if (!EvaluateComplexFloat(this, Result, Info))
       return false;
-  }    
+  }  else
+    return false;
 
   if (isEvaluated)
     *isEvaluated = Info.isEvaluated;
