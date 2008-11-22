@@ -268,11 +268,9 @@ private:
   SDValue PromoteIntRes_SRL(SDNode *N);
   SDValue PromoteIntRes_TRUNCATE(SDNode *N);
   SDValue PromoteIntRes_UDIV(SDNode *N);
-  SDValue PromoteIntRes_XADDO(SDNode *N, unsigned ResNo, ISD::NodeType NTy);
-  SDValue PromoteIntRes_SADDO(SDNode *N, unsigned ResNo);
-  SDValue PromoteIntRes_UADDO(SDNode *N, unsigned ResNo);
   SDValue PromoteIntRes_UNDEF(SDNode *N);
   SDValue PromoteIntRes_VAARG(SDNode *N);
+  SDValue PromoteIntRes_XADDO(SDNode *N, unsigned ResNo);
 
   // Integer Operand Promotion.
   bool PromoteIntegerOperand(SDNode *N, unsigned OperandNo);

@@ -250,12 +250,13 @@ namespace ISD {
     // values.
     ADDE, SUBE,
 
-    // RESULT, BOOL = [SU]ADDO(LHS, RHS) - Overflow-aware nodes for arithmetic
-    // operations. These nodes takes two operands: the normal lhs and rhs to the
-    // add. They produce two results: the normal result of the add, and a
-    // boolean to indicate if an overflow occured (*not* a flag, because it may
-    // be stored to memory, etc.). These nodes is generated from the
-    // llvm.[su]add.with.overflow intrinsics.
+    // RESULT, BOOL = [SU]ADDO(LHS, RHS) - Overflow-aware nodes for addition.
+    // These nodes take two operands: the normal LHS and RHS to the add. They
+    // produce two results: the normal result of the add, and a boolean that
+    // indicates if an overflow occured (*not* a flag, because it may be stored
+    // to memory, etc.).  If the type of the boolean is not i1 then the high
+    // bits conform to getSetCCResultContents.
+    // These nodes are generated from the llvm.[su]add.with.overflow intrinsics.
     SADDO, UADDO,
 
     // Simple binary floating point operators.

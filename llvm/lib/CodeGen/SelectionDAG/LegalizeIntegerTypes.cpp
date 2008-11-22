@@ -99,8 +99,8 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::UDIV:
   case ISD::UREM:        Result = PromoteIntRes_UDIV(N); break;
 
-  case ISD::SADDO:       Result = PromoteIntRes_SADDO(N, ResNo); break;
-  case ISD::UADDO:       Result = PromoteIntRes_UADDO(N, ResNo); break;
+  case ISD::SADDO:
+  case ISD::UADDO:       Result = PromoteIntRes_XADDO(N, ResNo); break;
 
   case ISD::ATOMIC_LOAD_ADD_8:
   case ISD::ATOMIC_LOAD_SUB_8:
@@ -518,26 +518,20 @@ SDValue DAGTypeLegalizer::PromoteIntRes_UDIV(SDNode *N) {
   return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
 }
 
-SDValue DAGTypeLegalizer::PromoteIntRes_XADDO(SDNode *N, unsigned ResNo,
-                                              ISD::NodeType NTy) {
-  MVT NewVT = TLI.getTypeToTransformTo(SDValue(N, ResNo).getValueType());
-  assert(isTypeLegal(NewVT) && "Illegal XADDO type!");
+SDValue DAGTypeLegalizer::PromoteIntRes_XADDO(SDNode *N, unsigned ResNo) {
+  assert(ResNo == 1 && "Only boolean result promotion currently supported!");
 
-  MVT ValueVTs[] = { N->getOperand(0).getValueType(), NewVT };
+  // Simply change the return type of the boolean result.
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(1));
+  MVT ValueVTs[] = { N->getValueType(0), NVT };
   SDValue Ops[] = { N->getOperand(0), N->getOperand(1) };
+  SDValue Res = DAG.getNode(N->getOpcode(), DAG.getVTList(ValueVTs, 2), Ops, 2);
 
-  SDValue Res = DAG.getNode(NTy, DAG.getVTList(&ValueVTs[0], 2), &Ops[0], 2);
-  ReplaceValueWith(SDValue(N, 0), SDValue(Res.getNode(), 0));
-  ReplaceValueWith(SDValue(N, 1), SDValue(Res.getNode(), 1));
-  return Res;
-}
+  // Modified the sum result - switch anything that used the old sum to use
+  // the new one.
+  ReplaceValueWith(SDValue(N, 0), Res);
 
-SDValue DAGTypeLegalizer::PromoteIntRes_SADDO(SDNode *N, unsigned ResNo) {
-  return PromoteIntRes_XADDO(N, ResNo, ISD::SADDO);
-}
-
-SDValue DAGTypeLegalizer::PromoteIntRes_UADDO(SDNode *N, unsigned ResNo) {
-  return PromoteIntRes_XADDO(N, ResNo, ISD::UADDO);
+  return SDValue(Res.getNode(), 1);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_UNDEF(SDNode *N) {
