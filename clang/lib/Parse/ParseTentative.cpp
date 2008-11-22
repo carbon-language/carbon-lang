@@ -399,7 +399,8 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
   //   ptr-operator declarator
 
   while (1) {
-    if (Tok.is(tok::star) || Tok.is(tok::amp)) {
+    if (Tok.is(tok::star) || Tok.is(tok::amp) || 
+        (Tok.is(tok::caret) && getLang().Blocks)) {
       // ptr-operator
       ConsumeToken();
       while (Tok.is(tok::kw_const)    ||
