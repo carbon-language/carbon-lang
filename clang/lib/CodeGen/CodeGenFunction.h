@@ -439,6 +439,7 @@ public:
   RValue EmitLoadOfExtVectorElementLValue(LValue V, QualType LVType);
   RValue EmitLoadOfBitfieldLValue(LValue LV, QualType ExprType);
   RValue EmitLoadOfPropertyRefLValue(LValue LV, QualType ExprType);
+  RValue EmitLoadOfKVCRefLValue(LValue LV, QualType ExprType);
 
   
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
@@ -448,6 +449,7 @@ public:
   void EmitStoreThroughExtVectorComponentLValue(RValue Src, LValue Dst,
                                                 QualType Ty);
   void EmitStoreThroughPropertyRefLValue(RValue Src, LValue Dst, QualType Ty);
+  void EmitStoreThroughKVCRefLValue(RValue Src, LValue Dst, QualType Ty);
 
   /// EmitStoreThroughLValue - Store Src into Dst with same
   /// constraints as EmitStoreThroughLValue. 
@@ -484,6 +486,7 @@ public:
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
   LValue EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E);
+  LValue EmitObjCKVCRefLValue(const ObjCKVCRefExpr *E);
   LValue EmitObjCSuperExpr(const ObjCSuperExpr *E);
 
   //===--------------------------------------------------------------------===//
@@ -525,7 +528,7 @@ public:
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
   RValue EmitObjCMessageExpr(const ObjCMessageExpr *E);
   RValue EmitObjCPropertyGet(const Expr *E);
-  void EmitObjCPropertySet(const ObjCPropertyRefExpr *E, RValue Src);
+  void EmitObjCPropertySet(const Expr *E, RValue Src);
 
 
   //===--------------------------------------------------------------------===//

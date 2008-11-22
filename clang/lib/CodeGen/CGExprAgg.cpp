@@ -229,6 +229,15 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     CGF.EmitAggExpr(E->getRHS(), AggLoc, false);
     CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(), 
                             RValue::getAggregate(AggLoc));
+  } 
+  else if (LHS.isKVCRef()) {
+    // FIXME: Volatility?
+    llvm::Value *AggLoc = DestPtr;
+    if (!AggLoc)
+      AggLoc = CGF.CreateTempAlloca(CGF.ConvertType(E->getRHS()->getType()));
+    CGF.EmitAggExpr(E->getRHS(), AggLoc, false);
+    CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(), 
+                            RValue::getAggregate(AggLoc));
   } else {
     // Codegen the RHS so that it stores directly into the LHS.
     CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), false /*FIXME: VOLATILE LHS*/);

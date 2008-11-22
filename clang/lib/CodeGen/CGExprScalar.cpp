@@ -145,6 +145,9 @@ public:
   Value *VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
     return EmitLoadOfLValue(E);
   }
+  Value *VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
+    return EmitLoadOfLValue(E);
+  }
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E) {
     return CGF.EmitObjCMessageExpr(E).getScalarVal();
   }

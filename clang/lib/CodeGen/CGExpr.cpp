@@ -132,6 +132,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitObjCIvarRefLValue(cast<ObjCIvarRefExpr>(E));
   case Expr::ObjCPropertyRefExprClass:
     return EmitObjCPropertyRefLValue(cast<ObjCPropertyRefExpr>(E));
+  case Expr::ObjCKVCRefExprClass:
+    return EmitObjCKVCRefLValue(cast<ObjCKVCRefExpr>(E));
   case Expr::ObjCSuperExprClass:
     return EmitObjCSuperExpr(cast<ObjCSuperExpr>(E));
 
@@ -198,6 +200,9 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
 
   if (LV.isPropertyRef())
     return EmitLoadOfPropertyRefLValue(LV, ExprType);
+
+  if (LV.isKVCRef())
+    return EmitLoadOfKVCRefLValue(LV, ExprType);
 
   assert(0 && "Unknown LValue type!");
   //an invalid RValue, but the assert will
@@ -272,6 +277,11 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
 RValue CodeGenFunction::EmitLoadOfPropertyRefLValue(LValue LV,
                                                     QualType ExprType) {
   return EmitObjCPropertyGet(LV.getPropertyRefExpr());
+}
+
+RValue CodeGenFunction::EmitLoadOfKVCRefLValue(LValue LV,
+                                               QualType ExprType) {
+  return EmitObjCPropertyGet(LV.getKVCRefExpr());
 }
 
 // If this is a reference to a subset of the elements of a vector, either
@@ -356,6 +366,9 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
 
     if (Dst.isPropertyRef())
       return EmitStoreThroughPropertyRefLValue(Src, Dst, Ty);
+
+    if (Dst.isKVCRef())
+      return EmitStoreThroughKVCRefLValue(Src, Dst, Ty);
 
     assert(0 && "Unknown LValue type");
   }
@@ -489,6 +502,12 @@ void CodeGenFunction::EmitStoreThroughPropertyRefLValue(RValue Src,
                                                         LValue Dst,
                                                         QualType Ty) {
   EmitObjCPropertySet(Dst.getPropertyRefExpr(), Src);
+}
+
+void CodeGenFunction::EmitStoreThroughKVCRefLValue(RValue Src,
+                                                   LValue Dst,
+                                                   QualType Ty) {
+  EmitObjCPropertySet(Dst.getKVCRefExpr(), Src);
 }
 
 void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
@@ -971,6 +990,13 @@ CodeGenFunction::EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E) {
   // This is a special l-value that just issues sends when we load or
   // store through it.
   return LValue::MakePropertyRef(E, E->getType().getCVRQualifiers());
+}
+
+LValue 
+CodeGenFunction::EmitObjCKVCRefLValue(const ObjCKVCRefExpr *E) {
+  // This is a special l-value that just issues sends when we load or
+  // store through it.
+  return LValue::MakeKVCRef(E, E->getType().getCVRQualifiers());
 }
 
 LValue

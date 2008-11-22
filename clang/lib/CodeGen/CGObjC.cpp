@@ -279,25 +279,46 @@ llvm::Value *CodeGenFunction::LoadObjCSelf() {
 }
 
 RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
+  // FIXME: Split it into two separate routines.
   if (const ObjCPropertyRefExpr *E = dyn_cast<ObjCPropertyRefExpr>(Exp)) {
     Selector S = E->getProperty()->getGetterName();
-
     return CGM.getObjCRuntime().
-    GenerateMessageSend(*this, E->getType(), S, 
-                        EmitScalarExpr(E->getBase()), 
-                        false, CallArgList());
+             GenerateMessageSend(*this, Exp->getType(), S, 
+                                 EmitScalarExpr(E->getBase()), 
+                                 false, CallArgList());
   }
-  assert (0);
+  else if (const ObjCKVCRefExpr *E = dyn_cast<ObjCKVCRefExpr>(Exp)) {
+    Selector S = E->getGetterMethod()->getSelector();
+    return CGM.getObjCRuntime().
+             GenerateMessageSend(*this, Exp->getType(), S, 
+                                 EmitScalarExpr(E->getBase()), 
+                                 false, CallArgList());
+  }
+  else
+    assert (0 && "bad expression node in EmitObjCPropertyGet");
 }
 
-void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
+void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
                                           RValue Src) {
-  Selector S = E->getProperty()->getSetterName();
-  CallArgList Args;
-  Args.push_back(std::make_pair(Src, E->getType()));
-  CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
-                                           EmitScalarExpr(E->getBase()), 
-                                           false, Args);
+  // FIXME: Split it into two separate routines.
+  if (const ObjCPropertyRefExpr *E = dyn_cast<ObjCPropertyRefExpr>(Exp)) {
+    Selector S = E->getProperty()->getSetterName();
+    CallArgList Args;
+    Args.push_back(std::make_pair(Src, E->getType()));
+    CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
+                                             EmitScalarExpr(E->getBase()), 
+                                             false, Args);
+  }
+  else if (const ObjCKVCRefExpr *E = dyn_cast<ObjCKVCRefExpr>(Exp)) {
+    Selector S = E->getSetterMethod()->getSelector();
+    CallArgList Args;
+    Args.push_back(std::make_pair(Src, E->getType()));
+    CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
+                                             EmitScalarExpr(E->getBase()), 
+                                             false, Args);
+  }
+  else
+    assert (0 && "bad expression node in EmitObjCPropertySet");
 }
 
 void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)

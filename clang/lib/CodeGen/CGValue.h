@@ -24,6 +24,7 @@ namespace llvm {
 
 namespace clang {
   class ObjCPropertyRefExpr;
+  class ObjCKVCRefExpr;
 
 namespace CodeGen {
 
@@ -103,8 +104,10 @@ class LValue {
     VectorElt,    // This is a vector element l-value (V[i]), use getVector*
     BitField,     // This is a bitfield l-value, use getBitfield*.
     ExtVectorElt, // This is an extended vector subset, use getExtVectorComp
-    PropertyRef   // This is an Objective-C property reference, use
+    PropertyRef,  // This is an Objective-C property reference, use
                   // getPropertyRefExpr
+    KVCRef        // This is an objective-c 'implicit' property ref,
+                  // use getKVCRefExpr
   } LVType;
 
   enum ObjCType {
@@ -131,6 +134,8 @@ class LValue {
 
     // Obj-C property reference expression
     const ObjCPropertyRefExpr *PropertyRefExpr;
+    // ObjC 'implicit' property reference expression
+    const ObjCKVCRefExpr *KVCRefExpr;
   };
 
   bool Volatile:1;
@@ -160,6 +165,7 @@ public:
   bool isBitfield() const { return LVType == BitField; }
   bool isExtVectorElt() const { return LVType == ExtVectorElt; }
   bool isPropertyRef() const { return LVType == PropertyRef; }
+  bool isKVCRef() const { return LVType == KVCRef; }
 
   bool isVolatileQualified() const { return Volatile; }
   bool isRestrictQualified() const { return Restrict; }
@@ -211,6 +217,12 @@ public:
     return PropertyRefExpr;
   }
 
+  // 'implicit' property ref lvalue
+  const ObjCKVCRefExpr *getKVCRefExpr() const {
+    assert(isKVCRef());
+    return KVCRefExpr;
+  }
+
   static LValue MakeAddr(llvm::Value *V, unsigned Qualifiers) {
     LValue R;
     R.LVType = Simple;
@@ -260,6 +272,14 @@ public:
     LValue R;
     R.LVType = PropertyRef;
     R.PropertyRefExpr = E;
+    SetQualifiers(Qualifiers,R);
+    return R;
+  }
+  static LValue MakeKVCRef(const ObjCKVCRefExpr *E,
+                                unsigned Qualifiers) {
+    LValue R;
+    R.LVType = KVCRef;
+    R.KVCRefExpr = E;
     SetQualifiers(Qualifiers,R);
     return R;
   }
