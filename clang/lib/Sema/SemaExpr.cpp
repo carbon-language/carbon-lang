@@ -1090,20 +1090,6 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   return VT; // should never get here (a typedef type should always be found).
 }
 
-/// constructSetterName - Return the setter name for the given
-/// identifier, i.e. "set" + Name where the initial character of Name
-/// has been capitalized.
-// FIXME: Merge with same routine in Parser. But where should this
-// live?
-static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
-                                           const IdentifierInfo *Name) {
-  llvm::SmallString<100> SelectorName;
-  SelectorName = "set";
-  SelectorName.append(Name->getName(), Name->getName()+Name->getLength());
-  SelectorName[3] = toupper(SelectorName[3]);
-  return &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
-}
-
 Action::ExprResult Sema::
 ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
@@ -1212,27 +1198,10 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     }
     if (Getter) {
       // If we found a getter then this may be a valid dot-reference, we
-      // need to also look for the matching setter.
-      IdentifierInfo *SetterName = constructSetterName(PP.getIdentifierTable(),
-                                                       &Member);
-      Selector SetterSel = PP.getSelectorTable().getUnarySelector(SetterName);
-      ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
-
-      if (!Setter) {
-        if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
-          if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-            if (ObjCImplementationDecl *ImpDecl = 
-                ObjCImplementations[ClassDecl->getIdentifier()])
-              Setter = ImpDecl->getInstanceMethod(SetterSel);
-      }
-
-      // FIXME: There are some issues here. First, we are not
-      // diagnosing accesses to read-only properties because we do not
-      // know if this is a getter or setter yet. Second, we are
-      // checking that the type of the setter matches the type we
-      // expect.
-      return new ObjCPropertyRefExpr(Getter, Setter, Getter->getResultType(), 
-                                     MemberLoc, BaseExpr);
+      // will look for the matching setter, if it is needed. But we don't
+      // know this yet.
+      return new ObjCKVCRefExpr(Getter, Getter->getResultType(), 
+                                MemberLoc, BaseExpr);
     }
   }
   // Handle properties on qualified "id" protocols.
@@ -2549,6 +2518,9 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
     break;
   case Expr::MLV_NotBlockQualified:
     Diag = diag::err_block_decl_ref_not_modifiable_lvalue;
+    break;
+  case Expr::MLV_ReadonlyProperty:
+    Diag = diag::error_readonly_property_assignment;
     break;
   }
 

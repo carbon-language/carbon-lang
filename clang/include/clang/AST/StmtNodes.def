@@ -115,6 +115,7 @@ STMT(ObjCSelectorExpr     , Expr)
 STMT(ObjCProtocolExpr     , Expr)
 STMT(ObjCIvarRefExpr      , Expr)
 STMT(ObjCPropertyRefExpr  , Expr)
+STMT(ObjCKVCRefExpr       , Expr)
 STMT(ObjCSuperExpr        , Expr)
 
 // Clang Extensions.

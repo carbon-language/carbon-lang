@@ -278,40 +278,21 @@ llvm::Value *CodeGenFunction::LoadObjCSelf() {
   return Builder.CreateLoad(LocalDeclMap[OMD->getSelfDecl()], "self");
 }
 
-RValue CodeGenFunction::EmitObjCPropertyGet(const ObjCPropertyRefExpr *E) {
-  // Determine getter selector.
-  Selector S;
-  if (E->getKind() == ObjCPropertyRefExpr::MethodRef) {
-    S = E->getGetterMethod()->getSelector();
-  } else {
-    S = E->getProperty()->getGetterName();
-  }
+RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
+  if (const ObjCPropertyRefExpr *E = dyn_cast<ObjCPropertyRefExpr>(Exp)) {
+    Selector S = E->getProperty()->getGetterName();
 
-  return CGM.getObjCRuntime().
+    return CGM.getObjCRuntime().
     GenerateMessageSend(*this, E->getType(), S, 
                         EmitScalarExpr(E->getBase()), 
                         false, CallArgList());
+  }
+  assert (0);
 }
 
 void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
                                           RValue Src) {
-  Selector S;
-  if (E->getKind() == ObjCPropertyRefExpr::MethodRef) {
-    ObjCMethodDecl *Setter = E->getSetterMethod(); 
-    
-    if (Setter) {
-      S = Setter->getSelector();
-    } else {
-      // FIXME: This should be diagnosed by sema.
-      CGM.getDiags().Report(getContext().getFullLoc(E->getLocStart()),
-                            diag::err_typecheck_assign_const)
-        << E->getSourceRange();
-      return;
-    }
-  } else {
-    S = E->getProperty()->getSetterName();
-  }
-
+  Selector S = E->getProperty()->getSetterName();
   CallArgList Args;
   Args.push_back(std::make_pair(Src, E->getType()));
   CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 

@@ -87,6 +87,7 @@ public:
     EmitAggLoadOfLValue(E);
   }
   void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
+  void VisitObjCKVCRefExpr(ObjCKVCRefExpr *E);
   
   void VisitConditionalOperator(const ConditionalOperator *CO);
   void VisitInitListExpr(InitListExpr *E);
@@ -159,6 +160,18 @@ void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 }
 
 void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
+  RValue RV = CGF.EmitObjCPropertyGet(E);
+  assert(RV.isAggregate() && "Return value must be aggregate value!");
+  
+  // If the result is ignored, don't copy from the value.
+  if (DestPtr == 0)
+    // FIXME: If the source is volatile, we must read from it.
+    return;
+  
+  CGF.EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+}
+
+void AggExprEmitter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
   RValue RV = CGF.EmitObjCPropertyGet(E);
   assert(RV.isAggregate() && "Return value must be aggregate value!");
   

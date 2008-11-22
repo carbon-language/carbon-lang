@@ -139,6 +139,7 @@ namespace  {
     void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
     void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
     void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node);
+    void VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
     void VisitObjCSuperExpr(ObjCSuperExpr *Node);
   };
@@ -470,16 +471,18 @@ void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
 void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   DumpExpr(Node);
 
-  if (Node->getKind() == ObjCPropertyRefExpr::MethodRef) {
-    ObjCMethodDecl *Getter = Node->getGetterMethod();
-    ObjCMethodDecl *Setter = Node->getSetterMethod();
-    fprintf(F, " Kind=MethodRef Getter=\"%s\" Setter=\"%s\"", 
-            Getter->getSelector().getName().c_str(),
-            Setter ? Setter->getSelector().getName().c_str() : "(null)");
-  } else {
-    fprintf(F, " Kind=PropertyRef Property=\"%s\"", 
-            Node->getProperty()->getIdentifierName());
-  }
+  fprintf(F, " Kind=PropertyRef Property=\"%s\"", 
+          Node->getProperty()->getIdentifierName());
+}
+
+void StmtDumper::VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node) {
+  DumpExpr(Node);
+  
+  ObjCMethodDecl *Getter = Node->getGetterMethod();
+  ObjCMethodDecl *Setter = Node->getSetterMethod();
+  fprintf(F, " Kind=MethodRef Getter=\"%s\" Setter=\"%s\"", 
+          Getter->getSelector().getName().c_str(),
+          Setter ? Setter->getSelector().getName().c_str() : "(null)");
 }
 
 void StmtDumper::VisitObjCSuperExpr(ObjCSuperExpr *Node) {

@@ -195,68 +195,21 @@ public:
 };
 
 /// ObjCPropertyRefExpr - A dot-syntax expression to access an ObjC
-/// property. Note that dot-syntax can also be used to access
-/// "implicit" properties (i.e. methods following the property naming
-/// convention). Additionally, sema is not yet smart enough to know if
-/// a property reference is to a getter or a setter, so the expr must
-/// have access to both methods.
+/// property.
 ///
-// FIXME: Consider splitting these into separate Expr classes.
 class ObjCPropertyRefExpr : public Expr {
-public:
-  enum Kind {
-    PropertyRef, // This expressions references a declared property.
-    MethodRef   // This expressions references methods.
-  };
-
 private:
-  // A dot-syntax reference via methods must always have a getter. We
-  // avoid storing the kind explicitly by relying on this invariant
-  // and assuming this is a MethodRef iff Getter is non-null. Setter
-  // can be null in situations which access a read-only property.
-  union {
-    ObjCPropertyDecl *AsProperty;
-    struct {
-      ObjCMethodDecl *Setter;
-      ObjCMethodDecl *Getter;
-    } AsMethod;
-  } Referent;
+  ObjCPropertyDecl *AsProperty;
   SourceLocation Loc;
   Stmt *Base;
   
 public:
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t, 
                       SourceLocation l, Expr *base)
-    : Expr(ObjCPropertyRefExprClass, t), Loc(l), Base(base) {
-    Referent.AsMethod.Getter = Referent.AsMethod.Setter = NULL;
-    Referent.AsProperty = PD;
+    : Expr(ObjCPropertyRefExprClass, t), AsProperty(PD), Loc(l), Base(base) {
   }
-  ObjCPropertyRefExpr(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter,
-                      QualType t, 
-                      SourceLocation l, Expr *base)
-    : Expr(ObjCPropertyRefExprClass, t), Loc(l), Base(base) {
-    Referent.AsMethod.Getter = Getter;
-    Referent.AsMethod.Setter = Setter;
-  }
-
-  Kind getKind() const { 
-    return Referent.AsMethod.Getter ? MethodRef : PropertyRef; 
-  }
-
   ObjCPropertyDecl *getProperty() const {
-    assert(getKind() == PropertyRef && 
-           "Cannot get property from an ObjCPropertyRefExpr using methods");
-    return Referent.AsProperty;
-  }
-  ObjCMethodDecl *getGetterMethod() const {
-    assert(getKind() == MethodRef && 
-           "Cannot get method from an ObjCPropertyRefExpr using a property");
-    return Referent.AsMethod.Getter;
-  }
-  ObjCMethodDecl *getSetterMethod() const {
-    assert(getKind() == MethodRef && 
-           "Cannot get method from an ObjCPropertyRefExpr using a property");
-    return Referent.AsMethod.Setter;
+    return AsProperty;
   }
   
   virtual SourceRange getSourceRange() const { 
@@ -281,6 +234,60 @@ public:
   static ObjCPropertyRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// ObjCKVCRefExpr - A dot-syntax expression to access "implicit" properties 
+/// (i.e. methods following the property naming convention). KVC stands for
+/// Key Value Encoding, a generic concept for accessing or setting a 'Key'
+/// value for an object.
+///
+
+class ObjCKVCRefExpr : public Expr {
+private:
+  
+  ObjCMethodDecl *Setter;
+  ObjCMethodDecl *Getter;
+  SourceLocation Loc;
+  Stmt *Base;
+    
+public:
+  ObjCKVCRefExpr(ObjCMethodDecl *getter,
+                 QualType t, 
+                 SourceLocation l, Expr *base)
+    : Expr(ObjCKVCRefExprClass, t), Setter(0), 
+      Getter(getter), Loc(l), Base(base) {
+    }
+  
+  ObjCMethodDecl *getGetterMethod() const {
+      return Getter;
+  }
+  void setSetterMethod(ObjCMethodDecl *setter) {
+    Setter = setter;
+  }
+  ObjCMethodDecl *getSetterMethod() const {
+    return Setter;
+  }
+    
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(getBase()->getLocStart(), Loc); 
+  }
+  const Expr *getBase() const { return cast<Expr>(Base); }
+  Expr *getBase() { return cast<Expr>(Base); }
+  void setBase(Expr * base) { Base = base; }
+    
+  SourceLocation getLocation() const { return Loc; }
+    
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ObjCKVCRefExprClass; 
+  }
+  static bool classof(const ObjCKVCRefExpr *) { return true; }
+    
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+    
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCKVCRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+  
 class ObjCMessageExpr : public Expr {
   // SubExprs - The receiver and arguments of the message expression.
   Stmt **SubExprs;

@@ -1150,14 +1150,14 @@ ObjCIvarRefExpr* ObjCIvarRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
 void ObjCPropertyRefExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
-  unsigned Kind = getKind();
-  S.Emit(Kind);
-  if (Kind == PropertyRef) {
-    S.EmitPtr(getProperty());
-  } else {
-    S.EmitPtr(getGetterMethod());
-    S.EmitPtr(getSetterMethod());
-  }
+  S.EmitPtr(getProperty());
+}
+
+void ObjCKVCRefExpr::EmitImpl(Serializer& S) const {
+  S.Emit(Loc);
+  S.Emit(getType());
+  S.EmitPtr(getGetterMethod());
+  S.EmitPtr(getSetterMethod());
 }
   
 ObjCPropertyRefExpr* ObjCPropertyRefExpr::CreateImpl(Deserializer& D, 
@@ -1165,13 +1165,17 @@ ObjCPropertyRefExpr* ObjCPropertyRefExpr::CreateImpl(Deserializer& D,
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType T = QualType::ReadVal(D);
   ObjCPropertyRefExpr* dr = new ObjCPropertyRefExpr(NULL,T,Loc,0);
-  unsigned Kind = D.ReadInt();
-  if (Kind == PropertyRef) {
-    D.ReadPtr(dr->Referent.AsProperty,false);
-  } else {
-    D.ReadPtr(dr->Referent.AsMethod.Setter,false);
-    D.ReadPtr(dr->Referent.AsMethod.Getter,false);
-  }
+  D.ReadPtr(dr->AsProperty,false);
+  return dr;
+}
+
+ObjCKVCRefExpr* ObjCKVCRefExpr::CreateImpl(Deserializer& D, 
+                                           ASTContext& C) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  QualType T = QualType::ReadVal(D);
+  ObjCKVCRefExpr* dr = new ObjCKVCRefExpr(NULL,T,Loc,0);
+  D.ReadPtr(dr->Setter,false);
+  D.ReadPtr(dr->Getter,false);
   return dr;
 }
 

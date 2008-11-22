@@ -463,6 +463,8 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     return LV_Valid;
   case ObjCPropertyRefExprClass: // FIXME: check if read-only property.
     return LV_Valid;
+  case ObjCKVCRefExprClass: // FIXME: check if read-only property.
+      return LV_Valid;
   case PredefinedExprClass:
     return LV_Valid;
   case VAArgExprClass:
@@ -544,6 +546,16 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
     const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(this);
     if (!BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
       return MLV_NotBlockQualified;
+  }
+  // Assigning to a readonly property?
+  if (getStmtClass() == ObjCPropertyRefExprClass) {
+    const ObjCPropertyRefExpr* PropExpr = cast<ObjCPropertyRefExpr>(this);
+    if (ObjCPropertyDecl *PDecl = PropExpr->getProperty()) {
+      ObjCPropertyDecl::PropertyAttributeKind Pkind = 
+        PDecl->getPropertyAttributes();
+      if (Pkind == ObjCPropertyDecl::OBJC_PR_readonly)
+        return MLV_ReadonlyProperty;
+    }
   }
   return MLV_Valid;    
 }
@@ -1352,6 +1364,10 @@ Stmt::child_iterator ObjCIvarRefExpr::child_end() { return &Base+1; }
 // ObjCPropertyRefExpr
 Stmt::child_iterator ObjCPropertyRefExpr::child_begin() { return &Base; }
 Stmt::child_iterator ObjCPropertyRefExpr::child_end() { return &Base+1; }
+
+// ObjCKVCRefExpr
+Stmt::child_iterator ObjCKVCRefExpr::child_begin() { return &Base; }
+Stmt::child_iterator ObjCKVCRefExpr::child_end() { return &Base+1; }
 
 // ObjCSuperExpr
 Stmt::child_iterator ObjCSuperExpr::child_begin() { return child_iterator(); }
