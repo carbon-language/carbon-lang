@@ -19,6 +19,7 @@
 #include "CXXFieldCollector.h"
 #include "SemaOverload.h"
 #include "clang/Parse/Action.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -104,6 +105,8 @@ public:
   Preprocessor &PP;
   ASTContext &Context;
   ASTConsumer &Consumer;
+  Diagnostic &Diags;
+  SourceManager &SourceMgr;
 
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
@@ -224,9 +227,13 @@ public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer);
   
   const LangOptions &getLangOptions() const;
-  
+  Diagnostic &getDiagnostics() const { return Diags; }
+  SourceManager &getSourceManager() const { return SourceMgr; }
+
   /// The primitive diagnostic helpers.
-  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
+    return Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
+  }
 
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);

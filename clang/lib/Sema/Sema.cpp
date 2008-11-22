@@ -79,7 +79,8 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
-  : PP(pp), Context(ctxt), Consumer(consumer), CurContext(0),PreDeclaratorDC(0),
+  : PP(pp), Context(ctxt), Consumer(consumer), Diags(PP.getDiagnostics()),
+    SourceMgr(PP.getSourceManager()), CurContext(0), PreDeclaratorDC(0),
     CurBlock(0), PackContext(0), IdResolver(pp.getLangOptions()) {
   
   // Get IdentifierInfo objects for known functions for which we
@@ -156,11 +157,6 @@ void Sema::ActOnEndOfTranslationUnit() {
 //===----------------------------------------------------------------------===//
 // Helper functions.
 //===----------------------------------------------------------------------===//
-
-DiagnosticBuilder Sema::Diag(SourceLocation Loc, unsigned DiagID) {
-  return PP.getDiagnostics().Report(FullSourceLoc(Loc, PP.getSourceManager()),
-                                    DiagID);
-}
 
 const LangOptions &Sema::getLangOptions() const {
   return PP.getLangOptions();
