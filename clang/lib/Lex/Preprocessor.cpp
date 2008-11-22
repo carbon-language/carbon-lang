@@ -114,18 +114,6 @@ Preprocessor::~Preprocessor() {
   delete Callbacks;
 }
 
-/// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
-/// the specified Token's location, translating the token's start
-/// position in the current buffer into a SourcePosition object for rendering.
-DiagnosticBuilder Preprocessor::Diag(SourceLocation Loc, unsigned DiagID) {
-  return Diags.Report(FullSourceLoc(Loc, getSourceManager()), DiagID);
-}
-
-DiagnosticBuilder Preprocessor::Diag(const Token &Tok, unsigned DiagID) {
-  return Diags.Report(FullSourceLoc(Tok.getLocation(), getSourceManager()),
-                      DiagID);
-}
-
 void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
   llvm::cerr << tok::getTokenName(Tok.getKind()) << " '"
              << getSpelling(Tok) << "'";

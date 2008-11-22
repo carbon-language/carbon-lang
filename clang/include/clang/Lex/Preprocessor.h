@@ -18,6 +18,7 @@
 #include "clang/Lex/PTHLexer.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/TokenLexer.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
@@ -404,8 +405,14 @@ public:
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
-  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);  
-  DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID);
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
+    return Diags.Report(FullSourceLoc(Loc, getSourceManager()), DiagID);
+  }
+  
+  DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID) {
+    return Diags.Report(FullSourceLoc(Tok.getLocation(), getSourceManager()),
+                        DiagID);
+  }
   
   /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
   /// token is the characters used to represent the token in the source file
