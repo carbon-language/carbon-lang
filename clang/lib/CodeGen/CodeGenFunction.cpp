@@ -197,8 +197,10 @@ int CodeGenFunction::ConstantFoldsToSimpleInteger(const Expr *Cond) {
   
   // FIXME: Rename and handle conversion of other evaluatable things
   // to bool.
-  if (!Cond->Evaluate(V, getContext()) || !V.isInt())
-    return 0;  // Not foldable or not integer.
+  bool isEvaluated;
+  if (!Cond->Evaluate(V, getContext(), &isEvaluated) || !V.isInt() ||
+      !isEvaluated)
+    return 0;  // Not foldable, not integer or not fully evaluatable.
   
   if (CodeGenFunction::ContainsLabel(Cond))
     return 0;  // Contains a label.
