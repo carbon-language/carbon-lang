@@ -289,7 +289,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
     FR = 0;
     return UnknownVal();
   }
-  printf("kidn = %d\n", R->getKind());
+
   assert(0 && "Other regions are not supported yet.");
 }
 
