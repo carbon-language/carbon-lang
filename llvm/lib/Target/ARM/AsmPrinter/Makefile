@@ -1,4 +1,4 @@
-##===- lib/Target/X86/Makefile -----------------------------*- Makefile -*-===##
+##===- lib/Target/ARM/Makefile -----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -9,7 +9,7 @@
 LEVEL = ../../../..
 LIBRARYNAME = LLVMARMAsmPrinter
 
-# Hack: we need to include 'main' x86 target directory to grab private headers 
+# Hack: we need to include 'main' arm target directory to grab private headers 
 CPPFLAGS = -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
 include $(LEVEL)/Makefile.common

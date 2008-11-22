@@ -344,11 +344,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         O << "@GOTOFF";
     }
 
-    int Offset = MO.getOffset();
-    if (Offset > 0)
-      O << '+' << Offset;
-    else if (Offset < 0)
-      O << Offset;
+    printOffset(MO.getOffset());
 
     if (isMemOp && Subtarget->isPICStyleRIPRel() && !NotRIPRel)
       O << "(%rip)";
@@ -429,11 +425,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (GV->hasExternalWeakLinkage())
       ExtWeakSymbols.insert(GV);
 
-    int Offset = MO.getOffset();
-    if (Offset > 0)
-      O << '+' << Offset;
-    else if (Offset < 0)
-      O << Offset;
+    printOffset(MO.getOffset());
 
     if (isThreadLocal) {
       if (TM.getRelocationModel() == Reloc::PIC_ || Subtarget->is64Bit())

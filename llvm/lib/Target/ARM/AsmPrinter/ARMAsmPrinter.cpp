@@ -300,12 +300,9 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       FnStubs.insert(Name);
     } else
       O << Name;
-    
-    if (MO.getOffset() > 0)
-      O << '+' << MO.getOffset();
-    else if (MO.getOffset() < 0)
-      O << MO.getOffset();
-    
+
+    printOffset(MO.getOffset());
+
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "(PLT)";
@@ -345,7 +342,7 @@ static void printSOImm(raw_ostream &O, int64_t V, const TargetAsmInfo *TAI) {
   assert(V < (1 << 12) && "Not a valid so_imm value!");
   unsigned Imm = ARM_AM::getSOImmValImm(V);
   unsigned Rot = ARM_AM::getSOImmValRot(V);
-  
+
   // Print low-level immediate formation info, per
   // A5.1.3: "Data-processing operands - Immediate".
   if (Rot) {
