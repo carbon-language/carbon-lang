@@ -33,7 +33,7 @@ DIAG(null_in_char  , WARNING,
 DIAG(null_in_file  , WARNING,
      "null character ignored")
 DIAG(warn_nested_block_comment, WARNING,
-     "\"/*\" within block comment")
+     "'/*' within block comment")
 DIAG(escaped_newline_block_comment_end, WARNING,
      "escaped newline between */ characters at block comment end")
 DIAG(backslash_newline_space, WARNING,
@@ -125,7 +125,7 @@ DIAG(ext_pp_comma_expr, EXTENSION,
 DIAG(ext_pp_bad_vaargs_use, EXTENSION,
      "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro")
 DIAG(ext_pp_macro_redef, EXTENSION,
-     "\"%0\" macro redefined")
+     "'%0' macro redefined")
 DIAG(ext_pp_macro_redef2, EXTENSION,
      "this is previous definition")
 DIAG(ext_variadic_macro, EXTENSION,
@@ -171,7 +171,7 @@ DIAG(err_pp_expected_ident_in_arg_list, ERROR,
 DIAG(err_pp_expected_comma_in_arg_list, ERROR,
      "expected comma in macro parameter list")
 DIAG(err_pp_duplicate_name_in_arg_list, ERROR,
-     "duplicate macro parameter name \"%0\"")
+     "duplicate macro parameter name '%0'")
 DIAG(err_pp_stringize_not_parameter, ERROR,
      "'#' is not followed by a macro parameter")
 DIAG(err_pp_malformed_ident, ERROR,
@@ -197,11 +197,11 @@ DIAG(err_pp_expected_rparen, ERROR,
 DIAG(err_pp_expected_eol, ERROR,
      "expected end of line in preprocessor expression")
 DIAG(warn_pp_undef_identifier, WARNING,
-     "\"%0\" is not defined, evaluates to 0")
+     "'%0' is not defined, evaluates to 0")
 DIAG(err_pp_defined_requires_identifier, ERROR,
-     "operator \"defined\" requires an identifier")
+     "operator 'defined' requires an identifier")
 DIAG(err_pp_missing_rparen, ERROR,
-     "missing ')' after \"defined\"")
+     "missing ')' after 'defined'")
 DIAG(err_pp_colon_without_question, ERROR,
      "':' without preceding '?'")
 DIAG(err_pp_division_by_zero, ERROR,
@@ -219,11 +219,11 @@ DIAG(err_pp_used_poisoned_id, ERROR,
 DIAG(err__Pragma_malformed, ERROR,
      "_Pragma takes a parenthesized string literal")
 DIAG(err_defined_macro_name, ERROR,
-     "\"defined\" cannot be used as a macro name")
+     "'defined' cannot be used as a macro name")
 DIAG(err_paste_at_start, ERROR,
-     "\"##\" cannot appear at start of macro expansion")
+     "'##' cannot appear at start of macro expansion")
 DIAG(err_paste_at_end, ERROR,
-     "\"##\" cannot appear at end of macro expansion")
+     "'##' cannot appear at end of macro expansion")
 DIAG(ext_paste_comma, EXTENSION,
      "Use of comma pasting extension is non-portable")
 DIAG(err_unterm_macro_invoc, ERROR,
@@ -233,9 +233,9 @@ DIAG(err_too_many_args_in_macro_invoc, ERROR,
 DIAG(err_too_few_args_in_macro_invoc, ERROR,
      "too few arguments provided to function-like macro invocation")
 DIAG(err_pp_bad_paste, ERROR,
-     "pasting formed \"%0\", an invalid preprocessing token")
+     "pasting formed '%0', an invalid preprocessing token")
 DIAG(err_pp_operator_used_as_macro_name, ERROR,
-     "C++ operator \"%0\" cannot be used as a macro name")
+     "C++ operator '%0' cannot be used as a macro name")
 DIAG(err_pp_illegal_floating_literal, ERROR,
      "floating point literal in preprocessor expression")
 
@@ -977,7 +977,7 @@ DIAG(warn_extern_init, WARNING,
 DIAG(err_variable_object_no_init, ERROR,
      "variable-sized object may not be initialized")
 DIAG(err_array_init_list_required, ERROR,
-     "initialization with \"{...}\" expected for array")
+     "initialization with '{...}' expected for array")
 DIAG(warn_excess_initializers, WARNING,
      "excess elements in array initializer")
 DIAG(err_excess_initializers_in_char_array_initializer, ERROR,
@@ -1332,11 +1332,13 @@ DIAG(err_anon_type_definition, ERROR,
 
 // C++ member initializers.
 DIAG(err_mem_init_not_member_or_class, ERROR,
-     "member initializer '%0' does not name a non-static data member or base class")
+     "member initializer '%0' does not name a non-static data member or base "
+     "class")
 DIAG(err_base_init_does_not_name_class, ERROR,
      "constructor initializer '%0' does not name a class")
 DIAG(err_base_init_direct_and_virtual, ERROR,
-     "base class initializer '%0' names both a direct base class and an inherited virtual base class")
+     "base class initializer '%0' names both a direct base class and an"
+     " inherited virtual base class")
 
 // Derived classes.
 DIAG(err_dup_virtual, ERROR,
