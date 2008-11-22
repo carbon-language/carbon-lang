@@ -48,5 +48,15 @@ void test4()
   case 0 && g() ... 1 || g():
     break;
   }
+  
+  switch (1) {
+  case g() && 0: // expected-error {{case label does not reduce to an integer constant}}
+    break;
+  }
+  
+  switch (1) {
+  case 0 ... g() || 1: // expected-error {{case label does not reduce to an integer constant}}
+    break;
+  }
 }
 

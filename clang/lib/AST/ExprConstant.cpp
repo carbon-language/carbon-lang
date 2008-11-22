@@ -537,6 +537,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     // These need to be handled specially because the operands aren't
     // necessarily integral
     bool bres;
+    bool isEvaluated = true;
     
     if (HandleConversionToBool(E->getLHS(), bres, Info)) {
       // We were able to evaluate the LHS, see if we can get away with not
@@ -548,16 +549,18 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         // We can't evaluate.
         return false;
       }
+      
+      // We did not evaluate the LHS
+      isEvaluated = false;
     }
 
-    // FIXME: If we evaluate the RHS, we need to check if the LHS has
-    // any side effects.
-    
     if (bres == (E->getOpcode() == BinaryOperator::LOr) ||
         !bres == (E->getOpcode() == BinaryOperator::LAnd)) {
       Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
       Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
       Result = bres;
+      Info.isEvaluated = isEvaluated;
+      
       return true;
     }
 
@@ -1153,30 +1156,31 @@ APValue ComplexFloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
 /// any crazy technique (that has nothing to do with language standards) that
 /// we want to.  If this function returns true, it returns the folded constant
 /// in Result.
-bool Expr::Evaluate(APValue &Result, ASTContext &Ctx) const {
+bool Expr::Evaluate(APValue &Result, ASTContext &Ctx, bool *isEvaluated) const {
   EvalInfo Info(Ctx);
   if (getType()->isIntegerType()) {
     llvm::APSInt sInt(32);
-    if (EvaluateInteger(this, sInt, Info)) {
-      Result = APValue(sInt);
-      return true;
-    }
+    if (!EvaluateInteger(this, sInt, Info))
+      return false;
+    
+    Result = APValue(sInt);
   } else if (getType()->isPointerType()) {
-    if (EvaluatePointer(this, Result, Info)) {
-      return true;
-    }
+    if (!EvaluatePointer(this, Result, Info))
+      return false;
   } else if (getType()->isRealFloatingType()) {
     llvm::APFloat f(0.0);
-    if (EvaluateFloat(this, f, Info)) {
-      Result = APValue(f);
-      return true;
-    }
+    if (!EvaluateFloat(this, f, Info))
+      return false;
+    
+    Result = APValue(f);
   } else if (getType()->isComplexType()) {
-    if (EvaluateComplexFloat(this, Result, Info))
-      return true;
+    if (!EvaluateComplexFloat(this, Result, Info))
+      return false;
   }    
-      
-  return false;
+
+  if (isEvaluated)
+    *isEvaluated = Info.isEvaluated;
+  return true;
 }
 
 /// isEvaluatable - Call Evaluate to see if this expression can be constant

@@ -131,8 +131,10 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
   // However, GCC allows any evaluatable integer expression. 
   // FIXME: Should we warn if this is evaluatable but not an I-C-E?
   APValue Result;
+  bool isEvaluated;
   
-  if (!LHSVal->Evaluate(Result, Context) || !Result.isInt()) {
+  if (!LHSVal->Evaluate(Result, Context, &isEvaluated) || !Result.isInt() ||
+      !isEvaluated) {
     // FIXME: Evaluate doesn't return the SourceLocation that it failed to
     // evaluate. 
     ExpLoc = LHSVal->getExprLoc();
@@ -142,7 +144,8 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
   }
 
   // GCC extension: The expression shall be an integer constant.
-  if (RHSVal && !RHSVal->Evaluate(Result, Context) || !Result.isInt()) {
+  if (RHSVal && !RHSVal->Evaluate(Result, Context, &isEvaluated) || 
+      !Result.isInt() || !isEvaluated) {
     ExpLoc = RHSVal->getExprLoc();
     Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr)
       << RHSVal->getSourceRange();
