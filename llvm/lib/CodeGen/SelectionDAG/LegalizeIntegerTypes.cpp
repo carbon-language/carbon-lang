@@ -84,20 +84,23 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::ANY_EXTEND:  Result = PromoteIntRes_INT_EXTEND(N); break;
 
   case ISD::FP_TO_SINT:
-  case ISD::FP_TO_UINT: Result = PromoteIntRes_FP_TO_XINT(N); break;
+  case ISD::FP_TO_UINT:  Result = PromoteIntRes_FP_TO_XINT(N); break;
 
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
   case ISD::ADD:
   case ISD::SUB:
-  case ISD::MUL: Result = PromoteIntRes_SimpleIntBinOp(N); break;
+  case ISD::MUL:         Result = PromoteIntRes_SimpleIntBinOp(N); break;
 
   case ISD::SDIV:
-  case ISD::SREM: Result = PromoteIntRes_SDIV(N); break;
+  case ISD::SREM:        Result = PromoteIntRes_SDIV(N); break;
 
   case ISD::UDIV:
-  case ISD::UREM: Result = PromoteIntRes_UDIV(N); break;
+  case ISD::UREM:        Result = PromoteIntRes_UDIV(N); break;
+
+  case ISD::SADDO:       Result = PromoteIntRes_SADDO(N, ResNo); break;
+  case ISD::UADDO:       Result = PromoteIntRes_UADDO(N, ResNo); break;
 
   case ISD::ATOMIC_LOAD_ADD_8:
   case ISD::ATOMIC_LOAD_SUB_8:
@@ -513,6 +516,28 @@ SDValue DAGTypeLegalizer::PromoteIntRes_UDIV(SDNode *N) {
   SDValue LHS = ZExtPromotedInteger(N->getOperand(0));
   SDValue RHS = ZExtPromotedInteger(N->getOperand(1));
   return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_XADDO(SDNode *N, unsigned ResNo,
+                                              ISD::NodeType NTy) {
+  MVT NewVT = TLI.getTypeToTransformTo(SDValue(N, ResNo).getValueType());
+  assert(isTypeLegal(NewVT) && "Illegal XADDO type!");
+
+  MVT ValueVTs[] = { N->getOperand(0).getValueType(), NewVT };
+  SDValue Ops[] = { N->getOperand(0), N->getOperand(1) };
+
+  SDValue Res = DAG.getNode(NTy, DAG.getVTList(&ValueVTs[0], 2), &Ops[0], 2);
+  ReplaceValueWith(SDValue(N, 0), SDValue(Res.getNode(), 0));
+  ReplaceValueWith(SDValue(N, 1), SDValue(Res.getNode(), 1));
+  return Res;
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_SADDO(SDNode *N, unsigned ResNo) {
+  return PromoteIntRes_XADDO(N, ResNo, ISD::SADDO);
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_UADDO(SDNode *N, unsigned ResNo) {
+  return PromoteIntRes_XADDO(N, ResNo, ISD::UADDO);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_UNDEF(SDNode *N) {
