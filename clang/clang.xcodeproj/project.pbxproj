@@ -851,7 +851,6 @@
 				352712500DAFE54700C76352 /* IdentifierResolver.cpp */,
 				DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */,
 				DE67E7140C020EDF00F66BC5 /* Sema.h */,
-				35A2B8610CF8FFA300E6C317 /* SemaUtil.h */,
 				DE67E7160C020EE400F66BC5 /* Sema.cpp */,
 				DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */,
 				35E194670ECB82FB00F21733 /* SemaCXXScopeSpec.cpp */,
@@ -870,6 +869,7 @@
 				35585DBF0EAFBC4500D0A97A /* SemaOverload.h */,
 				DE67E70C0C020ECA00F66BC5 /* SemaStmt.cpp */,
 				DE67E70A0C020EC500F66BC5 /* SemaType.cpp */,
+				35A2B8610CF8FFA300E6C317 /* SemaUtil.h */,
 			);
 			name = Sema;
 			sourceTree = "<group>";
