@@ -557,6 +557,12 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
         return MLV_ReadonlyProperty;
     }
   }
+  // Assigning to an 'implicit' property?
+  if (getStmtClass() == ObjCKVCRefExprClass) {
+    const ObjCKVCRefExpr* KVCExpr = cast<ObjCKVCRefExpr>(this);
+    if (KVCExpr->getSetterMethod() == 0)
+      return MLV_NoSetterProperty;
+  }
   return MLV_Valid;    
 }
 

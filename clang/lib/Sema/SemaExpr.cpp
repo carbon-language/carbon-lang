@@ -1090,6 +1090,20 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   return VT; // should never get here (a typedef type should always be found).
 }
 
+/// constructSetterName - Return the setter name for the given
+/// identifier, i.e. "set" + Name where the initial character of Name
+/// has been capitalized.
+// FIXME: Merge with same routine in Parser. But where should this
+// live?
+static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
+                                           const IdentifierInfo *Name) {
+  llvm::SmallString<100> SelectorName;
+  SelectorName = "set";
+  SelectorName.append(Name->getName(), Name->getName()+Name->getLength());
+  SelectorName[3] = toupper(SelectorName[3]);
+  return &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
+}
+
 Action::ExprResult Sema::
 ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
@@ -1198,9 +1212,30 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     }
     if (Getter) {
       // If we found a getter then this may be a valid dot-reference, we
-      // will look for the matching setter, if it is needed. But we don't
-      // know this yet.
-      return new ObjCKVCRefExpr(Getter, Getter->getResultType(), 
+      // will look for the matching setter, in case it is needed.
+      IdentifierInfo *SetterName = constructSetterName(PP.getIdentifierTable(),
+                                                       &Member);
+      Selector SetterSel = PP.getSelectorTable().getUnarySelector(SetterName);
+      ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
+      if (!Setter) {
+        // If this reference is in an @implementation, also check for 'private' 
+        // methods.
+        if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
+          if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
+            if (ObjCImplementationDecl *ImpDecl = 
+                  ObjCImplementations[ClassDecl->getIdentifier()])
+              Setter = ImpDecl->getInstanceMethod(SetterSel);
+      }
+      // Look through local category implementations associated with the class.
+      if (!Setter) {
+        for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
+          if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
+            Setter = ObjCCategoryImpls[i]->getInstanceMethod(SetterSel);
+        }
+      }
+      
+      // FIXME: we must check that the setter has property type.      
+      return new ObjCKVCRefExpr(Getter, Getter->getResultType(), Setter,
                                 MemberLoc, BaseExpr);
     }
   }
@@ -2521,6 +2556,9 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
     break;
   case Expr::MLV_ReadonlyProperty:
     Diag = diag::error_readonly_property_assignment;
+    break;
+  case Expr::MLV_NoSetterProperty:
+    Diag = diag::error_nosetter_property_assignment;
     break;
   }
 

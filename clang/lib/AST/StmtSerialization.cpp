@@ -1173,7 +1173,7 @@ ObjCKVCRefExpr* ObjCKVCRefExpr::CreateImpl(Deserializer& D,
                                            ASTContext& C) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType T = QualType::ReadVal(D);
-  ObjCKVCRefExpr* dr = new ObjCKVCRefExpr(NULL,T,Loc,0);
+  ObjCKVCRefExpr* dr = new ObjCKVCRefExpr(NULL,T,NULL,Loc,0);
   D.ReadPtr(dr->Setter,false);
   D.ReadPtr(dr->Getter,false);
   return dr;

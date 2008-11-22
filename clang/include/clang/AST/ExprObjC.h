@@ -251,16 +251,14 @@ private:
 public:
   ObjCKVCRefExpr(ObjCMethodDecl *getter,
                  QualType t, 
+                 ObjCMethodDecl *setter,
                  SourceLocation l, Expr *base)
-    : Expr(ObjCKVCRefExprClass, t), Setter(0), 
+    : Expr(ObjCKVCRefExprClass, t), Setter(setter),
       Getter(getter), Loc(l), Base(base) {
     }
   
   ObjCMethodDecl *getGetterMethod() const {
       return Getter;
-  }
-  void setSetterMethod(ObjCMethodDecl *setter) {
-    Setter = setter;
   }
   ObjCMethodDecl *getSetterMethod() const {
     return Setter;

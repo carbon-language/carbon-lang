@@ -104,7 +104,8 @@ public:
     MLV_ConstQualified,
     MLV_ArrayType,
     MLV_NotBlockQualified,
-    MLV_ReadonlyProperty
+    MLV_ReadonlyProperty,
+    MLV_NoSetterProperty
   };
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx) const;
   
