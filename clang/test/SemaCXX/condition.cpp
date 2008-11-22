@@ -6,7 +6,7 @@ void test() {
   if (int x=0) ++x;
 
   typedef int arr[10];
-  while (arr x=0) ; // expected-error: {{an array type is not allowed here}} expected-error: {{initialization with "{...}" expected for array}}
+  while (arr x=0) ; // expected-error: {{an array type is not allowed here}} expected-error: {{initialization with '{...}' expected for array}}
   while (int f()=0) ; // expected-error: {{a function type is not allowed here}}
 
   struct S {} s;
