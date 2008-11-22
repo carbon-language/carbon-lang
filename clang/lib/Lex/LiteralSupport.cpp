@@ -141,11 +141,10 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     }
     // FALL THROUGH.
   default:
-    if (isgraph(ThisTokBuf[0])) {
+    if (isgraph(ThisTokBuf[0]))
       PP.Diag(Loc, diag::ext_unknown_escape) << std::string()+(char)ResultChar;
-    } else {
+    else
       PP.Diag(Loc, diag::ext_unknown_escape) << "x"+llvm::utohexstr(ResultChar);
-    }
     break;
   }
   
@@ -225,8 +224,9 @@ NumericLiteralParser(const char *begin, const char *end,
     if (s == ThisTokEnd) {
       // Done.
     } else if (isxdigit(*s) && !(*s == 'e' || *s == 'E')) {
-      Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
-           diag::err_invalid_decimal_digit, std::string(s, s+1));
+      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+              diag::err_invalid_decimal_digit) << std::string(s, s+1);
+      hadError = true;
       return;
     } else if (*s == '.') {
       s++;
@@ -242,8 +242,9 @@ NumericLiteralParser(const char *begin, const char *end,
       if (first_non_digit != s) {
         s = first_non_digit;
       } else {
-        Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-begin),
-             diag::err_exponent_has_no_digits);
+        PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-begin),
+                diag::err_exponent_has_no_digits);
+        hadError = true;
         return;
       }
     }
@@ -330,10 +331,11 @@ NumericLiteralParser(const char *begin, const char *end,
   
   // Report an error if there are any.
   if (s != ThisTokEnd) {
-    Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
-         isFPConstant ? diag::err_invalid_suffix_float_constant :
-                        diag::err_invalid_suffix_integer_constant, 
-         std::string(SuffixBegin, ThisTokEnd));
+    PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+            isFPConstant ? diag::err_invalid_suffix_float_constant :
+                           diag::err_invalid_suffix_integer_constant)
+      << std::string(SuffixBegin, ThisTokEnd);
+    hadError = true;
     return;
   }
 }
@@ -369,17 +371,21 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
       if (*s == '+' || *s == '-')  s++; // sign
       const char *first_non_digit = SkipDigits(s);
       if (first_non_digit == s) {
-        Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-ThisTokBegin),
-             diag::err_exponent_has_no_digits);
+        PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-ThisTokBegin),
+                diag::err_exponent_has_no_digits);
+        hadError = true;
         return;
       }
       s = first_non_digit;
       
-      if (!PP.getLangOptions().HexFloats)
-        Diag(TokLoc, diag::ext_hexconstant_invalid);
+      if (!PP.getLangOptions().HexFloats) {
+        PP.Diag(TokLoc, diag::ext_hexconstant_invalid);
+        hadError = true;
+      }
     } else if (saw_period) {
-      Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
-           diag::err_hexconstant_requires_exponent);
+      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
+              diag::err_hexconstant_requires_exponent);
+      hadError = true;
     }
     return;
   }
@@ -395,8 +401,9 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     if (s == ThisTokEnd) {
       // Done.
     } else if (isxdigit(*s)) {
-      Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
-           diag::err_invalid_binary_digit, std::string(s, s+1));
+      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
+              diag::err_invalid_binary_digit) << std::string(s, s+1);
+      hadError = true;
     }
     // Other suffixes will be diagnosed by the caller.
     return;
@@ -424,8 +431,9 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   // If we have a hex digit other than 'e' (which denotes a FP exponent) then
   // the code is using an incorrect base.
   if (isxdigit(*s) && *s != 'e' && *s != 'E') {
-    Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
-         diag::err_invalid_octal_digit, std::string(s, s+1));
+    PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
+            diag::err_invalid_octal_digit) << std::string(s, s+1);
+    hadError = true;
     return;
   }
   
@@ -445,8 +453,9 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     if (first_non_digit != s) {
       s = first_non_digit;
     } else {
-      Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-ThisTokBegin), 
-           diag::err_exponent_has_no_digits);
+      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-ThisTokBegin), 
+              diag::err_exponent_has_no_digits);
+      hadError = true;
       return;
     }
   }
@@ -528,12 +537,6 @@ GetFloatValue(const llvm::fltSemantics &Format, bool* isExact) {
     *isExact = status == APFloat::opOK;
   
   return V;
-}
-
-void NumericLiteralParser::Diag(SourceLocation Loc, unsigned DiagID, 
-                                const std::string &M) {
-  PP.Diag(Loc, DiagID) << M;
-  hadError = true;
 }
 
 

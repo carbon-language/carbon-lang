@@ -84,9 +84,7 @@ public:
                               bool* isExact = NULL);
 
 private:  
-  void Diag(SourceLocation Loc, unsigned DiagID, 
-            const std::string &M = std::string());
-  
+ 
   void ParseNumberStartingWithZero(SourceLocation TokLoc);
   
   /// SkipHexDigits - Read and skip over any hex digits, up to End.
