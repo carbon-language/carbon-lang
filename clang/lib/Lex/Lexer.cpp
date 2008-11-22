@@ -313,11 +313,6 @@ DiagnosticBuilder Lexer::Diag(const char *Loc, unsigned DiagID) const {
   return PP->Diag(getSourceLocation(Loc), DiagID);
 }
 
-DiagnosticBuilder Lexer::Diag(SourceLocation Loc, unsigned DiagID) const {
-  return PP->Diag(Loc, DiagID);
-}
-
-
 //===----------------------------------------------------------------------===//
 // Trigraph and Escaped Newline Handling Code.
 //===----------------------------------------------------------------------===//
@@ -1153,7 +1148,8 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
 
   // If we are in a #if directive, emit an error.
   while (!ConditionalStack.empty()) {
-    Diag(ConditionalStack.back().IfLoc, diag::err_pp_unterminated_conditional);
+    PP->Diag(ConditionalStack.back().IfLoc,
+             diag::err_pp_unterminated_conditional);
     ConditionalStack.pop_back();
   }
   

@@ -173,7 +173,6 @@ public:
   /// Diag - Forwarding function for diagnostics.  This translate a source
   /// position in the current buffer into a SourceLocation object for rendering.
   DiagnosticBuilder Diag(const char *Loc, unsigned DiagID) const;
-  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) const;
 
   /// getSourceLocation - Return a source location identifier for the specified
   /// offset in the current file.
