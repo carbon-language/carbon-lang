@@ -39,8 +39,8 @@ namespace {
 
   //! MVT mapping to useful data for Cell SPU
   struct valtype_map_s {
-    const MVT        valtype;
-    const int                   prefslot_byte;
+    const MVT   valtype;
+    const int   prefslot_byte;
   };
 
   const valtype_map_s valtype_map[] = {
@@ -171,7 +171,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Expand the jumptable branches
   setOperationAction(ISD::BR_JT,        MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,        MVT::Other, Expand);
+
+  // Custom lower SELECT_CC for most cases, but expand by default
   setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC,    MVT::i8,    Custom);
+  setOperationAction(ISD::SELECT_CC,    MVT::i16,   Custom);
+  setOperationAction(ISD::SELECT_CC,    MVT::i32,   Custom);
+  setOperationAction(ISD::SELECT_CC,    MVT::i64,   Custom);
 
   // SPU has no intrinsics for these particular operations:
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
@@ -398,6 +404,9 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setTargetDAGCombine(ISD::ANY_EXTEND);
 
   computeRegisterProperties();
+
+  // Set other properties:
+  setSchedulingPreference(SchedulingForLatency);
 }
 
 const char *
@@ -413,7 +422,7 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::LDRESULT] = "SPUISD::LDRESULT";
     node_names[(unsigned) SPUISD::CALL] = "SPUISD::CALL";
     node_names[(unsigned) SPUISD::SHUFB] = "SPUISD::SHUFB";
-    node_names[(unsigned) SPUISD::INSERT_MASK] = "SPUISD::INSERT_MASK";
+    node_names[(unsigned) SPUISD::SHUFFLE_MASK] = "SPUISD::SHUFFLE_MASK";
     node_names[(unsigned) SPUISD::CNTB] = "SPUISD::CNTB";
     node_names[(unsigned) SPUISD::PROMOTE_SCALAR] = "SPUISD::PROMOTE_SCALAR";
     node_names[(unsigned) SPUISD::EXTRACT_ELT0] = "SPUISD::EXTRACT_ELT0";
@@ -750,7 +759,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     }
 
     SDValue insertEltOp =
-            DAG.getNode(SPUISD::INSERT_MASK, stVecVT, insertEltPtr);
+            DAG.getNode(SPUISD::SHUFFLE_MASK, stVecVT, insertEltPtr);
     SDValue vectorizeOp =
             DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, theValue);
 
@@ -1720,11 +1729,11 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
 /// which the Cell can operate. The code inspects V3 to ascertain whether the
 /// permutation vector, V3, is monotonically increasing with one "exception"
 /// element, e.g., (0, 1, _, 3). If this is the case, then generate a
-/// INSERT_MASK synthetic instruction. Otherwise, spill V3 to the constant pool.
+/// SHUFFLE_MASK synthetic instruction. Otherwise, spill V3 to the constant pool.
 /// In either case, the net result is going to eventually invoke SHUFB to
 /// permute/shuffle the bytes from V1 and V2.
 /// \note
-/// INSERT_MASK is eventually selected as one of the C*D instructions, generate
+/// SHUFFLE_MASK is eventually selected as one of the C*D instructions, generate
 /// control word for byte/halfword/word insertion. This takes care of a single
 /// element move from V2 into V1.
 /// \note
@@ -1782,9 +1791,9 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     // Initialize temporary register to 0
     SDValue InitTempReg =
       DAG.getCopyToReg(DAG.getEntryNode(), VReg, DAG.getConstant(0, PtrVT));
-    // Copy register's contents as index in INSERT_MASK:
+    // Copy register's contents as index in SHUFFLE_MASK:
     SDValue ShufMaskOp =
-      DAG.getNode(SPUISD::INSERT_MASK, V1.getValueType(),
+      DAG.getNode(SPUISD::SHUFFLE_MASK, V1.getValueType(),
                   DAG.getTargetConstant(V2Elt, MVT::i32),
                   DAG.getCopyFromReg(InitTempReg, VReg, PtrVT));
     // Use shuffle mask in SHUFB synthetic instruction:
@@ -2050,82 +2059,200 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
   SDValue N = Op.getOperand(0);
   SDValue Elt = Op.getOperand(1);
-  SDValue ShufMask[16];
-  ConstantSDNode *C = dyn_cast<ConstantSDNode>(Elt);
+  SDValue retval;
 
-  assert(C != 0 && "LowerEXTRACT_VECTOR_ELT expecting constant SDNode");
+  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Elt)) {
+    // Constant argument:
+    int EltNo = (int) C->getZExtValue();
 
-  int EltNo = (int) C->getZExtValue();
+    // sanity checks:
+    if (VT == MVT::i8 && EltNo >= 16)
+      assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i8 extraction slot > 15");
+    else if (VT == MVT::i16 && EltNo >= 8)
+      assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i16 extraction slot > 7");
+    else if (VT == MVT::i32 && EltNo >= 4)
+      assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i32 extraction slot > 4");
+    else if (VT == MVT::i64 && EltNo >= 2)
+      assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i64 extraction slot > 2");
 
-  // sanity checks:
-  if (VT == MVT::i8 && EltNo >= 16)
-    assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i8 extraction slot > 15");
-  else if (VT == MVT::i16 && EltNo >= 8)
-    assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i16 extraction slot > 7");
-  else if (VT == MVT::i32 && EltNo >= 4)
-    assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i32 extraction slot > 4");
-  else if (VT == MVT::i64 && EltNo >= 2)
-    assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i64 extraction slot > 2");
+    if (EltNo == 0 && (VT == MVT::i32 || VT == MVT::i64)) {
+      // i32 and i64: Element 0 is the preferred slot
+      return DAG.getNode(SPUISD::EXTRACT_ELT0, VT, N);
+    }
 
-  if (EltNo == 0 && (VT == MVT::i32 || VT == MVT::i64)) {
-    // i32 and i64: Element 0 is the preferred slot
-    return DAG.getNode(SPUISD::EXTRACT_ELT0, VT, N);
+    // Need to generate shuffle mask and extract:
+    int prefslot_begin = -1, prefslot_end = -1;
+    int elt_byte = EltNo * VT.getSizeInBits() / 8;
+
+    switch (VT.getSimpleVT()) {
+    default:
+      assert(false && "Invalid value type!");
+    case MVT::i8: {
+      prefslot_begin = prefslot_end = 3;
+      break;
+    }
+    case MVT::i16: {
+      prefslot_begin = 2; prefslot_end = 3;
+      break;
+    }
+    case MVT::i32:
+    case MVT::f32: {
+      prefslot_begin = 0; prefslot_end = 3;
+      break;
+    }
+    case MVT::i64:
+    case MVT::f64: {
+      prefslot_begin = 0; prefslot_end = 7;
+      break;
+    }
+    }
+
+    assert(prefslot_begin != -1 && prefslot_end != -1 &&
+           "LowerEXTRACT_VECTOR_ELT: preferred slots uninitialized");
+
+    unsigned int ShufBytes[16];
+    for (int i = 0; i < 16; ++i) {
+      // zero fill uppper part of preferred slot, don't care about the
+      // other slots:
+      unsigned int mask_val;
+      if (i <= prefslot_end) {
+        mask_val =
+          ((i < prefslot_begin)
+           ? 0x80
+           : elt_byte + (i - prefslot_begin));
+
+        ShufBytes[i] = mask_val;
+      } else
+        ShufBytes[i] = ShufBytes[i % (prefslot_end + 1)];
+    }
+
+    SDValue ShufMask[4];
+    for (unsigned i = 0; i < sizeof(ShufMask)/sizeof(ShufMask[0]); ++i) {
+      unsigned bidx = i / 4;
+      unsigned int bits = ((ShufBytes[bidx] << 24) |
+                           (ShufBytes[bidx+1] << 16) |
+                           (ShufBytes[bidx+2] << 8) |
+                           ShufBytes[bidx+3]);
+      ShufMask[i] = DAG.getConstant(bits, MVT::i32);
+    }
+
+    SDValue ShufMaskVec = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                                      &ShufMask[0],
+                                      sizeof(ShufMask) / sizeof(ShufMask[0]));
+
+    retval = DAG.getNode(SPUISD::EXTRACT_ELT0, VT,
+                         DAG.getNode(SPUISD::SHUFB, N.getValueType(),
+                                     N, N, ShufMaskVec));
+  } else {
+    // Variable index: Rotate the requested element into slot 0, then replicate
+    // slot 0 across the vector
+    MVT VecVT = N.getValueType();
+    if (!VecVT.isSimple() || !VecVT.isVector() || !VecVT.is128BitVector()) {
+      cerr << "LowerEXTRACT_VECTOR_ELT: Must have a simple, 128-bit vector type!\n";
+      abort();
+    }
+
+    // Make life easier by making sure the index is zero-extended to i32
+    if (Elt.getValueType() != MVT::i32)
+      Elt = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Elt);
+
+    // Scale the index to a bit/byte shift quantity
+    APInt scaleFactor =
+      APInt(32, uint64_t(16 / N.getValueType().getVectorNumElements()), false);
+    SDValue vecShift;
+    
+    switch (VT.getSimpleVT()) {
+    default:
+      cerr << "LowerEXTRACT_VECTOR_ELT(varable): Unhandled vector type\n";
+      abort();
+      /*NOTREACHED*/
+    case MVT::i8: {
+      // Don't need to scale, but we do need to correct for where bytes go in
+      // slot 0:
+      SDValue prefSlot = DAG.getNode(ISD::SUB, MVT::i32,
+                                     Elt, DAG.getConstant(3, MVT::i32));
+      SDValue corrected = DAG.getNode(ISD::ADD, MVT::i32, prefSlot,
+                                      DAG.getConstant(16, MVT::i32));
+
+      SDValue shiftAmt = DAG.getNode(ISD::SELECT_CC, MVT::i32,
+                                     prefSlot, DAG.getConstant(0, MVT::i32),
+                                     prefSlot,          // trueval
+                                     corrected,         // falseval
+                                     DAG.getCondCode(ISD::SETGT));
+      vecShift = DAG.getNode(SPUISD::ROTBYTES_LEFT, VecVT, N, shiftAmt);
+      break;
+    }
+    case MVT::i16: {
+      // Scale the index to bytes, subtract for preferred slot:
+      Elt = DAG.getNode(ISD::SHL, MVT::i32, Elt,
+                        DAG.getConstant(scaleFactor.logBase2(), MVT::i32));
+      SDValue prefSlot = DAG.getNode(ISD::SUB, MVT::i32,
+                                     Elt, DAG.getConstant(2, MVT::i32));
+      SDValue corrected = DAG.getNode(ISD::ADD, MVT::i32, prefSlot,
+                                      DAG.getConstant(16, MVT::i32));
+
+      SDValue shiftAmt = DAG.getNode(ISD::SELECT_CC, MVT::i32,
+                                     prefSlot, DAG.getConstant(0, MVT::i32),
+                                     prefSlot,          // trueval
+                                     corrected,         // falseval
+                                     DAG.getCondCode(ISD::SETGT));
+      vecShift = DAG.getNode(SPUISD::ROTBYTES_LEFT, VecVT, N, shiftAmt);
+      break;
+    }
+    case MVT::i32:
+    case MVT::f32:
+    case MVT::i64:
+    case MVT::f64:
+      // Simple left shift to slot 0
+      Elt = DAG.getNode(ISD::SHL, MVT::i32, Elt,
+                        DAG.getConstant(scaleFactor.logBase2(), MVT::i32));
+      vecShift = DAG.getNode(SPUISD::SHLQUAD_L_BYTES, VecVT, N, Elt);
+      break;
+    }
+
+    // Replicate slot 0 across the entire vector (for consistency with the
+    // notion of a unified register set)
+    SDValue replicate;
+
+    switch (VT.getSimpleVT()) {
+    default:
+      cerr << "LowerEXTRACT_VECTOR_ELT(varable): Unhandled vector type\n";
+      abort();
+      /*NOTREACHED*/
+    case MVT::i8: {
+      SDValue factor = DAG.getConstant(0x03030303, MVT::i32);
+      replicate = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, factor, factor,
+                              factor, factor);
+      break;
+    }
+    case MVT::i16: {
+      SDValue factor = DAG.getConstant(0x02030203, MVT::i32);
+      replicate = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, factor, factor,
+                              factor, factor);
+      break;
+    }
+    case MVT::i32:
+    case MVT::f32: {
+      SDValue factor = DAG.getConstant(0x00010203, MVT::i32);
+      replicate = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, factor, factor,
+                              factor, factor);
+      break;
+    }
+    case MVT::i64:
+    case MVT::f64: {
+      SDValue loFactor = DAG.getConstant(0x00010203, MVT::i32);
+      SDValue hiFactor = DAG.getConstant(0x04050607, MVT::i32);
+      replicate = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, loFactor, hiFactor,
+                              loFactor, hiFactor);
+      break;
+    }
+    }
+
+    retval = DAG.getNode(SPUISD::EXTRACT_ELT0, VT,
+                         DAG.getNode(SPUISD::SHUFB, VecVT, vecShift, vecShift, replicate));
   }
 
-  // Need to generate shuffle mask and extract:
-  int prefslot_begin = -1, prefslot_end = -1;
-  int elt_byte = EltNo * VT.getSizeInBits() / 8;
-
-  switch (VT.getSimpleVT()) {
-  default:
-    assert(false && "Invalid value type!");
-  case MVT::i8: {
-    prefslot_begin = prefslot_end = 3;
-    break;
-  }
-  case MVT::i16: {
-    prefslot_begin = 2; prefslot_end = 3;
-    break;
-  }
-  case MVT::i32:
-  case MVT::f32: {
-    prefslot_begin = 0; prefslot_end = 3;
-    break;
-  }
-  case MVT::i64:
-  case MVT::f64: {
-    prefslot_begin = 0; prefslot_end = 7;
-    break;
-  }
-  }
-
-  assert(prefslot_begin != -1 && prefslot_end != -1 &&
-         "LowerEXTRACT_VECTOR_ELT: preferred slots uninitialized");
-
-  for (int i = 0; i < 16; ++i) {
-    // zero fill uppper part of preferred slot, don't care about the
-    // other slots:
-    unsigned int mask_val;
-    if (i <= prefslot_end) {
-      mask_val =
-        ((i < prefslot_begin)
-         ? 0x80
-         : elt_byte + (i - prefslot_begin));
-
-      ShufMask[i] = DAG.getConstant(mask_val, MVT::i8);
-    } else
-      ShufMask[i] = ShufMask[i % (prefslot_end + 1)];
-  }
-
-  SDValue ShufMaskVec =
-    DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8,
-                &ShufMask[0],
-                sizeof(ShufMask) / sizeof(ShufMask[0]));
-
-  return DAG.getNode(SPUISD::EXTRACT_ELT0, VT,
-                     DAG.getNode(SPUISD::SHUFB, N.getValueType(),
-                                 N, N, ShufMaskVec));
-
+  return retval;
 }
 
 static SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
@@ -2145,7 +2272,7 @@ static SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     DAG.getNode(SPUISD::SHUFB, VT,
                 DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, ValOp),
                 VecOp,
-                DAG.getNode(SPUISD::INSERT_MASK, VT,
+                DAG.getNode(SPUISD::SHUFFLE_MASK, VT,
                             DAG.getNode(ISD::ADD, PtrVT,
                                         PtrBase,
                                         DAG.getConstant(CN->getZExtValue(),
@@ -2614,8 +2741,39 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
-/// LowerOperation - Provide custom lowering hooks for some operations.
-///
+//! Lower ISD::SELECT_CC
+/*!
+  ISD::SELECT_CC can (generally) be implemented directly on the SPU using the
+  SELB instruction.
+
+  \note Need to revisit this in the future: if the code path through the true
+  and false value computations is longer than the latency of a branch (6
+  cycles), then it would be more advantageous to branch and insert a new basic
+  block and branch on the condition. However, this code does not make that
+  assumption, given the simplisitc uses so far.
+ */
+
+static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
+  MVT VT = Op.getValueType();
+  SDValue lhs = Op.getOperand(0);
+  SDValue rhs = Op.getOperand(1);
+  SDValue trueval = Op.getOperand(2);
+  SDValue falseval = Op.getOperand(3);
+  SDValue condition = Op.getOperand(4);
+
+  // Note: Really should be ISD::SELECT instead of SPUISD::SELB, but LLVM's
+  // legalizer insists on combining SETCC/SELECT into SELECT_CC, so we end up
+  // with another "cannot select select_cc" assert:
+
+  SDValue compare = DAG.getNode(ISD::SETCC, VT, lhs, rhs, condition);
+  return DAG.getNode(SPUISD::SELB, VT, trueval, falseval, compare);
+}
+
+//! Custom (target-specific) lowering entry point
+/*!
+  This is where LLVM's DAG selection process calls to do target-specific
+  lowering of nodes.
+ */
 SDValue
 SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
 {
@@ -2704,13 +2862,19 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   case ISD::FDIV:
     if (VT == MVT::f32 || VT == MVT::v4f32)
       return LowerFDIVf32(Op, DAG);
-//    else if (Op.getValueType() == MVT::f64)
-//      return LowerFDIVf64(Op, DAG);
+#if 0
+    // This is probably a libcall
+    else if (Op.getValueType() == MVT::f64)
+      return LowerFDIVf64(Op, DAG);
+#endif
     else
       assert(0 && "Calling FDIV on unsupported MVT");
 
   case ISD::CTPOP:
     return LowerCTPOP(Op, DAG);
+
+  case ISD::SELECT_CC:
+    return LowerSELECT_CC(Op, DAG);
   }
 
   return SDValue();
@@ -2967,7 +3131,7 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
 #if 0
   case CALL:
   case SHUFB:
-  case INSERT_MASK:
+  case SHUFFLE_MASK:
   case CNTB:
 #endif
 

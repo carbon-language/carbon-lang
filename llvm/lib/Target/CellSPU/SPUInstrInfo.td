@@ -272,51 +272,51 @@ def STQR : RI16Form<0b111000100, (outs), (ins VECREG:$rT, s16imm:$disp),
 def CBD :
     RI7Form<0b10101111100, (outs VECREG:$rT), (ins memri7:$src),
       "cbd\t$rT, $src", ShuffleOp,
-      [(set (v16i8 VECREG:$rT), (SPUvecinsmask dform2_addr:$src))]>;
+      [(set (v16i8 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
 
 def CBX : RRForm<0b00101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cbx\t$rT, $src", ShuffleOp,
-    [(set (v16i8 VECREG:$rT), (SPUvecinsmask xform_addr:$src))]>;
+    [(set (v16i8 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
 def CHD : RI7Form<0b10101111100, (outs VECREG:$rT), (ins memri7:$src),
     "chd\t$rT, $src", ShuffleOp,
-    [(set (v8i16 VECREG:$rT), (SPUvecinsmask dform2_addr:$src))]>;
+    [(set (v8i16 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
 
 def CHX : RRForm<0b10101011100, (outs VECREG:$rT), (ins memrr:$src),
     "chx\t$rT, $src", ShuffleOp,
-    [(set (v8i16 VECREG:$rT), (SPUvecinsmask xform_addr:$src))]>;
+    [(set (v8i16 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
 def CWD : RI7Form<0b01101111100, (outs VECREG:$rT), (ins memri7:$src),
     "cwd\t$rT, $src", ShuffleOp,
-    [(set (v4i32 VECREG:$rT), (SPUvecinsmask dform2_addr:$src))]>;
+    [(set (v4i32 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
 
 def CWDf32 : RI7Form<0b01101111100, (outs VECREG:$rT), (ins memri7:$src),
     "cwd\t$rT, $src", ShuffleOp,
-    [(set (v4f32 VECREG:$rT), (SPUvecinsmask dform2_addr:$src))]>;
+    [(set (v4f32 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
 
 def CWX : RRForm<0b01101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cwx\t$rT, $src", ShuffleOp,
-    [(set (v4i32 VECREG:$rT), (SPUvecinsmask xform_addr:$src))]>;
+    [(set (v4i32 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
 def CWXf32 : RRForm<0b01101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cwx\t$rT, $src", ShuffleOp,
-    [(set (v4f32 VECREG:$rT), (SPUvecinsmask xform_addr:$src))]>;
+    [(set (v4f32 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
 def CDD : RI7Form<0b11101111100, (outs VECREG:$rT), (ins memri7:$src),
     "cdd\t$rT, $src", ShuffleOp,
-    [(set (v2i64 VECREG:$rT), (SPUvecinsmask dform2_addr:$src))]>;
+    [(set (v2i64 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
 
 def CDDf64 : RI7Form<0b11101111100, (outs VECREG:$rT), (ins memri7:$src),
     "cdd\t$rT, $src", ShuffleOp,
-    [(set (v2f64 VECREG:$rT), (SPUvecinsmask dform2_addr:$src))]>;
+    [(set (v2f64 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
 
 def CDX : RRForm<0b11101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cdx\t$rT, $src", ShuffleOp,
-    [(set (v2i64 VECREG:$rT), (SPUvecinsmask xform_addr:$src))]>;
+    [(set (v2i64 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
 def CDXf64 : RRForm<0b11101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cdx\t$rT, $src", ShuffleOp,
-    [(set (v2f64 VECREG:$rT), (SPUvecinsmask xform_addr:$src))]>;
+    [(set (v2f64 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
 //===----------------------------------------------------------------------===//
 // Constant formation:
@@ -1647,14 +1647,23 @@ multiclass SelectBits
 
 defm SELB : SelectBits;
 
-class SPUselbPat<ValueType vectype, SPUInstr inst>:
+class SPUselbPatVec<ValueType vectype, SPUInstr inst>:
    Pat<(SPUselb (vectype VECREG:$rA), (vectype VECREG:$rB), (vectype VECREG:$rC)),
        (inst VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
 
-def : SPUselbPat<v16i8, SELBv16i8>;
-def : SPUselbPat<v8i16, SELBv8i16>;
-def : SPUselbPat<v4i32, SELBv4i32>;
-def : SPUselbPat<v2i64, SELBv2i64>;
+def : SPUselbPatVec<v16i8, SELBv16i8>;
+def : SPUselbPatVec<v8i16, SELBv8i16>;
+def : SPUselbPatVec<v4i32, SELBv4i32>;
+def : SPUselbPatVec<v2i64, SELBv2i64>;
+
+class SPUselbPatReg<RegisterClass rclass, SPUInstr inst>:
+   Pat<(SPUselb rclass:$rA, rclass:$rB, rclass:$rC),
+       (inst rclass:$rA, rclass:$rB, rclass:$rC)>;
+
+def : SPUselbPatReg<R8C,   SELBr8>;
+def : SPUselbPatReg<R16C,  SELBr16>;
+def : SPUselbPatReg<R32C,  SELBr32>;
+def : SPUselbPatReg<R64C,  SELBr64>;
 
 class SelectConditional<RegisterClass rclass, SPUInstr inst>:
     Pat<(select rclass:$rCond, rclass:$rTrue, rclass:$rFalse),
@@ -1811,8 +1820,8 @@ def : SHUFBVecPat1<v4f32, v16i8, SHUFBv16i8>;
 def : SHUFBVecPat1<v2f64, v16i8, SHUFBv16i8>;
 
 // Shuffle mask is a v4i32 vector:
+def : SHUFBVecPat1<v16i8, v4i32, SHUFBv4i32>;
 def : SHUFBVecPat1<v8i16, v4i32, SHUFBv4i32>;
-def : SHUFBVecPat1<v4i32, v4i32, SHUFBv4i32>;
 def : SHUFBVecPat1<v2i64, v4i32, SHUFBv4i32>;
 def : SHUFBVecPat1<v4f32, v4i32, SHUFBv4i32>;
 def : SHUFBVecPat1<v2f64, v4i32, SHUFBv4i32>;
@@ -1939,7 +1948,9 @@ multiclass ShiftLeftQuadByBits
   def v16i8: SHLQBIVecInst<v16i8>;
   def v8i16: SHLQBIVecInst<v8i16>;
   def v4i32: SHLQBIVecInst<v4i32>;
+  def v4f32: SHLQBIVecInst<v4f32>;
   def v2i64: SHLQBIVecInst<v2i64>;
+  def v2f64: SHLQBIVecInst<v2f64>;
 }
 
 defm SHLQBI : ShiftLeftQuadByBits;
@@ -1960,7 +1971,9 @@ multiclass ShiftLeftQuadByBitsImm
   def v16i8 : SHLQBIIVecInst<v16i8>;
   def v8i16 : SHLQBIIVecInst<v8i16>;
   def v4i32 : SHLQBIIVecInst<v4i32>;
+  def v4f32 : SHLQBIIVecInst<v4f32>;
   def v2i64 : SHLQBIIVecInst<v2i64>;
+  def v2f64 : SHLQBIIVecInst<v2f64>;
 }
 
 defm SHLQBII : ShiftLeftQuadByBitsImm;
@@ -1982,7 +1995,9 @@ multiclass ShiftLeftQuadBytes
   def v16i8: SHLQBYVecInst<v16i8>;
   def v8i16: SHLQBYVecInst<v8i16>;
   def v4i32: SHLQBYVecInst<v4i32>;
+  def v4f32: SHLQBYVecInst<v4f32>;
   def v2i64: SHLQBYVecInst<v2i64>;
+  def v2f64: SHLQBYVecInst<v2f64>;
   def r128: SHLQBYInst<(outs GPRC:$rT), (ins GPRC:$rA, R32C:$rB),
                        [(set GPRC:$rT, (SPUshlquad_l_bytes GPRC:$rA, R32C:$rB))]>;
 }
@@ -2003,7 +2018,9 @@ multiclass ShiftLeftQuadBytesImm
   def v16i8: SHLQBYIVecInst<v16i8>;
   def v8i16: SHLQBYIVecInst<v8i16>;
   def v4i32: SHLQBYIVecInst<v4i32>;
+  def v4f32: SHLQBYIVecInst<v4f32>;
   def v2i64: SHLQBYIVecInst<v2i64>;
+  def v2f64: SHLQBYIVecInst<v2f64>;
   def r128:  SHLQBYIInst<(outs GPRC:$rT), (ins GPRC:$rA, u7imm_i32:$val),
                          [(set GPRC:$rT,
                                (SPUshlquad_l_bytes GPRC:$rA, (i32 uimm7:$val)))]>;

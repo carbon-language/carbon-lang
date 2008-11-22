@@ -591,13 +591,24 @@ SPUDAGToDAGISel::SelectXFormAddr(SDValue Op, SDValue N, SDValue &Base,
                                  SDValue &Index) {
   if (!SelectAFormAddr(Op, N, Base, Index)
       && !SelectDFormAddr(Op, N, Base, Index)) {
-    // default form of a X-form address is r(r) in operands 0 and 1:
+    // Default form of a X-form address is r(r) in operands 0 and 1:
     SDValue Op0 = N.getOperand(0);
     SDValue Op1 = N.getOperand(1);
 
-    if (Op0.getOpcode() == ISD::Register && Op1.getOpcode() == ISD::Register) {
-      Base = Op0;
-      Index = Op1;
+    if ((Op0.getOpcode() == ISD::Register
+         || Op.getOpcode() == ISD::CopyFromReg)
+        && (Op1.getOpcode() == ISD::Register
+            || Op.getOpcode() == ISD::CopyFromReg)) {
+      if (Op.getOpcode() == ISD::Register)
+        Base = Op0;
+      else
+        Base = Op0.getOperand(1);
+
+      if (Op1.getOpcode() == ISD::Register)
+        Index = Op1;
+      else
+        Index = Op1.getOperand(1);
+
       return true;
     }
   }

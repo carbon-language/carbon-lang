@@ -37,7 +37,7 @@ namespace llvm {
       LDRESULT,                 ///< Load result (value, chain)
       CALL,                     ///< CALL instruction
       SHUFB,                    ///< Vector shuffle (permute)
-      INSERT_MASK,              ///< Insert element shuffle mask
+      SHUFFLE_MASK,             ///< Shuffle mask
       CNTB,                     ///< Count leading ones in bytes
       PROMOTE_SCALAR,           ///< Promote scalar->vector
       EXTRACT_ELT0,             ///< Extract element 0

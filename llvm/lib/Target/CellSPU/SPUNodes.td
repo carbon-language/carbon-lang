@@ -16,7 +16,7 @@ def SDT_SPUCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
 
 // SPU_GenControl: Type profile for generating control words for insertions
 def SPU_GenControl : SDTypeProfile<1, 1, []>;
-def SPUvecinsmask : SDNode<"SPUISD::INSERT_MASK", SPU_GenControl, []>;
+def SPUshufmask    : SDNode<"SPUISD::SHUFFLE_MASK", SPU_GenControl, []>;
 
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPUCallSeq,
                            [SDNPHasChain, SDNPOutFlag]>;
