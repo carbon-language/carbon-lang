@@ -261,7 +261,6 @@ class DiagnosticBuilder {
   explicit DiagnosticBuilder(Diagnostic *diagObj)
     : DiagObj(diagObj), NumArgs(0), NumRanges(0) {}
 public:
-  DiagnosticBuilder() : DiagObj(0) {}
   
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
   /// input and neuters it.

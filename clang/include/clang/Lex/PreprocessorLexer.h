@@ -131,6 +131,13 @@ protected:
   void LexIncludeFilename(Token &Result);
   
 public:
+  
+  /// isLexingRawMode - Return true if this lexer is in raw mode or not.
+  bool isLexingRawMode() const { return LexingRawMode; }
+
+  /// getPP - Return the preprocessor object for this lexer.
+  Preprocessor *getPP() const { return PP; }
+  
   unsigned getFileID() const { 
     assert(PP &&
       "PreprocessorLexer::getFileID() should only be used with a Preprocessor");

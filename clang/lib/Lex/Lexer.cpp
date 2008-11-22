@@ -310,8 +310,6 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
 /// Diag - Forwarding function for diagnostics.  This translate a source
 /// position in the current buffer into a SourceLocation object for rendering.
 DiagnosticBuilder Lexer::Diag(const char *Loc, unsigned DiagID) const {
-  if (LexingRawMode && Diagnostic::isBuiltinNoteWarningOrExtension(DiagID))
-    return DiagnosticBuilder();
   return PP->Diag(getSourceLocation(Loc), DiagID);
 }
 
@@ -345,11 +343,13 @@ static char DecodeTrigraphChar(const char *CP, Lexer *L) {
   if (!Res || !L) return Res;
   
   if (!L->getFeatures().Trigraphs) {
-    L->Diag(CP-2, diag::trigraph_ignored);
+    if (!L->isLexingRawMode())
+      L->Diag(CP-2, diag::trigraph_ignored);
     return 0;
   }
     
-  L->Diag(CP-2, diag::trigraph_converted) << std::string()+Res;
+  if (!L->isLexingRawMode())
+    L->Diag(CP-2, diag::trigraph_converted) << std::string()+Res;
   return Res;
 }
 
@@ -390,7 +390,7 @@ Slash:
           if (Tok) Tok->setFlag(Token::NeedsCleaning);
 
           // Warn if there was whitespace between the backslash and newline.
-          if (SizeTmp != 1 && Tok)
+          if (SizeTmp != 1 && Tok && !isLexingRawMode())
             Diag(Ptr, diag::backslash_newline_space);
           
           // If this is a \r\n or \n\r, skip the newlines.
@@ -534,7 +534,8 @@ FinishIdentifier:
       if (!Features.DollarIdents) goto FinishIdentifier;
       
       // Otherwise, emit a diagnostic and continue.
-      Diag(CurPtr, diag::ext_dollar_in_identifier);
+      if (!isLexingRawMode())
+        Diag(CurPtr, diag::ext_dollar_in_identifier);
       CurPtr = ConsumeChar(CurPtr, Size, Result);
       C = getCharAndSize(CurPtr, Size);
       continue;
@@ -594,7 +595,8 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (!LexingRawMode) Diag(BufferPtr, diag::err_unterminated_string);
+      if (!isLexingRawMode())
+        Diag(BufferPtr, diag::err_unterminated_string);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
     } else if (C == 0) {
@@ -604,7 +606,8 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
   }
   
   // If a nul character existed in the string, warn about it.
-  if (NulCharacter) Diag(NulCharacter, diag::null_in_string);
+  if (NulCharacter && !isLexingRawMode())
+    Diag(NulCharacter, diag::null_in_string);
 
   // Update the location of the token as well as the BufferPtr instance var.
   FormTokenWithChars(Result, CurPtr,
@@ -624,7 +627,8 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (!LexingRawMode) Diag(BufferPtr, diag::err_unterminated_string);
+      if (!isLexingRawMode())
+        Diag(BufferPtr, diag::err_unterminated_string);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
     } else if (C == 0) {
@@ -634,7 +638,8 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
   }
   
   // If a nul character existed in the string, warn about it.
-  if (NulCharacter) Diag(NulCharacter, diag::null_in_string);
+  if (NulCharacter && !isLexingRawMode())
+    Diag(NulCharacter, diag::null_in_string);
   
   // Update the location of token as well as BufferPtr.
   FormTokenWithChars(Result, CurPtr, tok::angle_string_literal);
@@ -649,7 +654,8 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
   // Handle the common case of 'x' and '\y' efficiently.
   char C = getAndAdvanceChar(CurPtr, Result);
   if (C == '\'') {
-    if (!LexingRawMode) Diag(BufferPtr, diag::err_empty_character);
+    if (!isLexingRawMode())
+      Diag(BufferPtr, diag::err_empty_character);
     FormTokenWithChars(Result, CurPtr, tok::unknown);
     return;
   } else if (C == '\\') {
@@ -669,7 +675,8 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
         C = getAndAdvanceChar(CurPtr, Result);
       } else if (C == '\n' || C == '\r' ||               // Newline.
                  (C == 0 && CurPtr-1 == BufferEnd)) {    // End of file.
-        if (!LexingRawMode) Diag(BufferPtr, diag::err_unterminated_char);
+        if (!isLexingRawMode())
+          Diag(BufferPtr, diag::err_unterminated_char);
         FormTokenWithChars(Result, CurPtr-1, tok::unknown);
         return;
       } else if (C == 0) {
@@ -679,7 +686,8 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
     } while (C != '\'');
   }
   
-  if (NulCharacter) Diag(NulCharacter, diag::null_in_char);
+  if (NulCharacter && !isLexingRawMode())
+    Diag(NulCharacter, diag::null_in_char);
 
   // Update the location of token as well as BufferPtr.
   FormTokenWithChars(Result, CurPtr, tok::char_constant);
@@ -738,7 +746,7 @@ bool Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
 bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   // If BCPL comments aren't explicitly enabled for this language, emit an
   // extension warning.
-  if (!Features.BCPLComment) {
+  if (!Features.BCPLComment && !isLexingRawMode()) {
     Diag(BufferPtr, diag::ext_bcpl_comment);
     
     // Mark them enabled so we only emit one warning for this translation
@@ -788,7 +796,8 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
               break;
           }
           
-          Diag(OldPtr-1, diag::ext_multi_line_bcpl_comment);
+          if (!isLexingRawMode())
+            Diag(OldPtr-1, diag::ext_multi_line_bcpl_comment);
           break;
         }
     }
@@ -890,17 +899,21 @@ static bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr,
     // If no trigraphs are enabled, warn that we ignored this trigraph and
     // ignore this * character.
     if (!L->getFeatures().Trigraphs) {
-      L->Diag(CurPtr, diag::trigraph_ignored_block_comment);
+      if (!L->isLexingRawMode())
+        L->Diag(CurPtr, diag::trigraph_ignored_block_comment);
       return false;
     }
-    L->Diag(CurPtr, diag::trigraph_ends_block_comment);
+    if (!L->isLexingRawMode())
+      L->Diag(CurPtr, diag::trigraph_ends_block_comment);
   }
   
   // Warn about having an escaped newline between the */ characters.
-  L->Diag(CurPtr, diag::escaped_newline_block_comment_end);
+  if (!L->isLexingRawMode())
+    L->Diag(CurPtr, diag::escaped_newline_block_comment_end);
   
   // If there was space between the backslash and newline, warn about it.
-  if (HasSpace) L->Diag(CurPtr, diag::backslash_newline_space);
+  if (HasSpace && !L->isLexingRawMode())
+    L->Diag(CurPtr, diag::backslash_newline_space);
   
   return true;
 }
@@ -934,7 +947,7 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   unsigned char C = getCharAndSize(CurPtr, CharSize);
   CurPtr += CharSize;
   if (C == 0 && CurPtr == BufferEnd+1) {
-    if (!LexingRawMode)
+    if (!isLexingRawMode())
       Diag(BufferPtr, diag::err_unterminated_block_comment);
     --CurPtr;
     
@@ -1013,10 +1026,12 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
         // If this is a /* inside of the comment, emit a warning.  Don't do this
         // if this is a /*/, which will end the comment.  This misses cases with
         // embedded escaped newlines, but oh well.
-        Diag(CurPtr-1, diag::warn_nested_block_comment);
+        if (!isLexingRawMode())
+          Diag(CurPtr-1, diag::warn_nested_block_comment);
       }
     } else if (C == 0 && CurPtr == BufferEnd+1) {
-      if (!LexingRawMode) Diag(BufferPtr, diag::err_unterminated_block_comment);
+      if (!isLexingRawMode())
+        Diag(BufferPtr, diag::err_unterminated_block_comment);
       // Note: the user probably forgot a */.  We could continue immediately
       // after the /*, but this would involve lexing a lot of what really is the
       // comment, which surely would confuse the parser.
@@ -1122,7 +1137,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
 
   // If we are in raw mode, return this event as an EOF token.  Let the caller
   // that put us in raw mode handle the event.
-  if (LexingRawMode) {
+  if (isLexingRawMode()) {
     Result.startToken();
     BufferPtr = BufferEnd;
     FormTokenWithChars(Result, BufferEnd, tok::eof);
@@ -1234,7 +1249,8 @@ LexNextToken:
       return PPCache->Lex(Result);
     }
     
-    Diag(CurPtr-1, diag::null_in_file);
+    if (!isLexingRawMode())
+      Diag(CurPtr-1, diag::null_in_file);
     Result.setFlag(Token::LeadingSpace);
     if (SkipWhitespace(Result, CurPtr))
       return; // KeepWhitespaceMode
@@ -1329,7 +1345,8 @@ LexNextToken:
 
   case '$':   // $ in identifiers.
     if (Features.DollarIdents) {
-      Diag(CurPtr-1, diag::ext_dollar_in_identifier);
+      if (!isLexingRawMode())
+        Diag(CurPtr-1, diag::ext_dollar_in_identifier);
       // Notify MIOpt that we read a non-whitespace/non-comment token.
       MIOpt.ReadToken();
       return LexIdentifier(Result, CurPtr);
@@ -1493,7 +1510,8 @@ LexNextToken:
                              SizeTmp2, Result);
       } else if (Char == '@' && Features.Microsoft) {  // %:@ -> #@ -> Charize
         CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-        Diag(BufferPtr, diag::charize_microsoft_ext);
+        if (!isLexingRawMode())
+          Diag(BufferPtr, diag::charize_microsoft_ext);
         Kind = tok::hashat;
       } else {
         Kind = tok::hash;       // '%:' -> '#'
@@ -1623,7 +1641,8 @@ LexNextToken:
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Char == '@' && Features.Microsoft) {  // #@ -> Charize
       Kind = tok::hashat;
-      Diag(BufferPtr, diag::charize_microsoft_ext);
+      if (!isLexingRawMode())
+        Diag(BufferPtr, diag::charize_microsoft_ext);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
       Kind = tok::hash;
