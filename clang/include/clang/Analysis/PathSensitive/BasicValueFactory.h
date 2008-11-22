@@ -72,6 +72,7 @@ public:
   ASTContext& getContext() const { return Ctx; }  
 
   const llvm::APSInt& getValue(const llvm::APSInt& X);
+  const llvm::APSInt& getValue(const llvm::APInt& X, bool isUnsigned);
   const llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
   const llvm::APSInt& getValue(uint64_t X, QualType T);
 

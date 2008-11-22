@@ -34,6 +34,10 @@ public:
   virtual const GRState* Assume(const GRState* St, SVal Cond, 
                                 bool Assumption, bool& isFeasible) = 0;
 
+  virtual const GRState* AssumeInBound(const GRState* St, SVal Idx, 
+                                       SVal UpperBound, bool Assumption,
+                                       bool& isFeasible) = 0;
+
   virtual const GRState* AddNE(const GRState* St, SymbolID sym, 
                                const llvm::APSInt& V) = 0;
   virtual const llvm::APSInt* getSymVal(const GRState* St, SymbolID sym) = 0;

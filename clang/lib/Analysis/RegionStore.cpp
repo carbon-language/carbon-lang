@@ -80,6 +80,8 @@ public:
 
   SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
 
+  SVal getSizeInElements(const GRState* St, const MemRegion* R);
+
   SVal ArrayToPointer(SVal Array);
 
   std::pair<const GRState*, SVal>
@@ -255,6 +257,40 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   }
 
   return UnknownVal();
+}
+
+SVal RegionStoreManager::getSizeInElements(const GRState* St,
+                                           const MemRegion* R) {
+  if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
+    // Get the type of the variable.
+    QualType T = VR->getType(getContext());
+
+    // It must be of array type. 
+    const ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
+
+    // return the size as signed integer.
+    return NonLoc::MakeVal(getBasicVals(), CAT->getSize(), false);
+  }
+
+  if (const StringRegion* SR = dyn_cast<StringRegion>(R)) {
+    // FIXME: Unsupported yet.
+    SR = 0;
+    return UnknownVal();
+  }
+
+  if (const AnonTypedRegion* ATR = dyn_cast<AnonTypedRegion>(R)) {
+    // FIXME: Unsupported yet.
+    ATR = 0;
+    return UnknownVal();
+  }
+
+  if (const FieldRegion* FR = dyn_cast<FieldRegion>(R)) {
+    // FIXME: Unsupported yet.
+    FR = 0;
+    return UnknownVal();
+  }
+  printf("kidn = %d\n", R->getKind());
+  assert(0 && "Other regions are not supported yet.");
 }
 
 // Cast 'pointer to array' to 'pointer to the first element of array'.

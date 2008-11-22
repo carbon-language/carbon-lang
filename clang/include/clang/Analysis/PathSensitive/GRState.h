@@ -523,6 +523,12 @@ public:
     return ConstraintMgr->Assume(St, Cond, Assumption, isFeasible);
   }
 
+  const GRState* AssumeInBound(const GRState* St, SVal Idx, SVal UpperBound,
+                               bool Assumption, bool& isFeasible) {
+    return ConstraintMgr->AssumeInBound(St, Idx, UpperBound, Assumption, 
+                                        isFeasible);
+  }
+
   const GRState* AddNE(const GRState* St, SymbolID sym, const llvm::APSInt& V) {
     return ConstraintMgr->AddNE(St, sym, V);
   }

@@ -253,6 +253,11 @@ NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I) {
                               I->getType()->isUnsignedIntegerType())));
 }
 
+NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, const llvm::APInt& I,
+                       bool isUnsigned) {
+  return nonloc::ConcreteInt(BasicVals.getValue(I, isUnsigned));
+}
+
 NonLoc NonLoc::MakeIntTruthVal(BasicValueFactory& BasicVals, bool b) {
   return nonloc::ConcreteInt(BasicVals.getTruthValue(b));
 }

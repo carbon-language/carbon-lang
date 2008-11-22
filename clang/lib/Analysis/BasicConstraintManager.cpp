@@ -69,6 +69,9 @@ public:
   const GRState* AssumeSymLE(const GRState* St, SymbolID sym,
                              const llvm::APSInt& V, bool& isFeasible);
 
+  const GRState* AssumeInBound(const GRState* St, SVal Idx, SVal UpperBound,
+                               bool Assumption, bool& isFeasible);
+
   const GRState* AddEQ(const GRState* St, SymbolID sym, const llvm::APSInt& V);
 
   const GRState* AddNE(const GRState* St, SymbolID sym, const llvm::APSInt& V);
@@ -83,6 +86,9 @@ public:
 
   void print(const GRState* St, std::ostream& Out, 
              const char* nl, const char *sep);
+
+private:
+  BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
 };
 
 } // end anonymous namespace
@@ -349,6 +355,27 @@ BasicConstraintManager::AssumeSymLE(const GRState* St, SymbolID sym,
   isFeasible = !isNotEqual(St, sym, V) || 
                (V != llvm::APSInt::getMinValue(V.getBitWidth(), V.isSigned()));
   
+  return St;
+}
+
+const GRState* 
+BasicConstraintManager::AssumeInBound(const GRState* St, SVal Idx, 
+                                      SVal UpperBound, bool Assumption, 
+                                      bool& isFeasible) {
+  // Only support ConcreteInt for now.
+  if (!(isa<nonloc::ConcreteInt>(Idx) && isa<nonloc::ConcreteInt>(UpperBound))){
+    isFeasible = true;
+    return St;
+  }
+
+  const llvm::APSInt& Zero = getBasicVals().getZeroWithPtrWidth(false);
+  const llvm::APSInt& IdxV = cast<nonloc::ConcreteInt>(Idx).getValue();
+  const llvm::APSInt& UBV = cast<nonloc::ConcreteInt>(UpperBound).getValue();
+
+  bool InBound = (Zero <= IdxV) && (IdxV < UBV);
+
+  isFeasible = Assumption ? InBound : !InBound;
+
   return St;
 }
 

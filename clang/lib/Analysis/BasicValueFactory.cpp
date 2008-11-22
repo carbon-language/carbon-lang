@@ -76,6 +76,12 @@ const llvm::APSInt& BasicValueFactory::getValue(const llvm::APSInt& X) {
   return *P;
 }
 
+const llvm::APSInt& BasicValueFactory::getValue(const llvm::APInt& X,
+                                                bool isUnsigned) {
+  llvm::APSInt V(X, isUnsigned);
+  return getValue(V);
+}
+
 const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, unsigned BitWidth,
                                            bool isUnsigned) {
   llvm::APSInt V(BitWidth, isUnsigned);
