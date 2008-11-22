@@ -3,6 +3,11 @@
 <title>"clang" CFE Internals Manual</title>
 <link type="text/css" rel="stylesheet" href="../menu.css" />
 <link type="text/css" rel="stylesheet" href="../content.css" />
+<style type="text/css">
+td {
+	vertical-align: top;
+}
+</style>
 </head>
 <body>
 
@@ -253,9 +258,33 @@ Clang:</p>
 <tr><td>Description:</td><td>...</td></tr>
 
 <tr><td colspan="2"><b>"plural" format</b></td></tr>
-<tr><td>Example:</td><td><tt>".."</tt></td></tr>
+<tr><td>Example:</td><td><tt>"you have %1 %plural{1:mouse|:mice}1 connected to
+    your computer"</tt></td></tr>
 <tr><td>Classes:</td><td>Integers</td></tr>
-<tr><td>Description:</td><td>...</td></tr>
+<tr><td>Description:</td><td><p>This is a formatter for complex plural forms.
+    It is designed to handle even the requirements of languages with very
+	complex plural forms, as many Baltic languages have. The argument consists
+	of a series of expression/form pairs, separated by ':', where the first form
+	whose expression evaluates to true is the result of the modifier.</p>
+	<p>An expression can be empty, in which case it is always true. See the
+	example at the top. Otherwise, it is a series of one or more numeric
+	conditions, separated by ','. If any condition matches, the expression
+	matches. Each numeric condition can take one of three forms.</p>
+	<ul>
+	    <li>number: A simple decimal number matches if the argument is the same
+		as the number. Example: <tt>"{1:mouse|:mice}"</tt></li>
+		<li>range: A range in square brackets matches if the argument is within
+		the range. Then range is inclusive both ends. Example:
+		<tt>"{0:none|1:one|[2,5]:some|:many}"</tt></li>
+		<li>modulo: A modulo operator is followed by a number, and equals sign
+		and either a number or a range. The tests are the same as for plain
+		numbers and ranges, but the argument is taken modulo the number first.
+		Example: <tt>"{%100=0:even hundred|%100=[1,50]:lower half|:everything
+		else}"</tt></li>
+	</ul>
+	<p>The parser is very unforgiving. A syntax error, even whitespace, will
+	abort, as will a failure to match the argument against any
+	expression.</p></td></tr>
 
 
 </table>
