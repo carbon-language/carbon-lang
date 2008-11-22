@@ -29,6 +29,7 @@
   </ul></li>
   <li><a href="#InstructionSet">Instruction Set</a>
   <ul>  
+    <li><a href="#operandMapping">Instruction Operand Mapping</a></li>
     <li><a href="#implementInstr">Implement a subclass of TargetInstrInfo</a></li>
     <li><a href="#branchFolding">Branch Folding and If Conversion</a></li>
   </ul></li>
@@ -995,6 +996,88 @@ also defines enums that correspond to the same SPARC condition codes. Care must
 be taken to ensure the values in <tt>Sparc.h</tt> correspond to the values in
 <tt>SparcInstrInfo.td</tt>; that is, <tt>SPCC::ICC_NE = 9</tt>, <tt>SPCC::FCC_U = 23</tt> and so on.)</p>
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="operandMapping">Instruction Operand Mapping</a>
+</div>
+<div class="doc_text">
+<p>The code generator backend maps instruction operands to fields in
+the instruction.  Operands are assigned to unbound fields in the instruction in 
+the order they are defined. Fields are bound when they are assigned a value.
+For example, the Sparc target defines the XNORrr instruction as a F3_1 format 
+instruction having three operands.</p>
+</div>
+
+<div class="doc_code"> <pre>
+def XNORrr  : F3_1&lt;2, 0b000111,
+                   (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
+                   "xnor $b, $c, $dst",
+                   [(set IntRegs:$dst, (not (xor IntRegs:$b, IntRegs:$c)))]&gt;;
+</pre></div>
+
+<div class="doc_text">
+<p>The instruction templates in <tt>SparcInstrFormats.td</tt> show the base class for F3_1 is InstSP.</p>
+</div>
+
+<div class="doc_code"> <pre>
+class InstSP&lt;dag outs, dag ins, string asmstr, list&lt;dag&gt; pattern&gt; : Instruction {
+  field bits&lt;32&gt; Inst;
+  let Namespace = "SP";
+  bits&lt;2&gt; op;
+  let Inst{31-30} = op;       
+  dag OutOperandList = outs;
+  dag InOperandList = ins;
+  let AsmString   = asmstr;
+  let Pattern = pattern;
+}
+</pre></div>
+<div class="doc_text">
+<p>
+InstSP leaves the op field unbound.
+</p>
+</div>
+
+<div class="doc_code"> <pre>
+class F3&lt;dag outs, dag ins, string asmstr, list&lt;dag&gt; pattern&gt;
+    : InstSP&lt;outs, ins, asmstr, pattern&gt; {
+  bits&lt;5&gt; rd;
+  bits&lt;6&gt; op3;
+  bits&lt;5&gt; rs1;
+  let op{1} = 1;   // Op = 2 or 3
+  let Inst{29-25} = rd;
+  let Inst{24-19} = op3;
+  let Inst{18-14} = rs1;
+}
+</pre></div>
+<div class="doc_text">
+<p>
+F3 binds the op field and defines the rd, op3, and rs1 fields.  F3 format instructions will
+bind the operands rd, op3, and rs1 fields.
+</p>
+</div>
+
+<div class="doc_code"> <pre>
+class F3_1&lt;bits&lt;2&gt; opVal, bits&lt;6&gt; op3val, dag outs, dag ins,
+           string asmstr, list&lt;dag&gt; pattern&gt; : F3&lt;outs, ins, asmstr, pattern&gt; {
+  bits&lt;8&gt; asi = 0; // asi not currently used
+  bits&lt;5&gt; rs2;
+  let op         = opVal;
+  let op3        = op3val;
+  let Inst{13}   = 0;     // i field = 0
+  let Inst{12-5} = asi;   // address space identifier
+  let Inst{4-0}  = rs2;
+}
+</pre></div>
+<div class="doc_text">
+<p>
+F3_1 binds the op3 field and defines the rs2 fields.  F3_1 format instructions will
+bind the operands to the rd, rs1, and rs2 fields. This results in the XNORrr instruction
+binding $dst, $b, and $c operands to the rd, rs1, and rs2 fields respectively.
+</p>
+</div>
+
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
