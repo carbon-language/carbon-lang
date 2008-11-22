@@ -1309,16 +1309,11 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
       break;
 
     case OR_No_Viable_Function:
-      if (CandidateSet.empty())
-        Diag(Fn->getSourceRange().getBegin(), 
-             diag::err_ovl_no_viable_function_in_call)
-          << Ovl->getName() << Fn->getSourceRange();
-      else {
-        Diag(Fn->getSourceRange().getBegin(), 
-             diag::err_ovl_no_viable_function_in_call_with_cands)
-          << Ovl->getName() << Fn->getSourceRange();
-        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
-      }
+      Diag(Fn->getSourceRange().getBegin(), 
+           diag::err_ovl_no_viable_function_in_call)
+        << Ovl->getName() << (unsigned)CandidateSet.size()
+        << Fn->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       return true;
 
     case OR_Ambiguous:

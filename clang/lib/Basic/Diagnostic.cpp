@@ -293,6 +293,128 @@ static void HandleIntegerSModifier(unsigned ValNo,
 }
 
 
+/// PluralNumber - Parse an unsigned integer and advance Start.
+static unsigned PluralNumber(const char *&Start, const char *End)
+{
+  // Programming 101: Parse a decimal number :-)
+  unsigned Val = 0;
+  while (Start != End && *Start >= '0' && *Start <= '9') {
+    Val *= 10;
+    Val += *Start - '0';
+    ++Start;
+  }
+  return Val;
+}
+
+/// TestPluralRange - Test if Val is in the parsed range. Modifies Start.
+static bool TestPluralRange(unsigned Val, const char *&Start, const char *End)
+{
+  if (*Start != '[') {
+    unsigned Ref = PluralNumber(Start, End);
+    return Ref == Val;
+  }
+
+  ++Start;
+  unsigned Low = PluralNumber(Start, End);
+  assert(*Start == ',' && "Bad plural expression syntax: expected ,");
+  ++Start;
+  unsigned High = PluralNumber(Start, End);
+  assert(*Start == ']' && "Bad plural expression syntax: expected )");
+  ++Start;
+  return Low <= Val && Val <= High;
+}
+
+/// EvalPluralExpr - Actual expression evaluator for HandlePluralModifier.
+static bool EvalPluralExpr(unsigned ValNo, const char *Start, const char *End)
+{
+  // Empty condition?
+  if (*Start == ':')
+    return true;
+
+  while (1) {
+    char C = *Start;
+    if (C == '%') {
+      // Modulo expression
+      ++Start;
+      unsigned Arg = PluralNumber(Start, End);
+      assert(*Start == '=' && "Bad plural expression syntax: expected =");
+      ++Start;
+      unsigned ValMod = ValNo % Arg;
+      if (TestPluralRange(ValMod, Start, End))
+        return true;
+    } else {
+      assert(C == '[' || (C >= '0' && C <= '9') &&
+             "Bad plural expression syntax: unexpected character");
+      // Range expression
+      if (TestPluralRange(ValNo, Start, End))
+        return true;
+    }
+
+    // Scan for next or-expr part.
+    Start = std::find(Start, End, ',');
+    if(Start == End)
+      break;
+    ++Start;
+  }
+  return false;
+}
+
+/// HandlePluralModifier - Handle the integer 'plural' modifier. This is used
+/// for complex plural forms, or in languages where all plurals are complex.
+/// The syntax is: %plural{cond1:form1|cond2:form2|:form3}, where condn are
+/// conditions that are tested in order, the form corresponding to the first
+/// that applies being emitted. The empty condition is always true, making the
+/// last form a default case.
+/// Conditions are simple boolean expressions, where n is the number argument.
+/// Here are the rules.
+/// condition  := expression | empty
+/// empty      :=                             -> always true
+/// expression := numeric [',' expression]    -> logical or
+/// numeric    := range                       -> true if n in range
+///             | '%' number '=' range        -> true if n % number in range
+/// range      := number
+///             | '[' number ',' number ']'   -> ranges are inclusive both ends
+///
+/// Here are some examples from the GNU gettext manual written in this form:
+/// English:
+/// {1:form0|:form1}
+/// Latvian:
+/// {0:form2|%100=11,%10=0,%10=[2,9]:form1|:form0}
+/// Gaeilge:
+/// {1:form0|2:form1|:form2}
+/// Romanian:
+/// {1:form0|0,%100=[1,19]:form1|:form2}
+/// Lithuanian:
+/// {%10=0,%100=[10,19]:form2|%10=1:form0|:form1}
+/// Russian (requires repeated form):
+/// {%100=[11,14]:form2|%10=1:form0|%10=[2,4]:form1|:form2}
+/// Slovak
+/// {1:form0|[2,4]:form1|:form2}
+/// Polish (requires repeated form):
+/// {1:form0|%100=[10,20]:form2|%10=[2,4]:form1|:form2}
+static void HandlePluralModifier(unsigned ValNo,
+                                 const char *Argument, unsigned ArgumentLen,
+                                 llvm::SmallVectorImpl<char> &OutStr)
+{
+  const char *ArgumentEnd = Argument + ArgumentLen;
+  while (1) {
+    assert(Argument < ArgumentEnd && "Plural expression didn't match.");
+    const char *ExprEnd = Argument;
+    while (*ExprEnd != ':') {
+      assert(ExprEnd != ArgumentEnd && "Plural missing expression end");
+      ++ExprEnd;
+    }
+    if (EvalPluralExpr(ValNo, Argument, ExprEnd)) {
+      Argument = ExprEnd + 1;
+      ExprEnd = std::find(Argument, ArgumentEnd, '|');
+      OutStr.append(Argument, ExprEnd);
+      return;
+    }
+    Argument = std::find(Argument, ArgumentEnd - 1, '|') + 1;
+  }
+}
+
+
 /// FormatDiagnostic - Format this diagnostic into a string, substituting the
 /// formal arguments into the %0 slots.  The result is appended onto the Str
 /// array.
@@ -374,6 +496,8 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         HandleSelectModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "s")) {
         HandleIntegerSModifier(Val, OutStr);
+      } else if (ModifierIs(Modifier, ModifierLen, "plural")) {
+        HandlePluralModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
       } else {
         assert(ModifierLen == 0 && "Unknown integer modifier");
         // FIXME: Optimize
@@ -389,6 +513,8 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         HandleSelectModifier(Val, Argument, ArgumentLen, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "s")) {
         HandleIntegerSModifier(Val, OutStr);
+      } else if (ModifierIs(Modifier, ModifierLen, "plural")) {
+        HandlePluralModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
       } else {
         assert(ModifierLen == 0 && "Unknown integer modifier");
         

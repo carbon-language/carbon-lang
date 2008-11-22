@@ -1440,13 +1440,9 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
     return cast<CXXConstructorDecl>(Best->Function);
     
   case OR_No_Viable_Function:
-    if (CandidateSet.empty())
-      Diag(Loc, diag::err_ovl_no_viable_function_in_init) << InitEntity <<Range;
-    else {
-      Diag(Loc, diag::err_ovl_no_viable_function_in_init_with_cands)
-        << InitEntity << Range;
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
-    }
+    Diag(Loc, diag::err_ovl_no_viable_function_in_init)
+      << InitEntity << (unsigned)CandidateSet.size() << Range;
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     return 0;
     
   case OR_Ambiguous:

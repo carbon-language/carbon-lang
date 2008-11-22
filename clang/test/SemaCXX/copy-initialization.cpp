@@ -10,7 +10,7 @@ public:
 class Y : public X { };
 
 void f(Y y, int *ip, float *fp) {
-  X x1 = y; // expected-error{{no matching constructor for initialization of 'x1'; candidates are:}}
+  X x1 = y; // expected-error{{no matching constructor for initialization of 'x1'; candidate is:}}
   X x2 = 0;
   X x3 = ip;
   X x4 = fp; // expected-error{{incompatible type initializing 'x4', expected 'class X'}}

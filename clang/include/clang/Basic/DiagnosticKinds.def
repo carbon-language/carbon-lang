@@ -873,11 +873,11 @@ DIAG(err_first_label, ERROR,
 DIAG(err_ovl_diff_return_type, ERROR,
      "functions that differ only in their return type cannot be overloaded")
 DIAG(err_ovl_static_nonstatic_member, ERROR,
-     "static and non-static member functions with the same parameter types cannot be overloaded")
+     "static and non-static member functions with the same parameter types "
+     "cannot be overloaded")
 DIAG(err_ovl_no_viable_function_in_call, ERROR,
-     "no matching function for call to '%0'.")
-DIAG(err_ovl_no_viable_function_in_call_with_cands, ERROR,
-     "no matching function for call to '%0'; candidates are:")
+     "no matching function for call to '%0'"
+     "%plural{0:.|1:; candidate is|:; candidates are:}1")
 DIAG(err_ovl_ambiguous_call, ERROR,
      "call to '%0' is ambiguous; candidates are:")
 DIAG(err_ovl_candidate, NOTE,
@@ -885,19 +885,17 @@ DIAG(err_ovl_candidate, NOTE,
 DIAG(err_ovl_builtin_candidate, NOTE,
      "built-in candidate function '%0'")
 DIAG(err_ovl_no_viable_function_in_init, ERROR,
-     "no matching constructor for initialization of '%0'.")
-DIAG(err_ovl_no_viable_function_in_init_with_cands, ERROR,
-     "no matching constructor for initialization of '%0'; candidates are:")
+     "no matching constructor for initialization of '%0'"
+     "%plural{0:.|1:; candidate is|:; candidates are:}1")
 DIAG(err_ovl_ambiguous_init, ERROR,
      "call to constructor of '%0' is ambiguous; candidates are:")
 DIAG(err_ovl_ambiguous_oper, ERROR,
      "use of overloaded operator '%0' is ambiguous; candidates are:")
 DIAG(err_ovl_no_viable_oper, ERROR,
-     "no viable overloaded '%0'; candidates are:")
+     "no viable overloaded '%0'; candidate%plural{1: is|:s are}1:")
 DIAG(err_ovl_no_viable_object_call, ERROR,
-     "no matching function for call to object of type '%0'")
-DIAG(err_ovl_no_viable_object_call_with_cands, ERROR,
-     "no matching function for call to object of type '%0'; candidates are:")
+     "no matching function for call to object of type '%0'"
+     "%plural{0:.|1:; candidate is|:; candidates are:}1")
 DIAG(err_ovl_ambiguous_object_call, ERROR,
      "call to object of type '%0' is ambiguous; candidates are:")
 DIAG(err_ovl_surrogate_cand, NOTE,

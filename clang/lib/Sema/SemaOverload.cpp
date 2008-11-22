@@ -3050,16 +3050,11 @@ Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
     break;
 
   case OR_No_Viable_Function:
-    if (CandidateSet.empty())
-      Diag(Object->getSourceRange().getBegin(), 
-           diag::err_ovl_no_viable_object_call)
-        << Object->getType().getAsString() << Object->getSourceRange();
-    else {
-      Diag(Object->getSourceRange().getBegin(), 
-           diag::err_ovl_no_viable_object_call_with_cands)
-        << Object->getType().getAsString() << Object->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
-    }
+    Diag(Object->getSourceRange().getBegin(), 
+         diag::err_ovl_no_viable_object_call)
+      << Object->getType().getAsString() << (unsigned)CandidateSet.size()
+      << Object->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     break;
 
   case OR_Ambiguous:
@@ -3220,7 +3215,8 @@ Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
         << BasePtr->getType().getAsString() << BasePtr->getSourceRange();
     else
       Diag(OpLoc, diag::err_ovl_no_viable_oper)
-        << "operator->" << BasePtr->getSourceRange();
+        << "operator->" << (unsigned)CandidateSet.size()
+        << BasePtr->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     return true;
 
