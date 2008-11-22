@@ -129,7 +129,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   NumDiagnostics = 0;
   NumErrors = 0;
   CustomDiagInfo = 0;
-  NumDiagArgs = -1;
+  CurDiagID = ~0U;
 }
 
 Diagnostic::~Diagnostic() {
@@ -215,7 +215,9 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
 
 /// ProcessDiag - This is the method used to report a diagnostic that is
 /// finally fully formed.
-void Diagnostic::ProcessDiag(const DiagnosticInfo &Info) {
+void Diagnostic::ProcessDiag() {
+  DiagnosticInfo Info(this);
+  
   // Figure out the diagnostic level of this message.
   Diagnostic::Level DiagLevel = getDiagnosticLevel(Info.getID());
   
@@ -347,25 +349,25 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     unsigned StrNo = *DiagStr++ - '0';
 
     switch (getArgKind(StrNo)) {
-    case DiagnosticInfo::ak_std_string: {
+    case Diagnostic::ak_std_string: {
       const std::string &S = getArgStdStr(StrNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
       OutStr.append(S.begin(), S.end());
       break;
     }
-    case DiagnosticInfo::ak_c_string: {
+    case Diagnostic::ak_c_string: {
       const char *S = getArgCStr(StrNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
       OutStr.append(S, S + strlen(S));
       break;
     }
-    case DiagnosticInfo::ak_identifierinfo: {
+    case Diagnostic::ak_identifierinfo: {
       const IdentifierInfo *II = getArgIdentifier(StrNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
       OutStr.append(II->getName(), II->getName() + II->getLength());
       break;
     }
-    case DiagnosticInfo::ak_sint: {
+    case Diagnostic::ak_sint: {
       int Val = getArgSInt(StrNo);
       
       if (ModifierIs(Modifier, ModifierLen, "select")) {
@@ -380,7 +382,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       }
       break;
     }
-    case DiagnosticInfo::ak_uint: {
+    case Diagnostic::ak_uint: {
       unsigned Val = getArgUInt(StrNo);
       
       if (ModifierIs(Modifier, ModifierLen, "select")) {

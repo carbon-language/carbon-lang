@@ -25,7 +25,7 @@ namespace clang {
 class Diagnostic;
 class SourceManager;
 class Preprocessor;
-class DiagnosticInfo;
+class DiagnosticBuilder;
 
 /// Lexer - This provides a simple interface that turns a text buffer into a
 /// stream of tokens.  This provides no support for file reading or buffering,
@@ -172,7 +172,7 @@ public:
  
   /// Diag - Forwarding function for diagnostics.  This translate a source
   /// position in the current buffer into a SourceLocation object for rendering.
-  DiagnosticInfo Diag(const char *Loc, unsigned DiagID) const;
+  DiagnosticBuilder Diag(const char *Loc, unsigned DiagID) const;
 
   /// getSourceLocation - Return a source location identifier for the specified
   /// offset in the current file.

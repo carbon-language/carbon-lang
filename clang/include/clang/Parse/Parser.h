@@ -27,7 +27,7 @@ namespace clang {
   class ObjCDeclSpec;
   class PragmaHandler;
   class Scope;
-  class DiagnosticInfo;
+  class DiagnosticBuilder;
 
 /// Parser - This implements a parser for the C family of languages.  After
 /// parsing units of the grammar, productions are invoked to handle whatever has
@@ -313,8 +313,8 @@ private:
   //===--------------------------------------------------------------------===//
   // Diagnostic Emission and Error recovery.
     
-  DiagnosticInfo Diag(SourceLocation Loc, unsigned DiagID);
-  DiagnosticInfo Diag(const Token &Tok, unsigned DiagID);
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
+  DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID);
   
   /// SkipUntil - Read tokens until we get to the specified token, then consume
   /// it (unless DontConsume is true).  Because we cannot guarantee that the

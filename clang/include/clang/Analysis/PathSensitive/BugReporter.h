@@ -318,19 +318,19 @@ public:
     
     for (unsigned i = 0, e = Info.getNumArgs(); i != e; ++i) {
       switch (Info.getArgKind(i)) {
-      case DiagnosticInfo::ak_std_string:   
+      case Diagnostic::ak_std_string:   
         R.addString(Info.getArgStdStr(i));
         break;
-      case DiagnosticInfo::ak_c_string:   
+      case Diagnostic::ak_c_string:   
         R.addString(Info.getArgCStr(i));
         break;
-      case DiagnosticInfo::ak_sint:
+      case Diagnostic::ak_sint:
         R.addString(llvm::itostr(Info.getArgSInt(i)));
         break;
-      case DiagnosticInfo::ak_uint:
+      case Diagnostic::ak_uint:
         R.addString(llvm::utostr_32(Info.getArgUInt(i)));
         break;
-      case DiagnosticInfo::ak_identifierinfo:
+      case Diagnostic::ak_identifierinfo:
         R.addString(Info.getArgIdentifier(i)->getName());
         break;
           

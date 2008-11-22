@@ -157,7 +157,7 @@ void Sema::ActOnEndOfTranslationUnit() {
 // Helper functions.
 //===----------------------------------------------------------------------===//
 
-DiagnosticInfo Sema::Diag(SourceLocation Loc, unsigned DiagID) {
+DiagnosticBuilder Sema::Diag(SourceLocation Loc, unsigned DiagID) {
   return PP.getDiagnostics().Report(FullSourceLoc(Loc, PP.getSourceManager()),
                                     DiagID);
 }

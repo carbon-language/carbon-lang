@@ -226,7 +226,7 @@ public:
   const LangOptions &getLangOptions() const;
   
   /// The primitive diagnostic helpers.
-  DiagnosticInfo Diag(SourceLocation Loc, unsigned DiagID);
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
 
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);

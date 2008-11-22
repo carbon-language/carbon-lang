@@ -41,11 +41,11 @@ Parser::Parser(Preprocessor &pp, Action &actions)
 Action::~Action() {}
 
 
-DiagnosticInfo Parser::Diag(SourceLocation Loc, unsigned DiagID) {
+DiagnosticBuilder Parser::Diag(SourceLocation Loc, unsigned DiagID) {
   return Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID);
 }
 
-DiagnosticInfo Parser::Diag(const Token &Tok, unsigned DiagID) {
+DiagnosticBuilder Parser::Diag(const Token &Tok, unsigned DiagID) {
   return Diag(Tok.getLocation(), DiagID);
 }
 

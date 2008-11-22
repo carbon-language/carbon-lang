@@ -408,8 +408,8 @@ public:
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
-  DiagnosticInfo Diag(SourceLocation Loc, unsigned DiagID);  
-  DiagnosticInfo Diag(const Token &Tok, unsigned DiagID);
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);  
+  DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID);
   
   /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
   /// token is the characters used to represent the token in the source file

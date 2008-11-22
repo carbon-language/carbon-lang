@@ -309,9 +309,9 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
 
 /// Diag - Forwarding function for diagnostics.  This translate a source
 /// position in the current buffer into a SourceLocation object for rendering.
-DiagnosticInfo Lexer::Diag(const char *Loc, unsigned DiagID) const {
+DiagnosticBuilder Lexer::Diag(const char *Loc, unsigned DiagID) const {
   if (LexingRawMode && Diagnostic::isBuiltinNoteWarningOrExtension(DiagID))
-    return DiagnosticInfo(0, FullSourceLoc(), 0);
+    return DiagnosticBuilder();
   return PP->Diag(getSourceLocation(Loc), DiagID);
 }
 

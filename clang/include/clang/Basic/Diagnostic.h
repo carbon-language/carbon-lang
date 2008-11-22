@@ -26,7 +26,7 @@ namespace clang {
   class DiagnosticClient;
   class SourceRange;
   class SourceManager;
-  class DiagnosticInfo;
+  class DiagnosticBuilder;
   class IdentifierInfo;
   
   // Import the diagnostic enums themselves.
@@ -170,17 +170,18 @@ public:
   
   
   /// Report - Issue the message to the client.  DiagID is a member of the
-  /// diag::kind enum.  This actually returns a new instance of DiagnosticInfo
+  /// diag::kind enum.  This actually returns aninstance of DiagnosticBuilder
   /// which emits the diagnostics (through ProcessDiag) when it is destroyed.
-  inline DiagnosticInfo Report(FullSourceLoc Pos, unsigned DiagID);
+  inline DiagnosticBuilder Report(FullSourceLoc Pos, unsigned DiagID);
   
 private:
-  // This is private state used by DiagnosticInfo.  We put it here instead of
-  // in DiagnosticInfo in order to keep DiagnosticInfo a small light-weight
+  // This is private state used by DiagnosticBuilder.  We put it here instead of
+  // in DiagnosticBuilder in order to keep DiagnosticBuilder a small lightweight
   // object.  This implementation choice means that we can only have one
   // diagnostic "in flight" at a time, but this seems to be a reasonable
   // tradeoff to keep these objects small.  Assertions verify that only one
   // diagnostic is in flight at a time.
+  friend class DiagnosticBuilder;
   friend class DiagnosticInfo;
 
   /// CurDiagLoc - This is the location of the current diagnostic that is in
@@ -188,6 +189,7 @@ private:
   FullSourceLoc CurDiagLoc;
   
   /// CurDiagID - This is the ID of the current diagnostic that is in flight.
+  /// This is set to ~0U when there is no diagnostic in flight.
   unsigned CurDiagID;
 
   enum {
@@ -197,8 +199,7 @@ private:
     MaxArguments = 10
   };
   
-  /// NumDiagArgs - This is set to -1 when no diag is in flight.  Otherwise it
-  /// is the number of entries in Arguments.
+  /// NumDiagArgs - This contains the number of entries in Arguments.
   signed char NumDiagArgs;
   /// NumRanges - This is the number of ranges in the DiagRanges array.
   unsigned char NumDiagRanges;
@@ -225,22 +226,7 @@ private:
   
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.
-  void ProcessDiag(const DiagnosticInfo &Info);
-};
-  
-/// DiagnosticInfo - This is a little helper class used to produce diagnostics.
-/// This is constructed with an ID and location, and then has some number of
-/// arguments (for %0 substitution) and SourceRanges added to it with the
-/// overloaded operator<<.  Once it is destroyed, it emits the diagnostic with
-/// the accumulated information.
-///
-/// Note that many of these will be created as temporary objects (many call
-/// sites), so we want them to be small to reduce stack space usage etc.  For
-/// this reason, we stick state in the Diagnostic class, see the comment there
-/// for more info.
-class DiagnosticInfo {
-  mutable Diagnostic *DiagObj;
-  void operator=(const DiagnosticInfo&); // DO NOT IMPLEMENT
+  void ProcessDiag();
 public:
   enum ArgumentKind {
     ak_std_string,     // std::string
@@ -249,85 +235,190 @@ public:
     ak_uint,           // unsigned
     ak_identifierinfo  // IdentifierInfo
   };
+};
+
+//===----------------------------------------------------------------------===//
+// DiagnosticBuilder
+//===----------------------------------------------------------------------===//
+
+/// DiagnosticBuilder - This is a little helper class used to produce
+/// diagnostics.  This is constructed by the Diagnostic::Report method, and
+/// allows insertion of extra information (arguments and source ranges) into the
+/// currently "in flight" diagnostic.  When the temporary for the builder is
+/// destroyed, the diagnostic is issued.
+///
+/// Note that many of these will be created as temporary objects (many call
+/// sites), so we want them to be small and we never want their address taken.
+/// This ensures that compilers with somewhat reasonable optimizers will promote
+/// the common fields to registers, eliminating increments of the NumArgs field,
+/// for example.
+class DiagnosticBuilder {
+  mutable Diagnostic *DiagObj;
+  mutable unsigned NumArgs, NumRanges;
   
-  
-  DiagnosticInfo(Diagnostic *diagObj, FullSourceLoc Loc, unsigned DiagID) :
-    DiagObj(diagObj) {
-    if (DiagObj == 0) return;
-    assert(DiagObj->NumDiagArgs == -1 &&
-           "Multiple diagnostics in flight at once!");
-    DiagObj->NumDiagArgs = DiagObj->NumDiagRanges = 0;
-    DiagObj->CurDiagLoc = Loc;
-    DiagObj->CurDiagID = DiagID;
-  }
+  void operator=(const DiagnosticBuilder&); // DO NOT IMPLEMENT
+  friend class Diagnostic;
+  explicit DiagnosticBuilder(Diagnostic *diagObj)
+    : DiagObj(diagObj), NumArgs(0), NumRanges(0) {}
+public:
+  DiagnosticBuilder() : DiagObj(0) {}
   
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
   /// input and neuters it.
-  DiagnosticInfo(const DiagnosticInfo &D) {
+  DiagnosticBuilder(const DiagnosticBuilder &D) {
     DiagObj = D.DiagObj;
     D.DiagObj = 0;
   }
   
   /// Destructor - The dtor emits the diagnostic.
-  ~DiagnosticInfo() {
+  ~DiagnosticBuilder() {
     // If DiagObj is null, then its soul was stolen by the copy ctor.
-    if (!DiagObj) return;
+    if (DiagObj == 0) return;
     
-    DiagObj->ProcessDiag(*this);
+    
+    DiagObj->NumDiagArgs = NumArgs;
+    DiagObj->NumDiagRanges = NumRanges;
+
+    DiagObj->ProcessDiag();
 
     // This diagnostic is no longer in flight.
-    DiagObj->NumDiagArgs = -1;
+    DiagObj->CurDiagID = ~0U;
   }
+  
+  /// Operator bool: conversion of DiagnosticBuilder to bool always returns
+  /// true.  This allows is to be used in boolean error contexts like:
+  /// return Diag(...);
+  operator bool() const { return true; }
+
+  void AddString(const std::string &S) const {
+    assert(NumArgs < Diagnostic::MaxArguments &&
+           "Too many arguments to diagnostic!");
+    DiagObj->DiagArgumentsKind[NumArgs] = Diagnostic::ak_std_string;
+    DiagObj->DiagArgumentsStr[NumArgs++] = S;
+  }
+  
+  void AddTaggedVal(intptr_t V, Diagnostic::ArgumentKind Kind) const {
+    assert(NumArgs < Diagnostic::MaxArguments &&
+           "Too many arguments to diagnostic!");
+    DiagObj->DiagArgumentsKind[NumArgs] = Kind;
+    DiagObj->DiagArgumentsVal[NumArgs++] = V;
+  }
+  
+  void AddSourceRange(const SourceRange &R) const {
+    assert(NumRanges < 
+           sizeof(DiagObj->DiagRanges)/sizeof(DiagObj->DiagRanges[0]) &&
+           "Too many arguments to diagnostic!");
+    DiagObj->DiagRanges[NumRanges++] = &R;
+  }    
+};
+
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const std::string &S) {
+  DB.AddString(S);
+  return DB;
+}
+
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const char *Str) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(Str),
+                  Diagnostic::ak_c_string);
+  return DB;
+}
+
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB, int I) {
+  DB.AddTaggedVal(I, Diagnostic::ak_sint);
+  return DB;
+}
+
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           unsigned I) {
+  DB.AddTaggedVal(I, Diagnostic::ak_uint);
+  return DB;
+}
+
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const IdentifierInfo *II) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(II),
+                  Diagnostic::ak_identifierinfo);
+  return DB;
+}
+  
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const SourceRange &R) {
+  DB.AddSourceRange(R);
+  return DB;
+}
+  
+
+/// Report - Issue the message to the client.  DiagID is a member of the
+/// diag::kind enum.  This actually returns a new instance of DiagnosticBuilder
+/// which emits the diagnostics (through ProcessDiag) when it is destroyed.
+inline DiagnosticBuilder Diagnostic::Report(FullSourceLoc Loc, unsigned DiagID){
+  assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");
+  CurDiagLoc = Loc;
+  CurDiagID = DiagID;
+  return DiagnosticBuilder(this);
+}
+
+//===----------------------------------------------------------------------===//
+// DiagnosticInfo
+//===----------------------------------------------------------------------===//
+  
+/// DiagnosticInfo - This is a little helper class (which is basically a smart
+/// pointer that forward info from Diagnostic) that allows clients ot enquire
+/// about the currently in-flight diagnostic.
+class DiagnosticInfo {
+  const Diagnostic *DiagObj;
+public:
+  explicit DiagnosticInfo(const Diagnostic *DO) : DiagObj(DO) {}
   
   const Diagnostic *getDiags() const { return DiagObj; }
   unsigned getID() const { return DiagObj->CurDiagID; }
   const FullSourceLoc &getLocation() const { return DiagObj->CurDiagLoc; }
   
-  /// Operator bool: conversion of DiagnosticInfo to bool always returns true.
-  /// This allows is to be used in boolean error contexts like:
-  /// return Diag(...);
-  operator bool() const { return true; }
-
   unsigned getNumArgs() const { return DiagObj->NumDiagArgs; }
-  
   
   /// getArgKind - Return the kind of the specified index.  Based on the kind
   /// of argument, the accessors below can be used to get the value.
-  ArgumentKind getArgKind(unsigned Idx) const {
-    assert((signed char)Idx < DiagObj->NumDiagArgs &&
-           "Argument index out of range!");
-    return (ArgumentKind)DiagObj->DiagArgumentsKind[Idx];
+  Diagnostic::ArgumentKind getArgKind(unsigned Idx) const {
+    assert(Idx < getNumArgs() && "Argument index out of range!");
+    return (Diagnostic::ArgumentKind)DiagObj->DiagArgumentsKind[Idx];
   }
   
   /// getArgStdStr - Return the provided argument string specified by Idx.
   const std::string &getArgStdStr(unsigned Idx) const {
-    assert(getArgKind(Idx) == ak_std_string && "invalid argument accessor!");
+    assert(getArgKind(Idx) == Diagnostic::ak_std_string &&
+           "invalid argument accessor!");
     return DiagObj->DiagArgumentsStr[Idx];
   }
-
+  
   /// getArgCStr - Return the specified C string argument.
   const char *getArgCStr(unsigned Idx) const {
-    assert(getArgKind(Idx) == ak_c_string && "invalid argument accessor!");
+    assert(getArgKind(Idx) == Diagnostic::ak_c_string &&
+           "invalid argument accessor!");
     return reinterpret_cast<const char*>(DiagObj->DiagArgumentsVal[Idx]);
   }
   
   /// getArgSInt - Return the specified signed integer argument.
   int getArgSInt(unsigned Idx) const {
-    assert(getArgKind(Idx) == ak_sint && "invalid argument accessor!");
+    assert(getArgKind(Idx) == Diagnostic::ak_sint &&
+           "invalid argument accessor!");
     return (int)DiagObj->DiagArgumentsVal[Idx];
   }
-
+  
   /// getArgUInt - Return the specified unsigned integer argument.
   unsigned getArgUInt(unsigned Idx) const {
-    assert(getArgKind(Idx) == ak_uint && "invalid argument accessor!");
+    assert(getArgKind(Idx) == Diagnostic::ak_uint &&
+           "invalid argument accessor!");
     return (unsigned)DiagObj->DiagArgumentsVal[Idx];
   }
   
   /// getArgIdentifier - Return the specified IdentifierInfo argument.
   const IdentifierInfo *getArgIdentifier(unsigned Idx) const {
-    assert(getArgKind(Idx) == ak_identifierinfo &&"invalid argument accessor!");
+    assert(getArgKind(Idx) == Diagnostic::ak_identifierinfo &&
+           "invalid argument accessor!");
     return reinterpret_cast<const IdentifierInfo*>(
-                                                DiagObj->DiagArgumentsVal[Idx]);
+                                                   DiagObj->DiagArgumentsVal[Idx]);
   }
   
   /// getNumRanges - Return the number of source ranges associated with this
@@ -341,75 +432,12 @@ public:
     return *DiagObj->DiagRanges[Idx];
   }
   
-  void AddString(const std::string &S) const {
-    assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
-           "Too many arguments to diagnostic!");
-    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = ak_std_string;
-    DiagObj->DiagArgumentsStr[DiagObj->NumDiagArgs++] = S;
-  }
-  
-  void AddTaggedVal(intptr_t V, ArgumentKind Kind) const {
-    assert((unsigned)DiagObj->NumDiagArgs < Diagnostic::MaxArguments &&
-           "Too many arguments to diagnostic!");
-    DiagObj->DiagArgumentsKind[DiagObj->NumDiagArgs] = Kind;
-    DiagObj->DiagArgumentsVal[DiagObj->NumDiagArgs++] = V;
-  }
-  
-  void AddSourceRange(const SourceRange &R) const {
-    assert((unsigned)DiagObj->NumDiagArgs < 
-           sizeof(DiagObj->DiagRanges)/sizeof(DiagObj->DiagRanges[0]) &&
-           "Too many arguments to diagnostic!");
-    DiagObj->DiagRanges[DiagObj->NumDiagRanges++] = &R;
-  }    
   
   /// FormatDiagnostic - Format this diagnostic into a string, substituting the
   /// formal arguments into the %0 slots.  The result is appended onto the Str
   /// array.
   void FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const;
 };
-
-inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI,
-                                        const std::string &S) {
-  DI.AddString(S);
-  return DI;
-}
-
-inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI,
-                                        const char *Str) {
-  DI.AddTaggedVal(reinterpret_cast<intptr_t>(Str), DiagnosticInfo::ak_c_string);
-  return DI;
-}
-
-inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI, int I) {
-  DI.AddTaggedVal(I, DiagnosticInfo::ak_sint);
-  return DI;
-}
-
-inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI, unsigned I) {
-  DI.AddTaggedVal(I, DiagnosticInfo::ak_uint);
-  return DI;
-}
-
-inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI,
-                                        const IdentifierInfo *II){
-  DI.AddTaggedVal(reinterpret_cast<intptr_t>(II),
-                  DiagnosticInfo::ak_identifierinfo);
-  return DI;
-}
-  
-inline const DiagnosticInfo &operator<<(const DiagnosticInfo &DI,
-                                        const SourceRange &R) {
-  DI.AddSourceRange(R);
-  return DI;
-}
-  
-
-/// Report - Issue the message to the client.  DiagID is a member of the
-/// diag::kind enum.  This actually returns a new instance of DiagnosticInfo
-/// which emits the diagnostics (through ProcessDiag) when it is destroyed.
-inline DiagnosticInfo Diagnostic::Report(FullSourceLoc Pos, unsigned DiagID) {
-  return DiagnosticInfo(this, Pos, DiagID);
-}
   
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of
