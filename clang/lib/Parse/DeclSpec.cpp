@@ -16,6 +16,14 @@
 #include "clang/Basic/LangOptions.h"
 using namespace clang;
 
+
+static DiagnosticBuilder Diag(Diagnostic &D, SourceLocation Loc,
+                              SourceManager &SrcMgr, unsigned DiagID) {
+  return D.Report(FullSourceLoc(Loc, SrcMgr), DiagID);
+}
+
+
+
 /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this
 ///
 unsigned DeclSpec::getParsedSpecifiers() const {
@@ -124,7 +132,7 @@ bool DeclSpec::BadSpecifier(TQ T, const char *&PrevSpec) {
 bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
                                    const char *&PrevSpec) {
   if (StorageClassSpec != SCS_unspecified)
-    return BadSpecifier( (SCS)StorageClassSpec, PrevSpec);
+    return BadSpecifier((SCS)StorageClassSpec, PrevSpec);
   StorageClassSpec = S;
   StorageClassSpecLoc = Loc;
   assert((unsigned)S == StorageClassSpec && "SCS constants overflow bitfield");
@@ -151,7 +159,7 @@ bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
   if (TypeSpecWidth != TSW_unspecified &&
       // Allow turning long -> long long.
       (W != TSW_longlong || TypeSpecWidth != TSW_long))
-    return BadSpecifier( (TSW)TypeSpecWidth, PrevSpec);
+    return BadSpecifier((TSW)TypeSpecWidth, PrevSpec);
   TypeSpecWidth = W;
   TSWLoc = Loc;
   return false;
@@ -160,7 +168,7 @@ bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
 bool DeclSpec::SetTypeSpecComplex(TSC C, SourceLocation Loc, 
                                   const char *&PrevSpec) {
   if (TypeSpecComplex != TSC_unspecified)
-    return BadSpecifier( (TSC)TypeSpecComplex, PrevSpec);
+    return BadSpecifier((TSC)TypeSpecComplex, PrevSpec);
   TypeSpecComplex = C;
   TSCLoc = Loc;
   return false;
@@ -169,7 +177,7 @@ bool DeclSpec::SetTypeSpecComplex(TSC C, SourceLocation Loc,
 bool DeclSpec::SetTypeSpecSign(TSS S, SourceLocation Loc, 
                                const char *&PrevSpec) {
   if (TypeSpecSign != TSS_unspecified)
-    return BadSpecifier( (TSS)TypeSpecSign, PrevSpec);
+    return BadSpecifier((TSS)TypeSpecSign, PrevSpec);
   TypeSpecSign = S;
   TSSLoc = Loc;
   return false;
@@ -178,7 +186,7 @@ bool DeclSpec::SetTypeSpecSign(TSS S, SourceLocation Loc,
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
                                const char *&PrevSpec, Action::TypeTy *Rep) {
   if (TypeSpecType != TST_unspecified)
-    return BadSpecifier( (TST)TypeSpecType, PrevSpec);
+    return BadSpecifier((TST)TypeSpecType, PrevSpec);
   TypeSpecType = T;
   TypeRep = Rep;
   TSTLoc = Loc;
@@ -237,8 +245,8 @@ void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr,
       TypeSpecType = TST_int; // unsigned -> unsigned int, signed -> signed int.
     else if (TypeSpecType != TST_int  &&
              TypeSpecType != TST_char && TypeSpecType != TST_wchar) {
-      Diag(D, TSSLoc, SrcMgr, diag::err_invalid_sign_spec,
-           getSpecifierName( (TST)TypeSpecType));
+      Diag(D, TSSLoc, SrcMgr, diag::err_invalid_sign_spec)
+        << getSpecifierName((TST)TypeSpecType);
       // signed double -> double.
       TypeSpecSign = TSS_unspecified;
     }
@@ -254,8 +262,8 @@ void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr,
     else if (TypeSpecType != TST_int) {
       Diag(D, TSWLoc, SrcMgr,
            TypeSpecWidth == TSW_short ? diag::err_invalid_short_spec
-                                      : diag::err_invalid_longlong_spec,
-           getSpecifierName( (TST)TypeSpecType));
+                                      : diag::err_invalid_longlong_spec)
+        <<  getSpecifierName((TST)TypeSpecType);
       TypeSpecType = TST_int;
     }
     break;
@@ -263,8 +271,8 @@ void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr,
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int;  // long -> long int.
     else if (TypeSpecType != TST_int && TypeSpecType != TST_double) {
-      Diag(D, TSWLoc, SrcMgr, diag::err_invalid_long_spec,
-           getSpecifierName( (TST)TypeSpecType));
+      Diag(D, TSWLoc, SrcMgr, diag::err_invalid_long_spec)
+        << getSpecifierName((TST)TypeSpecType);
       TypeSpecType = TST_int;
     }
     break;
@@ -280,8 +288,8 @@ void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr,
       // Note that this intentionally doesn't include _Complex _Bool.
       Diag(D, TSTLoc, SrcMgr, diag::ext_integer_complex);
     } else if (TypeSpecType != TST_float && TypeSpecType != TST_double) {
-      Diag(D, TSCLoc, SrcMgr, diag::err_invalid_complex_spec, 
-           getSpecifierName( (TST)TypeSpecType));
+      Diag(D, TSCLoc, SrcMgr, diag::err_invalid_complex_spec)
+        << getSpecifierName((TST)TypeSpecType);
       TypeSpecComplex = TSC_unspecified;
     }
   }
@@ -292,8 +300,8 @@ void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr,
       StorageClassSpec = SCS_extern; // '__thread int' -> 'extern __thread int'
     } else if (StorageClassSpec != SCS_extern &&
                StorageClassSpec != SCS_static) {
-      Diag(D, getStorageClassSpecLoc(), SrcMgr, diag::err_invalid_thread_spec,
-           getSpecifierName( (SCS)StorageClassSpec));
+      Diag(D, getStorageClassSpecLoc(), SrcMgr, diag::err_invalid_thread_spec)
+        << getSpecifierName((SCS)StorageClassSpec);
       SCS_thread_specified = false;
     }
   }
@@ -305,12 +313,3 @@ void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr,
   // 'data definition has no type or storage class'?
 }
 
-void DeclSpec::Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr, 
-                    unsigned DiagID) {
-  D.Report(FullSourceLoc(Loc,SrcMgr), DiagID);
-}
-  
-void DeclSpec::Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr,
-                    unsigned DiagID, const std::string &Info) {
-  D.Report(FullSourceLoc(Loc,SrcMgr), DiagID) << Info;
-}

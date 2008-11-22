@@ -317,13 +317,6 @@ public:
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
   void Finish(Diagnostic &D, SourceManager& SrcMgr, const LangOptions &Lang);
-  
-private:
-  void Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr, 
-            unsigned DiagID);
-  
-  void Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr,
-            unsigned DiagID, const std::string &info);
 };
 
 /// ObjCDeclSpec - This class captures information about 
