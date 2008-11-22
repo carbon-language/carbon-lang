@@ -33,3 +33,8 @@ void test6() {
   int X;
   X();  // expected-error {{called object type 'int' is not a function or function pointer}}
 }
+
+void test7(int *P, _Complex float Gamma) {
+   P = (P-42) + Gamma*4;  // expected-error {{invalid operands to binary expression ('int *' and '_Complex float')}}
+}
+
