@@ -417,8 +417,7 @@ public:
   const IdentifierInfo *getArgIdentifier(unsigned Idx) const {
     assert(getArgKind(Idx) == Diagnostic::ak_identifierinfo &&
            "invalid argument accessor!");
-    return reinterpret_cast<const IdentifierInfo*>(
-                                                   DiagObj->DiagArgumentsVal[Idx]);
+    return reinterpret_cast<IdentifierInfo*>(DiagObj->DiagArgumentsVal[Idx]);
   }
   
   /// getNumRanges - Return the number of source ranges associated with this
