@@ -15,7 +15,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
-
 using namespace clang;
 
 PreprocessorLexer::PreprocessorLexer(Preprocessor* pp, SourceLocation L)
@@ -25,11 +24,6 @@ PreprocessorLexer::PreprocessorLexer(Preprocessor* pp, SourceLocation L)
      LexingRawMode(false) {}
 
 PreprocessorLexer::~PreprocessorLexer() {}
-
-void PreprocessorLexer::Diag(SourceLocation Loc, unsigned DiagID,
-                             const std::string &Msg) const {
-  PP->Diag(Loc, DiagID) << Msg;
-}
 
 /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
 /// (potentially) macro expand the filename.
@@ -49,5 +43,5 @@ void PreprocessorLexer::LexIncludeFilename(Token &FilenameTok) {
   
   // No filename?
   if (FilenameTok.is(tok::eom))
-    Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
+    PP->Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
 }

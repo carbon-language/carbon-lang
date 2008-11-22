@@ -79,11 +79,6 @@ protected:
   
   virtual void IndirectLex(Token& Result) = 0;
   
-  /// Diag - Forwarding function for diagnostics.  This translate a source
-  /// position in the current buffer into a SourceLocation object for rendering.
-  void Diag(SourceLocation Loc, unsigned DiagID,
-            const std::string &Msg = std::string()) const;
-  
   //===--------------------------------------------------------------------===//
   // #if directive handling.
   
