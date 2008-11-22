@@ -533,8 +533,8 @@ void CodeGenFunction::EmitContinueStmt(const ContinueStmt &S) {
 void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   assert(S.getRHS() && "Expected RHS value in CaseStmt");
 
-  llvm::APSInt LHS = S.getLHS()->getIntegerConstantExprValue(getContext());
-  llvm::APSInt RHS = S.getRHS()->getIntegerConstantExprValue(getContext());
+  llvm::APSInt LHS = S.getLHS()->EvaluateAsInt(getContext());
+  llvm::APSInt RHS = S.getRHS()->EvaluateAsInt(getContext());
 
   // Emit the code for this case. We do this first to make sure it is
   // properly chained from our predecessor before generating the
@@ -594,7 +594,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
     
   EmitBlock(createBasicBlock("sw.bb"));
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
-  llvm::APSInt CaseVal = S.getLHS()->getIntegerConstantExprValue(getContext());
+  llvm::APSInt CaseVal = S.getLHS()->EvaluateAsInt(getContext());
   SwitchInsn->addCase(llvm::ConstantInt::get(CaseVal), CaseDest);
   EmitStmt(S.getSubStmt());
 }

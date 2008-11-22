@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
@@ -127,14 +128,22 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
   
   SourceLocation ExpLoc;
   // C99 6.8.4.2p3: The expression shall be an integer constant.
-  if (!LHSVal->isIntegerConstantExpr(Context, &ExpLoc)) {
+  // However, GCC allows any evaluatable integer expression. 
+  // FIXME: Should we warn if this is evaluatable but not an I-C-E?
+  APValue Result;
+  
+  if (!LHSVal->Evaluate(Result, Context) || !Result.isInt()) {
+    // FIXME: Evaluate doesn't return the SourceLocation that it failed to
+    // evaluate. 
+    ExpLoc = LHSVal->getExprLoc();
     Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr)
       << LHSVal->getSourceRange();
     return SubStmt;
   }
 
   // GCC extension: The expression shall be an integer constant.
-  if (RHSVal && !RHSVal->isIntegerConstantExpr(Context, &ExpLoc)) {
+  if (RHSVal && !RHSVal->Evaluate(Result, Context) || !Result.isInt()) {
+    ExpLoc = RHSVal->getExprLoc();
     Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr)
       << RHSVal->getSourceRange();
     RHSVal = 0;  // Recover by just forgetting about it.
@@ -394,7 +403,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
       // We already verified that the expression has a i-c-e value (C99
       // 6.8.4.2p3) - get that value now.
       Expr *Lo = CS->getLHS();
-      llvm::APSInt LoVal = Lo->getIntegerConstantExprValue(Context);
+      llvm::APSInt LoVal = Lo->EvaluateAsInt(Context);
       
       // Convert the value to the same width/sign as the condition.
       ConvertIntegerToTypeWarnOnOverflow(LoVal, CondWidth, CondIsSigned,
@@ -444,7 +453,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
     for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
       CaseStmt *CR = CaseRanges[i].second;
       Expr *Hi = CR->getRHS();
-      llvm::APSInt HiVal = Hi->getIntegerConstantExprValue(Context);
+      llvm::APSInt HiVal = Hi->EvaluateAsInt(Context);
 
       // Convert the value to the same width/sign as the condition.
       ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,

@@ -28,3 +28,25 @@ void test3(void) {
   switch (0); 
 }
 
+extern int g();
+
+void test4()
+{
+  switch (1) {
+  case 0 && g():
+  case 1 || g():
+    break;
+  }
+
+  switch(1)  {
+  case g(): // expected-error {{case label does not reduce to an integer constant}}
+  case 0 ... g(): // expected-error {{case label does not reduce to an integer constant}}
+    break;
+  }
+  
+  switch (1) {
+  case 0 && g() ... 1 || g():
+    break;
+  }
+}
+

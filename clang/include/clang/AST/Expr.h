@@ -147,6 +147,10 @@ public:
   /// folded, but discard the result.
   bool isEvaluatable(ASTContext &Ctx) const;
 
+  /// EvaluateAsInt - Call Evaluate and return the folded integer. This
+  /// must be called on an expression that constant folds to an integer.
+  llvm::APSInt EvaluateAsInt(ASTContext &Ctx) const;
+
   /// hasGlobalStorage - Return true if this expression has static storage
   /// duration.  This means that the address of this expression is a link-time
   /// constant.

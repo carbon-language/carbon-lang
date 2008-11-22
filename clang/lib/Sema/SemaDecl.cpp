@@ -1488,7 +1488,7 @@ static const Expr* FindExpressionBaseAddress(const Expr* E) {
   }
 }
 
-bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
+bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {  
   switch (Init->getStmtClass()) {
   default:
     InitializerElementNotConstant(Init);

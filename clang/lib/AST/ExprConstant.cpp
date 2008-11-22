@@ -537,19 +537,28 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     // These need to be handled specially because the operands aren't
     // necessarily integral
     bool bres;
-    if (!HandleConversionToBool(E->getLHS(), bres, Info)) {
+    
+    if (HandleConversionToBool(E->getLHS(), bres, Info)) {
+      // We were able to evaluate the LHS, see if we can get away with not
+      // evaluating the RHS: 0 && X -> 0, 1 || X -> 1
+    } else {
       // We can't evaluate the LHS; however, sometimes the result
       // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
-      if (HandleConversionToBool(E->getRHS(), bres, Info) &&
-          bres == (E->getOpcode() == BinaryOperator::LOr)) {
-        Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-        Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-        Result = bres;
-        return true;
+      if (!HandleConversionToBool(E->getRHS(), bres, Info)) {
+        // We can't evaluate.
+        return false;
       }
+    }
 
-      // Really can't evaluate
-      return false;
+    // FIXME: If we evaluate the RHS, we need to check if the LHS has
+    // any side effects.
+    
+    if (bres == (E->getOpcode() == BinaryOperator::LOr) ||
+        !bres == (E->getOpcode() == BinaryOperator::LAnd)) {
+      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+      Result = bres;
+      return true;
     }
 
     bool bres2;
@@ -1175,4 +1184,13 @@ bool Expr::Evaluate(APValue &Result, ASTContext &Ctx) const {
 bool Expr::isEvaluatable(ASTContext &Ctx) const {
   APValue V;
   return Evaluate(V, Ctx);
+}
+
+APSInt Expr::EvaluateAsInt(ASTContext &Ctx) const {
+  APValue V;
+  bool Result = Evaluate(V, Ctx);
+  assert(Result && "Could not evaluate expression");
+  assert(V.isInt() && "Expression did not evaluate to integer");
+
+  return V.getInt();
 }
