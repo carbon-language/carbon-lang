@@ -59,7 +59,7 @@ class Diagnostic {
 public:
   /// Level - The level of the diagnostic, after it has been through mapping.
   enum Level {
-    Ignored, Note, Warning, Error, Fatal
+    Ignored, Note, Warning, Error
   };
   
 private:  

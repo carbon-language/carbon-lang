@@ -33,7 +33,6 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
   case Diagnostic::Note:    LevelStr = "note: "; break;
   case Diagnostic::Warning: LevelStr = "warning: "; break;
   case Diagnostic::Error:   LevelStr = "error: "; break;
-  case Diagnostic::Fatal:   LevelStr = "fatal error: "; break;
   }
 
   llvm::SmallString<100> StrC;

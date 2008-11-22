@@ -139,7 +139,6 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   case Diagnostic::Note:    OS << "note: "; break;
   case Diagnostic::Warning: OS << "warning: "; break;
   case Diagnostic::Error:   OS << "error: "; break;
-  case Diagnostic::Fatal:   OS << "fatal error: "; break;
   }
   
   llvm::SmallString<100> OutStr;
