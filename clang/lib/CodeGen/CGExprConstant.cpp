@@ -25,6 +25,8 @@
 using namespace clang;
 using namespace CodeGen;
 
+#define USE_TRY_EVALUATE
+
 namespace  {
 class VISIBILITY_HIDDEN ConstExprEmitter : 
   public StmtVisitor<ConstExprEmitter, llvm::Constant*> {
@@ -49,6 +51,7 @@ public:
     return Visit(PE->getSubExpr()); 
   }
   
+#ifndef USE_TRY_EVALUATE
   // Leaves
   llvm::Constant *VisitIntegerLiteral(const IntegerLiteral *E) {
     return llvm::ConstantInt::get(E->getValue());
@@ -65,13 +68,14 @@ public:
   llvm::Constant *VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
+#endif
   llvm::Constant *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     std::string S(E->getString()->getStrData(), 
                   E->getString()->getByteLength());
     llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(S);
     return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
   }
-  
+    
   llvm::Constant *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
     return Visit(E->getInitializer());
   }
@@ -376,6 +380,7 @@ public:
     return llvm::ConstantArray::get(CGM.GetStringForStringLiteral(E), false);
   }
 
+#ifndef USE_TRY_EVALUATE
   llvm::Constant *VisitDeclRefExpr(DeclRefExpr *E) {
     const NamedDecl *Decl = E->getDecl();
     if (const EnumConstantDecl *EC = dyn_cast<EnumConstantDecl>(Decl))
@@ -387,7 +392,8 @@ public:
   llvm::Constant *VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
     return EmitSizeAlignOf(E->getTypeOfArgument(), E->getType(), E->isSizeOf());
   }
-
+#endif
+    
   llvm::Constant *VisitAddrLabelExpr(const AddrLabelExpr *E) {
     assert(CGF && "Invalid address of label expression outside function.");
     llvm::Constant *C = 
@@ -396,6 +402,7 @@ public:
     return llvm::ConstantExpr::getIntToPtr(C, ConvertType(E->getType()));
   }
 
+#ifndef USE_TRY_EVALUATE
   // Unary operators
   llvm::Constant *VisitUnaryPlus(const UnaryOperator *E) {
     return Visit(E->getSubExpr());
@@ -426,6 +433,8 @@ public:
 
     return llvm::ConstantExpr::getZExt(SubExpr, ConvertType(E->getType()));
   }
+#endif
+    
   llvm::Constant *VisitUnaryAddrOf(const UnaryOperator *E) {
     return EmitLValue(E->getSubExpr());
   }
@@ -444,6 +453,7 @@ public:
   }
   
   // Binary operators
+#ifndef USE_TRY_EVALUATE
   llvm::Constant *VisitBinOr(const BinaryOperator *E) {
     llvm::Constant *LHS = Visit(E->getLHS());
     llvm::Constant *RHS = Visit(E->getRHS());
@@ -607,6 +617,7 @@ public:
 
     return Visit(E->getRHS());
   }
+#endif
 
   llvm::Constant *VisitCallExpr(const CallExpr *E) {
     APValue Result;
