@@ -13,3 +13,11 @@ void *d = c;
 intptr_t e = c; // expected-warning {{incompatible pointer to integer conversion}}
 
 int f, *g = __extension__ &f, *h = (1 != 1) ? &f : &f;
+
+union s2 {
+  struct {
+    struct { } *f0;
+  } f0;
+};
+
+int g0 = (int)(&(((union s2 *) 0)->f0.f0) - 0);
