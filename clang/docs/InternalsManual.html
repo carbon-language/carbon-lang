@@ -419,7 +419,7 @@ describe the location of the characters corresponding to the token and the
 location where the token was used (i.e. the macro instantiation point or the 
 location of the _Pragma itself).</p>
 
-<p>For efficiency, we only track one level of macro instantions: if a token was
+<p>For efficiency, we only track one level of macro instantiations: if a token was
 produced by multiple instantiations, we only track the source and ultimate
 destination.  Though we could track the intermediate instantiation points, this
 would require extra bookkeeping and no known client would benefit substantially
@@ -461,7 +461,7 @@ intended to live beyond them (for example, they should not live in the ASTs).<p>
 <p>Tokens most often live on the stack (or some other location that is efficient
 to access) as the parser is running, but occasionally do get buffered up.  For
 example, macro definitions are stored as a series of tokens, and the C++
-front-end will eventually need to buffer tokens up for tentative parsing and
+front-end periodically needs to buffer tokens up for tentative parsing and
 various pieces of look-ahead.  As such, the size of a Token matter.  On a 32-bit
 system, sizeof(Token) is currently 16 bytes.</p>
 
@@ -754,7 +754,7 @@ malloc'd objects are at least 8 byte aligned.</p>
 
 <p>The <tt>DeclarationName</tt> class represents the name of a
   declaration in Clang. Declarations in the C family of languages can
-  take several different forms. Most declarations are named by are
+  take several different forms. Most declarations are named by 
   simple identifiers, e.g., "<code>f</code>" and "<code>x</code>" in
   the function declaration <code>f(int x)</code>. In C++, declaration
   names can also name class constructors ("<code>Class</code>"
@@ -763,10 +763,10 @@ malloc'd objects are at least 8 byte aligned.</p>
   and conversion functions ("<code>operator void const *</code>"). In
   Objective-C, declaration names can refer to the names of Objective-C
   methods, which involve the method name and the parameters,
-  collectively called a <i>selector</i>, e.g..,
+  collectively called a <i>selector</i>, e.g.,
   "<code>setWidth:height:</code>". Since all of these kinds of
-  entities--variables, functions, Objective-C methods, C++
-  constructors, destructors, and operators---are represented as
+  entities - variables, functions, Objective-C methods, C++
+  constructors, destructors, and operators - are represented as
   subclasses of Clang's common <code>NamedDecl</code>
   class, <code>DeclarationName</code> is designed to efficiently
   represent any kind of name.</p>
