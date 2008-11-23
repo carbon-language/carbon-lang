@@ -23,6 +23,12 @@ using namespace clang;
 typedef TextDiagnosticBuffer::DiagList DiagList;
 typedef TextDiagnosticBuffer::const_iterator const_diag_iterator;
 
+static void EmitError(Preprocessor &PP, SourceLocation Pos, const char *String){
+  unsigned ID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error, String);
+  PP.Diag(Pos, ID);
+}
+
+
 // USING THE DIAGNOSTIC CHECKER:
 //
 // Indicating that a line expects an error or a warning is simple. Put a comment
@@ -38,19 +44,17 @@ typedef TextDiagnosticBuffer::const_iterator const_diag_iterator;
 // You can place as many diagnostics on one line as you wish. To make the code
 // more readable, you can use slash-newline to separate out the diagnostics.
 
-static const char * const ExpectedErrStr = "expected-error";
-static const char * const ExpectedWarnStr = "expected-warning";
-static const char * const ExpectedNoteStr = "expected-note";
-
 /// FindDiagnostics - Go through the comment and see if it indicates expected
 /// diagnostics. If so, then put them in a diagnostic list.
 /// 
 static void FindDiagnostics(const std::string &Comment,
                             DiagList &ExpectedDiags,
-                            SourceManager &SourceMgr,
+                            Preprocessor &PP,
                             SourceLocation Pos,
                             const char * const ExpectedStr) {
-  // Find all expected diagnostics
+  SourceManager &SourceMgr = PP.getSourceManager();
+  
+  // Find all expected diagnostics.
   typedef std::string::size_type size_type;
   size_type ColNo = 0;
 
@@ -61,27 +65,23 @@ static void FindDiagnostics(const std::string &Comment,
     size_type OpenDiag = Comment.find("{{", ColNo);
 
     if (OpenDiag == std::string::npos) {
-      fprintf(stderr,
-              "oops:%d: Cannot find beginning of expected error string\n",
-              SourceMgr.getLogicalLineNumber(Pos));
-      break;
+      EmitError(PP, Pos,
+                "cannot find start ('{{') of expected diagnostic string");
+      return;
     }
 
     OpenDiag += 2;
     size_type CloseDiag = Comment.find("}}", OpenDiag);
 
     if (CloseDiag == std::string::npos) {
-      fprintf(stderr,
-              "oops:%d: Cannot find end of expected error string\n",
-              SourceMgr.getLogicalLineNumber(Pos));
-      break;
+      EmitError(PP, Pos,"cannot find end ('}}') of expected diagnostic string");
+      return;
     }
 
     std::string Msg(Comment.substr(OpenDiag, CloseDiag - OpenDiag));
     size_type FindPos;
-    while((FindPos = Msg.find("\\n")) != std::string::npos) {
+    while ((FindPos = Msg.find("\\n")) != std::string::npos)
       Msg.replace(FindPos, 2, "\n");
-    }
     ExpectedDiags.push_back(std::make_pair(Pos, Msg));
     ColNo = CloseDiag + 2;
   }
@@ -95,7 +95,6 @@ static void FindExpectedDiags(Preprocessor &PP,
                               DiagList &ExpectedNotes) {
   // Create a raw lexer to pull all the comments out of the main file.  We don't
   // want to look in #include'd headers for expected-error strings.
-  
   unsigned FileID = PP.getSourceManager().getMainFileID();
   std::pair<const char*,const char*> File =
     PP.getSourceManager().getBufferData(FileID);
@@ -108,25 +107,25 @@ static void FindExpectedDiags(Preprocessor &PP,
   RawLex.SetCommentRetentionState(true);
 
   Token Tok;
-  do {
+  Tok.setKind(tok::comment);
+  while (Tok.isNot(tok::eof)) {
     RawLex.Lex(Tok);
+    if (!Tok.is(tok::comment)) continue;
+    
+    std::string Comment = PP.getSpelling(Tok);
 
-    if (Tok.is(tok::comment)) {
-      std::string Comment = PP.getSpelling(Tok);
+    // Find all expected errors.
+    FindDiagnostics(Comment, ExpectedErrors, PP,
+                    Tok.getLocation(), "expected-error");
 
-      // Find all expected errors
-      FindDiagnostics(Comment, ExpectedErrors, PP.getSourceManager(),
-                      Tok.getLocation(), ExpectedErrStr);
+    // Find all expected warnings.
+    FindDiagnostics(Comment, ExpectedWarnings, PP,
+                    Tok.getLocation(), "expected-warning");
 
-      // Find all expected warnings
-      FindDiagnostics(Comment, ExpectedWarnings, PP.getSourceManager(),
-                      Tok.getLocation(), ExpectedWarnStr);
-
-      // Find all expected notes
-      FindDiagnostics(Comment, ExpectedNotes, PP.getSourceManager(),
-                      Tok.getLocation(), ExpectedNoteStr);
-    }
-  } while (Tok.isNot(tok::eof));
+    // Find all expected notes.
+    FindDiagnostics(Comment, ExpectedNotes, PP,
+                    Tok.getLocation(), "expected-note");
+  };
 }
 
 /// PrintProblem - This takes a diagnostic map of the delta between expected and

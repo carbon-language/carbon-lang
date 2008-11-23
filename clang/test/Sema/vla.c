@@ -14,5 +14,5 @@ void f (unsigned int m)
 }
 
 // PR3048
-int x = sizeof(struct{char qq[x];}); // expected-error {{fields must have a constant size}}
+int x = sizeof(struct{char qq[x];}); // expected-error {{fields must have a constant size}
 
