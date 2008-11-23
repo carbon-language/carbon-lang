@@ -68,7 +68,8 @@ public:
     ak_sint,           // int
     ak_uint,           // unsigned
     ak_identifierinfo, // IdentifierInfo
-    ak_qualtype        // QualType
+    ak_qualtype,       // QualType
+    ak_declarationname // DeclarationName
   };
   
 private:  

@@ -1494,7 +1494,6 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                   Diagnostic::ak_qualtype);
   return DB;
 }
-  
 
 }  // end namespace clang
 

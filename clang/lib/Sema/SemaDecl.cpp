@@ -856,10 +856,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       SourceLocation L = D.getIdentifierLoc();
       SourceRange R = D.getCXXScopeSpec().getRange();
       if (isa<FunctionDecl>(CurContext)) {
-        Diag(L, diag::err_invalid_declarator_in_function)
-          << Name.getAsString() << R;
+        Diag(L, diag::err_invalid_declarator_in_function) << Name << R;
       } else {
-      Diag(L, diag::err_invalid_declarator_scope)
+        Diag(L, diag::err_invalid_declarator_scope)
           << Name.getAsString() << cast<NamedDecl>(DC)->getName() << R;
       }
     }

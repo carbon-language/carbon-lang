@@ -21,11 +21,11 @@ void C2::m() {
 }
 
 namespace B {
-  void ::A::Af() {} // expected-error {{definition or redeclaration for 'Af' not in a namespace enclosing 'A'}}
+  void ::A::Af() {} // expected-error {{definition or redeclaration of 'Af' not in a namespace enclosing 'A'}}
 }
 
 void f1() {
-  void A::Af(); // expected-error {{definition or redeclaration for 'Af' not allowed inside a function}}  
+  void A::Af(); // expected-error {{definition or redeclaration of 'Af' not allowed inside a function}}  
 }
 
 void f2() {

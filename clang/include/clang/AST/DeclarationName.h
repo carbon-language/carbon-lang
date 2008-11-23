@@ -22,11 +22,11 @@ namespace llvm {
 }
 
 namespace clang {
-  class CXXSpecialName;       // a private class used by DeclarationName
-  class CXXOperatorIdName;    // a private class used by DeclarationName
-  class DeclarationNameExtra; // a private class used by DeclarationName
+  class CXXSpecialName;
+  class CXXOperatorIdName;
+  class DeclarationNameExtra;
   class IdentifierInfo;
-  class MultiKeywordSelector; // a private class used by Selector and DeclarationName
+  class MultiKeywordSelector;
 
 /// DeclarationName - The name of a declaration. In the common case,
 /// this just stores an IdentifierInfo pointer to a normal
@@ -198,6 +198,12 @@ public:
   /// name as an opaque integer.
   uintptr_t getAsOpaqueInteger() const { return Ptr; }
 
+  static DeclarationName getFromOpaqueInteger(uintptr_t P) {
+    DeclarationName N;
+    N.Ptr = P;
+    return N;
+  }
+  
   /// getCXXNameType - If this name is one of the C++ names (of a
   /// constructor, destructor, or conversion function), return the
   /// type associated with that name.
@@ -314,6 +320,16 @@ public:
   DeclarationName getCXXOperatorName(OverloadedOperatorKind Op);
 };  
 
+/// Insertion operator for diagnostics.  This allows sending DeclarationName's
+/// into a diagnostic with <<.
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           DeclarationName N) {
+  DB.AddTaggedVal(N.getAsOpaqueInteger(),
+                  Diagnostic::ak_declarationname);
+  return DB;
+}
+  
+  
 }  // end namespace clang
 
 namespace llvm {

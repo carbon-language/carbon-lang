@@ -335,7 +335,8 @@ public:
       case Diagnostic::ak_identifierinfo:
         R.addString(Info.getArgIdentifier(i)->getName());
         break;
-      case Diagnostic::ak_qualtype: {
+      case Diagnostic::ak_qualtype:
+      case Diagnostic::ak_declarationname: {
         llvm::SmallString<64> Str;
         Info.getDiags()->ConvertArgToString(Info.getArgKind(i),
                                             Info.getRawArg(i), 0, 0, 0, 0, Str);
