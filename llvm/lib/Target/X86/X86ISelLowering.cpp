@@ -38,7 +38,11 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+static cl::opt<bool>
+DisableMMX("disable-mmx", cl::Hidden);
 
 // Forward declarations.
 static SDValue getMOVLMask(unsigned NumElems, SelectionDAG &DAG);
@@ -573,7 +577,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FEXP2, (MVT::SimpleValueType)VT, Expand);
   }
 
-  if (Subtarget->hasMMX()) {
+  if (!DisableMMX && Subtarget->hasMMX()) {
     addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass);
     addRegisterClass(MVT::v4i16, X86::VR64RegisterClass);
     addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
