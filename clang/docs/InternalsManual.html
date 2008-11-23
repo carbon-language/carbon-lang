@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>"clang" CFE Internals Manual</title>
+<title>"Clang" CFE Internals Manual</title>
 <link type="text/css" rel="stylesheet" href="../menu.css" />
 <link type="text/css" rel="stylesheet" href="../content.css" />
 <style type="text/css">
@@ -15,12 +15,12 @@ td {
 
 <div id="content">
 
-<h1>"clang" CFE Internals Manual</h1>
+<h1>"Clang" CFE Internals Manual</h1>
 
 <ul>
 <li><a href="#intro">Introduction</a></li>
 <li><a href="#libsystem">LLVM System and Support Libraries</a></li>
-<li><a href="#libbasic">The clang 'Basic' Library</a>
+<li><a href="#libbasic">The Clang 'Basic' Library</a>
   <ul>
   <li><a href="#Diagnostics">The Diagnostics Subsystem</a></li>
   <li><a href="#SourceLocation">The SourceLocation and SourceManager
@@ -56,17 +56,17 @@ td {
 <!-- ======================================================================= -->
 
 <p>This document describes some of the more important APIs and internal design
-decisions made in the clang C front-end.  The purpose of this document is to
+decisions made in the Clang C front-end.  The purpose of this document is to
 both capture some of this high level information and also describe some of the
 design decisions behind it.  This is meant for people interested in hacking on
-clang, not for end-users.  The description below is categorized by
+Clang, not for end-users.  The description below is categorized by
 libraries, and does not describe any of the clients of the libraries.</p>
 
 <!-- ======================================================================= -->
 <h2 id="libsystem">LLVM System and Support Libraries</h2>
 <!-- ======================================================================= -->
 
-<p>The LLVM libsystem library provides the basic clang system abstraction layer,
+<p>The LLVM libsystem library provides the basic Clang system abstraction layer,
 which is used for file system access.  The LLVM libsupport library provides many
 underlying libraries and <a 
 href="http://llvm.org/docs/ProgrammersManual.html">data-structures</a>,
@@ -74,7 +74,7 @@ href="http://llvm.org/docs/ProgrammersManual.html">data-structures</a>,
 processing and various containers.</p>
 
 <!-- ======================================================================= -->
-<h2 id="libbasic">The clang 'Basic' Library</h2>
+<h2 id="libbasic">The Clang 'Basic' Library</h2>
 <!-- ======================================================================= -->
 
 <p>This library certainly needs a better name.  The 'basic' library contains a
@@ -104,7 +104,7 @@ when the code is incorrect or dubious.  In Clang, each diagnostic produced has
 of arguments to the dianostic (which fill in "%0"'s in the string) as well as a
 number of source ranges that related to the diagnostic.</p>
 
-<p>In this section, we'll be giving examples produced by the clang command line
+<p>In this section, we'll be giving examples produced by the Clang command line
 driver, but diagnostics can be <a href="#DiagnosticClient">rendered in many
 different ways</a> depending on how the DiagnosticClient interface is
 implemented.  A representative example of a diagonstic is:</p>
@@ -187,13 +187,13 @@ are some simple format strings:</p>
    but these are C strings, so you have to use and be aware of all the C escape
    sequences (as in the second example).  If you want to produce a "%" in the
    output, use the "%%" escape sequence, like the third diagnostic.  Finally,
-   clang uses the "%...[digit]" sequences to specify where and how arguments to
+   Clang uses the "%...[digit]" sequences to specify where and how arguments to
    the diagnostic are formatted.</p>
    
 <p>Arguments to the diagnostic are numbered according to how they are specified
    by the C++ code that <a href="#producingdiag">produces them</a>, and are
    referenced by <tt>%0</tt> .. <tt>%9</tt>.  If you have more than 10 arguments
-   to your diagnostic, you are doing something wrong. :).  Unlike printf, there
+   to your diagnostic, you are doing something wrong :).  Unlike printf, there
    is no requirement that arguments to the diagnostic end up in the output in
    the same order as they are specified, you could have a format string with
    <tt>"%1 %0"</tt> that swaps them, for example.  The text in between the
@@ -225,7 +225,8 @@ localized diagnostic).  The exceptions to this are C/C++ language keywords
 (e.g. auto, const, mutable, etc) and C/C++ operators (<tt>/=</tt>).  Note
 that things like "pointer" and "reference" are not keywords.  On the other
 hand, you <em>can</em> include anything that comes from the user's source code,
-including variable names, types, labels, etc.</p>
+including variable names, types, labels, etc.  The 'select' format can be 
+used to achieve this sort of thing in a localizable way, see below.</p>
 
 <!-- ==================================== -->
 <h4>Formatting a Diagnostic Argument</a></h4>
@@ -244,7 +245,7 @@ Clang:</p>
 <table>
 <tr><td colspan="2"><b>"s" format</b></td></tr>
 <tr><td>Example:</td><td><tt>"requires %1 parameter%s1"</tt></td></tr>
-<tr><td>Classes:</td><td>Integers</td></tr>
+<tr><td>Class:</td><td>Integers</td></tr>
 <tr><td>Description:</td><td>This is a simple formatter for integers that is
     useful when producing English diagnostics.  When the integer is 1, it prints
     as nothing.  When the integer is not 1, it prints as "s".  This allows some
@@ -254,10 +255,10 @@ Clang:</p>
 <tr><td colspan="2"><b>"select" format</b></td></tr>
 <tr><td>Example:</td><td><tt>"must be a %select{unary|binary|unary or binary}2
      operator"</tt></td></tr>
-<tr><td>Classes:</td><td>Integers</td></tr>
+<tr><td>Class:</td><td>Integers</td></tr>
 <tr><td>Description:</td><td>This format specifier is used to merge multiple
     related diagnostics together into one common one, without requiring the
-    different to be specified as an English string argument.  Instead of
+    difference to be specified as an English string argument.  Instead of
     specifying the string, the diagnostic gets an integer argument and the
     format string selects the numbered option.  In this case, the "%2" value
     must be an integer in the range [0..2].  If it is 0, it prints 'unary', if
@@ -269,7 +270,7 @@ Clang:</p>
 <tr><td colspan="2"><b>"plural" format</b></td></tr>
 <tr><td>Example:</td><td><tt>"you have %1 %plural{1:mouse|:mice}1 connected to
     your computer"</tt></td></tr>
-<tr><td>Classes:</td><td>Integers</td></tr>
+<tr><td>Class:</td><td>Integers</td></tr>
 <tr><td>Description:</td><td><p>This is a formatter for complex plural forms.
     It is designed to handle even the requirements of languages with very
 	complex plural forms, as many Baltic languages have. The argument consists
@@ -283,7 +284,7 @@ Clang:</p>
 	    <li>number: A simple decimal number matches if the argument is the same
 		as the number. Example: <tt>"%plural{1:mouse|:mice}4"</tt></li>
 		<li>range: A range in square brackets matches if the argument is within
-		the range. Then range is inclusive both ends. Example:
+		the range. Then range is inclusive on both ends. Example:
 		<tt>"%plural{0:none|1:one|[2,5]:some|:many}2"</tt></li>
 		<li>modulo: A modulo operator is followed by a number, and
                 equals sign and either a number or a range. The tests are the
@@ -299,21 +300,22 @@ Clang:</p>
 </table>
 
 <p>It is really easy to add format specifiers to the Clang diagnostics system,
-but they should be discussed before they are added.  If you're creating a lot
-of repetitive diagnostics and/or have an idea for a useful formater, please
-bring it up on the cfe-dev mainling list.</p>
+but they should be discussed before they are added.  If you are creating a lot
+of repetitive diagnostics and/or have an idea for a useful formatter, please
+bring it up on the cfe-dev mailing list.</p>
 
 <!-- ===================================================== -->
 <h4><a name="#producingdiag">Producing the Diagnostic</a></h4>
 <!-- ===================================================== -->
 
 <p>Now that you've created the diagnostic in the DiagnosticKinds.def file, you
-need to produce it.  Various components of Clang (e.g. the preprocessor, Sema,
+need to write the code that detects the condition in question and emits the
+new diagnostic.  Various components of Clang (e.g. the preprocessor, Sema,
 etc) provide a helper function named "Diag".  It creates a diagnostic and
 accepts the arguments, ranges, and other information that goes along with
 it.</p>
 
-<p>For example the binary expression error comes from code like this:</p>
+<p>For example, the binary expression error comes from code like this:</p>
 
 <pre>
   if (various things that are bad)
@@ -361,10 +363,10 @@ code, the source ranges, and the caret.  However, this behavior isn't required.
 </p>
 
 <p>Another implementation of the DiagnosticClient interface is the
-'TextDiagnosticBuffer' class, which is used when clang is in -verify mode.
+'TextDiagnosticBuffer' class, which is used when Clang is in -verify mode.
 Instead of formatting and printing out the diagnostics, this implementation just
 captures and remembers the diagnostics as they fly by.  Then -verify compares
-the list of produced diagnostics to the list of expected ones.  If they diagree,
+the list of produced diagnostics to the list of expected ones.  If they disagree,
 it prints out its own output.
 </p>
 
@@ -423,10 +425,10 @@ destination.  Though we could track the intermediate instantiation points, this
 would require extra bookkeeping and no known client would benefit substantially
 from this.</p>
 
-<p>The clang front-end inherently depends on the location of a token being
+<p>The Clang front-end inherently depends on the location of a token being
 tracked correctly.  If it is ever incorrect, the front-end may get confused and
 die.  The reason for this is that the notion of the 'spelling' of a Token in
-clang depends on being able to find the original input characters for the token.
+Clang depends on being able to find the original input characters for the token.
 This concept maps directly to the "physical" location for the token.</p>
 
 <!-- ======================================================================= -->
@@ -1128,7 +1130,7 @@ just use expressions that are foldable in any way.</p>
 <h4>Extensions</h4>
 <!-- ========== -->
 
-<p>This section describes how some of the various extensions clang supports 
+<p>This section describes how some of the various extensions Clang supports 
 interacts with constant evaluation:</p>
 
 <ul>
