@@ -10,9 +10,9 @@ typedef int INTF; //  expected-error {{previous definition is here}}
 
 @interface OBJECT @end	// expected-error {{previous definition is here}}
 
-@interface INTF1 : OBJECT @end
+@interface INTF1 : OBJECT @end // expected-note {{previous definition is here}}
 
-@interface INTF1 : OBJECT @end // expected-error {{duplicate interface declaration for class 'INTF1'}}
+@interface INTF1 : OBJECT @end // expected-error {{duplicate interface definition for class 'INTF1'}}
 
 typedef int OBJECT; // expected-error {{previous definition is here}}  \
 		       expected-error {{redefinition of 'OBJECT' as different kind of symbol}}

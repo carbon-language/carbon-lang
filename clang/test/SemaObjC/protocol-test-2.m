@@ -15,10 +15,10 @@
 
 @protocol p1 @end
 
-@protocol PROTO<p1>
+@protocol PROTO<p1>     // expected-note {{previous definition is here}}
 @end
 
-@protocol PROTO<p1>	// expected-error {{duplicate protocol declaration of 'PROTO'}}
+@protocol PROTO<p1>	// expected-error {{duplicate protocol definition of 'PROTO'}}
 @end
 
 @protocol PROTO3<p1, p1>

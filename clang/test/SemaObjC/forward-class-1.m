@@ -14,11 +14,11 @@
 @interface INTF1 : FOO	
 @end
 
-@interface INTF2 : INTF1
+@interface INTF2 : INTF1 // expected-note {{previous definition is here}}
 @end
 
 
 @class INTF1, INTF2;
 
-@interface INTF2 : INTF1 // expected-error {{duplicate interface declaration for class 'INTF2'}}
+@interface INTF2 : INTF1 // expected-error {{duplicate interface definition for class 'INTF2'}}
 @end

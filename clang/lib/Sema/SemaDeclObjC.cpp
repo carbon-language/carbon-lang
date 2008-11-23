@@ -76,6 +76,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     // Class already seen. Is it a forward declaration?
     if (!IDecl->isForwardDecl()) {
       Diag(AtInterfaceLoc, diag::err_duplicate_class_def) << IDecl->getName();
+      Diag(IDecl->getLocation(), diag::note_previous_definition);
+
       // Return the previous class interface.
       // FIXME: don't leak the objects passed in!
       return IDecl;
@@ -188,6 +190,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     // Protocol already seen. Better be a forward protocol declaration
     if (!PDecl->isForwardDecl()) {
       Diag(ProtocolLoc, diag::err_duplicate_protocol_def) << ProtocolName;
+      Diag(PDecl->getLocation(), diag::note_previous_definition);
       // Just return the protocol we already had.
       // FIXME: don't leak the objects passed in!
       return PDecl;

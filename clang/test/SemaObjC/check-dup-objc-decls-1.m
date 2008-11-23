@@ -29,11 +29,11 @@ void Gorf() // expected-error {{redefinition of 'Gorf' as different kind of symb
 
 @protocol P -im1; @end
 @protocol Q -im2; @end
-@interface A<P> @end
-@interface A<Q> @end  // expected-error {{duplicate interface declaration for class 'A'}}
+@interface A<P> @end  // expected-note {{previous definition is here}}
+@interface A<Q> @end  // expected-error {{duplicate interface definition for class 'A'}}
 
-@protocol PP<P> @end
-@protocol PP<Q> @end  // expected-error {{duplicate protocol declaration of 'PP'}}
+@protocol PP<P> @end  // expected-note {{previous definition is here}}
+@protocol PP<Q> @end  // expected-error {{duplicate protocol definition of 'PP'}}
 
 @interface A(Cat)<P> @end // expected-note {{previous definition is here}}
 @interface A(Cat)<Q> @end // expected-warning {{duplicate definition of category 'Cat' on interface 'A'}}

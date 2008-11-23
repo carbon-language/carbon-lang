@@ -7,7 +7,7 @@
 
 @interface SUPER @end
 
-@interface INTF1 : SUPER
+@interface INTF1 : SUPER  // expected-note {{previous definition is here}}
 @end
 
 @interface INTF2 : INTF1
@@ -16,7 +16,7 @@
 @interface INTF3 : Y // expected-error {{cannot find interface declaration for 'Y', superclass of 'INTF3'}}
 @end
 
-@interface INTF1  // expected-error {{duplicate interface declaration for class 'INTF1'}}
+@interface INTF1  // expected-error {{duplicate interface definition for class 'INTF1'}}
 @end
 
 @implementation SUPER
