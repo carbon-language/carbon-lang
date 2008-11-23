@@ -127,8 +127,6 @@ private:
     return loc::MemRegionVal(MRMgr.getVarRegion(VD));
   }
 
-  SymbolManager& getSymbolManager() { return StateMgr.getSymbolManager(); }
-
   Store InitializeArray(Store store, const TypedRegion* R, SVal Init);
   Store BindArrayToVal(Store store, const TypedRegion* BaseR, SVal V);
   Store BindArrayToSymVal(Store store, const TypedRegion* BaseR);
@@ -139,9 +137,11 @@ private:
 
   SVal RetrieveStruct(Store store, const TypedRegion* R);
   Store BindStruct(Store store, const TypedRegion* R, SVal V);
+
   // Utility methods.
   BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
   ASTContext& getContext() { return StateMgr.getContext(); }
+  SymbolManager& getSymbolManager() { return StateMgr.getSymbolManager(); }
 
   const GRState* AddRegionView(const GRState* St,
                                const MemRegion* View, const MemRegion* Base);
@@ -250,8 +250,7 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
       CI2 = cast<nonloc::ConcreteInt>(&SignedInt);
     }
 
-    SVal NewIdx = CI1->EvalBinOp(StateMgr.getBasicVals(), BinaryOperator::Add,
-                                 *CI2);
+    SVal NewIdx = CI1->EvalBinOp(getBasicVals(), BinaryOperator::Add, *CI2);
     return loc::MemRegionVal(MRMgr.getElementRegion(NewIdx, 
                                                     ElemR->getSuperRegion()));
   }
@@ -297,9 +296,8 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
 
 SVal RegionStoreManager::ArrayToPointer(SVal Array) {
   const MemRegion* ArrayR = cast<loc::MemRegionVal>(&Array)->getRegion();
-  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
 
-  nonloc::ConcreteInt Idx(BasicVals.getZeroWithPtrWidth(false));
+  nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
   ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
   
   return loc::MemRegionVal(ER);                    
@@ -461,7 +459,7 @@ Store RegionStoreManager::getInitialStore() {
         // Initialize local variables to undefined.
         SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
                   isa<ImplicitParamDecl>(VD))
-                 ? SVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
+                 ? SVal::GetSymbolValue(getSymbolManager(), VD)
                  : UndefinedVal();
 
         St = Bind(St, getVarLoc(VD), X);
@@ -487,8 +485,6 @@ Store RegionStoreManager::getInitialStore() {
 Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD,
                                    SVal* InitVal, unsigned Count) {
   
-  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
-
   if (VD->hasGlobalStorage()) {
     // Static global variables should not be visited here.
     assert(!(VD->getStorageClass() == VarDecl::Static &&
@@ -502,11 +498,11 @@ Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD,
 
         if (Loc::IsLocType(T))
           store = Bind(store, getVarLoc(VD),
-                       loc::ConcreteInt(BasicVals.getValue(0, T)));
+                       loc::ConcreteInt(getBasicVals().getValue(0, T)));
 
         else if (T->isIntegerType())
           store = Bind(store, getVarLoc(VD),
-                       loc::ConcreteInt(BasicVals.getValue(0, T)));
+                       loc::ConcreteInt(getBasicVals().getValue(0, T)));
 
         // Other types of static local variables are not handled yet.
       } else {
