@@ -143,14 +143,11 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   // Look for previous declaration of alias name
   Decl *ADecl = LookupDecl(AliasName, Decl::IDNS_Ordinary, TUScope);
   if (ADecl) {
-    if (isa<ObjCCompatibleAliasDecl>(ADecl)) {
+    if (isa<ObjCCompatibleAliasDecl>(ADecl))
       Diag(AliasLocation, diag::warn_previous_alias_decl);
-      Diag(ADecl->getLocation(), diag::warn_previous_declaration);
-    }
-    else {
+    else
       Diag(AliasLocation, diag::err_conflicting_aliasing_type) << AliasName;
-      Diag(ADecl->getLocation(), diag::note_previous_declaration);
-    }
+    Diag(ADecl->getLocation(), diag::note_previous_declaration);
     return 0;
   }
   // Check for class declaration
@@ -159,7 +156,7 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   if (CDecl == 0) {
     Diag(ClassLocation, diag::warn_undef_interface) << ClassName;
     if (CDeclU)
-      Diag(CDeclU->getLocation(), diag::warn_previous_declaration);
+      Diag(CDeclU->getLocation(), diag::note_previous_declaration);
     return 0;
   }
   

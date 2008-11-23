@@ -5,7 +5,7 @@
 @class class2; // expected-note {{previous declaration is here}}
 @class class3;
 
-typedef int I;  // expected-warning {{previous declaration is here}}
+typedef int I;  // expected-note {{previous declaration is here}}
 
 @compatibility_alias alias1 I;  // expected-warning {{cannot find interface declaration for 'I'}}
 
