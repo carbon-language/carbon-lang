@@ -322,6 +322,16 @@ public:
   }
 };
 
+class VISIBILITY_HIDDEN OutOfBoundMemoryAccess : public BuiltinBug {
+public:
+  OutOfBoundMemoryAccess() : BuiltinBug("out-of-bound memory access",
+                       "Load or store into an out-of-bound memory position.") {}
+
+  virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) {
+    Emit(BR, Eng.explicit_oob_memacc_begin(), Eng.explicit_oob_memacc_end());
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // __attribute__(nonnull) checking
 
@@ -392,5 +402,6 @@ void GRExprEngine::RegisterInternalChecks() {
   Register(new BadArg());
   Register(new BadMsgExprArg());
   Register(new BadReceiver());
+  Register(new OutOfBoundMemoryAccess());
   AddCheck(new CheckAttrNonNull(), Stmt::CallExprClass); 
 }

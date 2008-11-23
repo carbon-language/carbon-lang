@@ -1088,7 +1088,20 @@ const GRState* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
       if (isFeasibleOutBound) {
         // Report warning.
 
-        StOutBound = 0;
+        // Make sink node manually.
+        ProgramPoint::Kind K = isLoad ? ProgramPoint::PostLoadKind
+                                      : ProgramPoint::PostStoreKind;
+
+        NodeTy* OOBNode = Builder->generateNode(Ex, StOutBound, Pred, K);
+
+        if (OOBNode) {
+          OOBNode->markAsSink();
+
+          if (isFeasibleInBound)
+            ImplicitOOBMemAccesses.insert(OOBNode);
+          else
+            ExplicitOOBMemAccesses.insert(OOBNode);
+        }
       }
 
       return isFeasibleInBound ? StInBound : NULL;
@@ -2529,8 +2542,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         
         SVal LHSVal;
         
-        if (Result.isUnknown() && (Loc::IsLocType(CTy) ||
-                                 (CTy->isScalarType() && CTy->isIntegerType()))) {
+        if (Result.isUnknown() && (Loc::IsLocType(CTy) 
+                            || (CTy->isScalarType() && CTy->isIntegerType()))) {
           
           unsigned Count = Builder->getCurrentBlockCount();
           
@@ -2542,7 +2555,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
                  ? cast<SVal>(loc::SymbolVal(Sym)) 
                  : cast<SVal>(nonloc::SymbolVal(Sym));
           
-          // However, we need to convert the symbol to the computation type.          
+          // However, we need to convert the symbol to the computation type.
           Result = (LTy == CTy) ? LHSVal : EvalCast(LHSVal,CTy);
         }
         else {

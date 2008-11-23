@@ -105,6 +105,7 @@ public:
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefResultsTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> RetsStackAddrTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> RetsUndefTy;
+  typedef llvm::SmallPtrSet<NodeTy*,2> OutOfBoundMemAccessesTy;
   
 protected:
 
@@ -170,6 +171,14 @@ protected:
   ///   message expressions where a pass-by-value argument has an undefined
   ///  value.
   UndefArgsTy MsgExprUndefArgs;
+
+  /// OutOfBoundMemAccesses - Nodes in the ExplodedGraph resulting from
+  /// out-of-bound memory accesses where the index MAY be out-of-bound.
+  OutOfBoundMemAccessesTy ImplicitOOBMemAccesses;
+
+  /// OutOfBoundMemAccesses - Nodes in the ExplodedGraph resulting from
+  /// out-of-bound memory accesses where the index MUST be out-of-bound.
+  OutOfBoundMemAccessesTy ExplicitOOBMemAccesses;
   
 public:
   GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L,
@@ -282,7 +291,7 @@ public:
   bool isUndefArg(const NodeTy* N) const {
     return N->isSink() &&
       (UndefArgs.find(const_cast<NodeTy*>(N)) != UndefArgs.end() ||
-       MsgExprUndefArgs.find(const_cast<NodeTy*>(N)) != MsgExprUndefArgs.end());            
+       MsgExprUndefArgs.find(const_cast<NodeTy*>(N)) != MsgExprUndefArgs.end());
   }
   
   bool isUndefReceiver(const NodeTy* N) const {
@@ -362,7 +371,21 @@ public:
   undef_receivers_iterator undef_receivers_end() {
     return UndefReceivers.end();
   }
-  
+
+  typedef OutOfBoundMemAccessesTy::iterator oob_memacc_iterator;
+  oob_memacc_iterator implicit_oob_memacc_begin() { 
+    return ImplicitOOBMemAccesses.begin();
+  }
+  oob_memacc_iterator implicit_oob_memacc_end() {
+    return ImplicitOOBMemAccesses.end();
+  }
+  oob_memacc_iterator explicit_oob_memacc_begin() {
+    return ExplicitOOBMemAccesses.begin();
+  }
+  oob_memacc_iterator explicit_oob_memacc_end() {
+    return ExplicitOOBMemAccesses.end();
+  }
+
   void AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C);
   
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
