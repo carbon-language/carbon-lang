@@ -5444,7 +5444,7 @@ SDValue DAGCombiner::SimplifySelectCC(SDValue N0, SDValue N1,
   
   // fold select C, 16, 0 -> shl C, 4
   if (N2C && N3C && N3C->isNullValue() && N2C->getAPIntValue().isPowerOf2() &&
-      TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult) {
+      TLI.getBooleanContents() == TargetLowering::ZeroOrOneBooleanContent) {
     
     // If the caller doesn't want us to simplify this into a zext of a compare,
     // don't do it.

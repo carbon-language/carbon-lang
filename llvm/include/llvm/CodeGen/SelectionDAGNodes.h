@@ -255,7 +255,7 @@ namespace ISD {
     // produce two results: the normal result of the add, and a boolean that
     // indicates if an overflow occured (*not* a flag, because it may be stored
     // to memory, etc.).  If the type of the boolean is not i1 then the high
-    // bits conform to getSetCCResultContents.
+    // bits conform to getBooleanContents.
     // These nodes are generated from the llvm.[su]add.with.overflow intrinsics.
     SADDO, UADDO,
 
@@ -336,7 +336,7 @@ namespace ISD {
     CTTZ, CTLZ, CTPOP,
 
     // Select(COND, TRUEVAL, FALSEVAL).  If the type of the boolean COND is not
-    // i1 then the high bits must conform to getSetCCResultContents.
+    // i1 then the high bits must conform to getBooleanContents.
     SELECT,
 
     // Select with condition operator - This selects between a true value and 
@@ -347,7 +347,7 @@ namespace ISD {
 
     // SetCC operator - This evaluates to a true value iff the condition is
     // true.  If the result value type is not i1 then the high bits conform
-    // to getSetCCResultContents.  The operands to this are the left and right
+    // to getBooleanContents.  The operands to this are the left and right
     // operands to compare (ops #0, and #1) and the condition code to compare
     // them with (op #2) as a CondCodeSDNode.
     SETCC,
@@ -494,7 +494,7 @@ namespace ISD {
     // BRCOND - Conditional branch.  The first operand is the chain, the
     // second is the condition, the third is the block to branch to if the
     // condition is true.  If the type of the condition is not i1, then the
-    // high bits must conform to getSetCCResultContents.
+    // high bits must conform to getBooleanContents.
     BRCOND,
 
     // BR_CC - Conditional branch.  The behavior is like that of SELECT_CC, in

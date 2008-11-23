@@ -1495,10 +1495,10 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
   case ISD::UADDO:
     if (Op.getResNo() != 1)
       return;
-    // The boolean result conforms to getSetCCResultContents.  Fall through.
+    // The boolean result conforms to getBooleanContents.  Fall through.
   case ISD::SETCC:
     // If we know the result of a setcc has the top bits zero, use this info.
-    if (TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult &&
+    if (TLI.getBooleanContents() == TargetLowering::ZeroOrOneBooleanContent &&
         BitWidth > 1)
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - 1);
     return;
@@ -1903,11 +1903,11 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
   case ISD::UADDO:
     if (Op.getResNo() != 1)
       break;
-    // The boolean result conforms to getSetCCResultContents.  Fall through.
+    // The boolean result conforms to getBooleanContents.  Fall through.
   case ISD::SETCC:
     // If setcc returns 0/-1, all bits are sign bits.
-    if (TLI.getSetCCResultContents() ==
-        TargetLowering::ZeroOrNegativeOneSetCCResult)
+    if (TLI.getBooleanContents() ==
+        TargetLowering::ZeroOrNegativeOneBooleanContent)
       return VTBits;
     break;
   case ISD::ROTL:

@@ -210,8 +210,8 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
   if (NVT.bitsLE(SVT)) {
     // The SETCC result type is bigger than the vector element type.
     // Ensure the SETCC result is sign-extended.
-    if (TLI.getSetCCResultContents() !=
-        TargetLowering::ZeroOrNegativeOneSetCCResult)
+    if (TLI.getBooleanContents() !=
+        TargetLowering::ZeroOrNegativeOneBooleanContent)
       Res = DAG.getNode(ISD::SIGN_EXTEND_INREG, SVT, Res,
                         DAG.getValueType(MVT::i1));
     // Truncate to the final type.
@@ -219,8 +219,8 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
   } else {
     // The SETCC result type is smaller than the vector element type.
     // If the SetCC result is not sign-extended, chop it down to MVT::i1.
-    if (TLI.getSetCCResultContents() !=
-        TargetLowering::ZeroOrNegativeOneSetCCResult)
+    if (TLI.getBooleanContents() !=
+        TargetLowering::ZeroOrNegativeOneBooleanContent)
       Res = DAG.getNode(ISD::TRUNCATE, MVT::i1, Res);
     // Sign extend to the final type.
     return DAG.getNode(ISD::SIGN_EXTEND, NVT, Res);

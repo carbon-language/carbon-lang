@@ -74,7 +74,7 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setSchedulingPreference(SchedulingForRegPressure);
 
   // Use i32 for setcc operations results (slt, sgt, ...).
-  setSetCCResultContents(ZeroOrOneSetCCResult);
+  setBooleanContents(ZeroOrOneBooleanContent);
 
   // XCore does not have the NodeTypes below.
   setOperationAction(ISD::BR_CC,     MVT::Other, Expand);

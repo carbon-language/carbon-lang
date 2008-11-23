@@ -63,7 +63,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // X86 is weird, it always uses i8 for shift amounts and setcc results.
   setShiftAmountType(MVT::i8);
-  setSetCCResultContents(ZeroOrOneSetCCResult);
+  setBooleanContents(ZeroOrOneBooleanContent);
   setSchedulingPreference(SchedulingForRegPressure);
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
   setStackPointerRegisterToSaveRestore(X86StackPtr);

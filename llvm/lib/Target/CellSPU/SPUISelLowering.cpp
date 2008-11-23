@@ -393,7 +393,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
 
   setShiftAmountType(MVT::i32);
-  setSetCCResultContents(ZeroOrOneSetCCResult);
+  setBooleanContents(ZeroOrOneBooleanContent);
 
   setStackPointerRegisterToSaveRestore(SPU::R1);
 

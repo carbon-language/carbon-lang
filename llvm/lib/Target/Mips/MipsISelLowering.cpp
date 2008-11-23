@@ -59,7 +59,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
 
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...). 
-  setSetCCResultContents(ZeroOrOneSetCCResult);
+  setBooleanContents(ZeroOrOneBooleanContent);
 
   // JumpTable targets must use GOT when using PIC_
   setUsesGlobalOffsetTable(true);

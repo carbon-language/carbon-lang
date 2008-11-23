@@ -41,7 +41,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   // Set up the TargetLowering object.
   //I am having problems with shr n ubyte 1
   setShiftAmountType(MVT::i64);
-  setSetCCResultContents(ZeroOrOneSetCCResult);
+  setBooleanContents(ZeroOrOneBooleanContent);
   
   setUsesGlobalOffsetTable(true);
   

@@ -698,19 +698,19 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo) {
   SDValue Cond = GetPromotedInteger(N->getOperand(1));  // Promote condition.
 
   // Make sure the extra bits coming from type promotion conform to
-  // getSetCCResultContents.
+  // getBooleanContents.
   unsigned CondBits = Cond.getValueSizeInBits();
-  switch (TLI.getSetCCResultContents()) {
+  switch (TLI.getBooleanContents()) {
   default:
-    assert(false && "Unknown SetCCResultValue!");
-  case TargetLowering::UndefinedSetCCResult:
+    assert(false && "Unknown BooleanContent!");
+  case TargetLowering::UndefinedBooleanContent:
     // The promoted value, which may contain rubbish in the upper bits, is fine.
     break;
-  case TargetLowering::ZeroOrOneSetCCResult:
+  case TargetLowering::ZeroOrOneBooleanContent:
     if (!DAG.MaskedValueIsZero(Cond,APInt::getHighBitsSet(CondBits,CondBits-1)))
       Cond = DAG.getZeroExtendInReg(Cond, MVT::i1);
     break;
-  case TargetLowering::ZeroOrNegativeOneSetCCResult:
+  case TargetLowering::ZeroOrNegativeOneBooleanContent:
     if (DAG.ComputeNumSignBits(Cond) != CondBits)
       Cond = DAG.getNode(ISD::SIGN_EXTEND_INREG, Cond.getValueType(), Cond,
                          DAG.getValueType(MVT::i1));
@@ -830,27 +830,27 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
   assert(isTypeLegal(SVT) && "Illegal SetCC type!");
   assert(Cond.getValueType().bitsLE(SVT) && "Unexpected SetCC type!");
 
-  // Make sure the extra bits conform to getSetCCResultContents.  There are
+  // Make sure the extra bits conform to getBooleanContents.  There are
   // two sets of extra bits: those in Cond, which come from type promotion,
   // and those we need to add to have the final type be SVT (for most targets
   // this last set of bits is empty).
   unsigned CondBits = Cond.getValueSizeInBits();
   ISD::NodeType ExtendCode;
-  switch (TLI.getSetCCResultContents()) {
+  switch (TLI.getBooleanContents()) {
   default:
-    assert(false && "Unknown SetCCResultValue!");
-  case TargetLowering::UndefinedSetCCResult:
+    assert(false && "Unknown BooleanContent!");
+  case TargetLowering::UndefinedBooleanContent:
     // Extend to SVT by adding rubbish.
     ExtendCode = ISD::ANY_EXTEND;
     break;
-  case TargetLowering::ZeroOrOneSetCCResult:
+  case TargetLowering::ZeroOrOneBooleanContent:
     ExtendCode = ISD::ZERO_EXTEND;
     if (!DAG.MaskedValueIsZero(Cond,APInt::getHighBitsSet(CondBits,CondBits-1)))
       // All extra bits need to be cleared.  Do this by zero extending the
       // original condition value all the way to SVT.
       Cond = N->getOperand(0);
     break;
-  case TargetLowering::ZeroOrNegativeOneSetCCResult: {
+  case TargetLowering::ZeroOrNegativeOneBooleanContent: {
     ExtendCode = ISD::SIGN_EXTEND;
     unsigned SignBits = DAG.ComputeNumSignBits(Cond);
     if (SignBits != CondBits)

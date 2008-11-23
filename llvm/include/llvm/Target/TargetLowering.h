@@ -78,10 +78,10 @@ public:
     Extend      // Oversized shift pulls in zeros or sign bits.
   };
 
-  enum SetCCResultValue {
-    UndefinedSetCCResult,          // SetCC returns a garbage/unknown extend.
-    ZeroOrOneSetCCResult,          // SetCC returns a zero extended result.
-    ZeroOrNegativeOneSetCCResult   // SetCC returns a sign extended result.
+  enum BooleanContent { // How the target represents true/false values.
+    UndefinedBooleanContent,    // Only bit 0 counts, the rest can hold garbage.
+    ZeroOrOneBooleanContent,        // All bits zero except for bit 0.
+    ZeroOrNegativeOneBooleanContent // All bits equal to bit 0.
   };
 
   enum SchedPreference {
@@ -121,10 +121,12 @@ public:
   /// operations.
   virtual MVT getSetCCResultType(const SDValue &) const;
 
-  /// getSetCCResultContents - For targets without boolean registers, this flag
-  /// returns information about the contents of the high-bits in the setcc
-  /// result register.
-  SetCCResultValue getSetCCResultContents() const { return SetCCResultContents;}
+  /// getBooleanContents - For targets without i1 registers, this gives the
+  /// nature of the high-bits of boolean values held in types wider than i1.
+  /// "Boolean values" are special true/false values produced by nodes like
+  /// SETCC and consumed (as the condition) by nodes like SELECT and BRCOND.
+  /// Not to be confused with general values promoted from i1.
+  BooleanContent getBooleanContents() const { return BooleanContents;}
 
   /// getSchedulingPreference - Return target scheduling preference.
   SchedPreference getSchedulingPreference() const {
@@ -812,9 +814,9 @@ protected:
   /// amounts.  This type defaults to the pointer type.
   void setShiftAmountType(MVT VT) { ShiftAmountTy = VT; }
 
-  /// setSetCCResultContents - Specify how the target extends the result of a
-  /// setcc operation in a register.
-  void setSetCCResultContents(SetCCResultValue Ty) { SetCCResultContents = Ty; }
+  /// setBooleanContents - Specify how the target extends the result of a
+  /// boolean value from i1 to a wider type.  See getBooleanContents.
+  void setBooleanContents(BooleanContent Ty) { BooleanContents = Ty; }
 
   /// setSchedulingPreference - Specify the target scheduling preference.
   void setSchedulingPreference(SchedPreference Pref) {
@@ -1430,9 +1432,9 @@ private:
 
   OutOfRangeShiftAmount ShiftAmtHandling;
 
-  /// SetCCResultContents - Information about the contents of the high-bits in
-  /// the result of a setcc comparison operation.
-  SetCCResultValue SetCCResultContents;
+  /// BooleanContents - Information about the contents of the high-bits in
+  /// boolean values held in a type wider than i1.  See getBooleanContents.
+  BooleanContent BooleanContents;
 
   /// SchedPreferenceInfo - The target scheduling preference: shortest possible
   /// total cycles or lowest register usage.

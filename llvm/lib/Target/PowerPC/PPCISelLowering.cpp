@@ -341,7 +341,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   }
   
   setShiftAmountType(MVT::i32);
-  setSetCCResultContents(ZeroOrOneSetCCResult);
+  setBooleanContents(ZeroOrOneBooleanContent);
   
   if (TM.getSubtarget<PPCSubtarget>().isPPC64()) {
     setStackPointerRegisterToSaveRestore(PPC::X1);
