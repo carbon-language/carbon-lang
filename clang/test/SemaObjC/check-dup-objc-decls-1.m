@@ -1,5 +1,4 @@
 // RUN: clang -fsyntax-only -verify %s
-// XFAIL
 
 @interface Foo // expected-error {{previous definition is here}}
 @end
@@ -36,5 +35,5 @@ void Gorf() // expected-error {{redefinition of 'Gorf' as different kind of symb
 @protocol PP<P> @end
 @protocol PP<Q> @end  // expected-error {{duplicate protocol declaration of 'PP'}}
 
-@interface A(Cat)<P> @end
-@interface A(Cat)<Q> @end // expected-warning {{duplicate interface declaration for category 'A(Cat)'}}
+@interface A(Cat)<P> @end // expected-note {{previous definition is here}}
+@interface A(Cat)<Q> @end // expected-warning {{duplicate definition of category 'Cat' on interface 'A'}}

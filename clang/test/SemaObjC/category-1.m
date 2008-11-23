@@ -1,29 +1,28 @@
 // RUN: clang -fsyntax-only -verify %s
-// XFAIL
 
 @interface MyClass1 @end
 
 @protocol p1,p2,p3;
 
-@interface MyClass1 (Category1)  <p1> // expected-warning {{cannot find protocol definition for 'p1'}}
+@interface MyClass1 (Category1)  <p1> // expected-warning {{cannot find protocol definition for 'p1'}} expected-note {{previous definition is here}}
 @end
 
-@interface MyClass1 (Category1)  // expected-warning {{duplicate interface declaration for category 'MyClass1(Category1)'}}
+@interface MyClass1 (Category1)  // expected-warning {{duplicate definition of category 'Category1' on interface 'MyClass1'}}
 @end
 
 @interface MyClass1 (Category3) 
 @end
 
-@interface MyClass1 (Category4) @end
+@interface MyClass1 (Category4) @end // expected-note {{previous definition is here}}
 @interface MyClass1 (Category5) @end
 @interface MyClass1 (Category6) @end
-@interface MyClass1 (Category7) @end
-@interface MyClass1 (Category8) @end
+@interface MyClass1 (Category7) @end // expected-note {{previous definition is here}}
+@interface MyClass1 (Category8) @end // expected-note {{previous definition is here}}
 
 
-@interface MyClass1 (Category4) @end // expected-warning {{duplicate interface declaration for category 'MyClass1(Category4)'}}
-@interface MyClass1 (Category7) @end // expected-warning {{duplicate interface declaration for category 'MyClass1(Category7)'}}
-@interface MyClass1 (Category8) @end // expected-warning {{duplicate interface declaration for category 'MyClass1(Category8)'}}
+@interface MyClass1 (Category4) @end // expected-warning {{duplicate definition of category 'Category4' on interface 'MyClass1'}}
+@interface MyClass1 (Category7) @end // expected-warning {{duplicate definition of category 'Category7' on interface 'MyClass1'}}
+@interface MyClass1 (Category8) @end // expected-warning {{duplicate definition of category 'Category8' on interface 'MyClass1'}}
 
 
 @protocol p3 @end
@@ -45,10 +44,10 @@
 @interface XCRemoteComputerManager()
 @end
 
-@interface XCRemoteComputerManager(x) 
+@interface XCRemoteComputerManager(x) // expected-note {{previous definition is here}}
 @end 
 
-@interface XCRemoteComputerManager(x) // expected-warning {{duplicate interface declaration for category 'XCRemoteComputerManager(x)'}}
+@interface XCRemoteComputerManager(x) // expected-warning {{duplicate definition of category 'x' on interface 'XCRemoteComputerManager'}}
 @end
 
 @implementation XCRemoteComputerManager

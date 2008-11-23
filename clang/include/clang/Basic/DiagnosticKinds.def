@@ -23,6 +23,14 @@
 //     ERROR     - Error, compilation will stop after parsing completes.
 
 //===----------------------------------------------------------------------===//
+// Common Helpers
+//===----------------------------------------------------------------------===//
+
+DIAG(note_previous_definition, NOTE,
+     "previous definition is here")
+
+
+//===----------------------------------------------------------------------===//
 // Lexer Diagnostics
 //===----------------------------------------------------------------------===//
 
@@ -126,8 +134,6 @@ DIAG(ext_pp_bad_vaargs_use, EXTENSION,
      "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro")
 DIAG(ext_pp_macro_redef, EXTENSION,
      "%0 macro redefined")
-DIAG(note_previous_definition, NOTE,
-     "previous definition is here")
 DIAG(ext_variadic_macro, EXTENSION,
      "variadic macros were introduced in C99")
 DIAG(ext_named_variadic_macro, EXTENSION,
@@ -455,7 +461,7 @@ DIAG(err_duplicate_protocol_def, ERROR,
 DIAG(err_undef_interface, ERROR,
      "cannot find interface declaration for %0")
 DIAG(warn_dup_category_def, WARNING,
-     "duplicate interface declaration for category %0 (%1)")
+     "duplicate definition of category %1 on interface %0")
 DIAG(warn_undef_interface, WARNING,
      "cannot find interface declaration for %0")
 DIAG(err_dup_implementation_class, ERROR,

@@ -406,6 +406,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
       if (CategoryName && CDeclChain->getIdentifier() == CategoryName) {
         Diag(CategoryLoc, diag::warn_dup_category_def)
           << ClassName << CategoryName;
+        Diag(CDeclChain->getLocation(), diag::note_previous_definition);
         break;
       }
     }
