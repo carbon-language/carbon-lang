@@ -4,7 +4,7 @@ char *funk(int format);
 enum Test {A=-1};
 char *funk(enum Test x);
 
-int eli(float b); // expected-error {{previous declaration is here}}
+int eli(float b); // expected-note {{previous declaration is here}}
 int b(int c) {return 1;}
 
 int foo();
@@ -16,7 +16,7 @@ int foo()
 }
 
 int bar();
-int bar(int i) // expected-error {{previous definition is here}}
+int bar(int i) // expected-note {{previous definition is here}}
 {
 	return 0;
 }
@@ -26,14 +26,14 @@ int bar() // expected-error {{redefinition of 'bar'}}
 }
 
 #if 0
-int foobar(int); // error {{previous declaration is here}}
+int foobar(int); // note {{previous declaration is here}}
 int foobar() // error {{conflicting types for 'foobar'}}
 {
 	return 0;
 }
 #endif
 
-int wibble(); // expected-error {{previous declaration is here}}
+int wibble(); // expected-note {{previous declaration is here}}
 float wibble() // expected-error {{conflicting types for 'wibble'}}
 {
 	return 0.0f;

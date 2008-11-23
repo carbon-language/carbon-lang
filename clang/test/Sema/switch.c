@@ -8,17 +8,17 @@ void f (int z) {
 
 void foo(int X) {
   switch (X) {
-  case 42: ;                 // expected-error {{previous case value}}
+  case 42: ;                 // expected-note {{previous case}}
   case 5000000000LL:         // expected-warning {{overflow}}
   case 42:                   // expected-error {{duplicate case value}}
    ;
 
   case 100 ... 99: ;         // expected-warning {{empty case range}}
 
-  case 43: ;                 // expected-error {{previous case value}}
+  case 43: ;                 // expected-note {{previous case}}
   case 43 ... 45:  ;         // expected-error {{duplicate case value}}
 
-  case 100 ... 20000:;       // expected-error {{previous case value}}
+  case 100 ... 20000:;       // expected-note {{previous case}}
   case 15000 ... 40000000:;  // expected-error {{duplicate case value}}
   }
 }
@@ -59,4 +59,12 @@ void test4()
     break;
   }
 }
+
+void test5(int z) { 
+  switch(z) {
+    default:  // expected-note {{previous case defined here}}
+    default:  // expected-error {{multiple default labels in one switch}}
+      break;
+  }
+} 
 

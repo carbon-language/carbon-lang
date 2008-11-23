@@ -1,6 +1,6 @@
 // RUN: clang -fsyntax-only -verify %s
 void f(int i);
-void f(int i = 0); // expected-error {{previous definition is here}}
+void f(int i = 0); // expected-note {{previous definition is here}}
 void f(int i = 17); // expected-error {{redefinition of default argument}}
 
 

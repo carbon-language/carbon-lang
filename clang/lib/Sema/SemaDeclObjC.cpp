@@ -68,7 +68,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   Decl *PrevDecl = LookupDecl(ClassName, Decl::IDNS_Ordinary, TUScope);
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
-    Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+    Diag(PrevDecl->getLocation(), diag::note_previous_definition);
   }
   
   ObjCInterfaceDecl* IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
@@ -102,7 +102,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     PrevDecl = LookupDecl(SuperName, Decl::IDNS_Ordinary, TUScope);
     if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
       Diag(SuperLoc, diag::err_redefinition_different_kind) << SuperName;
-      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+      Diag(PrevDecl->getLocation(), diag::note_previous_definition);
     }
     else {
       // Check that super class is previously defined
@@ -149,7 +149,7 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
     }
     else {
       Diag(AliasLocation, diag::err_conflicting_aliasing_type) << AliasName;
-      Diag(ADecl->getLocation(), diag::err_previous_declaration);
+      Diag(ADecl->getLocation(), diag::note_previous_declaration);
     }
     return 0;
   }
@@ -458,7 +458,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   Decl *PrevDecl = LookupDecl(ClassName, Decl::IDNS_Ordinary, TUScope);
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
-    Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+    Diag(PrevDecl->getLocation(), diag::note_previous_definition);
   }
   else {
     // Is there an interface declaration of this class; if not, warn!
@@ -475,7 +475,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
     if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
       Diag(SuperClassLoc, diag::err_redefinition_different_kind)
         << SuperClassname;
-      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+      Diag(PrevDecl->getLocation(), diag::note_previous_definition);
     } else {
       SDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
       if (!SDecl)
@@ -486,7 +486,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
         // super class.
         Diag(SuperClassLoc, diag::err_conflicting_super_class)
           << SDecl->getDeclName();
-        Diag(SDecl->getLocation(), diag::err_previous_definition);
+        Diag(SDecl->getLocation(), diag::note_previous_definition);
       }
     }
   }
@@ -559,14 +559,14 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
       Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_type)
         << ImplIvar->getIdentifier()
         << ImplIvar->getType() << ClsIvar->getType();
-      Diag(ClsIvar->getLocation(), diag::err_previous_definition);
+      Diag(ClsIvar->getLocation(), diag::note_previous_definition);
     }
     // TODO: Two mismatched (unequal width) Ivar bitfields should be diagnosed 
     // as error.
     else if (ImplIvar->getIdentifier() != ClsIvar->getIdentifier()) {
       Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_name)
         << ImplIvar->getIdentifier() << ClsIvar->getIdentifier();
-      Diag(ClsIvar->getLocation(), diag::err_previous_definition);
+      Diag(ClsIvar->getLocation(), diag::note_previous_definition);
       return;
     }
     --numIvars;
@@ -728,7 +728,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
       TypedefDecl *TDD = dyn_cast<TypedefDecl>(PrevDecl);
       if (!TDD || !isa<ObjCInterfaceType>(TDD->getUnderlyingType())) {
         Diag(AtClassLoc, diag::err_redefinition_different_kind) << IdentList[i];
-        Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+        Diag(PrevDecl->getLocation(), diag::note_previous_definition);
       }
     }
     ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
@@ -907,9 +907,9 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                               : false;
       if (isInterfaceDeclKind && PrevMethod && !match 
           || checkIdenticalMethods && match) {
-          Diag(Method->getLocation(), diag::error_duplicate_method_decl)
+          Diag(Method->getLocation(), diag::err_duplicate_method_decl)
             << Method->getSelector().getName();
-          Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
+          Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
       } else {
         insMethods.push_back(Method);
         InsMap[Method->getSelector()] = Method;
@@ -924,9 +924,9 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                               : false;
       if (isInterfaceDeclKind && PrevMethod && !match 
           || checkIdenticalMethods && match) {
-        Diag(Method->getLocation(), diag::error_duplicate_method_decl)
+        Diag(Method->getLocation(), diag::err_duplicate_method_decl)
           << Method->getSelector().getName();
-        Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
+        Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
       } else {
         clsMethods.push_back(Method);
         ClsMap[Method->getSelector()] = Method;
@@ -1117,9 +1117,9 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   }
   if (PrevMethod) {
     // You can never have two method definitions with the same name.
-    Diag(ObjCMethod->getLocation(), diag::error_duplicate_method_decl)
+    Diag(ObjCMethod->getLocation(), diag::err_duplicate_method_decl)
       << ObjCMethod->getSelector().getName();
-    Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
+    Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
   } 
   return ObjCMethod;
 }

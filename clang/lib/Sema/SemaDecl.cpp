@@ -326,7 +326,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
       << New->getDeclName();
-    Diag(OldD->getLocation(), diag::err_previous_definition);
+    Diag(OldD->getLocation(), diag::note_previous_definition);
     return New;
   }
   
@@ -338,7 +338,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
     Diag(New->getLocation(), diag::err_redefinition_different_typedef)
       << New->getUnderlyingType().getAsString()
       << Old->getUnderlyingType().getAsString();
-    Diag(Old->getLocation(), diag::err_previous_definition);
+    Diag(Old->getLocation(), diag::note_previous_definition);
     return Old;
   }
   
@@ -365,7 +365,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   }
 
   Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
-  Diag(Old->getLocation(), diag::err_previous_definition);
+  Diag(Old->getLocation(), diag::note_previous_definition);
   return New;
 }
 
@@ -419,7 +419,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
       << New->getDeclName();
-    Diag(OldD->getLocation(), diag::err_previous_definition);
+    Diag(OldD->getLocation(), diag::note_previous_definition);
     return New;
   }
 
@@ -427,11 +427,11 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   // implicit declaration, or a declaration.
   diag::kind PrevDiag;
   if (Old->isThisDeclarationADefinition())
-    PrevDiag = diag::err_previous_definition;
+    PrevDiag = diag::note_previous_definition;
   else if (Old->isImplicit())
-    PrevDiag = diag::err_previous_implicit_declaration;
+    PrevDiag = diag::note_previous_implicit_declaration;
   else 
-    PrevDiag = diag::err_previous_declaration;
+    PrevDiag = diag::note_previous_declaration;
   
   QualType OldQType = Context.getCanonicalType(Old->getType());
   QualType NewQType = Context.getCanonicalType(New->getType());
@@ -538,7 +538,7 @@ void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
           VD->getStorageClass() != VarDecl::Extern &&
           VD->getStorageClass() != VarDecl::PrivateExtern) {
         Diag(VD->getLocation(), diag::err_redefinition) << VD->getDeclName();
-        Diag(OldDecl->getLocation(), diag::err_previous_definition);
+        Diag(OldDecl->getLocation(), diag::note_previous_definition);
       }
     }
   }
@@ -558,7 +558,7 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
       << New->getDeclName();
-    Diag(OldD->getLocation(), diag::err_previous_definition);
+    Diag(OldD->getLocation(), diag::note_previous_definition);
     return New;
   }
 
@@ -569,7 +569,7 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   QualType NewCType = Context.getCanonicalType(New->getType());
   if (OldCType != NewCType && !Context.typesAreCompatible(OldCType, NewCType)) {
     Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
-    Diag(Old->getLocation(), diag::err_previous_definition);
+    Diag(Old->getLocation(), diag::note_previous_definition);
     return New;
   }
   // C99 6.2.2p4: Check if we have a static decl followed by a non-static.
@@ -577,20 +577,20 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
       (Old->getStorageClass() == VarDecl::None ||
        Old->getStorageClass() == VarDecl::Extern)) {
     Diag(New->getLocation(), diag::err_static_non_static) << New->getName();
-    Diag(Old->getLocation(), diag::err_previous_definition);
+    Diag(Old->getLocation(), diag::note_previous_definition);
     return New;
   }
   // C99 6.2.2p4: Check if we have a non-static decl followed by a static.
   if (New->getStorageClass() != VarDecl::Static &&
       Old->getStorageClass() == VarDecl::Static) {
     Diag(New->getLocation(), diag::err_non_static_static) << New->getName();
-    Diag(Old->getLocation(), diag::err_previous_definition);
+    Diag(Old->getLocation(), diag::note_previous_definition);
     return New;
   }
   // Variables with external linkage are analyzed in FinalizeDeclaratorGroup.
   if (New->getStorageClass() != VarDecl::Extern && !New->isFileVarDecl()) {
     Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
-    Diag(Old->getLocation(), diag::err_previous_definition);
+    Diag(Old->getLocation(), diag::note_previous_definition);
   }
   return New;
 }
@@ -2076,7 +2076,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   const FunctionDecl *Definition;
   if (FD->getBody(Definition)) {
     Diag(FD->getLocation(), diag::err_redefinition) << FD->getDeclName();
-    Diag(Definition->getLocation(), diag::err_previous_definition);
+    Diag(Definition->getLocation(), diag::note_previous_definition);
   }
 
   PushDeclContext(FD);
@@ -2257,7 +2257,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
         // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
           Diag(KWLoc, diag::err_use_with_wrong_tag) << Name;
-          Diag(PrevDecl->getLocation(), diag::err_previous_use);
+          Diag(PrevDecl->getLocation(), diag::note_previous_use);
           // Recover by making this an anonymous redefinition.
           Name = 0;
           PrevDecl = 0;
@@ -2269,7 +2269,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
           // Diagnose attempts to redefine a tag.
           if (PrevTagDecl->isDefinition()) {
             Diag(NameLoc, diag::err_redefinition) << Name;
-            Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+            Diag(PrevDecl->getLocation(), diag::note_previous_definition);
             // If this is a redefinition, recover by making this struct be
             // anonymous, which will make any later references get the previous
             // definition.
@@ -2291,7 +2291,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
         Diag(NameLoc, diag::err_redefinition_different_kind) << Name;
-        Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+        Diag(PrevDecl->getLocation(), diag::note_previous_definition);
         Name = 0;
       }
     }
@@ -2394,7 +2394,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
         // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
           Diag(KWLoc, diag::err_use_with_wrong_tag) << Name;
-          Diag(PrevDecl->getLocation(), diag::err_previous_use);
+          Diag(PrevDecl->getLocation(), diag::note_previous_use);
           // Recover by making this an anonymous redefinition.
           Name = 0;
           PrevDecl = 0;
@@ -2414,7 +2414,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
             if (RecordDecl* DefRecord =
                 cast<RecordDecl>(PrevTagDecl)->getDefinition(Context)) {
               Diag(NameLoc, diag::err_redefinition) << Name;
-              Diag(DefRecord->getLocation(), diag::err_previous_definition);
+              Diag(DefRecord->getLocation(), diag::note_previous_definition);
               // If this is a redefinition, recover by making this struct be
               // anonymous, which will make any later references get the previous
               // definition.
@@ -2441,7 +2441,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
         Diag(NameLoc, diag::err_redefinition_different_kind) << Name;
-        Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+        Diag(PrevDecl->getLocation(), diag::note_previous_definition);
         Name = 0;
       }
     }
@@ -2717,7 +2717,7 @@ void Sema::ActOnFields(Scope* S,
       // outer S.
       Diag(DefRecord->getLocation(), diag::err_nested_redefinition)
         << DefRecord->getKindName();
-      Diag(RecLoc, diag::err_previous_definition);
+      Diag(RecLoc, diag::note_previous_definition);
       Record->setInvalidDecl();
       return;
     }
@@ -2822,7 +2822,7 @@ void Sema::ActOnFields(Scope* S,
             break;
           }
         }
-        Diag(PrevLoc, diag::err_previous_definition);
+        Diag(PrevLoc, diag::note_previous_definition);
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
         continue;
@@ -2880,7 +2880,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
         Diag(IdLoc, diag::err_redefinition_of_enumerator) << Id;
       else
         Diag(IdLoc, diag::err_redefinition) << Id;
-      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+      Diag(PrevDecl->getLocation(), diag::note_previous_definition);
       delete Val;
       return 0;
     }
@@ -2943,7 +2943,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     //     E0 = sizeof(enum e0 { E1 })
     //   };
     Diag(Enum->getLocation(), diag::err_nested_redefinition) << Enum->getName();
-    Diag(EnumLoc, diag::err_previous_definition);
+    Diag(EnumLoc, diag::note_previous_definition);
     Enum->setInvalidDecl();
     return;
   }

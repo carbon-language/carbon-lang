@@ -195,7 +195,7 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
   // multiply defined, reject it now.
   if (LabelDecl->getSubStmt()) {
     Diag(IdentLoc, diag::err_redefinition_of_label) << LabelDecl->getID();
-    Diag(LabelDecl->getIdentLoc(), diag::err_previous_definition);
+    Diag(LabelDecl->getIdentLoc(), diag::note_previous_definition);
     return SubStmt;
   }
   
@@ -390,7 +390,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
     if (DefaultStmt *DS = dyn_cast<DefaultStmt>(SC)) {
       if (TheDefaultStmt) {
         Diag(DS->getDefaultLoc(), diag::err_multiple_default_labels_defined);
-        Diag(TheDefaultStmt->getDefaultLoc(), diag::err_first_label);
+        Diag(TheDefaultStmt->getDefaultLoc(), diag::note_duplicate_case_prev);
             
         // FIXME: Remove the default statement from the switch block so that
         // we'll return a valid AST.  This requires recursing down the
@@ -436,7 +436,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
         Diag(CaseVals[i+1].second->getLHS()->getLocStart(),
              diag::err_duplicate_case) << CaseVals[i].first.toString(10);
         Diag(CaseVals[i].second->getLHS()->getLocStart(), 
-             diag::err_duplicate_case_prev);
+             diag::note_duplicate_case_prev);
         // FIXME: We really want to remove the bogus case stmt from the substmt,
         // but we have no way to do this right now.
         CaseListIsErroneous = true;
@@ -520,7 +520,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
         Diag(CR->getLHS()->getLocStart(), diag::err_duplicate_case)
           << OverlapVal.toString(10);
         Diag(OverlapStmt->getLHS()->getLocStart(), 
-             diag::err_duplicate_case_prev);
+             diag::note_duplicate_case_prev);
         // FIXME: We really want to remove the bogus case stmt from the substmt,
         // but we have no way to do this right now.
         CaseListIsErroneous = true;

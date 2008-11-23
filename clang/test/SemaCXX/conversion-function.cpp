@@ -34,8 +34,8 @@ typedef int INT;
 typedef INT* INT_PTR;
 
 class Z { 
-  operator int(); // expected-error{{previous declaration is here}}
-  operator int**(); // expected-error{{previous declaration is here}}
+  operator int(); // expected-note {{previous declaration is here}}
+  operator int**(); // expected-note {{previous declaration is here}}
   
   operator INT();  // expected-error{{conversion function cannot be redeclared}}
   operator INT_PTR*(); // expected-error{{conversion function cannot be redeclared}}

@@ -6,15 +6,15 @@ void f(double (* restrict a)[5]);
 int foo (__const char *__path);
 int foo(__const char *__restrict __file);
 
-void func(const char*); //expected-error{{previous declaration is here}}
-void func(char*); //expected-error{{conflicting types for 'func'}}
+void func(const char*); // expected-note {{previous declaration is here}}
+void func(char*); // expected-error{{conflicting types for 'func'}}
 
 void g(int (*)(const void **, const void **));
 void g(int (*compar)()) {
 }
 
-void h();  //expected-error{{previous declaration is here}}
-void h (const char *fmt, ...) {} //expected-error{{conflicting types for 'h'}}
+void h();  // expected-note {{previous declaration is here}}
+void h (const char *fmt, ...) {} // expected-error{{conflicting types for 'h'}}
 
 // PR1965
 int t5(b);          // expected-error {{parameter list without types}}

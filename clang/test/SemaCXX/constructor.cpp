@@ -5,7 +5,7 @@ typedef int INT;
 class Foo {
   Foo();
   (Foo)(float) { }
-  explicit Foo(int); // expected-error{{previous declaration is here}}
+  explicit Foo(int); // expected-note {{previous declaration is here}}
   Foo(const Foo&);
 
   ((Foo))(INT); // expected-error{{cannot be redeclared}}

@@ -28,6 +28,14 @@
 
 DIAG(note_previous_definition, NOTE,
      "previous definition is here")
+DIAG(note_previous_declaration, NOTE,
+     "previous declaration is here")
+DIAG(note_previous_implicit_declaration, NOTE,
+     "previous implicit declaration is here")
+DIAG(note_previous_use, NOTE,
+     "previous use is here")
+DIAG(note_duplicate_case_prev, NOTE,
+     "previous case defined here")
 
 
 //===----------------------------------------------------------------------===//
@@ -484,12 +492,8 @@ DIAG(warn_using_decl, WARNING,
      "using")
 DIAG(warn_also_found_decl, WARNING,
      "also found")
-DIAG(error_duplicate_method_decl, ERROR,
+DIAG(err_duplicate_method_decl, ERROR,
      "duplicate declaration of method '%0'")
-DIAG(err_previous_declaration, ERROR,
-     "previous declaration is here")
-DIAG(err_previous_implicit_declaration, ERROR,
-     "previous implicit declaration is here")
 DIAG(err_undeclared_protocol, ERROR,
      "cannot find protocol declaration for %0")
 DIAG(err_missing_sel_definition, ERROR,
@@ -877,12 +881,6 @@ DIAG(err_param_default_argument_references_this, ERROR,
 DIAG(err_param_default_argument_nonfunc, ERROR,
      "default arguments can only be specified for parameters in a function"
      " declaration")
-DIAG(err_previous_definition, ERROR,
-     "previous definition is here")
-DIAG(err_previous_use, ERROR,
-     "previous use is here")
-DIAG(err_first_label, ERROR,
-    "first label is here")
 
 // C++ Overloading Semantic Analysis.
 DIAG(err_ovl_diff_return_type, ERROR,
@@ -1491,8 +1489,6 @@ DIAG(warn_case_value_overflow, WARNING,
      "overflow converting case value to switch condition type (%0 to %1)")
 DIAG(err_duplicate_case, ERROR,
      "duplicate case value '%0'")
-DIAG(err_duplicate_case_prev, ERROR,
-     "previous case value occurrence defined here")
 DIAG(warn_case_empty_range, WARNING,
      "empty case range specified")
 DIAG(err_typecheck_statement_requires_scalar, ERROR,

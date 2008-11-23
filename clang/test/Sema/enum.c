@@ -30,8 +30,8 @@ int test2(int i)
 }
 
 // PR2020
-union u0;    // expected-error {{previous use is here}}
-enum u0 { U0A }; // expected-error {{error: use of 'u0' with tag type that does not match previous declaration}}
+union u0;    // expected-note {{previous use is here}}
+enum u0 { U0A }; // expected-error {{use of 'u0' with tag type that does not match previous declaration}}
 
 
 // rdar://6095136
@@ -52,6 +52,6 @@ void test4() {
 enum someenum {};  // expected-warning {{use of empty enum extension}}
 
 // <rdar://problem/6093889>
-enum e0 { // expected-error {{previous definition is here}}
+enum e0 { // expected-note {{previous definition is here}}
   E0 = sizeof(enum e0 { E1 }) // expected-error {{nested redefinition}}
 };

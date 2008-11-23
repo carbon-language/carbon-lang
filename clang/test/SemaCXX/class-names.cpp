@@ -5,7 +5,7 @@ C c;
 
 void D(int);
 
-class D {}; // expected-error{{previous use is here}}
+class D {}; // expected-note {{previous use is here}}
 
 void foo()
 {
@@ -15,7 +15,7 @@ void foo()
 
 class D; 
 
-enum D; // expected-error{{use of 'D' with tag type that does not match previous declaration}}
+enum D; // expected-error {{use of 'D' with tag type that does not match previous declaration}}
 
 class A * A;
 

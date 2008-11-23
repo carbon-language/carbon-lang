@@ -197,7 +197,7 @@ Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
       Diag(NewParam->getLocation(), 
            diag::err_param_default_argument_redefinition)
         << NewParam->getDefaultArg()->getSourceRange();
-      Diag(OldParam->getLocation(), diag::err_previous_definition);
+      Diag(OldParam->getLocation(), diag::note_previous_definition);
     } else if (OldParam->getDefaultArg()) {
       // Merge the old default argument into the new parameter
       NewParam->setDefaultArg(OldParam->getDefaultArg());
@@ -1112,7 +1112,7 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
   if (!IsOverload(ConDecl, ClassDecl->getConstructors(), MatchedDecl)) {
     Diag(ConDecl->getLocation(), diag::err_constructor_redeclared)
       << SourceRange(ConDecl->getLocation());
-    Diag((*MatchedDecl)->getLocation(), diag::err_previous_declaration)
+    Diag((*MatchedDecl)->getLocation(), diag::note_previous_declaration)
       << SourceRange((*MatchedDecl)->getLocation());
     ConDecl->setInvalidDecl();
     return ConDecl;
@@ -1157,9 +1157,9 @@ Sema::DeclTy *Sema::ActOnDestructorDeclarator(CXXDestructorDecl *Destructor) {
   if (CXXDestructorDecl *PrevDestructor = ClassDecl->getDestructor()) {
     Diag(Destructor->getLocation(), diag::err_destructor_redeclared);
     Diag(PrevDestructor->getLocation(),
-         PrevDestructor->isThisDeclarationADefinition()?
-             diag::err_previous_definition
-           : diag::err_previous_declaration);
+         PrevDestructor->isThisDeclarationADefinition() ?
+             diag::note_previous_definition
+           : diag::note_previous_declaration);
     Destructor->setInvalidDecl();
     return Destructor;
   }
@@ -1188,8 +1188,8 @@ Sema::DeclTy *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
       Diag(Conversion->getLocation(), diag::err_conv_function_redeclared);
       Diag(OtherConv->getLocation(),
            OtherConv->isThisDeclarationADefinition()?
-              diag::err_previous_definition
-            : diag::err_previous_declaration);
+              diag::note_previous_definition
+            : diag::note_previous_declaration);
       Conversion->setInvalidDecl();
       return (DeclTy *)Conversion;      
     }
@@ -1272,7 +1272,7 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
         // This is an invalid name redefinition.
         Diag(Namespc->getLocation(), diag::err_redefinition_different_kind)
           << Namespc->getDeclName();
-        Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+        Diag(PrevDecl->getLocation(), diag::note_previous_definition);
         Namespc->setInvalidDecl();
         // Continue on to push Namespc as current DeclContext and return it.
       }

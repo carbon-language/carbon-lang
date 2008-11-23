@@ -3,7 +3,7 @@
 @interface INTF 
 {
 @public
-	int IVAR; // expected-error {{previous definition is here}}
+	int IVAR; // expected-note {{previous definition is here}}
 }
 @end
 
@@ -54,7 +54,7 @@
 @interface INTF3
 {
 @public
-	int IVAR; // expected-error {{previous definition is here}}
+	int IVAR; // expected-note {{previous definition is here}}
 }
 @end
 

@@ -7,7 +7,7 @@ void func() {
    int32_t *vector[16];
    const char compDesc[16 + 1];
    int32_t compCount = 0;
-   if (_CFCalendarDecomposeAbsoluteTimeV(compDesc, vector, compCount)) { // expected-error{{previous implicit declaration is here}}
+   if (_CFCalendarDecomposeAbsoluteTimeV(compDesc, vector, compCount)) { // expected-note {{previous implicit declaration is here}}
    }
    return ((void *)0);
 }

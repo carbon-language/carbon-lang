@@ -2,7 +2,7 @@
 
 @compatibility_alias alias4 foo; // expected-warning {{cannot find interface declaration for 'foo'}}
 
-@class class2; // expected-error {{previous declaration is here}}
+@class class2; // expected-note {{previous declaration is here}}
 @class class3;
 
 typedef int I;  // expected-warning {{previous declaration is here}}
@@ -13,7 +13,7 @@ typedef int I;  // expected-warning {{previous declaration is here}}
 @compatibility_alias alias class3;   // expected-error {{conflicting types for alias 'alias'}}
 
 
-typedef int alias2;	// expected-error {{previous declaration is here}}
+typedef int alias2;	// expected-note {{previous declaration is here}}
 @compatibility_alias alias2 class3;  // expected-error {{conflicting types for alias 'alias2'}}
 
 alias *p;

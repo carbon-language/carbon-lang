@@ -1,7 +1,7 @@
 // RUN: clang -fsyntax-only -verify %s
 
 // Note: GCC doesn't produce any of the following errors.
-@interface Super @end // expected-error {{previous definition is here}}
+@interface Super @end // expected-note {{previous definition is here}}
 
 @interface MyWpModule @end  // expected-note {{previous definition is here}}
 

@@ -4,17 +4,17 @@
 
 @interface SUPER <SUPER> @end // expected-warning {{cannot find protocol definition for 'SUPER'}}
 
-typedef int INTF; //  expected-error {{previous definition is here}}
+typedef int INTF; //  expected-note {{previous definition is here}}
 
 @interface INTF @end // expected-error {{redefinition of 'INTF' as different kind of symbol}}
 
-@interface OBJECT @end	// expected-error {{previous definition is here}}
+@interface OBJECT @end	// expected-note {{previous definition is here}}
 
 @interface INTF1 : OBJECT @end // expected-note {{previous definition is here}}
 
 @interface INTF1 : OBJECT @end // expected-error {{duplicate interface definition for class 'INTF1'}}
 
-typedef int OBJECT; // expected-error {{previous definition is here}}  \
+typedef int OBJECT; // expected-note {{previous definition is here}}  \
 		       expected-error {{redefinition of 'OBJECT' as different kind of symbol}}
 
 @interface INTF2 : OBJECT @end // expected-error {{redefinition of 'OBJECT' as different kind of symbol}}

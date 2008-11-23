@@ -31,8 +31,8 @@ struct E {
 };
 
 struct F {
-  (~F)(); // expected-error{{previous declaration is here}}
-  ~F(); // expected-error{{destructor cannot be redeclared}}
+  (~F)(); // expected-note {{previous declaration is here}}
+  ~F(); // expected-error {{destructor cannot be redeclared}}
 };
 
 ~; // expected-error {{expected class name}}
