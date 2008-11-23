@@ -337,8 +337,8 @@ public:
         break;
       case Diagnostic::ak_qualtype: {
         llvm::SmallString<64> Str;
-        Info.getDiags()->ConvertQualTypeToString(Info.getRawArg(i), 0, 0, 0, 0,
-                                                 Str);
+        Info.getDiags()->ConvertArgToString(Info.getArgKind(i),
+                                            Info.getRawArg(i), 0, 0, 0, 0, Str);
         R.addString(std::string(Str.begin(), Str.end()));
         break;
       }

@@ -62,6 +62,15 @@ public:
     Ignored, Note, Warning, Error
   };
   
+  enum ArgumentKind {
+    ak_std_string,     // std::string
+    ak_c_string,       // const char *
+    ak_sint,           // int
+    ak_uint,           // unsigned
+    ak_identifierinfo, // IdentifierInfo
+    ak_qualtype        // QualType
+  };
+  
 private:  
   bool IgnoreAllWarnings;     // Ignore all warnings: -w
   bool WarningsAsErrors;      // Treat warnings like errors: 
@@ -84,12 +93,15 @@ private:
   /// CustomDiagInfo - Information for uniquing and looking up custom diags.
   diag::CustomDiagInfo *CustomDiagInfo;
 
-  /// QualTypeToString - A function pointer that converts QualType's to strings.
+  /// ArgToStringFn - A function pointer that converts an opaque diagnostic
+  /// argument to a strings.  This takes the modifiers and argument that was
+  /// present in the diagnostic.
   /// This is a hack to avoid a layering violation between libbasic and libsema.
-  typedef void (*QTToStringFnTy)(intptr_t QT, const char *Modifier, unsigned ML,
-                                 const char *Argument, unsigned ArgLen,
-                                 llvm::SmallVectorImpl<char> &Output);
-  QTToStringFnTy QualTypeToString;
+  typedef void (*ArgToStringFnTy)(ArgumentKind Kind, intptr_t Val,
+                                  const char *Modifier, unsigned ModifierLen,
+                                  const char *Argument, unsigned ArgumentLen,
+                                  llvm::SmallVectorImpl<char> &Output);
+  ArgToStringFnTy ArgToStringFn;
 public:
   explicit Diagnostic(DiagnosticClient *client = 0);
   ~Diagnostic();
@@ -157,16 +169,17 @@ public:
   unsigned getCustomDiagID(Level L, const char *Message);
   
   
-  /// ConvertQualTypeToString - This method converts a QualType (as an intptr_t)
-  /// into the string that represents it if possible.
-  void ConvertQualTypeToString(intptr_t QT, const char *Modifier, unsigned ML,
-                               const char *Argument, unsigned ArgLen,
-                               llvm::SmallVectorImpl<char> &Output) const {
-    QualTypeToString(QT, Modifier, ML, Argument, ArgLen, Output);
+  /// ConvertArgToString - This method converts a diagnostic argument (as an
+  /// intptr_t) into the string that represents it.
+  void ConvertArgToString(ArgumentKind Kind, intptr_t Val,
+                          const char *Modifier, unsigned ModLen,
+                          const char *Argument, unsigned ArgLen,
+                          llvm::SmallVectorImpl<char> &Output) const {
+    ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen, Output);
   }
   
-  void SetQualTypeToStringFn(QTToStringFnTy Fn) {
-    QualTypeToString = Fn;
+  void SetArgToStringFn(ArgToStringFnTy Fn) {
+    ArgToStringFn = Fn;
   }
   
   //===--------------------------------------------------------------------===//
@@ -246,15 +259,6 @@ private:
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.
   void ProcessDiag();
-public:
-  enum ArgumentKind {
-    ak_std_string,     // std::string
-    ak_c_string,       // const char *
-    ak_sint,           // int
-    ak_uint,           // unsigned
-    ak_identifierinfo, // IdentifierInfo
-    ak_qualtype        // QualType
-  };
 };
 
 //===----------------------------------------------------------------------===//

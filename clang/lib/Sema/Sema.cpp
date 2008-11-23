@@ -22,12 +22,13 @@ using namespace clang;
 
 /// ConvertQualTypeToStringFn - This function is used to pretty print the 
 /// specified QualType as a string in diagnostics.
-static void ConvertQualTypeToStringFn(intptr_t QT,
+static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t QT,
                                       const char *Modifier, unsigned ML,
                                       const char *Argument, unsigned ArgLen,
                                       llvm::SmallVectorImpl<char> &Output) {
   assert(ML == 0 && ArgLen == 0 && "Invalid modifier for QualType argument");
-
+  assert(Kind == Diagnostic::ak_qualtype);
+  
   QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(QT)));
   
   // FIXME: Playing with std::string is really slow.
@@ -126,7 +127,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
     FieldCollector.reset(new CXXFieldCollector());
       
   // Tell diagnostics how to render things from the AST library.
-  PP.getDiagnostics().SetQualTypeToStringFn(ConvertQualTypeToStringFn);
+  PP.getDiagnostics().SetArgToStringFn(ConvertArgToStringFn);
 }
 
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast. 

@@ -116,10 +116,11 @@ namespace clang {
 // Common Diagnostic implementation
 //===----------------------------------------------------------------------===//
 
-static void DummyQTToStringFnTy(intptr_t QT, const char *Modifier, unsigned ML,
-                                const char *Argument, unsigned ArgLen,
-                                llvm::SmallVectorImpl<char> &Output) {
-  const char *Str = "<can't format QualType>";
+static void DummyArgToStringFn(Diagnostic::ArgumentKind AK, intptr_t QT,
+                               const char *Modifier, unsigned ML,
+                               const char *Argument, unsigned ArgLen,
+                               llvm::SmallVectorImpl<char> &Output) {
+  const char *Str = "<can't format argument>";
   Output.append(Str, Str+strlen(Str));
 }
 
@@ -139,7 +140,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   CustomDiagInfo = 0;
   CurDiagID = ~0U;
   
-  QualTypeToString = DummyQTToStringFnTy;
+  ArgToStringFn = DummyArgToStringFn;
 }
 
 Diagnostic::~Diagnostic() {
@@ -536,9 +537,9 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     }
     case Diagnostic::ak_qualtype:
       OutStr.push_back('\'');
-      getDiags()->ConvertQualTypeToString(getRawArg(ArgNo),
-                                          Modifier, ModifierLen,
-                                          Argument, ArgumentLen, OutStr);
+      getDiags()->ConvertArgToString(getArgKind(ArgNo), getRawArg(ArgNo),
+                                     Modifier, ModifierLen,
+                                     Argument, ArgumentLen, OutStr);
       OutStr.push_back('\'');
       break;
     }
