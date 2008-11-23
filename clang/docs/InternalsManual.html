@@ -248,8 +248,8 @@ Clang:</p>
 <tr><td>Description:</td><td>This is a simple formatter for integers that is
     useful when producing English diagnostics.  When the integer is 1, it prints
     as nothing.  When the integer is not 1, it prints as "s".  This allows some
-    simple grammar to be to be handled correctly, and eliminates the need to use
-    gross things like <tt>"requires %1 parameter(s)"</tt>.</td></tr>
+    simple grammatical forms to be to be handled correctly, and eliminates the
+    need to use gross things like <tt>"requires %1 parameter(s)"</tt>.</td></tr>
 
 <tr><td colspan="2"><b>"select" format</b></td></tr>
 <tr><td>Example:</td><td><tt>"must be a %select{unary|binary|unary or binary}2
@@ -281,15 +281,16 @@ Clang:</p>
 	matches. Each numeric condition can take one of three forms.</p>
 	<ul>
 	    <li>number: A simple decimal number matches if the argument is the same
-		as the number. Example: <tt>"{1:mouse|:mice}"</tt></li>
+		as the number. Example: <tt>"%plural{1:mouse|:mice}4"</tt></li>
 		<li>range: A range in square brackets matches if the argument is within
 		the range. Then range is inclusive both ends. Example:
-		<tt>"{0:none|1:one|[2,5]:some|:many}"</tt></li>
-		<li>modulo: A modulo operator is followed by a number, and equals sign
-		and either a number or a range. The tests are the same as for plain
+		<tt>"%plural{0:none|1:one|[2,5]:some|:many}2"</tt></li>
+		<li>modulo: A modulo operator is followed by a number, and
+                equals sign and either a number or a range. The tests are the
+                same as for plain
 		numbers and ranges, but the argument is taken modulo the number first.
-		Example: <tt>"{%100=0:even hundred|%100=[1,50]:lower half|:everything
-		else}"</tt></li>
+		Example: <tt>"%plural{%100=0:even hundred|%100=[1,50]:lower half|:everything
+		else}1"</tt></li>
 	</ul>
 	<p>The parser is very unforgiving. A syntax error, even whitespace, will
 	abort, as will a failure to match the argument against any
@@ -302,19 +303,61 @@ but they should be discussed before they are added.  If you're creating a lot
 of repetitive diagnostics and/or have an idea for a useful formater, please
 bring it up on the cfe-dev mainling list.</p>
 
-
-
-
 <!-- ===================================================== -->
 <h4><a name="#producingdiag">Producing the Diagnostic</a></h4>
 <!-- ===================================================== -->
 
-<p>SemaExpr.cpp example</p>
+<p>Now that you've created the diagnostic in the DiagnosticKinds.def file, you
+need to produce it.  Various components of Clang (e.g. the preprocessor, Sema,
+etc) provide a helper function named "Diag".  It creates a diagnostic and
+accepts the arguments, ranges, and other information that goes along with
+it.</p>
 
+<p>For example the binary expression error comes from code like this:</p>
+
+<pre>
+  if (various things that are bad)
+    Diag(Loc, diag::err_typecheck_invalid_operands)
+      &lt;&lt; lex-&gt;getType() &lt;&lt; rex-&gt;getType()
+      &lt;&lt; lex-&gt;getSourceRange() &lt;&lt; rex-&gt;getSourceRange();
+</pre>
+
+<p>This shows that use of the Diag method: they take a location (a <a
+href="#SourceLocation">SourceLocation</a> object) and a diagnostic enum value
+(which matches the name from DiagnosticKinds.def).  If the diagnostic takes
+arguments, they are specified with the &lt;&lt; operator: the first argument
+becomes %0, the second becomes %1, etc.  The diagnostic interface allows you to
+specify arguments 
+SourceRanges are also specified with
+the &lt;&lt; operator, and do not have a specific ordering.</p>
+
+<p>As you can see, adding and producing a diagnostic is pretty straightforward.
+The hard part is deciding exactly what you need to say to help the user, picking
+a suitable wording, and providing the information needed to format it correctly.
+</p>
 
 <!-- ============================================================= -->
 <h4><a name="DiagnosticClient">The DiagnosticClient Interface</a></h4>
 <!-- ============================================================= -->
+
+<p>Once code generates a diagnostic with all of the arguments and the rest of
+the relevant information, Clang needs to know what to do with it.  As previously
+mentioned, the diagnostic machinery goes through some filtering to map a
+severity onto a diagnostic level, then (assuming the diagnostic is not mapped to
+"<tt>Ignore</tt>") it invokes an object that implements the DiagnosticClient
+interface with the information.</p>
+
+<p>It is possible to implement this interface in many different ways.  For
+example, the normal Clang DiagnosticClient (named 'TextDiagnosticPrinter') turns
+the arguments into strings (according to the various formatting rules), prints
+out the file/line/column information and the string, then prints out the line of
+code, the source ranges, and the caret.  However, this behavior isn't required.
+</p>
+
+<p>Another implementation of the DiagnosticClient interface is the
+'TextDiagnosticBuffer' class, which is used when clang is in -verify mode.
+Instead of formatting and printing out the diagnostics, this implementation
+</p>
 
 <p>Clang command line, buffering, HTMLizing, etc.</p>
 
@@ -322,7 +365,8 @@ bring it up on the cfe-dev mainling list.</p>
 <h4><a name="translation">Adding Translations to Clang</a></h4>
 <!-- ====================================================== -->
 
-<p>Not possible yet!</p>
+<p>Not possible yet!  Diagnostic strings should be written in UTF-8, the client
+can translate to the relevant code page if needed.</p>
 
 
 <!-- ======================================================================= -->
