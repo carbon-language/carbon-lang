@@ -98,7 +98,7 @@ template<class FromCl>
 struct isa_impl_cl<FromCl*> {
   template<class ToCl>
   static bool isa(FromCl *Val) {
-    return (Val != 0 && isa_impl_cl<FromCl>::template isa<ToCl>(*Val));
+    return isa_impl_cl<FromCl>::template isa<ToCl>(*Val);
   }
 };
 
