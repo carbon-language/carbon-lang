@@ -84,6 +84,12 @@ private:
   /// CustomDiagInfo - Information for uniquing and looking up custom diags.
   diag::CustomDiagInfo *CustomDiagInfo;
 
+  /// QualTypeToString - A function pointer that converts QualType's to strings.
+  /// This is a hack to avoid a layering violation between libbasic and libsema.
+  typedef void (*QTToStringFnTy)(intptr_t QT, const char *Modifier, unsigned ML,
+                                 const char *Argument, unsigned ArgLen,
+                                 llvm::SmallVectorImpl<char> &Output);
+  QTToStringFnTy QualTypeToString;
 public:
   explicit Diagnostic(DiagnosticClient *client = 0);
   ~Diagnostic();
@@ -149,6 +155,19 @@ public:
   /// and level.  If this is the first request for this diagnosic, it is
   /// registered and created, otherwise the existing ID is returned.
   unsigned getCustomDiagID(Level L, const char *Message);
+  
+  
+  /// ConvertQualTypeToString - This method converts a QualType (as an intptr_t)
+  /// into the string that represents it if possible.
+  void ConvertQualTypeToString(intptr_t QT, const char *Modifier, unsigned ML,
+                               const char *Argument, unsigned ArgLen,
+                               llvm::SmallVectorImpl<char> &Output) const {
+    QualTypeToString(QT, Modifier, ML, Argument, ArgLen, Output);
+  }
+  
+  void SetQualTypeToStringFn(QTToStringFnTy Fn) {
+    QualTypeToString = Fn;
+  }
   
   //===--------------------------------------------------------------------===//
   // Diagnostic classification and reporting interfaces.
@@ -233,7 +252,8 @@ public:
     ak_c_string,       // const char *
     ak_sint,           // int
     ak_uint,           // unsigned
-    ak_identifierinfo  // IdentifierInfo
+    ak_identifierinfo, // IdentifierInfo
+    ak_qualtype        // QualType
   };
 };
 
@@ -273,11 +293,14 @@ public:
   ~DiagnosticBuilder() {
     // If DiagObj is null, then its soul was stolen by the copy ctor.
     if (DiagObj == 0) return;
-    
-    
+
+    // When destroyed, the ~DiagnosticBuilder sets the final argument count into
+    // the Diagnostic object.
     DiagObj->NumDiagArgs = NumArgs;
     DiagObj->NumDiagRanges = NumRanges;
 
+    // Process the diagnostic, sending the accumulated information to the
+    // DiagnosticClient.
     DiagObj->ProcessDiag();
 
     // This diagnostic is no longer in flight.
@@ -418,6 +441,14 @@ public:
            "invalid argument accessor!");
     return reinterpret_cast<IdentifierInfo*>(DiagObj->DiagArgumentsVal[Idx]);
   }
+  
+  /// getRawArg - Return the specified non-string argument in an opaque form.
+  intptr_t getRawArg(unsigned Idx) const {
+    assert(getArgKind(Idx) != Diagnostic::ak_std_string &&
+           "invalid argument accessor!");
+    return DiagObj->DiagArgumentsVal[Idx];
+  }
+  
   
   /// getNumRanges - Return the number of source ranges associated with this
   /// diagnostic.

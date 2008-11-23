@@ -116,6 +116,14 @@ namespace clang {
 // Common Diagnostic implementation
 //===----------------------------------------------------------------------===//
 
+static void DummyQTToStringFnTy(intptr_t QT, const char *Modifier, unsigned ML,
+                                const char *Argument, unsigned ArgLen,
+                                llvm::SmallVectorImpl<char> &Output) {
+  const char *Str = "<can't format QualType>";
+  Output.append(Str, Str+strlen(Str));
+}
+
+
 Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   IgnoreAllWarnings = false;
   WarningsAsErrors = false;
@@ -130,6 +138,8 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   NumErrors = 0;
   CustomDiagInfo = 0;
   CurDiagID = ~0U;
+  
+  QualTypeToString = DummyQTToStringFnTy;
 }
 
 Diagnostic::~Diagnostic() {
@@ -468,29 +478,29 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     }
       
     assert(isdigit(*DiagStr) && "Invalid format for argument in diagnostic");
-    unsigned StrNo = *DiagStr++ - '0';
+    unsigned ArgNo = *DiagStr++ - '0';
 
-    switch (getArgKind(StrNo)) {
+    switch (getArgKind(ArgNo)) {
     case Diagnostic::ak_std_string: {
-      const std::string &S = getArgStdStr(StrNo);
+      const std::string &S = getArgStdStr(ArgNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
       OutStr.append(S.begin(), S.end());
       break;
     }
     case Diagnostic::ak_c_string: {
-      const char *S = getArgCStr(StrNo);
+      const char *S = getArgCStr(ArgNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
       OutStr.append(S, S + strlen(S));
       break;
     }
     case Diagnostic::ak_identifierinfo: {
-      const IdentifierInfo *II = getArgIdentifier(StrNo);
+      const IdentifierInfo *II = getArgIdentifier(ArgNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
       OutStr.append(II->getName(), II->getName() + II->getLength());
       break;
     }
     case Diagnostic::ak_sint: {
-      int Val = getArgSInt(StrNo);
+      int Val = getArgSInt(ArgNo);
       
       if (ModifierIs(Modifier, ModifierLen, "select")) {
         HandleSelectModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
@@ -507,7 +517,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       break;
     }
     case Diagnostic::ak_uint: {
-      unsigned Val = getArgUInt(StrNo);
+      unsigned Val = getArgUInt(ArgNo);
       
       if (ModifierIs(Modifier, ModifierLen, "select")) {
         HandleSelectModifier(Val, Argument, ArgumentLen, OutStr);
@@ -521,9 +531,16 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         // FIXME: Optimize
         std::string S = llvm::utostr_32(Val);
         OutStr.append(S.begin(), S.end());
-        break;
       }
+      break;
     }
+    case Diagnostic::ak_qualtype:
+      OutStr.push_back('\'');
+      getDiags()->ConvertQualTypeToString(getRawArg(ArgNo),
+                                          Modifier, ModifierLen,
+                                          Argument, ArgumentLen, OutStr);
+      OutStr.push_back('\'');
+      break;
     }
   }
 }

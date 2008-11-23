@@ -14,11 +14,11 @@
 #ifndef LLVM_CLANG_AST_TYPE_H
 #define LLVM_CLANG_AST_TYPE_H
 
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/Bitcode/SerializationFwd.h"
-
 using llvm::isa;
 using llvm::cast;
 using llvm::cast_or_null;
@@ -1485,6 +1485,16 @@ inline bool Type::isOverloadType() const {
   else
     return false;
 }
+
+/// Insertion operator for diagnostics.  This allows sending QualType's into a
+/// diagnostic with <<.
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           QualType T) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
+                  Diagnostic::ak_qualtype);
+  return DB;
+}
+  
 
 }  // end namespace clang
 

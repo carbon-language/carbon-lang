@@ -21,6 +21,7 @@
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include <list>
 
@@ -316,6 +317,7 @@ public:
     for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
       R.addRange(Info.getRange(i));
     
+    // FIXME: This is losing/ignoring formatting.
     for (unsigned i = 0, e = Info.getNumArgs(); i != e; ++i) {
       switch (Info.getArgKind(i)) {
       case Diagnostic::ak_std_string:   
@@ -333,7 +335,13 @@ public:
       case Diagnostic::ak_identifierinfo:
         R.addString(Info.getArgIdentifier(i)->getName());
         break;
-          
+      case Diagnostic::ak_qualtype: {
+        llvm::SmallString<64> Str;
+        Info.getDiags()->ConvertQualTypeToString(Info.getRawArg(i), 0, 0, 0, 0,
+                                                 Str);
+        R.addString(std::string(Str.begin(), Str.end()));
+        break;
+      }
       }
     }
   }

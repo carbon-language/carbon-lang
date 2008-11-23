@@ -2054,7 +2054,7 @@ Sema::CheckCompoundAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
 QualType Sema::InvalidOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   Diag(Loc, diag::err_typecheck_invalid_operands)
-    << lex->getType().getAsString() << rex->getType().getAsString()
+    << lex->getType() << rex->getType()
     << lex->getSourceRange() << rex->getSourceRange();
   return QualType();
 }
@@ -2809,20 +2809,19 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   return Context.getPointerType(op->getType());
 }
 
-QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
-  UsualUnaryConversions(op);
-  QualType qType = op->getType();
+QualType Sema::CheckIndirectionOperand(Expr *Op, SourceLocation OpLoc) {
+  UsualUnaryConversions(Op);
+  QualType Ty = Op->getType();
   
-  if (const PointerType *PT = qType->getAsPointerType()) {
-    // Note that per both C89 and C99, this is always legal, even
-    // if ptype is an incomplete type or void.
-    // It would be possible to warn about dereferencing a
-    // void pointer, but it's completely well-defined,
-    // and such a warning is unlikely to catch any mistakes.
+  // Note that per both C89 and C99, this is always legal, even if ptype is an
+  // incomplete type or void.  It would be possible to warn about dereferencing
+  // a void pointer, but it's completely well-defined, and such a warning is
+  // unlikely to catch any mistakes.
+  if (const PointerType *PT = Ty->getAsPointerType())
     return PT->getPointeeType();
-  }
+  
   Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer)
-    << qType.getAsString() << op->getSourceRange();
+    << Ty << Op->getSourceRange();
   return QualType();
 }
 

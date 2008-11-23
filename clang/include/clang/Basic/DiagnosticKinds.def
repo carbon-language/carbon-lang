@@ -1123,9 +1123,9 @@ DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
 DIAG(err_typecheck_unary_expr, ERROR,
      "invalid argument type to unary expression '%0'")
 DIAG(err_typecheck_indirection_requires_pointer, ERROR,
-     "indirection requires pointer operand ('%0' invalid)")
+     "indirection requires pointer operand (%0 invalid)")
 DIAG(err_typecheck_invalid_operands, ERROR,
-     "invalid operands to binary expression ('%0' and '%1')")
+     "invalid operands to binary expression (%0 and %1)")
 DIAG(err_typecheck_sub_ptr_object, ERROR,
      "'%0' is not a complete object type")
 DIAG(err_typecheck_sub_ptr_compatible, ERROR,
