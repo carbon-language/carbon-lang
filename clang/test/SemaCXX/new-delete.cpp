@@ -50,7 +50,7 @@ void bad_deletes()
 {
   delete 0; // expected-error {{cannot delete expression of type 'int'}}
   delete [0] (int*)0; // expected-error {{expected ']'}} \
-                      // expected-error {{to match this '['}}
+                      // expected-note {{to match this '['}}
   delete (void*)0; // expected-error {{cannot delete expression}}
   delete (T*)0; // expected-warning {{deleting pointer to incomplete type}}
 }

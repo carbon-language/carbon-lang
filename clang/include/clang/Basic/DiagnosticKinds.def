@@ -37,6 +37,11 @@ DIAG(note_previous_use, NOTE,
 DIAG(note_duplicate_case_prev, NOTE,
      "previous case defined here")
 
+/// note_matching - this is used as a continuation of a previous diagnostic,
+/// e.g. to specify the '(' when we expected a ')'.
+DIAG(note_matching, NOTE,
+     "to match this '%0'")
+
 
 //===----------------------------------------------------------------------===//
 // Lexer Diagnostics
@@ -408,13 +413,6 @@ DIAG(err_expected_selector_for_method, ERROR,
 
 DIAG(err_unexpected_at, ERROR,
      "unexpected '@' in program")
-
-/// err_matching - this is used as a continuation of a previous error, e.g. to 
-/// specify the '(' when we expected a ')'.  This should probably be some
-/// special sort of diagnostic kind to indicate that it is the second half of
-/// the previous diagnostic.
-DIAG(err_matching, ERROR,
-     "to match this '%0'")
 
 /// Objective-C parser diagnostics
 DIAG(err_unexpected_interface, ERROR,

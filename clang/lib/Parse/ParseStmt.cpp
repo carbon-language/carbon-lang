@@ -733,7 +733,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
     ExitScope();
     if (!Body.isInvalid) {
       Diag(Tok, diag::err_expected_while);
-      Diag(DoLoc, diag::err_matching) << "do";
+      Diag(DoLoc, diag::note_matching) << "do";
       SkipUntil(tok::semi, false, true);
     }
     return true;

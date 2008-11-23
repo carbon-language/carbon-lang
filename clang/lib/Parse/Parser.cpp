@@ -71,7 +71,7 @@ SourceLocation Parser::MatchRHSPunctuation(tok::TokenKind RHSTok,
   case tok::greater:  LHSName = "<"; DID = diag::err_expected_greater; break;
   }
   Diag(Tok, DID);
-  Diag(LHSLoc, diag::err_matching) << LHSName;
+  Diag(LHSLoc, diag::note_matching) << LHSName;
   SkipUntil(RHSTok);
   return R;
 }

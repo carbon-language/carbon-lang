@@ -50,14 +50,16 @@ typedef signed char BOOL;
 
 
 // test parser recovery: rdar://6254579
-@property (readonly getter=isAwesome) // expected-error {{error: expected ')'}}  \
-                                      // expected-error {{to match this '('}}
+@property (                           // expected-note {{to match this '('}}
+           readonly getter=isAwesome) // expected-error {{error: expected ')'}}
+           
   int _awesome;
 @property (readonlyx) // expected-error {{unknown property attribute 'readonlyx'}}
   int _awesome2;
 
-@property (+)  // expected-error {{error: expected ')'}}  \
-               // expected-error {{to match this '('}}
+@property (    // expected-note {{to match this '('}}
+           +)  // expected-error {{error: expected ')'}}
+           
   int _awesome3;
 
 @end

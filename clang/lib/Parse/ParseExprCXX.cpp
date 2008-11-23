@@ -199,7 +199,7 @@ Parser::ExprResult Parser::ParseCXXCasts() {
   SourceLocation RAngleBracketLoc = Tok.getLocation();
 
   if (ExpectAndConsume(tok::greater, diag::err_expected_greater))
-    return Diag(LAngleBracketLoc, diag::err_matching) << "<";
+    return Diag(LAngleBracketLoc, diag::note_matching) << "<";
 
   SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
 

@@ -72,4 +72,4 @@ void f3() {
 }
 
 // make sure the following doesn't hit any asserts
-void f4(undef::C); // expected-error {{use of undeclared identifier 'undef'}} // expected-error {{expected ')'}} expected-error {{to match this '('}} // expected-error {{variable has incomplete type 'void'}}
+void f4(undef::C); // expected-error {{use of undeclared identifier 'undef'}} // expected-error {{expected ')'}} expected-note {{to match this '('}} // expected-error {{variable has incomplete type 'void'}}

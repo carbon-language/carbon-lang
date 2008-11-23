@@ -271,7 +271,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
       
       if (Tok.isNot(tok::colon)) {
         Diag(Tok, diag::err_expected_colon);
-        Diag(OpToken, diag::err_matching) << "?";
+        Diag(OpToken, diag::note_matching) << "?";
         Actions.DeleteExpr(LHS.Val);
         Actions.DeleteExpr(TernaryMiddle.Val);
         return ExprResult(true);
