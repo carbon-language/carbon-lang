@@ -62,7 +62,7 @@ void f7() {
 
 void f8() {
   int a[10];
-  a[sizeof(a) - 1] = 1;
+  a[sizeof(a)/sizeof(int) - 1] = 1;
 }
 
 void f9() {
