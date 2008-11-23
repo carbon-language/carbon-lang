@@ -2423,7 +2423,8 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
           StartIdx[Input] = 0;
         } else {
           StartIdx[Input] = (MinRange[Input]/MaskNumElts)*MaskNumElts;
-          if (MaxRange[Input] - StartIdx[Input] < MaskNumElts) 
+          if (MaxRange[Input] - StartIdx[Input] < MaskNumElts &&
+              StartIdx[Input] + MaskNumElts < SrcNumElts) 
             RangeUse[Input] = 1; // Extract from a multiple of the mask length.
         }
       }
