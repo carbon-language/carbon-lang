@@ -327,13 +327,19 @@ href="#SourceLocation">SourceLocation</a> object) and a diagnostic enum value
 (which matches the name from DiagnosticKinds.def).  If the diagnostic takes
 arguments, they are specified with the &lt;&lt; operator: the first argument
 becomes %0, the second becomes %1, etc.  The diagnostic interface allows you to
-specify arguments 
-SourceRanges are also specified with
-the &lt;&lt; operator, and do not have a specific ordering.</p>
+specify arguments of many different types, including <tt>int</tt> and
+<tt>unsigned</tt> for integer arguments, <tt>const char*</tt> and
+<tt>std::string</tt> for string arguments, <tt>DeclarationName</tt> and
+<tt>const IdentifierInfo*</tt> for names, <tt>QualType</tt> for types, etc.
+SourceRanges are also specified with the &lt;&lt; operator, but do not have a
+specific ordering requirement.</p>
 
 <p>As you can see, adding and producing a diagnostic is pretty straightforward.
 The hard part is deciding exactly what you need to say to help the user, picking
 a suitable wording, and providing the information needed to format it correctly.
+The good news is that the call site that issues a diagnostic should be
+completely independent of how the diagnostic is formatted and in what language
+it is rendered.
 </p>
 
 <!-- ============================================================= -->
@@ -356,17 +362,27 @@ code, the source ranges, and the caret.  However, this behavior isn't required.
 
 <p>Another implementation of the DiagnosticClient interface is the
 'TextDiagnosticBuffer' class, which is used when clang is in -verify mode.
-Instead of formatting and printing out the diagnostics, this implementation
+Instead of formatting and printing out the diagnostics, this implementation just
+captures and remembers the diagnostics as they fly by.  Then -verify compares
+the list of produced diagnostics to the list of expected ones.  If they diagree,
+it prints out its own output.
 </p>
 
-<p>Clang command line, buffering, HTMLizing, etc.</p>
+<p>There are many other possible implementations of this interface, and this is
+why we prefer diagnostics to pass down rich structured information in arguments.
+For example, an HTML output might want declaration names be linkified to where
+they come from in the source.  Another example is that a GUI might let you click
+on typedefs to expand them.  This application would want to pass significantly
+more information about types through to the GUI than a simple flat string.  The
+interface allows this to happen.</p>
 
 <!-- ====================================================== -->
 <h4><a name="translation">Adding Translations to Clang</a></h4>
 <!-- ====================================================== -->
 
 <p>Not possible yet!  Diagnostic strings should be written in UTF-8, the client
-can translate to the relevant code page if needed.</p>
+can translate to the relevant code page if needed.  Each translation completely
+replaces the format string for the diagnostic.</p>
 
 
 <!-- ======================================================================= -->
