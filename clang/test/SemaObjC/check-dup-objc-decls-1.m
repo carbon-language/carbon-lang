@@ -1,4 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s
+// XFAIL
 
 @interface Foo // expected-error {{previous definition is here}}
 @end

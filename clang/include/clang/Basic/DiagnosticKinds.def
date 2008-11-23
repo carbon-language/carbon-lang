@@ -125,9 +125,9 @@ DIAG(ext_pp_comma_expr, EXTENSION,
 DIAG(ext_pp_bad_vaargs_use, EXTENSION,
      "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro")
 DIAG(ext_pp_macro_redef, EXTENSION,
-     "'%0' macro redefined")
-DIAG(ext_pp_macro_redef2, EXTENSION,
-     "this is previous definition")
+     "%0 macro redefined")
+DIAG(note_previous_definition, NOTE,
+     "previous definition is here")
 DIAG(ext_variadic_macro, EXTENSION,
      "variadic macros were introduced in C99")
 DIAG(ext_named_variadic_macro, EXTENSION,
@@ -171,7 +171,7 @@ DIAG(err_pp_expected_ident_in_arg_list, ERROR,
 DIAG(err_pp_expected_comma_in_arg_list, ERROR,
      "expected comma in macro parameter list")
 DIAG(err_pp_duplicate_name_in_arg_list, ERROR,
-     "duplicate macro parameter name '%0'")
+     "duplicate macro parameter name %0")
 DIAG(err_pp_stringize_not_parameter, ERROR,
      "'#' is not followed by a macro parameter")
 DIAG(err_pp_malformed_ident, ERROR,
@@ -197,7 +197,7 @@ DIAG(err_pp_expected_rparen, ERROR,
 DIAG(err_pp_expected_eol, ERROR,
      "expected end of line in preprocessor expression")
 DIAG(warn_pp_undef_identifier, WARNING,
-     "'%0' is not defined, evaluates to 0")
+     "%0 is not defined, evaluates to 0")
 DIAG(err_pp_defined_requires_identifier, ERROR,
      "operator 'defined' requires an identifier")
 DIAG(err_pp_missing_rparen, ERROR,
@@ -361,6 +361,8 @@ DIAG(err_expected_statement, ERROR,
      "expected statement")
 DIAG(err_expected_lparen_after, ERROR,
      "expected '(' after '%0'")
+DIAG(err_expected_lparen_after_id, ERROR,
+     "expected '(' after %0")
 DIAG(err_expected_less_after, ERROR,
      "expected '<' after '%0'")
 DIAG(err_expected_comma, ERROR,
@@ -423,7 +425,7 @@ DIAG(err_objc_expected_equal, ERROR,
 DIAG(err_objc_property_requires_field_name, ERROR,
      "property requires fields to be named")
 DIAG(err_objc_expected_property_attr, ERROR,
-     "unknown property attribute '%0'")
+     "unknown property attribute %0")
 DIAG(err_objc_propertoes_require_objc2, ERROR,
      "properties are an Objective-C 2 feature")
 DIAG(err_objc_unexpected_attr, ERROR,
@@ -443,31 +445,31 @@ DIAG(err_missing_catch_finally, ERROR,
 DIAG(err_objc_concat_string, ERROR,
      "unexpected token after Objective-C string")
 DIAG(err_undef_superclass, ERROR,
-     "cannot find interface declaration for '%0', superclass of '%1'")
+     "cannot find interface declaration for %0, superclass of %1")
 DIAG(err_duplicate_class_def, ERROR,
      "duplicate interface declaration for class '%0'")
 DIAG(warn_undef_protocolref, WARNING,
-     "cannot find protocol definition for '%0'")
+     "cannot find protocol definition for %0")
 DIAG(err_duplicate_protocol_def, ERROR,
-     "duplicate protocol declaration of '%0'")
+     "duplicate protocol declaration of %0")
 DIAG(err_undef_interface, ERROR,
-     "cannot find interface declaration for '%0'")
+     "cannot find interface declaration for %0")
 DIAG(warn_dup_category_def, WARNING,
-     "duplicate interface declaration for category '%0(%1)'")
+     "duplicate interface declaration for category %0 (%1)")
 DIAG(warn_undef_interface, WARNING,
-     "cannot find interface declaration for '%0'")
+     "cannot find interface declaration for %0")
 DIAG(err_dup_implementation_class, ERROR,
-     "reimplementation of class '%0'")
+     "reimplementation of class %0")
 DIAG(err_conflicting_super_class, ERROR,
-     "conflicting super class name '%0'")
+     "conflicting super class name %0")
 DIAG(err_conflicting_ivar_name, ERROR,
-     "conflicting instance variable name '%0'")
+     "conflicting instance variable names: %0 vs %1")
 DIAG(err_inconsistant_ivar_count, ERROR,
      "inconsistent number of instance variables specified")
 DIAG(err_conflicting_ivar_type, ERROR,
-     "conflicting instance variable type")
+     "instance variable %0 has conflicting type: %1 vs %2")
 DIAG(warn_undef_method_impl, WARNING,
-     "method definition for '%0' not found")
+     "method definition for %0 not found")
 DIAG(warn_incomplete_impl, WARNING,
      "incomplete implementation")
 DIAG(warn_multiple_method_decl, WARNING,
@@ -483,7 +485,7 @@ DIAG(err_previous_declaration, ERROR,
 DIAG(err_previous_implicit_declaration, ERROR,
      "previous implicit declaration is here")
 DIAG(err_undeclared_protocol, ERROR,
-     "cannot find protocol declaration for '%0'")
+     "cannot find protocol declaration for %0")
 DIAG(err_missing_sel_definition, ERROR,
      "cannot find definition of 'SEL'")
 DIAG(err_missing_id_definition, ERROR,
@@ -497,9 +499,9 @@ DIAG(warn_previous_alias_decl, WARNING,
 DIAG(warn_previous_declaration, WARNING,
      "previous declaration is here")
 DIAG(err_conflicting_aliasing_type, ERROR,
-     "conflicting types for alias '%0'")
+     "conflicting types for alias %0")
 DIAG(err_statically_allocated_object, ERROR,
-     "statically allocated Objective-C object '%0'")
+     "statically allocated Objective-C object %0")
 DIAG(warn_method_not_found, WARNING,
      "method '%0%1' not found (return type defaults to 'id')")
 DIAG(warn_method_not_found_in_protocol, WARNING,
@@ -535,7 +537,7 @@ DIAG(error_dynamic_property_ivar_decl, ERROR,
 DIAG(error_missing_property_interface, ERROR,
      "property implementation in a category with no category declaration")
 DIAG(error_missing_property_ivar_decl, ERROR,
-     "synthesized property '%0' must either be named the same as a compatible"
+     "synthesized property %0 must either be named the same as a compatible"
      " ivar or must explicitly name an ivar")
 DIAG(error_synthesize_category_decl, ERROR,
      "@synthesize not allowed in a category's implementation")
@@ -584,7 +586,7 @@ DIAG(warn_pragma_pack_invalid_action, WARNING,
 DIAG(warn_pragma_pack_invalid_constant, WARNING,
      "invalid constant for '#pragma pack', expected %0 - ignored")
 DIAG(warn_pragma_pack_malformed, WARNING,
-     "malformed '#pragma pack', expected '#pragma pack(%0 [, id] [, n])' - ignored")
+     "expected integer or identifier in '#pragma pack' - ignored")
 // Follow the MSVC implementation.
 DIAG(warn_pragma_pack_show, WARNING,
      "value of #pragma pack(show) == %0")
@@ -592,7 +594,7 @@ DIAG(warn_pragma_pack_show, WARNING,
 DIAG(warn_pragma_pack_invalid_alignment, WARNING,
      "expected #pragma pack parameter to be '1', '2', '4', '8', or '16'")
 DIAG(warn_pragma_pack_pop_identifer_and_alignment, WARNING,
-     "specifying both a name and alignment to pragma pack(pop, ...) is undefined")
+     "specifying both a name and alignment to 'pop' is undefined")
 DIAG(warn_pragma_pack_pop_failed, WARNING,
      "#pragma pack(pop, ...) failed: %0")
 
@@ -794,19 +796,21 @@ DIAG(err_as_qualified_auto_decl, ERROR,
 DIAG(err_attribute_annotate_no_string, ERROR,
      "argument to annotate attribute was not a string literal")
 DIAG(warn_attribute_ignored, WARNING,
-  "'%0' attribute ignored")
+     "%0 attribute ignored")
 DIAG(warn_attribute_weak_on_field, WARNING,
      "__weak attribute cannot be specified on a field declaration")
 DIAG(warn_attribute_wrong_decl_type, WARNING,
-  "'%0' attribute only applies to %1 types")
+     "'%0' attribute only applies to %1 types")
 DIAG(warn_attribute_ignored_for_field_of_type, WARNING,
-  "'%0' attribute ignored for field of type '%1'")
+     "%0 attribute ignored for field of type %1")
 DIAG(warn_attribute_type_not_supported, WARNING,
-  "'%0' attribute argument not supported: '%1'")
+     "'%0' attribute argument not supported: %1")
+DIAG(warn_attribute_unknown_visibility, WARNING,
+     "unknown visibility '%1'")
 DIAG(err_unknown_machine_mode, ERROR,
-     "unknown machine mode '%0'")
+     "unknown machine mode %0")
 DIAG(err_unsupported_machine_mode, ERROR,
-     "unsupported machine mode '%0'")
+     "unsupported machine mode %0")
 DIAG(err_mode_not_primitive, ERROR,
      "mode attribute only supported for integer and floating-point types")
 DIAG(err_mode_wrong_type, ERROR,
@@ -814,16 +818,16 @@ DIAG(err_mode_wrong_type, ERROR,
 DIAG(err_attr_wrong_decl, ERROR,
      "'%0' attribute invalid on this declaration, requires typedef or value")
 DIAG(warn_attribute_nonnull_no_pointers, WARNING,
-  "'nonnull' attribute applied to function with no pointer arguments")
+     "'nonnull' attribute applied to function with no pointer arguments")
 DIAG(warn_transparent_union_nonpointer, WARNING,
-  "'transparent_union' attribute support incomplete; only supported for"
-  "pointer unions")
+     "'transparent_union' attribute support incomplete; only supported for"
+     "pointer unions")
 DIAG(warn_attribute_sentinel_not_variadic, WARNING,
-  "'sentinel' attribute only supported for variadic functions")
+     "'sentinel' attribute only supported for variadic functions")
 DIAG(err_attribute_sentinel_less_than_zero, ERROR,
-  "'sentinel' parameter 1 less than zero")
+     "'sentinel' parameter 1 less than zero")
 DIAG(err_attribute_sentinel_not_zero_or_one, ERROR,
-  "'sentinel' parameter 2 not 0 or 1")
+     "'sentinel' parameter 2 not 0 or 1")
   
 // Clang-Specific Attributes
 DIAG(err_attribute_iboutlet_non_ivar, ERROR,
@@ -839,15 +843,15 @@ DIAG(err_void_only_param, ERROR,
 DIAG(err_void_param_qualified, ERROR,
      "'void' as parameter must not have type qualifiers")
 DIAG(err_param_redefinition, ERROR,
-     "redefinition of parameter '%0'")
+     "redefinition of parameter %0")
 DIAG(err_ident_list_in_fn_declaration, ERROR,
      "a parameter list without types is only allowed in a function definition")
 DIAG(err_declaration_does_not_declare_param, ERROR,
      "declaration does not declare a parameter")
 DIAG(err_no_matching_param, ERROR,
-     "parameter named '%0' is missing")
+     "parameter named %0 is missing")
 DIAG(ext_param_not_declared, EXTENSION,
-     "parameter '%0' was not declared, defaulting to type 'int'")
+     "parameter %0 was not declared, defaulting to type 'int'")
 DIAG(ext_param_typedef_of_void, EXTENSION,
      "empty parameter list defined with a typedef of 'void' not allowed in C++")
 DIAG(err_param_default_argument, ERROR,
@@ -857,11 +861,11 @@ DIAG(err_param_default_argument_redefinition, ERROR,
 DIAG(err_param_default_argument_missing, ERROR,
      "missing default argument on parameter")
 DIAG(err_param_default_argument_missing_name, ERROR,
-     "missing default argument on parameter '%0'")
+     "missing default argument on parameter %0")
 DIAG(err_param_default_argument_references_param, ERROR,
-     "default argument references parameter '%0'")
+     "default argument references parameter %0")
 DIAG(err_param_default_argument_references_local, ERROR,
-     "default argument references local variable '%0' of enclosing function")
+     "default argument references local variable %0 of enclosing function")
 DIAG(err_param_default_argument_references_this, ERROR,
      "default argument references 'this'")
 DIAG(err_param_default_argument_nonfunc, ERROR,
@@ -911,21 +915,21 @@ DIAG(err_unexpected_typedef, ERROR,
 DIAG(err_unexpected_namespace, ERROR,
      "unexpected namespace name '%0': expected expression")
 DIAG(err_unexpected_typedef_ident, ERROR,
-     "unexpected type name '%0': expected identifier")
+     "unexpected type name %0: expected identifier")
 DIAG(err_undeclared_var_use, ERROR,
-     "use of undeclared identifier '%0'")
+     "use of undeclared identifier %0")
 DIAG(err_undeclared_use, ERROR,
      "use of undeclared '%0'")
 DIAG(warn_deprecated, WARNING,
      "'%0' is deprecated")
 DIAG(err_redefinition, ERROR,
-     "redefinition of '%0'")
+     "redefinition of %0")
 DIAG(err_static_non_static, ERROR,
      "static declaration of '%0' follows non-static declaration")
 DIAG(err_non_static_static, ERROR,
      "non-static declaration of '%0' follows static declaration")
 DIAG(err_redefinition_different_kind, ERROR,
-     "redefinition of '%0' as different kind of symbol")
+     "redefinition of %0 as different kind of symbol")
 DIAG(err_redefinition_different_typedef, ERROR,
      "typedef redefinition with different types ('%0' vs '%1')")
 DIAG(err_conflicting_types, ERROR,
@@ -933,15 +937,15 @@ DIAG(err_conflicting_types, ERROR,
 DIAG(err_nested_redefinition, ERROR,
      "nested redefinition of '%0'")
 DIAG(err_use_with_wrong_tag, ERROR,
-     "use of '%0' with tag type that does not match previous declaration")
+     "use of %0 with tag type that does not match previous declaration")
 DIAG(ext_forward_ref_enum, EXTENSION,
      "ISO C forbids forward references to 'enum' types")
 DIAG(err_redefinition_of_enumerator, ERROR,
-     "redefinition of enumerator '%0'")
+     "redefinition of enumerator %0")
 DIAG(err_duplicate_member, ERROR,
-     "duplicate member '%0'")
+     "duplicate member %0")
 DIAG(err_enum_value_not_integer_constant_expr, ERROR,
-     "enumerator value for '%0' is not an integer constant")
+     "enumerator value for %0 is not an integer constant")
 DIAG(ext_enum_value_not_int, EXTENSION,
      "ISO C restricts enumerator values to range of 'int' (%0 is too large)")
 DIAG(warn_enum_too_large, WARNING,
@@ -1003,9 +1007,9 @@ DIAG(err_undeclared_label_use, ERROR,
      "use of undeclared label '%0'")
 
 DIAG(warn_implicit_function_decl, WARNING,
-     "implicit declaration of function '%0'")
+     "implicit declaration of function %0")
 DIAG(ext_implicit_function_decl, EXTENSION,
-     "implicit declaration of function '%0' is invalid in C99")
+     "implicit declaration of function %0 is invalid in C99")
 
 DIAG(err_func_returning_array_function, ERROR,
      "function cannot return array or function type '%0'")
@@ -1030,7 +1034,7 @@ DIAG(err_illegal_decl_array_of_references, ERROR,
 DIAG(err_illegal_decl_pointer_to_reference, ERROR,
      "'%0' declared as a pointer to a reference")
 DIAG(err_illegal_decl_reference_to_reference, ERROR,
-     "'%0' declared as a reference to a reference")
+     "%0 declared as a reference to a reference")
 DIAG(err_invalid_reference_qualifier_application, ERROR,
      "'%0' qualifier may not be applied to a reference")
 DIAG(err_reference_to_void, ERROR,
@@ -1097,13 +1101,13 @@ DIAG(err_typecheck_subscript_not_object, ERROR,
 DIAG(err_typecheck_member_reference_struct_union, ERROR,
      "member reference base type ('%0') is not a structure or union")
 DIAG(err_typecheck_member_reference_ivar, ERROR,
-     "'%0' does not have a member named '%1'")
+     "%0 does not have a member named %1")
 DIAG(err_typecheck_member_reference_arrow, ERROR,
      "member reference type '%0' is not a pointer")
 DIAG(err_typecheck_incomplete_tag, ERROR,
      "incomplete definition of type '%0'")
 DIAG(err_typecheck_no_member, ERROR,
-     "no member named '%0'")
+     "no member named %0")
 DIAG(err_typecheck_illegal_increment_decrement, ERROR,
      "cannot modify value of type '%0'")
 DIAG(err_typecheck_arithmetic_incomplete_type, ERROR,
@@ -1222,7 +1226,7 @@ DIAG(err_invalid_declarator_scope, ERROR,
 DIAG(err_invalid_declarator_in_function, ERROR,
      "definition or redeclaration of %0 not allowed inside a function")
 DIAG(err_not_tag_in_scope, ERROR,
-     "'%0' does not name a tag member in the specified scope")
+     "%0 does not name a tag member in the specified scope")
 
 
 // assignment related diagnostics (also for argument passing, returning, etc).
@@ -1332,12 +1336,12 @@ DIAG(err_anon_type_definition, ERROR,
 
 // C++ member initializers.
 DIAG(err_mem_init_not_member_or_class, ERROR,
-     "member initializer '%0' does not name a non-static data member or base "
+     "member initializer %0 does not name a non-static data member or base "
      "class")
 DIAG(err_base_init_does_not_name_class, ERROR,
-     "constructor initializer '%0' does not name a class")
+     "constructor initializer %0 does not name a class")
 DIAG(err_base_init_direct_and_virtual, ERROR,
-     "base class initializer '%0' names both a direct base class and an"
+     "base class initializer %0 names both a direct base class and an"
      " inherited virtual base class")
 
 // Derived classes.
@@ -1433,9 +1437,9 @@ DIAG(warn_printf_asterisk_precision_wrong_type, WARNING,
 
 // CHECK: returning address/reference of stack memory
 DIAG(warn_ret_stack_addr, WARNING,
-  "address of stack memory associated with local variable '%0' returned")
+  "address of stack memory associated with local variable %0 returned")
 DIAG(warn_ret_stack_ref, WARNING,
-  "reference to stack memory associated with local variable '%0' returned")
+  "reference to stack memory associated with local variable %0 returned")
 
 // CHECK: floating point values should not use "==" or "!="
 DIAG(warn_floatingpoint_eq, WARNING,
@@ -1501,11 +1505,11 @@ DIAG(err_first_argument_to_va_arg_not_of_type_va_list, ERROR,
     "first argument to 'va_arg' is of type '%0' and not 'va_list'")
   
 DIAG(warn_return_missing_expr, WARNING,
-     "non-void function '%0' should return a value")
+     "non-void %select{function|method}1 %0 should return a value")
 DIAG(ext_return_missing_expr, EXTENSION,
-     "non-void function '%0' should return a value")
+     "non-void %select{function|method}1 %0 should return a value")
 DIAG(ext_return_has_expr, EXTENSION,
-     "void function '%0' should not return a value")
+     "void %select{function|method}1 %0 should not return a value")
 
 DIAG(err_shufflevector_non_vector, ERROR,
      "first two arguments to __builtin_shufflevector must be vectors")

@@ -1945,7 +1945,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
 
   if (Tok.isNot(tok::l_paren)) {
     if (!getLang().CPlusPlus) {
-      Diag(Tok, diag::err_expected_lparen_after) << BuiltinII;
+      Diag(Tok, diag::err_expected_lparen_after_id) << BuiltinII;
       return;
     }
 

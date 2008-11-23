@@ -719,7 +719,7 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
   if (lhsType->isPointerType() || lhsType->isBlockPointerType()) {
     if (DeclRefExpr *DR = EvalAddr(RetValExp))
       Diag(DR->getLocStart(), diag::warn_ret_stack_addr)
-       << DR->getDecl()->getIdentifier() << RetValExp->getSourceRange();
+       << DR->getDecl()->getDeclName() << RetValExp->getSourceRange();
     
     // Skip over implicit cast expressions when checking for block expressions.
     if (ImplicitCastExpr *IcExpr = 
@@ -735,8 +735,7 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
     // Check for a reference to the stack
     if (DeclRefExpr *DR = EvalVal(RetValExp))
       Diag(DR->getLocStart(), diag::warn_ret_stack_ref)
-        << DR->getDecl()->getIdentifier()
-        << RetValExp->getSourceRange();
+        << DR->getDecl()->getDeclName() << RetValExp->getSourceRange();
   }
 }
 

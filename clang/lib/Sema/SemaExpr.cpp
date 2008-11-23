@@ -417,12 +417,12 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       // diagnose the problem.
       if (SS && !SS->isEmpty())
         return Diag(Loc, diag::err_typecheck_no_member)
-          << Name.getAsString() << SS->getRange();
+          << Name << SS->getRange();
       else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
                Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
         return Diag(Loc, diag::err_undeclared_use) << Name.getAsString();
       else
-        return Diag(Loc, diag::err_undeclared_var_use) << Name.getAsString();
+        return Diag(Loc, diag::err_undeclared_var_use) << Name;
     }
   }
   

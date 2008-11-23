@@ -11,7 +11,7 @@
 {
 @private
 
-        int XIVAR; // expected-error {{conflicting instance variable name 'XIVAR'}}
+        int XIVAR; // expected-error {{conflicting instance variable names: 'XIVAR' vs 'IVAR'}}
 }
 @end
 
@@ -62,7 +62,7 @@
 {
 @private
 
-        short IVAR; // expected-error {{conflicting instance variable type}}
+        short IVAR; // expected-error {{instance variable 'IVAR' has conflicting type: 'short' vs 'int'}}
 }
 @end
 

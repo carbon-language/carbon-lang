@@ -482,6 +482,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     unsigned ArgNo = *DiagStr++ - '0';
 
     switch (getArgKind(ArgNo)) {
+    // ---- STRINGS ----
     case Diagnostic::ak_std_string: {
       const std::string &S = getArgStdStr(ArgNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
@@ -494,12 +495,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       OutStr.append(S, S + strlen(S));
       break;
     }
-    case Diagnostic::ak_identifierinfo: {
-      const IdentifierInfo *II = getArgIdentifier(ArgNo);
-      assert(ModifierLen == 0 && "No modifiers for strings yet");
-      OutStr.append(II->getName(), II->getName() + II->getLength());
-      break;
-    }
+    // ---- INTEGERS ----
     case Diagnostic::ak_sint: {
       int Val = getArgSInt(ArgNo);
       
@@ -533,6 +529,15 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         std::string S = llvm::utostr_32(Val);
         OutStr.append(S.begin(), S.end());
       }
+      break;
+    }
+    // ---- NAMES and TYPES ----
+    case Diagnostic::ak_identifierinfo: {
+      OutStr.push_back('\'');
+      const IdentifierInfo *II = getArgIdentifier(ArgNo);
+      assert(ModifierLen == 0 && "No modifiers for strings yet");
+      OutStr.append(II->getName(), II->getName() + II->getLength());
+      OutStr.push_back('\'');
       break;
     }
     case Diagnostic::ak_qualtype:

@@ -45,13 +45,13 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
     PP.Lex(Tok);
   } else if (Tok.is(tok::identifier)) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
-    if (II == &PP.getIdentifierTable().get("show")) {
+    if (II->isStr("show")) {
       Kind = Action::PPK_Show;
       PP.Lex(Tok);
     } else {
-      if (II == &PP.getIdentifierTable().get("push")) {
+      if (II->isStr("push")) {
         Kind = Action::PPK_Push;
-      } else if (II == &PP.getIdentifierTable().get("pop")) {
+      } else if (II->isStr("pop")) {
         Kind = Action::PPK_Pop;
       } else {
         PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_invalid_action);
@@ -76,7 +76,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
             PP.Lex(Tok);
             
             if (Tok.isNot(tok::numeric_constant)) {
-              PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_malformed)<<II;
+              PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_malformed);
               return;
             }
             
@@ -87,7 +87,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
             PP.Lex(Tok);
           }
         } else {
-          PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_malformed) << II;
+          PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_malformed);
           return;
         }
       }

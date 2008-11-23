@@ -80,7 +80,7 @@ void test7(C& c) {
 void test8(int& const,// expected-error{{'const' qualifier may not be applied to a reference}}
            
            void&,     // expected-error{{cannot form a reference to 'void'}}
-           int& &)    // expected-error{{'type name' declared as a reference to a reference}}
+           int& &)    // expected-error{{type name declared as a reference to a reference}}
 {
   typedef int& intref;
   typedef intref& intrefref; // C++ DR 106: reference collapsing

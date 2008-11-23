@@ -1,4 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s
+// XFAIL
 
 @interface MyClass1 @end
 

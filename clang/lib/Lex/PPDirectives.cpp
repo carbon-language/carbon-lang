@@ -977,7 +977,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     if (!MI->isIdenticalTo(*OtherMI, *this)) {
       Diag(MI->getDefinitionLoc(), diag::ext_pp_macro_redef)
         << MacroNameTok.getIdentifierInfo();
-      Diag(OtherMI->getDefinitionLoc(), diag::ext_pp_macro_redef2);
+      Diag(OtherMI->getDefinitionLoc(), diag::note_previous_definition);
     }
     delete OtherMI;
   }

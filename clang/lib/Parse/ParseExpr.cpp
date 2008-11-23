@@ -829,7 +829,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
 
   // All of these start with an open paren.
   if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after) << BuiltinII;
+    Diag(Tok, diag::err_expected_lparen_after_id) << BuiltinII;
     return ExprResult(true);
   }
   

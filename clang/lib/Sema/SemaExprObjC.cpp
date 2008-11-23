@@ -214,8 +214,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
         return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
                                     Args, NumArgs);
       }
-      return Diag(receiverLoc, diag::err_undeclared_var_use)
-        << receiverName->getName();
+      return Diag(receiverLoc, diag::err_undeclared_var_use) << receiverName;
     }      
   } else
     ClassDecl = getObjCInterfaceDecl(receiverName);

@@ -274,7 +274,7 @@ static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     if (!FD->getType()->isIncompleteType() &&
         S.Context.getTypeAlign(FD->getType()) <= 8)
       S.Diag(Attr.getLoc(), diag::warn_attribute_ignored_for_field_of_type)
-        << Attr.getName() << FD->getType().getAsString();
+        << Attr.getName() << FD->getType();
     else
       FD->addAttr(new PackedAttr(1));
   } else
@@ -533,8 +533,7 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   else if (TypeLen == 9 && !memcmp(TypeStr, "protected", 9))
     type = VisibilityAttr::ProtectedVisibility;
   else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
-      << "visibility" << TypeStr;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_unknown_visibility) << TypeStr;
     return;
   }
   
@@ -1142,8 +1141,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   default:
 #if 0
     // TODO: when we have the full set of attributes, warn about unknown ones.
-    S.Diag(Attr->getLoc(), diag::warn_attribute_ignored)
-        <<  Attr->getName()->getName();
+    S.Diag(Attr->getLoc(), diag::warn_attribute_ignored) << Attr->getName();
 #endif
     break;
   }

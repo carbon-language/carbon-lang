@@ -325,7 +325,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   TypedefDecl *Old = dyn_cast<TypedefDecl>(OldD);
   if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
-      << New->getName();
+      << New->getDeclName();
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
@@ -364,7 +364,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
       return New;
   }
 
-  Diag(New->getLocation(), diag::err_redefinition) << New->getName();
+  Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
   Diag(Old->getLocation(), diag::err_previous_definition);
   return New;
 }
@@ -418,7 +418,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   FunctionDecl *Old = dyn_cast<FunctionDecl>(OldD);
   if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
-      << New->getName();
+      << New->getDeclName();
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
@@ -537,7 +537,7 @@ void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
           OldDecl->getStorageClass() != VarDecl::PrivateExtern &&
           VD->getStorageClass() != VarDecl::Extern &&
           VD->getStorageClass() != VarDecl::PrivateExtern) {
-        Diag(VD->getLocation(), diag::err_redefinition) << VD->getName();
+        Diag(VD->getLocation(), diag::err_redefinition) << VD->getDeclName();
         Diag(OldDecl->getLocation(), diag::err_previous_definition);
       }
     }
@@ -557,7 +557,7 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   VarDecl *Old = dyn_cast<VarDecl>(OldD);
   if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
-      << New->getName();
+      << New->getDeclName();
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
@@ -568,7 +568,7 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   QualType OldCType = Context.getCanonicalType(Old->getType());
   QualType NewCType = Context.getCanonicalType(New->getType());
   if (OldCType != NewCType && !Context.typesAreCompatible(OldCType, NewCType)) {
-    Diag(New->getLocation(), diag::err_redefinition) << New->getName();
+    Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;
   }
@@ -589,7 +589,7 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   }
   // Variables with external linkage are analyzed in FinalizeDeclaratorGroup.
   if (New->getStorageClass() != VarDecl::Extern && !New->isFileVarDecl()) {
-    Diag(New->getLocation(), diag::err_redefinition) << New->getName();
+    Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
     Diag(Old->getLocation(), diag::err_previous_definition);
   }
   return New;
@@ -849,7 +849,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     if (PrevDecl == 0) {
       // No previous declaration in the qualifying scope.
       Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
-        << Name.getAsString() << D.getCXXScopeSpec().getRange();
+        << Name << D.getCXXScopeSpec().getRange();
     } else if (!CurContext->Encloses(DC)) {
       // The qualifying scope doesn't enclose the original declaration.
       // Emit diagnostic based on current scope.
@@ -1987,8 +1987,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   IdentifierInfo *II = D.getIdentifier();
   if (Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S)) {
     if (S->isDeclScope(PrevDecl)) {
-      Diag(D.getIdentifierLoc(), diag::err_param_redefinition)
-        << cast<NamedDecl>(PrevDecl)->getName();
+      Diag(D.getIdentifierLoc(), diag::err_param_redefinition) << II;
 
       // Recover by removing the name
       II = 0;
@@ -2076,7 +2075,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   // See if this is a redefinition.
   const FunctionDecl *Definition;
   if (FD->getBody(Definition)) {
-    Diag(FD->getLocation(), diag::err_redefinition) << FD->getName();
+    Diag(FD->getLocation(), diag::err_redefinition) << FD->getDeclName();
     Diag(Definition->getLocation(), diag::err_previous_definition);
   }
 
@@ -2804,7 +2803,7 @@ void Sema::ActOnFields(Scope* S,
     /// A field cannot be an Objective-c object
     if (FDTy->isObjCInterfaceType()) {
       Diag(FD->getLocation(), diag::err_statically_allocated_object)
-        << FD->getName();
+        << FD->getDeclName();
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
       continue;

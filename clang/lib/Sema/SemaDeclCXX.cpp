@@ -75,7 +75,7 @@ namespace {
       //   class member names.
       return S->Diag(DRE->getSourceRange().getBegin(), 
                      diag::err_param_default_argument_references_param)
-         << Param->getName() << DefaultArg->getSourceRange();
+         << Param->getDeclName() << DefaultArg->getSourceRange();
     } else if (VarDecl *VDecl = dyn_cast<VarDecl>(Decl)) {
       // C++ [dcl.fct.default]p7
       //   Local variables shall not be used in default argument
@@ -83,7 +83,7 @@ namespace {
       if (VDecl->isBlockVarDecl())
         return S->Diag(DRE->getSourceRange().getBegin(), 
                        diag::err_param_default_argument_references_local)
-          << VDecl->getName() << DefaultArg->getSourceRange();
+          << VDecl->getDeclName() << DefaultArg->getSourceRange();
     }
 
     return false;
@@ -650,7 +650,7 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
   QualType BaseType = Context.getTypeDeclType((TypeDecl *)BaseTy);
   if (!BaseType->isRecordType())
     return Diag(IdLoc, diag::err_base_init_does_not_name_class)
-      << BaseType.getAsString() << SourceRange(IdLoc, RParenLoc);
+      << BaseType << SourceRange(IdLoc, RParenLoc);
 
   // C++ [class.base.init]p2:
   //   [...] Unless the mem-initializer-id names a nonstatic data
@@ -1271,7 +1271,7 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       } else {
         // This is an invalid name redefinition.
         Diag(Namespc->getLocation(), diag::err_redefinition_different_kind)
-          << Namespc->getName();
+          << Namespc->getDeclName();
         Diag(PrevDecl->getLocation(), diag::err_previous_definition);
         Namespc->setInvalidDecl();
         // Continue on to push Namespc as current DeclContext and return it.

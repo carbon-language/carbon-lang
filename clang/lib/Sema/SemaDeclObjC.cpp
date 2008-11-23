@@ -111,7 +111,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
           << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
       else if (SuperClassEntry->isForwardDecl())
         Diag(SuperLoc, diag::err_undef_superclass)
-          << SuperClassEntry->getName() << ClassName
+          << SuperClassEntry->getDeclName() << ClassName
           << SourceRange(AtInterfaceLoc, ClassLoc);
     }
     IDecl->setSuperClass(SuperClassEntry);
@@ -481,7 +481,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
         // This implementation and its interface do not have the same
         // super class.
         Diag(SuperClassLoc, diag::err_conflicting_super_class)
-          << SDecl->getName();
+          << SDecl->getDeclName();
         Diag(SDecl->getLocation(), diag::err_previous_definition);
       }
     }
@@ -553,17 +553,16 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     if (Context.getCanonicalType(ImplIvar->getType()) !=
         Context.getCanonicalType(ClsIvar->getType())) {
       Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_type)
-        << ImplIvar->getIdentifier();
-      Diag(ClsIvar->getLocation(), diag::err_previous_definition)
-        << ClsIvar->getIdentifier();
+        << ImplIvar->getIdentifier()
+        << ImplIvar->getType() << ClsIvar->getType();
+      Diag(ClsIvar->getLocation(), diag::err_previous_definition);
     }
     // TODO: Two mismatched (unequal width) Ivar bitfields should be diagnosed 
     // as error.
     else if (ImplIvar->getIdentifier() != ClsIvar->getIdentifier()) {
       Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_name)
-        << ImplIvar->getIdentifier();
-      Diag(ClsIvar->getLocation(), diag::err_previous_definition)
-        << ClsIvar->getIdentifier();
+        << ImplIvar->getIdentifier() << ClsIvar->getIdentifier();
+      Diag(ClsIvar->getLocation(), diag::err_previous_definition);
       return;
     }
     --numIvars;
@@ -581,7 +580,7 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
     Diag(ImpLoc, diag::warn_incomplete_impl);
     IncompleteImpl = true;
   }
-  Diag(ImpLoc, diag::warn_undef_method_impl) << method->getSelector().getName();
+  Diag(ImpLoc, diag::warn_undef_method_impl) << method->getDeclName();
 }
 
 /// FIXME: Type hierarchies in Objective-C can be deep. We could most

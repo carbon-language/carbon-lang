@@ -62,7 +62,7 @@ Sema::StmtResult Sema::ActOnDeclStmt(DeclTy *decl, SourceLocation StartLoc,
     return new DeclStmt(DG, StartLoc, EndLoc);
   }
   else {
-    DeclGroupOwningRef DG(DeclGroup::Create(Context, decls.size(), &decls[0]));                      
+    DeclGroupOwningRef DG(DeclGroup::Create(Context, decls.size(), &decls[0]));
     return new DeclStmt(DG, StartLoc, EndLoc);
   }
 }
@@ -194,7 +194,7 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
   // Otherwise, this label was either forward reference or multiply defined.  If
   // multiply defined, reject it now.
   if (LabelDecl->getSubStmt()) {
-    Diag(IdentLoc, diag::err_redefinition_of_label) << LabelDecl->getName();
+    Diag(IdentLoc, diag::err_redefinition_of_label) << LabelDecl->getID();
     Diag(LabelDecl->getIdentLoc(), diag::err_previous_definition);
     return SubStmt;
   }
@@ -773,10 +773,10 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
     if (RetValExp) {// C99 6.8.6.4p1 (ext_ since GCC warns)
       if (FunctionDecl *FD = getCurFunctionDecl())
         Diag(ReturnLoc, diag::ext_return_has_expr)
-          << FD->getIdentifier() << RetValExp->getSourceRange();
+          << FD->getIdentifier() << 0/*function*/<< RetValExp->getSourceRange();
       else 
         Diag(ReturnLoc, diag::ext_return_has_expr)
-          << getCurMethodDecl()->getSelector().getName()
+          << getCurMethodDecl()->getDeclName() << 1 /*method*/
           << RetValExp->getSourceRange();
     }
     return new ReturnStmt(ReturnLoc, RetValExp);
@@ -788,9 +788,9 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
     if (getLangOptions().C99) DiagID = diag::ext_return_missing_expr;
 
     if (FunctionDecl *FD = getCurFunctionDecl())
-      Diag(ReturnLoc, DiagID) << FD->getIdentifier();
+      Diag(ReturnLoc, DiagID) << FD->getIdentifier() << 0/*fn*/;
     else
-      Diag(ReturnLoc, DiagID) << getCurMethodDecl()->getSelector().getName();
+      Diag(ReturnLoc, DiagID) << getCurMethodDecl()->getDeclName() << 1/*meth*/;
     return new ReturnStmt(ReturnLoc, (Expr*)0);
   }
   
@@ -813,7 +813,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
 }
 
 Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
-                                    bool IsSimple,                                    
+                                    bool IsSimple,
                                     bool IsVolatile,
                                     unsigned NumOutputs,
                                     unsigned NumInputs,
