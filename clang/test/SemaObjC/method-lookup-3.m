@@ -7,21 +7,21 @@ typedef struct { int x; } Alternate;
 #define INTERFERE_TYPE Alternate*
 
 @protocol A
-@property Abstract *x; // expected-warning{{using}}
+@property Abstract *x; // expected-note {{using}}
 @end
 
 @interface B
-@property Abstract *y; // expected-warning{{using}}
+@property Abstract *y; // expected-note {{using}}
 @end
 
 @interface B (Category)
-@property Abstract *z; // expected-warning{{using}}
+@property Abstract *z; // expected-note {{using}}
 @end
 
 @interface InterferencePre
--(void) x; // expected-warning{{also found}}
--(void) y; // expected-warning{{also found}}
--(void) z; // expected-warning{{also found}}
+-(void) x; // expected-note {{also found}}
+-(void) y; // expected-note {{also found}}
+-(void) z; // expected-note {{also found}}
 -(void) setX: (INTERFERE_TYPE) arg; 
 -(void) setY: (INTERFERE_TYPE) arg;
 -(void) setZ: (INTERFERE_TYPE) arg;
