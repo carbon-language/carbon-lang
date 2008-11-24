@@ -2363,16 +2363,27 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
 
     SDValue PromoteScalar =
             DAG.getNode(SPUISD::PROMOTE_SCALAR, Op0VecVT, Op0);
-    SDValue RotQuad =
-            DAG.getNode(SPUISD::ROTQUAD_RZ_BYTES, Op0VecVT,
-                        PromoteScalar, DAG.getConstant(4, MVT::i32));
 
     if (Opc != ISD::SIGN_EXTEND) {
+      // Use a shuffle to zero extend the i32 to i64 directly:
+      SDValue shufMask =
+              DAG.getNode(ISD::BUILD_VECTOR, Op0VecVT,
+                          DAG.getConstant(0x80808080, MVT::i32),
+                          DAG.getConstant(0x00010203, MVT::i32),
+                          DAG.getConstant(0x80808080, MVT::i32),
+                          DAG.getConstant(0x08090a0b, MVT::i32));
+      SDValue zextShuffle =
+              DAG.getNode(SPUISD::SHUFB, Op0VecVT,
+                          PromoteScalar, PromoteScalar, shufMask);
+
       return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
-                         DAG.getNode(ISD::BIT_CONVERT, VecVT, RotQuad));
+                         DAG.getNode(ISD::BIT_CONVERT, VecVT, zextShuffle));
     } else {
       // SPU has no "rotate quadword and replicate bit 0" (i.e. rotate/shift
       // right and propagate the sign bit) instruction.
+      SDValue RotQuad =
+              DAG.getNode(SPUISD::ROTQUAD_RZ_BYTES, Op0VecVT,
+                          PromoteScalar, DAG.getConstant(4, MVT::i32));
       SDValue SignQuad =
               DAG.getNode(SPUISD::VEC_SRA, Op0VecVT,
                           PromoteScalar, DAG.getConstant(32, MVT::i32));
