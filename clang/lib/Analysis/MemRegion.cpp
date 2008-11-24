@@ -145,7 +145,7 @@ void AllocaRegion::print(llvm::raw_ostream& os) const {
 }
 
 void VarRegion::print(llvm::raw_ostream& os) const {
-  os << cast<VarDecl>(D)->getName();
+  os << cast<VarDecl>(D)->getNameAsString();
 }
 
 void SymbolicRegion::print(llvm::raw_ostream& os) const {
@@ -154,7 +154,7 @@ void SymbolicRegion::print(llvm::raw_ostream& os) const {
 
 void FieldRegion::print(llvm::raw_ostream& os) const {
   superRegion->print(os);
-  os << "->" << getDecl()->getName();
+  os << "->" << getDecl()->getNameAsString();
 }
 
 void ElementRegion::print(llvm::raw_ostream& os) const {

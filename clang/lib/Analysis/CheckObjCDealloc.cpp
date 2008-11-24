@@ -149,7 +149,7 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
     
     std::string buf;
     llvm::raw_string_ostream os(buf);
-    os << "Objective-C class '" << D->getName()
+    os << "Objective-C class '" << D->getNameAsString()
        << "' lacks a 'dealloc' instance method";
     
     BR.EmitBasicReport(name, os.str().c_str(), D->getLocStart());
@@ -165,7 +165,8 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
     
     std::string buf;
     llvm::raw_string_ostream os(buf);
-    os << "The 'dealloc' instance method in Objective-C class '" << D->getName()
+    os << "The 'dealloc' instance method in Objective-C class '"
+       << D->getNameAsString()
        << "' does not send a 'dealloc' message to its super class"
            " (missing [super dealloc])";
     
@@ -220,7 +221,7 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
                ? "missing ivar release (leak)"
                : "missing ivar release (Hybrid MM, non-GC)";
         
-        os << "The '" << ID->getName()
+        os << "The '" << ID->getNameAsString()
            << "' instance variable was retained by a synthesized property but "
               "wasn't released in 'dealloc'";        
       } else {
@@ -228,7 +229,7 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
                ? "extra ivar release (use-after-release)"
                : "extra ivar release (Hybrid MM, non-GC)";
         
-        os << "The '" << ID->getName()
+        os << "The '" << ID->getNameAsString()
            << "' instance variable was not retained by a synthesized property "
               "but was released in 'dealloc'";
       }

@@ -210,7 +210,7 @@ void UserDefinedConversionSequence::DebugPrint() const {
     Before.DebugPrint();
     fprintf(stderr, " -> ");
   }
-  fprintf(stderr, "'%s'", ConversionFunction->getName().c_str());
+  fprintf(stderr, "'%s'", ConversionFunction->getNameAsString().c_str());
   if (After.First || After.Second || After.Third) {
     fprintf(stderr, " -> ");
     After.DebugPrint();
@@ -1401,17 +1401,17 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
 
     return DiagnoseAssignmentResult(ConvTy, From->getLocStart(), ToType,
                                     FromType, From, Flavor);
-  } else if (ToType->isReferenceType()) {
-    return CheckReferenceInit(From, ToType);
-  } else {
-    if (PerformImplicitConversion(From, ToType))
-      return Diag(From->getSourceRange().getBegin(),
-                  diag::err_typecheck_convert_incompatible)
-        << ToType.getAsString() << From->getType().getAsString()
-        << Flavor << From->getSourceRange();
-    else
-      return false;
   }
+  
+  if (ToType->isReferenceType())
+    return CheckReferenceInit(From, ToType);
+
+  if (!PerformImplicitConversion(From, ToType))
+    return false;
+  
+  return Diag(From->getSourceRange().getBegin(),
+              diag::err_typecheck_convert_incompatible)
+    << ToType << From->getType() << Flavor << From->getSourceRange();
 }
 
 /// TryObjectArgumentInitialization - Try to initialize the object

@@ -75,7 +75,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   if (IDecl) {
     // Class already seen. Is it a forward declaration?
     if (!IDecl->isForwardDecl()) {
-      Diag(AtInterfaceLoc, diag::err_duplicate_class_def) << IDecl->getName();
+      Diag(AtInterfaceLoc, diag::err_duplicate_class_def)<<IDecl->getDeclName();
       Diag(IDecl->getLocation(), diag::note_previous_definition);
 
       // Return the previous class interface.
@@ -1264,7 +1264,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     // Look for this property declaration in the @implementation's @interface
     property = IDecl->FindPropertyDeclaration(PropertyId);
     if (!property) {
-      Diag(PropertyLoc, diag::error_bad_property_decl) << IDecl->getName();
+      Diag(PropertyLoc, diag::error_bad_property_decl) << IDecl->getDeclName();
       return 0;
     }
   }
@@ -1289,7 +1289,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     property = Category->FindPropertyDeclaration(PropertyId);
     if (!property) {
       Diag(PropertyLoc, diag::error_bad_category_property_decl)
-        << Category->getName();
+        << Category->getDeclName();
       return 0;
     }
   }
@@ -1316,7 +1316,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     if (PropType != IvarType) {
       if (CheckAssignmentConstraints(PropType, IvarType) != Compatible) {
         Diag(PropertyLoc, diag::error_property_ivar_type)
-          << property->getName() << Ivar->getName();
+          << property->getDeclName() << Ivar->getDeclName();
         return 0;
       }
     }

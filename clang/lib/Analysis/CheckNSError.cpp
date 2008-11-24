@@ -251,7 +251,7 @@ void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
     else
       os << "documented in CoreFoundation/CFError.h the parameter '";
     
-    os << Param->getName() << "' may be null.";
+    os << Param->getNameAsString() << "' may be null.";
     desc = os.str().c_str();
 
     BR.addNotableSymbol(SV->getSymbol());

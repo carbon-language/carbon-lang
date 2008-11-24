@@ -321,9 +321,7 @@ void CodeGenModule::EmitAliases() {
     llvm::GlobalValue *GA = 
       new llvm::GlobalAlias(aliasee->getType(),
                             llvm::Function::ExternalLinkage,
-                            D->getName(),
-                            aliasee,
-                            &getModule());
+                            D->getNameAsString(), aliasee, &getModule());
     
     llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
     if (Entry) {
@@ -482,7 +480,7 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
   if (!Entry)
     Entry = new llvm::GlobalVariable(Ty, false, 
                                      llvm::GlobalValue::ExternalLinkage,
-                                     0, D->getName(), &getModule(), 0,
+                                     0, D->getNameAsString(), &getModule(), 0,
                                      ASTTy.getAddressSpace());
   
   // Make sure the result is of the correct type.
@@ -518,7 +516,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (!GV) {
     GV = new llvm::GlobalVariable(InitType, false, 
                                   llvm::GlobalValue::ExternalLinkage,
-                                  0, D->getName(), &getModule(), 0,
+                                  0, D->getNameAsString(), &getModule(), 0,
                                   ASTTy.getAddressSpace());
   } else if (GV->getType() != 
              llvm::PointerType::get(InitType, ASTTy.getAddressSpace())) {
@@ -542,7 +540,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     // Make a new global with the correct type
     GV = new llvm::GlobalVariable(InitType, false, 
                                   llvm::GlobalValue::ExternalLinkage,
-                                  0, D->getName(), &getModule(), 0,
+                                  0, D->getNameAsString(), &getModule(), 0,
                                   ASTTy.getAddressSpace());
     // Steal the name of the old global
     GV->takeName(OldGV);
@@ -630,7 +628,7 @@ CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D) {
   const llvm::Type *Ty = getTypes().ConvertType(D->getType());
   llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
                                              llvm::Function::ExternalLinkage,
-                                             D->getName(), &getModule());
+                                             D->getNameAsString(),&getModule());
   SetFunctionAttributes(D, F);
   return F;
 }

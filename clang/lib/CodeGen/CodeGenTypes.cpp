@@ -291,7 +291,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     std::vector<const llvm::Type*> IvarTypes;
     CollectObjCIvarTypes(OIT.getDecl(), IvarTypes);
     llvm::Type *T = llvm::StructType::get(IvarTypes);
-    TheModule.addTypeName(std::string("struct.") + OIT.getDecl()->getName(), T);
+    TheModule.addTypeName("struct." + OIT.getDecl()->getNameAsString(), T);
     return T;
   }
       
@@ -315,9 +315,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     // Name the codegen type after the typedef name
     // if there is no tag type name available
     if (TD->getIdentifier())
-      TypeName += TD->getName();
+      TypeName += TD->getNameAsString();
     else if (const TypedefType *TdT = dyn_cast<TypedefType>(T))
-      TypeName += TdT->getDecl()->getName();
+      TypeName += TdT->getDecl()->getNameAsString();
     else
       TypeName += "anon";
     

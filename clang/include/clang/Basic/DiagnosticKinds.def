@@ -420,7 +420,7 @@ DIAG(err_unexpected_at, ERROR,
 
 /// Objective-C parser diagnostics
 DIAG(err_unexpected_interface, ERROR,
-     "unexpected interface name '%0': expected expression")
+     "unexpected interface name %0: expected expression")
 DIAG(err_objc_no_attributes_on_category, ERROR,
      "attributes may not be specified on a category")
 DIAG(err_objc_missing_end, ERROR,
@@ -463,7 +463,7 @@ DIAG(err_objc_concat_string, ERROR,
 DIAG(err_undef_superclass, ERROR,
      "cannot find interface declaration for %0, superclass of %1")
 DIAG(err_duplicate_class_def, ERROR,
-     "duplicate interface definition for class '%0'")
+     "duplicate interface definition for class %0")
 DIAG(warn_undef_protocolref, WARNING,
      "cannot find protocol definition for %0")
 DIAG(err_duplicate_protocol_def, ERROR,
@@ -529,15 +529,15 @@ DIAG(error_missing_method_context, ERROR,
 DIAG(error_bad_receiver_type, ERROR,
      "bad receiver type '%0'")
 DIAG(error_no_super_class, ERROR,
-     "no super class declared in @interface for '%0'")
+     "no super class declared in @interface for %0")
 DIAG(error_missing_property_context, ERROR,
      "missing context for property implementation declaration")
 DIAG(error_bad_property_context, ERROR,
      "property implementation must be in a class or category implementation")
 DIAG(error_bad_property_decl, ERROR,
-     "property implementation must have its declaration in interface '%0'")
+     "property implementation must have its declaration in interface %0")
 DIAG(error_bad_category_property_decl, ERROR,
-     "property implementation must have its declaration in the category '%0'")
+     "property implementation must have its declaration in the category %0")
 DIAG(error_property_ivar_decl, ERROR,
      "property synthesize requires specification of an ivar")
 DIAG(error_dynamic_property_ivar_decl, ERROR,
@@ -550,7 +550,7 @@ DIAG(error_missing_property_ivar_decl, ERROR,
 DIAG(error_synthesize_category_decl, ERROR,
      "@synthesize not allowed in a category's implementation")
 DIAG(error_property_ivar_type, ERROR,
-     "type of property '%0'  does not match type of ivar '%1'") 
+     "type of property %0 does not match type of ivar %1") 
 DIAG(error_readonly_property_assignment, ERROR,
      "assigning to property with 'readonly' attribute not allowed")
 DIAG(error_nosetter_property_assignment, ERROR,
@@ -736,7 +736,7 @@ DIAG(err_destructor_with_params, ERROR,
 DIAG(err_destructor_variadic, ERROR,
      "destructor cannot be variadic")
 DIAG(err_destructor_typedef_name, ERROR,
-     "destructor cannot be declared using a typedef '%0' of the class name")
+     "destructor cannot be declared using a typedef %0 of the class name")
 
 // C++ initialization
 DIAG(err_not_reference_to_const_init, ERROR,
@@ -744,7 +744,7 @@ DIAG(err_not_reference_to_const_init, ERROR,
 DIAG(err_reference_init_drops_quals, ERROR,
      "initialization of reference to type '%0' with a %1 of type '%2' drops qualifiers")
 DIAG(err_reference_var_requires_init, ERROR,
-     "declaration of reference variable '%0' requires an initializer")
+     "declaration of reference variable %0 requires an initializer")
 DIAG(err_const_var_requires_init, ERROR,
      "declaration of const variable '%0' requires an initializer")
 DIAG(err_init_non_aggr_init_list, ERROR,
@@ -887,35 +887,35 @@ DIAG(err_ovl_static_nonstatic_member, ERROR,
      "static and non-static member functions with the same parameter types "
      "cannot be overloaded")
 DIAG(err_ovl_no_viable_function_in_call, ERROR,
-     "no matching function for call to '%0'"
-     "%plural{0:.|1:; candidate is|:; candidates are:}1")
+     "no matching function for call to %0"
+     "%plural{0:|1:; candidate is|:; candidates are:}1")
 DIAG(err_ovl_ambiguous_call, ERROR,
-     "call to '%0' is ambiguous; candidates are:")
+     "call to %0 is ambiguous; candidates are:")
 DIAG(err_ovl_candidate, NOTE,
      "candidate function")
 DIAG(err_ovl_builtin_candidate, NOTE,
      "built-in candidate function '%0'")
 DIAG(err_ovl_no_viable_function_in_init, ERROR,
-     "no matching constructor for initialization of '%0'"
-     "%plural{0:.|1:; candidate is|:; candidates are:}1")
+     "no matching constructor for initialization of %0"
+     "%plural{0:|1:; candidate is|:; candidates are:}1")
 DIAG(err_ovl_ambiguous_init, ERROR,
-     "call to constructor of '%0' is ambiguous; candidates are:")
+     "call to constructor of %0 is ambiguous; candidates are:")
 DIAG(err_ovl_ambiguous_oper, ERROR,
      "use of overloaded operator '%0' is ambiguous; candidates are:")
 DIAG(err_ovl_no_viable_oper, ERROR,
      "no viable overloaded '%0'; candidate%plural{1: is|:s are}1:")
 DIAG(err_ovl_no_viable_object_call, ERROR,
      "no matching function for call to object of type '%0'"
-     "%plural{0:.|1:; candidate is|:; candidates are:}1")
+     "%plural{0:|1:; candidate is|:; candidates are:}1")
 DIAG(err_ovl_ambiguous_object_call, ERROR,
      "call to object of type '%0' is ambiguous; candidates are:")
 DIAG(err_ovl_surrogate_cand, NOTE,
      "conversion candidate of type '%0'")
 
 DIAG(err_unexpected_typedef, ERROR,
-     "unexpected type name '%0': expected expression")
+     "unexpected type name %0: expected expression")
 DIAG(err_unexpected_namespace, ERROR,
-     "unexpected namespace name '%0': expected expression")
+     "unexpected namespace name %0: expected expression")
 DIAG(err_unexpected_typedef_ident, ERROR,
      "unexpected type name %0: expected identifier")
 DIAG(err_undeclared_var_use, ERROR,
@@ -923,21 +923,21 @@ DIAG(err_undeclared_var_use, ERROR,
 DIAG(err_undeclared_use, ERROR,
      "use of undeclared '%0'")
 DIAG(warn_deprecated, WARNING,
-     "'%0' is deprecated")
+     "%0 is deprecated")
 DIAG(err_redefinition, ERROR,
      "redefinition of %0")
 DIAG(err_static_non_static, ERROR,
-     "static declaration of '%0' follows non-static declaration")
+     "static declaration of %0 follows non-static declaration")
 DIAG(err_non_static_static, ERROR,
-     "non-static declaration of '%0' follows static declaration")
+     "non-static declaration of %0 follows static declaration")
 DIAG(err_redefinition_different_kind, ERROR,
      "redefinition of %0 as different kind of symbol")
 DIAG(err_redefinition_different_typedef, ERROR,
      "typedef redefinition with different types ('%0' vs '%1')")
 DIAG(err_conflicting_types, ERROR,
-     "conflicting types for '%0'")
+     "conflicting types for %0")
 DIAG(err_nested_redefinition, ERROR,
-     "nested redefinition of '%0'")
+     "nested redefinition of %0")
 DIAG(err_use_with_wrong_tag, ERROR,
      "use of %0 with tag type that does not match previous declaration")
 DIAG(ext_forward_ref_enum, EXTENSION,
@@ -1016,15 +1016,15 @@ DIAG(ext_implicit_function_decl, EXTENSION,
 DIAG(err_func_returning_array_function, ERROR,
      "function cannot return array or function type '%0'")
 DIAG(err_field_declared_as_function, ERROR,
-     "field '%0' declared as a function")
+     "field %0 declared as a function")
 DIAG(err_field_incomplete, ERROR,
-     "field '%0' has incomplete type")
+     "field %0 has incomplete type")
 DIAG(err_variable_sized_type_in_struct, EXTENSION,
-     "variable sized type '%0' must be at end of struct or class")
+     "variable sized type %0 must be at end of struct or class")
 DIAG(err_flexible_array_empty_struct, ERROR,
-     "flexible array '%0' not allowed in otherwise empty struct")
+     "flexible array %0 not allowed in otherwise empty struct")
 DIAG(ext_flexible_array_in_struct, EXTENSION,
-     "'%0' may not be nested in a struct due to flexible array member")
+     "%0 may not be nested in a struct due to flexible array member")
 DIAG(err_flexible_array_in_array, ERROR,
      "'%0' may not be used as an array element due to flexible array member")
 DIAG(err_illegal_decl_array_of_functions, ERROR,
@@ -1107,7 +1107,7 @@ DIAG(err_typecheck_member_reference_ivar, ERROR,
 DIAG(err_typecheck_member_reference_arrow, ERROR,
      "member reference type '%0' is not a pointer")
 DIAG(err_typecheck_incomplete_tag, ERROR,
-     "incomplete definition of type '%0'")
+     "incomplete definition of type %0")
 DIAG(err_typecheck_no_member, ERROR,
      "no member named %0")
 DIAG(err_typecheck_illegal_increment_decrement, ERROR,
@@ -1115,7 +1115,7 @@ DIAG(err_typecheck_illegal_increment_decrement, ERROR,
 DIAG(err_typecheck_arithmetic_incomplete_type, ERROR,
      "arithmetic on pointer to incomplete type '%0'")
 DIAG(err_typecheck_decl_incomplete_type, ERROR,
-     "variable has incomplete type '%0'")
+     "variable has incomplete type %0")
 DIAG(err_realimag_invalid_type, ERROR,
      "invalid type '%0' to __real or __imag operator")
 DIAG(err_typecheck_sclass_fscope, ERROR,
@@ -1146,14 +1146,14 @@ DIAG(err_typecheck_assign_const, ERROR,
 DIAG(err_invalid_this_use, ERROR,
      "invalid use of 'this' outside of a nonstatic member function")
 DIAG(err_invalid_member_use_in_static_method, ERROR,
-     "invalid use of member '%0' in static member function")
+     "invalid use of member %0 in static member function")
 DIAG(err_invalid_qualified_function_type, ERROR,
      "type qualifier is not allowed on this function")
 DIAG(err_invalid_qualified_typedef_function_type_use, ERROR,
      "a qualified function type cannot be used to declare a nonmember function "
      "or a static member function")
 DIAG(err_invalid_non_static_member_use, ERROR,
-     "invalid use of nonstatic data member '%0'")
+     "invalid use of nonstatic data member %0")
 DIAG(err_invalid_incomplete_type_use, ERROR,
      "invalid use of incomplete type '%0'")
 DIAG(err_builtin_func_cast_more_than_one_arg, ERROR,
@@ -1224,7 +1224,7 @@ DIAG(err_typecheck_bool_condition, ERROR,
 DIAG(err_expected_class_or_namespace, ERROR,
      "expected a class or namespace")
 DIAG(err_invalid_declarator_scope, ERROR,
-     "definition or redeclaration of '%0' not in a namespace enclosing '%1'")
+     "definition or redeclaration of %0 not in a namespace enclosing %1")
 DIAG(err_invalid_declarator_in_function, ERROR,
      "definition or redeclaration of %0 not allowed inside a function")
 DIAG(err_not_tag_in_scope, ERROR,
@@ -1232,30 +1232,31 @@ DIAG(err_not_tag_in_scope, ERROR,
 
 
 // assignment related diagnostics (also for argument passing, returning, etc).
+// FIXME: %2 is an english string here.
 DIAG(err_typecheck_convert_incompatible, ERROR,
-     "incompatible type %2 '%1', expected '%0'")
+     "incompatible type %2 %1, expected %0")
 DIAG(warn_incompatible_qualified_id, WARNING,
-     "incompatible type %2 '%1', expected '%0'")
+     "incompatible type %2 %1, expected %0")
 DIAG(warn_incompatible_qualified_id_operands, WARNING,
-     "invalid operands to binary expression ('%0' and '%1')")
+     "invalid operands to binary expression (%0 and %1)")
 DIAG(ext_typecheck_convert_pointer_int, EXTWARN,
-     "incompatible pointer to integer conversion %2 '%1', expected '%0'")
+     "incompatible pointer to integer conversion %2 %1, expected %0")
 DIAG(ext_typecheck_convert_int_pointer, EXTWARN,
-     "incompatible integer to pointer conversion %2 '%1', expected '%0'")
+     "incompatible integer to pointer conversion %2 %1, expected %0")
 DIAG(ext_typecheck_convert_pointer_void_func, EXTENSION,
-     "%2 '%1' converts between void* and function pointer, expected '%0'")
+     "%2 %1 converts between void* and function pointer, expected %0")
 DIAG(ext_typecheck_convert_incompatible_pointer, EXTWARN,
-     "incompatible pointer types %2 '%1', expected '%0'")
+     "incompatible pointer types %2 %1, expected %0")
 DIAG(ext_typecheck_convert_discards_qualifiers, EXTWARN,
-     "%2 '%1' discards qualifiers, expected '%0'")
+     "%2 %1 discards qualifiers, expected %0")
 DIAG(err_int_to_block_pointer, ERROR,
-     "invalid conversion %2 integer '%1', expected block pointer '%0'")
+     "invalid conversion %2 integer %1, expected block pointer %0")
 DIAG(err_typecheck_comparison_of_distinct_blocks, ERROR,
      "comparison of distinct block types ('%0' and '%1')")
 DIAG(ext_typecheck_convert_incompatible_block_pointer, EXTWARN,
-     "incompatible block pointer types %2 '%1', expected '%0'")
+     "incompatible block pointer types %2 %1, expected %0")
 DIAG(ext_typecheck_convert_pointer_void_block, EXTENSION,
-     "%2 '%1' converts between void* and block pointer, expected '%0'")
+     "%2 %1 converts between void* and block pointer, expected %0")
      
 DIAG(err_typecheck_array_not_modifiable_lvalue, ERROR,
      "array type '%0' is not assignable")
@@ -1364,19 +1365,19 @@ DIAG(err_ambiguous_derived_to_base_conv, ERROR,
 
 // C++ operator overloading
 DIAG(err_operator_overload_needs_class_or_enum, ERROR,
-     "overloaded '%0' must have at least one parameter of class "
+     "overloaded %0 must have at least one parameter of class "
      "or enumeration type")
 DIAG(err_operator_overload_variadic, ERROR,
-     "overloaded '%0' cannot be variadic")
+     "overloaded %0 cannot be variadic")
 DIAG(err_operator_overload_static, ERROR,
-     "overloaded '%0' cannot be a static member function")
+     "overloaded %0 cannot be a static member function")
 DIAG(err_operator_overload_default_arg, ERROR,
-     "parameter of overloaded '%0' cannot have a default argument")
+     "parameter of overloaded %0 cannot have a default argument")
 DIAG(err_operator_overload_must_be, ERROR,
-     "overloaded '%0' must be a %select{unary|binary|unary or binary}2 operator"
+     "overloaded %0 must be a %select{unary|binary|unary or binary}2 operator"
      " (has %1 parameter%s1)")
 DIAG(err_operator_overload_must_be_member, ERROR,
-     "overloaded '%0' must be a non-static member function")
+     "overloaded %0 must be a non-static member function")
 DIAG(err_operator_overload_post_incdec_must_be_int, ERROR,
      "parameter of overloaded post-%select{increment|decrement}1 operator must"
      " have type 'int' (not '%0')")

@@ -189,9 +189,8 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   QualType CheckType = AllocType;
   // To leverage the existing parser as much as possible, array types are
   // parsed as VLAs. Unwrap for checking.
-  if (const VariableArrayType *VLA = Context.getAsVariableArrayType(AllocType)){
+  if (const VariableArrayType *VLA = Context.getAsVariableArrayType(AllocType))
     CheckType = VLA->getElementType();
-  }
 
   // Validate the type, and unwrap an array if any.
   if (CheckAllocatedType(CheckType, StartLoc, SourceRange(TyStart, TyEnd)))
@@ -240,13 +239,13 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   // 2) Otherwise, the object is direct-initialized.
   CXXConstructorDecl *Constructor = 0;
   Expr **ConsArgs = (Expr**)ConstructorArgs;
-  if (CheckType->isRecordType()) {
+  if (const RecordType *RT = CheckType->getAsRecordType()) {
     // FIXME: This is incorrect for when there is an empty initializer and
     // no user-defined constructor. Must zero-initialize, not default-construct.
     Constructor = PerformInitializationByConstructor(
                       CheckType, ConsArgs, NumConsArgs,
                       TyStart, SourceRange(TyStart, ConstructorRParen),
-                      CheckType.getAsString(),
+                      RT->getDecl()->getDeclName(),
                       NumConsArgs != 0 ? IK_Direct : IK_Default);
     if (!Constructor)
       return true;
@@ -262,8 +261,9 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       // Object is value-initialized. Do nothing.
     } else if (NumConsArgs == 1) {
       // Object is direct-initialized.
+      // FIXME: WHAT DeclarationName do we pass in here?
       if (CheckInitializerTypes(ConsArgs[0], CheckType, StartLoc,
-                                CheckType.getAsString()))
+                                DeclarationName() /*CheckType.getAsString()*/))
         return true;
     } else {
       Diag(StartLoc, diag::err_builtin_direct_init_more_than_one_arg)

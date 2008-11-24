@@ -384,7 +384,7 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
     for (BlockDecl::param_iterator AI = BD->param_begin(),
          E = BD->param_end(); AI != E; ++AI) {
       if (AI != BD->param_begin()) S += ", ";
-      ParamStr = (*AI)->getName();
+      ParamStr = (*AI)->getNameAsString();
       (*AI)->getType().getAsStringInternal(ParamStr);
       S += ParamStr;
     }
@@ -401,15 +401,15 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
        E = BlockByRefDecls.end(); I != E; ++I) {
     S += "  ";
-    std::string Name = (*I)->getName();
+    std::string Name = (*I)->getNameAsString();
     Context->getPointerType((*I)->getType()).getAsStringInternal(Name);
-    S += Name + " = __cself->" + (*I)->getName() + "; // bound by ref\n";
+    S += Name + " = __cself->" + (*I)->getNameAsString() + "; // bound by ref\n";
   }    
   // Next, emit a declaration for all "by copy" declarations.
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
        E = BlockByCopyDecls.end(); I != E; ++I) {
     S += "  ";
-    std::string Name = (*I)->getName();
+    std::string Name = (*I)->getNameAsString();
     // Handle nested closure invocation. For example:
     //
     //   void (^myImportedClosure)(void);
@@ -424,7 +424,7 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
       S += "struct __block_impl *";
     else
       (*I)->getType().getAsStringInternal(Name);
-    S += Name + " = __cself->" + (*I)->getName() + "; // bound by copy\n";
+    S += Name + " = __cself->" + (*I)->getNameAsString() + "; // bound by copy\n";
   }
   std::string RewrittenStr = RewrittenBlockExprs[CE];
   const char *cstr = RewrittenStr.c_str();
@@ -448,9 +448,9 @@ std::string RewriteBlocks::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
       E = ImportedBlockDecls.end(); I != E; ++I) {
     S += "_Block_copy_assign(&dst->";
-    S += (*I)->getName();
+    S += (*I)->getNameAsString();
     S += ", src->";
-    S += (*I)->getName();
+    S += (*I)->getNameAsString();
     S += ");}";
   }
   S += "\nstatic void __";
@@ -461,7 +461,7 @@ std::string RewriteBlocks::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
       E = ImportedBlockDecls.end(); I != E; ++I) {
     S += "_Block_destroy(src->";
-    S += (*I)->getName();
+    S += (*I)->getNameAsString();
     S += ");";
   }
   S += "}\n";  
@@ -488,7 +488,7 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
          E = BlockByCopyDecls.end(); I != E; ++I) {
       S += "  ";
-      std::string FieldName = (*I)->getName();
+      std::string FieldName = (*I)->getNameAsString();
       std::string ArgName = "_" + FieldName;
       // Handle nested closure invocation. For example:
       //
@@ -514,7 +514,7 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
          E = BlockByRefDecls.end(); I != E; ++I) {
       S += "  ";
-      std::string FieldName = (*I)->getName();
+      std::string FieldName = (*I)->getNameAsString();
       std::string ArgName = "_" + FieldName;
       // Handle nested closure invocation. For example:
       //
@@ -548,7 +548,7 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
     // Initialize all "by copy" arguments.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
          E = BlockByCopyDecls.end(); I != E; ++I) {
-      std::string Name = (*I)->getName();
+      std::string Name = (*I)->getNameAsString();
       Constructor += "    ";
       if (isBlockPointerType((*I)->getType()))
         Constructor += Name + " = (struct __block_impl *)_";
@@ -559,7 +559,7 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
     // Initialize all "by ref" arguments.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
          E = BlockByRefDecls.end(); I != E; ++I) {
-      std::string Name = (*I)->getName();
+      std::string Name = (*I)->getNameAsString();
       Constructor += "    ";
       if (isBlockPointerType((*I)->getType()))
         Constructor += Name + " = (struct __block_impl *)_";
@@ -918,7 +918,7 @@ std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) 
   std::string FuncName;
   
   if (CurFunctionDef)
-    FuncName = std::string(CurFunctionDef->getName());
+    FuncName = std::string(CurFunctionDef->getNameAsString());
   else if (CurMethodDef) {
     FuncName = CurMethodDef->getSelector().getAsString();
     // Convert colons to underscores.
@@ -926,7 +926,7 @@ std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) 
     while ((loc = FuncName.find(":", loc)) != std::string::npos)
       FuncName.replace(loc, 1, "_");
   } else if (VD)
-    FuncName = std::string(VD->getName());
+    FuncName = std::string(VD->getNameAsString());
     
   std::string BlockNumber = utostr(Blocks.size()-1);
   
@@ -961,20 +961,20 @@ std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) 
       Init += ",";
       if (isObjCType((*I)->getType())) {
         Init += "[[";
-        Init += (*I)->getName();
+        Init += (*I)->getNameAsString();
         Init += " retain] autorelease]";
       } else if (isBlockPointerType((*I)->getType())) {
         Init += "(void *)";
-        Init += (*I)->getName();
+        Init += (*I)->getNameAsString();
       } else {
-        Init += (*I)->getName();
+        Init += (*I)->getNameAsString();
       }
     }
     // Output all "by ref" declarations.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
          E = BlockByRefDecls.end(); I != E; ++I) {
       Init += ",&";
-      Init += (*I)->getName();
+      Init += (*I)->getNameAsString();
     }
   }
   Init += ")";

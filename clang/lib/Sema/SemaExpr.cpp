@@ -431,11 +431,11 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       if (MD->isStatic())
         // "invalid use of member 'x' in static member function"
         return Diag(Loc, diag::err_invalid_member_use_in_static_method)
-           << FD->getName();
+           << FD->getDeclName();
       if (cast<CXXRecordDecl>(MD->getParent()) != FD->getParent())
         // "invalid use of nonstatic data member 'x'"
         return Diag(Loc, diag::err_invalid_non_static_member_use)
-          << FD->getName();
+          << FD->getDeclName();
 
       if (FD->isInvalidDecl())
         return true;
@@ -445,14 +445,15 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         FD->getType().getWithAdditionalQualifiers(MD->getTypeQualifiers()),Loc);
     }
 
-    return Diag(Loc, diag::err_invalid_non_static_member_use) << FD->getName();
+    return Diag(Loc, diag::err_invalid_non_static_member_use)
+      << FD->getDeclName();
   }
   if (isa<TypedefDecl>(D))
-    return Diag(Loc, diag::err_unexpected_typedef) << Name.getAsString();
+    return Diag(Loc, diag::err_unexpected_typedef) << Name;
   if (isa<ObjCInterfaceDecl>(D))
-    return Diag(Loc, diag::err_unexpected_interface) << Name.getAsString();
+    return Diag(Loc, diag::err_unexpected_interface) << Name;
   if (isa<NamespaceDecl>(D))
-    return Diag(Loc, diag::err_unexpected_namespace) << Name.getAsString();
+    return Diag(Loc, diag::err_unexpected_namespace) << Name;
 
   // Make the DeclRefExpr or BlockDeclRefExpr for the decl.
   if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
@@ -462,7 +463,7 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   
   // check if referencing an identifier with __attribute__((deprecated)).
   if (VD->getAttr<DeprecatedAttr>())
-    Diag(Loc, diag::warn_deprecated) << VD->getName();
+    Diag(Loc, diag::warn_deprecated) << VD->getDeclName();
 
   // Only create DeclRefExpr's for valid Decl's.
   if (VD->isInvalidDecl())
@@ -1135,7 +1136,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     RecordDecl *RDecl = RTy->getDecl();
     if (RTy->isIncompleteType())
       return Diag(OpLoc, diag::err_typecheck_incomplete_tag)
-               << RDecl->getName() << BaseExpr->getSourceRange();
+               << RDecl->getDeclName() << BaseExpr->getSourceRange();
     // The record definition is complete, now make sure the member is valid.
     FieldDecl *MemberDecl = RDecl->getMember(&Member);
     if (!MemberDecl)
@@ -1164,7 +1165,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
                                  OpKind == tok::arrow);
     return Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
-             << IFTy->getDecl()->getName() << &Member
+             << IFTy->getDecl()->getDeclName() << &Member
              << BaseExpr->getSourceRange();
   }
   
@@ -1315,14 +1316,14 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     case OR_No_Viable_Function:
       Diag(Fn->getSourceRange().getBegin(), 
            diag::err_ovl_no_viable_function_in_call)
-        << Ovl->getName() << (unsigned)CandidateSet.size()
+        << Ovl->getDeclName() << (unsigned)CandidateSet.size()
         << Fn->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       return true;
 
     case OR_Ambiguous:
       Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_ambiguous_call)
-        << Ovl->getName() << Fn->getSourceRange();
+        << Ovl->getDeclName() << Fn->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
       return true;
     }
@@ -1451,12 +1452,12 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
         << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd());
   } else if (literalType->isIncompleteType()) {
     return Diag(LParenLoc, diag::err_typecheck_decl_incomplete_type)
-      << literalType.getAsString()
+      << literalType
       << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd());
   }
 
   if (CheckInitializerTypes(literalExpr, literalType, LParenLoc, 
-                            "temporary"))
+                            DeclarationName()))
     return true;
 
   bool isFileScope = !getCurFunctionDecl() && !getCurMethodDecl();
@@ -2399,8 +2400,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     } else {
       if ((lType->isObjCQualifiedIdType() && rType->isObjCQualifiedIdType())) {
         Diag(Loc, diag::warn_incompatible_qualified_id_operands)
-          << lType.getAsString() << rType.getAsString()
-          << lex->getSourceRange() << rex->getSourceRange();
+          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
         ImpCastExprToType(rex, lType);
         return ResultTy;
       }
@@ -3696,7 +3696,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   }
   
-  Diag(Loc, DiagKind) << DstType.getAsString() << SrcType.getAsString()
-    << Flavor << SrcExpr->getSourceRange();
+  Diag(Loc, DiagKind) << DstType << SrcType << Flavor
+    << SrcExpr->getSourceRange();
   return isInvalid;
 }

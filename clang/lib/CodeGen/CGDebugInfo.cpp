@@ -291,7 +291,7 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   // Create DIEnumerator elements for each enumerator.
   for (EnumConstantDecl *Elt = Decl->getEnumConstantList(); Elt;
        Elt = dyn_cast_or_null<EnumConstantDecl>(Elt->getNextDeclarator())) {
-    Enumerators.push_back(DebugFactory.CreateEnumerator(Elt->getName(),
+    Enumerators.push_back(DebugFactory.CreateEnumerator(Elt->getNameAsString(),
                                             Elt->getInitVal().getZExtValue()));
   }
   
@@ -484,7 +484,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
   
   // Create the descriptor for the variable.
   llvm::DIVariable D = 
-    DebugFactory.CreateVariable(Tag, RegionStack.back(), Decl->getName(),
+    DebugFactory.CreateVariable(Tag, RegionStack.back(),Decl->getNameAsString(),
                                 Unit, Line,
                                 getOrCreateType(Decl->getType(), Unit));
   // Insert an llvm.dbg.declare into the current block.

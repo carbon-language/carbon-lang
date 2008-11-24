@@ -492,7 +492,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
-  Diag(New->getLocation(), diag::err_conflicting_types) << New->getName();
+  Diag(New->getLocation(), diag::err_conflicting_types) << New->getDeclName();
   Diag(Old->getLocation(), PrevDiag);
   return New;
 }
@@ -576,14 +576,14 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   if (New->getStorageClass() == VarDecl::Static &&
       (Old->getStorageClass() == VarDecl::None ||
        Old->getStorageClass() == VarDecl::Extern)) {
-    Diag(New->getLocation(), diag::err_static_non_static) << New->getName();
+    Diag(New->getLocation(), diag::err_static_non_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New;
   }
   // C99 6.2.2p4: Check if we have a non-static decl followed by a static.
   if (New->getStorageClass() != VarDecl::Static &&
       Old->getStorageClass() == VarDecl::Static) {
-    Diag(New->getLocation(), diag::err_non_static_static) << New->getName();
+    Diag(New->getLocation(), diag::err_non_static_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New;
   }
@@ -611,7 +611,7 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
     if (Param->getType()->isIncompleteType() &&
         !Param->isInvalidDecl()) {
       Diag(Param->getLocation(), diag::err_typecheck_decl_incomplete_type)
-        << Param->getType().getAsString();
+        << Param->getType();
       Param->setInvalidDecl();
       HasInvalidParm = true;
     }
@@ -676,9 +676,9 @@ StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
 
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
                                  SourceLocation InitLoc,
-                                 std::string InitEntity) {
+                                 DeclarationName InitEntity) {
   // C++ [dcl.init.ref]p1:
-  //   A variable declared to be a T&, that is â€œreference to type Tâ€
+  //   A variable declared to be a T&, that isâ "reference to type Tâ"
   //   (8.3.2), shall be initialized by an object, or function, of
   //   type T or by an object that can be converted into a T.
   if (DeclType->isReferenceType())
@@ -734,7 +734,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
         return false;
       
       return Diag(InitLoc, diag::err_typecheck_convert_incompatible)
-        << DeclType.getAsString() << InitEntity << "initializing"
+        << DeclType << InitEntity << "initializing"
         << Init->getSourceRange();
     }
 
@@ -859,7 +859,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         Diag(L, diag::err_invalid_declarator_in_function) << Name << R;
       } else {
         Diag(L, diag::err_invalid_declarator_scope)
-          << Name.getAsString() << cast<NamedDecl>(DC)->getName() << R;
+          << Name << cast<NamedDecl>(DC)->getDeclName() << R;
       }
     }
   }
@@ -1761,7 +1761,7 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
       VDecl->setInvalidDecl();
     } else if (!VDecl->isInvalidDecl()) {
       if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
-                                VDecl->getName()))
+                                VDecl->getDeclName()))
         VDecl->setInvalidDecl();
       
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.
@@ -1775,7 +1775,7 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
       Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!VDecl->isInvalidDecl())
       if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
-                                VDecl->getName()))
+                                VDecl->getDeclName()))
         VDecl->setInvalidDecl();
     
     // C++ 3.6.2p2, allow dynamic initialization of static initializers.
@@ -1815,7 +1815,8 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
     //   specifier is explicitly used.
     if (Type->isReferenceType() && Var->getStorageClass() != VarDecl::Extern) {
       Diag(Var->getLocation(), diag::err_reference_var_requires_init)
-       << Var->getName() << SourceRange(Var->getLocation(), Var->getLocation());
+        << Var->getDeclName()
+        << SourceRange(Var->getLocation(), Var->getLocation());
       Var->setInvalidDecl();
       return;
     }
@@ -1837,7 +1838,7 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
                                                Var->getLocation(),
                                                SourceRange(Var->getLocation(),
                                                            Var->getLocation()),
-                                               Var->getName(),
+                                               Var->getDeclName(),
                                                IK_Default);
         if (!Constructor)
           Var->setInvalidDecl();
@@ -1918,8 +1919,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     if (IDecl->isBlockVarDecl() && 
         IDecl->getStorageClass() != VarDecl::Extern) {
       if (T->isIncompleteType() && !IDecl->isInvalidDecl()) {
-        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type)
-          << T.getAsString();
+        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type)<<T;
         IDecl->setInvalidDecl();
       }
     }
@@ -1936,8 +1936,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
         // C99 6.9.2p3: If the declaration of an identifier for an object is
         // a tentative definition and has internal linkage (C99 6.2.2p3), the  
         // declared type shall not be an incomplete type.
-        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type)
-          << T.getAsString();
+        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type)<<T;
         IDecl->setInvalidDecl();
       }
     }
@@ -2716,7 +2715,7 @@ void Sema::ActOnFields(Scope* S,
       // We discover this when we complete the outer S.  Reject and ignore the
       // outer S.
       Diag(DefRecord->getLocation(), diag::err_nested_redefinition)
-        << DefRecord->getKindName();
+        << DefRecord->getDeclName();
       Diag(RecLoc, diag::note_previous_definition);
       Record->setInvalidDecl();
       return;
@@ -2741,7 +2740,7 @@ void Sema::ActOnFields(Scope* S,
     // C99 6.7.2.1p2 - A field may not be a function type.
     if (FDTy->isFunctionType()) {
       Diag(FD->getLocation(), diag::err_field_declared_as_function)
-        << FD->getName();
+        << FD->getDeclName();
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
       continue;
@@ -2749,7 +2748,7 @@ void Sema::ActOnFields(Scope* S,
     // C99 6.7.2.1p2 - A field may not be an incomplete type except...
     if (FDTy->isIncompleteType()) {
       if (!Record) {  // Incomplete ivar type is always an error.
-        Diag(FD->getLocation(), diag::err_field_incomplete) << FD->getName();
+        Diag(FD->getLocation(), diag::err_field_incomplete) <<FD->getDeclName();
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
         continue;
@@ -2757,14 +2756,14 @@ void Sema::ActOnFields(Scope* S,
       if (i != NumFields-1 ||                   // ... that the last member ...
           !Record->isStruct() ||  // ... of a structure ...
           !FDTy->isArrayType()) {         //... may have incomplete array type.
-        Diag(FD->getLocation(), diag::err_field_incomplete) << FD->getName();
+        Diag(FD->getLocation(), diag::err_field_incomplete) <<FD->getDeclName();
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
         continue;
       }
       if (NumNamedMembers < 1) {  //... must have more than named member ...
         Diag(FD->getLocation(), diag::err_flexible_array_empty_struct)
-          << FD->getName();
+          << FD->getDeclName();
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
         continue;
@@ -2786,7 +2785,7 @@ void Sema::ActOnFields(Scope* S,
           // structures.
           if (i != NumFields-1) {
             Diag(FD->getLocation(), diag::err_variable_sized_type_in_struct)
-              << FD->getName();
+              << FD->getDeclName();
             FD->setInvalidDecl();
             EnclosingDecl->setInvalidDecl();
             continue;
@@ -2794,7 +2793,7 @@ void Sema::ActOnFields(Scope* S,
           // We support flexible arrays at the end of structs in other structs
           // as an extension.
           Diag(FD->getLocation(), diag::ext_flexible_array_in_struct)
-            << FD->getName();
+            << FD->getDeclName();
           if (Record)
             Record->setHasFlexibleArrayMember(true);
         }
@@ -2942,7 +2941,8 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     //   enum e0 {
     //     E0 = sizeof(enum e0 { E1 })
     //   };
-    Diag(Enum->getLocation(), diag::err_nested_redefinition) << Enum->getName();
+    Diag(Enum->getLocation(), diag::err_nested_redefinition)
+      << Enum->getDeclName();
     Diag(EnumLoc, diag::note_previous_definition);
     Enum->setInvalidDecl();
     return;

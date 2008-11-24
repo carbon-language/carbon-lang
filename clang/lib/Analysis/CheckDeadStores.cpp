@@ -41,7 +41,7 @@ public:
   
   void Report(VarDecl* V, DeadStoreKind dsk, SourceLocation L, SourceRange R) {
 
-    std::string name(V->getName());
+    std::string name = V->getNameAsString();
     
     const char* BugType = 0;
     std::string msg;

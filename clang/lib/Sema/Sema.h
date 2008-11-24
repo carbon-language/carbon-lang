@@ -776,7 +776,7 @@ public:
   PerformInitializationByConstructor(QualType ClassType,
                                      Expr **Args, unsigned NumArgs,
                                      SourceLocation Loc, SourceRange Range,
-                                     std::string InitEntity,
+                                     DeclarationName InitEntity,
                                      InitializationKind Kind);
 
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
@@ -1262,7 +1262,7 @@ public:
   /// type checking declaration initializers (C99 6.7.8)
   friend class InitListChecker;
   bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType,
-                             SourceLocation InitLoc, std::string InitEntity);
+                             SourceLocation InitLoc,DeclarationName InitEntity);
   bool CheckSingleInitializer(Expr *&simpleInit, QualType declType);
   bool CheckForConstantInitializer(Expr *e, QualType t);
   bool CheckArithmeticConstantExpression(const Expr* e);

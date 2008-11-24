@@ -938,7 +938,7 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
   TypeDecl *DeclaratorTypeD = (TypeDecl *)D.getDeclaratorIdType();
   if (const TypedefDecl *TypedefD = dyn_cast<TypedefDecl>(DeclaratorTypeD)) {
     Diag(D.getIdentifierLoc(),  diag::err_destructor_typedef_name)
-      << TypedefD->getName();
+      << TypedefD->getDeclName();
     isInvalid = true;
   }
 
@@ -1352,7 +1352,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
                                            VDecl->getLocation(),
                                            SourceRange(VDecl->getLocation(),
                                                        RParenLoc),
-                                           VDecl->getName(),
+                                           VDecl->getDeclName(),
                                            IK_Direct);
     if (!Constructor) {
       RealDecl->setInvalidDecl();
@@ -1400,7 +1400,7 @@ CXXConstructorDecl *
 Sema::PerformInitializationByConstructor(QualType ClassType,
                                          Expr **Args, unsigned NumArgs,
                                          SourceLocation Loc, SourceRange Range,
-                                         std::string InitEntity,
+                                         DeclarationName InitEntity,
                                          InitializationKind Kind) {
   const RecordType *ClassRec = ClassType->getAsRecordType();
   assert(ClassRec && "Can only initialize a class type here");
@@ -1810,8 +1810,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   if (CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(FnDecl)) {
     if (MethodDecl->isStatic())
       return Diag(FnDecl->getLocation(),
-                  diag::err_operator_overload_static)
-        << FnDecl->getName();
+                  diag::err_operator_overload_static) << FnDecl->getDeclName();
   } else {
     bool ClassOrEnumParam = false;
     for (FunctionDecl::param_iterator Param = FnDecl->param_begin(),
@@ -1827,7 +1826,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
     if (!ClassOrEnumParam)
       return Diag(FnDecl->getLocation(),
                   diag::err_operator_overload_needs_class_or_enum)
-        << FnDecl->getName();
+        << FnDecl->getDeclName();
   }
 
   // C++ [over.oper]p8:
@@ -1842,7 +1841,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
       if (Expr *DefArg = (*Param)->getDefaultArg())
         return Diag((*Param)->getLocation(),
                     diag::err_operator_overload_default_arg)
-          << FnDecl->getName() << DefArg->getSourceRange();
+          << FnDecl->getDeclName() << DefArg->getSourceRange();
     }
   }
 
@@ -1880,21 +1879,21 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
     }
 
     return Diag(FnDecl->getLocation(), diag::err_operator_overload_must_be)
-      << FnDecl->getName() << NumParams << ErrorKind;
+      << FnDecl->getDeclName() << NumParams << ErrorKind;
   }
       
   // Overloaded operators other than operator() cannot be variadic.
   if (Op != OO_Call &&
       FnDecl->getType()->getAsFunctionTypeProto()->isVariadic()) {
     return Diag(FnDecl->getLocation(), diag::err_operator_overload_variadic)
-      << FnDecl->getName();
+      << FnDecl->getDeclName();
   }
 
   // Some operators must be non-static member functions.
   if (MustBeMemberOperator && !isa<CXXMethodDecl>(FnDecl)) {
     return Diag(FnDecl->getLocation(),
                 diag::err_operator_overload_must_be_member)
-      << FnDecl->getName();
+      << FnDecl->getDeclName();
   }
 
   // C++ [over.inc]p1:

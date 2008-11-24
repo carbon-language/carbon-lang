@@ -98,8 +98,8 @@ void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
     if (I->second == Unused) {
       
       std::ostringstream os;
-      os << "Instance variable '" << I->first->getName()
-         << "' in class '" << ID->getName() 
+      os << "Instance variable '" << I->first->getNameAsString()
+         << "' in class '" << ID->getNameAsString() 
          << "' is never used by the methods in its @implementation "
             "(although it may be used by category methods).";
 

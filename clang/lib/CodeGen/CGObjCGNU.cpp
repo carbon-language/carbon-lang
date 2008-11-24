@@ -193,7 +193,7 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
 // techniques can modify the name -> class mapping.
 llvm::Value *CGObjCGNU::GetClass(CGBuilderTy &Builder,
                                  const ObjCInterfaceDecl *OID) {
-  llvm::Value *ClassName = CGM.GetAddrOfConstantCString(OID->getName());
+  llvm::Value *ClassName = CGM.GetAddrOfConstantCString(OID->getNameAsString());
   ClassName = Builder.CreateStructGEP(ClassName, 0);
 
   llvm::Constant *ClassLookupFn =
@@ -565,7 +565,7 @@ llvm::Constant *CGObjCGNU::GenerateProtocolList(
 
 llvm::Value *CGObjCGNU::GenerateProtocolRef(CGBuilderTy &Builder, 
                                             const ObjCProtocolDecl *PD) {
-  return ExistingProtocols[PD->getName()];
+  return ExistingProtocols[PD->getNameAsString()];
 }
 
 void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
@@ -574,7 +574,7 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   llvm::SmallVector<std::string, 16> Protocols;
   for (ObjCProtocolDecl::protocol_iterator PI = PD->protocol_begin(),
        E = PD->protocol_end(); PI != E; ++PI)
-    Protocols.push_back((*PI)->getName());
+    Protocols.push_back((*PI)->getNameAsString());
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodNames;
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
   for (ObjCProtocolDecl::instmeth_iterator iter = PD->instmeth_begin(),
@@ -655,7 +655,7 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   const ObjCList<ObjCProtocolDecl> &Protos =ClassDecl->getReferencedProtocols();
   for (ObjCList<ObjCProtocolDecl>::iterator I = Protos.begin(),
        E = Protos.end(); I != E; ++I)
-    Protocols.push_back((*I)->getName());
+    Protocols.push_back((*I)->getNameAsString());
 
   std::vector<llvm::Constant*> Elements;
   Elements.push_back(MakeConstantString(CategoryName));
@@ -713,7 +713,8 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   for (ObjCInterfaceDecl::ivar_iterator iter = ClassDecl->ivar_begin(),
       endIter = ClassDecl->ivar_end() ; iter != endIter ; iter++) {
       // Store the name
-      IvarNames.push_back(CGM.GetAddrOfConstantCString((*iter)->getName()));
+      IvarNames.push_back(CGM.GetAddrOfConstantCString((*iter)
+                                                         ->getNameAsString()));
       // Get the type encoding for this ivar
       std::string TypeStr;
       Context.getObjCEncodingForType((*iter)->getType(), TypeStr);
@@ -751,7 +752,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   const ObjCList<ObjCProtocolDecl> &Protos =ClassDecl->getReferencedProtocols();
   for (ObjCList<ObjCProtocolDecl>::iterator I = Protos.begin(),
        E = Protos.end(); I != E; ++I)
-    Protocols.push_back((*I)->getName());
+    Protocols.push_back((*I)->getNameAsString());
 
 
 

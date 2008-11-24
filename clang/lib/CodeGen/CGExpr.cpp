@@ -649,7 +649,7 @@ LValue CodeGenFunction::EmitPredefinedFunctionName(unsigned Type) {
 
   std::string FunctionName;
   if(const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
-    FunctionName = FD->getName();
+    FunctionName = FD->getNameAsString();
   } else {
     // Just get the mangled name.
     FunctionName = CurFn->getName();

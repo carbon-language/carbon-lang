@@ -18,7 +18,7 @@
 @synthesize d1;		// expected-error {{synthesized property 'd1' must either be named the same as}}
 @dynamic    bad;	// expected-error {{property implementation must have its declaration in interface 'I'}}
 @synthesize prop_id;	// expected-error {{synthesized property 'prop_id' must either be named the same}}
-@synthesize prop_id = IVAR;	// expected-error {{type of property 'prop_id'  does not match type of ivar 'IVAR'}}
+@synthesize prop_id = IVAR;	// expected-error {{type of property 'prop_id' does not match type of ivar 'IVAR'}}
 @synthesize name;	// OK! property with same name as an accessible ivar of same name
 @end
 

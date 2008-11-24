@@ -695,17 +695,17 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
   Values[0] = EmitProtocolExtension(PD, OptInstanceMethods, OptClassMethods);
   Values[1] = GetClassName(PD->getIdentifier());
   Values[2] = 
-    EmitProtocolList(std::string("\01L_OBJC_PROTOCOL_REFS_")+PD->getName(),
+    EmitProtocolList("\01L_OBJC_PROTOCOL_REFS_" + PD->getNameAsString(),
                      PD->protocol_begin(),
                      PD->protocol_end());
   Values[3] = 
-    EmitMethodDescList(std::string("\01L_OBJC_PROTOCOL_INSTANCE_METHODS_") 
-                       + PD->getName(),
+    EmitMethodDescList("\01L_OBJC_PROTOCOL_INSTANCE_METHODS_"
+                          + PD->getNameAsString(),
                        "__OBJC,__cat_inst_meth,regular,no_dead_strip",
                        InstanceMethods);
   Values[4] = 
-    EmitMethodDescList(std::string("\01L_OBJC_PROTOCOL_CLASS_METHODS_") 
-                       + PD->getName(),
+    EmitMethodDescList("\01L_OBJC_PROTOCOL_CLASS_METHODS_" 
+                            + PD->getNameAsString(),
                        "__OBJC,__cat_cls_meth,regular,no_dead_strip",
                        ClassMethods);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ProtocolTy,
@@ -742,7 +742,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocolRef(const ObjCProtocolDecl *PD) {
       new llvm::GlobalVariable(ObjCTypes.ProtocolTy, false,
                                llvm::GlobalValue::ExternalLinkage,
                                0,
-                               std::string("\01L_OBJC_PROTOCOL_")+PD->getName(),
+                               "\01L_OBJC_PROTOCOL_" + PD->getNameAsString(),
                                &CGM.getModule());
     Entry->setSection("__OBJC,__protocol,regular,no_dead_strip");
     UsedGlobals.push_back(Entry);
@@ -770,17 +770,17 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
   std::vector<llvm::Constant*> Values(4);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   Values[1] = 
-    EmitMethodDescList(std::string("\01L_OBJC_PROTOCOL_INSTANCE_METHODS_OPT_") 
-                       + PD->getName(),
+    EmitMethodDescList("\01L_OBJC_PROTOCOL_INSTANCE_METHODS_OPT_" 
+                           + PD->getNameAsString(),
                        "__OBJC,__cat_inst_meth,regular,no_dead_strip",
                        OptInstanceMethods);
   Values[2] = 
-    EmitMethodDescList(std::string("\01L_OBJC_PROTOCOL_CLASS_METHODS_OPT_") 
-                       + PD->getName(),
+    EmitMethodDescList("\01L_OBJC_PROTOCOL_CLASS_METHODS_OPT_"
+                          + PD->getNameAsString(),
                        "__OBJC,__cat_cls_meth,regular,no_dead_strip",
                        OptClassMethods);
-  Values[3] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_PROTO_LIST_") + 
-                               PD->getName(),
+  Values[3] = EmitPropertyList("\01L_OBJC_$_PROP_PROTO_LIST_" + 
+                                   PD->getNameAsString(),
                                0,
                                PD->classprop_begin(),
                                PD->classprop_end());
@@ -796,8 +796,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
       new llvm::GlobalVariable(ObjCTypes.ProtocolExtensionTy, false,
                                llvm::GlobalValue::InternalLinkage,
                                Init,
-                               (std::string("\01L_OBJC_PROTOCOLEXT_") + 
-                                PD->getName()),
+                               "\01L_OBJC_PROTOCOLEXT_" + PD->getNameAsString(),
                                &CGM.getModule());
   // No special section, but goes in llvm.used
   UsedGlobals.push_back(GV);
@@ -962,9 +961,8 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   const ObjCInterfaceDecl *Interface = OCD->getClassInterface();
   const ObjCCategoryDecl *Category = 
     Interface->FindCategoryDeclaration(OCD->getIdentifier());
-  std::string ExtName(std::string(Interface->getName()) +
-                      "_" +
-                      OCD->getName());
+  std::string ExtName(Interface->getNameAsString() + "_" +
+                      OCD->getNameAsString());
 
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
   for (ObjCCategoryImplDecl::instmeth_iterator i = OCD->instmeth_begin(),
@@ -1081,7 +1079,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   ObjCInterfaceDecl *Interface = 
     const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
   llvm::Constant *Protocols = 
-    EmitProtocolList(std::string("\01L_OBJC_CLASS_PROTOCOLS_") + ID->getName(),
+    EmitProtocolList("\01L_OBJC_CLASS_PROTOCOLS_" + ID->getNameAsString(),
                      Interface->protocol_begin(),
                      Interface->protocol_end());
   const llvm::Type *InterfaceTy = 
@@ -1140,7 +1138,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   Values[ 5] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
   Values[ 6] = EmitIvarList(ID, false, InterfaceTy);
   Values[ 7] = 
-    EmitMethodList(std::string("\01L_OBJC_INSTANCE_METHODS_") + ID->getName(),
+    EmitMethodList("\01L_OBJC_INSTANCE_METHODS_" + ID->getNameAsString(),
                    "__OBJC,__inst_meth,regular,no_dead_strip",
                    InstanceMethods);
   // cache is always NULL.
@@ -1200,7 +1198,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   Values[ 5] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
   Values[ 6] = EmitIvarList(ID, true, InterfaceTy);
   Values[ 7] = 
-    EmitMethodList(std::string("\01L_OBJC_CLASS_METHODS_") + ID->getName(),
+    EmitMethodList("\01L_OBJC_CLASS_METHODS_" + ID->getNameAsString(),
                    "__OBJC,__inst_meth,regular,no_dead_strip",
                    Methods);
   // cache is always NULL.
@@ -1238,8 +1236,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
 }
 
 llvm::Constant *CGObjCMac::EmitMetaClassRef(const ObjCInterfaceDecl *ID) {  
-  std::string Name("\01L_OBJC_METACLASS_");
-  Name += ID->getName();
+  std::string Name = "\01L_OBJC_METACLASS_" + ID->getNameAsString();
 
   // FIXME: Should we look these up somewhere other than the
   // module. Its a bit silly since we only generate these while
@@ -1278,8 +1275,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   // FIXME: Output weak_ivar_layout string.
   Values[1] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
-  Values[2] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_LIST_") + 
-                               ID->getName(),
+  Values[2] = EmitPropertyList("\01L_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                                ID,
                                ID->getClassInterface()->classprop_begin(),
                                ID->getClassInterface()->classprop_end());
@@ -1294,8 +1290,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
     new llvm::GlobalVariable(ObjCTypes.ClassExtensionTy, false,
                              llvm::GlobalValue::InternalLinkage,
                              Init,
-                             (std::string("\01L_OBJC_CLASSEXT_") +
-                              ID->getName()),
+                             "\01L_OBJC_CLASSEXT_" + ID->getNameAsString(),
                              &CGM.getModule());
   // No special section, but goes in llvm.used
   UsedGlobals.push_back(GV);
@@ -1361,7 +1356,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
     new llvm::GlobalVariable(Init->getType(), false,
                              llvm::GlobalValue::InternalLinkage,
                              Init,
-                             std::string(Prefix) + ID->getName(),
+                             Prefix + ID->getNameAsString(),
                              &CGM.getModule());
   if (ForClass) {
     GV->setSection("__OBJC,__cls_vars,regular,no_dead_strip");
@@ -2145,7 +2140,7 @@ void CGObjCMac::GetNameForMethod(const ObjCMethodDecl *D,
   // FIXME: Find the mangling GCC uses.
   NameOut = (D->isInstance() ? "-" : "+");
   NameOut += '[';
-  NameOut += D->getClassInterface()->getName();
+  NameOut += D->getClassInterface()->getNameAsString();
   NameOut += ' ';
   NameOut += D->getSelector().getAsString();
   NameOut += ']';

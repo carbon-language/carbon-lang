@@ -400,8 +400,8 @@ public:
     FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
     
     if (VD->getType()->isPointerLikeType()) {
-      std::string msg = "'" + std::string(VD->getName()) +
-      "' now aliases '" + MostRecent->getName() + "'";
+      std::string msg = "'" + std::string(VD->getNameAsString()) +
+      "' now aliases '" + MostRecent->getNameAsString() + "'";
       
       PD.push_front(new PathDiagnosticPiece(L, msg));
     }
@@ -579,7 +579,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                 EnumConstantDecl* D = dyn_cast<EnumConstantDecl>(DR->getDecl());
                 if (D) {
                   GetRawInt = false;
-                  os << D->getName();
+                  os << D->getNameAsString();
                 }
               }
 

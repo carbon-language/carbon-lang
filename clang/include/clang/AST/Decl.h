@@ -91,13 +91,11 @@ public:
   /// which may be a special name.
   DeclarationName getDeclName() const { return Name; }
 
-  /// getName - Get a human-readable name for the declaration, even if
-  /// it is one of the special kinds of names (C++ constructor,
-  /// Objective-C selector, etc.). Creating this name requires some
-  /// expensive string manipulation, so it should be called only when
-  /// absolutely critical. For simple declarations, @c
-  /// getIdentifierName() should suffice.
-  std::string getName() const { return Name.getAsString(); }
+  /// getNameAsString - Get a human-readable name for the declaration, even if
+  /// it is one of the special kinds of names (C++ constructor, Objective-C
+  /// selector, etc).  Creating this name requires expensive string
+  /// manipulation, so it should be called only when performance doesn't matter.
+  /// For simple declarations, getNameAsCString() should suffice.
   std::string getNameAsString() const { return Name.getAsString(); }
   
   static bool classof(const Decl *D) {

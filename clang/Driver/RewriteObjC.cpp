@@ -605,13 +605,13 @@ void RewriteObjC::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
   for (int i = 0; i < numDecls; i++) {
     ObjCInterfaceDecl *ForwardDecl = ForwardDecls[i];
     typedefString += "#ifndef _REWRITER_typedef_";
-    typedefString += ForwardDecl->getName();
+    typedefString += ForwardDecl->getNameAsString();
     typedefString += "\n";
     typedefString += "#define _REWRITER_typedef_";
-    typedefString += ForwardDecl->getName();
+    typedefString += ForwardDecl->getNameAsString();
     typedefString += "\n";
     typedefString += "typedef struct objc_object ";
-    typedefString += ForwardDecl->getName();
+    typedefString += ForwardDecl->getNameAsString();
     typedefString += ";\n#endif\n";
   }
   
@@ -739,13 +739,13 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
   else
     NameStr += "_C_";
   
-  NameStr += OMD->getClassInterface()->getName();
+  NameStr += OMD->getClassInterface()->getNameAsString();
   NameStr += "_";
   
   NamedDecl *MethodContext = OMD->getMethodContext();
   if (ObjCCategoryImplDecl *CID = 
       dyn_cast<ObjCCategoryImplDecl>(MethodContext)) {
-    NameStr += CID->getName();
+    NameStr += CID->getNameAsString();
     NameStr += "_";
   }
   // Append selector names, replacing ':' with '_' 
@@ -773,7 +773,7 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
         ResultStr += "struct ";
     }
     // When rewriting for Microsoft, explicitly omit the structure name.
-    ResultStr += OMD->getClassInterface()->getName();
+    ResultStr += OMD->getClassInterface()->getNameAsString();
     ResultStr += " *";
   }
   else
@@ -789,9 +789,9 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     ResultStr += ", ";
     if (PDecl->getType()->isObjCQualifiedIdType()) {
       ResultStr += "id ";
-      ResultStr += PDecl->getName();
+      ResultStr += PDecl->getNameAsString();
     } else {
-      std::string Name = PDecl->getName();
+      std::string Name = PDecl->getNameAsString();
       if (isBlockPointerType(PDecl->getType())) {
         // Make sure we convert "t (^)(...)" to "t (*)(...)".
         const BlockPointerType *BPT = PDecl->getType()->getAsBlockPointerType();
@@ -875,13 +875,13 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   if (!ObjCForwardDecls.count(ClassDecl)) {
     // we haven't seen a forward decl - generate a typedef.
     ResultStr = "#ifndef _REWRITER_typedef_";
-    ResultStr += ClassDecl->getName();
+    ResultStr += ClassDecl->getNameAsString();
     ResultStr += "\n";
     ResultStr += "#define _REWRITER_typedef_";
-    ResultStr += ClassDecl->getName();
+    ResultStr += ClassDecl->getNameAsString();
     ResultStr += "\n";
     ResultStr += "typedef struct objc_object ";
-    ResultStr += ClassDecl->getName();
+    ResultStr += ClassDecl->getNameAsString();
     ResultStr += ";\n#endif\n";
     // Mark this typedef as having been generated.
     ObjCForwardDecls.insert(ClassDecl);
@@ -1355,7 +1355,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
         cls = dyn_cast<ObjCInterfaceType>(pType->getPointeeType().getTypePtr());
         if (cls) {
           buf += "objc_exception_match((struct objc_class *)objc_getClass(\"";
-          buf += cls->getDecl()->getName();
+          buf += cls->getDecl()->getNameAsString();
           buf += "\"), (struct objc_object *)_caught)) { ";
           ReplaceText(startLoc, lParenLoc-startBuf+1, buf.c_str(), buf.size());
         }
@@ -2377,7 +2377,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   // FIXME: This has potential of causing problem. If 
   // SynthesizeObjCInternalStruct is ever called recursively.
   Result += "\nstruct ";
-  Result += CDecl->getName();
+  Result += CDecl->getNameAsString();
   if (LangOpts.Microsoft)
     Result += "_IMPL";
 
@@ -2419,9 +2419,9 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     }
     if (RCDecl && ObjCSynthesizedStructs.count(RCDecl)) {
       Result = "\n    struct ";
-      Result += RCDecl->getName();
+      Result += RCDecl->getNameAsString();
       Result += "_IMPL ";
-      Result += RCDecl->getName();
+      Result += RCDecl->getNameAsString();
       Result += "_IVARS;\n";
       
       // insert the super class structure definition.
@@ -2468,9 +2468,9 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   } else { // we don't have any instance variables - insert super struct.
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
     Result += " {\n    struct ";
-    Result += RCDecl->getName();
+    Result += RCDecl->getNameAsString();
     Result += "_IMPL ";
-    Result += RCDecl->getName();
+    Result += RCDecl->getNameAsString();
     Result += "_IVARS;\n};\n";
     ReplaceText(LocStart, endBuf-startBuf, Result.c_str(), Result.size());
   }
@@ -2593,7 +2593,7 @@ RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl> &Protocols,
       Result += "\tstruct protocol_methods protocols[";
       Result += utostr(NumMethods);
       Result += "];\n} _OBJC_PROTOCOL_INSTANCE_METHODS_";
-      Result += PDecl->getName();
+      Result += PDecl->getNameAsString();
       Result += " __attribute__ ((used, section (\"__OBJC, __cat_inst_meth\")))= "
         "{\n\t" + utostr(NumMethods) + "\n";
       
@@ -2627,7 +2627,7 @@ RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl> &Protocols,
       Result += "\tstruct protocol_methods protocols[";
       Result += utostr(NumMethods);
       Result += "];\n} _OBJC_PROTOCOL_CLASS_METHODS_";
-      Result += PDecl->getName();
+      Result += PDecl->getNameAsString();
       Result += " __attribute__ ((used, section (\"__OBJC, __cat_cls_meth\")))= "
              "{\n\t";
       Result += utostr(NumMethods);
@@ -2674,21 +2674,21 @@ RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl> &Protocols,
     }
     
     Result += "\nstatic struct _objc_protocol _OBJC_PROTOCOL_";
-    Result += PDecl->getName();
+    Result += PDecl->getNameAsString();
     Result += " __attribute__ ((used, section (\"__OBJC, __protocol\")))= "
       "{\n\t0, \"";
-    Result += PDecl->getName();
+    Result += PDecl->getNameAsString();
     Result += "\", 0, ";
     if (PDecl->instmeth_begin() != PDecl->instmeth_end()) {
       Result += "(struct _objc_protocol_method_list *)&_OBJC_PROTOCOL_INSTANCE_METHODS_";
-      Result += PDecl->getName();
+      Result += PDecl->getNameAsString();
       Result += ", ";
     }
     else
       Result += "0, ";
     if (PDecl->getNumClassMethods() > 0) {
       Result += "(struct _objc_protocol_method_list *)&_OBJC_PROTOCOL_CLASS_METHODS_";
-      Result += PDecl->getName();
+      Result += PDecl->getNameAsString();
       Result += "\n";
     }
     else
@@ -2721,12 +2721,12 @@ RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl> &Protocols,
   Result += "\n";
   
   Result += "\t,{&_OBJC_PROTOCOL_";
-  Result += Protocols[0]->getName();
+  Result += Protocols[0]->getNameAsString();
   Result += " \n";
   
   for (unsigned i = 1; i != Protocols.size(); i++) {
     Result += "\t ,&_OBJC_PROTOCOL_";
-    Result += Protocols[i]->getName();
+    Result += Protocols[i]->getNameAsString();
     Result += "\n";
   }
   Result += "\t }\n};\n";
@@ -2744,9 +2744,9 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
     if (CDecl->getIdentifier() == IDecl->getIdentifier())
       break;
   
-  std::string FullCategoryName = ClassDecl->getName();
+  std::string FullCategoryName = ClassDecl->getNameAsString();
   FullCategoryName += '_';
-  FullCategoryName += IDecl->getName();
+  FullCategoryName += IDecl->getNameAsString();
     
   // Build _objc_method_list for class's instance methods if needed
   RewriteObjCMethodsMetaData(IDecl->instmeth_begin(), IDecl->instmeth_end(),
@@ -2793,9 +2793,9 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   Result += "\nstatic struct _objc_category _OBJC_CATEGORY_";
   Result += FullCategoryName;
   Result += " __attribute__ ((used, section (\"__OBJC, __category\")))= {\n\t\"";
-  Result += IDecl->getName();
+  Result += IDecl->getNameAsString();
   Result += "\"\n\t, \"";
-  Result += ClassDecl->getName();
+  Result += ClassDecl->getNameAsString();
   Result += "\"\n";
   
   if (IDecl->getNumInstanceMethods() > 0) {
@@ -2836,11 +2836,11 @@ void RewriteObjC::SynthesizeIvarOffsetComputation(ObjCImplementationDecl *IDecl,
     Result += "0";
   } else {
     Result += "__OFFSETOFIVAR__(struct ";
-    Result += IDecl->getName();
+    Result += IDecl->getNameAsString();
     if (LangOpts.Microsoft)
       Result += "_IMPL";
     Result += ", ";
-    Result += ivar->getName();
+    Result += ivar->getNameAsString();
     Result += ")";
   }
 }
@@ -2892,7 +2892,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     Result += "\tstruct _objc_ivar ivar_list[";
     Result += utostr(NumIvars);
     Result += "];\n} _OBJC_INSTANCE_VARIABLES_";
-    Result += IDecl->getName();
+    Result += IDecl->getNameAsString();
     Result += " __attribute__ ((used, section (\"__OBJC, __instance_vars\")))= "
       "{\n\t";
     Result += utostr(NumIvars);
@@ -2907,7 +2907,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
       IVE = CDecl->ivar_end();
     }
     Result += "\t,{{\"";
-    Result += (*IVI)->getName();
+    Result += (*IVI)->getNameAsString();
     Result += "\", \"";
     std::string StrEncoding;
     Context->getObjCEncodingForType((*IVI)->getType(), StrEncoding);
@@ -2917,7 +2917,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     Result += "}\n";
     for (++IVI; IVI != IVE; ++IVI) {
       Result += "\t  ,{\"";
-      Result += (*IVI)->getName();
+      Result += (*IVI)->getNameAsString();
       Result += "\", \"";
       std::string StrEncoding;
       Context->getObjCEncodingForType((*IVI)->getType(), StrEncoding);
@@ -2988,22 +2988,22 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   SuperClass = CDecl->getSuperClass();
   
   Result += "\nstatic struct _objc_class _OBJC_METACLASS_";
-  Result += CDecl->getName();
+  Result += CDecl->getNameAsString();
   Result += " __attribute__ ((used, section (\"__OBJC, __meta_class\")))= "
   "{\n\t(struct _objc_class *)\"";
-  Result += (RootClass ? RootClass->getName() : CDecl->getName());
+  Result += (RootClass ? RootClass->getNameAsString() : CDecl->getNameAsString());
   Result += "\"";
 
   if (SuperClass) {
     Result += ", \"";
-    Result += SuperClass->getName();
+    Result += SuperClass->getNameAsString();
     Result += "\", \"";
-    Result += CDecl->getName();
+    Result += CDecl->getNameAsString();
     Result += "\"";
   }
   else {
     Result += ", 0, \"";
-    Result += CDecl->getName();
+    Result += CDecl->getNameAsString();
     Result += "\"";
   }
   // Set 'ivars' field for root class to 0. ObjC1 runtime does not use it.
@@ -3011,14 +3011,14 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   Result += ", 0,2, sizeof(struct _objc_class), 0";
   if (IDecl->getNumClassMethods() > 0) {
     Result += "\n\t, (struct _objc_method_list *)&_OBJC_CLASS_METHODS_";
-    Result += IDecl->getName();
+    Result += IDecl->getNameAsString();
     Result += "\n"; 
   }
   else
     Result += ", 0\n";
   if (!CDecl->getReferencedProtocols().empty()) {
     Result += "\t,0, (struct _objc_protocol_list *)&_OBJC_CLASS_PROTOCOLS_";
-    Result += CDecl->getName();
+    Result += CDecl->getNameAsString();
     Result += ",0,0\n";
   }
   else
@@ -3027,20 +3027,20 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   
   // class metadata generation.
   Result += "\nstatic struct _objc_class _OBJC_CLASS_";
-  Result += CDecl->getName();
+  Result += CDecl->getNameAsString();
   Result += " __attribute__ ((used, section (\"__OBJC, __class\")))= "
             "{\n\t&_OBJC_METACLASS_";
-  Result += CDecl->getName();
+  Result += CDecl->getNameAsString();
   if (SuperClass) {
     Result += ", \"";
-    Result += SuperClass->getName();
+    Result += SuperClass->getNameAsString();
     Result += "\", \"";
-    Result += CDecl->getName();
+    Result += CDecl->getNameAsString();
     Result += "\"";
   }
   else {
     Result += ", 0, \"";
-    Result += CDecl->getName();
+    Result += CDecl->getNameAsString();
     Result += "\"";
   }
   // 'info' field is initialized to CLS_CLASS(1) for class
@@ -3050,28 +3050,28 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   else {
     // class has size. Must synthesize its size.
     Result += ",sizeof(struct ";
-    Result += CDecl->getName();
+    Result += CDecl->getNameAsString();
     if (LangOpts.Microsoft)
       Result += "_IMPL";
     Result += ")";
   }
   if (NumIvars > 0) {
     Result += ", (struct _objc_ivar_list *)&_OBJC_INSTANCE_VARIABLES_";
-    Result += CDecl->getName();
+    Result += CDecl->getNameAsString();
     Result += "\n\t";
   }
   else
     Result += ",0";
   if (IDecl->getNumInstanceMethods() > 0) {
     Result += ", (struct _objc_method_list *)&_OBJC_INSTANCE_METHODS_";
-    Result += CDecl->getName();
+    Result += CDecl->getNameAsString();
     Result += ", 0\n\t"; 
   }
   else
     Result += ",0,0";
   if (!CDecl->getReferencedProtocols().empty()) {
     Result += ", (struct _objc_protocol_list*)&_OBJC_CLASS_PROTOCOLS_";
-    Result += CDecl->getName();
+    Result += CDecl->getNameAsString();
     Result += ", 0,0\n";
   }
   else
@@ -3134,15 +3134,15 @@ void RewriteObjC::SynthesizeMetaDataIntoBuffer(std::string &Result) {
             + ", " + utostr(CatDefCount) + "\n";
   for (int i = 0; i < ClsDefCount; i++) {
     Result += "\t,&_OBJC_CLASS_";
-    Result += ClassImplementation[i]->getName();
+    Result += ClassImplementation[i]->getNameAsString();
     Result += "\n";
   }
   
   for (int i = 0; i < CatDefCount; i++) {
     Result += "\t,&_OBJC_CATEGORY_";
-    Result += CategoryImplementation[i]->getClassInterface()->getName();
+    Result += CategoryImplementation[i]->getClassInterface()->getNameAsString();
     Result += "_";
-    Result += CategoryImplementation[i]->getName();
+    Result += CategoryImplementation[i]->getNameAsString();
     Result += "\n";
   }
   
@@ -3205,7 +3205,7 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
     for (BlockDecl::param_iterator AI = BD->param_begin(),
          E = BD->param_end(); AI != E; ++AI) {
       if (AI != BD->param_begin()) S += ", ";
-      ParamStr = (*AI)->getName();
+      ParamStr = (*AI)->getNameAsString();
       (*AI)->getType().getAsStringInternal(ParamStr);
       S += ParamStr;
     }
@@ -3222,15 +3222,15 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
        E = BlockByRefDecls.end(); I != E; ++I) {
     S += "  ";
-    std::string Name = (*I)->getName();
+    std::string Name = (*I)->getNameAsString();
     Context->getPointerType((*I)->getType()).getAsStringInternal(Name);
-    S += Name + " = __cself->" + (*I)->getName() + "; // bound by ref\n";
+    S += Name + " = __cself->" + (*I)->getNameAsString() + "; // bound by ref\n";
   }    
   // Next, emit a declaration for all "by copy" declarations.
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
        E = BlockByCopyDecls.end(); I != E; ++I) {
     S += "  ";
-    std::string Name = (*I)->getName();
+    std::string Name = (*I)->getNameAsString();
     // Handle nested closure invocation. For example:
     //
     //   void (^myImportedClosure)(void);
@@ -3245,7 +3245,7 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
       S += "struct __block_impl *";
     else
       (*I)->getType().getAsStringInternal(Name);
-    S += Name + " = __cself->" + (*I)->getName() + "; // bound by copy\n";
+    S += Name + " = __cself->" + (*I)->getNameAsString() + "; // bound by copy\n";
   }
   std::string RewrittenStr = RewrittenBlockExprs[CE];
   const char *cstr = RewrittenStr.c_str();
@@ -3269,9 +3269,9 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
       E = ImportedBlockDecls.end(); I != E; ++I) {
     S += "_Block_copy_assign(&dst->";
-    S += (*I)->getName();
+    S += (*I)->getNameAsString();
     S += ", src->";
-    S += (*I)->getName();
+    S += (*I)->getNameAsString();
     S += ");}";
   }
   S += "\nstatic void __";
@@ -3282,7 +3282,7 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
       E = ImportedBlockDecls.end(); I != E; ++I) {
     S += "_Block_destroy(src->";
-    S += (*I)->getName();
+    S += (*I)->getNameAsString();
     S += ");";
   }
   S += "}\n";  
@@ -3309,7 +3309,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
          E = BlockByCopyDecls.end(); I != E; ++I) {
       S += "  ";
-      std::string FieldName = (*I)->getName();
+      std::string FieldName = (*I)->getNameAsString();
       std::string ArgName = "_" + FieldName;
       // Handle nested closure invocation. For example:
       //
@@ -3335,7 +3335,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
          E = BlockByRefDecls.end(); I != E; ++I) {
       S += "  ";
-      std::string FieldName = (*I)->getName();
+      std::string FieldName = (*I)->getNameAsString();
       std::string ArgName = "_" + FieldName;
       // Handle nested closure invocation. For example:
       //
@@ -3369,7 +3369,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
     // Initialize all "by copy" arguments.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
          E = BlockByCopyDecls.end(); I != E; ++I) {
-      std::string Name = (*I)->getName();
+      std::string Name = (*I)->getNameAsString();
       Constructor += "    ";
       if (isBlockPointerType((*I)->getType()))
         Constructor += Name + " = (struct __block_impl *)_";
@@ -3380,7 +3380,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
     // Initialize all "by ref" arguments.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
          E = BlockByRefDecls.end(); I != E; ++I) {
-      std::string Name = (*I)->getName();
+      std::string Name = (*I)->getNameAsString();
       Constructor += "    ";
       if (isBlockPointerType((*I)->getType()))
         Constructor += Name + " = (struct __block_impl *)_";
@@ -3773,7 +3773,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
     while ((loc = FuncName.find(":", loc)) != std::string::npos)
       FuncName.replace(loc, 1, "_");
   } else if (GlobalVarDecl)
-    FuncName = std::string(GlobalVarDecl->getName());
+    FuncName = std::string(GlobalVarDecl->getNameAsString());
     
   std::string BlockNumber = utostr(Blocks.size()-1);
   
