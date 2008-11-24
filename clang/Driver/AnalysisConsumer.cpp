@@ -362,13 +362,13 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   
   llvm::OwningPtr<GRTransferFuncs> TF(tf);
 
+  // Display progress.
+  mgr.DisplayFunction();
+
   // Construct the analysis engine.
   LiveVariables* L = mgr.getLiveVariables();
   if (!L) return;
-  
-  // Display progress.
-  mgr.DisplayFunction();
-  
+
   GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L,
                    mgr.getStoreManagerCreator());
 
