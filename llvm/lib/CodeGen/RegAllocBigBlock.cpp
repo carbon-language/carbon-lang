@@ -808,14 +808,14 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
       if (PhysReg) {
         DOUT  << "  Register " << RegInfo->getName(PhysReg)
               << " [%reg" << VirtReg
-              << "] is never used, removing it frame live list\n";
+              << "] is never used, removing it from live set\n";
         removePhysReg(PhysReg);
         for (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
             DOUT  << "  Register " << RegInfo->getName(*AliasSet)
                   << " [%reg" << *AliasSet
-                  << "] is never used, removing it frame live list\n";
+                  << "] is never used, removing it from live set\n";
             removePhysReg(*AliasSet);
           }
         }

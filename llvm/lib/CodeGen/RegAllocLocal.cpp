@@ -945,14 +945,14 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       if (PhysReg) {
         DOUT  << "  Register " << TRI->getName(PhysReg)
               << " [%reg" << VirtReg
-              << "] is never used, removing it frame live list\n";
+              << "] is never used, removing it from live set\n";
         removePhysReg(PhysReg);
         for (const unsigned *AliasSet = TRI->getAliasSet(PhysReg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
             DOUT  << "  Register " << TRI->getName(*AliasSet)
                   << " [%reg" << *AliasSet
-                  << "] is never used, removing it frame live list\n";
+                  << "] is never used, removing it from live set\n";
             removePhysReg(*AliasSet);
           }
         }
