@@ -273,6 +273,8 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
 
   if (const StringRegion* SR = dyn_cast<StringRegion>(R)) {
     const StringLiteral* Str = SR->getStringLiteral();
+    // We intentionally made the size value signed because it participates in 
+    // operations with signed indices.
     return NonLoc::MakeVal(getBasicVals(), Str->getByteLength(), false);
   }
 
