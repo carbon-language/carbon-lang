@@ -610,7 +610,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
        E = PDecl->instmeth_end(); I != E; ++I) {
     ObjCMethodDecl *method = *I;
     if (method->getImplementationControl() != ObjCMethodDecl::Optional && 
-        !InsMap.count(method->getSelector()) &&
+        !method->isSynthesized() && !InsMap.count(method->getSelector()) &&
         (!Super || !Super->lookupInstanceMethod(method->getSelector())))
       WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
   }
