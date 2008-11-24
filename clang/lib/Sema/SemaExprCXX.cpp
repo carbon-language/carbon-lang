@@ -126,7 +126,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
     //
     if (!RT->getDecl()->isDefinition())
       return Diag(TyBeginLoc, diag::err_invalid_incomplete_type_use)
-        << Ty.getAsString() << FullRange;
+        << Ty << FullRange;
 
     unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
                                     "class constructors are not supported yet");
@@ -164,7 +164,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
     return Diag(TyBeginLoc, diag::err_value_init_for_array_type) << FullRange;
   if (Ty->isIncompleteType() && !Ty->isVoidType())
     return Diag(TyBeginLoc, diag::err_invalid_incomplete_type_use) 
-      << Ty.getAsString() << FullRange;
+      << Ty << FullRange;
 
   return new CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc);
 }
@@ -302,7 +302,7 @@ bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation StartLoc,
       assert(false && "Unexpected type class");
       return true;
     }
-    Diag(StartLoc, msg) << AllocType.getAsString() << TyR;
+    Diag(StartLoc, msg) << AllocType << TyR;
     return true;
   }
 
@@ -340,18 +340,17 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
   }
 
   if (!Type->isPointerType()) {
-    Diag(StartLoc, diag::err_delete_operand)
-      << Type.getAsString() << Ex->getSourceRange();
+    Diag(StartLoc, diag::err_delete_operand) << Type << Ex->getSourceRange();
     return true;
   }
 
   QualType Pointee = Type->getAsPointerType()->getPointeeType();
   if (Pointee->isIncompleteType() && !Pointee->isVoidType())
     Diag(StartLoc, diag::warn_delete_incomplete)
-      << Pointee.getAsString() << Ex->getSourceRange();
+      << Pointee << Ex->getSourceRange();
   else if (!Pointee->isObjectType()) {
     Diag(StartLoc, diag::err_delete_operand)
-      << Type.getAsString() << Ex->getSourceRange();
+      << Type << Ex->getSourceRange();
     return true;
   }
 
@@ -428,7 +427,7 @@ bool Sema::CheckCXXBooleanCondition(Expr *&CondExpr) {
     ConvTy = CheckSingleAssignmentConstraints(Context.BoolTy, CondExpr);
   if (ConvTy == Incompatible)
     return Diag(CondExpr->getLocStart(), diag::err_typecheck_bool_condition)
-      << Ty.getAsString() << CondExpr->getSourceRange();
+      << Ty << CondExpr->getSourceRange();
   return false;
 }
 

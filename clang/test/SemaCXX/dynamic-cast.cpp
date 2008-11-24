@@ -34,9 +34,9 @@ void basic_bad()
   // noncls -> ref
   (void)dynamic_cast<A&>(*((int*)0)); // expected-error {{'int' is not a class}}
   // ptr -> incomplete
-  (void)dynamic_cast<Incomplete*>((A*)0); // expected-error {{'struct Incomplete' is incomplete}}
+  (void)dynamic_cast<Incomplete*>((A*)0); // expected-error {{'struct Incomplete' is an incomplete type}}
   // incomplete -> ptr
-  (void)dynamic_cast<A*>((Incomplete*)0); // expected-error {{'struct Incomplete' is incomplete}}
+  (void)dynamic_cast<A*>((Incomplete*)0); // expected-error {{'struct Incomplete' is an incomplete type}}
 }
 
 void same()

@@ -388,7 +388,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         << Sel << SourceRange(lbrac, rbrac);
   } else {
     Diag(lbrac, diag::error_bad_receiver_type)
-      << RExpr->getType().getAsString() << RExpr->getSourceRange();
+      << RExpr->getType() << RExpr->getSourceRange();
     return true;
   }
   

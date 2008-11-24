@@ -351,7 +351,7 @@ void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases,
       //   derived class more than once.
       Diag(BaseSpecs[idx]->getSourceRange().getBegin(),
            diag::err_duplicate_base_class)
-        << KnownBaseTypes[NewBaseType]->getType().getAsString()
+        << KnownBaseTypes[NewBaseType]->getType()
         << BaseSpecs[idx]->getSourceRange();
 
       // Delete the duplicate base class specifier; we're going to
@@ -1212,13 +1212,13 @@ Sema::DeclTy *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
     ConvType = Context.getCanonicalType(ConvType).getUnqualifiedType();
     if (ConvType == ClassType)
       Diag(Conversion->getLocation(), diag::warn_conv_to_self_not_used)
-        << ClassType.getAsString();
+        << ClassType;
     else if (IsDerivedFrom(ClassType, ConvType))
       Diag(Conversion->getLocation(), diag::warn_conv_to_base_not_used)
-        <<  ClassType.getAsString() << ConvType.getAsString();
+        <<  ClassType << ConvType;
   } else if (ConvType->isVoidType()) {
     Diag(Conversion->getLocation(), diag::warn_conv_to_void_not_used)
-      << ClassType.getAsString() << ConvType.getAsString();
+      << ClassType << ConvType;
   }
 
   ClassDecl->addConversionFunction(Context, Conversion);
@@ -1691,9 +1691,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
     if (!ICS)
       Diag(Init->getSourceRange().getBegin(),
            diag::err_not_reference_to_const_init)
-        <<  T1.getAsString()
-        << (InitLvalue != Expr::LV_Valid? "temporary" : "value")
-        <<  T2.getAsString() << Init->getSourceRange();
+        << T1 << (InitLvalue != Expr::LV_Valid? "temporary" : "value")
+        << T2 << Init->getSourceRange();
     return true;
   }
 
@@ -1755,9 +1754,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
     if (!ICS)
       Diag(Init->getSourceRange().getBegin(),
            diag::err_reference_init_drops_quals)
-        << T1.getAsString()
-        << (InitLvalue != Expr::LV_Valid? "temporary" : "value")
-        << T2.getAsString() << Init->getSourceRange();
+        << T1 << (InitLvalue != Expr::LV_Valid? "temporary" : "value")
+        << T2 << Init->getSourceRange();
     return true;
   }
 
@@ -1915,7 +1913,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
     if (!ParamIsInt)
       return Diag(LastParam->getLocation(),
                   diag::err_operator_overload_post_incdec_must_be_int) 
-        << LastParam->getType().getAsString() << (Op == OO_MinusMinus);
+        << LastParam->getType() << (Op == OO_MinusMinus);
   }
 
   return false;

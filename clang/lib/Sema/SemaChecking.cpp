@@ -223,7 +223,7 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   if (!Res->isRealFloatingType())
     return Diag(OrigArg0->getLocStart(), 
                 diag::err_typecheck_call_invalid_ordered_compare)
-      << OrigArg0->getType().getAsString() << OrigArg1->getType().getAsString()
+      << OrigArg0->getType() << OrigArg1->getType()
       << SourceRange(OrigArg0->getLocStart(), OrigArg1->getLocEnd());
   
   return false;
@@ -574,10 +574,10 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
       
       if (Str[StrIdx-1] == '.')
         Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type)
-          << E->getType().getAsString() << E->getSourceRange();
+          << E->getType() << E->getSourceRange();
       else
         Diag(Loc, diag::warn_printf_asterisk_width_wrong_type)
-          << E->getType().getAsString() << E->getSourceRange();
+          << E->getType() << E->getSourceRange();
       
       break;
     }

@@ -158,8 +158,7 @@ static void HandleExtVectorTypeAttr(Decl *d, const AttributeList &Attr,
   // unlike gcc's vector_size attribute, we do not allow vectors to be defined
   // in conjunction with complex types (pointers, arrays, functions, etc.).
   if (!curType->isIntegerType() && !curType->isRealFloatingType()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type)
-      << curType.getAsString();
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) << curType;
     return;
   }
   // unlike gcc's vector_size attribute, the size is specified as the 
@@ -229,8 +228,7 @@ static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
   // the base type must be integer or float.
   if (!CurType->isIntegerType() && !CurType->isRealFloatingType()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type)
-      << CurType.getAsString();
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) << CurType;
     return;
   }
   unsigned typeSize = static_cast<unsigned>(S.Context.getTypeSize(CurType));

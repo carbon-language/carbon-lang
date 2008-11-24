@@ -700,7 +700,7 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
   else if (exprType->isIncompleteType())
     return Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
                                   diag::err_alignof_incomplete_type)
-      << exprType.getAsString() << ExprRange;
+      << exprType << ExprRange;
 
   return false;
 }
@@ -747,7 +747,7 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc) {
     return V->getType();
   
   // Reject anything else.
-  Diag(Loc, diag::err_realimag_invalid_type) << V->getType().getAsString();
+  Diag(Loc, diag::err_realimag_invalid_type) << V->getType();
   return QualType();
 }
 
@@ -999,7 +999,7 @@ ActOnArraySubscriptExpr(Scope *S, ExprTy *Base, SourceLocation LLoc,
   if (!ResultType->isObjectType())
     return Diag(BaseExpr->getLocStart(), 
                 diag::err_typecheck_subscript_not_object)
-      << BaseExpr->getType().getAsString() << BaseExpr->getSourceRange();
+      << BaseExpr->getType() << BaseExpr->getSourceRange();
 
   return new ArraySubscriptExpr(LHSExp, RHSExp, ResultType, RLoc);
 }
@@ -1017,7 +1017,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   const char *compStr = CompName.getName();
   if (strlen(compStr) > vecType->getNumElements()) {
     Diag(OpLoc, diag::err_ext_vector_component_exceeds_length)
-      << baseType.getAsString() << SourceRange(CompLoc);
+      << baseType << SourceRange(CompLoc);
     return QualType();
   }
 
@@ -1059,7 +1059,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
     // We didn't get to the end of the string. This means a component accessor
     // exceeds the number of elements in the vector.
     Diag(OpLoc, diag::err_ext_vector_component_exceeds_length)
-      << baseType.getAsString() << SourceRange(CompLoc);
+      << baseType << SourceRange(CompLoc);
     return QualType();
   }
 
@@ -1068,7 +1068,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   // the elements.
   if (SpecialComponent && (vecType->getNumElements() & 1U)) {
     Diag(OpLoc, diag::err_ext_vector_component_requires_even)
-      << baseType.getAsString() << SourceRange(CompLoc);
+      << baseType << SourceRange(CompLoc);
     return QualType();
   }
   
@@ -1127,7 +1127,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       return BuildOverloadedArrowExpr(BaseExpr, OpLoc, MemberLoc, Member);
     else
       return Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
-        << BaseType.getAsString() << BaseExpr->getSourceRange();
+        << BaseType << BaseExpr->getSourceRange();
   }
   
   // Handle field access to simple records.  This also handles access to fields
@@ -1263,7 +1263,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
   }
   
   return Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union)
-          << BaseType.getAsString() << BaseExpr->getSourceRange();
+          << BaseType << BaseExpr->getSourceRange();
 }
 
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
@@ -1347,7 +1347,7 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     const PointerType *PT = Fn->getType()->getAsPointerType();
     if (PT == 0)
       return Diag(LParenLoc, diag::err_typecheck_call_not_function)
-        << Fn->getType().getAsString() << Fn->getSourceRange();
+        << Fn->getType() << Fn->getSourceRange();
     FuncT = PT->getPointeeType()->getAsFunctionType();
   } else { // This is a block call.
     FuncT = Fn->getType()->getAsBlockPointerType()->getPointeeType()->
@@ -1355,7 +1355,7 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   }
   if (FuncT == 0)
     return Diag(LParenLoc, diag::err_typecheck_call_not_function)
-      << Fn->getType().getAsString() << Fn->getSourceRange();
+      << Fn->getType() << Fn->getSourceRange();
   
   // We know the result type of the call, set it.
   TheCall->setType(FuncT->getResultType().getNonReferenceType());
@@ -1499,17 +1499,17 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
         (!castType->isStructureType() && !castType->isUnionType())) {
       // Reject any other conversions to non-scalar types.
       return Diag(TyR.getBegin(), diag::err_typecheck_cond_expect_scalar)
-        << castType.getAsString() << castExpr->getSourceRange();
+        << castType << castExpr->getSourceRange();
     }
       
     // accept this, but emit an ext-warn.
     Diag(TyR.getBegin(), diag::ext_typecheck_cast_nonscalar)
-      << castType.getAsString() << castExpr->getSourceRange();
+      << castType << castExpr->getSourceRange();
   } else if (!castExpr->getType()->isScalarType() && 
              !castExpr->getType()->isVectorType()) {
     return Diag(castExpr->getLocStart(),
                 diag::err_typecheck_expect_scalar_operand)
-      << castExpr->getType().getAsString() << castExpr->getSourceRange();
+      << castExpr->getType() << castExpr->getSourceRange();
   } else if (castExpr->getType()->isVectorType()) {
     if (CheckVectorCast(TyR, castExpr->getType(), castType))
       return true;
@@ -1529,11 +1529,11 @@ bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty) {
                   Ty->isVectorType() ? 
                   diag::err_invalid_conversion_between_vectors :
                   diag::err_invalid_conversion_between_vector_and_integer)
-        << VectorTy.getAsString() << Ty.getAsString() << R;
+        << VectorTy << Ty << R;
   } else
     return Diag(R.getBegin(),
                 diag::err_invalid_conversion_between_vector_and_scalar)
-      << VectorTy.getAsString() << Ty.getAsString() << R;
+      << VectorTy << Ty << R;
   
   return false;
 }
@@ -1564,8 +1564,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
 
   // first, check the condition.
   if (!condT->isScalarType()) { // C99 6.5.15p2
-    Diag(cond->getLocStart(), diag::err_typecheck_cond_expect_scalar)
-      << condT.getAsString();
+    Diag(cond->getLocStart(), diag::err_typecheck_cond_expect_scalar) << condT;
     return QualType();
   }
   
@@ -1684,8 +1683,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       } else if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
                                              rhptee.getUnqualifiedType())) {
         Diag(questionLoc, diag::warn_typecheck_cond_incompatible_pointers)
-          << lexT.getAsString() << rexT.getAsString()
-          << lex->getSourceRange() << rex->getSourceRange();
+          << lexT << rexT << lex->getSourceRange() << rex->getSourceRange();
         // In this situation, we assume void* type. No especially good
         // reason, but this is what gcc does, and we do have to pick
         // to get a consistent AST.
@@ -1738,8 +1736,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
 
   // Otherwise, the operands are not compatible.
   Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands)
-    << lexT.getAsString() << rexT.getAsString()
-    << lex->getSourceRange() << rex->getSourceRange();
+    << lexT << rexT << lex->getSourceRange() << rex->getSourceRange();
   return QualType();
 }
 
@@ -2110,7 +2107,7 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
 
   // You cannot convert between vector values of different size.
   Diag(Loc, diag::err_typecheck_vector_not_convertable)
-    << lex->getType().getAsString() << rex->getType().getAsString()
+    << lex->getType() << rex->getType()
     << lex->getSourceRange() << rex->getSourceRange();
   return QualType();
 }    
@@ -2168,7 +2165,7 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
             << lex->getSourceRange() << rex->getSourceRange();
         } else {
           Diag(Loc, diag::err_typecheck_arithmetic_incomplete_type)
-            << lex->getType().getAsString() << lex->getSourceRange();
+            << lex->getType() << lex->getSourceRange();
           return QualType();
         }
       }
@@ -2205,7 +2202,7 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
           << lex->getSourceRange() << rex->getSourceRange();
       } else {
         Diag(Loc, diag::err_typecheck_sub_ptr_object)
-          << lex->getType().getAsString() << lex->getSourceRange();
+          << lex->getType() << lex->getSourceRange();
         return QualType();
       }
     }
@@ -2227,7 +2224,7 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
               << lex->getSourceRange() << rex->getSourceRange();
         } else {
           Diag(Loc, diag::err_typecheck_sub_ptr_object)
-            << rex->getType().getAsString() << rex->getSourceRange();
+            << rex->getType() << rex->getSourceRange();
           return QualType();
         }
       }
@@ -2237,7 +2234,7 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
               Context.getCanonicalType(lpointee).getUnqualifiedType(), 
               Context.getCanonicalType(rpointee).getUnqualifiedType())) {
         Diag(Loc, diag::err_typecheck_sub_ptr_compatible)
-          << lex->getType().getAsString() << rex->getType().getAsString()
+          << lex->getType() << rex->getType()
           << lex->getSourceRange() << rex->getSourceRange();
         return QualType();
       }
@@ -2342,8 +2339,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                     RCanPointeeTy.getUnqualifiedType()) &&
         !areComparableObjCInterfaces(LCanPointeeTy, RCanPointeeTy, Context)) {
       Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
-        << lType.getAsString() << rType.getAsString()
-        << lex->getSourceRange() << rex->getSourceRange();
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return ResultTy;
@@ -2356,8 +2352,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     if (!LHSIsNull && !RHSIsNull &&
         !Context.typesAreBlockCompatible(lpointee, rpointee)) {
       Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
-        << lType.getAsString() << rType.getAsString()
-        << lex->getSourceRange() << rex->getSourceRange();
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return ResultTy;
@@ -2367,8 +2362,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       (lType->isPointerType() && rType->isBlockPointerType())) {
     if (!LHSIsNull && !RHSIsNull) {
       Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
-        << lType.getAsString() << rType.getAsString()
-        << lex->getSourceRange() << rex->getSourceRange();
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return ResultTy;
@@ -2386,8 +2380,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       if (!LPtrToVoid && !RPtrToVoid &&
           !Context.typesAreCompatible(lType, rType)) {
         Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
-          << lType.getAsString() << rType.getAsString()
-          << lex->getSourceRange() << rex->getSourceRange();
+          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
         ImpCastExprToType(rex, lType);
         return ResultTy;
       }
@@ -2410,8 +2403,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
        rType->isIntegerType()) {
     if (!RHSIsNull)
       Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
-        << lType.getAsString() << rType.getAsString()
-        << lex->getSourceRange() << rex->getSourceRange();
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(rex, lType); // promote the integer to pointer
     return ResultTy;
   }
@@ -2419,8 +2411,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       (rType->isPointerType() || rType->isObjCQualifiedIdType())) {
     if (!LHSIsNull)
       Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
-        << lType.getAsString() << rType.getAsString()
-        << lex->getSourceRange() << rex->getSourceRange();
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(lex, rType); // promote the integer to pointer
     return ResultTy;
   }
@@ -2428,16 +2419,14 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   if (lType->isBlockPointerType() && rType->isIntegerType()) {
     if (!RHSIsNull)
       Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
-        << lType.getAsString() << rType.getAsString()
-        << lex->getSourceRange() << rex->getSourceRange();
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(rex, lType); // promote the integer to pointer
     return ResultTy;
   }
   if (lType->isIntegerType() && rType->isBlockPointerType()) {
     if (!LHSIsNull)
       Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
-        << lType.getAsString() << rType.getAsString()
-        << lex->getSourceRange() << rex->getSourceRange();
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(lex, rType); // promote the integer to pointer
     return ResultTy;
   }
@@ -2563,7 +2552,7 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   }
 
   if (NeedType)
-    S.Diag(Loc, Diag) << E->getType().getAsString() << E->getSourceRange();
+    S.Diag(Loc, Diag) << E->getType() << E->getSourceRange();
   else
     S.Diag(Loc, Diag) << E->getSourceRange();
   return true;
@@ -2649,16 +2638,16 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc) {
       Diag(OpLoc, diag::ext_gnu_void_ptr) << Op->getSourceRange();
     } else {
       Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type)
-        << ResType.getAsString() << Op->getSourceRange();
+        << ResType << Op->getSourceRange();
       return QualType();
     }
   } else if (ResType->isComplexType()) {
     // C99 does not support ++/-- on complex types, we allow as an extension.
     Diag(OpLoc, diag::ext_integer_increment_complex)
-      << ResType.getAsString() << Op->getSourceRange();
+      << ResType << Op->getSourceRange();
   } else {
     Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement)
-      << ResType.getAsString() << Op->getSourceRange();
+      << ResType << Op->getSourceRange();
     return QualType();
   }
   // At this point, we know we have a real, complex or pointer type. 
@@ -3196,7 +3185,6 @@ Action::ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
     // build a built-in operation.    
   }
 
-
   QualType resultType;
   switch (Opc) {
   default:
@@ -3227,7 +3215,7 @@ Action::ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
       break;
 
     return Diag(OpLoc, diag::err_typecheck_unary_expr)
-          << resultType.getAsString();
+      << resultType << Input->getSourceRange();
   case UnaryOperator::Not: // bitwise complement
     UsualUnaryConversions(Input);
     resultType = Input->getType();
@@ -3235,10 +3223,10 @@ Action::ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
     if (resultType->isComplexType() || resultType->isComplexIntegerType())
       // C99 does not support '~' for complex conjugation.
       Diag(OpLoc, diag::ext_integer_complement_complex)
-        << resultType.getAsString() << Input->getSourceRange();
+        << resultType << Input->getSourceRange();
     else if (!resultType->isIntegerType())
       return Diag(OpLoc, diag::err_typecheck_unary_expr)
-        << resultType.getAsString() << Input->getSourceRange();
+        << resultType << Input->getSourceRange();
     break;
   case UnaryOperator::LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
@@ -3246,7 +3234,7 @@ Action::ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
     resultType = Input->getType();
     if (!resultType->isScalarType()) // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr)
-        << resultType.getAsString();
+        << resultType << Input->getSourceRange();
     // LNot always has type int. C99 6.5.3.3p5.
     resultType = Context.IntTy;
     break;
@@ -3323,7 +3311,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
   // one is known to be a field designator.  Verify that the ArgTy represents
   // a struct/union/class.
   if (!ArgTy->isRecordType())
-    return Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy.getAsString();
+    return Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy;
   
   // Otherwise, create a compound literal expression as the base, and
   // iteratively process the offsetof designators.
@@ -3342,8 +3330,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
       const ArrayType *AT = Context.getAsArrayType(Res->getType());
       if (!AT) {
         delete Res;
-        return Diag(OC.LocEnd, diag::err_offsetof_array_type)
-          << Res->getType().getAsString();
+        return Diag(OC.LocEnd, diag::err_offsetof_array_type) << Res->getType();
       }
       
       // FIXME: C++: Verify that operator[] isn't overloaded.
@@ -3361,8 +3348,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
     const RecordType *RC = Res->getType()->getAsRecordType();
     if (!RC) {
       delete Res;
-      return Diag(OC.LocEnd, diag::err_offsetof_record_type)
-        << Res->getType().getAsString();
+      return Diag(OC.LocEnd, diag::err_offsetof_record_type) << Res->getType();
     }
       
     // Get the decl corresponding to this.
@@ -3632,7 +3618,7 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   if (CheckAssignmentConstraints(VaListType, E->getType()) != Compatible)
     return Diag(E->getLocStart(),
                 diag::err_first_argument_to_va_arg_not_of_type_va_list)
-      << E->getType().getAsString() << E->getSourceRange();
+      << E->getType() << E->getSourceRange();
   
   // FIXME: Warn if a non-POD type is passed in.
   

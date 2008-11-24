@@ -336,8 +336,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
       Context.getCanonicalType(Old->getUnderlyingType()) != 
       Context.getCanonicalType(New->getUnderlyingType())) {
     Diag(New->getLocation(), diag::err_redefinition_different_typedef)
-      << New->getUnderlyingType().getAsString()
-      << Old->getUnderlyingType().getAsString();
+      << New->getUnderlyingType() << Old->getUnderlyingType();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return Old;
   }
@@ -757,7 +756,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(ClassRec->getDecl());
       if (!ClassDecl->isAggregate())
         return Diag(InitLoc, diag::err_init_non_aggr_init_list)
-           << DeclType.getAsString() << Init->getSourceRange();
+           << DeclType << Init->getSourceRange();
     }
   }
 
@@ -906,8 +905,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       case DeclSpec::SCS_auto:        
       case DeclSpec::SCS_register:
       case DeclSpec::SCS_mutable:
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func)
-          << R.getAsString();
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func);
         InvalidDecl = true;
         break;
       case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
@@ -1186,8 +1184,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         // C99 6.9p2: The storage-class specifiers auto and register shall not
         // appear in the declaration specifiers in an external declaration.
         if (SC == VarDecl::Auto || SC == VarDecl::Register) {
-          Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope)
-            << R.getAsString();
+          Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope);
           InvalidDecl = true;
         }
       }

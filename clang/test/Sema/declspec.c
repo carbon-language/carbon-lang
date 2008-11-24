@@ -18,6 +18,6 @@ typedef int f(void);
 typedef f* fptr;
 const f* v1;         // expected-warning {{qualifier on function type 'f' has unspecified behavior}}
 __restrict__ f* v2;  // expected-error {{restrict requires a pointer or reference ('f' is invalid)}}
-__restrict__ fptr v3; // expected-error {{pointer to function type ('f') may not be 'restrict' qualified}}
-f *__restrict__ v4;   // expected-error {{pointer to function type ('f') may not be 'restrict' qualified}}
+__restrict__ fptr v3; // expected-error {{pointer to function type 'f' may not be 'restrict' qualified}}
+f *__restrict__ v4;   // expected-error {{pointer to function type 'f' may not be 'restrict' qualified}}
 

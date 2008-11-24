@@ -223,7 +223,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
       return true;
   } else if (!condType->isScalarType()) // C99 6.8.4.1p1
     return Diag(IfLoc, diag::err_typecheck_statement_requires_scalar)
-      << condType.getAsString() << condExpr->getSourceRange();
+      << condType << condExpr->getSourceRange();
 
   // Warn if the if block has a null body without an else value.
   // this helps prevent bugs due to typos, such as
@@ -362,7 +362,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
   
   if (!CondType->isIntegerType()) { // C99 6.8.4.2p1
     Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer)
-      << CondType.getAsString() << CondExpr->getSourceRange();
+      << CondType << CondExpr->getSourceRange();
     return true;
   }
   
@@ -549,7 +549,7 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
       return true;
   } else if (!condType->isScalarType()) // C99 6.8.5p2
     return Diag(WhileLoc, diag::err_typecheck_statement_requires_scalar)
-      << condType.getAsString() << condExpr->getSourceRange();
+      << condType << condExpr->getSourceRange();
 
   return new WhileStmt(condExpr, (Stmt*)Body, WhileLoc);
 }
@@ -568,7 +568,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,
       return true;
   } else if (!condType->isScalarType()) // C99 6.8.5p2
     return Diag(DoLoc, diag::err_typecheck_statement_requires_scalar)
-      << condType.getAsString() << condExpr->getSourceRange();
+      << condType << condExpr->getSourceRange();
 
   return new DoStmt((Stmt*)Body, condExpr, DoLoc);
 }
@@ -607,7 +607,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
         return true;
     } else if (!SecondType->isScalarType()) // C99 6.8.5p2
       return Diag(ForLoc, diag::err_typecheck_statement_requires_scalar)
-        << SecondType.getAsString() << Second->getSourceRange();
+        << SecondType << Second->getSourceRange();
   }
   return new ForStmt(First, Second, Third, Body, ForLoc);
 }
@@ -646,14 +646,14 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
     }
     if (!Context.isObjCObjectPointerType(FirstType))
         Diag(ForLoc, diag::err_selector_element_type)
-          << FirstType.getAsString() << First->getSourceRange();
+          << FirstType << First->getSourceRange();
   }
   if (Second) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
     if (!Context.isObjCObjectPointerType(SecondType))
       Diag(ForLoc, diag::err_collection_expr_type)
-        << SecondType.getAsString() << Second->getSourceRange();
+        << SecondType << Second->getSourceRange();
   }
   return new ObjCForCollectionStmt(First, Second, Body, ForLoc, RParenLoc);
 }
@@ -888,7 +888,7 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       // FIXME: We currently leak memory here.
       return Diag(InputExpr->getSubExpr()->getLocStart(),
                   diag::err_asm_invalid_type_in_input)
-        << InputExpr->getType().getAsString() << InputConstraint
+        << InputExpr->getType() << InputConstraint
         << InputExpr->getSubExpr()->getSourceRange();
     }
   }

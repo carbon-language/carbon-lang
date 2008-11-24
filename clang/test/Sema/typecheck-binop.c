@@ -7,7 +7,7 @@ int sub1(int *a, double *b) {
 }
 
 void *sub2(struct incomplete *P) {
-  return P-4;      /* expected-error{{not a complete object type}} */
+  return P-4;      /* expected-error{{subtraction of pointer 'struct incomplete *' requires pointee to be a complete object type}} */
 }
 
 void *sub3(void *P) {

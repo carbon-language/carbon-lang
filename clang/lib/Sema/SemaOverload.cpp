@@ -1481,8 +1481,7 @@ Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
   if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion)
     return Diag(From->getSourceRange().getBegin(),
                 diag::err_implicit_object_parameter_init)
-       << ImplicitParamType.getAsString() << From->getType().getAsString()
-       << From->getSourceRange();
+       << ImplicitParamType << From->getType() << From->getSourceRange();
 
   if (ICS.Standard.Second == ICK_Derived_To_Base &&
       CheckDerivedToBaseConversion(From->getType(), ImplicitParamType,
@@ -2874,7 +2873,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         if (isReference) FnType = Context.getReferenceType(FnType);
 
         Diag(Cand->Surrogate->getLocation(), diag::err_ovl_surrogate_cand)
-          << FnType.getAsString();
+          << FnType;
       } else {
         // FIXME: We need to get the identifier in here
         // FIXME: Do we want the error message to point at the 
@@ -2885,8 +2884,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                                     Cand->Conversions.size(),
                                     false, 0);
 
-        Diag(SourceLocation(), diag::err_ovl_builtin_candidate)
-          << FnType.getAsString();
+        Diag(SourceLocation(), diag::err_ovl_builtin_candidate) << FnType;
       }
     }
   }
@@ -3052,7 +3050,7 @@ Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
   case OR_No_Viable_Function:
     Diag(Object->getSourceRange().getBegin(), 
          diag::err_ovl_no_viable_object_call)
-      << Object->getType().getAsString() << (unsigned)CandidateSet.size()
+      << Object->getType() << (unsigned)CandidateSet.size()
       << Object->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     break;
@@ -3060,7 +3058,7 @@ Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
   case OR_Ambiguous:
     Diag(Object->getSourceRange().getBegin(),
          diag::err_ovl_ambiguous_object_call)
-      << Object->getType().getAsString() << Object->getSourceRange();
+      << Object->getType() << Object->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     break;
   }    
@@ -3212,7 +3210,7 @@ Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
   case OR_No_Viable_Function:
     if (CandidateSet.empty())
       Diag(OpLoc, diag::err_typecheck_member_reference_arrow)
-        << BasePtr->getType().getAsString() << BasePtr->getSourceRange();
+        << BasePtr->getType() << BasePtr->getSourceRange();
     else
       Diag(OpLoc, diag::err_ovl_no_viable_oper)
         << "operator->" << (unsigned)CandidateSet.size()
@@ -3222,8 +3220,7 @@ Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
 
   case OR_Ambiguous:
     Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
-      << "operator->"
-      << BasePtr->getSourceRange();
+      << "operator->" << BasePtr->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     return true;
   }

@@ -204,13 +204,13 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
         if (!EltTy->isIncompleteOrObjectType()) {
           Diag(DS.getRestrictSpecLoc(),
                diag::err_typecheck_invalid_restrict_invalid_pointee)
-            << EltTy.getAsString() << DS.getSourceRange();
+            << EltTy << DS.getSourceRange();
           TypeQuals &= ~QualType::Restrict; // Remove the restrict qualifier.
         }
       } else {
         Diag(DS.getRestrictSpecLoc(),
              diag::err_typecheck_invalid_restrict_not_pointer)
-          << Result.getAsString() << DS.getSourceRange();
+          << Result << DS.getSourceRange();
         TypeQuals &= ~QualType::Restrict; // Remove the restrict qualifier.
       }
     }
@@ -229,7 +229,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
         Loc = DS.getVolatileSpecLoc();
       }
       Diag(Loc, diag::warn_typecheck_function_qualifiers)
-        << Result.getAsString() << DS.getSourceRange();
+        << Result << DS.getSourceRange();
     }
     
     // C++ [dcl.ref]p1:
@@ -286,7 +286,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, bool CXXNewMode) {
       if ((DeclType.Ptr.TypeQuals & QualType::Restrict) &&
           !T->isIncompleteOrObjectType()) {
         Diag(DeclType.Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
-          << T.getAsString();
+          << T;
         DeclType.Ptr.TypeQuals &= QualType::Restrict;
       }        
         
@@ -327,7 +327,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, bool CXXNewMode) {
       if (DeclType.Ref.HasRestrict &&
           !T->isIncompleteOrObjectType()) {
         Diag(DeclType.Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
-          << T.getAsString();
+          << T;
         DeclType.Ref.HasRestrict = false;
       }        
 
@@ -356,7 +356,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, bool CXXNewMode) {
       // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
       if (T->isIncompleteType()) { 
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_incomplete_type)
-          << T.getAsString();
+          << T;
         T = Context.IntTy;
         D.setInvalidType(true);
       } else if (T->isFunctionType()) {
@@ -374,20 +374,18 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, bool CXXNewMode) {
         // If the element type is a struct or union that contains a variadic
         // array, reject it: C99 6.7.2.1p2.
         if (EltTy->getDecl()->hasFlexibleArrayMember()) {
-          Diag(DeclType.Loc, diag::err_flexible_array_in_array)
-            << T.getAsString();
+          Diag(DeclType.Loc, diag::err_flexible_array_in_array) << T;
           T = Context.IntTy;
           D.setInvalidType(true);
         }
       } else if (T->isObjCInterfaceType()) {
-        Diag(DeclType.Loc, diag::warn_objc_array_of_interfaces)
-        << T.getAsString();
+        Diag(DeclType.Loc, diag::warn_objc_array_of_interfaces) << T;
       }
       
       // C99 6.7.5.2p1: The size expression shall have integer type.
       if (ArraySize && !ArraySize->getType()->isIntegerType()) {
         Diag(ArraySize->getLocStart(), diag::err_array_size_non_int)
-          << ArraySize->getType().getAsString() << ArraySize->getSourceRange();
+          << ArraySize->getType() << ArraySize->getSourceRange();
         D.setInvalidType(true);
         delete ArraySize;
         ATI.NumElts = ArraySize = 0;
@@ -436,8 +434,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, bool CXXNewMode) {
       
       // C99 6.7.5.3p1: The return type may not be a function or array type.
       if (T->isArrayType() || T->isFunctionType()) {
-        Diag(DeclType.Loc, diag::err_func_returning_array_function)
-          << T.getAsString();
+        Diag(DeclType.Loc, diag::err_func_returning_array_function) << T;
         T = Context.IntTy;
         D.setInvalidType(true);
       }
