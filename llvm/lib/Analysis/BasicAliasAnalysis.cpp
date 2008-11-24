@@ -383,9 +383,9 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     if (isIdentifiedObject(O1) && isIdentifiedObject(O2))
       return NoAlias;
   
-    // Local allocations can't alias with arguments or noalias functions.
-    if ((isa<AllocationInst>(O1) && (isa<Argument>(O2) || isNoAliasCall(O2))) ||
-        (isa<AllocationInst>(O2) && (isa<Argument>(O1) || isNoAliasCall(O1))))
+    // Arguments can't alias with local allocations or noalias calls.
+    if ((isa<Argument>(O1) && (isa<AllocationInst>(O2) || isNoAliasCall(O2))) ||
+        (isa<Argument>(O2) && (isa<AllocationInst>(O1) || isNoAliasCall(O1))))
       return NoAlias;
 
     // Most objects can't alias null.
