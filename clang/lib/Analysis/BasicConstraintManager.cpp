@@ -369,8 +369,14 @@ BasicConstraintManager::AssumeInBound(const GRState* St, SVal Idx,
   }
 
   const llvm::APSInt& Zero = getBasicVals().getZeroWithPtrWidth(false);
-  const llvm::APSInt& IdxV = cast<nonloc::ConcreteInt>(Idx).getValue();
-  const llvm::APSInt& UBV = cast<nonloc::ConcreteInt>(UpperBound).getValue();
+  llvm::APSInt IdxV = cast<nonloc::ConcreteInt>(Idx).getValue();
+  // IdxV might be too narrow.
+  if (IdxV.getBitWidth() < Zero.getBitWidth())
+    IdxV.extend(Zero.getBitWidth());
+  // UBV might be too narrow, too.
+  llvm::APSInt UBV = cast<nonloc::ConcreteInt>(UpperBound).getValue();
+  if (UBV.getBitWidth() < Zero.getBitWidth())
+    UBV.extend(Zero.getBitWidth());
 
   bool InBound = (Zero <= IdxV) && (IdxV < UBV);
 

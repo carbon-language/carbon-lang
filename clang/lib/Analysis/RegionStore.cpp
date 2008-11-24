@@ -254,12 +254,15 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   if ((CI1 = dyn_cast<nonloc::ConcreteInt>(&Idx)) &&
       (CI2 = dyn_cast<nonloc::ConcreteInt>(&Offset))) {
 
-    // Temporary SVal to hold a potential signed APSInt.
+    // Temporary SVal to hold a potential signed and extended APSInt.
     SVal SignedInt;
 
-    // Index might be unsigned. We have to convert it to signed.
-    if (CI2->getValue().isUnsigned()) {
+    // Index might be unsigned. We have to convert it to signed. It might also
+    // be less wide than the size. We have to extend it.
+    if (CI2->getValue().isUnsigned() ||
+        CI2->getValue().getBitWidth() < CI1->getValue().getBitWidth()) {
       llvm::APSInt SI = CI2->getValue();
+      SI.extend(CI1->getValue().getBitWidth());
       SI.setIsSigned(true);
       SignedInt = nonloc::ConcreteInt(getBasicVals().getValue(SI));
       CI2 = cast<nonloc::ConcreteInt>(&SignedInt);
