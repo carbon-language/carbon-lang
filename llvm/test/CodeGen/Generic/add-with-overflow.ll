@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llc
+; RUN: llvm-as < %s | llc -fast-isel
 
 @ok = internal constant [4 x i8] c"%d\0A\00"
 @no = internal constant [4 x i8] c"no\0A\00"
