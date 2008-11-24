@@ -75,7 +75,8 @@ namespace clang {
     typedef typename data_type::Factory&      context_type;  
     
     static inline data_type MakeData(void* const* p) {
-      return p ? data_type((const llvm::ImmutableListImpl<T>*) *p) : data_type(0);
+      return p ? data_type((const llvm::ImmutableListImpl<T>*) *p) 
+               : data_type(0);
     }  
     
     static inline void* MakeVoidPtr(data_type D) {
