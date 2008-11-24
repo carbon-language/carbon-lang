@@ -20,8 +20,11 @@
 using namespace llvm;
 
 /// run - This is the main entry point for the type legalizer.  This does a
-/// top-down traversal of the dag, legalizing types as it goes.
-void DAGTypeLegalizer::run() {
+/// top-down traversal of the dag, legalizing types as it goes.  Returns "true"
+/// if it made any changes.
+bool DAGTypeLegalizer::run() {
+  bool Changed = false;
+
   // Create a dummy node (which is not added to allnodes), that adds a reference
   // to the root node, preventing it from being deleted, and tracking any
   // changes of the root.
@@ -65,21 +68,27 @@ void DAGTypeLegalizer::run() {
         break;
       case PromoteInteger:
         PromoteIntegerResult(N, i);
+        Changed = true;
         goto NodeDone;
       case ExpandInteger:
         ExpandIntegerResult(N, i);
+        Changed = true;
         goto NodeDone;
       case SoftenFloat:
         SoftenFloatResult(N, i);
+        Changed = true;
         goto NodeDone;
       case ExpandFloat:
         ExpandFloatResult(N, i);
+        Changed = true;
         goto NodeDone;
       case ScalarizeVector:
         ScalarizeVectorResult(N, i);
+        Changed = true;
         goto NodeDone;
       case SplitVector:
         SplitVectorResult(N, i);
+        Changed = true;
         goto NodeDone;
       }
     }
@@ -103,21 +112,27 @@ ScanOperands:
         continue;
       case PromoteInteger:
         NeedsRevisit = PromoteIntegerOperand(N, i);
+        Changed = true;
         break;
       case ExpandInteger:
         NeedsRevisit = ExpandIntegerOperand(N, i);
+        Changed = true;
         break;
       case SoftenFloat:
         NeedsRevisit = SoftenFloatOperand(N, i);
+        Changed = true;
         break;
       case ExpandFloat:
         NeedsRevisit = ExpandFloatOperand(N, i);
+        Changed = true;
         break;
       case ScalarizeVector:
         NeedsRevisit = ScalarizeVectorOperand(N, i);
+        Changed = true;
         break;
       case SplitVector:
         NeedsRevisit = SplitVectorOperand(N, i);
+        Changed = true;
         break;
       }
       break;
@@ -216,6 +231,8 @@ NodeDone:
     }
   }
 #endif
+
+  return Changed;
 }
 
 /// AnalyzeNewNode - The specified node is the root of a subtree of potentially
@@ -727,10 +744,11 @@ void DAGTypeLegalizer::GetSplitDestVTs(MVT InVT, MVT &LoVT, MVT &HiVT) {
 //===----------------------------------------------------------------------===//
 
 /// LegalizeTypes - This transforms the SelectionDAG into a SelectionDAG that
-/// only uses types natively supported by the target.
+/// only uses types natively supported by the target.  Returns "true" if it made
+/// any changes.
 ///
 /// Note that this is an involved process that may invalidate pointers into
 /// the graph.
-void SelectionDAG::LegalizeTypes() {
-  DAGTypeLegalizer(*this).run();
+bool SelectionDAG::LegalizeTypes() {
+  return DAGTypeLegalizer(*this).run();
 }

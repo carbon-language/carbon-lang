@@ -4436,8 +4436,8 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 // Target Optimization Hooks
 //===----------------------------------------------------------------------===//
 
-SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N, 
-                                               DAGCombinerInfo &DCI) const {
+SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
+                                             DAGCombinerInfo &DCI) const {
   TargetMachine &TM = getTargetMachine();
   SelectionDAG &DAG = DCI.DAG;
   switch (N->getOpcode()) {

@@ -160,7 +160,10 @@ public:
            "Too many value types for ValueTypeActions to hold!");
   }
 
-  void run();
+  /// run - This is the main entry point for the type legalizer.  This does a
+  /// top-down traversal of the dag, legalizing types as it goes.  Returns
+  /// "true" if it made any changes.
+  bool run();
 
   /// ReanalyzeNode - Recompute the NodeId and correct processed operands
   /// for the specified node, adding it to the worklist if ready.

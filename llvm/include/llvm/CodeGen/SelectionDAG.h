@@ -54,6 +54,12 @@ private:
   static void createNode(const SDNode &);
 };
 
+enum CombineLevel {
+  Unrestricted,   // Combine may create illegal operations and illegal types.
+  NoIllegalTypes, // Combine may create illegal operations but no illegal types.
+  NoIllegalOperations // Combine may only create legal operations and types.
+};
+
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
 /// in a low-level Data Dependence DAG representation suitable for instruction
 /// selection.  This DAG is constructed as the first step of instruction
@@ -187,18 +193,19 @@ public:
   }
 
   /// Combine - This iterates over the nodes in the SelectionDAG, folding
-  /// certain types of nodes together, or eliminating superfluous nodes.  When
-  /// the AfterLegalize argument is set to 'true', Combine takes care not to
-  /// generate any nodes that will be illegal on the target.
-  void Combine(bool AfterLegalize, AliasAnalysis &AA, bool Fast);
-  
+  /// certain types of nodes together, or eliminating superfluous nodes.  The
+  /// Level argument controls whether Combine is allowed to produce nodes and
+  /// types that are illegal on the target.
+  void Combine(CombineLevel Level, AliasAnalysis &AA, bool Fast);
+
   /// LegalizeTypes - This transforms the SelectionDAG into a SelectionDAG that
-  /// only uses types natively supported by the target.
+  /// only uses types natively supported by the target.  Returns "true" if it
+  /// made any changes.
   ///
   /// Note that this is an involved process that may invalidate pointers into
   /// the graph.
-  void LegalizeTypes();
-  
+  bool LegalizeTypes();
+
   /// Legalize - This transforms the SelectionDAG into a SelectionDAG that is
   /// compatible with the target instruction selector, as indicated by the
   /// TargetLowering object.

@@ -88,6 +88,10 @@ ViewDAGCombine2("view-dag-combine2-dags", cl::Hidden,
           cl::desc("Pop up a window to show dags before the second "
                    "dag combine pass"));
 static cl::opt<bool>
+ViewDAGCombineLT("view-dag-combine-lt-dags", cl::Hidden,
+          cl::desc("Pop up a window to show dags before the post legalize types"
+                   " dag combine pass"));
+static cl::opt<bool>
 ViewISelDAGs("view-isel-dags", cl::Hidden,
           cl::desc("Pop up a window to show isel dags as they are selected"));
 static cl::opt<bool>
@@ -100,6 +104,7 @@ ViewSUnitDAGs("view-sunit-dags", cl::Hidden,
 static const bool ViewDAGCombine1 = false,
                   ViewLegalizeTypesDAGs = false, ViewLegalizeDAGs = false,
                   ViewDAGCombine2 = false,
+                  ViewDAGCombineLT = false,
                   ViewISelDAGs = false, ViewSchedDAGs = false,
                   ViewSUnitDAGs = false;
 #endif
@@ -556,7 +561,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     GroupName = "Instruction Selection and Scheduling";
   std::string BlockName;
   if (ViewDAGCombine1 || ViewLegalizeTypesDAGs || ViewLegalizeDAGs ||
-      ViewDAGCombine2 || ViewISelDAGs || ViewSchedDAGs || ViewSUnitDAGs)
+      ViewDAGCombine2 || ViewDAGCombineLT || ViewISelDAGs || ViewSchedDAGs ||
+      ViewSUnitDAGs)
     BlockName = CurDAG->getMachineFunction().getFunction()->getName() + ':' +
                 BB->getBasicBlock()->getName();
 
@@ -568,9 +574,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   // Run the DAG combiner in pre-legalize mode.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Combining 1", GroupName);
-    CurDAG->Combine(false, *AA, Fast);
+    CurDAG->Combine(Unrestricted, *AA, Fast);
   } else {
-    CurDAG->Combine(false, *AA, Fast);
+    CurDAG->Combine(Unrestricted, *AA, Fast);
   }
   
   DOUT << "Optimized lowered selection DAG:\n";
@@ -582,17 +588,32 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     if (ViewLegalizeTypesDAGs) CurDAG->viewGraph("legalize-types input for " +
                                                  BlockName);
 
+    bool Changed;
     if (TimePassesIsEnabled) {
       NamedRegionTimer T("Type Legalization", GroupName);
-      CurDAG->LegalizeTypes();
+      Changed = CurDAG->LegalizeTypes();
     } else {
-      CurDAG->LegalizeTypes();
+      Changed = CurDAG->LegalizeTypes();
     }
 
     DOUT << "Type-legalized selection DAG:\n";
     DEBUG(CurDAG->dump());
 
-    // TODO: enable a dag combine pass here.
+    if (Changed) {
+      if (ViewDAGCombineLT)
+        CurDAG->viewGraph("dag-combine-lt input for " + BlockName);
+
+      // Run the DAG combiner in post-type-legalize mode.
+      if (TimePassesIsEnabled) {
+        NamedRegionTimer T("DAG Combining after legalize types", GroupName);
+        CurDAG->Combine(NoIllegalTypes, *AA, Fast);
+      } else {
+        CurDAG->Combine(NoIllegalTypes, *AA, Fast);
+      }
+
+      DOUT << "Optimized type-legalized selection DAG:\n";
+      DEBUG(CurDAG->dump());
+    }
   }
   
   if (ViewLegalizeDAGs) CurDAG->viewGraph("legalize input for " + BlockName);
@@ -612,9 +633,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   // Run the DAG combiner in post-legalize mode.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Combining 2", GroupName);
-    CurDAG->Combine(true, *AA, Fast);
+    CurDAG->Combine(NoIllegalOperations, *AA, Fast);
   } else {
-    CurDAG->Combine(true, *AA, Fast);
+    CurDAG->Combine(NoIllegalOperations, *AA, Fast);
   }
   
   DOUT << "Optimized legalized selection DAG:\n";

@@ -701,12 +701,10 @@ public:
   /// that want to combine 
   struct TargetLoweringOpt {
     SelectionDAG &DAG;
-    bool AfterLegalize;
     SDValue Old;
     SDValue New;
 
-    explicit TargetLoweringOpt(SelectionDAG &InDAG, bool afterLegalize)
-      : DAG(InDAG), AfterLegalize(afterLegalize) {}
+    explicit TargetLoweringOpt(SelectionDAG &InDAG) : DAG(InDAG) {}
     
     bool CombineTo(SDValue O, SDValue N) { 
       Old = O; 
@@ -793,7 +791,7 @@ public:
   /// Return Value:
   ///   SDValue.Val == 0   - No change was made
   ///   SDValue.Val == N   - N was replaced, is dead, and is already handled.
-  ///   otherwise            - N should be replaced by the returned Operand.
+  ///   otherwise          - N should be replaced by the returned Operand.
   ///
   /// In addition, methods provided by DAGCombinerInfo may be used to perform
   /// more complex transformations.
