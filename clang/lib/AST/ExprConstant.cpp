@@ -121,7 +121,7 @@ public:
   }
 
   APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
-  APValue VisitDeclRefExpr(DeclRefExpr *E) { return APValue(E, 0); }
+  APValue VisitDeclRefExpr(DeclRefExpr *E);
   APValue VisitPredefinedExpr(PredefinedExpr *E) { return APValue(E, 0); }
   APValue VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   APValue VisitMemberExpr(MemberExpr *E);
@@ -133,6 +133,14 @@ public:
 static bool EvaluateLValue(const Expr* E, APValue& Result, EvalInfo &Info) {
   Result = LValueExprEvaluator(Info).Visit(const_cast<Expr*>(E));
   return Result.isLValue();
+}
+
+APValue LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E)
+{ 
+  if (!E->hasGlobalStorage())
+    return APValue();
+  
+  return APValue(E, 0); 
 }
 
 APValue LValueExprEvaluator::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {

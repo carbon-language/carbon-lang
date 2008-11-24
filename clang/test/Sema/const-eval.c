@@ -20,3 +20,9 @@ EVAL_EXPR(13, x || 3.0)
 
 unsigned int l_19 = 1;
 EVAL_EXPR(14, (1 ^ l_19) && 1); // expected-error {{fields must have a constant size}}
+
+void f()
+{
+  int a;
+  EVAL_EXPR(15, (_Bool)&a); // expected-error {{fields must have a constant size}}
+}
