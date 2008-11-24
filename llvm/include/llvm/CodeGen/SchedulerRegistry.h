@@ -31,9 +31,7 @@ class SelectionDAG;
 class MachineBasicBlock;
 
 class RegisterScheduler : public MachinePassRegistryNode {
-
 public:
-
   typedef ScheduleDAG *(*FunctionPassCtor)(SelectionDAGISel*, SelectionDAG*,
                                         const TargetMachine *,
                                         MachineBasicBlock*, bool);
@@ -63,8 +61,47 @@ public:
   static void setListener(MachinePassRegistryListener *L) {
     Registry.setListener(L);
   }
-  
 };
+
+/// createBURRListDAGScheduler - This creates a bottom up register usage
+/// reduction list scheduler.
+ScheduleDAG* createBURRListDAGScheduler(SelectionDAGISel *IS,
+                                        SelectionDAG *DAG,
+                                        const TargetMachine *TM,
+                                        MachineBasicBlock *BB,
+                                        bool Fast);
+
+/// createTDRRListDAGScheduler - This creates a top down register usage
+/// reduction list scheduler.
+ScheduleDAG* createTDRRListDAGScheduler(SelectionDAGISel *IS,
+                                        SelectionDAG *DAG,
+                                        const TargetMachine *TM,
+                                        MachineBasicBlock *BB,
+                                        bool Fast);
+
+/// createTDListDAGScheduler - This creates a top-down list scheduler with
+/// a hazard recognizer.
+ScheduleDAG* createTDListDAGScheduler(SelectionDAGISel *IS,
+                                      SelectionDAG *DAG,
+                                      const TargetMachine *TM,
+                                      MachineBasicBlock *BB,
+                                      bool Fast);
+                                      
+/// createFastDAGScheduler - This creates a "fast" scheduler.
+///
+ScheduleDAG *createFastDAGScheduler(SelectionDAGISel *IS,
+                                    SelectionDAG *DAG,
+                                    const TargetMachine *TM,
+                                    MachineBasicBlock *BB,
+                                    bool Fast);
+
+/// createDefaultScheduler - This creates an instruction scheduler appropriate
+/// for the target.
+ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
+                                    SelectionDAG *DAG,
+                                    const TargetMachine *TM,
+                                    MachineBasicBlock *BB,
+                                    bool Fast);
 
 } // end namespace llvm
 
