@@ -1074,8 +1074,8 @@ const GRState* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
       // Get the index of the accessed element.
       SVal Idx = ER->getIndex();
       // Get the extent of the array.
-      SVal NumElements = StateMgr.getStoreManager().getSizeInElements(StNotNull,
-                                                       ER->getSuperRegion());
+      SVal NumElements = getStoreManager().getSizeInElements(StNotNull,
+                                                          ER->getSuperRegion());
 
       bool isFeasibleInBound = false;
       const GRState* StInBound = AssumeInBound(StNotNull, Idx, NumElements, 
