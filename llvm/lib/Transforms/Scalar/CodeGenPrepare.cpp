@@ -485,40 +485,44 @@ static void EraseDeadInstructions(Value *V) {
 }
 
 namespace {
+  /// ExtAddrMode - This is an extended version of TargetLowering::AddrMode
+  /// which holds actual Value*'s for register values.
+  struct ExtAddrMode : public TargetLowering::AddrMode {
+    Value *BaseReg;
+    Value *ScaledReg;
+    ExtAddrMode() : BaseReg(0), ScaledReg(0) {}
+    void print(OStream &OS) const;
+    void dump() const {
+      print(cerr);
+      cerr << '\n';
+    }
+  };
+} // end anonymous namespace
 
-/// ExtAddrMode - This is an extended version of TargetLowering::AddrMode which
-/// holds actual Value*'s for register values.
-struct ExtAddrMode : public TargetLowering::AddrMode {
-  Value *BaseReg;
-  Value *ScaledReg;
-  ExtAddrMode() : BaseReg(0), ScaledReg(0) {}
-  void dump() const;
-};
+static OStream &operator<<(OStream &OS, const ExtAddrMode &AM) {
+  AM.print(OS);
+  return OS;
+}
 
-static std::ostream &operator<<(std::ostream &OS, const ExtAddrMode &AM) {
+
+void ExtAddrMode::print(OStream &OS) const {
   bool NeedPlus = false;
   OS << "[";
-  if (AM.BaseGV)
+  if (BaseGV)
     OS << (NeedPlus ? " + " : "")
-       << "GV:%" << AM.BaseGV->getName(), NeedPlus = true;
+       << "GV:%" << BaseGV->getName(), NeedPlus = true;
 
-  if (AM.BaseOffs)
-    OS << (NeedPlus ? " + " : "") << AM.BaseOffs, NeedPlus = true;
+  if (BaseOffs)
+    OS << (NeedPlus ? " + " : "") << BaseOffs, NeedPlus = true;
 
-  if (AM.BaseReg)
+  if (BaseReg)
     OS << (NeedPlus ? " + " : "")
-       << "Base:%" << AM.BaseReg->getName(), NeedPlus = true;
-  if (AM.Scale)
+       << "Base:%" << BaseReg->getName(), NeedPlus = true;
+  if (Scale)
     OS << (NeedPlus ? " + " : "")
-       << AM.Scale << "*%" << AM.ScaledReg->getName(), NeedPlus = true;
+       << Scale << "*%" << ScaledReg->getName(), NeedPlus = true;
 
-  return OS << "]";
-}
-
-void ExtAddrMode::dump() const {
-  cerr << *this << "\n";
-}
-
+  OS << ']';
 }
 
 static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
@@ -572,6 +576,11 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
   if (Instruction *I = dyn_cast_or_null<Instruction>(AddrInst))
     AddrModeInsts.push_back(I);
 
+#if 0
+  if (AddrInst && !AddrInst->hasOneUse())
+    ;
+  else
+#endif
   switch (Opcode) {
   case Instruction::PtrToInt:
     // PtrToInt is always a noop, as we know that the int type is pointer sized.
