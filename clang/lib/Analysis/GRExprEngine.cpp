@@ -1291,6 +1291,13 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
             MemRegionManager& RM = getStateManager().getRegionManager();
             const MemRegion* R =
               RM.getAllocaRegion(CE, Builder->getCurrentBlockCount());
+
+            // Set the extent of the region in bytes. This enables us to use the
+            // SVal of the argument directly. If we save the extent in bits, we
+            // cannot represent values like symbol*8.
+            SVal Extent = GetSVal(St, *(CE->arg_begin()));
+            St = getStoreManager().setExtent(St, R, Extent);
+
             MakeNode(Dst, CE, *DI, BindExpr(St, CE, loc::MemRegionVal(R)));
             continue;            
           }

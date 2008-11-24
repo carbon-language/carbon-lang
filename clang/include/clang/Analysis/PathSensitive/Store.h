@@ -97,6 +97,11 @@ public:
   virtual Store BindDecl(Store store, const VarDecl* VD, SVal* InitVal,
                          unsigned Count) = 0;
 
+  virtual const GRState* setExtent(const GRState* St,
+                                   const MemRegion* R, SVal Extent) {
+    return St;
+  }
+
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep) = 0;
       

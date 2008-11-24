@@ -26,16 +26,29 @@
 
 using namespace clang;
 
+// Actual Store type.
 typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionBindingsTy;
+
+// RegionView GDM stuff.
 typedef llvm::ImmutableList<const MemRegion*> RegionViewTy;
 typedef llvm::ImmutableMap<const MemRegion*, RegionViewTy> RegionViewMapTy;
-
 static int RegionViewMapTyIndex = 0;
-
 namespace clang {
 template<> struct GRStateTrait<RegionViewMapTy> 
   : public GRStatePartialTrait<RegionViewMapTy> {
   static void* GDMIndex() { return &RegionViewMapTyIndex; }
+};
+}
+
+// RegionExtents GDM stuff.
+// Currently RegionExtents are in bytes. We can change this representation when
+// there are real requirements.
+typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionExtentsTy;
+static int RegionExtentsTyIndex = 0;
+namespace clang {
+template<> struct GRStateTrait<RegionExtentsTy>
+  : public GRStatePartialTrait<RegionExtentsTy> {
+  static void* GDMIndex() { return &RegionExtentsTyIndex; }
 };
 }
 
@@ -111,6 +124,8 @@ public:
                            LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
 
   Store BindDecl(Store store, const VarDecl* VD, SVal* InitVal, unsigned Count);
+
+  const GRState* setExtent(const GRState* St, const MemRegion* R, SVal Extent);
 
   static inline RegionBindingsTy GetRegionBindings(Store store) {
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
@@ -279,9 +294,38 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
   }
 
   if (const AnonTypedRegion* ATR = dyn_cast<AnonTypedRegion>(R)) {
-    // FIXME: Unsupported yet.
-    ATR = 0;
-    return UnknownVal();
+    GRStateRef state(St, StateMgr);
+
+    // Get the size of the super region in bytes.
+    RegionExtentsTy::data_type* T 
+      = state.get<RegionExtentsTy>(ATR->getSuperRegion());
+
+    assert(T && "region extent not exist");
+
+    // Assume it's ConcreteInt for now.
+    llvm::APSInt SSize = cast<nonloc::ConcreteInt>(*T).getValue();
+
+    // Get the size of the element in bits.
+    QualType ElemTy = cast<PointerType>(ATR->getType(getContext()).getTypePtr())
+                      ->getPointeeType();
+
+    uint64_t X = getContext().getTypeSize(ElemTy);
+
+    const llvm::APSInt& ESize = getBasicVals().getValue(X, SSize.getBitWidth(),
+                                                        false);
+
+    // Calculate the number of elements. 
+
+    // FIXME: What do we do with signed-ness problem? Shall we make all APSInts
+    // signed?
+    if (SSize.isUnsigned())
+      SSize.setIsSigned(true);
+
+    // FIXME: move this operation into BasicVals.
+    const llvm::APSInt S = 
+      (SSize * getBasicVals().getValue(8, SSize.getBitWidth(), false)) / ESize;
+
+    return NonLoc::MakeVal(getBasicVals(), S);
   }
 
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R)) {
@@ -546,6 +590,13 @@ Store RegionStoreManager::BindCompoundLiteral(Store store,
   store = Bind(store, loc::MemRegionVal(R), V);
   return store;
 }
+
+const GRState* RegionStoreManager::setExtent(const GRState* St,
+                                             const MemRegion* R, SVal Extent) {
+  GRStateRef state(St, StateMgr);
+  return state.set<RegionExtentsTy>(R, Extent);
+}
+
 
 Store RegionStoreManager::RemoveDeadBindings(Store store, Stmt* Loc, 
                                              const LiveVariables& Live,
