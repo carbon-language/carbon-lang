@@ -1449,7 +1449,8 @@ QualType ASTContext::getObjCFastEnumerationStateType()
 // typedef <type> BOOL;
 static bool isTypeTypedefedAsBOOL(QualType T) {
   if (const TypedefType *TT = dyn_cast<TypedefType>(T))
-    return !strcmp(TT->getDecl()->getIdentifierName(), "BOOL");
+    if (IdentifierInfo *II = TT->getDecl()->getIdentifier())
+      return II->isStr("BOOL");
         
   return false;
 }
