@@ -20,8 +20,8 @@ extern NSString * const NSXMLParserErrorDomain ;
 @end
 
 @implementation A
-- (void)myMethodWhichMayFail:(NSError **)error {   // expected-warning: {{Method accepting NSError** should have a non-void return value to indicate whether or not an error occured.}}
-  *error = [NSError errorWithDomain:@"domain" code:1 userInfo:0]; // expected-warning: {{Potential null dereference.}}
+- (void)myMethodWhichMayFail:(NSError **)error {   // expected-warning {{Method accepting NSError** should have a non-void return value to indicate whether or not an error occured.}}
+  *error = [NSError errorWithDomain:@"domain" code:1 userInfo:0]; // expected-warning {{Potential null dereference.}}
 }
 
 - (BOOL)myMethodWhichMayFail2:(NSError **)error {  // no-warning
@@ -33,8 +33,8 @@ extern NSString * const NSXMLParserErrorDomain ;
 struct __CFError {};
 typedef struct __CFError* CFErrorRef;
 
-void foo(CFErrorRef* error) { // expected-warning{{Function accepting CFErrorRef* should have a non-void return value to indicate whether or not an error occured.}}
-  *error = 0;  // expected-warning{{Potential null dereference.}}
+void foo(CFErrorRef* error) { // expected-warning {{Function accepting CFErrorRef* should have a non-void return value to indicate whether or not an error occured.}}
+  *error = 0;  // expected-warning {{Potential null dereference.}}
 }
 
 int bar(CFErrorRef* error) {

@@ -47,43 +47,65 @@ static void EmitError(Preprocessor &PP, SourceLocation Pos, const char *String){
 /// FindDiagnostics - Go through the comment and see if it indicates expected
 /// diagnostics. If so, then put them in a diagnostic list.
 /// 
-static void FindDiagnostics(const std::string &Comment,
+static void FindDiagnostics(const char *CommentStart, unsigned CommentLen,
                             DiagList &ExpectedDiags,
-                            Preprocessor &PP,
-                            SourceLocation Pos,
-                            const char * const ExpectedStr) {
-  SourceManager &SourceMgr = PP.getSourceManager();
+                            Preprocessor &PP, SourceLocation Pos,
+                            const char *ExpectedStr) {
+  const char *CommentEnd = CommentStart+CommentLen;
+  unsigned ExpectedStrLen = strlen(ExpectedStr);
   
-  // Find all expected diagnostics.
-  typedef std::string::size_type size_type;
-  size_type ColNo = 0;
-
-  for (;;) {
-    ColNo = Comment.find(ExpectedStr, ColNo);
-    if (ColNo == std::string::npos) break;
-
-    size_type OpenDiag = Comment.find("{{", ColNo);
-
-    if (OpenDiag == std::string::npos) {
-      EmitError(PP, Pos,
-                "cannot find start ('{{') of expected diagnostic string");
+  // Find all expected-foo diagnostics in the string and add them to
+  // ExpectedDiags.
+  while (CommentStart != CommentEnd) {
+    CommentStart = std::find(CommentStart, CommentEnd, 'e');
+    if (unsigned(CommentEnd-CommentStart) < ExpectedStrLen) return;
+    
+    // If this isn't expected-foo, ignore it.
+    if (memcmp(CommentStart, ExpectedStr, ExpectedStrLen)) {
+      ++CommentStart;
+      continue;
+    }
+    
+    CommentStart += ExpectedStrLen;
+    
+    // Skip whitespace.
+    while (CommentStart != CommentEnd &&
+           isspace(CommentStart[0]))
+      ++CommentStart;
+    
+    // We should have a {{ now.
+    if (CommentEnd-CommentStart < 2 ||
+        CommentStart[0] != '{' || CommentStart[1] != '{') {
+      if (std::find(CommentStart, CommentEnd, '{') != CommentEnd)
+        EmitError(PP, Pos, "bogus characters before '{{' in expected string");
+      else
+        EmitError(PP, Pos, "cannot find start ('{{') of expected string");
       return;
+    }    
+    CommentStart += 2;
+
+    // Find the }}.
+    const char *ExpectedEnd = CommentStart;
+    while (1) {
+      ExpectedEnd = std::find(ExpectedEnd, CommentEnd, '}');
+      if (CommentEnd-ExpectedEnd < 2) {
+        EmitError(PP, Pos, "cannot find end ('}}') of expected string");
+        return;
+      }
+      
+      if (ExpectedEnd[1] == '}')
+        break;
+
+      ++ExpectedEnd;  // Skip over singular }'s
     }
 
-    OpenDiag += 2;
-    size_type CloseDiag = Comment.find("}}", OpenDiag);
-
-    if (CloseDiag == std::string::npos) {
-      EmitError(PP, Pos,"cannot find end ('}}') of expected diagnostic string");
-      return;
-    }
-
-    std::string Msg(Comment.substr(OpenDiag, CloseDiag - OpenDiag));
-    size_type FindPos;
+    std::string Msg(CommentStart, ExpectedEnd);
+    std::string::size_type FindPos;
     while ((FindPos = Msg.find("\\n")) != std::string::npos)
       Msg.replace(FindPos, 2, "\n");
     ExpectedDiags.push_back(std::make_pair(Pos, Msg));
-    ColNo = CloseDiag + 2;
+    
+    CommentStart = ExpectedEnd;
   }
 }
 
@@ -113,17 +135,19 @@ static void FindExpectedDiags(Preprocessor &PP,
     if (!Tok.is(tok::comment)) continue;
     
     std::string Comment = PP.getSpelling(Tok);
+    if (Comment.empty()) continue;
 
+    
     // Find all expected errors.
-    FindDiagnostics(Comment, ExpectedErrors, PP,
+    FindDiagnostics(&Comment[0], Comment.size(), ExpectedErrors, PP,
                     Tok.getLocation(), "expected-error");
 
     // Find all expected warnings.
-    FindDiagnostics(Comment, ExpectedWarnings, PP,
+    FindDiagnostics(&Comment[0], Comment.size(), ExpectedWarnings, PP,
                     Tok.getLocation(), "expected-warning");
 
     // Find all expected notes.
-    FindDiagnostics(Comment, ExpectedNotes, PP,
+    FindDiagnostics(&Comment[0], Comment.size(), ExpectedNotes, PP,
                     Tok.getLocation(), "expected-note");
   };
 }

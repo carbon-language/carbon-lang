@@ -11,5 +11,5 @@
 
 id s = @"123"; // simple
 id t = @"123" @"456"; // concat
-id u = @"123" @ blah; // expected-error: {{unexpected token}}
+id u = @"123" @ blah; // expected-error {{unexpected token}}
 
