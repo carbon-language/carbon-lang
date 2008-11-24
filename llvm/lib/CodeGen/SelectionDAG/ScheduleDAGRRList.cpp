@@ -506,7 +506,7 @@ bool ScheduleDAGRRList::AddPred(SUnit *Y, SUnit *X, bool isCtrl,
 bool ScheduleDAGRRList::RemovePred(SUnit *M, SUnit *N, 
                                    bool isCtrl, bool isArtificial) {
   // InitDAGTopologicalSorting();
-  return M->removePred(N, isCtrl, isArtificial);
+  return M->removePred(N, isCtrl, isArtificial, false);
 }
 
 /// DFS - Make a DFS traversal to mark all nodes reachable from SU and mark

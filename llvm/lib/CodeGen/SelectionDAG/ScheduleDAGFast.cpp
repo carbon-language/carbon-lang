@@ -198,7 +198,7 @@ bool ScheduleDAGFast::AddPred(SUnit *Y, SUnit *X, bool isCtrl,
 /// the current node M.
 bool ScheduleDAGFast::RemovePred(SUnit *M, SUnit *N, 
                                  bool isCtrl, bool isArtificial) {
-  return M->removePred(N, isCtrl, isArtificial);
+  return M->removePred(N, isCtrl, isArtificial, false);
 }
 
 /// CopyAndMoveSuccessors - Clone the specified node and move its scheduled

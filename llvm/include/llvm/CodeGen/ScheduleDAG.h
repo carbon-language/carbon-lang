@@ -164,7 +164,7 @@ namespace llvm {
       return true;
     }
 
-    bool removePred(SUnit *N, bool isCtrl, bool isArtificial) {
+    bool removePred(SUnit *N, bool isCtrl, bool isArtificial, bool isAntiDep) {
       for (SmallVector<SDep, 4>::iterator I = Preds.begin(), E = Preds.end();
            I != E; ++I)
         if (I->Dep == N && I->isCtrl == isCtrl && I->isArtificial == isArtificial) {
@@ -172,7 +172,8 @@ namespace llvm {
           for (SmallVector<SDep, 4>::iterator II = N->Succs.begin(),
                  EE = N->Succs.end(); II != EE; ++II)
             if (II->Dep == this &&
-                II->isCtrl == isCtrl && II->isArtificial == isArtificial) {
+                II->isCtrl == isCtrl && II->isArtificial == isArtificial &&
+                II->isAntiDep == isAntiDep) {
               FoundSucc = true;
               N->Succs.erase(II);
               break;
