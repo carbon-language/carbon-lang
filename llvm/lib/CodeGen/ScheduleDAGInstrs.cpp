@@ -58,7 +58,7 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
         SUnit *&Def = Defs[*Alias];
         if (Def && Def != SU)
           Def->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false,
-                       /*PhyReg=*/*Alias, Cost);
+                       /*PhyReg=*/*Alias, Cost, /*isAntiDep=*/MO.isUse());
       }
 
       if (MO.isDef()) {
