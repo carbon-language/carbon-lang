@@ -248,6 +248,11 @@ NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, unsigned X,
                                                 isUnsigned));
 }
 
+NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, uint64_t X, 
+                       unsigned BitWidth, bool isUnsigned) {
+  return nonloc::ConcreteInt(BasicVals.getValue(X, BitWidth, isUnsigned));
+}
+
 NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T) {  
   return nonloc::ConcreteInt(BasicVals.getValue(X, T));
 }
@@ -261,6 +266,10 @@ NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I) {
 NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, const llvm::APInt& I,
                        bool isUnsigned) {
   return nonloc::ConcreteInt(BasicVals.getValue(I, isUnsigned));
+}
+
+NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, const llvm::APSInt& I) {
+  return nonloc::ConcreteInt(BasicVals.getValue(I));
 }
 
 NonLoc NonLoc::MakeIntTruthVal(BasicValueFactory& BasicVals, bool b) {

@@ -174,12 +174,17 @@ public:
   static NonLoc MakeVal(BasicValueFactory& BasicVals, unsigned X, 
                         bool isUnsigned);
 
+  static NonLoc MakeVal(BasicValueFactory& BasicVals, uint64_t X, 
+                        unsigned BitWidth, bool isUnsigned);
+
   static NonLoc MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T);
   
   static NonLoc MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I);
 
   static NonLoc MakeVal(BasicValueFactory& BasicVals, const llvm::APInt& I,
                         bool isUnsigned);
+
+  static NonLoc MakeVal(BasicValueFactory& BasicVals, const llvm::APSInt& I);
     
   static NonLoc MakeIntTruthVal(BasicValueFactory& BasicVals, bool b);
 
