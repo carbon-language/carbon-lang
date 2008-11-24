@@ -189,6 +189,9 @@ protected:
                             const MemRegion* superRegion);
 
 public:
+
+  const StringLiteral* getStringLiteral() const { return Str; }
+
   QualType getType(ASTContext& C) const {
     return C.getCanonicalType(Str->getType());
   }

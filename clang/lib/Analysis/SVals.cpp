@@ -242,6 +242,11 @@ NonLoc Loc::NE(BasicValueFactory& BasicVals, const Loc& R) const {
 //===----------------------------------------------------------------------===//
 // Utility methods for constructing Non-Locs.
 //===----------------------------------------------------------------------===//
+NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, unsigned X, 
+                       bool isUnsigned) {
+  return nonloc::ConcreteInt(BasicVals.getValue(X, sizeof(unsigned)*8, 
+                                                isUnsigned));
+}
 
 NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T) {  
   return nonloc::ConcreteInt(BasicVals.getValue(X, T));

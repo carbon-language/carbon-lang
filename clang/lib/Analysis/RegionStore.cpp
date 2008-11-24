@@ -272,9 +272,8 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
   }
 
   if (const StringRegion* SR = dyn_cast<StringRegion>(R)) {
-    // FIXME: Unsupported yet.
-    SR = 0;
-    return UnknownVal();
+    const StringLiteral* Str = SR->getStringLiteral();
+    return NonLoc::MakeVal(getBasicVals(), Str->getByteLength(), false);
   }
 
   if (const AnonTypedRegion* ATR = dyn_cast<AnonTypedRegion>(R)) {

@@ -170,6 +170,10 @@ public:
   void print(llvm::raw_ostream& Out) const;
   
   // Utility methods to create NonLocs.
+
+  static NonLoc MakeVal(BasicValueFactory& BasicVals, unsigned X, 
+                        bool isUnsigned);
+
   static NonLoc MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T);
   
   static NonLoc MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I);
