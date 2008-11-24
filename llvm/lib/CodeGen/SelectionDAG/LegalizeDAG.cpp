@@ -114,12 +114,14 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   void AddPromotedOperand(SDValue From, SDValue To) {
     bool isNew = PromotedNodes.insert(std::make_pair(From, To)).second;
     assert(isNew && "Got into the map somehow?");
+    isNew = isNew;
     // If someone requests legalization of the new node, return itself.
     LegalizedNodes.insert(std::make_pair(To, To));
   }
   void AddWidenedOperand(SDValue From, SDValue To) {
     bool isNew = WidenNodes.insert(std::make_pair(From, To)).second;
     assert(isNew && "Got into the map somehow?");
+    isNew = isNew;
     // If someone requests legalization of the new node, return itself.
     LegalizedNodes.insert(std::make_pair(To, To));
   }
@@ -7163,6 +7165,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
   bool isNew =
     ExpandedNodes.insert(std::make_pair(Op, std::make_pair(Lo, Hi))).second;
   assert(isNew && "Value already expanded?!?");
+  isNew = isNew;
 }
 
 /// SplitVectorOp - Given an operand of vector type, break it down into
@@ -7509,6 +7512,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
   bool isNew = 
     SplitNodes.insert(std::make_pair(Op, std::make_pair(Lo, Hi))).second;
   assert(isNew && "Value already split?!?");
+  isNew = isNew;
 }
 
 
@@ -7676,6 +7680,7 @@ SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
     Result = LegalizeOp(Result);
   bool isNew = ScalarizedNodes.insert(std::make_pair(Op, Result)).second;
   assert(isNew && "Value already scalarized?");
+  isNew = isNew;
   return Result;
 }
 

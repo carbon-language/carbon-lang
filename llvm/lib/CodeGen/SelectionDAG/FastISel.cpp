@@ -401,6 +401,7 @@ bool FastISel::SelectCall(User *I) {
       bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
                                            Reg, RC, RC);
       assert(InsertedCopy && "Can't copy address registers!");
+      InsertedCopy = InsertedCopy;
       UpdateValueMap(I, ResultReg);
       return true;
     }
@@ -434,6 +435,7 @@ bool FastISel::SelectCall(User *I) {
         bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
                                              Reg, RC, RC);
         assert(InsertedCopy && "Can't copy address registers!");
+        InsertedCopy = InsertedCopy;
         UpdateValueMap(I, ResultReg);
       } else {
         unsigned ResultReg =

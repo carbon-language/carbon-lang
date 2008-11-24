@@ -1212,9 +1212,11 @@ SDValue SelectionDAG::getSrcValue(const Value *V) {
 }
 
 SDValue SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
+#ifndef NDEBUG
   const Value *v = MO.getValue();
   assert((!v || isa<PointerType>(v->getType())) &&
          "SrcValue is not a pointer?");
+#endif
 
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::MEMOPERAND, getVTList(MVT::Other), 0, 0);
