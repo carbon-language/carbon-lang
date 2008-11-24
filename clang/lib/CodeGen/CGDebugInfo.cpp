@@ -152,7 +152,7 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
   
   // We don't set size information, but do specify where the typedef was
   // declared.
-  const char *TyName = Ty->getDecl()->getIdentifierName();
+  std::string TyName = Ty->getDecl()->getNameAsString();
   SourceLocation DefLoc = Ty->getDecl()->getLocation();
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
 
@@ -206,8 +206,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   SourceManager &SM = M->getContext().getSourceManager();
 
   // Get overall information about the record type for the debug info.
-  const char *Name = Decl->getIdentifierName();
-  if (Name == 0) Name = "";
+  std::string Name = Decl->getNameAsString();
 
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(Decl->getLocation());
   uint64_t Line = SM.getLogicalLineNumber(Decl->getLocation());
@@ -241,9 +240,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
        E = Decl->field_end(); I != E; ++I, ++FieldNo) {
     FieldDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
-    
-    const char *FieldName = Field->getIdentifierName();
-    if (FieldName == 0) FieldName = "";
+
+    std::string FieldName = Field->getNameAsString();
 
     // Get the location for the field.
     SourceLocation FieldDefLoc = Field->getLocation();
@@ -301,8 +299,7 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   llvm::DIArray EltArray =
     DebugFactory.GetOrCreateArray(&Enumerators[0], Enumerators.size());
 
-  const char *EnumName 
-    = Decl->getIdentifierName() ? Decl->getIdentifierName() : "";
+  std::string EnumName = Decl->getNameAsString();
   SourceLocation DefLoc = Decl->getLocation();
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
   SourceManager &SM = M->getContext().getSourceManager();
@@ -516,7 +513,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
   SourceManager &SM = M->getContext().getSourceManager();
   uint64_t LineNo = SM.getLogicalLineNumber(Decl->getLocation());
-  const char *Name = Decl->getIdentifierName();
+
+  std::string Name = Decl->getNameAsString();
   
   DebugFactory.CreateGlobalVariable(Unit, Name, Name, "", Unit, LineNo,
                                     getOrCreateType(Decl->getType(), Unit),

@@ -664,7 +664,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
   // over.
   LazySymbols.insert(&CGM.getContext().Idents.get("Protocol"));
 
-  const char *ProtocolName = PD->getIdentifierName();
+  const char *ProtocolName = PD->getNameAsCString();
 
   // Construct method lists.
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
@@ -1076,7 +1076,7 @@ static bool IsClassHidden(const ObjCInterfaceDecl *ID) {
 void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   DefinedSymbols.insert(ID->getIdentifier());
 
-  const char *ClassName = ID->getIdentifierName();
+  std::string ClassName = ID->getNameAsString();
   // FIXME: Gross
   ObjCInterfaceDecl *Interface = 
     const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
@@ -1169,7 +1169,6 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
                                          llvm::Constant *Protocols,
                                          const llvm::Type *InterfaceTy,
                                          const ConstantVector &Methods) {
-  const char *ClassName = ID->getIdentifierName();
   unsigned Flags = eClassFlags_Meta;
   unsigned Size = CGM.getTargetData().getABITypeSize(ObjCTypes.ClassTy);
 
@@ -1215,7 +1214,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
                                                    Values);
 
   std::string Name("\01L_OBJC_METACLASS_");
-  Name += ClassName;
+  Name += ID->getNameAsCString();
 
   // Check for a forward reference.
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);

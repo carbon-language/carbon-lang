@@ -557,12 +557,12 @@ DIAG(error_nosetter_property_assignment, ERROR,
      "setter method is needed to assign to object using property"
      " assignment syntax")
 DIAG(warn_readonly_property, WARNING,
-     "attribute 'readonly' of property '%0' restricts attribute "
-     "'readwrite' of property inherited from '%1'")
+     "attribute 'readonly' of property %0 restricts attribute "
+     "'readwrite' of property inherited from %1")
 DIAG(warn_property_attribute, WARNING,
-     "property '%0' '%1' attribute does not match the property inherited from'%2' ")
+     "property %0 '%1' attribute does not match the property inherited from %2")
 DIAG(warn_property_type, WARNING,
-     "property type '%0' does not match property type inherited from '%1'")
+     "property type %0 does not match property type inherited from %1")
 
 /// C++ parser diagnostics
 DIAG(err_expected_unqualified_id, ERROR,

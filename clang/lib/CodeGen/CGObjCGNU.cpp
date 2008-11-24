@@ -570,7 +570,7 @@ llvm::Value *CGObjCGNU::GenerateProtocolRef(CGBuilderTy &Builder,
 
 void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   ASTContext &Context = CGM.getContext();
-  const char *ProtocolName = PD->getIdentifierName();
+  std::string ProtocolName = PD->getNameAsString();
   llvm::SmallVector<std::string, 16> Protocols;
   for (ObjCProtocolDecl::protocol_iterator PI = PD->protocol_begin(),
        E = PD->protocol_end(); PI != E; ++PI)
@@ -625,8 +625,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
 }
 
 void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
-  const char *ClassName = OCD->getClassInterface()->getIdentifierName();
-  const char *CategoryName = OCD->getIdentifierName();
+  std::string ClassName = OCD->getClassInterface()->getNameAsString();
+  std::string CategoryName = OCD->getNameAsString();
   // Collect information about instance methods
   llvm::SmallVector<Selector, 16> InstanceMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
@@ -682,14 +682,13 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   // Get the superclass name.
   const ObjCInterfaceDecl * SuperClassDecl = 
     OID->getClassInterface()->getSuperClass();
-  const char * SuperClassName = NULL;
-  if (SuperClassDecl) {
-    SuperClassName = SuperClassDecl->getIdentifierName();
-  }
+  std::string SuperClassName;
+  if (SuperClassDecl)
+    SuperClassName = SuperClassDecl->getNameAsString();
 
   // Get the class name
   ObjCInterfaceDecl * ClassDecl = (ObjCInterfaceDecl*)OID->getClassInterface();
-  const char * ClassName = ClassDecl->getIdentifierName();
+  std::string ClassName = ClassDecl->getNameAsString();
 
   // Get the size of instances.  For runtimes that support late-bound instances
   // this should probably be something different (size just of instance
@@ -758,7 +757,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
 
   // Get the superclass pointer.
   llvm::Constant *SuperClass;
-  if (SuperClassName) {
+  if (!SuperClassName.empty()) {
     SuperClass = MakeConstantString(SuperClassName, ".super_class_name");
   } else {
     SuperClass = llvm::ConstantPointerNull::get(
@@ -778,8 +777,9 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       NULLPtr, 0x2L, /*name*/"", 0, Zeros[0], GenerateIvarList(
         empty, empty, empty), ClassMethodList, NULLPtr);
   // Generate the class structure
-  llvm::Constant *ClassStruct = GenerateClassStructure(MetaClassStruct,
-      SuperClass, 0x1L, ClassName, 0,
+  llvm::Constant *ClassStruct =
+    GenerateClassStructure(MetaClassStruct, SuperClass, 0x1L,
+                           ClassName.c_str(), 0,
       llvm::ConstantInt::get(llvm::Type::Int32Ty, instanceSize), IvarList,
       MethodList, GenerateProtocolList(Protocols));
   // Add class structure to list to be added to the symtab later

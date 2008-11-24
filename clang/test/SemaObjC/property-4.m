@@ -24,7 +24,7 @@
    int newO;
    int oldO;
 }
-@property (retain) id MayCauseError;  // expected-warning {{property 'MayCauseError' 'copy' attribute does not match the property inherited from'GCObject'}} \
-				      expected-warning {{property 'MayCauseError' 'copy' attribute does not match the property inherited from'ProtocolObject'}}
+@property (retain) id MayCauseError;  // expected-warning {{property 'MayCauseError' 'copy' attribute does not match the property inherited from 'GCObject'}} \
+				      expected-warning {{property 'MayCauseError' 'copy' attribute does not match the property inherited from 'ProtocolObject'}}
 @end
 

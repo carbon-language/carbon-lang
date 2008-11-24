@@ -79,15 +79,12 @@ public:
   /// name (C++ constructor, Objective-C selector, etc.).
   IdentifierInfo *getIdentifier() const { return Name.getAsIdentifierInfo(); }
 
-  /// getIdentifierName - Get the name of identifier for this
-  /// declaration as a string. If the declaration has no name, or if
-  /// the name is a special name (C++ constructor, Objective-C
-  /// selector, etc.), returns NULL.
-  const char *getIdentifierName() const {
-    if (IdentifierInfo *II = getIdentifier())
-      return II->getName();
-    else
-      return 0;
+  /// getNameAsCString - Get the name of identifier for this declaration as a
+  /// C string (const char*).  This requires that the declaration have a name
+  /// and that it be a simple identifier.
+  const char *getNameAsCString() const {
+    assert(getIdentifier() && "Name is not a simple identifier");
+    return getIdentifier()->getName();
   }
 
   /// getDeclName - Get the actual, stored name of the declaration,

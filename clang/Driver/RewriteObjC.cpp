@@ -505,7 +505,7 @@ void RewriteObjC::HandleTopLevelDecl(Decl *D) {
     RewriteFunctionDecl(FD);
   } else if (VarDecl *FVD = dyn_cast<VarDecl>(D)) {
     // declared in <Foundation/NSString.h>
-    if (strcmp(FVD->getIdentifierName(), "_NSConstantStringClassReference") == 0) {
+    if (strcmp(FVD->getNameAsCString(), "_NSConstantStringClassReference") == 0) {
       ConstantStringClassReference = FVD;
       return;
     }
@@ -1085,13 +1085,13 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
     elementTypeAsString = ElementType.getAsString();
     buf += elementTypeAsString;
     buf += " ";
-    elementName = D->getIdentifierName();
+    elementName = D->getNameAsCString();
     buf += elementName;
     buf += ";\n\t";
   }
   else {
     DeclRefExpr *DR = cast<DeclRefExpr>(S->getElement());
-    elementName = DR->getDecl()->getIdentifierName();
+    elementName = DR->getDecl()->getNameAsCString();
     elementTypeAsString 
       = cast<ValueDecl>(DR->getDecl())->getType().getAsString();
   }
@@ -1703,7 +1703,7 @@ void RewriteObjC::SynthGetProtocolFunctionDecl() {
 
 void RewriteObjC::RewriteFunctionDecl(FunctionDecl *FD) {
   // declared in <objc/objc.h>
-  if (strcmp(FD->getIdentifierName(), "sel_registerName") == 0) {
+  if (strcmp(FD->getNameAsCString(), "sel_registerName") == 0) {
     SelGetUidFunctionDecl = FD;
     return;
   }
@@ -2308,8 +2308,8 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
   // Create a call to objc_getProtocol("ProtocolName").
   llvm::SmallVector<Expr*, 8> ProtoExprs;
   QualType argType = Context->getPointerType(Context->CharTy);
-  ProtoExprs.push_back(new StringLiteral(Exp->getProtocol()->getIdentifierName(),
-                                       strlen(Exp->getProtocol()->getIdentifierName()),
+  ProtoExprs.push_back(new StringLiteral(Exp->getProtocol()->getNameAsCString(),
+                                       strlen(Exp->getProtocol()->getNameAsCString()),
                                        false, argType, SourceLocation(),
                                        SourceLocation()));
   CallExpr *ProtoExp = SynthesizeCallToFunctionDecl(GetProtocolFunctionDecl,
@@ -2352,7 +2352,7 @@ bool RewriteObjC::BufferContainsPPDirectives(const char *startBuf,
 void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
                                                std::string &Result) {
   assert(CDecl && "Class missing in SynthesizeObjCInternalStruct");
-  assert(CDecl->getIdentifierName() && 
+  assert(CDecl->getNameAsCString() && 
          "Name missing in SynthesizeObjCInternalStruct");
   // Do not synthesize more than once.
   if (ObjCSynthesizedStructs.count(CDecl))
@@ -2932,15 +2932,15 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   
   // Build _objc_method_list for class's instance methods if needed
   RewriteObjCMethodsMetaData(IDecl->instmeth_begin(), IDecl->instmeth_end(), 
-                             true, "", IDecl->getIdentifierName(), Result);
+                             true, "", IDecl->getNameAsCString(), Result);
   
   // Build _objc_method_list for class's class methods if needed
   RewriteObjCMethodsMetaData(IDecl->classmeth_begin(), IDecl->classmeth_end(),
-                             false, "", IDecl->getIdentifierName(), Result);
+                             false, "", IDecl->getNameAsCString(), Result);
     
   // Protocols referenced in class declaration?
   RewriteObjCProtocolsMetaData(CDecl->getReferencedProtocols(),
-                               "CLASS", CDecl->getIdentifierName(), Result);
+                               "CLASS", CDecl->getNameAsCString(), Result);
     
   
   // Declaration of class/meta-class metadata
@@ -3439,7 +3439,7 @@ void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
 
 void RewriteObjC::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
   SourceLocation FunLocStart = FD->getTypeSpecStartLoc();
-  const char *FuncName = FD->getIdentifierName();
+  const char *FuncName = FD->getNameAsCString();
   
   SynthesizeBlockLiterals(FunLocStart, FuncName);
 }
@@ -3499,13 +3499,13 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
   const BlockPointerType *CPT = 0;
   
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp->getCallee())) {
-    closureName = DRE->getDecl()->getIdentifierName();
+    closureName = DRE->getDecl()->getNameAsCString();
     CPT = DRE->getType()->getAsBlockPointerType();
   } else if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(Exp->getCallee())) {
-    closureName = CDRE->getDecl()->getIdentifierName();
+    closureName = CDRE->getDecl()->getNameAsCString();
     CPT = CDRE->getType()->getAsBlockPointerType();
   } else if (MemberExpr *MExpr = dyn_cast<MemberExpr>(Exp->getCallee())) {
-    closureName = MExpr->getMemberDecl()->getIdentifierName();
+    closureName = MExpr->getMemberDecl()->getNameAsCString();
     CPT = MExpr->getType()->getAsBlockPointerType();
   } else {
     assert(1 && "RewriteBlockClass: Bad type");
@@ -3822,15 +3822,15 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
          E = BlockByCopyDecls.end(); I != E; ++I) {
       if (isObjCType((*I)->getType())) {
         // FIXME: Conform to ABI ([[obj retain] autorelease]).
-        FD = SynthBlockInitFunctionDecl((*I)->getIdentifierName());
+        FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Exp = new DeclRefExpr(FD, FD->getType(), SourceLocation());
       } else if (isBlockPointerType((*I)->getType())) {
-        FD = SynthBlockInitFunctionDecl((*I)->getIdentifierName());
+        FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Arg = new DeclRefExpr(FD, FD->getType(), SourceLocation());
         Exp = new CStyleCastExpr(Context->VoidPtrTy, Arg, 
                                  Context->VoidPtrTy, SourceLocation(), SourceLocation());
       } else {
-        FD = SynthBlockInitFunctionDecl((*I)->getIdentifierName());
+        FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Exp = new DeclRefExpr(FD, FD->getType(), SourceLocation());
       }
       InitExprs.push_back(Exp); 
@@ -3838,7 +3838,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
     // Output all "by ref" declarations.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
          E = BlockByRefDecls.end(); I != E; ++I) {
-      FD = SynthBlockInitFunctionDecl((*I)->getIdentifierName());
+      FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
       Exp = new DeclRefExpr(FD, FD->getType(), SourceLocation());
       Exp = new UnaryOperator(Exp, UnaryOperator::AddrOf,
                               Context->getPointerType(Exp->getType()), 
@@ -4075,7 +4075,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
       GlobalVarDecl = VD;
       RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
       SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(), 
-                              VD->getIdentifierName());
+                              VD->getNameAsCString());
       GlobalVarDecl = 0;
 
       // This is needed for blocks.

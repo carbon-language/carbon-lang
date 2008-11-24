@@ -203,7 +203,7 @@ void StmtDumper::DumpDeclarator(Decl *D) {
   if (TypedefDecl *localType = dyn_cast<TypedefDecl>(D)) {
     fprintf(F, "\"typedef %s %s\"",
             localType->getUnderlyingType().getAsString().c_str(),
-            localType->getIdentifierName());
+            localType->getNameAsString().c_str());
   } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     fprintf(F, "\"");
     // Emit storage class for vardecls.
@@ -304,8 +304,7 @@ void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   DumpExpr(Node);
 
   fprintf(F, " %sDecl='%s' %p", Node->getDecl()->getDeclKindName(), 
-                            Node->getDecl()->getIdentifierName(), 
-          (void*)Node->getDecl());
+          Node->getDecl()->getNameAsString().c_str(), (void*)Node->getDecl());
   if (Node->isFreeIvar())
     fprintf(F, " isFreeIvar");
 }
@@ -464,14 +463,14 @@ void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
   DumpExpr(Node);
   
   fprintf(F, " ");
-  fprintf(F, "%s", Node->getProtocol()->getIdentifierName());
+  fprintf(F, "%s", Node->getProtocol()->getNameAsString().c_str());
 }
 
 void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   DumpExpr(Node);
 
   fprintf(F, " Kind=PropertyRef Property=\"%s\"", 
-          Node->getProperty()->getIdentifierName());
+          Node->getProperty()->getNameAsString().c_str());
 }
 
 void StmtDumper::VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node) {

@@ -1029,7 +1029,7 @@ public:
                                    unsigned &Attributes);
   void DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
                                 ObjCPropertyDecl *SuperProperty,
-                                const char *Name);
+                                const IdentifierInfo *Name);
   void ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl);
   
   void MergeProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,

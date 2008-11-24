@@ -758,11 +758,11 @@ unsigned ObjCMethodDecl::getSynthesizedMethodSize() const {
   // syntesized method name is a concatenation of -/+[class-name selector]
   // Get length of this name.
   unsigned length = 3;  // _I_ or _C_
-  length += strlen(getClassInterface()->getIdentifierName()) +1; // extra for _
+  length += getClassInterface()->getNameAsString().size()+1; // extra for _
   NamedDecl *MethodContext = getMethodContext();
   if (ObjCCategoryImplDecl *CID = 
       dyn_cast<ObjCCategoryImplDecl>(MethodContext))
-    length += strlen(CID->getIdentifierName()) +1;
+    length += CID->getNameAsString().size()+1;
   length += getSelector().getAsString().size(); // selector name
   return length; 
 }

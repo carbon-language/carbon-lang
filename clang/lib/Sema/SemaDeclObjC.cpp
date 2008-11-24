@@ -242,7 +242,7 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
 void
 Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
                                ObjCPropertyDecl *SuperProperty,
-                               const char *inheritedName) {
+                               const IdentifierInfo *inheritedName) {
   ObjCPropertyDecl::PropertyAttributeKind CAttr = 
   Property->getPropertyAttributes();
   ObjCPropertyDecl::PropertyAttributeKind SAttr = 
@@ -250,31 +250,31 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_readonly)
       && (SAttr & ObjCPropertyDecl::OBJC_PR_readwrite))
     Diag(Property->getLocation(), diag::warn_readonly_property)
-      << Property->getName() << inheritedName;
+      << Property->getDeclName() << inheritedName;
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_copy)
       != (SAttr & ObjCPropertyDecl::OBJC_PR_copy))
     Diag(Property->getLocation(), diag::warn_property_attribute)
-      << Property->getName() << "copy" << inheritedName;
+      << Property->getDeclName() << "copy" << inheritedName;
   else if ((CAttr & ObjCPropertyDecl::OBJC_PR_retain)
            != (SAttr & ObjCPropertyDecl::OBJC_PR_retain))
     Diag(Property->getLocation(), diag::warn_property_attribute)
-      << Property->getName() << "retain" << inheritedName;
+      << Property->getDeclName() << "retain" << inheritedName;
   
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_nonatomic)
       != (SAttr & ObjCPropertyDecl::OBJC_PR_nonatomic))
     Diag(Property->getLocation(), diag::warn_property_attribute)
-      << Property->getName() << "atomic" << inheritedName;
+      << Property->getDeclName() << "atomic" << inheritedName;
   if (Property->getSetterName() != SuperProperty->getSetterName())
     Diag(Property->getLocation(), diag::warn_property_attribute)
-      << Property->getName() << "setter" << inheritedName; 
+      << Property->getDeclName() << "setter" << inheritedName; 
   if (Property->getGetterName() != SuperProperty->getGetterName())
     Diag(Property->getLocation(), diag::warn_property_attribute)
-      << Property->getName() << "getter" << inheritedName;
+      << Property->getDeclName() << "getter" << inheritedName;
   
   if (Context.getCanonicalType(Property->getType()) != 
           Context.getCanonicalType(SuperProperty->getType()))
     Diag(Property->getLocation(), diag::warn_property_type)
-      << Property->getType().getAsString() << inheritedName;
+      << Property->getType() << inheritedName;
   
 }
 
@@ -297,7 +297,7 @@ Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
       ObjCPropertyDecl *PDecl = (*I);
       if (SuperPDecl->getIdentifier() == PDecl->getIdentifier())
           DiagnosePropertyMismatch(PDecl, SuperPDecl, 
-                                   SDecl->getIdentifierName());
+                                   SDecl->getIdentifier());
     }
   }
 }
@@ -307,8 +307,7 @@ Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
 /// of properties for current class if it is not there already.
 void
 Sema::MergeOneProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
-                                          ObjCProtocolDecl *PDecl)
-{
+                                          ObjCProtocolDecl *PDecl) {
   llvm::SmallVector<ObjCPropertyDecl*, 16> mergeProperties;
   for (ObjCProtocolDecl::classprop_iterator P = PDecl->classprop_begin(),
        E = PDecl->classprop_end(); P != E; ++P) {
@@ -324,7 +323,7 @@ Sema::MergeOneProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
       mergeProperties.push_back(Pr);
     else
       // Property protocol already exist in class. Diagnose any mismatch.
-      DiagnosePropertyMismatch((*CP), Pr, PDecl->getIdentifierName());
+      DiagnosePropertyMismatch((*CP), Pr, PDecl->getIdentifier());
     }
   IDecl->mergeProperties(&mergeProperties[0], mergeProperties.size());
 }

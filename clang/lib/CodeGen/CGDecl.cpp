@@ -146,7 +146,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (!Target.useGlobalsForAutomaticVariables()) {
       // A normal fixed sized variable becomes an alloca in the entry block.
       const llvm::Type *LTy = ConvertType(Ty);
-      llvm::AllocaInst * Alloc = CreateTempAlloca(LTy, D.getIdentifierName());
+      llvm::AllocaInst *Alloc =
+        CreateTempAlloca(LTy, D.getIdentifier()->getName());
       unsigned align = getContext().getTypeAlign(Ty);
       if (const AlignedAttr* AA = D.getAttr<AlignedAttr>())
         align = std::max(align, AA->getAlignment());
@@ -164,7 +165,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     // FIXME: VLA: Add VLA support. For now just make up enough to let
     // the compile go through.
     const llvm::Type *LTy = ConvertType(Ty);
-    llvm::AllocaInst * Alloc = CreateTempAlloca(LTy, D.getIdentifierName());
+    llvm::AllocaInst *Alloc = 
+      CreateTempAlloca(LTy, D.getIdentifier()->getName());
     DeclPtr = Alloc;
   }
   
