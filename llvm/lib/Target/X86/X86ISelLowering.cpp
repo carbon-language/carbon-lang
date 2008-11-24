@@ -42,7 +42,7 @@
 using namespace llvm;
 
 static cl::opt<bool>
-DisableMMX("disable-mmx", cl::Hidden);
+DisableMMX("disable-mmx", cl::Hidden, cl::desc("Disable use of MMX"));
 
 // Forward declarations.
 static SDValue getMOVLMask(unsigned NumElems, SelectionDAG &DAG);
