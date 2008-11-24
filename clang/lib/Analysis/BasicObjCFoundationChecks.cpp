@@ -91,7 +91,7 @@ public:
       std::ostringstream os;
       
       os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
-      << ME->getSelector().getName() << "' cannot be nil.";
+      << ME->getSelector().getAsString() << "' cannot be nil.";
       
       Msg = os.str();
       s = Msg.c_str();      
@@ -243,7 +243,7 @@ bool BasicObjCFoundationChecks::AuditNSString(NodeTy* N,
   // FIXME: This is going to be really slow doing these checks with
   //  lexical comparisons.
   
-  std::string name = S.getName();
+  std::string name = S.getAsString();
   assert (!name.empty());
   const char* cstr = &name[0];
   unsigned len = name.size();

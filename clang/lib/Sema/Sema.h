@@ -1317,7 +1317,7 @@ public:
   /// \param [out] ReturnType - The return type of the send.
   /// \return true iff there were any incompatible types.
   bool CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs, Selector Sel,
-                                 ObjCMethodDecl *Method, const char *PrefixStr,
+                                 ObjCMethodDecl *Method, bool isClassMessage,
                                  SourceLocation lbrac, SourceLocation rbrac,
                                  QualType &ReturnType);  
 

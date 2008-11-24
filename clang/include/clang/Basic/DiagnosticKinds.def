@@ -489,9 +489,9 @@ DIAG(warn_undef_method_impl, WARNING,
 DIAG(warn_incomplete_impl, WARNING,
      "incomplete implementation")
 DIAG(warn_multiple_method_decl, WARNING,
-     "multiple methods named '%0' found")
+     "multiple methods named %0 found")
 DIAG(err_duplicate_method_decl, ERROR,
-     "duplicate declaration of method '%0'")
+     "duplicate declaration of method %0")
 DIAG(err_undeclared_protocol, ERROR,
      "cannot find protocol declaration for %0")
 DIAG(err_missing_sel_definition, ERROR,
@@ -508,10 +508,12 @@ DIAG(err_conflicting_aliasing_type, ERROR,
      "conflicting types for alias %0")
 DIAG(err_statically_allocated_object, ERROR,
      "statically allocated Objective-C object %0")
-DIAG(warn_method_not_found, WARNING,
-     "method '%0%1' not found (return type defaults to 'id')")
+DIAG(warn_class_method_not_found, WARNING,
+     "method %objcclass0 not found (return type defaults to 'id')")
+DIAG(warn_inst_method_not_found, WARNING,
+     "method %objcinstance0 not found (return type defaults to 'id')")
 DIAG(warn_method_not_found_in_protocol, WARNING,
-     "method '%0%1' not found in protocol (return type defaults to 'id')")
+     "method %objcinstance0 not found in protocol (return type defaults to 'id')")
 DIAG(err_collection_expr_type, ERROR,
      "collection expression type ('%0') is not a valid object")
 DIAG(err_selector_element_type, ERROR,

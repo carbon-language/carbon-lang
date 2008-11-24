@@ -749,10 +749,8 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     NameStr += "_";
   }
   // Append selector names, replacing ':' with '_' 
-  if (OMD->getSelector().getName().find(':') == std::string::npos)
-    NameStr +=  OMD->getSelector().getName();
-  else {
-    std::string selString = OMD->getSelector().getName();
+  {
+    std::string selString = OMD->getSelector().getAsString();
     int len = selString.size();
     for (int i = 0; i < len; i++)
       if (selString[i] == ':')
@@ -1498,8 +1496,8 @@ Stmt *RewriteObjC::RewriteAtSelector(ObjCSelectorExpr *Exp) {
   // Create a call to sel_registerName("selName").
   llvm::SmallVector<Expr*, 8> SelExprs;
   QualType argType = Context->getPointerType(Context->CharTy);
-  SelExprs.push_back(new StringLiteral(Exp->getSelector().getName().c_str(),
-                                       Exp->getSelector().getName().size(),
+  SelExprs.push_back(new StringLiteral(Exp->getSelector().getAsString().c_str(),
+                                       Exp->getSelector().getAsString().size(),
                                        false, argType, SourceLocation(),
                                        SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
@@ -2146,8 +2144,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   // Create a call to sel_registerName("selName"), it will be the 2nd argument.
   llvm::SmallVector<Expr*, 8> SelExprs;
   QualType argType = Context->getPointerType(Context->CharTy);
-  SelExprs.push_back(new StringLiteral(Exp->getSelector().getName().c_str(),
-                                       Exp->getSelector().getName().size(),
+  SelExprs.push_back(new StringLiteral(Exp->getSelector().getAsString().c_str(),
+                                       Exp->getSelector().getAsString().size(),
                                        false, argType, SourceLocation(),
                                        SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
@@ -2532,7 +2530,7 @@ void RewriteObjC::RewriteObjCMethodsMetaData(instmeth_iterator MethodBegin,
   Result += "{\n\t0, " + utostr(MethodEnd-MethodBegin) + "\n";
 
   Result += "\t,{{(SEL)\"";
-  Result += (*MethodBegin)->getSelector().getName().c_str();
+  Result += (*MethodBegin)->getSelector().getAsString().c_str();
   std::string MethodTypeString;
   Context->getObjCEncodingForMethodDecl(*MethodBegin, MethodTypeString);
   Result += "\", \"";
@@ -2542,7 +2540,7 @@ void RewriteObjC::RewriteObjCMethodsMetaData(instmeth_iterator MethodBegin,
   Result += "}\n";
   for (++MethodBegin; MethodBegin != MethodEnd; ++MethodBegin) {
     Result += "\t  ,{(SEL)\"";
-    Result += (*MethodBegin)->getSelector().getName().c_str();
+    Result += (*MethodBegin)->getSelector().getAsString().c_str();
     std::string MethodTypeString;
     Context->getObjCEncodingForMethodDecl(*MethodBegin, MethodTypeString);
     Result += "\", \"";
@@ -2606,7 +2604,7 @@ RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl> &Protocols,
           Result += "\t  ,{{(SEL)\"";
         else
           Result += "\t  ,{(SEL)\"";
-        Result += (*I)->getSelector().getName().c_str();
+        Result += (*I)->getSelector().getAsString().c_str();
         std::string MethodTypeString;
         Context->getObjCEncodingForMethodDecl((*I), MethodTypeString);
         Result += "\", \"";
@@ -2642,7 +2640,7 @@ RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl> &Protocols,
           Result += "\t  ,{{(SEL)\"";
         else
           Result += "\t  ,{(SEL)\"";
-        Result += (*I)->getSelector().getName().c_str();
+        Result += (*I)->getSelector().getAsString().c_str();
         std::string MethodTypeString;
         Context->getObjCEncodingForMethodDecl((*I), MethodTypeString);
         Result += "\", \"";
@@ -3451,7 +3449,7 @@ void RewriteObjC::InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD) {
   //SourceLocation FunLocStart = MD->getLocStart();
   // FIXME: This hack works around a bug in Rewrite.InsertText().
   SourceLocation FunLocStart = MD->getLocStart().getFileLocWithOffset(-1);
-  std::string FuncName = std::string(MD->getSelector().getName());
+  std::string FuncName = MD->getSelector().getAsString();
   // Convert colons to underscores.
   std::string::size_type loc = 0;
   while ((loc = FuncName.find(":", loc)) != std::string::npos)
@@ -3767,9 +3765,9 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
   std::string FuncName;
   
   if (CurFunctionDef)
-    FuncName = std::string(CurFunctionDef->getName());
+    FuncName = CurFunctionDef->getNameAsString();
   else if (CurMethodDef) {
-    FuncName = std::string(CurMethodDef->getSelector().getName());
+    FuncName = CurMethodDef->getSelector().getAsString();
     // Convert colons to underscores.
     std::string::size_type loc = 0;
     while ((loc = FuncName.find(":", loc)) != std::string::npos)

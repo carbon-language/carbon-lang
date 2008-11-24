@@ -763,7 +763,7 @@ unsigned ObjCMethodDecl::getSynthesizedMethodSize() const {
   if (ObjCCategoryImplDecl *CID = 
       dyn_cast<ObjCCategoryImplDecl>(MethodContext))
     length += strlen(CID->getIdentifierName()) +1;
-  length += getSelector().getName().size(); // selector name
+  length += getSelector().getAsString().size(); // selector name
   return length; 
 }
 

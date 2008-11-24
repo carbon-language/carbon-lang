@@ -120,7 +120,7 @@ std::string DeclarationName::getAsString() const {
   case ObjCZeroArgSelector:
   case ObjCOneArgSelector:
   case ObjCMultiArgSelector:
-    return getObjCSelector().getName();
+    return getObjCSelector().getAsString();
 
   case CXXConstructorName: {
     QualType ClassType = getCXXNameType();

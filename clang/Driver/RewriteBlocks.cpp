@@ -625,7 +625,7 @@ void RewriteBlocks::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
 
 void RewriteBlocks::InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD) {
   SourceLocation FunLocStart = MD->getLocStart();
-  std::string FuncName = std::string(MD->getSelector().getName());
+  std::string FuncName = MD->getSelector().getAsString();
   // Convert colons to underscores.
   std::string::size_type loc = 0;
   while ((loc = FuncName.find(":", loc)) != std::string::npos)
@@ -920,7 +920,7 @@ std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) 
   if (CurFunctionDef)
     FuncName = std::string(CurFunctionDef->getName());
   else if (CurMethodDef) {
-    FuncName = std::string(CurMethodDef->getSelector().getName());
+    FuncName = CurMethodDef->getSelector().getAsString();
     // Convert colons to underscores.
     std::string::size_type loc = 0;
     while ((loc = FuncName.find(":", loc)) != std::string::npos)

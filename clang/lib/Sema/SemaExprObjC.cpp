@@ -109,7 +109,7 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
 
 bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs, 
                                      Selector Sel, ObjCMethodDecl *Method, 
-                                     const char *PrefixStr,
+                                     bool isClassMessage,
                                      SourceLocation lbrac, SourceLocation rbrac,
                                      QualType &ReturnType) {  
   if (!Method) {
@@ -117,13 +117,15 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     for (unsigned i = 0; i != NumArgs; i++)
       DefaultArgumentPromotion(Args[i]);
 
-    Diag(lbrac, diag::warn_method_not_found)
-      << PrefixStr << Sel.getName() << SourceRange(lbrac, rbrac);
+    unsigned DiagID = isClassMessage ? diag::warn_class_method_not_found :
+                                       diag::warn_inst_method_not_found;
+    Diag(lbrac, DiagID)
+      << Sel << isClassMessage << SourceRange(lbrac, rbrac);
     ReturnType = Context.getObjCIdType();
     return false;
-  } else {
-    ReturnType = Method->getResultType();
   }
+  
+  ReturnType = Method->getResultType();
    
   unsigned NumNamedArgs = Sel.getNumArgs();
   assert(NumArgs >= NumNamedArgs && "Too few arguments for selector!");
@@ -261,7 +263,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   if (!Method)
     Method = ClassDecl->lookupInstanceMethod(Sel);
 
-  if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "+", 
+  if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, true, 
                                 lbrac, rbrac, returnType))
     return true;
 
@@ -304,7 +306,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         if (ObjCInterfaceDecl *SuperDecl = ClassDecl->getSuperClass())
           Method = SuperDecl->lookupInstanceMethod(Sel);
     }
-    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
+    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                   lbrac, rbrac, returnType))
       return true;
     return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
@@ -318,7 +320,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
                                Sel, SourceRange(lbrac,rbrac));
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
-    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
+    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false, 
                                   lbrac, rbrac, returnType))
       return true;
     return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
@@ -340,7 +342,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (!Method)
       Method = LookupInstanceMethodInGlobalPool(
                                Sel, SourceRange(lbrac,rbrac));
-    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
+    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                   lbrac, rbrac, returnType))
       return true;
     return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
@@ -361,7 +363,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     }
     if (!Method)
       Diag(lbrac, diag::warn_method_not_found_in_protocol)
-        << "-" << Sel.getName() << RExpr->getSourceRange();
+        << Sel << RExpr->getSourceRange();
   } else if (const ObjCInterfaceType *OCIReceiver = 
                 ReceiverCType->getAsPointerToObjCInterfaceType()) {
     // We allow sending a message to a pointer to an interface (an object).
@@ -383,7 +385,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     
     if (!Method && !OCIReceiver->qual_empty())
       Diag(lbrac, diag::warn_method_not_found_in_protocol)
-        << "-" << Sel.getName() << SourceRange(lbrac, rbrac);
+        << Sel << SourceRange(lbrac, rbrac);
   } else {
     Diag(lbrac, diag::error_bad_receiver_type)
       << RExpr->getType().getAsString() << RExpr->getSourceRange();
@@ -403,7 +405,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
           Method = LookupInstanceMethodInGlobalPool(
                                Sel, SourceRange(lbrac,rbrac));
   }
-  if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
+  if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                 lbrac, rbrac, returnType))
     return true;
   return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 

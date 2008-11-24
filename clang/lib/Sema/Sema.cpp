@@ -23,22 +23,33 @@ using namespace clang;
 /// ConvertQualTypeToStringFn - This function is used to pretty print the 
 /// specified QualType as a string in diagnostics.
 static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
-                                      const char *Modifier, unsigned ML,
+                                      const char *Modifier, unsigned ModLen,
                                       const char *Argument, unsigned ArgLen,
                                       llvm::SmallVectorImpl<char> &Output) {
-  assert(ML == 0 && ArgLen == 0 && "Invalid modifier for QualType argument");
   
   std::string S;
   if (Kind == Diagnostic::ak_qualtype) {
     QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(Val)));
-  
+
     // FIXME: Playing with std::string is really slow.
     S = Ty.getAsString();
+
+    assert(ModLen == 0 && ArgLen == 0 &&
+           "Invalid modifier for QualType argument");
+    
   } else {
     assert(Kind == Diagnostic::ak_declarationname);
    
     DeclarationName N = DeclarationName::getFromOpaqueInteger(Val);
     S = N.getAsString();
+    
+    if (ModLen == 9 && !memcmp(Modifier, "objcclass", 9) && ArgLen == 0)
+      S = '+' + S;
+    else if (ModLen == 12 && !memcmp(Modifier, "objcinstance", 12) && ArgLen==0)
+      S = '-' + S;
+    else
+      assert(ModLen == 0 && ArgLen == 0 &&
+             "Invalid modifier for DeclarationName argument");
   }
   Output.append(S.begin(), S.end());
 }

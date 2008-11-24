@@ -2065,7 +2065,8 @@ llvm::Constant *CGObjCMac::GetMethodVarName(Selector Sel) {
   llvm::GlobalVariable *&Entry = MethodVarNames[Sel];
 
   if (!Entry) {
-    llvm::Constant *C = llvm::ConstantArray::get(Sel.getName());
+    // FIXME: Avoid std::string copying.
+    llvm::Constant *C = llvm::ConstantArray::get(Sel.getAsString());
     Entry = 
       new llvm::GlobalVariable(C->getType(), false, 
                                llvm::GlobalValue::InternalLinkage,
@@ -2143,14 +2144,12 @@ llvm::Constant *CGObjCMac::GetPropertyTypeString(const ObjCPropertyDecl *PD,
 void CGObjCMac::GetNameForMethod(const ObjCMethodDecl *D, 
                                  std::string &NameOut) {
   // FIXME: Find the mangling GCC uses.
-  std::stringstream s;
-  s << (D->isInstance() ? "-" : "+");
-  s << "[";
-  s << D->getClassInterface()->getName();
-  s << " ";
-  s << D->getSelector().getName();
-  s << "]";
-  NameOut = s.str();
+  NameOut = (D->isInstance() ? "-" : "+");
+  NameOut += '[';
+  NameOut += D->getClassInterface()->getName();
+  NameOut += ' ';
+  NameOut += D->getSelector().getAsString();
+  NameOut += ']';
 }
 
 void CGObjCMac::FinishModule() {

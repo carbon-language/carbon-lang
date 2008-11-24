@@ -53,7 +53,7 @@ static void CompareReturnTypes(ObjCMethodDecl* MethDerived,
        << "', which is derived from class '"
        << MethAncestor->getClassInterface()->getName()
        << "', defines the instance method '"
-       << MethDerived->getSelector().getName()
+       << MethDerived->getSelector().getAsString()
        << "' whose return type is '"
        << ResDerived.getAsString()
        << "'.  A method with the same name (same selector) is also defined in "

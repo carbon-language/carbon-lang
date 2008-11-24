@@ -805,8 +805,7 @@ void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
     if (!match) {
       // We have a new signature for an existing method - add it.
       // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
-      struct ObjCMethodList *OMI = new ObjCMethodList(Method, FirstMethod.Next);
-      FirstMethod.Next = OMI;
+      FirstMethod.Next = new ObjCMethodList(Method, FirstMethod.Next);;
     }
   }
 }
@@ -824,7 +823,7 @@ ObjCMethodDecl *Sema::LookupInstanceMethodInGlobalPool(Selector Sel,
         issueWarning = true;
   }
   if (issueWarning && (MethList.Method && MethList.Next)) {
-    Diag(R.getBegin(), diag::warn_multiple_method_decl) << Sel.getName() << R;
+    Diag(R.getBegin(), diag::warn_multiple_method_decl) << Sel << R;
     Diag(MethList.Method->getLocStart(), diag::note_using_decl)
       << MethList.Method->getSourceRange();
     for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next)
@@ -905,7 +904,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
       if (isInterfaceDeclKind && PrevMethod && !match 
           || checkIdenticalMethods && match) {
           Diag(Method->getLocation(), diag::err_duplicate_method_decl)
-            << Method->getSelector().getName();
+            << Method->getDeclName();
           Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
       } else {
         insMethods.push_back(Method);
@@ -922,7 +921,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
       if (isInterfaceDeclKind && PrevMethod && !match 
           || checkIdenticalMethods && match) {
         Diag(Method->getLocation(), diag::err_duplicate_method_decl)
-          << Method->getSelector().getName();
+          << Method->getDeclName();
         Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
       } else {
         clsMethods.push_back(Method);
@@ -1115,7 +1114,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   if (PrevMethod) {
     // You can never have two method definitions with the same name.
     Diag(ObjCMethod->getLocation(), diag::err_duplicate_method_decl)
-      << ObjCMethod->getSelector().getName();
+      << ObjCMethod->getDeclName();
     Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
   } 
   return ObjCMethod;

@@ -205,7 +205,7 @@ llvm::Value *CGObjCGNU::GetClass(CGBuilderTy &Builder,
 /// GetSelector - Return the pointer to the unique'd string for this selector.
 llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel) {
   // FIXME: uniquing on the string is wasteful, unique on Sel instead!
-  llvm::GlobalAlias *&US = UntypedSelectors[Sel.getName()];
+  llvm::GlobalAlias *&US = UntypedSelectors[Sel.getAsString()];
   if (US == 0)
     US = new llvm::GlobalAlias(llvm::PointerType::getUnqual(SelectorTy),
                                llvm::GlobalValue::InternalLinkage,
@@ -370,13 +370,14 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
   std::vector<llvm::Constant*> Elements;
   for (unsigned int i = 0, e = MethodTypes.size(); i < e; ++i) {
     Elements.clear();
-    llvm::Constant *C = CGM.GetAddrOfConstantCString(MethodSels[i].getName());
+    llvm::Constant *C = 
+      CGM.GetAddrOfConstantCString(MethodSels[i].getAsString());
     Elements.push_back(llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2));
     Elements.push_back(
           llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
     llvm::Constant *Method =
       TheModule.getFunction(SymbolNameForMethod(ClassName, CategoryName,
-                                                MethodSels[i].getName(),
+                                                MethodSels[i].getAsString(),
                                                 isClassMethodList));
     Method = llvm::ConstantExpr::getBitCast(Method,
         llvm::PointerType::getUnqual(IMPTy));
@@ -581,7 +582,7 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl(*iter, TypeStr);
     InstanceMethodNames.push_back(
-        CGM.GetAddrOfConstantCString((*iter)->getSelector().getName()));
+        CGM.GetAddrOfConstantCString((*iter)->getSelector().getAsString()));
     InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
   }
   // Collect information about class methods:
@@ -592,7 +593,7 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
     ClassMethodNames.push_back(
-        CGM.GetAddrOfConstantCString((*iter)->getSelector().getName()));
+        CGM.GetAddrOfConstantCString((*iter)->getSelector().getAsString()));
     ClassMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
   }
 
@@ -932,9 +933,9 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
 llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD) {  
   const ObjCCategoryImplDecl *OCD = 
     dyn_cast<ObjCCategoryImplDecl>(OMD->getMethodContext());
-  const std::string &CategoryName = OCD ? OCD->getName() : "";
-  const std::string &ClassName = OMD->getClassInterface()->getName();
-  const std::string &MethodName = OMD->getSelector().getName();
+  std::string CategoryName = OCD ? OCD->getNameAsString() : "";
+  std::string ClassName = OMD->getClassInterface()->getNameAsString();
+  std::string MethodName = OMD->getSelector().getAsString();
   bool isClassMethod = !OMD->isInstance();
 
   const llvm::FunctionType *MethodTy = 

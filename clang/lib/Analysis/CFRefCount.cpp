@@ -1887,7 +1887,7 @@ CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
 
   if (V.isReturnedOwned() && V.getCount() == 0)
     if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
-      std::string s = MD->getSelector().getName();
+      std::string s = MD->getSelector().getAsString();
       if (!followsReturnRule(s.c_str())) {
         hasLeak = true;
         state = state.set<RefBindings>(sid, V ^ RefVal::ErrorLeakReturned);
@@ -2635,7 +2635,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   if (RV->getKind() == RefVal::ErrorLeakReturned) {
     ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BR.getGraph().getCodeDecl());
     os << " is returned from a method whose name ('"
-       << MD.getSelector().getName()
+       << MD.getSelector().getAsString()
        << "') does not contain 'create' or 'copy' or otherwise starts with"
           " 'new' or 'alloc'.  This violates the naming convention rules given"
           " in the Memory Management Guide for Cocoa (object leaked).";

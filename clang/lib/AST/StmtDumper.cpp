@@ -376,7 +376,7 @@ void StmtDumper::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
 void StmtDumper::VisitMemberExpr(MemberExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " %s%s %p", Node->isArrow() ? "->" : ".",
-          Node->getMemberDecl()->getName().c_str(), 
+          Node->getMemberDecl()->getNameAsString().c_str(), 
           (void*)Node->getMemberDecl());
 }
 void StmtDumper::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
@@ -441,7 +441,7 @@ void StmtDumper::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
 
 void StmtDumper::VisitObjCMessageExpr(ObjCMessageExpr* Node) {
   DumpExpr(Node);
-  fprintf(F, " selector=%s", Node->getSelector().getName().c_str());
+  fprintf(F, " selector=%s", Node->getSelector().getAsString().c_str());
   IdentifierInfo* clsName = Node->getClassName();
   if (clsName) fprintf(F, " class=%s", clsName->getName());
 }
@@ -457,8 +457,7 @@ void StmtDumper::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
   DumpExpr(Node);
   
   fprintf(F, " ");
-  Selector selector = Node->getSelector();
-  fprintf(F, "%s", selector.getName().c_str());
+  fprintf(F, "%s", Node->getSelector().getAsString().c_str());
 }
 
 void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
@@ -481,8 +480,8 @@ void StmtDumper::VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node) {
   ObjCMethodDecl *Getter = Node->getGetterMethod();
   ObjCMethodDecl *Setter = Node->getSetterMethod();
   fprintf(F, " Kind=MethodRef Getter=\"%s\" Setter=\"%s\"", 
-          Getter->getSelector().getName().c_str(),
-          Setter ? Setter->getSelector().getName().c_str() : "(null)");
+          Getter->getSelector().getAsString().c_str(),
+          Setter ? Setter->getSelector().getAsString().c_str() : "(null)");
 }
 
 void StmtDumper::VisitObjCSuperExpr(ObjCSuperExpr *Node) {

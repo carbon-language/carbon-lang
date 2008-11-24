@@ -297,6 +297,20 @@ Clang:</p>
 	abort, as will a failure to match the argument against any
 	expression.</p></td></tr>
 
+<tr><td colspan="2"><b>"objcclass" format</b></td></tr>
+<tr><td>Example:</td><td><tt>"method %objcclass0 not found"</tt></td></tr>
+<tr><td>Class:</td><td>DeclarationName</td></tr>
+<tr><td>Description:</td><td><p>This is a simple formatter that indicates the
+    DeclarationName corresponds to an Objective-C class method selector.  As
+    such, it prints the selector with a leading '+'.</p></td></tr>
+
+<tr><td colspan="2"><b>"objcinstance" format</b></td></tr>
+<tr><td>Example:</td><td><tt>"method %objcinstance0 not found"</tt></td></tr>
+<tr><td>Class:</td><td>DeclarationName</td></tr>
+<tr><td>Description:</td><td><p>This is a simple formatter that indicates the
+    DeclarationName corresponds to an Objective-C instance method selector.  As
+    such, it prints the selector with a leading '-'.</p></td></tr>
+
 </table>
 
 <p>It is really easy to add format specifiers to the Clang diagnostics system,

@@ -1577,12 +1577,12 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
 
   if (PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter) {
     S += ",G";
-    S += PD->getGetterName().getName();
+    S += PD->getGetterName().getAsString();
   }
 
   if (PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter) {
     S += ",S";
-    S += PD->getSetterName().getName();
+    S += PD->getSetterName().getAsString();
   }
 
   if (SynthesizePID) {

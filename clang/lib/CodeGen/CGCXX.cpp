@@ -19,11 +19,8 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/StringExtras.h"
-
 using namespace clang;
 using namespace CodeGen;
-
-using llvm::utostr;
 
 
 // FIXME: Name mangling should be moved to a separate class.
@@ -35,7 +32,7 @@ static void mangleDeclContextInternal(const DeclContext *D, std::string &S)
          "Only one level of decl context mangling is currently supported!");
   
   if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
-    S += utostr(FD->getIdentifier()->getLength());
+    S += llvm::utostr(FD->getIdentifier()->getLength());
     S += FD->getIdentifier()->getName();
     
     if (FD->param_size() == 0)
@@ -48,11 +45,11 @@ static void mangleDeclContextInternal(const DeclContext *D, std::string &S)
     std::string Name;
     Name += MD->isInstance() ? '-' : '+';
     Name += '[';
-    Name += MD->getClassInterface()->getName();
+    Name += MD->getClassInterface()->getNameAsString();
     Name += ' ';
-    Name += MD->getSelector().getName();
+    Name += MD->getSelector().getAsString();
     Name += ']';
-    S += utostr(Name.length());
+    S += llvm::utostr(Name.length());
     S += Name;
   } else 
     assert(0 && "Unsupported decl type!");
@@ -64,7 +61,7 @@ static void mangleVarDeclInternal(const VarDecl &D, std::string &S)
   mangleDeclContextInternal(D.getDeclContext(), S);
   S += 'E';
   
-  S += utostr(D.getIdentifier()->getLength());
+  S += llvm::utostr(D.getIdentifier()->getLength());
   S += D.getIdentifier()->getName();
 }
 

@@ -246,7 +246,7 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.HTMLDir, C.PP, C.PPF)); break;
         llvm::cerr << "ANALYZE (ObjC Method): "
         << getContext().getSourceManager().getSourceName(MD->getLocation())
         << " '"
-        << MD->getSelector().getName() << "'\n";
+        << MD->getSelector().getAsString() << "'\n";
       }
     }
   };
@@ -281,7 +281,7 @@ void AnalysisConsumer::HandleTopLevelDecl(Decl *D) {
     case Decl::ObjCMethod: {
       ObjCMethodDecl* MD = cast<ObjCMethodDecl>(D);
       
-      if (FName.size() > 0 && FName != MD->getSelector().getName())
+      if (FName.size() > 0 && FName != MD->getSelector().getAsString())
         return;
       
       Stmt* Body = MD->getBody();

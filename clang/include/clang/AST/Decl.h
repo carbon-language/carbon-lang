@@ -101,6 +101,7 @@ public:
   /// absolutely critical. For simple declarations, @c
   /// getIdentifierName() should suffice.
   std::string getName() const { return Name.getAsString(); }
+  std::string getNameAsString() const { return Name.getAsString(); }
   
   static bool classof(const Decl *D) {
     return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;

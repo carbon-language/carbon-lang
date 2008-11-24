@@ -198,7 +198,7 @@ void DeclPrinter::PrintObjCMethodDecl(ObjCMethodDecl *OMD) {
   if (!OMD->getResultType().isNull())
     Out << '(' << OMD->getResultType().getAsString() << ")";
   
-  std::string name = OMD->getSelector().getName();
+  std::string name = OMD->getSelector().getAsString();
   std::string::size_type pos, lastPos = 0;
   for (unsigned i = 0, e = OMD->getNumParams(); i != e; ++i) {
     ParmVarDecl *PDecl = OMD->getParamDecl(i);
@@ -363,12 +363,12 @@ void DeclPrinter::PrintObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
       
   if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter) {
     Out << (first ? ' ' : ',') << "getter = "
-    << PDecl->getGetterName().getName();
+        << PDecl->getGetterName().getAsString();
     first = false;
   }
   if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter) {
     Out << (first ? ' ' : ',') << "setter = "
-    << PDecl->getSetterName().getName();
+        << PDecl->getSetterName().getAsString();
     first = false;
   }
       
@@ -477,7 +477,7 @@ namespace {
       } else if (isa<FileScopeAsmDecl>(D)) {
         Out << "Read file scope asm decl\n";
       } else if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
-        Out << "Read objc method decl: '" << MD->getSelector().getName()
+        Out << "Read objc method decl: '" << MD->getSelector().getAsString()
             << "'\n";
         if (MD->getBody()) {
           // FIXME: convert dumper to use std::ostream?

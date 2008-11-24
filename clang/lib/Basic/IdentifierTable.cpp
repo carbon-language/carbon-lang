@@ -342,7 +342,7 @@ std::string MultiKeywordSelector::getName() const {
   return Result;
 }
 
-std::string Selector::getName() const {
+std::string Selector::getAsString() const {
   if (IdentifierInfo *II = getAsIdentifierInfo()) {
     if (getNumArgs() == 0)
       return II->getName();

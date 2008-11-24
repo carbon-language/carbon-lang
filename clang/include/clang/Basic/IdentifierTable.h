@@ -281,9 +281,9 @@ public:
   unsigned getNumArgs() const;
   IdentifierInfo *getIdentifierInfoForSlot(unsigned argIndex) const;
   
-  /// getName - Derive the full selector name (e.g. "foo:bar:") and return it.
-  ///
-  std::string getName() const;
+  /// getAsString - Derive the full selector name (e.g. "foo:bar:") and return
+  /// it as an std::string.
+  std::string getAsString() const;
   
   static Selector getEmptyMarker() {
     return Selector(uintptr_t(-1));
