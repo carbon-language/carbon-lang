@@ -17,3 +17,6 @@ void g0(void);
 EVAL_EXPR(11, (g0(), 12)) // FIXME: This should give an error
 EVAL_EXPR(12, 1.0&&2.0)
 EVAL_EXPR(13, x || 3.0)
+
+unsigned int l_19 = 1;
+EVAL_EXPR(14, (1 ^ l_19) && 1); // expected-error {{fields must have a constant size}}

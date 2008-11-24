@@ -505,13 +505,11 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     Result = EvaluateBuiltinClassifyType(E);
     return true;
     
-  case Builtin::BI__builtin_constant_p: {
+  case Builtin::BI__builtin_constant_p:
     // __builtin_constant_p always has one operand: it returns true if that
     // operand can be folded, false otherwise.
-    APValue Res;
-    Result = E->getArg(0)->Evaluate(Res, Info.Ctx);
+    Result = E->getArg(0)->isEvaluatable(Info.Ctx);
     return true;
-  }
   }
 }
 
@@ -537,43 +535,45 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     // These need to be handled specially because the operands aren't
     // necessarily integral
     bool bres;
-    bool isEvaluated = true;
     
     if (HandleConversionToBool(E->getLHS(), bres, Info)) {
       // We were able to evaluate the LHS, see if we can get away with not
       // evaluating the RHS: 0 && X -> 0, 1 || X -> 1
-    } else {
-      // We can't evaluate the LHS; however, sometimes the result
-      // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
-      if (!HandleConversionToBool(E->getRHS(), bres, Info)) {
-        // We can't evaluate.
-        return false;
+      if (bres == (E->getOpcode() == BinaryOperator::LOr) || 
+          !bres == (E->getOpcode() == BinaryOperator::LAnd)) {
+        Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+        Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+        Result = bres;
+        
+        return true;
       }
-      
-      // We did not evaluate the LHS
-      isEvaluated = false;
+
+      bool bres2;
+      if (HandleConversionToBool(E->getRHS(), bres2, Info)) {
+        Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+        Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+        if (E->getOpcode() == BinaryOperator::LOr)
+          Result = bres || bres2;
+        else
+          Result = bres && bres2;
+        return true;
+      }
+    } else {
+      if (HandleConversionToBool(E->getRHS(), bres, Info)) {
+        // We can't evaluate the LHS; however, sometimes the result
+        // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
+        if (bres == (E->getOpcode() == BinaryOperator::LOr) || 
+            !bres == (E->getOpcode() == BinaryOperator::LAnd)) {
+          Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+          Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+          Result = bres;
+          Info.isEvaluated = false;
+        
+          return true;
+        }
+      }
     }
 
-    if (bres == (E->getOpcode() == BinaryOperator::LOr) ||
-        !bres == (E->getOpcode() == BinaryOperator::LAnd)) {
-      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-      Result = bres;
-      Info.isEvaluated = isEvaluated;
-      
-      return true;
-    }
-
-    bool bres2;
-    if (HandleConversionToBool(E->getRHS(), bres2, Info)) {
-      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-      if (E->getOpcode() == BinaryOperator::LOr)
-        Result = bres || bres2;
-      else
-        Result = bres && bres2;
-      return true;
-    }
     return false;
   }
 
