@@ -13,7 +13,7 @@
 // Target-independent interfaces
 //===----------------------------------------------------------------------===//
 
-include "../Target.td"
+include "llvm/Target/Target.td"
 
 include "PIC16RegisterInfo.td"
 include "PIC16InstrInfo.td"

@@ -13,7 +13,7 @@
 // Target-independent interfaces
 //===----------------------------------------------------------------------===//
 
-include "../Target.td"
+include "llvm/Target/Target.td"
 
 //===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions

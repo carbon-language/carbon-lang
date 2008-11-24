@@ -14,7 +14,7 @@
 // Target-independent interfaces which we are implementing
 //===----------------------------------------------------------------------===//
 
-include "../Target.td"
+include "llvm/Target/Target.td"
 
 //===----------------------------------------------------------------------===//
 // SPARC Subtarget features.

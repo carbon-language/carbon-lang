@@ -1259,9 +1259,10 @@ $(ObjDir)/%.bc: %.ll $(ObjDir)/.dir $(LLVMAS)
 ifdef TARGET
 
 TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) \
-           $(LLVM_SRC_ROOT)/lib/Target/Target.td \
-           $(LLVM_SRC_ROOT)/lib/Target/TargetCallingConv.td \
-           $(LLVM_SRC_ROOT)/lib/Target/TargetSelectionDAG.td \
+           $(LLVM_SRC_ROOT)/include/llvm/Target/Target.td \
+           $(LLVM_SRC_ROOT)/include/llvm/Target/TargetCallingConv.td \
+           $(LLVM_SRC_ROOT)/include/llvm/Target/TargetSchedule.td \
+           $(LLVM_SRC_ROOT)/include/llvm/Target/TargetSelectionDAG.td \
            $(LLVM_SRC_ROOT)/include/llvm/CodeGen/ValueTypes.td) \
            $(wildcard $(LLVM_SRC_ROOT)/include/llvm/Intrinsics*.td)
 INCFiles := $(filter %.inc,$(BUILT_SOURCES))

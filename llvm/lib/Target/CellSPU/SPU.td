@@ -13,7 +13,7 @@
 
 // Get the target-independent interfaces which we are implementing.
 //
-include "../Target.td"
+include "llvm/Target/Target.td"
 
 //===----------------------------------------------------------------------===//
 // Register File Description
