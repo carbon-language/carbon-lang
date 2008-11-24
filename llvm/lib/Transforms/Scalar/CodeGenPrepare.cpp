@@ -208,7 +208,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
     while (PHINode *PN = dyn_cast<PHINode>(DestBB->begin())) {
       Value *NewVal = PN->getIncomingValue(0);
       // Replace self referencing PHI with undef, it must be dead.
-      if (NewVal == PN) NewVal = UndefValue::get(PN->getType());
+      //if (NewVal == PN) NewVal = UndefValue::get(PN->getType());
       PN->replaceAllUsesWith(NewVal);
       PN->eraseFromParent();
     }
@@ -572,9 +572,6 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
   if (Instruction *I = dyn_cast_or_null<Instruction>(AddrInst))
     AddrModeInsts.push_back(I);
 
-  if (AddrInst && !AddrInst->hasOneUse())
-    ;
-  else
   switch (Opcode) {
   case Instruction::PtrToInt:
     // PtrToInt is always a noop, as we know that the int type is pointer sized.
