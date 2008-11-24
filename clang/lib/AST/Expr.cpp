@@ -622,8 +622,32 @@ Expr *Expr::IgnoreParenCasts() {
   }
 }
 
+#define USE_EVALUATE
 
 bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
+#ifdef USE_EVALUATE
+  switch (getStmtClass()) {
+  default:
+    if (!isEvaluatable(Ctx)) {
+      if (Loc) *Loc = getLocStart();
+      return false;
+    }
+    break;
+  case StringLiteralClass:
+  case ObjCStringLiteralClass:
+    return true;
+  case InitListExprClass: {
+    const InitListExpr *Exp = cast<InitListExpr>(this);
+    unsigned numInits = Exp->getNumInits();
+    for (unsigned i = 0; i < numInits; i++) {
+      if (!Exp->getInit(i)->isConstantExpr(Ctx, Loc)) 
+        return false;
+    }
+  }
+  }
+
+  return true;
+#else
   switch (getStmtClass()) {
   default:
     if (Loc) *Loc = getLocStart();
@@ -762,6 +786,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->isConstantExpr(Ctx, Loc);
   }
+#endif
 }
 
 /// isIntegerConstantExpr - this recursive routine will test if an expression is

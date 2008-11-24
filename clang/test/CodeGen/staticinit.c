@@ -18,3 +18,9 @@ void g() {
   static char a[10];
   static char *b = a;
 }
+
+struct s { void *p; };
+
+void foo(void) {
+  static struct s var = {((void*)&((char*)0)[0])};
+}
