@@ -4096,9 +4096,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::sadd_with_overflow: {
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
-    MVT Ty = Op1.getValueType();
 
-    MVT ValueVTs[] = { Ty, MVT::i1 };
+    MVT ValueVTs[] = { Op1.getValueType(), MVT::i1 };
     SDValue Ops[] = { Op1, Op2 };
 
     SDValue Result =

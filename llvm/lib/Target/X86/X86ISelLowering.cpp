@@ -780,6 +780,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
+  // Add with overflow operations are custom lowered.
+  setOperationAction(ISD::SADDO, MVT::i32, Custom);
+  setOperationAction(ISD::SADDO, MVT::i64, Custom);
+  setOperationAction(ISD::UADDO, MVT::i32, Custom);
+  setOperationAction(ISD::UADDO, MVT::i64, Custom);
+
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
   setTargetDAGCombine(ISD::BUILD_VECTOR);
@@ -6142,6 +6148,11 @@ SDValue X86TargetLowering::LowerCTTZ(SDValue Op, SelectionDAG &DAG) {
   return Op;
 }
 
+SDValue X86TargetLowering::LowerXADDO(SDValue Op, SelectionDAG &DAG,
+                                      ISD::NodeType NTy) {
+  return SDValue();
+}
+
 SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
   MVT T = Op.getValueType();
   unsigned Reg = 0;
@@ -6321,6 +6332,8 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
   case ISD::CTLZ:               return LowerCTLZ(Op, DAG);
   case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
+  case ISD::SADDO:              return LowerXADDO(Op, DAG, ISD::SADDO);
+  case ISD::UADDO:              return LowerXADDO(Op, DAG, ISD::UADDO);
       
   // FIXME: REMOVE THIS WHEN LegalizeDAGTypes lands.
   case ISD::READCYCLECOUNTER:
