@@ -1286,7 +1286,6 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
           }
             
           case Builtin::BI__builtin_alloca: {
-            // FIXME: Handle size.
             // FIXME: Refactor into StoreManager itself?
             MemRegionManager& RM = getStateManager().getRegionManager();
             const MemRegion* R =
