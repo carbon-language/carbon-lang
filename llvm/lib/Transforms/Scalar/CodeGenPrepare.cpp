@@ -334,6 +334,7 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
 /// registers that must be created and coalesced.
 ///
 /// Return true if any changes are made.
+///
 static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
   // If this is a noop copy,
   MVT SrcVT = TLI.getValueType(CI->getOperand(0)->getType());
@@ -415,8 +416,7 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
 ///  (PowerPC), where it might lose; some adjustment may be wanted there.
 ///
 /// Return true if any changes are made.
-static bool OptimizeCmpExpression(CmpInst *CI){
-
+static bool OptimizeCmpExpression(CmpInst *CI) {
   BasicBlock *DefBB = CI->getParent();
 
   /// InsertedCmp - Only insert a cmp in each block once.
@@ -464,7 +464,7 @@ static bool OptimizeCmpExpression(CmpInst *CI){
   return MadeChange;
 }
 
-/// EraseDeadInstructions - Erase any dead instructions
+/// EraseDeadInstructions - Erase any dead instructions, recursively.
 static void EraseDeadInstructions(Value *V) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I || !I->use_empty()) return;
@@ -525,15 +525,63 @@ void ExtAddrMode::print(OStream &OS) const {
   OS << ']';
 }
 
+/// TryMatchingScaledValue - Try adding ScaleReg*Scale to the specified
+/// addressing mode.  Return true if this addr mode is legal for the target,
+/// false if not.
 static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
                                    const Type *AccessTy, ExtAddrMode &AddrMode,
                                    SmallVector<Instruction*, 16> &AddrModeInsts,
-                                   const TargetLowering &TLI, unsigned Depth);
+                                   const TargetLowering &TLI, unsigned Depth) {
+  // If we already have a scale of this value, we can add to it, otherwise, we
+  // need an available scale field.
+  if (AddrMode.Scale != 0 && AddrMode.ScaledReg != ScaleReg)
+    return false;
+
+  ExtAddrMode InputAddrMode = AddrMode;
+
+  // Add scale to turn X*4+X*3 -> X*7.  This could also do things like
+  // [A+B + A*7] -> [B+A*8].
+  AddrMode.Scale += Scale;
+  AddrMode.ScaledReg = ScaleReg;
+
+  if (TLI.isLegalAddressingMode(AddrMode, AccessTy)) {
+    // Okay, we decided that we can add ScaleReg+Scale to AddrMode.  Check now
+    // to see if ScaleReg is actually X+C.  If so, we can turn this into adding
+    // X*Scale + C*Scale to addr mode.
+    BinaryOperator *BinOp = dyn_cast<BinaryOperator>(ScaleReg);
+    if (BinOp && BinOp->getOpcode() == Instruction::Add &&
+        isa<ConstantInt>(BinOp->getOperand(1)) && InputAddrMode.ScaledReg ==0) {
+
+      InputAddrMode.Scale = Scale;
+      InputAddrMode.ScaledReg = BinOp->getOperand(0);
+      InputAddrMode.BaseOffs +=
+        cast<ConstantInt>(BinOp->getOperand(1))->getSExtValue()*Scale;
+      if (TLI.isLegalAddressingMode(InputAddrMode, AccessTy)) {
+        AddrModeInsts.push_back(BinOp);
+        AddrMode = InputAddrMode;
+        return true;
+      }
+    }
+
+    // Otherwise, not (x+c)*scale, just return what we have.
+    return true;
+  }
+
+  // Otherwise, back this attempt out.
+  AddrMode.Scale -= Scale;
+  if (AddrMode.Scale == 0) AddrMode.ScaledReg = 0;
+
+  return false;
+}
+
 
 /// FindMaximalLegalAddressingMode - If we can, try to merge the computation of
 /// Addr into the specified addressing mode.  If Addr can't be added to AddrMode
 /// this returns false.  This assumes that Addr is either a pointer type or
 /// intptr_t for the target.
+///
+/// This method is used to optimize both load/store and inline asms with memory
+/// operands.
 static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
                                            ExtAddrMode &AddrMode,
                                    SmallVector<Instruction*, 16> &AddrModeInsts,
@@ -764,55 +812,6 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
     AddrMode.Scale = 0;
   }
   // Couldn't match.
-  return false;
-}
-
-/// TryMatchingScaledValue - Try adding ScaleReg*Scale to the specified
-/// addressing mode.  Return true if this addr mode is legal for the target,
-/// false if not.
-static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
-                                   const Type *AccessTy, ExtAddrMode &AddrMode,
-                                   SmallVector<Instruction*, 16> &AddrModeInsts,
-                                   const TargetLowering &TLI, unsigned Depth) {
-  // If we already have a scale of this value, we can add to it, otherwise, we
-  // need an available scale field.
-  if (AddrMode.Scale != 0 && AddrMode.ScaledReg != ScaleReg)
-    return false;
-
-  ExtAddrMode InputAddrMode = AddrMode;
-
-  // Add scale to turn X*4+X*3 -> X*7.  This could also do things like
-  // [A+B + A*7] -> [B+A*8].
-  AddrMode.Scale += Scale;
-  AddrMode.ScaledReg = ScaleReg;
-
-  if (TLI.isLegalAddressingMode(AddrMode, AccessTy)) {
-    // Okay, we decided that we can add ScaleReg+Scale to AddrMode.  Check now
-    // to see if ScaleReg is actually X+C.  If so, we can turn this into adding
-    // X*Scale + C*Scale to addr mode.
-    BinaryOperator *BinOp = dyn_cast<BinaryOperator>(ScaleReg);
-    if (BinOp && BinOp->getOpcode() == Instruction::Add &&
-        isa<ConstantInt>(BinOp->getOperand(1)) && InputAddrMode.ScaledReg ==0) {
-
-      InputAddrMode.Scale = Scale;
-      InputAddrMode.ScaledReg = BinOp->getOperand(0);
-      InputAddrMode.BaseOffs +=
-        cast<ConstantInt>(BinOp->getOperand(1))->getSExtValue()*Scale;
-      if (TLI.isLegalAddressingMode(InputAddrMode, AccessTy)) {
-        AddrModeInsts.push_back(BinOp);
-        AddrMode = InputAddrMode;
-        return true;
-      }
-    }
-
-    // Otherwise, not (x+c)*scale, just return what we have.
-    return true;
-  }
-
-  // Otherwise, back this attempt out.
-  AddrMode.Scale -= Scale;
-  if (AddrMode.Scale == 0) AddrMode.ScaledReg = 0;
-
   return false;
 }
 
