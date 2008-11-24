@@ -497,12 +497,9 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   if (!FTI.hasPrototype && FTI.NumArgs != 0)
     ParseKNRParamDeclarations(D);
 
-  if (getLang().CPlusPlus && Tok.is(tok::colon)) {
-    
-  }
-
   // We should have either an opening brace or, in a C++ constructor,
   // we may have a colon.
+  // FIXME: In C++, we might also find the 'try' keyword.
   if (Tok.isNot(tok::l_brace) && Tok.isNot(tok::colon)) {
     Diag(Tok, diag::err_expected_fn_body);
 
