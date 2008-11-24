@@ -1,12 +1,10 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: grep shufb   %t1.s | count 39
-; RUN: grep ilhu    %t1.s | count 31
-; RUN: grep iohl    %t1.s | count 31
+; RUN: grep ilhu    %t1.s | count 27
+; RUN: grep iohl    %t1.s | count 27
 ; RUN: grep lqa     %t1.s | count 10
-; RUN: grep shlqbyi %t1.s | count 8
-; RUN: grep selb    %t1.s | count 4
-; RUN: grep cgti    %t1.s | count 4
-; RUN: grep   515   %t1.s | count 5
+; RUN: grep shlqbyi %t1.s | count 12
+; RUN: grep   515   %t1.s | count 1
 ; RUN: grep  1029   %t1.s | count 2
 ; RUN: grep  1543   %t1.s | count 2
 ; RUN: grep  2057   %t1.s | count 2

@@ -121,9 +121,6 @@ def SPUrotquad_rz_bytes: SDNode<"SPUISD::ROTQUAD_RZ_BYTES",
 def SPUrotquad_rz_bits: SDNode<"SPUISD::ROTQUAD_RZ_BITS",
                                     SPUvecshift_type, []>;
 
-def SPUrotbytes_right_sfill: SDNode<"SPUISD::ROTBYTES_RIGHT_S",
-                                    SPUvecshift_type, []>;
-
 // Vector rotate left, bits shifted out of the left are rotated in on the right
 def SPUrotbytes_left: SDNode<"SPUISD::ROTBYTES_LEFT",
                              SPUvecshift_type, []>;
@@ -155,9 +152,9 @@ def SDTpromote_scalar: SDTypeProfile<1, 1, []>;
 def SPUpromote_scalar: SDNode<"SPUISD::PROMOTE_SCALAR", SDTpromote_scalar, []>;
 
 def SPU_vec_demote   : SDTypeProfile<1, 1, []>;
-def SPUextract_elt0: SDNode<"SPUISD::EXTRACT_ELT0", SPU_vec_demote, []>;
+def SPUvec2prefslot: SDNode<"SPUISD::VEC2PREFSLOT", SPU_vec_demote, []>;
 def SPU_vec_demote_chained : SDTypeProfile<1, 2, []>;
-def SPUextract_elt0_chained: SDNode<"SPUISD::EXTRACT_ELT0_CHAINED",
+def SPUvec2prefslot_chained: SDNode<"SPUISD::VEC2PREFSLOT_CHAINED",
                                     SPU_vec_demote_chained, [SDNPHasChain]>;
 def SPUextract_i1_sext: SDNode<"SPUISD::EXTRACT_I1_SEXT", SPU_vec_demote, []>;
 def SPUextract_i1_zext: SDNode<"SPUISD::EXTRACT_I1_ZEXT", SPU_vec_demote, []>;

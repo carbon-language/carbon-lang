@@ -8,6 +8,7 @@ Department in The Aerospace Corporation:
 - Mark Thomas (floating point instructions)
 - Michael AuYeung (intrinsics)
 - Chandler Carruth (LLVM expertise)
+- Nehal Desai (debugging, RoadRunner SPU expertise)
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -32,6 +33,11 @@ to add 'spu' to configure's --enable-targets option, e.g.:
            --enable-targets=x86,x86_64,powerpc,spu
 
 ---------------------------------------------------------------------------
+
+The unofficially official status page (because it's not easy to get an
+officially blessed external web page from either IBM Austin or Aerosapce):
+
+              http://sites.google.com/site/llvmcellspu/
 
 TODO:
 * Finish branch instructions, branch prediction

@@ -40,8 +40,8 @@ namespace llvm {
       SHUFFLE_MASK,             ///< Shuffle mask
       CNTB,                     ///< Count leading ones in bytes
       PROMOTE_SCALAR,           ///< Promote scalar->vector
-      EXTRACT_ELT0,             ///< Extract element 0
-      EXTRACT_ELT0_CHAINED,     ///< Extract element 0, with chain
+      VEC2PREFSLOT,             ///< Extract element 0
+      VEC2PREFSLOT_CHAINED,     ///< Extract element 0, with chain
       EXTRACT_I1_ZEXT,          ///< Extract element 0 as i1, zero extend
       EXTRACT_I1_SEXT,          ///< Extract element 0 as i1, sign extend
       EXTRACT_I8_ZEXT,          ///< Extract element 0 as i8, zero extend
@@ -59,7 +59,6 @@ namespace llvm {
       VEC_ROTR,                 ///< Vector rotate right
       ROTQUAD_RZ_BYTES,         ///< Rotate quad right, by bytes, zero fill
       ROTQUAD_RZ_BITS,          ///< Rotate quad right, by bits, zero fill
-      ROTBYTES_RIGHT_S,         ///< Vector rotate right, by bytes, sign fill
       ROTBYTES_LEFT,            ///< Rotate bytes (loads -> ROTQBYI)
       ROTBYTES_LEFT_CHAINED,    ///< Rotate bytes (loads -> ROTQBYI), with chain
       ROTBYTES_LEFT_BITS,       ///< Rotate bytes left by bit shift count

@@ -1286,40 +1286,40 @@ def : Pat<(v2f64 (SPUpromote_scalar R64FP:$rA)),
 
 // ORi*_v*: Used to extract vector element 0 (the preferred slot)
 
-def : Pat<(SPUextract_elt0 (v16i8 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot (v16i8 VECREG:$rA)),
           (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0_chained (v16i8 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot_chained (v16i8 VECREG:$rA)),
           (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0 (v8i16 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot (v8i16 VECREG:$rA)),
           (ORi16_v8i16 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0_chained (v8i16 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot_chained (v8i16 VECREG:$rA)),
           (ORi16_v8i16 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0 (v4i32 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot (v4i32 VECREG:$rA)),
           (ORi32_v4i32 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0_chained (v4i32 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot_chained (v4i32 VECREG:$rA)),
           (ORi32_v4i32 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0 (v2i64 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot (v2i64 VECREG:$rA)),
           (ORi64_v2i64 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0_chained (v2i64 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot_chained (v2i64 VECREG:$rA)),
           (ORi64_v2i64 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0 (v4f32 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot (v4f32 VECREG:$rA)),
           (ORf32_v4f32 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0_chained (v4f32 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot_chained (v4f32 VECREG:$rA)),
           (ORf32_v4f32 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0 (v2f64 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot (v2f64 VECREG:$rA)),
           (ORf64_v2f64 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUextract_elt0_chained (v2f64 VECREG:$rA)),
+def : Pat<(SPUvec2prefslot_chained (v2f64 VECREG:$rA)),
           (ORf64_v2f64 VECREG:$rA, VECREG:$rA)>;
 
 // ORC: Bitwise "or" with complement (c = a | ~b)

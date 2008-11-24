@@ -425,9 +425,9 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::SHUFFLE_MASK] = "SPUISD::SHUFFLE_MASK";
     node_names[(unsigned) SPUISD::CNTB] = "SPUISD::CNTB";
     node_names[(unsigned) SPUISD::PROMOTE_SCALAR] = "SPUISD::PROMOTE_SCALAR";
-    node_names[(unsigned) SPUISD::EXTRACT_ELT0] = "SPUISD::EXTRACT_ELT0";
-    node_names[(unsigned) SPUISD::EXTRACT_ELT0_CHAINED]
-                                              = "SPUISD::EXTRACT_ELT0_CHAINED";
+    node_names[(unsigned) SPUISD::VEC2PREFSLOT] = "SPUISD::VEC2PREFSLOT";
+    node_names[(unsigned) SPUISD::VEC2PREFSLOT_CHAINED]
+                                              = "SPUISD::VEC2PREFSLOT_CHAINED";
     node_names[(unsigned) SPUISD::EXTRACT_I1_ZEXT] = "SPUISD::EXTRACT_I1_ZEXT";
     node_names[(unsigned) SPUISD::EXTRACT_I1_SEXT] = "SPUISD::EXTRACT_I1_SEXT";
     node_names[(unsigned) SPUISD::EXTRACT_I8_ZEXT] = "SPUISD::EXTRACT_I8_ZEXT";
@@ -447,8 +447,6 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
       "SPUISD::ROTQUAD_RZ_BYTES";
     node_names[(unsigned) SPUISD::ROTQUAD_RZ_BITS] =
       "SPUISD::ROTQUAD_RZ_BITS";
-    node_names[(unsigned) SPUISD::ROTBYTES_RIGHT_S] =
-      "SPUISD::ROTBYTES_RIGHT_S";
     node_names[(unsigned) SPUISD::ROTBYTES_LEFT] = "SPUISD::ROTBYTES_LEFT";
     node_names[(unsigned) SPUISD::ROTBYTES_LEFT_CHAINED] =
       "SPUISD::ROTBYTES_LEFT_CHAINED";
@@ -647,7 +645,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       Ops[0] = the_chain;
       Ops[1] = DAG.getNode(ISD::BIT_CONVERT, vecVT, result);
       scalarvts = DAG.getVTList((OpVT == VT ? VT : OpVT), MVT::Other);
-      result = DAG.getNode(SPUISD::EXTRACT_ELT0_CHAINED, scalarvts, Ops, 2);
+      result = DAG.getNode(SPUISD::VEC2PREFSLOT_CHAINED, scalarvts, Ops, 2);
       the_chain = result.getValue(1);
     } else {
       // Handle the sign and zero-extending loads for i1 and i8:
@@ -889,7 +887,7 @@ LowerConstant(SDValue Op, SelectionDAG &DAG) {
 
   if (VT == MVT::i64) {
     SDValue T = DAG.getConstant(CN->getZExtValue(), MVT::i64);
-    return DAG.getNode(SPUISD::EXTRACT_ELT0, VT,
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
                        DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i64, T, T));
   } else {
     cerr << "LowerConstant: unhandled constant type "
@@ -1603,7 +1601,7 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   case MVT::v2f64: {
     uint64_t f64val = SplatBits;
     assert(SplatSize == 8
-           && "LowerBUILD_VECTOR: 64-bit float vector element: unexpected size.");
+           && "LowerBUILD_VECTOR: 64-bit float vector size > 8 bytes.");
     // NOTE: pretend the constant is an integer. LLVM won't load FP constants
     SDValue T = DAG.getConstant(f64val, MVT::i64);
     return DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64,
@@ -1656,8 +1654,8 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
       // specialized masks to replace any and all 0's, 0xff's and 0x80's.
 
       // Detect if the upper or lower half is a special shuffle mask pattern:
-      upper_special = (upper == 0 || upper == 0xffffffff || upper == 0x80000000);
-      lower_special = (lower == 0 || lower == 0xffffffff || lower == 0x80000000);
+      upper_special = (upper == 0||upper == 0xffffffff||upper == 0x80000000);
+      lower_special = (lower == 0||lower == 0xffffffff||lower == 0x80000000);
 
       // Create lower vector if not a special pattern
       if (!lower_special) {
@@ -2077,7 +2075,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
 
     if (EltNo == 0 && (VT == MVT::i32 || VT == MVT::i64)) {
       // i32 and i64: Element 0 is the preferred slot
-      return DAG.getNode(SPUISD::EXTRACT_ELT0, VT, N);
+      return DAG.getNode(SPUISD::VEC2PREFSLOT, VT, N);
     }
 
     // Need to generate shuffle mask and extract:
@@ -2140,7 +2138,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
                                       &ShufMask[0],
                                       sizeof(ShufMask) / sizeof(ShufMask[0]));
 
-    retval = DAG.getNode(SPUISD::EXTRACT_ELT0, VT,
+    retval = DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
                          DAG.getNode(SPUISD::SHUFB, N.getValueType(),
                                      N, N, ShufMaskVec));
   } else {
@@ -2158,60 +2156,20 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
 
     // Scale the index to a bit/byte shift quantity
     APInt scaleFactor =
-      APInt(32, uint64_t(16 / N.getValueType().getVectorNumElements()), false);
+            APInt(32, uint64_t(16 / N.getValueType().getVectorNumElements()), false);
+    unsigned scaleShift = scaleFactor.logBase2();
     SDValue vecShift;
-    
-    switch (VT.getSimpleVT()) {
-    default:
-      cerr << "LowerEXTRACT_VECTOR_ELT(varable): Unhandled vector type\n";
-      abort();
-      /*NOTREACHED*/
-    case MVT::i8: {
-      // Don't need to scale, but we do need to correct for where bytes go in
-      // slot 0:
-      SDValue prefSlot = DAG.getNode(ISD::SUB, MVT::i32,
-                                     Elt, DAG.getConstant(3, MVT::i32));
-      SDValue corrected = DAG.getNode(ISD::ADD, MVT::i32, prefSlot,
-                                      DAG.getConstant(16, MVT::i32));
 
-      SDValue shiftAmt = DAG.getNode(ISD::SELECT_CC, MVT::i32,
-                                     prefSlot, DAG.getConstant(0, MVT::i32),
-                                     prefSlot,          // trueval
-                                     corrected,         // falseval
-                                     DAG.getCondCode(ISD::SETGT));
-      vecShift = DAG.getNode(SPUISD::ROTBYTES_LEFT, VecVT, N, shiftAmt);
-      break;
-    }
-    case MVT::i16: {
-      // Scale the index to bytes, subtract for preferred slot:
+    if (scaleShift > 0) {
+      // Scale the shift factor:
       Elt = DAG.getNode(ISD::SHL, MVT::i32, Elt,
-                        DAG.getConstant(scaleFactor.logBase2(), MVT::i32));
-      SDValue prefSlot = DAG.getNode(ISD::SUB, MVT::i32,
-                                     Elt, DAG.getConstant(2, MVT::i32));
-      SDValue corrected = DAG.getNode(ISD::ADD, MVT::i32, prefSlot,
-                                      DAG.getConstant(16, MVT::i32));
-
-      SDValue shiftAmt = DAG.getNode(ISD::SELECT_CC, MVT::i32,
-                                     prefSlot, DAG.getConstant(0, MVT::i32),
-                                     prefSlot,          // trueval
-                                     corrected,         // falseval
-                                     DAG.getCondCode(ISD::SETGT));
-      vecShift = DAG.getNode(SPUISD::ROTBYTES_LEFT, VecVT, N, shiftAmt);
-      break;
-    }
-    case MVT::i32:
-    case MVT::f32:
-    case MVT::i64:
-    case MVT::f64:
-      // Simple left shift to slot 0
-      Elt = DAG.getNode(ISD::SHL, MVT::i32, Elt,
-                        DAG.getConstant(scaleFactor.logBase2(), MVT::i32));
-      vecShift = DAG.getNode(SPUISD::SHLQUAD_L_BYTES, VecVT, N, Elt);
-      break;
+              DAG.getConstant(scaleShift, MVT::i32));
     }
 
-    // Replicate slot 0 across the entire vector (for consistency with the
-    // notion of a unified register set)
+    vecShift = DAG.getNode(SPUISD::SHLQUAD_L_BYTES, VecVT, N, Elt);
+
+    // Replicate the bytes starting at byte 0 across the entire vector (for
+    // consistency with the notion of a unified register set)
     SDValue replicate;
 
     switch (VT.getSimpleVT()) {
@@ -2220,13 +2178,13 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
       abort();
       /*NOTREACHED*/
     case MVT::i8: {
-      SDValue factor = DAG.getConstant(0x03030303, MVT::i32);
+      SDValue factor = DAG.getConstant(0x00000000, MVT::i32);
       replicate = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, factor, factor,
                               factor, factor);
       break;
     }
     case MVT::i16: {
-      SDValue factor = DAG.getConstant(0x02030203, MVT::i32);
+      SDValue factor = DAG.getConstant(0x00010001, MVT::i32);
       replicate = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, factor, factor,
                               factor, factor);
       break;
@@ -2248,7 +2206,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     }
     }
 
-    retval = DAG.getNode(SPUISD::EXTRACT_ELT0, VT,
+    retval = DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
                          DAG.getNode(SPUISD::SHUFB, VecVT, vecShift, vecShift, replicate));
   }
 
@@ -2400,19 +2358,34 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
 
     assert(Op0VT == MVT::i32
            && "CellSPU: Zero/sign extending something other than i32");
-    DEBUG(cerr << "CellSPU: LowerI64Math custom lowering zero/sign/any extend\n");
 
-    unsigned NewOpc = (Opc == ISD::SIGN_EXTEND
-                      ? SPUISD::ROTBYTES_RIGHT_S
-                      : SPUISD::ROTQUAD_RZ_BYTES);
+    DEBUG(cerr << "CellSPU.LowerI64Math: lowering zero/sign/any extend\n");
+
     SDValue PromoteScalar =
-      DAG.getNode(SPUISD::PROMOTE_SCALAR, Op0VecVT, Op0);
+            DAG.getNode(SPUISD::PROMOTE_SCALAR, Op0VecVT, Op0);
+    SDValue RotQuad =
+            DAG.getNode(SPUISD::ROTQUAD_RZ_BYTES, Op0VecVT,
+                        PromoteScalar, DAG.getConstant(4, MVT::i32));
 
-    return DAG.getNode(SPUISD::EXTRACT_ELT0, VT,
-                       DAG.getNode(ISD::BIT_CONVERT, VecVT,
-                                   DAG.getNode(NewOpc, Op0VecVT,
-                                               PromoteScalar,
-                                               DAG.getConstant(4, MVT::i32))));
+    if (Opc != ISD::SIGN_EXTEND) {
+      return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
+                         DAG.getNode(ISD::BIT_CONVERT, VecVT, RotQuad));
+    } else {
+      // SPU has no "rotate quadword and replicate bit 0" (i.e. rotate/shift
+      // right and propagate the sign bit) instruction.
+      SDValue SignQuad =
+              DAG.getNode(SPUISD::VEC_SRA, Op0VecVT,
+                          PromoteScalar, DAG.getConstant(32, MVT::i32));
+      SDValue SelMask =
+              DAG.getNode(SPUISD::SELECT_MASK, Op0VecVT,
+                          DAG.getConstant(0xf0f0, MVT::i16));
+      SDValue CombineQuad =
+              DAG.getNode(SPUISD::SELB, Op0VecVT,
+                          SignQuad, RotQuad, SelMask);
+
+      return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
+                         DAG.getNode(ISD::BIT_CONVERT, VecVT, CombineQuad));
+    }
   }
 
   case ISD::ADD: {
@@ -2439,7 +2412,7 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
                   DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
                               &ShufBytes[0], ShufBytes.size()));
 
-    return DAG.getNode(SPUISD::EXTRACT_ELT0, MVT::i64,
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, MVT::i64,
                        DAG.getNode(SPUISD::ADD_EXTENDED, MVT::v2i64,
                                    Op0, Op1, ShiftedCarry));
   }
@@ -2468,7 +2441,7 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
                   DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
                               &ShufBytes[0], ShufBytes.size()));
 
-    return DAG.getNode(SPUISD::EXTRACT_ELT0, MVT::i64,
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, MVT::i64,
                        DAG.getNode(SPUISD::SUB_EXTENDED, MVT::v2i64,
                                    Op0, Op1, ShiftedBorrow));
   }
@@ -2492,7 +2465,7 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
                   ShiftAmt,
                   DAG.getConstant(7, ShiftAmtVT));
 
-    return DAG.getNode(SPUISD::EXTRACT_ELT0, VT,
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
                        DAG.getNode(SPUISD::SHLQUAD_L_BITS, VecVT,
                                    DAG.getNode(SPUISD::SHLQUAD_L_BYTES, VecVT,
                                                MaskLower, ShiftAmtBytes),
@@ -2532,7 +2505,7 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
     }
 
     SDValue UpperHalfSign =
-      DAG.getNode(SPUISD::EXTRACT_ELT0, MVT::i32,
+      DAG.getNode(SPUISD::VEC2PREFSLOT, MVT::i32,
                   DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32,
                               DAG.getNode(SPUISD::VEC_SRA, MVT::v2i64,
                                           Op0, DAG.getConstant(31, MVT::i32))));
@@ -2551,7 +2524,7 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
       DAG.getNode(SPUISD::ROTBYTES_LEFT, MVT::v2i64,
                   RotateLeftBytes, ShiftAmt);
 
-    return DAG.getNode(SPUISD::EXTRACT_ELT0, MVT::i64,
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, MVT::i64,
                        RotateLeftBits);
   }
   }
@@ -2968,7 +2941,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND: {
-    if (Op0.getOpcode() == SPUISD::EXTRACT_ELT0 &&
+    if (Op0.getOpcode() == SPUISD::VEC2PREFSLOT &&
         N->getValueType(0) == Op0.getValueType()) {
       // (any_extend (SPUextract_elt0 <arg>)) ->
       // (SPUextract_elt0 <arg>)
@@ -3031,7 +3004,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
       // <arg>
       // but only if the SPUpromote_scalar and <arg> types match.
       SDValue Op00 = Op0.getOperand(0);
-      if (Op00.getOpcode() == SPUISD::EXTRACT_ELT0) {
+      if (Op00.getOpcode() == SPUISD::VEC2PREFSLOT) {
         SDValue Op000 = Op00.getOperand(0);
         if (Op000.getValueType() == N->getValueType(0)) {
           Result = Op000;
@@ -3039,7 +3012,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
       }
       break;
     }
-    case SPUISD::EXTRACT_ELT0: {
+    case SPUISD::VEC2PREFSLOT: {
       // (SPUpromote_scalar (SPUextract_elt0 <arg>)) ->
       // <arg>
       Result = Op0.getOperand(0);
@@ -3146,8 +3119,8 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   }
 
   case SPUISD::LDRESULT:
-  case SPUISD::EXTRACT_ELT0:
-  case SPUISD::EXTRACT_ELT0_CHAINED: {
+  case SPUISD::VEC2PREFSLOT:
+  case SPUISD::VEC2PREFSLOT_CHAINED: {
     MVT OpVT = Op.getValueType();
     unsigned OpVTBits = OpVT.getSizeInBits();
     uint64_t InMask = OpVT.getIntegerVTBitMask();
@@ -3174,7 +3147,6 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   case SPUISD::VEC_ROTR:
   case SPUISD::ROTQUAD_RZ_BYTES:
   case SPUISD::ROTQUAD_RZ_BITS:
-  case SPUISD::ROTBYTES_RIGHT_S:
   case SPUISD::ROTBYTES_LEFT:
   case SPUISD::ROTBYTES_LEFT_CHAINED:
   case SPUISD::SELECT_MASK:

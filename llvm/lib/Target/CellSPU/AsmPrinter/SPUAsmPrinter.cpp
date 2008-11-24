@@ -261,7 +261,7 @@ namespace {
     void printROTNeg7Imm(const MachineInstr *MI, unsigned OpNo) {
       if (MI->getOperand(OpNo).isImm()) {
         int value = (int) MI->getOperand(OpNo).getImm();
-        assert((value >= 0 && value < 32)
+        assert((value >= 0 && value <= 32)
                && "Invalid negated immediate rotate 7-bit argument");
         O << -value;
       } else {
