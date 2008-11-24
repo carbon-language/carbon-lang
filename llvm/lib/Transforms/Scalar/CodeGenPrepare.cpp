@@ -208,7 +208,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
     while (PHINode *PN = dyn_cast<PHINode>(DestBB->begin())) {
       Value *NewVal = PN->getIncomingValue(0);
       // Replace self referencing PHI with undef, it must be dead.
-      //if (NewVal == PN) NewVal = UndefValue::get(PN->getType());
+      if (NewVal == PN) NewVal = UndefValue::get(PN->getType());
       PN->replaceAllUsesWith(NewVal);
       PN->eraseFromParent();
     }
