@@ -894,7 +894,9 @@ declare signext i8 @returns_signed_char()
     parameter.  The caller is responsible for ensuring that this is the
     case. On a function return value, <tt>noalias</tt> additionally indicates
     that the pointer does not alias any other pointers visible to the
-    caller.</dd>
+    caller. Note that this applies only to pointers that can be used to actually
+    load/store a value: NULL, unique pointers from malloc(0), and freed pointers
+    are considered to not alias anything.</dd>
 
     <dt><tt>nest</tt></dt>
     <dd>This indicates that the pointer parameter can be excised using the
