@@ -1284,9 +1284,10 @@ OptAttributes : /* empty */  { $$ = Attribute::None; }
               }
               ;
 
-RetAttr       : INREG    { $$ = Attribute::InReg;     }
+RetAttr       : INREG    { $$ = Attribute::InReg;    }
               | ZEROEXT  { $$ = Attribute::ZExt;     }
               | SIGNEXT  { $$ = Attribute::SExt;     }
+              | NOALIAS  { $$ = Attribute::NoAlias;  }
               ;
 
 OptRetAttrs  : /* empty */ { $$ = Attribute::None; }

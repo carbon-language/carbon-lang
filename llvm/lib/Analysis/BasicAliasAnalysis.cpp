@@ -104,14 +104,24 @@ static const Value *GetGEPOperands(const Value *V,
   return V;
 }
 
+/// isNoAliasCall - Return true if this pointer is returned by a noalias
+/// function.
+static bool isNoAliasCall(const Value *V) {
+  if (isa<CallInst>(V) || isa<InvokeInst>(V))
+    return CallSite(const_cast<Instruction*>(cast<Instruction>(V)))
+      .paramHasAttr(0, Attribute::NoAlias);
+  return false;
+}
+
 /// isIdentifiedObject - Return true if this pointer refers to a distinct and
 /// identifiable object.  This returns true for:
 ///    Global Variables and Functions
 ///    Allocas and Mallocs
 ///    ByVal and NoAlias Arguments
+///    NoAlias returns
 ///
 static bool isIdentifiedObject(const Value *V) {
-  if (isa<GlobalValue>(V) || isa<AllocationInst>(V))
+  if (isa<GlobalValue>(V) || isa<AllocationInst>(V) || isNoAliasCall(V))
     return true;
   if (const Argument *A = dyn_cast<Argument>(V))
     return A->hasNoAliasAttr() || A->hasByValAttr();
@@ -138,7 +148,7 @@ static bool isKnownNonNull(const Value *V) {
 /// object that never escapes from the function.
 static bool isNonEscapingLocalObject(const Value *V) {
   // If this is a local allocation, check to see if it escapes.
-  if (isa<AllocationInst>(V))
+  if (isa<AllocationInst>(V) || isNoAliasCall(V))
     return !AddressMightEscape(V);
       
   // If this is an argument that corresponds to a byval or noalias argument,
@@ -355,8 +365,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   // Are we checking for alias of the same value?
   if (V1 == V2) return MustAlias;
 
-  if ((!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType())) &&
-      V1->getType() != Type::Int64Ty && V2->getType() != Type::Int64Ty)
+  if (!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType()))
     return NoAlias;  // Scalars cannot alias each other
 
   // Strip off cast instructions...
@@ -374,11 +383,11 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     if (isIdentifiedObject(O1) && isIdentifiedObject(O2))
       return NoAlias;
   
-    // Incoming argument cannot alias locally allocated object!
-    if ((isa<Argument>(O1) && isa<AllocationInst>(O2)) ||
-        (isa<Argument>(O2) && isa<AllocationInst>(O1)))
+    // Local allocations can't alias with arguments or noalias functions.
+    if ((isa<AllocationInst>(O1) && (isa<Argument>(O2) || isNoAliasCall(O2))) ||
+        (isa<AllocationInst>(O2) && (isa<Argument>(O1) || isNoAliasCall(O1))))
       return NoAlias;
-    
+
     // Most objects can't alias null.
     if ((isa<ConstantPointerNull>(V2) && isKnownNonNull(O1)) ||
         (isa<ConstantPointerNull>(V1) && isKnownNonNull(O2)))

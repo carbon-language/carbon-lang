@@ -890,10 +890,11 @@ declare signext i8 @returns_signed_char()
     return values. </dd>
 
     <dt><tt>noalias</tt></dt>
-    <dd>This indicates that the parameter does not alias any global or any other
-    parameter.  The caller is responsible for ensuring that this is the case,
-    usually by placing the value in a stack allocation. This is not a valid
-    attribute for return values.</dd>
+    <dd>This indicates that the pointer does not alias any global or any other
+    parameter.  The caller is responsible for ensuring that this is the
+    case. Additionally, on a function return value <tt>noalias</tt> indicates
+    that the pointer does not alias the return value from other calls of
+    itself or other noalias functions.</dd>
 
     <dt><tt>nest</tt></dt>
     <dd>This indicates that the pointer parameter can be excised using the
@@ -3155,7 +3156,7 @@ choose to align the allocation on any convenient boundary.</p>
 <h5>Semantics:</h5>
 
 <p>Memory is allocated using the system "<tt>malloc</tt>" function, and
-a pointer is returned.  The result of a zero byte allocattion is undefined.  The
+a pointer is returned.  The result of a zero byte allocation is undefined.  The
 result is null if there is insufficient memory available.</p>
 
 <h5>Example:</h5>
