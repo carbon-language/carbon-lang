@@ -106,7 +106,7 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
   // nodes are where they need to be.
   if (TypedefDecl *localType = dyn_cast<TypedefDecl>(D)) {
     OS << "typedef " << localType->getUnderlyingType().getAsString();
-    OS << " " << localType->getName();
+    OS << " " << localType->getNameAsString();
   } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     // Emit storage class for vardecls.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
@@ -120,7 +120,7 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
       }
     }
     
-    std::string Name = VD->getName();
+    std::string Name = VD->getNameAsString();
     VD->getType().getAsStringInternal(Name);
     OS << Name;
     
@@ -483,7 +483,7 @@ void StmtPrinter::VisitExpr(Expr *Node) {
 }
 
 void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
-  OS << Node->getDecl()->getName();
+  OS << Node->getDecl()->getNameAsString();
 }
 
 void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
@@ -491,7 +491,7 @@ void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
     PrintExpr(Node->getBase());
     OS << (Node->isArrow() ? "->" : ".");
   }
-  OS << Node->getDecl()->getName();
+  OS << Node->getDecl()->getNameAsString();
 }
 
 void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
@@ -658,7 +658,7 @@ bool StmtPrinter::PrintOffsetOfDesignator(Expr *E) {
   } else {
     MemberExpr *ME = cast<MemberExpr>(E);
     bool IsFirst = PrintOffsetOfDesignator(ME->getBase());
-    OS << (IsFirst ? "" : ".") << ME->getMemberDecl()->getName();
+    OS << (IsFirst ? "" : ".") << ME->getMemberDecl()->getNameAsString();
     return false;
   }
 }
@@ -705,7 +705,7 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   
   FieldDecl *Field = Node->getMemberDecl();
   assert(Field && "MemberExpr should alway reference a field!");
-  OS << Field->getName();
+  OS << Field->getNameAsString();
 }
 void StmtPrinter::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
   PrintExpr(Node->getBase());
@@ -984,15 +984,15 @@ void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
 }
 
 void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
-  OS << "@encode(" << Node->getEncodedType().getAsString() << ")";
+  OS << "@encode(" << Node->getEncodedType().getAsString() << ')';
 }
 
 void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
-  OS << "@selector(" << Node->getSelector().getAsString() << ")";
+  OS << "@selector(" << Node->getSelector().getAsString() << ')';
 }
 
 void StmtPrinter::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
-  OS << "@protocol(" << Node->getProtocol()->getName() << ")";
+  OS << "@protocol(" << Node->getProtocol()->getNameAsString() << ')';
 }
 
 void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
@@ -1009,7 +1009,7 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
       if (i < selector.getNumArgs()) {
         if (i > 0) OS << ' ';
         if (selector.getIdentifierInfoForSlot(i))
-          OS << selector.getIdentifierInfoForSlot(i)->getName() << ":";
+          OS << selector.getIdentifierInfoForSlot(i)->getName() << ':';
         else
            OS << ":";
       }
@@ -1039,7 +1039,7 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
     for (BlockDecl::param_iterator AI = BD->param_begin(),
          E = BD->param_end(); AI != E; ++AI) {
       if (AI != BD->param_begin()) OS << ", ";
-      ParamStr = (*AI)->getName();
+      ParamStr = (*AI)->getNameAsString();
       (*AI)->getType().getAsStringInternal(ParamStr);
       OS << ParamStr;
     }
@@ -1054,7 +1054,7 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
 }
 
 void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
-  OS << Node->getDecl()->getName();
+  OS << Node->getDecl()->getNameAsString();
 }
 //===----------------------------------------------------------------------===//
 // Stmt method implementations

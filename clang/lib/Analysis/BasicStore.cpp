@@ -433,7 +433,7 @@ void BasicStoreManager::print(Store store, std::ostream& Out,
     if (isFirst) isFirst = false;
     else Out << nl;
     
-    Out << ' ' << I.getKey()->getName() << " : ";
+    Out << ' ' << I.getKey()->getNameAsString() << " : ";
     I.getData().print(Out);
   }
 }

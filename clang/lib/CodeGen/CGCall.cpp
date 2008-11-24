@@ -716,7 +716,7 @@ void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
       // If this was structure was expand into multiple arguments then
       // we need to create a temporary and reconstruct it from the
       // arguments.
-      std::string Name(Arg->getName());
+      std::string Name = Arg->getNameAsString();
       llvm::Value *Temp = CreateTempAlloca(ConvertType(Ty), 
                                            (Name + ".addr").c_str());
       // FIXME: What are the right qualifiers here?

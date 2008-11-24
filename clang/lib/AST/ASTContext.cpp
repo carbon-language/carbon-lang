@@ -1589,7 +1589,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
   if (SynthesizePID) {
     const ObjCIvarDecl *OID = SynthesizePID->getPropertyIvarDecl();
     S += ",V";
-    S += OID->getName();
+    S += OID->getNameAsString();
   }
 
   // FIXME: OBJCGC: weak & strong
@@ -1695,7 +1695,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         FieldDecl *FD = RDecl->getMember(i);
         if (NameFields) {
           S += '"';
-          S += FD->getName();
+          S += FD->getNameAsString();
           S += '"';
         }
         

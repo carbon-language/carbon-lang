@@ -218,7 +218,7 @@ void StmtDumper::DumpDeclarator(Decl *D) {
       }
     }
     
-    std::string Name = VD->getName();
+    std::string Name = VD->getNameAsString();
     VD->getType().getAsStringInternal(Name);
     fprintf(F, "%s", Name.c_str());
     
@@ -296,7 +296,7 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
     default: fprintf(F,"Decl"); break;
   }
   
-  fprintf(F, "='%s' %p", Node->getDecl()->getName().c_str(), 
+  fprintf(F, "='%s' %p", Node->getDecl()->getNameAsString().c_str(), 
           (void*)Node->getDecl());
 }
 

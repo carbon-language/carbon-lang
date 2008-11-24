@@ -1012,7 +1012,7 @@ void ObjCQualifiedInterfaceType::getAsStringInternal(
                                   std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
-  std::string ObjCQIString = getDecl()->getName();
+  std::string ObjCQIString = getDecl()->getNameAsString();
   ObjCQIString += '<';
   bool isFirst = true;
   for (qual_iterator I = qual_begin(), E = qual_end(); I != E; ++I) {
@@ -1020,7 +1020,7 @@ void ObjCQualifiedInterfaceType::getAsStringInternal(
       isFirst = false;
     else
       ObjCQIString += ',';
-    ObjCQIString += (*I)->getName();
+    ObjCQIString += (*I)->getNameAsString();
   }
   ObjCQIString += '>';
   InnerString = ObjCQIString + InnerString;
@@ -1033,7 +1033,7 @@ void ObjCQualifiedIdType::getAsStringInternal(std::string &InnerString) const {
   ObjCQIString += '<';
   int num = getNumProtocols();
   for (int i = 0; i < num; i++) {
-    ObjCQIString += getProtocols(i)->getName();
+    ObjCQIString += getProtocols(i)->getNameAsString();
     if (i < num-1)
       ObjCQIString += ',';
   }

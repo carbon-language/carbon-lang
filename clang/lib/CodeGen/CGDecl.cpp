@@ -91,7 +91,7 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
 
   std::string ContextName;
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl))
-    ContextName = FD->getName();
+    ContextName = FD->getNameAsString();
   else if (isa<ObjCMethodDecl>(CurFuncDecl))
     ContextName = std::string(CurFn->getNameStart(), 
                               CurFn->getNameStart() + CurFn->getNameLen());
@@ -101,7 +101,7 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
   llvm::GlobalValue *GV =
     new llvm::GlobalVariable(Init->getType(), false,
                              llvm::GlobalValue::InternalLinkage,
-                             Init, ContextName + Separator + D.getName(),
+                             Init, ContextName + Separator +D.getNameAsString(),
                              &CGM.getModule(), 0, Ty.getAddressSpace());
 
   return GV;
@@ -212,7 +212,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
     const llvm::Type *LTy = ConvertType(Ty);
     if (LTy->isSingleValueType()) {
       // TODO: Alignment
-      std::string Name(D.getName());
+      std::string Name = D.getNameAsString();
       Name += ".addr";
       DeclPtr = CreateTempAlloca(LTy, Name.c_str());
       
@@ -222,7 +222,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
       // Otherwise, if this is an aggregate, just use the input pointer.
       DeclPtr = Arg;
     }
-    Arg->setName(D.getName());
+    Arg->setName(D.getNameAsString());
   }
 
   llvm::Value *&DMEntry = LocalDeclMap[&D];
