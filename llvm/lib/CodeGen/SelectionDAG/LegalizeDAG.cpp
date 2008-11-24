@@ -4168,13 +4168,16 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
   }
 
-  case ISD::SADDO: {
+  case ISD::SADDO:
+  case ISD::UADDO: {
     SDValue LHS = LegalizeOp(Node->getOperand(0));
     SDValue RHS = LegalizeOp(Node->getOperand(1));
 
     SDValue Sum = DAG.getNode(ISD::ADD, LHS.getValueType(), LHS, RHS);
     MVT OType = SDValue(Node, 1).getValueType();
-    SDValue Cmp = DAG.getSetCC(OType, Sum, LHS, ISD::SETLT);
+    SDValue Cmp = DAG.getSetCC(OType, Sum, LHS,
+                               (Node->getOpcode() == ISD::SADDO) ?
+                               ISD::SETLT : ISD::SETULT);
 
     MVT ValueVTs[] = { LHS.getValueType(), OType };
     SDValue Ops[] = { Sum, Cmp };
@@ -4183,9 +4186,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     SDNode *RNode = Result.getNode();
     DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), SDValue(RNode, 0));
     DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), SDValue(RNode, 1));
-    break;
-  }
-  case ISD::UADDO: {
     break;
   }
   }
