@@ -745,8 +745,15 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     if (Stmt* I = F->getInc()) {
       // Generate increment code in its own basic block.  This is the target
       // of continue statements.
-      Succ = addStmt(I);
-      Block = 0;
+      Succ = Visit(I);
+      
+      // Finish up the increment block if it hasn't been already.
+      if (Block) {
+        assert (Block == Succ);
+        FinishBlock(Block);
+        Block = 0;
+      }
+      
       ContinueTargetBlock = Succ;    
     }
     else {
@@ -1621,6 +1628,7 @@ void CFG::print(llvm::raw_ostream& OS) const {
   
   // Print the exit block.
   print_block(OS, this, getExit(), &Helper, true);
+  OS.flush();
 }  
 
 /// dump - A simply pretty printer of a CFGBlock that outputs to stderr.
