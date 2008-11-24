@@ -1,0 +1,6 @@
+// RUN: clang -checker-simple -analyzer-store-region -verify %s
+
+char f1() {
+  char* s = "abcd";
+  return s[4]; // expected-warning{{Load or store into an out-of-bound memory position.}}
+}
