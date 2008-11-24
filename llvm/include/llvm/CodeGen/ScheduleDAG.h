@@ -313,7 +313,7 @@ namespace llvm {
 
     /// addCustomGraphFeatures - Add custom features for a visualization of
     /// the ScheduleDAG.
-    virtual void addCustomGraphFeatures(GraphWriter<ScheduleDAG*> &GW) const {}
+    virtual void addCustomGraphFeatures(GraphWriter<ScheduleDAG*> &) const {}
 
 #ifndef NDEBUG
     /// VerifySchedule - Verify that all SUnits were scheduled and that
