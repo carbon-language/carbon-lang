@@ -14,6 +14,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "AstGuard.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
@@ -1194,6 +1195,7 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   }
   ConsumeParen();  // '('
   ExprResult Res = ParseExpression();
+  ExprGuard ResGuard(Actions, Res);
   if (Res.isInvalid) {
     SkipUntil(tok::semi);
     return true;
@@ -1216,7 +1218,8 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   ExitScope();
   if (SynchBody.isInvalid)
     SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
-  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.Val, SynchBody.Val);
+  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, ResGuard.take(),
+                                             SynchBody.Val);
 }
 
 ///  objc-try-catch-statement:
@@ -1245,7 +1248,9 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   ExitScope();
   if (TryBody.isInvalid)
     TryBody = Actions.ActOnNullStmt(Tok.getLocation());
-  
+  ExprGuard TryGuard(Actions, TryBody);
+  ExprGuard CatchGuard(Actions), FinallyGuard(Actions);
+
   while (Tok.is(tok::at)) {
     // At this point, we need to lookahead to determine if this @ is the start
     // of an @catch or @finally.  We don't want to consume the @ token if this
@@ -1290,7 +1295,8 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         if (CatchBody.isInvalid)
           CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
         CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc, RParenLoc, 
-          FirstPart, CatchBody.Val, CatchStmts.Val);
+          FirstPart, CatchBody.Val, CatchGuard.take());
+        CatchGuard.reset(CatchStmts);
         ExitScope();
       } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)
@@ -1313,6 +1319,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         FinallyBody = Actions.ActOnNullStmt(Tok.getLocation());
       FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc, 
                                                    FinallyBody.Val);
+      FinallyGuard.reset(FinallyStmt);
       catch_or_finally_seen = true;
       ExitScope();
       break;
@@ -1322,8 +1329,8 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag(atLoc, diag::err_missing_catch_finally);
     return true;
   }
-  return Actions.ActOnObjCAtTryStmt(atLoc, TryBody.Val, CatchStmts.Val, 
-                                    FinallyStmt.Val);
+  return Actions.ActOnObjCAtTryStmt(atLoc, TryGuard.take(), CatchGuard.take(), 
+                                    FinallyGuard.take());
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
@@ -1468,7 +1475,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
   IdentifierInfo *selIdent = ParseObjCSelector(Loc);
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
-  llvm::SmallVector<Action::ExprTy *, 12> KeyExprs;
+  ExprVector KeyExprs(Actions);
 
   if (Tok.is(tok::colon)) {
     while (1) {
@@ -1551,9 +1558,9 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
     return Actions.ActOnClassMessage(CurScope,
                                      ReceiverName, Sel, 
                                      LBracLoc, NameLoc, RBracLoc,
-                                     &KeyExprs[0], KeyExprs.size());
+                                     KeyExprs.take(), KeyExprs.size());
   return Actions.ActOnInstanceMessage(ReceiverExpr, Sel, LBracLoc, RBracLoc,
-                                      &KeyExprs[0], KeyExprs.size());
+                                      KeyExprs.take(), KeyExprs.size());
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
@@ -1564,31 +1571,26 @@ Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
   // expressions.  At this point, we know that the only valid thing that starts
   // with '@' is an @"".
   llvm::SmallVector<SourceLocation, 4> AtLocs;
-  llvm::SmallVector<ExprTy*, 4> AtStrings;
+  ExprVector AtStrings(Actions);
   AtLocs.push_back(AtLoc);
   AtStrings.push_back(Res.Val);
   
   while (Tok.is(tok::at)) {
     AtLocs.push_back(ConsumeToken()); // eat the @.
 
-    ExprResult Res(true);  // Invalid unless there is a string literal.
+    ExprResult Lit(true);  // Invalid unless there is a string literal.
     if (isTokenStringLiteral())
-      Res = ParseStringLiteralExpression();
+      Lit = ParseStringLiteralExpression();
     else
       Diag(Tok, diag::err_objc_concat_string);
     
-    if (Res.isInvalid) {
-      while (!AtStrings.empty()) {
-        Actions.DeleteExpr(AtStrings.back());
-        AtStrings.pop_back();
-      }
-      return Res;
-    }
+    if (Lit.isInvalid)
+      return Lit;
 
-    AtStrings.push_back(Res.Val);
+    AtStrings.push_back(Lit.Val);
   }
   
-  return Actions.ParseObjCStringLiteral(&AtLocs[0], &AtStrings[0],
+  return Actions.ParseObjCStringLiteral(&AtLocs[0], AtStrings.take(),
                                         AtStrings.size());
 }
 
@@ -1614,7 +1616,6 @@ Parser::ExprResult Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
 
 ///     objc-protocol-expression
 ///       @protocol ( protocol-name )
-
 Parser::ExprResult Parser::ParseObjCProtocolExpression(SourceLocation AtLoc) {
   SourceLocation ProtoLoc = ConsumeToken();
   

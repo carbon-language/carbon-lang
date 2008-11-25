@@ -23,6 +23,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "ExtensionRAIIObject.h"
+#include "AstGuard.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
@@ -238,12 +239,15 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
   unsigned NextTokPrec = getBinOpPrecedence(Tok.getKind());
   SourceLocation ColonLoc;
 
+  ExprGuard LHSGuard(Actions, LHS);
   while (1) {
     // If this token has a lower precedence than we are allowed to parse (e.g.
     // because we are called recursively, or because the token is not a binop),
     // then we are done!
-    if (NextTokPrec < MinPrec)
+    if (NextTokPrec < MinPrec) {
+      LHSGuard.take();
       return LHS;
+    }
 
     // Consume the operator, saving the operator token for error reporting.
     Token OpToken = Tok;
@@ -251,6 +255,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     
     // Special case handling for the ternary operator.
     ExprResult TernaryMiddle(true);
+    ExprGuard MiddleGuard(Actions);
     if (NextTokPrec == prec::Conditional) {
       if (Tok.isNot(tok::colon)) {
         // Handle this production specially:
@@ -259,7 +264,6 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
         // 'logical-OR-expression' as we might expect.
         TernaryMiddle = ParseExpression();
         if (TernaryMiddle.isInvalid) {
-          Actions.DeleteExpr(LHS.Val);
           return TernaryMiddle;
         }
       } else {
@@ -268,12 +272,11 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
         TernaryMiddle = ExprResult(false);
         Diag(Tok, diag::ext_gnu_conditional_expr);
       }
+      MiddleGuard.reset(TernaryMiddle);
       
       if (Tok.isNot(tok::colon)) {
         Diag(Tok, diag::err_expected_colon);
         Diag(OpToken, diag::note_matching) << "?";
-        Actions.DeleteExpr(LHS.Val);
-        Actions.DeleteExpr(TernaryMiddle.Val);
         return ExprResult(true);
       }
       
@@ -284,10 +287,9 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     // Parse another leaf here for the RHS of the operator.
     ExprResult RHS = ParseCastExpression(false);
     if (RHS.isInvalid) {
-      Actions.DeleteExpr(LHS.Val);
-      Actions.DeleteExpr(TernaryMiddle.Val);
       return RHS;
     }
+    ExprGuard RHSGuard(Actions, RHS);
 
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
@@ -306,30 +308,32 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
       // more tightly than the current operator.  If it is left-associative, it
       // is okay, to bind exactly as tightly.  For example, compile A=B=C=D as
       // A=(B=(C=D)), where each paren is a level of recursion here.
+      // The function takes ownership of the RHS.
+      RHSGuard.take();
       RHS = ParseRHSOfBinaryExpression(RHS, ThisPrec + !isRightAssoc);
       if (RHS.isInvalid) {
-        Actions.DeleteExpr(LHS.Val);
-        Actions.DeleteExpr(TernaryMiddle.Val);
         return RHS;
       }
+      RHSGuard.reset(RHS);
 
       NextTokPrec = getBinOpPrecedence(Tok.getKind());
     }
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
-  
+
     if (!LHS.isInvalid) {
       // Combine the LHS and RHS into the LHS (e.g. build AST).
+      LHSGuard.take();
+      MiddleGuard.take();
+      RHSGuard.take();
       if (TernaryMiddle.isInvalid)
         LHS = Actions.ActOnBinOp(CurScope, OpToken.getLocation(), 
                                  OpToken.getKind(), LHS.Val, RHS.Val);
       else
         LHS = Actions.ActOnConditionalOp(OpToken.getLocation(), ColonLoc,
                                          LHS.Val, TernaryMiddle.Val, RHS.Val);
-    } else {
-      // We had a semantic error on the LHS.  Just free the RHS and continue.
-      Actions.DeleteExpr(TernaryMiddle.Val);
-      Actions.DeleteExpr(RHS.Val);
+      LHSGuard.reset(LHS);
     }
+    // If we had an invalid LHS, Middle and RHS will be freed by the guards here
   }
 }
 
@@ -676,24 +680,27 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
 ///         argument-expression-list ',' assignment-expression
 ///
 Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
-  
+  ExprGuard LHSGuard(Actions, LHS);
   // Now that the primary-expression piece of the postfix-expression has been
   // parsed, see if there are any postfix-expression pieces here.
   SourceLocation Loc;
   while (1) {
     switch (Tok.getKind()) {
     default:  // Not a postfix-expression suffix.
+      LHSGuard.take();
       return LHS;
     case tok::l_square: {  // postfix-expression: p-e '[' expression ']'
       Loc = ConsumeBracket();
       ExprResult Idx = ParseExpression();
-      
+      ExprGuard IdxGuard(Actions, Idx);
+
       SourceLocation RLoc = Tok.getLocation();
       
-      if (!LHS.isInvalid && !Idx.isInvalid && Tok.is(tok::r_square))
-        LHS = Actions.ActOnArraySubscriptExpr(CurScope, LHS.Val, Loc, 
-                                              Idx.Val, RLoc);
-      else 
+      if (!LHS.isInvalid && !Idx.isInvalid && Tok.is(tok::r_square)) {
+        LHS = Actions.ActOnArraySubscriptExpr(CurScope, LHSGuard.take(), Loc, 
+                                              IdxGuard.take(), RLoc);
+        LHSGuard.reset(LHS);
+      } else 
         LHS = ExprResult(true);
 
       // Match the ']'.
@@ -702,7 +709,7 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     }
       
     case tok::l_paren: {   // p-e: p-e '(' argument-expression-list[opt] ')'
-      ExprListTy ArgExprs;
+      ExprVector ArgExprs(Actions);
       CommaLocsTy CommaLocs;
       
       Loc = ConsumeParen();
@@ -718,8 +725,10 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       if (!LHS.isInvalid && Tok.is(tok::r_paren)) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
-        LHS = Actions.ActOnCallExpr(LHS.Val, Loc, &ArgExprs[0], ArgExprs.size(),
-                                    &CommaLocs[0], Tok.getLocation());
+        LHS = Actions.ActOnCallExpr(LHSGuard.take(), Loc, ArgExprs.take(),
+                                    ArgExprs.size(), &CommaLocs[0],
+                                    Tok.getLocation());
+        LHSGuard.reset(LHS);
       }
       
       MatchRHSPunctuation(tok::r_paren, Loc);
@@ -735,18 +744,22 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         return ExprResult(true);
       }
       
-      if (!LHS.isInvalid)
-        LHS = Actions.ActOnMemberReferenceExpr(LHS.Val, OpLoc, OpKind,
+      if (!LHS.isInvalid) {
+        LHS = Actions.ActOnMemberReferenceExpr(LHSGuard.take(), OpLoc, OpKind,
                                                Tok.getLocation(),
                                                *Tok.getIdentifierInfo());
+        LHSGuard.reset(LHS);
+      }
       ConsumeToken();
       break;
     }
     case tok::plusplus:    // postfix-expression: postfix-expression '++'
     case tok::minusminus:  // postfix-expression: postfix-expression '--'
-      if (!LHS.isInvalid)
+      if (!LHS.isInvalid) {
         LHS = Actions.ActOnPostfixUnaryOp(CurScope, Tok.getLocation(), 
-                                          Tok.getKind(), LHS.Val);
+                                          Tok.getKind(), LHSGuard.take());
+        LHSGuard.reset(LHS);
+      }
       ConsumeToken();
       break;
     }
@@ -840,6 +853,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   default: assert(0 && "Not a builtin primary expression!");
   case tok::kw___builtin_va_arg: {
     ExprResult Expr = ParseAssignmentExpression();
+    ExprGuard ExprGuard(Actions, Expr);
     if (Expr.isInvalid) {
       SkipUntil(tok::r_paren);
       return ExprResult(true);
@@ -854,7 +868,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       Diag(Tok, diag::err_expected_rparen);
       return ExprResult(true);
     }
-    Res = Actions.ActOnVAArg(StartLoc, Expr.Val, Ty, ConsumeParen());
+    Res = Actions.ActOnVAArg(StartLoc, ExprGuard.take(), Ty, ConsumeParen());
     break;
   }
   case tok::kw___builtin_offsetof: {
@@ -879,6 +893,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     Comps.back().U.IdentInfo = Tok.getIdentifierInfo();
     Comps.back().LocStart = Comps.back().LocEnd = ConsumeToken();
 
+    // FIXME: This loop leaks the index expressions on error.
     while (1) {
       if (Tok.is(tok::period)) {
         // offsetof-member-designator: offsetof-member-designator '.' identifier
@@ -921,6 +936,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   }
   case tok::kw___builtin_choose_expr: {
     ExprResult Cond = ParseAssignmentExpression();
+    ExprGuard CondGuard(Actions, Cond);
     if (Cond.isInvalid) {
       SkipUntil(tok::r_paren);
       return Cond;
@@ -929,6 +945,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       return ExprResult(true);
     
     ExprResult Expr1 = ParseAssignmentExpression();
+    ExprGuard Guard1(Actions, Expr1);
     if (Expr1.isInvalid) {
       SkipUntil(tok::r_paren);
       return Expr1;
@@ -937,6 +954,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       return ExprResult(true);
     
     ExprResult Expr2 = ParseAssignmentExpression();
+    ExprGuard Guard2(Actions, Expr2);
     if (Expr2.isInvalid) {
       SkipUntil(tok::r_paren);
       return Expr2;
@@ -945,12 +963,12 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       Diag(Tok, diag::err_expected_rparen);
       return ExprResult(true);
     }
-    Res = Actions.ActOnChooseExpr(StartLoc, Cond.Val, Expr1.Val, Expr2.Val,
-                                  ConsumeParen());
+    Res = Actions.ActOnChooseExpr(StartLoc, CondGuard.take(), Guard1.take(),
+                                  Guard2.take(), ConsumeParen());
     break;
   }
   case tok::kw___builtin_overload: {
-    llvm::SmallVector<ExprTy*, 8> ArgExprs;
+    ExprVector ArgExprs(Actions);
     llvm::SmallVector<SourceLocation, 8> CommaLocs;
 
     // For each iteration through the loop look for assign-expr followed by a
@@ -977,7 +995,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       SkipUntil(tok::r_paren);
       return ExprResult(true);
     }
-    Res = Actions.ActOnOverloadExpr(&ArgExprs[0], ArgExprs.size(), 
+    Res = Actions.ActOnOverloadExpr(ArgExprs.take(), ArgExprs.size(), 
                                     &CommaLocs[0], StartLoc, ConsumeParen());
     break;
   }

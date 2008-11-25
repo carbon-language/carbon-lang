@@ -13,6 +13,7 @@
 
 #include "clang/Parse/Designator.h"
 #include "clang/Parse/Parser.h"
+#include "AstGuard.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
@@ -238,11 +239,11 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
 ///
 Parser::ExprResult Parser::ParseBraceInitializer() {
   SourceLocation LBraceLoc = ConsumeBrace();
-  
+
   /// InitExprs - This is the actual list of expressions contained in the
   /// initializer.
-  llvm::SmallVector<ExprTy*, 8> InitExprs;
-  
+  ExprVector InitExprs(Actions);
+
   /// ExprDesignators - For each initializer, keep track of the designator that
   /// was specified for it, if any.
   InitListDesignations InitExprDesignations(Actions);
@@ -289,6 +290,9 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
       // parsing the rest of the initializer.  This allows us to emit
       // diagnostics for later elements that we find.  If we don't see a comma,
       // assume there is a parse error, and just skip to recover.
+      // FIXME: This comment doesn't sound right. If there is a r_brace
+      // immediately, it can't be an error, since there is no other way of
+      // leaving this loop except through this if.
       if (Tok.isNot(tok::comma)) {
         SkipUntil(tok::r_brace, false, true);
         break;
@@ -305,12 +309,8 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
     if (Tok.is(tok::r_brace)) break;
   }
   if (InitExprsOk && Tok.is(tok::r_brace))
-    return Actions.ActOnInitList(LBraceLoc, &InitExprs[0], InitExprs.size(),
+    return Actions.ActOnInitList(LBraceLoc, InitExprs.take(), InitExprs.size(),
                                  InitExprDesignations, ConsumeBrace());
-  
-  // On error, delete any parsed subexpressions.
-  for (unsigned i = 0, e = InitExprs.size(); i != e; ++i)
-    Actions.DeleteExpr(InitExprs[i]);
   
   // Match the '}'.
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);

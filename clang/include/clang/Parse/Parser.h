@@ -445,8 +445,9 @@ private:
   ExprResult ParseSizeofAlignofExpression();
   ExprResult ParseBuiltinPrimaryExpression();
 
-  typedef llvm::SmallVector<ExprTy*, 8> ExprListTy;
-  typedef llvm::SmallVector<SourceLocation, 8> CommaLocsTy;
+  static const unsigned ExprListSize = 12;
+  typedef llvm::SmallVector<ExprTy*, ExprListSize> ExprListTy;
+  typedef llvm::SmallVector<SourceLocation, ExprListSize> CommaLocsTy;
 
   /// ParseExpressionList - Used for C/C++ (argument-)expression-list.
   bool ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs);

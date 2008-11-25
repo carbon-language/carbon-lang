@@ -14,6 +14,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "ExtensionRAIIObject.h"
+#include "AstGuard.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Parse/DeclSpec.h"
@@ -229,6 +230,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
     SkipUntil(tok::colon);
     return true;
   }
+  ExprGuard LHSGuard(Actions, LHS);
   
   // GNU case range extension.
   SourceLocation DotDotDotLoc;
@@ -244,6 +246,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
     }
     RHSVal = RHS.Val;
   }
+  ExprGuard RHSGuard(Actions, RHSVal);
   
   if (Tok.isNot(tok::colon)) {
     Diag(Tok, diag::err_expected_colon_after) << "'case'";
@@ -265,8 +268,8 @@ Parser::StmtResult Parser::ParseCaseStatement() {
   if (SubStmt.isInvalid)
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
   
-  return Actions.ActOnCaseStmt(CaseLoc, LHS.Val, DotDotDotLoc, RHSVal, ColonLoc,
-                               SubStmt.Val);
+  return Actions.ActOnCaseStmt(CaseLoc, LHSGuard.take(), DotDotDotLoc,
+                               RHSGuard.take(), ColonLoc, SubStmt.Val);
 }
 
 /// ParseDefaultStatement
@@ -351,8 +354,9 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 
   // TODO: "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
   // only allowed at the start of a compound stmt regardless of the language.
-  
-  llvm::SmallVector<StmtTy*, 32> Stmts;
+
+  typedef StmtVector StmtsTy;
+  StmtsTy Stmts(Actions);
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     StmtResult R;
     if (Tok.isNot(tok::kw___extension__)) {
@@ -410,7 +414,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   
   SourceLocation RBraceLoc = ConsumeBrace();
   return Actions.ActOnCompoundStmt(LBraceLoc, RBraceLoc,
-                                   &Stmts[0], Stmts.size(), isStmtExpr);
+                                   Stmts.take(), Stmts.size(), isStmtExpr);
 }
 
 /// ParseIfStatement
@@ -456,6 +460,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
   } else {
     CondExp = ParseSimpleParenExpression();
   }
+  ExprGuard CondGuard(Actions, CondExp);
 
   if (CondExp.isInvalid) {
     SkipUntil(tok::semi);
@@ -528,9 +533,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
   if ((ThenStmt.isInvalid && ElseStmt.isInvalid) ||
       (ThenStmt.isInvalid && ElseStmt.Val == 0) ||
       (ThenStmt.Val == 0  && ElseStmt.isInvalid)) {
-    // Both invalid, or one is invalid and other is non-present: delete cond and
-    // return error.
-    Actions.DeleteExpr(CondExp.Val);
+    // Both invalid, or one is invalid and other is non-present: return error.
     return true;
   }
   
@@ -540,7 +543,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
   if (ElseStmt.isInvalid)
     ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
   
-  return Actions.ActOnIfStmt(IfLoc, CondExp.Val, ThenStmt.Val,
+  return Actions.ActOnIfStmt(IfLoc, CondGuard.take(), ThenStmt.Val,
                              ElseLoc, ElseStmt.Val);
 }
 
@@ -668,6 +671,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   } else {
     Cond = ParseSimpleParenExpression();
   }
+  ExprGuard CondGuard(Actions, Cond);
   
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -685,6 +689,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
+  StmtGuard BodyGuard(Actions, Body);
 
   // Pop the body scope if needed.
   if (NeedsInnerScope) ExitScope();
@@ -693,7 +698,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   
   if (Cond.isInvalid || Body.isInvalid) return true;
   
-  return Actions.ActOnWhileStmt(WhileLoc, Cond.Val, Body.Val);
+  return Actions.ActOnWhileStmt(WhileLoc, CondGuard.take(), BodyGuard.take());
 }
 
 /// ParseDoStatement
@@ -725,6 +730,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
+  StmtGuard BodyGuard(Actions, Body);
 
   // Pop the body scope if needed.
   if (NeedsInnerScope) ExitScope();
@@ -749,12 +755,14 @@ Parser::StmtResult Parser::ParseDoStatement() {
   
   // Parse the condition.
   ExprResult Cond = ParseSimpleParenExpression();
+  ExprGuard CondGuard(Actions, Cond);
   
   ExitScope();
   
   if (Cond.isInvalid || Body.isInvalid) return true;
   
-  return Actions.ActOnDoStmt(DoLoc, Body.Val, WhileLoc, Cond.Val);
+  return Actions.ActOnDoStmt(DoLoc, BodyGuard.take(),
+                             WhileLoc, CondGuard.take());
 }
 
 /// ParseForStatement
@@ -810,6 +818,8 @@ Parser::StmtResult Parser::ParseForStatement() {
   ExprTy *SecondPart = 0;
   StmtTy *ThirdPart = 0;
   bool ForEach = false;
+  StmtGuard FirstGuard(Actions), ThirdGuard(Actions);
+  ExprGuard SecondGuard(Actions);
   
   // Parse the first part of the for specifier.
   if (Tok.is(tok::semi)) {  // for (;
@@ -856,7 +866,10 @@ Parser::StmtResult Parser::ParseForStatement() {
       SkipUntil(tok::semi);
     }
   }
+  FirstGuard.reset(FirstPart);
+  SecondGuard.reset(SecondPart);
   if (!ForEach) {
+    assert(!SecondGuard.get() && "Shouldn't have a second expression yet.");
     // Parse the second part of the for specifier.
     if (Tok.is(tok::semi)) {  // for (...;;
       // no second part.
@@ -888,6 +901,8 @@ Parser::StmtResult Parser::ParseForStatement() {
           ThirdPart = R.Val;
       }
     }
+    SecondGuard.reset(SecondPart);
+    ThirdGuard.reset(ThirdPart);
   }
   // Match the ')'.
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
@@ -918,6 +933,10 @@ Parser::StmtResult Parser::ParseForStatement() {
   if (Body.isInvalid)
     return Body;
   
+  // Release all the guards.
+  FirstGuard.take();
+  SecondGuard.take();
+  ThirdGuard.take();
   if (!ForEach) 
     return Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart, 
                                 SecondPart, ThirdPart, RParenLoc, Body.Val);
@@ -1082,11 +1101,12 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   ExprResult AsmString = ParseAsmStringLiteral();
   if (AsmString.isInvalid)
     return true;
+  ExprGuard AsmGuard(Actions, AsmString);
   
   llvm::SmallVector<std::string, 4> Names;
-  llvm::SmallVector<ExprTy*, 4> Constraints;
-  llvm::SmallVector<ExprTy*, 4> Exprs;
-  llvm::SmallVector<ExprTy*, 4> Clobbers;
+  ExprVector Constraints(Actions);
+  ExprVector Exprs(Actions);
+  ExprVector Clobbers(Actions);
 
   unsigned NumInputs = 0, NumOutputs = 0;
   
@@ -1097,7 +1117,7 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     
     RParenLoc = ConsumeParen();
   } else {
-    // Parse Outputs, if present. 
+    // Parse Outputs, if present.
     if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
         return true;
   
@@ -1136,9 +1156,9 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   
   return Actions.ActOnAsmStmt(AsmLoc, isSimple, isVolatile,
                               NumOutputs, NumInputs,
-                              &Names[0], &Constraints[0], &Exprs[0],
-                              AsmString.Val,
-                              Clobbers.size(), &Clobbers[0],
+                              &Names[0], Constraints.take(),
+                              Exprs.take(), AsmGuard.take(),
+                              Clobbers.size(), Clobbers.take(),
                               RParenLoc);
 }
 

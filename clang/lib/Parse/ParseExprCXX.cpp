@@ -14,6 +14,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
+#include "AstGuard.h"
 using namespace clang;
 
 /// ParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
@@ -328,7 +329,7 @@ Parser::ExprResult Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
   assert(Tok.is(tok::l_paren) && "Expected '('!");
   SourceLocation LParenLoc = ConsumeParen();
 
-  ExprListTy Exprs;
+  ExprVector Exprs(Actions);
   CommaLocsTy CommaLocs;
 
   if (Tok.isNot(tok::r_paren)) {
@@ -345,7 +346,7 @@ Parser::ExprResult Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
          "Unexpected number of commas!");
   return Actions.ActOnCXXTypeConstructExpr(DS.getSourceRange(), TypeRep,
                                            LParenLoc,
-                                           &Exprs[0], Exprs.size(),
+                                           Exprs.take(), Exprs.size(),
                                            &CommaLocs[0], RParenLoc);
 }
 
@@ -659,7 +660,7 @@ Parser::ExprResult Parser::ParseCXXNewExpression()
   // A '(' now can be a new-placement or the '(' wrapping the type-id in the
   // second form of new-expression. It can't be a new-type-id.
 
-  ExprListTy PlacementArgs;
+  ExprVector PlacementArgs(Actions);
   SourceLocation PlacementLParen, PlacementRParen;
 
   TypeTy *Ty = 0;
@@ -706,7 +707,7 @@ Parser::ExprResult Parser::ParseCXXNewExpression()
     ParenTypeId = false;
   }
 
-  ExprListTy ConstructorArgs;
+  ExprVector ConstructorArgs(Actions);
   SourceLocation ConstructorLParen, ConstructorRParen;
 
   if (Tok.is(tok::l_paren)) {
@@ -722,9 +723,9 @@ Parser::ExprResult Parser::ParseCXXNewExpression()
   }
 
   return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
-                             &PlacementArgs[0], PlacementArgs.size(),
+                             PlacementArgs.take(), PlacementArgs.size(),
                              PlacementRParen, ParenTypeId, TyStart, Ty, TyEnd,
-                             ConstructorLParen, &ConstructorArgs[0],
+                             ConstructorLParen, ConstructorArgs.take(),
                              ConstructorArgs.size(), ConstructorRParen);
 }
 

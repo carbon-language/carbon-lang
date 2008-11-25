@@ -15,6 +15,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/Scope.h"
 #include "ExtensionRAIIObject.h"
+#include "AstGuard.h"
 #include "llvm/ADT/SmallSet.h"
 using namespace clang;
 
@@ -122,7 +123,7 @@ AttributeList *Parser::ParseAttributes() {
           } else if (Tok.is(tok::comma)) {
             ConsumeToken();
             // __attribute__(( format(printf, 1, 2) ))
-            llvm::SmallVector<ExprTy*, 8> ArgExprs;
+            ExprVector ArgExprs(Actions);
             bool ArgExprsOk = true;
             
             // now parse the non-empty comma separated list of expressions
@@ -142,7 +143,7 @@ AttributeList *Parser::ParseAttributes() {
             if (ArgExprsOk && Tok.is(tok::r_paren)) {
               ConsumeParen(); // ignore the right paren loc for now
               CurrAttr = new AttributeList(AttrName, AttrNameLoc, ParmName, 
-                           ParmLoc, &ArgExprs[0], ArgExprs.size(), CurrAttr);
+                           ParmLoc, ArgExprs.take(), ArgExprs.size(), CurrAttr);
             }
           }
         } else { // not an identifier
@@ -154,7 +155,7 @@ AttributeList *Parser::ParseAttributes() {
                                          0, SourceLocation(), 0, 0, CurrAttr);
           } else { 
             // __attribute__(( aligned(16) ))
-            llvm::SmallVector<ExprTy*, 8> ArgExprs;
+            ExprVector ArgExprs(Actions);
             bool ArgExprsOk = true;
             
             // now parse the list of expressions
@@ -174,8 +175,8 @@ AttributeList *Parser::ParseAttributes() {
             // Match the ')'.
             if (ArgExprsOk && Tok.is(tok::r_paren)) {
               ConsumeParen(); // ignore the right paren loc for now
-              CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, 
-                           SourceLocation(), &ArgExprs[0], ArgExprs.size(), 
+              CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0,
+                           SourceLocation(), ArgExprs.take(), ArgExprs.size(),
                            CurrAttr);
             }
           }
@@ -295,7 +296,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     } else if (Tok.is(tok::l_paren)) {
       // Parse C++ direct initializer: '(' expression-list ')'
       SourceLocation LParenLoc = ConsumeParen();
-      ExprListTy Exprs;
+      ExprVector Exprs(Actions);
       CommaLocsTy CommaLocs;
 
       bool InvalidExpr = false;
@@ -310,7 +311,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
         assert(!Exprs.empty() && Exprs.size()-1 == CommaLocs.size() &&
                "Unexpected number of commas!");
         Actions.AddCXXDirectInitializerToDecl(LastDeclInGroup, LParenLoc,
-                                              &Exprs[0], Exprs.size(),
+                                              Exprs.take(), Exprs.size(),
                                               &CommaLocs[0], RParenLoc);
       }
     } else {
@@ -1988,6 +1989,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
       Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
   } else { // we have an expression.
     ExprResult Result = ParseExpression();
+    ExprGuard ResultGuard(Actions, Result);
     
     if (Result.isInvalid || Tok.isNot(tok::r_paren)) {
       MatchRHSPunctuation(tok::r_paren, LParenLoc);
@@ -1997,7 +1999,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     const char *PrevSpec = 0;
     // Check for duplicate type specifiers (e.g. "int typeof(int)").
     if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
-                           Result.Val))
+                           ResultGuard.take()))
       Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
   }
   DS.SetRangeEnd(RParenLoc);

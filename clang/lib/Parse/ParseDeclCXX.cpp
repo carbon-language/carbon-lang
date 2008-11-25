@@ -15,6 +15,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "AstGuard.h"
 using namespace clang;
 
 /// ParseNamespace - We know that the current token is a namespace keyword. This
@@ -377,8 +378,8 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
   
   // Notify semantic analysis that we have parsed a complete
   // base-specifier.
-  return Actions.ActOnBaseSpecifier(ClassDecl, Range, IsVirtual, Access, BaseType,
-                                    BaseLoc);
+  return Actions.ActOnBaseSpecifier(ClassDecl, Range, IsVirtual, Access,
+                                    BaseType, BaseLoc);
 }
 
 /// getAccessSpecifierIfPresent - Determine whether the next token is
@@ -747,7 +748,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclTy *ConstructorDecl) {
   SourceLocation LParenLoc = ConsumeParen();
 
   // Parse the optional expression-list.
-  ExprListTy ArgExprs;
+  ExprVector ArgExprs(Actions);
   CommaLocsTy CommaLocs;
   if (Tok.isNot(tok::r_paren) && ParseExpressionList(ArgExprs, CommaLocs)) {
     SkipUntil(tok::r_paren);
@@ -756,9 +757,9 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclTy *ConstructorDecl) {
 
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-  return Actions.ActOnMemInitializer(ConstructorDecl, CurScope, II, IdLoc, 
-                                     LParenLoc, &ArgExprs[0], ArgExprs.size(), 
-                                     &CommaLocs[0], RParenLoc);
+  return Actions.ActOnMemInitializer(ConstructorDecl, CurScope, II, IdLoc,
+                                     LParenLoc, ArgExprs.take(),
+                                     ArgExprs.size(), &CommaLocs[0], RParenLoc);
 }
 
 /// ParseExceptionSpecification - Parse a C++ exception-specification
