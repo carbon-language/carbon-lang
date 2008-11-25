@@ -22,7 +22,7 @@ def llvm_gcc_c : Tool<
                     (default),
                     "llvm-gcc -E -x c++ $INFILE"),
             (switch_on "fsyntax-only"),
-              "llvm-gcc -c -x c $INFILE",
+              "llvm-gcc -fsyntax-only -x c $INFILE",
             (default),
               "llvm-gcc -c -x c $INFILE -o $OUTFILE -emit-llvm")),
  (switch_option "emit-llvm", (stop_compilation),
@@ -46,9 +46,14 @@ def llvm_gcc_cpp : Tool<
                     "llvm-g++ -E -x c++ $INFILE -o $OUTFILE",
                     (default),
                     "llvm-g++ -E -x c++ $INFILE"),
+            (switch_on "fsyntax-only"),
+              "llvm-g++ -fsyntax-only -x c++ $INFILE",
             (default),
               "llvm-g++ -c -x c++ $INFILE -o $OUTFILE -emit-llvm")),
+ (switch_option "emit-llvm", (stop_compilation)),
  (switch_option "E", (stop_compilation)),
+ (switch_option "fsyntax-only", (stop_compilation)),
+ (parameter_list_option "include", (forward)),
  (sink)
 ]>;
 
@@ -62,9 +67,14 @@ def llvm_gcc_m : Tool<
                     "llvm-gcc -E -x objective-c $INFILE -o $OUTFILE",
                     (default),
                     "llvm-gcc -E -x objective-c $INFILE"),
+            (switch_on "fsyntax-only"),
+              "llvm-gcc -fsyntax-only -x objective-c $INFILE",
             (default),
               "llvm-gcc -c -x objective-c $INFILE -o $OUTFILE -emit-llvm")),
+ (switch_option "emit-llvm", (stop_compilation)),
  (switch_option "E", (stop_compilation)),
+ (switch_option "fsyntax-only", (stop_compilation)),
+ (parameter_list_option "include", (forward)),
  (sink)
 ]>;
 
@@ -78,9 +88,14 @@ def llvm_gcc_mxx : Tool<
                     "llvm-gcc -E -x objective-c++ $INFILE -o $OUTFILE",
                     (default),
                     "llvm-gcc -E -x objective-c++ $INFILE"),
+            (switch_on "fsyntax-only"),
+              "llvm-gcc -fsyntax-only -x objective-c++ $INFILE",
             (default),
               "llvm-gcc -c -x objective-c++ $INFILE -o $OUTFILE -emit-llvm")),
+ (switch_option "emit-llvm", (stop_compilation)),
  (switch_option "E", (stop_compilation)),
+ (switch_option "fsyntax-only", (stop_compilation)),
+ (parameter_list_option "include", (forward)),
  (sink)
 ]>;
 
