@@ -24,24 +24,32 @@
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/DenseSet.h"
+#include <map>
+#include <climits>
 using namespace llvm;
 
 STATISTIC(NumStalls, "Number of pipeline stalls");
+
+static cl::opt<bool>
+EnableAntiDepBreaking("break-anti-dependencies",
+                      cl::desc("Break scheduling anti-dependencies"),
+                      cl::init(false));
 
 namespace {
   class VISIBILITY_HIDDEN PostRAScheduler : public MachineFunctionPass {
   public:
     static char ID;
     PostRAScheduler() : MachineFunctionPass(&ID) {}
-  private:
-    MachineFunction *MF;
-    const TargetMachine *TM;
-  public:
+
     const char *getPassName() const {
-      return "Post RA top-down list latency scheduler (STUB)";
+      return "Post RA top-down list latency scheduler";
     }
 
     bool runOnMachineFunction(MachineFunction &Fn);
@@ -49,13 +57,6 @@ namespace {
   char PostRAScheduler::ID = 0;
 
   class VISIBILITY_HIDDEN SchedulePostRATDList : public ScheduleDAGInstrs {
-  public:
-    SchedulePostRATDList(MachineBasicBlock *mbb, const TargetMachine &tm)
-      : ScheduleDAGInstrs(mbb, tm) {}
-  private:
-    MachineFunction *MF;
-    const TargetMachine *TM;
-
     /// AvailableQueue - The priority queue to use for the available SUnits.
     ///
     LatencyPriorityQueue AvailableQueue;
@@ -66,12 +67,12 @@ namespace {
     /// added to the AvailableQueue.
     std::vector<SUnit*> PendingQueue;
 
-  public:
-    const char *getPassName() const {
-      return "Post RA top-down list latency scheduler (STUB)";
-    }
+    /// Topo - A topological ordering for SUnits.
+    ScheduleDAGTopologicalSort Topo;
 
-    bool runOnMachineFunction(MachineFunction &Fn);
+  public:
+    SchedulePostRATDList(MachineBasicBlock *mbb, const TargetMachine &tm)
+      : ScheduleDAGInstrs(mbb, tm), Topo(SUnits) {}
 
     void Schedule();
 
@@ -79,19 +80,18 @@ namespace {
     void ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain);
     void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
     void ListScheduleTopDown();
+    bool BreakAntiDependencies();
   };
 }
 
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   DOUT << "PostRAScheduler\n";
-  MF = &Fn;
-  TM = &MF->getTarget();
 
   // Loop over all of the basic blocks
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB) {
 
-    SchedulePostRATDList Scheduler(MBB, *TM);
+    SchedulePostRATDList Scheduler(MBB, Fn.getTarget());
 
     Scheduler.Run();
 
@@ -108,11 +108,405 @@ void SchedulePostRATDList::Schedule() {
   // Build scheduling units.
   BuildSchedUnits();
 
+  if (EnableAntiDepBreaking) {
+    if (BreakAntiDependencies()) {
+      // We made changes. Update the dependency graph.
+      // Theoretically we could update the graph in place:
+      // When a live range is changed to use a different register, remove
+      // the def's anti-dependence *and* output-dependence edges due to
+      // that register, and add new anti-dependence and output-dependence
+      // edges based on the next live range of the register.
+      SUnits.clear();
+      BuildSchedUnits();
+    }
+  }
+
   AvailableQueue.initNodes(SUnits);
-  
+
   ListScheduleTopDown();
   
   AvailableQueue.releaseState();
+}
+
+/// getInstrOperandRegClass - Return register class of the operand of an
+/// instruction of the specified TargetInstrDesc.
+static const TargetRegisterClass*
+getInstrOperandRegClass(const TargetRegisterInfo *TRI,
+                        const TargetInstrInfo *TII, const TargetInstrDesc &II,
+                        unsigned Op) {
+  if (Op >= II.getNumOperands())
+    return NULL;
+  if (II.OpInfo[Op].isLookupPtrRegClass())
+    return TII->getPointerRegClass();
+  return TRI->getRegClass(II.OpInfo[Op].RegClass);
+}
+
+/// BreakAntiDependencies - Identifiy anti-dependencies along the critical path
+/// of the ScheduleDAG and break them by renaming registers.
+///
+bool SchedulePostRATDList::BreakAntiDependencies() {
+  // The code below assumes that there is at least one instruction,
+  // so just duck out immediately if the block is empty.
+  if (BB->empty()) return false;
+
+  Topo.InitDAGTopologicalSorting();
+
+  // Compute a critical path for the DAG.
+  SUnit *Max = 0;
+  std::vector<SDep *> CriticalPath(SUnits.size());
+  for (ScheduleDAGTopologicalSort::const_iterator I = Topo.begin(),
+       E = Topo.end(); I != E; ++I) {
+    SUnit *SU = &SUnits[*I];
+    for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
+         P != PE; ++P) {
+      SUnit *PredSU = P->Dep;
+      unsigned PredLatency = PredSU->CycleBound + PredSU->Latency;
+      if (SU->CycleBound < PredLatency) {
+        SU->CycleBound = PredLatency;
+        CriticalPath[*I] = &*P;
+      }
+    }
+    // Keep track of the node at the end of the critical path.
+    if (!Max || SU->CycleBound + SU->Latency > Max->CycleBound + Max->Latency)
+      Max = SU;
+  }
+
+  DOUT << "Critical path has total latency "
+       << (Max ? Max->CycleBound + Max->Latency : 0) << "\n";
+
+  // Walk the critical path from the bottom up. Collect all anti-dependence
+  // edges on the critical path. Skip anti-dependencies between SUnits that
+  // are connected with other edges, since such units won't be able to be
+  // scheduled past each other anyway.
+  //
+  // The heuristic is that edges on the critical path are more important to
+  // break than other edges. And since there are a limited number of
+  // registers, we don't want to waste them breaking edges that aren't
+  // important.
+  // 
+  // TODO: Instructions with multiple defs could have multiple
+  // anti-dependencies. The current code here only knows how to break one
+  // edge per instruction. Note that we'd have to be able to break all of
+  // the anti-dependencies in an instruction in order to be effective.
+  BitVector AllocatableSet = TRI->getAllocatableSet(*MF);
+  DenseMap<MachineInstr *, unsigned> CriticalAntiDeps;
+  for (SUnit *SU = Max; CriticalPath[SU->NodeNum];
+       SU = CriticalPath[SU->NodeNum]->Dep) {
+    SDep *Edge = CriticalPath[SU->NodeNum];
+    SUnit *NextSU = Edge->Dep;
+    unsigned AntiDepReg = Edge->Reg;
+    // Don't break anti-dependencies on non-allocatable registers.
+    if (!AllocatableSet.test(AntiDepReg))
+      continue;
+    // If the SUnit has other dependencies on the SUnit that it
+    // anti-depends on, don't bother breaking the anti-dependency.
+    // Also, if there are dependencies on other SUnits with the
+    // same register as the anti-dependency, don't attempt to
+    // break it.
+    for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
+         P != PE; ++P)
+      if (P->Dep == NextSU ?
+            (!P->isAntiDep || P->Reg != AntiDepReg) :
+            (!P->isCtrl && !P->isAntiDep && P->Reg == AntiDepReg)) {
+        AntiDepReg = 0;
+        break;
+      }
+    if (AntiDepReg != 0)
+      CriticalAntiDeps[SU->getInstr()] = AntiDepReg;
+  }
+
+  // For live regs that are only used in one register class in a live range,
+  // the register class. If the register is not live or is referenced in
+  // multiple register classes, the corresponding value is null. If the
+  // register is used in multiple register classes, the corresponding value
+  // is -1 casted to a pointer.
+  const TargetRegisterClass *
+    Classes[TargetRegisterInfo::FirstVirtualRegister] = {};
+
+  // Map registers to all their references within a live range.
+  std::multimap<unsigned, MachineOperand *> RegRefs;
+
+  // The index of the most recent kill (proceding bottom-up), or -1 if
+  // the register is not live.
+  unsigned KillIndices[TargetRegisterInfo::FirstVirtualRegister];
+  std::fill(KillIndices, array_endof(KillIndices), -1);
+  // The index of the most recent def (proceding bottom up), or -1 if
+  // the register is live.
+  unsigned DefIndices[TargetRegisterInfo::FirstVirtualRegister];
+  std::fill(DefIndices, array_endof(DefIndices), BB->size());
+
+  // Determine the live-out physregs for this block.
+  if (!BB->empty() && BB->back().getDesc().isReturn())
+    // In a return block, examine the function live-out regs.
+    for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
+         E = MRI.liveout_end(); I != E; ++I) {
+      unsigned Reg = *I;
+      Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      KillIndices[Reg] = BB->size();
+      DefIndices[Reg] = -1;
+      // Repeat, for all aliases.
+      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+        unsigned AliasReg = *Alias;
+        Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+        KillIndices[AliasReg] = BB->size();
+        DefIndices[AliasReg] = -1;
+      }
+    }
+  else
+    // In a non-return block, examine the live-in regs of all successors.
+    for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
+         SE = BB->succ_end(); SI != SE; ++SI) 
+      for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
+           E = (*SI)->livein_end(); I != E; ++I) {
+        unsigned Reg = *I;
+        Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+        KillIndices[Reg] = BB->size();
+        DefIndices[Reg] = -1;
+        // Repeat, for all aliases.
+        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+          unsigned AliasReg = *Alias;
+          Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+          KillIndices[AliasReg] = BB->size();
+          DefIndices[AliasReg] = -1;
+        }
+      }
+
+  // Consider callee-saved registers as live-out, since we're running after
+  // prologue/epilogue insertion so there's no way to add additional
+  // saved registers.
+  //
+  // TODO: If the callee saves and restores these, then we can potentially
+  // use them between the save and the restore. To do that, we could scan
+  // the exit blocks to see which of these registers are defined.
+  for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
+    unsigned Reg = *I;
+    Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+    KillIndices[Reg] = BB->size();
+    DefIndices[Reg] = -1;
+    // Repeat, for all aliases.
+    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+      unsigned AliasReg = *Alias;
+      Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      KillIndices[AliasReg] = BB->size();
+      DefIndices[AliasReg] = -1;
+    }
+  }
+
+  // Consider this pattern:
+  //   A = ...
+  //   ... = A
+  //   A = ...
+  //   ... = A
+  //   A = ...
+  //   ... = A
+  //   A = ...
+  //   ... = A
+  // There are three anti-dependencies here, and without special care,
+  // we'd break all of them using the same register:
+  //   A = ...
+  //   ... = A
+  //   B = ...
+  //   ... = B
+  //   B = ...
+  //   ... = B
+  //   B = ...
+  //   ... = B
+  // because at each anti-dependence, B is the first register that
+  // isn't A which is free.  This re-introduces anti-dependencies
+  // at all but one of the original anti-dependencies that we were
+  // trying to break.  To avoid this, keep track of the most recent
+  // register that each register was replaced with, avoid avoid
+  // using it to repair an anti-dependence on the same register.
+  // This lets us produce this:
+  //   A = ...
+  //   ... = A
+  //   B = ...
+  //   ... = B
+  //   C = ...
+  //   ... = C
+  //   B = ...
+  //   ... = B
+  // This still has an anti-dependence on B, but at least it isn't on the
+  // original critical path.
+  //
+  // TODO: If we tracked more than one register here, we could potentially
+  // fix that remaining critical edge too. This is a little more involved,
+  // because unlike the most recent register, less recent registers should
+  // still be considered, though only if no other registers are available.
+  unsigned LastNewReg[TargetRegisterInfo::FirstVirtualRegister] = {};
+
+  // A registers defined and not used in an instruction. This is used for
+  // liveness tracking and is declared outside the loop only to avoid
+  // having it be re-allocated on each iteration.
+  DenseSet<unsigned> Defs;
+
+  // Attempt to break anti-dependence edges on the critical path. Walk the
+  // instructions from the bottom up, tracking information about liveness
+  // as we go to help determine which registers are available.
+  bool Changed = false;
+  unsigned Count = BB->size() - 1;
+  for (MachineBasicBlock::reverse_iterator I = BB->rbegin(), E = BB->rend();
+       I != E; ++I, --Count) {
+    MachineInstr *MI = &*I;
+
+    // Check if this instruction has an anti-dependence that we're
+    // interested in.
+    DenseMap<MachineInstr *, unsigned>::iterator C = CriticalAntiDeps.find(MI);
+    unsigned AntiDepReg = C != CriticalAntiDeps.end() ?
+      C->second : 0;
+
+    // Scan the register operands for this instruction and update
+    // Classes and RegRefs.
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg()) continue;
+      unsigned Reg = MO.getReg();
+      if (Reg == 0) continue;
+      const TargetRegisterClass *NewRC =
+        getInstrOperandRegClass(TRI, TII, MI->getDesc(), i);
+
+      // If this instruction has a use of AntiDepReg, breaking it
+      // is invalid.
+      if (MO.isUse() && AntiDepReg == Reg)
+        AntiDepReg = 0;
+
+      // For now, only allow the register to be changed if its register
+      // class is consistent across all uses.
+      if (!Classes[Reg] && NewRC)
+        Classes[Reg] = NewRC;
+      else if (!NewRC || Classes[Reg] != NewRC)
+        Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+
+      // Now check for aliases.
+      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+        // If an alias of the reg is used during the live range, give up.
+        // Note that this allows us to skip checking if AntiDepReg
+        // overlaps with any of the aliases, among other things.
+        unsigned AliasReg = *Alias;
+        if (Classes[AliasReg]) {
+          Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+          Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+        }
+      }
+
+      // If we're still willing to consider this register, note the reference.
+      if (Classes[Reg] != reinterpret_cast<TargetRegisterClass *>(-1))
+        RegRefs.insert(std::make_pair(Reg, &MO));
+    }
+
+    // Determine AntiDepReg's register class, if it is live and is
+    // consistently used within a single class.
+    const TargetRegisterClass *RC = AntiDepReg != 0 ? Classes[AntiDepReg] : 0;
+    assert(AntiDepReg == 0 || RC != NULL &&
+           "Register should be live if it's causing an anti-dependence!");
+    if (RC == reinterpret_cast<TargetRegisterClass *>(-1))
+      AntiDepReg = 0;
+
+    // Look for a suitable register to use to break the anti-depenence.
+    //
+    // TODO: Instead of picking the first free register, consider which might
+    // be the best.
+    if (AntiDepReg != 0) {
+      for (TargetRegisterClass::iterator R = RC->allocation_order_begin(*MF),
+           RE = RC->allocation_order_end(*MF); R != RE; ++R) {
+        unsigned NewReg = *R;
+        // Don't replace a register with itself.
+        if (NewReg == AntiDepReg) continue;
+        // Don't replace a register with one that was recently used to repair
+        // an anti-dependence with this AntiDepReg, because that would
+        // re-introduce that anti-dependence.
+        if (NewReg == LastNewReg[AntiDepReg]) continue;
+        // If NewReg is dead and NewReg's most recent def is not before
+        // AntiDepReg's kill, it's safe to replace AntiDepReg with NewReg.
+        assert(((KillIndices[AntiDepReg] == -1) != (DefIndices[AntiDepReg] == -1)) &&
+               "Kill and Def maps aren't consistent for AntiDepReg!");
+        assert(((KillIndices[NewReg] == -1) != (DefIndices[NewReg] == -1)) &&
+               "Kill and Def maps aren't consistent for NewReg!");
+        if (KillIndices[NewReg] == -1 &&
+            KillIndices[AntiDepReg] <= DefIndices[NewReg]) {
+          DOUT << "Breaking anti-dependence edge on reg " << AntiDepReg
+               << " with reg " << NewReg << "!\n";
+
+          // Update the references to the old register to refer to the new
+          // register.
+          std::pair<std::multimap<unsigned, MachineOperand *>::iterator,
+                    std::multimap<unsigned, MachineOperand *>::iterator>
+             Range = RegRefs.equal_range(AntiDepReg);
+          for (std::multimap<unsigned, MachineOperand *>::iterator
+               Q = Range.first, QE = Range.second; Q != QE; ++Q)
+            Q->second->setReg(NewReg);
+
+          // We just went back in time and modified history; the
+          // liveness information for the anti-depenence reg is now
+          // inconsistent. Set the state as if it were dead.
+          Classes[NewReg] = Classes[AntiDepReg];
+          DefIndices[NewReg] = DefIndices[AntiDepReg];
+          KillIndices[NewReg] = KillIndices[AntiDepReg];
+
+          Classes[AntiDepReg] = 0;
+          DefIndices[AntiDepReg] = KillIndices[AntiDepReg];
+          KillIndices[AntiDepReg] = -1;
+
+          RegRefs.erase(AntiDepReg);
+          Changed = true;
+          LastNewReg[AntiDepReg] = NewReg;
+          break;
+        }
+      }
+    }
+
+    // Update liveness.
+    Defs.clear();
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg()) continue;
+      unsigned Reg = MO.getReg();
+      if (Reg == 0) continue;
+      if (MO.isDef())
+        Defs.insert(Reg);
+      else {
+        // Treat a use in the same instruction as a def as an extension of
+        // a live range.
+        Defs.erase(Reg);
+        // It wasn't previously live but now it is, this is a kill.
+        if (KillIndices[Reg] == -1) {
+          KillIndices[Reg] = Count;
+          DefIndices[Reg] = -1;
+        }
+        // Repeat, for all aliases.
+        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+          unsigned AliasReg = *Alias;
+          Defs.erase(AliasReg);
+          if (KillIndices[AliasReg] == -1) {
+            KillIndices[AliasReg] = Count;
+            DefIndices[AliasReg] = -1;
+          }
+        }
+      }
+    }
+    // Proceding upwards, registers that are defed but not used in this
+    // instruction are now dead.
+    for (DenseSet<unsigned>::iterator D = Defs.begin(), DE = Defs.end();
+         D != DE; ++D) {
+      unsigned Reg = *D;
+      DefIndices[Reg] = Count;
+      KillIndices[Reg] = -1;
+      Classes[Reg] = 0;
+      RegRefs.erase(Reg);
+      // Repeat, for all subregs.
+      for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+           *Subreg; ++Subreg) {
+        unsigned SubregReg = *Subreg;
+        DefIndices[SubregReg] = Count;
+        KillIndices[SubregReg] = -1;
+        Classes[SubregReg] = 0;
+        RegRefs.erase(SubregReg);
+      }
+    }
+  }
+  assert(Count == -1u && "Count mismatch!");
+
+  return Changed;
 }
 
 //===----------------------------------------------------------------------===//
@@ -202,8 +596,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
       }
     }
     
-    // If there are no instructions available, don't try to issue anything, and
-    // don't advance the hazard recognizer.
+    // If there are no instructions available, don't try to issue anything.
     if (AvailableQueue.empty()) {
       ++CurCycle;
       continue;

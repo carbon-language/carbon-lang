@@ -69,12 +69,16 @@ private:
   std::vector<SUnit*> LiveRegDefs;
   std::vector<unsigned> LiveRegCycles;
 
+  /// Topo - A topological ordering for SUnits which permits fast IsReachable
+  /// and similar queries.
+  ScheduleDAGTopologicalSort Topo;
+
 public:
   ScheduleDAGRRList(SelectionDAG *dag, MachineBasicBlock *bb,
                     const TargetMachine &tm, bool isbottomup,
                     SchedulingPriorityQueue *availqueue)
     : ScheduleDAGSDNodes(dag, bb, tm), isBottomUp(isbottomup),
-      AvailableQueue(availqueue) {
+      AvailableQueue(availqueue), Topo(SUnits) {
     }
 
   ~ScheduleDAGRRList() {
@@ -84,22 +88,32 @@ public:
   void Schedule();
 
   /// IsReachable - Checks if SU is reachable from TargetSU.
-  bool IsReachable(const SUnit *SU, const SUnit *TargetSU);
+  bool IsReachable(const SUnit *SU, const SUnit *TargetSU) {
+    return Topo.IsReachable(SU, TargetSU);
+  }
 
   /// willCreateCycle - Returns true if adding an edge from SU to TargetSU will
   /// create a cycle.
-  bool WillCreateCycle(SUnit *SU, SUnit *TargetSU);
+  bool WillCreateCycle(SUnit *SU, SUnit *TargetSU) {
+    return Topo.WillCreateCycle(SU, TargetSU);
+  }
 
   /// AddPred - This adds the specified node X as a predecessor of 
   /// the current node Y if not already.
   /// This returns true if this is a new predecessor.
   /// Updates the topological ordering if required.
   bool AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isArtificial,
-               unsigned PhyReg = 0, int Cost = 1);
+               unsigned PhyReg = 0, int Cost = 1) {
+    Topo.AddPred(Y, X);
+    return Y->addPred(X, isCtrl, isArtificial, PhyReg, Cost);
+  }
 
   /// RemovePred - This removes the specified node N from the predecessors of 
   /// the current node M. Updates the topological ordering if required.
-  bool RemovePred(SUnit *M, SUnit *N, bool isCtrl, bool isArtificial);
+  bool RemovePred(SUnit *M, SUnit *N, bool isCtrl, bool isArtificial) {
+    Topo.RemovePred(M, N);
+    return M->removePred(N, isCtrl, isArtificial, false);
+  }
 
 private:
   void ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain);
@@ -123,49 +137,24 @@ private:
   /// CreateNewSUnit - Creates a new SUnit and returns a pointer to it.
   /// Updates the topological ordering if required.
   SUnit *CreateNewSUnit(SDNode *N) {
+    unsigned NumSUnits = SUnits.size();
     SUnit *NewNode = NewSUnit(N);
     // Update the topological ordering.
-    if (NewNode->NodeNum >= Node2Index.size())
-      InitDAGTopologicalSorting();
+    if (NewNode->NodeNum >= NumSUnits)
+      Topo.InitDAGTopologicalSorting();
     return NewNode;
   }
 
   /// CreateClone - Creates a new SUnit from an existing one.
   /// Updates the topological ordering if required.
   SUnit *CreateClone(SUnit *N) {
+    unsigned NumSUnits = SUnits.size();
     SUnit *NewNode = Clone(N);
     // Update the topological ordering.
-    if (NewNode->NodeNum >= Node2Index.size())
-      InitDAGTopologicalSorting();
+    if (NewNode->NodeNum >= NumSUnits)
+      Topo.InitDAGTopologicalSorting();
     return NewNode;
   }
-
-  /// Functions for preserving the topological ordering
-  /// even after dynamic insertions of new edges.
-  /// This allows a very fast implementation of IsReachable.
-
-  /// InitDAGTopologicalSorting - create the initial topological 
-  /// ordering from the DAG to be scheduled.
-  void InitDAGTopologicalSorting();
-
-  /// DFS - make a DFS traversal and mark all nodes affected by the 
-  /// edge insertion. These nodes will later get new topological indexes
-  /// by means of the Shift method.
-  void DFS(const SUnit *SU, int UpperBound, bool& HasLoop);
-
-  /// Shift - reassign topological indexes for the nodes in the DAG
-  /// to preserve the topological ordering.
-  void Shift(BitVector& Visited, int LowerBound, int UpperBound);
-
-  /// Allocate - assign the topological index to the node n.
-  void Allocate(int n, int index);
-
-  /// Index2Node - Maps topological index to the node number.
-  std::vector<int> Index2Node;
-  /// Node2Index - Maps the node number to its topological index.
-  std::vector<int> Node2Index;
-  /// Visited - a set of nodes visited during a DFS traversal.
-  BitVector Visited;
 };
 }  // end anonymous namespace
 
@@ -185,7 +174,7 @@ void ScheduleDAGRRList::Schedule() {
           SUnits[su].dumpAll(this));
   CalculateDepths();
   CalculateHeights();
-  InitDAGTopologicalSorting();
+  Topo.InitDAGTopologicalSorting();
 
   AvailableQueue->initNodes(SUnits);
   
@@ -372,207 +361,6 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   SU->isScheduled = false;
   SU->isAvailable = true;
   AvailableQueue->push(SU);
-}
-
-/// IsReachable - Checks if SU is reachable from TargetSU.
-bool ScheduleDAGRRList::IsReachable(const SUnit *SU, const SUnit *TargetSU) {
-  // If insertion of the edge SU->TargetSU would create a cycle
-  // then there is a path from TargetSU to SU.
-  int UpperBound, LowerBound;
-  LowerBound = Node2Index[TargetSU->NodeNum];
-  UpperBound = Node2Index[SU->NodeNum];
-  bool HasLoop = false;
-  // Is Ord(TargetSU) < Ord(SU) ?
-  if (LowerBound < UpperBound) {
-    Visited.reset();
-    // There may be a path from TargetSU to SU. Check for it. 
-    DFS(TargetSU, UpperBound, HasLoop);
-  }
-  return HasLoop;
-}
-
-/// Allocate - assign the topological index to the node n.
-inline void ScheduleDAGRRList::Allocate(int n, int index) {
-  Node2Index[n] = index;
-  Index2Node[index] = n;
-}
-
-/// InitDAGTopologicalSorting - create the initial topological 
-/// ordering from the DAG to be scheduled.
-
-/// The idea of the algorithm is taken from 
-/// "Online algorithms for managing the topological order of
-/// a directed acyclic graph" by David J. Pearce and Paul H.J. Kelly
-/// This is the MNR algorithm, which was first introduced by 
-/// A. Marchetti-Spaccamela, U. Nanni and H. Rohnert in  
-/// "Maintaining a topological order under edge insertions".
-///
-/// Short description of the algorithm: 
-///
-/// Topological ordering, ord, of a DAG maps each node to a topological
-/// index so that for all edges X->Y it is the case that ord(X) < ord(Y).
-///
-/// This means that if there is a path from the node X to the node Z, 
-/// then ord(X) < ord(Z).
-///
-/// This property can be used to check for reachability of nodes:
-/// if Z is reachable from X, then an insertion of the edge Z->X would 
-/// create a cycle.
-///
-/// The algorithm first computes a topological ordering for the DAG by
-/// initializing the Index2Node and Node2Index arrays and then tries to keep
-/// the ordering up-to-date after edge insertions by reordering the DAG.
-///
-/// On insertion of the edge X->Y, the algorithm first marks by calling DFS
-/// the nodes reachable from Y, and then shifts them using Shift to lie
-/// immediately after X in Index2Node.
-void ScheduleDAGRRList::InitDAGTopologicalSorting() {
-  unsigned DAGSize = SUnits.size();
-  std::vector<SUnit*> WorkList;
-  WorkList.reserve(DAGSize);
-
-  Index2Node.resize(DAGSize);
-  Node2Index.resize(DAGSize);
-
-  // Initialize the data structures.
-  for (unsigned i = 0, e = DAGSize; i != e; ++i) {
-    SUnit *SU = &SUnits[i];
-    int NodeNum = SU->NodeNum;
-    unsigned Degree = SU->Succs.size();
-    // Temporarily use the Node2Index array as scratch space for degree counts.
-    Node2Index[NodeNum] = Degree;
-
-    // Is it a node without dependencies?
-    if (Degree == 0) {
-        assert(SU->Succs.empty() && "SUnit should have no successors");
-        // Collect leaf nodes.
-        WorkList.push_back(SU);
-    }
-  }  
-
-  int Id = DAGSize;
-  while (!WorkList.empty()) {
-    SUnit *SU = WorkList.back();
-    WorkList.pop_back();
-    Allocate(SU->NodeNum, --Id);
-    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-         I != E; ++I) {
-      SUnit *SU = I->Dep;
-      if (!--Node2Index[SU->NodeNum])
-        // If all dependencies of the node are processed already,
-        // then the node can be computed now.
-        WorkList.push_back(SU);
-    }
-  }
-
-  Visited.resize(DAGSize);
-
-#ifndef NDEBUG
-  // Check correctness of the ordering
-  for (unsigned i = 0, e = DAGSize; i != e; ++i) {
-    SUnit *SU = &SUnits[i];
-    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-         I != E; ++I) {
-       assert(Node2Index[SU->NodeNum] > Node2Index[I->Dep->NodeNum] && 
-       "Wrong topological sorting");
-    }
-  }
-#endif
-}
-
-/// AddPred - adds an edge from SUnit X to SUnit Y.
-/// Updates the topological ordering if required.
-bool ScheduleDAGRRList::AddPred(SUnit *Y, SUnit *X, bool isCtrl,
-                 bool isArtificial, unsigned PhyReg, int Cost) {
-  int UpperBound, LowerBound;
-  LowerBound = Node2Index[Y->NodeNum];
-  UpperBound = Node2Index[X->NodeNum];
-  bool HasLoop = false;
-  // Is Ord(X) < Ord(Y) ?
-  if (LowerBound < UpperBound) {
-    // Update the topological order.
-    Visited.reset();
-    DFS(Y, UpperBound, HasLoop);
-    assert(!HasLoop && "Inserted edge creates a loop!");
-    // Recompute topological indexes.
-    Shift(Visited, LowerBound, UpperBound);
-  }
-  // Now really insert the edge.
-  return Y->addPred(X, isCtrl, isArtificial, PhyReg, Cost);
-}
-
-/// RemovePred - This removes the specified node N from the predecessors of 
-/// the current node M. Updates the topological ordering if required.
-bool ScheduleDAGRRList::RemovePred(SUnit *M, SUnit *N, 
-                                   bool isCtrl, bool isArtificial) {
-  // InitDAGTopologicalSorting();
-  return M->removePred(N, isCtrl, isArtificial, false);
-}
-
-/// DFS - Make a DFS traversal to mark all nodes reachable from SU and mark
-/// all nodes affected by the edge insertion. These nodes will later get new
-/// topological indexes by means of the Shift method.
-void ScheduleDAGRRList::DFS(const SUnit *SU, int UpperBound, bool& HasLoop) {
-  std::vector<const SUnit*> WorkList;
-  WorkList.reserve(SUnits.size()); 
-
-  WorkList.push_back(SU);
-  while (!WorkList.empty()) {
-    SU = WorkList.back();
-    WorkList.pop_back();
-    Visited.set(SU->NodeNum);
-    for (int I = SU->Succs.size()-1; I >= 0; --I) {
-      int s = SU->Succs[I].Dep->NodeNum;
-      if (Node2Index[s] == UpperBound) {
-        HasLoop = true; 
-        return;
-      }
-      // Visit successors if not already and in affected region.
-      if (!Visited.test(s) && Node2Index[s] < UpperBound) {
-        WorkList.push_back(SU->Succs[I].Dep);
-      } 
-    } 
-  }
-}
-
-/// Shift - Renumber the nodes so that the topological ordering is 
-/// preserved.
-void ScheduleDAGRRList::Shift(BitVector& Visited, int LowerBound, 
-                              int UpperBound) {
-  std::vector<int> L;
-  int shift = 0;
-  int i;
-
-  for (i = LowerBound; i <= UpperBound; ++i) {
-    // w is node at topological index i.
-    int w = Index2Node[i];
-    if (Visited.test(w)) {
-      // Unmark.
-      Visited.reset(w);
-      L.push_back(w);
-      shift = shift + 1;
-    } else {
-      Allocate(w, i - shift);
-    }
-  }
-
-  for (unsigned j = 0; j < L.size(); ++j) {
-    Allocate(L[j], i - shift);
-    i = i + 1;
-  }
-}
-
-
-/// WillCreateCycle - Returns true if adding an edge from SU to TargetSU will
-/// create a cycle.
-bool ScheduleDAGRRList::WillCreateCycle(SUnit *SU, SUnit *TargetSU) {
-  if (IsReachable(TargetSU, SU))
-    return true;
-  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I)
-    if (I->Cost < 0 && IsReachable(TargetSU, I->Dep))
-      return true;
-  return false;
 }
 
 /// BacktrackBottomUp - Backtrack scheduling to a previous cycle specified in

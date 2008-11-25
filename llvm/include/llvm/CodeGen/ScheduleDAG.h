@@ -17,6 +17,7 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -148,7 +149,9 @@ namespace llvm {
                  unsigned PhyReg = 0, int Cost = 1, bool isAntiDep = false) {
       for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
         if (Preds[i].Dep == N &&
-            Preds[i].isCtrl == isCtrl && Preds[i].isArtificial == isArtificial)
+            Preds[i].isCtrl == isCtrl &&
+            Preds[i].isArtificial == isArtificial &&
+            Preds[i].isAntiDep == isAntiDep)
           return false;
       Preds.push_back(SDep(N, PhyReg, Cost, isCtrl, isArtificial, isAntiDep));
       N->Succs.push_back(SDep(this, PhyReg, Cost, isCtrl,
@@ -167,7 +170,10 @@ namespace llvm {
     bool removePred(SUnit *N, bool isCtrl, bool isArtificial, bool isAntiDep) {
       for (SmallVector<SDep, 4>::iterator I = Preds.begin(), E = Preds.end();
            I != E; ++I)
-        if (I->Dep == N && I->isCtrl == isCtrl && I->isArtificial == isArtificial) {
+        if (I->Dep == N &&
+            I->isCtrl == isCtrl &&
+            I->isArtificial == isArtificial &&
+            I->isAntiDep == isAntiDep) {
           bool FoundSucc = false;
           for (SmallVector<SDep, 4>::iterator II = N->Succs.begin(),
                  EE = N->Succs.end(); II != EE; ++II)
@@ -403,6 +409,73 @@ namespace llvm {
     static nodes_iterator nodes_end(ScheduleDAG *G) {
       return G->SUnits.end();
     }
+  };
+
+  /// ScheduleDAGTopologicalSort is a class that computes a topological
+  /// ordering for SUnits and provides methods for dynamically updating
+  /// the ordering as new edges are added.
+  ///
+  /// This allows a very fast implementation of IsReachable, for example.
+  ///
+  class ScheduleDAGTopologicalSort {
+    /// SUnits - A reference to the ScheduleDAG's SUnits.
+    std::vector<SUnit> &SUnits;
+
+    /// Index2Node - Maps topological index to the node number.
+    std::vector<int> Index2Node;
+    /// Node2Index - Maps the node number to its topological index.
+    std::vector<int> Node2Index;
+    /// Visited - a set of nodes visited during a DFS traversal.
+    BitVector Visited;
+
+    /// DFS - make a DFS traversal and mark all nodes affected by the 
+    /// edge insertion. These nodes will later get new topological indexes
+    /// by means of the Shift method.
+    void DFS(const SUnit *SU, int UpperBound, bool& HasLoop);
+
+    /// Shift - reassign topological indexes for the nodes in the DAG
+    /// to preserve the topological ordering.
+    void Shift(BitVector& Visited, int LowerBound, int UpperBound);
+
+    /// Allocate - assign the topological index to the node n.
+    void Allocate(int n, int index);
+
+  public:
+    explicit ScheduleDAGTopologicalSort(std::vector<SUnit> &SUnits);
+
+    /// InitDAGTopologicalSorting - create the initial topological 
+    /// ordering from the DAG to be scheduled.
+    void InitDAGTopologicalSorting();
+
+    /// IsReachable - Checks if SU is reachable from TargetSU.
+    bool IsReachable(const SUnit *SU, const SUnit *TargetSU);
+
+    /// WillCreateCycle - Returns true if adding an edge from SU to TargetSU
+    /// will create a cycle.
+    bool WillCreateCycle(SUnit *SU, SUnit *TargetSU);
+
+    /// AddPred - Updates the topological ordering to accomodate an edge
+    /// to be added from SUnit X to SUnit Y.
+    void AddPred(SUnit *Y, SUnit *X);
+
+    /// RemovePred - Updates the topological ordering to accomodate an
+    /// an edge to be removed from the specified node N from the predecessors
+    /// of the current node M.
+    void RemovePred(SUnit *M, SUnit *N);
+
+    typedef std::vector<int>::iterator iterator;
+    typedef std::vector<int>::const_iterator const_iterator;
+    iterator begin() { return Index2Node.begin(); }
+    const_iterator begin() const { return Index2Node.begin(); }
+    iterator end() { return Index2Node.end(); }
+    const_iterator end() const { return Index2Node.end(); }
+
+    typedef std::vector<int>::reverse_iterator reverse_iterator;
+    typedef std::vector<int>::const_reverse_iterator const_reverse_iterator;
+    reverse_iterator rbegin() { return Index2Node.rbegin(); }
+    const_reverse_iterator rbegin() const { return Index2Node.rbegin(); }
+    reverse_iterator rend() { return Index2Node.rend(); }
+    const_reverse_iterator rend() const { return Index2Node.rend(); }
   };
 }
 
