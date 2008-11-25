@@ -1,6 +1,7 @@
 ======================
 Tutorial - Using LLVMC
 ======================
+:Author: Mikhail Glushenkov <foldr@codedegers.com>
 
 LLVMC is a generic compiler driver, which plays the same role for LLVM
 as the ``gcc`` program does for GCC - the difference being that LLVMC

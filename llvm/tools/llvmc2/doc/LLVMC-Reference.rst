@@ -1,6 +1,7 @@
 ===================================
 Customizing LLVMC: Reference Manual
 ===================================
+:Author: Mikhail Glushenkov <foldr@codedegers.com>
 
 LLVMC is a generic compiler driver, designed to be customizable and
 extensible. It plays the same role for LLVM as the ``gcc`` program
@@ -193,8 +194,10 @@ The definition of the compilation graph (see file
         Edge<"llvm_gcc_cpp", "llc">,
         ...
 
-        OptionalEdge<"llvm_gcc_c", "opt", [(switch_on "opt")]>,
-        OptionalEdge<"llvm_gcc_cpp", "opt", [(switch_on "opt")]>,
+        OptionalEdge<"llvm_gcc_c", "opt", (case (switch_on "opt"),
+                                          (inc_weight))>,
+        OptionalEdge<"llvm_gcc_cpp", "opt", (case (switch_on "opt"),
+                                                  (inc_weight))>,
         ...
 
         OptionalEdge<"llvm_gcc_assembler", "llvm_gcc_cpp_linker",
@@ -437,7 +440,7 @@ use TableGen inheritance instead.
 
 * Possible tests are:
 
-  - ``switch_on`` - Returns true if a given command-line option is
+  - ``switch_on`` - Returns true if a given command-line switch is
     provided by the user. Example: ``(switch_on "opt")``. Note that
     you have to define all possible command-line options separately in
     the tool descriptions. See the next section for the discussion of
@@ -481,8 +484,8 @@ Language map
 One last thing that you will need to modify when adding support for a
 new language to LLVMC is the language map, which defines mappings from
 file extensions to language names. It is used to choose the proper
-toolchain(s) for a given input file set. Language map definition is
-located in the file ``Tools.td`` and looks like this::
+toolchain(s) for a given input file set. Language map definition looks
+like this::
 
     def LanguageMap : LanguageMap<
         [LangToSuffixes<"c++", ["cc", "cp", "cxx", "cpp", "CPP", "c++", "C"]>,
