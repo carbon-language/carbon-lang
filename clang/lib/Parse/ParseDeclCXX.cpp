@@ -760,3 +760,36 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclTy *ConstructorDecl) {
                                      LParenLoc, &ArgExprs[0], ArgExprs.size(), 
                                      &CommaLocs[0], RParenLoc);
 }
+
+/// ParseExceptionSpecification - Parse a C++ exception-specification
+/// (C++ [except.spec]).
+///
+///    exception-specification:
+///      'throw' '(' type-id-list [opt] ')'
+///      
+///    type-id-list:
+///      type-id
+///      type-id-list ',' type-id
+///
+bool Parser::ParseExceptionSpecification() {
+  assert(Tok.is(tok::kw_throw) && "expected throw");
+  
+  SourceLocation ThrowLoc = ConsumeToken();
+  
+  if (!Tok.is(tok::l_paren)) {
+    return Diag(Tok, diag::err_expected_lparen_after) << "throw";
+  }
+  SourceLocation LParenLoc = ConsumeParen();
+
+  // Parse the sequence of type-ids.
+  while (Tok.isNot(tok::r_paren)) {
+    ParseTypeName();
+    if (Tok.is(tok::comma))
+      ConsumeToken();
+    else 
+      break;
+  }
+
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  return false;
+}

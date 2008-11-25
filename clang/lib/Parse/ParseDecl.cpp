@@ -1653,7 +1653,10 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     DeclSpec DS;
     if (getLang().CPlusPlus) {
       ParseTypeQualifierListOpt(DS);
-      // FIXME: Parse exception-specification[opt].
+
+      // Parse exception-specification[opt].
+      if (Tok.is(tok::kw_throw))
+        ParseExceptionSpecification();
     }
 
     // Remember that we parsed a function type, and remember the attributes.
@@ -1783,11 +1786,14 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   // If we have the closing ')', eat it.
   MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-  // cv-qualifier-seq[opt].
   DeclSpec DS;
   if (getLang().CPlusPlus) {
+    // Parse cv-qualifier-seq[opt].
     ParseTypeQualifierListOpt(DS);
-    // FIXME: Parse exception-specification[opt].
+
+    // Parse exception-specification[opt].
+    if (Tok.is(tok::kw_throw))
+      ParseExceptionSpecification();
   }
 
   // Remember that we parsed a function type, and remember the attributes.
