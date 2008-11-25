@@ -622,10 +622,7 @@ Expr *Expr::IgnoreParenCasts() {
   }
 }
 
-#define USE_EVALUATE
-
 bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
-#ifdef USE_EVALUATE
   switch (getStmtClass()) {
   default:
     if (!isEvaluatable(Ctx)) {
@@ -634,7 +631,6 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     }
     break;
   case StringLiteralClass:
-  case ObjCStringLiteralClass:
     return true;
   case InitListExprClass: {
     const InitListExpr *Exp = cast<InitListExpr>(this);
@@ -647,146 +643,6 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   }
 
   return true;
-#else
-  switch (getStmtClass()) {
-  default:
-    if (Loc) *Loc = getLocStart();
-    return false;
-  case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->isConstantExpr(Ctx, Loc);
-  case StringLiteralClass:
-  case ObjCStringLiteralClass:
-  case FloatingLiteralClass:
-  case IntegerLiteralClass:
-  case CharacterLiteralClass:
-  case ImaginaryLiteralClass:
-  case TypesCompatibleExprClass:
-  case CXXBoolLiteralExprClass:
-  case AddrLabelExprClass:
-    return true;
-  case CallExprClass: 
-  case CXXOperatorCallExprClass: {
-    const CallExpr *CE = cast<CallExpr>(this);
-
-    // Allow any constant foldable calls to builtins.
-    if (CE->isBuiltinCall() && CE->isEvaluatable(Ctx))
-      return true;
-    
-    if (Loc) *Loc = getLocStart();
-    return false;
-  }
-  case DeclRefExprClass: {
-    const Decl *D = cast<DeclRefExpr>(this)->getDecl();
-    // Accept address of function.
-    if (isa<EnumConstantDecl>(D) || isa<FunctionDecl>(D))
-      return true;
-    if (Loc) *Loc = getLocStart();
-    if (isa<VarDecl>(D))
-      return TR->isArrayType();
-    return false;
-  }
-  case CompoundLiteralExprClass:
-    if (Loc) *Loc = getLocStart();
-    // Allow "(int []){2,4}", since the array will be converted to a pointer.
-    // Allow "(vector type){2,4}" since the elements are all constant.
-    return TR->isArrayType() || TR->isVectorType();
-  case UnaryOperatorClass: {
-    const UnaryOperator *Exp = cast<UnaryOperator>(this);
-    
-    // C99 6.6p9
-    if (Exp->getOpcode() == UnaryOperator::AddrOf) {
-      if (!Exp->getSubExpr()->hasGlobalStorage()) {
-        if (Loc) *Loc = getLocStart();
-        return false;
-      }
-      return true;
-    }
-
-    // Get the operand value.  If this is sizeof/alignof, do not evalute the
-    // operand.  This affects C99 6.6p3.
-    if (Exp->getOpcode() != UnaryOperator::OffsetOf &&
-        !Exp->getSubExpr()->isConstantExpr(Ctx, Loc))
-      return false;
-  
-    switch (Exp->getOpcode()) {
-    // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
-    // See C99 6.6p3.
-    default:
-      if (Loc) *Loc = Exp->getOperatorLoc();
-      return false;
-    case UnaryOperator::Extension:
-      return true;  // FIXME: this is wrong.
-    case UnaryOperator::OffsetOf:
-      if (!Exp->getSubExpr()->getType()->isConstantSizeType()) {
-        if (Loc) *Loc = Exp->getOperatorLoc();
-        return false;
-      }
-      return true;
-    case UnaryOperator::LNot:
-    case UnaryOperator::Plus:
-    case UnaryOperator::Minus:
-    case UnaryOperator::Not:
-      return true;
-    }
-  }
-  case SizeOfAlignOfExprClass: {
-    const SizeOfAlignOfExpr *Exp = cast<SizeOfAlignOfExpr>(this);
-    // alignof always evaluates to a constant.
-    if (Exp->isSizeOf()) {
-      QualType ArgTy = Exp->getTypeOfArgument();
-      if (!ArgTy->isVoidType() && !ArgTy->isConstantSizeType()) {
-        if (Loc) *Loc = Exp->getOperatorLoc();
-        return false;
-      }
-    }
-    return true;
-  }
-  case BinaryOperatorClass: {
-    const BinaryOperator *Exp = cast<BinaryOperator>(this);
-    
-    // The LHS of a constant expr is always evaluated and needed.
-    if (!Exp->getLHS()->isConstantExpr(Ctx, Loc))
-      return false;
-
-    if (!Exp->getRHS()->isConstantExpr(Ctx, Loc))
-      return false;
-    return true;
-  }
-  case ImplicitCastExprClass:
-  case CStyleCastExprClass:
-  case CXXFunctionalCastExprClass: {
-    const Expr *SubExpr = cast<CastExpr>(this)->getSubExpr();
-    SourceLocation CastLoc = getLocStart();
-    if (!SubExpr->isConstantExpr(Ctx, Loc)) {
-      if (Loc) *Loc = SubExpr->getLocStart();
-      return false;
-    }
-    return true;
-  }
-  case ConditionalOperatorClass: {
-    const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
-    if (!Exp->getCond()->isConstantExpr(Ctx, Loc) ||
-        // Handle the GNU extension for missing LHS.
-        !(Exp->getLHS() && Exp->getLHS()->isConstantExpr(Ctx, Loc)) ||
-        !Exp->getRHS()->isConstantExpr(Ctx, Loc))
-      return false;
-    return true;
-  }
-  case InitListExprClass: {
-    const InitListExpr *Exp = cast<InitListExpr>(this);
-    unsigned numInits = Exp->getNumInits();
-    for (unsigned i = 0; i < numInits; i++) {
-      if (!Exp->getInit(i)->isConstantExpr(Ctx, Loc)) {
-        if (Loc) *Loc = Exp->getInit(i)->getLocStart();
-        return false;
-      }
-    }
-    return true;
-  }
-  case CXXDefaultArgExprClass:
-    return cast<CXXDefaultArgExpr>(this)->getExpr()->isConstantExpr(Ctx, Loc);
-  }
-#endif
 }
 
 /// isIntegerConstantExpr - this recursive routine will test if an expression is
