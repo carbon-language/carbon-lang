@@ -117,6 +117,11 @@ namespace {
            && "Compile-time arithmetic does not support these semantics");
   }
 
+  static inline bool
+  isArithmeticOk(const llvm::fltSemantics &semantics) {
+    return semantics.arithmeticOK;
+  }
+
   /* Return the value of a decimal exponent of the form
      [+-]ddddddd.
 
@@ -1787,7 +1792,8 @@ APFloat::convertToSignExtendedInteger(integerPart *parts, unsigned int width,
   const integerPart *src;
   unsigned int dstPartsCount, truncatedBits;
 
-  assertArithmeticOK(*semantics);
+  if (!isArithmeticOk(*semantics))
+    return opInvalidOp;
 
   *isExact = false;
 
