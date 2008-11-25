@@ -4187,21 +4187,20 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
       SDValue Zero = DAG.getConstant(0, LHS.getValueType());
 
-      SDValue LHSPos = DAG.getSetCC(OType, LHS, Zero, ISD::SETGE);
-      SDValue RHSPos = DAG.getSetCC(OType, RHS, Zero, ISD::SETGE);
-      SDValue And1 = DAG.getNode(ISD::AND, OType, LHSPos, RHSPos);
+      //   LHSSign -> LHS >= 0
+      //   RHSSign -> RHS >= 0
+      //   SumSign -> Sum >= 0
+      //
+      //   Overflow -> (LHSSign == RHSSign) && (LHSSign != SumSign)
+      //
+      SDValue LHSSign = DAG.getSetCC(OType, LHS, Zero, ISD::SETGE);
+      SDValue RHSSign = DAG.getSetCC(OType, RHS, Zero, ISD::SETGE);
+      SDValue SignsEq = DAG.getSetCC(OType, LHSSign, RHSSign, ISD::SETEQ);
 
-      And1 = DAG.getNode(ISD::AND, OType, And1,
-                         DAG.getSetCC(OType, Sum, Zero, ISD::SETLT));
+      SDValue SumSign = DAG.getSetCC(OType, Sum, Zero, ISD::SETGE);
+      SDValue SumSignNE = DAG.getSetCC(OType, LHSSign, SumSign, ISD::SETNE);
 
-      SDValue LHSNeg = DAG.getSetCC(OType, LHS, Zero, ISD::SETLT);
-      SDValue RHSNeg = DAG.getSetCC(OType, RHS, Zero, ISD::SETLT);
-      SDValue And2 = DAG.getNode(ISD::AND, OType, LHSNeg, RHSNeg);
-
-      And2 = DAG.getNode(ISD::AND, OType, And2,
-                         DAG.getSetCC(OType, Sum, Zero, ISD::SETGE));
-
-      SDValue Cmp = DAG.getNode(ISD::OR, OType, And1, And2);
+      SDValue Cmp = DAG.getNode(ISD::AND, OType, SignsEq, SumSignNE);
 
       MVT ValueVTs[] = { LHS.getValueType(), OType };
       SDValue Ops[] = { Sum, Cmp };
