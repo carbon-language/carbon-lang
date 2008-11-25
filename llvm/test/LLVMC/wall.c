@@ -1,6 +1,6 @@
 /*
  * Check that -Wall works as intended
- * RUN: llvmc2 -Wall %s -o %t
+ * RUN: llvmc -Wall %s -o %t
  * RUN: ./%t | grep hello
  */
 

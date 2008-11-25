@@ -83,4 +83,3 @@ def CompilationGraph : CompilationGraph<[
     Edge<"clang_cpp", "llvm_ld">,
     Edge<"clang_objective_c", "llvm_ld">
     ]>;
-

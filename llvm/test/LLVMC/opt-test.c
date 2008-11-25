@@ -1,6 +1,6 @@
 /*
  * Check that the -opt switch works.
- * RUN: llvmc2 %s -opt -o %t
+ * RUN: llvmc %s -opt -o %t
  * RUN: ./%t | grep hello
  */
 

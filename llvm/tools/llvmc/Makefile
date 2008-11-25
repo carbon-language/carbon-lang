@@ -1,4 +1,4 @@
-##===- tools/llvmc2/Makefile -------------------------------*- Makefile -*-===##
+##===- tools/llvmc/Makefile --------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -10,7 +10,7 @@
 LEVEL = ../..
 
 BUILTIN_PLUGINS = Base
-DRIVER_NAME = llvmc2
+DRIVER_NAME = llvmc
 DIRS = plugins driver
 
 export BUILTIN_PLUGINS

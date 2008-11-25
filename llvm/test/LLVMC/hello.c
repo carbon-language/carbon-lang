@@ -1,6 +1,6 @@
 /*
  * Check that we can compile helloworld
- * RUN: llvmc2 %s -o %t
+ * RUN: llvmc %s -o %t
  * RUN: ./%t | grep hello
  */
 

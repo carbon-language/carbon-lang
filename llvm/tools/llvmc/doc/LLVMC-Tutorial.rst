@@ -20,7 +20,7 @@ Compiling with LLVMC
 In general, LLVMC tries to be command-line compatible with ``gcc`` as
 much as possible, so most of the familiar options work::
 
-     $ llvmc2 -O3 -Wall hello.cpp
+     $ llvmc -O3 -Wall hello.cpp
      $ ./a.out
      hello
 
@@ -38,7 +38,7 @@ be familiar with it to get anything done.
 Start by compiling ``plugins/Simple/Simple.td``, which is a primitive
 wrapper for ``gcc``::
 
-    $ cd $LLVM_DIR/tools/llvmc2
+    $ cd $LLVM_DIR/tools/llvmc
     $ make DRIVER_NAME=mygcc BUILTIN_PLUGINS=Simple
     $ cat > hello.c
     [...]
@@ -98,4 +98,3 @@ References
 
 .. [1] TableGen Fundamentals
        http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html
-

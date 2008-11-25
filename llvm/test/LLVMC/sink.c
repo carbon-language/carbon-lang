@@ -1,6 +1,6 @@
 /*
  * Check that the 'sink' options work.
- * RUN: llvmc2 -v -Wall %s -o %t |& grep "Wall"
+ * RUN: llvmc -v -Wall %s -o %t |& grep "Wall"
  * RUN: ./%t | grep hello
  */
 

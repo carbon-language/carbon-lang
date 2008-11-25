@@ -31,7 +31,7 @@ although there are some small differences. Most of the time, however,
 you shouldn't be able to notice them::
 
      $ # This works as expected:
-     $ llvmc2 -O3 -Wall hello.cpp
+     $ llvmc -O3 -Wall hello.cpp
      $ ./a.out
      hello
 
@@ -43,7 +43,7 @@ extensions). If you want to force files ending with ".c" to compile as
 C++, use the ``-x`` option, just like you would do it with ``gcc``::
 
       $ # hello.c is really a C++ file
-      $ llvmc2 -x c++ hello.c
+      $ llvmc -x c++ hello.c
       $ ./a.out
       hello
 
@@ -51,10 +51,10 @@ On the other hand, when using LLVMC as a linker to combine several C++
 object files you should provide the ``--linker`` option since it's
 impossible for LLVMC to choose the right linker in that case::
 
-    $ llvmc2 -c hello.cpp
-    $ llvmc2 hello.o
+    $ llvmc -c hello.cpp
+    $ llvmc hello.o
     [A lot of link-time errors skipped]
-    $ llvmc2 --linker=c++ hello.o
+    $ llvmc --linker=c++ hello.o
     $ ./a.out
     hello
 
@@ -138,7 +138,7 @@ directory and run ``make``. The resulting file will be called
 
     $ cd $LLVMC_DIR/plugins/Simple
     $ make
-    $ llvmc2 -load $LLVM_DIR/Release/lib/LLVMCSimple.so
+    $ llvmc -load $LLVM_DIR/Release/lib/LLVMCSimple.so
 
 Sometimes, you will want a 'bare-bones' version of LLVMC that has no
 built-in plugins. It can be compiled with the following command::
@@ -229,7 +229,7 @@ which gets a special treatment - there you are allowed to specify one
 default edge *per language*).
 
 To get a visual representation of the compilation graph (useful for
-debugging), run ``llvmc2 --view-graph``. You will need ``dot`` and
+debugging), run ``llvmc --view-graph``. You will need ``dot`` and
 ``gsview`` installed for this to work properly.
 
 

@@ -1,4 +1,4 @@
-##===- tools/llvmc2/plugins/Simple/Makefile ------------------*- Makefile -*-===##
+##===- tools/llvmc/plugins/Simple/Makefile -----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
