@@ -50,7 +50,6 @@ SVal Environment::GetSVal(Stmt* E, BasicValueFactory& BasicVals) const {
       case Stmt::CStyleCastExprClass: {
         CastExpr* C = cast<CastExpr>(E);
         QualType CT = C->getType();
-        QualType ST = C->getSubExpr()->getType();
         
         if (CT->isVoidType())
           return UnknownVal();
