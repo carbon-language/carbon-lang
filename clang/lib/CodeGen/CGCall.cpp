@@ -868,7 +868,10 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
       llvm::PointerType::getUnqual(RetAI.getCoerceToType());
     llvm::Value *V = CreateTempAlloca(ConvertType(RetTy), "tmp");
     Builder.CreateStore(CI, Builder.CreateBitCast(V, CoerceToPTy));
-    return RValue::getAggregate(V);
+    if (RetTy->isAnyComplexType())
+      return RValue::getComplex(LoadComplexFromAddr(V, false));
+    else
+      return RValue::getAggregate(V);
   }
 
   case ABIArgInfo::ByVal:

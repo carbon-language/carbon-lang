@@ -51,3 +51,10 @@ void t3() {
   __complex__ long long v = 2;
 }
 
+// PR3131
+float _Complex t4();
+
+void t5() {
+  float _Complex x = t4();
+}
+
