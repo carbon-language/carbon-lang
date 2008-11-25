@@ -591,6 +591,7 @@ SPUDAGToDAGISel::SelectXFormAddr(SDValue Op, SDValue N, SDValue &Base,
                                  SDValue &Index) {
   if (!SelectAFormAddr(Op, N, Base, Index)
       && !SelectDFormAddr(Op, N, Base, Index)) {
+#if 0
     // Default form of a X-form address is r(r) in operands 0 and 1:
     SDValue Op0 = N.getOperand(0);
     SDValue Op1 = N.getOperand(1);
@@ -611,6 +612,12 @@ SPUDAGToDAGISel::SelectXFormAddr(SDValue Op, SDValue N, SDValue &Base,
 
       return true;
     }
+#else
+    // All else fails, punt and use an X-form address:
+    Base = N.getOperand(0);
+    Index = N.getOperand(1);
+    return true;
+#endif
   }
 
   return false;
