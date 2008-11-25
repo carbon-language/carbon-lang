@@ -33,7 +33,9 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/PatternMatch.h"
 using namespace llvm;
+using namespace llvm::PatternMatch;
 
 namespace {
   class VISIBILITY_HIDDEN CodeGenPrepare : public FunctionPass {
@@ -537,41 +539,38 @@ static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
   if (AddrMode.Scale != 0 && AddrMode.ScaledReg != ScaleReg)
     return false;
 
-  ExtAddrMode InputAddrMode = AddrMode;
+  ExtAddrMode TestAddrMode = AddrMode;
 
   // Add scale to turn X*4+X*3 -> X*7.  This could also do things like
   // [A+B + A*7] -> [B+A*8].
-  AddrMode.Scale += Scale;
-  AddrMode.ScaledReg = ScaleReg;
+  TestAddrMode.Scale += Scale;
+  TestAddrMode.ScaledReg = ScaleReg;
 
-  if (TLI.isLegalAddressingMode(AddrMode, AccessTy)) {
-    // Okay, we decided that we can add ScaleReg+Scale to AddrMode.  Check now
-    // to see if ScaleReg is actually X+C.  If so, we can turn this into adding
-    // X*Scale + C*Scale to addr mode.
-    BinaryOperator *BinOp = dyn_cast<BinaryOperator>(ScaleReg);
-    if (BinOp && BinOp->getOpcode() == Instruction::Add &&
-        isa<ConstantInt>(BinOp->getOperand(1)) && InputAddrMode.ScaledReg ==0) {
+  // If the new address isn't legal, bail out.
+  if (!TLI.isLegalAddressingMode(TestAddrMode, AccessTy))
+    return false;
 
-      InputAddrMode.Scale = Scale;
-      InputAddrMode.ScaledReg = BinOp->getOperand(0);
-      InputAddrMode.BaseOffs +=
-        cast<ConstantInt>(BinOp->getOperand(1))->getSExtValue()*Scale;
-      if (TLI.isLegalAddressingMode(InputAddrMode, AccessTy)) {
-        AddrModeInsts.push_back(BinOp);
-        AddrMode = InputAddrMode;
-        return true;
-      }
+  // It was legal, so commit it.
+  AddrMode = TestAddrMode;
+  
+  // Okay, we decided that we can add ScaleReg+Scale to AddrMode.  Check now
+  // to see if ScaleReg is actually X+C.  If so, we can turn this into adding
+  // X*Scale + C*Scale to addr mode.
+  ConstantInt *CI; Value *AddLHS;
+  if (match(ScaleReg, m_Add(m_Value(AddLHS), m_ConstantInt(CI)))) {
+    TestAddrMode.ScaledReg = AddLHS;
+    TestAddrMode.BaseOffs += CI->getSExtValue()*TestAddrMode.Scale;
+      
+    // If this addressing mode is legal, commit it and remember that we folded
+    // this instruction.
+    if (TLI.isLegalAddressingMode(TestAddrMode, AccessTy)) {
+      AddrModeInsts.push_back(cast<Instruction>(ScaleReg));
+      AddrMode = TestAddrMode;
     }
-
-    // Otherwise, not (x+c)*scale, just return what we have.
-    return true;
   }
 
-  // Otherwise, back this attempt out.
-  AddrMode.Scale -= Scale;
-  if (AddrMode.Scale == 0) AddrMode.ScaledReg = 0;
-
-  return false;
+  // Otherwise, not (x+c)*scale, just return what we have.
+  return true;
 }
 
 
@@ -584,7 +583,7 @@ static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
 /// operands.
 static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
                                            ExtAddrMode &AddrMode,
-                                   SmallVector<Instruction*, 16> &AddrModeInsts,
+                                   SmallVectorImpl<Instruction*> &AddrModeInsts,
                                            const TargetLowering &TLI,
                                            unsigned Depth) {
 
@@ -672,8 +671,8 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
     break;
   }
   case Instruction::Or: {
-    ConstantInt *RHS = dyn_cast<ConstantInt>(AddrInst->getOperand(1));
-    if (!RHS) break;
+    //ConstantInt *RHS = dyn_cast<ConstantInt>(AddrInst->getOperand(1));
+    //if (!RHS) break;
     // TODO: We can handle "Or Val, Imm" iff this OR is equivalent to an ADD.
     break;
   }
