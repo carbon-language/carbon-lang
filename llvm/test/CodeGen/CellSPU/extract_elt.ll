@@ -3,7 +3,7 @@
 ; RUN: grep ilhu    %t1.s | count 27
 ; RUN: grep iohl    %t1.s | count 27
 ; RUN: grep lqa     %t1.s | count 10
-; RUN: grep shlqbyi %t1.s | count 12
+; RUN: grep shlqby  %t1.s | count 12
 ; RUN: grep   515   %t1.s | count 1
 ; RUN: grep  1029   %t1.s | count 2
 ; RUN: grep  1543   %t1.s | count 2
@@ -28,7 +28,6 @@
 ; RUN: grep 32782   %t1.s | count 1
 ; RUN: grep 32783   %t1.s | count 1
 ; RUN: grep 32896   %t1.s | count 24
-; XFAIL: *
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
