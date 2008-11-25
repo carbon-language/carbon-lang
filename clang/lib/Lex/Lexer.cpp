@@ -706,7 +706,7 @@ bool Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
     while (isHorizontalWhitespace(Char))
       Char = *++CurPtr;
     
-    // Otherwise if we something other than whitespace, we're done.
+    // Otherwise if we have something other than whitespace, we're done.
     if (Char != '\n' && Char != '\r')
       break;
     
