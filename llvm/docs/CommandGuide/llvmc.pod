@@ -1,0 +1,70 @@
+=pod
+
+=head1 NAME
+
+llvmc - The LLVM Compiler Driver (WIP)
+
+=head1 SYNOPSIS
+
+B<llvmc> [I<options>] I<filenames...>
+
+=head1 DESCRIPTION
+
+B<llvmc> is a configurable driver for invoking other LLVM (and non-LLVM) tools
+in order to compile, optimize and link software for multiple languages. For
+those familiar with FSF's B<gcc> tool, it is very similar.  Please note that
+B<llvmc> is considered an experimental tool.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--help>
+
+Print a summary of command line options.
+
+=item B<-o> I<filename>
+
+Specify the output file to be I<filename>.
+
+=item B<-I> I<directory>
+
+Add a directory to the header file search path.  This option can be
+repeated.
+
+=item B<-L> I<directory>
+
+Add I<directory> to the library search path.  This option can be
+repeated.
+
+=item B<-l>I<name>
+
+Link in the library libI<name>.[bc | a | so].  This library should
+be a bitcode library.
+
+=item B<-emit-llvm>
+
+Make the output be LLVM bitcode (with B<-c>) or assembly (with B<-s>) instead
+of native object (or assembly).  If B<-emit-llvm> is given without either B<-c>
+or B<-S> it has no effect.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<llvmc> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value. If one of the compilation
+tools returns a non-zero status, pending actions will be discarded and
+B<llvmc> will return the same result code as the failing compilation
+tool.
+
+=head1 SEE ALSO
+
+L<llvm-gcc|llvmgcc>, L<llvm-g++|llvmgxx>, L<llvm-as|llvm-as>,
+L<llvm-dis|llvm-dis>, L<llc|llc>, L<llvm-link|llvm-link>
+
+=head1 AUTHORS
+
+Maintained by the LLVM Team (L<http://llvm.org>).
+
+=cut
