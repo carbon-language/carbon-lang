@@ -1982,7 +1982,7 @@ defm SHLQBII : ShiftLeftQuadByBitsImm;
 // not by bits. See notes above on SHLQBI.
 
 class SHLQBYInst<dag OOL, dag IOL, list<dag> pattern>:
-    RI7Form<0b11111011100, OOL, IOL, "shlqbyi\t$rT, $rA, $rB",
+    RI7Form<0b11111011100, OOL, IOL, "shlqby\t$rT, $rA, $rB",
             RotateShift, pattern>;
 
 class SHLQBYVecInst<ValueType vectype>:

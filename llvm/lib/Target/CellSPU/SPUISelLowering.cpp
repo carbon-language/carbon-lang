@@ -177,7 +177,9 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::SELECT_CC,    MVT::i8,    Custom);
   setOperationAction(ISD::SELECT_CC,    MVT::i16,   Custom);
   setOperationAction(ISD::SELECT_CC,    MVT::i32,   Custom);
+#if 0
   setOperationAction(ISD::SELECT_CC,    MVT::i64,   Custom);
+#endif
 
   // SPU has no intrinsics for these particular operations:
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
