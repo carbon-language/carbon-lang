@@ -573,61 +573,22 @@ static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
   return true;
 }
 
-
-/// FindMaximalLegalAddressingMode - If we can, try to merge the computation of
-/// Addr into the specified addressing mode.  If Addr can't be added to AddrMode
-/// this returns false.  This assumes that Addr is either a pointer type or
-/// intptr_t for the target.
-///
-/// This method is used to optimize both load/store and inline asms with memory
-/// operands.
 static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
+                                           ExtAddrMode &AddrMode,
+                                           SmallVectorImpl<Instruction*> &AMI,
+                                           const TargetLowering &TLI,
+                                           unsigned Depth);
+
+/// FindMaximalLegalAddressingModeForOperation - Given an instruction or
+/// constant expr, see if we can fold the operation into the addressing mode.
+/// If so, update the addressing mode and return true, otherwise return false.
+static bool 
+FindMaximalLegalAddressingModeForOperation(User *AddrInst, unsigned Opcode,
+                                           const Type *AccessTy,
                                            ExtAddrMode &AddrMode,
                                    SmallVectorImpl<Instruction*> &AddrModeInsts,
                                            const TargetLowering &TLI,
                                            unsigned Depth) {
-
-  // If this is a global variable, fold it into the addressing mode if possible.
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(Addr)) {
-    if (AddrMode.BaseGV == 0) {
-      AddrMode.BaseGV = GV;
-      if (TLI.isLegalAddressingMode(AddrMode, AccessTy))
-        return true;
-      AddrMode.BaseGV = 0;
-    }
-  } else if (ConstantInt *CI = dyn_cast<ConstantInt>(Addr)) {
-    AddrMode.BaseOffs += CI->getSExtValue();
-    if (TLI.isLegalAddressingMode(AddrMode, AccessTy))
-      return true;
-    AddrMode.BaseOffs -= CI->getSExtValue();
-  } else if (isa<ConstantPointerNull>(Addr)) {
-    return true;
-  }
-
-  // Look through constant exprs and instructions.
-  unsigned Opcode = ~0U;
-  User *AddrInst = 0;
-  if (Instruction *I = dyn_cast<Instruction>(Addr)) {
-    Opcode = I->getOpcode();
-    AddrInst = I;
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Addr)) {
-    Opcode = CE->getOpcode();
-    AddrInst = CE;
-  }
-
-  // Limit recursion to avoid exponential behavior.
-  if (Depth == 5) { AddrInst = 0; Opcode = ~0U; }
-
-  // If this is really an instruction, add it to our list of related
-  // instructions.
-  if (Instruction *I = dyn_cast_or_null<Instruction>(AddrInst))
-    AddrModeInsts.push_back(I);
-
-#if 0
-  if (AddrInst && !AddrInst->hasOneUse())
-    ;
-  else
-#endif
   switch (Opcode) {
   case Instruction::PtrToInt:
     // PtrToInt is always a noop, as we know that the int type is pointer sized.
@@ -653,18 +614,18 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
         FindMaximalLegalAddressingMode(AddrInst->getOperand(0), AccessTy,
                                        AddrMode, AddrModeInsts, TLI, Depth+1))
       return true;
-
+    
     // Restore the old addr mode info.
     AddrMode = BackupAddrMode;
     AddrModeInsts.resize(OldSize);
-
+    
     // Otherwise this was over-aggressive.  Try merging in the LHS then the RHS.
     if (FindMaximalLegalAddressingMode(AddrInst->getOperand(0), AccessTy,
                                        AddrMode, AddrModeInsts, TLI, Depth+1) &&
         FindMaximalLegalAddressingMode(AddrInst->getOperand(1), AccessTy,
                                        AddrMode, AddrModeInsts, TLI, Depth+1))
       return true;
-
+    
     // Otherwise we definitely can't merge the ADD in.
     AddrMode = BackupAddrMode;
     AddrModeInsts.resize(OldSize);
@@ -684,7 +645,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
     int64_t Scale = RHS->getSExtValue();
     if (Opcode == Instruction::Shl)
       Scale = 1 << Scale;
-
+    
     if (TryMatchingScaledValue(AddrInst->getOperand(0), Scale, AccessTy,
                                AddrMode, AddrModeInsts, TLI, Depth))
       return true;
@@ -695,7 +656,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
     // one variable offset.
     int VariableOperand = -1;
     unsigned VariableScale = 0;
-
+    
     int64_t ConstantOffset = 0;
     const TargetData *TD = TLI.getTargetData();
     gep_type_iterator GTI = gep_type_begin(AddrInst);
@@ -703,7 +664,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
       if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
         const StructLayout *SL = TD->getStructLayout(STy);
         unsigned Idx =
-          cast<ConstantInt>(AddrInst->getOperand(i))->getZExtValue();
+        cast<ConstantInt>(AddrInst->getOperand(i))->getZExtValue();
         ConstantOffset += SL->getElementOffset(Idx);
       } else {
         uint64_t TypeSize = TD->getABITypeSize(GTI.getIndexedType());
@@ -715,18 +676,18 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
             VariableOperand = -2;
             break;
           }
-
+          
           // Remember the variable index.
           VariableOperand = i;
           VariableScale = TypeSize;
         }
       }
     }
-
+    
     // If the GEP had multiple variable indices, punt.
     if (VariableOperand == -2)
       break;
-
+    
     // A common case is for the GEP to only do a constant offset.  In this case,
     // just add it to the disp field and check validity.
     if (VariableOperand == -1) {
@@ -751,14 +712,14 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
         AddrMode.BaseReg = AddrInst->getOperand(0);
         SetBaseReg = true;
       }
-
+      
       // See if the scale amount is valid for this target.
       AddrMode.BaseOffs += ConstantOffset;
       if (TryMatchingScaledValue(AddrInst->getOperand(VariableOperand),
                                  VariableScale, AccessTy, AddrMode,
                                  AddrModeInsts, TLI, Depth)) {
         if (!SetBaseReg) return true;
-
+        
         // If this match succeeded, we know that we can form an address with the
         // GepBase as the basereg.  See if we can match *more*.
         AddrMode.HasBaseReg = false;
@@ -773,7 +734,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
         AddrMode.BaseReg = AddrInst->getOperand(0);
         return true;
       }
-
+      
       AddrMode.BaseOffs -= ConstantOffset;
       if (SetBaseReg) {
         AddrMode.HasBaseReg = false;
@@ -783,11 +744,53 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
     break;
   }
   }
+  return false;
+}
 
-  if (Instruction *I = dyn_cast_or_null<Instruction>(AddrInst)) {
-    assert(AddrModeInsts.back() == I && "Stack imbalance"); I = I;
-    AddrModeInsts.pop_back();
+/// FindMaximalLegalAddressingMode - If we can, try to merge the computation of
+/// Addr into the specified addressing mode.  If Addr can't be added to AddrMode
+/// this returns false.  This assumes that Addr is either a pointer type or
+/// intptr_t for the target.
+///
+/// This method is used to optimize both load/store and inline asms with memory
+/// operands.
+static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
+                                           ExtAddrMode &AddrMode,
+                                   SmallVectorImpl<Instruction*> &AddrModeInsts,
+                                           const TargetLowering &TLI,
+                                           unsigned Depth) {
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Addr)) {
+    // Fold in immediates if legal for the target.
+    AddrMode.BaseOffs += CI->getSExtValue();
+    if (TLI.isLegalAddressingMode(AddrMode, AccessTy))
+      return true;
+    AddrMode.BaseOffs -= CI->getSExtValue();
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(Addr)) {
+    // If this is a global variable, fold it into the addressing mode if possible.
+    if (AddrMode.BaseGV == 0) {
+      AddrMode.BaseGV = GV;
+      if (TLI.isLegalAddressingMode(AddrMode, AccessTy))
+        return true;
+      AddrMode.BaseGV = 0;
+    }
+  } else if (Instruction *I = dyn_cast<Instruction>(Addr)) {
+    if (Depth < 5 &&   // Limit recursion to avoid exponential behavior.
+        FindMaximalLegalAddressingModeForOperation(I, I->getOpcode(),
+                                                   AccessTy, AddrMode,
+                                                   AddrModeInsts, TLI, Depth)) {
+      AddrModeInsts.push_back(I);
+      return true;
+    }
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Addr)) {
+    if (Depth < 5 &&   // Limit recursion to avoid exponential behavior.
+        FindMaximalLegalAddressingModeForOperation(CE, CE->getOpcode(),
+                                                   AccessTy, AddrMode,
+                                                   AddrModeInsts, TLI, Depth))
+      return true;
+  } else if (isa<ConstantPointerNull>(Addr)) {
+    return true;
   }
+
 
   // Worse case, the target should support [reg] addressing modes. :)
   if (!AddrMode.HasBaseReg) {
