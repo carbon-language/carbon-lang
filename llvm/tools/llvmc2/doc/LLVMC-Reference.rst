@@ -121,20 +121,13 @@ generic::
 
    $ mv Simple.td MyPlugin.td
 
-Note that the plugin source directory should be placed under
+Note that the plugin source directory must be placed under
 ``$LLVMC_DIR/plugins`` to make use of the existing build
 infrastructure. To build a version of the LLVMC executable called
 ``mydriver`` with your plugin compiled in, use the following command::
 
    $ cd $LLVMC_DIR
    $ make BUILTIN_PLUGINS=MyPlugin DRIVER_NAME=mydriver
-
-When linking plugins dynamically, you'll usually want a 'bare-bones'
-version of LLVMC that has no built-in plugins. It can be compiled with
-the following command::
-
-    $ cd $LLVMC_DIR
-    $ make BUILTIN_PLUGINS=""
 
 To build your plugin as a dynamic library, just ``cd`` to its source
 directory and run ``make``. The resulting file will be called
@@ -146,7 +139,28 @@ directory and run ``make``. The resulting file will be called
     $ make
     $ llvmc2 -load $LLVM_DIR/Release/lib/LLVMCSimple.so
 
-In the future LLVMC will be able to load TableGen files directly.
+Sometimes, you will want a 'bare-bones' version of LLVMC that has no
+built-in plugins. It can be compiled with the following command::
+
+    $ cd $LLVMC_DIR
+    $ make BUILTIN_PLUGINS=""
+
+How plugins are loaded
+======================
+
+It is possible for LLVMC plugins to depend on each other. For example,
+one can create edges between nodes defined in some other plugin. To
+make this work, however, that plugin should be loaded first. To
+achieve this, the concept of plugin priority was introduced. By
+default, every plugin has priority zero; to specify the priority
+explicitly, put the following line in your ``.td`` file::
+
+    def Priority : PluginPriority<$PRIORITY_VALUE>;
+    # Where PRIORITY_VALUE is some integer > 0
+
+Plugins are loaded in order of their (increasing) priority, starting
+with 0. Therefore, the plugin with the highest priority value will be
+loaded last.
 
 
 Customizing LLVMC: the compilation graph
@@ -194,9 +208,9 @@ The definition of the compilation graph (see file
 As you can see, the edges can be either default or optional, where
 optional edges are differentiated by an additional ``case`` expression
 used to calculate the weight of this edge. Notice also that we refer
-to tools via their names (as strings). This allows us to add edges to
-an existing compilation graph without having to include all tool
-definitions that it uses.
+to tools via their names (as strings). This makes it possible to add
+edges to an existing compilation graph in plugins without having to
+know about all tool definitions used in the graph.
 
 The default edges are assigned a weight of 1, and optional edges get a
 weight of 0 + 2*N where N is the number of tests that evaluated to
