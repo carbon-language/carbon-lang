@@ -551,24 +551,13 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
   if (getStmtClass() == ObjCPropertyRefExprClass) {
     const ObjCPropertyRefExpr* PropExpr = cast<ObjCPropertyRefExpr>(this);
     if (ObjCPropertyDecl *PDecl = PropExpr->getProperty()) {
-      if (PDecl->isReadOnly()) {
-        // Main class has the property as 'readyonly'. Must search
-        // through the category list to see if the property's 
-        // attribute has been over-ridden to 'readwrite'.
-        const Expr *BaseExpr = PropExpr->getBase();
-        QualType BaseType = BaseExpr->getType();
-        const PointerType *PTy = BaseType->getAsPointerType();
-        const ObjCInterfaceType *IFTy = 
-          PTy->getPointeeType()->getAsObjCInterfaceType();
-        ObjCInterfaceDecl *IFace = IFTy->getDecl();
-        for (ObjCCategoryDecl *Category = IFace->getCategoryList();
-             Category; Category = Category->getNextClassCategory()) {
-          PDecl= Category->FindPropertyDeclaration(PDecl->getIdentifier());
-          if (PDecl && !PDecl->isReadOnly())
-            return MLV_Valid;
-        }
-        return MLV_ReadonlyProperty;
-      }
+      QualType BaseType = PropExpr->getBase()->getType();
+      if (const PointerType *PTy = BaseType->getAsPointerType())
+        if (const ObjCInterfaceType *IFTy = 
+            PTy->getPointeeType()->getAsObjCInterfaceType())
+          if (ObjCInterfaceDecl *IFace = IFTy->getDecl())
+            if (IFace->isPropertyReadonly(PDecl))
+              return MLV_ReadonlyProperty;
     }
   }
   // Assigning to an 'implicit' property?

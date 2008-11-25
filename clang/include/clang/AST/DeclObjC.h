@@ -339,6 +339,7 @@ public:
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
   ObjCCategoryDecl *FindCategoryDeclaration(IdentifierInfo *CategoryId) const;
   ObjCIvarDecl *FindIvarDeclaration(IdentifierInfo *IvarId) const;
+  bool isPropertyReadonly(ObjCPropertyDecl *PropertyDecl) const;
 
   typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
