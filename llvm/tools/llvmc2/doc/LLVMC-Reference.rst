@@ -41,8 +41,8 @@ language names (which are, in turn, determined from file
 extensions). If you want to force files ending with ".c" to compile as
 C++, use the ``-x`` option, just like you would do it with ``gcc``::
 
-      $ llvmc2 -x c hello.cpp
-      $ # hello.cpp is really a C file
+      $ # hello.c is really a C++ file
+      $ llvmc2 -x c++ hello.c
       $ ./a.out
       hello
 
@@ -361,7 +361,7 @@ Tool-specific option properties like ``append_cmd`` have (obviously)
 no meaning in the context of ``OptionList``, so the only properties
 allowed there are ``help`` and ``required``.
 
-Option lists are used at the file scope. See file
+Option lists are used at file scope. See the file
 ``plugins/Clang/Clang.td`` for an example of ``OptionList`` usage.
 
 .. _hooks:

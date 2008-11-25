@@ -23,8 +23,10 @@ much as possible, so most of the familiar options work::
      $ ./a.out
      hello
 
-For further help on command-line LLVMC usage, refer to the ``llvmc
---help`` output.
+This will invoke ``llvm-g++`` under the hood (you can see which
+commands are executed by using the ``-v`` option). For further help on
+command-line LLVMC usage, refer to the ``llvmc --help`` output.
+
 
 Using LLVMC to generate toolchain drivers
 =========================================
@@ -51,7 +53,7 @@ reference manual.
 Contents of the file ``Simple.td`` look like this::
 
     // Include common definitions
-    include "Common.td"
+    include "llvm/CompilerDriver/Common.td"
 
     // Tool descriptions
     def gcc : Tool<
