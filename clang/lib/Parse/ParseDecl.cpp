@@ -426,7 +426,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 
     // Only annotate C++ scope. Allow class-name as an identifier in case
     // it's a constructor.
-    TryAnnotateScopeToken();
+    if (getLang().CPlusPlus)
+      TryAnnotateScopeToken();
     
     switch (Tok.getKind()) {
     default: 
