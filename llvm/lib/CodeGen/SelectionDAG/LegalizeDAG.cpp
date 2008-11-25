@@ -4183,7 +4183,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       SDValue RHS = LegalizeOp(Node->getOperand(1));
 
       SDValue Sum = DAG.getNode(ISD::ADD, LHS.getValueType(), LHS, RHS);
-      MVT SType = Node->getValueType(0);
       MVT OType = Node->getValueType(1);
 
       SDValue Zero = DAG.getConstant(0, OType);
