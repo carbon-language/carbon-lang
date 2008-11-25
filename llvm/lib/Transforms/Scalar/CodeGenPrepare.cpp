@@ -532,7 +532,7 @@ void ExtAddrMode::print(OStream &OS) const {
 /// false if not.
 static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
                                    const Type *AccessTy, ExtAddrMode &AddrMode,
-                                   SmallVector<Instruction*, 16> &AddrModeInsts,
+                                   SmallVectorImpl<Instruction*> &AddrModeInsts,
                                    const TargetLowering &TLI, unsigned Depth) {
   // If we already have a scale of this value, we can add to it, otherwise, we
   // need an available scale field.
@@ -678,8 +678,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
   }
   case Instruction::Mul:
   case Instruction::Shl: {
-    // Can only handle X*C and X << C, and can only handle this when the scale
-    // field is available.
+    // Can only handle X*C and X << C.
     ConstantInt *RHS = dyn_cast<ConstantInt>(AddrInst->getOperand(1));
     if (!RHS) break;
     int64_t Scale = RHS->getSExtValue();
