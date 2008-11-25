@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 struct S // expected-note {{candidate}}
 {
   S(int, int, double); // expected-note {{candidate}}
@@ -21,7 +23,7 @@ void good_news()
   ia4 *pai = new (int[3][4]);
 }
 
-void bad_news()
+void bad_news(int *ip)
 {
   int i = 1;
   (void)new; // expected-error {{missing type specifier}}
@@ -33,9 +35,9 @@ void bad_news()
   (void)new int(*(S*)0); // expected-error {{incompatible type initializing}}
   (void)new int(1, 2); // expected-error {{initializer of a builtin type can only take one argument}}
   (void)new S(1); // expected-error {{no matching constructor}}
-  (void)new S(1, 1); // expected-error {{call to constructor of 'struct S' is ambiguous}}
+  (void)new S(1, 1); // expected-error {{call to constructor of 'S' is ambiguous}}
   (void)new const int; // expected-error {{must provide an initializer}}
-  
+  (void)new float*(ip); // expected-error {{incompatible type initializing 'int *', expected 'float *'}}
   // Some lacking cases due to lack of sema support.
 }
 
