@@ -557,7 +557,7 @@ public:
     return Result;
   }
 private:
-  bool MatchScaledValue(Value *ScaleReg, int64_t Scale);
+  bool MatchScaledValue(Value *ScaleReg, int64_t Scale, unsigned Depth);
   bool MatchAddr(Value *V, unsigned Depth);
   bool MatchOperationAddr(User *Operation, unsigned Opcode, unsigned Depth);
 };
@@ -566,7 +566,17 @@ private:
 /// MatchScaledValue - Try adding ScaleReg*Scale to the current addressing mode.
 /// Return true and update AddrMode if this addr mode is legal for the target,
 /// false if not.
-bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale) {
+bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
+                                             unsigned Depth) {
+  // If Scale is 1, then this is the same as adding ScaleReg to the addressing
+  // mode.  Just process that directly.
+  if (Scale == 1)
+    return MatchAddr(ScaleReg, Depth);
+  
+  // If the scale is 0, it takes nothing to add this.
+  if (Scale == 0)
+    return true;
+  
   // If we already have a scale of this value, we can add to it, otherwise, we
   // need an available scale field.
   if (AddrMode.Scale != 0 && AddrMode.ScaledReg != ScaleReg)
@@ -663,7 +673,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     if (Opcode == Instruction::Shl)
       Scale = 1 << Scale;
     
-    return MatchScaledValue(AddrInst->getOperand(0), Scale);
+    return MatchScaledValue(AddrInst->getOperand(0), Scale, Depth);
   }
   case Instruction::GetElementPtr: {
     // Scan the GEP.  We check it if it contains constant offsets and at most
@@ -728,8 +738,8 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     // See if the scale and offset amount is valid for this target.
     AddrMode.BaseOffs += ConstantOffset;
     
-    // FIXME: If VariableScale = 1, just call MatchAddr recursively?
-    if (!MatchScaledValue(AddrInst->getOperand(VariableOperand),VariableScale)){
+    if (!MatchScaledValue(AddrInst->getOperand(VariableOperand), VariableScale,
+                          Depth)) {
       AddrMode = BackupAddrMode;
       return false;
     }
