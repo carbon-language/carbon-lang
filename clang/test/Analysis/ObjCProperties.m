@@ -8,7 +8,7 @@
     id _X;
 }
 - (id)initWithY:(id)Y;
-@property(copy, readonly) id X;
+@property(copy, readwrite) id X;
 @end
 
 @implementation MyClass
