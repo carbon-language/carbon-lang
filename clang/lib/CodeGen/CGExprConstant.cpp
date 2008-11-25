@@ -25,8 +25,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-#define USE_TRY_EVALUATE
-
 namespace  {
 class VISIBILITY_HIDDEN ConstExprEmitter : 
   public StmtVisitor<ConstExprEmitter, llvm::Constant*> {
@@ -51,24 +49,6 @@ public:
     return Visit(PE->getSubExpr()); 
   }
   
-#ifndef USE_TRY_EVALUATE
-  // Leaves
-  llvm::Constant *VisitIntegerLiteral(const IntegerLiteral *E) {
-    return llvm::ConstantInt::get(E->getValue());
-  }
-  llvm::Constant *VisitFloatingLiteral(const FloatingLiteral *E) {
-    return llvm::ConstantFP::get(E->getValue());
-  }
-  llvm::Constant *VisitCharacterLiteral(const CharacterLiteral *E) {
-    return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
-  }
-  llvm::Constant *VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) {
-    return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
-  }
-  llvm::Constant *VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
-  }
-#endif
   llvm::Constant *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     std::string S(E->getString()->getStrData(), 
                   E->getString()->getByteLength());
@@ -380,20 +360,6 @@ public:
     return llvm::ConstantArray::get(CGM.GetStringForStringLiteral(E), false);
   }
 
-#ifndef USE_TRY_EVALUATE
-  llvm::Constant *VisitDeclRefExpr(DeclRefExpr *E) {
-    const NamedDecl *Decl = E->getDecl();
-    if (const EnumConstantDecl *EC = dyn_cast<EnumConstantDecl>(Decl))
-      return llvm::ConstantInt::get(EC->getInitVal());
-    assert(0 && "Unsupported decl ref type!");
-    return 0;
-  }
-
-  llvm::Constant *VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
-    return EmitSizeAlignOf(E->getTypeOfArgument(), E->getType(), E->isSizeOf());
-  }
-#endif
-    
   llvm::Constant *VisitAddrLabelExpr(const AddrLabelExpr *E) {
     assert(CGF && "Invalid address of label expression outside function.");
     llvm::Constant *C = 
@@ -402,39 +368,6 @@ public:
     return llvm::ConstantExpr::getIntToPtr(C, ConvertType(E->getType()));
   }
 
-#ifndef USE_TRY_EVALUATE
-  // Unary operators
-  llvm::Constant *VisitUnaryPlus(const UnaryOperator *E) {
-    return Visit(E->getSubExpr());
-  }
-  llvm::Constant *VisitUnaryMinus(const UnaryOperator *E) {
-    return llvm::ConstantExpr::getNeg(Visit(E->getSubExpr()));
-  }
-  llvm::Constant *VisitUnaryNot(const UnaryOperator *E) {
-    return llvm::ConstantExpr::getNot(Visit(E->getSubExpr()));
-  }  
-  llvm::Constant *VisitUnaryLNot(const UnaryOperator *E) {
-    llvm::Constant *SubExpr = Visit(E->getSubExpr());
-    
-    if (E->getSubExpr()->getType()->isRealFloatingType()) {
-      // Compare against 0.0 for fp scalars.
-      llvm::Constant *Zero = llvm::Constant::getNullValue(SubExpr->getType());
-      SubExpr = llvm::ConstantExpr::getFCmp(llvm::FCmpInst::FCMP_UEQ, SubExpr,
-                                            Zero);
-    } else {
-      assert((E->getSubExpr()->getType()->isIntegerType() ||
-              E->getSubExpr()->getType()->isPointerType()) &&
-             "Unknown scalar type to convert");
-      // Compare against an integer or pointer null.
-      llvm::Constant *Zero = llvm::Constant::getNullValue(SubExpr->getType());
-      SubExpr = llvm::ConstantExpr::getICmp(llvm::ICmpInst::ICMP_EQ, SubExpr,
-                                            Zero);
-    }
-
-    return llvm::ConstantExpr::getZExt(SubExpr, ConvertType(E->getType()));
-  }
-#endif
-    
   llvm::Constant *VisitUnaryAddrOf(const UnaryOperator *E) {
     return EmitLValue(E->getSubExpr());
   }
@@ -453,171 +386,6 @@ public:
   }
   
   // Binary operators
-#ifndef USE_TRY_EVALUATE
-  llvm::Constant *VisitBinOr(const BinaryOperator *E) {
-    llvm::Constant *LHS = Visit(E->getLHS());
-    llvm::Constant *RHS = Visit(E->getRHS());
-    
-    return llvm::ConstantExpr::getOr(LHS, RHS);
-  }
-  llvm::Constant *VisitBinSub(const BinaryOperator *E) {
-    llvm::Constant *LHS = Visit(E->getLHS());
-    llvm::Constant *RHS = Visit(E->getRHS());
-    
-    if (!isa<llvm::PointerType>(RHS->getType())) {
-      // pointer - int
-      if (isa<llvm::PointerType>(LHS->getType())) {
-        llvm::Constant *Idx = llvm::ConstantExpr::getNeg(RHS);
-      
-        return llvm::ConstantExpr::getGetElementPtr(LHS, &Idx, 1);
-      }
-      
-      // int - int
-      return llvm::ConstantExpr::getSub(LHS, RHS);
-    }
-
-    assert(isa<llvm::PointerType>(LHS->getType()));
-
-    const llvm::Type *ResultType = ConvertType(E->getType());
-    const QualType Type = E->getLHS()->getType();
-    const QualType ElementType = Type->getAsPointerType()->getPointeeType();
-
-    LHS = llvm::ConstantExpr::getPtrToInt(LHS, ResultType);
-    RHS = llvm::ConstantExpr::getPtrToInt(RHS, ResultType);
-
-    llvm::Constant *sub = llvm::ConstantExpr::getSub(LHS, RHS);
-    llvm::Constant *size = EmitSizeAlignOf(ElementType, E->getType(), true);
-    return llvm::ConstantExpr::getSDiv(sub, size);
-  }
-    
-  llvm::Constant *VisitBinShl(const BinaryOperator *E) {
-    llvm::Constant *LHS = Visit(E->getLHS());
-    llvm::Constant *RHS = Visit(E->getRHS());
-
-    // LLVM requires the LHS and RHS to be the same type: promote or truncate the
-    // RHS to the same size as the LHS.
-    if (LHS->getType() != RHS->getType())
-      RHS = llvm::ConstantExpr::getIntegerCast(RHS, LHS->getType(), false);
-    
-    return llvm::ConstantExpr::getShl(LHS, RHS);
-  }
-    
-  llvm::Constant *VisitBinMul(const BinaryOperator *E) {
-    llvm::Constant *LHS = Visit(E->getLHS());
-    llvm::Constant *RHS = Visit(E->getRHS());
-
-    return llvm::ConstantExpr::getMul(LHS, RHS);
-  }
-
-  llvm::Constant *VisitBinDiv(const BinaryOperator *E) {
-    llvm::Constant *LHS = Visit(E->getLHS());
-    llvm::Constant *RHS = Visit(E->getRHS());
-    
-    if (LHS->getType()->isFPOrFPVector())
-      return llvm::ConstantExpr::getFDiv(LHS, RHS);
-    else if (E->getType()->isUnsignedIntegerType())
-      return llvm::ConstantExpr::getUDiv(LHS, RHS);
-    else
-      return llvm::ConstantExpr::getSDiv(LHS, RHS);
-  }
-
-  llvm::Constant *VisitBinAdd(const BinaryOperator *E) {
-    llvm::Constant *LHS = Visit(E->getLHS());
-    llvm::Constant *RHS = Visit(E->getRHS());
-
-    if (!E->getType()->isPointerType())
-      return llvm::ConstantExpr::getAdd(LHS, RHS);
-    
-    llvm::Constant *Ptr, *Idx;
-    if (isa<llvm::PointerType>(LHS->getType())) { // pointer + int
-      Ptr = LHS;
-      Idx = RHS;
-    } else { // int + pointer
-      Ptr = RHS;
-      Idx = LHS;
-    }
-    
-    return llvm::ConstantExpr::getGetElementPtr(Ptr, &Idx, 1);
-  }
-    
-  llvm::Constant *VisitBinAnd(const BinaryOperator *E) {
-    llvm::Constant *LHS = Visit(E->getLHS());
-    llvm::Constant *RHS = Visit(E->getRHS());
-
-    return llvm::ConstantExpr::getAnd(LHS, RHS);
-  }
-
-  llvm::Constant *EmitCmp(const BinaryOperator *E,
-                          llvm::CmpInst::Predicate SignedPred,
-                          llvm::CmpInst::Predicate UnsignedPred,
-                          llvm::CmpInst::Predicate FloatPred) {
-    llvm::Constant *LHS = Visit(E->getLHS());
-    llvm::Constant *RHS = Visit(E->getRHS());
-    llvm::Constant *Result;
-    if (LHS->getType()->isInteger() ||
-        isa<llvm::PointerType>(LHS->getType())) {
-      if (E->getLHS()->getType()->isSignedIntegerType())
-        Result = llvm::ConstantExpr::getICmp(SignedPred, LHS, RHS);
-      else
-        Result = llvm::ConstantExpr::getICmp(UnsignedPred, LHS, RHS);
-    } else if (LHS->getType()->isFloatingPoint()) {
-      Result = llvm::ConstantExpr::getFCmp(FloatPred, LHS, RHS);
-    } else {
-      CGM.ErrorUnsupported(E, "constant expression");
-      Result = llvm::ConstantInt::getFalse();
-    }
-
-    const llvm::Type* ResultType = ConvertType(E->getType());
-    return llvm::ConstantExpr::getZExtOrBitCast(Result, ResultType);
-  }
-
-  llvm::Constant *VisitBinNE(const BinaryOperator *E) {
-    return EmitCmp(E, llvm::CmpInst::ICMP_NE, llvm::CmpInst::ICMP_NE,
-                   llvm::CmpInst::FCMP_ONE);
-  }
-
-  llvm::Constant *VisitBinEQ(const BinaryOperator *E) {
-    return EmitCmp(E, llvm::CmpInst::ICMP_EQ, llvm::CmpInst::ICMP_EQ,
-                   llvm::CmpInst::FCMP_OEQ);
-  }
-
-  llvm::Constant *VisitBinLT(const BinaryOperator *E) {
-    return EmitCmp(E, llvm::CmpInst::ICMP_SLT, llvm::CmpInst::ICMP_ULT,
-                   llvm::CmpInst::FCMP_OLT);
-  }
-
-  llvm::Constant *VisitBinLE(const BinaryOperator *E) {
-    return EmitCmp(E, llvm::CmpInst::ICMP_SLE, llvm::CmpInst::ICMP_ULE,
-                   llvm::CmpInst::FCMP_OLE);
-  }
-
-  llvm::Constant *VisitBinGT(const BinaryOperator *E) {
-    return EmitCmp(E, llvm::CmpInst::ICMP_SGT, llvm::CmpInst::ICMP_UGT,
-                   llvm::CmpInst::FCMP_OGT);
-  }
-
-  llvm::Constant *VisitBinGE(const BinaryOperator *E) {
-    return EmitCmp(E, llvm::CmpInst::ICMP_SGE, llvm::CmpInst::ICMP_SGE,
-                   llvm::CmpInst::FCMP_OGE);
-  }
-
-  llvm::Constant *VisitConditionalOperator(const ConditionalOperator *E) {
-    llvm::Constant *Cond = Visit(E->getCond());
-    llvm::Constant *CondVal = EmitConversionToBool(Cond, E->getType());
-    llvm::ConstantInt *CondValInt = dyn_cast<llvm::ConstantInt>(CondVal);
-    if (!CondValInt) {
-      CGM.ErrorUnsupported(E, "constant expression");
-      return llvm::Constant::getNullValue(ConvertType(E->getType()));
-    }
-    if (CondValInt->isOne()) {
-      if (E->getLHS())
-        return Visit(E->getLHS());
-      return Cond;
-    }
-
-    return Visit(E->getRHS());
-  }
-#endif
 
   llvm::Constant *VisitCallExpr(const CallExpr *E) {
     APValue Result;
@@ -854,7 +622,6 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                                 CodeGenFunction *CGF) {
   QualType type = Context.getCanonicalType(E->getType());
 
-#ifdef USE_TRY_EVALUATE
   APValue V;
   if (E->Evaluate(V, Context)) {
     // FIXME: Assert that the value doesn't have any side effects.
@@ -904,14 +671,6 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
     }
     }
   }
-#else
-  if (type->isIntegerType()) {
-    llvm::APSInt Value(static_cast<uint32_t>(Context.getTypeSize(type)));
-    if (E->isIntegerConstantExpr(Value, Context)) {
-      return llvm::ConstantInt::get(Value);
-    } 
-  }
-#endif
 
   llvm::Constant* C = ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
   if (C->getType() == llvm::Type::Int1Ty) {
