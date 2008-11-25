@@ -418,11 +418,11 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         if (NewReg == LastNewReg[AntiDepReg]) continue;
         // If NewReg is dead and NewReg's most recent def is not before
         // AntiDepReg's kill, it's safe to replace AntiDepReg with NewReg.
-        assert(((KillIndices[AntiDepReg] == -1) != (DefIndices[AntiDepReg] == -1)) &&
+        assert(((KillIndices[AntiDepReg] == -1u) != (DefIndices[AntiDepReg] == -1u)) &&
                "Kill and Def maps aren't consistent for AntiDepReg!");
-        assert(((KillIndices[NewReg] == -1) != (DefIndices[NewReg] == -1)) &&
+        assert(((KillIndices[NewReg] == -1u) != (DefIndices[NewReg] == -1u)) &&
                "Kill and Def maps aren't consistent for NewReg!");
-        if (KillIndices[NewReg] == -1 &&
+        if (KillIndices[NewReg] == -1u &&
             KillIndices[AntiDepReg] <= DefIndices[NewReg]) {
           DOUT << "Breaking anti-dependence edge on reg " << AntiDepReg
                << " with reg " << NewReg << "!\n";
@@ -469,17 +469,17 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         // a live range.
         Defs.erase(Reg);
         // It wasn't previously live but now it is, this is a kill.
-        if (KillIndices[Reg] == -1) {
+        if (KillIndices[Reg] == -1u) {
           KillIndices[Reg] = Count;
-          DefIndices[Reg] = -1;
+          DefIndices[Reg] = -1u;
         }
         // Repeat, for all aliases.
         for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
           unsigned AliasReg = *Alias;
           Defs.erase(AliasReg);
-          if (KillIndices[AliasReg] == -1) {
+          if (KillIndices[AliasReg] == -1u) {
             KillIndices[AliasReg] = Count;
-            DefIndices[AliasReg] = -1;
+            DefIndices[AliasReg] = -1u;
           }
         }
       }
