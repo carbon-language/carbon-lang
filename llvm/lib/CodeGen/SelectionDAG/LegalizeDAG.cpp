@@ -4170,7 +4170,53 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
   }
 
-  case ISD::SADDO:
+  case ISD::SADDO: {
+    MVT VT = Node->getValueType(0);
+    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
+    default: assert(0 && "This action not supported for this op yet!");
+    case TargetLowering::Custom:
+      Result = TLI.LowerOperation(Op, DAG);
+      if (Result.getNode()) break;
+      // FALLTHROUGH
+    case TargetLowering::Legal: {
+      SDValue LHS = LegalizeOp(Node->getOperand(0));
+      SDValue RHS = LegalizeOp(Node->getOperand(1));
+
+      SDValue Sum = DAG.getNode(ISD::ADD, LHS.getValueType(), LHS, RHS);
+      MVT SType = Node->getValueType(0);
+      MVT OType = Node->getValueType(1);
+
+      SDValue Zero = DAG.getConstant(0, OType);
+
+      SDValue LHSPos = DAG.getSetCC(OType, LHS, Zero, ISD::SETGE);
+      SDValue RHSPos = DAG.getSetCC(OType, RHS, Zero, ISD::SETGE);
+      SDValue And1 = DAG.getNode(ISD::AND, OType, LHSPos, RHSPos);
+
+      And1 = DAG.getNode(ISD::AND, OType, And1,
+                         DAG.getSetCC(OType, Sum, Zero, ISD::SETLT));
+
+      SDValue LHSNeg = DAG.getSetCC(OType, LHS, Zero, ISD::SETLT);
+      SDValue RHSNeg = DAG.getSetCC(OType, RHS, Zero, ISD::SETLT);
+      SDValue And2 = DAG.getNode(ISD::AND, OType, LHSNeg, RHSNeg);
+
+      And2 = DAG.getNode(ISD::AND, OType, And2,
+                         DAG.getSetCC(OType, Sum, Zero, ISD::SETGE));
+
+      SDValue Cmp = DAG.getNode(ISD::OR, OType, And1, And2);
+
+      MVT ValueVTs[] = { LHS.getValueType(), OType };
+      SDValue Ops[] = { Sum, Cmp };
+
+      Result = DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], 2), &Ops[0], 2);
+      SDNode *RNode = Result.getNode();
+      DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), SDValue(RNode, 0));
+      DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), SDValue(RNode, 1));
+      break;
+    }
+    }
+
+    break;
+  }
   case ISD::UADDO: {
     MVT VT = Node->getValueType(0);
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
@@ -4185,9 +4231,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
       SDValue Sum = DAG.getNode(ISD::ADD, LHS.getValueType(), LHS, RHS);
       MVT OType = Node->getValueType(1);
-      SDValue Cmp = DAG.getSetCC(OType, Sum, LHS,
-                                 (Node->getOpcode() == ISD::SADDO) ?
-                                 ISD::SETLT : ISD::SETULT);
+      SDValue Cmp = DAG.getSetCC(OType, Sum, LHS, ISD::SETULT);
 
       MVT ValueVTs[] = { LHS.getValueType(), OType };
       SDValue Ops[] = { Sum, Cmp };
