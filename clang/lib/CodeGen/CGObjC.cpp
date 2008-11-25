@@ -24,8 +24,10 @@ using namespace clang;
 using namespace CodeGen;
 
 /// Emits an instance of NSConstantString representing the object.
-llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E) {
-  std::string String(E->getString()->getStrData(), E->getString()->getByteLength());
+llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E) 
+{
+  std::string String(E->getString()->getStrData(), 
+                     E->getString()->getByteLength());
   llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(String);
   // FIXME: This bitcast should just be made an invariant on the Runtime.
   return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
