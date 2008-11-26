@@ -226,6 +226,10 @@ private:
   /// This simplifies handling of C++ scope specifiers and allows efficient
   /// backtracking without the need to re-parse and resolve nested-names and
   /// typenames.
+  /// It will mainly be called when we expect to treat identifiers as typenames
+  /// (if they are typenames). For example, in C we do not expect identifiers
+  /// inside expressions to be treated as typenames so it will not be called
+  /// for expressions in C.
   void TryAnnotateTypeOrScopeToken();
 
   /// TryAnnotateCXXScopeToken - Like TryAnnotateTypeOrScopeToken but only

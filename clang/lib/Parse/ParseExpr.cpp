@@ -424,7 +424,11 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   if (getLang().CPlusPlus) {
     // Annotate typenames and C++ scope specifiers.
-    // Used only in C++; in C let the typedef name be handled as an identifier.
+    // Used only in C++, where the typename can be considered as a functional
+    // style cast ("int(1)").
+    // In C we don't expect identifiers to be treated as typenames; if it's a
+    // typedef name, let it be handled as an identifier and
+    // Actions.ActOnIdentifierExpr will emit the proper diagnostic.
     TryAnnotateTypeOrScopeToken();
   }
 

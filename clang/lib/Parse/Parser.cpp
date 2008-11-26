@@ -700,6 +700,15 @@ Parser::ExprResult Parser::ParseSimpleAsm() {
 /// This simplifies handling of C++ scope specifiers and allows efficient
 /// backtracking without the need to re-parse and resolve nested-names and
 /// typenames.
+/// It will mainly be called when we expect to treat identifiers as typenames
+/// (if they are typenames). For example, in C we do not expect identifiers
+/// inside expressions to be treated as typenames so it will not be called
+/// for expressions in C.
+/// The benefit for C/ObjC is that a typename will be annotated and
+/// Actions.isTypeName will not be needed to be called again (e.g. isTypeName
+/// will not be called twice, once to check whether we have a declaration
+/// specifier, and another one to get the actual type inside
+/// ParseDeclarationSpecifiers).
 void Parser::TryAnnotateTypeOrScopeToken() {
   if (Tok.is(tok::annot_qualtypename) || Tok.is(tok::annot_cxxscope))
     return;
