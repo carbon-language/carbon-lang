@@ -571,7 +571,10 @@ private:
   bool MatchScaledValue(Value *ScaleReg, int64_t Scale, unsigned Depth);
   bool MatchAddr(Value *V, unsigned Depth);
   bool MatchOperationAddr(User *Operation, unsigned Opcode, unsigned Depth);
-  bool IsProfitableToFoldIntoAddressingMode(Instruction *I);
+  bool IsProfitableToFoldIntoAddressingMode(Instruction *I,
+                                            ExtAddrMode &AMBefore,
+                                            ExtAddrMode &AMAfter);
+  bool ValueAlreadyLiveAtInst(Value *Val, Value *KnownLive1, Value *KnownLive2);
 };
 } // end anonymous namespace
 
@@ -843,7 +846,8 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
       // Okay, it's possible to fold this.  Check to see if it is actually
       // *profitable* to do so.  We use a simple cost model to avoid increasing
       // register pressure too much.
-      if (I->hasOneUse() || IsProfitableToFoldIntoAddressingMode(I)) {
+      if (I->hasOneUse() ||
+          IsProfitableToFoldIntoAddressingMode(I, BackupAddrMode, AddrMode)) {
         AddrModeInsts.push_back(I);
         return true;
       }
@@ -929,7 +933,33 @@ static bool FindAllMemoryUses(Instruction *I,
 
   return false;
 }
+
+
+/// ValueAlreadyLiveAtInst - Retrn true if Val is already known to be live at
+/// the use site that we're folding it into.  If so, there is no cost to
+/// include it in the addressing mode.  KnownLive1 and KnownLive2 are two values
+/// that we know are live at the instruction already.
+bool AddressingModeMatcher::ValueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
+                                                   Value *KnownLive2) {
+  // If Val is either of the known-live values, we know it is live!
+  if (Val == 0 || Val == KnownLive1 || Val == KnownLive2)
+    return true;
   
+  // All non-instruction values other than arguments (constants) are live.
+  if (!isa<Instruction>(Val) && !isa<Argument>(Val)) return true;
+  
+  // If Val is a constant sized alloca in the entry block, it is live, this is
+  // true because it is just a reference to the stack/frame pointer, which is
+  // live for the whole function.
+  if (AllocaInst *AI = dyn_cast<AllocaInst>(Val))
+    if (AI->isStaticAlloca())
+      return true;
+  
+  return false;
+}
+
+
+
 #include "llvm/Support/CommandLine.h"
 cl::opt<bool> ENABLECRAZYHACK("enable-smarter-addr-folding", cl::Hidden);
 
@@ -956,17 +986,32 @@ cl::opt<bool> ENABLECRAZYHACK("enable-smarter-addr-folding", cl::Hidden);
 /// X was live across 'load Z' for other reasons, we actually *would* want to
 /// fold the addressing mode in the Z case.  This would make Y die earlier.
 bool AddressingModeMatcher::
-IsProfitableToFoldIntoAddressingMode(Instruction *I) {
+IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
+                                     ExtAddrMode &AMAfter) {
   if (IgnoreProfitability || !ENABLECRAZYHACK) return true;
   
-  // If 'I' is a constant GEP from an alloca, always fold it.  This allows us
-  // to get an offset from the stack pointer.  If a non-memory use uses this GEP
-  // it will just get an add of a constant to the stack pointer.  This increases
-  // the lifetime of the stack pointer, which is always live anyway.
-  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I))
-    // FIXME: This is just a special purpose form of availability hacking.
-    if (isa<AllocaInst>(GEPI->getOperand(0)) && GEPI->hasAllConstantIndices())
-      return true;
+  // AMBefore is the addressing mode before this instruction was folded into it,
+  // and AMAfter is the addressing mode after the instruction was folded.  Get
+  // the set of registers referenced by AMAfter and subtract out those
+  // referenced by AMBefore: this is the set of values which folding in this
+  // address extends the lifetime of.
+  //
+  // Note that there are only two potential values being referenced here,
+  // BaseReg and ScaleReg (global addresses are always available, as are any
+  // folded immediates).
+  Value *BaseReg = AMAfter.BaseReg, *ScaledReg = AMAfter.ScaledReg;
+  
+  // If the BaseReg or ScaledReg was referenced by the previous addrmode, their
+  // lifetime wasn't extended by adding this instruction.
+  if (ValueAlreadyLiveAtInst(BaseReg, AMBefore.BaseReg, AMBefore.ScaledReg))
+    BaseReg = 0;
+  if (ValueAlreadyLiveAtInst(ScaledReg, AMBefore.BaseReg, AMBefore.ScaledReg))
+    ScaledReg = 0;
+
+  // If folding this instruction (and it's subexprs) didn't extend any live
+  // ranges, we're ok with it.
+  if (BaseReg == 0 && ScaledReg == 0)
+    return true;
 
   // If all uses of this instruction are ultimately load/store/inlineasm's,
   // check to see if their addressing modes will include this instruction.  If
