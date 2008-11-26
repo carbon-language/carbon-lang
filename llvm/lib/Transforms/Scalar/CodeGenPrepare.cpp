@@ -864,22 +864,22 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
   // Worse case, the target should support [reg] addressing modes. :)
   if (!AddrMode.HasBaseReg) {
     AddrMode.HasBaseReg = true;
+    AddrMode.BaseReg = Addr;
     // Still check for legality in case the target supports [imm] but not [i+r].
-    if (TLI.isLegalAddressingMode(AddrMode, AccessTy)) {
-      AddrMode.BaseReg = Addr;
+    if (TLI.isLegalAddressingMode(AddrMode, AccessTy))
       return true;
-    }
     AddrMode.HasBaseReg = false;
+    AddrMode.BaseReg = 0;
   }
 
   // If the base register is already taken, see if we can do [r+r].
   if (AddrMode.Scale == 0) {
     AddrMode.Scale = 1;
-    if (TLI.isLegalAddressingMode(AddrMode, AccessTy)) {
-      AddrMode.ScaledReg = Addr;
+    AddrMode.ScaledReg = Addr;
+    if (TLI.isLegalAddressingMode(AddrMode, AccessTy))
       return true;
-    }
     AddrMode.Scale = 0;
+    AddrMode.ScaledReg = 0;
   }
   // Couldn't match.
   return false;
@@ -954,7 +954,7 @@ cl::opt<bool> ENABLECRAZYHACK("enable-smarter-addr-folding", cl::Hidden);
 ///
 /// Note that this (like most of CodeGenPrepare) is just a rough heuristic.  If
 /// X was live across 'load Z' for other reasons, we actually *would* want to
-/// fold the addressing mode in the Z case.
+/// fold the addressing mode in the Z case.  This would make Y die earlier.
 bool AddressingModeMatcher::
 IsProfitableToFoldIntoAddressingMode(Instruction *I) {
   if (IgnoreProfitability || !ENABLECRAZYHACK) return true;
