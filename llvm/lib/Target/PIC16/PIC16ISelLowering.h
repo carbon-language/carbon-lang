@@ -64,6 +64,7 @@ namespace llvm {
     SDValue LowerADDC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSUBE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSUBC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerBinOp(SDValue Op, SelectionDAG &DAG);
 
     SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandStore(SDNode *N, SelectionDAG &DAG);

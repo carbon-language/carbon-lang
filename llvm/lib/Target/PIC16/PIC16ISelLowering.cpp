@@ -55,6 +55,10 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setOperationAction(ISD::ADD,    MVT::i8,  Legal);
   setOperationAction(ISD::ADD,    MVT::i16, Custom);
 
+  setOperationAction(ISD::OR,     MVT::i8,  Custom);
+  setOperationAction(ISD::AND,    MVT::i8,  Custom);
+  setOperationAction(ISD::XOR,    MVT::i8,  Custom);
+
   setOperationAction(ISD::SHL,    MVT::i16, Custom);
   setOperationAction(ISD::SHL,    MVT::i32, Custom);
 
@@ -532,6 +536,10 @@ SDValue PIC16TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
       return SDValue(ExpandStore(Op.getNode(), DAG), Op.getResNo());
     case ISD::SHL:
       return SDValue(ExpandShift(Op.getNode(), DAG), Op.getResNo());
+    case ISD::OR:
+    case ISD::AND:
+    case ISD::XOR:
+      return LowerBinOp(Op, DAG);
   }
   return SDValue();
 }
@@ -568,6 +576,21 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
                              DAG.getConstant (FI, MVT::i8));
     
   return Load.getValue(0);
+}
+
+SDValue PIC16TargetLowering:: LowerBinOp(SDValue Op, SelectionDAG &DAG) {
+  // We should have handled larger operands in type legalizer itself.
+  assert (Op.getValueType() == MVT::i8 && "illegal Op to lower");
+
+  // Return the original Op if the one of the operands is already a load.
+  if (Op.getOperand(0).getOpcode() == PIC16ISD::PIC16Load
+      || Op.getOperand(1).getOpcode() == PIC16ISD::PIC16Load)
+    return Op;
+
+  // Put one value on stack.
+  SDValue NewVal = ConvertToMemOperand (Op.getOperand(1), DAG);
+
+  return DAG.getNode(Op.getOpcode(), MVT::i8, Op.getOperand(0), NewVal);
 }
 
 SDValue PIC16TargetLowering:: LowerADDC(SDValue Op, SelectionDAG &DAG) {

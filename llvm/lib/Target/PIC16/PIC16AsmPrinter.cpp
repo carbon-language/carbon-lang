@@ -86,7 +86,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       O << '\n';
     }
     else
-      O << "_" << CurrentFnName << ":\n";
+      O << CurrentFnName << ":\n";
     CurrentBankselLabelInBasicBlock = "";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
@@ -141,15 +141,42 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
   // The processor should be passed to llc as in input and the header file
   // should be generated accordingly.
   O << "\t#include P16F1937.INC\n";
-
+  EmitExternsAndGlobals (M);
   EmitInitData (M);
   EmitUnInitData(M);
   EmitRomData(M);
   return Result;
 }
 
-void PIC16AsmPrinter::EmitInitData (Module &M)
-{
+void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
+ // Emit declarations for external functions.
+  O << "section.0" <<"\n";
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; I++) {
+    std::string Name = Mang->getValueName(I);
+    if (Name.compare("abort") == 0)
+      continue;
+    if (I->isDeclaration()) {
+      O << "\textern " <<Name << "\n";
+      O << "\textern " << Name << ".retval\n";
+      O << "\textern " << Name << ".args\n";
+    }
+    else if (I->hasExternalLinkage()) {
+      O << "\tglobal " << Name << "\n";
+      O << "\tglobal " << Name << ".retval\n";
+      O << "\tglobal " << Name << ".args\n";
+    }
+  }
+  // Emit declarations for external globals.
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; I++) {
+    std::string Name = Mang->getValueName(I);
+    if (I->isDeclaration())
+      O << "\textern "<< Name << "\n";
+    else if (I->getLinkage() == GlobalValue::CommonLinkage)
+      O << "\tglobal "<< Name << "\n";
+  }
+}
+void PIC16AsmPrinter::EmitInitData (Module &M) {
   std::string iDataSection = "idata.#";
   SwitchToDataSection(iDataSection.c_str());
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -295,16 +322,26 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   O << "\n"; 
   std::string fDataSection = "fdata." + CurrentFnName + ".#";
   SwitchToUDataSection(fDataSection.c_str(), F);
-  // Emit the label for data section of current function.
-  O << "_frame_" << CurrentFnName << ":" ;
-  O << "\n";
-
+  
+  //Emit function return value.
+  O << CurrentFnName << ".retval:\n";
+  const Type *RetType = F->getReturnType();
+  if (RetType->getTypeID() != Type::VoidTyID) {
+    unsigned RetSize = TD->getABITypeSize(RetType);
+    if (RetSize > 0)
+      O << CurrentFnName << ".retval" << " RES " << RetSize;
+   }
+  // Emit function arguments.
+  O << CurrentFnName << ".args:\n";
+  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
+       AI != AE; ++AI) {
+    std::string ArgName = Mang->getValueName(AI);
+    const Type *ArgTy = AI->getType();
+    unsigned ArgSize = TD->getABITypeSize(ArgTy);
+    O << CurrentFnName << ".args." << ArgName << " RES " << ArgSize; 
+  }
   // Emit the function variables. 
    
-  if (F->hasExternalLinkage()) {
-    O << "\t" << "GLOBAL _frame_"  << CurrentFnName << "\n";
-    O << "\t" << "GLOBAL _"  << CurrentFnName << "\n";
-  }
   // In PIC16 all the function arguments and local variables are global.
   // Therefore to get the variable belonging to this function entire
   // global list will be traversed and variables belonging to this function

@@ -75,17 +75,44 @@ def PIC16Store : SDNode<"PIC16ISD::PIC16Store", SDT_PIC16Store, [SDNPHasChain]>;
 // Node to match a direct load operation.
 def PIC16Load : SDNode<"PIC16ISD::PIC16Load", SDT_PIC16Load, [SDNPHasChain]>;
 
+// Nodes to match bitwise operatios.
+def OR : SDNode<"ISD::OR", SDTI8BinOp>;
+def XOR : SDNode<"ISD::XOR", SDTI8BinOp>;
+def AND : SDNode<"ISD::AND", SDTI8BinOp>; 
 //===----------------------------------------------------------------------===//
 // PIC16 Operand Definitions.
 //===----------------------------------------------------------------------===//
 def i8mem : Operand<i8>;
 
+include "PIC16InstrFormats.td"
 
+//===----------------------------------------------------------------------===//
+// PIC16 Common Classes.
+//===----------------------------------------------------------------------===//
+
+// W = W Op F : Load the value from F and do Op to W
+class BinOpFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
+  ByteFormat<OpCode, (outs GPR:$dst),
+             (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
+              !strconcat(OpcStr, " $ptrlo + $offset, W"),
+             [(set GPR:$dst, (OpNode GPR:$src, (PIC16Load diraddr:$ptrlo,
+                                             (i8 imm:$ptrhi),
+                                             (i8 imm:$offset))))]>;
+// F = F Op W : Load the value from F, do op with W and store in F
+class BinOpWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
+  ByteFormat<OpCode, (outs),
+             (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
+              !strconcat(OpcStr, " $ptrlo + $offset"),
+             [(PIC16Store (OpNode GPR:$src, (PIC16Load diraddr:$ptrlo,
+                                             (i8 imm:$ptrhi),
+                                             (i8 imm:$offset))),
+                                             diraddr:$ptrlo,
+                                             (i8 imm:$ptrhi), (i8 imm:$offset)
+                                             )]>;
 
 //===----------------------------------------------------------------------===//
 // PIC16 Instructions.
 //===----------------------------------------------------------------------===//
-include "PIC16InstrFormats.td"
 
 // Pseudo-instructions.
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i8imm:$amt),
@@ -189,36 +216,29 @@ def load_indirect :
              []>;
 
 //-------------------------
+// Bitwise operations patterns
+//--------------------------
+def OrFW :  BinOpFW<0, "iorwf", OR>;
+def XOrFW : BinOpFW<0, "xorwf", XOR>;
+def AndFW : BinOpFW<0, "andwf", AND>;
+
+def OrWF :  BinOpWF<0, "iorwf", OR>;
+def XOrWF : BinOpWF<0, "xorwf", XOR>;
+def AndWF : BinOpWF<0, "andwf", AND>;
+
+//-------------------------
 // Various add/sub patterns.
 //-------------------------
-// W += [F] ; load from F and add the value to W. 
-class ADDFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
-  ByteFormat<OpCode, (outs GPR:$dst),
-             (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
-              !strconcat(OpcStr, " $ptrlo + $offset, W"),
-             [(set GPR:$dst, (OpNode GPR:$src, (PIC16Load diraddr:$ptrlo,
-                                             (i8 imm:$ptrhi),
-                                             (i8 imm:$offset))))]>;
+
 // let isTwoAddress = 1 in {
-def addfw_1: ADDFW<0, "addwf", add>;
-def addfw_2: ADDFW<0, "addwf", addc>;
-def addfwc: ADDFW<0, "addwfc", adde>;  // With Carry.
+def addfw_1: BinOpFW<0, "addwf", add>;
+def addfw_2: BinOpFW<0, "addwf", addc>;
+def addfwc: BinOpFW<0, "addwfc", adde>;  // With Carry.
 // }
 
-// [F] += W ; add the value of  W to [F]. 
-class ADDWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
-  ByteFormat<OpCode, (outs),
-             (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
-              !strconcat(OpcStr, " $ptrlo + $offset"),
-             [(PIC16Store (OpNode GPR:$src, (PIC16Load diraddr:$ptrlo,
-                                             (i8 imm:$ptrhi),
-                                             (i8 imm:$offset))),
-                                             diraddr:$ptrlo, 
-                                             (i8 imm:$ptrhi), (i8 imm:$offset)
-                                             )]>;
-def addwf_1: ADDWF<0, "addwf", add>;
-def addwf_2: ADDWF<0, "addwf", addc>;
-def addwfc: ADDWF<0, "addwfc", adde>;  // With Carry.
+def addwf_1: BinOpWF<0, "addwf", add>;
+def addwf_2: BinOpWF<0, "addwf", addc>;
+def addwfc: BinOpWF<0, "addwfc", adde>;  // With Carry.
 
 // W -= [F] ; load from F and sub the value from W.
 class SUBFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
