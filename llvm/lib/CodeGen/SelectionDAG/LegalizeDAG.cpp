@@ -3299,11 +3299,26 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+    Tmp3 = Result.getValue(0);
+    Tmp4 = Result.getValue(1);
+
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Tmp3, DAG);
+      if (Tmp1.getNode() != NULL) {
+        Tmp3 = LegalizeOp(Tmp1);;
+        Tmp4 = LegalizeOp(Tmp1.getValue(1));
+      }
+      break;
+    }
     // Since this produces two values, make sure to remember that we legalized
     // both of them.
-    AddLegalizedOperand(SDValue(Node, 0), Result.getValue(0));
-    AddLegalizedOperand(SDValue(Node, 1), Result.getValue(1));
-    return Result;
+    AddLegalizedOperand(SDValue(Node, 0), Tmp3);
+    AddLegalizedOperand(SDValue(Node, 1), Tmp4);
+    return Op.getResNo() ? Tmp4 : Tmp3;
 
   case ISD::ADDE:
   case ISD::SUBE:
@@ -3311,11 +3326,26 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Tmp3 = LegalizeOp(Node->getOperand(2));
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
+    Tmp3 = Result.getValue(0);
+    Tmp4 = Result.getValue(1);
+
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Tmp3, DAG);
+      if (Tmp1.getNode() != NULL) {
+        Tmp3 = LegalizeOp(Tmp1);;
+        Tmp4 = LegalizeOp(Tmp1.getValue(1));
+      }
+      break;
+    }
     // Since this produces two values, make sure to remember that we legalized
     // both of them.
-    AddLegalizedOperand(SDValue(Node, 0), Result.getValue(0));
-    AddLegalizedOperand(SDValue(Node, 1), Result.getValue(1));
-    return Result;
+    AddLegalizedOperand(SDValue(Node, 0), Tmp3);
+    AddLegalizedOperand(SDValue(Node, 1), Tmp4);
+    return Op.getResNo() ? Tmp4 : Tmp3;
     
   case ISD::BUILD_PAIR: {
     MVT PairTy = Node->getValueType(0);
