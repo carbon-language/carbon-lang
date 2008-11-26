@@ -750,7 +750,7 @@ bool LiveIntervals::findLiveInMBBs(unsigned Start, unsigned End,
 
   bool ResVal = false;
   while (I != Idx2MBBMap.end()) {
-    if (I->first > End)
+    if (I->first >= End)
       break;
     MBBs.push_back(I->second);
     ResVal = true;
