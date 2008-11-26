@@ -228,11 +228,11 @@ struct GlobalOptionDescription : public OptionDescription {
     if (other.Type != Type)
       throw "Conflicting definitions for the option " + Name + "!";
 
-    if (Help == DefaultHelpString)
+    if (Help == other.Help || Help == DefaultHelpString)
       Help = other.Help;
     else if (other.Help != DefaultHelpString) {
-      llvm::cerr << "Warning: more than one help string defined for option "
-        + Name + "\n";
+      llvm::cerr << "Warning: several different help strings"
+        " defined for option " + Name + "\n";
     }
 
     Flags |= other.Flags;
