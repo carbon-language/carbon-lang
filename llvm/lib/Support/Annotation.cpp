@@ -27,7 +27,7 @@ Annotable::~Annotable() {   // Virtual because it's designed to be subclassed...
   }
 }
 
-typedef std::map<const std::string, unsigned> IDMapType;
+typedef std::map<const char*, unsigned> IDMapType;
 static unsigned IDCounter = 0;  // Unique ID counter
 
 // Static member to ensure initialiation on demand.
@@ -53,7 +53,7 @@ static void eraseFromFactMap(unsigned ID) {
   }
 }
 
-AnnotationID AnnotationManager::getID(const std::string &Name) {  // Name -> ID
+AnnotationID AnnotationManager::getID(const char *Name) {  // Name -> ID
   IDMapType::iterator I = IDMap->find(Name);
   if (I == IDMap->end()) {
     (*IDMap)[Name] = IDCounter++;   // Add a new element
@@ -64,7 +64,7 @@ AnnotationID AnnotationManager::getID(const std::string &Name) {  // Name -> ID
 
 // getID - Name -> ID + registration of a factory function for demand driven
 // annotation support.
-AnnotationID AnnotationManager::getID(const std::string &Name, Factory Fact,
+AnnotationID AnnotationManager::getID(const char *Name, Factory Fact,
                                       void *Data) {
   AnnotationID Result(getID(Name));
   registerAnnotationFactory(Result, Fact, Data);
@@ -74,7 +74,7 @@ AnnotationID AnnotationManager::getID(const std::string &Name, Factory Fact,
 // getName - This function is especially slow, but that's okay because it should
 // only be used for debugging.
 //
-const std::string &AnnotationManager::getName(AnnotationID ID) {  // ID -> Name
+const char *AnnotationManager::getName(AnnotationID ID) {  // ID -> Name
   IDMapType &TheMap = *IDMap;
   for (IDMapType::iterator I = TheMap.begin(); ; ++I) {
     assert(I != TheMap.end() && "Annotation ID is unknown!");

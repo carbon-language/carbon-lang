@@ -172,13 +172,12 @@ struct AnnotationManager {
   //===--------------------------------------------------------------------===//
   // Basic ID <-> Name map functionality
 
-  static AnnotationID         getID(const std::string &Name);  // Name -> ID
-  static const std::string &getName(AnnotationID ID);          // ID -> Name
+  static AnnotationID  getID(const char *Name);  // Name -> ID
+  static const char *getName(AnnotationID ID);   // ID -> Name
 
   // getID - Name -> ID + registration of a factory function for demand driven
   // annotation support.
-  static AnnotationID getID(const std::string &Name, Factory Fact,
-                            void *Data = 0);
+  static AnnotationID getID(const char *Name, Factory Fact, void *Data = 0);
 
   //===--------------------------------------------------------------------===//
   // Annotation creation on demand support...
