@@ -33,6 +33,8 @@ class llvm_gcc_based <string cmd_prefix, string in_lang> : Tool<
    (help "Stop after checking the input for syntax errors")),
  (parameter_list_option "include", (forward),
    (help "Include the named file prior to preprocessing")),
+ (prefix_list_option "I", (forward),
+   (help "Add a directory to include path")),
  (sink)
 ]>;
 
