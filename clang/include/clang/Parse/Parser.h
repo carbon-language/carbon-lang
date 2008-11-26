@@ -118,17 +118,6 @@ private:
            Tok.getKind() == tok::wide_string_literal;
   }
 
-  /// isTokenCXXScopeSpecifier - True if this token is '::', or identifier with
-  /// '::' as next token, or a 'C++ scope annotation' token.
-  /// When not in C++, always returns false.
-  ///
-  bool isTokenCXXScopeSpecifier() {
-    return getLang().CPlusPlus &&
-           (Tok.is(tok::coloncolon)     ||
-            Tok.is(tok::annot_cxxscope) ||
-            (Tok.is(tok::identifier) && NextToken().is(tok::coloncolon)));
-  }
-
   /// ConsumeToken - Consume the current 'peek token' and lex the next one.
   /// This does not work with all kinds of tokens: strings and specific other
   /// tokens must be consumed with custom methods below.  This returns the
@@ -239,9 +228,9 @@ private:
   /// typenames.
   void TryAnnotateTypeOrScopeToken();
 
-  /// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only
+  /// TryAnnotateCXXScopeToken - Like TryAnnotateTypeOrScopeToken but only
   /// annotates C++ scope specifiers.
-  void TryAnnotateScopeToken();
+  void TryAnnotateCXXScopeToken();
 
   /// TentativeParsingAction - An object that is used as a kind of "tentative
   /// parsing transaction". It gets instantiated to mark the token position and
@@ -476,7 +465,10 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ Expressions
   ExprResult ParseCXXIdExpression();
-  void ParseCXXScopeSpecifier(CXXScopeSpec &SS);
+
+  /// MaybeParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
+  /// Returns true if a nested-name-specifier was parsed from the token stream.
+  bool MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS);
   
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts

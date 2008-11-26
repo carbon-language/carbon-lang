@@ -17,7 +17,8 @@
 #include "AstGuard.h"
 using namespace clang;
 
-/// ParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
+/// MaybeParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
+/// Returns true if a nested-name-specifier was parsed from the token stream.
 ///
 ///       '::'[opt] nested-name-specifier
 ///       '::'
@@ -28,14 +29,20 @@ using namespace clang;
 ///         nested-name-specifier identifier '::'
 ///         nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
 ///
-void Parser::ParseCXXScopeSpecifier(CXXScopeSpec &SS) {
-  assert(isTokenCXXScopeSpecifier() && "Not scope specifier!");
+bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS) {
+  assert(getLang().CPlusPlus &&
+         "Call sites of this function should be guarded by checking for C++.");
+
+  if (Tok.isNot(tok::coloncolon)     &&
+      Tok.isNot(tok::annot_cxxscope) &&
+      (Tok.isNot(tok::identifier) || NextToken().isNot(tok::coloncolon)))
+    return false;
 
   if (Tok.is(tok::annot_cxxscope)) {
     SS.setScopeRep(Tok.getAnnotationValue());
     SS.setRange(Tok.getAnnotationRange());
     ConsumeToken();
-    return;
+    return true;
   }
 
   SS.setBeginLoc(Tok.getLocation());
@@ -68,6 +75,8 @@ void Parser::ParseCXXScopeSpecifier(CXXScopeSpec &SS) {
          Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, *II) );
     SS.setEndLoc(CCLoc);
   }
+
+  return true;
 }
 
 /// ParseCXXIdExpression - Handle id-expression.
@@ -126,8 +135,7 @@ Parser::ExprResult Parser::ParseCXXIdExpression() {
   //   '::' unqualified-id
   //
   CXXScopeSpec SS;
-  if (isTokenCXXScopeSpecifier())
-    ParseCXXScopeSpecifier(SS);
+  MaybeParseCXXScopeSpecifier(SS);
 
   // unqualified-id:
   //   identifier

@@ -705,8 +705,8 @@ void Parser::TryAnnotateTypeOrScopeToken() {
     return;
 
   CXXScopeSpec SS;
-  if (isTokenCXXScopeSpecifier())
-    ParseCXXScopeSpecifier(SS);
+  if (getLang().CPlusPlus)
+    MaybeParseCXXScopeSpecifier(SS);
 
   if (Tok.is(tok::identifier)) {
     TypeTy *Ty = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope, &SS);
@@ -746,13 +746,15 @@ void Parser::TryAnnotateTypeOrScopeToken() {
 
 /// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only
 /// annotates C++ scope specifiers.
-void Parser::TryAnnotateScopeToken() {
+void Parser::TryAnnotateCXXScopeToken() {
+  assert(getLang().CPlusPlus &&
+         "Call sites of this function should be guarded by checking for C++.");
+
   if (Tok.is(tok::annot_cxxscope))
     return;
 
-  if (isTokenCXXScopeSpecifier()) {
-    CXXScopeSpec SS;
-    ParseCXXScopeSpecifier(SS);
+  CXXScopeSpec SS;
+  if (MaybeParseCXXScopeSpecifier(SS)) {
 
     // Push the current token back into the token stream (or revert it if it is
     // cached) and use an annotation scope token for current token.

@@ -427,7 +427,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     // Only annotate C++ scope. Allow class-name as an identifier in case
     // it's a constructor.
     if (getLang().CPlusPlus)
-      TryAnnotateScopeToken();
+      TryAnnotateCXXScopeToken();
     
     switch (Tok.getKind()) {
     default: 
@@ -985,8 +985,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
     Attr = ParseAttributes();
 
   CXXScopeSpec SS;
-  if (isTokenCXXScopeSpecifier()) {
-    ParseCXXScopeSpecifier(SS);
+  if (getLang().CPlusPlus && MaybeParseCXXScopeSpecifier(SS)) {
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident);
       if (Tok.isNot(tok::l_brace)) {
@@ -1435,8 +1434,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   CXXScopeSpec &SS = D.getCXXScopeSpec();
   DeclaratorScopeObj DeclScopeObj(*this, SS);
 
-  if (D.mayHaveIdentifier() && isTokenCXXScopeSpecifier()) {
-    ParseCXXScopeSpecifier(SS);
+  if (D.mayHaveIdentifier() &&
+      getLang().CPlusPlus && MaybeParseCXXScopeSpecifier(SS)) {
     // Change the declaration context for name lookup, until this function is
     // exited (and the declarator has been parsed).
     DeclScopeObj.EnterDeclaratorScope();
