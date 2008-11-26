@@ -74,14 +74,17 @@ void test_m() {
 
 int* n(char*);
 double* n(void*);
+class E;
 
-void test_n() {
+void test_n(E* e) {
   char ca[7];
   int* ip1 = n(ca);
   int* ip2 = n("foo");
 
   float fa[7];
   double* dp1 = n(fa);
+
+  double* dp2 = n(e);
 }
 
 enum PromotesToInt {
