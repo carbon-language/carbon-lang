@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only %s
+
 typedef struct foo T0;
 typedef const struct foo T1;
 

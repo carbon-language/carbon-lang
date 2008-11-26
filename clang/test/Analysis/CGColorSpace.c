@@ -1,4 +1,4 @@
-// clang -checker-cfref -verify %s
+// RUN: clang -checker-cfref -verify %s
 
 typedef struct CGColorSpace *CGColorSpaceRef;
 extern CGColorSpaceRef CGColorSpaceCreateDeviceRGB(void);
