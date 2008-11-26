@@ -636,6 +636,17 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
         TLI.getPointerTy())
       return MatchAddr(AddrInst->getOperand(0), Depth);
     return false;
+  case Instruction::BitCast:
+    // BitCast is always a noop, and we can handle it as long as it is
+    // int->int or pointer->pointer (we don't want int<->fp or something).
+    if ((isa<PointerType>(AddrInst->getOperand(0)->getType()) ||
+         isa<IntegerType>(AddrInst->getOperand(0)->getType())) &&
+        // Don't touch identity bitcasts.  These were probably put here by LSR,
+        // and we don't want to mess around with them.  Assume it knows what it
+        // is doing.
+        AddrInst->getOperand(0)->getType() != AddrInst->getType())
+      return MatchAddr(AddrInst->getOperand(0), Depth);
+    return false;
   case Instruction::Add: {
     // Check to see if we can merge in the RHS then the LHS.  If so, we win.
     ExtAddrMode BackupAddrMode = AddrMode;
