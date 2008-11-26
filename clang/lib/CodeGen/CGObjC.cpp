@@ -187,10 +187,13 @@ void CodeGenFunction::GenerateObjCGetter(const ObjCPropertyImplDecl *PID) {
                                            Types.ConvertType(PD->getType())));
     EmitReturnOfRValue(RV, PD->getType());
   } else {
-    EmitReturnOfRValue(EmitLoadOfLValue(EmitLValueForIvar(LoadObjCSelf(), 
-                                                          Ivar, 0), 
-                                        Ivar->getType()), 
-                       PD->getType());
+    LValue LV = EmitLValueForIvar(LoadObjCSelf(), Ivar, 0);
+    if (hasAggregateLLVMType(Ivar->getType())) {
+      EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
+    }
+    else
+      EmitReturnOfRValue(EmitLoadOfLValue(LV, Ivar->getType()), 
+                                          PD->getType());
   }
 
   FinishFunction();
