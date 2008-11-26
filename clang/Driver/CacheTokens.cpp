@@ -28,10 +28,19 @@ typedef llvm::DenseMap<const FileEntry*,uint64_t> PCHMap;
 typedef llvm::DenseMap<const IdentifierInfo*,uint64_t> IDMap;
 
 static void Emit32(llvm::raw_ostream& Out, uint32_t V) {
+#if 0
   Out << (unsigned char)(V);
   Out << (unsigned char)(V >>  8);
   Out << (unsigned char)(V >> 16);
   Out << (unsigned char)(V >> 24);
+#else
+  Out << V;
+#endif
+}
+
+static void EmitOffset(llvm::raw_ostream& Out, uint64_t V) {
+  assert(((uint32_t) V) == V && "Offset exceeds 32 bits.");
+  Emit32(Out, (uint32_t) V);
 }
 
 static void Emit8(llvm::raw_ostream& Out, uint32_t V) {
@@ -75,8 +84,11 @@ static void EmitIdentifier(llvm::raw_ostream& Out, const IdentifierInfo& II) {
   Emit32(Out, X);
 }
 
-static void EmitIdentifierTable(llvm::raw_ostream& Out,
-                                const IdentifierTable& T, const IDMap& IM) {
+static uint64_t EmitIdentifierTable(llvm::raw_fd_ostream& Out,
+                                    const IdentifierTable& T, const IDMap& IM) {
+
+  // Record the location within the PTH file.
+  uint64_t Off = Out.tell();
   
   for (IdentifierTable::const_iterator I=T.begin(), E=T.end(); I!=E; ++I) {
     const IdentifierInfo& II = I->getValue();
@@ -91,10 +103,68 @@ static void EmitIdentifierTable(llvm::raw_ostream& Out,
     unsigned len = I->getKeyLength();
     Emit32(Out, len);
     const char* buf = I->getKeyData();    
-    EmitBuf(Out, buf, buf+len);
+    EmitBuf(Out, buf, buf+len);  
   }
+  
+  return Off;
 }
 
+static uint64_t EmitFileTable(llvm::raw_fd_ostream& Out, SourceManager& SM,
+                              PCHMap& PM) {
+  
+  uint64_t off = Out.tell();
+  assert (0 && "Write out the table.");
+  return off;
+}
+
+static uint64_t LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
+                          uint32_t& idcount, IDMap& IM) {
+  
+  // Record the location within the token file.
+  uint64_t off = Out.tell();
+
+  Token Tok;
+  
+  do {
+    L.LexFromRawLexer(Tok);
+    
+    if (Tok.is(tok::identifier)) {
+      Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+    }
+    else if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
+      // Special processing for #include.  Store the '#' token and lex
+      // the next token.
+      EmitToken(Out, Tok, idcount, IM);
+      L.LexFromRawLexer(Tok);
+      
+      // Did we see 'include'/'import'/'include_next'?
+      if (!Tok.is(tok::identifier))
+        continue;
+      
+      IdentifierInfo* II = PP.LookUpIdentifierInfo(Tok);
+      Tok.setIdentifierInfo(II);
+      tok::PPKeywordKind K = II->getPPKeywordID();
+      
+      if (K == tok::pp_include || K == tok::pp_import || 
+          K == tok::pp_include_next) {
+        
+        // Save the 'include' token.
+        EmitToken(Out, Tok, idcount, IM);
+        
+        // Lex the next token as an include string.
+        L.setParsingPreprocessorDirective(true);
+        L.LexIncludeFilename(Tok); 
+        L.setParsingPreprocessorDirective(false);
+        
+        if (Tok.is(tok::identifier))
+          Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+      }
+    }    
+  }
+  while (EmitToken(Out, Tok, idcount, IM), Tok.isNot(tok::eof));
+  
+  return off;
+}
 
 void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
   // Lex through the entire file.  This will populate SourceManager with
@@ -111,7 +181,6 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
 
   PCHMap PM;
   IDMap  IM;
-  uint64_t tokIdx = 0;
   uint32_t idcount = 0;
   
   std::string ErrMsg;
@@ -126,52 +195,30 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
        I!=E; ++I) {
     
     const SrcMgr::ContentCache* C = I.getFileIDInfo().getContentCache();
+    if (!C) continue;
 
-    if (!C)
-      continue;
-    
-    const FileEntry* FE = C->Entry;
-    
-    if (!FE)
-      continue;
-    
-    PCHMap::iterator PI = PM.find(FE);
-    if (PI != PM.end()) continue;    
-    PM[FE] = tokIdx;
-    
-    // os << "Processing: " << FE->getName() << " : " << tokIdx << "\n";
-    
-    const llvm::MemoryBuffer* B = C->Buffer;
+    const FileEntry* FE = C->Entry;    // Does this entry correspond to a file?    
+    if (!FE) continue;
 
-    if (!B)
-      continue;
-
-    // Create a raw lexer.
+    PCHMap::iterator PI = PM.find(FE); // Have we already processed this file?
+    if (PI != PM.end()) continue;
+    
+    const llvm::MemoryBuffer* B = C->Buffer;    
+    if (!B) continue;
+    
     Lexer L(SourceLocation::getFileLoc(I.getFileID(), 0), LOpts,
             B->getBufferStart(), B->getBufferEnd(), B);
-
-    // Ignore whitespace.
-    L.SetKeepWhitespaceMode(false);
-    L.SetCommentRetentionState(false);
     
-    // Lex the file, populating our data structures.
-    Token Tok;
-    L.LexFromRawLexer(Tok);
-
-    while (Tok.isNot(tok::eof)) {
-      ++tokIdx;
-
-      if (Tok.is(tok::identifier))
-        Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
-
-      // Write the token to disk.
-      EmitToken(Out, Tok, idcount, IM);
-
-      // Lex the next token.
-      L.LexFromRawLexer(Tok);
-    }
+    PM[FE] = LexTokens(Out, L, PP, idcount, IM);
   }
+
+  // Write out the identifier table.
+  uint64_t IdTableOff = EmitIdentifierTable(Out, PP.getIdentifierTable(), IM);
   
-  // Now, write out the identifier table.
-  EmitIdentifierTable(Out, PP.getIdentifierTable(), IM);
+  // Write out the file table.
+  uint64_t FileTableOff = EmitFileTable(Out, SM, PM);  
+  
+  // Finally, write out the offset table at the end.
+  EmitOffset(Out, IdTableOff);
+  EmitOffset(Out, FileTableOff);
 }
