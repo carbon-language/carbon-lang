@@ -61,3 +61,7 @@ void f9(int cond, id<P0,P1> x0, id<P0,P2> x1) {
 void f10(int cond, id<P0,P1> x0, id<P0,P2> x1) {
   barP2(cond ? x0 : x1);
 }
+
+int f11(int cond, A* a, B* b) {
+  return (cond? b : a)->x; // expected-error{{'A' does not have a member named 'x'}}
+}

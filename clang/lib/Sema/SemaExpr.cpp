@@ -1644,7 +1644,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
             Context.canAssignObjCInterfaces(LHSIface, RHSIface)) {
           compositeType = lexT;
         } else if (LHSIface && RHSIface &&
-                   Context.canAssignObjCInterfaces(LHSIface, RHSIface)) {
+                   Context.canAssignObjCInterfaces(RHSIface, LHSIface)) {
           compositeType = rexT;
         } else if (Context.isObjCIdType(lhptee) || 
                    Context.isObjCIdType(rhptee)) { 
