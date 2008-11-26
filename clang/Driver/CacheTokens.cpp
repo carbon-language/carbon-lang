@@ -38,6 +38,10 @@ static void Emit32(llvm::raw_ostream& Out, uint32_t V) {
 #endif
 }
 
+static void Emit64(llvm::raw_ostream& Out, uint64_t V) {
+  Out << V;
+}
+
 static void EmitOffset(llvm::raw_ostream& Out, uint64_t V) {
   assert(((uint32_t) V) == V && "Offset exceeds 32 bits.");
   Emit32(Out, (uint32_t) V);
@@ -84,36 +88,70 @@ static void EmitIdentifier(llvm::raw_ostream& Out, const IdentifierInfo& II) {
   Emit32(Out, X);
 }
 
-static uint64_t EmitIdentifierTable(llvm::raw_fd_ostream& Out,
-                                    const IdentifierTable& T, const IDMap& IM) {
+struct IDData {
+  const IdentifierInfo* II;
+  uint32_t FileOffset;
+  const IdentifierTable::const_iterator::value_type* Str;
+};
 
-  // Record the location within the PTH file.
-  uint64_t Off = Out.tell();
+static std::pair<uint64_t,uint64_t>
+EmitIdentifierTable(llvm::raw_fd_ostream& Out, uint32_t max,
+                    const IdentifierTable& T, const IDMap& IM) {
+
+  // Build an inverse map from persistent IDs -> IdentifierInfo*.
+  typedef std::vector< IDData > InverseIDMap;
+  InverseIDMap IIDMap;
+  IIDMap.reserve(max);
   
-  for (IdentifierTable::const_iterator I=T.begin(), E=T.end(); I!=E; ++I) {
-    const IdentifierInfo& II = I->getValue();
+  // Generate mapping from persistent IDs -> IdentifierInfo*.
+  for (IDMap::const_iterator I=IM.begin(), E=IM.end(); I!=E; ++I)
+    IIDMap[I->second].II = I->first;
 
-    // Write out the persistent identifier.
-    IDMap::const_iterator IItr = IM.find(&II);
-    if (IItr == IM.end()) continue;
-    Emit32(Out, IItr->second);
-    EmitIdentifier(Out, II);
-    
-    // Write out the keyword.    
-    unsigned len = I->getKeyLength();
+  // Get the string data associated with the IdentifierInfo.
+  for (IdentifierTable::const_iterator I=T.begin(), E=T.end(); I!=E; ++I) {
+    IDMap::const_iterator IDI = IM.find(&(I->getValue()));
+    if (IDI == IM.end()) continue;
+    IIDMap[IDI->second].Str = &(*I);
+  }
+  
+  uint64_t DataOff = Out.tell();
+  
+  for (InverseIDMap::iterator I=IIDMap.begin(), E=IIDMap.end(); I!=E; ++I) {
+    I->FileOffset = Out.tell();      // Record the location for this data.
+    EmitIdentifier(Out, *(I->II));   // Write out the identifier data.
+    unsigned len = I->Str->getKeyLength();  // Write out the keyword.
     Emit32(Out, len);
-    const char* buf = I->getKeyData();    
+    const char* buf = I->Str->getKeyData();    
     EmitBuf(Out, buf, buf+len);  
   }
   
-  return Off;
+  // Now emit the table mapping from persistent IDs to PTH file offsets.  
+  uint64_t IDOff = Out.tell();
+  
+  for (InverseIDMap::iterator I=IIDMap.begin(), E=IIDMap.end(); I!=E; ++I)
+    EmitOffset(Out, I->FileOffset);
+  
+  return std::make_pair(DataOff, IDOff);
 }
 
 static uint64_t EmitFileTable(llvm::raw_fd_ostream& Out, SourceManager& SM,
                               PCHMap& PM) {
   
   uint64_t off = Out.tell();
-  assert (0 && "Write out the table.");
+  
+  // Output the size of the table.
+  Emit32(Out, PM.size());
+
+  for (PCHMap::iterator I=PM.begin(), E=PM.end(); I!=E; ++I) {
+    // For now emit inode information.  In the future we should utilize
+    // the FileManager's internal mechanism of uniquing files, which differs
+    // for Windows and Unix-like systems.
+    const FileEntry* FE = I->first;
+    Emit64(Out, FE->getDevice());
+    Emit64(Out, FE->getInode());
+    Emit32(Out, I->second);    
+  }
+
   return off;
 }
 
@@ -213,12 +251,14 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
   }
 
   // Write out the identifier table.
-  uint64_t IdTableOff = EmitIdentifierTable(Out, PP.getIdentifierTable(), IM);
+  std::pair<uint64_t,uint64_t> IdTableOff =
+    EmitIdentifierTable(Out, idcount, PP.getIdentifierTable(), IM);
   
   // Write out the file table.
   uint64_t FileTableOff = EmitFileTable(Out, SM, PM);  
   
   // Finally, write out the offset table at the end.
-  EmitOffset(Out, IdTableOff);
+  EmitOffset(Out, IdTableOff.first);
+  EmitOffset(Out, IdTableOff.second);
   EmitOffset(Out, FileTableOff);
 }
