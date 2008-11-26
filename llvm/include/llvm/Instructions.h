@@ -167,6 +167,11 @@ public:
     : AllocationInst(Ty, ArraySize, Alloca, Align, NameStr, InsertAtEnd) {}
 
   virtual AllocaInst *clone() const;
+  
+  /// isStaticAlloca - Return true if this alloca is in the entry block of the
+  /// function and is a constant size.  If so, the code generator will fold it
+  /// into the prolog/epilog code, so it is basically free.
+  bool isStaticAlloca() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const AllocaInst *) { return true; }

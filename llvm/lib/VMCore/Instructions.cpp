@@ -732,6 +732,18 @@ AllocaInst::AllocaInst(const AllocaInst &AI)
                    Instruction::Alloca, AI.getAlignment()) {
 }
 
+/// isStaticAlloca - Return true if this alloca is in the entry block of the
+/// function and is a constant size.  If so, the code generator will fold it
+/// into the prolog/epilog code, so it is basically free.
+bool AllocaInst::isStaticAlloca() const {
+  // Must be constant size.
+  if (!isa<ConstantInt>(getArraySize())) return false;
+  
+  // Must be in the entry block.
+  const BasicBlock *Parent = getParent();
+  return Parent == &Parent->getParent()->front();
+}
+
 MallocInst::MallocInst(const MallocInst &MI)
   : AllocationInst(MI.getType()->getElementType(), (Value*)MI.getOperand(0),
                    Instruction::Malloc, MI.getAlignment()) {
