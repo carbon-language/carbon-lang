@@ -1295,12 +1295,16 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   }
 
   if (Ovl) {
-    Fn = ResolveOverloadedCallFn(Fn, Ovl, LParenLoc, Args, NumArgs, CommaLocs,
-                                 RParenLoc);
-    if (!Fn)
+    FDecl = ResolveOverloadedCallFn(Fn, Ovl, LParenLoc, Args, NumArgs, CommaLocs,
+                                    RParenLoc);
+    if (!FDecl)
       return true;
 
-    // Fall through and build the call to Fn.
+    // Update Fn to refer to the actual function selected.
+    Expr *NewFn = new DeclRefExpr(FDecl, FDecl->getType(), 
+                                  Fn->getSourceRange().getBegin());
+    Fn->Destroy(Context);
+    Fn = NewFn;
   }
 
   if (getLangOptions().CPlusPlus && Fn->getType()->isRecordType())

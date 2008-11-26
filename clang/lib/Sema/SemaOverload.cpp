@@ -2967,24 +2967,20 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 /// (which eventually refers to the set of overloaded functions in
 /// Ovl) and the call arguments Args/NumArgs, attempt to resolve the
 /// function call down to a specific function. If overload resolution
-/// succeeds, returns an expression that refers to a specific function
-/// and deletes Fn. Otherwise, emits diagnostics, deletes all of the
+/// succeeds, returns the function declaration produced by overload
+/// resolution. Otherwise, emits diagnostics, deletes all of the
 /// arguments and Fn, and returns NULL.
-Expr *Sema::ResolveOverloadedCallFn(Expr *Fn, OverloadedFunctionDecl *Ovl,
-                                    SourceLocation LParenLoc,
-                                    Expr **Args, unsigned NumArgs,
-                                    SourceLocation *CommaLocs, 
-                                    SourceLocation RParenLoc) {
+FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, OverloadedFunctionDecl *Ovl,
+                                            SourceLocation LParenLoc,
+                                            Expr **Args, unsigned NumArgs,
+                                            SourceLocation *CommaLocs, 
+                                            SourceLocation RParenLoc) {
   OverloadCandidateSet CandidateSet;
   AddOverloadCandidates(Ovl, Args, NumArgs, CandidateSet);
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Best)) {
-  case OR_Success: {
-    Expr *NewFn = new DeclRefExpr(Best->Function, Best->Function->getType(), 
-                                  Fn->getSourceRange().getBegin());
-    Fn->Destroy(Context);
-    return NewFn;
-  }
+  case OR_Success:
+    return Best->Function;
 
   case OR_No_Viable_Function:
     Diag(Fn->getSourceRange().getBegin(), 
