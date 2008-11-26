@@ -1294,39 +1294,13 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     }
   }
 
-  // If we have a set of overloaded functions, perform overload
-  // resolution to pick the function.
   if (Ovl) {
-    OverloadCandidateSet CandidateSet;
-    AddOverloadCandidates(Ovl, Args, NumArgs, CandidateSet);
-    OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(CandidateSet, Best)) {
-    case OR_Success: 
-      {
-        // Success! Let the remainder of this function build a call to
-        // the function selected by overload resolution.
-        FDecl = Best->Function;
-        Expr *NewFn = new DeclRefExpr(FDecl, FDecl->getType(), 
-                                      Fn->getSourceRange().getBegin());
-        delete Fn;
-        Fn = NewFn;
-      }
-      break;
-
-    case OR_No_Viable_Function:
-      Diag(Fn->getSourceRange().getBegin(), 
-           diag::err_ovl_no_viable_function_in_call)
-        << Ovl->getDeclName() << (unsigned)CandidateSet.size()
-        << Fn->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+    Fn = ResolveOverloadedCallFn(Fn, Ovl, LParenLoc, Args, NumArgs, CommaLocs,
+                                 RParenLoc);
+    if (!Fn)
       return true;
 
-    case OR_Ambiguous:
-      Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_ambiguous_call)
-        << Ovl->getDeclName() << Fn->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-      return true;
-    }
+    // Fall through and build the call to Fn.
   }
 
   if (getLangOptions().CPlusPlus && Fn->getType()->isRecordType())

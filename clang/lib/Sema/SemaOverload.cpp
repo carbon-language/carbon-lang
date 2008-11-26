@@ -2963,6 +2963,52 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   return 0;
 }
 
+/// ResolveOverloadedCallFn - Given the call expression that calls Fn
+/// (which eventually refers to the set of overloaded functions in
+/// Ovl) and the call arguments Args/NumArgs, attempt to resolve the
+/// function call down to a specific function. If overload resolution
+/// succeeds, returns an expression that refers to a specific function
+/// and deletes Fn. Otherwise, emits diagnostics, deletes all of the
+/// arguments and Fn, and returns NULL.
+Expr *Sema::ResolveOverloadedCallFn(Expr *Fn, OverloadedFunctionDecl *Ovl,
+                                    SourceLocation LParenLoc,
+                                    Expr **Args, unsigned NumArgs,
+                                    SourceLocation *CommaLocs, 
+                                    SourceLocation RParenLoc) {
+  OverloadCandidateSet CandidateSet;
+  AddOverloadCandidates(Ovl, Args, NumArgs, CandidateSet);
+  OverloadCandidateSet::iterator Best;
+  switch (BestViableFunction(CandidateSet, Best)) {
+  case OR_Success: {
+    Expr *NewFn = new DeclRefExpr(Best->Function, Best->Function->getType(), 
+                                  Fn->getSourceRange().getBegin());
+    Fn->Destroy(Context);
+    return NewFn;
+  }
+
+  case OR_No_Viable_Function:
+    Diag(Fn->getSourceRange().getBegin(), 
+         diag::err_ovl_no_viable_function_in_call)
+      << Ovl->getDeclName() << (unsigned)CandidateSet.size()
+      << Fn->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+    break;
+
+  case OR_Ambiguous:
+    Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_ambiguous_call)
+      << Ovl->getDeclName() << Fn->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+    break;
+  }
+
+  // Overload resolution failed. Destroy all of the subexpressions and
+  // return NULL.
+  Fn->Destroy(Context);
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
+    Args[Arg]->Destroy(Context);
+  return 0;
+}
+
 /// BuildCallToObjectOfClassType - Build a call to an object of class
 /// type (C++ [over.call.object]), which can end up invoking an
 /// overloaded function call operator (@c operator()) or performing a

@@ -447,6 +447,12 @@ public:
                                                    bool Complain);
   void FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
 
+  Expr *ResolveOverloadedCallFn(Expr *Fn, OverloadedFunctionDecl *Ovl,
+                                SourceLocation LParenLoc,
+                                Expr **Args, unsigned NumArgs,
+                                SourceLocation *CommaLocs, 
+                                SourceLocation RParenLoc);
+
   ExprResult 
   BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
                                Expr **Args, unsigned NumArgs,
