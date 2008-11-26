@@ -1431,59 +1431,88 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 ///         template-id             [TODO]
 ///
 void Parser::ParseDirectDeclarator(Declarator &D) {
-  CXXScopeSpec &SS = D.getCXXScopeSpec();
-  DeclaratorScopeObj DeclScopeObj(*this, SS);
+  DeclaratorScopeObj DeclScopeObj(*this, D.getCXXScopeSpec());
 
-  if (D.mayHaveIdentifier() &&
-      getLang().CPlusPlus && MaybeParseCXXScopeSpecifier(SS)) {
-    // Change the declaration context for name lookup, until this function is
-    // exited (and the declarator has been parsed).
-    DeclScopeObj.EnterDeclaratorScope();
-  }
+  if (getLang().CPlusPlus) {
+    if (D.mayHaveIdentifier()) {
+      bool afterCXXScope = MaybeParseCXXScopeSpecifier(D.getCXXScopeSpec());
+      if (afterCXXScope) {
+        // Change the declaration context for name lookup, until this function
+        // is exited (and the declarator has been parsed).
+        DeclScopeObj.EnterDeclaratorScope();
+      }
 
-  // Parse the first direct-declarator seen.
-  if (Tok.is(tok::identifier) && D.mayHaveIdentifier()) {
-    assert(Tok.getIdentifierInfo() && "Not an identifier?");
-    // Determine whether this identifier is a C++ constructor name or
-    // a normal identifier.
-    if (getLang().CPlusPlus && 
-        Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope))
-      D.setConstructor(Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope),
-                       Tok.getLocation());
-    else
-      D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
-    ConsumeToken();
-  } else if (getLang().CPlusPlus &&
-             Tok.is(tok::tilde) && D.mayHaveIdentifier()) {
-    // This should be a C++ destructor.
-    SourceLocation TildeLoc = ConsumeToken();
-    if (Tok.is(tok::identifier)) {
-      if (TypeTy *Type = ParseClassName())
-        D.setDestructor(Type, TildeLoc);
-      else
-        D.SetIdentifier(0, TildeLoc);
-    } else {
-      Diag(Tok, diag::err_expected_class_name);
-      D.SetIdentifier(0, TildeLoc);
-    }
-  } else if (Tok.is(tok::kw_operator)) {
-    SourceLocation OperatorLoc = Tok.getLocation();
+      if (Tok.is(tok::identifier)) {
+        assert(Tok.getIdentifierInfo() && "Not an identifier?");
+        // Determine whether this identifier is a C++ constructor name or
+        // a normal identifier.
+        if (Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope)) {
+          D.setConstructor(Actions.isTypeName(*Tok.getIdentifierInfo(),
+                                              CurScope),
+                           Tok.getLocation());
+        } else
+          D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
+        ConsumeToken();
+        goto PastIdentifier;
+      }
 
-    // First try the name of an overloaded operator
-    if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
-      D.setOverloadedOperator(Op, OperatorLoc);
-    } else {
-      // This must be a conversion function (C++ [class.conv.fct]).
-      if (TypeTy *ConvType = ParseConversionFunctionId()) {
-        D.setConversionFunction(ConvType, OperatorLoc);
+      if (Tok.is(tok::tilde)) {
+        // This should be a C++ destructor.
+        SourceLocation TildeLoc = ConsumeToken();
+        if (Tok.is(tok::identifier)) {
+          if (TypeTy *Type = ParseClassName())
+            D.setDestructor(Type, TildeLoc);
+          else
+            D.SetIdentifier(0, TildeLoc);
+        } else {
+          Diag(Tok, diag::err_expected_class_name);
+          D.SetIdentifier(0, TildeLoc);
+        }
+        goto PastIdentifier;
+      }
+
+      // If we reached this point, token is not identifier and not '~'.
+
+      if (afterCXXScope) {
+        Diag(Tok, diag::err_expected_unqualified_id);
+        D.SetIdentifier(0, Tok.getLocation());
+        D.setInvalidType(true);
+        goto PastIdentifier;
       }
     }
-  } else if (Tok.is(tok::l_paren) && SS.isEmpty()) {
+
+    if (Tok.is(tok::kw_operator)) {
+      SourceLocation OperatorLoc = Tok.getLocation();
+
+      // First try the name of an overloaded operator
+      if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
+        D.setOverloadedOperator(Op, OperatorLoc);
+      } else {
+        // This must be a conversion function (C++ [class.conv.fct]).
+        if (TypeTy *ConvType = ParseConversionFunctionId())
+          D.setConversionFunction(ConvType, OperatorLoc);
+        else
+          D.SetIdentifier(0, Tok.getLocation());
+      }
+      goto PastIdentifier;
+    }
+  }
+
+  // If we reached this point, we are either in C/ObjC or the token didn't
+  // satisfy any of the C++-specific checks.
+
+  if (Tok.is(tok::identifier) && D.mayHaveIdentifier()) {
+    assert(!getLang().CPlusPlus &&
+           "There's a C++-specific check for tok::identifier above");
+    assert(Tok.getIdentifierInfo() && "Not an identifier?");
+    D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
+    ConsumeToken();
+  } else if (Tok.is(tok::l_paren)) {
     // direct-declarator: '(' declarator ')'
     // direct-declarator: '(' attributes declarator ')'
     // Example: 'char (*X)'   or 'int (*XX)(void)'
     ParseParenDeclarator(D);
-  } else if (D.mayOmitIdentifier() && SS.isEmpty()) {
+  } else if (D.mayOmitIdentifier()) {
     // This could be something simple like "int" (in which case the declarator
     // portion is empty), if an abstract-declarator is allowed.
     D.SetIdentifier(0, Tok.getLocation());
@@ -1496,6 +1525,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     D.setInvalidType(true);
   }
   
+ PastIdentifier:
   assert(D.isPastIdentifier() &&
          "Haven't past the location of the identifier yet?");
   
