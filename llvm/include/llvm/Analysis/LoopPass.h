@@ -123,7 +123,7 @@ public:
   // Delete loop from the loop queue and loop nest (LoopInfo).
   void deleteLoopFromQueue(Loop *L);
   
-  // Inset loop into the loop nest(LoopInfo) and loop queue(LQ).
+  // Insert loop into the loop nest(LoopInfo) and loop queue(LQ).
   void insertLoop(Loop *L, Loop *ParentLoop);
 
   // Reoptimize this loop. LPPassManager will re-insert this loop into the
