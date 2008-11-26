@@ -311,7 +311,7 @@ void AddOptimizationPasses(PassManager &MPM, FunctionPassManager &FPM,
   MPM.add(createLoopRotatePass());            // Rotate Loop
   MPM.add(createLICMPass());                  // Hoist loop invariants
   MPM.add(createLoopUnswitchPass());
-  MPM.add(createLoopIndexSplitPass());        // Split loop index
+  //  MPM.add(createLoopIndexSplitPass());        // Split loop index
   MPM.add(createInstructionCombiningPass());  
   MPM.add(createIndVarSimplifyPass());        // Canonicalize indvars
   MPM.add(createLoopDeletionPass());          // Delete dead loops
@@ -383,7 +383,7 @@ void AddStandardCompilePasses(PassManager &PM) {
   addPass(PM, createLoopRotatePass());
   addPass(PM, createLICMPass());                 // Hoist loop invariants
   addPass(PM, createLoopUnswitchPass());         // Unswitch loops.
-  addPass(PM, createLoopIndexSplitPass());       // Index split loops.
+  //  addPass(PM, createLoopIndexSplitPass());       // Index split loops.
   // FIXME : Removing instcombine causes nestedloop regression.
   addPass(PM, createInstructionCombiningPass());
   addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
