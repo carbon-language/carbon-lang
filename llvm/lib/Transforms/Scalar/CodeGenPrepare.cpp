@@ -504,7 +504,7 @@ namespace {
   };
 } // end anonymous namespace
 
-static OStream &operator<<(OStream &OS, const ExtAddrMode &AM) {
+static inline OStream &operator<<(OStream &OS, const ExtAddrMode &AM) {
   AM.print(OS);
   return OS;
 }
@@ -541,11 +541,22 @@ class AddressingModeMatcher {
   const TargetLowering &TLI;
   const Type *AccessTy;
   ExtAddrMode &AddrMode;
+  
+  /// IgnoreProfitability - This is set to true when we should not do
+  /// profitability checks.  When true, IsProfitableToFoldIntoAddressingMode
+  /// always returns true.
+  bool IgnoreProfitability;
+  
   AddressingModeMatcher(SmallVectorImpl<Instruction*> &AMI,
                         const TargetLowering &T, const Type *AT,ExtAddrMode &AM)
-    : AddrModeInsts(AMI), TLI(T), AccessTy(AT), AddrMode(AM) {}
+    : AddrModeInsts(AMI), TLI(T), AccessTy(AT), AddrMode(AM) {
+    IgnoreProfitability = false;
+  }
 public:
   
+  /// Match - Find the maximal addressing mode that a load/store of V can fold,
+  /// give an access type of AccessTy.  This returns a list of involved
+  /// instructions in AddrModeInsts.
   static ExtAddrMode Match(Value *V, const Type *AccessTy, 
                            SmallVectorImpl<Instruction*> &AddrModeInsts,
                            const TargetLowering &TLI) {
@@ -560,6 +571,7 @@ private:
   bool MatchScaledValue(Value *ScaleReg, int64_t Scale, unsigned Depth);
   bool MatchAddr(Value *V, unsigned Depth);
   bool MatchOperationAddr(User *Operation, unsigned Opcode, unsigned Depth);
+  bool IsProfitableToFoldIntoAddressingMode(Instruction *I);
 };
 } // end anonymous namespace
 
@@ -617,6 +629,36 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
   return true;
 }
 
+/// MightBeFoldableInst - This is a little filter, which returns true if an
+/// addressing computation involving I might be folded into a load/store
+/// accessing it.  This doesn't need to be perfect, but needs to accept at least
+/// the set of instructions that MatchOperationAddr can.
+static bool MightBeFoldableInst(Instruction *I) {
+  switch (I->getOpcode()) {
+  case Instruction::BitCast:
+    // Don't touch identity bitcasts.
+    if (I->getType() == I->getOperand(0)->getType())
+      return false;
+    return isa<PointerType>(I->getType()) || isa<IntegerType>(I->getType());
+  case Instruction::PtrToInt:
+    // PtrToInt is always a noop, as we know that the int type is pointer sized.
+    return true;
+  case Instruction::IntToPtr:
+    // We know the input is intptr_t, so this is foldable.
+    return true;
+  case Instruction::Add:
+    return true;
+  case Instruction::Mul:
+  case Instruction::Shl:
+    // Can only handle X*C and X << C.
+    return isa<ConstantInt>(I->getOperand(1));
+  case Instruction::GetElementPtr:
+    return true;
+  default:
+    return false;
+  }
+}
+
 
 /// MatchOperationAddr - Given an instruction or constant expr, see if we can
 /// fold the operation into the addressing mode.  If so, update the addressing
@@ -669,12 +711,9 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     AddrModeInsts.resize(OldSize);
     break;
   }
-  case Instruction::Or: {
-    //ConstantInt *RHS = dyn_cast<ConstantInt>(AddrInst->getOperand(1));
-    //if (!RHS) break;
-    // TODO: We can handle "Or Val, Imm" iff this OR is equivalent to an ADD.
-    break;
-  }
+  //case Instruction::Or:
+  // TODO: We can handle "Or Val, Imm" iff this OR is equivalent to an ADD.
+  //break;
   case Instruction::Mul:
   case Instruction::Shl: {
     // Can only handle X*C and X << C.
@@ -796,9 +835,23 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
       AddrMode.BaseGV = 0;
     }
   } else if (Instruction *I = dyn_cast<Instruction>(Addr)) {
+    ExtAddrMode BackupAddrMode = AddrMode;
+    unsigned OldSize = AddrModeInsts.size();
+
+    // Check to see if it is possible to fold this operation.
     if (MatchOperationAddr(I, I->getOpcode(), Depth)) {
-      AddrModeInsts.push_back(I);
-      return true;
+      // Okay, it's possible to fold this.  Check to see if it is actually
+      // *profitable* to do so.  We use a simple cost model to avoid increasing
+      // register pressure too much.
+      if (I->hasOneUse() || IsProfitableToFoldIntoAddressingMode(I)) {
+        AddrModeInsts.push_back(I);
+        return true;
+      }
+      
+      // It isn't profitable to do this, roll back.
+      //cerr << "NOT FOLDING: " << *I;
+      AddrMode = BackupAddrMode;
+      AddrModeInsts.resize(OldSize);
     }
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Addr)) {
     if (MatchOperationAddr(CE, CE->getOpcode(), Depth))
@@ -830,6 +883,136 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
   }
   // Couldn't match.
   return false;
+}
+
+/// FindAllMemoryUses - Recursively walk all the uses of I until we find a
+/// memory use.  If we find an obviously non-foldable instruction, return true.
+/// Add the ultimately found memory instructions to MemoryUses.
+static bool FindAllMemoryUses(Instruction *I,
+                SmallVectorImpl<std::pair<Instruction*,unsigned> > &MemoryUses,
+                              SmallPtrSet<Instruction*, 16> &ConsideredInsts) {
+  // If we already considered this instruction, we're done.
+  if (!ConsideredInsts.insert(I))
+    return false;
+  
+  // If this is an obviously unfoldable instruction, bail out.
+  if (!MightBeFoldableInst(I))
+    return true;
+
+  // Loop over all the uses, recursively processing them.
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+       UI != E; ++UI) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+      MemoryUses.push_back(std::make_pair(LI, UI.getOperandNo()));
+      continue;
+    }
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+      if (UI.getOperandNo() == 0) return true; // Storing addr, not into addr.
+      MemoryUses.push_back(std::make_pair(SI, UI.getOperandNo()));
+      continue;
+    }
+    
+    if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
+      InlineAsm *IA = dyn_cast<InlineAsm>(CI->getCalledValue());
+      if (IA == 0) return true;
+
+      
+      // FIXME: HANDLE MEM OPS
+      //MemoryUses.push_back(std::make_pair(CI, UI.getOperandNo()));
+      return true;
+    }
+    
+    if (FindAllMemoryUses(cast<Instruction>(*UI), MemoryUses, ConsideredInsts))
+      return true;
+  }
+
+  return false;
+}
+  
+#include "llvm/Support/CommandLine.h"
+cl::opt<bool> ENABLECRAZYHACK("enable-smarter-addr-folding", cl::Hidden);
+
+
+/// IsProfitableToFoldIntoAddressingMode - It is possible for the addressing
+/// mode of the machine to fold the specified instruction into a load or store
+/// that ultimately uses it.  However, the specified instruction has multiple
+/// uses.  Given this, it may actually increase register pressure to fold it
+/// into the load.  For example, consider this code:
+///
+///     X = ...
+///     Y = X+1
+///     use(Y)   -> nonload/store
+///     Z = Y+1
+///     load Z
+///
+/// In this case, Y has multiple uses, and can be folded into the load of Z
+/// (yielding load [X+2]).  However, doing this will cause both "X" and "X+1" to
+/// be live at the use(Y) line.  If we don't fold Y into load Z, we use one
+/// fewer register.  Since Y can't be folded into "use(Y)" we don't increase the
+/// number of computations either.
+///
+/// Note that this (like most of CodeGenPrepare) is just a rough heuristic.  If
+/// X was live across 'load Z' for other reasons, we actually *would* want to
+/// fold the addressing mode in the Z case.
+bool AddressingModeMatcher::
+IsProfitableToFoldIntoAddressingMode(Instruction *I) {
+  if (IgnoreProfitability || !ENABLECRAZYHACK) return true;
+  
+  // If 'I' is a constant GEP from an alloca, always fold it.  This allows us
+  // to get an offset from the stack pointer.  If a non-memory use uses this GEP
+  // it will just get an add of a constant to the stack pointer.  This increases
+  // the lifetime of the stack pointer, which is always live anyway.
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I))
+    // FIXME: This is just a special purpose form of availability hacking.
+    if (isa<AllocaInst>(GEPI->getOperand(0)) && GEPI->hasAllConstantIndices())
+      return true;
+
+  // If all uses of this instruction are ultimately load/store/inlineasm's,
+  // check to see if their addressing modes will include this instruction.  If
+  // so, we can fold it into all uses, so it doesn't matter if it has multiple
+  // uses.
+  SmallVector<std::pair<Instruction*,unsigned>, 16> MemoryUses;
+  SmallPtrSet<Instruction*, 16> ConsideredInsts;
+  if (FindAllMemoryUses(I, MemoryUses, ConsideredInsts))
+    return false;  // Has a non-memory, non-foldable use!
+  
+  // Now that we know that all uses of this instruction are part of a chain of
+  // computation involving only operations that could theoretically be folded
+  // into a memory use, loop over each of these uses and see if they could
+  // *actually* fold the instruction.
+  SmallVector<Instruction*, 32> MatchedAddrModeInsts;
+  for (unsigned i = 0, e = MemoryUses.size(); i != e; ++i) {
+    Instruction *User = MemoryUses[i].first;
+    unsigned OpNo = MemoryUses[i].second;
+    
+    // Get the access type of this use.  If the use isn't a pointer, we don't
+    // know what it accesses.
+    Value *Address = User->getOperand(OpNo);
+    if (!isa<PointerType>(Address->getType()))
+      return false;
+    const Type *AddressAccessTy =
+      cast<PointerType>(Address->getType())->getElementType();
+    
+    // Do a match against the root of this address, ignoring profitability. This
+    // will tell us if the addressing mode for the memory operation will
+    // *actually* cover the shared instruction.
+    ExtAddrMode Result;
+    AddressingModeMatcher Matcher(MatchedAddrModeInsts, TLI, AddressAccessTy,
+                                  Result);
+    Matcher.IgnoreProfitability = true;
+    bool Success = Matcher.MatchAddr(Address, 0);
+    Success = Success; assert(Success && "Couldn't select *anything*?");
+
+    // If the match didn't cover I, then it won't be shared by it.
+    if (std::find(MatchedAddrModeInsts.begin(), MatchedAddrModeInsts.end(),
+                  I) == MatchedAddrModeInsts.end())
+      return false;
+    
+    MatchedAddrModeInsts.clear();
+  }
+  
+  return true;
 }
 
 
