@@ -116,6 +116,8 @@ protected:
   }
   
   unsigned getConditionalStackDepth() const { return ConditionalStack.size(); } 
+
+public:
   
   //===--------------------------------------------------------------------===//
   // Misc. lexing methods.
@@ -125,7 +127,11 @@ protected:
   /// lexically legal, emit a diagnostic and return a result EOM token.
   void LexIncludeFilename(Token &Result);
   
-public:
+  /// setParsingPreprocessorDirective - Inform the lexer whether or not
+  ///  we are currently lexing a preprocessor directive.
+  void setParsingPreprocessorDirective(bool f) {
+    ParsingPreprocessorDirective = f;
+  }
   
   /// isLexingRawMode - Return true if this lexer is in raw mode or not.
   bool isLexingRawMode() const { return LexingRawMode; }
