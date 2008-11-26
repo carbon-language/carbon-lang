@@ -1025,10 +1025,6 @@ bool AddressingModeMatcher::ValueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
 
 
 
-#include "llvm/Support/CommandLine.h"
-cl::opt<bool> ENABLECRAZYHACK("enable-smarter-addr-folding", cl::Hidden);
-
-
 /// IsProfitableToFoldIntoAddressingMode - It is possible for the addressing
 /// mode of the machine to fold the specified instruction into a load or store
 /// that ultimately uses it.  However, the specified instruction has multiple
@@ -1053,7 +1049,7 @@ cl::opt<bool> ENABLECRAZYHACK("enable-smarter-addr-folding", cl::Hidden);
 bool AddressingModeMatcher::
 IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
                                      ExtAddrMode &AMAfter) {
-  if (IgnoreProfitability || !ENABLECRAZYHACK) return true;
+  if (IgnoreProfitability) return true;
   
   // AMBefore is the addressing mode before this instruction was folded into it,
   // and AMAfter is the addressing mode after the instruction was folded.  Get

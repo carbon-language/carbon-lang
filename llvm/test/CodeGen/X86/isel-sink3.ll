@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -enable-smarter-addr-folding | grep {addl.(%eax), %ecx}
-; RUN: llvm-as < %s | llc -enable-smarter-addr-folding | not grep leal
+; RUN: llvm-as < %s | llc | grep {addl.(%eax), %ecx}
+; RUN: llvm-as < %s | llc | not grep leal
 ; this should not sink %1 into bb1, that would increase reg pressure.
 
 ; rdar://6399178
