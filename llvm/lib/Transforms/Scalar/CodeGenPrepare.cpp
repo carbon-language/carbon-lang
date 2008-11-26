@@ -899,12 +899,56 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
   return false;
 }
 
+
+/// IsOperandAMemoryOperand - Check to see if all uses of OpVal by the specified
+/// inline asm call are due to memory operands.  If so, return true, otherwise
+/// return false.
+static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
+                                    const TargetLowering &TLI) {
+  std::vector<InlineAsm::ConstraintInfo>
+  Constraints = IA->ParseConstraints();
+  
+  unsigned ArgNo = 1;   // ArgNo - The operand of the CallInst.
+  for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
+    TargetLowering::AsmOperandInfo OpInfo(Constraints[i]);
+    
+    // Compute the value type for each operand.
+    switch (OpInfo.Type) {
+      case InlineAsm::isOutput:
+        if (OpInfo.isIndirect)
+          OpInfo.CallOperandVal = CI->getOperand(ArgNo++);
+        break;
+      case InlineAsm::isInput:
+        OpInfo.CallOperandVal = CI->getOperand(ArgNo++);
+        break;
+      case InlineAsm::isClobber:
+        // Nothing to do.
+        break;
+    }
+    
+    // Compute the constraint code and ConstraintType to use.
+    TLI.ComputeConstraintToUse(OpInfo, SDValue(),
+                             OpInfo.ConstraintType == TargetLowering::C_Memory);
+    
+    // If this asm operand is our Value*, and if it isn't an indirect memory
+    // operand, we can't fold it!
+    if (OpInfo.CallOperandVal == OpVal &&
+        (OpInfo.ConstraintType != TargetLowering::C_Memory ||
+         !OpInfo.isIndirect))
+      return false;
+  }
+  
+  return true;
+}
+
+
 /// FindAllMemoryUses - Recursively walk all the uses of I until we find a
 /// memory use.  If we find an obviously non-foldable instruction, return true.
 /// Add the ultimately found memory instructions to MemoryUses.
 static bool FindAllMemoryUses(Instruction *I,
                 SmallVectorImpl<std::pair<Instruction*,unsigned> > &MemoryUses,
-                              SmallPtrSet<Instruction*, 16> &ConsideredInsts) {
+                              SmallPtrSet<Instruction*, 16> &ConsideredInsts,
+                              const TargetLowering &TLI) {
   // If we already considered this instruction, we're done.
   if (!ConsideredInsts.insert(I))
     return false;
@@ -930,14 +974,15 @@ static bool FindAllMemoryUses(Instruction *I,
     if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
       InlineAsm *IA = dyn_cast<InlineAsm>(CI->getCalledValue());
       if (IA == 0) return true;
-
       
-      // FIXME: HANDLE MEM OPS
-      //MemoryUses.push_back(std::make_pair(CI, UI.getOperandNo()));
-      return true;
+      // If this is a memory operand, we're cool, otherwise bail out.
+      if (!IsOperandAMemoryOperand(CI, IA, I, TLI))
+        return true;
+      continue;
     }
     
-    if (FindAllMemoryUses(cast<Instruction>(*UI), MemoryUses, ConsideredInsts))
+    if (FindAllMemoryUses(cast<Instruction>(*UI), MemoryUses, ConsideredInsts,
+                          TLI))
       return true;
   }
 
@@ -1039,7 +1084,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
   // uses.
   SmallVector<std::pair<Instruction*,unsigned>, 16> MemoryUses;
   SmallPtrSet<Instruction*, 16> ConsideredInsts;
-  if (FindAllMemoryUses(I, MemoryUses, ConsideredInsts))
+  if (FindAllMemoryUses(I, MemoryUses, ConsideredInsts, TLI))
     return false;  // Has a non-memory, non-foldable use!
   
   // Now that we know that all uses of this instruction are part of a chain of
