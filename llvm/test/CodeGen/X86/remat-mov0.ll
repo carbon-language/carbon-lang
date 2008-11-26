@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep xor | count 3
+; RUN: llvm-as < %s | llc -march=x86 | grep xor | count 2
 
 	%struct.FILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
 	%struct.ImgT = type { i8, i8*, i8*, %struct.FILE*, i32, i32, i32, i32, i8*, double*, float*, float*, float*, i32*, double, double, i32*, double*, i32*, i32* }
@@ -17,12 +17,7 @@ bb105:		; preds = %bb200
 	br i1 false, label %bb197, label %bb149
 
 bb149:		; preds = %bb105
-	%tmp151 = getelementptr %struct._CompT* null, i32 0, i32 0		; <i32*> [#uses=1]
-	br i1 false, label %bb184, label %bb193
-
-bb184:		; preds = %bb149
-	tail call fastcc void @MergeComponents( %struct._CompT* %comp, %struct._CompT* null, %struct._CompT* null, %struct._CompT** %head, %struct.ImgT* %img ) nounwind 
-	tail call fastcc void @MergeToLeft( %struct._CompT* %comp, %struct._CompT** %head, %struct.ImgT* %img ) nounwind 
+	%tmp151 = getelementptr %struct._CompT* %comp, i32 0, i32 0		; <i32*> [#uses=1]
 	br label %bb193
 
 bb193:		; preds = %bb184, %bb149
