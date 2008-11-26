@@ -1880,7 +1880,8 @@ bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     unsigned Reg = CSI[i-1].getReg();
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
-    BuildMI(MBB, MI, get(Opc)).addReg(Reg);
+    BuildMI(MBB, MI, get(Opc))
+      .addReg(Reg, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
   }
   return true;
 }

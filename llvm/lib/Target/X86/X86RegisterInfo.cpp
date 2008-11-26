@@ -719,7 +719,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     // Save EBP into the appropriate stack slot...
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::PUSH64r : X86::PUSH32r))
-      .addReg(FramePtr);
+      .addReg(FramePtr, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
 
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
@@ -774,7 +774,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
           .addExternalSymbol("_alloca");
       } else {
         // Save EAX
-        BuildMI(MBB, MBBI, TII.get(X86::PUSH32r), X86::EAX);
+        BuildMI(MBB, MBBI, TII.get(X86::PUSH32r))
+          .addReg(X86::EAX, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
         // Allocate NumBytes-4 bytes on stack. We'll also use 4 already
         // allocated bytes for EAX.
         BuildMI(MBB, MBBI, TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes-4);
