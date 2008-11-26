@@ -33,9 +33,9 @@ int PIC16TargetMachineModule = 0;
 
 // Register the targets
 static RegisterTarget<PIC16TargetMachine> 
-X("pic16", "PIC16 14-bit (experimental).");
+X("pic16", "PIC16 14-bit [experimental].");
 static RegisterTarget<CooperTargetMachine> 
-Y("cooper", "PIC16 Cooper (experimental).");
+Y("cooper", "PIC16 Cooper [experimental].");
 
 // PIC16TargetMachine - Traditional PIC16 Machine.
 PIC16TargetMachine::PIC16TargetMachine(const Module &M, const std::string &FS,
