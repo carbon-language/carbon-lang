@@ -264,8 +264,8 @@ inline void addPass(PassManager &PM, Pass *P) {
 /// duplicates llvm-gcc behaviour.
 ///
 /// OptLevel - Optimization Level
-  void AddOptimizationPasses(PassManager &MPM, FunctionPassManager &FPM,
-                             unsigned OptLevel) {
+void AddOptimizationPasses(PassManager &MPM, FunctionPassManager &FPM,
+                           unsigned OptLevel) {
 
   if (OptLevel == 0) 
     return;
