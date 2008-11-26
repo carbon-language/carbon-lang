@@ -1382,6 +1382,8 @@ static X86::CondCode GetCondFromBranchOpc(unsigned BrOpc) {
   case X86::JNP: return X86::COND_NP;
   case X86::JO:  return X86::COND_O;
   case X86::JNO: return X86::COND_NO;
+  case X86::JC:  return X86::COND_C;
+  case X86::JNC: return X86::COND_NC;
   }
 }
 
@@ -1404,6 +1406,8 @@ unsigned X86::GetCondBranchFromCond(X86::CondCode CC) {
   case X86::COND_NP: return X86::JNP;
   case X86::COND_O:  return X86::JO;
   case X86::COND_NO: return X86::JNO;
+  case X86::COND_C:  return X86::JC;
+  case X86::COND_NC: return X86::JNC;
   }
 }
 
@@ -1428,6 +1432,8 @@ X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
   case X86::COND_NP: return X86::COND_P;
   case X86::COND_O:  return X86::COND_NO;
   case X86::COND_NO: return X86::COND_O;
+  case X86::COND_C:  return X86::COND_NC;
+  case X86::COND_NC: return X86::COND_C;
   }
 }
 

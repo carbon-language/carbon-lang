@@ -235,9 +235,11 @@ def X86_COND_NE  : PatLeaf<(i8 9)>;
 def X86_COND_NO  : PatLeaf<(i8 10)>;
 def X86_COND_NP  : PatLeaf<(i8 11)>;
 def X86_COND_NS  : PatLeaf<(i8 12)>;
-def X86_COND_O   : PatLeaf<(i8 13)>;
-def X86_COND_P   : PatLeaf<(i8 14)>;
-def X86_COND_S   : PatLeaf<(i8 15)>;
+def X86_COND_NC  : PatLeaf<(i8 13)>;
+def X86_COND_O   : PatLeaf<(i8 14)>;
+def X86_COND_P   : PatLeaf<(i8 15)>;
+def X86_COND_S   : PatLeaf<(i8 16)>;
+def X86_COND_C   : PatLeaf<(i8 17)>;
 
 def i16immSExt8  : PatLeaf<(i16 imm), [{
   // i16immSExt8 predicate - True if the 16-bit immediate fits in a 8-bit
@@ -449,6 +451,10 @@ def JO  : IBr<0x80, (ins brtarget:$dst), "jo\t$dst",
               [(X86brcond bb:$dst, X86_COND_O, EFLAGS)]>, TB;
 def JNO : IBr<0x81, (ins brtarget:$dst), "jno\t$dst",
               [(X86brcond bb:$dst, X86_COND_NO, EFLAGS)]>, TB;
+def JC  : IBr<0x82, (ins brtarget:$dst), "jc\t$dst",
+              [(X86brcond bb:$dst, X86_COND_C, EFLAGS)]>, TB;
+def JNC : IBr<0x83, (ins brtarget:$dst), "jnc\t$dst",
+              [(X86brcond bb:$dst, X86_COND_NC, EFLAGS)]>, TB;
 } // Uses = [EFLAGS]
 
 //===----------------------------------------------------------------------===//

@@ -6150,6 +6150,26 @@ SDValue X86TargetLowering::LowerCTTZ(SDValue Op, SelectionDAG &DAG) {
 
 SDValue X86TargetLowering::LowerXADDO(SDValue Op, SelectionDAG &DAG,
                                       ISD::NodeType NTy) {
+  SDNode *N = Op.getNode();
+
+  for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
+    SDNode *UseNode = *I;
+
+    if (UseNode->getOpcode() == ISD::BRCOND) {
+      // Lower a branch on the overflow/carry flag into a "JO"/"JC"
+      // instruction. Convert the addition into an actual addition, not just a
+      // pseudo node.
+      SDValue LHS = N->getOperand(0);
+      SDValue RHS = N->getOperand(1);
+      SDValue Sum = DAG.getNode(ISD::ADD, LHS.getValueType(), LHS, RHS);
+
+      SDValue Ops[] = { UseNode->getOperand(2), UseNode->getOperand(0) };
+      DAG.SelectNodeTo(UseNode, (NTy == ISD::SADDO) ? X86::JO : X86::JC,
+                       MVT::Other, Ops, 2);
+      return Sum;
+    }
+  }
+
   return SDValue();
 }
 
