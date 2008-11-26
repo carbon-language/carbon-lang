@@ -1088,7 +1088,6 @@ public:
   //===--------------------------------------------------------------------===//
 
   APValue VisitStmt(Stmt *S) {
-    assert(0 && "This should be called on complex floats");
     return APValue();
   }
     
