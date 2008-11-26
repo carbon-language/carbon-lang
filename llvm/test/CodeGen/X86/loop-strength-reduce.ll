@@ -5,7 +5,7 @@
 
 @A = internal global [16 x [16 x i32]] zeroinitializer, align 32		; <[16 x [16 x i32]]*> [#uses=2]
 
-define void @test(i32 %row, i32 %N.in) {
+define void @test(i32 %row, i32 %N.in) nounwind {
 entry:
 	%N = bitcast i32 %N.in to i32		; <i32> [#uses=1]
 	%tmp5 = icmp sgt i32 %N.in, 0		; <i1> [#uses=1]
