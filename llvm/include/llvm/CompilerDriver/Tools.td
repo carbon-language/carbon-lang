@@ -11,20 +11,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-def llvm_gcc_c : Tool<
-[(in_language "c"),
+class llvm_gcc_based <string cmd_prefix, string in_lang> : Tool<
+[(in_language in_lang),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
  (cmd_line (case
             (switch_on "E"),
               (case (not_empty "o"),
-                    "llvm-gcc -E -x c++ $INFILE -o $OUTFILE",
+                    !strconcat(cmd_prefix, " -E $INFILE -o $OUTFILE"),
                     (default),
-                    "llvm-gcc -E -x c++ $INFILE"),
+                    !strconcat(cmd_prefix, " -E $INFILE")),
             (switch_on "fsyntax-only"),
-              "llvm-gcc -fsyntax-only -x c $INFILE",
+              !strconcat(cmd_prefix, " -fsyntax-only $INFILE"),
             (default),
-              "llvm-gcc -c -x c $INFILE -o $OUTFILE -emit-llvm")),
+              !strconcat(cmd_prefix, " -c $INFILE -o $OUTFILE -emit-llvm"))),
  (switch_option "emit-llvm", (stop_compilation),
    (help "Emit LLVM intermediate files instead of native object files")),
  (switch_option "E", (stop_compilation),
@@ -36,68 +36,10 @@ def llvm_gcc_c : Tool<
  (sink)
 ]>;
 
-def llvm_gcc_cpp : Tool<
-[(in_language "c++"),
- (out_language "llvm-bitcode"),
- (output_suffix "bc"),
- (cmd_line (case
-            (switch_on "E"),
-              (case (not_empty "o"),
-                    "llvm-g++ -E -x c++ $INFILE -o $OUTFILE",
-                    (default),
-                    "llvm-g++ -E -x c++ $INFILE"),
-            (switch_on "fsyntax-only"),
-              "llvm-g++ -fsyntax-only -x c++ $INFILE",
-            (default),
-              "llvm-g++ -c -x c++ $INFILE -o $OUTFILE -emit-llvm")),
- (switch_option "emit-llvm", (stop_compilation)),
- (switch_option "E", (stop_compilation)),
- (switch_option "fsyntax-only", (stop_compilation)),
- (parameter_list_option "include", (forward)),
- (sink)
-]>;
-
-def llvm_gcc_m : Tool<
-[(in_language "objective-c"),
- (out_language "llvm-bitcode"),
- (output_suffix "bc"),
- (cmd_line (case
-            (switch_on "E"),
-              (case (not_empty "o"),
-                    "llvm-gcc -E -x objective-c $INFILE -o $OUTFILE",
-                    (default),
-                    "llvm-gcc -E -x objective-c $INFILE"),
-            (switch_on "fsyntax-only"),
-              "llvm-gcc -fsyntax-only -x objective-c $INFILE",
-            (default),
-              "llvm-gcc -c -x objective-c $INFILE -o $OUTFILE -emit-llvm")),
- (switch_option "emit-llvm", (stop_compilation)),
- (switch_option "E", (stop_compilation)),
- (switch_option "fsyntax-only", (stop_compilation)),
- (parameter_list_option "include", (forward)),
- (sink)
-]>;
-
-def llvm_gcc_mxx : Tool<
-[(in_language "objective-c++"),
- (out_language "llvm-bitcode"),
- (output_suffix "bc"),
- (cmd_line (case
-            (switch_on "E"),
-              (case (not_empty "o"),
-                    "llvm-gcc -E -x objective-c++ $INFILE -o $OUTFILE",
-                    (default),
-                    "llvm-gcc -E -x objective-c++ $INFILE"),
-            (switch_on "fsyntax-only"),
-              "llvm-gcc -fsyntax-only -x objective-c++ $INFILE",
-            (default),
-              "llvm-gcc -c -x objective-c++ $INFILE -o $OUTFILE -emit-llvm")),
- (switch_option "emit-llvm", (stop_compilation)),
- (switch_option "E", (stop_compilation)),
- (switch_option "fsyntax-only", (stop_compilation)),
- (parameter_list_option "include", (forward)),
- (sink)
-]>;
+def llvm_gcc_c : llvm_gcc_based<"llvm-gcc -x c", "c">;
+def llvm_gcc_cpp : llvm_gcc_based<"llvm-g++ -x c++", "c++">;
+def llvm_gcc_m : llvm_gcc_based<"llvm-gcc -x objective-c", "objective-c">;
+def llvm_gcc_mxx : llvm_gcc_based<"llvm-gcc -x objective-c++", "objective-c++">;
 
 def opt : Tool<
 [(in_language "llvm-bitcode"),
