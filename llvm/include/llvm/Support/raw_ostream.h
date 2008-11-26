@@ -175,7 +175,10 @@ public:
   virtual void flush_impl();
   
   /// close - Manually flush the stream and close the file.
-  void close();  
+  void close();
+  
+  /// tell - Return the current offset with the file.
+  uint64_t tell();
 };
   
 /// raw_stdout_ostream - This is a stream that always prints to stdout.

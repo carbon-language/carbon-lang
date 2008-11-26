@@ -253,6 +253,14 @@ void raw_fd_ostream::close() {
   FD = -1;
 }
 
+uint64_t raw_fd_ostream::tell() {
+  // We have to take into account the bytes waiting in the buffer.  For now
+  // we do the easy thing and just flush the buffer before getting the
+  // current file offset.
+  flush();  
+  return (uint64_t) lseek(FD, 0, SEEK_CUR);
+}
+
 //===----------------------------------------------------------------------===//
 //  raw_stdout/err_ostream
 //===----------------------------------------------------------------------===//
