@@ -992,16 +992,25 @@ throws the same exception) when called with the same set of arguments and global
 state.</dd>
 
 <dt><tt><a name="ssp">ssp</a></tt></dt>
-<dd>This attribute indicates that the function should emit a stack smashing
+<dd><p>This attribute indicates that the function should emit a stack smashing
 protector. It is in the form of a "canary"&mdash;a random value placed on the
 stack before the local variables that's checked upon return from the function to
 see if it has been overwritten. A heuristic is used to determine if a function
-needs stack protectors or not.</dd>
+needs stack protectors or not.</p>
 
-<dt><tt>ssp-req</tt></dt>
-<dd>This attribute indicates that the function should <em>always</em> emit a
+<p>If a function that has an <tt>ssp</tt> attribute is inlined into a function
+that doesn't have an <tt>ssp</tt> attribute, then the resulting function will
+have an <tt>ssp</tt> attribute.</p></dd>
+
+<dt><tt>sspreq</tt></dt>
+<dd><p>This attribute indicates that the function should <em>always</em> emit a
 stack smashing protector. This overrides the <tt><a href="#ssp">ssp</a></tt>
-function attribute.</dd>
+function attribute.</p>
+
+<p>If a function that has an <tt>sspreq</tt> attribute is inlined into a
+function that doesn't have an <tt>sspreq</tt> attribute or which has
+an <tt>ssp</tt> attribute, then the resulting function will have
+an <tt>sspreq</tt> attribute.</p></dd>
 </dl>
 
 </div>
