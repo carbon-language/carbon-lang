@@ -63,7 +63,7 @@ Predefined options
 ==================
 
 LLVMC has some built-in options that can't be overridden in the
-configuration files:
+configuration libraries:
 
 * ``-o FILE`` - Output file name.
 
@@ -154,7 +154,7 @@ one can create edges between nodes defined in some other plugin. To
 make this work, however, that plugin should be loaded first. To
 achieve this, the concept of plugin priority was introduced. By
 default, every plugin has priority zero; to specify the priority
-explicitly, put the following line in your ``.td`` file::
+explicitly, put the following line in your plugin's TableGen file::
 
     def Priority : PluginPriority<$PRIORITY_VALUE>;
     # Where PRIORITY_VALUE is some integer > 0
@@ -220,13 +220,21 @@ weight of 0 + 2*N where N is the number of tests that evaluated to
 true in the ``case`` expression. It is also possible to provide an
 integer parameter to ``inc_weight`` and ``dec_weight`` - in this case,
 the weight is increased (or decreased) by the provided value instead
-of the default 2.
+of the default 2. It is also possible to change the default weight of
+an optional edge by using the ``default`` clause of the ``case``
+construct.
 
 When passing an input file through the graph, LLVMC picks the edge
 with the maximum weight. To avoid ambiguity, there should be only one
 default edge between two nodes (with the exception of the root node,
 which gets a special treatment - there you are allowed to specify one
 default edge *per language*).
+
+When multiple plugins are loaded, their compilation graphs are merged
+together. Since multiple edges are not allowed, an edge defined in
+several plugins will be replaced by the definition from the plugin
+that was loaded last. Plugin load order can be controlled by using the
+plugin priority feature described above.
 
 To get a visual representation of the compilation graph (useful for
 debugging), run ``llvmc --view-graph``. You will need ``dot`` and

@@ -79,6 +79,20 @@ namespace {
 
 }
 
+void Node::AddEdge(Edge* Edg) {
+  // If there already was an edge between two nodes, modify it instead
+  // of adding a new edge.
+  const std::string& ToolName = Edg->ToolName();
+  for (container_type::iterator B = OutEdges.begin(), E = OutEdges.end();
+       B != E; ++B) {
+    if ((*B)->ToolName() == ToolName) {
+      llvm::IntrusiveRefCntPtr<Edge>(Edg).swap(*B);
+      return;
+    }
+  }
+  OutEdges.push_back(llvm::IntrusiveRefCntPtr<Edge>(Edg));
+}
+
 CompilationGraph::CompilationGraph() {
   NodesMap["root"] = Node(this);
 }

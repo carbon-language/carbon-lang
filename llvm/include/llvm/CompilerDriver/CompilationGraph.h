@@ -83,8 +83,7 @@ namespace llvmc {
 
     /// AddEdge - Add an outward edge. Takes ownership of the provided
     /// Edge object.
-    void AddEdge(Edge* E)
-    { OutEdges.push_back(llvm::IntrusiveRefCntPtr<Edge>(E)); }
+    void AddEdge(Edge* E);
 
     // Inward edge counter. Used to implement topological sort.
     void IncrInEdges() { ++InEdges; }
