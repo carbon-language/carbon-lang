@@ -709,6 +709,34 @@ bool Sema::IsFloatingPointPromotion(QualType FromType, QualType ToType)
   return false;
 }
 
+/// BuildSimilarlyQualifiedPointerType - In a pointer conversion from
+/// the pointer type FromPtr to a pointer to type ToPointee, with the
+/// same type qualifiers as FromPtr has on its pointee type. ToType,
+/// if non-empty, will be a pointer to ToType that may or may not have
+/// the right set of qualifiers on its pointee.
+static QualType 
+BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr, 
+                                   QualType ToPointee, QualType ToType,
+                                   ASTContext &Context) {
+  QualType CanonFromPointee = Context.getCanonicalType(FromPtr->getPointeeType());
+  QualType CanonToPointee = Context.getCanonicalType(ToPointee);
+  unsigned Quals = CanonFromPointee.getCVRQualifiers();
+  
+  // Exact qualifier match -> return the pointer type we're converting to.  
+  if (CanonToPointee.getCVRQualifiers() == Quals) {
+    // ToType is exactly what we need. Return it.
+    if (ToType.getTypePtr())
+      return ToType;
+
+    // Build a pointer to ToPointee. It has the right qualifiers
+    // already.
+    return Context.getPointerType(ToPointee);
+  }
+
+  // Just build a canonical type that has the right qualifiers.
+  return Context.getPointerType(CanonToPointee.getQualifiedType(Quals));
+}
+
 /// IsPointerConversion - Determines whether the conversion of the
 /// expression From, which has the (possibly adjusted) type FromType,
 /// can be converted to the type ToType via a pointer conversion (C++
@@ -728,27 +756,20 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return true;
   }
 
+  // Beyond this point, both types need to be pointers.
+  const PointerType *FromTypePtr = FromType->getAsPointerType();
+  if (!FromTypePtr)
+    return false;
+
+  QualType FromPointeeType = FromTypePtr->getPointeeType();
+  QualType ToPointeeType = ToTypePtr->getPointeeType();
+
   // An rvalue of type "pointer to cv T," where T is an object type,
   // can be converted to an rvalue of type "pointer to cv void" (C++
   // 4.10p2).
-  if (FromType->isPointerType() &&
-      FromType->getAsPointerType()->getPointeeType()->isObjectType() &&
-      ToTypePtr->getPointeeType()->isVoidType()) {
-    // We need to produce a pointer to cv void, where cv is the same
-    // set of cv-qualifiers as we had on the incoming pointee type.
-    QualType toPointee = ToTypePtr->getPointeeType();
-    unsigned Quals = Context.getCanonicalType(FromType)->getAsPointerType()
-                   ->getPointeeType().getCVRQualifiers();
-
-    if (Context.getCanonicalType(ToTypePtr->getPointeeType()).getCVRQualifiers()
-	  == Quals) {
-      // ToType is exactly the type we want. Use it.
-      ConvertedType = ToType;
-    } else {
-      // Build a new type with the right qualifiers.
-      ConvertedType 
-	= Context.getPointerType(Context.VoidTy.getQualifiedType(Quals));
-    }
+  if (FromPointeeType->isIncompleteOrObjectType() && ToPointeeType->isVoidType()) {
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, ToPointeeType,
+                                                       ToType, Context);
     return true;
   }
 
@@ -765,32 +786,32 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   //
   // Note that we do not check for ambiguity or inaccessibility
   // here. That is handled by CheckPointerConversion.
-  if (const PointerType *FromPtrType = FromType->getAsPointerType())
-    if (const PointerType *ToPtrType = ToType->getAsPointerType()) {
-      if (FromPtrType->getPointeeType()->isRecordType() &&
-          ToPtrType->getPointeeType()->isRecordType() &&
-          IsDerivedFrom(FromPtrType->getPointeeType(), 
-                        ToPtrType->getPointeeType())) {
-        // The conversion is okay. Now, we need to produce the type
-        // that results from this conversion, which will have the same
-        // qualifiers as the incoming type.
-        QualType CanonFromPointee 
-          = Context.getCanonicalType(FromPtrType->getPointeeType());
-        QualType ToPointee = ToPtrType->getPointeeType();
-        QualType CanonToPointee = Context.getCanonicalType(ToPointee);
-        unsigned Quals = CanonFromPointee.getCVRQualifiers();
+  if (FromPointeeType->isRecordType() && ToPointeeType->isRecordType() &&
+      IsDerivedFrom(FromPointeeType, ToPointeeType)) {
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, ToPointeeType,
+                                                       ToType, Context);
+    return true;
+  }
 
-        if (CanonToPointee.getCVRQualifiers() == Quals) {
-          // ToType is exactly the type we want. Use it.
-          ConvertedType = ToType;
-        } else {
-          // Build a new type with the right qualifiers.
-          ConvertedType
-            = Context.getPointerType(CanonToPointee.getQualifiedType(Quals));
-        }
-        return true;
-      }
-    }
+  // Objective C++: We're able to convert from a pointer to an
+  // interface to a pointer to a different interface.
+  const ObjCInterfaceType* FromIface = FromPointeeType->getAsObjCInterfaceType();
+  const ObjCInterfaceType* ToIface = ToPointeeType->getAsObjCInterfaceType();
+  if (FromIface && ToIface && 
+      Context.canAssignObjCInterfaces(ToIface, FromIface)) {
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, ToPointeeType,
+                                                       ToType, Context);
+    return true;
+  }
+
+  // Objective C++: We're able to convert between "id" and a pointer
+  // to any interface (in both directions).
+  if ((FromIface && Context.isObjCIdType(ToPointeeType))
+      || (ToIface && Context.isObjCIdType(FromPointeeType))) {
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, ToPointeeType,
+                                                       ToType, Context);
+    return true;
+  } 
 
   return false;
 }
@@ -1125,6 +1146,17 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
       return ImplicitConversionSequence::Better;
     else if (IsDerivedFrom(FromPointee1, FromPointee2))
       return ImplicitConversionSequence::Worse;
+
+    // Objective-C++: If one interface is more specific than the
+    // other, it is the better one.
+    const ObjCInterfaceType* FromIface1 = FromPointee1->getAsObjCInterfaceType();
+    const ObjCInterfaceType* FromIface2 = FromPointee2->getAsObjCInterfaceType();
+    if (FromIface1 && FromIface1) {
+      if (Context.canAssignObjCInterfaces(FromIface2, FromIface1))
+        return ImplicitConversionSequence::Better;
+      else if (Context.canAssignObjCInterfaces(FromIface1, FromIface2))
+        return ImplicitConversionSequence::Worse;
+    }
   }
 
   // Compare based on qualification conversions (C++ 13.3.3.2p3,
@@ -1247,7 +1279,9 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
 
 /// CompareDerivedToBaseConversions - Compares two standard conversion
 /// sequences to determine whether they can be ranked based on their
-/// various kinds of derived-to-base conversions (C++ [over.ics.rank]p4b3).
+/// various kinds of derived-to-base conversions (C++
+/// [over.ics.rank]p4b3).  As part of these checks, we also look at
+/// conversions between Objective-C interface types.
 ImplicitConversionSequence::CompareKind
 Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
                                       const StandardConversionSequence& SCS2) {
@@ -1273,6 +1307,9 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
   //
   //   If class B is derived directly or indirectly from class A and
   //   class C is derived directly or indirectly from B,
+  //
+  // For Objective-C, we let A, B, and C also be Objective-C
+  // interfaces.
 
   // Compare based on pointer conversions.
   if (SCS1.Second == ICK_Pointer_Conversion && 
@@ -1285,12 +1322,25 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
       = FromType2->getAsPointerType()->getPointeeType().getUnqualifiedType();
     QualType ToPointee2
       = ToType2->getAsPointerType()->getPointeeType().getUnqualifiedType();
+
+    const ObjCInterfaceType* FromIface1 = FromPointee1->getAsObjCInterfaceType();
+    const ObjCInterfaceType* FromIface2 = FromPointee2->getAsObjCInterfaceType();
+    const ObjCInterfaceType* ToIface1 = ToPointee1->getAsObjCInterfaceType();
+    const ObjCInterfaceType* ToIface2 = ToPointee2->getAsObjCInterfaceType();
+
     //   -- conversion of C* to B* is better than conversion of C* to A*,
     if (FromPointee1 == FromPointee2 && ToPointee1 != ToPointee2) {
       if (IsDerivedFrom(ToPointee1, ToPointee2))
         return ImplicitConversionSequence::Better;
       else if (IsDerivedFrom(ToPointee2, ToPointee1))
         return ImplicitConversionSequence::Worse;
+
+      if (ToIface1 && ToIface2) {
+        if (Context.canAssignObjCInterfaces(ToIface2, ToIface1))
+          return ImplicitConversionSequence::Better;
+        else if (Context.canAssignObjCInterfaces(ToIface1, ToIface2))
+          return ImplicitConversionSequence::Worse;
+      }
     }
 
     //   -- conversion of B* to A* is better than conversion of C* to A*,
@@ -1299,6 +1349,13 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
         return ImplicitConversionSequence::Better;
       else if (IsDerivedFrom(FromPointee1, FromPointee2))
         return ImplicitConversionSequence::Worse;
+      
+      if (FromIface1 && FromIface2) {
+        if (Context.canAssignObjCInterfaces(FromIface1, FromIface2))
+          return ImplicitConversionSequence::Better;
+        else if (Context.canAssignObjCInterfaces(FromIface2, FromIface1))
+          return ImplicitConversionSequence::Worse;
+      }
     }
   }
 
@@ -2268,7 +2325,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
          Ptr != CandidateTypes.pointer_end(); ++Ptr) {
       // Skip pointer types that aren't pointers to object types.
-      if (!(*Ptr)->getAsPointerType()->getPointeeType()->isObjectType())
+      if (!(*Ptr)->getAsPointerType()->getPointeeType()->isIncompleteOrObjectType())
         continue;
 
       QualType ParamTypes[2] = { 

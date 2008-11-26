@@ -573,7 +573,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   }
 
   if (Options.CPlusPlus)
-    Options.Blocks = 0;   
+    Options.Blocks = 0;
 }
 
 static llvm::cl::opt<bool>
