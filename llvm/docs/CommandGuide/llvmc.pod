@@ -17,15 +17,69 @@ B<llvmc> is considered an experimental tool.
 
 =head1 OPTIONS
 
+=head2 Built-in Options
+
+LLVMC has some built-in options that can't be overridden in the
+configuration libraries.
+
 =over
-
-=item B<--help>
-
-Print a summary of command line options.
 
 =item B<-o> I<filename>
 
-Specify the output file to be I<filename>.
+Output file name.
+
+=item B<-x> I<language>
+
+Specify the language of the following input files until the next B<-x>
+option.
+
+=item B<-load> I<plugin_name>
+
+Load the specified plugin DLL. Example:
+S<-load $LLVM_DIR/Release/lib/LLVMCSimple.so>.
+
+=item B<-v> or B<--verbose>
+
+Enable verbose mode, i.e. print out all executed commands.
+
+=item B<--view-graph>
+
+Show a graphical representation of the compilation graph. Requires
+that you have I<dot> and I<gv> programs installed. Hidden option,
+useful for debugging.
+
+=item B<--write-graph>
+
+Write a I<compilation-graph.dot> file in the current directory with
+the compilation graph description in the Graphviz format. Hidden
+option, useful for debugging.
+
+=item B<--save-temps>
+
+Write temporary files to the current directory and do not delete them
+on exit. Hidden option, useful for debugging.
+
+=item B<--help>
+
+Print a summary of command-line options and exit.
+
+=item B<--help-hidden>
+
+Print a summary of command-line options and exit. Print help even for
+options intended for developers.
+
+=item B<--version>
+
+Print version information and exit.
+
+=back
+
+=head2 Control Options
+
+By default, LLVMC is built with some standard configuration libraries
+that define the following options:
+
+=over
 
 =item B<-I> I<directory>
 
@@ -52,11 +106,11 @@ or B<-S> it has no effect.
 
 =head1 EXIT STATUS
 
-If B<llvmc> succeeds, it will exit with 0.  Otherwise, if an error
-occurs, it will exit with a non-zero value. If one of the compilation
-tools returns a non-zero status, pending actions will be discarded and
-B<llvmc> will return the same result code as the failing compilation
-tool.
+If B<llvmc> succeeds, it will exit with code 0.  Otherwise, if an
+error occurs, it will exit with a non-zero value. If one of the
+compilation tools returns a non-zero status, pending actions will be
+discarded and B<llvmc> will return the same result code as the failing
+compilation tool.
 
 =head1 SEE ALSO
 
