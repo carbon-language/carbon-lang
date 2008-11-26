@@ -539,7 +539,14 @@ namespace {
 class AddressingModeMatcher {
   SmallVectorImpl<Instruction*> &AddrModeInsts;
   const TargetLowering &TLI;
+
+  /// AccessTy/MemoryInst - This is the type for the access (e.g. double) and
+  /// the memory instruction that we're computing this address for.
   const Type *AccessTy;
+  Instruction *MemoryInst;
+  
+  /// AddrMode - This is the addressing mode that we're building up.  This is
+  /// part of the return value of this addressing mode matching stuff.
   ExtAddrMode &AddrMode;
   
   /// IgnoreProfitability - This is set to true when we should not do
@@ -548,8 +555,9 @@ class AddressingModeMatcher {
   bool IgnoreProfitability;
   
   AddressingModeMatcher(SmallVectorImpl<Instruction*> &AMI,
-                        const TargetLowering &T, const Type *AT,ExtAddrMode &AM)
-    : AddrModeInsts(AMI), TLI(T), AccessTy(AT), AddrMode(AM) {
+                        const TargetLowering &T, const Type *AT,
+                        Instruction *MI, ExtAddrMode &AM)
+    : AddrModeInsts(AMI), TLI(T), AccessTy(AT), MemoryInst(MI), AddrMode(AM) {
     IgnoreProfitability = false;
   }
 public:
@@ -557,13 +565,15 @@ public:
   /// Match - Find the maximal addressing mode that a load/store of V can fold,
   /// give an access type of AccessTy.  This returns a list of involved
   /// instructions in AddrModeInsts.
-  static ExtAddrMode Match(Value *V, const Type *AccessTy, 
+  static ExtAddrMode Match(Value *V, const Type *AccessTy,
+                           Instruction *MemoryInst,
                            SmallVectorImpl<Instruction*> &AddrModeInsts,
                            const TargetLowering &TLI) {
     ExtAddrMode Result;
 
     bool Success = 
-      AddressingModeMatcher(AddrModeInsts,TLI,AccessTy,Result).MatchAddr(V, 0);
+      AddressingModeMatcher(AddrModeInsts, TLI, AccessTy,
+                            MemoryInst, Result).MatchAddr(V, 0);
     Success = Success; assert(Success && "Couldn't select *anything*?");
     return Result;
   }
@@ -945,7 +955,7 @@ bool AddressingModeMatcher::ValueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
   if (Val == 0 || Val == KnownLive1 || Val == KnownLive2)
     return true;
   
-  // All non-instruction values other than arguments (constants) are live.
+  // All values other than instructions and arguments (e.g. constants) are live.
   if (!isa<Instruction>(Val) && !isa<Argument>(Val)) return true;
   
   // If Val is a constant sized alloca in the entry block, it is live, this is
@@ -953,6 +963,16 @@ bool AddressingModeMatcher::ValueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
   // live for the whole function.
   if (AllocaInst *AI = dyn_cast<AllocaInst>(Val))
     if (AI->isStaticAlloca())
+      return true;
+  
+  // Check to see if this value is already used in the memory instruction's
+  // block.  If so, it's already live into the block at the very least, so we
+  // can reasonably fold it.
+  BasicBlock *MemBB = MemoryInst->getParent();
+  for (Value::use_iterator UI = Val->use_begin(), E = Val->use_end();
+       UI != E; ++UI)
+    // We know that uses of arguments and instructions have to be instructions.
+    if (cast<Instruction>(*UI)->getParent() == MemBB)
       return true;
   
   return false;
@@ -1044,7 +1064,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     // *actually* cover the shared instruction.
     ExtAddrMode Result;
     AddressingModeMatcher Matcher(MatchedAddrModeInsts, TLI, AddressAccessTy,
-                                  Result);
+                                  MemoryInst, Result);
     Matcher.IgnoreProfitability = true;
     bool Success = Matcher.MatchAddr(Address, 0);
     Success = Success; assert(Success && "Couldn't select *anything*?");
@@ -1082,19 +1102,19 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
 ///
 /// This method is used to optimize both load/store and inline asms with memory
 /// operands.
-bool CodeGenPrepare::OptimizeMemoryInst(Instruction *LdStInst, Value *Addr,
+bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
                                         const Type *AccessTy,
                                         DenseMap<Value*,Value*> &SunkAddrs) {
   // Figure out what addressing mode will be built up for this operation.
   SmallVector<Instruction*, 16> AddrModeInsts;
-  ExtAddrMode AddrMode = 
-    AddressingModeMatcher::Match(Addr, AccessTy, AddrModeInsts, *TLI);
+  ExtAddrMode AddrMode = AddressingModeMatcher::Match(Addr, AccessTy,MemoryInst,
+                                                      AddrModeInsts, *TLI);
 
   // Check to see if any of the instructions supersumed by this addr mode are
   // non-local to I's BB.
   bool AnyNonLocal = false;
   for (unsigned i = 0, e = AddrModeInsts.size(); i != e; ++i) {
-    if (IsNonLocalValue(AddrModeInsts[i], LdStInst->getParent())) {
+    if (IsNonLocalValue(AddrModeInsts[i], MemoryInst->getParent())) {
       AnyNonLocal = true;
       break;
     }
@@ -1109,7 +1129,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *LdStInst, Value *Addr,
   // Insert this computation right after this user.  Since our caller is
   // scanning from the top of the BB to the bottom, reuse of the expr are
   // guaranteed to happen later.
-  BasicBlock::iterator InsertPt = LdStInst;
+  BasicBlock::iterator InsertPt = MemoryInst;
 
   // Now that we determined the addressing expression we want to use and know
   // that we have to sink it into this block.  Check to see if we have already
@@ -1181,7 +1201,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *LdStInst, Value *Addr,
       SunkAddr = new IntToPtrInst(Result, Addr->getType(), "sunkaddr",InsertPt);
   }
 
-  LdStInst->replaceUsesOfWith(Addr, SunkAddr);
+  MemoryInst->replaceUsesOfWith(Addr, SunkAddr);
 
   if (Addr->use_empty())
     EraseDeadInstructions(Addr);
