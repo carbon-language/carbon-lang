@@ -19,4 +19,6 @@ struct s0 *f0(struct s0 *a0) {
   return a0->p;
 }
   
-  
+// PR3134
+char xpto[];
+

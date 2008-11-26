@@ -515,9 +515,22 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   uint64_t LineNo = SM.getLogicalLineNumber(Decl->getLocation());
 
   std::string Name = Decl->getNameAsString();
-  
+
+  QualType T = Decl->getType();
+  if (T->isIncompleteArrayType()) {
+    
+    // CodeGen turns int[] into int[1] so we'll do the same here.
+    llvm::APSInt ConstVal(32);
+    
+    ConstVal = 1;
+    QualType ET = M->getContext().getAsArrayType(T)->getElementType();
+    
+    T = M->getContext().getConstantArrayType(ET, ConstVal, 
+                                           ArrayType::Normal, 0);
+  }
+
   DebugFactory.CreateGlobalVariable(Unit, Name, Name, "", Unit, LineNo,
-                                    getOrCreateType(Decl->getType(), Unit),
+                                    getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
                                     true/*definition*/, Var);
 }
