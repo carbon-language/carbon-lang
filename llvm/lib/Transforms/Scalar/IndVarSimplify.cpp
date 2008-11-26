@@ -742,6 +742,8 @@ static bool useSIToFPInst(ConstantFP &InitV, ConstantFP &ExitV,
 static bool convertToInt(const APFloat &APF, uint64_t *intVal) {
 
   bool isExact = false;
+  if (&APF.getSemantics() == &APFloat::PPCDoubleDouble)
+    return false;
   if (APF.convertToInteger(intVal, 32, APF.isNegative(), 
                            APFloat::rmTowardZero, &isExact)
       != APFloat::opOK)
