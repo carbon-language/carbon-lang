@@ -1186,12 +1186,81 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                                   ObjCDeclSpec &ODS,
                                   Selector GetterSel,
                                   Selector SetterSel,
+                                  DeclTy *ClassCategory,
+                                  bool *isOverridingProperty,
                                   tok::ObjCKeywordKind MethodImplKind) {
-  QualType T = GetTypeForDeclarator(FD.D, S);
   unsigned Attributes = ODS.getPropertyAttributes();
+  bool isReadWrite = ((Attributes & ObjCDeclSpec::DQ_PR_readwrite) ||
+                      // default is readwrite!
+                      !(Attributes & ObjCDeclSpec::DQ_PR_readonly));
+  // property is defaulted to 'assign' if it is readwrite and is 
+  // not retain or copy
+  bool isAssign = ((Attributes & ObjCDeclSpec::DQ_PR_assign) ||
+                   (isReadWrite && 
+                    !(Attributes & ObjCDeclSpec::DQ_PR_retain) && 
+                    !(Attributes & ObjCDeclSpec::DQ_PR_copy)));
+  QualType T = GetTypeForDeclarator(FD.D, S);
+  Decl *ClassDecl = static_cast<Decl *>(ClassCategory);
 
   // May modify Attributes.
   CheckObjCPropertyAttributes(T, AtLoc, Attributes);
+  
+  if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
+    if (!CDecl->getIdentifier()) {
+      // This is an anonymous category. property requires special 
+      // handling.
+      if (ObjCInterfaceDecl *ICDecl = CDecl->getClassInterface()) {
+        if (ObjCPropertyDecl *PIDecl =
+            ICDecl->FindPropertyDeclaration(FD.D.getIdentifier())) {
+          // property 'PIDecl's readonly attribute will be over-ridden
+          // with anonymous category's readwrite property attribute!
+          unsigned PIkind = PIDecl->getPropertyAttributes();
+          if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
+            if ((Attributes & ObjCPropertyDecl::OBJC_PR_retain) !=
+                (PIkind & ObjCPropertyDecl::OBJC_PR_retain) ||
+                (Attributes & ObjCPropertyDecl::OBJC_PR_copy) !=
+                (PIkind & ObjCPropertyDecl::OBJC_PR_copy) ||
+                (Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) !=
+                (PIkind & ObjCPropertyDecl::OBJC_PR_nonatomic))
+              Diag(AtLoc, diag::warn_property_attr_mismatch);
+            PIDecl->makeitReadWriteAttribute();
+            if (Attributes & ObjCDeclSpec::DQ_PR_retain)
+              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
+            if (Attributes & ObjCDeclSpec::DQ_PR_copy)
+              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
+            PIDecl->setSetterName(SetterSel);
+            // FIXME: use a common routine with addPropertyMethods.
+            ObjCMethodDecl *SetterDecl =
+              ObjCMethodDecl::Create(Context, AtLoc, AtLoc, SetterSel,
+                                     Context.VoidTy,
+                                     ICDecl,
+                                     true, false, true, 
+                                     ObjCMethodDecl::Required);
+            ParmVarDecl *Argument = ParmVarDecl::Create(Context,
+                                                        SetterDecl,
+                                                        SourceLocation(),
+                                                        FD.D.getIdentifier(),
+                                                        T,
+                                                        VarDecl::None,
+                                                        0, 0);
+            SetterDecl->setMethodParams(&Argument, 1);
+            PIDecl->setSetterMethodDecl(SetterDecl);
+          }
+          else
+            Diag(AtLoc, diag::err_use_continuation_class);
+          *isOverridingProperty = true;
+          return 0;
+        }
+        // else
+        // FIXME:
+        // no matching property found in the main class. Must simply
+        // add this property to the main class's property list.
+      } else {
+          Diag(CDecl->getLocation(), diag::err_continuation_class);
+          *isOverridingProperty = true;
+          return 0;
+      }
+    }
 
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc, 
                                                      FD.D.getIdentifier(), T);
@@ -1209,10 +1278,7 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   if (Attributes & ObjCDeclSpec::DQ_PR_setter)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_setter);
   
-  if (Attributes & ObjCDeclSpec::DQ_PR_assign)
-    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);
-  
-  if (Attributes & ObjCDeclSpec::DQ_PR_readwrite)
+  if (isReadWrite)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
   
   if (Attributes & ObjCDeclSpec::DQ_PR_retain)
@@ -1220,6 +1286,9 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   
   if (Attributes & ObjCDeclSpec::DQ_PR_copy)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
+  
+  if (isAssign)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);
   
   if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);

@@ -332,10 +332,14 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
                                            FD.D.getIdentifier());
         Selector SetterSel = 
           PP.getSelectorTable().getUnarySelector(SetterName);
+        bool isOverridingProperty = false;
         DeclTy *Property = Actions.ActOnProperty(CurScope, AtLoc, FD, OCDS,
                                                  GetterSel, SetterSel,
+                                                 interfaceDecl, 
+                                                 &isOverridingProperty,
                                                  MethodImplKind);
-        allProperties.push_back(Property);
+        if (!isOverridingProperty)
+          allProperties.push_back(Property);
       }
       break;
     }

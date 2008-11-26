@@ -1051,6 +1051,7 @@ public:
   virtual DeclTy *ActOnProperty(Scope *S, SourceLocation AtLoc,
                                 FieldDeclarator &FD, ObjCDeclSpec &ODS,
                                 Selector GetterSel, Selector SetterSel,
+                                DeclTy *ClassCategory, bool *OverridingProperty,
                                 tok::ObjCKeywordKind MethodImplKind);
   
   virtual DeclTy *ActOnPropertyImplDecl(SourceLocation AtLoc, 

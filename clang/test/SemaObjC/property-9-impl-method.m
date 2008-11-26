@@ -60,4 +60,5 @@ NSSize minimumSize;
   NSRect dummy, result = {};
   NSDivideRect(self.bounds, &result, &dummy, self.tabAreaThickness, self.rectEdgeForTabs);
 }
+@end
 

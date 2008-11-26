@@ -563,6 +563,12 @@ DIAG(warn_property_attribute, WARNING,
      "property %0 '%1' attribute does not match the property inherited from %2")
 DIAG(warn_property_type, WARNING,
      "property type %0 does not match property type inherited from %1")
+DIAG(err_continuation_class, ERROR,
+     "continuation class has no primary class")
+DIAG(err_use_continuation_class, ERROR,
+     "use contination class to override 'readonly' property with 'readwrite'")
+DIAG(warn_property_attr_mismatch, WARNING,
+     "property attribute in continuation class does not match the primary class")
 
 /// C++ parser diagnostics
 DIAG(err_expected_unqualified_id, ERROR,
