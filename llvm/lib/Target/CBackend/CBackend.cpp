@@ -2193,10 +2193,10 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   if (F->hasDLLExportLinkage()) Out << "__declspec(dllexport) ";  
   switch (F->getCallingConv()) {
    case CallingConv::X86_StdCall:
-    Out << "__stdcall ";
+    Out << "__attribute__((stdcall)) ";
     break;
    case CallingConv::X86_FastCall:
-    Out << "__fastcall ";
+    Out << "__attribute__((fastcall)) ";
     break;
   }
   
