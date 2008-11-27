@@ -397,7 +397,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     // Determine AntiDepReg's register class, if it is live and is
     // consistently used within a single class.
     const TargetRegisterClass *RC = AntiDepReg != 0 ? Classes[AntiDepReg] : 0;
-    assert(AntiDepReg == 0 || RC != NULL &&
+    assert((AntiDepReg == 0 || RC != NULL) &&
            "Register should be live if it's causing an anti-dependence!");
     if (RC == reinterpret_cast<TargetRegisterClass *>(-1))
       AntiDepReg = 0;
