@@ -20,6 +20,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Target/TargetData.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -390,6 +391,13 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
                                       unsigned MaxInstsToScan,
                                       AliasAnalysis *AA) {
   if (MaxInstsToScan == 0) MaxInstsToScan = ~0U;
+
+  // If we're using alias analysis to disambiguate get the size of *Ptr.
+  unsigned AccessSize = 0;
+  if (AA) {
+    const Type *AccessTy = cast<PointerType>(Ptr->getType())->getElementType();
+    AccessSize = AA->getTargetData().getTypeStoreSizeInBits(AccessTy);
+  }
   
   while (ScanFrom != ScanBB->begin()) {
     // Don't scan huge blocks.
@@ -415,14 +423,25 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
            isa<GlobalVariable>(SI->getOperand(1))))
         continue;
       
+      // If we have alias analysis and it says the store won't modify the loaded
+      // value, ignore the store.
+      if (AA &&
+          (AA->getModRefInfo(SI, Ptr, AccessSize) & AliasAnalysis::Mod) == 0)
+        continue;
+      
       // Otherwise the store that may or may not alias the pointer, bail out.
       ++ScanFrom;
       return 0;
     }
     
-    
     // If this is some other instruction that may clobber Ptr, bail out.
     if (Inst->mayWriteToMemory()) {
+      // If alias analysis claims that it really won't modify the load,
+      // ignore it.
+      if (AA &&
+          (AA->getModRefInfo(Inst, Ptr, AccessSize) & AliasAnalysis::Mod) == 0)
+        continue;
+      
       // May modify the pointer, bail out.
       ++ScanFrom;
       return 0;
