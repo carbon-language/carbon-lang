@@ -1,0 +1,40 @@
+#ifndef LLVM_CLANG_MANAGER_REGISTRY_H
+#define LLVM_CLANG_MANAGER_REGISTRY_H
+
+#include "clang/Analysis/PathSensitive/GRState.h"
+
+namespace clang {
+
+/// ManagerRegistry - This class records manager creators registered at
+/// runtime. The information is communicated to AnalysisManager through static
+/// members. Better design is expected.
+
+class ManagerRegistry {
+public:
+  static StoreManagerCreator StoreMgrCreator;
+  static ConstraintManagerCreator ConstraintMgrCreator;
+};
+
+/// RegisterConstraintManager - This class is used to setup the constraint
+/// manager of the static analyzer. The constructor takes a creator function
+/// pointer for creating the constraint manager.
+///
+/// It is used like this:
+///
+/// class MyConstraintManager {};
+/// ConstraintManager* CreateMyConstraintManager(GRStateManager& statemgr) {
+///  return new MyConstraintManager(statemgr);
+/// }
+/// RegisterConstraintManager X(CreateMyConstraintManager);
+
+class RegisterConstraintManager {
+public:
+  RegisterConstraintManager(ConstraintManagerCreator CMC) {
+    assert(ManagerRegistry::ConstraintMgrCreator == 0 
+           && "ConstraintMgrCreator already set!");
+    ManagerRegistry::ConstraintMgrCreator = CMC;
+  }
+};
+
+}
+#endif

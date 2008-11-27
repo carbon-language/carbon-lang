@@ -182,8 +182,8 @@ protected:
   
 public:
   GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L,
-               GRStateManager::StoreManagerCreator SMC =
-                CreateBasicStoreManager);
+               StoreManagerCreator SMC = CreateBasicStoreManager,
+               ConstraintManagerCreator CMC = CreateBasicConstraintManager);
   
   ~GRExprEngine();
   

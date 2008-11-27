@@ -116,13 +116,13 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 
 GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
                            LiveVariables& L,
-                           GRStateManager::StoreManagerCreator SMC)
+                           StoreManagerCreator SMC,
+                           ConstraintManagerCreator CMC)
   : CoreEngine(cfg, CD, Ctx, *this), 
     G(CoreEngine.getGraph()),
     Liveness(L),
     Builder(NULL),
-    StateMgr(G.getContext(), SMC,
-             CreateBasicConstraintManager, G.getAllocator(), cfg, CD, L),
+    StateMgr(G.getContext(), SMC, CMC, G.getAllocator(), cfg, CD, L),
     SymMgr(StateMgr.getSymbolManager()),
     CurrentStmt(NULL),
   NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),

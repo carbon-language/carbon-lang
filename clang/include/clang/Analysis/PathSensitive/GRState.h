@@ -46,6 +46,9 @@ namespace clang {
 class GRStateManager;
 class GRTransferFuncs;
 
+typedef ConstraintManager* (*ConstraintManagerCreator)(GRStateManager&);
+typedef StoreManager* (*StoreManagerCreator)(GRStateManager&);
+
 //===----------------------------------------------------------------------===//
 // GRStateTrait - Traits used by the Generic Data Map of a GRState.
 //===----------------------------------------------------------------------===//
@@ -291,9 +294,6 @@ private:
 //   }
     
 public:
-  
-  typedef ConstraintManager* (*ConstraintManagerCreator)(GRStateManager&);
-  typedef StoreManager* (*StoreManagerCreator)(GRStateManager&);
   
   GRStateManager(ASTContext& Ctx,
                  StoreManagerCreator CreateStoreManager,

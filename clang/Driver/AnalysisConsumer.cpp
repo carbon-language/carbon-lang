@@ -13,6 +13,7 @@
 
 #include "ASTConsumers.h"
 #include "clang/Driver/PathDiagnosticClients.h"
+#include "clang/Driver/ManagerRegistry.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -129,12 +130,20 @@ namespace {
     llvm::OwningPtr<LiveVariables> liveness;
     llvm::OwningPtr<ParentMap> PM;
 
+    // Configurable components creators.
+    StoreManagerCreator CreateStoreMgr;
+    ConstraintManagerCreator CreateConstraintMgr;
+
   public:
     AnalysisManager(AnalysisConsumer& c, Decl* d, Stmt* b) 
-    : D(d), Body(b), TU(0), AScope(ScopeDecl), C(c), DisplayedFunction(false) {}
+    : D(d), Body(b), TU(0), AScope(ScopeDecl), C(c), DisplayedFunction(false) {
+      setManagerCreators();
+    }
     
     AnalysisManager(AnalysisConsumer& c, TranslationUnit* tu) 
-    : D(0), Body(0), TU(tu), AScope(ScopeTU), C(c), DisplayedFunction(false) {}    
+    : D(0), Body(0), TU(tu), AScope(ScopeTU), C(c), DisplayedFunction(false) {
+      setManagerCreators();
+    }
     
     Decl* getCodeDecl() const { 
       assert (AScope == ScopeDecl);
@@ -151,14 +160,13 @@ namespace {
       return TU;
     }    
     
-    GRStateManager::StoreManagerCreator getStoreManagerCreator() {
-      switch (C.SM) {
-        default:
-#define ANALYSIS_STORE(NAME, CMDFLAG, DESC)\
-case NAME##Model: return Create##NAME##Manager;
-#include "Analyses.def"
-      }
+    StoreManagerCreator getStoreManagerCreator() {
+      return CreateStoreMgr;
     };
+
+    ConstraintManagerCreator getConstraintManagerCreator() {
+      return CreateConstraintMgr;
+    }
     
     virtual CFG* getCFG() {
       if (!cfg) cfg.reset(CFG::buildCFG(getBody()));
@@ -215,7 +223,7 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.HTMLDir, C.PP, C.PPF)); break;
     bool shouldVisualizeGraphviz() const {
       return C.VisGraphviz;
     }
-    
+
     bool shouldVisualizeUbigraph() const {
       return C.VisUbigraph;
     }
@@ -249,8 +257,33 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.HTMLDir, C.PP, C.PPF)); break;
         << MD->getSelector().getAsString() << "'\n";
       }
     }
+
+  private:
+    /// Set configurable analyzer components creators. First check if there are
+    /// components registered at runtime. Otherwise fall back to builtin
+    /// components.
+    void setManagerCreators() {
+      if (ManagerRegistry::StoreMgrCreator != 0) {
+        CreateStoreMgr = ManagerRegistry::StoreMgrCreator;
+      }
+      else {
+        switch (C.SM) {
+        default:
+          assert(0 && "Unknown store manager.");
+#define ANALYSIS_STORE(NAME, CMDFLAG, DESC)     \
+          case NAME##Model: CreateStoreMgr = Create##NAME##Manager; break;
+#include "Analyses.def"
+        }
+      }
+
+      if (ManagerRegistry::ConstraintMgrCreator != 0)
+        CreateConstraintMgr = ManagerRegistry::ConstraintMgrCreator;
+      else
+        CreateConstraintMgr = CreateBasicConstraintManager;
+    }
+
   };
-  
+
 } // end anonymous namespace
 
 namespace llvm {
@@ -370,7 +403,8 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   if (!L) return;
 
   GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L,
-                   mgr.getStoreManagerCreator());
+                   mgr.getStoreManagerCreator(), 
+                   mgr.getConstraintManagerCreator());
 
   Eng.setTransferFunctions(tf);
   
