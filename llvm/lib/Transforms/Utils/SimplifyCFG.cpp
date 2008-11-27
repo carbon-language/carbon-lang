@@ -1709,9 +1709,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   assert(&BB->getParent()->getEntryBlock() != BB &&
          "Can't Simplify entry block!");
 
-  // Remove basic blocks that have no predecessors... which are unreachable.
-  if ((pred_begin(BB) == pred_end(BB)) ||
-      (*pred_begin(BB) == BB && ++pred_begin(BB) == pred_end(BB))) {
+  // Remove basic blocks that have no predecessors... or that just have themself
+  // as a predecessor.  These are unreachable.
+  if (pred_begin(BB) == pred_end(BB) || BB->getSinglePredecessor() == BB) {
     DOUT << "Removing BB: \n" << *BB;
 
     // Loop through all of our successors and make sure they know that one
@@ -1733,7 +1733,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       // Remove the instruction from the basic block
       BB->getInstList().pop_back();
     }
-    M->getBasicBlockList().erase(BB);
+    BB->eraseFromParent();
     return true;
   }
 
