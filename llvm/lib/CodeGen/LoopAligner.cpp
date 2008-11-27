@@ -64,8 +64,14 @@ bool LoopAligner::runOnMachineFunction(MachineFunction &MF) {
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = I;
-    if (MLI->isLoopHeader(MBB))
+    if (MLI->isLoopHeader(MBB)) {
+      MachineBasicBlock *PredBB = prior(I);
+      if (MLI->getLoopFor(MBB) == MLI->getLoopFor(PredBB))
+        // If previously BB is in the same loop, don't align this BB. We want
+        // to prevent adding noop's inside a loop.
+        continue;
       MBB->setAlignment(Align);
+    }
   }
 
   return true;
