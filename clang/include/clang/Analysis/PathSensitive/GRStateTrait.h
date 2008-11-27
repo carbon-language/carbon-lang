@@ -80,7 +80,7 @@ namespace clang {
     }  
     
     static inline void* MakeVoidPtr(data_type D) {
-      return D.getInternalPointer();
+      return  (void*) D.getInternalPointer();
     }  
     
     static inline context_type MakeContext(void* p) {
