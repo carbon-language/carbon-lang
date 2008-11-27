@@ -2576,12 +2576,21 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     } else if (isa<VectorType>(Op1->getType())) {
       if (isa<ConstantAggregateZero>(Op1))
         return ReplaceInstUsesWith(I, Op1);
-      
-      // As above, vector X*splat(1.0) -> X in all defined cases.
-      if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1))
-        if (ConstantFP *F = dyn_cast_or_null<ConstantFP>(Op1V->getSplatValue()))
-          if (F->isExactlyValue(1.0))
-            return ReplaceInstUsesWith(I, Op0);
+
+      if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
+        if (Op1V->isAllOnesValue())              // X * -1 == 0 - X
+          return BinaryOperator::CreateNeg(Op0, I.getName());
+
+        // As above, vector X*splat(1.0) -> X in all defined cases.
+        if (Constant *Splat = Op1V->getSplatValue()) {
+          if (ConstantFP *F = dyn_cast<ConstantFP>(Splat))
+            if (F->isExactlyValue(1.0))
+              return ReplaceInstUsesWith(I, Op0);
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(Splat))
+            if (CI->equalsInt(1))
+              return ReplaceInstUsesWith(I, Op0);
+        }
+      }
     }
     
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
@@ -2855,6 +2864,13 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
   // It can't be division by zero, hence it must be division by one.
   if (I.getType() == Type::Int1Ty)
     return ReplaceInstUsesWith(I, Op0);
+
+  if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
+    if (ConstantInt *X = cast_or_null<ConstantInt>(Op1V->getSplatValue()))
+      // div X, 1 == X
+      if (X->isOne())
+        return ReplaceInstUsesWith(I, Op0);
+  }
 
   return 0;
 }
