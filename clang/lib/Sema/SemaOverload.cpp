@@ -783,7 +783,8 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // can be converted to an rvalue of type "pointer to cv void" (C++
   // 4.10p2).
   if (FromPointeeType->isIncompleteOrObjectType() && ToPointeeType->isVoidType()) {
-    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, ToPointeeType,
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
+                                                       ToPointeeType,
                                                        ToType, Context);
     return true;
   }
@@ -803,7 +804,8 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // here. That is handled by CheckPointerConversion.
   if (FromPointeeType->isRecordType() && ToPointeeType->isRecordType() &&
       IsDerivedFrom(FromPointeeType, ToPointeeType)) {
-    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, ToPointeeType,
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
+                                                       ToPointeeType,
                                                        ToType, Context);
     return true;
   }
@@ -814,7 +816,8 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   const ObjCInterfaceType* ToIface = ToPointeeType->getAsObjCInterfaceType();
   if (FromIface && ToIface && 
       Context.canAssignObjCInterfaces(ToIface, FromIface)) {
-    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, ToPointeeType,
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
+                                                       ToPointeeType,
                                                        ToType, Context);
     return true;
   }
@@ -823,7 +826,8 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // to any interface (in both directions).
   if ((FromIface && Context.isObjCIdType(ToPointeeType))
       || (ToIface && Context.isObjCIdType(FromPointeeType))) {
-    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, ToPointeeType,
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
+                                                       ToPointeeType,
                                                        ToType, Context);
     return true;
   } 
