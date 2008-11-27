@@ -494,40 +494,8 @@ static bool GatherValueComparisons(Instruction *Cond, Value *&CompVal,
   return false;
 }
 
-/// ErasePossiblyDeadInstructionTree - If the specified instruction is dead and
-/// has no side effects, nuke it.  If it uses any instructions that become dead
-/// because the instruction is now gone, nuke them too.
-static void ErasePossiblyDeadInstructionTree(Instruction *I) {
-  if (!isInstructionTriviallyDead(I)) return;
-  
-  SmallVector<Instruction*, 16> InstrsToInspect;
-  InstrsToInspect.push_back(I);
-
-  while (!InstrsToInspect.empty()) {
-    I = InstrsToInspect.back();
-    InstrsToInspect.pop_back();
-
-    if (!isInstructionTriviallyDead(I)) continue;
-
-    // If I is in the work list multiple times, remove previous instances.
-    for (unsigned i = 0, e = InstrsToInspect.size(); i != e; ++i)
-      if (InstrsToInspect[i] == I) {
-        InstrsToInspect.erase(InstrsToInspect.begin()+i);
-        --i, --e;
-      }
-
-    // Add operands of dead instruction to worklist.
-    for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
-      if (Instruction *OpI = dyn_cast<Instruction>(*i))
-        InstrsToInspect.push_back(OpI);
-
-    // Remove dead instruction.
-    I->eraseFromParent();
-  }
-}
-
-// isValueEqualityComparison - Return true if the specified terminator checks to
-// see if a value is equal to constant integer value.
+/// isValueEqualityComparison - Return true if the specified terminator checks
+/// to see if a value is equal to constant integer value.
 static Value *isValueEqualityComparison(TerminatorInst *TI) {
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
     // Do not permit merging of large switch instructions into their
@@ -548,8 +516,8 @@ static Value *isValueEqualityComparison(TerminatorInst *TI) {
   return 0;
 }
 
-// Given a value comparison instruction, decode all of the 'cases' that it
-// represents and return the 'default' block.
+/// Given a value comparison instruction, decode all of the 'cases' that it
+/// represents and return the 'default' block.
 static BasicBlock *
 GetValueEqualityComparisonCases(TerminatorInst *TI,
                                 std::vector<std::pair<ConstantInt*,
@@ -666,7 +634,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
         TI->eraseFromParent();   // Nuke the old one.
         // If condition is now dead, nuke it.
         if (Instruction *CondI = dyn_cast<Instruction>(Cond))
-          ErasePossiblyDeadInstructionTree(CondI);
+          RecursivelyDeleteTriviallyDeadInstructions(CondI);
         return true;
 
       } else {
@@ -734,7 +702,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
       Cond = dyn_cast<Instruction>(BI->getCondition());
     TI->eraseFromParent();   // Nuke the old one.
 
-    if (Cond) ErasePossiblyDeadInstructionTree(Cond);
+    if (Cond) RecursivelyDeleteTriviallyDeadInstructions(Cond);
     return true;
   }
   return false;
@@ -850,7 +818,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
       Pred->getInstList().erase(PTI);
 
       // If the condition is dead now, remove the instruction tree.
-      if (DeadCond) ErasePossiblyDeadInstructionTree(DeadCond);
+      if (DeadCond) RecursivelyDeleteTriviallyDeadInstructions(DeadCond);
 
       // Okay, last check.  If BB is still a successor of PSI, then we must
       // have an infinite loop case.  If so, add an infinitely looping block
@@ -1425,7 +1393,7 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
   BI->eraseFromParent();
   
   if (Instruction *BrCondI = dyn_cast<Instruction>(BrCond))
-    ErasePossiblyDeadInstructionTree(BrCondI);
+    RecursivelyDeleteTriviallyDeadInstructions(BrCondI);
   return true;
 }
 
@@ -2146,7 +2114,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
           // Erase the potentially condition tree that was used to computed the
           // branch condition.
-          ErasePossiblyDeadInstructionTree(Cond);
+          RecursivelyDeleteTriviallyDeadInstructions(Cond);
           return true;
         }
       }
