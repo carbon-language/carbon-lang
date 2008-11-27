@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 | grep {jo} | count 1
 ; RUN: llvm-as < %s | llc -march=x86 | grep {jc} | count 1
+; XFAIL: *
 
 @ok = internal constant [4 x i8] c"%d\0A\00"
 @no = internal constant [4 x i8] c"no\0A\00"
