@@ -454,26 +454,6 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
   return MadeChange;
 }
 
-/// EraseDeadInstructions - Erase any dead instructions, recursively.
-static void EraseDeadInstructions(Value *V) {
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I || !I->use_empty()) return;
-
-  SmallPtrSet<Instruction*, 16> Insts;
-  Insts.insert(I);
-
-  while (!Insts.empty()) {
-    I = *Insts.begin();
-    Insts.erase(I);
-    if (isInstructionTriviallyDead(I)) {
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
-          Insts.insert(U);
-      I->eraseFromParent();
-    }
-  }
-}
-
 //===----------------------------------------------------------------------===//
 // Addressing Mode Analysis and Optimization
 //===----------------------------------------------------------------------===//
@@ -1234,7 +1214,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   MemoryInst->replaceUsesOfWith(Addr, SunkAddr);
 
   if (Addr->use_empty())
-    EraseDeadInstructions(Addr);
+    RecursivelyDeleteTriviallyDeadInstructions(Addr);
   return true;
 }
 

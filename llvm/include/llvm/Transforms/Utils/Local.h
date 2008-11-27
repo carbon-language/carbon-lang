@@ -26,13 +26,8 @@ class ConstantExpr;
 class TargetData;
 
 //===----------------------------------------------------------------------===//
-//  Local constant propagation...
+//  Local constant propagation.
 //
-
-/// doConstantPropagation - Constant prop a specific instruction.  Returns true
-/// and potentially moves the iterator if constant propagation was performed.
-///
-bool doConstantPropagation(BasicBlock::iterator &I, const TargetData *TD = 0);
 
 /// ConstantFoldTerminator - If a terminator instruction is predicated on a
 /// constant value, convert it into an unconditional branch to the constant
@@ -42,7 +37,7 @@ bool doConstantPropagation(BasicBlock::iterator &I, const TargetData *TD = 0);
 bool ConstantFoldTerminator(BasicBlock *BB);
 
 //===----------------------------------------------------------------------===//
-//  Local dead code elimination...
+//  Local dead code elimination.
 //
 
 /// isInstructionTriviallyDead - Return true if the result produced by the
@@ -50,14 +45,12 @@ bool ConstantFoldTerminator(BasicBlock *BB);
 ///
 bool isInstructionTriviallyDead(Instruction *I);
 
-
-/// dceInstruction - Inspect the instruction at *BBI and figure out if it
-/// isTriviallyDead.  If so, remove the instruction and update the iterator to
-/// point to the instruction that immediately succeeded the original
-/// instruction.
-///
-bool dceInstruction(BasicBlock::iterator &BBI);
-
+  
+/// RecursivelyDeleteTriviallyDeadInstructions - If the specified value is a
+/// trivially dead instruction, delete it.  If that makes any of its operands
+/// trivially dead, delete them too, recursively.
+void RecursivelyDeleteTriviallyDeadInstructions(Value *V);
+    
 //===----------------------------------------------------------------------===//
 //  Control Flow Graph Restructuring...
 //

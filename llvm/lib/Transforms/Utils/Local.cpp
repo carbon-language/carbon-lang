@@ -22,29 +22,12 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
-#include <cerrno>
+#include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-//  Local constant propagation...
+//  Local constant propagation.
 //
-
-/// doConstantPropagation - If an instruction references constants, try to fold
-/// them together...
-///
-bool llvm::doConstantPropagation(BasicBlock::iterator &II,
-                                 const TargetData *TD) {
-  if (Constant *C = ConstantFoldInstruction(II, TD)) {
-    // Replaces all of the uses of a variable with uses of the constant.
-    II->replaceAllUsesWith(C);
-
-    // Remove the instruction from the basic block...
-    II = II->getParent()->getInstList().erase(II);
-    return true;
-  }
-
-  return false;
-}
 
 // ConstantFoldTerminator - If a terminator instruction is predicated on a
 // constant value, convert it into an unconditional branch to the constant
@@ -171,6 +154,9 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
 //  Local dead code elimination...
 //
 
+/// isInstructionTriviallyDead - Return true if the result produced by the
+/// instruction is not used, and the instruction has no side effects.
+///
 bool llvm::isInstructionTriviallyDead(Instruction *I) {
   if (!I->use_empty() || isa<TerminatorInst>(I)) return false;
 
@@ -187,19 +173,28 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
   return false;
 }
 
-// dceInstruction - Inspect the instruction at *BBI and figure out if it's
-// [trivially] dead.  If so, remove the instruction and update the iterator
-// to point to the instruction that immediately succeeded the original
-// instruction.
-//
-bool llvm::dceInstruction(BasicBlock::iterator &BBI) {
-  // Look for un"used" definitions...
-  if (isInstructionTriviallyDead(BBI)) {
-    BBI = BBI->getParent()->getInstList().erase(BBI);   // Bye bye
-    return true;
+/// RecursivelyDeleteTriviallyDeadInstructions - If the specified value is a
+/// trivially dead instruction, delete it.  If that makes any of its operands
+/// trivially dead, delete them too, recursively.
+void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I || !I->use_empty()) return;
+  
+  SmallPtrSet<Instruction*, 16> Insts;
+  Insts.insert(I);
+  
+  while (!Insts.empty()) {
+    I = *Insts.begin();
+    Insts.erase(I);
+    if (isInstructionTriviallyDead(I)) {
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+        if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
+          Insts.insert(U);
+      I->eraseFromParent();
+    }
   }
-  return false;
 }
+
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Graph Restructuring...
