@@ -1917,7 +1917,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       
     if (rhsType->getAsBlockPointerType()) {
       if (lhsType->getAsPointerType()->getPointeeType()->isVoidType())
-        return BlockVoidPointer;
+        return Compatible;
 
       // Treat block pointers as objects.
       if (getLangOptions().ObjC1 &&
@@ -1941,7 +1941,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       
     if (const PointerType *RHSPT = rhsType->getAsPointerType()) {
       if (RHSPT->getPointeeType()->isVoidType())
-        return BlockVoidPointer;
+        return Compatible;
     }
     return Incompatible;
   }
@@ -1959,7 +1959,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       
     if (isa<BlockPointerType>(lhsType) && 
         rhsType->getAsPointerType()->getPointeeType()->isVoidType())
-      return BlockVoidPointer;
+      return Compatible;
     return Incompatible;
   }
 
@@ -3645,9 +3645,6 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   case IncompatibleBlockPointer:
     DiagKind = diag::ext_typecheck_convert_incompatible_block_pointer;
-    break;
-  case BlockVoidPointer:
-    DiagKind = diag::ext_typecheck_convert_pointer_void_block;
     break;
   case IncompatibleObjCQualifiedId:
     // FIXME: Diagnose the problem in ObjCQualifiedIdTypesAreCompatible, since 
