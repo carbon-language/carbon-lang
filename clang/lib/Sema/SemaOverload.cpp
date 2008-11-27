@@ -743,9 +743,24 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
 /// 4.10). If so, returns true and places the converted type (that
 /// might differ from ToType in its cv-qualifiers at some level) into
 /// ConvertedType.
+///
+/// This routine also supports conversions to and from block pointers.
 bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
                                QualType& ConvertedType)
 {
+  // Blocks: Block pointers can be converted to void*.
+  if (FromType->isBlockPointerType() && ToType->isPointerType() &&
+      ToType->getAsPointerType()->getPointeeType()->isVoidType()) {
+    ConvertedType = ToType;
+    return true;
+  }
+  // Blocks: A null pointer constant can be converted to a block
+  // pointer type.
+  if (ToType->isBlockPointerType() && From->isNullPointerConstant(Context)) {
+    ConvertedType = ToType;
+    return true;
+  }
+
   const PointerType* ToTypePtr = ToType->getAsPointerType();
   if (!ToTypePtr)
     return false;
