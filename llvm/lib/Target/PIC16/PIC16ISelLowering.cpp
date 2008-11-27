@@ -478,7 +478,7 @@ SDNode *PIC16TargetLowering::ExpandShift(SDNode *N, SelectionDAG &DAG) {
   SDVTList Tys; 
   SDValue ShfCom;   // Shift Component - Lo component should be shifted
   SDValue RotCom;   // Rotate Component- Hi component should be rotated
-  PIC16ISD::NodeType ShfNode, RotNode; 
+  PIC16ISD::NodeType ShfNode = PIC16ISD::Dummy, RotNode = PIC16ISD::Dummy;
   
   // Currently handling Constant shift only
   if (Amt.getOpcode() != ISD::Constant)
