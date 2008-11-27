@@ -205,25 +205,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   // If the destination block has a single pred, then this is a trivial edge,
   // just collapse it.
   if (DestBB->getSinglePredecessor()) {
-    // If DestBB has single-entry PHI nodes, fold them.
-    while (PHINode *PN = dyn_cast<PHINode>(DestBB->begin())) {
-      Value *NewVal = PN->getIncomingValue(0);
-      // Replace self referencing PHI with undef, it must be dead.
-      if (NewVal == PN) NewVal = UndefValue::get(PN->getType());
-      PN->replaceAllUsesWith(NewVal);
-      PN->eraseFromParent();
-    }
-
-    // Splice all the PHI nodes from BB over to DestBB.
-    DestBB->getInstList().splice(DestBB->begin(), BB->getInstList(),
-                                 BB->begin(), BI);
-
-    // Anything that branched to BB now branches to DestBB.
-    BB->replaceAllUsesWith(DestBB);
-
-    // Nuke BB.
-    BB->eraseFromParent();
-
+    MergeBasicBlockIntoOnlyPred(DestBB);
     DOUT << "AFTER:\n" << *DestBB << "\n\n\n";
     return;
   }
