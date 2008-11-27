@@ -57,7 +57,6 @@ namespace {
 class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   RegionBindingsTy::Factory RBFactory;
   RegionViewTy::Factory RVFactory;
-  RegionViewMapTy::Factory RVMFactory;
 
   GRStateManager& StateMgr;
   MemRegionManager MRMgr;
@@ -66,7 +65,6 @@ public:
   RegionStoreManager(GRStateManager& mgr) 
     : RBFactory(mgr.getAllocator()),
       RVFactory(mgr.getAllocator()),
-      RVMFactory(mgr.getAllocator()),
       StateMgr(mgr), 
       MRMgr(StateMgr.getAllocator()) {}
 
