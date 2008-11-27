@@ -14,6 +14,7 @@
 #include "llvm/Support/Annotation.h"
 #include "llvm/Support/ManagedStatic.h"
 #include <map>
+#include <cstring>
 using namespace llvm;
 
 Annotation::~Annotation() {}  // Designed to be subclassed
