@@ -2290,8 +2290,8 @@ APFloat::convertFromString(const char *p, roundingMode rounding_mode)
 
   if(p[0] == '0' && (p[1] == 'x' || p[1] == 'X'))
     return convertFromHexadecimalString(p + 2, rounding_mode);
-  else
-    return convertFromDecimalString(p, rounding_mode);
+
+  return convertFromDecimalString(p, rounding_mode);
 }
 
 /* Write out a hexadecimal representation of the floating point value
