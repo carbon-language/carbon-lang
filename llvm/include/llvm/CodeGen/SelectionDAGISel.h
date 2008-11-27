@@ -80,9 +80,11 @@ public:
     return true;
   }
 
-  /// CanBeFoldedBy - Returns true if the specific operand node N of U can be
-  /// folded during instruction selection that starts at Root?
-  virtual bool CanBeFoldedBy(SDNode *N, SDNode *U, SDNode *Root) const {
+  /// IsLegalAndProfitableToFold - Returns true if the specific operand node N of
+  /// U can be folded during instruction selection that starts at Root and
+  /// folding N is profitable.
+  virtual
+  bool IsLegalAndProfitableToFold(SDNode *N, SDNode *U, SDNode *Root) const {
     return true;
   }
   

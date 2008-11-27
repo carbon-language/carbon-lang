@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep {addl.(%eax), %ecx}
+; RUN: llvm-as < %s | llc | grep {addl.\$4, %ecx}
 ; RUN: llvm-as < %s | llc | not grep leal
 ; this should not sink %1 into bb1, that would increase reg pressure.
 

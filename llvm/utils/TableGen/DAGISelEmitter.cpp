@@ -522,8 +522,8 @@ public:
 
           if (NeedCheck) {
             std::string ParentName(RootName.begin(), RootName.end()-1);
-            emitCheck("CanBeFoldedBy(" + RootName + ".getNode(), " + ParentName +
-                      ".getNode(), N.getNode())");
+            emitCheck("IsLegalAndProfitableToFold(" + RootName +
+                      ".getNode(), " + ParentName + ".getNode(), N.getNode())");
           }
         }
       }
