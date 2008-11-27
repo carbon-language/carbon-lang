@@ -39,12 +39,14 @@ namespace {
     DeadInstElimination() : BasicBlockPass(intptr_t(&ID)) {}
     virtual bool runOnBasicBlock(BasicBlock &BB) {
       bool Changed = false;
-      for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); )
-        if (dceInstruction(DI)) {
+      for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); ) {
+        Instruction *Inst = DI++;
+        if (isInstructionTriviallyDead(Inst)) {
+          Inst->eraseFromParent();
           Changed = true;
           ++DIEEliminated;
-        } else
-          ++DI;
+        }
+      }
       return Changed;
     }
 
