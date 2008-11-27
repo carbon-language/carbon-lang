@@ -984,3 +984,27 @@ define i1 @test(i8 %x) {
 }
 
 //===---------------------------------------------------------------------===//
+
+These three functions all perform the same computation, but produce different
+assembly. On x86, they are sorted from slowest to fastest.
+
+define i8 @udiv(i8 %x) readnone nounwind {
+  %A = udiv i8 %x, 250
+  ret i8 %A
+}
+
+define i8 @select(i8 %x) readnone nounwind {
+  %A = icmp ult i8 %x, 250
+  %B = select i1 %A, i8 0, i8 1
+  ret i8 %B 
+}
+
+define i8 @addshr(i8 %x) readnone nounwind {
+  %A = zext i8 %x to i9
+  %B = add i9 %A, 6       ;; 256 - 250 == 6
+  %C = lshr i9 %B, 8
+  %D = trunc i9 %C to i8
+  ret i8 %D
+}
+
+//===---------------------------------------------------------------------===//
