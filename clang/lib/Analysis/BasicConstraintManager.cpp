@@ -448,6 +448,8 @@ bool BasicConstraintManager::isEqual(const GRState* St, SymbolID sym,
   return T ? **T == V : false;
 }
 
+/// Scan all symbols referenced by the constraints. If the symbol is not alive
+/// as marked in LSymbols, mark it as dead in DSymbols.
 const GRState* BasicConstraintManager::RemoveDeadBindings(const GRState* St,
                                         StoreManager::LiveSymbolsTy& LSymbols,
                                         StoreManager::DeadSymbolsTy& DSymbols) {
