@@ -29,9 +29,10 @@ typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
 // constants and integer variables.
 class VISIBILITY_HIDDEN BasicConstraintManager : public ConstraintManager {
   GRStateManager& StateMgr;
-
+  GRState::IntSetTy::Factory ISetFactory;
 public:
-  BasicConstraintManager(GRStateManager& statemgr) : StateMgr(statemgr) {}
+  BasicConstraintManager(GRStateManager& statemgr) 
+    : StateMgr(statemgr), ISetFactory(statemgr.getAllocator()) {}
 
   virtual const GRState* Assume(const GRState* St, SVal Cond,
                                 bool Assumption, bool& isFeasible);
@@ -409,7 +410,7 @@ const GRState* BasicConstraintManager::AddEQ(const GRState* St, SymbolID sym,
 
 const GRState* BasicConstraintManager::AddNE(const GRState* St, SymbolID sym,
                                              const llvm::APSInt& V) {
-  GRState::IntSetTy::Factory ISetFactory(StateMgr.getAllocator());
+
   GRStateRef state(St, StateMgr);
 
   // First, retrieve the NE-set associated with the given symbol.
