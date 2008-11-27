@@ -17,3 +17,4 @@ appropriately aligned then is is a lot shorter to just load the char
 directly.
 
 //===---------------------------------------------------------------------===//
+
