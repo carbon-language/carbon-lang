@@ -56,7 +56,7 @@ namespace {
     JumpThreading() : FunctionPass(&ID) {}
 
     bool runOnFunction(Function &F);
-    bool ThreadBlock(BasicBlock *BB);
+    bool ProcessBlock(BasicBlock *BB);
     void ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB);
     BasicBlock *FactorCommonPHIPreds(PHINode *PN, Constant *CstVal);
 
@@ -85,7 +85,7 @@ bool JumpThreading::runOnFunction(Function &F) {
     AnotherIteration = false;
     bool Changed = false;
     for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-      while (ThreadBlock(I))
+      while (ProcessBlock(I))
         Changed = true;
     AnotherIteration = Changed;
     EverChanged |= Changed;
@@ -187,9 +187,9 @@ static void MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB) {
 }
 
 
-/// ThreadBlock - If there are any predecessors whose control can be threaded
+/// ProcessBlock - If there are any predecessors whose control can be threaded
 /// through to a successor, transform them now.
-bool JumpThreading::ThreadBlock(BasicBlock *BB) {
+bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // If this block has a single predecessor, and if that pred has a single
   // successor, merge the blocks.  This encourages recursive jump threading
   // because now the condition in this block can be threaded through
