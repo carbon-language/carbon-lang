@@ -27,6 +27,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
@@ -348,10 +349,17 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
   // instructions one last time, constant propagating and DCE'ing them, because
   // they may not be needed anymore.
   //
-  if (HadPHINodes)
-    while (BI != SourceBlock->end())
-      if (!dceInstruction(BI) && !doConstantPropagation(BI))
-        ++BI;
+  if (HadPHINodes) {
+    while (BI != SourceBlock->end()) {
+      Instruction *Inst = BI++;
+      if (isInstructionTriviallyDead(Inst))
+        Inst->eraseFromParent();
+      else if (Constant *C = ConstantFoldInstruction(Inst)) {
+        Inst->replaceAllUsesWith(C);
+        Inst->eraseFromParent();
+      }
+    }
+  }
 
   ++NumEliminated;  // We just killed a branch!
 }
