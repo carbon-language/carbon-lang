@@ -58,7 +58,7 @@ public:
   /// isIdenticalTo - Return true if the specified instruction is exactly
   /// identical to the current one.  This means that all operands match and any
   /// extra information (e.g. load is volatile) agree.
-  bool isIdenticalTo(Instruction *I) const;
+  bool isIdenticalTo(const Instruction *I) const;
 
   /// This function determines if the specified instruction executes the same
   /// operation as the current one. This means that the opcodes, type, operand
@@ -68,7 +68,7 @@ public:
   /// @returns true if the specified instruction is the same operation as
   /// the current one.
   /// @brief Determine if one instruction is the same operation as another.
-  bool isSameOperationAs(Instruction *I) const;
+  bool isSameOperationAs(const Instruction *I) const;
 
   /// isUsedOutsideOfBlock - Return true if there are any uses of this
   /// instruction in blocks other than the specified block.  Note that PHI nodes

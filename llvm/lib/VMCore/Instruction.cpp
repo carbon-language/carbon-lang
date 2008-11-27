@@ -158,7 +158,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
 /// isIdenticalTo - Return true if the specified instruction is exactly
 /// identical to the current one.  This means that all operands match and any
 /// extra information (e.g. load is volatile) agree.
-bool Instruction::isIdenticalTo(Instruction *I) const {
+bool Instruction::isIdenticalTo(const Instruction *I) const {
   if (getOpcode() != I->getOpcode() ||
       getNumOperands() != I->getNumOperands() ||
       getType() != I->getType())
@@ -209,7 +209,7 @@ bool Instruction::isIdenticalTo(Instruction *I) const {
 }
 
 // isSameOperationAs
-bool Instruction::isSameOperationAs(Instruction *I) const {
+bool Instruction::isSameOperationAs(const Instruction *I) const {
   if (getOpcode() != I->getOpcode() || getType() != I->getType() ||
       getNumOperands() != I->getNumOperands())
     return false;
