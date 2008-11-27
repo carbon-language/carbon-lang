@@ -2076,25 +2076,26 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
       //
       // FIXME: this needs to eliminate an induction variable even if it's being
       // compared against some value to decide loop termination.
-      if (PN->hasOneUse()) {
-        SmallPtrSet<PHINode *, 2> PHIs;
-        for (Instruction *J = dyn_cast<Instruction>(*PN->use_begin());
-             J && J->hasOneUse() && !J->mayWriteToMemory();
-             J = dyn_cast<Instruction>(*J->use_begin())) {
-          // If we find the original PHI, we've discovered a cycle.
-          if (J == PN) {
-            // Break the cycle and mark the PHI for deletion.
-            SE->deleteValueFromRecords(PN);
-            PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-            DeadInsts.insert(PN);
-            Changed = true;
-            break;
-          }
-          // If we find a PHI more than once, we're on a cycle that
-          // won't prove fruitful.
-          if (isa<PHINode>(J) && !PHIs.insert(cast<PHINode>(J)))
-            break;
+      if (!PN->hasOneUse())
+        continue;
+      
+      SmallPtrSet<PHINode *, 4> PHIs;
+      for (Instruction *J = dyn_cast<Instruction>(*PN->use_begin());
+           J && J->hasOneUse() && !J->mayWriteToMemory();
+           J = dyn_cast<Instruction>(*J->use_begin())) {
+        // If we find the original PHI, we've discovered a cycle.
+        if (J == PN) {
+          // Break the cycle and mark the PHI for deletion.
+          SE->deleteValueFromRecords(PN);
+          PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+          DeadInsts.insert(PN);
+          Changed = true;
+          break;
         }
+        // If we find a PHI more than once, we're on a cycle that
+        // won't prove fruitful.
+        if (isa<PHINode>(J) && !PHIs.insert(cast<PHINode>(J)))
+          break;
       }
     }
     DeleteTriviallyDeadInstructions(DeadInsts);
