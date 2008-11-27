@@ -373,6 +373,29 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   return NewBB;
 }
 
+/// AreEquivalentAddressValues - Test if A and B will obviously have the same
+/// value. This includes recognizing that %t0 and %t1 will have the same
+/// value in code like this:
+///   %t0 = getelementptr @a, 0, 3
+///   store i32 0, i32* %t0
+///   %t1 = getelementptr @a, 0, 3
+///   %t2 = load i32* %t1
+///
+static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
+  // Test if the values are trivially equivalent.
+  if (A == B) return true;
+  
+  // Test if the values come form identical arithmetic instructions.
+  if (isa<BinaryOperator>(A) || isa<CastInst>(A) ||
+      isa<PHINode>(A) || isa<GetElementPtrInst>(A))
+    if (const Instruction *BI = dyn_cast<Instruction>(B))
+      if (cast<Instruction>(A)->isIdenticalTo(BI))
+        return true;
+  
+  // Otherwise they may not be equivalent.
+  return false;
+}
+
 /// FindAvailableLoadedValue - Scan the ScanBB block backwards (starting at the
 /// instruction before ScanFrom) checking to see if we have the value at the
 /// memory address *Ptr locally available within a small number of instructions.
@@ -407,12 +430,12 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
     
     // If this is a load of Ptr, the loaded value is available.
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
-      if (LI->getOperand(0) == Ptr)
+      if (AreEquivalentAddressValues(LI->getOperand(0), Ptr))
         return LI;
     
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       // If this is a store through Ptr, the value is available!
-      if (SI->getOperand(1) == Ptr)
+      if (AreEquivalentAddressValues(SI->getOperand(1), Ptr))
         return SI->getOperand(0);
       
       // If Ptr is an alloca and this is a store to a different alloca, ignore

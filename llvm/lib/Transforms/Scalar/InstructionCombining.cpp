@@ -10762,31 +10762,6 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
   return false;
 }
 
-/// equivalentAddressValues - Test if A and B will obviously have the same
-/// value. This includes recognizing that %t0 and %t1 will have the same
-/// value in code like this:
-///   %t0 = getelementptr @a, 0, 3
-///   store i32 0, i32* %t0
-///   %t1 = getelementptr @a, 0, 3
-///   %t2 = load i32* %t1
-///
-static bool equivalentAddressValues(Value *A, Value *B) {
-  // Test if the values are trivially equivalent.
-  if (A == B) return true;
-
-  // Test if the values come form identical arithmetic instructions.
-  if (isa<BinaryOperator>(A) ||
-      isa<CastInst>(A) ||
-      isa<PHINode>(A) ||
-      isa<GetElementPtrInst>(A))
-    if (Instruction *BI = dyn_cast<Instruction>(B))
-      if (cast<Instruction>(A)->isIdenticalTo(BI))
-        return true;
-
-  // Otherwise they may not be equivalent.
-  return false;
-}
-
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
@@ -10809,22 +10784,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   // where there are several consequtive memory accesses to the same location,
   // separated by a few arithmetic operations.
   BasicBlock::iterator BBI = &LI;
-  for (unsigned ScanInsts = 6; BBI != LI.getParent()->begin() && ScanInsts;
-       --ScanInsts) {
-    --BBI;
-    
-    if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
-      if (equivalentAddressValues(SI->getOperand(1), LI.getOperand(0)))
-        return ReplaceInstUsesWith(LI, SI->getOperand(0));
-    } else if (LoadInst *LIB = dyn_cast<LoadInst>(BBI)) {
-      if (equivalentAddressValues(LIB->getOperand(0), LI.getOperand(0)))
-        return ReplaceInstUsesWith(LI, LIB);
-    }
-
-    // Don't skip over things that can modify memory.
-    if (BBI->mayWriteToMemory())
-      break;
-  }
+  if (Value *AvailableVal = FindAvailableLoadedValue(Op, LI.getParent(), BBI,6))
+    return ReplaceInstUsesWith(LI, AvailableVal);
 
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
     const Value *GEPI0 = GEPI->getOperand(0);
@@ -10991,6 +10952,31 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   return 0;
 }
 
+/// equivalentAddressValues - Test if A and B will obviously have the same
+/// value. This includes recognizing that %t0 and %t1 will have the same
+/// value in code like this:
+///   %t0 = getelementptr @a, 0, 3
+///   store i32 0, i32* %t0
+///   %t1 = getelementptr @a, 0, 3
+///   %t2 = load i32* %t1
+///
+static bool equivalentAddressValues(Value *A, Value *B) {
+  // Test if the values are trivially equivalent.
+  if (A == B) return true;
+  
+  // Test if the values come form identical arithmetic instructions.
+  if (isa<BinaryOperator>(A) ||
+      isa<CastInst>(A) ||
+      isa<PHINode>(A) ||
+      isa<GetElementPtrInst>(A))
+    if (Instruction *BI = dyn_cast<Instruction>(B))
+      if (cast<Instruction>(A)->isIdenticalTo(BI))
+        return true;
+  
+  // Otherwise they may not be equivalent.
+  return false;
+}
+
 Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   Value *Val = SI.getOperand(0);
   Value *Ptr = SI.getOperand(1);
@@ -11036,8 +11022,8 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     
     if (StoreInst *PrevSI = dyn_cast<StoreInst>(BBI)) {
       // Prev store isn't volatile, and stores to the same location?
-      if (!PrevSI->isVolatile() && equivalentAddressValues(PrevSI->getOperand(1),
-          SI.getOperand(1))) {
+      if (!PrevSI->isVolatile() &&equivalentAddressValues(PrevSI->getOperand(1),
+                                                          SI.getOperand(1))) {
         ++NumDeadStore;
         ++BBI;
         EraseInstFromFunction(*PrevSI);
