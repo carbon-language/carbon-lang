@@ -243,67 +243,6 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   return false;
 }
 
-
-/// FindAvailableLoadedValue - Scan backwards from ScanFrom checking to see if
-/// we have the value at the memory address *Ptr locally available within a
-/// small number of instructions.  If the value is available, return it.
-///
-/// If not, return the iterator for the last validated instruction that the 
-/// value would be live through.  If we scanned the entire block, ScanFrom would
-/// be left at begin().
-///
-/// FIXME: Move this to transform utils and use from
-/// InstCombiner::visitLoadInst.  It would also be nice to optionally take AA so
-/// that GVN could do this.
-static Value *FindAvailableLoadedValue(Value *Ptr,
-                                       BasicBlock *ScanBB,
-                                       BasicBlock::iterator &ScanFrom) {
-  
-  unsigned NumToScan = 6;
-  while (ScanFrom != ScanBB->begin()) {
-    // Don't scan huge blocks.
-    if (--NumToScan == 0) return 0;
-    
-    Instruction *Inst = --ScanFrom;
-    
-    // If this is a load of Ptr, the loaded value is available.
-    if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
-      if (LI->getOperand(0) == Ptr)
-        return LI;
-    
-    if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-      // If this is a store through Ptr, the value is available!
-      if (SI->getOperand(1) == Ptr)
-        return SI->getOperand(0);
-
-      // If Ptr is an alloca and this is a store to a different alloca, ignore
-      // the store.  This is a trivial form of alias analysis that is important
-      // for reg2mem'd code.
-      if ((isa<AllocaInst>(Ptr) || isa<GlobalVariable>(Ptr)) &&
-          (isa<AllocaInst>(SI->getOperand(1)) ||
-           isa<GlobalVariable>(SI->getOperand(1))))
-        continue;
-      
-      // Otherwise the store that may or may not alias the pointer, bail out.
-      ++ScanFrom;
-      return 0;
-    }
-    
-  
-    // If this is some other instruction that may clobber Ptr, bail out.
-    if (Inst->mayWriteToMemory()) {
-      // May modify the pointer, bail out.
-      ++ScanFrom;
-      return 0;
-    }
-  }
-  
-  // Got to the start of the block, we didn't find it, but are done for this
-  // block.
-  return 0;
-}
-
-
 /// SimplifyPartiallyRedundantLoad - If LI is an obviously partially redundant
 /// load instruction, eliminate it by replacing it with a PHI node.  This is an
 /// important optimization that encourages jump threading, and needs to be run
@@ -330,7 +269,8 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   // the entry to its block.
   BasicBlock::iterator BBIt = LI;
 
-  if (Value *AvailableVal = FindAvailableLoadedValue(LoadedPtr, LoadBB, BBIt)) {
+  if (Value *AvailableVal = FindAvailableLoadedValue(LoadedPtr, LoadBB, 
+                                                     BBIt, 6)) {
     // If the value if the load is locally available within the block, just use
     // it.  This frequently occurs for reg2mem'd allocas.
     //cerr << "LOAD ELIMINATED:\n" << *BBIt << *LI << "\n";
@@ -363,7 +303,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
 
     // Scan the predecessor to see if the value is available in the pred.
     BBIt = PredBB->end();
-    Value *PredAvailable = FindAvailableLoadedValue(LoadedPtr, PredBB, BBIt);
+    Value *PredAvailable = FindAvailableLoadedValue(LoadedPtr, PredBB, BBIt, 6);
     if (!PredAvailable) {
       OneUnavailablePred = PredBB;
       continue;

@@ -24,6 +24,7 @@ namespace llvm {
 
 class Instruction;
 class Pass;
+class AliasAnalysis;
 
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.
@@ -47,6 +48,25 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 //
 void ReplaceInstWithInst(Instruction *From, Instruction *To);
 
+/// FindAvailableLoadedValue - Scan the ScanBB block backwards (starting at the
+/// instruction before ScanFrom) checking to see if we have the value at the
+/// memory address *Ptr locally available within a small number of instructions.
+/// If the value is available, return it.
+///
+/// If not, return the iterator for the last validated instruction that the 
+/// value would be live through.  If we scanned the entire block and didn't find
+/// something that invalidates *Ptr or provides it, ScanFrom would be left at
+/// begin() and this returns null.  ScanFrom could also be left 
+///
+/// MaxInstsToScan specifies the maximum instructions to scan in the block.  If
+/// it is set to 0, it will scan the whole block. You can also optionally
+/// specify an alias analysis implementation, which makes this more precise.
+Value *FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
+                                BasicBlock::iterator &ScanFrom,
+                                unsigned MaxInstsToScan = 6,
+                                AliasAnalysis *AA = 0);
+    
+  
 
 // RemoveSuccessor - Change the specified terminator instruction such that its
 // successor #SuccNum no longer exists.  Because this reduces the outgoing
