@@ -3309,7 +3309,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Tmp3, DAG);
       if (Tmp1.getNode() != NULL) {
-        Tmp3 = LegalizeOp(Tmp1);;
+        Tmp3 = LegalizeOp(Tmp1);
         Tmp4 = LegalizeOp(Tmp1.getValue(1));
       }
       break;
@@ -3336,7 +3336,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Tmp3, DAG);
       if (Tmp1.getNode() != NULL) {
-        Tmp3 = LegalizeOp(Tmp1);;
+        Tmp3 = LegalizeOp(Tmp1);
         Tmp4 = LegalizeOp(Tmp1.getValue(1));
       }
       break;
