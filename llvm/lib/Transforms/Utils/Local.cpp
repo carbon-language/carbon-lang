@@ -176,7 +176,11 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
 /// RecursivelyDeleteTriviallyDeadInstructions - If the specified value is a
 /// trivially dead instruction, delete it.  If that makes any of its operands
 /// trivially dead, delete them too, recursively.
-void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
+///
+/// If DeadInst is specified, the vector is filled with the instructions that
+/// are actually deleted.
+void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V,
+                                      SmallVectorImpl<Instruction*> *DeadInst) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I || !I->use_empty()) return;
   
@@ -186,12 +190,16 @@ void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
   while (!Insts.empty()) {
     I = *Insts.begin();
     Insts.erase(I);
-    if (isInstructionTriviallyDead(I)) {
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
-          Insts.insert(U);
-      I->eraseFromParent();
-    }
+    if (!isInstructionTriviallyDead(I))
+      continue;
+    
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+      if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
+        Insts.insert(U);
+    I->eraseFromParent();
+    
+    if (DeadInst)
+      DeadInst->push_back(I);
   }
 }
 

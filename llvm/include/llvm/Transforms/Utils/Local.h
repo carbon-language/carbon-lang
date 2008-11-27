@@ -24,7 +24,7 @@ class PHINode;
 class AllocaInst;
 class ConstantExpr;
 class TargetData;
-
+  
 //===----------------------------------------------------------------------===//
 //  Local constant propagation.
 //
@@ -49,7 +49,11 @@ bool isInstructionTriviallyDead(Instruction *I);
 /// RecursivelyDeleteTriviallyDeadInstructions - If the specified value is a
 /// trivially dead instruction, delete it.  If that makes any of its operands
 /// trivially dead, delete them too, recursively.
-void RecursivelyDeleteTriviallyDeadInstructions(Value *V);
+///
+/// If DeadInst is specified, the vector is filled with the instructions that
+/// are actually deleted.
+void RecursivelyDeleteTriviallyDeadInstructions(Value *V,
+                                  SmallVectorImpl<Instruction*> *DeadInst = 0);
     
 //===----------------------------------------------------------------------===//
 //  Control Flow Graph Restructuring...
