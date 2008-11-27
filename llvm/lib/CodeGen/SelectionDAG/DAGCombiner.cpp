@@ -1010,6 +1010,9 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   // fold (A+(B-A)) -> B
   if (N1.getOpcode() == ISD::SUB && N0 == N1.getOperand(1))
     return N1.getOperand(0);
+  // fold ((B-A)+A) -> B
+  if (N0.getOpcode() == ISD::SUB && N1 == N0.getOperand(1))
+    return N0.getOperand(0);
 
   if (!VT.isVector() && SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
