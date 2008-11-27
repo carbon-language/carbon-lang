@@ -156,37 +156,6 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
   return Size;
 }
 
-/// MergeBasicBlockIntoOnlyPred - DestBB is a block with one predecessor and its
-/// predecessor is known to have one successor (DestBB!).  Eliminate the edge
-/// between them, moving the instructions in the predecessor into DestBB and
-/// deleting the predecessor block.
-///
-/// FIXME: Move to TransformUtils to share with simplifycfg and codegenprepare.
-static void MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB) {
-  // If BB has single-entry PHI nodes, fold them.
-  while (PHINode *PN = dyn_cast<PHINode>(DestBB->begin())) {
-    Value *NewVal = PN->getIncomingValue(0);
-    // Replace self referencing PHI with undef, it must be dead.
-    if (NewVal == PN) NewVal = UndefValue::get(PN->getType());
-    PN->replaceAllUsesWith(NewVal);
-    PN->eraseFromParent();
-  }
-
-  BasicBlock *PredBB = DestBB->getSinglePredecessor();
-  assert(PredBB && "Block doesn't have a single predecessor!");
-  
-  // Splice all the instructions from PredBB to DestBB.
-  PredBB->getTerminator()->eraseFromParent();
-  DestBB->getInstList().splice(DestBB->begin(), PredBB->getInstList());
-  
-  // Anything that branched to PredBB now branches to DestBB.
-  PredBB->replaceAllUsesWith(DestBB);
-  
-  // Nuke BB.
-  PredBB->eraseFromParent();
-}
-
-
 /// ProcessBlock - If there are any predecessors whose control can be threaded
 /// through to a successor, transform them now.
 bool JumpThreading::ProcessBlock(BasicBlock *BB) {

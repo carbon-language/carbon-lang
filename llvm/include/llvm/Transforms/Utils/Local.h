@@ -62,6 +62,14 @@ bool dceInstruction(BasicBlock::iterator &BBI);
 //  Control Flow Graph Restructuring...
 //
 
+/// MergeBasicBlockIntoOnlyPred - BB is a block with one predecessor and its
+/// predecessor is known to have one successor (BB!).  Eliminate the edge
+/// between them, moving the instructions in the predecessor into BB.  This
+/// deletes the predecessor block.
+///
+void MergeBasicBlockIntoOnlyPred(BasicBlock *BB);
+    
+  
 /// SimplifyCFG - This function is used to do simplification of a CFG.  For
 /// example, it adjusts branches to branches to eliminate the extra hop, it
 /// eliminates unreachable basic blocks, and does other "peephole" optimization
