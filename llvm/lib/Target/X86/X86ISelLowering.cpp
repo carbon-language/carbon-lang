@@ -6150,6 +6150,8 @@ SDValue X86TargetLowering::LowerCTTZ(SDValue Op, SelectionDAG &DAG) {
 
 SDValue X86TargetLowering::LowerXADDO(SDValue Op, SelectionDAG &DAG,
                                       ISD::NodeType NTy) {
+#if 0
+  // FIXME: Lowering XADDO should use BRCOND as well.
   SDNode *N = Op.getNode();
 
   for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
@@ -6169,7 +6171,7 @@ SDValue X86TargetLowering::LowerXADDO(SDValue Op, SelectionDAG &DAG,
       return Sum;
     }
   }
-
+#endif
   return SDValue();
 }
 
