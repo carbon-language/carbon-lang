@@ -16,16 +16,8 @@
 #include "clang/Basic/TokenKinds.h"
 using namespace clang;
 
-PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc,
-                   const Token *TokArray, unsigned NumTokens)
-  : PreprocessorLexer(&pp, fileloc),
-    Tokens(TokArray),
-    LastTokenIdx(NumTokens - 1),
-    CurTokenIdx(0) {
-
-  assert(NumTokens >= 1);
-  assert(Tokens[LastTokenIdx].is(tok::eof));
-}
+PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc)
+  : PreprocessorLexer(&pp, fileloc), CurTokenIdx(0) {}
 
 Token PTHLexer::GetToken() { 
   Token Tok = Tokens[CurTokenIdx];
@@ -104,7 +96,8 @@ bool PTHLexer::LexEndOfFile(Token &Tok) {
 }
 
 void PTHLexer::setEOF(Token& Tok) {
-  Tok = Tokens[LastTokenIdx];
+  assert(!Tokens.empty());
+  Tok = Tokens[Tokens.size()-1];
 }
 
 void PTHLexer::DiscardToEndOfLine() {

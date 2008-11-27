@@ -15,36 +15,32 @@
 #define LLVM_CLANG_PTHLEXER_H
 
 #include "clang/Lex/PreprocessorLexer.h"
+#include <vector>
 
 namespace clang {
   
 class PTHLexer : public PreprocessorLexer {
-  /// Tokens - This is the pointer to an array of tokens that the macro is
-  /// defined to, with arguments expanded for function-like macros.  If this is
-  /// a token stream, these are the tokens we are returning.
-  const Token *Tokens;
-  
-  /// LastTokenIdx - The index of the last token in Tokens.  This token
-  ///  will be an eof token.
-  unsigned LastTokenIdx;
-  
+  /// Tokens - Vector of raw tokens.
+  std::vector<Token> Tokens;
+
   /// CurTokenIdx - This is the index of the next token that Lex will return.
   unsigned CurTokenIdx;
         
   PTHLexer(const PTHLexer&);  // DO NOT IMPLEMENT
   void operator=(const PTHLexer&); // DO NOT IMPLEMENT
 
-public:
+public:  
 
   /// Create a PTHLexer for the specified token stream.
-  PTHLexer(Preprocessor& pp, SourceLocation fileloc,
-           const Token *TokArray, unsigned NumToks);
+  PTHLexer(Preprocessor& pp, SourceLocation fileloc);
   ~PTHLexer() {}
     
   /// Lex - Return the next token.
   void Lex(Token &Tok);
   
   void setEOF(Token &Tok);
+  
+  std::vector<Token>& getTokens() { return Tokens; }
   
   /// DiscardToEndOfLine - Read the rest of the current preprocessor line as an
   /// uninterpreted string.  This switches the lexer out of directive mode.
@@ -64,7 +60,7 @@ public:
 private:
   
   /// AtLastToken - Returns true if the PTHLexer is at the last token.
-  bool AtLastToken() const { return CurTokenIdx == LastTokenIdx; }
+  bool AtLastToken() const { return CurTokenIdx+1 == Tokens.size(); }
   
   /// GetToken - Returns the next token.  This method does not advance the
   ///  PTHLexer to the next token.

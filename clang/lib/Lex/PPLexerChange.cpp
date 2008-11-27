@@ -78,6 +78,16 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   Lexer *TheLexer = new Lexer(SourceLocation::getFileLoc(FileID, 0), *this);
   EnterSourceFileWithLexer(TheLexer, CurDir);
 #else
+  if (CurPPLexer || CurTokenLexer)
+    PushIncludeMacroStack();
+  
+  CurDirLookup = CurDir;
+  SourceLocation Loc = SourceLocation::getFileLoc(FileID, 0);
+  CurPTHLexer.reset(new PTHLexer(*this, Loc));
+  CurPPLexer = CurPTHLexer.get();
+
+  // Generate the tokens.
+  
   const llvm::MemoryBuffer* B = getSourceManager().getBuffer(FileID);
   
   // Create a raw lexer.
@@ -89,7 +99,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   L.SetCommentRetentionState(false);
   
   // Lex the file, populating our data structures.
-  std::vector<Token>* Tokens = new std::vector<Token>();
+  std::vector<Token>& Tokens = CurPTHLexer->getTokens();
   Token Tok;
   
   do {
@@ -101,7 +111,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
     else if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
       // Special processing for #include.  Store the '#' token and lex
       // the next token.
-      Tokens->push_back(Tok);
+      Tokens.push_back(Tok);
       L.LexFromRawLexer(Tok);
       
       // Did we see 'include'/'import'/'include_next'?
@@ -116,7 +126,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
           K == tok::pp_include_next) {
         
         // Save the 'include' token.
-        Tokens->push_back(Tok);
+        Tokens.push_back(Tok);
         
         // Lex the next token as an include string.
         L.ParsingPreprocessorDirective = true;
@@ -128,15 +138,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
       }
     }    
   }
-  while (Tokens->push_back(Tok), Tok.isNot(tok::eof));
-  
-  if (CurPPLexer || CurTokenLexer)
-    PushIncludeMacroStack();
-  
-  CurDirLookup = CurDir;
-  SourceLocation Loc = SourceLocation::getFileLoc(FileID, 0);
-  CurPTHLexer.reset(new PTHLexer(*this, Loc, &(*Tokens)[0], Tokens->size()));
-  CurPPLexer = CurPTHLexer.get();
+  while (Tokens.push_back(Tok), Tok.isNot(tok::eof));
   
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks) {
