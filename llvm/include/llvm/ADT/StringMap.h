@@ -420,16 +420,18 @@ class StringMapConstIterator {
 protected:
   StringMapImpl::ItemBucket *Ptr;
 public:
+  typedef StringMapEntry<ValueTy> value_type;
+  
   explicit StringMapConstIterator(StringMapImpl::ItemBucket *Bucket,
                                   bool NoAdvance = false)
   : Ptr(Bucket) {
     if (!NoAdvance) AdvancePastEmptyBuckets();
   }
 
-  const StringMapEntry<ValueTy> &operator*() const {
+  const value_type &operator*() const {
     return *static_cast<StringMapEntry<ValueTy>*>(Ptr->Item);
   }
-  const StringMapEntry<ValueTy> *operator->() const {
+  const value_type *operator->() const {
     return static_cast<StringMapEntry<ValueTy>*>(Ptr->Item);
   }
 
