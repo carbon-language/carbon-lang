@@ -22,6 +22,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
 STATISTIC(NumThreads, "Number of jumps threaded");
@@ -62,6 +63,8 @@ namespace {
     bool ProcessJumpOnPHI(PHINode *PN);
     bool ProcessBranchOnLogical(Value *V, BasicBlock *BB, bool isAnd);
     bool ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB);
+    
+    bool SimplifyPartiallyRedundantLoad(LoadInst *LI);
   };
 }
 
@@ -153,10 +156,50 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
   return Size;
 }
 
+/// MergeBasicBlockIntoOnlyPred - DestBB is a block with one predecessor and its
+/// predecessor is known to have one successor (DestBB!).  Eliminate the edge
+/// between them, moving the instructions in the predecessor into DestBB and
+/// deleting the predecessor block.
+///
+/// FIXME: Move to TransformUtils to share with simplifycfg and codegenprepare.
+static void MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB) {
+  // If BB has single-entry PHI nodes, fold them.
+  while (PHINode *PN = dyn_cast<PHINode>(DestBB->begin())) {
+    Value *NewVal = PN->getIncomingValue(0);
+    // Replace self referencing PHI with undef, it must be dead.
+    if (NewVal == PN) NewVal = UndefValue::get(PN->getType());
+    PN->replaceAllUsesWith(NewVal);
+    PN->eraseFromParent();
+  }
+
+  BasicBlock *PredBB = DestBB->getSinglePredecessor();
+  assert(PredBB && "Block doesn't have a single predecessor!");
+  
+  // Splice all the instructions from PredBB to DestBB.
+  PredBB->getTerminator()->eraseFromParent();
+  DestBB->getInstList().splice(DestBB->begin(), PredBB->getInstList());
+  
+  // Anything that branched to PredBB now branches to DestBB.
+  PredBB->replaceAllUsesWith(DestBB);
+  
+  // Nuke BB.
+  PredBB->eraseFromParent();
+}
+
 
 /// ThreadBlock - If there are any predecessors whose control can be threaded
 /// through to a successor, transform them now.
 bool JumpThreading::ThreadBlock(BasicBlock *BB) {
+  // If this block has a single predecessor, and if that pred has a single
+  // successor, merge the blocks.  This encourages recursive jump threading
+  // because now the condition in this block can be threaded through
+  // predecessors of our predecessor block.
+  if (BasicBlock *SinglePred = BB->getSinglePredecessor())
+    if (SinglePred->getTerminator()->getNumSuccessors() == 1) {
+      MergeBasicBlockIntoOnlyPred(BB);
+      return true;
+    }
+  
   // See if this block ends with a branch or switch.  If so, see if the
   // condition is a phi node.  If so, and if an entry of the phi node is a
   // constant, we can thread the block.
@@ -208,9 +251,239 @@ bool JumpThreading::ThreadBlock(BasicBlock *BB) {
         isa<Constant>(CondCmp->getOperand(1)) &&
         ProcessBranchOnCompare(CondCmp, BB))
       return true;
+
+  // Check for some cases that are worth simplifying.  Right now we want to look
+  // for loads that are used by a switch or by the condition for the branch.  If
+  // we see one, check to see if it's partially redundant.  If so, insert a PHI
+  // which can then be used to thread the values.
+  //
+  // This is particularly important because reg2mem inserts loads and stores all
+  // over the place, and this blocks jump threading if we don't zap them.
+  Value *SimplifyValue = Condition;
+  if (CmpInst *CondCmp = dyn_cast<CmpInst>(SimplifyValue))
+    if (isa<Constant>(CondCmp->getOperand(1)))
+      SimplifyValue = CondCmp->getOperand(0);
+  
+  if (LoadInst *LI = dyn_cast<LoadInst>(SimplifyValue))
+    if (SimplifyPartiallyRedundantLoad(LI))
+      return true;
+  
+  // TODO: If we have: "br (X > 0)"  and we have a predecessor where we know
+  // "(X == 4)" thread through this block.
   
   return false;
 }
+
+
+/// FindAvailableLoadedValue - Scan backwards from ScanFrom checking to see if
+/// we have the value at the memory address *Ptr locally available within a
+/// small number of instructions.  If the value is available, return it.
+///
+/// If not, return the iterator for the last validated instruction that the 
+/// value would be live through.  If we scanned the entire block, ScanFrom would
+/// be left at begin().
+///
+/// FIXME: Move this to transform utils and use from
+/// InstCombiner::visitLoadInst.  It would also be nice to optionally take AA so
+/// that GVN could do this.
+static Value *FindAvailableLoadedValue(Value *Ptr,
+                                       BasicBlock *ScanBB,
+                                       BasicBlock::iterator &ScanFrom) {
+  
+  unsigned NumToScan = 6;
+  while (ScanFrom != ScanBB->begin()) {
+    // Don't scan huge blocks.
+    if (--NumToScan == 0) return 0;
+    
+    Instruction *Inst = --ScanFrom;
+    
+    // If this is a load of Ptr, the loaded value is available.
+    if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
+      if (LI->getOperand(0) == Ptr)
+        return LI;
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+      // If this is a store through Ptr, the value is available!
+      if (SI->getOperand(1) == Ptr)
+        return SI->getOperand(0);
+
+      // If Ptr is an alloca and this is a store to a different alloca, ignore
+      // the store.  This is a trivial form of alias analysis that is important
+      // for reg2mem'd code.
+      if ((isa<AllocaInst>(Ptr) || isa<GlobalVariable>(Ptr)) &&
+          (isa<AllocaInst>(SI->getOperand(1)) ||
+           isa<GlobalVariable>(SI->getOperand(1))))
+        continue;
+      
+      // Otherwise the store that may or may not alias the pointer, bail out.
+      ++ScanFrom;
+      return 0;
+    }
+    
+  
+    // If this is some other instruction that may clobber Ptr, bail out.
+    if (Inst->mayWriteToMemory()) {
+      // May modify the pointer, bail out.
+      ++ScanFrom;
+      return 0;
+    }
+  }
+  
+  // Got to the start of the block, we didn't find it, but are done for this
+  // block.
+  return 0;
+}
+
+
+/// SimplifyPartiallyRedundantLoad - If LI is an obviously partially redundant
+/// load instruction, eliminate it by replacing it with a PHI node.  This is an
+/// important optimization that encourages jump threading, and needs to be run
+/// interlaced with other jump threading tasks.
+bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
+  // Don't hack volatile loads.
+  if (LI->isVolatile()) return false;
+  
+  // If the load is defined in a block with exactly one predecessor, it can't be
+  // partially redundant.
+  BasicBlock *LoadBB = LI->getParent();
+  if (LoadBB->getSinglePredecessor())
+    return false;
+  
+  Value *LoadedPtr = LI->getOperand(0);
+
+  // If the loaded operand is defined in the LoadBB, it can't be available.
+  // FIXME: Could do PHI translation, that would be fun :)
+  if (Instruction *PtrOp = dyn_cast<Instruction>(LoadedPtr))
+    if (PtrOp->getParent() == LoadBB)
+      return false;
+  
+  // Scan a few instructions up from the load, to see if it is obviously live at
+  // the entry to its block.
+  BasicBlock::iterator BBIt = LI;
+
+  if (Value *AvailableVal = FindAvailableLoadedValue(LoadedPtr, LoadBB, BBIt)) {
+    // If the value if the load is locally available within the block, just use
+    // it.  This frequently occurs for reg2mem'd allocas.
+    //cerr << "LOAD ELIMINATED:\n" << *BBIt << *LI << "\n";
+    LI->replaceAllUsesWith(AvailableVal);
+    LI->eraseFromParent();
+    return true;
+  }
+
+  // Otherwise, if we scanned the whole block and got to the top of the block,
+  // we know the block is locally transparent to the load.  If not, something
+  // might clobber its value.
+  if (BBIt != LoadBB->begin())
+    return false;
+  
+  
+  SmallPtrSet<BasicBlock*, 8> PredsScanned;
+  typedef SmallVector<std::pair<BasicBlock*, Value*>, 8> AvailablePredsTy;
+  AvailablePredsTy AvailablePreds;
+  BasicBlock *OneUnavailablePred = 0;
+  
+  // If we got here, the loaded value is transparent through to the start of the
+  // block.  Check to see if it is available in any of the predecessor blocks.
+  for (pred_iterator PI = pred_begin(LoadBB), PE = pred_end(LoadBB);
+       PI != PE; ++PI) {
+    BasicBlock *PredBB = *PI;
+
+    // If we already scanned this predecessor, skip it.
+    if (!PredsScanned.insert(PredBB))
+      continue;
+
+    // Scan the predecessor to see if the value is available in the pred.
+    BBIt = PredBB->end();
+    Value *PredAvailable = FindAvailableLoadedValue(LoadedPtr, PredBB, BBIt);
+    if (!PredAvailable) {
+      OneUnavailablePred = PredBB;
+      continue;
+    }
+    
+    // If so, this load is partially redundant.  Remember this info so that we
+    // can create a PHI node.
+    AvailablePreds.push_back(std::make_pair(PredBB, PredAvailable));
+  }
+  
+  // If the loaded value isn't available in any predecessor, it isn't partially
+  // redundant.
+  if (AvailablePreds.empty()) return false;
+  
+  // Okay, the loaded value is available in at least one (and maybe all!)
+  // predecessors.  If the value is unavailable in more than one unique
+  // predecessor, we want to insert a merge block for those common predecessors.
+  // This ensures that we only have to insert one reload, thus not increasing
+  // code size.
+  BasicBlock *UnavailablePred = 0;
+  
+  // If there is exactly one predecessor where the value is unavailable, the
+  // already computed 'OneUnavailablePred' block is it.  If it ends in an
+  // unconditional branch, we know that it isn't a critical edge.
+  if (PredsScanned.size() == AvailablePreds.size()+1 &&
+      OneUnavailablePred->getTerminator()->getNumSuccessors() == 1) {
+    UnavailablePred = OneUnavailablePred;
+  } else if (PredsScanned.size() != AvailablePreds.size()) {
+    // Otherwise, we had multiple unavailable predecessors or we had a critical
+    // edge from the one.
+    SmallVector<BasicBlock*, 8> PredsToSplit;
+    SmallPtrSet<BasicBlock*, 8> AvailablePredSet;
+
+    for (unsigned i = 0, e = AvailablePreds.size(); i != e; ++i)
+      AvailablePredSet.insert(AvailablePreds[i].first);
+
+    // Add all the unavailable predecessors to the PredsToSplit list.
+    for (pred_iterator PI = pred_begin(LoadBB), PE = pred_end(LoadBB);
+         PI != PE; ++PI)
+      if (!AvailablePredSet.count(*PI))
+        PredsToSplit.push_back(*PI);
+    
+    // Split them out to their own block.
+    UnavailablePred =
+      SplitBlockPredecessors(LoadBB, &PredsToSplit[0], PredsToSplit.size(),
+                             "thread-split", this);
+  }
+  
+  // If the value isn't available in all predecessors, then there will be
+  // exactly one where it isn't available.  Insert a load on that edge and add
+  // it to the AvailablePreds list.
+  if (UnavailablePred) {
+    assert(UnavailablePred->getTerminator()->getNumSuccessors() == 1 &&
+           "Can't handle critical edge here!");
+    Value *NewVal = new LoadInst(LoadedPtr, LI->getName()+".pr",
+                                 UnavailablePred->getTerminator());
+    AvailablePreds.push_back(std::make_pair(UnavailablePred, NewVal));
+  }
+  
+  // Now we know that each predecessor of this block has a value in
+  // AvailablePreds, sort them for efficient access as we're walking the preds.
+  std::sort(AvailablePreds.begin(), AvailablePreds.end());
+  
+  // Create a PHI node at the start of the block for the PRE'd load value.
+  PHINode *PN = PHINode::Create(LI->getType(), "", LoadBB->begin());
+  PN->takeName(LI);
+  
+  // Insert new entries into the PHI for each predecessor.  A single block may
+  // have multiple entries here.
+  for (pred_iterator PI = pred_begin(LoadBB), E = pred_end(LoadBB); PI != E;
+       ++PI) {
+    AvailablePredsTy::iterator I = 
+      std::lower_bound(AvailablePreds.begin(), AvailablePreds.end(),
+                       std::make_pair(*PI, (Value*)0));
+    
+    assert(I != AvailablePreds.end() && I->first == *PI &&
+           "Didn't find entry for predecessor!");
+    
+    PN->addIncoming(I->second, I->first);
+  }
+  
+  //cerr << "PRE: " << *LI << *PN << "\n";
+  
+  LI->replaceAllUsesWith(PN);
+  LI->eraseFromParent();
+  
+  return true;
+}
+
 
 /// ProcessJumpOnPHI - We have a conditional branch of switch on a PHI node in
 /// the current block.  See if there are any simplifications we can do based on
