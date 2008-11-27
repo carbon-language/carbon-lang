@@ -27,7 +27,16 @@ Annotable::~Annotable() {   // Virtual because it's designed to be subclassed...
   }
 }
 
-typedef std::map<const char*, unsigned> IDMapType;
+namespace {
+  class StrCmp {
+  public:
+    bool operator()(const char *a, const char *b) {
+      return strcmp(a, b) < 0;
+    }
+  };
+}
+
+typedef std::map<const char*, unsigned, StrCmp> IDMapType;
 static unsigned IDCounter = 0;  // Unique ID counter
 
 // Static member to ensure initialiation on demand.
