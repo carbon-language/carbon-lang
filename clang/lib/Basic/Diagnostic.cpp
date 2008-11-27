@@ -354,7 +354,7 @@ static bool EvalPluralExpr(unsigned ValNo, const char *Start, const char *End)
       if (TestPluralRange(ValMod, Start, End))
         return true;
     } else {
-      assert(C == '[' || (C >= '0' && C <= '9') &&
+      assert((C == '[' || (C >= '0' && C <= '9')) &&
              "Bad plural expression syntax: unexpected character");
       // Range expression
       if (TestPluralRange(ValNo, Start, End))
