@@ -1,8 +1,17 @@
 // RUN clang -fsyntax-only -verify %s
-@interface A 
+@protocol P0
+@end
+
+@protocol P1
+@end
+
+@interface A <P0>
 @end
 
 @interface B : A
+@end
+
+@interface C <P1>
 @end
 
 int& f(A*);
@@ -36,4 +45,14 @@ void cv_test(A* a, B* b, const A* ac, const B* bc) {
   float &f2 = cv(bc);
   int& i3 = cv2(a);
   float& f3 = cv2(ac);
+}
+
+
+int& qualid(id<P0>);
+float& qualid(id<P1>); // FIXME: GCC complains that this isn't an overload. Is it?
+
+void qualid_test(A *a, B *b, C *c) {
+  int& i1 = qualid(a);
+  int& i2 = qualid(b);
+  float& f1 = qualid(c);
 }

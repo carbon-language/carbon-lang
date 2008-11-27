@@ -744,7 +744,13 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
 /// might differ from ToType in its cv-qualifiers at some level) into
 /// ConvertedType.
 ///
-/// This routine also supports conversions to and from block pointers.
+/// This routine also supports conversions to and from block pointers
+/// and conversions with Objective-C's 'id', 'id<protocols...>', and
+/// pointers to interfaces. FIXME: Once we've determined the
+/// appropriate overloading rules for Objective-C, we may want to
+/// split the Objective-C checks into a different routine; however,
+/// GCC seems to consider all of these conversions to be pointer
+/// conversions, so for now they live here.
 bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
                                QualType& ConvertedType)
 {
@@ -757,6 +763,13 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // Blocks: A null pointer constant can be converted to a block
   // pointer type.
   if (ToType->isBlockPointerType() && From->isNullPointerConstant(Context)) {
+    ConvertedType = ToType;
+    return true;
+  }
+
+  // Conversions with Objective-C's id<...>.
+  if ((FromType->isObjCQualifiedIdType() || ToType->isObjCQualifiedIdType()) &&
+      ObjCQualifiedIdTypesAreCompatible(ToType, FromType, /*compare=*/false)) {
     ConvertedType = ToType;
     return true;
   }
@@ -1332,7 +1345,10 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
 
   // Compare based on pointer conversions.
   if (SCS1.Second == ICK_Pointer_Conversion && 
-      SCS2.Second == ICK_Pointer_Conversion) {
+      SCS2.Second == ICK_Pointer_Conversion &&
+      /*FIXME: Remove if Objective-C id conversions get their own rank*/
+      FromType1->isPointerType() && FromType2->isPointerType() &&
+      ToType1->isPointerType() && ToType2->isPointerType()) {
     QualType FromPointee1 
       = FromType1->getAsPointerType()->getPointeeType().getUnqualifiedType();
     QualType ToPointee1 
