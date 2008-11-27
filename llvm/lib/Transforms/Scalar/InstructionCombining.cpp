@@ -2882,13 +2882,21 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   if (Instruction *Common = commonIDivTransforms(I))
     return Common;
 
-  // X udiv C^2 -> X >> C
-  // Check to see if this is an unsigned division with an exact power of 2,
-  // if so, convert to a right shift.
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
+    // X udiv C^2 -> X >> C
+    // Check to see if this is an unsigned division with an exact power of 2,
+    // if so, convert to a right shift.
     if (C->getValue().isPowerOf2())  // 0 not included in isPowerOf2
       return BinaryOperator::CreateLShr(Op0, 
                ConstantInt::get(Op0->getType(), C->getValue().logBase2()));
+
+    // X udiv C, where C >= signbit
+    if (C->getValue().isNegative()) {
+      Value *IC = InsertNewInstBefore(new ICmpInst(ICmpInst::ICMP_ULT, Op0, C),
+                                      I);
+      return SelectInst::Create(IC, Constant::getNullValue(I.getType()),
+                                ConstantInt::get(I.getType(), 1));
+    }
   }
 
   // X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
