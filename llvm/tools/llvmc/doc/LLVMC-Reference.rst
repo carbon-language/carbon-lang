@@ -231,7 +231,8 @@ which gets a special treatment - there you are allowed to specify one
 default edge *per language*).
 
 When multiple plugins are loaded, their compilation graphs are merged
-together. Since multiple edges are not allowed, an edge defined in
+together. Since multiple edges that have the same end nodes are not
+allowed (i.e. the graph is not a multigraph), an edge defined in
 several plugins will be replaced by the definition from the plugin
 that was loaded last. Plugin load order can be controlled by using the
 plugin priority feature described above.
