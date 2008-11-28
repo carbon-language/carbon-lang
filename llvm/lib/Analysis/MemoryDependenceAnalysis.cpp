@@ -48,31 +48,32 @@ Instruction* const MemoryDependenceAnalysis::Dirty = (Instruction*)-5;
 static RegisterPass<MemoryDependenceAnalysis> X("memdep",
                                                 "Memory Dependence Analysis", false, true);
 
-void MemoryDependenceAnalysis::ping(Instruction *D) {
-  for (depMapType::iterator I = depGraphLocal.begin(), E = depGraphLocal.end();
-       I != E; ++I) {
+void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
+  for (depMapType::const_iterator I = depGraphLocal.begin(),
+       E = depGraphLocal.end(); I != E; ++I) {
     assert(I->first != D);
     assert(I->second.first != D);
   }
 
-  for (nonLocalDepMapType::iterator I = depGraphNonLocal.begin(), E = depGraphNonLocal.end();
-       I != E; ++I) {
+  for (nonLocalDepMapType::const_iterator I = depGraphNonLocal.begin(),
+       E = depGraphNonLocal.end(); I != E; ++I) {
     assert(I->first != D);
     for (DenseMap<BasicBlock*, Value*>::iterator II = I->second.begin(),
          EE = I->second.end(); II  != EE; ++II)
       assert(II->second != D);
   }
 
-  for (reverseDepMapType::iterator I = reverseDep.begin(), E = reverseDep.end();
-       I != E; ++I)
-    for (SmallPtrSet<Instruction*, 4>::iterator II = I->second.begin(), EE = I->second.end();
-         II != EE; ++II)
+  for (reverseDepMapType::const_iterator I = reverseDep.begin(),
+       E = reverseDep.end(); I != E; ++I)
+    for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
+         EE = I->second.end(); II != EE; ++II)
       assert(*II != D);
 
-  for (reverseDepMapType::iterator I = reverseDepNonLocal.begin(), E = reverseDepNonLocal.end();
+  for (reverseDepMapType::const_iterator I = reverseDepNonLocal.begin(),
+       E = reverseDepNonLocal.end();
        I != E; ++I)
-    for (SmallPtrSet<Instruction*, 4>::iterator II = I->second.begin(), EE = I->second.end();
-         II != EE; ++II)
+    for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
+         EE = I->second.end(); II != EE; ++II)
       assert(*II != D);
 }
 

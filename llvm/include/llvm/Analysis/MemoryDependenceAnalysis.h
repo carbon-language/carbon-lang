@@ -51,8 +51,6 @@ namespace llvm {
     reverseDepMapType reverseDepNonLocal;
     
   public:
-    void ping(Instruction* D);
-
     // Special marker indicating that the query has no dependency
     // in the specified block.
     static Instruction* const NonLocal;
@@ -104,6 +102,10 @@ namespace llvm {
     void dropInstruction(Instruction* drop);
     
   private:
+    /// verifyRemoved - Verify that the specified instruction does not occur
+    /// in our internal data structures.
+    void verifyRemoved(Instruction *Inst) const;
+    
     Instruction* getCallSiteDependency(CallSite C, Instruction* start,
                                        BasicBlock* block);
     void nonLocalHelper(Instruction* query, BasicBlock* block,
