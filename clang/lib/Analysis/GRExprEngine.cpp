@@ -982,6 +982,7 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
 
   // FIXME: The "CheckOnly" option exists only because Array and Field
   //  loads aren't fully implemented.  Eventually this option will go away.
+  assert(!CheckOnly);
 
   if (CheckOnly)
     MakeNode(Dst, Ex, Pred, St, K);
@@ -989,9 +990,10 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
     // This is important.  We must nuke the old binding.
     MakeNode(Dst, Ex, Pred, BindExpr(St, Ex, UnknownVal()), K);
   }
-  else    
-    MakeNode(Dst, Ex, Pred, BindExpr(St, Ex, GetSVal(St, cast<Loc>(location),
-                                                     Ex->getType())), K);  
+  else {
+    SVal V = GetSVal(St, cast<Loc>(location), Ex->getType());
+    MakeNode(Dst, Ex, Pred, BindExpr(St, Ex, V), K);  
+  }
 }
 
 void GRExprEngine::EvalStore(NodeSet& Dst, Expr* Ex, Expr* StoreE, NodeTy* Pred,
