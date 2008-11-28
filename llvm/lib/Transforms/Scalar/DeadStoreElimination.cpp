@@ -87,37 +87,38 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   bool MadeChange = false;
   
   // Do a top-down walk on the BB
-  for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end();
-       BBI != BBE; ++BBI) {
+  for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); BBI != BBE; ) {
+    Instruction *Inst = BBI++;
+    
     // If we find a store or a free...
-    if (!isa<StoreInst>(BBI) && !isa<FreeInst>(BBI))
+    if (!isa<StoreInst>(Inst) && !isa<FreeInst>(Inst))
       continue;
 
     Value* pointer = 0;
-    if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
+    if (StoreInst* S = dyn_cast<StoreInst>(Inst)) {
       if (S->isVolatile())
         continue;
       pointer = S->getPointerOperand();
     } else {
-      pointer = cast<FreeInst>(BBI)->getPointerOperand();
+      pointer = cast<FreeInst>(Inst)->getPointerOperand();
     }
 
     pointer = pointer->stripPointerCasts();
-    StoreInst*& last = lastStore[pointer];
-    bool deletedStore = false;
-
+    StoreInst *&last = lastStore[pointer];
+ 
     // ... to a pointer that has been stored to before...
     if (last) {
-      Instruction* dep = MD.getDependency(BBI);
-        
+      Instruction* dep = MD.getDependency(Inst);
+      bool deletedStore = false;
+    
       // ... and no other memory dependencies are between them....
       while (dep != MemoryDependenceAnalysis::None &&
              dep != MemoryDependenceAnalysis::NonLocal &&
              isa<StoreInst>(dep)) {
         if (dep != last ||
              TD.getTypeStoreSize(last->getOperand(0)->getType()) >
-             TD.getTypeStoreSize(BBI->getOperand(0)->getType())) {
-          dep = MD.getDependency(BBI, dep);
+             TD.getTypeStoreSize(Inst->getOperand(0)->getType())) {
+          dep = MD.getDependency(Inst, dep);
           continue;
         }
         
@@ -128,21 +129,27 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
         MadeChange = true;
         break;
       }
+      
+      // If we deleted a store, reinvestigate this instruction.
+      if (deletedStore) {
+        --BBI;
+        continue;
+      }
     }
     
     // Handle frees whose dependencies are non-trivial.
-    if (FreeInst* F = dyn_cast<FreeInst>(BBI)) {
-      if (!deletedStore)
-        MadeChange |= handleFreeWithNonTrivialDependency(F,MD.getDependency(F));
+    if (FreeInst* F = dyn_cast<FreeInst>(Inst)) {
+      MadeChange |= handleFreeWithNonTrivialDependency(F, MD.getDependency(F));
       
-      // No known stores after the free
+      // No known stores after the free.
       last = 0;
     } else {
-      StoreInst* S = cast<StoreInst>(BBI);
+      StoreInst* S = cast<StoreInst>(Inst);
       
       // If we're storing the same value back to a pointer that we just
       // loaded from, then the store can be removed;
       if (LoadInst* L = dyn_cast<LoadInst>(S->getOperand(0))) {
+        // FIXME: Don't do dep query if Parents don't match and other stuff!
         Instruction* dep = MD.getDependency(S);
         DominatorTree& DT = getAnalysis<DominatorTree>();
         
@@ -152,9 +159,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
              dep == MemoryDependenceAnalysis::NonLocal ||
              DT.dominates(dep, L))) {
           
-          // Avoid iterator invalidation.
-          BBI++;
           DeleteDeadInstruction(S);
+          --BBI;
           NumFastStores++;
           MadeChange = true;
         } else
@@ -166,8 +172,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     }
   }
   
-  // If this block ends in a return, unwind, unreachable, and eventually
-  // tailcall, then all allocas are dead at its end.
+  // If this block ends in a return, unwind, or unreachable, all allocas are
+  // dead at its end, which means stores to them are also dead.
   if (BB.getTerminator()->getNumSuccessors() == 0)
     MadeChange |= handleEndBlock(BB);
   
@@ -337,7 +343,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
         unsigned pointerSize = ~0U;
         if (AllocaInst* A = dyn_cast<AllocaInst>(*I)) {
           if (ConstantInt* C = dyn_cast<ConstantInt>(A->getArraySize()))
-            pointerSize = C->getZExtValue() * \
+            pointerSize = C->getZExtValue() *
                           TD.getABITypeSize(A->getAllocatedType());
         } else {
           const PointerType* PT = cast<PointerType>(
