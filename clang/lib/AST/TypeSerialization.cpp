@@ -30,15 +30,17 @@ void QualType::Emit(Serializer& S) const {
 }
 
 QualType QualType::ReadVal(Deserializer& D) {
-  QualType Q;
-  D.ReadUIntPtr(Q.ThePtr,false);
-  Q.ThePtr |= D.ReadInt();
-  return Q;
+  uintptr_t Val;
+  D.ReadUIntPtr(Val, false);
+  return QualType(reinterpret_cast<Type*>(Val), D.ReadInt());
 }
 
 void QualType::ReadBackpatch(Deserializer& D) {
-  D.ReadUIntPtr(ThePtr,true);
-  ThePtr |= D.ReadInt();
+  uintptr_t Val;
+  D.ReadUIntPtr(Val, false);
+  
+  Value.setPointer(reinterpret_cast<Type*>(Val));
+  Value.setInt(D.ReadInt());
 }
 
 //===----------------------------------------------------------------------===//

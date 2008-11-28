@@ -16,8 +16,9 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 using llvm::isa;
 using llvm::cast;
@@ -74,7 +75,7 @@ namespace clang {
 /// packing/unpacking, we make QualType be a simple wrapper class that acts like
 /// a smart pointer.
 class QualType {
-  uintptr_t ThePtr;
+  llvm::PointerIntPair<Type*, 3> Value;
 public:
   enum TQ {   // NOTE: These flags must be kept in sync with DeclSpec::TQ.
     Const    = 0x1,
@@ -83,37 +84,19 @@ public:
     CVRFlags = Const|Restrict|Volatile
   };
   
-  QualType() : ThePtr(0) {}
+  QualType() {}
   
-  QualType(Type *Ptr, unsigned Quals) {
-    assert((Quals & ~CVRFlags) == 0 && "Invalid type qualifiers!");
-    ThePtr = reinterpret_cast<uintptr_t>(Ptr);
-    assert((ThePtr & CVRFlags) == 0 && "Type pointer not 8-byte aligned?");
-    ThePtr |= Quals;
-  }
+  QualType(const Type *Ptr, unsigned Quals)
+    : Value(const_cast<Type*>(Ptr), Quals) {}
 
-  QualType(const Type *Ptr, unsigned Quals) {
-    assert((Quals & ~CVRFlags) == 0 && "Invalid type qualifiers!");
-    ThePtr = reinterpret_cast<uintptr_t>(Ptr);
-    assert((ThePtr & CVRFlags) == 0 && "Type pointer not 8-byte aligned?");
-    ThePtr |= Quals;
-  }
-
+  unsigned getCVRQualifiers() const { return Value.getInt(); }
+  Type *getTypePtr() const { return Value.getPointer(); }
+  
+  void *getAsOpaquePtr() const { return Value.getOpaqueValue(); }
   static QualType getFromOpaquePtr(void *Ptr) {
     QualType T;
-    T.ThePtr = reinterpret_cast<uintptr_t>(Ptr);
+    T.Value.setFromOpaqueValue(Ptr);
     return T;
-  }
-  
-  unsigned getCVRQualifiers() const {
-    return ThePtr & CVRFlags;
-  }
-  Type *getTypePtr() const {
-    return reinterpret_cast<Type*>(ThePtr & ~CVRFlags);
-  }
-  
-  void *getAsOpaquePtr() const {
-    return reinterpret_cast<void*>(ThePtr);
   }
   
   Type &operator*() const {
@@ -126,30 +109,30 @@ public:
   
   /// isNull - Return true if this QualType doesn't point to a type yet.
   bool isNull() const {
-    return ThePtr == 0;
+    return getTypePtr() == 0;
   }
 
   bool isConstQualified() const {
-    return (ThePtr & Const) ? true : false;
+    return (getCVRQualifiers() & Const) ? true : false;
   }
   bool isVolatileQualified() const {
-    return (ThePtr & Volatile) ? true : false;
+    return (getCVRQualifiers() & Volatile) ? true : false;
   }
   bool isRestrictQualified() const {
-    return (ThePtr & Restrict) ? true : false;
+    return (getCVRQualifiers() & Restrict) ? true : false;
   }
 
   bool isConstant(ASTContext& Ctx) const;
   
   /// addConst/addVolatile/addRestrict - add the specified type qual to this
   /// QualType.
-  void addConst()    { ThePtr |= Const; }
-  void addVolatile() { ThePtr |= Volatile; }
-  void addRestrict() { ThePtr |= Restrict; }
+  void addConst()    { Value.setInt(Value.getInt() | Const); }
+  void addVolatile() { Value.setInt(Value.getInt() | Volatile); }
+  void addRestrict() { Value.setInt(Value.getInt() | Restrict); }
 
-  void removeConst()    { ThePtr &= ~Const; }
-  void removeVolatile() { ThePtr &= ~Volatile; }
-  void removeRestrict() { ThePtr &= ~Restrict; }
+  void removeConst()    { Value.setInt(Value.getInt() & ~Const); }
+  void removeVolatile() { Value.setInt(Value.getInt() & ~Volatile); }
+  void removeRestrict() { Value.setInt(Value.getInt() & ~Restrict); }
 
   QualType getQualifiedType(unsigned TQs) const {
     return QualType(getTypePtr(), TQs);
@@ -171,10 +154,10 @@ public:
   /// operator==/!= - Indicate whether the specified types and qualifiers are
   /// identical.
   bool operator==(const QualType &RHS) const {
-    return ThePtr == RHS.ThePtr;
+    return Value == RHS.Value;
   }
   bool operator!=(const QualType &RHS) const {
-    return ThePtr != RHS.ThePtr;
+    return Value != RHS.Value;
   }
   std::string getAsString() const {
     std::string S;
