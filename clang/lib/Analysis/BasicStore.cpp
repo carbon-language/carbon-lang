@@ -68,7 +68,7 @@ public:
 
   std::pair<const GRState*, SVal> 
   CastRegion(const GRState* St, SVal VoidPtr, QualType CastToTy, Stmt* CastE) {
-    return std::pair<const GRState*, SVal>(St, UnknownVal());
+    return std::make_pair(St, UnknownVal());
   }
 
   

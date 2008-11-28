@@ -364,12 +364,11 @@ RegionStoreManager::CastRegion(const GRState* St, SVal VoidPtr,
     const ElementRegion* ER = MRMgr.getElementRegion(Idx, TR);
 
     // Add a RegionView to base region.
-    return std::pair<const GRState*, SVal>(AddRegionView(St, TR, AR), 
-                                           loc::MemRegionVal(ER));
+    return std::make_pair(AddRegionView(St, TR, AR), loc::MemRegionVal(ER));
   }
 
   // Default case.
-  return std::pair<const GRState*, SVal>(St, UnknownVal());
+  return std::make_pair(St, UnknownVal());
 }
 
 SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
