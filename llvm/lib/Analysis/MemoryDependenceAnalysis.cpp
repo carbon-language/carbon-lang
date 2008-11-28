@@ -20,11 +20,12 @@
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/ADT/Statistic.h"
 
 using namespace llvm;
 
@@ -511,9 +512,6 @@ void MemoryDependenceAnalysis::dropInstruction(Instruction* drop) {
 /// updating the dependence of instructions that previously depended on it.
 /// This method attempts to keep the cache coherent using the reverse map.
 void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
-  // Figure out the new dep for things that currently depend on rem
-  Instruction* newDep = NonLocal;
-
   // Walk through the Non-local dependencies, removing this one as the value
   // for any cached queries.
   for (DenseMap<BasicBlock*, Value*>::iterator DI =
@@ -522,51 +520,57 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
     if (DI->second != None)
       reverseDepNonLocal[DI->second].erase(RemInst);
 
+  // Shortly after this, we will look for things that depend on RemInst.  In
+  // order to update these, we'll need a new dependency to base them on.  We
+  // could completely delete any entries that depend on this, but it is better
+  // to make a more accurate approximation where possible.  Compute that better
+  // approximation if we can.
+  Instruction *NewDependency = 0;
+  bool NewDependencyConfirmed = false;
+  
   // If we have a cached local dependence query for this instruction, remove it.
-  depMapType::iterator depGraphEntry = depGraphLocal.find(RemInst);
-  if (depGraphEntry != depGraphLocal.end()) {
-    Instruction *DepInst = depGraphEntry->second.first;
-    bool IsConfirmed = depGraphEntry->second.second;
+  //
+  depMapType::iterator LocalDepEntry = depGraphLocal.find(RemInst);
+  if (LocalDepEntry != depGraphLocal.end()) {
+    Instruction *LocalDepInst = LocalDepEntry->second.first;
+    bool IsConfirmed = LocalDepEntry->second.second;
     
-    reverseDep[DepInst].erase(RemInst);
+    // Remove this local dependency info.
+    depGraphLocal.erase(LocalDepEntry);
     
-    if (DepInst != NonLocal && DepInst != None && IsConfirmed) {
-      // If we have dep info for rem, set them to it
-      BasicBlock::iterator RI = DepInst;
-      RI++;
-      
-      // If RI is rem, then we use rem's immediate successor.
-      if (RI == (BasicBlock::iterator)RemInst) RI++;
-      
-      newDep = RI;
-    } else if ((DepInst == NonLocal || DepInst == None) && IsConfirmed) {
-      // If we have a confirmed non-local flag, use it
-      newDep = DepInst;
-    } else {
-      // Otherwise, use the immediate successor of rem
-      // NOTE: This is because, when getDependence is called, it will first
-      // check the immediate predecessor of what is in the cache.
-      BasicBlock::iterator RI = RemInst;
-      RI++;
-      newDep = RI;
+    // Remove us from DepInst's reverse set now that the local dep info is gone.
+    reverseDep[LocalDepInst].erase(RemInst);
+
+    // If we have unconfirmed info, don't trust it.
+    if (IsConfirmed) {
+      // If we have a confirmed non-local flag, use it.
+      if (LocalDepInst == NonLocal || LocalDepInst == None) {
+        NewDependency = LocalDepInst;
+        NewDependencyConfirmed = true;
+      } else {
+        // If we have dep info for RemInst, set them to it.
+        NewDependency = next(BasicBlock::iterator(LocalDepInst));
+        
+        // Don't use RI for the new dependency!
+        if (NewDependency == RemInst)
+          NewDependency = 0;
+      }
     }
-    depGraphLocal.erase(RemInst);
-  } else {
-    // Otherwise, use the immediate successor of rem
-    // NOTE: This is because, when getDependence is called, it will first
-    // check the immediate predecessor of what is in the cache.
-    BasicBlock::iterator RI = RemInst;
-    RI++;
-    newDep = RI;
   }
+  
+  // If we don't already have a local dependency answer for this instruction,
+  // use the immediate successor of RemInst.  We use the successor because
+  // getDependence starts by checking the immediate predecessor of what is in
+  // the cache.
+  if (NewDependency == 0)
+    NewDependency = next(BasicBlock::iterator(RemInst));
   
   SmallPtrSet<Instruction*, 4>& set = reverseDep[RemInst];
   for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
        I != E; ++I) {
     // Insert the new dependencies
     // Mark it as unconfirmed as long as it is not the non-local flag
-    depGraphLocal[*I] = std::make_pair(newDep, (newDep == NonLocal ||
-                                                newDep == None));
+    depGraphLocal[*I] = std::make_pair(NewDependency, NewDependencyConfirmed);
   }
   
   reverseDep.erase(RemInst);
