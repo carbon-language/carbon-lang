@@ -22,7 +22,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -182,26 +181,37 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
 void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V,
                                       SmallVectorImpl<Instruction*> *DeadInst) {
   Instruction *I = dyn_cast<Instruction>(V);
-  if (!I || !I->use_empty()) return;
+  if (!I || !I->use_empty() || !isInstructionTriviallyDead(I))
+    return;
   
-  SmallPtrSet<Instruction*, 16> Insts;
-  Insts.insert(I);
+  SmallVector<Instruction*, 16> DeadInsts;
+  DeadInsts.push_back(I);
   
-  while (!Insts.empty()) {
-    I = *Insts.begin();
-    Insts.erase(I);
+  while (!DeadInsts.empty()) {
+    I = DeadInsts.back();
+    DeadInsts.pop_back();
 
-    // Okay, if the instruction is dead, delete it.
-    if (!isInstructionTriviallyDead(I))
-      continue;
-    
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
-        Insts.insert(U);
-    I->eraseFromParent();
-    
+    // If the client wanted to know, tell it about deleted instructions.
     if (DeadInst)
       DeadInst->push_back(I);
+    
+    // Null out all of the instruction's operands to see if any operand becomes
+    // dead as we go.
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+      Value *OpV = I->getOperand(i);
+      I->setOperand(i, 0);
+      
+      if (!OpV->use_empty()) continue;
+    
+      // If the operand is an instruction that became dead as we nulled out the
+      // operand, and if it is 'trivially' dead, delete it in a future loop
+      // iteration.
+      if (Instruction *OpI = dyn_cast<Instruction>(OpV))
+        if (isInstructionTriviallyDead(OpI))
+          DeadInsts.push_back(OpI);
+    }
+    
+    I->eraseFromParent();
   }
 }
 
