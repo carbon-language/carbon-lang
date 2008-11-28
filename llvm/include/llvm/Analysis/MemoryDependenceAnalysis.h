@@ -31,16 +31,16 @@ namespace llvm {
   class MemoryDependenceAnalysis : public FunctionPass {
   private:
     // A map from instructions to their dependency, with a boolean
-    // flags for whether this mapping is confirmed or not
+    // flags for whether this mapping is confirmed or not.
     typedef DenseMap<Instruction*, std::pair<Instruction*, bool> > depMapType;
     depMapType depGraphLocal;
 
     // A map from instructions to their non-local dependencies.
-    typedef DenseMap<Instruction*, DenseMap<BasicBlock*, Value*> >
-            nonLocalDepMapType;
+    typedef DenseMap<Instruction*,
+                     DenseMap<BasicBlock*, Value*> > nonLocalDepMapType;
     nonLocalDepMapType depGraphNonLocal;
     
-    // A reverse mapping form dependencies to the dependees.  This is
+    // A reverse mapping from dependencies to the dependees.  This is
     // used when removing instructions to keep the cache coherent.
     typedef DenseMap<Value*, SmallPtrSet<Instruction*, 4> > reverseDepMapType;
     reverseDepMapType reverseDep;
