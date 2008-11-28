@@ -190,14 +190,7 @@ void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V,
   while (!Insts.empty()) {
     I = *Insts.begin();
     Insts.erase(I);
-    
-    // If this is a PHI node, we may be able to make it dead if we know all the
-    // input values are the same.
-    if (PHINode *PN = dyn_cast<PHINode>(I)) {
-      if (Value *PNV = PN->hasConstantValue())
-        PN->replaceAllUsesWith(PNV);
-    }
-    
+
     // Okay, if the instruction is dead, delete it.
     if (!isInstructionTriviallyDead(I))
       continue;
