@@ -536,6 +536,10 @@ public:
   const llvm::APSInt* getSymVal(const GRState* St, SymbolID sym) {
     return ConstraintMgr->getSymVal(St, sym);
   }
+
+  void EndPath(const GRState* St) {
+    ConstraintMgr->EndPath(St);
+  }
 };
   
 //===----------------------------------------------------------------------===//

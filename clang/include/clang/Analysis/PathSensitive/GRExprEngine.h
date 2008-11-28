@@ -414,6 +414,7 @@ public:
   ///  nodes when the control reaches the end of a function.
   void ProcessEndPath(EndPathNodeBuilder& builder) {
     getTF().EvalEndPath(*this, builder);
+    StateMgr.EndPath(builder.getState());
   }
   
   GRStateManager& getStateManager() { return StateMgr; }

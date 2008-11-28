@@ -51,6 +51,8 @@ public:
 
   virtual void print(const GRState* St, std::ostream& Out, 
                      const char* nl, const char *sep) = 0;
+
+  virtual void EndPath(const GRState* St) {}
 };
 
 ConstraintManager* CreateBasicConstraintManager(GRStateManager& statemgr);
