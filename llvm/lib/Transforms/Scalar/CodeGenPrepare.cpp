@@ -205,16 +205,18 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   // If the destination block has a single pred, then this is a trivial edge,
   // just collapse it.
   if (BasicBlock *SinglePred = DestBB->getSinglePredecessor()) {
-    // Remember if SinglePred was the entry block of the function.  If so, we
-    // will need to move BB back to the entry position.
-    bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
-    MergeBasicBlockIntoOnlyPred(DestBB);
+    if (SinglePred != DestBB) {
+      // Remember if SinglePred was the entry block of the function.  If so, we
+      // will need to move BB back to the entry position.
+      bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
+      MergeBasicBlockIntoOnlyPred(DestBB);
 
-    if (isEntry && BB != &BB->getParent()->getEntryBlock())
-      BB->moveBefore(&BB->getParent()->getEntryBlock());
-    
-    DOUT << "AFTER:\n" << *DestBB << "\n\n\n";
-    return;
+      if (isEntry && BB != &BB->getParent()->getEntryBlock())
+        BB->moveBefore(&BB->getParent()->getEntryBlock());
+      
+      DOUT << "AFTER:\n" << *DestBB << "\n\n\n";
+      return;
+    }
   }
 
   // Otherwise, we have multiple predecessors of BB.  Update the PHIs in DestBB

@@ -164,7 +164,8 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // because now the condition in this block can be threaded through
   // predecessors of our predecessor block.
   if (BasicBlock *SinglePred = BB->getSinglePredecessor())
-    if (SinglePred->getTerminator()->getNumSuccessors() == 1) {
+    if (SinglePred->getTerminator()->getNumSuccessors() == 1 &&
+        SinglePred != BB) {
       // Remember if SinglePred was the entry block of the function.  If so, we
       // will need to move BB back to the entry position.
       bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
