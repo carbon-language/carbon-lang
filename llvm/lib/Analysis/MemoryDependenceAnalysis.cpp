@@ -120,7 +120,7 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        pointerSize = C->getZExtValue() * \
+        pointerSize = C->getZExtValue() *
                       TD.getABITypeSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
@@ -398,7 +398,7 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        pointerSize = C->getZExtValue() * \
+        pointerSize = C->getZExtValue() * 
                       TD.getABITypeSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
@@ -533,9 +533,9 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
       if (RI == (BasicBlock::iterator)rem) RI++;
       
       newDep = RI;
-    } else if ( (depGraphEntry->second.first == NonLocal ||
-                 depGraphEntry->second.first == None ) &&
-               depGraphEntry->second.second ) {
+    } else if ((depGraphEntry->second.first == NonLocal ||
+                depGraphEntry->second.first == None) &&
+               depGraphEntry->second.second) {
       // If we have a confirmed non-local flag, use it
       newDep = depGraphEntry->second.first;
     } else {
