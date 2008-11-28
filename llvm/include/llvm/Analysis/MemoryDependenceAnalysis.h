@@ -15,7 +15,6 @@
 #define LLVM_ANALYSIS_MEMORY_DEPENDENCE_H
 
 #include "llvm/Pass.h"
-#include "llvm/Support/CallSite.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
@@ -23,6 +22,7 @@ namespace llvm {
   class Function;
   class FunctionPass;
   class Instruction;
+  class CallSite;
 
   /// MemoryDependenceAnalysis - This is an analysis that determines, for a
   /// given memory operation, what preceding memory operations it depends on.
@@ -32,8 +32,7 @@ namespace llvm {
   private:
     // A map from instructions to their dependency, with a boolean
     // flags for whether this mapping is confirmed or not
-    typedef DenseMap<Instruction*, std::pair<Instruction*, bool> > 
-            depMapType;
+    typedef DenseMap<Instruction*, std::pair<Instruction*, bool> > depMapType;
     depMapType depGraphLocal;
 
     // A map from instructions to their non-local dependencies.
@@ -43,8 +42,7 @@ namespace llvm {
     
     // A reverse mapping form dependencies to the dependees.  This is
     // used when removing instructions to keep the cache coherent.
-    typedef DenseMap<Value*, SmallPtrSet<Instruction*, 4> >
-            reverseDepMapType;
+    typedef DenseMap<Value*, SmallPtrSet<Instruction*, 4> > reverseDepMapType;
     reverseDepMapType reverseDep;
     
     // A reverse mapping form dependencies to the non-local dependees.
