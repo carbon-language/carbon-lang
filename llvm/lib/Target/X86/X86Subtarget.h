@@ -23,7 +23,7 @@ class Module;
 class GlobalValue;
 class TargetMachine;
   
-namespace PICStyle {
+namespace PICStyles {
 enum Style {
   Stub, GOT, RIPRel, WinPIC, None
 };
@@ -51,7 +51,7 @@ protected:
 
   /// PICStyle - Which PIC style to use
   ///
-  PICStyle::Style PICStyle;
+  PICStyles::Style PICStyle;
   
   /// X86SSELevel - MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, or
   /// none supported.
@@ -114,8 +114,8 @@ public:
 
   bool is64Bit() const { return Is64Bit; }
 
-  PICStyle::Style getPICStyle() const { return PICStyle; }
-  void setPICStyle(PICStyle::Style Style)  { PICStyle = Style; }
+  PICStyles::Style getPICStyle() const { return PICStyle; }
+  void setPICStyle(PICStyles::Style Style)  { PICStyle = Style; }
 
   bool hasMMX() const { return X86SSELevel >= MMX; }
   bool hasSSE1() const { return X86SSELevel >= SSE1; }
@@ -160,11 +160,11 @@ public:
     return std::string(p);
   }
 
-  bool isPICStyleSet() const { return PICStyle != PICStyle::None; }
-  bool isPICStyleGOT() const { return PICStyle == PICStyle::GOT; }
-  bool isPICStyleStub() const { return PICStyle == PICStyle::Stub; }
-  bool isPICStyleRIPRel() const { return PICStyle == PICStyle::RIPRel; }
-  bool isPICStyleWinPIC() const { return PICStyle == PICStyle:: WinPIC; }
+  bool isPICStyleSet() const { return PICStyle != PICStyles::None; }
+  bool isPICStyleGOT() const { return PICStyle == PICStyles::GOT; }
+  bool isPICStyleStub() const { return PICStyle == PICStyles::Stub; }
+  bool isPICStyleRIPRel() const { return PICStyle == PICStyles::RIPRel; }
+  bool isPICStyleWinPIC() const { return PICStyle == PICStyles:: WinPIC; }
   
   /// getDarwinVers - Return the darwin version number, 8 = tiger, 9 = leopard.
   unsigned getDarwinVers() const { return DarwinVers; }

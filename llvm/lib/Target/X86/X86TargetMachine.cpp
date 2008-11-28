@@ -162,17 +162,17 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
   }
 
   if (Subtarget.isTargetCygMing())
-    Subtarget.setPICStyle(PICStyle::WinPIC);
+    Subtarget.setPICStyle(PICStyles::WinPIC);
   else if (Subtarget.isTargetDarwin()) {
     if (Subtarget.is64Bit())
-      Subtarget.setPICStyle(PICStyle::RIPRel);
+      Subtarget.setPICStyle(PICStyles::RIPRel);
     else
-      Subtarget.setPICStyle(PICStyle::Stub);
+      Subtarget.setPICStyle(PICStyles::Stub);
   } else if (Subtarget.isTargetELF()) {
     if (Subtarget.is64Bit())
-      Subtarget.setPICStyle(PICStyle::RIPRel);
+      Subtarget.setPICStyle(PICStyles::RIPRel);
     else
-      Subtarget.setPICStyle(PICStyle::GOT);
+      Subtarget.setPICStyle(PICStyles::GOT);
   }
 }
 
