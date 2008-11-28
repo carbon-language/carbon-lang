@@ -669,8 +669,9 @@ Store RegionStoreManager::BindArrayToVal(Store store, const TypedRegion* BaseR,
 
     llvm::APInt Size = CAT->getSize();
     llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
+
     for (; i != Size; ++i) {
-      nonloc::ConcreteInt Idx(getBasicVals().getValue(llvm::APSInt(i)));
+      nonloc::ConcreteInt Idx(getBasicVals().getValue(llvm::APSInt(i, false)));
 
       ElementRegion* ER = MRMgr.getElementRegion(Idx, BaseR);
 
@@ -693,7 +694,7 @@ Store RegionStoreManager::BindArrayToSymVal(Store store,
     llvm::APInt Size = CAT->getSize();
     llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
     for (; i != Size; ++i) {
-      nonloc::ConcreteInt Idx(getBasicVals().getValue(llvm::APSInt(i)));
+      nonloc::ConcreteInt Idx(getBasicVals().getValue(llvm::APSInt(i, false)));
       
       ElementRegion* ER = MRMgr.getElementRegion(Idx, BaseR);
 
