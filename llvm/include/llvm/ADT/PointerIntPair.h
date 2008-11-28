@@ -51,7 +51,7 @@ public:
   
   void setInt(IntType Int) {
     assert(Int < (1 << IntBits) && "Integer too large for field");
-    Value |= reinterpret_cast<intptr_t>(getPointer()) | (intptr_t)Int;
+    Value = reinterpret_cast<intptr_t>(getPointer()) | (intptr_t)Int;
   }
   
   void *getOpaqueValue() const { return reinterpret_cast<void*>(Value); }
