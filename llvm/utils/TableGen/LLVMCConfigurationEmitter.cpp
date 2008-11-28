@@ -1539,20 +1539,18 @@ void FillInToolToLang (const ToolPropertiesList& TPList,
 /// on all edges do match. This doesn't do much when the information
 /// about the whole graph is not available (i.e. when compiling most
 /// plugins).
-// TODO: add a --check-graph switch to llvmc2. It would also make it
-// possible to detect cycles and multiple default edges.
-void TypecheckGraph (const Record* CompilationGraph,
+void TypecheckGraph (const RecordVector& EdgeVector,
                      const ToolPropertiesList& TPList) {
   StringMap<StringSet<> > ToolToInLang;
   StringMap<std::string> ToolToOutLang;
 
   FillInToolToLang(TPList, ToolToInLang, ToolToOutLang);
-  ListInit* edges = CompilationGraph->getValueAsListInit("edges");
   StringMap<std::string>::iterator IAE = ToolToOutLang.end();
   StringMap<StringSet<> >::iterator IBE = ToolToInLang.end();
 
-  for (unsigned i = 0; i < edges->size(); ++i) {
-    const Record* Edge = edges->getElementAsRecord(i);
+  for (RecordVector::const_iterator B = EdgeVector.begin(),
+         E = EdgeVector.end(); B != E; ++B) {
+    const Record* Edge = *B;
     const std::string& A = Edge->getValueAsString("a");
     const std::string& B = Edge->getValueAsString("b");
     StringMap<std::string>::iterator IA = ToolToOutLang.find(A);
@@ -1613,31 +1611,28 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
 }
 
 /// EmitEdgeClasses - Emit Edge* classes that represent graph edges.
-void EmitEdgeClasses (const Record* CompilationGraph,
+void EmitEdgeClasses (const RecordVector& EdgeVector,
                       const GlobalOptionDescriptions& OptDescs,
                       std::ostream& O) {
-  ListInit* edges = CompilationGraph->getValueAsListInit("edges");
-
-  for (unsigned i = 0; i < edges->size(); ++i) {
-    const Record* Edge = edges->getElementAsRecord(i);
+  int i = 0;
+  for (RecordVector::const_iterator B = EdgeVector.begin(),
+         E = EdgeVector.end(); B != E; ++B) {
+    const Record* Edge = *B;
     const std::string& B = Edge->getValueAsString("b");
     DagInit* Weight = Edge->getValueAsDag("weight");
 
-    if (isDagEmpty(Weight))
-      continue;
-
-    EmitEdgeClass(i, B, Weight, OptDescs, O);
+    if (!isDagEmpty(Weight))
+      EmitEdgeClass(i, B, Weight, OptDescs, O);
+    ++i;
   }
 }
 
 /// EmitPopulateCompilationGraph - Emit the PopulateCompilationGraph()
 /// function.
-void EmitPopulateCompilationGraph (const Record* CompilationGraph,
+void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
                                    const ToolPropertiesList& ToolProps,
                                    std::ostream& O)
 {
-  ListInit* edges = CompilationGraph->getValueAsListInit("edges");
-
   O << "namespace {\n\n";
   O << "void PopulateCompilationGraphLocal(CompilationGraph& G) {\n";
 
@@ -1649,8 +1644,10 @@ void EmitPopulateCompilationGraph (const Record* CompilationGraph,
 
   // Insert edges.
 
-  for (unsigned i = 0; i < edges->size(); ++i) {
-    const Record* Edge = edges->getElementAsRecord(i);
+  int i = 0;
+  for (RecordVector::const_iterator B = EdgeVector.begin(),
+         E = EdgeVector.end(); B != E; ++B) {
+    const Record* Edge = *B;
     const std::string& A = Edge->getValueAsString("a");
     const std::string& B = Edge->getValueAsString("b");
     DagInit* Weight = Edge->getValueAsDag("weight");
@@ -1663,6 +1660,7 @@ void EmitPopulateCompilationGraph (const Record* CompilationGraph,
       O << "new Edge" << i << "()";
 
     O << ");\n";
+    ++i;
   }
 
   O << "}\n\n}\n\n";
@@ -1796,15 +1794,16 @@ public:
 
 /// FilterNotInGraph - Filter out from ToolProps all Tools not
 /// mentioned in the compilation graph definition.
-void FilterNotInGraph (const Record* CompilationGraph,
+void FilterNotInGraph (const RecordVector& EdgeVector,
                        ToolPropertiesList& ToolProps) {
 
   // List all tools mentioned in the graph.
   llvm::StringSet<> ToolsInGraph;
-  ListInit* edges = CompilationGraph->getValueAsListInit("edges");
 
-  for (unsigned i = 0; i < edges->size(); ++i) {
-    const Record* Edge = edges->getElementAsRecord(i);
+  for (RecordVector::const_iterator B = EdgeVector.begin(),
+         E = EdgeVector.end(); B != E; ++B) {
+
+    const Record* Edge = *B;
     const std::string& A = Edge->getValueAsString("a");
     const std::string& B = Edge->getValueAsString("b");
 
@@ -1820,6 +1819,7 @@ void FilterNotInGraph (const Record* CompilationGraph,
   ToolProps.erase(new_end, ToolProps.end());
 }
 
+/// CalculatePriority - Calculate the priority of this plugin.
 int CalculatePriority(RecordVector::const_iterator B,
                       RecordVector::const_iterator E) {
   int total = 0;
@@ -1827,6 +1827,18 @@ int CalculatePriority(RecordVector::const_iterator B,
     total += static_cast<int>((*B)->getValueAsInt("priority"));
   }
   return total;
+}
+
+/// FillInEdgeVector - Merge all compilation graph definitions into
+/// one single edge list.
+void FillInEdgeVector(RecordVector::const_iterator B,
+                      RecordVector::const_iterator E, RecordVector& Out) {
+  for (; B != E; ++B) {
+    const ListInit* edges = (*B)->getValueAsListInit("edges");
+
+    for (unsigned i = 0; i < edges->size(); ++i)
+      Out.push_back(edges->getElementAsRecord(i));
+  }
 }
 
 // End of anonymous namespace
@@ -1840,33 +1852,30 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
   EmitSourceFileHeader("LLVMC Configuration Library", O);
   EmitIncludes(O);
 
-  // Get a list of all defined Tools.
-
+  // Collect tool properties.
   RecordVector Tools = Records.getAllDerivedDefinitions("Tool");
-  if (Tools.empty())
-    throw std::string("No tool definitions found!");
-
-  // Gather information from the Tool description dags.
   ToolPropertiesList ToolProps;
   GlobalOptionDescriptions OptDescs;
   CollectToolProperties(Tools.begin(), Tools.end(), ToolProps, OptDescs);
 
+  // Collect option properties.
   const RecordVector& OptionLists =
     Records.getAllDerivedDefinitions("OptionList");
   CollectPropertiesFromOptionLists(OptionLists.begin(), OptionLists.end(),
                                    OptDescs);
 
-  // TOTHINK: Nothing actually prevents us from having multiple
-  // compilation graphs in a single plugin; OTOH, I do not see how
-  // that could be useful.
-  const Record* CompilationGraphRecord = Records.getDef("CompilationGraph");
-  if (!CompilationGraphRecord)
-    throw std::string("Compilation graph description not found!");
+  // Collect compilation graph edges.
+  const RecordVector& CompilationGraphs =
+    Records.getAllDerivedDefinitions("CompilationGraph");
+  RecordVector EdgeVector;
+  FillInEdgeVector(CompilationGraphs.begin(), CompilationGraphs.end(),
+                   EdgeVector);
 
-  FilterNotInGraph(CompilationGraphRecord, ToolProps);
+  // Filter out all tools not mentioned in the compilation graph.
+  FilterNotInGraph(EdgeVector, ToolProps);
 
   // Typecheck the compilation graph.
-  TypecheckGraph(CompilationGraphRecord, ToolProps);
+  TypecheckGraph(EdgeVector, ToolProps);
 
   // Check that there are no options without side effects (specified
   // only in the OptionList).
@@ -1888,16 +1897,16 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
     EmitToolClassDefinition(*(*B), OptDescs, O);
 
   // Emit Edge# classes.
-  EmitEdgeClasses(CompilationGraphRecord, OptDescs, O);
+  EmitEdgeClasses(EdgeVector, OptDescs, O);
 
   // Emit PopulateCompilationGraph() function.
-  EmitPopulateCompilationGraph(CompilationGraphRecord, ToolProps, O);
+  EmitPopulateCompilationGraph(EdgeVector, ToolProps, O);
 
   // Emit code for plugin registration.
   const RecordVector& Priorities =
     Records.getAllDerivedDefinitions("PluginPriority");
-  EmitRegisterPlugin(CalculatePriority(Priorities.begin(), Priorities.end()),
-                     O);
+  EmitRegisterPlugin(CalculatePriority(Priorities.begin(),
+                                       Priorities.end()), O);
 
   // EOF
   } catch (std::exception& Error) {
