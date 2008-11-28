@@ -353,6 +353,12 @@ currently implemented option types and properties are described below:
 
    - ``required`` - this option is obligatory.
 
+   - ``hidden`` - this option should not appear in the ``--help``
+     output (but should appear in the ``--help-hidden`` output).
+
+   - ``really_hidden`` - the option should not appear in any help
+     output.
+
 
 Option list - specifying all options in a single place
 ======================================================

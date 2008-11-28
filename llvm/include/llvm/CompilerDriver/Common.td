@@ -38,10 +38,12 @@ def prefix_list_option;
 def append_cmd;
 def forward;
 def forward_as;
+def help;
+def hidden;
+def really_hidden;
+def required;
 def stop_compilation;
 def unpack_values;
-def help;
-def required;
 
 // Empty DAG marker.
 def empty;

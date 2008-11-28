@@ -198,7 +198,8 @@ struct OptionDescription {
 // Global option description.
 
 namespace GlobalOptionDescriptionFlags {
-  enum GlobalOptionDescriptionFlags { Required = 0x1 };
+  enum GlobalOptionDescriptionFlags { Required = 0x1, Hidden = 0x2,
+                                      ReallyHidden = 0x4 };
 }
 
 struct GlobalOptionDescription : public OptionDescription {
@@ -220,6 +221,20 @@ struct GlobalOptionDescription : public OptionDescription {
   }
   void setRequired() {
     Flags |= GlobalOptionDescriptionFlags::Required;
+  }
+
+  bool isHidden() const {
+    return Flags & GlobalOptionDescriptionFlags::Hidden;
+  }
+  void setHidden() {
+    Flags |= GlobalOptionDescriptionFlags::Hidden;
+  }
+
+  bool isReallyHidden() const {
+    return Flags & GlobalOptionDescriptionFlags::ReallyHidden;
+  }
+  void setReallyHidden() {
+    Flags |= GlobalOptionDescriptionFlags::ReallyHidden;
   }
 
   /// Merge - Merge two option descriptions.
@@ -412,8 +427,12 @@ public:
         &CollectOptionProperties::onForwardAs;
       optionPropertyHandlers_["help"] =
         &CollectOptionProperties::onHelp;
+      optionPropertyHandlers_["hidden"] =
+        &CollectOptionProperties::onHidden;
       optionPropertyHandlers_["output_suffix"] =
         &CollectOptionProperties::onOutputSuffix;
+      optionPropertyHandlers_["really_hidden"] =
+        &CollectOptionProperties::onReallyHidden;
       optionPropertyHandlers_["required"] =
         &CollectOptionProperties::onRequired;
       optionPropertyHandlers_["stop_compilation"] =
@@ -491,6 +510,18 @@ private:
     const std::string& help_message = InitPtrToString(d->getArg(0));
 
     optDesc_.Help = help_message;
+  }
+
+  void onHidden (const DagInit* d) {
+    checkNumberOfArguments(d, 0);
+    checkToolProps(d);
+    optDesc_.setHidden();
+  }
+
+  void onReallyHidden (const DagInit* d) {
+    checkNumberOfArguments(d, 0);
+    checkToolProps(d);
+    optDesc_.setReallyHidden();
   }
 
   void onRequired (const DagInit* d) {
@@ -1411,6 +1442,17 @@ void EmitOptionDescriptions (const GlobalOptionDescriptions& descs,
       default:
         O << ", cl::Required";
       }
+    }
+
+    if (val.isReallyHidden() || val.isHidden()) {
+      if (val.isRequired())
+        O << " |";
+      else
+        O << ",";
+      if (val.isReallyHidden())
+        O << " cl::ReallyHidden";
+      else
+        O << " cl::Hidden";
     }
 
     if (!val.Help.empty())
