@@ -545,6 +545,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
     if (IsConfirmed) {
       // If we have a confirmed non-local flag, use it.
       if (LocalDepInst == NonLocal || LocalDepInst == None) {
+        // The only time this dependency is confirmed is if it is non-local.
         NewDependency = LocalDepInst;
         NewDependencyConfirmed = true;
       } else {
@@ -565,18 +566,34 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   if (NewDependency == 0)
     NewDependency = next(BasicBlock::iterator(RemInst));
   
-  SmallPtrSet<Instruction*, 4>& set = reverseDep[RemInst];
-  for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
-       I != E; ++I) {
-    // Insert the new dependencies
-    // Mark it as unconfirmed as long as it is not the non-local flag
-    depGraphLocal[*I] = std::make_pair(NewDependency, NewDependencyConfirmed);
+  // Loop over all of the things that depend on the instruction we're removing.
+  // 
+  reverseDepMapType::iterator ReverseDepIt = reverseDep.find(RemInst);
+  if (ReverseDepIt != reverseDep.end()) {
+    SmallPtrSet<Instruction*, 4> &ReverseDeps = ReverseDepIt->second;
+    for (SmallPtrSet<Instruction*, 4>::iterator I = ReverseDeps.begin(),
+         E = ReverseDeps.end(); I != E; ++I) {
+      Instruction *InstDependingOnRemInst = *I;
+      
+      // If we thought the instruction depended on itself (possible for
+      // unconfirmed dependencies) ignore the update.
+      if (InstDependingOnRemInst == RemInst) continue;
+      
+      // Insert the new dependencies.
+      depGraphLocal[InstDependingOnRemInst] =
+        std::make_pair(NewDependency, NewDependencyConfirmed);
+      
+      // If our NewDependency is an instruction, make sure to remember that new
+      // things depend on it.
+      if (NewDependency != NonLocal && NewDependency != None)
+        reverseDep[NewDependency].insert(InstDependingOnRemInst);
+    }
+    reverseDep.erase(RemInst);
   }
   
-  reverseDep.erase(RemInst);
-  
-  if (reverseDepNonLocal.count(RemInst)) {
-    SmallPtrSet<Instruction*, 4>& set = reverseDepNonLocal[RemInst];
+  ReverseDepIt = reverseDepNonLocal.find(RemInst);
+  if (ReverseDepIt != reverseDepNonLocal.end()) {
+    SmallPtrSet<Instruction*, 4>& set = ReverseDepIt->second;
     for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
          I != E; ++I)
       for (DenseMap<BasicBlock*, Value*>::iterator DI =
@@ -584,10 +601,9 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
            DI != DE; ++DI)
         if (DI->second == RemInst)
           DI->second = Dirty;
-    
+    reverseDepNonLocal.erase(RemInst);
   }
   
-  reverseDepNonLocal.erase(RemInst);
   depGraphNonLocal.erase(RemInst);
 
   getAnalysis<AliasAnalysis>().deleteValue(RemInst);
