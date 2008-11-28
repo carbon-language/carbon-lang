@@ -14,6 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "memdep"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
@@ -21,10 +22,9 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Statistic.h"
-
-#define DEBUG_TYPE "memdep"
 
 using namespace llvm;
 
@@ -46,35 +46,37 @@ Instruction* const MemoryDependenceAnalysis::Dirty = (Instruction*)-5;
   
 // Register this pass...
 static RegisterPass<MemoryDependenceAnalysis> X("memdep",
-                                                "Memory Dependence Analysis", false, true);
+                                     "Memory Dependence Analysis", false, true);
 
+/// verifyRemoved - Verify that the specified instruction does not occur
+/// in our internal data structures.
 void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
   for (depMapType::const_iterator I = depGraphLocal.begin(),
        E = depGraphLocal.end(); I != E; ++I) {
-    assert(I->first != D);
-    assert(I->second.first != D);
+    assert(I->first != D && "Inst occurs in data structures");
+    assert(I->second.first != D && "Inst occurs in data structures");
   }
 
   for (nonLocalDepMapType::const_iterator I = depGraphNonLocal.begin(),
        E = depGraphNonLocal.end(); I != E; ++I) {
-    assert(I->first != D);
+    assert(I->first != D && "Inst occurs in data structures");
     for (DenseMap<BasicBlock*, Value*>::iterator II = I->second.begin(),
          EE = I->second.end(); II  != EE; ++II)
-      assert(II->second != D);
+      assert(II->second != D && "Inst occurs in data structures");
   }
 
   for (reverseDepMapType::const_iterator I = reverseDep.begin(),
        E = reverseDep.end(); I != E; ++I)
     for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
          EE = I->second.end(); II != EE; ++II)
-      assert(*II != D);
+      assert(*II != D && "Inst occurs in data structures");
 
   for (reverseDepMapType::const_iterator I = reverseDepNonLocal.begin(),
        E = reverseDepNonLocal.end();
        I != E; ++I)
     for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
          EE = I->second.end(); II != EE; ++II)
-      assert(*II != D);
+      assert(*II != D && "Inst occurs in data structures");
 }
 
 /// getAnalysisUsage - Does not modify anything.  It uses Alias Analysis.
@@ -88,7 +90,7 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 /// getCallSiteDependency - Private helper for finding the local dependencies
 /// of a call site.
 Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
-                                                           Instruction* start,
+                                                             Instruction* start,
                                                             BasicBlock* block) {
   
   std::pair<Instruction*, bool>& cachedResult =
@@ -586,4 +588,6 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
     depGraphNonLocal.erase(I);
 
   getAnalysis<AliasAnalysis>().deleteValue(rem);
+  
+  DEBUG(verifyRemoved(rem));
 }
