@@ -19,7 +19,7 @@
 namespace llvm {
   
 /// PointerIntPair - This class implements a pair of a pointer and small
-/// integer.  It is designed to represet this in the space required by one
+/// integer.  It is designed to represent this in the space required by one
 /// pointer by bitmangling the integer into the low part of the pointer.  This
 /// can only be done for small integers: typically up to 3 bits, but it depends
 /// on the alignment returned by the allocator in use.
