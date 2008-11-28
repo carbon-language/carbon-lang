@@ -510,55 +510,57 @@ void MemoryDependenceAnalysis::dropInstruction(Instruction* drop) {
 /// removeInstruction - Remove an instruction from the dependence analysis,
 /// updating the dependence of instructions that previously depended on it.
 /// This method attempts to keep the cache coherent using the reverse map.
-void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
+void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   // Figure out the new dep for things that currently depend on rem
   Instruction* newDep = NonLocal;
 
+  // Walk through the Non-local dependencies, removing this one as the value
+  // for any cached queries.
   for (DenseMap<BasicBlock*, Value*>::iterator DI =
-       depGraphNonLocal[rem].begin(), DE = depGraphNonLocal[rem].end();
+       depGraphNonLocal[RemInst].begin(), DE = depGraphNonLocal[RemInst].end();
        DI != DE; ++DI)
     if (DI->second != None)
-      reverseDepNonLocal[DI->second].erase(rem);
+      reverseDepNonLocal[DI->second].erase(RemInst);
 
-  depMapType::iterator depGraphEntry = depGraphLocal.find(rem);
-
+  // If we have a cached local dependence query for this instruction, remove it.
+  depMapType::iterator depGraphEntry = depGraphLocal.find(RemInst);
   if (depGraphEntry != depGraphLocal.end()) {
-    reverseDep[depGraphEntry->second.first].erase(rem);
+    Instruction *DepInst = depGraphEntry->second.first;
+    bool IsConfirmed = depGraphEntry->second.second;
     
-    if (depGraphEntry->second.first != NonLocal &&
-        depGraphEntry->second.first != None &&
-        depGraphEntry->second.second) {
+    reverseDep[DepInst].erase(RemInst);
+    
+    if (DepInst != NonLocal && DepInst != None && IsConfirmed) {
       // If we have dep info for rem, set them to it
-      BasicBlock::iterator RI = depGraphEntry->second.first;
+      BasicBlock::iterator RI = DepInst;
       RI++;
       
       // If RI is rem, then we use rem's immediate successor.
-      if (RI == (BasicBlock::iterator)rem) RI++;
+      if (RI == (BasicBlock::iterator)RemInst) RI++;
       
       newDep = RI;
-    } else if ((depGraphEntry->second.first == NonLocal ||
-                depGraphEntry->second.first == None) &&
-               depGraphEntry->second.second) {
+    } else if ((DepInst == NonLocal || DepInst == None) && IsConfirmed) {
       // If we have a confirmed non-local flag, use it
-      newDep = depGraphEntry->second.first;
+      newDep = DepInst;
     } else {
       // Otherwise, use the immediate successor of rem
       // NOTE: This is because, when getDependence is called, it will first
       // check the immediate predecessor of what is in the cache.
-      BasicBlock::iterator RI = rem;
+      BasicBlock::iterator RI = RemInst;
       RI++;
       newDep = RI;
     }
+    depGraphLocal.erase(RemInst);
   } else {
     // Otherwise, use the immediate successor of rem
     // NOTE: This is because, when getDependence is called, it will first
     // check the immediate predecessor of what is in the cache.
-    BasicBlock::iterator RI = rem;
+    BasicBlock::iterator RI = RemInst;
     RI++;
     newDep = RI;
   }
   
-  SmallPtrSet<Instruction*, 4>& set = reverseDep[rem];
+  SmallPtrSet<Instruction*, 4>& set = reverseDep[RemInst];
   for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
        I != E; ++I) {
     // Insert the new dependencies
@@ -567,27 +569,24 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
                                                 newDep == None));
   }
   
-  depGraphLocal.erase(rem);
-  reverseDep.erase(rem);
+  reverseDep.erase(RemInst);
   
-  if (reverseDepNonLocal.count(rem)) {
-    SmallPtrSet<Instruction*, 4>& set = reverseDepNonLocal[rem];
+  if (reverseDepNonLocal.count(RemInst)) {
+    SmallPtrSet<Instruction*, 4>& set = reverseDepNonLocal[RemInst];
     for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
          I != E; ++I)
       for (DenseMap<BasicBlock*, Value*>::iterator DI =
            depGraphNonLocal[*I].begin(), DE = depGraphNonLocal[*I].end();
            DI != DE; ++DI)
-        if (DI->second == rem)
+        if (DI->second == RemInst)
           DI->second = Dirty;
     
   }
   
-  reverseDepNonLocal.erase(rem);
-  nonLocalDepMapType::iterator I = depGraphNonLocal.find(rem);
-  if (I != depGraphNonLocal.end())
-    depGraphNonLocal.erase(I);
+  reverseDepNonLocal.erase(RemInst);
+  depGraphNonLocal.erase(RemInst);
 
-  getAnalysis<AliasAnalysis>().deleteValue(rem);
+  getAnalysis<AliasAnalysis>().deleteValue(RemInst);
   
-  DEBUG(verifyRemoved(rem));
+  DEBUG(verifyRemoved(RemInst));
 }
