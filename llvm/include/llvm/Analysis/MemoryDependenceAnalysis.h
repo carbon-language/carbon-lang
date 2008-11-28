@@ -7,10 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines an analysis that determines, for a given memory operation,
-// what preceding memory operations it depends on.  It builds on alias analysis
-// information, and tries to provide a lazy, caching interface to a common kind
-// of alias information query.
+// This file defines the MemoryDependenceAnalysis analysis pass.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,15 +18,17 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
+  class Function;
+  class FunctionPass;
+  class Instruction;
 
-class Function;
-class FunctionPass;
-class Instruction;
-
-class MemoryDependenceAnalysis : public FunctionPass {
+  /// MemoryDependenceAnalysis - This is an analysis that determines, for a
+  /// given memory operation, what preceding memory operations it depends on.
+  /// It builds on alias analysis information, and tries to provide a lazy,
+  /// caching interface to a common kind of alias information query.
+  class MemoryDependenceAnalysis : public FunctionPass {
   private:
     // A map from instructions to their dependency, with a boolean
     // flags for whether this mapping is confirmed or not
@@ -60,7 +59,6 @@ class MemoryDependenceAnalysis : public FunctionPass {
     
     // Special marker indicating that the query has no dependency at all
     static Instruction* const None;
-    
     
     // Special marker indicating a dirty cache entry
     static Instruction* const Dirty;
