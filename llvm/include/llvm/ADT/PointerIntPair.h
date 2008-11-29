@@ -42,12 +42,12 @@ public:
   }
   
   IntType getInt() const {
-    return (IntType)(Value & (1 << IntBits)-1);
+    return (IntType)(Value & ((1 << IntBits)-1));
   }
   
   void setPointer(PointerTy Ptr) {
     intptr_t PtrVal = reinterpret_cast<intptr_t>(Ptr);
-    assert((PtrVal & (1 << IntBits)-1) == 0 &&
+    assert((PtrVal & ((1 << IntBits)-1)) == 0 &&
            "Pointer is not sufficiently aligned");
     Value = PtrVal | (intptr_t)getInt();
   }
