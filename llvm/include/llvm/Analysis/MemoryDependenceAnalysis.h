@@ -84,19 +84,15 @@ namespace llvm {
     /// DepType - This enum is used to indicate what flavor of dependence this
     /// is.  If the type is Normal, there is an associated instruction pointer.
     enum DepType {
-      /// Dirty - Entries with this marker may come in two forms, depending on
-      /// whether they are in a LocalDeps map or NonLocalDeps map.  In either
-      /// case, this marker indicates that the cached value has been invalidated
-      /// by a removeInstruction call.
-      ///
-      /// If in the LocalDeps map, the Instruction field will indicate the place
-      /// in the current block to start scanning.  If in the non-localdeps map,
-      /// the instruction will be null.
+      /// Dirty - Entries with this marker occur in a LocalDeps map or
+      /// NonLocalDeps map when the instruction they previously referenced was
+      /// removed from MemDep.  In either case, the entry may include an
+      /// instruction pointer.  If so, the pointer is an instruction in the
+      /// block where scanning can start from, saving some work.
       ///
       /// In a default-constructed DepResultTy object, the type will be Dirty
       /// and the instruction pointer will be null.
       ///
-      /// FIXME: Why not add a scanning point for the non-local deps map???
       Dirty = 0,
       
       /// Normal - This is a normal instruction dependence.  The pointer member

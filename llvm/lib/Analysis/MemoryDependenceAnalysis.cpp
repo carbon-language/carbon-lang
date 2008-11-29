@@ -28,8 +28,8 @@
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
 
-STATISTIC(NumCacheNonlocal, "Number of cached non-local responses");
-STATISTIC(NumUncacheNonlocal, "Number of uncached non-local responses");
+STATISTIC(NumCacheNonLocal, "Number of cached non-local responses");
+STATISTIC(NumUncacheNonLocal, "Number of uncached non-local responses");
 
 char MemoryDependenceAnalysis::ID = 0;
   
@@ -112,8 +112,10 @@ getNonLocalDependency(Instruction *QueryInst,
      "getNonLocalDependency should only be used on insts with non-local deps!");
   DenseMap<BasicBlock*, DepResultTy> &Cache = NonLocalDeps[QueryInst];
 
-  /// DirtyBlocks - This is the set of blocks that need to be recomputed.  This
-  /// can happen due to instructions being deleted etc.
+  /// DirtyBlocks - This is the set of blocks that need to be recomputed.  In
+  /// the cached case, this can happen due to instructions being deleted etc. In
+  /// the uncached case, this starts out as the set of predecessors we care
+  /// about.
   SmallVector<BasicBlock*, 32> DirtyBlocks;
   
   if (!Cache.empty()) {
@@ -126,12 +128,15 @@ getNonLocalDependency(Instruction *QueryInst,
       if (I->second.getInt() == Dirty)
         DirtyBlocks.push_back(I->first);
     
-    NumCacheNonlocal++;
+    NumCacheNonLocal++;
+    
+    //cerr << "CACHED CASE: " << DirtyBlocks.size() << " dirty: "
+    //     << Cache.size() << " cached: " << *QueryInst;
   } else {
     // Seed DirtyBlocks with each of the preds of QueryInst's block.
     BasicBlock *QueryBB = QueryInst->getParent();
     DirtyBlocks.append(pred_begin(QueryBB), pred_end(QueryBB));
-    NumUncacheNonlocal++;
+    NumUncacheNonLocal++;
   }
 
   // Iterate while we still have blocks to update.
@@ -149,7 +154,14 @@ getNonLocalDependency(Instruction *QueryInst,
     // Find out if this block has a local dependency for QueryInst.
     // FIXME: If the dirty entry has an instruction pointer, scan from it!
     // FIXME: Don't convert back and forth for MemDepResult <-> DepResultTy.
-    DirtyBBEntry = ConvFromResult(getDependencyFrom(QueryInst, DirtyBB->end(),
+    
+    // If the dirty entry has a pointer, start scanning from it so we don't have
+    // to rescan the entire block.
+    BasicBlock::iterator ScanPos = DirtyBB->end();
+    if (Instruction *Inst = DirtyBBEntry.getPointer())
+      ScanPos = Inst;
+    
+    DirtyBBEntry = ConvFromResult(getDependencyFrom(QueryInst, ScanPos,
                                                     DirtyBB));
     
     // If the block has a dependency (i.e. it isn't completely transparent to
@@ -289,7 +301,8 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
   // Check for a cached result
   DepResultTy &LocalCache = LocalDeps[QueryInst];
   
-  // If the cached entry is non-dirty, just return it.
+  // If the cached entry is non-dirty, just return it.  Note that this depends
+  // on DepResultTy's default constructing to 'dirty'.
   if (LocalCache.getInt() != Dirty)
     return ConvToResult(LocalCache);
     
@@ -337,6 +350,8 @@ void MemoryDependenceAnalysis::dropInstruction(Instruction* drop) {
       ReverseNonLocalDeps[Inst].erase(drop);
   
   if (ReverseNonLocalDeps.count(drop)) {
+    SmallVector<std::pair<Instruction*, Instruction*>, 8> ReverseDepsToAdd;
+    
     SmallPtrSet<Instruction*, 4>& set =
       ReverseNonLocalDeps[drop];
     for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
@@ -344,9 +359,24 @@ void MemoryDependenceAnalysis::dropInstruction(Instruction* drop) {
       for (DenseMap<BasicBlock*, DepResultTy>::iterator DI =
            NonLocalDeps[*I].begin(), DE = NonLocalDeps[*I].end();
            DI != DE; ++DI)
-        if (DI->second == DepResultTy(drop, Normal))
-          // FIXME: Why not remember the old insertion point??
-          DI->second = DepResultTy(0, Dirty);
+        if (DI->second.getPointer() == drop) {
+          // Convert to a dirty entry for the subsequent instruction.
+          DI->second.setInt(Dirty);
+          if (drop->isTerminator())
+            DI->second.setPointer(0);
+          else {
+            Instruction *NextI = next(BasicBlock::iterator(drop));
+            DI->second.setPointer(NextI);
+            ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
+          }
+        }
+    
+    // Add new reverse deps after scanning the set, to avoid invalidating 'Set'
+    while (!ReverseDepsToAdd.empty()) {
+      ReverseNonLocalDeps[ReverseDepsToAdd.back().first]
+        .insert(ReverseDepsToAdd.back().second);
+      ReverseDepsToAdd.pop_back();
+    }
   }
   
   ReverseNonLocalDeps.erase(drop);
@@ -433,15 +463,33 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   
   ReverseDepIt = ReverseNonLocalDeps.find(RemInst);
   if (ReverseDepIt != ReverseNonLocalDeps.end()) {
+    SmallVector<std::pair<Instruction*, Instruction*>, 8> ReverseDepsToAdd;
+    
     SmallPtrSet<Instruction*, 4>& set = ReverseDepIt->second;
     for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
          I != E; ++I)
       for (DenseMap<BasicBlock*, DepResultTy>::iterator
            DI = NonLocalDeps[*I].begin(), DE = NonLocalDeps[*I].end();
            DI != DE; ++DI)
-        if (DI->second == DepResultTy(RemInst, Normal))
-          // FIXME: Why not remember the old insertion point??
-          DI->second = DepResultTy(0, Dirty);
+        if (DI->second.getPointer() == RemInst) {
+          // Convert to a dirty entry for the subsequent instruction.
+          DI->second.setInt(Dirty);
+          if (RemInst->isTerminator())
+            DI->second.setPointer(0);
+          else {
+            Instruction *NextI = next(BasicBlock::iterator(RemInst));
+            DI->second.setPointer(NextI);
+            ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
+          }
+        }
+    
+    // Add new reverse deps after scanning the set, to avoid invalidating 'Set'
+    while (!ReverseDepsToAdd.empty()) {
+      ReverseNonLocalDeps[ReverseDepsToAdd.back().first]
+        .insert(ReverseDepsToAdd.back().second);
+      ReverseDepsToAdd.pop_back();
+    }
+    
     ReverseNonLocalDeps.erase(ReverseDepIt);
   }
   
