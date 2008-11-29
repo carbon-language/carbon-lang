@@ -87,8 +87,7 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 
 /// getCallSiteDependency - Private helper for finding the local dependencies
 /// of a call site.
-MemoryDependenceAnalysis::DepResultTy
-MemoryDependenceAnalysis::
+MemDepResult MemoryDependenceAnalysis::
 getCallSiteDependency(CallSite C, Instruction *start, BasicBlock *block) {
   std::pair<DepResultTy, bool> &cachedResult = LocalDeps[C.getInstruction()];
   AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
@@ -140,7 +139,7 @@ getCallSiteDependency(CallSite C, Instruction *start, BasicBlock *block) {
           cachedResult.second = true;
           reverseDep[DepResultTy(QI, Normal)].insert(C.getInstruction());
         }
-        return DepResultTy(QI, Normal);
+        return MemDepResult::get(QI);
       } else {
         continue;
       }
@@ -153,7 +152,7 @@ getCallSiteDependency(CallSite C, Instruction *start, BasicBlock *block) {
         cachedResult.second = true;
         reverseDep[DepResultTy(QI, Normal)].insert(C.getInstruction());
       }
-      return DepResultTy(QI, Normal);
+      return MemDepResult::get(QI);
     }
   }
   
@@ -161,7 +160,7 @@ getCallSiteDependency(CallSite C, Instruction *start, BasicBlock *block) {
   cachedResult.first = DepResultTy(0, NonLocal);
   cachedResult.second = true;
   reverseDep[DepResultTy(0, NonLocal)].insert(C.getInstruction());
-  return DepResultTy(0, NonLocal);
+  return MemDepResult::getNonLocal();
 }
 
 /// nonLocalHelper - Private helper used to calculate non-local dependencies
@@ -199,11 +198,10 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
     if (BB != block) {
       visited.insert(BB);
       
-      DepResultTy localDep = getDependency(query, 0, BB);
-      if (localDep.getInt() != NonLocal) {
-        resp.insert(std::make_pair(BB, localDep));
+      MemDepResult localDep = getDependency(query, 0, BB);
+      if (!localDep.isNonLocal()) {
+        resp.insert(std::make_pair(BB, ConvFromResult(localDep)));
         stack.pop_back();
-        
         continue;
       }
     // If we re-encounter the starting block, we still need to search it
@@ -212,12 +210,11 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
     } else if (BB == block) {
       visited.insert(BB);
       
-      DepResultTy localDep = getDependency(query, 0, BB);
-      if (localDep != DepResultTy(query, Normal))
-        resp.insert(std::make_pair(BB, localDep));
+      MemDepResult localDep = getDependency(query, 0, BB);
+      if (localDep.getInst() != query)
+        resp.insert(std::make_pair(BB, ConvFromResult(localDep)));
       
       stack.pop_back();
-      
       continue;
     }
     
@@ -257,7 +254,7 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
 /// dependencies of the queries.  The map will contain NonLocal for
 /// blocks between the query and its dependencies.
 void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
-                                     DenseMap<BasicBlock*, DepResultTy> &resp) {
+                                    DenseMap<BasicBlock*, MemDepResult> &resp) {
   if (depGraphNonLocal.count(query)) {
     DenseMap<BasicBlock*, DepResultTy> &cached = depGraphNonLocal[query];
     NumCacheNonlocal++;
@@ -270,44 +267,46 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
     
     for (SmallVector<BasicBlock*, 4>::iterator I = dirtied.begin(),
          E = dirtied.end(); I != E; ++I) {
-      DepResultTy localDep = getDependency(query, 0, *I);
-      if (localDep.getInt() != NonLocal)
-        cached[*I] = localDep;
+      MemDepResult localDep = getDependency(query, 0, *I);
+      if (!localDep.isNonLocal())
+        cached[*I] = ConvFromResult(localDep);
       else {
         cached.erase(*I);
         nonLocalHelper(query, *I, cached);
       }
     }
     
-    resp = cached;
-    
-    // Update the reverse non-local dependency cache
-    for (DenseMap<BasicBlock*, DepResultTy>::iterator I = resp.begin(),
-         E = resp.end(); I != E; ++I)
+    // Update the reverse non-local dependency cache.
+    for (DenseMap<BasicBlock*, DepResultTy>::iterator I = cached.begin(),
+         E = cached.end(); I != E; ++I) {
       reverseDepNonLocal[I->second].insert(query);
+      resp[I->first] = ConvToResult(I->second);
+    }
     
     return;
-  } else
-    NumUncacheNonlocal++;
+  }
+  
+  NumUncacheNonlocal++;
   
   // If not, go ahead and search for non-local deps.
-  nonLocalHelper(query, query->getParent(), resp);
-  
+  DenseMap<BasicBlock*, DepResultTy> &cached = depGraphNonLocal[query];
+  nonLocalHelper(query, query->getParent(), cached);
+
   // Update the non-local dependency cache
-  for (DenseMap<BasicBlock*, DepResultTy>::iterator I = resp.begin(),
-       E = resp.end(); I != E; ++I) {
-    depGraphNonLocal[query].insert(*I);
+  for (DenseMap<BasicBlock*, DepResultTy>::iterator I = cached.begin(),
+       E = cached.end(); I != E; ++I) {
+    // FIXME: Merge with the code above!
     reverseDepNonLocal[I->second].insert(query);
+    resp[I->first] = ConvToResult(I->second);
   }
 }
 
 /// getDependency - Return the instruction on which a memory operation
 /// depends.  The local parameter indicates if the query should only
 /// evaluate dependencies within the same basic block.
-MemoryDependenceAnalysis::DepResultTy
-MemoryDependenceAnalysis::getDependency(Instruction *query,
-                                        Instruction *start,
-                                        BasicBlock *block) {
+MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
+                                                     Instruction *start,
+                                                     BasicBlock *block) {
   // Start looking for dependencies with the queried inst
   BasicBlock::iterator QI = query;
   
@@ -316,7 +315,7 @@ MemoryDependenceAnalysis::getDependency(Instruction *query,
   // If we have a _confirmed_ cached entry, return it
   if (!block && !start) {
     if (cachedResult.second)
-      return cachedResult.first;
+      return ConvToResult(cachedResult.first);
     else if (cachedResult.first.getInt() == Normal &&
              cachedResult.first.getPointer())
       // If we have an unconfirmed cached entry, we can start our search from
@@ -355,9 +354,9 @@ MemoryDependenceAnalysis::getDependency(Instruction *query,
   } else if (CallSite::get(query).getInstruction() != 0)
     return getCallSiteDependency(CallSite::get(query), start, block);
   else if (isa<AllocationInst>(query))
-    return DepResultTy(0, None);
+    return MemDepResult::getNone();
   else
-    return DepResultTy(0, None);
+    return MemDepResult::getNone();
   
   BasicBlock::iterator blockBegin = block ? block->begin()
                                           : query->getParent()->begin();
@@ -378,7 +377,7 @@ MemoryDependenceAnalysis::getDependency(Instruction *query,
           reverseDep[DepResultTy(S, Normal)].insert(query);
         }
         
-        return DepResultTy(S, Normal);
+        return MemDepResult::get(S);
       }
       
       pointer = S->getPointerOperand();
@@ -392,7 +391,7 @@ MemoryDependenceAnalysis::getDependency(Instruction *query,
           reverseDep[DepResultTy(L, Normal)].insert(query);
         }
         
-        return DepResultTy(L, Normal);
+        return MemDepResult::get(L);
       }
       
       pointer = L->getPointerOperand();
@@ -427,7 +426,7 @@ MemoryDependenceAnalysis::getDependency(Instruction *query,
           cachedResult.second = true;
           reverseDep[DepResultTy(QI, Normal)].insert(query);
         }
-        return DepResultTy(QI, Normal);
+        return MemDepResult::get(QI);
       } else {
         continue;
       }
@@ -450,7 +449,7 @@ MemoryDependenceAnalysis::getDependency(Instruction *query,
           reverseDep[DepResultTy(QI, Normal)].insert(query);
         }
         
-        return DepResultTy(QI, Normal);
+        return MemDepResult::get(QI);
       }
     }
   }
@@ -462,7 +461,7 @@ MemoryDependenceAnalysis::getDependency(Instruction *query,
     reverseDep[DepResultTy(0, NonLocal)].insert(query);
   }
   
-  return DepResultTy(0, NonLocal);
+  return MemDepResult::getNonLocal();
 }
 
 /// dropInstruction - Remove an instruction from the analysis, making 

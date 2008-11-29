@@ -47,10 +47,8 @@ namespace {
       return Changed;
     }
     
-    typedef MemoryDependenceAnalysis::DepResultTy DepResultTy;
-
     bool runOnBasicBlock(BasicBlock &BB);
-    bool handleFreeWithNonTrivialDependency(FreeInst *F, DepResultTy Dep);
+    bool handleFreeWithNonTrivialDependency(FreeInst *F, MemDepResult Dep);
     bool handleEndBlock(BasicBlock &BB);
     bool RemoveUndeadPointers(Value* pointer, uint64_t killPointerSize,
                               BasicBlock::iterator& BBI,
@@ -110,16 +108,15 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
  
     // ... to a pointer that has been stored to before...
     if (last) {
-      DepResultTy dep = MD.getDependency(Inst);
+      MemDepResult dep = MD.getDependency(Inst);
       bool deletedStore = false;
     
       // ... and no other memory dependencies are between them....
-      while (dep.getInt() == MemoryDependenceAnalysis::Normal &&
-             isa<StoreInst>(dep.getPointer())) {
-        if (dep.getPointer() != last ||
-             TD.getTypeStoreSize(last->getOperand(0)->getType()) >
-             TD.getTypeStoreSize(Inst->getOperand(0)->getType())) {
-          dep = MD.getDependency(Inst, dep.getPointer());
+      while (StoreInst *DepStore = dyn_cast_or_null<StoreInst>(dep.getInst())) {
+        if (DepStore != last ||
+            TD.getTypeStoreSize(last->getOperand(0)->getType()) >
+            TD.getTypeStoreSize(Inst->getOperand(0)->getType())) {
+          dep = MD.getDependency(Inst, DepStore);
           continue;
         }
         
@@ -152,14 +149,12 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // loaded from, then the store can be removed;
       if (LoadInst* L = dyn_cast<LoadInst>(S->getOperand(0))) {
         // FIXME: Don't do dep query if Parents don't match and other stuff!
-        DepResultTy dep = MD.getDependency(S);
+        MemDepResult dep = MD.getDependency(S);
         DominatorTree& DT = getAnalysis<DominatorTree>();
         
         if (!S->isVolatile() && S->getParent() == L->getParent() &&
             S->getPointerOperand() == L->getPointerOperand() &&
-            (dep.getInt() == MemoryDependenceAnalysis::None ||
-             dep.getInt() == MemoryDependenceAnalysis::NonLocal ||
-             DT.dominates(dep.getPointer(), L))) {
+            (!dep.isNormal() || DT.dominates(dep.getInst(), L))) {
           
           DeleteDeadInstruction(S);
           if (!isa<TerminatorInst>(BB.begin()))
@@ -185,15 +180,11 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
 /// handleFreeWithNonTrivialDependency - Handle frees of entire structures whose
 /// dependency is a store to a field of that structure.
-bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, DepResultTy dep) {
+bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, MemDepResult dep) {
   TargetData &TD = getAnalysis<TargetData>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   
-  if (dep.getInt() == MemoryDependenceAnalysis::None ||
-      dep.getInt() == MemoryDependenceAnalysis::NonLocal)
-    return false;
-  
-  StoreInst* dependency = dyn_cast<StoreInst>(dep.getPointer());
+  StoreInst* dependency = dyn_cast_or_null<StoreInst>(dep.getInst());
   if (!dependency)
     return false;
   else if (dependency->isVolatile())

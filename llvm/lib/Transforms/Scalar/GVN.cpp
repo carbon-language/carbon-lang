@@ -456,19 +456,19 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
         return nextValueNumber++;
       }
       
-      MemoryDependenceAnalysis::DepResultTy local_dep = MD->getDependency(C);
+      MemDepResult local_dep = MD->getDependency(C);
       
-      if (local_dep.getInt() == MemoryDependenceAnalysis::None) {
+      if (local_dep.isNone()) {
         valueNumbering.insert(std::make_pair(V, nextValueNumber));
         return nextValueNumber++;
-      } else if (local_dep.getInt() != MemoryDependenceAnalysis::NonLocal) {
+      } else if (Instruction *LocalDepInst = local_dep.getInst()) {
         // FIXME: INDENT PROPERLY!
-        if (!isa<CallInst>(local_dep.getPointer())) {
+        if (!isa<CallInst>(LocalDepInst)) {
           valueNumbering.insert(std::make_pair(V, nextValueNumber));
           return nextValueNumber++;
         }
         
-        CallInst* local_cdep = cast<CallInst>(local_dep.getPointer());
+        CallInst* local_cdep = cast<CallInst>(LocalDepInst);
         
         // FIXME: INDENT PROPERLY.
         if (local_cdep->getCalledFunction() != C->getCalledFunction() ||
@@ -495,20 +495,21 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
       }
       
       
-      DenseMap<BasicBlock*, MemoryDependenceAnalysis::DepResultTy> deps;
+      DenseMap<BasicBlock*, MemDepResult> deps;
       MD->getNonLocalDependency(C, deps);
       CallInst* cdep = 0;
       
-      for (DenseMap<BasicBlock*, MemoryDependenceAnalysis::DepResultTy>
+      for (DenseMap<BasicBlock*, MemDepResult>
              ::iterator I = deps.begin(), E = deps.end(); I != E; ++I) {
-        if (I->second.getInt() == MemoryDependenceAnalysis::None) {
+        if (I->second.isNone()) {
           valueNumbering.insert(std::make_pair(V, nextValueNumber));
 
           return nextValueNumber++;
-        } else if (I->second.getInt() != MemoryDependenceAnalysis::NonLocal) {
+        } else if (Instruction *NonLocalDepInst = I->second.getInst()) {
           // FIXME: INDENT PROPERLY
+          // FIXME: All duplicated with non-local case.
           if (DT->properlyDominates(I->first, C->getParent())) {
-            if (CallInst* CD = dyn_cast<CallInst>(I->second.getPointer()))
+            if (CallInst* CD = dyn_cast<CallInst>(NonLocalDepInst))
               cdep = CD;
             else {
               valueNumbering.insert(std::make_pair(V, nextValueNumber));
@@ -721,8 +722,6 @@ namespace {
       AU.addPreserved<AliasAnalysis>();
     }
   
-    typedef MemoryDependenceAnalysis::DepResultTy DepResultTy;
-
     // Helper fuctions
     // FIXME: eliminate or document these better
     bool processLoad(LoadInst* L,
@@ -866,7 +865,7 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   
   // Find the non-local dependencies of the load
-  DenseMap<BasicBlock*, DepResultTy> deps;
+  DenseMap<BasicBlock*, MemDepResult> deps;
   MD.getNonLocalDependency(L, deps);
   
   // If we had to process more than one hundred blocks to find the
@@ -878,19 +877,19 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   DenseMap<BasicBlock*, Value*> repl;
   
   // Filter out useless results (non-locals, etc)
-  for (DenseMap<BasicBlock*, DepResultTy>::iterator I = deps.begin(),
+  for (DenseMap<BasicBlock*, MemDepResult>::iterator I = deps.begin(),
        E = deps.end(); I != E; ++I) {
-    if (I->second.getInt() == MemoryDependenceAnalysis::None)
+    if (I->second.isNone())
       return false;
   
-    if (I->second.getInt() == MemoryDependenceAnalysis::NonLocal)
+    if (I->second.isNonLocal())
       continue;
   
-    if (StoreInst* S = dyn_cast<StoreInst>(I->second.getPointer())) {
+    if (StoreInst* S = dyn_cast<StoreInst>(I->second.getInst())) {
       if (S->getPointerOperand() != L->getPointerOperand())
         return false;
       repl[I->first] = S->getOperand(0);
-    } else if (LoadInst* LD = dyn_cast<LoadInst>(I->second.getPointer())) {
+    } else if (LoadInst* LD = dyn_cast<LoadInst>(I->second.getInst())) {
       if (LD->getPointerOperand() != L->getPointerOperand())
         return false;
       repl[I->first] = LD;
@@ -941,8 +940,8 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
   // ... to a pointer that has been loaded from before...
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   bool removedNonLocal = false;
-  DepResultTy dep = MD.getDependency(L);
-  if (dep.getInt() == MemoryDependenceAnalysis::NonLocal &&
+  MemDepResult dep = MD.getDependency(L);
+  if (dep.isNonLocal() &&
       L->getParent() != &L->getParent()->getParent()->getEntryBlock()) {
     removedNonLocal = processNonLocalLoad(L, toErase);
     
@@ -957,10 +956,9 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
   
   // Walk up the dependency chain until we either find
   // a dependency we can use, or we can't walk any further
-  while (dep.getInt() == MemoryDependenceAnalysis::Normal &&
-         (isa<LoadInst>(dep.getPointer()) || isa<StoreInst>(dep.getPointer()))){
+  while (Instruction *DepInst = dep.getInst()) {
     // ... that depends on a store ...
-    if (StoreInst* S = dyn_cast<StoreInst>(dep.getPointer())) {
+    if (StoreInst* S = dyn_cast<StoreInst>(DepInst)) {
       if (S->getPointerOperand() == pointer) {
         // Remove it!
         MD.removeInstruction(L);
@@ -974,11 +972,14 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
       // Whether we removed it or not, we can't
       // go any further
       break;
+    } else if (!isa<LoadInst>(DepInst)) {
+      // Only want to handle loads below.
+      break;
     } else if (!last) {
       // If we don't depend on a store, and we haven't
       // been loaded before, bail.
       break;
-    } else if (dep.getPointer() == last) {
+    } else if (DepInst == last) {
       // Remove it!
       MD.removeInstruction(L);
       
@@ -989,15 +990,14 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
         
       break;
     } else {
-      dep = MD.getDependency(L, dep.getPointer());
+      dep = MD.getDependency(L, DepInst);
     }
   }
 
-  if (dep.getInt() == MemoryDependenceAnalysis::Normal &&
-      isa<AllocationInst>(dep.getPointer())) {
+  if (AllocationInst *DepAI = dyn_cast_or_null<AllocationInst>(dep.getInst())) {
     // Check that this load is actually from the
     // allocation we found
-    if (L->getOperand(0)->getUnderlyingObject() == dep.getPointer()) {
+    if (L->getOperand(0)->getUnderlyingObject() == DepAI) {
       // If this load depends directly on an allocation, there isn't
       // anything stored there; therefore, we can optimize this load
       // to undef.

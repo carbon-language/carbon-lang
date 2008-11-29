@@ -629,18 +629,17 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   // The are two possible optimizations we can do for memcpy:
   //   a) memcpy-memcpy xform which exposes redundance for DSE
   //   b) call-memcpy xform for return slot optimization
-  MemoryDependenceAnalysis::DepResultTy dep = MD.getDependency(M);
-  if (dep.getInt() == MemoryDependenceAnalysis::None ||
-      dep.getInt() == MemoryDependenceAnalysis::NonLocal)
+  MemDepResult dep = MD.getDependency(M);
+  if (!dep.isNormal())
     return false;
-  else if (!isa<MemCpyInst>(dep.getPointer())) {
-    if (CallInst* C = dyn_cast<CallInst>(dep.getPointer()))
+  else if (!isa<MemCpyInst>(dep.getInst())) {
+    if (CallInst* C = dyn_cast<CallInst>(dep.getInst()))
       return performCallSlotOptzn(M, C);
     else
       return false;
   }
   
-  MemCpyInst* MDep = cast<MemCpyInst>(dep.getPointer());
+  MemCpyInst* MDep = cast<MemCpyInst>(dep.getInst());
   
   // We can only transforms memcpy's where the dest of one is the source of the
   // other
