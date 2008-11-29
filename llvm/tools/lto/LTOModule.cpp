@@ -224,6 +224,8 @@ void LTOModule::addDefinedSymbol(GlobalValue* def, Mangler &mangler,
     // set scope part
     if ( def->hasHiddenVisibility() )
         attr |= LTO_SYMBOL_SCOPE_HIDDEN;
+    else if ( def->hasProtectedVisibility() )
+        attr |= LTO_SYMBOL_SCOPE_PROTECTED;
     else if ( def->hasExternalLinkage() || def->hasWeakLinkage() 
               || def->hasLinkOnceLinkage() || def->hasCommonLinkage() )
         attr |= LTO_SYMBOL_SCOPE_DEFAULT;
