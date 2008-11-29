@@ -990,7 +990,7 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
         
       break;
     } else {
-      dep = MD.getDependency(L, DepInst);
+      dep = MD.getDependencyFrom(L, DepInst, DepInst->getParent());
     }
   }
 

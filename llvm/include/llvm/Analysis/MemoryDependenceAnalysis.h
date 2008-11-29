@@ -14,6 +14,7 @@
 #ifndef LLVM_ANALYSIS_MEMORY_DEPENDENCE_H
 #define LLVM_ANALYSIS_MEMORY_DEPENDENCE_H
 
+#include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -156,9 +157,15 @@ namespace llvm {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     
     /// getDependency - Return the instruction on which a memory operation
-    /// depends, starting with start.
-    MemDepResult getDependency(Instruction *query, Instruction *start = 0,
-                               BasicBlock *block = 0);
+    /// depends.
+    MemDepResult getDependency(Instruction *QueryInst);
+
+    /// getDependencyFrom - Return the instruction on which the memory operation
+    /// 'QueryInst' depends.  This starts scanning from the instruction before
+    /// the position indicated by ScanIt.
+    MemDepResult getDependencyFrom(Instruction *QueryInst,
+                                   BasicBlock::iterator ScanIt, BasicBlock *BB);
+
     
     /// getNonLocalDependency - Fills the passed-in map with the non-local 
     /// dependencies of the queries.  The map will contain NonLocal for
@@ -199,8 +206,8 @@ namespace llvm {
     /// in our internal data structures.
     void verifyRemoved(Instruction *Inst) const;
     
-    MemDepResult getCallSiteDependency(CallSite C, Instruction* start,
-                                       BasicBlock* block);
+    MemDepResult getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
+                                       BasicBlock *BB);
     void nonLocalHelper(Instruction* query, BasicBlock* block,
                         DenseMap<BasicBlock*, DepResultTy> &resp);
   };

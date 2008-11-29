@@ -116,7 +116,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
         if (DepStore != last ||
             TD.getTypeStoreSize(last->getOperand(0)->getType()) >
             TD.getTypeStoreSize(Inst->getOperand(0)->getType())) {
-          dep = MD.getDependency(Inst, DepStore);
+          dep = MD.getDependencyFrom(Inst, DepStore, DepStore->getParent());
           continue;
         }
         

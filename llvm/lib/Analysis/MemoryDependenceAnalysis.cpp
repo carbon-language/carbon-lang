@@ -87,74 +87,49 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 /// getCallSiteDependency - Private helper for finding the local dependencies
 /// of a call site.
 MemDepResult MemoryDependenceAnalysis::
-getCallSiteDependency(CallSite C, Instruction *start, BasicBlock *block) {
-  DepResultTy &cachedResult = LocalDeps[C.getInstruction()];
+getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
+                      BasicBlock *BB) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   TargetData &TD = getAnalysis<TargetData>();
-  BasicBlock::iterator blockBegin = C.getInstruction()->getParent()->begin();
-  BasicBlock::iterator QI = C.getInstruction();
-  
-  // If the starting point was specified, use it
-  if (start) {
-    QI = start;
-    blockBegin = start->getParent()->begin();
-  // If the starting point wasn't specified, but the block was, use it
-  } else if (!start && block) {
-    QI = block->end();
-    blockBegin = block->begin();
-  }
   
   // Walk backwards through the block, looking for dependencies
-  while (QI != blockBegin) {
-    --QI;
+  while (ScanIt != BB->begin()) {
+    Instruction *Inst = --ScanIt;
     
     // If this inst is a memory op, get the pointer it accessed
     Value* pointer = 0;
     uint64_t pointerSize = 0;
-    if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
+    if (StoreInst* S = dyn_cast<StoreInst>(Inst)) {
       pointer = S->getPointerOperand();
       pointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
-    } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
+    } else if (AllocationInst* AI = dyn_cast<AllocationInst>(Inst)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
         pointerSize = C->getZExtValue() *
                       TD.getABITypeSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
-    } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
+    } else if (VAArgInst* V = dyn_cast<VAArgInst>(Inst)) {
       pointer = V->getOperand(0);
       pointerSize = TD.getTypeStoreSize(V->getType());
-    } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
+    } else if (FreeInst* F = dyn_cast<FreeInst>(Inst)) {
       pointer = F->getPointerOperand();
       
       // FreeInsts erase the entire structure
       pointerSize = ~0UL;
-    } else if (CallSite::get(QI).getInstruction() != 0) {
-      AliasAnalysis::ModRefBehavior result =
-                   AA.getModRefBehavior(CallSite::get(QI));
-      if (result != AliasAnalysis::DoesNotAccessMemory) {
-        if (!start && !block) {
-          cachedResult = DepResultTy(QI, Normal);
-          reverseDep[QI].insert(C.getInstruction());
-        }
-        return MemDepResult::get(QI);
-      } else {
-        continue;
-      }
+    } else if (CallSite::get(Inst).getInstruction() != 0) {
+      if (AA.getModRefBehavior(CallSite::get(Inst)) !=
+            AliasAnalysis::DoesNotAccessMemory)
+        return MemDepResult::get(Inst);
+      continue;
     } else
       continue;
     
-    if (AA.getModRefInfo(C, pointer, pointerSize) != AliasAnalysis::NoModRef) {
-      if (!start && !block) {
-        cachedResult = DepResultTy(QI, Normal);
-        reverseDep[QI].insert(C.getInstruction());
-      }
-      return MemDepResult::get(QI);
-    }
+    if (AA.getModRefInfo(C, pointer, pointerSize) != AliasAnalysis::NoModRef)
+      return MemDepResult::get(Inst);
   }
   
-  // No dependence found
-  cachedResult = DepResultTy(0, NonLocal);
+  // No dependence found.
   return MemDepResult::getNonLocal();
 }
 
@@ -193,7 +168,7 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
     if (BB != block) {
       visited.insert(BB);
       
-      MemDepResult localDep = getDependency(query, 0, BB);
+      MemDepResult localDep = getDependencyFrom(query, BB->end(), BB);
       if (!localDep.isNonLocal()) {
         resp.insert(std::make_pair(BB, ConvFromResult(localDep)));
         stack.pop_back();
@@ -205,7 +180,7 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
     } else if (BB == block) {
       visited.insert(BB);
       
-      MemDepResult localDep = getDependency(query, 0, BB);
+      MemDepResult localDep = getDependencyFrom(query, BB->end(), BB);
       if (localDep.getInst() != query)
         resp.insert(std::make_pair(BB, ConvFromResult(localDep)));
       
@@ -262,7 +237,7 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
     
     for (SmallVector<BasicBlock*, 4>::iterator I = dirtied.begin(),
          E = dirtied.end(); I != E; ++I) {
-      MemDepResult localDep = getDependency(query, 0, *I);
+      MemDepResult localDep = getDependencyFrom(query, (*I)->end(), *I);
       if (!localDep.isNonLocal())
         cached[*I] = ConvFromResult(localDep);
       else {
@@ -303,127 +278,86 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
 /// evaluate dependencies within the same basic block.
 /// FIXME: ELIMINATE START/BLOCK and make the caching happen in a higher level
 /// METHOD.
-MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
-                                                     Instruction *start,
-                                                     BasicBlock *block) {
-  // Start looking for dependencies with the queried inst
-  BasicBlock::iterator QI = query;
-  
-  // Check for a cached result
-  // FIXME: why do this when Block or Start is specified??
-  DepResultTy &cachedResult = LocalDeps[query];
-  
-  if (start)
-    QI = start;
-  else if (block)
-    QI = block->end();
-  else if (cachedResult.getInt() != Dirty) {
-    // If we have a _confirmed_ cached entry, return it.
-    return ConvToResult(cachedResult);
-  } else if (Instruction *Inst = cachedResult.getPointer()) {
-    // If we have an unconfirmed cached entry, we can start our search from it.
-    QI = Inst;
-  }
-  
-  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
-  TargetData& TD = getAnalysis<TargetData>();
+MemDepResult MemoryDependenceAnalysis::
+getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt, 
+                  BasicBlock *BB) {
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  TargetData &TD = getAnalysis<TargetData>();
   
   // Get the pointer value for which dependence will be determined
   Value* dependee = 0;
   uint64_t dependeeSize = 0;
   bool queryIsVolatile = false;
-  if (StoreInst* S = dyn_cast<StoreInst>(query)) {
+  
+  if (StoreInst* S = dyn_cast<StoreInst>(QueryInst)) {
     dependee = S->getPointerOperand();
     dependeeSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
     queryIsVolatile = S->isVolatile();
-  } else if (LoadInst* L = dyn_cast<LoadInst>(query)) {
+  } else if (LoadInst* L = dyn_cast<LoadInst>(QueryInst)) {
     dependee = L->getPointerOperand();
     dependeeSize = TD.getTypeStoreSize(L->getType());
     queryIsVolatile = L->isVolatile();
-  } else if (VAArgInst* V = dyn_cast<VAArgInst>(query)) {
+  } else if (VAArgInst* V = dyn_cast<VAArgInst>(QueryInst)) {
     dependee = V->getOperand(0);
     dependeeSize = TD.getTypeStoreSize(V->getType());
-  } else if (FreeInst* F = dyn_cast<FreeInst>(query)) {
+  } else if (FreeInst* F = dyn_cast<FreeInst>(QueryInst)) {
     dependee = F->getPointerOperand();
-    
     // FreeInsts erase the entire structure, not just a field
     dependeeSize = ~0UL;
-  } else if (CallSite::get(query).getInstruction() != 0)
-    return getCallSiteDependency(CallSite::get(query), start, block);
-  else if (isa<AllocationInst>(query))
-    return MemDepResult::getNone();
+  } else if (CallSite::get(QueryInst).getInstruction() != 0)
+    return getCallSiteDependency(CallSite::get(QueryInst), ScanIt, BB);
   else
     return MemDepResult::getNone();
   
-  BasicBlock::iterator blockBegin = block ? block->begin()
-                                          : query->getParent()->begin();
-  
   // Walk backwards through the basic block, looking for dependencies
-  while (QI != blockBegin) {
-    --QI;
+  while (ScanIt != BB->begin()) {
+    Instruction *Inst = --ScanIt;
     
     // If this inst is a memory op, get the pointer it accessed
     Value* pointer = 0;
     uint64_t pointerSize = 0;
-    if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
+    if (StoreInst* S = dyn_cast<StoreInst>(Inst)) {
       // All volatile loads/stores depend on each other
-      if (queryIsVolatile && S->isVolatile()) {
-        if (!start && !block) {
-          cachedResult = DepResultTy(S, Normal);
-          reverseDep[S].insert(query);
-        }
-        
+      if (queryIsVolatile && S->isVolatile())
         return MemDepResult::get(S);
-      }
       
       pointer = S->getPointerOperand();
       pointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
-    } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
+    } else if (LoadInst* L = dyn_cast<LoadInst>(Inst)) {
       // All volatile loads/stores depend on each other
-      if (queryIsVolatile && L->isVolatile()) {
-        if (!start && !block) {
-          cachedResult = DepResultTy(L, Normal);
-          reverseDep[L].insert(query);
-        }
-        
+      if (queryIsVolatile && L->isVolatile())
         return MemDepResult::get(L);
-      }
       
       pointer = L->getPointerOperand();
       pointerSize = TD.getTypeStoreSize(L->getType());
-    } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
+    } else if (AllocationInst* AI = dyn_cast<AllocationInst>(Inst)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
         pointerSize = C->getZExtValue() * 
                       TD.getABITypeSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
-    } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
+    } else if (VAArgInst* V = dyn_cast<VAArgInst>(Inst)) {
       pointer = V->getOperand(0);
       pointerSize = TD.getTypeStoreSize(V->getType());
-    } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
+    } else if (FreeInst* F = dyn_cast<FreeInst>(Inst)) {
       pointer = F->getPointerOperand();
       
       // FreeInsts erase the entire structure
       pointerSize = ~0UL;
-    } else if (CallSite::get(QI).getInstruction() != 0) {
+    } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
       // Call insts need special handling. Check if they can modify our pointer
-      AliasAnalysis::ModRefResult MR = AA.getModRefInfo(CallSite::get(QI),
+      AliasAnalysis::ModRefResult MR = AA.getModRefInfo(CallSite::get(Inst),
                                                         dependee, dependeeSize);
       
       if (MR != AliasAnalysis::NoModRef) {
         // Loads don't depend on read-only calls
-        if (isa<LoadInst>(query) && MR == AliasAnalysis::Ref)
+        if (isa<LoadInst>(QueryInst) && MR == AliasAnalysis::Ref)
           continue;
-        
-        if (!start && !block) {
-          cachedResult = DepResultTy(QI, Normal);
-          reverseDep[QI].insert(query);
-        }
-        return MemDepResult::get(QI);
-      } else {
-        continue;
+        return MemDepResult::get(Inst);
       }
+       
+      continue;
     }
     
     // If we found a pointer, check if it could be the same as our pointer
@@ -433,26 +367,48 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
       
       if (R != AliasAnalysis::NoAlias) {
         // May-alias loads don't depend on each other
-        if (isa<LoadInst>(query) && isa<LoadInst>(QI) &&
+        if (isa<LoadInst>(QueryInst) && isa<LoadInst>(Inst) &&
             R == AliasAnalysis::MayAlias)
           continue;
-        
-        if (!start && !block) {
-          cachedResult = DepResultTy(QI, Normal);
-          reverseDep[QI].insert(query);
-        }
-        
-        return MemDepResult::get(QI);
+        return MemDepResult::get(Inst);
       }
     }
   }
   
-  // If we found nothing, return the non-local flag
-  if (!start && !block)
-    cachedResult = DepResultTy(0, NonLocal);
-  
+  // If we found nothing, return the non-local flag.
   return MemDepResult::getNonLocal();
 }
+
+/// getDependency - Return the instruction on which a memory operation
+/// depends.
+MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
+  Instruction *ScanPos = QueryInst;
+  
+  // Check for a cached result
+  DepResultTy &LocalCache = LocalDeps[QueryInst];
+  
+  // If the cached entry is non-dirty, just return it.
+  if (LocalCache.getInt() != Dirty)
+    return ConvToResult(LocalCache);
+    
+  // Otherwise, if we have a dirty entry, we know we can start the scan at that
+  // instruction, which may save us some work.
+  if (Instruction *Inst = LocalCache.getPointer())
+    ScanPos = Inst;
+  
+  // Do the scan.
+  MemDepResult Res = 
+    getDependencyFrom(QueryInst, ScanPos, QueryInst->getParent());  
+  
+  // Remember the result!
+  // FIXME: Don't convert back and forth!  Make a shared helper function.
+  LocalCache = ConvFromResult(Res);
+  if (Instruction *I = Res.getInst())
+    reverseDep[I].insert(QueryInst);
+  
+  return Res;
+}
+
 
 /// dropInstruction - Remove an instruction from the analysis, making 
 /// absolutely conservative assumptions when updating the cache.  This is
