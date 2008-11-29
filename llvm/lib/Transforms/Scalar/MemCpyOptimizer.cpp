@@ -609,7 +609,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
   // Drop any cached information about the call, because we may have changed
   // its dependence information by changing its parameter.
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-  MD.dropInstruction(C);
+  MD.removeInstruction(C);
 
   // Remove the memcpy
   MD.removeInstruction(cpy);
@@ -691,11 +691,9 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   // If C and M don't interfere, then this is a valid transformation.  If they
   // did, this would mean that the two sources overlap, which would be bad.
   if (MD.getDependency(C) == dep) {
-    MD.dropInstruction(M);
+    MD.removeInstruction(M);
     M->eraseFromParent();
-    
     NumMemCpyInstr++;
-    
     return true;
   }
   
@@ -703,7 +701,6 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   // inserted and act like nothing happened.
   MD.removeInstruction(C);
   C->eraseFromParent();
-  
   return false;
 }
 

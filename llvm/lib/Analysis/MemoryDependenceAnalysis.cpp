@@ -138,7 +138,8 @@ getNonLocalDependency(Instruction *QueryInst,
     DirtyBlocks.append(pred_begin(QueryBB), pred_end(QueryBB));
     NumUncacheNonLocal++;
   }
-
+  
+  
   // Iterate while we still have blocks to update.
   while (!DirtyBlocks.empty()) {
     BasicBlock *DirtyBB = DirtyBlocks.back();
@@ -147,10 +148,10 @@ getNonLocalDependency(Instruction *QueryInst,
     // Get the entry for this block.  Note that this relies on DepResultTy
     // default initializing to Dirty.
     DepResultTy &DirtyBBEntry = Cache[DirtyBB];
-
+    
     // If DirtyBBEntry isn't dirty, it ended up on the worklist multiple times.
     if (DirtyBBEntry.getInt() != Dirty) continue;
-    
+
     // Find out if this block has a local dependency for QueryInst.
     // FIXME: If the dirty entry has an instruction pointer, scan from it!
     // FIXME: Don't convert back and forth for MemDepResult <-> DepResultTy.
@@ -163,12 +164,12 @@ getNonLocalDependency(Instruction *QueryInst,
     
     DirtyBBEntry = ConvFromResult(getDependencyFrom(QueryInst, ScanPos,
                                                     DirtyBB));
-    
+           
     // If the block has a dependency (i.e. it isn't completely transparent to
     // the value), remember it!
     if (DirtyBBEntry.getInt() != NonLocal) {
       // Keep the ReverseNonLocalDeps map up to date so we can efficiently
-      // update this when we remove  instructions.
+      // update this when we remove instructions.
       if (Instruction *Inst = DirtyBBEntry.getPointer())
         ReverseNonLocalDeps[Inst].insert(QueryInst);
       continue;
@@ -176,10 +177,9 @@ getNonLocalDependency(Instruction *QueryInst,
     
     // If the block *is* completely transparent to the load, we need to check
     // the predecessors of this block.  Add them to our worklist.
-    for (pred_iterator I = pred_begin(DirtyBB), E = pred_end(DirtyBB);
-         I != E; ++I)
-      DirtyBlocks.push_back(*I);
+    DirtyBlocks.append(pred_begin(DirtyBB), pred_end(DirtyBB));
   }
+  
   
   // Copy the result into the output set.
   for (DenseMap<BasicBlock*, DepResultTy>::iterator I = Cache.begin(),
@@ -324,65 +324,6 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
   return Res;
 }
 
-
-/// dropInstruction - Remove an instruction from the analysis, making 
-/// absolutely conservative assumptions when updating the cache.  This is
-/// useful, for example when an instruction is changed rather than removed.
-void MemoryDependenceAnalysis::dropInstruction(Instruction* drop) {
-  LocalDepMapType::iterator depGraphEntry = LocalDeps.find(drop);
-  if (depGraphEntry != LocalDeps.end())
-    if (Instruction *Inst = depGraphEntry->second.getPointer())
-      ReverseLocalDeps[Inst].erase(drop);
-  
-  // Drop dependency information for things that depended on this instr
-  SmallPtrSet<Instruction*, 4>& set = ReverseLocalDeps[drop];
-  for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
-       I != E; ++I)
-    LocalDeps.erase(*I);
-  
-  LocalDeps.erase(drop);
-  ReverseLocalDeps.erase(drop);
-  
-  for (DenseMap<BasicBlock*, DepResultTy>::iterator DI =
-         NonLocalDeps[drop].begin(), DE = NonLocalDeps[drop].end();
-       DI != DE; ++DI)
-    if (Instruction *Inst = DI->second.getPointer())
-      ReverseNonLocalDeps[Inst].erase(drop);
-  
-  if (ReverseNonLocalDeps.count(drop)) {
-    SmallVector<std::pair<Instruction*, Instruction*>, 8> ReverseDepsToAdd;
-    
-    SmallPtrSet<Instruction*, 4>& set =
-      ReverseNonLocalDeps[drop];
-    for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
-         I != E; ++I)
-      for (DenseMap<BasicBlock*, DepResultTy>::iterator DI =
-           NonLocalDeps[*I].begin(), DE = NonLocalDeps[*I].end();
-           DI != DE; ++DI)
-        if (DI->second.getPointer() == drop) {
-          // Convert to a dirty entry for the subsequent instruction.
-          DI->second.setInt(Dirty);
-          if (drop->isTerminator())
-            DI->second.setPointer(0);
-          else {
-            Instruction *NextI = next(BasicBlock::iterator(drop));
-            DI->second.setPointer(NextI);
-            ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
-          }
-        }
-    
-    // Add new reverse deps after scanning the set, to avoid invalidating 'Set'
-    while (!ReverseDepsToAdd.empty()) {
-      ReverseNonLocalDeps[ReverseDepsToAdd.back().first]
-        .insert(ReverseDepsToAdd.back().second);
-      ReverseDepsToAdd.pop_back();
-    }
-  }
-  
-  ReverseNonLocalDeps.erase(drop);
-  NonLocalDeps.erase(drop);
-}
-
 /// removeInstruction - Remove an instruction from the dependence analysis,
 /// updating the dependence of instructions that previously depended on it.
 /// This method attempts to keep the cache coherent using the reverse map.
@@ -439,6 +380,8 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   
   // Loop over all of the things that depend on the instruction we're removing.
   // 
+  SmallVector<std::pair<Instruction*, Instruction*>, 8> ReverseDepsToAdd;
+  
   ReverseDepMapType::iterator ReverseDepIt = ReverseLocalDeps.find(RemInst);
   if (ReverseDepIt != ReverseLocalDeps.end()) {
     SmallPtrSet<Instruction*, 4> &ReverseDeps = ReverseDepIt->second;
@@ -451,20 +394,34 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       if (InstDependingOnRemInst == RemInst) continue;
       
       // Insert the new dependencies.
+      // FIXME: DEPENDENCIES ARE NOT TRANSITIVE!
+      //cerr << "FOO:\n";
+      //RemInst->dump();
+      //InstDependingOnRemInst->dump();
       LocalDeps[InstDependingOnRemInst] = NewDependency;
       
       // If our NewDependency is an instruction, make sure to remember that new
       // things depend on it.
-      if (Instruction *Inst = NewDependency.getPointer())
-        ReverseLocalDeps[Inst].insert(InstDependingOnRemInst);
+      if (Instruction *Inst = NewDependency.getPointer()) {
+        assert(Inst != RemInst);
+        ReverseDepsToAdd.push_back(std::make_pair(Inst, 
+                                                  InstDependingOnRemInst));
+      }
     }
-    ReverseLocalDeps.erase(RemInst);
+    
+    ReverseLocalDeps.erase(ReverseDepIt);
+
+    // Add new reverse deps after scanning the set, to avoid invalidating the
+    // 'ReverseDeps' reference.
+    while (!ReverseDepsToAdd.empty()) {
+      ReverseLocalDeps[ReverseDepsToAdd.back().first]
+        .insert(ReverseDepsToAdd.back().second);
+      ReverseDepsToAdd.pop_back();
+    }
   }
   
   ReverseDepIt = ReverseNonLocalDeps.find(RemInst);
   if (ReverseDepIt != ReverseNonLocalDeps.end()) {
-    SmallVector<std::pair<Instruction*, Instruction*>, 8> ReverseDepsToAdd;
-    
     SmallPtrSet<Instruction*, 4>& set = ReverseDepIt->second;
     for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
          I != E; ++I)
@@ -479,24 +436,23 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
           else {
             Instruction *NextI = next(BasicBlock::iterator(RemInst));
             DI->second.setPointer(NextI);
+            assert(NextI != RemInst);
             ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
           }
         }
-    
+
+    ReverseNonLocalDeps.erase(ReverseDepIt);
+
     // Add new reverse deps after scanning the set, to avoid invalidating 'Set'
     while (!ReverseDepsToAdd.empty()) {
       ReverseNonLocalDeps[ReverseDepsToAdd.back().first]
         .insert(ReverseDepsToAdd.back().second);
       ReverseDepsToAdd.pop_back();
     }
-    
-    ReverseNonLocalDeps.erase(ReverseDepIt);
   }
   
   NonLocalDeps.erase(RemInst);
-
   getAnalysis<AliasAnalysis>().deleteValue(RemInst);
-  
   DEBUG(verifyRemoved(RemInst));
 }
 
