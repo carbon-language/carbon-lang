@@ -106,7 +106,7 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
         pointerSize = C->getZExtValue() *
-                      TD.getABITypeSize(AI->getAllocatedType());
+                      TD.getTypeStoreSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
     } else if (VAArgInst* V = dyn_cast<VAArgInst>(Inst)) {
@@ -276,8 +276,6 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
 /// getDependency - Return the instruction on which a memory operation
 /// depends.  The local parameter indicates if the query should only
 /// evaluate dependencies within the same basic block.
-/// FIXME: ELIMINATE START/BLOCK and make the caching happen in a higher level
-/// METHOD.
 MemDepResult MemoryDependenceAnalysis::
 getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt, 
                   BasicBlock *BB) {
@@ -285,28 +283,28 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
   TargetData &TD = getAnalysis<TargetData>();
   
   // Get the pointer value for which dependence will be determined
-  Value* dependee = 0;
-  uint64_t dependeeSize = 0;
-  bool queryIsVolatile = false;
+  Value *MemPtr = 0;
+  uint64_t MemSize = 0;
+  bool MemVolatile = false;
   
   if (StoreInst* S = dyn_cast<StoreInst>(QueryInst)) {
-    dependee = S->getPointerOperand();
-    dependeeSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
-    queryIsVolatile = S->isVolatile();
+    MemPtr = S->getPointerOperand();
+    MemSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
+    MemVolatile = S->isVolatile();
   } else if (LoadInst* L = dyn_cast<LoadInst>(QueryInst)) {
-    dependee = L->getPointerOperand();
-    dependeeSize = TD.getTypeStoreSize(L->getType());
-    queryIsVolatile = L->isVolatile();
+    MemPtr = L->getPointerOperand();
+    MemSize = TD.getTypeStoreSize(L->getType());
+    MemVolatile = L->isVolatile();
   } else if (VAArgInst* V = dyn_cast<VAArgInst>(QueryInst)) {
-    dependee = V->getOperand(0);
-    dependeeSize = TD.getTypeStoreSize(V->getType());
+    MemPtr = V->getOperand(0);
+    MemSize = TD.getTypeStoreSize(V->getType());
   } else if (FreeInst* F = dyn_cast<FreeInst>(QueryInst)) {
-    dependee = F->getPointerOperand();
-    // FreeInsts erase the entire structure, not just a field
-    dependeeSize = ~0UL;
-  } else if (CallSite::get(QueryInst).getInstruction() != 0)
+    MemPtr = F->getPointerOperand();
+    // FreeInsts erase the entire structure, not just a field.
+    MemSize = ~0UL;
+  } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst))
     return getCallSiteDependency(CallSite::get(QueryInst), ScanIt, BB);
-  else
+  else  // Non-memory instructions depend on nothing.
     return MemDepResult::getNone();
   
   // Walk backwards through the basic block, looking for dependencies
@@ -314,65 +312,67 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     Instruction *Inst = --ScanIt;
     
     // If this inst is a memory op, get the pointer it accessed
-    Value* pointer = 0;
-    uint64_t pointerSize = 0;
-    if (StoreInst* S = dyn_cast<StoreInst>(Inst)) {
-      // All volatile loads/stores depend on each other
-      if (queryIsVolatile && S->isVolatile())
+    Value *Pointer = 0;
+    uint64_t PointerSize = 0;
+    if (StoreInst *S = dyn_cast<StoreInst>(Inst)) {
+      // All volatile loads/stores depend on each other.
+      if (MemVolatile && S->isVolatile())
         return MemDepResult::get(S);
       
-      pointer = S->getPointerOperand();
-      pointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
-    } else if (LoadInst* L = dyn_cast<LoadInst>(Inst)) {
+      Pointer = S->getPointerOperand();
+      PointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
+    } else if (LoadInst *L = dyn_cast<LoadInst>(Inst)) {
       // All volatile loads/stores depend on each other
-      if (queryIsVolatile && L->isVolatile())
+      if (MemVolatile && L->isVolatile())
         return MemDepResult::get(L);
       
-      pointer = L->getPointerOperand();
-      pointerSize = TD.getTypeStoreSize(L->getType());
-    } else if (AllocationInst* AI = dyn_cast<AllocationInst>(Inst)) {
-      pointer = AI;
-      if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        pointerSize = C->getZExtValue() * 
-                      TD.getABITypeSize(AI->getAllocatedType());
+      Pointer = L->getPointerOperand();
+      PointerSize = TD.getTypeStoreSize(L->getType());
+    } else if (AllocationInst *AI = dyn_cast<AllocationInst>(Inst)) {
+      Pointer = AI;
+      if (ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize()))
+        PointerSize = C->getZExtValue() * 
+                      TD.getTypeStoreSize(AI->getAllocatedType());
       else
-        pointerSize = ~0UL;
-    } else if (VAArgInst* V = dyn_cast<VAArgInst>(Inst)) {
-      pointer = V->getOperand(0);
-      pointerSize = TD.getTypeStoreSize(V->getType());
-    } else if (FreeInst* F = dyn_cast<FreeInst>(Inst)) {
-      pointer = F->getPointerOperand();
+        PointerSize = ~0UL;
+    } else if (VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
+      Pointer = V->getOperand(0);
+      PointerSize = TD.getTypeStoreSize(V->getType());
+    } else if (FreeInst *F = dyn_cast<FreeInst>(Inst)) {
+      Pointer = F->getPointerOperand();
       
-      // FreeInsts erase the entire structure
-      pointerSize = ~0UL;
+      // FreeInsts erase the entire structure.
+      PointerSize = ~0UL;
     } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
-      // Call insts need special handling. Check if they can modify our pointer
-      AliasAnalysis::ModRefResult MR = AA.getModRefInfo(CallSite::get(Inst),
-                                                        dependee, dependeeSize);
+      // Calls need special handling.  Check if they can modify our pointer.
+      AliasAnalysis::ModRefResult MR =
+        AA.getModRefInfo(CallSite::get(Inst), MemPtr, MemSize);
       
-      if (MR != AliasAnalysis::NoModRef) {
-        // Loads don't depend on read-only calls
-        if (isa<LoadInst>(QueryInst) && MR == AliasAnalysis::Ref)
-          continue;
-        return MemDepResult::get(Inst);
-      }
-       
+      if (MR == AliasAnalysis::NoModRef)
+        continue;
+      
+      // Loads don't depend on read-only calls
+      if (isa<LoadInst>(QueryInst) && MR == AliasAnalysis::Ref)
+        continue;
+      
+      return MemDepResult::get(Inst);
+    } else {
+      // Non memory instruction, move to the next one.
       continue;
     }
     
     // If we found a pointer, check if it could be the same as our pointer
-    if (pointer) {
-      AliasAnalysis::AliasResult R = AA.alias(pointer, pointerSize,
-                                              dependee, dependeeSize);
+    AliasAnalysis::AliasResult R =
+      AA.alias(Pointer, PointerSize, MemPtr, MemSize);
       
-      if (R != AliasAnalysis::NoAlias) {
-        // May-alias loads don't depend on each other
-        if (isa<LoadInst>(QueryInst) && isa<LoadInst>(Inst) &&
-            R == AliasAnalysis::MayAlias)
-          continue;
-        return MemDepResult::get(Inst);
-      }
-    }
+    if (R == AliasAnalysis::NoAlias)
+      continue;
+    
+    // May-alias loads don't depend on each other without a dependence.
+    if (isa<LoadInst>(QueryInst) && isa<LoadInst>(Inst) &&
+        R == AliasAnalysis::MayAlias)
+      continue;
+    return MemDepResult::get(Inst);
   }
   
   // If we found nothing, return the non-local flag.
