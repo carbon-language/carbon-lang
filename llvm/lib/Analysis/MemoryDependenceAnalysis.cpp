@@ -97,35 +97,35 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
     Instruction *Inst = --ScanIt;
     
     // If this inst is a memory op, get the pointer it accessed
-    Value* pointer = 0;
-    uint64_t pointerSize = 0;
-    if (StoreInst* S = dyn_cast<StoreInst>(Inst)) {
-      pointer = S->getPointerOperand();
-      pointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
-    } else if (AllocationInst* AI = dyn_cast<AllocationInst>(Inst)) {
-      pointer = AI;
-      if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        pointerSize = C->getZExtValue() *
+    Value *Pointer = 0;
+    uint64_t PointerSize = 0;
+    if (StoreInst *S = dyn_cast<StoreInst>(Inst)) {
+      Pointer = S->getPointerOperand();
+      PointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
+    } else if (AllocationInst *AI = dyn_cast<AllocationInst>(Inst)) {
+      Pointer = AI;
+      if (ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize()))
+        PointerSize = C->getZExtValue() *
                       TD.getTypeStoreSize(AI->getAllocatedType());
       else
-        pointerSize = ~0UL;
-    } else if (VAArgInst* V = dyn_cast<VAArgInst>(Inst)) {
-      pointer = V->getOperand(0);
-      pointerSize = TD.getTypeStoreSize(V->getType());
-    } else if (FreeInst* F = dyn_cast<FreeInst>(Inst)) {
-      pointer = F->getPointerOperand();
+        PointerSize = ~0UL;
+    } else if (VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
+      Pointer = V->getOperand(0);
+      PointerSize = TD.getTypeStoreSize(V->getType());
+    } else if (FreeInst *F = dyn_cast<FreeInst>(Inst)) {
+      Pointer = F->getPointerOperand();
       
       // FreeInsts erase the entire structure
-      pointerSize = ~0UL;
-    } else if (CallSite::get(Inst).getInstruction() != 0) {
-      if (AA.getModRefBehavior(CallSite::get(Inst)) !=
+      PointerSize = ~0UL;
+    } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
+      if (AA.getModRefBehavior(CallSite::get(Inst)) ==
             AliasAnalysis::DoesNotAccessMemory)
-        return MemDepResult::get(Inst);
-      continue;
+        continue;
+      return MemDepResult::get(Inst);
     } else
       continue;
     
-    if (AA.getModRefInfo(C, pointer, pointerSize) != AliasAnalysis::NoModRef)
+    if (AA.getModRefInfo(C, Pointer, PointerSize) != AliasAnalysis::NoModRef)
       return MemDepResult::get(Inst);
   }
   
