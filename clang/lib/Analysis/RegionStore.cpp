@@ -646,7 +646,7 @@ Store RegionStoreManager::InitializeArray(Store store, const TypedRegion* R,
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
 
   for (; i != Size; ++i) {
-    nonloc::ConcreteInt Idx(getBasicVals().getValue(llvm::APSInt(i)));
+    nonloc::ConcreteInt Idx(getBasicVals().getValue(llvm::APSInt(i, false)));
 
     ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
     

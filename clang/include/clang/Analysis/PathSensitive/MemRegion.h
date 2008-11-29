@@ -415,7 +415,11 @@ class ElementRegion : public TypedRegion {
   SVal Index;
 
   ElementRegion(SVal Idx, const MemRegion* sReg)
-    : TypedRegion(sReg, ElementRegionKind), Index(Idx) {}
+    : TypedRegion(sReg, ElementRegionKind), Index(Idx) {
+    // The index must be signed.
+    if (nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&Idx))
+      assert(CI->getValue().isSigned());
+  }
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, SVal Idx, 
                             const MemRegion* superRegion);
