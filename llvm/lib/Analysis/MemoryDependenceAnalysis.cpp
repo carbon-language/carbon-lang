@@ -37,38 +37,6 @@ char MemoryDependenceAnalysis::ID = 0;
 static RegisterPass<MemoryDependenceAnalysis> X("memdep",
                                      "Memory Dependence Analysis", false, true);
 
-/// verifyRemoved - Verify that the specified instruction does not occur
-/// in our internal data structures.
-void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
-  for (LocalDepMapType::const_iterator I = LocalDeps.begin(),
-       E = LocalDeps.end(); I != E; ++I) {
-    assert(I->first != D && "Inst occurs in data structures");
-    assert(I->second.getPointer() != D &&
-           "Inst occurs in data structures");
-  }
-
-  for (NonLocalDepMapType::const_iterator I = NonLocalDeps.begin(),
-       E = NonLocalDeps.end(); I != E; ++I) {
-    assert(I->first != D && "Inst occurs in data structures");
-    for (DenseMap<BasicBlock*, DepResultTy>::iterator II = I->second.begin(),
-         EE = I->second.end(); II  != EE; ++II)
-      assert(II->second.getPointer() != D && "Inst occurs in data structures");
-  }
-
-  for (ReverseDepMapType::const_iterator I = ReverseLocalDeps.begin(),
-       E = ReverseLocalDeps.end(); I != E; ++I)
-    for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
-         EE = I->second.end(); II != EE; ++II)
-      assert(*II != D && "Inst occurs in data structures");
-
-  for (ReverseDepMapType::const_iterator I = ReverseNonLocalDeps.begin(),
-       E = ReverseNonLocalDeps.end();
-       I != E; ++I)
-    for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
-         EE = I->second.end(); II != EE; ++II)
-      assert(*II != D && "Inst occurs in data structures");
-}
-
 /// getAnalysisUsage - Does not modify anything.  It uses Alias Analysis.
 ///
 void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -483,4 +451,36 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   getAnalysis<AliasAnalysis>().deleteValue(RemInst);
   
   DEBUG(verifyRemoved(RemInst));
+}
+
+/// verifyRemoved - Verify that the specified instruction does not occur
+/// in our internal data structures.
+void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
+  for (LocalDepMapType::const_iterator I = LocalDeps.begin(),
+       E = LocalDeps.end(); I != E; ++I) {
+    assert(I->first != D && "Inst occurs in data structures");
+    assert(I->second.getPointer() != D &&
+           "Inst occurs in data structures");
+  }
+  
+  for (NonLocalDepMapType::const_iterator I = NonLocalDeps.begin(),
+       E = NonLocalDeps.end(); I != E; ++I) {
+    assert(I->first != D && "Inst occurs in data structures");
+    for (DenseMap<BasicBlock*, DepResultTy>::iterator II = I->second.begin(),
+         EE = I->second.end(); II  != EE; ++II)
+      assert(II->second.getPointer() != D && "Inst occurs in data structures");
+  }
+  
+  for (ReverseDepMapType::const_iterator I = ReverseLocalDeps.begin(),
+       E = ReverseLocalDeps.end(); I != E; ++I)
+    for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
+         EE = I->second.end(); II != EE; ++II)
+      assert(*II != D && "Inst occurs in data structures");
+  
+  for (ReverseDepMapType::const_iterator I = ReverseNonLocalDeps.begin(),
+       E = ReverseNonLocalDeps.end();
+       I != E; ++I)
+    for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
+         EE = I->second.end(); II != EE; ++II)
+      assert(*II != D && "Inst occurs in data structures");
 }
