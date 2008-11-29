@@ -18,6 +18,9 @@
 
 namespace llvm {
   
+template<typename T>
+struct DenseMapInfo;
+  
 /// PointerIntPair - This class implements a pair of a pointer and small
 /// integer.  It is designed to represent this in the space required by one
 /// pointer by bitmangling the integer into the low part of the pointer.  This
@@ -63,6 +66,25 @@ public:
   bool operator!=(const PointerIntPair &RHS) const {
     return Value != RHS.Value;
   }
+};
+
+// Provide specialization of DenseMapInfo for PointerIntPair.
+template<typename PointerTy, unsigned IntBits, typename IntType>
+struct DenseMapInfo<PointerIntPair<PointerTy, IntBits, IntType> > {
+  typedef PointerIntPair<PointerTy, IntBits, IntType> Ty;
+  static Ty getEmptyKey() {
+    return Ty(reinterpret_cast<PointerTy>(-1),
+              IntType((1 << IntBits)-1));
+  }
+  static Ty getTombstoneKey() {
+    return Ty(reinterpret_cast<PointerTy>(-2), IntType(0));
+  }
+  static unsigned getHashValue(Ty V) {
+    uintptr_t IV = reinterpret_cast<uintptr_t>(V.getOpaqueValue());
+    return unsigned(IV) ^ unsigned(IV >> 9);
+  }
+  static bool isEqual(const Ty &LHS, const Ty &RHS) { return LHS == RHS; }
+  static bool isPod() { return true; }
 };
 
 } // end namespace llvm
