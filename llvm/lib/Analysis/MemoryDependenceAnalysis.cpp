@@ -26,7 +26,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
-
 using namespace llvm;
 
 // Control the calculation of non-local dependencies by only examining the
@@ -51,7 +50,7 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
   for (LocalDepMapType::const_iterator I = LocalDeps.begin(),
        E = LocalDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in data structures");
-    assert(I->second.first.getPointer() != D &&
+    assert(I->second.getPointer() != D &&
            "Inst occurs in data structures");
   }
 
@@ -89,9 +88,9 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 /// of a call site.
 MemDepResult MemoryDependenceAnalysis::
 getCallSiteDependency(CallSite C, Instruction *start, BasicBlock *block) {
-  std::pair<DepResultTy, bool> &cachedResult = LocalDeps[C.getInstruction()];
-  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
-  TargetData& TD = getAnalysis<TargetData>();
+  DepResultTy &cachedResult = LocalDeps[C.getInstruction()];
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  TargetData &TD = getAnalysis<TargetData>();
   BasicBlock::iterator blockBegin = C.getInstruction()->getParent()->begin();
   BasicBlock::iterator QI = C.getInstruction();
   
@@ -135,9 +134,8 @@ getCallSiteDependency(CallSite C, Instruction *start, BasicBlock *block) {
                    AA.getModRefBehavior(CallSite::get(QI));
       if (result != AliasAnalysis::DoesNotAccessMemory) {
         if (!start && !block) {
-          cachedResult.first = DepResultTy(QI, Normal);
-          cachedResult.second = true;
-          reverseDep[DepResultTy(QI, Normal)].insert(C.getInstruction());
+          cachedResult = DepResultTy(QI, Normal);
+          reverseDep[QI].insert(C.getInstruction());
         }
         return MemDepResult::get(QI);
       } else {
@@ -148,18 +146,15 @@ getCallSiteDependency(CallSite C, Instruction *start, BasicBlock *block) {
     
     if (AA.getModRefInfo(C, pointer, pointerSize) != AliasAnalysis::NoModRef) {
       if (!start && !block) {
-        cachedResult.first = DepResultTy(QI, Normal);
-        cachedResult.second = true;
-        reverseDep[DepResultTy(QI, Normal)].insert(C.getInstruction());
+        cachedResult = DepResultTy(QI, Normal);
+        reverseDep[QI].insert(C.getInstruction());
       }
       return MemDepResult::get(QI);
     }
   }
   
   // No dependence found
-  cachedResult.first = DepResultTy(0, NonLocal);
-  cachedResult.second = true;
-  reverseDep[DepResultTy(0, NonLocal)].insert(C.getInstruction());
+  cachedResult = DepResultTy(0, NonLocal);
   return MemDepResult::getNonLocal();
 }
 
@@ -279,7 +274,8 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
     // Update the reverse non-local dependency cache.
     for (DenseMap<BasicBlock*, DepResultTy>::iterator I = cached.begin(),
          E = cached.end(); I != E; ++I) {
-      reverseDepNonLocal[I->second].insert(query);
+      if (Instruction *Inst = I->second.getPointer())
+        reverseDepNonLocal[Inst].insert(query);
       resp[I->first] = ConvToResult(I->second);
     }
     
@@ -296,7 +292,8 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
   for (DenseMap<BasicBlock*, DepResultTy>::iterator I = cached.begin(),
        E = cached.end(); I != E; ++I) {
     // FIXME: Merge with the code above!
-    reverseDepNonLocal[I->second].insert(query);
+    if (Instruction *Inst = I->second.getPointer())
+      reverseDepNonLocal[Inst].insert(query);
     resp[I->first] = ConvToResult(I->second);
   }
 }
@@ -304,6 +301,8 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
 /// getDependency - Return the instruction on which a memory operation
 /// depends.  The local parameter indicates if the query should only
 /// evaluate dependencies within the same basic block.
+/// FIXME: ELIMINATE START/BLOCK and make the caching happen in a higher level
+/// METHOD.
 MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
                                                      Instruction *start,
                                                      BasicBlock *block) {
@@ -311,22 +310,20 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
   BasicBlock::iterator QI = query;
   
   // Check for a cached result
-  std::pair<DepResultTy, bool>& cachedResult = LocalDeps[query];
-  // If we have a _confirmed_ cached entry, return it
-  if (!block && !start) {
-    if (cachedResult.second)
-      return ConvToResult(cachedResult.first);
-    else if (cachedResult.first.getInt() == Normal &&
-             cachedResult.first.getPointer())
-      // If we have an unconfirmed cached entry, we can start our search from
-      // it.
-      QI = cachedResult.first.getPointer();
-  }
+  // FIXME: why do this when Block or Start is specified??
+  DepResultTy &cachedResult = LocalDeps[query];
   
   if (start)
     QI = start;
-  else if (!start && block)
+  else if (block)
     QI = block->end();
+  else if (cachedResult.getInt() != Dirty) {
+    // If we have a _confirmed_ cached entry, return it.
+    return ConvToResult(cachedResult);
+  } else if (Instruction *Inst = cachedResult.getPointer()) {
+    // If we have an unconfirmed cached entry, we can start our search from it.
+    QI = Inst;
+  }
   
   AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
   TargetData& TD = getAnalysis<TargetData>();
@@ -372,9 +369,8 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
       // All volatile loads/stores depend on each other
       if (queryIsVolatile && S->isVolatile()) {
         if (!start && !block) {
-          cachedResult.first = DepResultTy(S, Normal);
-          cachedResult.second = true;
-          reverseDep[DepResultTy(S, Normal)].insert(query);
+          cachedResult = DepResultTy(S, Normal);
+          reverseDep[S].insert(query);
         }
         
         return MemDepResult::get(S);
@@ -386,9 +382,8 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
       // All volatile loads/stores depend on each other
       if (queryIsVolatile && L->isVolatile()) {
         if (!start && !block) {
-          cachedResult.first = DepResultTy(L, Normal);
-          cachedResult.second = true;
-          reverseDep[DepResultTy(L, Normal)].insert(query);
+          cachedResult = DepResultTy(L, Normal);
+          reverseDep[L].insert(query);
         }
         
         return MemDepResult::get(L);
@@ -422,9 +417,8 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
           continue;
         
         if (!start && !block) {
-          cachedResult.first = DepResultTy(QI, Normal);
-          cachedResult.second = true;
-          reverseDep[DepResultTy(QI, Normal)].insert(query);
+          cachedResult = DepResultTy(QI, Normal);
+          reverseDep[QI].insert(query);
         }
         return MemDepResult::get(QI);
       } else {
@@ -444,9 +438,8 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
           continue;
         
         if (!start && !block) {
-          cachedResult.first = DepResultTy(QI, Normal);
-          cachedResult.second = true;
-          reverseDep[DepResultTy(QI, Normal)].insert(query);
+          cachedResult = DepResultTy(QI, Normal);
+          reverseDep[QI].insert(query);
         }
         
         return MemDepResult::get(QI);
@@ -455,11 +448,8 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
   }
   
   // If we found nothing, return the non-local flag
-  if (!start && !block) {
-    cachedResult.first = DepResultTy(0, NonLocal);
-    cachedResult.second = true;
-    reverseDep[DepResultTy(0, NonLocal)].insert(query);
-  }
+  if (!start && !block)
+    cachedResult = DepResultTy(0, NonLocal);
   
   return MemDepResult::getNonLocal();
 }
@@ -470,36 +460,38 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *query,
 void MemoryDependenceAnalysis::dropInstruction(Instruction* drop) {
   LocalDepMapType::iterator depGraphEntry = LocalDeps.find(drop);
   if (depGraphEntry != LocalDeps.end())
-    reverseDep[depGraphEntry->second.first].erase(drop);
+    if (Instruction *Inst = depGraphEntry->second.getPointer())
+      reverseDep[Inst].erase(drop);
   
   // Drop dependency information for things that depended on this instr
-  SmallPtrSet<Instruction*, 4>& set = reverseDep[DepResultTy(drop, Normal)];
+  SmallPtrSet<Instruction*, 4>& set = reverseDep[drop];
   for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
        I != E; ++I)
     LocalDeps.erase(*I);
   
   LocalDeps.erase(drop);
-  reverseDep.erase(DepResultTy(drop, Normal));
+  reverseDep.erase(drop);
   
   for (DenseMap<BasicBlock*, DepResultTy>::iterator DI =
          depGraphNonLocal[drop].begin(), DE = depGraphNonLocal[drop].end();
        DI != DE; ++DI)
-    if (DI->second.getInt() != None)
-      reverseDepNonLocal[DI->second].erase(drop);
+    if (Instruction *Inst = DI->second.getPointer())
+      reverseDepNonLocal[Inst].erase(drop);
   
-  if (reverseDepNonLocal.count(DepResultTy(drop, Normal))) {
+  if (reverseDepNonLocal.count(drop)) {
     SmallPtrSet<Instruction*, 4>& set =
-      reverseDepNonLocal[DepResultTy(drop, Normal)];
+      reverseDepNonLocal[drop];
     for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
          I != E; ++I)
       for (DenseMap<BasicBlock*, DepResultTy>::iterator DI =
            depGraphNonLocal[*I].begin(), DE = depGraphNonLocal[*I].end();
            DI != DE; ++DI)
         if (DI->second == DepResultTy(drop, Normal))
+          // FIXME: Why not remember the old insertion point??
           DI->second = DepResultTy(0, Dirty);
   }
   
-  reverseDepNonLocal.erase(DepResultTy(drop, Normal));
+  reverseDepNonLocal.erase(drop);
   depGraphNonLocal.erase(drop);
 }
 
@@ -512,8 +504,8 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   for (DenseMap<BasicBlock*, DepResultTy>::iterator DI =
        depGraphNonLocal[RemInst].begin(), DE = depGraphNonLocal[RemInst].end();
        DI != DE; ++DI)
-    if (DI->second.getInt() != None)
-      reverseDepNonLocal[DI->second].erase(RemInst);
+    if (Instruction *Inst = DI->second.getPointer())
+      reverseDepNonLocal[Inst].erase(RemInst);
 
   // Shortly after this, we will look for things that depend on RemInst.  In
   // order to update these, we'll need a new dependency to base them on.  We
@@ -521,33 +513,31 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   // to make a more accurate approximation where possible.  Compute that better
   // approximation if we can.
   DepResultTy NewDependency;
-  bool NewDependencyConfirmed = false;
   
   // If we have a cached local dependence query for this instruction, remove it.
   //
   LocalDepMapType::iterator LocalDepEntry = LocalDeps.find(RemInst);
   if (LocalDepEntry != LocalDeps.end()) {
-    DepResultTy LocalDep = LocalDepEntry->second.first;
-    bool IsConfirmed = LocalDepEntry->second.second;
+    DepResultTy LocalDep = LocalDepEntry->second;
     
     // Remove this local dependency info.
     LocalDeps.erase(LocalDepEntry);
     
     // Remove us from DepInst's reverse set now that the local dep info is gone.
-    reverseDep[LocalDep].erase(RemInst);
+    if (Instruction *Inst = LocalDep.getPointer())
+      reverseDep[Inst].erase(RemInst);
 
     // If we have unconfirmed info, don't trust it.
-    if (IsConfirmed) {
+    if (LocalDep.getInt() != Dirty) {
       // If we have a confirmed non-local flag, use it.
       if (LocalDep.getInt() == NonLocal || LocalDep.getInt() == None) {
         // The only time this dependency is confirmed is if it is non-local.
         NewDependency = LocalDep;
-        NewDependencyConfirmed = true;
       } else {
         // If we have dep info for RemInst, set them to it.
         Instruction *NDI = next(BasicBlock::iterator(LocalDep.getPointer()));
         if (NDI != RemInst) // Don't use RemInst for the new dependency!
-          NewDependency = DepResultTy(NDI, Normal);
+          NewDependency = DepResultTy(NDI, Dirty);
       }
     }
   }
@@ -556,13 +546,12 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   // use the immediate successor of RemInst.  We use the successor because
   // getDependence starts by checking the immediate predecessor of what is in
   // the cache.
-  if (NewDependency == DepResultTy(0, Normal))
-    NewDependency = DepResultTy(next(BasicBlock::iterator(RemInst)), Normal);
+  if (NewDependency == DepResultTy(0, Dirty))
+    NewDependency = DepResultTy(next(BasicBlock::iterator(RemInst)), Dirty);
   
   // Loop over all of the things that depend on the instruction we're removing.
   // 
-  reverseDepMapType::iterator ReverseDepIt =
-    reverseDep.find(DepResultTy(RemInst, Normal));
+  reverseDepMapType::iterator ReverseDepIt = reverseDep.find(RemInst);
   if (ReverseDepIt != reverseDep.end()) {
     SmallPtrSet<Instruction*, 4> &ReverseDeps = ReverseDepIt->second;
     for (SmallPtrSet<Instruction*, 4>::iterator I = ReverseDeps.begin(),
@@ -574,19 +563,17 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       if (InstDependingOnRemInst == RemInst) continue;
       
       // Insert the new dependencies.
-      LocalDeps[InstDependingOnRemInst] =
-        std::make_pair(NewDependency, NewDependencyConfirmed);
+      LocalDeps[InstDependingOnRemInst] = NewDependency;
       
       // If our NewDependency is an instruction, make sure to remember that new
       // things depend on it.
-      // FIXME: Just insert all deps!
-      if (NewDependency.getInt() != NonLocal && NewDependency.getInt() != None)
-        reverseDep[NewDependency].insert(InstDependingOnRemInst);
+      if (Instruction *Inst = NewDependency.getPointer())
+        reverseDep[Inst].insert(InstDependingOnRemInst);
     }
-    reverseDep.erase(DepResultTy(RemInst, Normal));
+    reverseDep.erase(RemInst);
   }
   
-  ReverseDepIt = reverseDepNonLocal.find(DepResultTy(RemInst, Normal));
+  ReverseDepIt = reverseDepNonLocal.find(RemInst);
   if (ReverseDepIt != reverseDepNonLocal.end()) {
     SmallPtrSet<Instruction*, 4>& set = ReverseDepIt->second;
     for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
@@ -595,6 +582,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
            depGraphNonLocal[*I].begin(), DE = depGraphNonLocal[*I].end();
            DI != DE; ++DI)
         if (DI->second == DepResultTy(RemInst, Normal))
+          // FIXME: Why not remember the old insertion point??
           DI->second = DepResultTy(0, Dirty);
     reverseDepNonLocal.erase(ReverseDepIt);
   }

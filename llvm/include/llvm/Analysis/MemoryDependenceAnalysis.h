@@ -83,9 +83,24 @@ namespace llvm {
     /// DepType - This enum is used to indicate what flavor of dependence this
     /// is.  If the type is Normal, there is an associated instruction pointer.
     enum DepType {
+      /// Dirty - Entries with this marker may come in two forms, depending on
+      /// whether they are in a LocalDeps map or NonLocalDeps map.  In either
+      /// case, this marker indicates that the cached value has been invalidated
+      /// by a removeInstruction call.
+      ///
+      /// If in the LocalDeps map, the Instruction field will indicate the place
+      /// in the current block to start scanning.  If in the non-localdeps map,
+      /// the instruction will be null.
+      ///
+      /// In a default-constructed DepResultTy object, the type will be Dirty
+      /// and the instruction pointer will be null.
+      ///
+      /// FIXME: Why not add a scanning point for the non-local deps map???
+      Dirty = 0,
+      
       /// Normal - This is a normal instruction dependence.  The pointer member
       /// of the DepResultTy pair holds the instruction.
-      Normal = 0,
+      Normal,
 
       /// None - This dependence type indicates that the query does not depend
       /// on any instructions, either because it scanned to the start of the
@@ -96,18 +111,12 @@ namespace llvm {
       /// NonLocal - This marker indicates that the query has no dependency in
       /// the specified block.  To find out more, the client should query other
       /// predecessor blocks.
-      NonLocal,
-      
-      /// Dirty - This is an internal marker indicating that that a cache entry
-      /// is dirty.
-      Dirty
+      NonLocal
     };
     typedef PointerIntPair<Instruction*, 2, DepType> DepResultTy;
 
-    // A map from instructions to their dependency, with a boolean
-    // flags for whether this mapping is confirmed or not.
-    typedef DenseMap<Instruction*,
-                     std::pair<DepResultTy, bool> > LocalDepMapType;
+    // A map from instructions to their dependency.
+    typedef DenseMap<Instruction*, DepResultTy> LocalDepMapType;
     LocalDepMapType LocalDeps;
 
     // A map from instructions to their non-local dependencies.
@@ -118,7 +127,7 @@ namespace llvm {
     
     // A reverse mapping from dependencies to the dependees.  This is
     // used when removing instructions to keep the cache coherent.
-    typedef DenseMap<DepResultTy,
+    typedef DenseMap<Instruction*,
                      SmallPtrSet<Instruction*, 4> > reverseDepMapType;
     reverseDepMapType reverseDep;
     
