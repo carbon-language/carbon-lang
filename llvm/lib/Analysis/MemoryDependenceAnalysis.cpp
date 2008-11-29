@@ -310,68 +310,66 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
   // Walk backwards through the basic block, looking for dependencies
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
-    
-    // If this inst is a memory op, get the pointer it accessed
-    Value *Pointer = 0;
-    uint64_t PointerSize = 0;
-    if (StoreInst *S = dyn_cast<StoreInst>(Inst)) {
-      // All volatile loads/stores depend on each other.
-      if (MemVolatile && S->isVolatile())
-        return MemDepResult::get(S);
-      
-      Pointer = S->getPointerOperand();
-      PointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
-    } else if (LoadInst *L = dyn_cast<LoadInst>(Inst)) {
-      // All volatile loads/stores depend on each other
-      if (MemVolatile && L->isVolatile())
-        return MemDepResult::get(L);
-      
-      Pointer = L->getPointerOperand();
-      PointerSize = TD.getTypeStoreSize(L->getType());
-    } else if (AllocationInst *AI = dyn_cast<AllocationInst>(Inst)) {
-      Pointer = AI;
-      if (ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        PointerSize = C->getZExtValue() * 
-                      TD.getTypeStoreSize(AI->getAllocatedType());
-      else
-        PointerSize = ~0UL;
-    } else if (VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
-      Pointer = V->getOperand(0);
-      PointerSize = TD.getTypeStoreSize(V->getType());
-    } else if (FreeInst *F = dyn_cast<FreeInst>(Inst)) {
-      Pointer = F->getPointerOperand();
-      
-      // FreeInsts erase the entire structure.
-      PointerSize = ~0UL;
-    } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
-      // Calls need special handling.  Check if they can modify our pointer.
-      AliasAnalysis::ModRefResult MR =
-        AA.getModRefInfo(CallSite::get(Inst), MemPtr, MemSize);
-      
-      if (MR == AliasAnalysis::NoModRef)
-        continue;
-      
-      // Loads don't depend on read-only calls
-      if (isa<LoadInst>(QueryInst) && MR == AliasAnalysis::Ref)
-        continue;
-      
+
+    // If the access is volatile and this is a volatile load/store, return a
+    // dependence.
+    if (MemVolatile &&
+        ((isa<LoadInst>(Inst) && cast<LoadInst>(Inst)->isVolatile()) ||
+         (isa<StoreInst>(Inst) && cast<StoreInst>(Inst)->isVolatile())))
       return MemDepResult::get(Inst);
-    } else {
-      // Non memory instruction, move to the next one.
-      continue;
+
+    // MemDep is broken w.r.t. loads: it says that two loads of the same pointer
+    // depend on each other.  :(
+    // FIXME: ELIMINATE THIS!
+    if (LoadInst *L = dyn_cast<LoadInst>(Inst)) {
+      Value *Pointer = L->getPointerOperand();
+      uint64_t PointerSize = TD.getTypeStoreSize(L->getType());
+      
+      // If we found a pointer, check if it could be the same as our pointer
+      AliasAnalysis::AliasResult R =
+        AA.alias(Pointer, PointerSize, MemPtr, MemSize);
+      
+      if (R == AliasAnalysis::NoAlias)
+        continue;
+      
+      // May-alias loads don't depend on each other without a dependence.
+      if (isa<LoadInst>(QueryInst) && R == AliasAnalysis::MayAlias)
+        continue;
+      return MemDepResult::get(Inst);
     }
     
-    // If we found a pointer, check if it could be the same as our pointer
-    AliasAnalysis::AliasResult R =
-      AA.alias(Pointer, PointerSize, MemPtr, MemSize);
+    // FIXME: This claims that an access depends on the allocation.  This may
+    // make sense, but is dubious at best.  It would be better to fix GVN to
+    // handle a 'None' Query.
+    if (AllocationInst *AI = dyn_cast<AllocationInst>(Inst)) {
+      Value *Pointer = AI;
+      uint64_t PointerSize;
+      if (ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize()))
+        PointerSize = C->getZExtValue() * 
+          TD.getTypeStoreSize(AI->getAllocatedType());
+      else
+        PointerSize = ~0UL;
       
-    if (R == AliasAnalysis::NoAlias)
+      AliasAnalysis::AliasResult R =
+        AA.alias(Pointer, PointerSize, MemPtr, MemSize);
+      
+      if (R == AliasAnalysis::NoAlias)
+        continue;
+      return MemDepResult::get(Inst);
+    }
+      
+    
+    // See if this instruction mod/ref's the pointer.
+    AliasAnalysis::ModRefResult MRR = AA.getModRefInfo(Inst, MemPtr, MemSize);
+
+    if (MRR == AliasAnalysis::NoModRef)
       continue;
     
-    // May-alias loads don't depend on each other without a dependence.
-    if (isa<LoadInst>(QueryInst) && isa<LoadInst>(Inst) &&
-        R == AliasAnalysis::MayAlias)
+    // Loads don't depend on read-only instructions.
+    if (isa<LoadInst>(QueryInst) && MRR == AliasAnalysis::Ref)
       continue;
+    
+    // Otherwise, there is a dependence.
     return MemDepResult::get(Inst);
   }
   
