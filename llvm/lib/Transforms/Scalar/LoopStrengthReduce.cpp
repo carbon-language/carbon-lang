@@ -240,30 +240,31 @@ Value *LoopStrengthReduce::getCastedVersionOf(Instruction::CastOps opcode,
 /// their operands subsequently dead.
 void LoopStrengthReduce::
 DeleteTriviallyDeadInstructions(SetVector<Instruction*> &Insts) {
-  SmallVector<Instruction*, 16> DeadInsts;
-  
   while (!Insts.empty()) {
     Instruction *I = Insts.back();
     Insts.pop_back();
-    
-    // If I is dead, delete it and all the things that it recursively uses
-    // that become dead.
-    RecursivelyDeleteTriviallyDeadInstructions(I, &DeadInsts);
-    
-    if (DeadInsts.empty()) continue;
-    Changed = true;
 
-    while (!DeadInsts.empty()) {
-      Instruction *DeadInst = DeadInsts.back();
-      DeadInsts.pop_back();
-      
-      // Make sure ScalarEvolutions knows this instruction is gone.
-      SE->deleteValueFromRecords(DeadInst);
-      
-      // Make sure that this instruction is removed from DeadInsts if it was
-      // recursively removed.
-      if (DeadInst != I)
-        Insts.remove(DeadInst);
+    if (PHINode *PN = dyn_cast<PHINode>(I)) {
+      // If all incoming values to the Phi are the same, we can replace the Phi
+      // with that value.
+      if (Value *PNV = PN->hasConstantValue()) {
+        if (Instruction *U = dyn_cast<Instruction>(PNV))
+          Insts.insert(U);
+        SE->deleteValueFromRecords(PN);
+        PN->replaceAllUsesWith(PNV);
+        PN->eraseFromParent();
+        Changed = true;
+        continue;
+      }
+    }
+
+    if (isInstructionTriviallyDead(I)) {
+      for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
+        if (Instruction *U = dyn_cast<Instruction>(*i))
+          Insts.insert(U);
+      SE->deleteValueFromRecords(I);
+      I->eraseFromParent();
+      Changed = true;
     }
   }
 }
