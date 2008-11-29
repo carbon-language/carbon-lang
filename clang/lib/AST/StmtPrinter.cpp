@@ -783,6 +783,10 @@ void StmtPrinter::VisitChooseExpr(ChooseExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitGNUNullExpr(GNUNullExpr *) {
+  OS << "__null";
+}
+
 void StmtPrinter::VisitOverloadExpr(OverloadExpr *Node) {
   OS << "__builtin_overload(";
   for (unsigned i = 0, e = Node->getNumSubExprs(); i != e; ++i) {

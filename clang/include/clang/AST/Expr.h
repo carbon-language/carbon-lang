@@ -1295,7 +1295,7 @@ public:
 /// ChooseExpr - GNU builtin-in function __builtin_choose_expr.
 /// This AST node is similar to the conditional operator (?:) in C, with 
 /// the following exceptions:
-/// - the test expression much be a constant expression.
+/// - the test expression must be a constant expression.
 /// - the expression returned has it's type unaltered by promotion rules.
 /// - does not evaluate the expression that was not chosen.
 class ChooseExpr : public Expr {
@@ -1334,6 +1334,39 @@ public:
 
   virtual void EmitImpl(llvm::Serializer& S) const;
   static ChooseExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// GNUNullExpr - Implements the GNU __null extension, which is a name
+/// for a null pointer constant that has integral type (e.g., int or
+/// long) and is the same size and alignment as a pointer. The __null
+/// extension is typically only used by system headers, which define
+/// NULL as __null in C++ rather than using 0 (which is an integer
+/// that may not match the size of a pointer).
+class GNUNullExpr : public Expr {
+  /// TokenLoc - The location of the __null keyword.
+  SourceLocation TokenLoc;
+
+public:
+  GNUNullExpr(QualType Ty, SourceLocation Loc) 
+    : Expr(GNUNullExprClass, Ty), TokenLoc(Loc) { }
+
+  /// getTokenLocation - The location of the __null token.
+  SourceLocation getTokenLocation() const { return TokenLoc; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(TokenLoc);
+  }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == GNUNullExprClass; 
+  }
+  static bool classof(const GNUNullExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static GNUNullExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);  
 };
 
 /// OverloadExpr - Clang builtin function __builtin_overload.

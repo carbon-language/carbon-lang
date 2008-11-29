@@ -61,6 +61,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     case CharacterLiteralClass:
       return CharacterLiteral::CreateImpl(D, C);
       
+    case ChooseExprClass:
+      return ChooseExpr::CreateImpl(D, C);
+
     case CompoundAssignOperatorClass:
       return CompoundAssignOperator::CreateImpl(D, C);
       
@@ -94,6 +97,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     case ForStmtClass:
       return ForStmt::CreateImpl(D, C);
     
+    case GNUNullExprClass:
+      return GNUNullExpr::CreateImpl(D, C);
+
     case GotoStmtClass:
       return GotoStmt::CreateImpl(D, C);
       
@@ -902,6 +908,17 @@ ChooseExpr* ChooseExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
   ChooseExpr *CE = new ChooseExpr(BL, 0, 0, 0, T, RP);
   D.BatchReadOwnedPtrs((unsigned) END_EXPR, &CE->SubExprs[0], C);
   return CE;
+}
+
+void GNUNullExpr::EmitImpl(llvm::Serializer &S) const {
+  S.Emit(getType());
+  S.Emit(TokenLoc);
+}
+
+GNUNullExpr *GNUNullExpr::CreateImpl(llvm::Deserializer &D, ASTContext &C) {
+  QualType T = QualType::ReadVal(D);
+  SourceLocation TL = SourceLocation::ReadVal(D);
+  return new GNUNullExpr(T, TL);
 }
 
 void OverloadExpr::EmitImpl(llvm::Serializer& S) const {

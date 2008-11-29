@@ -638,6 +638,12 @@ public:
     return 0;
   }
 
+  /// ActOnGNUNullExpr - Parsed the GNU __null expression, the token
+  /// for which is at position TokenLoc.
+  virtual ExprResult ActOnGNUNullExpr(SourceLocation TokenLoc) {
+    return 0;
+  }
+
   //===------------------------- "Block" Extension ------------------------===//
 
   /// ActOnBlockStart - This callback is invoked when a block literal is

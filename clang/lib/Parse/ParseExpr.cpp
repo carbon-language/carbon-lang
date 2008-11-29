@@ -378,6 +378,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [GNU]   '__builtin_choose_expr' '(' assign-expr ',' assign-expr ','
 ///                                     assign-expr ')'
 /// [GNU]   '__builtin_types_compatible_p' '(' type-name ',' type-name ')'
+/// [GNU]   '__null'
 /// [OBJC]  '[' objc-message-expr ']'    
 /// [OBJC]  '@selector' '(' objc-selector-arg ')'
 /// [OBJC]  '@protocol' '(' identifier ')'             
@@ -531,6 +532,9 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw___builtin_overload:
   case tok::kw___builtin_types_compatible_p:
     return ParseBuiltinPrimaryExpression();
+  case tok::kw___null:
+    return Actions.ActOnGNUNullExpr(ConsumeToken());
+    break;
   case tok::plusplus:      // unary-expression: '++' unary-expression
   case tok::minusminus: {  // unary-expression: '--' unary-expression
     SourceLocation SavedLoc = ConsumeToken();

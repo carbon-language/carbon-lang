@@ -3603,6 +3603,18 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   return new VAArgExpr(BuiltinLoc, E, T.getNonReferenceType(), RPLoc);
 }
 
+Sema::ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
+  // The type of __null will be int or long, depending on the size of
+  // pointers on the target.
+  QualType Ty;
+  if (Context.Target.getPointerWidth(0) == Context.Target.getIntWidth())
+    Ty = Context.IntTy;
+  else
+    Ty = Context.LongTy;
+
+  return new GNUNullExpr(Ty, TokenLoc);
+}
+
 bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
                                     SourceLocation Loc,
                                     QualType DstType, QualType SrcType,

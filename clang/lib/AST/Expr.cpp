@@ -1031,8 +1031,11 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
                = dyn_cast<CXXDefaultArgExpr>(this)) {
     // See through default argument expressions
     return DefaultArg->getExpr()->isNullPointerConstant(Ctx);
+  } else if (isa<GNUNullExpr>(this)) {
+    // The GNU __null extension is always a null pointer constant.
+    return true;
   }
-  
+
   // This expression must be an integer type.
   if (!getType()->isIntegerType())
     return false;
@@ -1382,6 +1385,10 @@ Stmt::child_iterator TypesCompatibleExpr::child_end() {
 // ChooseExpr
 Stmt::child_iterator ChooseExpr::child_begin() { return &SubExprs[0]; }
 Stmt::child_iterator ChooseExpr::child_end() { return &SubExprs[0]+END_EXPR; }
+
+// GNUNullExpr
+Stmt::child_iterator GNUNullExpr::child_begin() { return child_iterator(); }
+Stmt::child_iterator GNUNullExpr::child_end() { return child_iterator(); }
 
 // OverloadExpr
 Stmt::child_iterator OverloadExpr::child_begin() { return &SubExprs[0]; }

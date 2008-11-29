@@ -736,6 +736,9 @@ public:
                                 ExprTy *expr, TypeTy *type,
                                 SourceLocation RPLoc);
 
+  // __null
+  virtual ExprResult ActOnGNUNullExpr(SourceLocation TokenLoc);
+
   //===------------------------- "Block" Extension ------------------------===//
 
   /// ActOnBlockStart - This callback is invoked when a block literal is
