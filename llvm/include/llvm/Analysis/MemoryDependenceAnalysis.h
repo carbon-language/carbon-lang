@@ -170,8 +170,8 @@ namespace llvm {
     /// getNonLocalDependency - Fills the passed-in map with the non-local 
     /// dependencies of the queries.  The map will contain NonLocal for
     /// blocks between the query and its dependencies.
-    void getNonLocalDependency(Instruction* query,
-                               DenseMap<BasicBlock*, MemDepResult> &resp);
+    void getNonLocalDependency(Instruction *QueryInst,
+                               DenseMap<BasicBlock*, MemDepResult> &Result);
     
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.
@@ -201,15 +201,14 @@ namespace llvm {
       return MemDepResult::getNone();
     }
     
-    
     /// verifyRemoved - Verify that the specified instruction does not occur
     /// in our internal data structures.
     void verifyRemoved(Instruction *Inst) const;
     
     MemDepResult getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
                                        BasicBlock *BB);
-    void nonLocalHelper(Instruction* query, BasicBlock* block,
-                        DenseMap<BasicBlock*, DepResultTy> &resp);
+    void nonLocalHelper(Instruction *Query, BasicBlock *BB,
+                        DenseMap<BasicBlock*, DepResultTy> &Result);
   };
 
 } // End llvm namespace
