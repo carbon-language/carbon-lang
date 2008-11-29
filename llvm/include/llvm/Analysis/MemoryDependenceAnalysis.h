@@ -175,7 +175,8 @@ namespace llvm {
     /// This method assumes the instruction returns a "nonlocal" dependency
     /// within its own block.
     void getNonLocalDependency(Instruction *QueryInst,
-                               DenseMap<BasicBlock*, MemDepResult> &Result);
+                               SmallVectorImpl<std::pair<BasicBlock*, 
+                                                       MemDepResult> > &Result);
     
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.

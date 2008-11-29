@@ -495,11 +495,11 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
       }
       
       
-      DenseMap<BasicBlock*, MemDepResult> deps;
+      SmallVector<std::pair<BasicBlock*, MemDepResult>, 32> deps;
       MD->getNonLocalDependency(C, deps);
       CallInst* cdep = 0;
       
-      for (DenseMap<BasicBlock*, MemDepResult>
+      for (SmallVector<std::pair<BasicBlock*, MemDepResult>, 32>
              ::iterator I = deps.begin(), E = deps.end(); I != E; ++I) {
         if (I->second.isNone()) {
           valueNumbering.insert(std::make_pair(V, nextValueNumber));
@@ -871,7 +871,7 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   
   // Find the non-local dependencies of the load
-  DenseMap<BasicBlock*, MemDepResult> deps;
+  SmallVector<std::pair<BasicBlock*, MemDepResult>, 32> deps;
   MD.getNonLocalDependency(L, deps);
   
   // If we had to process more than one hundred blocks to find the
@@ -885,8 +885,8 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   DenseMap<BasicBlock*, Value*> repl;
   
   // Filter out useless results (non-locals, etc)
-  for (DenseMap<BasicBlock*, MemDepResult>::iterator I = deps.begin(),
-       E = deps.end(); I != E; ++I) {
+  for (SmallVector<std::pair<BasicBlock*, MemDepResult>, 32>::iterator
+       I = deps.begin(), E = deps.end(); I != E; ++I) {
     if (I->second.isNone()) {
       repl[I->first] = UndefValue::get(L->getType());
       continue;

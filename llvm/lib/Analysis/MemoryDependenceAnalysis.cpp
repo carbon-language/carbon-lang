@@ -104,8 +104,10 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
 /// This method assumes the instruction returns a "nonlocal" dependency
 /// within its own block.
 ///
-void MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst,
-                                  DenseMap<BasicBlock*, MemDepResult> &Result) {
+void MemoryDependenceAnalysis::
+getNonLocalDependency(Instruction *QueryInst,
+                      SmallVectorImpl<std::pair<BasicBlock*, 
+                                                      MemDepResult> > &Result) {
   assert(getDependency(QueryInst).isNonLocal() &&
      "getNonLocalDependency should only be used on insts with non-local deps!");
   DenseMap<BasicBlock*, DepResultTy> &Cache = NonLocalDeps[QueryInst];
@@ -128,10 +130,7 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst,
   } else {
     // Seed DirtyBlocks with each of the preds of QueryInst's block.
     BasicBlock *QueryBB = QueryInst->getParent();
-    // FIXME: use range insertion/append.
-    for (pred_iterator PI = pred_begin(QueryBB), E = pred_end(QueryBB);
-         PI != E; ++PI)
-      DirtyBlocks.push_back(*PI);
+    DirtyBlocks.append(pred_begin(QueryBB), pred_end(QueryBB));
     NumUncacheNonlocal++;
   }
 
@@ -173,7 +172,7 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst,
   // Copy the result into the output set.
   for (DenseMap<BasicBlock*, DepResultTy>::iterator I = Cache.begin(),
        E = Cache.end(); I != E; ++I)
-    Result[I->first] = ConvToResult(I->second);
+    Result.push_back(std::make_pair(I->first, ConvToResult(I->second)));
 }
 
 /// getDependency - Return the instruction on which a memory operation
