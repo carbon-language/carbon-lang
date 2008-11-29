@@ -629,18 +629,18 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   // The are two possible optimizations we can do for memcpy:
   //   a) memcpy-memcpy xform which exposes redundance for DSE
   //   b) call-memcpy xform for return slot optimization
-  Instruction* dep = MD.getDependency(M);
-  if (dep == MemoryDependenceAnalysis::None ||
-      dep == MemoryDependenceAnalysis::NonLocal)
+  MemoryDependenceAnalysis::DepResultTy dep = MD.getDependency(M);
+  if (dep.getInt() == MemoryDependenceAnalysis::None ||
+      dep.getInt() == MemoryDependenceAnalysis::NonLocal)
     return false;
-  else if (!isa<MemCpyInst>(dep)) {
-    if (CallInst* C = dyn_cast<CallInst>(dep))
+  else if (!isa<MemCpyInst>(dep.getPointer())) {
+    if (CallInst* C = dyn_cast<CallInst>(dep.getPointer()))
       return performCallSlotOptzn(M, C);
     else
       return false;
   }
   
-  MemCpyInst* MDep = cast<MemCpyInst>(dep);
+  MemCpyInst* MDep = cast<MemCpyInst>(dep.getPointer());
   
   // We can only transforms memcpy's where the dest of one is the source of the
   // other
@@ -691,7 +691,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   
   // If C and M don't interfere, then this is a valid transformation.  If they
   // did, this would mean that the two sources overlap, which would be bad.
-  if (MD.getDependency(C) == MDep) {
+  if (MD.getDependency(C) == dep) {
     MD.dropInstruction(M);
     M->eraseFromParent();
     
