@@ -1,10 +1,9 @@
 ; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep undef
 ; PR2503
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
-target triple = "i686-apple-darwin9.3.0"
+
 @g_3 = external global i8		; <i8*> [#uses=2]
 
-define i32 @func_1() nounwind  {
+define i8 @func_1() nounwind  {
 entry:
 	br i1 false, label %ifelse, label %ifthen
 
@@ -29,8 +28,8 @@ forinc:		; preds = %forbody
 
 afterfor:		; preds = %forcond, %forcond.thread
 	%tmp10 = load i8* @g_3		; <i8> [#uses=0]
-	br label %ifend
+	ret i8 %tmp10
 
 ifend:		; preds = %afterfor, %ifthen
-	ret i32 0
+	ret i8 0
 }
