@@ -130,7 +130,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       
       // If we deleted a store, reinvestigate this instruction.
       if (deletedStore) {
-        if (!isa<TerminatorInst>(BB.begin()))
+        if (BBI != BB.begin())
           --BBI;
         continue;
       }
@@ -157,7 +157,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
             (!dep.isNormal() || DT.dominates(dep.getInst(), L))) {
           
           DeleteDeadInstruction(S);
-          if (!isa<TerminatorInst>(BB.begin()))
+          if (BBI != BB.begin())
             --BBI;
           NumFastStores++;
           MadeChange = true;
