@@ -123,17 +123,17 @@ namespace llvm {
     // A map from instructions to their non-local dependencies.
     // FIXME: DENSEMAP of DENSEMAP not a great idea.
     typedef DenseMap<Instruction*,
-                     DenseMap<BasicBlock*, DepResultTy> > nonLocalDepMapType;
-    nonLocalDepMapType depGraphNonLocal;
+                     DenseMap<BasicBlock*, DepResultTy> > NonLocalDepMapType;
+    NonLocalDepMapType NonLocalDeps;
     
     // A reverse mapping from dependencies to the dependees.  This is
     // used when removing instructions to keep the cache coherent.
     typedef DenseMap<Instruction*,
-                     SmallPtrSet<Instruction*, 4> > reverseDepMapType;
-    reverseDepMapType reverseDep;
+                     SmallPtrSet<Instruction*, 4> > ReverseDepMapType;
+    ReverseDepMapType ReverseLocalDeps;
     
     // A reverse mapping form dependencies to the non-local dependees.
-    reverseDepMapType reverseDepNonLocal;
+    ReverseDepMapType ReverseNonLocalDeps;
     
   public:
     MemoryDependenceAnalysis() : FunctionPass(&ID) {}
@@ -146,9 +146,9 @@ namespace llvm {
     /// Clean up memory in between runs
     void releaseMemory() {
       LocalDeps.clear();
-      depGraphNonLocal.clear();
-      reverseDep.clear();
-      reverseDepNonLocal.clear();
+      NonLocalDeps.clear();
+      ReverseLocalDeps.clear();
+      ReverseNonLocalDeps.clear();
     }
 
     /// getAnalysisUsage - Does not modify anything.  It uses Value Numbering
