@@ -48,7 +48,7 @@ public:
   void setPointer(PointerTy Ptr) {
     intptr_t PtrVal = reinterpret_cast<intptr_t>(Ptr);
     assert((PtrVal & (1 << IntBits)-1) == 0 &&
-           "Pointer is no sufficiently aligned");
+           "Pointer is not sufficiently aligned");
     Value = PtrVal | (intptr_t)getInt();
   }
   
