@@ -28,13 +28,6 @@
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
 
-// Control the calculation of non-local dependencies by only examining the
-// predecessors if the basic block has less than X amount (50 by default).
-static cl::opt<int> 
-PredLimit("nonlocaldep-threshold", cl::Hidden, cl::init(50),
-          cl::desc("Control the calculation of non-local"
-                   "dependencies (default = 50)"));           
-
 STATISTIC(NumCacheNonlocal, "Number of cached non-local responses");
 STATISTIC(NumUncacheNonlocal, "Number of uncached non-local responses");
 
@@ -105,8 +98,10 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
     } else if (AllocationInst *AI = dyn_cast<AllocationInst>(Inst)) {
       Pointer = AI;
       if (ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize()))
+        // Use ABI size (size between elements), not store size (size of one
+        // element without padding).
         PointerSize = C->getZExtValue() *
-                      TD.getTypeStoreSize(AI->getAllocatedType());
+                      TD.getABITypeSize(AI->getAllocatedType());
       else
         PointerSize = ~0UL;
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
@@ -133,144 +128,84 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
   return MemDepResult::getNonLocal();
 }
 
-/// nonLocalHelper - Private helper used to calculate non-local dependencies
-/// by doing DFS on the predecessors of a block to find its dependencies.
-void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
-                                              BasicBlock* block,
-                                     DenseMap<BasicBlock*, DepResultTy> &resp) {
-  // Set of blocks that we've already visited in our DFS
-  SmallPtrSet<BasicBlock*, 4> visited;
-  // If we're updating a dirtied cache entry, we don't need to reprocess
-  // already computed entries.
-  for (DenseMap<BasicBlock*, DepResultTy>::iterator I = resp.begin(), 
-       E = resp.end(); I != E; ++I)
-    if (I->second.getInt() != Dirty)
-      visited.insert(I->first);
-  
-  // Current stack of the DFS
-  SmallVector<BasicBlock*, 4> stack;
-  for (pred_iterator PI = pred_begin(block), PE = pred_end(block);
-       PI != PE; ++PI)
-    stack.push_back(*PI);
-  
-  // Do a basic DFS
-  while (!stack.empty()) {
-    BasicBlock* BB = stack.back();
-    
-    // If we've already visited this block, no need to revist
-    if (visited.count(BB)) {
-      stack.pop_back();
-      continue;
-    }
-    
-    // If we find a new block with a local dependency for query,
-    // then we insert the new dependency and backtrack.
-    if (BB != block) {
-      visited.insert(BB);
-      
-      MemDepResult localDep = getDependencyFrom(query, BB->end(), BB);
-      if (!localDep.isNonLocal()) {
-        resp.insert(std::make_pair(BB, ConvFromResult(localDep)));
-        stack.pop_back();
-        continue;
-      }
-    // If we re-encounter the starting block, we still need to search it
-    // because there might be a dependency in the starting block AFTER
-    // the position of the query.  This is necessary to get loops right.
-    } else if (BB == block) {
-      visited.insert(BB);
-      
-      MemDepResult localDep = getDependencyFrom(query, BB->end(), BB);
-      if (localDep.getInst() != query)
-        resp.insert(std::make_pair(BB, ConvFromResult(localDep)));
-      
-      stack.pop_back();
-      continue;
-    }
-    
-    // If we didn't find anything, recurse on the precessors of this block
-    // Only do this for blocks with a small number of predecessors.
-    bool predOnStack = false;
-    bool inserted = false;
-    if (std::distance(pred_begin(BB), pred_end(BB)) <= PredLimit) { 
-      for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
-           PI != PE; ++PI)
-        if (!visited.count(*PI)) {
-          stack.push_back(*PI);
-          inserted = true;
-        } else
-          predOnStack = true;
-    }
-    
-    // If we inserted a new predecessor, then we'll come back to this block
-    if (inserted)
-      continue;
-    // If we didn't insert because we have no predecessors, then this
-    // query has no dependency at all.
-    else if (!inserted && !predOnStack) {
-      resp.insert(std::make_pair(BB, DepResultTy(0, None)));
-    // If we didn't insert because our predecessors are already on the stack,
-    // then we might still have a dependency, but it will be discovered during
-    // backtracking.
-    } else if (!inserted && predOnStack){
-      resp.insert(std::make_pair(BB, DepResultTy(0, NonLocal)));
-    }
-    
-    stack.pop_back();
-  }
-}
+/// getNonLocalDependency - Perform a full dependency query for the
+/// specified instruction, returning the set of blocks that the value is
+/// potentially live across.  The returned set of results will include a
+/// "NonLocal" result for all blocks where the value is live across.
+///
+/// This method assumes the instruction returns a "nonlocal" dependency
+/// within its own block.
+///
+void MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst,
+                                  DenseMap<BasicBlock*, MemDepResult> &Result) {
+  assert(getDependency(QueryInst).isNonLocal() &&
+     "getNonLocalDependency should only be used on insts with non-local deps!");
+  DenseMap<BasicBlock*, DepResultTy> &Cache = NonLocalDeps[QueryInst];
 
-/// getNonLocalDependency - Fills the passed-in map with the non-local 
-/// dependencies of the queries.  The map will contain NonLocal for
-/// blocks between the query and its dependencies.
-void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
-                                    DenseMap<BasicBlock*, MemDepResult> &resp) {
-  if (NonLocalDeps.count(query)) {
-    DenseMap<BasicBlock*, DepResultTy> &cached = NonLocalDeps[query];
-    NumCacheNonlocal++;
-    
-    SmallVector<BasicBlock*, 4> dirtied;
-    for (DenseMap<BasicBlock*, DepResultTy>::iterator I = cached.begin(),
-         E = cached.end(); I != E; ++I)
+  /// DirtyBlocks - This is the set of blocks that need to be recomputed.  This
+  /// can happen due to instructions being deleted etc.
+  SmallVector<BasicBlock*, 32> DirtyBlocks;
+  
+  if (!Cache.empty()) {
+    // If we already have a partially computed set of results, scan them to
+    // determine what is dirty, seeding our initial DirtyBlocks worklist.
+    // FIXME: In the "don't need to be updated" case, this is expensive, why not
+    // have a per-"cache" flag saying it is undirty?
+    for (DenseMap<BasicBlock*, DepResultTy>::iterator I = Cache.begin(),
+         E = Cache.end(); I != E; ++I)
       if (I->second.getInt() == Dirty)
-        dirtied.push_back(I->first);
+        DirtyBlocks.push_back(I->first);
     
-    for (SmallVector<BasicBlock*, 4>::iterator I = dirtied.begin(),
-         E = dirtied.end(); I != E; ++I) {
-      MemDepResult localDep = getDependencyFrom(query, (*I)->end(), *I);
-      if (!localDep.isNonLocal())
-        cached[*I] = ConvFromResult(localDep);
-      else {
-        cached.erase(*I);
-        nonLocalHelper(query, *I, cached);
-      }
-    }
-    
-    // Update the reverse non-local dependency cache.
-    for (DenseMap<BasicBlock*, DepResultTy>::iterator I = cached.begin(),
-         E = cached.end(); I != E; ++I) {
-      if (Instruction *Inst = I->second.getPointer())
-        ReverseNonLocalDeps[Inst].insert(query);
-      resp[I->first] = ConvToResult(I->second);
-    }
-    
-    return;
+    NumCacheNonlocal++;
+  } else {
+    // Seed DirtyBlocks with each of the preds of QueryInst's block.
+    BasicBlock *QueryBB = QueryInst->getParent();
+    // FIXME: use range insertion/append.
+    for (pred_iterator PI = pred_begin(QueryBB), E = pred_end(QueryBB);
+         PI != E; ++PI)
+      DirtyBlocks.push_back(*PI);
+    NumUncacheNonlocal++;
   }
-  
-  NumUncacheNonlocal++;
-  
-  // If not, go ahead and search for non-local deps.
-  DenseMap<BasicBlock*, DepResultTy> &cached = NonLocalDeps[query];
-  nonLocalHelper(query, query->getParent(), cached);
 
-  // Update the non-local dependency cache
-  for (DenseMap<BasicBlock*, DepResultTy>::iterator I = cached.begin(),
-       E = cached.end(); I != E; ++I) {
-    // FIXME: Merge with the code above!
-    if (Instruction *Inst = I->second.getPointer())
-      ReverseNonLocalDeps[Inst].insert(query);
-    resp[I->first] = ConvToResult(I->second);
+  // Iterate while we still have blocks to update.
+  while (!DirtyBlocks.empty()) {
+    BasicBlock *DirtyBB = DirtyBlocks.back();
+    DirtyBlocks.pop_back();
+    
+    // Get the entry for this block.  Note that this relies on DepResultTy
+    // default initializing to Dirty.
+    DepResultTy &DirtyBBEntry = Cache[DirtyBB];
+
+    // If DirtyBBEntry isn't dirty, it ended up on the worklist multiple times.
+    if (DirtyBBEntry.getInt() != Dirty) continue;
+    
+    // Find out if this block has a local dependency for QueryInst.
+    // FIXME: If the dirty entry has an instruction pointer, scan from it!
+    // FIXME: Don't convert back and forth for MemDepResult <-> DepResultTy.
+    DirtyBBEntry = ConvFromResult(getDependencyFrom(QueryInst, DirtyBB->end(),
+                                                    DirtyBB));
+    
+    // If the block has a dependency (i.e. it isn't completely transparent to
+    // the value), remember it!
+    if (DirtyBBEntry.getInt() != NonLocal) {
+      // Keep the ReverseNonLocalDeps map up to date so we can efficiently
+      // update this when we remove  instructions.
+      if (Instruction *Inst = DirtyBBEntry.getPointer())
+        ReverseNonLocalDeps[Inst].insert(QueryInst);
+      continue;
+    }
+    
+    // If the block *is* completely transparent to the load, we need to check
+    // the predecessors of this block.  Add them to our worklist.
+    for (pred_iterator I = pred_begin(DirtyBB), E = pred_end(DirtyBB);
+         I != E; ++I)
+      DirtyBlocks.push_back(*I);
   }
+  
+  // Copy the result into the output set.
+  for (DenseMap<BasicBlock*, DepResultTy>::iterator I = Cache.begin(),
+       E = Cache.end(); I != E; ++I)
+    Result[I->first] = ConvToResult(I->second);
 }
 
 /// getDependency - Return the instruction on which a memory operation
@@ -345,8 +280,10 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
       Value *Pointer = AI;
       uint64_t PointerSize;
       if (ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize()))
+        // Use ABI size (size between elements), not store size (size of one
+        // element without padding).
         PointerSize = C->getZExtValue() * 
-          TD.getTypeStoreSize(AI->getAllocatedType());
+          TD.getABITypeSize(AI->getAllocatedType());
       else
         PointerSize = ~0UL;
       

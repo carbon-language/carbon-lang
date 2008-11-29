@@ -57,16 +57,16 @@ namespace llvm {
 
     /// isNormal - Return true if this MemDepResult represents a query that is
     /// a normal instruction dependency.
-    bool isNormal()          const { return Value.getInt() == Normal; }
+    bool isNormal() const { return Value.getInt() == Normal; }
     
     /// isNonLocal - Return true if this MemDepResult represents an query that
     /// is transparent to the start of the block, but where a non-local hasn't
     /// been done.
-    bool isNonLocal()      const { return Value.getInt() == NonLocal; }
+    bool isNonLocal() const { return Value.getInt() == NonLocal; }
     
     /// isNone - Return true if this MemDepResult represents a query that
     /// doesn't depend on any instruction.
-    bool isNone()          const { return Value.getInt() == None; }
+    bool isNone() const { return Value.getInt() == None; }
 
     /// getInst() - If this is a normal dependency, return the instruction that
     /// is depended on.  Otherwise, return null.
@@ -167,9 +167,13 @@ namespace llvm {
                                    BasicBlock::iterator ScanIt, BasicBlock *BB);
 
     
-    /// getNonLocalDependency - Fills the passed-in map with the non-local 
-    /// dependencies of the queries.  The map will contain NonLocal for
-    /// blocks between the query and its dependencies.
+    /// getNonLocalDependency - Perform a full dependency query for the
+    /// specified instruction, returning the set of blocks that the value is
+    /// potentially live across.  The returned set of results will include a
+    /// "NonLocal" result for all blocks where the value is live across.
+    ///
+    /// This method assumes the instruction returns a "nonlocal" dependency
+    /// within its own block.
     void getNonLocalDependency(Instruction *QueryInst,
                                DenseMap<BasicBlock*, MemDepResult> &Result);
     
@@ -207,8 +211,6 @@ namespace llvm {
     
     MemDepResult getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
                                        BasicBlock *BB);
-    void nonLocalHelper(Instruction *Query, BasicBlock *BB,
-                        DenseMap<BasicBlock*, DepResultTy> &Result);
   };
 
 } // End llvm namespace

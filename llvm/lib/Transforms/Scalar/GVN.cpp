@@ -508,7 +508,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
         } else if (Instruction *NonLocalDepInst = I->second.getInst()) {
           // FIXME: INDENT PROPERLY
           // FIXME: All duplicated with non-local case.
-          if (DT->properlyDominates(I->first, C->getParent())) {
+          if (cdep == 0 && DT->properlyDominates(I->first, C->getParent())) {
             if (CallInst* CD = dyn_cast<CallInst>(NonLocalDepInst))
               cdep = CD;
             else {
@@ -527,6 +527,12 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
         return nextValueNumber++;
       }
       
+      // FIXME: THIS ISN'T SAFE: CONSIDER:
+      // X = strlen(str)
+      //   if (C)
+      //     str[0] = 1;
+      // Y = strlen(str)
+      // This doesn't guarantee all-paths availability!
       if (cdep->getCalledFunction() != C->getCalledFunction() ||
           cdep->getNumOperands() != C->getNumOperands()) {
         valueNumbering.insert(std::make_pair(V, nextValueNumber));
@@ -874,16 +880,27 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   if (deps.size() > 100)
     return false;
   
+  BasicBlock *EntryBlock = &L->getParent()->getParent()->getEntryBlock();
+  
   DenseMap<BasicBlock*, Value*> repl;
   
   // Filter out useless results (non-locals, etc)
   for (DenseMap<BasicBlock*, MemDepResult>::iterator I = deps.begin(),
        E = deps.end(); I != E; ++I) {
-    if (I->second.isNone())
-      return false;
-  
-    if (I->second.isNonLocal())
+    if (I->second.isNone()) {
+      repl[I->first] = UndefValue::get(L->getType());
       continue;
+    }
+  
+    if (I->second.isNonLocal()) {
+      // If this is a non-local dependency in the entry block, then we depend on
+      // the value live-in at the start of the function.  We could insert a load
+      // in the entry block to get this, but for now we'll just bail out.
+      // FIXME: Consider emitting a load in the entry block to catch this case!
+      if (I->first == EntryBlock)
+        return false;
+      continue;
+    }
   
     if (StoreInst* S = dyn_cast<StoreInst>(I->second.getInst())) {
       if (S->getPointerOperand() != L->getPointerOperand())
