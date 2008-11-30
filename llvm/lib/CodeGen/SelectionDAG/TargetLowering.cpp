@@ -1583,12 +1583,19 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
       // by changing cc.
 
       // SETUGT X, SINTMAX  -> SETLT X, 0
-      if (Cond == ISD::SETUGT && OperandBitSize != 1 &&
-          C1 == (~0ULL >> (65-OperandBitSize)))
+      if (Cond == ISD::SETUGT && 
+          C1 == APInt::getSignedMaxValue(OperandBitSize))
         return DAG.getSetCC(VT, N0, DAG.getConstant(0, N1.getValueType()),
                             ISD::SETLT);
 
-      // FIXME: Implement the rest of these.
+      // SETULT X, SINTMIN  -> SETGT X, -1
+      if (Cond == ISD::SETULT &&
+          C1 == APInt::getSignedMinValue(OperandBitSize)) {
+        SDValue ConstMinusOne =
+            DAG.getConstant(APInt::getAllOnesValue(OperandBitSize),
+                            N1.getValueType());
+        return DAG.getSetCC(VT, N0, ConstMinusOne, ISD::SETGT);
+      }
 
       // Fold bit comparisons when we can.
       if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&

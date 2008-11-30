@@ -204,7 +204,7 @@ entry:
 
 define i16 @icmp_ult_immed04_i16(i16 %arg1, i16 %val1, i16 %val2) nounwind {
 entry:
-       %A = icmp ult i16 %arg1, 32768
+       %A = icmp ult i16 %arg1, 32769
        %B = select i1 %A, i16 %val1, i16 %val2
        ret i16 %B
 }
