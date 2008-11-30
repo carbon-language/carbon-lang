@@ -82,6 +82,5 @@ void f9() {
 // Initializing array with string literal.
 void f10() {
   char a1[4] = "abc";
-  char a2[2] = "abc";
   char a3[6] = "abc";
 }
