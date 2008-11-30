@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_EXPR_H
 #define LLVM_CLANG_AST_EXPR_H
 
+#include "clang/AST/APValue.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/APSInt.h"
@@ -137,6 +138,30 @@ public:
   /// isConstantExpr - Return true if this expression is a valid constant expr.
   bool isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const;
   
+  /// EvalResult is a struct with detailed info about an evaluated expression.
+  struct EvalResult {
+    /// Val - This is the scalar value the expression can be folded to.
+    APValue Val;
+    
+    /// HasSideEffects - Whether the evaluated expression has side effects.
+    /// For example, (f() && 0) can be folded, but it still has side effects.
+    bool HasSideEffects;
+    
+    /// Diag - If the expression is unfoldable, then Diag contains a note
+    /// diagnostic indicating why it's not foldable. DiagLoc indicates a caret
+    /// position for the error, and DiagExpr is the expression that caused
+    /// the error.
+    /// If the expression is foldable, but not an integer constant expression,
+    /// Diag contains a note diagnostic that describes why it isn't an integer
+    /// constant expression. If the expression *is* an integer constant
+    /// expression, then Diag will be zero.
+    unsigned Diag;
+    const Expr *DiagExpr;
+    SourceLocation DiagLoc;
+    
+    EvalResult() : HasSideEffects(false), Diag(0), DiagExpr(0) {}
+  };
+
   /// Evaluate - Return true if this is a constant which we can fold using
   /// any crazy technique (that has nothing to do with language standards) that
   /// we want to.  If this function returns true, it returns the folded constant
