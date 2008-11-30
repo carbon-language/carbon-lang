@@ -5443,9 +5443,9 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     Pred = ICmpInst::ICMP_NE;
     break;
   case FCmpInst::FCMP_ORD:
-    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+    return ReplaceInstUsesWith(I, ConstantInt::getTrue());
   case FCmpInst::FCMP_UNO:
-    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+    return ReplaceInstUsesWith(I, ConstantInt::getFalse());
   }
   
   const IntegerType *IntTy = cast<IntegerType>(LHSI->getOperand(0)->getType());
@@ -5465,8 +5465,8 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     if (SMax.compare(RHS) == APFloat::cmpLessThan) {  // smax < 13123.0
       if (Pred == ICmpInst::ICMP_NE  || Pred == ICmpInst::ICMP_SLT ||
           Pred == ICmpInst::ICMP_SLE)
-        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
-      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse());
     }
   } else {
     // If the RHS value is > UnsignedMax, fold the comparison. This handles
@@ -5477,8 +5477,8 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     if (UMax.compare(RHS) == APFloat::cmpLessThan) {  // umax < 13123.0
       if (Pred == ICmpInst::ICMP_NE  || Pred == ICmpInst::ICMP_ULT ||
           Pred == ICmpInst::ICMP_ULE)
-        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
-      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse());
     }
   }
   
@@ -5490,8 +5490,8 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     if (SMin.compare(RHS) == APFloat::cmpGreaterThan) { // smin > 12312.0
       if (Pred == ICmpInst::ICMP_NE || Pred == ICmpInst::ICMP_SGT ||
           Pred == ICmpInst::ICMP_SGE)
-        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
-      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+        return ReplaceInstUsesWith(I,ConstantInt::getTrue());
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse());
     }
   }
 
@@ -5508,14 +5508,14 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     switch (Pred) {
     default: assert(0 && "Unexpected integer comparison!");
     case ICmpInst::ICMP_NE:  // (float)int != 4.4   --> true
-      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+      return ReplaceInstUsesWith(I, ConstantInt::getTrue());
     case ICmpInst::ICMP_EQ:  // (float)int == 4.4   --> false
-      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse());
     case ICmpInst::ICMP_ULE:
       // (float)int <= 4.4   --> int <= 4
       // (float)int <= -4.4  --> false
       if (RHS.isNegative())
-        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
       break;
     case ICmpInst::ICMP_SLE:
       // (float)int <= 4.4   --> int <= 4
@@ -5527,7 +5527,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
       // (float)int < -4.4   --> false
       // (float)int < 4.4    --> int <= 4
       if (RHS.isNegative())
-        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
       Pred = ICmpInst::ICMP_ULE;
       break;
     case ICmpInst::ICMP_SLT:
@@ -5540,7 +5540,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
       // (float)int > 4.4    --> int > 4
       // (float)int > -4.4   --> true
       if (RHS.isNegative())
-        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
       break;
     case ICmpInst::ICMP_SGT:
       // (float)int > 4.4    --> int > 4
@@ -5552,7 +5552,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
       // (float)int >= -4.4   --> true
       // (float)int >= 4.4    --> int > 4
       if (!RHS.isNegative())
-        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
       Pred = ICmpInst::ICMP_UGT;
       break;
     case ICmpInst::ICMP_SGE:
@@ -5575,9 +5575,9 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
 
   // Fold trivial predicates.
   if (I.getPredicate() == FCmpInst::FCMP_FALSE)
-    return ReplaceInstUsesWith(I, Constant::getNullValue(Type::Int1Ty));
+    return ReplaceInstUsesWith(I, ConstantInt::getFalse());
   if (I.getPredicate() == FCmpInst::FCMP_TRUE)
-    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+    return ReplaceInstUsesWith(I, ConstantInt::getTrue());
   
   // Simplify 'fcmp pred X, X'
   if (Op0 == Op1) {
@@ -5586,11 +5586,11 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
     case FCmpInst::FCMP_UEQ:    // True if unordered or equal
     case FCmpInst::FCMP_UGE:    // True if unordered, greater than, or equal
     case FCmpInst::FCMP_ULE:    // True if unordered, less than, or equal
-      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+      return ReplaceInstUsesWith(I, ConstantInt::getTrue());
     case FCmpInst::FCMP_OGT:    // True if ordered and greater than
     case FCmpInst::FCMP_OLT:    // True if ordered and less than
     case FCmpInst::FCMP_ONE:    // True if ordered and operands are unequal
-      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse());
       
     case FCmpInst::FCMP_UNO:    // True if unordered: isnan(X) | isnan(Y)
     case FCmpInst::FCMP_ULT:    // True if unordered or less than
@@ -5621,11 +5621,11 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
       if (CFP->getValueAPF().isNaN()) {
         if (FCmpInst::isOrdered(I.getPredicate()))   // True if ordered and...
-          return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+          return ReplaceInstUsesWith(I, ConstantInt::getFalse());
         assert(FCmpInst::isUnordered(I.getPredicate()) &&
                "Comparison must be either ordered or unordered!");
         // True if unordered.
-        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
       }
     }
     
