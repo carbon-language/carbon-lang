@@ -6,4 +6,5 @@ add_clang_library(clangDriver
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp
   PlistDiagnostics.cpp
+  ManagerRegistry.cpp
   )
