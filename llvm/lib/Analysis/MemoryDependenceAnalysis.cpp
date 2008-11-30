@@ -53,9 +53,8 @@ bool MemoryDependenceAnalysis::runOnFunction(Function &) {
 
 /// getCallSiteDependency - Private helper for finding the local dependencies
 /// of a call site.
-MemoryDependenceAnalysis::DepResultTy MemoryDependenceAnalysis::
-getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
-                      BasicBlock *BB) {
+MemDepResult MemoryDependenceAnalysis::
+getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt, BasicBlock *BB) {
   // Walk backwards through the block, looking for dependencies
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
@@ -78,26 +77,25 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
       if (AA->getModRefBehavior(CallSite::get(Inst)) ==
             AliasAnalysis::DoesNotAccessMemory)
         continue;
-      return DepResultTy(Inst, Normal);
+      return MemDepResult::get(Inst);
     } else {
       // Non-memory instruction.
       continue;
     }
     
     if (AA->getModRefInfo(C, Pointer, PointerSize) != AliasAnalysis::NoModRef)
-      return DepResultTy(Inst, Normal);
+      return MemDepResult::get(Inst);
   }
   
   // No dependence found.
-  return DepResultTy(0, NonLocal);
+  return MemDepResult::getNonLocal();
 }
 
-/// getDependency - Return the instruction on which a memory operation
-/// depends.  The local parameter indicates if the query should only
-/// evaluate dependencies within the same basic block.
-MemoryDependenceAnalysis::DepResultTy MemoryDependenceAnalysis::
-getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt, 
-                          BasicBlock *BB) {
+/// getDependencyFrom - Return the instruction on which a memory operation
+/// depends.
+MemDepResult MemoryDependenceAnalysis::
+getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt, 
+                  BasicBlock *BB) {
   // Get the pointer value for which dependence will be determined
   Value *MemPtr = 0;
   uint64_t MemSize = 0;
@@ -121,7 +119,7 @@ getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt,
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst))
     return getCallSiteDependency(CallSite::get(QueryInst), ScanIt, BB);
   else  // Non-memory instructions depend on nothing.
-    return DepResultTy(0, None);
+    return MemDepResult::getNone();
   
   // Walk backwards through the basic block, looking for dependencies
   while (ScanIt != BB->begin()) {
@@ -132,7 +130,7 @@ getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     if (MemVolatile &&
         ((isa<LoadInst>(Inst) && cast<LoadInst>(Inst)->isVolatile()) ||
          (isa<StoreInst>(Inst) && cast<StoreInst>(Inst)->isVolatile())))
-      return DepResultTy(Inst, Normal);
+      return MemDepResult::get(Inst);
 
     // Values depend on loads if the pointers are must aliased.  This means that
     // a load depends on another must aliased load from the same value.
@@ -150,7 +148,7 @@ getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt,
       // May-alias loads don't depend on each other without a dependence.
       if (isa<LoadInst>(QueryInst) && R == AliasAnalysis::MayAlias)
         continue;
-      return DepResultTy(Inst, Normal);
+      return MemDepResult::get(Inst);
     }
 
     // If this is an allocation, and if we know that the accessed pointer is to
@@ -162,7 +160,7 @@ getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt,
       
       if (AccessPtr == AI ||
           AA->alias(AI, 1, AccessPtr, 1) == AliasAnalysis::MustAlias)
-        return DepResultTy(0, None);
+        return MemDepResult::getNone();
       continue;
     }
     
@@ -177,11 +175,11 @@ getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt,
       continue;
     
     // Otherwise, there is a dependence.
-    return DepResultTy(Inst, Normal);
+    return MemDepResult::get(Inst);
   }
   
   // If we found nothing, return the non-local flag.
-  return DepResultTy(0, NonLocal);
+  return MemDepResult::getNonLocal();
 }
 
 /// getDependency - Return the instruction on which a memory operation
@@ -190,16 +188,16 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
   Instruction *ScanPos = QueryInst;
   
   // Check for a cached result
-  DepResultTy &LocalCache = LocalDeps[QueryInst];
+  MemDepResult &LocalCache = LocalDeps[QueryInst];
   
   // If the cached entry is non-dirty, just return it.  Note that this depends
-  // on DepResultTy's default constructing to 'dirty'.
-  if (LocalCache.getInt() != Dirty)
-    return ConvToResult(LocalCache);
+  // on MemDepResult's default constructing to 'dirty'.
+  if (!LocalCache.isDirty())
+    return LocalCache;
     
   // Otherwise, if we have a dirty entry, we know we can start the scan at that
   // instruction, which may save us some work.
-  if (Instruction *Inst = LocalCache.getPointer()) {
+  if (Instruction *Inst = LocalCache.getInst()) {
     ScanPos = Inst;
    
     SmallPtrSet<Instruction*, 4> &InstMap = ReverseLocalDeps[Inst];
@@ -209,14 +207,13 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
   }
   
   // Do the scan.
-  LocalCache = getDependencyFromInternal(QueryInst, ScanPos,
-                                         QueryInst->getParent());
+  LocalCache = getDependencyFrom(QueryInst, ScanPos, QueryInst->getParent());
   
   // Remember the result!
-  if (Instruction *I = LocalCache.getPointer())
+  if (Instruction *I = LocalCache.getInst())
     ReverseLocalDeps[I].insert(QueryInst);
   
-  return ConvToResult(LocalCache);
+  return LocalCache;
 }
 
 /// getNonLocalDependency - Perform a full dependency query for the
@@ -251,7 +248,7 @@ getNonLocalDependency(Instruction *QueryInst,
     if (CacheP.getInt())
       for (NonLocalDepInfo::iterator I = Cache.begin(), E = Cache.end();
          I != E; ++I)
-        if (I->second.getInt() == Dirty)
+        if (I->second.isDirty())
           DirtyBlocks.push_back(I->first);
     
     NumCacheNonLocal++;
@@ -270,17 +267,17 @@ getNonLocalDependency(Instruction *QueryInst,
     BasicBlock *DirtyBB = DirtyBlocks.back();
     DirtyBlocks.pop_back();
     
-    // Get the entry for this block.  Note that this relies on DepResultTy
+    // Get the entry for this block.  Note that this relies on MemDepResult
     // default initializing to Dirty.
-    DepResultTy &DirtyBBEntry = Cache[DirtyBB];
+    MemDepResult &DirtyBBEntry = Cache[DirtyBB];
     
     // If DirtyBBEntry isn't dirty, it ended up on the worklist multiple times.
-    if (DirtyBBEntry.getInt() != Dirty) continue;
+    if (!DirtyBBEntry.isDirty()) continue;
 
     // If the dirty entry has a pointer, start scanning from it so we don't have
     // to rescan the entire block.
     BasicBlock::iterator ScanPos = DirtyBB->end();
-    if (Instruction *Inst = DirtyBBEntry.getPointer()) {
+    if (Instruction *Inst = DirtyBBEntry.getInst()) {
       ScanPos = Inst;
       
       // We're removing QueryInst's dependence on Inst.
@@ -290,14 +287,14 @@ getNonLocalDependency(Instruction *QueryInst,
     }
     
     // Find out if this block has a local dependency for QueryInst.
-    DirtyBBEntry = getDependencyFromInternal(QueryInst, ScanPos, DirtyBB);
+    DirtyBBEntry = getDependencyFrom(QueryInst, ScanPos, DirtyBB);
            
     // If the block has a dependency (i.e. it isn't completely transparent to
     // the value), remember it!
-    if (DirtyBBEntry.getInt() != NonLocal) {
+    if (!DirtyBBEntry.isNonLocal()) {
       // Keep the ReverseNonLocalDeps map up to date so we can efficiently
       // update this when we remove instructions.
-      if (Instruction *Inst = DirtyBBEntry.getPointer())
+      if (Instruction *Inst = DirtyBBEntry.getInst())
         ReverseNonLocalDeps[Inst].insert(QueryInst);
       continue;
     }
@@ -310,7 +307,7 @@ getNonLocalDependency(Instruction *QueryInst,
   
   // Copy the result into the output set.
   for (NonLocalDepInfo::iterator I = Cache.begin(), E = Cache.end(); I != E;++I)
-    Result.push_back(std::make_pair(I->first, ConvToResult(I->second)));
+    Result.push_back(std::make_pair(I->first, I->second));
 }
 
 /// removeInstruction - Remove an instruction from the dependence analysis,
@@ -324,7 +321,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
     NonLocalDepInfo &BlockMap = *NLDI->second.getPointer();
     for (NonLocalDepInfo::iterator DI = BlockMap.begin(), DE = BlockMap.end();
          DI != DE; ++DI)
-      if (Instruction *Inst = DI->second.getPointer())
+      if (Instruction *Inst = DI->second.getInst())
         ReverseNonLocalDeps[Inst].erase(RemInst);
     delete &BlockMap;
     NonLocalDeps.erase(NLDI);
@@ -335,7 +332,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   LocalDepMapType::iterator LocalDepEntry = LocalDeps.find(RemInst);
   if (LocalDepEntry != LocalDeps.end()) {
     // Remove us from DepInst's reverse set now that the local dep info is gone.
-    if (Instruction *Inst = LocalDepEntry->second.getPointer()) {
+    if (Instruction *Inst = LocalDepEntry->second.getInst()) {
       SmallPtrSet<Instruction*, 4> &RLD = ReverseLocalDeps[Inst];
       RLD.erase(RemInst);
       if (RLD.empty())
@@ -369,7 +366,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       assert(InstDependingOnRemInst != RemInst &&
              "Already removed our local dep info");
                         
-      LocalDeps[InstDependingOnRemInst] = DepResultTy(NewDepInst, Dirty);
+      LocalDeps[InstDependingOnRemInst] = MemDepResult::getDirty(NewDepInst);
       
       // Make sure to remember that new things depend on NewDepInst.
       ReverseDepsToAdd.push_back(std::make_pair(NewDepInst, 
@@ -401,17 +398,15 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       
       for (NonLocalDepInfo::iterator DI = INLD.getPointer()->begin(), 
            DE = INLD.getPointer()->end(); DI != DE; ++DI) {
-        if (DI->second.getPointer() != RemInst) continue;
+        if (DI->second.getInst() != RemInst) continue;
         
         // Convert to a dirty entry for the subsequent instruction.
-        DI->second.setInt(Dirty);
-        if (RemInst->isTerminator())
-          DI->second.setPointer(0);
-        else {
-          Instruction *NextI = next(BasicBlock::iterator(RemInst));
-          DI->second.setPointer(NextI);
+        Instruction *NextI = 0;
+        if (!RemInst->isTerminator()) {
+          NextI = next(BasicBlock::iterator(RemInst));
           ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
         }
+        DI->second = MemDepResult::getDirty(NextI);
       }
     }
 
@@ -436,7 +431,7 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
   for (LocalDepMapType::const_iterator I = LocalDeps.begin(),
        E = LocalDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in data structures");
-    assert(I->second.getPointer() != D &&
+    assert(I->second.getInst() != D &&
            "Inst occurs in data structures");
   }
   
@@ -446,7 +441,7 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
     const PerInstNLInfo &INLD = I->second;
     for (NonLocalDepInfo::iterator II = INLD.getPointer()->begin(),
          EE = INLD.getPointer()->end(); II  != EE; ++II)
-      assert(II->second.getPointer() != D && "Inst occurs in data structures");
+      assert(II->second.getInst() != D && "Inst occurs in data structures");
   }
   
   for (ReverseDepMapType::const_iterator I = ReverseLocalDeps.begin(),

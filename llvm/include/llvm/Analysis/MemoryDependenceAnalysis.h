@@ -27,17 +27,28 @@ namespace llvm {
   class CallSite;
   class AliasAnalysis;
   class TargetData;
+  class MemoryDependenceAnalysis;
   
   /// MemDepResult - A memory dependence query can return one of three different
-  /// answers:
-  ///   Normal  : The query is dependent on a specific instruction.
-  ///   NonLocal: The query does not depend on anything inside this block, but
-  ///             we haven't scanned beyond the block to find out what.
-  ///   None    : The query does not depend on anything: we found the entry
-  ///             block or the allocation site of the memory.
+  /// answers, described below.
   class MemDepResult {
     enum DepType {
-      Invalid = 0, Normal, NonLocal, None
+      /// Invalid - Clients of MemDep never see this.
+      Invalid = 0,
+      /// Normal - This is a normal instruction dependence.  The pointer member
+      /// of the DepResultTy pair holds the instruction.
+      Normal,
+
+      /// NonLocal - This marker indicates that the query has no dependency in
+      /// the specified block.  To find out more, the client should query other
+      /// predecessor blocks.
+      NonLocal,
+
+      /// None - This dependence type indicates that the query does not depend
+      /// on any instructions, either because it is not a memory instruction or
+      /// because it scanned to the definition of the memory (alloca/malloc)
+      /// being accessed.
+      None
     };
     typedef PointerIntPair<Instruction*, 2, DepType> PairTy;
     PairTy Value;
@@ -72,10 +83,29 @@ namespace llvm {
 
     /// getInst() - If this is a normal dependency, return the instruction that
     /// is depended on.  Otherwise, return null.
-    Instruction *getInst() const { return isNormal() ? Value.getPointer() : 0; }
+    Instruction *getInst() const { return Value.getPointer(); }
     
     bool operator==(const MemDepResult &M) { return M.Value == Value; }
     bool operator!=(const MemDepResult &M) { return M.Value != Value; }
+  private:
+    friend class MemoryDependenceAnalysis;
+    /// Dirty - Entries with this marker occur in a LocalDeps map or
+    /// NonLocalDeps map when the instruction they previously referenced was
+    /// removed from MemDep.  In either case, the entry may include an
+    /// instruction pointer.  If so, the pointer is an instruction in the
+    /// block where scanning can start from, saving some work.
+    ///
+    /// In a default-constructed DepResultTy object, the type will be Dirty
+    /// and the instruction pointer will be null.
+    ///
+    
+    /// isDirty - Return true if this is a MemDepResult in its dirty/invalid.
+    /// state.
+    bool isDirty() const { return Value.getInt() == Invalid; }
+
+    static MemDepResult getDirty(Instruction *Inst) {
+      return MemDepResult(PairTy(Inst, Invalid));
+    }
   };
 
   /// MemoryDependenceAnalysis - This is an analysis that determines, for a
@@ -94,42 +124,11 @@ namespace llvm {
   /// internal caching mechanism.
   ///
   class MemoryDependenceAnalysis : public FunctionPass {
-    /// DepType - This enum is used to indicate what flavor of dependence this
-    /// is.  If the type is Normal, there is an associated instruction pointer.
-    enum DepType {
-      /// Dirty - Entries with this marker occur in a LocalDeps map or
-      /// NonLocalDeps map when the instruction they previously referenced was
-      /// removed from MemDep.  In either case, the entry may include an
-      /// instruction pointer.  If so, the pointer is an instruction in the
-      /// block where scanning can start from, saving some work.
-      ///
-      /// In a default-constructed DepResultTy object, the type will be Dirty
-      /// and the instruction pointer will be null.
-      ///
-      Dirty = 0,
-      
-      /// Normal - This is a normal instruction dependence.  The pointer member
-      /// of the DepResultTy pair holds the instruction.
-      Normal,
-
-      /// None - This dependence type indicates that the query does not depend
-      /// on any instructions, either because it is not a memory instruction or
-      /// because it scanned to the definition of the memory (alloca/malloc)
-      /// being accessed.
-      None,
-      
-      /// NonLocal - This marker indicates that the query has no dependency in
-      /// the specified block.  To find out more, the client should query other
-      /// predecessor blocks.
-      NonLocal
-    };
-    typedef PointerIntPair<Instruction*, 2, DepType> DepResultTy;
-
     // A map from instructions to their dependency.
-    typedef DenseMap<Instruction*, DepResultTy> LocalDepMapType;
+    typedef DenseMap<Instruction*, MemDepResult> LocalDepMapType;
     LocalDepMapType LocalDeps;
 
-    typedef DenseMap<BasicBlock*, DepResultTy> NonLocalDepInfo;
+    typedef DenseMap<BasicBlock*, MemDepResult> NonLocalDepInfo;
     
     /// PerInstNLInfo - This is the instruction we keep for each cached access
     /// that we have for an instruction.  The pointer is an owning pointer and
@@ -187,9 +186,7 @@ namespace llvm {
     /// Note that this method does no caching at all.  You should use
     /// getDependency where possible.
     MemDepResult getDependencyFrom(Instruction *QueryInst,
-                                   BasicBlock::iterator ScanIt, BasicBlock *BB){
-      return ConvToResult(getDependencyFromInternal(QueryInst, ScanIt, BB));
-    }
+                                   BasicBlock::iterator ScanIt, BasicBlock *BB);
 
     
     /// getNonLocalDependency - Perform a full dependency query for the
@@ -208,25 +205,11 @@ namespace llvm {
     void removeInstruction(Instruction *InstToRemove);
     
   private:
-    MemDepResult ConvToResult(DepResultTy R) {
-      if (R.getInt() == Normal)
-        return MemDepResult::get(R.getPointer());
-      if (R.getInt() == NonLocal)
-        return MemDepResult::getNonLocal();
-      assert(R.getInt() == None && "Unknown MemDepResult!");
-      return MemDepResult::getNone();
-    }
-    
     /// verifyRemoved - Verify that the specified instruction does not occur
     /// in our internal data structures.
     void verifyRemoved(Instruction *Inst) const;
     
-    /// getDependencyFromInternal - Return the instruction on which the memory
-    /// operation 'QueryInst' depends.  This starts scanning from the
-    /// instruction before the position indicated by ScanIt.
-    DepResultTy getDependencyFromInternal(Instruction *QueryInst,
-                                   BasicBlock::iterator ScanIt, BasicBlock *BB);
-    DepResultTy getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
+    MemDepResult getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
                                       BasicBlock *BB);
   };
 
