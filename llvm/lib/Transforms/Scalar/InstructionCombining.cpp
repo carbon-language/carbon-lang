@@ -2956,9 +2956,26 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return BinaryOperator::CreateNeg(Op0);
 
-    // -X/C -> X/-C
-    if (Value *LHSNeg = dyn_castNegVal(Op0))
-      return BinaryOperator::CreateSDiv(LHSNeg, ConstantExpr::getNeg(RHS));
+    ConstantInt *RHSNeg = cast<ConstantInt>(ConstantExpr::getNeg(RHS));
+
+    // -X/C -> X/-C, if and only if negation doesn't overflow.
+    if ((RHS->getSExtValue() < 0 &&
+         RHS->getSExtValue() < RHSNeg->getSExtValue()) ||
+        (RHS->getSExtValue() > 0 &&
+         RHS->getSExtValue() > RHSNeg->getSExtValue())) {
+      if (Value *LHSNeg = dyn_castNegVal(Op0)) {
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(LHSNeg)) {
+          ConstantInt *CINeg = cast<ConstantInt>(ConstantExpr::getNeg(CI));
+
+          if ((CI->getSExtValue() < 0 &&
+               CI->getSExtValue() < CINeg->getSExtValue()) ||
+              (CI->getSExtValue() > 0 &&
+               CI->getSExtValue() > CINeg->getSExtValue()))
+            return BinaryOperator::CreateSDiv(LHSNeg,
+                                              ConstantExpr::getNeg(RHS));
+        }
+      }
+    }
   }
 
   // If the sign bits of both operands are zero (i.e. we can prove they are

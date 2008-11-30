@@ -3,7 +3,7 @@
 ;
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:   grep -v {sub i19 %Cok, %Bok} | not grep sub
+; RUN:   grep -v {sub i19 %Cok, %Bok} | grep -v {sub i25 0, %Aok} | not grep sub
 ; END.
 
 define i23 @test1(i23 %A) {
@@ -107,8 +107,10 @@ define i51 @test16(i51 %A) {
 	ret i51 %Y
 }
 
-define i25 @test17(i25 %A) {
-	%B = sub i25 0, %A		; <i25> [#uses=1]
+; Can't fold subtract here because negation it might oveflow.
+; PR3142
+define i25 @test17(i25 %Aok) {
+	%B = sub i25 0, %Aok		; <i25> [#uses=1]
 	%C = sdiv i25 %B, 1234		; <i25> [#uses=1]
 	ret i25 %C
 }

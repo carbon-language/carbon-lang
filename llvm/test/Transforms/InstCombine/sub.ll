@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:   grep -v {sub i32 %Cok, %Bok} | not grep sub
+; RUN:   grep -v {sub i32 %Cok, %Bok} | grep -v {sub i32 0, %Aok} | not grep sub
 
 define i32 @test1(i32 %A) {
 	%B = sub i32 %A, %A		; <i32> [#uses=1]
@@ -104,8 +104,10 @@ define i32 @test16(i32 %A) {
 	ret i32 %Y
 }
 
-define i32 @test17(i32 %A) {
-	%B = sub i32 0, %A		; <i32> [#uses=1]
+; Can't fold subtract here because negation it might oveflow.
+; PR3142
+define i32 @test17(i32 %Aok) {
+	%B = sub i32 0, %Aok		; <i32> [#uses=1]
 	%C = sdiv i32 %B, 1234		; <i32> [#uses=1]
 	ret i32 %C
 }
