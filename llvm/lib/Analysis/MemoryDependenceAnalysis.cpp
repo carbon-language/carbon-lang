@@ -336,47 +336,21 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
     if (Instruction *Inst = DI->second.getPointer())
       ReverseNonLocalDeps[Inst].erase(RemInst);
 
-  // Shortly after this, we will look for things that depend on RemInst.  In
-  // order to update these, we'll need a new dependency to base them on.  We
-  // could completely delete any entries that depend on this, but it is better
-  // to make a more accurate approximation where possible.  Compute that better
-  // approximation if we can.
-  DepResultTy NewDependency;
-  
   // If we have a cached local dependence query for this instruction, remove it.
   //
   LocalDepMapType::iterator LocalDepEntry = LocalDeps.find(RemInst);
   if (LocalDepEntry != LocalDeps.end()) {
-    DepResultTy LocalDep = LocalDepEntry->second;
-    
+    // Remove us from DepInst's reverse set now that the local dep info is gone.
+    if (Instruction *Inst = LocalDepEntry->second.getPointer()) {
+      SmallPtrSet<Instruction*, 4> &RLD = ReverseLocalDeps[Inst];
+      RLD.erase(RemInst);
+      if (RLD.empty())
+        ReverseLocalDeps.erase(Inst);
+    }
+
     // Remove this local dependency info.
     LocalDeps.erase(LocalDepEntry);
-    
-    // Remove us from DepInst's reverse set now that the local dep info is gone.
-    if (Instruction *Inst = LocalDep.getPointer())
-      ReverseLocalDeps[Inst].erase(RemInst);
-
-    // If we have unconfirmed info, don't trust it.
-    if (LocalDep.getInt() != Dirty) {
-      // If we have a confirmed non-local flag, use it.
-      if (LocalDep.getInt() == NonLocal || LocalDep.getInt() == None) {
-        // The only time this dependency is confirmed is if it is non-local.
-        NewDependency = LocalDep;
-      } else {
-        // If we have dep info for RemInst, set them to it.
-        Instruction *NDI = next(BasicBlock::iterator(LocalDep.getPointer()));
-        if (NDI != RemInst) // Don't use RemInst for the new dependency!
-          NewDependency = DepResultTy(NDI, Dirty);
-      }
-    }
-  }
-  
-  // If we don't already have a local dependency answer for this instruction,
-  // use the immediate successor of RemInst.  We use the successor because
-  // getDependence starts by checking the immediate predecessor of what is in
-  // the cache.
-  if (NewDependency == DepResultTy(0, Dirty))
-    NewDependency = DepResultTy(next(BasicBlock::iterator(RemInst)), Dirty);
+  }    
   
   // Loop over all of the things that depend on the instruction we're removing.
   // 
@@ -385,6 +359,16 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   ReverseDepMapType::iterator ReverseDepIt = ReverseLocalDeps.find(RemInst);
   if (ReverseDepIt != ReverseLocalDeps.end()) {
     SmallPtrSet<Instruction*, 4> &ReverseDeps = ReverseDepIt->second;
+    // RemInst can't be the terminator if it has stuff depending on it.
+    assert(!ReverseDeps.empty() && !isa<TerminatorInst>(RemInst) &&
+           "Nothing can locally depend on a terminator");
+    
+    // Anything that was locally dependent on RemInst is now going to be
+    // dependent on the instruction after RemInst.  It will have the dirty flag
+    // set so it will rescan.  This saves having to scan the entire block to get
+    // to this point.
+    Instruction *NewDepInst = next(BasicBlock::iterator(RemInst));
+                        
     for (SmallPtrSet<Instruction*, 4>::iterator I = ReverseDeps.begin(),
          E = ReverseDeps.end(); I != E; ++I) {
       Instruction *InstDependingOnRemInst = *I;
@@ -392,21 +376,12 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       // If we thought the instruction depended on itself (possible for
       // unconfirmed dependencies) ignore the update.
       if (InstDependingOnRemInst == RemInst) continue;
+                        
+      LocalDeps[InstDependingOnRemInst] = DepResultTy(NewDepInst, Dirty);
       
-      // Insert the new dependencies.
-      // FIXME: DEPENDENCIES ARE NOT TRANSITIVE!
-      //cerr << "FOO:\n";
-      //RemInst->dump();
-      //InstDependingOnRemInst->dump();
-      LocalDeps[InstDependingOnRemInst] = NewDependency;
-      
-      // If our NewDependency is an instruction, make sure to remember that new
-      // things depend on it.
-      if (Instruction *Inst = NewDependency.getPointer()) {
-        assert(Inst != RemInst);
-        ReverseDepsToAdd.push_back(std::make_pair(Inst, 
-                                                  InstDependingOnRemInst));
-      }
+      // Make sure to remember that new things depend on NewDepInst.
+      ReverseDepsToAdd.push_back(std::make_pair(NewDepInst, 
+                                                InstDependingOnRemInst));
     }
     
     ReverseLocalDeps.erase(ReverseDepIt);
