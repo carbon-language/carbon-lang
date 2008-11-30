@@ -707,6 +707,60 @@ struct VISIBILITY_HIDDEN MemCpyOpt : public LibCallOptimization {
   }
 };
 
+//===---------------------------------------===//
+// 'memmove' Optimizations
+
+struct VISIBILITY_HIDDEN MemMoveOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
+        !isa<PointerType>(FT->getParamType(0)) ||
+        !isa<PointerType>(FT->getParamType(1)) ||
+        FT->getParamType(2) != TD->getIntPtrType())
+      return 0;
+
+    // memmove(x, y, n) -> llvm.memmove(x, y, n, 1)
+    Module *M = Caller->getParent();
+    Intrinsic::ID IID = Intrinsic::memmove;
+    const Type *Tys[1];
+    Tys[0] = TD->getIntPtrType();
+    Value *MemMove = Intrinsic::getDeclaration(M, IID, Tys, 1);
+    Value *Dst = CastToCStr(CI->getOperand(1), B);
+    Value *Src = CastToCStr(CI->getOperand(2), B);
+    Value *Size = CI->getOperand(3);
+    Value *Align = ConstantInt::get(Type::Int32Ty, 1);
+    B.CreateCall4(MemMove, Dst, Src, Size, Align);
+    return CI->getOperand(1);
+  }
+};
+
+//===---------------------------------------===//
+// 'memset' Optimizations
+
+struct VISIBILITY_HIDDEN MemSetOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
+        !isa<PointerType>(FT->getParamType(0)) ||
+        FT->getParamType(1) != TD->getIntPtrType() ||
+        FT->getParamType(2) != TD->getIntPtrType())
+      return 0;
+
+    // memset(p, v, n) -> llvm.memset(p, v, n, 1)
+    Module *M = Caller->getParent();
+    Intrinsic::ID IID = Intrinsic::memset;
+    const Type *Tys[1];
+    Tys[0] = TD->getIntPtrType();
+    Value *MemSet = Intrinsic::getDeclaration(M, IID, Tys, 1);
+    Value *Dst = CastToCStr(CI->getOperand(1), B);
+    Value *Val = B.CreateTrunc(CI->getOperand(2), Type::Int8Ty);
+    Value *Size = CI->getOperand(3);
+    Value *Align = ConstantInt::get(Type::Int32Ty, 1);
+    B.CreateCall4(MemSet, Dst, Val, Size, Align);
+    return CI->getOperand(1);
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // Math Library Optimizations
 //===----------------------------------------------------------------------===//
@@ -1197,6 +1251,7 @@ namespace {
     // String and Memory LibCall Optimizations
     StrCatOpt StrCat; StrChrOpt StrChr; StrCmpOpt StrCmp; StrNCmpOpt StrNCmp;
     StrCpyOpt StrCpy; StrLenOpt StrLen; MemCmpOpt MemCmp; MemCpyOpt  MemCpy;
+    MemMoveOpt MemMove; MemSetOpt MemSet;
     // Math Library Optimizations
     PowOpt Pow; Exp2Opt Exp2; UnaryDoubleFPOpt UnaryDoubleFP;
     // Integer Optimizations
@@ -1242,6 +1297,8 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["strlen"] = &StrLen;
   Optimizations["memcmp"] = &MemCmp;
   Optimizations["memcpy"] = &MemCpy;
+  Optimizations["memmove"] = &MemMove;
+  Optimizations["memset"] = &MemSet;
   
   // Math Library Optimizations
   Optimizations["powf"] = &Pow;
@@ -1385,10 +1442,6 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
 // memcmp:
 //   * memcmp(x,y,l)   -> cnst
 //      (if all arguments are constant and strlen(x) <= l and strlen(y) <= l)
-//
-// memmove:
-//   * memmove(d,s,l,a) -> memcpy(d,s,l,a)
-//       (if s is a global constant array)
 //
 // pow, powf, powl:
 //   * pow(exp(x),y)  -> exp(x*y)
