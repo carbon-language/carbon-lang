@@ -394,6 +394,10 @@ estimate to determine whether the match is profitable.
 However, if we care more about code size, then imull is better. It's two bytes
 shorter than movl + leal.
 
+On a Pentium M, both variants have the same characteristics with regard
+to throughput; however, the multiplication has a latency of four cycles, as
+opposed to two cycles for the movl+lea variant.
+
 //===---------------------------------------------------------------------===//
 
 __builtin_ffs codegen is messy.
@@ -628,9 +632,9 @@ imagine there has to be some kind of complicated decoder reset and realignment
 to grab the bytes from the next cacheline.
 
 532  532 0x3cfc movb     (1809(%esp, %esi), %bl   <<<--- spans 2 64 byte lines
-942  942 0x3d03 movl     %dh, (1809(%esp, %esi)                                                                          
-937  937 0x3d0a incl     %esi                           
-3    3   0x3d0b cmpb     %bl, %dl                                               
+942  942 0x3d03 movl     %dh, (1809(%esp, %esi)
+937  937 0x3d0a incl     %esi
+3    3   0x3d0b cmpb     %bl, %dl
 27   27  0x3d0d jnz      0x000062db <main+11707>
 
 //===---------------------------------------------------------------------===//
@@ -1790,3 +1794,25 @@ def : Pat<(v8i8 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
           (v8i8 (MMX_MOVDQ2Qrr VR128:$src))>;
 
 There are other cases in various td files.
+
+//===---------------------------------------------------------------------===//
+
+Take something like the following on x86-32:
+unsigned a(unsigned long long x, unsigned y) {return x % y;}
+
+We currently generate a libcall, but we really shouldn't: the expansion is
+shorter and likely faster than the libcall.  The expected code is something
+like the following:
+
+	movl	12(%ebp), %eax
+	movl	16(%ebp), %ecx
+	xorl	%edx, %edx
+	divl	%ecx
+	movl	8(%ebp), %eax
+	divl	%ecx
+	movl	%edx, %eax
+	ret
+
+A similar code sequence works for division.
+
+//===---------------------------------------------------------------------===//
