@@ -47,7 +47,7 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 
 /// getCallSiteDependency - Private helper for finding the local dependencies
 /// of a call site.
-MemDepResult MemoryDependenceAnalysis::
+MemoryDependenceAnalysis::DepResultTy MemoryDependenceAnalysis::
 getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
                       BasicBlock *BB) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
@@ -84,24 +84,24 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
       if (AA.getModRefBehavior(CallSite::get(Inst)) ==
             AliasAnalysis::DoesNotAccessMemory)
         continue;
-      return MemDepResult::get(Inst);
+      return DepResultTy(Inst, Normal);
     } else
       continue;
     
     if (AA.getModRefInfo(C, Pointer, PointerSize) != AliasAnalysis::NoModRef)
-      return MemDepResult::get(Inst);
+      return DepResultTy(Inst, Normal);
   }
   
   // No dependence found.
-  return MemDepResult::getNonLocal();
+  return DepResultTy(0, NonLocal);
 }
 
 /// getDependency - Return the instruction on which a memory operation
 /// depends.  The local parameter indicates if the query should only
 /// evaluate dependencies within the same basic block.
-MemDepResult MemoryDependenceAnalysis::
-getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt, 
-                  BasicBlock *BB) {
+MemoryDependenceAnalysis::DepResultTy MemoryDependenceAnalysis::
+getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt, 
+                          BasicBlock *BB) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   TargetData &TD = getAnalysis<TargetData>();
   
@@ -128,7 +128,7 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst))
     return getCallSiteDependency(CallSite::get(QueryInst), ScanIt, BB);
   else  // Non-memory instructions depend on nothing.
-    return MemDepResult::getNone();
+    return DepResultTy(0, None);
   
   // Walk backwards through the basic block, looking for dependencies
   while (ScanIt != BB->begin()) {
@@ -139,7 +139,7 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     if (MemVolatile &&
         ((isa<LoadInst>(Inst) && cast<LoadInst>(Inst)->isVolatile()) ||
          (isa<StoreInst>(Inst) && cast<StoreInst>(Inst)->isVolatile())))
-      return MemDepResult::get(Inst);
+      return DepResultTy(Inst, Normal);
 
     // MemDep is broken w.r.t. loads: it says that two loads of the same pointer
     // depend on each other.  :(
@@ -157,7 +157,7 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
       // May-alias loads don't depend on each other without a dependence.
       if (isa<LoadInst>(QueryInst) && R == AliasAnalysis::MayAlias)
         continue;
-      return MemDepResult::get(Inst);
+      return DepResultTy(Inst, Normal);
     }
     
     // FIXME: This claims that an access depends on the allocation.  This may
@@ -179,7 +179,7 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
       
       if (R == AliasAnalysis::NoAlias)
         continue;
-      return MemDepResult::get(Inst);
+      return DepResultTy(Inst, Normal);
     }
       
     
@@ -194,11 +194,11 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
       continue;
     
     // Otherwise, there is a dependence.
-    return MemDepResult::get(Inst);
+    return DepResultTy(Inst, Normal);
   }
   
   // If we found nothing, return the non-local flag.
-  return MemDepResult::getNonLocal();
+  return DepResultTy(0, NonLocal);
 }
 
 /// getDependency - Return the instruction on which a memory operation
@@ -220,16 +220,14 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
     ScanPos = Inst;
   
   // Do the scan.
-  MemDepResult Res = 
-    getDependencyFrom(QueryInst, ScanPos, QueryInst->getParent());  
+  LocalCache = getDependencyFromInternal(QueryInst, ScanPos,
+                                         QueryInst->getParent());
   
   // Remember the result!
-  // FIXME: Don't convert back and forth!  Make a shared helper function.
-  LocalCache = ConvFromResult(Res);
-  if (Instruction *I = Res.getInst())
+  if (Instruction *I = LocalCache.getPointer())
     ReverseLocalDeps[I].insert(QueryInst);
   
-  return Res;
+  return ConvToResult(LocalCache);
 }
 
 /// getNonLocalDependency - Perform a full dependency query for the
@@ -287,17 +285,14 @@ getNonLocalDependency(Instruction *QueryInst,
     // If DirtyBBEntry isn't dirty, it ended up on the worklist multiple times.
     if (DirtyBBEntry.getInt() != Dirty) continue;
 
-    // Find out if this block has a local dependency for QueryInst.
-    // FIXME: Don't convert back and forth for MemDepResult <-> DepResultTy.
-    
     // If the dirty entry has a pointer, start scanning from it so we don't have
     // to rescan the entire block.
     BasicBlock::iterator ScanPos = DirtyBB->end();
     if (Instruction *Inst = DirtyBBEntry.getPointer())
       ScanPos = Inst;
     
-    DirtyBBEntry = ConvFromResult(getDependencyFrom(QueryInst, ScanPos,
-                                                    DirtyBB));
+    // Find out if this block has a local dependency for QueryInst.
+    DirtyBBEntry = getDependencyFromInternal(QueryInst, ScanPos, DirtyBB);
            
     // If the block has a dependency (i.e. it isn't completely transparent to
     // the value), remember it!

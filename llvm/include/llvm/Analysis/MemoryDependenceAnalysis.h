@@ -170,8 +170,13 @@ namespace llvm {
     /// getDependencyFrom - Return the instruction on which the memory operation
     /// 'QueryInst' depends.  This starts scanning from the instruction before
     /// the position indicated by ScanIt.
+    ///
+    /// Note that this method does no caching at all.  You should use
+    /// getDependency where possible.
     MemDepResult getDependencyFrom(Instruction *QueryInst,
-                                   BasicBlock::iterator ScanIt, BasicBlock *BB);
+                                   BasicBlock::iterator ScanIt, BasicBlock *BB){
+      return ConvToResult(getDependencyFromInternal(QueryInst, ScanIt, BB));
+    }
 
     
     /// getNonLocalDependency - Perform a full dependency query for the
@@ -190,15 +195,6 @@ namespace llvm {
     void removeInstruction(Instruction *InstToRemove);
     
   private:
-    DepResultTy ConvFromResult(MemDepResult R) {
-      if (Instruction *I = R.getInst())
-        return DepResultTy(I, Normal);
-      if (R.isNonLocal())
-        return DepResultTy(0, NonLocal);
-      assert(R.isNone() && "Unknown MemDepResult!");
-      return DepResultTy(0, None);
-    }
-    
     MemDepResult ConvToResult(DepResultTy R) {
       if (R.getInt() == Normal)
         return MemDepResult::get(R.getPointer());
@@ -212,8 +208,13 @@ namespace llvm {
     /// in our internal data structures.
     void verifyRemoved(Instruction *Inst) const;
     
-    MemDepResult getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
-                                       BasicBlock *BB);
+    /// getDependencyFromInternal - Return the instruction on which the memory
+    /// operation 'QueryInst' depends.  This starts scanning from the
+    /// instruction before the position indicated by ScanIt.
+    DepResultTy getDependencyFromInternal(Instruction *QueryInst,
+                                   BasicBlock::iterator ScanIt, BasicBlock *BB);
+    DepResultTy getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
+                                      BasicBlock *BB);
   };
 
 } // End llvm namespace
