@@ -96,96 +96,6 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
   return MemDepResult::getNonLocal();
 }
 
-/// getNonLocalDependency - Perform a full dependency query for the
-/// specified instruction, returning the set of blocks that the value is
-/// potentially live across.  The returned set of results will include a
-/// "NonLocal" result for all blocks where the value is live across.
-///
-/// This method assumes the instruction returns a "nonlocal" dependency
-/// within its own block.
-///
-void MemoryDependenceAnalysis::
-getNonLocalDependency(Instruction *QueryInst,
-                      SmallVectorImpl<std::pair<BasicBlock*, 
-                                                      MemDepResult> > &Result) {
-  assert(getDependency(QueryInst).isNonLocal() &&
-     "getNonLocalDependency should only be used on insts with non-local deps!");
-  DenseMap<BasicBlock*, DepResultTy> &Cache = NonLocalDeps[QueryInst];
-
-  /// DirtyBlocks - This is the set of blocks that need to be recomputed.  In
-  /// the cached case, this can happen due to instructions being deleted etc. In
-  /// the uncached case, this starts out as the set of predecessors we care
-  /// about.
-  SmallVector<BasicBlock*, 32> DirtyBlocks;
-  
-  if (!Cache.empty()) {
-    // If we already have a partially computed set of results, scan them to
-    // determine what is dirty, seeding our initial DirtyBlocks worklist.
-    // FIXME: In the "don't need to be updated" case, this is expensive, why not
-    // have a per-"cache" flag saying it is undirty?
-    for (DenseMap<BasicBlock*, DepResultTy>::iterator I = Cache.begin(),
-         E = Cache.end(); I != E; ++I)
-      if (I->second.getInt() == Dirty)
-        DirtyBlocks.push_back(I->first);
-    
-    NumCacheNonLocal++;
-    
-    //cerr << "CACHED CASE: " << DirtyBlocks.size() << " dirty: "
-    //     << Cache.size() << " cached: " << *QueryInst;
-  } else {
-    // Seed DirtyBlocks with each of the preds of QueryInst's block.
-    BasicBlock *QueryBB = QueryInst->getParent();
-    DirtyBlocks.append(pred_begin(QueryBB), pred_end(QueryBB));
-    NumUncacheNonLocal++;
-  }
-  
-  
-  // Iterate while we still have blocks to update.
-  while (!DirtyBlocks.empty()) {
-    BasicBlock *DirtyBB = DirtyBlocks.back();
-    DirtyBlocks.pop_back();
-    
-    // Get the entry for this block.  Note that this relies on DepResultTy
-    // default initializing to Dirty.
-    DepResultTy &DirtyBBEntry = Cache[DirtyBB];
-    
-    // If DirtyBBEntry isn't dirty, it ended up on the worklist multiple times.
-    if (DirtyBBEntry.getInt() != Dirty) continue;
-
-    // Find out if this block has a local dependency for QueryInst.
-    // FIXME: Don't convert back and forth for MemDepResult <-> DepResultTy.
-    
-    // If the dirty entry has a pointer, start scanning from it so we don't have
-    // to rescan the entire block.
-    BasicBlock::iterator ScanPos = DirtyBB->end();
-    if (Instruction *Inst = DirtyBBEntry.getPointer())
-      ScanPos = Inst;
-    
-    DirtyBBEntry = ConvFromResult(getDependencyFrom(QueryInst, ScanPos,
-                                                    DirtyBB));
-           
-    // If the block has a dependency (i.e. it isn't completely transparent to
-    // the value), remember it!
-    if (DirtyBBEntry.getInt() != NonLocal) {
-      // Keep the ReverseNonLocalDeps map up to date so we can efficiently
-      // update this when we remove instructions.
-      if (Instruction *Inst = DirtyBBEntry.getPointer())
-        ReverseNonLocalDeps[Inst].insert(QueryInst);
-      continue;
-    }
-    
-    // If the block *is* completely transparent to the load, we need to check
-    // the predecessors of this block.  Add them to our worklist.
-    DirtyBlocks.append(pred_begin(DirtyBB), pred_end(DirtyBB));
-  }
-  
-  
-  // Copy the result into the output set.
-  for (DenseMap<BasicBlock*, DepResultTy>::iterator I = Cache.begin(),
-       E = Cache.end(); I != E; ++I)
-    Result.push_back(std::make_pair(I->first, ConvToResult(I->second)));
-}
-
 /// getDependency - Return the instruction on which a memory operation
 /// depends.  The local parameter indicates if the query should only
 /// evaluate dependencies within the same basic block.
@@ -320,6 +230,95 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
     ReverseLocalDeps[I].insert(QueryInst);
   
   return Res;
+}
+
+/// getNonLocalDependency - Perform a full dependency query for the
+/// specified instruction, returning the set of blocks that the value is
+/// potentially live across.  The returned set of results will include a
+/// "NonLocal" result for all blocks where the value is live across.
+///
+/// This method assumes the instruction returns a "nonlocal" dependency
+/// within its own block.
+///
+void MemoryDependenceAnalysis::
+getNonLocalDependency(Instruction *QueryInst,
+                      SmallVectorImpl<std::pair<BasicBlock*, 
+                                                      MemDepResult> > &Result) {
+  assert(getDependency(QueryInst).isNonLocal() &&
+     "getNonLocalDependency should only be used on insts with non-local deps!");
+  DenseMap<BasicBlock*, DepResultTy> &Cache = NonLocalDeps[QueryInst];
+
+  /// DirtyBlocks - This is the set of blocks that need to be recomputed.  In
+  /// the cached case, this can happen due to instructions being deleted etc. In
+  /// the uncached case, this starts out as the set of predecessors we care
+  /// about.
+  SmallVector<BasicBlock*, 32> DirtyBlocks;
+  
+  if (!Cache.empty()) {
+    // If we already have a partially computed set of results, scan them to
+    // determine what is dirty, seeding our initial DirtyBlocks worklist.
+    // FIXME: In the "don't need to be updated" case, this is expensive, why not
+    // have a per-"cache" flag saying it is undirty?
+    for (DenseMap<BasicBlock*, DepResultTy>::iterator I = Cache.begin(),
+         E = Cache.end(); I != E; ++I)
+      if (I->second.getInt() == Dirty)
+        DirtyBlocks.push_back(I->first);
+    
+    NumCacheNonLocal++;
+    
+    //cerr << "CACHED CASE: " << DirtyBlocks.size() << " dirty: "
+    //     << Cache.size() << " cached: " << *QueryInst;
+  } else {
+    // Seed DirtyBlocks with each of the preds of QueryInst's block.
+    BasicBlock *QueryBB = QueryInst->getParent();
+    DirtyBlocks.append(pred_begin(QueryBB), pred_end(QueryBB));
+    NumUncacheNonLocal++;
+  }
+  
+  // Iterate while we still have blocks to update.
+  while (!DirtyBlocks.empty()) {
+    BasicBlock *DirtyBB = DirtyBlocks.back();
+    DirtyBlocks.pop_back();
+    
+    // Get the entry for this block.  Note that this relies on DepResultTy
+    // default initializing to Dirty.
+    DepResultTy &DirtyBBEntry = Cache[DirtyBB];
+    
+    // If DirtyBBEntry isn't dirty, it ended up on the worklist multiple times.
+    if (DirtyBBEntry.getInt() != Dirty) continue;
+
+    // Find out if this block has a local dependency for QueryInst.
+    // FIXME: Don't convert back and forth for MemDepResult <-> DepResultTy.
+    
+    // If the dirty entry has a pointer, start scanning from it so we don't have
+    // to rescan the entire block.
+    BasicBlock::iterator ScanPos = DirtyBB->end();
+    if (Instruction *Inst = DirtyBBEntry.getPointer())
+      ScanPos = Inst;
+    
+    DirtyBBEntry = ConvFromResult(getDependencyFrom(QueryInst, ScanPos,
+                                                    DirtyBB));
+           
+    // If the block has a dependency (i.e. it isn't completely transparent to
+    // the value), remember it!
+    if (DirtyBBEntry.getInt() != NonLocal) {
+      // Keep the ReverseNonLocalDeps map up to date so we can efficiently
+      // update this when we remove instructions.
+      if (Instruction *Inst = DirtyBBEntry.getPointer())
+        ReverseNonLocalDeps[Inst].insert(QueryInst);
+      continue;
+    }
+    
+    // If the block *is* completely transparent to the load, we need to check
+    // the predecessors of this block.  Add them to our worklist.
+    DirtyBlocks.append(pred_begin(DirtyBB), pred_end(DirtyBB));
+  }
+  
+  
+  // Copy the result into the output set.
+  for (DenseMap<BasicBlock*, DepResultTy>::iterator I = Cache.begin(),
+       E = Cache.end(); I != E; ++I)
+    Result.push_back(std::make_pair(I->first, ConvToResult(I->second)));
 }
 
 /// removeInstruction - Remove an instruction from the dependence analysis,
