@@ -344,13 +344,6 @@ namespace {
     }
 
   private:
-    /// InsertOperandCastBefore - This inserts a cast of V to DestTy before the
-    /// InsertBefore instruction.  This is specialized a bit to avoid inserting
-    /// casts that are known to not do anything...
-    ///
-    Value *InsertOperandCastBefore(Instruction::CastOps opcode,
-                                   Value *V, const Type *DestTy,
-                                   Instruction *InsertBefore);
 
     /// SimplifyCommutative - This performs a few simplifications for 
     /// commutative operators.
@@ -503,20 +496,6 @@ static bool ValueRequiresCast(Instruction::CastOps opcode, const Value *V,
     if (isEliminableCastPair(CI, opcode, Ty, TD)) 
       return false;
   return true;
-}
-
-/// InsertOperandCastBefore - This inserts a cast of V to DestTy before the
-/// InsertBefore instruction.  This is specialized a bit to avoid inserting
-/// casts that are known to not do anything...
-///
-Value *InstCombiner::InsertOperandCastBefore(Instruction::CastOps opcode,
-                                             Value *V, const Type *DestTy,
-                                             Instruction *InsertBefore) {
-  if (V->getType() == DestTy) return V;
-  if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getCast(opcode, C, DestTy);
-  
-  return InsertCastBefore(opcode, V, DestTy, *InsertBefore);
 }
 
 // SimplifyCommutative - This performs a few simplifications for commutative
@@ -1815,11 +1794,7 @@ struct AddMaskingAnd {
 static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner *IC) {
   if (CastInst *CI = dyn_cast<CastInst>(&I)) {
-    if (Constant *SOC = dyn_cast<Constant>(SO))
-      return ConstantExpr::getCast(CI->getOpcode(), SOC, I.getType());
-
-    return IC->InsertNewInstBefore(CastInst::Create(
-          CI->getOpcode(), SO, I.getType(), SO->getName() + ".cast"), I);
+    return IC->InsertCastBefore(CI->getOpcode(), SO, I.getType(), I);
   }
 
   // Figure out if the constant is the left or the right argument.
@@ -2413,10 +2388,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
       if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
-
-    if (isa<PHINode>(Op0))
-      if (Instruction *NV = FoldOpIntoPhi(I))
-        return NV;
   }
 
   if (I.getType() == Type::Int1Ty)
@@ -7893,8 +7864,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
           !ValueRequiresCast(CI.getOpcode(), Op1, DestTy,TD) ||
           !ValueRequiresCast(CI.getOpcode(), Op0, DestTy, TD)) {
         Instruction::CastOps opcode = CI.getOpcode();
-        Value *Op0c = InsertOperandCastBefore(opcode, Op0, DestTy, SrcI);
-        Value *Op1c = InsertOperandCastBefore(opcode, Op1, DestTy, SrcI);
+        Value *Op0c = InsertCastBefore(opcode, Op0, DestTy, *SrcI);
+        Value *Op1c = InsertCastBefore(opcode, Op1, DestTy, *SrcI);
         return BinaryOperator::Create(
             cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
       }
@@ -7905,7 +7876,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         SrcI->getOpcode() == Instruction::Xor &&
         Op1 == ConstantInt::getTrue() &&
         (!Op0->hasOneUse() || !isa<CmpInst>(Op0))) {
-      Value *New = InsertOperandCastBefore(Instruction::ZExt, Op0, DestTy, &CI);
+      Value *New = InsertCastBefore(Instruction::ZExt, Op0, DestTy, CI);
       return BinaryOperator::CreateXor(New, ConstantInt::get(CI.getType(), 1));
     }
     break;
@@ -7920,10 +7891,10 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       // only be converting signedness, which is a noop.
       if (!ValueRequiresCast(CI.getOpcode(), Op1, DestTy, TD) || 
           !ValueRequiresCast(CI.getOpcode(), Op0, DestTy, TD)) {
-        Value *Op0c = InsertOperandCastBefore(Instruction::BitCast, 
-                                              Op0, DestTy, SrcI);
-        Value *Op1c = InsertOperandCastBefore(Instruction::BitCast, 
-                                              Op1, DestTy, SrcI);
+        Value *Op0c = InsertCastBefore(Instruction::BitCast, 
+                                       Op0, DestTy, *SrcI);
+        Value *Op1c = InsertCastBefore(Instruction::BitCast, 
+                                       Op1, DestTy, *SrcI);
         return BinaryOperator::Create(
           cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
       }
@@ -7940,8 +7911,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         (DestBitSize < SrcBitSize && isa<Constant>(Op1))) {
       Instruction::CastOps opcode = (DestBitSize == SrcBitSize ?
           Instruction::BitCast : Instruction::Trunc);
-      Value *Op0c = InsertOperandCastBefore(opcode, Op0, DestTy, SrcI);
-      Value *Op1c = InsertOperandCastBefore(opcode, Op1, DestTy, SrcI);
+      Value *Op0c = InsertCastBefore(opcode, Op0, DestTy, *SrcI);
+      Value *Op1c = InsertCastBefore(opcode, Op1, DestTy, *SrcI);
       return BinaryOperator::CreateShl(Op0c, Op1c);
     }
     break;
@@ -8507,10 +8478,10 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
              Tmp->getOperand(0)->getType() == DestTy) ||
             ((Tmp = dyn_cast<CastInst>(SVI->getOperand(1))) && 
              Tmp->getOperand(0)->getType() == DestTy)) {
-          Value *LHS = InsertOperandCastBefore(Instruction::BitCast,
-                                               SVI->getOperand(0), DestTy, &CI);
-          Value *RHS = InsertOperandCastBefore(Instruction::BitCast,
-                                               SVI->getOperand(1), DestTy, &CI);
+          Value *LHS = InsertCastBefore(Instruction::BitCast,
+                                        SVI->getOperand(0), DestTy, CI);
+          Value *RHS = InsertCastBefore(Instruction::BitCast,
+                                        SVI->getOperand(1), DestTy, CI);
           // Return a new shuffle vector.  Use the same element ID's, as we
           // know the vector types match #elts.
           return new ShuffleVectorInst(LHS, RHS, SVI->getOperand(2));
@@ -8835,8 +8806,6 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                                                "not."+CondVal->getName()), SI);
         return CastInst::Create(Instruction::ZExt, NotCond, SI.getType());
       }
-      
-      // FIXME: Turn select 0/-1 and -1/0 into sext from condition!
 
       if (ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition())) {
 
@@ -8852,17 +8821,9 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
               Instruction *SRA = BinaryOperator::Create(Instruction::AShr, X,
                                                         ShAmt, "ones");
               InsertNewInstBefore(SRA, SI);
-              
-              // Finally, convert to the type of the select RHS.  We figure out
-              // if this requires a SExt, Trunc or BitCast based on the sizes.
-              Instruction::CastOps opc = Instruction::BitCast;
-              uint32_t SRASize = SRA->getType()->getPrimitiveSizeInBits();
-              uint32_t SISize  = SI.getType()->getPrimitiveSizeInBits();
-              if (SRASize < SISize)
-                opc = Instruction::SExt;
-              else if (SRASize > SISize)
-                opc = Instruction::Trunc;
-              return CastInst::Create(opc, SRA, SI.getType());
+
+              // Then cast to the appropriate width.
+              return CastInst::CreateIntegerCast(SRA, SI.getType(), true);
             }
           }
 
