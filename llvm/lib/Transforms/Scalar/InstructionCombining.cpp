@@ -2960,8 +2960,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     APInt RHSNegAPI(RHSNeg->getBitWidth(), RHSNeg->getSExtValue(), true);
 
     APInt NegOne = -APInt(RHSNeg->getBitWidth(), 1, true);
-    APInt TwoToExp(RHSNeg->getBitWidth(), 1 << (RHSNeg->getBitWidth() - 1),
-                   true);
+    APInt TwoToExp(RHSNeg->getBitWidth(), 1 << (RHSNeg->getBitWidth() - 1));
 
     // -X/C -> X/-C, if and only if negation doesn't overflow.
     if ((RHS->getSExtValue() < 0 && RHSNegAPI.slt(TwoToExp - 1)) ||
