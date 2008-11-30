@@ -4638,6 +4638,29 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       return Match;
     if (Instruction *Match = MatchSelectFromAndOr(D, A, B, C))
       return Match;
+
+    V1 = V2 = 0;
+
+    // ((A&~B)|(~A&B)) -> A^B
+    if ((match(C, m_Not(m_Value(V1))) &&
+         match(B, m_Not(m_Value(V2)))))
+      if (V1 == D && V2 == A)
+        return BinaryOperator::CreateXor(V1, V2);
+    // ((~B&A)|(~A&B)) -> A^B
+    if ((match(A, m_Not(m_Value(V1))) &&
+         match(B, m_Not(m_Value(V2)))))
+      if (V1 == D && V2 == C)
+        return BinaryOperator::CreateXor(V1, V2);
+    // ((A&~B)|(B&~A)) -> A^B
+    if ((match(C, m_Not(m_Value(V1))) &&
+         match(D, m_Not(m_Value(V2)))))
+      if (V1 == B && V2 == A)
+        return BinaryOperator::CreateXor(V1, V2);
+    // ((~B&A)|(B&~A)) -> A^B
+    if ((match(A, m_Not(m_Value(V1))) &&
+         match(D, m_Not(m_Value(V2)))))
+      if (V1 == B && V2 == C)
+        return BinaryOperator::CreateXor(V1, V2);
   }
   
   // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.

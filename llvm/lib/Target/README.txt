@@ -1171,12 +1171,6 @@ Should combine to "a | 1".  Currently not optimized with "clang
 
 //===---------------------------------------------------------------------===//
 
-int a(int a, int b, int c) {return ((a&~b) | (~a&b));}
-Should fold to xor.  Currently not optimized with "clang -emit-llvm-bc
-| opt -std-compile-opts".
-
-//===---------------------------------------------------------------------===//
-
 int a(int a, int b, int c) {return (~a & c) | ((c|a) & b);}
 Should fold to "(~a & c) | (a & b)".  Currently not optimized with
 "clang -emit-llvm-bc | opt -std-compile-opts".
