@@ -25,6 +25,8 @@ namespace llvm {
   class FunctionPass;
   class Instruction;
   class CallSite;
+  class AliasAnalysis;
+  class TargetData;
   
   /// MemDepResult - A memory dependence query can return one of three different
   /// answers:
@@ -148,13 +150,15 @@ namespace llvm {
     // A reverse mapping form dependencies to the non-local dependees.
     ReverseDepMapType ReverseNonLocalDeps;
     
+    /// Current AA implementation, just a cache.
+    AliasAnalysis *AA;
+    TargetData *TD;
   public:
     MemoryDependenceAnalysis() : FunctionPass(&ID) {}
     static char ID;
 
-    /// Pass Implementation stuff.  This doesn't do any analysis.
-    ///
-    bool runOnFunction(Function &) {return false; }
+    /// Pass Implementation stuff.  This doesn't do any analysis eagerly.
+    bool runOnFunction(Function &);
     
     /// Clean up memory in between runs
     void releaseMemory() {

@@ -45,14 +45,17 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredTransitive<TargetData>();
 }
 
+bool MemoryDependenceAnalysis::runOnFunction(Function &) {
+  AA = &getAnalysis<AliasAnalysis>();
+  TD = &getAnalysis<TargetData>();
+  return false;
+}
+
 /// getCallSiteDependency - Private helper for finding the local dependencies
 /// of a call site.
 MemoryDependenceAnalysis::DepResultTy MemoryDependenceAnalysis::
 getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
                       BasicBlock *BB) {
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  TargetData &TD = getAnalysis<TargetData>();
-  
   // Walk backwards through the block, looking for dependencies
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
@@ -62,17 +65,17 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
     uint64_t PointerSize = 0;
     if (StoreInst *S = dyn_cast<StoreInst>(Inst)) {
       Pointer = S->getPointerOperand();
-      PointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
+      PointerSize = TD->getTypeStoreSize(S->getOperand(0)->getType());
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
       Pointer = V->getOperand(0);
-      PointerSize = TD.getTypeStoreSize(V->getType());
+      PointerSize = TD->getTypeStoreSize(V->getType());
     } else if (FreeInst *F = dyn_cast<FreeInst>(Inst)) {
       Pointer = F->getPointerOperand();
       
       // FreeInsts erase the entire structure
       PointerSize = ~0UL;
     } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
-      if (AA.getModRefBehavior(CallSite::get(Inst)) ==
+      if (AA->getModRefBehavior(CallSite::get(Inst)) ==
             AliasAnalysis::DoesNotAccessMemory)
         continue;
       return DepResultTy(Inst, Normal);
@@ -81,7 +84,7 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
       continue;
     }
     
-    if (AA.getModRefInfo(C, Pointer, PointerSize) != AliasAnalysis::NoModRef)
+    if (AA->getModRefInfo(C, Pointer, PointerSize) != AliasAnalysis::NoModRef)
       return DepResultTy(Inst, Normal);
   }
   
@@ -95,9 +98,6 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
 MemoryDependenceAnalysis::DepResultTy MemoryDependenceAnalysis::
 getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt, 
                           BasicBlock *BB) {
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  TargetData &TD = getAnalysis<TargetData>();
-  
   // Get the pointer value for which dependence will be determined
   Value *MemPtr = 0;
   uint64_t MemSize = 0;
@@ -105,15 +105,15 @@ getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt,
   
   if (StoreInst* S = dyn_cast<StoreInst>(QueryInst)) {
     MemPtr = S->getPointerOperand();
-    MemSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
+    MemSize = TD->getTypeStoreSize(S->getOperand(0)->getType());
     MemVolatile = S->isVolatile();
   } else if (LoadInst* L = dyn_cast<LoadInst>(QueryInst)) {
     MemPtr = L->getPointerOperand();
-    MemSize = TD.getTypeStoreSize(L->getType());
+    MemSize = TD->getTypeStoreSize(L->getType());
     MemVolatile = L->isVolatile();
   } else if (VAArgInst* V = dyn_cast<VAArgInst>(QueryInst)) {
     MemPtr = V->getOperand(0);
-    MemSize = TD.getTypeStoreSize(V->getType());
+    MemSize = TD->getTypeStoreSize(V->getType());
   } else if (FreeInst* F = dyn_cast<FreeInst>(QueryInst)) {
     MemPtr = F->getPointerOperand();
     // FreeInsts erase the entire structure, not just a field.
@@ -138,11 +138,11 @@ getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     // a load depends on another must aliased load from the same value.
     if (LoadInst *L = dyn_cast<LoadInst>(Inst)) {
       Value *Pointer = L->getPointerOperand();
-      uint64_t PointerSize = TD.getTypeStoreSize(L->getType());
+      uint64_t PointerSize = TD->getTypeStoreSize(L->getType());
       
       // If we found a pointer, check if it could be the same as our pointer
       AliasAnalysis::AliasResult R =
-        AA.alias(Pointer, PointerSize, MemPtr, MemSize);
+        AA->alias(Pointer, PointerSize, MemPtr, MemSize);
       
       if (R == AliasAnalysis::NoAlias)
         continue;
@@ -161,13 +161,13 @@ getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt,
       Value *AccessPtr = MemPtr->getUnderlyingObject();
       
       if (AccessPtr == AI ||
-          AA.alias(AI, 1, AccessPtr, 1) == AliasAnalysis::MustAlias)
+          AA->alias(AI, 1, AccessPtr, 1) == AliasAnalysis::MustAlias)
         return DepResultTy(0, None);
       continue;
     }
     
     // See if this instruction mod/ref's the pointer.
-    AliasAnalysis::ModRefResult MRR = AA.getModRefInfo(Inst, MemPtr, MemSize);
+    AliasAnalysis::ModRefResult MRR = AA->getModRefInfo(Inst, MemPtr, MemSize);
 
     if (MRR == AliasAnalysis::NoModRef)
       continue;
@@ -426,7 +426,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   }
   
   assert(!NonLocalDeps.count(RemInst) && "RemInst got reinserted?");
-  getAnalysis<AliasAnalysis>().deleteValue(RemInst);
+  AA->deleteValue(RemInst);
   DEBUG(verifyRemoved(RemInst));
 }
 
