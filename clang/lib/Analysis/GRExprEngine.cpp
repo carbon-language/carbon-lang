@@ -405,6 +405,10 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       
       break;
     }
+
+    case Stmt::StringLiteralClass:
+      VisitLValue(cast<StringLiteral>(S), Pred, Dst);
+      break;
       
     case Stmt::UnaryOperatorClass:
       VisitUnaryOperator(cast<UnaryOperator>(S), Pred, Dst, false);

@@ -637,17 +637,42 @@ Store RegionStoreManager::InitializeArray(Store store, const TypedRegion* R,
 
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
 
-  llvm::APInt Size = CAT->getSize();
+  llvm::APSInt Size(CAT->getSize(), false);
 
-  llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
+  llvm::APSInt i = getBasicVals().getZeroWithPtrWidth(false);
+
+  // Check if the init expr is a StringLiteral.
+  if (isa<loc::MemRegionVal>(Init)) {
+    const MemRegion* InitR = cast<loc::MemRegionVal>(Init).getRegion();
+    const StringLiteral* S = cast<StringRegion>(InitR)->getStringLiteral();
+    const char* str = S->getStrData();
+    unsigned len = S->getByteLength();
+    unsigned j = 0;
+
+    for (; i < Size; ++i, ++j) {
+      SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
+      ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
+
+      // Copy bytes from the string literal into the target array. Trailing
+      // bytes in the array that are not covered by the string literal are
+      // initialized to zero.
+      SVal V = (j < len) 
+        ? NonLoc::MakeVal(getBasicVals(), str[j], sizeof(char)*8, true)
+        : NonLoc::MakeVal(getBasicVals(), 0, sizeof(char)*8, true);
+
+      store = Bind(store, loc::MemRegionVal(ER), V);
+    }
+
+    return store;
+  }
+
 
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(Init);
 
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
 
-  for (; i != Size; ++i) {
-    nonloc::ConcreteInt Idx(getBasicVals().getValue(llvm::APSInt(i, false)));
-
+  for (; i < Size; ++i) {
+    SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
     ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
     
     store = Bind(store, loc::MemRegionVal(ER), (VI!=VE) ? *VI : UndefinedVal());
