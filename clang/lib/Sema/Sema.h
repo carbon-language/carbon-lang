@@ -1347,6 +1347,11 @@ public:
 
   void InitBuiltinVaListType();
 
+  /// VerifyIntegerConstantExpression - verifies that an expression is an ICE,
+  /// and reports the appropriate diagnostics. Returns false on success.
+  /// Can optionally return the value of the expression.
+  bool VerifyIntegerConstantExpression(const Expr* E, llvm::APSInt *Result = 0);
+
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
 private:

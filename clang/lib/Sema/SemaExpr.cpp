@@ -3673,3 +3673,36 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     << SrcExpr->getSourceRange();
   return isInvalid;
 }
+
+bool Sema::VerifyIntegerConstantExpression(const Expr* E, llvm::APSInt *Result)
+{
+  Expr::EvalResult EvalResult;
+
+  if (!E->Evaluate(EvalResult, Context) || !EvalResult.Val.isInt() || 
+      EvalResult.HasSideEffects) {
+    Diag(E->getExprLoc(), diag::err_expr_not_ice) << E->getSourceRange();
+
+    if (EvalResult.Diag) {
+      // We only show the note if it's not the usual "invalid subexpression"
+      // or if it's actually in a subexpression.
+      if (EvalResult.Diag != diag::note_invalid_subexpr_in_ice ||
+          E->IgnoreParens() != EvalResult.DiagExpr->IgnoreParens())
+        Diag(EvalResult.DiagLoc, EvalResult.Diag);
+    }
+    
+    return true;
+  }
+
+  if (EvalResult.Diag) {
+    Diag(E->getExprLoc(), diag::ext_expr_not_ice) << 
+      E->getSourceRange();
+
+    // Print the reason it's not a constant.
+    if (Diags.getDiagnosticLevel(diag::ext_expr_not_ice) != Diagnostic::Ignored)
+      Diag(EvalResult.DiagLoc, EvalResult.Diag);
+  }
+  
+  if (Result)
+    *Result = EvalResult.Val.getInt();
+  return false;
+}
