@@ -26,7 +26,6 @@
 // C++ class which implements the opaque lto_code_gen_t
 //
 
-class llvm::raw_ostream;
 class LTOCodeGenerator {
 public:
     static const char*        getVersionString();
