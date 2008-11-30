@@ -2224,7 +2224,7 @@ bool TargetLowering::isLegalAddressingMode(const AddrMode &AM,
 struct mu {
   APInt m;     // magic number
   bool a;      // add indicator
-  uint32_t s;  // shift amount
+  unsigned s;  // shift amount
 };
 
 /// magicu - calculate the magic numbers required to codegen an integer udiv as
@@ -2273,89 +2273,50 @@ static mu magicu(const APInt& d) {
 }
 
 // Magic for divide replacement
-// FIXME: This should be APInt'ified
 struct ms {
-  int64_t m;  // magic number
-  int64_t s;  // shift amount
+  APInt m;  // magic number
+  unsigned s;  // shift amount
 };
 
 /// magic - calculate the magic numbers required to codegen an integer sdiv as
 /// a sequence of multiply and shifts.  Requires that the divisor not be 0, 1,
 /// or -1.
-static ms magic32(int32_t d) {
-  int32_t p;
-  uint32_t ad, anc, delta, q1, r1, q2, r2, t;
-  const uint32_t two31 = 0x80000000U;
+static ms magic(const APInt& d) {
+  unsigned p;
+  APInt ad, anc, delta, q1, r1, q2, r2, t;
+  APInt allOnes = APInt::getAllOnesValue(d.getBitWidth());
+  APInt signedMin = APInt::getSignedMinValue(d.getBitWidth());
+  APInt signedMax = APInt::getSignedMaxValue(d.getBitWidth());
   struct ms mag;
   
-  ad = abs(d);
-  t = two31 + ((uint32_t)d >> 31);
-  anc = t - 1 - t%ad;   // absolute value of nc
-  p = 31;               // initialize p
-  q1 = two31/anc;       // initialize q1 = 2p/abs(nc)
-  r1 = two31 - q1*anc;  // initialize r1 = rem(2p,abs(nc))
-  q2 = two31/ad;        // initialize q2 = 2p/abs(d)
-  r2 = two31 - q2*ad;   // initialize r2 = rem(2p,abs(d))
+  ad = d.abs();
+  t = signedMin + (d.lshr(d.getBitWidth() - 1));
+  anc = t - 1 - t.urem(ad);   // absolute value of nc
+  p = d.getBitWidth() - 1;    // initialize p
+  q1 = signedMin.udiv(anc);   // initialize q1 = 2p/abs(nc)
+  r1 = signedMin - q1*anc;    // initialize r1 = rem(2p,abs(nc))
+  q2 = signedMin.udiv(ad);    // initialize q2 = 2p/abs(d)
+  r2 = signedMin - q2*ad;     // initialize r2 = rem(2p,abs(d))
   do {
     p = p + 1;
-    q1 = 2*q1;        // update q1 = 2p/abs(nc)
-    r1 = 2*r1;        // update r1 = rem(2p/abs(nc))
-    if (r1 >= anc) {  // must be unsigned comparison
+    q1 = q1<<1;          // update q1 = 2p/abs(nc)
+    r1 = r1<<1;          // update r1 = rem(2p/abs(nc))
+    if (r1.uge(anc)) {  // must be unsigned comparison
       q1 = q1 + 1;
       r1 = r1 - anc;
     }
-    q2 = 2*q2;        // update q2 = 2p/abs(d)
-    r2 = 2*r2;        // update r2 = rem(2p/abs(d))
-    if (r2 >= ad) {   // must be unsigned comparison
+    q2 = q2<<1;          // update q2 = 2p/abs(d)
+    r2 = r2<<1;          // update r2 = rem(2p/abs(d))
+    if (r2.uge(ad)) {   // must be unsigned comparison
       q2 = q2 + 1;
       r2 = r2 - ad;
     }
     delta = ad - r2;
-  } while (q1 < delta || (q1 == delta && r1 == 0));
-  
-  mag.m = (int32_t)(q2 + 1); // make sure to sign extend
-  if (d < 0) mag.m = -mag.m; // resulting magic number
-  mag.s = p - 32;            // resulting shift
-  return mag;
-}
-
-/// magic - calculate the magic numbers required to codegen an integer sdiv as
-/// a sequence of multiply and shifts.  Requires that the divisor not be 0, 1,
-/// or -1.
-static ms magic64(int64_t d) {
-  int64_t p;
-  uint64_t ad, anc, delta, q1, r1, q2, r2, t;
-  const uint64_t two63 = 9223372036854775808ULL; // 2^63
-  struct ms mag;
-  
-  ad = d >= 0 ? d : -d;
-  t = two63 + ((uint64_t)d >> 63);
-  anc = t - 1 - t%ad;   // absolute value of nc
-  p = 63;               // initialize p
-  q1 = two63/anc;       // initialize q1 = 2p/abs(nc)
-  r1 = two63 - q1*anc;  // initialize r1 = rem(2p,abs(nc))
-  q2 = two63/ad;        // initialize q2 = 2p/abs(d)
-  r2 = two63 - q2*ad;   // initialize r2 = rem(2p,abs(d))
-  do {
-    p = p + 1;
-    q1 = 2*q1;        // update q1 = 2p/abs(nc)
-    r1 = 2*r1;        // update r1 = rem(2p/abs(nc))
-    if (r1 >= anc) {  // must be unsigned comparison
-      q1 = q1 + 1;
-      r1 = r1 - anc;
-    }
-    q2 = 2*q2;        // update q2 = 2p/abs(d)
-    r2 = 2*r2;        // update r2 = rem(2p/abs(d))
-    if (r2 >= ad) {   // must be unsigned comparison
-      q2 = q2 + 1;
-      r2 = r2 - ad;
-    }
-    delta = ad - r2;
-  } while (q1 < delta || (q1 == delta && r1 == 0));
+  } while (q1.ule(delta) || (q1 == delta && r1 == 0));
   
   mag.m = q2 + 1;
-  if (d < 0) mag.m = -mag.m; // resulting magic number
-  mag.s = p - 64;            // resulting shift
+  if (d.isNegative()) mag.m = -mag.m;   // resulting magic number
+  mag.s = p - d.getBitWidth();          // resulting shift
   return mag;
 }
 
@@ -2368,13 +2329,15 @@ SDValue TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
   MVT VT = N->getValueType(0);
   
   // Check to see if we can do this.
-  if (!isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
-    return SDValue();       // BuildSDIV only operates on i32 or i64
+  // FIXME: We should be more aggressive here.
+  if (!isTypeLegal(VT))
+    return SDValue();
   
-  int64_t d = cast<ConstantSDNode>(N->getOperand(1))->getSExtValue();
-  ms magics = (VT == MVT::i32) ? magic32(d) : magic64(d);
+  APInt d = cast<ConstantSDNode>(N->getOperand(1))->getAPIntValue();
+  ms magics = magic(d);
   
   // Multiply the numerator (operand 0) by the magic value
+  // FIXME: We should support doing a MUL in a wider type
   SDValue Q;
   if (isOperationLegal(ISD::MULHS, VT))
     Q = DAG.getNode(ISD::MULHS, VT, N->getOperand(0),
@@ -2386,13 +2349,13 @@ SDValue TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
   else
     return SDValue();       // No mulhs or equvialent
   // If d > 0 and m < 0, add the numerator
-  if (d > 0 && magics.m < 0) { 
+  if (d.isStrictlyPositive() && magics.m.isNegative()) { 
     Q = DAG.getNode(ISD::ADD, VT, Q, N->getOperand(0));
     if (Created)
       Created->push_back(Q.getNode());
   }
   // If d < 0 and m > 0, subtract the numerator.
-  if (d < 0 && magics.m > 0) {
+  if (d.isNegative() && magics.m.isStrictlyPositive()) {
     Q = DAG.getNode(ISD::SUB, VT, Q, N->getOperand(0));
     if (Created)
       Created->push_back(Q.getNode());
