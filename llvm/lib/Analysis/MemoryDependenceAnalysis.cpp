@@ -199,8 +199,14 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
     
   // Otherwise, if we have a dirty entry, we know we can start the scan at that
   // instruction, which may save us some work.
-  if (Instruction *Inst = LocalCache.getPointer())
+  if (Instruction *Inst = LocalCache.getPointer()) {
     ScanPos = Inst;
+   
+    SmallPtrSet<Instruction*, 4> &InstMap = ReverseLocalDeps[Inst];
+    InstMap.erase(QueryInst);
+    if (InstMap.empty())
+      ReverseLocalDeps.erase(Inst);
+  }
   
   // Do the scan.
   LocalCache = getDependencyFromInternal(QueryInst, ScanPos,
@@ -227,10 +233,10 @@ getNonLocalDependency(Instruction *QueryInst,
                                                       MemDepResult> > &Result) {
   assert(getDependency(QueryInst).isNonLocal() &&
      "getNonLocalDependency should only be used on insts with non-local deps!");
-  NonLocalDepInfo *&CacheP = NonLocalDeps[QueryInst];
-  if (CacheP == 0) CacheP = new NonLocalDepInfo();
+  PerInstNLInfo &CacheP = NonLocalDeps[QueryInst];
+  if (CacheP.getPointer() == 0) CacheP.setPointer(new NonLocalDepInfo());
   
-  NonLocalDepInfo &Cache = *CacheP;
+  NonLocalDepInfo &Cache = *CacheP.getPointer();
 
   /// DirtyBlocks - This is the set of blocks that need to be recomputed.  In
   /// the cached case, this can happen due to instructions being deleted etc. In
@@ -240,13 +246,13 @@ getNonLocalDependency(Instruction *QueryInst,
   
   if (!Cache.empty()) {
     // If we already have a partially computed set of results, scan them to
-    // determine what is dirty, seeding our initial DirtyBlocks worklist.
-    // FIXME: In the "don't need to be updated" case, this is expensive, why not
-    // have a per-"cache" flag saying it is undirty?
-    for (NonLocalDepInfo::iterator I = Cache.begin(), E = Cache.end();
+    // determine what is dirty, seeding our initial DirtyBlocks worklist.  The
+    // Int bit of CacheP tells us if we have anything dirty.
+    if (CacheP.getInt())
+      for (NonLocalDepInfo::iterator I = Cache.begin(), E = Cache.end();
          I != E; ++I)
-      if (I->second.getInt() == Dirty)
-        DirtyBlocks.push_back(I->first);
+        if (I->second.getInt() == Dirty)
+          DirtyBlocks.push_back(I->first);
     
     NumCacheNonLocal++;
     
@@ -315,7 +321,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   // for any cached queries.
   NonLocalDepMapType::iterator NLDI = NonLocalDeps.find(RemInst);
   if (NLDI != NonLocalDeps.end()) {
-    NonLocalDepInfo &BlockMap = *NLDI->second;
+    NonLocalDepInfo &BlockMap = *NLDI->second.getPointer();
     for (NonLocalDepInfo::iterator DI = BlockMap.begin(), DE = BlockMap.end();
          DI != DE; ++DI)
       if (Instruction *Inst = DI->second.getPointer())
@@ -388,11 +394,13 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
          I != E; ++I) {
       assert(*I != RemInst && "Already removed NonLocalDep info for RemInst");
       
-      NonLocalDepInfo &INLD = *NonLocalDeps[*I];
-      assert(&INLD != 0 && "Reverse mapping out of date?");
+      PerInstNLInfo &INLD = NonLocalDeps[*I];
+      assert(INLD.getPointer() != 0 && "Reverse mapping out of date?");
+      // The information is now dirty!
+      INLD.setInt(true);
       
-      for (NonLocalDepInfo::iterator DI = INLD.begin(), DE = INLD.end();
-           DI != DE; ++DI) {
+      for (NonLocalDepInfo::iterator DI = INLD.getPointer()->begin(), 
+           DE = INLD.getPointer()->end(); DI != DE; ++DI) {
         if (DI->second.getPointer() != RemInst) continue;
         
         // Convert to a dirty entry for the subsequent instruction.
@@ -435,9 +443,9 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
   for (NonLocalDepMapType::const_iterator I = NonLocalDeps.begin(),
        E = NonLocalDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in data structures");
-    NonLocalDepInfo &INLD = *I->second;
-    for (NonLocalDepInfo::iterator II = INLD.begin(), EE = INLD.end();
-         II  != EE; ++II)
+    const PerInstNLInfo &INLD = I->second;
+    for (NonLocalDepInfo::iterator II = INLD.getPointer()->begin(),
+         EE = INLD.getPointer()->end(); II  != EE; ++II)
       assert(II->second.getPointer() != D && "Inst occurs in data structures");
   }
   

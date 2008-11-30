@@ -129,11 +129,14 @@ namespace llvm {
 
     typedef DenseMap<BasicBlock*, DepResultTy> NonLocalDepInfo;
     
+    /// PerInstNLInfo - This is the instruction we keep for each cached access
+    /// that we have for an instruction.  The pointer is an owning pointer and
+    /// the bool indicates whether we have any dirty bits in the set.
+    typedef PointerIntPair<NonLocalDepInfo*, 1, bool> PerInstNLInfo;
     
     // A map from instructions to their non-local dependencies.
-    typedef DenseMap<Instruction*,
-                     // This is an owning pointer.
-                     NonLocalDepInfo*> NonLocalDepMapType;
+    typedef DenseMap<Instruction*, PerInstNLInfo> NonLocalDepMapType;
+      
     NonLocalDepMapType NonLocalDeps;
     
     // A reverse mapping from dependencies to the dependees.  This is
@@ -158,7 +161,7 @@ namespace llvm {
       LocalDeps.clear();
       for (NonLocalDepMapType::iterator I = NonLocalDeps.begin(),
            E = NonLocalDeps.end(); I != E; ++I)
-        delete I->second;
+        delete I->second.getPointer();
       NonLocalDeps.clear();
       ReverseLocalDeps.clear();
       ReverseNonLocalDeps.clear();
