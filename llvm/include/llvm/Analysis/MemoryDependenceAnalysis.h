@@ -127,10 +127,13 @@ namespace llvm {
     typedef DenseMap<Instruction*, DepResultTy> LocalDepMapType;
     LocalDepMapType LocalDeps;
 
+    typedef DenseMap<BasicBlock*, DepResultTy> NonLocalDepInfo;
+    
+    
     // A map from instructions to their non-local dependencies.
     typedef DenseMap<Instruction*,
                      // This is an owning pointer.
-                     DenseMap<BasicBlock*, DepResultTy>*> NonLocalDepMapType;
+                     NonLocalDepInfo*> NonLocalDepMapType;
     NonLocalDepMapType NonLocalDeps;
     
     // A reverse mapping from dependencies to the dependees.  This is

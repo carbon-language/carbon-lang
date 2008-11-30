@@ -227,10 +227,10 @@ getNonLocalDependency(Instruction *QueryInst,
                                                       MemDepResult> > &Result) {
   assert(getDependency(QueryInst).isNonLocal() &&
      "getNonLocalDependency should only be used on insts with non-local deps!");
-  DenseMap<BasicBlock*, DepResultTy>* &CacheP = NonLocalDeps[QueryInst];
-  if (CacheP == 0) CacheP = new DenseMap<BasicBlock*, DepResultTy>();
+  NonLocalDepInfo *&CacheP = NonLocalDeps[QueryInst];
+  if (CacheP == 0) CacheP = new NonLocalDepInfo();
   
-  DenseMap<BasicBlock*, DepResultTy> &Cache = *CacheP;
+  NonLocalDepInfo &Cache = *CacheP;
 
   /// DirtyBlocks - This is the set of blocks that need to be recomputed.  In
   /// the cached case, this can happen due to instructions being deleted etc. In
@@ -243,8 +243,8 @@ getNonLocalDependency(Instruction *QueryInst,
     // determine what is dirty, seeding our initial DirtyBlocks worklist.
     // FIXME: In the "don't need to be updated" case, this is expensive, why not
     // have a per-"cache" flag saying it is undirty?
-    for (DenseMap<BasicBlock*, DepResultTy>::iterator I = Cache.begin(),
-         E = Cache.end(); I != E; ++I)
+    for (NonLocalDepInfo::iterator I = Cache.begin(), E = Cache.end();
+         I != E; ++I)
       if (I->second.getInt() == Dirty)
         DirtyBlocks.push_back(I->first);
     
@@ -303,8 +303,7 @@ getNonLocalDependency(Instruction *QueryInst,
   
   
   // Copy the result into the output set.
-  for (DenseMap<BasicBlock*, DepResultTy>::iterator I = Cache.begin(),
-       E = Cache.end(); I != E; ++I)
+  for (NonLocalDepInfo::iterator I = Cache.begin(), E = Cache.end(); I != E;++I)
     Result.push_back(std::make_pair(I->first, ConvToResult(I->second)));
 }
 
@@ -316,9 +315,9 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   // for any cached queries.
   NonLocalDepMapType::iterator NLDI = NonLocalDeps.find(RemInst);
   if (NLDI != NonLocalDeps.end()) {
-    DenseMap<BasicBlock*, DepResultTy> &BlockMap = *NLDI->second;
-    for (DenseMap<BasicBlock*, DepResultTy>::iterator DI =
-         BlockMap.begin(), DE = BlockMap.end(); DI != DE; ++DI)
+    NonLocalDepInfo &BlockMap = *NLDI->second;
+    for (NonLocalDepInfo::iterator DI = BlockMap.begin(), DE = BlockMap.end();
+         DI != DE; ++DI)
       if (Instruction *Inst = DI->second.getPointer())
         ReverseNonLocalDeps[Inst].erase(RemInst);
     delete &BlockMap;
@@ -389,11 +388,11 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
          I != E; ++I) {
       assert(*I != RemInst && "Already removed NonLocalDep info for RemInst");
       
-      DenseMap<BasicBlock*, DepResultTy> &INLD = *NonLocalDeps[*I];
+      NonLocalDepInfo &INLD = *NonLocalDeps[*I];
       assert(&INLD != 0 && "Reverse mapping out of date?");
       
-      for (DenseMap<BasicBlock*, DepResultTy>::iterator
-           DI = INLD.begin(), DE = INLD.end(); DI != DE; ++DI) {
+      for (NonLocalDepInfo::iterator DI = INLD.begin(), DE = INLD.end();
+           DI != DE; ++DI) {
         if (DI->second.getPointer() != RemInst) continue;
         
         // Convert to a dirty entry for the subsequent instruction.
@@ -436,9 +435,9 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
   for (NonLocalDepMapType::const_iterator I = NonLocalDeps.begin(),
        E = NonLocalDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in data structures");
-    DenseMap<BasicBlock*, DepResultTy> &INLD = *I->second;
-    for (DenseMap<BasicBlock*, DepResultTy>::iterator II = INLD.begin(),
-         EE = INLD.end(); II  != EE; ++II)
+    NonLocalDepInfo &INLD = *I->second;
+    for (NonLocalDepInfo::iterator II = INLD.begin(), EE = INLD.end();
+         II  != EE; ++II)
       assert(II->second.getPointer() != D && "Inst occurs in data structures");
   }
   
