@@ -60,12 +60,12 @@ public:
   void *getOpaqueValue() const { return reinterpret_cast<void*>(Value); }
   void setFromOpaqueValue(void *Val) { Value = reinterpret_cast<intptr_t>(Val);}
   
-  bool operator==(const PointerIntPair &RHS) const {
-    return Value == RHS.Value;
-  }
-  bool operator!=(const PointerIntPair &RHS) const {
-    return Value != RHS.Value;
-  }
+  bool operator==(const PointerIntPair &RHS) const {return Value == RHS.Value;}
+  bool operator!=(const PointerIntPair &RHS) const {return Value != RHS.Value;}
+  bool operator<(const PointerIntPair &RHS) const {return Value < RHS.Value;}
+  bool operator>(const PointerIntPair &RHS) const {return Value > RHS.Value;}
+  bool operator<=(const PointerIntPair &RHS) const {return Value <= RHS.Value;}
+  bool operator>=(const PointerIntPair &RHS) const {return Value >= RHS.Value;}
 };
 
 // Provide specialization of DenseMapInfo for PointerIntPair.
