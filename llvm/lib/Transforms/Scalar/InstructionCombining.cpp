@@ -2968,7 +2968,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
       if (Value *LHSNeg = dyn_castNegVal(Op0)) {
         if (ConstantInt *CI = dyn_cast<ConstantInt>(LHSNeg)) {
           ConstantInt *CINeg = cast<ConstantInt>(ConstantExpr::getNeg(CI));
-          APInt CINegAPI(CINeg->getBitWidth(), CINeg->getSExtValue(), true);
+          APInt CINegAPI(CINeg->getValue());
 
           if ((CI->getValue().isNegative() && CINegAPI.slt(TwoToExp - 1)) ||
               (CI->getValue().isNonNegative() && CINegAPI.sgt(TwoToExp*NegOne)))
