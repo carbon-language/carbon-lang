@@ -67,22 +67,23 @@ struct DenseMapInfo<std::pair<T, U> > {
   }
   static inline Pair getTombstoneKey() { 
     return std::make_pair(FirstInfo::getTombstoneKey(), 
-                            SecondInfo::getEmptyKey()); }
-    static unsigned getHashValue(const Pair& PairVal) {
-      uint64_t key = (uint64_t)FirstInfo::getHashValue(PairVal.first) << 32
-            | (uint64_t)SecondInfo::getHashValue(PairVal.second);
-      key += ~(key << 32);
-      key ^= (key >> 22);
-      key += ~(key << 13);
-      key ^= (key >> 8);
-      key += (key << 3);
-      key ^= (key >> 15);
-      key += ~(key << 27);
-      key ^= (key >> 31);
-      return (unsigned)key;
-    }
-    static bool isEqual(const Pair& LHS, const Pair& RHS) { return LHS == RHS; }
-    static bool isPod() { return false; }
+                            SecondInfo::getEmptyKey());
+  }
+  static unsigned getHashValue(const Pair& PairVal) {
+    uint64_t key = (uint64_t)FirstInfo::getHashValue(PairVal.first) << 32
+          | (uint64_t)SecondInfo::getHashValue(PairVal.second);
+    key += ~(key << 32);
+    key ^= (key >> 22);
+    key += ~(key << 13);
+    key ^= (key >> 8);
+    key += (key << 3);
+    key ^= (key >> 15);
+    key += ~(key << 27);
+    key ^= (key >> 31);
+    return (unsigned)key;
+  }
+  static bool isEqual(const Pair& LHS, const Pair& RHS) { return LHS == RHS; }
+  static bool isPod() { return FirstInfo::isPod() && SecondInfo::isPod(); }
 };
 
 template<typename KeyT, typename ValueT, 
