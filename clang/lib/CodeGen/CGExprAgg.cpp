@@ -368,14 +368,23 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     CGF.ErrorUnsupported(E, "initializer list with designators");
     return;
   }
-  
-  // FIXME: For constant expressions, call into const expr emitter so
-  // that we can emit a memcpy instead of storing the individual
-  // members.  This is purely for perf; both codepaths lead to
-  // equivalent (although not necessarily identical) code.  It's worth
-  // noting that LLVM keeps on getting smarter, though, so it might
-  // not be worth bothering.
-  
+
+  // If we can, prefer a copy from a global; this is a lot less
+  // code for long globals, and it's easier for the current optimizers
+  // to analyze.
+  // FIXME: Should we really be doing this? Should we try to avoid
+  // cases where we emit a global with a lot of zeros?  Should
+  // we try to avoid short globals? 
+  if (E->isConstantExpr(CGF.getContext(), 0)) {
+    llvm::Constant* C = CGF.CGM.EmitConstantExpr(E, &CGF);
+    llvm::GlobalVariable* GV =
+    new llvm::GlobalVariable(C->getType(), true,
+                             llvm::GlobalValue::InternalLinkage,
+                             C, "", &CGF.CGM.getModule(), 0);
+    CGF.EmitAggregateCopy(DestPtr, GV, E->getType());
+    return;
+  }
+
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
     const llvm::PointerType *APType =
