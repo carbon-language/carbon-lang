@@ -329,20 +329,21 @@ public:
     return (unsigned)Info.Ctx.getIntWidth(T);
   }
   
-  bool Extension(SourceLocation L, diag::kind D) {
+  bool Extension(SourceLocation L, diag::kind D, const Expr *E) {
     Info.EvalResult.DiagLoc = L;
     Info.EvalResult.Diag = D;
+    Info.EvalResult.DiagExpr = E;
     return true;  // still a constant.
   }
     
-  bool Error(SourceLocation L, diag::kind D, QualType ExprTy) {
+  bool Error(SourceLocation L, diag::kind D, const Expr *E) {
     // If this is in an unevaluated portion of the subexpression, ignore the
     // error.
     if (!Info.isEvaluated) {
       // If error is ignored because the value isn't evaluated, get the real
       // type at least to prevent errors downstream.
-      Result.zextOrTrunc(getIntTypeSizeInBits(ExprTy));
-      Result.setIsUnsigned(ExprTy->isUnsignedIntegerType());
+      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
       return true;
     }
     
@@ -350,6 +351,7 @@ public:
     if (Info.EvalResult.Diag == 0) {
       Info.EvalResult.DiagLoc = L;
       Info.EvalResult.Diag = D;
+      Info.EvalResult.DiagExpr = E;
     }
     return false;
   }
@@ -364,7 +366,7 @@ public:
   }
     
   bool VisitExpr(Expr *E) {
-    return Error(E->getLocStart(), diag::err_expr_not_constant, E->getType());
+    return Error(E->getLocStart(), diag::err_expr_not_constant, E);
   }
   
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
@@ -398,7 +400,7 @@ public:
   bool VisitConditionalOperator(const ConditionalOperator *E);
 
   bool VisitCastExpr(CastExpr* E) {
-    return HandleCast(E->getLocStart(), E->getSubExpr(), E->getType());
+    return HandleCast(E);
   }
   bool VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
 
@@ -416,7 +418,7 @@ public:
   }
 
 private:
-  bool HandleCast(SourceLocation CastLoc, Expr *SubExpr, QualType DestType);
+  bool HandleCast(CastExpr* E);
 };
 } // end anonymous namespace
 
@@ -432,7 +434,7 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
   }
   
   // Otherwise, random variable references are not constants.
-  return Error(E->getLocStart(), diag::err_expr_not_constant, E->getType());
+  return Error(E->getLocStart(), diag::err_expr_not_constant, E);
 }
 
 /// EvaluateBuiltinClassifyType - Evaluate __builtin_classify_type the same way
@@ -495,7 +497,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   
   switch (E->isBuiltinCall()) {
   default:
-    return Error(E->getLocStart(), diag::err_expr_not_constant, E->getType());
+    return Error(E->getLocStart(), diag::err_expr_not_constant, E);
   case Builtin::BI__builtin_classify_type:
     Result.setIsSigned(true);
     Result = EvaluateBuiltinClassifyType(E);
@@ -522,7 +524,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     // whether a comma is evaluated.  This isn't really used yet, though,
     // and I'm not sure it really works as intended.
     if (!Info.isEvaluated)
-      return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr);
+      return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr,E);
 
     return false;
   }
@@ -676,7 +678,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
   switch (E->getOpcode()) {
   default:
-    return Error(E->getOperatorLoc(), diag::err_expr_not_constant,E->getType());
+    return Error(E->getOperatorLoc(), diag::err_expr_not_constant, E);
   case BinaryOperator::Mul: Result *= RHS; return true;
   case BinaryOperator::Add: Result += RHS; return true;
   case BinaryOperator::Sub: Result -= RHS; return true;
@@ -686,13 +688,12 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   case BinaryOperator::Div:
     if (RHS == 0)
       return Error(E->getOperatorLoc(), diag::err_expr_divide_by_zero,
-                   E->getType());
+                   E);
     Result /= RHS;
     break;
   case BinaryOperator::Rem:
     if (RHS == 0)
-      return Error(E->getOperatorLoc(), diag::err_expr_divide_by_zero,
-                   E->getType());
+      return Error(E->getOperatorLoc(), diag::err_expr_divide_by_zero, E);
     Result %= RHS;
     break;
   case BinaryOperator::Shl:
@@ -819,8 +820,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   default:
     // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
     // See C99 6.6p3.
-    return Error(E->getOperatorLoc(), diag::err_expr_not_constant,
-                 E->getType());
+    return Error(E->getOperatorLoc(), diag::err_expr_not_constant, E);
   case UnaryOperator::Extension:
     // FIXME: Should extension allow i-c-e extension expressions in its scope?
     // If so, we could clear the diagnostic ID.
@@ -841,8 +841,10 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   
 /// HandleCast - This is used to evaluate implicit or explicit casts where the
 /// result type is integer.
-bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
-                                  Expr *SubExpr, QualType DestType) {
+bool IntExprEvaluator::HandleCast(CastExpr *E) {
+  Expr *SubExpr = E->getSubExpr();
+  QualType DestType = E->getType();
+
   unsigned DestWidth = getIntTypeSizeInBits(DestType);
 
   if (DestType->isBooleanType()) {
@@ -883,11 +885,11 @@ bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
   }
 
   if (!SubExpr->getType()->isRealFloatingType())
-    return Error(CastLoc, diag::err_expr_not_constant, DestType);
+    return Error(E->getExprLoc(), diag::err_expr_not_constant, E);
 
   APFloat F(0.0);
   if (!EvaluateFloat(SubExpr, F, Info))
-    return Error(CastLoc, diag::err_expr_not_constant, DestType);
+    return Error(E->getExprLoc(), diag::err_expr_not_constant, E);
   
   // Determine whether we are converting to unsigned or signed.
   bool DestSigned = DestType->isSignedIntegerType();
