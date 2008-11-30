@@ -159,29 +159,19 @@ getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt,
         continue;
       return DepResultTy(Inst, Normal);
     }
-    
-    // FIXME: This claims that an access depends on the allocation.  This may
-    // make sense, but is dubious at best.  It would be better to fix GVN to
-    // handle a 'None' Query.
+
+    // If this is an allocation, and if we know that the accessed pointer is to
+    // the allocation, return None.  This means that there is no dependence and
+    // the access can be optimized based on that.  For example, a load could
+    // turn into undef.
     if (AllocationInst *AI = dyn_cast<AllocationInst>(Inst)) {
-      Value *Pointer = AI;
-      uint64_t PointerSize;
-      if (ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        // Use ABI size (size between elements), not store size (size of one
-        // element without padding).
-        PointerSize = C->getZExtValue() * 
-          TD.getABITypeSize(AI->getAllocatedType());
-      else
-        PointerSize = ~0UL;
+      Value *AccessPtr = MemPtr->getUnderlyingObject();
       
-      AliasAnalysis::AliasResult R =
-        AA.alias(Pointer, PointerSize, MemPtr, MemSize);
-      
-      if (R == AliasAnalysis::NoAlias)
-        continue;
-      return DepResultTy(Inst, Normal);
+      if (AccessPtr == AI ||
+          AA.alias(AI, 1, AccessPtr, 1) == AliasAnalysis::MustAlias)
+        return DepResultTy(0, None);
+      continue;
     }
-      
     
     // See if this instruction mod/ref's the pointer.
     AliasAnalysis::ModRefResult MRR = AA.getModRefInfo(Inst, MemPtr, MemSize);

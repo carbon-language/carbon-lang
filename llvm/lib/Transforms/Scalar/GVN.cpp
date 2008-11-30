@@ -1004,27 +1004,24 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
       toErase.push_back(L);
       deletedLoad = true;
       NumGVNLoad++;
-        
       break;
     } else {
       dep = MD.getDependencyFrom(L, DepInst, DepInst->getParent());
     }
   }
 
-  if (AllocationInst *DepAI = dyn_cast_or_null<AllocationInst>(dep.getInst())) {
-    // Check that this load is actually from the
-    // allocation we found
-    if (L->getOperand(0)->getUnderlyingObject() == DepAI) {
-      // If this load depends directly on an allocation, there isn't
-      // anything stored there; therefore, we can optimize this load
-      // to undef.
-      MD.removeInstruction(L);
-
-      L->replaceAllUsesWith(UndefValue::get(L->getType()));
-      toErase.push_back(L);
-      deletedLoad = true;
-      NumGVNLoad++;
-    }
+  // If this load really doesn't depend on anything, then we must be loading an
+  // undef value.  This can happen when loading for a fresh allocation with no
+  // intervening stores, for example.
+  if (dep.isNone()) {
+    // If this load depends directly on an allocation, there isn't
+    // anything stored there; therefore, we can optimize this load
+    // to undef.
+    MD.removeInstruction(L);
+    L->replaceAllUsesWith(UndefValue::get(L->getType()));
+    toErase.push_back(L);
+    deletedLoad = true;
+    NumGVNLoad++;
   }
 
   if (!deletedLoad)
