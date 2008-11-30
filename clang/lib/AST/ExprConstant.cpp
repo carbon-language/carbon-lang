@@ -1160,33 +1160,43 @@ APValue ComplexFloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
 /// any crazy technique (that has nothing to do with language standards) that
 /// we want to.  If this function returns true, it returns the folded constant
 /// in Result.
-bool Expr::Evaluate(APValue &Result, ASTContext &Ctx, bool *isEvaluated) const {
-  Expr::EvalResult EvalResult;
-  EvalInfo Info(Ctx, EvalResult);
+bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
+  EvalInfo Info(Ctx, Result);
 
   if (getType()->isIntegerType()) {
     llvm::APSInt sInt(32);
     if (!EvaluateInteger(this, sInt, Info))
       return false;
     
-    Result = APValue(sInt);
+    Result.Val = APValue(sInt);
   } else if (getType()->isPointerType()) {
-    if (!EvaluatePointer(this, Result, Info))
+    if (!EvaluatePointer(this, Result.Val, Info))
       return false;
   } else if (getType()->isRealFloatingType()) {
     llvm::APFloat f(0.0);
     if (!EvaluateFloat(this, f, Info))
       return false;
     
-    Result = APValue(f);
+    Result.Val = APValue(f);
   } else if (getType()->isComplexType()) {
-    if (!EvaluateComplexFloat(this, Result, Info))
+    if (!EvaluateComplexFloat(this, Result.Val, Info))
       return false;
   }  else
     return false;
 
+  return true;
+}
+
+bool Expr::Evaluate(APValue &Result, ASTContext &Ctx, bool *isEvaluated) const {
+  EvalResult EvalResult;
+  
+  if (!Evaluate(EvalResult, Ctx))
+    return false;
+  
+  Result = EvalResult.Val;
   if (isEvaluated)
     *isEvaluated = !EvalResult.HasSideEffects;
+  
   return true;
 }
 

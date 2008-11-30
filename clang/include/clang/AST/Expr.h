@@ -166,6 +166,8 @@ public:
   /// any crazy technique (that has nothing to do with language standards) that
   /// we want to.  If this function returns true, it returns the folded constant
   /// in Result.
+  bool Evaluate(EvalResult &Result, ASTContext &Ctx) const;
+
   // FIXME: We should come up with a better API for the isEvaluated case.
   bool Evaluate(APValue& Result, ASTContext &Ctx, bool *isEvaluated = 0) const;
 
