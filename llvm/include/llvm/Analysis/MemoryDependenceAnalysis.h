@@ -80,6 +80,17 @@ namespace llvm {
   /// given memory operation, what preceding memory operations it depends on.
   /// It builds on alias analysis information, and tries to provide a lazy,
   /// caching interface to a common kind of alias information query.
+  ///
+  /// The dependency information returned is somewhat unusual, but is pragmatic.
+  /// If queried about a store or call that might modify memory, the analysis
+  /// will return the instruction[s] that may either load from that memory or
+  /// store to it.  If queried with a load or call that can never modify memory,
+  /// the analysis will return calls and stores that might modify the pointer,
+  /// but generally does not return loads unless a) they are volatile, or
+  /// b) they load from *must-aliased* pointers.  Returning a dependence on
+  /// must-alias'd pointers instead of all pointers interacts well with the
+  /// internal caching mechanism.
+  ///
   class MemoryDependenceAnalysis : public FunctionPass {
     /// DepType - This enum is used to indicate what flavor of dependence this
     /// is.  If the type is Normal, there is an associated instruction pointer.
@@ -153,7 +164,7 @@ namespace llvm {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     
     /// getDependency - Return the instruction on which a memory operation
-    /// depends.
+    /// depends.  See the class comment for more details.
     MemDepResult getDependency(Instruction *QueryInst);
 
     /// getDependencyFrom - Return the instruction on which the memory operation

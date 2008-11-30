@@ -153,7 +153,6 @@ getNonLocalDependency(Instruction *QueryInst,
     if (DirtyBBEntry.getInt() != Dirty) continue;
 
     // Find out if this block has a local dependency for QueryInst.
-    // FIXME: If the dirty entry has an instruction pointer, scan from it!
     // FIXME: Don't convert back and forth for MemDepResult <-> DepResultTy.
     
     // If the dirty entry has a pointer, start scanning from it so we don't have
@@ -234,7 +233,6 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
 
     // MemDep is broken w.r.t. loads: it says that two loads of the same pointer
     // depend on each other.  :(
-    // FIXME: ELIMINATE THIS!
     if (LoadInst *L = dyn_cast<LoadInst>(Inst)) {
       Value *Pointer = L->getPointerOperand();
       uint64_t PointerSize = TD.getTypeStoreSize(L->getType());
