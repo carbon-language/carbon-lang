@@ -41,13 +41,13 @@ struct EvalInfo {
   
   /// EvalResult - Contains information about the evaluation.
   Expr::EvalResult &EvalResult;
-  
-  /// isEvaluated - True if the subexpression is required to be evaluated, false
-  /// if it is short-circuited (according to C rules).
-  bool isEvaluated;
+
+  /// ShortCircuit - will be greater than zero if the current subexpression has
+  /// will not be evaluated because it's short-circuited (according to C rules).
+  unsigned ShortCircuit;
 
   EvalInfo(ASTContext &ctx, Expr::EvalResult& evalresult) : Ctx(ctx), 
-           EvalResult(evalresult), isEvaluated(true) {}
+           EvalResult(evalresult), ShortCircuit(0) {}
 };
 
 
@@ -339,7 +339,7 @@ public:
   bool Error(SourceLocation L, diag::kind D, const Expr *E) {
     // If this is in an unevaluated portion of the subexpression, ignore the
     // error.
-    if (!Info.isEvaluated) {
+    if (Info.ShortCircuit) {
       // If error is ignored because the value isn't evaluated, get the real
       // type at least to prevent errors downstream.
       Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
@@ -519,11 +519,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     if (Visit(E->getRHS()))
       return true;
 
-    // Check for isEvaluated; the idea is that this might eventually
-    // be useful for isICE and other similar uses that care about
-    // whether a comma is evaluated.  This isn't really used yet, though,
-    // and I'm not sure it really works as intended.
-    if (!Info.isEvaluated)
+    if (Info.ShortCircuit)
       return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr,E);
 
     return false;
@@ -543,8 +539,10 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
         Result = lhsResult;
         
+        Info.ShortCircuit++;
         bool rhsEvaluated = HandleConversionToBool(E->getRHS(), rhsResult, Info);
-
+        Info.ShortCircuit--;
+        
         if (rhsEvaluated)
           return true;
         
