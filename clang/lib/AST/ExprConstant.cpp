@@ -39,27 +39,15 @@ using llvm::APFloat;
 struct EvalInfo {
   ASTContext &Ctx;
   
+  /// EvalResult - Contains information about the evaluation.
+  Expr::EvalResult &EvalResult;
+  
   /// isEvaluated - True if the subexpression is required to be evaluated, false
   /// if it is short-circuited (according to C rules).
   bool isEvaluated;
-  
-  /// ICEDiag - If the expression is unfoldable, then ICEDiag contains the 
-  /// error diagnostic indicating why it is not foldable and DiagLoc indicates a
-  /// caret position for the error.  If it is foldable, but the expression is
-  /// not an integer constant expression, ICEDiag contains the extension
-  /// diagnostic to emit which describes why it isn't an integer constant
-  /// expression.  If this expression *is* an integer-constant-expr, then
-  /// ICEDiag is zero.
-  ///
-  /// The caller can choose to emit this diagnostic or not, depending on whether
-  /// they require an i-c-e or a constant or not.  DiagLoc indicates the caret
-  /// position for the report.
-  ///
-  /// If ICEDiag is zero, then this expression is an i-c-e.  
-  unsigned ICEDiag;
-  SourceLocation DiagLoc;
 
-  EvalInfo(ASTContext &ctx) : Ctx(ctx), isEvaluated(true), ICEDiag(0) {}
+  EvalInfo(ASTContext &ctx, Expr::EvalResult& evalresult) : Ctx(ctx), 
+           EvalResult(evalresult), isEvaluated(true) {}
 };
 
 
@@ -342,8 +330,8 @@ public:
   }
   
   bool Extension(SourceLocation L, diag::kind D) {
-    Info.DiagLoc = L;
-    Info.ICEDiag = D;
+    Info.EvalResult.DiagLoc = L;
+    Info.EvalResult.Diag = D;
     return true;  // still a constant.
   }
     
@@ -359,9 +347,9 @@ public:
     }
     
     // Take the first error.
-    if (Info.ICEDiag == 0) {
-      Info.DiagLoc = L;
-      Info.ICEDiag = D;
+    if (Info.EvalResult.Diag == 0) {
+      Info.EvalResult.DiagLoc = L;
+      Info.EvalResult.Diag = D;
     }
     return false;
   }
@@ -1164,7 +1152,9 @@ APValue ComplexFloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
 /// we want to.  If this function returns true, it returns the folded constant
 /// in Result.
 bool Expr::Evaluate(APValue &Result, ASTContext &Ctx, bool *isEvaluated) const {
-  EvalInfo Info(Ctx);
+  Expr::EvalResult EvalResult;
+  EvalInfo Info(Ctx, EvalResult);
+
   if (getType()->isIntegerType()) {
     llvm::APSInt sInt(32);
     if (!EvaluateInteger(this, sInt, Info))
