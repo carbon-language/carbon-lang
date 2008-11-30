@@ -1086,16 +1086,6 @@ produces better code on X86.
 
 //===---------------------------------------------------------------------===//
 
-From GCC Bug 33512:
-int f(int y, int x)
-{
- return x & ((~x) | y);
-}
-Should combine to x & y.  Currently not optimized with "clang
--emit-llvm-bc | opt -std-compile-opts".
-
-//===---------------------------------------------------------------------===//
-
 From GCC Bug 15784:
 #define abs(x) x>0?x:-x
 int f(int x, int y)

@@ -3993,6 +3993,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         std::swap(Op0, Op1);
       }
     }
+
     if (Op1->hasOneUse() &&
         match(Op1, m_Xor(m_Value(A), m_Value(B)))) {
       if (B == Op0) {                                // B&(A^B) -> B&(B^A)
@@ -4004,6 +4005,24 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         InsertNewInstBefore(NotB, I);
         return BinaryOperator::CreateAnd(A, NotB);
       }
+    }
+
+    // (A&((~A)|B)) -> A&B
+    if (match(Op0, m_Or(m_Not(m_Value(A)), m_Value(B)))) {
+      if (A == Op1)
+        return BinaryOperator::CreateAnd(A, B);
+    }
+    if (match(Op0, m_Or(m_Value(A), m_Not(m_Value(B))))) {
+      if (B == Op1)
+        return BinaryOperator::CreateAnd(A, B);
+    }
+    if (match(Op1, m_Or(m_Not(m_Value(A)), m_Value(B)))) {
+      if (A == Op0)
+        return BinaryOperator::CreateAnd(A, B);
+    }
+    if (match(Op1, m_Or(m_Value(A), m_Not(m_Value(B))))) {
+      if (B == Op0)
+        return BinaryOperator::CreateAnd(A, B);
     }
   }
   
