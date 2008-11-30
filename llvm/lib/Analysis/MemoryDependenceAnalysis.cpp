@@ -63,15 +63,6 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
     if (StoreInst *S = dyn_cast<StoreInst>(Inst)) {
       Pointer = S->getPointerOperand();
       PointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
-    } else if (AllocationInst *AI = dyn_cast<AllocationInst>(Inst)) {
-      Pointer = AI;
-      if (ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        // Use ABI size (size between elements), not store size (size of one
-        // element without padding).
-        PointerSize = C->getZExtValue() *
-                      TD.getABITypeSize(AI->getAllocatedType());
-      else
-        PointerSize = ~0UL;
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
       Pointer = V->getOperand(0);
       PointerSize = TD.getTypeStoreSize(V->getType());
@@ -85,8 +76,10 @@ getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
             AliasAnalysis::DoesNotAccessMemory)
         continue;
       return DepResultTy(Inst, Normal);
-    } else
+    } else {
+      // Non-memory instruction.
       continue;
+    }
     
     if (AA.getModRefInfo(C, Pointer, PointerSize) != AliasAnalysis::NoModRef)
       return DepResultTy(Inst, Normal);
@@ -141,8 +134,8 @@ getDependencyFromInternal(Instruction *QueryInst, BasicBlock::iterator ScanIt,
          (isa<StoreInst>(Inst) && cast<StoreInst>(Inst)->isVolatile())))
       return DepResultTy(Inst, Normal);
 
-    // MemDep is broken w.r.t. loads: it says that two loads of the same pointer
-    // depend on each other.  :(
+    // Values depend on loads if the pointers are must aliased.  This means that
+    // a load depends on another must aliased load from the same value.
     if (LoadInst *L = dyn_cast<LoadInst>(Inst)) {
       Value *Pointer = L->getPointerOperand();
       uint64_t PointerSize = TD.getTypeStoreSize(L->getType());
