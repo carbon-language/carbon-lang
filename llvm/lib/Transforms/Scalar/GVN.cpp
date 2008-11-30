@@ -461,8 +461,9 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
       if (local_dep.isNone()) {
         valueNumbering.insert(std::make_pair(V, nextValueNumber));
         return nextValueNumber++;
-      } else if (Instruction *LocalDepInst = local_dep.getInst()) {
-        // FIXME: INDENT PROPERLY!
+      }
+      
+      if (Instruction *LocalDepInst = local_dep.getInst()) {
         if (!isa<CallInst>(LocalDepInst)) {
           valueNumbering.insert(std::make_pair(V, nextValueNumber));
           return nextValueNumber++;
@@ -470,28 +471,29 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
         
         CallInst* local_cdep = cast<CallInst>(LocalDepInst);
         
-        // FIXME: INDENT PROPERLY.
         if (local_cdep->getCalledFunction() != C->getCalledFunction() ||
             local_cdep->getNumOperands() != C->getNumOperands()) {
           valueNumbering.insert(std::make_pair(V, nextValueNumber));
           return nextValueNumber++;
-        } else if (!C->getCalledFunction()) { 
+        }
+        
+        if (!C->getCalledFunction()) { 
           valueNumbering.insert(std::make_pair(V, nextValueNumber));
           return nextValueNumber++;
-        } else {
-          for (unsigned i = 1; i < C->getNumOperands(); ++i) {
-            uint32_t c_vn = lookup_or_add(C->getOperand(i));
-            uint32_t cd_vn = lookup_or_add(local_cdep->getOperand(i));
-            if (c_vn != cd_vn) {
-              valueNumbering.insert(std::make_pair(V, nextValueNumber));
-              return nextValueNumber++;
-            }
-          }
-        
-          uint32_t v = lookup_or_add(local_cdep);
-          valueNumbering.insert(std::make_pair(V, v));
-          return v;
         }
+        
+        for (unsigned i = 1; i < C->getNumOperands(); ++i) {
+          uint32_t c_vn = lookup_or_add(C->getOperand(i));
+          uint32_t cd_vn = lookup_or_add(local_cdep->getOperand(i));
+          if (c_vn != cd_vn) {
+            valueNumbering.insert(std::make_pair(V, nextValueNumber));
+            return nextValueNumber++;
+          }
+        }
+      
+        uint32_t v = lookup_or_add(local_cdep);
+        valueNumbering.insert(std::make_pair(V, v));
+        return v;
       }
       
       
@@ -499,27 +501,30 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
       MD->getNonLocalDependency(C, deps);
       CallInst* cdep = 0;
       
+      // Check to see if we have a single dominating call instruction that is
+      // identical to C.
       for (SmallVector<std::pair<BasicBlock*, MemDepResult>, 32>
              ::iterator I = deps.begin(), E = deps.end(); I != E; ++I) {
-        if (I->second.isNone()) {
-          valueNumbering.insert(std::make_pair(V, nextValueNumber));
+        // Ignore non-local dependencies.
+        if (I->second.isNonLocal())
+          continue;
 
-          return nextValueNumber++;
-        } else if (Instruction *NonLocalDepInst = I->second.getInst()) {
-          // FIXME: INDENT PROPERLY
-          // FIXME: All duplicated with non-local case.
-          if (cdep == 0 && DT->properlyDominates(I->first, C->getParent())) {
-            if (CallInst* CD = dyn_cast<CallInst>(NonLocalDepInst))
-              cdep = CD;
-            else {
-              valueNumbering.insert(std::make_pair(V, nextValueNumber));
-              return nextValueNumber++;
-            }
-          } else {
-            valueNumbering.insert(std::make_pair(V, nextValueNumber));
-            return nextValueNumber++;
-          }
+        // We don't handle non-depedencies.  If we already have a call, reject
+        // instruction dependencies.
+        if (I->second.isNone() || cdep != 0) {
+          cdep = 0;
+          break;
         }
+        
+        CallInst *NonLocalDepCall = dyn_cast<CallInst>(I->second.getInst());
+        // FIXME: All duplicated with non-local case.
+        if (NonLocalDepCall && DT->properlyDominates(I->first, C->getParent())){
+          cdep = NonLocalDepCall;
+          continue;
+        }
+        
+        cdep = 0;
+        break;
       }
       
       if (!cdep) {
@@ -527,33 +532,27 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
         return nextValueNumber++;
       }
       
-      // FIXME: THIS ISN'T SAFE: CONSIDER:
-      // X = strlen(str)
-      //   if (C)
-      //     str[0] = 1;
-      // Y = strlen(str)
-      // This doesn't guarantee all-paths availability!
       if (cdep->getCalledFunction() != C->getCalledFunction() ||
           cdep->getNumOperands() != C->getNumOperands()) {
         valueNumbering.insert(std::make_pair(V, nextValueNumber));
         return nextValueNumber++;
-      } else if (!C->getCalledFunction()) { 
+      }
+      if (!C->getCalledFunction()) { 
         valueNumbering.insert(std::make_pair(V, nextValueNumber));
         return nextValueNumber++;
-      } else {
-        for (unsigned i = 1; i < C->getNumOperands(); ++i) {
-          uint32_t c_vn = lookup_or_add(C->getOperand(i));
-          uint32_t cd_vn = lookup_or_add(cdep->getOperand(i));
-          if (c_vn != cd_vn) {
-            valueNumbering.insert(std::make_pair(V, nextValueNumber));
-            return nextValueNumber++;
-          }
-        }
-        
-        uint32_t v = lookup_or_add(cdep);
-        valueNumbering.insert(std::make_pair(V, v));
-        return v;
       }
+      for (unsigned i = 1; i < C->getNumOperands(); ++i) {
+        uint32_t c_vn = lookup_or_add(C->getOperand(i));
+        uint32_t cd_vn = lookup_or_add(cdep->getOperand(i));
+        if (c_vn != cd_vn) {
+          valueNumbering.insert(std::make_pair(V, nextValueNumber));
+          return nextValueNumber++;
+        }
+      }
+      
+      uint32_t v = lookup_or_add(cdep);
+      valueNumbering.insert(std::make_pair(V, v));
+      return v;
       
     } else {
       valueNumbering.insert(std::make_pair(V, nextValueNumber));
