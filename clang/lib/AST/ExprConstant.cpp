@@ -530,41 +530,50 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->isLogicalOp()) {
     // These need to be handled specially because the operands aren't
     // necessarily integral
-    bool bres;
+    bool lhsResult, rhsResult;
     
-    if (HandleConversionToBool(E->getLHS(), bres, Info)) {
+    if (HandleConversionToBool(E->getLHS(), lhsResult, Info)) {
       // We were able to evaluate the LHS, see if we can get away with not
       // evaluating the RHS: 0 && X -> 0, 1 || X -> 1
-      if (bres == (E->getOpcode() == BinaryOperator::LOr) || 
-          !bres == (E->getOpcode() == BinaryOperator::LAnd)) {
+      if (lhsResult == (E->getOpcode() == BinaryOperator::LOr) || 
+          !lhsResult == (E->getOpcode() == BinaryOperator::LAnd)) {
         Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
         Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-        Result = bres;
+        Result = lhsResult;
         
+        bool rhsEvaluated = HandleConversionToBool(E->getRHS(), rhsResult, Info);
+
+        if (rhsEvaluated)
+          return true;
+        
+        // FIXME: Return an extension warning saying that the RHS could not be
+        // evaluated.
         return true;
       }
 
-      bool bres2;
-      if (HandleConversionToBool(E->getRHS(), bres2, Info)) {
+      if (HandleConversionToBool(E->getRHS(), rhsResult, Info)) {
         Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
         Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
         if (E->getOpcode() == BinaryOperator::LOr)
-          Result = bres || bres2;
+          Result = lhsResult || rhsResult;
         else
-          Result = bres && bres2;
+          Result = lhsResult && rhsResult;
         return true;
       }
     } else {
-      if (HandleConversionToBool(E->getRHS(), bres, Info)) {
+      if (HandleConversionToBool(E->getRHS(), rhsResult, Info)) {
         // We can't evaluate the LHS; however, sometimes the result
         // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
-        if (bres == (E->getOpcode() == BinaryOperator::LOr) || 
-            !bres == (E->getOpcode() == BinaryOperator::LAnd)) {
+        if (rhsResult == (E->getOpcode() == BinaryOperator::LOr) || 
+            !rhsResult == (E->getOpcode() == BinaryOperator::LAnd)) {
           Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
           Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-          Result = bres;
-          Info.isEvaluated = false;
-        
+          Result = rhsResult;
+          
+          // Since we werent able to evaluate the left hand side, it
+          // must have had side effects.
+          Info.EvalResult.HasSideEffects = true;
+          
           return true;
         }
       }
@@ -1177,7 +1186,7 @@ bool Expr::Evaluate(APValue &Result, ASTContext &Ctx, bool *isEvaluated) const {
     return false;
 
   if (isEvaluated)
-    *isEvaluated = Info.isEvaluated;
+    *isEvaluated = !EvalResult.HasSideEffects;
   return true;
 }
 
