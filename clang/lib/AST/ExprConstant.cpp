@@ -366,7 +366,7 @@ public:
   }
     
   bool VisitExpr(Expr *E) {
-    return Error(E->getLocStart(), diag::err_expr_not_constant, E);
+    return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
   }
   
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
@@ -434,7 +434,7 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
   }
   
   // Otherwise, random variable references are not constants.
-  return Error(E->getLocStart(), diag::err_expr_not_constant, E);
+  return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
 }
 
 /// EvaluateBuiltinClassifyType - Evaluate __builtin_classify_type the same way
@@ -497,7 +497,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   
   switch (E->isBuiltinCall()) {
   default:
-    return Error(E->getLocStart(), diag::err_expr_not_constant, E);
+    return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
   case Builtin::BI__builtin_classify_type:
     Result.setIsSigned(true);
     Result = EvaluateBuiltinClassifyType(E);
@@ -520,7 +520,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       return true;
 
     if (Info.ShortCircuit)
-      return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr,E);
+      return Extension(E->getOperatorLoc(), diag::note_comma_in_ice, E);
 
     return false;
   }
@@ -676,7 +676,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
   switch (E->getOpcode()) {
   default:
-    return Error(E->getOperatorLoc(), diag::err_expr_not_constant, E);
+    return Error(E->getOperatorLoc(), diag::note_invalid_subexpr_in_ice, E);
   case BinaryOperator::Mul: Result *= RHS; return true;
   case BinaryOperator::Add: Result += RHS; return true;
   case BinaryOperator::Sub: Result -= RHS; return true;
@@ -685,13 +685,12 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   case BinaryOperator::Or:  Result |= RHS; return true;
   case BinaryOperator::Div:
     if (RHS == 0)
-      return Error(E->getOperatorLoc(), diag::err_expr_divide_by_zero,
-                   E);
+      return Error(E->getOperatorLoc(), diag::note_expr_divide_by_zero, E);
     Result /= RHS;
     break;
   case BinaryOperator::Rem:
     if (RHS == 0)
-      return Error(E->getOperatorLoc(), diag::err_expr_divide_by_zero, E);
+      return Error(E->getOperatorLoc(), diag::note_expr_divide_by_zero, E);
     Result %= RHS;
     break;
   case BinaryOperator::Shl:
@@ -818,7 +817,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   default:
     // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
     // See C99 6.6p3.
-    return Error(E->getOperatorLoc(), diag::err_expr_not_constant, E);
+    return Error(E->getOperatorLoc(), diag::note_invalid_subexpr_in_ice, E);
   case UnaryOperator::Extension:
     // FIXME: Should extension allow i-c-e extension expressions in its scope?
     // If so, we could clear the diagnostic ID.
@@ -883,11 +882,11 @@ bool IntExprEvaluator::HandleCast(CastExpr *E) {
   }
 
   if (!SubExpr->getType()->isRealFloatingType())
-    return Error(E->getExprLoc(), diag::err_expr_not_constant, E);
+    return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
 
   APFloat F(0.0);
   if (!EvaluateFloat(SubExpr, F, Info))
-    return Error(E->getExprLoc(), diag::err_expr_not_constant, E);
+    return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
   
   // Determine whether we are converting to unsigned or signed.
   bool DestSigned = DestType->isSignedIntegerType();

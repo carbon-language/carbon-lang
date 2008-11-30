@@ -617,12 +617,18 @@ DIAG(warn_pragma_pack_pop_failed, WARNING,
 //===----------------------------------------------------------------------===//
 
 // Constant expressions
-DIAG(err_expr_not_constant, ERROR,
-     "expression is invalid in a constant expression")
-DIAG(err_expr_divide_by_zero, ERROR,
-     "division by zero")
-DIAG(ext_comma_in_constant_expr, EXTENSION,
-     "C does not permit evaluated commas in constant expression")
+DIAG(err_expr_not_ice, ERROR,
+     "expression is not an integer constant expression")
+DIAG(ext_expr_not_ice, EXTENSION,
+     "expression is not integer constant expression "
+     "(but is allowed as an extension)")
+
+DIAG(note_comma_in_ice, NOTE,
+     "C does not permit evaluated commas in an integer constant expression")
+DIAG(note_invalid_subexpr_in_ice, NOTE,
+     "subexpression not valid in an integer constant expression")
+DIAG(note_expr_divide_by_zero, NOTE,
+    "division by zero")
 
 // Semantic analysis of string and character constant literals.
 DIAG(ext_nonstandard_escape, EXTENSION,
