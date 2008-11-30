@@ -111,9 +111,9 @@ namespace llvm {
       Normal,
 
       /// None - This dependence type indicates that the query does not depend
-      /// on any instructions, either because it scanned to the start of the
-      /// function or it scanned to the definition of the memory
-      /// (alloca/malloc).
+      /// on any instructions, either because it is not a memory instruction or
+      /// because it scanned to the definition of the memory (alloca/malloc)
+      /// being accessed.
       None,
       
       /// NonLocal - This marker indicates that the query has no dependency in
@@ -128,9 +128,9 @@ namespace llvm {
     LocalDepMapType LocalDeps;
 
     // A map from instructions to their non-local dependencies.
-    // FIXME: DENSEMAP of DENSEMAP not a great idea.
     typedef DenseMap<Instruction*,
-                     DenseMap<BasicBlock*, DepResultTy> > NonLocalDepMapType;
+                     // This is an owning pointer.
+                     DenseMap<BasicBlock*, DepResultTy>*> NonLocalDepMapType;
     NonLocalDepMapType NonLocalDeps;
     
     // A reverse mapping from dependencies to the dependees.  This is
@@ -153,6 +153,9 @@ namespace llvm {
     /// Clean up memory in between runs
     void releaseMemory() {
       LocalDeps.clear();
+      for (NonLocalDepMapType::iterator I = NonLocalDeps.begin(),
+           E = NonLocalDeps.end(); I != E; ++I)
+        delete I->second;
       NonLocalDeps.clear();
       ReverseLocalDeps.clear();
       ReverseNonLocalDeps.clear();

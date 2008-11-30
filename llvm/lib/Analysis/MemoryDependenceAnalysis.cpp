@@ -227,7 +227,10 @@ getNonLocalDependency(Instruction *QueryInst,
                                                       MemDepResult> > &Result) {
   assert(getDependency(QueryInst).isNonLocal() &&
      "getNonLocalDependency should only be used on insts with non-local deps!");
-  DenseMap<BasicBlock*, DepResultTy> &Cache = NonLocalDeps[QueryInst];
+  DenseMap<BasicBlock*, DepResultTy>* &CacheP = NonLocalDeps[QueryInst];
+  if (CacheP == 0) CacheP = new DenseMap<BasicBlock*, DepResultTy>();
+  
+  DenseMap<BasicBlock*, DepResultTy> &Cache = *CacheP;
 
   /// DirtyBlocks - This is the set of blocks that need to be recomputed.  In
   /// the cached case, this can happen due to instructions being deleted etc. In
@@ -271,8 +274,14 @@ getNonLocalDependency(Instruction *QueryInst,
     // If the dirty entry has a pointer, start scanning from it so we don't have
     // to rescan the entire block.
     BasicBlock::iterator ScanPos = DirtyBB->end();
-    if (Instruction *Inst = DirtyBBEntry.getPointer())
+    if (Instruction *Inst = DirtyBBEntry.getPointer()) {
       ScanPos = Inst;
+      
+      // We're removing QueryInst's dependence on Inst.
+      SmallPtrSet<Instruction*, 4> &InstMap = ReverseNonLocalDeps[Inst];
+      InstMap.erase(QueryInst);
+      if (InstMap.empty()) ReverseNonLocalDeps.erase(Inst);
+    }
     
     // Find out if this block has a local dependency for QueryInst.
     DirtyBBEntry = getDependencyFromInternal(QueryInst, ScanPos, DirtyBB);
@@ -305,11 +314,16 @@ getNonLocalDependency(Instruction *QueryInst,
 void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   // Walk through the Non-local dependencies, removing this one as the value
   // for any cached queries.
-  for (DenseMap<BasicBlock*, DepResultTy>::iterator DI =
-       NonLocalDeps[RemInst].begin(), DE = NonLocalDeps[RemInst].end();
-       DI != DE; ++DI)
-    if (Instruction *Inst = DI->second.getPointer())
-      ReverseNonLocalDeps[Inst].erase(RemInst);
+  NonLocalDepMapType::iterator NLDI = NonLocalDeps.find(RemInst);
+  if (NLDI != NonLocalDeps.end()) {
+    DenseMap<BasicBlock*, DepResultTy> &BlockMap = *NLDI->second;
+    for (DenseMap<BasicBlock*, DepResultTy>::iterator DI =
+         BlockMap.begin(), DE = BlockMap.end(); DI != DE; ++DI)
+      if (Instruction *Inst = DI->second.getPointer())
+        ReverseNonLocalDeps[Inst].erase(RemInst);
+    delete &BlockMap;
+    NonLocalDeps.erase(NLDI);
+  }
 
   // If we have a cached local dependence query for this instruction, remove it.
   //
@@ -347,10 +361,8 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
     for (SmallPtrSet<Instruction*, 4>::iterator I = ReverseDeps.begin(),
          E = ReverseDeps.end(); I != E; ++I) {
       Instruction *InstDependingOnRemInst = *I;
-      
-      // If we thought the instruction depended on itself (possible for
-      // unconfirmed dependencies) ignore the update.
-      if (InstDependingOnRemInst == RemInst) continue;
+      assert(InstDependingOnRemInst != RemInst &&
+             "Already removed our local dep info");
                         
       LocalDeps[InstDependingOnRemInst] = DepResultTy(NewDepInst, Dirty);
       
@@ -374,22 +386,27 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   if (ReverseDepIt != ReverseNonLocalDeps.end()) {
     SmallPtrSet<Instruction*, 4>& set = ReverseDepIt->second;
     for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
-         I != E; ++I)
+         I != E; ++I) {
+      assert(*I != RemInst && "Already removed NonLocalDep info for RemInst");
+      
+      DenseMap<BasicBlock*, DepResultTy> &INLD = *NonLocalDeps[*I];
+      assert(&INLD != 0 && "Reverse mapping out of date?");
+      
       for (DenseMap<BasicBlock*, DepResultTy>::iterator
-           DI = NonLocalDeps[*I].begin(), DE = NonLocalDeps[*I].end();
-           DI != DE; ++DI)
-        if (DI->second.getPointer() == RemInst) {
-          // Convert to a dirty entry for the subsequent instruction.
-          DI->second.setInt(Dirty);
-          if (RemInst->isTerminator())
-            DI->second.setPointer(0);
-          else {
-            Instruction *NextI = next(BasicBlock::iterator(RemInst));
-            DI->second.setPointer(NextI);
-            assert(NextI != RemInst);
-            ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
-          }
+           DI = INLD.begin(), DE = INLD.end(); DI != DE; ++DI) {
+        if (DI->second.getPointer() != RemInst) continue;
+        
+        // Convert to a dirty entry for the subsequent instruction.
+        DI->second.setInt(Dirty);
+        if (RemInst->isTerminator())
+          DI->second.setPointer(0);
+        else {
+          Instruction *NextI = next(BasicBlock::iterator(RemInst));
+          DI->second.setPointer(NextI);
+          ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
         }
+      }
+    }
 
     ReverseNonLocalDeps.erase(ReverseDepIt);
 
@@ -401,7 +418,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
     }
   }
   
-  NonLocalDeps.erase(RemInst);
+  assert(!NonLocalDeps.count(RemInst) && "RemInst got reinserted?");
   getAnalysis<AliasAnalysis>().deleteValue(RemInst);
   DEBUG(verifyRemoved(RemInst));
 }
@@ -419,21 +436,26 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
   for (NonLocalDepMapType::const_iterator I = NonLocalDeps.begin(),
        E = NonLocalDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in data structures");
-    for (DenseMap<BasicBlock*, DepResultTy>::iterator II = I->second.begin(),
-         EE = I->second.end(); II  != EE; ++II)
+    DenseMap<BasicBlock*, DepResultTy> &INLD = *I->second;
+    for (DenseMap<BasicBlock*, DepResultTy>::iterator II = INLD.begin(),
+         EE = INLD.end(); II  != EE; ++II)
       assert(II->second.getPointer() != D && "Inst occurs in data structures");
   }
   
   for (ReverseDepMapType::const_iterator I = ReverseLocalDeps.begin(),
-       E = ReverseLocalDeps.end(); I != E; ++I)
+       E = ReverseLocalDeps.end(); I != E; ++I) {
+    assert(I->first != D && "Inst occurs in data structures");
     for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
          EE = I->second.end(); II != EE; ++II)
       assert(*II != D && "Inst occurs in data structures");
+  }
   
   for (ReverseDepMapType::const_iterator I = ReverseNonLocalDeps.begin(),
        E = ReverseNonLocalDeps.end();
-       I != E; ++I)
+       I != E; ++I) {
+    assert(I->first != D && "Inst occurs in data structures");
     for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
          EE = I->second.end(); II != EE; ++II)
       assert(*II != D && "Inst occurs in data structures");
+  }
 }
