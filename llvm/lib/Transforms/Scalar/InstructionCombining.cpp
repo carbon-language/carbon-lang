@@ -2957,20 +2957,22 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
       return BinaryOperator::CreateNeg(Op0);
 
     ConstantInt *RHSNeg = cast<ConstantInt>(ConstantExpr::getNeg(RHS));
+    APInt RHSNegAPI(RHSNeg->getBitWidth(), RHSNeg->getSExtValue(), true);
+
+    APInt NegOne = -APInt(RHSNeg->getBitWidth(), 1, true);
+    APInt TwoToExp(RHSNeg->getBitWidth(), 1 << (RHSNeg->getBitWidth() - 1),
+                   true);
 
     // -X/C -> X/-C, if and only if negation doesn't overflow.
-    if ((RHS->getSExtValue() < 0 &&
-         RHS->getSExtValue() < RHSNeg->getSExtValue()) ||
-        (RHS->getSExtValue() > 0 &&
-         RHS->getSExtValue() > RHSNeg->getSExtValue())) {
+    if ((RHS->getSExtValue() < 0 && RHSNegAPI.slt(TwoToExp - 1)) ||
+        (RHS->getSExtValue() > 0 && RHSNegAPI.sgt(TwoToExp * NegOne))) {
       if (Value *LHSNeg = dyn_castNegVal(Op0)) {
         if (ConstantInt *CI = dyn_cast<ConstantInt>(LHSNeg)) {
           ConstantInt *CINeg = cast<ConstantInt>(ConstantExpr::getNeg(CI));
+          APInt CINegAPI(CINeg->getBitWidth(), CINeg->getSExtValue(), true);
 
-          if ((CI->getSExtValue() < 0 &&
-               CI->getSExtValue() < CINeg->getSExtValue()) ||
-              (CI->getSExtValue() > 0 &&
-               CI->getSExtValue() > CINeg->getSExtValue()))
+          if ((CI->getSExtValue() < 0 && CINegAPI.slt(TwoToExp - 1)) ||
+              (CI->getSExtValue() > 0 && CINegAPI.sgt(TwoToExp * NegOne)))
             return BinaryOperator::CreateSDiv(LHSNeg,
                                               ConstantExpr::getNeg(RHS));
         }
