@@ -169,6 +169,7 @@ namespace {
     void RewriteInclude();
     void RewriteTabs();
     void RewriteForwardClassDecl(ObjCClassDecl *Dcl);
+    void RewritePropertyImplDecl(ObjCPropertyImplDecl *PID);
     void RewriteInterfaceDecl(ObjCInterfaceDecl *Dcl);
     void RewriteImplementationDecl(NamedDecl *Dcl);
     void RewriteObjCMethodDecl(ObjCMethodDecl *MDecl, std::string &ResultStr);
@@ -585,6 +586,10 @@ void RewriteObjC::RewriteTabs() {
   }
 }
 
+void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID) {
+  SourceLocation startLoc = PID->getLocStart();
+  InsertText(startLoc, "// ", 3);
+}
 
 void RewriteObjC::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
   int numDecls = ClassDecl->getNumForwardDecls();
@@ -864,6 +869,12 @@ void RewriteObjC::RewriteImplementationDecl(NamedDecl *OID) {
     ReplaceText(LocStart, endBuf-startBuf,
                 ResultStr.c_str(), ResultStr.size());    
   }
+  for (ObjCCategoryImplDecl::propimpl_iterator
+       I = IMD ? IMD->propimpl_begin() : CID->propimpl_begin(),
+       E = IMD ? IMD->propimpl_end() : CID->propimpl_end(); I != E; ++I) {
+    RewritePropertyImplDecl(*I);
+  }
+
   if (IMD)
     InsertText(IMD->getLocEnd(), "// ", 3);
   else

@@ -1311,6 +1311,8 @@ public:
                                       Kind PK, 
                                       ObjCIvarDecl *ivarDecl);
 
+  SourceLocation getLocStart() const { return AtLoc; }
+
   ObjCPropertyDecl *getPropertyDecl() const {
     return PropertyDecl;
   }

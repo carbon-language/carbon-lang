@@ -72,9 +72,12 @@ const char *Decl::getDeclKindName() const {
   case EnumConstant:        return "EnumConstant";
   case ObjCIvar:            return "ObjCIvar";
   case ObjCInterface:       return "ObjCInterface";
+  case ObjCImplementation:  return "ObjCImplementation";
   case ObjCClass:           return "ObjCClass";
   case ObjCMethod:          return "ObjCMethod";
   case ObjCProtocol:        return "ObjCProtocol";
+  case ObjCProperty:        return "ObjCProperty";
+  case ObjCPropertyImpl:    return "ObjCPropertyImpl";
   case ObjCForwardProtocol: return "ObjCForwardProtocol"; 
   case Record:              return "Record";
   case CXXRecord:           return "CXXRecord";
