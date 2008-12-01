@@ -516,13 +516,13 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     // Evaluate the side that actually matters; this needs to be
     // handled specially because calling Visit() on the LHS can
     // have strange results when it doesn't have an integral type.
-    if (Visit(E->getRHS()))
-      return true;
-
+    if (!Visit(E->getRHS()))
+      return false;
+    
     if (Info.ShortCircuit)
       return Extension(E->getOperatorLoc(), diag::note_comma_in_ice, E);
 
-    return false;
+    return true;
   }
 
   if (E->isLogicalOp()) {
