@@ -222,18 +222,14 @@ inline size_t array_lengthof(T (&x)[N]) {
 }
 
 /// array_pod_sort_comparator - This is helper function for array_pod_sort,
-/// which does a memcmp of a specific size.
-template<unsigned Size>
+/// which just uses operator< on T.
+template<typename T>
 static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
-  if (Size == sizeof(char))
-    return *(const char*)P1 - *(const char*)P2;
-  if (Size == sizeof(int))
-    return *(const int*)P1 - *(const int*)P2;
-  if (Size == sizeof(long long))
-    return *(const long long*)P1 - *(const long long*)P2;
-  if (Size == sizeof(intptr_t))
-    return *(intptr_t*)P1 - *(intptr_t*)P2;
-  return memcmp(P1, P2, Size);
+  if (*reinterpret_cast<const T*>(P1) < *reinterpret_cast<const T*>(P2))
+    return -1;
+  if (*reinterpret_cast<const T*>(P2) < *reinterpret_cast<const T*>(P1))
+    return 1;
+  return 0;
 }
 
 /// array_pod_sort - This sorts an array with the specified start and end
@@ -245,8 +241,8 @@ static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
 /// possible.
 ///
 /// This function assumes that you have simple POD-like types that can be
-/// compared with memcmp and can be moved with memcpy.  If this isn't true, you
-/// should use std::sort.
+/// compared with operator< and can be moved with memcpy.  If this isn't true,
+/// you should use std::sort.
 ///
 /// NOTE: If qsort_r were portable, we could allow a custom comparator and
 /// default to std::less.
