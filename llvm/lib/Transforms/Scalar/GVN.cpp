@@ -497,15 +497,15 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
         return v;
       }
       
-      
-      SmallVector<std::pair<BasicBlock*, MemDepResult>, 32> deps;
-      MD->getNonLocalDependency(C, deps);
+
+      const MemoryDependenceAnalysis::NonLocalDepInfo &deps = 
+        MD->getNonLocalDependency(C);
       CallInst* cdep = 0;
       
       // Check to see if we have a single dominating call instruction that is
       // identical to C.
-      for (SmallVector<std::pair<BasicBlock*, MemDepResult>, 32>
-             ::iterator I = deps.begin(), E = deps.end(); I != E; ++I) {
+      for (unsigned i = 0, e = deps.size(); i != e; ++i) {
+        const MemoryDependenceAnalysis::NonLocalDepEntry *I = &deps[i];
         // Ignore non-local dependencies.
         if (I->second.isNonLocal())
           continue;
@@ -868,11 +868,18 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
 bool GVN::processNonLocalLoad(LoadInst* L,
                               SmallVectorImpl<Instruction*> &toErase) {
   // Find the non-local dependencies of the load
-  SmallVector<std::pair<BasicBlock*, MemDepResult>, 32> deps;
-  MD->getNonLocalDependency(L, deps);
-
+  const MemoryDependenceAnalysis::NonLocalDepInfo &deps = 
+    MD->getNonLocalDependency(L);
   DEBUG(cerr << "INVESTIGATING NONLOCAL LOAD: " << deps.size() << *L);
-
+#if 0
+  DEBUG(for (unsigned i = 0, e = deps.size(); i != e; ++i) {
+        cerr << "  " << deps[i].first->getName();
+          if (Instruction *I = deps[i].second.getInst())
+        cerr << *I;
+        else
+        cerr << "\n";
+        });
+#endif          
   
   // If we had to process more than one hundred blocks to find the
   // dependencies, this load isn't worth worrying about.  Optimizing
@@ -885,31 +892,36 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   DenseMap<BasicBlock*, Value*> repl;
   
   // Filter out useless results (non-locals, etc)
-  for (SmallVector<std::pair<BasicBlock*, MemDepResult>, 32>::iterator
-       I = deps.begin(), E = deps.end(); I != E; ++I) {
-    if (I->second.isNone()) {
-      repl[I->first] = UndefValue::get(L->getType());
-      continue;
-    }
-  
-    if (I->second.isNonLocal()) {
+  for (unsigned i = 0, e = deps.size(); i != e; ++i) {
+    BasicBlock *DepBB = deps[i].first;
+    MemDepResult DepInfo = deps[i].second;
+    
+    if (DepInfo.isNonLocal()) {
       // If this is a non-local dependency in the entry block, then we depend on
       // the value live-in at the start of the function.  We could insert a load
       // in the entry block to get this, but for now we'll just bail out.
+      //
       // FIXME: Consider emitting a load in the entry block to catch this case!
-      if (I->first == EntryBlock)
+      // Tricky part is to sink so that it doesn't execute in places where it
+      // isn't needed.
+      if (DepBB == EntryBlock)
         return false;
       continue;
     }
+    
+    if (DepInfo.isNone()) {
+      repl[DepBB] = UndefValue::get(L->getType());
+      continue;
+    }
   
-    if (StoreInst* S = dyn_cast<StoreInst>(I->second.getInst())) {
+    if (StoreInst* S = dyn_cast<StoreInst>(DepInfo.getInst())) {
       if (S->getPointerOperand() != L->getPointerOperand())
         return false;
-      repl[I->first] = S->getOperand(0);
-    } else if (LoadInst* LD = dyn_cast<LoadInst>(I->second.getInst())) {
+      repl[DepBB] = S->getOperand(0);
+    } else if (LoadInst* LD = dyn_cast<LoadInst>(DepInfo.getInst())) {
       if (LD->getPointerOperand() != L->getPointerOperand())
         return false;
-      repl[I->first] = LD;
+      repl[DepBB] = LD;
     } else {
       return false;
     }

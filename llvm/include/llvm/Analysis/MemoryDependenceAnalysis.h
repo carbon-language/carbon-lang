@@ -36,7 +36,7 @@ namespace llvm {
       /// Invalid - Clients of MemDep never see this.
       Invalid = 0,
       /// Normal - This is a normal instruction dependence.  The pointer member
-      /// of the DepResultTy pair holds the instruction.
+      /// of the MemDepResult pair holds the instruction.
       Normal,
 
       /// NonLocal - This marker indicates that the query has no dependency in
@@ -85,8 +85,10 @@ namespace llvm {
     /// is depended on.  Otherwise, return null.
     Instruction *getInst() const { return Value.getPointer(); }
     
-    bool operator==(const MemDepResult &M) { return M.Value == Value; }
-    bool operator!=(const MemDepResult &M) { return M.Value != Value; }
+    bool operator==(const MemDepResult &M) const { return M.Value == Value; }
+    bool operator!=(const MemDepResult &M) const { return M.Value != Value; }
+    bool operator<(const MemDepResult &M) const { return M.Value < Value; }
+    bool operator>(const MemDepResult &M) const { return M.Value > Value; }
   private:
     friend class MemoryDependenceAnalysis;
     /// Dirty - Entries with this marker occur in a LocalDeps map or
@@ -95,14 +97,14 @@ namespace llvm {
     /// instruction pointer.  If so, the pointer is an instruction in the
     /// block where scanning can start from, saving some work.
     ///
-    /// In a default-constructed DepResultTy object, the type will be Dirty
+    /// In a default-constructed MemDepResult object, the type will be Dirty
     /// and the instruction pointer will be null.
     ///
-    
+         
     /// isDirty - Return true if this is a MemDepResult in its dirty/invalid.
     /// state.
     bool isDirty() const { return Value.getInt() == Invalid; }
-
+    
     static MemDepResult getDirty(Instruction *Inst) {
       return MemDepResult(PairTy(Inst, Invalid));
     }
@@ -128,12 +130,15 @@ namespace llvm {
     typedef DenseMap<Instruction*, MemDepResult> LocalDepMapType;
     LocalDepMapType LocalDeps;
 
-    typedef DenseMap<BasicBlock*, MemDepResult> NonLocalDepInfo;
+  public:
+    typedef std::pair<BasicBlock*, MemDepResult> NonLocalDepEntry;
+    typedef std::vector<NonLocalDepEntry> NonLocalDepInfo;
+  private:
     
     /// PerInstNLInfo - This is the instruction we keep for each cached access
     /// that we have for an instruction.  The pointer is an owning pointer and
     /// the bool indicates whether we have any dirty bits in the set.
-    typedef PointerIntPair<NonLocalDepInfo*, 1, bool> PerInstNLInfo;
+    typedef std::pair<NonLocalDepInfo, bool> PerInstNLInfo;
     
     // A map from instructions to their non-local dependencies.
     typedef DenseMap<Instruction*, PerInstNLInfo> NonLocalDepMapType;
@@ -162,9 +167,7 @@ namespace llvm {
     /// Clean up memory in between runs
     void releaseMemory() {
       LocalDeps.clear();
-      for (NonLocalDepMapType::iterator I = NonLocalDeps.begin(),
-           E = NonLocalDeps.end(); I != E; ++I)
-        delete I->second.getPointer();
+      NonLocalDeps.clear();
       NonLocalDeps.clear();
       ReverseLocalDeps.clear();
       ReverseNonLocalDeps.clear();
@@ -194,11 +197,14 @@ namespace llvm {
     /// potentially live across.  The returned set of results will include a
     /// "NonLocal" result for all blocks where the value is live across.
     ///
-    /// This method assumes the instruction returns a "nonlocal" dependency
+    /// This method assumes the instruction returns a "NonLocal" dependency
     /// within its own block.
-    void getNonLocalDependency(Instruction *QueryInst,
-                               SmallVectorImpl<std::pair<BasicBlock*, 
-                                                       MemDepResult> > &Result);
+    ///
+    /// This returns a reference to an internal data structure that may be
+    /// invalidated on the next non-local query or when an instruction is
+    /// removed.  Clients must copy this data if they want it around longer than
+    /// that.
+    const NonLocalDepInfo &getNonLocalDependency(Instruction *QueryInst);
     
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.
