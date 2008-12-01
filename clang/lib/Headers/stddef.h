@@ -33,7 +33,7 @@ typedef __typeof__(*L"") wchar_t;
 #endif
 
 #ifdef __cplusplus
-#define NULL (0)
+#define NULL __null
 #else
 #define NULL ((void*)0)
 #endif
