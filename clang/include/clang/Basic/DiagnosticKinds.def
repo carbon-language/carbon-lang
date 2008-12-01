@@ -590,6 +590,16 @@ DIAG(err_expected_member_or_base_name, ERROR,
 DIAG(ext_ellipsis_exception_spec, EXTENSION,
      "exception specification of '...' is a Microsoft extension")
 
+/// C++ Templates
+DIAG(err_expected_template, ERROR,
+      "expected template")
+DIAG(err_expected_comma_greater, ERROR,
+      "expected ',' or '>' in template-parameter-list")
+DIAG(err_expected_type_id_after, ERROR,
+      "expected type-id after '%0'")
+DIAG(err_expected_class_before, ERROR,
+      "expected 'class' before '%0'")
+
 // Language specific pragmas
 
 // #pragma pack

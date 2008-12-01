@@ -202,11 +202,15 @@ AttributeList *Parser::ParseAttributes() {
 ///         block-declaration ->
 ///           simple-declaration
 ///           others                   [FIXME]
+/// [C++]   template-declaration
 /// [C++]   namespace-definition
 ///         others... [FIXME]
 ///
 Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
   switch (Tok.getKind()) {
+  case tok::kw_export:
+  case tok::kw_template:
+    return ParseTemplateDeclaration(Context);
   case tok::kw_namespace:
     return ParseNamespace(Context);
   default:
@@ -417,7 +421,8 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [C++]   'virtual'
 /// [C++]   'explicit'
 ///
-void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
+void Parser::ParseDeclarationSpecifiers(DeclSpec &DS)
+{
   DS.SetRangeStart(Tok.getLocation());
   while (1) {
     int isInvalid = false;
@@ -431,9 +436,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     
     switch (Tok.getKind()) {
     default: 
-      // Try to parse a type-specifier; if we found one, continue.
-      if (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec))
+      // Try to parse a type-specifier; if we found one, continue. If it's not
+      // a type, this falls through.
+      if (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec)) {
         continue;
+      }
 
     DoneWithDeclSpec:
       // If this is not a declaration specifier token, we're done reading decl
@@ -612,6 +619,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     ConsumeToken();
   }
 }
+
 /// MaybeParseTypeSpecifier - Try to parse a single type-specifier. We
 /// primarily follow the C++ grammar with additions for C99 and GNU,
 /// which together subsume the C grammar. Note that the C++

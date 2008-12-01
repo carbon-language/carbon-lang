@@ -802,6 +802,17 @@ private:
   // C++ 13.5: Overloaded operators [over.oper]
   OverloadedOperatorKind TryParseOperatorFunctionId();
   TypeTy *ParseConversionFunctionId();
+
+  //===--------------------------------------------------------------------===//
+  // C++ 14: Templates [temp]
+  // C++ 14.1: Template Parameters [temp.param]
+  DeclTy *ParseTemplateDeclaration(unsigned Context);
+  bool ParseTemplateParameters(DeclTy* TempDecl);
+  bool ParseTemplateParameterList(DeclTy *TmpDecl);
+  DeclTy *ParseTemplateParameter();
+  DeclTy *ParseTypeParameter();
+  DeclTy *ParseTemplateTemplateParameter();
+  DeclTy *ParseNonTypeTemplateParameter();
 };
 
 }  // end namespace clang
