@@ -1147,12 +1147,6 @@ There's an unnecessary zext in the generated code with "clang
 
 //===---------------------------------------------------------------------===//
 
-int a(int a, int b) {return ((a|b)&1) | (b&-2);}
-Should be combined to "(a&1)|b".  Currently not optimized with "clang
--emit-llvm-bc | opt -std-compile-opts".
-
-//===---------------------------------------------------------------------===//
-
 int a(unsigned b) {return ((b << 31) | (b << 30)) >> 31;}
 Should be combined to  "((b >> 1) | b) & 1".  Currently not optimized
 with "clang -emit-llvm-bc | opt -std-compile-opts".

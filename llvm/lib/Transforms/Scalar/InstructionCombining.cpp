@@ -4649,6 +4649,73 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
   }
 
+  // ((A|B)&1)|(B&-2) -> (A&1) | B
+  if (match(Op0, m_And(m_Or(m_Value(A), m_Value(B)), m_Value(C))) ||
+      match(Op0, m_And(m_Value(C), m_Or(m_Value(A), m_Value(B))))) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
+      if (CI->getValue() == 1) {
+        Value *V1 = 0, *C2 = 0;
+        if (match(Op1, m_And(m_Value(V1), m_Value(C2)))) {
+          ConstantInt *CI2 = dyn_cast<ConstantInt>(C2);
+
+          if (!CI2) {
+            std::swap(V1, C2);
+            CI2 = dyn_cast<ConstantInt>(C2);
+          }
+
+          if (CI2) {
+            APInt NegTwo = -APInt(CI2->getValue().getBitWidth(), 2, true);
+            if (CI2->getValue().eq(NegTwo)) {
+              if (V1 == B) {
+                Instruction *NewOp =
+                  InsertNewInstBefore(BinaryOperator::CreateAnd(A, CI), I);
+                return BinaryOperator::CreateOr(NewOp, B);
+              }
+              if (V1 == A) {
+                Instruction *NewOp =
+                  InsertNewInstBefore(BinaryOperator::CreateAnd(B, CI), I);
+                return BinaryOperator::CreateOr(NewOp, A);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  // (B&-2)|((A|B)&1) -> (A&1) | B
+  if (match(Op1, m_And(m_Or(m_Value(A), m_Value(B)), m_Value(C))) ||
+      match(Op1, m_And(m_Value(C), m_Or(m_Value(A), m_Value(B))))) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
+      if (CI->getValue() == 1) {
+        Value *V1 = 0, *C2 = 0;
+        if (match(Op0, m_And(m_Value(V1), m_Value(C2)))) {
+          ConstantInt *CI2 = dyn_cast<ConstantInt>(C2);
+
+          if (!CI2) {
+            std::swap(V1, C2);
+            CI2 = dyn_cast<ConstantInt>(C2);
+          }
+
+          if (CI2) {
+            APInt NegTwo = -APInt(CI2->getValue().getBitWidth(), 2, true);
+            if (CI2->getValue().eq(NegTwo)) {
+              if (V1 == B) {
+                Instruction *NewOp =
+                  InsertNewInstBefore(BinaryOperator::CreateAnd(A, CI), I);
+                return BinaryOperator::CreateOr(NewOp, B);
+              }
+              if (V1 == A) {
+                Instruction *NewOp =
+                  InsertNewInstBefore(BinaryOperator::CreateAnd(B, CI), I);
+                return BinaryOperator::CreateOr(NewOp, A);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   if (match(Op0, m_Not(m_Value(A)))) {   // ~A | Op1
     if (A == Op1)   // ~A | A == -1
       return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
