@@ -415,7 +415,7 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   // Error parsing the declarator?
   if (!DeclaratorInfo.hasName()) {
     // If so, skip until the semi-colon or a }.
-    SkipUntil(tok::r_brace, true);
+    SkipUntil(tok::r_brace, true, true);
     if (Tok.is(tok::semi))
       ConsumeToken();
     return 0;
