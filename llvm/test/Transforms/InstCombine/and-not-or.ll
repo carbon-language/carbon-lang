@@ -1,6 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {and i32 %y, %x} | count 2
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {and i32 %x, %y} | count 2
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {xor}
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {and i32 %x, %y} | count 4
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {or}
 
 define i32 @func1(i32 %x, i32 %y) nounwind {
