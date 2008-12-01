@@ -513,14 +513,17 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
 
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->getOpcode() == BinaryOperator::Comma) {
-    // Evaluate the side that actually matters; this needs to be
-    // handled specially because calling Visit() on the LHS can
-    // have strange results when it doesn't have an integral type.
     if (!Visit(E->getRHS()))
       return false;
-    
-    if (Info.ShortCircuit)
+
+    if (!Info.ShortCircuit) {
+      // If we can't evaluate the LHS, it must be because it has 
+      // side effects.
+      if (!E->getLHS()->isEvaluatable(Info.Ctx))
+        Info.EvalResult.HasSideEffects = true;
+      
       return Extension(E->getOperatorLoc(), diag::note_comma_in_ice, E);
+    }
 
     return true;
   }
@@ -1202,8 +1205,8 @@ bool Expr::Evaluate(APValue &Result, ASTContext &Ctx, bool *isEvaluated) const {
 /// isEvaluatable - Call Evaluate to see if this expression can be constant
 /// folded, but discard the result.
 bool Expr::isEvaluatable(ASTContext &Ctx) const {
-  APValue V;
-  return Evaluate(V, Ctx);
+  EvalResult Result;
+  return Evaluate(Result, Ctx) && !Result.HasSideEffects;
 }
 
 APSInt Expr::EvaluateAsInt(ASTContext &Ctx) const {
