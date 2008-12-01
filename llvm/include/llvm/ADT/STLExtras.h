@@ -204,7 +204,7 @@ inline tier<T1, T2> tie(T1& f, T2& s) {
 }
 
 //===----------------------------------------------------------------------===//
-//     Extra additions to arrays
+//     Extra additions for arrays
 //===----------------------------------------------------------------------===//
 
 /// Find where an array ends (for ending iterators)
@@ -221,6 +221,43 @@ inline size_t array_lengthof(T (&x)[N]) {
   return N;
 }
 
+/// array_pod_sort_comparator - This is helper function for array_pod_sort,
+/// which does a memcmp of a specific size.
+template<unsigned Size>
+static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
+  if (Size == sizeof(char))
+    return *(const char*)P1 - *(const char*)P2;
+  if (Size == sizeof(int))
+    return *(const int*)P1 - *(const int*)P2;
+  if (Size == sizeof(long long))
+    return *(const long long*)P1 - *(const long long*)P2;
+  if (Size == sizeof(intptr_t))
+    return *(intptr_t*)P1 - *(intptr_t*)P2;
+  return memcmp(P1, P2, Size);
+}
+
+/// array_pod_sort - This sorts an array with the specified start and end
+/// extent.  This is just like std::sort, except that it calls qsort instead of
+/// using an inlined template.  qsort is slightly slower than std::sort, but
+/// most sorts are not performance critical in LLVM and std::sort has to be
+/// template instantiated for each type, leading to significant measured code
+/// bloat.  This function should generally be used instead of std::sort where
+/// possible.
+///
+/// This function assumes that you have simple POD-like types that can be
+/// compared with memcmp and can be moved with memcpy.  If this isn't true, you
+/// should use std::sort.
+///
+/// NOTE: If qsort_r were portable, we could allow a custom comparator and
+/// default to std::less.
+template<class IteratorTy>
+static inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
+  // Don't dereference start iterator of empty sequence.
+  if (Start == End) return;
+  qsort(Start, End-Start, sizeof(*Start),
+        array_pod_sort_comparator<sizeof(*Start)>);
+}
+  
 } // End llvm namespace
 
 #endif

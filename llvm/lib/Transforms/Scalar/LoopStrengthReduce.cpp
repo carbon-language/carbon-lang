@@ -243,7 +243,7 @@ void LoopStrengthReduce::DeleteTriviallyDeadInstructions() {
   // Sort the deadinsts list so that we can trivially eliminate duplicates as we
   // go.  The code below never adds a non-dead instruction to the worklist, but
   // callers may not be so careful.
-  std::sort(DeadInsts.begin(), DeadInsts.end());
+  array_pod_sort(DeadInsts.begin(), DeadInsts.end());
 
   // Drop duplicate instructions and those with uses.
   for (unsigned i = 0, e = DeadInsts.size()-1; i < e; ++i) {
