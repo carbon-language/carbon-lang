@@ -2933,10 +2933,10 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     // -X/C -> X/-C, if and only if negation doesn't overflow.
     if (Value *LHSNeg = dyn_castNegVal(Op0)) {
       if (ConstantInt *CI = dyn_cast<ConstantInt>(LHSNeg)) {
-        ConstantInt *RHSNeg = cast<ConstantInt>(ConstantExpr::getNeg(RHS));
-        if (RHS != RHSNeg) {
-          ConstantInt *CINeg = cast<ConstantInt>(ConstantExpr::getNeg(CI));
-          if (CI != CINeg)
+        Constant *RHSNeg = ConstantExpr::getNeg(RHS);
+        if (RHS != RHSNeg) {    // Check that there is no overflow.
+          Constant *CINeg = ConstantExpr::getNeg(CI);
+          if (CI != CINeg)      // Check that there is no overflow.
             return BinaryOperator::CreateSDiv(LHSNeg,
                                               ConstantExpr::getNeg(RHS));
         }
