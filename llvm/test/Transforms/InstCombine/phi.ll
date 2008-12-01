@@ -1,7 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep phi
-; END.
 
 define i32 @test1(i32 %A, i1 %b) {
 BB0:
@@ -96,6 +95,21 @@ Loop:           ; preds = %Loop, %BB0
 
 Exit:           ; preds = %Loop
         ret i32 0
+}
+
+define i32* @test8({ i32, i32 } *%A, i1 %b) {
+BB0:
+        %X = getelementptr { i32, i32 } *%A, i32 0, i32 1
+        br i1 %b, label %BB1, label %BB2
+
+BB1:
+        %Y = getelementptr { i32, i32 } *%A, i32 0, i32 1
+        br label %BB2
+
+BB2:
+        ;; Suck GEPs into phi
+        %B = phi i32* [ %X, %BB0 ], [ %Y, %BB1 ]
+        ret i32* %B
 }
 
 

@@ -372,7 +372,8 @@ namespace {
     // inputs, and do the operation once, to the result of the PHI.
     Instruction *FoldPHIArgOpIntoPHI(PHINode &PN);
     Instruction *FoldPHIArgBinOpIntoPHI(PHINode &PN);
-    
+    Instruction *FoldPHIArgGEPIntoPHI(PHINode &PN);
+
     
     Instruction *OptAndOp(Instruction *Op, ConstantInt *OpRHS,
                           ConstantInt *AndRHS, BinaryOperator &TheAnd);
@@ -9985,7 +9986,7 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   
   // Scan to see if all operands are the same opcode, all have one use, and all
   // kill their operands (i.e. the operands have one use).
-  for (unsigned i = 0; i != PN.getNumIncomingValues(); ++i) {
+  for (unsigned i = 1; i != PN.getNumIncomingValues(); ++i) {
     Instruction *I = dyn_cast<Instruction>(PN.getIncomingValue(i));
     if (!I || I->getOpcode() != Opc || !I->hasOneUse() ||
         // Verify type of the LHS matches so we don't fold cmp's of different
@@ -10010,6 +10011,7 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   // If this is a GEP, and if the index (not the pointer) needs a PHI, bail out.
   // Indexes are often folded into load/store instructions, so we don't want to
   // hide them behind a phi.
+  // URR??
   if (isa<GetElementPtrInst>(FirstInst) && RHSVal == 0)
     return 0;
   
@@ -10035,27 +10037,100 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   }
   
   // Add all operands to the new PHIs.
-  for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
-    if (NewLHS) {
-      Value *NewInLHS =cast<Instruction>(PN.getIncomingValue(i))->getOperand(0);
-      NewLHS->addIncoming(NewInLHS, PN.getIncomingBlock(i));
-    }
-    if (NewRHS) {
-      Value *NewInRHS =cast<Instruction>(PN.getIncomingValue(i))->getOperand(1);
-      NewRHS->addIncoming(NewInRHS, PN.getIncomingBlock(i));
+  if (NewLHS || NewRHS) {
+    for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
+      Instruction *InInst = cast<Instruction>(PN.getIncomingValue(i));
+      if (NewLHS) {
+        Value *NewInLHS = InInst->getOperand(0);
+        NewLHS->addIncoming(NewInLHS, PN.getIncomingBlock(i));
+      }
+      if (NewRHS) {
+        Value *NewInRHS = InInst->getOperand(1);
+        NewRHS->addIncoming(NewInRHS, PN.getIncomingBlock(i));
+      }
     }
   }
     
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::Create(BinOp->getOpcode(), LHSVal, RHSVal);
-  else if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
+  if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
     return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(), LHSVal, 
                            RHSVal);
-  else {
-    assert(isa<GetElementPtrInst>(FirstInst));
-    return GetElementPtrInst::Create(LHSVal, RHSVal);
-  }
+  assert(isa<GetElementPtrInst>(FirstInst));
+  return GetElementPtrInst::Create(LHSVal, RHSVal);
 }
+
+Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
+  GetElementPtrInst *FirstInst =cast<GetElementPtrInst>(PN.getIncomingValue(0));
+  
+  SmallVector<Value*, 16> FixedOperands(FirstInst->op_begin(), 
+                                        FirstInst->op_end());
+  
+  // Scan to see if all operands are the same opcode, all have one use, and all
+  // kill their operands (i.e. the operands have one use).
+  for (unsigned i = 1; i != PN.getNumIncomingValues(); ++i) {
+    GetElementPtrInst *GEP= dyn_cast<GetElementPtrInst>(PN.getIncomingValue(i));
+    if (!GEP || !GEP->hasOneUse() || GEP->getType() != FirstInst->getType() ||
+      GEP->getNumOperands() != FirstInst->getNumOperands())
+      return 0;
+
+    // Compare the operand lists.
+    for (unsigned op = 0, e = FirstInst->getNumOperands(); op != e; ++op) {
+      if (FirstInst->getOperand(op) == GEP->getOperand(op))
+        continue;
+      
+      // Don't merge two GEPs when two operands differ (introducing phi nodes)
+      // if one of the PHIs has a constant for the index.  The index may be
+      // substantially cheaper to compute for the constants, so making it a
+      // variable index could pessimize the path.  This also handles the case
+      // for struct indices, which must always be constant.
+      if (isa<ConstantInt>(FirstInst->getOperand(op)) ||
+          isa<ConstantInt>(GEP->getOperand(op)))
+        return 0;
+      
+      if (FirstInst->getOperand(op)->getType() !=GEP->getOperand(op)->getType())
+        return 0;
+      FixedOperands[op] = 0;  // Needs a PHI.
+    }
+  }
+  
+  // Otherwise, this is safe to transform.  Insert PHI nodes for each operand
+  // that is variable.
+  SmallVector<PHINode*, 16> OperandPhis(FixedOperands.size());
+  
+  bool HasAnyPHIs = false;
+  for (unsigned i = 0, e = FixedOperands.size(); i != e; ++i) {
+    if (FixedOperands[i]) continue;  // operand doesn't need a phi.
+    Value *FirstOp = FirstInst->getOperand(i);
+    PHINode *NewPN = PHINode::Create(FirstOp->getType(),
+                                     FirstOp->getName()+".pn");
+    InsertNewInstBefore(NewPN, PN);
+    
+    NewPN->reserveOperandSpace(e);
+    NewPN->addIncoming(FirstOp, PN.getIncomingBlock(0));
+    OperandPhis[i] = NewPN;
+    FixedOperands[i] = NewPN;
+    HasAnyPHIs = true;
+  }
+
+  
+  // Add all operands to the new PHIs.
+  if (HasAnyPHIs) {
+    for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
+      GetElementPtrInst *InGEP =cast<GetElementPtrInst>(PN.getIncomingValue(i));
+      BasicBlock *InBB = PN.getIncomingBlock(i);
+      
+      for (unsigned op = 0, e = OperandPhis.size(); op != e; ++op)
+        if (PHINode *OpPhi = OperandPhis[op])
+          OpPhi->addIncoming(InGEP->getOperand(op), InBB);
+    }
+  }
+  
+  Value *Base = FixedOperands[0];
+  return GetElementPtrInst::Create(Base, FixedOperands.begin()+1,
+                                   FixedOperands.end());
+}
+
 
 /// isSafeToSinkLoad - Return true if we know that it is safe sink the load out
 /// of the block that defines it.  This means that it must be obvious the value
@@ -10134,8 +10209,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   } else if (isa<GetElementPtrInst>(FirstInst)) {
     if (FirstInst->getNumOperands() == 2)
       return FoldPHIArgBinOpIntoPHI(PN);
-    // Can't handle general GEPs yet.
-    return 0;
+    return FoldPHIArgGEPIntoPHI(PN);
   } else {
     return 0;  // Cannot fold this operation.
   }
@@ -10279,6 +10353,11 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   // If all PHI operands are the same operation, pull them through the PHI,
   // reducing code size.
   if (isa<Instruction>(PN.getIncomingValue(0)) &&
+      isa<Instruction>(PN.getIncomingValue(1)) &&
+      cast<Instruction>(PN.getIncomingValue(0))->getOpcode() ==
+      cast<Instruction>(PN.getIncomingValue(1))->getOpcode() &&
+      // FIXME: The hasOneUse check will fail for PHIs that use the value more
+      // than themselves more than once.
       PN.getIncomingValue(0)->hasOneUse())
     if (Instruction *Result = FoldPHIArgOpIntoPHI(PN))
       return Result;
