@@ -1352,8 +1352,6 @@ public:
   /// Can optionally return the value of the expression.
   bool VerifyIntegerConstantExpression(const Expr*E, llvm::APSInt *Result = 0);
 
-  bool isNullPointerConstant(const Expr *E);
-
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
 private:

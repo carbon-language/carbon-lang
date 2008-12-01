@@ -1582,13 +1582,13 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   // the type of the other operand."
   if ((lexT->isPointerType() || lexT->isBlockPointerType() ||
        Context.isObjCObjectPointerType(lexT)) &&
-      isNullPointerConstant(rex)) {
+      rex->isNullPointerConstant(Context)) {
     ImpCastExprToType(rex, lexT); // promote the null to a pointer.
     return lexT;
   }
   if ((rexT->isPointerType() || rexT->isBlockPointerType() ||
        Context.isObjCObjectPointerType(rexT)) &&
-      isNullPointerConstant(lex)) {
+      lex->isNullPointerConstant(Context)) {
     ImpCastExprToType(lex, rexT); // promote the null to a pointer.
     return rexT;
   }
@@ -3705,24 +3705,4 @@ bool Sema::VerifyIntegerConstantExpression(const Expr* E, llvm::APSInt *Result)
   if (Result)
     *Result = EvalResult.Val.getInt();
   return false;
-}
-
-bool Sema::isNullPointerConstant(const Expr *E)
-{
-  Expr::EvalResult EvalResult;
-  
-  if (!E->isNullPointerConstant(EvalResult, Context))
-    return false;
-  
-  if (EvalResult.Diag) {
-    Diag(E->getExprLoc(), diag::ext_null_pointer_expr_not_ice) << 
-      E->getSourceRange();
-
-    // Print the reason it's not a constant.
-    if (Diags.getDiagnosticLevel(diag::ext_null_pointer_expr_not_ice) != 
-        Diagnostic::Ignored)
-      Diag(EvalResult.DiagLoc, EvalResult.Diag);
-  }
-
-  return true;
 }
