@@ -2928,17 +2928,19 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return BinaryOperator::CreateNeg(Op0);
 
-    ConstantInt *RHSNeg = cast<ConstantInt>(ConstantExpr::getNeg(RHS));
-    APInt RHSNegAPI(RHSNeg->getValue());
-
-    APInt NegOne = -APInt(RHSNeg->getBitWidth(), 1, true);
-    APInt TwoToExp(RHSNeg->getBitWidth(), 1 << (RHSNeg->getBitWidth() - 1));
-
     // -X/C -> X/-C, if and only if negation doesn't overflow.
-    if ((RHS->getValue().isNegative() && RHSNegAPI.slt(TwoToExp - 1)) ||
-        (RHS->getValue().isNonNegative() && RHSNegAPI.sgt(TwoToExp * NegOne))) {
-      if (Value *LHSNeg = dyn_castNegVal(Op0)) {
-        if (ConstantInt *CI = dyn_cast<ConstantInt>(LHSNeg)) {
+    if (Value *LHSNeg = dyn_castNegVal(Op0)) {
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(LHSNeg)) {
+        ConstantInt *RHSNeg = cast<ConstantInt>(ConstantExpr::getNeg(RHS));
+        APInt RHSNegAPI(RHSNeg->getValue());
+
+        APInt NegOne = -APInt(RHSNeg->getBitWidth(), 1, true);
+        APInt TwoToExp(RHSNeg->getBitWidth(), 1 << (RHSNeg->getBitWidth() - 1));
+
+        if ((RHS->getValue().isNegative() &&
+             RHSNegAPI.slt(TwoToExp - 1)) ||
+            (RHS->getValue().isNonNegative() &&
+             RHSNegAPI.sgt(TwoToExp * NegOne))) {
           ConstantInt *CINeg = cast<ConstantInt>(ConstantExpr::getNeg(CI));
           APInt CINegAPI(CINeg->getValue());
 
