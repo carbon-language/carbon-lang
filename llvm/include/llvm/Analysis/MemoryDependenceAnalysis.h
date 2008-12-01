@@ -35,6 +35,7 @@ namespace llvm {
     enum DepType {
       /// Invalid - Clients of MemDep never see this.
       Invalid = 0,
+      
       /// Normal - This is a normal instruction dependence.  The pointer member
       /// of the MemDepResult pair holds the instruction.
       Normal,
@@ -216,7 +217,7 @@ namespace llvm {
     void verifyRemoved(Instruction *Inst) const;
     
     MemDepResult getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
-                                      BasicBlock *BB);
+                                       BasicBlock *BB);
   };
 
 } // End llvm namespace
