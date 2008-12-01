@@ -622,6 +622,9 @@ DIAG(err_expr_not_ice, ERROR,
 DIAG(ext_expr_not_ice, EXTENSION,
      "expression is not integer constant expression "
      "(but is allowed as an extension)")
+DIAG(ext_null_pointer_expr_not_ice, EXTENSION,
+     "null pointer expression is not an integer constant expression "
+     "(but is allowed as an extension)")
 
 DIAG(note_comma_in_ice, NOTE,
      "C does not permit evaluated commas in an integer constant expression")
@@ -965,8 +968,6 @@ DIAG(ext_enum_value_not_int, EXTENSION,
      "ISO C restricts enumerator values to range of 'int' (%0 is too large)")
 DIAG(warn_enum_too_large, WARNING,
      "enumeration values exceed range of largest integer")
-DIAG(err_case_label_not_integer_constant_expr, ERROR,
-     "case label does not reduce to an integer constant")
 DIAG(warn_illegal_constant_array_size, EXTENSION,
      "size of static array must be an integer constant expression")
 DIAG(err_typecheck_illegal_vla, ERROR,
