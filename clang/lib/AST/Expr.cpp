@@ -1007,7 +1007,14 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
 /// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
 /// integer constant expression with the value zero, or if this is one that is
 /// cast to void*.
-bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
+bool Expr::isNullPointerConstant(ASTContext &Ctx) const
+{
+  EvalResult EvalResult;
+  
+  return isNullPointerConstant(EvalResult, Ctx);
+}
+
+bool Expr::isNullPointerConstant(EvalResult &Result, ASTContext &Ctx) const {
   // Strip off a cast to void*, if it exists. Except in C++.
   if (const ExplicitCastExpr *CE = dyn_cast<ExplicitCastExpr>(this)) {
     if (!Ctx.getLangOptions().CPlusPlus) {
@@ -1017,20 +1024,20 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
         if (Pointee.getCVRQualifiers() == 0 && 
             Pointee->isVoidType() &&                              // to void*
             CE->getSubExpr()->getType()->isIntegerType())         // from int.
-          return CE->getSubExpr()->isNullPointerConstant(Ctx);
+          return CE->getSubExpr()->isNullPointerConstant(Result, Ctx);
       }
     }
   } else if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(this)) {
     // Ignore the ImplicitCastExpr type entirely.
-    return ICE->getSubExpr()->isNullPointerConstant(Ctx);
+    return ICE->getSubExpr()->isNullPointerConstant(Result, Ctx);
   } else if (const ParenExpr *PE = dyn_cast<ParenExpr>(this)) {
     // Accept ((void*)0) as a null pointer constant, as many other
     // implementations do.
-    return PE->getSubExpr()->isNullPointerConstant(Ctx);
+    return PE->getSubExpr()->isNullPointerConstant(Result, Ctx);
   } else if (const CXXDefaultArgExpr *DefaultArg 
                = dyn_cast<CXXDefaultArgExpr>(this)) {
     // See through default argument expressions
-    return DefaultArg->getExpr()->isNullPointerConstant(Ctx);
+    return DefaultArg->getExpr()->isNullPointerConstant(Result, Ctx);
   } else if (isa<GNUNullExpr>(this)) {
     // The GNU __null extension is always a null pointer constant.
     return true;
@@ -1042,6 +1049,9 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   
   // If we have an integer constant expression, we need to *evaluate* it and
   // test for the value 0.
+  return Evaluate(Result, Ctx) && !Result.HasSideEffects &&
+      Result.Val.isInt() && Result.Val.getInt() == 0;
+
   llvm::APSInt Val(32);
   return isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
 }

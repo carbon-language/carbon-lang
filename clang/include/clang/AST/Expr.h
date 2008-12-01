@@ -110,7 +110,6 @@ public:
   };
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx) const;
   
-  bool isNullPointerConstant(ASTContext &Ctx) const;
   bool isBitField();
 
   /// getIntegerConstantExprValue() - Return the value of an integer
@@ -178,6 +177,12 @@ public:
   /// EvaluateAsInt - Call Evaluate and return the folded integer. This
   /// must be called on an expression that constant folds to an integer.
   llvm::APSInt EvaluateAsInt(ASTContext &Ctx) const;
+
+  /// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
+  /// integer constant expression with the value zero, or if this is one that is
+  /// cast to void*.
+  bool isNullPointerConstant(EvalResult &Result, ASTContext &Ctx) const;
+  bool isNullPointerConstant(ASTContext &Ctx) const;
 
   /// hasGlobalStorage - Return true if this expression has static storage
   /// duration.  This means that the address of this expression is a link-time
