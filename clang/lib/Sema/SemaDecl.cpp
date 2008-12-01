@@ -1162,6 +1162,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       // an error here
       Diag(D.getIdentifierLoc(), diag::err_mutable_nonmember);
       InvalidDecl = true;
+      SC = VarDecl::None;
       break;
     }
 
