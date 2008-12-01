@@ -41,6 +41,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -834,14 +835,14 @@ void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
   
   // Remove phi node entries in successors for this block.
   TerminatorInst *TI = BB->getTerminator();
-  std::vector<BasicBlock*> Succs;
+  SmallVector<BasicBlock*, 4> Succs;
   for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
     Succs.push_back(TI->getSuccessor(i));
     TI->getSuccessor(i)->removePredecessor(BB);
   }
   
   // Unique the successors, remove anything with multiple uses.
-  std::sort(Succs.begin(), Succs.end());
+  array_pod_sort(Succs.begin(), Succs.end());
   Succs.erase(std::unique(Succs.begin(), Succs.end()), Succs.end());
   
   // Remove the basic block, including all of the instructions contained in it.

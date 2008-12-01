@@ -17,6 +17,7 @@
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -380,7 +381,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   
   // Now we know that each predecessor of this block has a value in
   // AvailablePreds, sort them for efficient access as we're walking the preds.
-  std::sort(AvailablePreds.begin(), AvailablePreds.end());
+  array_pod_sort(AvailablePreds.begin(), AvailablePreds.end());
   
   // Create a PHI node at the start of the block for the PRE'd load value.
   PHINode *PN = PHINode::Create(LI->getType(), "", LoadBB->begin());
