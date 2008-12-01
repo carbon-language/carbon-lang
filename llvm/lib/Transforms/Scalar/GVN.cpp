@@ -1223,7 +1223,7 @@ bool GVN::processBlock(DomTreeNode* DTN) {
 /// performPRE - Perform a purely local form of PRE that looks for diamond
 /// control flow patterns and attempts to perform simple PRE at the join point.
 bool GVN::performPRE(Function& F) {
-  bool changed = false;
+  bool Changed = false;
   SmallVector<std::pair<TerminatorInst*, unsigned>, 4> toSplit;
   DenseMap<BasicBlock*, Value*> predMap;
   for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
@@ -1235,14 +1235,14 @@ bool GVN::performPRE(Function& F) {
     
     for (BasicBlock::iterator BI = CurrentBlock->begin(),
          BE = CurrentBlock->end(); BI != BE; ) {
-      if (isa<AllocationInst>(BI) || isa<TerminatorInst>(BI) ||
-          isa<PHINode>(BI) || BI->mayReadFromMemory() ||
-          BI->mayWriteToMemory()) {
-        BI++;
-        continue;
-      }
+      Instruction *CurInst = BI++;
       
-      uint32_t valno = VN.lookup(BI);
+      if (isa<AllocationInst>(CurInst) || isa<TerminatorInst>(CurInst) ||
+          isa<PHINode>(CurInst) || CurInst->mayReadFromMemory() ||
+          CurInst->mayWriteToMemory())
+        continue;
+      
+      uint32_t valno = VN.lookup(CurInst);
       
       // Look for the predecessors for PRE opportunities.  We're
       // only trying to solve the basic diamond case, where
@@ -1273,7 +1273,7 @@ bool GVN::performPRE(Function& F) {
         if (predV == localAvail[*PI]->table.end()) {
           PREPred = *PI;
           numWithout++;
-        } else if (predV->second == BI) {
+        } else if (predV->second == CurInst) {
           numWithout = 2;
         } else {
           predMap[*PI] = predV->second;
@@ -1283,10 +1283,8 @@ bool GVN::performPRE(Function& F) {
       
       // Don't do PRE when it might increase code size, i.e. when
       // we would need to insert instructions in more than one pred.
-      if (numWithout != 1 || numWith == 0) {
-        BI++;
+      if (numWithout != 1 || numWith == 0)
         continue;
-      }
       
       // We can't do PRE safely on a critical edge, so instead we schedule
       // the edge to be split and perform the PRE the next time we iterate
@@ -1301,8 +1299,6 @@ bool GVN::performPRE(Function& F) {
         
       if (isCriticalEdge(PREPred->getTerminator(), succNum)) {
         toSplit.push_back(std::make_pair(PREPred->getTerminator(), succNum));
-        changed = true;
-        BI++;
         continue;
       }
       
@@ -1311,19 +1307,18 @@ bool GVN::performPRE(Function& F) {
       // will be available in the predecessor by the time we need them.  Any
       // that weren't original present will have been instantiated earlier
       // in this loop.
-      Instruction* PREInstr = BI->clone();
+      Instruction* PREInstr = CurInst->clone();
       bool success = true;
-      for (unsigned i = 0; i < BI->getNumOperands(); ++i) {
-        Value* op = BI->getOperand(i);
-        if (isa<Argument>(op) || isa<Constant>(op) || isa<GlobalValue>(op))
-          PREInstr->setOperand(i, op);
-        else {
-          Value* V = lookupNumber(PREPred, VN.lookup(op));
-          if (!V) {
-            success = false;
-            break;
-          } else
-            PREInstr->setOperand(i, V);
+      for (unsigned i = 0, e = CurInst->getNumOperands(); i != e; ++i) {
+        Value *Op = PREInstr->getOperand(i);
+        if (isa<Argument>(Op) || isa<Constant>(Op) || isa<GlobalValue>(Op))
+          continue;
+        
+        if (Value *V = lookupNumber(PREPred, VN.lookup(Op))) {
+          PREInstr->setOperand(i, V);
+        } else {
+          success = false;
+          break;
         }
       }
       
@@ -1332,12 +1327,11 @@ bool GVN::performPRE(Function& F) {
       // are not value numbered precisely.
       if (!success) {
         delete PREInstr;
-        BI++;
         continue;
       }
       
       PREInstr->insertBefore(PREPred->getTerminator());
-      PREInstr->setName(BI->getName() + ".pre");
+      PREInstr->setName(CurInst->getName() + ".pre");
       predMap[PREPred] = PREInstr;
       VN.add(PREInstr, valno);
       NumGVNPRE++;
@@ -1346,8 +1340,8 @@ bool GVN::performPRE(Function& F) {
       localAvail[PREPred]->table.insert(std::make_pair(valno, PREInstr));
       
       // Create a PHI to make the value available in this block.
-      PHINode* Phi = PHINode::Create(BI->getType(),
-                                     BI->getName() + ".pre-phi",
+      PHINode* Phi = PHINode::Create(CurInst->getType(),
+                                     CurInst->getName() + ".pre-phi",
                                      CurrentBlock->begin());
       for (pred_iterator PI = pred_begin(CurrentBlock),
            PE = pred_end(CurrentBlock); PI != PE; ++PI)
@@ -1356,15 +1350,13 @@ bool GVN::performPRE(Function& F) {
       VN.add(Phi, valno);
       localAvail[CurrentBlock]->table[valno] = Phi;
       
-      BI->replaceAllUsesWith(Phi);
-      VN.erase(BI);
+      CurInst->replaceAllUsesWith(Phi);
+      VN.erase(CurInst);
       
-      Instruction* erase = BI;
-      BI++;
-      DEBUG(cerr << "GVN PRE removed: " << *erase);
-      MD->removeInstruction(erase);
-      erase->eraseFromParent();
-      changed = true;
+      DEBUG(cerr << "GVN PRE removed: " << *CurInst);
+      MD->removeInstruction(CurInst);
+      CurInst->eraseFromParent();
+      Changed = true;
     }
   }
   
@@ -1372,7 +1364,7 @@ bool GVN::performPRE(Function& F) {
        I = toSplit.begin(), E = toSplit.end(); I != E; ++I)
     SplitCriticalEdge(I->first, I->second, this);
   
-  return changed || toSplit.size();
+  return Changed || toSplit.size();
 }
 
 // iterateOnFunction - Executes one iteration of GVN
