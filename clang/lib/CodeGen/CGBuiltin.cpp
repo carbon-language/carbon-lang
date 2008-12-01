@@ -38,12 +38,12 @@ static RValue EmitBinaryAtomic(CodeGenFunction& CFG,
 
 RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   // See if we can constant fold this builtin.  If so, don't emit it at all.
-  APValue Result;
+  Expr::EvalResult Result;
   if (E->Evaluate(Result, CGM.getContext())) {
-    if (Result.isInt())
-      return RValue::get(llvm::ConstantInt::get(Result.getInt()));
-    assert(Result.isFloat() && "Unsupported constant type");
-    return RValue::get(llvm::ConstantFP::get(Result.getFloat()));
+    if (Result.Val.isInt())
+      return RValue::get(llvm::ConstantInt::get(Result.Val.getInt()));
+    assert(Result.Val.isFloat() && "Unsupported constant type");
+    return RValue::get(llvm::ConstantFP::get(Result.Val.getFloat()));
   }
       
   switch (BuiltinID) {
