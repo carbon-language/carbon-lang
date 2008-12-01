@@ -166,6 +166,7 @@ namespace {
       void erase(Value* v);
       unsigned size();
       void setAliasAnalysis(AliasAnalysis* A) { AA = A; }
+      AliasAnalysis *getAliasAnalysis() const { return AA; }
       void setMemDep(MemoryDependenceAnalysis* M) { MD = M; }
       void setDomTree(DominatorTree* D) { DT = D; }
       uint32_t getNextUnusedValueNumber() { return nextValueNumber; }
@@ -710,6 +711,9 @@ namespace {
     GVN() : FunctionPass(&ID) { }
 
   private:
+    MemoryDependenceAnalysis *MD;
+    DominatorTree *DT;
+
     ValueTable VN;
     DenseMap<BasicBlock*, ValueNumberScope*> localAvail;
     
@@ -771,16 +775,14 @@ void GVN::dump(DenseMap<uint32_t, Value*>& d) {
 }
 
 Value* GVN::CollapsePhi(PHINode* p) {
-  DominatorTree &DT = getAnalysis<DominatorTree>();
   Value* constVal = p->hasConstantValue();
-  
   if (!constVal) return 0;
   
   Instruction* inst = dyn_cast<Instruction>(constVal);
   if (!inst)
     return constVal;
     
-  if (DT.dominates(inst, p))
+  if (DT->dominates(inst, p))
     if (isSafeReplacement(p, inst))
       return inst;
   return 0;
@@ -811,7 +813,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   
   // If the block is unreachable, just return undef, since this path
   // can't actually occur at runtime.
-  if (!getAnalysis<DominatorTree>().isReachableFromEntry(BB))
+  if (!DT->isReachableFromEntry(BB))
     return Phis[BB] = UndefValue::get(orig->getType());
   
   BasicBlock* singlePred = BB->getSinglePredecessor();
@@ -836,8 +838,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     PN->addIncoming(val, *PI);
   }
   
-  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
-  AA.copyValue(orig, PN);
+  VN.getAliasAnalysis()->copyValue(orig, PN);
   
   // Attempt to collapse PHI nodes that are trivially redundant
   Value* v = CollapsePhi(PN);
@@ -847,9 +848,6 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     return PN;
   }
     
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-
-  MD.removeInstruction(PN);
   PN->replaceAllUsesWith(v);
 
   for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
@@ -857,6 +855,8 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     if (I->second == PN)
       I->second = v;
 
+  DEBUG(cerr << "GVN removed: " << *PN);
+  MD->removeInstruction(PN);
   PN->eraseFromParent();
 
   Phis[BB] = v;
@@ -867,11 +867,12 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
 /// non-local by performing PHI construction.
 bool GVN::processNonLocalLoad(LoadInst* L,
                               SmallVectorImpl<Instruction*> &toErase) {
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-  
   // Find the non-local dependencies of the load
   SmallVector<std::pair<BasicBlock*, MemDepResult>, 32> deps;
-  MD.getNonLocalDependency(L, deps);
+  MD->getNonLocalDependency(L, deps);
+
+  DEBUG(cerr << "INVESTIGATING NONLOCAL LOAD: " << deps.size() << *L);
+
   
   // If we had to process more than one hundred blocks to find the
   // dependencies, this load isn't worth worrying about.  Optimizing
@@ -919,7 +920,6 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
        I != E; ++I) {
     if ((*I)->getParent() == L->getParent()) {
-      MD.removeInstruction(L);
       L->replaceAllUsesWith(*I);
       toErase.push_back(L);
       NumGVNLoad++;
@@ -928,16 +928,15 @@ bool GVN::processNonLocalLoad(LoadInst* L,
     
     repl.insert(std::make_pair((*I)->getParent(), *I));
   }
-  
+
+  DEBUG(cerr << "GVN REMOVING NONLOCAL LOAD: " << *L);
+
   // Perform PHI construction
   SmallPtrSet<BasicBlock*, 4> visited;
   Value* v = GetValueForBlock(L->getParent(), L, repl, true);
-  
-  MD.removeInstruction(L);
   L->replaceAllUsesWith(v);
   toErase.push_back(L);
   NumGVNLoad++;
-
   return true;
 }
 
@@ -954,9 +953,8 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
   LoadInst*& last = lastLoad[pointer];
   
   // ... to a pointer that has been loaded from before...
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   bool removedNonLocal = false;
-  MemDepResult dep = MD.getDependency(L);
+  MemDepResult dep = MD->getDependency(L);
   if (dep.isNonLocal() &&
       L->getParent() != &L->getParent()->getParent()->getEntryBlock()) {
     removedNonLocal = processNonLocalLoad(L, toErase);
@@ -977,8 +975,6 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
     if (StoreInst* S = dyn_cast<StoreInst>(DepInst)) {
       if (S->getPointerOperand() == pointer) {
         // Remove it!
-        MD.removeInstruction(L);
-        
         L->replaceAllUsesWith(S->getOperand(0));
         toErase.push_back(L);
         deletedLoad = true;
@@ -997,15 +993,13 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
       break;
     } else if (DepInst == last) {
       // Remove it!
-      MD.removeInstruction(L);
-      
       L->replaceAllUsesWith(last);
       toErase.push_back(L);
       deletedLoad = true;
       NumGVNLoad++;
       break;
     } else {
-      dep = MD.getDependencyFrom(L, DepInst, DepInst->getParent());
+      dep = MD->getDependencyFrom(L, DepInst, DepInst->getParent());
     }
   }
 
@@ -1016,7 +1010,6 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
     // If this load depends directly on an allocation, there isn't
     // anything stored there; therefore, we can optimize this load
     // to undef.
-    MD.removeInstruction(L);
     L->replaceAllUsesWith(UndefValue::get(L->getType()));
     toErase.push_back(L);
     deletedLoad = true;
@@ -1098,9 +1091,6 @@ bool GVN::processInstruction(Instruction *I,
   // Perform value-number based elimination
   } else if (Value* repl = lookupNumber(I->getParent(), num)) {
     // Remove it!
-    MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-    MD.removeInstruction(I);
-    
     VN.erase(I);
     I->replaceAllUsesWith(repl);
     toErase.push_back(I);
@@ -1116,9 +1106,11 @@ bool GVN::processInstruction(Instruction *I,
 // function.
 //
 bool GVN::runOnFunction(Function& F) {
+  MD = &getAnalysis<MemoryDependenceAnalysis>();
+  DT = &getAnalysis<DominatorTree>();
   VN.setAliasAnalysis(&getAnalysis<AliasAnalysis>());
-  VN.setMemDep(&getAnalysis<MemoryDependenceAnalysis>());
-  VN.setDomTree(&getAnalysis<DominatorTree>());
+  VN.setMemDep(MD);
+  VN.setDomTree(DT);
   
   bool changed = false;
   bool shouldContinue = true;
@@ -1155,7 +1147,6 @@ bool GVN::runOnFunction(Function& F) {
 
 bool GVN::processBlock(DomTreeNode* DTN) {
   BasicBlock* BB = DTN->getBlock();
-
   SmallVector<Instruction*, 8> toErase;
   DenseMap<Value*, LoadInst*> lastSeenLoad;
   bool changed_function = false;
@@ -1183,8 +1174,11 @@ bool GVN::processBlock(DomTreeNode* DTN) {
       --BI;
 
     for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
-         E = toErase.end(); I != E; ++I)
+         E = toErase.end(); I != E; ++I) {
+      DEBUG(cerr << "GVN removed: " << **I);
+      MD->removeInstruction(*I);
       (*I)->eraseFromParent();
+    }
 
     if (AtStart)
       BI = BB->begin();
@@ -1336,8 +1330,9 @@ bool GVN::performPRE(Function& F) {
       
       Instruction* erase = BI;
       BI++;
+      DEBUG(cerr << "GVN removed: " << *erase);
+      MD->removeInstruction(erase);
       erase->eraseFromParent();
-      
       changed = true;
     }
   }
@@ -1351,14 +1346,12 @@ bool GVN::performPRE(Function& F) {
 
 // iterateOnFunction - Executes one iteration of GVN
 bool GVN::iterateOnFunction(Function &F) {
-  DominatorTree &DT = getAnalysis<DominatorTree>();
-
   cleanupGlobalSets();
 
   // Top-down walk of the dominator tree
   bool changed = false;
-  for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
-       DE = df_end(DT.getRootNode()); DI != DE; ++DI)
+  for (df_iterator<DomTreeNode*> DI = df_begin(DT->getRootNode()),
+       DE = df_end(DT->getRootNode()); DI != DE; ++DI)
     changed |= processBlock(*DI);
   
   return changed;
