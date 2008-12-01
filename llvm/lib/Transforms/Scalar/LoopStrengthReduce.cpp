@@ -244,28 +244,21 @@ DeleteTriviallyDeadInstructions(SetVector<Instruction*> &Insts) {
     Instruction *I = Insts.back();
     Insts.pop_back();
 
-    if (PHINode *PN = dyn_cast<PHINode>(I)) {
-      // If all incoming values to the Phi are the same, we can replace the Phi
-      // with that value.
-      if (Value *PNV = PN->hasConstantValue()) {
-        if (Instruction *U = dyn_cast<Instruction>(PNV))
+    if (!isInstructionTriviallyDead(I))
+      continue;
+
+    SE->deleteValueFromRecords(I);
+
+    for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i) {
+      if (Instruction *U = dyn_cast<Instruction>(*i)) {
+        *i = 0;
+        if (U->use_empty())
           Insts.insert(U);
-        SE->deleteValueFromRecords(PN);
-        PN->replaceAllUsesWith(PNV);
-        PN->eraseFromParent();
-        Changed = true;
-        continue;
       }
     }
-
-    if (isInstructionTriviallyDead(I)) {
-      for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
-        if (Instruction *U = dyn_cast<Instruction>(*i))
-          Insts.insert(U);
-      SE->deleteValueFromRecords(I);
-      I->eraseFromParent();
-      Changed = true;
-    }
+    
+    I->eraseFromParent();
+    Changed = true;
   }
 }
 
@@ -2067,7 +2060,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     BasicBlock::iterator I = L->getHeader()->begin();
     while (PHINode *PN = dyn_cast<PHINode>(I++)) {
       // At this point, we know that we have killed one or more IV users.
-      // It is worth checking to see if the cann indvar is also
+      // It is worth checking to see if the cannonical indvar is also
       // dead, so that we can remove it as well.
       //
       // We can remove a PHI if it is on a cycle in the def-use graph
