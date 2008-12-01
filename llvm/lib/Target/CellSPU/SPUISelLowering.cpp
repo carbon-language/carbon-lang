@@ -759,12 +759,13 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     }
 
     SDValue insertEltOp =
-            DAG.getNode(SPUISD::SHUFFLE_MASK, stVecVT, insertEltPtr);
+            DAG.getNode(SPUISD::SHUFFLE_MASK, vecVT, insertEltPtr);
     SDValue vectorizeOp =
             DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, theValue);
 
-    result = DAG.getNode(SPUISD::SHUFB, vecVT, vectorizeOp, alignLoadVec,
-                         DAG.getNode(ISD::BIT_CONVERT, vecVT, insertEltOp));
+    result = DAG.getNode(SPUISD::SHUFB, vecVT,
+			 vectorizeOp, alignLoadVec,
+			 DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, insertEltOp));
 
     result = DAG.getStore(the_chain, result, basePtr,
                           LN->getSrcValue(), LN->getSrcValueOffset(),
@@ -885,10 +886,10 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 static SDValue
 LowerConstant(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
-  ConstantSDNode *CN = cast<ConstantSDNode>(Op.getNode());
 
   if (VT == MVT::i64) {
-    SDValue T = DAG.getConstant(CN->getZExtValue(), MVT::i64);
+    ConstantSDNode *CN = cast<ConstantSDNode>(Op.getNode());
+    SDValue T = DAG.getConstant(CN->getZExtValue(), VT);
     return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
                        DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i64, T, T));
   } else {
@@ -906,15 +907,18 @@ LowerConstant(SDValue Op, SelectionDAG &DAG) {
 static SDValue
 LowerConstantFP(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
-  ConstantFPSDNode *FP = cast<ConstantFPSDNode>(Op.getNode());
-
-  assert((FP != 0) &&
-         "LowerConstantFP: Node is not ConstantFPSDNode");
 
   if (VT == MVT::f64) {
+    ConstantFPSDNode *FP = cast<ConstantFPSDNode>(Op.getNode());
+
+    assert((FP != 0) &&
+           "LowerConstantFP: Node is not ConstantFPSDNode");
+    
     uint64_t dbits = DoubleToBits(FP->getValueAPF().convertToDouble());
-    return DAG.getNode(ISD::BIT_CONVERT, VT,
-                       LowerConstant(DAG.getConstant(dbits, MVT::i64), DAG));
+    SDValue T = DAG.getConstant(dbits, MVT::i64);
+    SDValue Tvec = DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i64, T, T);
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
+                       DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64, Tvec));
   }
 
   return SDValue();
@@ -1793,7 +1797,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       DAG.getCopyToReg(DAG.getEntryNode(), VReg, DAG.getConstant(0, PtrVT));
     // Copy register's contents as index in SHUFFLE_MASK:
     SDValue ShufMaskOp =
-      DAG.getNode(SPUISD::SHUFFLE_MASK, V1.getValueType(),
+      DAG.getNode(SPUISD::SHUFFLE_MASK, MVT::v4i32,
                   DAG.getTargetConstant(V2Elt, MVT::i32),
                   DAG.getCopyFromReg(InitTempReg, VReg, PtrVT));
     // Use shuffle mask in SHUFB synthetic instruction:
@@ -1818,7 +1822,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     }
 
     SDValue VPermMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8,
-                                      &ResultMask[0], ResultMask.size());
+                                    &ResultMask[0], ResultMask.size());
     return DAG.getNode(SPUISD::SHUFB, V1.getValueType(), V1, V2, VPermMask);
   }
 }
@@ -2165,7 +2169,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     if (scaleShift > 0) {
       // Scale the shift factor:
       Elt = DAG.getNode(ISD::SHL, MVT::i32, Elt,
-              DAG.getConstant(scaleShift, MVT::i32));
+                        DAG.getConstant(scaleShift, MVT::i32));
     }
 
     vecShift = DAG.getNode(SPUISD::SHLQUAD_L_BYTES, VecVT, N, Elt);
@@ -2209,7 +2213,8 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     }
 
     retval = DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
-                         DAG.getNode(SPUISD::SHUFB, VecVT, vecShift, vecShift, replicate));
+                         DAG.getNode(SPUISD::SHUFB, VecVT,
+                                     vecShift, vecShift, replicate));
   }
 
   return retval;
@@ -2225,18 +2230,17 @@ static SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   assert(CN != 0 && "LowerINSERT_VECTOR_ELT: Index is not constant!");
 
   MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
-  // Use $2 because it's always 16-byte aligned and it's available:
-  SDValue PtrBase = DAG.getRegister(SPU::R2, PtrVT);
+  // Use $sp ($1) because it's always 16-byte aligned and it's available:
+  SDValue Pointer = DAG.getNode(SPUISD::IndirectAddr, PtrVT,
+                                DAG.getRegister(SPU::R1, PtrVT),
+                                DAG.getConstant(CN->getSExtValue(), PtrVT));
+  SDValue ShufMask = DAG.getNode(SPUISD::SHUFFLE_MASK, VT, Pointer);
 
   SDValue result =
     DAG.getNode(SPUISD::SHUFB, VT,
                 DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, ValOp),
-                VecOp,
-                DAG.getNode(SPUISD::SHUFFLE_MASK, VT,
-                            DAG.getNode(ISD::ADD, PtrVT,
-                                        PtrBase,
-                                        DAG.getConstant(CN->getZExtValue(),
-                                                        PtrVT))));
+                VecOp, 
+		DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, ShufMask));
 
   return result;
 }
@@ -2901,8 +2905,10 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
 #endif
   const SPUSubtarget *ST = SPUTM.getSubtargetImpl();
   SelectionDAG &DAG = DCI.DAG;
-  SDValue Op0 = N->getOperand(0);      // everything has at least one operand
-  SDValue Result;                     // Initially, NULL result
+  SDValue Op0 = N->getOperand(0);       // everything has at least one operand
+  MVT NodeVT = N->getValueType(0);      // The node's value type
+  MVT Op0VT = Op0.getValueType();      // The first operand's result
+  SDValue Result;                       // Initially, empty result
 
   switch (N->getOpcode()) {
   default: break;
@@ -2918,14 +2924,13 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
         ConstantSDNode *CN0 = cast<ConstantSDNode>(Op1);
         ConstantSDNode *CN1 = cast<ConstantSDNode>(Op01);
         SDValue combinedConst =
-          DAG.getConstant(CN0->getZExtValue() + CN1->getZExtValue(),
-                          Op0.getValueType());
+          DAG.getConstant(CN0->getZExtValue() + CN1->getZExtValue(), Op0VT);
 
         DEBUG(cerr << "Replace: (add " << CN0->getZExtValue() << ", "
                    << "(SPUindirect <arg>, " << CN1->getZExtValue() << "))\n");
         DEBUG(cerr << "With:    (SPUindirect <arg>, "
                    << CN0->getZExtValue() + CN1->getZExtValue() << ")\n");
-        return DAG.getNode(SPUISD::IndirectAddr, Op0.getValueType(),
+        return DAG.getNode(SPUISD::IndirectAddr, Op0VT,
                            Op0.getOperand(0), combinedConst);
       }
     } else if (isa<ConstantSDNode>(Op0)
@@ -2938,8 +2943,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
         ConstantSDNode *CN0 = cast<ConstantSDNode>(Op0);
         ConstantSDNode *CN1 = cast<ConstantSDNode>(Op11);
         SDValue combinedConst =
-          DAG.getConstant(CN0->getZExtValue() + CN1->getZExtValue(),
-                          Op0.getValueType());
+          DAG.getConstant(CN0->getZExtValue() + CN1->getZExtValue(), Op0VT);
 
         DEBUG(cerr << "Replace: (add " << CN0->getZExtValue() << ", "
                    << "(SPUindirect <arg>, " << CN1->getZExtValue() << "))\n");
@@ -2955,8 +2959,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND: {
-    if (Op0.getOpcode() == SPUISD::VEC2PREFSLOT &&
-        N->getValueType(0) == Op0.getValueType()) {
+    if (Op0.getOpcode() == SPUISD::VEC2PREFSLOT && NodeVT == Op0VT) {
       // (any_extend (SPUextract_elt0 <arg>)) ->
       // (SPUextract_elt0 <arg>)
       // Types must match, however...
@@ -3000,7 +3003,6 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
     if (isa<ConstantSDNode>(Op1)) {
       // Kill degenerate vector shifts:
       ConstantSDNode *CN = cast<ConstantSDNode>(Op1);
-
       if (CN->getZExtValue() == 0) {
         Result = Op0;
       }
@@ -3014,20 +3016,20 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
     case ISD::ANY_EXTEND:
     case ISD::ZERO_EXTEND:
     case ISD::SIGN_EXTEND: {
-      // (SPUpromote_scalar (any|sign|zero_extend (SPUextract_elt0 <arg>))) ->
+      // (SPUpromote_scalar (any|zero|sign_extend (SPUvec2prefslot <arg>))) ->
       // <arg>
       // but only if the SPUpromote_scalar and <arg> types match.
       SDValue Op00 = Op0.getOperand(0);
       if (Op00.getOpcode() == SPUISD::VEC2PREFSLOT) {
         SDValue Op000 = Op00.getOperand(0);
-        if (Op000.getValueType() == N->getValueType(0)) {
+        if (Op000.getValueType() == NodeVT) {
           Result = Op000;
         }
       }
       break;
     }
     case SPUISD::VEC2PREFSLOT: {
-      // (SPUpromote_scalar (SPUextract_elt0 <arg>)) ->
+      // (SPUpromote_scalar (SPUvec2prefslot <arg>)) ->
       // <arg>
       Result = Op0.getOperand(0);
       break;
@@ -3037,7 +3039,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   }
   }
   // Otherwise, return unchanged.
-#ifdef NDEBUG
+#ifndef NDEBUG
   if (Result.getNode()) {
     DEBUG(cerr << "\nReplace.SPU: ");
     DEBUG(N->dump(&DAG));

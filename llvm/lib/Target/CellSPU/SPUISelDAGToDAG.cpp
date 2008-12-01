@@ -593,8 +593,8 @@ SPUDAGToDAGISel::SelectXFormAddr(SDValue Op, SDValue N, SDValue &Base,
       && !SelectDFormAddr(Op, N, Base, Index)) {
     // If the address is neither A-form or D-form, punt and use an X-form
     // address:
-    Base = N.getOperand(0);
-    Index = N.getOperand(1);
+    Base = N.getOperand(1);
+    Index = N.getOperand(0);
     return true;
   }
 

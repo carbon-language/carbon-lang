@@ -269,52 +269,51 @@ def STQR : RI16Form<0b111000100, (outs), (ins VECREG:$rT, s16imm:$disp),
 // Generate Controls for Insertion:
 //===----------------------------------------------------------------------===//
 
-def CBD :
-    RI7Form<0b10101111100, (outs VECREG:$rT), (ins memri7:$src),
-      "cbd\t$rT, $src", ShuffleOp,
-      [(set (v16i8 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
+def CBD: RI7Form<0b10101111100, (outs VECREG:$rT), (ins memri7:$src),
+    "cbd\t$rT, $src", ShuffleOp,
+    [(set (v16i8 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
 
-def CBX : RRForm<0b00101011100, (outs VECREG:$rT), (ins memrr:$src),
+def CBX: RRForm<0b00101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cbx\t$rT, $src", ShuffleOp,
     [(set (v16i8 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
-def CHD : RI7Form<0b10101111100, (outs VECREG:$rT), (ins memri7:$src),
+def CHD: RI7Form<0b10101111100, (outs VECREG:$rT), (ins memri7:$src),
     "chd\t$rT, $src", ShuffleOp,
     [(set (v8i16 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
 
-def CHX : RRForm<0b10101011100, (outs VECREG:$rT), (ins memrr:$src),
+def CHX: RRForm<0b10101011100, (outs VECREG:$rT), (ins memrr:$src),
     "chx\t$rT, $src", ShuffleOp,
     [(set (v8i16 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
-def CWD : RI7Form<0b01101111100, (outs VECREG:$rT), (ins memri7:$src),
+def CWD: RI7Form<0b01101111100, (outs VECREG:$rT), (ins memri7:$src),
     "cwd\t$rT, $src", ShuffleOp,
     [(set (v4i32 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
 
-def CWDf32 : RI7Form<0b01101111100, (outs VECREG:$rT), (ins memri7:$src),
-    "cwd\t$rT, $src", ShuffleOp,
-    [(set (v4f32 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
-
-def CWX : RRForm<0b01101011100, (outs VECREG:$rT), (ins memrr:$src),
+def CWX: RRForm<0b01101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cwx\t$rT, $src", ShuffleOp,
     [(set (v4i32 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
-def CWXf32 : RRForm<0b01101011100, (outs VECREG:$rT), (ins memrr:$src),
+def CWDf32: RI7Form<0b01101111100, (outs VECREG:$rT), (ins memri7:$src),
+    "cwd\t$rT, $src", ShuffleOp,
+    [(set (v4f32 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
+
+def CWXf32: RRForm<0b01101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cwx\t$rT, $src", ShuffleOp,
     [(set (v4f32 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
-def CDD : RI7Form<0b11101111100, (outs VECREG:$rT), (ins memri7:$src),
+def CDD: RI7Form<0b11101111100, (outs VECREG:$rT), (ins memri7:$src),
     "cdd\t$rT, $src", ShuffleOp,
     [(set (v2i64 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
 
-def CDDf64 : RI7Form<0b11101111100, (outs VECREG:$rT), (ins memri7:$src),
-    "cdd\t$rT, $src", ShuffleOp,
-    [(set (v2f64 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
-
-def CDX : RRForm<0b11101011100, (outs VECREG:$rT), (ins memrr:$src),
+def CDX: RRForm<0b11101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cdx\t$rT, $src", ShuffleOp,
     [(set (v2i64 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
-def CDXf64 : RRForm<0b11101011100, (outs VECREG:$rT), (ins memrr:$src),
+def CDDf64: RI7Form<0b11101111100, (outs VECREG:$rT), (ins memri7:$src),
+    "cdd\t$rT, $src", ShuffleOp,
+    [(set (v2f64 VECREG:$rT), (SPUshufmask dform2_addr:$src))]>;
+
+def CDXf64: RRForm<0b11101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cdx\t$rT, $src", ShuffleOp,
     [(set (v2f64 VECREG:$rT), (SPUshufmask xform_addr:$src))]>;
 
@@ -1786,45 +1785,32 @@ class SHUFBInst<dag OOL, dag IOL, list<dag> pattern>:
     RRRForm<0b1000, OOL, IOL, "shufb\t$rT, $rA, $rB, $rC",
             IntegerOp, pattern>;
 
-class SHUFBVecInst<ValueType vectype>:
+class SHUFBVecInst<ValueType resultvec, ValueType maskvec>:
     SHUFBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
-              [(set (vectype VECREG:$rT), (SPUshuffle (vectype VECREG:$rA),
-                                                      (vectype VECREG:$rB),
-                                                      (vectype VECREG:$rC)))]>;
-
-// It's this pattern that's probably the most useful, since SPUISelLowering
-// methods create a v16i8 vector for $rC:
-class SHUFBVecPat1<ValueType vectype, ValueType masktype, SPUInstr inst>:
-    Pat<(SPUshuffle (vectype VECREG:$rA), (vectype VECREG:$rB),
-                    (masktype VECREG:$rC)),
-         (inst VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
+              [(set (resultvec VECREG:$rT),
+                    (SPUshuffle (resultvec VECREG:$rA),
+                                (resultvec VECREG:$rB),
+                                (maskvec VECREG:$rC)))]>;
 
 multiclass ShuffleBytes
 {
-  def v16i8 : SHUFBVecInst<v16i8>;
-  def v8i16 : SHUFBVecInst<v8i16>;
-  def v4i32 : SHUFBVecInst<v4i32>;
-  def v2i64 : SHUFBVecInst<v2i64>;
+  def v16i8     : SHUFBVecInst<v16i8, v16i8>;
+  def v16i8_m32 : SHUFBVecInst<v16i8, v4i32>;
+  def v8i16     : SHUFBVecInst<v8i16, v16i8>;
+  def v8i16_m32 : SHUFBVecInst<v8i16, v4i32>;
+  def v4i32     : SHUFBVecInst<v4i32, v16i8>;
+  def v4i32_m32 : SHUFBVecInst<v4i32, v4i32>;
+  def v2i64     : SHUFBVecInst<v2i64, v16i8>;
+  def v2i64_m32 : SHUFBVecInst<v2i64, v4i32>;
 
-  def v4f32 : SHUFBVecInst<v4f32>;
-  def v2f64 : SHUFBVecInst<v2f64>;
+  def v4f32     : SHUFBVecInst<v4f32, v16i8>;
+  def v4f32_m32 : SHUFBVecInst<v4f32, v4i32>;
+
+  def v2f64     : SHUFBVecInst<v2f64, v16i8>;
+  def v2f64_m32 : SHUFBVecInst<v2f64, v4i32>;
 }
 
 defm SHUFB : ShuffleBytes;
-
-// Shuffle mask is a v16i8 vector
-def : SHUFBVecPat1<v8i16, v16i8, SHUFBv16i8>;
-def : SHUFBVecPat1<v4i32, v16i8, SHUFBv16i8>;
-def : SHUFBVecPat1<v2i64, v16i8, SHUFBv16i8>;
-def : SHUFBVecPat1<v4f32, v16i8, SHUFBv16i8>;
-def : SHUFBVecPat1<v2f64, v16i8, SHUFBv16i8>;
-
-// Shuffle mask is a v4i32 vector:
-def : SHUFBVecPat1<v16i8, v4i32, SHUFBv4i32>;
-def : SHUFBVecPat1<v8i16, v4i32, SHUFBv4i32>;
-def : SHUFBVecPat1<v2i64, v4i32, SHUFBv4i32>;
-def : SHUFBVecPat1<v4f32, v4i32, SHUFBv4i32>;
-def : SHUFBVecPat1<v2f64, v4i32, SHUFBv4i32>;
 
 //===----------------------------------------------------------------------===//
 // Shift and rotate group:
