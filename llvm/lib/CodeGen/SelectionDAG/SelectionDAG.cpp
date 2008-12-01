@@ -3838,6 +3838,23 @@ SDVTList SelectionDAG::getVTList(MVT VT1, MVT VT2, MVT VT3) {
   return Result;
 }
 
+SDVTList SelectionDAG::getVTList(MVT VT1, MVT VT2, MVT VT3, MVT VT4) {
+  for (std::vector<SDVTList>::reverse_iterator I = VTList.rbegin(),
+       E = VTList.rend(); I != E; ++I)
+    if (I->NumVTs == 4 && I->VTs[0] == VT1 && I->VTs[1] == VT2 &&
+                          I->VTs[2] == VT3 && I->VTs[3] == VT4)
+      return *I;
+
+  MVT *Array = Allocator.Allocate<MVT>(3);
+  Array[0] = VT1;
+  Array[1] = VT2;
+  Array[2] = VT3;
+  Array[3] = VT4;
+  SDVTList Result = makeVTList(Array, 4);
+  VTList.push_back(Result);
+  return Result;
+}
+
 SDVTList SelectionDAG::getVTList(const MVT *VTs, unsigned NumVTs) {
   switch (NumVTs) {
     case 0: assert(0 && "Cannot have nodes without results!");
@@ -4075,6 +4092,13 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
   return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
 }
 
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
+                                   MVT VT1, MVT VT2, MVT VT3, MVT VT4,
+                                   const SDValue *Ops, unsigned NumOps) {
+  SDVTList VTs = getVTList(VT1, VT2, VT3, VT4);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
+}
+
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc, 
                                    MVT VT1, MVT VT2,
                                    SDValue Op1) {
@@ -4096,6 +4120,15 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    SDValue Op1, SDValue Op2, 
                                    SDValue Op3) {
   SDVTList VTs = getVTList(VT1, VT2);
+  SDValue Ops[] = { Op1, Op2, Op3 };
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, 3);
+}
+
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
+                                   MVT VT1, MVT VT2, MVT VT3,
+                                   SDValue Op1, SDValue Op2, 
+                                   SDValue Op3) {
+  SDVTList VTs = getVTList(VT1, VT2, VT3);
   SDValue Ops[] = { Op1, Op2, Op3 };
   return SelectNodeTo(N, MachineOpc, VTs, Ops, 3);
 }

@@ -227,6 +227,7 @@ public:
   SDVTList getVTList(MVT VT);
   SDVTList getVTList(MVT VT1, MVT VT2);
   SDVTList getVTList(MVT VT1, MVT VT2, MVT VT3);
+  SDVTList getVTList(MVT VT1, MVT VT2, MVT VT3, MVT VT4);
   SDVTList getVTList(const MVT *VTs, unsigned NumVTs);
   
   /// getNodeValueTypes - These are obsolete, use getVTList instead.
@@ -238,6 +239,9 @@ public:
   }
   const MVT *getNodeValueTypes(MVT VT1, MVT VT2, MVT VT3) {
     return getVTList(VT1, VT2, VT3).VTs;
+  }
+  const MVT *getNodeValueTypes(MVT VT1, MVT VT2, MVT VT3, MVT VT4) {
+    return getVTList(VT1, VT2, VT3, VT4).VTs;
   }
   const MVT *getNodeValueTypes(const std::vector<MVT> &vtList) {
     return getVTList(&vtList[0], (unsigned)vtList.size()).VTs;
@@ -564,12 +568,17 @@ public:
                        MVT VT2, const SDValue *Ops, unsigned NumOps);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1,
                        MVT VT2, MVT VT3, const SDValue *Ops, unsigned NumOps);
+  SDNode *SelectNodeTo(SDNode *N, unsigned MachineOpc, MVT VT1,
+                       MVT VT2, MVT VT3, MVT VT4, const SDValue *Ops,
+                       unsigned NumOps);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1,
                        MVT VT2, SDValue Op1);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1,
                        MVT VT2, SDValue Op1, SDValue Op2);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1,
                        MVT VT2, SDValue Op1, SDValue Op2, SDValue Op3);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1,
+                       MVT VT2, MVT VT3, SDValue Op1, SDValue Op2, SDValue Op3);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, SDVTList VTs,
                        const SDValue *Ops, unsigned NumOps);
 
