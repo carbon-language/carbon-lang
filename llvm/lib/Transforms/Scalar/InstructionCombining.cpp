@@ -9975,8 +9975,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
 /// and a single binop.
 Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
-  assert(isa<BinaryOperator>(FirstInst) || isa<GetElementPtrInst>(FirstInst) ||
-         isa<CmpInst>(FirstInst));
+  assert(isa<BinaryOperator>(FirstInst) || isa<CmpInst>(FirstInst));
   unsigned Opc = FirstInst->getOpcode();
   Value *LHSVal = FirstInst->getOperand(0);
   Value *RHSVal = FirstInst->getOperand(1);
@@ -10006,14 +10005,7 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
     if (I->getOperand(1) != RHSVal) RHSVal = 0;
   }
   
-  // Otherwise, this is safe to transform, determine if it is profitable.
-
-  // If this is a GEP, and if the index (not the pointer) needs a PHI, bail out.
-  // Indexes are often folded into load/store instructions, so we don't want to
-  // hide them behind a phi.
-  // URR??
-  if (isa<GetElementPtrInst>(FirstInst) && RHSVal == 0)
-    return 0;
+  // Otherwise, this is safe to transform!
   
   Value *InLHS = FirstInst->getOperand(0);
   Value *InRHS = FirstInst->getOperand(1);
@@ -10053,11 +10045,9 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
     
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::Create(BinOp->getOpcode(), LHSVal, RHSVal);
-  if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
-    return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(), LHSVal, 
-                           RHSVal);
-  assert(isa<GetElementPtrInst>(FirstInst));
-  return GetElementPtrInst::Create(LHSVal, RHSVal);
+  CmpInst *CIOp = cast<CmpInst>(FirstInst);
+  return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(), LHSVal,
+                         RHSVal);
 }
 
 Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
@@ -10207,8 +10197,6 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
       return 0;
     
   } else if (isa<GetElementPtrInst>(FirstInst)) {
-    if (FirstInst->getNumOperands() == 2)
-      return FoldPHIArgBinOpIntoPHI(PN);
     return FoldPHIArgGEPIntoPHI(PN);
   } else {
     return 0;  // Cannot fold this operation.
