@@ -643,7 +643,9 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
     // cases (e.g. use of a post-incremented induction variable) the NewBase
     // value will be pinned to live somewhere after the original computation.
     // In this case, we have to back off.
-    if (!isUseOfPostIncrementedValue) {
+    // However, do not insert new code inside the loop when the reference
+    // is outside.
+    if (!isUseOfPostIncrementedValue && L->contains(Inst->getParent())) {
       if (NewBasePt && isa<PHINode>(OperandValToReplace)) {
         InsertPt = NewBasePt;
         ++InsertPt;
@@ -921,14 +923,16 @@ static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
 /// (a+c+d) -> (a+c).  The common expression is *removed* from the Bases.
 static SCEVHandle 
 RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
-                                    ScalarEvolution *SE) {
+                                    ScalarEvolution *SE, Loop *L) {
   unsigned NumUses = Uses.size();
 
-  // Only one use?  Use its base, regardless of what it is!
+  // Only one use?  If inside the loop, use its base, regardless of what it is;
+  // if outside, use 0.
   SCEVHandle Zero = SE->getIntegerSCEV(0, Uses[0].Base->getType());
   SCEVHandle Result = Zero;
   if (NumUses == 1) {
-    std::swap(Result, Uses[0].Base);
+    if (L->contains(Uses[0].Inst->getParent()))
+      std::swap(Result, Uses[0].Base);
     return Result;
   }
 
@@ -941,7 +945,13 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
   std::vector<SCEVHandle> UniqueSubExprs;
 
   std::vector<SCEVHandle> SubExprs;
+  uint64_t NumUsesInsideLoop = 0;
   for (unsigned i = 0; i != NumUses; ++i) {
+    // For this purpose, consider only uses that are inside the loop.
+    if (!L->contains(Uses[i].Inst->getParent()))
+      continue;
+    NumUsesInsideLoop++;
+    
     // If the base is zero (which is common), return zero now, there are no
     // CSEs we can find.
     if (Uses[i].Base == Zero) return Zero;
@@ -961,7 +971,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
     std::map<SCEVHandle, unsigned>::iterator I = 
        SubExpressionUseCounts.find(UniqueSubExprs[i]);
     assert(I != SubExpressionUseCounts.end() && "Entry not found?");
-    if (I->second == NumUses) {  // Found CSE!
+    if (I->second == NumUsesInsideLoop) {  // Found CSE!
       Result = SE->getAddExpr(Result, I->first);
     } else {
       // Remove non-cse's from SubExpressionUseCounts.
@@ -974,6 +984,10 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
   
   // Otherwise, remove all of the CSE's we found from each of the base values.
   for (unsigned i = 0; i != NumUses; ++i) {
+    // For this purpose, consider only uses that are inside the loop.
+    if (!L->contains(Uses[i].Inst->getParent()))
+      continue;
+
     // Split the expression into subexprs.
     SeparateSubExprs(SubExprs, Uses[i].Base, SE);
 
@@ -1166,7 +1180,7 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
   // "A+B"), emit it to the preheader, then remove the expression from the
   // UsersToProcess base values.
   SCEVHandle CommonExprs =
-    RemoveCommonExpressionsFromUseBases(UsersToProcess, SE);
+    RemoveCommonExpressionsFromUseBases(UsersToProcess, SE, L);
 
   // Next, figure out what we can represent in the immediate fields of
   // instructions.  If we can represent anything there, move it to the imm
@@ -1449,6 +1463,12 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       if (!isa<ConstantInt>(BaseV) || !cast<ConstantInt>(BaseV)->isZero())
         // Add BaseV to the PHI value if needed.
         RewriteExpr = SE->getAddExpr(RewriteExpr, SE->getUnknown(BaseV));
+
+      // If this reference is not in the loop and we have a Common base,
+      // that has been added into the induction variable and must be
+      // subtracted off here.
+      if (HaveCommonExprs && !L->contains(User.Inst->getParent()))
+        RewriteExpr = SE->getMinusSCEV(RewriteExpr, CommonExprs);
 
       User.RewriteInstructionToUseNewBase(RewriteExpr, NewBasePt,
                                           Rewriter, L, this,
