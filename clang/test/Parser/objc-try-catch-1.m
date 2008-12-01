@@ -1,5 +1,5 @@
-// RUN: clang -fsyntax-only -verify %s
-
+// RUN: clang -fsyntax-only -verify %s &&
+// RUN: clang -fsyntax-only -verify -x objective-c++ %s
 void * proc();
 
 @interface NSConstantString

@@ -41,8 +41,9 @@ static void InitCharacterInfo();
 
 /// isObjCAtKeyword - Return true if we have an ObjC keyword identifier. 
 bool Token::isObjCAtKeyword(tok::ObjCKeywordKind objcKey) const {
-  return is(tok::identifier) && 
-         getIdentifierInfo()->getObjCKeywordID() == objcKey;
+  if (IdentifierInfo *II = getIdentifierInfo())
+    return II->getObjCKeywordID() == objcKey;
+  return false;
 }
 
 /// getObjCKeywordID - Return the ObjC keyword kind.
