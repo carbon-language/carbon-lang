@@ -388,12 +388,12 @@ public:
   // Binary operators
 
   llvm::Constant *VisitCallExpr(const CallExpr *E) {
-    APValue Result;
+    Expr::EvalResult Result;
     if (E->Evaluate(Result, CGM.getContext())) {
-      if (Result.isInt())
-        return llvm::ConstantInt::get(Result.getInt());
-      if (Result.isFloat())
-        return llvm::ConstantFP::get(Result.getFloat());
+      if (Result.Val.isInt())
+        return llvm::ConstantInt::get(Result.Val.getInt());
+      if (Result.Val.isFloat())
+        return llvm::ConstantFP::get(Result.Val.getFloat());
     }
 
     // Handle __builtin___CFStringMakeConstantString.
@@ -622,16 +622,19 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                                 CodeGenFunction *CGF) {
   QualType type = Context.getCanonicalType(E->getType());
 
-  APValue V;
-  if (E->Evaluate(V, Context)) {
-    // FIXME: Assert that the value doesn't have any side effects.
-    switch (V.getKind()) {
+  Expr::EvalResult Result;
+  
+  if (E->Evaluate(Result, Context)) {
+    assert(!Result.HasSideEffects && 
+           "Constant expr should not have any side effects!");
+    switch (Result.Val.getKind()) {
     default: assert(0 && "unhandled value kind!");
     case APValue::LValue: {
-      llvm::Constant *Offset = llvm::ConstantInt::get(llvm::Type::Int64Ty,
-                                                      V.getLValueOffset());
+      llvm::Constant *Offset = 
+        llvm::ConstantInt::get(llvm::Type::Int64Ty, 
+                               Result.Val.getLValueOffset());
       
-      if (const Expr *LVBase = V.getLValueBase()) {
+      if (const Expr *LVBase = Result.Val.getLValueBase()) {
         llvm::Constant *C = 
           ConstExprEmitter(*this, CGF).EmitLValue(const_cast<Expr*>(LVBase));
 
@@ -651,7 +654,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                              getTypes().ConvertType(type));
     }
     case APValue::Int: {
-      llvm::Constant *C = llvm::ConstantInt::get(V.getInt());
+      llvm::Constant *C = llvm::ConstantInt::get(Result.Val.getInt());
       
       if (C->getType() == llvm::Type::Int1Ty) {
         const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
@@ -660,12 +663,12 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       return C;
     }
     case APValue::Float:
-      return llvm::ConstantFP::get(V.getFloat());
+      return llvm::ConstantFP::get(Result.Val.getFloat());
     case APValue::ComplexFloat: {
       llvm::Constant *Complex[2];
       
-      Complex[0] = llvm::ConstantFP::get(V.getComplexFloatReal());
-      Complex[1] = llvm::ConstantFP::get(V.getComplexFloatImag());
+      Complex[0] = llvm::ConstantFP::get(Result.Val.getComplexFloatReal());
+      Complex[1] = llvm::ConstantFP::get(Result.Val.getComplexFloatImag());
       
       return llvm::ConstantStruct::get(Complex, 2);
     }
