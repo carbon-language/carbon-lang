@@ -183,7 +183,7 @@ namespace {
     Instruction *FoldAndOfICmps(Instruction &I, ICmpInst *LHS, ICmpInst *RHS);
     Instruction *visitAnd(BinaryOperator &I);
     Instruction *FoldOrOfICmps(Instruction &I, ICmpInst *LHS, ICmpInst *RHS);
-    Instruction *FoldOrWithConstants(BinaryOperator &I,
+    Instruction *FoldOrWithConstants(BinaryOperator &I, Value *Op,
                                      Value *A, Value *B, Value *C);
     Instruction *visitOr (BinaryOperator &I);
     Instruction *visitXor(BinaryOperator &I);
@@ -4449,40 +4449,39 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
 
 /// FoldOrWithConstants - This helper function folds:
 ///
-///     ((A|B)&1)|(B&-2)
+///     ((A | B) & 1) | (B & -2)
 ///
 /// into:
 /// 
-///     (A&1) | B
-Instruction *InstCombiner::FoldOrWithConstants(BinaryOperator &I,
+///     (A & 1) | B
+///
+/// The constants aren't important. Only that they don't overlap. (I.e., the XOR
+/// of the two constants is "all ones".)
+Instruction *InstCombiner::FoldOrWithConstants(BinaryOperator &I, Value *Op,
                                                Value *A, Value *B, Value *C) {
-  Value *Op1 = I.getOperand(1);
+  if (ConstantInt *CI1 = dyn_cast<ConstantInt>(C)) {
+    Value *V1 = 0, *C2 = 0;
+    if (match(Op, m_And(m_Value(V1), m_Value(C2)))) {
+      ConstantInt *CI2 = dyn_cast<ConstantInt>(C2);
 
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
-    if (CI->getValue() == 1) {
-      Value *V1 = 0, *C2 = 0;
-      if (match(Op1, m_And(m_Value(V1), m_Value(C2)))) {
-        ConstantInt *CI2 = dyn_cast<ConstantInt>(C2);
+      if (!CI2) {
+        std::swap(V1, C2);
+        CI2 = dyn_cast<ConstantInt>(C2);
+      }
 
-        if (!CI2) {
-          std::swap(V1, C2);
-          CI2 = dyn_cast<ConstantInt>(C2);
-        }
-
-        if (CI2) {
-          APInt NegTwo = -APInt(CI2->getValue().getBitWidth(), 2, true);
-          if (CI2->getValue().eq(NegTwo)) {
+      if (CI2) {
+        APInt Xor = CI1->getValue() ^ CI2->getValue();
+        if (Xor.isAllOnesValue()) {
             if (V1 == B) {
               Instruction *NewOp =
-                InsertNewInstBefore(BinaryOperator::CreateAnd(A, CI), I);
+                InsertNewInstBefore(BinaryOperator::CreateAnd(A, CI1), I);
               return BinaryOperator::CreateOr(NewOp, B);
             }
             if (V1 == A) {
               Instruction *NewOp =
-                InsertNewInstBefore(BinaryOperator::CreateAnd(B, CI), I);
+                InsertNewInstBefore(BinaryOperator::CreateAnd(B, CI1), I);
               return BinaryOperator::CreateOr(NewOp, A);
             }
-          }
         }
       }
     }
@@ -4685,13 +4684,13 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   // ((A|B)&1)|(B&-2) -> (A&1) | B
   if (match(Op0, m_And(m_Or(m_Value(A), m_Value(B)), m_Value(C))) ||
       match(Op0, m_And(m_Value(C), m_Or(m_Value(A), m_Value(B))))) {
-    Instruction *Ret = FoldOrWithConstants(I, A, B, C);
+    Instruction *Ret = FoldOrWithConstants(I, Op1, A, B, C);
     if (Ret) return Ret;
   }
   // (B&-2)|((A|B)&1) -> (A&1) | B
   if (match(Op1, m_And(m_Or(m_Value(A), m_Value(B)), m_Value(C))) ||
       match(Op1, m_And(m_Value(C), m_Or(m_Value(A), m_Value(B))))) {
-    Instruction *Ret = FoldOrWithConstants(I, A, B, C);
+    Instruction *Ret = FoldOrWithConstants(I, Op0, A, B, C);
     if (Ret) return Ret;
   }
 
