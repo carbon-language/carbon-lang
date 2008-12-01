@@ -6083,8 +6083,10 @@ SDValue SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDValue LegalOp,
   // the target lowering hooks to expand it.  Just keep the low part of the
   // expanded operation, we know that we're truncating anyway.
   if (getTypeAction(NewOutTy) == Expand) {
-    Operation = SDValue(TLI.ReplaceNodeResults(Operation.getNode(), DAG), 0);
-    assert(Operation.getNode() && "Didn't return anything");
+    SmallVector<SDValue, 2> Results;
+    TLI.ReplaceNodeResults(Operation.getNode(), Results, DAG);
+    assert(Results.size() == 1 && "Incorrect FP_TO_XINT lowering!");
+    Operation = Results[0];
   }
 
   // Truncate the result of the extended FP_TO_*INT operation to the desired

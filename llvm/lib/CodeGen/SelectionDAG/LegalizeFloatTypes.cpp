@@ -727,16 +727,8 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   Lo = Hi = SDValue();
 
   // See if the target wants to custom expand this node.
-  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(ResNo)) ==
-      TargetLowering::Custom) {
-    // If the target wants to, allow it to lower this itself.
-    if (SDNode *P = TLI.ReplaceNodeResults(N, DAG)) {
-      // Everything that once used N now uses P.  We are guaranteed that the
-      // result value types of N and the result value types of P match.
-      ReplaceNodeWith(N, P);
-      return;
-    }
-  }
+  if (CustomLowerResults(N, ResNo))
+    return;
 
   switch (N->getOpcode()) {
   default:

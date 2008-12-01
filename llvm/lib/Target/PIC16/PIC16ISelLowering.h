@@ -66,12 +66,17 @@ namespace llvm {
     SDValue LowerSUBC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBinOp(SDValue Op, SelectionDAG &DAG);
 
-    SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
-    SDNode *ExpandStore(SDNode *N, SelectionDAG &DAG);
-    SDNode *ExpandLoad(SDNode *N, SelectionDAG &DAG);
-    SDNode *ExpandAdd(SDNode *N, SelectionDAG &DAG);
-    SDNode *ExpandGlobalAddress(SDNode *N, SelectionDAG &DAG);
-    SDNode *ExpandShift(SDNode *N, SelectionDAG &DAG);
+    /// ReplaceNodeResults - Replace the results of node with an illegal result
+    /// type with new values built out of custom code.
+    ///
+    virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
+                                    SelectionDAG &DAG);
+
+    SDValue ExpandStore(SDNode *N, SelectionDAG &DAG);
+    SDValue ExpandLoad(SDNode *N, SelectionDAG &DAG);
+//    SDNode *ExpandAdd(SDNode *N, SelectionDAG &DAG);
+    SDValue ExpandGlobalAddress(SDNode *N, SelectionDAG &DAG);
+    SDValue ExpandShift(SDNode *N, SelectionDAG &DAG);
 
     SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const; 
     SDValue PerformPIC16LoadCombine(SDNode *N, DAGCombinerInfo &DCI) const; 

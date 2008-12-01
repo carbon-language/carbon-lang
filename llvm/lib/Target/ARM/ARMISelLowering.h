@@ -76,8 +76,13 @@ namespace llvm {
     explicit ARMTargetLowering(TargetMachine &TM);
 
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
-    virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
-        
+
+    /// ReplaceNodeResults - Replace the results of node with an illegal result
+    /// type with new values built out of custom code.
+    ///
+    virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
+                                    SelectionDAG &DAG);
+
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
     
     virtual const char *getTargetNodeName(unsigned Opcode) const;

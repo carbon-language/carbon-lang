@@ -161,7 +161,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::VASTART:          return LowerVASTART(Op, DAG);
   // FIXME: Remove these when LegalizeDAGTypes lands.
   case ISD::ADD:
-  case ISD::SUB:              return SDValue(ExpandADDSUB(Op.getNode(), DAG),0);
+  case ISD::SUB:              return ExpandADDSUB(Op.getNode(), DAG);
   case ISD::FRAMEADDR:        return LowerFRAMEADDR(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
@@ -169,16 +169,19 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   }
 }
 
-/// ReplaceNodeResults - Provide custom lowering hooks for nodes with illegal
-/// result types.
-SDNode *XCoreTargetLowering::
-ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
+/// ReplaceNodeResults - Replace the results of node with an illegal result
+/// type with new values built out of custom code.
+void XCoreTargetLowering::ReplaceNodeResults(SDNode *N,
+                                             SmallVectorImpl<SDValue>&Results,
+                                             SelectionDAG &DAG) {
   switch (N->getOpcode()) {
   default:
     assert(0 && "Don't know how to custom expand this!");
-    return NULL;
+    return;
   case ISD::ADD:
-  case ISD::SUB: return ExpandADDSUB(N, DAG);
+  case ISD::SUB:
+    Results.push_back(ExpandADDSUB(N, DAG));
+    return;
   }
 }
 
@@ -296,7 +299,7 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG)
   return DAG.getNode(XCoreISD::DPRelativeWrapper, MVT::i32, JTI);
 }
 
-SDNode *XCoreTargetLowering::
+SDValue XCoreTargetLowering::
 ExpandADDSUB(SDNode *N, SelectionDAG &DAG)
 {
   assert(N->getValueType(0) == MVT::i64 &&
@@ -326,7 +329,7 @@ ExpandADDSUB(SDNode *N, SelectionDAG &DAG)
                                   LHSH, RHSH, Carry);
   SDValue Hi(Ignored.getNode(), 1);
   // Merge the pieces
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi).getNode();
+  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
 }
 
 SDValue XCoreTargetLowering::

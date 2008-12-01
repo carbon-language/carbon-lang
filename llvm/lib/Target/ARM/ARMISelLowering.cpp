@@ -1344,7 +1344,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   return DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
 }
 
-static SDNode *ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
+static SDValue ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
   SDValue Op = N->getOperand(0);
   if (N->getValueType(0) == MVT::f64) {
     // Turn i64->f64 into FMDRR.
@@ -1352,7 +1352,7 @@ static SDNode *ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
                              DAG.getConstant(0, MVT::i32));
     SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
                              DAG.getConstant(1, MVT::i32));
-    return DAG.getNode(ARMISD::FMDRR, MVT::f64, Lo, Hi).getNode();
+    return DAG.getNode(ARMISD::FMDRR, MVT::f64, Lo, Hi);
   }
   
   // Turn f64->i64 into FMRRD.
@@ -1360,21 +1360,21 @@ static SDNode *ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
                             &Op, 1);
   
   // Merge the pieces into a single i64 value.
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Cvt, Cvt.getValue(1)).getNode();
+  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Cvt, Cvt.getValue(1));
 }
 
-static SDNode *ExpandSRx(SDNode *N, SelectionDAG &DAG, const ARMSubtarget *ST) {
+static SDValue ExpandSRx(SDNode *N, SelectionDAG &DAG, const ARMSubtarget *ST) {
   assert(N->getValueType(0) == MVT::i64 &&
          (N->getOpcode() == ISD::SRL || N->getOpcode() == ISD::SRA) &&
          "Unknown shift to lower!");
-  
+
   // We only lower SRA, SRL of 1 here, all others use generic lowering.
   if (!isa<ConstantSDNode>(N->getOperand(1)) ||
       cast<ConstantSDNode>(N->getOperand(1))->getZExtValue() != 1)
-    return 0;
+    return SDValue();
   
   // If we are in thumb mode, we don't have RRX.
-  if (ST->isThumb()) return 0;
+  if (ST->isThumb()) return SDValue();
   
   // Okay, we have a 64-bit SRA or SRL of 1.  Lower this to an RRX expr.
   SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, N->getOperand(0),
@@ -1391,7 +1391,7 @@ static SDNode *ExpandSRx(SDNode *N, SelectionDAG &DAG, const ARMSubtarget *ST) {
   Lo = DAG.getNode(ARMISD::RRX, MVT::i32, Lo, Hi.getValue(1));
   
   // Merge the pieces into a single i64 value.
- return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi).getNode();
+ return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
 }
 
 
@@ -1419,22 +1419,34 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::FRAMEADDR:     break;
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
-  case ISD::BIT_CONVERT:   return SDValue(ExpandBIT_CONVERT(Op.getNode(), DAG), 0);
+  case ISD::BIT_CONVERT:   return ExpandBIT_CONVERT(Op.getNode(), DAG);
   case ISD::SRL:
-  case ISD::SRA:           return SDValue(ExpandSRx(Op.getNode(), DAG,Subtarget),0);
+  case ISD::SRA:           return ExpandSRx(Op.getNode(), DAG,Subtarget);
   }
   return SDValue();
 }
 
 
-/// ReplaceNodeResults - Provide custom lowering hooks for nodes with illegal
-/// result types.
-SDNode *ARMTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
+/// ReplaceNodeResults - Replace the results of node with an illegal result
+/// type with new values built out of custom code.
+///
+void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
+                                           SmallVectorImpl<SDValue>&Results,
+                                           SelectionDAG &DAG) {
   switch (N->getOpcode()) {
-  default: assert(0 && "Don't know how to custom expand this!"); abort();
-  case ISD::BIT_CONVERT:   return ExpandBIT_CONVERT(N, DAG);
+  default:
+    assert(0 && "Don't know how to custom expand this!");
+    return;
+  case ISD::BIT_CONVERT:
+    Results.push_back(ExpandBIT_CONVERT(N, DAG));
+    return;
   case ISD::SRL:
-  case ISD::SRA:           return ExpandSRx(N, DAG, Subtarget);
+  case ISD::SRA: {
+    SDValue Res = ExpandSRx(N, DAG, Subtarget);
+    if (Res.getNode())
+      Results.push_back(Res);
+    return;
+  }
   }
 }
   

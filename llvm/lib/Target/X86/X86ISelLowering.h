@@ -375,10 +375,11 @@ namespace llvm {
     ///
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
-    /// ReplaceNodeResults - Replace a node with an illegal result type
-    /// with a new node built out of custom code.
+    /// ReplaceNodeResults - Replace the results of node with an illegal result
+    /// type with new values built out of custom code.
     ///
-    virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
+    virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
+                                    SelectionDAG &DAG);
 
     
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
@@ -596,12 +597,11 @@ namespace llvm {
 
     SDValue LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG);
     SDValue LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerATOMIC_BINARY_64(SDValue Op, SelectionDAG &DAG, 
-                                  unsigned NewOp);
-    SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
-    SDNode *ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG);
-    SDNode *ExpandATOMIC_CMP_SWAP(SDNode *N, SelectionDAG &DAG);
-    
+    SDValue LowerREADCYCLECOUNTER(SDValue Op, SelectionDAG &DAG);
+
+    void ReplaceATOMIC_BINARY_64(SDNode *N, SmallVectorImpl<SDValue> &Results,
+                                 SelectionDAG &DAG, unsigned NewOp);
+
     SDValue EmitTargetCodeForMemset(SelectionDAG &DAG,
                                     SDValue Chain,
                                     SDValue Dst, SDValue Src,

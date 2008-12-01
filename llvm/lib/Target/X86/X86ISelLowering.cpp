@@ -4863,22 +4863,6 @@ SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {
   return DAG.getLoad(Op.getValueType(), FIST, StackSlot, NULL, 0);
 }
 
-SDNode *X86TargetLowering::ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG) {
-  std::pair<SDValue,SDValue> Vals = FP_TO_SINTHelper(SDValue(N, 0), DAG);
-  SDValue FIST = Vals.first, StackSlot = Vals.second;
-  if (FIST.getNode() == 0) return 0;
-
-  MVT VT = N->getValueType(0);
-
-  // Return a load from the stack slot.
-  SDValue Res = DAG.getLoad(VT, FIST, StackSlot, NULL, 0);
-
-  // Use MERGE_VALUES to drop the chain result value and get a node with one
-  // result.  This requires turning off getMergeValues simplification, since
-  // otherwise it will give us Res back.
-  return DAG.getMergeValues(&Res, 1, false).getNode();
-}
-
 SDValue X86TargetLowering::LowerFABS(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
   MVT EltVT = VT;
@@ -5550,36 +5534,6 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   return DAG.getNode(ISD::TokenFactor, MVT::Other, &Results[0], Results.size());
 }
 
-/// Expand the result of: i64,outchain = READCYCLECOUNTER inchain
-SDNode *X86TargetLowering::ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG){
-  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-  SDValue TheChain = N->getOperand(0);
-  SDValue rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &TheChain, 1);
-  if (Subtarget->is64Bit()) {
-    SDValue rax = DAG.getCopyFromReg(rd, X86::RAX, MVT::i64, rd.getValue(1));
-    SDValue rdx = DAG.getCopyFromReg(rax.getValue(1), X86::RDX,
-                                       MVT::i64, rax.getValue(2));
-    SDValue Tmp = DAG.getNode(ISD::SHL, MVT::i64, rdx,
-                                DAG.getConstant(32, MVT::i8));
-    SDValue Ops[] = {
-      DAG.getNode(ISD::OR, MVT::i64, rax, Tmp), rdx.getValue(1)
-    };
-    
-    return DAG.getMergeValues(Ops, 2).getNode();
-  }
-  
-  SDValue eax = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
-  SDValue edx = DAG.getCopyFromReg(eax.getValue(1), X86::EDX,
-                                       MVT::i32, eax.getValue(2));
-  // Use a buildpair to merge the two 32-bit values into a 64-bit one. 
-  SDValue Ops[] = { eax, edx };
-  Ops[0] = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Ops, 2);
-
-  // Use a MERGE_VALUES to return the value and chain.
-  Ops[1] = edx.getValue(1);
-  return DAG.getMergeValues(Ops, 2).getNode();
-}
-
 SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) {
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
 
@@ -6186,10 +6140,8 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
   case MVT::i16: Reg = X86::AX;  size = 2; break;
   case MVT::i32: Reg = X86::EAX; size = 4; break;
   case MVT::i64: 
-    if (Subtarget->is64Bit()) {
-      Reg = X86::RAX; size = 8;
-    } else //Should go away when LegalizeType stuff lands
-      return SDValue(ExpandATOMIC_CMP_SWAP(Op.getNode(), DAG), 0);
+    assert(Subtarget->is64Bit() && "Node not type legal!");
+    Reg = X86::RAX; size = 8;
     break;
   };
   SDValue cpIn = DAG.getCopyToReg(Op.getOperand(0), Reg,
@@ -6206,66 +6158,22 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
   return cpOut;
 }
 
-SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op,
+SDValue X86TargetLowering::LowerREADCYCLECOUNTER(SDValue Op,
                                                  SelectionDAG &DAG) {
-  MVT T = Op->getValueType(0);
-  assert (T == MVT::i64 && "Only know how to expand i64 Cmp and Swap");
-  SDValue cpInL, cpInH;
-  cpInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(2),
-                      DAG.getConstant(0, MVT::i32));
-  cpInH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(2),
-                      DAG.getConstant(1, MVT::i32));
-  cpInL = DAG.getCopyToReg(Op->getOperand(0), X86::EAX,
-                           cpInL, SDValue());
-  cpInH = DAG.getCopyToReg(cpInL.getValue(0), X86::EDX,
-                           cpInH, cpInL.getValue(1));
-  SDValue swapInL, swapInH;
-  swapInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(3),
-                        DAG.getConstant(0, MVT::i32));
-  swapInH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(3),
-                        DAG.getConstant(1, MVT::i32));
-  swapInL = DAG.getCopyToReg(cpInH.getValue(0), X86::EBX,
-                             swapInL, cpInH.getValue(1));
-  swapInH = DAG.getCopyToReg(swapInL.getValue(0), X86::ECX,
-                             swapInH, swapInL.getValue(1));
-  SDValue Ops[] = { swapInH.getValue(0),
-                    Op->getOperand(1),
-                    swapInH.getValue(1) };
+  assert(Subtarget->is64Bit() && "Result not type legalized?");
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-  SDValue Result = DAG.getNode(X86ISD::LCMPXCHG8_DAG, Tys, Ops, 3);
-  SDValue cpOutL = DAG.getCopyFromReg(Result.getValue(0), X86::EAX, MVT::i32, 
-                                        Result.getValue(1));
-  SDValue cpOutH = DAG.getCopyFromReg(cpOutL.getValue(1), X86::EDX, MVT::i32, 
-                                        cpOutL.getValue(2));
-  SDValue OpsF[] = { cpOutL.getValue(0), cpOutH.getValue(0)};
-  SDValue ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OpsF, 2);
-  SDValue Vals[2] = { ResultVal, cpOutH.getValue(1) };
-  return DAG.getMergeValues(Vals, 2).getNode();
-}
-
-SDValue X86TargetLowering::LowerATOMIC_BINARY_64(SDValue Op,
-                                                 SelectionDAG &DAG,
-                                                 unsigned NewOp) {
-  SDNode *Node = Op.getNode();
-  MVT T = Node->getValueType(0);
-  assert (T == MVT::i64 && "Only know how to expand i64 atomics");
-  
-  SDValue Chain = Node->getOperand(0);
-  SDValue In1 = Node->getOperand(1);
-  SDValue In2L = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
-                             Node->getOperand(2), DAG.getIntPtrConstant(0));
-  SDValue In2H = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
-                             Node->getOperand(2), DAG.getIntPtrConstant(1));
-  // This is a generalized SDNode, not an AtomicSDNode, so it doesn't
-  // have a MemOperand.  Pass the info through as a normal operand.
-  SDValue LSI = DAG.getMemOperand(cast<MemSDNode>(Node)->getMemOperand());
-  SDValue Ops[] = { Chain, In1, In2L, In2H, LSI };
-  SDVTList Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
-  SDValue Result = DAG.getNode(NewOp, Tys, Ops, 5);
-  SDValue OpsF[] = { Result.getValue(0), Result.getValue(1)};
-  SDValue ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OpsF, 2);
-  SDValue Vals[2] = { ResultVal, Result.getValue(2) };
-  return SDValue(DAG.getMergeValues(Vals, 2).getNode(), 0);
+  SDValue TheChain = Op.getOperand(0);
+  SDValue rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &TheChain, 1);
+  SDValue rax = DAG.getCopyFromReg(rd, X86::RAX, MVT::i64, rd.getValue(1));
+  SDValue rdx = DAG.getCopyFromReg(rax.getValue(1), X86::RDX, MVT::i64,
+                                   rax.getValue(2));
+  SDValue Tmp = DAG.getNode(ISD::SHL, MVT::i64, rdx,
+                            DAG.getConstant(32, MVT::i8));
+  SDValue Ops[] = {
+    DAG.getNode(ISD::OR, MVT::i64, rax, Tmp),
+    rdx.getValue(1)
+  };
+  return DAG.getMergeValues(Ops, 2);
 }
 
 SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) {
@@ -6298,22 +6206,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::ATOMIC_LOAD_SUB_8:
   case ISD::ATOMIC_LOAD_SUB_16:
   case ISD::ATOMIC_LOAD_SUB_32: return LowerLOAD_SUB(Op,DAG);
-  case ISD::ATOMIC_LOAD_SUB_64: return (Subtarget->is64Bit()) ?
-                                        LowerLOAD_SUB(Op,DAG) :
-                                        LowerATOMIC_BINARY_64(Op,DAG,
-                                        X86ISD::ATOMSUB64_DAG);
-  case ISD::ATOMIC_LOAD_AND_64: return LowerATOMIC_BINARY_64(Op,DAG,
-                                        X86ISD::ATOMAND64_DAG);
-  case ISD::ATOMIC_LOAD_OR_64:  return LowerATOMIC_BINARY_64(Op, DAG,
-                                        X86ISD::ATOMOR64_DAG);
-  case ISD::ATOMIC_LOAD_XOR_64: return LowerATOMIC_BINARY_64(Op,DAG,
-                                        X86ISD::ATOMXOR64_DAG);
-  case ISD::ATOMIC_LOAD_NAND_64:return LowerATOMIC_BINARY_64(Op,DAG,
-                                        X86ISD::ATOMNAND64_DAG);
-  case ISD::ATOMIC_LOAD_ADD_64: return LowerATOMIC_BINARY_64(Op,DAG,
-                                        X86ISD::ATOMADD64_DAG);
-  case ISD::ATOMIC_SWAP_64:     return LowerATOMIC_BINARY_64(Op,DAG,
-                                        X86ISD::ATOMSWAP64_DAG);
+  case ISD::ATOMIC_LOAD_SUB_64: return LowerLOAD_SUB(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
@@ -6356,22 +6249,120 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
   case ISD::SADDO:              return LowerXADDO(Op, DAG, ISD::SADDO);
   case ISD::UADDO:              return LowerXADDO(Op, DAG, ISD::UADDO);
-      
-  // FIXME: REMOVE THIS WHEN LegalizeDAGTypes lands.
-  case ISD::READCYCLECOUNTER:
-    return SDValue(ExpandREADCYCLECOUNTER(Op.getNode(), DAG), 0);
+  case ISD::READCYCLECOUNTER:   return LowerREADCYCLECOUNTER(Op, DAG);
   }
+}
+
+void X86TargetLowering::
+ReplaceATOMIC_BINARY_64(SDNode *Node, SmallVectorImpl<SDValue>&Results,
+                        SelectionDAG &DAG, unsigned NewOp) {
+  MVT T = Node->getValueType(0);
+  assert (T == MVT::i64 && "Only know how to expand i64 atomics");
+
+  SDValue Chain = Node->getOperand(0);
+  SDValue In1 = Node->getOperand(1);
+  SDValue In2L = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
+                             Node->getOperand(2), DAG.getIntPtrConstant(0));
+  SDValue In2H = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
+                             Node->getOperand(2), DAG.getIntPtrConstant(1));
+  // This is a generalized SDNode, not an AtomicSDNode, so it doesn't
+  // have a MemOperand.  Pass the info through as a normal operand.
+  SDValue LSI = DAG.getMemOperand(cast<MemSDNode>(Node)->getMemOperand());
+  SDValue Ops[] = { Chain, In1, In2L, In2H, LSI };
+  SDVTList Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
+  SDValue Result = DAG.getNode(NewOp, Tys, Ops, 5);
+  SDValue OpsF[] = { Result.getValue(0), Result.getValue(1)};
+  Results.push_back(DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OpsF, 2));
+  Results.push_back(Result.getValue(2));
 }
 
 /// ReplaceNodeResults - Replace a node with an illegal result type
 /// with a new node built out of custom code.
-SDNode *X86TargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
+void X86TargetLowering::ReplaceNodeResults(SDNode *N,
+                                           SmallVectorImpl<SDValue>&Results,
+                                           SelectionDAG &DAG) {
   switch (N->getOpcode()) {
   default:
-    return X86TargetLowering::LowerOperation(SDValue (N, 0), DAG).getNode();
-  case ISD::FP_TO_SINT:         return ExpandFP_TO_SINT(N, DAG);
-  case ISD::READCYCLECOUNTER:   return ExpandREADCYCLECOUNTER(N, DAG);
-  case ISD::ATOMIC_CMP_SWAP_64: return ExpandATOMIC_CMP_SWAP(N, DAG);
+    assert(false && "Do not know how to custom type legalize this operation!");
+    return;
+  case ISD::FP_TO_SINT: {
+    std::pair<SDValue,SDValue> Vals = FP_TO_SINTHelper(SDValue(N, 0), DAG);
+    SDValue FIST = Vals.first, StackSlot = Vals.second;
+    if (FIST.getNode() != 0) {
+      MVT VT = N->getValueType(0);
+      // Return a load from the stack slot.
+      Results.push_back(DAG.getLoad(VT, FIST, StackSlot, NULL, 0));
+    }
+    return;
+  }
+  case ISD::READCYCLECOUNTER: {
+    SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+    SDValue TheChain = N->getOperand(0);
+    SDValue rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &TheChain, 1);
+    SDValue eax = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
+    SDValue edx = DAG.getCopyFromReg(eax.getValue(1), X86::EDX, MVT::i32,
+                                     eax.getValue(2));
+    // Use a buildpair to merge the two 32-bit values into a 64-bit one.
+    SDValue Ops[] = { eax, edx };
+    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Ops, 2));
+    Results.push_back(edx.getValue(1));
+    return;
+  }
+  case ISD::ATOMIC_CMP_SWAP_64: {
+    MVT T = N->getValueType(0);
+    assert (T == MVT::i64 && "Only know how to expand i64 Cmp and Swap");
+    SDValue cpInL, cpInH;
+    cpInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, N->getOperand(2),
+                        DAG.getConstant(0, MVT::i32));
+    cpInH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, N->getOperand(2),
+                        DAG.getConstant(1, MVT::i32));
+    cpInL = DAG.getCopyToReg(N->getOperand(0), X86::EAX, cpInL, SDValue());
+    cpInH = DAG.getCopyToReg(cpInL.getValue(0), X86::EDX, cpInH,
+                             cpInL.getValue(1));
+    SDValue swapInL, swapInH;
+    swapInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, N->getOperand(3),
+                          DAG.getConstant(0, MVT::i32));
+    swapInH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, N->getOperand(3),
+                          DAG.getConstant(1, MVT::i32));
+    swapInL = DAG.getCopyToReg(cpInH.getValue(0), X86::EBX, swapInL,
+                               cpInH.getValue(1));
+    swapInH = DAG.getCopyToReg(swapInL.getValue(0), X86::ECX, swapInH,
+                               swapInL.getValue(1));
+    SDValue Ops[] = { swapInH.getValue(0),
+                      N->getOperand(1),
+                      swapInH.getValue(1) };
+    SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+    SDValue Result = DAG.getNode(X86ISD::LCMPXCHG8_DAG, Tys, Ops, 3);
+    SDValue cpOutL = DAG.getCopyFromReg(Result.getValue(0), X86::EAX, MVT::i32,
+                                        Result.getValue(1));
+    SDValue cpOutH = DAG.getCopyFromReg(cpOutL.getValue(1), X86::EDX, MVT::i32,
+                                        cpOutL.getValue(2));
+    SDValue OpsF[] = { cpOutL.getValue(0), cpOutH.getValue(0)};
+    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OpsF, 2));
+    Results.push_back(cpOutH.getValue(1));
+    return;
+  }
+  case ISD::ATOMIC_LOAD_ADD_64:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMADD64_DAG);
+    return;
+  case ISD::ATOMIC_LOAD_AND_64:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMAND64_DAG);
+    return;
+  case ISD::ATOMIC_LOAD_NAND_64:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMNAND64_DAG);
+    return;
+  case ISD::ATOMIC_LOAD_OR_64:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMOR64_DAG);
+    return;
+  case ISD::ATOMIC_LOAD_SUB_64:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMSUB64_DAG);
+    return;
+  case ISD::ATOMIC_LOAD_XOR_64:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMXOR64_DAG);
+    return;
+  case ISD::ATOMIC_SWAP_64:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMSWAP64_DAG);
+    return;
   }
 }
 

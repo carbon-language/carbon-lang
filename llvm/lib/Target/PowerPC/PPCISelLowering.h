@@ -269,8 +269,12 @@ namespace llvm {
     ///
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
-    virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
-    
+    /// ReplaceNodeResults - Replace the results of node with an illegal result
+    /// type with new values built out of custom code.
+    ///
+    virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
+                                    SelectionDAG &DAG);
+
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
     
     virtual void computeMaskedBitsForTargetNode(const SDValue Op,
@@ -372,7 +376,6 @@ namespace llvm {
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerFP_ROUND_INREG(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSHL_PARTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSRL_PARTS(SDValue Op, SelectionDAG &DAG);

@@ -612,15 +612,18 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
-SDNode *AlphaTargetLowering::ReplaceNodeResults(SDNode *N,
-                                                SelectionDAG &DAG) {
+void AlphaTargetLowering::ReplaceNodeResults(SDNode *N,
+                                             SmallVectorImpl<SDValue>&Results,
+                                             SelectionDAG &DAG) {
   assert(N->getValueType(0) == MVT::i32 &&
          N->getOpcode() == ISD::VAARG &&
          "Unknown node to custom promote!");
 
   SDValue Chain, DataPtr;
   LowerVAARG(N, Chain, DataPtr, DAG);
-  return DAG.getLoad(N->getValueType(0), Chain, DataPtr, NULL, 0).getNode();
+  SDValue Res = DAG.getLoad(N->getValueType(0), Chain, DataPtr, NULL, 0);
+  Results.push_back(Res);
+  Results.push_back(SDValue(Res.getNode(), 1));
 }
 
 

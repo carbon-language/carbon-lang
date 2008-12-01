@@ -2866,7 +2866,9 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   return SDValue();
 }
 
-SDNode *SPUTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG)
+void SPUTargetLowering::ReplaceNodeResults(SDNode *N,
+                                           SmallVectorImpl<SDValue>&Results,
+                                           SelectionDAG &DAG)
 {
 #if 0
   unsigned Opc = (unsigned) N->getOpcode();
@@ -2885,7 +2887,6 @@ SDNode *SPUTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG)
 #endif
 
   /* Otherwise, return unchanged */
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//

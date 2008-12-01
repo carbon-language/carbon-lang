@@ -90,24 +90,35 @@ const char *PIC16TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-SDNode *PIC16TargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
+void PIC16TargetLowering::ReplaceNodeResults(SDNode *N,
+                                             SmallVectorImpl<SDValue>&Results,
+                                             SelectionDAG &DAG) {
   switch (N->getOpcode()) {
     case ISD::GlobalAddress:
-      return ExpandGlobalAddress(N, DAG);
+      Results.push_back(ExpandGlobalAddress(N, DAG));
+      return;
     case ISD::STORE:
-      return ExpandStore(N, DAG);
+      Results.push_back(ExpandStore(N, DAG));
+      return;
     case ISD::LOAD:
-      return ExpandLoad(N, DAG);
+      Results.push_back(ExpandLoad(N, DAG));
+      return;
     case ISD::ADD:
-      return ExpandAdd(N, DAG);
-    case ISD::SHL:
-      return ExpandShift(N, DAG);
+//      return ExpandAdd(N, DAG);
+      return;
+    case ISD::SHL: {
+      SDValue Res = ExpandShift(N, DAG);
+      if (Res.getNode())
+        Results.push_back(Res);
+      return;
+    }
     default:
       assert (0 && "not implemented");
+      return;
   }
 }
 
-SDNode *PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) { 
+SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
   StoreSDNode *St = cast<StoreSDNode>(N);
   SDValue Chain = St->getChain();
   SDValue Src = St->getValue();
@@ -119,9 +130,8 @@ SDNode *PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
   LegalizeAddress(Ptr, DAG, PtrLo, PtrHi, StoreOffset);
  
   if (ValueType == MVT::i8) {
-    SDValue Store = DAG.getNode (PIC16ISD::PIC16Store, MVT::Other, Chain, Src,
-                                 PtrLo, PtrHi, DAG.getConstant (0, MVT::i8));
-    return Store.getNode();
+    return DAG.getNode (PIC16ISD::PIC16Store, MVT::Other, Chain, Src,
+                        PtrLo, PtrHi, DAG.getConstant (0, MVT::i8));
   }
   else if (ValueType == MVT::i16) {
     // Get the Lo and Hi parts from MERGE_VALUE or BUILD_PAIR.
@@ -142,7 +152,7 @@ SDNode *PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
                                  DAG.getConstant (1 + StoreOffset, MVT::i8));
 
     return DAG.getNode(ISD::TokenFactor, MVT::Other, getChain(Store1),
-                       getChain(Store2)).getNode();
+                       getChain(Store2));
   }
   else if (ValueType == MVT::i32) {
     // Get the Lo and Hi parts from MERGE_VALUE or BUILD_PAIR.
@@ -190,16 +200,16 @@ SDNode *PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
                                  getChain(Store2));
     SDValue RetHi =  DAG.getNode(ISD::TokenFactor, MVT::Other, getChain(Store3),
                                 getChain(Store4));
-    return  DAG.getNode(ISD::TokenFactor, MVT::Other, RetLo, RetHi).getNode();
-
+    return DAG.getNode(ISD::TokenFactor, MVT::Other, RetLo, RetHi);
   }
   else {
     assert (0 && "value type not supported");
+    return SDValue();
   }
 }
 
 // ExpandGlobalAddress - 
-SDNode *PIC16TargetLowering::ExpandGlobalAddress(SDNode *N, SelectionDAG &DAG) {
+SDValue PIC16TargetLowering::ExpandGlobalAddress(SDNode *N, SelectionDAG &DAG) {
   GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(SDValue(N, 0));
   
   SDValue TGA = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i8,
@@ -209,7 +219,7 @@ SDNode *PIC16TargetLowering::ExpandGlobalAddress(SDNode *N, SelectionDAG &DAG) {
   SDValue Hi = DAG.getNode(PIC16ISD::Hi, MVT::i8, TGA);
 
   SDValue BP = DAG.getNode(ISD::BUILD_PAIR, MVT::i16, Lo, Hi);
-  return BP.getNode();
+  return BP;
 }
 
 bool PIC16TargetLowering::isDirectAddress(const SDValue &Op) {
@@ -351,20 +361,20 @@ void PIC16TargetLowering:: LegalizeAddress(SDValue Ptr, SelectionDAG &DAG,
   return;
 }
 
-SDNode *PIC16TargetLowering::ExpandAdd(SDNode *N, SelectionDAG &DAG) {
-  SDValue OperLeft = N->getOperand(0);
-  SDValue OperRight = N->getOperand(1);
+//SDNode *PIC16TargetLowering::ExpandAdd(SDNode *N, SelectionDAG &DAG) {
+//  SDValue OperLeft = N->getOperand(0);
+//  SDValue OperRight = N->getOperand(1);
+//
+//  if((OperLeft.getOpcode() == ISD::Constant) ||
+//     (OperRight.getOpcode() == ISD::Constant)) {
+//    return NULL;
+//  }
+//
+//  // These case are yet to be handled
+//  return NULL;
+//}
 
-  if((OperLeft.getOpcode() == ISD::Constant) || 
-     (OperRight.getOpcode() == ISD::Constant)) { 
-    return NULL;
-  }
-
-  // These case are yet to be handled
-  return NULL;
-}
-
-SDNode *PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
+SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
   LoadSDNode *LD = dyn_cast<LoadSDNode>(SDValue(N, 0));
   SDValue Chain = LD->getChain();
   SDValue Ptr = LD->getBasePtr();
@@ -438,7 +448,7 @@ SDNode *PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
 
   if (VT == MVT::i8) {
     // Operand of Load is illegal -- Load itself is legal
-    return PICLoads[0].getNode();
+    return PICLoads[0];
   }
   else if (VT == MVT::i16) {
     BP = DAG.getNode(ISD::BUILD_PAIR, VT, PICLoads[0], PICLoads[1]);
@@ -467,12 +477,10 @@ SDNode *PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
     }
   }
   Tys = DAG.getVTList(VT, MVT::Other); 
-  SDValue MergeV = DAG.getNode(ISD::MERGE_VALUES, Tys, BP, Chain);
-  return MergeV.getNode();
-
+  return DAG.getNode(ISD::MERGE_VALUES, Tys, BP, Chain);
 }
 
-SDNode *PIC16TargetLowering::ExpandShift(SDNode *N, SelectionDAG &DAG) {
+SDValue PIC16TargetLowering::ExpandShift(SDNode *N, SelectionDAG &DAG) {
   SDValue Value = N->getOperand(0);
   SDValue Amt = N->getOperand(1);
   SDValue BCF, BCFInput;
@@ -483,11 +491,11 @@ SDNode *PIC16TargetLowering::ExpandShift(SDNode *N, SelectionDAG &DAG) {
   
   // Currently handling Constant shift only
   if (Amt.getOpcode() != ISD::Constant)
-    return NULL;
+    return SDValue();
 
   // Following code considers 16 bit left-shift only
   if (N->getValueType(0) != MVT::i16)
-    return NULL;
+    return SDValue();
 
   if (N->getOpcode() == ISD::SHL) {
     ShfNode = PIC16ISD::LSLF;
@@ -515,8 +523,7 @@ SDNode *PIC16TargetLowering::ExpandShift(SDNode *N, SelectionDAG &DAG) {
     BCFInput = RotCom.getValue(1); 
   }
 
-  SDValue BP = DAG.getNode(ISD::BUILD_PAIR, N->getValueType(0), ShfCom, RotCom);
-  return BP.getNode();
+  return DAG.getNode(ISD::BUILD_PAIR, N->getValueType(0), ShfCom, RotCom);
 }
 
 SDValue PIC16TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
@@ -532,11 +539,11 @@ SDValue PIC16TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     case ISD::SUBC:
       return LowerSUBC(Op, DAG);
     case ISD::LOAD:
-      return SDValue(ExpandLoad(Op.getNode(), DAG), Op.getResNo());
+      return ExpandLoad(Op.getNode(), DAG);
     case ISD::STORE:
-      return SDValue(ExpandStore(Op.getNode(), DAG), Op.getResNo());
+      return ExpandStore(Op.getNode(), DAG);
     case ISD::SHL:
-      return SDValue(ExpandShift(Op.getNode(), DAG), Op.getResNo());
+      return ExpandShift(Op.getNode(), DAG);
     case ISD::OR:
     case ISD::AND:
     case ISD::XOR:

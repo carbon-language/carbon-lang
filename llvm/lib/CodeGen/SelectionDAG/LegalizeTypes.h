@@ -185,12 +185,13 @@ private:
   void AnalyzeNewValue(SDValue &Val);
 
   void ReplaceValueWith(SDValue From, SDValue To);
-  void ReplaceNodeWith(SDNode *From, SDNode *To);
 
   void RemapValue(SDValue &N);
   void ExpungeNode(SDNode *N);
 
   // Common routines.
+  bool CustomLowerResults(SDNode *N, unsigned ResNo);
+
   SDValue CreateStackStoreLoad(SDValue Op, MVT DestVT);
   SDValue MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
                       const SDValue *Ops, unsigned NumOps, bool isSigned);

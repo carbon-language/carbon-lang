@@ -72,7 +72,12 @@ namespace llvm {
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
-    virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
+
+    /// ReplaceNodeResults - Replace the results of node with an illegal result
+    /// type with new values built out of custom code.
+    ///
+    virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
+                                    SelectionDAG &DAG);
 
     // Friendly names for dumps
     const char *getTargetNodeName(unsigned Opcode) const;

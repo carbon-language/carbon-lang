@@ -1130,17 +1130,18 @@ public:
   /// implement this.  The default implementation of this aborts.
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
-  /// ReplaceNodeResults - This callback is invoked for operations that are
-  /// unsupported by the target, which are registered to use 'custom' lowering,
-  /// and whose result type is illegal.  This must return a node whose results
-  /// precisely match the results of the input node.  This typically involves a
-  /// MERGE_VALUES node and/or BUILD_PAIR.
+  /// ReplaceNodeResults - This callback is invoked when a node result type is
+  /// illegal for the target, and the operation was registered to use 'custom'
+  /// lowering for that result type.  The target places new result values for
+  /// the node in Results (their number and types must exactly match those of
+  /// the original return values of the node), or leaves Results empty, which
+  /// indicates that the node is not to be custom lowered after all.
   ///
   /// If the target has no operations that require custom lowering, it need not
   /// implement this.  The default implementation aborts.
-  virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
+  virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
+                                  SelectionDAG &DAG) {
     assert(0 && "ReplaceNodeResults not implemented for this target!");
-    return 0;
   }
 
   /// IsEligibleForTailCallOptimization - Check whether the call is eligible for

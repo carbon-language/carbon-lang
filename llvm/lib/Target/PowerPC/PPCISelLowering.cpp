@@ -2874,66 +2874,6 @@ SDValue PPCTargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {
   return DAG.getLoad(Op.getValueType(), Chain, FIPtr, NULL, 0);
 }
 
-SDValue PPCTargetLowering::LowerFP_ROUND_INREG(SDValue Op, 
-                                                 SelectionDAG &DAG) {
-  assert(Op.getValueType() == MVT::ppcf128);
-  SDNode *Node = Op.getNode();
-  assert(Node->getOperand(0).getValueType() == MVT::ppcf128);
-  SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::f64, Node->getOperand(0),
-                           DAG.getIntPtrConstant(0));
-  SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::f64, Node->getOperand(0),
-                           DAG.getIntPtrConstant(1));
-
-  // This sequence changes FPSCR to do round-to-zero, adds the two halves
-  // of the long double, and puts FPSCR back the way it was.  We do not
-  // actually model FPSCR.
-  std::vector<MVT> NodeTys;
-  SDValue Ops[4], Result, MFFSreg, InFlag, FPreg;
-
-  NodeTys.push_back(MVT::f64);   // Return register
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for later insns
-  Result = DAG.getNode(PPCISD::MFFS, NodeTys, &InFlag, 0);
-  MFFSreg = Result.getValue(0);
-  InFlag = Result.getValue(1);
-
-  NodeTys.clear();
-  NodeTys.push_back(MVT::Flag);   // Returns a flag
-  Ops[0] = DAG.getConstant(31, MVT::i32);
-  Ops[1] = InFlag;
-  Result = DAG.getNode(PPCISD::MTFSB1, NodeTys, Ops, 2);
-  InFlag = Result.getValue(0);
-
-  NodeTys.clear();
-  NodeTys.push_back(MVT::Flag);   // Returns a flag
-  Ops[0] = DAG.getConstant(30, MVT::i32);
-  Ops[1] = InFlag;
-  Result = DAG.getNode(PPCISD::MTFSB0, NodeTys, Ops, 2);
-  InFlag = Result.getValue(0);
-
-  NodeTys.clear();
-  NodeTys.push_back(MVT::f64);    // result of add
-  NodeTys.push_back(MVT::Flag);   // Returns a flag
-  Ops[0] = Lo;
-  Ops[1] = Hi;
-  Ops[2] = InFlag;
-  Result = DAG.getNode(PPCISD::FADDRTZ, NodeTys, Ops, 3);
-  FPreg = Result.getValue(0);
-  InFlag = Result.getValue(1);
-
-  NodeTys.clear();
-  NodeTys.push_back(MVT::f64);
-  Ops[0] = DAG.getConstant(1, MVT::i32);
-  Ops[1] = MFFSreg;
-  Ops[2] = FPreg;
-  Ops[3] = InFlag;
-  Result = DAG.getNode(PPCISD::MTFSF, NodeTys, Ops, 4);
-  FPreg = Result.getValue(0);
-
-  // We know the low half is about to be thrown away, so just use something
-  // convenient.
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::ppcf128, FPreg, FPreg);
-}
-
 SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   // Don't handle ppc_fp128 here; let it be lowered to a libcall.
   if (Op.getValueType() != MVT::f32 && Op.getValueType() != MVT::f64)
@@ -3874,7 +3814,6 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
-  case ISD::FP_ROUND_INREG:     return LowerFP_ROUND_INREG(Op, DAG);
   case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
 
   // Lower 64-bit shifts.
@@ -3896,17 +3835,74 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
-SDNode *PPCTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
+void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
+                                           SmallVectorImpl<SDValue>&Results,
+                                           SelectionDAG &DAG) {
   switch (N->getOpcode()) {
   default:
-    return PPCTargetLowering::LowerOperation(SDValue (N, 0), DAG).getNode();
-  case ISD::FP_TO_SINT: {
-    SDValue Res = LowerFP_TO_SINT(SDValue(N, 0), DAG);
-    // Use MERGE_VALUES to drop the chain result value and get a node with one
-    // result.  This requires turning off getMergeValues simplification, since
-    // otherwise it will give us Res back.
-    return DAG.getMergeValues(&Res, 1, false).getNode();
+    assert(false && "Do not know how to custom type legalize this operation!");
+    return;
+  case ISD::FP_ROUND_INREG: {
+    assert(N->getValueType(0) == MVT::ppcf128);
+    assert(N->getOperand(0).getValueType() == MVT::ppcf128);
+    SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::f64, N->getOperand(0),
+                             DAG.getIntPtrConstant(0));
+    SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::f64, N->getOperand(0),
+                             DAG.getIntPtrConstant(1));
+
+    // This sequence changes FPSCR to do round-to-zero, adds the two halves
+    // of the long double, and puts FPSCR back the way it was.  We do not
+    // actually model FPSCR.
+    std::vector<MVT> NodeTys;
+    SDValue Ops[4], Result, MFFSreg, InFlag, FPreg;
+
+    NodeTys.push_back(MVT::f64);   // Return register
+    NodeTys.push_back(MVT::Flag);    // Returns a flag for later insns
+    Result = DAG.getNode(PPCISD::MFFS, NodeTys, &InFlag, 0);
+    MFFSreg = Result.getValue(0);
+    InFlag = Result.getValue(1);
+
+    NodeTys.clear();
+    NodeTys.push_back(MVT::Flag);   // Returns a flag
+    Ops[0] = DAG.getConstant(31, MVT::i32);
+    Ops[1] = InFlag;
+    Result = DAG.getNode(PPCISD::MTFSB1, NodeTys, Ops, 2);
+    InFlag = Result.getValue(0);
+
+    NodeTys.clear();
+    NodeTys.push_back(MVT::Flag);   // Returns a flag
+    Ops[0] = DAG.getConstant(30, MVT::i32);
+    Ops[1] = InFlag;
+    Result = DAG.getNode(PPCISD::MTFSB0, NodeTys, Ops, 2);
+    InFlag = Result.getValue(0);
+
+    NodeTys.clear();
+    NodeTys.push_back(MVT::f64);    // result of add
+    NodeTys.push_back(MVT::Flag);   // Returns a flag
+    Ops[0] = Lo;
+    Ops[1] = Hi;
+    Ops[2] = InFlag;
+    Result = DAG.getNode(PPCISD::FADDRTZ, NodeTys, Ops, 3);
+    FPreg = Result.getValue(0);
+    InFlag = Result.getValue(1);
+
+    NodeTys.clear();
+    NodeTys.push_back(MVT::f64);
+    Ops[0] = DAG.getConstant(1, MVT::i32);
+    Ops[1] = MFFSreg;
+    Ops[2] = FPreg;
+    Ops[3] = InFlag;
+    Result = DAG.getNode(PPCISD::MTFSF, NodeTys, Ops, 4);
+    FPreg = Result.getValue(0);
+
+    // We know the low half is about to be thrown away, so just use something
+    // convenient.
+    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, MVT::ppcf128, FPreg, FPreg));
+    return;
   }
+  case ISD::FP_TO_SINT:
+    Results.push_back(LowerFP_TO_SINT(SDValue(N, 0), DAG));
+    return;
   }
 }
 

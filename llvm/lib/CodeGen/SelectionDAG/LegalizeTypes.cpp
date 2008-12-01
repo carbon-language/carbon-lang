@@ -376,45 +376,6 @@ void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
   ReplacedValues[From] = To;
 }
 
-/// ReplaceNodeWith - Replace uses of the 'from' node's results with the 'to'
-/// node's results.  The from and to node must define identical result types.
-void DAGTypeLegalizer::ReplaceNodeWith(SDNode *From, SDNode *To) {
-  if (From == To) return;
-
-  // If expansion produced new nodes, make sure they are properly marked.
-  ExpungeNode(From);
-
-  To = AnalyzeNewNode(To); // Expunges To.
-  // If To morphed into an already processed node, its values may need
-  // remapping.  This is done below.
-
-  assert(From->getNumValues() == To->getNumValues() &&
-         "Node results don't match");
-
-  // Anything that used the old node should now use the new one.  Note that this
-  // can potentially cause recursive merging.
-  NodeUpdateListener NUL(*this);
-  for (unsigned i = 0, e = From->getNumValues(); i != e; ++i) {
-    SDValue FromVal(From, i);
-    SDValue ToVal(To, i);
-
-    // AnalyzeNewNode may have morphed a new node into a processed node.  Remap
-    // values now.
-    if (To->getNodeId() == Processed)
-      RemapValue(ToVal);
-
-    assert(FromVal.getValueType() == ToVal.getValueType() &&
-           "Node results don't match!");
-
-    // Make anything that used the old value use the new value.
-    DAG.ReplaceAllUsesOfValueWith(FromVal, ToVal, &NUL);
-
-    // The old node may still be present in a map like ExpandedIntegers or
-    // PromotedIntegers.  Inform maps about the replacement.
-    ReplacedValues[FromVal] = ToVal;
-  }
-}
-
 /// RemapValue - If the specified value was already legalized to another value,
 /// replace it by that value.
 void DAGTypeLegalizer::RemapValue(SDValue &N) {
@@ -619,6 +580,28 @@ SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
   SDValue Store = DAG.getStore(DAG.getEntryNode(), Op, FIPtr, NULL, 0);
   // Result is a load from the stack slot.
   return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0);
+}
+
+/// CustomLowerResults - Replace the node's results with custom code provided
+/// by the target and return "true", or do nothing and return "false".
+bool DAGTypeLegalizer::CustomLowerResults(SDNode *N, unsigned ResNo) {
+  // See if the target wants to custom lower this node.
+  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(ResNo)) !=
+      TargetLowering::Custom)
+    return false;
+
+  SmallVector<SDValue, 8> Results;
+  TLI.ReplaceNodeResults(N, Results, DAG);
+  if (Results.empty())
+    // The target didn't want to custom lower it after all.
+    return false;
+
+  // Make everything that once used N's values now use those in Results instead.
+  assert(Results.size() == N->getNumValues() &&
+         "Custom lowering returned the wrong number of results!");
+  for (unsigned i = 0, e = Results.size(); i != e; ++i)
+    ReplaceValueWith(SDValue(N, i), Results[i]);
+  return true;
 }
 
 /// JoinIntegers - Build an integer with low bits Lo and high bits Hi.

@@ -113,9 +113,10 @@ namespace llvm {
     //! Custom lowering hooks
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
-    //! Provide custom lowering hooks for nodes with illegal result types.
-    SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
-    
+    //! Custom lowering hook for nodes with illegal result types.
+    virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
+                                    SelectionDAG &DAG);
+
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
     virtual void computeMaskedBitsForTargetNode(const SDValue Op,

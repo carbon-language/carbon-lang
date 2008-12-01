@@ -68,7 +68,11 @@ namespace llvm {
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
-    virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
+    /// ReplaceNodeResults - Replace the results of node with an illegal result
+    /// type with new values built out of custom code.
+    ///
+    virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
+                                    SelectionDAG &DAG);
 
     /// getTargetNodeName - This method returns the name of a target specific 
     //  DAG node.
@@ -112,7 +116,7 @@ namespace llvm {
               MVT VT) const;
   
     // Expand specifics
-    SDNode *ExpandADDSUB(SDNode *Op, SelectionDAG &DAG);
+    SDValue ExpandADDSUB(SDNode *Op, SelectionDAG &DAG);
   };
 }
 
