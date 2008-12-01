@@ -31,7 +31,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
@@ -138,7 +137,7 @@ namespace {
 
     /// DeadInsts - Keep track of instructions we may have made dead, so that
     /// we can remove them after we are done working.
-    SetVector<Instruction*> DeadInsts;
+    SmallVector<Instruction*, 16> DeadInsts;
 
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
@@ -230,7 +229,7 @@ Value *LoopStrengthReduce::getCastedVersionOf(Instruction::CastOps opcode,
   if (New) return New;
   
   New = SCEVExpander::InsertCastOfTo(opcode, V, UIntPtrTy);
-  DeadInsts.insert(cast<Instruction>(New));
+  DeadInsts.push_back(cast<Instruction>(New));
   return New;
 }
 
@@ -239,20 +238,35 @@ Value *LoopStrengthReduce::getCastedVersionOf(Instruction::CastOps opcode,
 /// specified set are trivially dead, delete them and see if this makes any of
 /// their operands subsequently dead.
 void LoopStrengthReduce::DeleteTriviallyDeadInstructions() {
+  if (DeadInsts.empty()) return;
+  
+  // Sort the deadinsts list so that we can trivially eliminate duplicates as we
+  // go.  The code below never adds a non-dead instruction to the worklist, but
+  // callers may not be so careful.
+  std::sort(DeadInsts.begin(), DeadInsts.end());
+
+  // Drop duplicate instructions and those with uses.
+  for (unsigned i = 0, e = DeadInsts.size()-1; i < e; ++i) {
+    Instruction *I = DeadInsts[i];
+    if (!I->use_empty()) DeadInsts[i] = 0;
+    while (DeadInsts[i+1] == I && i != e)
+      DeadInsts[++i] = 0;
+  }
+  
   while (!DeadInsts.empty()) {
     Instruction *I = DeadInsts.back();
     DeadInsts.pop_back();
-
-    if (!isInstructionTriviallyDead(I))
+    
+    if (I == 0 || !isInstructionTriviallyDead(I))
       continue;
 
     SE->deleteValueFromRecords(I);
 
-    for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i) {
-      if (Instruction *U = dyn_cast<Instruction>(*i)) {
-        *i = 0;
+    for (User::op_iterator OI = I->op_begin(), E = I->op_end(); OI != E; ++OI) {
+      if (Instruction *U = dyn_cast<Instruction>(*OI)) {
+        *OI = 0;
         if (U->use_empty())
-          DeadInsts.insert(U);
+          DeadInsts.push_back(U);
       }
     }
     
@@ -383,7 +397,7 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
 /// should use the post-inc value).
 static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
                                        Loop *L, DominatorTree *DT, Pass *P,
-                                       SetVector<Instruction*> &DeadInsts){
+                                      SmallVectorImpl<Instruction*> &DeadInsts){
   // If the user is in the loop, use the preinc value.
   if (L->contains(User->getParent())) return false;
   
@@ -425,7 +439,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
     }
 
   // PHI node might have become a constant value after SplitCriticalEdge.
-  DeadInsts.insert(User);
+  DeadInsts.push_back(User);
   
   return true;
 }
@@ -551,7 +565,7 @@ namespace {
     void RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                         Instruction *InsertPt,
                                        SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                       SetVector<Instruction*> &DeadInsts);
+                                      SmallVectorImpl<Instruction*> &DeadInsts);
     
     Value *InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
                                        SCEVExpander &Rewriter,
@@ -616,7 +630,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
 void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                                Instruction *NewBasePt,
                                       SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                      SetVector<Instruction*> &DeadInsts) {
+                                      SmallVectorImpl<Instruction*> &DeadInsts){
   if (!isa<PHINode>(Inst)) {
     // By default, insert code at the user instruction.
     BasicBlock::iterator InsertPt = Inst;
@@ -713,7 +727,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
   }
 
   // PHI node might have become a constant value after SplitCriticalEdge.
-  DeadInsts.insert(Inst);
+  DeadInsts.push_back(Inst);
 
   DOUT << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst;
 }
@@ -1442,7 +1456,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
       // Mark old value we replaced as possibly dead, so that it is eliminated
       // if we just replaced the last use of that value.
-      DeadInsts.insert(cast<Instruction>(User.OperandValToReplace));
+      DeadInsts.push_back(cast<Instruction>(User.OperandValToReplace));
 
       UsersToProcess.pop_back();
       ++NumReduced;
@@ -1672,7 +1686,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
                         OldCond);
 
     // Remove the old compare instruction. The old indvar is probably dead too.
-    DeadInsts.insert(cast<Instruction>(CondUse->OperandValToReplace));
+    DeadInsts.push_back(cast<Instruction>(CondUse->OperandValToReplace));
     SE->deleteValueFromRecords(OldCond);
     OldCond->replaceAllUsesWith(Cond);
     OldCond->eraseFromParent();
@@ -2080,7 +2094,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
           // Break the cycle and mark the PHI for deletion.
           SE->deleteValueFromRecords(PN);
           PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-          DeadInsts.insert(PN);
+          DeadInsts.push_back(PN);
           Changed = true;
           break;
         }
