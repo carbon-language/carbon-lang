@@ -1051,9 +1051,6 @@ bool Expr::isNullPointerConstant(EvalResult &Result, ASTContext &Ctx) const {
   // test for the value 0.
   return Evaluate(Result, Ctx) && !Result.HasSideEffects &&
       Result.Val.isInt() && Result.Val.getInt() == 0;
-
-  llvm::APSInt Val(32);
-  return isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
 }
 
 /// isBitField - Return true if this expression is a bit-field.
