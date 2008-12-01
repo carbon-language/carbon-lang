@@ -1445,8 +1445,8 @@ CXXZeroInitValueExpr::CreateImpl(Deserializer& D, ASTContext& C) {
 void CXXNewExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
   S.Emit(Initializer);
-  S.Emit(NumPlacementArgs);
-  S.Emit(NumConstructorArgs);
+  S.EmitInt(NumPlacementArgs);
+  S.EmitInt(NumConstructorArgs);
   S.BatchEmitOwnedPtrs(NumPlacementArgs + NumConstructorArgs, SubExprs);
   assert((OperatorNew == 0 || S.isRegistered(OperatorNew)) &&
          (OperatorDelete == 0 || S.isRegistered(OperatorDelete)) &&
