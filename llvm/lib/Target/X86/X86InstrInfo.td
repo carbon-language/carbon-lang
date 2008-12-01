@@ -1926,136 +1926,110 @@ let isCommutable = 1 in {   // X = ADD Y, Z   --> X = ADD Z, Y
 def ADD8rr   : I<0x00, MRMDestReg, (outs GR8 :$dst),
                                    (ins GR8 :$src1, GR8 :$src2),
                  "add{b}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR8:$dst, (add GR8:$src1, GR8:$src2)),
-                  (implicit EFLAGS)]>;
+                 [(set GR8:$dst, (add GR8:$src1, GR8:$src2))]>;
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 def ADD16rr  : I<0x01, MRMDestReg, (outs GR16:$dst),
                                    (ins GR16:$src1, GR16:$src2),
                  "add{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (add GR16:$src1, GR16:$src2)),
-                  (implicit EFLAGS)]>, OpSize;
+                 [(set GR16:$dst, (add GR16:$src1, GR16:$src2))]>, OpSize;
 def ADD32rr  : I<0x01, MRMDestReg, (outs GR32:$dst),
                                    (ins GR32:$src1, GR32:$src2),
                  "add{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (add GR32:$src1, GR32:$src2)),
-                  (implicit EFLAGS)]>;
+                 [(set GR32:$dst, (add GR32:$src1, GR32:$src2))]>;
 } // end isConvertibleToThreeAddress
 } // end isCommutable
 def ADD8rm   : I<0x02, MRMSrcMem, (outs GR8 :$dst),
                                   (ins GR8 :$src1, i8mem :$src2),
                  "add{b}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR8:$dst, (add GR8:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>;
+                 [(set GR8:$dst, (add GR8:$src1, (load addr:$src2)))]>;
 def ADD16rm  : I<0x03, MRMSrcMem, (outs GR16:$dst),
                                   (ins GR16:$src1, i16mem:$src2),
                  "add{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (add GR16:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>, OpSize;
+                 [(set GR16:$dst, (add GR16:$src1, (load addr:$src2)))]>,OpSize;
 def ADD32rm  : I<0x03, MRMSrcMem, (outs GR32:$dst),
                                   (ins GR32:$src1, i32mem:$src2),
                  "add{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (add GR32:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>;
+                 [(set GR32:$dst, (add GR32:$src1, (load addr:$src2)))]>;
 
 def ADD8ri   : Ii8<0x80, MRM0r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                    "add{b}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR8:$dst, (add GR8:$src1, imm:$src2)),
-                    (implicit EFLAGS)]>;
+                   [(set GR8:$dst, (add GR8:$src1, imm:$src2))]>;
 
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 def ADD16ri  : Ii16<0x81, MRM0r, (outs GR16:$dst),
                                  (ins GR16:$src1, i16imm:$src2),
                     "add{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (add GR16:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>, OpSize;
+                    [(set GR16:$dst, (add GR16:$src1, imm:$src2))]>, OpSize;
 def ADD32ri  : Ii32<0x81, MRM0r, (outs GR32:$dst),
                                  (ins GR32:$src1, i32imm:$src2),
                     "add{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (add GR32:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>;
+                    [(set GR32:$dst, (add GR32:$src1, imm:$src2))]>;
 def ADD16ri8 : Ii8<0x83, MRM0r, (outs GR16:$dst),
                                 (ins GR16:$src1, i16i8imm:$src2),
                    "add{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, (add GR16:$src1, i16immSExt8:$src2)),
-                 (implicit EFLAGS)]>, OpSize;
+                [(set GR16:$dst, (add GR16:$src1, i16immSExt8:$src2))]>, OpSize;
 def ADD32ri8 : Ii8<0x83, MRM0r, (outs GR32:$dst),
                                 (ins GR32:$src1, i32i8imm:$src2),
                    "add{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, (add GR32:$src1, i32immSExt8:$src2)),
-                 (implicit EFLAGS)]>;
+                [(set GR32:$dst, (add GR32:$src1, i32immSExt8:$src2))]>;
 }
 
 let isTwoAddress = 0 in {
   def ADD8mr   : I<0x00, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src2),
                    "add{b}\t{$src2, $dst|$dst, $src2}",
-                   [(store (add (load addr:$dst), GR8:$src2), addr:$dst),
-                    (implicit EFLAGS)]>;
+                   [(store (add (load addr:$dst), GR8:$src2), addr:$dst)]>;
   def ADD16mr  : I<0x01, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
                    "add{w}\t{$src2, $dst|$dst, $src2}",
-                   [(store (add (load addr:$dst), GR16:$src2), addr:$dst),
-                    (implicit EFLAGS)]>,
+                   [(store (add (load addr:$dst), GR16:$src2), addr:$dst)]>,
                  OpSize;
   def ADD32mr  : I<0x01, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                    "add{l}\t{$src2, $dst|$dst, $src2}",
-                   [(store (add (load addr:$dst), GR32:$src2), addr:$dst),
-                    (implicit EFLAGS)]>;
+                   [(store (add (load addr:$dst), GR32:$src2), addr:$dst)]>;
   def ADD8mi   : Ii8<0x80, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src2),
                      "add{b}\t{$src2, $dst|$dst, $src2}",
-                   [(store (add (loadi8 addr:$dst), imm:$src2), addr:$dst),
-                    (implicit EFLAGS)]>;
+                   [(store (add (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
   def ADD16mi  : Ii16<0x81, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src2),
                       "add{w}\t{$src2, $dst|$dst, $src2}",
-                  [(store (add (loadi16 addr:$dst), imm:$src2), addr:$dst),
-                   (implicit EFLAGS)]>,
+                  [(store (add (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
                  OpSize;
   def ADD32mi  : Ii32<0x81, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src2),
                       "add{l}\t{$src2, $dst|$dst, $src2}",
-                  [(store (add (loadi32 addr:$dst), imm:$src2), addr:$dst),
-                   (implicit EFLAGS)]>;
+                  [(store (add (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
   def ADD16mi8 : Ii8<0x83, MRM0m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
                      "add{w}\t{$src2, $dst|$dst, $src2}",
-                  [(store (add (load addr:$dst), i16immSExt8:$src2), addr:$dst),
-                   (implicit EFLAGS)]>,
+                [(store (add (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
                  OpSize;
   def ADD32mi8 : Ii8<0x83, MRM0m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
                      "add{l}\t{$src2, $dst|$dst, $src2}",
-                  [(store (add (load addr:$dst), i32immSExt8:$src2), addr:$dst),
-                   (implicit EFLAGS)]>;
+                [(store (add (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
 }
 
 let Uses = [EFLAGS] in {
 let isCommutable = 1 in {  // X = ADC Y, Z --> X = ADC Z, Y
 def ADC32rr  : I<0x11, MRMDestReg, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                  "adc{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (adde GR32:$src1, GR32:$src2)),
-                  (implicit EFLAGS)]>;
+                 [(set GR32:$dst, (adde GR32:$src1, GR32:$src2))]>;
 }
 def ADC32rm  : I<0x13, MRMSrcMem , (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                  "adc{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (adde GR32:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>;
+                 [(set GR32:$dst, (adde GR32:$src1, (load addr:$src2)))]>;
 def ADC32ri  : Ii32<0x81, MRM2r, (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
                     "adc{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (adde GR32:$src1, imm:$src2)),
-                  (implicit EFLAGS)]>;
+                 [(set GR32:$dst, (adde GR32:$src1, imm:$src2))]>;
 def ADC32ri8 : Ii8<0x83, MRM2r, (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
                    "adc{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (adde GR32:$src1, i32immSExt8:$src2)),
-                  (implicit EFLAGS)]>;
+                 [(set GR32:$dst, (adde GR32:$src1, i32immSExt8:$src2))]>;
 
 let isTwoAddress = 0 in {
   def ADC32mr  : I<0x11, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                    "adc{l}\t{$src2, $dst|$dst, $src2}",
-                   [(store (adde (load addr:$dst), GR32:$src2), addr:$dst),
-                    (implicit EFLAGS)]>;
+                   [(store (adde (load addr:$dst), GR32:$src2), addr:$dst)]>;
   def ADC32mi  : Ii32<0x81, MRM2m, (outs), (ins i32mem:$dst, i32imm:$src2),
                       "adc{l}\t{$src2, $dst|$dst, $src2}",
-                  [(store (adde (loadi32 addr:$dst), imm:$src2), addr:$dst),
-                   (implicit EFLAGS)]>;
+                  [(store (adde (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
   def ADC32mi8 : Ii8<0x83, MRM2m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
                      "adc{l}\t{$src2, $dst|$dst, $src2}",
-                 [(store (adde (load addr:$dst), i32immSExt8:$src2), addr:$dst),
-                  (implicit EFLAGS)]>;
+             [(store (adde (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
 }
 } // Uses = [EFLAGS]
 
@@ -2298,7 +2272,6 @@ def SETEm    : I<0x94, MRM0m,
                  "sete\t$dst",
                  [(store (X86setcc X86_COND_E, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = ==
-
 def SETNEr   : I<0x95, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setne\t$dst",
@@ -2309,7 +2282,6 @@ def SETNEm   : I<0x95, MRM0m,
                  "setne\t$dst",
                  [(store (X86setcc X86_COND_NE, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = !=
-
 def SETLr    : I<0x9C, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setl\t$dst",
@@ -2320,7 +2292,6 @@ def SETLm    : I<0x9C, MRM0m,
                  "setl\t$dst",
                  [(store (X86setcc X86_COND_L, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = <  signed
-
 def SETGEr   : I<0x9D, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setge\t$dst",
@@ -2331,7 +2302,6 @@ def SETGEm   : I<0x9D, MRM0m,
                  "setge\t$dst",
                  [(store (X86setcc X86_COND_GE, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = >= signed
-
 def SETLEr   : I<0x9E, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setle\t$dst",
@@ -2342,7 +2312,6 @@ def SETLEm   : I<0x9E, MRM0m,
                  "setle\t$dst",
                  [(store (X86setcc X86_COND_LE, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = <= signed
-
 def SETGr    : I<0x9F, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setg\t$dst",
@@ -2364,7 +2333,6 @@ def SETBm    : I<0x92, MRM0m,
                  "setb\t$dst",
                  [(store (X86setcc X86_COND_B, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = <  unsign
-
 def SETAEr   : I<0x93, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setae\t$dst",
@@ -2375,7 +2343,6 @@ def SETAEm   : I<0x93, MRM0m,
                  "setae\t$dst",
                  [(store (X86setcc X86_COND_AE, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = >= unsign
-
 def SETBEr   : I<0x96, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setbe\t$dst",
@@ -2386,7 +2353,6 @@ def SETBEm   : I<0x96, MRM0m,
                  "setbe\t$dst",
                  [(store (X86setcc X86_COND_BE, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = <= unsign
-
 def SETAr    : I<0x97, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "seta\t$dst",
@@ -2418,7 +2384,6 @@ def SETNSm   : I<0x99, MRM0m,
                  "setns\t$dst",
                  [(store (X86setcc X86_COND_NS, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = !<sign bit>
-
 def SETPr    : I<0x9A, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setp\t$dst",
@@ -2439,48 +2404,6 @@ def SETNPm   : I<0x9B, MRM0m,
                  "setnp\t$dst",
                  [(store (X86setcc X86_COND_NP, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = not parity
-
-def SETOr    : I<0x90, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "seto\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_O, EFLAGS))]>,
-               TB;                        // GR8 = overflow
-def SETOm    : I<0x90, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "seto\t$dst",
-                 [(store (X86setcc X86_COND_O, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = overflow
-def SETNOr   : I<0x91, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setno\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_NO, EFLAGS))]>,
-               TB;                        // GR8 = not overflow
-def SETNOm   : I<0x91, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setno\t$dst",
-                 [(store (X86setcc X86_COND_NO, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = not overflow
-
-def SETCr    : I<0x92, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setc\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_C, EFLAGS))]>,
-               TB;                        // GR8 = carry
-def SETCm    : I<0x92, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setc\t$dst",
-                 [(store (X86setcc X86_COND_C, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = carry
-def SETNCr   : I<0x93, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setnc\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_NC, EFLAGS))]>,
-               TB;                        // GR8 = not carry
-def SETNCm   : I<0x93, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setnc\t$dst",
-                 [(store (X86setcc X86_COND_NC, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = not carry
 } // Uses = [EFLAGS]
 
 
