@@ -314,59 +314,73 @@ let isConvertibleToThreeAddress = 1 in {
 let isCommutable = 1 in
 def ADD64rr  : RI<0x01, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                   "add{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (add GR64:$src1, GR64:$src2))]>;
+                  [(set GR64:$dst, (add GR64:$src1, GR64:$src2)),
+                   (implicit EFLAGS)]>;
 
 def ADD64ri32 : RIi32<0x81, MRM0r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
                       "add{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst, (add GR64:$src1, i64immSExt32:$src2))]>;
+                      [(set GR64:$dst, (add GR64:$src1, i64immSExt32:$src2)),
+                       (implicit EFLAGS)]>;
 def ADD64ri8 : RIi8<0x83, MRM0r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                     "add{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst, (add GR64:$src1, i64immSExt8:$src2))]>;
+                    [(set GR64:$dst, (add GR64:$src1, i64immSExt8:$src2)),
+                     (implicit EFLAGS)]>;
 } // isConvertibleToThreeAddress
 
 def ADD64rm  : RI<0x03, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                   "add{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (add GR64:$src1, (load addr:$src2)))]>;
+                  [(set GR64:$dst, (add GR64:$src1, (load addr:$src2))),
+                   (implicit EFLAGS)]>;
 } // isTwoAddress
 
 def ADD64mr  : RI<0x01, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                   "add{q}\t{$src2, $dst|$dst, $src2}",
-                  [(store (add (load addr:$dst), GR64:$src2), addr:$dst)]>;
+                  [(store (add (load addr:$dst), GR64:$src2), addr:$dst),
+                   (implicit EFLAGS)]>;
 def ADD64mi32 : RIi32<0x81, MRM0m, (outs), (ins i64mem:$dst, i64i32imm :$src2),
                       "add{q}\t{$src2, $dst|$dst, $src2}",
-               [(store (add (load addr:$dst), i64immSExt32:$src2), addr:$dst)]>;
+               [(store (add (load addr:$dst), i64immSExt32:$src2), addr:$dst),
+                (implicit EFLAGS)]>;
 def ADD64mi8 : RIi8<0x83, MRM0m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
                     "add{q}\t{$src2, $dst|$dst, $src2}",
-                [(store (add (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
+                [(store (add (load addr:$dst), i64immSExt8:$src2), addr:$dst),
+                 (implicit EFLAGS)]>;
 
 let Uses = [EFLAGS] in {
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
 def ADC64rr  : RI<0x11, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                   "adc{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (adde GR64:$src1, GR64:$src2))]>;
+                  [(set GR64:$dst, (adde GR64:$src1, GR64:$src2)),
+                   (implicit EFLAGS)]>;
 
 def ADC64rm  : RI<0x13, MRMSrcMem , (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                   "adc{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (adde GR64:$src1, (load addr:$src2)))]>;
+                  [(set GR64:$dst, (adde GR64:$src1, (load addr:$src2))),
+                   (implicit EFLAGS)]>;
 
 def ADC64ri32 : RIi32<0x81, MRM2r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
                       "adc{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst, (adde GR64:$src1, i64immSExt32:$src2))]>;
+                      [(set GR64:$dst, (adde GR64:$src1, i64immSExt32:$src2)),
+                       (implicit EFLAGS)]>;
 def ADC64ri8 : RIi8<0x83, MRM2r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                     "adc{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst, (adde GR64:$src1, i64immSExt8:$src2))]>;
+                    [(set GR64:$dst, (adde GR64:$src1, i64immSExt8:$src2)),
+                     (implicit EFLAGS)]>;
 } // isTwoAddress
 
 def ADC64mr  : RI<0x11, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                   "adc{q}\t{$src2, $dst|$dst, $src2}",
-                  [(store (adde (load addr:$dst), GR64:$src2), addr:$dst)]>;
+                  [(store (adde (load addr:$dst), GR64:$src2), addr:$dst),
+                   (implicit EFLAGS)]>;
 def ADC64mi32 : RIi32<0x81, MRM2m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
                       "adc{q}\t{$src2, $dst|$dst, $src2}",
-               [(store (adde (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
+                 [(store (adde (load addr:$dst), i64immSExt8:$src2), addr:$dst),
+                  (implicit EFLAGS)]>;
 def ADC64mi8 : RIi8<0x83, MRM2m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
                     "adc{q}\t{$src2, $dst|$dst, $src2}",
-               [(store (adde (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
+                 [(store (adde (load addr:$dst), i64immSExt8:$src2), addr:$dst),
+                   (implicit EFLAGS)]>;
 } // Uses = [EFLAGS]
 
 let isTwoAddress = 1 in {
