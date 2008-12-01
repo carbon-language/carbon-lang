@@ -1225,6 +1225,7 @@ bool GVN::processBlock(DomTreeNode* DTN) {
 bool GVN::performPRE(Function& F) {
   bool changed = false;
   SmallVector<std::pair<TerminatorInst*, unsigned>, 4> toSplit;
+  DenseMap<BasicBlock*, Value*> predMap;
   for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
        DE = df_end(&F.getEntryBlock()); DI != DE; ++DI) {
     BasicBlock* CurrentBlock = *DI;
@@ -1252,7 +1253,8 @@ bool GVN::performPRE(Function& F) {
       unsigned numWith = 0;
       unsigned numWithout = 0;
       BasicBlock* PREPred = 0;
-      DenseMap<BasicBlock*, Value*> predMap;
+      predMap.clear();
+
       for (pred_iterator PI = pred_begin(CurrentBlock),
            PE = pred_end(CurrentBlock); PI != PE; ++PI) {
         // We're not interested in PRE where the block is its
@@ -1359,7 +1361,7 @@ bool GVN::performPRE(Function& F) {
       
       Instruction* erase = BI;
       BI++;
-      DEBUG(cerr << "GVN removed: " << *erase);
+      DEBUG(cerr << "GVN PRE removed: " << *erase);
       MD->removeInstruction(erase);
       erase->eraseFromParent();
       changed = true;
