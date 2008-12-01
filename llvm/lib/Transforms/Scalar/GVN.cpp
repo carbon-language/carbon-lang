@@ -915,11 +915,28 @@ bool GVN::processNonLocalLoad(LoadInst* L,
     }
   
     if (StoreInst* S = dyn_cast<StoreInst>(DepInfo.getInst())) {
-      if (S->getPointerOperand() != L->getPointerOperand())
+      // Reject loads and stores that are to the same address but are of 
+      // different types.
+      // NOTE: 403.gcc does have this case (e.g. in readonly_fields_p) because
+      // of bitfield access, it would be interesting to optimize for it at some
+      // point.
+      if (S->getOperand(0)->getType() != L->getType())
+        return false;
+      
+      if (S->getPointerOperand() != L->getPointerOperand() &&
+          VN.getAliasAnalysis()->alias(S->getPointerOperand(), 1,
+                                       L->getPointerOperand(), 1)
+            != AliasAnalysis::MustAlias)
         return false;
       repl[DepBB] = S->getOperand(0);
     } else if (LoadInst* LD = dyn_cast<LoadInst>(DepInfo.getInst())) {
-      if (LD->getPointerOperand() != L->getPointerOperand())
+      if (LD->getType() != L->getType())
+        return false;
+      
+      if (LD->getPointerOperand() != L->getPointerOperand() &&
+          VN.getAliasAnalysis()->alias(LD->getPointerOperand(), 1,
+                                       L->getPointerOperand(), 1)
+            != AliasAnalysis::MustAlias)
         return false;
       repl[DepBB] = LD;
     } else {
