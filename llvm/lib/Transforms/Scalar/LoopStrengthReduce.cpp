@@ -205,7 +205,7 @@ private:
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
-    void DeleteTriviallyDeadInstructions(SetVector<Instruction*> &Insts);
+    void DeleteTriviallyDeadInstructions();
   };
 }
 
@@ -238,11 +238,10 @@ Value *LoopStrengthReduce::getCastedVersionOf(Instruction::CastOps opcode,
 /// DeleteTriviallyDeadInstructions - If any of the instructions is the
 /// specified set are trivially dead, delete them and see if this makes any of
 /// their operands subsequently dead.
-void LoopStrengthReduce::
-DeleteTriviallyDeadInstructions(SetVector<Instruction*> &Insts) {
-  while (!Insts.empty()) {
-    Instruction *I = Insts.back();
-    Insts.pop_back();
+void LoopStrengthReduce::DeleteTriviallyDeadInstructions() {
+  while (!DeadInsts.empty()) {
+    Instruction *I = DeadInsts.back();
+    DeadInsts.pop_back();
 
     if (!isInstructionTriviallyDead(I))
       continue;
@@ -253,7 +252,7 @@ DeleteTriviallyDeadInstructions(SetVector<Instruction*> &Insts) {
       if (Instruction *U = dyn_cast<Instruction>(*i)) {
         *i = 0;
         if (U->use_empty())
-          Insts.insert(U);
+          DeadInsts.insert(U);
       }
     }
     
@@ -1441,7 +1440,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                           Rewriter, L, this,
                                           DeadInsts);
 
-      // Mark old value we replaced as possibly dead, so that it is elminated
+      // Mark old value we replaced as possibly dead, so that it is eliminated
       // if we just replaced the last use of that value.
       DeadInsts.insert(cast<Instruction>(User.OperandValToReplace));
 
@@ -2055,7 +2054,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Clean up after ourselves
   if (!DeadInsts.empty()) {
-    DeleteTriviallyDeadInstructions(DeadInsts);
+    DeleteTriviallyDeadInstructions();
 
     BasicBlock::iterator I = L->getHeader()->begin();
     while (PHINode *PN = dyn_cast<PHINode>(I++)) {
@@ -2091,7 +2090,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
           break;
       }
     }
-    DeleteTriviallyDeadInstructions(DeadInsts);
+    DeleteTriviallyDeadInstructions();
   }
   return Changed;
 }
