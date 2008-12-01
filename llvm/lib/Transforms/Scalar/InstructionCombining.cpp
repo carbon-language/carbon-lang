@@ -2937,8 +2937,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
         if (RHS != RHSNeg) {    // Check that there is no overflow.
           Constant *CINeg = ConstantExpr::getNeg(CI);
           if (CI != CINeg)      // Check that there is no overflow.
-            return BinaryOperator::CreateSDiv(LHSNeg,
-                                              ConstantExpr::getNeg(RHS));
+            return BinaryOperator::CreateSDiv(LHSNeg, RHSNeg);
         }
       }
     }
