@@ -25,6 +25,7 @@ struct LangOptions {
   unsigned Trigraphs         : 1;  // Trigraphs in source files.
   unsigned BCPLComment       : 1;  // BCPL-style '//' comments.
   unsigned DollarIdents      : 1;  // '$' allowed in identifiers.
+  unsigned AsmPreprocessor   : 1;  // Preprocessor in asm mode.
   unsigned ImplicitInt       : 1;  // C89 implicit 'int'.
   unsigned Digraphs          : 1;  // C94, C99 and C++
   unsigned HexFloats         : 1;  // C99 Hexadecimal float constants.
@@ -47,7 +48,7 @@ struct LangOptions {
   unsigned NeXTRuntime       : 1; // Use NeXT runtime.
 
   unsigned ThreadsafeStatics : 1; // Whether static initializers are protected
-                                  // by lockis.
+                                  // by locks.
   unsigned Blocks            : 1; // block extension to C
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
@@ -58,7 +59,8 @@ public:
   enum GCMode { NonGC, GCOnly, HybridGC };
   
   LangOptions() {
-    Trigraphs = BCPLComment = DollarIdents = ImplicitInt = Digraphs = 0;
+    Trigraphs = BCPLComment = DollarIdents = AsmPreprocessor = 0;
+    ImplicitInt = Digraphs = 0;
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;

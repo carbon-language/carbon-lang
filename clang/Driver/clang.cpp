@@ -353,6 +353,7 @@ static bool InitializeLangOptions(LangOptions &Options, LangKind LK){
     PCH = true;
     break;
   case langkind_asm_cpp:
+    Options.AsmPreprocessor = 1;
     // FALLTHROUGH
   case langkind_c_cpp:
     NoPreprocess = true;
