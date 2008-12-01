@@ -449,8 +449,8 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
   ResultVals.push_back(Chain);
 
   // Merge everything together with a MERGE_VALUES node.
-  return DAG.getMergeValues(TheCall->getVTList(), &ResultVals[0],
-                            ResultVals.size());
+  return DAG.getNode(ISD::MERGE_VALUES, TheCall->getVTList(), &ResultVals[0],
+                     ResultVals.size());
 }
 
 

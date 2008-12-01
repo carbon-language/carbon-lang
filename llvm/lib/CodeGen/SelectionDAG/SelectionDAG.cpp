@@ -2187,8 +2187,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
   unsigned OpOpcode = Operand.getNode()->getOpcode();
   switch (Opcode) {
   case ISD::TokenFactor:
+  case ISD::MERGE_VALUES:
   case ISD::CONCAT_VECTORS:
-    return Operand;         // Factor or concat of one node?  No need.
+    return Operand;         // Factor, merge or concat of one node?  No need.
   case ISD::FP_ROUND: assert(0 && "Invalid method to make FP_ROUND node");
   case ISD::FP_EXTEND:
     assert(VT.isFloatingPoint() &&
@@ -3355,9 +3356,8 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDValue Chain,
 
 /// getMergeValues - Create a MERGE_VALUES node from the given operands.
 /// Allowed to return something different (and simpler) if Simplify is true.
-SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
-                                     bool Simplify) {
-  if (Simplify && NumOps == 1)
+SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps) {
+  if (NumOps == 1)
     return Ops[0];
 
   SmallVector<MVT, 4> VTs;

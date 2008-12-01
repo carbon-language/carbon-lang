@@ -778,8 +778,8 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
   ResultVals.push_back(Chain);
 
   // Merge everything together with a MERGE_VALUES node.
-  return DAG.getMergeValues(TheCall->getVTList(), &ResultVals[0],
-                            ResultVals.size()).getNode();
+  return DAG.getNode(ISD::MERGE_VALUES, TheCall->getVTList(),
+                     &ResultVals[0], ResultVals.size()).getNode();
 }
 
 //===----------------------------------------------------------------------===//
@@ -921,8 +921,8 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  return DAG.getMergeValues(Op.getNode()->getVTList(), &ArgValues[0],
-                            ArgValues.size()).getValue(Op.getResNo());
+  return DAG.getNode(ISD::MERGE_VALUES, Op.getNode()->getVTList(),
+                     &ArgValues[0], ArgValues.size()).getValue(Op.getResNo());
 }
 
 //===----------------------------------------------------------------------===//

@@ -486,19 +486,7 @@ public:
                               bool ReadMem = true, bool WriteMem = true);
 
   /// getMergeValues - Create a MERGE_VALUES node from the given operands.
-  /// Allowed to return something different (and simpler) if Simplify is true.
-  SDValue getMergeValues(const SDValue *Ops, unsigned NumOps,
-                         bool Simplify = true);
-
-  /// getMergeValues - Create a MERGE_VALUES node from the given types and ops.
-  /// Allowed to return something different (and simpler) if Simplify is true.
-  /// May be faster than the above version if VTs is known and NumOps is large.
-  SDValue getMergeValues(SDVTList VTs, const SDValue *Ops, unsigned NumOps,
-                           bool Simplify = true) {
-    if (Simplify && NumOps == 1)
-      return Ops[0];
-    return getNode(ISD::MERGE_VALUES, VTs, Ops, NumOps);
-  }
+  SDValue getMergeValues(const SDValue *Ops, unsigned NumOps);
 
   /// getCall - Create a CALL node from the given information.
   ///

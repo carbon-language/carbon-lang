@@ -1261,7 +1261,7 @@ SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) {
   SDValue Ops[] =
     { CallResult.first, CallResult.second };
 
-  return DAG.getMergeValues(Ops, 2, false);
+  return DAG.getMergeValues(Ops, 2);
 }
 
 SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
@@ -1825,8 +1825,8 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   ArgValues.push_back(Root);
  
   // Return the new list of results.
-  return DAG.getMergeValues(Op.getNode()->getVTList(), &ArgValues[0],
-                            ArgValues.size());
+  return DAG.getNode(ISD::MERGE_VALUES, Op.getNode()->getVTList(),
+                     &ArgValues[0], ArgValues.size());
 }
 
 /// CalculateParameterAndLinkageAreaSize - Get the size of the paramter plus
@@ -2605,8 +2605,8 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   
   // Otherwise, merge everything together with a MERGE_VALUES node.
   ResultVals.push_back(Chain);
-  SDValue Res = DAG.getMergeValues(TheCall->getVTList(), &ResultVals[0],
-                                     ResultVals.size());
+  SDValue Res = DAG.getNode(ISD::MERGE_VALUES, TheCall->getVTList(),
+                            &ResultVals[0], ResultVals.size());
   return Res.getValue(Op.getResNo());
 }
 

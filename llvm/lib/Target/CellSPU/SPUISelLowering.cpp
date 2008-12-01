@@ -1047,8 +1047,8 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  return DAG.getMergeValues(Op.getNode()->getVTList(), &ArgValues[0],
-                            ArgValues.size());
+  return DAG.getNode(ISD::MERGE_VALUES, Op.getNode()->getVTList(),
+                     &ArgValues[0], ArgValues.size());
 }
 
 /// isLSAAddress - Return the immediate to use if the specified

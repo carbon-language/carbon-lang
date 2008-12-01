@@ -4235,7 +4235,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       MVT ValueVTs[] = { LHS.getValueType(), OType };
       SDValue Ops[] = { Sum, Cmp };
 
-      Result = DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], 2), &Ops[0], 2);
+      Result = DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(&ValueVTs[0], 2),
+                           &Ops[0], 2);
       SDNode *RNode = Result.getNode();
       DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), SDValue(RNode, 0));
       DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), SDValue(RNode, 1));
@@ -4264,7 +4265,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       MVT ValueVTs[] = { LHS.getValueType(), OType };
       SDValue Ops[] = { Sum, Cmp };
 
-      Result = DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], 2), &Ops[0], 2);
+      Result = DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(&ValueVTs[0], 2),
+                           &Ops[0], 2);
       SDNode *RNode = Result.getNode();
       DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), SDValue(RNode, 0));
       DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), SDValue(RNode, 1));

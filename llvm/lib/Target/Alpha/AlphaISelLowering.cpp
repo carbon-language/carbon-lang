@@ -294,8 +294,8 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  return DAG.getMergeValues(Op.getNode()->getVTList(), &ArgValues[0],
-                            ArgValues.size());
+  return DAG.getNode(ISD::MERGE_VALUES, Op.getNode()->getVTList(),
+                     &ArgValues[0], ArgValues.size());
 }
 
 static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
