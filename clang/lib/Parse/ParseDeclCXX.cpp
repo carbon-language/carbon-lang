@@ -763,12 +763,13 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclTy *ConstructorDecl) {
 /// ParseExceptionSpecification - Parse a C++ exception-specification
 /// (C++ [except.spec]).
 ///
-///    exception-specification:
-///      'throw' '(' type-id-list [opt] ')'
+///       exception-specification:
+///         'throw' '(' type-id-list [opt] ')'
+/// [MS]    'throw' '(' '...' ')'
 ///      
-///    type-id-list:
-///      type-id
-///      type-id-list ',' type-id
+///       type-id-list:
+///         type-id
+///         type-id-list ',' type-id
 ///
 bool Parser::ParseExceptionSpecification() {
   assert(Tok.is(tok::kw_throw) && "expected throw");
@@ -779,6 +780,16 @@ bool Parser::ParseExceptionSpecification() {
     return Diag(Tok, diag::err_expected_lparen_after) << "throw";
   }
   SourceLocation LParenLoc = ConsumeParen();
+
+  // Parse throw(...), a Microsoft extension that means "this function
+  // can throw anything".
+  if (Tok.is(tok::ellipsis)) {
+    SourceLocation EllipsisLoc = ConsumeToken();
+    if (!getLang().Microsoft)
+      Diag(EllipsisLoc, diag::ext_ellipsis_exception_spec);
+    SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+    return false;
+  }
 
   // Parse the sequence of type-ids.
   while (Tok.isNot(tok::r_paren)) {
