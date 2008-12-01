@@ -2934,20 +2934,9 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     if (Value *LHSNeg = dyn_castNegVal(Op0)) {
       if (ConstantInt *CI = dyn_cast<ConstantInt>(LHSNeg)) {
         ConstantInt *RHSNeg = cast<ConstantInt>(ConstantExpr::getNeg(RHS));
-        APInt RHSNegAPI(RHSNeg->getValue());
-
-        APInt NegOne = -APInt(RHSNeg->getBitWidth(), 1, true);
-        APInt TwoToExp(RHSNeg->getBitWidth(), 1 << (RHSNeg->getBitWidth() - 1));
-
-        if ((RHS->getValue().isNegative() &&
-             RHSNegAPI.slt(TwoToExp - 1)) ||
-            (RHS->getValue().isNonNegative() &&
-             RHSNegAPI.sgt(TwoToExp * NegOne))) {
+        if (RHS != RHSNeg) {
           ConstantInt *CINeg = cast<ConstantInt>(ConstantExpr::getNeg(CI));
-          APInt CINegAPI(CINeg->getValue());
-
-          if ((CI->getValue().isNegative() && CINegAPI.slt(TwoToExp - 1)) ||
-              (CI->getValue().isNonNegative() && CINegAPI.sgt(TwoToExp*NegOne)))
+          if (CI != CINeg)
             return BinaryOperator::CreateSDiv(LHSNeg,
                                               ConstantExpr::getNeg(RHS));
         }
