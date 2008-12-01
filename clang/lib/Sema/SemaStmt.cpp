@@ -126,31 +126,16 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
   Expr *LHSVal = ((Expr *)lhsval), *RHSVal = ((Expr *)rhsval);
   assert((LHSVal != 0) && "missing expression in case statement");
   
-  SourceLocation ExpLoc;
   // C99 6.8.4.2p3: The expression shall be an integer constant.
   // However, GCC allows any evaluatable integer expression. 
-  // FIXME: Should we warn if this is evaluatable but not an I-C-E?
-  APValue Result;
-  bool isEvaluated;
-  
-  if (!LHSVal->Evaluate(Result, Context, &isEvaluated) || !Result.isInt() ||
-      !isEvaluated) {
-    // FIXME: Evaluate doesn't return the SourceLocation that it failed to
-    // evaluate. 
-    ExpLoc = LHSVal->getExprLoc();
-    Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr)
-      << LHSVal->getSourceRange();
+
+  if (VerifyIntegerConstantExpression(LHSVal))
     return SubStmt;
-  }
 
   // GCC extension: The expression shall be an integer constant.
-  if (RHSVal && !RHSVal->Evaluate(Result, Context, &isEvaluated) || 
-      !Result.isInt() || !isEvaluated) {
-    ExpLoc = RHSVal->getExprLoc();
-    Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr)
-      << RHSVal->getSourceRange();
+  
+  if (RHSVal && VerifyIntegerConstantExpression(RHSVal))
     RHSVal = 0;  // Recover by just forgetting about it.
-  }
   
   if (SwitchStack.empty()) {
     Diag(CaseLoc, diag::err_case_not_in_switch);
