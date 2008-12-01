@@ -231,6 +231,15 @@ static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
     return 1;
   return 0;
 }
+  
+/// get_array_pad_sort_comparator - This is an internal helper function used to
+/// get type deduction of T right.
+template<typename T>
+static int (*get_array_pad_sort_comparator(const T &X)) 
+             (const void*, const void*) {
+  return array_pod_sort_comparator<T>;
+}
+
 
 /// array_pod_sort - This sorts an array with the specified start and end
 /// extent.  This is just like std::sort, except that it calls qsort instead of
@@ -246,18 +255,12 @@ static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
 ///
 /// NOTE: If qsort_r were portable, we could allow a custom comparator and
 /// default to std::less.
-}
-#include <algorithm>
-namespace llvm {
-  
 template<class IteratorTy>
 static inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
-  std::sort(Start, End);
-  
   // Don't dereference start iterator of empty sequence.
-  //if (Start == End) return;
-  //qsort(&*Start, End-Start, sizeof(*Start),
-  //      array_pod_sort_comparator<*Start>);
+  if (Start == End) return;
+  qsort(&*Start, End-Start, sizeof(*Start),
+        get_array_pad_sort_comparator(*Start));
 }
   
 } // End llvm namespace
