@@ -72,6 +72,10 @@ namespace {  // Anonymous namespace for class
 
     PreVerifier() : FunctionPass(&ID) { }
 
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+
     // Check that the prerequisites for successful DominatorTree construction
     // are satisfied.
     bool runOnFunction(Function &F) {
