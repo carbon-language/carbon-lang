@@ -17,8 +17,10 @@
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -51,9 +53,14 @@ namespace {
   /// revectored to the false side of the second if.
   ///
   class VISIBILITY_HIDDEN JumpThreading : public FunctionPass {
+    TargetData *TD;
   public:
     static char ID; // Pass identification
     JumpThreading() : FunctionPass(&ID) {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
+    }
 
     bool runOnFunction(Function &F);
     bool ProcessBlock(BasicBlock *BB);
@@ -79,6 +86,7 @@ FunctionPass *llvm::createJumpThreadingPass() { return new JumpThreading(); }
 ///
 bool JumpThreading::runOnFunction(Function &F) {
   DOUT << "Jump threading on function '" << F.getNameStart() << "'\n";
+  TD = &getAnalysis<TargetData>();
   
   bool AnotherIteration = true, EverChanged = false;
   while (AnotherIteration) {
@@ -679,7 +687,7 @@ void JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
     PN->addIncoming(IV, NewBB);
   }
   
-  // Finally, NewBB is good to go.  Update the terminator of PredBB to jump to
+  // Ok, NewBB is good to go.  Update the terminator of PredBB to jump to
   // NewBB instead of BB.  This eliminates predecessors from BB, which requires
   // us to simplify any PHI nodes in BB.
   TerminatorInst *PredTerm = PredBB->getTerminator();
@@ -688,4 +696,19 @@ void JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
       BB->removePredecessor(PredBB);
       PredTerm->setSuccessor(i, NewBB);
     }
+  
+  // At this point, the IR is fully up to date and consistent.  Do a quick scan
+  // over the new instructions and zap any that are constants or dead.  This
+  // frequently happens because of phi translation.
+  BI = NewBB->begin();
+  for (BasicBlock::iterator E = NewBB->end(); BI != E; ) {
+    Instruction *Inst = BI++;
+    if (Constant *C = ConstantFoldInstruction(Inst, TD)) {
+      Inst->replaceAllUsesWith(C);
+      Inst->eraseFromParent();
+      continue;
+    }
+    
+    RecursivelyDeleteTriviallyDeadInstructions(Inst);
+  }
 }
