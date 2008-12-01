@@ -246,12 +246,16 @@ static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
 ///
 /// NOTE: If qsort_r were portable, we could allow a custom comparator and
 /// default to std::less.
+#include <algorithm>
+  
 template<class IteratorTy>
 static inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
+  std::sort(Start, End);
+  
   // Don't dereference start iterator of empty sequence.
-  if (Start == End) return;
-  qsort(&*Start, End-Start, sizeof(*Start),
-        array_pod_sort_comparator<sizeof(*Start)>);
+  //if (Start == End) return;
+  //qsort(&*Start, End-Start, sizeof(*Start),
+  //      array_pod_sort_comparator<*Start>);
 }
   
 } // End llvm namespace
