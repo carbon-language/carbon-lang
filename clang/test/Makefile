@@ -19,7 +19,7 @@ REPORTFAIL = (echo; echo '----' $< 'failed ----')
 DONE = echo
 endif
 
-TESTS := $(addprefix Output/, $(addsuffix .testresults, $(shell find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' -or -name '*.mm' \) | grep -v "Output/")))
+TESTS := $(addprefix Output/, $(addsuffix .testresults, $(shell find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' -or -name '*.mm' -or -name '*.S' \) | grep -v "Output/")))
 Output/%.testresults: %
 	@ $(PROGRESS)
 	@ PATH=$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$$PATH VG=$(VG) $(PROJ_SRC_DIR)/TestRunner.sh $< > $@ || $(REPORTFAIL)
