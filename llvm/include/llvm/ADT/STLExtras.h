@@ -254,7 +254,7 @@ template<class IteratorTy>
 static inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
   // Don't dereference start iterator of empty sequence.
   if (Start == End) return;
-  qsort(Start, End-Start, sizeof(*Start),
+  qsort(&*Start, End-Start, sizeof(*Start),
         array_pod_sort_comparator<sizeof(*Start)>);
 }
   
