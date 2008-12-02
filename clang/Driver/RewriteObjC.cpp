@@ -624,6 +624,9 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
   RewriteObjCMethodDecl(PD->getGetterMethodDecl(), Getr);
   Getr += "{ ";
   // Synthesize an explicit cast to gain access to the ivar.
+  // FIXME: deal with code generation implications for various property 
+  // attributes (copy, retain, nonatomic). 
+  // See objc-act.c:objc_synthesize_new_getter() for details.
   Getr += "return " + getIvarAccessString(ClassDecl, OID);
   Getr += "; }";
   InsertText(onePastSemiLoc, Getr.c_str(), Getr.size());
@@ -645,6 +648,9 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
   RewriteObjCMethodDecl(PD->getSetterMethodDecl(), Setr);
   Setr += "{ ";
   // Synthesize an explicit cast to initialize the ivar.
+  // FIXME: deal with code generation implications for various property 
+  // attributes (copy, retain, nonatomic). 
+  // See objc-act.c:objc_synthesize_new_getter() for details.
   Setr += getIvarAccessString(ClassDecl, OID) + " = ";
   Setr += OID->getNameAsCString();
   Setr += "; }";
