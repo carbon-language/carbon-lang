@@ -1077,9 +1077,9 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
       return Builder.CreateZExt(RHSCond, CGF.LLVMIntTy, "lor.ext");
     }
     
-    // 1 || RHS: If it is safe, just elide the RHS, and return 0.
+    // 1 || RHS: If it is safe, just elide the RHS, and return 1.
     if (!CGF.ContainsLabel(E->getRHS()))
-      return llvm::Constant::getNullValue(CGF.LLVMIntTy);
+      return llvm::ConstantInt::get(CGF.LLVMIntTy, 1);
   }
   
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("lor.end");
