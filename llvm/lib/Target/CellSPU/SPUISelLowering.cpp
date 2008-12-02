@@ -151,6 +151,8 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Custom);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Custom);
 
+  setLoadExtAction(ISD::EXTLOAD,  MVT::f32, Custom);
+
   // SPU constant load actions are custom lowered:
   setOperationAction(ISD::Constant,   MVT::i64, Custom);
   setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
@@ -276,6 +278,12 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::ZERO_EXTEND, MVT::i64, Custom);
   setOperationAction(ISD::SIGN_EXTEND, MVT::i64, Custom);
   setOperationAction(ISD::ANY_EXTEND,  MVT::i64, Custom);
+
+  // Custom lower truncates
+  setOperationAction(ISD::TRUNCATE, MVT::i8, Custom);
+  setOperationAction(ISD::TRUNCATE, MVT::i16, Custom);
+  setOperationAction(ISD::TRUNCATE, MVT::i32, Custom);
+  setOperationAction(ISD::TRUNCATE, MVT::i64, Custom);
 
   // SPU has a legal FP -> signed INT instruction
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Legal);
@@ -782,7 +790,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       DAG.setRoot(currentRoot);
     }
 #endif
-    
+
     return result;
     /*UNREACHED*/
   }
@@ -2759,6 +2767,102 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(SPUISD::SELB, VT, trueval, falseval, compare);
 }
 
+//! Custom lower ISD::TRUNCATE
+static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
+{
+  MVT VT = Op.getValueType();
+  MVT::SimpleValueType simpleVT = VT.getSimpleVT();
+  MVT VecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
+
+  SDValue Op0 = Op.getOperand(0);
+  MVT Op0VT = Op0.getValueType();
+  MVT Op0VecVT = MVT::getVectorVT(Op0VT, (128 / Op0VT.getSizeInBits()));
+
+  SDValue PromoteScalar = DAG.getNode(SPUISD::PROMOTE_SCALAR, Op0VecVT, Op0);
+
+  unsigned maskLow;
+  unsigned maskHigh;
+
+  // Create shuffle mask
+  switch (Op0VT.getSimpleVT()) {
+  case MVT::i128:
+    switch (simpleVT) {
+    case MVT::i64:
+      // least significant doubleword of quadword
+      maskHigh = 0x08090a0b;
+      maskLow = 0x0c0d0e0f;
+      break;
+    case MVT::i32:
+      // least significant word of quadword
+      maskHigh = maskLow = 0x0c0d0e0f;
+      break;
+    case MVT::i16:
+      // least significant halfword of quadword
+      maskHigh = maskLow = 0x0e0f0e0f;
+      break;
+    case MVT::i8:
+      // least significant byte of quadword
+      maskHigh = maskLow = 0x0f0f0f0f;
+      break;
+    default:
+      cerr << "Truncation to illegal type!";
+      abort();
+    }
+    break;
+  case MVT::i64:
+    switch (simpleVT) {
+    case MVT::i32:
+      // least significant word of doubleword
+      maskHigh = maskLow = 0x04050607;
+      break;
+    case MVT::i16:
+      // least significant halfword of doubleword
+      maskHigh = maskLow = 0x06070607;
+      break;
+    case MVT::i8:
+      // least significant byte of doubleword
+      maskHigh = maskLow = 0x07070707;
+      break;
+    default:
+      cerr << "Truncation to illegal type!";
+      abort();
+    }
+    break;
+  case MVT::i32:
+  case MVT::i16:
+    switch (simpleVT) {
+    case MVT::i16:
+      // least significant halfword of word
+      maskHigh = maskLow = 0x02030203;
+      break;
+    case MVT::i8:
+      // least significant byte of word/halfword
+      maskHigh = maskLow = 0x03030303;
+      break;
+    default:
+      cerr << "Truncation to illegal type!";
+      abort();
+    }
+    break;
+  default:
+    cerr << "Trying to lower truncation from illegal type!";
+    abort();
+  }
+
+  // Use a shuffle to perform the truncation
+  SDValue shufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                                 DAG.getConstant(maskHigh, MVT::i32),
+                                 DAG.getConstant(maskLow, MVT::i32),
+                                 DAG.getConstant(maskHigh, MVT::i32),
+                                 DAG.getConstant(maskLow, MVT::i32));
+
+  SDValue truncShuffle = DAG.getNode(SPUISD::SHUFB, Op0VecVT,
+                                     PromoteScalar, PromoteScalar, shufMask);
+
+  return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
+                     DAG.getNode(ISD::BIT_CONVERT, VecVT, truncShuffle));
+}
+
 //! Custom (target-specific) lowering entry point
 /*!
   This is where LLVM's DAG selection process calls to do target-specific
@@ -2779,6 +2883,7 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     abort();
   }
   case ISD::LOAD:
+  case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD:
     return LowerLOAD(Op, DAG, SPUTM.getSubtargetImpl());
@@ -2865,6 +2970,9 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
 
   case ISD::SELECT_CC:
     return LowerSELECT_CC(Op, DAG);
+
+  case ISD::TRUNCATE:
+    return LowerTRUNCATE(Op, DAG);
   }
 
   return SDValue();

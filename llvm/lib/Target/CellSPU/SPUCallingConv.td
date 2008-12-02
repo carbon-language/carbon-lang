@@ -21,6 +21,8 @@ class CCIfSubtarget<string F, CCAction A>
 
 // Return-value convention for Cell SPU: Everything can be passed back via $3:
 def RetCC_SPU : CallingConv<[
+  CCIfType<[i8],  CCAssignToReg<[R3]>>,
+  CCIfType<[i16], CCAssignToReg<[R3]>>,
   CCIfType<[i32], CCAssignToReg<[R3]>>,
   CCIfType<[i64], CCAssignToReg<[R3]>>,
   CCIfType<[f32, f64], CCAssignToReg<[R3]>>,
@@ -30,30 +32,82 @@ def RetCC_SPU : CallingConv<[
 
 //===----------------------------------------------------------------------===//
 // CellSPU Argument Calling Conventions
-// FIXME
+// (note: this isn't used, but presumably should be at some point when other
+//  targets do.)
 //===----------------------------------------------------------------------===//
 /*
 def CC_SPU : CallingConv<[
-  // The first 8 integer arguments are passed in integer registers.
-  CCIfType<[i32], CCAssignToReg<[R3, R4, R5, R6, R7, R8, R9, R10]>>,
-  CCIfType<[i64], CCAssignToReg<[X3, X4, X5, X6, X7, X8, X9, X10]>>,
+  CCIfType<[i8],  CCAssignToReg<[R3,   R4,  R5,  R6,  R7,  R8,  R9, R10, R11,
+                                 R12, R13, R14, R15, R16, R17, R18, R19, R20,
+                                 R21, R22, R23, R24, R25, R26, R27, R28, R29,
+                                 R30, R31, R32, R33, R34, R35, R36, R37, R38,
+                                 R39, R40, R41, R42, R43, R44, R45, R46, R47,
+                                 R48, R49, R50, R51, R52, R53, R54, R55, R56,
+                                 R57, R58, R59, R60, R61, R62, R63, R64, R65,
+                                 R66, R67, R68, R69, R70, R71, R72, R73, R74,
+                                 R75, R76, R77, R78, R79]>>,
+  CCIfType<[i16], CCAssignToReg<[R3,   R4,  R5,  R6,  R7,  R8,  R9, R10, R11,
+                                 R12, R13, R14, R15, R16, R17, R18, R19, R20,
+                                 R21, R22, R23, R24, R25, R26, R27, R28, R29,
+                                 R30, R31, R32, R33, R34, R35, R36, R37, R38,
+                                 R39, R40, R41, R42, R43, R44, R45, R46, R47,
+                                 R48, R49, R50, R51, R52, R53, R54, R55, R56,
+                                 R57, R58, R59, R60, R61, R62, R63, R64, R65,
+                                 R66, R67, R68, R69, R70, R71, R72, R73, R74,
+                                 R75, R76, R77, R78, R79]>>,
+  CCIfType<[i32], CCAssignToReg<[R3,   R4,  R5,  R6,  R7,  R8,  R9, R10, R11,
+                                 R12, R13, R14, R15, R16, R17, R18, R19, R20,
+                                 R21, R22, R23, R24, R25, R26, R27, R28, R29,
+                                 R30, R31, R32, R33, R34, R35, R36, R37, R38,
+                                 R39, R40, R41, R42, R43, R44, R45, R46, R47,
+                                 R48, R49, R50, R51, R52, R53, R54, R55, R56,
+                                 R57, R58, R59, R60, R61, R62, R63, R64, R65,
+                                 R66, R67, R68, R69, R70, R71, R72, R73, R74,
+                                 R75, R76, R77, R78, R79]>>,
+  CCIfType<[f32], CCAssignToReg<[R3,   R4,  R5,  R6,  R7,  R8,  R9, R10, R11,
+                                 R12, R13, R14, R15, R16, R17, R18, R19, R20,
+                                 R21, R22, R23, R24, R25, R26, R27, R28, R29,
+                                 R30, R31, R32, R33, R34, R35, R36, R37, R38,
+                                 R39, R40, R41, R42, R43, R44, R45, R46, R47,
+                                 R48, R49, R50, R51, R52, R53, R54, R55, R56,
+                                 R57, R58, R59, R60, R61, R62, R63, R64, R65,
+                                 R66, R67, R68, R69, R70, R71, R72, R73, R74,
+                                 R75, R76, R77, R78, R79]>>,
+  CCIfType<[i64], CCAssignToReg<[R3,   R4,  R5,  R6,  R7,  R8,  R9, R10, R11,
+                                 R12, R13, R14, R15, R16, R17, R18, R19, R20,
+                                 R21, R22, R23, R24, R25, R26, R27, R28, R29,
+                                 R30, R31, R32, R33, R34, R35, R36, R37, R38,
+                                 R39, R40, R41, R42, R43, R44, R45, R46, R47,
+                                 R48, R49, R50, R51, R52, R53, R54, R55, R56,
+                                 R57, R58, R59, R60, R61, R62, R63, R64, R65,
+                                 R66, R67, R68, R69, R70, R71, R72, R73, R74,
+                                 R75, R76, R77, R78, R79]>>,
+  CCIfType<[f64], CCAssignToReg<[R3,   R4,  R5,  R6,  R7,  R8,  R9, R10, R11,
+                                 R12, R13, R14, R15, R16, R17, R18, R19, R20,
+                                 R21, R22, R23, R24, R25, R26, R27, R28, R29,
+                                 R30, R31, R32, R33, R34, R35, R36, R37, R38,
+                                 R39, R40, R41, R42, R43, R44, R45, R46, R47,
+                                 R48, R49, R50, R51, R52, R53, R54, R55, R56,
+                                 R57, R58, R59, R60, R61, R62, R63, R64, R65,
+                                 R66, R67, R68, R69, R70, R71, R72, R73, R74,
+                                 R75, R76, R77, R78, R79]>>,
+  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2i64, v2f64],
+                  CCAssignToReg<[R3,   R4,  R5,  R6,  R7,  R8,  R9, R10, R11,
+                                 R12, R13, R14, R15, R16, R17, R18, R19, R20,
+                                 R21, R22, R23, R24, R25, R26, R27, R28, R29,
+                                 R30, R31, R32, R33, R34, R35, R36, R37, R38,
+                                 R39, R40, R41, R42, R43, R44, R45, R46, R47,
+                                 R48, R49, R50, R51, R52, R53, R54, R55, R56,
+                                 R57, R58, R59, R60, R61, R62, R63, R64, R65,
+                                 R66, R67, R68, R69, R70, R71, R72, R73, R74,
+                                 R75, R76, R77, R78, R79]>>,
   
-  // SPU can pass back arguments in all 
-  CCIfType<[f32, f64], CCIfSubtarget<"isMachoABI()",
-           CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8,F9,F10,F11,F12,F13]>>>,
-  // Other sub-targets pass FP values in F1-10.
-  CCIfType<[f32, f64], CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8, F9,F10]>>,
-           
-  // The first 12 Vector arguments are passed in altivec registers.
-  CCIfType<[v16i8, v8i16, v4i32, v4f32],
-              CCAssignToReg<[V2, V3, V4, V5, V6, V7, V8, V9, V10,V11,V12,V13]>>
-/*
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
   CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>,
   
   // Vectors get 16-byte stack slots that are 16-byte aligned.
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-              CCAssignToStack<16, 16>>*/
+              CCAssignToStack<16, 16>>
 ]>;
- */
+*/
