@@ -953,10 +953,15 @@ void StmtPrinter::VisitCXXNewExpr(CXXNewExpr *E) {
   }
   if (E->isParenTypeId())
     OS << "(";
-  // FIXME: This doesn't print the dynamic array size. We'd have to split up
-  // the allocated type to correctly emit that, but without an ASTContext,
-  // that's not possible.
-  OS << E->getAllocatedType().getAsString();
+  std::string TypeS;
+  if (Expr *Size = E->getArraySize()) {
+    llvm::raw_string_ostream s(TypeS);
+    Size->printPretty(s);
+    s.flush();
+    TypeS = "[" + TypeS + "]";
+  }
+  E->getAllocatedType().getAsStringInternal(TypeS);
+  OS << TypeS;
   if (E->isParenTypeId())
     OS << ")";
 
