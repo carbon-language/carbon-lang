@@ -213,6 +213,14 @@ public:
                           true);
   }
   
+  /// insert - Range insertion of pairs.
+  template<typename InputIt>
+  void insert(InputIt I, InputIt E) {
+    for (; I != E; ++I)
+      insert(*I);
+  }
+
+  
   bool erase(const KeyT &Val) {
     BucketT *TheBucket;
     if (!LookupBucketFor(Val, TheBucket))
