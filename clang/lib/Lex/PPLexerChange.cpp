@@ -75,6 +75,16 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
 #if 1
+  if (PTH) {
+    PTHLexer* PL =
+      PTH->CreateLexer(FileID, getSourceManager().getFileEntryForID(FileID));
+
+    if (PL) {
+      EnterSourceFileWithPTH(PL, CurDir);
+      return;
+    }
+  }
+  
   Lexer *TheLexer = new Lexer(SourceLocation::getFileLoc(FileID, 0), *this);
   EnterSourceFileWithLexer(TheLexer, CurDir);
 #else
@@ -149,8 +159,8 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
 #endif
 }  
 
-/// EnterSourceFile - Add a source file to the top of the include stack and
-/// start lexing tokens from it instead of the current buffer.
+/// EnterSourceFileWithLexer - Add a source file to the top of the include stack
+///  and start lexing tokens from it instead of the current buffer.
 void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer, 
                                             const DirectoryLookup *CurDir) {
     
@@ -172,7 +182,27 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
   }
 }
 
+/// EnterSourceFileWithPTH - Add a source file to the top of the include stack
+/// and start getting tokens from it using the PTH cache.
+void Preprocessor::EnterSourceFileWithPTH(PTHLexer *PL, 
+                                          const DirectoryLookup *CurDir) {
+  
+  if (CurPPLexer || CurTokenLexer)
+    PushIncludeMacroStack();
 
+  CurDirLookup = CurDir;
+  CurPTHLexer.reset(PL);
+  CurPPLexer = CurPTHLexer.get();
+
+  // Notify the client, if desired, that we are in a new source file.
+  if (Callbacks) {
+    unsigned FileID = CurPPLexer->getFileID();
+    SrcMgr::CharacteristicKind FileType =
+      SourceMgr.getFileCharacteristic(CurPPLexer->getFileID());    
+    Callbacks->FileChanged(SourceLocation::getFileLoc(FileID, 0),
+                           PPCallbacks::EnterFile, FileType);
+  }
+}
 
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
 /// tokens from it instead of the current buffer.

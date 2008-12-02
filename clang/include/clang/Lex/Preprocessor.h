@@ -18,6 +18,7 @@
 #include "clang/Lex/PTHLexer.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/TokenLexer.h"
+#include "clang/Lex/PTHManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
@@ -36,7 +37,7 @@ class ScratchBuffer;
 class TargetInfo;
 class PPCallbacks;
 class DirectoryLookup;
-
+  
 /// Preprocessor - This object engages in a tight little dance with the lexer to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
 /// single source file, and don't know anything about preprocessor-level issues
@@ -50,6 +51,10 @@ class Preprocessor {
   SourceManager     &SourceMgr;
   ScratchBuffer     *ScratchBuf;
   HeaderSearch      &HeaderInfo;
+  
+  /// PTH - An optional PTHManager object used for getting tokens from
+  ///  a token cache rather than lexing the original source file.
+  llvm::OwningPtr<PTHManager> PTH;
     
   /// Identifiers for builtin macros and other builtins.
   IdentifierInfo *Ident__LINE__, *Ident__FILE__;   // __LINE__, __FILE__
@@ -189,6 +194,8 @@ public:
 
   IdentifierTable &getIdentifierTable() { return Identifiers; }
   SelectorTable &getSelectorTable() { return Selectors; }
+  
+  void setPTHManager(PTHManager* pm) { PTH.reset(pm); }
 
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
   /// comments in output.
@@ -591,10 +598,13 @@ private:
   /// been read into 'Tok'.
   void Handle_Pragma(Token &Tok);
   
-  
   /// EnterSourceFileWithLexer - Add a lexer to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.
   void EnterSourceFileWithLexer(Lexer *TheLexer, const DirectoryLookup *Dir);
+
+  /// EnterSourceFileWithPTH - Add a lexer to the top of the include stack and
+  /// start getting tokens from it using the PTH cache.
+  void EnterSourceFileWithPTH(PTHLexer *PL, const DirectoryLookup *Dir);
   
   /// GetIncludeFilenameSpelling - Turn the specified lexer token into a fully
   /// checked and spelled filename, e.g. as an operand of #include. This returns
