@@ -2633,6 +2633,9 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   const RefVal* RV = EndN->getState()->get<RefBindings>(Sym);
   
   if (RV->getKind() == RefVal::ErrorLeakReturned) {
+    // FIXME: Per comments in rdar://6320065, "create" only applies to CF
+    // ojbects.  Only "copy", "alloc", "retain" and "new" transfer ownership
+    // to the caller for NS objects.
     ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BR.getGraph().getCodeDecl());
     os << " is returned from a method whose name ('"
        << MD.getSelector().getAsString()
