@@ -598,10 +598,11 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
   
   // If InsertLoop is not L, and InsertLoop is nested inside of L, figure out
   // the preheader of the outer-most loop where NewBase is not loop invariant.
-  while (InsertLoop && NewBase->isLoopInvariant(InsertLoop)) {
-    BaseInsertPt = InsertLoop->getLoopPreheader()->getTerminator();
-    InsertLoop = InsertLoop->getParentLoop();
-  }
+  if (L->contains(IP->getParent()))
+    while (InsertLoop && NewBase->isLoopInvariant(InsertLoop)) {
+      BaseInsertPt = InsertLoop->getLoopPreheader()->getTerminator();
+      InsertLoop = InsertLoop->getParentLoop();
+    }
   
   // If there is no immediate value, skip the next part.
   if (Imm->isZero())
