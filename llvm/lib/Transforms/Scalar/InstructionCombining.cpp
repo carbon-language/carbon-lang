@@ -4437,14 +4437,13 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
 
 /// FoldOrWithConstants - This helper function folds:
 ///
-///     ((A | B) & 1) | (B & -2)
+///     ((A | B) & C1) | (B & C2)
 ///
 /// into:
 /// 
-///     (A & 1) | B
+///     (A & C1) | B
 ///
-/// The constants aren't important. Only that they don't overlap. (I.e., the XOR
-/// of the two constants is "all ones".)
+/// when the XOR of the two constants is "all ones" (-1).
 Instruction *InstCombiner::FoldOrWithConstants(BinaryOperator &I, Value *Op,
                                                Value *A, Value *B, Value *C) {
   ConstantInt *CI1 = dyn_cast<ConstantInt>(C);
