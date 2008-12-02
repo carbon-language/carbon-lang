@@ -40,6 +40,7 @@ static cl::opt<int> PreSplitLimit("pre-split-limit", cl::init(-1), cl::Hidden);
 
 STATISTIC(NumSplits, "Number of intervals split");
 STATISTIC(NumRemats, "Number of intervals split by rematerialization");
+STATISTIC(NumFolds, "Number of intervals split with spill folding");
 
 namespace {
   class VISIBILITY_HIDDEN PreAllocSplitting : public MachineFunctionPass {
@@ -159,6 +160,12 @@ namespace {
                        MachineBasicBlock::iterator RestorePt,
                        unsigned RestoreIdx,
                        SmallPtrSet<MachineInstr*, 4>& RefsInMBB);
+    MachineInstr* FoldSpill(unsigned vreg, const TargetRegisterClass* RC,
+                            MachineInstr* DefMI,
+                            MachineInstr* Barrier,
+                            MachineBasicBlock* MBB,
+                            int& SS,
+                            SmallPtrSet<MachineInstr*, 4>& RefsInMBB);
   };
 } // end anonymous namespace
 
@@ -713,8 +720,62 @@ bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
 
   ++NumSplits;
   ++NumRemats;
-  return true;
+  return true;  
+}
+
+MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg, 
+                                           const TargetRegisterClass* RC,
+                                           MachineInstr* DefMI,
+                                           MachineInstr* Barrier,
+                                           MachineBasicBlock* MBB,
+                                           int& SS,
+                                    SmallPtrSet<MachineInstr*, 4>& RefsInMBB) {
+  MachineBasicBlock::iterator Pt = MBB->begin();
+
+  // Go top down if RefsInMBB is empty.
+  if (RefsInMBB.empty())
+    return 0;
   
+  MachineBasicBlock::iterator FoldPt = Barrier;
+  while (&*FoldPt != DefMI && FoldPt != MBB->begin() &&
+         !RefsInMBB.count(FoldPt))
+    --FoldPt;
+  
+  int OpIdx = FoldPt->findRegisterDefOperandIdx(vreg, false);
+  if (OpIdx == -1)
+    return 0;
+  
+  SmallVector<unsigned, 1> Ops;
+  Ops.push_back(OpIdx);
+  
+  if (!TII->canFoldMemoryOperand(FoldPt, Ops))
+    return 0;
+  
+  DenseMap<unsigned, int>::iterator I = IntervalSSMap.find(vreg);
+  if (I != IntervalSSMap.end()) {
+    SS = I->second;
+  } else {
+    SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
+    
+  }
+  
+  MachineInstr* FMI = TII->foldMemoryOperand(*MBB->getParent(),
+                                             FoldPt, Ops, SS);
+  
+  if (FMI) {
+    LIs->ReplaceMachineInstrInMaps(FoldPt, FMI);
+    FMI = MBB->insert(MBB->erase(FoldPt), FMI);
+    ++NumFolds;
+    
+    IntervalSSMap[vreg] = SS;
+    CurrSLI = &LSs->getOrCreateInterval(SS);
+    if (CurrSLI->hasAtLeastOneValue())
+      CurrSValNo = CurrSLI->getValNumInfo(0);
+    else
+      CurrSValNo = CurrSLI->getNextValue(~0U, 0, LSs->getVNInfoAllocator());
+  }
+  
+  return FMI;
 }
 
 /// SplitRegLiveInterval - Split (spill and restore) the given live interval
@@ -770,40 +831,53 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   int SS = -1;
   if (ValNo->def == ~0U) {
     // If it's defined by a phi, we must split just before the barrier.
-    MachineBasicBlock::iterator SpillPt = 
-      findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB, SpillIndex);
-    if (SpillPt == BarrierMBB->begin())
-      return false; // No gap to insert spill.
-    // Add spill.
-    SS = CreateSpillStackSlot(CurrLI->reg, RC);
-    TII->storeRegToStackSlot(*BarrierMBB, SpillPt, CurrLI->reg, true, SS, RC);
-    SpillMI = prior(SpillPt);
-    LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
+    if ((SpillMI = FoldSpill(LI->reg, RC, 0, Barrier,
+                            BarrierMBB, SS, RefsInMBB))) {
+      SpillIndex = LIs->getInstructionIndex(SpillMI);
+    } else {
+      MachineBasicBlock::iterator SpillPt = 
+        findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB, SpillIndex);
+      if (SpillPt == BarrierMBB->begin())
+        return false; // No gap to insert spill.
+      // Add spill.
+    
+      SS = CreateSpillStackSlot(CurrLI->reg, RC);
+      TII->storeRegToStackSlot(*BarrierMBB, SpillPt, CurrLI->reg, true, SS, RC);
+      SpillMI = prior(SpillPt);
+      LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
+    }
   } else if (!IsAvailableInStack(DefMBB, CurrLI->reg, ValNo->def,
                                  RestoreIndex, SpillIndex, SS)) {
     // If it's already split, just restore the value. There is no need to spill
     // the def again.
     if (!DefMI)
       return false; // Def is dead. Do nothing.
-    // Check if it's possible to insert a spill after the def MI.
-    MachineBasicBlock::iterator SpillPt;
-    if (DefMBB == BarrierMBB) {
-      // Add spill after the def and the last use before the barrier.
-      SpillPt = findSpillPoint(BarrierMBB, Barrier, DefMI, RefsInMBB, SpillIndex);
-      if (SpillPt == DefMBB->begin())
-        return false; // No gap to insert spill.
+    
+    if ((SpillMI = FoldSpill(LI->reg, RC, DefMI, Barrier,
+                            BarrierMBB, SS, RefsInMBB))) {
+      SpillIndex = LIs->getInstructionIndex(SpillMI);
     } else {
-      SpillPt = findNextEmptySlot(DefMBB, DefMI, SpillIndex);
-      if (SpillPt == DefMBB->end())
-        return false; // No gap to insert spill.
+      // Check if it's possible to insert a spill after the def MI.
+      MachineBasicBlock::iterator SpillPt;
+      if (DefMBB == BarrierMBB) {
+        // Add spill after the def and the last use before the barrier.
+        SpillPt = findSpillPoint(BarrierMBB, Barrier, DefMI,
+                                 RefsInMBB, SpillIndex);
+        if (SpillPt == DefMBB->begin())
+          return false; // No gap to insert spill.
+      } else {
+        SpillPt = findNextEmptySlot(DefMBB, DefMI, SpillIndex);
+        if (SpillPt == DefMBB->end())
+          return false; // No gap to insert spill.
+      }
+      // Add spill. The store instruction kills the register if def is before
+      // the barrier in the barrier block.
+      SS = CreateSpillStackSlot(CurrLI->reg, RC);
+      TII->storeRegToStackSlot(*DefMBB, SpillPt, CurrLI->reg,
+                               DefMBB == BarrierMBB, SS, RC);
+      SpillMI = prior(SpillPt);
+      LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
     }
-    // Add spill. The store instruction kills the register if def is before
-    // the barrier in the barrier block.
-    SS = CreateSpillStackSlot(CurrLI->reg, RC);
-    TII->storeRegToStackSlot(*DefMBB, SpillPt, CurrLI->reg,
-                             DefMBB == BarrierMBB, SS, RC);
-    SpillMI = prior(SpillPt);
-    LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
   }
 
   // Remember def instruction index to spill index mapping.
