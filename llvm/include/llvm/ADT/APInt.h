@@ -333,12 +333,14 @@ public:
   /// @brief Check if this APInt has an N-bits unsigned integer value.
   bool isIntN(uint32_t N) const {
     assert(N && "N == 0 ???");
-    if (isSingleWord()) {
+    if (N >= getBitWidth())
+      return true;
+    
+    if (isSingleWord())
       return VAL == (VAL & (~0ULL >> (64 - N)));
-    } else {
-      APInt Tmp(N, getNumWords(), pVal);
-      return Tmp == (*this);
-    }
+    APInt Tmp(N, getNumWords(), pVal);
+    Tmp.zext(getBitWidth());
+    return Tmp == (*this);
   }
 
   /// @brief Check if this APInt has an N-bits signed integer value.
