@@ -386,7 +386,6 @@ void DAGTypeLegalizer::RemapValue(SDValue &N) {
     RemapValue(I->second);
     N = I->second;
   }
-  assert(N.getNode()->getNodeId() != NewNode && "Mapped to unanalyzed node!");
 }
 
 /// ExpungeNode - If N has a bogus mapping in ReplacedValues, eliminate it.
