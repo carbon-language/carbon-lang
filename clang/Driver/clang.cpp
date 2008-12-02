@@ -155,6 +155,15 @@ static llvm::cl::opt<bool>
 GenerateDebugInfo("g",
                   llvm::cl::desc("Generate source level debug information"));
 
+
+//===----------------------------------------------------------------------===//
+// PTH.
+//===----------------------------------------------------------------------===//
+
+static llvm::cl::opt<std::string>
+TokenCache("token-cache", llvm::cl::value_desc("path"),
+           llvm::cl::desc("Use specified token cache file"));
+
 //===----------------------------------------------------------------------===//
 // Diagnostic Options
 //===----------------------------------------------------------------------===//
@@ -903,6 +912,12 @@ static bool InitializePreprocessor(Preprocessor &PP,
   // Null terminate PredefinedBuffer and add it.
   PredefineBuffer.push_back(0);
   PP.setPredefines(&PredefineBuffer[0]);
+  
+  // Use PTH.
+  if (!TokenCache.empty()) {
+    PTHManager* PM = PTHManager::Create(TokenCache, PP);
+    if (PM) PP.setPTHManager(PM);    
+  }
   
   // Once we've read this, we're done.
   return false;
