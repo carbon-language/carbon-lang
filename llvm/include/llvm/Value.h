@@ -243,7 +243,7 @@ public:
     return const_cast<Value*>(this)->getUnderlyingObject();
   }
   
-  /// DoPHITranslation - If this value is a PHI node with CurBB as a its parent,
+  /// DoPHITranslation - If this value is a PHI node with CurBB as its parent,
   /// return the value in the PHI node corresponding to PredBB.  If not, return
   /// ourself.  This is useful if you want to know the value something has in a
   /// predecessor block.
