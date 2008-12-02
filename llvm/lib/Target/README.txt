@@ -1252,3 +1252,24 @@ have the concept of a "C signed subtraction" operator that which is undefined
 on overflow.
 
 //===---------------------------------------------------------------------===//
+
+This was noticed in the entryblock for grokdeclarator in 403.gcc:
+
+        %tmp = icmp eq i32 %decl_context, 4          
+        %decl_context_addr.0 = select i1 %tmp, i32 3, i32 %decl_context 
+        %tmp1 = icmp eq i32 %decl_context_addr.0, 1 
+        %decl_context_addr.1 = select i1 %tmp1, i32 0, i32 %decl_context_addr.0
+
+tmp1 should be simplified to something like:
+  (!tmp || decl_context == 1)
+
+This allows recursive simplifications, tmp1 is used all over the place in
+the function, e.g. by:
+
+        %tmp23 = icmp eq i32 %decl_context_addr.1, 0            ; <i1> [#uses=1]
+        %tmp24 = xor i1 %tmp1, true             ; <i1> [#uses=1]
+        %or.cond8 = and i1 %tmp23, %tmp24               ; <i1> [#uses=1]
+
+later.
+
+
