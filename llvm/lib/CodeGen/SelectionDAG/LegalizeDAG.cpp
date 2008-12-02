@@ -3904,6 +3904,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));
       Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) ==
+          TargetLowering::Custom) {
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.getNode()) Result = Tmp1;
+      }
       break;
     case Expand:
       ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
