@@ -639,6 +639,8 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     return ParsePostfixExpressionSuffix(Res);
 
   case tok::coloncolon: // [C++] new-expression or [C++] delete-expression
+    // If the next token is neither 'new' nor 'delete', the :: would have been
+    // parsed as a scope specifier already.
     if (NextToken().is(tok::kw_new))
       return ParseCXXNewExpression();
     else

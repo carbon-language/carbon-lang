@@ -38,8 +38,8 @@ bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS) {
       (Tok.isNot(tok::identifier) || NextToken().isNot(tok::coloncolon)))
     return false;
 
-  // Don't parse ::new and ::delete as scope specifiers. It would only make
-  // things a lot more complicated.
+  // ::new and ::delete aren'T nested-name-specifiers, so parsing the :: as
+  // a scope specifier only makes things more complicated.
   if (Tok.is(tok::coloncolon) && (NextToken().is(tok::kw_new) ||
                                   NextToken().is(tok::kw_delete)))
     return false;
