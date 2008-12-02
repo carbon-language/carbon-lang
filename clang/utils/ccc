@@ -259,7 +259,6 @@ def main(args):
         # wrong.
         if arg in ('-g', '-gdwarf-2'):
             compile_opts.append('-g')
-            link_opts.append(arg)
 
         # Options with one argument that should pass through to compiler
         if arg in [ '-include', '-idirafter', '-iprefix',
