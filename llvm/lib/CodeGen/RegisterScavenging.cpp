@@ -257,7 +257,7 @@ void RegScavenger::forward() {
       continue;
     }
 
-    // Skip is this is merely redefining part of a super-register.
+    // Skip if this is merely redefining part of a super-register.
     if (RedefinesSuperRegPart(MI, MO, TRI))
       continue;
 
