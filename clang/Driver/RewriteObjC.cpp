@@ -169,7 +169,9 @@ namespace {
     void RewriteInclude();
     void RewriteTabs();
     void RewriteForwardClassDecl(ObjCClassDecl *Dcl);
-    void RewritePropertyImplDecl(ObjCPropertyImplDecl *PID);
+    void RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
+                                 ObjCImplementationDecl *IMD,
+                                 ObjCCategoryImplDecl *CID);
     void RewriteInterfaceDecl(ObjCInterfaceDecl *Dcl);
     void RewriteImplementationDecl(NamedDecl *Dcl);
     void RewriteObjCMethodDecl(ObjCMethodDecl *MDecl, std::string &ResultStr);
@@ -596,7 +598,9 @@ static std::string getIvarAccessString(ObjCInterfaceDecl *ClassDecl,
   return S;
 }
 
-void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID) {
+void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
+                                          ObjCImplementationDecl *IMD,
+                                          ObjCCategoryImplDecl *CID) {
   SourceLocation startLoc = PID->getLocStart();
   InsertText(startLoc, "// ", 3);
   const char *startBuf = SM->getCharacterData(startLoc);
@@ -623,6 +627,15 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID) {
   Getr += "return " + getIvarAccessString(ClassDecl, OID);
   Getr += "; }";
   InsertText(onePastSemiLoc, Getr.c_str(), Getr.size());
+
+  // Add the rewritten getter to trigger meta data generation. An alternate, and 
+  // possibly cleaner approach is to hack RewriteObjCMethodsMetaData() to deal 
+  // with properties explicitly. The following addInstanceMethod() required far 
+  // less code change (and actually models what the rewriter is doing).
+  if (IMD)
+    IMD->addInstanceMethod(PD->getGetterMethodDecl());
+  else
+    CID->addInstanceMethod(PD->getGetterMethodDecl());
   
   if (PD->isReadOnly())
     return;
@@ -636,6 +649,12 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID) {
   Setr += OID->getNameAsCString();
   Setr += "; }";
   InsertText(onePastSemiLoc, Setr.c_str(), Setr.size());
+
+  // Add the rewritten setter to trigger meta data generation.
+  if (IMD)
+    IMD->addInstanceMethod(PD->getSetterMethodDecl());
+  else
+    CID->addInstanceMethod(PD->getSetterMethodDecl());
 }
 
 void RewriteObjC::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
@@ -919,7 +938,7 @@ void RewriteObjC::RewriteImplementationDecl(NamedDecl *OID) {
   for (ObjCCategoryImplDecl::propimpl_iterator
        I = IMD ? IMD->propimpl_begin() : CID->propimpl_begin(),
        E = IMD ? IMD->propimpl_end() : CID->propimpl_end(); I != E; ++I) {
-    RewritePropertyImplDecl(*I);
+    RewritePropertyImplDecl(*I, IMD, CID);
   }
 
   if (IMD)
