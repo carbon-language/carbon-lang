@@ -38,6 +38,12 @@ bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS) {
       (Tok.isNot(tok::identifier) || NextToken().isNot(tok::coloncolon)))
     return false;
 
+  // Don't parse ::new and ::delete as scope specifiers. It would only make
+  // things a lot more complicated.
+  if (Tok.is(tok::coloncolon) && (NextToken().is(tok::kw_new) ||
+                                  NextToken().is(tok::kw_delete)))
+    return false;
+
   if (Tok.is(tok::annot_cxxscope)) {
     SS.setScopeRep(Tok.getAnnotationValue());
     SS.setRange(Tok.getAnnotationRange());

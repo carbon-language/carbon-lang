@@ -638,8 +638,13 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     Res = ParseCXXIdExpression();
     return ParsePostfixExpressionSuffix(Res);
 
+  case tok::coloncolon: // [C++] new-expression or [C++] delete-expression
+    if (NextToken().is(tok::kw_new))
+      return ParseCXXNewExpression();
+    else
+      return ParseCXXDeleteExpression();
+
   case tok::kw_new: // [C++] new-expression
-    // FIXME: ParseCXXIdExpression currently steals :: tokens.
     return ParseCXXNewExpression();
 
   case tok::kw_delete: // [C++] delete-expression

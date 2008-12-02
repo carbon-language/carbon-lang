@@ -21,6 +21,7 @@ void good_news()
   ps = new (S[3])(1, 2, 3.4);
   typedef int ia4[4];
   ia4 *pai = new (int[3][4]);
+  pi = ::new int;
 }
 
 void bad_news(int *ip)
@@ -41,6 +42,7 @@ void bad_news(int *ip)
   // Undefined, but clang should reject it directly.
   (void)new int[-1]; // expected-error {{array size is negative}}
   (void)new int[*(S*)0]; // expected-error {{array size expression must have integral or enumerated type, not 'struct S'}}
+  (void)::S::new int; // expected-error {{expected unqualified-id}}
   // Some lacking cases due to lack of sema support.
 }
 
@@ -49,6 +51,7 @@ void good_deletes()
   delete (int*)0;
   delete [](int*)0;
   delete (S*)0;
+  ::delete (int*)0;
 }
 
 void bad_deletes()
@@ -58,4 +61,5 @@ void bad_deletes()
                       // expected-note {{to match this '['}}
   delete (void*)0; // expected-error {{cannot delete expression}}
   delete (T*)0; // expected-warning {{deleting pointer to incomplete type}}
+  ::S::delete (int*)0; // expected-error {{expected unqualified-id}}
 }
