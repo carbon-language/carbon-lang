@@ -4437,13 +4437,14 @@ Instruction *InstCombiner::FoldOrWithConstants(BinaryOperator &I, Value *Op,
   ConstantInt *CI1 = dyn_cast<ConstantInt>(C);
   if (!CI1) return 0;
 
-  Value *V1 = 0, *C2 = 0;
-  if (!match(Op, m_And(m_Value(V1), m_ConstantInt(C2)))) return 0;
+  Value *V1 = 0;
+  ConstantInt *CI2 = 0;
+  if (!match(Op, m_And(m_Value(V1), m_ConstantInt(CI2)))) return 0;
 
   APInt Xor = CI1->getValue() ^ CI2->getValue();
   if (!Xor.isAllOnesValue()) return 0;
 
-  if (V1 == A || V1 == B)
+  if (V1 == A || V1 == B) {
     Instruction *NewOp =
       InsertNewInstBefore(BinaryOperator::CreateAnd((V1 == A) ? B : A, CI1), I);
     return BinaryOperator::CreateOr(NewOp, V1);
