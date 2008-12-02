@@ -369,6 +369,10 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     return;
   }
 
+#if 0
+  // FIXME: Disabled while we figure out what to do about 
+  // test/CodeGen/bitfield.c
+  //
   // If we can, prefer a copy from a global; this is a lot less
   // code for long globals, and it's easier for the current optimizers
   // to analyze.
@@ -384,7 +388,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     CGF.EmitAggregateCopy(DestPtr, GV, E->getType());
     return;
   }
-
+#endif
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
     const llvm::PointerType *APType =
