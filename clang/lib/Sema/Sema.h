@@ -1032,6 +1032,9 @@ public:
   void CheckObjCPropertyAttributes(QualType PropertyTy, 
                                    SourceLocation Loc,
                                    unsigned &Attributes);
+  void diagnosePropertySetterGetterMismatch(ObjCPropertyDecl *property,
+                                            const ObjCMethodDecl *GetterMethod,
+                                            const ObjCMethodDecl *SetterMethod);
   void DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
                                 ObjCPropertyDecl *SuperProperty,
                                 const IdentifierInfo *Name);

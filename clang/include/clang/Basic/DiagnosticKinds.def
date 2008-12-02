@@ -569,6 +569,10 @@ DIAG(err_use_continuation_class, ERROR,
      "use contination class to override 'readonly' property with 'readwrite'")
 DIAG(warn_property_attr_mismatch, WARNING,
      "property attribute in continuation class does not match the primary class")
+DIAG(err_accessor_property_type_mismatch, ERROR,
+     "type of property %0 does not match type of accessor %1")
+DIAG(err_setter_type_void, ERROR,
+     "type of setter must be void")
 
 /// C++ parser diagnostics
 DIAG(err_expected_unqualified_id, ERROR,

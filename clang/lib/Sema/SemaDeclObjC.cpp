@@ -855,6 +855,33 @@ void Sema::AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method) {
   }
 }
 
+/// diagnosePropertySetterGetterMismatch - Make sure that use-defined
+/// setter/getter methods have the property type and issue diagnostics
+/// if they don't.
+///
+void
+Sema::diagnosePropertySetterGetterMismatch(ObjCPropertyDecl *property,
+                                           const ObjCMethodDecl *GetterMethod,
+                                           const ObjCMethodDecl *SetterMethod) {
+  if (GetterMethod &&
+      GetterMethod->getResultType() != property->getType())
+    Diag(property->getLocation(), 
+         diag::err_accessor_property_type_mismatch) 
+      << property->getDeclName()
+      << GetterMethod->getSelector().getAsIdentifierInfo();
+  
+  if (SetterMethod) {
+    if (SetterMethod->getResultType() != Context.VoidPtrTy)
+      Diag(SetterMethod->getLocation(), diag::err_setter_type_void);
+    if (SetterMethod->getNumParams() != 1 ||
+        (SetterMethod->getParamDecl(0)->getType() != property->getType()))
+      Diag(property->getLocation(), 
+           diag::err_accessor_property_type_mismatch) 
+        << property->getDeclName()
+        << SetterMethod->getSelector().getAsIdentifierInfo();
+  }
+}
+
 // Note: For class/category implemenations, allMethods/allProperties is
 // always null.
 void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
@@ -940,15 +967,21 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     ComparePropertiesInBaseAndSuper(I);
     MergeProtocolPropertiesIntoClass(I, I);
     for (ObjCInterfaceDecl::classprop_iterator i = I->classprop_begin(),
-           e = I->classprop_end(); i != e; ++i)
+         e = I->classprop_end(); i != e; ++i) {
+      diagnosePropertySetterGetterMismatch((*i), InsMap[(*i)->getGetterName()],
+                                           InsMap[(*i)->getSetterName()]);
       I->addPropertyMethods(Context, *i, insMethods, InsMap);
+    }
     I->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
     
   } else if (ObjCProtocolDecl *P = dyn_cast<ObjCProtocolDecl>(ClassDecl)) {
     for (ObjCProtocolDecl::classprop_iterator i = P->classprop_begin(),
-           e = P->classprop_end(); i != e; ++i)
+         e = P->classprop_end(); i != e; ++i) {
+      diagnosePropertySetterGetterMismatch((*i), InsMap[(*i)->getGetterName()],
+                                           InsMap[(*i)->getSetterName()]);
       P->addPropertyMethods(Context, *i, insMethods, InsMap);
+    }
     P->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
   }
@@ -958,8 +991,11 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     // FIXME: If we merge properties into class we should probably
     // merge them into category as well?
     for (ObjCCategoryDecl::classprop_iterator i = C->classprop_begin(),
-           e = C->classprop_end(); i != e; ++i)
+         e = C->classprop_end(); i != e; ++i) {
+      diagnosePropertySetterGetterMismatch((*i), InsMap[(*i)->getGetterName()],
+                                           InsMap[(*i)->getSetterName()]);
       C->addPropertyMethods(Context, *i, insMethods, InsMap);
+    }
     C->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
   }
