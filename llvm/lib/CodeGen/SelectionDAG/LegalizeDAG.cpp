@@ -7927,21 +7927,6 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
     Tmp1 = WidenVectorOp(Tmp1, TWidenVT);
     assert(Tmp1.getValueType().getVectorNumElements() == NewNumElts);
     Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1);
-
-    TargetLowering::LegalizeAction action =
-      TLI.getOperationAction(Node->getOpcode(), WidenVT);
-    switch (action)  {
-    default: assert(0 && "action not supported");
-    case TargetLowering::Legal:
-        break;
-    case TargetLowering::Promote:
-        // We defer the promotion to when we legalize the op
-      break;
-    case TargetLowering::Expand:
-      // Expand the operation into a bunch of nasty scalar code.
-      Result = LegalizeOp(UnrollVectorOp(Result));
-      break;
-    }
     break;
   }
 
@@ -7963,33 +7948,14 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   case ISD::CTLZ: {
     // Unary op widening
     SDValue Tmp1;    
-    TargetLowering::LegalizeAction action =
-      TLI.getOperationAction(Node->getOpcode(), WidenVT);
-
     Tmp1 = WidenVectorOp(Node->getOperand(0), WidenVT);
     assert(Tmp1.getValueType() == WidenVT);
     Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1);
-    switch (action)  {
-    default: assert(0 && "action not supported");
-    case TargetLowering::Legal:
-        break;
-    case TargetLowering::Promote:
-        // We defer the promotion to when we legalize the op
-      break;
-    case TargetLowering::Expand:
-      // Expand the operation into a bunch of nasty scalar code.
-      Result = LegalizeOp(UnrollVectorOp(Result));
-      break;
-    }
     break;
   }
   case ISD::CONVERT_RNDSAT: {
     SDValue RndOp = Node->getOperand(3);
     SDValue SatOp = Node->getOperand(4);
-
-    TargetLowering::LegalizeAction action =
-      TLI.getOperationAction(Node->getOpcode(), WidenVT);
-
     SDValue SrcOp = Node->getOperand(0);
 
     // Converts between two different types so we need to determine
@@ -8007,18 +7973,6 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
 
     Result = DAG.getConvertRndSat(WidenVT, SrcOp, DTyOp, STyOp,
                                   RndOp, SatOp, CvtCode);
-    switch (action)  {
-    default: assert(0 && "action not supported");
-    case TargetLowering::Legal:
-      break;
-    case TargetLowering::Promote:
-      // We defer the promotion to when we legalize the op
-      break;
-    case TargetLowering::Expand:
-      // Expand the operation into a bunch of nasty scalar code.
-      Result = LegalizeOp(UnrollVectorOp(Result));
-      break;
-    }
     break;
   }
   case ISD::FPOW:
@@ -8043,53 +7997,28 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   case ISD::UREM:
   case ISD::BSWAP: {
     // Binary op widening
-    TargetLowering::LegalizeAction action =
-      TLI.getOperationAction(Node->getOpcode(), WidenVT);
-    
     SDValue Tmp1 = WidenVectorOp(Node->getOperand(0), WidenVT);
     SDValue Tmp2 = WidenVectorOp(Node->getOperand(1), WidenVT);
     assert(Tmp1.getValueType() == WidenVT && Tmp2.getValueType() == WidenVT);
     Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1, Tmp2);
-    switch (action)  {
-    default: assert(0 && "action not supported");
-    case TargetLowering::Legal:
-      break;
-    case TargetLowering::Promote:
-      // We defer the promotion to when we legalize the op
-      break;
-    case TargetLowering::Expand:
-      // Expand the operation into a bunch of nasty scalar code by first 
-      // Widening to the right type and then unroll the beast.
-      Result = LegalizeOp(UnrollVectorOp(Result));
-      break;
-    }
     break;
   }
 
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL: {
-    // Binary op with one non vector operand
-    TargetLowering::LegalizeAction action =
-      TLI.getOperationAction(Node->getOpcode(), WidenVT);
-    
     SDValue Tmp1 = WidenVectorOp(Node->getOperand(0), WidenVT);
     assert(Tmp1.getValueType() == WidenVT);
-    Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1, Node->getOperand(1));
-    switch (action)  {
-    default: assert(0 && "action not supported");
-    case TargetLowering::Legal:
-      break;
-    case TargetLowering::Promote:
-       // We defer the promotion to when we legalize the op
-      break;
-    case TargetLowering::Expand:
-      // Expand the operation into a bunch of nasty scalar code.
-      Result = LegalizeOp(UnrollVectorOp(Result));
-      break;
-    }
+    SDValue ShOp = Node->getOperand(1);
+    MVT ShVT = ShOp.getValueType();
+    MVT NewShVT = MVT::getVectorVT(ShVT.getVectorElementType(),
+                                   WidenVT.getVectorNumElements());
+    ShOp = WidenVectorOp(ShOp, NewShVT);
+    assert(ShOp.getValueType() == NewShVT);
+    Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1, ShOp);
     break;
   }
+
   case ISD::EXTRACT_VECTOR_ELT: {
     SDValue Tmp1 = WidenVectorOp(Node->getOperand(0), WidenVT);
     assert(Tmp1.getValueType() == WidenVT);
@@ -8101,10 +8030,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
     // We could widen on a multiple of the incoming operand if necessary.
     unsigned NumConcat = NewNumElts / NumElts;
     assert(NewNumElts % NumElts == 0 && "Can widen only a multiple of vector");
-    std::vector<SDValue> UnOps(NumElts, DAG.getNode(ISD::UNDEF, 
-                               VT.getVectorElementType()));
-    SDValue UndefVal = DAG.getNode(ISD::BUILD_VECTOR, VT,
-                                   &UnOps[0], UnOps.size());
+    SDValue UndefVal = DAG.getNode(ISD::UNDEF, VT);
     SmallVector<SDValue, 8> MOps;
     MOps.push_back(Op);
     for (unsigned i = 1; i != NumConcat; ++i) {
@@ -8151,9 +8077,6 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   }
 
   case ISD::SELECT: {
-    TargetLowering::LegalizeAction action =
-      TLI.getOperationAction(Node->getOpcode(), WidenVT);
-
     // Determine new condition widen type and widen
     SDValue Cond1 = Node->getOperand(0);
     MVT CondVT = Cond1.getValueType();
@@ -8167,26 +8090,10 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
     SDValue Tmp2 = WidenVectorOp(Node->getOperand(2), WidenVT);
     assert(Tmp1.getValueType() == WidenVT && Tmp2.getValueType() == WidenVT);
     Result = DAG.getNode(Node->getOpcode(), WidenVT, Cond1, Tmp1, Tmp2);
-    switch (action)  {
-    default: assert(0 && "action not supported");
-    case TargetLowering::Legal:
-      break;
-    case TargetLowering::Promote:
-      // We defer the promotion to when we legalize the op
-      break;
-    case TargetLowering::Expand:
-      // Expand the operation into a bunch of nasty scalar code by first 
-      // Widening to the right type and then unroll the beast.
-      Result = LegalizeOp(UnrollVectorOp(Result));
-      break;
-    }  
     break;
   }
   
   case ISD::SELECT_CC: {
-    TargetLowering::LegalizeAction action =
-      TLI.getOperationAction(Node->getOpcode(), WidenVT);
-
     // Determine new condition widen type and widen
     SDValue Cond1 = Node->getOperand(0);
     SDValue Cond2 = Node->getOperand(1);
@@ -8206,19 +8113,6 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
            "operands not widen");
     Result = DAG.getNode(Node->getOpcode(), WidenVT, Cond1, Cond2, Tmp1,
                          Tmp2, Node->getOperand(4));
-    switch (action)  {
-    default: assert(0 && "action not supported");
-    case TargetLowering::Legal:
-      break;
-    case TargetLowering::Promote:
-      // We defer the promotion to when we legalize the op
-      break;
-    case TargetLowering::Expand:
-      // Expand the operation into a bunch of nasty scalar code by first 
-      // Widening to the right type and then unroll the beast.
-      Result = LegalizeOp(UnrollVectorOp(Result));
-      break;
-    }  
     break;
   }
   case ISD::VSETCC: {
