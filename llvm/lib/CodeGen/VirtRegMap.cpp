@@ -1760,8 +1760,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           SmallVector<unsigned, 2> KillRegs;
           InvalidateKills(MI, RegKills, KillOps, &KillRegs);
           if (MO.isDead() && !KillRegs.empty()) {
-            // Source register or an implicit super-register use is killed.
-            assert(KillRegs[0] == Dst || TRI->isSubRegister(KillRegs[0], Dst));
+            // Source register or an implicit super/sub-register use is killed.
+            assert(KillRegs[0] == Dst ||
+                   TRI->isSubRegister(KillRegs[0], Dst) ||
+                   TRI->isSuperRegister(KillRegs[0], Dst));
             // Last def is now dead.
             TransferDeadness(&MBB, Dist, Src, RegKills, KillOps);
           }
