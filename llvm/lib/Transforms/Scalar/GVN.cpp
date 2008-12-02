@@ -43,9 +43,11 @@ STATISTIC(NumGVNInstr, "Number of instructions deleted");
 STATISTIC(NumGVNLoad, "Number of loads deleted");
 STATISTIC(NumGVNPRE, "Number of instructions PRE'd");
 STATISTIC(NumGVNBlocks, "Number of blocks merged");
+STATISTIC(NumPRELoad, "Number of loads PRE'd");
 
 static cl::opt<bool> EnablePRE("enable-pre",
                                cl::init(true), cl::Hidden);
+cl::opt<bool> EnableLoadPRE("enable-load-pre");
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
@@ -863,23 +865,46 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   return v;
 }
 
+/// IsValueFullyAvailableInBlock - Return true if we can prove that the value
+/// we're analyzing is fully available in the specified block.  As we go, keep
+/// track of which blocks we know it is fully alive or not in
+/// FullyAvailableBlocks.
+static bool IsValueFullyAvailableInBlock(BasicBlock *BB, 
+                            DenseMap<BasicBlock*, bool> &FullyAvailableBlocks) {
+  // Optimistically assume that the block is fully available and check to see
+  // if we already know about this block in one lookup.
+  std::pair<DenseMap<BasicBlock*, bool>::iterator, bool> IV = 
+    FullyAvailableBlocks.insert(std::make_pair(BB, true));
+
+  // If the entry already existed for this block, return the precomputed value.
+  if (!IV.second)
+    return IV.first->second;
+  
+  // Otherwise, see if it is fully available in all predecessors.
+  pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+  
+  // If this block has no predecessors, it isn't live-in here.
+  if (PI == PE)
+    return FullyAvailableBlocks[BB] = false;
+  
+  for (; PI != PE; ++PI)
+    // If the value isn't fully available in one of our predecessors, then it
+    // isn't fully available in this block either.  Undo our previous
+    // optimistic assumption and bail out.
+    if (!IsValueFullyAvailableInBlock(*PI, FullyAvailableBlocks))
+      return FullyAvailableBlocks[BB] = false;
+  
+  return true;
+}
+
 /// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
 /// non-local by performing PHI construction.
-bool GVN::processNonLocalLoad(LoadInst* L,
+bool GVN::processNonLocalLoad(LoadInst *LI,
                               SmallVectorImpl<Instruction*> &toErase) {
-  // Find the non-local dependencies of the load
+  // Find the non-local dependencies of the load.
   const MemoryDependenceAnalysis::NonLocalDepInfo &deps = 
-    MD->getNonLocalDependency(L);
-  DEBUG(cerr << "INVESTIGATING NONLOCAL LOAD: " << deps.size() << *L);
-#if 0
-  DEBUG(for (unsigned i = 0, e = deps.size(); i != e; ++i) {
-        cerr << "  " << deps[i].first->getName();
-          if (Instruction *I = deps[i].second.getInst())
-        cerr << *I;
-        else
-        cerr << "\n";
-        });
-#endif          
+    MD->getNonLocalDependency(LI);
+  //DEBUG(cerr << "INVESTIGATING NONLOCAL LOAD: " << deps.size() << *LI);
   
   // If we had to process more than one hundred blocks to find the
   // dependencies, this load isn't worth worrying about.  Optimizing
@@ -887,11 +912,15 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   if (deps.size() > 100)
     return false;
   
-  BasicBlock *EntryBlock = &L->getParent()->getParent()->getEntryBlock();
+  BasicBlock *EntryBlock = &LI->getParent()->getParent()->getEntryBlock();
   
-  DenseMap<BasicBlock*, Value*> repl;
+  // Filter out useless results (non-locals, etc).  Keep track of the blocks
+  // where we have a value available in repl, also keep track of whether we see
+  // dependencies that produce an unknown value for the load (such as a call
+  // that could potentially clobber the load).
+  SmallVector<std::pair<BasicBlock*, Value*>, 16> ValuesPerBlock;
+  SmallVector<BasicBlock*, 16> UnavailableBlocks;
   
-  // Filter out useless results (non-locals, etc)
   for (unsigned i = 0, e = deps.size(); i != e; ++i) {
     BasicBlock *DepBB = deps[i].first;
     MemDepResult DepInfo = deps[i].second;
@@ -900,17 +929,14 @@ bool GVN::processNonLocalLoad(LoadInst* L,
       // If this is a non-local dependency in the entry block, then we depend on
       // the value live-in at the start of the function.  We could insert a load
       // in the entry block to get this, but for now we'll just bail out.
-      //
-      // FIXME: Consider emitting a load in the entry block to catch this case!
-      // Tricky part is to sink so that it doesn't execute in places where it
-      // isn't needed.
       if (DepBB == EntryBlock)
-        return false;
+        UnavailableBlocks.push_back(DepBB);
       continue;
     }
     
     if (DepInfo.isNone()) {
-      repl[DepBB] = UndefValue::get(L->getType());
+      ValuesPerBlock.push_back(std::make_pair(DepBB, 
+                                              UndefValue::get(LI->getType())));
       continue;
     }
   
@@ -920,52 +946,165 @@ bool GVN::processNonLocalLoad(LoadInst* L,
       // NOTE: 403.gcc does have this case (e.g. in readonly_fields_p) because
       // of bitfield access, it would be interesting to optimize for it at some
       // point.
-      if (S->getOperand(0)->getType() != L->getType())
-        return false;
+      if (S->getOperand(0)->getType() != LI->getType()) {
+        UnavailableBlocks.push_back(DepBB);
+        continue;
+      }
       
-      if (S->getPointerOperand() != L->getPointerOperand() &&
+      if (S->getPointerOperand() != LI->getPointerOperand() &&
           VN.getAliasAnalysis()->alias(S->getPointerOperand(), 1,
-                                       L->getPointerOperand(), 1)
-            != AliasAnalysis::MustAlias)
-        return false;
-      repl[DepBB] = S->getOperand(0);
-    } else if (LoadInst* LD = dyn_cast<LoadInst>(DepInfo.getInst())) {
-      if (LD->getType() != L->getType())
-        return false;
+                                       LI->getPointerOperand(), 1)
+            != AliasAnalysis::MustAlias) {
+        UnavailableBlocks.push_back(DepBB);
+        continue;
+      }
+      ValuesPerBlock.push_back(std::make_pair(DepBB, S->getOperand(0)));
       
-      if (LD->getPointerOperand() != L->getPointerOperand() &&
+    } else if (LoadInst* LD = dyn_cast<LoadInst>(DepInfo.getInst())) {
+      if (LD->getType() != LI->getType()) {
+        UnavailableBlocks.push_back(DepBB);
+        continue;
+      }
+      
+      if (LD->getPointerOperand() != LI->getPointerOperand() &&
           VN.getAliasAnalysis()->alias(LD->getPointerOperand(), 1,
-                                       L->getPointerOperand(), 1)
-            != AliasAnalysis::MustAlias)
-        return false;
-      repl[DepBB] = LD;
+                                       LI->getPointerOperand(), 1)
+          != AliasAnalysis::MustAlias) {
+        UnavailableBlocks.push_back(DepBB);
+        continue;
+      }
+      ValuesPerBlock.push_back(std::make_pair(DepBB, LD));
     } else {
-      return false;
+      UnavailableBlocks.push_back(DepBB);
+      continue;
     }
   }
   
-  // Use cached PHI construction information from previous runs
-  SmallPtrSet<Instruction*, 4>& p = phiMap[L->getPointerOperand()];
-  for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
-       I != E; ++I) {
-    if ((*I)->getParent() == L->getParent()) {
-      L->replaceAllUsesWith(*I);
-      toErase.push_back(L);
-      NumGVNLoad++;
-      return true;
+  // If we have no predecessors that produce a known value for this load, exit
+  // early.
+  if (ValuesPerBlock.empty()) return false;
+  
+  // If all of the instructions we depend on produce a known value for this
+  // load, then it is fully redundant and we can use PHI insertion to compute
+  // its value.  Insert PHIs and remove the fully redundant value now.
+  if (UnavailableBlocks.empty()) {
+    // Use cached PHI construction information from previous runs
+    SmallPtrSet<Instruction*, 4> &p = phiMap[LI->getPointerOperand()];
+    for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
+         I != E; ++I) {
+      if ((*I)->getParent() == LI->getParent()) {
+        DEBUG(cerr << "GVN REMOVING NONLOCAL LOAD #1: " << *LI);
+        LI->replaceAllUsesWith(*I);
+        toErase.push_back(LI);
+        NumGVNLoad++;
+        return true;
+      }
+      
+      ValuesPerBlock.push_back(std::make_pair((*I)->getParent(), *I));
     }
     
-    repl.insert(std::make_pair((*I)->getParent(), *I));
+    DEBUG(cerr << "GVN REMOVING NONLOCAL LOAD: " << *LI);
+    
+    DenseMap<BasicBlock*, Value*> BlockReplValues;
+    BlockReplValues.insert(ValuesPerBlock.begin(), ValuesPerBlock.end());
+    // Perform PHI construction.
+    Value* v = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
+    LI->replaceAllUsesWith(v);
+    toErase.push_back(LI);
+    NumGVNLoad++;
+    return true;
+  }
+  
+  if (!EnablePRE || !EnableLoadPRE)
+    return false;
+
+  // Okay, we have *some* definitions of the value.  This means that the value
+  // is available in some of our (transitive) predecessors.  Lets think about
+  // doing PRE of this load.  This will involve inserting a new load into the
+  // predecessor when it's not available.  We could do this in general, but
+  // prefer to not increase code size.  As such, we only do this when we know
+  // that we only have to insert *one* load (which means we're basically moving
+  // the load, not inserting a new one).
+  
+  // Everything we do here is based on local predecessors of LI's block.  If it
+  // only has one predecessor, bail now.
+  BasicBlock *LoadBB = LI->getParent();
+  if (LoadBB->getSinglePredecessor())
+    return false;
+  
+  // If we have a repl set with LI itself in it, this means we have a loop where
+  // at least one of the values is LI.  Since this means that we won't be able
+  // to eliminate LI even if we insert uses in the other predecessors, we will
+  // end up increasing code size.  Reject this by scanning for LI.
+  for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
+    if (ValuesPerBlock[i].second == LI)
+      return false;
+  
+  // Okay, we have some hope :).  Check to see if the loaded value is fully
+  // available in all but one predecessor.
+  // FIXME: If we could restructure the CFG, we could make a common pred with
+  // all the preds that don't have an available LI and insert a new load into
+  // that one block.
+  BasicBlock *UnavailablePred = 0;
+
+  DenseMap<BasicBlock*, bool> FullyAvailableBlocks;
+  for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
+    FullyAvailableBlocks[ValuesPerBlock[i].first] = true;
+  for (unsigned i = 0, e = UnavailableBlocks.size(); i != e; ++i)
+    FullyAvailableBlocks[UnavailableBlocks[i]] = false;
+
+  for (pred_iterator PI = pred_begin(LoadBB), E = pred_end(LoadBB);
+       PI != E; ++PI) {
+    if (IsValueFullyAvailableInBlock(*PI, FullyAvailableBlocks))
+      continue;
+    
+    // If this load is not available in multiple predecessors, reject it.
+    if (UnavailablePred && UnavailablePred != *PI)
+      return false;
+    UnavailablePred = *PI;
+  }
+  
+  assert(UnavailablePred != 0 &&
+         "Fully available value should be eliminated above!");
+  
+  // If the loaded pointer is PHI node defined in this block, do PHI translation
+  // to get its value in the predecessor.
+  Value *LoadPtr = LI->getOperand(0)->DoPHITranslation(LoadBB, UnavailablePred);
+  
+  // Make sure the value is live in the predecessor.  If it was defined by a
+  // non-PHI instruction in this block, we don't know how to recompute it above.
+  if (Instruction *LPInst = dyn_cast<Instruction>(LoadPtr))
+    if (!DT->dominates(LPInst->getParent(), UnavailablePred)) {
+      DEBUG(cerr << "COULDN'T PRE LOAD BECAUSE PTR IS UNAVAILABLE IN PRED: "
+                 << *LPInst << *LI << "\n");
+      return false;
+    }
+  
+  // We don't currently handle critical edges :(
+  if (UnavailablePred->getTerminator()->getNumSuccessors() != 1) {
+    DEBUG(cerr << "COULD NOT PRE LOAD BECAUSE OF CRITICAL EDGE '"
+                << UnavailablePred->getName() << "': " << *LI);
+    return false;
   }
 
-  DEBUG(cerr << "GVN REMOVING NONLOCAL LOAD: " << *L);
-
-  // Perform PHI construction
-  SmallPtrSet<BasicBlock*, 4> visited;
-  Value* v = GetValueForBlock(L->getParent(), L, repl, true);
-  L->replaceAllUsesWith(v);
-  toErase.push_back(L);
-  NumGVNLoad++;
+  // Okay, we can eliminate this load by inserting a reload in the predecessor
+  // and using PHI construction to get the value in the other predecessors, do
+  // it.
+  DEBUG(cerr << "GVN REMOVING PRE LOAD: " << *LI);
+  
+  Value *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
+                                LI->getAlignment(),
+                                UnavailablePred->getTerminator());
+  
+  DenseMap<BasicBlock*, Value*> BlockReplValues;
+  BlockReplValues.insert(ValuesPerBlock.begin(), ValuesPerBlock.end());
+  BlockReplValues[UnavailablePred] = NewLoad;
+  
+  // Perform PHI construction.
+  Value* v = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
+  LI->replaceAllUsesWith(v);
+  toErase.push_back(LI);
+  NumPRELoad++;
   return true;
 }
 
