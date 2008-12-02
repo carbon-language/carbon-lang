@@ -1242,3 +1242,13 @@ Should combine to "20 * (((unsigned)x) & -2)".  Currently not
 optimized with "clang -emit-llvm-bc | opt -std-compile-opts".
 
 //===---------------------------------------------------------------------===//
+
+We would like to do the following transform in the instcombiner:
+
+  -X/C -> X/-C
+
+However, this isn't valid if (-X) overflows. We can implement this when we
+have the concept of a "C signed subtraction" operator that which is undefined
+on overflow.
+
+//===---------------------------------------------------------------------===//
