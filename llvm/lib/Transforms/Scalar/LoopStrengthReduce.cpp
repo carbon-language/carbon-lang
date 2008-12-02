@@ -996,9 +996,14 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
   
   // Otherwise, remove all of the CSE's we found from each of the base values.
   for (unsigned i = 0; i != NumUses; ++i) {
-    // For this purpose, consider only uses that are inside the loop.
-    if (!L->contains(Uses[i].Inst->getParent()))
+    // Uses outside the loop don't necessarily include the common base, but
+    // the final IV value coming into those uses does.  Instead of trying to
+    // remove the pieces of the common base, which might not be there,
+    // subtract off the base to compensate for this.
+    if (!L->contains(Uses[i].Inst->getParent())) {
+      Uses[i].Base = SE->getMinusSCEV(Uses[i].Base, Result);
       continue;
+    }
 
     // Split the expression into subexprs.
     SeparateSubExprs(SubExprs, Uses[i].Base, SE);
@@ -1475,12 +1480,6 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       if (!isa<ConstantInt>(BaseV) || !cast<ConstantInt>(BaseV)->isZero())
         // Add BaseV to the PHI value if needed.
         RewriteExpr = SE->getAddExpr(RewriteExpr, SE->getUnknown(BaseV));
-
-      // If this reference is not in the loop and we have a Common base,
-      // that has been added into the induction variable and must be
-      // subtracted off here.
-      if (HaveCommonExprs && !L->contains(User.Inst->getParent()))
-        RewriteExpr = SE->getMinusSCEV(RewriteExpr, CommonExprs);
 
       User.RewriteInstructionToUseNewBase(RewriteExpr, NewBasePt,
                                           Rewriter, L, this,
