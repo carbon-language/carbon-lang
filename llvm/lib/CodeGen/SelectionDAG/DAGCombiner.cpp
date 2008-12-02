@@ -1013,6 +1013,30 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   // fold ((B-A)+A) -> B
   if (N0.getOpcode() == ISD::SUB && N1 == N0.getOperand(1))
     return N0.getOperand(0);
+  // fold (A+(B-(A+C))) to (B-C)
+  if (N1.getOpcode() == ISD::SUB && N1.getOperand(1).getOpcode() == ISD::ADD &&
+      N0 == N1.getOperand(1).getOperand(0)) {
+    return DAG.getNode(ISD::SUB, VT, N1.getOperand(0),
+                       N1.getOperand(1).getOperand(1));
+  }
+  // fold (A+(B-(C+A))) to (B-C)
+  if (N1.getOpcode() == ISD::SUB && N1.getOperand(1).getOpcode() == ISD::ADD &&
+      N0 == N1.getOperand(1).getOperand(1)) {
+    return DAG.getNode(ISD::SUB, VT, N1.getOperand(0),
+                       N1.getOperand(1).getOperand(0));
+  }
+  // fold (A-B)+(C-D) to (A+C)-(B+D) when A or C is constant
+  if (N0.getOpcode() == ISD::SUB && N1.getOpcode() == ISD::SUB) {
+    SDValue N00 = N0.getOperand(0);
+    SDValue N01 = N0.getOperand(1);
+    SDValue N10 = N1.getOperand(0);
+    SDValue N11 = N1.getOperand(1);
+    if (isa<ConstantSDNode>(N00) || isa<ConstantSDNode>(N10)) {
+      return DAG.getNode(ISD::SUB, VT,
+                 DAG.getNode(ISD::ADD, VT, N00, N10),
+                 DAG.getNode(ISD::ADD, VT, N01, N11));
+    }
+  }
 
   if (!VT.isVector() && SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
