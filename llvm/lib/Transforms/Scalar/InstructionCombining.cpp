@@ -4447,30 +4447,24 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
 /// of the two constants is "all ones".)
 Instruction *InstCombiner::FoldOrWithConstants(BinaryOperator &I, Value *Op,
                                                Value *A, Value *B, Value *C) {
-  if (ConstantInt *CI1 = dyn_cast<ConstantInt>(C)) {
-    Value *V1 = 0, *C2 = 0;
-    if (match(Op, m_And(m_Value(V1), m_Value(C2)))) {
-      ConstantInt *CI2 = dyn_cast<ConstantInt>(C2);
+  ConstantInt *CI1 = dyn_cast<ConstantInt>(C);
+  if (!CI1) return 0;
 
-      if (!CI2) {
-        std::swap(V1, C2);
-        CI2 = dyn_cast<ConstantInt>(C2);
-      }
+  Value *V1 = 0, *C2 = 0;
+  if (match(Op, m_And(m_Value(V1), m_Value(C2)))) {
+    ConstantInt *CI2 = dyn_cast<ConstantInt>(C2);
+    if (!CI2) return 0;
 
-      if (CI2) {
-        APInt Xor = CI1->getValue() ^ CI2->getValue();
-        if (Xor.isAllOnesValue()) {
-            if (V1 == B) {
-              Instruction *NewOp =
-                InsertNewInstBefore(BinaryOperator::CreateAnd(A, CI1), I);
-              return BinaryOperator::CreateOr(NewOp, B);
-            }
-            if (V1 == A) {
-              Instruction *NewOp =
-                InsertNewInstBefore(BinaryOperator::CreateAnd(B, CI1), I);
-              return BinaryOperator::CreateOr(NewOp, A);
-            }
-        }
+    APInt Xor = CI1->getValue() ^ CI2->getValue();
+    if (Xor.isAllOnesValue()) {
+      if (V1 == B) {
+        Instruction *NewOp =
+          InsertNewInstBefore(BinaryOperator::CreateAnd(A, CI1), I);
+        return BinaryOperator::CreateOr(NewOp, B);
+      } else if (V1 == A) {
+        Instruction *NewOp =
+          InsertNewInstBefore(BinaryOperator::CreateAnd(B, CI1), I);
+        return BinaryOperator::CreateOr(NewOp, A);
       }
     }
   }
