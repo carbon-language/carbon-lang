@@ -40,15 +40,19 @@ Parser::DeclTy *Parser::ParseTemplateDeclaration(unsigned Context) {
   }
   SourceLocation TemplateLoc = ConsumeToken();
   
-  // Try to parse the template parameters, and the declaration if successful.
-  if(ParseTemplateParameters(0)) {
-    // For some reason, this is generating a compiler error when parsing the
-    // declaration. Apparently, ParseDeclaration doesn't want to match a
-    // function-definition, but will match a function declaration.
-    // TODO: ParseDeclarationOrFunctionDefinition
-    return ParseDeclaration(Context);
-  }
-  return 0;
+  // Enter template-parameter scope.
+  EnterScope(Scope::TemplateParamScope|Scope::DeclScope);
+
+  // Try to parse the template parameters, and the declaration if
+  // successful.
+  DeclTy *TemplateDecl = 0;
+  if(ParseTemplateParameters(0))
+    TemplateDecl = ParseDeclarationOrFunctionDefinition();
+
+  // Leave template-parameter scope.
+  ExitScope();
+
+  return TemplateDecl;
 }
 
 /// ParseTemplateParameters - Parses a template-parameter-list enclosed in
@@ -153,13 +157,19 @@ Parser::DeclTy *Parser::ParseTemplateParameter() {
 ///         'typename' identifier[opt]
 ///         'typename' identifier[opt] '=' type-id
 Parser::DeclTy *Parser::ParseTypeParameter() {
-  SourceLocation keyLoc = ConsumeToken();
+  assert((Tok.is(tok::kw_class) || Tok.is(tok::kw_typename)) &&
+	 "A type-parameter starts with 'class' or 'typename'");
+
+  // Consume the 'class' or 'typename' keyword.
+  bool TypenameKeyword = Tok.is(tok::kw_typename);
+  SourceLocation KeyLoc = ConsumeToken();
 
   // Grab the template parameter name (if given)
-  IdentifierInfo* paramName = 0;
+  SourceLocation NameLoc;
+  IdentifierInfo* ParamName = 0;
   if(Tok.is(tok::identifier)) {
-    paramName = Tok.getIdentifierInfo();
-    ConsumeToken();
+    ParamName = Tok.getIdentifierInfo();
+    NameLoc = ConsumeToken();
   } else if(Tok.is(tok::equal) || Tok.is(tok::comma) ||
 	    Tok.is(tok::greater)) {
     // Unnamed template parameter. Don't have to do anything here, just
@@ -169,17 +179,18 @@ Parser::DeclTy *Parser::ParseTypeParameter() {
     return 0;
   }
   
+  DeclTy *TypeParam = Actions.ActOnTypeParameter(CurScope, TypenameKeyword, 
+						 KeyLoc, ParamName, NameLoc);
+
   // Grab a default type id (if given).
-  TypeTy* defaultType = 0;
   if(Tok.is(tok::equal)) {
-    ConsumeToken();
-    defaultType = ParseTypeName();
-    if(!defaultType)
-      return 0;
+    SourceLocation EqualLoc = ConsumeToken();
+    TypeTy *DefaultType = ParseTypeName();
+    if(DefaultType)
+      Actions.ActOnTypeParameterDefault(TypeParam, DefaultType);
   }
   
-  // FIXME: Add an action for type parameters.
-  return 0;
+  return TypeParam;
 }
 
 /// ParseTemplateTemplateParameter - Handle the parsing of template
@@ -244,22 +255,21 @@ Parser::DeclTy* Parser::ParseTemplateTemplateParameter() {
 /// but that didn't work out to well. Instead, this tries to recrate the basic
 /// parsing of parameter declarations, but tries to constrain it for template
 /// parameters.
-/// FIXME: We need to make ParseParameterDeclaration work for non-type 
-/// template parameters, too.
-Parser::DeclTy* Parser::ParseNonTypeTemplateParameter()
-{
-  SourceLocation startLoc = Tok.getLocation();
+/// FIXME: We need to make a ParseParameterDeclaration that works for
+/// non-type template parameters and normal function parameters.
+Parser::DeclTy* Parser::ParseNonTypeTemplateParameter() {
+  SourceLocation StartLoc = Tok.getLocation();
 
   // Parse the declaration-specifiers (i.e., the type).
-  // FIXME:: The type should probably be restricted in some way... Not all
+  // FIXME: The type should probably be restricted in some way... Not all
   // declarators (parts of declarators?) are accepted for parameters.
-  DeclSpec ds;
-  ParseDeclarationSpecifiers(ds);
+  DeclSpec DS;
+  ParseDeclarationSpecifiers(DS);
 
   // Parse this as a typename.
-  Declarator decl(ds, Declarator::TypeNameContext);
-  ParseDeclarator(decl);
-  if(ds.getTypeSpecType() == DeclSpec::TST_unspecified && !ds.getTypeRep()) {
+  Declarator ParamDecl(DS, Declarator::TemplateParamContext);
+  ParseDeclarator(ParamDecl);
+  if(DS.getTypeSpecType() == DeclSpec::TST_unspecified && !DS.getTypeRep()) {
     // This probably shouldn't happen - and it's more of a Sema thing, but
     // basically we didn't parse the type name because we couldn't associate
     // it with an AST node. we should just skip to the comma or greater.
@@ -269,11 +279,8 @@ Parser::DeclTy* Parser::ParseNonTypeTemplateParameter()
     return 0;
   }
 
-  // If there's an identifier after the typename, parse that as part of the
-  // declarator - or something.
-  if(Tok.is(tok::identifier)) {
-    ConsumeToken();
-  }
+  // Create the parameter. 
+  DeclTy *Param = Actions.ActOnNonTypeTemplateParameter(CurScope, ParamDecl);
 
   // Is there a default value? Parsing this can be fairly annoying because
   // we have to stop on the first non-nested (paren'd) '>' as the closure
@@ -283,6 +290,5 @@ Parser::DeclTy* Parser::ParseNonTypeTemplateParameter()
     SkipUntil(tok::comma, tok::greater, true, true);
   }
   
-  // FIXME: Add an action for non-type template parameters.
-  return 0;
+  return Param;
 }

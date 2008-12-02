@@ -631,7 +631,8 @@ public:
     MemberContext,       // Struct/Union field.
     BlockContext,        // Declaration within a block in a function.
     ForContext,          // Declaration within first part of a for loop.
-    ConditionContext     // Condition declaration in a C++ if/switch/while/for.
+    ConditionContext,    // Condition declaration in a C++ if/switch/while/for.
+    TemplateParamContext // Within a template parameter list.
   };
 
   /// DeclaratorKind - The kind of declarator this represents.
@@ -743,9 +744,11 @@ public:
   }
   
   /// mayOmitIdentifier - Return true if the identifier is either optional or
-  /// not allowed.  This is true for typenames and prototypes.
+  /// not allowed.  This is true for typenames, prototypes, and template 
+  /// parameter lists.
   bool mayOmitIdentifier() const {
-    return Context == TypeNameContext || Context == PrototypeContext;
+    return Context == TypeNameContext || Context == PrototypeContext ||
+           Context == TemplateParamContext;
   }
 
   /// mayHaveIdentifier - Return true if the identifier is either optional or

@@ -13,9 +13,8 @@ template <template <typename> Foo> ;    // expected-error {{expected 'class' bef
 template <typename T> void foo();
 template <typename T, typename U> void foo();
 
-// TODO Implement ParseDeclarationOrFunction()
-// Template function definitions. Not done yet.
-// template <typename T> void foo() { }
+// Template function definitions.
+template <typename T> void foo() { }
 
 // Template class (forward) declarations
 template <typename T> struct A;

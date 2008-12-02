@@ -852,6 +852,37 @@ public:
   virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl) {
   }
 
+  //===---------------------------C++ Templates----------------------------===//
+
+  /// ActOnTypeParameter - Called when a C++ template type parameter
+  /// (e.g., "typename T") has been parsed. Typename specifies whether
+  /// the keyword "typename" was used to declare the type parameter
+  /// (otherwise, "class" was used), and KeyLoc is the location of the
+  /// "class" or "typename" keyword. ParamName is the name of the
+  /// parameter (NULL indicates an unnamed template parameter) and
+  /// ParamName is the location of the parameter name (if any). 
+  /// If the type parameter has a default argument, it will be added
+  /// later via ActOnTypeParameterDefault.
+  virtual DeclTy *ActOnTypeParameter(Scope *S, bool Typename, 
+				     SourceLocation KeyLoc,
+				     IdentifierInfo *ParamName,
+				     SourceLocation ParamNameLoc) {
+    return 0;
+  }
+
+  /// ActOnTypeParameterDefault - Adds a default argument (the type
+  /// Default) to the given template type parameter (TypeParam). 
+  virtual void ActOnTypeParameterDefault(DeclTy *TypeParam, TypeTy *Default) {
+  }
+
+  /// ActOnNonTypeTemplateParameter - Called when a C++ non-type
+  /// template parameter (e.g., "int Size" in "template<int Size>
+  /// class Array") has been parsed. S is the current scope and D is
+  /// the parsed declarator.
+  virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D) {
+    return 0;
+  }
+
   //===----------------------- Obj-C Declarations -------------------------===//
   
   // ActOnStartClassInterface - this action is called immediately after parsing

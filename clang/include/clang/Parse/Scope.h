@@ -54,7 +54,13 @@ public:
     /// Blocks serve as top-level scopes for some objects like labels, they
     /// also prevent things like break and continue.  BlockScopes have the
     /// other flags set as well.
-    BlockScope = 0x40
+    BlockScope = 0x40,
+
+    /// TemplateParamScope - This is a scope that corresponds to the
+    /// template parameters of a C++ template. Template parameter
+    /// scope starts at the 'template' keyword and ends when the
+    /// template declaration ends.
+    TemplateParamScope = 0x80
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -172,6 +178,12 @@ public:
     return false;
   }
   
+  /// isTemplateParamScope - Return true if this scope is a C++
+  /// template parameter scope.
+  bool isTemplateParamScope() const {
+    return getFlags() & Scope::TemplateParamScope;
+  }
+
   /// Init - This is used by the parser to implement scope caching.
   ///
   void Init(Scope *Parent, unsigned ScopeFlags) {
