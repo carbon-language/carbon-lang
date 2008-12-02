@@ -4443,14 +4443,10 @@ Instruction *InstCombiner::FoldOrWithConstants(BinaryOperator &I, Value *Op,
   APInt Xor = CI1->getValue() ^ CI2->getValue();
   if (!Xor.isAllOnesValue()) return 0;
 
-  if (V1 == B) {
+  if (V1 == A || V1 == B)
     Instruction *NewOp =
-      InsertNewInstBefore(BinaryOperator::CreateAnd(A, CI1), I);
-    return BinaryOperator::CreateOr(NewOp, B);
-  } else if (V1 == A) {
-    Instruction *NewOp =
-      InsertNewInstBefore(BinaryOperator::CreateAnd(B, CI1), I);
-    return BinaryOperator::CreateOr(NewOp, A);
+      InsertNewInstBefore(BinaryOperator::CreateAnd((V1 == A) ? B : A, CI1), I);
+    return BinaryOperator::CreateOr(NewOp, V1);
   }
 
   return 0;
