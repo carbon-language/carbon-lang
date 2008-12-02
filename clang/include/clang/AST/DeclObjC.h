@@ -16,6 +16,7 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace clang {
 class Expr;
@@ -385,7 +386,8 @@ public:
   
   void addPropertyMethods(ASTContext &Context,
                           ObjCPropertyDecl* Property,
-                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods);
+                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
+                          llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap);
   
   typedef ObjCPropertyDecl * const * classprop_iterator;
   classprop_iterator classprop_begin() const { return PropertyDecl; }
@@ -641,7 +643,8 @@ public:
 
   void addPropertyMethods(ASTContext &Context,
                           ObjCPropertyDecl* Property,
-                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods);
+                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
+                          llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap);
   
   typedef ObjCPropertyDecl * const * classprop_iterator;
   classprop_iterator classprop_begin() const { return PropertyDecl; }
@@ -882,7 +885,8 @@ public:
 
   void addPropertyMethods(ASTContext &Context,
                           ObjCPropertyDecl* Property,
-                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods);
+                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
+                          llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap);
   
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
   

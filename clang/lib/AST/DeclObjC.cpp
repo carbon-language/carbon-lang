@@ -426,24 +426,14 @@ static void
 addPropertyMethods(Decl *D,
                    ASTContext &Context,
                    ObjCPropertyDecl *property,
-                   llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
+                   llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
+                   llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap) {
   ObjCMethodDecl *GetterDecl, *SetterDecl = 0;
-
-  if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(D)) {
-    GetterDecl = OID->getInstanceMethod(property->getGetterName());
-    if (!property->isReadOnly())
-      SetterDecl = OID->getInstanceMethod(property->getSetterName());
-  } else if (ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(D)) {
-    GetterDecl = OCD->getInstanceMethod(property->getGetterName());
-    if (!property->isReadOnly())
-      SetterDecl = OCD->getInstanceMethod(property->getSetterName());
-  } else {
-    ObjCProtocolDecl *OPD = cast<ObjCProtocolDecl>(D);
-    GetterDecl = OPD->getInstanceMethod(property->getGetterName());
-    if (!property->isReadOnly())
-      SetterDecl = OPD->getInstanceMethod(property->getSetterName());
-  }
-
+  
+  GetterDecl = const_cast<ObjCMethodDecl*>(InsMap[property->getGetterName()]);
+  if (!property->isReadOnly())
+    SetterDecl = const_cast<ObjCMethodDecl*>(InsMap[property->getSetterName()]);
+  
   // FIXME: The synthesized property we set here is misleading. We
   // almost always synthesize these methods unless the user explicitly
   // provided prototypes (which is odd, but allowed). Sema should be
@@ -463,6 +453,7 @@ addPropertyMethods(Decl *D,
                              D,
                              true, false, true, ObjCMethodDecl::Required);
     insMethods.push_back(GetterDecl);
+    InsMap[property->getGetterName()] = GetterDecl;
   }
   property->setGetterMethodDecl(GetterDecl);
 
@@ -483,7 +474,7 @@ addPropertyMethods(Decl *D,
                              D,
                              true, false, true, ObjCMethodDecl::Required);
     insMethods.push_back(SetterDecl);
-
+    InsMap[property->getSetterName()] = SetterDecl;
     // Invent the arguments for the setter. We don't bother making a
     // nice name for the argument.
     ParmVarDecl *Argument = ParmVarDecl::Create(Context, 
@@ -505,8 +496,9 @@ addPropertyMethods(Decl *D,
 void ObjCInterfaceDecl::addPropertyMethods(
        ASTContext &Context,
        ObjCPropertyDecl *property,
-       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
-  ::addPropertyMethods(this, Context, property, insMethods);
+       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
+       llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap) {
+  ::addPropertyMethods(this, Context, property, insMethods, InsMap);
 }
 
 /// addPropertyMethods - Goes through list of properties declared in this class
@@ -516,8 +508,9 @@ void ObjCInterfaceDecl::addPropertyMethods(
 void ObjCCategoryDecl::addPropertyMethods(
        ASTContext &Context,
        ObjCPropertyDecl *property,
-       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
-  ::addPropertyMethods(this, Context, property, insMethods);
+       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods, 
+       llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap) {
+  ::addPropertyMethods(this, Context, property, insMethods, InsMap);
 }
 
 /// addPropertyMethods - Goes through list of properties declared in this class
@@ -527,8 +520,9 @@ void ObjCCategoryDecl::addPropertyMethods(
 void ObjCProtocolDecl::addPropertyMethods(
        ASTContext &Context,
        ObjCPropertyDecl *property,
-       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
-  ::addPropertyMethods(this, Context, property, insMethods);
+       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
+       llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap) {
+  ::addPropertyMethods(this, Context, property, insMethods, InsMap);
 }
 
 /// addProperties - Insert property declaration AST nodes into

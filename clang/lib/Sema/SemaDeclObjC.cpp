@@ -941,14 +941,14 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     MergeProtocolPropertiesIntoClass(I, I);
     for (ObjCInterfaceDecl::classprop_iterator i = I->classprop_begin(),
            e = I->classprop_end(); i != e; ++i)
-      I->addPropertyMethods(Context, *i, insMethods);
+      I->addPropertyMethods(Context, *i, insMethods, InsMap);
     I->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
     
   } else if (ObjCProtocolDecl *P = dyn_cast<ObjCProtocolDecl>(ClassDecl)) {
     for (ObjCProtocolDecl::classprop_iterator i = P->classprop_begin(),
            e = P->classprop_end(); i != e; ++i)
-      P->addPropertyMethods(Context, *i, insMethods);
+      P->addPropertyMethods(Context, *i, insMethods, InsMap);
     P->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
   }
@@ -959,7 +959,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     // merge them into category as well?
     for (ObjCCategoryDecl::classprop_iterator i = C->classprop_begin(),
            e = C->classprop_end(); i != e; ++i)
-      C->addPropertyMethods(Context, *i, insMethods);
+      C->addPropertyMethods(Context, *i, insMethods, InsMap);
     C->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
   }
