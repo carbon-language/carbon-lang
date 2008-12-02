@@ -245,16 +245,14 @@ public:
   //
   QualType ConvertDeclSpecToType(const DeclSpec &DS);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
-  QualType GetTypeForDeclarator(Declarator &D, Scope *S,
-                                bool CXXNewMode = false);
+  QualType GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip = 0);
   DeclarationName GetNameForDeclarator(Declarator &D);
 
   QualType ObjCGetTypeForMethodDefinition(DeclTy *D);
 
   bool UnwrapSimilarPointerTypes(QualType& T1, QualType& T2);
 
-  virtual TypeResult ActOnTypeName(Scope *S, Declarator &D,
-                                   bool CXXNewMode = false);
+  virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
 
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
@@ -828,13 +826,11 @@ public:
                                  SourceLocation PlacementLParen,
                                  ExprTy **PlacementArgs, unsigned NumPlaceArgs,
                                  SourceLocation PlacementRParen,
-                                 bool ParenTypeId, SourceLocation TyStart,
-                                 TypeTy *Ty, SourceLocation TyEnd,
+                                 bool ParenTypeId, Declarator &D,
                                  SourceLocation ConstructorLParen,
                                  ExprTy **ConstructorArgs, unsigned NumConsArgs,
                                  SourceLocation ConstructorRParen);
-  bool CheckAllocatedType(QualType AllocType, SourceLocation StartLoc,
-                          const SourceRange &TyR);
+  bool CheckAllocatedType(QualType AllocType, const Declarator &D);
 
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression
   virtual ExprResult ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,

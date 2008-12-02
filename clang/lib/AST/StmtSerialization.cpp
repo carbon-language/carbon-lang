@@ -1444,7 +1444,10 @@ CXXZeroInitValueExpr::CreateImpl(Deserializer& D, ASTContext& C) {
 
 void CXXNewExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
-  S.Emit(Initializer);
+  S.EmitBool(GlobalNew);
+  S.EmitBool(ParenTypeId);
+  S.EmitBool(Initializer);
+  S.EmitBool(Array);
   S.EmitInt(NumPlacementArgs);
   S.EmitInt(NumConstructorArgs);
   S.BatchEmitOwnedPtrs(NumPlacementArgs + NumConstructorArgs, SubExprs);
@@ -1455,7 +1458,6 @@ void CXXNewExpr::EmitImpl(Serializer& S) const {
   S.EmitPtr(OperatorNew);
   S.EmitPtr(OperatorDelete);
   S.EmitPtr(Constructor);
-  S.Emit(AllocType);
   S.Emit(StartLoc);
   S.Emit(EndLoc);
 }
@@ -1466,19 +1468,19 @@ CXXNewExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   bool GlobalNew = D.ReadBool();
   bool ParenTypeId = D.ReadBool();
   bool Initializer = D.ReadBool();
+  bool Array = D.ReadBool();
   unsigned NumPlacementArgs = D.ReadInt();
   unsigned NumConstructorArgs = D.ReadInt();
-  unsigned TotalExprs = NumPlacementArgs + NumConstructorArgs;
+  unsigned TotalExprs = Array + NumPlacementArgs + NumConstructorArgs;
   Stmt** SubExprs = new Stmt*[TotalExprs];
   D.BatchReadOwnedPtrs(TotalExprs, SubExprs, C);
   FunctionDecl *OperatorNew = D.ReadPtr<FunctionDecl>();
   FunctionDecl *OperatorDelete = D.ReadPtr<FunctionDecl>();
   CXXConstructorDecl *Constructor = D.ReadPtr<CXXConstructorDecl>();
-  QualType AllocType = QualType::ReadVal(D);
   SourceLocation StartLoc = SourceLocation::ReadVal(D);
   SourceLocation EndLoc = SourceLocation::ReadVal(D);
 
-  return new CXXNewExpr(T, AllocType, GlobalNew, ParenTypeId, Initializer,
+  return new CXXNewExpr(T, GlobalNew, ParenTypeId, Initializer, Array,
                         NumPlacementArgs, NumConstructorArgs, SubExprs,
                         OperatorNew, OperatorDelete, Constructor, StartLoc,
                         EndLoc);
@@ -1486,8 +1488,8 @@ CXXNewExpr::CreateImpl(Deserializer& D, ASTContext& C) {
 
 void CXXDeleteExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
-  S.Emit(GlobalDelete);
-  S.Emit(ArrayForm);
+  S.EmitBool(GlobalDelete);
+  S.EmitBool(ArrayForm);
   S.EmitPtr(OperatorDelete);
   S.EmitOwnedPtr(Argument);
   S.Emit(Loc);

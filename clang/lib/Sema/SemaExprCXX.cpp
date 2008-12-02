@@ -180,30 +180,60 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   SourceLocation PlacementLParen,
                   ExprTy **PlacementArgs, unsigned NumPlaceArgs,
                   SourceLocation PlacementRParen, bool ParenTypeId,
-                  SourceLocation TyStart, TypeTy *Ty, SourceLocation TyEnd,
-                  SourceLocation ConstructorLParen,
+                  Declarator &D, SourceLocation ConstructorLParen,
                   ExprTy **ConstructorArgs, unsigned NumConsArgs,
                   SourceLocation ConstructorRParen)
 {
-  QualType AllocType = QualType::getFromOpaquePtr(Ty);
-  QualType CheckType = AllocType;
-  // To leverage the existing parser as much as possible, array types are
-  // parsed as VLAs. Unwrap for checking.
-  if (const VariableArrayType *VLA = Context.getAsVariableArrayType(AllocType))
-    CheckType = VLA->getElementType();
+  // FIXME: Throughout this function, we have rather bad location information.
+  // Implementing Declarator::getSourceRange() would go a long way toward
+  // fixing that.
 
-  // Validate the type, and unwrap an array if any.
-  if (CheckAllocatedType(CheckType, StartLoc, SourceRange(TyStart, TyEnd)))
+  Expr *ArraySize = 0;
+  unsigned Skip = 0;
+  // If the specified type is an array, unwrap it and save the expression.
+  if (D.getNumTypeObjects() > 0 &&
+      D.getTypeObject(0).Kind == DeclaratorChunk::Array) {
+    DeclaratorChunk &Chunk = D.getTypeObject(0);
+    if (Chunk.Arr.hasStatic)
+      return Diag(Chunk.Loc, diag::err_static_illegal_in_new);
+    if (!Chunk.Arr.NumElts)
+      return Diag(Chunk.Loc, diag::err_array_new_needs_size);
+    ArraySize = static_cast<Expr*>(Chunk.Arr.NumElts);
+    Skip = 1;
+  }
+
+  QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, Skip);
+  if (D.getInvalidType())
     return true;
 
-  QualType ResultType = Context.getPointerType(CheckType);
+  if (CheckAllocatedType(AllocType, D))
+    return true;
+
+  QualType ResultType = Context.getPointerType(AllocType);
 
   // That every array dimension except the first is constant was already
   // checked by the type check above.
+
   // C++ 5.3.4p6: "The expression in a direct-new-declarator shall have integral
   //   or enumeration type with a non-negative value."
-  // This was checked by ActOnTypeName, since C99 has the same restriction on
-  // VLA expressions.
+  if (ArraySize) {
+    QualType SizeType = ArraySize->getType();
+    if (!SizeType->isIntegralType() && !SizeType->isEnumeralType())
+      return Diag(ArraySize->getSourceRange().getBegin(),
+                  diag::err_array_size_not_integral)
+        << SizeType << ArraySize->getSourceRange();
+    // Let's see if this is a constant < 0. If so, we reject it out of hand.
+    // We don't care about special rules, so we tell the machinery it's not
+    // evaluated - it gives us a result in more cases.
+    llvm::APSInt Value;
+    if (ArraySize->isIntegerConstantExpr(Value, Context, 0, false)) {
+      if (Value < llvm::APSInt(
+                      llvm::APInt::getNullValue(Value.getBitWidth()), false))
+        return Diag(ArraySize->getSourceRange().getBegin(),
+                    diag::err_typecheck_negative_array_size)
+          << ArraySize->getSourceRange();
+    }
+  }
 
   // --- Choosing an allocation function ---
   // C++ 5.3.4p8 - 14 & 18
@@ -239,12 +269,14 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   // 2) Otherwise, the object is direct-initialized.
   CXXConstructorDecl *Constructor = 0;
   Expr **ConsArgs = (Expr**)ConstructorArgs;
-  if (const RecordType *RT = CheckType->getAsRecordType()) {
+  if (const RecordType *RT = AllocType->getAsRecordType()) {
     // FIXME: This is incorrect for when there is an empty initializer and
     // no user-defined constructor. Must zero-initialize, not default-construct.
     Constructor = PerformInitializationByConstructor(
-                      CheckType, ConsArgs, NumConsArgs,
-                      TyStart, SourceRange(TyStart, ConstructorRParen),
+                      AllocType, ConsArgs, NumConsArgs,
+                      D.getDeclSpec().getSourceRange().getBegin(),
+                      SourceRange(D.getDeclSpec().getSourceRange().getBegin(),
+                                  ConstructorRParen),
                       RT->getDecl()->getDeclName(),
                       NumConsArgs != 0 ? IK_Direct : IK_Default);
     if (!Constructor)
@@ -252,9 +284,9 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   } else {
     if (!Init) {
       // FIXME: Check that no subpart is const.
-      if (CheckType.isConstQualified()) {
+      if (AllocType.isConstQualified()) {
         Diag(StartLoc, diag::err_new_uninitialized_const)
-          << SourceRange(StartLoc, TyEnd);
+          << D.getSourceRange();
         return true;
       }
     } else if (NumConsArgs == 0) {
@@ -262,8 +294,8 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     } else if (NumConsArgs == 1) {
       // Object is direct-initialized.
       // FIXME: WHAT DeclarationName do we pass in here?
-      if (CheckInitializerTypes(ConsArgs[0], CheckType, StartLoc,
-                                DeclarationName() /*CheckType.getAsString()*/))
+      if (CheckInitializerTypes(ConsArgs[0], AllocType, StartLoc,
+                                DeclarationName() /*AllocType.getAsString()*/))
         return true;
     } else {
       Diag(StartLoc, diag::err_builtin_direct_init_more_than_one_arg)
@@ -274,16 +306,15 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   // FIXME: Also check that the destructor is accessible. (C++ 5.3.4p16)
 
   return new CXXNewExpr(UseGlobal, OperatorNew, PlaceArgs, NumPlaceArgs,
-                        ParenTypeId, AllocType, Constructor, Init,
+                        ParenTypeId, ArraySize, Constructor, Init,
                         ConsArgs, NumConsArgs, OperatorDelete, ResultType,
-                        StartLoc, Init ? ConstructorRParen : TyEnd);
+                        StartLoc, Init ? ConstructorRParen : SourceLocation());
 }
 
 /// CheckAllocatedType - Checks that a type is suitable as the allocated type
 /// in a new-expression.
 /// dimension off and stores the size expression in ArraySize.
-bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation StartLoc,
-                              const SourceRange &TyR)
+bool Sema::CheckAllocatedType(QualType AllocType, const Declarator &D)
 {
   // C++ 5.3.4p1: "[The] type shall be a complete object type, but not an
   //   abstract class type or array thereof.
@@ -291,29 +322,34 @@ bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation StartLoc,
   // FIXME: Under C++ semantics, an incomplete object type is still an object
   // type. This code assumes the C semantics, where it's not.
   if (!AllocType->isObjectType()) {
-    diag::kind msg;
+    unsigned type; // For the select in the message.
     if (AllocType->isFunctionType()) {
-      msg = diag::err_new_function;
+      type = 0;
     } else if(AllocType->isIncompleteType()) {
-      msg = diag::err_new_incomplete;
-    } else if(AllocType->isReferenceType()) {
-      msg = diag::err_new_reference;
+      type = 1;
     } else {
-      assert(false && "Unexpected type class");
-      return true;
+      assert(AllocType->isReferenceType() && "What else could it be?");
+      type = 2;
     }
-    Diag(StartLoc, msg) << AllocType << TyR;
+    SourceRange TyR = D.getDeclSpec().getSourceRange();
+    // FIXME: This is very much a guess and won't work for, e.g., pointers.
+    if (D.getNumTypeObjects() > 0)
+      TyR.setEnd(D.getTypeObject(0).Loc);
+    Diag(TyR.getBegin(), diag::err_bad_new_type)
+      << AllocType.getAsString() << type << TyR;
     return true;
   }
 
-  // Every dimension beyond the first shall be of constant size.
+  // Every dimension shall be of constant size.
+  unsigned i = 1;
   while (const ArrayType *Array = Context.getAsArrayType(AllocType)) {
     if (!Array->isConstantArrayType()) {
-      // FIXME: Might be nice to get a better source range from somewhere.
-      Diag(StartLoc, diag::err_new_array_nonconst) << TyR;
+      Diag(D.getTypeObject(i).Loc, diag::err_new_array_nonconst)
+        << static_cast<Expr*>(D.getTypeObject(i).Arr.NumElts)->getSourceRange();
       return true;
     }
     AllocType = Array->getElementType();
+    ++i;
   }
 
   return false;

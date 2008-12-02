@@ -28,9 +28,7 @@ using namespace clang;
 ///         specifier-qualifier-list abstract-declarator[opt]
 ///
 /// Called type-id in C++.
-/// CXXNewMode is a special flag used by the parser of C++ new-expressions. It
-/// is simply passed on to ActOnTypeName.
-Parser::TypeTy *Parser::ParseTypeName(bool CXXNewMode) {
+Parser::TypeTy *Parser::ParseTypeName() {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseSpecifierQualifierList(DS);
@@ -39,7 +37,7 @@ Parser::TypeTy *Parser::ParseTypeName(bool CXXNewMode) {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParseDeclarator(DeclaratorInfo);
   
-  return Actions.ActOnTypeName(CurScope, DeclaratorInfo, CXXNewMode).Val;
+  return Actions.ActOnTypeName(CurScope, DeclaratorInfo).Val;
 }
 
 /// ParseAttributes - Parse a non-empty attributes list.

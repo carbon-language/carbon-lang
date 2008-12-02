@@ -1228,15 +1228,16 @@ DIAG(err_static_downcast_via_virtual, ERROR,
 // Other C++ expressions
 DIAG(err_need_header_before_typeid, ERROR,
      "you need to include <typeinfo> before using the 'typeid' operator")
-// FIXME: merge with %select
-DIAG(err_new_function, ERROR,
-     "cannot allocate function type %0 with new")
-DIAG(err_new_incomplete, ERROR,
-     "cannot allocate incomplete type %0 with new")
-DIAG(err_new_reference, ERROR,
-     "cannot allocate reference type %0 with new")
+DIAG(err_static_illegal_in_new, ERROR,
+     "the 'static' modifier for the array size is not legal in new expressions")
+DIAG(err_array_new_needs_size, ERROR,
+     "array size must be specified in new expressions")
+DIAG(err_bad_new_type, ERROR,
+    "cannot allocate %select{function|incomplete|reference}1 type %0 with new")
 DIAG(err_new_array_nonconst, ERROR,
      "only the first dimension of an allocated array may be non-const")
+DIAG(err_array_size_not_integral, ERROR,
+     "array size expression must have integral or enumerated type, not %0")
 DIAG(err_new_uninitialized_const, ERROR,
      "must provide an initializer if the allocated object is 'const'")
 DIAG(err_delete_operand, ERROR,

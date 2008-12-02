@@ -80,30 +80,32 @@ Stmt::child_iterator CXXConditionDeclExpr::child_end() {
 // CXXNewExpr
 CXXNewExpr::CXXNewExpr(bool globalNew, FunctionDecl *operatorNew,
                        Expr **placementArgs, unsigned numPlaceArgs,
-                       bool parenTypeId, QualType alloc,
+                       bool parenTypeId, Expr *arraySize,
                        CXXConstructorDecl *constructor, bool initializer,
                        Expr **constructorArgs, unsigned numConsArgs,
                        FunctionDecl *operatorDelete, QualType ty,
                        SourceLocation startLoc, SourceLocation endLoc)
   : Expr(CXXNewExprClass, ty), GlobalNew(globalNew), ParenTypeId(parenTypeId),
-    Initializer(initializer), NumPlacementArgs(numPlaceArgs),
+    Initializer(initializer), Array(arraySize), NumPlacementArgs(numPlaceArgs),
     NumConstructorArgs(numConsArgs), OperatorNew(operatorNew),
-    OperatorDelete(operatorDelete), Constructor(constructor), AllocType(alloc),
+    OperatorDelete(operatorDelete), Constructor(constructor),
     StartLoc(startLoc), EndLoc(endLoc)
 {
-  unsigned TotalSize = NumPlacementArgs + NumConstructorArgs;
+  unsigned TotalSize = Array + NumPlacementArgs + NumConstructorArgs;
   SubExprs = new Stmt*[TotalSize];
   unsigned i = 0;
-  for(unsigned j = 0; j < NumPlacementArgs; ++j)
+  if (Array)
+    SubExprs[i++] = arraySize;
+  for (unsigned j = 0; j < NumPlacementArgs; ++j)
     SubExprs[i++] = placementArgs[j];
-  for(unsigned j = 0; j < NumConstructorArgs; ++j)
+  for (unsigned j = 0; j < NumConstructorArgs; ++j)
     SubExprs[i++] = constructorArgs[j];
   assert(i == TotalSize);
 }
 
 Stmt::child_iterator CXXNewExpr::child_begin() { return &SubExprs[0]; }
 Stmt::child_iterator CXXNewExpr::child_end() {
-  return &SubExprs[0] + getNumPlacementArgs() + getNumConstructorArgs();
+  return &SubExprs[0] + Array + getNumPlacementArgs() + getNumConstructorArgs();
 }
 
 // CXXDeleteExpr

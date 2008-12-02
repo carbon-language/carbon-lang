@@ -249,8 +249,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
 }
 
 /// GetTypeForDeclarator - Convert the type for the specified declarator to Type
-/// instances.
-QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, bool CXXNewMode) {
+/// instances. Skip the outermost Skip type objects.
+QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
   // long long is a C99 feature.
   if (!getLangOptions().C99 && !getLangOptions().CPlusPlus0x &&
       D.getDeclSpec().getTypeSpecWidth() == DeclSpec::TSW_longlong)
@@ -260,8 +260,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, bool CXXNewMode) {
 
   // Walk the DeclTypeInfo, building the recursive type as we go.  DeclTypeInfos
   // are ordered from the identifier out, which is opposite of what we want :).
-  for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
-    DeclaratorChunk &DeclType = D.getTypeObject(e-i-1);
+  for (unsigned i = Skip, e = D.getNumTypeObjects(); i != e; ++i) {
+    DeclaratorChunk &DeclType = D.getTypeObject(e-i-1+Skip);
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
     case DeclaratorChunk::BlockPointer:
@@ -340,8 +340,6 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, bool CXXNewMode) {
       break;
     }
     case DeclaratorChunk::Array: {
-      // Only the outermost dimension gets special treatment.
-      bool UseCXXNewMode = CXXNewMode && i == e-1;
       DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
       Expr *ArraySize = static_cast<Expr*>(ATI.NumElts);
       ArrayType::ArraySizeModifier ASM;
@@ -394,11 +392,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, bool CXXNewMode) {
       if (!ArraySize) {
         T = Context.getIncompleteArrayType(T, ASM, ATI.TypeQuals);
       } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context) ||
-                 !T->isConstantSizeType() || UseCXXNewMode) {
+                 !T->isConstantSizeType()) {
         // Per C99, a variable array is an array with either a non-constant
         // size or an element type that has a non-constant-size
-        // We also force this for parsing C++ new-expressions, since the
-        // outermost dimension is always treated as variable.
         T = Context.getVariableArrayType(T, ArraySize, ASM, ATI.TypeQuals);
       } else {
         // C99 6.7.5.2p1: If the expression is a constant expression, it shall
@@ -418,9 +414,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, bool CXXNewMode) {
         T = Context.getConstantArrayType(T, ConstVal, ASM, ATI.TypeQuals);
       }
       // If this is not C99, extwarn about VLA's and C99 array size modifiers.
-      // Unless we're in C++ new mode. ActOnCXXNew will complain about them
-      // there, and they're hard errors.
-      if (!getLangOptions().C99 && !CXXNewMode &&
+      if (!getLangOptions().C99 &&
           (ASM != ArrayType::Normal ||
            (ArraySize && !ArraySize->isIntegerConstantExpr(Context))))
         Diag(D.getIdentifierLoc(), diag::ext_vla);
@@ -617,12 +611,12 @@ bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2)
   return false;
 }
 
-Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D, bool CXXNewMode) {
+Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   // C99 6.7.6: Type names have no identifier.  This is already validated by
   // the parser.
   assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
   
-  QualType T = GetTypeForDeclarator(D, S, CXXNewMode);
+  QualType T = GetTypeForDeclarator(D, S);
 
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   

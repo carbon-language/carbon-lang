@@ -258,10 +258,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// ActOnTypeName - A type-name (type-id in C++) was parsed.
-  /// CXXNewMode is a flag passed by the parser of C++ new-expressions. It
-  /// specifies that the outermost array (if any) must be treated as a VLA.
-  virtual TypeResult ActOnTypeName(Scope *S, Declarator &D,
-                                   bool CXXNewMode = false) {
+  virtual TypeResult ActOnTypeName(Scope *S, Declarator &D) {
     return 0;
   }
   
@@ -760,18 +757,12 @@ public:
   /// new was qualified (::new). In a full new like
   /// @code new (p1, p2) type(c1, c2) @endcode
   /// the p1 and p2 expressions will be in PlacementArgs and the c1 and c2
-  /// expressions in ConstructorArgs. If the type is a dynamic array, Ty will
-  /// be a variable-length array type, with the outermost dimension to be
-  /// allocated dynamically.
-  /// Example:
-  /// @code new int*[rand()][3] @endcode
-  /// Here, Ty will be a VLA with size "rand()" and element type "int*[3]".
+  /// expressions in ConstructorArgs. The type is passed as a declarator.
   virtual ExprResult ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                                  SourceLocation PlacementLParen,
                                  ExprTy **PlacementArgs, unsigned NumPlaceArgs,
                                  SourceLocation PlacementRParen,
-                                 bool ParenTypeId, SourceLocation TyStart,
-                                 TypeTy *Ty, SourceLocation TyEnd,
+                                 bool ParenTypeId, Declarator &D,
                                  SourceLocation ConstructorLParen,
                                  ExprTy **ConstructorArgs, unsigned NumConsArgs,
                                  SourceLocation ConstructorRParen) {

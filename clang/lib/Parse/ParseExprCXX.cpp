@@ -645,6 +645,13 @@ Parser::TypeTy *Parser::ParseConversionFunctionId() {
 ///        new-placement:
 ///                   '(' expression-list ')'
 ///
+///        new-type-id:
+///                   type-specifier-seq new-declarator[opt]
+///
+///        new-declarator:
+///                   ptr-operator new-declarator[opt]
+///                   direct-new-declarator
+///
 ///        new-initializer:
 ///                   '(' expression-list[opt] ')'
 /// [C++0x]           braced-init-list                                   [TODO]
@@ -671,48 +678,57 @@ Parser::ExprResult Parser::ParseCXXNewExpression()
   ExprVector PlacementArgs(Actions);
   SourceLocation PlacementLParen, PlacementRParen;
 
-  TypeTy *Ty = 0;
-  SourceLocation TyStart, TyEnd;
   bool ParenTypeId;
+  DeclSpec DS;
+  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   if (Tok.is(tok::l_paren)) {
     // If it turns out to be a placement, we change the type location.
     PlacementLParen = ConsumeParen();
-    TyStart = Tok.getLocation();
-    if (ParseExpressionListOrTypeId(PlacementArgs, Ty))
+    if (ParseExpressionListOrTypeId(PlacementArgs, DeclaratorInfo)) {
+      SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
       return true;
-    TyEnd = Tok.getLocation();
+    }
 
     PlacementRParen = MatchRHSPunctuation(tok::r_paren, PlacementLParen);
-    if (PlacementRParen.isInvalid())
+    if (PlacementRParen.isInvalid()) {
+      SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
       return true;
+    }
 
-    if (Ty) {
+    if (PlacementArgs.empty()) {
       // Reset the placement locations. There was no placement.
       PlacementLParen = PlacementRParen = SourceLocation();
       ParenTypeId = true;
     } else {
       // We still need the type.
       if (Tok.is(tok::l_paren)) {
-        ConsumeParen();
-        TyStart = Tok.getLocation();
-        Ty = ParseTypeName(/*CXXNewMode=*/true);
+        SourceLocation LParen = ConsumeParen();
+        ParseSpecifierQualifierList(DS);
+        ParseDeclarator(DeclaratorInfo);
+        MatchRHSPunctuation(tok::r_paren, LParen);
         ParenTypeId = true;
       } else {
-        TyStart = Tok.getLocation();
-        Ty = ParseNewTypeId();
+        if (ParseCXXTypeSpecifierSeq(DS))
+          DeclaratorInfo.setInvalidType(true);
+        else
+          ParseDeclaratorInternal(DeclaratorInfo,
+                                  &Parser::ParseDirectNewDeclarator);
         ParenTypeId = false;
       }
-      if (!Ty)
-        return true;
-      TyEnd = Tok.getLocation();
     }
   } else {
-    TyStart = Tok.getLocation();
-    Ty = ParseNewTypeId();
-    if (!Ty)
-      return true;
-    TyEnd = Tok.getLocation();
+    // A new-type-id is a simplified type-id, where essentially the
+    // direct-declarator is replaced by a direct-new-declarator.
+    if (ParseCXXTypeSpecifierSeq(DS))
+      DeclaratorInfo.setInvalidType(true);
+    else
+      ParseDeclaratorInternal(DeclaratorInfo,
+                              &Parser::ParseDirectNewDeclarator);
     ParenTypeId = false;
+  }
+  if (DeclaratorInfo.getInvalidType()) {
+    SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
+    return true;
   }
 
   ExprVector ConstructorArgs(Actions);
@@ -722,49 +738,23 @@ Parser::ExprResult Parser::ParseCXXNewExpression()
     ConstructorLParen = ConsumeParen();
     if (Tok.isNot(tok::r_paren)) {
       CommaLocsTy CommaLocs;
-      if (ParseExpressionList(ConstructorArgs, CommaLocs))
+      if (ParseExpressionList(ConstructorArgs, CommaLocs)) {
+        SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
         return true;
+      }
     }
     ConstructorRParen = MatchRHSPunctuation(tok::r_paren, ConstructorLParen);
-    if (ConstructorRParen.isInvalid())
+    if (ConstructorRParen.isInvalid()) {
+      SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
       return true;
+    }
   }
 
   return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
                              PlacementArgs.take(), PlacementArgs.size(),
-                             PlacementRParen, ParenTypeId, TyStart, Ty, TyEnd,
+                             PlacementRParen, ParenTypeId, DeclaratorInfo,
                              ConstructorLParen, ConstructorArgs.take(),
                              ConstructorArgs.size(), ConstructorRParen);
-}
-
-/// ParseNewTypeId - Parses a type ID as it appears in a new expression.
-/// The most interesting part of this is the new-declarator, which can be a
-/// multi-dimensional array, of which the first has a non-constant expression as
-/// the size, e.g.
-/// @code new int[runtimeSize()][2][2] @endcode
-///
-///        new-type-id:
-///                   type-specifier-seq new-declarator[opt]
-///
-///        new-declarator:
-///                   ptr-operator new-declarator[opt]
-///                   direct-new-declarator
-///
-Parser::TypeTy * Parser::ParseNewTypeId()
-{
-  DeclSpec DS;
-  if (ParseCXXTypeSpecifierSeq(DS))
-    return 0;
-
-  // A new-declarator is a simplified version of a declarator. We use
-  // ParseDeclaratorInternal, but pass our own direct declarator parser,
-  // one that parses a direct-new-declarator.
-  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
-  ParseDeclaratorInternal(DeclaratorInfo, &Parser::ParseDirectNewDeclarator);
-
-  TypeTy *Ty = Actions.ActOnTypeName(CurScope, DeclaratorInfo,
-                                     /*CXXNewMode=*/true).Val;
-  return DeclaratorInfo.getInvalidType() ? 0 : Ty;
 }
 
 /// ParseDirectNewDeclarator - Parses a direct-new-declarator. Intended to be
@@ -806,12 +796,14 @@ void Parser::ParseDirectNewDeclarator(Declarator &D)
 ///        new-placement:
 ///                   '(' expression-list ')'
 ///
-bool Parser::ParseExpressionListOrTypeId(ExprListTy &PlacementArgs, TypeTy *&Ty)
+bool Parser::ParseExpressionListOrTypeId(ExprListTy &PlacementArgs,
+                                         Declarator &D)
 {
   // The '(' was already consumed.
   if (isTypeIdInParens()) {
-    Ty = ParseTypeName(/*CXXNewMode=*/true);
-    return Ty == 0;
+    ParseSpecifierQualifierList(D.getMutableDeclSpec());
+    ParseDeclarator(D);
+    return D.getInvalidType();
   }
 
   // It's not a type, it has to be an expression list.

@@ -509,8 +509,7 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 5.3.4 and 5.3.5: C++ new and delete
   ExprResult ParseCXXNewExpression();
-  TypeTy *ParseNewTypeId();
-  bool ParseExpressionListOrTypeId(ExprListTy &Exprs, TypeTy *&Ty);
+  bool ParseExpressionListOrTypeId(ExprListTy &Exprs, Declarator &D);
   void ParseDirectNewDeclarator(Declarator &D);
   ExprResult ParseCXXDeleteExpression();
 
@@ -736,7 +735,7 @@ private:
   TPResult TryParseBracketDeclarator();
 
 
-  TypeTy *ParseTypeName(bool CXXNewMode = false);
+  TypeTy *ParseTypeName();
   AttributeList *ParseAttributes();
   void ParseTypeofSpecifier(DeclSpec &DS);
 

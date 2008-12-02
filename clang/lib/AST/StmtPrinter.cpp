@@ -953,6 +953,9 @@ void StmtPrinter::VisitCXXNewExpr(CXXNewExpr *E) {
   }
   if (E->isParenTypeId())
     OS << "(";
+  // FIXME: This doesn't print the dynamic array size. We'd have to split up
+  // the allocated type to correctly emit that, but without an ASTContext,
+  // that's not possible.
   OS << E->getAllocatedType().getAsString();
   if (E->isParenTypeId())
     OS << ")";
