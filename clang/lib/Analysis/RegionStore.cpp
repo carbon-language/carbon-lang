@@ -639,7 +639,8 @@ Store RegionStoreManager::InitializeArray(Store store, const TypedRegion* R,
 
   llvm::APSInt Size(CAT->getSize(), false);
 
-  llvm::APSInt i = getBasicVals().getZeroWithPtrWidth(false);
+  llvm::APSInt i = getBasicVals().getValue(0, Size.getBitWidth(),
+                                           Size.isUnsigned());
 
   // Check if the init expr is a StringLiteral.
   if (isa<loc::MemRegionVal>(Init)) {
