@@ -242,6 +242,17 @@ public:
   const Value *getUnderlyingObject() const {
     return const_cast<Value*>(this)->getUnderlyingObject();
   }
+  
+  /// DoPHITranslation - If this value is a PHI node with CurBB as a its parent,
+  /// return the value in the PHI node corresponding to PredBB.  If not, return
+  /// ourself.  This is useful if you want to know the value something has in a
+  /// predecessor block.
+  Value *DoPHITranslation(const BasicBlock *CurBB, const BasicBlock *PredBB);
+
+  const Value *DoPHITranslation(const BasicBlock *CurBB,
+                                const BasicBlock *PredBB) const{
+    return const_cast<Value*>(this)->DoPHITranslation(CurBB, PredBB);
+  }
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Value &V) {

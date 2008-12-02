@@ -358,6 +358,19 @@ Value *Value::getUnderlyingObject() {
   return this;
 }
 
+/// DoPHITranslation - If this value is a PHI node with CurBB as a its parent,
+/// return the value in the PHI node corresponding to PredBB.  If not, return
+/// ourself.  This is useful if you want to know the value something has in a
+/// predecessor block.
+Value *Value::DoPHITranslation(const BasicBlock *CurBB, 
+                               const BasicBlock *PredBB) {
+  PHINode *PN = dyn_cast<PHINode>(this);
+  if (PN && PN->getParent() == CurBB)
+    return PN->getIncomingValueForBlock(PredBB);
+  return this;
+}
+
+
 //===----------------------------------------------------------------------===//
 //                                 User Class
 //===----------------------------------------------------------------------===//
