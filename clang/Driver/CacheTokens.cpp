@@ -21,30 +21,20 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Path.h"
 
 using namespace clang;
 
-typedef llvm::DenseMap<const FileEntry*,uint64_t> PCHMap;
-typedef llvm::DenseMap<const IdentifierInfo*,uint64_t> IDMap;
+typedef uint32_t Offset;
+
+typedef llvm::DenseMap<const FileEntry*,Offset> PCHMap;
+typedef llvm::DenseMap<const IdentifierInfo*,uint32_t> IDMap;
 
 static void Emit32(llvm::raw_ostream& Out, uint32_t V) {
-#if 0
   Out << (unsigned char)(V);
   Out << (unsigned char)(V >>  8);
   Out << (unsigned char)(V >> 16);
   Out << (unsigned char)(V >> 24);
-#else
-  Out << V;
-#endif
-}
-
-static void Emit64(llvm::raw_ostream& Out, uint64_t V) {
-  Out << V;
-}
-
-static void EmitOffset(llvm::raw_ostream& Out, uint64_t V) {
-  assert(((uint32_t) V) == V && "Offset exceeds 32 bits.");
-  Emit32(Out, (uint32_t) V);
 }
 
 static void Emit8(llvm::raw_ostream& Out, uint32_t V) {
@@ -56,36 +46,30 @@ static void EmitBuf(llvm::raw_ostream& Out, const char* I, const char* E) {
 }
 
 static uint32_t ResolveID(IDMap& IM, uint32_t& idx, const IdentifierInfo* II) {
+  
+  // Null IdentifierInfo's map to the persistent ID 0.
+  if (!II)
+    return 0;
+  
   IDMap::iterator I = IM.find(II);
 
   if (I == IM.end()) {
-    IM[II] = idx;
-    return idx++;
+    IM[II] = ++idx; // Pre-increment since '0' is reserved for NULL.
+    return idx;
   }
   
-  return I->second;
+  return I->second; // We've already added 1.
 }
 
 static void EmitToken(llvm::raw_ostream& Out, const Token& T,
+                      const SourceManager& SMgr,
                       uint32_t& idcount, IDMap& IM) {
+  
   Emit8(Out, T.getKind());
   Emit8(Out, T.getFlags());
   Emit32(Out, ResolveID(IM, idcount, T.getIdentifierInfo()));
-  Emit32(Out, T.getLocation().getRawEncoding());
+  Emit32(Out, SMgr.getFullFilePos(T.getLocation()));
   Emit32(Out, T.getLength());
-}
-
-
-static void EmitIdentifier(llvm::raw_ostream& Out, const IdentifierInfo& II) {
-  uint32_t X = (uint32_t) II.getTokenID() << 19;
-  X |= (uint32_t) II.getBuiltinID() << 9;
-  X |= (uint32_t) II.getObjCKeywordID() << 4;
-  if (II.hasMacroDefinition()) X |= 0x8;
-  if (II.isExtensionToken()) X |= 0x4;
-  if (II.isPoisoned()) X |= 0x2;
-  if (II.isCPlusPlusOperatorKeyword()) X |= 0x1;
-
-  Emit32(Out, X);
 }
 
 struct IDData {
@@ -94,72 +78,78 @@ struct IDData {
   const IdentifierTable::const_iterator::value_type* Str;
 };
 
-static std::pair<uint64_t,uint64_t>
+static std::pair<Offset,Offset>
 EmitIdentifierTable(llvm::raw_fd_ostream& Out, uint32_t max,
                     const IdentifierTable& T, const IDMap& IM) {
 
   // Build an inverse map from persistent IDs -> IdentifierInfo*.
-  typedef std::vector< IDData > InverseIDMap;
+  typedef std::vector<IDData> InverseIDMap;
   InverseIDMap IIDMap;
-  IIDMap.reserve(max);
+  IIDMap.resize(max);
   
   // Generate mapping from persistent IDs -> IdentifierInfo*.
-  for (IDMap::const_iterator I=IM.begin(), E=IM.end(); I!=E; ++I)
-    IIDMap[I->second].II = I->first;
+  for (IDMap::const_iterator I=IM.begin(), E=IM.end(); I!=E; ++I) {
+    // Decrement by 1 because we are using a vector for the lookup and
+    // 0 is reserved for NULL.
+    assert(I->second > 0);
+    assert(I->second-1 < IIDMap.size());
+    IIDMap[I->second-1].II = I->first;
+  }
 
   // Get the string data associated with the IdentifierInfo.
   for (IdentifierTable::const_iterator I=T.begin(), E=T.end(); I!=E; ++I) {
     IDMap::const_iterator IDI = IM.find(&(I->getValue()));
     if (IDI == IM.end()) continue;
-    IIDMap[IDI->second].Str = &(*I);
+    IIDMap[IDI->second-1].Str = &(*I);
   }
   
-  uint64_t DataOff = Out.tell();
+  Offset DataOff = Out.tell();
   
   for (InverseIDMap::iterator I=IIDMap.begin(), E=IIDMap.end(); I!=E; ++I) {
-    I->FileOffset = Out.tell();      // Record the location for this data.
-    EmitIdentifier(Out, *(I->II));   // Write out the identifier data.
-    unsigned len = I->Str->getKeyLength();  // Write out the keyword.
+    // Record the location for this data.
+    I->FileOffset = Out.tell();
+    // Write out the keyword.
+    unsigned len = I->Str->getKeyLength();  
     Emit32(Out, len);
     const char* buf = I->Str->getKeyData();    
     EmitBuf(Out, buf, buf+len);  
   }
   
   // Now emit the table mapping from persistent IDs to PTH file offsets.  
-  uint64_t IDOff = Out.tell();
+  Offset IDOff = Out.tell();
   
   for (InverseIDMap::iterator I=IIDMap.begin(), E=IIDMap.end(); I!=E; ++I)
-    EmitOffset(Out, I->FileOffset);
-  
+    Emit32(Out, I->FileOffset);
+
   return std::make_pair(DataOff, IDOff);
 }
 
-static uint64_t EmitFileTable(llvm::raw_fd_ostream& Out, SourceManager& SM,
-                              PCHMap& PM) {
+Offset EmitFileTable(llvm::raw_fd_ostream& Out, SourceManager& SM, PCHMap& PM) {
   
-  uint64_t off = Out.tell();
+  Offset off = (Offset) Out.tell();
   
   // Output the size of the table.
   Emit32(Out, PM.size());
 
   for (PCHMap::iterator I=PM.begin(), E=PM.end(); I!=E; ++I) {
-    // For now emit inode information.  In the future we should utilize
-    // the FileManager's internal mechanism of uniquing files, which differs
-    // for Windows and Unix-like systems.
     const FileEntry* FE = I->first;
-    Emit64(Out, FE->getDevice());
-    Emit64(Out, FE->getInode());
+    llvm::sys::Path P(FE->getName());
+    assert(P.isAbsolute());
+    Emit32(Out, P.size());
+    const char* buf = P.c_str();
+    EmitBuf(Out, buf, buf+P.size());
     Emit32(Out, I->second);    
   }
 
   return off;
 }
 
-static uint64_t LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
-                          uint32_t& idcount, IDMap& IM) {
+static Offset LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
+                        uint32_t& idcount, IDMap& IM) {
   
   // Record the location within the token file.
-  uint64_t off = Out.tell();
+  Offset off = (Offset) Out.tell();
+  SourceManager& SMgr = PP.getSourceManager();
 
   Token Tok;
   
@@ -172,7 +162,7 @@ static uint64_t LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
     else if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
       // Special processing for #include.  Store the '#' token and lex
       // the next token.
-      EmitToken(Out, Tok, idcount, IM);
+      EmitToken(Out, Tok, SMgr, idcount, IM);
       L.LexFromRawLexer(Tok);
       
       // Did we see 'include'/'import'/'include_next'?
@@ -187,7 +177,7 @@ static uint64_t LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
           K == tok::pp_include_next) {
         
         // Save the 'include' token.
-        EmitToken(Out, Tok, idcount, IM);
+        EmitToken(Out, Tok, SMgr, idcount, IM);
         
         // Lex the next token as an include string.
         L.setParsingPreprocessorDirective(true);
@@ -199,8 +189,8 @@ static uint64_t LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
       }
     }    
   }
-  while (EmitToken(Out, Tok, idcount, IM), Tok.isNot(tok::eof));
-  
+  while (EmitToken(Out, Tok, SMgr, idcount, IM), Tok.isNot(tok::eof));
+
   return off;
 }
 
@@ -225,7 +215,7 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
   llvm::raw_fd_ostream Out(OutFile.c_str(), true, ErrMsg);
   
   if (!ErrMsg.empty()) {
-    os << "PCH error: " << ErrMsg << "\n";
+    os << "PTH error: " << ErrMsg << "\n";
     return;
   }
   
@@ -237,6 +227,11 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
 
     const FileEntry* FE = C->Entry;    // Does this entry correspond to a file?    
     if (!FE) continue;
+    
+    // FIXME: Handle files with non-absolute paths.
+    llvm::sys::Path P(FE->getName());
+    if (!P.isAbsolute())
+      continue;
 
     PCHMap::iterator PI = PM.find(FE); // Have we already processed this file?
     if (PI != PM.end()) continue;
@@ -251,14 +246,14 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
   }
 
   // Write out the identifier table.
-  std::pair<uint64_t,uint64_t> IdTableOff =
+  std::pair<Offset,Offset> IdTableOff =
     EmitIdentifierTable(Out, idcount, PP.getIdentifierTable(), IM);
   
   // Write out the file table.
-  uint64_t FileTableOff = EmitFileTable(Out, SM, PM);  
+  Offset FileTableOff = EmitFileTable(Out, SM, PM);  
   
   // Finally, write out the offset table at the end.
-  EmitOffset(Out, IdTableOff.first);
-  EmitOffset(Out, IdTableOff.second);
-  EmitOffset(Out, FileTableOff);
+  Emit32(Out, IdTableOff.first);
+  Emit32(Out, IdTableOff.second);
+  Emit32(Out, FileTableOff);
 }
