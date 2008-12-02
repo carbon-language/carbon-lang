@@ -609,19 +609,19 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID) {
     return; // FIXME: is this correct?
     
   // Generate the 'getter' function.
-  std::string Getr;
   ObjCPropertyDecl *PD = PID->getPropertyDecl();
-
-  RewriteObjCMethodDecl(PD->getGetterMethodDecl(), Getr);
   ObjCInterfaceDecl *ClassDecl = PD->getGetterMethodDecl()->getClassInterface();
-
-  Getr += "{ ";
   ObjCIvarDecl *OID = PID->getPropertyIvarDecl();
-  if (OID) {
-    // Synthesize an explicit cast to gain access to the ivar.
-    Getr += "return " + getIvarAccessString(ClassDecl, OID);
-    Getr += "; }";
-  } 
+  
+  if (!OID)
+    return;
+    
+  std::string Getr;
+  RewriteObjCMethodDecl(PD->getGetterMethodDecl(), Getr);
+  Getr += "{ ";
+  // Synthesize an explicit cast to gain access to the ivar.
+  Getr += "return " + getIvarAccessString(ClassDecl, OID);
+  Getr += "; }";
   InsertText(onePastSemiLoc, Getr.c_str(), Getr.size());
   
   if (PD->isReadOnly())
@@ -630,14 +630,11 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID) {
   // Generate the 'setter' function.
   std::string Setr;
   RewriteObjCMethodDecl(PD->getSetterMethodDecl(), Setr);
-  
   Setr += "{ ";
-  if (OID) {
-    // Synthesize an explicit cast to initialize the ivar.
-    Setr += getIvarAccessString(ClassDecl, OID) + " = ";
-    Setr += OID->getNameAsCString();
-    Setr += "; }";
-  } 
+  // Synthesize an explicit cast to initialize the ivar.
+  Setr += getIvarAccessString(ClassDecl, OID) + " = ";
+  Setr += OID->getNameAsCString();
+  Setr += "; }";
   InsertText(onePastSemiLoc, Setr.c_str(), Setr.size());
 }
 
