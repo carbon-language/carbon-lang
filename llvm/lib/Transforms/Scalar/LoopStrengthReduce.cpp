@@ -643,8 +643,10 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
     // cases (e.g. use of a post-incremented induction variable) the NewBase
     // value will be pinned to live somewhere after the original computation.
     // In this case, we have to back off.
-    // However, do not insert new code inside the loop when the reference
-    // is outside.
+    //
+    // If this is a use outside the loop (which means after, since it is based
+    // on a loop indvar) we use the post-incremented value, so that we don't
+    // artificially make the preinc value live out the bottom of the loop. 
     if (!isUseOfPostIncrementedValue && L->contains(Inst->getParent())) {
       if (NewBasePt && isa<PHINode>(OperandValToReplace)) {
         InsertPt = NewBasePt;
@@ -920,17 +922,22 @@ static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
 /// RemoveCommonExpressionsFromUseBases - Look through all of the uses in Bases,
 /// removing any common subexpressions from it.  Anything truly common is
 /// removed, accumulated, and returned.  This looks for things like (a+b+c) and
-/// (a+c+d) -> (a+c).  The common expression is *removed* from the Bases.
+/// (a+c+d) and computes the common (a+c) subexpression.  The common expression
+/// is *removed* from the Bases and returned.
 static SCEVHandle 
 RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
                                     ScalarEvolution *SE, Loop *L) {
   unsigned NumUses = Uses.size();
 
-  // Only one use?  If inside the loop, use its base, regardless of what it is;
-  // if outside, use 0.
+  // Only one use?  This is a very common case, so we handle it specially and
+  // cheaply.
   SCEVHandle Zero = SE->getIntegerSCEV(0, Uses[0].Base->getType());
   SCEVHandle Result = Zero;
   if (NumUses == 1) {
+    // If the use is inside the loop, use its base, regardless of what it is:
+    // it is clearly shared across all the IV's.  If the use is outside the loop
+    // (which means after it) we don't want to factor anything *into* the loop,
+    // so just use 0 as the base.
     if (L->contains(Uses[0].Inst->getParent()))
       std::swap(Result, Uses[0].Base);
     return Result;
@@ -945,9 +952,14 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
   std::vector<SCEVHandle> UniqueSubExprs;
 
   std::vector<SCEVHandle> SubExprs;
-  uint64_t NumUsesInsideLoop = 0;
+  unsigned NumUsesInsideLoop = 0;
   for (unsigned i = 0; i != NumUses; ++i) {
-    // For this purpose, consider only uses that are inside the loop.
+    // If the user is outside the loop, just ignore it for base computation.
+    // Since the user is outside the loop, it must be *after* the loop (if it
+    // were before, it could not be based on the loop IV).  We don't want users
+    // after the loop to affect base computation of values *inside* the loop,
+    // because we can always add their offsets to the result IV after the loop
+    // is done, ensuring we get good code inside the loop.
     if (!L->contains(Uses[i].Inst->getParent()))
       continue;
     NumUsesInsideLoop++;
@@ -971,12 +983,11 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
     std::map<SCEVHandle, unsigned>::iterator I = 
        SubExpressionUseCounts.find(UniqueSubExprs[i]);
     assert(I != SubExpressionUseCounts.end() && "Entry not found?");
-    if (I->second == NumUsesInsideLoop) {  // Found CSE!
+    if (I->second == NumUsesInsideLoop)   // Found CSE!
       Result = SE->getAddExpr(Result, I->first);
-    } else {
+    else
       // Remove non-cse's from SubExpressionUseCounts.
       SubExpressionUseCounts.erase(I);
-    }
   }
   
   // If we found no CSE's, return now.
@@ -998,7 +1009,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
         --j; --e;
       }
     
-    // Finally, the non-shared expressions together.
+    // Finally, add the non-shared expressions together.
     if (SubExprs.empty())
       Uses[i].Base = Zero;
     else
