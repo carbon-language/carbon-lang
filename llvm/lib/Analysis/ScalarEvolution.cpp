@@ -324,6 +324,26 @@ const Type *SCEVUDivExpr::getType() const {
   return LHS->getType();
 }
 
+
+// SCEVSDivs - Only allow the creation of one SCEVSDivExpr for any particular
+// input.  Don't use a SCEVHandle here, or else the object will never be
+// deleted!
+static ManagedStatic<std::map<std::pair<SCEV*, SCEV*>, 
+                     SCEVSDivExpr*> > SCEVSDivs;
+
+SCEVSDivExpr::~SCEVSDivExpr() {
+  SCEVSDivs->erase(std::make_pair(LHS, RHS));
+}
+
+void SCEVSDivExpr::print(std::ostream &OS) const {
+  OS << "(" << *LHS << " /s " << *RHS << ")";
+}
+
+const Type *SCEVSDivExpr::getType() const {
+  return LHS->getType();
+}
+
+
 // SCEVAddRecExprs - Only allow the creation of one SCEVAddRecExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will never
 // be deleted!
@@ -1109,9 +1129,12 @@ SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
 }
 
 SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS, const SCEVHandle &RHS) {
+  if (LHS == RHS)
+    return getIntegerSCEV(1, LHS->getType());  // X udiv X --> 1
+
   if (SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->equalsInt(1))
-      return LHS;                            // X udiv 1 --> x
+      return LHS;                              // X udiv 1 --> X
 
     if (SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
       Constant *LHSCV = LHSC->getValue();
@@ -1120,10 +1143,31 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS, const SCEVHandle 
     }
   }
 
-  // FIXME: implement folding of (X*4)/4 when we know X*4 doesn't overflow.
-
   SCEVUDivExpr *&Result = (*SCEVUDivs)[std::make_pair(LHS, RHS)];
   if (Result == 0) Result = new SCEVUDivExpr(LHS, RHS);
+  return Result;
+}
+
+SCEVHandle ScalarEvolution::getSDivExpr(const SCEVHandle &LHS, const SCEVHandle &RHS) {
+  if (LHS == RHS)                            
+    return getIntegerSCEV(1, LHS->getType());  // X sdiv X --> 1
+
+  if (SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
+    if (RHSC->getValue()->equalsInt(1))
+      return LHS;                              // X sdiv 1 --> X
+
+    if (RHSC->getValue()->isAllOnesValue())
+      return getNegativeSCEV(LHS);             // X sdiv -1 --> -X
+
+    if (SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
+      Constant *LHSCV = LHSC->getValue();
+      Constant *RHSCV = RHSC->getValue();
+      return getUnknown(ConstantExpr::getSDiv(LHSCV, RHSCV));
+    }
+  }
+
+  SCEVSDivExpr *&Result = (*SCEVSDivs)[std::make_pair(LHS, RHS)];
+  if (Result == 0) Result = new SCEVSDivExpr(LHS, RHS);
   return Result;
 }
 
@@ -1732,7 +1776,7 @@ static uint32_t GetMinTrailingZeros(SCEVHandle S) {
     return MinOpRes;
   }
 
-  // SCEVUDivExpr, SCEVUnknown
+  // SCEVUDivExpr, SCEVSDivExpr, SCEVUnknown
   return 0;
 }
 
@@ -1761,6 +1805,9 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
                          getSCEV(U->getOperand(1)));
   case Instruction::UDiv:
     return SE.getUDivExpr(getSCEV(U->getOperand(0)),
+                          getSCEV(U->getOperand(1)));
+  case Instruction::SDiv:
+    return SE.getSDivExpr(getSCEV(U->getOperand(0)),
                           getSCEV(U->getOperand(1)));
   case Instruction::Sub:
     return SE.getMinusSCEV(getSCEV(U->getOperand(0)),
@@ -1805,7 +1852,7 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
     break;
 
   case Instruction::LShr:
-    // Turn logical shift right of a constant into a unsigned divide.
+    // Turn logical shift right of a constant into an unsigned divide.
     if (ConstantInt *SA = dyn_cast<ConstantInt>(U->getOperand(1))) {
       uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
       Constant *X = ConstantInt::get(
@@ -2505,14 +2552,24 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
     return Comm;
   }
 
-  if (SCEVUDivExpr *Div = dyn_cast<SCEVUDivExpr>(V)) {
-    SCEVHandle LHS = getSCEVAtScope(Div->getLHS(), L);
+  if (SCEVUDivExpr *UDiv = dyn_cast<SCEVUDivExpr>(V)) {
+    SCEVHandle LHS = getSCEVAtScope(UDiv->getLHS(), L);
     if (LHS == UnknownValue) return LHS;
-    SCEVHandle RHS = getSCEVAtScope(Div->getRHS(), L);
+    SCEVHandle RHS = getSCEVAtScope(UDiv->getRHS(), L);
     if (RHS == UnknownValue) return RHS;
-    if (LHS == Div->getLHS() && RHS == Div->getRHS())
-      return Div;   // must be loop invariant
+    if (LHS == UDiv->getLHS() && RHS == UDiv->getRHS())
+      return UDiv;   // must be loop invariant
     return SE.getUDivExpr(LHS, RHS);
+  }
+
+  if (SCEVSDivExpr *SDiv = dyn_cast<SCEVSDivExpr>(V)) {
+    SCEVHandle LHS = getSCEVAtScope(SDiv->getLHS(), L);
+    if (LHS == UnknownValue) return LHS;
+    SCEVHandle RHS = getSCEVAtScope(SDiv->getRHS(), L);
+    if (RHS == UnknownValue) return RHS;
+    if (LHS == SDiv->getLHS() && RHS == SDiv->getRHS())
+      return SDiv;   // must be loop invariant
+    return SE.getSDivExpr(LHS, RHS);
   }
 
   // If this is a loop recurrence for a loop that does not contain L, then we

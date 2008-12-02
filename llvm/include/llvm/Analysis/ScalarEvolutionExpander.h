@@ -104,6 +104,8 @@ namespace llvm {
 
     Value *visitUDivExpr(SCEVUDivExpr *S);
 
+    Value *visitSDivExpr(SCEVSDivExpr *S);
+
     Value *visitAddRecExpr(SCEVAddRecExpr *S);
 
     Value *visitSMaxExpr(SCEVSMaxExpr *S);
