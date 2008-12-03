@@ -1976,9 +1976,9 @@ static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
 }
 
 MachineInstr*
-X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
-                                MachineInstr *MI, unsigned i,
-                                const SmallVector<MachineOperand,4> &MOs) const{
+X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
+                                    MachineInstr *MI, unsigned i,
+                                    const SmallVector<MachineOperand,4> &MOs) const{
   const DenseMap<unsigned*, unsigned> *OpcodeTablePtr = NULL;
   bool isTwoAddrFold = false;
   unsigned NumOps = MI->getDesc().getNumOperands();
@@ -2035,10 +2035,10 @@ X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
 }
 
 
-MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
-                                              MachineInstr *MI,
-                                        const SmallVectorImpl<unsigned> &Ops,
-                                              int FrameIndex) const {
+MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
+                                                  MachineInstr *MI,
+                                                  const SmallVectorImpl<unsigned> &Ops,
+                                                  int FrameIndex) const {
   // Check switch flag 
   if (NoFusing) return NULL;
 
@@ -2079,13 +2079,13 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
 
   SmallVector<MachineOperand,4> MOs;
   MOs.push_back(MachineOperand::CreateFI(FrameIndex));
-  return foldMemoryOperand(MF, MI, Ops[0], MOs);
+  return foldMemoryOperandImpl(MF, MI, Ops[0], MOs);
 }
 
-MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
-                                              MachineInstr *MI,
-                                        const SmallVectorImpl<unsigned> &Ops,
-                                              MachineInstr *LoadMI) const {
+MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
+                                                  MachineInstr *MI,
+                                            const SmallVectorImpl<unsigned> &Ops,
+                                                  MachineInstr *LoadMI) const {
   // Check switch flag 
   if (NoFusing) return NULL;
 
@@ -2158,7 +2158,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
     for (unsigned i = NumOps - 4; i != NumOps; ++i)
       MOs.push_back(LoadMI->getOperand(i));
   }
-  return foldMemoryOperand(MF, MI, Ops[0], MOs);
+  return foldMemoryOperandImpl(MF, MI, Ops[0], MOs);
 }
 
 

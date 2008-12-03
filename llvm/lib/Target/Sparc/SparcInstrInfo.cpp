@@ -225,10 +225,10 @@ void SparcInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   return;
 }
 
-MachineInstr *SparcInstrInfo::foldMemoryOperand(MachineFunction &MF,
-                                                MachineInstr* MI,
+MachineInstr *SparcInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
+                                                    MachineInstr* MI,
                                           const SmallVectorImpl<unsigned> &Ops,
-                                                int FI) const {
+                                                    int FI) const {
   if (Ops.size() != 1) return NULL;
 
   unsigned OpNum = Ops[0];

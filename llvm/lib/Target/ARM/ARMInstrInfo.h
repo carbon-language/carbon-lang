@@ -211,15 +211,15 @@ public:
                                            MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI) const;
   
-  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
-                                          MachineInstr* MI,
-                                          const SmallVectorImpl<unsigned> &Ops,
-                                          int FrameIndex) const;
+  virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+                                              MachineInstr* MI,
+                                           const SmallVectorImpl<unsigned> &Ops,
+                                              int FrameIndex) const;
 
-  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
-                                          MachineInstr* MI,
-                                          const SmallVectorImpl<unsigned> &Ops,
-                                          MachineInstr* LoadMI) const {
+  virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+                                              MachineInstr* MI,
+                                           const SmallVectorImpl<unsigned> &Ops,
+                                              MachineInstr* LoadMI) const {
     return 0;
   }
 

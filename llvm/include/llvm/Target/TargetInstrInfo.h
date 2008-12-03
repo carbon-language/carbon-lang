@@ -305,23 +305,41 @@ public:
   /// operand folded, otherwise NULL is returned. The client is responsible for
   /// removing the old instruction and adding the new one in the instruction
   /// stream.
-  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
+  MachineInstr* foldMemoryOperand(MachineFunction &MF,
+                                  MachineInstr* MI,
+                                  const SmallVectorImpl<unsigned> &Ops,
+                                  int FrameIndex) const;
+
+  /// foldMemoryOperand - Same as the previous version except it allows folding
+  /// of any load and store from / to any address, not just from a specific
+  /// stack slot.
+  MachineInstr* foldMemoryOperand(MachineFunction &MF,
+                                  MachineInstr* MI,
+                                  const SmallVectorImpl<unsigned> &Ops,
+                                  MachineInstr* LoadMI) const;
+
+protected:
+  /// foldMemoryOperandImpl - Target-dependent implementation for
+  /// foldMemoryOperand. Target-independent code in foldMemoryOperand will
+  /// take care of adding a MachineMemOperand to the newly created instruction.
+  virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                           MachineInstr* MI,
                                           const SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const {
     return 0;
   }
 
-  /// foldMemoryOperand - Same as the previous version except it allows folding
-  /// of any load and store from / to any address, not just from a specific
-  /// stack slot.
-  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
-                                          MachineInstr* MI,
-                                          const SmallVectorImpl<unsigned> &Ops,
-                                          MachineInstr* LoadMI) const {
+  /// foldMemoryOperandImpl - Target-dependent implementation for
+  /// foldMemoryOperand. Target-independent code in foldMemoryOperand will
+  /// take care of adding a MachineMemOperand to the newly created instruction.
+  virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+                                              MachineInstr* MI,
+                                              const SmallVectorImpl<unsigned> &Ops,
+                                              MachineInstr* LoadMI) const {
     return 0;
   }
 
+public:
   /// canFoldMemoryOperand - Returns true if the specified load / store is
   /// folding is possible.
   virtual

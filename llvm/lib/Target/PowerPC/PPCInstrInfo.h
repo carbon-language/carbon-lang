@@ -142,15 +142,15 @@ public:
   
   /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
   /// copy instructions, turning them into load/store instructions.
-  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
-                                          MachineInstr* MI,
-                                          const SmallVectorImpl<unsigned> &Ops,
-                                          int FrameIndex) const;
+  virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+                                              MachineInstr* MI,
+                                              const SmallVectorImpl<unsigned> &Ops,
+                                              int FrameIndex) const;
 
-  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
-                                          MachineInstr* MI,
-                                          const SmallVectorImpl<unsigned> &Ops,
-                                          MachineInstr* LoadMI) const {
+  virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+                                              MachineInstr* MI,
+                                              const SmallVectorImpl<unsigned> &Ops,
+                                              MachineInstr* LoadMI) const {
     return 0;
   }
 

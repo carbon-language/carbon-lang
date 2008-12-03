@@ -14,8 +14,10 @@
 
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 using namespace llvm;
 
 // commuteInstruction - The default implementation of this method just exchanges
@@ -123,4 +125,70 @@ TargetInstrInfoImpl::GetFunctionSizeInBytes(const MachineFunction &MF) const {
       FnSize += GetInstSizeInBytes(I);
   }
   return FnSize;
+}
+
+/// foldMemoryOperand - Attempt to fold a load or store of the specified stack
+/// slot into the specified machine instruction for the specified operand(s).
+/// If this is possible, a new instruction is returned with the specified
+/// operand folded, otherwise NULL is returned. The client is responsible for
+/// removing the old instruction and adding the new one in the instruction
+/// stream.
+MachineInstr*
+TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
+                                   MachineInstr* MI,
+                                   const SmallVectorImpl<unsigned> &Ops,
+                                   int FrameIndex) const {
+  unsigned Flags = 0;
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+    if (MI->getOperand(Ops[i]).isDef())
+      Flags |= MachineMemOperand::MOStore;
+    else
+      Flags |= MachineMemOperand::MOLoad;
+
+  // Ask the target to do the actual folding.
+  MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, FrameIndex);
+  if (!NewMI) return 0;
+
+  assert((!(Flags & MachineMemOperand::MOStore) ||
+          NewMI->getDesc().mayStore()) &&
+         "Folded a def to a non-store!");
+  assert((!(Flags & MachineMemOperand::MOLoad) ||
+          NewMI->getDesc().mayLoad()) &&
+         "Folded a use to a non-load!");
+  const MachineFrameInfo &MFI = *MF.getFrameInfo();
+  assert(MFI.getObjectOffset(FrameIndex) != -1);
+  MachineMemOperand MMO(PseudoSourceValue::getFixedStack(FrameIndex),
+                        Flags,
+                        MFI.getObjectOffset(FrameIndex),
+                        MFI.getObjectSize(FrameIndex),
+                        MFI.getObjectAlignment(FrameIndex));
+  NewMI->addMemOperand(MF, MMO);
+
+  return NewMI;
+}
+
+/// foldMemoryOperand - Same as the previous version except it allows folding
+/// of any load and store from / to any address, not just from a specific
+/// stack slot.
+MachineInstr*
+TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
+                                   MachineInstr* MI,
+                                   const SmallVectorImpl<unsigned> &Ops,
+                                   MachineInstr* LoadMI) const {
+  assert(LoadMI->getDesc().canFoldAsLoad() && "LoadMI isn't foldable!");
+#ifndef NDEBUG
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+    assert(MI->getOperand(Ops[i]).isUse() && "Folding load into def!");
+#endif
+
+  // Ask the target to do the actual folding.
+  MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, LoadMI);
+  if (!NewMI) return 0;
+
+  // Copy the memoperands from the load to the folded instruction.
+  for (std::list<MachineMemOperand>::iterator I = LoadMI->memoperands_begin(),
+       E = LoadMI->memoperands_end(); I != E; ++I)
+    NewMI->addMemOperand(MF, *I);
+
+  return NewMI;
 }

@@ -279,9 +279,9 @@ void MipsInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 }
 
 MachineInstr *MipsInstrInfo::
-foldMemoryOperand(MachineFunction &MF,
-                  MachineInstr* MI,
-                  const SmallVectorImpl<unsigned> &Ops, int FI) const 
+foldMemoryOperandImpl(MachineFunction &MF,
+                      MachineInstr* MI,
+                      const SmallVectorImpl<unsigned> &Ops, int FI) const 
 {
   if (Ops.size() != 1) return NULL;
 
@@ -323,7 +323,7 @@ foldMemoryOperand(MachineFunction &MF,
       } else if (RC == Mips::AFGR64RegisterClass) {
         LoadOpc = Mips::LDC1; StoreOpc = Mips::SDC1;
       } else
-        assert(0 && "foldMemoryOperand register unknown");
+        assert(0 && "foldMemoryOperandImpl register unknown");
 
       if (Ops[0] == 0) {    // COPY -> STORE
         unsigned SrcReg = MI->getOperand(1).getReg();
