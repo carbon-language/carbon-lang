@@ -144,3 +144,12 @@ void f11(unsigned i) {
   }
 }
 
+void f11b(unsigned i) {
+  int *x = 0;
+  if (i <= ~(unsigned)0) {
+    // always true
+  } else {
+    *x = 42; // no-warning
+  }
+}
+

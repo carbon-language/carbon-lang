@@ -328,6 +328,13 @@ const GRState*
 BasicConstraintManager::AssumeSymGT(const GRState* St, SymbolID sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
 
+  // Is 'V' the largest possible value?
+  if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isSigned())) {
+    // sym cannot be any value greater than 'V'.  This path is infeasible.
+    isFeasible = false;
+    return St;
+  }
+
   // FIXME: For now have assuming x > y be the same as assuming sym != V;
   return AssumeSymNE(St, sym, V, isFeasible);
 }
@@ -341,10 +348,23 @@ BasicConstraintManager::AssumeSymGE(const GRState* St, SymbolID sym,
     isFeasible = *X >= V;
     return St;
   }
+  
+  // Sym is not a constant, but it is worth looking to see if V is the
+  // maximum integer value.
+  if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isSigned())) {
+    // If we know that sym != V, then this condition is infeasible since
+    // there is no other value greater than V.    
+    isFeasible = !isNotEqual(St, sym, V);
+    
+    // If the path is still feasible then as a consequence we know that
+    // 'sym == V' because we cannot have 'sym > V' (no larger values).
+    // Add this constraint.
+    if (isFeasible)
+      return AddEQ(St, sym, V);
+  }
+  else
+    isFeasible = true;
 
-  isFeasible = !isNotEqual(St, sym, V) || 
-               (V != llvm::APSInt::getMaxValue(V.getBitWidth(), V.isSigned()));
-                
   return St;
 }
 
