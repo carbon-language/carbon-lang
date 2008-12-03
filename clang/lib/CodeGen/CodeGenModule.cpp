@@ -607,6 +607,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     case VarDecl::None:
       if (!D->getInit())
         GV->setLinkage(llvm::GlobalVariable::CommonLinkage);
+      else
+        GV->setLinkage(llvm::GlobalVariable::ExternalLinkage);
       break;
     case VarDecl::Extern:
     case VarDecl::PrivateExtern:
