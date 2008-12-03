@@ -27,7 +27,9 @@ using namespace llvm;
 /// DeleteDeadBlock - Delete the specified block, which must have no
 /// predecessors.
 void llvm::DeleteDeadBlock(BasicBlock *BB) {
-  assert(pred_begin(BB) == pred_end(BB) && "Block is not dead!");
+  assert((pred_begin(BB) == pred_end(BB) ||
+         // Can delete self loop.
+         BB->getSinglePredecessor() == BB) && "Block is not dead!");
   TerminatorInst *BBTerm = BB->getTerminator();
   
   // Loop through all of our successors and make sure they know that one
