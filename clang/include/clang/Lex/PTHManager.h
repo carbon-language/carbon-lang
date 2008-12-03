@@ -27,8 +27,12 @@ namespace clang {
 class FileEntry;
 class IdentifierInfo;
 class IdentifierTable;
+class PTHLexer;
   
 class PTHManager {
+  
+  friend class PTHLexer;
+  
   /// The memory mapped PTH file.
   const llvm::MemoryBuffer* Buf;
   
@@ -64,9 +68,6 @@ class PTHManager {
   /// ReadIdentifierInfo - Used by PTHManager to reconstruct IdentifierInfo
   ///  objects from the PTH file.
   IdentifierInfo* ReadIdentifierInfo(const char*& D);
-  
-  /// ReadToken - Used by PTHManager to read tokens from the PTH file.
-  void ReadToken(const char*& D, unsigned FileID, Token& T);
 
 public:
   
