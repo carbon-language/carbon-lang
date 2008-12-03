@@ -112,6 +112,7 @@ char ScalarEvolution::ID = 0;
 SCEV::~SCEV() {}
 void SCEV::dump() const {
   print(cerr);
+  cerr << '\n';
 }
 
 uint32_t SCEV::getBitWidth() const {
