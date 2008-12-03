@@ -587,11 +587,21 @@ let AddedComplexity = 15 in {
 
 let AddedComplexity = 20 in {
   def : Pat<(v8i8 (X86vzmovl (bc_v8i8 (load_mmx addr:$src)))),
-           (MMX_MOVZDI2PDIrm addr:$src)>; 
+            (MMX_MOVZDI2PDIrm addr:$src)>; 
   def : Pat<(v4i16 (X86vzmovl (bc_v4i16 (load_mmx addr:$src)))),
-           (MMX_MOVZDI2PDIrm addr:$src)>; 
+            (MMX_MOVZDI2PDIrm addr:$src)>; 
   def : Pat<(v2i32 (X86vzmovl (bc_v2i32 (load_mmx addr:$src)))),
-           (MMX_MOVZDI2PDIrm addr:$src)>; 
+            (MMX_MOVZDI2PDIrm addr:$src)>; 
+}
+
+// Clear top half.
+let AddedComplexity = 15 in {
+  def : Pat<(v8i8 (X86vzmovl VR64:$src)),
+            (MMX_PUNPCKLDQrr VR64:$src, (MMX_V_SET0))>;
+  def : Pat<(v4i16 (X86vzmovl VR64:$src)),
+            (MMX_PUNPCKLDQrr VR64:$src, (MMX_V_SET0))>;
+  def : Pat<(v2i32 (X86vzmovl VR64:$src)),
+            (MMX_PUNPCKLDQrr VR64:$src, (MMX_V_SET0))>;
 }
 
 // Scalar to v4i16 / v8i8. The source may be a GR32, but only the lower
