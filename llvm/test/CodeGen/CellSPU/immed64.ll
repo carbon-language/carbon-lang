@@ -1,6 +1,8 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: grep lqa        %t1.s | count 13
-; RUN: grep il         %t1.s | count 22
+; RUN: grep ilhu       %t1.s | count 15
+; RUN: grep ila        %t1.s | count 1
+; RUN: grep -w il      %t1.s | count 6
 ; RUN: grep shufb      %t1.s | count 13
 ; RUN: grep      65520 %t1.s | count  1
 ; RUN: grep      43981 %t1.s | count  1

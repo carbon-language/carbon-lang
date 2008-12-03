@@ -1,7 +1,7 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: grep ilhu  %t1.s | count 8
 ; RUN: grep iohl  %t1.s | count 6
-; RUN: grep il    %t1.s | count 11
+; RUN: grep -w il    %t1.s | count 3
 ; RUN: grep 16429 %t1.s | count 1
 ; RUN: grep 63572 %t1.s | count 1
 ; RUN: grep   128 %t1.s | count 1

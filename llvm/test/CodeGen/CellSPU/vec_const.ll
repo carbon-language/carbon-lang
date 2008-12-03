@@ -1,8 +1,8 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: llvm-as -o - %s | llc -march=cellspu -mattr=large_mem > %t2.s
-; RUN: grep il     %t1.s | count 16
+; RUN: grep -w il  %t1.s | count 3
 ; RUN: grep ilhu   %t1.s | count 8
-; RUN: grep ilh    %t1.s | count 13
+; RUN: grep -w ilh %t1.s | count 5
 ; RUN: grep iohl   %t1.s | count 7
 ; RUN: grep lqa    %t1.s | count 6
 ; RUN: grep 24672  %t1.s | count 2

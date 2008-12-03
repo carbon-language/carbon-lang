@@ -2,8 +2,8 @@
 ; RUN: grep cbd     %t1.s | count 5
 ; RUN: grep chd     %t1.s | count 5
 ; RUN: grep cwd     %t1.s | count 10
-; RUN: grep il      %t1.s | count 15
-; RUN: grep ilh     %t1.s | count 10
+; RUN: grep -w il   %t1.s | count 5
+; RUN: grep -w ilh  %t1.s | count 6
 ; RUN: grep iohl    %t1.s | count 1
 ; RUN: grep ilhu    %t1.s | count 4
 ; RUN: grep shufb   %t1.s | count 26
