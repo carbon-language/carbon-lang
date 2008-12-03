@@ -301,11 +301,14 @@ public:
     return Flags & (1 << TID::DelaySlot);
   }
   
-  /// isSimpleLoad - Return true for instructions that are simple loads from
-  /// memory.  This should only be set on instructions that load a value from
-  /// memory and return it in their only virtual register definition.
-  /// Instructions that return a value loaded from memory and then modified in
-  /// some way should not return true for this.
+  /// isSimpleLoad - Return true for instructions that can be folded as
+  /// memory operands in other instructions. The most common use for this
+  /// is instructions that are simple loads from memory that don't modify
+  /// the loaded value in any way, but it can also be used for instructions
+  /// that can be expressed as constant-pool loads, such as V_SETALLONES
+  /// on x86, to allow them to be folded when it is beneficial.
+  /// This should only be set on instructions that return a value in their
+  /// only virtual register definition.
   bool isSimpleLoad() const {
     return Flags & (1 << TID::SimpleLoad);
   }

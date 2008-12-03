@@ -987,7 +987,9 @@ def STMXCSR : PSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
                   "stmxcsr\t$dst", [(int_x86_sse_stmxcsr addr:$dst)]>;
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
-let isReMaterializable = 1 in
+// We set isSimpleLoad because this can be converted to a constant-pool
+// load of an all-zeros value if folding it would be beneficial.
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isSimpleLoad = 1 in
 def V_SET0 : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins),
                  "xorps\t$dst, $dst",
                  [(set VR128:$dst, (v4i32 immAllZerosV))]>;
@@ -2253,7 +2255,9 @@ def : Pat<(membarrier (i8 imm:$ll), (i8 imm:$ls), (i8 imm:$sl), (i8 imm:$ss),
            (i8 1)), (MFENCE)>;
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
-let isReMaterializable = 1, isAsCheapAsAMove = 1 in
+// We set isSimpleLoad because this can be converted to a constant-pool
+// load of an all-ones value if folding it would be beneficial.
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isSimpleLoad = 1 in
   def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins),
                          "pcmpeqd\t$dst, $dst",
                          [(set VR128:$dst, (v4i32 immAllOnesV))]>;

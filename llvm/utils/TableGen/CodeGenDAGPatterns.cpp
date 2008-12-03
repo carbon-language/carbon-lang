@@ -1759,15 +1759,6 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     MayLoad = true;
   }
 
-  // Sanity-check the isSimpleLoad flag.
-  if (Inst.isSimpleLoad) {
-    if (!MayLoad)
-      fprintf(stderr,
-              "Warning: mayLoad flag not set or inferred for instruction '%s'"
-              " which has isSimpleLoad set.\n",
-              Inst.TheDef->getName().c_str());
-  }
-
   if (Inst.neverHasSideEffects) {
     if (HadPattern)
       fprintf(stderr, "Warning: neverHasSideEffects set on instruction '%s' "

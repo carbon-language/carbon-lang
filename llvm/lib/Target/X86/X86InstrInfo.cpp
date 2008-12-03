@@ -19,6 +19,7 @@
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -2127,9 +2128,36 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
     return NULL;
 
   SmallVector<MachineOperand,4> MOs;
-  unsigned NumOps = LoadMI->getDesc().getNumOperands();
-  for (unsigned i = NumOps - 4; i != NumOps; ++i)
-    MOs.push_back(LoadMI->getOperand(i));
+  if (LoadMI->getOpcode() == X86::V_SET0 ||
+      LoadMI->getOpcode() == X86::V_SETALLONES) {
+    // Folding a V_SET0 or V_SETALLONES as a load, to ease register pressure.
+    // Create a constant-pool entry and operands to load from it.
+
+    // x86-32 PIC requires a PIC base register for constant pools.
+    unsigned PICBase = 0;
+    if (TM.getRelocationModel() == Reloc::PIC_ &&
+        !TM.getSubtarget<X86Subtarget>().is64Bit())
+      PICBase = TM.getInstrInfo()->getGlobalBaseReg(&MF);
+
+    // Create a v4i32 constant-pool entry.
+    MachineConstantPool &MCP = *MF.getConstantPool();
+    const VectorType *Ty = VectorType::get(Type::Int32Ty, 4);
+    Constant *C = LoadMI->getOpcode() == X86::V_SET0 ?
+                    ConstantVector::getNullValue(Ty) :
+                    ConstantVector::getAllOnesValue(Ty);
+    unsigned CPI = MCP.getConstantPoolIndex(C, /*AlignmentLog2=*/4);
+
+    // Create operands to load from the constant pool entry.
+    MOs.push_back(MachineOperand::CreateReg(PICBase, false));
+    MOs.push_back(MachineOperand::CreateImm(1));
+    MOs.push_back(MachineOperand::CreateReg(0, false));
+    MOs.push_back(MachineOperand::CreateCPI(CPI, 0));
+  } else {
+    // Folding a normal load. Just copy the load's address operands.
+    unsigned NumOps = LoadMI->getDesc().getNumOperands();
+    for (unsigned i = NumOps - 4; i != NumOps; ++i)
+      MOs.push_back(LoadMI->getOperand(i));
+  }
   return foldMemoryOperand(MF, MI, Ops[0], MOs);
 }
 
