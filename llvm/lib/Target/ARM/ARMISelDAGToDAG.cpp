@@ -380,9 +380,10 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDValue Op, SDValue N,
                                             SDValue &Base, SDValue &Offset){
   if (N.getOpcode() != ISD::ADD) {
     Base = N;
-    // We must materialize a zero in a reg! Returning an constant here won't
-    // work since its node is -1 so it won't get added to the selection queue.
-    // Explicitly issue a tMOVri8 node!
+    // We must materialize a zero in a reg! Returning a constant here
+    // wouldn't work without additional code to position the node within
+    // ISel's topological ordering in a place where ISel will process it
+    // normally.  Instead, just explicitly issue a tMOVri8 node!
     Offset = SDValue(CurDAG->getTargetNode(ARM::tMOVi8, MVT::i32,
                                     CurDAG->getTargetConstant(0, MVT::i32)), 0);
     return true;
