@@ -116,7 +116,8 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   : PP(pp), Context(ctxt), Consumer(consumer), Diags(PP.getDiagnostics()),
     SourceMgr(PP.getSourceManager()), CurContext(0), PreDeclaratorDC(0),
-    CurBlock(0), PackContext(0), IdResolver(pp.getLangOptions()) {
+    CurBlock(0), PackContext(0), IdResolver(pp.getLangOptions()),
+    GlobalNewDeleteDeclared(false) {
   
   // Get IdentifierInfo objects for known functions for which we
   // do extra checking.  

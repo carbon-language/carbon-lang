@@ -17,6 +17,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/TargetInfo.h"
 using namespace clang;
 
 /// ActOnCXXConversionFunctionExpr - Parse a C++ conversion function
@@ -235,19 +236,13 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     }
   }
 
-  // --- Choosing an allocation function ---
-  // C++ 5.3.4p8 - 14 & 18
-  // 1) If UseGlobal is true, only look in the global scope. Else, also look
-  //   in the scope of the allocated class.
-  // 2) If an array size is given, look for operator new[], else look for
-  //   operator new.
-  // 3) The first argument is always size_t. Append the arguments from the
-  //   placement form.
-  // FIXME: Find the correct overload of operator new.
-  // FIXME: Also find the corresponding overload of operator delete.
   FunctionDecl *OperatorNew = 0;
   FunctionDecl *OperatorDelete = 0;
   Expr **PlaceArgs = (Expr**)PlacementArgs;
+  if (FindAllocationFunctions(StartLoc, UseGlobal, AllocType, ArraySize,
+                              PlaceArgs, NumPlaceArgs, OperatorNew,
+                              OperatorDelete))
+    return true;
 
   bool Init = ConstructorLParen.isValid();
   // --- Choosing a constructor ---
@@ -353,6 +348,235 @@ bool Sema::CheckAllocatedType(QualType AllocType, const Declarator &D)
   }
 
   return false;
+}
+
+/// FindAllocationFunctions - Finds the overloads of operator new and delete
+/// that are appropriate for the allocation.
+bool Sema::FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
+                                   QualType AllocType, bool IsArray,
+                                   Expr **PlaceArgs, unsigned NumPlaceArgs,
+                                   FunctionDecl *&OperatorNew,
+                                   FunctionDecl *&OperatorDelete)
+{
+  // --- Choosing an allocation function ---
+  // C++ 5.3.4p8 - 14 & 18
+  // 1) If UseGlobal is true, only look in the global scope. Else, also look
+  //   in the scope of the allocated class.
+  // 2) If an array size is given, look for operator new[], else look for
+  //   operator new.
+  // 3) The first argument is always size_t. Append the arguments from the
+  //   placement form.
+  // FIXME: Also find the appropriate delete operator.
+
+  llvm::SmallVector<Expr*, 8> AllocArgs(1 + NumPlaceArgs);
+  // We don't care about the actual value of this argument.
+  // FIXME: Should the Sema create the expression and embed it in the syntax
+  // tree? Or should the consumer just recalculate the value?
+  AllocArgs[0] = new IntegerLiteral(llvm::APInt::getNullValue(
+                                        Context.Target.getPointerWidth(0)),
+                                    Context.getSizeType(),
+                                    SourceLocation());
+  std::copy(PlaceArgs, PlaceArgs + NumPlaceArgs, AllocArgs.begin() + 1);
+
+  DeclarationName NewName = Context.DeclarationNames.getCXXOperatorName(
+                                        IsArray ? OO_Array_New : OO_New);
+  if (AllocType->isRecordType() && !UseGlobal) {
+    OverloadCandidateSet MemberNewCandidates;
+    const CXXRecordType *Record = cast<CXXRecordType>(
+                                      AllocType->getAsRecordType());
+    IdentifierResolver::iterator I =
+      IdResolver.begin(NewName, Record->getDecl(), /*LookInParentCtx=*/false);
+    NamedDecl *Decl = (I == IdResolver.end()) ? 0 : *I;
+    // Member operator new is implicitly treated as static, so don't use
+    // AddMemberCandidate.
+    if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(Decl))
+      AddOverloadCandidate(Method, &AllocArgs[0], AllocArgs.size(),
+                           MemberNewCandidates,
+                           /*SuppressUserConversions=*/false);
+    else if (OverloadedFunctionDecl *Ovl
+               = dyn_cast_or_null<OverloadedFunctionDecl>(Decl)) {
+      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                     FEnd = Ovl->function_end();
+         F != FEnd; ++F) {
+        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*F))
+          AddOverloadCandidate(Method, &AllocArgs[0], AllocArgs.size(),
+                               MemberNewCandidates,
+                               /*SuppressUserConversions=*/false);
+      }
+    }
+
+    // Do the resolution.
+    OverloadCandidateSet::iterator Best;
+    switch (BestViableFunction(MemberNewCandidates, Best)) {
+    case OR_Success: {
+      // Got one!
+      FunctionDecl *FnDecl = Best->Function;
+      // The first argument is size_t, and the first parameter must be size_t,
+      // too.
+      for (unsigned i = 1; i < AllocArgs.size(); ++i) {
+        // FIXME: Passing word to diagnostic.
+        // This might modify the argument expression, so pass the one in
+        // PlaceArgs.
+        if (PerformCopyInitialization(PlaceArgs[i-1],
+                                      FnDecl->getParamDecl(i)->getType(),
+                                      "passing"))
+          return true;
+      }
+      OperatorNew = FnDecl;
+      break;
+    }
+
+    case OR_No_Viable_Function:
+      // No viable function; look something up in the global scope instead.
+      break;
+
+    case OR_Ambiguous:
+      // FIXME: Bad location information.
+      Diag(StartLoc, diag::err_ovl_ambiguous_oper) << NewName;
+      PrintOverloadCandidates(MemberNewCandidates, /*OnlyViable=*/true);
+      return true;
+    }
+  }
+  if (!OperatorNew) {
+    // Didn't find a member overload. Look for a global one.
+    DeclareGlobalNewDelete();
+    OverloadCandidateSet GlobalNewCandidates;
+    IdentifierResolver::iterator I =
+      IdResolver.begin(NewName, Context.getTranslationUnitDecl(),
+                       /*LookInParentCtx=*/false);
+    NamedDecl *Decl = (I == IdResolver.end()) ? 0 : *I;
+    if (FunctionDecl *Fn = dyn_cast_or_null<FunctionDecl>(Decl))
+      AddOverloadCandidate(Fn, &AllocArgs[0], AllocArgs.size(),
+                           GlobalNewCandidates,
+                           /*SuppressUserConversions=*/false);
+    else if (OverloadedFunctionDecl *Ovl
+               = dyn_cast_or_null<OverloadedFunctionDecl>(Decl)) {
+      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                     FEnd = Ovl->function_end();
+         F != FEnd; ++F) {
+        if (FunctionDecl *Fn = dyn_cast<FunctionDecl>(*F))
+          AddOverloadCandidate(Fn, &AllocArgs[0], AllocArgs.size(),
+                               GlobalNewCandidates,
+                               /*SuppressUserConversions=*/false);
+      }
+    }
+
+    // Do the resolution.
+    OverloadCandidateSet::iterator Best;
+    switch (BestViableFunction(GlobalNewCandidates, Best)) {
+    case OR_Success: {
+      // Got one!
+      FunctionDecl *FnDecl = Best->Function;
+      // The first argument is size_t, and the first parameter must be size_t,
+      // too. This is checked on declaration and can be assumed.
+      for (unsigned i = 1; i < AllocArgs.size(); ++i) {
+        // FIXME: Passing word to diagnostic.
+        // This might modify the argument expression, so pass the one in
+        // PlaceArgs.
+        if (PerformCopyInitialization(PlaceArgs[i-1],
+                                      FnDecl->getParamDecl(i)->getType(),
+                                      "passing"))
+          return true;
+      }
+      OperatorNew = FnDecl;
+      break;
+    }
+
+    case OR_No_Viable_Function:
+      // FIXME: Bad location information.
+      Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
+        << NewName << (unsigned)GlobalNewCandidates.size();
+      PrintOverloadCandidates(GlobalNewCandidates, /*OnlyViable=*/false);
+      return true;
+
+    case OR_Ambiguous:
+      // FIXME: Bad location information.
+      Diag(StartLoc, diag::err_ovl_ambiguous_oper) << NewName;
+      PrintOverloadCandidates(GlobalNewCandidates, /*OnlyViable=*/true);
+      return true;
+    }
+  }
+
+  AllocArgs[0]->Destroy(Context);
+  return false;
+}
+
+/// DeclareGlobalNewDelete - Declare the global forms of operator new and
+/// delete. These are:
+/// @code
+///   void* operator new(std::size_t) throw(std::bad_alloc);
+///   void* operator new[](std::size_t) throw(std::bad_alloc);
+///   void operator delete(void *) throw();
+///   void operator delete[](void *) throw();
+/// @endcode
+/// Note that the placement and nothrow forms of new are *not* implicitly
+/// declared. Their use requires including \<new\>.
+void Sema::DeclareGlobalNewDelete()
+{
+  if (GlobalNewDeleteDeclared)
+    return;
+  GlobalNewDeleteDeclared = true;
+
+  QualType VoidPtr = Context.getPointerType(Context.VoidTy);
+  QualType SizeT = Context.getSizeType();
+
+  // FIXME: Exception specifications are not added.
+  DeclareGlobalAllocationFunction(
+      Context.DeclarationNames.getCXXOperatorName(OO_New),
+      VoidPtr, SizeT);
+  DeclareGlobalAllocationFunction(
+      Context.DeclarationNames.getCXXOperatorName(OO_Array_New),
+      VoidPtr, SizeT);
+  DeclareGlobalAllocationFunction(
+      Context.DeclarationNames.getCXXOperatorName(OO_Delete),
+      Context.VoidTy, VoidPtr);
+  DeclareGlobalAllocationFunction(
+      Context.DeclarationNames.getCXXOperatorName(OO_Array_Delete),
+      Context.VoidTy, VoidPtr);
+}
+
+/// DeclareGlobalAllocationFunction - Declares a single implicit global
+/// allocation function if it doesn't already exist.
+void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
+                                           QualType Return, QualType Argument)
+{
+  DeclContext *GlobalCtx = Context.getTranslationUnitDecl();
+
+  // Check if this function is already declared.
+  IdentifierResolver::iterator I = IdResolver.begin(Name, GlobalCtx,
+                                                    /*CheckParent=*/false);
+
+  if (I != IdResolver.end()) {
+    NamedDecl *Decl = *I;
+    if (FunctionDecl *Fn = dyn_cast<FunctionDecl>(Decl)) {
+      // The return type fits. This is checked when the function is declared.
+      if (Fn->getNumParams() == 1 &&
+          Context.getCanonicalType(Fn->getParamDecl(0)->getType()) == Argument)
+        return;
+    } else if(OverloadedFunctionDecl *Ovl =
+                  dyn_cast<OverloadedFunctionDecl>(Decl)) {
+      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                     FEnd = Ovl->function_end();
+               F != FEnd; ++F) {
+        if ((*F)->getNumParams() == 1 &&
+            Context.getCanonicalType((*F)->getParamDecl(0)->getType())
+                == Argument)
+          return;
+      }
+    }
+  }
+
+  QualType FnType = Context.getFunctionType(Return, &Argument, 1, false, 0);
+  FunctionDecl *Alloc =
+    FunctionDecl::Create(Context, GlobalCtx, SourceLocation(), Name,
+                         FnType, FunctionDecl::None, false, 0,
+                         SourceLocation());
+  Alloc->setImplicit();
+  ParmVarDecl *Param = ParmVarDecl::Create(Context, Alloc, SourceLocation(),
+                                           0, Argument, VarDecl::None, 0, 0);
+  Alloc->setParams(&Param, 1);
+
+  PushOnScopeChains(Alloc, TUScope);
 }
 
 /// ActOnCXXDelete - Parsed a C++ 'delete' expression (C++ 5.3.5), as in:

@@ -202,6 +202,10 @@ public:
   /// The C++ "std" namespace, where the standard library resides. Cached here
   /// by GetStdNamespace
   NamespaceDecl *StdNamespace;
+
+  /// A flag to remember whether the implicit forms of operator new and delete
+  /// have been declared.
+  bool GlobalNewDeleteDeclared;
   
   /// ObjCMethodList - a linked list of methods with different signatures.
   struct ObjCMethodList {
@@ -831,6 +835,14 @@ public:
                                  ExprTy **ConstructorArgs, unsigned NumConsArgs,
                                  SourceLocation ConstructorRParen);
   bool CheckAllocatedType(QualType AllocType, const Declarator &D);
+  bool FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
+                               QualType AllocType, bool IsArray,
+                               Expr **PlaceArgs, unsigned NumPlaceArgs,
+                               FunctionDecl *&OperatorNew,
+                               FunctionDecl *&OperatorDelete);
+  void DeclareGlobalNewDelete();
+  void DeclareGlobalAllocationFunction(DeclarationName Name, QualType Return,
+                                       QualType Argument);
 
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression
   virtual ExprResult ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,

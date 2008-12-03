@@ -1,5 +1,7 @@
 // RUN: clang -fsyntax-only -verify %s
 
+#include <stddef.h>
+
 struct S // expected-note {{candidate}}
 {
   S(int, int, double); // expected-note {{candidate}}
@@ -7,6 +9,10 @@ struct S // expected-note {{candidate}}
   S(float, int); // expected-note {{candidate}} expected-note {{candidate}}
 };
 struct T;
+
+void* operator new(size_t); // expected-note {{candidate}}
+void* operator new(size_t, int*); // expected-note {{candidate}}
+void* operator new(size_t, float*); // expected-note {{candidate}}
 
 void good_news()
 {
@@ -43,6 +49,7 @@ void bad_news(int *ip)
   (void)new int[-1]; // expected-error {{array size is negative}}
   (void)new int[*(S*)0]; // expected-error {{array size expression must have integral or enumerated type, not 'struct S'}}
   (void)::S::new int; // expected-error {{expected unqualified-id}}
+  (void)new (0, 0) int; // expected-error {{no matching function for call to 'operator new'}}
   // Some lacking cases due to lack of sema support.
 }
 
