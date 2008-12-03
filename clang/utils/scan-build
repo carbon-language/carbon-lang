@@ -366,7 +366,7 @@ sub ScanFile {
       ++$found;
     }
     elsif (/<!-- BUGFILE (.*) -->$/) {
-      $BugFile = $1;
+      $BugFile = abs_path($1);
       UpdatePrefix($BugFile);
       ++$found;
     }
