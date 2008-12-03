@@ -14,12 +14,13 @@
 
 #define DEBUG_TYPE "condprop"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
@@ -95,13 +96,9 @@ void CondProp::SimplifyBlock(BasicBlock *BB) {
         BB != BI->getSuccessor(0)) {
       BasicBlock *Succ = BI->getSuccessor(0);
       
-      // If Succ has any PHI nodes, they are all single-entry PHI's.
-      while (PHINode *PN = dyn_cast<PHINode>(Succ->begin())) {
-        assert(PN->getNumIncomingValues() == 1 &&
-               "PHI doesn't match parent block");
-        PN->replaceAllUsesWith(PN->getIncomingValue(0));
-        PN->eraseFromParent();
-      }
+      // If Succ has any PHI nodes, they are all single-entry PHI's.  Eliminate
+      // them.
+      FoldSingleEntryPHINodes(Succ);
       
       // Remove BI.
       BI->eraseFromParent();
@@ -205,11 +202,7 @@ void CondProp::RevectorBlockTo(BasicBlock *FromBB, BasicBlock *ToBB) {
   // OldSucc had multiple successors. If ToBB has multiple predecessors, then 
   // the edge between them would be critical, which we already took care of.
   // If ToBB has single operand PHI node then take care of it here.
-  while (PHINode *PN = dyn_cast<PHINode>(ToBB->begin())) {
-    assert(PN->getNumIncomingValues() == 1 && "Critical Edge Found!");    
-    PN->replaceAllUsesWith(PN->getIncomingValue(0));
-    PN->eraseFromParent();
-  }
+  FoldSingleEntryPHINodes(ToBB);
 
   // Update PHI nodes in OldSucc to know that FromBB no longer branches to it.
   OldSucc->removePredecessor(FromBB);

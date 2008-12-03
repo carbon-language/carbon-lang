@@ -30,6 +30,14 @@ class AliasAnalysis;
 /// predecessors.
 void DeleteDeadBlock(BasicBlock *BB);
   
+  
+/// FoldSingleEntryPHINodes - We know that BB has one predecessor.  If there are
+/// any single-entry PHI nodes in it, fold them away.  This handles the case
+/// when all entries to the PHI nodes in a block are guaranteed equal, such as
+/// when the block has exactly one predecessor.
+void FoldSingleEntryPHINodes(BasicBlock *BB);
+  
+  
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.
 bool MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P = 0);

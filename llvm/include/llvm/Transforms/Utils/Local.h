@@ -56,7 +56,7 @@ void RecursivelyDeleteTriviallyDeadInstructions(Value *V,
                                   SmallVectorImpl<Instruction*> *DeadInst = 0);
     
 //===----------------------------------------------------------------------===//
-//  Control Flow Graph Restructuring...
+//  Control Flow Graph Restructuring.
 //
 
 /// MergeBasicBlockIntoOnlyPred - BB is a block with one predecessor and its

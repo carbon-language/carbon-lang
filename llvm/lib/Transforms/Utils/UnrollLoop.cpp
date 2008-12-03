@@ -25,13 +25,14 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <cstdio>
 
 using namespace llvm;
 
-/* TODO: Should these be here or in LoopUnroll? */
+// TODO: Should these be here or in LoopUnroll?
 STATISTIC(NumCompletelyUnrolled, "Number of loops completely unrolled");
 STATISTIC(NumUnrolled,    "Number of loops unrolled (completely or otherwise)");
 
@@ -68,11 +69,7 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
   // multiple duplicate (but guaranteed to be equal) entries for the
   // incoming edges.  This occurs when there are multiple edges from
   // OnlyPred to OnlySucc.
-  //
-  while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
-    PN->replaceAllUsesWith(PN->getIncomingValue(0));
-    BB->getInstList().pop_front();  // Delete the phi node...
-  }
+  FoldSingleEntryPHINodes(BB);
 
   // Delete the unconditional branch from the predecessor...
   OnlyPred->getInstList().pop_back();
