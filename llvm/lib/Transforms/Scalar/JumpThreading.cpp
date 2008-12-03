@@ -67,6 +67,7 @@ namespace {
     bool ProcessBlock(BasicBlock *BB);
     void ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB);
     BasicBlock *FactorCommonPHIPreds(PHINode *PN, Constant *CstVal);
+    bool ProcessBranchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
 
     bool ProcessJumpOnPHI(PHINode *PN);
     bool ProcessBranchOnLogical(Value *V, BasicBlock *BB, bool isAnd);
@@ -93,9 +94,23 @@ bool JumpThreading::runOnFunction(Function &F) {
   while (AnotherIteration) {
     AnotherIteration = false;
     bool Changed = false;
-    for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-      while (ProcessBlock(I))
+    for (Function::iterator I = F.begin(), E = F.end(); I != E;) {
+      BasicBlock *BB = I;
+      while (ProcessBlock(BB))
         Changed = true;
+      
+      ++I;
+      
+      // If the block is trivially dead, zap it.  This eliminates the successor
+      // edges which simplifies the CFG.
+      if (pred_begin(BB) == pred_end(BB) &&
+          BB != &BB->getParent()->getEntryBlock()) {
+        DOUT << "  JT: Deleting dead block '" << BB->getNameStart()
+             << "' with terminator: " << *BB->getTerminator();
+        DeleteDeadBlock(BB);
+        Changed = true;
+      }
+    }
     AnotherIteration = Changed;
     EverChanged |= Changed;
   }
@@ -209,29 +224,80 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     return true;
   }
   
+  // If the terminator is branching on an undef, we can pick any of the
+  // successors to branch to.  Since this is arbitrary, we pick the successor
+  // with the fewest predecessors.  This should reduce the in-degree of the
+  // others.
+  if (isa<UndefValue>(Condition)) {
+    TerminatorInst *BBTerm = BB->getTerminator();
+    unsigned MinSucc = 0;
+    BasicBlock *TestBB = BBTerm->getSuccessor(MinSucc);
+    // Compute the successor with the minimum number of predecessors.
+    unsigned MinNumPreds = std::distance(pred_begin(TestBB), pred_end(TestBB));
+    for (unsigned i = 1, e = BBTerm->getNumSuccessors(); i != e; ++i) {
+      TestBB = BBTerm->getSuccessor(i);
+      unsigned NumPreds = std::distance(pred_begin(TestBB), pred_end(TestBB));
+      if (NumPreds < MinNumPreds)
+        MinSucc = i;
+    }
+    
+    // Fold the branch/switch.
+    for (unsigned i = 0, e = BBTerm->getNumSuccessors(); i != e; ++i) {
+      if (i == MinSucc) continue;
+      BBTerm->getSuccessor(i)->removePredecessor(BB);
+    }
+    
+    DOUT << "  In block '" << BB->getNameStart()
+         << "' folding undef terminator: " << *BBTerm;
+    BranchInst::Create(BBTerm->getSuccessor(MinSucc), BBTerm);
+    BBTerm->eraseFromParent();
+    return true;
+  }
+  
+  Instruction *CondInst = dyn_cast<Instruction>(Condition);
+
+  // If the condition is an instruction defined in another block, see if a
+  // predecessor has the same condition:
+  //     br COND, BBX, BBY
+  //  BBX:
+  //     br COND, BBZ, BBW
+  if (!Condition->hasOneUse() && // Multiple uses.
+      (CondInst == 0 || CondInst->getParent() != BB)) { // Non-local definition.
+    pred_iterator PI = pred_begin(BB), E = pred_end(BB);
+    if (isa<BranchInst>(BB->getTerminator())) {
+      for (; PI != E; ++PI)
+        if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
+          if (PBI->isConditional() && PBI->getCondition() == Condition &&
+              ProcessBranchOnDuplicateCond(*PI, BB))
+            return true;
+    }
+  }
+
   // If there is only a single predecessor of this block, nothing to fold.
   if (BB->getSinglePredecessor())
     return false;
-
+  
+  // All the rest of our checks depend on the condition being an instruction.
+  if (CondInst == 0)
+    return false;
+  
   // See if this is a phi node in the current block.
-  PHINode *PN = dyn_cast<PHINode>(Condition);
-  if (PN && PN->getParent() == BB)
-    return ProcessJumpOnPHI(PN);
+  if (PHINode *PN = dyn_cast<PHINode>(CondInst))
+    if (PN->getParent() == BB)
+      return ProcessJumpOnPHI(PN);
   
   // If this is a conditional branch whose condition is and/or of a phi, try to
   // simplify it.
-  if (BinaryOperator *CondI = dyn_cast<BinaryOperator>(Condition)) {
-    if ((CondI->getOpcode() == Instruction::And || 
-         CondI->getOpcode() == Instruction::Or) &&
-        isa<BranchInst>(BB->getTerminator()) &&
-        ProcessBranchOnLogical(CondI, BB,
-                               CondI->getOpcode() == Instruction::And))
-      return true;
-  }
+  if ((CondInst->getOpcode() == Instruction::And || 
+       CondInst->getOpcode() == Instruction::Or) &&
+      isa<BranchInst>(BB->getTerminator()) &&
+      ProcessBranchOnLogical(CondInst, BB,
+                             CondInst->getOpcode() == Instruction::And))
+    return true;
   
   // If we have "br (phi != 42)" and the phi node has any constant values as 
   // operands, we can thread through this block.
-  if (CmpInst *CondCmp = dyn_cast<CmpInst>(Condition))
+  if (CmpInst *CondCmp = dyn_cast<CmpInst>(CondInst))
     if (isa<PHINode>(CondCmp->getOperand(0)) &&
         isa<Constant>(CondCmp->getOperand(1)) &&
         ProcessBranchOnCompare(CondCmp, BB))
@@ -244,7 +310,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   //
   // This is particularly important because reg2mem inserts loads and stores all
   // over the place, and this blocks jump threading if we don't zap them.
-  Value *SimplifyValue = Condition;
+  Value *SimplifyValue = CondInst;
   if (CmpInst *CondCmp = dyn_cast<CmpInst>(SimplifyValue))
     if (isa<Constant>(CondCmp->getOperand(1)))
       SimplifyValue = CondCmp->getOperand(0);
@@ -257,6 +323,80 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // "(X == 4)" thread through this block.
   
   return false;
+}
+
+/// ProcessBranchOnDuplicateCond - We found a block and a predecessor of that
+/// block that jump on exactly the same condition.  This means that we almost
+/// always know the direction of the edge in the DESTBB:
+///  PREDBB:
+///     br COND, DESTBB, BBY
+///  DESTBB:
+///     br COND, BBZ, BBW
+///
+/// If DESTBB has multiple predecessors, we can't just constant fold the branch
+/// in DESTBB, we have to thread over it.
+bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
+                                                 BasicBlock *BB) {
+  BranchInst *PredBI = cast<BranchInst>(PredBB->getTerminator());
+  
+  // If both successors of PredBB go to DESTBB, we don't know anything.  We can
+  // fold the branch to an unconditional one, which allows other recursive
+  // simplifications.
+  bool BranchDir;
+  if (PredBI->getSuccessor(1) != BB)
+    BranchDir = true;
+  else if (PredBI->getSuccessor(0) != BB)
+    BranchDir = false;
+  else {
+    DOUT << "  In block '" << PredBB->getNameStart()
+         << "' folding terminator: " << *PredBB->getTerminator();
+    ++NumFolds;
+    ConstantFoldTerminator(PredBB);
+    return true;
+  }
+   
+  BranchInst *DestBI = cast<BranchInst>(BB->getTerminator());
+
+  // If the dest block has one predecessor, just fix the branch condition to a
+  // constant and fold it.
+  if (BB->getSinglePredecessor()) {
+    DOUT << "  In block '" << BB->getNameStart()
+         << "' folding condition to '" << BranchDir << "': "
+         << *BB->getTerminator();
+    ++NumFolds;
+    DestBI->setCondition(ConstantInt::get(Type::Int1Ty, BranchDir));
+    ConstantFoldTerminator(BB);
+    return true;
+  }
+  
+  // Otherwise we need to thread from PredBB to DestBB's successor which
+  // involves code duplication.  Check to see if it is worth it.
+  unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
+  if (JumpThreadCost > Threshold) {
+    DOUT << "  Not threading BB '" << BB->getNameStart()
+         << "' - Cost is too high: " << JumpThreadCost << "\n";
+    return false;
+  }
+  
+  // Next, figure out which successor we are threading to.
+  BasicBlock *SuccBB = DestBI->getSuccessor(!BranchDir);
+  
+  // If threading to the same block as we come from, we would infinite loop.
+  if (SuccBB == BB) {
+    DOUT << "  Not threading BB '" << BB->getNameStart()
+         << "' - would thread to self!\n";
+    return false;
+  }
+  
+  // And finally, do it!
+  DOUT << "  Threading edge from '" << PredBB->getNameStart() << "' to '"
+       << SuccBB->getNameStart() << "' with cost: " << JumpThreadCost
+       << ", across block:\n    "
+       << *BB << "\n";
+  
+  ThreadEdge(BB, PredBB, SuccBB);
+  ++NumThreads;
+  return true;
 }
 
 /// SimplifyPartiallyRedundantLoad - If LI is an obviously partially redundant
