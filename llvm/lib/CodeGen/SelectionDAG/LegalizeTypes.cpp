@@ -385,6 +385,7 @@ void DAGTypeLegalizer::RemapValue(SDValue &N) {
     // replaced with other values.
     RemapValue(I->second);
     N = I->second;
+    assert(N.getNode()->getNodeId() != NewNode && "Mapped to unanalyzed node!");
   }
 }
 
