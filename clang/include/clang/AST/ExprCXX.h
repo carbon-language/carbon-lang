@@ -193,21 +193,30 @@ public:
 class CXXTypeidExpr : public Expr {
 private:
   bool isTypeOp : 1;
-  void *Operand;
+  union {
+    void *Ty;
+    Stmt *Ex;
+  } Operand;
   SourceRange Range;
 
 public:
   CXXTypeidExpr(bool isTypeOp, void *op, QualType Ty, const SourceRange r) :
-    Expr(CXXTypeidExprClass, Ty), isTypeOp(isTypeOp), Operand(op), Range(r) {}
+      Expr(CXXTypeidExprClass, Ty), isTypeOp(isTypeOp), Range(r) {
+    if (isTypeOp)
+      Operand.Ty = op;
+    else
+      // op was an Expr*, so cast it back to that to be safe
+      Operand.Ex = static_cast<Stmt*>(op);
+  }
 
   bool isTypeOperand() const { return isTypeOp; }
   QualType getTypeOperand() const {
     assert(isTypeOperand() && "Cannot call getTypeOperand for typeid(expr)");
-    return QualType::getFromOpaquePtr(Operand);
+    return QualType::getFromOpaquePtr(Operand.Ty);
   }
   Expr* getExprOperand() const {
     assert(!isTypeOperand() && "Cannot call getExprOperand for typeid(type)");
-    return static_cast<Expr*>(Operand);
+    return static_cast<Expr*>(Operand.Ex);
   }
 
   virtual SourceRange getSourceRange() const {

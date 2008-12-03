@@ -28,10 +28,10 @@ void CXXConditionDeclExpr::Destroy(ASTContext& C) {
 
 // CXXTypeidExpr - has child iterators if the operand is an expression
 Stmt::child_iterator CXXTypeidExpr::child_begin() {
-  return isTypeOperand() ? child_iterator() : (Stmt**)&Operand;
+  return isTypeOperand() ? child_iterator() : &Operand.Ex;
 }
 Stmt::child_iterator CXXTypeidExpr::child_end() {
-  return isTypeOperand() ? child_iterator() : (Stmt**)&Operand+1;
+  return isTypeOperand() ? child_iterator() : &Operand.Ex+1;
 }
 
 // CXXBoolLiteralExpr

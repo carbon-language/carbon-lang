@@ -1394,7 +1394,7 @@ CXXNamedCastExpr::CreateImpl(Deserializer& D, ASTContext& C, StmtClass SC) {
 
 void CXXTypeidExpr::EmitImpl(llvm::Serializer& S) const {
   S.Emit(getType());
-  S.Emit(isTypeOperand());
+  S.EmitBool(isTypeOperand());
   if (isTypeOperand()) {
     S.Emit(getTypeOperand());
   } else {

@@ -557,15 +557,23 @@ public:
 class SizeOfAlignOfExpr : public Expr {
   bool isSizeof : 1;  // true if sizeof, false if alignof.
   bool isType : 1;    // true if operand is a type, false if an expression
-  void *Argument;
+  union {
+    void *Ty;
+    Stmt *Ex;
+  } Argument;
   SourceLocation OpLoc, RParenLoc;
 public:
   SizeOfAlignOfExpr(bool issizeof, bool istype, void *argument,
                     QualType resultType, SourceLocation op,
                     SourceLocation rp) :
-    Expr(SizeOfAlignOfExprClass, resultType),
-    isSizeof(issizeof), isType(istype), Argument(argument),
-    OpLoc(op), RParenLoc(rp) {}
+      Expr(SizeOfAlignOfExprClass, resultType), isSizeof(issizeof),
+      isType(istype), OpLoc(op), RParenLoc(rp) {
+    if (isType)
+      Argument.Ty = argument;
+    else
+      // argument was an Expr*, so cast it back to that to be safe
+      Argument.Ex = static_cast<Expr*>(argument);
+  }
 
   virtual void Destroy(ASTContext& C);
 
@@ -573,11 +581,11 @@ public:
   bool isArgumentType() const { return isType; }
   QualType getArgumentType() const {
     assert(isArgumentType() && "calling getArgumentType() when arg is expr");
-    return QualType::getFromOpaquePtr(Argument);
+    return QualType::getFromOpaquePtr(Argument.Ty);
   }
   Expr* getArgumentExpr() const {
     assert(!isArgumentType() && "calling getArgumentExpr() when arg is type");
-    return (Expr *)Argument;
+    return static_cast<Expr*>(Argument.Ex);
   }
   /// Gets the argument type, or the type of the argument expression, whichever
   /// is appropriate.

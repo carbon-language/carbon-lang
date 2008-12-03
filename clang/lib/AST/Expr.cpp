@@ -1314,12 +1314,12 @@ Stmt::child_iterator SizeOfAlignOfExpr::child_begin() {
       return child_iterator(T);
     return child_iterator();
   }
-  return child_iterator((Stmt**)&Argument);
+  return child_iterator(&Argument.Ex);
 }
 Stmt::child_iterator SizeOfAlignOfExpr::child_end() {
   if (isArgumentType())
     return child_iterator();
-  return child_iterator((Stmt**)&Argument + 1);
+  return child_iterator(&Argument.Ex + 1);
 }
 
 // ArraySubscriptExpr
