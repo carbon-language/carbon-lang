@@ -89,6 +89,11 @@ public:
     MI->addOperand(MachineOperand::CreateES(FnName, Offset));
     return *this;
   }
+
+  const MachineInstrBuilder &addMemOperand(const MachineMemOperand &MMO) const {
+    MI->addMemOperand(*MI->getParent()->getParent(), MMO);
+    return *this;
+  }
 };
 
 /// BuildMI - Builder interface.  Specify how to create the initial instruction

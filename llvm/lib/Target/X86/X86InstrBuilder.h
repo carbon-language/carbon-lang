@@ -24,7 +24,9 @@
 #ifndef X86INSTRBUILDER_H
 #define X86INSTRBUILDER_H
 
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 
 namespace llvm {
 
@@ -109,7 +111,22 @@ inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
 ///
 inline const MachineInstrBuilder &
 addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
-  return MIB.addFrameIndex(FI).addImm(1).addReg(0).addImm(Offset);
+  MachineInstr *MI = MIB;
+  MachineFunction &MF = *MI->getParent()->getParent();
+  MachineFrameInfo &MFI = *MF.getFrameInfo();
+  const TargetInstrDesc &TID = MI->getDesc();
+  unsigned Flags = 0;
+  if (TID.mayLoad())
+    Flags |= MachineMemOperand::MOLoad;
+  if (TID.mayStore())
+    Flags |= MachineMemOperand::MOStore;
+  MachineMemOperand MMO(PseudoSourceValue::getFixedStack(FI),
+                        Flags,
+                        MFI.getObjectOffset(FI) + Offset,
+                        MFI.getObjectSize(FI),
+                        MFI.getObjectAlignment(FI));
+  return MIB.addFrameIndex(FI).addImm(1).addReg(0).addImm(Offset)
+            .addMemOperand(MMO);
 }
 
 /// addConstantPoolReference - This function is used to add a reference to the

@@ -99,7 +99,7 @@ class MachineFrameInfo {
     // the function.  This field has no meaning for a variable sized element.
     int64_t SPOffset;
     
-    StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM = false)
+    StackObject(uint64_t Sz, unsigned Al, int64_t SP = 0, bool IM = false)
       : Size(Sz), Alignment(Al), isImmutable(IM), SPOffset(SP) {}
   };
 
@@ -355,7 +355,7 @@ public:
   ///
   int CreateStackObject(uint64_t Size, unsigned Alignment) {
     assert(Size != 0 && "Cannot allocate zero size stack objects!");
-    Objects.push_back(StackObject(Size, Alignment, -1));
+    Objects.push_back(StackObject(Size, Alignment));
     return (int)Objects.size()-NumFixedObjects-1;
   }
 
@@ -373,7 +373,7 @@ public:
   ///
   int CreateVariableSizedObject() {
     HasVarSizedObjects = true;
-    Objects.push_back(StackObject(0, 1, -1));
+    Objects.push_back(StackObject(0, 1));
     return (int)Objects.size()-NumFixedObjects-1;
   }
   
