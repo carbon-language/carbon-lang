@@ -31,6 +31,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include <map>
 #include <climits>
 using namespace llvm;
@@ -343,11 +344,6 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   // still be considered, though only if no other registers are available.
   unsigned LastNewReg[TargetRegisterInfo::FirstVirtualRegister] = {};
 
-  // A registers defined and not used in an instruction. This is used for
-  // liveness tracking and is declared outside the loop only to avoid
-  // having it be re-allocated on each iteration.
-  DenseSet<unsigned> Defs;
-
   // Attempt to break anti-dependence edges on the critical path. Walk the
   // instructions from the bottom up, tracking information about liveness
   // as we go to help determine which registers are available.
@@ -433,7 +429,8 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         if (KillIndices[NewReg] == -1u &&
             KillIndices[AntiDepReg] <= DefIndices[NewReg]) {
           DOUT << "Breaking anti-dependence edge on reg " << AntiDepReg
-               << " with reg " << NewReg << "!\n";
+               << " with " << RegRefs.count(AntiDepReg) << " references"
+               << " with new reg " << NewReg << "!\n";
 
           // Update the references to the old register to refer to the new
           // register.
@@ -464,39 +461,17 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     }
 
     // Update liveness.
-    Defs.clear();
+    // Proceding upwards, registers that are defed but not used in this
+    // instruction are now dead.
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg()) continue;
       unsigned Reg = MO.getReg();
       if (Reg == 0) continue;
-      if (MO.isDef())
-        Defs.insert(Reg);
-      else {
-        // Treat a use in the same instruction as a def as an extension of
-        // a live range.
-        Defs.erase(Reg);
-        // It wasn't previously live but now it is, this is a kill.
-        if (KillIndices[Reg] == -1u) {
-          KillIndices[Reg] = Count;
-          DefIndices[Reg] = -1u;
-        }
-        // Repeat, for all aliases.
-        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-          unsigned AliasReg = *Alias;
-          Defs.erase(AliasReg);
-          if (KillIndices[AliasReg] == -1u) {
-            KillIndices[AliasReg] = Count;
-            DefIndices[AliasReg] = -1u;
-          }
-        }
-      }
-    }
-    // Proceding upwards, registers that are defed but not used in this
-    // instruction are now dead.
-    for (DenseSet<unsigned>::iterator D = Defs.begin(), DE = Defs.end();
-         D != DE; ++D) {
-      unsigned Reg = *D;
+      if (!MO.isDef()) continue;
+      // Ignore two-addr defs.
+      if (MI->isRegReDefinedByTwoAddr(Reg, i)) continue;
+
       DefIndices[Reg] = Count;
       KillIndices[Reg] = -1;
       Classes[Reg] = 0;
@@ -509,6 +484,39 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         KillIndices[SubregReg] = -1;
         Classes[SubregReg] = 0;
         RegRefs.erase(SubregReg);
+      }
+    }
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg()) continue;
+      unsigned Reg = MO.getReg();
+      if (Reg == 0) continue;
+      if (!MO.isUse()) continue;
+
+      const TargetRegisterClass *NewRC =
+        getInstrOperandRegClass(TRI, TII, MI->getDesc(), i);
+
+      // For now, only allow the register to be changed if its register
+      // class is consistent across all uses.
+      if (!Classes[Reg] && NewRC)
+        Classes[Reg] = NewRC;
+      else if (!NewRC || Classes[Reg] != NewRC)
+        Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+
+      RegRefs.insert(std::make_pair(Reg, &MO));
+
+      // It wasn't previously live but now it is, this is a kill.
+      if (KillIndices[Reg] == -1u) {
+        KillIndices[Reg] = Count;
+        DefIndices[Reg] = -1u;
+      }
+      // Repeat, for all aliases.
+      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+        unsigned AliasReg = *Alias;
+        if (KillIndices[AliasReg] == -1u) {
+          KillIndices[AliasReg] = Count;
+          DefIndices[AliasReg] = -1u;
+        }
       }
     }
   }
