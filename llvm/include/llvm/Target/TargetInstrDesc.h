@@ -90,7 +90,7 @@ namespace TID {
     Predicable,
     NotDuplicable,
     DelaySlot,
-    SimpleLoad,
+    FoldableAsLoad,
     MayLoad,
     MayStore,
     UnmodeledSideEffects,
@@ -301,7 +301,7 @@ public:
     return Flags & (1 << TID::DelaySlot);
   }
   
-  /// isSimpleLoad - Return true for instructions that can be folded as
+  /// canFoldAsLoad - Return true for instructions that can be folded as
   /// memory operands in other instructions. The most common use for this
   /// is instructions that are simple loads from memory that don't modify
   /// the loaded value in any way, but it can also be used for instructions
@@ -309,8 +309,8 @@ public:
   /// on x86, to allow them to be folded when it is beneficial.
   /// This should only be set on instructions that return a value in their
   /// only virtual register definition.
-  bool isSimpleLoad() const {
-    return Flags & (1 << TID::SimpleLoad);
+  bool canFoldAsLoad() const {
+    return Flags & (1 << TID::FoldableAsLoad);
   }
   
   //===--------------------------------------------------------------------===//

@@ -146,7 +146,7 @@ def MMX_FEMMS : MMXI<0x0E, RawFrm, (outs), (ins), "femms", [(int_x86_mmx_femms)]
 def MMX_MOVD64rr : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
                         "movd\t{$src, $dst|$dst, $src}",
                         [(set VR64:$dst, (v2i32 (scalar_to_vector GR32:$src)))]>;
-let isSimpleLoad = 1, isReMaterializable = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
                         "movd\t{$src, $dst|$dst, $src}",
               [(set VR64:$dst, (v2i32 (scalar_to_vector (loadi32 addr:$src))))]>;
@@ -165,7 +165,7 @@ def MMX_MOVD64from64rr : MMXRI<0x7E, MRMSrcReg, (outs GR64:$dst), (ins VR64:$src
 let neverHasSideEffects = 1 in
 def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
                         "movq\t{$src, $dst|$dst, $src}", []>;
-let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MMX_MOVQ64rm : MMXI<0x6F, MRMSrcMem, (outs VR64:$dst), (ins i64mem:$src),
                         "movq\t{$src, $dst|$dst, $src}",
                         [(set VR64:$dst, (load_mmx addr:$src))]>;

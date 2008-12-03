@@ -546,7 +546,7 @@ let mayStore = 1 in {
     "stf.spill [$dstPtr] = $value">, isM;
 }
 
-let isSimpleLoad = 1 in {
+let canFoldAsLoad = 1 in {
   def LD1 : AForm<0x03, 0x0b, (outs GR:$dst), (ins GR:$srcPtr),
     "ld1 $dst = [$srcPtr]">, isM;
   def LD2 : AForm<0x03, 0x0b, (outs GR:$dst), (ins GR:$srcPtr),

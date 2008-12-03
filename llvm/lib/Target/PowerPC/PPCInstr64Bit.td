@@ -468,7 +468,7 @@ def RLDICR : MDForm_1<30, 1,
 
 
 // Sign extending loads.
-let isSimpleLoad = 1, PPC970_Unit = 2 in {
+let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LHA8: DForm_1<42, (outs G8RC:$rD), (ins memri:$src),
                   "lha $rD, $src", LdStLHA,
                   [(set G8RC:$rD, (sextloadi16 iaddr:$src))]>,
@@ -498,7 +498,7 @@ def LHAU8 : DForm_1<43, (outs G8RC:$rD, ptr_rc:$ea_result), (ins symbolLo:$disp,
 }
 
 // Zero extending loads.
-let isSimpleLoad = 1, PPC970_Unit = 2 in {
+let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LBZ8 : DForm_1<34, (outs G8RC:$rD), (ins memri:$src),
                   "lbz $rD, $src", LdStGeneral,
                   [(set G8RC:$rD, (zextloadi8 iaddr:$src))]>;
@@ -539,7 +539,7 @@ def LWZU8 : DForm_1<33, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
 
 
 // Full 8-byte loads.
-let isSimpleLoad = 1, PPC970_Unit = 2 in {
+let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LD   : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrix:$src),
                     "ld $rD, $src", LdStLD,
                     [(set G8RC:$rD, (load ixaddr:$src))]>, isPPC64;

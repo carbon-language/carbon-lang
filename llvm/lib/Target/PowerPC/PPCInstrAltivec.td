@@ -199,7 +199,7 @@ def MTVSCR : VXForm_5<1604, (outs), (ins VRRC:$vB),
                       "mtvscr $vB", LdStGeneral,
                       [(int_ppc_altivec_mtvscr VRRC:$vB)]>; 
 
-let isSimpleLoad = 1, PPC970_Unit = 2 in {  // Loads.
+let canFoldAsLoad = 1, PPC970_Unit = 2 in {  // Loads.
 def LVEBX: XForm_1<31,   7, (outs VRRC:$vD), (ins memrr:$src),
                    "lvebx $vD, $src", LdStGeneral,
                    [(set VRRC:$vD, (int_ppc_altivec_lvebx xoaddr:$src))]>;

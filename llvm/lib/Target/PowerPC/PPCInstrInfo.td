@@ -659,7 +659,7 @@ def TRAP  : XForm_24<31, 4, (outs), (ins), "trap", LdStGeneral, [(trap)]>;
 //
 
 // Unindexed (r+i) Loads. 
-let isSimpleLoad = 1, PPC970_Unit = 2 in {
+let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LBZ : DForm_1<34, (outs GPRC:$rD), (ins memri:$src),
                   "lbz $rD, $src", LdStGeneral,
                   [(set GPRC:$rD, (zextloadi8 iaddr:$src))]>;
@@ -718,7 +718,7 @@ def LFDU : DForm_1<51, (outs F8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
 
 // Indexed (r+r) Loads.
 //
-let isSimpleLoad = 1, PPC970_Unit = 2 in {
+let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LBZX : XForm_1<31,  87, (outs GPRC:$rD), (ins memrr:$src),
                    "lbzx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (zextloadi8 xaddr:$src))]>;

@@ -41,7 +41,7 @@ class InstAlpha<bits<6> op, string asmstr, InstrItinClass itin> : Instruction {
 class MForm<bits<6> opcode, bit load, string asmstr, list<dag> pattern, InstrItinClass itin> 
         : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let isSimpleLoad = load;
+  let canFoldAsLoad = load;
   let Defs = [R28]; //We may use this for frame index calculations, so reserve it here
 
   bits<5> Ra;

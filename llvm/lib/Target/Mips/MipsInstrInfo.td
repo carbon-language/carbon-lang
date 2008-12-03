@@ -224,7 +224,7 @@ class LoadUpper<bits<6> op, string instr_asm>:
       [], IIAlu>;
 
 // Memory Load/Store
-let isSimpleLoad = 1, hasDelaySlot = 1 in
+let canFoldAsLoad = 1, hasDelaySlot = 1 in
 class LoadM<bits<6> op, string instr_asm, PatFrag OpNode>:
   FI< op,
       (outs CPURegs:$dst),

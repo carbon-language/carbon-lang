@@ -342,7 +342,7 @@ def CMOVNP_F : FPI<0xD8, AddRegFrm, (outs RST:$op), (ins),
                   "fcmovnu\t{$op, %st(0)|%ST(0), $op}">, DB;
 
 // Floating point loads & stores.
-let isSimpleLoad = 1 in {
+let canFoldAsLoad = 1 in {
 def LD_Fp32m   : FpIf32<(outs RFP32:$dst), (ins f32mem:$src), ZeroArgFP,
                   [(set RFP32:$dst, (loadf32 addr:$src))]>;
 let isReMaterializable = 1, mayHaveSideEffects = 1 in

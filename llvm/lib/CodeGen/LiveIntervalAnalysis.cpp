@@ -1841,7 +1841,7 @@ addIntervalsForSpills(const LiveInterval &li,
     int LdSlot = 0;
     bool isLoadSS = DefIsReMat && tii_->isLoadFromStackSlot(ReMatDefMI, LdSlot);
     bool isLoad = isLoadSS ||
-      (DefIsReMat && (ReMatDefMI->getDesc().isSimpleLoad()));
+      (DefIsReMat && (ReMatDefMI->getDesc().canFoldAsLoad()));
     bool IsFirstRange = true;
     for (LiveInterval::Ranges::const_iterator
            I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
@@ -1927,7 +1927,7 @@ addIntervalsForSpills(const LiveInterval &li,
     int LdSlot = 0;
     bool isLoadSS = DefIsReMat && tii_->isLoadFromStackSlot(ReMatDefMI, LdSlot);
     bool isLoad = isLoadSS ||
-      (DefIsReMat && ReMatDefMI->getDesc().isSimpleLoad());
+      (DefIsReMat && ReMatDefMI->getDesc().canFoldAsLoad());
     rewriteInstructionsForSpills(li, TrySplit, I, ReMatOrigDefMI, ReMatDefMI,
                                Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
                                CanDelete, vrm, rc, ReMatIds, loopInfo,
@@ -2056,7 +2056,7 @@ addIntervalsForSpills(const LiveInterval &li,
           int LdSlot = 0;
           bool isLoadSS = tii_->isLoadFromStackSlot(ReMatDefMI, LdSlot);
           // If the rematerializable def is a load, also try to fold it.
-          if (isLoadSS || ReMatDefMI->getDesc().isSimpleLoad())
+          if (isLoadSS || ReMatDefMI->getDesc().canFoldAsLoad())
             Folded = tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index,
                                           Ops, isLoadSS, LdSlot, VReg);
           unsigned ImpUse = getReMatImplicitUse(li, ReMatDefMI);

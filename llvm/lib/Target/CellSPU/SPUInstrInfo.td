@@ -47,7 +47,7 @@ def DWARF_LOC        : Pseudo<(outs), (ins i32imm:$line, i32imm:$col, i32imm:$fi
 // finally the X-form with the register-register.
 //===----------------------------------------------------------------------===//
 
-let isSimpleLoad = 1 in {
+let canFoldAsLoad = 1 in {
   class LoadDFormVec<ValueType vectype>
     : RI10Form<0b00101100, (outs VECREG:$rT), (ins memri10:$src),
                "lqd\t$rT, $src",

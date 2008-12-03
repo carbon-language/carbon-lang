@@ -34,7 +34,7 @@ def arm_fmdrr  : SDNode<"ARMISD::FMDRR",  SDT_FMDRR>;
 //  Load / store Instructions.
 //
 
-let isSimpleLoad = 1 in {
+let canFoldAsLoad = 1 in {
 def FLDD  : ADI5<0b1101, 0b01, (outs DPR:$dst), (ins addrmode5:$addr),
                  "fldd", " $dst, $addr",
                  [(set DPR:$dst, (load addrmode5:$addr))]>;
@@ -42,7 +42,7 @@ def FLDD  : ADI5<0b1101, 0b01, (outs DPR:$dst), (ins addrmode5:$addr),
 def FLDS  : ASI5<0b1101, 0b01, (outs SPR:$dst), (ins addrmode5:$addr),
                  "flds", " $dst, $addr",
                  [(set SPR:$dst, (load addrmode5:$addr))]>;
-} // isSimpleLoad
+} // canFoldAsLoad
 
 def FSTD  : ADI5<0b1101, 0b00, (outs), (ins DPR:$src, addrmode5:$addr),
                  "fstd", " $src, $addr",
