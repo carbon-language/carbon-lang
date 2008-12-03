@@ -41,6 +41,10 @@ static const char *const PSVNames[] = {
 PseudoSourceValue::PseudoSourceValue() :
   Value(PointerType::getUnqual(Type::Int8Ty), PseudoSourceValueVal) {}
 
+void PseudoSourceValue::dump() const {
+  print(errs()); errs() << '\n'; errs().flush();
+}
+
 void PseudoSourceValue::print(raw_ostream &OS) const {
   OS << PSVNames[this - *PSVs];
 }

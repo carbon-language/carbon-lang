@@ -1759,8 +1759,7 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
   } else if (isa<InlineAsm>(this)) {
     WriteAsOperand(OS, this, true, 0);
   } else {
-    // FIXME: PseudoSourceValue breaks this!
-    //assert(0 && "Unknown value to print out!");
+    assert(0 && "Unknown value to print out!");
   }
 }
 

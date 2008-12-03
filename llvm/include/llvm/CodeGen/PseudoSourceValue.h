@@ -28,6 +28,12 @@ namespace llvm {
   public:
     PseudoSourceValue();
 
+    /// dump - Support for debugging, callable in GDB: V->dump()
+    //
+    virtual void dump() const;
+
+    /// print - Implement operator<< on PseudoSourceValue.
+    ///
     virtual void print(raw_ostream &OS) const;
 
     /// isConstant - Test whether this PseudoSourceValue has a constant value.
