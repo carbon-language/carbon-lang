@@ -162,6 +162,12 @@ public:
     return GRStateTrait<T>::Lookup(GRStateTrait<T>::MakeData(d), key);
   }
   
+  template<typename T>
+  bool contains(typename GRStateTrait<T>::key_type key) const {
+    void* const* d = FindGDM(GRStateTrait<T>::GDMIndex());
+    return GRStateTrait<T>::Contains(GRStateTrait<T>::MakeData(d), key);
+  }
+  
   // State pretty-printing.
   class Printer {
   public:
@@ -623,7 +629,7 @@ public:
   template <typename T>
   typename GRStateTrait<T>::context_type get_context() {
     return Mgr->get_context<T>();
-  }    
+  }
 
   template<typename T>
   GRStateRef set(typename GRStateTrait<T>::key_type K,
@@ -647,6 +653,11 @@ public:
   template<typename T>
   GRStateRef remove(typename GRStateTrait<T>::key_type K) {
     return GRStateRef(Mgr->remove<T>(St, K, get_context<T>()), *Mgr);
+  }
+  
+  template<typename T>
+  bool contains(typename GRStateTrait<T>::key_type key) const {
+    return St->contains(key);
   }
   
   // Lvalue methods.
