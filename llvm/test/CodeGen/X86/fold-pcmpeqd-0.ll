@@ -1,13 +1,11 @@
-; RUN: llvm-as < %s | llc | not grep pcmpeqd
-; RUN: llvm-as < %s | llc -march=x86-64 | grep pcmpeqd | count 1
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin   | not grep pcmpeqd
+; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep pcmpeqd | count 1
 
 ; On x86-64, this testcase shouldn't need to spill the -1 value,
 ; so it should just use pcmpeqd to materialize an all-ones vector.
 ; On x86-32, there aren't enough registers, so an all-ones
 ; constant pool should be created so it can be folded.
 
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32"
-target triple = "i686-apple-cl.1.0"
 	%struct.__ImageExecInfo = type <{ <4 x i32>, <4 x float>, <2 x i64>, i8*, i8*, i8*, i32, i32, i32, i32, i32 }>
 	%struct._cl_image_format_t = type <{ i32, i32, i32 }>
 	%struct._image2d_t = type <{ i8*, %struct._cl_image_format_t, i32, i32, i32, i32, i32, i32 }>
