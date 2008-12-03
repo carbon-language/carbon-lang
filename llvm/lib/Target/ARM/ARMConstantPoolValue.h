@@ -15,6 +15,7 @@
 #define LLVM_TARGET_ARM_CONSTANTPOOLVALUE_H
 
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include <ostream>
 
 namespace llvm {
 
