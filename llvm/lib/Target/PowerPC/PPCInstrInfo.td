@@ -683,6 +683,7 @@ def LFD : DForm_1<50, (outs F8RC:$rD), (ins memri:$src),
 
 
 // Unindexed (r+i) Loads with Update (preinc).
+let mayLoad = 1 in {
 def LBZU : DForm_1<35, (outs GPRC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                    "lbzu $rD, $addr", LdStGeneral,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
@@ -712,6 +713,7 @@ def LFDU : DForm_1<51, (outs F8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                   "lfd $rD, $addr", LdStLFD,
                   []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
+}
 }
 
 // Indexed (r+r) Loads.

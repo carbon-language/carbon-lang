@@ -570,7 +570,9 @@ def : Pat<(truncstorei8 GPRC:$DATA, GPRC:$addr),
 
 
 //load address, rellocated gpdist form
-let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s16imm:$DISP, GPRC:$RB, s16imm:$NUM) in {
+let OutOperandList = (ops GPRC:$RA),
+    InOperandList = (ops s16imm:$DISP, GPRC:$RB, s16imm:$NUM),
+    mayLoad = 1 in {
 def LDAg  : MForm<0x08, 1, "lda $RA,0($RB)\t\t!gpdisp!$NUM", [], s_lda>;  //Load address
 def LDAHg : MForm<0x09, 1, "ldah $RA,0($RB)\t\t!gpdisp!$NUM", [], s_lda>;  //Load address
 }
@@ -589,7 +591,9 @@ let OutOperandList = (outs GPRC:$RR),
 def STQ_C : MForm<0x2F, 0, "stq_l $RA,$DISP($RB)", [], s_ist>;
 def STL_C : MForm<0x2E, 0, "stl_l $RA,$DISP($RB)", [], s_ist>;
 }
-let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
+let OutOperandList = (ops GPRC:$RA),
+    InOperandList = (ops s64imm:$DISP, GPRC:$RB),
+    mayLoad = 1 in {
 def LDQ_L : MForm<0x2B, 1, "ldq_l $RA,$DISP($RB)", [], s_ild>;
 def LDL_L : MForm<0x2A, 1, "ldl_l $RA,$DISP($RB)", [], s_ild>;
 }

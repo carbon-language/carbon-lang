@@ -1097,7 +1097,7 @@ public:
 
       // Generate MemOperandSDNodes nodes for each memory accesses covered by 
       // this pattern.
-      if (II.isSimpleLoad | II.mayLoad | II.mayStore) {
+      if (II.mayLoad | II.mayStore) {
         std::vector<std::string>::const_iterator mi, mie;
         for (mi = LSI.begin(), mie = LSI.end(); mi != mie; ++mi) {
           std::string LSIName = "LSI_" + *mi;

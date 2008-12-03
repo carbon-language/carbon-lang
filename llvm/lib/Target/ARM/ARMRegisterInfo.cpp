@@ -834,7 +834,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   assert(Offset && "This code isn't needed if offset already handled!");
 
   if (isThumb) {
-    if (Desc.isSimpleLoad()) {
+    if (Desc.mayLoad()) {
       // Use the destination register to materialize sp + offset.
       unsigned TmpReg = MI.getOperand(0).getReg();
       bool UseRR = false;

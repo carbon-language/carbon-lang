@@ -487,6 +487,7 @@ def LWAX : XForm_1<31, 341, (outs G8RC:$rD), (ins memrr:$src),
                    PPC970_DGroup_Cracked;
 
 // Update forms.
+let mayLoad = 1 in
 def LHAU8 : DForm_1<43, (outs G8RC:$rD, ptr_rc:$ea_result), (ins symbolLo:$disp,
                             ptr_rc:$rA),
                     "lhau $rD, $disp($rA)", LdStGeneral,
@@ -520,6 +521,7 @@ def LWZX8 : XForm_1<31,  23, (outs G8RC:$rD), (ins memrr:$src),
                    
                    
 // Update forms.
+let mayLoad = 1 in {
 def LBZU8 : DForm_1<35, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                     "lbzu $rD, $addr", LdStGeneral,
                     []>, RegConstraint<"$addr.reg = $ea_result">,
@@ -533,6 +535,7 @@ def LWZU8 : DForm_1<33, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                     []>, RegConstraint<"$addr.reg = $ea_result">,
                     NoEncode<"$ea_result">;
 }
+}
 
 
 // Full 8-byte loads.
@@ -544,6 +547,7 @@ def LDX  : XForm_1<31,  21, (outs G8RC:$rD), (ins memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
                    
+let mayLoad = 1 in
 def LDU  : DSForm_1<58, 1, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memrix:$addr),
                     "ldu $rD, $addr", LdStLD,
                     []>, RegConstraint<"$addr.reg = $ea_result">, isPPC64,

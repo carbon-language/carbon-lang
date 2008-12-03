@@ -414,7 +414,7 @@ static unsigned EstimateRuntime(MachineBasicBlock::iterator I,
     const TargetInstrDesc &TID = I->getDesc();
     if (TID.isCall())
       Time += 10;
-    else if (TID.isSimpleLoad() || TID.mayStore())
+    else if (TID.mayLoad() || TID.mayStore())
       Time += 2;
     else
       ++Time;
