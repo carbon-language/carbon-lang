@@ -19,7 +19,7 @@ use Digest::MD5;
 use File::Basename;
 use Term::ANSIColor;
 use Term::ANSIColor qw(:constants);
-use Cwd;
+use Cwd qw/ getcwd abs_path /;
 use Sys::Hostname;
 
 my $Verbose = 0;       # Verbose output from this script.
