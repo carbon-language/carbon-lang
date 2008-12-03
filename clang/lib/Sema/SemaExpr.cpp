@@ -870,7 +870,7 @@ ActOnArraySubscriptExpr(Scope *S, ExprTy *Base, SourceLocation LLoc,
       LHSExp->getType()->isRecordType() || 
       LHSExp->getType()->isEnumeralType() ||
       RHSExp->getType()->isRecordType() ||
-      RHSExp->getType()->isRecordType()) {
+      RHSExp->getType()->isEnumeralType()) {
     // Add the appropriate overloaded operators (C++ [over.match.oper]) 
     // to the candidate set.
     OverloadCandidateSet CandidateSet;
