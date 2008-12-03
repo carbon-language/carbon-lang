@@ -1180,7 +1180,7 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
   for (unsigned i = 0, e = Uses.Users.size(); i != e; ++i) {
     UsersToProcess.push_back(BasedUser(Uses.Users[i], SE));
     
-    // Move any loop invariant operands from the offset field to the immediate
+    // Move any loop variant operands from the offset field to the immediate
     // field of the use, so that we don't try to use something before it is
     // computed.
     MoveLoopVariantsToImediateField(UsersToProcess.back().Base,
