@@ -69,6 +69,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   // Leopard and above support aligned common symbols.
   COMMDirectiveTakesAlignment = (Subtarget->getDarwinVers() >= 9);
   HasDotTypeDotSizeDirective = false;
+  HasSingleParameterDotFile = false;
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorsSection = ".constructor";
     StaticDtorsSection = ".destructor";
@@ -221,6 +222,7 @@ X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM):
   LCOMMDirective = "\t.lcomm\t";
   COMMDirectiveTakesAlignment = false;
   HasDotTypeDotSizeDirective = false;
+  HasSingleParameterDotFile = false;
   StaticCtorsSection = "\t.section .ctors,\"aw\"";
   StaticDtorsSection = "\t.section .dtors,\"aw\"";
   HiddenDirective = NULL;
@@ -335,6 +337,7 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   Data32bitsDirective = "\tdd\t";
   Data64bitsDirective = "\tdq\t";
   HasDotTypeDotSizeDirective = false;
+  HasSingleParameterDotFile = false;
 
   TextSection = getUnnamedSection("_text", SectionFlags::Code);
   DataSection = getUnnamedSection("_data", SectionFlags::Writeable);

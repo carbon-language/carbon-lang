@@ -61,6 +61,7 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
   JumpTableDataSection = ".const";
   CStringSection = "\t.cstring";
   HasDotTypeDotSizeDirective = false;
+  HasSingleParameterDotFile = false;
   NeedsIndirectEncoding = true;
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorsSection = ".constructor";

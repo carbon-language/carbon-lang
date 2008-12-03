@@ -390,7 +390,11 @@ namespace llvm {
     /// HasDotTypeDotSizeDirective - True if the target has .type and .size
     /// directives, this is true for most ELF targets.
     bool HasDotTypeDotSizeDirective;      // Defaults to true.
-    
+
+    /// HasSingleParameterDotFile - True if the target has a single parameter
+    /// .file directive, this is true for ELF targets.
+    bool HasSingleParameterDotFile;      // Defaults to true.
+
     /// UsedDirective - This directive, if non-null, is used to declare a global
     /// as being used somehow that the assembler can't see.  This prevents dead
     /// code elimination on some targets.
@@ -765,6 +769,9 @@ namespace llvm {
     bool hasDotTypeDotSizeDirective() const {
       return HasDotTypeDotSizeDirective;
     }
+    bool hasSingleParameterDotFile() const {
+      return HasSingleParameterDotFile;
+    }
     const char *getUsedDirective() const {
       return UsedDirective;
     }
@@ -856,4 +863,3 @@ namespace llvm {
 }
 
 #endif
-

@@ -142,6 +142,14 @@ bool AsmPrinter::doInitialization(Module &M) {
   
   GCModuleInfo *MI = getAnalysisToUpdate<GCModuleInfo>();
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
+
+  if (TAI->hasSingleParameterDotFile()) {
+    /* Very minimal debug info. It is ignored if we emit actual
+       debug info. If we don't, this at helps the user find where
+       a function came from. */
+    O << "\t.file\t\"" << M.getModuleIdentifier() << "\"\n";
+  }
+
   for (GCModuleInfo::iterator I = MI->begin(), E = MI->end(); I != E; ++I)
     if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*I))
       MP->beginAssembly(O, *this, *TAI);

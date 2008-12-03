@@ -85,6 +85,7 @@ void TargetAsmInfo::fillDefaultValues() {
   COMMDirective = "\t.comm\t";
   COMMDirectiveTakesAlignment = true;
   HasDotTypeDotSizeDirective = true;
+  HasSingleParameterDotFile = true;
   UsedDirective = 0;
   WeakRefDirective = 0;
   WeakDefDirective = 0;
