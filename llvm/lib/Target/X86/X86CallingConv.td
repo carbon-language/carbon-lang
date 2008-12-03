@@ -323,7 +323,7 @@ def CC_X86_32_FastCall : CallingConv<[
 def CC_X86_32_FastCC : CallingConv<[
   // Handles byval parameters.  Note that we can't rely on the delegation
   // to CC_X86_32_Common for this because that happens after code that
-  // handles i32 arguments.
+  // puts arguments in registers.
   CCIfByVal<CCPassByVal<4, 4>>,
 
   // Promote i8/i16 arguments to i32.
