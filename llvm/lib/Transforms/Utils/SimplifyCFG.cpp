@@ -1681,27 +1681,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // as a predecessor.  These are unreachable.
   if (pred_begin(BB) == pred_end(BB) || BB->getSinglePredecessor() == BB) {
     DOUT << "Removing BB: \n" << *BB;
-
-    // Loop through all of our successors and make sure they know that one
-    // of their predecessors is going away.
-    for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
-      SI->removePredecessor(BB);
-
-    while (!BB->empty()) {
-      Instruction &I = BB->back();
-      // If this instruction is used, replace uses with an arbitrary
-      // value.  Because control flow can't get here, we don't care
-      // what we replace the value with.  Note that since this block is
-      // unreachable, and all values contained within it must dominate their
-      // uses, that all uses will eventually be removed.
-      if (!I.use_empty())
-        // Make all users of this instruction use undef instead
-        I.replaceAllUsesWith(UndefValue::get(I.getType()));
-
-      // Remove the instruction from the basic block
-      BB->getInstList().pop_back();
-    }
-    BB->eraseFromParent();
+    DeleteBlockIfDead(BB);
     return true;
   }
 

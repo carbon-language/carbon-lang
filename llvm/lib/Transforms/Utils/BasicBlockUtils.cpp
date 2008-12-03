@@ -24,6 +24,39 @@
 #include <algorithm>
 using namespace llvm;
 
+/// DeleteBlockIfDead - If the specified basic block is trivially dead (has no
+/// predecessors and not the entry block), delete it and return true.  Otherwise
+/// return false.
+bool llvm::DeleteBlockIfDead(BasicBlock *BB) {
+  if (pred_begin(BB) != pred_end(BB) ||
+      BB == &BB->getParent()->getEntryBlock())
+    return false;
+  
+  TerminatorInst *BBTerm = BB->getTerminator();
+  
+  // Loop through all of our successors and make sure they know that one
+  // of their predecessors is going away.
+  for (unsigned i = 0, e = BBTerm->getNumSuccessors(); i != e; ++i)
+    BBTerm->getSuccessor(i)->removePredecessor(BB);
+  
+  // Zap all the instructions in the block.
+  while (!BB->empty()) {
+    Instruction &I = BB->back();
+    // If this instruction is used, replace uses with an arbitrary value.
+    // Because control flow can't get here, we don't care what we replace the
+    // value with.  Note that since this block is unreachable, and all values
+    // contained within it must dominate their uses, that all uses will
+    // eventually be removed (they are themselves dead).
+    if (!I.use_empty())
+      I.replaceAllUsesWith(UndefValue::get(I.getType()));
+    BB->getInstList().pop_back();
+  }
+  
+  // Zap the block!
+  BB->eraseFromParent();
+  return true;
+}
+
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.
 bool llvm::MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P) {
