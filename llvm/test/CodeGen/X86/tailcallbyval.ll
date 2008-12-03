@@ -1,6 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -tailcallopt | grep TAILCALL
-; check for the 2 byval moves
-; RUN: llvm-as < %s | llc -march=x86 -tailcallopt | grep movl | grep ecx | grep eax | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 -tailcallopt | grep {movl\[\[:space:\]\]*4(%esp), %eax} | count 1
 %struct.s = type {i32, i32, i32, i32, i32, i32, i32, i32,
                   i32, i32, i32, i32, i32, i32, i32, i32,
                   i32, i32, i32, i32, i32, i32, i32, i32 }
