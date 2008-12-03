@@ -613,6 +613,8 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
+  SwitchToSection(TAI->SectionForGlobal(F));
+
   // Emit post-function debug information.
   DW.EndFunction(&MF);
 
