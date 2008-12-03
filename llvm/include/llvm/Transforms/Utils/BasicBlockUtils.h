@@ -26,10 +26,9 @@ class Instruction;
 class Pass;
 class AliasAnalysis;
 
-/// DeleteBlockIfDead - If the specified basic block is trivially dead (has no
-/// predecessors and not the entry block), delete it and return true.  Otherwise
-/// return false.
-bool DeleteBlockIfDead(BasicBlock *BB);
+/// DeleteDeadBlock - Delete the specified block, which must have no
+/// predecessors.
+void DeleteDeadBlock(BasicBlock *BB);
   
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.

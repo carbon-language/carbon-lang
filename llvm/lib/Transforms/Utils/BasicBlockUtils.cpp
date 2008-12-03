@@ -24,14 +24,10 @@
 #include <algorithm>
 using namespace llvm;
 
-/// DeleteBlockIfDead - If the specified basic block is trivially dead (has no
-/// predecessors and not the entry block), delete it and return true.  Otherwise
-/// return false.
-bool llvm::DeleteBlockIfDead(BasicBlock *BB) {
-  if (pred_begin(BB) != pred_end(BB) ||
-      BB == &BB->getParent()->getEntryBlock())
-    return false;
-  
+/// DeleteDeadBlock - Delete the specified block, which must have no
+/// predecessors.
+void llvm::DeleteDeadBlock(BasicBlock *BB) {
+  assert(pred_begin(BB) != pred_end(BB) && "Block is not dead!");
   TerminatorInst *BBTerm = BB->getTerminator();
   
   // Loop through all of our successors and make sure they know that one
@@ -54,7 +50,6 @@ bool llvm::DeleteBlockIfDead(BasicBlock *BB) {
   
   // Zap the block!
   BB->eraseFromParent();
-  return true;
 }
 
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,

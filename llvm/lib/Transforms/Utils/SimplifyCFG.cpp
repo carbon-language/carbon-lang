@@ -1681,7 +1681,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // as a predecessor.  These are unreachable.
   if (pred_begin(BB) == pred_end(BB) || BB->getSinglePredecessor() == BB) {
     DOUT << "Removing BB: \n" << *BB;
-    DeleteBlockIfDead(BB);
+    DeleteDeadBlock(BB);
     return true;
   }
 
