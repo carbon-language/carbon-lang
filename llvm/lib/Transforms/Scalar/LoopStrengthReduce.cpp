@@ -767,9 +767,9 @@ static bool isTargetConstant(const SCEVHandle &V, const Type *UseTy,
   return false;
 }
 
-/// MoveLoopVariantsToImediateField - Move any subexpressions from Val that are
+/// MoveLoopVariantsToImmediateField - Move any subexpressions from Val that are
 /// loop varying to the Imm operand.
-static void MoveLoopVariantsToImediateField(SCEVHandle &Val, SCEVHandle &Imm,
+static void MoveLoopVariantsToImmediateField(SCEVHandle &Val, SCEVHandle &Imm,
                                             Loop *L, ScalarEvolution *SE) {
   if (Val->isLoopInvariant(L)) return;  // Nothing to do.
   
@@ -793,7 +793,7 @@ static void MoveLoopVariantsToImediateField(SCEVHandle &Val, SCEVHandle &Imm,
   } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
     // Try to pull immediates out of the start value of nested addrec's.
     SCEVHandle Start = SARE->getStart();
-    MoveLoopVariantsToImediateField(Start, Imm, L, SE);
+    MoveLoopVariantsToImmediateField(Start, Imm, L, SE);
     
     std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
     Ops[0] = Start;
@@ -1183,7 +1183,7 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
     // Move any loop variant operands from the offset field to the immediate
     // field of the use, so that we don't try to use something before it is
     // computed.
-    MoveLoopVariantsToImediateField(UsersToProcess.back().Base,
+    MoveLoopVariantsToImmediateField(UsersToProcess.back().Base,
                                     UsersToProcess.back().Imm, L, SE);
     assert(UsersToProcess.back().Base->isLoopInvariant(L) &&
            "Base value is not loop invariant!");
