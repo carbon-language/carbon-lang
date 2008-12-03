@@ -160,9 +160,12 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
          P != PE; ++P) {
       SUnit *PredSU = P->Dep;
-      unsigned PredLatency = PredSU->CycleBound + PredSU->Latency;
-      if (SU->CycleBound < PredLatency) {
-        SU->CycleBound = PredLatency;
+      // This assumes that there's no delay for reusing registers.
+      unsigned PredLatency = (P->isCtrl && P->Reg != 0) ? 1 : PredSU->Latency;
+      unsigned PredTotalLatency = PredSU->CycleBound + PredLatency;
+      if (SU->CycleBound < PredTotalLatency ||
+          (SU->CycleBound == PredTotalLatency && !P->isAntiDep)) {
+        SU->CycleBound = PredTotalLatency;
         CriticalPath[*I] = &*P;
       }
     }
