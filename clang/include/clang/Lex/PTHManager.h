@@ -38,7 +38,7 @@ class PTHManager {
   
   /// IdMap - A lazily generated cache mapping from persistent identifiers to
   ///  IdentifierInfo*.
-  void* PersistentIDCache;
+  void* PerIDCache;
   
   /// FileLookup - Abstract data structure used for mapping between files
   ///  and token data in the PTH file.
@@ -59,7 +59,7 @@ class PTHManager {
   /// This constructor is intended to only be called by the static 'Create'
   /// method.
   PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
-             const char* idDataTable, Preprocessor& pp);
+             const char* idDataTable, void* perIDCache, Preprocessor& pp);
 
   // Do not implement.
   PTHManager();

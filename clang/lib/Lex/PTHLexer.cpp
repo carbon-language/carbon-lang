@@ -23,13 +23,12 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/DenseMap.h"
 
 using namespace clang;
 
 PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D,
                    PTHManager& PM)
-  : TokBuf(D), PreprocessorLexer(&pp, fileloc), CurTokenIdx(0), PTHMgr(PM), 
+  : PreprocessorLexer(&pp, fileloc), TokBuf(D), CurTokenIdx(0), PTHMgr(PM), 
     NeedsFetching(true) {
     // Make sure the EofToken is completely clean.
     EofToken.startToken();
@@ -184,7 +183,6 @@ void PTHLexer::ReadToken(Token& T) {
 // Internal Data Structures for PTH file lookup and resolving identifiers.
 //===----------------------------------------------------------------------===//
 
-typedef llvm::DenseMap<uint32_t, IdentifierInfo*> IDCache;
 
 /// PTHFileLookup - This internal data structure is used by the PTHManager
 ///  to map from FileEntry objects managed by FileManager to offsets within
@@ -238,14 +236,15 @@ public:
 //===----------------------------------------------------------------------===//
 
 PTHManager::PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
-                       const char* idDataTable, Preprocessor& pp)
-: Buf(buf), PersistentIDCache(0), FileLookup(fileLookup),
-IdDataTable(idDataTable), ITable(pp.getIdentifierTable()), PP(pp) {}
+                       const char* idDataTable, void* perIDCache, 
+                       Preprocessor& pp)
+: Buf(buf), PerIDCache(perIDCache), FileLookup(fileLookup),
+  IdDataTable(idDataTable), ITable(pp.getIdentifierTable()), PP(pp) {}
 
 PTHManager::~PTHManager() {
   delete Buf;
   delete (PTHFileLookup*) FileLookup;
-  delete (IDCache*) PersistentIDCache;
+  delete [] (IdentifierInfo**) PerIDCache;
 }
 
 PTHManager* PTHManager::Create(const std::string& file, Preprocessor& PP) {
@@ -294,7 +293,22 @@ PTHManager* PTHManager::Create(const std::string& file, Preprocessor& PP) {
     return 0; // FIXME: Proper error diagnostic?
   }
   
-  return new PTHManager(File.take(), FL.take(), IData, PP);
+  // Get the number of IdentifierInfos and pre-allocate the identifier cache.
+  uint32_t NumIds = Read32(IData);
+
+  // Pre-allocate the peristent ID -> IdentifierInfo* cache.  We use calloc()
+  // so that we in the best case only zero out memory once when the OS returns
+  // us new pages.
+  IdentifierInfo** PerIDCache =
+    (IdentifierInfo**) calloc(NumIds, sizeof(*PerIDCache));
+  
+  if (!PerIDCache) {
+    assert(false && "Could not allocate Persistent ID cache.");
+    return 0;
+  }
+  
+  // Create the new lexer.
+  return new PTHManager(File.take(), FL.take(), IData, PerIDCache, PP);
 }
 
 IdentifierInfo* PTHManager::ReadIdentifierInfo(const char*& D) {
@@ -310,11 +324,7 @@ IdentifierInfo* PTHManager::ReadIdentifierInfo(const char*& D) {
   --persistentID;
   
   // Check if the IdentifierInfo has already been resolved.
-  if (!PersistentIDCache)
-    PersistentIDCache = new IDCache();
-  
-  // FIXME: We can make this an array, but what is the performance tradeoff?
-  IdentifierInfo*& II = (*((IDCache*) PersistentIDCache))[persistentID];
+  IdentifierInfo*& II = ((IdentifierInfo**) PerIDCache)[persistentID];
   if (II) return II;
   
   // Look in the PTH file for the string data for the IdentifierInfo object.

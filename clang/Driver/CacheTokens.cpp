@@ -104,7 +104,7 @@ EmitIdentifierTable(llvm::raw_fd_ostream& Out, uint32_t max,
   }
   
   Offset DataOff = Out.tell();
-  
+    
   for (InverseIDMap::iterator I=IIDMap.begin(), E=IIDMap.end(); I!=E; ++I) {
     // Record the location for this data.
     I->FileOffset = Out.tell();
@@ -118,6 +118,9 @@ EmitIdentifierTable(llvm::raw_fd_ostream& Out, uint32_t max,
   // Now emit the table mapping from persistent IDs to PTH file offsets.  
   Offset IDOff = Out.tell();
   
+  // Emit the number of identifiers.
+  Emit32(Out, max);
+
   for (InverseIDMap::iterator I=IIDMap.begin(), E=IIDMap.end(); I!=E; ++I)
     Emit32(Out, I->FileOffset);
 
