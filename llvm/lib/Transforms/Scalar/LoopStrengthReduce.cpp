@@ -542,10 +542,6 @@ namespace {
     /// instruction.
     SCEVHandle Imm;
 
-    /// EmittedBase - The actual value* to use for the base value of this
-    /// operation.  This is null if we should just use zero so far.
-    Value *EmittedBase;
-
     // isUseOfPostIncrementedValue - True if this should use the
     // post-incremented version of this IV, not the preincremented version.
     // This can only be set in special cases, such as the terminating setcc
@@ -556,7 +552,7 @@ namespace {
     BasedUser(IVStrideUse &IVSU, ScalarEvolution *se)
       : SE(se), Base(IVSU.Offset), Inst(IVSU.User), 
         OperandValToReplace(IVSU.OperandValToReplace), 
-        Imm(SE->getIntegerSCEV(0, Base->getType())), EmittedBase(0),
+        Imm(SE->getIntegerSCEV(0, Base->getType())), 
         isUseOfPostIncrementedValue(IVSU.isUseOfPostIncrementedValue) {}
 
     // Once we rewrite the code to insert the new IVs we want, update the
@@ -577,9 +573,6 @@ namespace {
 void BasedUser::dump() const {
   cerr << " Base=" << *Base;
   cerr << " Imm=" << *Imm;
-  if (EmittedBase)
-    cerr << "  EB=" << *EmittedBase;
-
   cerr << "   Inst: " << *Inst;
 }
 
