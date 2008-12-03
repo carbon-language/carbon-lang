@@ -15,7 +15,6 @@
 #ifndef LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
-#include "llvm/ADT/FoldingSet.h"
 #include <cassert>
 #include <vector>
 
@@ -23,6 +22,7 @@ namespace llvm {
 
 class AsmPrinter;
 class Constant;
+class FoldingSetNodeID;
 class TargetData;
 class TargetMachine;
 class Type;
