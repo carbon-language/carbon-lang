@@ -281,10 +281,6 @@ sub UpdatePrefix {
   my $x = shift;
   my $y = basename($x);
   $x =~ s/\Q$y\E$//;
-  
-  # Ignore /usr, /Library, /System, /Developer
-  return if ( $x =~ /^\/usr/ or $x =~ /^\/Library/
-              or $x =~ /^\/System/ or $x =~ /^\/Developer/);
 
   if (!defined $Prefix) {
     $Prefix = $x;
