@@ -104,6 +104,9 @@ namespace {
 
     llvm::DenseMap<BlockExpr *, std::string> RewrittenBlockExprs;
 
+    // This maps a synthesized message expr back to the original property.
+    llvm::DenseMap<Stmt *, ObjCPropertyRefExpr *> PropMsgExprs;
+
     FunctionDecl *CurFunctionDef;
     VarDecl *GlobalVarDecl;
     
@@ -193,6 +196,8 @@ namespace {
     Stmt *RewriteFunctionBodyOrGlobalInitializer(Stmt *S);
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
     Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, SourceLocation OrigStart);
+    Stmt *RewritePropertyRefExpr(ObjCPropertyRefExpr *PropRefExpr);
+    Stmt *RewritePropertySetter(BinaryOperator *BinOp, ObjCPropertyRefExpr *PRE);
     Stmt *RewriteAtSelector(ObjCSelectorExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
@@ -650,7 +655,7 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
   // Synthesize an explicit cast to initialize the ivar.
   // FIXME: deal with code generation implications for various property 
   // attributes (copy, retain, nonatomic). 
-  // See objc-act.c:objc_synthesize_new_getter() for details.
+  // See objc-act.c:objc_synthesize_new_setter() for details.
   Setr += getIvarAccessString(ClassDecl, OID) + " = ";
   Setr += OID->getNameAsCString();
   Setr += "; }";
@@ -982,6 +987,35 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
 
   // Lastly, comment out the @end.
   ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
+}
+
+Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, 
+                                         ObjCPropertyRefExpr *PRE) {
+  // FIXME: Fill in the transform.
+  return BinOp;
+}
+
+Stmt *RewriteObjC::RewritePropertyRefExpr(ObjCPropertyRefExpr *PropRefExpr) {
+  // Synthesize a ObjCMessageExpr from a ObjCPropertyRefExpr.
+  // This allows us to reuse all the fun and games in SynthMessageExpr().
+  ObjCMessageExpr *MsgExpr;
+  ObjCPropertyDecl *PDecl = PropRefExpr->getProperty();
+  
+  MsgExpr = new ObjCMessageExpr(PropRefExpr->getBase(), 
+                                PDecl->getGetterName(), PDecl->getType(), 
+                                PDecl->getGetterMethodDecl(), 
+                                SourceLocation(), SourceLocation(), 
+                                0, 0);
+
+  Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
+  
+  // Now do the actual rewrite.
+  ReplaceStmt(PropRefExpr, ReplacingStmt);
+  PropMsgExprs[ReplacingStmt] = PropRefExpr;
+  
+  // delete PropRefExpr; elsewhere...
+  delete MsgExpr;
+  return ReplacingStmt;
 }
 
 Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, 
@@ -3986,6 +4020,15 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S))
     return RewriteObjCIvarRefExpr(IvarRefExpr, OrigStmtRange.getBegin());
 
+  if (ObjCPropertyRefExpr *PropRefExpr = dyn_cast<ObjCPropertyRefExpr>(S))
+    return RewritePropertyRefExpr(PropRefExpr);
+  
+  if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
+    if (BinOp->isAssignmentOp()) {
+      if (ObjCPropertyRefExpr *PRE = PropMsgExprs[BinOp->getLHS()])
+        return RewritePropertySetter(BinOp, PRE);
+    }
+  }
   if (ObjCSelectorExpr *AtSelector = dyn_cast<ObjCSelectorExpr>(S))
     return RewriteAtSelector(AtSelector);
     
