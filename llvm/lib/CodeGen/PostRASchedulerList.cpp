@@ -223,10 +223,9 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   }
 
   // For live regs that are only used in one register class in a live range,
-  // the register class. If the register is not live or is referenced in
-  // multiple register classes, the corresponding value is null. If the
-  // register is used in multiple register classes, the corresponding value
-  // is -1 casted to a pointer.
+  // the register class. If the register is not live, the corresponding value
+  // is null. If the register is live but used in multiple register classes,
+  // the corresponding value is -1 casted to a pointer.
   const TargetRegisterClass *
     Classes[TargetRegisterInfo::FirstVirtualRegister] = {};
 
