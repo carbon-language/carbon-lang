@@ -178,7 +178,7 @@ class MachineFrameInfo {
   ///
   const TargetFrameInfo &TFI;
 public:
-  MachineFrameInfo(const TargetFrameInfo &tfi) : TFI(tfi) {
+  explicit MachineFrameInfo(const TargetFrameInfo &tfi) : TFI(tfi) {
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
     HasVarSizedObjects = false;
     FrameAddressTaken = false;
