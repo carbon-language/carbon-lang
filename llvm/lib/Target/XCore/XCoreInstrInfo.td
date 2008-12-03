@@ -762,7 +762,7 @@ def CLZ_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
 
 // One operand short
 // TODO edu, eeu, waitet, waitef, freer, tstart, msync, mjoin, syncr, clrtp
-// bru, setdp, setcp, setv, setev, kcall, ecallt, ecallf
+// bru, setdp, setcp, setv, setev, kcall
 // dgetreg
 let isBranch=1, isIndirectBranch=1, isTerminator=1 in
 def BAU_1r : _F1R<(outs), (ins GRRegs:$addr),
@@ -772,6 +772,16 @@ def BAU_1r : _F1R<(outs), (ins GRRegs:$addr),
 let Defs=[SP], neverHasSideEffects=1 in
 def SETSP_1r : _F1R<(outs), (ins GRRegs:$src),
                  "set sp, $src",
+                 []>;
+
+let isBarrier = 1, hasCtrlDep = 1 in 
+def ECALLT_1r : _F1R<(outs), (ins GRRegs:$src),
+                 "ecallt $src",
+                 []>;
+
+let isBarrier = 1, hasCtrlDep = 1 in 
+def ECALLF_1r : _F1R<(outs), (ins GRRegs:$src),
+                 "ecallf $src",
                  []>;
 
 let isCall=1, 
@@ -851,6 +861,9 @@ def : Pat<(store GRRegs:$val, GRRegs:$addr),
 
 /// cttz
 def : Pat<(cttz GRRegs:$src), (CLZ_l2r (BITREV_l2r GRRegs:$src))>;
+
+/// trap
+def : Pat<(trap), (ECALLF_1r (LDC_ru6 0))>;
 
 ///
 /// branch patterns

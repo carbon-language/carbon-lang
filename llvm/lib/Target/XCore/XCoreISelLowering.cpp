@@ -106,6 +106,8 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::ROTL , MVT::i32, Expand);
   setOperationAction(ISD::ROTR , MVT::i32, Expand);
   
+  setOperationAction(ISD::TRAP, MVT::Other, Legal);
+  
   // Expand jump tables for now
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::JumpTable, MVT::i32, Custom);
