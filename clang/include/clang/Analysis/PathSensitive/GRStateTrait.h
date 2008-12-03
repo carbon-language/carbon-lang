@@ -20,6 +20,7 @@
 namespace llvm {
   class BumpPtrAllocator;
   template <typename K, typename D, typename I> class ImmutableMap;
+  template <typename K, typename I> class ImmutableSet;
   template <typename T> class ImmutableList;
   template <typename T> class ImmutableListImpl;
 }
@@ -67,6 +68,44 @@ namespace clang {
     }      
   };
   
+  
+  // Partial-specialization for ImmutableSet.
+  
+  template <typename Key, typename Info>
+  struct GRStatePartialTrait< llvm::ImmutableSet<Key,Info> > {
+    typedef llvm::ImmutableSet<Key,Info>      data_type;
+    typedef typename data_type::Factory&      context_type;  
+    typedef Key                               key_type;
+    
+    static inline data_type MakeData(void* const* p) {
+      return p ? data_type((typename data_type::TreeTy*) *p) : data_type(0);
+    }  
+
+    static inline void* MakeVoidPtr(data_type B) {
+      return B.getRoot();
+    }  
+    
+    static data_type Remove(data_type B, key_type K, context_type F) {
+      return F.Remove(B, K);
+    }
+    
+    static bool Contains(data_type B, key_type K) {
+      return B.contains(K);
+    }
+    
+    static inline context_type MakeContext(void* p) {
+      return *((typename data_type::Factory*) p);
+    }
+    
+    static void* CreateContext(llvm::BumpPtrAllocator& Alloc) {
+      return new typename data_type::Factory(Alloc);      
+    }
+    
+    static void DeleteContext(void* Ctx) {
+      delete (typename data_type::Factory*) Ctx;
+    }      
+  };
+    
   // Partial-specialization for ImmutableList.
   
   template <typename T>
