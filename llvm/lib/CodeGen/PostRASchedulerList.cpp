@@ -195,6 +195,10 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     SDep *Edge = CriticalPath[SU->NodeNum];
     SUnit *NextSU = Edge->Dep;
     unsigned AntiDepReg = Edge->Reg;
+    // Only consider anti-dependence edges.
+    if (!Edge->isAntiDep)
+      continue;
+    assert(AntiDepReg != 0 && "Anti-dependence on reg0?");
     // Don't break anti-dependencies on non-allocatable registers.
     if (!AllocatableSet.test(AntiDepReg))
       continue;
