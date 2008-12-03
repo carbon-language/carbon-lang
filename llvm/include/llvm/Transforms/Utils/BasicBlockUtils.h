@@ -94,10 +94,10 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 /// will not invalidate either of them. This returns true if the edge was split,
 /// false otherwise.  
 ///
-/// If MergeIdenticalEdges is true (the default), *all* edges from TI to the 
+/// If MergeIdenticalEdges is true (not the default), *all* edges from TI to the
 /// specified successor will be merged into the same critical edge block.  
 /// This is most commonly interesting with switch instructions, which may 
-/// have many edges to any one destination.  This ensures that all edges to that 
+/// have many edges to any one destination.  This ensures that all edges to that
 /// dest go to one block instead of each going to a different block, but isn't 
 /// the standard definition of a "critical edge".
 ///
