@@ -312,6 +312,13 @@ BasicConstraintManager::AssumeSymEQ(const GRState* St, SymbolID sym,
 const GRState*
 BasicConstraintManager::AssumeSymLT(const GRState* St, SymbolID sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
+  
+  // Is 'V' the smallest possible value?
+  if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isSigned())) {
+    // sym cannot be any value less than 'V'.  This path is infeasible.
+    isFeasible = false;
+    return St;
+  }
 
   // FIXME: For now have assuming x < y be the same as assuming sym != V;
   return AssumeSymNE(St, sym, V, isFeasible);
@@ -345,17 +352,28 @@ const GRState*
 BasicConstraintManager::AssumeSymLE(const GRState* St, SymbolID sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
 
-  // FIXME: Primitive logic for now.  Only reject a path if the value of
-  //  sym is a constant X and !(X <= V).
-
+  // Reject a path if the value of sym is a constant X and !(X <= V).
   if (const llvm::APSInt* X = getSymVal(St, sym)) {
     isFeasible = *X <= V;
     return St;
   }
   
-  isFeasible = !isNotEqual(St, sym, V) || 
-               (V != llvm::APSInt::getMinValue(V.getBitWidth(), V.isSigned()));
-  
+  // Sym is not a constant, but it is worth looking to see if V is the
+  // minimum integer value.
+  if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isSigned())) {
+    // If we know that sym != V, then this condition is infeasible since
+    // there is no other value less than V.    
+    isFeasible = !isNotEqual(St, sym, V);
+    
+    // If the path is still feasible then as a consequence we know that
+    // 'sym == V' because we cannot have 'sym < V' (no smaller values).
+    // Add this constraint.
+    if (isFeasible)
+      return AddEQ(St, sym, V);
+  }
+  else
+    isFeasible = true;
+    
   return St;
 }
 
