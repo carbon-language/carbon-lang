@@ -278,6 +278,8 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   // TODO: If the callee saves and restores these, then we can potentially
   // use them between the save and the restore. To do that, we could scan
   // the exit blocks to see which of these registers are defined.
+  // Alternatively, calle-saved registers that aren't saved and restored
+  // could be marked live-in in every block.
   for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
     unsigned Reg = *I;
     Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
