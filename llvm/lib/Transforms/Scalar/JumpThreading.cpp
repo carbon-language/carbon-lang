@@ -36,6 +36,11 @@ Threshold("jump-threading-threshold",
           cl::desc("Max block size to duplicate for jump threading"),
           cl::init(6), cl::Hidden);
 
+static cl::opt<int>
+DebugIterations("jump-threading-debug",
+                cl::desc("Stop jump threading after N iterations"),
+                cl::init(-1), cl::Hidden);
+
 namespace {
   /// This pass performs 'jump threading', which looks at blocks that have
   /// multiple predecessors and multiple successors.  If one or more of the
@@ -104,11 +109,15 @@ bool JumpThreading::runOnFunction(Function &F) {
       // If the block is trivially dead, zap it.  This eliminates the successor
       // edges which simplifies the CFG.
       if (pred_begin(BB) == pred_end(BB) &&
-          BB != &BB->getParent()->getEntryBlock()) {
+          BB != &BB->getParent()->getEntryBlock() &&
+          DebugIterations != 0) {
         DOUT << "  JT: Deleting dead block '" << BB->getNameStart()
              << "' with terminator: " << *BB->getTerminator();
         DeleteDeadBlock(BB);
         Changed = true;
+        
+        if (DebugIterations != -1)
+          DebugIterations = DebugIterations-1;
       }
     }
     AnotherIteration = Changed;
@@ -183,6 +192,10 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
 /// ProcessBlock - If there are any predecessors whose control can be threaded
 /// through to a successor, transform them now.
 bool JumpThreading::ProcessBlock(BasicBlock *BB) {
+  if (DebugIterations == 0) return false;
+  if (DebugIterations != -1)
+    DebugIterations = DebugIterations-1;
+  
   // If this block has a single predecessor, and if that pred has a single
   // successor, merge the blocks.  This encourages recursive jump threading
   // because now the condition in this block can be threaded through
