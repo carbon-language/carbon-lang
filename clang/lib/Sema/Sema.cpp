@@ -201,9 +201,29 @@ const LangOptions &Sema::getLangOptions() const {
   return PP.getLangOptions();
 }
 
+/// getCurFunctionDecl - If inside of a function body, this returns a pointer
+/// to the function decl for the function being parsed.  If we're currently
+/// in a 'block', this returns the containing context.
+FunctionDecl *Sema::getCurFunctionDecl() {
+  DeclContext *DC = CurContext;
+  while (isa<BlockDecl>(DC))
+    DC = DC->getParent();
+  return dyn_cast<FunctionDecl>(DC);
+}
+
 ObjCMethodDecl *Sema::getCurMethodDecl() {
   DeclContext *DC = CurContext;
   while (isa<BlockDecl>(DC))
     DC = DC->getParent();
   return dyn_cast<ObjCMethodDecl>(DC);
 }
+
+NamedDecl *Sema::getCurFunctionOrMethodDecl() {
+  DeclContext *DC = CurContext;
+  while (isa<BlockDecl>(DC))
+    DC = DC->getParent();
+  if (isa<ObjCMethodDecl>(DC) || isa<FunctionDecl>(DC))
+    return cast<NamedDecl>(DC);
+  return 0;
+}
+

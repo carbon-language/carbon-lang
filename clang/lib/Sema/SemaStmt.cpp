@@ -750,9 +750,12 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
   Expr *RetValExp = static_cast<Expr *>(rex);
   if (CurBlock)
     return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
-  QualType FnRetType =
-        getCurFunctionDecl() ? getCurFunctionDecl()->getResultType() : 
-                               getCurMethodDecl()->getResultType();
+  
+  QualType FnRetType;
+  if (FunctionDecl *FD = getCurFunctionDecl())
+    FnRetType = FD->getResultType();
+  else
+    FnRetType = getCurMethodDecl()->getResultType();
 
   if (FnRetType->isVoidType()) {
     if (RetValExp) {// C99 6.8.6.4p1 (ext_ since GCC warns)

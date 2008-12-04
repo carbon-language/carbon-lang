@@ -184,8 +184,8 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
       // FIXME: This isn't correct for methods (results in bogus warning).
       // Get the last formal in the current function.
       const ParmVarDecl *LastArg;
-      if (getCurFunctionDecl())
-        LastArg = *(getCurFunctionDecl()->param_end()-1);
+      if (FunctionDecl *FD = getCurFunctionDecl())
+        LastArg = *(FD->param_end()-1);
       else
         LastArg = *(getCurMethodDecl()->param_end()-1);
       SecondArgIsLastNamedArgument = PV == LastArg;

@@ -329,15 +329,20 @@ public:
   void PushDeclContext(DeclContext *DC);
   void PopDeclContext();
   
-  /// CurFunctionDecl - If inside of a function body, this returns a pointer to
-  /// the function decl for the function being parsed.
-  FunctionDecl *getCurFunctionDecl() {
-    return dyn_cast<FunctionDecl>(CurContext);
-  }
-
-  /// CurMethodDecl - If inside of a method body, this returns a pointer to
-  /// the method decl for the method being parsed.
+  /// getCurFunctionDecl - If inside of a function body, this returns a pointer
+  /// to the function decl for the function being parsed.  If we're currently
+  /// in a 'block', this returns the containing context.
+  FunctionDecl *getCurFunctionDecl();
+  
+  /// getCurMethodDecl - If inside of a method body, this returns a pointer to
+  /// the method decl for the method being parsed.  If we're currently
+  /// in a 'block', this returns the containing context.
   ObjCMethodDecl *getCurMethodDecl();
+
+  /// getCurFunctionOrMethodDecl - Return the Decl for the current ObjC method
+  /// or C function we're in, otherwise return null.  If we're currently
+  /// in a 'block', this returns the containing context.
+  NamedDecl *getCurFunctionOrMethodDecl();
 
   /// Add this decl to the scope shadowed decl chains.
   void PushOnScopeChains(NamedDecl *D, Scope *S);

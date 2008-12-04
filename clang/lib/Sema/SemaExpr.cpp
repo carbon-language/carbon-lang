@@ -505,14 +505,14 @@ Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
   }
 
   // Verify that this is in a function context.
-  if (getCurFunctionDecl() == 0 && getCurMethodDecl() == 0)
+  if (getCurFunctionOrMethodDecl() == 0)
     return Diag(Loc, diag::err_predef_outside_function);
   
   // Pre-defined identifiers are of type char[x], where x is the length of the
   // string.
   unsigned Length;
-  if (getCurFunctionDecl())
-    Length = getCurFunctionDecl()->getIdentifier()->getLength();
+  if (FunctionDecl *FD = getCurFunctionDecl())
+    Length = FD->getIdentifier()->getLength();
   else
     Length = getCurMethodDecl()->getSynthesizedMethodSize();
   
@@ -1438,7 +1438,7 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
                             DeclarationName()))
     return true;
 
-  bool isFileScope = !getCurFunctionDecl() && !getCurMethodDecl();
+  bool isFileScope = getCurFunctionOrMethodDecl() == 0;
   if (isFileScope) { // 6.5.2.5p3
     if (CheckForConstantInitializer(literalExpr, literalType))
       return true;

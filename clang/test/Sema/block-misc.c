@@ -70,3 +70,10 @@ void test5() {
   bar(^{ test5g = 1; });
 }
 
+// rdar://6405429 - __func__ in a block refers to the containing function name.
+const char*test6() {
+    return ^{
+        return __func__;
+    } ();
+}
+

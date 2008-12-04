@@ -57,8 +57,8 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// NamedDecl - This represents a decl with a name.  Many
-/// decls have names, but not ObjCMethodDecl, @class, etc.
+/// NamedDecl - This represents a decl with a name.  Many decls have names such
+/// as ObjCMethodDecl, but not @class, etc.
 class NamedDecl : public Decl {
   /// Name - The name of this declaration, which is typically a normal
   /// identifier but may also be a special kind of name (C++
