@@ -1237,7 +1237,7 @@ SDValue SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
 /// specified value type.
 SDValue SelectionDAG::CreateStackTemporary(MVT VT, unsigned minAlign) {
   MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
-  unsigned ByteSize = VT.getSizeInBits()/8;
+  unsigned ByteSize = VT.getStoreSizeInBits()/8;
   const Type *Ty = VT.getTypeForMVT();
   unsigned StackAlign =
   std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty), minAlign);
