@@ -499,7 +499,7 @@ void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
     PrintExpr(Node->getBase());
     OS << ".";
   }
-  // FIXME: OS << Node->getDecl()->getName();
+  OS << Node->getProperty()->getNameAsCString();
 }
 
 void StmtPrinter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node) {

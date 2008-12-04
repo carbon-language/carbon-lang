@@ -1165,7 +1165,7 @@ ObjCIvarRefExpr* ObjCIvarRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
 }
 
 void ObjCPropertyRefExpr::EmitImpl(Serializer& S) const {
-  S.Emit(Loc);
+  S.Emit(IdLoc);
   S.Emit(getType());
   S.EmitPtr(getProperty());
 }

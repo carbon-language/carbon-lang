@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_EXPROBJC_H
 
 #include "clang/AST/Expr.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/Basic/IdentifierTable.h"
 
 namespace clang {
@@ -200,26 +201,28 @@ public:
 class ObjCPropertyRefExpr : public Expr {
 private:
   ObjCPropertyDecl *AsProperty;
-  SourceLocation Loc;
+  SourceLocation IdLoc;
   Stmt *Base;
   
 public:
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t, 
                       SourceLocation l, Expr *base)
-    : Expr(ObjCPropertyRefExprClass, t), AsProperty(PD), Loc(l), Base(base) {
+    : Expr(ObjCPropertyRefExprClass, t), AsProperty(PD), IdLoc(l), Base(base) {
   }
   ObjCPropertyDecl *getProperty() const {
     return AsProperty;
   }
   
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(getBase()->getLocStart(), Loc); 
+  virtual SourceRange getSourceRange() const {
+    unsigned IDLen = AsProperty->getIdentifier()->getLength();
+    return SourceRange(getBase()->getLocStart(), 
+                       IdLoc.getFileLocWithOffset(IDLen-1)); 
   }
   const Expr *getBase() const { return cast<Expr>(Base); }
   Expr *getBase() { return cast<Expr>(Base); }
   void setBase(Expr * base) { Base = base; }
   
-  SourceLocation getLocation() const { return Loc; }
+  SourceLocation getLocation() const { return IdLoc; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ObjCPropertyRefExprClass; 

@@ -104,8 +104,10 @@ namespace {
 
     llvm::DenseMap<BlockExpr *, std::string> RewrittenBlockExprs;
 
-    // This maps a synthesized message expr back to the original property.
-    llvm::DenseMap<Stmt *, ObjCPropertyRefExpr *> PropMsgExprs;
+    // This maps a property to it's assignment statement.
+    llvm::DenseMap<ObjCPropertyRefExpr *, BinaryOperator *> PropSetters;
+    // This maps a property to the stmt it was rewritten to.
+    llvm::DenseMap<ObjCPropertyRefExpr *, Stmt *> PropGetters;
 
     FunctionDecl *CurFunctionDef;
     VarDecl *GlobalVarDecl;
@@ -194,10 +196,12 @@ namespace {
     
     // Expression Rewriting.
     Stmt *RewriteFunctionBodyOrGlobalInitializer(Stmt *S);
+    void CollectPropertySetters(Stmt *S);
+    
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
     Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, SourceLocation OrigStart);
-    Stmt *RewritePropertyRefExpr(ObjCPropertyRefExpr *PropRefExpr);
-    Stmt *RewritePropertySetter(BinaryOperator *BinOp, ObjCPropertyRefExpr *PRE);
+    Stmt *RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr);
+    Stmt *RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt);
     Stmt *RewriteAtSelector(ObjCSelectorExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
@@ -989,13 +993,35 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
 }
 
-Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, 
-                                         ObjCPropertyRefExpr *PRE) {
-  // FIXME: Fill in the transform.
-  return BinOp;
+Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt) {
+  // Synthesize a ObjCMessageExpr from a ObjCPropertyRefExpr.
+  // This allows us to reuse all the fun and games in SynthMessageExpr().
+  ObjCPropertyRefExpr *PropRefExpr = dyn_cast<ObjCPropertyRefExpr>(BinOp->getLHS());
+  ObjCMessageExpr *MsgExpr;
+  ObjCPropertyDecl *PDecl = PropRefExpr->getProperty();
+  llvm::SmallVector<Expr *, 1> ExprVec;
+  ExprVec.push_back(newStmt);
+  
+  MsgExpr = new ObjCMessageExpr(PropRefExpr->getBase(), 
+                                PDecl->getSetterName(), PDecl->getType(), 
+                                PDecl->getSetterMethodDecl(), 
+                                SourceLocation(), SourceLocation(), 
+                                &ExprVec[0], 1);
+  Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
+  
+  // Now do the actual rewrite.
+  ReplaceStmt(BinOp, ReplacingStmt);
+  delete BinOp;
+  delete MsgExpr;
+  return ReplacingStmt;
 }
 
-Stmt *RewriteObjC::RewritePropertyRefExpr(ObjCPropertyRefExpr *PropRefExpr) {
+Stmt *RewriteObjC::RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr) {
+  Stmt *ReplacingStmt = PropGetters[PropRefExpr];
+  
+  if (ReplacingStmt)
+    return ReplacingStmt; // We can't rewrite the same property twice.
+    
   // Synthesize a ObjCMessageExpr from a ObjCPropertyRefExpr.
   // This allows us to reuse all the fun and games in SynthMessageExpr().
   ObjCMessageExpr *MsgExpr;
@@ -1007,11 +1033,11 @@ Stmt *RewriteObjC::RewritePropertyRefExpr(ObjCPropertyRefExpr *PropRefExpr) {
                                 SourceLocation(), SourceLocation(), 
                                 0, 0);
 
-  Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
-  
-  // Now do the actual rewrite.
+  ReplacingStmt = SynthMessageExpr(MsgExpr);
+    
   ReplaceStmt(PropRefExpr, ReplacingStmt);
-  PropMsgExprs[ReplacingStmt] = PropRefExpr;
+  
+  PropGetters[PropRefExpr] = ReplacingStmt;
   
   // delete PropRefExpr; elsewhere...
   delete MsgExpr;
@@ -2410,6 +2436,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
 Stmt *RewriteObjC::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   Stmt *ReplacingStmt = SynthMessageExpr(Exp);
   
+  //ReplacingStmt->dump();
   // Now do the actual rewrite.
   ReplaceStmt(Exp, ReplacingStmt);
   
@@ -3980,6 +4007,27 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
 // Function Body / Expression rewriting
 //===----------------------------------------------------------------------===//
 
+// This is run as a first "pass" prior to RewriteFunctionBodyOrGlobalInitializer().
+// The allows the main rewrite loop to associate all ObjCPropertyRefExprs with
+// their respective BinaryOperator. Without this knowledge, we'd need to rewrite
+// the ObjCPropertyRefExpr twice (once as a getter, and later as a setter).
+// Since the rewriter isn't capable of rewriting rewritten code, it's important
+// we get this right.
+void RewriteObjC::CollectPropertySetters(Stmt *S) {
+  // Perform a bottom up traversal of all children.
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+       CI != E; ++CI)
+    if (*CI)
+      CollectPropertySetters(*CI);
+
+  if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
+    if (BinOp->isAssignmentOp()) {
+      if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(BinOp->getLHS()))
+        PropSetters[PRE] = BinOp;
+    }
+  }
+}
+
 Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || 
       isa<DoStmt>(S) || isa<ForStmt>(S))
@@ -4020,13 +4068,15 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S))
     return RewriteObjCIvarRefExpr(IvarRefExpr, OrigStmtRange.getBegin());
 
-  if (ObjCPropertyRefExpr *PropRefExpr = dyn_cast<ObjCPropertyRefExpr>(S))
-    return RewritePropertyRefExpr(PropRefExpr);
-  
-  if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
-    if (BinOp->isAssignmentOp()) {
-      if (ObjCPropertyRefExpr *PRE = PropMsgExprs[BinOp->getLHS()])
-        return RewritePropertySetter(BinOp, PRE);
+  if (ObjCPropertyRefExpr *PropRefExpr = dyn_cast<ObjCPropertyRefExpr>(S)) {
+    BinaryOperator *BinOp = PropSetters[PropRefExpr];
+    if (BinOp) {
+      // Because the rewriter doesn't allow us to rewrite rewritten code,
+      // we need to rewrite the right hand side prior to rewriting the setter.
+      Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(BinOp->getRHS());
+      return RewritePropertySetter(BinOp, dyn_cast<Expr>(newStmt));
+    } else {
+      return RewritePropertyGetter(PropRefExpr);
     }
   }
   if (ObjCSelectorExpr *AtSelector = dyn_cast<ObjCSelectorExpr>(S))
@@ -4036,6 +4086,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     return RewriteObjCStringLiteral(AtString);
     
   if (ObjCMessageExpr *MessExpr = dyn_cast<ObjCMessageExpr>(S)) {
+#if 0
     // Before we rewrite it, put the original message expression in a comment.
     SourceLocation startLoc = MessExpr->getLocStart();
     SourceLocation endLoc = MessExpr->getLocEnd();
@@ -4053,6 +4104,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     // InsertText(startLoc, messString.c_str(), messString.size());
     // Tried this, but it didn't work either...
     // ReplaceText(startLoc, 0, messString.c_str(), messString.size());
+#endif
     return RewriteMessageExpr(MessExpr);
   }
   
@@ -4162,7 +4214,9 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
 
     if (Stmt *Body = FD->getBody()) {
       CurFunctionDef = FD;
+      CollectPropertySetters(Body);
       FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
+      
       // This synthesizes and inserts the block "impl" struct, invoke function,
       // and any copy/dispose helper functions.
       InsertBlockLiteralsWithinFunction(FD);
@@ -4174,6 +4228,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     if (Stmt *Body = MD->getBody()) {
       //Body->dump();
       CurMethodDef = MD;
+      CollectPropertySetters(Body);
       MD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
       InsertBlockLiteralsWithinMethod(MD);
       CurMethodDef = 0;
@@ -4199,6 +4254,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     }
     if (VD->getInit()) {
       GlobalVarDecl = VD;
+      CollectPropertySetters(VD->getInit());
       RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
       SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(), 
                               VD->getNameAsCString());
