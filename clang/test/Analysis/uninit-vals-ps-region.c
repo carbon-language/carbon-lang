@@ -12,6 +12,6 @@ void f4() {
   int a;
   if (global.data == 0)
     a = 3;
-  if (global.data == 0) // The true branch is infeasible.
+  if (global.data == 0) // When the true branch is feasible 'a = 3'.
     g(a); // no-warning
 }
