@@ -497,6 +497,8 @@ Ansi("ansi", llvm::cl::desc("Equivalent to specifying -std=c89."));
 //   -fpascal-strings
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
                                        TargetInfo *Target) {
+  // Allow the target to set the default the langauge options as it sees fit.
+  Target->getDefaultLangOptions(Options);
   
   if (Ansi) // "The -ansi option is equivalent to -std=c89."
     LangStd = lang_c89;
@@ -574,13 +576,11 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   Options.LaxVectorConversions = LaxVectorConversions;
   Options.Exceptions = Exceptions;
 
-  if (NeXTRuntime) {
+  // Override the default runtime if the user requested it.
+  if (NeXTRuntime)
     Options.NeXTRuntime = 1;
-  } else if (GNURuntime) {
+  else if (GNURuntime)
     Options.NeXTRuntime = 0;
-  } else {
-    Options.NeXTRuntime = Target->useNeXTRuntimeAsDefault();
-  }
 }
 
 static llvm::cl::opt<bool>
@@ -1524,8 +1524,8 @@ int main(int argc, char **argv) {
       InitializeBaseLanguage();
       LangKind LK = GetLanguage(InFile);
       bool PCH = InitializeLangOptions(LangInfo, LK);
-      InitializeLanguageStandard(LangInfo, LK, Target.get());
       InitializeGCMode(LangInfo);
+      InitializeLanguageStandard(LangInfo, LK, Target.get());
             
       // Process the -I options and set them in the HeaderInfo.
       HeaderSearch HeaderInfo(FileMgr);

@@ -15,6 +15,7 @@
 #include "clang/AST/Builtins.h"
 #include "clang/AST/TargetBuiltins.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/APFloat.h"
 using namespace clang;
@@ -366,7 +367,12 @@ public:
     getDarwinDefines(Defines, getTargetTriple());
   }
 
-  virtual bool useNeXTRuntimeAsDefault() const { return true; }
+  /// getDefaultLangOptions - Allow the target to specify default settings for
+  /// various language options.  These may be overridden by command line
+  /// options. 
+  virtual void getDefaultLangOptions(LangOptions &Opts) {
+    Opts.NeXTRuntime = true;
+  }
 };
 } // end anonymous namespace.
 
@@ -379,7 +385,12 @@ public:
     getDarwinDefines(Defines, getTargetTriple());
   }
 
-  virtual bool useNeXTRuntimeAsDefault() const { return true; }
+  /// getDefaultLangOptions - Allow the target to specify default settings for
+  /// various language options.  These may be overridden by command line
+  /// options. 
+  virtual void getDefaultLangOptions(LangOptions &Opts) {
+    Opts.NeXTRuntime = true;
+  }
 };
 } // end anonymous namespace.
 
@@ -526,7 +537,12 @@ public:
     X86_32TargetInfo::getTargetDefines(Defines);
     getDarwinDefines(Defines, getTargetTriple());
   }
-  virtual bool useNeXTRuntimeAsDefault() const { return true; }
+  /// getDefaultLangOptions - Allow the target to specify default settings for
+  /// various language options.  These may be overridden by command line
+  /// options. 
+  virtual void getDefaultLangOptions(LangOptions &Opts) {
+    Opts.NeXTRuntime = true;
+  }
 };
 } // end anonymous namespace
 
@@ -670,7 +686,12 @@ public:
     getDarwinDefines(Defines, getTargetTriple());
   }
 
-  virtual bool useNeXTRuntimeAsDefault() const { return true; }
+  /// getDefaultLangOptions - Allow the target to specify default settings for
+  /// various language options.  These may be overridden by command line
+  /// options. 
+  virtual void getDefaultLangOptions(LangOptions &Opts) {
+    Opts.NeXTRuntime = true;
+  }
 };
 } // end anonymous namespace.
 

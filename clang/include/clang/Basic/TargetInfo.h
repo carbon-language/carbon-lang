@@ -24,6 +24,7 @@ namespace clang {
 
 class Diagnostic;
 class SourceManager;
+class LangOptions;
   
 namespace Builtin { struct Info; }
   
@@ -228,7 +229,10 @@ public:
 
   virtual bool useGlobalsForAutomaticVariables() const { return false; }
 
-  virtual bool useNeXTRuntimeAsDefault() const { return false; }
+  /// getDefaultLangOptions - Allow the target to specify default settings for
+  /// various language options.  These may be overridden by command line
+  /// options. 
+  virtual void getDefaultLangOptions(LangOptions &Opts) {}
 
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
