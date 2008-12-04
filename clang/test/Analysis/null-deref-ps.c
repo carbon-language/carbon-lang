@@ -75,8 +75,8 @@ int f6b(int *p) {
 int bar3(int*p, int q, int *r) __attribute__((nonnull(1,3)));
 
 int f6c(int *p, int *q) {
-   return !p ? bar3(q, 2, p)
-             : bar3(p, 2, q);
+   return !p ? bar3(q, 2, p) // expected-warning {{Null pointer passed as an argument to a 'nonnull' parameter}}
+             : bar3(p, 2, q); // no-warning
 }
 
 int* qux();
