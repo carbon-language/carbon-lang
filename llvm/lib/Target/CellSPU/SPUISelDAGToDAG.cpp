@@ -676,7 +676,7 @@ SPUDAGToDAGISel::Select(SDValue Op) {
 
       Result = CurDAG->getTargetNode(Opc, VT, MVT::Other, Arg, Zero, Chain);
     } else {
-      Result = CurDAG->getTargetNode(Opc, MVT::Other, Arg, Arg, Chain);
+      Result = CurDAG->getTargetNode(Opc, VT, MVT::Other, Arg, Arg, Chain);
     }
 
     Chain = SDValue(Result, 1);

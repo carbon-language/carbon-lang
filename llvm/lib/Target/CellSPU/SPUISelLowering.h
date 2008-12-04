@@ -41,11 +41,6 @@ namespace llvm {
       CNTB,                     ///< Count leading ones in bytes
       PROMOTE_SCALAR,           ///< Promote scalar->vector
       VEC2PREFSLOT,             ///< Extract element 0
-      VEC2PREFSLOT_CHAINED,     ///< Extract element 0, with chain
-      EXTRACT_I1_ZEXT,          ///< Extract element 0 as i1, zero extend
-      EXTRACT_I1_SEXT,          ///< Extract element 0 as i1, sign extend
-      EXTRACT_I8_ZEXT,          ///< Extract element 0 as i8, zero extend
-      EXTRACT_I8_SEXT,          ///< Extract element 0 as i8, sign extend
       MPY,                      ///< 16-bit Multiply (low parts of a 32-bit)
       MPYU,                     ///< Multiply Unsigned
       MPYH,                     ///< Multiply High
@@ -60,7 +55,6 @@ namespace llvm {
       ROTQUAD_RZ_BYTES,         ///< Rotate quad right, by bytes, zero fill
       ROTQUAD_RZ_BITS,          ///< Rotate quad right, by bits, zero fill
       ROTBYTES_LEFT,            ///< Rotate bytes (loads -> ROTQBYI)
-      ROTBYTES_LEFT_CHAINED,    ///< Rotate bytes (loads -> ROTQBYI), with chain
       ROTBYTES_LEFT_BITS,       ///< Rotate bytes left by bit shift count
       SELECT_MASK,              ///< Select Mask (FSM, FSMB, FSMH, FSMBI)
       SELB,                     ///< Select bits -> (b & mask) | (a & ~mask)

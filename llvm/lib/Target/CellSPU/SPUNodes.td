@@ -125,11 +125,6 @@ def SPUrotquad_rz_bits: SDNode<"SPUISD::ROTQUAD_RZ_BITS",
 def SPUrotbytes_left: SDNode<"SPUISD::ROTBYTES_LEFT",
                              SPUvecshift_type, []>;
 
-// Same as above, but the node also has a chain associated (used in loads and
-// stores)
-def SPUrotbytes_left_chained : SDNode<"SPUISD::ROTBYTES_LEFT_CHAINED",
-                                      SPUvecshift_type, [SDNPHasChain]>;
-
 // Vector rotate left by bytes, but the count is given in bits and the SPU
 // internally converts it to bytes (saves an instruction to mask off lower
 // three bits)
@@ -153,13 +148,6 @@ def SPUpromote_scalar: SDNode<"SPUISD::PROMOTE_SCALAR", SDTpromote_scalar, []>;
 
 def SPU_vec_demote   : SDTypeProfile<1, 1, []>;
 def SPUvec2prefslot: SDNode<"SPUISD::VEC2PREFSLOT", SPU_vec_demote, []>;
-def SPU_vec_demote_chained : SDTypeProfile<1, 2, []>;
-def SPUvec2prefslot_chained: SDNode<"SPUISD::VEC2PREFSLOT_CHAINED",
-                                    SPU_vec_demote_chained, [SDNPHasChain]>;
-def SPUextract_i1_sext: SDNode<"SPUISD::EXTRACT_I1_SEXT", SPU_vec_demote, []>;
-def SPUextract_i1_zext: SDNode<"SPUISD::EXTRACT_I1_ZEXT", SPU_vec_demote, []>;
-def SPUextract_i8_sext: SDNode<"SPUISD::EXTRACT_I8_SEXT", SPU_vec_demote, []>;
-def SPUextract_i8_zext: SDNode<"SPUISD::EXTRACT_I8_ZEXT", SPU_vec_demote, []>;
 
 // Address high and low components, used for [r+r] type addressing
 def SPUhi : SDNode<"SPUISD::Hi", SDTIntBinOp, []>;

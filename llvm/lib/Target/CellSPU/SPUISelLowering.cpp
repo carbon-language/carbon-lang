@@ -436,12 +436,6 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::CNTB] = "SPUISD::CNTB";
     node_names[(unsigned) SPUISD::PROMOTE_SCALAR] = "SPUISD::PROMOTE_SCALAR";
     node_names[(unsigned) SPUISD::VEC2PREFSLOT] = "SPUISD::VEC2PREFSLOT";
-    node_names[(unsigned) SPUISD::VEC2PREFSLOT_CHAINED]
-                                              = "SPUISD::VEC2PREFSLOT_CHAINED";
-    node_names[(unsigned) SPUISD::EXTRACT_I1_ZEXT] = "SPUISD::EXTRACT_I1_ZEXT";
-    node_names[(unsigned) SPUISD::EXTRACT_I1_SEXT] = "SPUISD::EXTRACT_I1_SEXT";
-    node_names[(unsigned) SPUISD::EXTRACT_I8_ZEXT] = "SPUISD::EXTRACT_I8_ZEXT";
-    node_names[(unsigned) SPUISD::EXTRACT_I8_SEXT] = "SPUISD::EXTRACT_I8_SEXT";
     node_names[(unsigned) SPUISD::MPY] = "SPUISD::MPY";
     node_names[(unsigned) SPUISD::MPYU] = "SPUISD::MPYU";
     node_names[(unsigned) SPUISD::MPYH] = "SPUISD::MPYH";
@@ -458,8 +452,6 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::ROTQUAD_RZ_BITS] =
       "SPUISD::ROTQUAD_RZ_BITS";
     node_names[(unsigned) SPUISD::ROTBYTES_LEFT] = "SPUISD::ROTBYTES_LEFT";
-    node_names[(unsigned) SPUISD::ROTBYTES_LEFT_CHAINED] =
-      "SPUISD::ROTBYTES_LEFT_CHAINED";
     node_names[(unsigned) SPUISD::ROTBYTES_LEFT_BITS] =
       "SPUISD::ROTBYTES_LEFT_BITS";
     node_names[(unsigned) SPUISD::SELECT_MASK] = "SPUISD::SELECT_MASK";
@@ -597,13 +589,24 @@ AlignedLoad(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST,
 /*!
  All CellSPU loads and stores are aligned to 16-byte boundaries, so for elements
  within a 16-byte block, we have to rotate to extract the requested element.
- */
+
+ For extending loads, we also want to ensure that the following sequence is
+ emitted, e.g. for MVT::f32 extending load to MVT::f64:
+
+\verbatim
+%1  v16i8,ch = load 
+%2  v16i8,ch = rotate %1
+%3  v4f8, ch = bitconvert %2 
+%4  f32      = vec2perfslot %3
+%5  f64      = fp_extend %4
+\endverbatim
+*/
 static SDValue
 LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   LoadSDNode *LN = cast<LoadSDNode>(Op);
   SDValue the_chain = LN->getChain();
-  MVT VT = LN->getMemoryVT();
-  MVT OpVT = Op.getNode()->getValueType(0);
+  MVT InVT = LN->getMemoryVT();
+  MVT OutVT = Op.getValueType();
   ISD::LoadExtType ExtType = LN->getExtensionType();
   unsigned alignment = LN->getAlignment();
   SDValue Ops[8];
@@ -613,7 +616,8 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     int offset, rotamt;
     bool was16aligned;
     SDValue result =
-      AlignedLoad(Op, DAG, ST, LN,alignment, offset, rotamt, VT, was16aligned);
+      AlignedLoad(Op, DAG, ST, LN,alignment, offset, rotamt, InVT,
+                  was16aligned);
 
     if (result.getNode() == 0)
       return result;
@@ -625,57 +629,40 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     if (rotamt != 0 || !was16aligned) {
       SDVTList vecvts = DAG.getVTList(MVT::v16i8, MVT::Other);
 
-      Ops[0] = the_chain;
-      Ops[1] = result;
+      Ops[0] = result;
       if (was16aligned) {
-        Ops[2] = DAG.getConstant(rotamt, MVT::i16);
+        Ops[1] = DAG.getConstant(rotamt, MVT::i16);
       } else {
         MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
         LoadSDNode *LN1 = cast<LoadSDNode>(result);
-        Ops[2] = DAG.getNode(ISD::ADD, PtrVT, LN1->getBasePtr(),
+        Ops[1] = DAG.getNode(ISD::ADD, PtrVT, LN1->getBasePtr(),
                              DAG.getConstant(rotamt, PtrVT));
       }
 
-      result = DAG.getNode(SPUISD::ROTBYTES_LEFT_CHAINED, vecvts, Ops, 3);
-      the_chain = result.getValue(1);
+      result = DAG.getNode(SPUISD::ROTBYTES_LEFT, MVT::v16i8, Ops, 2);
     }
 
-    if (VT == OpVT || ExtType == ISD::EXTLOAD) {
-      SDVTList scalarvts;
-      MVT vecVT = MVT::v16i8;
+    // Convert the loaded v16i8 vector to the appropriate vector type
+    // specified by the operand:
+    MVT vecVT = MVT::getVectorVT(InVT, (128 / InVT.getSizeInBits()));
+    result = DAG.getNode(SPUISD::VEC2PREFSLOT, InVT,
+	                 DAG.getNode(ISD::BIT_CONVERT, vecVT, result));
 
-      // Convert the loaded v16i8 vector to the appropriate vector type
-      // specified by the operand:
-      if (OpVT == VT) {
-        if (VT != MVT::i1)
-          vecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
-      } else
-        vecVT = MVT::getVectorVT(OpVT, (128 / OpVT.getSizeInBits()));
+    // Handle extending loads by extending the scalar result:
+    if (ExtType == ISD::SEXTLOAD) {
+      result = DAG.getNode(ISD::SIGN_EXTEND, OutVT, result);
+    } else if (ExtType == ISD::ZEXTLOAD) {
+      result = DAG.getNode(ISD::ZERO_EXTEND, OutVT, result);
+    } else if (ExtType == ISD::EXTLOAD) {
+      unsigned NewOpc = ISD::ANY_EXTEND;
 
-      Ops[0] = the_chain;
-      Ops[1] = DAG.getNode(ISD::BIT_CONVERT, vecVT, result);
-      scalarvts = DAG.getVTList((OpVT == VT ? VT : OpVT), MVT::Other);
-      result = DAG.getNode(SPUISD::VEC2PREFSLOT_CHAINED, scalarvts, Ops, 2);
-      the_chain = result.getValue(1);
-    } else {
-      // Handle the sign and zero-extending loads for i1 and i8:
-      unsigned NewOpC;
+      if (OutVT.isFloatingPoint())
+	NewOpc = ISD::FP_EXTEND;
 
-      if (ExtType == ISD::SEXTLOAD) {
-        NewOpC = (OpVT == MVT::i1
-                  ? SPUISD::EXTRACT_I1_SEXT
-                  : SPUISD::EXTRACT_I8_SEXT);
-      } else {
-        assert(ExtType == ISD::ZEXTLOAD);
-        NewOpC = (OpVT == MVT::i1
-                  ? SPUISD::EXTRACT_I1_ZEXT
-                  : SPUISD::EXTRACT_I8_ZEXT);
-      }
-
-      result = DAG.getNode(NewOpC, OpVT, result);
+      result = DAG.getNode(NewOpc, OutVT, result);
     }
 
-    SDVTList retvts = DAG.getVTList(OpVT, MVT::Other);
+    SDVTList retvts = DAG.getVTList(OutVT, MVT::Other);
     SDValue retops[2] = {
       result,
       the_chain
@@ -3034,10 +3021,16 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
         SDValue combinedConst =
           DAG.getConstant(CN0->getZExtValue() + CN1->getZExtValue(), Op0VT);
 
-        DEBUG(cerr << "Replace: (add " << CN0->getZExtValue() << ", "
-                   << "(SPUindirect <arg>, " << CN1->getZExtValue() << "))\n");
-        DEBUG(cerr << "With:    (SPUindirect <arg>, "
-                   << CN0->getZExtValue() + CN1->getZExtValue() << ")\n");
+#if defined(NDEBUG)
+        if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
+            cerr << "\n"
+                 << "Replace: (add " << CN0->getZExtValue() << ", "
+                 << "(SPUindirect <arg>, " << CN1->getZExtValue() << "))\n"
+                 << "With:    (SPUindirect <arg>, "
+                 << CN0->getZExtValue() + CN1->getZExtValue() << ")\n";
+        }
+#endif
+
         return DAG.getNode(SPUISD::IndirectAddr, Op0VT,
                            Op0.getOperand(0), combinedConst);
       }
@@ -3071,11 +3064,14 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
       // (any_extend (SPUextract_elt0 <arg>)) ->
       // (SPUextract_elt0 <arg>)
       // Types must match, however...
-      DEBUG(cerr << "Replace: ");
-      DEBUG(N->dump(&DAG));
-      DEBUG(cerr << "\nWith:    ");
-      DEBUG(Op0.getNode()->dump(&DAG));
-      DEBUG(cerr << "\n");
+#if defined(NDEBUG)
+      if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
+        cerr << "\nReplace: ";
+        N->dump(&DAG);
+        cerr << "\nWith:    ";
+        Op0.getNode()->dump(&DAG);
+        cerr << "\n";
+#endif
 
       return Op0;
     }
@@ -3243,8 +3239,7 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   }
 
   case SPUISD::LDRESULT:
-  case SPUISD::VEC2PREFSLOT:
-  case SPUISD::VEC2PREFSLOT_CHAINED: {
+  case SPUISD::VEC2PREFSLOT: {
     MVT OpVT = Op.getValueType();
     unsigned OpVTBits = OpVT.getSizeInBits();
     uint64_t InMask = OpVT.getIntegerVTBitMask();
@@ -3254,10 +3249,6 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   }
 
 #if 0
-  case EXTRACT_I1_ZEXT:
-  case EXTRACT_I1_SEXT:
-  case EXTRACT_I8_ZEXT:
-  case EXTRACT_I8_SEXT:
   case MPY:
   case MPYU:
   case MPYH:
@@ -3272,7 +3263,6 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   case SPUISD::ROTQUAD_RZ_BYTES:
   case SPUISD::ROTQUAD_RZ_BITS:
   case SPUISD::ROTBYTES_LEFT:
-  case SPUISD::ROTBYTES_LEFT_CHAINED:
   case SPUISD::SELECT_MASK:
   case SPUISD::SELB:
   case SPUISD::FPInterp:

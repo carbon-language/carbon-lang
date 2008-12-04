@@ -1288,37 +1288,19 @@ def : Pat<(v2f64 (SPUpromote_scalar R64FP:$rA)),
 def : Pat<(SPUvec2prefslot (v16i8 VECREG:$rA)),
           (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUvec2prefslot_chained (v16i8 VECREG:$rA)),
-          (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
-
 def : Pat<(SPUvec2prefslot (v8i16 VECREG:$rA)),
-          (ORi16_v8i16 VECREG:$rA, VECREG:$rA)>;
-
-def : Pat<(SPUvec2prefslot_chained (v8i16 VECREG:$rA)),
           (ORi16_v8i16 VECREG:$rA, VECREG:$rA)>;
 
 def : Pat<(SPUvec2prefslot (v4i32 VECREG:$rA)),
           (ORi32_v4i32 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUvec2prefslot_chained (v4i32 VECREG:$rA)),
-          (ORi32_v4i32 VECREG:$rA, VECREG:$rA)>;
-
 def : Pat<(SPUvec2prefslot (v2i64 VECREG:$rA)),
-          (ORi64_v2i64 VECREG:$rA, VECREG:$rA)>;
-
-def : Pat<(SPUvec2prefslot_chained (v2i64 VECREG:$rA)),
           (ORi64_v2i64 VECREG:$rA, VECREG:$rA)>;
 
 def : Pat<(SPUvec2prefslot (v4f32 VECREG:$rA)),
           (ORf32_v4f32 VECREG:$rA, VECREG:$rA)>;
 
-def : Pat<(SPUvec2prefslot_chained (v4f32 VECREG:$rA)),
-          (ORf32_v4f32 VECREG:$rA, VECREG:$rA)>;
-
 def : Pat<(SPUvec2prefslot (v2f64 VECREG:$rA)),
-          (ORf64_v2f64 VECREG:$rA, VECREG:$rA)>;
-
-def : Pat<(SPUvec2prefslot_chained (v2f64 VECREG:$rA)),
           (ORf64_v2f64 VECREG:$rA, VECREG:$rA)>;
 
 // ORC: Bitwise "or" with complement (c = a | ~b)
@@ -2147,15 +2129,6 @@ multiclass RotateQuadLeftByBytes
 
 defm ROTQBY: RotateQuadLeftByBytes;
 
-def : Pat<(SPUrotbytes_left_chained (v16i8 VECREG:$rA), R32C:$rB),
-          (ROTQBYv16i8 VECREG:$rA, R32C:$rB)>;
-def : Pat<(SPUrotbytes_left_chained (v8i16 VECREG:$rA), R32C:$rB),
-          (ROTQBYv8i16 VECREG:$rA, R32C:$rB)>;
-def : Pat<(SPUrotbytes_left_chained (v4i32 VECREG:$rA), R32C:$rB),
-          (ROTQBYv4i32 VECREG:$rA, R32C:$rB)>;
-def : Pat<(SPUrotbytes_left_chained (v2i64 VECREG:$rA), R32C:$rB),
-          (ROTQBYv2i64 VECREG:$rA, R32C:$rB)>;
-
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // Rotate quad by byte (count), immediate
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
@@ -2178,15 +2151,6 @@ multiclass RotateQuadByBytesImm
 }
 
 defm ROTQBYI: RotateQuadByBytesImm;
-
-def : Pat<(SPUrotbytes_left_chained (v16i8 VECREG:$rA), (i16 uimm7:$val)),
-          (ROTQBYIv16i8 VECREG:$rA, uimm7:$val)>;
-def : Pat<(SPUrotbytes_left_chained (v8i16 VECREG:$rA), (i16 uimm7:$val)),
-          (ROTQBYIv8i16 VECREG:$rA, uimm7:$val)>;
-def : Pat<(SPUrotbytes_left_chained (v4i32 VECREG:$rA), (i16 uimm7:$val)),
-          (ROTQBYIv4i32 VECREG:$rA, uimm7:$val)>;
-def : Pat<(SPUrotbytes_left_chained (v2i64 VECREG:$rA), (i16 uimm7:$val)),
-          (ROTQBYIv2i64 VECREG:$rA, uimm7:$val)>;
 
 // See ROTQBY note above.
 class ROTQBYBIInst<dag OOL, dag IOL, list<dag> pattern>:
@@ -3972,10 +3936,6 @@ def : Pat<(ret),
 // Zero/Any/Sign extensions
 //===----------------------------------------------------------------------===//
 
-// zext 1->32: Zero extend i1 to i32
-def : Pat<(SPUextract_i1_zext R32C:$rSrc),
-          (ANDIr32 R32C:$rSrc, 0x1)>;
-
 // sext 8->32: Sign extend bytes to words
 def : Pat<(sext_inreg R32C:$rSrc, i8),
           (XSHWr32 (XSBHr32 R32C:$rSrc))>;
@@ -3983,18 +3943,9 @@ def : Pat<(sext_inreg R32C:$rSrc, i8),
 def : Pat<(i32 (sext R8C:$rSrc)),
           (XSHWr16 (XSBHr8 R8C:$rSrc))>;
 
-def : Pat<(SPUextract_i8_sext VECREG:$rSrc),
-          (XSHWr32 (XSBHr32 (ORi32_v4i32 (v4i32 VECREG:$rSrc),
-                            (v4i32 VECREG:$rSrc))))>;
-
 // zext 8->16: Zero extend bytes to halfwords
 def : Pat<(i16 (zext R8C:$rSrc)),
           (ANDHIi8i16 R8C:$rSrc, 0xff)>;
-
-// zext 8->32 from preferred slot in load/store
-def : Pat<(SPUextract_i8_zext VECREG:$rSrc),
-          (ANDIr32 (ORi32_v4i32 (v4i32 VECREG:$rSrc), (v4i32 VECREG:$rSrc)),
-                   0xff)>;
 
 // zext 8->32: Zero extend bytes to words
 def : Pat<(i32 (zext R8C:$rSrc)),
