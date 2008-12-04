@@ -18,3 +18,15 @@ directly.
 
 //===---------------------------------------------------------------------===//
 
+It may be worth avoiding creation of alloca's for formal arguments
+for the common situation where the argument is never written to or has
+its address taken. The idea would be to begin generating code by using
+the argument directly and if its address is taken or it is stored to
+then generate the alloca and patch up the existing code.
+
+In theory, the same optimization could be a win for block local
+variables as long as the declaration dominates all statements in the
+block.
+
+//===---------------------------------------------------------------------===//
+
