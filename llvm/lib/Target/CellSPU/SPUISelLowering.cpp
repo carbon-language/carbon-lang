@@ -766,7 +766,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                           LN->getSrcValue(), LN->getSrcValueOffset(),
                           LN->isVolatile(), LN->getAlignment());
 
-#if 0 && defined(NDEBUG)
+#if 0 && !defined(NDEBUG)
     if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
       const SDValue &currentRoot = DAG.getRoot();
 
@@ -3021,7 +3021,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
         SDValue combinedConst =
           DAG.getConstant(CN0->getZExtValue() + CN1->getZExtValue(), Op0VT);
 
-#if defined(NDEBUG)
+#if !defined(NDEBUG)
         if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
             cerr << "\n"
                  << "Replace: (add " << CN0->getZExtValue() << ", "
@@ -3064,14 +3064,14 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
       // (any_extend (SPUextract_elt0 <arg>)) ->
       // (SPUextract_elt0 <arg>)
       // Types must match, however...
-#if defined(NDEBUG)
-    //  if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
+#if !defined(NDEBUG)
+      if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
         cerr << "\nReplace: ";
         N->dump(&DAG);
         cerr << "\nWith:    ";
         Op0.getNode()->dump(&DAG);
         cerr << "\n";
-      
+      }
 #endif
 
       return Op0;
