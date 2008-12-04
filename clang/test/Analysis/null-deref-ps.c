@@ -65,6 +65,15 @@ int f6(int *p) {
          : bar(p, 0);   // no-warning
 }
 
+int bar2(int* p, int q) __attribute__((nonnull(1)));
+
+int f6b(int *p) { 
+  return !p ? bar2(p, 1) // expected-warning {{Null pointer passed as an argument to a 'nonnull' parameter}}
+         : bar2(p, 0);   // no-warning
+}
+
+
+
 int* qux();
 
 int f7(int x) {
