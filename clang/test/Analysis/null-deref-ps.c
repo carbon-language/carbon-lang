@@ -72,7 +72,12 @@ int f6b(int *p) {
          : bar2(p, 0);   // no-warning
 }
 
+int bar3(int*p, int q, int *r) __attribute__((nonnull(1,3)));
 
+int f6c(int *p, int *q) {
+   return !p ? bar3(q, 2, p)
+             : bar3(p, 2, q);
+}
 
 int* qux();
 
