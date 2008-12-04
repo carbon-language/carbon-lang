@@ -432,7 +432,8 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
 
     case OR_Ambiguous:
       // FIXME: Bad location information.
-      Diag(StartLoc, diag::err_ovl_ambiguous_oper) << NewName;
+      Diag(StartLoc, diag::err_ovl_ambiguous_oper)
+        << (IsArray ? "new[]" : "new");
       PrintOverloadCandidates(MemberNewCandidates, /*OnlyViable=*/true);
       return true;
     }
@@ -491,7 +492,8 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
 
     case OR_Ambiguous:
       // FIXME: Bad location information.
-      Diag(StartLoc, diag::err_ovl_ambiguous_oper) << NewName;
+      Diag(StartLoc, diag::err_ovl_ambiguous_oper)
+        << (IsArray ? "new[]" : "new");
       PrintOverloadCandidates(GlobalNewCandidates, /*OnlyViable=*/true);
       return true;
     }
