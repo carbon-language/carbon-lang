@@ -381,127 +381,105 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
   DeclarationName NewName = Context.DeclarationNames.getCXXOperatorName(
                                         IsArray ? OO_Array_New : OO_New);
   if (AllocType->isRecordType() && !UseGlobal) {
-    OverloadCandidateSet MemberNewCandidates;
-    const CXXRecordType *Record = cast<CXXRecordType>(
-                                      AllocType->getAsRecordType());
-    IdentifierResolver::iterator I =
-      IdResolver.begin(NewName, Record->getDecl(), /*LookInParentCtx=*/false);
-    NamedDecl *Decl = (I == IdResolver.end()) ? 0 : *I;
-    // Member operator new is implicitly treated as static, so don't use
-    // AddMemberCandidate.
-    if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(Decl))
-      AddOverloadCandidate(Method, &AllocArgs[0], AllocArgs.size(),
-                           MemberNewCandidates,
-                           /*SuppressUserConversions=*/false);
-    else if (OverloadedFunctionDecl *Ovl
-               = dyn_cast_or_null<OverloadedFunctionDecl>(Decl)) {
-      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                                     FEnd = Ovl->function_end();
-         F != FEnd; ++F) {
-        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*F))
-          AddOverloadCandidate(Method, &AllocArgs[0], AllocArgs.size(),
-                               MemberNewCandidates,
-                               /*SuppressUserConversions=*/false);
-      }
-    }
-
-    // Do the resolution.
-    OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(MemberNewCandidates, Best)) {
-    case OR_Success: {
-      // Got one!
-      FunctionDecl *FnDecl = Best->Function;
-      // The first argument is size_t, and the first parameter must be size_t,
-      // too.
-      for (unsigned i = 1; i < AllocArgs.size(); ++i) {
-        // FIXME: Passing word to diagnostic.
-        // This might modify the argument expression, so pass the one in
-        // PlaceArgs.
-        if (PerformCopyInitialization(PlaceArgs[i-1],
-                                      FnDecl->getParamDecl(i)->getType(),
-                                      "passing"))
-          return true;
-      }
-      OperatorNew = FnDecl;
-      break;
-    }
-
-    case OR_No_Viable_Function:
-      // No viable function; look something up in the global scope instead.
-      break;
-
-    case OR_Ambiguous:
-      // FIXME: Bad location information.
-      Diag(StartLoc, diag::err_ovl_ambiguous_oper)
-        << (IsArray ? "new[]" : "new");
-      PrintOverloadCandidates(MemberNewCandidates, /*OnlyViable=*/true);
+    CXXRecordDecl *Record = cast<CXXRecordType>(AllocType->getAsRecordType())
+                                ->getDecl();
+    // FIXME: We fail to find inherited overloads.
+    if (FindAllocationOverload(StartLoc, NewName, &AllocArgs[0],
+                          AllocArgs.size(), Record, /*AllowMissing=*/true,
+                          OperatorNew))
       return true;
-    }
   }
   if (!OperatorNew) {
     // Didn't find a member overload. Look for a global one.
     DeclareGlobalNewDelete();
-    OverloadCandidateSet GlobalNewCandidates;
-    IdentifierResolver::iterator I =
-      IdResolver.begin(NewName, Context.getTranslationUnitDecl(),
-                       /*LookInParentCtx=*/false);
-    NamedDecl *Decl = (I == IdResolver.end()) ? 0 : *I;
-    if (FunctionDecl *Fn = dyn_cast_or_null<FunctionDecl>(Decl))
-      AddOverloadCandidate(Fn, &AllocArgs[0], AllocArgs.size(),
-                           GlobalNewCandidates,
-                           /*SuppressUserConversions=*/false);
-    else if (OverloadedFunctionDecl *Ovl
-               = dyn_cast_or_null<OverloadedFunctionDecl>(Decl)) {
-      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                                     FEnd = Ovl->function_end();
-         F != FEnd; ++F) {
-        if (FunctionDecl *Fn = dyn_cast<FunctionDecl>(*F))
-          AddOverloadCandidate(Fn, &AllocArgs[0], AllocArgs.size(),
-                               GlobalNewCandidates,
-                               /*SuppressUserConversions=*/false);
-      }
-    }
-
-    // Do the resolution.
-    OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(GlobalNewCandidates, Best)) {
-    case OR_Success: {
-      // Got one!
-      FunctionDecl *FnDecl = Best->Function;
-      // The first argument is size_t, and the first parameter must be size_t,
-      // too. This is checked on declaration and can be assumed.
-      for (unsigned i = 1; i < AllocArgs.size(); ++i) {
-        // FIXME: Passing word to diagnostic.
-        // This might modify the argument expression, so pass the one in
-        // PlaceArgs.
-        if (PerformCopyInitialization(PlaceArgs[i-1],
-                                      FnDecl->getParamDecl(i)->getType(),
-                                      "passing"))
-          return true;
-      }
-      OperatorNew = FnDecl;
-      break;
-    }
-
-    case OR_No_Viable_Function:
-      // FIXME: Bad location information.
-      Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
-        << NewName << (unsigned)GlobalNewCandidates.size();
-      PrintOverloadCandidates(GlobalNewCandidates, /*OnlyViable=*/false);
+    DeclContext *TUDecl = Context.getTranslationUnitDecl();
+    if (FindAllocationOverload(StartLoc, NewName, &AllocArgs[0],
+                          AllocArgs.size(), TUDecl, /*AllowMissing=*/false,
+                          OperatorNew))
       return true;
-
-    case OR_Ambiguous:
-      // FIXME: Bad location information.
-      Diag(StartLoc, diag::err_ovl_ambiguous_oper)
-        << (IsArray ? "new[]" : "new");
-      PrintOverloadCandidates(GlobalNewCandidates, /*OnlyViable=*/true);
-      return true;
-    }
   }
 
+  // FIXME: This is leaked on error. But so much is currently in Sema that it's
+  // easier to clean it in one go.
   AllocArgs[0]->Destroy(Context);
   return false;
 }
+
+/// FindAllocationOverload - Find an fitting overload for the allocation
+/// function in the specified scope.
+bool Sema::FindAllocationOverload(SourceLocation StartLoc, DeclarationName Name,
+                                  Expr** Args, unsigned NumArgs,
+                                  DeclContext *Ctx, bool AllowMissing,
+                                  FunctionDecl *&Operator)
+{
+  IdentifierResolver::iterator I =
+    IdResolver.begin(Name, Ctx, /*LookInParentCtx=*/false);
+  if (I == IdResolver.end()) {
+    if (AllowMissing)
+      return false;
+    // FIXME: Bad location information.
+    return Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
+      << Name << 0;
+  }
+
+  OverloadCandidateSet Candidates;
+  NamedDecl *Decl = *I;
+  // Even member operator new/delete are implicitly treated as static, so don't
+  // use AddMemberCandidate.
+  if (FunctionDecl *Fn = dyn_cast_or_null<FunctionDecl>(Decl))
+    AddOverloadCandidate(Fn, Args, NumArgs, Candidates,
+                         /*SuppressUserConversions=*/false);
+  else if (OverloadedFunctionDecl *Ovl
+             = dyn_cast_or_null<OverloadedFunctionDecl>(Decl)) {
+    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                   FEnd = Ovl->function_end();
+       F != FEnd; ++F) {
+      if (FunctionDecl *Fn = *F)
+        AddOverloadCandidate(Fn, Args, NumArgs, Candidates,
+                             /*SuppressUserConversions=*/false);
+    }
+  }
+
+  // Do the resolution.
+  OverloadCandidateSet::iterator Best;
+  switch(BestViableFunction(Candidates, Best)) {
+  case OR_Success: {
+    // Got one!
+    FunctionDecl *FnDecl = Best->Function;
+    // The first argument is size_t, and the first parameter must be size_t,
+    // too. This is checked on declaration and can be assumed. (It can't be
+    // asserted on, though, since invalid decls are left in there.)
+    for (unsigned i = 1; i < NumArgs; ++i) {
+      // FIXME: Passing word to diagnostic.
+      if (PerformCopyInitialization(Args[i-1],
+                                    FnDecl->getParamDecl(i)->getType(),
+                                    "passing"))
+        return true;
+    }
+    Operator = FnDecl;
+    return false;
+  }
+
+  case OR_No_Viable_Function:
+    if (AllowMissing)
+      return false;
+    // FIXME: Bad location information.
+    Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
+      << Name << (unsigned)Candidates.size();
+    PrintOverloadCandidates(Candidates, /*OnlyViable=*/false);
+    return true;
+
+  case OR_Ambiguous:
+    // FIXME: Bad location information.
+    Diag(StartLoc, diag::err_ovl_ambiguous_call)
+      << Name;
+    PrintOverloadCandidates(Candidates, /*OnlyViable=*/true);
+    return true;
+  }
+  assert(false && "Unreachable, bad result from BestViableFunction");
+  return true;
+}
+
 
 /// DeclareGlobalNewDelete - Declare the global forms of operator new and
 /// delete. These are:

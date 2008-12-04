@@ -14,6 +14,9 @@ struct U
   // A special new, to verify that the global version isn't used.
   void* operator new(size_t, S*);
 };
+struct V : U
+{
+};
 
 void* operator new(size_t); // expected-note {{candidate}}
 void* operator new(size_t, int*); // expected-note {{candidate}}
@@ -34,6 +37,8 @@ void good_news()
   ia4 *pai = new (int[3][4]);
   pi = ::new int;
   U *pu = new (ps) U;
+  // This is xfail. Inherited functions are not looked up currently.
+  //V *pv = new (ps) V;
 }
 
 void bad_news(int *ip)
@@ -56,7 +61,7 @@ void bad_news(int *ip)
   (void)new int[*(S*)0]; // expected-error {{array size expression must have integral or enumerated type, not 'struct S'}}
   (void)::S::new int; // expected-error {{expected unqualified-id}}
   (void)new (0, 0) int; // expected-error {{no matching function for call to 'operator new'}}
-  (void)new (0L) int; // expected-error {{use of overloaded operator 'new' is ambiguous}}
+  (void)new (0L) int; // expected-error {{call to 'operator new' is ambiguous}}
   // This must fail, because the member version shouldn't be found.
   (void)::new ((S*)0) U; // expected-error {{no matching function for call to 'operator new'}}
   // Some lacking cases due to lack of sema support.
