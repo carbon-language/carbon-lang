@@ -313,7 +313,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     
     
     // The argument must be an integer constant expression.
-    Expr *Ex = static_cast<Expr *>(Attr.getArg(0));
+    Expr *Ex = static_cast<Expr *>(*I);
     llvm::APSInt ArgNum(32);
     if (!Ex->isIntegerConstantExpr(ArgNum, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
