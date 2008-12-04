@@ -244,7 +244,7 @@ PTHManager::PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
 PTHManager::~PTHManager() {
   delete Buf;
   delete (PTHFileLookup*) FileLookup;
-  assert(PerIDCache); free(PerIDCache);
+  free(PerIDCache);
 }
 
 PTHManager* PTHManager::Create(const std::string& file, Preprocessor& PP) {
