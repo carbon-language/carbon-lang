@@ -566,7 +566,7 @@ DIAG(warn_property_type, WARNING,
 DIAG(err_continuation_class, ERROR,
      "continuation class has no primary class")
 DIAG(err_use_continuation_class, ERROR,
-     "use contination class to override 'readonly' property with 'readwrite'")
+     "attribute of property in continuation class of %0 can only  be 'readwrite'")
 DIAG(warn_property_attr_mismatch, WARNING,
      "property attribute in continuation class does not match the primary class")
 DIAG(err_accessor_property_type_mismatch, ERROR,

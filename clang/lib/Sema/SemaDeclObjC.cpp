@@ -1283,7 +1283,7 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
             PIDecl->setSetterMethodDecl(SetterDecl);
           }
           else
-            Diag(AtLoc, diag::err_use_continuation_class);
+            Diag(AtLoc, diag::err_use_continuation_class) << ICDecl->getDeclName();
           *isOverridingProperty = true;
           return 0;
         }

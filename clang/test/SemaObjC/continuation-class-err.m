@@ -11,5 +11,5 @@
 
 @interface ReadOnly ()
 @property(readwrite, copy) id object;	// expected-warning {{property attribute in continuation class does not match the primary class}}
-@property(readonly) id object1; // expected-error {{use contination class to override 'readonly' property with 'readwrite'}}
+@property(readonly) id object1; // expected-error {{attribute of property in continuation class of 'ReadOnly' can only  be 'readwrite'}}
 @end
