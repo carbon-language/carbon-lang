@@ -3065,12 +3065,13 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
       // (SPUextract_elt0 <arg>)
       // Types must match, however...
 #if defined(NDEBUG)
-      if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
+    //  if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
         cerr << "\nReplace: ";
         N->dump(&DAG);
         cerr << "\nWith:    ";
         Op0.getNode()->dump(&DAG);
         cerr << "\n";
+      
 #endif
 
       return Op0;
