@@ -79,6 +79,9 @@ public:
     return SelfRegion;  
   }
     
+  /// RemoveDeadBindings - Scans a BasicStore for dead values.  It returns
+  ///  a new Store with these values removed, and populates LSymbols and
+  ///  DSymbols with the known set of live and dead symbols respectively.
   Store RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                            LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
