@@ -73,6 +73,7 @@ namespace {
     void ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB);
     BasicBlock *FactorCommonPHIPreds(PHINode *PN, Constant *CstVal);
     bool ProcessBranchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
+    bool ProcessSwitchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
 
     bool ProcessJumpOnPHI(PHINode *PN);
     bool ProcessBranchOnLogical(Value *V, BasicBlock *BB, bool isAnd);
@@ -283,6 +284,13 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
           if (PBI->isConditional() && PBI->getCondition() == Condition &&
               ProcessBranchOnDuplicateCond(*PI, BB))
             return true;
+    } else {
+      assert(isa<SwitchInst>(BB->getTerminator()) && "Unknown jump terminator");
+      for (; PI != E; ++PI)
+        if (SwitchInst *PSI = dyn_cast<SwitchInst>((*PI)->getTerminator()))
+          if (PSI->getCondition() == Condition &&
+              ProcessSwitchOnDuplicateCond(*PI, BB))
+            return true;
     }
   }
 
@@ -411,6 +419,72 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
   ++NumThreads;
   return true;
 }
+
+/// ProcessSwitchOnDuplicateCond - We found a block and a predecessor of that
+/// block that switch on exactly the same condition.  This means that we almost
+/// always know the direction of the edge in the DESTBB:
+///  PREDBB:
+///     switch COND [... DESTBB, BBY ... ]
+///  DESTBB:
+///     switch COND [... BBZ, BBW ]
+///
+/// Optimizing switches like this is very important, because simplifycfg builds
+/// switches out of repeated 'if' conditions.
+bool JumpThreading::ProcessSwitchOnDuplicateCond(BasicBlock *PredBB,
+                                                 BasicBlock *DestBB) {
+  SwitchInst *PredSI = cast<SwitchInst>(PredBB->getTerminator());
+  SwitchInst *DestSI = cast<SwitchInst>(DestBB->getTerminator());
+
+  // There are a variety of optimizations that we can potentially do on these
+  // blocks: we order them from most to least preferable.
+  
+  // If DESTBB *just* contains the switch, then we can forward edges from PREDBB
+  // directly to their destination.  This does not introduce *any* code size
+  // growth.
+  
+  // FIXME: Thread if it just contains a PHI.
+  if (isa<SwitchInst>(DestBB->begin())) {
+    bool MadeChange = false;
+    // Ignore the default edge for now.
+    for (unsigned i = 1, e = DestSI->getNumSuccessors(); i != e; ++i) {
+      ConstantInt *DestVal = DestSI->getCaseValue(i);
+      BasicBlock *DestSucc = DestSI->getSuccessor(i);
+      
+      // Okay, DestSI has a case for 'DestVal' that goes to 'DestSucc'.  See if
+      // PredSI has an explicit case for it.  If so, forward.  If it is covered
+      // by the default case, we can't update PredSI.
+      unsigned PredCase = PredSI->findCaseValue(DestVal);
+      if (PredCase == 0) continue;
+      
+      // If PredSI doesn't go to DestBB on this value, then it won't reach the
+      // case on this condition.
+      if (PredSI->getSuccessor(PredCase) != DestBB &&
+          DestSI->getSuccessor(i) != DestBB)
+        continue;
+
+      // Otherwise, we're safe to make the change.  Make sure that the edge from
+      // DestSI to DestSucc is not critical and has no PHI nodes.
+      DOUT << "FORWARDING EDGE " << *DestVal << "   FROM: " << *PredSI;
+      DOUT << "THROUGH: " << *DestSI;
+
+      // If the destination has PHI nodes, just split the edge for updating
+      // simplicity.
+      if (isa<PHINode>(DestSucc->begin()) && !DestSucc->getSinglePredecessor()){
+        SplitCriticalEdge(DestSI, i, this);
+        DestSucc = DestSI->getSuccessor(i);
+      }
+      FoldSingleEntryPHINodes(DestSucc);
+      PredSI->setSuccessor(PredCase, DestSucc);
+      MadeChange = true;
+    }
+    
+    if (MadeChange)
+      return true;
+  }
+  
+  return false;
+}
+
 
 /// SimplifyPartiallyRedundantLoad - If LI is an obviously partially redundant
 /// load instruction, eliminate it by replacing it with a PHI node.  This is an
