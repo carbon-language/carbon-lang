@@ -52,6 +52,17 @@ template<> struct GRStateTrait<RegionExtentsTy>
 };
 }
 
+// KillSet GDM stuff.
+typedef llvm::ImmutableSet<const MemRegion*> RegionKillSetTy;
+static int RegionKillSetTyIndex = 0;
+namespace clang {
+  template<> struct GRStateTrait<RegionKillSetTy>
+  : public GRStatePartialTrait<RegionKillSetTy> {
+    static void* GDMIndex() { return &RegionKillSetTyIndex; }
+  };
+}
+
+
 namespace {
 
 class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
@@ -116,10 +127,15 @@ public:
     assert (false && "Not implemented.");
     return 0;
   }
-
+  
+  /// RemoveDeadBindings - Scans a RegionStore for dead values.  It returns
+  ///  a new Store with these values removed, and populates LSymbols and
+  ///  DSymbols with the known set of live and dead symbols respectively.
   Store RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                            LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
+  
+  void UpdateLiveSymbols(SVal X, LiveSymbolsTy& LSymbols);
 
   Store BindDecl(Store store, const VarDecl* VD, SVal* InitVal, unsigned Count);
 
@@ -605,22 +621,130 @@ const GRState* RegionStoreManager::setExtent(const GRState* St,
 }
 
 
+void RegionStoreManager::UpdateLiveSymbols(SVal X, LiveSymbolsTy& LSymbols) {
+  for (SVal::symbol_iterator SI=X.symbol_begin(),SE=X.symbol_end();SI!=SE;++SI)
+    LSymbols.insert(*SI);
+}
+
 Store RegionStoreManager::RemoveDeadBindings(Store store, Stmt* Loc, 
                                              const LiveVariables& Live,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                            LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) {
 
   RegionBindingsTy B = GetRegionBindings(store);
-  typedef SVal::symbol_iterator symbol_iterator;
-
-  // FIXME: Mark all region binding value's symbol as live. We also omit symbols
-  // in SymbolicRegions.
+  
+  // Lazily constructed backmap from MemRegions to SubRegions.
+  typedef llvm::ImmutableSet<const MemRegion*> SubRegionsTy;
+  typedef llvm::ImmutableMap<const MemRegion*, SubRegionsTy> SubRegionsMapTy;
+  
+  // FIXME: As a future optimization we can modifiy BumpPtrAllocator to have
+  // the ability to reuse memory.  This way we can keep TmpAlloc around as
+  // an instance variable of RegionStoreManager (avoiding repeated malloc
+  // overhead).
+  llvm::BumpPtrAllocator TmpAlloc;
+  
+  // Factory objects.
+  SubRegionsMapTy::Factory SubRegMapF(TmpAlloc);
+  SubRegionsTy::Factory SubRegF(TmpAlloc);
+  
+  // The backmap from regions to subregions.
+  SubRegionsMapTy SubRegMap = SubRegMapF.GetEmptyMap();
+  
+  // Do a pass over the regions in the store.  For VarRegions we check if
+  // the variable is still live and if so add it to the list of live roots.
+  // For other regions we populate our region backmap.
   for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
-    SVal X = I.getData();
-    for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
-      LSymbols.insert(*SI);
+    const MemRegion* R = I.getKey();
+    if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
+      if (Live.isLive(Loc, VR->getDecl()))
+        RegionRoots.push_back(VR); // This is a live "root".
+    }
+    else {
+      // Get the super region for R.
+      const MemRegion* SuperR = cast<SubRegion>(R)->getSuperRegion();
+      // Get the current set of subregions for SuperR.
+      const SubRegionsTy* SRptr = SubRegMap.lookup(SuperR);
+      SubRegionsTy SR = SRptr ? *SRptr : SubRegF.GetEmptySet();
+      // Add R to the subregions of SuperR.
+      SubRegMap = SubRegMapF.Add(SubRegMap, SuperR, SubRegF.Add(SR, R));
+      
+      // Finally, check if SuperR is a VarRegion.  We need to do this
+      // to also mark SuperR as a root (as it may not have a value directly
+      // bound to it in the store).
+      if (const VarRegion* VR = dyn_cast<VarRegion>(SuperR)) {
+        if (Live.isLive(Loc, VR->getDecl()))
+          RegionRoots.push_back(VR); // This is a live "root".
+      }
+    } 
   }
+  
+  // Process the worklist of RegionRoots.  This performs a "mark-and-sweep"
+  // of the store.  We want to find all live symbols and dead regions.  
+  llvm::SmallPtrSet<const MemRegion*, 10> Marked;
+  
+  while (!RegionRoots.empty()) {
+    // Dequeue the next region on the worklist.
+    const MemRegion* R = RegionRoots.back();
+    RegionRoots.pop_back();
 
+    // Check if we have already processed this region.
+    if (Marked.count(R)) continue;
+
+    // Mark this region as processed.  This is needed for termination in case
+    // a region is referenced more than once.
+    Marked.insert(R);
+    
+    // Mark the symbol for any live SymbolicRegion as "live".  This means we
+    // should continue to track that symbol.
+    if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
+      LSymbols.insert(SymR->getSymbol());
+
+    // Get the data binding for R (if any).
+    RegionBindingsTy::data_type* Xptr = B.lookup(R);
+    if (Xptr) {
+      SVal X = *Xptr;
+      UpdateLiveSymbols(X, LSymbols); // Update the set of live symbols.
+    
+      // If X is a region, then add it the RegionRoots.
+      if (loc::MemRegionVal* RegionX = dyn_cast<loc::MemRegionVal>(&X))
+        RegionRoots.push_back(RegionX->getRegion());
+    }
+    
+    // Get the subregions of R.  These are RegionRoots as well since they
+    // represent values that are also bound to R.
+    const SubRegionsTy* SRptr = SubRegMap.lookup(R);      
+    if (!SRptr) continue;
+    SubRegionsTy SR = *SRptr;
+    
+    for (SubRegionsTy::iterator I=SR.begin(), E=SR.end(); I!=E; ++I)
+      RegionRoots.push_back(*I);
+  }
+  
+  // We have now scanned the store, marking reachable regions and symbols
+  // as live.  We now remove all the regions that are dead from the store
+  // as well as update DSymbols with the set symbols that are now dead.
+  
+  for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    const MemRegion* R = I.getKey();
+    
+    // If this region live?  Is so, none of its symbols are dead.
+    if (Marked.count(R))
+      continue;
+    
+    // Remove this dead region from the store.
+    store = Remove(store, loc::MemRegionVal(R));
+
+    // Mark all non-live symbols that this region references as dead.
+    if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R)) {
+      SymbolID Sym = SymR->getSymbol();
+      if (!LSymbols.count(Sym)) DSymbols.insert(Sym);
+    }
+
+    SVal X = I.getData();
+    SVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
+    for (; SI != SE; ++SI) { if (!LSymbols.count(*SI)) DSymbols.insert(*SI); }
+  }
+  
   return store;
 }
 
