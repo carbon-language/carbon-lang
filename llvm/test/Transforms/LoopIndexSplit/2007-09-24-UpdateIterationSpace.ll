@@ -13,7 +13,7 @@ bb.preheader:		; preds = %entry
 	br label %bb
 
 bb:		; preds = %bb.preheader, %cond_next45
-	%i.01.0 = phi i32 [ %tmp47, %cond_next45 ], [ %xmin, %bb.preheader ]		; <i32> [#uses=6]
+	%i.01.0 = phi i32 [ %tmp47, %cond_next45 ], [ 0, %bb.preheader ]		; <i32> [#uses=6]
 	%tmp2 = icmp sgt i32 %i.01.0, -1		; <i1> [#uses=1]
 	%tmp6 = icmp slt i32 %i.01.0, %ndat		; <i1> [#uses=1]
 	%bothcond = and i1 %tmp2, %tmp6		; <i1> [#uses=1]

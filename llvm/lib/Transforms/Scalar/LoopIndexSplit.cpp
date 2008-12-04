@@ -7,8 +7,36 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements Loop Index Splitting Pass.
+// This file implements Loop Index Splitting Pass. This pass handles three
+// kinds of loops.
 //
+// [1] Loop is eliminated when loop body is executed only once. For example,
+// for (i = 0; i < N; ++i) {
+//   if ( i == X) {
+//     ...
+//   }
+// }
+//
+// [2] Loop's iteration space is shrunk if loop body is executed for certain
+//     range only. For example,
+// 
+// for (i = 0; i < N; ++i) {
+//   if ( i > A && i < B) {
+//     ...
+//   }
+// }
+// is trnasformed to iterators from A to B, if A > 0 and B < N.
+//
+// [3] Loop is split if the loop body is dominated by an branch. For example,
+//
+// for (i = LB; i < UB; ++i) { if (i < SV) A; else B; }
+//
+// is transformed into
+// AEV = BSV = SV
+// for (i = LB; i < min(UB, AEV); ++i)
+//    A;
+// for (i = max(LB, BSV); i < UB; ++i);
+//    B;
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-index-split"
@@ -25,7 +53,9 @@
 
 using namespace llvm;
 
-STATISTIC(NumIndexSplit, "Number of loops index split");
+STATISTIC(NumIndexSplit, "Number of loop index split");
+STATISTIC(NumIndexSplitRemoved, "Number of loops eliminated by loop index split");
+STATISTIC(NumRestrictBounds, "Number of loop iteration space restricted");
 
 namespace {
 
@@ -54,96 +84,50 @@ namespace {
     }
 
   private:
+    /// processOneIterationLoop -- Eliminate loop if loop body is executed 
+    /// only once. For example,
+    /// for (i = 0; i < N; ++i) {
+    ///   if ( i == X) {
+    ///     ...
+    ///   }
+    /// }
+    ///
+    bool processOneIterationLoop();
 
-    class SplitInfo {
-    public:
-      SplitInfo() : SplitValue(NULL), SplitCondition(NULL), 
-                    UseTrueBranchFirst(true), A_ExitValue(NULL), 
-                    B_StartValue(NULL) {}
+    // -- Routines used by updateLoopIterationSpace();
 
-      // Induction variable's range is split at this value.
-      Value *SplitValue;
-      
-      // This instruction compares IndVar against SplitValue.
-      Instruction *SplitCondition;
+    /// updateLoopIterationSpace -- Update loop's iteration space if loop 
+    /// body is executed for certain IV range only. For example,
+    /// 
+    /// for (i = 0; i < N; ++i) {
+    ///   if ( i > A && i < B) {
+    ///     ...
+    ///   }
+    /// }
+    /// is trnasformed to iterators from A to B, if A > 0 and B < N.
+    ///
+    bool updateLoopIterationSpace();
 
-      // True if after loop index split, first loop will execute split condition's
-      // true branch.
-      bool UseTrueBranchFirst;
+    /// restrictLoopBound - Op dominates loop body. Op compares an IV based value
+    /// with a loop invariant value. Update loop's lower and upper bound based on
+    /// the loop invariant value.
+    bool restrictLoopBound(ICmpInst &Op);
 
-      // Exit value for first loop after loop split.
-      Value *A_ExitValue;
+    // --- Routines used by splitLoop(). --- /
 
-      // Start value for second loop after loop split.
-      Value *B_StartValue;
+    bool splitLoop();
 
-      // Clear split info.
-      void clear() {
-        SplitValue = NULL;
-        SplitCondition = NULL;
-        UseTrueBranchFirst = true;
-        A_ExitValue = NULL;
-        B_StartValue = NULL;
-      }
-
-    };
-    
-  private:
-
-    // safeIcmpInst - CI is considered safe instruction if one of the operand
-    // is SCEVAddRecExpr based on induction variable and other operand is
-    // loop invariant. If CI is safe then populate SplitInfo object SD appropriately
-    // and return true;
-    bool safeICmpInst(ICmpInst *CI, SplitInfo &SD);
-
-    /// Find condition inside a loop that is suitable candidate for index split.
-    void findSplitCondition();
-
-    /// Find loop's exit condition.
-    void findLoopConditionals();
-
-    /// Return induction variable associated with value V.
-    void findIndVar(Value *V, Loop *L);
-
-    /// processOneIterationLoop - Current loop L contains compare instruction
-    /// that compares induction variable, IndVar, agains loop invariant. If
-    /// entire (i.e. meaningful) loop body is dominated by this compare
-    /// instruction then loop body is executed only for one iteration. In
-    /// such case eliminate loop structure surrounding this loop body. For
-    bool processOneIterationLoop(SplitInfo &SD);
-    
-    /// isOneIterationLoop - Return true if split condition is EQ and 
-    /// the IV is not used outside the loop.
-    bool isOneIterationLoop(ICmpInst *CI);
-
-    void updateLoopBounds(ICmpInst *CI);
-    /// updateLoopIterationSpace - Current loop body is covered by an AND
-    /// instruction whose operands compares induction variables with loop
-    /// invariants. If possible, hoist this check outside the loop by
-    /// updating appropriate start and end values for induction variable.
-    bool updateLoopIterationSpace(SplitInfo &SD);
-
-    /// If loop header includes loop variant instruction operands then
-    /// this loop may not be eliminated.
-    bool safeHeader(SplitInfo &SD,  BasicBlock *BB);
-
-    /// If Exiting block includes loop variant instructions then this
-    /// loop may not be eliminated.
-    bool safeExitingBlock(SplitInfo &SD, BasicBlock *BB);
-
-    /// removeBlocks - Remove basic block DeadBB and all blocks dominated by DeadBB.
-    /// This routine is used to remove split condition's dead branch, dominated by
-    /// DeadBB. LiveBB dominates split conidition's other branch.
+    /// removeBlocks - Remove basic block DeadBB and all blocks dominated by 
+    /// DeadBB. This routine is used to remove split condition's dead branch, 
+    /// dominated by DeadBB. LiveBB dominates split conidition's other branch.
     void removeBlocks(BasicBlock *DeadBB, Loop *LP, BasicBlock *LiveBB);
-
-    /// safeSplitCondition - Return true if it is possible to
-    /// split loop using given split condition.
-    bool safeSplitCondition(SplitInfo &SD);
-
-    /// calculateLoopBounds - ALoop exit value and BLoop start values are calculated
-    /// based on split value. 
-    void calculateLoopBounds(SplitInfo &SD);
-
+    
+    /// moveExitCondition - Move exit condition EC into split condition block.
+    void moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
+                           BasicBlock *ExitBB, ICmpInst *EC, ICmpInst *SC,
+                           PHINode *IV, Instruction *IVAdd, Loop *LP,
+                           unsigned);
+    
     /// updatePHINodes - CFG has been changed. 
     /// Before 
     ///   - ExitBB's single predecessor was Latch
@@ -157,47 +141,49 @@ namespace {
                         BasicBlock *Header,
                         PHINode *IV, Instruction *IVIncrement, Loop *LP);
 
-    /// moveExitCondition - Move exit condition EC into split condition block CondBB.
-    void moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
-                           BasicBlock *ExitBB, ICmpInst *EC, ICmpInst *SC,
-                           PHINode *IV, Instruction *IVAdd, Loop *LP);
+    // --- Utility routines --- /
 
-    /// splitLoop - Split current loop L in two loops using split information
-    /// SD. Update dominator information. Maintain LCSSA form.
-    bool splitLoop(SplitInfo &SD);
+    /// cleanBlock - A block is considered clean if all non terminal 
+    /// instructions are either PHINodes or IV based values.
+    bool cleanBlock(BasicBlock *BB);
 
-    void initialize() {
-      IndVar = NULL; 
-      IndVarIncrement = NULL;
-      ExitCondition = NULL;
-      StartValue = NULL;
-      ExitValueNum = 0;
-      SplitData.clear();
-    }
+    /// IVisLT - If Op is comparing IV based value with an loop invaraint and 
+    /// IV based value is less than  the loop invariant then return the loop 
+    /// invariant. Otherwise return NULL.
+    Value * IVisLT(ICmpInst &Op);
+
+    /// IVisLE - If Op is comparing IV based value with an loop invaraint and 
+    /// IV based value is less than or equal to the loop invariant then 
+    /// return the loop invariant. Otherwise return NULL.
+    Value * IVisLE(ICmpInst &Op);
+
+    /// IVisGT - If Op is comparing IV based value with an loop invaraint and 
+    /// IV based value is greater than  the loop invariant then return the loop 
+    /// invariant. Otherwise return NULL.
+    Value * IVisGT(ICmpInst &Op);
+
+    /// IVisGE - If Op is comparing IV based value with an loop invaraint and 
+    /// IV based value is greater than or equal to the loop invariant then 
+    /// return the loop invariant. Otherwise return NULL.
+    Value * IVisGE(ICmpInst &Op);
 
   private:
 
-    // Current Loop.
+    // Current Loop information.
     Loop *L;
     LPPassManager *LPM;
     LoopInfo *LI;
     ScalarEvolution *SE;
     DominatorTree *DT;
     DominanceFrontier *DF;
-    SmallVector<SplitInfo, 4> SplitData;
 
-    // Induction variable whose range is being split by this transformation.
     PHINode *IndVar;
-    Instruction *IndVarIncrement;
-      
-    // Loop exit condition.
     ICmpInst *ExitCondition;
-
-    // Induction variable's initial value.
-    Value *StartValue;
-
-    // Induction variable's final loop exit value operand number in exit condition..
-    unsigned ExitValueNum;
+    ICmpInst *SplitCondition;
+    Value *IVStartValue;
+    Value *IVExitValue;
+    Instruction *IVIncrement;
+    SmallPtrSet<Value *, 4> IVBasedValues;
   };
 }
 
@@ -211,7 +197,6 @@ Pass *llvm::createLoopIndexSplitPass() {
 
 // Index split Loop L. Return true if loop is split.
 bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
-  bool Changed = false;
   L = IncomingLoop;
   LPM = &LPM_Ref;
 
@@ -224,370 +209,189 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   LI = &getAnalysis<LoopInfo>();
   DF = &getAnalysis<DominanceFrontier>();
 
-  initialize();
+  // Initialize loop data.
+  IndVar = L->getCanonicalInductionVariable();
+  if (!IndVar) return false;
 
-  findLoopConditionals();
-
-  if (!ExitCondition)
-    return false;
-
-  findSplitCondition();
-
-  if (SplitData.empty())
-    return false;
-
-  // First see if it is possible to eliminate loop itself or not.
-  for (SmallVector<SplitInfo, 4>::iterator SI = SplitData.begin();
-       SI != SplitData.end();) {
-    SplitInfo &SD = *SI;
-    ICmpInst *CI = dyn_cast<ICmpInst>(SD.SplitCondition);
-    if (SD.SplitCondition->getOpcode() == Instruction::And) {
-      Changed = updateLoopIterationSpace(SD);
-      if (Changed) {
-        ++NumIndexSplit;
-        // If is loop is eliminated then nothing else to do here.
-        return Changed;
-      } else {
-        SmallVector<SplitInfo, 4>::iterator Delete_SI = SI;
-        SI = SplitData.erase(Delete_SI);
-      }
-    }
-    else if (isOneIterationLoop(CI)) {
-      Changed = processOneIterationLoop(SD);
-      if (Changed) {
-        ++NumIndexSplit;
-        // If is loop is eliminated then nothing else to do here.
-        return Changed;
-      } else {
-        SmallVector<SplitInfo, 4>::iterator Delete_SI = SI;
-        SI = SplitData.erase(Delete_SI);
-      }
-    } else
-      ++SI;
-  }
-
-  if (SplitData.empty())
-    return false;
-
-  // Split most profitiable condition.
-  // FIXME : Implement cost analysis.
-  unsigned MostProfitableSDIndex = 0;
-  Changed = splitLoop(SplitData[MostProfitableSDIndex]);
-
-  if (Changed)
-    ++NumIndexSplit;
+  bool P1InLoop = L->contains(IndVar->getIncomingBlock(1));
+  IVStartValue = IndVar->getIncomingValue(!P1InLoop);
+  IVIncrement = dyn_cast<Instruction>(IndVar->getIncomingValue(P1InLoop));
+  if (!IVIncrement) return false;
   
-  return Changed;
-}
-
-/// isOneIterationLoop - Return true if split condition is EQ and 
-/// the IV is not used outside the loop.
-bool LoopIndexSplit::isOneIterationLoop(ICmpInst *CI) {
-  if (!CI)
-    return false;
-  if (CI->getPredicate() != ICmpInst::ICMP_EQ)
-    return false;
-
-  Value *Incr = IndVar->getIncomingValueForBlock(L->getLoopLatch());
-  for (Value::use_iterator UI = Incr->use_begin(), E = Incr->use_end(); 
-       UI != E; ++UI)
-    if (!L->contains(cast<Instruction>(*UI)->getParent()))
-      return false;
-
-  return true;
-}
-/// Return true if V is a induction variable or induction variable's
-/// increment for loop L.
-void LoopIndexSplit::findIndVar(Value *V, Loop *L) {
-  
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I)
-    return;
-
-  // Check if I is a phi node from loop header or not.
-  if (PHINode *PN = dyn_cast<PHINode>(V)) {
-    if (PN->getParent() == L->getHeader()) {
-      IndVar = PN;
-      return;
-    }
-  }
- 
-  // Check if I is a add instruction whose one operand is
-  // phi node from loop header and second operand is constant.
-  if (I->getOpcode() != Instruction::Add)
-    return;
-  
-  Value *Op0 = I->getOperand(0);
-  Value *Op1 = I->getOperand(1);
-  
-  if (PHINode *PN = dyn_cast<PHINode>(Op0)) 
-    if (PN->getParent() == L->getHeader()) 
-      if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) 
-        if (CI->isOne()) {
-          IndVar = PN;
-          IndVarIncrement = I;
-          return;
-        }
-
-  if (PHINode *PN = dyn_cast<PHINode>(Op1)) 
-    if (PN->getParent() == L->getHeader()) 
-      if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0)) 
-        if (CI->isOne()) {
-          IndVar = PN;
-          IndVarIncrement = I;
-          return;
-        }
-  
-  return;
-}
-
-// Find loop's exit condition and associated induction variable.
-void LoopIndexSplit::findLoopConditionals() {
-
-  BasicBlock *ExitingBlock = NULL;
-
+  IVBasedValues.clear();
+  IVBasedValues.insert(IndVar);
+  IVBasedValues.insert(IVIncrement);
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
-       I != E; ++I) {
-    BasicBlock *BB = *I;
-    if (!L->isLoopExit(BB))
-      continue;
-    if (ExitingBlock)
-      return;
-    ExitingBlock = BB;
-  }
+       I != E; ++I) 
+    for(BasicBlock::iterator BI = (*I)->begin(), BE = (*I)->end(); 
+        BI != BE; ++BI) {
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(BI)) 
+        if (BO != IVIncrement 
+            && (BO->getOpcode() == Instruction::Add
+                || BO->getOpcode() == Instruction::Sub))
+          if (IVBasedValues.count(BO->getOperand(0))
+              && L->isLoopInvariant(BO->getOperand(1)))
+            IVBasedValues.insert(BO);
+    }
 
-  if (!ExitingBlock)
-    return;
-
-  // If exiting block is neither loop header nor loop latch then this loop is
-  // not suitable. 
-  if (ExitingBlock != L->getHeader() && ExitingBlock != L->getLoopLatch())
-    return;
-
-  // If exit block's terminator is conditional branch inst then we have found
-  // exit condition.
-  BranchInst *BR = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
-  if (!BR || BR->isUnconditional())
-    return;
-  
-  ICmpInst *CI = dyn_cast<ICmpInst>(BR->getCondition());
-  if (!CI)
-    return;
-
-  // FIXME 
-  if (CI->getPredicate() == ICmpInst::ICMP_EQ
-      || CI->getPredicate() == ICmpInst::ICMP_NE)
-    return;
-
-  ExitCondition = CI;
-
-  // Exit condition's one operand is loop invariant exit value and second 
-  // operand is SCEVAddRecExpr based on induction variable.
-  Value *V0 = CI->getOperand(0);
-  Value *V1 = CI->getOperand(1);
-  
-  SCEVHandle SH0 = SE->getSCEV(V0);
-  SCEVHandle SH1 = SE->getSCEV(V1);
-  
-  if (SH0->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH1)) {
-    ExitValueNum = 0;
-    findIndVar(V1, L);
-  }
-  else if (SH1->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH0)) {
-    ExitValueNum =  1;
-    findIndVar(V0, L);
-  }
-
-  if (!IndVar) 
-    ExitCondition = NULL;
-  else if (IndVar) {
-    BasicBlock *Preheader = L->getLoopPreheader();
-    StartValue = IndVar->getIncomingValueForBlock(Preheader);
-  }
+  // Reject loop if loop exit condition is not suitable.
+  SmallVector<BasicBlock *, 2> EBs;
+  L->getExitingBlocks(EBs);
+  if (EBs.size() != 1)
+    return false;
+  BranchInst *EBR = dyn_cast<BranchInst>(EBs[0]->getTerminator());
+  if (!EBR) return false;
+  ExitCondition = dyn_cast<ICmpInst>(EBR->getCondition());
+  if (!ExitCondition) return false;
+  if (EBs[0] != L->getLoopLatch()) return false;
+  IVExitValue = ExitCondition->getOperand(1);
+  if (!L->isLoopInvariant(IVExitValue))
+    IVExitValue = ExitCondition->getOperand(0);
+  if (!L->isLoopInvariant(IVExitValue))
+    return false;
 
   // If start value is more then exit value where induction variable
   // increments by 1 then we are potentially dealing with an infinite loop.
   // Do not index split this loop.
-  if (ExitCondition) {
-    ConstantInt *SV = dyn_cast<ConstantInt>(StartValue);
-    ConstantInt *EV = 
-      dyn_cast<ConstantInt>(ExitCondition->getOperand(ExitValueNum));
-    if (SV && EV && SV->getSExtValue() > EV->getSExtValue())
-      ExitCondition = NULL;
-    else if (EV && EV->isZero())
-      ExitCondition = NULL;
-  }
-}
+  if (ConstantInt *SV = dyn_cast<ConstantInt>(IVStartValue))
+    if (ConstantInt *EV = dyn_cast<ConstantInt>(IVExitValue))
+      if (SV->getSExtValue() > EV->getSExtValue())
+        return false;
 
-/// Find condition inside a loop that is suitable candidate for index split.
-void LoopIndexSplit::findSplitCondition() {
+  if (processOneIterationLoop())
+    return true;
 
-  SplitInfo SD;
-  // Check all basic block's terminators.
-  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
-       I != E; ++I) {
-    SD.clear();
-    BasicBlock *BB = *I;
+  if (updateLoopIterationSpace())
+    return true;
 
-    // If this basic block does not terminate in a conditional branch
-    // then terminator is not a suitable split condition.
-    BranchInst *BR = dyn_cast<BranchInst>(BB->getTerminator());
-    if (!BR)
-      continue;
-    
-    if (BR->isUnconditional())
-      continue;
-
-    if (Instruction *AndI = dyn_cast<Instruction>(BR->getCondition())) {
-      if (AndI->getOpcode() == Instruction::And) {
-        ICmpInst *Op0 = dyn_cast<ICmpInst>(AndI->getOperand(0));
-        ICmpInst *Op1 = dyn_cast<ICmpInst>(AndI->getOperand(1));
-
-        if (!Op0 || !Op1)
-          continue;
-
-        if (!safeICmpInst(Op0, SD))
-          continue;
-        SD.clear();
-        if (!safeICmpInst(Op1, SD))
-          continue;
-        SD.clear();
-        SD.SplitCondition = AndI;
-        SplitData.push_back(SD);
-        continue;
-      }
-    }
-    ICmpInst *CI = dyn_cast<ICmpInst>(BR->getCondition());
-    if (!CI || CI == ExitCondition)
-      continue;
-
-    if (CI->getPredicate() == ICmpInst::ICMP_NE)
-      continue;
-
-    // If split condition predicate is GT or GE then first execute
-    // false branch of split condition.
-    if (CI->getPredicate() == ICmpInst::ICMP_UGT
-        || CI->getPredicate() == ICmpInst::ICMP_SGT
-        || CI->getPredicate() == ICmpInst::ICMP_UGE
-        || CI->getPredicate() == ICmpInst::ICMP_SGE)
-      SD.UseTrueBranchFirst = false;
-
-    // If one operand is loop invariant and second operand is SCEVAddRecExpr
-    // based on induction variable then CI is a candidate split condition.
-    if (safeICmpInst(CI, SD))
-      SplitData.push_back(SD);
-  }
-}
-
-// safeIcmpInst - CI is considered safe instruction if one of the operand
-// is SCEVAddRecExpr based on induction variable and other operand is
-// loop invariant. If CI is safe then populate SplitInfo object SD appropriately
-// and return true;
-bool LoopIndexSplit::safeICmpInst(ICmpInst *CI, SplitInfo &SD) {
-
-  Value *V0 = CI->getOperand(0);
-  Value *V1 = CI->getOperand(1);
-  
-  SCEVHandle SH0 = SE->getSCEV(V0);
-  SCEVHandle SH1 = SE->getSCEV(V1);
-  
-  if (SH0->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH1)) {
-    SD.SplitValue = V0;
-    SD.SplitCondition = CI;
-    if (PHINode *PN = dyn_cast<PHINode>(V1)) {
-      if (PN == IndVar)
-        return true;
-    }
-    else  if (Instruction *Insn = dyn_cast<Instruction>(V1)) {
-      if (IndVarIncrement && IndVarIncrement == Insn)
-        return true;
-    }
-  }
-  else if (SH1->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH0)) {
-    SD.SplitValue =  V1;
-    SD.SplitCondition = CI;
-    if (PHINode *PN = dyn_cast<PHINode>(V0)) {
-      if (PN == IndVar)
-        return true;
-    }
-    else  if (Instruction *Insn = dyn_cast<Instruction>(V0)) {
-      if (IndVarIncrement && IndVarIncrement == Insn)
-        return true;
-    }
-  }
+  if (splitLoop())
+    return true;
 
   return false;
 }
 
-/// processOneIterationLoop - Current loop L contains compare instruction
-/// that compares induction variable, IndVar, against loop invariant. If
-/// entire (i.e. meaningful) loop body is dominated by this compare
-/// instruction then loop body is executed only once. In such case eliminate 
-/// loop structure surrounding this loop body. For example,
-///     for (int i = start; i < end; ++i) {
-///         if ( i == somevalue) {
-///           loop_body
-///         }
-///     }
-/// can be transformed into
-///     if (somevalue >= start && somevalue < end) {
-///        i = somevalue;
-///        loop_body
-///     }
-bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
+// --- Helper routines --- 
+// isUsedOutsideLoop - Returns true iff V is used outside the loop L.
+static bool isUsedOutsideLoop(Value *V, Loop *L) {
+  for(Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
+    if (!L->contains(cast<Instruction>(*UI)->getParent()))
+      return true;
+  return false;
+}
 
-  BasicBlock *Header = L->getHeader();
+// Return V+1
+static Value *getPlusOne(Value *V, bool Sign, Instruction *InsertPt) {
+  ConstantInt *One = ConstantInt::get(V->getType(), 1, Sign);
+  return BinaryOperator::CreateAdd(V, One, "lsp", InsertPt);
+}
 
-  // First of all, check if SplitCondition dominates entire loop body
-  // or not.
-  
-  // If SplitCondition is not in loop header then this loop is not suitable
-  // for this transformation.
-  if (SD.SplitCondition->getParent() != Header)
-    return false;
-  
-  // If loop header includes loop variant instruction operands then
-  // this loop may not be eliminated.
-  if (!safeHeader(SD, Header)) 
-    return false;
+// Return V-1
+static Value *getMinusOne(Value *V, bool Sign, Instruction *InsertPt) {
+  ConstantInt *One = ConstantInt::get(V->getType(), 1, Sign);
+  return BinaryOperator::CreateSub(V, One, "lsp", InsertPt);
+}
 
-  // If Exiting block includes loop variant instructions then this
-  // loop may not be eliminated.
-  if (!safeExitingBlock(SD, ExitCondition->getParent())) 
-    return false;
+// Return min(V1, V1)
+static Value *getMin(Value *V1, Value *V2, bool Sign, Instruction *InsertPt) {
+ 
+  Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                          V1, V2, "lsp", InsertPt);
+  return SelectInst::Create(C, V1, V2, "lsp", InsertPt);
+}
 
-  // Filter loops where split condition's false branch is not empty.
-  if (ExitCondition->getParent() != Header->getTerminator()->getSuccessor(1))
-    return false;
+// Return max(V1, V2)
+static Value *getMax(Value *V1, Value *V2, bool Sign, Instruction *InsertPt) {
+ 
+  Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                          V1, V2, "lsp", InsertPt);
+  return SelectInst::Create(C, V2, V1, "lsp", InsertPt);
+}
 
-  // If split condition is not safe then do not process this loop.
-  // For example,
-  // for(int i = 0; i < N; i++) {
-  //    if ( i == XYZ) {
-  //      A;
-  //    else
-  //      B;
-  //    }
-  //   C;
-  //   D;
-  // }
-  if (!safeSplitCondition(SD))
-    return false;
-
+/// processOneIterationLoop -- Eliminate loop if loop body is executed 
+/// only once. For example,
+/// for (i = 0; i < N; ++i) {
+///   if ( i == X) {
+///     ...
+///   }
+/// }
+///
+bool LoopIndexSplit::processOneIterationLoop() {
+  SplitCondition = NULL;
   BasicBlock *Latch = L->getLoopLatch();
-  BranchInst *BR = dyn_cast<BranchInst>(Latch->getTerminator());
-  if (!BR)
+  BasicBlock *Header = L->getHeader();
+  BranchInst *BR = dyn_cast<BranchInst>(Header->getTerminator());
+  if (!BR) return false;
+  if (!isa<BranchInst>(Latch->getTerminator())) return false;
+  if (BR->isUnconditional()) return false;
+  SplitCondition = dyn_cast<ICmpInst>(BR->getCondition());
+  if (!SplitCondition) return false;
+  if (SplitCondition == ExitCondition) return false;
+  if (SplitCondition->getPredicate() != ICmpInst::ICMP_EQ) return false;
+  if (BR->getOperand(1) != Latch) return false;
+  if (!IVBasedValues.count(SplitCondition->getOperand(0))
+      && !IVBasedValues.count(SplitCondition->getOperand(1)))
     return false;
 
-  // Update CFG.
+  // If IV is used outside the loop then this loop traversal is required.
+  // FIXME: Calculate and use last IV value. 
+  if (isUsedOutsideLoop(IVIncrement, L))
+    return false;
+
+  // If BR operands are not IV or not loop invariants then skip this loop.
+  Value *OPV = SplitCondition->getOperand(0);
+  Value *SplitValue = SplitCondition->getOperand(1);
+  if (!L->isLoopInvariant(SplitValue)) {
+    Value *T = SplitValue;
+    SplitValue = OPV;
+    OPV = T;
+  }
+  if (!L->isLoopInvariant(SplitValue))
+    return false;
+  Instruction *OPI = dyn_cast<Instruction>(OPV);
+  if (!OPI) return false;
+  if (OPI->getParent() != Header || isUsedOutsideLoop(OPI, L))
+    return false;
+  
+  if (!cleanBlock(Header))
+    return false;
+
+  if (!cleanBlock(Latch))
+    return false;
+    
+  // If the merge point for BR is not loop latch then skip this loop.
+  if (BR->getSuccessor(0) != Latch) {
+    DominanceFrontier::iterator DF0 = DF->find(BR->getSuccessor(0));
+    assert (DF0 != DF->end() && "Unable to find dominance frontier");
+    if (!DF0->second.count(Latch))
+      return false;
+  }
+  
+  if (BR->getSuccessor(1) != Latch) {
+    DominanceFrontier::iterator DF1 = DF->find(BR->getSuccessor(1));
+    assert (DF1 != DF->end() && "Unable to find dominance frontier");
+    if (!DF1->second.count(Latch))
+      return false;
+  }
+    
+  // Now, Current loop L contains compare instruction
+  // that compares induction variable, IndVar, against loop invariant. And
+  // entire (i.e. meaningful) loop body is dominated by this compare
+  // instruction. In such case eliminate 
+  // loop structure surrounding this loop body. For example,
+  //     for (int i = start; i < end; ++i) {
+  //         if ( i == somevalue) {
+  //           loop_body
+  //         }
+  //     }
+  // can be transformed into
+  //     if (somevalue >= start && somevalue < end) {
+  //        i = somevalue;
+  //        loop_body
+  //     }
 
   // Replace index variable with split value in loop body. Loop body is executed
   // only when index variable is equal to split value.
-  IndVar->replaceAllUsesWith(SD.SplitValue);
-
-  Instruction *LTerminator = Latch->getTerminator();
-  Instruction *Terminator = Header->getTerminator();
-  Value *ExitValue = ExitCondition->getOperand(ExitValueNum);
+  IndVar->replaceAllUsesWith(SplitValue);
 
   // Replace split condition in header.
   // Transform 
@@ -596,21 +400,19 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
   //      c1 = icmp uge i32 SplitValue, StartValue
   //      c2 = icmp ult i32 SplitValue, ExitValue
   //      and i32 c1, c2 
-  bool SignedPredicate = ExitCondition->isSignedPredicate();
-  CmpInst::Predicate C2Predicate = ExitCondition->getPredicate();
-  if (LTerminator->getOperand(0) != Header)
-    C2Predicate = CmpInst::getInversePredicate(C2Predicate);
-  Instruction *C1 = new ICmpInst(SignedPredicate ? 
+  Instruction *C1 = new ICmpInst(ExitCondition->isSignedPredicate() ? 
                                  ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE,
-                                 SD.SplitValue, StartValue, "lisplit", 
-                                 Terminator);
-  Instruction *C2 = new ICmpInst(C2Predicate,
-                                 SD.SplitValue, ExitValue, "lisplit", 
-                                 Terminator);
-  Instruction *NSplitCond = BinaryOperator::CreateAnd(C1, C2, "lisplit", 
-                                                      Terminator);
-  SD.SplitCondition->replaceAllUsesWith(NSplitCond);
-  SD.SplitCondition->eraseFromParent();
+                                 SplitValue, IVStartValue, "lisplit", BR);
+
+  CmpInst::Predicate C2P  = ExitCondition->getPredicate();
+  BranchInst *LatchBR = cast<BranchInst>(Latch->getTerminator());
+  if (LatchBR->getOperand(0) != Header)
+    C2P = CmpInst::getInversePredicate(C2P);
+  Instruction *C2 = new ICmpInst(C2P, SplitValue, IVExitValue, "lisplit", BR);
+  Instruction *NSplitCond = BinaryOperator::CreateAnd(C1, C2, "lisplit", BR);
+
+  SplitCondition->replaceAllUsesWith(NSplitCond);
+  SplitCondition->eraseFromParent();
 
   // Remove Latch to Header edge.
   BasicBlock *LatchSucc = NULL;
@@ -620,40 +422,12 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
     if (Header != *SI)
       LatchSucc = *SI;
   }
-  BR->setUnconditionalDest(LatchSucc);
+  LatchBR->setUnconditionalDest(LatchSucc);
 
-  // Now, clear latch block. Remove instructions that are responsible
-  // to increment induction variable. 
-  for (BasicBlock::iterator LB = Latch->begin(), LE = Latch->end();
-       LB != LE; ) {
-    Instruction *I = LB;
-    ++LB;
-    if (isa<PHINode>(I) || I == LTerminator)
-      continue;
-
-    if (I == IndVarIncrement) {
-      // Replace induction variable increment if it is not used outside 
-      // the loop.
-      bool UsedOutsideLoop = false;
-      for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); 
-           UI != E; ++UI) {
-        if (Instruction *Use = dyn_cast<Instruction>(UI)) 
-          if (!L->contains(Use->getParent())) {
-            UsedOutsideLoop = true;
-            break;
-          }
-      }
-      if (!UsedOutsideLoop) {
-        I->replaceAllUsesWith(ExitValue);
-        I->eraseFromParent();
-      }
-    }
-    else {
-      I->replaceAllUsesWith(UndefValue::get(I->getType()));
-      I->eraseFromParent();
-    }
-  }
-
+  // Remove IVIncrement
+  IVIncrement->replaceAllUsesWith(UndefValue::get(IVIncrement->getType()));
+  IVIncrement->eraseFromParent();
+  
   LPM->deleteLoopFromQueue(L);
 
   // Update Dominator Info.
@@ -669,330 +443,99 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
     if (LatchDF != DF->end()) 
       DF->removeFromFrontier(LatchDF, Header);
   }
+
+  ++NumIndexSplitRemoved;
   return true;
 }
 
-// If loop header includes loop variant instruction operands then
-// this loop can not be eliminated. This is used by processOneIterationLoop().
-bool LoopIndexSplit::safeHeader(SplitInfo &SD, BasicBlock *Header) {
+/// restrictLoopBound - Op dominates loop body. Op compares an IV based value 
+/// with a loop invariant value. Update loop's lower and upper bound based on 
+/// the loop invariant value.
+bool LoopIndexSplit::restrictLoopBound(ICmpInst &Op) {
+  bool Sign = Op.isSignedPredicate();
+  Instruction *PHTerm = L->getLoopPreheader()->getTerminator();
 
-  Instruction *Terminator = Header->getTerminator();
-  for(BasicBlock::iterator BI = Header->begin(), BE = Header->end(); 
-      BI != BE; ++BI) {
-    Instruction *I = BI;
-
-    // PHI Nodes are OK.
-    if (isa<PHINode>(I))
-      continue;
-
-    // SplitCondition itself is OK.
-    if (I == SD.SplitCondition)
-      continue;
-
-    // Induction variable is OK.
-    if (I == IndVar)
-      continue;
-
-    // Induction variable increment is OK.
-    if (I == IndVarIncrement)
-      continue;
-
-    // Terminator is also harmless.
-    if (I == Terminator)
-      continue;
-
-    // Otherwise we have a instruction that may not be safe.
-    return false;
-  }
-  
-  return true;
-}
-
-// If Exiting block includes loop variant instructions then this
-// loop may not be eliminated. This is used by processOneIterationLoop().
-bool LoopIndexSplit::safeExitingBlock(SplitInfo &SD, 
-                                       BasicBlock *ExitingBlock) {
-
-  for (BasicBlock::iterator BI = ExitingBlock->begin(), 
-         BE = ExitingBlock->end(); BI != BE; ++BI) {
-    Instruction *I = BI;
-
-    // PHI Nodes are OK.
-    if (isa<PHINode>(I))
-      continue;
-
-    // Induction variable increment is OK.
-    if (IndVarIncrement && IndVarIncrement == I)
-      continue;
-
-    // Check if I is induction variable increment instruction.
-    if (I->getOpcode() == Instruction::Add) {
-
-      Value *Op0 = I->getOperand(0);
-      Value *Op1 = I->getOperand(1);
-      PHINode *PN = NULL;
-      ConstantInt *CI = NULL;
-
-      if ((PN = dyn_cast<PHINode>(Op0))) {
-        if ((CI = dyn_cast<ConstantInt>(Op1)))
-          if (CI->isOne()) {
-            if (!IndVarIncrement && PN == IndVar)
-              IndVarIncrement = I;
-            // else this is another loop induction variable
-            continue;
-          }
-      } else 
-        if ((PN = dyn_cast<PHINode>(Op1))) {
-          if ((CI = dyn_cast<ConstantInt>(Op0)))
-            if (CI->isOne()) {
-              if (!IndVarIncrement && PN == IndVar)
-                IndVarIncrement = I;
-              // else this is another loop induction variable
-              continue;
-            }
-      }
-    } 
-
-    // I is an Exit condition if next instruction is block terminator.
-    // Exit condition is OK if it compares loop invariant exit value,
-    // which is checked below.
-    else if (ICmpInst *EC = dyn_cast<ICmpInst>(I)) {
-      if (EC == ExitCondition)
-        continue;
-    }
-
-    if (I == ExitingBlock->getTerminator())
-      continue;
-
-    // Otherwise we have instruction that may not be safe.
-    return false;
+  if (IVisGT(*ExitCondition) || IVisGE(*ExitCondition)) {
+    BranchInst *EBR = 
+      cast<BranchInst>(ExitCondition->getParent()->getTerminator());
+    ExitCondition->setPredicate(ExitCondition->getInversePredicate());
+    BasicBlock *T = EBR->getSuccessor(0);
+    EBR->setSuccessor(0, EBR->getSuccessor(1));
+    EBR->setSuccessor(1, T);
   }
 
-  // We could not find any reason to consider ExitingBlock unsafe.
-  return true;
-}
-
-void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
-
-  Value *V0 = CI->getOperand(0);
-  Value *V1 = CI->getOperand(1);
-  Value *NV = NULL;
-
-  SCEVHandle SH0 = SE->getSCEV(V0);
-  
-  if (SH0->isLoopInvariant(L))
-    NV = V0;
-  else
-    NV = V1;
-
-  if (ExitCondition->getPredicate() == ICmpInst::ICMP_SGT
-      || ExitCondition->getPredicate() == ICmpInst::ICMP_UGT
-      || ExitCondition->getPredicate() == ICmpInst::ICMP_SGE
-      || ExitCondition->getPredicate() == ICmpInst::ICMP_UGE)  {
-    ExitCondition->swapOperands();
-    if (ExitValueNum)
-      ExitValueNum = 0;
-    else
-      ExitValueNum = 1;
-  }
-
-  Value *NUB = NULL;
+  // New upper and lower bounds.
   Value *NLB = NULL;
-  Value *UB = ExitCondition->getOperand(ExitValueNum);
-  const Type *Ty = NV->getType();
-  bool Sign = ExitCondition->isSignedPredicate();
-  BasicBlock *Preheader = L->getLoopPreheader();
-  Instruction *PHTerminator = Preheader->getTerminator();
+  Value *NUB = NULL;
+  if (Value *V = IVisLT(Op)) {
+    // Restrict upper bound.
+    if (IVisLE(*ExitCondition)) 
+      V = getMinusOne(V, Sign, PHTerm);
+    NUB = getMin(V, IVExitValue, Sign, PHTerm);
+  } else if (Value *V = IVisLE(Op)) {
+    // Restrict upper bound.
+    if (IVisLT(*ExitCondition)) 
+      V = getPlusOne(V, Sign, PHTerm);
+    NUB = getMin(V, IVExitValue, Sign, PHTerm);
+  } else if (Value *V = IVisGT(Op)) {
+    // Restrict lower bound.
+    V = getPlusOne(V, Sign, PHTerm);
+    NLB = getMax(V, IVStartValue, Sign, PHTerm);
+  } else if (Value *V = IVisGE(Op))
+    // Restrict lower bound.
+    NLB = getMax(V, IVStartValue, Sign, PHTerm);
 
-  assert (NV && "Unexpected value");
-
-  switch (CI->getPredicate()) {
-  case ICmpInst::ICMP_ULE:
-  case ICmpInst::ICMP_SLE:
-    // for (i = LB; i < UB; ++i)
-    //   if (i <= NV && ...)
-    //      LOOP_BODY
-    // 
-    // is transformed into
-    // NUB = min (NV+1, UB)
-    // for (i = LB; i < NUB ; ++i)
-    //   LOOP_BODY
-    //
-    if (ExitCondition->getPredicate() == ICmpInst::ICMP_SLT
-        || ExitCondition->getPredicate() == ICmpInst::ICMP_ULT) {
-      Value *A = BinaryOperator::CreateAdd(NV, ConstantInt::get(Ty, 1, Sign),
-                                           "lsplit.add", PHTerminator);
-      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                              A, UB,"lsplit,c", PHTerminator);
-      NUB = SelectInst::Create(C, A, UB, "lsplit.nub", PHTerminator);
-    }
-    
-    // for (i = LB; i <= UB; ++i)
-    //   if (i <= NV && ...)
-    //      LOOP_BODY
-    // 
-    // is transformed into
-    // NUB = min (NV, UB)
-    // for (i = LB; i <= NUB ; ++i)
-    //   LOOP_BODY
-    //
-    else if (ExitCondition->getPredicate() == ICmpInst::ICMP_SLE
-             || ExitCondition->getPredicate() == ICmpInst::ICMP_ULE) {
-      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                              NV, UB, "lsplit.c", PHTerminator);
-      NUB = SelectInst::Create(C, NV, UB, "lsplit.nub", PHTerminator);
-    }
-    break;
-  case ICmpInst::ICMP_ULT:
-  case ICmpInst::ICMP_SLT:
-    // for (i = LB; i < UB; ++i)
-    //   if (i < NV && ...)
-    //      LOOP_BODY
-    // 
-    // is transformed into
-    // NUB = min (NV, UB)
-    // for (i = LB; i < NUB ; ++i)
-    //   LOOP_BODY
-    //
-    if (ExitCondition->getPredicate() == ICmpInst::ICMP_SLT
-        || ExitCondition->getPredicate() == ICmpInst::ICMP_ULT) {
-      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                              NV, UB, "lsplit.c", PHTerminator);
-      NUB = SelectInst::Create(C, NV, UB, "lsplit.nub", PHTerminator);
-    }
-
-    // for (i = LB; i <= UB; ++i)
-    //   if (i < NV && ...)
-    //      LOOP_BODY
-    // 
-    // is transformed into
-    // NUB = min (NV -1 , UB)
-    // for (i = LB; i <= NUB ; ++i)
-    //   LOOP_BODY
-    //
-    else if (ExitCondition->getPredicate() == ICmpInst::ICMP_SLE
-             || ExitCondition->getPredicate() == ICmpInst::ICMP_ULE) {
-      Value *S = BinaryOperator::CreateSub(NV, ConstantInt::get(Ty, 1, Sign),
-                                           "lsplit.add", PHTerminator);
-      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                              S, UB, "lsplit.c", PHTerminator);
-      NUB = SelectInst::Create(C, S, UB, "lsplit.nub", PHTerminator);
-    }
-    break;
-  case ICmpInst::ICMP_UGE:
-  case ICmpInst::ICMP_SGE:
-    // for (i = LB; i (< or <=) UB; ++i)
-    //   if (i >= NV && ...)
-    //      LOOP_BODY
-    // 
-    // is transformed into
-    // NLB = max (NV, LB)
-    // for (i = NLB; i (< or <=) UB ; ++i)
-    //   LOOP_BODY
-    //
-    {
-      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                              NV, StartValue, "lsplit.c", PHTerminator);
-      NLB = SelectInst::Create(C, StartValue, NV, "lsplit.nlb", PHTerminator);
-    }
-    break;
-  case ICmpInst::ICMP_UGT:
-  case ICmpInst::ICMP_SGT:
-    // for (i = LB; i (< or <=) UB; ++i)
-    //   if (i > NV && ...)
-    //      LOOP_BODY
-    // 
-    // is transformed into
-    // NLB = max (NV+1, LB)
-    // for (i = NLB; i (< or <=) UB ; ++i)
-    //   LOOP_BODY
-    //
-    {
-      Value *A = BinaryOperator::CreateAdd(NV, ConstantInt::get(Ty, 1, Sign),
-                                           "lsplit.add", PHTerminator);
-      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                              A, StartValue, "lsplit.c", PHTerminator);
-      NLB = SelectInst::Create(C, StartValue, A, "lsplit.nlb", PHTerminator);
-    }
-    break;
-  default:
-    assert ( 0 && "Unexpected split condition predicate");
-  }
+  if (!NLB && !NUB) 
+    return false;
 
   if (NLB) {
-    unsigned i = IndVar->getBasicBlockIndex(Preheader);
+    unsigned i = IndVar->getBasicBlockIndex(L->getLoopPreheader());
     IndVar->setIncomingValue(i, NLB);
   }
 
   if (NUB) {
-    ExitCondition->setOperand(ExitValueNum, NUB);
+    unsigned i = (ExitCondition->getOperand(0) != IVExitValue);
+    ExitCondition->setOperand(i, NUB);
   }
+  return true;
 }
-/// updateLoopIterationSpace - Current loop body is covered by an AND
-/// instruction whose operands compares induction variables with loop
-/// invariants. If possible, hoist this check outside the loop by
-/// updating appropriate start and end values for induction variable.
-bool LoopIndexSplit::updateLoopIterationSpace(SplitInfo &SD) {
+
+/// updateLoopIterationSpace -- Update loop's iteration space if loop 
+/// body is executed for certain IV range only. For example,
+/// 
+/// for (i = 0; i < N; ++i) {
+///   if ( i > A && i < B) {
+///     ...
+///   }
+/// }
+/// is trnasformed to iterators from A to B, if A > 0 and B < N.
+///
+bool LoopIndexSplit::updateLoopIterationSpace() {
+  SplitCondition = NULL;
+  if (ExitCondition->getPredicate() == ICmpInst::ICMP_NE
+      || ExitCondition->getPredicate() == ICmpInst::ICMP_EQ)
+    return false;
+  BasicBlock *Latch = L->getLoopLatch();
   BasicBlock *Header = L->getHeader();
+  BranchInst *BR = dyn_cast<BranchInst>(Header->getTerminator());
+  if (!BR) return false;
+  if (!isa<BranchInst>(Latch->getTerminator())) return false;
+  if (BR->isUnconditional()) return false;
+  BinaryOperator *AND = dyn_cast<BinaryOperator>(BR->getCondition());
+  if (!AND) return false;
+  if (AND->getOpcode() != Instruction::And) return false;
+  ICmpInst *Op0 = dyn_cast<ICmpInst>(AND->getOperand(0));
+  ICmpInst *Op1 = dyn_cast<ICmpInst>(AND->getOperand(1));
+  if (!Op0 || !Op1)
+    return false;
+  IVBasedValues.insert(AND);
+  IVBasedValues.insert(Op0);
+  IVBasedValues.insert(Op1);
+  if (!cleanBlock(Header)) return false;
   BasicBlock *ExitingBlock = ExitCondition->getParent();
-  BasicBlock *SplitCondBlock = SD.SplitCondition->getParent();
+  if (!cleanBlock(ExitingBlock)) return false;
 
-  ICmpInst *Op0 = cast<ICmpInst>(SD.SplitCondition->getOperand(0));
-  ICmpInst *Op1 = cast<ICmpInst>(SD.SplitCondition->getOperand(1));
-
-  if (Op0->getPredicate() == ICmpInst::ICMP_EQ 
-      || Op0->getPredicate() == ICmpInst::ICMP_NE
-      || Op1->getPredicate() == ICmpInst::ICMP_EQ 
-      || Op1->getPredicate() == ICmpInst::ICMP_NE)
-    return false;
-
-  // Check if SplitCondition dominates entire loop body
-  // or not.
-  
-  // If SplitCondition is not in loop header then this loop is not suitable
-  // for this transformation.
-  if (SD.SplitCondition->getParent() != Header)
-    return false;
-  
-  // If loop header includes loop variant instruction operands then
-  // this loop may not be eliminated.
-  Instruction *Terminator = Header->getTerminator();
-  for(BasicBlock::iterator BI = Header->begin(), BE = Header->end(); 
-      BI != BE; ++BI) {
-    Instruction *I = BI;
-
-    // PHI Nodes are OK.
-    if (isa<PHINode>(I))
-      continue;
-
-    // SplitCondition itself is OK.
-    if (I == SD.SplitCondition)
-      continue;
-    if (I == Op0 || I == Op1)
-      continue;
-
-    // Induction variable is OK.
-    if (I == IndVar)
-      continue;
-
-    // Induction variable increment is OK.
-    if (I == IndVarIncrement)
-      continue;
-
-    // Terminator is also harmless.
-    if (I == Terminator)
-      continue;
-
-    // Otherwise we have a instruction that may not be safe.
-    return false;
-  }
-
-  // If Exiting block includes loop variant instructions then this
-  // loop may not be eliminated.
-  if (!safeExitingBlock(SD, ExitCondition->getParent())) 
-    return false;
-  
-  // Verify that loop exiting block has only two predecessor, where one predecessor
+  // Verify that loop exiting block has only two predecessor, where one pred
   // is split condition block. The other predecessor will become exiting block's
   // dominator after CFG is updated. TODO : Handle CFG's where exiting block has
   // more then two predecessors. This requires extra work in updating dominator
@@ -1001,51 +544,43 @@ bool LoopIndexSplit::updateLoopIterationSpace(SplitInfo &SD) {
   for (pred_iterator PI = pred_begin(ExitingBlock), PE = pred_end(ExitingBlock);
        PI != PE; ++PI) {
     BasicBlock *BB = *PI;
-    if (SplitCondBlock == BB) 
+    if (Header == BB)
       continue;
     if (ExitingBBPred)
       return false;
     else
       ExitingBBPred = BB;
   }
-  
-  // Update loop bounds to absorb Op0 check.
-  updateLoopBounds(Op0);
-  // Update loop bounds to absorb Op1 check.
-  updateLoopBounds(Op1);
 
-  // Update CFG
+  if (!restrictLoopBound(*Op0))
+    return false;
 
-  // Unconditionally connect split block to its remaining successor. 
-  BranchInst *SplitTerminator = 
-    cast<BranchInst>(SplitCondBlock->getTerminator());
-  BasicBlock *Succ0 = SplitTerminator->getSuccessor(0);
-  BasicBlock *Succ1 = SplitTerminator->getSuccessor(1);
-  if (Succ0 == ExitCondition->getParent())
-    SplitTerminator->setUnconditionalDest(Succ1);
+  if (!restrictLoopBound(*Op1))
+    return false;
+
+  // Update CFG.
+  if (BR->getSuccessor(0) == ExitingBlock)
+    BR->setUnconditionalDest(BR->getSuccessor(1));
   else
-    SplitTerminator->setUnconditionalDest(Succ0);
+    BR->setUnconditionalDest(BR->getSuccessor(0));
 
-  // Remove split condition.
-  SD.SplitCondition->eraseFromParent();
+  AND->eraseFromParent();
   if (Op0->use_empty())
     Op0->eraseFromParent();
   if (Op1->use_empty())
     Op1->eraseFromParent();
-      
-  BranchInst *ExitInsn =
-    dyn_cast<BranchInst>(ExitingBlock->getTerminator());
-  assert (ExitInsn && "Unable to find suitable loop exit branch");
-  BasicBlock *ExitBlock = ExitInsn->getSuccessor(1);
-  if (L->contains(ExitBlock))
-    ExitBlock = ExitInsn->getSuccessor(0);
 
   // Update domiantor info. Now, ExitingBlock has only one predecessor, 
   // ExitingBBPred, and it is ExitingBlock's immediate domiantor.
   DT->changeImmediateDominator(ExitingBlock, ExitingBBPred);
-  
-  // If ExitingBlock is a member of loop BB's DF list then replace it with
-  // loop header and exit block.
+
+  BasicBlock *ExitBlock = ExitingBlock->getTerminator()->getSuccessor(1);
+  if (L->contains(ExitBlock))
+    ExitBlock = ExitingBlock->getTerminator()->getSuccessor(0);
+
+  // If ExitingBlock is a member of the loop basic blocks' DF list then
+  // replace ExitingBlock with header and exit block in the DF list
+  DominanceFrontier::iterator ExitingBlockDF = DF->find(ExitingBlock);
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {
     BasicBlock *BB = *I;
@@ -1060,16 +595,16 @@ bool LoopIndexSplit::updateLoopIterationSpace(SplitInfo &SD) {
       BasicBlock *DFBB = *CurrentItr;
       if (DFBB == ExitingBlock) {
         BBDF->second.erase(DFBB);
-        BBDF->second.insert(Header);
-        if (Header != ExitingBlock)
-          BBDF->second.insert(ExitBlock);
+        for (DominanceFrontier::DomSetType::iterator 
+               EBI = ExitingBlockDF->second.begin(),
+               EBE = ExitingBlockDF->second.end(); EBI != EBE; ++EBI) 
+          BBDF->second.insert(*EBI);
       }
     }
   }
-
+  NumRestrictBounds++;
   return true;
 }
-
 
 /// removeBlocks - Remove basic block DeadBB and all blocks dominated by DeadBB.
 /// This routine is used to remove split condition's dead branch, dominated by
@@ -1085,7 +620,8 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
     
     DominanceFrontier::DomSetType DeadBBSet = DeadBBDF->second;
     for (DominanceFrontier::DomSetType::iterator DeadBBSetI = DeadBBSet.begin(),
-           DeadBBSetE = DeadBBSet.end(); DeadBBSetI != DeadBBSetE; ++DeadBBSetI) {
+           DeadBBSetE = DeadBBSet.end(); DeadBBSetI != DeadBBSetE; ++DeadBBSetI) 
+      {
       BasicBlock *FrontierBB = *DeadBBSetI;
       FrontierBBs.push_back(FrontierBB);
 
@@ -1165,480 +701,12 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
 
 }
 
-/// safeSplitCondition - Return true if it is possible to
-/// split loop using given split condition.
-bool LoopIndexSplit::safeSplitCondition(SplitInfo &SD) {
-
-  BasicBlock *SplitCondBlock = SD.SplitCondition->getParent();
-  BasicBlock *Latch = L->getLoopLatch();  
-  BranchInst *SplitTerminator = 
-    cast<BranchInst>(SplitCondBlock->getTerminator());
-  BasicBlock *Succ0 = SplitTerminator->getSuccessor(0);
-  BasicBlock *Succ1 = SplitTerminator->getSuccessor(1);
-
-  // If split block does not dominate the latch then this is not a diamond.
-  // Such loop may not benefit from index split.
-  if (!DT->dominates(SplitCondBlock, Latch))
-    return false;
-
-  // Finally this split condition is safe only if merge point for
-  // split condition branch is loop latch. This check along with previous
-  // check, to ensure that exit condition is in either loop latch or header,
-  // filters all loops with non-empty loop body between merge point
-  // and exit condition.
-  DominanceFrontier::iterator Succ0DF = DF->find(Succ0);
-  assert (Succ0DF != DF->end() && "Unable to find Succ0 dominance frontier");
-  if (Succ0DF->second.count(Latch))
-    return true;
-
-  DominanceFrontier::iterator Succ1DF = DF->find(Succ1);
-  assert (Succ1DF != DF->end() && "Unable to find Succ1 dominance frontier");
-  if (Succ1DF->second.count(Latch))
-    return true;
-  
-  return false;
-}
-
-/// calculateLoopBounds - ALoop exit value and BLoop start values are calculated
-/// based on split value. 
-void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
-
-  ICmpInst *SC = cast<ICmpInst>(SD.SplitCondition);
-  ICmpInst::Predicate SP = SC->getPredicate();
-  const Type *Ty = SD.SplitValue->getType();
-  bool Sign = ExitCondition->isSignedPredicate();
-  BasicBlock *Preheader = L->getLoopPreheader();
-  Instruction *PHTerminator = Preheader->getTerminator();
-
-  // Initially use split value as upper loop bound for first loop and lower loop
-  // bound for second loop.
-  Value *AEV = SD.SplitValue;
-  Value *BSV = SD.SplitValue;
-
-  if (ExitCondition->getPredicate() == ICmpInst::ICMP_SGT
-      || ExitCondition->getPredicate() == ICmpInst::ICMP_UGT
-      || ExitCondition->getPredicate() == ICmpInst::ICMP_SGE
-      || ExitCondition->getPredicate() == ICmpInst::ICMP_UGE) {
-    ExitCondition->swapOperands();
-    if (ExitValueNum)
-      ExitValueNum = 0;
-    else
-      ExitValueNum = 1;
-  }
-
-  switch (ExitCondition->getPredicate()) {
-  case ICmpInst::ICMP_SGT:
-  case ICmpInst::ICMP_UGT:
-  case ICmpInst::ICMP_SGE:
-  case ICmpInst::ICMP_UGE:
-  default:
-    assert (0 && "Unexpected exit condition predicate");
-
-  case ICmpInst::ICMP_SLT:
-  case ICmpInst::ICMP_ULT:
-    {
-      switch (SP) {
-      case ICmpInst::ICMP_SLT:
-      case ICmpInst::ICMP_ULT:
-        //
-        // for (i = LB; i < UB; ++i) { if (i < SV) A; else B; }
-        //
-        // is transformed into
-        // AEV = BSV = SV
-        // for (i = LB; i < min(UB, AEV); ++i)
-        //    A;
-        // for (i = max(LB, BSV); i < UB; ++i);
-        //    B;
-        break;
-      case ICmpInst::ICMP_SLE:
-      case ICmpInst::ICMP_ULE:
-        {
-          //
-          // for (i = LB; i < UB; ++i) { if (i <= SV) A; else B; }
-          //
-          // is transformed into
-          //
-          // AEV = SV + 1
-          // BSV = SV + 1
-          // for (i = LB; i < min(UB, AEV); ++i) 
-          //       A;
-          // for (i = max(LB, BSV); i < UB; ++i) 
-          //       B;
-          BSV = BinaryOperator::CreateAdd(SD.SplitValue,
-                                          ConstantInt::get(Ty, 1, Sign),
-                                          "lsplit.add", PHTerminator);
-          AEV = BSV;
-        }
-        break;
-      case ICmpInst::ICMP_SGE:
-      case ICmpInst::ICMP_UGE: 
-        //
-        // for (i = LB; i < UB; ++i) { if (i >= SV) A; else B; }
-        // 
-        // is transformed into
-        // AEV = BSV = SV
-        // for (i = LB; i < min(UB, AEV); ++i)
-        //    B;
-        // for (i = max(BSV, LB); i < UB; ++i)
-        //    A;
-        break;
-      case ICmpInst::ICMP_SGT:
-      case ICmpInst::ICMP_UGT: 
-        {
-          //
-          // for (i = LB; i < UB; ++i) { if (i > SV) A; else B; }
-          //
-          // is transformed into
-          //
-          // BSV = AEV = SV + 1
-          // for (i = LB; i < min(UB, AEV); ++i) 
-          //       B;
-          // for (i = max(LB, BSV); i < UB; ++i) 
-          //       A;
-          BSV = BinaryOperator::CreateAdd(SD.SplitValue,
-                                          ConstantInt::get(Ty, 1, Sign),
-                                          "lsplit.add", PHTerminator);
-          AEV = BSV;
-        }
-        break;
-      default:
-        assert (0 && "Unexpected split condition predicate");
-        break;
-      } // end switch (SP)
-    }
-    break;
-  case ICmpInst::ICMP_SLE:
-  case ICmpInst::ICMP_ULE:
-    {
-      switch (SP) {
-      case ICmpInst::ICMP_SLT:
-      case ICmpInst::ICMP_ULT:
-        //
-        // for (i = LB; i <= UB; ++i) { if (i < SV) A; else B; }
-        //
-        // is transformed into
-        // AEV = SV - 1;
-        // BSV = SV;
-        // for (i = LB; i <= min(UB, AEV); ++i) 
-        //       A;
-        // for (i = max(LB, BSV); i <= UB; ++i) 
-        //       B;
-        AEV = BinaryOperator::CreateSub(SD.SplitValue,
-                                        ConstantInt::get(Ty, 1, Sign),
-                                        "lsplit.sub", PHTerminator);
-        break;
-      case ICmpInst::ICMP_SLE:
-      case ICmpInst::ICMP_ULE:
-        //
-        // for (i = LB; i <= UB; ++i) { if (i <= SV) A; else B; }
-        //
-        // is transformed into
-        // AEV = SV;
-        // BSV = SV + 1;
-        // for (i = LB; i <= min(UB, AEV); ++i) 
-        //       A;
-        // for (i = max(LB, BSV); i <= UB; ++i) 
-        //       B;
-        BSV = BinaryOperator::CreateAdd(SD.SplitValue,
-                                        ConstantInt::get(Ty, 1, Sign),
-                                        "lsplit.add", PHTerminator);
-        break;
-      case ICmpInst::ICMP_SGT:
-      case ICmpInst::ICMP_UGT: 
-        //
-        // for (i = LB; i <= UB; ++i) { if (i > SV) A; else B; }
-        //
-        // is transformed into
-        // AEV = SV;
-        // BSV = SV + 1;
-        // for (i = LB; i <= min(AEV, UB); ++i)
-        //      B;
-        // for (i = max(LB, BSV); i <= UB; ++i)
-        //      A;
-        BSV = BinaryOperator::CreateAdd(SD.SplitValue,
-                                        ConstantInt::get(Ty, 1, Sign),
-                                        "lsplit.add", PHTerminator);
-        break;
-      case ICmpInst::ICMP_SGE:
-      case ICmpInst::ICMP_UGE: 
-        // ** TODO **
-        //
-        // for (i = LB; i <= UB; ++i) { if (i >= SV) A; else B; }
-        //
-        // is transformed into
-        // AEV = SV - 1;
-        // BSV = SV;
-        // for (i = LB; i <= min(AEV, UB); ++i)
-        //      B;
-        // for (i = max(LB, BSV); i <= UB; ++i)
-        //      A;
-        AEV = BinaryOperator::CreateSub(SD.SplitValue,
-                                        ConstantInt::get(Ty, 1, Sign),
-                                        "lsplit.sub", PHTerminator);
-        break;
-      default:
-        assert (0 && "Unexpected split condition predicate");
-        break;
-      } // end switch (SP)
-    }
-    break;
-  }
-
-  // Calculate ALoop induction variable's new exiting value and
-  // BLoop induction variable's new starting value. Calculuate these
-  // values in original loop's preheader.
-  //      A_ExitValue = min(SplitValue, OrignalLoopExitValue)
-  //      B_StartValue = max(SplitValue, OriginalLoopStartValue)
-  Instruction *InsertPt = L->getHeader()->getFirstNonPHI();
-
-  // If ExitValue operand is also defined in Loop header then
-  // insert new ExitValue after this operand definition.
-  if (Instruction *EVN = 
-      dyn_cast<Instruction>(ExitCondition->getOperand(ExitValueNum))) {
-    if (!isa<PHINode>(EVN))
-      if (InsertPt->getParent() == EVN->getParent()) {
-        BasicBlock::iterator LHBI = L->getHeader()->begin();
-        BasicBlock::iterator LHBE = L->getHeader()->end();  
-        for(;LHBI != LHBE; ++LHBI) {
-          Instruction *I = LHBI;
-          if (I == EVN) 
-            break;
-        }
-        InsertPt = ++LHBI;
-      }
-  }
-  Value *C1 = new ICmpInst(Sign ?
-                           ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                           AEV,
-                           ExitCondition->getOperand(ExitValueNum), 
-                           "lsplit.ev", InsertPt);
-
-  SD.A_ExitValue = SelectInst::Create(C1, AEV,
-                                      ExitCondition->getOperand(ExitValueNum), 
-                                      "lsplit.ev", InsertPt);
-
-  Value *C2 = new ICmpInst(Sign ?
-                           ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                           BSV, StartValue, "lsplit.sv",
-                           PHTerminator);
-  SD.B_StartValue = SelectInst::Create(C2, StartValue, BSV,
-                                       "lsplit.sv", PHTerminator);
-}
-
-/// splitLoop - Split current loop L in two loops using split information
-/// SD. Update dominator information. Maintain LCSSA form.
-bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
-
-  if (!safeSplitCondition(SD))
-    return false;
-
-  // If split condition EQ is not handled.
-  if (ICmpInst *ICMP = dyn_cast<ICmpInst>(SD.SplitCondition)) {
-    if (ICMP->getPredicate() == ICmpInst::ICMP_EQ)
-      return false;
-  }
-
-  // If the predicate sign does not match then skip.
-  ICmpInst *CI = dyn_cast<ICmpInst>(SD.SplitCondition);
-  if (CI && (ExitCondition->isSignedPredicate() != CI->isSignedPredicate()))
-    return false;
-
-  BasicBlock *SplitCondBlock = SD.SplitCondition->getParent();
-  
-  // Unable to handle triangle loops at the moment.
-  // In triangle loop, split condition is in header and one of the
-  // the split destination is loop latch. If split condition is EQ
-  // then such loops are already handle in processOneIterationLoop().
-  BasicBlock *Latch = L->getLoopLatch();
-  BranchInst *SplitTerminator = 
-    cast<BranchInst>(SplitCondBlock->getTerminator());
-  BasicBlock *Succ0 = SplitTerminator->getSuccessor(0);
-  BasicBlock *Succ1 = SplitTerminator->getSuccessor(1);
-  if (L->getHeader() == SplitCondBlock 
-      && (Latch == Succ0 || Latch == Succ1))
-    return false;
-
-  // If split condition branches heads do not have single predecessor, 
-  // SplitCondBlock, then is not possible to remove inactive branch.
-  if (!Succ0->getSinglePredecessor() || !Succ1->getSinglePredecessor())
-    return false;
-
-  // If Exiting block includes loop variant instructions then this
-  // loop may not be split safely.
-  if (!safeExitingBlock(SD, ExitCondition->getParent())) 
-    return false;
-
-  // After loop is cloned there are two loops.
-  //
-  // First loop, referred as ALoop, executes first part of loop's iteration
-  // space split.  Second loop, referred as BLoop, executes remaining
-  // part of loop's iteration space. 
-  //
-  // ALoop's exit edge enters BLoop's header through a forwarding block which 
-  // acts as a BLoop's preheader.
-  BasicBlock *Preheader = L->getLoopPreheader();
-
-  // Calculate ALoop induction variable's new exiting value and
-  // BLoop induction variable's new starting value.
-  calculateLoopBounds(SD);
-
-  //[*] Clone loop.
-  DenseMap<const Value *, Value *> ValueMap;
-  Loop *BLoop = CloneLoop(L, LPM, LI, ValueMap, this);
-  Loop *ALoop = L;
-  BasicBlock *B_Header = BLoop->getHeader();
-
-  //[*] ALoop's exiting edge BLoop's header.
-  //    ALoop's original exit block becomes BLoop's exit block.
-  PHINode *B_IndVar = cast<PHINode>(ValueMap[IndVar]);
-  BasicBlock *A_ExitingBlock = ExitCondition->getParent();
-  BranchInst *A_ExitInsn =
-    dyn_cast<BranchInst>(A_ExitingBlock->getTerminator());
-  assert (A_ExitInsn && "Unable to find suitable loop exit branch");
-  BasicBlock *B_ExitBlock = A_ExitInsn->getSuccessor(1);
-  if (L->contains(B_ExitBlock)) {
-    B_ExitBlock = A_ExitInsn->getSuccessor(0);
-    A_ExitInsn->setSuccessor(0, B_Header);
-  } else
-    A_ExitInsn->setSuccessor(1, B_Header);
-
-  //[*] Update ALoop's exit value using new exit value.
-  ExitCondition->setOperand(ExitValueNum, SD.A_ExitValue);
-  
-  // [*] Update BLoop's header phi nodes. Remove incoming PHINode's from
-  //     original loop's preheader. Add incoming PHINode values from
-  //     ALoop's exiting block. Update BLoop header's domiantor info.
-
-  // Collect inverse map of Header PHINodes.
-  DenseMap<Value *, Value *> InverseMap;
-  for (BasicBlock::iterator BI = L->getHeader()->begin(), 
-         BE = L->getHeader()->end(); BI != BE; ++BI) {
-    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      PHINode *PNClone = cast<PHINode>(ValueMap[PN]);
-      InverseMap[PNClone] = PN;
-    } else
-      break;
-  }
-
-  for (BasicBlock::iterator BI = B_Header->begin(), BE = B_Header->end();
-       BI != BE; ++BI) {
-    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      // Remove incoming value from original preheader.
-      PN->removeIncomingValue(Preheader);
-
-      // Add incoming value from A_ExitingBlock.
-      if (PN == B_IndVar)
-        PN->addIncoming(SD.B_StartValue, A_ExitingBlock);
-      else { 
-        PHINode *OrigPN = cast<PHINode>(InverseMap[PN]);
-        Value *V2 = NULL;
-        // If loop header is also loop exiting block then
-        // OrigPN is incoming value for B loop header.
-        if (A_ExitingBlock == L->getHeader())
-          V2 = OrigPN;
-        else
-          V2 = OrigPN->getIncomingValueForBlock(A_ExitingBlock);
-        PN->addIncoming(V2, A_ExitingBlock);
-      }
-    } else
-      break;
-  }
-  DT->changeImmediateDominator(B_Header, A_ExitingBlock);
-  DF->changeImmediateDominator(B_Header, A_ExitingBlock, DT);
-  
-  // [*] Update BLoop's exit block. Its new predecessor is BLoop's exit
-  //     block. Remove incoming PHINode values from ALoop's exiting block.
-  //     Add new incoming values from BLoop's incoming exiting value.
-  //     Update BLoop exit block's dominator info..
-  BasicBlock *B_ExitingBlock = cast<BasicBlock>(ValueMap[A_ExitingBlock]);
-  for (BasicBlock::iterator BI = B_ExitBlock->begin(), BE = B_ExitBlock->end();
-       BI != BE; ++BI) {
-    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      PN->addIncoming(ValueMap[PN->getIncomingValueForBlock(A_ExitingBlock)], 
-                                                            B_ExitingBlock);
-      PN->removeIncomingValue(A_ExitingBlock);
-    } else
-      break;
-  }
-
-  DT->changeImmediateDominator(B_ExitBlock, B_ExitingBlock);
-  DF->changeImmediateDominator(B_ExitBlock, B_ExitingBlock, DT);
-
-  //[*] Split ALoop's exit edge. This creates a new block which
-  //    serves two purposes. First one is to hold PHINode defnitions
-  //    to ensure that ALoop's LCSSA form. Second use it to act
-  //    as a preheader for BLoop.
-  BasicBlock *A_ExitBlock = SplitEdge(A_ExitingBlock, B_Header, this);
-
-  //[*] Preserve ALoop's LCSSA form. Create new forwarding PHINodes
-  //    in A_ExitBlock to redefine outgoing PHI definitions from ALoop.
-  for(BasicBlock::iterator BI = B_Header->begin(), BE = B_Header->end();
-      BI != BE; ++BI) {
-    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      Value *V1 = PN->getIncomingValueForBlock(A_ExitBlock);
-      PHINode *newPHI = PHINode::Create(PN->getType(), PN->getName());
-      newPHI->addIncoming(V1, A_ExitingBlock);
-      A_ExitBlock->getInstList().push_front(newPHI);
-      PN->removeIncomingValue(A_ExitBlock);
-      PN->addIncoming(newPHI, A_ExitBlock);
-    } else
-      break;
-  }
-
-  //[*] Eliminate split condition's inactive branch from ALoop.
-  BasicBlock *A_SplitCondBlock = SD.SplitCondition->getParent();
-  BranchInst *A_BR = cast<BranchInst>(A_SplitCondBlock->getTerminator());
-  BasicBlock *A_InactiveBranch = NULL;
-  BasicBlock *A_ActiveBranch = NULL;
-  if (SD.UseTrueBranchFirst) {
-    A_ActiveBranch = A_BR->getSuccessor(0);
-    A_InactiveBranch = A_BR->getSuccessor(1);
-  } else {
-    A_ActiveBranch = A_BR->getSuccessor(1);
-    A_InactiveBranch = A_BR->getSuccessor(0);
-  }
-  A_BR->setUnconditionalDest(A_ActiveBranch);
-  removeBlocks(A_InactiveBranch, L, A_ActiveBranch);
-
-  //[*] Eliminate split condition's inactive branch in from BLoop.
-  BasicBlock *B_SplitCondBlock = cast<BasicBlock>(ValueMap[A_SplitCondBlock]);
-  BranchInst *B_BR = cast<BranchInst>(B_SplitCondBlock->getTerminator());
-  BasicBlock *B_InactiveBranch = NULL;
-  BasicBlock *B_ActiveBranch = NULL;
-  if (SD.UseTrueBranchFirst) {
-    B_ActiveBranch = B_BR->getSuccessor(1);
-    B_InactiveBranch = B_BR->getSuccessor(0);
-  } else {
-    B_ActiveBranch = B_BR->getSuccessor(0);
-    B_InactiveBranch = B_BR->getSuccessor(1);
-  }
-  B_BR->setUnconditionalDest(B_ActiveBranch);
-  removeBlocks(B_InactiveBranch, BLoop, B_ActiveBranch);
-
-  BasicBlock *A_Header = L->getHeader();
-  if (A_ExitingBlock == A_Header)
-    return true;
-
-  //[*] Move exit condition into split condition block to avoid
-  //    executing dead loop iteration.
-  ICmpInst *B_ExitCondition = cast<ICmpInst>(ValueMap[ExitCondition]);
-  Instruction *B_IndVarIncrement = cast<Instruction>(ValueMap[IndVarIncrement]);
-  ICmpInst *B_SplitCondition = cast<ICmpInst>(ValueMap[SD.SplitCondition]);
-
-  moveExitCondition(A_SplitCondBlock, A_ActiveBranch, A_ExitBlock, ExitCondition,
-                    cast<ICmpInst>(SD.SplitCondition), IndVar, IndVarIncrement, 
-                    ALoop);
-
-  moveExitCondition(B_SplitCondBlock, B_ActiveBranch, B_ExitBlock, B_ExitCondition,
-                    B_SplitCondition, B_IndVar, B_IndVarIncrement, BLoop);
-
-  return true;
-}
-
 // moveExitCondition - Move exit condition EC into split condition block CondBB.
 void LoopIndexSplit::moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
-                                       BasicBlock *ExitBB, ICmpInst *EC, ICmpInst *SC,
-                                       PHINode *IV, Instruction *IVAdd, Loop *LP) {
+                                       BasicBlock *ExitBB, ICmpInst *EC, 
+                                       ICmpInst *SC, PHINode *IV, 
+                                       Instruction *IVAdd, Loop *LP,
+                                       unsigned ExitValueNum) {
 
   BasicBlock *ExitingBB = EC->getParent();
   Instruction *CurrentBR = CondBB->getTerminator();
@@ -1753,3 +821,381 @@ void LoopIndexSplit::updatePHINodes(BasicBlock *ExitBB, BasicBlock *Latch,
     PN->removeIncomingValue(Latch);
   }
 }
+
+bool LoopIndexSplit::splitLoop() {
+  SplitCondition = NULL;
+  if (ExitCondition->getPredicate() == ICmpInst::ICMP_NE
+      || ExitCondition->getPredicate() == ICmpInst::ICMP_EQ)
+    return false;
+  BasicBlock *Header = L->getHeader();
+  BasicBlock *Latch = L->getLoopLatch();
+  BranchInst *SBR = NULL; // Split Condition Branch
+  BranchInst *EBR = cast<BranchInst>(ExitCondition->getParent()->getTerminator());
+  // If Exiting block includes loop variant instructions then this
+  // loop may not be split safely.
+  BasicBlock *ExitingBlock = ExitCondition->getParent();
+  if (!cleanBlock(ExitingBlock)) return false;
+
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BranchInst *BR = dyn_cast<BranchInst>((*I)->getTerminator());
+    if (!BR || BR->isUnconditional()) continue;
+    ICmpInst *CI = dyn_cast<ICmpInst>(BR->getCondition());
+    if (!CI || CI == ExitCondition 
+        || CI->getPredicate() == ICmpInst::ICMP_NE
+        || CI->getPredicate() == ICmpInst::ICMP_EQ)
+      continue;
+
+    // Unable to handle triangle loops at the moment.
+    // In triangle loop, split condition is in header and one of the
+    // the split destination is loop latch. If split condition is EQ
+    // then such loops are already handle in processOneIterationLoop().
+    if (Header == (*I)
+        && (Latch == BR->getSuccessor(0) || Latch == BR->getSuccessor(1)))
+      continue;
+
+    // If the block does not dominate the latch then this is not a diamond.
+    // Such loop may not benefit from index split.
+    if (!DT->dominates((*I), Latch))
+      continue;
+
+    // If split condition branches heads do not have single predecessor, 
+    // SplitCondBlock, then is not possible to remove inactive branch.
+    if (!BR->getSuccessor(0)->getSinglePredecessor() 
+        || !BR->getSuccessor(1)->getSinglePredecessor())
+      return false;
+
+    // If the merge point for BR is not loop latch then skip this condition.
+    if (BR->getSuccessor(0) != Latch) {
+      DominanceFrontier::iterator DF0 = DF->find(BR->getSuccessor(0));
+      assert (DF0 != DF->end() && "Unable to find dominance frontier");
+      if (!DF0->second.count(Latch))
+        continue;
+    }
+    
+    if (BR->getSuccessor(1) != Latch) {
+      DominanceFrontier::iterator DF1 = DF->find(BR->getSuccessor(1));
+      assert (DF1 != DF->end() && "Unable to find dominance frontier");
+      if (!DF1->second.count(Latch))
+        continue;
+    }
+    SplitCondition = CI;
+    SBR = BR;
+    break;
+  }
+   
+  if (!SplitCondition)
+    return false;
+
+  // If the predicate sign does not match then skip.
+  if (ExitCondition->isSignedPredicate() != SplitCondition->isSignedPredicate())
+    return false;
+
+  unsigned EVOpNum = (ExitCondition->getOperand(1) == IVExitValue);
+  unsigned SVOpNum = IVBasedValues.count(SplitCondition->getOperand(0));
+  Value *SplitValue = SplitCondition->getOperand(SVOpNum);
+  if (!L->isLoopInvariant(SplitValue))
+    return false;
+  if (!IVBasedValues.count(SplitCondition->getOperand(!SVOpNum)))
+    return false;
+
+  // Normalize loop conditions so that it is easier to calculate new loop
+  // bounds.
+  if (IVisGT(*ExitCondition) || IVisGE(*ExitCondition)) {
+    ExitCondition->setPredicate(ExitCondition->getInversePredicate());
+    BasicBlock *T = EBR->getSuccessor(0);
+    EBR->setSuccessor(0, EBR->getSuccessor(1));
+    EBR->setSuccessor(1, T);
+  }
+
+  if (IVisGT(*SplitCondition) || IVisGE(*SplitCondition)) {
+    SplitCondition->setPredicate(SplitCondition->getInversePredicate());
+    BasicBlock *T = SBR->getSuccessor(0);
+    SBR->setSuccessor(0, SBR->getSuccessor(1));
+    SBR->setSuccessor(1, T);
+  }
+
+  //[*] Calculate new loop bounds.
+  Value *AEV = SplitValue;
+  Value *BSV = SplitValue;
+  bool Sign = SplitCondition->isSignedPredicate();
+  Instruction *PHTerm = L->getLoopPreheader()->getTerminator();
+
+  if (IVisLT(*ExitCondition)) {
+    if (IVisLT(*SplitCondition)) {
+      /* Do nothing */
+    }
+    else if (IVisLE(*SplitCondition)) {
+      AEV = getPlusOne(SplitValue, Sign, PHTerm);
+      BSV = getPlusOne(SplitValue, Sign, PHTerm);
+    } else {
+      assert (0 && "Unexpected split condition!");
+    }
+  }
+  else if (IVisLE(*ExitCondition)) {
+    if (IVisLT(*SplitCondition)) {
+      AEV = getMinusOne(SplitValue, Sign, PHTerm);
+    }
+    else if (IVisLE(*SplitCondition)) {
+      BSV = getPlusOne(SplitValue, Sign, PHTerm);
+    } else {
+      assert (0 && "Unexpected split condition!");
+    }
+  } else {
+    assert (0 && "Unexpected exit condition!");
+  }
+  AEV = getMin(AEV, IVExitValue, Sign, PHTerm);
+  BSV = getMax(BSV, IVStartValue, Sign, PHTerm);
+
+  // [*] Clone Loop
+  DenseMap<const Value *, Value *> ValueMap;
+  Loop *BLoop = CloneLoop(L, LPM, LI, ValueMap, this);
+  Loop *ALoop = L;
+
+  // [*] ALoop's exiting edge enters BLoop's header.
+  //    ALoop's original exit block becomes BLoop's exit block.
+  PHINode *B_IndVar = cast<PHINode>(ValueMap[IndVar]);
+  BasicBlock *A_ExitingBlock = ExitCondition->getParent();
+  BranchInst *A_ExitInsn =
+    dyn_cast<BranchInst>(A_ExitingBlock->getTerminator());
+  assert (A_ExitInsn && "Unable to find suitable loop exit branch");
+  BasicBlock *B_ExitBlock = A_ExitInsn->getSuccessor(1);
+  BasicBlock *B_Header = BLoop->getHeader();
+  if (ALoop->contains(B_ExitBlock)) {
+    B_ExitBlock = A_ExitInsn->getSuccessor(0);
+    A_ExitInsn->setSuccessor(0, B_Header);
+  } else
+    A_ExitInsn->setSuccessor(1, B_Header);
+
+  // [*] Update ALoop's exit value using new exit value.
+  ExitCondition->setOperand(EVOpNum, AEV);
+
+  // [*] Update BLoop's header phi nodes. Remove incoming PHINode's from
+  //     original loop's preheader. Add incoming PHINode values from
+  //     ALoop's exiting block. Update BLoop header's domiantor info.
+
+  // Collect inverse map of Header PHINodes.
+  DenseMap<Value *, Value *> InverseMap;
+  for (BasicBlock::iterator BI = ALoop->getHeader()->begin(), 
+         BE = ALoop->getHeader()->end(); BI != BE; ++BI) {
+    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
+      PHINode *PNClone = cast<PHINode>(ValueMap[PN]);
+      InverseMap[PNClone] = PN;
+    } else
+      break;
+  }
+
+  BasicBlock *A_Preheader = ALoop->getLoopPreheader();
+  for (BasicBlock::iterator BI = B_Header->begin(), BE = B_Header->end();
+       BI != BE; ++BI) {
+    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
+      // Remove incoming value from original preheader.
+      PN->removeIncomingValue(A_Preheader);
+
+      // Add incoming value from A_ExitingBlock.
+      if (PN == B_IndVar)
+        PN->addIncoming(BSV, A_ExitingBlock);
+      else { 
+        PHINode *OrigPN = cast<PHINode>(InverseMap[PN]);
+        Value *V2 = NULL;
+        // If loop header is also loop exiting block then
+        // OrigPN is incoming value for B loop header.
+        if (A_ExitingBlock == ALoop->getHeader())
+          V2 = OrigPN;
+        else
+          V2 = OrigPN->getIncomingValueForBlock(A_ExitingBlock);
+        PN->addIncoming(V2, A_ExitingBlock);
+      }
+    } else
+      break;
+  }
+
+  DT->changeImmediateDominator(B_Header, A_ExitingBlock);
+  DF->changeImmediateDominator(B_Header, A_ExitingBlock, DT);
+  
+  // [*] Update BLoop's exit block. Its new predecessor is BLoop's exit
+  //     block. Remove incoming PHINode values from ALoop's exiting block.
+  //     Add new incoming values from BLoop's incoming exiting value.
+  //     Update BLoop exit block's dominator info..
+  BasicBlock *B_ExitingBlock = cast<BasicBlock>(ValueMap[A_ExitingBlock]);
+  for (BasicBlock::iterator BI = B_ExitBlock->begin(), BE = B_ExitBlock->end();
+       BI != BE; ++BI) {
+    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
+      PN->addIncoming(ValueMap[PN->getIncomingValueForBlock(A_ExitingBlock)], 
+                                                            B_ExitingBlock);
+      PN->removeIncomingValue(A_ExitingBlock);
+    } else
+      break;
+  }
+
+  DT->changeImmediateDominator(B_ExitBlock, B_ExitingBlock);
+  DF->changeImmediateDominator(B_ExitBlock, B_ExitingBlock, DT);
+
+ //[*] Split ALoop's exit edge. This creates a new block which
+  //    serves two purposes. First one is to hold PHINode defnitions
+  //    to ensure that ALoop's LCSSA form. Second use it to act
+  //    as a preheader for BLoop.
+  BasicBlock *A_ExitBlock = SplitEdge(A_ExitingBlock, B_Header, this);
+
+  //[*] Preserve ALoop's LCSSA form. Create new forwarding PHINodes
+  //    in A_ExitBlock to redefine outgoing PHI definitions from ALoop.
+  for(BasicBlock::iterator BI = B_Header->begin(), BE = B_Header->end();
+      BI != BE; ++BI) {
+    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
+      Value *V1 = PN->getIncomingValueForBlock(A_ExitBlock);
+      PHINode *newPHI = PHINode::Create(PN->getType(), PN->getName());
+      newPHI->addIncoming(V1, A_ExitingBlock);
+      A_ExitBlock->getInstList().push_front(newPHI);
+      PN->removeIncomingValue(A_ExitBlock);
+      PN->addIncoming(newPHI, A_ExitBlock);
+    } else
+      break;
+  }
+
+  //[*] Eliminate split condition's inactive branch from ALoop.
+  BasicBlock *A_SplitCondBlock = SplitCondition->getParent();
+  BranchInst *A_BR = cast<BranchInst>(A_SplitCondBlock->getTerminator());
+  BasicBlock *A_InactiveBranch = NULL;
+  BasicBlock *A_ActiveBranch = NULL;
+  A_ActiveBranch = A_BR->getSuccessor(0);
+  A_InactiveBranch = A_BR->getSuccessor(1);
+  A_BR->setUnconditionalDest(A_ActiveBranch);
+  removeBlocks(A_InactiveBranch, L, A_ActiveBranch);
+
+  //[*] Eliminate split condition's inactive branch in from BLoop.
+  BasicBlock *B_SplitCondBlock = cast<BasicBlock>(ValueMap[A_SplitCondBlock]);
+  BranchInst *B_BR = cast<BranchInst>(B_SplitCondBlock->getTerminator());
+  BasicBlock *B_InactiveBranch = NULL;
+  BasicBlock *B_ActiveBranch = NULL;
+  B_ActiveBranch = B_BR->getSuccessor(1);
+  B_InactiveBranch = B_BR->getSuccessor(0);
+  B_BR->setUnconditionalDest(B_ActiveBranch);
+  removeBlocks(B_InactiveBranch, BLoop, B_ActiveBranch);
+
+  BasicBlock *A_Header = ALoop->getHeader();
+  if (A_ExitingBlock == A_Header)
+    return true;
+
+  //[*] Move exit condition into split condition block to avoid
+  //    executing dead loop iteration.
+  ICmpInst *B_ExitCondition = cast<ICmpInst>(ValueMap[ExitCondition]);
+  Instruction *B_IndVarIncrement = cast<Instruction>(ValueMap[IVIncrement]);
+  ICmpInst *B_SplitCondition = cast<ICmpInst>(ValueMap[SplitCondition]);
+
+  moveExitCondition(A_SplitCondBlock, A_ActiveBranch, A_ExitBlock, ExitCondition,
+                    cast<ICmpInst>(SplitCondition), IndVar, IVIncrement, 
+                    ALoop, EVOpNum);
+
+  moveExitCondition(B_SplitCondBlock, B_ActiveBranch, 
+                    B_ExitBlock, B_ExitCondition,
+                    B_SplitCondition, B_IndVar, B_IndVarIncrement, 
+                    BLoop, EVOpNum);
+
+  NumIndexSplit++;
+  return true;
+}
+
+/// cleanBlock - A block is considered clean if all non terminal instructions 
+/// are either, PHINodes, IV based.
+bool LoopIndexSplit::cleanBlock(BasicBlock *BB) {
+  Instruction *Terminator = BB->getTerminator();
+  for(BasicBlock::iterator BI = BB->begin(), BE = BB->end(); 
+      BI != BE; ++BI) {
+    Instruction *I = BI;
+
+    if (isa<PHINode>(I) || I == Terminator || I == ExitCondition
+        || I == SplitCondition || IVBasedValues.count(I))
+      continue;
+
+    if (I->mayWriteToMemory())
+      return false;
+
+    // I is used only inside this block then it is OK.
+    bool usedOutsideBB = false;
+    for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); 
+         UI != UE; ++UI) {
+      Instruction *U = cast<Instruction>(UI);
+      if (U->getParent() != BB)
+        usedOutsideBB = true;
+    }
+    if (!usedOutsideBB)
+      continue;
+
+    // Otherwise we have a instruction that may not allow loop spliting.
+    return false;
+  }
+  return true;
+}
+
+/// IVisLT - If Op is comparing IV based value with an loop invaraint and 
+/// IV based value is less than  the loop invariant then return the loop 
+/// invariant. Otherwise return NULL.
+Value * LoopIndexSplit::IVisLT(ICmpInst &Op) {
+  ICmpInst::Predicate P = Op.getPredicate();
+  if ((P == ICmpInst::ICMP_SLT || P == ICmpInst::ICMP_ULT) 
+      && IVBasedValues.count(Op.getOperand(0)) 
+      && L->isLoopInvariant(Op.getOperand(1)))
+    return Op.getOperand(1);
+
+  if ((P == ICmpInst::ICMP_SGT || P == ICmpInst::ICMP_UGT) 
+      && IVBasedValues.count(Op.getOperand(1)) 
+      && L->isLoopInvariant(Op.getOperand(0)))
+    return Op.getOperand(0);
+
+  return NULL;
+}
+
+/// IVisLE - If Op is comparing IV based value with an loop invaraint and 
+/// IV based value is less than or equal to the loop invariant then 
+/// return the loop invariant. Otherwise return NULL.
+Value * LoopIndexSplit::IVisLE(ICmpInst &Op) {
+  ICmpInst::Predicate P = Op.getPredicate();
+  if ((P == ICmpInst::ICMP_SLE || P == ICmpInst::ICMP_ULE)
+      && IVBasedValues.count(Op.getOperand(0)) 
+      && L->isLoopInvariant(Op.getOperand(1)))
+    return Op.getOperand(1);
+
+  if ((P == ICmpInst::ICMP_SGE || P == ICmpInst::ICMP_UGE) 
+      && IVBasedValues.count(Op.getOperand(1)) 
+      && L->isLoopInvariant(Op.getOperand(0)))
+    return Op.getOperand(0);
+
+  return NULL;
+}
+
+/// IVisGT - If Op is comparing IV based value with an loop invaraint and 
+/// IV based value is greater than  the loop invariant then return the loop 
+/// invariant. Otherwise return NULL.
+Value * LoopIndexSplit::IVisGT(ICmpInst &Op) {
+  ICmpInst::Predicate P = Op.getPredicate();
+  if ((P == ICmpInst::ICMP_SGT || P == ICmpInst::ICMP_UGT) 
+      && IVBasedValues.count(Op.getOperand(0)) 
+      && L->isLoopInvariant(Op.getOperand(1)))
+    return Op.getOperand(1);
+
+  if ((P == ICmpInst::ICMP_SLT || P == ICmpInst::ICMP_ULT) 
+      && IVBasedValues.count(Op.getOperand(1)) 
+      && L->isLoopInvariant(Op.getOperand(0)))
+    return Op.getOperand(0);
+
+  return NULL;
+}
+
+/// IVisGE - If Op is comparing IV based value with an loop invaraint and 
+/// IV based value is greater than or equal to the loop invariant then 
+/// return the loop invariant. Otherwise return NULL.
+Value * LoopIndexSplit::IVisGE(ICmpInst &Op) {
+  ICmpInst::Predicate P = Op.getPredicate();
+  if ((P == ICmpInst::ICMP_SGE || P == ICmpInst::ICMP_UGE)
+      && IVBasedValues.count(Op.getOperand(0)) 
+      && L->isLoopInvariant(Op.getOperand(1)))
+    return Op.getOperand(1);
+
+  if ((P == ICmpInst::ICMP_SLE || P == ICmpInst::ICMP_ULE) 
+      && IVBasedValues.count(Op.getOperand(1)) 
+      && L->isLoopInvariant(Op.getOperand(0)))
+    return Op.getOperand(0);
+
+  return NULL;
+}
+
