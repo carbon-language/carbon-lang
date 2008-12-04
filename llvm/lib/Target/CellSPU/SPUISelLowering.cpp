@@ -548,7 +548,6 @@ AlignedLoad(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST,
     alignOffs = int(FIN->getIndex() * SPUFrameInfo::stackSlotSize());
     prefSlotOffs = (int) (alignOffs & 0xf);
     prefSlotOffs -= vtm->prefslot_byte;
-    basePtr = DAG.getRegister(SPU::R1, VT);
   } else {
     alignOffs = 0;
     prefSlotOffs = -vtm->prefslot_byte;
@@ -1127,6 +1126,8 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
         ArgOffset += StackSlotSize;
       }
       break;
+    case MVT::v2i64:
+    case MVT::v2f64:
     case MVT::v4f32:
     case MVT::v4i32:
     case MVT::v8i16:
@@ -1255,6 +1256,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     NumResults = 1;
     break;
   case MVT::v2f64:
+  case MVT::v2i64:
   case MVT::v4f32:
   case MVT::v4i32:
   case MVT::v8i16:
@@ -1747,38 +1749,64 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   // If we have a single element being moved from V1 to V2, this can be handled
   // using the C*[DX] compute mask instructions, but the vector elements have
   // to be monotonically increasing with one exception element.
-  MVT EltVT = V1.getValueType().getVectorElementType();
+  MVT VecVT = V1.getValueType();
+  MVT EltVT = VecVT.getVectorElementType();
   unsigned EltsFromV2 = 0;
   unsigned V2Elt = 0;
   unsigned V2EltIdx0 = 0;
   unsigned CurrElt = 0;
+  unsigned MaxElts = VecVT.getVectorNumElements();
+  unsigned PrevElt = 0;
+  unsigned V0Elt = 0;
   bool monotonic = true;
-  if (EltVT == MVT::i8)
+  bool rotate = true;
+
+  if (EltVT == MVT::i8) {
     V2EltIdx0 = 16;
-  else if (EltVT == MVT::i16)
+  } else if (EltVT == MVT::i16) {
     V2EltIdx0 = 8;
-  else if (EltVT == MVT::i32)
+  } else if (EltVT == MVT::i32 || EltVT == MVT::f32) {
     V2EltIdx0 = 4;
-  else
+  } else if (EltVT == MVT::i64 || EltVT == MVT::f64) {
+    V2EltIdx0 = 2;
+  } else
     assert(0 && "Unhandled vector type in LowerVECTOR_SHUFFLE");
 
-  for (unsigned i = 0, e = PermMask.getNumOperands();
-       EltsFromV2 <= 1 && monotonic && i != e;
-       ++i) {
-    unsigned SrcElt;
-    if (PermMask.getOperand(i).getOpcode() == ISD::UNDEF)
-      SrcElt = 0;
-    else
-      SrcElt = cast<ConstantSDNode>(PermMask.getOperand(i))->getZExtValue();
+  for (unsigned i = 0; i != PermMask.getNumOperands(); ++i) {
+    if (PermMask.getOperand(i).getOpcode() != ISD::UNDEF) {
+      unsigned SrcElt = cast<ConstantSDNode > (PermMask.getOperand(i))->getZExtValue();
 
-    if (SrcElt >= V2EltIdx0) {
-      ++EltsFromV2;
-      V2Elt = (V2EltIdx0 - SrcElt) << 2;
-    } else if (CurrElt != SrcElt) {
-      monotonic = false;
+      if (monotonic) {
+        if (SrcElt >= V2EltIdx0) {
+          if (1 >= (++EltsFromV2)) {
+            V2Elt = (V2EltIdx0 - SrcElt) << 2;
+          }
+        } else if (CurrElt != SrcElt) {
+          monotonic = false;
+        }
+
+        ++CurrElt;
+      }
+
+      if (rotate) {
+        if (PrevElt > 0 && SrcElt < MaxElts) {
+          if ((PrevElt == SrcElt - 1)
+              || (PrevElt == MaxElts - 1 && SrcElt == 0)) {
+            PrevElt = SrcElt;
+            if (SrcElt == 0)
+              V0Elt = i;
+          } else {
+            rotate = false;
+          }
+        } else if (PrevElt == 0) {
+          // First time through, need to keep track of previous element
+          PrevElt = SrcElt;
+        } else {
+          // This isn't a rotation, takes elements from vector 2
+          rotate = false;
+        }
+      }
     }
-
-    ++CurrElt;
   }
 
   if (EltsFromV2 == 1 && monotonic) {
@@ -1797,6 +1825,11 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
                   DAG.getCopyFromReg(InitTempReg, VReg, PtrVT));
     // Use shuffle mask in SHUFB synthetic instruction:
     return DAG.getNode(SPUISD::SHUFB, V1.getValueType(), V2, V1, ShufMaskOp);
+  } else if (rotate) {
+    int rotamt = (MaxElts - V0Elt) * EltVT.getSizeInBits()/8;
+    
+    return DAG.getNode(SPUISD::ROTBYTES_LEFT, V1.getValueType(),
+                       V1, DAG.getConstant(rotamt, MVT::i16));
   } else {
    // Convert the SHUFFLE_VECTOR mask's input element units to the
    // actual bytes.
@@ -2127,7 +2160,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
 
     SDValue ShufMask[4];
     for (unsigned i = 0; i < sizeof(ShufMask)/sizeof(ShufMask[0]); ++i) {
-      unsigned bidx = i / 4;
+      unsigned bidx = i * 4;
       unsigned int bits = ((ShufBytes[bidx] << 24) |
                            (ShufBytes[bidx+1] << 16) |
                            (ShufBytes[bidx+2] << 8) |

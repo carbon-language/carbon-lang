@@ -2124,7 +2124,9 @@ multiclass RotateQuadLeftByBytes
   def v16i8: ROTQBYVecInst<v16i8>;
   def v8i16: ROTQBYVecInst<v8i16>;
   def v4i32: ROTQBYVecInst<v4i32>;
+  def v4f32: ROTQBYVecInst<v4f32>;
   def v2i64: ROTQBYVecInst<v2i64>;
+  def v2f64: ROTQBYVecInst<v2f64>;
 }
 
 defm ROTQBY: RotateQuadLeftByBytes;
@@ -2147,7 +2149,9 @@ multiclass RotateQuadByBytesImm
   def v16i8: ROTQBYIVecInst<v16i8>;
   def v8i16: ROTQBYIVecInst<v8i16>;
   def v4i32: ROTQBYIVecInst<v4i32>;
+  def v4f32: ROTQBYIVecInst<v4f32>;
   def v2i64: ROTQBYIVecInst<v2i64>;
+  def vfi64: ROTQBYIVecInst<v2f64>;
 }
 
 defm ROTQBYI: RotateQuadByBytesImm;

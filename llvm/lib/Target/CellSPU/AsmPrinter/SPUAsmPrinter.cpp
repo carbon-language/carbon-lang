@@ -221,7 +221,6 @@ namespace {
 
     void printPCRelativeOperand(const MachineInstr *MI, unsigned OpNo) {
       printOp(MI->getOperand(OpNo));
-      O << "-.";
     }
 
     void printSymbolHi(const MachineInstr *MI, unsigned OpNo) {
