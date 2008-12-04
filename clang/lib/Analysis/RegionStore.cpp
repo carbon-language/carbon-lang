@@ -148,7 +148,13 @@ private:
   Store BindStructToVal(Store store, const TypedRegion* BaseR, SVal V);
   Store BindStructToSymVal(Store store, const TypedRegion* BaseR);
 
+  /// Retrieve the values in a struct and return a CompoundVal, used when doing
+  /// struct copy: 
+  /// struct s x, y; 
+  /// x = y;
+  /// y's value is retrieved by this method.
   SVal RetrieveStruct(Store store, const TypedRegion* R);
+
   Store BindStruct(Store store, const TypedRegion* R, SVal V);
 
   // Utility methods.
