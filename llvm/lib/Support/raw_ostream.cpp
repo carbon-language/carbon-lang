@@ -202,7 +202,7 @@ void format_object_base::home() {
 /// stream should be immediately destroyed; the string will be empty
 /// if no error occurred.
 raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary,
-                               std::string &ErrorInfo) {
+                               std::string &ErrorInfo) : pos(0) {
   ErrorInfo.clear();
 
   // Handle "-" as stdout.
@@ -240,8 +240,10 @@ raw_fd_ostream::~raw_fd_ostream() {
 
 void raw_fd_ostream::flush_impl() {
   assert (FD >= 0 && "File already closed.");
-  if (OutBufCur-OutBufStart)
+  if (OutBufCur-OutBufStart) {
+    pos += (OutBufCur - OutBufStart);
     ::write(FD, OutBufStart, OutBufCur-OutBufStart);
+  }
   HandleFlush();
 }
 
@@ -251,14 +253,6 @@ void raw_fd_ostream::close() {
   flush();
   ::close(FD);
   FD = -1;
-}
-
-uint64_t raw_fd_ostream::tell() {
-  // We have to take into account the bytes waiting in the buffer.  For now
-  // we do the easy thing and just flush the buffer before getting the
-  // current file offset.
-  flush();  
-  return (uint64_t) lseek(FD, 0, SEEK_CUR);
 }
 
 //===----------------------------------------------------------------------===//

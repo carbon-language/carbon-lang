@@ -151,6 +151,7 @@ private:
 class raw_fd_ostream : public raw_ostream {
   int FD;
   bool ShouldClose;
+  uint64_t pos;
 public:
   /// raw_fd_ostream - Open the specified file for writing. If an
   /// error occurs, information about the error is put into ErrorInfo,
@@ -178,7 +179,9 @@ public:
   void close();
   
   /// tell - Return the current offset with the file.
-  uint64_t tell();
+  uint64_t tell() {
+    return pos + (OutBufCur - OutBufStart);
+  }  
 };
   
 /// raw_stdout_ostream - This is a stream that always prints to stdout.
