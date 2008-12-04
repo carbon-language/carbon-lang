@@ -462,6 +462,9 @@ LaxVectorConversions("flax-vector-conversions",
                      llvm::cl::desc("Allow implicit conversions between vectors"
                                     " with a different number of elements or "
                                     "different element types"));
+static llvm::cl::opt<bool>
+EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"));
+
 
 // FIXME: This (and all GCC -f options) really come in -f... and
 // -fno-... forms, and additionally support automagic behavior when
@@ -494,7 +497,6 @@ Ansi("ansi", llvm::cl::desc("Equivalent to specifying -std=c89."));
 
 // FIXME: add:
 //   -fdollars-in-identifiers
-//   -fpascal-strings
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
                                        TargetInfo *Target) {
   // Allow the target to set the default the langauge options as it sees fit.
@@ -570,11 +572,14 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   Options.Trigraphs = LangStd < lang_gnu_START || Trigraphs ? 1 : 0;
 
   Options.DollarIdents = 1;  // FIXME: Really a target property.
-  Options.PascalStrings = PascalStrings;
+  if (PascalStrings.getPosition())
+    Options.PascalStrings = PascalStrings;
   Options.Microsoft = MSExtensions;
   Options.WritableStrings = WritableStrings;
   Options.LaxVectorConversions = LaxVectorConversions;
   Options.Exceptions = Exceptions;
+  if (EnableBlocks.getPosition())
+    Options.Blocks = EnableBlocks;
 
   // Override the default runtime if the user requested it.
   if (NeXTRuntime)

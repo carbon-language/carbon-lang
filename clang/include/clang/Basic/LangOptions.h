@@ -69,7 +69,7 @@ public:
     
     // FIXME: The default should be 1.
     ThreadsafeStatics = 0;
-    Blocks = 1;
+    Blocks = 0;
   }
   
   GCMode getGCMode() const { return (GCMode) GC; }

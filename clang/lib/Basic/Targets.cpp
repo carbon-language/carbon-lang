@@ -86,39 +86,69 @@ static void getLinuxDefines(std::vector<char> &Defs) {
   Define(Defs, "__gnu_linux__");
 }
 
+/// getDarwinNumber - Parse the 'darwin number' out of the specific targe
+/// triple.  For example, if we have darwin8.5 return 8,5,4.  If any entry is
+/// not defined, return 0's.  Return true if we have -darwin in the string or
+/// false otherwise.
+static bool getDarwinNumber(const char *Triple, unsigned &Maj, unsigned &Min) {
+  Maj = Min = 0;
+  const char *Darwin = strstr(Triple, "-darwin");
+  if (Darwin == 0) return false;
+  
+  Darwin += strlen("-darwin");
+  if (Darwin[0] < '0' || Darwin[0] > '9')
+    return true;
+  
+  Maj = Darwin[0]-'0';
+  ++Darwin;
+    
+  // Handle "darwin11".
+  if (Maj == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
+    Maj = 10+Darwin[0]-'0';
+    ++Darwin;
+  }
+    
+  // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
+  if (Darwin[0] == '.' && Darwin[1] >= '0' && Darwin[1] <= '9' &&
+      Darwin[2] == '\0')
+    Min = Darwin[1]-'0';
+  
+  return true;
+}
+
 static void getDarwinDefines(std::vector<char> &Defs, const char *Triple) {
   Define(Defs, "__APPLE__");
   Define(Defs, "__MACH__");
   
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
-  const char *Darwin = strstr(Triple, "-darwin");
-  if (Darwin) {
+  unsigned Maj, Min;
+  if (getDarwinNumber(Triple, Maj, Min)) {
     char DarwinStr[] = "1000";
-    Darwin += strlen("-darwin");
-    if (Darwin[0] >= '0' && Darwin[0] <= '9') {
-      unsigned DarwinNo = Darwin[0]-'0';
-      ++Darwin;
-      
-      // Handle "darwin11".
-      if (DarwinNo == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
-        DarwinNo = 10+Darwin[0]-'0';
-        ++Darwin;
-      }
-      
-      if (DarwinNo >= 4 && DarwinNo <= 13) { // 10.0-10.9
-        // darwin7 -> 1030, darwin8 -> 1040, darwin9 -> 1050, etc.
-        DarwinStr[2] = '0' + DarwinNo-4;
-      }
-      
-      // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
-      if (Darwin[0] == '.' && Darwin[1] >= '0' && Darwin[1] <= '9' &&
-          Darwin[2] == '\0')
-        DarwinStr[3] = Darwin[1];
-      
+    if (Maj >= 4 && Maj <= 13) { // 10.0-10.9
+      // darwin7 -> 1030, darwin8 -> 1040, darwin9 -> 1050, etc.
+      DarwinStr[2] = '0' + Maj-4;
     }
+      
+    // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
+    DarwinStr[3] = Min+'0';
     Define(Defs, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", DarwinStr);
   }
 }
+
+/// GetDarwinLanguageOptions - Set the default language options for darwin.
+static void GetDarwinLanguageOptions(LangOptions &Opts,
+                                     const char *Triple) {
+  Opts.NeXTRuntime = true;
+  
+  unsigned Maj, Min;
+  if (!getDarwinNumber(Triple, Maj, Min))
+    return;
+  
+  // Blocks default to on for 10.6 (darwin10) and beyond.
+  if (Maj > 9)
+    Opts.Blocks = 1;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Defines specific to certain architectures.
@@ -358,6 +388,7 @@ public:
 };
 } // end anonymous namespace.
 
+
 namespace {
 class DarwinPPCTargetInfo : public PPC32TargetInfo {
 public:
@@ -371,7 +402,7 @@ public:
   /// various language options.  These may be overridden by command line
   /// options. 
   virtual void getDefaultLangOptions(LangOptions &Opts) {
-    Opts.NeXTRuntime = true;
+    GetDarwinLanguageOptions(Opts, getTargetTriple());
   }
 };
 } // end anonymous namespace.
@@ -389,7 +420,7 @@ public:
   /// various language options.  These may be overridden by command line
   /// options. 
   virtual void getDefaultLangOptions(LangOptions &Opts) {
-    Opts.NeXTRuntime = true;
+    GetDarwinLanguageOptions(Opts, getTargetTriple());
   }
 };
 } // end anonymous namespace.
@@ -541,7 +572,7 @@ public:
   /// various language options.  These may be overridden by command line
   /// options. 
   virtual void getDefaultLangOptions(LangOptions &Opts) {
-    Opts.NeXTRuntime = true;
+    GetDarwinLanguageOptions(Opts, getTargetTriple());
   }
 };
 } // end anonymous namespace
@@ -690,7 +721,7 @@ public:
   /// various language options.  These may be overridden by command line
   /// options. 
   virtual void getDefaultLangOptions(LangOptions &Opts) {
-    Opts.NeXTRuntime = true;
+    GetDarwinLanguageOptions(Opts, getTargetTriple());
   }
 };
 } // end anonymous namespace.
