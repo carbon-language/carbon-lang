@@ -106,8 +106,10 @@ namespace {
 
     // This maps a property to it's assignment statement.
     llvm::DenseMap<ObjCPropertyRefExpr *, BinaryOperator *> PropSetters;
-    // This maps a property to the stmt it was rewritten to.
-    llvm::DenseMap<ObjCPropertyRefExpr *, Stmt *> PropGetters;
+    // This maps an original source AST to it's rewritten form. This allows
+    // us to avoid rewriting the same node twice (which is very uncommon).
+    // This is needed to support some of the exotic property rewriting.
+    llvm::DenseMap<Stmt *, Stmt *> ReplacedNodes;
 
     FunctionDecl *CurFunctionDef;
     VarDecl *GlobalVarDecl;
@@ -133,10 +135,18 @@ namespace {
     virtual void HandleTranslationUnit(TranslationUnit& TU);
     
     void ReplaceStmt(Stmt *Old, Stmt *New) {
-      // If replacement succeeded or warning disabled return with no warning.
-      if (!Rewrite.ReplaceStmt(Old, New) || SilenceRewriteMacroWarning)
-        return;
+      Stmt *ReplacingStmt = ReplacedNodes[Old];
+  
+      if (ReplacingStmt)
+        return; // We can't rewrite the same node twice.
 
+      // If replacement succeeded or warning disabled return with no warning.
+      if (!Rewrite.ReplaceStmt(Old, New)) {
+        ReplacedNodes[Old] = New;
+        return;
+      }
+      if (SilenceRewriteMacroWarning)
+        return;
       Diags.Report(Context->getFullLoc(Old->getLocStart()), RewriteFailedDiag)
                    << Old->getSourceRange();
     }
@@ -1017,11 +1027,6 @@ Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt) {
 }
 
 Stmt *RewriteObjC::RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr) {
-  Stmt *ReplacingStmt = PropGetters[PropRefExpr];
-  
-  if (ReplacingStmt)
-    return ReplacingStmt; // We can't rewrite the same property twice.
-    
   // Synthesize a ObjCMessageExpr from a ObjCPropertyRefExpr.
   // This allows us to reuse all the fun and games in SynthMessageExpr().
   ObjCMessageExpr *MsgExpr;
@@ -1033,12 +1038,10 @@ Stmt *RewriteObjC::RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr) {
                                 SourceLocation(), SourceLocation(), 
                                 0, 0);
 
-  ReplacingStmt = SynthMessageExpr(MsgExpr);
+  Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
     
   ReplaceStmt(PropRefExpr, ReplacingStmt);
-  
-  PropGetters[PropRefExpr] = ReplacingStmt;
-  
+    
   // delete PropRefExpr; elsewhere...
   delete MsgExpr;
   return ReplacingStmt;
@@ -1074,7 +1077,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
         MemberExpr *ME = new MemberExpr(PE, true, D, IV->getLocation(),
                                         D->getType());
         ReplaceStmt(IV, ME);
-        delete IV;
+        // delete IV; leak for now, see RewritePropertySetter() usage for more info.
         return ME;
       }
        
@@ -1630,7 +1633,7 @@ Stmt *RewriteObjC::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   ReplaceStmt(Exp, Replacement);
   
   // Replace this subexpr in the parent.
-  delete Exp;
+  // delete Exp; leak for now, see RewritePropertySetter() usage for more info.
   return Replacement;
 }
 
@@ -1646,7 +1649,7 @@ Stmt *RewriteObjC::RewriteAtSelector(ObjCSelectorExpr *Exp) {
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
                                                  &SelExprs[0], SelExprs.size());
   ReplaceStmt(Exp, SelExp);
-  delete Exp;
+  // delete Exp; leak for now, see RewritePropertySetter() usage for more info.
   return SelExp;
 }
 
@@ -2045,7 +2048,7 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   CastExpr *cast = new CStyleCastExpr(Exp->getType(), Unop, 
                                          Exp->getType(), SourceLocation(), SourceLocation());
   ReplaceStmt(Exp, cast);
-  delete Exp;
+  // delete Exp; leak for now, see RewritePropertySetter() usage for more info.
   return cast;
 }
 
@@ -2440,7 +2443,7 @@ Stmt *RewriteObjC::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   // Now do the actual rewrite.
   ReplaceStmt(Exp, ReplacingStmt);
   
-  delete Exp;
+  // delete Exp; leak for now, see RewritePropertySetter() usage for more info. 
   return ReplacingStmt;
 }
 
@@ -2460,7 +2463,7 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
                                                     &ProtoExprs[0], 
                                                     ProtoExprs.size());
   ReplaceStmt(Exp, ProtoExp);
-  delete Exp;
+  // delete Exp; leak for now, see RewritePropertySetter() usage for more info.
   return ProtoExp;
   
 }
@@ -4074,6 +4077,38 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
       // Because the rewriter doesn't allow us to rewrite rewritten code,
       // we need to rewrite the right hand side prior to rewriting the setter.
       Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(BinOp->getRHS());
+      //
+      // Unlike the main iterator, we explicily avoid changing 'BinOp'. If
+      // we changed the RHS of BinOp, the rewriter would fail (since it needs
+      // to see the original expression). Consider this example:
+      //
+      // Foo *obj1, *obj2;
+      //
+      // obj1.i = [obj2 rrrr];
+      //
+      // 'BinOp' for the previous expression looks like:
+      //
+      // (BinaryOperator 0x231ccf0 'int' '='
+      //   (ObjCPropertyRefExpr 0x231cc70 'int' Kind=PropertyRef Property="i"
+      //     (DeclRefExpr 0x231cc50 'Foo *' Var='obj1' 0x231cbb0))
+      //   (ObjCMessageExpr 0x231ccb0 'int' selector=rrrr
+      //     (DeclRefExpr 0x231cc90 'Foo *' Var='obj2' 0x231cbe0)))
+      //
+      // 'newStmt' represents the rewritten message expression. For example:
+      //
+      // (CallExpr 0x231d300 'id':'struct objc_object *'
+      //   (ParenExpr 0x231d2e0 'int (*)(id, SEL)'
+      //     (CStyleCastExpr 0x231d2c0 'int (*)(id, SEL)'
+      //       (CStyleCastExpr 0x231d220 'void *'
+      //         (DeclRefExpr 0x231d200 'id (id, SEL, ...)' FunctionDecl='objc_msgSend' 0x231cdc0))))
+      //
+      // Note that 'newStmt' is passed to RewritePropertySetter so that it
+      // can be used as the setter argument. ReplaceStmt() will still 'see'
+      // the original RHS (since we haven't altered BinOp).
+      //
+      // This implies the Rewrite* routines can no longer delete the original 
+      // node. As a result, we now leak the original AST nodes.
+      //
       return RewritePropertySetter(BinOp, dyn_cast<Expr>(newStmt));
     } else {
       return RewritePropertyGetter(PropRefExpr);
