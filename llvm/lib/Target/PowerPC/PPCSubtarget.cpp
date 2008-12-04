@@ -141,7 +141,9 @@ bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV) const {
   // We never hae stubs if HasLazyResolverStubs=false or if in static mode.
   if (!HasLazyResolverStubs || TM.getRelocationModel() == Reloc::Static)
     return false;
-  
+  // Extra load is not needed for symbols with hidden visibility.
+  if (GV->hasHiddenVisibility())
+    return false;
   return GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
          GV->hasCommonLinkage() ||
          (GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode());

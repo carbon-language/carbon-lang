@@ -387,8 +387,9 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
 
     // External or weakly linked global variables need non-lazily-resolved stubs
     if (TM.getRelocationModel() != Reloc::Static) {
-      if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
-            GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
+      if (!GV->hasHiddenVisibility() &&
+          (GV->isDeclaration() || GV->hasWeakLinkage() ||
+           GV->hasLinkOnceLinkage() || GV->hasCommonLinkage())) {
         GVStubs.insert(Name);
         printSuffixedName(Name, "$non_lazy_ptr");
         if (GV->hasExternalWeakLinkage())

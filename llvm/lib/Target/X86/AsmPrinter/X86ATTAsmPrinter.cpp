@@ -391,6 +391,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
             FnStubs.insert(Name);
             printSuffixedName(Name, "$stub");
           }
+        } else if (GV->hasHiddenVisibility()) {
+          O << Name;
         } else {
           GVStubs.insert(Name);
           printSuffixedName(Name, "$non_lazy_ptr");

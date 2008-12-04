@@ -40,6 +40,9 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
   if (TM.getRelocationModel() != Reloc::Static &&
       TM.getCodeModel() != CodeModel::Large) {
     if (isTargetDarwin()) {
+      if (GV->hasHiddenVisibility())
+        // Extra load is not needed for symbols with hidden visibility.
+        return false;
       return (!isDirectCall &&
               (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
                GV->hasCommonLinkage() ||
