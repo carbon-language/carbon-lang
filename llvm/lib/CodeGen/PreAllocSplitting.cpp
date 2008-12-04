@@ -153,6 +153,9 @@ namespace {
 
     bool SplitRegLiveIntervals(const TargetRegisterClass **);
     
+    void RepairLiveInterval(LiveInterval* CurrLI, VNInfo* ValNo,
+                            MachineInstr* DefMI, unsigned RestoreIdx);
+    
     bool createsNewJoin(LiveRange* LR, MachineBasicBlock* DefMBB,
                         MachineBasicBlock* BarrierMBB);
     bool Rematerialize(unsigned vreg, VNInfo* ValNo,
@@ -640,35 +643,11 @@ PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo, MachineBasicBlock *MBB,
   return;
 }
 
-bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
-                                      MachineInstr* DefMI,
-                                      MachineBasicBlock::iterator RestorePt,
-                                      unsigned RestoreIdx,
-                                    SmallPtrSet<MachineInstr*, 4>& RefsInMBB) {
-  MachineBasicBlock& MBB = *RestorePt->getParent();
-  
-  MachineBasicBlock::iterator KillPt = BarrierMBB->end();
-  unsigned KillIdx = 0;
-  if (ValNo->def == ~0U || DefMI->getParent() == BarrierMBB)
-    KillPt = findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB, KillIdx);
-  else
-    KillPt = findNextEmptySlot(DefMI->getParent(), DefMI, KillIdx);
-  
-  if (KillPt == DefMI->getParent()->end())
-    return false;
-  
-  TII->reMaterialize(MBB, RestorePt, vreg, DefMI);
-  LIs->InsertMachineInstrInMaps(prior(RestorePt), RestoreIdx);
-  
-  if (KillPt->getParent() == BarrierMBB) {
-    UpdateRegisterInterval(ValNo, LIs->getUseIndex(KillIdx)+1,
-                           LIs->getDefIndex(RestoreIdx));
 
-    ++NumSplits;
-    ++NumRemats;
-    return true;
-  }
-
+void PreAllocSplitting::RepairLiveInterval(LiveInterval* CurrLI,
+                                           VNInfo* ValNo,
+                                           MachineInstr* DefMI,
+                                           unsigned RestoreIdx) {
   // Shrink wrap the live interval by walking up the CFG and find the
   // new kills.
   // Now let's find all the uses of the val#.
@@ -717,6 +696,37 @@ bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
   // point to re-start the live interval.
   UpdateRegisterInterval(ValNo, LIs->getUseIndex(BarrierIdx)+1,
                          LIs->getDefIndex(RestoreIdx));
+}
+bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
+                                      MachineInstr* DefMI,
+                                      MachineBasicBlock::iterator RestorePt,
+                                      unsigned RestoreIdx,
+                                    SmallPtrSet<MachineInstr*, 4>& RefsInMBB) {
+  MachineBasicBlock& MBB = *RestorePt->getParent();
+  
+  MachineBasicBlock::iterator KillPt = BarrierMBB->end();
+  unsigned KillIdx = 0;
+  if (ValNo->def == ~0U || DefMI->getParent() == BarrierMBB)
+    KillPt = findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB, KillIdx);
+  else
+    KillPt = findNextEmptySlot(DefMI->getParent(), DefMI, KillIdx);
+  
+  if (KillPt == DefMI->getParent()->end())
+    return false;
+  
+  TII->reMaterialize(MBB, RestorePt, vreg, DefMI);
+  LIs->InsertMachineInstrInMaps(prior(RestorePt), RestoreIdx);
+  
+  if (KillPt->getParent() == BarrierMBB) {
+    UpdateRegisterInterval(ValNo, LIs->getUseIndex(KillIdx)+1,
+                           LIs->getDefIndex(RestoreIdx));
+
+    ++NumSplits;
+    ++NumRemats;
+    return true;
+  }
+
+  RepairLiveInterval(CurrLI, ValNo, DefMI, RestoreIdx);
 
   ++NumSplits;
   ++NumRemats;
@@ -908,54 +918,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   UpdateSpillSlotInterval(ValNo, LIs->getUseIndex(SpillIndex)+1,
                           LIs->getDefIndex(RestoreIndex));
 
-  // Shrink wrap the live interval by walking up the CFG and find the
-  // new kills.
-  // Now let's find all the uses of the val#.
-  DenseMap<MachineBasicBlock*, SmallVector<MachineOperand*, 4> > Uses;
-  DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 4> > UseMIs;
-  SmallPtrSet<MachineBasicBlock*, 4> Seen;
-  SmallVector<MachineBasicBlock*, 4> UseMBBs;
-  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(CurrLI->reg),
-         UE = MRI->use_end(); UI != UE; ++UI) {
-    MachineOperand &UseMO = UI.getOperand();
-    MachineInstr *UseMI = UseMO.getParent();
-    unsigned UseIdx = LIs->getInstructionIndex(UseMI);
-    LiveInterval::iterator ULR = CurrLI->FindLiveRangeContaining(UseIdx);
-    if (ULR->valno != ValNo)
-      continue;
-    MachineBasicBlock *UseMBB = UseMI->getParent();
-    // Remember which other mbb's use this val#.
-    if (Seen.insert(UseMBB) && UseMBB != BarrierMBB)
-      UseMBBs.push_back(UseMBB);
-    DenseMap<MachineBasicBlock*, SmallVector<MachineOperand*, 4> >::iterator
-      UMII = Uses.find(UseMBB);
-    if (UMII != Uses.end()) {
-      DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 4> >::iterator
-        UMII2 = UseMIs.find(UseMBB);
-      UMII->second.push_back(&UseMO);
-      UMII2->second.insert(UseMI);
-    } else {
-      SmallVector<MachineOperand*, 4> Ops;
-      Ops.push_back(&UseMO);
-      Uses.insert(std::make_pair(UseMBB, Ops));
-      SmallPtrSet<MachineInstr*, 4> MIs;
-      MIs.insert(UseMI);
-      UseMIs.insert(std::make_pair(UseMBB, MIs));
-    }
-  }
-
-  // Walk up the predecessor chains.
-  SmallPtrSet<MachineBasicBlock*, 8> Visited;
-  ShrinkWrapLiveInterval(ValNo, BarrierMBB, NULL, DefMBB, Visited,
-                         Uses, UseMIs, UseMBBs);
-
-  // FIXME: If ValNo->hasPHIKill is false, then renumber the val# by
-  // the restore.
-
-  // Remove live range from barrier to the restore. FIXME: Find a better
-  // point to re-start the live interval.
-  UpdateRegisterInterval(ValNo, LIs->getUseIndex(BarrierIdx)+1,
-                         LIs->getDefIndex(RestoreIndex));
+  RepairLiveInterval(CurrLI, ValNo, DefMI, RestoreIndex);
 
   ++NumSplits;
   return true;
