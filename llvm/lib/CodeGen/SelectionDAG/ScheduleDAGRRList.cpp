@@ -1300,7 +1300,7 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
              (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||
              (!SU->isCommutable && SuccSU->isCommutable)) &&
             !scheduleDAG->IsReachable(SuccSU, SU)) {
-          DOUT << "Adding an edge from SU # " << SU->NodeNum
+          DOUT << "Adding a pseudo-two-addr edge from SU # " << SU->NodeNum
                << " to SU #" << SuccSU->NodeNum << "\n";
           scheduleDAG->AddPred(SU, SuccSU, true, true);
         }
