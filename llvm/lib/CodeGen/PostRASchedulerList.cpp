@@ -428,9 +428,10 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
                "Kill and Def maps aren't consistent for NewReg!");
         if (KillIndices[NewReg] == -1u &&
             KillIndices[AntiDepReg] <= DefIndices[NewReg]) {
-          DOUT << "Breaking anti-dependence edge on reg " << AntiDepReg
+          DOUT << "Breaking anti-dependence edge on "
+               << TRI->getName(AntiDepReg)
                << " with " << RegRefs.count(AntiDepReg) << " references"
-               << " with new reg " << NewReg << "!\n";
+               << " using " << TRI->getName(NewReg) << "!\n";
 
           // Update the references to the old register to refer to the new
           // register.
