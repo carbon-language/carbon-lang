@@ -15,7 +15,6 @@
 #define LLVM_CLANG_AST_EXPROBJC_H
 
 #include "clang/AST/Expr.h"
-#include "clang/AST/DeclObjC.h"
 #include "clang/Basic/IdentifierTable.h"
 
 namespace clang {
@@ -214,9 +213,7 @@ public:
   }
   
   virtual SourceRange getSourceRange() const {
-    unsigned IDLen = AsProperty->getIdentifier()->getLength();
-    return SourceRange(getBase()->getLocStart(), 
-                       IdLoc.getFileLocWithOffset(IDLen-1)); 
+    return SourceRange(getBase()->getLocStart(), IdLoc);
   }
   const Expr *getBase() const { return cast<Expr>(Base); }
   Expr *getBase() { return cast<Expr>(Base); }
