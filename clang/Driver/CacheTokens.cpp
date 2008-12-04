@@ -136,11 +136,10 @@ Offset EmitFileTable(llvm::raw_fd_ostream& Out, SourceManager& SM, PCHMap& PM) {
 
   for (PCHMap::iterator I=PM.begin(), E=PM.end(); I!=E; ++I) {
     const FileEntry* FE = I->first;
-    llvm::sys::Path P(FE->getName());
-    assert(P.isAbsolute());
-    Emit32(Out, P.size());
-    const char* buf = P.c_str();
-    EmitBuf(Out, buf, buf+P.size());
+    const char* Name = FE->getName();
+    unsigned size = strlen(Name);
+    Emit32(Out, size);
+    EmitBuf(Out, Name, Name+size);
     Emit32(Out, I->second);    
   }
 
