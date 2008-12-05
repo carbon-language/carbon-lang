@@ -2141,8 +2141,6 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       // This doesn't work for several reasons.
       // 1. GlobalBaseReg may have been spilled.
       // 2. It may not be live at MI.
-      // 3. If this is used during register allocation / spilling, the spiller
-      // must know not to spill GlobalBaseReg (which is a temporary nasty hack).
       return false;
 
     // Create a v4i32 constant-pool entry.

@@ -2059,15 +2059,17 @@ addIntervalsForSpills(const LiveInterval &li,
           if (isLoadSS || ReMatDefMI->getDesc().canFoldAsLoad())
             Folded = tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index,
                                           Ops, isLoadSS, LdSlot, VReg);
-          unsigned ImpUse = getReMatImplicitUse(li, ReMatDefMI);
-          if (ImpUse) {
-            // Re-matting an instruction with virtual register use. Add the
-            // register as an implicit use on the use MI and update the register
-            // interval's spill weight to HUGE_VALF to prevent it from being
-            // spilled.
-            LiveInterval &ImpLi = getInterval(ImpUse);
-            ImpLi.weight = HUGE_VALF;
-            MI->addOperand(MachineOperand::CreateReg(ImpUse, false, true));
+          if (!Folded) {
+            unsigned ImpUse = getReMatImplicitUse(li, ReMatDefMI);
+            if (ImpUse) {
+              // Re-matting an instruction with virtual register use. Add the
+              // register as an implicit use on the use MI and update the register
+              // interval's spill weight to HUGE_VALF to prevent it from being
+              // spilled.
+              LiveInterval &ImpLi = getInterval(ImpUse);
+              ImpLi.weight = HUGE_VALF;
+              MI->addOperand(MachineOperand::CreateReg(ImpUse, false, true));
+            }
           }
         }
       }
