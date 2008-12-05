@@ -1800,7 +1800,7 @@ addIntervalsForSpills(const LiveInterval &li,
   // Spill slot weight.
   SSWeight = 0.0f;
 
-  // Each bit specify whether it a spill is required in the MBB.
+  // Each bit specify whether a spill is required in the MBB.
   BitVector SpillMBBs(mf_->getNumBlockIDs());
   DenseMap<unsigned, std::vector<SRInfo> > SpillIdxes;
   BitVector RestoreMBBs(mf_->getNumBlockIDs());
