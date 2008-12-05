@@ -15,25 +15,15 @@ NSInteger codeAssistantCaseCompareItems(id<PBXCompletionItem> a, id<PBXCompletio
 {
 }
 
-#if 0
-FIXME: clang needs to compare each method prototype with its definition (see below).
-
-GCC produces the following correct warnning:
-[snaroff:llvm/tools/clang] snarofflocal% cc -c test/Sema/objc-types-compatible.m 
-test/Sema/objc-types-compatible.m: In function ‘-[TedWantsToVerifyObjCDoesTheRightThing compareThis:withThat:]’:
-test/Sema/objc-types-compatible.m:26: warning: conflicting types for ‘-(id)compareThis:(id <PBXCompletionItem>)a withThat:(id <PBXCompletionItem>)b’
-test/Sema/objc-types-compatible.m:20: warning: previous declaration of ‘-(id)compareThis:(int)a withThat:(id)b’
-#endif
-
 @interface TedWantsToVerifyObjCDoesTheRightThing
 
-- compareThis:(int)a withThat:(id)b;
+- compareThis:(int)a withThat:(id)b;  // expected-note {{previous definition is here}}
 
 @end
 
 @implementation TedWantsToVerifyObjCDoesTheRightThing
 
-- compareThis:(id<PBXCompletionItem>)a withThat:(id<PBXCompletionItem>)b {
+- compareThis:(id<PBXCompletionItem>)a withThat:(id<PBXCompletionItem>)b { // expected-error {{conflicting types for 'compareThis:withThat:'}}
   return self;
 }
 

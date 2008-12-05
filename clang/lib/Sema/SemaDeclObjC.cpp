@@ -643,6 +643,34 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl,
        E = IDecl->instmeth_end(); I != E; ++I)
     if (!(*I)->isSynthesized() && !InsMap.count((*I)->getSelector()))
       WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
+    else if (!(*I)->isSynthesized()){
+      bool err = false;
+      ObjCMethodDecl *ImpMethodDecl = 
+        IMPDecl->getInstanceMethod((*I)->getSelector());
+      ObjCMethodDecl *IntfMethodDecl = 
+        IDecl->getInstanceMethod((*I)->getSelector());
+      QualType ImpMethodQType = 
+        Context.getCanonicalType(ImpMethodDecl->getResultType());
+      QualType IntfMethodQType = 
+        Context.getCanonicalType(IntfMethodDecl->getResultType());
+      if (!Context.typesAreCompatible(IntfMethodQType, ImpMethodQType))
+        err = true;
+      else for (ObjCMethodDecl::param_iterator IM=ImpMethodDecl->param_begin(),
+                IF=IntfMethodDecl->param_begin(),
+                EM=ImpMethodDecl->param_end(); IM!=EM; ++IM, IF++) {
+        ImpMethodQType = Context.getCanonicalType((*IM)->getType());
+        IntfMethodQType = Context.getCanonicalType((*IF)->getType());
+        if (!Context.typesAreCompatible(IntfMethodQType, ImpMethodQType)) {
+          err = true;
+          break;
+        }
+      }
+      if (err) {
+        Diag(ImpMethodDecl->getLocation(), diag::err_conflicting_types) 
+          << ImpMethodDecl->getDeclName();
+        Diag(IntfMethodDecl->getLocation(), diag::note_previous_definition);
+      }
+    }
       
   llvm::DenseSet<Selector> ClsMap;
   // Check and see if class methods in class interface have been

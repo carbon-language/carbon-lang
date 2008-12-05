@@ -16,6 +16,6 @@
 
 @implementation MyClass
 - (void)myMethod { }
-- (void)myMethod2 { }
+- (vid)myMethod2 { }	// expected-error {{expected a type}}
 @end
 
