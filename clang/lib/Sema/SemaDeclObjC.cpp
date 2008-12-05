@@ -1506,10 +1506,41 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
                                   ObjCPropertyImplDecl::Synthesize 
                                   : ObjCPropertyImplDecl::Dynamic),
                                  Ivar);
-  if (IC)
+  if (IC) {
+    if (Synthesize)
+      if (ObjCPropertyImplDecl *PPIDecl = 
+          IC->FindPropertyImplIvarDecl(PropertyIvar)) {
+        Diag(PropertyLoc, diag::error_duplicate_ivar_use) 
+          << PropertyId << PPIDecl->getPropertyDecl()->getIdentifier() 
+          << PropertyIvar;
+        Diag(PPIDecl->getLocation(), diag::note_previous_use);
+      }
+    
+    if (ObjCPropertyImplDecl *PPIDecl = IC->FindPropertyImplDecl(PropertyId)) {
+      Diag(PropertyLoc, diag::error_property_implemented) << PropertyId;
+      Diag(PPIDecl->getLocation(), diag::note_previous_declaration);
+      return 0;
+    }
     IC->addPropertyImplementation(PIDecl);
-  else
+  }
+  else {
+    if (Synthesize)
+      if (ObjCPropertyImplDecl *PPIDecl = 
+          CatImplClass->FindPropertyImplIvarDecl(PropertyIvar)) {
+        Diag(PropertyLoc, diag::error_duplicate_ivar_use) 
+          << PropertyId << PPIDecl->getPropertyDecl()->getIdentifier() 
+          << PropertyIvar;
+        Diag(PPIDecl->getLocation(), diag::note_previous_use);
+      }
+    
+    if (ObjCPropertyImplDecl *PPIDecl = 
+          CatImplClass->FindPropertyImplDecl(PropertyId)) {
+      Diag(PropertyLoc, diag::error_property_implemented) << PropertyId;
+      Diag(PPIDecl->getLocation(), diag::note_previous_declaration);
+      return 0;
+    }    
     CatImplClass->addPropertyImplementation(PIDecl);
+  }
     
   return PIDecl;
 }

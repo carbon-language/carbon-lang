@@ -716,6 +716,60 @@ ObjCMethodDecl *ObjCImplementationDecl::getClassMethod(Selector Sel) const {
   return NULL;
 }
 
+/// FindPropertyImplDecl - This method looks up a previous ObjCPropertyImplDecl
+/// added to the list of those properties @synthesized/@dynamic in this
+/// @implementation block.
+///
+ObjCPropertyImplDecl *ObjCImplementationDecl::FindPropertyImplDecl(IdentifierInfo *Id) const {
+  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i) {
+    ObjCPropertyImplDecl *PID = *i;
+    if (PID->getPropertyDecl()->getIdentifier() == Id)
+      return PID;
+  }
+  return 0;
+}
+
+/// FindPropertyImplIvarDecl - This method lookup the ivar in the list of
+/// properties implemented in this @implementation block and returns it if 
+/// found.
+///
+ObjCPropertyImplDecl *ObjCImplementationDecl::FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
+  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i) {
+    ObjCPropertyImplDecl *PID = *i;
+    if (PID->getPropertyIvarDecl() &&
+        PID->getPropertyIvarDecl()->getIdentifier() == ivarId)
+      return PID;
+  }
+  return 0;
+}
+
+/// FindPropertyImplIvarDecl - This method lookup the ivar in the list of
+/// properties implemented in this category @implementation block and returns it if 
+/// found.
+///
+ObjCPropertyImplDecl *ObjCCategoryImplDecl::FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
+  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i) {
+    ObjCPropertyImplDecl *PID = *i;
+    if (PID->getPropertyIvarDecl() &&
+        PID->getPropertyIvarDecl()->getIdentifier() == ivarId)
+      return PID;
+  }
+  return 0;
+}
+
+/// FindPropertyImplDecl - This method looks up a previous ObjCPropertyImplDecl
+/// added to the list of those properties @synthesized/@dynamic in this
+/// category @implementation block.
+///
+ObjCPropertyImplDecl *ObjCCategoryImplDecl::FindPropertyImplDecl(IdentifierInfo *Id) const {
+  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i) {
+    ObjCPropertyImplDecl *PID = *i;
+    if (PID->getPropertyDecl()->getIdentifier() == Id)
+      return PID;
+  }
+  return 0;
+}
+
 // lookupInstanceMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.

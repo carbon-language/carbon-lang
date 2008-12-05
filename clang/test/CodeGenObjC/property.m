@@ -9,6 +9,7 @@
 
 @interface A : Root {
   int x;
+  int y, ro, z;
   id ob0, ob1, ob2, ob3, ob4;
 }
 @property int x;
@@ -24,10 +25,9 @@
 
 @implementation A
 @dynamic x;
-@synthesize x;
-@synthesize y = x;
-@synthesize z = x;
-@synthesize ro = x;
+@synthesize y;
+@synthesize z = z;
+@synthesize ro;
 @synthesize ob0;
 @synthesize ob1;
 @synthesize ob2;

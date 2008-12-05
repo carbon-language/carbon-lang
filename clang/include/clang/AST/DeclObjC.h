@@ -1005,6 +1005,9 @@ public:
     PropertyImplementations.push_back(property);
   }
 
+  ObjCPropertyImplDecl *FindPropertyImplDecl(IdentifierInfo *propertyId) const;
+  ObjCPropertyImplDecl *FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const;
+  
   unsigned getNumPropertyImplementations() const
   { return PropertyImplementations.size(); }
   
@@ -1101,6 +1104,10 @@ public:
   void addPropertyImplementation(ObjCPropertyImplDecl *property) {
     PropertyImplementations.push_back(property);
   } 
+
+  ObjCPropertyImplDecl *FindPropertyImplDecl(IdentifierInfo *propertyId) const;
+  ObjCPropertyImplDecl *FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const;
+
   typedef llvm::SmallVector<ObjCPropertyImplDecl*, 8>::const_iterator
   propimpl_iterator;
   propimpl_iterator propimpl_begin() const { 

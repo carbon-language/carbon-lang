@@ -575,6 +575,10 @@ DIAG(err_setter_type_void, ERROR,
      "type of setter must be void")
 DIAG(warn_conflicting_types, WARNING,
      "conflicting types for %0")
+DIAG(error_property_implemented, ERROR,
+     "property %0 is already implemented")
+DIAG(error_duplicate_ivar_use, ERROR,
+     "synthesized properties %0 and %1 both claim ivar %2")
 
 /// C++ parser diagnostics
 DIAG(err_expected_unqualified_id, ERROR,
