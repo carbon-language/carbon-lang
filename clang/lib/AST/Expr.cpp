@@ -103,7 +103,10 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 
 CallExpr::CallExpr(StmtClass SC, Expr *fn, Expr **args, unsigned numargs, 
                    QualType t, SourceLocation rparenloc)
-  : Expr(SC, t), NumArgs(numargs) {
+  : Expr(SC, t, 
+         fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
+         fn->isValueDependent() || hasAnyValueDependentArguments(args, numargs)),
+    NumArgs(numargs) {
   SubExprs = new Stmt*[numargs+1];
   SubExprs[FN] = fn;
   for (unsigned i = 0; i != numargs; ++i)
@@ -113,7 +116,10 @@ CallExpr::CallExpr(StmtClass SC, Expr *fn, Expr **args, unsigned numargs,
 
 CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
                    SourceLocation rparenloc)
-  : Expr(CallExprClass, t), NumArgs(numargs) {
+  : Expr(CallExprClass, t,
+         fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
+         fn->isValueDependent() || hasAnyValueDependentArguments(args, numargs)),
+    NumArgs(numargs) {
   SubExprs = new Stmt*[numargs+1];
   SubExprs[FN] = fn;
   for (unsigned i = 0; i != numargs; ++i)
@@ -629,6 +635,26 @@ Expr *Expr::IgnoreParenCasts() {
     else
       return E;
   }
+}
+
+/// hasAnyTypeDependentArguments - Determines if any of the expressions
+/// in Exprs is type-dependent.
+bool Expr::hasAnyTypeDependentArguments(Expr** Exprs, unsigned NumExprs) {
+  for (unsigned I = 0; I < NumExprs; ++I)
+    if (Exprs[I]->isTypeDependent())
+      return true;
+
+  return false;
+}
+
+/// hasAnyValueDependentArguments - Determines if any of the expressions
+/// in Exprs is value-dependent.
+bool Expr::hasAnyValueDependentArguments(Expr** Exprs, unsigned NumExprs) {
+  for (unsigned I = 0; I < NumExprs; ++I)
+    if (Exprs[I]->isValueDependent())
+      return true;
+
+  return false;
 }
 
 bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {

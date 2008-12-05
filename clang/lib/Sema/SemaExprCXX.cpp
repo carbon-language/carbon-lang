@@ -163,9 +163,9 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   //
   if (Ty->isArrayType())
     return Diag(TyBeginLoc, diag::err_value_init_for_array_type) << FullRange;
-  if (Ty->isIncompleteType() && !Ty->isVoidType())
+  if (!Ty->isDependentType() && Ty->isIncompleteType() && !Ty->isVoidType())
     return Diag(TyBeginLoc, diag::err_invalid_incomplete_type_use) 
-      << Ty << FullRange;
+             << Ty << FullRange;
 
   return new CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc);
 }

@@ -315,6 +315,26 @@ Type* VariableArrayType::CreateImpl(ASTContext& Context, Deserializer& D) {
 }
 
 //===----------------------------------------------------------------------===//
+// DependentSizedArrayType
+//===----------------------------------------------------------------------===//
+
+void DependentSizedArrayType::EmitImpl(Serializer& S) const {
+  S.Emit(getElementType());
+  S.EmitInt(getSizeModifier());
+  S.EmitInt(getIndexTypeQualifier());
+  S.EmitOwnedPtr(SizeExpr);
+}
+
+Type* DependentSizedArrayType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  QualType ElTy = QualType::ReadVal(D);
+  ArraySizeModifier am = static_cast<ArraySizeModifier>(D.ReadInt());
+  unsigned ITQ = D.ReadInt();  
+  Expr* SizeExpr = D.ReadOwnedPtr<Expr>(Context);
+  
+  return Context.getDependentSizedArrayType(ElTy,SizeExpr,am,ITQ).getTypePtr();
+}
+
+//===----------------------------------------------------------------------===//
 // IncompleteArrayType
 //===----------------------------------------------------------------------===//
 

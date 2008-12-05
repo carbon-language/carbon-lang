@@ -391,6 +391,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
       llvm::APSInt ConstVal(32);
       if (!ArraySize) {
         T = Context.getIncompleteArrayType(T, ASM, ATI.TypeQuals);
+      } else if (ArraySize->isValueDependent()) {
+        T = Context.getDependentSizedArrayType(T, ArraySize, ASM, ATI.TypeQuals);
       } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context) ||
                  !T->isConstantSizeType()) {
         // Per C99, a variable array is an array with either a non-constant
@@ -416,7 +418,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
       // If this is not C99, extwarn about VLA's and C99 array size modifiers.
       if (!getLangOptions().C99 &&
           (ASM != ArrayType::Normal ||
-           (ArraySize && !ArraySize->isIntegerConstantExpr(Context))))
+           (ArraySize && !ArraySize->isValueDependent() && 
+            !ArraySize->isIntegerConstantExpr(Context))))
         Diag(D.getIdentifierLoc(), diag::ext_vla);
       break;
     }

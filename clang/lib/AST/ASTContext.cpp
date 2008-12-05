@@ -183,7 +183,14 @@ void ASTContext::InitBuiltinTypes() {
   InitBuiltinType(WCharTy,             BuiltinType::WChar);
 
   // Placeholder type for functions.
-  InitBuiltinType(OverloadTy,         BuiltinType::Overload);
+  InitBuiltinType(OverloadTy,          BuiltinType::Overload);
+
+  // Placeholder type for type-dependent expressions whose type is
+  // completely unknown. No code should ever check a type against
+  // DependentTy and users should never see it; however, it is here to
+  // help diagnose failures to properly check for type-dependent
+  // expressions.
+  InitBuiltinType(DependentTy,         BuiltinType::Dependent);
 
   // C99 6.2.5p11.
   FloatComplexTy      = getComplexType(FloatTy);
@@ -235,6 +242,8 @@ ASTContext::getTypeInfo(const Type *T) {
     assert(0 && "Incomplete types have no size!");
   case Type::VariableArray:
     assert(0 && "VLAs not implemented yet!");
+  case Type::DependentSizedArray:
+    assert(0 && "Dependently-sized arrays don't have a known size");
   case Type::ConstantArray: {
     const ConstantArrayType *CAT = cast<ConstantArrayType>(T);
     
@@ -759,6 +768,28 @@ QualType ASTContext::getVariableArrayType(QualType EltTy, Expr *NumElts,
   return QualType(New, 0);
 }
 
+/// getDependentSizedArrayType - Returns a non-unique reference to
+/// the type for a dependently-sized array of the specified element
+/// type. FIXME: We will need these to be uniqued, or at least
+/// comparable, at some point.
+QualType ASTContext::getDependentSizedArrayType(QualType EltTy, Expr *NumElts,
+                                                ArrayType::ArraySizeModifier ASM,
+                                                unsigned EltTypeQuals) {
+  assert((NumElts->isTypeDependent() || NumElts->isValueDependent()) && 
+         "Size must be type- or value-dependent!");
+
+  // Since we don't unique expressions, it isn't possible to unique
+  // dependently-sized array types.
+
+  DependentSizedArrayType *New 
+    = new DependentSizedArrayType(EltTy, QualType(), NumElts, 
+                                  ASM, EltTypeQuals);
+
+  DependentSizedArrayTypes.push_back(New);
+  Types.push_back(New);
+  return QualType(New, 0);
+}
+
 QualType ASTContext::getIncompleteArrayType(QualType EltTy,
                                             ArrayType::ArraySizeModifier ASM,
                                             unsigned EltTypeQuals) {
@@ -1174,6 +1205,11 @@ QualType ASTContext::getCanonicalType(QualType T) {
     return getIncompleteArrayType(NewEltTy, IAT->getSizeModifier(),
                                   IAT->getIndexTypeQualifier());
   
+  if (DependentSizedArrayType *DSAT = dyn_cast<DependentSizedArrayType>(AT))
+    return getDependentSizedArrayType(NewEltTy, DSAT->getSizeExpr(),
+                                      DSAT->getSizeModifier(),
+                                      DSAT->getIndexTypeQualifier());    
+
   // FIXME: What is the ownership of size expressions in VLAs?
   VariableArrayType *VAT = cast<VariableArrayType>(AT);
   return getVariableArrayType(NewEltTy, VAT->getSizeExpr(),
@@ -1246,6 +1282,16 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
     return cast<ArrayType>(getIncompleteArrayType(NewEltTy,
                                                   IAT->getSizeModifier(),
                                                  IAT->getIndexTypeQualifier()));
+
+  // FIXME: What is the ownership of size expressions in
+  // dependent-sized array types?
+  if (const DependentSizedArrayType *DSAT 
+        = dyn_cast<DependentSizedArrayType>(ATy))
+    return cast<ArrayType>(
+                     getDependentSizedArrayType(NewEltTy, 
+                                                DSAT->getSizeExpr(),
+                                                DSAT->getSizeModifier(),
+                                                DSAT->getIndexTypeQualifier()));
   
   // FIXME: What is the ownership of size expressions in VLAs?
   const VariableArrayType *VAT = cast<VariableArrayType>(ATy);

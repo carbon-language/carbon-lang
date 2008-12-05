@@ -60,6 +60,7 @@ class ASTContext {
   llvm::FoldingSet<ConstantArrayType> ConstantArrayTypes;
   llvm::FoldingSet<IncompleteArrayType> IncompleteArrayTypes;
   std::vector<VariableArrayType*> VariableArrayTypes;
+  std::vector<DependentSizedArrayType*> DependentSizedArrayTypes;
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
@@ -142,6 +143,7 @@ public:
   QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   QualType VoidPtrTy;
   QualType OverloadTy;
+  QualType DependentTy;
 
   ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,
@@ -183,6 +185,14 @@ public:
   QualType getVariableArrayType(QualType EltTy, Expr *NumElts,
                                 ArrayType::ArraySizeModifier ASM,
                                 unsigned EltTypeQuals);
+  
+  /// getDependentSizedArrayType - Returns a non-unique reference to
+  /// the type for a dependently-sized array of the specified element
+  /// type. FIXME: We will need these to be uniqued, or at least
+  /// comparable, at some point.
+  QualType getDependentSizedArrayType(QualType EltTy, Expr *NumElts,
+				      ArrayType::ArraySizeModifier ASM,
+				      unsigned EltTypeQuals);
 
   /// getIncompleteArrayType - Returns a unique reference to the type for a
   /// incomplete array of the specified element type.

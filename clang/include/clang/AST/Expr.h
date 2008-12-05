@@ -38,8 +38,27 @@ namespace clang {
 ///
 class Expr : public Stmt {
   QualType TR;
+
+  /// TypeDependent - Whether this expression is type-dependent 
+  /// (C++ [temp.dep.expr]).
+  bool TypeDependent : 1;
+
+  /// ValueDependent - Whether this expression is value-dependent 
+  /// (C++ [temp.dep.constexpr]).
+  bool ValueDependent : 1;
+
 protected:
-  Expr(StmtClass SC, QualType T) : Stmt(SC) { setType(T); }
+  // FIXME: Eventually, this constructor should go away and we should
+  // require every subclass to provide type/value-dependence
+  // information.
+  Expr(StmtClass SC, QualType T) 
+    : Stmt(SC), TypeDependent(false), ValueDependent(false) { setType(T); }
+
+  Expr(StmtClass SC, QualType T, bool TD, bool VD)
+    : Stmt(SC), TypeDependent(TD), ValueDependent(VD) {
+    setType(T);
+  }
+
 public:  
   QualType getType() const { return TR; }
   void setType(QualType t) { 
@@ -55,6 +74,28 @@ public:
 
     TR = t; 
   }
+
+  /// isValueDependent - Determines whether this expression is
+  /// value-dependent (C++ [temp.dep.constexpr]). For example, the
+  /// array bound of "Chars" in the following example is
+  /// value-dependent. 
+  /// @code
+  /// template<int Size, char (&Chars)[Size]> struct meta_string;
+  /// @endcode
+  bool isValueDependent() const { return ValueDependent; }
+
+  /// isTypeDependent - Determines whether this expression is
+  /// type-dependent (C++ [temp.dep.expr]), which means that its type
+  /// could change from one template instantiation to the next. For
+  /// example, the expressions "x" and "x + y" are type-dependent in
+  /// the following code, but "y" is not type-dependent:
+  /// @code
+  /// template<typename T> 
+  /// void add(T x, int y) {
+  ///   x + y;
+  /// }
+  /// @endcode
+  bool isTypeDependent() const { return TypeDependent; }
 
   /// SourceLocation tokens are not useful in isolation - they are low level
   /// value objects created/interpreted by SourceManager. We assume AST
@@ -204,7 +245,10 @@ public:
   const Expr *IgnoreParenCasts() const {
     return const_cast<Expr*>(this)->IgnoreParenCasts();
   }
-  
+
+  static bool hasAnyTypeDependentArguments(Expr** Exprs, unsigned NumExprs);
+  static bool hasAnyValueDependentArguments(Expr** Exprs, unsigned NumExprs);
+
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() >= firstExprConstant &&
            T->getStmtClass() <= lastExprConstant; 
@@ -232,8 +276,13 @@ protected:
     Expr(SC, t), D(d), Loc(l) {}
 
 public:
+  // FIXME: Eventually, this constructor will go away and all clients
+  // will have to provide the type- and value-dependent flags.
   DeclRefExpr(NamedDecl *d, QualType t, SourceLocation l) : 
     Expr(DeclRefExprClass, t), D(d), Loc(l) {}
+
+  DeclRefExpr(NamedDecl *d, QualType t, SourceLocation l, bool TD, bool VD) : 
+    Expr(DeclRefExprClass, t, TD, VD), D(d), Loc(l) {}
   
   NamedDecl *getDecl() { return D; }
   const NamedDecl *getDecl() const { return D; }
@@ -450,7 +499,9 @@ class ParenExpr : public Expr {
   Stmt *Val;
 public:
   ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
-    : Expr(ParenExprClass, val->getType()), L(l), R(r), Val(val) {}
+    : Expr(ParenExprClass, val->getType(),
+           val->isTypeDependent(), val->isValueDependent()), 
+      L(l), R(r), Val(val) {}
   
   const Expr *getSubExpr() const { return cast<Expr>(Val); }
   Expr *getSubExpr() { return cast<Expr>(Val); }
@@ -863,7 +914,14 @@ class CastExpr : public Expr {
   Stmt *Op;
 protected:
   CastExpr(StmtClass SC, QualType ty, Expr *op) : 
-    Expr(SC, ty), Op(op) {}
+    Expr(SC, ty,
+         // Cast expressions are type-dependent if the type is
+         // dependent (C++ [temp.dep.expr]p3).
+         ty->isDependentType(),
+         // Cast expressions are value-dependent if the type is
+         // dependent or if the subexpression is value-dependent.
+         ty->isDependentType() || (op && op->isValueDependent())), 
+    Op(op) {}
   
 public:
   Expr *getSubExpr() { return cast<Expr>(Op); }
@@ -1030,7 +1088,10 @@ public:
   
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy,
                  SourceLocation opLoc)
-    : Expr(BinaryOperatorClass, ResTy), Opc(opc), OpLoc(opLoc) {
+    : Expr(BinaryOperatorClass, ResTy,
+           lhs->isTypeDependent() || rhs->isTypeDependent(),
+           lhs->isValueDependent() || rhs->isValueDependent()), 
+      Opc(opc), OpLoc(opLoc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
     assert(!isCompoundAssignmentOp() && 
@@ -1128,7 +1189,14 @@ class ConditionalOperator : public Expr {
   Stmt* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
 public:
   ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs, QualType t)
-    : Expr(ConditionalOperatorClass, t) {
+    : Expr(ConditionalOperatorClass, t,
+           // FIXME: the type of the conditional operator doesn't
+           // depend on the type of the conditional, but the standard
+           // seems to imply that it could. File a bug!
+           ((lhs && lhs->isTypeDependent()) || (rhs && rhs->isTypeDependent())),
+           (cond->isValueDependent() || 
+            (lhs && lhs->isValueDependent()) ||
+            (rhs && rhs->isValueDependent()))) {
     SubExprs[COND] = cond;
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;

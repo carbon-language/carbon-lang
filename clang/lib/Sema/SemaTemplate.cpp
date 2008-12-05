@@ -12,6 +12,7 @@
 //+//===----------------------------------------------------------------------===/
 
 #include "Sema.h"
+#include "clang/AST/Expr.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
 

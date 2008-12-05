@@ -490,7 +490,52 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   }
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.
-  return new DeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc);
+
+  // C++ [temp.dep.expr]p3:
+  //   An id-expression is type-dependent if it contains:   
+  bool TypeDependent = false;
+
+  //     - an identifier that was declared with a dependent type,
+  if (VD->getType()->isDependentType())
+    TypeDependent = true;
+  //     - FIXME: a template-id that is dependent,
+  //     - a conversion-function-id that specifies a dependent type,
+  else if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName &&
+           Name.getCXXNameType()->isDependentType())
+    TypeDependent = true;
+  //     - a nested-name-specifier that contains a class-name that
+  //       names a dependent type.
+  else if (SS && !SS->isEmpty()) {
+    for (DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep()); 
+         DC; DC = DC->getParent()) {
+      // FIXME: could stop early at namespace scope.
+      if (DC->isCXXRecord()) {
+        CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
+        if (Context.getTypeDeclType(Record)->isDependentType()) {
+          TypeDependent = true;
+          break;
+        }
+      }
+    }
+  }
+
+  // C++ [temp.dep.constexpr]p2:
+  //
+  //   An identifier is value-dependent if it is:
+  bool ValueDependent = false;
+  
+  //     - a name declared with a dependent type,
+  if (TypeDependent)
+    ValueDependent = true;
+  //     - the name of a non-type template parameter,
+  else if (isa<NonTypeTemplateParmDecl>(VD))
+    ValueDependent = true;
+  //    - a constant with integral or enumeration type and is
+  //      initialized with an expression that is value-dependent
+  //      (FIXME!).
+
+  return new DeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc,
+                         TypeDependent, ValueDependent);
 }
 
 Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
@@ -1279,6 +1324,11 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   FunctionDecl *FDecl = NULL;
   OverloadedFunctionDecl *Ovl = NULL;
 
+  // FIXME: Will need to cache the results of name lookup (including
+  // ADL) in Fn.
+  if (Fn->isTypeDependent() || Expr::hasAnyTypeDependentArguments(Args, NumArgs))
+    return new CallExpr(Fn, Args, NumArgs, Context.DependentTy, RParenLoc);
+
   // If we're directly calling a function or a set of overloaded
   // functions, get the appropriate declaration.
   {
@@ -1318,6 +1368,7 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   // of arguments and function on error.
   llvm::OwningPtr<CallExpr> TheCall(new CallExpr(Fn, Args, NumArgs,
                                                  Context.BoolTy, RParenLoc));
+  
   const FunctionType *FuncT;
   if (!Fn->getType()->isBlockPointerType()) {
     // C99 6.5.2.2p1 - "The expression that denotes the called function shall
@@ -1470,6 +1521,8 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
   // type needs to be scalar.
   if (castType->isVoidType()) {
     // Cast to void allows any expr type.
+  } else if (castType->isDependentType() || castExpr->isTypeDependent()) {
+    // We can't check any more until template instantiation time.
   } else if (!castType->isScalarType() && !castType->isVectorType()) {
     // GCC struct/union extension: allow cast to self.
     if (Context.getCanonicalType(castType) !=
@@ -1541,13 +1594,17 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   QualType rexT = rex->getType();
 
   // first, check the condition.
-  if (!condT->isScalarType()) { // C99 6.5.15p2
-    Diag(cond->getLocStart(), diag::err_typecheck_cond_expect_scalar) << condT;
-    return QualType();
+  if (!cond->isTypeDependent()) {
+    if (!condT->isScalarType()) { // C99 6.5.15p2
+      Diag(cond->getLocStart(), diag::err_typecheck_cond_expect_scalar) << condT;
+      return QualType();
+    }
   }
   
   // Now check the two expressions.
-  
+  if ((lex && lex->isTypeDependent()) || (rex && rex->isTypeDependent()))
+    return Context.DependentTy;
+
   // If both operands have arithmetic type, do the usual arithmetic conversions
   // to find a common type: C99 6.5.15p3,5.
   if (lexT->isArithmeticType() && rexT->isArithmeticType()) {
@@ -2958,6 +3015,17 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
 
   assert((lhs != 0) && "ActOnBinOp(): missing left expression");
   assert((rhs != 0) && "ActOnBinOp(): missing right expression");
+
+  // If either expression is type-dependent, just build the AST.
+  // FIXME: We'll need to perform some caching of the result of name
+  // lookup for operator+.
+  if (lhs->isTypeDependent() || rhs->isTypeDependent()) {
+    if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign)
+      return new CompoundAssignOperator(lhs, rhs, Opc, Context.DependentTy, 
+                                        Context.DependentTy, TokLoc);
+    else
+      return new BinaryOperator(lhs, rhs, Opc, Context.DependentTy, TokLoc);
+  }
 
   if (getLangOptions().CPlusPlus &&
       (lhs->getType()->isRecordType() || lhs->getType()->isEnumeralType() ||

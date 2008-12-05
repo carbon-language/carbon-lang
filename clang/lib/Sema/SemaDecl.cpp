@@ -870,9 +870,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 
   if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
     // Maybe we will complain about the shadowed template parameter.
-    InvalidDecl 
-      = InvalidDecl || DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), 
-						       PrevDecl);
+    InvalidDecl = InvalidDecl 
+      || DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
     // Just pretend that we didn't see the previous declaration.
     PrevDecl = 0;
   }

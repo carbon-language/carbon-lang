@@ -51,6 +51,7 @@ namespace clang {
   class ConstantArrayType;
   class VariableArrayType;
   class IncompleteArrayType;
+  class DependentSizedArrayType;
   class RecordType;
   class EnumType;
   class ComplexType;
@@ -236,7 +237,7 @@ class Type {
 public:
   enum TypeClass {
     Builtin, Complex, Pointer, Reference, 
-    ConstantArray, VariableArray, IncompleteArray,
+    ConstantArray, VariableArray, IncompleteArray, DependentSizedArray,
     Vector, ExtVector,
     FunctionNoProto, FunctionProto,
     TypeName, Tagged, ASQual,
@@ -249,17 +250,21 @@ public:
 private:
   QualType CanonicalType;
 
+  /// Dependent - Whether this type is a dependent type (C++ [temp.dep.type]).
+  bool Dependent : 1;
+
   /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
   /// Note that this should stay at the end of the ivars for Type so that
   /// subclasses can pack their bitfields into the same word.
   unsigned TC : 5;
+
 protected:
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
-  Type(TypeClass tc, QualType Canonical)
+  Type(TypeClass tc, QualType Canonical, bool dependent)
     : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical),
-      TC(tc) {}
-  virtual ~Type() {};
+      Dependent(dependent), TC(tc) {}
+  virtual ~Type() {}
   virtual void Destroy(ASTContext& C);
   friend class ASTContext;
   
@@ -332,6 +337,7 @@ public:
   bool isConstantArrayType() const;
   bool isIncompleteArrayType() const;
   bool isVariableArrayType() const;
+  bool isDependentSizedArrayType() const;
   bool isRecordType() const;
   bool isClassType() const;   
   bool isStructureType() const;   
@@ -343,6 +349,11 @@ public:
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
   bool isTemplateTypeParmType() const;          // C++ template type parameter
+
+  /// isDependentType - Whether this type is a dependent type, meaning
+  /// that its definition somehow depends on a template parameter 
+  /// (C++ [temp.dep.type]).
+  bool isDependentType() const { return Dependent; }
   bool isOverloadType() const;                  // C++ overloaded function
 
   // Type Checking Functions: Check to see if this type is structurally the
@@ -357,7 +368,7 @@ public:
   const ReferenceType *getAsReferenceType() const;
   const RecordType *getAsRecordType() const;
   const RecordType *getAsStructureType() const;
-  /// NOTE: getAsArrayType* are methods on ASTContext.
+  /// NOTE: getAs*ArrayType are methods on ASTContext.
   const TypedefType *getAsTypedefType() const;
   const RecordType *getAsUnionType() const;
   const EnumType *getAsEnumType() const;
@@ -440,7 +451,8 @@ class ASQualType : public Type, public llvm::FoldingSetNode {
   /// Address Space ID - The address space ID this type is qualified with.
   unsigned AddressSpace;
   ASQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace) :
-    Type(ASQual, CanonicalPtr), BaseType(Base), AddressSpace(AddrSpace) {
+    Type(ASQual, CanonicalPtr, Base->isDependentType()), BaseType(Base), 
+    AddressSpace(AddrSpace) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -493,12 +505,15 @@ public:
     
     Float, Double, LongDouble,
 
-    Overload  // This represents the type of an overloaded function declaration.
+    Overload,  // This represents the type of an overloaded function declaration.
+    Dependent  // This represents the type of a type-dependent expression.
   };
 private:
   Kind TypeKind;
 public:
-  BuiltinType(Kind K) : Type(Builtin, QualType()), TypeKind(K) {}
+  BuiltinType(Kind K) 
+    : Type(Builtin, QualType(), /*Dependent=*/(K == Dependent)), 
+      TypeKind(K) {}
   
   Kind getKind() const { return TypeKind; }
   const char *getName() const;
@@ -515,7 +530,8 @@ public:
 class ComplexType : public Type, public llvm::FoldingSetNode {
   QualType ElementType;
   ComplexType(QualType Element, QualType CanonicalPtr) :
-    Type(Complex, CanonicalPtr), ElementType(Element) {
+    Type(Complex, CanonicalPtr, Element->isDependentType()), 
+    ElementType(Element) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -548,7 +564,7 @@ class PointerLikeType : public Type {
   QualType PointeeType;
 protected:
   PointerLikeType(TypeClass K, QualType Pointee, QualType CanonicalPtr) :
-    Type(K, CanonicalPtr), PointeeType(Pointee) {
+    Type(K, CanonicalPtr, Pointee->isDependentType()), PointeeType(Pointee) {
   }
 public:
   
@@ -597,7 +613,8 @@ protected:
 class BlockPointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;  // Block is some kind of pointer type
   BlockPointerType(QualType Pointee, QualType CanonicalCls) :
-    Type(BlockPointer, CanonicalCls), PointeeType(Pointee) {
+    Type(BlockPointer, CanonicalCls, Pointee->isDependentType()), 
+    PointeeType(Pointee) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -651,8 +668,9 @@ public:
 class ArrayType : public Type, public llvm::FoldingSetNode {
 public:
   /// ArraySizeModifier - Capture whether this is a normal array (e.g. int X[4])
-  /// an array with a static size (e.g. int X[static 4]), or with a star size
-  /// (e.g. int X[*]). 'static' is only allowed on function parameters.
+  /// an array with a static size (e.g. int X[static 4]), or an array
+  /// with a star size (e.g. int X[*]).
+  /// 'static' is only allowed on function parameters.
   enum ArraySizeModifier {
     Normal, Static, Star
   };
@@ -669,9 +687,16 @@ private:
   unsigned IndexTypeQuals : 3;
   
 protected:
+  // C++ [temp.dep.type]p1:
+  //   A type is dependent if it is...
+  //     - an array type constructed from any dependent type or whose
+  //       size is specified by a constant expression that is
+  //       value-dependent,
   ArrayType(TypeClass tc, QualType et, QualType can,
             ArraySizeModifier sm, unsigned tq)
-    : Type(tc, can), ElementType(et), SizeModifier(sm), IndexTypeQuals(tq) {}
+    : Type(tc, can, et->isDependentType() || tc == DependentSizedArray),
+      ElementType(et), SizeModifier(sm), IndexTypeQuals(tq) {}
+
   friend class ASTContext;  // ASTContext creates these.
 public:
   QualType getElementType() const { return ElementType; }
@@ -683,7 +708,8 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
            T->getTypeClass() == VariableArray ||
-           T->getTypeClass() == IncompleteArray;
+           T->getTypeClass() == IncompleteArray ||
+           T->getTypeClass() == DependentSizedArray;
   }
   static bool classof(const ArrayType *) { return true; }
 };
@@ -806,6 +832,54 @@ protected:
   friend class Type;
 };
 
+/// DependentSizedArrayType - This type represents an array type in
+/// C++ whose size is a value-dependent expression. For example:
+/// @code
+/// template<typename T, int Size> 
+/// class array {
+///   T data[Size];
+/// };
+/// @endcode
+/// For these types, we won't actually know what the array bound is
+/// until template instantiation occurs, at which point this will
+/// become either a ConstantArrayType or a VariableArrayType.
+class DependentSizedArrayType : public ArrayType {
+  /// SizeExpr - An assignment expression that will instantiate to the
+  /// size of the array.
+  Stmt *SizeExpr;
+  
+  DependentSizedArrayType(QualType et, QualType can, Expr *e,
+			  ArraySizeModifier sm, unsigned tq)
+    : ArrayType(DependentSizedArray, et, can, sm, tq), SizeExpr((Stmt*) e) {}
+  friend class ASTContext;  // ASTContext creates these.
+  virtual void Destroy(ASTContext& C);
+
+public:
+  Expr *getSizeExpr() const { 
+    // We use C-style casts instead of cast<> here because we do not wish
+    // to have a dependency of Type.h on Stmt.h/Expr.h.
+    return (Expr*) SizeExpr;
+  }
+  
+  virtual void getAsStringInternal(std::string &InnerString) const;
+  
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == DependentSizedArray; 
+  }
+  static bool classof(const DependentSizedArrayType *) { return true; }
+  
+  friend class StmtIteratorBase;
+  
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    assert (0 && "Cannnot unique DependentSizedArrayTypes.");
+  }
+  
+protected:  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
+  friend class Type;
+};
+
 /// VectorType - GCC generic vector type. This type is created using
 /// __attribute__((vector_size(n)), where "n" specifies the vector size in 
 /// bytes. Since the constructor takes the number of vector elements, the 
@@ -819,10 +893,12 @@ protected:
   unsigned NumElements;
   
   VectorType(QualType vecType, unsigned nElements, QualType canonType) :
-    Type(Vector, canonType), ElementType(vecType), NumElements(nElements) {} 
+    Type(Vector, canonType, vecType->isDependentType()), 
+    ElementType(vecType), NumElements(nElements) {} 
   VectorType(TypeClass tc, QualType vecType, unsigned nElements, 
-    QualType canonType) : Type(tc, canonType), ElementType(vecType), 
-    NumElements(nElements) {} 
+	     QualType canonType) 
+    : Type(tc, canonType, vecType->isDependentType()), ElementType(vecType), 
+      NumElements(nElements) {} 
   friend class ASTContext;  // ASTContext creates these.
 public:
     
@@ -924,8 +1000,8 @@ class FunctionType : public Type {
   QualType ResultType;
 protected:
   FunctionType(TypeClass tc, QualType res, bool SubclassInfo,
-               unsigned typeQuals, QualType Canonical)
-    : Type(tc, Canonical),
+               unsigned typeQuals, QualType Canonical, bool Dependent)
+    : Type(tc, Canonical, Dependent),
       SubClassData(SubclassInfo), TypeQuals(typeQuals), ResultType(res) {}
   bool getSubClassData() const { return SubClassData; }
   unsigned getTypeQuals() const { return TypeQuals; }
@@ -945,7 +1021,8 @@ public:
 /// no information available about its arguments.
 class FunctionTypeNoProto : public FunctionType, public llvm::FoldingSetNode {
   FunctionTypeNoProto(QualType Result, QualType Canonical)
-    : FunctionType(FunctionNoProto, Result, false, 0, Canonical) {}
+    : FunctionType(FunctionNoProto, Result, false, 0, Canonical, 
+		   /*Dependent=*/false) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   // No additional state past what FunctionType provides.
@@ -974,9 +1051,21 @@ protected:
 /// 'int foo(int)' or 'int foo(void)'.  'void' is represented as having no
 /// arguments, not as having a single void argument.
 class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
+  /// hasAnyDependentType - Determine whether there are any dependent
+  /// types within the arguments passed in.
+  static bool hasAnyDependentType(const QualType *ArgArray, unsigned numArgs) {
+    for (unsigned Idx = 0; Idx < numArgs; ++Idx)
+      if (ArgArray[Idx]->isDependentType())
+	return true;
+
+    return false;
+  }
+
   FunctionTypeProto(QualType Result, const QualType *ArgArray, unsigned numArgs,
                     bool isVariadic, unsigned typeQuals, QualType Canonical)
-    : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical),
+    : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
+		   (Result->isDependentType() || 
+		    hasAnyDependentType(ArgArray, numArgs))),
       NumArgs(numArgs) {
     // Fill in the trailing argument array.
     QualType *ArgInfo = reinterpret_cast<QualType *>(this+1);;
@@ -1032,7 +1121,7 @@ class TypedefType : public Type {
   TypedefDecl *Decl;
 protected:
   TypedefType(TypeClass tc, TypedefDecl *D, QualType can) 
-    : Type(tc, can), Decl(D) {
+    : Type(tc, can, can->isDependentType()), Decl(D) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -1062,9 +1151,7 @@ protected:
 /// TypeOfExpr (GCC extension).
 class TypeOfExpr : public Type {
   Expr *TOExpr;
-  TypeOfExpr(Expr *E, QualType can) : Type(TypeOfExp, can), TOExpr(E) {
-    assert(!isa<TypedefType>(can) && "Invalid canonical type");
-  }
+  TypeOfExpr(Expr *E, QualType can);
   friend class ASTContext;  // ASTContext creates these.
 public:
   Expr *getUnderlyingExpr() const { return TOExpr; }
@@ -1078,7 +1165,8 @@ public:
 /// TypeOfType (GCC extension).
 class TypeOfType : public Type {
   QualType TOType;
-  TypeOfType(QualType T, QualType can) : Type(TypeOfTyp, can), TOType(T) {
+  TypeOfType(QualType T, QualType can) 
+    : Type(TypeOfTyp, can, T->isDependentType()), TOType(T) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -1096,7 +1184,11 @@ class TagType : public Type {
   friend class ASTContext;
 
 protected:
-  TagType(TagDecl *D, QualType can) : Type(Tagged, can), decl(D) {}
+  // FIXME: We'll need the user to pass in information about whether
+  // this type is dependent or not, because we don't have enough
+  // information to compute it here.
+  TagType(TagDecl *D, QualType can) 
+    : Type(Tagged, can, /*Dependent=*/false), decl(D) {}
 
 public:   
   TagDecl *getDecl() const { return decl; }
@@ -1184,7 +1276,7 @@ class TemplateTypeParmType : public Type {
 
 protected:
   TemplateTypeParmType(TemplateTypeParmDecl *D)
-    : Type(TemplateTypeParm, QualType(this, 0)), Decl(D) { }
+    : Type(TemplateTypeParm, QualType(this, 0), /*Dependent=*/true), Decl(D) { }
 
   friend class ASTContext; // ASTContext creates these
 
@@ -1214,7 +1306,7 @@ class ObjCInterfaceType : public Type {
   ObjCInterfaceDecl *Decl;
 protected:
   ObjCInterfaceType(TypeClass tc, ObjCInterfaceDecl *D) : 
-    Type(tc, QualType()), Decl(D) { }
+    Type(tc, QualType(), /*Dependent=*/false), Decl(D) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
   
@@ -1327,7 +1419,8 @@ class ObjCQualifiedIdType : public Type,
   llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
     
   ObjCQualifiedIdType(ObjCProtocolDecl **Protos, unsigned NumP)
-    : Type(ObjCQualifiedId, QualType()/*these are always canonical*/), 
+    : Type(ObjCQualifiedId, QualType()/*these are always canonical*/,
+	   /*Dependent=*/false), 
   Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -1468,6 +1561,9 @@ inline bool Type::isIncompleteArrayType() const {
 }
 inline bool Type::isVariableArrayType() const {
   return isa<VariableArrayType>(CanonicalType.getUnqualifiedType());
+}
+inline bool Type::isDependentSizedArrayType() const {
+  return isa<DependentSizedArrayType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isRecordType() const {
   return isa<RecordType>(CanonicalType.getUnqualifiedType());

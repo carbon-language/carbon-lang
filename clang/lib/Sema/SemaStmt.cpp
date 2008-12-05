@@ -782,21 +782,23 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
     return new ReturnStmt(ReturnLoc, (Expr*)0);
   }
   
-  // we have a non-void function with an expression, continue checking
-  QualType RetValType = RetValExp->getType();
-
-  // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
-  // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
-  // function return.  
-
-  // In C++ the return statement is handled via a copy initialization.
-  // the C version of which boils down to
-  // CheckSingleAssignmentConstraints.
-  if (PerformCopyInitialization(RetValExp, FnRetType, "returning"))
-    return true;
+  if (!FnRetType->isDependentType() && !RetValExp->isTypeDependent()) {
+    // we have a non-void function with an expression, continue checking
+    QualType RetValType = RetValExp->getType();
+    
+    // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
+    // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
+    // function return.  
+    
+    // In C++ the return statement is handled via a copy initialization.
+    // the C version of which boils down to
+    // CheckSingleAssignmentConstraints.
+    if (PerformCopyInitialization(RetValExp, FnRetType, "returning"))
+      return true;
   
-  if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
-  
+    if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
+  }
+
   return new ReturnStmt(ReturnLoc, (Expr*)RetValExp);
 }
 

@@ -43,6 +43,10 @@ void VariableArrayType::Destroy(ASTContext& C) {
   delete this;  
 }
 
+void DependentSizedArrayType::Destroy(ASTContext& C) {
+  SizeExpr->Destroy(C);
+  delete this;
+}
 
 /// getArrayElementTypeNoTypeQual - If this is an array type, return the
 /// element type of the array, potentially with type qualifiers missing.
@@ -634,11 +638,12 @@ bool Type::isAggregateType() const {
 
 /// isConstantSizeType - Return true if this is not a variable sized type,
 /// according to the rules of C99 6.7.5p3.  It is not legal to call this on
-/// incomplete types.
+/// incomplete types or dependent types.
 bool Type::isConstantSizeType() const {
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isConstantSizeType();
   assert(!isIncompleteType() && "This doesn't make sense for incomplete types");
+  assert(!isDependentType() && "This doesn't make sense for dependent types");
   // The VAT must have a size, as it is known to be complete.
   return !isa<VariableArrayType>(CanonicalType);
 }
@@ -706,6 +711,7 @@ const char *BuiltinType::getName() const {
   case LongDouble:        return "long double";
   case WChar:             return "wchar_t";
   case Overload:          return "<overloaded function type>";
+  case Dependent:         return "<dependent type>";
   }
 }
 
@@ -778,6 +784,11 @@ QualType TypedefType::LookThroughTypedefs() const {
     if (TDT == 0)
       return QualType(CurType.getTypePtr(), TypeQuals);
   }
+}
+
+TypeOfExpr::TypeOfExpr(Expr *E, QualType can)
+  : Type(TypeOfExp, can, E->isTypeDependent()), TOExpr(E) {
+  assert(!isa<TypedefType>(can) && "Invalid canonical type");
 }
 
 bool RecordType::classof(const TagType *TT) {
@@ -909,6 +920,30 @@ void IncompleteArrayType::getAsStringInternal(std::string &S) const {
 }
 
 void VariableArrayType::getAsStringInternal(std::string &S) const {
+  S += '[';
+  
+  if (getIndexTypeQualifier()) {
+    AppendTypeQualList(S, getIndexTypeQualifier());
+    S += ' ';
+  }
+  
+  if (getSizeModifier() == Static)
+    S += "static";
+  else if (getSizeModifier() == Star)
+    S += '*';
+  
+  if (getSizeExpr()) {
+    std::string SStr;
+    llvm::raw_string_ostream s(SStr);
+    getSizeExpr()->printPretty(s);
+    S += s.str();
+  }
+  S += ']';
+  
+  getElementType().getAsStringInternal(S);
+}
+
+void DependentSizedArrayType::getAsStringInternal(std::string &S) const {
   S += '[';
   
   if (getIndexTypeQualifier()) {

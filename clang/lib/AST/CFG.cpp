@@ -154,6 +154,8 @@ private:
   bool badCFG;
 };
   
+// FIXME: Add support for dependent-sized array types in C++?
+// Does it even make sense to build a CFG for an uninstantiated template?
 static VariableArrayType* FindVA(Type* t) {
   while (ArrayType* vt = dyn_cast<ArrayType>(t)) {
     if (VariableArrayType* vat = dyn_cast<VariableArrayType>(vt))
