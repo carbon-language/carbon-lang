@@ -1,4 +1,4 @@
-//===- GVN.cpp - Eliminate redundant values and loads ------------===//
+//===- GVN.cpp - Eliminate redundant values and loads ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -47,7 +47,7 @@ STATISTIC(NumPRELoad, "Number of loads PRE'd");
 
 static cl::opt<bool> EnablePRE("enable-pre",
                                cl::init(true), cl::Hidden);
-cl::opt<bool> EnableLoadPRE("enable-load-pre");
+cl::opt<bool> EnableLoadPRE("enable-load-pre"/*, cl::init(true)*/);
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
@@ -867,34 +867,79 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
 
 /// IsValueFullyAvailableInBlock - Return true if we can prove that the value
 /// we're analyzing is fully available in the specified block.  As we go, keep
-/// track of which blocks we know it is fully alive or not in
-/// FullyAvailableBlocks.
+/// track of which blocks we know are fully alive in FullyAvailableBlocks.  This
+/// map is actually a tri-state map with the following values:
+///   0) we know the block *is not* fully available.
+///   1) we know the block *is* fully available.
+///   2) we do not know whether the block is fully available or not, but we are
+///      currently speculating that it will be.
+///   3) we are speculating for this block and have used that to speculate for
+///      other blocks.
 static bool IsValueFullyAvailableInBlock(BasicBlock *BB, 
-                            DenseMap<BasicBlock*, bool> &FullyAvailableBlocks) {
+                            DenseMap<BasicBlock*, char> &FullyAvailableBlocks) {
   // Optimistically assume that the block is fully available and check to see
   // if we already know about this block in one lookup.
-  std::pair<DenseMap<BasicBlock*, bool>::iterator, bool> IV = 
-    FullyAvailableBlocks.insert(std::make_pair(BB, true));
+  std::pair<DenseMap<BasicBlock*, char>::iterator, char> IV = 
+    FullyAvailableBlocks.insert(std::make_pair(BB, 2));
 
   // If the entry already existed for this block, return the precomputed value.
-  if (!IV.second)
-    return IV.first->second;
+  if (!IV.second) {
+    // If this is a speculative "available" value, mark it as being used for
+    // speculation of other blocks.
+    if (IV.first->second == 2)
+      IV.first->second = 3;
+    return IV.first->second != 0;
+  }
   
   // Otherwise, see if it is fully available in all predecessors.
   pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
   
   // If this block has no predecessors, it isn't live-in here.
   if (PI == PE)
-    return FullyAvailableBlocks[BB] = false;
+    goto SpeculationFailure;
   
   for (; PI != PE; ++PI)
     // If the value isn't fully available in one of our predecessors, then it
     // isn't fully available in this block either.  Undo our previous
     // optimistic assumption and bail out.
     if (!IsValueFullyAvailableInBlock(*PI, FullyAvailableBlocks))
-      return FullyAvailableBlocks[BB] = false;
+      goto SpeculationFailure;
   
   return true;
+  
+// SpeculationFailure - If we get here, we found out that this is not, after
+// all, a fully-available block.  We have a problem if we speculated on this and
+// used the speculation to mark other blocks as available.
+SpeculationFailure:
+  char &BBVal = FullyAvailableBlocks[BB];
+  
+  // If we didn't speculate on this, just return with it set to false.
+  if (BBVal == 2) {
+    BBVal = 0;
+    return false;
+  }
+
+  // If we did speculate on this value, we could have blocks set to 1 that are
+  // incorrect.  Walk the (transitive) successors of this block and mark them as
+  // 0 if set to one.
+  SmallVector<BasicBlock*, 32> BBWorklist;
+  BBWorklist.push_back(BB);
+  
+  while (!BBWorklist.empty()) {
+    BasicBlock *Entry = BBWorklist.pop_back_val();
+    // Note that this sets blocks to 0 (unavailable) if they happen to not
+    // already be in FullyAvailableBlocks.  This is safe.
+    char &EntryVal = FullyAvailableBlocks[Entry];
+    if (EntryVal == 0) continue;  // Already unavailable.
+
+    // Mark as unavailable.
+    EntryVal = 0;
+    
+    for (succ_iterator I = succ_begin(Entry), E = succ_end(Entry); I != E; ++I)
+      BBWorklist.push_back(*I);
+  }
+  
+  return false;
 }
 
 /// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
@@ -1047,7 +1092,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // that one block.
   BasicBlock *UnavailablePred = 0;
 
-  DenseMap<BasicBlock*, bool> FullyAvailableBlocks;
+  DenseMap<BasicBlock*, char> FullyAvailableBlocks;
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
     FullyAvailableBlocks[ValuesPerBlock[i].first] = true;
   for (unsigned i = 0, e = UnavailableBlocks.size(); i != e; ++i)
@@ -1086,11 +1131,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
                 << UnavailablePred->getName() << "': " << *LI);
     return false;
   }
-
+  
   // Okay, we can eliminate this load by inserting a reload in the predecessor
   // and using PHI construction to get the value in the other predecessors, do
   // it.
-  DEBUG(cerr << "GVN REMOVING PRE LOAD: " << *LI);
+  /*DEBUG*/(cerr << "GVN REMOVING PRE LOAD: " << *LI);
   
   Value *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
                                 LI->getAlignment(),
@@ -1103,6 +1148,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // Perform PHI construction.
   Value* v = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
   LI->replaceAllUsesWith(v);
+  v->takeName(LI);
   toErase.push_back(LI);
   NumPRELoad++;
   return true;
