@@ -86,28 +86,7 @@ SymbolID SymbolManager::getFieldSymbol(const MemRegion* R, const FieldDecl* D) {
   DataMap[SymbolCounter] = SD;
   return SymbolCounter++;
 }
- 
-SymbolID SymbolManager::getContentsOfSymbol(SymbolID sym) {
-  
-  llvm::FoldingSetNodeID profile;
-  SymbolDataContentsOf::Profile(profile, sym);
-  void* InsertPos;
-  
-  SymbolData* SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
-  
-  if (SD)
-    return SD->getSymbol();
 
-  SD = (SymbolData*) BPAlloc.Allocate<SymbolDataContentsOf>();
-  new (SD) SymbolDataContentsOf(SymbolCounter, sym);
-
-
-  DataSet.InsertNode(SD, InsertPos);  
-  DataMap[SymbolCounter] = SD;
-  
-  return SymbolCounter++;
-}
-  
 SymbolID SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count) {
   
   llvm::FoldingSetNodeID profile;
@@ -145,13 +124,7 @@ QualType SymbolData::getType(const SymbolManager& SymMgr) const {
 
     case GlobalKind:
       return cast<SymbolDataGlobalVar>(this)->getDecl()->getType();
-      
-    case ContentsOfKind: {
-      SymbolID x = cast<SymbolDataContentsOf>(this)->getContainerSymbol();
-      QualType T = SymMgr.getSymbolData(x).getType(SymMgr);
-      return T->getAsPointerType()->getPointeeType();
-    }
-      
+
     case ConjuredKind:
       return cast<SymbolConjured>(this)->getType();
   }

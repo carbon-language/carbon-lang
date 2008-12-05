@@ -70,7 +70,7 @@ namespace clang {
 class SymbolData : public llvm::FoldingSetNode {
 public:
   enum Kind { UndefKind, ParmKind, GlobalKind, ElementKind, FieldKind,
-              ContentsOfKind, ConjuredKind };
+              ConjuredKind };
   
 private:
   Kind K;
@@ -188,30 +188,6 @@ public:
   }
 };
 
-class SymbolDataContentsOf : public SymbolData {
-  SymbolID Sym;
-      
-public:
-  SymbolDataContentsOf(SymbolID MySym, SymbolID sym) : 
-    SymbolData(ContentsOfKind, MySym), Sym(sym) {}
-  
-  SymbolID getContainerSymbol() const { return Sym; }
-  
-  static void Profile(llvm::FoldingSetNodeID& profile, SymbolID Sym) {
-    profile.AddInteger((unsigned) ContentsOfKind);
-    profile.AddInteger(Sym);
-  }
-  
-  virtual void Profile(llvm::FoldingSetNodeID& profile) {
-    Profile(profile, Sym);
-  }
-  
-  // Implement isa<T> support.
-  static inline bool classof(const SymbolData* D) {
-    return D->getKind() == ContentsOfKind;
-  }  
-};
-  
 class SymbolConjured : public SymbolData {
   Stmt* S;
   QualType T;
@@ -294,7 +270,6 @@ public:
   SymbolID getSymbol(VarDecl* D);
   SymbolID getElementSymbol(const MemRegion* R, const llvm::APSInt* Idx);
   SymbolID getFieldSymbol(const MemRegion* R, const FieldDecl* D);
-  SymbolID getContentsOfSymbol(SymbolID sym);
   SymbolID getConjuredSymbol(Stmt* E, QualType T, unsigned VisitCount);
   SymbolID getConjuredSymbol(Expr* E, unsigned VisitCount) {
     return getConjuredSymbol(E, E->getType(), VisitCount);
