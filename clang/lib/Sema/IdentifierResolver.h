@@ -94,18 +94,18 @@ class IdentifierResolver {
     /// FindContext - Returns an iterator pointing just after the decl that is
     /// in the given context or in a parent of it. The search is in reverse
     /// order, from end to begin.
-    DeclsTy::iterator FindContext(const LookupContext &Ctx) {
-      return FindContext(Ctx, Decls.end());
+    DeclsTy::iterator FindDeclVisibleInContext(const LookupContext &Ctx) {
+      return FindDeclVisibleInContext(Ctx, Decls.end());
     }
 
     /// FindContext - Returns an iterator pointing just after the decl that is
     /// in the given context or in a parent of it. The search is in reverse
     /// order, from end to begin.
-    DeclsTy::iterator FindContext(const LookupContext &Ctx,
+    DeclsTy::iterator FindDeclVisibleInContext(const LookupContext &Ctx,
                                   const DeclsTy::iterator &Start);
 
     void AddDecl(NamedDecl *D) {
-      Decls.insert(FindContext(LookupContext(D)), D);
+      Decls.insert(FindDeclVisibleInContext(LookupContext(D)), D);
     }
 
     /// AddShadowed - Add a decl by putting it directly above the 'Shadow' decl.

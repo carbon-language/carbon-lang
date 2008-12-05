@@ -90,7 +90,8 @@ bool IdentifierResolver::LookupContext::isEqOrContainedBy(
 /// in the given context or in a parent of it. The search is in reverse
 /// order, from end to begin.
 IdentifierResolver::IdDeclInfo::DeclsTy::iterator
-IdentifierResolver::IdDeclInfo::FindContext(const LookupContext &Ctx,
+IdentifierResolver::IdDeclInfo::FindDeclVisibleInContext(
+                                            const LookupContext &Ctx,
                                             const DeclsTy::iterator &Start) {
   for (DeclsTy::iterator I = Start; I != Decls.begin(); --I) {
     if (Ctx.isEqOrContainedBy(LookupContext(*(I-1))))
@@ -267,7 +268,7 @@ IdentifierResolver::begin(DeclarationName Name, const DeclContext *Ctx,
 
   IdDeclInfo::DeclsTy::iterator I;
   if (LookInParentCtx)
-    I = IDI->FindContext(LC);
+    I = IDI->FindDeclVisibleInContext(LC);
   else {
     for (I = IDI->decls_end(); I != IDI->decls_begin(); --I)
       if (LookupContext(*(I-1)) == LC)
@@ -290,7 +291,7 @@ void IdentifierResolver::iterator::PreIncIter() {
 
   BaseIter I = getIterator();
   if (LookInParentCtx())
-    I = Info->FindContext(Ctx, I);
+    I = Info->FindDeclVisibleInContext(Ctx, I);
   else {
     if (I != Info->decls_begin() && LookupContext(*(I-1)) != Ctx) {
       // The next decl is in different declaration context.
