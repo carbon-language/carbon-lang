@@ -180,7 +180,8 @@ namespace llvm {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     
     /// getDependency - Return the instruction on which a memory operation
-    /// depends.  See the class comment for more details.
+    /// depends.  See the class comment for more details.  It is illegal to call
+    /// this on non-memory instructions.
     MemDepResult getDependency(Instruction *QueryInst);
 
     /// getDependencyFrom - Return the instruction on which the memory operation

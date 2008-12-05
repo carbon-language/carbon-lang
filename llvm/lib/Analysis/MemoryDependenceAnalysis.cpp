@@ -118,10 +118,11 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     MemPtr = F->getPointerOperand();
     // FreeInsts erase the entire structure, not just a field.
     MemSize = ~0UL;
-  } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst))
+  } else {
+    assert((isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) &&
+            "Can only get dependency info for memory instructions!");
     return getCallSiteDependency(CallSite::get(QueryInst), ScanIt, BB);
-  else  // Non-memory instructions depend on nothing.
-    return MemDepResult::getNone();
+  }
   
   // Walk backwards through the basic block, looking for dependencies
   while (ScanIt != BB->begin()) {
