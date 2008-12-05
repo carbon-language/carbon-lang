@@ -2137,7 +2137,13 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     unsigned PICBase = 0;
     if (TM.getRelocationModel() == Reloc::PIC_ &&
         !TM.getSubtarget<X86Subtarget>().is64Bit())
-      PICBase = TM.getInstrInfo()->getGlobalBaseReg(&MF);
+      // FIXME: PICBase = TM.getInstrInfo()->getGlobalBaseReg(&MF);
+      // This doesn't work for several reasons.
+      // 1. GlobalBaseReg may have been spilled.
+      // 2. It may not be live at MI.
+      // 3. If this is used during register allocation / spilling, the spiller
+      // must know not to spill GlobalBaseReg (which is a temporary nasty hack).
+      return false;
 
     // Create a v4i32 constant-pool entry.
     MachineConstantPool &MCP = *MF.getConstantPool();
