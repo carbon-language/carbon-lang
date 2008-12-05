@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn -enable-load-pre | llvm-dis | grep {%PRE.rle = phi}
+; RUN: llvm-as < %s | opt -gvn -enable-load-pre | llvm-dis | grep {%PRE = phi}
 
 define i32 @test(i32* %p, i1 %C) {
 block1:

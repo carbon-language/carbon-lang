@@ -1135,7 +1135,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // Okay, we can eliminate this load by inserting a reload in the predecessor
   // and using PHI construction to get the value in the other predecessors, do
   // it.
-  /*DEBUG*/(cerr << "GVN REMOVING PRE LOAD: " << *LI);
+  DEBUG(cerr << "GVN REMOVING PRE LOAD: " << *LI);
   
   Value *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
                                 LI->getAlignment(),
