@@ -41,7 +41,8 @@ namespace {
     Diagnostic &Diags;
     const LangOptions &LangOpts;
     unsigned RewriteFailedDiag;
-    
+    unsigned TryFinallyContainsReturnDiag;
+        
     ASTContext *Context;
     SourceManager *SM;
     TranslationUnitDecl *TUDecl;
@@ -216,6 +217,7 @@ namespace {
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
     Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
+    void WarnAboutReturnGotoContinueOrBreakStmts(Stmt *S);
     Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
     Stmt *RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S);
     Stmt *RewriteObjCCatchStmt(ObjCAtCatchStmt *S);
@@ -368,6 +370,8 @@ RewriteObjC::RewriteObjC(std::string inFile, std::string outFile,
   OutFileName = outFile;
   RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
                "rewriting sub-expression within a macro (may not be correct)");
+  TryFinallyContainsReturnDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
+               "rewriter doesn't support user-specified control flow semantics for @try/@finally (code may not execute properly)");
 }
 
 ASTConsumer *clang::CreateCodeRewriterTest(const std::string& InFile,
@@ -1420,6 +1424,21 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   return 0;
 }
 
+void RewriteObjC::WarnAboutReturnGotoContinueOrBreakStmts(Stmt *S) {  
+  // Perform a bottom up traversal of all children.
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+       CI != E; ++CI)
+    if (*CI)
+      WarnAboutReturnGotoContinueOrBreakStmts(*CI);
+
+  if (isa<ReturnStmt>(S) || isa<ContinueStmt>(S) || 
+      isa<BreakStmt>(S) || isa<GotoStmt>(S)) {
+    Diags.Report(Context->getFullLoc(S->getLocStart()), 
+                 TryFinallyContainsReturnDiag);
+  }
+  return;
+}
+
 Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   // Get the start location and compute the semi location.
   SourceLocation startLoc = S->getLocStart();
@@ -1570,6 +1589,9 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     
     // Set lastCurlyLoc
     lastCurlyLoc = body->getLocEnd();
+    
+    // Now check for any return/continue/go statements within the @try.
+    WarnAboutReturnGotoContinueOrBreakStmts(S->getTryBody());
   } else { /* no finally clause - make sure we synthesize an implicit one */
     buf = "{ /* implicit finally clause */\n";
     buf += " if (!_rethrow) objc_exception_try_exit(&_stack);\n";
