@@ -101,37 +101,37 @@ public:
   void printStdErr() const;
   
   class symbol_iterator {
-    const enum { One, Many } HowMany;
-    union { uintptr_t sym; const SymbolRef* sptr; };
+    SymbolRef SingleRef;
+    const SymbolRef* sptr;
   public:
     
     bool operator==(const symbol_iterator& X) {
-      return X.sym == sym;
+      return SingleRef == X.SingleRef && sptr == X.sptr;
     }
     
     bool operator!=(const symbol_iterator& X) {
-      return X.sym != sym;
+      return SingleRef != X.SingleRef || sptr != X.sptr;
     }
     
     symbol_iterator& operator++() {
-      if (HowMany == Many)
+      if (sptr)
         ++sptr;
       else
-        sym = ~0x0;
+        SingleRef = SymbolRef();
       
       return *this;
     }
     
     SymbolRef operator*() const {
-      if (HowMany)
+      if (sptr)
         return *sptr;
       
-      return SymbolRef(sym);
+      return SingleRef;
     }
     
-    symbol_iterator(SymbolRef x) : HowMany(One), sym(x.getNumber()) {}
-    symbol_iterator() : HowMany(One), sym(~0x0) {}
-    symbol_iterator(const SymbolRef* x) : HowMany(Many), sptr(x) {}
+    symbol_iterator(SymbolRef x) : SingleRef(x), sptr(0) {}
+    symbol_iterator() : sptr(0) {}
+    symbol_iterator(const SymbolRef* x) : sptr(x) {}
   };
   
   symbol_iterator symbol_begin() const;

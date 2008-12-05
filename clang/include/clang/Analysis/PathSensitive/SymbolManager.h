@@ -40,6 +40,9 @@ public:
   bool isInitialized() const { return Data != (unsigned) (~0U - 2); }
   operator unsigned() const { return getNumber(); }
   unsigned getNumber() const { assert (isInitialized()); return Data; }
+  
+  bool operator==(const SymbolRef& X) const { return Data == X.Data; }
+  bool operator!=(const SymbolRef& X) const { return Data != X.Data; }
     
   void print(llvm::raw_ostream& os) const;
   
