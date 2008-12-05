@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -225,10 +226,26 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
         int FI = MO.getIndex();
         if (FI < 0)
           continue;
-        FI = SlotMapping[FI];
-        if (FI == -1)
+        int NewFI = SlotMapping[FI];
+        if (NewFI == -1)
           continue;
-        MO.setIndex(FI);
+        MO.setIndex(NewFI);
+
+        // Update the MachineMemOperand for the new memory location.
+        // FIXME: We need a better method of managing these too.
+        SmallVector<MachineMemOperand, 2> MMOs(MI.memoperands_begin(),
+                                               MI.memoperands_end());
+        MI.clearMemOperands(MF);
+        const Value *OldSV = PseudoSourceValue::getFixedStack(FI);
+        for (unsigned i = 0, e = MMOs.size(); i != e; ++i) {
+          if (MMOs[i].getValue() == OldSV) {
+            MachineMemOperand MMO(PseudoSourceValue::getFixedStack(NewFI),
+                                  MMOs[i].getFlags(), MMOs[i].getOffset(),
+                                  MMOs[i].getSize(), MMOs[i].getAlignment());
+            MI.addMemOperand(MF, MMO);
+          } else
+            MI.addMemOperand(MF, MMOs[i]);
+        }
       }
     }
   }
