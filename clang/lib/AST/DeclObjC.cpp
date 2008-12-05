@@ -730,8 +730,8 @@ ObjCPropertyImplDecl *ObjCImplementationDecl::FindPropertyImplDecl(IdentifierInf
 }
 
 /// FindPropertyImplIvarDecl - This method lookup the ivar in the list of
-/// properties implemented in this @implementation block and returns it if 
-/// found.
+/// properties implemented in this @implementation block and returns the
+/// implemented property that uses it.
 ///
 ObjCPropertyImplDecl *ObjCImplementationDecl::FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
   for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i) {
@@ -744,8 +744,8 @@ ObjCPropertyImplDecl *ObjCImplementationDecl::FindPropertyImplIvarDecl(Identifie
 }
 
 /// FindPropertyImplIvarDecl - This method lookup the ivar in the list of
-/// properties implemented in this category @implementation block and returns it if 
-/// found.
+/// properties implemented in this category @implementation block and returns the 
+/// implemented property that uses it.
 ///
 ObjCPropertyImplDecl *ObjCCategoryImplDecl::FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
   for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i) {
