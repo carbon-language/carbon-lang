@@ -36,20 +36,36 @@ namespace llvm {
       /// Invalid - Clients of MemDep never see this.
       Invalid = 0,
       
-      /// Normal - This is a normal instruction dependence.  The pointer member
-      /// of the MemDepResult pair holds the instruction.
-      Normal,
+      /// Clobber - This is a dependence on the specified instruction which
+      /// clobbers the desired value.  The pointer member of the MemDepResult
+      /// pair holds the instruction that clobbers the memory.  For example,
+      /// this occurs when we see a may-aliased store to the memory location we
+      /// care about.
+      Clobber,
 
+      /// Def - This is a dependence on the specified instruction which
+      /// defines/produces the desired memory location.  The pointer member of
+      /// the MemDepResult pair holds the instruction that defines the memory.
+      /// Cases of interest:
+      ///   1. This could be a load or store for dependence queries on
+      ///      load/store.  The value loaded or stored is the produced value.
+      ///      Note that the pointer operand may be different than that of the
+      ///      queried pointer due to must aliases and phi translation.  Note
+      ///      that the def may not be the same type as the query, the pointers
+      ///      may just be must aliases.
+      ///   2. For loads and stores, this could be an allocation instruction. In
+      ///      this case, the load is loading an undef value or a store is the
+      ///      first store to (that part of) the allocation.
+      ///   3. Dependence queries on calls return Def only when they are
+      ///      readonly calls with identical callees and no intervening
+      ///      clobbers.  No validation is done that the operands to the calls
+      ///      are the same.
+      Def,
+      
       /// NonLocal - This marker indicates that the query has no dependency in
       /// the specified block.  To find out more, the client should query other
       /// predecessor blocks.
-      NonLocal,
-
-      /// None - This dependence type indicates that the query does not depend
-      /// on any instructions, either because it is not a memory instruction or
-      /// because it scanned to the definition of the memory (alloca/malloc)
-      /// being accessed.
-      None
+      NonLocal
     };
     typedef PointerIntPair<Instruction*, 2, DepType> PairTy;
     PairTy Value;
@@ -59,29 +75,29 @@ namespace llvm {
     
     /// get methods: These are static ctor methods for creating various
     /// MemDepResult kinds.
-    static MemDepResult get(Instruction *Inst) {
-      return MemDepResult(PairTy(Inst, Normal));
+    static MemDepResult getDef(Instruction *Inst) {
+      return MemDepResult(PairTy(Inst, Def));
+    }
+    static MemDepResult getClobber(Instruction *Inst) {
+      return MemDepResult(PairTy(Inst, Clobber));
     }
     static MemDepResult getNonLocal() {
       return MemDepResult(PairTy(0, NonLocal));
     }
-    static MemDepResult getNone() {
-      return MemDepResult(PairTy(0, None));
-    }
 
-    /// isNormal - Return true if this MemDepResult represents a query that is
-    /// a normal instruction dependency.
-    bool isNormal() const { return Value.getInt() == Normal; }
+    /// isClobber - Return true if this MemDepResult represents a query that is
+    /// a instruction clobber dependency.
+    bool isClobber() const { return Value.getInt() == Clobber; }
+
+    /// isDef - Return true if this MemDepResult represents a query that is
+    /// a instruction definition dependency.
+    bool isDef() const { return Value.getInt() == Def; }
     
     /// isNonLocal - Return true if this MemDepResult represents an query that
     /// is transparent to the start of the block, but where a non-local hasn't
     /// been done.
     bool isNonLocal() const { return Value.getInt() == NonLocal; }
     
-    /// isNone - Return true if this MemDepResult represents a query that
-    /// doesn't depend on any instruction.
-    bool isNone() const { return Value.getInt() == None; }
-
     /// getInst() - If this is a normal dependency, return the instruction that
     /// is depended on.  Otherwise, return null.
     Instruction *getInst() const { return Value.getPointer(); }

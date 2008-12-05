@@ -461,30 +461,19 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
       
       MemDepResult local_dep = MD->getDependency(C);
       
-      if (local_dep.isNone()) {
+      if (!local_dep.isDef() && !local_dep.isNonLocal()) {
         valueNumbering.insert(std::make_pair(V, nextValueNumber));
         return nextValueNumber++;
       }
-      
-      if (Instruction *LocalDepInst = local_dep.getInst()) {
-        if (!isa<CallInst>(LocalDepInst)) {
+
+      if (local_dep.isDef()) {
+        CallInst* local_cdep = cast<CallInst>(local_dep.getInst());
+        
+        if (local_cdep->getNumOperands() != C->getNumOperands()) {
           valueNumbering.insert(std::make_pair(V, nextValueNumber));
           return nextValueNumber++;
         }
-        
-        CallInst* local_cdep = cast<CallInst>(LocalDepInst);
-        
-        if (local_cdep->getCalledFunction() != C->getCalledFunction() ||
-            local_cdep->getNumOperands() != C->getNumOperands()) {
-          valueNumbering.insert(std::make_pair(V, nextValueNumber));
-          return nextValueNumber++;
-        }
-        
-        if (!C->getCalledFunction()) { 
-          valueNumbering.insert(std::make_pair(V, nextValueNumber));
-          return nextValueNumber++;
-        }
-        
+          
         for (unsigned i = 1; i < C->getNumOperands(); ++i) {
           uint32_t c_vn = lookup_or_add(C->getOperand(i));
           uint32_t cd_vn = lookup_or_add(local_cdep->getOperand(i));
@@ -498,10 +487,12 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
         valueNumbering.insert(std::make_pair(V, v));
         return v;
       }
-      
 
+      // Non-local case.
       const MemoryDependenceAnalysis::NonLocalDepInfo &deps = 
         MD->getNonLocalDependency(C);
+      // FIXME: call/call dependencies for readonly calls should return def, not
+      // clobber!  Move the checking logic to MemDep!
       CallInst* cdep = 0;
       
       // Check to see if we have a single dominating call instruction that is
@@ -514,7 +505,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
 
         // We don't handle non-depedencies.  If we already have a call, reject
         // instruction dependencies.
-        if (I->second.isNone() || cdep != 0) {
+        if (I->second.isClobber() || cdep != 0) {
           cdep = 0;
           break;
         }
@@ -535,12 +526,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
         return nextValueNumber++;
       }
       
-      if (cdep->getCalledFunction() != C->getCalledFunction() ||
-          cdep->getNumOperands() != C->getNumOperands()) {
-        valueNumbering.insert(std::make_pair(V, nextValueNumber));
-        return nextValueNumber++;
-      }
-      if (!C->getCalledFunction()) { 
+      if (cdep->getNumOperands() != C->getNumOperands()) {
         valueNumbering.insert(std::make_pair(V, nextValueNumber));
         return nextValueNumber++;
       }
@@ -736,10 +722,8 @@ namespace {
     // Helper fuctions
     // FIXME: eliminate or document these better
     bool processLoad(LoadInst* L,
-                     DenseMap<Value*, LoadInst*> &lastLoad,
                      SmallVectorImpl<Instruction*> &toErase);
     bool processInstruction(Instruction* I,
-                            DenseMap<Value*, LoadInst*>& lastSeenLoad,
                             SmallVectorImpl<Instruction*> &toErase);
     bool processNonLocalLoad(LoadInst* L,
                              SmallVectorImpl<Instruction*> &toErase);
@@ -979,7 +963,15 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       continue;
     }
     
-    if (DepInfo.isNone()) {
+    if (DepInfo.isClobber()) {
+      UnavailableBlocks.push_back(DepBB);
+      continue;
+    }
+    
+    Instruction *DepInst = DepInfo.getInst();
+    
+    // Loading the allocation -> undef.
+    if (isa<AllocationInst>(DepInst)) {
       ValuesPerBlock.push_back(std::make_pair(DepBB, 
                                               UndefValue::get(LI->getType())));
       continue;
@@ -996,25 +988,10 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
         continue;
       }
       
-      if (S->getPointerOperand() != LI->getPointerOperand() &&
-          VN.getAliasAnalysis()->alias(S->getPointerOperand(), 1,
-                                       LI->getPointerOperand(), 1)
-            != AliasAnalysis::MustAlias) {
-        UnavailableBlocks.push_back(DepBB);
-        continue;
-      }
       ValuesPerBlock.push_back(std::make_pair(DepBB, S->getOperand(0)));
       
     } else if (LoadInst* LD = dyn_cast<LoadInst>(DepInfo.getInst())) {
       if (LD->getType() != LI->getType()) {
-        UnavailableBlocks.push_back(DepBB);
-        continue;
-      }
-      
-      if (LD->getPointerOperand() != LI->getPointerOperand() &&
-          VN.getAliasAnalysis()->alias(LD->getPointerOperand(), 1,
-                                       LI->getPointerOperand(), 1)
-          != AliasAnalysis::MustAlias) {
         UnavailableBlocks.push_back(DepBB);
         continue;
       }
@@ -1156,84 +1133,64 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
 /// processLoad - Attempt to eliminate a load, first by eliminating it
 /// locally, and then attempting non-local elimination if that fails.
-bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
-                      SmallVectorImpl<Instruction*> &toErase) {
-  if (L->isVolatile()) {
-    lastLoad[L->getPointerOperand()] = L;
+bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
+  if (L->isVolatile())
     return false;
-  }
   
   Value* pointer = L->getPointerOperand();
-  LoadInst*& last = lastLoad[pointer];
-  
+
   // ... to a pointer that has been loaded from before...
-  bool removedNonLocal = false;
   MemDepResult dep = MD->getDependency(L);
-  if (dep.isNonLocal() &&
-      L->getParent() != &L->getParent()->getParent()->getEntryBlock()) {
-    removedNonLocal = processNonLocalLoad(L, toErase);
-    
-    if (!removedNonLocal)
-      last = L;
-    
-    return removedNonLocal;
-  }
   
-  
-  bool deletedLoad = false;
-  
-  // Walk up the dependency chain until we either find
-  // a dependency we can use, or we can't walk any further
-  while (Instruction *DepInst = dep.getInst()) {
-    // ... that depends on a store ...
-    if (StoreInst* S = dyn_cast<StoreInst>(DepInst)) {
-      if (S->getPointerOperand() == pointer) {
-        // Remove it!
-        L->replaceAllUsesWith(S->getOperand(0));
-        toErase.push_back(L);
-        deletedLoad = true;
-        NumGVNLoad++;
-      }
-      
-      // Whether we removed it or not, we can't
-      // go any further
-      break;
-    } else if (!isa<LoadInst>(DepInst)) {
-      // Only want to handle loads below.
-      break;
-    } else if (!last) {
-      // If we don't depend on a store, and we haven't
-      // been loaded before, bail.
-      break;
-    } else if (DepInst == last) {
-      // Remove it!
-      L->replaceAllUsesWith(last);
-      toErase.push_back(L);
-      deletedLoad = true;
-      NumGVNLoad++;
-      break;
-    } else {
-      dep = MD->getDependencyFrom(L, DepInst, DepInst->getParent());
-    }
+  // If the value isn't available, don't do anything!
+  if (dep.isClobber())
+    return false;
+
+  // If it is defined in another block, try harder.
+  if (dep.isNonLocal()) {
+    if (L->getParent() == &L->getParent()->getParent()->getEntryBlock())
+      return false;
+    return processNonLocalLoad(L, toErase);
   }
 
+  Instruction *DepInst = dep.getInst();
+  if (StoreInst *DepSI = dyn_cast<StoreInst>(DepInst)) {
+    // Only forward substitute stores to loads of the same type.
+    // FIXME: Could do better!
+    if (DepSI->getPointerOperand()->getType() != pointer->getType())
+      return false;
+    
+    // Remove it!
+    L->replaceAllUsesWith(DepSI->getOperand(0));
+    toErase.push_back(L);
+    NumGVNLoad++;
+    return true;
+  }
+
+  if (LoadInst *DepLI = dyn_cast<LoadInst>(DepInst)) {
+    // Only forward substitute stores to loads of the same type.
+    // FIXME: Could do better! load i32 -> load i8 -> truncate on little endian.
+    if (DepLI->getType() != L->getType())
+      return false;
+    
+    // Remove it!
+    L->replaceAllUsesWith(DepLI);
+    toErase.push_back(L);
+    NumGVNLoad++;
+    return true;
+  }
+  
   // If this load really doesn't depend on anything, then we must be loading an
   // undef value.  This can happen when loading for a fresh allocation with no
   // intervening stores, for example.
-  if (dep.isNone()) {
-    // If this load depends directly on an allocation, there isn't
-    // anything stored there; therefore, we can optimize this load
-    // to undef.
+  if (isa<AllocationInst>(DepInst)) {
     L->replaceAllUsesWith(UndefValue::get(L->getType()));
     toErase.push_back(L);
-    deletedLoad = true;
     NumGVNLoad++;
+    return true;
   }
 
-  if (!deletedLoad)
-    last = L;
-  
-  return deletedLoad;
+  return false;
 }
 
 Value* GVN::lookupNumber(BasicBlock* BB, uint32_t num) {
@@ -1257,10 +1214,9 @@ Value* GVN::lookupNumber(BasicBlock* BB, uint32_t num) {
 /// processInstruction - When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
 bool GVN::processInstruction(Instruction *I,
-                             DenseMap<Value*, LoadInst*> &lastSeenLoad,
                              SmallVectorImpl<Instruction*> &toErase) {
   if (LoadInst* L = dyn_cast<LoadInst>(I)) {
-    bool changed = processLoad(L, lastSeenLoad, toErase);
+    bool changed = processLoad(L, toErase);
     
     if (!changed) {
       unsigned num = VN.lookup_or_add(L);
@@ -1362,7 +1318,6 @@ bool GVN::runOnFunction(Function& F) {
 bool GVN::processBlock(DomTreeNode* DTN) {
   BasicBlock* BB = DTN->getBlock();
   SmallVector<Instruction*, 8> toErase;
-  DenseMap<Value*, LoadInst*> lastSeenLoad;
   bool changed_function = false;
   
   if (DTN->getIDom())
@@ -1373,7 +1328,7 @@ bool GVN::processBlock(DomTreeNode* DTN) {
   
   for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
        BI != BE;) {
-    changed_function |= processInstruction(BI, lastSeenLoad, toErase);
+    changed_function |= processInstruction(BI, toErase);
     if (toErase.empty()) {
       ++BI;
       continue;

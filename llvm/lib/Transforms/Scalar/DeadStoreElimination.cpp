@@ -148,25 +148,27 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // If we're storing the same value back to a pointer that we just
       // loaded from, then the store can be removed;
       if (LoadInst* L = dyn_cast<LoadInst>(S->getOperand(0))) {
-        // FIXME: Don't do dep query if Parents don't match and other stuff!
-        MemDepResult dep = MD.getDependency(S);
-        DominatorTree& DT = getAnalysis<DominatorTree>();
-        
         if (!S->isVolatile() && S->getParent() == L->getParent() &&
-            S->getPointerOperand() == L->getPointerOperand() &&
-            (!dep.isNormal() || DT.dominates(dep.getInst(), L))) {
-          
-          DeleteDeadInstruction(S);
-          if (BBI != BB.begin())
-            --BBI;
-          NumFastStores++;
-          MadeChange = true;
-        } else
+            S->getPointerOperand() == L->getPointerOperand()) {
+          MemDepResult dep = MD.getDependency(S);
+          if (dep.isDef() && dep.getInst() == L) {
+            DeleteDeadInstruction(S);
+            if (BBI != BB.begin())
+              --BBI;
+            NumFastStores++;
+            MadeChange = true;
+          } else {
+            // Update our most-recent-store map.
+            last = S;
+          }
+        } else {
           // Update our most-recent-store map.
           last = S;
-      } else
+        }
+      } else {
         // Update our most-recent-store map.
         last = S;
+      }
     }
   }
   

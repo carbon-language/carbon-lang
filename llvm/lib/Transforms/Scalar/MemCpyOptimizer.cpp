@@ -630,13 +630,12 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   //   a) memcpy-memcpy xform which exposes redundance for DSE
   //   b) call-memcpy xform for return slot optimization
   MemDepResult dep = MD.getDependency(M);
-  if (!dep.isNormal())
+  if (!dep.isClobber())
     return false;
-  else if (!isa<MemCpyInst>(dep.getInst())) {
+  if (!isa<MemCpyInst>(dep.getInst())) {
     if (CallInst* C = dyn_cast<CallInst>(dep.getInst()))
       return performCallSlotOptzn(M, C);
-    else
-      return false;
+    return false;
   }
   
   MemCpyInst* MDep = cast<MemCpyInst>(dep.getInst());
