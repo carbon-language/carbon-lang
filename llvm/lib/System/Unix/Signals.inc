@@ -97,7 +97,8 @@ static void PrintStackTrace() {
     if (name == NULL) fprintf(stderr, " %-*s", width, dlinfo.dli_fname);
     else              fprintf(stderr, " %-*s", width, name+1);
 
-    fprintf(stderr, " %#0*x", (int)(sizeof(void*) * 2) + 2, StackTrace[i]);
+    fprintf(stderr, " %#0*lx",
+            (int)(sizeof(void*) * 2) + 2, (unsigned long)StackTrace[i]);
 
     if (dlinfo.dli_sname != NULL) {
       int res;
