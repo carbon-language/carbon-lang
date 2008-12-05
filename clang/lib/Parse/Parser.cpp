@@ -441,7 +441,7 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
 
       if (Tok.is(tok::l_brace)) {
         // This recovery skips the entire function body. It would be nice
-        // to simply call ParseFunctionDefintion() below, however Sema
+        // to simply call ParseFunctionDefinition() below, however Sema
         // assumes the declarator represents a function, not a typedef.
         ConsumeBrace();
         SkipUntil(tok::r_brace, true);

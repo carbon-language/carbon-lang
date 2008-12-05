@@ -341,6 +341,12 @@ bool Expr::hasLocalSideEffect() const {
 /// DeclCanBeLvalue - Determine whether the given declaration can be
 /// an lvalue. This is a helper routine for isLvalue.
 static bool DeclCanBeLvalue(const NamedDecl *Decl, ASTContext &Ctx) {
+  // C++ [temp.param]p6:
+  //   A non-type non-reference template-parameter is not an lvalue.
+  if (const NonTypeTemplateParmDecl *NTTParm 
+        = dyn_cast<NonTypeTemplateParmDecl>(Decl))
+    return NTTParm->getType()->isReferenceType();
+
   return isa<VarDecl>(Decl) || isa<CXXFieldDecl>(Decl) ||
     // C++ 3.10p2: An lvalue refers to an object or function.
     (Ctx.getLangOptions().CPlusPlus &&

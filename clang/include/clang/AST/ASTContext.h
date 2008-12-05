@@ -46,6 +46,7 @@ namespace clang {
   class TranslationUnitDecl;
   class TypeDecl;
   class TypedefDecl;
+  class TemplateTypeParmDecl;
 
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
@@ -221,6 +222,7 @@ public:
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
   QualType getTypedefType(TypedefDecl *Decl);
+  QualType getTemplateTypeParmType(TemplateTypeParmDecl *Decl);
   QualType getObjCInterfaceType(ObjCInterfaceDecl *Decl);
   
   /// getObjCQualifiedInterfaceType - Return a 

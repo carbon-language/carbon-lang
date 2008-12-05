@@ -23,6 +23,70 @@ class CXXConstructorDecl;
 class CXXDestructorDecl;
 class CXXConversionDecl;
 
+/// TemplateTypeParmDecl - Declaration of a template type parameter,
+/// e.g., "T" in
+/// @code
+/// template<typename T> class vector;
+/// @endcode
+class TemplateTypeParmDecl : public TypeDecl {
+  /// Typename - Whether this template type parameter was declaration
+  /// with the 'typename' keyword. If false, it was declared with the
+  /// 'class' keyword.
+  bool Typename : 1;
+
+  TemplateTypeParmDecl(DeclContext *DC, SourceLocation L,
+		       IdentifierInfo *Id, bool Typename)
+    : TypeDecl(TemplateTypeParm, DC, L, Id, 0), Typename(Typename) { }
+
+public:
+  static TemplateTypeParmDecl *Create(ASTContext &C, DeclContext *DC,
+				      SourceLocation L, IdentifierInfo *Id,
+				      bool Typename);
+
+  /// wasDeclarationWithTypename - Whether this template type
+  /// parameter was declared with the 'typename' keyword. If not, it
+  /// was declared with the 'class' keyword.
+  bool wasDeclaredWithTypename() const { return Typename; }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { 
+    return D->getKind() == TemplateTypeParm; 
+  }
+  static bool classof(const TemplateTypeParmDecl *D) { return true; }
+
+protected:
+  /// EmitImpl - Serialize this TemplateTypeParmDecl.  Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize a TemplateTypeParmDecl.  Called by Decl::Create.
+  static TemplateTypeParmDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+  
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);  
+};
+
+/// NonTypeTemplateParmDecl - Declares a non-type template parameter,
+/// e.g., "Size" in 
+/// @code
+/// template<int Size> class array { };
+/// @endcode
+class NonTypeTemplateParmDecl : public VarDecl {
+  NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, 
+			  IdentifierInfo *Id, QualType T,
+			  SourceLocation TSSL = SourceLocation())
+    : VarDecl(NonTypeTemplateParm, DC, L, Id, T, VarDecl::None, 0, TSSL) { }
+			  
+public:
+  static NonTypeTemplateParmDecl *
+  Create(ASTContext &C, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
+	 QualType T, SourceLocation TypeSpecStartLoc = SourceLocation());
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) {
+    return D->getKind() == NonTypeTemplateParm;
+  }
+  static bool classof(const NonTypeTemplateParmDecl *D) { return true; }
+};
+
 /// OverloadedFunctionDecl - An instance of this class represents a
 /// set of overloaded functions. All of the functions have the same
 /// name and occur within the same scope.

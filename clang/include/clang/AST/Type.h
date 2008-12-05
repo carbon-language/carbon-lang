@@ -30,6 +30,7 @@ namespace clang {
   class ASTContext;
   class Type;
   class TypedefDecl;
+  class TemplateTypeParmDecl;
   class TagDecl;
   class RecordDecl;
   class CXXRecordDecl;
@@ -55,6 +56,7 @@ namespace clang {
   class ComplexType;
   class TagType;
   class TypedefType;
+  class TemplateTypeParmType;
   class FunctionType;
   class FunctionTypeProto;
   class ExtVectorType;
@@ -238,6 +240,7 @@ public:
     Vector, ExtVector,
     FunctionNoProto, FunctionProto,
     TypeName, Tagged, ASQual,
+    TemplateTypeParm,
     ObjCInterface, ObjCQualifiedInterface,
     ObjCQualifiedId,
     TypeOfExp, TypeOfTyp, // GNU typeof extension.
@@ -339,8 +342,9 @@ public:
   bool isObjCInterfaceType() const;             // NSString or NSString<foo>
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
+  bool isTemplateTypeParmType() const;          // C++ template type parameter
   bool isOverloadType() const;                  // C++ overloaded function
-  
+
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs and qualifiers, and return a pointer to
   // the best type we can.
@@ -364,7 +368,8 @@ public:
   const ObjCInterfaceType *getAsObjCInterfaceType() const;
   const ObjCQualifiedInterfaceType *getAsObjCQualifiedInterfaceType() const;
   const ObjCQualifiedIdType *getAsObjCQualifiedIdType() const;
-  
+  const TemplateTypeParmType *getAsTemplateTypeParmType() const;
+
   /// getAsPointerToObjCInterfaceType - If this is a pointer to an ObjC
   /// interface, return the interface type, otherwise return null.
   const ObjCInterfaceType *getAsPointerToObjCInterfaceType() const;
@@ -1174,7 +1179,30 @@ public:
   static bool classof(const EnumType *) { return true; }
 };
 
+class TemplateTypeParmType : public Type {
+  TemplateTypeParmDecl *Decl;
 
+protected:
+  TemplateTypeParmType(TemplateTypeParmDecl *D)
+    : Type(TemplateTypeParm, QualType(this, 0)), Decl(D) { }
+
+  friend class ASTContext; // ASTContext creates these
+
+public:
+  TemplateTypeParmDecl *getDecl() const { return Decl; }
+
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == TemplateTypeParm; 
+  }
+  static bool classof(const TemplateTypeParmType *T) { return true; }
+
+protected:
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
+  friend class Type;
+};
   
 /// ObjCInterfaceType - Interfaces are the core concept in Objective-C for
 /// object oriented design.  They basically correspond to C++ classes.  There
@@ -1462,6 +1490,10 @@ inline bool Type::isObjCQualifiedInterfaceType() const {
 inline bool Type::isObjCQualifiedIdType() const {
   return isa<ObjCQualifiedIdType>(CanonicalType.getUnqualifiedType());
 }
+inline bool Type::isTemplateTypeParmType() const {
+  return isa<TemplateTypeParmType>(CanonicalType.getUnqualifiedType());
+}
+
 inline bool Type::isOverloadType() const {
   if (const BuiltinType *BT = getAsBuiltinType())
     return BT->getKind() == BuiltinType::Overload;

@@ -239,6 +239,8 @@ void Decl::addDeclKind(Kind k) {
   case CXXField:            nCXXFieldDecls++; break;
   case CXXRecord:           nCXXSUC++; break;
   // FIXME: Statistics for C++ decls.
+  case TemplateTypeParm:
+  case NonTypeTemplateParm:
   case CXXMethod:
   case CXXConstructor:
   case CXXDestructor:

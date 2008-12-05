@@ -66,6 +66,13 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   
   // Check for another declaration kind with the same name.
   Decl *PrevDecl = LookupDecl(ClassName, Decl::IDNS_Ordinary, TUScope);
+  if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
+    // Maybe we will complain about the shadowed template parameter.
+    DiagnoseTemplateParameterShadow(ClassLoc, PrevDecl);
+    // Just pretend that we didn't see the previous declaration.
+    PrevDecl = 0;
+  }
+
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
@@ -742,6 +749,13 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
   for (unsigned i = 0; i != NumElts; ++i) {
     // Check for another declaration kind with the same name.
     Decl *PrevDecl = LookupDecl(IdentList[i], Decl::IDNS_Ordinary, TUScope);
+    if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
+      // Maybe we will complain about the shadowed template parameter.
+      DiagnoseTemplateParameterShadow(AtClassLoc, PrevDecl);
+      // Just pretend that we didn't see the previous declaration.
+      PrevDecl = 0;
+    }
+
     if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
       // GCC apparently allows the following idiom:
       //

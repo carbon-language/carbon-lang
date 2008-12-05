@@ -943,6 +943,8 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
   
   if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(Decl))
     return getTypedefType(Typedef);
+  else if (TemplateTypeParmDecl *TP = dyn_cast<TemplateTypeParmDecl>(Decl))
+    return getTemplateTypeParmType(TP);
   else if (ObjCInterfaceDecl *ObjCInterface = dyn_cast<ObjCInterfaceDecl>(Decl))
     return getObjCInterfaceType(ObjCInterface);
 
@@ -979,6 +981,16 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   QualType Canonical = getCanonicalType(Decl->getUnderlyingType());
   Decl->TypeForDecl = new TypedefType(Type::TypeName, Decl, Canonical);
   Types.push_back(Decl->TypeForDecl);
+  return QualType(Decl->TypeForDecl, 0);
+}
+
+/// getTemplateTypeParmType - Return the unique reference to the type
+/// for the specified template type parameter declaration. 
+QualType ASTContext::getTemplateTypeParmType(TemplateTypeParmDecl *Decl) {
+  if (!Decl->TypeForDecl) {
+    Decl->TypeForDecl = new TemplateTypeParmType(Decl);
+    Types.push_back(Decl->TypeForDecl);
+  }
   return QualType(Decl->TypeForDecl, 0);
 }
 

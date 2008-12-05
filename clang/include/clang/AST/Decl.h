@@ -746,8 +746,8 @@ protected:
 ///
 class TypeDecl : public ScopedDecl {
   /// TypeForDecl - This indicates the Type object that represents this
-  /// TypeDecl.  It is a cache maintained by ASTContext::getTypedefType and
-  /// ASTContext::getTagDeclType.
+  /// TypeDecl.  It is a cache maintained by ASTContext::getTypedefType,
+  /// ASTContext::getTagDeclType, and ASTContext::getTemplateTypeParmType.
   Type *TypeForDecl;
   friend class ASTContext;
 protected:
@@ -794,8 +794,7 @@ protected:
   /// CreateImpl - Deserialize a TypedefDecl.  Called by Decl::Create.
   static TypedefDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
-  
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);  
 };
 
 

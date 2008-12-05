@@ -41,7 +41,7 @@ Parser::DeclTy *Parser::ParseTemplateDeclaration(unsigned Context) {
   SourceLocation TemplateLoc = ConsumeToken();
   
   // Enter template-parameter scope.
-  EnterScope(Scope::TemplateParamScope|Scope::DeclScope);
+  EnterScope(Scope::TemplateParamScope);
 
   // Try to parse the template parameters, and the declaration if
   // successful.

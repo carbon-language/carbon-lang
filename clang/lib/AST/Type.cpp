@@ -443,6 +443,11 @@ const ObjCQualifiedIdType *Type::getAsObjCQualifiedIdType() const {
   return dyn_cast<ObjCQualifiedIdType>(CanonicalType);
 }
 
+const TemplateTypeParmType *Type::getAsTemplateTypeParmType() const {
+  // There is no sugar for template type parameters, so just return
+  // the canonical type pointer if it is the right class.
+  return dyn_cast<TemplateTypeParmType>(CanonicalType);
+}
 
 bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
@@ -998,6 +1003,12 @@ void FunctionTypeProto::getAsStringInternal(std::string &S) const {
 
 void TypedefType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
+    InnerString = ' ' + InnerString;
+  InnerString = getDecl()->getIdentifier()->getName() + InnerString;
+}
+
+void TemplateTypeParmType::getAsStringInternal(std::string &InnerString) const {
+  if (!InnerString.empty())    // Prefix the basic type, e.g. 'parmname X'.
     InnerString = ' ' + InnerString;
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;
 }

@@ -988,6 +988,17 @@ public:
 
   bool CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl);
 
+  //===--------------------------------------------------------------------===//
+  // C++ Templates [C++ 14]
+  //
+  bool isTemplateParameterDecl(Decl *D);
+  bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
+  virtual DeclTy *ActOnTypeParameter(Scope *S, bool Typename, 
+				     SourceLocation KeyLoc,
+				     IdentifierInfo *ParamName,
+				     SourceLocation ParamNameLoc);
+  virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D);
+
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                            IdentifierInfo *ClassName,

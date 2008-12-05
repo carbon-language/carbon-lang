@@ -63,6 +63,7 @@ public:
                  Enum,  // [DeclContext]
                  Record,
                    CXXRecord,  // [DeclContext]
+ 	       TemplateTypeParm,
     //       ValueDecl
                EnumConstant,
                Function,  // [DeclContext]
@@ -74,6 +75,7 @@ public:
                  ImplicitParam,
                  CXXClassVar,
                  ParmVar,
+  	         NonTypeTemplateParm,
            ObjCInterface,  // [DeclContext]
            ObjCCompatibleAlias,
            ObjCClass,
@@ -85,15 +87,15 @@ public:
   
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
-    NamedFirst     = Field        , NamedLast     = ParmVar,
+    NamedFirst     = Field        , NamedLast     = NonTypeTemplateParm,
     FieldFirst     = Field        , FieldLast     = ObjCAtDefsField,
-    ScopedFirst    = Namespace    , ScopedLast    = ParmVar,
-    TypeFirst      = Typedef      , TypeLast      = CXXRecord,
+    ScopedFirst    = Namespace    , ScopedLast    = NonTypeTemplateParm,
+    TypeFirst      = Typedef      , TypeLast      = TemplateTypeParm,
     TagFirst       = Enum         , TagLast       = CXXRecord,
     RecordFirst    = Record       , RecordLast    = CXXRecord,
-    ValueFirst     = EnumConstant , ValueLast     = ParmVar,
+    ValueFirst     = EnumConstant , ValueLast     = NonTypeTemplateParm,
     FunctionFirst  = Function     , FunctionLast  = CXXConversion,
-    VarFirst       = Var          , VarLast       = ParmVar
+    VarFirst       = Var          , VarLast       = NonTypeTemplateParm
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
@@ -180,6 +182,7 @@ public:
     case Var:
     case ParmVar:
     case EnumConstant:
+    case NonTypeTemplateParm:
     case ObjCInterface:
     case ObjCCompatibleAlias:
     case OverloadedFunction:
@@ -190,6 +193,7 @@ public:
       return IDNS_Ordinary;
     case Record:
     case CXXRecord:
+    case TemplateTypeParm:
     case Enum:
       return IDNS_Tag;
     case Namespace:

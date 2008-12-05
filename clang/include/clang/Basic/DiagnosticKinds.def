@@ -944,6 +944,12 @@ DIAG(err_ovl_ambiguous_object_call, ERROR,
 DIAG(err_ovl_surrogate_cand, NOTE,
      "conversion candidate of type %0")
 
+/// C++ Templates Semantic Analysis
+DIAG(err_template_param_shadow, ERROR,
+     "declaration of %0 shadows template parameter")
+DIAG(note_template_param_here, NOTE,
+     "template parameter is declared here")
+
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name %0: expected expression")
 DIAG(err_unexpected_namespace, ERROR,

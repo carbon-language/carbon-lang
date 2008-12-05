@@ -88,6 +88,10 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
       Dcl = TypedefDecl::CreateImpl(D, C);
       break;
       
+    case TemplateTypeParm:
+      Dcl = TemplateTypeParmDecl::CreateImpl(D, C);
+      break;
+
     case FileScopeAsm:
       Dcl = FileScopeAsmDecl::CreateImpl(D, C);
       break;
@@ -626,6 +630,27 @@ TypedefDecl* TypedefDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   decl->ScopedDecl::ReadInRec(D, C);
   decl->ScopedDecl::ReadOutRec(D, C);
 
+  return decl;
+}
+
+//===----------------------------------------------------------------------===//
+//      TemplateTypeParmDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+void TemplateTypeParmDecl::EmitImpl(Serializer& S) const {
+  S.EmitBool(Typename);
+  ScopedDecl::EmitInRec(S);
+  ScopedDecl::EmitOutRec(S);
+}
+
+TemplateTypeParmDecl *
+TemplateTypeParmDecl::CreateImpl(Deserializer& D, ASTContext& C) {
+  bool Typename = D.ReadBool();
+  void *Mem = C.getAllocator().Allocate<TemplateTypeParmDecl>();
+  TemplateTypeParmDecl *decl
+    = new (Mem) TemplateTypeParmDecl(0, SourceLocation(), NULL, Typename);
+  decl->ScopedDecl::ReadInRec(D, C);
+  decl->ScopedDecl::ReadOutRec(D, C);
   return decl;
 }
 

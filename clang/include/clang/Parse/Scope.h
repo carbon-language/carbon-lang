@@ -87,7 +87,13 @@ private:
   /// BlockParent - This is a direct link to the immediately containing
   /// BlockScope if this scope is not one, or null if there is none.
   Scope *BlockParent;
-  
+
+  /// TemplateParamParent - This is a direct link to the
+  /// immediately containing template parameter scope. In the
+  /// case of nested templates, template parameter scopes can have
+  /// other template parameter scopes as parents.
+  Scope *TemplateParamParent;
+
   /// DeclsInScope - This keeps track of all declarations in this scope.  When
   /// the declaration is added to the scope, it is set as the current
   /// declaration for the identifier in the IdentifierTable.  When the scope is
@@ -147,6 +153,9 @@ public:
  
   Scope *getBlockParent() { return BlockParent; }
   const Scope *getBlockParent() const { return BlockParent; }  
+
+  Scope *getTemplateParamParent() { return TemplateParamParent; }
+  const Scope *getTemplateParamParent() const { return TemplateParamParent; }  
  
   typedef DeclSetTy::iterator decl_iterator;
   decl_iterator decl_begin() const { return DeclsInScope.begin(); }
@@ -196,18 +205,20 @@ public:
       BreakParent    = AnyParent->BreakParent;
       ContinueParent = AnyParent->ContinueParent;
       BlockParent  = AnyParent->BlockParent;
+      TemplateParamParent = AnyParent->TemplateParamParent;
     } else {
       FnParent = BreakParent = ContinueParent = BlockParent = 0;
+      TemplateParamParent = 0;
     }
     
     // If this scope is a function or contains breaks/continues, remember it.
-    if (Flags & FnScope)       FnParent = this;
-    if (Flags & BreakScope)    BreakParent = this;
-    if (Flags & ContinueScope) ContinueParent = this;
-    if (Flags & BlockScope)  BlockParent = this;
-    
+    if (Flags & FnScope)       	    FnParent = this;
+    if (Flags & BreakScope)    	    BreakParent = this;
+    if (Flags & ContinueScope) 	    ContinueParent = this;
+    if (Flags & BlockScope)    	    BlockParent = this;
+    if (Flags & TemplateParamScope) TemplateParamParent = this;
     DeclsInScope.clear();
-  }      
+  }
 };
     
 }  // end namespace clang

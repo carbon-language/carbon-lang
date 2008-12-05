@@ -18,5 +18,6 @@ add_clang_library(clangSema
   SemaNamedCast.cpp
   SemaOverload.cpp
   SemaStmt.cpp
+  SemaTemplate.cpp
   SemaType.cpp
   )

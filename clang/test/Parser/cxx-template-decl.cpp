@@ -41,9 +41,33 @@ template <int = 10> class NTP3;
 template <unsigned int N = 12u> NTP4;;
 template <unsigned int = 12u> NTP5;
 template <unsigned = 15u> NTP6;
-template <typename T, T Obj> NTP7;      // expected-error {{parse error}}
+template <typename T, T Obj> NTP7;
 
 // Template class declarations
 template <typename T> struct A { };
 template <typename T, typename U> struct B { };
 
+// Template parameter shadowing
+template<typename T, // expected-note{{template parameter is declared here}}
+	 typename T> // expected-error{{declaration of 'T' shadows template parameter}}
+  void shadow1();
+
+template<typename T> // expected-note{{template parameter is declared here}}
+void shadow2(int T); // expected-error{{declaration of 'T' shadows template parameter}}
+
+template<typename T> // expected-note{{template parameter is declared here}}
+class T { // expected-error{{declaration of 'T' shadows template parameter}}
+};
+
+template<int Size> // expected-note{{template parameter is declared here}}
+void shadow3(int Size); // expected-error{{declaration of 'Size' shadows template parameter}}
+
+// Non-type template parameters in scope
+template<int Size> 
+void f(int& i) {
+  i = Size;
+  Size = i; // expected-error{{expression is not assignable}}
+}
+
+template<typename T>
+const T& min(const T&, const T&);

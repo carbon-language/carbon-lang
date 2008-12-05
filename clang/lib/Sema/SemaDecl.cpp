@@ -39,7 +39,8 @@ Sema::TypeTy *Sema::isTypeName(IdentifierInfo &II, Scope *S,
 
   if (IIDecl && (isa<TypedefDecl>(IIDecl) || 
                  isa<ObjCInterfaceDecl>(IIDecl) ||
-                 isa<TagDecl>(IIDecl)))
+                 isa<TagDecl>(IIDecl) ||
+		 isa<TemplateTypeParmDecl>(IIDecl)))
     return IIDecl;
   return 0;
 }
@@ -148,7 +149,8 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
 
 void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   if (S->decl_empty()) return;
-  assert((S->getFlags() & Scope::DeclScope) &&"Scope shouldn't contain decls!");
+  assert((S->getFlags() & (Scope::DeclScope | Scope::TemplateParamScope)) &&
+	 "Scope shouldn't contain decls!");
 
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
@@ -165,7 +167,10 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     
     // We only want to remove the decls from the identifier decl chains for
     // local scopes, when inside a function/method.
-    if (S->getFnParent() != 0)
+    // However, we *always* remove template parameters, since they are
+    // purely lexically scoped (and can never be found by qualified
+    // name lookup).
+    if (S->getFnParent() != 0 || isa<TemplateTypeParmDecl>(D))
       IdResolver.RemoveDecl(D);
 
     // Chain this decl to the containing DeclContext.
@@ -861,6 +866,15 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
           << Name << cast<NamedDecl>(DC)->getDeclName() << R;
       }
     }
+  }
+
+  if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
+    // Maybe we will complain about the shadowed template parameter.
+    InvalidDecl 
+      = InvalidDecl || DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), 
+						       PrevDecl);
+    // Just pretend that we didn't see the previous declaration.
+    PrevDecl = 0;
   }
 
   // In C++, the previous declaration we find might be a tag type
@@ -1991,7 +2005,12 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   // among each other.  Here they can only shadow globals, which is ok.
   IdentifierInfo *II = D.getIdentifier();
   if (Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S)) {
-    if (S->isDeclScope(PrevDecl)) {
+    if (isTemplateParameterDecl(PrevDecl)) {
+      // Maybe we will complain about the shadowed template parameter.
+      DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
+      // Just pretend that we didn't see the previous declaration.
+      PrevDecl = 0;
+    } else if (S->isDeclScope(PrevDecl)) {
       Diag(D.getIdentifierLoc(), diag::err_param_redefinition) << II;
 
       // Recover by removing the name
@@ -2250,6 +2269,13 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     PrevDecl = dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S));
   }
 
+  if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
+    // Maybe we will complain about the shadowed template parameter.
+    DiagnoseTemplateParameterShadow(NameLoc, PrevDecl);
+    // Just pretend that we didn't see the previous declaration.
+    PrevDecl = 0;
+  }
+
   if (PrevDecl) {    
     assert((isa<TagDecl>(PrevDecl) || isa<NamespaceDecl>(PrevDecl)) &&
             "unexpected Decl type");
@@ -2386,6 +2412,13 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
     PrevDecl = dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S));
   }
   
+  if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
+    // Maybe we will complain about the shadowed template parameter.
+    DiagnoseTemplateParameterShadow(NameLoc, PrevDecl);
+    // Just pretend that we didn't see the previous declaration.
+    PrevDecl = 0;
+  }
+
   if (PrevDecl) {    
     assert((isa<TagDecl>(PrevDecl) || isa<NamespaceDecl>(PrevDecl)) &&
            "unexpected Decl type");
@@ -2875,7 +2908,15 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   
   // Verify that there isn't already something declared with this name in this
   // scope.
-  if (Decl *PrevDecl = LookupDecl(Id, Decl::IDNS_Ordinary, S)) {
+  Decl *PrevDecl = LookupDecl(Id, Decl::IDNS_Ordinary, S);
+  if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
+    // Maybe we will complain about the shadowed template parameter.
+    DiagnoseTemplateParameterShadow(IdLoc, PrevDecl);
+    // Just pretend that we didn't see the previous declaration.
+    PrevDecl = 0;
+  }
+
+  if (PrevDecl) {
     // When in C++, we may get a TagDecl with the same name; in this case the
     // enum constant will 'hide' the tag.
     assert((getLangOptions().CPlusPlus || !isa<TagDecl>(PrevDecl)) &&

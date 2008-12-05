@@ -110,6 +110,10 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       D.RegisterPtr(PtrID,TypedefType::CreateImpl(Context,D));
       break;
       
+    case Type::TemplateTypeParm:
+      D.RegisterPtr(PtrID,TemplateTypeParmType::CreateImpl(Context, D));
+      break;
+
     case Type::VariableArray:
       D.RegisterPtr(PtrID,VariableArrayType::CreateImpl(Context,D));
       break;
@@ -265,6 +269,25 @@ Type* TypedefType::CreateImpl(ASTContext& Context, Deserializer& D) {
     const_cast<std::vector<Type*>&>(Context.getTypes());
   
   TypedefType* T = new TypedefType(Type::TypeName, NULL, QualType::ReadVal(D));
+  Types.push_back(T);
+  
+  D.ReadPtr(T->Decl); // May be backpatched.
+  return T;
+}
+  
+//===----------------------------------------------------------------------===//
+// TemplateTypeParmType
+//===----------------------------------------------------------------------===//
+
+void TemplateTypeParmType::EmitImpl(Serializer& S) const {
+  S.EmitPtr(getDecl());
+}
+
+Type* TemplateTypeParmType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  std::vector<Type*>& Types = 
+    const_cast<std::vector<Type*>&>(Context.getTypes());
+  
+  TemplateTypeParmType* T = new TemplateTypeParmType(NULL);
   Types.push_back(T);
   
   D.ReadPtr(T->Decl); // May be backpatched.

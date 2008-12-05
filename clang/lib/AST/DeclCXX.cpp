@@ -19,7 +19,23 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
- 
+
+TemplateTypeParmDecl *
+TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
+			     SourceLocation L, IdentifierInfo *Id,
+			     bool Typename) {
+  void *Mem = C.getAllocator().Allocate<TemplateTypeParmDecl>();
+  return new (Mem) TemplateTypeParmDecl(DC, L, Id, Typename);
+}
+
+NonTypeTemplateParmDecl *
+NonTypeTemplateParmDecl::Create(ASTContext &C, DeclContext *DC, 
+				SourceLocation L, IdentifierInfo *Id,
+				QualType T, SourceLocation TypeSpecStartLoc) {
+  void *Mem = C.getAllocator().Allocate<NonTypeTemplateParmDecl>();
+  return new (Mem) NonTypeTemplateParmDecl(DC, L, Id, T, TypeSpecStartLoc);
+}
+
 CXXFieldDecl *CXXFieldDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, IdentifierInfo *Id,
                                    QualType T, bool Mut, Expr *BW) {
