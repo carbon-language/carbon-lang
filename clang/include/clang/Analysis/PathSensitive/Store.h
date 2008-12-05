@@ -39,10 +39,15 @@ public:
   typedef llvm::DenseSet<SymbolID>          DeadSymbolsTy;
   
   virtual ~StoreManager() {}
-  virtual SVal Retrieve(Store St, Loc LV, QualType T = QualType()) = 0;  
+  
+  /// Retrieve - Retrieves the value bound to specified location.  The optional
+  ///  QualType information provides a hint to the store indicating the expected
+  ///  type of the returned value.
+  virtual SVal Retrieve(const GRState* state, Loc LV, QualType T=QualType()) =0;  
 
-  virtual SVal GetRegionSVal(Store St, const MemRegion* R) {
-    return Retrieve(St, loc::MemRegionVal(R));
+  /// GetRegionSVal - Retrieves  the value bound to the specified region.
+  SVal GetRegionSVal(const GRState* state, const MemRegion* R) {
+    return Retrieve(state, loc::MemRegionVal(R));
   }
   
   virtual Store Bind(Store St, Loc LV, SVal V) = 0;
@@ -90,7 +95,7 @@ public:
   virtual const MemRegion* getSelfRegion(Store store) = 0;
 
   virtual Store
-  RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
+  RemoveDeadBindings(const GRState* state, Stmt* Loc, const LiveVariables& Live,
                      llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                      LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) = 0;
 

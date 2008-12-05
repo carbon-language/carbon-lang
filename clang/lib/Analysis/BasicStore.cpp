@@ -38,7 +38,7 @@ public:
   
   ~BasicStoreManager() {}
 
-  SVal Retrieve(Store St, Loc LV, QualType T);  
+  SVal Retrieve(const GRState *state, Loc LV, QualType T);  
   Store Bind(Store St, Loc LV, SVal V);  
   Store Remove(Store St, Loc LV);
   Store getInitialStore();
@@ -79,10 +79,11 @@ public:
     return SelfRegion;  
   }
     
-  /// RemoveDeadBindings - Scans a BasicStore for dead values.  It returns
-  ///  a new Store with these values removed, and populates LSymbols and
-  ///  DSymbols with the known set of live and dead symbols respectively.
-  Store RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
+  /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
+  ///  It returns a new Store with these values removed, and populates LSymbols
+  ///  and DSymbols with the known set of live and dead symbols respectively.
+  Store RemoveDeadBindings(const GRState* state, Stmt* Loc,
+                           const LiveVariables& Live,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                            LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
 
@@ -168,7 +169,7 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
   return Base;
 }
 
-SVal BasicStoreManager::Retrieve(Store St, Loc LV, QualType T) {
+SVal BasicStoreManager::Retrieve(const GRState* state, Loc LV, QualType T) {
   
   if (isa<UnknownVal>(LV))
     return UnknownVal();
@@ -183,8 +184,9 @@ SVal BasicStoreManager::Retrieve(Store St, Loc LV, QualType T) {
       
       if (!R)
         return UnknownVal();
-        
-      VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(St));      
+      
+      Store store = state->getStore();
+      VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(store));
       VarBindingsTy::data_type* T = B.lookup(R->getDecl());      
       return T ? *T : UnknownVal();
     }
@@ -247,11 +249,12 @@ Store BasicStoreManager::Remove(Store store, Loc LV) {
 }
 
 Store
-BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
+BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
                           const LiveVariables& Liveness,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                           LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) {
   
+  Store store = state->getStore();
   VarBindingsTy B = GetVarBindings(store);
   typedef SVal::symbol_iterator symbol_iterator;
   
@@ -282,7 +285,7 @@ BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
           break;
         
         Marked.insert(R);
-        SVal X = GetRegionSVal(store, R);      
+        SVal X = GetRegionSVal(state, R);      
     
         // FIXME: We need to handle symbols nested in region definitions.
         for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)

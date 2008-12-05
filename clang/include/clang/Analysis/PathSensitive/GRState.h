@@ -346,8 +346,8 @@ public:
                                      const CompoundLiteralExpr* CL, SVal V);
 
   const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
-                                       const LiveVariables& Liveness,
-                                       DeadSymbolsTy& DeadSyms);
+                                    const LiveVariables& Liveness,
+                                    DeadSymbolsTy& DeadSyms);
 
   const GRState* RemoveSubExprBindings(const GRState* St) {
     GRState NewSt = *St;
@@ -459,12 +459,12 @@ public:
   }
     
   
-  SVal GetSVal(const GRState* St, Loc LV, QualType T = QualType()) {
-    return StoreMgr->Retrieve(St->getStore(), LV, T);
+  SVal GetSVal(const GRState* state, Loc LV, QualType T = QualType()) {
+    return StoreMgr->Retrieve(state, LV, T);
   }
   
-  SVal GetSVal(const GRState* St, const MemRegion* R) {
-    return StoreMgr->GetRegionSVal(St->getStore(), R);
+  SVal GetSVal(const GRState* state, const MemRegion* R) {
+    return StoreMgr->GetRegionSVal(state, R);
   }  
   
   void BindLoc(GRState& St, Loc LV, SVal V) {

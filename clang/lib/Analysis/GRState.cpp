@@ -33,7 +33,7 @@ GRStateManager::~GRStateManager() {
 }
 
 const GRState*
-GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
+GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
                                    const LiveVariables& Liveness,
                                    DeadSymbolsTy& DSymbols) {  
   
@@ -45,17 +45,17 @@ GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
   // for optimum performance.
   llvm::SmallVector<const MemRegion*, 10> RegionRoots;
   StoreManager::LiveSymbolsTy LSymbols;
-  GRState NewSt = *St;
+  GRState NewState = *state;
 
-  NewSt.Env =
-    EnvMgr.RemoveDeadBindings(NewSt.Env, Loc, Liveness, RegionRoots, LSymbols);
+  NewState.Env = EnvMgr.RemoveDeadBindings(NewState.Env, Loc, Liveness,
+                                           RegionRoots, LSymbols);
 
   // Clean up the store.
   DSymbols.clear();
-  NewSt.St = StoreMgr->RemoveDeadBindings(St->getStore(), Loc, Liveness,
-                                       RegionRoots, LSymbols, DSymbols);
+  NewState.St = StoreMgr->RemoveDeadBindings(&NewState, Loc, Liveness,
+                                             RegionRoots, LSymbols, DSymbols);
 
-  return ConstraintMgr->RemoveDeadBindings(getPersistentState(NewSt), 
+  return ConstraintMgr->RemoveDeadBindings(getPersistentState(NewState),
                                            LSymbols, DSymbols);
 }
 

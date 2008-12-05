@@ -53,12 +53,12 @@ template<> struct GRStateTrait<RegionExtentsTy>
 }
 
 // KillSet GDM stuff.
-typedef llvm::ImmutableSet<const MemRegion*> RegionKillSetTy;
-static int RegionKillSetTyIndex = 0;
+typedef llvm::ImmutableSet<const MemRegion*> RegionKills;
+static int RegionKillsIndex = 0;
 namespace clang {
-  template<> struct GRStateTrait<RegionKillSetTy>
-  : public GRStatePartialTrait<RegionKillSetTy> {
-    static void* GDMIndex() { return &RegionKillSetTyIndex; }
+  template<> struct GRStateTrait<RegionKills>
+  : public GRStatePartialTrait<RegionKills> {
+    static void* GDMIndex() { return &RegionKillsIndex; }
   };
 }
 
@@ -82,11 +82,6 @@ public:
   virtual ~RegionStoreManager() {}
 
   MemRegionManager& getRegionManager() { return MRMgr; }
-
-  // FIXME: Is this function necessary?
-  SVal GetRegionSVal(Store St, const MemRegion* R) {
-    return Retrieve(St, loc::MemRegionVal(R));
-  }
   
   Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL, SVal V);
 
@@ -109,7 +104,7 @@ public:
   std::pair<const GRState*, SVal>
   CastRegion(const GRState* St, SVal VoidPtr, QualType CastToTy, Stmt* CastE);
 
-  SVal Retrieve(Store S, Loc L, QualType T = QualType());
+  SVal Retrieve(const GRState* state, Loc L, QualType T = QualType());
 
   Store Bind(Store St, Loc LV, SVal V);
 
@@ -128,13 +123,14 @@ public:
     return 0;
   }
   
-  /// RemoveDeadBindings - Scans a RegionStore for dead values.  It returns
-  ///  a new Store with these values removed, and populates LSymbols and
-  ///  DSymbols with the known set of live and dead symbols respectively.
-  Store RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
+  /// RemoveDeadBindings - Scans the RegionStore of 'state' for dead values.
+  ///  It returns a new Store with these values removed, and populates LSymbols
+  //   and DSymbols with the known set of live and dead symbols respectively.
+  Store RemoveDeadBindings(const GRState* state, Stmt* Loc,
+                           const LiveVariables& Live,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                            LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
-  
+
   void UpdateLiveSymbols(SVal X, LiveSymbolsTy& LSymbols);
 
   Store BindDecl(Store store, const VarDecl* VD, SVal* InitVal, unsigned Count);
@@ -142,7 +138,7 @@ public:
   const GRState* setExtent(const GRState* St, const MemRegion* R, SVal Extent);
 
   static inline RegionBindingsTy GetRegionBindings(Store store) {
-   return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
+    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
   }
 
   void print(Store store, std::ostream& Out, const char* nl, const char *sep);
@@ -393,9 +389,10 @@ RegionStoreManager::CastRegion(const GRState* St, SVal VoidPtr,
   return std::make_pair(St, UnknownVal());
 }
 
-SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
+SVal RegionStoreManager::Retrieve(const GRState* state, Loc L, QualType T) {
   assert(!isa<UnknownVal>(L) && "location unknown");
   assert(!isa<UndefinedVal>(L) && "location undefined");
+  Store S = state->getStore();
 
   switch (L.getSubKind()) {
   case loc::MemRegionKind: {
@@ -626,11 +623,12 @@ void RegionStoreManager::UpdateLiveSymbols(SVal X, LiveSymbolsTy& LSymbols) {
     LSymbols.insert(*SI);
 }
 
-Store RegionStoreManager::RemoveDeadBindings(Store store, Stmt* Loc, 
+Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc, 
                                              const LiveVariables& Live,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                            LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) {
 
+  Store store = state->getStore();
   RegionBindingsTy B = GetRegionBindings(store);
   
   // Lazily constructed backmap from MemRegions to SubRegions.
