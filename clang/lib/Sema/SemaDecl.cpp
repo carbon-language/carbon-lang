@@ -2899,8 +2899,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
     
     // C99 6.7.2.2p2: Make sure we have an integer constant expression.
     SourceLocation ExpLoc;
-    if (!Val->isIntegerConstantExpr(EnumVal, Context, &ExpLoc)) {
-      Diag(ExpLoc, diag::err_enum_value_not_integer_constant_expr) << Id;
+    if (VerifyIntegerConstantExpression(Val, &EnumVal)) {
       delete Val;
       Val = 0;  // Just forget about it.
     } else {

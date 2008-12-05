@@ -978,8 +978,6 @@ DIAG(err_redefinition_of_enumerator, ERROR,
      "redefinition of enumerator %0")
 DIAG(err_duplicate_member, ERROR,
      "duplicate member %0")
-DIAG(err_enum_value_not_integer_constant_expr, ERROR,
-     "enumerator value for %0 is not an integer constant")
 DIAG(ext_enum_value_not_int, EXTENSION,
      "ISO C restricts enumerator values to range of 'int' (%0 is too large)")
 DIAG(warn_enum_too_large, WARNING,
