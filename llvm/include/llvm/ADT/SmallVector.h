@@ -162,6 +162,12 @@ public:
     End->~T();
   }
   
+  T pop_back_val() {
+    T Result = back();
+    pop_back();
+    return Result;
+  }
+  
   void clear() {
     destroy_range(Begin, End);
     End = Begin;
