@@ -179,6 +179,12 @@ public:
   bool GVRequiresExtraLoad(const GlobalValue* GV, const TargetMachine& TM,
                            bool isDirectCall) const;
 
+  /// True if accessing the GV requires a register.  This is a superset of the
+  /// cases where GVRequiresExtraLoad is true.  Some variations of PIC require
+  /// a register, but not an extra load.
+  bool GVRequiresRegister(const GlobalValue* GV, const TargetMachine& TM,
+                           bool isDirectCall) const;
+
   /// This function returns the name of a function which has an interface
   /// like the non-standard bzero function, if such a function exists on
   /// the current subtarget and it is considered prefereable over
