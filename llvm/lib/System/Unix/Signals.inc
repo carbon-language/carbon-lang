@@ -25,6 +25,10 @@
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#if HAVE_DLFCN_H && __GNUG__
+#include <dlfcn.h>
+#include <cxxabi.h> 
+#endif
 using namespace llvm;
 
 namespace {
@@ -69,7 +73,47 @@ static void PrintStackTrace() {
   // Use backtrace() to output a backtrace on Linux systems with glibc.
   int depth = backtrace(StackTrace,
                         static_cast<int>(array_lengthof(StackTrace)));
+#if HAVE_DLFCN_H && __GNUG__
+  int width = 0;
+  for (int i = 0; i < depth; ++i) {
+    Dl_info dlinfo;
+    dladdr(StackTrace[i], &dlinfo);
+    char* name = strrchr(dlinfo.dli_fname, '/');
+
+    int nwidth;
+    if (name == NULL) nwidth = strlen(dlinfo.dli_fname);
+    else              nwidth = strlen(name) - 1;
+
+    if (nwidth > width) width = nwidth;
+  }
+
+  for (int i = 0; i < depth; ++i) {
+    Dl_info dlinfo;
+    dladdr(StackTrace[i], &dlinfo);
+
+    fprintf(stderr, "%-3d", i);
+
+    char* name = strrchr(dlinfo.dli_fname, '/');
+    if (name == NULL) fprintf(stderr, " %-*s", width, dlinfo.dli_fname);
+    else              fprintf(stderr, " %-*s", width, name+1);
+
+    fprintf(stderr, " %#0*x", (int)(sizeof(void*) * 2) + 2, StackTrace[i]);
+
+    if (dlinfo.dli_sname != NULL) {
+      int res;
+      fputc(' ', stderr);
+      char* d = abi::__cxa_demangle(dlinfo.dli_sname, NULL, NULL, &res);
+      if (d == NULL) fputs(dlinfo.dli_sname, stderr);
+      else           fputs(d, stderr);
+      free(d);
+
+      fprintf(stderr, " + %tu",(char*)StackTrace[i]-(char*)dlinfo.dli_saddr);
+    }
+    fputc('\n', stderr);
+  }
+#else
   backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
+#endif
 #endif
 }
 
