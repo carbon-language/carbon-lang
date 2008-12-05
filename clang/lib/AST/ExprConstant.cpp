@@ -207,6 +207,7 @@ public:
 
   APValue VisitBinaryOperator(const BinaryOperator *E);
   APValue VisitCastExpr(const CastExpr* E);
+  APValue VisitCallExpr(CallExpr *E);
   APValue VisitUnaryOperator(const UnaryOperator *E);
   APValue VisitObjCStringLiteral(ObjCStringLiteral *E)
       { return APValue(E, 0); }
@@ -266,7 +267,6 @@ APValue PointerExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
 
   return APValue();
 }
-  
 
 APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
   const Expr* SubExpr = E->getSubExpr();
@@ -298,6 +298,15 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
   //assert(0 && "Unhandled cast");
   return APValue();
 }  
+
+APValue PointerExprEvaluator::VisitCallExpr(CallExpr *E)
+{
+  switch (E->isBuiltinCall()) {
+    default: return APValue();
+    case Builtin::BI__builtin___CFStringMakeConstantString:
+      return APValue(E, 0);
+  }
+}
 
 APValue PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
   bool BoolResult;
