@@ -478,7 +478,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
       if (Reg == 0) continue;
       if (!MO.isDef()) continue;
       // Ignore two-addr defs.
-      if (MI->isRegReDefinedByTwoAddr(Reg, i)) continue;
+      if (MI->isRegReDefinedByTwoAddr(i)) continue;
 
       DefIndices[Reg] = Count;
       KillIndices[Reg] = -1;

@@ -219,9 +219,9 @@ public:
   /// none is found.
   int findFirstPredOperandIdx() const;
   
-  /// isRegReDefinedByTwoAddr - Given the defined register and the operand index,
+  /// isRegReDefinedByTwoAddr - Given the index of a register def operand,
   /// check if the register def is a re-definition due to two addr elimination.
-  bool isRegReDefinedByTwoAddr(unsigned Reg, unsigned DefIdx) const;
+  bool isRegReDefinedByTwoAddr(unsigned DefIdx) const;
 
   /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
   ///

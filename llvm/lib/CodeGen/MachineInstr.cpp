@@ -646,13 +646,14 @@ int MachineInstr::findFirstPredOperandIdx() const {
   return -1;
 }
   
-/// isRegReDefinedByTwoAddr - Given the defined register and the operand index,
+/// isRegReDefinedByTwoAddr - Given the index of a register def operand,
 /// check if the register def is a re-definition due to two addr elimination.
-bool MachineInstr::isRegReDefinedByTwoAddr(unsigned Reg, unsigned DefIdx) const{
+bool MachineInstr::isRegReDefinedByTwoAddr(unsigned DefIdx) const{
+  assert(getOperand(DefIdx).isDef() && "DefIdx is not a def!");
   const TargetInstrDesc &TID = getDesc();
   for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
-    if (MO.isReg() && MO.isUse() && MO.getReg() == Reg &&
+    if (MO.isReg() && MO.isUse() &&
         TID.getOperandConstraint(i, TOI::TIED_TO) == (int)DefIdx)
       return true;
   }
