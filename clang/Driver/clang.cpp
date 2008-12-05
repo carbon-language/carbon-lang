@@ -569,8 +569,16 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   
   // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs or -ansi
   // is specified, or -std is set to a conforming mode.  
-  Options.Trigraphs = LangStd < lang_gnu_START || Trigraphs ? 1 : 0;
+  Options.Trigraphs = LangStd < lang_gnu_START;
+  if (Trigraphs.getPosition())
+    Options.Trigraphs = Trigraphs;  // Command line option wins.
 
+  // If in a conformant language mode (e.g. -std=c99) Blocks defaults to off
+  // even if they are normally on for the target.  In GNU modes (e.g.
+  // -std=gnu99) the default for blocks depends on the target settings.
+  if (LangStd < lang_gnu_START)
+    Options.Blocks = 0;
+  
   Options.DollarIdents = 1;  // FIXME: Really a target property.
   if (PascalStrings.getPosition())
     Options.PascalStrings = PascalStrings;
