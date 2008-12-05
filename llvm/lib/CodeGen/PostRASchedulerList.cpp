@@ -353,6 +353,13 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
        I != E; ++I, --Count) {
     MachineInstr *MI = &*I;
 
+    // After regalloc, IMPLICIT_DEF instructions aren't safe to treat as
+    // dependence-breaking. In the case of an INSERT_SUBREG, the IMPLICIT_DEF
+    // is left behind appearing to clobber the super-register, while the
+    // subregister needs to remain live. So we just ignore them.
+    if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
+      continue;
+
     // Check if this instruction has an anti-dependence that we're
     // interested in.
     DenseMap<MachineInstr *, unsigned>::iterator C = CriticalAntiDeps.find(MI);
