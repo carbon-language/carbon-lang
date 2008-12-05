@@ -92,7 +92,7 @@ void DeclRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 
 void SymbolicRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef sym) {
   ID.AddInteger((unsigned) MemRegion::SymbolicRegionKind);
-  ID.AddInteger(sym.getNumber());
+  ID.Add(sym);
 }
 
 void SymbolicRegion::Profile(llvm::FoldingSetNodeID& ID) const {
