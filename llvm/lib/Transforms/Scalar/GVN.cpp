@@ -1484,7 +1484,6 @@ bool GVN::performPRE(Function& F) {
         
       if (isCriticalEdge(PREPred->getTerminator(), succNum)) {
         toSplit.push_back(std::make_pair(PREPred->getTerminator(), succNum));
-        Changed = true;
         continue;
       }
       
@@ -1547,14 +1546,10 @@ bool GVN::performPRE(Function& F) {
   }
   
   for (SmallVector<std::pair<TerminatorInst*, unsigned>, 4>::iterator
-       I = toSplit.begin(), E = toSplit.end(); I != E; ++I) {
+       I = toSplit.begin(), E = toSplit.end(); I != E; ++I)
     SplitCriticalEdge(I->first, I->second, this);
-    BasicBlock* NewBlock = I->first->getSuccessor(I->second);
-    localAvail[NewBlock] =
-             new ValueNumberScope(localAvail[I->first->getParent()]);
-  }
   
-  return Changed;
+  return Changed || toSplit.size();
 }
 
 // iterateOnFunction - Executes one iteration of GVN
