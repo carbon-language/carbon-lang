@@ -444,7 +444,33 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
   return true;
 }
 
-  
+/// isAddress - Returns true if the specified instruction is using the
+/// specified value as an address.
+static bool isAddressUse(Instruction *Inst, Value *OperandVal) {
+  bool isAddress = isa<LoadInst>(Inst);
+  if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+    if (SI->getOperand(1) == OperandVal)
+      isAddress = true;
+  } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
+    // Addressing modes can also be folded into prefetches and a variety
+    // of intrinsics.
+    switch (II->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::prefetch:
+      case Intrinsic::x86_sse2_loadu_dq:
+      case Intrinsic::x86_sse2_loadu_pd:
+      case Intrinsic::x86_sse_loadu_ps:
+      case Intrinsic::x86_sse_storeu_ps:
+      case Intrinsic::x86_sse2_storeu_pd:
+      case Intrinsic::x86_sse2_storeu_dq:
+      case Intrinsic::x86_sse2_storel_dq:
+        if (II->getOperand(1) == OperandVal)
+          isAddress = true;
+        break;
+    }
+  }
+  return isAddress;
+}
 
 /// AddUsersIfInteresting - Inspect the specified instruction.  If it is a
 /// reducible SCEV, recursively add its users to the IVUsesByStride set and
@@ -731,15 +757,16 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
 }
 
 
-/// isTargetConstant - Return true if the following can be referenced by the
-/// immediate field of a target instruction.
-static bool isTargetConstant(const SCEVHandle &V, const Type *UseTy,
-                             const TargetLowering *TLI) {
+/// fitsInAddressMode - Return true if V can be subsumed within an addressing
+/// mode, and does not need to be put in a register first.
+static bool fitsInAddressMode(const SCEVHandle &V, const Type *UseTy,
+                             const TargetLowering *TLI, bool HasBaseReg) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
     int64_t VC = SC->getValue()->getSExtValue();
     if (TLI) {
       TargetLowering::AddrMode AM;
       AM.BaseOffs = VC;
+      AM.HasBaseReg = HasBaseReg;
       return TLI->isLegalAddressingMode(AM, UseTy);
     } else {
       // Defaults to PPC. PPC allows a sign-extended 16-bit immediate field.
@@ -754,6 +781,7 @@ static bool isTargetConstant(const SCEVHandle &V, const Type *UseTy,
         if (GlobalValue *GV = dyn_cast<GlobalValue>(Op0)) {
           TargetLowering::AddrMode AM;
           AM.BaseGV = GV;
+          AM.HasBaseReg = HasBaseReg;
           return TLI->isLegalAddressingMode(AM, UseTy);
         }
       }
@@ -846,7 +874,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
     return;
   } else if (SCEVMulExpr *SME = dyn_cast<SCEVMulExpr>(Val)) {
     // Transform "8 * (4 + v)" -> "32 + 8*V" if "32" fits in the immed field.
-    if (isAddress && isTargetConstant(SME->getOperand(0), UseTy, TLI) &&
+    if (isAddress && fitsInAddressMode(SME->getOperand(0), UseTy, TLI, false) &&
         SME->getNumOperands() == 2 && SME->isLoopInvariant(L)) {
 
       SCEVHandle SubImm = SE->getIntegerSCEV(0, Val->getType());
@@ -859,7 +887,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
         // Scale SubImm up by "8".  If the result is a target constant, we are
         // good.
         SubImm = SE->getMulExpr(SubImm, SME->getOperand(0));
-        if (isTargetConstant(SubImm, UseTy, TLI)) {
+        if (fitsInAddressMode(SubImm, UseTy, TLI, false)) {
           // Accumulate the immediate.
           Imm = SE->getAddExpr(Imm, SubImm);
           
@@ -873,7 +901,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
 
   // Loop-variant expressions must stay in the immediate field of the
   // expression.
-  if ((isAddress && isTargetConstant(Val, UseTy, TLI)) ||
+  if ((isAddress && fitsInAddressMode(Val, UseTy, TLI, false)) ||
       !Val->isLoopInvariant(L)) {
     Imm = SE->getAddExpr(Imm, Val);
     Val = SE->getIntegerSCEV(0, Val->getType());
@@ -912,21 +940,28 @@ static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
   }
 }
 
+// This is logically local to the following function, but C++ says we have 
+// to make it file scope.
+struct SubExprUseData { unsigned Count; bool notAllUsesAreFree; };
 
-/// RemoveCommonExpressionsFromUseBases - Look through all of the uses in Bases,
-/// removing any common subexpressions from it.  Anything truly common is
-/// removed, accumulated, and returned.  This looks for things like (a+b+c) and
+/// RemoveCommonExpressionsFromUseBases - Look through all of the Bases of all
+/// the Uses, removing any common subexpressions, except that if all such
+/// subexpressions can be folded into an addressing mode for all uses inside
+/// the loop (this case is referred to as "free" in comments herein) we do
+/// not remove anything.  This looks for things like (a+b+c) and
 /// (a+c+d) and computes the common (a+c) subexpression.  The common expression
 /// is *removed* from the Bases and returned.
 static SCEVHandle 
 RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
-                                    ScalarEvolution *SE, Loop *L) {
+                                    ScalarEvolution *SE, Loop *L,
+                                    const TargetLowering *TLI) {
   unsigned NumUses = Uses.size();
 
   // Only one use?  This is a very common case, so we handle it specially and
   // cheaply.
   SCEVHandle Zero = SE->getIntegerSCEV(0, Uses[0].Base->getType());
   SCEVHandle Result = Zero;
+  SCEVHandle FreeResult = Zero;
   if (NumUses == 1) {
     // If the use is inside the loop, use its base, regardless of what it is:
     // it is clearly shared across all the IV's.  If the use is outside the loop
@@ -939,7 +974,10 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
 
   // To find common subexpressions, count how many of Uses use each expression.
   // If any subexpressions are used Uses.size() times, they are common.
-  std::map<SCEVHandle, unsigned> SubExpressionUseCounts;
+  // Also track whether all uses of each expression can be moved into an
+  // an addressing mode "for free"; such expressions are left within the loop.
+  // struct SubExprUseData { unsigned Count; bool notAllUsesAreFree; };
+  std::map<SCEVHandle, SubExprUseData> SubExpressionUseData;
   
   // UniqueSubExprs - Keep track of all of the subexpressions we see in the
   // order we see them.
@@ -962,31 +1000,89 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
     // CSEs we can find.
     if (Uses[i].Base == Zero) return Zero;
 
+    // If this use is as an address we may be able to put CSEs in the addressing
+    // mode rather than hoisting them.
+    bool isAddrUse = isAddressUse(Uses[i].Inst, Uses[i].OperandValToReplace);
+    // We may need the UseTy below, but only when isAddrUse, so compute it
+    // only in that case.
+    const Type *UseTy = 0;
+    if (isAddrUse) {
+      UseTy  = Uses[i].Inst->getType();
+      if (StoreInst *SI = dyn_cast<StoreInst>(Uses[i].Inst))
+        UseTy = SI->getOperand(0)->getType();
+    }
+
     // Split the expression into subexprs.
     SeparateSubExprs(SubExprs, Uses[i].Base, SE);
-    // Add one to SubExpressionUseCounts for each subexpr present.
-    for (unsigned j = 0, e = SubExprs.size(); j != e; ++j)
-      if (++SubExpressionUseCounts[SubExprs[j]] == 1)
+    // Add one to SubExpressionUseData.Count for each subexpr present, and
+    // if the subexpr is not a valid immediate within an addressing mode use,
+    // set SubExpressionUseData.notAllUsesAreFree.  We definitely want to
+    // hoist these out of the loop (if they are common to all uses).
+    for (unsigned j = 0, e = SubExprs.size(); j != e; ++j) {
+      if (++SubExpressionUseData[SubExprs[j]].Count == 1)
         UniqueSubExprs.push_back(SubExprs[j]);
+      if (!isAddrUse || !fitsInAddressMode(SubExprs[j], UseTy, TLI, false))
+        SubExpressionUseData[SubExprs[j]].notAllUsesAreFree = true;
+    }
     SubExprs.clear();
   }
 
   // Now that we know how many times each is used, build Result.  Iterate over
   // UniqueSubexprs so that we have a stable ordering.
   for (unsigned i = 0, e = UniqueSubExprs.size(); i != e; ++i) {
-    std::map<SCEVHandle, unsigned>::iterator I = 
-       SubExpressionUseCounts.find(UniqueSubExprs[i]);
-    assert(I != SubExpressionUseCounts.end() && "Entry not found?");
-    if (I->second == NumUsesInsideLoop)   // Found CSE!
-      Result = SE->getAddExpr(Result, I->first);
-    else
-      // Remove non-cse's from SubExpressionUseCounts.
-      SubExpressionUseCounts.erase(I);
+    std::map<SCEVHandle, SubExprUseData>::iterator I = 
+       SubExpressionUseData.find(UniqueSubExprs[i]);
+    assert(I != SubExpressionUseData.end() && "Entry not found?");
+    if (I->second.Count == NumUsesInsideLoop) { // Found CSE! 
+      if (I->second.notAllUsesAreFree)
+        Result = SE->getAddExpr(Result, I->first);
+      else 
+        FreeResult = SE->getAddExpr(FreeResult, I->first);
+    } else
+      // Remove non-cse's from SubExpressionUseData.
+      SubExpressionUseData.erase(I);
   }
-  
+
+  if (FreeResult != Zero) {
+    // We have some subexpressions that can be subsumed into addressing
+    // modes in every use inside the loop.  However, it's possible that
+    // there are so many of them that the combined FreeResult cannot
+    // be subsumed, or that the target cannot handle both a FreeResult
+    // and a Result in the same instruction (for example because it would
+    // require too many registers).  Check this.
+    for (unsigned i=0; i<NumUses; ++i) {
+      if (!L->contains(Uses[i].Inst->getParent()))
+        continue;
+      // We know this is an addressing mode use; if there are any uses that
+      // are not, FreeResult would be Zero.
+      const Type *UseTy = Uses[i].Inst->getType();
+      if (StoreInst *SI = dyn_cast<StoreInst>(Uses[i].Inst))
+        UseTy = SI->getOperand(0)->getType();
+      if (!fitsInAddressMode(FreeResult, UseTy, TLI, Result!=Zero)) {
+        // FIXME:  could split up FreeResult into pieces here, some hoisted
+        // and some not.  Doesn't seem worth it for now.
+        Result = SE->getAddExpr(Result, FreeResult);
+        FreeResult = Zero;
+        break;
+      }
+    }
+  }
+
   // If we found no CSE's, return now.
   if (Result == Zero) return Result;
   
+  // If we still have a FreeResult, remove its subexpressions from
+  // SubExpressionUseData.  This means they will remain in the use Bases.
+  if (FreeResult != Zero) {
+    SeparateSubExprs(SubExprs, FreeResult, SE);
+    for (unsigned j = 0, e = SubExprs.size(); j != e; ++j) {
+      std::map<SCEVHandle, SubExprUseData>::iterator I = 
+         SubExpressionUseData.find(SubExprs[j]);
+      SubExpressionUseData.erase(I);
+    }
+    SubExprs.clear();
+  }
+
   // Otherwise, remove all of the CSE's we found from each of the base values.
   for (unsigned i = 0; i != NumUses; ++i) {
     // Uses outside the loop don't necessarily include the common base, but
@@ -1003,7 +1099,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
 
     // Remove any common subexpressions.
     for (unsigned j = 0, e = SubExprs.size(); j != e; ++j)
-      if (SubExpressionUseCounts.count(SubExprs[j])) {
+      if (SubExpressionUseData.count(SubExprs[j])) {
         SubExprs.erase(SubExprs.begin()+j);
         --j; --e;
       }
@@ -1131,34 +1227,6 @@ static bool isNonConstantNegative(const SCEVHandle &Expr) {
   return SC->getValue()->getValue().isNegative();
 }
 
-/// isAddress - Returns true if the specified instruction is using the
-/// specified value as an address.
-static bool isAddressUse(Instruction *Inst, Value *OperandVal) {
-  bool isAddress = isa<LoadInst>(Inst);
-  if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-    if (SI->getOperand(1) == OperandVal)
-      isAddress = true;
-  } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
-    // Addressing modes can also be folded into prefetches and a variety
-    // of intrinsics.
-    switch (II->getIntrinsicID()) {
-      default: break;
-      case Intrinsic::prefetch:
-      case Intrinsic::x86_sse2_loadu_dq:
-      case Intrinsic::x86_sse2_loadu_pd:
-      case Intrinsic::x86_sse_loadu_ps:
-      case Intrinsic::x86_sse_storeu_ps:
-      case Intrinsic::x86_sse2_storeu_pd:
-      case Intrinsic::x86_sse2_storeu_dq:
-      case Intrinsic::x86_sse2_storel_dq:
-        if (II->getOperand(1) == OperandVal)
-          isAddress = true;
-        break;
-    }
-  }
-  return isAddress;
-}
-
 // CollectIVUsers - Transform our list of users and offsets to a bit more
 // complex table. In this new vector, each 'BasedUser' contains 'Base', the base
 // of the strided accesses, as well as the old information from Uses. We
@@ -1190,7 +1258,7 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
   // "A+B"), emit it to the preheader, then remove the expression from the
   // UsersToProcess base values.
   SCEVHandle CommonExprs =
-    RemoveCommonExpressionsFromUseBases(UsersToProcess, SE, L);
+    RemoveCommonExpressionsFromUseBases(UsersToProcess, SE, L, TLI);
 
   // Next, figure out what we can represent in the immediate fields of
   // instructions.  If we can represent anything there, move it to the imm
@@ -1347,7 +1415,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     Constant *C = dyn_cast<Constant>(CommonBaseV);
     if (!C ||
         (!C->isNullValue() &&
-         !isTargetConstant(SE->getUnknown(CommonBaseV), ReplacedTy, TLI)))
+         !fitsInAddressMode(SE->getUnknown(CommonBaseV), ReplacedTy, 
+                           TLI, false)))
       // We want the common base emitted into the preheader! This is just
       // using cast as a copy so BitCast (no-op cast) is appropriate
       CommonBaseV = new BitCastInst(CommonBaseV, CommonBaseV->getType(), 
@@ -1403,7 +1472,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // this by forcing a BitCast (noop cast) to be inserted into the preheader 
     // in this case.
     if (Constant *C = dyn_cast<Constant>(BaseV)) {
-      if (!C->isNullValue() && !isTargetConstant(Base, ReplacedTy, TLI)) {
+      if (!C->isNullValue() && !fitsInAddressMode(Base, ReplacedTy, 
+                                                 TLI, false)) {
         // We want this constant emitted into the preheader! This is just
         // using cast as a copy so BitCast (no-op cast) is appropriate
         BaseV = new BitCastInst(BaseV, BaseV->getType(), "preheaderinsert",

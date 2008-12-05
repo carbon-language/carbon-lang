@@ -1,10 +1,10 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | \
-; RUN:   grep {A+} | count 2
+; RUN: llvm-as < %s | llc -march=x86 -relocation-model=pic | \
+; RUN:   grep {A-} | count 1
 ;
-; Make sure the common loop invariant A is not hoisted up to preheader,
-; since it can be subsumed into the addressing mode in all uses.
+; Make sure the common loop invariant A is hoisted up to preheader,
+; since too many registers are needed to subsume it into the addressing modes.
 
-@A = internal global [16 x [16 x i32]] zeroinitializer, align 32		; <[16 x [16 x i32]]*> [#uses=2]
+@A = global [16 x [16 x i32]] zeroinitializer, align 32		; <[16 x [16 x i32]]*> [#uses=2]
 
 define void @test(i32 %row, i32 %N.in) nounwind {
 entry:

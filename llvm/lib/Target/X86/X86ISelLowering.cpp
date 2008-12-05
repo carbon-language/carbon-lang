@@ -6463,6 +6463,10 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
     // We can only fold this if we don't need an extra load.
     if (Subtarget->GVRequiresExtraLoad(AM.BaseGV, getTargetMachine(), false))
       return false;
+    // If BaseGV requires a register, we cannot also have a BaseReg.
+    if (Subtarget->GVRequiresRegister(AM.BaseGV, getTargetMachine(), false) &&
+        AM.HasBaseReg)
+      return false;
 
     // X86-64 only supports addr of globals in small code model.
     if (Subtarget->is64Bit()) {

@@ -59,7 +59,23 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
       return (GV->hasDLLImportLinkage());
     }
   }
-  
+  return false;
+}
+
+/// True if accessing the GV requires a register.  This is a superset of the
+/// cases where GVRequiresExtraLoad is true.  Some variations of PIC require
+/// a register, but not an extra load.
+bool X86Subtarget::GVRequiresRegister(const GlobalValue *GV,
+                                       const TargetMachine& TM,
+                                       bool isDirectCall) const
+{
+  if (GVRequiresExtraLoad(GV, TM, isDirectCall))
+    return true;
+  // Code below here need only consider cases where GVRequiresExtraLoad
+  // returns false.
+  if (TM.getRelocationModel() == Reloc::PIC_)
+    return !isDirectCall && 
+      (GV->hasInternalLinkage() || GV->hasExternalLinkage());
   return false;
 }
 
