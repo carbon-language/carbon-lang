@@ -490,6 +490,8 @@ public:
 
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);
+  void WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethod,
+                                   ObjCMethodDecl *IntfMethod);
 
   NamespaceDecl *GetStdNamespace();
                            

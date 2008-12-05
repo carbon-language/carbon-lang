@@ -590,6 +590,32 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
   Diag(ImpLoc, diag::warn_undef_method_impl) << method->getDeclName();
 }
 
+void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
+                                       ObjCMethodDecl *IntfMethodDecl) {
+  bool err = false;
+  QualType ImpMethodQType = 
+    Context.getCanonicalType(ImpMethodDecl->getResultType());
+  QualType IntfMethodQType = 
+    Context.getCanonicalType(IntfMethodDecl->getResultType());
+  if (!Context.typesAreCompatible(IntfMethodQType, ImpMethodQType))
+    err = true;
+  else for (ObjCMethodDecl::param_iterator IM=ImpMethodDecl->param_begin(),
+            IF=IntfMethodDecl->param_begin(),
+            EM=ImpMethodDecl->param_end(); IM!=EM; ++IM, IF++) {
+    ImpMethodQType = Context.getCanonicalType((*IM)->getType());
+    IntfMethodQType = Context.getCanonicalType((*IF)->getType());
+    if (!Context.typesAreCompatible(IntfMethodQType, ImpMethodQType)) {
+      err = true;
+      break;
+    }
+  }
+  if (err) {
+    Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_types) 
+    << ImpMethodDecl->getDeclName();
+    Diag(IntfMethodDecl->getLocation(), diag::note_previous_definition);
+  }
+}
+
 /// FIXME: Type hierarchies in Objective-C can be deep. We could most
 /// likely improve the efficiency of selector lookups and type
 /// checking by associating with each protocol / interface / category
@@ -651,32 +677,12 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl,
     if (!(*I)->isSynthesized() && !InsMap.count((*I)->getSelector()))
       WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
     else if (!(*I)->isSynthesized()){
-      bool err = false;
       ObjCMethodDecl *ImpMethodDecl = 
         IMPDecl->getInstanceMethod((*I)->getSelector());
       ObjCMethodDecl *IntfMethodDecl = 
         IDecl->getInstanceMethod((*I)->getSelector());
-      QualType ImpMethodQType = 
-        Context.getCanonicalType(ImpMethodDecl->getResultType());
-      QualType IntfMethodQType = 
-        Context.getCanonicalType(IntfMethodDecl->getResultType());
-      if (!Context.typesAreCompatible(IntfMethodQType, ImpMethodQType))
-        err = true;
-      else for (ObjCMethodDecl::param_iterator IM=ImpMethodDecl->param_begin(),
-                IF=IntfMethodDecl->param_begin(),
-                EM=ImpMethodDecl->param_end(); IM!=EM; ++IM, IF++) {
-        ImpMethodQType = Context.getCanonicalType((*IM)->getType());
-        IntfMethodQType = Context.getCanonicalType((*IF)->getType());
-        if (!Context.typesAreCompatible(IntfMethodQType, ImpMethodQType)) {
-          err = true;
-          break;
-        }
-      }
-      if (err) {
-        Diag(ImpMethodDecl->getLocation(), diag::err_conflicting_types) 
-          << ImpMethodDecl->getDeclName();
-        Diag(IntfMethodDecl->getLocation(), diag::note_previous_definition);
-      }
+      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+      
     }
       
   llvm::DenseSet<Selector> ClsMap;
@@ -690,6 +696,14 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl,
        E = IDecl->classmeth_end(); I != E; ++I)
     if (!ClsMap.count((*I)->getSelector()))
       WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
+    else {
+      ObjCMethodDecl *ImpMethodDecl = 
+        IMPDecl->getClassMethod((*I)->getSelector());
+      ObjCMethodDecl *IntfMethodDecl = 
+        IDecl->getClassMethod((*I)->getSelector());
+      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+    }
+  
   
   // Check the protocol list for unimplemented methods in the @implementation
   // class.
@@ -717,6 +731,13 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
        E = CatClassDecl->instmeth_end(); I != E; ++I)
     if (!InsMap.count((*I)->getSelector()))
       WarnUndefinedMethod(CatImplDecl->getLocation(), *I, IncompleteImpl);
+    else {
+      ObjCMethodDecl *ImpMethodDecl = 
+        CatImplDecl->getInstanceMethod((*I)->getSelector());
+      ObjCMethodDecl *IntfMethodDecl = 
+        CatClassDecl->getInstanceMethod((*I)->getSelector());
+      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+    }
 
   llvm::DenseSet<Selector> ClsMap;
   // Check and see if class methods in category interface have been
@@ -730,7 +751,13 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
        E = CatClassDecl->classmeth_end(); I != E; ++I)
     if (!ClsMap.count((*I)->getSelector()))
       WarnUndefinedMethod(CatImplDecl->getLocation(), *I, IncompleteImpl);
-  
+    else {
+      ObjCMethodDecl *ImpMethodDecl = 
+        CatImplDecl->getClassMethod((*I)->getSelector());
+      ObjCMethodDecl *IntfMethodDecl = 
+        CatClassDecl->getClassMethod((*I)->getSelector());
+      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+    }
   // Check the protocol list for unimplemented methods in the @implementation
   // class.
   for (ObjCCategoryDecl::protocol_iterator PI = CatClassDecl->protocol_begin(),

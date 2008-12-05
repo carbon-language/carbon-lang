@@ -573,6 +573,8 @@ DIAG(err_accessor_property_type_mismatch, ERROR,
      "type of property %0 does not match type of accessor %1")
 DIAG(err_setter_type_void, ERROR,
      "type of setter must be void")
+DIAG(warn_conflicting_types, WARNING,
+     "conflicting types for %0")
 
 /// C++ parser diagnostics
 DIAG(err_expected_unqualified_id, ERROR,
