@@ -1548,9 +1548,9 @@ void TypecheckGraph (const RecordVector& EdgeVector,
   StringMap<std::string>::iterator IAE = ToolToOutLang.end();
   StringMap<StringSet<> >::iterator IBE = ToolToInLang.end();
 
-  for (RecordVector::const_iterator B = EdgeVector.begin(),
-         E = EdgeVector.end(); B != E; ++B) {
-    const Record* Edge = *B;
+  for (RecordVector::const_iterator Beg = EdgeVector.begin(),
+         E = EdgeVector.end(); Beg != E; ++Beg) {
+    const Record* Edge = *Beg;
     const std::string& A = Edge->getValueAsString("a");
     const std::string& B = Edge->getValueAsString("b");
     StringMap<std::string>::iterator IA = ToolToOutLang.find(A);
@@ -1615,9 +1615,9 @@ void EmitEdgeClasses (const RecordVector& EdgeVector,
                       const GlobalOptionDescriptions& OptDescs,
                       std::ostream& O) {
   int i = 0;
-  for (RecordVector::const_iterator B = EdgeVector.begin(),
-         E = EdgeVector.end(); B != E; ++B) {
-    const Record* Edge = *B;
+  for (RecordVector::const_iterator Beg = EdgeVector.begin(),
+         E = EdgeVector.end(); Beg != E; ++Beg) {
+    const Record* Edge = *Beg;
     const std::string& B = Edge->getValueAsString("b");
     DagInit* Weight = Edge->getValueAsDag("weight");
 
@@ -1645,9 +1645,9 @@ void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
   // Insert edges.
 
   int i = 0;
-  for (RecordVector::const_iterator B = EdgeVector.begin(),
-         E = EdgeVector.end(); B != E; ++B) {
-    const Record* Edge = *B;
+  for (RecordVector::const_iterator Beg = EdgeVector.begin(),
+         E = EdgeVector.end(); Beg != E; ++Beg) {
+    const Record* Edge = *Beg;
     const std::string& A = Edge->getValueAsString("a");
     const std::string& B = Edge->getValueAsString("b");
     DagInit* Weight = Edge->getValueAsDag("weight");
@@ -1800,10 +1800,10 @@ void FilterNotInGraph (const RecordVector& EdgeVector,
   // List all tools mentioned in the graph.
   llvm::StringSet<> ToolsInGraph;
 
-  for (RecordVector::const_iterator B = EdgeVector.begin(),
-         E = EdgeVector.end(); B != E; ++B) {
+  for (RecordVector::const_iterator Beg = EdgeVector.begin(),
+         E = EdgeVector.end(); Beg != E; ++Beg) {
 
-    const Record* Edge = *B;
+    const Record* Edge = *Beg;
     const std::string& A = Edge->getValueAsString("a");
     const std::string& B = Edge->getValueAsString("b");
 
