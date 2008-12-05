@@ -149,7 +149,8 @@ void VarRegion::print(llvm::raw_ostream& os) const {
 }
 
 void SymbolicRegion::print(llvm::raw_ostream& os) const {
-  os << "$" << sym.getNumber();
+  os << "SymRegion-";
+  sym.print(os);
 }
 
 void FieldRegion::print(llvm::raw_ostream& os) const {

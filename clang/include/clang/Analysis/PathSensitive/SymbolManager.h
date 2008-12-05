@@ -22,6 +22,10 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Allocator.h"
 
+namespace llvm {
+  class raw_ostream;
+}
+
 namespace clang {
   
 class MemRegion;
@@ -37,6 +41,8 @@ public:
   operator unsigned() const { return getNumber(); }
   unsigned getNumber() const { assert (isInitialized()); return Data; }
     
+  void print(llvm::raw_ostream& os) const;
+  
   void Profile(llvm::FoldingSetNodeID& ID) const { 
     assert (isInitialized());
     ID.AddInteger(Data);

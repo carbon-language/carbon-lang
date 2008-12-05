@@ -13,8 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+
+void SymbolRef::print(llvm::raw_ostream& os) const {
+  os << getNumber();
+}
 
 SymbolRef SymbolManager::getSymbol(VarDecl* D) {
 
