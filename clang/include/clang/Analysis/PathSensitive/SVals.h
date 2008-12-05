@@ -102,7 +102,7 @@ public:
   
   class symbol_iterator {
     const enum { One, Many } HowMany;
-    union { uintptr_t sym; const SymbolID* sptr; };
+    union { uintptr_t sym; const SymbolRef* sptr; };
   public:
     
     bool operator==(const symbol_iterator& X) {
@@ -122,16 +122,16 @@ public:
       return *this;
     }
     
-    SymbolID operator*() const {
+    SymbolRef operator*() const {
       if (HowMany)
         return *sptr;
       
-      return SymbolID(sym);
+      return SymbolRef(sym);
     }
     
-    symbol_iterator(SymbolID x) : HowMany(One), sym(x.getNumber()) {}
+    symbol_iterator(SymbolRef x) : HowMany(One), sym(x.getNumber()) {}
     symbol_iterator() : HowMany(One), sym(~0x0) {}
-    symbol_iterator(const SymbolID* x) : HowMany(Many), sptr(x) {}
+    symbol_iterator(const SymbolRef* x) : HowMany(Many), sptr(x) {}
   };
   
   symbol_iterator symbol_begin() const;
@@ -238,8 +238,8 @@ public:
   SymbolVal(unsigned SymID)
     : NonLoc(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
   
-  SymbolID getSymbol() const {
-    return (SymbolID) reinterpret_cast<uintptr_t>(Data);
+  SymbolRef getSymbol() const {
+    return (SymbolRef) reinterpret_cast<uintptr_t>(Data);
   }
   
   static inline bool classof(const SVal* V) {
@@ -371,8 +371,8 @@ public:
   SymbolVal(unsigned SymID)
   : Loc(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
   
-  SymbolID getSymbol() const {
-    return (SymbolID) reinterpret_cast<uintptr_t>(Data);
+  SymbolRef getSymbol() const {
+    return (SymbolRef) reinterpret_cast<uintptr_t>(Data);
   }
   
   static inline bool classof(const SVal* V) {

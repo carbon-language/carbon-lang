@@ -90,7 +90,7 @@ void DeclRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   DeclRegion::ProfileRegion(ID, D, superRegion, getKind());
 }
 
-void SymbolicRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolID sym) {
+void SymbolicRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef sym) {
   ID.AddInteger((unsigned) MemRegion::SymbolicRegionKind);
   ID.AddInteger(sym.getNumber());
 }
@@ -300,7 +300,7 @@ ElementRegion* MemRegionManager::getElementRegion(SVal Idx,
 }
 
 /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
-SymbolicRegion* MemRegionManager::getSymbolicRegion(const SymbolID sym) {
+SymbolicRegion* MemRegionManager::getSymbolicRegion(const SymbolRef sym) {
   
   llvm::FoldingSetNodeID ID;
   SymbolicRegion::ProfileRegion(ID, sym);

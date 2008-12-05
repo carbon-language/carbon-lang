@@ -35,8 +35,8 @@ class ObjCIvarDecl;
 
 class StoreManager {
 public:
-  typedef llvm::SmallSet<SymbolID, 20>      LiveSymbolsTy;
-  typedef llvm::DenseSet<SymbolID>          DeadSymbolsTy;
+  typedef llvm::SmallSet<SymbolRef, 20>      LiveSymbolsTy;
+  typedef llvm::DenseSet<SymbolRef>          DeadSymbolsTy;
   
   virtual ~StoreManager() {}
   

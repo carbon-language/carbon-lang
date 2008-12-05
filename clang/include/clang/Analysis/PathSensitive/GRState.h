@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines SymbolID, ExprBindKey, and GRState*
+//  This file defines SymbolRef, ExprBindKey, and GRState*
 //
 //===----------------------------------------------------------------------===//
 
@@ -535,11 +535,11 @@ public:
                                         isFeasible);
   }
 
-  const GRState* AddNE(const GRState* St, SymbolID sym, const llvm::APSInt& V) {
+  const GRState* AddNE(const GRState* St, SymbolRef sym, const llvm::APSInt& V) {
     return ConstraintMgr->AddNE(St, sym, V);
   }
 
-  const llvm::APSInt* getSymVal(const GRState* St, SymbolID sym) {
+  const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) {
     return ConstraintMgr->getSymVal(St, sym);
   }
 
@@ -605,7 +605,7 @@ public:
     return GRStateRef(Mgr->Unbind(St, LV), *Mgr);
   }
   
-  GRStateRef AddNE(SymbolID sym, const llvm::APSInt& V) {
+  GRStateRef AddNE(SymbolRef sym, const llvm::APSInt& V) {
     return GRStateRef(Mgr->AddNE(St, sym, V), *Mgr);
   }
   

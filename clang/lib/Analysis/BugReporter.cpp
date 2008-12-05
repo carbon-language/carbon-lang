@@ -326,7 +326,7 @@ namespace {
 class VISIBILITY_HIDDEN NotableSymbolHandler 
   : public StoreManager::BindingsHandler {
     
-  SymbolID Sym;
+  SymbolRef Sym;
   const GRState* PrevSt;
   Stmt* S;
   GRStateManager& VMgr;
@@ -336,14 +336,14 @@ class VISIBILITY_HIDDEN NotableSymbolHandler
     
 public:
   
-  NotableSymbolHandler(SymbolID sym, const GRState* prevst, Stmt* s,
+  NotableSymbolHandler(SymbolRef sym, const GRState* prevst, Stmt* s,
                        GRStateManager& vmgr, ExplodedNode<GRState>* pred,
                        PathDiagnostic& pd, BugReporter& br)
     : Sym(sym), PrevSt(prevst), S(s), VMgr(vmgr), Pred(pred), PD(pd), BR(br) {}
                         
   bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, SVal V) {
 
-    SymbolID ScanSym;
+    SymbolRef ScanSym;
     
     if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V))
       ScanSym = SV->getSymbol();
@@ -412,7 +412,7 @@ public:
 }
 
 static void HandleNotableSymbol(ExplodedNode<GRState>* N, Stmt* S,
-                                SymbolID Sym, BugReporter& BR,
+                                SymbolRef Sym, BugReporter& BR,
                                 PathDiagnostic& PD) {
   
   ExplodedNode<GRState>* Pred = N->pred_empty() ? 0 : *N->pred_begin();
@@ -432,7 +432,7 @@ namespace {
 class VISIBILITY_HIDDEN ScanNotableSymbols
   : public StoreManager::BindingsHandler {
     
-  llvm::SmallSet<SymbolID, 10> AlreadyProcessed;
+  llvm::SmallSet<SymbolRef, 10> AlreadyProcessed;
   ExplodedNode<GRState>* N;
   Stmt* S;
   GRBugReporter& BR;
@@ -444,7 +444,7 @@ public:
     : N(n), S(s), BR(br), PD(pd) {}
   
   bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, SVal V) {
-    SymbolID ScanSym;
+    SymbolRef ScanSym;
   
     if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V))
       ScanSym = SV->getSymbol();

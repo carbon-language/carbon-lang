@@ -236,7 +236,7 @@ public:
   
 class GRBugReporter : public BugReporter {
   GRExprEngine& Eng;
-  llvm::SmallSet<SymbolID, 10> NotableSymbols;
+  llvm::SmallSet<SymbolRef, 10> NotableSymbols;
 public:
   
   GRBugReporter(BugReporterData& d, GRExprEngine& eng)
@@ -260,11 +260,11 @@ public:
   
   virtual void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R);
 
-  void addNotableSymbol(SymbolID Sym) {
+  void addNotableSymbol(SymbolRef Sym) {
     NotableSymbols.insert(Sym);
   }
   
-  bool isNotable(SymbolID Sym) const {
+  bool isNotable(SymbolRef Sym) const {
     return (bool) NotableSymbols.count(Sym);
   }
     

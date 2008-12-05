@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines SymbolID, ExprBindKey, and GRState*
+//  This file defines SymbolRef, ExprBindKey, and GRState*
 //
 //===----------------------------------------------------------------------===//
 

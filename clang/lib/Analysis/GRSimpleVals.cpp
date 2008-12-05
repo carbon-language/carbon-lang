@@ -415,7 +415,7 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
   QualType T = CE->getType();  
   if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {    
     unsigned Count = Builder.getCurrentBlockCount();
-    SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
+    SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
         
     SVal X = Loc::IsLocType(CE->getType())
              ? cast<SVal>(loc::SymbolVal(Sym)) 

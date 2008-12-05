@@ -1799,11 +1799,11 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
       // UnknownVal.
       if (InitVal.isUnknown()) {
         if (Loc::IsLocType(T)) {
-          SymbolID Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
+          SymbolRef Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
           InitVal = loc::SymbolVal(Sym);
         }
         else if (T->isIntegerType() && T->isScalarType()) {
-          SymbolID Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
+          SymbolRef Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
           InitVal = nonloc::SymbolVal(Sym);                    
         }
       }        
@@ -2399,7 +2399,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           if (RightV.isUnknown() && (Loc::IsLocType(T) || 
                                   (T->isScalarType() && T->isIntegerType()))) {
             unsigned Count = Builder->getCurrentBlockCount();
-            SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
+            SymbolRef Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
             
             RightV = Loc::IsLocType(T) 
                    ? cast<SVal>(loc::SymbolVal(Sym)) 
@@ -2562,7 +2562,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // The symbolic value is actually for the type of the left-hand side
           // expression, not the computation type, as this is the value the
           // LValue on the LHS will bind to.
-          SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), LTy, Count);
+          SymbolRef Sym = SymMgr.getConjuredSymbol(B->getRHS(), LTy, Count);
           LHSVal = Loc::IsLocType(LTy) 
                  ? cast<SVal>(loc::SymbolVal(Sym)) 
                  : cast<SVal>(nonloc::SymbolVal(Sym));

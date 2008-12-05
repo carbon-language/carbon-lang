@@ -29,9 +29,9 @@ SVal::symbol_iterator SVal::symbol_begin() const {
   // FIXME: This is a rat's nest.  Cleanup.
 
   if (isa<loc::SymbolVal>(this))
-    return symbol_iterator(SymbolID((uintptr_t)Data));
+    return symbol_iterator(SymbolRef((uintptr_t)Data));
   else if (isa<nonloc::SymbolVal>(this))
-    return symbol_iterator(SymbolID((uintptr_t)Data));
+    return symbol_iterator(SymbolRef((uintptr_t)Data));
   else if (isa<nonloc::SymIntConstraintVal>(this)) {
     const SymIntConstraint& C =
       cast<nonloc::SymIntConstraintVal>(this)->getConstraint();    

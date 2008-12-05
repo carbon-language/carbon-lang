@@ -734,7 +734,7 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
 
     // Mark all non-live symbols that this region references as dead.
     if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R)) {
-      SymbolID Sym = SymR->getSymbol();
+      SymbolRef Sym = SymR->getSymbol();
       if (!LSymbols.count(Sym)) DSymbols.insert(Sym);
     }
 

@@ -140,17 +140,17 @@ public:
 ///  regions do not need to be typed.
 class SymbolicRegion : public MemRegion {
 protected:
-  const SymbolID sym;
+  const SymbolRef sym;
 
 public:
-  SymbolicRegion(const SymbolID s) : MemRegion(SymbolicRegionKind), sym(s) {}
+  SymbolicRegion(const SymbolRef s) : MemRegion(SymbolicRegionKind), sym(s) {}
     
-  SymbolID getSymbol() const {
+  SymbolRef getSymbol() const {
     return sym;
   }
     
   void Profile(llvm::FoldingSetNodeID& ID) const;
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolID sym);
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef sym);
   
   void print(llvm::raw_ostream& os) const;
   
@@ -507,9 +507,9 @@ public:
 ///  the sizes of dynamically allocated chunks of memory with variable size.
 class SymbolicExtent : public RegionExtent {
 public:
-  SymbolicExtent(SymbolID S) : RegionExtent(S.getNumber() << 1, Sym) {}
+  SymbolicExtent(SymbolRef S) : RegionExtent(S.getNumber() << 1, Sym) {}
 
-  SymbolID getSymbol() const { return SymbolID(getData() >> 1); }
+  SymbolRef getSymbol() const { return SymbolRef(getData() >> 1); }
 
   // Implement isa<T> support.
   static inline bool classof(const RegionExtent* E) {
@@ -567,7 +567,7 @@ public:
   getCompoundLiteralRegion(const CompoundLiteralExpr* CL);  
   
   /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
-  SymbolicRegion* getSymbolicRegion(const SymbolID sym);
+  SymbolicRegion* getSymbolicRegion(const SymbolRef sym);
 
   StringRegion* getStringRegion(const StringLiteral* Str);
 

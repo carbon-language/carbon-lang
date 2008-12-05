@@ -27,11 +27,11 @@ namespace clang {
 class MemRegion;
 class SymbolManager;
 
-class SymbolID {
+class SymbolRef {
   unsigned Data;
 public:
-  SymbolID() : Data(~0U - 2) {}
-  SymbolID(unsigned x) : Data(x) {}
+  SymbolRef() : Data(~0U - 2) {}
+  SymbolRef(unsigned x) : Data(x) {}
     
   bool isInitialized() const { return Data != (unsigned) (~0U - 2); }
   operator unsigned() const { return getNumber(); }
@@ -46,17 +46,17 @@ public:
 } // end clang namespace
 
 namespace llvm {
-  template <> struct DenseMapInfo<clang::SymbolID> {
-    static inline clang::SymbolID getEmptyKey() {
-      return clang::SymbolID(~0U);
+  template <> struct DenseMapInfo<clang::SymbolRef> {
+    static inline clang::SymbolRef getEmptyKey() {
+      return clang::SymbolRef(~0U);
     }
-    static inline clang::SymbolID getTombstoneKey() {
-      return clang::SymbolID(~0U - 1);
+    static inline clang::SymbolRef getTombstoneKey() {
+      return clang::SymbolRef(~0U - 1);
     }
-    static unsigned getHashValue(clang::SymbolID X) {
+    static unsigned getHashValue(clang::SymbolRef X) {
       return X.getNumber();
     }
-    static bool isEqual(clang::SymbolID X, clang::SymbolID Y) {
+    static bool isEqual(clang::SymbolRef X, clang::SymbolRef Y) {
       return X.getNumber() == Y.getNumber();
     }
     static bool isPod() { return true; }
@@ -74,17 +74,17 @@ public:
   
 private:
   Kind K;
-  SymbolID Sym;
+  SymbolRef Sym;
   
 protected:
-  SymbolData(Kind k, SymbolID sym) : K(k), Sym(sym) {}  
+  SymbolData(Kind k, SymbolRef sym) : K(k), Sym(sym) {}  
 
 public:
   virtual ~SymbolData() {}
   
   Kind getKind() const { return K; }  
   
-  SymbolID getSymbol() const { return Sym; }
+  SymbolRef getSymbol() const { return Sym; }
     
   QualType getType(const SymbolManager& SymMgr) const;
   
@@ -98,7 +98,7 @@ class SymbolDataParmVar : public SymbolData {
   ParmVarDecl *VD;
 
 public:  
-  SymbolDataParmVar(SymbolID MySym, ParmVarDecl* vd)
+  SymbolDataParmVar(SymbolRef MySym, ParmVarDecl* vd)
     : SymbolData(ParmKind, MySym), VD(vd) {}
   
   ParmVarDecl* getDecl() const { return VD; }  
@@ -122,7 +122,7 @@ class SymbolDataGlobalVar : public SymbolData {
   VarDecl *VD;
 
 public:
-  SymbolDataGlobalVar(SymbolID MySym, VarDecl* vd) :
+  SymbolDataGlobalVar(SymbolRef MySym, VarDecl* vd) :
     SymbolData(GlobalKind, MySym), VD(vd) {}
   
   VarDecl* getDecl() const { return VD; }
@@ -147,7 +147,7 @@ class SymbolDataElement : public SymbolData {
   const llvm::APSInt* Idx;
 
 public:
-  SymbolDataElement(SymbolID MySym, const MemRegion* r, const llvm::APSInt* idx)
+  SymbolDataElement(SymbolRef MySym, const MemRegion* r, const llvm::APSInt* idx)
     : SymbolData(ElementKind, MySym), R(r), Idx(idx) {}
 
   static void Profile(llvm::FoldingSetNodeID& profile, const MemRegion* R, 
@@ -170,7 +170,7 @@ class SymbolDataField : public SymbolData {
   const FieldDecl* D;
 
 public:
-  SymbolDataField(SymbolID MySym, const MemRegion* r, const FieldDecl* d)
+  SymbolDataField(SymbolRef MySym, const MemRegion* r, const FieldDecl* d)
     : SymbolData(FieldKind, MySym), R(r), D(d) {}
 
   static void Profile(llvm::FoldingSetNodeID& profile, const MemRegion* R,
@@ -194,7 +194,7 @@ class SymbolConjured : public SymbolData {
   unsigned Count;
 
 public:
-  SymbolConjured(SymbolID Sym, Stmt* s, QualType t, unsigned count)
+  SymbolConjured(SymbolRef Sym, Stmt* s, QualType t, unsigned count)
     : SymbolData(ConjuredKind, Sym), S(s), T(t), Count(count) {}
   
   Stmt* getStmt() const { return S; }
@@ -223,21 +223,21 @@ public:
 // Constraints on symbols.  Usually wrapped by SValues.
 
 class SymIntConstraint : public llvm::FoldingSetNode {
-  SymbolID Symbol;
+  SymbolRef Symbol;
   BinaryOperator::Opcode Op;
   const llvm::APSInt& Val;
 public:  
-  SymIntConstraint(SymbolID sym, BinaryOperator::Opcode op, 
+  SymIntConstraint(SymbolRef sym, BinaryOperator::Opcode op, 
                    const llvm::APSInt& V)
   : Symbol(sym),
   Op(op), Val(V) {}
   
   BinaryOperator::Opcode getOpcode() const { return Op; }
-  const SymbolID& getSymbol() const { return Symbol; }
+  const SymbolRef& getSymbol() const { return Symbol; }
   const llvm::APSInt& getInt() const { return Val; }
   
   static inline void Profile(llvm::FoldingSetNodeID& ID,
-                             SymbolID Symbol,
+                             SymbolRef Symbol,
                              BinaryOperator::Opcode Op,
                              const llvm::APSInt& Val) {
     Symbol.Profile(ID);
@@ -253,7 +253,7 @@ public:
 
 class SymbolManager {
   typedef llvm::FoldingSet<SymbolData> DataSetTy;
-  typedef llvm::DenseMap<SymbolID, SymbolData*> DataMapTy;
+  typedef llvm::DenseMap<SymbolRef, SymbolData*> DataMapTy;
   
   DataSetTy DataSet;
   DataMapTy DataMap;
@@ -267,17 +267,17 @@ public:
   
   ~SymbolManager();
   
-  SymbolID getSymbol(VarDecl* D);
-  SymbolID getElementSymbol(const MemRegion* R, const llvm::APSInt* Idx);
-  SymbolID getFieldSymbol(const MemRegion* R, const FieldDecl* D);
-  SymbolID getConjuredSymbol(Stmt* E, QualType T, unsigned VisitCount);
-  SymbolID getConjuredSymbol(Expr* E, unsigned VisitCount) {
+  SymbolRef getSymbol(VarDecl* D);
+  SymbolRef getElementSymbol(const MemRegion* R, const llvm::APSInt* Idx);
+  SymbolRef getFieldSymbol(const MemRegion* R, const FieldDecl* D);
+  SymbolRef getConjuredSymbol(Stmt* E, QualType T, unsigned VisitCount);
+  SymbolRef getConjuredSymbol(Expr* E, unsigned VisitCount) {
     return getConjuredSymbol(E, E->getType(), VisitCount);
   }
   
-  const SymbolData& getSymbolData(SymbolID ID) const;
+  const SymbolData& getSymbolData(SymbolRef ID) const;
   
-  QualType getType(SymbolID ID) const {
+  QualType getType(SymbolRef ID) const {
     return getSymbolData(ID).getType(*this);
   }
 };

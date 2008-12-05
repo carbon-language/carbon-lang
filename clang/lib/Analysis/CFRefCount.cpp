@@ -1267,7 +1267,7 @@ void RefVal::print(std::ostream& Out) const {
 // RefBindings - State used to track object reference counts.
 //===----------------------------------------------------------------------===//
   
-typedef llvm::ImmutableMap<SymbolID, RefVal> RefBindings;
+typedef llvm::ImmutableMap<SymbolRef, RefVal> RefBindings;
 static int RefBIndex = 0;
 
 namespace clang {
@@ -1281,8 +1281,8 @@ namespace clang {
 // ARBindings - State used to track objects in autorelease pools.
 //===----------------------------------------------------------------------===//
 
-typedef llvm::ImmutableSet<SymbolID> ARPoolContents;
-typedef llvm::ImmutableList< std::pair<SymbolID, ARPoolContents*> > ARBindings;
+typedef llvm::ImmutableSet<SymbolRef> ARPoolContents;
+typedef llvm::ImmutableList< std::pair<SymbolRef, ARPoolContents*> > ARBindings;
 static int AutoRBIndex = 0;
 
 namespace clang {
@@ -1301,13 +1301,13 @@ namespace {
 class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
 public:
   // Type definitions.  
-  typedef llvm::DenseMap<GRExprEngine::NodeTy*,std::pair<Expr*, SymbolID> >
+  typedef llvm::DenseMap<GRExprEngine::NodeTy*,std::pair<Expr*, SymbolRef> >
           ReleasesNotOwnedTy;
 
   typedef ReleasesNotOwnedTy UseAfterReleasesTy;
     
   typedef llvm::DenseMap<GRExprEngine::NodeTy*,
-                         std::vector<std::pair<SymbolID,bool> >*>
+                         std::vector<std::pair<SymbolRef,bool> >*>
           LeaksTy;
 
   class BindingsPrinter : public GRState::Printer {
@@ -1324,10 +1324,10 @@ private:
   ReleasesNotOwnedTy   ReleasesNotOwned;
   LeaksTy              Leaks;
   
-  RefBindings Update(RefBindings B, SymbolID sym, RefVal V, ArgEffect E,
+  RefBindings Update(RefBindings B, SymbolRef sym, RefVal V, ArgEffect E,
                      RefVal::Kind& hasErr, RefBindings::Factory& RefBFactory);
   
-  RefVal::Kind& Update(GRStateRef& state, SymbolID sym, RefVal V,
+  RefVal::Kind& Update(GRStateRef& state, SymbolRef sym, RefVal V,
                        ArgEffect E, RefVal::Kind& hasErr) {
     
     state = state.set<RefBindings>(Update(state.get<RefBindings>(), sym, V, 
@@ -1341,11 +1341,11 @@ private:
                            Expr* NodeExpr, Expr* ErrorExpr,                        
                            ExplodedNode<GRState>* Pred,
                            const GRState* St,
-                           RefVal::Kind hasErr, SymbolID Sym);
+                           RefVal::Kind hasErr, SymbolRef Sym);
   
   std::pair<GRStateRef, bool>
   HandleSymbolDeath(GRStateManager& VMgr, const GRState* St,
-                    const Decl* CD, SymbolID sid, RefVal V, bool& hasLeak);
+                    const Decl* CD, SymbolRef sid, RefVal V, bool& hasLeak);
   
 public:
   
@@ -1487,7 +1487,7 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
                                      Expr* NodeExpr, Expr* ErrorExpr,                        
                                      ExplodedNode<GRState>* Pred,
                                      const GRState* St,
-                                     RefVal::Kind hasErr, SymbolID Sym) {
+                                     RefVal::Kind hasErr, SymbolRef Sym) {
   Builder.BuildSinks = true;
   GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, NodeExpr, Pred, St);
 
@@ -1555,13 +1555,13 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
   RefVal::Kind hasErr = (RefVal::Kind) 0;
   unsigned idx = 0;
   Expr* ErrorExpr = NULL;
-  SymbolID ErrorSym = 0;                                        
+  SymbolRef ErrorSym = 0;                                        
   
   for (ExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {    
     SVal V = state.GetSVal(*I);
     
     if (isa<loc::SymbolVal>(V)) {
-      SymbolID Sym = cast<loc::SymbolVal>(V).getSymbol();
+      SymbolRef Sym = cast<loc::SymbolVal>(V).getSymbol();
       if (RefBindings::data_type* T = state.get<RefBindings>(Sym))
         if (Update(state, Sym, *T, GetArgE(Summ, idx), hasErr)) {
           ErrorExpr = *I;
@@ -1594,7 +1594,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         SVal X = state.GetSVal(*MR);
         
         if (isa<loc::SymbolVal>(X)) {
-          SymbolID Sym = cast<loc::SymbolVal>(X).getSymbol();
+          SymbolRef Sym = cast<loc::SymbolVal>(X).getSymbol();
           state = state.remove<RefBindings>(Sym);
         }
         
@@ -1606,7 +1606,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           
           // FIXME: handle structs.
           if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
-            SymbolID NewSym =
+            SymbolRef NewSym =
               Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
             
             state = state.BindLoc(*MR,
@@ -1635,7 +1635,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
   if (!ErrorExpr && Receiver) {
     SVal V = state.GetSVal(Receiver);
     if (isa<loc::SymbolVal>(V)) {
-      SymbolID Sym = cast<loc::SymbolVal>(V).getSymbol();
+      SymbolRef Sym = cast<loc::SymbolVal>(V).getSymbol();
       if (const RefVal* T = state.get<RefBindings>(Sym))
         if (Update(state, Sym, *T, GetReceiverE(Summ), hasErr)) {
           ErrorExpr = Receiver;
@@ -1671,7 +1671,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       
       if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
         unsigned Count = Builder.getCurrentBlockCount();
-        SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
+        SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
         
         SVal X = Loc::IsLocType(Ex->getType())
                ? cast<SVal>(loc::SymbolVal(Sym)) 
@@ -1702,7 +1702,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
     case RetEffect::OwnedAllocatedSymbol:
     case RetEffect::OwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
+      SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
       state = state.set<RefBindings>(Sym, RefVal::makeOwned(RetT));
@@ -1722,7 +1722,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       
     case RetEffect::NotOwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
+      SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
       state = state.set<RefBindings>(Sym, RefVal::makeNotOwned(RetT));
@@ -1770,7 +1770,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     SVal V = Eng.getStateManager().GetSVal(St, Receiver );
 
     if (isa<loc::SymbolVal>(V)) {
-      SymbolID Sym = cast<loc::SymbolVal>(V).getSymbol();
+      SymbolRef Sym = cast<loc::SymbolVal>(V).getSymbol();
       
       if (const RefVal* T  = St->get<RefBindings>(Sym)) {
         QualType Ty = T->getType();
@@ -1839,7 +1839,7 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
   // (3) we are binding to a memregion with stack storage that the store
   //     does not understand.
   
-  SymbolID Sym = cast<loc::SymbolVal>(Val).getSymbol();
+  SymbolRef Sym = cast<loc::SymbolVal>(Val).getSymbol();
   GRStateRef state(St, Eng.getStateManager());
 
   if (!isa<loc::MemRegionVal>(TargetLV))
@@ -1878,7 +1878,7 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
 std::pair<GRStateRef,bool>
 CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
                               const GRState* St, const Decl* CD,
-                              SymbolID sid,
+                              SymbolRef sid,
                               RefVal V, bool& hasLeak) {
 
   GRStateRef state(St, VMgr);
@@ -1913,7 +1913,7 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   const GRState* St = Builder.getState();
   RefBindings B = St->get<RefBindings>();
   
-  llvm::SmallVector<std::pair<SymbolID, bool>, 10> Leaked;
+  llvm::SmallVector<std::pair<SymbolRef, bool>, 10> Leaked;
   const Decl* CodeDecl = &Eng.getGraph().getCodeDecl();
   
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
@@ -1935,11 +1935,11 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   if (!N)
     return;
     
-  std::vector<std::pair<SymbolID,bool> >*& LeaksAtNode = Leaks[N];
+  std::vector<std::pair<SymbolRef,bool> >*& LeaksAtNode = Leaks[N];
   assert (!LeaksAtNode);
-  LeaksAtNode = new std::vector<std::pair<SymbolID,bool> >();
+  LeaksAtNode = new std::vector<std::pair<SymbolRef,bool> >();
   
-  for (llvm::SmallVector<std::pair<SymbolID,bool>, 10>::iterator
+  for (llvm::SmallVector<std::pair<SymbolRef,bool>, 10>::iterator
        I = Leaked.begin(), E = Leaked.end(); I != E; ++I)
     (*LeaksAtNode).push_back(*I);
 }
@@ -1957,7 +1957,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
   // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.
   
   RefBindings B = St->get<RefBindings>();
-  llvm::SmallVector<std::pair<SymbolID,bool>, 10> Leaked;
+  llvm::SmallVector<std::pair<SymbolRef,bool>, 10> Leaked;
   
   for (GRStateManager::DeadSymbolsTy::const_iterator
        I=Dead.begin(), E=Dead.end(); I!=E; ++I) {
@@ -1986,11 +1986,11 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
   if (!N)
     return;
   
-  std::vector<std::pair<SymbolID,bool> >*& LeaksAtNode = Leaks[N];
+  std::vector<std::pair<SymbolRef,bool> >*& LeaksAtNode = Leaks[N];
   assert (!LeaksAtNode);
-  LeaksAtNode = new std::vector<std::pair<SymbolID,bool> >();
+  LeaksAtNode = new std::vector<std::pair<SymbolRef,bool> >();
   
-  for (llvm::SmallVector<std::pair<SymbolID,bool>, 10>::iterator
+  for (llvm::SmallVector<std::pair<SymbolRef,bool>, 10>::iterator
        I = Leaked.begin(), E = Leaked.end(); I != E; ++I)
     (*LeaksAtNode).push_back(*I);    
 }
@@ -2013,7 +2013,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
     return;
   
   // Get the reference count binding (if any).
-  SymbolID Sym = cast<loc::SymbolVal>(V).getSymbol();
+  SymbolRef Sym = cast<loc::SymbolVal>(V).getSymbol();
   const RefVal* T = state.get<RefBindings>(Sym);
   
   if (!T)
@@ -2084,7 +2084,7 @@ const GRState* CFRefCount::EvalAssume(GRStateManager& VMgr,
   return state;
 }
 
-RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
+RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
                                RefVal V, ArgEffect E,
                                RefVal::Kind& hasErr,
                                RefBindings::Factory& RefBFactory) {
@@ -2270,9 +2270,9 @@ namespace {
   //===---------===//
   
   class VISIBILITY_HIDDEN CFRefReport : public RangedBugReport {
-    SymbolID Sym;
+    SymbolRef Sym;
   public:
-    CFRefReport(CFRefBug& D, ExplodedNode<GRState> *n, SymbolID sym)
+    CFRefReport(CFRefBug& D, ExplodedNode<GRState> *n, SymbolRef sym)
       : RangedBugReport(D, n), Sym(sym) {}
         
     virtual ~CFRefReport() {}
@@ -2293,7 +2293,7 @@ namespace {
         beg = end = 0;
     }
     
-    SymbolID getSymbol() const { return Sym; }
+    SymbolRef getSymbol() const { return Sym; }
     
     virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
                                             ExplodedNode<GRState>* N);
@@ -2491,12 +2491,12 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<GRState>* N,
 namespace {
 class VISIBILITY_HIDDEN FindUniqueBinding :
   public StoreManager::BindingsHandler {
-    SymbolID Sym;
+    SymbolRef Sym;
     MemRegion* Binding;
     bool First;
     
   public:
-    FindUniqueBinding(SymbolID sym) : Sym(sym), Binding(0), First(true) {}
+    FindUniqueBinding(SymbolRef sym) : Sym(sym), Binding(0), First(true) {}
     
   bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, SVal val) {
     if (const loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&val)) {
@@ -2527,7 +2527,7 @@ class VISIBILITY_HIDDEN FindUniqueBinding :
 
 static std::pair<ExplodedNode<GRState>*,MemRegion*>
 GetAllocationSite(GRStateManager* StateMgr, ExplodedNode<GRState>* N,
-                  SymbolID Sym) {
+                  SymbolRef Sym) {
 
   // Find both first node that referred to the tracked symbol and the
   // memory location that value was store to.
@@ -2678,7 +2678,7 @@ void Leak::EmitWarnings(BugReporter& BR) {
   for (CFRefCount::leaks_iterator I = TF.leaks_begin(),
        E = TF.leaks_end(); I != E; ++I) {
     
-    std::vector<std::pair<SymbolID, bool> >& SymV = *(I->second);
+    std::vector<std::pair<SymbolRef, bool> >& SymV = *(I->second);
     unsigned n = SymV.size();
     
     for (unsigned i = 0; i < n; ++i) {
@@ -2701,7 +2701,7 @@ bool Leak::isCached(BugReport& R) {
   // With leaks, we want to unique them by the location where they were
   // allocated, and only report a single path.
   
-  SymbolID Sym = static_cast<CFRefReport&>(R).getSymbol();
+  SymbolRef Sym = static_cast<CFRefReport&>(R).getSymbol();
 
   ExplodedNode<GRState>* AllocNode =
     GetAllocationSite(0, R.getEndNode(), Sym).first;

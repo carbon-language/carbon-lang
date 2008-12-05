@@ -84,7 +84,7 @@ public:
     return getValue(b ? 1 : 0, Ctx.getTypeSize(Ctx.IntTy), false);
   }
 
-  const SymIntConstraint& getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
+  const SymIntConstraint& getConstraint(SymbolRef sym, BinaryOperator::Opcode Op,
                                         const llvm::APSInt& V);
 
   const CompoundValData* getCompoundValData(QualType T, 

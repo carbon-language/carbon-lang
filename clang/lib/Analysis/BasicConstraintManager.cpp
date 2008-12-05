@@ -22,8 +22,8 @@ using namespace clang;
 
 namespace {
 
-typedef llvm::ImmutableMap<SymbolID,GRState::IntSetTy> ConstNotEqTy;
-typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
+typedef llvm::ImmutableMap<SymbolRef,GRState::IntSetTy> ConstNotEqTy;
+typedef llvm::ImmutableMap<SymbolRef,const llvm::APSInt*> ConstEqTy;
 
 // BasicConstraintManager only tracks equality and inequality constraints of
 // constants and integer variables.
@@ -52,34 +52,34 @@ public:
   const GRState* AssumeSymInt(const GRState* St, bool Assumption,
                               const SymIntConstraint& C, bool& isFeasible);
 
-  const GRState* AssumeSymNE(const GRState* St, SymbolID sym,
+  const GRState* AssumeSymNE(const GRState* St, SymbolRef sym,
                                 const llvm::APSInt& V, bool& isFeasible);
 
-  const GRState* AssumeSymEQ(const GRState* St, SymbolID sym,
+  const GRState* AssumeSymEQ(const GRState* St, SymbolRef sym,
                                 const llvm::APSInt& V, bool& isFeasible);
 
-  const GRState* AssumeSymLT(const GRState* St, SymbolID sym,
+  const GRState* AssumeSymLT(const GRState* St, SymbolRef sym,
                                     const llvm::APSInt& V, bool& isFeasible);
 
-  const GRState* AssumeSymGT(const GRState* St, SymbolID sym,
+  const GRState* AssumeSymGT(const GRState* St, SymbolRef sym,
                              const llvm::APSInt& V, bool& isFeasible);
 
-  const GRState* AssumeSymGE(const GRState* St, SymbolID sym,
+  const GRState* AssumeSymGE(const GRState* St, SymbolRef sym,
                              const llvm::APSInt& V, bool& isFeasible);
 
-  const GRState* AssumeSymLE(const GRState* St, SymbolID sym,
+  const GRState* AssumeSymLE(const GRState* St, SymbolRef sym,
                              const llvm::APSInt& V, bool& isFeasible);
 
   const GRState* AssumeInBound(const GRState* St, SVal Idx, SVal UpperBound,
                                bool Assumption, bool& isFeasible);
 
-  const GRState* AddEQ(const GRState* St, SymbolID sym, const llvm::APSInt& V);
+  const GRState* AddEQ(const GRState* St, SymbolRef sym, const llvm::APSInt& V);
 
-  const GRState* AddNE(const GRState* St, SymbolID sym, const llvm::APSInt& V);
+  const GRState* AddNE(const GRState* St, SymbolRef sym, const llvm::APSInt& V);
 
-  const llvm::APSInt* getSymVal(const GRState* St, SymbolID sym);
-  bool isNotEqual(const GRState* St, SymbolID sym, const llvm::APSInt& V) const;
-  bool isEqual(const GRState* St, SymbolID sym, const llvm::APSInt& V) const;
+  const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym);
+  bool isNotEqual(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
+  bool isEqual(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
 
   const GRState* RemoveDeadBindings(const GRState* St,
                                     StoreManager::LiveSymbolsTy& LSymbols,
@@ -189,7 +189,7 @@ BasicConstraintManager::AssumeAux(const GRState* St,NonLoc Cond,
 
   case nonloc::SymbolValKind: {
     nonloc::SymbolVal& SV = cast<nonloc::SymbolVal>(Cond);
-    SymbolID sym = SV.getSymbol();
+    SymbolRef sym = SV.getSymbol();
 
     if (Assumption)
       return AssumeSymNE(St, sym, BasicVals.getValue(0, SymMgr.getType(sym)),
@@ -266,7 +266,7 @@ BasicConstraintManager::AssumeSymInt(const GRState* St, bool Assumption,
 }
 
 const GRState*
-BasicConstraintManager::AssumeSymNE(const GRState* St, SymbolID sym,
+BasicConstraintManager::AssumeSymNE(const GRState* St, SymbolRef sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
   // First, determine if sym == X, where X != V.
   if (const llvm::APSInt* X = getSymVal(St, sym)) {
@@ -287,7 +287,7 @@ BasicConstraintManager::AssumeSymNE(const GRState* St, SymbolID sym,
 }
 
 const GRState*
-BasicConstraintManager::AssumeSymEQ(const GRState* St, SymbolID sym,
+BasicConstraintManager::AssumeSymEQ(const GRState* St, SymbolRef sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
   // First, determine if sym == X, where X != V.
   if (const llvm::APSInt* X = getSymVal(St, sym)) {
@@ -310,7 +310,7 @@ BasicConstraintManager::AssumeSymEQ(const GRState* St, SymbolID sym,
 
 // These logic will be handled in another ConstraintManager.
 const GRState*
-BasicConstraintManager::AssumeSymLT(const GRState* St, SymbolID sym,
+BasicConstraintManager::AssumeSymLT(const GRState* St, SymbolRef sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
   
   // Is 'V' the smallest possible value?
@@ -325,7 +325,7 @@ BasicConstraintManager::AssumeSymLT(const GRState* St, SymbolID sym,
 }
 
 const GRState*
-BasicConstraintManager::AssumeSymGT(const GRState* St, SymbolID sym,
+BasicConstraintManager::AssumeSymGT(const GRState* St, SymbolRef sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
 
   // Is 'V' the largest possible value?
@@ -340,7 +340,7 @@ BasicConstraintManager::AssumeSymGT(const GRState* St, SymbolID sym,
 }
 
 const GRState*
-BasicConstraintManager::AssumeSymGE(const GRState* St, SymbolID sym,
+BasicConstraintManager::AssumeSymGE(const GRState* St, SymbolRef sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
 
   // Reject a path if the value of sym is a constant X and !(X >= V).
@@ -369,7 +369,7 @@ BasicConstraintManager::AssumeSymGE(const GRState* St, SymbolID sym,
 }
 
 const GRState*
-BasicConstraintManager::AssumeSymLE(const GRState* St, SymbolID sym,
+BasicConstraintManager::AssumeSymLE(const GRState* St, SymbolRef sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
 
   // Reject a path if the value of sym is a constant X and !(X <= V).
@@ -439,14 +439,14 @@ namespace clang {
   };
 }
 
-const GRState* BasicConstraintManager::AddEQ(const GRState* St, SymbolID sym,
+const GRState* BasicConstraintManager::AddEQ(const GRState* St, SymbolRef sym,
                                              const llvm::APSInt& V) {
   // Create a new state with the old binding replaced.
   GRStateRef state(St, StateMgr);
   return state.set<ConstEqTy>(sym, &V);
 }
 
-const GRState* BasicConstraintManager::AddNE(const GRState* St, SymbolID sym,
+const GRState* BasicConstraintManager::AddNE(const GRState* St, SymbolRef sym,
                                              const llvm::APSInt& V) {
 
   GRStateRef state(St, StateMgr);
@@ -464,12 +464,12 @@ const GRState* BasicConstraintManager::AddNE(const GRState* St, SymbolID sym,
 }
 
 const llvm::APSInt* BasicConstraintManager::getSymVal(const GRState* St,
-                                                      SymbolID sym) {
+                                                      SymbolRef sym) {
   const ConstEqTy::data_type* T = St->get<ConstEqTy>(sym);
   return T ? *T : NULL;  
 }
 
-bool BasicConstraintManager::isNotEqual(const GRState* St, SymbolID sym, 
+bool BasicConstraintManager::isNotEqual(const GRState* St, SymbolRef sym, 
                                         const llvm::APSInt& V) const {
 
   // Retrieve the NE-set associated with the given symbol.
@@ -479,7 +479,7 @@ bool BasicConstraintManager::isNotEqual(const GRState* St, SymbolID sym,
   return T ? T->contains(&V) : false;
 }
 
-bool BasicConstraintManager::isEqual(const GRState* St, SymbolID sym,
+bool BasicConstraintManager::isEqual(const GRState* St, SymbolRef sym,
                                      const llvm::APSInt& V) const {
   // Retrieve the EQ-set associated with the given symbol.
   const ConstEqTy::data_type* T = St->get<ConstEqTy>(sym);
@@ -497,7 +497,7 @@ const GRState* BasicConstraintManager::RemoveDeadBindings(const GRState* St,
   ConstEqTy::Factory& CEFactory = state.get_context<ConstEqTy>();
 
   for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I) {
-    SymbolID sym = I.getKey();        
+    SymbolRef sym = I.getKey();        
     if (!LSymbols.count(sym)) {
       DSymbols.insert(sym);
       CE = CEFactory.Remove(CE, sym);
@@ -509,7 +509,7 @@ const GRState* BasicConstraintManager::RemoveDeadBindings(const GRState* St,
   ConstNotEqTy::Factory& CNEFactory = state.get_context<ConstNotEqTy>();
 
   for (ConstNotEqTy::iterator I = CNE.begin(), E = CNE.end(); I != E; ++I) {
-    SymbolID sym = I.getKey();    
+    SymbolRef sym = I.getKey();    
     if (!LSymbols.count(sym)) {
       DSymbols.insert(sym);
       CNE = CNEFactory.Remove(CNE, sym);

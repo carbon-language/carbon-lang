@@ -98,7 +98,7 @@ const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, QualType T) {
 }
 
 const SymIntConstraint&
-BasicValueFactory::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
+BasicValueFactory::getConstraint(SymbolRef sym, BinaryOperator::Opcode Op,
                             const llvm::APSInt& V) {
   
   llvm::FoldingSetNodeID ID;

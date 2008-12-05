@@ -26,7 +26,7 @@ namespace clang {
 class GRState;
 class GRStateManager;
 class SVal;
-class SymbolID;
+class SymbolRef;
 
 class ConstraintManager {
 public:
@@ -38,11 +38,11 @@ public:
                                        SVal UpperBound, bool Assumption,
                                        bool& isFeasible) = 0;
 
-  virtual const GRState* AddNE(const GRState* St, SymbolID sym, 
+  virtual const GRState* AddNE(const GRState* St, SymbolRef sym, 
                                const llvm::APSInt& V) = 0;
-  virtual const llvm::APSInt* getSymVal(const GRState* St, SymbolID sym) = 0;
+  virtual const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) = 0;
 
-  virtual bool isEqual(const GRState* St, SymbolID sym, 
+  virtual bool isEqual(const GRState* St, SymbolRef sym, 
                        const llvm::APSInt& V) const = 0;
 
   virtual const GRState* RemoveDeadBindings(const GRState* St,

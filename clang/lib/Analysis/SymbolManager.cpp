@@ -16,7 +16,7 @@
 
 using namespace clang;
 
-SymbolID SymbolManager::getSymbol(VarDecl* D) {
+SymbolRef SymbolManager::getSymbol(VarDecl* D) {
 
   assert (isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D) || 
           D->hasGlobalStorage());
@@ -52,7 +52,7 @@ SymbolID SymbolManager::getSymbol(VarDecl* D) {
   return SymbolCounter++;
 }  
 
-SymbolID SymbolManager::getElementSymbol(const MemRegion* R, 
+SymbolRef SymbolManager::getElementSymbol(const MemRegion* R, 
                                          const llvm::APSInt* Idx){
   llvm::FoldingSetNodeID ID;
   SymbolDataElement::Profile(ID, R, Idx);
@@ -70,7 +70,7 @@ SymbolID SymbolManager::getElementSymbol(const MemRegion* R,
   return SymbolCounter++;
 }
 
-SymbolID SymbolManager::getFieldSymbol(const MemRegion* R, const FieldDecl* D) {
+SymbolRef SymbolManager::getFieldSymbol(const MemRegion* R, const FieldDecl* D) {
   llvm::FoldingSetNodeID ID;
   SymbolDataField::Profile(ID, R, D);
   void* InsertPos;
@@ -87,7 +87,7 @@ SymbolID SymbolManager::getFieldSymbol(const MemRegion* R, const FieldDecl* D) {
   return SymbolCounter++;
 }
 
-SymbolID SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count) {
+SymbolRef SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count) {
   
   llvm::FoldingSetNodeID profile;
   SymbolConjured::Profile(profile, E, T, Count);
@@ -107,7 +107,7 @@ SymbolID SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count) {
   return SymbolCounter++;
 }
 
-const SymbolData& SymbolManager::getSymbolData(SymbolID Sym) const {  
+const SymbolData& SymbolManager::getSymbolData(SymbolRef Sym) const {  
   DataMapTy::const_iterator I = DataMap.find(Sym);
   assert (I != DataMap.end());  
   return *I->second;
