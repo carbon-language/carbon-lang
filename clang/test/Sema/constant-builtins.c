@@ -19,5 +19,6 @@ int h0 = __builtin_types_compatible_p(int,float); // expected-warning {{extensio
 
 short somefunc();
 
-short t = __builtin_constant_p(5353) ? 42 : somefunc(); // expected-warning {{expression is not a constant, but is accepted as one by GNU extensions}}
+short t = __builtin_constant_p(5353) ? 42 : somefunc();
+
 

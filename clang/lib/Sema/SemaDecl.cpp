@@ -1651,7 +1651,12 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
 }
 
 bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
+  Expr::EvalResult Result;
+
   Init = Init->IgnoreParens();
+
+  if (Init->Evaluate(Result, Context) && !Result.HasSideEffects)
+    return false;
 
   // Look through CXXDefaultArgExprs; they have no meaning in this context.
   if (CXXDefaultArgExpr* DAE = dyn_cast<CXXDefaultArgExpr>(Init))
@@ -1672,6 +1677,9 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
     return false;
   }
 
+  // FIXME: We can probably remove some of this code below, now that 
+  // Expr::Evaluate is doing the heavy lifting for scalars.
+  
   if (Init->isNullPointerConstant(Context))
     return false;
   if (Init->getType()->isArithmeticType()) {
