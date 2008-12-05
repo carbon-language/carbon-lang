@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin9   | grep mov | count 1
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin9 | not grep GOT
+; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin9 | not grep non_lazy_ptr
 
 @x = weak hidden global i32 0		; <i32*> [#uses=1]
 

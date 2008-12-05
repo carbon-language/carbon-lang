@@ -121,13 +121,14 @@ struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   void printModuleLevelGV(const GlobalVariable* GVar);
 
   void printGVStub(const char *GV, const char *Prefix = NULL);
+  void printHiddenGVStub(const char *GV, const char *Prefix = NULL);
 
   bool runOnMachineFunction(MachineFunction &F);
 
   void emitFunctionHeader(const MachineFunction &MF);
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs
-  StringSet<> FnStubs, GVStubs, LinkOnceStubs;
+  StringSet<> FnStubs, GVStubs, HiddenGVStubs;
 
   // Necessary for dllexport support
   StringSet<> DLLExportedFns, DLLExportedGVs;

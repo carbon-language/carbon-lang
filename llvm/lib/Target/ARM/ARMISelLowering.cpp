@@ -830,9 +830,12 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
 /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect symbol
 /// even in non-static mode.
 static bool GVIsIndirectSymbol(GlobalValue *GV, Reloc::Model RelocM) {
-  return RelocM != Reloc::Static &&
-    (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
-     (GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode()));
+  // If symbol visibility is hidden, the extra load is not needed if
+  // the symbol is definitely defined in the current translation unit.
+  bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
+  if (GV->hasHiddenVisibility() && (!isDecl && !GV->hasCommonLinkage()))
+    return false;
+  return RelocM != Reloc::Static && (isDecl || GV->mayBeOverridden());
 }
 
 SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,

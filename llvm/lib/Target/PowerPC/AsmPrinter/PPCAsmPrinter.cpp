@@ -43,14 +43,14 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
-#include <set>
+#include "llvm/ADT/StringSet.h"
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
   struct VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
-    std::set<std::string> FnStubs, GVStubs;
+    StringSet<> FnStubs, GVStubs, HiddenGVStubs;
     const PPCSubtarget &Subtarget;
 
     PPCAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
@@ -387,10 +387,18 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
 
     // External or weakly linked global variables need non-lazily-resolved stubs
     if (TM.getRelocationModel() != Reloc::Static) {
-      if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
-            GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
-        GVStubs.insert(Name);
-        printSuffixedName(Name, "$non_lazy_ptr");
+      if (GV->isDeclaration() || GV->mayBeOverridden()) {
+        if (GV->hasHiddenVisibility()) {
+          if (!GV->isDeclaration() && !GV->hasCommonLinkage())
+            O << Name;
+          else {
+            HiddenGVStubs.insert(Name);
+            printSuffixedName(Name, "$non_lazy_ptr");
+          }
+        } else {
+          GVStubs.insert(Name);
+          printSuffixedName(Name, "$non_lazy_ptr");
+        }
         if (GV->hasExternalWeakLinkage())
           ExtWeakSymbols.insert(GV);
         return;
@@ -416,7 +424,10 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
 void PPCAsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
   std::string Name = getGlobalLinkName(GV);
   if (TM.getRelocationModel() != Reloc::Static) {
-    GVStubs.insert(Name);
+    if (GV->hasHiddenVisibility())
+      HiddenGVStubs.insert(Name);
+    else
+      GVStubs.insert(Name);
     printSuffixedName(Name, "$non_lazy_ptr");
     return;
   }
@@ -979,51 +990,70 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 
   // Output stubs for dynamically-linked functions
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
+    for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
       SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
                           "pure_instructions,32");
       EmitAlignment(4);
-      std::string p = *i;
-      std::string L0p = (p[0]=='\"') ? "\"L0$" + p.substr(1) : "L0$" + p ;
+      const char *p = i->getKeyData();
+      bool hasQuote = p[0]=='\"';
       printSuffixedName(p, "$stub");
       O << ":\n";
-      O << "\t.indirect_symbol " << *i << '\n';
+      O << "\t.indirect_symbol " << p << '\n';
       O << "\tmflr r0\n";
-      O << "\tbcl 20,31," << L0p << '\n';
-      O << L0p << ":\n";
+      O << "\tbcl 20,31,";
+      if (hasQuote)
+        O << "\"L0$" << &p[1];
+      else
+        O << "L0$" << p;
+      O << '\n';
+      if (hasQuote)
+        O << "\"L0$" << &p[1];
+      else
+        O << "L0$" << p;
+      O << ":\n";
       O << "\tmflr r11\n";
       O << "\taddis r11,r11,ha16(";
       printSuffixedName(p, "$lazy_ptr");
-      O << "-" << L0p << ")\n";
+      O << "-";
+      if (hasQuote)
+        O << "\"L0$" << &p[1];
+      else
+        O << "L0$" << p;
+      O << ")\n";
       O << "\tmtlr r0\n";
       if (isPPC64)
         O << "\tldu r12,lo16(";
       else
         O << "\tlwzu r12,lo16(";
       printSuffixedName(p, "$lazy_ptr");
-      O << "-" << L0p << ")(r11)\n";
+      O << "-";
+      if (hasQuote)
+        O << "\"L0$" << &p[1];
+      else
+        O << "L0$" << p;
+      O << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       SwitchToDataSection(".lazy_symbol_pointer");
       printSuffixedName(p, "$lazy_ptr");
       O << ":\n";
-      O << "\t.indirect_symbol " << *i << '\n';
+      O << "\t.indirect_symbol " << p << '\n';
       if (isPPC64)
         O << "\t.quad dyld_stub_binding_helper\n";
       else
         O << "\t.long dyld_stub_binding_helper\n";
     }
   } else {
-    for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
+    for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
       SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
                           "pure_instructions,16");
       EmitAlignment(4);
-      std::string p = *i;
+      const char *p = i->getKeyData();
       printSuffixedName(p, "$stub");
       O << ":\n";
-      O << "\t.indirect_symbol " << *i << '\n';
+      O << "\t.indirect_symbol " << p << '\n';
       O << "\tlis r11,ha16(";
       printSuffixedName(p, "$lazy_ptr");
       O << ")\n";
@@ -1038,7 +1068,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       SwitchToDataSection(".lazy_symbol_pointer");
       printSuffixedName(p, "$lazy_ptr");
       O << ":\n";
-      O << "\t.indirect_symbol " << *i << '\n';
+      O << "\t.indirect_symbol " << p << '\n';
       if (isPPC64)
         O << "\t.quad dyld_stub_binding_helper\n";
       else
@@ -1061,18 +1091,35 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   // Output stubs for external and common global variables.
   if (!GVStubs.empty()) {
     SwitchToDataSection(".non_lazy_symbol_pointer");
-    for (std::set<std::string>::iterator I = GVStubs.begin(),
-         E = GVStubs.end(); I != E; ++I) {
-      std::string p = *I;
+    for (StringSet<>::iterator i = GVStubs.begin(), e = GVStubs.end();
+         i != e; ++i) {
+      std::string p = i->getKeyData();
       printSuffixedName(p, "$non_lazy_ptr");
       O << ":\n";
-      O << "\t.indirect_symbol " << *I << '\n';
+      O << "\t.indirect_symbol " << p << '\n';
       if (isPPC64)
         O << "\t.quad\t0\n";
       else
         O << "\t.long\t0\n";
     }
   }
+
+  if (!HiddenGVStubs.empty()) {
+    SwitchToSection(TAI->getDataSection());
+    for (StringSet<>::iterator i = HiddenGVStubs.begin(), e = HiddenGVStubs.end();
+         i != e; ++i) {
+      std::string p = i->getKeyData();
+      EmitAlignment(isPPC64 ? 3 : 2);
+      printSuffixedName(p, "$non_lazy_ptr");
+      O << ":\n";
+      if (isPPC64)
+        O << "\t.quad\t";
+      else
+        O << "\t.long\t";
+      O << p << '\n';
+    }
+  }
+
 
   // Emit initial debug information.
   DW.EndModule();

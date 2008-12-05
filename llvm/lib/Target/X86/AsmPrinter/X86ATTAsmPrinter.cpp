@@ -391,6 +391,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
             FnStubs.insert(Name);
             printSuffixedName(Name, "$stub");
           }
+        } else if (GV->hasHiddenVisibility()) {
+          if (!GV->isDeclaration() && !GV->hasCommonLinkage())
+            // Definition is not definitely in the current translation unit.
+            O << Name;
+          else {
+            HiddenGVStubs.insert(Name);
+            printSuffixedName(Name, "$non_lazy_ptr");
+          }
         } else {
           GVStubs.insert(Name);
           printSuffixedName(Name, "$non_lazy_ptr");
@@ -875,6 +883,15 @@ void X86ATTAsmPrinter::printGVStub(const char *GV, const char *Prefix) {
   O << GV << "\n\t.long\t0\n";
 }
 
+/// printHiddenGVStub - Print stub for a hidden global value.
+///
+void X86ATTAsmPrinter::printHiddenGVStub(const char *GV, const char *Prefix) {
+  EmitAlignment(2);
+  printSuffixedName(GV, "$non_lazy_ptr", Prefix);
+  if (Prefix) O << Prefix;
+  O << ":\n" << TAI->getData32bitsDirective() << GV << '\n';
+}
+
 
 bool X86ATTAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
@@ -908,9 +925,8 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     SwitchToDataSection("");
 
     // Output stubs for dynamically-linked functions
-    unsigned j = 1;
     for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
-         i != e; ++i, ++j) {
+         i != e; ++i) {
       SwitchToDataSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
                           "self_modifying_code+pure_instructions,5", 0);
       const char *p = i->getKeyData();
@@ -948,6 +964,13 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     for (StringSet<>::iterator i = GVStubs.begin(), e = GVStubs.end();
          i != e; ++i)
       printGVStub(i->getKeyData());
+
+    if (!HiddenGVStubs.empty()) {
+      SwitchToSection(TAI->getDataSection());
+      for (StringSet<>::iterator i = HiddenGVStubs.begin(), e = HiddenGVStubs.end();
+           i != e; ++i)
+        printHiddenGVStub(i->getKeyData());
+    }
 
     // Emit final debug information.
     DW.EndModule();

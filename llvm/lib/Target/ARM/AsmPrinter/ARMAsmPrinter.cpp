@@ -32,6 +32,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
@@ -73,11 +74,15 @@ namespace {
 
     /// GVNonLazyPtrs - Keeps the set of GlobalValues that require
     /// non-lazy-pointers for indirect access.
-    std::set<std::string> GVNonLazyPtrs;
+    StringSet<> GVNonLazyPtrs;
+
+    /// HiddenGVNonLazyPtrs - Keeps the set of GlobalValues with hidden
+    /// visibility that require non-lazy-pointers for indirect access.
+    StringSet<> HiddenGVNonLazyPtrs;
 
     /// FnStubs - Keeps the set of external function GlobalAddresses that the
     /// asm printer should generate stubs for.
-    std::set<std::string> FnStubs;
+    StringSet<> FnStubs;
 
     /// PCRelGVs - Keeps the set of GlobalValues used in pc relative
     /// constantpool.
@@ -141,7 +146,10 @@ namespace {
       if (!GV)
         Name += ACPV->getSymbol();
       if (ACPV->isNonLazyPointer()) {
-        GVNonLazyPtrs.insert(Name);
+        if (GV->hasHiddenVisibility())
+          HiddenGVNonLazyPtrs.insert(Name);
+        else
+          GVNonLazyPtrs.insert(Name);
         printSuffixedName(Name, "$non_lazy_ptr");
       } else if (ACPV->isStub()) {
         FnStubs.insert(Name);
@@ -927,9 +935,8 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     SwitchToDataSection("");
 
     // Output stubs for dynamically-linked functions
-    unsigned j = 1;
-    for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
-         i != e; ++i, ++j) {
+    for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
+         i != e; ++i) {
       if (TM.getRelocationModel() == Reloc::PIC_)
         SwitchToTextSection(".section __TEXT,__picsymbolstub4,symbol_stubs,"
                             "none,16", 0);
@@ -940,10 +947,10 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
       EmitAlignment(2);
       O << "\t.code\t32\n";
 
-      std::string p = *i;
+      const char *p = i->getKeyData();
       printSuffixedName(p, "$stub");
       O << ":\n";
-      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.indirect_symbol " << p << "\n";
       O << "\tldr ip, ";
       printSuffixedName(p, "$slp");
       O << "\n";
@@ -966,22 +973,36 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
       SwitchToDataSection(".lazy_symbol_pointer", 0);
       printSuffixedName(p, "$lazy_ptr");
       O << ":\n";
-      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.indirect_symbol " << p << "\n";
       O << "\t.long\tdyld_stub_binding_helper\n";
     }
     O << "\n";
 
     // Output non-lazy-pointers for external and common global variables.
-    if (!GVNonLazyPtrs.empty())
+    if (!GVNonLazyPtrs.empty()) {
       SwitchToDataSection(".non_lazy_symbol_pointer", 0);
-    for (std::set<std::string>::iterator i = GVNonLazyPtrs.begin(),
-           e = GVNonLazyPtrs.end(); i != e; ++i) {
-      std::string p = *i;
-      printSuffixedName(p, "$non_lazy_ptr");
-      O << ":\n";
-      O << "\t.indirect_symbol " << *i << "\n";
-      O << "\t.long\t0\n";
+      for (StringSet<>::iterator i =  GVNonLazyPtrs.begin(),
+             e = GVNonLazyPtrs.end(); i != e; ++i) {
+        const char *p = i->getKeyData();
+        printSuffixedName(p, "$non_lazy_ptr");
+        O << ":\n";
+        O << "\t.indirect_symbol " << p << "\n";
+        O << "\t.long\t0\n";
+      }
     }
+
+    if (!HiddenGVNonLazyPtrs.empty()) {
+      SwitchToSection(TAI->getDataSection());
+      for (StringSet<>::iterator i = HiddenGVNonLazyPtrs.begin(),
+             e = HiddenGVNonLazyPtrs.end(); i != e; ++i) {
+        const char *p = i->getKeyData();
+        EmitAlignment(2);
+        printSuffixedName(p, "$non_lazy_ptr");
+        O << ":\n";
+        O << "\t.long " << p << "\n";
+      }
+    }
+
 
     // Emit initial debug information.
     // FIXME: Dwarf support.
