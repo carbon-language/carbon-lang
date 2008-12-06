@@ -16,7 +16,7 @@
   B *iv1;
 }
 
-@property(assign,readonly) int p0;
+@property(readonly) int p0;
 @property(assign,nonatomic,readwrite) int p1;
 @property(copy) id p2;
 @property(retain) id p3;

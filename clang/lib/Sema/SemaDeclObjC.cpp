@@ -1229,12 +1229,22 @@ void Sema::CheckObjCPropertyAttributes(QualType PropertyTy,
                                        unsigned &Attributes) {
   // FIXME: Improve the reported location.
 
-  // readonly and readwrite conflict.
+  // readonly and readwrite/assign/retain/copy conflict.
   if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
-      (Attributes & ObjCDeclSpec::DQ_PR_readwrite)) {
+      (Attributes & (ObjCDeclSpec::DQ_PR_readwrite |
+                     ObjCDeclSpec::DQ_PR_assign |
+                     ObjCDeclSpec::DQ_PR_copy |
+                     ObjCDeclSpec::DQ_PR_retain))) {
+    const char * which = (Attributes & ObjCDeclSpec::DQ_PR_readwrite) ?
+                          "readwrite" :
+                         (Attributes & ObjCDeclSpec::DQ_PR_assign) ?
+                          "assign" :
+                         (Attributes & ObjCDeclSpec::DQ_PR_copy) ?
+                          "copy" : "retain";
+                         
     Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
-      << "readonly" << "readwrite";
-    Attributes &= ~ObjCDeclSpec::DQ_PR_readonly;
+      << "readonly" << which;
+    return;
   }
 
   // Check for copy or retain on non-object types.

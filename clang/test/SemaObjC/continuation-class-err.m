@@ -5,7 +5,7 @@
   id _object;
   id _object1;
 }
-@property(readonly, assign) id object;
+@property(readonly) id object;
 @property(readwrite, assign) id object1;
 @end
 

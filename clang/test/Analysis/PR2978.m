@@ -23,7 +23,7 @@
 @property(retain) id Y;
 @property(assign) id Z;
 @property(assign) id K;
-@property(assign, readonly) id N;
+@property(readonly) id N;
 @property(retain) id M;
 @property(retain) id V;
 @property(retain) id W;
