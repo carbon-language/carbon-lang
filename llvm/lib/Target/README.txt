@@ -1307,6 +1307,9 @@ bb2:		; preds = %bb, %bb1
 
 DSE should sink partially dead stores to get the store out of the loop.
 
+Here's another partial dead case:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=12395
+
 //===---------------------------------------------------------------------===//
 
 Scalar PRE hoists the mul in the common block up to the else:
@@ -1367,6 +1370,54 @@ bb3:		; preds = %bb1, %bb2, %bb
 
 %11 is fully redundant, an in BB2 it should have the value %8.
 
+GCC PR33344 is a similar case.
+
 //===---------------------------------------------------------------------===//
 
+There are many load PRE testcases in testsuite/gcc.dg/tree-ssa/loadpre* in the
+GCC testsuite.  There are many pre testcases as ssa-pre-*.c
+
+Other simple load PRE cases:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=35287
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34677 (licm does this)
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=29789 (SPEC2K6)
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=23455
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=14705
+
+//===---------------------------------------------------------------------===//
+
+When GVN/PRE finds a store of float* to a must aliases pointer when expecting
+an int*, it should turn it into a bitcast.  This is a nice generalization of
+the SROA hack that would apply to other cases.
+
+One example (that requires crazy phi translation) is:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16799
+
+//===---------------------------------------------------------------------===//
+
+A/B get pinned to the stack because we turn an if/then into a select instead
+of PRE'ing the load/store.  This may be fixable in instcombine:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37892
+
+Interesting missed case because of control flow flattening (should be 2 loads):
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=26629
+
+
+//===---------------------------------------------------------------------===//
+
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=19633
+We could eliminate the branch condition here, loading from null is undefined:
+
+struct S { int w, x, y, z; };
+struct T { int r; struct S s; };
+void bar (struct S, int);
+void foo (int a, struct T b)
+{
+  struct S *c = 0;
+  if (a)
+    c = &b.s;
+  bar (*c, a);
+}
+
+//===---------------------------------------------------------------------===//
 
