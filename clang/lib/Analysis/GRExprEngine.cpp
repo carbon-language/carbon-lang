@@ -2364,6 +2364,13 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   Expr* LHS = B->getLHS()->IgnoreParens();
   Expr* RHS = B->getRHS()->IgnoreParens();
   
+  // FIXME: Add proper support for ObjCKVCRefExpr.
+  if (isa<ObjCKVCRefExpr>(LHS)) {
+    Visit(RHS, Pred, Dst);   
+    return;
+  }
+  
+  
   if (B->isAssignmentOp())
     VisitLValue(LHS, Pred, Tmp1);
   else
