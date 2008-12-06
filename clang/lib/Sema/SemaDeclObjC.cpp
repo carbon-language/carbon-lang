@@ -992,7 +992,8 @@ Sema::diagnosePropertySetterGetterMismatch(ObjCPropertyDecl *property,
   }
   
   if (SetterMethod) {
-    if (SetterMethod->getResultType() != Context.VoidTy)
+    if (Context.getCanonicalType(SetterMethod->getResultType()) 
+        != Context.VoidTy)
       Diag(SetterMethod->getLocation(), diag::err_setter_type_void);
     if (SetterMethod->getNumParams() != 1 ||
         (SetterMethod->getParamDecl(0)->getType() != property->getType())) {
