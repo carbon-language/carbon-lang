@@ -1816,3 +1816,18 @@ like the following:
 A similar code sequence works for division.
 
 //===---------------------------------------------------------------------===//
+
+These should compile to the same code, but the later codegen's to useless
+instructions on X86. This may be a trivial dag combine (GCC PR7061):
+
+struct s1 { unsigned char a, b; };
+unsigned long f1(struct s1 x) {
+    return x.a + x.b;
+}
+struct s2 { unsigned a: 8, b: 8; };
+unsigned long f2(struct s2 x) {
+    return x.a + x.b;
+}
+
+//===---------------------------------------------------------------------===//
+
