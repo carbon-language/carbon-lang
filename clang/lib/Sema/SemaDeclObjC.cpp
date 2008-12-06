@@ -1055,7 +1055,9 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
   }
   else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
-    // FIXME: Need to compare properties to those in interface?
+    // Categories are used to extend the class by declaring new methods.
+    // By the same token, they are also used to add new properties. No 
+    // need to compare the added property to those in the class.
 
     // FIXME: If we merge properties into class we should probably
     // merge them into category as well?
