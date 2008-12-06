@@ -1384,8 +1384,14 @@ public:
   /// VerifyIntegerConstantExpression - verifies that an expression is an ICE,
   /// and reports the appropriate diagnostics. Returns false on success.
   /// Can optionally return the value of the expression.
-  bool VerifyIntegerConstantExpression(const Expr*E, llvm::APSInt *Result = 0);
+  bool VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result = 0);
 
+  /// VerifyBitField - verifies that a bit field expression is an ICE and has
+  /// the correct width, and that the field type is valid. 
+  /// Returns false on success.
+  bool VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName, 
+                      QualType FieldTy, const Expr *BitWidth);
+  
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
 private:

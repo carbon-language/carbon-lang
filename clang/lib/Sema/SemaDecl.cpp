@@ -2599,6 +2599,31 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
   return QualType();
 }
 
+bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName, 
+                          QualType FieldTy, const Expr *BitWidth)
+{
+  // FIXME: 6.7.2.1p4 - verify the field type.
+  
+  llvm::APSInt Value;
+  if (VerifyIntegerConstantExpression(BitWidth, &Value))
+    return true;
+
+  if (Value.isNegative()) {
+    Diag(FieldLoc, diag::err_bitfield_has_negative_width) << FieldName;
+    return true;
+  }
+
+  uint64_t TypeSize = Context.getTypeSize(FieldTy);
+  // FIXME: We won't need the 0 size once we check that the field type is valid.
+  if (TypeSize && Value.getZExtValue() > TypeSize) {
+    Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_size) << 
+         FieldName << (unsigned)TypeSize;
+    return true;
+  }
+
+  return false;
+}
+
 /// ActOnField - Each field of a struct/union/class is passed into this in order
 /// to create a FieldDecl object for it.
 Sema::DeclTy *Sema::ActOnField(Scope *S,
@@ -2611,25 +2636,11 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
   
   // FIXME: Unnamed fields can be handled in various different ways, for
   // example, unnamed unions inject all members into the struct namespace!
-    
-  if (BitWidth) {
-    // TODO: Validate.
-    //printf("WARNING: BITFIELDS IGNORED!\n");
-    
-    // 6.7.2.1p3
-    // 6.7.2.1p4
-    
-  } else {
-    // Not a bitfield.
 
-    // validate II.
-    
-  }
-  
   QualType T = GetTypeForDeclarator(D, S);
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   bool InvalidDecl = false;
-
+  
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
   if (T->isVariablyModifiedType()) {
@@ -2643,6 +2654,17 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
       InvalidDecl = true;
     }
   }
+  
+  if (BitWidth) {
+    if (VerifyBitField(Loc, II, T, BitWidth))
+      InvalidDecl = true;
+  } else {
+    // Not a bitfield.
+
+    // validate II.
+    
+  }
+  
   // FIXME: Chain fielddecls together.
   FieldDecl *NewFD;
 
@@ -2692,6 +2714,9 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
   // FIXME: Unnamed fields can be handled in various different ways, for
   // example, unnamed unions inject all members into the struct namespace!
   
+  QualType T = GetTypeForDeclarator(D, S);
+  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
+  bool InvalidDecl = false;
   
   if (BitWidth) {
     // TODO: Validate.
@@ -2706,10 +2731,6 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
     // validate II.
     
   }
-  
-  QualType T = GetTypeForDeclarator(D, S);
-  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
-  bool InvalidDecl = false;
   
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
