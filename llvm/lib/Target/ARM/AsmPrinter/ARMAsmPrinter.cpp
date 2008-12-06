@@ -29,7 +29,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
@@ -83,10 +82,6 @@ namespace {
     /// FnStubs - Keeps the set of external function GlobalAddresses that the
     /// asm printer should generate stubs for.
     StringSet<> FnStubs;
-
-    /// PCRelGVs - Keeps the set of GlobalValues used in pc relative
-    /// constantpool.
-    SmallPtrSet<const GlobalValue*, 8> PCRelGVs;
 
     /// True if asm printer is printing a series of CONSTPOOL_ENTRY.
     bool InCPMode;
@@ -677,12 +672,6 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNo,
     
     if (MCPE.isMachineConstantPoolEntry()) {
       EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
-      ARMConstantPoolValue *ACPV =
-        static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
-      if (ACPV->getPCAdjustment() != 0) {
-        const GlobalValue *GV = ACPV->getGV();
-        PCRelGVs.insert(GV);
-      }
     } else {
       EmitGlobalConstant(MCPE.Val.ConstVal);
       // remember to emit the weak reference
@@ -841,18 +830,18 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   const Type *Type = C->getType();
   unsigned Size = TD->getABITypeSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
+  bool isDarwin = Subtarget->isTargetDarwin();
 
   printVisibility(name, GVar->getVisibility());
 
   if (Subtarget->isTargetELF())
     O << "\t.type " << name << ",%object\n";
 
-  SwitchToSection(TAI->SectionForGlobal(GVar));
-
   if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal()) {
     // FIXME: This seems to be pretty darwin-specific
 
     if (GVar->hasExternalLinkage()) {
+      SwitchToSection(TAI->SectionForGlobal(GVar));
       if (const char *Directive = TAI->getZeroFillDirective()) {
         O << "\t.globl\t" << name << "\n";
         O << Directive << "__DATA, __common, " << name << ", "
@@ -864,14 +853,34 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     if (GVar->hasInternalLinkage() || GVar->mayBeOverridden()) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-      if (TAI->getLCOMMDirective() != NULL) {
-        if (PCRelGVs.count(GVar) || GVar->hasInternalLinkage()) {
+      if (isDarwin) {
+        if (GVar->hasInternalLinkage()) {
+          O << TAI->getLCOMMDirective()  << name << "," << Size
+            << ',' << Align;
+        } else if (GVar->hasCommonLinkage()) {
+          O << TAI->getCOMMDirective()  << name << "," << Size
+            << ',' << Align;
+        } else {
+          SwitchToSection(TAI->SectionForGlobal(GVar));
+          O << "\t.globl " << name << '\n'
+            << TAI->getWeakDefDirective() << name << '\n';
+          EmitAlignment(Align, GVar);
+          O << name << ":\t\t\t\t" << TAI->getCommentString() << ' ';
+          PrintUnmangledNameSafely(GVar, O);
+          O << '\n';
+          EmitGlobalConstant(C);
+          return;
+        }
+      } else if (TAI->getLCOMMDirective() != NULL) {
+        if (GVar->hasInternalLinkage()) {
           O << TAI->getLCOMMDirective() << name << "," << Size;
-          if (Subtarget->isTargetDarwin())
-            O << "," << Align;
-        } else
+        } else {
           O << TAI->getCOMMDirective()  << name << "," << Size;
+          if (TAI->getCOMMDirectiveTakesAlignment())
+            O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+        }
       } else {
+        SwitchToSection(TAI->SectionForGlobal(GVar));
         if (GVar->hasInternalLinkage())
           O << "\t.local\t" << name << "\n";
         O << TAI->getCOMMDirective()  << name << "," << Size;
@@ -885,10 +894,12 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     }
   }
 
+  SwitchToSection(TAI->SectionForGlobal(GVar));
   switch (GVar->getLinkage()) {
+   case GlobalValue::CommonLinkage:
    case GlobalValue::LinkOnceLinkage:
    case GlobalValue::WeakLinkage:
-    if (Subtarget->isTargetDarwin()) {
+    if (isDarwin) {
       O << "\t.globl " << name << "\n"
         << "\t.weak_definition " << name << "\n";
     } else {
@@ -980,7 +991,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 
     // Output non-lazy-pointers for external and common global variables.
     if (!GVNonLazyPtrs.empty()) {
-      SwitchToDataSection(".non_lazy_symbol_pointer", 0);
+      SwitchToDataSection("\t.non_lazy_symbol_pointer", 0);
       for (StringSet<>::iterator i =  GVNonLazyPtrs.begin(),
              e = GVNonLazyPtrs.end(); i != e; ++i) {
         const char *p = i->getKeyData();

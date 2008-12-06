@@ -56,6 +56,7 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
   ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
   SetDirective = "\t.set\t";
   WeakRefDirective = "\t.weak_reference\t";
+  WeakDefDirective = "\t.weak_definition ";
   HiddenDirective = "\t.private_extern\t";
   ProtectedDirective = NULL;
   JumpTableDataSection = ".const";
