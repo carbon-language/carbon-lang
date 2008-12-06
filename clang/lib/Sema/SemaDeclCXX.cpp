@@ -525,14 +525,14 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       // FIXME: Emit diagnostic about only constructors taking base initializers
       // or something similar, when constructor support is in place.
       Diag(Loc, diag::err_not_bitfield_type)
-        << Name.getAsString() << BitWidth->getSourceRange();
+        << Name << BitWidth->getSourceRange();
       InvalidDecl = true;
 
     } else if (isInstField) {
       // C++ 9.6p3: A bit-field shall have integral or enumeration type.
       if (!cast<FieldDecl>(Member)->getType()->isIntegralType()) {
         Diag(Loc, diag::err_not_integral_type_bitfield)
-          << Name.getAsString() << BitWidth->getSourceRange();
+          << Name << BitWidth->getSourceRange();
         InvalidDecl = true;
       }
 
@@ -540,13 +540,13 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       // A function typedef ("typedef int f(); f a;").
       // C++ 9.6p3: A bit-field shall have integral or enumeration type.
       Diag(Loc, diag::err_not_integral_type_bitfield)
-        << Name.getAsString() << BitWidth->getSourceRange();
+        << Name << BitWidth->getSourceRange();
       InvalidDecl = true;
 
     } else if (isa<TypedefDecl>(Member)) {
       // "cannot declare 'A' to be a bit-field type"
       Diag(Loc, diag::err_not_bitfield_type)
-        << Name.getAsString() << BitWidth->getSourceRange();
+        << Name << BitWidth->getSourceRange();
       InvalidDecl = true;
 
     } else {
@@ -555,7 +555,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       // C++ 9.6p3: A bit-field shall not be a static member.
       // "static member 'A' cannot be a bit-field"
       Diag(Loc, diag::err_static_not_bitfield)
-        << Name.getAsString() << BitWidth->getSourceRange();
+        << Name << BitWidth->getSourceRange();
       InvalidDecl = true;
     }
   }
@@ -577,14 +577,14 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       } else {
         // not const integral.
         Diag(Loc, diag::err_member_initialization)
-          << Name.getAsString() << Init->getSourceRange();
+          << Name << Init->getSourceRange();
         InvalidDecl = true;
       }
 
     } else {
       // not static member.
       Diag(Loc, diag::err_member_initialization)
-        << Name.getAsString() << Init->getSourceRange();
+        << Name << Init->getSourceRange();
       InvalidDecl = true;
     }
   }

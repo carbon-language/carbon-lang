@@ -734,13 +734,13 @@ DIAG(err_mutable_nonmember, ERROR,
 DIAG(err_virtual_non_function, ERROR,
      "'virtual' can only appear on non-static member functions")
 DIAG(err_not_bitfield_type, ERROR,
-     "cannot declare '%0' to be a bit-field type")
+     "cannot declare %0 to be a bit-field type")
 DIAG(err_static_not_bitfield, ERROR,
-     "static member '%0' cannot be a bit-field")
+     "static member %0 cannot be a bit-field")
 DIAG(err_not_integral_type_bitfield, ERROR,
-     "bit-field '%0' with non-integral type")
+     "bit-field %0 with non-integral type")
 DIAG(err_member_initialization, ERROR,
-    "'%0' can only be initialized if it is a static const integral data member")
+    "%0 can only be initialized if it is a static const integral data member")
 DIAG(err_implicit_object_parameter_init, ERROR,
      "cannot initialize object parameter of type %0 with an expression of type %1")
 
