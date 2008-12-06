@@ -1,7 +1,7 @@
 // RUN: clang -fsyntax-only -verify %s
 
 @interface A
--(float) x;
+-(float) x;	// expected-note {{declared at}}
 @property int x; // expected-error {{type of property 'x' does not match type of accessor 'x'}}
 @end
 

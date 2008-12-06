@@ -933,21 +933,25 @@ Sema::diagnosePropertySetterGetterMismatch(ObjCPropertyDecl *property,
                                            const ObjCMethodDecl *GetterMethod,
                                            const ObjCMethodDecl *SetterMethod) {
   if (GetterMethod &&
-      GetterMethod->getResultType() != property->getType())
+      GetterMethod->getResultType() != property->getType()) {
     Diag(property->getLocation(), 
          diag::err_accessor_property_type_mismatch) 
       << property->getDeclName()
       << GetterMethod->getSelector().getAsIdentifierInfo();
+    Diag(GetterMethod->getLocation(), diag::note_declared_at);
+  }
   
   if (SetterMethod) {
     if (SetterMethod->getResultType() != Context.VoidTy)
       Diag(SetterMethod->getLocation(), diag::err_setter_type_void);
     if (SetterMethod->getNumParams() != 1 ||
-        (SetterMethod->getParamDecl(0)->getType() != property->getType()))
+        (SetterMethod->getParamDecl(0)->getType() != property->getType())) {
       Diag(property->getLocation(), 
            diag::err_accessor_property_type_mismatch) 
         << property->getDeclName()
         << SetterMethod->getSelector().getAsIdentifierInfo();
+      Diag(SetterMethod->getLocation(), diag::note_declared_at);
+    }
   }
 }
 

@@ -571,6 +571,8 @@ DIAG(warn_property_attr_mismatch, WARNING,
      "property attribute in continuation class does not match the primary class")
 DIAG(err_accessor_property_type_mismatch, ERROR,
      "type of property %0 does not match type of accessor %1")
+DIAG(note_declared_at, NOTE,
+     "declared at")
 DIAG(err_setter_type_void, ERROR,
      "type of setter must be void")
 DIAG(warn_conflicting_types, WARNING,
