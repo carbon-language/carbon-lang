@@ -1272,4 +1272,101 @@ the function, e.g. by:
 
 later.
 
+//===---------------------------------------------------------------------===//
+
+Store sinking: This code:
+
+void f (int n, int *cond, int *res) {
+    int i;
+    *res = 0;
+    for (i = 0; i < n; i++)
+        if (*cond)
+            *res ^= 234; /* (*) */
+}
+
+On this function GVN hoists the fully redundant value of *res, but nothing
+moves the store out.  This gives us this code:
+
+bb:		; preds = %bb2, %entry
+	%.rle = phi i32 [ 0, %entry ], [ %.rle6, %bb2 ]	
+	%i.05 = phi i32 [ 0, %entry ], [ %indvar.next, %bb2 ]
+	%1 = load i32* %cond, align 4
+	%2 = icmp eq i32 %1, 0
+	br i1 %2, label %bb2, label %bb1
+
+bb1:		; preds = %bb
+	%3 = xor i32 %.rle, 234	
+	store i32 %3, i32* %res, align 4
+	br label %bb2
+
+bb2:		; preds = %bb, %bb1
+	%.rle6 = phi i32 [ %3, %bb1 ], [ %.rle, %bb ]	
+	%indvar.next = add i32 %i.05, 1	
+	%exitcond = icmp eq i32 %indvar.next, %n
+	br i1 %exitcond, label %return, label %bb
+
+DSE should sink partially dead stores to get the store out of the loop.
+
+//===---------------------------------------------------------------------===//
+
+Scalar PRE hoists the mul in the common block up to the else:
+
+int test (int a, int b, int c, int g) {
+  int d, e;
+  if (a)
+    d = b * c;
+  else
+    d = b - c;
+  e = b * c + g;
+  return d + e;
+}
+
+It would be better to do the mul once to reduce codesize above the if.
+This is GCC PR38204.
+
+//===---------------------------------------------------------------------===//
+
+GCC PR37810 is an interesting case where we should sink load/store reload
+into the if block and outside the loop, so we don't reload/store it on the
+non-call path.
+
+for () {
+  *P += 1;
+  if ()
+    call();
+  else
+    ...
+->
+tmp = *P
+for () {
+  tmp += 1;
+  if () {
+    *P = tmp;
+    call();
+    tmp = *P;
+  } else ...
+}
+*P = tmp;
+
+//===---------------------------------------------------------------------===//
+
+GCC PR37166: Sinking of loads prevents SROA'ing the "g" struct on the stack
+leading to excess stack traffic. This could be handled by GVN with some crazy
+symbolic phi translation.  The code we get looks like (g is on the stack):
+
+bb2:		; preds = %bb1
+..
+	%9 = getelementptr %struct.f* %g, i32 0, i32 0		
+	store i32 %8, i32* %9, align  bel %bb3
+
+bb3:		; preds = %bb1, %bb2, %bb
+	%c_addr.0 = phi %struct.f* [ %g, %bb2 ], [ %c, %bb ], [ %c, %bb1 ]
+	%b_addr.0 = phi %struct.f* [ %b, %bb2 ], [ %g, %bb ], [ %b, %bb1 ]
+	%10 = getelementptr %struct.f* %c_addr.0, i32 0, i32 0
+	%11 = load i32* %10, align 4
+
+%11 is fully redundant, an in BB2 it should have the value %8.
+
+//===---------------------------------------------------------------------===//
+
 
