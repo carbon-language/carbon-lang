@@ -28,7 +28,7 @@ int f3(value v) {
 }
 
 enum E9 { one, two };
-union S65 { enum E9 a:62; } ; union S65 s65;
+union S65 { enum E9 a; } ; union S65 s65;
 void fS65() { enum E9 e = s65.a; } 
 
 typedef union{
