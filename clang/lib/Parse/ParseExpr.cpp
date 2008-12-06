@@ -740,7 +740,8 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       if (!LHS.isInvalid && Tok.is(tok::r_paren)) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
-        LHS = Actions.ActOnCallExpr(LHSGuard.take(), Loc, ArgExprs.take(),
+        LHS = Actions.ActOnCallExpr(CurScope, LHSGuard.take(), Loc, 
+                                    ArgExprs.take(),
                                     ArgExprs.size(), &CommaLocs[0],
                                     Tok.getLocation());
         LHSGuard.reset(LHS);

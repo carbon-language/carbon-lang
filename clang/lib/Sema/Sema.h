@@ -461,7 +461,7 @@ public:
                                         SourceLocation RParenLoc);
 
   ExprResult 
-  BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
+  BuildCallToObjectOfClassType(Scope *S, Expr *Object, SourceLocation LParenLoc,
                                Expr **Args, unsigned NumArgs,
                                SourceLocation *CommaLocs, 
                                SourceLocation RParenLoc);
@@ -643,7 +643,8 @@ public:
   ExprResult ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                       DeclarationName Name,
                                       bool HasTrailingLParen,
-                                      const CXXScopeSpec *SS);
+                                      const CXXScopeSpec *SS,
+                                      bool ForceResolution = false);
                                       
 
   virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
@@ -681,7 +682,8 @@ public:
   /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
   /// locations.
-  virtual ExprResult ActOnCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
+  virtual ExprResult ActOnCallExpr(Scope *S, ExprTy *Fn, 
+                                   SourceLocation LParenLoc,
                                    ExprTy **Args, unsigned NumArgs,
                                    SourceLocation *CommaLocs,
                                    SourceLocation RParenLoc);

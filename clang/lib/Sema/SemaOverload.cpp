@@ -3102,7 +3102,8 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, OverloadedFunctionDecl *Ov
 /// overloaded function call operator (@c operator()) or performing a
 /// user-defined conversion on the object argument.
 Action::ExprResult 
-Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
+Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object, 
+                                   SourceLocation LParenLoc,
                                    Expr **Args, unsigned NumArgs,
                                    SourceLocation *CommaLocs, 
                                    SourceLocation RParenLoc) {
@@ -3220,7 +3221,7 @@ Sema::BuildCallToObjectOfClassType(Expr *Object, SourceLocation LParenLoc,
     ImpCastExprToType(Object, 
                       Conv->getConversionType().getNonReferenceType(),
                       Conv->getConversionType()->isReferenceType());
-    return ActOnCallExpr((ExprTy*)Object, LParenLoc, (ExprTy**)Args, NumArgs,
+    return ActOnCallExpr(S, (ExprTy*)Object, LParenLoc, (ExprTy**)Args, NumArgs,
                          CommaLocs, RParenLoc);
   }
 

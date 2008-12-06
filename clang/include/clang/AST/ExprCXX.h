@@ -632,6 +632,48 @@ public:
   static CXXDeleteExpr * CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// CXXDependentNameExpr - Represents a dependent name in C++ for
+/// which we could not locate any definition. These names can only
+/// occur as in the example below, with an unqualified call to a
+/// function name whose arguments are dependent.
+/// @code
+/// template<typename T> void f(T x) {
+///   g(x); // g is a dependent name.
+/// }
+/// @endcode
+class CXXDependentNameExpr : public Expr {
+  /// Name - The name that was present in the source code.
+  IdentifierInfo *Name;
+
+  /// Loc - The location 
+  SourceLocation Loc;
+
+public:
+  CXXDependentNameExpr(IdentifierInfo *N, QualType T, SourceLocation L)
+    : Expr(CXXDependentNameExprClass, T, true, true), Name(N), Loc(L) { }
+
+  /// getName - Retrieves the name that occurred in the source code.
+  IdentifierInfo *getName() const { return Name; }
+
+  /// getLocation - Retrieves the location in the source code where
+  /// the name occurred.
+  SourceLocation getLocation() const { return Loc; }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXDependentNameExprClass;
+  }
+  static bool classof(const CXXDependentNameExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXDependentNameExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
 }  // end namespace clang
 
 #endif

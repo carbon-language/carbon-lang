@@ -239,6 +239,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
 
     case CXXDeleteExprClass:
       return CXXDeleteExpr::CreateImpl(D, C);
+
+    case CXXDependentNameExprClass:
+      return CXXDependentNameExpr::CreateImpl(D, C);
   }
 }
 
@@ -1505,4 +1508,18 @@ CXXDeleteExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   return new CXXDeleteExpr(Ty, GlobalDelete, ArrayForm, OperatorDelete,
                            cast<Expr>(Argument), Loc);
+}
+
+void CXXDependentNameExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.EmitPtr(Name);
+  S.Emit(Loc);
+}
+
+CXXDependentNameExpr *
+CXXDependentNameExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  QualType Ty = QualType::ReadVal(D);
+  IdentifierInfo *N = D.ReadPtr<IdentifierInfo>();
+  SourceLocation L = SourceLocation::ReadVal(D);
+  return new CXXDependentNameExpr(N, Ty, L);
 }

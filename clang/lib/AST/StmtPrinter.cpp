@@ -988,6 +988,10 @@ void StmtPrinter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   PrintExpr(E->getArgument());
 }
 
+void StmtPrinter::VisitCXXDependentNameExpr(CXXDependentNameExpr *E) {
+  OS << E->getName()->getName();
+}
+
 // Obj-C 
 
 void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {

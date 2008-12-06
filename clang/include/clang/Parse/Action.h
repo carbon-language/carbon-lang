@@ -530,7 +530,8 @@ public:
   /// This provides the location of the left/right parens and a list of comma
   /// locations.  There are guaranteed to be one fewer commas than arguments,
   /// unless there are zero arguments.
-  virtual ExprResult ActOnCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
+  virtual ExprResult ActOnCallExpr(Scope *S, ExprTy *Fn, 
+                                   SourceLocation LParenLoc,
                                    ExprTy **Args, unsigned NumArgs,
                                    SourceLocation *CommaLocs,
                                    SourceLocation RParenLoc) {

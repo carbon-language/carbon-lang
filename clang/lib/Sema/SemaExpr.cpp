@@ -364,10 +364,29 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
 /// function call context.  LookupCtx is only used for a C++
 /// qualified-id (foo::bar) to indicate the class or namespace that
 /// the identifier must be a member of.
+///
+/// If ForceResolution is true, then we will attempt to resolve the
+/// name even if it looks like a dependent name. This option is off by
+/// default.
 Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                                 DeclarationName Name,
                                                 bool HasTrailingLParen,
-                                                const CXXScopeSpec *SS) {
+                                                const CXXScopeSpec *SS,
+                                                bool ForceResolution) {
+  if (S->getTemplateParamParent() && Name.getAsIdentifierInfo() &&
+      HasTrailingLParen && !SS && !ForceResolution) {
+    // We've seen something of the form
+    //   identifier(
+    // and we are in a template, so it is likely that 's' is a
+    // dependent name. However, we won't know until we've parsed all
+    // of the call arguments. So, build a CXXDependentNameExpr node
+    // to represent this name. Then, if it turns out that none of the
+    // arguments are type-dependent, we'll force the resolution of the
+    // dependent name at that point.
+    return new CXXDependentNameExpr(Name.getAsIdentifierInfo(),
+                                    Context.DependentTy, Loc);
+  }
+
   // Could be enum-constant, value decl, instance variable, etc.
   Decl *D;
   if (SS && !SS->isEmpty()) {
@@ -377,7 +396,7 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     D = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
   } else
     D = LookupDecl(Name, Decl::IDNS_Ordinary, S);
-  
+
   // If this reference is in an Objective-C method, then ivar lookup happens as
   // well.
   IdentifierInfo *II = Name.getAsIdentifierInfo();
@@ -1315,7 +1334,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
 /// This provides the location of the left/right parens and a list of comma
 /// locations.
 Action::ExprResult Sema::
-ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
+ActOnCallExpr(Scope *S, ExprTy *fn, SourceLocation LParenLoc,
               ExprTy **args, unsigned NumArgs,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
   Expr *Fn = static_cast<Expr *>(fn);
@@ -1324,9 +1343,36 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   FunctionDecl *FDecl = NULL;
   OverloadedFunctionDecl *Ovl = NULL;
 
+  // Determine whether this is a dependent call inside a C++ template,
+  // in which case we won't do any semantic analysis now. 
+  bool Dependent = false;
+  if (Fn->isTypeDependent()) {
+    if (CXXDependentNameExpr *FnName = dyn_cast<CXXDependentNameExpr>(Fn)) {
+      if (Expr::hasAnyTypeDependentArguments(Args, NumArgs))
+        Dependent = true;
+      else {
+        // Resolve the CXXDependentNameExpr to an actual identifier;
+        // it wasn't really a dependent name after all.
+        ExprResult Resolved 
+          = ActOnDeclarationNameExpr(S, FnName->getLocation(), FnName->getName(),
+                                     /*HasTrailingLParen=*/true,
+                                     /*SS=*/0,
+                                     /*ForceResolution=*/true);
+        if (Resolved.isInvalid)
+          return true;
+        else {
+          delete Fn;
+          Fn = (Expr *)Resolved.Val;
+        }                                         
+      }
+    } else
+      Dependent = true;
+  } else
+    Dependent = Expr::hasAnyTypeDependentArguments(Args, NumArgs);
+
   // FIXME: Will need to cache the results of name lookup (including
   // ADL) in Fn.
-  if (Fn->isTypeDependent() || Expr::hasAnyTypeDependentArguments(Args, NumArgs))
+  if (Dependent)
     return new CallExpr(Fn, Args, NumArgs, Context.DependentTy, RParenLoc);
 
   // If we're directly calling a function or a set of overloaded
@@ -1358,7 +1404,7 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   }
 
   if (getLangOptions().CPlusPlus && Fn->getType()->isRecordType())
-    return BuildCallToObjectOfClassType(Fn, LParenLoc, Args, NumArgs,
+    return BuildCallToObjectOfClassType(S, Fn, LParenLoc, Args, NumArgs,
                                         CommaLocs, RParenLoc);
 
   // Promote the function operand.
