@@ -513,6 +513,31 @@ void ObjCCategoryDecl::addPropertyMethods(
   ::addPropertyMethods(this, Context, property, insMethods, InsMap);
 }
 
+/// mergeProperties - Adds properties to the end of list of current properties
+/// for this category.
+
+void ObjCCategoryDecl::mergeProperties(ObjCPropertyDecl **Properties, 
+                                        unsigned NumNewProperties) {
+  if (NumNewProperties == 0) return;
+  
+  if (PropertyDecl) {
+    ObjCPropertyDecl **newPropertyDecl =  
+      new ObjCPropertyDecl*[NumNewProperties + NumPropertyDecl];
+    ObjCPropertyDecl **buf = newPropertyDecl;
+    // put back original properties in buffer.
+    memcpy(buf, PropertyDecl, NumPropertyDecl*sizeof(ObjCPropertyDecl*));
+    // Add new properties to this buffer.
+    memcpy(buf+NumPropertyDecl, Properties, 
+           NumNewProperties*sizeof(ObjCPropertyDecl*));
+    delete[] PropertyDecl;
+    PropertyDecl = newPropertyDecl;
+    NumPropertyDecl += NumNewProperties;
+  }
+  else {
+    addProperties(Properties, NumNewProperties);
+  }
+}
+
 /// addPropertyMethods - Goes through list of properties declared in this class
 /// and builds setter/getter method declartions depending on the setter/getter
 /// attributes of the property.

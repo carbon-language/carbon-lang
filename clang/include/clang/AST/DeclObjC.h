@@ -883,6 +883,8 @@ public:
   
   void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
 
+  void mergeProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
+
   void addPropertyMethods(ASTContext &Context,
                           ObjCPropertyDecl* Property,
                           llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,

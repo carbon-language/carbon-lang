@@ -1075,10 +1075,10 @@ public:
                                 const IdentifierInfo *Name);
   void ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl);
   
-  void MergeProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
+  void MergeProtocolPropertiesIntoClass(Decl *CDecl,
                                         DeclTy *MergeProtocols);
   
-  void MergeOneProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
+  void MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
                                            ObjCProtocolDecl *PDecl);
   
   virtual void ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
