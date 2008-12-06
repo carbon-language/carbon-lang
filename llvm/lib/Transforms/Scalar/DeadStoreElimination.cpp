@@ -50,7 +50,7 @@ namespace {
     bool runOnBasicBlock(BasicBlock &BB);
     bool handleFreeWithNonTrivialDependency(FreeInst *F, MemDepResult Dep);
     bool handleEndBlock(BasicBlock &BB);
-    bool RemoveUndeadPointers(Value* pointer, uint64_t killPointerSize,
+    bool RemoveUndeadPointers(Value* Ptr, uint64_t killPointerSize,
                               BasicBlock::iterator& BBI,
                               SmallPtrSet<Value*, 64>& deadPointers);
     void DeleteDeadInstruction(Instruction *I,
@@ -81,93 +81,60 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   TargetData &TD = getAnalysis<TargetData>();  
 
-  // Record the last-seen store to this pointer
-  DenseMap<Value*, StoreInst*> lastStore;
-  
   bool MadeChange = false;
   
   // Do a top-down walk on the BB
   for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); BBI != BBE; ) {
     Instruction *Inst = BBI++;
     
-    // If we find a store or a free...
+    // If we find a store or a free, get it's memory dependence.
     if (!isa<StoreInst>(Inst) && !isa<FreeInst>(Inst))
       continue;
 
-    Value* pointer = 0;
-    if (StoreInst* S = dyn_cast<StoreInst>(Inst)) {
-      if (S->isVolatile())
-        continue;
-      pointer = S->getPointerOperand();
-    } else {
-      pointer = cast<FreeInst>(Inst)->getPointerOperand();
-    }
-
-    pointer = pointer->stripPointerCasts();
-    StoreInst *&last = lastStore[pointer];
- 
-    // ... to a pointer that has been stored to before...
-    if (last) {
-      MemDepResult dep = MD.getDependency(Inst);
-      bool deletedStore = false;
+    MemDepResult InstDep = MD.getDependency(Inst);
     
-      // ... and no other memory dependencies are between them....
-      while (StoreInst *DepStore = dyn_cast_or_null<StoreInst>(dep.getInst())) {
-        if (DepStore != last ||
-            TD.getTypeStoreSize(last->getOperand(0)->getType()) >
-            TD.getTypeStoreSize(Inst->getOperand(0)->getType())) {
-          dep = MD.getDependencyFrom(Inst, DepStore, DepStore->getParent());
-          continue;
-        }
-        
+    // Ignore non-local stores.
+    // FIXME: cross-block DSE would be fun. :)
+    if (InstDep.isNonLocal()) continue;
+  
+    // Handle frees whose dependencies are non-trivial.
+    if (FreeInst *FI = dyn_cast<FreeInst>(Inst)) {
+      MadeChange |= handleFreeWithNonTrivialDependency(FI, InstDep);
+      continue;
+    }
+    
+    StoreInst *SI = cast<StoreInst>(Inst);
+    
+    // If not a definite must-alias dependency, ignore it.
+    if (!InstDep.isDef())
+      continue;
+    
+    // If this is a store-store dependence, then the previous store is dead so
+    // long as this store is at least as big as it.
+    if (StoreInst *DepStore = dyn_cast<StoreInst>(InstDep.getInst()))
+      if (TD.getTypeStoreSize(DepStore->getOperand(0)->getType()) <=
+          TD.getTypeStoreSize(SI->getOperand(0)->getType())) {
         // Delete the store and now-dead instructions that feed it.
-        DeleteDeadInstruction(last);
+        DeleteDeadInstruction(DepStore);
         NumFastStores++;
-        deletedStore = true;
         MadeChange = true;
-        break;
-      }
-      
-      // If we deleted a store, reinvestigate this instruction.
-      if (deletedStore) {
+        
         if (BBI != BB.begin())
           --BBI;
         continue;
       }
-    }
     
-    // Handle frees whose dependencies are non-trivial.
-    if (FreeInst* F = dyn_cast<FreeInst>(Inst)) {
-      MadeChange |= handleFreeWithNonTrivialDependency(F, MD.getDependency(F));
-      
-      // No known stores after the free.
-      last = 0;
-    } else {
-      StoreInst* S = cast<StoreInst>(Inst);
-      
-      // If we're storing the same value back to a pointer that we just
-      // loaded from, then the store can be removed;
-      if (LoadInst* L = dyn_cast<LoadInst>(S->getOperand(0))) {
-        if (!S->isVolatile() && S->getParent() == L->getParent() &&
-            S->getPointerOperand() == L->getPointerOperand()) {
-          MemDepResult dep = MD.getDependency(S);
-          if (dep.isDef() && dep.getInst() == L) {
-            DeleteDeadInstruction(S);
-            if (BBI != BB.begin())
-              --BBI;
-            NumFastStores++;
-            MadeChange = true;
-          } else {
-            // Update our most-recent-store map.
-            last = S;
-          }
-        } else {
-          // Update our most-recent-store map.
-          last = S;
-        }
-      } else {
-        // Update our most-recent-store map.
-        last = S;
+    // If we're storing the same value back to a pointer that we just
+    // loaded from, then the store can be removed.
+    if (LoadInst *DepLoad = dyn_cast<LoadInst>(InstDep.getInst())) {
+      if (SI->getPointerOperand() == DepLoad->getPointerOperand() &&
+          SI->getOperand(0) == DepLoad) {
+        DeleteDeadInstruction(SI);
+        if (BBI != BB.begin())
+          --BBI;
+        NumFastStores++;
+        MadeChange = true;
+        continue;
       }
     }
   }
@@ -182,29 +149,22 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
 /// handleFreeWithNonTrivialDependency - Handle frees of entire structures whose
 /// dependency is a store to a field of that structure.
-bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, MemDepResult dep) {
-  TargetData &TD = getAnalysis<TargetData>();
+bool DSE::handleFreeWithNonTrivialDependency(FreeInst *F, MemDepResult Dep) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   
-  StoreInst* dependency = dyn_cast_or_null<StoreInst>(dep.getInst());
-  if (!dependency)
-    return false;
-  else if (dependency->isVolatile())
+  StoreInst *Dependency = dyn_cast_or_null<StoreInst>(Dep.getInst());
+  if (!Dependency || Dependency->isVolatile())
     return false;
   
-  Value* depPointer = dependency->getPointerOperand();
-  const Type* depType = dependency->getOperand(0)->getType();
-  unsigned depPointerSize = TD.getTypeStoreSize(depType);
+  Value *DepPointer = Dependency->getPointerOperand()->getUnderlyingObject();
 
-  // Check for aliasing
-  AliasAnalysis::AliasResult A = AA.alias(F->getPointerOperand(), ~0U,
-                                          depPointer, depPointerSize);
-
-  if (A != AliasAnalysis::MustAlias)
+  // Check for aliasing.
+  if (AA.alias(F->getPointerOperand(), 1, DepPointer, 1) !=
+         AliasAnalysis::MustAlias)
     return false;
   
   // DCE instructions only used to calculate that store
-  DeleteDeadInstruction(dependency);
+  DeleteDeadInstruction(Dependency);
   NumFastStores++;
   return true;
 }
