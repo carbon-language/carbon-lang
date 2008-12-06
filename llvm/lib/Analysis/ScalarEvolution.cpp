@@ -2911,18 +2911,18 @@ bool ScalarEvolutionsImpl::potentialInfiniteLoop(SCEV *Stride, SCEV *RHS,
                                                  bool isSigned, bool trueWhenEqual) {
   // Return true when the distance from RHS to maxint > Stride.
 
-  if (!isa<SCEVConstant>(Stride))
+  SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride);
+  if (!SC)
     return true;
-  SCEVConstant *SC = cast<SCEVConstant>(Stride);
 
   if (SC->getValue()->isZero())
     return true;
   if (!trueWhenEqual && SC->getValue()->isOne())
     return false;
 
-  if (!isa<SCEVConstant>(RHS))
+  SCEVConstant *R = dyn_cast<SCEVConstant>(RHS);
+  if (!R)
     return true;
-  SCEVConstant *R = cast<SCEVConstant>(RHS);
 
   if (isSigned)
     return true;  // XXX: because we don't have an sdiv scev.
@@ -2983,7 +2983,7 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
     // loop by one iteration.
     //
     // The loop won't actually run (m-n)/s times because the loop iterations
-    // won't divide evenly. For example, if you have {2,+,5} u< 10 the
+    // might not divide cleanly. For example, if you have {2,+,5} u< 10 the
     // division would equal one, but the loop runs twice putting the
     // induction variable at 12.
 
