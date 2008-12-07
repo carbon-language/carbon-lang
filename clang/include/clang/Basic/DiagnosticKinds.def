@@ -999,13 +999,13 @@ DIAG(warn_enum_too_large, WARNING,
 DIAG(warn_illegal_constant_array_size, EXTENSION,
      "size of static array must be an integer constant expression")
 DIAG(err_vla_decl_in_file_scope, ERROR,
-     "variable length array declaration not allowed in file scope")
+     "variable length array declaration not allowed at file scope")
 DIAG(err_vla_decl_has_static_storage, ERROR,
      "variable length array declaration can not have 'static' storage duration")
 DIAG(err_vla_decl_has_extern_linkage, ERROR,
      "variable length array declaration can not have 'extern' linkage")
 DIAG(err_vm_decl_in_file_scope, ERROR,
-     "variably modified type declaration not allowed in file scope")
+     "variably modified type declaration not allowed at file scope")
 DIAG(err_vm_decl_has_extern_linkage, ERROR,
      "variably modified type declaration can not have 'extern' linkage")
 DIAG(err_typecheck_field_variable_size, ERROR,

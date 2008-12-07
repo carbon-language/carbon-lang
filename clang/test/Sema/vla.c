@@ -27,10 +27,10 @@ void f2(unsigned int m)
 
 // PR2361
 int i; 
-int c[][i]; // expected-error {{variably modified type declaration not allowed in file scope}}
-int d[i]; // expected-error {{variable length array declaration not allowed in file scope}}
+int c[][i]; // expected-error {{variably modified type declaration not allowed at file scope}}
+int d[i]; // expected-error {{variable length array declaration not allowed at file scope}}
 
-int (*e)[i]; // expected-error {{variably modified type declaration not allowed in file scope}}
+int (*e)[i]; // expected-error {{variably modified type declaration not allowed at file scope}}
 
 void f3()
 {

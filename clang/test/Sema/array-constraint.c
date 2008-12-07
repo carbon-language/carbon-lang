@@ -41,7 +41,7 @@ void check_size() {
 }
 
 static int I;
-typedef int TA[I]; // expected-error {{variable length array declaration not allowed in file scope}}
+typedef int TA[I]; // expected-error {{variable length array declaration not allowed at file scope}}
 
 void strFunc(char *);
 const char staticAry[] = "test";
