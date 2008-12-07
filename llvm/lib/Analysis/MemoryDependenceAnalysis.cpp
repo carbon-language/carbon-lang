@@ -647,6 +647,16 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   // Loop over all of the things that depend on the instruction we're removing.
   // 
   SmallVector<std::pair<Instruction*, Instruction*>, 8> ReverseDepsToAdd;
+
+  // If we find RemInst as a clobber or Def in any of the maps for other values,
+  // we need to replace its entry with a dirty version of the instruction after
+  // it.  If RemInst is a terminator, we use a null dirty value.
+  //
+  // Using a dirty version of the instruction after RemInst saves having to scan
+  // the entire block to get to this point.
+  MemDepResult NewDirtyVal;
+  if (!RemInst->isTerminator())
+    NewDirtyVal = MemDepResult::getDirty(++BasicBlock::iterator(RemInst));
   
   ReverseDepMapType::iterator ReverseDepIt = ReverseLocalDeps.find(RemInst);
   if (ReverseDepIt != ReverseLocalDeps.end()) {
@@ -655,22 +665,18 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
     assert(!ReverseDeps.empty() && !isa<TerminatorInst>(RemInst) &&
            "Nothing can locally depend on a terminator");
     
-    // Anything that was locally dependent on RemInst is now going to be
-    // dependent on the instruction after RemInst.  It will have the dirty flag
-    // set so it will rescan.  This saves having to scan the entire block to get
-    // to this point.
-    Instruction *NewDepInst = ++BasicBlock::iterator(RemInst);
-                        
     for (SmallPtrSet<Instruction*, 4>::iterator I = ReverseDeps.begin(),
          E = ReverseDeps.end(); I != E; ++I) {
       Instruction *InstDependingOnRemInst = *I;
       assert(InstDependingOnRemInst != RemInst &&
              "Already removed our local dep info");
                         
-      LocalDeps[InstDependingOnRemInst] = MemDepResult::getDirty(NewDepInst);
+      LocalDeps[InstDependingOnRemInst] = NewDirtyVal;
       
       // Make sure to remember that new things depend on NewDepInst.
-      ReverseDepsToAdd.push_back(std::make_pair(NewDepInst, 
+      assert(NewDirtyVal.getInst() && "There is no way something else can have "
+             "a local dep on this if it is a terminator!");
+      ReverseDepsToAdd.push_back(std::make_pair(NewDirtyVal.getInst(), 
                                                 InstDependingOnRemInst));
     }
     
@@ -701,12 +707,10 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
         if (DI->second.getInst() != RemInst) continue;
         
         // Convert to a dirty entry for the subsequent instruction.
-        Instruction *NextI = 0;
-        if (!RemInst->isTerminator()) {
-          NextI = ++BasicBlock::iterator(RemInst);
+        DI->second = NewDirtyVal;
+        
+        if (Instruction *NextI = NewDirtyVal.getInst())
           ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
-        }
-        DI->second = MemDepResult::getDirty(NextI);
       }
     }
 
@@ -736,10 +740,6 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
              "Already removed NonLocalPointerDeps info for RemInst");
       
       NonLocalDepInfo &NLPDI = NonLocalPointerDeps[P];
-      
-      MemDepResult NewDirtyVal;
-      if (!RemInst->isTerminator())
-        NewDirtyVal = MemDepResult::getDirty(++BasicBlock::iterator(RemInst));
       
       // Update any entries for RemInst to use the instruction after it.
       for (NonLocalDepInfo::iterator DI = NLPDI.begin(), DE = NLPDI.end();
