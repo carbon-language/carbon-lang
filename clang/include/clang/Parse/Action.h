@@ -106,7 +106,7 @@ public:
   // Declaration Tracking Callbacks.
   //===--------------------------------------------------------------------===//
   
-  /// isTypeName - Return non-null if the specified identifier is a typedef name
+  /// isTypeName - Return non-null if the specified identifier is a type name
   /// in the current scope.
   /// An optional CXXScopeSpec can be passed to indicate the C++ scope (class or
   /// namespace) that the identifier must be a member of.
