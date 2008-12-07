@@ -156,7 +156,7 @@ namespace llvm {
     typedef PointerIntPair<Value*, 1, int> ValueIsLoadPair;
     
     /// CachedNonLocalPointerInfo - This map stores the cached results of doing
-    /// a pointer lookup at the bottom of a block.  Key key of this map is the
+    /// a pointer lookup at the bottom of a block.  The key of this map is the
     /// pointer+isload bit, the value is a list of <bb->result> mappings.
     typedef DenseMap<ValueIsLoadPair, NonLocalDepInfo>CachedNonLocalPointerInfo;
     CachedNonLocalPointerInfo NonLocalPointerDeps;
