@@ -584,7 +584,12 @@ private:
 
   void onActions (const DagInit* d) {
     checkNumberOfArguments(d, 1);
-    toolDesc_.Actions = d->getArg(0);
+    Init* Case = d->getArg(0);
+    if (typeid(*Case) != typeid(DagInit) ||
+        static_cast<DagInit*>(Case)->getOperator()->getAsString() != "case")
+      throw
+        std::string("The argument to (actions) should be a 'case' construct!");
+    toolDesc_.Actions = Case;
   }
 
   void onCmdLine (const DagInit* d) {
