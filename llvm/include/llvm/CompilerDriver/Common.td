@@ -15,7 +15,7 @@ class Tool<list<dag> l> {
       list<dag> properties = l;
 }
 
-// Possible Tool properties
+// Possible Tool properties.
 
 def in_language;
 def out_language;
@@ -23,8 +23,9 @@ def output_suffix;
 def cmd_line;
 def join;
 def sink;
+def actions;
 
-// Possible option types
+// Possible option types.
 
 def alias_option;
 def switch_option;
@@ -33,23 +34,26 @@ def parameter_list_option;
 def prefix_option;
 def prefix_list_option;
 
-// Possible option properties
+def extern_switch;
+def extern_parameter;
+def extern_list;
 
-def append_cmd;
-def forward;
-def forward_as;
+// Possible option properties.
+
 def help;
 def hidden;
 def really_hidden;
 def required;
-def stop_compilation;
-def unpack_values;
 
 // Empty DAG marker.
 def empty;
 
 // The 'case' construct.
 def case;
+
+// Boolean operators.
+def and;
+def or;
 
 // Primitive tests.
 def switch_on;
@@ -59,9 +63,13 @@ def input_languages_contain;
 def not_empty;
 def default;
 
-// Boolean operators.
-def and;
-def or;
+// Possible actions.
+
+def append_cmd;
+def forward;
+def forward_as;
+def stop_compilation;
+def unpack_values;
 
 // Increase/decrease the edge weight.
 def inc_weight;

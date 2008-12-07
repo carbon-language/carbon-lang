@@ -36,22 +36,29 @@ namespace llvmc {
     virtual ~Tool() {}
 
     virtual Action GenerateAction (const PathVector& inFiles,
-                                   const llvm::sys::Path& outFile,
+                                   bool  HasChildren,
+                                   const llvm::sys::Path& TempDir,
                                    const InputLanguagesSet& InLangs,
                                    const LanguageMap& LangMap) const = 0;
 
     virtual Action GenerateAction (const llvm::sys::Path& inFile,
-                                   const llvm::sys::Path& outFile,
+                                   bool  HasChildren,
+                                   const llvm::sys::Path& TempDir,
                                    const InputLanguagesSet& InLangs,
                                    const LanguageMap& LangMap) const = 0;
 
     virtual const char*  Name() const = 0;
     virtual const char** InputLanguages() const = 0;
     virtual const char*  OutputLanguage() const = 0;
-    virtual const char*  OutputSuffix() const = 0;
 
-    virtual bool IsLast() const = 0;
     virtual bool IsJoin() const = 0;
+
+  protected:
+    /// OutFileName - Generate the output file name.
+    llvm::sys::Path OutFilename(const llvm::sys::Path& In,
+                                const llvm::sys::Path& TempDir,
+                                bool StopCompilation,
+                                const char* OutputSuffix) const;
   };
 
   /// JoinTool - A Tool that has an associated input file list.
@@ -61,10 +68,11 @@ namespace llvmc {
     void ClearJoinList() { JoinList_.clear(); }
     bool JoinListEmpty() const { return JoinList_.empty(); }
 
-    Action GenerateAction(const llvm::sys::Path& outFile,
+    Action GenerateAction(bool  HasChildren,
+                          const llvm::sys::Path& TempDir,
                           const InputLanguagesSet& InLangs,
                           const LanguageMap& LangMap) const {
-      return GenerateAction(JoinList_, outFile, InLangs, LangMap);
+      return GenerateAction(JoinList_, HasChildren, TempDir, InLangs, LangMap);
     }
     // We shouldn't shadow base class's version of GenerateAction.
     using Tool::GenerateAction;

@@ -29,7 +29,6 @@ using namespace llvm;
 using namespace llvmc;
 
 extern cl::list<std::string> InputFilenames;
-extern cl::opt<std::string> OutputFilename;
 extern cl::list<std::string> Languages;
 
 namespace llvmc {
@@ -143,30 +142,6 @@ void CompilationGraph::insertEdge(const std::string& A, Edge* Edg) {
   B.IncrInEdges();
 }
 
-namespace {
-  sys::Path MakeTempFile(const sys::Path& TempDir, const std::string& BaseName,
-                         const std::string& Suffix) {
-    sys::Path Out;
-
-    // Make sure we don't end up with path names like '/file.o' if the
-    // TempDir is empty.
-    if (TempDir.empty()) {
-      Out.set(BaseName);
-    }
-    else {
-      Out = TempDir;
-      Out.appendComponent(BaseName);
-    }
-    Out.appendSuffix(Suffix);
-    // NOTE: makeUnique always *creates* a unique temporary file,
-    // which is good, since there will be no races. However, some
-    // tools do not like it when the output file already exists, so
-    // they have to be placated with -f or something like that.
-    Out.makeUnique(true, NULL);
-    return Out;
-  }
-}
-
 // Pass input file through the chain until we bump into a Join node or
 // a node that says that it is the last.
 void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
@@ -174,12 +149,10 @@ void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
                                          const InputLanguagesSet& InLangs,
                                          const sys::Path& TempDir,
                                          const LanguageMap& LangMap) const {
-  bool Last = false;
   sys::Path In = InFile;
   const Node* CurNode = StartNode;
 
-  while(!Last) {
-    sys::Path Out;
+  while(true) {
     Tool* CurTool = CurNode->ToolPtr.getPtr();
 
     if (CurTool->IsJoin()) {
@@ -188,32 +161,19 @@ void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
       break;
     }
 
-    // Since toolchains do not have to end with a Join node, we should
-    // check if this Node is the last.
-    if (!CurNode->HasChildren() || CurTool->IsLast()) {
-      if (!OutputFilename.empty()) {
-        Out.set(OutputFilename);
-      }
-      else {
-        Out.set(In.getBasename());
-        Out.appendSuffix(CurTool->OutputSuffix());
-      }
-      Last = true;
-    }
-    else {
-      Out = MakeTempFile(TempDir, In.getBasename(), CurTool->OutputSuffix());
-    }
+    Action CurAction = CurTool->GenerateAction(In, CurNode->HasChildren(),
+                                               TempDir, InLangs, LangMap);
 
-    if (int ret = CurTool->GenerateAction(In, Out, InLangs, LangMap).Execute())
+    if (int ret = CurAction.Execute())
       throw error_code(ret);
 
-    if (Last)
+    if (CurAction.StopCompilation())
       return;
 
     CurNode = &getNode(ChooseEdge(CurNode->OutEdges,
                                   InLangs,
                                   CurNode->Name())->ToolName());
-    In = Out; Out.clear();
+    In = CurAction.OutFile();
   }
 }
 
@@ -351,36 +311,24 @@ int CompilationGraph::Build (const sys::Path& TempDir,
     sys::Path Out;
     const Node* CurNode = *B;
     JoinTool* JT = &dynamic_cast<JoinTool&>(*CurNode->ToolPtr.getPtr());
-    bool IsLast = false;
 
     // Are there any files in the join list?
     if (JT->JoinListEmpty())
       continue;
 
-    // Is this the last tool in the toolchain?
-    // NOTE: we can process several toolchains in parallel.
-    if (!CurNode->HasChildren() || JT->IsLast()) {
-      if (OutputFilename.empty()) {
-        Out.set("a");
-        Out.appendSuffix(JT->OutputSuffix());
-      }
-      else
-        Out.set(OutputFilename);
-      IsLast = true;
-    }
-    else {
-      Out = MakeTempFile(TempDir, "tmp", JT->OutputSuffix());
-    }
+    Action CurAction = JT->GenerateAction(CurNode->HasChildren(),
+                                          TempDir, InLangs, LangMap);
 
-    if (int ret = JT->GenerateAction(Out, InLangs, LangMap).Execute())
+    if (int ret = CurAction.Execute())
       throw error_code(ret);
 
-    if (!IsLast) {
-      const Node* NextNode =
-        &getNode(ChooseEdge(CurNode->OutEdges, InLangs,
-                            CurNode->Name())->ToolName());
+    if (CurAction.StopCompilation())
+      return 0;
+
+    const Node* NextNode =
+      &getNode(ChooseEdge(CurNode->OutEdges, InLangs,
+                          CurNode->Name())->ToolName());
       PassThroughGraph(Out, NextNode, InLangs, TempDir, LangMap);
-    }
   }
 
   return 0;

@@ -11,6 +11,35 @@
 //
 //===----------------------------------------------------------------------===//
 
+def OptList : OptionList<[
+ (switch_option "emit-llvm",
+    (help "Emit LLVM bitcode files instead of native object files")),
+ (switch_option "E",
+    (help "Stop after the preprocessing stage, do not run the compiler")),
+ (switch_option "fsyntax-only",
+    (help "Stop after checking the input for syntax errors")),
+ (switch_option "opt",
+    (help "Enable opt")),
+ (switch_option "S",
+    (help "Stop after compilation, do not assemble")),
+ (switch_option "c",
+    (help "Compile and assemble, but do not link")),
+ (parameter_option "linker",
+    (help "Choose linker (possible values: gcc, g++)")),
+ (parameter_list_option "include",
+    (help "Include the named file prior to preprocessing")),
+ (prefix_list_option "I",
+    (help "Add a directory to include path")),
+ (prefix_list_option "Wa,",
+    (help "Pass options to assembler")),
+ (prefix_list_option "L",
+    (help "Add a directory to link path")),
+ (prefix_list_option "l",
+    (help "Search a library when linking")),
+ (prefix_list_option "Wl,",
+    (help "Pass options to linker"))
+]>;
+
 class llvm_gcc_based <string cmd_prefix, string in_lang> : Tool<
 [(in_language in_lang),
  (out_language "llvm-bitcode"),
@@ -25,16 +54,13 @@ class llvm_gcc_based <string cmd_prefix, string in_lang> : Tool<
               !strconcat(cmd_prefix, " -fsyntax-only $INFILE"),
             (default),
               !strconcat(cmd_prefix, " -c $INFILE -o $OUTFILE -emit-llvm"))),
- (switch_option "emit-llvm", (stop_compilation),
-   (help "Emit LLVM intermediate files instead of native object files")),
- (switch_option "E", (stop_compilation),
-   (help "Stop after the preprocessing stage, do not run the compiler")),
- (switch_option "fsyntax-only", (stop_compilation),
-   (help "Stop after checking the input for syntax errors")),
- (parameter_list_option "include", (forward),
-   (help "Include the named file prior to preprocessing")),
- (prefix_list_option "I", (forward),
-   (help "Add a directory to include path")),
+ (actions
+     (case
+         (switch_on "emit-llvm"), (stop_compilation),
+         (switch_on "E"), (stop_compilation),
+         (switch_on "fsyntax-only"), (stop_compilation),
+         (not_empty "include"), (forward "include"),
+         (not_empty "I"), (forward "include"))),
  (sink)
 ]>;
 
@@ -46,7 +72,6 @@ def llvm_gcc_mxx : llvm_gcc_based<"llvm-gcc -x objective-c++", "objective-c++">;
 def opt : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
- (switch_option "opt", (help "Enable opt")),
  (output_suffix "bc"),
  (cmd_line "opt -f $INFILE -o $OUTFILE")
 ]>;
@@ -62,8 +87,8 @@ def llc : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "assembler"),
  (output_suffix "s"),
- (switch_option "S", (stop_compilation),
-                (help "Stop after compilation, do not assemble")),
+ (actions (case
+          (switch_on "S"), (stop_compilation))),
  (cmd_line "llc -f $INFILE -o $OUTFILE")
 ]>;
 
@@ -72,36 +97,28 @@ def llvm_gcc_assembler : Tool<
  (out_language "object-code"),
  (output_suffix "o"),
  (cmd_line "llvm-gcc -c -x assembler $INFILE -o $OUTFILE"),
- (switch_option "c", (stop_compilation),
-                (help "Compile and assemble, but do not link")),
- (prefix_list_option "Wa,", (unpack_values), (help "Pass options to assembler"))
+ (actions (case
+          (switch_on "c"), (stop_compilation),
+          (not_empty "Wa,"), (unpack_values "Wa,")))
+]>;
+
+// Base class for linkers
+class llvm_gcc_based_linker <string cmd_prefix> : Tool<
+[(in_language "object-code"),
+ (out_language "executable"),
+ (output_suffix "out"),
+ (cmd_line !strconcat(cmd_prefix, " $INFILE -o $OUTFILE")),
+ (join),
+ (actions (case
+          (not_empty "L"), (forward "L"),
+          (not_empty "l"), (forward "l"),
+          (not_empty "Wl,"), (unpack_values "Wl,")))
 ]>;
 
 // Default linker
-def llvm_gcc_linker : Tool<
-[(in_language "object-code"),
- (out_language "executable"),
- (output_suffix "out"),
- (cmd_line "llvm-gcc $INFILE -o $OUTFILE"),
- (join),
- (prefix_list_option "L", (forward), (help "Add a directory to link path")),
- (prefix_list_option "l", (forward), (help "Search a library when linking")),
- (prefix_list_option "Wl,", (unpack_values), (help "Pass options to linker"))
-]>;
-
+def llvm_gcc_linker : llvm_gcc_based_linker<"llvm-gcc">;
 // Alternative linker for C++
-def llvm_gcc_cpp_linker : Tool<
-[(in_language "object-code"),
- (out_language "executable"),
- (output_suffix "out"),
- (cmd_line "llvm-g++ $INFILE -o $OUTFILE"),
- (join),
- (parameter_option "linker",
-                   (help "Choose linker (possible values: gcc, g++)")),
- (prefix_list_option "L", (forward)),
- (prefix_list_option "l", (forward)),
- (prefix_list_option "Wl,", (unpack_values))
-]>;
+def llvm_gcc_cpp_linker : llvm_gcc_based_linker<"llvm-g++">;
 
 // Language map
 

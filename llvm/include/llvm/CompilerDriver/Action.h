@@ -27,14 +27,22 @@ namespace llvmc {
     std::string Command_;
     /// Args_ - Command arguments. Stdout redirection ("> file") is allowed.
     std::vector<std::string> Args_;
+    /// StopCompilation_ - Should we stop compilation after executing
+    /// this action?
+    bool StopCompilation_;
+    /// OutFile_ - The output file name.
+    std::string OutFile_;
+
   public:
-    Action() {}
-    Action (const std::string& C, const StrVector& A)
-      : Command_(C), Args_(A)
+    Action (const std::string& C, const StrVector& A,
+            bool S, const std::string& O)
+      : Command_(C), Args_(A), StopCompilation_(S), OutFile_(O)
     {}
 
     /// Execute - Executes the represented action.
-    int Execute() const;
+    int Execute () const;
+    bool StopCompilation () const { return StopCompilation_; }
+    const std::string& OutFile() { return OutFile_; }
   };
 
 }
