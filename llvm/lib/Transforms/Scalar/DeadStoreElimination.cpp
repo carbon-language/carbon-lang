@@ -90,6 +90,11 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // If we find a store or a free, get it's memory dependence.
     if (!isa<StoreInst>(Inst) && !isa<FreeInst>(Inst))
       continue;
+    
+    // Don't molest volatile stores or do queries that will return "clobber".
+    if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
+      if (SI->isVolatile())
+        continue;
 
     MemDepResult InstDep = MD.getDependency(Inst);
     
