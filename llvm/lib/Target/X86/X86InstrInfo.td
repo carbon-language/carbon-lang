@@ -2787,66 +2787,66 @@ def LXADD8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
 let Constraints = "$val = $dst", Defs = [EFLAGS],
                   usesCustomDAGSchedInserter = 1 in {
 def ATOMAND32 : I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMAND32 PSUEDO!", 
+               "#ATOMAND32 PSEUDO!", 
                [(set GR32:$dst, (atomic_load_and_32 addr:$ptr, GR32:$val))]>;
 def ATOMOR32 : I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMOR32 PSUEDO!", 
+               "#ATOMOR32 PSEUDO!", 
                [(set GR32:$dst, (atomic_load_or_32 addr:$ptr, GR32:$val))]>;
 def ATOMXOR32 : I<0, Pseudo,(outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMXOR32 PSUEDO!", 
+               "#ATOMXOR32 PSEUDO!", 
                [(set GR32:$dst, (atomic_load_xor_32 addr:$ptr, GR32:$val))]>;
 def ATOMNAND32 : I<0, Pseudo,(outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMNAND32 PSUEDO!", 
+               "#ATOMNAND32 PSEUDO!", 
                [(set GR32:$dst, (atomic_load_nand_32 addr:$ptr, GR32:$val))]>;
 def ATOMMIN32: I<0, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "#ATOMMIN32 PSUEDO!", 
+               "#ATOMMIN32 PSEUDO!", 
                [(set GR32:$dst, (atomic_load_min_32 addr:$ptr, GR32:$val))]>;
 def ATOMMAX32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMMAX32 PSUEDO!", 
+               "#ATOMMAX32 PSEUDO!", 
                [(set GR32:$dst, (atomic_load_max_32 addr:$ptr, GR32:$val))]>;
 def ATOMUMIN32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMUMIN32 PSUEDO!", 
+               "#ATOMUMIN32 PSEUDO!", 
                [(set GR32:$dst, (atomic_load_umin_32 addr:$ptr, GR32:$val))]>;
 def ATOMUMAX32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMUMAX32 PSUEDO!", 
+               "#ATOMUMAX32 PSEUDO!", 
                [(set GR32:$dst, (atomic_load_umax_32 addr:$ptr, GR32:$val))]>;
 
 def ATOMAND16 : I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMAND16 PSUEDO!", 
+               "#ATOMAND16 PSEUDO!", 
                [(set GR16:$dst, (atomic_load_and_16 addr:$ptr, GR16:$val))]>;
 def ATOMOR16 : I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMOR16 PSUEDO!", 
+               "#ATOMOR16 PSEUDO!", 
                [(set GR16:$dst, (atomic_load_or_16 addr:$ptr, GR16:$val))]>;
 def ATOMXOR16 : I<0, Pseudo,(outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMXOR16 PSUEDO!", 
+               "#ATOMXOR16 PSEUDO!", 
                [(set GR16:$dst, (atomic_load_xor_16 addr:$ptr, GR16:$val))]>;
 def ATOMNAND16 : I<0, Pseudo,(outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMNAND16 PSUEDO!", 
+               "#ATOMNAND16 PSEUDO!", 
                [(set GR16:$dst, (atomic_load_nand_16 addr:$ptr, GR16:$val))]>;
 def ATOMMIN16: I<0, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "#ATOMMIN16 PSUEDO!", 
+               "#ATOMMIN16 PSEUDO!", 
                [(set GR16:$dst, (atomic_load_min_16 addr:$ptr, GR16:$val))]>;
 def ATOMMAX16: I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMMAX16 PSUEDO!", 
+               "#ATOMMAX16 PSEUDO!", 
                [(set GR16:$dst, (atomic_load_max_16 addr:$ptr, GR16:$val))]>;
 def ATOMUMIN16: I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMUMIN16 PSUEDO!", 
+               "#ATOMUMIN16 PSEUDO!", 
                [(set GR16:$dst, (atomic_load_umin_16 addr:$ptr, GR16:$val))]>;
 def ATOMUMAX16: I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMUMAX16 PSUEDO!", 
+               "#ATOMUMAX16 PSEUDO!", 
                [(set GR16:$dst, (atomic_load_umax_16 addr:$ptr, GR16:$val))]>;
 
 def ATOMAND8 : I<0, Pseudo, (outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
-               "#ATOMAND8 PSUEDO!", 
+               "#ATOMAND8 PSEUDO!", 
                [(set GR8:$dst, (atomic_load_and_8 addr:$ptr, GR8:$val))]>;
 def ATOMOR8 : I<0, Pseudo, (outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
-               "#ATOMOR8 PSUEDO!", 
+               "#ATOMOR8 PSEUDO!", 
                [(set GR8:$dst, (atomic_load_or_8 addr:$ptr, GR8:$val))]>;
 def ATOMXOR8 : I<0, Pseudo,(outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
-               "#ATOMXOR8 PSUEDO!", 
+               "#ATOMXOR8 PSEUDO!", 
                [(set GR8:$dst, (atomic_load_xor_8 addr:$ptr, GR8:$val))]>;
 def ATOMNAND8 : I<0, Pseudo,(outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
-               "#ATOMNAND8 PSUEDO!", 
+               "#ATOMNAND8 PSEUDO!", 
                [(set GR8:$dst, (atomic_load_nand_8 addr:$ptr, GR8:$val))]>;
 }
 
@@ -2857,25 +2857,25 @@ let Constraints = "$val1 = $dst1, $val2 = $dst2",
                   usesCustomDAGSchedInserter = 1 in {
 def ATOMAND6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                                (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMAND6432 PSUEDO!", []>;
+               "#ATOMAND6432 PSEUDO!", []>;
 def ATOMOR6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                                (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMOR6432 PSUEDO!", []>;
+               "#ATOMOR6432 PSEUDO!", []>;
 def ATOMXOR6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                                (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMXOR6432 PSUEDO!", []>;
+               "#ATOMXOR6432 PSEUDO!", []>;
 def ATOMNAND6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                                (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMNAND6432 PSUEDO!", []>;
+               "#ATOMNAND6432 PSEUDO!", []>;
 def ATOMADD6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                                (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMADD6432 PSUEDO!", []>;
+               "#ATOMADD6432 PSEUDO!", []>;
 def ATOMSUB6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                                (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMSUB6432 PSUEDO!", []>;
+               "#ATOMSUB6432 PSEUDO!", []>;
 def ATOMSWAP6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                                (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMSWAP6432 PSUEDO!", []>;
+               "#ATOMSWAP6432 PSEUDO!", []>;
 }
 
 //===----------------------------------------------------------------------===//
