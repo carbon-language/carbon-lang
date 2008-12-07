@@ -151,7 +151,25 @@ namespace llvm {
     typedef std::pair<BasicBlock*, MemDepResult> NonLocalDepEntry;
     typedef std::vector<NonLocalDepEntry> NonLocalDepInfo;
   private:
-   
+    /// ValueIsLoadPair - This is a pair<Value*, bool> where the bool is true if
+    /// the dependence is a read only dependence, false if read/write.
+    typedef PointerIntPair<Value*, 1, int> ValueIsLoadPair;
+    
+    /// CachedNonLocalPointerInfo - This map stores the cached results of doing
+    /// a pointer lookup at the bottom of a block.  Key key of this map is the
+    /// pointer+isload bit, the value is a list of <bb->result> mappings.
+    typedef DenseMap<ValueIsLoadPair, NonLocalDepInfo>CachedNonLocalPointerInfo;
+    CachedNonLocalPointerInfo NonLocalPointerDeps;
+
+    // A map from instructions to their non-local pointer dependencies.
+    // The elements of the SmallPtrSet are ValueIsLoadPair's.
+    typedef DenseMap<Instruction*, 
+                     SmallPtrSet<void*, 4> > ReverseNonLocalPtrDepTy;
+    ReverseNonLocalPtrDepTy ReverseNonLocalPtrDeps;
+
+    
+    
+    
     /// PerInstNLInfo - This is the instruction we keep for each cached access
     /// that we have for an instruction.  The pointer is an owning pointer and
     /// the bool indicates whether we have any dirty bits in the set.
@@ -185,9 +203,10 @@ namespace llvm {
     void releaseMemory() {
       LocalDeps.clear();
       NonLocalDeps.clear();
-      NonLocalDeps.clear();
+      NonLocalPointerDeps.clear();
       ReverseLocalDeps.clear();
       ReverseNonLocalDeps.clear();
+      ReverseNonLocalPtrDeps.clear();
     }
 
     /// getAnalysisUsage - Does not modify anything.  It uses Value Numbering
@@ -229,10 +248,6 @@ namespace llvm {
     void removeInstruction(Instruction *InstToRemove);
     
   private:
-    
-    /// getDependencyFrom - Return the instruction on which the memory location
-    /// '*Pointer' depends.  This starts scanning from the instruction before
-    /// the position indicated by ScanIt.
     MemDepResult getPointerDependencyFrom(Value *Pointer, uint64_t MemSize,
                                           bool isLoad, 
                                           BasicBlock::iterator ScanIt,
@@ -240,12 +255,11 @@ namespace llvm {
     MemDepResult getCallSiteDependencyFrom(CallSite C,
                                            BasicBlock::iterator ScanIt,
                                            BasicBlock *BB);
-    
     void getNonLocalPointerDepInternal(Value *Pointer, uint64_t Size,
                                        bool isLoad, BasicBlock *BB,
                                       SmallVectorImpl<NonLocalDepEntry> &Result,
                                        SmallPtrSet<BasicBlock*, 64> &Visited);
-      
+    void RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P);
     
     /// verifyRemoved - Verify that the specified instruction does not occur
     /// in our internal data structures.
