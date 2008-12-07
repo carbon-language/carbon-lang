@@ -118,14 +118,14 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
   Value *MemPtr = 0;
   uint64_t MemSize = 0;
   
-  if (StoreInst *S = dyn_cast<StoreInst>(QueryInst)) {
+  if (StoreInst *SI = dyn_cast<StoreInst>(QueryInst)) {
     // If this is a volatile store, don't mess around with it.  Just return the
     // previous instruction as a clobber.
-    if (S->isVolatile())
+    if (SI->isVolatile())
       return MemDepResult::getClobber(--ScanIt);
 
-    MemPtr = S->getPointerOperand();
-    MemSize = TD->getTypeStoreSize(S->getOperand(0)->getType());
+    MemPtr = SI->getPointerOperand();
+    MemSize = TD->getTypeStoreSize(SI->getOperand(0)->getType());
   } else if (LoadInst *LI = dyn_cast<LoadInst>(QueryInst)) {
     // If this is a volatile load, don't mess around with it.  Just return the
     // previous instruction as a clobber.
@@ -134,8 +134,8 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     
     MemPtr = LI->getPointerOperand();
     MemSize = TD->getTypeStoreSize(LI->getType());
-  } else if (FreeInst* F = dyn_cast<FreeInst>(QueryInst)) {
-    MemPtr = F->getPointerOperand();
+  } else if (FreeInst *FI = dyn_cast<FreeInst>(QueryInst)) {
+    MemPtr = FI->getPointerOperand();
     // FreeInsts erase the entire structure, not just a field.
     MemSize = ~0UL;
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
