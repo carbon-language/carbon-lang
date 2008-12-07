@@ -214,6 +214,18 @@ namespace llvm {
     /// that.
     const NonLocalDepInfo &getNonLocalDependency(Instruction *QueryInst);
     
+    
+    /// getNonLocalPointerDependency - Perform a full dependency query for an
+    /// access to the specified (non-volatile) memory location, returning the
+    /// set of instructions that either define or clobber the value.
+    ///
+    /// This method assumes the pointer has a "NonLocal" dependency within BB
+    /// and assumes that Result is empty when you call it.
+    ///
+    void getNonLocalPointerDependency(Value *Pointer, bool isLoad,
+                                      BasicBlock *BB,
+                                     SmallVectorImpl<NonLocalDepEntry> &Result);
+    
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.
     void removeInstruction(Instruction *InstToRemove);

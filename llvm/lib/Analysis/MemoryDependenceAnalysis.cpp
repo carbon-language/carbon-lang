@@ -101,8 +101,11 @@ getCallSiteDependencyFrom(CallSite CS, BasicBlock::iterator ScanIt,
       return MemDepResult::getClobber(Inst);
   }
   
-  // No dependence found.
-  return MemDepResult::getNonLocal();
+  // No dependence found.  If this is the entry block of the function, it is a
+  // clobber, otherwise it is non-local.
+  if (BB != &BB->getParent()->getEntryBlock())
+    return MemDepResult::getNonLocal();
+  return MemDepResult::getClobber(ScanIt);
 }
 
 /// getPointerDependencyFrom - Return the instruction on which a memory
@@ -111,10 +114,7 @@ getCallSiteDependencyFrom(CallSite CS, BasicBlock::iterator ScanIt,
 MemDepResult MemoryDependenceAnalysis::
 getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
                          BasicBlock::iterator ScanIt, BasicBlock *BB) {
-  // The first instruction in a block is always non-local.
-  if (ScanIt == BB->begin())
-    return MemDepResult::getNonLocal();
-  
+
   // Walk backwards through the basic block, looking for dependencies
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
@@ -174,8 +174,11 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     return MemDepResult::getClobber(Inst);
   }
   
-  // If we found nothing, return the non-local flag.
-  return MemDepResult::getNonLocal();
+  // No dependence found.  If this is the entry block of the function, it is a
+  // clobber, otherwise it is non-local.
+  if (BB != &BB->getParent()->getEntryBlock())
+    return MemDepResult::getNonLocal();
+  return MemDepResult::getClobber(ScanIt);
 }
 
 /// getDependency - Return the instruction on which a memory operation
@@ -209,8 +212,12 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
   
   // Do the scan.
   if (BasicBlock::iterator(QueryInst) == QueryParent->begin()) {
-    // First instruction in the block -> non local.
-    LocalCache = MemDepResult::getNonLocal();
+    // No dependence found.  If this is the entry block of the function, it is a
+    // clobber, otherwise it is non-local.
+    if (QueryParent != &QueryParent->getParent()->getEntryBlock())
+      LocalCache = MemDepResult::getNonLocal();
+    else
+      LocalCache = MemDepResult::getClobber(QueryInst);
   } else if (StoreInst *SI = dyn_cast<StoreInst>(QueryInst)) {
     // If this is a volatile store, don't mess around with it.  Just return the
     // previous instruction as a clobber.
@@ -264,6 +271,7 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
 ///
 const MemoryDependenceAnalysis::NonLocalDepInfo &
 MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
+  // FIXME: Make this only be for callsites in the future.
   assert(isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst) ||
          isa<LoadInst>(QueryInst) || isa<StoreInst>(QueryInst));
   assert(getDependency(QueryInst).isNonLocal() &&
@@ -359,9 +367,13 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
     Value *MemPtr = 0;
     uint64_t MemSize = 0;
 
-    if (BasicBlock::iterator(QueryInst) == DirtyBB->begin()) {
-      // First instruction in the block -> non local.
-      Dep = MemDepResult::getNonLocal();
+    if (ScanPos == DirtyBB->begin()) {
+      // No dependence found.  If this is the entry block of the function, it is a
+      // clobber, otherwise it is non-local.
+      if (DirtyBB != &DirtyBB->getParent()->getEntryBlock())
+        Dep = MemDepResult::getNonLocal();
+      else
+        Dep = MemDepResult::getClobber(ScanPos);
     } else if (StoreInst *SI = dyn_cast<StoreInst>(QueryInst)) {
       // If this is a volatile store, don't mess around with it.  Just return the
       // previous instruction as a clobber.
@@ -414,6 +426,63 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
   
   return Cache;
 }
+
+/// getNonLocalPointerDependency - Perform a full dependency query for an
+/// access to the specified (non-volatile) memory location, returning the
+/// set of instructions that either define or clobber the value.
+///
+/// This method assumes the pointer has a "NonLocal" dependency within its
+/// own block.
+///
+void MemoryDependenceAnalysis::
+getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
+                             SmallVectorImpl<NonLocalDepEntry> &Result) {
+  // We know that the pointer value is live into FromBB find the def/clobbers
+  // from presecessors.
+  SmallVector<std::pair<BasicBlock*, Value*>, 32> Worklist;
+  
+  for (pred_iterator PI = pred_begin(FromBB), E = pred_end(FromBB); PI != E;
+       ++PI)
+    // TODO: PHI TRANSLATE.
+    Worklist.push_back(std::make_pair(*PI, Pointer));
+
+  const Type *EltTy = cast<PointerType>(Pointer->getType())->getElementType();
+  uint64_t PointeeSize = TD->getTypeStoreSize(EltTy);
+  
+  // While we have blocks to analyze, get their values.
+  SmallPtrSet<BasicBlock*, 64> Visited;
+  while (!Worklist.empty()) {
+    FromBB = Worklist.back().first;
+    Pointer = Worklist.back().second;
+    Worklist.pop_back();
+    
+    // Analyze the dependency of *Pointer in FromBB.  See if we already have
+    // been here.
+    if (!Visited.insert(FromBB))
+      continue;
+    
+    // FIXME: CACHE!
+    
+    MemDepResult Dep =
+      getPointerDependencyFrom(Pointer, PointeeSize, isLoad,
+                               FromBB->end(), FromBB);
+    
+    // If we got a Def or Clobber, add this to the list of results.
+    if (!Dep.isNonLocal()) {
+      Result.push_back(NonLocalDepEntry(FromBB, Dep));
+      continue;
+    }
+    
+    // Otherwise, we have to process all the predecessors of this block to scan
+    // them as well.
+    for (pred_iterator PI = pred_begin(FromBB), E = pred_end(FromBB); PI != E;
+         ++PI)
+      // TODO: PHI TRANSLATE.
+      Worklist.push_back(std::make_pair(*PI, Pointer));
+  }
+}
+
+
 
 /// removeInstruction - Remove an instruction from the dependence analysis,
 /// updating the dependence of instructions that previously depended on it.
