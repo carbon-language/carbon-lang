@@ -1388,7 +1388,18 @@ http://gcc.gnu.org/bugzilla/show_bug.cgi?id=14705
 
 When GVN/PRE finds a store of float* to a must aliases pointer when expecting
 an int*, it should turn it into a bitcast.  This is a nice generalization of
-the SROA hack that would apply to other cases.
+the SROA hack that would apply to other cases, e.g.:
+
+int foo(int C, int *P, float X) {
+  if (C) {
+    bar();
+    *P = 42;
+  } else
+    *(float*)P = X;
+
+   return *P;
+}
+
 
 One example (that requires crazy phi translation) is:
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16799
