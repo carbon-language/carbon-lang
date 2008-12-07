@@ -802,11 +802,8 @@ void WalkCase(Init* Case, F1 TestCallback, F2 StatementCallback) {
 /// CheckForSuperfluousOptions() to walk the 'case' DAG.
 class ExtractOptionNames {
   llvm::StringSet<>& OptionNames_;
-public:
-  ExtractOptionNames(llvm::StringSet<>& OptionNames) : OptionNames_(OptionNames)
-  {}
 
-  void operator()(const Init* Statement) {
+  void processDag(const Init* Statement) {
     const DagInit& Stmt = InitPtrToDag(Statement);
     const std::string& ActionName = Stmt.getOperator()->getAsString();
     if (ActionName == "forward" || ActionName == "forward_as" ||
@@ -819,8 +816,24 @@ public:
     }
     else if (ActionName == "and" || ActionName == "or") {
       for (unsigned i = 0, NumArgs = Stmt.getNumArgs(); i < NumArgs; ++i) {
-        this->operator()(Stmt.getArg(i));
+        this->processDag(Stmt.getArg(i));
       }
+    }
+  }
+
+public:
+  ExtractOptionNames(llvm::StringSet<>& OptionNames) : OptionNames_(OptionNames)
+  {}
+
+  void operator()(const Init* Statement) {
+    if (typeid(*Statement) == typeid(ListInit)) {
+      const ListInit& DagList = *static_cast<const ListInit*>(Statement);
+      for (ListInit::const_iterator B = DagList.begin(), E = DagList.end();
+           B != E; ++B)
+        this->processDag(*B);
+    }
+    else {
+      this->processDag(Statement);
     }
   }
 };
@@ -1185,12 +1198,9 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
 /// EmitCaseConstructHandler().
 class EmitActionHandler {
   const OptionDescriptions& OptDescs;
- public:
-  EmitActionHandler(const OptionDescriptions& OD)
-    : OptDescs(OD) {}
 
-  void operator()(const Init* Statement, const char* IndentLevel,
-                  std::ostream& O) const
+  void processActionDag(const Init* Statement, const char* IndentLevel,
+                        std::ostream& O) const
   {
     const DagInit& Dag = InitPtrToDag(Statement);
     const std::string& ActionName = Dag.getOperator()->getAsString();
@@ -1244,6 +1254,23 @@ class EmitActionHandler {
     }
     else {
       throw "Unknown action name: " + ActionName + "!";
+    }
+  }
+ public:
+  EmitActionHandler(const OptionDescriptions& OD)
+    : OptDescs(OD) {}
+
+  void operator()(const Init* Statement, const char* IndentLevel,
+                  std::ostream& O) const
+  {
+    if (typeid(*Statement) == typeid(ListInit)) {
+      const ListInit& DagList = *static_cast<const ListInit*>(Statement);
+      for (ListInit::const_iterator B = DagList.begin(), E = DagList.end();
+           B != E; ++B)
+        this->processActionDag(*B, IndentLevel, O);
+    }
+    else {
+      this->processActionDag(Statement, IndentLevel, O);
     }
   }
 };
