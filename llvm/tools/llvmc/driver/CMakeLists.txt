@@ -6,4 +6,5 @@ add_llvm_tool(llvmc
   CompilationGraph.cpp
   llvmc.cpp
   Plugin.cpp
+  Tool.cpp
   )
