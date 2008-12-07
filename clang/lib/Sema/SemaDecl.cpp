@@ -906,8 +906,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       // C99 6.7.7p2: If a typedef name specifies a variably modified type
       // then it shall have block scope.
       if (NewTD->getUnderlyingType()->isVariablyModifiedType()) {
-        // FIXME: Diagnostic needs to be fixed.
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_illegal_vla);
+        if (NewTD->getUnderlyingType()->isVariableArrayType())
+          Diag(D.getIdentifierLoc(), diag::err_vla_decl_in_file_scope);
+        else
+          Diag(D.getIdentifierLoc(), diag::err_vm_decl_in_file_scope);
+
         InvalidDecl = true;
       }
     }
@@ -1924,15 +1927,33 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
       continue;
     QualType T = IDecl->getType();
     
-    // C99 6.7.5.2p2: If an identifier is declared to be an object with 
-    // static storage duration, it shall not have a variable length array.
-    if ((IDecl->isFileVarDecl() || IDecl->isBlockVarDecl()) && 
-        IDecl->getStorageClass() == VarDecl::Static) {
-      if (T->isVariableArrayType()) {
-        Diag(IDecl->getLocation(), diag::err_typecheck_illegal_vla);
+    if (T->isVariableArrayType()) {
+      if (IDecl->isFileVarDecl()) {
+        Diag(IDecl->getLocation(), diag::err_vla_decl_in_file_scope);
         IDecl->setInvalidDecl();
+      } else {
+        // C99 6.7.5.2p2: If an identifier is declared to be an object with 
+        // static storage duration, it shall not have a variable length array.
+        if (IDecl->getStorageClass() == VarDecl::Static) {
+          Diag(IDecl->getLocation(), diag::err_vla_decl_has_static_storage);
+          IDecl->setInvalidDecl();
+        } else if (IDecl->getStorageClass() == VarDecl::Extern) {
+          Diag(IDecl->getLocation(), diag::err_vla_decl_has_extern_linkage);
+          IDecl->setInvalidDecl();
+        }
+      }
+    } else if (T->isVariablyModifiedType()) {
+      if (IDecl->isFileVarDecl()) {
+        Diag(IDecl->getLocation(), diag::err_vm_decl_in_file_scope);
+        IDecl->setInvalidDecl();
+      } else {
+        if (IDecl->getStorageClass() == VarDecl::Extern) {
+          Diag(IDecl->getLocation(), diag::err_vm_decl_has_extern_linkage);
+          IDecl->setInvalidDecl();
+        }
       }
     }
+     
     // Block scope. C99 6.7p7: If an identifier for an object is declared with
     // no linkage (C99 6.2.2p6), the type for the object shall be complete...
     if (IDecl->isBlockVarDecl() && 
@@ -2735,8 +2756,7 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
   if (T->isVariablyModifiedType()) {
-    // FIXME: This diagnostic needs work
-    Diag(Loc, diag::err_typecheck_illegal_vla) << SourceRange(Loc);
+    Diag(Loc, diag::err_typecheck_ivar_variable_size);
     InvalidDecl = true;
   }
   
