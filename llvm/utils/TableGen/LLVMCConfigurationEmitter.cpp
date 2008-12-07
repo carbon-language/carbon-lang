@@ -1427,7 +1427,7 @@ void EmitToolClassDefinition (const ToolDescription& D,
 /// EmitOptionDefintions - Iterate over a list of option descriptions
 /// and emit registration code.
 void EmitOptionDefintions (const OptionDescriptions& descs,
-                           bool HasSink,
+                           bool HasSink, bool HasExterns,
                            std::ostream& O)
 {
   std::vector<OptionDescription> Aliases;
@@ -1503,7 +1503,9 @@ void EmitOptionDefintions (const OptionDescriptions& descs,
 
   // Emit the sink option.
   if (HasSink)
-    O << "cl::list<std::string> " << SinkOptionName << "(cl::Sink);\n";
+    O << (HasExterns ? "extern cl" : "cl")
+      << "::list<std::string> " << SinkOptionName
+      << (HasExterns ? ";\n" : "(cl::Sink);\n");
 
   O << '\n';
 }
@@ -1744,20 +1746,32 @@ void EmitIncludes(std::ostream& O) {
 struct PluginData {
   OptionDescriptions OptDescs;
   bool HasSink;
+  bool HasExterns;
   ToolDescriptions ToolDescs;
   RecordVector Edges;
   int Priority;
 };
 
 /// HasSink - Go through the list of tool descriptions and check if
-/// there is one with the 'sink' property set.
+/// there are any with the 'sink' property set.
 bool HasSink(const ToolDescriptions& ToolDescs) {
   for (ToolDescriptions::const_iterator B = ToolDescs.begin(),
          E = ToolDescs.end(); B != E; ++B)
     if ((*B)->isSink())
       return true;
 
-    return false;
+  return false;
+}
+
+/// HasExterns - Go through the list of option descriptions and check
+/// if there are any external options.
+bool HasExterns(const OptionDescriptions& OptDescs) {
+ for (OptionDescriptions::const_iterator B = OptDescs.begin(),
+         E = OptDescs.end(); B != E; ++B)
+    if (B->second.isExtern())
+      return true;
+
+  return false;
 }
 
 /// CollectPluginData - Collect tool and option properties,
@@ -1773,6 +1787,7 @@ void CollectPluginData (const RecordKeeper& Records, PluginData& Data) {
   const RecordVector& Tools = Records.getAllDerivedDefinitions("Tool");
   CollectToolDescriptions(Tools.begin(), Tools.end(), Data.ToolDescs);
   Data.HasSink = HasSink(Data.ToolDescs);
+  Data.HasExterns = HasExterns(Data.OptDescs);
 
   // Collect compilation graph edges.
   const RecordVector& CompilationGraphs =
@@ -1805,7 +1820,7 @@ void EmitPluginCode(const PluginData& Data, std::ostream& O) {
   EmitIncludes(O);
 
   // Emit global option registration code.
-  EmitOptionDefintions(Data.OptDescs, Data.HasSink, O);
+  EmitOptionDefintions(Data.OptDescs, Data.HasSink, Data.HasExterns, O);
 
   // Emit hook declarations.
   EmitHookDeclarations(Data.ToolDescs, O);
