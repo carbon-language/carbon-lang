@@ -52,10 +52,11 @@ bool MemoryDependenceAnalysis::runOnFunction(Function &) {
 }
 
 
-/// getCallSiteDependency - Private helper for finding the local dependencies
-/// of a call site.
+/// getCallSiteDependencyFrom - Private helper for finding the local
+/// dependencies of a call site.
 MemDepResult MemoryDependenceAnalysis::
-getCallSiteDependency(CallSite CS, BasicBlock::iterator ScanIt, BasicBlock *BB) {
+getCallSiteDependencyFrom(CallSite CS, BasicBlock::iterator ScanIt,
+                          BasicBlock *BB) {
   // Walk backwards through the block, looking for dependencies
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
@@ -138,7 +139,7 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     // FreeInsts erase the entire structure, not just a field.
     MemSize = ~0UL;
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
-    return getCallSiteDependency(CallSite::get(QueryInst), ScanIt, BB);
+    return getCallSiteDependencyFrom(CallSite::get(QueryInst), ScanIt, BB);
   } else {
     // Otherwise, this is a vaarg or non-memory instruction, just return a
     // clobber dependency on the previous inst.

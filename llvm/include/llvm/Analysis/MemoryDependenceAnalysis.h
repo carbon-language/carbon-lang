@@ -223,18 +223,16 @@ namespace llvm {
     /// getDependencyFrom - Return the instruction on which the memory operation
     /// 'QueryInst' depends.  This starts scanning from the instruction before
     /// the position indicated by ScanIt.
-    ///
-    /// Note that this method does no caching at all.  You should use
-    /// getDependency where possible.
     MemDepResult getDependencyFrom(Instruction *QueryInst,
                                    BasicBlock::iterator ScanIt, BasicBlock *BB);
+    MemDepResult getCallSiteDependencyFrom(CallSite C,
+                                           BasicBlock::iterator ScanIt,
+                                           BasicBlock *BB);
     
     /// verifyRemoved - Verify that the specified instruction does not occur
     /// in our internal data structures.
     void verifyRemoved(Instruction *Inst) const;
     
-    MemDepResult getCallSiteDependency(CallSite C, BasicBlock::iterator ScanIt,
-                                       BasicBlock *BB);
   };
 
 } // End llvm namespace
