@@ -109,6 +109,10 @@ getCallSiteDependency(CallSite CS, BasicBlock::iterator ScanIt, BasicBlock *BB) 
 MemDepResult MemoryDependenceAnalysis::
 getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt, 
                   BasicBlock *BB) {
+  // The first instruction in a block is always non-local.
+  if (ScanIt == BB->begin())
+    return MemDepResult::getNonLocal();
+  
   // Get the pointer value for which dependence will be determined
   Value *MemPtr = 0;
   uint64_t MemSize = 0;
@@ -122,17 +126,16 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     MemPtr = LI->getPointerOperand();
     MemSize = TD->getTypeStoreSize(LI->getType());
     MemVolatile = LI->isVolatile();
-  } else if (VAArgInst* V = dyn_cast<VAArgInst>(QueryInst)) {
-    MemPtr = V->getOperand(0);
-    MemSize = TD->getTypeStoreSize(V->getType());
   } else if (FreeInst* F = dyn_cast<FreeInst>(QueryInst)) {
     MemPtr = F->getPointerOperand();
     // FreeInsts erase the entire structure, not just a field.
     MemSize = ~0UL;
-  } else {
-    assert((isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) &&
-            "Can only get dependency info for memory instructions!");
+  } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
     return getCallSiteDependency(CallSite::get(QueryInst), ScanIt, BB);
+  } else {
+    // Otherwise, this is a vaarg or non-memory instruction, just return a
+    // clobber dependency on the previous inst.
+    return MemDepResult::getClobber(--ScanIt);
   }
   
   // Walk backwards through the basic block, looking for dependencies
