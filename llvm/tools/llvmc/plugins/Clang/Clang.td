@@ -1,4 +1,5 @@
-// A (first stab at a) replacement for the Clang's ccc script.
+// A replacement for the Clang's ccc script.
+// Depends on the Base plugin.
 // To compile, use this command:
 //    cd $LLVMC2_DIR
 //    make DRIVER_NAME=ccc2 BUILTIN_PLUGINS=Clang
@@ -6,8 +7,10 @@
 include "llvm/CompilerDriver/Common.td"
 
 def Options : OptionList<[
-(switch_option "E",
-    (help "Stop after the preprocessing stage, do not run the compiler"))
+(extern_switch "E",
+    (help "Stop after the preprocessing stage, do not run the compiler")),
+(extern_list "L", (help "Specify a library search path")),
+(switch_option "clang", (help "Use Clang instead of llvm-gcc"))
 ]>;
 
 class clang_based<string language, string cmd> : Tool<
@@ -23,7 +26,8 @@ class clang_based<string language, string cmd> : Tool<
                 !strconcat(cmd, " -E $INFILE")),
           (default),
           !strconcat(cmd, " -emit-llvm-bc $INFILE -o $OUTFILE"))),
- (switch_option "E", (stop_compilation), (output_suffix "i")),
+ (actions (case (switch_on "E"),
+                [(stop_compilation), (output_suffix "i")])),
  (sink)
 ]>;
 
@@ -39,7 +43,7 @@ def llvm_ld : Tool<
  (out_language "executable"),
  (output_suffix "out"),
  (cmd_line "llvm-ld -native -disable-internalize $INFILE -o $OUTFILE"),
- (prefix_list_option "L", (forward), (help "Specify a library search path")),
+ (actions (case (not_empty "L"), (forward "L"))),
  (join)
 ]>;
 
@@ -56,9 +60,12 @@ def LanguageMap : LanguageMap<
 // Compilation graph
 
 def CompilationGraph : CompilationGraph<[
-    Edge<"root", "clang_c">,
-    Edge<"root", "clang_cpp">,
-    Edge<"root", "clang_objective_c">,
+    OptionalEdge<"root", "clang_c",
+                         (case (switch_on "clang"), (inc_weight))>,
+    OptionalEdge<"root", "clang_cpp",
+                         (case (switch_on "clang"), (inc_weight))>,
+    OptionalEdge<"root", "clang_objective_c",
+                         (case (switch_on "clang"), (inc_weight))>,
     Edge<"clang_c", "llvm_ld">,
     Edge<"clang_cpp", "llvm_ld">,
     Edge<"clang_objective_c", "llvm_ld">
