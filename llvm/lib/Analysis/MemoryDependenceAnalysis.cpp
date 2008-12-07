@@ -437,51 +437,60 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
 void MemoryDependenceAnalysis::
 getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
                              SmallVectorImpl<NonLocalDepEntry> &Result) {
+  Result.clear();
+  
   // We know that the pointer value is live into FromBB find the def/clobbers
   // from presecessors.
-  SmallVector<std::pair<BasicBlock*, Value*>, 32> Worklist;
-  
-  for (pred_iterator PI = pred_begin(FromBB), E = pred_end(FromBB); PI != E;
-       ++PI)
-    // TODO: PHI TRANSLATE.
-    Worklist.push_back(std::make_pair(*PI, Pointer));
 
   const Type *EltTy = cast<PointerType>(Pointer->getType())->getElementType();
   uint64_t PointeeSize = TD->getTypeStoreSize(EltTy);
   
   // While we have blocks to analyze, get their values.
   SmallPtrSet<BasicBlock*, 64> Visited;
+  
+  for (pred_iterator PI = pred_begin(FromBB), E = pred_end(FromBB); PI != E;
+       ++PI) {
+    // TODO: PHI TRANSLATE.
+    getNonLocalPointerDepInternal(Pointer, PointeeSize, isLoad, *PI,
+                                  Result, Visited);
+  }
+}
+
+void MemoryDependenceAnalysis::
+getNonLocalPointerDepInternal(Value *Pointer, uint64_t PointeeSize,
+                              bool isLoad, BasicBlock *StartBB,
+                              SmallVectorImpl<NonLocalDepEntry> &Result,
+                              SmallPtrSet<BasicBlock*, 64> &Visited) {
+  SmallVector<BasicBlock*, 32> Worklist;
+  Worklist.push_back(StartBB);
+  
   while (!Worklist.empty()) {
-    FromBB = Worklist.back().first;
-    Pointer = Worklist.back().second;
-    Worklist.pop_back();
+    BasicBlock *BB = Worklist.pop_back_val();
     
     // Analyze the dependency of *Pointer in FromBB.  See if we already have
     // been here.
-    if (!Visited.insert(FromBB))
+    if (!Visited.insert(BB))
       continue;
     
     // FIXME: CACHE!
     
     MemDepResult Dep =
-      getPointerDependencyFrom(Pointer, PointeeSize, isLoad,
-                               FromBB->end(), FromBB);
+      getPointerDependencyFrom(Pointer, PointeeSize, isLoad, BB->end(), BB);
     
     // If we got a Def or Clobber, add this to the list of results.
     if (!Dep.isNonLocal()) {
-      Result.push_back(NonLocalDepEntry(FromBB, Dep));
+      Result.push_back(NonLocalDepEntry(BB, Dep));
       continue;
     }
     
     // Otherwise, we have to process all the predecessors of this block to scan
     // them as well.
-    for (pred_iterator PI = pred_begin(FromBB), E = pred_end(FromBB); PI != E;
-         ++PI)
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
       // TODO: PHI TRANSLATE.
-      Worklist.push_back(std::make_pair(*PI, Pointer));
+      Worklist.push_back(*PI);
+    }
   }
 }
-
 
 
 /// removeInstruction - Remove an instruction from the dependence analysis,

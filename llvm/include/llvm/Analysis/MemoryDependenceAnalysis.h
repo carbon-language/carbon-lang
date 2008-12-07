@@ -151,7 +151,7 @@ namespace llvm {
     typedef std::pair<BasicBlock*, MemDepResult> NonLocalDepEntry;
     typedef std::vector<NonLocalDepEntry> NonLocalDepInfo;
   private:
-    
+   
     /// PerInstNLInfo - This is the instruction we keep for each cached access
     /// that we have for an instruction.  The pointer is an owning pointer and
     /// the bool indicates whether we have any dirty bits in the set.
@@ -219,9 +219,7 @@ namespace llvm {
     /// access to the specified (non-volatile) memory location, returning the
     /// set of instructions that either define or clobber the value.
     ///
-    /// This method assumes the pointer has a "NonLocal" dependency within BB
-    /// and assumes that Result is empty when you call it.
-    ///
+    /// This method assumes the pointer has a "NonLocal" dependency within BB.
     void getNonLocalPointerDependency(Value *Pointer, bool isLoad,
                                       BasicBlock *BB,
                                      SmallVectorImpl<NonLocalDepEntry> &Result);
@@ -242,6 +240,12 @@ namespace llvm {
     MemDepResult getCallSiteDependencyFrom(CallSite C,
                                            BasicBlock::iterator ScanIt,
                                            BasicBlock *BB);
+    
+    void getNonLocalPointerDepInternal(Value *Pointer, uint64_t Size,
+                                       bool isLoad, BasicBlock *BB,
+                                      SmallVectorImpl<NonLocalDepEntry> &Result,
+                                       SmallPtrSet<BasicBlock*, 64> &Visited);
+      
     
     /// verifyRemoved - Verify that the specified instruction does not occur
     /// in our internal data structures.
