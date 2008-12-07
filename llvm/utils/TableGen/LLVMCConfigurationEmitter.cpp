@@ -713,12 +713,12 @@ void FilterNotInGraph (const RecordVector& EdgeVector,
          E = EdgeVector.end(); B != E; ++B) {
 
     const Record* Edge = *B;
-    const std::string& A = Edge->getValueAsString("a");
-    const std::string& B = Edge->getValueAsString("b");
+    const std::string& NodeA = Edge->getValueAsString("a");
+    const std::string& NodeB = Edge->getValueAsString("b");
 
-    if (A != "root")
-      ToolsInGraph.insert(A);
-    ToolsInGraph.insert(B);
+    if (NodeA != "root")
+      ToolsInGraph.insert(NodeA);
+    ToolsInGraph.insert(NodeB);
   }
 
   // Filter ToolPropertiesList.
@@ -759,18 +759,18 @@ void TypecheckGraph (const RecordVector& EdgeVector,
   for (RecordVector::const_iterator B = EdgeVector.begin(),
          E = EdgeVector.end(); B != E; ++B) {
     const Record* Edge = *B;
-    const std::string& A = Edge->getValueAsString("a");
-    const std::string& B = Edge->getValueAsString("b");
-    StringMap<std::string>::iterator IA = ToolToOutLang.find(A);
-    StringMap<StringSet<> >::iterator IB = ToolToInLang.find(B);
+    const std::string& NodeA = Edge->getValueAsString("a");
+    const std::string& NodeB = Edge->getValueAsString("b");
+    StringMap<std::string>::iterator IA = ToolToOutLang.find(NodeA);
+    StringMap<StringSet<> >::iterator IB = ToolToInLang.find(NodeB);
 
-    if (A != "root") {
+    if (NodeA != "root") {
       if (IA != IAE && IB != IBE && IB->second.count(IA->second) == 0)
-        throw "Edge " + A + "->" + B
+        throw "Edge " + NodeA + "->" + NodeB
           + ": output->input language mismatch";
     }
 
-    if (B == "root")
+    if (NodeB == "root")
       throw std::string("Edges back to the root are not allowed!");
   }
 }
@@ -1591,14 +1591,14 @@ void EmitEdgeClasses (const RecordVector& EdgeVector,
                       const OptionDescriptions& OptDescs,
                       std::ostream& O) {
   int i = 0;
-  for (RecordVector::const_iterator Beg = EdgeVector.begin(),
-         E = EdgeVector.end(); Beg != E; ++Beg) {
-    const Record* Edge = *Beg;
-    const std::string& B = Edge->getValueAsString("b");
+  for (RecordVector::const_iterator B = EdgeVector.begin(),
+         E = EdgeVector.end(); B != E; ++B) {
+    const Record* Edge = *B;
+    const std::string& NodeB = Edge->getValueAsString("b");
     DagInit* Weight = Edge->getValueAsDag("weight");
 
     if (!isDagEmpty(Weight))
-      EmitEdgeClass(i, B, Weight, OptDescs, O);
+      EmitEdgeClass(i, NodeB, Weight, OptDescs, O);
     ++i;
   }
 }
@@ -1621,17 +1621,17 @@ void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
   // Insert edges.
 
   int i = 0;
-  for (RecordVector::const_iterator Beg = EdgeVector.begin(),
-         E = EdgeVector.end(); Beg != E; ++Beg) {
-    const Record* Edge = *Beg;
-    const std::string& A = Edge->getValueAsString("a");
-    const std::string& B = Edge->getValueAsString("b");
+  for (RecordVector::const_iterator B = EdgeVector.begin(),
+         E = EdgeVector.end(); B != E; ++B) {
+    const Record* Edge = *B;
+    const std::string& NodeA = Edge->getValueAsString("a");
+    const std::string& NodeB = Edge->getValueAsString("b");
     DagInit* Weight = Edge->getValueAsDag("weight");
 
-    O << Indent1 << "G.insertEdge(\"" << A << "\", ";
+    O << Indent1 << "G.insertEdge(\"" << NodeA << "\", ";
 
     if (isDagEmpty(Weight))
-      O << "new SimpleEdge(\"" << B << "\")";
+      O << "new SimpleEdge(\"" << NodeB << "\")";
     else
       O << "new Edge" << i << "()";
 
