@@ -57,6 +57,21 @@ bool MemoryDependenceAnalysis::runOnFunction(Function &) {
   return false;
 }
 
+/// RemoveFromReverseMap - This is a helper function that removes Val from
+/// 'Inst's set in ReverseMap.  If the set becomes empty, remove Inst's entry.
+template <typename KeyTy>
+static void RemoveFromReverseMap(DenseMap<Instruction*, 
+                                 SmallPtrSet<KeyTy*, 4> > &ReverseMap,
+                                 Instruction *Inst, KeyTy *Val) {
+  typename DenseMap<Instruction*, SmallPtrSet<KeyTy*, 4> >::iterator
+  InstIt = ReverseMap.find(Inst);
+  assert(InstIt != ReverseMap.end() && "Reverse map out of sync?");
+  bool Found = InstIt->second.erase(Val);
+  assert(Found && "Invalid reverse map!"); Found=Found;
+  if (InstIt->second.empty())
+    ReverseMap.erase(InstIt);
+}
+
 
 /// getCallSiteDependencyFrom - Private helper for finding the local
 /// dependencies of a call site.
@@ -207,12 +222,7 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
   if (Instruction *Inst = LocalCache.getInst()) {
     ScanPos = Inst;
    
-    SmallPtrSet<Instruction*, 4> &InstMap = ReverseLocalDeps[Inst];
-    bool Found = InstMap.erase(QueryInst);
-    assert(Found && "Invalid reverse map!"); Found=Found;
-    if (InstMap.empty())
-      // FIXME: use an iterator to avoid looking up inst again.
-      ReverseLocalDeps.erase(Inst);
+    RemoveFromReverseMap(ReverseLocalDeps, Inst, QueryInst);
   }
   
   BasicBlock *QueryParent = QueryInst->getParent();
@@ -363,13 +373,8 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
     if (ExistingResult) {
       if (Instruction *Inst = ExistingResult->getInst()) {
         ScanPos = Inst;
-      
         // We're removing QueryInst's use of Inst.
-        SmallPtrSet<Instruction*, 4> &InstMap = ReverseNonLocalDeps[Inst];
-        bool Found = InstMap.erase(QueryInst);
-        assert(Found && "Invalid reverse map!"); Found=Found;
-        // FIXME: Use an iterator to avoid looking up inst again.
-        if (InstMap.empty()) ReverseNonLocalDeps.erase(Inst);
+        RemoveFromReverseMap(ReverseNonLocalDeps, Inst, QueryInst);
       }
     }
     
@@ -527,11 +532,8 @@ getNonLocalPointerDepInternal(Value *Pointer, uint64_t PointeeSize,
         ScanPos = ExistingResult->getInst();
 
         // Eliminating the dirty entry from 'Cache', so update the reverse info.
-        SmallPtrSet<void *, 4> &InstMap = ReverseNonLocalPtrDeps[ScanPos];
-        bool Contained = InstMap.erase(CacheKey.getOpaqueValue());
-        assert(Contained && "Invalid cache entry"); Contained=Contained;
-        // FIXME: Use an iterator to avoid a repeated lookup in ".erase".
-        if (InstMap.empty()) ReverseNonLocalPtrDeps.erase(ScanPos);
+        RemoveFromReverseMap(ReverseNonLocalPtrDeps, ScanPos,
+                             CacheKey.getOpaqueValue());
       } else {
         ++NumUncacheNonLocalPtr;
       }
@@ -595,12 +597,7 @@ RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P) {
     assert(Target->getParent() == PInfo[i].first && Target != P.getPointer());
     
     // Eliminating the dirty entry from 'Cache', so update the reverse info.
-    SmallPtrSet<void *, 4> &InstMap = ReverseNonLocalPtrDeps[Target];
-    bool Contained = InstMap.erase(P.getOpaqueValue());
-    assert(Contained && "Invalid cache entry"); Contained=Contained;
-    
-    // FIXME: Use an iterator to avoid a repeated lookup in ".erase".
-    if (InstMap.empty()) ReverseNonLocalPtrDeps.erase(Target);
+    RemoveFromReverseMap(ReverseNonLocalPtrDeps, Target, P.getOpaqueValue());
   }
   
   // Remove P from NonLocalPointerDeps (which deletes NonLocalDepInfo).
@@ -620,7 +617,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
     for (NonLocalDepInfo::iterator DI = BlockMap.begin(), DE = BlockMap.end();
          DI != DE; ++DI)
       if (Instruction *Inst = DI->second.getInst())
-        ReverseNonLocalDeps[Inst].erase(RemInst);
+        RemoveFromReverseMap(ReverseNonLocalDeps, Inst, RemInst);
     NonLocalDeps.erase(NLDI);
   }
 
@@ -629,14 +626,8 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   LocalDepMapType::iterator LocalDepEntry = LocalDeps.find(RemInst);
   if (LocalDepEntry != LocalDeps.end()) {
     // Remove us from DepInst's reverse set now that the local dep info is gone.
-    if (Instruction *Inst = LocalDepEntry->second.getInst()) {
-      SmallPtrSet<Instruction*, 4> &RLD = ReverseLocalDeps[Inst];
-      bool Found = RLD.erase(RemInst);
-      assert(Found && "Invalid reverse map!"); Found=Found;
-      // FIXME: Use an iterator to avoid looking up Inst again.
-      if (RLD.empty())
-        ReverseLocalDeps.erase(Inst);
-    }
+    if (Instruction *Inst = LocalDepEntry->second.getInst())
+      RemoveFromReverseMap(ReverseLocalDeps, Inst, RemInst);
 
     // Remove this local dependency info.
     LocalDeps.erase(LocalDepEntry);
