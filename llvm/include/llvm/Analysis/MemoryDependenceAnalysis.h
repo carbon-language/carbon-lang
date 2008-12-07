@@ -220,11 +220,13 @@ namespace llvm {
     
   private:
     
-    /// getDependencyFrom - Return the instruction on which the memory operation
-    /// 'QueryInst' depends.  This starts scanning from the instruction before
+    /// getDependencyFrom - Return the instruction on which the memory location
+    /// '*Pointer' depends.  This starts scanning from the instruction before
     /// the position indicated by ScanIt.
-    MemDepResult getDependencyFrom(Instruction *QueryInst,
-                                   BasicBlock::iterator ScanIt, BasicBlock *BB);
+    MemDepResult getPointerDependencyFrom(Value *Pointer, uint64_t MemSize,
+                                          bool isLoad, 
+                                          BasicBlock::iterator ScanIt,
+                                          BasicBlock *BB);
     MemDepResult getCallSiteDependencyFrom(CallSite C,
                                            BasicBlock::iterator ScanIt,
                                            BasicBlock *BB);

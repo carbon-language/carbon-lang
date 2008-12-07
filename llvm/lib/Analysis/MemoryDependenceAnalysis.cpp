@@ -105,47 +105,15 @@ getCallSiteDependencyFrom(CallSite CS, BasicBlock::iterator ScanIt,
   return MemDepResult::getNonLocal();
 }
 
-/// getDependencyFrom - Return the instruction on which a memory operation
-/// depends.
+/// getPointerDependencyFrom - Return the instruction on which a memory
+/// location depends.  If isLoad is true, this routine ignore may-aliases with
+/// read-only operations.
 MemDepResult MemoryDependenceAnalysis::
-getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt, 
-                  BasicBlock *BB) {
+getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
+                         BasicBlock::iterator ScanIt, BasicBlock *BB) {
   // The first instruction in a block is always non-local.
   if (ScanIt == BB->begin())
     return MemDepResult::getNonLocal();
-  
-  // Get the pointer value for which dependence will be determined
-  Value *MemPtr = 0;
-  uint64_t MemSize = 0;
-  
-  if (StoreInst *SI = dyn_cast<StoreInst>(QueryInst)) {
-    // If this is a volatile store, don't mess around with it.  Just return the
-    // previous instruction as a clobber.
-    if (SI->isVolatile())
-      return MemDepResult::getClobber(--ScanIt);
-
-    MemPtr = SI->getPointerOperand();
-    MemSize = TD->getTypeStoreSize(SI->getOperand(0)->getType());
-  } else if (LoadInst *LI = dyn_cast<LoadInst>(QueryInst)) {
-    // If this is a volatile load, don't mess around with it.  Just return the
-    // previous instruction as a clobber.
-    if (LI->isVolatile())
-      return MemDepResult::getClobber(--ScanIt);
-    
-    MemPtr = LI->getPointerOperand();
-    MemSize = TD->getTypeStoreSize(LI->getType());
-  } else if (FreeInst *FI = dyn_cast<FreeInst>(QueryInst)) {
-    MemPtr = FI->getPointerOperand();
-    // FreeInsts erase the entire structure, not just a field.
-    MemSize = ~0UL;
-  } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
-    assert(0 && "Should use getCallSiteDependencyFrom!");
-    return getCallSiteDependencyFrom(CallSite::get(QueryInst), ScanIt, BB);
-  } else {
-    // Otherwise, this is a vaarg or non-memory instruction, just return a
-    // clobber dependency on the previous inst.
-    return MemDepResult::getClobber(--ScanIt);
-  }
   
   // Walk backwards through the basic block, looking for dependencies
   while (ScanIt != BB->begin()) {
@@ -164,7 +132,7 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
         continue;
       
       // May-alias loads don't depend on each other without a dependence.
-      if (isa<LoadInst>(QueryInst) && R == AliasAnalysis::MayAlias)
+      if (isLoad && R == AliasAnalysis::MayAlias)
         continue;
       return MemDepResult::getDef(Inst);
     }
@@ -198,6 +166,7 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     }
     
     // See if this instruction (e.g. a call or vaarg) mod/ref's the pointer.
+    // FIXME: If this is a load, we should ignore readonly calls!
     if (AA->getModRefInfo(Inst, MemPtr, MemSize) == AliasAnalysis::NoModRef)
       continue;
     
@@ -233,12 +202,50 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       ReverseLocalDeps.erase(Inst);
   }
   
+  BasicBlock *QueryParent = QueryInst->getParent();
+  
+  Value *MemPtr = 0;
+  uint64_t MemSize = 0;
+  
   // Do the scan.
-  if (!isa<CallInst>(QueryInst) && !isa<InvokeInst>(QueryInst))
-    LocalCache = getDependencyFrom(QueryInst, ScanPos, QueryInst->getParent());
-  else 
+  if (BasicBlock::iterator(QueryInst) == QueryParent->begin()) {
+    // First instruction in the block -> non local.
+    LocalCache = MemDepResult::getNonLocal();
+  } else if (StoreInst *SI = dyn_cast<StoreInst>(QueryInst)) {
+    // If this is a volatile store, don't mess around with it.  Just return the
+    // previous instruction as a clobber.
+    if (SI->isVolatile())
+      LocalCache = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));
+    else {
+      MemPtr = SI->getPointerOperand();
+      MemSize = TD->getTypeStoreSize(SI->getOperand(0)->getType());
+    }
+  } else if (LoadInst *LI = dyn_cast<LoadInst>(QueryInst)) {
+    // If this is a volatile load, don't mess around with it.  Just return the
+    // previous instruction as a clobber.
+    if (LI->isVolatile())
+      LocalCache = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));
+    else {
+      MemPtr = LI->getPointerOperand();
+      MemSize = TD->getTypeStoreSize(LI->getType());
+    }
+  } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
     LocalCache = getCallSiteDependencyFrom(CallSite::get(QueryInst), ScanPos,
-                                           QueryInst->getParent());
+                                           QueryParent);
+  } else if (FreeInst *FI = dyn_cast<FreeInst>(QueryInst)) {
+    MemPtr = FI->getPointerOperand();
+    // FreeInsts erase the entire structure, not just a field.
+    MemSize = ~0UL;
+  } else {
+    // Non-memory instruction.
+    LocalCache = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));
+  }
+  
+  // If we need to do a pointer scan, make it happen.
+  if (MemPtr)
+    LocalCache = getPointerDependencyFrom(MemPtr, MemSize, 
+                                          isa<LoadInst>(QueryInst),
+                                          ScanPos, QueryParent);
   
   // Remember the result!
   if (Instruction *I = LocalCache.getInst())
@@ -257,10 +264,11 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
 ///
 const MemoryDependenceAnalysis::NonLocalDepInfo &
 MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
+  assert(isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst) ||
+         isa<LoadInst>(QueryInst) || isa<StoreInst>(QueryInst));
   assert(getDependency(QueryInst).isNonLocal() &&
      "getNonLocalDependency should only be used on insts with non-local deps!");
   PerInstNLInfo &CacheP = NonLocalDeps[QueryInst];
-  
   NonLocalDepInfo &Cache = CacheP.first;
 
   /// DirtyBlocks - This is the set of blocks that need to be recomputed.  In
@@ -347,11 +355,40 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
     
     // Find out if this block has a local dependency for QueryInst.
     MemDepResult Dep;
-    if (!isa<CallInst>(QueryInst) && !isa<InvokeInst>(QueryInst))
-      Dep = getDependencyFrom(QueryInst, ScanPos, DirtyBB);
-    else 
+    
+    Value *MemPtr = 0;
+    uint64_t MemSize = 0;
+
+    if (BasicBlock::iterator(QueryInst) == DirtyBB->begin()) {
+      // First instruction in the block -> non local.
+      Dep = MemDepResult::getNonLocal();
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(QueryInst)) {
+      // If this is a volatile store, don't mess around with it.  Just return the
+      // previous instruction as a clobber.
+      if (SI->isVolatile())
+        Dep = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));
+      else {
+        MemPtr = SI->getPointerOperand();
+        MemSize = TD->getTypeStoreSize(SI->getOperand(0)->getType());
+      }
+    } else if (LoadInst *LI = dyn_cast<LoadInst>(QueryInst)) {
+      // If this is a volatile load, don't mess around with it.  Just return the
+      // previous instruction as a clobber.
+      if (LI->isVolatile())
+        Dep = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));
+      else {
+        MemPtr = LI->getPointerOperand();
+        MemSize = TD->getTypeStoreSize(LI->getType());
+      }
+    } else {
+      assert(isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst));
       Dep = getCallSiteDependencyFrom(CallSite::get(QueryInst), ScanPos,
                                       DirtyBB);
+    }
+    
+    if (MemPtr)
+      Dep = getPointerDependencyFrom(MemPtr, MemSize, isa<LoadInst>(QueryInst),
+                                     ScanPos, DirtyBB);
     
     // If we had a dirty entry for the block, update it.  Otherwise, just add
     // a new entry.
@@ -377,7 +414,6 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
   
   return Cache;
 }
-
 
 /// removeInstruction - Remove an instruction from the dependence analysis,
 /// updating the dependence of instructions that previously depended on it.
