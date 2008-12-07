@@ -58,6 +58,10 @@ impossible for LLVMC to choose the right linker in that case::
     $ ./a.out
     hello
 
+By default, LLVMC uses ``llvm-gcc`` to compile the source code. It is
+also possible to choose the work-in-progress ``clang`` compiler with
+the ``-clang`` option.
+
 
 Predefined options
 ==================
@@ -146,23 +150,6 @@ built-in plugins. It can be compiled with the following command::
     $ cd $LLVMC_DIR
     $ make BUILTIN_PLUGINS=""
 
-How plugins are loaded
-======================
-
-It is possible for LLVMC plugins to depend on each other. For example,
-one can create edges between nodes defined in some other plugin. To
-make this work, however, that plugin should be loaded first. To
-achieve this, the concept of plugin priority was introduced. By
-default, every plugin has priority zero; to specify the priority
-explicitly, put the following line in your plugin's TableGen file::
-
-    def Priority : PluginPriority<$PRIORITY_VALUE>;
-    # Where PRIORITY_VALUE is some integer > 0
-
-Plugins are loaded in order of their (increasing) priority, starting
-with 0. Therefore, the plugin with the highest priority value will be
-loaded last.
-
 
 Customizing LLVMC: the compilation graph
 ========================================
@@ -241,71 +228,23 @@ To get a visual representation of the compilation graph (useful for
 debugging), run ``llvmc --view-graph``. You will need ``dot`` and
 ``gsview`` installed for this to work properly.
 
+Describing options
+==================
 
-Writing a tool description
-==========================
+Command-line options that the plugin supports are defined by using an
+``OptionList``::
 
-As was said earlier, nodes in the compilation graph represent tools,
-which are described separately. A tool definition looks like this
-(taken from the ``include/llvm/CompilerDriver/Tools.td`` file)::
+    def Options : OptionList<[
+    (switch_option "E", (help "Help string")),
+    (alias_option "quiet", "q")
+    ...
+    ]>;
 
-  def llvm_gcc_cpp : Tool<[
-      (in_language "c++"),
-      (out_language "llvm-assembler"),
-      (output_suffix "bc"),
-      (cmd_line "llvm-g++ -c $INFILE -o $OUTFILE -emit-llvm"),
-      (sink)
-      ]>;
-
-This defines a new tool called ``llvm_gcc_cpp``, which is an alias for
-``llvm-g++``. As you can see, a tool definition is just a list of
-properties; most of them should be self-explanatory. The ``sink``
-property means that this tool should be passed all command-line
-options that lack explicit descriptions.
-
-The complete list of the currently implemented tool properties follows:
-
-* Possible tool properties:
-
-  - ``in_language`` - input language name. Can be either a string or a
-    list, in case the tool supports multiple input languages.
-
-  - ``out_language`` - output language name.
-
-  - ``output_suffix`` - output file suffix.
-
-  - ``cmd_line`` - the actual command used to run the tool. You can
-    use ``$INFILE`` and ``$OUTFILE`` variables, output redirection
-    with ``>``, hook invocations (``$CALL``), environment variables
-    (via ``$ENV``) and the ``case`` construct (more on this below).
-
-  - ``join`` - this tool is a "join node" in the graph, i.e. it gets a
-    list of input files and joins them together. Used for linkers.
-
-  - ``sink`` - all command-line options that are not handled by other
-    tools are passed to this tool.
-
-The next tool definition is slightly more complex::
-
-  def llvm_gcc_linker : Tool<[
-      (in_language "object-code"),
-      (out_language "executable"),
-      (output_suffix "out"),
-      (cmd_line "llvm-gcc $INFILE -o $OUTFILE"),
-      (join),
-      (prefix_list_option "L", (forward),
-                          (help "add a directory to link path")),
-      (prefix_list_option "l", (forward),
-                          (help "search a library when linking")),
-      (prefix_list_option "Wl", (unpack_values),
-                          (help "pass options to linker"))
-      ]>;
-
-This tool has a "join" property, which means that it behaves like a
-linker. This tool also defines several command-line options: ``-l``,
-``-L`` and ``-Wl`` which have their usual meaning. An option has two
-attributes: a name and a (possibly empty) list of properties. All
-currently implemented option types and properties are described below:
+As you can see, the option list is just a list of DAGs, where each DAG
+is an option description consisting of the option name and some
+properties. A plugin can define more than one option list (they are
+all merged together in the end), which can be handy if one wants to
+separate option groups syntactically.
 
 * Possible option types:
 
@@ -331,23 +270,6 @@ currently implemented option types and properties are described below:
 
 * Possible option properties:
 
-   - ``append_cmd`` - append a string to the tool invocation command.
-
-   - ``forward`` - forward this option unchanged.
-
-   - ``forward_as`` - Change the name of this option, but forward the
-     argument unchanged. Example: ``(forward_as "--disable-optimize")``.
-
-   - ``output_suffix`` - modify the output suffix of this
-     tool. Example: ``(switch "E", (output_suffix "i")``.
-
-   - ``stop_compilation`` - stop compilation after this phase.
-
-   - ``unpack_values`` - used for for splitting and forwarding
-     comma-separated lists of options, e.g. ``-Wa,-foo=bar,-baz`` is
-     converted to ``-foo=bar -baz`` and appended to the tool invocation
-     command.
-
    - ``help`` - help string associated with this option. Used for
      ``--help`` output.
 
@@ -359,71 +281,41 @@ currently implemented option types and properties are described below:
    - ``really_hidden`` - the option should not appear in any help
      output.
 
+   - ``extern`` - this option is defined in some other plugin, see below.
 
-Option list - specifying all options in a single place
-======================================================
+External options
+----------------
 
-It can be handy to have all information about options gathered in a
-single place to provide an overview. This can be achieved by using a
-so-called ``OptionList``::
+Sometimes, when linking several plugins together, one plugin needs to
+access options defined in some other plugin. Because of the way
+options are implemented, such options should be marked as
+``extern``. This is what the ``extern`` option property is
+for. Example::
 
-    def Options : OptionList<[
-    (switch_option "E", (help "Help string")),
-    (alias_option "quiet", "q")
-    ...
-    ]>;
+     ...
+     (switch_option "E", (extern))
+     ...
 
-``OptionList`` is also a good place to specify option aliases.
+See also the section on plugin `priorities`__.
 
-Tool-specific option properties like ``append_cmd`` have (obviously)
-no meaning in the context of ``OptionList``, so the only properties
-allowed there are ``help`` and ``required``.
+__ priorities_
 
-Option lists are used at file scope. See the file
-``plugins/Clang/Clang.td`` for an example of ``OptionList`` usage.
+.. _case:
 
-.. _hooks:
+Conditional evaluation
+======================
 
-Using hooks and environment variables in the ``cmd_line`` property
-==================================================================
-
-Normally, LLVMC executes programs from the system ``PATH``. Sometimes,
-this is not sufficient: for example, we may want to specify tool names
-in the configuration file. This can be achieved via the mechanism of
-hooks - to write your own hooks, just add their definitions to the
-``PluginMain.cpp`` or drop a ``.cpp`` file into the
-``$LLVMC_DIR/driver`` directory. Hooks should live in the ``hooks``
-namespace and have the signature ``std::string hooks::MyHookName
-(void)``. They can be used from the ``cmd_line`` tool property::
-
-    (cmd_line "$CALL(MyHook)/path/to/file -o $CALL(AnotherHook)")
-
-It is also possible to use environment variables in the same manner::
-
-   (cmd_line "$ENV(VAR1)/path/to/file -o $ENV(VAR2)")
-
-To change the command line string based on user-provided options use
-the ``case`` expression (documented below)::
-
-    (cmd_line
-      (case
-        (switch_on "E"),
-           "llvm-g++ -E -x c $INFILE -o $OUTFILE",
-        (default),
-           "llvm-g++ -c -x c $INFILE -o $OUTFILE -emit-llvm"))
-
-Conditional evaluation: the ``case`` expression
-===============================================
-
-The 'case' construct can be used to calculate weights of the optional
-edges and to choose between several alternative command line strings
-in the ``cmd_line`` tool property. It is designed after the
-similarly-named construct in functional languages and takes the form
-``(case (test_1), statement_1, (test_2), statement_2, ... (test_N),
-statement_N)``. The statements are evaluated only if the corresponding
-tests evaluate to true.
+The 'case' construct is the main means by which programmability is
+achieved in LLVMC. It can be used to calculate edge weights, program
+actions and modify the shell commands to be executed. The 'case'
+expression is designed after the similarly-named construct in
+functional languages and takes the form ``(case (test_1), statement_1,
+(test_2), statement_2, ... (test_N), statement_N)``. The statements
+are evaluated only if the corresponding tests evaluate to true.
 
 Examples::
+
+    // Edge weight calculation
 
     // Increases edge weight by 5 if "-A" is provided on the
     // command-line, and by 5 more if "-B" is also provided.
@@ -431,8 +323,13 @@ Examples::
         (switch_on "A"), (inc_weight 5),
         (switch_on "B"), (inc_weight 5))
 
-    // Evaluates to "cmdline1" if option "-A" is provided on the
-    // command line, otherwise to "cmdline2"
+
+    // Tool command line specification
+
+    // Evaluates to "cmdline1" if the option "-A" is provided on the
+    // command line; to "cmdline2" if "-B" is provided;
+    // otherwise to "cmdline3".
+
     (case
         (switch_on "A"), "cmdline1",
         (switch_on "B"), "cmdline2",
@@ -456,29 +353,29 @@ use TableGen inheritance instead.
 * Possible tests are:
 
   - ``switch_on`` - Returns true if a given command-line switch is
-    provided by the user. Example: ``(switch_on "opt")``. Note that
-    you have to define all possible command-line options separately in
-    the tool descriptions. See the next section for the discussion of
-    different kinds of command-line options.
+    provided by the user. Example: ``(switch_on "opt")``.
 
   - ``parameter_equals`` - Returns true if a command-line parameter equals
-    a given value. Example: ``(parameter_equals "W", "all")``.
+    a given value.
+    Example: ``(parameter_equals "W", "all")``.
 
-  - ``element_in_list`` - Returns true if a command-line parameter list
-    includes a given value. Example: ``(parameter_in_list "l", "pthread")``.
+  - ``element_in_list`` - Returns true if a command-line parameter
+    list contains a given value.
+    Example: ``(parameter_in_list "l", "pthread")``.
 
   - ``input_languages_contain`` - Returns true if a given language
-    belongs to the current input language set. Example:
-    ``(input_languages_contain "c++")``.
+    belongs to the current input language set.
+    Example: ``(input_languages_contain "c++")``.
 
-  - ``in_language`` - Evaluates to true if the language of the input
-    file equals to the argument. At the moment works only with
-    ``cmd_line`` property on non-join nodes. Example: ``(in_language
-    "c++")``.
+  - ``in_language`` - Evaluates to true if the input file language
+    equals to the argument. At the moment works only with ``cmd_line``
+    and ``actions`` (on non-join nodes).
+    Example: ``(in_language "c++")``.
 
   - ``not_empty`` - Returns true if a given option (which should be
     either a parameter or a parameter list) is set by the
-    user. Example: ``(not_empty "o")``.
+    user.
+    Example: ``(not_empty "o")``.
 
   - ``default`` - Always evaluates to true. Should always be the last
     test in the ``case`` expression.
@@ -493,14 +390,122 @@ use TableGen inheritance instead.
     (test2), ... (testN))``.
 
 
+Writing a tool description
+==========================
+
+As was said earlier, nodes in the compilation graph represent tools,
+which are described separately. A tool definition looks like this
+(taken from the ``include/llvm/CompilerDriver/Tools.td`` file)::
+
+  def llvm_gcc_cpp : Tool<[
+      (in_language "c++"),
+      (out_language "llvm-assembler"),
+      (output_suffix "bc"),
+      (cmd_line "llvm-g++ -c $INFILE -o $OUTFILE -emit-llvm"),
+      (sink)
+      ]>;
+
+This defines a new tool called ``llvm_gcc_cpp``, which is an alias for
+``llvm-g++``. As you can see, a tool definition is just a list of
+properties; most of them should be self-explanatory. The ``sink``
+property means that this tool should be passed all command-line
+options that aren't mentioned in the option list.
+
+The complete list of all currently implemented tool properties follows.
+
+* Possible tool properties:
+
+  - ``in_language`` - input language name. Can be either a string or a
+    list, in case the tool supports multiple input languages.
+
+  - ``out_language`` - output language name. Tools are not allowed to
+    have multiple output languages.
+
+  - ``output_suffix`` - output file suffix. Can also be changed
+    dynamically, see documentation on actions.
+
+  - ``cmd_line`` - the actual command used to run the tool. You can
+    use ``$INFILE`` and ``$OUTFILE`` variables, output redirection
+    with ``>``, hook invocations (``$CALL``), environment variables
+    (via ``$ENV``) and the ``case`` construct.
+
+  - ``join`` - this tool is a "join node" in the graph, i.e. it gets a
+    list of input files and joins them together. Used for linkers.
+
+  - ``sink`` - all command-line options that are not handled by other
+    tools are passed to this tool.
+
+  - ``actions`` - A single big ``case`` expression that specifies how
+    this tool reacts on command-line options (described in more detail
+    below).
+
+Actions
+-------
+
+A tool often needs to react to command-line options, and this is
+precisely what the ``actions`` property is for. The next example
+illustrates this feature::
+
+  def llvm_gcc_linker : Tool<[
+      (in_language "object-code"),
+      (out_language "executable"),
+      (output_suffix "out"),
+      (cmd_line "llvm-gcc $INFILE -o $OUTFILE"),
+      (join),
+      (actions (case (not_empty "L"), (forward "L"),
+                     (not_empty "l"), (forward "l"),
+                     (not_empty "dummy"),
+                               [(append_cmd "-dummy1"), (append_cmd "-dummy2")])
+      ]>;
+
+The ``actions`` tool property is implemented on top of the omnipresent
+``case`` expression. It associates one or more different *actions*
+with given conditions - in the example, the actions are ``forward``,
+which forwards a given option unchanged, and ``append_cmd``, which
+appends a given string to the tool execution command. Multiple actions
+can be associated with a single condition by using a list of actions
+(used in the example to append some dummy options). The same ``case``
+construct can also be used in the ``cmd_line`` property to modify the
+tool command line.
+
+The "join" property used in the example means that this tool behaves
+like a linker.
+
+The list of all possible actions follows.
+
+* Possible actions:
+
+   - ``append_cmd`` - append a string to the tool invocation
+     command.
+     Example: ``(case (switch_on "pthread"), (append_cmd "-lpthread"))``
+
+   - ``forward`` - forward an option unchanged.
+     Example: ``(forward "Wall")``.
+
+   - ``forward_as`` - Change the name of an option, but forward the
+     argument unchanged.
+     Example: ``(forward_as "O0" "--disable-optimization")``.
+
+   - ``output_suffix`` - modify the output suffix of this
+     tool.
+     Example: ``(output_suffix "i")``.
+
+   - ``stop_compilation`` - stop compilation after this tool processes
+     its input. Used without arguments.
+
+   - ``unpack_values`` - used for for splitting and forwarding
+     comma-separated lists of options, e.g. ``-Wa,-foo=bar,-baz`` is
+     converted to ``-foo=bar -baz`` and appended to the tool invocation
+     command.
+     Example: ``(unpack_values "Wa,")``.
+
 Language map
 ============
 
-One last thing that you will need to modify when adding support for a
-new language to LLVMC is the language map, which defines mappings from
-file extensions to language names. It is used to choose the proper
-toolchain(s) for a given input file set. Language map definition looks
-like this::
+If you are adding support for a new language to LLVMC, you'll need to
+modify the language map, which defines mappings from file extensions
+to language names. It is used to choose the proper toolchain(s) for a
+given input file set. Language map definition looks like this::
 
     def LanguageMap : LanguageMap<
         [LangToSuffixes<"c++", ["cc", "cp", "cxx", "cpp", "CPP", "c++", "C"]>,
@@ -508,8 +513,73 @@ like this::
          ...
         ]>;
 
+For example, without those definitions the following command wouldn't work::
+
+    $ llvmc hello.cpp
+    llvmc: Unknown suffix: cpp
+
+The language map entries should be added only for tools that are
+linked with the root node. Since tools are not allowed to have
+multiple output languages, for nodes "inside" the graph the input and
+output languages should match. This is enforced at compile-time.
+
+
+More advanced topics
+====================
+
+.. _hooks:
+
+Hooks and environment variables
+-------------------------------
+
+Normally, LLVMC executes programs from the system ``PATH``. Sometimes,
+this is not sufficient: for example, we may want to specify tool names
+in the configuration file. This can be achieved via the mechanism of
+hooks - to write your own hooks, just add their definitions to the
+``PluginMain.cpp`` or drop a ``.cpp`` file into the
+``$LLVMC_DIR/driver`` directory. Hooks should live in the ``hooks``
+namespace and have the signature ``std::string hooks::MyHookName
+(void)``. They can be used from the ``cmd_line`` tool property::
+
+    (cmd_line "$CALL(MyHook)/path/to/file -o $CALL(AnotherHook)")
+
+It is also possible to use environment variables in the same manner::
+
+   (cmd_line "$ENV(VAR1)/path/to/file -o $ENV(VAR2)")
+
+To change the command line string based on user-provided options use
+the ``case`` expression (documented `above`__)::
+
+    (cmd_line
+      (case
+        (switch_on "E"),
+           "llvm-g++ -E -x c $INFILE -o $OUTFILE",
+        (default),
+           "llvm-g++ -c -x c $INFILE -o $OUTFILE -emit-llvm"))
+
+__ case_
+
+.. _priorities:
+
+How plugins are loaded
+----------------------
+
+It is possible for LLVMC plugins to depend on each other. For example,
+one can create edges between nodes defined in some other plugin. To
+make this work, however, that plugin should be loaded first. To
+achieve this, the concept of plugin priority was introduced. By
+default, every plugin has priority zero; to specify the priority
+explicitly, put the following line in your plugin's TableGen file::
+
+    def Priority : PluginPriority<$PRIORITY_VALUE>;
+    # Where PRIORITY_VALUE is some integer > 0
+
+Plugins are loaded in order of their (increasing) priority, starting
+with 0. Therefore, the plugin with the highest priority value will be
+loaded last.
+
 Debugging
-=========
+---------
 
 When writing LLVMC plugins, it can be useful to get a visual view of
 the resulting compilation graph. This can be achieved via the command
