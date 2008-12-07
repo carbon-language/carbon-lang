@@ -81,6 +81,10 @@ that define the following options:
 
 =over
 
+=item B<-clang>
+
+Use Clang instead of llvm-gcc.
+
 =item B<-I> I<directory>
 
 Add a directory to the header file search path.  This option can be
@@ -101,6 +105,14 @@ be a bitcode library.
 Make the output be LLVM bitcode (with B<-c>) or assembly (with B<-s>) instead
 of native object (or assembly).  If B<-emit-llvm> is given without either B<-c>
 or B<-S> it has no effect.
+
+=item B<-Wa>
+
+Pass options to assembler.
+
+=item B<-Wl>
+
+Pass options to linker.
 
 =back
 
