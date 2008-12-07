@@ -1102,7 +1102,6 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
   // Degenerate case of a single entry PHI.
   if (PN->getNumIncomingValues() == 1) {
     FoldSingleEntryPHINodes(PN->getParent());
-    PN->eraseFromParent();
     return true;    
   }
 
