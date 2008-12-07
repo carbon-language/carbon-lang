@@ -308,7 +308,6 @@ int CompilationGraph::Build (const sys::Path& TempDir,
   for (std::vector<const Node*>::iterator B = JTV.begin(), E = JTV.end();
        B != E; ++B) {
 
-    sys::Path Out;
     const Node* CurNode = *B;
     JoinTool* JT = &dynamic_cast<JoinTool&>(*CurNode->ToolPtr.getPtr());
 
@@ -325,10 +324,10 @@ int CompilationGraph::Build (const sys::Path& TempDir,
     if (CurAction.StopCompilation())
       return 0;
 
-    const Node* NextNode =
-      &getNode(ChooseEdge(CurNode->OutEdges, InLangs,
-                          CurNode->Name())->ToolName());
-      PassThroughGraph(Out, NextNode, InLangs, TempDir, LangMap);
+    const Node* NextNode = &getNode(ChooseEdge(CurNode->OutEdges, InLangs,
+                                               CurNode->Name())->ToolName());
+    PassThroughGraph(sys::Path(CurAction.OutFile()), NextNode,
+                     InLangs, TempDir, LangMap);
   }
 
   return 0;
