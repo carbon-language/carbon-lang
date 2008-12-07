@@ -24,6 +24,8 @@ def OptList : OptionList<[
     (help "Stop after compilation, do not assemble")),
  (switch_option "c",
     (help "Compile and assemble, but do not link")),
+ (switch_option "pthread",
+    (help "Enable threads")),
  (parameter_option "linker",
     (help "Choose linker (possible values: gcc, g++)")),
  (parameter_list_option "include",
@@ -57,10 +59,11 @@ class llvm_gcc_based <string cmd_prefix, string in_lang> : Tool<
  (actions
      (case
          (switch_on "emit-llvm"), (stop_compilation),
-         (switch_on "E"), (stop_compilation),
+         (switch_on "E"), [(stop_compilation), (output_suffix "i")],
+         (switch_on "S"), (stop_compilation),
          (switch_on "fsyntax-only"), (stop_compilation),
          (not_empty "include"), (forward "include"),
-         (not_empty "I"), (forward "include"))),
+         (not_empty "I"), (forward "I"))),
  (sink)
 ]>;
 
@@ -83,15 +86,6 @@ def llvm_as : Tool<
  (cmd_line "llvm-as $INFILE -o $OUTFILE")
 ]>;
 
-def llc : Tool<
-[(in_language "llvm-bitcode"),
- (out_language "assembler"),
- (output_suffix "s"),
- (actions (case
-          (switch_on "S"), (stop_compilation))),
- (cmd_line "llc -f $INFILE -o $OUTFILE")
-]>;
-
 def llvm_gcc_assembler : Tool<
 [(in_language "assembler"),
  (out_language "object-code"),
@@ -102,6 +96,14 @@ def llvm_gcc_assembler : Tool<
           (not_empty "Wa,"), (unpack_values "Wa,")))
 ]>;
 
+def llc : Tool<
+[(in_language "llvm-bitcode"),
+ (out_language "assembler"),
+ (output_suffix "s"),
+ (cmd_line "llc -relocation-model=pic -f $INFILE -o $OUTFILE"),
+ (actions (case (switch_on "S"), (stop_compilation)))
+]>;
+
 // Base class for linkers
 class llvm_gcc_based_linker <string cmd_prefix> : Tool<
 [(in_language "object-code"),
@@ -110,6 +112,7 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
  (cmd_line !strconcat(cmd_prefix, " $INFILE -o $OUTFILE")),
  (join),
  (actions (case
+          (switch_on "pthread"), (append_cmd "-lpthread"),
           (not_empty "L"), (forward "L"),
           (not_empty "l"), (forward "l"),
           (not_empty "Wl,"), (unpack_values "Wl,")))
@@ -125,9 +128,12 @@ def llvm_gcc_cpp_linker : llvm_gcc_based_linker<"llvm-g++">;
 def LanguageMap : LanguageMap<
     [LangToSuffixes<"c++", ["cc", "cp", "cxx", "cpp", "CPP", "c++", "C"]>,
      LangToSuffixes<"c", ["c"]>,
+     LangToSuffixes<"c-cpp-output", ["i"]>,
+     LangToSuffixes<"objective-c-cpp-output", ["mi"]>,
      LangToSuffixes<"objective-c++", ["mm"]>,
      LangToSuffixes<"objective-c", ["m"]>,
      LangToSuffixes<"assembler", ["s"]>,
+     LangToSuffixes<"assembler-with-cpp", ["S"]>,
      LangToSuffixes<"llvm-assembler", ["ll"]>,
      LangToSuffixes<"llvm-bitcode", ["bc"]>,
      LangToSuffixes<"object-code", ["o"]>,
