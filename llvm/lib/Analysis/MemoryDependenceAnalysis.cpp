@@ -454,6 +454,8 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
 void MemoryDependenceAnalysis::
 getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
                              SmallVectorImpl<NonLocalDepEntry> &Result) {
+  assert(isa<PointerType>(Pointer->getType()) &&
+         "Can't get pointer deps of a non-pointer!");
   Result.clear();
   
   // We know that the pointer value is live into FromBB find the def/clobbers
