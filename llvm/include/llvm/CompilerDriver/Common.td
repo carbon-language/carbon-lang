@@ -34,16 +34,13 @@ def parameter_list_option;
 def prefix_option;
 def prefix_list_option;
 
-def extern_switch;
-def extern_parameter;
-def extern_list;
-
 // Possible option properties.
 
 def help;
 def hidden;
 def really_hidden;
 def required;
+def extern;
 
 // Empty DAG marker.
 def empty;

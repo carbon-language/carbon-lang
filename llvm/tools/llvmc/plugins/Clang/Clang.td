@@ -9,17 +9,17 @@ include "llvm/CompilerDriver/Common.td"
 def Priority : PluginPriority<1>;
 
 def Options : OptionList<[
-(extern_switch "E"),
-(extern_switch "c"),
-(extern_switch "fsyntax-only"),
-(extern_switch "emit-llvm"),
-(extern_switch "pthread"),
-(extern_list "I"),
-(extern_list "include"),
-(extern_list "L"),
-(extern_list "l"),
-(extern_list "Wa,"),
-(extern_list "Wl,"),
+(switch_option "E", (extern)),
+(switch_option "c", (extern)),
+(switch_option "fsyntax-only", (extern)),
+(switch_option "emit-llvm", (extern)),
+(switch_option "pthread", (extern)),
+(parameter_list_option "I", (extern)),
+(parameter_list_option "include", (extern)),
+(parameter_list_option "L", (extern)),
+(parameter_list_option "l", (extern)),
+(prefix_list_option "Wa,", (extern)),
+(prefix_list_option "Wl,", (extern)),
 (switch_option "clang", (help "Use Clang instead of llvm-gcc"))
 ]>;
 
