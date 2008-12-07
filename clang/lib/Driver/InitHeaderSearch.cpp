@@ -155,6 +155,15 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
     AddPath("/usr/include/c++/4.3.1/x86_64-unknown-linux-gnu", System, true,
         false, false);
 
+    // Gentoo x86 stable
+    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4", System,
+            true, false, false);
+    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4/"
+            "i686-pc-linux-gnu", System, true, false, false);
+    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4/backward",
+            System, true, false, false);
+
+
     // DragonFly
     AddPath("/usr/include/c++/4.1", System, true, false, false);
   }
