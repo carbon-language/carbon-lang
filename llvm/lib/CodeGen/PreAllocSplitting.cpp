@@ -442,6 +442,9 @@ PreAllocSplitting::UpdateRegisterInterval(VNInfo *ValNo, unsigned SpillIndex,
          SE = MBB->succ_end(); SI != SE; ++SI)
     WorkList.push_back(*SI);
 
+  SmallPtrSet<MachineBasicBlock*, 4> ProcessedBlocks;
+  ProcessedBlocks.insert(MBB);
+
   while (!WorkList.empty()) {
     MBB = WorkList.back();
     WorkList.pop_back();
@@ -459,6 +462,13 @@ PreAllocSplitting::UpdateRegisterInterval(VNInfo *ValNo, unsigned SpillIndex,
       }
       Processed.insert(LR);
     }
+    
+    ProcessedBlocks.insert(MBB);
+    if (LR)
+      for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+            SE = MBB->succ_end(); SI != SE; ++SI)
+        if (!ProcessedBlocks.count(*SI))
+          WorkList.push_back(*SI);
   }
 
   for (LiveInterval::iterator I = CurrLI->begin(), E = CurrLI->end();
@@ -1039,7 +1049,7 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   // Make sure blocks are numbered in order.
   MF.RenumberBlocks();
 
-#if 0
+#if 1
   // FIXME: Go top down.
   MachineBasicBlock *Entry = MF.begin();
   SmallPtrSet<MachineBasicBlock*,16> Visited;
