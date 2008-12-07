@@ -1928,17 +1928,27 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     QualType T = IDecl->getType();
     
     if (T->isVariableArrayType()) {
+      const VariableArrayType *VAT = 
+        cast<VariableArrayType>(T.getUnqualifiedType());
+      
+      // FIXME: This won't give the correct result for 
+      // int a[10][n];      
+      SourceRange SizeRange = VAT->getSizeExpr()->getSourceRange();
       if (IDecl->isFileVarDecl()) {
-        Diag(IDecl->getLocation(), diag::err_vla_decl_in_file_scope);
+        Diag(IDecl->getLocation(), diag::err_vla_decl_in_file_scope) <<
+          SizeRange;
+          
         IDecl->setInvalidDecl();
       } else {
         // C99 6.7.5.2p2: If an identifier is declared to be an object with 
         // static storage duration, it shall not have a variable length array.
         if (IDecl->getStorageClass() == VarDecl::Static) {
-          Diag(IDecl->getLocation(), diag::err_vla_decl_has_static_storage);
+          Diag(IDecl->getLocation(), diag::err_vla_decl_has_static_storage)
+            << SizeRange;
           IDecl->setInvalidDecl();
         } else if (IDecl->getStorageClass() == VarDecl::Extern) {
-          Diag(IDecl->getLocation(), diag::err_vla_decl_has_extern_linkage);
+          Diag(IDecl->getLocation(), diag::err_vla_decl_has_extern_linkage)
+            << SizeRange;
           IDecl->setInvalidDecl();
         }
       }
