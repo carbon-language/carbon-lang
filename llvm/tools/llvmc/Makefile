@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 
-BUILTIN_PLUGINS = Base
+BUILTIN_PLUGINS = Base Clang
 DRIVER_NAME = llvmc
 DIRS = plugins driver
 
