@@ -139,6 +139,7 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     // FreeInsts erase the entire structure, not just a field.
     MemSize = ~0UL;
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
+    assert(0 && "Should use getCallSiteDependencyFrom!");
     return getCallSiteDependencyFrom(CallSite::get(QueryInst), ScanIt, BB);
   } else {
     // Otherwise, this is a vaarg or non-memory instruction, just return a
@@ -233,7 +234,11 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
   }
   
   // Do the scan.
-  LocalCache = getDependencyFrom(QueryInst, ScanPos, QueryInst->getParent());
+  if (!isa<CallInst>(QueryInst) && !isa<InvokeInst>(QueryInst))
+    LocalCache = getDependencyFrom(QueryInst, ScanPos, QueryInst->getParent());
+  else 
+    LocalCache = getCallSiteDependencyFrom(CallSite::get(QueryInst), ScanPos,
+                                           QueryInst->getParent());
   
   // Remember the result!
   if (Instruction *I = LocalCache.getInst())
@@ -341,7 +346,12 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
     }
     
     // Find out if this block has a local dependency for QueryInst.
-    MemDepResult Dep = getDependencyFrom(QueryInst, ScanPos, DirtyBB);
+    MemDepResult Dep;
+    if (!isa<CallInst>(QueryInst) && !isa<InvokeInst>(QueryInst))
+      Dep = getDependencyFrom(QueryInst, ScanPos, DirtyBB);
+    else 
+      Dep = getCallSiteDependencyFrom(CallSite::get(QueryInst), ScanPos,
+                                      DirtyBB);
     
     // If we had a dirty entry for the block, update it.  Otherwise, just add
     // a new entry.
@@ -367,6 +377,7 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
   
   return Cache;
 }
+
 
 /// removeInstruction - Remove an instruction from the dependence analysis,
 /// updating the dependence of instructions that previously depended on it.
