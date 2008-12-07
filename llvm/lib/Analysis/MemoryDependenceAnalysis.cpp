@@ -116,16 +116,23 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
   // Get the pointer value for which dependence will be determined
   Value *MemPtr = 0;
   uint64_t MemSize = 0;
-  bool MemVolatile = false;
   
   if (StoreInst* S = dyn_cast<StoreInst>(QueryInst)) {
+    // If this is a volatile store, don't mess around with it.  Just return the
+    // previous instruction as a clobber.
+    if (S->isVolatile())
+      return MemDepResult::getClobber(--ScanIt);
+
     MemPtr = S->getPointerOperand();
     MemSize = TD->getTypeStoreSize(S->getOperand(0)->getType());
-    MemVolatile = S->isVolatile();
   } else if (LoadInst* LI = dyn_cast<LoadInst>(QueryInst)) {
+    // If this is a volatile load, don't mess around with it.  Just return the
+    // previous instruction as a clobber.
+    if (S->isVolatile())
+      return MemDepResult::getClobber(--ScanIt);
+    
     MemPtr = LI->getPointerOperand();
     MemSize = TD->getTypeStoreSize(LI->getType());
-    MemVolatile = LI->isVolatile();
   } else if (FreeInst* F = dyn_cast<FreeInst>(QueryInst)) {
     MemPtr = F->getPointerOperand();
     // FreeInsts erase the entire structure, not just a field.
@@ -145,10 +152,6 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     // Values depend on loads if the pointers are must aliased.  This means that
     // a load depends on another must aliased load from the same value.
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
-      // If the access is volatile and this is volatile, return a dependence.
-      if (MemVolatile && LI->isVolatile())
-        return MemDepResult::getClobber(LI);
-      
       Value *Pointer = LI->getPointerOperand();
       uint64_t PointerSize = TD->getTypeStoreSize(LI->getType());
       
@@ -165,10 +168,6 @@ getDependencyFrom(Instruction *QueryInst, BasicBlock::iterator ScanIt,
     }
     
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-      // If the access is volatile and this is volatile, return a dependence.
-      if (MemVolatile && SI->isVolatile())
-        return MemDepResult::getClobber(SI);
-      
       Value *Pointer = SI->getPointerOperand();
       uint64_t PointerSize = TD->getTypeStoreSize(SI->getOperand(0)->getType());
 
