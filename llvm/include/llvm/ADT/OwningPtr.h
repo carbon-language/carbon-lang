@@ -96,7 +96,7 @@ public:
     if (P == Ptr) return;
     T *Tmp = Ptr;
     Ptr = P;
-    delete Tmp;
+    delete [] Tmp;
   }
 
   /// take - Reset the owning pointer to null and return its pointer.  This does
