@@ -685,6 +685,14 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(Selector Sel) {
     while (CatDecl) {
       if ((MethodDecl = CatDecl->getInstanceMethod(Sel)))
         return MethodDecl;
+        
+      // Didn't find one yet - look through protocols.
+      const ObjCList<ObjCProtocolDecl> &Protocols =
+        CatDecl->getReferencedProtocols();
+      for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+           E = Protocols.end(); I != E; ++I)
+        if ((MethodDecl = (*I)->getInstanceMethod(Sel)))
+          return MethodDecl;
       CatDecl = CatDecl->getNextClassCategory();
     }
     ClassDecl = ClassDecl->getSuperClass();
