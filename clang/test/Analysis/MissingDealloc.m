@@ -45,3 +45,21 @@ typedef struct objc_selector *SEL;
   return self;
 }
 @end
+
+//===------------------------------------------------------------------------===
+//  Don't warn about iVars that are IBOutlets.
+
+#ifndef IBOutlet
+#define IBOutlet
+#endif
+
+@class NSWindow;
+
+@interface HasOutlet : NSObject {
+IBOutlet NSWindow *window;
+}
+@end
+
+@implementation HasOutlet // no-warning
+@end
+
