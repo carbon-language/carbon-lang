@@ -76,7 +76,7 @@ DeclContext *Sema::getContainingDC(DeclContext *DC) {
 
 void Sema::PushDeclContext(DeclContext *DC) {
   assert(getContainingDC(DC) == CurContext &&
-       "The next DeclContext should be lexically contained in the current one.");
+      "The next DeclContext should be lexically contained in the current one.");
   CurContext = DC;
 }
 
