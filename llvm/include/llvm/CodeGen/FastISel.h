@@ -106,6 +106,11 @@ public:
   /// defined locally.
   unsigned lookUpRegForValue(Value *V);
 
+  /// getRegForGEPIndex - This is a wrapper around getRegForValue that also
+  /// takes care of truncating or sign-extending the given getelementptr
+  /// index value.
+  unsigned getRegForGEPIndex(Value *V);
+
   virtual ~FastISel();
 
 protected:

@@ -55,6 +55,19 @@
 using namespace llvm;
 
 unsigned FastISel::getRegForValue(Value *V) {
+  MVT::SimpleValueType VT = TLI.getValueType(V->getType()).getSimpleVT();
+
+  // Ignore illegal types. We must do this before looking up the value
+  // in ValueMap because Arguments are given virtual registers regardless
+  // of whether FastISel can handle them.
+  if (!TLI.isTypeLegal(VT)) {
+    // Promote MVT::i1 to a legal type though, because it's common and easy.
+    if (VT == MVT::i1)
+      VT = TLI.getTypeToTransformTo(VT).getSimpleVT();
+    else
+      return 0;
+  }
+
   // Look up the value to see if we already have a register for it. We
   // cache values defined by Instructions across blocks, and other values
   // only locally. This is because Instructions already have the SSA
@@ -64,17 +77,6 @@ unsigned FastISel::getRegForValue(Value *V) {
   unsigned Reg = LocalValueMap[V];
   if (Reg != 0)
     return Reg;
-
-  MVT::SimpleValueType VT = TLI.getValueType(V->getType()).getSimpleVT();
-
-  // Ignore illegal types.
-  if (!TLI.isTypeLegal(VT)) {
-    // Promote MVT::i1 to a legal type though, because it's common and easy.
-    if (VT == MVT::i1)
-      VT = TLI.getTypeToTransformTo(VT).getSimpleVT();
-    else
-      return 0;
-  }
 
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     if (CI->getValue().getActiveBits() <= 64)
@@ -151,6 +153,24 @@ void FastISel::UpdateValueMap(Value* I, unsigned Reg) {
   else
     TII.copyRegToReg(*MBB, MBB->end(), ValueMap[I],
                      Reg, MRI.getRegClass(Reg), MRI.getRegClass(Reg));
+}
+
+unsigned FastISel::getRegForGEPIndex(Value *Idx) {
+  unsigned IdxN = getRegForValue(Idx);
+  if (IdxN == 0)
+    // Unhandled operand. Halt "fast" selection and bail.
+    return 0;
+
+  // If the index is smaller or larger than intptr_t, truncate or extend it.
+  MVT PtrVT = TLI.getPointerTy();
+  MVT IdxVT = MVT::getMVT(Idx->getType(), /*HandleUnknown=*/false);
+  if (IdxVT.bitsLT(PtrVT))
+    IdxN = FastEmit_r(IdxVT.getSimpleVT(), PtrVT.getSimpleVT(),
+                      ISD::SIGN_EXTEND, IdxN);
+  else if (IdxVT.bitsGT(PtrVT))
+    IdxN = FastEmit_r(IdxVT.getSimpleVT(), PtrVT.getSimpleVT(),
+                      ISD::TRUNCATE, IdxN);
+  return IdxN;
 }
 
 /// SelectBinaryOp - Select and emit code for a binary operator instruction,
@@ -263,18 +283,7 @@ bool FastISel::SelectGetElementPtr(User *I) {
       
       // N = N + Idx * ElementSize;
       uint64_t ElementSize = TD.getABITypeSize(Ty);
-      unsigned IdxN = getRegForValue(Idx);
-      if (IdxN == 0)
-        // Unhandled operand. Halt "fast" selection and bail.
-        return false;
-
-      // If the index is smaller or larger than intptr_t, truncate or extend
-      // it.
-      MVT IdxVT = MVT::getMVT(Idx->getType(), /*HandleUnknown=*/false);
-      if (IdxVT.bitsLT(VT))
-        IdxN = FastEmit_r(IdxVT.getSimpleVT(), VT, ISD::SIGN_EXTEND, IdxN);
-      else if (IdxVT.bitsGT(VT))
-        IdxN = FastEmit_r(IdxVT.getSimpleVT(), VT, ISD::TRUNCATE, IdxN);
+      unsigned IdxN = getRegForGEPIndex(Idx);
       if (IdxN == 0)
         // Unhandled operand. Halt "fast" selection and bail.
         return false;

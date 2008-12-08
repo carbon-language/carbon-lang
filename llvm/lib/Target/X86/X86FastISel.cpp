@@ -372,8 +372,8 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     unsigned IndexReg = AM.IndexReg;
     unsigned Scale = AM.Scale;
     gep_type_iterator GTI = gep_type_begin(U);
-    // Look at all but the last index. Constants can be folded,
-    // and one dynamic index can be handled, if the scale is supported.
+    // Iterate through the indices, folding what we can. Constants can be
+    // folded, and one dynamic index can be handled, if the scale is supported.
     for (User::op_iterator i = U->op_begin() + 1, e = U->op_end();
          i != e; ++i, ++GTI) {
       Value *Op = *i;
@@ -392,7 +392,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
                    (S == 1 || S == 2 || S == 4 || S == 8)) {
           // Scaled-index addressing.
           Scale = S;
-          IndexReg = getRegForValue(Op);
+          IndexReg = getRegForGEPIndex(Op);
           if (IndexReg == 0)
             return false;
         } else
