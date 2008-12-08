@@ -35,6 +35,24 @@ MachineRegisterInfo::~MachineRegisterInfo() {
   delete [] PhysRegUseDefLists;
 }
 
+/// createVirtualRegister - Create and return a new virtual register in the
+/// function with the specified register class.
+///
+unsigned
+MachineRegisterInfo::createVirtualRegister(const TargetRegisterClass *RegClass){
+  assert(RegClass && "Cannot create register without RegClass!");
+  // Add a reg, but keep track of whether the vector reallocated or not.
+  void *ArrayBase = VRegInfo.empty() ? 0 : &VRegInfo[0];
+  VRegInfo.push_back(std::make_pair(RegClass, (MachineOperand*)0));
+
+  if (!((&VRegInfo[0] == ArrayBase || VRegInfo.size() == 1)))
+    // The vector reallocated, handle this now.
+    HandleVRegListReallocation();
+  unsigned VR = getLastVirtReg();
+  RegClass2VRegMap[RegClass->getID()].push_back(VR);
+  return VR;
+}
+
 /// HandleVRegListReallocation - We just added a virtual register to the
 /// VRegInfo info list and it reallocated.  Update the use/def lists info
 /// pointers.
