@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unswitch -stats | not grep loop-unswitch
+; RUN: llvm-as < %s | opt -loop-unswitch -verify -disable-output
 
 
 define void @test_fc_while_continue_or(float %x, float %y, float* %result) nounwind {
