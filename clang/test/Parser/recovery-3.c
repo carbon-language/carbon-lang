@@ -7,3 +7,8 @@ static char *f (char * (*g) (char **, int), char **p, ...) {
     s = g (p, __builtin_va_arg(v, int));    // expected-error {{identifier}} expected-warning {{extension}}
 }
 
+
+// PR3172
+} // expected-error {{expected external declaration}}
+
+

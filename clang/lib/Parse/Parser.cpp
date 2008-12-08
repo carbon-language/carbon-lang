@@ -295,6 +295,7 @@ void Parser::ParseTranslationUnit() {
 }
 
 /// ParseExternalDeclaration:
+///
 ///       external-declaration: [C99 6.9], declaration: [C++ dcl.dcl]
 ///         function-definition
 ///         declaration
@@ -317,6 +318,13 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     Diag(Tok, diag::ext_top_level_semi);
     ConsumeToken();
     // TODO: Invoke action for top-level semicolon.
+    return 0;
+  case tok::r_brace:
+    Diag(Tok, diag::err_expected_external_declaration);
+    ConsumeBrace();
+    return 0;
+  case tok::eof:
+    Diag(Tok, diag::err_expected_external_declaration);
     return 0;
   case tok::kw___extension__: {
     // __extension__ silences extension warnings in the subexpression.
@@ -352,6 +360,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
   case tok::kw_export:    // As in 'export template'
     // A function definition cannot start with a these keywords.
     return ParseDeclaration(Declarator::FileContext);
+       
   default:
     // We can't tell whether this is a function-definition or declaration yet.
     return ParseDeclarationOrFunctionDefinition();
