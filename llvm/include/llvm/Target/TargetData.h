@@ -178,8 +178,12 @@ public:
   /// that alloca reserves for this type.  For example, returns 12 or 16 for
   /// x86_fp80, depending on alignment.
   uint64_t getABITypeSize(const Type* Ty) const {
-    unsigned char Align = getABITypeAlignment(Ty);
-    return (getTypeStoreSize(Ty) + Align - 1)/Align*Align;
+    // The alignment of a type is always a power of two.
+    unsigned char AlignMinusOne = getABITypeAlignment(Ty)-1;
+
+    // Round up to the next alignment boundary.
+    uint64_t RoundUp = getTypeStoreSize(Ty) + AlignMinusOne;
+    return RoundUp &= ~uint64_t(AlignMinusOne);
   }
 
   /// getABITypeSizeInBits - Return the offset in bits between successive
