@@ -178,12 +178,8 @@ public:
   /// that alloca reserves for this type.  For example, returns 12 or 16 for
   /// x86_fp80, depending on alignment.
   uint64_t getABITypeSize(const Type* Ty) const {
-    // The alignment of a type is always a power of two.
-    unsigned char AlignMinusOne = getABITypeAlignment(Ty)-1;
-
     // Round up to the next alignment boundary.
-    uint64_t RoundUp = getTypeStoreSize(Ty) + AlignMinusOne;
-    return RoundUp &= ~uint64_t(AlignMinusOne);
+    return RoundUpAlignment(getTypeStoreSize(Ty), getABITypeAlignment(Ty));
   }
 
   /// getABITypeSizeInBits - Return the offset in bits between successive
@@ -244,6 +240,16 @@ public:
   /// requested alignment (if the global has one).
   unsigned getPreferredAlignmentLog(const GlobalVariable *GV) const;
 
+  /// RoundUpAlignment - Round the specified value up to the next alignment
+  /// boundary specified by Alignment.  For example, 7 rounded up to an
+  /// alignment boundary of 4 is 8.  8 rounded up to the alignment boundary of 4
+  /// is 8 because it is already aligned.
+  template <typename UIntTy>
+  static UIntTy RoundUpAlignment(UIntTy Val, unsigned Alignment) {
+    assert((Alignment & (Alignment-1)) == 0 && "Alignment must be power of 2!");
+    return (Val + (Alignment-1)) & ~UIntTy(Alignment-1);
+  }
+  
   static char ID; // Pass identification, replacement for typeid
 };
 

@@ -45,15 +45,16 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
   StructSize = 0;
   NumElements = ST->getNumElements();
 
-  // Loop over each of the elements, placing them in memory...
+  // Loop over each of the elements, placing them in memory.
   for (unsigned i = 0, e = NumElements; i != e; ++i) {
     const Type *Ty = ST->getElementType(i);
     unsigned TyAlign = ST->isPacked() ? 1 : TD.getABITypeAlignment(Ty);
 
-    // Add padding if necessary to align the data element properly...
-    StructSize = (StructSize + TyAlign - 1)/TyAlign * TyAlign;
+    // Add padding if necessary to align the data element properly.
+    if (StructSize & TyAlign-1)
+      StructSize = TargetData::RoundUpAlignment(StructSize, TyAlign);
 
-    // Keep track of maximum alignment constraint
+    // Keep track of maximum alignment constraint.
     StructAlignment = std::max(TyAlign, StructAlignment);
 
     MemberOffsets[i] = StructSize;
@@ -65,8 +66,8 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
 
   // Add padding to the end of the struct so that it could be put in an array
   // and all array elements would be aligned correctly.
-  if (StructSize % StructAlignment != 0)
-    StructSize = (StructSize/StructAlignment + 1) * StructAlignment;
+  if (StructSize & (StructAlignment-1) != 0)
+    StructSize = TargetData::RoundUpAlignment(StructSize, StructAlignment);
 }
 
 
@@ -346,18 +347,18 @@ typedef DenseMap<LayoutKey, StructLayout*, DenseMapLayoutKeyInfo> LayoutInfoTy;
 static ManagedStatic<LayoutInfoTy> LayoutInfo;
 
 TargetData::~TargetData() {
-  if (LayoutInfo.isConstructed()) {
-    // Remove any layouts for this TD.
-    LayoutInfoTy &TheMap = *LayoutInfo;
-    for (LayoutInfoTy::iterator I = TheMap.begin(), E = TheMap.end();
-         I != E; ) {
-      if (I->first.first == this) {
-        I->second->~StructLayout();
-        free(I->second);
-        TheMap.erase(I++);
-      } else {
-        ++I;
-      }
+  if (!LayoutInfo.isConstructed())
+    return;
+  
+  // Remove any layouts for this TD.
+  LayoutInfoTy &TheMap = *LayoutInfo;
+  for (LayoutInfoTy::iterator I = TheMap.begin(), E = TheMap.end(); I != E; ) {
+    if (I->first.first == this) {
+      I->second->~StructLayout();
+      free(I->second);
+      TheMap.erase(I++);
+    } else {
+      ++I;
     }
   }
 }
@@ -390,11 +391,11 @@ void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
   if (!LayoutInfo.isConstructed()) return;  // No cache.
   
   LayoutInfoTy::iterator I = LayoutInfo->find(LayoutKey(this, Ty));
-  if (I != LayoutInfo->end()) {
-    I->second->~StructLayout();
-    free(I->second);
-    LayoutInfo->erase(I);
-  }
+  if (I == LayoutInfo->end()) return;
+  
+  I->second->~StructLayout();
+  free(I->second);
+  LayoutInfo->erase(I);
 }
 
 
@@ -426,11 +427,9 @@ uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
     const ArrayType *ATy = cast<ArrayType>(Ty);
     return getABITypeSizeInBits(ATy->getElementType())*ATy->getNumElements();
   }
-  case Type::StructTyID: {
+  case Type::StructTyID:
     // Get the layout annotation... which is lazily created on demand.
-    const StructLayout *Layout = getStructLayout(cast<StructType>(Ty));
-    return Layout->getSizeInBits();
-  }
+    return getStructLayout(cast<StructType>(Ty))->getSizeInBits();
   case Type::IntegerTyID:
     return cast<IntegerType>(Ty)->getBitWidth();
   case Type::VoidTyID:
@@ -446,10 +445,8 @@ uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
   // only 80 bits contain information.
   case Type::X86_FP80TyID:
     return 80;
-  case Type::VectorTyID: {
-    const VectorType *PTy = cast<VectorType>(Ty);
-    return PTy->getBitWidth();
-  }
+  case Type::VectorTyID:
+    return cast<VectorType>(Ty)->getBitWidth();
   default:
     assert(0 && "TargetData::getTypeSizeInBits(): Unsupported type");
     break;
@@ -470,7 +467,7 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
 
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getTypeID()) {
-  /* Early escape for the non-numeric types */
+  // Early escape for the non-numeric types.
   case Type::LabelTyID:
   case Type::PointerTyID:
     return (abi_or_pref
