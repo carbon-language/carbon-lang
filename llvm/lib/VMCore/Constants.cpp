@@ -1268,7 +1268,7 @@ static ManagedStatic<ValueMap<char, Type,
 
 static char getValType(ConstantAggregateZero *CPZ) { return 0; }
 
-Constant *ConstantAggregateZero::get(const Type *Ty) {
+ConstantAggregateZero *ConstantAggregateZero::get(const Type *Ty) {
   assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) &&
          "Cannot create an aggregate zero of non-aggregate type!");
   return AggZeroConstants->getOrCreate(Ty, 0);

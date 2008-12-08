@@ -295,7 +295,7 @@ protected:
 public:
   /// get() - static factory method for creating a null aggregate.  It is
   /// illegal to call this method with a non-aggregate type.
-  static Constant *get(const Type *Ty);
+  static ConstantAggregateZero *get(const Type *Ty);
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
