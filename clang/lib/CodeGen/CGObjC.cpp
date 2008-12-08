@@ -148,11 +148,13 @@ void CodeGenFunction::GenerateObjCGetter(const ObjCPropertyImplDecl *PID) {
   StartObjCMethod(OMD);
 
   // Determine if we should use an objc_getProperty call for
-  // this. Non-atomic and properties with assign semantics are
-  // directly evaluated, and in gc-only mode we don't need it at all.
+  // this. Non-atomic properties are directly evaluated.
+  // atomic 'copy' and 'retain' properties are also directly
+  // evaluated in gc-only mode.
   if (CGM.getLangOptions().getGCMode() != LangOptions::GCOnly &&
-      PD->getSetterKind() != ObjCPropertyDecl::Assign &&
-      !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic)) {
+      !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic) &&
+      (PD->getSetterKind() == ObjCPropertyDecl::Copy ||
+       PD->getSetterKind() == ObjCPropertyDecl::Retain)) {
     llvm::Value *GetPropertyFn = 
       CGM.getObjCRuntime().GetPropertyGetFunction();
     
