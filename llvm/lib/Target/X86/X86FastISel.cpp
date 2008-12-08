@@ -332,11 +332,13 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     // Look past no-op inttoptrs.
     if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
       return X86SelectAddress(U->getOperand(0), AM, isCall);
+    break;
 
   case Instruction::PtrToInt:
     // Look past no-op ptrtoints.
     if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
       return X86SelectAddress(U->getOperand(0), AM, isCall);
+    break;
 
   case Instruction::Alloca: {
     if (isCall) break;
