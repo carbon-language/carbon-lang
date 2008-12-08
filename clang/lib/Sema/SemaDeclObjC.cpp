@@ -1299,9 +1299,10 @@ void Sema::CheckObjCPropertyAttributes(QualType PropertyTy,
                          (Attributes & ObjCDeclSpec::DQ_PR_copy) ?
                           "copy" : "retain";
                          
-    Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
+    Diag(Loc, (Attributes & (ObjCDeclSpec::DQ_PR_readwrite)) ? 
+                 diag::err_objc_property_attr_mutually_exclusive :
+                 diag::warn_objc_property_attr_mutually_exclusive)
       << "readonly" << which;
-    return;
   }
 
   // Check for copy or retain on non-object types.

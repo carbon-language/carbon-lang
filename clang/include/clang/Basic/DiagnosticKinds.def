@@ -448,6 +448,8 @@ DIAG(err_objc_unexpected_attr, ERROR,
      "prefix attribute must be followed by an interface or protocol")
 DIAG(err_objc_property_attr_mutually_exclusive, ERROR,
      "property attributes '%0' and '%1' are mutually exclusive")
+DIAG(warn_objc_property_attr_mutually_exclusive, WARNING,
+     "property attributes '%0' and '%1' are mutually exclusive")
 DIAG(warn_objc_property_no_assignment_attribute, WARNING,
      "no 'assign', 'retain', or 'copy' attribute is specified - 'assign' is assumed")
 DIAG(warn_objc_property_default_assign_on_object, WARNING,

@@ -1,15 +1,15 @@
 // RUN: clang -fsyntax-only -verify %s
 
 @protocol P0
-@property(readonly,assign) id X; // expected-error {{property attributes 'readonly' and 'assign' are mutually exclusive}}
+@property(readonly,assign) id X; // expected-warning {{property attributes 'readonly' and 'assign' are mutually exclusive}}
 @end
 
 @protocol P1
-@property(readonly,retain) id X; // expected-error {{property attributes 'readonly' and 'retain' are mutually exclusive}}
+@property(readonly,retain) id X; // expected-warning {{property attributes 'readonly' and 'retain' are mutually exclusive}}
 @end
 
 @protocol P2
-@property(readonly,copy) id X; // expected-error {{property attributes 'readonly' and 'copy' are mutually exclusive}}
+@property(readonly,copy) id X; // expected-warning {{property attributes 'readonly' and 'copy' are mutually exclusive}}
 @end
 
 @protocol P3
