@@ -51,7 +51,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
     unsigned TyAlign = ST->isPacked() ? 1 : TD.getABITypeAlignment(Ty);
 
     // Add padding if necessary to align the data element properly.
-    if (StructSize & TyAlign-1)
+    if ((StructSize & TyAlign-1) != 0)
       StructSize = TargetData::RoundUpAlignment(StructSize, TyAlign);
 
     // Keep track of maximum alignment constraint.
@@ -66,7 +66,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
 
   // Add padding to the end of the struct so that it could be put in an array
   // and all array elements would be aligned correctly.
-  if (StructSize & (StructAlignment-1) != 0)
+  if ((StructSize & (StructAlignment-1)) != 0)
     StructSize = TargetData::RoundUpAlignment(StructSize, StructAlignment);
 }
 
