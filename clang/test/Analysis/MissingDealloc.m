@@ -3,7 +3,10 @@ typedef signed char BOOL;
 @protocol NSObject  - (BOOL)isEqual:(id)object; @end
 @interface NSObject <NSObject> {}
 - (void)dealloc;
+- (id)init;
 @end
+
+typedef struct objc_selector *SEL;
 
 // <rdar://problem/6380411>: 'myproperty' has kind 'assign' and thus the
 //  assignment through the setter does not perform a release.
@@ -19,5 +22,26 @@ typedef signed char BOOL;
 - (void)dealloc {
   self.myproperty = 0;
   [super dealloc]; 
+}
+@end
+
+//===------------------------------------------------------------------------===
+//  Don't warn about iVars that are selectors.
+
+@interface TestSELs : NSObject {
+  SEL a;
+  SEL b;
+}
+
+@end
+
+@implementation TestSELs // no-warning
+- (id)init {
+  if( (self = [super init]) ) {
+    a = @selector(a);
+    b = @selector(b);
+  }
+
+  return self;
 }
 @end
