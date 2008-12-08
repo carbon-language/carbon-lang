@@ -1254,7 +1254,7 @@ public:
 
     SDUse &getUse() const { return *Op; }
 
-    /// getOperandNo - Retrive the operand # of this use in its user.
+    /// getOperandNo - Retrieve the operand # of this use in its user.
     ///
     unsigned getOperandNo() const {
       assert(Op && "Cannot dereference end iterator!");
