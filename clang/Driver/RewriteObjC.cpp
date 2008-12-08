@@ -16,6 +16,7 @@
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/TranslationUnit.h"
+#include "clang/AST/ParentMap.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Diagnostic.h"
@@ -107,6 +108,10 @@ namespace {
 
     // This maps a property to it's assignment statement.
     llvm::DenseMap<ObjCPropertyRefExpr *, BinaryOperator *> PropSetters;
+    // This maps a property to it's synthesied message expression.
+    // This allows us to rewrite chained getters (e.g. o.a.b.c).
+    llvm::DenseMap<ObjCPropertyRefExpr *, Stmt *> PropGetters;
+    
     // This maps an original source AST to it's rewritten form. This allows
     // us to avoid rewriting the same node twice (which is very uncommon).
     // This is needed to support some of the exotic property rewriting.
@@ -208,6 +213,9 @@ namespace {
     // Expression Rewriting.
     Stmt *RewriteFunctionBodyOrGlobalInitializer(Stmt *S);
     void CollectPropertySetters(Stmt *S);
+    
+    Stmt *CurrentBody;
+    ParentMap *PropParentMap; // created lazily.
     
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
     Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, SourceLocation OrigStart);
@@ -1016,7 +1024,13 @@ Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt) {
   llvm::SmallVector<Expr *, 1> ExprVec;
   ExprVec.push_back(newStmt);
   
-  MsgExpr = new ObjCMessageExpr(PropRefExpr->getBase(), 
+  Stmt *Receiver = PropRefExpr->getBase();
+  ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(Receiver);
+  if (PRE && PropGetters[PRE]) {
+    // This allows us to handle chain/nested property getters.
+    Receiver = PropGetters[PRE];
+  }
+  MsgExpr = new ObjCMessageExpr(dyn_cast<Expr>(Receiver), 
                                 PDecl->getSetterName(), PDecl->getType(), 
                                 PDecl->getSetterMethodDecl(), 
                                 SourceLocation(), SourceLocation(), 
@@ -1036,19 +1050,37 @@ Stmt *RewriteObjC::RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr) {
   ObjCMessageExpr *MsgExpr;
   ObjCPropertyDecl *PDecl = PropRefExpr->getProperty();
   
-  MsgExpr = new ObjCMessageExpr(PropRefExpr->getBase(), 
+  Stmt *Receiver = PropRefExpr->getBase();
+  
+  ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(Receiver);
+  if (PRE && PropGetters[PRE]) {
+    // This allows us to handle chain/nested property getters.
+    Receiver = PropGetters[PRE];
+  }
+  MsgExpr = new ObjCMessageExpr(dyn_cast<Expr>(Receiver), 
                                 PDecl->getGetterName(), PDecl->getType(), 
                                 PDecl->getGetterMethodDecl(), 
                                 SourceLocation(), SourceLocation(), 
                                 0, 0);
 
   Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
-    
-  ReplaceStmt(PropRefExpr, ReplacingStmt);
-    
-  // delete PropRefExpr; elsewhere...
-  delete MsgExpr;
-  return ReplacingStmt;
+
+  if (!PropParentMap)
+    PropParentMap = new ParentMap(CurrentBody);
+
+  Stmt *Parent = PropParentMap->getParent(PropRefExpr);
+  if (Parent && isa<ObjCPropertyRefExpr>(Parent)) {
+    // We stash away the ReplacingStmt since actually doing the
+    // replacement/rewrite won't work for nested getters (e.g. obj.p.i)
+    PropGetters[PropRefExpr] = ReplacingStmt;
+    delete MsgExpr;
+    return PropRefExpr; // return the original...
+  } else {
+    ReplaceStmt(PropRefExpr, ReplacingStmt);
+    // delete PropRefExpr; elsewhere...
+    delete MsgExpr;
+    return ReplacingStmt;
+  }
 }
 
 Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, 
@@ -4272,8 +4304,13 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     if (Stmt *Body = FD->getBody()) {
       CurFunctionDef = FD;
       CollectPropertySetters(Body);
+      CurrentBody = Body;
       FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
-      
+      CurrentBody = 0;
+      if (PropParentMap) {
+        delete PropParentMap;
+        PropParentMap = 0;
+      }
       // This synthesizes and inserts the block "impl" struct, invoke function,
       // and any copy/dispose helper functions.
       InsertBlockLiteralsWithinFunction(FD);
@@ -4283,10 +4320,15 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
   }
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     if (Stmt *Body = MD->getBody()) {
-      //Body->dump();
       CurMethodDef = MD;
       CollectPropertySetters(Body);
+      CurrentBody = Body;
       MD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
+      CurrentBody = 0;
+      if (PropParentMap) {
+        delete PropParentMap;
+        PropParentMap = 0;
+      }
       InsertBlockLiteralsWithinMethod(MD);
       CurMethodDef = 0;
     }
@@ -4312,7 +4354,13 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     if (VD->getInit()) {
       GlobalVarDecl = VD;
       CollectPropertySetters(VD->getInit());
+      CurrentBody = VD->getInit();
       RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
+      CurrentBody = 0;
+      if (PropParentMap) {
+        delete PropParentMap;
+        PropParentMap = 0;
+      }
       SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(), 
                               VD->getNameAsCString());
       GlobalVarDecl = 0;
