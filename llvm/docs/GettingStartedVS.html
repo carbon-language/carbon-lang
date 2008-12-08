@@ -65,12 +65,12 @@
   <p>The LLVM test suite cannot be run on the Visual Studio port at this
   time.</p>
 
-  <p>Most of the tools build and work.  <tt>llvm-db</tt> does not build at this
-  time.  <tt>bugpoint</tt> does build, but does not work.
+  <p>Most of the tools build and work.  <tt>bugpoint</tt> does build, but does
+  not work.  The other tools 'should' work, but have not been fully tested.</p>
 
   <p>Additional information about the LLVM directory structure and tool chain
   can be found on the main <a href="GettingStarted.html">Getting Started</a>
-  page.</P>
+  page.</p>
 
 </div>
 
@@ -108,11 +108,38 @@
       <li><tt>cd llvm</tt></li>
     </ol></li>
   </ul></li>
+  
+  <li> Use <a href="http://www.cmake.org/">CMake</a> to generate up-to-date
+    project files:
+    <ul><li>This step is currently optional as LLVM does still come with a
+    normal Visual Studio solution file, but it is not always kept up-to-date
+    and will soon be deprecated in favor of the multi-platform generator
+    CMake.</li>
+    <li>If CMake is installed then the most simple way is to just start the
+    CMake GUI, select the directory where you have LLVM extracted to, and
+    the default options should all be fine.  The one option you may really
+    want to change, regardless of anything else, might be the
+    CMAKE_INSTALL_PREFIX setting to select a directory to INSTALL to once
+    compiling is complete.</li>
+    <li>If you use CMake to generate the Visual Studio solution and project
+    files, then the Solution will have a few extra options compared to the
+    current included one.  The projects may still be built individually, but
+    to build them all do not just select all of them in batch build (as some
+    are meant as configuration projects), but rather select and build just
+    the ALL_BUILD project to build everything, or the INSTALL project, which
+    first builds the ALL_BUILD project, then installs the LLVM headers, libs,
+    and other useful things to the directory set by the CMAKE_INSTALL_PREFIX
+    setting when you first configured CMake.</li>
+    </ul>
+  </li>
 
   <li>Start Visual Studio
-  <ol>
-    <li>Simply double click on the solution file <tt>llvm/win32/llvm.sln</tt>.
-    </li>
+  <ul>
+    <li>If you did not use CMake, then simply double click on the solution
+    file <tt>llvm/win32/llvm.sln</tt>.</li>
+    <li>If you used CMake, then the directory you created the project files,
+    the root directory will have an <tt>llvm.sln</tt> file, just
+    double-click on that to open Visual Studio.</li>
   </ol></li>
 
   <li>Build the LLVM Suite:
@@ -151,8 +178,8 @@ changes are continually making the VS support better.</p>
 
 <div class="doc_text">
 
-  <p>Any system that can adequately run Visual Studio .NET 2003 is fine.  The
-  LLVM source tree and object files, libraries and executables will consume
+  <p>Any system that can adequately run Visual Studio .NET 2005 SP1 is fine.  
+  The LLVM source tree and object files, libraries and executables will consume
   approximately 3GB.</p>
 
 </div>
@@ -161,11 +188,15 @@ changes are continually making the VS support better.</p>
 <div class="doc_subsection"><a name="software"><b>Software</b></a></div>
 <div class="doc_text">
 
-  <p>You will need Visual Studio .NET 2003.  Earlier versions cannot open the
-  solution/project files.  The VS 2005 beta can, but will migrate these files
-  to its own format in the process.  While it should work with the VS 2005
-  beta, there are no guarantees and there is no support for it at this time.
-  It has been reported that VC++ Express also works.</p>
+  <p>You will need Visual Studio .NET 2005 SP1 or higher.  The VS2005 SP1
+  beta and the normal VS2005 still have bugs that are not completely
+  compatible. VS2003 would work except (at last check) it has a bug with
+  friend classes that you can work-around with some minor code rewriting
+  (and please submit a patch if you do).  Earlier versions of Visual Studio
+  do not support the C++ standard well enough and will not work.</p>
+  
+  <p>You will also need the <a href="http://www.cmake.org/">CMake</a> build
+  system since it generates the project files you will use to build with.</p>
 
   <p>If you plan to modify any .y or .l files, you will need to have bison
   and/or flex installed where Visual Studio can find them.  Otherwise, you do

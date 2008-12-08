@@ -31,7 +31,7 @@ Annotable::~Annotable() {   // Virtual because it's designed to be subclassed...
 namespace {
   class StrCmp {
   public:
-    bool operator()(const char *a, const char *b) {
+    bool operator()(const char *a, const char *b) const {
       return strcmp(a, b) < 0;
     }
   };
