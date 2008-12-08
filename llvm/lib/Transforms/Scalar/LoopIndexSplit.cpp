@@ -104,7 +104,7 @@ namespace {
     ///     ...
     ///   }
     /// }
-    /// is trnasformed to iterators from A to B, if A > 0 and B < N.
+    /// is transformed to iterators from A to B, if A > 0 and B < N.
     ///
     bool updateLoopIterationSpace();
 
@@ -147,22 +147,22 @@ namespace {
     /// instructions are either PHINodes or IV based values.
     bool cleanBlock(BasicBlock *BB);
 
-    /// IVisLT - If Op is comparing IV based value with an loop invaraint and 
+    /// IVisLT - If Op is comparing IV based value with an loop invariant and 
     /// IV based value is less than  the loop invariant then return the loop 
     /// invariant. Otherwise return NULL.
     Value * IVisLT(ICmpInst &Op);
 
-    /// IVisLE - If Op is comparing IV based value with an loop invaraint and 
+    /// IVisLE - If Op is comparing IV based value with an loop invariant and 
     /// IV based value is less than or equal to the loop invariant then 
     /// return the loop invariant. Otherwise return NULL.
     Value * IVisLE(ICmpInst &Op);
 
-    /// IVisGT - If Op is comparing IV based value with an loop invaraint and 
+    /// IVisGT - If Op is comparing IV based value with an loop invariant and 
     /// IV based value is greater than  the loop invariant then return the loop 
     /// invariant. Otherwise return NULL.
     Value * IVisGT(ICmpInst &Op);
 
-    /// IVisGE - If Op is comparing IV based value with an loop invaraint and 
+    /// IVisGE - If Op is comparing IV based value with an loop invariant and 
     /// IV based value is greater than or equal to the loop invariant then 
     /// return the loop invariant. Otherwise return NULL.
     Value * IVisGE(ICmpInst &Op);
@@ -508,7 +508,7 @@ bool LoopIndexSplit::restrictLoopBound(ICmpInst &Op) {
 ///     ...
 ///   }
 /// }
-/// is trnasformed to iterators from A to B, if A > 0 and B < N.
+/// is transformed to iterators from A to B, if A > 0 and B < N.
 ///
 bool LoopIndexSplit::updateLoopIterationSpace() {
   SplitCondition = NULL;
@@ -1127,7 +1127,7 @@ bool LoopIndexSplit::cleanBlock(BasicBlock *BB) {
   return true;
 }
 
-/// IVisLT - If Op is comparing IV based value with an loop invaraint and 
+/// IVisLT - If Op is comparing IV based value with an loop invariant and 
 /// IV based value is less than  the loop invariant then return the loop 
 /// invariant. Otherwise return NULL.
 Value * LoopIndexSplit::IVisLT(ICmpInst &Op) {
@@ -1145,7 +1145,7 @@ Value * LoopIndexSplit::IVisLT(ICmpInst &Op) {
   return NULL;
 }
 
-/// IVisLE - If Op is comparing IV based value with an loop invaraint and 
+/// IVisLE - If Op is comparing IV based value with an loop invariant and 
 /// IV based value is less than or equal to the loop invariant then 
 /// return the loop invariant. Otherwise return NULL.
 Value * LoopIndexSplit::IVisLE(ICmpInst &Op) {
@@ -1163,7 +1163,7 @@ Value * LoopIndexSplit::IVisLE(ICmpInst &Op) {
   return NULL;
 }
 
-/// IVisGT - If Op is comparing IV based value with an loop invaraint and 
+/// IVisGT - If Op is comparing IV based value with an loop invariant and 
 /// IV based value is greater than  the loop invariant then return the loop 
 /// invariant. Otherwise return NULL.
 Value * LoopIndexSplit::IVisGT(ICmpInst &Op) {
@@ -1181,7 +1181,7 @@ Value * LoopIndexSplit::IVisGT(ICmpInst &Op) {
   return NULL;
 }
 
-/// IVisGE - If Op is comparing IV based value with an loop invaraint and 
+/// IVisGE - If Op is comparing IV based value with an loop invariant and 
 /// IV based value is greater than or equal to the loop invariant then 
 /// return the loop invariant. Otherwise return NULL.
 Value * LoopIndexSplit::IVisGE(ICmpInst &Op) {
