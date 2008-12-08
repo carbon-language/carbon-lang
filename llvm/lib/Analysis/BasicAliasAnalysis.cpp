@@ -164,19 +164,24 @@ static bool isNonEscapingLocalObject(const Value *V) {
 /// by V is smaller than Size.
 static bool isObjectSmallerThan(const Value *V, unsigned Size,
                                 const TargetData &TD) {
-  const Type *AccessTy = 0;
-  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+  const Type *AccessTy;
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     AccessTy = GV->getType()->getElementType();
-  
-  if (const AllocationInst *AI = dyn_cast<AllocationInst>(V))
+  } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(V)) {
     if (!AI->isArrayAllocation())
       AccessTy = AI->getType()->getElementType();
-
-  if (const Argument *A = dyn_cast<Argument>(V))
+    else
+      return false;
+  } else if (const Argument *A = dyn_cast<Argument>(V)) {
     if (A->hasByValAttr())
       AccessTy = cast<PointerType>(A->getType())->getElementType();
+    else
+      return false;
+  } else {
+    return false;
+  }
   
-  if (AccessTy && AccessTy->isSized())
+  if (AccessTy->isSized())
     return TD.getABITypeSize(AccessTy) < Size;
   return false;
 }
