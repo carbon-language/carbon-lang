@@ -40,6 +40,8 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
   if (TM.getRelocationModel() != Reloc::Static &&
       TM.getCodeModel() != CodeModel::Large) {
     if (isTargetDarwin()) {
+      if (isDirectCall)
+        return false;
       bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
       if (GV->hasHiddenVisibility() &&
           (Is64Bit || (!isDecl && !GV->hasCommonLinkage())))
