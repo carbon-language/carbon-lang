@@ -55,3 +55,6 @@ enum someenum {};  // expected-warning {{use of empty enum extension}}
 enum e0 { // expected-note {{previous definition is here}}
   E0 = sizeof(enum e0 { E1 }) // expected-error {{nested redefinition}}
 };
+
+// PR3173
+enum { PR3173A, PR3173B = PR3173A+50 };

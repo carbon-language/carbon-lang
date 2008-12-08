@@ -430,6 +430,9 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
   // Enums are integer constant exprs.
   if (const EnumConstantDecl *D = dyn_cast<EnumConstantDecl>(E->getDecl())) {
     Result = D->getInitVal();
+    // FIXME: This is an ugly hack around the fact that enums don't set their
+    // signedness consistently; see PR3173
+    Result.setIsUnsigned(!E->getType()->isSignedIntegerType());
     return true;
   }
   
