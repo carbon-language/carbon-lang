@@ -1,4 +1,4 @@
-//===---- ScheduleDAG.cpp - Implement the ScheduleDAG class ---------------===//
+//===---- ScheduleDAGInstrs.cpp - MachineInstr Rescheduling ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This implements the ScheduleDAG class, which is a base class used by
-// scheduling implementation classes.
+// This implements the ScheduleDAGInstrs class, which implements re-scheduling
+// of MachineInstrs.
 //
 //===----------------------------------------------------------------------===//
 
@@ -114,7 +114,8 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
     if (TID.isCall() || TID.isReturn() || TID.isBranch() ||
         TID.hasUnmodeledSideEffects()) {
     new_chain:
-      // This is the conservative case. Add dependencies on all memory references.
+      // This is the conservative case. Add dependencies on all memory
+      // references.
       if (Chain)
         Chain->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
       Chain = SU;
@@ -161,7 +162,8 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
           MemDefs[V] = SU;
         }
         // Handle the uses in MemUses, if there are any.
-        std::map<const Value *, std::vector<SUnit *> >::iterator J = MemUses.find(V);
+        std::map<const Value *, std::vector<SUnit *> >::iterator J =
+          MemUses.find(V);
         if (J != MemUses.end()) {
           for (unsigned i = 0, e = J->second.size(); i != e; ++i)
             J->second[i]->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
@@ -203,8 +205,8 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
       }
     }
 
-    // Add chain edges from the terminator to ensure that all the work of the block is
-    // completed before any control transfers.
+    // Add chain edges from the terminator to ensure that all the work of the
+    // block is completed before any control transfers.
     if (Terminator && SU->Succs.empty())
       Terminator->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
     if (TID.isTerminator() || MI->isLabel())
