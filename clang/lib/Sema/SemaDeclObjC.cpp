@@ -1388,11 +1388,7 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
           // with anonymous category's readwrite property attribute!
           unsigned PIkind = PIDecl->getPropertyAttributes();
           if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
-            if ((Attributes & ObjCPropertyDecl::OBJC_PR_retain) !=
-                (PIkind & ObjCPropertyDecl::OBJC_PR_retain) ||
-                (Attributes & ObjCPropertyDecl::OBJC_PR_copy) !=
-                (PIkind & ObjCPropertyDecl::OBJC_PR_copy) ||
-                (Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) !=
+            if ((Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) !=
                 (PIkind & ObjCPropertyDecl::OBJC_PR_nonatomic))
               Diag(AtLoc, diag::warn_property_attr_mismatch);
             PIDecl->makeitReadWriteAttribute();
