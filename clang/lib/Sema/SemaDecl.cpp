@@ -868,7 +868,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
   }
 
-  if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
+  if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
     InvalidDecl = InvalidDecl 
       || DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
@@ -2035,7 +2035,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   // among each other.  Here they can only shadow globals, which is ok.
   IdentifierInfo *II = D.getIdentifier();
   if (Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S)) {
-    if (isTemplateParameterDecl(PrevDecl)) {
+    if (PrevDecl->isTemplateParameter()) {
       // Maybe we will complain about the shadowed template parameter.
       DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
       // Just pretend that we didn't see the previous declaration.
@@ -2299,7 +2299,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     PrevDecl = dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S));
   }
 
-  if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
+  if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
     DiagnoseTemplateParameterShadow(NameLoc, PrevDecl);
     // Just pretend that we didn't see the previous declaration.
@@ -2442,7 +2442,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
     PrevDecl = dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S));
   }
   
-  if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
+  if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
     DiagnoseTemplateParameterShadow(NameLoc, PrevDecl);
     // Just pretend that we didn't see the previous declaration.
@@ -2959,7 +2959,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   // Verify that there isn't already something declared with this name in this
   // scope.
   Decl *PrevDecl = LookupDecl(Id, Decl::IDNS_Ordinary, S);
-  if (PrevDecl && isTemplateParameterDecl(PrevDecl)) {
+  if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
     DiagnoseTemplateParameterShadow(IdLoc, PrevDecl);
     // Just pretend that we didn't see the previous declaration.

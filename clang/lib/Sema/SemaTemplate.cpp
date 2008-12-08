@@ -18,18 +18,12 @@
 
 using namespace clang;
 
-/// isTemplateParameterDecl - Determines whether the given declaration
-/// 'D' names a template parameter.
-bool Sema::isTemplateParameterDecl(Decl *D) {
-  return isa<TemplateTypeParmDecl>(D) || isa<NonTypeTemplateParmDecl>(D);
-}
-
 /// DiagnoseTemplateParameterShadow - Produce a diagnostic complaining
 /// that the template parameter 'PrevDecl' is being shadowed by a new
 /// declaration at location Loc. Returns true to indicate that this is
 /// an error, and false otherwise.
 bool Sema::DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl) {
-  assert(isTemplateParameterDecl(PrevDecl) && "Not a template parameter");
+  assert(PrevDecl->isTemplateParameter() && "Not a template parameter");
 
   // Microsoft Visual C++ permits template parameters to be shadowed.
   if (getLangOptions().Microsoft)
@@ -63,7 +57,7 @@ Sema::DeclTy *Sema::ActOnTypeParameter(Scope *S, bool Typename,
 
   if (ParamName) {
     Decl *PrevDecl = LookupDecl(ParamName, Decl::IDNS_Tag, S);
-    if (PrevDecl && isTemplateParameterDecl(PrevDecl))
+    if (PrevDecl && PrevDecl->isTemplateParameter())
       Invalid = Invalid || DiagnoseTemplateParameterShadow(ParamNameLoc,
 							   PrevDecl);
   }
@@ -97,7 +91,7 @@ Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D) {
   IdentifierInfo *ParamName = D.getIdentifier();
   if (ParamName) {
     Decl *PrevDecl = LookupDecl(ParamName, Decl::IDNS_Tag, S);
-    if (PrevDecl && isTemplateParameterDecl(PrevDecl))
+    if (PrevDecl && PrevDecl->isTemplateParameter())
       Invalid = Invalid || DiagnoseTemplateParameterShadow(D.getIdentifierLoc(),
 							   PrevDecl);
   }

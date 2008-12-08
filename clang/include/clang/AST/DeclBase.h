@@ -211,6 +211,10 @@ public:
   static bool CollectingStats(bool Enable = false);
   static void PrintStats();
     
+  /// isTemplateParameter - Determines whether this declartion is a
+  /// template parameter.
+  bool isTemplateParameter() const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }
   static DeclContext *castToDeclContext(const Decl *);
@@ -387,6 +391,11 @@ private:
 template<> struct DeclContext::KindTrait<DeclContext> {
   static Decl::Kind getKind(const DeclContext *D) { return D->DeclKind; }
 };
+
+inline bool Decl::isTemplateParameter() const {
+  return getKind() == TemplateTypeParm || getKind() == NonTypeTemplateParm;
+}
+
 
 } // end clang.
 
