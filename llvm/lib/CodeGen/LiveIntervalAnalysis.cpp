@@ -918,7 +918,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
         MachineRegisterInfo::def_iterator I = mri_->def_begin(Reg),
                                           E = mri_->def_end();
 
-        // For the def, it should be the only def.
+        // For the def, it should be the only def of that register.
         if (MO.isDef() && (next(I) != E || IsLiveIn))
           return false;
 
@@ -931,7 +931,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
             else if (Reg != ImpUse)
               return false;
           }
-          // For uses, there should be only one associate def.
+          // For the use, there should be only one associated def.
           if (I != E && (next(I) != E || IsLiveIn))
             return false;
         }
