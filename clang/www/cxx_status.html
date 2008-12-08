@@ -44,7 +44,7 @@ of support for a given section:
 <p>The following table is used to help track our implementation
   progress toward implementing the complete C++03 standard. We use a
   simple, somewhat arbitrary color-coding scheme to describe the
-  relatively completeness of features by section:</p>
+  relative completeness of features by section:</p>
 
 <table width="689" border="1" cellspacing="0">
   <tr>
@@ -58,7 +58,7 @@ of support for a given section:
   </tr>
   <tr>
     <td></td>
-    <td class="na">N/A</td>    
+    <td class="na">N/A</td>
     <td class="broken"></td>
     <td class="basic"></td>
     <td class="medium"></td>
@@ -104,7 +104,7 @@ welcome!</p>
   </tr>
 <tr>
   <td>2 [lex]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -112,23 +112,23 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.1 [lex.phases]</td>
-  <td></td>
+  <td class="advanced" align="center"></td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
-  <td></td>
+  <td>Extended characters aren't handled.</td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.2 [lex.charset]</td>
-  <td></td>
+    <td class="basic"></td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
-  <td></td>
+  <td>No support for extended characters.</td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.3 [lex.trigraph]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -136,7 +136,7 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.4 [lex.pptoken]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -144,7 +144,7 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.5 [lex.digraph]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -152,7 +152,7 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.6 [lex.token]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -160,15 +160,15 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.7 [lex.comment]</td>
-  <td></td>
+  <td class="advanced" align="center"></td>
   <td></td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
-  <td></td>
+  <td>NDR "form feed or vtab in comment" is not diagnosed. No AST representation of comments.</td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.8 [lex.header]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -176,7 +176,7 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.9 [lex.ppnumber]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -184,15 +184,15 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.10 [lex.name]</td>
-  <td></td>
+  <td class="advanced" align="center"></td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
-  <td></td>
+  <td>No support for extended characters</td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.11 [lex.key]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -200,7 +200,7 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.12 [lex.operators]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -208,7 +208,7 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;2.13 [lex.literal]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -216,7 +216,7 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;2.13.1 [lex.icon]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -224,15 +224,15 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;2.13.2 [lex.ccon]</td>
-  <td></td>
+  <td class="advanced" align="center"></td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
-  <td></td>
+  <td>Poor support for extended characters</td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;2.13.3 [lex.fcon]</td>
-  <td></td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
@@ -240,36 +240,126 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;2.13.4 [lex.string]</td>
-  <td></td>
+  <td class="advanced" align="center"></td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td>Poor support for extended characters</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;2.13.5 [lex.bool]</td>
+  <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td></td>
 </tr>
 <tr>
-  <td>&nbsp;&nbsp;&nbsp;&nbsp;2.13.5 [lex.bool]</td>
-  <td></td>
+<td>3 [basic]</td>
+  <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td class="na">N/A</td>
   <td></td>
 </tr>
-<tr><td>3 [basic]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;3.1 [basic.def]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;3.2 [basic.def.odr]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;3.3 [basic.scope]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.1 [basic.scope.pdecl]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.2 [basic.scope.local]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.3 [basic.scope.proto]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.4 [basic.funscope]</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr>
+  <td>&nbsp;&nbsp;3.1 [basic.def]</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td class="na">N/A</td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;3.2 [basic.def.odr]</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;3.3 [basic.scope]</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="na">N/A</td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.1 [basic.scope.pdecl]</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="advanced"></td>
+  <td class="na">N/A</td>
+  <td>See PR3184</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.2 [basic.scope.local]</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="advanced"></td>
+  <td class="na">N/A</td>
+  <td>try-catch not implemented</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.3 [basic.scope.proto]</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="na">N/A</td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.4 [basic.funscope]</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="na">N/A</td>
+  <td></td>
+</tr>
 <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.5 [basic.scope.namespace]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.6 [basic.scope.class]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.7 [basic.scope.enum]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.8 [basic.scope.hiding]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;3.4 [basic.lookup]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.4.1 [basic.lookup.unqual]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.4.2 [basic.lookup.argdep]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.4.3 [basic.lookup.qual]</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;3.3.7 [basic.scope.hiding]</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="na">N/A</td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;3.4 [basic.lookup]</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="na">N/A</td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;3.4.1 [basic.lookup.unqual]</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="medium"></td>
+  <td class="na">N/A</td>
+  <td>Many cases beyond simple global and function-local lookup don't work</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;3.4.2 [basic.lookup.argdep]</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="broken"></td>
+  <td class="na">N/A</td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;3.4.3 [basic.lookup.qual]</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="advanced"></td>
+  <td class="na">N/A</td>
+  <td>What's the state of namespaces now?</td>
+</tr>
 <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.4.3.1 [class.qual]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.4.3.2 [namespace.qual]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;3.4.4 [basic.lookup.elab]</td><td></td><td></td><td></td><td></td><td></td></tr>
@@ -365,7 +455,6 @@ welcome!</p>
   <td></td>
   <td></td>
 </tr>
-
 <tr>
   <td>&nbsp;&nbsp;4.9 [conv.fpint]</td>
   <td class="complete" align="center">&#x2713;</td>
