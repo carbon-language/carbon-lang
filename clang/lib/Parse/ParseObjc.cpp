@@ -20,7 +20,7 @@
 using namespace clang;
 
 
-/// ParseExternalDeclaration:
+/// ParseObjCAtDirectives - Handle parts of the external-declaration production:
 ///       external-declaration: [C99 6.9]
 /// [OBJC]  objc-class-definition
 /// [OBJC]  objc-class-declaration
