@@ -441,41 +441,42 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "typedef struct objc_object Protocol;\n";
   Preamble += "#define _REWRITER_typedef_Protocol\n";
   Preamble += "#endif\n";
-  if (LangOpts.Microsoft) 
-    Preamble += "#define __OBJC_RW_EXTERN extern \"C\" __declspec(dllimport)\n";
-  else
-    Preamble += "#define __OBJC_RW_EXTERN extern\n";
-  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSend";
+  if (LangOpts.Microsoft) {
+    Preamble += "#define __OBJC_RW_DLLIMPORT extern \"C\" __declspec(dllimport)\n";
+    Preamble += "#define __OBJC_RW_STATICIMPORT extern \"C\"\n";
+  } else
+    Preamble += "#define __OBJC_RW_DLLIMPORT extern\n";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_msgSend";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSendSuper";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_msgSendSuper";
   Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSend_stret";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_msgSend_stret";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSendSuper_stret";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_msgSendSuper_stret";
   Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_EXTERN double objc_msgSend_fpret";
+  Preamble += "__OBJC_RW_DLLIMPORT double objc_msgSend_fpret";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_getClass";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_getClass";
   Preamble += "(const char *);\n";
-  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_getMetaClass";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_getMetaClass";
   Preamble += "(const char *);\n";
-  Preamble += "__OBJC_RW_EXTERN void objc_exception_throw(struct objc_object *);\n";
-  Preamble += "__OBJC_RW_EXTERN void objc_exception_try_enter(void *);\n";
-  Preamble += "__OBJC_RW_EXTERN void objc_exception_try_exit(void *);\n";
-  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_exception_extract(void *);\n";
-  Preamble += "__OBJC_RW_EXTERN int objc_exception_match";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_throw(struct objc_object *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_try_enter(void *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_try_exit(void *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_exception_extract(void *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT int objc_exception_match";
   Preamble += "(struct objc_class *, struct objc_object *);\n";
   // @synchronized hooks.
-  Preamble += "__OBJC_RW_EXTERN void objc_sync_enter(struct objc_object *);\n";
-  Preamble += "__OBJC_RW_EXTERN void objc_sync_exit(struct objc_object *);\n";
-  Preamble += "__OBJC_RW_EXTERN Protocol *objc_getProtocol(const char *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_enter(struct objc_object *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_exit(struct objc_object *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT Protocol *objc_getProtocol(const char *);\n";
   Preamble += "#ifndef __FASTENUMERATIONSTATE\n";
   Preamble += "struct __objcFastEnumerationState {\n\t";
   Preamble += "unsigned long state;\n\t";
   Preamble += "void **itemsPtr;\n\t";
   Preamble += "unsigned long *mutationsPtr;\n\t";
   Preamble += "unsigned long extra[5];\n};\n";
-  Preamble += "__OBJC_RW_EXTERN void objc_enumerationMutation(struct objc_object *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_enumerationMutation(struct objc_object *);\n";
   Preamble += "#define __FASTENUMERATIONSTATE\n";
   Preamble += "#endif\n";
   Preamble += "#ifndef __NSCONSTANTSTRINGIMPL\n";
@@ -488,7 +489,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "#ifdef CF_EXPORT_CONSTANT_STRING\n";
   Preamble += "extern \"C\" __declspec(dllexport) int __CFConstantStringClassReference[];\n";
   Preamble += "#else\n";
-  Preamble += "__OBJC_RW_EXTERN int __CFConstantStringClassReference[];\n";
+  Preamble += "__OBJC_RW_DLLIMPORT int __CFConstantStringClassReference[];\n";
   Preamble += "#endif\n";
   Preamble += "#define __NSCONSTANTSTRINGIMPL\n";
   Preamble += "#endif\n";
@@ -506,15 +507,16 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "  BLOCK_IS_GLOBAL = (1<<28)\n";
   Preamble += "};\n";
   Preamble += "// Runtime copy/destroy helper functions\n";
-  Preamble += "__OBJC_RW_EXTERN void _Block_copy_assign(void *, void *);\n";
-  Preamble += "__OBJC_RW_EXTERN void _Block_byref_assign_copy(void *, void *);\n";
-  Preamble += "__OBJC_RW_EXTERN void _Block_destroy(void *);\n";
-  Preamble += "__OBJC_RW_EXTERN void _Block_byref_release(void *);\n";
-  Preamble += "__OBJC_RW_EXTERN void *_NSConcreteGlobalBlock;\n";
-  Preamble += "__OBJC_RW_EXTERN void *_NSConcreteStackBlock;\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void _Block_copy_assign(void *, void *);\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void _Block_byref_assign_copy(void *, void *);\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void _Block_destroy(void *);\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void _Block_byref_release(void *);\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void *_NSConcreteGlobalBlock;\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void *_NSConcreteStackBlock;\n";
   Preamble += "#endif\n";
   if (LangOpts.Microsoft) {
-    Preamble += "#undef __OBJC_RW_EXTERN\n";
+    Preamble += "#undef __OBJC_RW_DLLIMPORT\n";
+    Preamble += "#undef __OBJC_RW_STATICIMPORT\n";
     Preamble += "#define __attribute__(X)\n";
   }
 }
