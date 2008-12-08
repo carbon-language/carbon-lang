@@ -277,7 +277,7 @@ static bool ExtractLoops(BugDriver &BD,
     // we're going to test the newly loop extracted program to make sure nothing
     // has broken.  If something broke, then we'll inform the user and stop
     // extraction.
-    AbstractInterpreter *AI = BD.switchToCBE();
+    AbstractInterpreter *AI = BD.switchToSafeInterpreter();
     if (TestMergedProgram(BD, ToOptimizeLoopExtracted, ToNotOptimize, false)) {
       BD.switchToInterpreter(AI);
 
@@ -838,13 +838,15 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
 /// debugCodeGenerator - debug errors in LLC, LLI, or CBE.
 ///
 bool BugDriver::debugCodeGenerator() {
-  if ((void*)cbe == (void*)Interpreter) {
-    std::string Result = executeProgramWithCBE("bugpoint.cbe.out");
-    std::cout << "\n*** The C backend cannot match the reference diff, but it "
-              << "is used as the\n    'known good' code generator, so I can't"
-              << " debug it.  Perhaps you have a\n    front-end problem?  As a"
-              << " sanity check, I left the result of executing the\n    "
-              << "program with the C backend in this file for you: '"
+  if ((void*)SafeInterpreter == (void*)Interpreter) {
+    std::string Result = executeProgramSafely("bugpoint.safe.out");
+    std::cout << "\n*** The \"safe\" i.e. 'known good' backend cannot match "
+              << "the reference diff.  This may be due to a\n    front-end "
+              << "bug or a bug in the original program, but this can also "
+              << "happen if bugpoint isn't running the program with the "
+              << "right flags or input.\n    I left the result of executing "
+              << "the program with the \"safe\" backend in this file for "
+              << "you: '"
               << Result << "'.\n";
     return true;
   }

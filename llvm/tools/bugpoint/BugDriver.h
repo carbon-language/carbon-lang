@@ -45,7 +45,7 @@ class BugDriver {
   Module *Program;             // The raw program, linked together
   std::vector<const PassInfo*> PassesToRun;
   AbstractInterpreter *Interpreter;   // How to run the program
-  AbstractInterpreter *cbe;
+  AbstractInterpreter *SafeInterpreter;  // To generate reference output, etc.
   GCC *gcc;
   bool run_as_child;
   bool run_find_bugs;
@@ -140,9 +140,9 @@ public:
     return OldProgram;
   }
 
-  AbstractInterpreter *switchToCBE() {
+  AbstractInterpreter *switchToSafeInterpreter() {
     AbstractInterpreter *Old = Interpreter;
-    Interpreter = (AbstractInterpreter*)cbe;
+    Interpreter = (AbstractInterpreter*)SafeInterpreter;
     return Old;
   }
 
@@ -172,11 +172,11 @@ public:
                              AbstractInterpreter *AI = 0,
                              bool *ProgramExitedNonzero = 0);
 
-  /// executeProgramWithCBE - Used to create reference output with the C
+  /// executeProgramSafely - Used to create reference output with the "safe"
   /// backend, if reference output is not provided.  If there is a problem with
   /// the code generator (e.g., llc crashes), this will throw an exception.
   ///
-  std::string executeProgramWithCBE(std::string OutputFile = "");
+  std::string executeProgramSafely(std::string OutputFile = "");
 
   /// createReferenceFile - calls compileProgram and then records the output
   /// into ReferenceOutputFile. Returns true if reference file created, false 

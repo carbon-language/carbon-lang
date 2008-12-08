@@ -39,7 +39,7 @@ namespace {
                cl::init(0.0));
 
   cl::opt<OutputType>
-  InterpreterSel(cl::desc("Specify how LLVM code should be executed:"),
+  InterpreterSel(cl::desc("Specify the \"test\" i.e. suspect back-end:"),
                  cl::values(clEnumValN(AutoPick, "auto", "Use best guess"),
                             clEnumValN(RunLLI, "run-int",
                                        "Execute with the interpreter"),
@@ -53,6 +53,22 @@ namespace {
                             "the bitcode. Useful for cross-compilation."),
                             clEnumValEnd),
                  cl::init(AutoPick));
+
+  cl::opt<OutputType>
+  SafeInterpreterSel(cl::desc("Specify \"safe\" i.e. known-good backend:"),
+                     cl::values(clEnumValN(AutoPick, "safe-auto", "Use best guess"),
+                                clEnumValN(RunLLC, "safe-run-llc", "Compile with LLC"),
+                                clEnumValN(RunCBE, "safe-run-cbe", "Compile with CBE"),
+                                clEnumValN(Custom, "safe-run-custom",
+                                "Use -exec-command to define a command to execute "
+                                "the bitcode. Useful for cross-compilation."),
+                                clEnumValEnd),
+                     cl::init(AutoPick));
+
+  cl::opt<std::string>
+  SafeInterpreterPath("safe-path",
+                      cl::desc("Specify the path to the \"safe\" backend program"),
+                      cl::init(""));
 
   cl::opt<bool>
   AppendProgramExitCode("append-exit-code",
@@ -84,10 +100,17 @@ namespace llvm {
   cl::list<std::string>
   InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
             cl::ZeroOrMore, cl::PositionalEatsArgs);
+}
 
+namespace {
   cl::list<std::string>
   ToolArgv("tool-args", cl::Positional, cl::desc("<tool arguments>..."),
            cl::ZeroOrMore, cl::PositionalEatsArgs);
+
+  cl::list<std::string>
+  SafeToolArgv("safe-tool-args", cl::Positional,
+               cl::desc("<safe-tool arguments>..."),
+               cl::ZeroOrMore, cl::PositionalEatsArgs);
 }
 
 //===----------------------------------------------------------------------===//
@@ -102,14 +125,14 @@ bool BugDriver::initializeExecutionEnvironment() {
 
   // Create an instance of the AbstractInterpreter interface as specified on
   // the command line
-  cbe = 0;
+  SafeInterpreter = 0;
   std::string Message;
 
   switch (InterpreterSel) {
   case AutoPick:
     InterpreterSel = RunCBE;
-    Interpreter = cbe = AbstractInterpreter::createCBE(getToolName(), Message,
-                                                       &ToolArgv);
+    Interpreter =
+      AbstractInterpreter::createCBE(getToolName(), Message, &ToolArgv);
     if (!Interpreter) {
       InterpreterSel = RunJIT;
       Interpreter = AbstractInterpreter::createJIT(getToolName(), Message,
@@ -135,15 +158,12 @@ bool BugDriver::initializeExecutionEnvironment() {
                                                  &ToolArgv);
     break;
   case RunLLC:
+  case LLC_Safe:
     Interpreter = AbstractInterpreter::createLLC(getToolName(), Message,
                                                  &ToolArgv);
     break;
   case RunJIT:
     Interpreter = AbstractInterpreter::createJIT(getToolName(), Message,
-                                                 &ToolArgv);
-    break;
-  case LLC_Safe:
-    Interpreter = AbstractInterpreter::createLLC(getToolName(), Message,
                                                  &ToolArgv);
     break;
   case RunCBE:
@@ -164,20 +184,71 @@ bool BugDriver::initializeExecutionEnvironment() {
   else // Display informational messages on stdout instead of stderr
     std::cout << Message;
 
-  // Initialize auxiliary tools for debugging
-  if (InterpreterSel == RunCBE) {
-    // We already created a CBE, reuse it.
-    cbe = Interpreter;
-  } else if (InterpreterSel == CBE_bug || InterpreterSel == LLC_Safe) {
-    // We want to debug the CBE itself or LLC is known-good.  Use LLC as the
-    // 'known-good' compiler.
-    std::vector<std::string> ToolArgs;
-    ToolArgs.push_back("--relocation-model=pic");
-    cbe = AbstractInterpreter::createLLC(getToolName(), Message, &ToolArgs);
-  } else {
-    cbe = AbstractInterpreter::createCBE(getToolName(), Message, &ToolArgv);
+  std::string Path = SafeInterpreterPath;
+  if (Path.empty())
+    Path = getToolName();
+  std::vector<std::string> SafeToolArgs = SafeToolArgv;
+  switch (SafeInterpreterSel) {
+  case AutoPick:
+    // In "cbe-bug" mode, default to using LLC as the "safe" backend.
+    if (!SafeInterpreter &&
+        InterpreterSel == CBE_bug) {
+      SafeInterpreterSel = RunLLC;
+      SafeToolArgs.push_back("--relocation-model=pic");
+      SafeInterpreter = AbstractInterpreter::createLLC(Path, Message,
+                                                       &SafeToolArgs);
+    }
+
+    // In "llc-safe" mode, default to using LLC as the "safe" backend.
+    if (!SafeInterpreter &&
+        InterpreterSel == LLC_Safe) {
+      SafeInterpreterSel = RunLLC;
+      SafeToolArgs.push_back("--relocation-model=pic");
+      SafeInterpreter = AbstractInterpreter::createLLC(Path, Message,
+                                                       &SafeToolArgs);
+    }
+
+    // Pick a backend that's different from the test backend. The JIT and
+    // LLC backends share a lot of code, so prefer to use the CBE as the
+    // safe back-end when testing them.
+    if (!SafeInterpreter &&
+        InterpreterSel != RunCBE) {
+      SafeInterpreterSel = RunCBE;
+      SafeInterpreter = AbstractInterpreter::createCBE(Path, Message,
+                                                       &SafeToolArgs);
+    }
+    if (!SafeInterpreter &&
+        InterpreterSel != RunLLC &&
+        InterpreterSel != RunJIT) {
+      SafeInterpreterSel = RunLLC;
+      SafeToolArgs.push_back("--relocation-model=pic");
+      SafeInterpreter = AbstractInterpreter::createLLC(Path, Message,
+                                                       &SafeToolArgs);
+    }
+    if (!SafeInterpreter) {
+      SafeInterpreterSel = AutoPick;
+      Message = "Sorry, I can't automatically select an interpreter!\n";
+    }
+    break;
+  case RunLLC:
+    SafeToolArgs.push_back("--relocation-model=pic");
+    SafeInterpreter = AbstractInterpreter::createLLC(Path, Message,
+                                                     &SafeToolArgs);
+    break;
+  case RunCBE:
+    SafeInterpreter = AbstractInterpreter::createCBE(Path, Message,
+                                                     &SafeToolArgs);
+    break;
+  case Custom:
+    SafeInterpreter = AbstractInterpreter::createCustom(Path, Message,
+                                                        CustomExecCommand);
+    break;
+  default:
+    Message = "Sorry, this back-end is not supported by bugpoint as the "
+              "\"safe\" backend right now!\n";
+    break;
   }
-  if (!cbe) { std::cout << Message << "\nExiting.\n"; exit(1); }
+  if (!SafeInterpreter) { std::cout << Message << "\nExiting.\n"; exit(1); }
   
   gcc = GCC::create(getToolName(), Message);
   if (!gcc) { std::cout << Message << "\nExiting.\n"; exit(1); }
@@ -264,20 +335,9 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   if (!SharedObj.empty())
     SharedObjs.push_back(SharedObj);
 
-  
-  // If this is an LLC or CBE run, then the GCC compiler might get run to 
-  // compile the program. If so, we should pass the user's -Xlinker options
-  // as the GCCArgs.
-  int RetVal = 0;
-  if (InterpreterSel == RunLLC || InterpreterSel == RunCBE ||
-      InterpreterSel == CBE_bug || InterpreterSel == LLC_Safe)
-    RetVal = AI->ExecuteProgram(BitcodeFile, InputArgv, InputFile,
-                                OutputFile, AdditionalLinkerArgs, SharedObjs, 
-                                Timeout, MemoryLimit);
-  else 
-    RetVal = AI->ExecuteProgram(BitcodeFile, InputArgv, InputFile,
-                                OutputFile, std::vector<std::string>(), 
-                                SharedObjs, Timeout, MemoryLimit);
+  int RetVal = AI->ExecuteProgram(BitcodeFile, InputArgv, InputFile,
+                                  OutputFile, AdditionalLinkerArgs, SharedObjs, 
+                                  Timeout, MemoryLimit);
 
   if (RetVal == -1) {
     std::cerr << "<timeout>";
@@ -305,12 +365,12 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   return OutputFile;
 }
 
-/// executeProgramWithCBE - Used to create reference output with the C
+/// executeProgramSafely - Used to create reference output with the "safe"
 /// backend, if reference output is not provided.
 ///
-std::string BugDriver::executeProgramWithCBE(std::string OutputFile) {
+std::string BugDriver::executeProgramSafely(std::string OutputFile) {
   bool ProgramExitedNonzero;
-  std::string outFN = executeProgram(OutputFile, "", "", cbe,
+  std::string outFN = executeProgram(OutputFile, "", "", SafeInterpreter,
                                      &ProgramExitedNonzero);
   return outFN;
 }
@@ -319,8 +379,8 @@ std::string BugDriver::compileSharedObject(const std::string &BitcodeFile) {
   assert(Interpreter && "Interpreter should have been created already!");
   sys::Path OutputFile;
 
-  // Using CBE
-  GCC::FileType FT = cbe->OutputCode(BitcodeFile, OutputFile);
+  // Using the known-good backend.
+  GCC::FileType FT = SafeInterpreter->OutputCode(BitcodeFile, OutputFile);
 
   std::string SharedObjectFile;
   if (gcc->MakeSharedObject(OutputFile.toString(), FT,
@@ -345,14 +405,15 @@ bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
     return false;
   }
   try {
-    ReferenceOutputFile = executeProgramWithCBE(Filename);
+    ReferenceOutputFile = executeProgramSafely(Filename);
     std::cout << "Reference output is: " << ReferenceOutputFile << "\n\n";
   } catch (ToolExecutionError &TEE) {
     std::cerr << TEE.what();
-    if (Interpreter != cbe) {
-      std::cerr << "*** There is a bug running the C backend.  Either debug"
-                << " it (use the -run-cbe bugpoint option), or fix the error"
-                << " some other way.\n";
+    if (Interpreter != SafeInterpreter) {
+      std::cerr << "*** There is a bug running the \"safe\" backend.  Either"
+                << " debug it (for example with the -run-cbe bugpoint option,"
+                << " if CBE is being used as the \"safe\" backend), or fix the"
+                << " error some other way.\n";
     }
     return false;
   }
