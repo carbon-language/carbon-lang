@@ -530,7 +530,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   return MayAlias;
 }
 
-// This function is used to determin if the indices of two GEP instructions are
+// This function is used to determine if the indices of two GEP instructions are
 // equal. V1 and V2 are the indices.
 static bool IndexOperandsEqual(Value *V1, Value *V2) {
   if (V1->getType() == V2->getType())
