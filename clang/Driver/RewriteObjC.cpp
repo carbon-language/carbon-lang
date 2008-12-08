@@ -412,7 +412,9 @@ void RewriteObjC::Initialize(ASTContext &context) {
   BcLabelCount = 0;
   SuperContructorFunctionDecl = 0;
   NumObjCStringLiterals = 0;
-  
+  PropParentMap = 0;
+  CurrentBody = 0;
+
   // Get the ID and start/end of the main file.
   MainFileID = SM->getMainFileID();
   const llvm::MemoryBuffer *MainBuf = SM->getBuffer(MainFileID);
