@@ -73,8 +73,11 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
       if(ObjCPropertyRefExpr* PRE = 
          dyn_cast<ObjCPropertyRefExpr>(BO->getLHS()->IgnoreParenCasts()))
           if(PRE->getProperty() == PD)
-            if(BO->getRHS()->isNullPointerConstant(Ctx))
-              return true;
+            if(BO->getRHS()->isNullPointerConstant(Ctx)) {
+              // This is only a 'release' if the property kind is not
+              // 'assign'.
+              return PD->getSetterKind() != ObjCPropertyDecl::Assign;;
+            }
   
   // Recurse to children.
   for (Stmt::child_iterator I = S->child_begin(), E= S->child_end(); I!=E; ++I)
