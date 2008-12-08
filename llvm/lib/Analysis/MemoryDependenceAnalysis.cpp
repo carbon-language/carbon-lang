@@ -36,6 +36,8 @@ STATISTIC(NumCacheDirtyNonLocalPtr,
           "Number of cached, but dirty, non-local ptr responses");
 STATISTIC(NumUncacheNonLocalPtr,
           "Number of uncached non-local ptr responses");
+STATISTIC(NumCacheCompleteNonLocalPtr,
+          "Number of block queries that were completely cached");
 
 char MemoryDependenceAnalysis::ID = 0;
   
@@ -479,12 +481,32 @@ getNonLocalPointerDepInternal(Value *Pointer, uint64_t PointeeSize,
                               bool isLoad, BasicBlock *StartBB,
                               SmallVectorImpl<NonLocalDepEntry> &Result,
                               SmallPtrSet<BasicBlock*, 64> &Visited) {
-  SmallVector<BasicBlock*, 32> Worklist;
-  Worklist.push_back(StartBB);
-  
   // Look up the cached info for Pointer.
   ValueIsLoadPair CacheKey(Pointer, isLoad);
-  NonLocalDepInfo *Cache = &NonLocalPointerDeps[CacheKey];
+  
+  std::pair<BasicBlock*, NonLocalDepInfo> &CacheInfo =
+    NonLocalPointerDeps[CacheKey];
+  NonLocalDepInfo *Cache = &CacheInfo.second;
+
+  // If we have valid cached information for exactly the block we are
+  // investigating, just return it with no recomputation.
+  if (CacheInfo.first == StartBB) {
+    for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end();
+         I != E; ++I)
+      if (!I->second.isNonLocal())
+        Result.push_back(*I);
+    ++NumCacheCompleteNonLocalPtr;
+    return;
+  }
+  
+  // Otherwise, either this is a new block, a block with an invalid cache
+  // pointer or one that we're about to invalidate by putting more info into it
+  // than its valid cache info.  If empty, the result will be valid cache info,
+  // otherwise it isn't.
+  CacheInfo.first = Cache->empty() ? StartBB : 0;
+  
+  SmallVector<BasicBlock*, 32> Worklist;
+  Worklist.push_back(StartBB);
   
   // Keep track of the entries that we know are sorted.  Previously cached
   // entries will all be sorted.  The entries we add we only sort on demand (we
@@ -591,7 +613,7 @@ RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P) {
   
   // Remove all of the entries in the BB->val map.  This involves removing
   // instructions from the reverse map.
-  NonLocalDepInfo &PInfo = It->second;
+  NonLocalDepInfo &PInfo = It->second.second;
   
   for (unsigned i = 0, e = PInfo.size(); i != e; ++i) {
     Instruction *Target = PInfo[i].second.getInst();
@@ -741,7 +763,10 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       assert(P.getPointer() != RemInst &&
              "Already removed NonLocalPointerDeps info for RemInst");
       
-      NonLocalDepInfo &NLPDI = NonLocalPointerDeps[P];
+      NonLocalDepInfo &NLPDI = NonLocalPointerDeps[P].second;
+      
+      // The cache is not valid for any specific block anymore.
+      NonLocalPointerDeps[P].first = 0;
       
       // Update any entries for RemInst to use the instruction after it.
       for (NonLocalDepInfo::iterator DI = NLPDI.begin(), DE = NLPDI.end();
@@ -784,7 +809,7 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
   for (CachedNonLocalPointerInfo::const_iterator I =NonLocalPointerDeps.begin(),
        E = NonLocalPointerDeps.end(); I != E; ++I) {
     assert(I->first.getPointer() != D && "Inst occurs in NLPD map key");
-    const NonLocalDepInfo &Val = I->second;
+    const NonLocalDepInfo &Val = I->second.second;
     for (NonLocalDepInfo::const_iterator II = Val.begin(), E = Val.end();
          II != E; ++II)
       assert(II->second.getInst() != D && "Inst occurs as NLPD value");

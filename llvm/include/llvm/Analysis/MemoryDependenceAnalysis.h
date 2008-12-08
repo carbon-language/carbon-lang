@@ -158,7 +158,8 @@ namespace llvm {
     /// CachedNonLocalPointerInfo - This map stores the cached results of doing
     /// a pointer lookup at the bottom of a block.  The key of this map is the
     /// pointer+isload bit, the value is a list of <bb->result> mappings.
-    typedef DenseMap<ValueIsLoadPair, NonLocalDepInfo>CachedNonLocalPointerInfo;
+    typedef DenseMap<ValueIsLoadPair,
+      std::pair<BasicBlock*, NonLocalDepInfo> > CachedNonLocalPointerInfo;
     CachedNonLocalPointerInfo NonLocalPointerDeps;
 
     // A map from instructions to their non-local pointer dependencies.
