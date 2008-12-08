@@ -1773,8 +1773,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
   if (!D || !isa<VarDecl>(D))
     return;
   
-  const VarDecl* VD = dyn_cast<VarDecl>(D);
-  
+  const VarDecl* VD = dyn_cast<VarDecl>(D);    
   Expr* InitEx = const_cast<Expr*>(VD->getInit());
 
   // FIXME: static variables may have an initializer, but the second
@@ -1812,6 +1811,33 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
     }
     else
       St = StateMgr.BindDecl(St, VD, 0, Count);
+    
+    
+    // Check if 'VD' is a VLA and if so check if has a non-zero size.
+    QualType T = getContext().getCanonicalType(VD->getType());
+    if (VariableArrayType* VLA = dyn_cast<VariableArrayType>(T)) {
+      // FIXME: Handle multi-dimensional VLAs.
+      
+      Expr* SE = VLA->getSizeExpr();
+      SVal Size = GetSVal(St, SE);
+
+      bool isFeasibleZero = false;
+      const GRState* ZeroSt =  Assume(St, Size, false, isFeasibleZero);
+            
+      bool isFeasibleNotZero = false;
+      St = Assume(St, Size, true, isFeasibleNotZero);
+      
+      if (isFeasibleZero) {
+        if (NodeTy* N = Builder->generateNode(DS, ZeroSt, Pred)) {
+          N->markAsSink();          
+          if (isFeasibleNotZero) ImplicitZeroSizedVLA.insert(N);
+          else ExplicitZeroSizedVLA.insert(N);
+        }
+      }
+      
+      if (!isFeasibleNotZero)
+        continue;      
+    }
 
     MakeNode(Dst, DS, *I, St);
   }

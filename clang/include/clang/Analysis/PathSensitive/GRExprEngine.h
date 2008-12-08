@@ -94,74 +94,70 @@ protected:
   llvm::OwningPtr<GRSimpleAPICheck> BatchAuditor;
   
 public:
-  typedef llvm::SmallPtrSet<NodeTy*,2> UndefBranchesTy;  
-  typedef llvm::SmallPtrSet<NodeTy*,2> UndefStoresTy;
-  typedef llvm::SmallPtrSet<NodeTy*,2> BadDerefTy;
-  typedef llvm::SmallPtrSet<NodeTy*,2> BadCallsTy;
-  typedef llvm::SmallPtrSet<NodeTy*,2> UndefReceiversTy;
+  typedef llvm::SmallPtrSet<NodeTy*,2> ErrorNodes;  
   typedef llvm::DenseMap<NodeTy*, Expr*> UndefArgsTy;
-  typedef llvm::SmallPtrSet<NodeTy*,2> BadDividesTy;
-  typedef llvm::SmallPtrSet<NodeTy*,2> NoReturnCallsTy;  
-  typedef llvm::SmallPtrSet<NodeTy*,2> UndefResultsTy;
-  typedef llvm::SmallPtrSet<NodeTy*,2> RetsStackAddrTy;
-  typedef llvm::SmallPtrSet<NodeTy*,2> RetsUndefTy;
-  typedef llvm::SmallPtrSet<NodeTy*,2> OutOfBoundMemAccessesTy;
   
-protected:
-
   /// RetsStackAddr - Nodes in the ExplodedGraph that result from returning
   ///  the address of a stack variable.
-  RetsStackAddrTy RetsStackAddr;
+  ErrorNodes RetsStackAddr;
 
   /// RetsUndef - Nodes in the ExplodedGraph that result from returning
   ///  an undefined value.
-  RetsUndefTy RetsUndef;
+  ErrorNodes RetsUndef;
   
   /// UndefBranches - Nodes in the ExplodedGraph that result from
   ///  taking a branch based on an undefined value.
-  UndefBranchesTy UndefBranches;
+  ErrorNodes UndefBranches;
   
   /// UndefStores - Sinks in the ExplodedGraph that result from
   ///  making a store to an undefined lvalue.
-  UndefStoresTy UndefStores;
+  ErrorNodes UndefStores;
   
   /// NoReturnCalls - Sinks in the ExplodedGraph that result from
   //  calling a function with the attribute "noreturn".
-  NoReturnCallsTy NoReturnCalls;
+  ErrorNodes NoReturnCalls;
   
   /// ImplicitNullDeref - Nodes in the ExplodedGraph that result from
   ///  taking a dereference on a symbolic pointer that MAY be NULL.
-  BadDerefTy ImplicitNullDeref;
+  ErrorNodes ImplicitNullDeref;
     
   /// ExplicitNullDeref - Nodes in the ExplodedGraph that result from
   ///  taking a dereference on a symbolic pointer that MUST be NULL.
-  BadDerefTy ExplicitNullDeref;
+  ErrorNodes ExplicitNullDeref;
   
   /// UnitDeref - Nodes in the ExplodedGraph that result from
   ///  taking a dereference on an undefined value.
-  BadDerefTy UndefDeref;
+  ErrorNodes UndefDeref;
 
   /// ImplicitBadDivides - Nodes in the ExplodedGraph that result from 
   ///  evaluating a divide or modulo operation where the denominator
   ///  MAY be zero.
-  BadDividesTy ImplicitBadDivides;
+  ErrorNodes ImplicitBadDivides;
   
   /// ExplicitBadDivides - Nodes in the ExplodedGraph that result from 
   ///  evaluating a divide or modulo operation where the denominator
   ///  MUST be zero or undefined.
-  BadDividesTy ExplicitBadDivides;
+  ErrorNodes ExplicitBadDivides;
+  
+  /// ImplicitZeroSizedVLA - Nodes in the ExplodedGraph that result from 
+  ///  constructing a zero-sized VLA where the size may be zero.
+  ErrorNodes ImplicitZeroSizedVLA;
+  
+  /// ExplicitZeroSizedVLA - Nodes in the ExplodedGraph that result from 
+  ///  constructing a zero-sized VLA where the size must be zero.
+  ErrorNodes ExplicitZeroSizedVLA;
   
   /// UndefResults - Nodes in the ExplodedGraph where the operands are defined
   ///  by the result is not.  Excludes divide-by-zero errors.
-  UndefResultsTy UndefResults;
+  ErrorNodes UndefResults;
   
   /// BadCalls - Nodes in the ExplodedGraph resulting from calls to function
   ///  pointers that are NULL (or other constants) or Undefined.
-  BadCallsTy BadCalls;
+  ErrorNodes BadCalls;
   
   /// UndefReceiver - Nodes in the ExplodedGraph resulting from message
   ///  ObjC message expressions where the receiver is undefined (uninitialized).
-  UndefReceiversTy UndefReceivers;
+  ErrorNodes UndefReceivers;
   
   /// UndefArg - Nodes in the ExplodedGraph resulting from calls to functions
   ///   where a pass-by-value argument has an undefined value.
@@ -174,11 +170,11 @@ protected:
 
   /// OutOfBoundMemAccesses - Nodes in the ExplodedGraph resulting from
   /// out-of-bound memory accesses where the index MAY be out-of-bound.
-  OutOfBoundMemAccessesTy ImplicitOOBMemAccesses;
+  ErrorNodes ImplicitOOBMemAccesses;
 
   /// OutOfBoundMemAccesses - Nodes in the ExplodedGraph resulting from
   /// out-of-bound memory accesses where the index MUST be out-of-bound.
-  OutOfBoundMemAccessesTy ExplicitOOBMemAccesses;
+  ErrorNodes ExplicitOOBMemAccesses;
   
 public:
   GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L,
@@ -298,19 +294,19 @@ public:
     return N->isSink() && UndefReceivers.count(const_cast<NodeTy*>(N)) != 0;
   }
   
-  typedef RetsStackAddrTy::iterator ret_stackaddr_iterator;
+  typedef ErrorNodes::iterator ret_stackaddr_iterator;
   ret_stackaddr_iterator ret_stackaddr_begin() { return RetsStackAddr.begin(); }
   ret_stackaddr_iterator ret_stackaddr_end() { return RetsStackAddr.end(); }  
   
-  typedef RetsUndefTy::iterator ret_undef_iterator;
+  typedef ErrorNodes::iterator ret_undef_iterator;
   ret_undef_iterator ret_undef_begin() { return RetsUndef.begin(); }
   ret_undef_iterator ret_undef_end() { return RetsUndef.end(); }
   
-  typedef UndefBranchesTy::iterator undef_branch_iterator;
+  typedef ErrorNodes::iterator undef_branch_iterator;
   undef_branch_iterator undef_branches_begin() { return UndefBranches.begin(); }
   undef_branch_iterator undef_branches_end() { return UndefBranches.end(); }  
   
-  typedef BadDerefTy::iterator null_deref_iterator;
+  typedef ErrorNodes::iterator null_deref_iterator;
   null_deref_iterator null_derefs_begin() { return ExplicitNullDeref.begin(); }
   null_deref_iterator null_derefs_end() { return ExplicitNullDeref.end(); }
   
@@ -321,11 +317,11 @@ public:
     return ImplicitNullDeref.end();
   }
   
-  typedef BadDerefTy::iterator undef_deref_iterator;
+  typedef ErrorNodes::iterator undef_deref_iterator;
   undef_deref_iterator undef_derefs_begin() { return UndefDeref.begin(); }
   undef_deref_iterator undef_derefs_end() { return UndefDeref.end(); }
   
-  typedef BadDividesTy::iterator bad_divide_iterator;
+  typedef ErrorNodes::iterator bad_divide_iterator;
 
   bad_divide_iterator explicit_bad_divides_begin() {
     return ExplicitBadDivides.begin();
@@ -343,11 +339,11 @@ public:
     return ImplicitBadDivides.end();
   }
   
-  typedef UndefResultsTy::iterator undef_result_iterator;
+  typedef ErrorNodes::iterator undef_result_iterator;
   undef_result_iterator undef_results_begin() { return UndefResults.begin(); }
   undef_result_iterator undef_results_end() { return UndefResults.end(); }
 
-  typedef BadCallsTy::iterator bad_calls_iterator;
+  typedef ErrorNodes::iterator bad_calls_iterator;
   bad_calls_iterator bad_calls_begin() { return BadCalls.begin(); }
   bad_calls_iterator bad_calls_end() { return BadCalls.end(); }  
   
@@ -362,7 +358,7 @@ public:
     return MsgExprUndefArgs.end();
   }  
   
-  typedef UndefReceiversTy::iterator undef_receivers_iterator;
+  typedef ErrorNodes::iterator undef_receivers_iterator;
 
   undef_receivers_iterator undef_receivers_begin() {
     return UndefReceivers.begin();
@@ -372,7 +368,7 @@ public:
     return UndefReceivers.end();
   }
 
-  typedef OutOfBoundMemAccessesTy::iterator oob_memacc_iterator;
+  typedef ErrorNodes::iterator oob_memacc_iterator;
   oob_memacc_iterator implicit_oob_memacc_begin() { 
     return ImplicitOOBMemAccesses.begin();
   }

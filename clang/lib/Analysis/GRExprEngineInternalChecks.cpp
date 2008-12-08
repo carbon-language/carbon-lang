@@ -163,7 +163,7 @@ public:
                "Receiver in message expression is an uninitialized value.") {}
   
   virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) {
-    for (GRExprEngine::UndefReceiversTy::iterator I=Eng.undef_receivers_begin(),
+    for (GRExprEngine::ErrorNodes::iterator I=Eng.undef_receivers_begin(),
          End = Eng.undef_receivers_end(); I!=End; ++I) {
       
       // Generate a report for this bug.
@@ -331,6 +331,33 @@ public:
     Emit(BR, Eng.explicit_oob_memacc_begin(), Eng.explicit_oob_memacc_end());
   }
 };
+  
+class VISIBILITY_HIDDEN ZeroSizeVLA : public BuiltinBug {
+
+public:
+  ZeroSizeVLA() : BuiltinBug("Zero-sized VLA",  
+                             "VLAs with zero-size are undefined.") {}
+  
+  virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) {
+    for (GRExprEngine::ErrorNodes::iterator
+          I = Eng.ExplicitZeroSizedVLA.begin(),
+          E = Eng.ExplicitZeroSizedVLA.end(); I!=E; ++I) {
+      
+      // Generate a report for this bug.
+      PostStmt PS = cast<PostStmt>((*I)->getLocation());      
+      DeclStmt *DS = cast<DeclStmt>(PS.getStmt());
+      VarDecl* VD = cast<VarDecl>(*DS->decl_begin());
+      QualType T = Eng.getContext().getCanonicalType(VD->getType());
+      VariableArrayType* VT = cast<VariableArrayType>(T);
+      
+      RangedBugReport report(*this, *I);
+      report.addRange(VT->getSizeExpr()->getSourceRange());
+      
+      // Emit the warning.
+      BR.EmitWarning(report);
+    }
+  }
+};
 
 //===----------------------------------------------------------------------===//
 // __attribute__(nonnull) checking
@@ -403,5 +430,6 @@ void GRExprEngine::RegisterInternalChecks() {
   Register(new BadMsgExprArg());
   Register(new BadReceiver());
   Register(new OutOfBoundMemoryAccess());
+  Register(new ZeroSizeVLA());
   AddCheck(new CheckAttrNonNull(), Stmt::CallExprClass); 
 }
