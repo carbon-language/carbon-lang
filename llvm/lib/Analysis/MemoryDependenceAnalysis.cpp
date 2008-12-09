@@ -608,7 +608,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
   unsigned NumSortedEntries = Cache->size();
   
   // SkipFirstBlock - If this is the very first block that we're processing, we
-  // don't want to skip or thing about its body, because the client was supposed
+  // don't want to scan or think about its body, because the client was supposed
   // to do a local dependence query.  Instead, just start processing it by
   // adding its predecessors to the worklist and iterating.
   bool SkipFirstBlock = Visited.empty();
