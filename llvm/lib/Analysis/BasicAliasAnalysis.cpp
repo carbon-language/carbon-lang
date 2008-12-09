@@ -264,10 +264,8 @@ namespace {
                       const Value *V2, unsigned V2Size);
 
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
-    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
-      return NoAA::getModRefInfo(CS1,CS2);
-    }
-
+    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
+    
     /// hasNoModRefInfoForCalls - We can provide mod/ref information against
     /// non-escaping allocations.
     virtual bool hasNoModRefInfoForCalls() const { return false; }
@@ -349,6 +347,24 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
   // The AliasAnalysis base class has some smarts, lets use them.
   return AliasAnalysis::getModRefInfo(CS, P, Size);
+}
+
+
+AliasAnalysis::ModRefResult 
+BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
+  // If CS1 or CS2 are readnone, they don't interact.
+  ModRefBehavior CS1B = AliasAnalysis::getModRefBehavior(CS1);
+  if (CS1B == DoesNotAccessMemory) return NoModRef;
+  
+  ModRefBehavior CS2B = AliasAnalysis::getModRefBehavior(CS2);
+  if (CS2B == DoesNotAccessMemory) return NoModRef;
+  
+  // If they both only read from memory, just return ref.
+  if (CS1B == OnlyReadsMemory && CS2B == OnlyReadsMemory)
+    return Ref;
+  
+  // Otherwise, fall back to NoAA (mod+ref).
+  return NoAA::getModRefInfo(CS1, CS2);
 }
 
 

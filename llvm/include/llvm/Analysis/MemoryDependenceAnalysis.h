@@ -248,7 +248,7 @@ namespace llvm {
                                           bool isLoad, 
                                           BasicBlock::iterator ScanIt,
                                           BasicBlock *BB);
-    MemDepResult getCallSiteDependencyFrom(CallSite C,
+    MemDepResult getCallSiteDependencyFrom(CallSite C, bool isReadOnlyCall,
                                            BasicBlock::iterator ScanIt,
                                            BasicBlock *BB);
     void getNonLocalPointerDepFromBB(Value *Pointer, uint64_t Size,

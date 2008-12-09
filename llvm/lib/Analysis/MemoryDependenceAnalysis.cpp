@@ -99,8 +99,8 @@ static void RemoveFromReverseMap(DenseMap<Instruction*,
 /// getCallSiteDependencyFrom - Private helper for finding the local
 /// dependencies of a call site.
 MemDepResult MemoryDependenceAnalysis::
-getCallSiteDependencyFrom(CallSite CS, BasicBlock::iterator ScanIt,
-                          BasicBlock *BB) {
+getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
+                          BasicBlock::iterator ScanIt, BasicBlock *BB) {
   // Walk backwards through the block, looking for dependencies
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
@@ -122,20 +122,31 @@ getCallSiteDependencyFrom(CallSite CS, BasicBlock::iterator ScanIt,
     } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
       CallSite InstCS = CallSite::get(Inst);
       // If these two calls do not interfere, look past it.
-      if (AA->getModRefInfo(CS, InstCS) == AliasAnalysis::NoModRef)
+      switch (AA->getModRefInfo(CS, InstCS)) {
+      case AliasAnalysis::NoModRef:
+        // If the two calls don't interact (e.g. InstCS is readnone) keep
+        // scanning.
         continue;
-      
-      // FIXME: If this is a ref/ref result, we should ignore it!
-      //  X = strlen(P);
-      //  Y = strlen(Q);
-      //  Z = strlen(P);  // Z = X
-      
-      // If they interfere, we generally return clobber.  However, if they are
-      // calls to the same read-only functions we return Def.
-      if (!AA->onlyReadsMemory(CS) || CS.getCalledFunction() == 0 ||
-          CS.getCalledFunction() != InstCS.getCalledFunction())
+      case AliasAnalysis::Ref:
+        // If the two calls read the same memory locations and CS is a readonly
+        // function, then we have two cases: 1) the calls may not interfere with
+        // each other at all.  2) the calls may produce the same value.  In case
+        // #1 we want to ignore the values, in case #2, we want to return Inst
+        // as a Def dependence.  This allows us to CSE in cases like:
+        //   X = strlen(P);
+        //    memchr(...);
+        //   Y = strlen(P);  // Y = X
+        if (isReadOnlyCall) {
+          if (CS.getCalledFunction() != 0 &&
+              CS.getCalledFunction() == InstCS.getCalledFunction())
+            return MemDepResult::getDef(Inst);
+          // Ignore unrelated read/read call dependences.
+          continue;
+        }
+        // FALL THROUGH
+      default:
         return MemDepResult::getClobber(Inst);
-      return MemDepResult::getDef(Inst);
+      }
     } else {
       // Non-memory instruction.
       continue;
@@ -212,7 +223,6 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     }
     
     // See if this instruction (e.g. a call or vaarg) mod/ref's the pointer.
-    // FIXME: If this is a load, we should ignore readonly calls!
     switch (AA->getModRefInfo(Inst, MemPtr, MemSize)) {
     case AliasAnalysis::NoModRef:
       // If the call has no effect on the queried pointer, just ignore it.
@@ -289,7 +299,9 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       MemSize = TD->getTypeStoreSize(LI->getType());
     }
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
-    LocalCache = getCallSiteDependencyFrom(CallSite::get(QueryInst), ScanPos,
+    CallSite QueryCS = CallSite::get(QueryInst);
+    bool isReadOnly = AA->onlyReadsMemory(QueryCS);
+    LocalCache = getCallSiteDependencyFrom(QueryCS, isReadOnly, ScanPos,
                                            QueryParent);
   } else if (FreeInst *FI = dyn_cast<FreeInst>(QueryInst)) {
     MemPtr = FI->getPointerOperand();
@@ -367,6 +379,9 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     NumUncacheNonLocal++;
   }
   
+  // isReadonlyCall - If this is a read-only call, we can be more aggressive.
+  bool isReadonlyCall = AA->onlyReadsMemory(QueryCS);
+  
   // Visited checked first, vector in sorted order.
   SmallPtrSet<BasicBlock*, 64> Visited;
   
@@ -417,7 +432,7 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     MemDepResult Dep;
     
     if (ScanPos != DirtyBB->begin()) {
-      Dep = getCallSiteDependencyFrom(QueryCS, ScanPos, DirtyBB);
+      Dep = getCallSiteDependencyFrom(QueryCS, isReadonlyCall,ScanPos, DirtyBB);
     } else if (DirtyBB != &DirtyBB->getParent()->getEntryBlock()) {
       // No dependence found.  If this is the entry block of the function, it is
       // a clobber, otherwise it is non-local.
