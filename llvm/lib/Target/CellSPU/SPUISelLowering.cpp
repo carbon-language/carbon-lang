@@ -28,6 +28,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/CodeGen/SchedulerRegistry.h"
 
 #include <map>
 
@@ -415,8 +416,10 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   computeRegisterProperties();
 
-  // Set other properties:
-  setSchedulingPreference(SchedulingForLatency);
+  // Set pre-RA register scheduler default to BURR, which produces slightly
+  // better code than the default (could also be TDRR, but TargetLowering.h
+  // needs a mod to support that model):
+  setSchedulingPreference(SchedulingForRegPressure);
 }
 
 const char *
