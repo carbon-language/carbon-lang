@@ -952,10 +952,10 @@ bool X86FastISel::X86SelectExtractValue(Instruction *I) {
       default: break;
       case Intrinsic::sadd_with_overflow:
       case Intrinsic::uadd_with_overflow:
-        // Cheat a little. We know that the register for the "add" and "seto"
-        // are allocated sequentially. However, we only keep track of the
-        // register for "add" in the value map. Use the extractvalue's index to
-        // get the correct register for "seto".
+        // Cheat a little. We know that the registers for "add" and "seto" are
+        // allocated sequentially. However, we only keep track of the register
+        // for "add" in the value map. Use extractvalue's index to get the
+        // correct register for "seto".
         UpdateValueMap(I, lookUpRegForValue(Agg) + *EI->idx_begin());
         return true;
       }
@@ -971,10 +971,11 @@ bool X86FastISel::X86VisitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   default: return false;
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::uadd_with_overflow: {
-    // Replace these intrinsics with an "add" instruction followed by a
-    // "set[co]" instruction. Later on, when the "extractvalue" instructions are
-    // encountered, we use the fact that two registers were created sequentially
-    // to get the correct registers for the "sum" and the "overflow bit".
+    // Replace "add with overflow" intrinsics with an "add" instruction followed
+    // by a seto/setc instruction. Later on, when the "extractvalue"
+    // instructions are encountered, we use the fact that two registers were
+    // created sequentially to get the correct registers for the "sum" and the
+    // "overflow bit".
     MVT VT;
     const Function *Callee = I.getCalledFunction();
     const Type *RetTy =
