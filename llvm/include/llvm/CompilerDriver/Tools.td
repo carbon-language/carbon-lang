@@ -13,7 +13,7 @@
 
 def OptList : OptionList<[
  (switch_option "emit-llvm",
-    (help "Emit LLVM bitcode files instead of native object files")),
+    (help "Emit LLVM .ll files instead of native object files")),
  (switch_option "E",
     (help "Stop after the preprocessing stage, do not run the compiler")),
  (switch_option "fsyntax-only",
@@ -42,7 +42,7 @@ def OptList : OptionList<[
     (help "Pass options to linker"))
 ]>;
 
-class llvm_gcc_based <string cmd_prefix, string in_lang> : Tool<
+class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
 [(in_language in_lang),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
@@ -54,23 +54,27 @@ class llvm_gcc_based <string cmd_prefix, string in_lang> : Tool<
                     !strconcat(cmd_prefix, " -E $INFILE")),
             (switch_on "fsyntax-only"),
               !strconcat(cmd_prefix, " -fsyntax-only $INFILE"),
+            (and (switch_on "S"), (switch_on "emit-llvm")),
+              !strconcat(cmd_prefix, " -S $INFILE -o $OUTFILE -emit-llvm"),
             (default),
               !strconcat(cmd_prefix, " -c $INFILE -o $OUTFILE -emit-llvm"))),
  (actions
      (case
-         (switch_on "emit-llvm"), (stop_compilation),
-         (switch_on "E"), [(stop_compilation), (output_suffix "i")],
-         (switch_on "S"), (stop_compilation),
+         (switch_on "E"), [(stop_compilation), (output_suffix E_ext)],
+         (and (switch_on "emit-llvm"), (switch_on "S")),
+              [(output_suffix "ll"), (stop_compilation)],
+         (and (switch_on "emit-llvm"), (switch_on "c")), (stop_compilation),
          (switch_on "fsyntax-only"), (stop_compilation),
          (not_empty "include"), (forward "include"),
          (not_empty "I"), (forward "I"))),
  (sink)
 ]>;
 
-def llvm_gcc_c : llvm_gcc_based<"llvm-gcc -x c", "c">;
-def llvm_gcc_cpp : llvm_gcc_based<"llvm-g++ -x c++", "c++">;
-def llvm_gcc_m : llvm_gcc_based<"llvm-gcc -x objective-c", "objective-c">;
-def llvm_gcc_mxx : llvm_gcc_based<"llvm-gcc -x objective-c++", "objective-c++">;
+def llvm_gcc_c : llvm_gcc_based<"llvm-gcc -x c", "c", "i">;
+def llvm_gcc_cpp : llvm_gcc_based<"llvm-g++ -x c++", "c++", "i">;
+def llvm_gcc_m : llvm_gcc_based<"llvm-gcc -x objective-c", "objective-c", "mi">;
+def llvm_gcc_mxx : llvm_gcc_based<"llvm-gcc -x objective-c++",
+                                  "objective-c++", "mi">;
 
 def opt : Tool<
 [(in_language "llvm-bitcode"),

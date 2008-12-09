@@ -1,15 +1,20 @@
 // A replacement for the Clang's ccc script.
 // Depends on the Base plugin.
 // To compile, use this command:
+//
 //    cd $LLVMC2_DIR
 //    make DRIVER_NAME=ccc2 BUILTIN_PLUGINS=Clang
+//
+// Or just use the default llvmc, which now has this plugin enabled.
 
 include "llvm/CompilerDriver/Common.td"
 
 def Priority : PluginPriority<1>;
 
 def Options : OptionList<[
+// Extern options
 (switch_option "E", (extern)),
+(switch_option "S", (extern)),
 (switch_option "c", (extern)),
 (switch_option "fsyntax-only", (extern)),
 (switch_option "emit-llvm", (extern)),
@@ -20,6 +25,7 @@ def Options : OptionList<[
 (parameter_list_option "l", (extern)),
 (prefix_list_option "Wa,", (extern)),
 (prefix_list_option "Wl,", (extern)),
+
 (switch_option "clang", (help "Use Clang instead of llvm-gcc"))
 ]>;
 
@@ -34,15 +40,17 @@ class clang_based<string language, string cmd, string ext_E> : Tool<
                 !strconcat(cmd, " -E $INFILE -o $OUTFILE"),
                 (default),
                 !strconcat(cmd, " -E $INFILE")),
-          (switch_on "c"),
-          !strconcat(cmd, " -fsyntax-only $INFILE"),
+          (and (switch_on "S"), (switch_on "emit-llvm")),
+          !strconcat(cmd, " -emit-llvm $INFILE -o $OUTFILE"),
           (default),
           !strconcat(cmd, " -emit-llvm-bc $INFILE -o $OUTFILE"))),
  (actions (case (switch_on "E"),
                 [(stop_compilation), (output_suffix ext_E)],
-                (switch_on "c"), (stop_compilation),
                 (switch_on "fsyntax-only"), (stop_compilation),
-                (switch_on "emit-llvm"), (stop_compilation),
+                (and (switch_on "S"), (switch_on "emit-llvm")),
+                           [(stop_compilation), (output_suffix "ll")],
+                (and (switch_on "c"), (switch_on "emit-llvm")),
+                           (stop_compilation),
                 (not_empty "include"), (forward "include"),
                 (not_empty "I"), (forward "I"))),
  (sink)
@@ -60,7 +68,8 @@ def as : Tool<
  (out_language "object-code"),
  (output_suffix "o"),
  (cmd_line "as $INFILE -o $OUTFILE"),
- (actions (case (not_empty "Wa,"), (unpack_values "Wa,")))
+ (actions (case (not_empty "Wa,"), (unpack_values "Wa,"),
+                (switch_on "c"), (stop_compilation)))
 ]>;
 
 // Default linker
