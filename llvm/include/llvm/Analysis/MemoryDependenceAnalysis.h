@@ -243,6 +243,14 @@ namespace llvm {
     /// updating the dependence of instructions that previously depended on it.
     void removeInstruction(Instruction *InstToRemove);
     
+    /// invalidateCachedPointerInfo - This method is used to invalidate cached
+    /// information about the specified pointer, because it may be too
+    /// conservative in memdep.  This is an optional call that can be used when
+    /// the client detects an equivalence between the pointer and some other
+    /// value and replaces the other value with ptr. This can make Ptr available
+    /// in more places that cached info does not necessarily keep.
+    void invalidateCachedPointerInfo(Value *Ptr);
+    
   private:
     MemDepResult getPointerDependencyFrom(Value *Pointer, uint64_t MemSize,
                                           bool isLoad, 
@@ -260,7 +268,6 @@ namespace llvm {
                                          NonLocalDepInfo *Cache,
                                          unsigned NumSortedEntries);
 
-    
     void RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P);
     
     /// verifyRemoved - Verify that the specified instruction does not occur

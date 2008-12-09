@@ -842,6 +842,8 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   }
     
   PN->replaceAllUsesWith(v);
+  if (isa<PointerType>(v->getType()))
+    MD->invalidateCachedPointerInfo(v);
 
   for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
        E = Phis.end(); I != E; ++I)
@@ -1015,6 +1017,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       if ((*I)->getParent() == LI->getParent()) {
         DEBUG(cerr << "GVN REMOVING NONLOCAL LOAD #1: " << *LI);
         LI->replaceAllUsesWith(*I);
+        if (isa<PointerType>((*I)->getType()))
+          MD->invalidateCachedPointerInfo(*I);
         toErase.push_back(LI);
         NumGVNLoad++;
         return true;
@@ -1030,6 +1034,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     // Perform PHI construction.
     Value* v = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
     LI->replaceAllUsesWith(v);
+    if (isa<PointerType>(v->getType()))
+      MD->invalidateCachedPointerInfo(v);
     toErase.push_back(LI);
     NumGVNLoad++;
     return true;
@@ -1124,6 +1130,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   Value* v = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
   LI->replaceAllUsesWith(v);
   v->takeName(LI);
+  if (isa<PointerType>(v->getType()))
+    MD->invalidateCachedPointerInfo(v);
   toErase.push_back(LI);
   NumPRELoad++;
   return true;
@@ -1157,6 +1165,8 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     
     // Remove it!
     L->replaceAllUsesWith(DepSI->getOperand(0));
+    if (isa<PointerType>(DepSI->getOperand(0)->getType()))
+      MD->invalidateCachedPointerInfo(DepSI->getOperand(0));
     toErase.push_back(L);
     NumGVNLoad++;
     return true;
@@ -1170,6 +1180,8 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     
     // Remove it!
     L->replaceAllUsesWith(DepLI);
+    if (isa<PointerType>(DepLI->getType()))
+      MD->invalidateCachedPointerInfo(DepLI);
     toErase.push_back(L);
     NumGVNLoad++;
     return true;
@@ -1241,6 +1253,8 @@ bool GVN::processInstruction(Instruction *I,
         PI->second.erase(p);
         
       p->replaceAllUsesWith(constVal);
+      if (isa<PointerType>(constVal->getType()))
+        MD->invalidateCachedPointerInfo(constVal);
       toErase.push_back(p);
     } else {
       localAvail[I->getParent()]->table.insert(std::make_pair(num, I));
@@ -1257,6 +1271,8 @@ bool GVN::processInstruction(Instruction *I,
     // Remove it!
     VN.erase(I);
     I->replaceAllUsesWith(repl);
+    if (isa<PointerType>(repl->getType()))
+      MD->invalidateCachedPointerInfo(repl);
     toErase.push_back(I);
     return true;
   } else {
@@ -1494,6 +1510,8 @@ bool GVN::performPRE(Function& F) {
       localAvail[CurrentBlock]->table[valno] = Phi;
       
       CurInst->replaceAllUsesWith(Phi);
+      if (isa<PointerType>(Phi->getType()))
+        MD->invalidateCachedPointerInfo(Phi);
       VN.erase(CurInst);
       
       DEBUG(cerr << "GVN PRE removed: " << *CurInst);

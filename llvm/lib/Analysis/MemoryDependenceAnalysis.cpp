@@ -698,6 +698,21 @@ RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P) {
 }
 
 
+/// invalidateCachedPointerInfo - This method is used to invalidate cached
+/// information about the specified pointer, because it may be too
+/// conservative in memdep.  This is an optional call that can be used when
+/// the client detects an equivalence between the pointer and some other
+/// value and replaces the other value with ptr. This can make Ptr available
+/// in more places that cached info does not necessarily keep.
+void MemoryDependenceAnalysis::invalidateCachedPointerInfo(Value *Ptr) {
+  // If Ptr isn't really a pointer, just ignore it.
+  if (!isa<PointerType>(Ptr->getType())) return;
+  // Flush store info for the pointer.
+  RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair(Ptr, false));
+  // Flush load info for the pointer.
+  RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair(Ptr, true));
+}
+
 /// removeInstruction - Remove an instruction from the dependence analysis,
 /// updating the dependence of instructions that previously depended on it.
 /// This method attempts to keep the cache coherent using the reverse map.
@@ -864,7 +879,6 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   AA->deleteValue(RemInst);
   DEBUG(verifyRemoved(RemInst));
 }
-
 /// verifyRemoved - Verify that the specified instruction does not occur
 /// in our internal data structures.
 void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
