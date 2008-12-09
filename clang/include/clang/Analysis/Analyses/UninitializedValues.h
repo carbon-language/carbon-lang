@@ -63,7 +63,7 @@ class UninitializedValues :
 public:
   typedef UninitializedValues_ValueTypes::ObserverTy ObserverTy;
 
-  UninitializedValues(CFG &cfg) { getAnalysisData().setCFG(&cfg); }
+  UninitializedValues(CFG &cfg) { getAnalysisData().setCFG(cfg); }
   
   /// IntializeValues - Create initial dataflow values and meta data for
   ///  a given CFG.  This is intended to be called by the dataflow solver.

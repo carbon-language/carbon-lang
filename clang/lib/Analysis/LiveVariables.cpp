@@ -13,6 +13,7 @@
 
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
@@ -95,9 +96,11 @@ public:
 } // end anonymous namespace
 
 
-LiveVariables::LiveVariables(CFG& cfg) {
+LiveVariables::LiveVariables(ASTContext& Ctx, CFG& cfg) {
   // Register all referenced VarDecls.
-  getAnalysisData().setCFG(&cfg);
+  getAnalysisData().setCFG(cfg);
+  getAnalysisData().setContext(Ctx);
+  
   RegisterDecls R(getAnalysisData());
   cfg.VisitBlockStmts(R);
 }
@@ -269,6 +272,13 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
       // transfer function for this expression first.
       if (Expr* Init = VD->getInit())
         Visit(Init);
+      
+      if (const VariableArrayType* VT =
+            AD.getContext().getAsVariableArrayType(VD->getType())) {
+        StmtIterator I(const_cast<VariableArrayType*>(VT));
+        StmtIterator E;        
+        for (; I != E; ++I) Visit(*I);
+      }
       
       // Update liveness information by killing the VarDecl.
       unsigned bit = AD.getIdx(VD);

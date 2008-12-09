@@ -66,7 +66,7 @@ class LiveVariables : public DataflowValues<LiveVariables_ValueTypes,
 public:
   typedef LiveVariables_ValueTypes::ObserverTy ObserverTy;
     
-  LiveVariables(CFG& cfg);
+  LiveVariables(ASTContext& Ctx, CFG& cfg);
   
   /// IsLive - Return true if a variable is live at beginning of a
   /// specified block.

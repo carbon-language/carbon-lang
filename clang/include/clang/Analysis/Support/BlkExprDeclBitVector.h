@@ -25,6 +25,7 @@
 namespace clang {
   
   class Stmt;
+  class ASTContext;
 
 struct DeclBitVector_Types {
   
@@ -170,12 +171,19 @@ struct StmtDeclBitVector_Types {
   //===--------------------------------------------------------------------===//
 
   class AnalysisDataTy : public DeclBitVector_Types::AnalysisDataTy {
+    ASTContext* ctx;
     CFG* cfg;
   public:
-    AnalysisDataTy() {}
+    AnalysisDataTy() : ctx(0), cfg(0) {}
     virtual ~AnalysisDataTy() {}
 
-    void setCFG(CFG* c) { cfg = c; }
+    void setContext(ASTContext& c) { ctx = &c; }
+    ASTContext& getContext() {
+      assert(ctx && "ASTContext should not be NULL."); 
+      return *ctx;
+    }
+
+    void setCFG(CFG& c) { cfg = &c; }
     CFG& getCFG() { assert(cfg && "CFG should not be NULL."); return *cfg; }
     
     bool isTracked(const Stmt* S) { return cfg->isBlkExpr(S); }
