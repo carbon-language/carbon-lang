@@ -165,8 +165,43 @@ SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
 
 SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
                                          SVal Offset) {
-  // Total hack: Just return "Base" for now.
-  return Base;
+
+  
+  if (Base.isUnknownOrUndef())
+    return Base;
+  
+  Loc BaseL = cast<Loc>(Base);  
+  const MemRegion* BaseR = 0;
+  
+  switch(BaseL.getSubKind()) {
+    case loc::SymbolValKind:
+      BaseR = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(&BaseL)->getSymbol());
+      break;
+      
+    case loc::GotoLabelKind:
+    case loc::FuncValKind:
+      // Technically we can get here if people do funny things with casts.
+      return UndefinedVal();
+      
+    case loc::MemRegionKind:
+      BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
+      break;
+      
+    case loc::ConcreteIntKind:
+      // While these seem funny, this can happen through casts.
+      // FIXME: What we should return is the field offset.  For example,
+      //  add the field offset to the integer value.  That way funny things
+      //  like this work properly:  &(((struct foo *) 0xa)->f)
+      return Base;
+      
+    default:
+      assert ("Unhandled Base.");
+      return Base;
+  }
+  
+  // We return an "unknown" index because we aren't reasoning about indices
+  // at all.
+  return loc::MemRegionVal(MRMgr.getElementRegion(UnknownVal(), BaseR));
 }
 
 SVal BasicStoreManager::Retrieve(const GRState* state, Loc LV, QualType T) {
