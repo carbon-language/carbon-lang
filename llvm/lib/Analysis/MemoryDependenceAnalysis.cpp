@@ -490,12 +490,8 @@ getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
   
   // While we have blocks to analyze, get their values.
   SmallPtrSet<BasicBlock*, 64> Visited;
-  
-  for (BasicBlock **PI = PredCache->GetPreds(FromBB); *PI; ++PI) {
-    // TODO: PHI TRANSLATE.
-    getNonLocalPointerDepFromBB(Pointer, PointeeSize, isLoad, *PI,
-                                Result, Visited);
-  }
+  getNonLocalPointerDepFromBB(Pointer, PointeeSize, isLoad, FromBB,
+                              Result, Visited);
 }
 
 /// GetNonLocalInfoForBlock - Compute the memdep value for BB with
@@ -611,23 +607,34 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
   // revisit blocks after we insert info for them.
   unsigned NumSortedEntries = Cache->size();
   
+  // SkipFirstBlock - If this is the very first block that we're processing, we
+  // don't want to skip or thing about its body, because the client was supposed
+  // to do a local dependence query.  Instead, just start processing it by
+  // adding its predecessors to the worklist and iterating.
+  bool SkipFirstBlock = Visited.empty();
+  
   while (!Worklist.empty()) {
     BasicBlock *BB = Worklist.pop_back_val();
     
-    // Analyze the dependency of *Pointer in FromBB.  See if we already have
-    // been here.
-    if (!Visited.insert(BB))
-      continue;
+    // Skip the first block if we have it.
+    if (SkipFirstBlock) {
+      SkipFirstBlock = false;
+    } else {
+      // Analyze the dependency of *Pointer in FromBB.  See if we already have
+      // been here.
+      if (!Visited.insert(BB))
+        continue;
 
-    // Get the dependency info for Pointer in BB.  If we have cached
-    // information, we will use it, otherwise we compute it.
-    MemDepResult Dep = GetNonLocalInfoForBlock(Pointer, PointeeSize, isLoad,
-                                               BB, Cache, NumSortedEntries);
-    
-    // If we got a Def or Clobber, add this to the list of results.
-    if (!Dep.isNonLocal()) {
-      Result.push_back(NonLocalDepEntry(BB, Dep));
-      continue;
+      // Get the dependency info for Pointer in BB.  If we have cached
+      // information, we will use it, otherwise we compute it.
+      MemDepResult Dep = GetNonLocalInfoForBlock(Pointer, PointeeSize, isLoad,
+                                                 BB, Cache, NumSortedEntries);
+      
+      // If we got a Def or Clobber, add this to the list of results.
+      if (!Dep.isNonLocal()) {
+        Result.push_back(NonLocalDepEntry(BB, Dep));
+        continue;
+      }
     }
     
     // Otherwise, we have to process all the predecessors of this block to scan
