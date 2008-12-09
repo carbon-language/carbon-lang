@@ -3876,8 +3876,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: assert(0 && "Unknown cvt code!");
     case ISD::CVT_SF:
     case ISD::CVT_UF:
-      break;
     case ISD::CVT_FF:
+      break;
     case ISD::CVT_FS:
     case ISD::CVT_FU:
     case ISD::CVT_SS:
@@ -3904,7 +3904,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         Result = PromoteOp(Node->getOperand(0));
         // For FP, make Op1 a i32
         
-        Result = DAG.getConvertRndSat(Result.getValueType(), Result,
+        Result = DAG.getConvertRndSat(Op.getValueType(), Result,
                                       DTyOp, STyOp, RndOp, SatOp, CvtCode);
         break;
       }
