@@ -102,7 +102,7 @@ be a bitcode library.
 
 =item B<-emit-llvm>
 
-Make the output be LLVM bitcode (with B<-c>) or assembly (with B<-s>) instead
+Make the output be LLVM bitcode (with B<-c>) or assembly (with B<-S>) instead
 of native object (or assembly).  If B<-emit-llvm> is given without either B<-c>
 or B<-S> it has no effect.
 
