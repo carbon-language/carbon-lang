@@ -18,6 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PointerIntPair.h"
 
 namespace llvm {
@@ -28,6 +29,7 @@ namespace llvm {
   class AliasAnalysis;
   class TargetData;
   class MemoryDependenceAnalysis;
+  class PredIteratorCache;
   
   /// MemDepResult - A memory dependence query can return one of three different
   /// answers, described below.
@@ -193,23 +195,18 @@ namespace llvm {
     /// Current AA implementation, just a cache.
     AliasAnalysis *AA;
     TargetData *TD;
+    OwningPtr<PredIteratorCache> PredCache;
   public:
-    MemoryDependenceAnalysis() : FunctionPass(&ID) {}
+    MemoryDependenceAnalysis();
+    ~MemoryDependenceAnalysis();
     static char ID;
 
     /// Pass Implementation stuff.  This doesn't do any analysis eagerly.
     bool runOnFunction(Function &);
     
     /// Clean up memory in between runs
-    void releaseMemory() {
-      LocalDeps.clear();
-      NonLocalDeps.clear();
-      NonLocalPointerDeps.clear();
-      ReverseLocalDeps.clear();
-      ReverseNonLocalDeps.clear();
-      ReverseNonLocalPtrDeps.clear();
-    }
-
+    void releaseMemory();
+    
     /// getAnalysisUsage - Does not modify anything.  It uses Value Numbering
     /// and Alias Analysis.
     ///

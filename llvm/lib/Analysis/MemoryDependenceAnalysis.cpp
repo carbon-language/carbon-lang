@@ -21,7 +21,7 @@
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/CFG.h"
+#include "llvm/Support/PredIteratorCache.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
@@ -45,6 +45,25 @@ char MemoryDependenceAnalysis::ID = 0;
 static RegisterPass<MemoryDependenceAnalysis> X("memdep",
                                      "Memory Dependence Analysis", false, true);
 
+MemoryDependenceAnalysis::MemoryDependenceAnalysis()
+: FunctionPass(&ID), PredCache(0) {
+}
+MemoryDependenceAnalysis::~MemoryDependenceAnalysis() {
+}
+
+/// Clean up memory in between runs
+void MemoryDependenceAnalysis::releaseMemory() {
+  LocalDeps.clear();
+  NonLocalDeps.clear();
+  NonLocalPointerDeps.clear();
+  ReverseLocalDeps.clear();
+  ReverseNonLocalDeps.clear();
+  ReverseNonLocalPtrDeps.clear();
+  PredCache->clear();
+}
+
+
+
 /// getAnalysisUsage - Does not modify anything.  It uses Alias Analysis.
 ///
 void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -56,6 +75,8 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 bool MemoryDependenceAnalysis::runOnFunction(Function &) {
   AA = &getAnalysis<AliasAnalysis>();
   TD = &getAnalysis<TargetData>();
+  if (PredCache == 0)
+    PredCache.reset(new PredIteratorCache());
   return false;
 }
 
@@ -468,8 +489,7 @@ getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
   // While we have blocks to analyze, get their values.
   SmallPtrSet<BasicBlock*, 64> Visited;
   
-  for (pred_iterator PI = pred_begin(FromBB), E = pred_end(FromBB); PI != E;
-       ++PI) {
+  for (BasicBlock **PI = PredCache->GetPreds(FromBB); *PI; ++PI) {
     // TODO: PHI TRANSLATE.
     getNonLocalPointerDepInternal(Pointer, PointeeSize, isLoad, *PI,
                                   Result, Visited);
@@ -592,7 +612,7 @@ getNonLocalPointerDepInternal(Value *Pointer, uint64_t PointeeSize,
     
     // Otherwise, we have to process all the predecessors of this block to scan
     // them as well.
-    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+    for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
       // TODO: PHI TRANSLATE.
       Worklist.push_back(*PI);
     }
