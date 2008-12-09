@@ -249,7 +249,7 @@ void LoopStrengthReduce::DeleteTriviallyDeadInstructions() {
   for (unsigned i = 0, e = DeadInsts.size()-1; i < e; ++i) {
     Instruction *I = DeadInsts[i];
     if (!I->use_empty()) DeadInsts[i] = 0;
-    while (DeadInsts[i+1] == I && i != e)
+    while (i != e && DeadInsts[i+1] == I)
       DeadInsts[++i] = 0;
   }
   
