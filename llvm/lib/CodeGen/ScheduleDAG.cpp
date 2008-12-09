@@ -49,9 +49,9 @@ void ScheduleDAG::CalculateDepths() {
 
     // Is it a node without dependencies?
     if (Degree == 0) {
-        assert(SU->Preds.empty() && "SUnit should have no predecessors");
-        // Collect leaf nodes
-        WorkList.push_back(SU);
+      assert(SU->Preds.empty() && "SUnit should have no predecessors");
+      // Collect leaf nodes
+      WorkList.push_back(SU);
     }
   }
 
@@ -69,7 +69,7 @@ void ScheduleDAG::CalculateDepths() {
          I != E; ++I) {
       unsigned PredDepth = I->Dep->Depth;
       if (PredDepth+1 > SUDepth) {
-          SUDepth = PredDepth + 1;
+        SUDepth = PredDepth + 1;
       }
     }
 
@@ -103,10 +103,10 @@ void ScheduleDAG::CalculateHeights() {
 
     // Is it a node without dependencies?
     if (Degree == 0) {
-        assert(SU->Succs.empty() && "Something wrong");
-        assert(WorkList.empty() && "Should be empty");
-        // Collect leaf nodes
-        WorkList.push_back(SU);
+      assert(SU->Succs.empty() && "Something wrong");
+      assert(WorkList.empty() && "Should be empty");
+      // Collect leaf nodes
+      WorkList.push_back(SU);
     }
   }
 
@@ -124,7 +124,7 @@ void ScheduleDAG::CalculateHeights() {
          I != E; ++I) {
       unsigned SuccHeight = I->Dep->Height;
       if (SuccHeight+1 > SUHeight) {
-          SUHeight = SuccHeight + 1;
+        SUHeight = SuccHeight + 1;
       }
     }
 
@@ -375,7 +375,8 @@ void ScheduleDAGTopologicalSort::RemovePred(SUnit *M, SUnit *N) {
 /// DFS - Make a DFS traversal to mark all nodes reachable from SU and mark
 /// all nodes affected by the edge insertion. These nodes will later get new
 /// topological indexes by means of the Shift method.
-void ScheduleDAGTopologicalSort::DFS(const SUnit *SU, int UpperBound, bool& HasLoop) {
+void ScheduleDAGTopologicalSort::DFS(const SUnit *SU, int UpperBound,
+                                     bool& HasLoop) {
   std::vector<const SUnit*> WorkList;
   WorkList.reserve(SUnits.size()); 
 
@@ -401,7 +402,7 @@ void ScheduleDAGTopologicalSort::DFS(const SUnit *SU, int UpperBound, bool& HasL
 /// Shift - Renumber the nodes so that the topological ordering is 
 /// preserved.
 void ScheduleDAGTopologicalSort::Shift(BitVector& Visited, int LowerBound, 
-                              int UpperBound) {
+                                       int UpperBound) {
   std::vector<int> L;
   int shift = 0;
   int i;
@@ -439,7 +440,8 @@ bool ScheduleDAGTopologicalSort::WillCreateCycle(SUnit *SU, SUnit *TargetSU) {
 }
 
 /// IsReachable - Checks if SU is reachable from TargetSU.
-bool ScheduleDAGTopologicalSort::IsReachable(const SUnit *SU, const SUnit *TargetSU) {
+bool ScheduleDAGTopologicalSort::IsReachable(const SUnit *SU,
+                                             const SUnit *TargetSU) {
   // If insertion of the edge SU->TargetSU would create a cycle
   // then there is a path from TargetSU to SU.
   int UpperBound, LowerBound;
