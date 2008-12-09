@@ -171,8 +171,6 @@ namespace llvm {
     ReverseNonLocalPtrDepTy ReverseNonLocalPtrDeps;
 
     
-    
-    
     /// PerInstNLInfo - This is the instruction we keep for each cached access
     /// that we have for an instruction.  The pointer is an owning pointer and
     /// the bool indicates whether we have any dirty bits in the set.
@@ -253,10 +251,16 @@ namespace llvm {
     MemDepResult getCallSiteDependencyFrom(CallSite C,
                                            BasicBlock::iterator ScanIt,
                                            BasicBlock *BB);
-    void getNonLocalPointerDepInternal(Value *Pointer, uint64_t Size,
-                                       bool isLoad, BasicBlock *BB,
-                                      SmallVectorImpl<NonLocalDepEntry> &Result,
-                                       SmallPtrSet<BasicBlock*, 64> &Visited);
+    void getNonLocalPointerDepFromBB(Value *Pointer, uint64_t Size,
+                                     bool isLoad, BasicBlock *BB,
+                                     SmallVectorImpl<NonLocalDepEntry> &Result,
+                                     SmallPtrSet<BasicBlock*, 64> &Visited);
+    MemDepResult GetNonLocalInfoForBlock(Value *Pointer, uint64_t PointeeSize,
+                                         bool isLoad, BasicBlock *BB,
+                                         NonLocalDepInfo *Cache,
+                                         unsigned NumSortedEntries);
+
+    
     void RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P);
     
     /// verifyRemoved - Verify that the specified instruction does not occur

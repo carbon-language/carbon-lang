@@ -493,16 +493,90 @@ getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
   
   for (BasicBlock **PI = PredCache->GetPreds(FromBB); *PI; ++PI) {
     // TODO: PHI TRANSLATE.
-    getNonLocalPointerDepInternal(Pointer, PointeeSize, isLoad, *PI,
-                                  Result, Visited);
+    getNonLocalPointerDepFromBB(Pointer, PointeeSize, isLoad, *PI,
+                                Result, Visited);
   }
 }
 
+/// GetNonLocalInfoForBlock - Compute the memdep value for BB with
+/// Pointer/PointeeSize using either cached information in Cache or by doing a
+/// lookup (which may use dirty cache info if available).  If we do a lookup,
+/// add the result to the cache.
+MemDepResult MemoryDependenceAnalysis::
+GetNonLocalInfoForBlock(Value *Pointer, uint64_t PointeeSize,
+                        bool isLoad, BasicBlock *BB,
+                        NonLocalDepInfo *Cache, unsigned NumSortedEntries) {
+  
+  // Do a binary search to see if we already have an entry for this block in
+  // the cache set.  If so, find it.
+  NonLocalDepInfo::iterator Entry =
+    std::upper_bound(Cache->begin(), Cache->begin()+NumSortedEntries,
+                     std::make_pair(BB, MemDepResult()));
+  if (Entry != Cache->begin() && (&*Entry)[-1].first == BB)
+    --Entry;
+  
+  MemDepResult *ExistingResult = 0;
+  if (Entry != Cache->begin()+NumSortedEntries && Entry->first == BB)
+    ExistingResult = &Entry->second;
+  
+  // If we have a cached entry, and it is non-dirty, use it as the value for
+  // this dependency.
+  if (ExistingResult && !ExistingResult->isDirty()) {
+    ++NumCacheNonLocalPtr;
+    return *ExistingResult;
+  }    
+  
+  // Otherwise, we have to scan for the value.  If we have a dirty cache
+  // entry, start scanning from its position, otherwise we scan from the end
+  // of the block.
+  BasicBlock::iterator ScanPos = BB->end();
+  if (ExistingResult && ExistingResult->getInst()) {
+    assert(ExistingResult->getInst()->getParent() == BB &&
+           "Instruction invalidated?");
+    ++NumCacheDirtyNonLocalPtr;
+    ScanPos = ExistingResult->getInst();
+    
+    // Eliminating the dirty entry from 'Cache', so update the reverse info.
+    ValueIsLoadPair CacheKey(Pointer, isLoad);
+    RemoveFromReverseMap(ReverseNonLocalPtrDeps, ScanPos,
+                         CacheKey.getOpaqueValue());
+  } else {
+    ++NumUncacheNonLocalPtr;
+  }
+  
+  // Scan the block for the dependency.
+  MemDepResult Dep = getPointerDependencyFrom(Pointer, PointeeSize, isLoad, 
+                                              ScanPos, BB);
+  
+  // If we had a dirty entry for the block, update it.  Otherwise, just add
+  // a new entry.
+  if (ExistingResult)
+    *ExistingResult = Dep;
+  else
+    Cache->push_back(std::make_pair(BB, Dep));
+  
+  // If the block has a dependency (i.e. it isn't completely transparent to
+  // the value), remember the reverse association because we just added it
+  // to Cache!
+  if (Dep.isNonLocal())
+    return Dep;
+  
+  // Keep the ReverseNonLocalPtrDeps map up to date so we can efficiently
+  // update MemDep when we remove instructions.
+  Instruction *Inst = Dep.getInst();
+  assert(Inst && "Didn't depend on anything?");
+  ValueIsLoadPair CacheKey(Pointer, isLoad);
+  ReverseNonLocalPtrDeps[Inst].insert(CacheKey.getOpaqueValue());
+  return Dep;
+}
+
+
+/// getNonLocalPointerDepFromBB - 
 void MemoryDependenceAnalysis::
-getNonLocalPointerDepInternal(Value *Pointer, uint64_t PointeeSize,
-                              bool isLoad, BasicBlock *StartBB,
-                              SmallVectorImpl<NonLocalDepEntry> &Result,
-                              SmallPtrSet<BasicBlock*, 64> &Visited) {
+getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
+                            bool isLoad, BasicBlock *StartBB,
+                            SmallVectorImpl<NonLocalDepEntry> &Result,
+                            SmallPtrSet<BasicBlock*, 64> &Visited) {
   // Look up the cached info for Pointer.
   ValueIsLoadPair CacheKey(Pointer, isLoad);
   
@@ -547,64 +621,8 @@ getNonLocalPointerDepInternal(Value *Pointer, uint64_t PointeeSize,
 
     // Get the dependency info for Pointer in BB.  If we have cached
     // information, we will use it, otherwise we compute it.
-    
-    // Do a binary search to see if we already have an entry for this block in
-    // the cache set.  If so, find it.
-    NonLocalDepInfo::iterator Entry =
-      std::upper_bound(Cache->begin(), Cache->begin()+NumSortedEntries,
-                       std::make_pair(BB, MemDepResult()));
-    if (Entry != Cache->begin() && (&*Entry)[-1].first == BB)
-      --Entry;
-    
-    MemDepResult *ExistingResult = 0;
-    if (Entry != Cache->begin()+NumSortedEntries && Entry->first == BB)
-      ExistingResult = &Entry->second;
-    
-    // If we have a cached entry, and it is non-dirty, use it as the value for
-    // this dependency.
-    MemDepResult Dep;
-    if (ExistingResult && !ExistingResult->isDirty()) {
-      Dep = *ExistingResult;
-      ++NumCacheNonLocalPtr;
-    } else {
-      // Otherwise, we have to scan for the value.  If we have a dirty cache
-      // entry, start scanning from its position, otherwise we scan from the end
-      // of the block.
-      BasicBlock::iterator ScanPos = BB->end();
-      if (ExistingResult && ExistingResult->getInst()) {
-        assert(ExistingResult->getInst()->getParent() == BB &&
-               "Instruction invalidated?");
-        ++NumCacheDirtyNonLocalPtr;
-        ScanPos = ExistingResult->getInst();
-
-        // Eliminating the dirty entry from 'Cache', so update the reverse info.
-        RemoveFromReverseMap(ReverseNonLocalPtrDeps, ScanPos,
-                             CacheKey.getOpaqueValue());
-      } else {
-        ++NumUncacheNonLocalPtr;
-      }
-      
-      // Scan the block for the dependency.
-      Dep = getPointerDependencyFrom(Pointer, PointeeSize, isLoad, ScanPos, BB);
-      
-      // If we had a dirty entry for the block, update it.  Otherwise, just add
-      // a new entry.
-      if (ExistingResult)
-        *ExistingResult = Dep;
-      else
-        Cache->push_back(std::make_pair(BB, Dep));
-      
-      // If the block has a dependency (i.e. it isn't completely transparent to
-      // the value), remember the reverse association because we just added it
-      // to Cache!
-      if (!Dep.isNonLocal()) {
-        // Keep the ReverseNonLocalPtrDeps map up to date so we can efficiently
-        // update MemDep when we remove instructions.
-        Instruction *Inst = Dep.getInst();
-        assert(Inst && "Didn't depend on anything?");
-        ReverseNonLocalPtrDeps[Inst].insert(CacheKey.getOpaqueValue());
-      }
-    }
+    MemDepResult Dep = GetNonLocalInfoForBlock(Pointer, PointeeSize, isLoad,
+                                               BB, Cache, NumSortedEntries);
     
     // If we got a Def or Clobber, add this to the list of results.
     if (!Dep.isNonLocal()) {
@@ -620,7 +638,7 @@ getNonLocalPointerDepInternal(Value *Pointer, uint64_t PointeeSize,
     }
   }
   
-  // If we computed new values, re-sort Cache.
+  // Okay, we're done now.  If we added new values to the cache, re-sort it.
   switch (Cache->size()-NumSortedEntries) {
   case 0:
     // done, no new entries.
