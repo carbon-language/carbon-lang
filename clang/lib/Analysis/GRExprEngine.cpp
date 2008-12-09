@@ -377,6 +377,15 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       break;
     }
       
+    case Stmt::ObjCAtThrowStmtClass: {
+      // FIXME: This is not complete.  We basically treat @throw as
+      // an abort.
+      SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+      Builder->BuildSinks = true;
+      MakeNode(Dst, S, Pred, GetState(Pred));
+      break;
+    }
+      
     case Stmt::ParenExprClass:
       Visit(cast<ParenExpr>(S)->getSubExpr()->IgnoreParens(), Pred, Dst);
       break;
