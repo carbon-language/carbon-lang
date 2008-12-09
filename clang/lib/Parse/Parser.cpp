@@ -17,6 +17,7 @@
 #include "clang/Parse/Scope.h"
 #include "ExtensionRAIIObject.h"
 #include "ParsePragma.h"
+#include "AstGuard.h"
 using namespace clang;
 
 Parser::Parser(Preprocessor &pp, Action &actions)
@@ -333,13 +334,13 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     return ParseExternalDeclaration();
   }
   case tok::kw_asm: {
-    ExprResult Result = ParseSimpleAsm();
+    ExprOwner Result(Actions, ParseSimpleAsm());
 
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                      "top-level asm block");
 
-    if (!Result.isInvalid)
-      return Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), Result.Val);
+    if (!Result.isInvalid())
+      return Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), Result.move());
     return 0;
   }
   case tok::at:
@@ -669,12 +670,12 @@ Parser::ExprResult Parser::ParseAsmStringLiteral() {
     return true;
   }
 
-  ExprResult Res = ParseStringLiteralExpression();
-  if (Res.isInvalid) return true;
+  ExprOwner Res(Actions, ParseStringLiteralExpression());
+  if (Res.isInvalid()) return true;
 
   // TODO: Diagnose: wide string literal in 'asm'
 
-  return Res;
+  return Res.move();
 }
 
 /// ParseSimpleAsm
@@ -693,14 +694,14 @@ Parser::ExprResult Parser::ParseSimpleAsm() {
 
   ConsumeParen();
 
-  ExprResult Result = ParseAsmStringLiteral();
+  ExprOwner Result(Actions, ParseAsmStringLiteral());
 
-  if (Result.isInvalid)
+  if (Result.isInvalid())
     SkipUntil(tok::r_paren);
   else
     MatchRHSPunctuation(tok::r_paren, Loc);
 
-  return Result;
+  return Result.move();
 }
 
 /// TryAnnotateTypeOrScopeToken - If the current token position is on a

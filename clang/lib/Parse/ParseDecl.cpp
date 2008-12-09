@@ -126,13 +126,13 @@ AttributeList *Parser::ParseAttributes() {
             
             // now parse the non-empty comma separated list of expressions
             while (1) {
-              ExprResult ArgExpr = ParseAssignmentExpression();
-              if (ArgExpr.isInvalid) {
+              ExprOwner ArgExpr(Actions, ParseAssignmentExpression());
+              if (ArgExpr.isInvalid()) {
                 ArgExprsOk = false;
                 SkipUntil(tok::r_paren);
                 break;
               } else {
-                ArgExprs.push_back(ArgExpr.Val);
+                ArgExprs.push_back(ArgExpr.move());
               }
               if (Tok.isNot(tok::comma))
                 break;
@@ -158,13 +158,13 @@ AttributeList *Parser::ParseAttributes() {
             
             // now parse the list of expressions
             while (1) {
-              ExprResult ArgExpr = ParseAssignmentExpression();
-              if (ArgExpr.isInvalid) {
+              ExprOwner ArgExpr(Actions, ParseAssignmentExpression());
+              if (ArgExpr.isInvalid()) {
                 ArgExprsOk = false;
                 SkipUntil(tok::r_paren);
                 break;
               } else {
-                ArgExprs.push_back(ArgExpr.Val);
+                ArgExprs.push_back(ArgExpr.move());
               }
               if (Tok.isNot(tok::comma))
                 break;
@@ -270,13 +270,13 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   while (1) {
     // If a simple-asm-expr is present, parse it.
     if (Tok.is(tok::kw_asm)) {
-      ExprResult AsmLabel = ParseSimpleAsm();
-      if (AsmLabel.isInvalid) {
+      ExprOwner AsmLabel(Actions, ParseSimpleAsm());
+      if (AsmLabel.isInvalid()) {
         SkipUntil(tok::semi);
         return 0;
       }
       
-      D.setAsmLabel(AsmLabel.Val);
+      D.setAsmLabel(AsmLabel.move());
     }
     
     // If attributes are present, parse them.
@@ -285,16 +285,16 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
 
     // Inform the current actions module that we just parsed this declarator.
     LastDeclInGroup = Actions.ActOnDeclarator(CurScope, D, LastDeclInGroup);
-        
+
     // Parse declarator '=' initializer.
     if (Tok.is(tok::equal)) {
       ConsumeToken();
-      ExprResult Init = ParseInitializer();
-      if (Init.isInvalid) {
+      ExprOwner Init(Actions, ParseInitializer());
+      if (Init.isInvalid()) {
         SkipUntil(tok::semi);
         return 0;
       }
-      Actions.AddInitializerToDecl(LastDeclInGroup, Init.Val);
+      Actions.AddInitializerToDecl(LastDeclInGroup, Init.move());
     } else if (Tok.is(tok::l_paren)) {
       // Parse C++ direct initializer: '(' expression-list ')'
       SourceLocation LParenLoc = ConsumeParen();
@@ -842,11 +842,11 @@ ParseStructDeclaration(DeclSpec &DS,
     
     if (Tok.is(tok::colon)) {
       ConsumeToken();
-      ExprResult Res = ParseConstantExpression();
-      if (Res.isInvalid)
+      ExprOwner Res(Actions, ParseConstantExpression());
+      if (Res.isInvalid())
         SkipUntil(tok::semi, true, true);
       else
-        DeclaratorInfo.BitfieldSize = Res.Val;
+        DeclaratorInfo.BitfieldSize = Res.move();
     }
     
     // If attributes exist after the declarator, parse them.
@@ -1074,21 +1074,20 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
     SourceLocation IdentLoc = ConsumeToken();
     
     SourceLocation EqualLoc;
-    ExprTy *AssignedVal = 0;
+    ExprOwner AssignedVal(Actions);
     if (Tok.is(tok::equal)) {
       EqualLoc = ConsumeToken();
-      ExprResult Res = ParseConstantExpression();
-      if (Res.isInvalid)
+      AssignedVal = ParseConstantExpression();
+      if (AssignedVal.isInvalid())
         SkipUntil(tok::comma, tok::r_brace, true, true);
-      else
-        AssignedVal = Res.Val;
     }
     
     // Install the enumerator constant into EnumDecl.
     DeclTy *EnumConstDecl = Actions.ActOnEnumConstant(CurScope, EnumDecl,
                                                       LastEnumConstDecl,
                                                       IdentLoc, Ident,
-                                                      EqualLoc, AssignedVal);
+                                                      EqualLoc,
+                                                      AssignedVal.move());
     EnumConstantDecls.push_back(EnumConstDecl);
     LastEnumConstDecl = EnumConstDecl;
     
@@ -1797,12 +1796,13 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
         ConsumeToken();
         
         // Parse the default argument
-        ExprResult DefArgResult = ParseAssignmentExpression();
-        if (DefArgResult.isInvalid) {
+        ExprOwner DefArgResult(Actions, ParseAssignmentExpression());
+        if (DefArgResult.isInvalid()) {
           SkipUntil(tok::comma, tok::r_paren, true, true);
         } else {
           // Inform the actions module about the default argument
-          Actions.ActOnParamDefaultArgument(Param, EqualLoc, DefArgResult.Val);
+          Actions.ActOnParamDefaultArgument(Param, EqualLoc,
+                                            DefArgResult.move());
         }
       }
       
@@ -1934,7 +1934,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   
   // Handle "direct-declarator [ type-qual-list[opt] * ]".
   bool isStar = false;
-  ExprResult NumElements(false);
+  ExprOwner NumElements(Actions);
   
   // Handle the case where we have '[*]' as the array size.  However, a leading
   // star could be the start of an expression, for example 'X[*p + 4]'.  Verify
@@ -1953,7 +1953,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   }
   
   // If there was an error parsing the assignment-expression, recover.
-  if (NumElements.isInvalid) {
+  if (NumElements.isInvalid()) {
     // If the expression was invalid, skip it.
     SkipUntil(tok::r_square);
     return;
@@ -1973,7 +1973,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // Remember that we parsed a pointer type, and remember the type-quals.
   D.AddTypeInfo(DeclaratorChunk::getArray(DS.getTypeQualifiers(),
                                           StaticLoc.isValid(), isStar,
-                                          NumElements.Val, StartLoc));
+                                          NumElements.move(), StartLoc));
 }
 
 /// [GNU]   typeof-specifier:
@@ -1992,14 +1992,14 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
       return;
     }
 
-    ExprResult Result = ParseCastExpression(true/*isUnaryExpression*/);
-    if (Result.isInvalid)
+    ExprOwner Result(Actions, ParseCastExpression(true/*isUnaryExpression*/));
+    if (Result.isInvalid())
       return;
 
     const char *PrevSpec = 0;
     // Check for duplicate type specifiers.
     if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
-                           Result.Val))
+                           Result.move()))
       Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 
     // FIXME: Not accurate, the range gets one token more than it should.
@@ -2024,10 +2024,9 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec, Ty))
       Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
   } else { // we have an expression.
-    ExprResult Result = ParseExpression();
-    ExprGuard ResultGuard(Actions, Result);
-    
-    if (Result.isInvalid || Tok.isNot(tok::r_paren)) {
+    ExprOwner Result(Actions, ParseExpression());
+
+    if (Result.isInvalid() || Tok.isNot(tok::r_paren)) {
       MatchRHSPunctuation(tok::r_paren, LParenLoc);
       return;
     }
@@ -2035,7 +2034,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     const char *PrevSpec = 0;
     // Check for duplicate type specifiers (e.g. "int typeof(int)").
     if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
-                           ResultGuard.take()))
+                           Result.move()))
       Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
   }
   DS.SetRangeEnd(RParenLoc);

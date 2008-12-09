@@ -173,10 +173,10 @@ Parser::ExprResult Parser::ParseExpression() {
   if (Tok.is(tok::kw_throw))
     return ParseThrowExpression();
 
-  ExprResult LHS = ParseCastExpression(false);
-  if (LHS.isInvalid) return LHS;
+  ExprOwner LHS(Actions, ParseCastExpression(false));
+  if (LHS.isInvalid()) return LHS.move();
   
-  return ParseRHSOfBinaryExpression(LHS, prec::Comma);
+  return ParseRHSOfBinaryExpression(LHS.move(), prec::Comma);
 }
 
 /// This routine is called when the '@' is seen and consumed. 
@@ -185,10 +185,10 @@ Parser::ExprResult Parser::ParseExpression() {
 /// for example, @encode-expression.
 ///
 Parser::ExprResult Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
-  ExprResult LHS = ParseObjCAtExpression(AtLoc);
-  if (LHS.isInvalid) return LHS;
- 
-  return ParseRHSOfBinaryExpression(LHS, prec::Comma);
+  ExprOwner LHS(Actions, ParseObjCAtExpression(AtLoc));
+  if (LHS.isInvalid()) return LHS.move();
+
+  return ParseRHSOfBinaryExpression(LHS.move(), prec::Comma);
 }
 
 /// ParseAssignmentExpression - Parse an expr that doesn't include commas.
@@ -197,10 +197,10 @@ Parser::ExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::kw_throw))
     return ParseThrowExpression();
 
-  ExprResult LHS = ParseCastExpression(false);
-  if (LHS.isInvalid) return LHS;
+  ExprOwner LHS(Actions, ParseCastExpression(false));
+  if (LHS.isInvalid()) return LHS.move();
   
-  return ParseRHSOfBinaryExpression(LHS, prec::Assignment);
+  return ParseRHSOfBinaryExpression(LHS.move(), prec::Assignment);
 }
 
 /// ParseAssignmentExprWithObjCMessageExprStart - Parse an assignment expression
@@ -216,46 +216,44 @@ Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
                                                     SourceLocation NameLoc,
                                                    IdentifierInfo *ReceiverName,
                                                     ExprTy *ReceiverExpr) {
-  ExprResult R = ParseObjCMessageExpressionBody(LBracLoc, NameLoc, ReceiverName,
-                                                ReceiverExpr);
-  if (R.isInvalid) return R;
-  R = ParsePostfixExpressionSuffix(R);
-  if (R.isInvalid) return R;
-  return ParseRHSOfBinaryExpression(R, 2);
+  ExprOwner R(Actions, ParseObjCMessageExpressionBody(LBracLoc, NameLoc,
+                                                      ReceiverName,
+                                                      ReceiverExpr));
+  if (R.isInvalid()) return R.move();
+  R = ParsePostfixExpressionSuffix(R.move());
+  if (R.isInvalid()) return R.move();
+  return ParseRHSOfBinaryExpression(R.move(), 2);
 }
 
 
 Parser::ExprResult Parser::ParseConstantExpression() {
-  ExprResult LHS = ParseCastExpression(false);
-  if (LHS.isInvalid) return LHS;
+  ExprOwner LHS(Actions, ParseCastExpression(false));
+  if (LHS.isInvalid()) return LHS.move();
   
-  return ParseRHSOfBinaryExpression(LHS, prec::Conditional);
+  return ParseRHSOfBinaryExpression(LHS.move(), prec::Conditional);
 }
 
 /// ParseRHSOfBinaryExpression - Parse a binary expression that starts with
 /// LHS and has a precedence of at least MinPrec.
 Parser::ExprResult
-Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
+Parser::ParseRHSOfBinaryExpression(ExprResult LHSArg, unsigned MinPrec) {
   unsigned NextTokPrec = getBinOpPrecedence(Tok.getKind());
   SourceLocation ColonLoc;
 
-  ExprGuard LHSGuard(Actions, LHS);
+  ExprOwner LHS(Actions, LHSArg);
   while (1) {
     // If this token has a lower precedence than we are allowed to parse (e.g.
     // because we are called recursively, or because the token is not a binop),
     // then we are done!
-    if (NextTokPrec < MinPrec) {
-      LHSGuard.take();
-      return LHS;
-    }
+    if (NextTokPrec < MinPrec)
+      return LHS.move();
 
     // Consume the operator, saving the operator token for error reporting.
     Token OpToken = Tok;
     ConsumeToken();
     
     // Special case handling for the ternary operator.
-    ExprResult TernaryMiddle(true);
-    ExprGuard MiddleGuard(Actions);
+    ExprOwner TernaryMiddle(Actions, true);
     if (NextTokPrec == prec::Conditional) {
       if (Tok.isNot(tok::colon)) {
         // Handle this production specially:
@@ -263,17 +261,15 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
         // In particular, the RHS of the '?' is 'expression', not
         // 'logical-OR-expression' as we might expect.
         TernaryMiddle = ParseExpression();
-        if (TernaryMiddle.isInvalid) {
-          return TernaryMiddle;
-        }
+        if (TernaryMiddle.isInvalid())
+          return TernaryMiddle.move();
       } else {
         // Special case handling of "X ? Y : Z" where Y is empty:
         //   logical-OR-expression '?' ':' conditional-expression   [GNU]
-        TernaryMiddle = ExprResult(false);
+        TernaryMiddle.reset();
         Diag(Tok, diag::ext_gnu_conditional_expr);
       }
-      MiddleGuard.reset(TernaryMiddle);
-      
+
       if (Tok.isNot(tok::colon)) {
         Diag(Tok, diag::err_expected_colon);
         Diag(OpToken, diag::note_matching) << "?";
@@ -285,11 +281,9 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     }
     
     // Parse another leaf here for the RHS of the operator.
-    ExprResult RHS = ParseCastExpression(false);
-    if (RHS.isInvalid) {
-      return RHS;
-    }
-    ExprGuard RHSGuard(Actions, RHS);
+    ExprOwner RHS(Actions, ParseCastExpression(false));
+    if (RHS.isInvalid())
+      return RHS.move();
 
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
@@ -309,31 +303,24 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
       // is okay, to bind exactly as tightly.  For example, compile A=B=C=D as
       // A=(B=(C=D)), where each paren is a level of recursion here.
       // The function takes ownership of the RHS.
-      RHSGuard.take();
-      RHS = ParseRHSOfBinaryExpression(RHS, ThisPrec + !isRightAssoc);
-      if (RHS.isInvalid) {
-        return RHS;
-      }
-      RHSGuard.reset(RHS);
+      RHS = ParseRHSOfBinaryExpression(RHS.move(), ThisPrec + !isRightAssoc);
+      if (RHS.isInvalid())
+        return RHS.move();
 
       NextTokPrec = getBinOpPrecedence(Tok.getKind());
     }
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
 
-    if (!LHS.isInvalid) {
+    if (!LHS.isInvalid()) {
       // Combine the LHS and RHS into the LHS (e.g. build AST).
-      LHSGuard.take();
-      MiddleGuard.take();
-      RHSGuard.take();
-      if (TernaryMiddle.isInvalid)
+      if (TernaryMiddle.isInvalid())
         LHS = Actions.ActOnBinOp(CurScope, OpToken.getLocation(), 
-                                 OpToken.getKind(), LHS.Val, RHS.Val);
+                                 OpToken.getKind(), LHS.move(), RHS.move());
       else
         LHS = Actions.ActOnConditionalOp(OpToken.getLocation(), ColonLoc,
-                                         LHS.Val, TernaryMiddle.Val, RHS.Val);
-      LHSGuard.reset(LHS);
+                                         LHS.move(), TernaryMiddle.move(),
+                                         RHS.move());
     }
-    // If we had an invalid LHS, Middle and RHS will be freed by the guards here
   }
 }
 
@@ -433,7 +420,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     TryAnnotateTypeOrScopeToken();
   }
 
-  ExprResult Res;
+  ExprOwner Res(Actions);
   tok::TokenKind SavedKind = Tok.getKind();
   
   // This handles all of cast-expression, unary-expression, postfix-expression,
@@ -456,7 +443,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation LParenLoc = Tok.getLocation();
     SourceLocation RParenLoc;
     Res = ParseParenExpression(ParenExprType, CastTy, RParenLoc);
-    if (Res.isInvalid) return Res;
+    if (Res.isInvalid()) return Res.move();
     
     switch (ParenExprType) {
     case SimpleExpr:   break;    // Nothing else to do.
@@ -470,15 +457,15 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
       // the cast-expression that follows it next.
       // TODO: For cast expression with CastTy.
       Res = ParseCastExpression(false);
-      if (!Res.isInvalid)
-        Res = Actions.ActOnCastExpr(LParenLoc, CastTy, RParenLoc, Res.Val);
-      return Res;
+      if (!Res.isInvalid())
+        Res = Actions.ActOnCastExpr(LParenLoc, CastTy, RParenLoc, Res.move());
+      return Res.move();
     }
-      
+
     // These can be followed by postfix-expr pieces.
-    return ParsePostfixExpressionSuffix(Res);
+    return ParsePostfixExpressionSuffix(Res.move());
   }
-    
+
     // primary-expression
   case tok::numeric_constant:
     // constant: integer-constant
@@ -488,7 +475,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     ConsumeToken();
     
     // These can be followed by postfix-expr pieces.
-    return ParsePostfixExpressionSuffix(Res);
+    return ParsePostfixExpressionSuffix(Res.move());
 
   case tok::kw_true:
   case tok::kw_false:
@@ -506,26 +493,26 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation L = ConsumeToken();
     Res = Actions.ActOnIdentifierExpr(CurScope, L, II, Tok.is(tok::l_paren));
     // These can be followed by postfix-expr pieces.
-    return ParsePostfixExpressionSuffix(Res);
+    return ParsePostfixExpressionSuffix(Res.move());
   }
   case tok::char_constant:     // constant: character-constant
     Res = Actions.ActOnCharacterConstant(Tok);
     ConsumeToken();
     // These can be followed by postfix-expr pieces.
-    return ParsePostfixExpressionSuffix(Res);    
+    return ParsePostfixExpressionSuffix(Res.move());
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
     Res = Actions.ActOnPredefinedExpr(Tok.getLocation(), SavedKind);
     ConsumeToken();
     // These can be followed by postfix-expr pieces.
-    return ParsePostfixExpressionSuffix(Res);
+    return ParsePostfixExpressionSuffix(Res.move());
   case tok::string_literal:    // primary-expression: string-literal
   case tok::wide_string_literal:
     Res = ParseStringLiteralExpression();
-    if (Res.isInvalid) return Res;
+    if (Res.isInvalid()) return Res.move();
     // This can be followed by postfix-expr pieces (e.g. "foo"[1]).
-    return ParsePostfixExpressionSuffix(Res);
+    return ParsePostfixExpressionSuffix(Res.move());
   case tok::kw___builtin_va_arg:
   case tok::kw___builtin_offsetof:
   case tok::kw___builtin_choose_expr:
@@ -539,9 +526,9 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::minusminus: {  // unary-expression: '--' unary-expression
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(true);
-    if (!Res.isInvalid)
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.Val);
-    return Res;
+    if (!Res.isInvalid())
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.move());
+    return Res.move();
   }
   case tok::amp:           // unary-expression: '&' cast-expression
   case tok::star:          // unary-expression: '*' cast-expression
@@ -553,19 +540,19 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw___imag: {   // unary-expression: '__imag' cast-expression [GNU]
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
-    if (!Res.isInvalid)
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.Val);
-    return Res;
-  }    
-      
+    if (!Res.isInvalid())
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.move());
+    return Res.move();
+  }
+
   case tok::kw___extension__:{//unary-expression:'__extension__' cast-expr [GNU]
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
-    if (!Res.isInvalid)
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.Val);
-    return Res;
+    if (!Res.isInvalid())
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.move());
+    return Res.move();
   }
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
                            // unary-expression: 'sizeof' '(' type-name ')'
@@ -585,7 +572,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     Res = Actions.ActOnAddrLabel(AmpAmpLoc, Tok.getLocation(),
                                  Tok.getIdentifierInfo());
     ConsumeToken();
-    return Res;
+    return Res.move();
   }
   case tok::kw_const_cast:
   case tok::kw_dynamic_cast:
@@ -593,15 +580,15 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_static_cast:
     Res = ParseCXXCasts();
     // These can be followed by postfix-expr pieces.
-    return ParsePostfixExpressionSuffix(Res);
+    return ParsePostfixExpressionSuffix(Res.move());
   case tok::kw_typeid:
     Res = ParseCXXTypeid();
     // This can be followed by postfix-expr pieces.
-    return ParsePostfixExpressionSuffix(Res);
+    return ParsePostfixExpressionSuffix(Res.move());
   case tok::kw_this:
     Res = ParseCXXThis();
     // This can be followed by postfix-expr pieces.
-    return ParsePostfixExpressionSuffix(Res);
+    return ParsePostfixExpressionSuffix(Res.move());
 
   case tok::kw_char:
   case tok::kw_wchar_t:
@@ -629,14 +616,14 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
 
     Res = ParseCXXTypeConstructExpression(DS);
     // This can be followed by postfix-expr pieces.
-    return ParsePostfixExpressionSuffix(Res);
+    return ParsePostfixExpressionSuffix(Res.move());
   }
 
   case tok::annot_cxxscope: // [C++] id-expression: qualified-id
   case tok::kw_operator: // [C++] id-expression: operator/conversion-function-id
                          //                      template-id
     Res = ParseCXXIdExpression();
-    return ParsePostfixExpressionSuffix(Res);
+    return ParsePostfixExpressionSuffix(Res.move());
 
   case tok::coloncolon: // [C++] new-expression or [C++] delete-expression
     // If the next token is neither 'new' nor 'delete', the :: would have been
@@ -694,35 +681,32 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
 ///         argument-expression
 ///         argument-expression-list ',' assignment-expression
 ///
-Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
-  ExprGuard LHSGuard(Actions, LHS);
+Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHSArg) {
+  ExprOwner LHS(Actions, LHSArg);
   // Now that the primary-expression piece of the postfix-expression has been
   // parsed, see if there are any postfix-expression pieces here.
   SourceLocation Loc;
   while (1) {
     switch (Tok.getKind()) {
     default:  // Not a postfix-expression suffix.
-      LHSGuard.take();
-      return LHS;
+      return LHS.move();
     case tok::l_square: {  // postfix-expression: p-e '[' expression ']'
       Loc = ConsumeBracket();
-      ExprResult Idx = ParseExpression();
-      ExprGuard IdxGuard(Actions, Idx);
+      ExprOwner Idx(Actions, ParseExpression());
 
       SourceLocation RLoc = Tok.getLocation();
-      
-      if (!LHS.isInvalid && !Idx.isInvalid && Tok.is(tok::r_square)) {
-        LHS = Actions.ActOnArraySubscriptExpr(CurScope, LHSGuard.take(), Loc, 
-                                              IdxGuard.take(), RLoc);
-        LHSGuard.reset(LHS);
-      } else 
+
+      if (!LHS.isInvalid() && !Idx.isInvalid() && Tok.is(tok::r_square)) {
+        LHS = Actions.ActOnArraySubscriptExpr(CurScope, LHS.move(), Loc,
+                                              Idx.move(), RLoc);
+      } else
         LHS = ExprResult(true);
 
       // Match the ']'.
       MatchRHSPunctuation(tok::r_square, Loc);
       break;
     }
-      
+
     case tok::l_paren: {   // p-e: p-e '(' argument-expression-list[opt] ')'
       ExprVector ArgExprs(Actions);
       CommaLocsTy CommaLocs;
@@ -737,14 +721,13 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       }
         
       // Match the ')'.
-      if (!LHS.isInvalid && Tok.is(tok::r_paren)) {
+      if (!LHS.isInvalid() && Tok.is(tok::r_paren)) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
-        LHS = Actions.ActOnCallExpr(CurScope, LHSGuard.take(), Loc, 
+        LHS = Actions.ActOnCallExpr(CurScope, LHS.move(), Loc, 
                                     ArgExprs.take(),
                                     ArgExprs.size(), &CommaLocs[0],
                                     Tok.getLocation());
-        LHSGuard.reset(LHS);
       }
       
       MatchRHSPunctuation(tok::r_paren, Loc);
@@ -760,21 +743,19 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         return ExprResult(true);
       }
       
-      if (!LHS.isInvalid) {
-        LHS = Actions.ActOnMemberReferenceExpr(LHSGuard.take(), OpLoc, OpKind,
+      if (!LHS.isInvalid()) {
+        LHS = Actions.ActOnMemberReferenceExpr(LHS.move(), OpLoc, OpKind,
                                                Tok.getLocation(),
                                                *Tok.getIdentifierInfo());
-        LHSGuard.reset(LHS);
       }
       ConsumeToken();
       break;
     }
     case tok::plusplus:    // postfix-expression: postfix-expression '++'
     case tok::minusminus:  // postfix-expression: postfix-expression '--'
-      if (!LHS.isInvalid) {
+      if (!LHS.isInvalid()) {
         LHS = Actions.ActOnPostfixUnaryOp(CurScope, Tok.getLocation(), 
-                                          Tok.getKind(), LHSGuard.take());
-        LHSGuard.reset(LHS);
+                                          Tok.getKind(), LHS.move());
       }
       ConsumeToken();
       break;
@@ -798,7 +779,7 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
   ConsumeToken();
   
   // If the operand doesn't start with an '(', it must be an expression.
-  ExprResult Operand;
+  ExprOwner Operand(Actions);
   if (Tok.isNot(tok::l_paren)) {
     Operand = ParseCastExpression(true);
   } else {
@@ -822,16 +803,16 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
     // If this is a parenthesized expression, it is the start of a 
     // unary-expression, but doesn't include any postfix pieces.  Parse these
     // now if present.
-    Operand = ParsePostfixExpressionSuffix(Operand);
+    Operand = ParsePostfixExpressionSuffix(Operand.move());
   }
   
   // If we get here, the operand to the sizeof/alignof was an expresion.
-  if (!Operand.isInvalid)
+  if (!Operand.isInvalid())
     Operand = Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
                                              OpTok.is(tok::kw_sizeof),
-                                             /*isType=*/false, Operand.Val,
+                                             /*isType=*/false, Operand.move(),
                                              SourceRange());
-  return Operand;
+  return Operand.move();
 }
 
 /// ParseBuiltinPrimaryExpression
@@ -850,7 +831,7 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
 /// [GNU]   offsetof-member-designator '[' expression ']'
 ///
 Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
-  ExprResult Res(false);
+  ExprOwner Res(Actions);
   const IdentifierInfo *BuiltinII = Tok.getIdentifierInfo();
 
   tok::TokenKind T = Tok.getKind();
@@ -868,9 +849,8 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   switch (T) {
   default: assert(0 && "Not a builtin primary expression!");
   case tok::kw___builtin_va_arg: {
-    ExprResult Expr = ParseAssignmentExpression();
-    ExprGuard ExprGuard(Actions, Expr);
-    if (Expr.isInvalid) {
+    ExprOwner Expr(Actions, ParseAssignmentExpression());
+    if (Expr.isInvalid()) {
       SkipUntil(tok::r_paren);
       return ExprResult(true);
     }
@@ -879,12 +859,12 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       return ExprResult(true);
 
     TypeTy *Ty = ParseTypeName();
-    
+
     if (Tok.isNot(tok::r_paren)) {
       Diag(Tok, diag::err_expected_rparen);
       return ExprResult(true);
     }
-    Res = Actions.ActOnVAArg(StartLoc, ExprGuard.take(), Ty, ConsumeParen());
+    Res = Actions.ActOnVAArg(StartLoc, Expr.move(), Ty, ConsumeParen());
     break;
   }
   case tok::kw___builtin_offsetof: {
@@ -931,11 +911,11 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
         Comps.back().isBrackets = true;
         Comps.back().LocStart = ConsumeBracket();
         Res = ParseExpression();
-        if (Res.isInvalid) {
+        if (Res.isInvalid()) {
           SkipUntil(tok::r_paren);
-          return Res;
+          return Res.move();
         }
-        Comps.back().U.E = Res.Val;
+        Comps.back().U.E = Res.move();
 
         Comps.back().LocEnd =
           MatchRHSPunctuation(tok::r_square, Comps.back().LocStart);
@@ -951,36 +931,33 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     break;
   }
   case tok::kw___builtin_choose_expr: {
-    ExprResult Cond = ParseAssignmentExpression();
-    ExprGuard CondGuard(Actions, Cond);
-    if (Cond.isInvalid) {
+    ExprOwner Cond(Actions, ParseAssignmentExpression());
+    if (Cond.isInvalid()) {
       SkipUntil(tok::r_paren);
-      return Cond;
+      return Cond.move();
     }
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
-    ExprResult Expr1 = ParseAssignmentExpression();
-    ExprGuard Guard1(Actions, Expr1);
-    if (Expr1.isInvalid) {
+    ExprOwner Expr1(Actions, ParseAssignmentExpression());
+    if (Expr1.isInvalid()) {
       SkipUntil(tok::r_paren);
-      return Expr1;
-    }    
+      return Expr1.move();
+    }
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
-    ExprResult Expr2 = ParseAssignmentExpression();
-    ExprGuard Guard2(Actions, Expr2);
-    if (Expr2.isInvalid) {
+    ExprOwner Expr2(Actions, ParseAssignmentExpression());
+    if (Expr2.isInvalid()) {
       SkipUntil(tok::r_paren);
-      return Expr2;
-    }    
+      return Expr2.move();
+    }
     if (Tok.isNot(tok::r_paren)) {
       Diag(Tok, diag::err_expected_rparen);
       return ExprResult(true);
     }
-    Res = Actions.ActOnChooseExpr(StartLoc, CondGuard.take(), Guard1.take(),
-                                  Guard2.take(), ConsumeParen());
+    Res = Actions.ActOnChooseExpr(StartLoc, Cond.move(), Expr1.move(),
+                                  Expr2.move(), ConsumeParen());
     break;
   }
   case tok::kw___builtin_overload: {
@@ -991,13 +968,13 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     // comma.  If there is no comma, break and attempt to match r-paren.
     if (Tok.isNot(tok::r_paren)) {
       while (1) {
-        ExprResult ArgExpr = ParseAssignmentExpression();
-        if (ArgExpr.isInvalid) {
+        ExprOwner ArgExpr(Actions, ParseAssignmentExpression());
+        if (ArgExpr.isInvalid()) {
           SkipUntil(tok::r_paren);
           return ExprResult(true);
         } else
-          ArgExprs.push_back(ArgExpr.Val);
-        
+          ArgExprs.push_back(ArgExpr.move());
+
         if (Tok.isNot(tok::comma))
           break;
         // Move to the next argument, remember where the comma was.
@@ -1033,7 +1010,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   
   // These can be followed by postfix-expr pieces because they are
   // primary-expressions.
-  return ParsePostfixExpressionSuffix(Res);
+  return ParsePostfixExpressionSuffix(Res.move());
 }
 
 /// ParseParenExpression - This parses the unit that starts with a '(' token,
@@ -1054,18 +1031,19 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
                                                 SourceLocation &RParenLoc) {
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
   SourceLocation OpenLoc = ConsumeParen();
-  ExprResult Result(true);
+  ExprOwner Result(Actions, true);
   CastTy = 0;
   
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
-    Parser::StmtResult Stmt = ParseCompoundStatement(true);
+    StmtOwner Stmt(Actions, ParseCompoundStatement(true));
     ExprType = CompoundStmt;
-    
+
     // If the substmt parsed correctly, build the AST node.
-    if (!Stmt.isInvalid && Tok.is(tok::r_paren))
-      Result = Actions.ActOnStmtExpr(OpenLoc, Stmt.Val, Tok.getLocation());
-    
+    if (!Stmt.isInvalid() && Tok.is(tok::r_paren))
+      Result = Actions.ActOnStmtExpr(
+        OpenLoc, Stmt.move(), Tok.getLocation());
+
   } else if (ExprType >= CompoundLiteral && isTypeIdInParens()) {
     // Otherwise, this is a compound literal expression or cast expression.
     TypeTy *Ty = ParseTypeName();
@@ -1081,8 +1059,9 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
         Diag(OpenLoc, diag::ext_c99_compound_literal);
       Result = ParseInitializer();
       ExprType = CompoundLiteral;
-      if (!Result.isInvalid)
-        return Actions.ActOnCompoundLiteral(OpenLoc, Ty, RParenLoc, Result.Val);
+      if (!Result.isInvalid())
+        return Actions.ActOnCompoundLiteral(OpenLoc, Ty, RParenLoc,
+                                            Result.take());
     } else if (ExprType == CastExpr) {
       // Note that this doesn't parse the subsequence cast-expression, it just
       // returns the parsed type to the callee.
@@ -1093,16 +1072,17 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
       Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
       return ExprResult(true);
     }
-    return Result;
+    return Result.move();
   } else {
     Result = ParseExpression();
     ExprType = SimpleExpr;
-    if (!Result.isInvalid && Tok.is(tok::r_paren))
-      Result = Actions.ActOnParenExpr(OpenLoc, Tok.getLocation(), Result.Val);
+    if (!Result.isInvalid() && Tok.is(tok::r_paren))
+      Result = Actions.ActOnParenExpr(
+        OpenLoc, Tok.getLocation(), Result.take());
   }
   
   // Match the ')'.
-  if (Result.isInvalid)
+  if (Result.isInvalid())
     SkipUntil(tok::r_paren);
   else {
     if (Tok.is(tok::r_paren))
@@ -1111,7 +1091,7 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
       MatchRHSPunctuation(tok::r_paren, OpenLoc);
   }
   
-  return Result;
+  return Result.move();
 }
 
 /// ParseStringLiteralExpression - This handles the various token types that
@@ -1148,11 +1128,11 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
 ///
 bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs) {
   while (1) {
-    ExprResult Expr = ParseAssignmentExpression();
-    if (Expr.isInvalid)
+    ExprOwner Expr(Actions, ParseAssignmentExpression());
+    if (Expr.isInvalid())
       return true;
 
-    Exprs.push_back(Expr.Val);
+    Exprs.push_back(Expr.move());
 
     if (Tok.isNot(tok::comma))
       return false;
@@ -1209,16 +1189,16 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
   // Inform sema that we are starting a block.
   Actions.ActOnBlockArguments(ParamInfo);
   
-  ExprResult Result = true;
+  ExprOwner Result(Actions, true);
   if (Tok.is(tok::l_brace)) {
-    StmtResult Stmt = ParseCompoundStatementBody();
-    if (!Stmt.isInvalid) {
-      Result = Actions.ActOnBlockStmtExpr(CaretLoc, Stmt.Val, CurScope);
+    StmtOwner Stmt(Actions, ParseCompoundStatementBody());
+    if (!Stmt.isInvalid()) {
+      Result = Actions.ActOnBlockStmtExpr(CaretLoc, Stmt.move(), CurScope);
     } else {
       Actions.ActOnBlockError(CaretLoc, CurScope);
     }
   }
   ExitScope();
-  return Result;
+  return Result.move();
 }
 

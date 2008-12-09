@@ -1175,17 +1175,17 @@ Parser::DeclTy *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
 ///    throw expression[opt];
 ///
 Parser::StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
-  ExprResult Res;
+  ExprOwner Res(Actions);
   ConsumeToken(); // consume throw
   if (Tok.isNot(tok::semi)) {
     Res = ParseExpression();
-    if (Res.isInvalid) {
+    if (Res.isInvalid()) {
       SkipUntil(tok::semi);
       return true;
     }
   }
   ConsumeToken(); // consume ';'
-  return Actions.ActOnObjCAtThrowStmt(atLoc, Res.Val);
+  return Actions.ActOnObjCAtThrowStmt(atLoc, Res.move());
 }
 
 /// objc-synchronized-statement:
@@ -1198,9 +1198,8 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
     return true;
   }
   ConsumeParen();  // '('
-  ExprResult Res = ParseExpression();
-  ExprGuard ResGuard(Actions, Res);
-  if (Res.isInvalid) {
+  ExprOwner Res(Actions, ParseExpression());
+  if (Res.isInvalid()) {
     SkipUntil(tok::semi);
     return true;
   }
@@ -1217,13 +1216,13 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   // statements can always hold declarations.
   EnterScope(Scope::DeclScope);
 
-  StmtResult SynchBody = ParseCompoundStatementBody();
-  
+  StmtOwner SynchBody(Actions, ParseCompoundStatementBody());
+
   ExitScope();
-  if (SynchBody.isInvalid)
+  if (SynchBody.isInvalid())
     SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
-  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, ResGuard.take(),
-                                             SynchBody.Val);
+  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.move(),
+                                             SynchBody.move());
 }
 
 ///  objc-try-catch-statement:
@@ -1245,15 +1244,13 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag(Tok, diag::err_expected_lbrace);
     return true;
   }
-  StmtResult CatchStmts;
-  StmtResult FinallyStmt;
+  StmtOwner CatchStmts(Actions);
+  StmtOwner FinallyStmt(Actions);
   EnterScope(Scope::DeclScope);
-  StmtResult TryBody = ParseCompoundStatementBody();
+  StmtOwner TryBody(Actions, ParseCompoundStatementBody());
   ExitScope();
-  if (TryBody.isInvalid)
+  if (TryBody.isInvalid())
     TryBody = Actions.ActOnNullStmt(Tok.getLocation());
-  ExprGuard TryGuard(Actions, TryBody);
-  ExprGuard CatchGuard(Actions), FinallyGuard(Actions);
 
   while (Tok.is(tok::at)) {
     // At this point, we need to lookahead to determine if this @ is the start
@@ -1263,10 +1260,10 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     if (!AfterAt.isObjCAtKeyword(tok::objc_catch) &&
         !AfterAt.isObjCAtKeyword(tok::objc_finally))
       break;
-      
+
     SourceLocation AtCatchFinallyLoc = ConsumeToken();
     if (Tok.isObjCAtKeyword(tok::objc_catch)) {
-      StmtTy *FirstPart = 0;
+      StmtOwner FirstPart(Actions);
       ConsumeToken(); // consume catch
       if (Tok.is(tok::l_paren)) {
         ConsumeParen();
@@ -1281,26 +1278,24 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
           if (DeclaratorInfo.getIdentifier()) {
             DeclTy *aBlockVarDecl = Actions.ActOnDeclarator(CurScope, 
                                                           DeclaratorInfo, 0);
-            StmtResult stmtResult =
+            FirstPart =
               Actions.ActOnDeclStmt(aBlockVarDecl, 
                                     DS.getSourceRange().getBegin(),
                                     DeclaratorInfo.getSourceRange().getEnd());
-            FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
           }
         } else
           ConsumeToken(); // consume '...'
         SourceLocation RParenLoc = ConsumeParen();
         
-        StmtResult CatchBody(true);
+        StmtOwner CatchBody(Actions, true);
         if (Tok.is(tok::l_brace))
           CatchBody = ParseCompoundStatementBody();
         else
           Diag(Tok, diag::err_expected_lbrace);
-        if (CatchBody.isInvalid)
+        if (CatchBody.isInvalid())
           CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
-        CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc, RParenLoc, 
-          FirstPart, CatchBody.Val, CatchGuard.take());
-        CatchGuard.reset(CatchStmts);
+        CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
+          RParenLoc, FirstPart.move(), CatchBody.move(), CatchStmts.move());
         ExitScope();
       } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)
@@ -1313,17 +1308,16 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       ConsumeToken(); // consume finally
       EnterScope(Scope::DeclScope);
 
-      
-      StmtResult FinallyBody(true);
+
+      StmtOwner FinallyBody(Actions, true);
       if (Tok.is(tok::l_brace))
         FinallyBody = ParseCompoundStatementBody();
       else
         Diag(Tok, diag::err_expected_lbrace);
-      if (FinallyBody.isInvalid)
+      if (FinallyBody.isInvalid())
         FinallyBody = Actions.ActOnNullStmt(Tok.getLocation());
-      FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc, 
-                                                   FinallyBody.Val);
-      FinallyGuard.reset(FinallyStmt);
+      FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc,
+                                                       FinallyBody.move());
       catch_or_finally_seen = true;
       ExitScope();
       break;
@@ -1333,8 +1327,8 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag(atLoc, diag::err_missing_catch_finally);
     return true;
   }
-  return Actions.ActOnObjCAtTryStmt(atLoc, TryGuard.take(), CatchGuard.take(), 
-                                    FinallyGuard.take());
+  return Actions.ActOnObjCAtTryStmt(atLoc, TryBody.move(), CatchStmts.move(), 
+                                    FinallyStmt.move());
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
@@ -1365,17 +1359,17 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   // specified Declarator for the method.
   Actions.ObjCActOnStartOfMethodDef(CurScope, MDecl);
   
-  StmtResult FnBody = ParseCompoundStatementBody();
+  StmtOwner FnBody(Actions, ParseCompoundStatementBody());
   
   // If the function body could not be parsed, make a bogus compoundstmt.
-  if (FnBody.isInvalid)
+  if (FnBody.isInvalid())
     FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc, 0, 0, false);
   
   // Leave the function body scope.
   ExitScope();
   
   // TODO: Pass argument information.
-  Actions.ActOnFinishFunctionBody(MDecl, FnBody.Val);
+  Actions.ActOnFinishFunctionBody(MDecl, FnBody.move());
   return MDecl;
 }
 
@@ -1386,8 +1380,8 @@ Parser::StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
     return ParseObjCThrowStmt(AtLoc);
   else if (Tok.isObjCAtKeyword(tok::objc_synchronized))
     return ParseObjCSynchronizedStmt(AtLoc);
-  ExprResult Res = ParseExpressionWithLeadingAt(AtLoc);
-  if (Res.isInvalid) {
+  ExprOwner Res(Actions, ParseExpressionWithLeadingAt(AtLoc));
+  if (Res.isInvalid()) {
     // If the expression is invalid, skip ahead to the next semicolon. Not
     // doing this opens us up to the possibility of infinite loops if
     // ParseExpression does not consume any tokens.
@@ -1396,7 +1390,7 @@ Parser::StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   }
   // Otherwise, eat the semicolon.
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-  return Actions.ActOnExprStmt(Res.Val);
+  return Actions.ActOnExprStmt(Res.move());
 }
 
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
@@ -1439,13 +1433,14 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     return ParseObjCMessageExpressionBody(LBracLoc, NameLoc, ReceiverName, 0);
   }
 
-  ExprResult Res = ParseExpression();
-  if (Res.isInvalid) {
+  ExprOwner Res(Actions, ParseExpression());
+  if (Res.isInvalid()) {
     SkipUntil(tok::r_square);
-    return Res;
+    return Res.move();
   }
   
-  return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 0, Res.Val);
+  return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
+                                        0, Res.move());
 }
   
 /// ParseObjCMessageExpressionBody - Having parsed "'[' objc-receiver", parse
@@ -1497,17 +1492,17 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
       
       ConsumeToken(); // Eat the ':'.
       ///  Parse the expression after ':' 
-      ExprResult Res = ParseAssignmentExpression();
-      if (Res.isInvalid) {
+      ExprOwner Res(Actions, ParseAssignmentExpression());
+      if (Res.isInvalid()) {
         // We must manually skip to a ']', otherwise the expression skipper will
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
         SkipUntil(tok::r_square);
-        return Res;
+        return Res.move();
       }
       
       // We have a valid expression.
-      KeyExprs.push_back(Res.Val);
+      KeyExprs.push_back(Res.move());
       
       // Check for another keyword selector.
       selIdent = ParseObjCSelector(Loc);
@@ -1519,17 +1514,17 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
     while (Tok.is(tok::comma)) {
       ConsumeToken(); // Eat the ','.
       ///  Parse the expression after ',' 
-      ExprResult Res = ParseAssignmentExpression();
-      if (Res.isInvalid) {
+      ExprOwner Res(Actions, ParseAssignmentExpression());
+      if (Res.isInvalid()) {
         // We must manually skip to a ']', otherwise the expression skipper will
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
         SkipUntil(tok::r_square);
-        return Res;
+        return Res.move();
       }
-      
+
       // We have a valid expression.
-      KeyExprs.push_back(Res.Val);
+      KeyExprs.push_back(Res.move());
     }
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected_ident); // missing selector name.
@@ -1568,8 +1563,8 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
-  ExprResult Res = ParseStringLiteralExpression();
-  if (Res.isInvalid) return Res;
+  ExprOwner Res(Actions, ParseStringLiteralExpression());
+  if (Res.isInvalid()) return Res.move();
   
   // @"foo" @"bar" is a valid concatenated string.  Eat any subsequent string
   // expressions.  At this point, we know that the only valid thing that starts
@@ -1577,21 +1572,21 @@ Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
   llvm::SmallVector<SourceLocation, 4> AtLocs;
   ExprVector AtStrings(Actions);
   AtLocs.push_back(AtLoc);
-  AtStrings.push_back(Res.Val);
-  
+  AtStrings.push_back(Res.move());
+
   while (Tok.is(tok::at)) {
     AtLocs.push_back(ConsumeToken()); // eat the @.
 
-    ExprResult Lit(true);  // Invalid unless there is a string literal.
+    ExprOwner Lit(Actions, true);  // Invalid unless there is a string literal.
     if (isTokenStringLiteral())
       Lit = ParseStringLiteralExpression();
     else
       Diag(Tok, diag::err_objc_concat_string);
-    
-    if (Lit.isInvalid)
-      return Lit;
 
-    AtStrings.push_back(Lit.Val);
+    if (Lit.isInvalid())
+      return Lit.move();
+
+    AtStrings.push_back(Lit.move());
   }
   
   return Actions.ParseObjCStringLiteral(&AtLocs[0], AtStrings.take(),

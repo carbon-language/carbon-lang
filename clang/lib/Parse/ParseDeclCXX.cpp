@@ -489,8 +489,8 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   //   member-declarator-list ',' member-declarator
 
   DeclTy *LastDeclInGroup = 0;
-  ExprTy *BitfieldSize = 0;
-  ExprTy *Init = 0;
+  ExprOwner BitfieldSize(Actions);
+  ExprOwner Init(Actions);
 
   while (1) {
 
@@ -501,11 +501,9 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
 
     if (Tok.is(tok::colon)) {
       ConsumeToken();
-      ExprResult Res = ParseConstantExpression();
-      if (Res.isInvalid)
+      BitfieldSize = ParseConstantExpression();
+      if (BitfieldSize.isInvalid())
         SkipUntil(tok::comma, true, true);
-      else
-        BitfieldSize = Res.Val;
     }
     
     // pure-specifier:
@@ -516,11 +514,9 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
 
     if (Tok.is(tok::equal)) {
       ConsumeToken();
-      ExprResult Res = ParseInitializer();
-      if (Res.isInvalid)
+      Init = ParseInitializer();
+      if (Init.isInvalid())
         SkipUntil(tok::comma, true, true);
-      else
-        Init = Res.Val;
     }
 
     // If attributes exist after the declarator, parse them.
@@ -533,7 +529,8 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     // See Sema::ActOnCXXMemberDeclarator for details.
     LastDeclInGroup = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
                                                        DeclaratorInfo,
-                                                       BitfieldSize, Init,
+                                                       BitfieldSize.move(),
+                                                       Init.move(),
                                                        LastDeclInGroup);
 
     // If we don't have a comma, it is either the end of the list (a ';')
@@ -546,7 +543,8 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     
     // Parse the next declarator.
     DeclaratorInfo.clear();
-    BitfieldSize = Init = 0;
+    BitfieldSize.reset();
+    Init.reset();
     
     // Attributes are only allowed on the second declarator.
     if (Tok.is(tok::kw___attribute))

@@ -35,15 +35,13 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
 
   Action::PragmaPackKind Kind = Action::PPK_Default;
   IdentifierInfo *Name = 0;
-  Action::ExprResult Alignment;
-  ExprGuard AlignmentGuard(Actions);
+  ExprOwner Alignment(Actions);
   SourceLocation LParenLoc = Tok.getLocation();
   PP.Lex(Tok);  
   if (Tok.is(tok::numeric_constant)) {
     Alignment = Actions.ActOnNumericConstant(Tok);
-    if (Alignment.isInvalid)
+    if (Alignment.isInvalid())
       return;
-    AlignmentGuard.reset(Alignment);
 
     PP.Lex(Tok);
   } else if (Tok.is(tok::identifier)) {
@@ -67,9 +65,8 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
         
         if (Tok.is(tok::numeric_constant)) {
           Alignment = Actions.ActOnNumericConstant(Tok);
-          if (Alignment.isInvalid)
+          if (Alignment.isInvalid())
             return;
-          AlignmentGuard.reset(Alignment);
 
           PP.Lex(Tok);
         } else if (Tok.is(tok::identifier)) {
@@ -85,9 +82,8 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
             }
             
             Alignment = Actions.ActOnNumericConstant(Tok);
-            if (Alignment.isInvalid)
+            if (Alignment.isInvalid())
               return;
-            AlignmentGuard.reset(Alignment);
 
             PP.Lex(Tok);
           }
@@ -97,7 +93,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
         }
       }
     }
-  } 
+  }
 
   if (Tok.isNot(tok::r_paren)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_expected_rparen);
@@ -105,7 +101,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
   }
 
   SourceLocation RParenLoc = Tok.getLocation();
-  Actions.ActOnPragmaPack(Kind, Name, AlignmentGuard.take(), PackLoc, 
+  Actions.ActOnPragmaPack(Kind, Name, Alignment.move(), PackLoc,
                           LParenLoc, RParenLoc);
 }
 

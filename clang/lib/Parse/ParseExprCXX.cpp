@@ -221,14 +221,14 @@ Parser::ExprResult Parser::ParseCXXCasts() {
   if (Tok.isNot(tok::l_paren))
     return Diag(Tok, diag::err_expected_lparen_after) << CastName;
 
-  ExprResult Result = ParseSimpleParenExpression(RParenLoc);
+  ExprOwner Result(Actions, ParseSimpleParenExpression(RParenLoc));
 
-  if (!Result.isInvalid)
+  if (!Result.isInvalid())
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
                                        LAngleBracketLoc, CastTy, RAngleBracketLoc,
-                                       LParenLoc, Result.Val, RParenLoc);
+                                       LParenLoc, Result.move(), RParenLoc);
 
-  return Result;
+  return Result.move();
 }
 
 /// ParseCXXTypeid - This handles the C++ typeid expression.
@@ -249,7 +249,7 @@ Parser::ExprResult Parser::ParseCXXTypeid() {
       "typeid"))
     return ExprResult(true);
 
-  Parser::ExprResult Result;
+  ExprOwner Result(Actions);
 
   if (isTypeIdInParens()) {
     TypeTy *Ty = ParseTypeName();
@@ -266,17 +266,17 @@ Parser::ExprResult Parser::ParseCXXTypeid() {
     Result = ParseExpression();
 
     // Match the ')'.
-    if (Result.isInvalid)
+    if (Result.isInvalid())
       SkipUntil(tok::r_paren);
     else {
       MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
       Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/false,
-                                      Result.Val, RParenLoc);
+                                      Result.move(), RParenLoc);
     }
   }
 
-  return Result;
+  return Result.move();
 }
 
 /// ParseCXXBoolLiteral - This handles the C++ Boolean literals.
@@ -310,9 +310,9 @@ Parser::ExprResult Parser::ParseThrowExpression() {
     return Actions.ActOnCXXThrow(ThrowLoc);
 
   default:
-    ExprResult Expr = ParseAssignmentExpression();
-    if (Expr.isInvalid) return Expr;
-    return Actions.ActOnCXXThrow(ThrowLoc, Expr.Val);
+    ExprOwner Expr(Actions, ParseAssignmentExpression());
+    if (Expr.isInvalid()) return Expr.move();
+    return Actions.ActOnCXXThrow(ThrowLoc, Expr.move());
   }
 }
 
@@ -388,12 +388,12 @@ Parser::ExprResult Parser::ParseCXXCondition() {
 
   // simple-asm-expr[opt]
   if (Tok.is(tok::kw_asm)) {
-    ExprResult AsmLabel = ParseSimpleAsm();
-    if (AsmLabel.isInvalid) {
+    ExprOwner AsmLabel(Actions, ParseSimpleAsm());
+    if (AsmLabel.isInvalid()) {
       SkipUntil(tok::semi);
       return true;
     }
-    DeclaratorInfo.setAsmLabel(AsmLabel.Val);
+    DeclaratorInfo.setAsmLabel(AsmLabel.move());
   }
 
   // If attributes are present, parse them.
@@ -404,13 +404,13 @@ Parser::ExprResult Parser::ParseCXXCondition() {
   if (Tok.isNot(tok::equal))
     return Diag(Tok, diag::err_expected_equal_after_declarator);
   SourceLocation EqualLoc = ConsumeToken();
-  ExprResult AssignExpr = ParseAssignmentExpression();
-  if (AssignExpr.isInvalid)
+  ExprOwner AssignExpr(Actions, ParseAssignmentExpression());
+  if (AssignExpr.isInvalid())
     return true;
   
   return Actions.ActOnCXXConditionDeclarationExpr(CurScope, StartLoc,
                                                   DeclaratorInfo,
-                                                  EqualLoc, AssignExpr.Val);
+                                                  EqualLoc, AssignExpr.move());
 }
 
 /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
@@ -776,8 +776,9 @@ void Parser::ParseDirectNewDeclarator(Declarator &D)
   bool first = true;
   while (Tok.is(tok::l_square)) {
     SourceLocation LLoc = ConsumeBracket();
-    ExprResult Size = first ? ParseExpression() : ParseConstantExpression();
-    if (Size.isInvalid) {
+    ExprOwner Size(Actions, first ? ParseExpression()
+                                  : ParseConstantExpression());
+    if (Size.isInvalid()) {
       // Recover
       SkipUntil(tok::r_square);
       return;
@@ -785,7 +786,7 @@ void Parser::ParseDirectNewDeclarator(Declarator &D)
     first = false;
 
     D.AddTypeInfo(DeclaratorChunk::getArray(0, /*static=*/false, /*star=*/false,
-                                            Size.Val, LLoc));
+                                            Size.move(), LLoc));
 
     if (MatchRHSPunctuation(tok::r_square, LLoc).isInvalid())
       return;
@@ -850,9 +851,9 @@ Parser::ExprResult Parser::ParseCXXDeleteExpression()
       return true;
   }
 
-  ExprResult Operand = ParseCastExpression(false);
-  if (Operand.isInvalid)
-    return Operand;
+  ExprOwner Operand(Actions, ParseCastExpression(false));
+  if (Operand.isInvalid())
+    return Operand.move();
 
-  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, Operand.Val);
+  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, Operand.move());
 }

@@ -143,10 +143,10 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     // Note that we parse this as an assignment expression, not a constant
     // expression (allowing *=, =, etc) to handle the objc case.  Sema needs
     // to validate that the expression is a constant.
-    ExprResult Idx = ParseAssignmentExpression();
-    if (Idx.isInvalid) {
+    ExprOwner Idx(Actions, ParseAssignmentExpression());
+    if (Idx.isInvalid()) {
       SkipUntil(tok::r_square);
-      return Idx;
+      return Idx.move();
     }
     
     // Given an expression, we could either have a designator (if the next
@@ -170,7 +170,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
       
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                          SourceLocation(), 
-                                                         0, Idx.Val);
+                                                         0, Idx.move());
     }
 
     // Create designation if we haven't already.
@@ -179,21 +179,20 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     
     // If this is a normal array designator, remember it.
     if (Tok.isNot(tok::ellipsis)) {
-      Desig->AddDesignator(Designator::getArray(Idx.Val));
+      Desig->AddDesignator(Designator::getArray(Idx.move()));
     } else {
       // Handle the gnu array range extension.
       Diag(Tok, diag::ext_gnu_array_range);
       ConsumeToken();
       
-      ExprResult RHS = ParseConstantExpression();
-      if (RHS.isInvalid) {
-        Actions.DeleteExpr(Idx.Val);
+      ExprOwner RHS(Actions, ParseConstantExpression());
+      if (RHS.isInvalid()) {
         SkipUntil(tok::r_square);
-        return RHS;
+        return RHS.move();
       }
-      Desig->AddDesignator(Designator::getArrayRange(Idx.Val, RHS.Val));
+      Desig->AddDesignator(Designator::getArrayRange(Idx.move(), RHS.move()));
     }
-    
+
     MatchRHSPunctuation(tok::r_square, StartLoc);
   }
 
@@ -264,7 +263,7 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
     
     // If we know that this cannot be a designation, just parse the nested
     // initializer directly.
-    ExprResult SubElt;
+    ExprOwner SubElt(Actions);
     if (!MayBeDesignationStart(Tok.getKind(), PP))
       SubElt = ParseInitializer();
     else {
@@ -275,13 +274,13 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
       // designator, make sure to remove the designator from
       // InitExprDesignations, otherwise we'll end up with a designator with no
       // making initializer.
-      if (SubElt.isInvalid)
+      if (SubElt.isInvalid())
         InitExprDesignations.EraseDesignation(InitExprs.size());
     }
     
     // If we couldn't parse the subelement, bail out.
-    if (!SubElt.isInvalid) {
-      InitExprs.push_back(SubElt.Val);
+    if (!SubElt.isInvalid()) {
+      InitExprs.push_back(SubElt.move());
     } else {
       InitExprsOk = false;
       
@@ -298,7 +297,7 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
         break;
       }
     }
-      
+
     // If we don't have a comma continued list, we're done.
     if (Tok.isNot(tok::comma)) break;
     
