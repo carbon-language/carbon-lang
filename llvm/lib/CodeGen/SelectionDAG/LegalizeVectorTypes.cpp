@@ -21,6 +21,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LegalizeTypes.h"
+#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -264,15 +265,10 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
   // If the result is null, the sub-method took care of registering results etc.
   if (!Res.getNode()) return false;
 
-  // If the result is N, the sub-method updated N in place.  Check to see if any
-  // operands are new, and if so, mark them.
-  if (Res.getNode() == N) {
-    // Mark N as new and remark N and its operands.  This allows us to correctly
-    // revisit N if it needs another step of promotion and allows us to visit
-    // any new operands to N.
-    ReanalyzeNode(N);
+  // If the result is N, the sub-method updated N in place.  Tell the legalizer
+  // core about this.
+  if (Res.getNode() == N)
     return true;
-  }
 
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");
@@ -576,13 +572,21 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   // Store the new element.  This may be larger than the vector element type,
   // so use a truncating store.
   SDValue EltPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
+  unsigned Alignment =
+    TLI.getTargetData()->getPrefTypeAlignment(VecVT.getTypeForMVT());
   Store = DAG.getTruncStore(Store, Elt, EltPtr, NULL, 0, EltVT);
 
-  // Reload the vector from the stack.
-  SDValue Load = DAG.getLoad(VecVT, Store, StackPtr, NULL, 0);
+  // Load the Lo part from the stack slot.
+  Lo = DAG.getLoad(Lo.getValueType(), Store, StackPtr, NULL, 0);
 
-  // Split it.
-  SplitVecRes_LOAD(cast<LoadSDNode>(Load.getNode()), Lo, Hi);
+  // Increment the pointer to the other part.
+  unsigned IncrementSize = Lo.getValueType().getSizeInBits() / 8;
+  StackPtr = DAG.getNode(ISD::ADD, StackPtr.getValueType(), StackPtr,
+                         DAG.getIntPtrConstant(IncrementSize));
+
+  // Load the Hi part from the stack slot.
+  Hi = DAG.getLoad(Hi.getValueType(), Store, StackPtr, NULL, 0, false,
+                   MinAlign(Alignment, IncrementSize));
 }
 
 void DAGTypeLegalizer::SplitVecRes_SCALAR_TO_VECTOR(SDNode *N, SDValue &Lo,
@@ -840,15 +844,10 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
   // If the result is null, the sub-method took care of registering results etc.
   if (!Res.getNode()) return false;
 
-  // If the result is N, the sub-method updated N in place.  Check to see if any
-  // operands are new, and if so, mark them.
-  if (Res.getNode() == N) {
-    // Mark N as new and remark N and its operands.  This allows us to correctly
-    // revisit N if it needs another step of promotion and allows us to visit
-    // any new operands to N.
-    ReanalyzeNode(N);
+  // If the result is N, the sub-method updated N in place.  Tell the legalizer
+  // core about this.
+  if (Res.getNode() == N)
     return true;
-  }
 
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");

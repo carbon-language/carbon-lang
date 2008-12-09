@@ -18,6 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LegalizeTypes.h"
+#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -30,7 +31,8 @@ using namespace llvm;
 
 void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
                                              SDValue &Hi) {
-  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  MVT OutVT = N->getValueType(0);
+  MVT NOutVT = TLI.getTypeToTransformTo(OutVT);
   SDValue InOp = N->getOperand(0);
   MVT InVT = InOp.getValueType();
 
@@ -44,15 +46,15 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
     case SoftenFloat:
       // Convert the integer operand instead.
       SplitInteger(GetSoftenedFloat(InOp), Lo, Hi);
-      Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
-      Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
+      Lo = DAG.getNode(ISD::BIT_CONVERT, NOutVT, Lo);
+      Hi = DAG.getNode(ISD::BIT_CONVERT, NOutVT, Hi);
       return;
     case ExpandInteger:
     case ExpandFloat:
       // Convert the expanded pieces of the input.
       GetExpandedOp(InOp, Lo, Hi);
-      Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
-      Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
+      Lo = DAG.getNode(ISD::BIT_CONVERT, NOutVT, Lo);
+      Hi = DAG.getNode(ISD::BIT_CONVERT, NOutVT, Hi);
       return;
     case SplitVector:
       // Convert the split parts of the input if it was split in two.
@@ -60,22 +62,46 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
       if (Lo.getValueType() == Hi.getValueType()) {
         if (TLI.isBigEndian())
           std::swap(Lo, Hi);
-        Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
-        Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
+        Lo = DAG.getNode(ISD::BIT_CONVERT, NOutVT, Lo);
+        Hi = DAG.getNode(ISD::BIT_CONVERT, NOutVT, Hi);
         return;
       }
       break;
     case ScalarizeVector:
       // Convert the element instead.
       SplitInteger(BitConvertToInteger(GetScalarizedVector(InOp)), Lo, Hi);
-      Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
-      Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
+      Lo = DAG.getNode(ISD::BIT_CONVERT, NOutVT, Lo);
+      Hi = DAG.getNode(ISD::BIT_CONVERT, NOutVT, Hi);
       return;
   }
 
-  // Lower the bit-convert to a store/load from the stack, then expand the load.
-  SDValue Op = CreateStackStoreLoad(InOp, N->getValueType(0));
-  ExpandRes_NormalLoad(Op.getNode(), Lo, Hi);
+  // Lower the bit-convert to a store/load from the stack.
+  assert(NOutVT.isByteSized() && "Expanded type not byte sized!");
+
+  // Create the stack frame object.  Make sure it is aligned for both
+  // the source and expanded destination types.
+  unsigned Alignment =
+    TLI.getTargetData()->getPrefTypeAlignment(NOutVT.getTypeForMVT());
+  SDValue StackPtr = DAG.CreateStackTemporary(InVT, Alignment);
+
+  // Emit a store to the stack slot.
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), InOp, StackPtr, NULL, 0);
+
+  // Load the first half from the stack slot.
+  Lo = DAG.getLoad(NOutVT, Store, StackPtr, NULL, 0);
+
+  // Increment the pointer to the other half.
+  unsigned IncrementSize = NOutVT.getSizeInBits() / 8;
+  StackPtr = DAG.getNode(ISD::ADD, StackPtr.getValueType(), StackPtr,
+                         DAG.getIntPtrConstant(IncrementSize));
+
+  // Load the second half from the stack slot.
+  Hi = DAG.getLoad(NOutVT, Store, StackPtr, NULL, 0, false,
+                   MinAlign(Alignment, IncrementSize));
+
+  // Handle endianness of the load.
+  if (TLI.isBigEndian())
+    std::swap(Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandRes_BUILD_PAIR(SDNode *N, SDValue &Lo,

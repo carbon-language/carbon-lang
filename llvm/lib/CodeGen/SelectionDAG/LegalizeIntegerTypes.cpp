@@ -189,7 +189,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
   SDValue InOp = N->getOperand(0);
   MVT InVT = InOp.getValueType();
   MVT NInVT = TLI.getTypeToTransformTo(InVT);
-  MVT OutVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  MVT OutVT = N->getValueType(0);
+  MVT NOutVT = TLI.getTypeToTransformTo(OutVT);
 
   switch (getTypeAction(InVT)) {
   default:
@@ -198,19 +199,19 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
   case Legal:
     break;
   case PromoteInteger:
-    if (OutVT.bitsEq(NInVT))
+    if (NOutVT.bitsEq(NInVT))
       // The input promotes to the same size.  Convert the promoted value.
-      return DAG.getNode(ISD::BIT_CONVERT, OutVT, GetPromotedInteger(InOp));
+      return DAG.getNode(ISD::BIT_CONVERT, NOutVT, GetPromotedInteger(InOp));
     break;
   case SoftenFloat:
     // Promote the integer operand by hand.
-    return DAG.getNode(ISD::ANY_EXTEND, OutVT, GetSoftenedFloat(InOp));
+    return DAG.getNode(ISD::ANY_EXTEND, NOutVT, GetSoftenedFloat(InOp));
   case ExpandInteger:
   case ExpandFloat:
     break;
   case ScalarizeVector:
     // Convert the element to an integer and promote it by hand.
-    return DAG.getNode(ISD::ANY_EXTEND, OutVT,
+    return DAG.getNode(ISD::ANY_EXTEND, NOutVT,
                        BitConvertToInteger(GetScalarizedVector(InOp)));
   case SplitVector:
     // For example, i32 = BIT_CONVERT v2i16 on alpha.  Convert the split
@@ -224,15 +225,22 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
       std::swap(Lo, Hi);
 
     InOp = DAG.getNode(ISD::ANY_EXTEND,
-                       MVT::getIntegerVT(OutVT.getSizeInBits()),
+                       MVT::getIntegerVT(NOutVT.getSizeInBits()),
                        JoinIntegers(Lo, Hi));
-    return DAG.getNode(ISD::BIT_CONVERT, OutVT, InOp);
+    return DAG.getNode(ISD::BIT_CONVERT, NOutVT, InOp);
   }
 
-  // Otherwise, lower the bit-convert to a store/load from the stack, then
-  // promote the load.
-  SDValue Op = CreateStackStoreLoad(InOp, N->getValueType(0));
-  return PromoteIntRes_LOAD(cast<LoadSDNode>(Op.getNode()));
+  // Otherwise, lower the bit-convert to a store/load from the stack.
+
+  // Create the stack frame object.  Make sure it is aligned for both
+  // the source and destination types.
+  SDValue FIPtr = DAG.CreateStackTemporary(InVT, OutVT);
+
+  // Emit a store to the stack slot.
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), InOp, FIPtr, NULL, 0);
+
+  // Result is an extending load from the stack slot.
+  return DAG.getExtLoad(ISD::EXTLOAD, NOutVT, Store, FIPtr, NULL, 0, OutVT);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_BSWAP(SDNode *N) {
@@ -406,9 +414,9 @@ SDValue DAGTypeLegalizer::PromoteIntRes_LOAD(LoadSDNode *N) {
   ISD::LoadExtType ExtType =
     ISD::isNON_EXTLoad(N) ? ISD::EXTLOAD : N->getExtensionType();
   SDValue Res = DAG.getExtLoad(ExtType, NVT, N->getChain(), N->getBasePtr(),
-                                 N->getSrcValue(), N->getSrcValueOffset(),
-                                 N->getMemoryVT(), N->isVolatile(),
-                                 N->getAlignment());
+                               N->getSrcValue(), N->getSrcValueOffset(),
+                               N->getMemoryVT(), N->isVolatile(),
+                               N->getAlignment());
 
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
@@ -620,14 +628,11 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
 
   // If the result is null, the sub-method took care of registering results etc.
   if (!Res.getNode()) return false;
-  // If the result is N, the sub-method updated N in place.
-  if (Res.getNode() == N) {
-    // Mark N as new and remark N and its operands.  This allows us to correctly
-    // revisit N if it needs another step of promotion and allows us to visit
-    // any new operands to N.
-    ReanalyzeNode(N);
+
+  // If the result is N, the sub-method updated N in place.  Tell the legalizer
+  // core about this.
+  if (Res.getNode() == N)
     return true;
-  }
 
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");
@@ -1890,15 +1895,11 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
 
   // If the result is null, the sub-method took care of registering results etc.
   if (!Res.getNode()) return false;
-  // If the result is N, the sub-method updated N in place.  Check to see if any
-  // operands are new, and if so, mark them.
-  if (Res.getNode() == N) {
-    // Mark N as new and remark N and its operands.  This allows us to correctly
-    // revisit N if it needs another step of expansion and allows us to visit
-    // any new operands to N.
-    ReanalyzeNode(N);
+
+  // If the result is N, the sub-method updated N in place.  Tell the legalizer
+  // core about this.
+  if (Res.getNode() == N)
     return true;
-  }
 
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");

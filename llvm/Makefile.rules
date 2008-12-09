@@ -274,7 +274,7 @@ endif
 # appropriate preprocessor symbols.
 ifdef ENABLE_EXPENSIVE_CHECKS
   BuildMode := $(BuildMode)+Checks
-  CPP.Defines += -D_GLIBCXX_DEBUG
+  CPP.Defines += -D_GLIBCXX_DEBUG -DXDEBUG
 endif
 
 ifeq ($(ENABLE_PIC),1)

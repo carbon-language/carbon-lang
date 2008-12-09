@@ -42,14 +42,18 @@ public:
     /// to be handled.
     ReadyToProcess = 0,
 
-    /// NewNode - This is a new node that was created in the process of
-    /// legalizing some other node.
+    /// NewNode - This is a new node, not before seen, that was created in the
+    /// process of legalizing some other node.
     NewNode = -1,
 
-    /// Processed - This is a node that has already been processed.
-    Processed = -2
+    /// Unanalyzed - This node's ID needs to be set to the number of its
+    /// unprocessed operands.
+    Unanalyzed = -2,
 
-    // 1+ - This is a node which has this many unlegalized operands.
+    /// Processed - This is a node that has already been processed.
+    Processed = -3
+
+    // 1+ - This is a node which has this many unprocessed operands.
   };
 private:
   enum LegalizeAction {
@@ -165,14 +169,6 @@ public:
   /// "true" if it made any changes.
   bool run();
 
-  /// ReanalyzeNode - Recompute the NodeId and correct processed operands
-  /// for the specified node, adding it to the worklist if ready.
-  void ReanalyzeNode(SDNode *N) {
-    N->setNodeId(NewNode);
-    AnalyzeNewNode(N);
-    // The node may have changed but we don't care.
-  }
-
   void NoteDeletion(SDNode *Old, SDNode *New) {
     ExpungeNode(Old);
     ExpungeNode(New);
@@ -183,13 +179,13 @@ public:
 private:
   SDNode *AnalyzeNewNode(SDNode *N);
   void AnalyzeNewValue(SDValue &Val);
-
-  void ReplaceValueWith(SDValue From, SDValue To);
-
-  void RemapValue(SDValue &N);
   void ExpungeNode(SDNode *N);
+  void PerformExpensiveChecks();
+  void RemapValue(SDValue &N);
 
   // Common routines.
+  void ReplaceValueWith(SDValue From, SDValue To);
+
   bool CustomLowerResults(SDNode *N, unsigned ResNo);
 
   SDValue CreateStackStoreLoad(SDValue Op, MVT DestVT);

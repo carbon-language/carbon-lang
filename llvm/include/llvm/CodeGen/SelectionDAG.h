@@ -737,7 +737,11 @@ public:
   /// specified value type.  If minAlign is specified, the slot size will have
   /// at least that alignment.
   SDValue CreateStackTemporary(MVT VT, unsigned minAlign = 1);
-  
+
+  /// CreateStackTemporary - Create a stack temporary suitable for holding
+  /// either of the specified value types.
+  SDValue CreateStackTemporary(MVT VT1, MVT VT2);
+
   /// FoldConstantArithmetic - 
   SDValue FoldConstantArithmetic(unsigned Opcode,
                                  MVT VT,

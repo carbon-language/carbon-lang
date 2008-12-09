@@ -1246,6 +1246,22 @@ SDValue SelectionDAG::CreateStackTemporary(MVT VT, unsigned minAlign) {
   return getFrameIndex(FrameIdx, TLI.getPointerTy());
 }
 
+/// CreateStackTemporary - Create a stack temporary suitable for holding
+/// either of the specified value types.
+SDValue SelectionDAG::CreateStackTemporary(MVT VT1, MVT VT2) {
+  unsigned Bytes = std::max(VT1.getStoreSizeInBits(),
+                            VT2.getStoreSizeInBits())/8;
+  const Type *Ty1 = VT1.getTypeForMVT();
+  const Type *Ty2 = VT2.getTypeForMVT();
+  const TargetData *TD = TLI.getTargetData();
+  unsigned Align = std::max(TD->getPrefTypeAlignment(Ty1),
+                            TD->getPrefTypeAlignment(Ty2));
+
+  MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
+  int FrameIdx = FrameInfo->CreateStackObject(Bytes, Align);
+  return getFrameIndex(FrameIdx, TLI.getPointerTy());
+}
+
 SDValue SelectionDAG::FoldSetCC(MVT VT, SDValue N1,
                                 SDValue N2, ISD::CondCode Cond) {
   // These setcc operations always fold.

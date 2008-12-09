@@ -507,15 +507,10 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
   // If the result is null, the sub-method took care of registering results etc.
   if (!Res.getNode()) return false;
 
-  // If the result is N, the sub-method updated N in place.  Check to see if any
-  // operands are new, and if so, mark them.
-  if (Res.getNode() == N) {
-    // Mark N as new and remark N and its operands.  This allows us to correctly
-    // revisit N if it needs another step of promotion and allows us to visit
-    // any new operands to N.
-    ReanalyzeNode(N);
+  // If the result is N, the sub-method updated N in place.  Tell the legalizer
+  // core about this.
+  if (Res.getNode() == N)
     return true;
-  }
 
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");
@@ -1190,15 +1185,11 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
 
   // If the result is null, the sub-method took care of registering results etc.
   if (!Res.getNode()) return false;
-  // If the result is N, the sub-method updated N in place.  Check to see if any
-  // operands are new, and if so, mark them.
-  if (Res.getNode() == N) {
-    // Mark N as new and remark N and its operands.  This allows us to correctly
-    // revisit N if it needs another step of expansion and allows us to visit
-    // any new operands to N.
-    ReanalyzeNode(N);
+
+  // If the result is N, the sub-method updated N in place.  Tell the legalizer
+  // core about this.
+  if (Res.getNode() == N)
     return true;
-  }
 
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");
