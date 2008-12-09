@@ -212,7 +212,7 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.HTMLDir, C.PP, C.PPF)); break;
         CFG* c = getCFG();
         if (!c) return 0;
         
-        liveness.reset(new LiveVariables(*c));
+        liveness.reset(new LiveVariables(getContext(), *c));
         liveness->runOnCFG(*c);
         liveness->runOnAllBlocks(*c, 0, true);
       }
