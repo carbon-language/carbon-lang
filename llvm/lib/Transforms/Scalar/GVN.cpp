@@ -802,21 +802,28 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   if (!DT->isReachableFromEntry(BB))
     return Phis[BB] = UndefValue::get(orig->getType());
   
-  BasicBlock* singlePred = BB->getSinglePredecessor();
-  if (singlePred) {
-    Value *ret = GetValueForBlock(singlePred, orig, Phis);
+  if (BasicBlock *Pred = BB->getSinglePredecessor()) {
+    Value *ret = GetValueForBlock(Pred, orig, Phis);
     Phis[BB] = ret;
     return ret;
   }
+
+  // Get the number of predecessors of this block so we can reserve space later.
+  // If there is already a PHI in it, use the #preds from it, otherwise count.
+  // Getting it from the PHI is constant time.
+  unsigned NumPreds;
+  if (PHINode *ExistingPN = dyn_cast<PHINode>(BB->begin()))
+    NumPreds = ExistingPN->getNumIncomingValues();
+  else
+    NumPreds = std::distance(pred_begin(BB), pred_end(BB));
   
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
   PHINode *PN = PHINode::Create(orig->getType(), orig->getName()+".rle",
                                 BB->begin());
-  PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
+  PN->reserveOperandSpace(NumPreds);
   
-  if (Phis.count(BB) == 0)
-    Phis.insert(std::make_pair(BB, PN));
+  Phis.insert(std::make_pair(BB, PN));
   
   // Fill in the incoming values for the block.
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
@@ -1147,11 +1154,8 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     return false;
 
   // If it is defined in another block, try harder.
-  if (dep.isNonLocal()) {
-    if (L->getParent() == &L->getParent()->getParent()->getEntryBlock())
-      return false;
+  if (dep.isNonLocal())
     return processNonLocalLoad(L, toErase);
-  }
 
   Instruction *DepInst = dep.getInst();
   if (StoreInst *DepSI = dyn_cast<StoreInst>(DepInst)) {
@@ -1243,8 +1247,7 @@ bool GVN::processInstruction(Instruction *I,
     if (constVal) {
       for (PhiMapType::iterator PI = phiMap.begin(), PE = phiMap.end();
            PI != PE; ++PI)
-        if (PI->second.count(p))
-          PI->second.erase(p);
+        PI->second.erase(p);
         
       p->replaceAllUsesWith(constVal);
       toErase.push_back(p);
@@ -1296,9 +1299,13 @@ bool GVN::runOnFunction(Function& F) {
     changed |= removedBlock;
   }
   
+  unsigned Iteration = 0;
+  
   while (shouldContinue) {
+    DEBUG(cerr << "GVN iteration: " << Iteration << "\n");
     shouldContinue = iterateOnFunction(F);
     changed |= shouldContinue;
+    ++Iteration;
   }
   
   if (EnablePRE) {
@@ -1308,6 +1315,10 @@ bool GVN::runOnFunction(Function& F) {
       changed |= PREChanged;
     }
   }
+  // FIXME: Should perform GVN again after PRE does something.  PRE can move
+  // computations into blocks where they become fully redundant.  Note that
+  // we can't do this until PRE's critical edge splitting updates memdep.
+  // Actually, when this happens, we should just fully integrate PRE into GVN.
 
   cleanupGlobalSets();
 
@@ -1317,6 +1328,8 @@ bool GVN::runOnFunction(Function& F) {
 
 bool GVN::processBlock(DomTreeNode* DTN) {
   BasicBlock* BB = DTN->getBlock();
+  // FIXME: Kill off toErase by doing erasing eagerly in a helper function (and
+  // incrementing BI before processing an instruction).
   SmallVector<Instruction*, 8> toErase;
   bool changed_function = false;
   
@@ -1348,13 +1361,12 @@ bool GVN::processBlock(DomTreeNode* DTN) {
       MD->removeInstruction(*I);
       (*I)->eraseFromParent();
     }
+    toErase.clear();
 
     if (AtStart)
       BI = BB->begin();
     else
       ++BI;
-    
-    toErase.clear();
   }
   
   return changed_function;
