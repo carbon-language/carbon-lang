@@ -132,7 +132,10 @@ public:
   CFGBlock* VisitObjCAtTryStmt(ObjCAtTryStmt* S) { return NYS(); }
   CFGBlock* VisitObjCAtCatchStmt(ObjCAtCatchStmt* S) { return NYS(); }
   CFGBlock* VisitObjCAtFinallyStmt(ObjCAtFinallyStmt* S) { return NYS(); }
-  CFGBlock* VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) { return NYS(); }
+  
+  // FIXME: This is not completely supported.  We basically @throw like
+  // a 'return'.
+  CFGBlock* VisitObjCAtThrowStmt(ObjCAtThrowStmt* S);
 
   CFGBlock* VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S){
     return NYS();
@@ -971,6 +974,25 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   // Return the condition block, which is the dominating block for the loop.
   Succ = EntryConditionBlock;
   return EntryConditionBlock;
+}
+  
+CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
+  // FIXME: This isn't complete.  We basically treat @throw like a return
+  //  statement.
+  
+  // If we were in the middle of a block we stop processing that block
+  // and reverse its statements.
+  if (Block) FinishBlock(Block);
+  
+  // Create the new block.
+  Block = createBlock(false);
+  
+  // The Exit block is the only successor.
+  Block->addSuccessor(&cfg->getExit());
+  
+  // Add the statement to the block.  This may create new blocks
+  // if S contains control-flow (short-circuit operations).
+  return addStmt(S);
 }
 
 CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
