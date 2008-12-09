@@ -406,6 +406,8 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
   assert((isImpReg || !OperandsComplete()) &&
          "Trying to add an operand to a machine instr that is already done!");
 
+  MachineRegisterInfo *RegInfo = getRegInfo();
+
   // If we are adding the operand to the end of the list, our job is simpler.
   // This is true most of the time, so this is a reasonable optimization.
   if (isImpReg || NumImplicitOps == 0) {
@@ -419,15 +421,13 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
   
       // If the operand is a register, update the operand's use list.
       if (Op.isReg())
-        Operands.back().AddRegOperandToRegInfo(getRegInfo());
+        Operands.back().AddRegOperandToRegInfo(RegInfo);
       return;
     }
   }
   
   // Otherwise, we have to insert a real operand before any implicit ones.
   unsigned OpNo = Operands.size()-NumImplicitOps;
-
-  MachineRegisterInfo *RegInfo = getRegInfo();
 
   // If this instruction isn't embedded into a function, then we don't need to
   // update any operand lists.
