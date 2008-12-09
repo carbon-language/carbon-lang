@@ -22,6 +22,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -106,6 +107,9 @@ private:
   bool X86SelectFPExt(Instruction *I);
   bool X86SelectFPTrunc(Instruction *I);
 
+  bool X86SelectExtractValue(Instruction *I);
+
+  bool X86VisitIntrinsicCall(CallInst &I, unsigned Intrinsic);
   bool X86SelectCall(Instruction *I);
 
   CCAssignFn *CCAssignFnForCall(unsigned CC, bool isTailCall = false);
@@ -291,8 +295,6 @@ bool X86FastISel::X86FastEmitStore(MVT VT, Value *Val,
  
   return X86FastEmitStore(VT, ValReg, AM);
 }
-
-
 
 /// X86FastEmitExtend - Emit a machine instruction to extend a value Src of
 /// type SrcVT to type DstVT using the specified extension opcode Opc (e.g.
@@ -938,6 +940,79 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
   return true;
 }
 
+bool X86FastISel::X86SelectExtractValue(Instruction *I) {
+  ExtractValueInst *EI = cast<ExtractValueInst>(I);
+  Value *Agg = EI->getAggregateOperand();
+
+  if (CallInst *CI = dyn_cast<CallInst>(Agg)) {
+    Function *F = CI->getCalledFunction();
+
+    if (F && F->isDeclaration()) {
+      switch (F->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::sadd_with_overflow:
+      case Intrinsic::uadd_with_overflow:
+        // Cheat a little. We know that the register for the "add" and "seto"
+        // are allocated sequentially. However, we only keep track of the
+        // register for "add" in the value map. Use the extractvalue's index to
+        // get the correct register for "seto".
+        UpdateValueMap(I, lookUpRegForValue(Agg) + *EI->idx_begin());
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool X86FastISel::X86VisitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
+  // FIXME: Handle more intrinsics.
+  switch (Intrinsic) {
+  default: return false;
+  case Intrinsic::sadd_with_overflow:
+  case Intrinsic::uadd_with_overflow: {
+    // Replace these intrinsics with an "add" instruction followed by a
+    // "set[co]" instruction. Later on, when the "extractvalue" instructions are
+    // encountered, we use the fact that two registers were created sequentially
+    // to get the correct registers for the "sum" and the "overflow bit".
+    MVT VT;
+    const Function *Callee = I.getCalledFunction();
+    const Type *RetTy =
+      cast<StructType>(Callee->getReturnType())->getTypeAtIndex(unsigned(0));
+
+    if (!isTypeLegal(RetTy, VT))
+      return false;
+
+    Value *Op1 = I.getOperand(1);
+    Value *Op2 = I.getOperand(2);
+    unsigned Reg1 = getRegForValue(Op1);
+    unsigned Reg2 = getRegForValue(Op2);
+
+    if (Reg1 == 0 || Reg2 == 0)
+      // FIXME: Handle values *not* in registers.
+      return false;
+
+    unsigned OpC = 0;
+
+    if (VT == MVT::i32)
+      OpC = X86::ADD32rr;
+    else if (VT == MVT::i64)
+      OpC = X86::ADD64rr;
+    else
+      return false;
+
+    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+    BuildMI(MBB, TII.get(OpC), ResultReg).addReg(Reg1).addReg(Reg2);
+    UpdateValueMap(&I, ResultReg);
+
+    ResultReg = createResultReg(TLI.getRegClassFor(MVT::i8));
+    BuildMI(MBB, TII.get((Intrinsic == Intrinsic::sadd_with_overflow) ?
+                         X86::SETOr : X86::SETCr), ResultReg);
+    return true;
+  }
+  }
+}
+
 bool X86FastISel::X86SelectCall(Instruction *I) {
   CallInst *CI = cast<CallInst>(I);
   Value *Callee = I->getOperand(0);
@@ -946,11 +1021,11 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   if (isa<InlineAsm>(Callee))
     return false;
 
-  // FIXME: Handle some intrinsics.
-  if (Function *F = CI->getCalledFunction()) {
-    if (F->isDeclaration() &&F->getIntrinsicID())
-      return false;
-  }
+  // Handle intrinsic calls.
+  if (Function *F = CI->getCalledFunction())
+    if (F->isDeclaration())
+      if (unsigned IID = F->getIntrinsicID())
+        return X86VisitIntrinsicCall(*CI, IID);
 
   // Handle only C and fastcc calling conventions for now.
   CallSite CS(CI);
@@ -1234,6 +1309,8 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
     return X86SelectFPExt(I);
   case Instruction::FPTrunc:
     return X86SelectFPTrunc(I);
+  case Instruction::ExtractValue:
+    return X86SelectExtractValue(I);
   }
 
   return false;
