@@ -748,6 +748,69 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
       MBB->addSuccessor(TrueMBB);
       return true;
     }
+  } else if (ExtractValueInst *EI =
+             dyn_cast<ExtractValueInst>(BI->getCondition())) {
+    // Check to see if the branch instruction is from an "arithmetic with
+    // overflow" intrinsic. The main way these intrinsics are used is:
+    //
+    //   %t = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %v1, i32 %v2)
+    //   %sum = extractvalue { i32, i1 } %t, 0
+    //   %obit = extractvalue { i32, i1 } %t, 1
+    //   br i1 %obit, label %overflow, label %normal
+    //
+    // The %sum and %obit are converted in an ADD and a SETO/SETC before
+    // reaching the branch. Therefore, we search backwards through the MBB
+    // looking for the SETO/SETC instruction. If an instruction modifies the
+    // EFLAGS register before we reach the SETO/SETC instruction, then we can't
+    // convert the branch into a JO/JC instruction.
+    const MachineInstr *SetMI = 0;
+    unsigned Reg = lookUpRegForValue(EI);
+
+    for (MachineBasicBlock::const_reverse_iterator
+           RI = MBB->rbegin(), RE = MBB->rend(); RI != RE; ++RI) {
+      const MachineInstr &MI = *RI;
+
+      if (MI.modifiesRegister(Reg)) {
+        unsigned Src, Dst;
+
+        if (getInstrInfo()->isMoveInstr(MI, Src, Dst)) {
+          Reg = Src;
+          continue;
+        }
+
+        SetMI = &MI;
+        break;
+      }
+
+      const TargetInstrDesc &TID = MI.getDesc();
+      const unsigned *ImpDefs = TID.getImplicitDefs();
+
+      if (TID.hasUnmodeledSideEffects()) break;
+
+      bool ModifiesEFlags = false;
+
+      if (ImpDefs) {
+        for (unsigned u = 0; ImpDefs[u]; ++u)
+          if (ImpDefs[u] == X86::EFLAGS) {
+            ModifiesEFlags = true;
+            break;
+          }
+      }
+
+      if (ModifiesEFlags) break;
+    }
+
+    if (SetMI) {
+      unsigned OpCode = SetMI->getOpcode();
+
+      if (OpCode == X86::SETOr || OpCode == X86::SETCr) {
+        BuildMI(MBB, TII.get((OpCode == X86::SETOr) ? 
+                             X86::JO : X86::JC)).addMBB(TrueMBB);
+        FastEmitBranch(FalseMBB);
+        MBB->addSuccessor(TrueMBB);
+        return true;
+      }
+    }
   }
 
   // Otherwise do a clumsy setcc and re-test it.
