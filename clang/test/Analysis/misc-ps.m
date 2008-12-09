@@ -74,4 +74,11 @@ __m128i vec128i(long long __q1, long long __q0) {
   return __extension__ (__m128i)(__v2di){ __q0, __q1 };
 }
 
+// Zero-sized VLAs.
+void check_zero_sized_VLA(int x) {
+  if (x)
+    return;
+
+  int vla[x]; // expected-warning{{VLAs with zero-size are undefined}}
+}
 
