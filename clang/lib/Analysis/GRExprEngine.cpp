@@ -1820,6 +1820,14 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
       
       Expr* SE = VLA->getSizeExpr();
       SVal Size = GetSVal(St, SE);
+      
+      if (Size.isUndef()) {
+        if (NodeTy* N = Builder->generateNode(DS, St, Pred)) {
+          N->markAsSink();          
+          ExplicitBadSizedVLA.insert(N);
+        }
+        continue;
+      }
 
       bool isFeasibleZero = false;
       const GRState* ZeroSt =  Assume(St, Size, false, isFeasibleZero);
@@ -1830,8 +1838,8 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
       if (isFeasibleZero) {
         if (NodeTy* N = Builder->generateNode(DS, ZeroSt, Pred)) {
           N->markAsSink();          
-          if (isFeasibleNotZero) ImplicitZeroSizedVLA.insert(N);
-          else ExplicitZeroSizedVLA.insert(N);
+          if (isFeasibleNotZero) ImplicitBadSizedVLA.insert(N);
+          else ExplicitBadSizedVLA.insert(N);
         }
       }
       

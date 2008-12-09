@@ -139,13 +139,13 @@ public:
   ///  MUST be zero or undefined.
   ErrorNodes ExplicitBadDivides;
   
-  /// ImplicitZeroSizedVLA - Nodes in the ExplodedGraph that result from 
+  /// ImplicitBadSizedVLA - Nodes in the ExplodedGraph that result from 
   ///  constructing a zero-sized VLA where the size may be zero.
-  ErrorNodes ImplicitZeroSizedVLA;
+  ErrorNodes ImplicitBadSizedVLA;
   
-  /// ExplicitZeroSizedVLA - Nodes in the ExplodedGraph that result from 
+  /// ExplicitBadSizedVLA - Nodes in the ExplodedGraph that result from 
   ///  constructing a zero-sized VLA where the size must be zero.
-  ErrorNodes ExplicitZeroSizedVLA;
+  ErrorNodes ExplicitBadSizedVLA;
   
   /// UndefResults - Nodes in the ExplodedGraph where the operands are defined
   ///  by the result is not.  Excludes divide-by-zero errors.
@@ -453,7 +453,7 @@ protected:
   const GRState* BindLoc(const GRState* St, Loc LV, SVal V) {
     return StateMgr.BindLoc(St, LV, V);
   }
-  
+
   SVal GetSVal(const GRState* St, Stmt* Ex) {
     return StateMgr.GetSVal(St, Ex);
   }

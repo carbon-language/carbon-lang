@@ -79,6 +79,11 @@ void check_zero_sized_VLA(int x) {
   if (x)
     return;
 
-  int vla[x]; // expected-warning{{VLAs with zero-size are undefined}}
+  int vla[x]; // expected-warning{{VLAs with no elements have undefined behavior}}
+}
+
+void check_uninit_sized_VLA() {
+  int x;
+  int vla[x]; // expected-warning{{The expression used to specify the number of elements in the VLA 'vla' evaluates to an undefined or garbage value.}}
 }
 

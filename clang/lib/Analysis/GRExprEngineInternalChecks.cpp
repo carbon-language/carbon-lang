@@ -40,6 +40,7 @@ ExplodedNode<GRState>* GetNode(GRExprEngine::undef_arg_iterator I) {
 
 namespace {
 class VISIBILITY_HIDDEN BuiltinBug : public BugTypeCacheLocation {
+protected:
   const char* name;
   const char* desc;
 public:
@@ -332,26 +333,45 @@ public:
   }
 };
   
-class VISIBILITY_HIDDEN ZeroSizeVLA : public BuiltinBug {
+class VISIBILITY_HIDDEN BadSizeVLA : public BuiltinBug {
 
 public:
-  ZeroSizeVLA() : BuiltinBug("Zero-sized VLA",  
+  BadSizeVLA() : BuiltinBug("Zero-sized VLA",  
                              "VLAs with zero-size are undefined.") {}
   
   virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) {
     for (GRExprEngine::ErrorNodes::iterator
-          I = Eng.ExplicitZeroSizedVLA.begin(),
-          E = Eng.ExplicitZeroSizedVLA.end(); I!=E; ++I) {
-      
-      // Generate a report for this bug.
-      PostStmt PS = cast<PostStmt>((*I)->getLocation());      
+          I = Eng.ExplicitBadSizedVLA.begin(),
+          E = Eng.ExplicitBadSizedVLA.end(); I!=E; ++I) {
+
+      // Determine whether this was a 'zero-sized' VLA or a VLA with an
+      // undefined size.
+      GRExprEngine::NodeTy* N = *I;
+      PostStmt PS = cast<PostStmt>(N->getLocation());      
       DeclStmt *DS = cast<DeclStmt>(PS.getStmt());
       VarDecl* VD = cast<VarDecl>(*DS->decl_begin());
       QualType T = Eng.getContext().getCanonicalType(VD->getType());
       VariableArrayType* VT = cast<VariableArrayType>(T);
+      Expr* SizeExpr = VT->getSizeExpr();
       
-      RangedBugReport report(*this, *I);
-      report.addRange(VT->getSizeExpr()->getSourceRange());
+      std::string buf;
+      llvm::raw_string_ostream os(buf);
+      os << "The expression used to specify the number of elements in the VLA '"
+          << VD->getNameAsString() << "' evaluates to ";
+      
+      SVal X = Eng.getStateManager().GetSVal(N->getState(), SizeExpr);
+      if (X.isUndef()) {
+        name = "Undefined size for VLA";
+        os << "an undefined or garbage value.";
+      }
+      else {
+        name = "Zero-sized VLA";
+        os << " to 0.  VLAs with no elements have undefined behavior.";
+      }
+
+      desc = os.str().c_str();
+      RangedBugReport report(*this, N);
+      report.addRange(SizeExpr->getSourceRange());
       
       // Emit the warning.
       BR.EmitWarning(report);
@@ -430,6 +450,6 @@ void GRExprEngine::RegisterInternalChecks() {
   Register(new BadMsgExprArg());
   Register(new BadReceiver());
   Register(new OutOfBoundMemoryAccess());
-  Register(new ZeroSizeVLA());
+  Register(new BadSizeVLA());
   AddCheck(new CheckAttrNonNull(), Stmt::CallExprClass); 
 }
