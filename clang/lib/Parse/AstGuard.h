@@ -19,11 +19,11 @@
 
 namespace clang
 {
-  template <void (Action::*Destroyer)(void*)>
+  template <void (ActionBase::*Destroyer)(void*)>
   class ASTOwner;
 
-  typedef ASTOwner<&Action::DeleteStmt> StmtOwner;
-  typedef ASTOwner<&Action::DeleteExpr> ExprOwner;
+  typedef ASTOwner<&ActionBase::DeleteStmt> StmtOwner;
+  typedef ASTOwner<&ActionBase::DeleteExpr> ExprOwner;
 
   /// Some trickery to switch between an ActionResult and an ASTOwner
   template <typename Owner> struct ResultOfOwner;
@@ -36,7 +36,7 @@ namespace clang
 
   /// Move emulation helper for ASTOwner. Implicitly convertible to ActionResult
   /// and void*, which means ASTOwner::move() can be used universally.
-  template <void (Action::*Destroyer)(void*)>
+  template <void (ActionBase::*Destroyer)(void*)>
   class ASTMove {
     ASTOwner<Destroyer> &Moved;
 
@@ -62,7 +62,7 @@ namespace clang
   };
 
   /// RAII owning pointer for StmtTys and ExprTys. Simple move emulation.
-  template <void (Action::*Destroyer)(void*)>
+  template <void (ActionBase::*Destroyer)(void*)>
   class ASTOwner {
     typedef typename ResultOfOwner<ASTOwner>::type Result;
 
@@ -136,7 +136,7 @@ namespace clang
   /// automatically freeing them on destruction unless it's been disowned.
   /// Instantiated for statements and expressions (Action::DeleteStmt and
   /// Action::DeleteExpr).
-  template <void (Action::*Destroyer)(void*), unsigned N>
+  template <void (ActionBase::*Destroyer)(void*), unsigned N>
   class ASTVector : public llvm::SmallVector<void*, N> {
   private:
     Action &Actions;

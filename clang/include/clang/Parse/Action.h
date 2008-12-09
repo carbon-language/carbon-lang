@@ -17,6 +17,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Parse/AccessSpecifier.h"
+#include "clang/Parse/Ownership.h"
 
 namespace clang {
   // Semantic.
@@ -49,41 +50,21 @@ namespace clang {
 /// isCurrentClassName(), which must be specified in order for the
 /// parse to complete accurately.  The MinimalAction class does this
 /// bare-minimum of tracking to implement this functionality.
-class Action {
+class Action : public ActionBase {
 public:
   /// Out-of-line virtual destructor to provide home for this class.
   virtual ~Action();
-  
+
   // Types - Though these don't actually enforce strong typing, they document
   // what types are required to be identical for the actions.
-  typedef void ExprTy;
-  typedef void StmtTy;
+  typedef ActionBase::ExprTy ExprTy;
+  typedef ActionBase::StmtTy StmtTy;
   typedef void DeclTy;
   typedef void TypeTy;
   typedef void AttrTy;
   typedef void BaseTy;
   typedef void MemInitTy;
   typedef void CXXScopeTy;
-
-  /// ActionResult - This structure is used while parsing/acting on expressions,
-  /// stmts, etc.  It encapsulates both the object returned by the action, plus
-  /// a sense of whether or not it is valid.
-  template<unsigned UID>
-  struct ActionResult {
-    void *Val;
-    bool isInvalid;
-    
-    ActionResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
-    template<typename ActualExprTy>
-    ActionResult(ActualExprTy *val) : Val(val), isInvalid(false) {}
-    ActionResult(const DiagnosticBuilder &) : Val(0), isInvalid(true) {}
-    
-    const ActionResult &operator=(void *RHS) {
-      Val = RHS;
-      isInvalid = false;
-      return *this;
-    }
-  };
 
   /// Expr/Stmt/Type/BaseResult - Provide a unique type to wrap
   /// ExprTy/StmtTy/TypeTy/BaseTy, providing strong typing and
@@ -94,12 +75,20 @@ public:
   typedef ActionResult<3> BaseResult;
   typedef ActionResult<4> MemInitResult;
 
-  /// Deletion callbacks - Since the parser doesn't know the concrete types of
-  /// the AST nodes being generated, it must do callbacks to delete objects when
-  /// recovering from errors.
-  virtual void DeleteExpr(ExprTy *E) {}
-  virtual void DeleteStmt(StmtTy *E) {}
-  
+  /// Same, but with ownership.
+  typedef ASTOwningResult<&ActionBase::DeleteExpr> OwningExprResult;
+  typedef ASTOwningResult<&ActionBase::DeleteStmt> OwningStmtResult;
+  // Note that these will replace ExprResult and StmtResult when the transition
+  // is complete.
+
+  /// Single expressions or statements as arguments.
+  typedef ASTOwningPtr<&ActionBase::DeleteExpr> ExprArg;
+  typedef ASTOwningPtr<&ActionBase::DeleteStmt> StmtArg;
+
+  /// Multiple expressions or statements as arguments.
+  typedef ASTMultiPtr<&ActionBase::DeleteExpr> MultiExprArg;
+  typedef ASTMultiPtr<&ActionBase::DeleteStmt> MultiStmtArg;
+
   /// Statistics.
   virtual void PrintStats() const {}
   //===--------------------------------------------------------------------===//

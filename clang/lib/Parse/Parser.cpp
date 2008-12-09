@@ -39,6 +39,9 @@ Parser::Parser(Preprocessor &pp, Action &actions)
 }
 
 ///  Out-of-line virtual destructor to provide home for Action class.
+ActionBase::~ActionBase() {}
+
+///  Out-of-line virtual destructor to provide home for Action class.
 Action::~Action() {}
 
 
