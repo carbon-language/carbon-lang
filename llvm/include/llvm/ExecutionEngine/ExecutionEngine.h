@@ -263,8 +263,9 @@ public:
     return LazyCompilationDisabled;
   }
 
-  /// DisableGVCompilation - If called, the JIT will abort if it's asked to allocate
-  /// space and populate a GlobalVariable.
+  /// DisableGVCompilation - If called, the JIT will abort if it's asked to
+  /// allocate space and populate a GlobalVariable that is not internal to
+  /// the module.
   void DisableGVCompilation(bool Disabled = true) {
     GVCompilationDisabled = Disabled;
   }
