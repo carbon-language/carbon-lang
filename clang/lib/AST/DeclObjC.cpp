@@ -456,6 +456,10 @@ addPropertyMethods(Decl *D,
     insMethods.push_back(GetterDecl);
     InsMap[property->getGetterName()] = GetterDecl;
   }
+  else
+    // A user declared getter will be synthesize when @synthesize of
+    // the property with the same name is seen in the @implementation
+    GetterDecl->setIsSynthesized();
   property->setGetterMethodDecl(GetterDecl);
 
   // Skip setter if property is read-only.
@@ -487,6 +491,10 @@ addPropertyMethods(Decl *D,
                                                0, 0);
     SetterDecl->setMethodParams(&Argument, 1);
   }
+  else
+    // A user declared setter will be synthesize when @synthesize of
+    // the property with the same name is seen in the @implementation
+    SetterDecl->setIsSynthesized();
   property->setSetterMethodDecl(SetterDecl);
 }
 

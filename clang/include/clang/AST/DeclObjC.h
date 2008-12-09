@@ -225,6 +225,7 @@ public:
   bool isVariadic() const { return IsVariadic; }
   
   bool isSynthesized() const { return IsSynthesized; }
+  void setIsSynthesized() { IsSynthesized = true; }
   
   // Related to protocols declared in  @protocol
   void setDeclImplementation(ImplementationControl ic) { 
