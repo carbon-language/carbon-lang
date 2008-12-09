@@ -621,8 +621,19 @@ getNonLocalPointerDepInternal(Value *Pointer, uint64_t PointeeSize,
   }
   
   // If we computed new values, re-sort Cache.
-  if (NumSortedEntries != Cache->size())
+  if (NumSortedEntries == Cache->size()) {
+    // done, no new entries.
+  } else if (NumSortedEntries+1 == Cache->size()) {
+    // One new entry, Just insert the new value at the appropriate position.
+    NonLocalDepEntry Val = Cache->back();
+    Cache->pop_back();
+    NonLocalDepInfo::iterator Entry =
+      std::upper_bound(Cache->begin(), Cache->end(), Val);
+    Cache->insert(Entry, Val);
+  } else {
+    // Added many values, do a full scale sort.
     std::sort(Cache->begin(), Cache->end());
+  }
 }
 
 /// RemoveCachedNonLocalPointerDependencies - If P exists in
