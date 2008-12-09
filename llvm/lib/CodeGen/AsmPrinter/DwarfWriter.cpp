@@ -1559,7 +1559,7 @@ private:
                                           sizeof(int32_t));
 
         // Add subranges to array type.
-        for(unsigned i = 0, N = Elements.size(); i < N; ++i) {
+        for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
           SubrangeDesc *SRD = cast<SubrangeDesc>(Elements[i]);
           int64_t Lo = SRD->getLo();
           int64_t Hi = SRD->getHi();
@@ -1580,12 +1580,11 @@ private:
       case DW_TAG_structure_type:
       case DW_TAG_union_type: {
         // Add elements to structure type.
-        for(unsigned i = 0, N = Elements.size(); i < N; ++i) {
+        for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
           DebugInfoDesc *Element = Elements[i];
 
           if (DerivedTypeDesc *MemberDesc = dyn_cast<DerivedTypeDesc>(Element)){
             // Add field or base class.
-
             unsigned Tag = MemberDesc->getTag();
 
             // Extract the basic information.
@@ -1600,6 +1599,7 @@ private:
             // Add name if not "".
             if (!Name.empty())
               AddString(Member, DW_AT_name, DW_FORM_string, Name);
+
             // Add location if available.
             AddSourceLine(Member, MemberDesc->getFile(), MemberDesc->getLine());
 
@@ -1723,7 +1723,7 @@ private:
               }
 
               // Add arguments.
-              for(unsigned i = 1, N = Args.size(); i < N; ++i) {
+              for (unsigned i = 1, N = Args.size(); i < N; ++i) {
                 DIE *Arg = new DIE(DW_TAG_formal_parameter);
                 AddType(Arg, cast<TypeDesc>(Args[i]), Unit);
                 AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1);
@@ -1743,7 +1743,7 @@ private:
       }
       case DW_TAG_enumeration_type: {
         // Add enumerators to enumeration type.
-        for(unsigned i = 0, N = Elements.size(); i < N; ++i) {
+        for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
           EnumeratorDesc *ED = cast<EnumeratorDesc>(Elements[i]);
           const std::string &Name = ED->getName();
           int64_t Value = ED->getValue();
@@ -1762,7 +1762,7 @@ private:
         AddType(&Buffer, dyn_cast<TypeDesc>(Elements[0]), Unit);
 
         // Add arguments.
-        for(unsigned i = 1, N = Elements.size(); i < N; ++i) {
+        for (unsigned i = 1, N = Elements.size(); i < N; ++i) {
           DIE *Arg = new DIE(DW_TAG_formal_parameter);
           AddType(Arg, cast<TypeDesc>(Elements[i]), Unit);
           Buffer.AddChild(Arg);
@@ -1776,8 +1776,10 @@ private:
 
     // Add size if non-zero (derived types don't have a size.)
     if (Size) AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
+
     // Add name if not anonymous or intermediate type.
     if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
+
     // Add source line info if available.
     AddSourceLine(&Buffer, TyDesc->getFile(), TyDesc->getLine());
   }
