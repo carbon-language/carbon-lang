@@ -51,7 +51,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
     unsigned TyAlign = ST->isPacked() ? 1 : TD.getABITypeAlignment(Ty);
 
     // Add padding if necessary to align the data element properly.
-    if ((StructSize & TyAlign-1) != 0)
+    if ((StructSize & (TyAlign-1)) != 0)
       StructSize = TargetData::RoundUpAlignment(StructSize, TyAlign);
 
     // Keep track of maximum alignment constraint.
