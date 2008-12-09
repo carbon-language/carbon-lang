@@ -297,6 +297,9 @@ private:
 
   SDValue ExpandEXTRACT_SUBVECTOR(SDValue Op);
   SDValue ExpandEXTRACT_VECTOR_ELT(SDValue Op);
+
+  // Returns the legalized (truncated or extended) shift amount.
+  SDValue LegalizeShiftAmount(SDValue ShiftAmt);
 };
 }
 
@@ -786,8 +789,19 @@ SDValue SelectionDAGLegalize::UnrollVectorOp(SDValue Op) {
         Operands[j] = Operand;
       }
     }
-    Scalars.push_back(DAG.getNode(Op.getOpcode(), EltVT,
-                                  &Operands[0], Operands.size()));
+
+    switch (Op.getOpcode()) {
+    default:
+      Scalars.push_back(DAG.getNode(Op.getOpcode(), EltVT,
+                                    &Operands[0], Operands.size()));
+      break;
+    case ISD::SHL:
+    case ISD::SRA:
+    case ISD::SRL:
+      Scalars.push_back(DAG.getNode(Op.getOpcode(), EltVT, Operands[0],
+                                    LegalizeShiftAmount(Operands[1])));
+      break;
+    }
   }
 
   return DAG.getNode(ISD::BUILD_VECTOR, VT, &Scalars[0], Scalars.size());
@@ -849,6 +863,17 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx) {
   return DAG.getLoad(VT, Ch, StackPtr,
                      PseudoSourceValue::getFixedStack(SPFI), 0);
 }
+
+SDValue SelectionDAGLegalize::LegalizeShiftAmount(SDValue ShiftAmt) {
+  if (TLI.getShiftAmountTy().bitsLT(ShiftAmt.getValueType()))
+    return DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), ShiftAmt);
+
+  if (TLI.getShiftAmountTy().bitsGT(ShiftAmt.getValueType()))
+    return DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), ShiftAmt);
+
+  return ShiftAmt;
+}
+
 
 /// LegalizeOp - We know that the specified value has a legal type, and
 /// that its operands are legal.  Now ensure that the operation itself
@@ -3094,11 +3119,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
          Node->getOpcode() == ISD::SRL ||
          Node->getOpcode() == ISD::SRA) &&
         !Node->getValueType(0).isVector()) {
-      if (TLI.getShiftAmountTy().bitsLT(Tmp2.getValueType()))
-        Tmp2 = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), Tmp2);
-      else if (TLI.getShiftAmountTy().bitsGT(Tmp2.getValueType()))
-        Tmp2 = DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), Tmp2);
-    }
+      Tmp2 = LegalizeShiftAmount(Tmp2);
+     }
 
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
 

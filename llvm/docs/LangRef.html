@@ -2591,6 +2591,7 @@ equal to or larger than the number of bits in <tt>op1</tt>, the result is undefi
   &lt;result&gt; = shl i32 4, 2      <i>; yields {i32}: 16</i>
   &lt;result&gt; = shl i32 1, 10     <i>; yields {i32}: 1024</i>
   &lt;result&gt; = shl i32 1, 32     <i>; undefined</i>
+  &lt;result&gt; = shl &lt;2 x i32&gt; &lt; i32 1, i32 1&gt;, &lt; i32 1, i32 2&gt;   <i>; yields: result=&lt;2 x i32&gt; &lt; i32 2, i32 4&gt;</i>
 </pre>
 </div>
 <!-- _______________________________________________________________________ -->
@@ -2624,6 +2625,7 @@ the number of bits in <tt>op1</tt>, the result is undefined.</p>
   &lt;result&gt; = lshr i8  4, 3   <i>; yields {i8}:result = 0</i>
   &lt;result&gt; = lshr i8 -2, 1   <i>; yields {i8}:result = 0x7FFFFFFF </i>
   &lt;result&gt; = lshr i32 1, 32  <i>; undefined</i>
+  &lt;result&gt; = lshr &lt;2 x i32&gt; &lt; i32 -2, i32 4&gt;, &lt; i32 1, i32 2&gt;   <i>; yields: result=&lt;2 x i32&gt; &lt; i32 0x7FFFFFFF, i32 1&gt;</i>
 </pre>
 </div>
 
@@ -2659,6 +2661,7 @@ larger than the number of bits in <tt>op1</tt>, the result is undefined.
   &lt;result&gt; = ashr i8  4, 3   <i>; yields {i8}:result = 0</i>
   &lt;result&gt; = ashr i8 -2, 1   <i>; yields {i8}:result = -1</i>
   &lt;result&gt; = ashr i32 1, 32  <i>; undefined</i>
+  &lt;result&gt; = ashr &lt;2 x i32&gt; &lt; i32 -2, i32 4&gt;, &lt; i32 1, i32 3&gt;   <i>; yields: result=&lt;2 x i32&gt; &lt; i32 -1, i32 0&gt;</i>
 </pre>
 </div>
 

@@ -2066,7 +2066,8 @@ SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
 
   if (V.getOpcode() == ISD::BIT_CONVERT) {
     V = V.getOperand(0);
-    if (V.getValueType().getVectorNumElements() != NumElems)
+    MVT VVT = V.getValueType();
+    if (!VVT.isVector() || VVT.getVectorNumElements() != NumElems)
       return SDValue();
   }
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR)
@@ -2418,7 +2419,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
            "Shift operators return type must be the same as their first arg");
     assert(VT.isInteger() && N2.getValueType().isInteger() &&
            "Shifts only work on integers");
-    assert(N2.getValueType() == TLI.getShiftAmountTy() &&
+    assert((N2.getValueType() == TLI.getShiftAmountTy() ||
+            (N2.getValueType().isVector() && N2.getValueType().isInteger())) &&
            "Wrong type for shift amount");
 
     // Always fold shifts of i1 values so the code generator doesn't need to
