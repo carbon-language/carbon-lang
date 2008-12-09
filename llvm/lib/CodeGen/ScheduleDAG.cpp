@@ -67,7 +67,7 @@ void ScheduleDAG::CalculateDepths() {
     // So, just iterate over all predecessors and take the longest path
     for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
-      unsigned PredDepth = I->Dep->Depth;
+      unsigned PredDepth = I->getSUnit()->Depth;
       if (PredDepth+1 > SUDepth) {
         SUDepth = PredDepth + 1;
       }
@@ -78,7 +78,7 @@ void ScheduleDAG::CalculateDepths() {
     // Update degrees of all nodes depending on current SUnit
     for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
          I != E; ++I) {
-      SUnit *SU = I->Dep;
+      SUnit *SU = I->getSUnit();
       if (!--SU->Depth)
         // If all dependencies of the node are processed already,
         // then the longest path for the node can be computed now
@@ -122,7 +122,7 @@ void ScheduleDAG::CalculateHeights() {
     // So, just iterate over all successors and take the longest path
     for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
          I != E; ++I) {
-      unsigned SuccHeight = I->Dep->Height;
+      unsigned SuccHeight = I->getSUnit()->Height;
       if (SuccHeight+1 > SUHeight) {
         SUHeight = SuccHeight + 1;
       }
@@ -133,7 +133,7 @@ void ScheduleDAG::CalculateHeights() {
     // Update degrees of all nodes depending on current SUnit
     for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
-      SUnit *SU = I->Dep;
+      SUnit *SU = I->getSUnit();
       if (!--SU->Height)
         // If all dependencies of the node are processed already,
         // then the longest path for the node can be computed now
@@ -183,12 +183,16 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
     cerr << "  Predecessors:\n";
     for (SUnit::const_succ_iterator I = Preds.begin(), E = Preds.end();
          I != E; ++I) {
-      if (I->isCtrl)
-        cerr << "   ch  #";
-      else
-        cerr << "   val #";
-      cerr << I->Dep << " - SU(" << I->Dep->NodeNum << ")";
-      if (I->isArtificial)
+      cerr << "   ";
+      switch (I->getKind()) {
+      case SDep::Data:        cerr << "val "; break;
+      case SDep::Anti:        cerr << "anti"; break;
+      case SDep::Output:      cerr << "out "; break;
+      case SDep::Order:       cerr << "ch  "; break;
+      }
+      cerr << "#";
+      cerr << I->getSUnit() << " - SU(" << I->getSUnit()->NodeNum << ")";
+      if (I->isArtificial())
         cerr << " *";
       cerr << "\n";
     }
@@ -197,12 +201,16 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
     cerr << "  Successors:\n";
     for (SUnit::const_succ_iterator I = Succs.begin(), E = Succs.end();
          I != E; ++I) {
-      if (I->isCtrl)
-        cerr << "   ch  #";
-      else
-        cerr << "   val #";
-      cerr << I->Dep << " - SU(" << I->Dep->NodeNum << ")";
-      if (I->isArtificial)
+      cerr << "   ";
+      switch (I->getKind()) {
+      case SDep::Data:        cerr << "val "; break;
+      case SDep::Anti:        cerr << "anti"; break;
+      case SDep::Output:      cerr << "out "; break;
+      case SDep::Order:       cerr << "ch  "; break;
+      }
+      cerr << "#";
+      cerr << I->getSUnit() << " - SU(" << I->getSUnit()->NodeNum << ")";
+      if (I->isArtificial())
         cerr << " *";
       cerr << "\n";
     }
@@ -324,7 +332,7 @@ void ScheduleDAGTopologicalSort::InitDAGTopologicalSorting() {
     Allocate(SU->NodeNum, --Id);
     for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
-      SUnit *SU = I->Dep;
+      SUnit *SU = I->getSUnit();
       if (!--Node2Index[SU->NodeNum])
         // If all dependencies of the node are processed already,
         // then the node can be computed now.
@@ -340,7 +348,7 @@ void ScheduleDAGTopologicalSort::InitDAGTopologicalSorting() {
     SUnit *SU = &SUnits[i];
     for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
-      assert(Node2Index[SU->NodeNum] > Node2Index[I->Dep->NodeNum] && 
+      assert(Node2Index[SU->NodeNum] > Node2Index[I->getSUnit()->NodeNum] && 
       "Wrong topological sorting");
     }
   }
@@ -386,14 +394,14 @@ void ScheduleDAGTopologicalSort::DFS(const SUnit *SU, int UpperBound,
     WorkList.pop_back();
     Visited.set(SU->NodeNum);
     for (int I = SU->Succs.size()-1; I >= 0; --I) {
-      int s = SU->Succs[I].Dep->NodeNum;
+      int s = SU->Succs[I].getSUnit()->NodeNum;
       if (Node2Index[s] == UpperBound) {
         HasLoop = true; 
         return;
       }
       // Visit successors if not already and in affected region.
       if (!Visited.test(s) && Node2Index[s] < UpperBound) {
-        WorkList.push_back(SU->Succs[I].Dep);
+        WorkList.push_back(SU->Succs[I].getSUnit());
       } 
     } 
   }
@@ -434,7 +442,8 @@ bool ScheduleDAGTopologicalSort::WillCreateCycle(SUnit *SU, SUnit *TargetSU) {
     return true;
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I)
-    if (I->Cost < 0 && IsReachable(TargetSU, I->Dep))
+    if (I->isAssignedRegDep() &&
+        IsReachable(TargetSU, I->getSUnit()))
       return true;
   return false;
 }

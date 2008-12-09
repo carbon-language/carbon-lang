@@ -176,7 +176,10 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
         int Cost = 1;
         // Determine if this is a physical register dependency.
         CheckForPhysRegDependency(OpN, N, i, TRI, TII, PhysReg, Cost);
-        SU->addPred(OpSU, isChain, false, PhysReg, Cost);
+        assert((PhysReg == 0 || !isChain) &&
+               "Chain dependence via physreg data?");
+        SU->addPred(SDep(OpSU, isChain ? SDep::Order : SDep::Data,
+                         OpSU->Latency, PhysReg));
       }
     }
   }

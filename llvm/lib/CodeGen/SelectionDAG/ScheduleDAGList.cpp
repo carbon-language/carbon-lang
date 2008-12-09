@@ -78,7 +78,7 @@ public:
   void Schedule();
 
 private:
-  void ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain);
+  void ReleaseSucc(SUnit *SU, const SDep &D);
   void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
   void ListScheduleTopDown();
 };
@@ -107,7 +107,8 @@ void ScheduleDAGList::Schedule() {
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
 /// the PendingQueue if the count reaches zero. Also update its cycle bound.
-void ScheduleDAGList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
+void ScheduleDAGList::ReleaseSucc(SUnit *SU, const SDep &D) {
+  SUnit *SuccSU = D.getSUnit();
   --SuccSU->NumPredsLeft;
   
 #ifndef NDEBUG
@@ -121,14 +122,7 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
   
   // Compute the cycle when this SUnit actually becomes available.  This
   // is the max of the start time of all predecessors plus their latencies.
-  // If this is a token edge, we don't need to wait for the latency of the
-  // preceeding instruction (e.g. a long-latency load) unless there is also
-  // some other data dependence.
-  unsigned PredDoneCycle = SU->Cycle;
-  if (!isChain)
-    PredDoneCycle += SU->Latency;
-  else if (SU->Latency)
-    PredDoneCycle += 1;
+  unsigned PredDoneCycle = SU->Cycle + SU->Latency;
   SuccSU->CycleBound = std::max(SuccSU->CycleBound, PredDoneCycle);
   
   if (SuccSU->NumPredsLeft == 0) {
@@ -149,7 +143,7 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   // Top down: release successors.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
-    ReleaseSucc(SU, I->Dep, I->isCtrl);
+    ReleaseSucc(SU, *I);
 
   SU->isScheduled = true;
   AvailableQueue->ScheduledNode(SU);

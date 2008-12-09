@@ -20,22 +20,6 @@
 #include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
-  struct SUnit;
-  class MachineConstantPool;
-  class MachineFunction;
-  class MachineModuleInfo;
-  class MachineRegisterInfo;
-  class MachineInstr;
-  class TargetRegisterInfo;
-  class ScheduleDAG;
-  class SelectionDAG;
-  class SelectionDAGISel;
-  class TargetInstrInfo;
-  class TargetInstrDesc;
-  class TargetLowering;
-  class TargetMachine;
-  class TargetRegisterClass;
-
   /// HazardRecognizer - This determines whether or not an instruction can be
   /// issued this cycle, and whether or not a noop needs to be inserted to handle
   /// the hazard.

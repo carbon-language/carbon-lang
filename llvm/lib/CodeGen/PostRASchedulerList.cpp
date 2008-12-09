@@ -78,7 +78,7 @@ namespace {
     void Schedule();
 
   private:
-    void ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain);
+    void ReleaseSucc(SUnit *SU, SDep *SuccEdge);
     void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
     void ListScheduleTopDown();
     bool BreakAntiDependencies();
@@ -160,12 +160,13 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     SUnit *SU = &SUnits[*I];
     for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
          P != PE; ++P) {
-      SUnit *PredSU = P->Dep;
+      SUnit *PredSU = P->getSUnit();
       // This assumes that there's no delay for reusing registers.
-      unsigned PredLatency = (P->isCtrl && P->Reg != 0) ? 1 : PredSU->Latency;
+      unsigned PredLatency = P->getLatency();
       unsigned PredTotalLatency = PredSU->CycleBound + PredLatency;
       if (SU->CycleBound < PredTotalLatency ||
-          (SU->CycleBound == PredTotalLatency && !P->isAntiDep)) {
+          (SU->CycleBound == PredTotalLatency &&
+           P->getKind() == SDep::Anti)) {
         SU->CycleBound = PredTotalLatency;
         CriticalPath[*I] = &*P;
       }
@@ -195,13 +196,13 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   BitVector AllocatableSet = TRI->getAllocatableSet(*MF);
   DenseMap<MachineInstr *, unsigned> CriticalAntiDeps;
   for (SUnit *SU = Max; CriticalPath[SU->NodeNum];
-       SU = CriticalPath[SU->NodeNum]->Dep) {
+       SU = CriticalPath[SU->NodeNum]->getSUnit()) {
     SDep *Edge = CriticalPath[SU->NodeNum];
-    SUnit *NextSU = Edge->Dep;
-    unsigned AntiDepReg = Edge->Reg;
+    SUnit *NextSU = Edge->getSUnit();
     // Only consider anti-dependence edges.
-    if (!Edge->isAntiDep)
+    if (Edge->getKind() != SDep::Anti)
       continue;
+    unsigned AntiDepReg = Edge->getReg();
     assert(AntiDepReg != 0 && "Anti-dependence on reg0?");
     // Don't break anti-dependencies on non-allocatable registers.
     if (!AllocatableSet.test(AntiDepReg))
@@ -213,9 +214,9 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     // break it.
     for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
          P != PE; ++P)
-      if (P->Dep == NextSU ?
-            (!P->isAntiDep || P->Reg != AntiDepReg) :
-            (!P->isCtrl && !P->isAntiDep && P->Reg == AntiDepReg)) {
+      if (P->getSUnit() == NextSU ?
+            (P->getKind() != SDep::Anti || P->getReg() != AntiDepReg) :
+            (P->getKind() == SDep::Data && P->getReg() == AntiDepReg)) {
         AntiDepReg = 0;
         break;
       }
@@ -539,7 +540,8 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
 /// the PendingQueue if the count reaches zero. Also update its cycle bound.
-void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
+void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
+  SUnit *SuccSU = SuccEdge->getSUnit();
   --SuccSU->NumPredsLeft;
   
 #ifndef NDEBUG
@@ -554,14 +556,7 @@ void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SUnit *SuccSU, bool isChain) {
   // Compute how many cycles it will be before this actually becomes
   // available.  This is the max of the start time of all predecessors plus
   // their latencies.
-  // If this is a token edge, we don't need to wait for the latency of the
-  // preceeding instruction (e.g. a long-latency load) unless there is also
-  // some other data dependence.
-  unsigned PredDoneCycle = SU->Cycle;
-  if (!isChain)
-    PredDoneCycle += SU->Latency;
-  else if (SU->Latency)
-    PredDoneCycle += 1;
+  unsigned PredDoneCycle = SU->Cycle + SuccEdge->getLatency();
   SuccSU->CycleBound = std::max(SuccSU->CycleBound, PredDoneCycle);
   
   if (SuccSU->NumPredsLeft == 0) {
@@ -582,7 +577,7 @@ void SchedulePostRATDList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   // Top down: release successors.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
-    ReleaseSucc(SU, I->Dep, I->isCtrl);
+    ReleaseSucc(SU, &*I);
 
   SU->isScheduled = true;
   AvailableQueue.ScheduledNode(SU);
@@ -616,7 +611,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
         PendingQueue.pop_back();
         --i; --e;
       } else {
-        assert(PendingQueue[i]->CycleBound > CurCycle && "Negative latency?");
+        assert(PendingQueue[i]->CycleBound > CurCycle && "Non-positive latency?");
       }
     }
     

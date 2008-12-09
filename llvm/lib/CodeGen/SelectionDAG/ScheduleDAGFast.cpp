@@ -77,18 +77,20 @@ public:
 
   void Schedule();
 
-  /// AddPred - This adds the specified node X as a predecessor of 
-  /// the current node Y if not already.
+  /// AddPred - adds a predecessor edge to SUnit SU.
   /// This returns true if this is a new predecessor.
-  bool AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isArtificial,
-               unsigned PhyReg = 0, int Cost = 1);
+  bool AddPred(SUnit *SU, const SDep &D) {
+    return SU->addPred(D);
+  }
 
-  /// RemovePred - This removes the specified node N from the predecessors of 
-  /// the current node M.
-  bool RemovePred(SUnit *M, SUnit *N, bool isCtrl, bool isArtificial);
+  /// RemovePred - removes a predecessor edge from SUnit SU.
+  /// This returns true if an edge was removed.
+  bool RemovePred(SUnit *SU, const SDep &D) {
+    return SU->removePred(D);
+  }
 
 private:
-  void ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain);
+  void ReleasePred(SUnit *SU, SDep *PredEdge);
   void ScheduleNodeBottomUp(SUnit*, unsigned);
   SUnit *CopyAndMoveSuccessors(SUnit*);
   void InsertCCCopiesAndMoveSuccs(SUnit*, unsigned,
@@ -125,7 +127,8 @@ void ScheduleDAGFast::Schedule() {
 
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the AvailableQueue if the count reaches zero. Also update its cycle bound.
-void ScheduleDAGFast::ReleasePred(SUnit *SU, SUnit *PredSU, bool isChain) {
+void ScheduleDAGFast::ReleasePred(SUnit *SU, SDep *PredEdge) {
+  SUnit *PredSU = PredEdge->getSUnit();
   --PredSU->NumSuccsLeft;
   
 #ifndef NDEBUG
@@ -156,16 +159,16 @@ void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   // Bottom up: release predecessors
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
-    ReleasePred(SU, I->Dep, I->isCtrl);
-    if (I->Cost < 0)  {
+    ReleasePred(SU, &*I);
+    if (I->isAssignedRegDep()) {
       // This is a physical register dependency and it's impossible or
       // expensive to copy the register. Make sure nothing that can 
       // clobber the register is scheduled between the predecessor and
       // this node.
-      if (!LiveRegDefs[I->Reg]) {
+      if (!LiveRegDefs[I->getReg()]) {
         ++NumLiveRegs;
-        LiveRegDefs[I->Reg] = I->Dep;
-        LiveRegCycles[I->Reg] = CurCycle;
+        LiveRegDefs[I->getReg()] = I->getSUnit();
+        LiveRegCycles[I->getReg()] = CurCycle;
       }
     }
   }
@@ -173,32 +176,19 @@ void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   // Release all the implicit physical register defs that are live.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    if (I->Cost < 0)  {
-      if (LiveRegCycles[I->Reg] == I->Dep->Cycle) {
+    if (I->isAssignedRegDep()) {
+      if (LiveRegCycles[I->getReg()] == I->getSUnit()->Cycle) {
         assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
-        assert(LiveRegDefs[I->Reg] == SU &&
+        assert(LiveRegDefs[I->getReg()] == SU &&
                "Physical register dependency violated?");
         --NumLiveRegs;
-        LiveRegDefs[I->Reg] = NULL;
-        LiveRegCycles[I->Reg] = 0;
+        LiveRegDefs[I->getReg()] = NULL;
+        LiveRegCycles[I->getReg()] = 0;
       }
     }
   }
 
   SU->isScheduled = true;
-}
-
-/// AddPred - adds an edge from SUnit X to SUnit Y.
-bool ScheduleDAGFast::AddPred(SUnit *Y, SUnit *X, bool isCtrl,
-                              bool isArtificial, unsigned PhyReg, int Cost) {
-  return Y->addPred(X, isCtrl, isArtificial, PhyReg, Cost);
-}
-
-/// RemovePred - This removes the specified node N from the predecessors of 
-/// the current node M.
-bool ScheduleDAGFast::RemovePred(SUnit *M, SUnit *N, 
-                                 bool isCtrl, bool isArtificial) {
-  return M->removePred(N, isCtrl, isArtificial, false);
 }
 
 /// CopyAndMoveSuccessors - Clone the specified node and move its scheduled
@@ -277,65 +267,66 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
       LoadSU->Height = SU->Height;
     }
 
-    SUnit *ChainPred = NULL;
+    SDep ChainPred;
     SmallVector<SDep, 4> ChainSuccs;
     SmallVector<SDep, 4> LoadPreds;
     SmallVector<SDep, 4> NodePreds;
     SmallVector<SDep, 4> NodeSuccs;
     for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
-      if (I->isCtrl)
-        ChainPred = I->Dep;
-      else if (I->Dep->getNode() && I->Dep->getNode()->isOperandOf(LoadNode))
-        LoadPreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false, false));
+      if (I->isCtrl())
+        ChainPred = *I;
+      else if (I->getSUnit()->getNode() &&
+               I->getSUnit()->getNode()->isOperandOf(LoadNode))
+        LoadPreds.push_back(*I);
       else
-        NodePreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false, false));
+        NodePreds.push_back(*I);
     }
     for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
          I != E; ++I) {
-      if (I->isCtrl)
-        ChainSuccs.push_back(SDep(I->Dep, I->Reg, I->Cost,
-                                  I->isCtrl, I->isArtificial, I->isAntiDep));
+      if (I->isCtrl())
+        ChainSuccs.push_back(*I);
       else
-        NodeSuccs.push_back(SDep(I->Dep, I->Reg, I->Cost,
-                                 I->isCtrl, I->isArtificial, I->isAntiDep));
+        NodeSuccs.push_back(*I);
     }
 
-    if (ChainPred) {
-      RemovePred(SU, ChainPred, true, false);
+    if (ChainPred.getSUnit()) {
+      RemovePred(SU, ChainPred);
       if (isNewLoad)
-        AddPred(LoadSU, ChainPred, true, false);
+        AddPred(LoadSU, ChainPred);
     }
     for (unsigned i = 0, e = LoadPreds.size(); i != e; ++i) {
-      SDep *Pred = &LoadPreds[i];
-      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isArtificial);
+      const SDep &Pred = LoadPreds[i];
+      RemovePred(SU, Pred);
       if (isNewLoad) {
-        AddPred(LoadSU, Pred->Dep, Pred->isCtrl, Pred->isArtificial,
-                Pred->Reg, Pred->Cost);
+        AddPred(LoadSU, Pred);
       }
     }
     for (unsigned i = 0, e = NodePreds.size(); i != e; ++i) {
-      SDep *Pred = &NodePreds[i];
-      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isArtificial);
-      AddPred(NewSU, Pred->Dep, Pred->isCtrl, Pred->isArtificial,
-              Pred->Reg, Pred->Cost);
+      const SDep &Pred = NodePreds[i];
+      RemovePred(SU, Pred);
+      AddPred(NewSU, Pred);
     }
     for (unsigned i = 0, e = NodeSuccs.size(); i != e; ++i) {
-      SDep *Succ = &NodeSuccs[i];
-      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isArtificial);
-      AddPred(Succ->Dep, NewSU, Succ->isCtrl, Succ->isArtificial,
-              Succ->Reg, Succ->Cost);
+      SDep D = NodeSuccs[i];
+      SUnit *SuccDep = D.getSUnit();
+      D.setSUnit(SU);
+      RemovePred(SuccDep, D);
+      D.setSUnit(NewSU);
+      AddPred(SuccDep, D);
     }
     for (unsigned i = 0, e = ChainSuccs.size(); i != e; ++i) {
-      SDep *Succ = &ChainSuccs[i];
-      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isArtificial);
+      SDep D = ChainSuccs[i];
+      SUnit *SuccDep = D.getSUnit();
+      D.setSUnit(SU);
+      RemovePred(SuccDep, D);
       if (isNewLoad) {
-        AddPred(Succ->Dep, LoadSU, Succ->isCtrl, Succ->isArtificial,
-                Succ->Reg, Succ->Cost);
+        D.setSUnit(LoadSU);
+        AddPred(SuccDep, D);
       }
     } 
     if (isNewLoad) {
-      AddPred(NewSU, LoadSU, false, false);
+      AddPred(NewSU, SDep(LoadSU, SDep::Order, LoadSU->Latency));
     }
 
     ++NumUnfolds;
@@ -353,28 +344,30 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   // New SUnit has the exact same predecessors.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I)
-    if (!I->isArtificial) {
-      AddPred(NewSU, I->Dep, I->isCtrl, false, I->Reg, I->Cost);
-      NewSU->Depth = std::max(NewSU->Depth, I->Dep->Depth+1);
+    if (!I->isArtificial()) {
+      AddPred(NewSU, *I);
+      NewSU->Depth = std::max(NewSU->Depth, I->getSUnit()->Depth+1);
     }
 
   // Only copy scheduled successors. Cut them from old node's successor
   // list and move them over.
-  SmallVector<std::pair<SUnit*, bool>, 4> DelDeps;
+  SmallVector<std::pair<SUnit *, SDep>, 4> DelDeps;
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    if (I->isArtificial)
+    if (I->isArtificial())
       continue;
-    if (I->Dep->isScheduled) {
-      NewSU->Height = std::max(NewSU->Height, I->Dep->Height+1);
-      AddPred(I->Dep, NewSU, I->isCtrl, false, I->Reg, I->Cost);
-      DelDeps.push_back(std::make_pair(I->Dep, I->isCtrl));
+    SUnit *SuccSU = I->getSUnit();
+    if (SuccSU->isScheduled) {
+      NewSU->Height = std::max(NewSU->Height, SuccSU->Height+1);
+      SDep D = *I;
+      D.setSUnit(NewSU);
+      AddPred(SuccSU, D);
+      D.setSUnit(SU);
+      DelDeps.push_back(std::make_pair(SuccSU, D));
     }
   }
   for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
-    SUnit *Succ = DelDeps[i].first;
-    bool isCtrl = DelDeps[i].second;
-    RemovePred(Succ, SU, isCtrl, false);
+    RemovePred(DelDeps[i].first, DelDeps[i].second);
   }
 
   ++NumDups;
@@ -397,24 +390,25 @@ void ScheduleDAGFast::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
 
   // Only copy scheduled successors. Cut them from old node's successor
   // list and move them over.
-  SmallVector<std::pair<SUnit*, bool>, 4> DelDeps;
+  SmallVector<std::pair<SUnit *, SDep>, 4> DelDeps;
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    if (I->isArtificial)
+    if (I->isArtificial())
       continue;
-    if (I->Dep->isScheduled) {
-      AddPred(I->Dep, CopyToSU, I->isCtrl, false, I->Reg, I->Cost);
-      DelDeps.push_back(std::make_pair(I->Dep, I->isCtrl));
+    SUnit *SuccSU = I->getSUnit();
+    if (SuccSU->isScheduled) {
+      SDep D = *I;
+      D.setSUnit(CopyToSU);
+      AddPred(SuccSU, D);
+      DelDeps.push_back(std::make_pair(SuccSU, *I));
     }
   }
   for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
-    SUnit *Succ = DelDeps[i].first;
-    bool isCtrl = DelDeps[i].second;
-    RemovePred(Succ, SU, isCtrl, false);
+    RemovePred(DelDeps[i].first, DelDeps[i].second);
   }
 
-  AddPred(CopyFromSU, SU, false, false, Reg, -1);
-  AddPred(CopyToSU, CopyFromSU, false, false, Reg, 1);
+  AddPred(CopyFromSU, SDep(SU, SDep::Data, SU->Latency, Reg));
+  AddPred(CopyToSU, SDep(CopyFromSU, SDep::Data, CopyFromSU->Latency, 0));
 
   Copies.push_back(CopyFromSU);
   Copies.push_back(CopyToSU);
@@ -451,15 +445,15 @@ bool ScheduleDAGFast::DelayForLiveRegsBottomUp(SUnit *SU,
   // If this node would clobber any "live" register, then it's not ready.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
-    if (I->Cost < 0)  {
-      unsigned Reg = I->Reg;
-      if (LiveRegDefs[Reg] && LiveRegDefs[Reg] != I->Dep) {
+    if (I->isAssignedRegDep()) {
+      unsigned Reg = I->getReg();
+      if (LiveRegDefs[Reg] && LiveRegDefs[Reg] != I->getSUnit()) {
         if (RegAdded.insert(Reg))
           LRegs.push_back(Reg);
       }
       for (const unsigned *Alias = TRI->getAliasSet(Reg);
            *Alias; ++Alias)
-        if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != I->Dep) {
+        if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != I->getSUnit()) {
           if (RegAdded.insert(*Alias))
             LRegs.push_back(*Alias);
         }
@@ -550,14 +544,18 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
           InsertCCCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
           DOUT << "Adding an edge from SU # " << TrySU->NodeNum
                << " to SU #" << Copies.front()->NodeNum << "\n";
-          AddPred(TrySU, Copies.front(), true, true);
+          AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
+                              /*Reg=*/0, /*isNormalMemory=*/false,
+                              /*isMustAlias=*/false, /*isArtificial=*/true));
           NewDef = Copies.back();
         }
 
         DOUT << "Adding an edge from SU # " << NewDef->NodeNum
              << " to SU #" << TrySU->NodeNum << "\n";
         LiveRegDefs[Reg] = NewDef;
-        AddPred(NewDef, TrySU, true, true);
+        AddPred(NewDef, SDep(TrySU, SDep::Order, /*Latency=*/1,
+                             /*Reg=*/0, /*isNormalMemory=*/false,
+                             /*isMustAlias=*/false, /*isArtificial=*/true));
         TrySU->isAvailable = false;
         CurSU = NewDef;
       }

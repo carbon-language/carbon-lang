@@ -20,6 +20,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/PointerIntPair.h"
 
 namespace llvm {
   struct SUnit;
@@ -39,20 +40,174 @@ namespace llvm {
   class TargetRegisterClass;
   template<class Graph> class GraphWriter;
 
-  /// SDep - Scheduling dependency. It keeps track of dependent nodes,
-  /// cost of the depdenency, etc.
-  struct SDep {
-    SUnit    *Dep;           // Dependent - either a predecessor or a successor.
-    unsigned  Reg;           // If non-zero, this dep is a physreg dependency.
-    int       Cost;          // Cost of the dependency.
-    bool      isCtrl    : 1; // True iff it's a control dependency.
-    bool      isArtificial : 1; // True iff it's an artificial ctrl dep added
-                                // during sched that may be safely deleted if
-                                // necessary.
-    bool      isAntiDep : 1; // True iff it's an anti-dependency (on a physical
-                             // register.
-    SDep(SUnit *d, unsigned r, int t, bool c, bool a, bool anti)
-      : Dep(d), Reg(r), Cost(t), isCtrl(c), isArtificial(a), isAntiDep(anti) {}
+  /// SDep - Scheduling dependency. This represents one direction of an
+  /// edge in the scheduling DAG.
+  class SDep {
+  public:
+    /// Kind - These are the different kinds of scheduling dependencies.
+    enum Kind {
+      Data,        ///< Regular data dependence (aka true-dependence).
+      Anti,        ///< A register anti-dependedence (aka WAR).
+      Output,      ///< A register output-dependence (aka WAW).
+      Order        ///< Any other ordering dependency.
+    };
+
+  private:
+    /// Dep - A pointer to the depending/depended-on SUnit, and an enum
+    /// indicating the kind of the dependency.
+    PointerIntPair<SUnit *, 2, Kind> Dep;
+
+    /// Contents - A union discriminated by the dependence kind.
+    union {
+      /// Reg - For Data, Anti, and Output dependencies, the associated
+      /// register. For Data dependencies that don't currently have a register
+      /// assigned, this is set to zero.
+      unsigned Reg;
+
+      /// Order - Additional information about Order dependencies.
+      struct {
+        /// isNormalMemory - True if both sides of the dependence
+        /// access memory in non-volatile and fully modeled ways.
+        bool isNormalMemory : 1;
+
+        /// isMustAlias - True if both sides of the dependence are known to
+        /// access the same memory.
+        bool isMustAlias : 1;
+
+        /// isArtificial - True if this is an artificial dependency, meaning
+        /// it is not necessary for program correctness, and may be safely
+        /// deleted if necessary.
+        bool isArtificial : 1;
+      } Order;
+    } Contents;
+
+    /// Latency - The time associated with this edge. Often this is just
+    /// the value of the Latency field of the predecessor, however advanced
+    /// models may provide additional information about specific edges.
+    unsigned Latency;
+
+  public:
+    /// SDep - Construct a null SDep. This is only for use by container
+    /// classes which require default constructors. SUnits may not
+    /// have null SDep edges.
+    SDep() : Dep(0, Data) {}
+
+    /// SDep - Construct an SDep with the specified values.
+    SDep(SUnit *S, Kind kind, unsigned latency = 1, unsigned Reg = 0,
+         bool isNormalMemory = false, bool isMustAlias = false,
+         bool isArtificial = false)
+      : Dep(S, kind), Contents(), Latency(latency) {
+      switch (kind) {
+      case Anti:
+      case Output:
+        assert(Reg != 0 &&
+               "SDep::Anti and SDep::Output must use a non-zero Reg!");
+        // fall through
+      case Data:
+        assert(!isMustAlias && "isMustAlias only applies with SDep::Order!");
+        assert(!isArtificial && "isArtificial only applies with SDep::Order!");
+        Contents.Reg = Reg;
+        break;
+      case Order:
+        assert(Reg == 0 && "Reg given for non-register dependence!");
+        Contents.Order.isNormalMemory = isNormalMemory;
+        Contents.Order.isMustAlias = isMustAlias;
+        Contents.Order.isArtificial = isArtificial;
+        break;
+      }
+    }
+
+    bool operator==(const SDep &Other) const {
+      if (Dep != Other.Dep) return false;
+      switch (Dep.getInt()) {
+      case Data:
+      case Anti:
+      case Output:
+        return Contents.Reg == Other.Contents.Reg;
+      case Order:
+        return Contents.Order.isNormalMemory ==
+                 Other.Contents.Order.isNormalMemory &&
+               Contents.Order.isMustAlias == Other.Contents.Order.isMustAlias &&
+               Contents.Order.isArtificial == Other.Contents.Order.isArtificial;
+      }
+      assert(0 && "Invalid dependency kind!");
+      return false;
+    }
+
+    bool operator!=(const SDep &Other) const {
+      return !operator==(Other);
+    }
+
+    /// getLatency - Return the latency value for this edge, which roughly
+    /// means the minimum number of cycles that must elapse between the
+    /// predecessor and the successor, given that they have this edge
+    /// between them.
+    unsigned getLatency() const {
+      return Latency;
+    }
+
+    //// getSUnit - Return the SUnit to which this edge points.
+    SUnit *getSUnit() const {
+      return Dep.getPointer();
+    }
+
+    //// setSUnit - Assign the SUnit to which this edge points.
+    void setSUnit(SUnit *SU) {
+      Dep.setPointer(SU);
+    }
+
+    /// getKind - Return an enum value representing the kind of the dependence.
+    Kind getKind() const {
+      return Dep.getInt();
+    }
+
+    /// isCtrl - Shorthand for getKind() != SDep::Data.
+    bool isCtrl() const {
+      return getKind() != Data;
+    }
+
+    /// isArtificial - Test if this is an Order dependence that is marked
+    /// as "artificial", meaning it isn't necessary for correctness.
+    bool isArtificial() const {
+      return getKind() == Order && Contents.Order.isArtificial;
+    }
+
+    /// isMustAlias - Test if this is an Order dependence that is marked
+    /// as "must alias", meaning that the SUnits at either end of the edge
+    /// have a memory dependence on a known memory location.
+    bool isMustAlias() const {
+      return getKind() == Order && Contents.Order.isMustAlias;
+    }
+
+    /// isAssignedRegDep - Test if this is a Data dependence that is
+    /// associated with a register.
+    bool isAssignedRegDep() const {
+      return getKind() == Data && Contents.Reg != 0;
+    }
+
+    /// getReg - Return the register associated with this edge. This is
+    /// only valid on Data, Anti, and Output edges. On Data edges, this
+    /// value may be zero, meaning there is no associated register.
+    unsigned getReg() const {
+      assert((getKind() == Data || getKind() == Anti || getKind() == Output) &&
+             "getReg called on non-register dependence edge!");
+      return Contents.Reg;
+    }
+
+    /// setReg - Assign the associated register for this edge. This is
+    /// only valid on Data, Anti, and Output edges. On Anti and Output
+    /// edges, this value must not be zero. On Data edges, the value may
+    /// be zero, which would mean that no specific register is associated
+    /// with this edge.
+    void setReg(unsigned Reg) {
+      assert((getKind() == Data || getKind() == Anti || getKind() == Output) &&
+             "setReg called on non-register dependence edge!");
+      assert((getKind() != Anti || Reg != 0) &&
+             "SDep::Anti edge cannot use the zero register!");
+      assert((getKind() != Output || Reg != 0) &&
+             "SDep::Output edge cannot use the zero register!");
+      Contents.Reg = Reg;
+    }
   };
 
   /// SUnit - Scheduling unit. This is a node in the scheduling DAG.
@@ -77,8 +232,8 @@ namespace llvm {
     unsigned NodeNum;                   // Entry # of node in the node vector.
     unsigned NodeQueueId;               // Queue id of node.
     unsigned short Latency;             // Node latency.
-    short NumPreds;                     // # of non-control preds.
-    short NumSuccs;                     // # of non-control sucss.
+    short NumPreds;                     // # of SDep::Data preds.
+    short NumSuccs;                     // # of SDep::Data sucss.
     short NumPredsLeft;                 // # of preds not scheduled.
     short NumSuccsLeft;                 // # of succs not scheduled.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
@@ -142,21 +297,23 @@ namespace llvm {
       return Instr;
     }
 
-    /// addPred - This adds the specified node as a pred of the current node if
+    /// addPred - This adds the specified edge as a pred of the current node if
     /// not already.  It also adds the current node as a successor of the
     /// specified node.  This returns true if this is a new pred.
-    bool addPred(SUnit *N, bool isCtrl, bool isArtificial,
-                 unsigned PhyReg = 0, int Cost = 1, bool isAntiDep = false) {
+    bool addPred(const SDep &D) {
+      // If this node already has this depenence, don't add a redundant one.
       for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
-        if (Preds[i].Dep == N &&
-            Preds[i].isCtrl == isCtrl &&
-            Preds[i].isArtificial == isArtificial &&
-            Preds[i].isAntiDep == isAntiDep)
+        if (Preds[i] == D)
           return false;
-      Preds.push_back(SDep(N, PhyReg, Cost, isCtrl, isArtificial, isAntiDep));
-      N->Succs.push_back(SDep(this, PhyReg, Cost, isCtrl,
-                              isArtificial, isAntiDep));
-      if (!isCtrl) {
+      // Add a pred to this SUnit.
+      Preds.push_back(D);
+      // Now add a corresponding succ to N.
+      SDep P = D;
+      P.setSUnit(this);
+      SUnit *N = D.getSUnit();
+      N->Succs.push_back(P);
+      // Update the bookkeeping.
+      if (D.getKind() == SDep::Data) {
         ++NumPreds;
         ++N->NumSuccs;
       }
@@ -167,26 +324,31 @@ namespace llvm {
       return true;
     }
 
-    bool removePred(SUnit *N, bool isCtrl, bool isArtificial, bool isAntiDep) {
+    /// removePred - This removes the specified edge as a pred of the current
+    /// node if it exists.  It also removes the current node as a successor of
+    /// the specified node.  This returns true if the edge existed and was
+    /// removed.
+    bool removePred(const SDep &D) {
+      // Find the matching predecessor.
       for (SmallVector<SDep, 4>::iterator I = Preds.begin(), E = Preds.end();
            I != E; ++I)
-        if (I->Dep == N &&
-            I->isCtrl == isCtrl &&
-            I->isArtificial == isArtificial &&
-            I->isAntiDep == isAntiDep) {
+        if (*I == D) {
           bool FoundSucc = false;
+          // Find the corresponding successor in N.
+          SDep P = D;
+          P.setSUnit(this);
+          SUnit *N = D.getSUnit();
           for (SmallVector<SDep, 4>::iterator II = N->Succs.begin(),
                  EE = N->Succs.end(); II != EE; ++II)
-            if (II->Dep == this &&
-                II->isCtrl == isCtrl && II->isArtificial == isArtificial &&
-                II->isAntiDep == isAntiDep) {
+            if (*II == P) {
               FoundSucc = true;
               N->Succs.erase(II);
               break;
             }
           assert(FoundSucc && "Mismatching preds / succs lists!");
           Preds.erase(I);
-          if (!isCtrl) {
+          // Update the bookkeeping;
+          if (D.getKind() == SDep::Data) {
             --NumPreds;
             --N->NumSuccs;
           }
@@ -201,14 +363,14 @@ namespace llvm {
 
     bool isPred(SUnit *N) {
       for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
-        if (Preds[i].Dep == N)
+        if (Preds[i].getSUnit() == N)
           return true;
       return false;
     }
     
     bool isSucc(SUnit *N) {
       for (unsigned i = 0, e = (unsigned)Succs.size(); i != e; ++i)
-        if (Succs[i].Dep == N)
+        if (Succs[i].getSUnit() == N)
           return true;
       return false;
     }
@@ -366,7 +528,7 @@ namespace llvm {
     }
 
     pointer operator*() const {
-      return Node->Preds[Operand].Dep;
+      return Node->Preds[Operand].getSUnit();
     }
     pointer operator->() const { return operator*(); }
 
@@ -385,8 +547,13 @@ namespace llvm {
 
     unsigned getOperand() const { return Operand; }
     const SUnit *getNode() const { return Node; }
-    bool isCtrlDep() const { return Node->Preds[Operand].isCtrl; }
-    bool isArtificialDep() const { return Node->Preds[Operand].isArtificial; }
+    /// isCtrlDep - Test if this is not an SDep::Data dependence.
+    bool isCtrlDep() const {
+      return Node->Preds[Operand].isCtrl();
+    }
+    bool isArtificialDep() const {
+      return Node->Preds[Operand].isArtificial();
+    }
   };
 
   template <> struct GraphTraits<SUnit*> {

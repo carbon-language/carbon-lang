@@ -30,7 +30,6 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineBasicBlock *bb,
 void ScheduleDAGInstrs::BuildSchedUnits() {
   SUnits.clear();
   SUnits.reserve(BB->size());
-  int Cost = 1; // FIXME
 
   // We build scheduling units by walking a block's instruction list from bottom
   // to top.
@@ -63,6 +62,9 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
     MachineInstr *MI = prior(MII);
     SUnit *SU = NewSUnit(MI);
 
+    // Assign the Latency field of SU using target-provided information.
+    ComputeLatency(SU);
+
     // Add register-based dependencies (data, anti, and output).
     for (unsigned j = 0, n = MI->getNumOperands(); j != n; ++j) {
       const MachineOperand &MO = MI->getOperand(j);
@@ -74,28 +76,27 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
       std::vector<SUnit *> &UseList = Uses[Reg];
       SUnit *&Def = Defs[Reg];
       // Optionally add output and anti dependencies.
+      // TODO: Using a latency of 1 here assumes there's no cost for
+      //       reusing registers.
+      SDep::Kind Kind = MO.isUse() ? SDep::Anti : SDep::Output;
       if (Def && Def != SU)
-        Def->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false,
-                     /*PhyReg=*/Reg, Cost, /*isAntiDep=*/MO.isUse());
+        Def->addPred(SDep(SU, Kind, /*Latency=*/1, /*Reg=*/Reg));
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         SUnit *&Def = Defs[*Alias];
         if (Def && Def != SU)
-          Def->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false,
-                       /*PhyReg=*/*Alias, Cost, /*isAntiDep=*/MO.isUse());
+          Def->addPred(SDep(SU, Kind, /*Latency=*/1, /*Reg=*/ *Alias));
       }
 
       if (MO.isDef()) {
         // Add any data dependencies.
         for (unsigned i = 0, e = UseList.size(); i != e; ++i)
           if (UseList[i] != SU)
-            UseList[i]->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false,
-                                /*PhysReg=*/Reg, Cost);
+            UseList[i]->addPred(SDep(SU, SDep::Data, SU->Latency, Reg));
         for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
           std::vector<SUnit *> &UseList = Uses[*Alias];
           for (unsigned i = 0, e = UseList.size(); i != e; ++i)
             if (UseList[i] != SU)
-              UseList[i]->addPred(SU, /*isCtrl=*/false, /*isArtificial=*/false,
-                                  /*PhysReg=*/*Alias, Cost);
+              UseList[i]->addPred(SDep(SU, SDep::Data, SU->Latency, *Alias));
         }
 
         UseList.clear();
@@ -117,20 +118,20 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
       // This is the conservative case. Add dependencies on all memory
       // references.
       if (Chain)
-        Chain->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+        Chain->addPred(SDep(SU, SDep::Order, SU->Latency));
       Chain = SU;
       for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
-        PendingLoads[k]->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+        PendingLoads[k]->addPred(SDep(SU, SDep::Order, SU->Latency));
       PendingLoads.clear();
       for (std::map<const Value *, SUnit *>::iterator I = MemDefs.begin(),
            E = MemDefs.end(); I != E; ++I) {
-        I->second->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+        I->second->addPred(SDep(SU, SDep::Order, SU->Latency));
         I->second = SU;
       }
       for (std::map<const Value *, std::vector<SUnit *> >::iterator I =
            MemUses.begin(), E = MemUses.end(); I != E; ++I) {
         for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-          I->second[i]->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+          I->second[i]->addPred(SDep(SU, SDep::Order, SU->Latency));
         I->second.clear();
       }
       // See if it is known to just have a single memory reference.
@@ -156,7 +157,8 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
         // Handle the def in MemDefs, if there is one.
         std::map<const Value *, SUnit *>::iterator I = MemDefs.find(V);
         if (I != MemDefs.end()) {
-          I->second->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+          I->second->addPred(SDep(SU, SDep::Order, SU->Latency, /*Reg=*/0,
+                                  /*isNormalMemory=*/true));
           I->second = SU;
         } else {
           MemDefs[V] = SU;
@@ -166,12 +168,13 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
           MemUses.find(V);
         if (J != MemUses.end()) {
           for (unsigned i = 0, e = J->second.size(); i != e; ++i)
-            J->second[i]->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+            J->second[i]->addPred(SDep(SU, SDep::Order, SU->Latency, /*Reg=*/0,
+                                       /*isNormalMemory=*/true));
           J->second.clear();
         }
         // Add a general dependence too, if needed.
         if (Chain)
-          Chain->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+          Chain->addPred(SDep(SU, SDep::Order, SU->Latency));
       } else
         // Treat all other stores conservatively.
         goto new_chain;
@@ -186,13 +189,14 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
         const Value *V = MI->memoperands_begin()->getValue();
         std::map<const Value *, SUnit *>::iterator I = MemDefs.find(V);
         if (I != MemDefs.end())
-          I->second->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+          I->second->addPred(SDep(SU, SDep::Order, SU->Latency, /*Reg=*/0,
+                                  /*isNormalMemory=*/true));
         MemUses[V].push_back(SU);
 
         // Add a general dependence too, if needed.
         if (Chain && (!ChainMMO ||
                       (ChainMMO->isStore() || ChainMMO->isVolatile())))
-          Chain->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+          Chain->addPred(SDep(SU, SDep::Order, SU->Latency));
       } else if (MI->hasVolatileMemoryRef()) {
         // Treat volatile loads conservatively. Note that this includes
         // cases where memoperand information is unavailable.
@@ -200,7 +204,7 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
       } else {
         // A normal load. Just depend on the general chain.
         if (Chain)
-          Chain->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+          Chain->addPred(SDep(SU, SDep::Order, SU->Latency));
         PendingLoads.push_back(SU);
       }
     }
@@ -208,12 +212,9 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
     // Add chain edges from the terminator to ensure that all the work of the
     // block is completed before any control transfers.
     if (Terminator && SU->Succs.empty())
-      Terminator->addPred(SU, /*isCtrl=*/true, /*isArtificial=*/false);
+      Terminator->addPred(SDep(SU, SDep::Order, SU->Latency));
     if (TID.isTerminator() || MI->isLabel())
       Terminator = SU;
-
-    // Assign the Latency field of SU using target-provided information.
-    ComputeLatency(SU);
   }
 }
 

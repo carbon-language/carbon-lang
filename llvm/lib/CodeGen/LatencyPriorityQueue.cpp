@@ -57,14 +57,13 @@ int LatencyPriorityQueue::CalcLatency(const SUnit &SU) {
     unsigned MaxSuccLatency = 0;
     for (SUnit::const_succ_iterator I = Cur->Succs.begin(),E = Cur->Succs.end();
          I != E; ++I) {
-      int SuccLatency = Latencies[I->Dep->NodeNum];
+      int SuccLatency = Latencies[I->getSUnit()->NodeNum];
       if (SuccLatency == -1) {
         AllDone = false;
-        WorkList.push_back(I->Dep);
+        WorkList.push_back(I->getSUnit());
       } else {
         // This assumes that there's no delay for reusing registers.
-        unsigned NewLatency =
-          SuccLatency + ((I->isCtrl && I->Reg != 0) ? 1 : CurLatency);
+        unsigned NewLatency = SuccLatency + CurLatency;
         MaxSuccLatency = std::max(MaxSuccLatency, NewLatency);
       }
     }
@@ -99,7 +98,7 @@ void LatencyPriorityQueue::CalculatePriorities() {
       Latency = SU->Latency + SuccLat;
       for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
            I != E; ++I)
-        WorkList.push_back(std::make_pair(I->Dep, Latency));
+        WorkList.push_back(std::make_pair(I->getSUnit(), Latency));
     }
   }
 }
@@ -110,7 +109,7 @@ SUnit *LatencyPriorityQueue::getSingleUnscheduledPred(SUnit *SU) {
   SUnit *OnlyAvailablePred = 0;
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
-    SUnit &Pred = *I->Dep;
+    SUnit &Pred = *I->getSUnit();
     if (!Pred.isScheduled) {
       // We found an available, but not scheduled, predecessor.  If it's the
       // only one we have found, keep track of it... otherwise give up.
@@ -129,7 +128,7 @@ void LatencyPriorityQueue::push_impl(SUnit *SU) {
   unsigned NumNodesBlocking = 0;
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
-    if (getSingleUnscheduledPred(I->Dep) == SU)
+    if (getSingleUnscheduledPred(I->getSUnit()) == SU)
       ++NumNodesBlocking;
   NumNodesSolelyBlocking[SU->NodeNum] = NumNodesBlocking;
   
@@ -144,7 +143,7 @@ void LatencyPriorityQueue::push_impl(SUnit *SU) {
 void LatencyPriorityQueue::ScheduledNode(SUnit *SU) {
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
-    AdjustPriorityOfUnscheduledPreds(I->Dep);
+    AdjustPriorityOfUnscheduledPreds(I->getSUnit());
 }
 
 /// AdjustPriorityOfUnscheduledPreds - One of the predecessors of SU was just

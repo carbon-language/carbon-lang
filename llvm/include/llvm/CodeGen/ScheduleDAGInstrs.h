@@ -18,22 +18,6 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 
 namespace llvm {
-  struct SUnit;
-  class MachineConstantPool;
-  class MachineFunction;
-  class MachineModuleInfo;
-  class MachineRegisterInfo;
-  class MachineInstr;
-  class TargetRegisterInfo;
-  class ScheduleDAG;
-  class SelectionDAG;
-  class SelectionDAGISel;
-  class TargetInstrInfo;
-  class TargetInstrDesc;
-  class TargetLowering;
-  class TargetMachine;
-  class TargetRegisterClass;
-
   class ScheduleDAGInstrs : public ScheduleDAG {
   public:
     ScheduleDAGInstrs(MachineBasicBlock *bb,
