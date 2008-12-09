@@ -213,11 +213,20 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     
     // See if this instruction (e.g. a call or vaarg) mod/ref's the pointer.
     // FIXME: If this is a load, we should ignore readonly calls!
-    if (AA->getModRefInfo(Inst, MemPtr, MemSize) == AliasAnalysis::NoModRef)
+    switch (AA->getModRefInfo(Inst, MemPtr, MemSize)) {
+    case AliasAnalysis::NoModRef:
+      // If the call has no effect on the queried pointer, just ignore it.
       continue;
-    
-    // Otherwise, there is a dependence.
-    return MemDepResult::getClobber(Inst);
+    case AliasAnalysis::Ref:
+      // If the call is known to never store to the pointer, and if this is a
+      // load query, we can safely ignore it (scan past it).
+      if (isLoad)
+        continue;
+      // FALL THROUGH.
+    default:
+      // Otherwise, there is a potential dependence.  Return a clobber.
+      return MemDepResult::getClobber(Inst);
+    }
   }
   
   // No dependence found.  If this is the entry block of the function, it is a
