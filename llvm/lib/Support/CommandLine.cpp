@@ -394,8 +394,6 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
     argc = static_cast<int>(newArgv.size());
   }
 
-  sys::Path progname(argv[0]);
-
   // Copy the program name into ProgName, making sure not to overflow it.
   std::string ProgName = sys::Path(argv[0]).getLast();
   if (ProgName.size() > 79) ProgName.resize(79);
