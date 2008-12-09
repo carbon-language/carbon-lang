@@ -938,17 +938,16 @@ SpeculationFailure:
 bool GVN::processNonLocalLoad(LoadInst *LI,
                               SmallVectorImpl<Instruction*> &toErase) {
   // Find the non-local dependencies of the load.
-  const MemoryDependenceAnalysis::NonLocalDepInfo &deps = 
-    MD->getNonLocalDependency(LI);
-  //DEBUG(cerr << "INVESTIGATING NONLOCAL LOAD: " << deps.size() << *LI);
+  SmallVector<MemoryDependenceAnalysis::NonLocalDepEntry, 64> Deps; 
+  MD->getNonLocalPointerDependency(LI->getOperand(0), true, LI->getParent(),
+                                   Deps);
+  //DEBUG(cerr << "INVESTIGATING NONLOCAL LOAD: " << Deps.size() << *LI);
   
   // If we had to process more than one hundred blocks to find the
   // dependencies, this load isn't worth worrying about.  Optimizing
   // it will be too expensive.
-  if (deps.size() > 100)
+  if (Deps.size() > 100)
     return false;
-  
-  BasicBlock *EntryBlock = &LI->getParent()->getParent()->getEntryBlock();
   
   // Filter out useless results (non-locals, etc).  Keep track of the blocks
   // where we have a value available in repl, also keep track of whether we see
@@ -957,18 +956,9 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   SmallVector<std::pair<BasicBlock*, Value*>, 16> ValuesPerBlock;
   SmallVector<BasicBlock*, 16> UnavailableBlocks;
   
-  for (unsigned i = 0, e = deps.size(); i != e; ++i) {
-    BasicBlock *DepBB = deps[i].first;
-    MemDepResult DepInfo = deps[i].second;
-    
-    if (DepInfo.isNonLocal()) {
-      // If this is a non-local dependency in the entry block, then we depend on
-      // the value live-in at the start of the function.  We could insert a load
-      // in the entry block to get this, but for now we'll just bail out.
-      if (DepBB == EntryBlock)
-        UnavailableBlocks.push_back(DepBB);
-      continue;
-    }
+  for (unsigned i = 0, e = Deps.size(); i != e; ++i) {
+    BasicBlock *DepBB = Deps[i].first;
+    MemDepResult DepInfo = Deps[i].second;
     
     if (DepInfo.isClobber()) {
       UnavailableBlocks.push_back(DepBB);
@@ -984,7 +974,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       continue;
     }
   
-    if (StoreInst* S = dyn_cast<StoreInst>(DepInfo.getInst())) {
+    if (StoreInst* S = dyn_cast<StoreInst>(DepInst)) {
       // Reject loads and stores that are to the same address but are of 
       // different types.
       // NOTE: 403.gcc does have this case (e.g. in readonly_fields_p) because
@@ -997,7 +987,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       
       ValuesPerBlock.push_back(std::make_pair(DepBB, S->getOperand(0)));
       
-    } else if (LoadInst* LD = dyn_cast<LoadInst>(DepInfo.getInst())) {
+    } else if (LoadInst* LD = dyn_cast<LoadInst>(DepInst)) {
       if (LD->getType() != LI->getType()) {
         UnavailableBlocks.push_back(DepBB);
         continue;
@@ -1019,6 +1009,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   if (UnavailableBlocks.empty()) {
     // Use cached PHI construction information from previous runs
     SmallPtrSet<Instruction*, 4> &p = phiMap[LI->getPointerOperand()];
+    // FIXME: What does phiMap do? Are we positive it isn't getting invalidated?
     for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
          I != E; ++I) {
       if ((*I)->getParent() == LI->getParent()) {
