@@ -959,7 +959,7 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str,
 /// character. The result has pointer to array type.
 llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &str,
                                                         const char *GlobalName){
-  return GetAddrOfConstantString(str + "\0", GlobalName);
+  return GetAddrOfConstantString(str + '\0', GlobalName);
 }
 
 /// EmitObjCPropertyImplementations - Emit information for synthesized
