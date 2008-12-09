@@ -2924,8 +2924,12 @@ bool ScalarEvolutionsImpl::potentialInfiniteLoop(SCEV *Stride, SCEV *RHS,
   if (!R)
     return true;
 
-  if (isSigned)
+  if (isSigned) {
+    if (SC->getValue()->isOne())
+      return R->getValue()->isMaxValue(true);
+
     return true;  // XXX: because we don't have an sdiv scev.
+  }
 
   // If negative, it wraps around every iteration, but we don't care about that.
   APInt S = SC->getValue()->getValue().abs();
