@@ -352,7 +352,8 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
   } else {
     // Seed DirtyBlocks with each of the preds of QueryInst's block.
     BasicBlock *QueryBB = QueryInst->getParent();
-    DirtyBlocks.append(pred_begin(QueryBB), pred_end(QueryBB));
+    for (BasicBlock **PI = PredCache->GetPreds(QueryBB); *PI; ++PI)
+      DirtyBlocks.push_back(*PI);
     NumUncacheNonLocal++;
   }
   
@@ -460,7 +461,8 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
     
       // If the block *is* completely transparent to the load, we need to check
       // the predecessors of this block.  Add them to our worklist.
-      DirtyBlocks.append(pred_begin(DirtyBB), pred_end(DirtyBB));
+      for (BasicBlock **PI = PredCache->GetPreds(DirtyBB); *PI; ++PI)
+        DirtyBlocks.push_back(*PI);
     }
   }
   
