@@ -1171,7 +1171,7 @@ public:
   }
 
   /// GetPossiblePreceedingTailCall - Get preceeding TailCallNodeOpCode node if
-  /// it exists. Skip a possible ISD:TokenFactor.
+  /// it exists. Skip a possible ISD::TokenFactor.
   static SDValue GetPossiblePreceedingTailCall(SDValue Chain,
                                                  unsigned TailCallNodeOpCode) {
     if (Chain.getOpcode() == TailCallNodeOpCode) {
