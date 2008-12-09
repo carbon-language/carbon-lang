@@ -1227,9 +1227,14 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     // FIXME: arg->AttrList must be stored too!
     QualType argType;
     
-    if (ArgTypes[i])
+    if (ArgTypes[i]) {
       argType = QualType::getFromOpaquePtr(ArgTypes[i]);
-    else
+      // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
+      if (argType->isArrayType()) // (char *[]) -> (char **)
+        argType = Context.getArrayDecayedType(argType);
+      else if (argType->isFunctionType())
+        argType = Context.getPointerType(argType);
+    } else
       argType = Context.getObjCIdType();
     ParmVarDecl* Param = ParmVarDecl::Create(Context, ObjCMethod,
                                              SourceLocation(/*FIXME*/),
