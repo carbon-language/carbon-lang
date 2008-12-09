@@ -316,6 +316,8 @@ nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,
 // Utility methods for constructing Locs.
 //===----------------------------------------------------------------------===//
 
+Loc Loc::MakeVal(const MemRegion* R) { return loc::MemRegionVal(R); }
+
 Loc Loc::MakeVal(AddrLabelExpr* E) { return loc::GotoLabel(E->getLabel()); }
 
 //===----------------------------------------------------------------------===//

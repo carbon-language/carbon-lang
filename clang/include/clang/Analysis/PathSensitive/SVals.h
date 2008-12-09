@@ -208,10 +208,10 @@ protected:
   
 public:
   void print(llvm::raw_ostream& Out) const;
+
+  static Loc MakeVal(const MemRegion* R);
     
   static Loc MakeVal(AddrLabelExpr* E);
-  
-  static Loc MakeVal(StringLiteral* S);
   
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
