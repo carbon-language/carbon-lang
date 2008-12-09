@@ -687,7 +687,7 @@ RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P) {
   for (unsigned i = 0, e = PInfo.size(); i != e; ++i) {
     Instruction *Target = PInfo[i].second.getInst();
     if (Target == 0) continue;  // Ignore non-local dep results.
-    assert(Target->getParent() == PInfo[i].first && Target != P.getPointer());
+    assert(Target->getParent() == PInfo[i].first);
     
     // Eliminating the dirty entry from 'Cache', so update the reverse info.
     RemoveFromReverseMap(ReverseNonLocalPtrDeps, Target, P.getOpaqueValue());
