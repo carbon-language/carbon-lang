@@ -780,11 +780,19 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
-  // Add with overflow operations are custom lowered.
+  // Add/Sub/Mul with overflow operations are custom lowered.
   setOperationAction(ISD::SADDO, MVT::i32, Custom);
   setOperationAction(ISD::SADDO, MVT::i64, Custom);
   setOperationAction(ISD::UADDO, MVT::i32, Custom);
   setOperationAction(ISD::UADDO, MVT::i64, Custom);
+  setOperationAction(ISD::SSUBO, MVT::i32, Custom);
+  setOperationAction(ISD::SSUBO, MVT::i64, Custom);
+  setOperationAction(ISD::USUBO, MVT::i32, Custom);
+  setOperationAction(ISD::USUBO, MVT::i64, Custom);
+  setOperationAction(ISD::SMULO, MVT::i32, Custom);
+  setOperationAction(ISD::SMULO, MVT::i64, Custom);
+  setOperationAction(ISD::UMULO, MVT::i32, Custom);
+  setOperationAction(ISD::UMULO, MVT::i64, Custom);
 
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
@@ -5202,8 +5210,10 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
 
   if (Cond.getOpcode() == ISD::SETCC)
     Cond = LowerSETCC(Cond, DAG);
-  else if (Cond.getOpcode() == ISD::SADDO || Cond.getOpcode() == ISD::UADDO)
-    Cond = LowerXADDO(Cond, DAG);
+  else if (Cond.getOpcode() == ISD::SADDO || Cond.getOpcode() == ISD::UADDO ||
+           Cond.getOpcode() == ISD::SSUBO || Cond.getOpcode() == ISD::USUBO ||
+           Cond.getOpcode() == ISD::SMULO || Cond.getOpcode() == ISD::UMULO)
+    Cond = LowerXALUO(Cond, DAG);
 
   // If condition flag is set by a X86ISD::CMP, then use it as the condition
   // setting operand in place of the X86ISD::SETCC.
@@ -6118,23 +6128,52 @@ SDValue X86TargetLowering::LowerCTTZ(SDValue Op, SelectionDAG &DAG) {
   return Op;
 }
 
-SDValue X86TargetLowering::LowerXADDO(SDValue Op, SelectionDAG &DAG) {
-  // Lower the "add with overflow" instruction into a regular "add" plus a
-  // "setcc" instruction that checks the overflow flag. The "brcond" lowering
+SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) {
+  // Lower the "add/sub/mul with overflow" instruction into a regular ins plus
+  // a "setcc" instruction that checks the overflow flag. The "brcond" lowering
   // looks for this combo and may remove the "setcc" instruction if the "setcc"
   // has only one use.
   SDNode *N = Op.getNode();
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
+  unsigned BaseOp = 0;
+  unsigned Cond = 0;
+
+  switch (Op.getOpcode()) {
+  default: assert(0 && "Unknown ovf instruction!");
+  case ISD::SADDO:
+    BaseOp = ISD::ADD;
+    Cond = X86::COND_O;
+    break;
+  case ISD::UADDO:
+    BaseOp = ISD::ADD;
+    Cond = X86::COND_C;
+    break;
+  case ISD::SSUBO:
+    BaseOp = ISD::SUB;
+    Cond = X86::COND_O;
+    break;
+  case ISD::USUBO:
+    BaseOp = ISD::SUB;
+    Cond = X86::COND_C;
+    break;
+  case ISD::SMULO:
+    BaseOp = ISD::MUL;
+    Cond = X86::COND_O;
+    break;
+  case ISD::UMULO:
+    BaseOp = ISD::MUL;
+    Cond = X86::COND_C;
+    break;
+  }
 
   // Also sets EFLAGS.
   SDVTList VTs = DAG.getVTList(N->getValueType(0), MVT::i32);
-  SDValue Sum = DAG.getNode(ISD::ADD, VTs, LHS, RHS);
+  SDValue Sum = DAG.getNode(BaseOp, VTs, LHS, RHS);
 
   SDValue SetCC =
     DAG.getNode(X86ISD::SETCC, N->getValueType(1),
-                DAG.getConstant((Op.getOpcode() == ISD::SADDO) ?
-                                  X86::COND_O : X86::COND_C,
+                DAG.getConstant(Cond,
                                 MVT::i32), SDValue(Sum.getNode(), 1));
 
   DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), SetCC);
@@ -6259,8 +6298,12 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
   case ISD::CTLZ:               return LowerCTLZ(Op, DAG);
   case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
-  case ISD::SADDO:              return LowerXADDO(Op, DAG);
-  case ISD::UADDO:              return LowerXADDO(Op, DAG);
+  case ISD::SADDO:
+  case ISD::UADDO:
+  case ISD::SSUBO:
+  case ISD::USUBO:
+  case ISD::SMULO:
+  case ISD::UMULO:              return LowerXALUO(Op, DAG);
   case ISD::READCYCLECOUNTER:   return LowerREADCYCLECOUNTER(Op, DAG);
   }
 }

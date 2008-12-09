@@ -1511,6 +1511,10 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     return;
   case ISD::SADDO:
   case ISD::UADDO:
+  case ISD::SSUBO:
+  case ISD::USUBO:
+  case ISD::SMULO:
+  case ISD::UMULO:
     if (Op.getResNo() != 1)
       return;
     // The boolean result conforms to getBooleanContents.  Fall through.
@@ -1919,6 +1923,10 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
 
   case ISD::SADDO:
   case ISD::UADDO:
+  case ISD::SSUBO:
+  case ISD::USUBO:
+  case ISD::SMULO:
+  case ISD::UMULO:
     if (Op.getResNo() != 1)
       break;
     // The boolean result conforms to getBooleanContents.  Fall through.
@@ -5216,6 +5224,10 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::ADDE:        return "adde";
   case ISD::SADDO:       return "saddo";
   case ISD::UADDO:       return "uaddo";
+  case ISD::SSUBO:       return "ssubo";
+  case ISD::USUBO:       return "usubo";
+  case ISD::SMULO:       return "smulo";
+  case ISD::UMULO:       return "umulo";
   case ISD::SUBC:        return "subc";
   case ISD::SUBE:        return "sube";
   case ISD::SHL_PARTS:   return "shl_parts";

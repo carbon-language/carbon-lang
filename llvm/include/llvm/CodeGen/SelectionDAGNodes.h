@@ -259,6 +259,12 @@ namespace ISD {
     // These nodes are generated from the llvm.[su]add.with.overflow intrinsics.
     SADDO, UADDO,
 
+    // Same for subtraction
+    SSUBO, USUBO,
+
+    // Same for multiplication
+    SMULO, UMULO,
+
     // Simple binary floating point operators.
     FADD, FSUB, FMUL, FDIV, FREM,
 

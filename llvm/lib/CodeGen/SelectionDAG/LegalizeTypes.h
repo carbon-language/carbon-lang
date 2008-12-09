@@ -270,7 +270,7 @@ private:
   SDValue PromoteIntRes_UDIV(SDNode *N);
   SDValue PromoteIntRes_UNDEF(SDNode *N);
   SDValue PromoteIntRes_VAARG(SDNode *N);
-  SDValue PromoteIntRes_XADDO(SDNode *N, unsigned ResNo);
+  SDValue PromoteIntRes_XALUO(SDNode *N, unsigned ResNo);
 
   // Integer Operand Promotion.
   bool PromoteIntegerOperand(SDNode *N, unsigned OperandNo);

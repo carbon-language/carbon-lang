@@ -379,29 +379,36 @@ def ADC64mi8 : RIi8<0x83, MRM2m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
 let isTwoAddress = 1 in {
 def SUB64rr  : RI<0x29, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                   "sub{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (sub GR64:$src1, GR64:$src2))]>;
+                  [(set GR64:$dst, (sub GR64:$src1, GR64:$src2)),
+                   (implicit EFLAGS)]>;
 
 def SUB64rm  : RI<0x2B, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                   "sub{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (sub GR64:$src1, (load addr:$src2)))]>;
+                  [(set GR64:$dst, (sub GR64:$src1, (load addr:$src2))),
+                   (implicit EFLAGS)]>;
 
 def SUB64ri32 : RIi32<0x81, MRM5r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
                       "sub{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst, (sub GR64:$src1, i64immSExt32:$src2))]>;
+                      [(set GR64:$dst, (sub GR64:$src1, i64immSExt32:$src2)),
+                   (implicit EFLAGS)]>;
 def SUB64ri8 : RIi8<0x83, MRM5r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                     "sub{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst, (sub GR64:$src1, i64immSExt8:$src2))]>;
+                    [(set GR64:$dst, (sub GR64:$src1, i64immSExt8:$src2)),
+                   (implicit EFLAGS)]>;
 } // isTwoAddress
 
 def SUB64mr  : RI<0x29, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
                   "sub{q}\t{$src2, $dst|$dst, $src2}",
-                  [(store (sub (load addr:$dst), GR64:$src2), addr:$dst)]>;
+                  [(store (sub (load addr:$dst), GR64:$src2), addr:$dst),
+                   (implicit EFLAGS)]>;
 def SUB64mi32 : RIi32<0x81, MRM5m, (outs), (ins i64mem:$dst, i64i32imm:$src2), 
                       "sub{q}\t{$src2, $dst|$dst, $src2}",
-               [(store (sub (load addr:$dst), i64immSExt32:$src2), addr:$dst)]>;
+               [(store (sub (load addr:$dst), i64immSExt32:$src2), addr:$dst),
+                   (implicit EFLAGS)]>;
 def SUB64mi8 : RIi8<0x83, MRM5m, (outs), (ins i64mem:$dst, i64i8imm :$src2), 
                     "sub{q}\t{$src2, $dst|$dst, $src2}",
-                [(store (sub (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
+                [(store (sub (load addr:$dst), i64immSExt8:$src2), addr:$dst),
+                   (implicit EFLAGS)]>;
 
 let Uses = [EFLAGS] in {
 let isTwoAddress = 1 in {
@@ -454,30 +461,36 @@ let isTwoAddress = 1 in {
 let isCommutable = 1 in
 def IMUL64rr : RI<0xAF, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                   "imul{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (mul GR64:$src1, GR64:$src2))]>, TB;
+                  [(set GR64:$dst, (mul GR64:$src1, GR64:$src2)),
+                   (implicit EFLAGS)]>, TB;
 
 def IMUL64rm : RI<0xAF, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                   "imul{q}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR64:$dst, (mul GR64:$src1, (load addr:$src2)))]>, TB;
+                 [(set GR64:$dst, (mul GR64:$src1, (load addr:$src2))),
+                  (implicit EFLAGS)]>, TB;
 } // isTwoAddress
 
 // Suprisingly enough, these are not two address instructions!
 def IMUL64rri32 : RIi32<0x69, MRMSrcReg,                    // GR64 = GR64*I32
                         (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
                         "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       [(set GR64:$dst, (mul GR64:$src1, i64immSExt32:$src2))]>;
+                       [(set GR64:$dst, (mul GR64:$src1, i64immSExt32:$src2)),
+                        (implicit EFLAGS)]>;
 def IMUL64rri8 : RIi8<0x6B, MRMSrcReg,                      // GR64 = GR64*I8
                       (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                       "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR64:$dst, (mul GR64:$src1, i64immSExt8:$src2))]>;
+                      [(set GR64:$dst, (mul GR64:$src1, i64immSExt8:$src2)),
+                       (implicit EFLAGS)]>;
 def IMUL64rmi32 : RIi32<0x69, MRMSrcMem,                   // GR64 = [mem64]*I32
                         (outs GR64:$dst), (ins i64mem:$src1, i64i32imm:$src2),
                         "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                [(set GR64:$dst, (mul (load addr:$src1), i64immSExt32:$src2))]>;
+                [(set GR64:$dst, (mul (load addr:$src1), i64immSExt32:$src2)),
+                 (implicit EFLAGS)]>;
 def IMUL64rmi8 : RIi8<0x6B, MRMSrcMem,                      // GR64 = [mem64]*I8
                       (outs GR64:$dst), (ins i64mem:$src1, i64i8imm: $src2),
                       "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                 [(set GR64:$dst, (mul (load addr:$src1), i64immSExt8:$src2))]>;
+                 [(set GR64:$dst, (mul (load addr:$src1), i64immSExt8:$src2)),
+                  (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
 // Unsigned division / remainder

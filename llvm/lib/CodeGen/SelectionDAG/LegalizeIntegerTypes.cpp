@@ -92,7 +92,11 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::UREM:        Result = PromoteIntRes_UDIV(N); break;
 
   case ISD::SADDO:
-  case ISD::UADDO:       Result = PromoteIntRes_XADDO(N, ResNo); break;
+  case ISD::UADDO:
+  case ISD::SSUBO:
+  case ISD::USUBO:
+  case ISD::SMULO:
+  case ISD::UMULO:       Result = PromoteIntRes_XALUO(N, ResNo); break;
 
   case ISD::ATOMIC_LOAD_ADD_8:
   case ISD::ATOMIC_LOAD_SUB_8:
@@ -518,7 +522,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_UDIV(SDNode *N) {
   return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
 }
 
-SDValue DAGTypeLegalizer::PromoteIntRes_XADDO(SDNode *N, unsigned ResNo) {
+SDValue DAGTypeLegalizer::PromoteIntRes_XALUO(SDNode *N, unsigned ResNo) {
   assert(ResNo == 1 && "Only boolean result promotion currently supported!");
 
   // Simply change the return type of the boolean result.

@@ -4234,7 +4234,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
   }
 
-  case ISD::SADDO: {
+  case ISD::SADDO:
+  case ISD::SSUBO: {
     MVT VT = Node->getValueType(0);
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: assert(0 && "This action not supported for this op yet!");
@@ -4246,7 +4247,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       SDValue LHS = LegalizeOp(Node->getOperand(0));
       SDValue RHS = LegalizeOp(Node->getOperand(1));
 
-      SDValue Sum = DAG.getNode(ISD::ADD, LHS.getValueType(), LHS, RHS);
+      SDValue Sum = DAG.getNode(Node->getOpcode() == ISD::SADDO ? 
+                                ISD::ADD : ISD::SUB, LHS.getValueType(),
+                                LHS, RHS);
       MVT OType = Node->getValueType(1);
 
       SDValue Zero = DAG.getConstant(0, LHS.getValueType());
@@ -4255,16 +4258,21 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       //   RHSSign -> RHS >= 0
       //   SumSign -> Sum >= 0
       //
+      //   Add:
       //   Overflow -> (LHSSign == RHSSign) && (LHSSign != SumSign)
+      //   Sub:
+      //   Overflow -> (LHSSign != RHSSign) && (LHSSign != SumSign)
       //
       SDValue LHSSign = DAG.getSetCC(OType, LHS, Zero, ISD::SETGE);
       SDValue RHSSign = DAG.getSetCC(OType, RHS, Zero, ISD::SETGE);
-      SDValue SignsEq = DAG.getSetCC(OType, LHSSign, RHSSign, ISD::SETEQ);
+      SDValue SignsMatch = DAG.getSetCC(OType, LHSSign, RHSSign, 
+                                        Node->getOpcode() == ISD::SADDO ? 
+                                        ISD::SETEQ : ISD::SETNE);
 
       SDValue SumSign = DAG.getSetCC(OType, Sum, Zero, ISD::SETGE);
       SDValue SumSignNE = DAG.getSetCC(OType, LHSSign, SumSign, ISD::SETNE);
 
-      SDValue Cmp = DAG.getNode(ISD::AND, OType, SignsEq, SumSignNE);
+      SDValue Cmp = DAG.getNode(ISD::AND, OType, SignsMatch, SumSignNE);
 
       MVT ValueVTs[] = { LHS.getValueType(), OType };
       SDValue Ops[] = { Sum, Cmp };
@@ -4280,7 +4288,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
     break;
   }
-  case ISD::UADDO: {
+  case ISD::UADDO:
+  case ISD::USUBO: {
     MVT VT = Node->getValueType(0);
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: assert(0 && "This action not supported for this op yet!");
@@ -4292,9 +4301,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       SDValue LHS = LegalizeOp(Node->getOperand(0));
       SDValue RHS = LegalizeOp(Node->getOperand(1));
 
-      SDValue Sum = DAG.getNode(ISD::ADD, LHS.getValueType(), LHS, RHS);
+      SDValue Sum = DAG.getNode(Node->getOpcode() == ISD::UADDO ?
+                                ISD::ADD : ISD::SUB, LHS.getValueType(),
+                                LHS, RHS);
       MVT OType = Node->getValueType(1);
-      SDValue Cmp = DAG.getSetCC(OType, Sum, LHS, ISD::SETULT);
+      SDValue Cmp = DAG.getSetCC(OType, Sum, LHS,
+                                 Node->getOpcode () == ISD::UADDO ? 
+                                 ISD::SETULT : ISD::SETUGT);
 
       MVT ValueVTs[] = { LHS.getValueType(), OType };
       SDValue Ops[] = { Sum, Cmp };
@@ -4310,6 +4323,25 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
     break;
   }
+  case ISD::SMULO:
+  case ISD::UMULO: {
+    MVT VT = Node->getValueType(0);
+    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
+    default: assert(0 && "This action is not supported at all!");
+    case TargetLowering::Custom:
+      Result = TLI.LowerOperation(Op, DAG);
+      if (Result.getNode()) break;
+      // Fall Thru
+    case TargetLowering::Legal:
+      // FIXME: According to Hacker's Delight, this can be implemented in
+      // target independent lowering, but it would be inefficient, since it
+      // requires a division + a branch
+      assert(0 && "Target independent lowering is not supported for SMULO/UMULO!");	
+    break;
+    }
+    break;
+  }
+
   }
   
   assert(Result.getValueType() == Op.getValueType() &&

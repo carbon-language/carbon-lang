@@ -2968,6 +2968,23 @@ SelectionDAGLowering::implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op) {
   return 0;
 }
 
+// implVisitAluOverflow - Lower an overflow instrinsics
+const char *
+SelectionDAGLowering::implVisitAluOverflow(CallInst &I, ISD::NodeType Op) {
+    SDValue Op1 = getValue(I.getOperand(1));
+    SDValue Op2 = getValue(I.getOperand(2));
+
+    MVT ValueVTs[] = { Op1.getValueType(), MVT::i1 };
+    SDValue Ops[] = { Op1, Op2 };
+
+    SDValue Result =
+      DAG.getNode(Op,
+                  DAG.getVTList(&ValueVTs[0], 2), &Ops[0], 2);
+
+    setValue(&I, Result);
+    return 0;
+  }
+
 /// visitExp - Lower an exp intrinsic. Handles the special sequences for
 /// limited-precision mode.
 void
@@ -4097,21 +4114,17 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
 
   case Intrinsic::uadd_with_overflow:
-  case Intrinsic::sadd_with_overflow: {
-    SDValue Op1 = getValue(I.getOperand(1));
-    SDValue Op2 = getValue(I.getOperand(2));
-
-    MVT ValueVTs[] = { Op1.getValueType(), MVT::i1 };
-    SDValue Ops[] = { Op1, Op2 };
-
-    SDValue Result =
-      DAG.getNode((Intrinsic == Intrinsic::sadd_with_overflow) ?
-                    ISD::SADDO : ISD::UADDO,
-                  DAG.getVTList(&ValueVTs[0], 2), &Ops[0], 2);
-
-    setValue(&I, Result);
-    return 0;
-  }
+    return implVisitAluOverflow(I, ISD::UADDO);
+  case Intrinsic::sadd_with_overflow:
+    return implVisitAluOverflow(I, ISD::SADDO);
+  case Intrinsic::usub_with_overflow:
+    return implVisitAluOverflow(I, ISD::USUBO);
+  case Intrinsic::ssub_with_overflow:
+    return implVisitAluOverflow(I, ISD::SSUBO);
+  case Intrinsic::umul_with_overflow:
+    return implVisitAluOverflow(I, ISD::UMULO);
+  case Intrinsic::smul_with_overflow:
+    return implVisitAluOverflow(I, ISD::SMULO);
 
   case Intrinsic::prefetch: {
     SDValue Ops[4];

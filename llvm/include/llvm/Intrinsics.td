@@ -305,6 +305,16 @@ def int_sadd_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
 def int_uadd_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
                                        [LLVMMatchType<0>, LLVMMatchType<0>]>;
 
+def int_ssub_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
+                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+def int_usub_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
+                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+
+def int_smul_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
+                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+def int_umul_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
+                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+
 //===------------------------- Atomic Intrinsics --------------------------===//
 //
 def int_memory_barrier : Intrinsic<[llvm_void_ty],

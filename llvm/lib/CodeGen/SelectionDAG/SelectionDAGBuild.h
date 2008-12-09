@@ -530,6 +530,7 @@ private:
   }
   
   const char *implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op);
+  const char *implVisitAluOverflow(CallInst &I, ISD::NodeType Op);
 };
 
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector
