@@ -35,8 +35,6 @@ namespace clang {
   // Lex.
   class Preprocessor;
   class Token;
-  // Basic.
-  class DiagnosticBuilder;
 
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input

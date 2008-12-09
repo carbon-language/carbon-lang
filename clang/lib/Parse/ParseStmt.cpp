@@ -74,7 +74,7 @@ using namespace clang;
 /// 
 Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   const char *SemiError = 0;
-  StmtOwner Res(Actions);
+  OwningStmtResult Res(Actions);
 
   // Cases in this switch statement should fall through if the parser expects
   // the token to end in a semicolon (in which case SemiError should be set),
@@ -106,7 +106,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       return true;
     } else {
       // expression[opt] ';'
-      ExprOwner Expr(Actions, ParseExpression());
+      OwningExprResult Expr(Actions, ParseExpression());
       if (Expr.isInvalid()) {
         // If the expression is invalid, skip ahead to the next semicolon.  Not
         // doing this opens us up to the possibility of infinite loops if
@@ -203,7 +203,7 @@ Parser::StmtResult Parser::ParseLabeledStatement() {
     // TODO: save these somewhere.
     AttrList = ParseAttributes();
 
-  StmtOwner SubStmt(Actions, ParseStatement());
+  OwningStmtResult SubStmt(Actions, ParseStatement());
 
   // Broken substmt shouldn't prevent the label from being added to the AST.
   if (SubStmt.isInvalid())
@@ -225,7 +225,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
   assert(Tok.is(tok::kw_case) && "Not a case stmt!");
   SourceLocation CaseLoc = ConsumeToken();  // eat the 'case'.
 
-  ExprOwner LHS(Actions, ParseConstantExpression());
+  OwningExprResult LHS(Actions, ParseConstantExpression());
   if (LHS.isInvalid()) {
     SkipUntil(tok::colon);
     return true;
@@ -233,7 +233,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
 
   // GNU case range extension.
   SourceLocation DotDotDotLoc;
-  ExprOwner RHS(Actions);
+  OwningExprResult RHS(Actions);
   if (Tok.is(tok::ellipsis)) {
     Diag(Tok, diag::ext_gnu_case_range);
     DotDotDotLoc = ConsumeToken();
@@ -259,7 +259,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
     return true;
   }
   
-  StmtOwner SubStmt(Actions, ParseStatement());
+  OwningStmtResult SubStmt(Actions, ParseStatement());
 
   // Broken substmt shouldn't prevent the case from being added to the AST.
   if (SubStmt.isInvalid())
@@ -292,7 +292,7 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
     return true;
   }
 
-  StmtOwner SubStmt(Actions, ParseStatement());
+  OwningStmtResult SubStmt(Actions, ParseStatement());
   if (SubStmt.isInvalid())
     return true;
   
@@ -336,7 +336,7 @@ Parser::StmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
   EnterScope(Scope::DeclScope);
 
   // Parse the statements in the body.
-  StmtOwner Body(Actions, ParseCompoundStatementBody(isStmtExpr));
+  OwningStmtResult Body(Actions, ParseCompoundStatementBody(isStmtExpr));
 
   ExitScope();
   return Body.move();
@@ -356,7 +356,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   typedef StmtVector StmtsTy;
   StmtsTy Stmts(Actions);
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
-    StmtOwner R(Actions);
+    OwningStmtResult R(Actions);
     if (Tok.isNot(tok::kw___extension__)) {
       R = ParseStatementOrDeclaration(false);
     } else {
@@ -380,7 +380,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       } else {
         // Otherwise this was a unary __extension__ marker.  Parse the
         // subexpression and add the __extension__ unary op. 
-        ExprOwner Res(Actions, ParseCastExpression(false));
+        OwningExprResult Res(Actions, ParseCastExpression(false));
 
         if (Res.isInvalid()) {
           SkipUntil(tok::semi);
@@ -450,7 +450,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
     EnterScope(Scope::DeclScope | Scope::ControlScope);
 
   // Parse the condition.
-  ExprOwner CondExp(Actions);
+  OwningExprResult CondExp(Actions);
   if (getLang().CPlusPlus) {
     SourceLocation LParenLoc = ConsumeParen();
     CondExp = ParseCXXCondition();
@@ -489,7 +489,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
 
   // Read the 'then' stmt.
   SourceLocation ThenStmtLoc = Tok.getLocation();
-  StmtOwner ThenStmt(Actions, ParseStatement());
+  OwningStmtResult ThenStmt(Actions, ParseStatement());
 
   // Pop the 'if' scope if needed.
   if (NeedsInnerScope) ExitScope();
@@ -497,7 +497,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
   // If it has an else, parse it.
   SourceLocation ElseLoc;
   SourceLocation ElseStmtLoc;
-  StmtOwner ElseStmt(Actions);
+  OwningStmtResult ElseStmt(Actions);
 
   if (Tok.is(tok::kw_else)) {
     ElseLoc = ConsumeToken();
@@ -578,7 +578,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
     EnterScope(Scope::BreakScope);
 
   // Parse the condition.
-  ExprOwner Cond(Actions);
+  OwningExprResult Cond(Actions);
   if (getLang().CPlusPlus) {
     SourceLocation LParenLoc = ConsumeParen();
     Cond = ParseCXXCondition();
@@ -592,7 +592,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
     return true;
   }
 
-  StmtOwner Switch(Actions, Actions.ActOnStartOfSwitchStmt(Cond.move()));
+  OwningStmtResult Switch(Actions, Actions.ActOnStartOfSwitchStmt(Cond.move()));
 
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -609,7 +609,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
-  StmtOwner Body(Actions, ParseStatement());
+  OwningStmtResult Body(Actions, ParseStatement());
 
   // Pop the body scope if needed.
   if (NeedsInnerScope) ExitScope();
@@ -660,7 +660,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
     EnterScope(Scope::BreakScope | Scope::ContinueScope);
 
   // Parse the condition.
-  ExprOwner Cond(Actions);
+  OwningExprResult Cond(Actions);
   if (getLang().CPlusPlus) {
     SourceLocation LParenLoc = ConsumeParen();
     Cond = ParseCXXCondition();
@@ -684,7 +684,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
-  StmtOwner Body(Actions, ParseStatement());
+  OwningStmtResult Body(Actions, ParseStatement());
 
   // Pop the body scope if needed.
   if (NeedsInnerScope) ExitScope();
@@ -724,7 +724,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
-  StmtOwner Body(Actions, ParseStatement());
+  OwningStmtResult Body(Actions, ParseStatement());
 
   // Pop the body scope if needed.
   if (NeedsInnerScope) ExitScope();
@@ -748,7 +748,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   }
   
   // Parse the condition.
-  ExprOwner Cond(Actions, ParseSimpleParenExpression());
+  OwningExprResult Cond(Actions, ParseSimpleParenExpression());
 
   ExitScope();
 
@@ -804,11 +804,11 @@ Parser::StmtResult Parser::ParseForStatement() {
     EnterScope(Scope::BreakScope | Scope::ContinueScope);
 
   SourceLocation LParenLoc = ConsumeParen();
-  ExprOwner Value(Actions);
+  OwningExprResult Value(Actions);
 
   bool ForEach = false;
-  StmtOwner FirstPart(Actions), ThirdPart(Actions);
-  ExprOwner SecondPart(Actions);
+  OwningStmtResult FirstPart(Actions), ThirdPart(Actions);
+  OwningExprResult SecondPart(Actions);
 
   // Parse the first part of the for specifier.
   if (Tok.is(tok::semi)) {  // for (;
@@ -893,7 +893,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
 
   // Read the body statement.
-  StmtOwner Body(Actions, ParseStatement());
+  OwningStmtResult Body(Actions, ParseStatement());
 
   // Pop the body scope if needed.
   if (NeedsInnerScope) ExitScope();
@@ -926,7 +926,7 @@ Parser::StmtResult Parser::ParseGotoStatement() {
   assert(Tok.is(tok::kw_goto) && "Not a goto stmt!");
   SourceLocation GotoLoc = ConsumeToken();  // eat the 'goto'.
   
-  StmtOwner Res(Actions);
+  OwningStmtResult Res(Actions);
   if (Tok.is(tok::identifier)) {
     Res = Actions.ActOnGotoStmt(GotoLoc, Tok.getLocation(),
                                 Tok.getIdentifierInfo());
@@ -935,7 +935,7 @@ Parser::StmtResult Parser::ParseGotoStatement() {
     // GNU indirect goto extension.
     Diag(Tok, diag::ext_gnu_indirect_goto);
     SourceLocation StarLoc = ConsumeToken();
-    ExprOwner R(Actions, ParseExpression());
+    OwningExprResult R(Actions, ParseExpression());
     if (R.isInvalid()) {  // Skip to the semicolon, but don't consume it.
       SkipUntil(tok::semi, false, true);
       return true;
@@ -978,7 +978,7 @@ Parser::StmtResult Parser::ParseReturnStatement() {
   assert(Tok.is(tok::kw_return) && "Not a return stmt!");
   SourceLocation ReturnLoc = ConsumeToken();  // eat the 'return'.
   
-  ExprOwner R(Actions);
+  OwningExprResult R(Actions);
   if (Tok.isNot(tok::semi)) {
     R = ParseExpression();
     if (R.isInvalid()) {  // Skip to the semicolon, but don't consume it.
@@ -1068,7 +1068,7 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   }
   Loc = ConsumeParen();
   
-  ExprOwner AsmString(Actions, ParseAsmStringLiteral());
+  OwningExprResult AsmString(Actions, ParseAsmStringLiteral());
   if (AsmString.isInvalid())
     return true;
 
@@ -1108,7 +1108,7 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     
       // Parse the asm-string list for clobbers.
       while (1) {
-        ExprOwner Clobber(Actions, ParseAsmStringLiteral());
+        OwningExprResult Clobber(Actions, ParseAsmStringLiteral());
 
         if (Clobber.isInvalid())
           break;
@@ -1173,7 +1173,7 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
     } else
       Names.push_back(std::string());
 
-    ExprOwner Constraint(Actions, ParseAsmStringLiteral());
+    OwningExprResult Constraint(Actions, ParseAsmStringLiteral());
     if (Constraint.isInvalid()) {
         SkipUntil(tok::r_paren);
         return true;
@@ -1187,7 +1187,7 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
     }
     
     // Read the parenthesized expression.
-    ExprOwner Res(Actions, ParseSimpleParenExpression());
+    OwningExprResult Res(Actions, ParseSimpleParenExpression());
     if (Res.isInvalid()) {
       SkipUntil(tok::r_paren);
       return true;
@@ -1206,7 +1206,7 @@ Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl,
   // Do not enter a scope for the brace, as the arguments are in the same scope
   // (the function body) as the body itself.  Instead, just read the statement
   // list and put it into a CompoundStmt for safe keeping.
-  StmtOwner FnBody(Actions, ParseCompoundStatementBody());
+  OwningStmtResult FnBody(Actions, ParseCompoundStatementBody());
   
   // If the function body could not be parsed, make a bogus compoundstmt.
   if (FnBody.isInvalid())

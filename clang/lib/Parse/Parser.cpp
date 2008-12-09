@@ -17,7 +17,6 @@
 #include "clang/Parse/Scope.h"
 #include "ExtensionRAIIObject.h"
 #include "ParsePragma.h"
-#include "AstGuard.h"
 using namespace clang;
 
 Parser::Parser(Preprocessor &pp, Action &actions)
@@ -337,7 +336,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     return ParseExternalDeclaration();
   }
   case tok::kw_asm: {
-    ExprOwner Result(Actions, ParseSimpleAsm());
+    OwningExprResult Result(Actions, ParseSimpleAsm());
 
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                      "top-level asm block");
@@ -673,7 +672,7 @@ Parser::ExprResult Parser::ParseAsmStringLiteral() {
     return true;
   }
 
-  ExprOwner Res(Actions, ParseStringLiteralExpression());
+  OwningExprResult Res(Actions, ParseStringLiteralExpression());
   if (Res.isInvalid()) return true;
 
   // TODO: Diagnose: wide string literal in 'asm'
@@ -697,7 +696,7 @@ Parser::ExprResult Parser::ParseSimpleAsm() {
 
   ConsumeParen();
 
-  ExprOwner Result(Actions, ParseAsmStringLiteral());
+  OwningExprResult Result(Actions, ParseAsmStringLiteral());
 
   if (Result.isInvalid())
     SkipUntil(tok::r_paren);

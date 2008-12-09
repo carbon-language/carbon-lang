@@ -15,7 +15,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
-#include "AstGuard.h"
 
 using namespace clang;
 
@@ -232,7 +231,7 @@ Parser::DeclTy* Parser::ParseTemplateTemplateParameter() {
   }
 
   // Get the a default value, if given.
-  ExprOwner DefaultExpr(Actions);
+  OwningExprResult DefaultExpr(Actions);
   if(Tok.is(tok::equal)) {
     ConsumeToken();
     DefaultExpr = ParseCXXIdExpression();

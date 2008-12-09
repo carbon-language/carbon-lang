@@ -16,6 +16,7 @@
 
 namespace clang
 {
+  // Basic
   class DiagnosticBuilder;
 
   /// ActionBase - A small part split from Action because of the horrible
@@ -154,6 +155,8 @@ namespace clang
     }
 
   public:
+    typedef ActionBase::ActionResult<DestroyerToUID<Destroyer>::UID> DumbResult;
+
     // For convenience and compatibility.
     ASTOwningResult(bool invalid = false)
       : Actions(0), Node(0), Invalid(invalid) {}
@@ -164,6 +167,8 @@ namespace clang
       : Actions(&actions), Node(0), Invalid(invalid) {}
     ASTOwningResult(ActionBase &actions, void *node)
       : Actions(&actions), Node(node), Invalid(false) {}
+    ASTOwningResult(ActionBase &actions, const DumbResult &res)
+      : Actions(&actions), Node(res.Val), Invalid(res.isInvalid) {}
     /// Move from another owning result
     ASTOwningResult(ASTResultMover<Destroyer> mover)
       : Actions(mover->Actions), Node(mover->take()), Invalid(mover->Invalid) {}
@@ -192,8 +197,7 @@ namespace clang
     }
 
     /// Assignment from an ActionResult. Takes ownership - beware!
-    ASTOwningResult & operator =(
-        const ActionBase::ActionResult<DestroyerToUID<Destroyer>::UID> &res) {
+    ASTOwningResult & operator =(const DumbResult &res) {
       assert((!res.Val || Actions) &&
              "Cannot assign from ActionResult when there's no Action");
       Node = res.Val;
@@ -330,6 +334,15 @@ namespace clang
 
   template <ASTDestroyer Destroyer> inline
   ASTResultMover<Destroyer>::operator void*() {
+    return Moved.take();
+  }
+
+  template <ASTDestroyer Destroyer> inline
+  ASTResultMover<Destroyer>::operator
+                    ActionBase::ActionResult<DestroyerToUID<Destroyer>::UID>()
+  {
+    if(Moved.isInvalid())
+      return true;
     return Moved.take();
   }
 

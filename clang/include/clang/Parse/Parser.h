@@ -79,6 +79,14 @@ public:
   typedef Action::MemInitTy MemInitTy;
   typedef Action::CXXScopeTy CXXScopeTy;
 
+  typedef Action::ExprResult    ExprResult;
+  typedef Action::StmtResult    StmtResult;
+  typedef Action::BaseResult    BaseResult;
+  typedef Action::MemInitResult MemInitResult;
+
+  typedef Action::OwningExprResult OwningExprResult;
+  typedef Action::OwningStmtResult OwningStmtResult;
+
   // Parsing methods.
   
   /// ParseTranslationUnit - All in one method that initializes parses, and
@@ -305,10 +313,10 @@ private:
 
   //===--------------------------------------------------------------------===//
   // Diagnostic Emission and Error recovery.
-    
+
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
   DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID);
-  
+
   /// SkipUntil - Read tokens until we get to the specified token, then consume
   /// it (unless DontConsume is true).  Because we cannot guarantee that the
   /// token will ever occur, this skips to the next token, or to some likely
@@ -328,11 +336,6 @@ private:
   }
   bool SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
                  bool StopAtSemi = true, bool DontConsume = false);
- 
-  typedef Action::ExprResult    ExprResult;
-  typedef Action::StmtResult    StmtResult;
-  typedef Action::BaseResult    BaseResult;
-  typedef Action::MemInitResult MemInitResult;
 
   //===--------------------------------------------------------------------===//
   // Lexing and parsing of C++ inline methods.

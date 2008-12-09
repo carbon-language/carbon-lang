@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ParsePragma.h"
-#include "AstGuard.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Action.h"
@@ -35,7 +34,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
 
   Action::PragmaPackKind Kind = Action::PPK_Default;
   IdentifierInfo *Name = 0;
-  ExprOwner Alignment(Actions);
+  Action::OwningExprResult Alignment(Actions);
   SourceLocation LParenLoc = Tok.getLocation();
   PP.Lex(Tok);  
   if (Tok.is(tok::numeric_constant)) {

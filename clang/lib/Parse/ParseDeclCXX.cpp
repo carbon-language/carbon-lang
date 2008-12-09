@@ -489,8 +489,8 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   //   member-declarator-list ',' member-declarator
 
   DeclTy *LastDeclInGroup = 0;
-  ExprOwner BitfieldSize(Actions);
-  ExprOwner Init(Actions);
+  OwningExprResult BitfieldSize(Actions);
+  OwningExprResult Init(Actions);
 
   while (1) {
 
@@ -543,8 +543,8 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     
     // Parse the next declarator.
     DeclaratorInfo.clear();
-    BitfieldSize.reset();
-    Init.reset();
+    BitfieldSize = 0;
+    Init = 0;
     
     // Attributes are only allowed on the second declarator.
     if (Tok.is(tok::kw___attribute))

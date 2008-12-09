@@ -221,7 +221,7 @@ Parser::ExprResult Parser::ParseCXXCasts() {
   if (Tok.isNot(tok::l_paren))
     return Diag(Tok, diag::err_expected_lparen_after) << CastName;
 
-  ExprOwner Result(Actions, ParseSimpleParenExpression(RParenLoc));
+  OwningExprResult Result(Actions, ParseSimpleParenExpression(RParenLoc));
 
   if (!Result.isInvalid())
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
@@ -249,7 +249,7 @@ Parser::ExprResult Parser::ParseCXXTypeid() {
       "typeid"))
     return ExprResult(true);
 
-  ExprOwner Result(Actions);
+  OwningExprResult Result(Actions);
 
   if (isTypeIdInParens()) {
     TypeTy *Ty = ParseTypeName();
@@ -310,7 +310,7 @@ Parser::ExprResult Parser::ParseThrowExpression() {
     return Actions.ActOnCXXThrow(ThrowLoc);
 
   default:
-    ExprOwner Expr(Actions, ParseAssignmentExpression());
+    OwningExprResult Expr(Actions, ParseAssignmentExpression());
     if (Expr.isInvalid()) return Expr.move();
     return Actions.ActOnCXXThrow(ThrowLoc, Expr.move());
   }
@@ -388,7 +388,7 @@ Parser::ExprResult Parser::ParseCXXCondition() {
 
   // simple-asm-expr[opt]
   if (Tok.is(tok::kw_asm)) {
-    ExprOwner AsmLabel(Actions, ParseSimpleAsm());
+    OwningExprResult AsmLabel(Actions, ParseSimpleAsm());
     if (AsmLabel.isInvalid()) {
       SkipUntil(tok::semi);
       return true;
@@ -404,7 +404,7 @@ Parser::ExprResult Parser::ParseCXXCondition() {
   if (Tok.isNot(tok::equal))
     return Diag(Tok, diag::err_expected_equal_after_declarator);
   SourceLocation EqualLoc = ConsumeToken();
-  ExprOwner AssignExpr(Actions, ParseAssignmentExpression());
+  OwningExprResult AssignExpr(Actions, ParseAssignmentExpression());
   if (AssignExpr.isInvalid())
     return true;
   
@@ -776,8 +776,8 @@ void Parser::ParseDirectNewDeclarator(Declarator &D)
   bool first = true;
   while (Tok.is(tok::l_square)) {
     SourceLocation LLoc = ConsumeBracket();
-    ExprOwner Size(Actions, first ? ParseExpression()
-                                  : ParseConstantExpression());
+    OwningExprResult Size(Actions, first ? ParseExpression()
+                                         : ParseConstantExpression());
     if (Size.isInvalid()) {
       // Recover
       SkipUntil(tok::r_square);
@@ -851,7 +851,7 @@ Parser::ExprResult Parser::ParseCXXDeleteExpression()
       return true;
   }
 
-  ExprOwner Operand(Actions, ParseCastExpression(false));
+  OwningExprResult Operand(Actions, ParseCastExpression(false));
   if (Operand.isInvalid())
     return Operand.move();
 

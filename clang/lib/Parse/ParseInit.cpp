@@ -143,7 +143,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     // Note that we parse this as an assignment expression, not a constant
     // expression (allowing *=, =, etc) to handle the objc case.  Sema needs
     // to validate that the expression is a constant.
-    ExprOwner Idx(Actions, ParseAssignmentExpression());
+    OwningExprResult Idx(Actions, ParseAssignmentExpression());
     if (Idx.isInvalid()) {
       SkipUntil(tok::r_square);
       return Idx.move();
@@ -185,7 +185,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
       Diag(Tok, diag::ext_gnu_array_range);
       ConsumeToken();
       
-      ExprOwner RHS(Actions, ParseConstantExpression());
+      OwningExprResult RHS(Actions, ParseConstantExpression());
       if (RHS.isInvalid()) {
         SkipUntil(tok::r_square);
         return RHS.move();
@@ -263,7 +263,7 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
     
     // If we know that this cannot be a designation, just parse the nested
     // initializer directly.
-    ExprOwner SubElt(Actions);
+    OwningExprResult SubElt(Actions);
     if (!MayBeDesignationStart(Tok.getKind(), PP))
       SubElt = ParseInitializer();
     else {
