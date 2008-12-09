@@ -52,8 +52,9 @@ int LatencyPriorityQueue::CalcLatency(const SUnit &SU) {
   WorkList.push_back(&SU);
   while (!WorkList.empty()) {
     const SUnit *Cur = WorkList.back();
+    unsigned CurLatency = Cur->Latency;
     bool AllDone = true;
-    int MaxSuccLatency = 0;
+    unsigned MaxSuccLatency = 0;
     for (SUnit::const_succ_iterator I = Cur->Succs.begin(),E = Cur->Succs.end();
          I != E; ++I) {
       int SuccLatency = Latencies[I->Dep->NodeNum];
@@ -61,11 +62,14 @@ int LatencyPriorityQueue::CalcLatency(const SUnit &SU) {
         AllDone = false;
         WorkList.push_back(I->Dep);
       } else {
-        MaxSuccLatency = std::max(MaxSuccLatency, SuccLatency);
+        // This assumes that there's no delay for reusing registers.
+        unsigned NewLatency =
+          SuccLatency + ((I->isCtrl && I->Reg != 0) ? 1 : CurLatency);
+        MaxSuccLatency = std::max(MaxSuccLatency, NewLatency);
       }
     }
     if (AllDone) {
-      Latencies[Cur->NodeNum] = MaxSuccLatency + Cur->Latency;
+      Latencies[Cur->NodeNum] = MaxSuccLatency;
       WorkList.pop_back();
     }
   }
