@@ -120,6 +120,8 @@ namespace {
     FunctionDecl *CurFunctionDef;
     VarDecl *GlobalVarDecl;
     
+    bool DisableReplaceStmt;
+    
     static const int OBJC_ABI_VERSION =7 ;
   public:
     virtual void Initialize(ASTContext &context);
@@ -146,6 +148,9 @@ namespace {
       if (ReplacingStmt)
         return; // We can't rewrite the same node twice.
 
+      if (DisableReplaceStmt)
+        return; // Used when rewriting the assignment of a property setter.
+
       // If replacement succeeded or warning disabled return with no warning.
       if (!Rewrite.ReplaceStmt(Old, New)) {
         ReplacedNodes[Old] = New;
@@ -156,7 +161,32 @@ namespace {
       Diags.Report(Context->getFullLoc(Old->getLocStart()), RewriteFailedDiag)
                    << Old->getSourceRange();
     }
-    
+
+    void ReplaceStmtWithRange(Stmt *Old, Stmt *New, SourceRange SrcRange) {
+      // Measaure the old text.
+      int Size = Rewrite.getRangeSize(SrcRange);
+      if (Size == -1) {
+        Diags.Report(Context->getFullLoc(Old->getLocStart()), RewriteFailedDiag)
+                     << Old->getSourceRange();
+        return;
+      }
+      // Get the new text.
+      std::string SStr;
+      llvm::raw_string_ostream S(SStr);
+      New->printPretty(S);
+      const std::string &Str = S.str();
+
+      // If replacement succeeded or warning disabled return with no warning.
+      if (!Rewrite.ReplaceText(SrcRange.getBegin(), Size, &Str[0], Str.size())) {
+        ReplacedNodes[Old] = New;
+        return;
+      }
+      if (SilenceRewriteMacroWarning)
+        return;
+      Diags.Report(Context->getFullLoc(Old->getLocStart()), RewriteFailedDiag)
+                   << Old->getSourceRange();
+    }
+
     void InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen,
                     bool InsertAfter = true) {
       // If insertion succeeded or warning disabled return with no warning.
@@ -220,7 +250,8 @@ namespace {
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
     Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, SourceLocation OrigStart);
     Stmt *RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr);
-    Stmt *RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt);
+    Stmt *RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt, 
+                                SourceRange SrcRange);
     Stmt *RewriteAtSelector(ObjCSelectorExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
@@ -407,6 +438,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   NSStringRecord = 0;
   CurMethodDef = 0;
   CurFunctionDef = 0;
+  GlobalVarDecl = 0;
   SuperStructDecl = 0;
   ConstantStringDecl = 0;
   BcLabelCount = 0;
@@ -414,7 +446,8 @@ void RewriteObjC::Initialize(ASTContext &context) {
   NumObjCStringLiterals = 0;
   PropParentMap = 0;
   CurrentBody = 0;
-
+  DisableReplaceStmt = false;
+  
   // Get the ID and start/end of the main file.
   MainFileID = SM->getMainFileID();
   const llvm::MemoryBuffer *MainBuf = SM->getBuffer(MainFileID);
@@ -1019,7 +1052,8 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
 }
 
-Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt) {
+Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt,
+                                         SourceRange SrcRange) {
   // Synthesize a ObjCMessageExpr from a ObjCPropertyRefExpr.
   // This allows us to reuse all the fun and games in SynthMessageExpr().
   ObjCPropertyRefExpr *PropRefExpr = dyn_cast<ObjCPropertyRefExpr>(BinOp->getLHS());
@@ -1042,7 +1076,7 @@ Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt) {
   Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
   
   // Now do the actual rewrite.
-  ReplaceStmt(BinOp, ReplacingStmt);
+  ReplaceStmtWithRange(BinOp, ReplacingStmt, SrcRange);
   delete BinOp;
   delete MsgExpr;
   return ReplacingStmt;
@@ -4134,7 +4168,15 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     if (BinOp) {
       // Because the rewriter doesn't allow us to rewrite rewritten code,
       // we need to rewrite the right hand side prior to rewriting the setter.
+      DisableReplaceStmt = true;
+      // Save the source range. Even if we disable the replacement, the
+      // rewritten node will have been inserted into the tree. If the synthesized
+      // node is at the 'end', the rewriter will fail. Consider this:
+      //    self.errorHandler = handler ? handler : 
+      //              ^(NSURL *errorURL, NSError *error) { return (BOOL)1; };
+      SourceRange SrcRange = BinOp->getSourceRange();
       Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(BinOp->getRHS());
+      DisableReplaceStmt = false;
       //
       // Unlike the main iterator, we explicily avoid changing 'BinOp'. If
       // we changed the RHS of BinOp, the rewriter would fail (since it needs
@@ -4167,7 +4209,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
       // This implies the Rewrite* routines can no longer delete the original 
       // node. As a result, we now leak the original AST nodes.
       //
-      return RewritePropertySetter(BinOp, dyn_cast<Expr>(newStmt));
+      return RewritePropertySetter(BinOp, dyn_cast<Expr>(newStmt), SrcRange);
     } else {
       return RewritePropertyGetter(PropRefExpr);
     }

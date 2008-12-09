@@ -47,6 +47,7 @@ static int func(int i);
     obj1.i = (obj2.rrrr);
     [obj1 setI:[obj2 rrrr]];
     obj1.i = [obj2 rrrr];
+    obj1.i = 3 + [obj2 rrrr];
     i = obj1.o.i;
     obj1.o.i = 77;
 }
