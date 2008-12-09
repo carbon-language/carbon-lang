@@ -216,7 +216,7 @@ public:
   /// implict parameters. This must be called prior to using getSelfDecl()
   /// or getCmdDecl(). The call is ignored if the implicit paramters
   /// have already been created.
-  void createImplicitParams(ASTContext &Context);
+  void createImplicitParams(ASTContext &Context, const ObjCInterfaceDecl *ID);
 
   ImplicitParamDecl * getSelfDecl() const { return SelfDecl; }
   ImplicitParamDecl * getCmdDecl() const { return CmdDecl; }

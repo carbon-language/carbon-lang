@@ -220,13 +220,14 @@ ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C,
 // Objective-C Decl Implementation
 //===----------------------------------------------------------------------===//
 
-void ObjCMethodDecl::createImplicitParams(ASTContext &Context) {
+void ObjCMethodDecl::createImplicitParams(ASTContext &Context, 
+                                          const ObjCInterfaceDecl *OID) {
   QualType selfTy;
   if (isInstance()) {
     // There may be no interface context due to error in declaration
     // of the interface (which has been reported). Recover gracefully.
-    if (ObjCInterfaceDecl *OID = getClassInterface()) {
-      selfTy = Context.getObjCInterfaceType(OID);
+    if (OID) {
+      selfTy = Context.getObjCInterfaceType(const_cast<ObjCInterfaceDecl *>(OID));
       selfTy = Context.getPointerType(selfTy);
     } else {
       selfTy = Context.getObjCIdType();

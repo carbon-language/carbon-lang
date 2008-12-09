@@ -45,6 +45,7 @@ namespace clang {
   class ObjCInterfaceDecl;
   class ObjCIvarDecl;
   class ObjCMethodDecl;
+  class ObjCImplementationDecl;
   class ObjCPropertyImplDecl;
   class TargetInfo;
   class VarDecl;
@@ -176,11 +177,13 @@ public:
 
   /// GenerateObjCGetter - Synthesize an Objective-C property getter
   /// function.
-  void GenerateObjCGetter(const ObjCPropertyImplDecl *PID);
+  void GenerateObjCGetter(ObjCImplementationDecl *IMP,
+                          const ObjCPropertyImplDecl *PID);
 
   /// GenerateObjCSetter - Synthesize an Objective-C property setter
   /// function for the given property.
-  void GenerateObjCSetter(const ObjCPropertyImplDecl *PID);
+  void GenerateObjCSetter(ObjCImplementationDecl *IMP,
+                          const ObjCPropertyImplDecl *PID);
 
   void GenerateCode(const FunctionDecl *FD,
                     llvm::Function *Fn);

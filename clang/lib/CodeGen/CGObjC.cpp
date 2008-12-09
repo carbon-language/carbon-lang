@@ -137,14 +137,15 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
 /// GenerateObjCGetter - Generate an Objective-C property getter
 /// function. The given Decl must be either an ObjCCategoryImplDecl
 /// or an ObjCImplementationDecl.
-void CodeGenFunction::GenerateObjCGetter(const ObjCPropertyImplDecl *PID) {
+void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
+                                         const ObjCPropertyImplDecl *PID) {
   ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
   // FIXME: This is rather murky, we create this here since they will
   // not have been created by Sema for us.
-  OMD->createImplicitParams(getContext());
+  OMD->createImplicitParams(getContext(), IMP->getClassInterface());
   StartObjCMethod(OMD);
 
   // Determine if we should use an objc_getProperty call for
@@ -173,7 +174,7 @@ void CodeGenFunction::GenerateObjCGetter(const ObjCPropertyImplDecl *PID) {
     QualType IdTy = getContext().getObjCIdType();
     llvm::Value *SelfAsId = 
       Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
-    llvm::Value *Offset = EmitIvarOffset(OMD->getClassInterface(), Ivar);
+    llvm::Value *Offset = EmitIvarOffset(IMP->getClassInterface(), Ivar);
     llvm::Value *True =
       llvm::ConstantInt::get(Types.ConvertTypeForMem(getContext().BoolTy), 1);
     CallArgList Args;
@@ -204,14 +205,15 @@ void CodeGenFunction::GenerateObjCGetter(const ObjCPropertyImplDecl *PID) {
 /// GenerateObjCSetter - Generate an Objective-C property setter
 /// function. The given Decl must be either an ObjCCategoryImplDecl
 /// or an ObjCImplementationDecl.
-void CodeGenFunction::GenerateObjCSetter(const ObjCPropertyImplDecl *PID) {
+void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
+                                         const ObjCPropertyImplDecl *PID) {
   ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
   // FIXME: This is rather murky, we create this here since they will
   // not have been created by Sema for us.  
-  OMD->createImplicitParams(getContext());
+  OMD->createImplicitParams(getContext(), IMP->getClassInterface());
   StartObjCMethod(OMD);
 
   bool IsCopy = PD->getSetterKind() == ObjCPropertyDecl::Copy;
@@ -244,7 +246,7 @@ void CodeGenFunction::GenerateObjCSetter(const ObjCPropertyImplDecl *PID) {
     QualType IdTy = getContext().getObjCIdType();
     llvm::Value *SelfAsId = 
       Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
-    llvm::Value *Offset = EmitIvarOffset(OMD->getClassInterface(), Ivar);
+    llvm::Value *Offset = EmitIvarOffset(IMP->getClassInterface(), Ivar);
     llvm::Value *Arg = LocalDeclMap[OMD->getParamDecl(0)];
     llvm::Value *ArgAsId = 
       Builder.CreateBitCast(Builder.CreateLoad(Arg, "arg"),

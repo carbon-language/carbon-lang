@@ -42,7 +42,7 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   // binding to their use.
 
   // Insert the invisible arguments, self and _cmd!
-  MDecl->createImplicitParams(Context);
+  MDecl->createImplicitParams(Context, MDecl->getClassInterface());
   
   PushOnScopeChains(MDecl->getSelfDecl(), FnBodyScope);
   PushOnScopeChains(MDecl->getCmdDecl(), FnBodyScope);

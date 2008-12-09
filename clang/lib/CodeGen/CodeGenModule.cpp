@@ -980,10 +980,12 @@ void CodeGenModule::EmitObjCPropertyImplementations(const
       // property. What we want to know is if the method is defined in
       // this implementation.
       if (!D->getInstanceMethod(PD->getGetterName()))
-        CodeGenFunction(*this).GenerateObjCGetter(PID);
+        CodeGenFunction(*this).GenerateObjCGetter(
+                                 const_cast<ObjCImplementationDecl *>(D), PID);
       if (!PD->isReadOnly() &&
           !D->getInstanceMethod(PD->getSetterName()))
-        CodeGenFunction(*this).GenerateObjCSetter(PID);
+        CodeGenFunction(*this).GenerateObjCSetter(
+                                 const_cast<ObjCImplementationDecl *>(D), PID);
     }
   }
 }
