@@ -454,7 +454,7 @@ class MemRegionManager {
 
 public:
   MemRegionManager(llvm::BumpPtrAllocator& a)
-  : A(a), globals(0), stack(0), heap(0) {}
+    : A(a), globals(0), stack(0), heap(0), unknown(0) {}
   
   ~MemRegionManager() {}
   
