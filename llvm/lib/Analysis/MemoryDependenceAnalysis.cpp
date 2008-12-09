@@ -304,22 +304,23 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
   return LocalCache;
 }
 
-/// getNonLocalDependency - Perform a full dependency query for the
-/// specified instruction, returning the set of blocks that the value is
+/// getNonLocalCallDependency - Perform a full dependency query for the
+/// specified call, returning the set of blocks that the value is
 /// potentially live across.  The returned set of results will include a
 /// "NonLocal" result for all blocks where the value is live across.
 ///
-/// This method assumes the instruction returns a "nonlocal" dependency
+/// This method assumes the instruction returns a "NonLocal" dependency
 /// within its own block.
 ///
+/// This returns a reference to an internal data structure that may be
+/// invalidated on the next non-local query or when an instruction is
+/// removed.  Clients must copy this data if they want it around longer than
+/// that.
 const MemoryDependenceAnalysis::NonLocalDepInfo &
-MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
-  // FIXME: Make this only be for callsites in the future.
-  assert(isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst) ||
-         isa<LoadInst>(QueryInst) || isa<StoreInst>(QueryInst));
-  assert(getDependency(QueryInst).isNonLocal() &&
-     "getNonLocalDependency should only be used on insts with non-local deps!");
-  PerInstNLInfo &CacheP = NonLocalDeps[QueryInst];
+MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
+  assert(getDependency(QueryCS.getInstruction()).isNonLocal() &&
+ "getNonLocalCallDependency should only be used on calls with non-local deps!");
+  PerInstNLInfo &CacheP = NonLocalDeps[QueryCS.getInstruction()];
   NonLocalDepInfo &Cache = CacheP.first;
 
   /// DirtyBlocks - This is the set of blocks that need to be recomputed.  In
@@ -351,7 +352,7 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
     //     << Cache.size() << " cached: " << *QueryInst;
   } else {
     // Seed DirtyBlocks with each of the preds of QueryInst's block.
-    BasicBlock *QueryBB = QueryInst->getParent();
+    BasicBlock *QueryBB = QueryCS.getInstruction()->getParent();
     for (BasicBlock **PI = PredCache->GetPreds(QueryBB); *PI; ++PI)
       DirtyBlocks.push_back(*PI);
     NumUncacheNonLocal++;
@@ -398,50 +399,23 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
       if (Instruction *Inst = ExistingResult->getInst()) {
         ScanPos = Inst;
         // We're removing QueryInst's use of Inst.
-        RemoveFromReverseMap(ReverseNonLocalDeps, Inst, QueryInst);
+        RemoveFromReverseMap(ReverseNonLocalDeps, Inst,
+                             QueryCS.getInstruction());
       }
     }
     
     // Find out if this block has a local dependency for QueryInst.
     MemDepResult Dep;
     
-    Value *MemPtr = 0;
-    uint64_t MemSize = 0;
-
-    if (ScanPos == DirtyBB->begin()) {
-      // No dependence found.  If this is the entry block of the function, it is a
-      // clobber, otherwise it is non-local.
-      if (DirtyBB != &DirtyBB->getParent()->getEntryBlock())
-        Dep = MemDepResult::getNonLocal();
-      else
-        Dep = MemDepResult::getClobber(ScanPos);
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(QueryInst)) {
-      // If this is a volatile store, don't mess around with it.  Just return the
-      // previous instruction as a clobber.
-      if (SI->isVolatile())
-        Dep = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));
-      else {
-        MemPtr = SI->getPointerOperand();
-        MemSize = TD->getTypeStoreSize(SI->getOperand(0)->getType());
-      }
-    } else if (LoadInst *LI = dyn_cast<LoadInst>(QueryInst)) {
-      // If this is a volatile load, don't mess around with it.  Just return the
-      // previous instruction as a clobber.
-      if (LI->isVolatile())
-        Dep = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));
-      else {
-        MemPtr = LI->getPointerOperand();
-        MemSize = TD->getTypeStoreSize(LI->getType());
-      }
+    if (ScanPos != DirtyBB->begin()) {
+      Dep = getCallSiteDependencyFrom(QueryCS, ScanPos, DirtyBB);
+    } else if (DirtyBB != &DirtyBB->getParent()->getEntryBlock()) {
+      // No dependence found.  If this is the entry block of the function, it is
+      // a clobber, otherwise it is non-local.
+      Dep = MemDepResult::getNonLocal();
     } else {
-      assert(isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst));
-      Dep = getCallSiteDependencyFrom(CallSite::get(QueryInst), ScanPos,
-                                      DirtyBB);
+      Dep = MemDepResult::getClobber(ScanPos);
     }
-    
-    if (MemPtr)
-      Dep = getPointerDependencyFrom(MemPtr, MemSize, isa<LoadInst>(QueryInst),
-                                     ScanPos, DirtyBB);
     
     // If we had a dirty entry for the block, update it.  Otherwise, just add
     // a new entry.
@@ -456,7 +430,7 @@ MemoryDependenceAnalysis::getNonLocalDependency(Instruction *QueryInst) {
       // Keep the ReverseNonLocalDeps map up to date so we can efficiently
       // update this when we remove instructions.
       if (Instruction *Inst = Dep.getInst())
-        ReverseNonLocalDeps[Inst].insert(QueryInst);
+        ReverseNonLocalDeps[Inst].insert(QueryCS.getInstruction());
     } else {
     
       // If the block *is* completely transparent to the load, we need to check

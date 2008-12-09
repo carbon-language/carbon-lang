@@ -215,8 +215,8 @@ namespace llvm {
     /// this on non-memory instructions.
     MemDepResult getDependency(Instruction *QueryInst);
 
-    /// getNonLocalDependency - Perform a full dependency query for the
-    /// specified instruction, returning the set of blocks that the value is
+    /// getNonLocalCallDependency - Perform a full dependency query for the
+    /// specified call, returning the set of blocks that the value is
     /// potentially live across.  The returned set of results will include a
     /// "NonLocal" result for all blocks where the value is live across.
     ///
@@ -227,7 +227,7 @@ namespace llvm {
     /// invalidated on the next non-local query or when an instruction is
     /// removed.  Clients must copy this data if they want it around longer than
     /// that.
-    const NonLocalDepInfo &getNonLocalDependency(Instruction *QueryInst);
+    const NonLocalDepInfo &getNonLocalCallDependency(CallSite QueryCS);
     
     
     /// getNonLocalPointerDependency - Perform a full dependency query for an

@@ -490,7 +490,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
 
       // Non-local case.
       const MemoryDependenceAnalysis::NonLocalDepInfo &deps = 
-        MD->getNonLocalDependency(C);
+        MD->getNonLocalCallDependency(CallSite(C));
       // FIXME: call/call dependencies for readonly calls should return def, not
       // clobber!  Move the checking logic to MemDep!
       CallInst* cdep = 0;
