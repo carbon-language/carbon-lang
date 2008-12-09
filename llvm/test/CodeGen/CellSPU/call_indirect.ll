@@ -10,7 +10,7 @@
 ; RUN: grep ilhu    %t2.s | count 2
 ; RUN: grep iohl    %t2.s | count 2
 ; RUN: grep rotqby  %t2.s | count 6
-; RUN: grep lqd     %t2.s | count 18
+; RUN: grep lqd     %t2.s | count 13
 ; RUN: grep ilhu    %t2.s | count 2
 ; RUN: grep ai      %t2.s | count 9
 ; RUN: grep dispatch_tab %t2.s | count 6
