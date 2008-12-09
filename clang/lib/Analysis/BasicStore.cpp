@@ -174,9 +174,20 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
   const MemRegion* BaseR = 0;
   
   switch(BaseL.getSubKind()) {
-    case loc::SymbolValKind:
-      BaseR = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(&BaseL)->getSymbol());
+    case loc::SymbolValKind: {
+      // FIXME: Should we have symbolic regions be typed or typeless?
+      //  Here we assume that these regions are typeless, even though the
+      //  symbol is typed.
+      SymbolRef Sym = cast<loc::SymbolVal>(&BaseL)->getSymbol();
+      // Create a region to represent this symbol.
+      // FIXME: In the future we may just use symbolic regions instead of
+      //  SymbolVals to reason about symbolic memory chunks.
+      const MemRegion* SymR = MRMgr.getSymbolicRegion(Sym);
+      // Layered a typed region on top of this.
+      QualType T = StateMgr.getSymbolManager().getType(Sym);
+      BaseR = MRMgr.getAnonTypedRegion(T, SymR);
       break;
+    }
       
     case loc::GotoLabelKind:
     case loc::FuncValKind:
