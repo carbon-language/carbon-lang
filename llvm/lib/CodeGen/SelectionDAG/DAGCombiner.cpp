@@ -966,6 +966,11 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     SDValue FoldedVOp = SimplifyVBinOp(N);
     if (FoldedVOp.getNode()) return FoldedVOp;
   }
+
+  if (N->getNumValues() != 1)
+    // FIXME: DAG combiner cannot handle multiple return values on arithmetic
+    //        operators.
+    return SDValue();
   
   // fold (add x, undef) -> undef
   if (N0.getOpcode() == ISD::UNDEF)
@@ -1161,6 +1166,11 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     SDValue FoldedVOp = SimplifyVBinOp(N);
     if (FoldedVOp.getNode()) return FoldedVOp;
   }
+
+  if (N->getNumValues() != 1)
+    // FIXME: DAG combiner cannot handle multiple return values on arithmetic
+    //        operators.
+    return SDValue();
   
   // fold (sub x, x) -> 0
   if (N0 == N1)
@@ -1220,6 +1230,11 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
     if (FoldedVOp.getNode()) return FoldedVOp;
   }
   
+  if (N->getNumValues() != 1)
+    // FIXME: DAG combiner cannot handle multiple return values on arithmetic
+    //        operators.
+    return SDValue();
+    
   // fold (mul x, undef) -> 0
   if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return DAG.getConstant(0, VT);

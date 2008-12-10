@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep {jo} | count 1
-; RUN: llvm-as < %s | llc -march=x86 | grep {jc} | count 1
-; RUN: llvm-as < %s | llc -march=x86 -fast | grep {jo} | count 1
-; RUN: llvm-as < %s | llc -march=x86 -fast | grep {jc} | count 1
+; RUN: llvm-as < %s | llc -march=x86 | grep {jo} | count 2
+; RUN: llvm-as < %s | llc -march=x86 | grep {jc} | count 2
+; RUN: llvm-as < %s | llc -march=x86 -fast | grep {jo} | count 2
+; RUN: llvm-as < %s | llc -march=x86 -fast | grep {jc} | count 2
 
 @ok = internal constant [4 x i8] c"%d\0A\00"
 @no = internal constant [4 x i8] c"no\0A\00"
@@ -25,6 +25,38 @@ overflow:
 define i1 @func2(i32 %v1, i32 %v2) nounwind {
 entry:
   %t = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %v1, i32 %v2)
+  %sum = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  br i1 %obit, label %carry, label %normal
+
+normal:
+  %t1 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @ok, i32 0, i32 0), i32 %sum ) nounwind
+  ret i1 true
+
+carry:
+  %t2 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @no, i32 0, i32 0) ) nounwind
+  ret i1 false
+}
+
+define i1 @func3() nounwind {
+entry:
+  %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 0, i32 0)
+  %sum = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  br i1 %obit, label %carry, label %normal
+
+normal:
+  %t1 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @ok, i32 0, i32 0), i32 %sum ) nounwind
+  ret i1 true
+
+carry:
+  %t2 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @no, i32 0, i32 0) ) nounwind
+  ret i1 false
+}
+
+define i1 @func4() nounwind {
+entry:
+  %t = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 0, i32 0)
   %sum = extractvalue {i32, i1} %t, 0
   %obit = extractvalue {i32, i1} %t, 1
   br i1 %obit, label %carry, label %normal
