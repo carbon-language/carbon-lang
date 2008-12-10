@@ -25,7 +25,8 @@ typedef struct _NSRange {
 }
   CSSM_FIELDGROUP, *CSSM_FIELDGROUP_PTR;
 @protocol XDUMLClassifier;
-@protocol XDUMLClassInterfaceCommons <XDUMLClassifier>    @end  @protocol XDUMLImplementation;
+@protocol XDUMLClassInterfaceCommons <XDUMLClassifier>  // expected-warning {{cannot find protocol definition for 'XDUMLClassifier'}}
+@end  @protocol XDUMLImplementation;
 @protocol XDUMLElement <NSObject> - (NSArray *) ownedElements;
 @end @protocol XDUMLDataType;
 @protocol XDUMLNamedElement <XDUMLElement>     - (NSString *) name;
@@ -39,7 +40,7 @@ typedef NSUInteger XDSourceLanguage;
 @end  @class XDSCOperation;
 @interface XDSCClassFormatter : NSObject {
 }
-+ (NSUInteger) compartmentsForClassifier: (id <XDUMLClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec;
++ (NSUInteger) compartmentsForClassifier: (id <XDUMLClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec; // expected-note {{previous definition is here}}
 @end  
 @class NSString;
 @implementation XDSCClassFormatter       
@@ -47,7 +48,7 @@ typedef NSUInteger XDSourceLanguage;
 + appendVisibility: (id <XDUMLNamedElement>) element withSpecification: (XDSCDisplaySpecification *) displaySpec to: (NSMutableAttributedString *) attributedString
 {
 }
-// FIXME: should we warn? (since the protocols are different). FWIW...GCC doesn't currently.
-+ (NSUInteger) compartmentsForClassifier: (id <XDSCClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec {
+// GCC doesn't currently warn about this.
++ (NSUInteger) compartmentsForClassifier: (id <XDSCClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec { // expected-warning {{conflicting types for 'compartmentsForClassifier:withSpecification:'}}
 }
 @end 

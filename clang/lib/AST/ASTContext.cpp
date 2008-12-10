@@ -2122,36 +2122,35 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (LHSClass == Type::ObjCQualifiedInterface) LHSClass = Type::ObjCInterface;
   if (RHSClass == Type::ObjCQualifiedInterface) RHSClass = Type::ObjCInterface;
 
-  // ID is compatible with all qualified id types.
-  if (LHS->isObjCQualifiedIdType()) {
-    if (const PointerType *PT = RHS->getAsPointerType()) {
-      QualType pType = PT->getPointeeType();
-      if (isObjCIdType(pType))
-        return LHS;
-      // FIXME: need to use ObjCQualifiedIdTypesAreCompatible(LHS, RHS, true).
-      // Unfortunately, this API is part of Sema (which we don't have access
-      // to. Need to refactor. The following check is insufficient, since we 
-      // need to make sure the class implements the protocol.
-      if (pType->isObjCInterfaceType())
-        return LHS;
-    }
-  }
-  if (RHS->isObjCQualifiedIdType()) {
-    if (const PointerType *PT = LHS->getAsPointerType()) {
-      QualType pType = PT->getPointeeType();
-      if (isObjCIdType(pType))
-        return RHS;
-      // FIXME: need to use ObjCQualifiedIdTypesAreCompatible(LHS, RHS, true).
-      // Unfortunately, this API is part of Sema (which we don't have access
-      // to. Need to refactor. The following check is insufficient, since we 
-      // need to make sure the class implements the protocol.
-      if (pType->isObjCInterfaceType())
-        return RHS;
-    }
-  }
   // If the canonical type classes don't match.
   if (LHSClass != RHSClass) {
-
+    // ID is compatible with all qualified id types.
+    if (LHS->isObjCQualifiedIdType()) {
+      if (const PointerType *PT = RHS->getAsPointerType()) {
+        QualType pType = PT->getPointeeType();
+        if (isObjCIdType(pType))
+          return LHS;
+        // FIXME: need to use ObjCQualifiedIdTypesAreCompatible(LHS, RHS, true).
+        // Unfortunately, this API is part of Sema (which we don't have access
+        // to. Need to refactor. The following check is insufficient, since we 
+        // need to make sure the class implements the protocol.
+        if (pType->isObjCInterfaceType())
+          return LHS;
+      }
+    }
+    if (RHS->isObjCQualifiedIdType()) {
+      if (const PointerType *PT = LHS->getAsPointerType()) {
+        QualType pType = PT->getPointeeType();
+        if (isObjCIdType(pType))
+          return RHS;
+        // FIXME: need to use ObjCQualifiedIdTypesAreCompatible(LHS, RHS, true).
+        // Unfortunately, this API is part of Sema (which we don't have access
+        // to. Need to refactor. The following check is insufficient, since we 
+        // need to make sure the class implements the protocol.
+        if (pType->isObjCInterfaceType())
+          return RHS;
+      }
+    }
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type. 
     if (const EnumType* ETy = LHS->getAsEnumType()) {
@@ -2252,6 +2251,9 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   case Type::ObjCInterface:
     // Distinct ObjC interfaces are not compatible; see canAssignObjCInterfaces
     // for checking assignment/comparison safety
+    return QualType();
+  case Type::ObjCQualifiedId:
+    // Distinct qualified id's are not compatible.
     return QualType();
   default:
     assert(0 && "unexpected type");
