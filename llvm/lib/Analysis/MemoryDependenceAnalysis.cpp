@@ -21,6 +21,7 @@
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/PredIteratorCache.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
@@ -401,7 +402,7 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     NonLocalDepInfo::iterator Entry = 
       std::upper_bound(Cache.begin(), Cache.begin()+NumSortedEntries,
                        std::make_pair(DirtyBB, MemDepResult()));
-    if (Entry != Cache.begin() && (&*Entry)[-1].first == DirtyBB)
+    if (Entry != Cache.begin() && prior(Entry)->first == DirtyBB)
       --Entry;
     
     MemDepResult *ExistingResult = 0;
@@ -506,7 +507,7 @@ GetNonLocalInfoForBlock(Value *Pointer, uint64_t PointeeSize,
   NonLocalDepInfo::iterator Entry =
     std::upper_bound(Cache->begin(), Cache->begin()+NumSortedEntries,
                      std::make_pair(BB, MemDepResult()));
-  if (Entry != Cache->begin() && (&*Entry)[-1].first == BB)
+  if (Entry != Cache->begin() && prior(Entry)->first == BB)
     --Entry;
   
   MemDepResult *ExistingResult = 0;
