@@ -24,7 +24,7 @@ int main() {
 
 	int * (^IPCC2) () = IPCC;	// expected-warning {{incompatible block pointer types initializing 'int *const (^)()', expected 'int *(^)()'}}
 
-	int (^IPCC3) (const int) = PFR;	// expected-warning {{incompatible block pointer types initializing 'int (^)(int)', expected 'int (^)(int const)'}}
+	int (^IPCC3) (const int) = PFR;
 
 
 	int (^IPCC4) (int, char (^CArg) (double));

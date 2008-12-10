@@ -1920,7 +1920,13 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
 /// FIXME: When the dust settles on this integration, fold this into mergeTypes.
 ///
 bool ASTContext::typesAreBlockCompatible(QualType lhs, QualType rhs) {
- return getCanonicalType(lhs) == getCanonicalType(rhs);
+  const FunctionType *lbase = lhs->getAsFunctionType();
+  const FunctionType *rbase = rhs->getAsFunctionType();
+  const FunctionTypeProto *lproto = dyn_cast<FunctionTypeProto>(lbase);
+  const FunctionTypeProto *rproto = dyn_cast<FunctionTypeProto>(rbase);
+  if (lproto && rproto)
+    return !mergeTypes(lhs, rhs).isNull();
+  return false;
 }
 
 /// areCompatVectorTypes - Return true if the two specified vector types are 
@@ -2178,6 +2184,19 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     if (getCanonicalType(RHSPointee) == getCanonicalType(ResultType))
       return RHS;
     return getPointerType(ResultType);
+  }
+  case Type::BlockPointer:
+  {
+    // Merge two block pointer types, while trying to preserve typedef info
+    QualType LHSPointee = LHS->getAsBlockPointerType()->getPointeeType();
+    QualType RHSPointee = RHS->getAsBlockPointerType()->getPointeeType();
+    QualType ResultType = mergeTypes(LHSPointee, RHSPointee);
+    if (ResultType.isNull()) return QualType();
+    if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType))
+      return LHS;
+    if (getCanonicalType(RHSPointee) == getCanonicalType(ResultType))
+      return RHS;
+    return getBlockPointerType(ResultType);
   }
   case Type::ConstantArray:
   {
