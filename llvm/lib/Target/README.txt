@@ -2,13 +2,6 @@ Target Independent Opportunities:
 
 //===---------------------------------------------------------------------===//
 
-We should make the various target's "IMPLICIT_DEF" instructions be a single
-target-independent opcode like TargetInstrInfo::INLINEASM.  This would allow
-us to eliminate the TargetInstrDesc::isImplicitDef() method, and would allow
-us to avoid having to define this for every target for every register class.
-
-//===---------------------------------------------------------------------===//
-
 With the recent changes to make the implicit def/use set explicit in
 machineinstrs, we should change the target descriptions for 'call' instructions
 so that the .td files don't list all the call-clobbered registers as implicit
@@ -30,7 +23,10 @@ Make the PPC branch selector target independant
 //===---------------------------------------------------------------------===//
 
 Get the C front-end to expand hypot(x,y) -> llvm.sqrt(x*x+y*y) when errno and
-precision don't matter (ffastmath).  Misc/mandel will like this. :)
+precision don't matter (ffastmath).  Misc/mandel will like this. :)  This isn't
+safe in general, even on darwin.  See the libm implementation of hypot for
+examples (which special case when x/y are exactly zero to get signed zeros etc
+right).
 
 //===---------------------------------------------------------------------===//
 
@@ -165,6 +161,9 @@ Expand these to calls of sin/cos and stores:
 
 Doing so could allow SROA of the destination pointers.  See also:
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17687
+
+This is now easily doable with MRVs.  We could even make an intrinsic for this
+if anyone cared enough about sincos.
 
 //===---------------------------------------------------------------------===//
 
@@ -510,6 +509,8 @@ int i;
   a[i+3] = a[i-1+3]*a[i-2+3];
   }
 }
+
+BasicAA also doesn't do this for add.  It needs to know that &A[i+1] != &A[i].
 
 //===---------------------------------------------------------------------===//
 
@@ -922,35 +923,6 @@ static vec2d a={{1,2}}, b={{3,4}};
 vec2d foo () {
     return (vec2d){ .v = a.v + b.v * (vec2d){{5,5}}.v };
 }
-
-//===---------------------------------------------------------------------===//
-
-This C++ file:
-void g(); struct A { int n; int m; A& operator++(void) { ++n; if (n == m) g(); 
-return *this; }    A() : n(0), m(0) { } friend bool operator!=(A const& a1, 
-A const& a2) { return a1.n != a2.n; } }; void testfunction(A& iter) { A const 
-end; while (iter != end) ++iter; }
-
-Compiles down to:
-
-bb:		; preds = %bb3.backedge, %bb.nph
-	%.rle = phi i32 [ %1, %bb.nph ], [ %7, %bb3.backedge ]		; <i32> [#uses=1]
-	%4 = add i32 %.rle, 1		; <i32> [#uses=2]
-	store i32 %4, i32* %0, align 4
-	%5 = load i32* %3, align 4		; <i32> [#uses=1]
-	%6 = icmp eq i32 %4, %5		; <i1> [#uses=1]
-	br i1 %6, label %bb1, label %bb3.backedge
-
-bb1:		; preds = %bb
-	tail call void @_Z1gv()
-	br label %bb3.backedge
-
-bb3.backedge:		; preds = %bb, %bb1
-	%7 = load i32* %0, align 4		; <i32> [#uses=2]
-
-
-The %7 load is partially redundant with the store of %4 to %0, GVN's PRE 
-should remove it, but it doesn't apply to memory objects.
 
 //===---------------------------------------------------------------------===//
 
@@ -1429,6 +1401,35 @@ void foo (int a, struct T b)
     c = &b.s;
   bar (*c, a);
 }
+
+//===---------------------------------------------------------------------===//
+
+This C++ file:
+void g(); struct A { int n; int m; A& operator++(void) { ++n; if (n == m) g(); 
+return *this; }    A() : n(0), m(0) { } friend bool operator!=(A const& a1, 
+A const& a2) { return a1.n != a2.n; } }; void testfunction(A& iter) { A const 
+end; while (iter != end) ++iter; }
+
+Compiles down to:
+
+bb:		; preds = %bb3.backedge, %bb.nph
+	%.rle = phi i32 [ %1, %bb.nph ], [ %7, %bb3.backedge ]		; <i32> [#uses=1]
+	%4 = add i32 %.rle, 1		; <i32> [#uses=2]
+	store i32 %4, i32* %0, align 4
+	%5 = load i32* %3, align 4		; <i32> [#uses=1]
+	%6 = icmp eq i32 %4, %5		; <i1> [#uses=1]
+	br i1 %6, label %bb1, label %bb3.backedge
+
+bb1:		; preds = %bb
+	tail call void @_Z1gv()
+	br label %bb3.backedge
+
+bb3.backedge:		; preds = %bb, %bb1
+	%7 = load i32* %0, align 4		; <i32> [#uses=2]
+
+
+The %7 load is partially redundant with the store of %4 to %0, GVN's PRE 
+should remove it, but it doesn't apply to memory objects.
 
 //===---------------------------------------------------------------------===//
 
