@@ -739,33 +739,25 @@ the test code or configure script changes).</p>
 
 <div class="doc_text">
 <p>Note, when configuring the <tt>test-suite</tt> module, you might want to
-specify the following configuration options:</p>
+specify the following configuration option:</p>
 <dl>
-  <dt><i>--enable-spec2000</i>
-  <dt><i>--enable-spec2000=&lt;<tt>directory</tt>&gt;</i>
-  <dd>
-    Enable the use of SPEC2000 when testing LLVM.  This is disabled by default
-    (unless <tt>configure</tt> finds SPEC2000 installed).  By specifying
-    <tt>directory</tt>, you can tell configure where to find the SPEC2000
-    benchmarks.  If <tt>directory</tt> is left unspecified, <tt>configure</tt>
-    uses the default value
-    <tt>/home/vadve/shared/benchmarks/speccpu2000/benchspec</tt>.
-    <p>
-
-  <dt><i>--enable-spec95</i>
-  <dt><i>--enable-spec95=&lt;<tt>directory</tt>&gt;</i>
-  <dd>
-    Enable the use of SPEC95 when testing LLVM.  It is similar to the
-    <i>--enable-spec2000</i> option.
-    <p>
-
-  <dt><i>--enable-povray</i>
-  <dt><i>--enable-povray=&lt;<tt>directory</tt>&gt;</i>
-  <dd>
-    Enable the use of Povray as an external test.  Versions of Povray written
-    in C should work.  This option is similar to the <i>--enable-spec2000</i>
-    option.
+<dt><i>--with-externals</i></dt>
+<dt><i>--with-externals=&lt;<tt>directory</tt>&gt;</i></dt>
 </dl>
+  This tells LLVM where to find any external tests.  They are expected to be
+  in specifically named subdirectories of &lt;<tt>directory</tt>&gt;.
+  If <tt>directory</tt> is left unspecified,
+  <tt>configure</tt> uses the default value
+  <tt>/home/vadve/shared/benchmarks/speccpu2000/benchspec</tt>.
+  Subdirectory names known to LLVM include:
+  <dl>
+  <dt>spec95</dt>
+  <dt>speccpu2000</dt>
+  <dt>speccpu2006</dt>
+  <dt>povray31</dt>
+  </dl>
+  Others are added from time to time, and can be determined from 
+  <tt>configure</tt>.
 </div>
 
 <!-- _______________________________________________________________________ -->
