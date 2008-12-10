@@ -2189,6 +2189,10 @@ void CGObjCMac::FinishModule() {
 
   // FIXME: Uh, this isn't particularly portable.
   std::stringstream s;
+  
+  if (!CGM.getModule().getModuleInlineAsm().empty())
+    s << "\n";
+  
   for (std::set<IdentifierInfo*>::iterator i = LazySymbols.begin(),
          e = LazySymbols.end(); i != e; ++i) {
     s << "\t.lazy_reference .objc_class_name_" << (*i)->getName() << "\n";
@@ -2198,6 +2202,7 @@ void CGObjCMac::FinishModule() {
     s << "\t.objc_class_name_" << (*i)->getName() << "=0\n"
       << "\t.globl .objc_class_name_" << (*i)->getName() << "\n";
   }  
+  
   CGM.getModule().appendModuleInlineAsm(s.str());
 }
 
