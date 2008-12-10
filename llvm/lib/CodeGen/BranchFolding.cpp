@@ -596,7 +596,7 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
   unsigned minCommonTailLength = (SuccBB ? 1 : 2) + 1;
   MadeChange = false;
   
-  DOUT << "\nTryMergeBlocks " << MergePotentials.size();
+  DOUT << "\nTryMergeBlocks " << MergePotentials.size() << '\n';
 
   // Sort by hash value so that blocks with identical end sequences sort
   // together.
