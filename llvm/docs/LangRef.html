@@ -2584,7 +2584,9 @@ type.  '<tt>op2</tt>' is treated as an unsigned value.</p>
 
 <p>The value produced is <tt>op1</tt> * 2<sup><tt>op2</tt></sup> mod 2<sup>n</sup>,
 where n is the width of the result.  If <tt>op2</tt> is (statically or dynamically) negative or
-equal to or larger than the number of bits in <tt>op1</tt>, the result is undefined.</p>
+equal to or larger than the number of bits in <tt>op1</tt>, the result is undefined.
+If the arguments are vectors, each vector element of <tt>op1</tt> is shifted by the
+corresponding shift amount in <tt>op2</tt>.</p>
 
 <h5>Example:</h5><pre>
   &lt;result&gt; = shl i32 4, %var   <i>; yields {i32}: 4 &lt;&lt; %var</i>
@@ -2616,7 +2618,9 @@ type.  '<tt>op2</tt>' is treated as an unsigned value.</p>
 <p>This instruction always performs a logical shift right operation. The most
 significant bits of the result will be filled with zero bits after the 
 shift.  If <tt>op2</tt> is (statically or dynamically) equal to or larger than
-the number of bits in <tt>op1</tt>, the result is undefined.</p>
+the number of bits in <tt>op1</tt>, the result is undefined. If the arguments are
+vectors, each vector element of <tt>op1</tt> is shifted by the corresponding shift
+amount in <tt>op2</tt>.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2651,8 +2655,9 @@ type.  '<tt>op2</tt>' is treated as an unsigned value.</p>
 <p>This instruction always performs an arithmetic shift right operation, 
 The most significant bits of the result will be filled with the sign bit 
 of <tt>op1</tt>.  If <tt>op2</tt> is (statically or dynamically) equal to or
-larger than the number of bits in <tt>op1</tt>, the result is undefined.
-</p>
+larger than the number of bits in <tt>op1</tt>, the result is undefined. If the
+arguments are vectors, each vector element of <tt>op1</tt> is shifted by the
+corresponding shift amount in <tt>op2</tt>.</p>
 
 <h5>Example:</h5>
 <pre>
