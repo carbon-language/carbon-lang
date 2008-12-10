@@ -100,7 +100,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
   }
 
   SourceLocation RParenLoc = Tok.getLocation();
-  Actions.ActOnPragmaPack(Kind, Name, Alignment.move(), PackLoc,
+  Actions.ActOnPragmaPack(Kind, Name, Alignment.release(), PackLoc,
                           LParenLoc, RParenLoc);
 }
 

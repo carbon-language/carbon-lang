@@ -1185,7 +1185,7 @@ Parser::StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
     }
   }
   ConsumeToken(); // consume ';'
-  return Actions.ActOnObjCAtThrowStmt(atLoc, Res.move());
+  return Actions.ActOnObjCAtThrowStmt(atLoc, Res.release());
 }
 
 /// objc-synchronized-statement:
@@ -1221,8 +1221,8 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   ExitScope();
   if (SynchBody.isInvalid())
     SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
-  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.move(),
-                                             SynchBody.move());
+  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.release(),
+                                             SynchBody.release());
 }
 
 ///  objc-try-catch-statement:
@@ -1295,7 +1295,8 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         if (CatchBody.isInvalid())
           CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
         CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
-          RParenLoc, FirstPart.move(), CatchBody.move(), CatchStmts.move());
+          RParenLoc, FirstPart.release(), CatchBody.release(),
+          CatchStmts.release());
         ExitScope();
       } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)
@@ -1317,7 +1318,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       if (FinallyBody.isInvalid())
         FinallyBody = Actions.ActOnNullStmt(Tok.getLocation());
       FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc,
-                                                       FinallyBody.move());
+                                                   FinallyBody.release());
       catch_or_finally_seen = true;
       ExitScope();
       break;
@@ -1327,8 +1328,9 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag(atLoc, diag::err_missing_catch_finally);
     return true;
   }
-  return Actions.ActOnObjCAtTryStmt(atLoc, TryBody.move(), CatchStmts.move(), 
-                                    FinallyStmt.move());
+  return Actions.ActOnObjCAtTryStmt(atLoc, TryBody.release(),
+                                    CatchStmts.release(),
+                                    FinallyStmt.release());
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
@@ -1369,7 +1371,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   ExitScope();
   
   // TODO: Pass argument information.
-  Actions.ActOnFinishFunctionBody(MDecl, FnBody.move());
+  Actions.ActOnFinishFunctionBody(MDecl, FnBody.release());
   return MDecl;
 }
 
@@ -1390,7 +1392,7 @@ Parser::StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   }
   // Otherwise, eat the semicolon.
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-  return Actions.ActOnExprStmt(Res.move());
+  return Actions.ActOnExprStmt(Res.release());
 }
 
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
@@ -1436,11 +1438,11 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   OwningExprResult Res(Actions, ParseExpression());
   if (Res.isInvalid()) {
     SkipUntil(tok::r_square);
-    return Res.move();
+    return Res.result();
   }
   
   return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
-                                        0, Res.move());
+                                        0, Res.release());
 }
   
 /// ParseObjCMessageExpressionBody - Having parsed "'[' objc-receiver", parse
@@ -1498,11 +1500,11 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
         SkipUntil(tok::r_square);
-        return Res.move();
+        return Res.result();
       }
       
       // We have a valid expression.
-      KeyExprs.push_back(Res.move());
+      KeyExprs.push_back(Res.release());
       
       // Check for another keyword selector.
       selIdent = ParseObjCSelector(Loc);
@@ -1520,11 +1522,11 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
         SkipUntil(tok::r_square);
-        return Res.move();
+        return Res.result();
       }
 
       // We have a valid expression.
-      KeyExprs.push_back(Res.move());
+      KeyExprs.push_back(Res.release());
     }
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected_ident); // missing selector name.
@@ -1564,7 +1566,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 
 Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
   OwningExprResult Res(Actions, ParseStringLiteralExpression());
-  if (Res.isInvalid()) return Res.move();
+  if (Res.isInvalid()) return Res.result();
   
   // @"foo" @"bar" is a valid concatenated string.  Eat any subsequent string
   // expressions.  At this point, we know that the only valid thing that starts
@@ -1572,7 +1574,7 @@ Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
   llvm::SmallVector<SourceLocation, 4> AtLocs;
   ExprVector AtStrings(Actions);
   AtLocs.push_back(AtLoc);
-  AtStrings.push_back(Res.move());
+  AtStrings.push_back(Res.release());
 
   while (Tok.is(tok::at)) {
     AtLocs.push_back(ConsumeToken()); // eat the @.
@@ -1585,9 +1587,9 @@ Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
       Diag(Tok, diag::err_objc_concat_string);
 
     if (Lit.isInvalid())
-      return Lit.move();
+      return Lit.result();
 
-    AtStrings.push_back(Lit.move());
+    AtStrings.push_back(Lit.release());
   }
   
   return Actions.ParseObjCStringLiteral(&AtLocs[0], AtStrings.take(),

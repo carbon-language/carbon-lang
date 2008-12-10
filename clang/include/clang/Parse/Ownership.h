@@ -83,50 +83,49 @@ namespace clang
   /// the individual pointers, not the array holding them.
   template <ASTDestroyer Destroyer> class ASTMultiPtr;
 
-  /// Move emulation helper for ASTOwningResult
-  template <ASTDestroyer Destroyer>
-  class ASTResultMover
-  {
-    ASTOwningResult<Destroyer> &Moved;
+  namespace moving {
+    /// Move emulation helper for ASTOwningResult. NEVER EVER use this class
+    /// directly if you don't know what you're doing.
+    template <ASTDestroyer Destroyer>
+    class ASTResultMover
+    {
+      ASTOwningResult<Destroyer> &Moved;
 
-  public:
-    ASTResultMover(ASTOwningResult<Destroyer> &moved) : Moved(moved) {}
+    public:
+      ASTResultMover(ASTOwningResult<Destroyer> &moved) : Moved(moved) {}
 
-    ASTOwningResult<Destroyer> * operator ->() { return &Moved; }
+      ASTOwningResult<Destroyer> * operator ->() { return &Moved; }
+    };
 
-    // For the transition phase.
-    operator void*();
+    /// Move emulation helper for ASTOwningPtr. NEVER EVER use this class
+    /// directly if you don't know what you're doing.
+    template <ASTDestroyer Destroyer>
+    class ASTPtrMover
+    {
+      ASTOwningPtr<Destroyer> &Moved;
 
-    // For the transition phase.
-    operator ActionBase::ActionResult<DestroyerToUID<Destroyer>::UID>();
-  };
+    public:
+      ASTPtrMover(ASTOwningPtr<Destroyer> &moved) : Moved(moved) {}
 
-  /// Move emulation helper for ASTOwningPtr
-  template <ASTDestroyer Destroyer>
-  class ASTPtrMover
-  {
-    ASTOwningPtr<Destroyer> &Moved;
+      ASTOwningPtr<Destroyer> * operator ->() { return &Moved; }
+    };
 
-  public:
-    ASTPtrMover(ASTOwningPtr<Destroyer> &moved) : Moved(moved) {}
+    /// Move emulation helper for ASTMultiPtr. NEVER EVER use this class
+    /// directly if you don't know what you're doing.
+    template <ASTDestroyer Destroyer>
+    class ASTMultiMover
+    {
+      ASTMultiPtr<Destroyer> &Moved;
 
-    ASTOwningPtr<Destroyer> * operator ->() { return &Moved; }
+    public:
+      ASTMultiMover(ASTMultiPtr<Destroyer> &moved) : Moved(moved) {}
 
-    operator void*();
-  };
+      ASTMultiPtr<Destroyer> * operator ->() { return &Moved; }
 
-  /// Move emulation helper for ASTMultiPtr
-  template <ASTDestroyer Destroyer>
-  class ASTMultiMover
-  {
-    ASTMultiPtr<Destroyer> &Moved;
-
-  public:
-    ASTMultiMover(ASTMultiPtr<Destroyer> &moved) : Moved(moved) {}
-
-    /// Reset the moved object's internal structures.
-    void release();
-  };
+      /// Reset the moved object's internal structures.
+      void release();
+    };
+  }
 
   template <ASTDestroyer Destroyer>
   class ASTOwningResult
@@ -135,23 +134,17 @@ namespace clang
     void *Node;
     bool Invalid;
 
-    friend class ASTResultMover<Destroyer>;
+    friend class moving::ASTResultMover<Destroyer>;
     friend class ASTOwningPtr<Destroyer>;
 
-    ASTOwningResult(const ASTOwningResult&); // DO NOT IMPLEMENT
-    ASTOwningResult& operator =(const ASTOwningResult&); // DO NOT IMPLEMENT
+    ASTOwningResult(ASTOwningResult&); // DO NOT IMPLEMENT
+    ASTOwningResult& operator =(ASTOwningResult&); // DO NOT IMPLEMENT
 
     void destroy() {
       if (Node) {
         assert(Actions && "Owning pointer without Action owns node.");
         (Actions->*Destroyer)(Node);
       }
-    }
-
-    void * take() {
-      if (Invalid)
-        return 0;
-      return Node;
     }
 
   public:
@@ -170,13 +163,13 @@ namespace clang
     ASTOwningResult(ActionBase &actions, const DumbResult &res)
       : Actions(&actions), Node(res.Val), Invalid(res.isInvalid) {}
     /// Move from another owning result
-    ASTOwningResult(ASTResultMover<Destroyer> mover)
+    ASTOwningResult(moving::ASTResultMover<Destroyer> mover)
       : Actions(mover->Actions), Node(mover->take()), Invalid(mover->Invalid) {}
     /// Move from an owning pointer
-    ASTOwningResult(ASTPtrMover<Destroyer> mover);
+    ASTOwningResult(moving::ASTPtrMover<Destroyer> mover);
 
     /// Move assignment from another owning result
-    ASTOwningResult & operator =(ASTResultMover<Destroyer> mover) {
+    ASTOwningResult & operator =(moving::ASTResultMover<Destroyer> mover) {
       Actions = mover->Actions;
       Node = mover->take();
       Invalid = mover->Invalid;
@@ -184,7 +177,7 @@ namespace clang
     }
 
     /// Move assignment from an owning ptr
-    ASTOwningResult & operator =(ASTPtrMover<Destroyer> mover);
+    ASTOwningResult & operator =(moving::ASTPtrMover<Destroyer> mover);
 
     /// Assignment from a raw pointer. Takes ownership - beware!
     ASTOwningResult & operator =(void *raw)
@@ -214,9 +207,30 @@ namespace clang
     /// valid and non-null.
     bool isUsable() const { return !Invalid && Node; }
 
+    /// Take outside ownership of the raw pointer.
+    void * take() {
+      if (Invalid)
+        return 0;
+      void *tmp = Node;
+      Node = 0;
+      return tmp;
+    }
+
+    /// Alias for interface familiarity with unique_ptr.
+    void * release() {
+      return take();
+    }
+
+    /// Pass ownership to a classical ActionResult.
+    DumbResult result() {
+      if (Invalid)
+        return true;
+      return Node;
+    }
+
     /// Move hook
-    ASTResultMover<Destroyer> move() {
-      return ASTResultMover<Destroyer>(*this);
+    operator moving::ASTResultMover<Destroyer>() {
+      return moving::ASTResultMover<Destroyer>(*this);
     }
   };
 
@@ -226,11 +240,11 @@ namespace clang
     ActionBase *Actions;
     void *Node;
 
-    friend class ASTPtrMover<Destroyer>;
+    friend class moving::ASTPtrMover<Destroyer>;
     friend class ASTOwningResult<Destroyer>;
 
-    ASTOwningPtr(const ASTOwningPtr&); // DO NOT IMPLEMENT
-    ASTOwningPtr& operator =(const ASTOwningPtr&); // DO NOT IMPLEMENT
+    ASTOwningPtr(ASTOwningPtr&); // DO NOT IMPLEMENT
+    ASTOwningPtr& operator =(ASTOwningPtr&); // DO NOT IMPLEMENT
 
     void destroy() {
       if (Node) {
@@ -245,20 +259,20 @@ namespace clang
     ASTOwningPtr(ActionBase &actions, void *node)
       : Actions(&actions), Node(node) {}
     /// Move from another owning pointer
-    ASTOwningPtr(ASTPtrMover<Destroyer> mover)
+    ASTOwningPtr(moving::ASTPtrMover<Destroyer> mover)
       : Actions(mover->Actions), Node(mover->take()) {}
     /// Move from an owning result
-    ASTOwningPtr(ASTResultMover<Destroyer> mover);
+    ASTOwningPtr(moving::ASTResultMover<Destroyer> mover);
 
     /// Move assignment from another owning pointer
-    ASTOwningPtr & operator =(ASTPtrMover<Destroyer> mover) {
+    ASTOwningPtr & operator =(moving::ASTPtrMover<Destroyer> mover) {
       Actions = mover->Actions;
       Node = mover->take();
       return *this;
     }
 
     /// Move assignment from an owning result
-    ASTOwningPtr & operator =(ASTResultMover<Destroyer> mover);
+    ASTOwningPtr & operator =(moving::ASTResultMover<Destroyer> mover);
 
     /// Assignment from a raw pointer. Takes ownership - beware!
     ASTOwningPtr & operator =(void *raw)
@@ -271,9 +285,21 @@ namespace clang
     /// Access to the raw pointer.
     void * get() const { return Node; }
 
+    /// Release the raw pointer.
+    void * take() {
+      void *tmp = Node;
+      Node = 0;
+      return tmp;
+    }
+
+    /// Alias for interface familiarity with unique_ptr.
+    void * release() {
+      return take();
+    }
+
     /// Move hook
-    ASTPtrMover<Destroyer> move() {
-      return ASTPtrMover<Destroyer>(*this);
+    operator moving::ASTPtrMover<Destroyer>() {
+      return moving::ASTPtrMover<Destroyer>(*this);
     }
   };
 
@@ -284,9 +310,9 @@ namespace clang
     void **Nodes;
     unsigned Count;
 
-    friend class ASTMultiMover<Destroyer>;
+    friend class moving::ASTMultiMover<Destroyer>;
 
-    ASTMultiPtr(const ASTMultiPtr&); // DO NOT IMPLEMENT
+    ASTMultiPtr(ASTMultiPtr&); // DO NOT IMPLEMENT
     // Reference member prevents copy assignment.
 
     void destroy() {
@@ -303,15 +329,14 @@ namespace clang
     ASTMultiPtr(ActionBase &actions, void **nodes, unsigned count)
       : Actions(actions), Nodes(nodes), Count(count) {}
     /// Move constructor
-    ASTMultiPtr(ASTMultiMover<Destroyer> mover)
+    ASTMultiPtr(moving::ASTMultiMover<Destroyer> mover)
       : Actions(mover->Actions), Nodes(mover->Nodes), Count(mover->Count) {
-      mover->Nodes = 0;
-      mover->Count = 0;
+      mover.release();
     }
 
     /// Move assignment
-    ASTMultiPtr & operator =(ASTMultiMover<Destroyer> mover) {
-      Actions = mover->Actions;
+    ASTMultiPtr & operator =(moving::ASTMultiMover<Destroyer> mover) {
+      destroy();
       Nodes = mover->Nodes;
       Count = mover->Count;
       mover.release();
@@ -325,45 +350,27 @@ namespace clang
     unsigned size() const { return Count; }
 
     /// Move hook
-    ASTMultiMover<Destroyer> move() {
-      return ASTMultiMover<Destroyer>(*this);
+    operator moving::ASTMultiMover<Destroyer>() {
+      return moving::ASTMultiMover<Destroyer>(*this);
     }
   };
 
   // Out-of-line implementations due to definition dependencies
 
   template <ASTDestroyer Destroyer> inline
-  ASTResultMover<Destroyer>::operator void*() {
-    return Moved.take();
-  }
-
-  template <ASTDestroyer Destroyer> inline
-  ASTResultMover<Destroyer>::operator
-                    ActionBase::ActionResult<DestroyerToUID<Destroyer>::UID>()
-  {
-    if(Moved.isInvalid())
-      return true;
-    return Moved.take();
-  }
-
-  template <ASTDestroyer Destroyer> inline
-  ASTPtrMover<Destroyer>::operator void*() {
-    return Moved.take();
-  }
-
-  template <ASTDestroyer Destroyer> inline
-  void ASTMultiMover<Destroyer>::release() {
+  void moving::ASTMultiMover<Destroyer>::release() {
     Moved.Nodes = 0;
     Moved.Count = 0;
   }
 
   template <ASTDestroyer Destroyer> inline
-  ASTOwningResult<Destroyer>::ASTOwningResult(ASTPtrMover<Destroyer> mover)
+  ASTOwningResult<Destroyer>::ASTOwningResult(
+                                          moving::ASTPtrMover<Destroyer> mover)
     : Actions(mover->Actions), Node(mover->take()), Invalid(false) {}
 
   template <ASTDestroyer Destroyer> inline
   ASTOwningResult<Destroyer> &
-  ASTOwningResult<Destroyer>::operator =(ASTPtrMover<Destroyer> mover) {
+  ASTOwningResult<Destroyer>::operator =(moving::ASTPtrMover<Destroyer> mover) {
     Actions = mover->Actions;
     Node = mover->take();
     Invalid = false;
@@ -371,16 +378,33 @@ namespace clang
   }
 
   template <ASTDestroyer Destroyer> inline
-  ASTOwningPtr<Destroyer>::ASTOwningPtr(ASTResultMover<Destroyer> mover)
+  ASTOwningPtr<Destroyer>::ASTOwningPtr(moving::ASTResultMover<Destroyer> mover)
     : Actions(mover->Actions), Node(mover->take()) {
   }
 
   template <ASTDestroyer Destroyer> inline
   ASTOwningPtr<Destroyer> &
-  ASTOwningPtr<Destroyer>::operator =(ASTResultMover<Destroyer> mover) {
+  ASTOwningPtr<Destroyer>::operator =(moving::ASTResultMover<Destroyer> mover) {
     Actions = mover->Actions;
     Node = mover->take();
     return *this;
+  }
+
+  // Move overloads.
+
+  template <ASTDestroyer Destroyer> inline
+  ASTOwningResult<Destroyer> move(ASTOwningResult<Destroyer> &ptr) {
+    return ASTOwningResult<Destroyer>(moving::ASTResultMover<Destroyer>(ptr));
+  }
+
+  template <ASTDestroyer Destroyer> inline
+  ASTOwningPtr<Destroyer> move(ASTOwningPtr<Destroyer> &ptr) {
+    return ASTOwningPtr<Destroyer>(moving::ASTPtrMover<Destroyer>(ptr));
+  }
+
+  template <ASTDestroyer Destroyer> inline
+  ASTMultiPtr<Destroyer> move(ASTMultiPtr<Destroyer> &ptr) {
+    return ASTMultiPtr<Destroyer>(moving::ASTMultiMover<Destroyer>(ptr));
   }
 }
 

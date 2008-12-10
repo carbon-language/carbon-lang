@@ -529,8 +529,8 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     // See Sema::ActOnCXXMemberDeclarator for details.
     LastDeclInGroup = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
                                                        DeclaratorInfo,
-                                                       BitfieldSize.move(),
-                                                       Init.move(),
+                                                       BitfieldSize.release(),
+                                                       Init.release(),
                                                        LastDeclInGroup);
 
     // If we don't have a comma, it is either the end of the list (a ';')

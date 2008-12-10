@@ -146,7 +146,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     OwningExprResult Idx(Actions, ParseAssignmentExpression());
     if (Idx.isInvalid()) {
       SkipUntil(tok::r_square);
-      return Idx.move();
+      return Idx.result();
     }
     
     // Given an expression, we could either have a designator (if the next
@@ -170,7 +170,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
       
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                          SourceLocation(), 
-                                                         0, Idx.move());
+                                                         0, Idx.release());
     }
 
     // Create designation if we haven't already.
@@ -179,7 +179,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     
     // If this is a normal array designator, remember it.
     if (Tok.isNot(tok::ellipsis)) {
-      Desig->AddDesignator(Designator::getArray(Idx.move()));
+      Desig->AddDesignator(Designator::getArray(Idx.release()));
     } else {
       // Handle the gnu array range extension.
       Diag(Tok, diag::ext_gnu_array_range);
@@ -188,9 +188,10 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
       OwningExprResult RHS(Actions, ParseConstantExpression());
       if (RHS.isInvalid()) {
         SkipUntil(tok::r_square);
-        return RHS.move();
+        return RHS.result();
       }
-      Desig->AddDesignator(Designator::getArrayRange(Idx.move(), RHS.move()));
+      Desig->AddDesignator(Designator::getArrayRange(Idx.release(),
+                                                     RHS.release()));
     }
 
     MatchRHSPunctuation(tok::r_square, StartLoc);
@@ -280,7 +281,7 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
     
     // If we couldn't parse the subelement, bail out.
     if (!SubElt.isInvalid()) {
-      InitExprs.push_back(SubElt.move());
+      InitExprs.push_back(SubElt.release());
     } else {
       InitExprsOk = false;
       

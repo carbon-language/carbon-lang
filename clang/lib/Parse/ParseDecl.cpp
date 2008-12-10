@@ -132,7 +132,7 @@ AttributeList *Parser::ParseAttributes() {
                 SkipUntil(tok::r_paren);
                 break;
               } else {
-                ArgExprs.push_back(ArgExpr.move());
+                ArgExprs.push_back(ArgExpr.release());
               }
               if (Tok.isNot(tok::comma))
                 break;
@@ -164,7 +164,7 @@ AttributeList *Parser::ParseAttributes() {
                 SkipUntil(tok::r_paren);
                 break;
               } else {
-                ArgExprs.push_back(ArgExpr.move());
+                ArgExprs.push_back(ArgExpr.release());
               }
               if (Tok.isNot(tok::comma))
                 break;
@@ -270,13 +270,13 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   while (1) {
     // If a simple-asm-expr is present, parse it.
     if (Tok.is(tok::kw_asm)) {
-      OwningExprResult AsmLabel(Actions, ParseSimpleAsm());
+      OwningExprResult AsmLabel(ParseSimpleAsm());
       if (AsmLabel.isInvalid()) {
         SkipUntil(tok::semi);
         return 0;
       }
       
-      D.setAsmLabel(AsmLabel.move());
+      D.setAsmLabel(AsmLabel.release());
     }
     
     // If attributes are present, parse them.
@@ -294,7 +294,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
         SkipUntil(tok::semi);
         return 0;
       }
-      Actions.AddInitializerToDecl(LastDeclInGroup, Init.move());
+      Actions.AddInitializerToDecl(LastDeclInGroup, Init.release());
     } else if (Tok.is(tok::l_paren)) {
       // Parse C++ direct initializer: '(' expression-list ')'
       SourceLocation LParenLoc = ConsumeParen();
@@ -846,7 +846,7 @@ ParseStructDeclaration(DeclSpec &DS,
       if (Res.isInvalid())
         SkipUntil(tok::semi, true, true);
       else
-        DeclaratorInfo.BitfieldSize = Res.move();
+        DeclaratorInfo.BitfieldSize = Res.release();
     }
     
     // If attributes exist after the declarator, parse them.
@@ -1087,7 +1087,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
                                                       LastEnumConstDecl,
                                                       IdentLoc, Ident,
                                                       EqualLoc,
-                                                      AssignedVal.move());
+                                                      AssignedVal.release());
     EnumConstantDecls.push_back(EnumConstDecl);
     LastEnumConstDecl = EnumConstDecl;
     
@@ -1802,7 +1802,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
         } else {
           // Inform the actions module about the default argument
           Actions.ActOnParamDefaultArgument(Param, EqualLoc,
-                                            DefArgResult.move());
+                                            DefArgResult.release());
         }
       }
       
@@ -1973,7 +1973,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // Remember that we parsed a pointer type, and remember the type-quals.
   D.AddTypeInfo(DeclaratorChunk::getArray(DS.getTypeQualifiers(),
                                           StaticLoc.isValid(), isStar,
-                                          NumElements.move(), StartLoc));
+                                          NumElements.release(), StartLoc));
 }
 
 /// [GNU]   typeof-specifier:
@@ -2000,7 +2000,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     const char *PrevSpec = 0;
     // Check for duplicate type specifiers.
     if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
-                           Result.move()))
+                           Result.release()))
       Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 
     // FIXME: Not accurate, the range gets one token more than it should.
@@ -2035,7 +2035,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     const char *PrevSpec = 0;
     // Check for duplicate type specifiers (e.g. "int typeof(int)").
     if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
-                           Result.move()))
+                           Result.release()))
       Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
   }
   DS.SetRangeEnd(RParenLoc);

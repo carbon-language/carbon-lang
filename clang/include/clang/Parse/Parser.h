@@ -379,8 +379,8 @@ private:
   DeclTy *ParseDeclarationOrFunctionDefinition();
   DeclTy *ParseFunctionDefinition(Declarator &D);
   void ParseKNRParamDeclarations(Declarator &D);
-  ExprResult ParseSimpleAsm();
-  ExprResult ParseAsmStringLiteral();
+  OwningExprResult ParseSimpleAsm();
+  OwningExprResult ParseAsmStringLiteral();
 
   // Objective-C External Declarations
   DeclTy *ParseObjCAtDirectives(); 

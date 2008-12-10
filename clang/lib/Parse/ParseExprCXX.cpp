@@ -226,9 +226,9 @@ Parser::ExprResult Parser::ParseCXXCasts() {
   if (!Result.isInvalid())
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
                                        LAngleBracketLoc, CastTy, RAngleBracketLoc,
-                                       LParenLoc, Result.move(), RParenLoc);
+                                       LParenLoc, Result.release(), RParenLoc);
 
-  return Result.move();
+  return Result.result();
 }
 
 /// ParseCXXTypeid - This handles the C++ typeid expression.
@@ -272,11 +272,11 @@ Parser::ExprResult Parser::ParseCXXTypeid() {
       MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
       Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/false,
-                                      Result.move(), RParenLoc);
+                                      Result.release(), RParenLoc);
     }
   }
 
-  return Result.move();
+  return Result.result();
 }
 
 /// ParseCXXBoolLiteral - This handles the C++ Boolean literals.
@@ -311,8 +311,8 @@ Parser::ExprResult Parser::ParseThrowExpression() {
 
   default:
     OwningExprResult Expr(Actions, ParseAssignmentExpression());
-    if (Expr.isInvalid()) return Expr.move();
-    return Actions.ActOnCXXThrow(ThrowLoc, Expr.move());
+    if (Expr.isInvalid()) return Expr.result();
+    return Actions.ActOnCXXThrow(ThrowLoc, Expr.release());
   }
 }
 
@@ -388,12 +388,12 @@ Parser::ExprResult Parser::ParseCXXCondition() {
 
   // simple-asm-expr[opt]
   if (Tok.is(tok::kw_asm)) {
-    OwningExprResult AsmLabel(Actions, ParseSimpleAsm());
+    OwningExprResult AsmLabel(ParseSimpleAsm());
     if (AsmLabel.isInvalid()) {
       SkipUntil(tok::semi);
       return true;
     }
-    DeclaratorInfo.setAsmLabel(AsmLabel.move());
+    DeclaratorInfo.setAsmLabel(AsmLabel.release());
   }
 
   // If attributes are present, parse them.
@@ -409,8 +409,8 @@ Parser::ExprResult Parser::ParseCXXCondition() {
     return true;
   
   return Actions.ActOnCXXConditionDeclarationExpr(CurScope, StartLoc,
-                                                  DeclaratorInfo,
-                                                  EqualLoc, AssignExpr.move());
+                                                  DeclaratorInfo, EqualLoc,
+                                                  AssignExpr.release());
 }
 
 /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
@@ -786,7 +786,7 @@ void Parser::ParseDirectNewDeclarator(Declarator &D)
     first = false;
 
     D.AddTypeInfo(DeclaratorChunk::getArray(0, /*static=*/false, /*star=*/false,
-                                            Size.move(), LLoc));
+                                            Size.release(), LLoc));
 
     if (MatchRHSPunctuation(tok::r_square, LLoc).isInvalid())
       return;
@@ -853,7 +853,8 @@ Parser::ExprResult Parser::ParseCXXDeleteExpression()
 
   OwningExprResult Operand(Actions, ParseCastExpression(false));
   if (Operand.isInvalid())
-    return Operand.move();
+    return Operand.result();
 
-  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, Operand.move());
+  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete,
+                                Operand.release());
 }

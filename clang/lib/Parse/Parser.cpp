@@ -336,13 +336,13 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     return ParseExternalDeclaration();
   }
   case tok::kw_asm: {
-    OwningExprResult Result(Actions, ParseSimpleAsm());
+    OwningExprResult Result(ParseSimpleAsm());
 
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                      "top-level asm block");
 
     if (!Result.isInvalid())
-      return Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), Result.move());
+      return Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), Result.release());
     return 0;
   }
   case tok::at:
@@ -666,18 +666,18 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 /// [GNU] asm-string-literal:
 ///         string-literal
 ///
-Parser::ExprResult Parser::ParseAsmStringLiteral() {
+Parser::OwningExprResult Parser::ParseAsmStringLiteral() {
   if (!isTokenStringLiteral()) {
     Diag(Tok, diag::err_expected_string_literal);
-    return true;
+    return OwningExprResult(true);
   }
 
   OwningExprResult Res(Actions, ParseStringLiteralExpression());
-  if (Res.isInvalid()) return true;
+  if (Res.isInvalid()) return move(Res);
 
   // TODO: Diagnose: wide string literal in 'asm'
 
-  return Res.move();
+  return move(Res);
 }
 
 /// ParseSimpleAsm
@@ -685,25 +685,25 @@ Parser::ExprResult Parser::ParseAsmStringLiteral() {
 /// [GNU] simple-asm-expr:
 ///         'asm' '(' asm-string-literal ')'
 ///
-Parser::ExprResult Parser::ParseSimpleAsm() {
+Parser::OwningExprResult Parser::ParseSimpleAsm() {
   assert(Tok.is(tok::kw_asm) && "Not an asm!");
   SourceLocation Loc = ConsumeToken();
 
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "asm";
-    return true;
+    return OwningExprResult(true);
   }
 
   ConsumeParen();
 
-  OwningExprResult Result(Actions, ParseAsmStringLiteral());
+  OwningExprResult Result(ParseAsmStringLiteral());
 
   if (Result.isInvalid())
     SkipUntil(tok::r_paren);
   else
     MatchRHSPunctuation(tok::r_paren, Loc);
 
-  return Result.move();
+  return move(Result);
 }
 
 /// TryAnnotateTypeOrScopeToken - If the current token position is on a
