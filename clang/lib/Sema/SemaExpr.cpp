@@ -189,13 +189,21 @@ QualType Sema::UsualArithmeticConversionsType(QualType lhs, QualType rhs) {
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
     // if we have an integer operand, the result is the real floating type.
-    if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
+    if (rhs->isIntegerType()) {
       // convert rhs to the lhs floating point type.
       return lhs;
     }
-    if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
+    if (rhs->isComplexIntegerType()) {
+      // convert rhs to the complex floating point type.
+      return Context.getComplexType(lhs);
+    }
+    if (lhs->isIntegerType()) {
       // convert lhs to the rhs floating point type.
       return rhs;
+    }
+    if (lhs->isComplexIntegerType()) { 
+      // convert lhs to the complex floating point type.
+      return Context.getComplexType(rhs);
     }
     // We have two real floating types, float/complex combos were handled above.
     // Convert the smaller operand to the bigger result.
