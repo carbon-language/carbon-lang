@@ -611,7 +611,7 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   // If we have already compiled the function, return a pointer to its body.
   Function *F = cast<Function>(V);
   void *ResultPtr;
-  if (!DoesntNeedStub)
+  if (!DoesntNeedStub && !TheJIT->isLazyCompilationDisabled())
     // Return the function stub if it's already created.
     ResultPtr = Resolver.getFunctionStubIfAvailable(F);
   else
