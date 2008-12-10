@@ -510,48 +510,48 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.
 
-  // C++ [temp.dep.expr]p3:
-  //   An id-expression is type-dependent if it contains:   
   bool TypeDependent = false;
-
-  //     - an identifier that was declared with a dependent type,
-  if (VD->getType()->isDependentType())
-    TypeDependent = true;
-  //     - FIXME: a template-id that is dependent,
-  //     - a conversion-function-id that specifies a dependent type,
-  else if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName &&
-           Name.getCXXNameType()->isDependentType())
-    TypeDependent = true;
-  //     - a nested-name-specifier that contains a class-name that
-  //       names a dependent type.
-  else if (SS && !SS->isEmpty()) {
-    for (DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep()); 
-         DC; DC = DC->getParent()) {
-      // FIXME: could stop early at namespace scope.
-      if (DC->isCXXRecord()) {
-        CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
-        if (Context.getTypeDeclType(Record)->isDependentType()) {
-          TypeDependent = true;
-          break;
+  bool ValueDependent = false;
+  if (getLangOptions().CPlusPlus) {
+    // C++ [temp.dep.expr]p3:
+    //   An id-expression is type-dependent if it contains:   
+    //     - an identifier that was declared with a dependent type,
+    if (VD->getType()->isDependentType())
+      TypeDependent = true;
+    //     - FIXME: a template-id that is dependent,
+    //     - a conversion-function-id that specifies a dependent type,
+    else if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName &&
+             Name.getCXXNameType()->isDependentType())
+      TypeDependent = true;
+    //     - a nested-name-specifier that contains a class-name that
+    //       names a dependent type.
+    else if (SS && !SS->isEmpty()) {
+      for (DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep()); 
+           DC; DC = DC->getParent()) {
+        // FIXME: could stop early at namespace scope.
+        if (DC->isCXXRecord()) {
+          CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
+          if (Context.getTypeDeclType(Record)->isDependentType()) {
+            TypeDependent = true;
+            break;
+          }
         }
       }
     }
-  }
 
-  // C++ [temp.dep.constexpr]p2:
-  //
-  //   An identifier is value-dependent if it is:
-  bool ValueDependent = false;
-  
-  //     - a name declared with a dependent type,
-  if (TypeDependent)
-    ValueDependent = true;
-  //     - the name of a non-type template parameter,
-  else if (isa<NonTypeTemplateParmDecl>(VD))
-    ValueDependent = true;
-  //    - a constant with integral or enumeration type and is
-  //      initialized with an expression that is value-dependent
-  //      (FIXME!).
+    // C++ [temp.dep.constexpr]p2:
+    //
+    //   An identifier is value-dependent if it is:
+    //     - a name declared with a dependent type,
+    if (TypeDependent)
+      ValueDependent = true;
+    //     - the name of a non-type template parameter,
+    else if (isa<NonTypeTemplateParmDecl>(VD))
+      ValueDependent = true;
+    //    - a constant with integral or enumeration type and is
+    //      initialized with an expression that is value-dependent
+    //      (FIXME!).
+  }
 
   return new DeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc,
                          TypeDependent, ValueDependent);

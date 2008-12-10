@@ -1210,7 +1210,6 @@ QualType ASTContext::getCanonicalType(QualType T) {
                                       DSAT->getSizeModifier(),
                                       DSAT->getIndexTypeQualifier());    
 
-  // FIXME: What is the ownership of size expressions in VLAs?
   VariableArrayType *VAT = cast<VariableArrayType>(AT);
   return getVariableArrayType(NewEltTy, VAT->getSizeExpr(),
                               VAT->getSizeModifier(),
@@ -1283,8 +1282,6 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
                                                   IAT->getSizeModifier(),
                                                  IAT->getIndexTypeQualifier()));
 
-  // FIXME: What is the ownership of size expressions in
-  // dependent-sized array types?
   if (const DependentSizedArrayType *DSAT 
         = dyn_cast<DependentSizedArrayType>(ATy))
     return cast<ArrayType>(
@@ -1293,7 +1290,6 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
                                                 DSAT->getSizeModifier(),
                                                 DSAT->getIndexTypeQualifier()));
   
-  // FIXME: What is the ownership of size expressions in VLAs?
   const VariableArrayType *VAT = cast<VariableArrayType>(ATy);
   return cast<ArrayType>(getVariableArrayType(NewEltTy, VAT->getSizeExpr(),
                                               VAT->getSizeModifier(),
