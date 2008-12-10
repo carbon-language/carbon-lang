@@ -236,7 +236,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 PTHManager::PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
-                       const char* idDataTable, void* perIDCache, 
+                       const char* idDataTable, IdentifierInfo** perIDCache, 
                        Preprocessor& pp)
 : Buf(buf), PerIDCache(perIDCache), FileLookup(fileLookup),
   IdDataTable(idDataTable), ITable(pp.getIdentifierTable()), PP(pp) {}
@@ -324,7 +324,7 @@ IdentifierInfo* PTHManager::ReadIdentifierInfo(const char*& D) {
   --persistentID;
   
   // Check if the IdentifierInfo has already been resolved.
-  IdentifierInfo*& II = ((IdentifierInfo**) PerIDCache)[persistentID];
+  IdentifierInfo*& II = PerIDCache[persistentID];
   if (II) return II;
   
   // Look in the PTH file for the string data for the IdentifierInfo object.
