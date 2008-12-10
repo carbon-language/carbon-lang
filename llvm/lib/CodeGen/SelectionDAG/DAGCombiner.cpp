@@ -4874,7 +4874,8 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     MVT LVT = EVT;
     if (InVec.getOpcode() == ISD::BIT_CONVERT) {
       MVT BCVT = InVec.getOperand(0).getValueType();
-      if (!BCVT.isVector() || EVT.bitsGT(BCVT.getVectorElementType()))
+      if (!BCVT.isVector() || EVT.bitsGT(BCVT.getVectorElementType()) ||
+          VT.getVectorNumElements() != BCVT.getVectorNumElements())
         return SDValue();
       InVec = InVec.getOperand(0);
       EVT = BCVT.getVectorElementType();
