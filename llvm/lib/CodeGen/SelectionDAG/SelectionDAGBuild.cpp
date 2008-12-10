@@ -2960,30 +2960,28 @@ const char *
 SelectionDAGLowering::implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op) {
   SDValue Root = getRoot();   
   SDValue L = DAG.getAtomic(Op, Root, 
-                              getValue(I.getOperand(1)), 
-                              getValue(I.getOperand(2)),
-                              I.getOperand(1));
+                            getValue(I.getOperand(1)), 
+                            getValue(I.getOperand(2)),
+                            I.getOperand(1));
   setValue(&I, L);
   DAG.setRoot(L.getValue(1));
   return 0;
 }
 
-// implVisitAluOverflow - Lower an overflow instrinsics
+// implVisitAluOverflow - Lower arithmetic overflow instrinsics.
 const char *
 SelectionDAGLowering::implVisitAluOverflow(CallInst &I, ISD::NodeType Op) {
-    SDValue Op1 = getValue(I.getOperand(1));
-    SDValue Op2 = getValue(I.getOperand(2));
+  SDValue Op1 = getValue(I.getOperand(1));
+  SDValue Op2 = getValue(I.getOperand(2));
 
-    MVT ValueVTs[] = { Op1.getValueType(), MVT::i1 };
-    SDValue Ops[] = { Op1, Op2 };
+  MVT ValueVTs[] = { Op1.getValueType(), MVT::i1 };
+  SDValue Ops[] = { Op1, Op2 };
 
-    SDValue Result =
-      DAG.getNode(Op,
-                  DAG.getVTList(&ValueVTs[0], 2), &Ops[0], 2);
+  SDValue Result = DAG.getNode(Op, DAG.getVTList(&ValueVTs[0], 2), &Ops[0], 2);
 
-    setValue(&I, Result);
-    return 0;
-  }
+  setValue(&I, Result);
+  return 0;
+}
 
 /// visitExp - Lower an exp intrinsic. Handles the special sequences for
 /// limited-precision mode.
