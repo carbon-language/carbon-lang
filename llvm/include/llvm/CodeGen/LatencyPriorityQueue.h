@@ -115,7 +115,7 @@ public:
 
 private:
     void CalculatePriorities();
-    int CalcLatency(const SUnit &SU);
+    void CalcLatency(const SUnit &SU);
     void AdjustPriorityOfUnscheduledPreds(SUnit *SU);
     SUnit *getSingleUnscheduledPred(SUnit *SU);
   };
