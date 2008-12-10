@@ -85,7 +85,7 @@ static const User *isGEP(const Value *V) {
 }
 
 static const Value *GetGEPOperands(const Value *V, 
-                                   SmallVector<Value*, 16> &GEPOps){
+                                   SmallVector<Value*, 16> &GEPOps) {
   assert(GEPOps.empty() && "Expect empty list to populate!");
   GEPOps.insert(GEPOps.end(), cast<User>(V)->op_begin()+1,
                 cast<User>(V)->op_end());
@@ -369,8 +369,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 
 
 // alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
-// as array references.  Note that this function is heavily tail recursive.
-// Hopefully we have a smart C++ compiler.  :)
+// as array references.
 //
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
@@ -389,13 +388,14 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   if (!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType()))
     return NoAlias;  // Scalars cannot alias each other
 
-  // Strip off cast instructions...
+  // Strip off cast instructions.   Since V1 and V2 are pointers, they must be
+  // pointer<->pointer bitcasts.
   if (const BitCastInst *I = dyn_cast<BitCastInst>(V1))
     return alias(I->getOperand(0), V1Size, V2, V2Size);
   if (const BitCastInst *I = dyn_cast<BitCastInst>(V2))
     return alias(V1, V1Size, I->getOperand(0), V2Size);
 
-  // Figure out what objects these things are pointing to if we can...
+  // Figure out what objects these things are pointing to if we can.
   const Value *O1 = V1->getUnderlyingObject();
   const Value *O2 = V2->getUnderlyingObject();
 
@@ -438,21 +438,35 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   // constant expression getelementptrs here.
   //
   if (isGEP(V1) && isGEP(V2)) {
+    const User *GEP1 = cast<User>(V1);
+    const User *GEP2 = cast<User>(V2);
+    
+    // If V1 and V2 are identical GEPs, just recurse down on both of them.
+    // This allows us to analyze things like:
+    //   P = gep A, 0, i, 1
+    //   Q = gep B, 0, i, 1
+    // by just analyzing A and B.  This is even safe for variable indices.
+    if (GEP1->getType() == GEP2->getType() &&
+        GEP1->getNumOperands() == GEP2->getNumOperands() &&
+        GEP1->getOperand(0)->getType() == GEP2->getOperand(0)->getType() &&
+        // All operands are the same, ignoring the base.
+        std::equal(GEP1->op_begin()+1, GEP1->op_end(), GEP2->op_begin()+1))
+      return alias(GEP1->getOperand(0), V1Size, GEP2->getOperand(0), V2Size);
+    
+    
     // Drill down into the first non-gep value, to test for must-aliasing of
     // the base pointers.
-    const User *G = cast<User>(V1);
-    while (isGEP(G->getOperand(0)) &&
-           G->getOperand(1) ==
-           Constant::getNullValue(G->getOperand(1)->getType()))
-      G = cast<User>(G->getOperand(0));
-    const Value *BasePtr1 = G->getOperand(0);
+    while (isGEP(GEP1->getOperand(0)) &&
+           GEP1->getOperand(1) ==
+           Constant::getNullValue(GEP1->getOperand(1)->getType()))
+      GEP1 = cast<User>(GEP1->getOperand(0));
+    const Value *BasePtr1 = GEP1->getOperand(0);
 
-    G = cast<User>(V2);
-    while (isGEP(G->getOperand(0)) &&
-           G->getOperand(1) ==
-           Constant::getNullValue(G->getOperand(1)->getType()))
-      G = cast<User>(G->getOperand(0));
-    const Value *BasePtr2 = G->getOperand(0);
+    while (isGEP(GEP2->getOperand(0)) &&
+           GEP2->getOperand(1) ==
+           Constant::getNullValue(GEP2->getOperand(1)->getType()))
+      GEP2 = cast<User>(GEP2->getOperand(0));
+    const Value *BasePtr2 = GEP2->getOperand(0);
 
     // Do the base pointers alias?
     AliasResult BaseAlias = alias(BasePtr1, ~0U, BasePtr2, ~0U);
