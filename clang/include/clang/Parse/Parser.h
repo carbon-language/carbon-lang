@@ -305,6 +305,44 @@ private:
   //===--------------------------------------------------------------------===//
   // Scope manipulation
   
+  /// ParseScope - Introduces a new scope for parsing. The kind of
+  /// scope is determined by ScopeFlags. Objects of this type should
+  /// be created on the stack to coincide with the position where the
+  /// parser enters the new scope, and this object's constructor will
+  /// create that new scope. Similarly, once the object is destroyed
+  /// the parser will exit the scope.
+  class ParseScope {
+    Parser *Self;
+    ParseScope(const ParseScope&); // do not implement
+    ParseScope& operator=(const ParseScope&); // do not implement
+
+  public:
+    // ParseScope - Construct a new object to manage a scope in the
+    // parser Self where the new Scope is created with the flags
+    // ScopeFlags, but only when ManageScope is true (the default). If
+    // ManageScope is false, this object does nothing.
+    ParseScope(Parser *Self, unsigned ScopeFlags, bool ManageScope = true) 
+      : Self(Self) {
+      if (ManageScope)
+        Self->EnterScope(ScopeFlags);
+      else
+        this->Self = 0;
+    }
+
+    // Exit - Exit the scope associated with this object now, rather
+    // than waiting until the object is destroyed.
+    void Exit() {
+      if (Self) {
+        Self->ExitScope();
+        Self = 0;
+      }
+    }
+
+    ~ParseScope() {
+      Exit();
+    }
+  };
+
   /// EnterScope - Start a new scope.
   void EnterScope(unsigned ScopeFlags);
   

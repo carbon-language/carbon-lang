@@ -41,16 +41,13 @@ Parser::DeclTy *Parser::ParseTemplateDeclaration(unsigned Context) {
   SourceLocation TemplateLoc = ConsumeToken();
   
   // Enter template-parameter scope.
-  EnterScope(Scope::TemplateParamScope);
+  ParseScope TemplateParmScope(this, Scope::TemplateParamScope);
 
   // Try to parse the template parameters, and the declaration if
   // successful.
   DeclTy *TemplateDecl = 0;
   if(ParseTemplateParameters(0))
     TemplateDecl = ParseDeclarationOrFunctionDefinition();
-
-  // Leave template-parameter scope.
-  ExitScope();
 
   return TemplateDecl;
 }

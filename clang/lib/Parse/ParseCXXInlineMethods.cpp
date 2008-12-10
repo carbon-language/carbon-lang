@@ -65,7 +65,7 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
 /// (non-nested) C++ class. Now go over the stack of lexed methods that were
 /// collected during its parsing and parse them all.
 void Parser::ParseLexedMethodDefs() {
-  while (!getCurTopClassStack().empty()) {
+  for (; !getCurTopClassStack().empty(); getCurTopClassStack().pop()) {
     LexedMethod &LM = getCurTopClassStack().top();
 
     assert(!LM.Toks.empty() && "Empty body!");
@@ -81,15 +81,13 @@ void Parser::ParseLexedMethodDefs() {
 
     // Parse the method body. Function body parsing code is similar enough
     // to be re-used for method bodies as well.
-    EnterScope(Scope::FnScope|Scope::DeclScope);
+    ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope);
     Actions.ActOnStartOfFunctionDef(CurScope, LM.D);
 
     if (Tok.is(tok::colon))
       ParseConstructorInitializer(LM.D);
 
     ParseFunctionStatementBody(LM.D, Tok.getLocation(), Tok.getLocation());
-
-    getCurTopClassStack().pop();
   }
 }
 

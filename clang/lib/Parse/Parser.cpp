@@ -287,7 +287,7 @@ bool Parser::ParseTopLevelDecl(DeclTy*& Result) {
 ///         external-declaration
 ///         translation-unit external-declaration
 void Parser::ParseTranslationUnit() {
-  Initialize();  // pushes a scope.
+  Initialize();
 
   DeclTy *Res;
   while (!ParseTopLevelDecl(Res))
@@ -526,7 +526,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   }
 
   // Enter a scope for the function body.
-  EnterScope(Scope::FnScope|Scope::DeclScope);
+  ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
 
   // Tell the actions module that we have entered a function definition with the
   // specified Declarator for the function.
@@ -549,7 +549,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 
   // Enter function-declaration scope, limiting any declarators to the
   // function prototype scope, including parameter declarators.
-  EnterScope(Scope::FnScope|Scope::DeclScope);
+  ParseScope PrototypeScope(this, Scope::FnScope|Scope::DeclScope);
 
   // Read all the argument declarations.
   while (isDeclarationSpecifier()) {
@@ -652,9 +652,6 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
         ConsumeToken();
     }
   }
-
-  // Leave prototype scope.
-  ExitScope();
 
   // The actions module must verify that all arguments were declared.
 }

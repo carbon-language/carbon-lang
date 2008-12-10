@@ -1159,8 +1159,8 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
   // argument decls, decls within the compound expression, etc.  This also
   // allows determining whether a variable reference inside the block is
   // within or outside of the block.
-  EnterScope(Scope::BlockScope|Scope::FnScope|Scope::BreakScope|
-             Scope::ContinueScope|Scope::DeclScope);
+  ParseScope BlockScope(this, Scope::BlockScope|Scope::FnScope|Scope::BreakScope|
+                              Scope::ContinueScope|Scope::DeclScope);
 
   // Inform sema that we are starting a block.
   Actions.ActOnBlockStart(CaretLoc, CurScope);
@@ -1179,7 +1179,6 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
       // If there was an error parsing the arguments, they may have tried to use
       // ^(x+y) which requires an argument list.  Just skip the whole block
       // literal.
-      ExitScope();
       return true;
     }
   } else {
@@ -1200,7 +1199,6 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
       Actions.ActOnBlockError(CaretLoc, CurScope);
     }
   }
-  ExitScope();
   return Result.result();
 }
 

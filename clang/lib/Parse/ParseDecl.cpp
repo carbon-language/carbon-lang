@@ -1728,7 +1728,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
   // Enter function-declaration scope, limiting any declarators to the
   // function prototype scope, including parameter declarators.
-  EnterScope(Scope::FnScope|Scope::DeclScope);
+  ParseScope PrototypeScope(this, Scope::FnScope|Scope::DeclScope);
   
   bool IsVariadic = false;
   while (1) {
@@ -1818,7 +1818,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   }
   
   // Leave prototype scope.
-  ExitScope();
+  PrototypeScope.Exit();
   
   // If we have the closing ')', eat it.
   MatchRHSPunctuation(tok::r_paren, LParenLoc);

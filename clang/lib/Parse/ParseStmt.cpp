@@ -333,12 +333,10 @@ Parser::StmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
   
   // Enter a scope to hold everything within the compound stmt.  Compound
   // statements can always hold declarations.
-  EnterScope(Scope::DeclScope);
+  ParseScope CompoundScope(this, Scope::DeclScope);
 
   // Parse the statements in the body.
   OwningStmtResult Body(Actions, ParseCompoundStatementBody(isStmtExpr));
-
-  ExitScope();
   return Body.result();
 }
 
@@ -446,8 +444,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
   // while, for, and switch statements are local to the if, while, for, or
   // switch statement (including the controlled statement).
   //
-  if (C99orCXX)
-    EnterScope(Scope::DeclScope | Scope::ControlScope);
+  ParseScope IfScope(this, Scope::DeclScope | Scope::ControlScope, C99orCXX);
 
   // Parse the condition.
   OwningExprResult CondExp(Actions);
@@ -461,8 +458,6 @@ Parser::StmtResult Parser::ParseIfStatement() {
 
   if (CondExp.isInvalid()) {
     SkipUntil(tok::semi);
-    if (C99orCXX)
-      ExitScope();
     return true;
   }
   
@@ -484,15 +479,15 @@ Parser::StmtResult Parser::ParseIfStatement() {
   //    would have to notify ParseStatement not to create a new scope. It's
   //    simpler to let it create a new scope.
   //
-  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
-  if (NeedsInnerScope) EnterScope(Scope::DeclScope);
+  ParseScope InnerScope(this, Scope::DeclScope, 
+                        C99orCXX && Tok.isNot(tok::l_brace));
 
   // Read the 'then' stmt.
   SourceLocation ThenStmtLoc = Tok.getLocation();
   OwningStmtResult ThenStmt(Actions, ParseStatement());
 
   // Pop the 'if' scope if needed.
-  if (NeedsInnerScope) ExitScope();
+  InnerScope.Exit();
   
   // If it has an else, parse it.
   SourceLocation ElseLoc;
@@ -511,18 +506,17 @@ Parser::StmtResult Parser::ParseIfStatement() {
     // The substatement in a selection-statement (each substatement, in the else
     // form of the if statement) implicitly defines a local scope.
     //
-    NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
-    if (NeedsInnerScope) EnterScope(Scope::DeclScope);
+    ParseScope InnerScope(this, Scope::DeclScope, 
+                          C99orCXX && Tok.isNot(tok::l_brace));
 
     ElseStmtLoc = Tok.getLocation();
     ElseStmt = ParseStatement();
 
     // Pop the 'else' scope if needed.
-    if (NeedsInnerScope) ExitScope();
+    InnerScope.Exit();
   }
   
-  if (C99orCXX)
-    ExitScope();
+  IfScope.Exit();
 
   // If the then or else stmt is invalid and the other is valid (and present),
   // make turn the invalid one into a null stmt to avoid dropping the other 
@@ -572,10 +566,10 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   // while, for, and switch statements are local to the if, while, for, or
   // switch statement (including the controlled statement).
   //
-  if (C99orCXX)
-    EnterScope(Scope::BreakScope | Scope::DeclScope | Scope::ControlScope);
-  else
-    EnterScope(Scope::BreakScope);
+  unsigned ScopeFlags 
+    = C99orCXX? Scope::BreakScope | Scope::DeclScope | Scope::ControlScope
+              : Scope::BreakScope;
+  ParseScope SwitchScope(this, ScopeFlags);
 
   // Parse the condition.
   OwningExprResult Cond(Actions);
@@ -587,10 +581,8 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
     Cond = ParseSimpleParenExpression();
   }
   
-  if (Cond.isInvalid()) {
-    ExitScope();
+  if (Cond.isInvalid())
     return true;
-  }
 
   OwningStmtResult Switch(Actions,
                           Actions.ActOnStartOfSwitchStmt(Cond.release()));
@@ -606,21 +598,21 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   // See comments in ParseIfStatement for why we create a scope for the
   // condition and a new scope for substatement in C++.
   //
-  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
-  if (NeedsInnerScope) EnterScope(Scope::DeclScope);
+  ParseScope InnerScope(this, Scope::DeclScope, 
+                        C99orCXX && Tok.isNot(tok::l_brace));
   
   // Read the body statement.
   OwningStmtResult Body(Actions, ParseStatement());
 
   // Pop the body scope if needed.
-  if (NeedsInnerScope) ExitScope();
+  InnerScope.Exit();
   
   if (Body.isInvalid()) {
     Body = Actions.ActOnNullStmt(Tok.getLocation());
     // FIXME: Remove the case statement list from the Switch statement.
   }
-  
-  ExitScope();
+
+  SwitchScope.Exit();
   
   return Actions.ActOnFinishSwitchStmt(SwitchLoc, Switch.release(),
                                        Body.release());
@@ -655,11 +647,13 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   // while, for, and switch statements are local to the if, while, for, or
   // switch statement (including the controlled statement).
   //
+  unsigned ScopeFlags;
   if (C99orCXX)
-    EnterScope(Scope::BreakScope | Scope::ContinueScope |
-               Scope::DeclScope  | Scope::ControlScope);
+    ScopeFlags = Scope::BreakScope | Scope::ContinueScope |
+                 Scope::DeclScope  | Scope::ControlScope;
   else
-    EnterScope(Scope::BreakScope | Scope::ContinueScope);
+    ScopeFlags = Scope::BreakScope | Scope::ContinueScope;
+  ParseScope WhileScope(this, ScopeFlags);
 
   // Parse the condition.
   OwningExprResult Cond(Actions);
@@ -682,16 +676,15 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   // See comments in ParseIfStatement for why we create a scope for the
   // condition and a new scope for substatement in C++.
   //
-  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
-  if (NeedsInnerScope) EnterScope(Scope::DeclScope);
+  ParseScope InnerScope(this, Scope::DeclScope, 
+                        C99orCXX && Tok.isNot(tok::l_brace));
   
   // Read the body statement.
   OwningStmtResult Body(Actions, ParseStatement());
 
   // Pop the body scope if needed.
-  if (NeedsInnerScope) ExitScope();
-
-  ExitScope();
+  InnerScope.Exit();
+  WhileScope.Exit();
   
   if (Cond.isInvalid() || Body.isInvalid()) return true;
   
@@ -708,10 +701,13 @@ Parser::StmtResult Parser::ParseDoStatement() {
   
   // C99 6.8.5p5 - In C99, the do statement is a block.  This is not
   // the case for C90.  Start the loop scope.
+  unsigned ScopeFlags;
   if (getLang().C99)
-    EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
+    ScopeFlags = Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope;
   else
-    EnterScope(Scope::BreakScope | Scope::ContinueScope);
+    ScopeFlags = Scope::BreakScope | Scope::ContinueScope;
+  
+  ParseScope DoScope(this, ScopeFlags);
 
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause. We only do this
@@ -721,18 +717,17 @@ Parser::StmtResult Parser::ParseDoStatement() {
   // The substatement in an iteration-statement implicitly defines a local scope
   // which is entered and exited each time through the loop.
   //
-  bool NeedsInnerScope =
-    (getLang().C99 || getLang().CPlusPlus) && Tok.isNot(tok::l_brace);
-  if (NeedsInnerScope) EnterScope(Scope::DeclScope);
+  ParseScope InnerScope(this, Scope::DeclScope,
+                        (getLang().C99 || getLang().CPlusPlus) && 
+                        Tok.isNot(tok::l_brace));
   
   // Read the body statement.
   OwningStmtResult Body(Actions, ParseStatement());
 
   // Pop the body scope if needed.
-  if (NeedsInnerScope) ExitScope();
+  InnerScope.Exit();
 
   if (Tok.isNot(tok::kw_while)) {
-    ExitScope();
     if (!Body.isInvalid()) {
       Diag(Tok, diag::err_expected_while);
       Diag(DoLoc, diag::note_matching) << "do";
@@ -743,7 +738,6 @@ Parser::StmtResult Parser::ParseDoStatement() {
   SourceLocation WhileLoc = ConsumeToken();
   
   if (Tok.isNot(tok::l_paren)) {
-    ExitScope();
     Diag(Tok, diag::err_expected_lparen_after) << "do/while";
     SkipUntil(tok::semi, false, true);
     return true;
@@ -751,8 +745,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   
   // Parse the condition.
   OwningExprResult Cond(Actions, ParseSimpleParenExpression());
-
-  ExitScope();
+  DoScope.Exit();
 
   if (Cond.isInvalid() || Body.isInvalid()) return true;
 
@@ -799,11 +792,14 @@ Parser::StmtResult Parser::ParseForStatement() {
   // Names declared in the for-init-statement are in the same declarative-region
   // as those declared in the condition.
   //
+  unsigned ScopeFlags;
   if (C99orCXX)
-    EnterScope(Scope::BreakScope | Scope::ContinueScope |
-               Scope::DeclScope  | Scope::ControlScope);
+    ScopeFlags = Scope::BreakScope | Scope::ContinueScope |
+                 Scope::DeclScope  | Scope::ControlScope;
   else
-    EnterScope(Scope::BreakScope | Scope::ContinueScope);
+    ScopeFlags = Scope::BreakScope | Scope::ContinueScope;
+
+  ParseScope ForScope(this, ScopeFlags);
 
   SourceLocation LParenLoc = ConsumeParen();
   OwningExprResult Value(Actions);
@@ -891,17 +887,17 @@ Parser::StmtResult Parser::ParseForStatement() {
   // See comments in ParseIfStatement for why we create a scope for
   // for-init-statement/condition and a new scope for substatement in C++.
   //
-  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
-  if (NeedsInnerScope) EnterScope(Scope::DeclScope);
+  ParseScope InnerScope(this, Scope::DeclScope, 
+                        C99orCXX && Tok.isNot(tok::l_brace));
 
   // Read the body statement.
   OwningStmtResult Body(Actions, ParseStatement());
 
   // Pop the body scope if needed.
-  if (NeedsInnerScope) ExitScope();
+  InnerScope.Exit();
 
   // Leave the for-scope.
-  ExitScope();
+  ForScope.Exit();
 
   if (Body.isInvalid())
     return true;
@@ -1213,9 +1209,6 @@ Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl,
   // If the function body could not be parsed, make a bogus compoundstmt.
   if (FnBody.isInvalid())
     FnBody = Actions.ActOnCompoundStmt(L, R, 0, 0, false);
-  
-  // Leave the function body scope.
-  ExitScope();
   
   return Actions.ActOnFinishFunctionBody(Decl, FnBody.release());
 }

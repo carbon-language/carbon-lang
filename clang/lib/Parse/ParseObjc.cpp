@@ -1214,11 +1214,11 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   }
   // Enter a scope to hold everything within the compound stmt.  Compound
   // statements can always hold declarations.
-  EnterScope(Scope::DeclScope);
+  ParseScope BodyScope(this, Scope::DeclScope);
 
   OwningStmtResult SynchBody(Actions, ParseCompoundStatementBody());
 
-  ExitScope();
+  BodyScope.Exit();
   if (SynchBody.isInvalid())
     SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
   return Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.release(),
@@ -1246,9 +1246,9 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   }
   OwningStmtResult CatchStmts(Actions);
   OwningStmtResult FinallyStmt(Actions);
-  EnterScope(Scope::DeclScope);
+  ParseScope TryScope(this, Scope::DeclScope);
   OwningStmtResult TryBody(Actions, ParseCompoundStatementBody());
-  ExitScope();
+  TryScope.Exit();
   if (TryBody.isInvalid())
     TryBody = Actions.ActOnNullStmt(Tok.getLocation());
 
@@ -1267,7 +1267,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       ConsumeToken(); // consume catch
       if (Tok.is(tok::l_paren)) {
         ConsumeParen();
-        EnterScope(Scope::DeclScope);
+        ParseScope CatchScope(this, Scope::DeclScope);
         if (Tok.isNot(tok::ellipsis)) {
           DeclSpec DS;
           ParseDeclarationSpecifiers(DS);
@@ -1297,7 +1297,6 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
           RParenLoc, FirstPart.release(), CatchBody.release(),
           CatchStmts.release());
-        ExitScope();
       } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)
           << "@catch clause";
@@ -1307,8 +1306,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     } else {
       assert(Tok.isObjCAtKeyword(tok::objc_finally) && "Lookahead confused?");
       ConsumeToken(); // consume finally
-      EnterScope(Scope::DeclScope);
-
+      ParseScope FinallyScope(this, Scope::DeclScope);
 
       OwningStmtResult FinallyBody(Actions, true);
       if (Tok.is(tok::l_brace))
@@ -1320,7 +1318,6 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc,
                                                    FinallyBody.release());
       catch_or_finally_seen = true;
-      ExitScope();
       break;
     }
   }
@@ -1355,7 +1352,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   SourceLocation BraceLoc = Tok.getLocation();
   
   // Enter a scope for the method body.
-  EnterScope(Scope::FnScope|Scope::DeclScope);
+  ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
   
   // Tell the actions module that we have entered a method definition with the
   // specified Declarator for the method.
@@ -1368,7 +1365,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
     FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc, 0, 0, false);
   
   // Leave the function body scope.
-  ExitScope();
+  BodyScope.Exit();
   
   // TODO: Pass argument information.
   Actions.ActOnFinishFunctionBody(MDecl, FnBody.release());

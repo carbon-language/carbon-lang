@@ -67,7 +67,7 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
     SourceLocation LBrace = ConsumeBrace();
 
     // Enter a scope for the namespace.
-    EnterScope(Scope::DeclScope);
+    ParseScope NamespaceScope(this, Scope::DeclScope);
 
     DeclTy *NamespcDecl =
       Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace);
@@ -76,7 +76,7 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
       ParseExternalDeclaration();
     
     // Leave the namespace scope.
-    ExitScope();
+    NamespaceScope.Exit();
 
     SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
     Actions.ActOnFinishNamespaceDef(NamespcDecl, RBrace);
@@ -590,7 +590,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   }
 
   // Enter a scope for the class.
-  EnterScope(Scope::CXXClassScope|Scope::DeclScope);
+  ParseScope ClassScope(this, Scope::CXXClassScope|Scope::DeclScope);
 
   Actions.ActOnStartCXXClassDef(CurScope, TagDecl, LBraceLoc);
 
@@ -659,7 +659,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   }
 
   // Leave the class scope.
-  ExitScope();
+  ClassScope.Exit();
 
   Actions.ActOnFinishCXXClassDef(TagDecl);
 }
