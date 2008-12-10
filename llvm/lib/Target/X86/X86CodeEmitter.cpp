@@ -555,7 +555,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
       MCE.emitByte(BaseOpcode);
       emitConstant(0, X86InstrInfo::sizeOfImm(Desc));
       // Remember PIC base.
-      PICBaseOffset = MCE.getCurrentPCOffset();
+      PICBaseOffset = (intptr_t) MCE.getCurrentPCOffset();
       X86JITInfo *JTI = TM.getJITInfo();
       JTI->setPICBase(MCE.getCurrentPCValue());
       break;

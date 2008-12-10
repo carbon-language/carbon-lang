@@ -22,7 +22,7 @@ namespace llvm {
 
   class X86JITInfo : public TargetJITInfo {
     X86TargetMachine &TM;
-    intptr_t PICBase;
+    uintptr_t PICBase;
     char* TLSOffset;
   public:
     explicit X86JITInfo(X86TargetMachine &tm) : TM(tm) {
@@ -51,7 +51,7 @@ namespace llvm {
 
     /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
     /// specific basic block.
-    virtual intptr_t getPICJumpTableEntry(intptr_t BB, intptr_t JTBase);
+    virtual uintptr_t getPICJumpTableEntry(uintptr_t BB, uintptr_t JTBase);
 
     /// getLazyResolverFunction - Expose the lazy resolver to the JIT.
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
@@ -69,8 +69,8 @@ namespace llvm {
 
     /// setPICBase / getPICBase - Getter / setter of PICBase, used to compute
     /// PIC jumptable entry.
-    void setPICBase(intptr_t Base) { PICBase = Base; }
-    intptr_t getPICBase() const { return PICBase; }
+    void setPICBase(uintptr_t Base) { PICBase = Base; }
+    uintptr_t getPICBase() const { return PICBase; }
   };
 }
 

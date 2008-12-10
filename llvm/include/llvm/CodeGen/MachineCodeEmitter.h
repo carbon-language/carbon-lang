@@ -98,7 +98,7 @@ public:
   /// written to the output stream in little-endian format.
   ///
   void emitWordLE(unsigned W) {
-    if (CurBufferPtr+4 <= BufferEnd) {
+    if (4 <= BufferEnd-CurBufferPtr) {
       *CurBufferPtr++ = (unsigned char)(W >>  0);
       *CurBufferPtr++ = (unsigned char)(W >>  8);
       *CurBufferPtr++ = (unsigned char)(W >> 16);
@@ -112,7 +112,7 @@ public:
   /// written to the output stream in big-endian format.
   ///
   void emitWordBE(unsigned W) {
-    if (CurBufferPtr+4 <= BufferEnd) {
+    if (4 <= BufferEnd-CurBufferPtr) {
       *CurBufferPtr++ = (unsigned char)(W >> 24);
       *CurBufferPtr++ = (unsigned char)(W >> 16);
       *CurBufferPtr++ = (unsigned char)(W >>  8);
@@ -126,7 +126,7 @@ public:
   /// written to the output stream in little-endian format.
   ///
   void emitDWordLE(uint64_t W) {
-    if (CurBufferPtr+8 <= BufferEnd) {
+    if (8 <= BufferEnd-CurBufferPtr) {
       *CurBufferPtr++ = (unsigned char)(W >>  0);
       *CurBufferPtr++ = (unsigned char)(W >>  8);
       *CurBufferPtr++ = (unsigned char)(W >> 16);
@@ -144,7 +144,7 @@ public:
   /// written to the output stream in big-endian format.
   ///
   void emitDWordBE(uint64_t W) {
-    if (CurBufferPtr+8 <= BufferEnd) {
+    if (8 <= BufferEnd-CurBufferPtr) {
       *CurBufferPtr++ = (unsigned char)(W >> 56);
       *CurBufferPtr++ = (unsigned char)(W >> 48);
       *CurBufferPtr++ = (unsigned char)(W >> 40);
@@ -162,12 +162,15 @@ public:
   /// alignment (saturated to BufferEnd of course).
   void emitAlignment(unsigned Alignment) {
     if (Alignment == 0) Alignment = 1;
-    // Move the current buffer ptr up to the specified alignment.
-    CurBufferPtr =
-      (unsigned char*)(((intptr_t)CurBufferPtr+Alignment-1) &
-                       ~(intptr_t)(Alignment-1));
-    if (CurBufferPtr > BufferEnd)
+
+    if(Alignment <= (uintptr_t)(BufferEnd-CurBufferPtr)) {
+      // Move the current buffer ptr up to the specified alignment.
+      CurBufferPtr =
+        (unsigned char*)(((uintptr_t)CurBufferPtr+Alignment-1) &
+                         ~(uintptr_t)(Alignment-1));
+    } else {
       CurBufferPtr = BufferEnd;
+    }
   }
   
 
@@ -210,7 +213,7 @@ public:
   
   /// emitInt32 - Emit a int32 directive.
   void emitInt32(int Value) {
-    if (CurBufferPtr+4 <= BufferEnd) {
+    if (4 <= BufferEnd-CurBufferPtr) {
       *((uint32_t*)CurBufferPtr) = Value;
       CurBufferPtr += 4;
     } else {
@@ -220,7 +223,7 @@ public:
 
   /// emitInt64 - Emit a int64 directive.
   void emitInt64(uint64_t Value) {
-    if (CurBufferPtr+8 <= BufferEnd) {
+    if (8 <= BufferEnd-CurBufferPtr) {
       *((uint64_t*)CurBufferPtr) = Value;
       CurBufferPtr += 8;
     } else {
@@ -247,18 +250,20 @@ public:
   /// allocateSpace - Allocate a block of space in the current output buffer,
   /// returning null (and setting conditions to indicate buffer overflow) on
   /// failure.  Alignment is the alignment in bytes of the buffer desired.
-  virtual void *allocateSpace(intptr_t Size, unsigned Alignment) {
+  virtual void *allocateSpace(uintptr_t Size, unsigned Alignment) {
     emitAlignment(Alignment);
-    void *Result = CurBufferPtr;
-    
-    // Allocate the space.
-    CurBufferPtr += Size;
+    void *Result;
     
     // Check for buffer overflow.
-    if (CurBufferPtr >= BufferEnd) {
+    if (Size >= (uintptr_t)(BufferEnd-CurBufferPtr)) {
       CurBufferPtr = BufferEnd;
       Result = 0;
+    } else {
+      // Allocate the space.
+      Result = CurBufferPtr;
+      CurBufferPtr += Size;
     }
+    
     return Result;
   }
 
@@ -270,13 +275,13 @@ public:
   /// getCurrentPCValue - This returns the address that the next emitted byte
   /// will be output to.
   ///
-  virtual intptr_t getCurrentPCValue() const {
-    return (intptr_t)CurBufferPtr;
+  virtual uintptr_t getCurrentPCValue() const {
+    return (uintptr_t)CurBufferPtr;
   }
 
   /// getCurrentPCOffset - Return the offset from the start of the emitted
   /// buffer that we are currently writing to.
-  intptr_t getCurrentPCOffset() const {
+  uintptr_t getCurrentPCOffset() const {
     return CurBufferPtr-BufferBegin;
   }
 
@@ -290,23 +295,23 @@ public:
   /// getConstantPoolEntryAddress - Return the address of the 'Index' entry in
   /// the constant pool that was last emitted with the emitConstantPool method.
   ///
-  virtual intptr_t getConstantPoolEntryAddress(unsigned Index) const = 0;
+  virtual uintptr_t getConstantPoolEntryAddress(unsigned Index) const = 0;
 
   /// getJumpTableEntryAddress - Return the address of the jump table with index
   /// 'Index' in the function that last called initJumpTableInfo.
   ///
-  virtual intptr_t getJumpTableEntryAddress(unsigned Index) const = 0;
+  virtual uintptr_t getJumpTableEntryAddress(unsigned Index) const = 0;
   
   /// getMachineBasicBlockAddress - Return the address of the specified
   /// MachineBasicBlock, only usable after the label for the MBB has been
   /// emitted.
   ///
-  virtual intptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const= 0;
+  virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const= 0;
 
   /// getLabelAddress - Return the address of the specified LabelID, only usable
   /// after the LabelID has been emitted.
   ///
-  virtual intptr_t getLabelAddress(uint64_t LabelID) const = 0;
+  virtual uintptr_t getLabelAddress(uint64_t LabelID) const = 0;
   
   /// Specifies the MachineModuleInfo object. This is used for exception handling
   /// purposes.

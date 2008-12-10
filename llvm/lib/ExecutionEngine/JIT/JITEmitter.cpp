@@ -467,7 +467,7 @@ namespace {
     /// MBBLocations - This vector is a mapping from MBB ID's to their address.
     /// It is filled in by the StartMachineBasicBlock callback and queried by
     /// the getMachineBasicBlockAddress callback.
-    std::vector<intptr_t> MBBLocations;
+    std::vector<uintptr_t> MBBLocations;
 
     /// ConstantPool - The constant pool for the current function.
     ///
@@ -493,7 +493,7 @@ namespace {
 
     /// LabelLocations - This vector is a mapping from Label ID's to their 
     /// address.
-    std::vector<intptr_t> LabelLocations;
+    std::vector<uintptr_t> LabelLocations;
 
     /// MMI - Machine module info for exception informations
     MachineModuleInfo* MMI;
@@ -537,7 +537,7 @@ namespace {
 
     /// allocateSpace - Reserves space in the current block if any, or
     /// allocate a new one of the given size.
-    virtual void *allocateSpace(intptr_t Size, unsigned Alignment);
+    virtual void *allocateSpace(uintptr_t Size, unsigned Alignment);
 
     virtual void addRelocation(const MachineRelocation &MR) {
       Relocations.push_back(MR);
@@ -551,10 +551,10 @@ namespace {
            << (void*) getCurrentPCValue() << "]\n";
     }
 
-    virtual intptr_t getConstantPoolEntryAddress(unsigned Entry) const;
-    virtual intptr_t getJumpTableEntryAddress(unsigned Entry) const;
+    virtual uintptr_t getConstantPoolEntryAddress(unsigned Entry) const;
+    virtual uintptr_t getJumpTableEntryAddress(unsigned Entry) const;
 
-    virtual intptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
+    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
       assert(MBBLocations.size() > (unsigned)MBB->getNumber() && 
              MBBLocations[MBB->getNumber()] && "MBB not emitted!");
       return MBBLocations[MBB->getNumber()];
@@ -572,7 +572,7 @@ namespace {
       LabelLocations[LabelID] = getCurrentPCValue();
     }
 
-    virtual intptr_t getLabelAddress(uint64_t LabelID) const {
+    virtual uintptr_t getLabelAddress(uint64_t LabelID) const {
       assert(LabelLocations.size() > (unsigned)LabelID && 
              LabelLocations[LabelID] && "Label not emitted!");
       return LabelLocations[LabelID];
@@ -963,6 +963,13 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   unsigned char *FnEnd = CurBufferPtr;
 
   MemMgr->endFunctionBody(F.getFunction(), BufferBegin, FnEnd);
+
+  if (CurBufferPtr == BufferEnd) {
+    // FIXME: Allocate more space, then try again.
+    cerr << "JIT: Ran out of space for generated machine code!\n";
+    abort();
+  }
+
   BufferBegin = CurBufferPtr = 0;
   NumBytes += FnEnd-FnStart;
 
@@ -1044,7 +1051,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   return false;
 }
 
-void* JITEmitter::allocateSpace(intptr_t Size, unsigned Alignment) {
+void* JITEmitter::allocateSpace(uintptr_t Size, unsigned Alignment) {
   if (BufferBegin)
     return MachineCodeEmitter::allocateSpace(Size, Alignment);
 
@@ -1129,9 +1136,9 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
       const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
       // Store the offset of the basic block for this jump table slot in the
       // memory we allocated for the jump table in 'initJumpTableInfo'
-      intptr_t Base = (intptr_t)SlotPtr;
+      uintptr_t Base = (uintptr_t)SlotPtr;
       for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi) {
-        intptr_t MBBAddr = getMachineBasicBlockAddress(MBBs[mi]);
+        uintptr_t MBBAddr = getMachineBasicBlockAddress(MBBs[mi]);
         *SlotPtr++ = TheJIT->getJITInfo().getPICJumpTableEntry(MBBAddr, Base);
       }
     }
@@ -1174,17 +1181,17 @@ void *JITEmitter::finishGVStub(const GlobalValue* GV) {
 // in the constant pool that was last emitted with the 'emitConstantPool'
 // method.
 //
-intptr_t JITEmitter::getConstantPoolEntryAddress(unsigned ConstantNum) const {
+uintptr_t JITEmitter::getConstantPoolEntryAddress(unsigned ConstantNum) const {
   assert(ConstantNum < ConstantPool->getConstants().size() &&
          "Invalid ConstantPoolIndex!");
-  return (intptr_t)ConstantPoolBase +
+  return (uintptr_t)ConstantPoolBase +
          ConstantPool->getConstants()[ConstantNum].Offset;
 }
 
 // getJumpTableEntryAddress - Return the address of the JumpTable with index
 // 'Index' in the jumpp table that was last initialized with 'initJumpTableInfo'
 //
-intptr_t JITEmitter::getJumpTableEntryAddress(unsigned Index) const {
+uintptr_t JITEmitter::getJumpTableEntryAddress(unsigned Index) const {
   const std::vector<MachineJumpTableEntry> &JT = JumpTable->getJumpTables();
   assert(Index < JT.size() && "Invalid jump table index!");
   
@@ -1196,7 +1203,7 @@ intptr_t JITEmitter::getJumpTableEntryAddress(unsigned Index) const {
   
    Offset *= EntrySize;
   
-  return (intptr_t)((char *)JumpTableBase + Offset);
+  return (uintptr_t)((char *)JumpTableBase + Offset);
 }
 
 //===----------------------------------------------------------------------===//

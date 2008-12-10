@@ -75,7 +75,7 @@ namespace llvm {
     
     /// CPLocations - This is a map of constant pool indices to offsets from the
     /// start of the section for that constant pool index.
-    std::vector<intptr_t> CPLocations;
+    std::vector<uintptr_t> CPLocations;
 
     /// CPSections - This is a map of constant pool indices to the MachOSection
     /// containing the constant pool entry for that index.
@@ -83,12 +83,12 @@ namespace llvm {
 
     /// JTLocations - This is a map of jump table indices to offsets from the
     /// start of the section for that jump table index.
-    std::vector<intptr_t> JTLocations;
+    std::vector<uintptr_t> JTLocations;
 
     /// MBBLocations - This vector is a mapping from MBB ID's to their address.
     /// It is filled in by the StartMachineBasicBlock callback and queried by
     /// the getMachineBasicBlockAddress callback.
-    std::vector<intptr_t> MBBLocations;
+    std::vector<uintptr_t> MBBLocations;
     
   public:
     MachOCodeEmitter(MachOWriter &mow) : MOW(mow), TM(MOW.TM) {
@@ -106,11 +106,11 @@ namespace llvm {
     void emitConstantPool(MachineConstantPool *MCP);
     void emitJumpTables(MachineJumpTableInfo *MJTI);
     
-    virtual intptr_t getConstantPoolEntryAddress(unsigned Index) const {
+    virtual uintptr_t getConstantPoolEntryAddress(unsigned Index) const {
       assert(CPLocations.size() > Index && "CP not emitted!");
       return CPLocations[Index];
     }
-    virtual intptr_t getJumpTableEntryAddress(unsigned Index) const {
+    virtual uintptr_t getJumpTableEntryAddress(unsigned Index) const {
       assert(JTLocations.size() > Index && "JT not emitted!");
       return JTLocations[Index];
     }
@@ -121,13 +121,13 @@ namespace llvm {
       MBBLocations[MBB->getNumber()] = getCurrentPCOffset();
     }
 
-    virtual intptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
+    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
       assert(MBBLocations.size() > (unsigned)MBB->getNumber() && 
              MBBLocations[MBB->getNumber()] && "MBB not emitted!");
       return MBBLocations[MBB->getNumber()];
     }
 
-    virtual intptr_t getLabelAddress(uint64_t Label) const {
+    virtual uintptr_t getLabelAddress(uint64_t Label) const {
       assert(0 && "get Label not implemented");
       abort();
       return 0;

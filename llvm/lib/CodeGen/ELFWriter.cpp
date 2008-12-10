@@ -85,21 +85,21 @@ namespace llvm {
     virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) {
     }
 
-    virtual intptr_t getConstantPoolEntryAddress(unsigned Index) const {
+    virtual uintptr_t getConstantPoolEntryAddress(unsigned Index) const {
       assert(0 && "CP not implementated yet!");
       return 0;
     }
-    virtual intptr_t getJumpTableEntryAddress(unsigned Index) const {
+    virtual uintptr_t getJumpTableEntryAddress(unsigned Index) const {
       assert(0 && "JT not implementated yet!");
       return 0;
     }
 
-    virtual intptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
+    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
       assert(0 && "JT not implementated yet!");
       return 0;
     }
 
-    virtual intptr_t getLabelAddress(uint64_t Label) const {
+    virtual uintptr_t getLabelAddress(uint64_t Label) const {
       assert(0 && "Label address not implementated yet!");
       abort();
       return 0;

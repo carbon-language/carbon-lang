@@ -60,7 +60,7 @@ namespace llvm {
 
     /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
     /// specific basic block.
-    virtual intptr_t getPICJumpTableEntry(intptr_t BB, intptr_t JTBase) {
+    virtual uintptr_t getPICJumpTableEntry(uintptr_t BB, uintptr_t JTBase) {
       assert(0 && "This target doesn't implement getPICJumpTableEntry!");
       return 0;
     }

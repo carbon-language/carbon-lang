@@ -1078,7 +1078,7 @@ void ARMCodeEmitter::emitBranchInstruction(const MachineInstr &MI) {
 
 void ARMCodeEmitter::emitInlineJumpTable(unsigned JTIndex) {
   // Remember the base address of the inline jump table.
-  intptr_t JTBase = MCE.getCurrentPCValue();
+  uintptr_t JTBase = MCE.getCurrentPCValue();
   JTI->addJumpTableBaseAddr(JTIndex, JTBase);
   DOUT << "  ** Jump Table #" << JTIndex << " @ " << (void*)JTBase << '\n';
 

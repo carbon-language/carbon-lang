@@ -49,7 +49,7 @@ class MachineRelocation {
   
   /// Offset - This is the offset from the start of the code buffer of the
   /// relocation to perform.
-  intptr_t Offset;
+  uintptr_t Offset;
   
   /// ConstantVal - A field that may be used by the target relocation type.
   intptr_t ConstantVal;
@@ -79,7 +79,7 @@ public:
   
   /// MachineRelocation::getGV - Return a relocation entry for a GlobalValue.
   ///
-  static MachineRelocation getGV(intptr_t offset, unsigned RelocationType, 
+  static MachineRelocation getGV(uintptr_t offset, unsigned RelocationType, 
                                  GlobalValue *GV, intptr_t cst = 0,
                                  bool NeedStub = 0,
                                  bool GOTrelative = 0) {
@@ -98,7 +98,7 @@ public:
 
   /// MachineRelocation::getIndirectSymbol - Return a relocation entry for an
   /// indirect symbol.
-  static MachineRelocation getIndirectSymbol(intptr_t offset,
+  static MachineRelocation getIndirectSymbol(uintptr_t offset,
                                              unsigned RelocationType, 
                                              GlobalValue *GV, intptr_t cst = 0,
                                              bool NeedStub = 0,
@@ -118,7 +118,7 @@ public:
 
   /// MachineRelocation::getBB - Return a relocation entry for a BB.
   ///
-  static MachineRelocation getBB(intptr_t offset,unsigned RelocationType,
+  static MachineRelocation getBB(uintptr_t offset,unsigned RelocationType,
                                  MachineBasicBlock *MBB, intptr_t cst = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     MachineRelocation Result;
@@ -136,7 +136,7 @@ public:
   /// MachineRelocation::getExtSym - Return a relocation entry for an external
   /// symbol, like "free".
   ///
-  static MachineRelocation getExtSym(intptr_t offset, unsigned RelocationType, 
+  static MachineRelocation getExtSym(uintptr_t offset, unsigned RelocationType, 
                                      const char *ES, intptr_t cst = 0,
                                      bool GOTrelative = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
@@ -155,7 +155,7 @@ public:
   /// MachineRelocation::getConstPool - Return a relocation entry for a constant
   /// pool entry.
   ///
-  static MachineRelocation getConstPool(intptr_t offset,unsigned RelocationType,
+  static MachineRelocation getConstPool(uintptr_t offset,unsigned RelocationType,
                                         unsigned CPI, intptr_t cst = 0,
                                         bool letTargetResolve = false) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
@@ -174,7 +174,7 @@ public:
   /// MachineRelocation::getJumpTable - Return a relocation entry for a jump
   /// table entry.
   ///
-  static MachineRelocation getJumpTable(intptr_t offset,unsigned RelocationType,
+  static MachineRelocation getJumpTable(uintptr_t offset,unsigned RelocationType,
                                         unsigned JTI, intptr_t cst = 0,
                                         bool letTargetResolve = false) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
