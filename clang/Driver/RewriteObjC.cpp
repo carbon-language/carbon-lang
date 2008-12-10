@@ -1077,7 +1077,7 @@ Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt,
   
   // Now do the actual rewrite.
   ReplaceStmtWithRange(BinOp, ReplacingStmt, SrcRange);
-  delete BinOp;
+  //delete BinOp;
   delete MsgExpr;
   return ReplacingStmt;
 }
