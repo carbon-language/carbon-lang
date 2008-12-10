@@ -1532,22 +1532,24 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       SDValue Chain = Node->getOperand(0);
       SDValue N1 = Node->getOperand(1);
       SDValue N2 = Node->getOperand(2);
-      if (!isa<FrameIndexSDNode>(N1))
+      FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(N1);
+      if (!FINode)
         break;
-      int FI = cast<FrameIndexSDNode>(N1)->getIndex();
       if (N2.getOpcode() == ISD::ADD &&
           N2.getOperand(0).getOpcode() == X86ISD::GlobalBaseReg)
         N2 = N2.getOperand(1);
-      if (N2.getOpcode() == X86ISD::Wrapper &&
-          isa<GlobalAddressSDNode>(N2.getOperand(0))) {
-        GlobalValue *GV =
-          cast<GlobalAddressSDNode>(N2.getOperand(0))->getGlobal();
-        SDValue Tmp1 = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-        SDValue Tmp2 = CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());
-        SDValue Ops[] = { Tmp1, Tmp2, Chain };
-        return CurDAG->getTargetNode(TargetInstrInfo::DECLARE,
-                                     MVT::Other, Ops, 3);
-      }
+      if (N2.getOpcode() != X86ISD::Wrapper)
+        break;
+      GlobalAddressSDNode *GVNode = dyn_cast<GlobalAddressSDNode>(N2.getOperand(0));
+      if (!GVNode)
+        break;
+      SDValue Tmp1 = CurDAG->getTargetFrameIndex(FINode->getIndex(),
+                                                 TLI.getPointerTy());
+      SDValue Tmp2 = CurDAG->getTargetGlobalAddress(GVNode->getGlobal(),
+                                                    TLI.getPointerTy());
+      SDValue Ops[] = { Tmp1, Tmp2, Chain };
+      return CurDAG->getTargetNode(TargetInstrInfo::DECLARE,
+                                   MVT::Other, Ops, 3);
       break;
     }
   }
