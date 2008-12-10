@@ -1309,9 +1309,16 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
   if (OpKind == tok::period && (QIdTy = BaseType->getAsObjCQualifiedIdType())) {
     // Check protocols on qualified interfaces.
     for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
-         E = QIdTy->qual_end(); I != E; ++I)
+         E = QIdTy->qual_end(); I != E; ++I) {
       if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member))
         return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
+      // Also must look for a getter name which uses property syntax.
+      Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+      if (ObjCMethodDecl *OMD = (*I)->getInstanceMethod(Sel)) {
+        return new ObjCMessageExpr(BaseExpr, Sel, OMD->getResultType(), OMD, 
+                                   OpLoc, MemberLoc, NULL, 0);
+      }
+    }
   }  
   // Handle 'field access' to vectors, such as 'V.xx'.
   if (BaseType->isExtVectorType() && OpKind == tok::period) {
