@@ -4335,7 +4335,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal:
       // FIXME: According to Hacker's Delight, this can be implemented in
       // target independent lowering, but it would be inefficient, since it
-      // requires a division + a branch
+      // requires a division + a branch.
       assert(0 && "Target independent lowering is not supported for SMULO/UMULO!");	
     break;
     }

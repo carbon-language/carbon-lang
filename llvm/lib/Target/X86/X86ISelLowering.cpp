@@ -6173,8 +6173,7 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) {
 
   SDValue SetCC =
     DAG.getNode(X86ISD::SETCC, N->getValueType(1),
-                DAG.getConstant(Cond,
-                                MVT::i32), SDValue(Sum.getNode(), 1));
+                DAG.getConstant(Cond, MVT::i32), SDValue(Sum.getNode(), 1));
 
   DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), SetCC);
   return Sum;
