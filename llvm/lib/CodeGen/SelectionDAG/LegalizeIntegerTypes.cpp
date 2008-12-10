@@ -92,11 +92,11 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::UREM:        Result = PromoteIntRes_UDIV(N); break;
 
   case ISD::SADDO:
+  case ISD::SSUBO:       Result = PromoteIntRes_SADDSUBO(N, ResNo); break;
   case ISD::UADDO:
-  case ISD::SSUBO:
-  case ISD::USUBO:
+  case ISD::USUBO:       Result = PromoteIntRes_UADDSUBO(N, ResNo); break;
   case ISD::SMULO:
-  case ISD::UMULO:       Result = PromoteIntRes_XALUO(N, ResNo); break;
+  case ISD::UMULO:       Result = PromoteIntRes_XMULO(N, ResNo); break;
 
   case ISD::ATOMIC_LOAD_ADD_8:
   case ISD::ATOMIC_LOAD_SUB_8:
@@ -428,6 +428,49 @@ SDValue DAGTypeLegalizer::PromoteIntRes_LOAD(LoadSDNode *N) {
   return Res;
 }
 
+/// Promote the overflow flag of an overflowing arithmetic node.
+SDValue DAGTypeLegalizer::PromoteIntRes_Overflow(SDNode *N) {
+  // Simply change the return type of the boolean result.
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(1));
+  MVT ValueVTs[] = { N->getValueType(0), NVT };
+  SDValue Ops[] = { N->getOperand(0), N->getOperand(1) };
+  SDValue Res = DAG.getNode(N->getOpcode(), DAG.getVTList(ValueVTs, 2), Ops, 2);
+
+  // Modified the sum result - switch anything that used the old sum to use
+  // the new one.
+  ReplaceValueWith(SDValue(N, 0), Res);
+
+  return SDValue(Res.getNode(), 1);
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_SADDSUBO(SDNode *N, unsigned ResNo) {
+  if (ResNo == 1)
+    return PromoteIntRes_Overflow(N);
+
+  // The operation overflowed iff the result in the larger type is not the
+  // sign extension of its truncation to the original type.
+  SDValue LHS = SExtPromotedInteger(N->getOperand(0));
+  SDValue RHS = SExtPromotedInteger(N->getOperand(1));
+  MVT OVT = N->getOperand(0).getValueType();
+  MVT NVT = LHS.getValueType();
+
+  // Do the arithmetic in the larger type.
+  unsigned Opcode = N->getOpcode() == ISD::SADDO ? ISD::ADD : ISD::SUB;
+  SDValue Res = DAG.getNode(Opcode, NVT, LHS, RHS);
+
+  // Calculate the overflow flag: sign extend the arithmetic result from
+  // the original type.
+  SDValue Ofl = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Res,
+                            DAG.getValueType(OVT));
+  // Overflowed if and only if this is not equal to Res.
+  Ofl = DAG.getSetCC(N->getValueType(1), Ofl, Res, ISD::SETNE);
+
+  // Use the calculated overflow everywhere.
+  ReplaceValueWith(SDValue(N, 1), Ofl);
+
+  return Res;
+}
+
 SDValue DAGTypeLegalizer::PromoteIntRes_SDIV(SDNode *N) {
   // Sign extend the input.
   SDValue LHS = SExtPromotedInteger(N->getOperand(0));
@@ -515,27 +558,38 @@ SDValue DAGTypeLegalizer::PromoteIntRes_TRUNCATE(SDNode *N) {
   return DAG.getNode(ISD::TRUNCATE, NVT, Res);
 }
 
+SDValue DAGTypeLegalizer::PromoteIntRes_UADDSUBO(SDNode *N, unsigned ResNo) {
+  if (ResNo == 1)
+    return PromoteIntRes_Overflow(N);
+
+  // The operation overflowed iff the result in the larger type is not the
+  // zero extension of its truncation to the original type.
+  SDValue LHS = ZExtPromotedInteger(N->getOperand(0));
+  SDValue RHS = ZExtPromotedInteger(N->getOperand(1));
+  MVT OVT = N->getOperand(0).getValueType();
+  MVT NVT = LHS.getValueType();
+
+  // Do the arithmetic in the larger type.
+  unsigned Opcode = N->getOpcode() == ISD::UADDO ? ISD::ADD : ISD::SUB;
+  SDValue Res = DAG.getNode(Opcode, NVT, LHS, RHS);
+
+  // Calculate the overflow flag: zero extend the arithmetic result from
+  // the original type.
+  SDValue Ofl = DAG.getZeroExtendInReg(Res, OVT);
+  // Overflowed if and only if this is not equal to Res.
+  Ofl = DAG.getSetCC(N->getValueType(1), Ofl, Res, ISD::SETNE);
+
+  // Use the calculated overflow everywhere.
+  ReplaceValueWith(SDValue(N, 1), Ofl);
+
+  return Res;
+}
+
 SDValue DAGTypeLegalizer::PromoteIntRes_UDIV(SDNode *N) {
   // Zero extend the input.
   SDValue LHS = ZExtPromotedInteger(N->getOperand(0));
   SDValue RHS = ZExtPromotedInteger(N->getOperand(1));
   return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
-}
-
-SDValue DAGTypeLegalizer::PromoteIntRes_XALUO(SDNode *N, unsigned ResNo) {
-  assert(ResNo == 1 && "Only boolean result promotion currently supported!");
-
-  // Simply change the return type of the boolean result.
-  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(1));
-  MVT ValueVTs[] = { N->getValueType(0), NVT };
-  SDValue Ops[] = { N->getOperand(0), N->getOperand(1) };
-  SDValue Res = DAG.getNode(N->getOpcode(), DAG.getVTList(ValueVTs, 2), Ops, 2);
-
-  // Modified the sum result - switch anything that used the old sum to use
-  // the new one.
-  ReplaceValueWith(SDValue(N, 0), Res);
-
-  return SDValue(Res.getNode(), 1);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_UNDEF(SDNode *N) {
@@ -580,6 +634,10 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
   return Res;
 }
 
+SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
+  assert(ResNo == 1 && "Only boolean result promotion currently supported!");
+  return PromoteIntRes_Overflow(N);
+}
 
 //===----------------------------------------------------------------------===//
 //  Integer Operand Promotion
