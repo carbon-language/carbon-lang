@@ -1774,14 +1774,25 @@ private:
       }
     }
 
-    // Add size if non-zero (derived types don't have a size.)
-    if (Size) AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
-
     // Add name if not anonymous or intermediate type.
     if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
 
-    // Add source line info if available.
-    AddSourceLine(&Buffer, TyDesc->getFile(), TyDesc->getLine());
+    // Add size if non-zero (derived types might be zero-sized.)
+    if (Size)
+      AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
+    else if (isa<CompositeTypeDesc>(TyDesc)) {
+      // If TyDesc is a composite type, then add size even if it's zero unless
+      // it's a forward declaration.
+      if (TyDesc->isForwardDecl())
+        AddUInt(&Buffer, DW_AT_declaration, DW_FORM_flag, 1);
+      else
+        AddUInt(&Buffer, DW_AT_byte_size, 0, 0);
+    }
+
+    // Add source line info if available and TyDesc is not a forward
+    // declaration.
+    if (!TyDesc->isForwardDecl())
+      AddSourceLine(&Buffer, TyDesc->getFile(), TyDesc->getLine());
   }
 
   /// NewCompileUnit - Create new compile unit and it's debug information entry.

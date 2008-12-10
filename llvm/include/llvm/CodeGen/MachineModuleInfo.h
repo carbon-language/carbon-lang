@@ -282,7 +282,8 @@ class TypeDesc : public DebugInfoDesc {
 private:
   enum {
     FlagPrivate    = 1 << 0,
-    FlagProtected  = 1 << 1
+    FlagProtected  = 1 << 1,
+    FlagFwdDecl    = 1 << 2
   };
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Type name (may be empty.)
@@ -291,6 +292,8 @@ private:
   uint64_t Size;                        // Type bit size (may be zero.)
   uint64_t Align;                       // Type bit alignment (may be zero.)
   uint64_t Offset;                      // Type bit offset (may be zero.)
+
+protected:
   unsigned Flags;                       // Miscellaneous flags.
 
 public:
@@ -312,6 +315,9 @@ public:
   bool isProtected() const {
     return (Flags & FlagProtected) != 0;
   }
+  bool isForwardDecl() const {
+    return (Flags & FlagFwdDecl) != 0;
+  }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
   void setFile(CompileUnitDesc *U) {
@@ -323,6 +329,7 @@ public:
   void setOffset(uint64_t O)                       { Offset = O; }
   void setIsPrivate()                              { Flags |= FlagPrivate; }
   void setIsProtected()                            { Flags |= FlagProtected; }
+  void setIsForwardDecl()                          { Flags |= FlagFwdDecl; }
   
   /// ApplyToFields - Target the visitor to the fields of the TypeDesc.
   ///

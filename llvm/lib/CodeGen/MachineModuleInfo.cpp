@@ -906,7 +906,8 @@ void BasicTypeDesc::dump() {
        << "Context(" << getContext() << "), "
        << "Name(\"" << getName() << "\"), "
        << "Size(" << getSize() << "), "
-       << "Encoding(" << Encoding << ")\n";
+       << "Encoding(" << Encoding << "),"
+       << "Flags(" << Flags << ")\n";
 }
 #endif
 
@@ -965,7 +966,8 @@ void DerivedTypeDesc::dump() {
        << "Size(" << getSize() << "), "
        << "File(" << getFile() << "), "
        << "Line(" << getLine() << "), "
-       << "FromType(" << FromType << ")\n";
+       << "FromType(" << FromType << "),"
+       << "Flags(" << Flags << ")\n";
 }
 #endif
 
@@ -1023,7 +1025,8 @@ void CompositeTypeDesc::dump() {
        << "File(" << getFile() << "), "
        << "Line(" << getLine() << "), "
        << "FromType(" << getFromType() << "), "
-       << "Elements.size(" << Elements.size() << ")\n";
+       << "Elements.size(" << Elements.size() << "),"
+       << "Flags(" << Flags << ")\n";
 }
 #endif
 
