@@ -557,10 +557,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
       else
         Addr = N;                       // Register
 
-      if (OpOpc == ISD::STORE)
-        Offs = Op.getOperand(3);
-      else
-        Offs = Op.getOperand(2);        // LOAD
+      Offs = ((OpOpc == ISD::STORE) ? Op.getOperand(3) : Op.getOperand(2));
 
       if (Offs.getOpcode() == ISD::Constant || Offs.getOpcode() == ISD::UNDEF) {
         if (Offs.getOpcode() == ISD::UNDEF)
@@ -570,6 +567,16 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
         Index = Addr;
         return true;
       }
+    } else {
+      /* If otherwise unadorned, default to D-form address with 0 offset: */
+      if (Opc == ISD::CopyFromReg) {
+	Index = N.getOperand(1);
+      } else {
+	Index = N;
+      }
+
+      Base = CurDAG->getTargetConstant(0, Index.getValueType());
+      return true;
     }
   }
 

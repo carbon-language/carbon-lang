@@ -575,7 +575,7 @@ def calltarget : Operand<iPTR> {
   let MIOperandInfo = (ops u18imm:$calldest);
 }
 
-// Relative call target
+// PC relative call target
 def relcalltarget : Operand<iPTR> {
   let PrintMethod = "printPCRelativeOperand";
   let MIOperandInfo = (ops s16imm:$calldest);
@@ -584,6 +584,11 @@ def relcalltarget : Operand<iPTR> {
 // Branch targets:
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printPCRelativeOperand";
+}
+
+// Hint for branch target
+def hbrtarget : Operand<OtherVT> {
+  let PrintMethod = "printHBROperand";
 }
 
 // Indirect call target

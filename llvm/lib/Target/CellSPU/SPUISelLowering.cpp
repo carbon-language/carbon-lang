@@ -28,7 +28,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/CodeGen/SchedulerRegistry.h"
 
 #include <map>
 
@@ -130,9 +129,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   addRegisterClass(MVT::f32,  SPU::R32FPRegisterClass);
   addRegisterClass(MVT::f64,  SPU::R64FPRegisterClass);
   addRegisterClass(MVT::i128, SPU::GPRCRegisterClass);
-
-  // Initialize libcalls:
-  setLibcallName(RTLIB::MUL_I64, "__muldi3");
 
   // SPU has no sign or zero extended loads for i1, i8, i16:
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
@@ -237,10 +233,12 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::MUL,  MVT::i64,    Expand);   // libcall
 
   // SMUL_LOHI, UMUL_LOHI
-  setOperationAction(ISD::SMUL_LOHI, MVT::i32, Custom);
-  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Custom);
-  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Custom);
-  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Custom);
+#if 0
+  setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
+#endif
 
   // Need to custom handle (some) common i8, i64 math ops
   setOperationAction(ISD::ADD,  MVT::i64,    Custom);

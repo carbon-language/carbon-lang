@@ -220,6 +220,18 @@ namespace {
     }
 
     void printPCRelativeOperand(const MachineInstr *MI, unsigned OpNo) {
+      // Used to generate a ".-<target>", but it turns out that the assembler
+      // really wants the target.
+      //
+      // N.B.: This operand is used for call targets. Branch hints are another
+      // animal entirely.
+      printOp(MI->getOperand(OpNo));
+    }
+
+    void printHBROperand(const MachineInstr *MI, unsigned OpNo) {
+      // HBR operands are generated in front of branches, hence, the
+      // program counter plus the target.
+      O << ".+";
       printOp(MI->getOperand(OpNo));
     }
 

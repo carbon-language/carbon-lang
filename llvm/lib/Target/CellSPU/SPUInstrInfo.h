@@ -91,7 +91,17 @@ namespace llvm {
                                                 MachineInstr* LoadMI) const {
       return 0;
     }
-  };
+
+    virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+			       MachineBasicBlock *&FBB,
+			       SmallVectorImpl<MachineOperand> &Cond) const;
+    
+    virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
+    
+    virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+			      MachineBasicBlock *FBB,
+			      const SmallVectorImpl<MachineOperand> &Cond) const;
+   };
 }
 
 #endif

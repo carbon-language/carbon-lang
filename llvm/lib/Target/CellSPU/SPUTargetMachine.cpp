@@ -18,6 +18,8 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/CodeGen/RegAllocRegistry.h"
+#include "llvm/CodeGen/SchedulerRegistry.h"
 
 using namespace llvm;
 

@@ -21,6 +21,26 @@
 
 using namespace llvm;
 
+namespace {
+  //! Predicate for an unconditional branch instruction
+  inline bool isUncondBranch(const MachineInstr *I) {
+    unsigned opc = I->getOpcode();
+
+    return (opc == SPU::BR
+	    || opc == SPU::BRA
+	    || opc == SPU::BI);
+  }
+
+  inline bool isCondBranch(const MachineInstr *I) {
+    unsigned opc = I->getOpcode();
+
+    return (opc == SPU::BRNZ
+	    || opc == SPU::BRZ
+	    || opc == SPU::BRHNZ
+	    || opc == SPU::BRHZ);
+  }
+}
+
 SPUInstrInfo::SPUInstrInfo(SPUTargetMachine &tm)
   : TargetInstrInfoImpl(SPUInsts, sizeof(SPUInsts)/sizeof(SPUInsts[0])),
     TM(tm),
@@ -131,14 +151,28 @@ SPUInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   case SPU::LQDr128:
   case SPU::LQDr64:
   case SPU::LQDr32:
-  case SPU::LQDr16:
+  case SPU::LQDr16: {
+    const MachineOperand MOp1 = MI->getOperand(1);
+    const MachineOperand MOp2 = MI->getOperand(2);
+    if (MOp1.isImm()
+	&& (MOp2.isFI()
+	    || (MOp2.isReg() && MOp2.getReg() == SPU::R1))) {
+      if (MOp2.isFI())
+	FrameIndex = MOp2.getIndex();
+      else
+	FrameIndex = MOp1.getImm() / SPUFrameInfo::stackSlotSize();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  }
   case SPU::LQXv4i32:
   case SPU::LQXr128:
   case SPU::LQXr64:
   case SPU::LQXr32:
   case SPU::LQXr16:
-    if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
-        MI->getOperand(2).isFI()) {
+    if (MI->getOperand(1).isReg() && MI->getOperand(2).isReg()
+	&& (MI->getOperand(2).getReg() == SPU::R1
+	    || MI->getOperand(1).getReg() == SPU::R1)) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -161,7 +195,20 @@ SPUInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   case SPU::STQDr64:
   case SPU::STQDr32:
   case SPU::STQDr16:
-  case SPU::STQDr8:
+  case SPU::STQDr8: {
+    const MachineOperand MOp1 = MI->getOperand(1);
+    const MachineOperand MOp2 = MI->getOperand(2);
+    if (MOp1.isImm()
+	&& (MOp2.isFI()
+	    || (MOp2.isReg() && MOp2.getReg() == SPU::R1))) {
+      if (MOp2.isFI())
+	FrameIndex = MOp2.getIndex();
+      else
+	FrameIndex = MOp1.getImm() / SPUFrameInfo::stackSlotSize();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  }
   case SPU::STQXv16i8:
   case SPU::STQXv8i16:
   case SPU::STQXv4i32:
@@ -172,8 +219,9 @@ SPUInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   case SPU::STQXr32:
   case SPU::STQXr16:
   case SPU::STQXr8:
-    if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
-        MI->getOperand(2).isFI()) {
+    if (MI->getOperand(1).isReg() && MI->getOperand(2).isReg()
+	&& (MI->getOperand(2).getReg() == SPU::R1
+	    || MI->getOperand(1).getReg() == SPU::R1)) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -193,11 +241,6 @@ bool SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   // we instruction select bitconvert i64 -> f64 as a noop for example, so our
   // types have no specific meaning.
   
-  //if (DestRC != SrcRC) {
-  //  cerr << "SPUInstrInfo::copyRegToReg(): DestRC != SrcRC not supported!\n";
-  //  abort();
-  //}
-
   if (DestRC == SPU::R8CRegisterClass) {
     BuildMI(MBB, MI, get(SPU::ORBIr8), DestReg).addReg(SrcReg).addImm(0);
   } else if (DestRC == SPU::R16CRegisterClass) {
@@ -234,30 +277,21 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                      const TargetRegisterClass *RC) const
 {
   unsigned opc;
+  bool isValidFrameIdx = (FrameIdx < SPUFrameInfo::maxFrameOffset());
   if (RC == SPU::GPRCRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::STQDr128
-      : SPU::STQXr128;
+    opc = (isValidFrameIdx ? SPU::STQDr128 : SPU::STQXr128);
   } else if (RC == SPU::R64CRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::STQDr64
-      : SPU::STQXr64;
+    opc = (isValidFrameIdx ? SPU::STQDr64 : SPU::STQXr64);
   } else if (RC == SPU::R64FPRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::STQDr64
-      : SPU::STQXr64;
+    opc = (isValidFrameIdx ? SPU::STQDr64 : SPU::STQXr64);
   } else if (RC == SPU::R32CRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::STQDr32
-      : SPU::STQXr32;
+    opc = (isValidFrameIdx ? SPU::STQDr32 : SPU::STQXr32);
   } else if (RC == SPU::R32FPRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::STQDr32
-      : SPU::STQXr32;
+    opc = (isValidFrameIdx ? SPU::STQDr32 : SPU::STQXr32);
   } else if (RC == SPU::R16CRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset()) ?
-      SPU::STQDr16
-      : SPU::STQXr16;
+    opc = (isValidFrameIdx ? SPU::STQDr16 : SPU::STQXr16);
+  } else if (RC == SPU::R8CRegisterClass) {
+    opc = (isValidFrameIdx ? SPU::STQDr8 : SPU::STQXr8);
   } else {
     assert(0 && "Unknown regclass!");
     abort();
@@ -317,30 +351,21 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         const TargetRegisterClass *RC) const
 {
   unsigned opc;
+  bool isValidFrameIdx = (FrameIdx < SPUFrameInfo::maxFrameOffset());
   if (RC == SPU::GPRCRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::LQDr128
-      : SPU::LQXr128;
+    opc = (isValidFrameIdx ? SPU::LQDr128 : SPU::LQXr128);
   } else if (RC == SPU::R64CRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::LQDr64
-      : SPU::LQXr64;
+    opc = (isValidFrameIdx ? SPU::LQDr64 : SPU::LQXr64);
   } else if (RC == SPU::R64FPRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::LQDr64
-      : SPU::LQXr64;
+    opc = (isValidFrameIdx ? SPU::LQDr64 : SPU::LQXr64);
   } else if (RC == SPU::R32CRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::LQDr32
-      : SPU::LQXr32;
+    opc = (isValidFrameIdx ? SPU::LQDr32 : SPU::LQXr32);
   } else if (RC == SPU::R32FPRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::LQDr32
-      : SPU::LQXr32;
+    opc = (isValidFrameIdx ? SPU::LQDr32 : SPU::LQXr32);
   } else if (RC == SPU::R16CRegisterClass) {
-    opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
-      ? SPU::LQDr16
-      : SPU::LQXr16;
+    opc = (isValidFrameIdx ? SPU::LQDr16 : SPU::LQXr16);
+  } else if (RC == SPU::R8CRegisterClass) {
+    opc = (isValidFrameIdx ? SPU::LQDr8 : SPU::LQXr8);
   } else {
     assert(0 && "Unknown regclass in loadRegFromStackSlot!");
     abort();
@@ -353,9 +378,9 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   \note We are really pessimistic here about what kind of a load we're doing.
  */
 void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                      SmallVectorImpl<MachineOperand> &Addr,
-                                      const TargetRegisterClass *RC,
-                                      SmallVectorImpl<MachineInstr*> &NewMIs)
+                                   SmallVectorImpl<MachineOperand> &Addr,
+                                   const TargetRegisterClass *RC,
+                                   SmallVectorImpl<MachineInstr*> &NewMIs)
     const {
   cerr << "loadRegToAddr() invoked!\n";
   abort();
@@ -437,4 +462,127 @@ SPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   return 0;
 #endif
 }
+
+//! Branch analysis
+/*
+  \note This code was kiped from PPC. There may be more branch analysis for
+  CellSPU than what's currently done here.
+ */
+bool
+SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+			    MachineBasicBlock *&FBB,
+			    SmallVectorImpl<MachineOperand> &Cond) const {
+  // If the block has no terminators, it just falls into the block after it.
+  MachineBasicBlock::iterator I = MBB.end();
+  if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
+    return false;
+
+  // Get the last instruction in the block.
+  MachineInstr *LastInst = I;
+  
+  // If there is only one terminator instruction, process it.
+  if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
+    if (isUncondBranch(LastInst)) {
+      TBB = LastInst->getOperand(0).getMBB();
+      return false;
+    } else if (isCondBranch(LastInst)) {
+      // Block ends with fall-through condbranch.
+      TBB = LastInst->getOperand(1).getMBB();
+      Cond.push_back(LastInst->getOperand(0));
+      Cond.push_back(LastInst->getOperand(1));
+      return false;
+    }
+    // Otherwise, don't know what this is.
+    return true;
+  }
+  
+  // Get the instruction before it if it's a terminator.
+  MachineInstr *SecondLastInst = I;
+
+  // If there are three terminators, we don't know what sort of block this is.
+  if (SecondLastInst && I != MBB.begin() &&
+      isUnpredicatedTerminator(--I))
+    return true;
+  
+  // If the block ends with a conditional and unconditional branch, handle it.
+  if (isCondBranch(SecondLastInst) && isUncondBranch(LastInst)) {
+    TBB =  SecondLastInst->getOperand(1).getMBB();
+    Cond.push_back(SecondLastInst->getOperand(0));
+    Cond.push_back(SecondLastInst->getOperand(1));
+    FBB = LastInst->getOperand(0).getMBB();
+    return false;
+  }
+  
+  // If the block ends with two unconditional branches, handle it.  The second
+  // one is not executed, so remove it.
+  if (isUncondBranch(SecondLastInst) && isUncondBranch(LastInst)) {
+    TBB = SecondLastInst->getOperand(0).getMBB();
+    I = LastInst;
+    I->eraseFromParent();
+    return false;
+  }
+
+  // Otherwise, can't handle this.
+  return true;
+}
+    
+unsigned
+SPUInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+  MachineBasicBlock::iterator I = MBB.end();
+  if (I == MBB.begin())
+    return 0;
+  --I;
+  if (!isCondBranch(I) && !isUncondBranch(I))
+    return 0;
+
+  // Remove the first branch.
+  I->eraseFromParent();
+  I = MBB.end();
+  if (I == MBB.begin())
+    return 1;
+
+  --I;
+  if (isCondBranch(I))
+    return 1;
+
+  // Remove the second branch.
+  I->eraseFromParent();
+  return 2;
+}
+    
+unsigned
+SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+			   MachineBasicBlock *FBB,
+			   const SmallVectorImpl<MachineOperand> &Cond) const {
+  // Shouldn't be a fall through.
+  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert((Cond.size() == 2 || Cond.size() == 0) && 
+         "SPU branch conditions have two components!");
+  
+  // One-way branch.
+  if (FBB == 0) {
+    if (Cond.empty())   // Unconditional branch
+      BuildMI(&MBB, get(SPU::BR)).addMBB(TBB);
+    else {              // Conditional branch
+      /* BuildMI(&MBB, get(SPU::BRNZ))
+        .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB); */
+      cerr << "SPUInstrInfo::InsertBranch conditional branch logic needed\n";
+      abort();
+    }
+    return 1;
+  }
+  
+  // Two-way Conditional Branch.
+#if 0
+  BuildMI(&MBB, get(SPU::BRNZ))
+    .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
+  BuildMI(&MBB, get(SPU::BR)).addMBB(FBB);
+#else
+  cerr << "SPUInstrInfo::InsertBranch conditional branch logic needed\n";
+  abort();
+#endif
+
+  return 2;
+}
+
 

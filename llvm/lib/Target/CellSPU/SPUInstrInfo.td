@@ -1124,7 +1124,7 @@ defm ANDC : AndComplement;
 
 class ANDBIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI10Form<0b01101000, OOL, IOL, "andbi\t$rT, $rA, $val",
-             IntegerOp, pattern>;
+             ByteOp, pattern>;
 
 multiclass AndByteImm
 {
@@ -1141,7 +1141,7 @@ defm ANDBI : AndByteImm;
 
 class ANDHIInst<dag OOL, dag IOL, list<dag> pattern> :
     RI10Form<0b10101000, OOL, IOL, "andhi\t$rT, $rA, $val",
-             IntegerOp, pattern>;
+             ByteOp, pattern>;
 
 multiclass AndHalfwordImm
 {
@@ -3394,25 +3394,39 @@ let isTerminator = 1, isBarrier = 1 in {
 // Single precision floating point instructions
 //===----------------------------------------------------------------------===//
 
-def FAv4f32:
-    RRForm<0b00100011010, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "fa\t$rT, $rA, $rB", SPrecFP,
-      [(set (v4f32 VECREG:$rT), (fadd (v4f32 VECREG:$rA), (v4f32 VECREG:$rB)))]>;
+class FAInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b01011000100, OOL, IOL, "fa\t$rT, $rA, $rB",
+	   SPrecFP, pattern>;
+class FAVecInst<ValueType vectype>:
+    FAInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+             [(set (vectype VECREG:$rT),
+		   (fadd (vectype VECREG:$rA), (vectype VECREG:$rB)))]>;
+multiclass SFPAdd
+{
+  def v4f32: FAVecInst<v4f32>;
+  def r32:   FAInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
+		    [(set R32FP:$rT, (fadd R32FP:$rA, R32FP:$rB))]>;
+}
 
-def FAf32 :
-    RRForm<0b00100011010, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
-      "fa\t$rT, $rA, $rB", SPrecFP,
-      [(set R32FP:$rT, (fadd R32FP:$rA, R32FP:$rB))]>;
+defm FA : SFPAdd;
 
-def FSv4f32:
-    RRForm<0b00100011010, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "fs\t$rT, $rA, $rB", SPrecFP,
-      [(set (v4f32 VECREG:$rT), (fsub (v4f32 VECREG:$rA), (v4f32 VECREG:$rB)))]>;
+class FSInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b01011000100, OOL, IOL, "fs\t$rT, $rA, $rB",
+	   SPrecFP, pattern>;
 
-def FSf32 :
-    RRForm<0b10100011010, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
-      "fs\t$rT, $rA, $rB", SPrecFP,
-      [(set R32FP:$rT, (fsub R32FP:$rA, R32FP:$rB))]>;
+class FSVecInst<ValueType vectype>:
+    FSInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+    	   [(set (vectype VECREG:$rT),
+	         (fsub (vectype VECREG:$rA), (vectype VECREG:$rB)))]>;
+
+multiclass SFPSub
+{
+  def v4f32: FSVecInst<v4f32>;
+  def r32:   FSInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
+		    [(set R32FP:$rT, (fsub R32FP:$rA, R32FP:$rB))]>;
+}
+
+defm FS : SFPSub;
 
 // Floating point reciprocal estimate
 def FREv4f32 :
@@ -3840,6 +3854,12 @@ def : Pat<(fabs R64FP:$rA),
 def : Pat<(fabs (v2f64 VECREG:$rA)),
           (ANDfabsvec (v2f64 VECREG:$rA),
                       (v2f64 (ANDBIv16i8 (FSMBIv16i8 0xffff), 0x7f)))>;
+
+//===----------------------------------------------------------------------===//
+// Hint for branch instructions:
+//===----------------------------------------------------------------------===//
+
+/* def HBR : SPUInstr<(outs), (ins), "hbr\t" */
 
 //===----------------------------------------------------------------------===//
 // Execution, Load NOP (execute NOPs belong in even pipeline, load NOPs belong
