@@ -2876,8 +2876,11 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
           << "register variable" << op->getSourceRange();
         return QualType();
       }
-    } else if (isa<OverloadedFunctionDecl>(dcl))
+    } else if (isa<OverloadedFunctionDecl>(dcl)) {
       return Context.OverloadTy;
+    } else if (isa<FieldDecl>(dcl)) {
+      // Okay: we can take the address of a field.
+    }
     else 
       assert(0 && "Unknown/unexpected decl type");
   }
