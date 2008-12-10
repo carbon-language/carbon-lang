@@ -12,9 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
+#include "ARMAddressingModes.h"
+#include "ARMConstantPoolValue.h"
 #include "ARMISelLowering.h"
 #include "ARMTargetMachine.h"
-#include "ARMAddressingModes.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -821,11 +822,46 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       break;
     case MVT::f64:
       Opc = ARM::FNEGDcc;
-      break; 
+      break;
     }
     return CurDAG->SelectNodeTo(Op.getNode(), Opc, VT, Ops, 5);
   }
+
+  case ISD::DECLARE: {
+    SDValue Chain = Op.getOperand(0);
+    SDValue N1 = Op.getOperand(1);
+    SDValue N2 = Op.getOperand(2);
+    FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(N1);
+    if (!FINode)
+      break;
+    if (N2.getOpcode() == ARMISD::PIC_ADD && isa<LoadSDNode>(N2.getOperand(0)))
+      N2 = N2.getOperand(0);
+    LoadSDNode *Ld = dyn_cast<LoadSDNode>(N2);
+    if (!Ld)
+      break;
+    SDValue BasePtr = Ld->getBasePtr();
+    assert(BasePtr.getOpcode() == ARMISD::Wrapper &&
+           isa<ConstantPoolSDNode>(BasePtr.getOperand(0)) &&
+           "llvm.dbg.variable should be a constantpool node");
+    ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(BasePtr.getOperand(0));
+    GlobalValue *GV = 0;
+    if (CP->isMachineConstantPoolEntry()) {
+      ARMConstantPoolValue *ACPV = (ARMConstantPoolValue*)CP->getMachineCPVal();
+      GV = ACPV->getGV();
+    } else
+      GV = dyn_cast<GlobalValue>(CP->getConstVal());
+    if (GV) {
+      SDValue Tmp1 = CurDAG->getTargetFrameIndex(FINode->getIndex(),
+                                                 TLI.getPointerTy());
+      SDValue Tmp2 = CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());
+      SDValue Ops[] = { Tmp1, Tmp2, Chain };
+      return CurDAG->getTargetNode(TargetInstrInfo::DECLARE,
+                                   MVT::Other, Ops, 3);
+    }
+    break;
   }
+  }
+
   return SelectCode(Op);
 }
 

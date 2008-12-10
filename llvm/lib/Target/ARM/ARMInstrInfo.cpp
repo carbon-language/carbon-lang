@@ -900,16 +900,24 @@ unsigned ARMInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   unsigned TSFlags = TID.TSFlags;
   
   switch ((TSFlags & ARMII::SizeMask) >> ARMII::SizeShift) {
-  default:
+  default: {
     // If this machine instr is an inline asm, measure it.
     if (MI->getOpcode() == ARM::INLINEASM)
       return TAI->getInlineAsmLength(MI->getOperand(0).getSymbolName());
     if (MI->isLabel())
       return 0;
-    if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
+    switch (MI->getOpcode()) {
+    default:
+      assert(0 && "Unknown or unset size field for instr!");
+      break;
+    case TargetInstrInfo::IMPLICIT_DEF:
+    case TargetInstrInfo::DECLARE:
+    case TargetInstrInfo::DBG_LABEL:
+    case TargetInstrInfo::EH_LABEL:
       return 0;
-    assert(0 && "Unknown or unset size field for instr!");
+    }
     break;
+  }
   case ARMII::Size8Bytes: return 8;          // Arm instruction x 2.
   case ARMII::Size4Bytes: return 4;          // Arm instruction.
   case ARMII::Size2Bytes: return 2;          // Thumb instruction.
