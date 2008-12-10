@@ -177,6 +177,10 @@ public:
   /// getSourceLocation - Return a source location identifier for the specified
   /// offset in the current file.
   SourceLocation getSourceLocation(const char *Loc) const;
+    
+  /// getSourceLocation - Return a source location for the next character in
+  /// the current file.
+  SourceLocation getSourceLocation() { return getSourceLocation(BufferPtr); }
   
   /// Stringify - Convert the specified string into a C string by escaping '\'
   /// and " characters.  This does not add surrounding ""'s to the string.

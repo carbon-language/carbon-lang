@@ -79,6 +79,10 @@ protected:
   
   virtual void IndirectLex(Token& Result) = 0;
   
+  /// getSourceLocation - Return the source location for the next observable
+  ///  location.
+  virtual SourceLocation getSourceLocation() = 0;
+  
   //===--------------------------------------------------------------------===//
   // #if directive handling.
   

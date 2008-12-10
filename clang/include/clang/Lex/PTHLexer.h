@@ -69,6 +69,10 @@ public:
   ///  the PreprocessorLexer interface.
   void IndirectLex(Token &Result) { Lex(Result); }
   
+  /// getSourceLocation - Return a source location for the token in
+  /// the current file.
+  SourceLocation getSourceLocation() { return GetToken().getLocation(); }
+
 private:
   
   /// AtLastToken - Returns true if the PTHLexer is at the last token.
