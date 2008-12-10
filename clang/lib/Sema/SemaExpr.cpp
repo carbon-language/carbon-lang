@@ -483,6 +483,27 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // check if referencing an identifier with __attribute__((deprecated)).
   if (VD->getAttr<DeprecatedAttr>())
     Diag(Loc, diag::warn_deprecated) << VD->getDeclName();
+  
+  if (VarDecl *Var = dyn_cast<VarDecl>(VD)) {
+    if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
+      Scope *CheckS = S;
+      while (CheckS) {
+        if (CheckS->isWithinElse() && 
+            CheckS->getControlParent()->isDeclScope(Var)) {
+          if (Var->getType()->isBooleanType())
+            Diag(Loc, diag::warn_value_always_false) << Var->getDeclName();
+          else
+            Diag(Loc, diag::warn_value_always_zero) << Var->getDeclName();
+          break;
+        }
+
+        // Move up one more control parent to check again.
+        CheckS = CheckS->getControlParent();
+        if (CheckS)
+          CheckS = CheckS->getParent();
+      }
+    }
+  }
 
   // Only create DeclRefExpr's for valid Decl's.
   if (VD->isInvalidDecl())

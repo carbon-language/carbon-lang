@@ -331,7 +331,11 @@ private:
   unsigned SClass : 3;
   bool ThreadSpecified : 1;
   bool HasCXXDirectInit : 1; 
-  
+
+  /// DeclaredInCondition - Whether this variable was declared in a
+  /// condition, e.g., if (int x = foo()) { ... }.
+  bool DeclaredInCondition : 1;
+
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
   friend class StmtIteratorBase;
@@ -341,7 +345,9 @@ protected:
           SourceLocation TSSL = SourceLocation())
     : ValueDecl(DK, DC, L, Id, T, PrevDecl), Init(0),
           ThreadSpecified(false), HasCXXDirectInit(false),
-          TypeSpecStartLoc(TSSL) { SClass = SC; }
+          DeclaredInCondition(false), TypeSpecStartLoc(TSSL) { 
+    SClass = SC; 
+  }
 public:
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
@@ -373,6 +379,18 @@ public:
     return HasCXXDirectInit;
   }
   
+  /// isDeclaredInCondition - Whether this variable was declared as
+  /// part of a condition in an if/switch/while statement, e.g.,
+  /// @code
+  /// if (int x = foo()) { ... }
+  /// @endcode
+  bool isDeclaredInCondition() const {
+    return DeclaredInCondition;
+  }
+  void setDeclaredInCondition(bool InCondition) { 
+    DeclaredInCondition = InCondition; 
+  }
+
   /// hasLocalStorage - Returns true if a variable with function scope
   ///  is a non-static local variable.
   bool hasLocalStorage() const {

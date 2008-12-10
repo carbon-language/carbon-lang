@@ -648,6 +648,10 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
     return true;
   AddInitializerToDecl(Dcl, AssignExprVal);
 
+  // Mark this variable as one that is declared within a conditional.
+  if (VarDecl *VD = dyn_cast<VarDecl>((Decl *)Dcl))
+    VD->setDeclaredInCondition(true);
+
   return new CXXConditionDeclExpr(StartLoc, EqualLoc,
                                        cast<VarDecl>(static_cast<Decl *>(Dcl)));
 }

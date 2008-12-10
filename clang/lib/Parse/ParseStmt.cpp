@@ -509,8 +509,11 @@ Parser::StmtResult Parser::ParseIfStatement() {
     ParseScope InnerScope(this, Scope::DeclScope, 
                           C99orCXX && Tok.isNot(tok::l_brace));
 
+    bool WithinElse = CurScope->isWithinElse();
+    CurScope->setWithinElse(true);
     ElseStmtLoc = Tok.getLocation();
     ElseStmt = ParseStatement();
+    CurScope->setWithinElse(WithinElse);
 
     // Pop the 'else' scope if needed.
     InnerScope.Exit();

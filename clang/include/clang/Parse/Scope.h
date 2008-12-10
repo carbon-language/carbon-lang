@@ -75,6 +75,10 @@ private:
   /// interrelates with other control flow statements.
   unsigned Flags : 8;
   
+  /// WithinElse - Whether this scope is part of the "else" branch in
+  /// its parent ControlScope.
+  bool WithinElse : 1;
+
   /// FnParent - If this scope has a parent scope that is a function body, this
   /// pointer is non-null and points to it.  This is used for label processing.
   Scope *FnParent;
@@ -83,6 +87,11 @@ private:
   /// preceeding BreakParent/ContinueParent if this scope is not one, or null if
   /// there is no containing break/continue scope.
   Scope *BreakParent, *ContinueParent;
+
+  /// ControlParent - This is a direct link to the immediately
+  /// preceeding ControlParent if this scope is not one, or null if
+  /// there is no containing control scope.
+  Scope *ControlParent;
 
   /// BlockParent - This is a direct link to the immediately containing
   /// BlockScope if this scope is not one, or null if there is none.
@@ -151,6 +160,9 @@ public:
     return const_cast<Scope*>(this)->getBreakParent();
   }
  
+  Scope *getControlParent() { return ControlParent; }
+  const Scope *getControlParent() const { return ControlParent; }
+  
   Scope *getBlockParent() { return BlockParent; }
   const Scope *getBlockParent() const { return BlockParent; }  
 
@@ -193,6 +205,12 @@ public:
     return getFlags() & Scope::TemplateParamScope;
   }
 
+  /// isWithinElse - Whether we are within the "else" of the
+  /// ControlParent (if any).
+  bool isWithinElse() const { return WithinElse; }
+
+  void setWithinElse(bool WE) { WithinElse = WE; }
+
   /// Init - This is used by the parser to implement scope caching.
   ///
   void Init(Scope *Parent, unsigned ScopeFlags) {
@@ -204,17 +222,23 @@ public:
       FnParent       = AnyParent->FnParent;
       BreakParent    = AnyParent->BreakParent;
       ContinueParent = AnyParent->ContinueParent;
+      ControlParent = AnyParent->ControlParent;
       BlockParent  = AnyParent->BlockParent;
       TemplateParamParent = AnyParent->TemplateParamParent;
+      WithinElse = AnyParent->WithinElse;
+
     } else {
       FnParent = BreakParent = ContinueParent = BlockParent = 0;
+      ControlParent = 0;
       TemplateParamParent = 0;
+      WithinElse = false;
     }
     
     // If this scope is a function or contains breaks/continues, remember it.
     if (Flags & FnScope)       	    FnParent = this;
     if (Flags & BreakScope)    	    BreakParent = this;
     if (Flags & ContinueScope) 	    ContinueParent = this;
+    if (Flags & ControlScope)       ControlParent = this;
     if (Flags & BlockScope)    	    BlockParent = this;
     if (Flags & TemplateParamScope) TemplateParamParent = this;
     DeclsInScope.clear();

@@ -1294,6 +1294,10 @@ DIAG(err_invalid_declarator_in_function, ERROR,
 DIAG(err_not_tag_in_scope, ERROR,
      "%0 does not name a tag member in the specified scope")
 
+DIAG(warn_value_always_zero, WARNING,
+     "%0 is always zero in this context")
+DIAG(warn_value_always_false, WARNING,
+     "%0 is always false in this context")
 
 // assignment related diagnostics (also for argument passing, returning, etc).
 // FIXME: %2 is an english string here.
