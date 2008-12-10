@@ -763,52 +763,67 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
     // looking for the SETO/SETC instruction. If an instruction modifies the
     // EFLAGS register before we reach the SETO/SETC instruction, then we can't
     // convert the branch into a JO/JC instruction.
-    const MachineInstr *SetMI = 0;
-    unsigned Reg = lookUpRegForValue(EI);
 
-    for (MachineBasicBlock::const_reverse_iterator
-           RI = MBB->rbegin(), RE = MBB->rend(); RI != RE; ++RI) {
-      const MachineInstr &MI = *RI;
+    Value *Agg = EI->getAggregateOperand();
 
-      if (MI.modifiesRegister(Reg)) {
-        unsigned Src, Dst;
+    if (CallInst *CI = dyn_cast<CallInst>(Agg)) {
+      Function *F = CI->getCalledFunction();
 
-        if (getInstrInfo()->isMoveInstr(MI, Src, Dst)) {
-          Reg = Src;
-          continue;
-        }
+      if (F && F->isDeclaration()) {
+        switch (F->getIntrinsicID()) {
+        default: break;
+        case Intrinsic::sadd_with_overflow:
+        case Intrinsic::uadd_with_overflow: {
+          const MachineInstr *SetMI = 0;
+          unsigned Reg = lookUpRegForValue(EI);
 
-        SetMI = &MI;
-        break;
-      }
+          for (MachineBasicBlock::const_reverse_iterator
+                 RI = MBB->rbegin(), RE = MBB->rend(); RI != RE; ++RI) {
+            const MachineInstr &MI = *RI;
 
-      const TargetInstrDesc &TID = MI.getDesc();
-      const unsigned *ImpDefs = TID.getImplicitDefs();
+            if (MI.modifiesRegister(Reg)) {
+              unsigned Src, Dst;
 
-      if (TID.hasUnmodeledSideEffects()) break;
+              if (getInstrInfo()->isMoveInstr(MI, Src, Dst)) {
+                Reg = Src;
+                continue;
+              }
 
-      bool ModifiesEFlags = false;
+              SetMI = &MI;
+              break;
+            }
 
-      if (ImpDefs) {
-        for (unsigned u = 0; ImpDefs[u]; ++u)
-          if (ImpDefs[u] == X86::EFLAGS) {
-            ModifiesEFlags = true;
-            break;
+            const TargetInstrDesc &TID = MI.getDesc();
+            const unsigned *ImpDefs = TID.getImplicitDefs();
+
+            if (TID.hasUnmodeledSideEffects()) break;
+
+            bool ModifiesEFlags = false;
+
+            if (ImpDefs) {
+              for (unsigned u = 0; ImpDefs[u]; ++u)
+                if (ImpDefs[u] == X86::EFLAGS) {
+                  ModifiesEFlags = true;
+                  break;
+                }
+            }
+
+            if (ModifiesEFlags) break;
           }
-      }
 
-      if (ModifiesEFlags) break;
-    }
+          if (SetMI) {
+            unsigned OpCode = SetMI->getOpcode();
 
-    if (SetMI) {
-      unsigned OpCode = SetMI->getOpcode();
-
-      if (OpCode == X86::SETOr || OpCode == X86::SETCr) {
-        BuildMI(MBB, TII.get((OpCode == X86::SETOr) ? 
-                             X86::JO : X86::JC)).addMBB(TrueMBB);
-        FastEmitBranch(FalseMBB);
-        MBB->addSuccessor(TrueMBB);
-        return true;
+            if (OpCode == X86::SETOr || OpCode == X86::SETCr) {
+              BuildMI(MBB, TII.get((OpCode == X86::SETOr) ? 
+                                   X86::JO : X86::JC)).addMBB(TrueMBB);
+              FastEmitBranch(FalseMBB);
+              MBB->addSuccessor(TrueMBB);
+              return true;
+            }
+          }
+        }
+        }
       }
     }
   }
