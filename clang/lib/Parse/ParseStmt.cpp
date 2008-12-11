@@ -133,16 +133,16 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
     return ParseIfStatement();
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
-    return Owned(ParseSwitchStatement());
+    return ParseSwitchStatement();
 
   case tok::kw_while:               // C99 6.8.5.1: while-statement
-    return Owned(ParseWhileStatement());
+    return ParseWhileStatement();
   case tok::kw_do:                  // C99 6.8.5.2: do-statement
     Res = ParseDoStatement();
     SemiError = "do/while loop";
     break;
   case tok::kw_for:                 // C99 6.8.5.3: for-statement
-    return Owned(ParseForStatement());
+    return ParseForStatement();
 
   case tok::kw_goto:                // C99 6.8.6.1: goto-statement
     Res = ParseGotoStatement();
@@ -546,14 +546,14 @@ Parser::OwningStmtResult Parser::ParseIfStatement() {
 ///       switch-statement:
 ///         'switch' '(' expression ')' statement
 /// [C++]   'switch' '(' condition ')' statement
-Parser::StmtResult Parser::ParseSwitchStatement() {
+Parser::OwningStmtResult Parser::ParseSwitchStatement() {
   assert(Tok.is(tok::kw_switch) && "Not a switch stmt!");
   SourceLocation SwitchLoc = ConsumeToken();  // eat the 'switch'.
 
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "switch";
     SkipUntil(tok::semi);
-    return true;
+    return StmtError();
   }
 
   bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
@@ -586,7 +586,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   }
   
   if (Cond.isInvalid())
-    return true;
+    return StmtError();
 
   OwningStmtResult Switch(Actions,
                           Actions.ActOnStartOfSwitchStmt(Cond.release()));
@@ -610,7 +610,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
 
   // Pop the body scope if needed.
   InnerScope.Exit();
-  
+
   if (Body.isInvalid()) {
     Body = Actions.ActOnNullStmt(Tok.getLocation());
     // FIXME: Remove the case statement list from the Switch statement.
@@ -618,25 +618,25 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
 
   SwitchScope.Exit();
 
-  return Actions.ActOnFinishSwitchStmt(SwitchLoc, Switch.release(),
-                                       Body.release());
+  return Owned(Actions.ActOnFinishSwitchStmt(SwitchLoc, Switch.release(),
+                                             Body.release()));
 }
 
 /// ParseWhileStatement
 ///       while-statement: [C99 6.8.5.1]
 ///         'while' '(' expression ')' statement
 /// [C++]   'while' '(' condition ')' statement
-Parser::StmtResult Parser::ParseWhileStatement() {
+Parser::OwningStmtResult Parser::ParseWhileStatement() {
   assert(Tok.is(tok::kw_while) && "Not a while stmt!");
   SourceLocation WhileLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'while'.
-  
+
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "while";
     SkipUntil(tok::semi);
-    return true;
+    return StmtError();
   }
-  
+
   bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
 
   // C99 6.8.5p5 - In C99, the while statement is a block.  This is not
@@ -682,27 +682,28 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   //
   ParseScope InnerScope(this, Scope::DeclScope, 
                         C99orCXX && Tok.isNot(tok::l_brace));
-  
+
   // Read the body statement.
   OwningStmtResult Body(ParseStatement());
 
   // Pop the body scope if needed.
   InnerScope.Exit();
   WhileScope.Exit();
-  
-  if (Cond.isInvalid() || Body.isInvalid()) return true;
-  
-  return Actions.ActOnWhileStmt(WhileLoc, Cond.release(), Body.release());
+
+  if (Cond.isInvalid() || Body.isInvalid())
+    return StmtError();
+
+  return Owned(Actions.ActOnWhileStmt(WhileLoc, Cond.release(),Body.release()));
 }
 
 /// ParseDoStatement
 ///       do-statement: [C99 6.8.5.2]
 ///         'do' statement 'while' '(' expression ')' ';'
 /// Note: this lets the caller parse the end ';'.
-Parser::StmtResult Parser::ParseDoStatement() {
+Parser::OwningStmtResult Parser::ParseDoStatement() {
   assert(Tok.is(tok::kw_do) && "Not a do stmt!");
   SourceLocation DoLoc = ConsumeToken();  // eat the 'do'.
-  
+
   // C99 6.8.5p5 - In C99, the do statement is a block.  This is not
   // the case for C90.  Start the loop scope.
   unsigned ScopeFlags;
@@ -710,7 +711,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
     ScopeFlags = Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope;
   else
     ScopeFlags = Scope::BreakScope | Scope::ContinueScope;
-  
+
   ParseScope DoScope(this, ScopeFlags);
 
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
@@ -724,7 +725,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   ParseScope InnerScope(this, Scope::DeclScope,
                         (getLang().C99 || getLang().CPlusPlus) && 
                         Tok.isNot(tok::l_brace));
-  
+
   // Read the body statement.
   OwningStmtResult Body(ParseStatement());
 
@@ -737,23 +738,25 @@ Parser::StmtResult Parser::ParseDoStatement() {
       Diag(DoLoc, diag::note_matching) << "do";
       SkipUntil(tok::semi, false, true);
     }
-    return true;
+    return StmtError();
   }
   SourceLocation WhileLoc = ConsumeToken();
-  
+
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "do/while";
     SkipUntil(tok::semi, false, true);
-    return true;
+    return StmtError();
   }
-  
+
   // Parse the condition.
   OwningExprResult Cond(Actions, ParseSimpleParenExpression());
   DoScope.Exit();
 
-  if (Cond.isInvalid() || Body.isInvalid()) return true;
+  if (Cond.isInvalid() || Body.isInvalid())
+    return StmtError();
 
-  return Actions.ActOnDoStmt(DoLoc, Body.release(), WhileLoc, Cond.release());
+  return Owned(Actions.ActOnDoStmt(DoLoc, Body.release(), WhileLoc,
+                                   Cond.release()));
 }
 
 /// ParseForStatement
@@ -769,16 +772,16 @@ Parser::StmtResult Parser::ParseDoStatement() {
 /// [C++]   expression-statement
 /// [C++]   simple-declaration
 ///
-Parser::StmtResult Parser::ParseForStatement() {
+Parser::OwningStmtResult Parser::ParseForStatement() {
   assert(Tok.is(tok::kw_for) && "Not a for stmt!");
   SourceLocation ForLoc = ConsumeToken();  // eat the 'for'.
-  
+
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "for";
     SkipUntil(tok::semi);
-    return true;
+    return StmtError();
   }
-  
+
   bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
 
   // C99 6.8.5p5 - In C99, the for statement is a block.  This is not
@@ -820,7 +823,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     // Parse declaration, which eats the ';'.
     if (!C99orCXX)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
-    
+
     SourceLocation DeclStart = Tok.getLocation();
     DeclTy *aBlockVarDecl = ParseSimpleDeclaration(Declarator::ForContext);
     // FIXME: Pass in the right location for the end of the declstmt.
@@ -865,7 +868,7 @@ Parser::StmtResult Parser::ParseForStatement() {
       if (!SecondPart.isInvalid()) Diag(Tok, diag::err_expected_semi_for);
       SkipUntil(tok::semi);
     }
-  
+
     // Parse the third part of the for specifier.
     if (Tok.is(tok::r_paren)) {  // for (...;...;)
       // no third part.
@@ -904,17 +907,17 @@ Parser::StmtResult Parser::ParseForStatement() {
   ForScope.Exit();
 
   if (Body.isInvalid())
-    return true;
+    return StmtError();
 
   if (!ForEach)
-    return Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart.release(),
-                                SecondPart.release(), ThirdPart.release(),
-                                RParenLoc, Body.release());
+    return Owned(Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart.release(),
+                                      SecondPart.release(), ThirdPart.release(),
+                                      RParenLoc, Body.release()));
   else
-    return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
-                                              FirstPart.release(),
-                                              SecondPart.release(),
-                                              RParenLoc, Body.release());
+    return Owned(Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
+                                                    FirstPart.release(),
+                                                    SecondPart.release(),
+                                                    RParenLoc, Body.release()));
 }
 
 /// ParseGotoStatement
@@ -924,10 +927,10 @@ Parser::StmtResult Parser::ParseForStatement() {
 ///
 /// Note: this lets the caller parse the end ';'.
 ///
-Parser::StmtResult Parser::ParseGotoStatement() {
+Parser::OwningStmtResult Parser::ParseGotoStatement() {
   assert(Tok.is(tok::kw_goto) && "Not a goto stmt!");
   SourceLocation GotoLoc = ConsumeToken();  // eat the 'goto'.
-  
+
   OwningStmtResult Res(Actions);
   if (Tok.is(tok::identifier)) {
     Res = Actions.ActOnGotoStmt(GotoLoc, Tok.getLocation(),
@@ -940,15 +943,15 @@ Parser::StmtResult Parser::ParseGotoStatement() {
     OwningExprResult R(Actions, ParseExpression());
     if (R.isInvalid()) {  // Skip to the semicolon, but don't consume it.
       SkipUntil(tok::semi, false, true);
-      return true;
+      return StmtError();
     }
     Res = Actions.ActOnIndirectGotoStmt(GotoLoc, StarLoc, R.release());
   } else {
     Diag(Tok, diag::err_expected_ident);
-    return true;
+    return StmtError();
   }
 
-  return Res.result();
+  return move(Res);
 }
 
 /// ParseContinueStatement
@@ -957,9 +960,9 @@ Parser::StmtResult Parser::ParseGotoStatement() {
 ///
 /// Note: this lets the caller parse the end ';'.
 ///
-Parser::StmtResult Parser::ParseContinueStatement() {
+Parser::OwningStmtResult Parser::ParseContinueStatement() {
   SourceLocation ContinueLoc = ConsumeToken();  // eat the 'continue'.
-  return Actions.ActOnContinueStmt(ContinueLoc, CurScope);
+  return Owned(Actions.ActOnContinueStmt(ContinueLoc, CurScope));
 }
 
 /// ParseBreakStatement
@@ -968,32 +971,32 @@ Parser::StmtResult Parser::ParseContinueStatement() {
 ///
 /// Note: this lets the caller parse the end ';'.
 ///
-Parser::StmtResult Parser::ParseBreakStatement() {
+Parser::OwningStmtResult Parser::ParseBreakStatement() {
   SourceLocation BreakLoc = ConsumeToken();  // eat the 'break'.
-  return Actions.ActOnBreakStmt(BreakLoc, CurScope);
+  return Owned(Actions.ActOnBreakStmt(BreakLoc, CurScope));
 }
 
 /// ParseReturnStatement
 ///       jump-statement:
 ///         'return' expression[opt] ';'
-Parser::StmtResult Parser::ParseReturnStatement() {
+Parser::OwningStmtResult Parser::ParseReturnStatement() {
   assert(Tok.is(tok::kw_return) && "Not a return stmt!");
   SourceLocation ReturnLoc = ConsumeToken();  // eat the 'return'.
-  
+
   OwningExprResult R(Actions);
   if (Tok.isNot(tok::semi)) {
     R = ParseExpression();
     if (R.isInvalid()) {  // Skip to the semicolon, but don't consume it.
       SkipUntil(tok::semi, false, true);
-      return true;
+      return StmtError();
     }
   }
-  return Actions.ActOnReturnStmt(ReturnLoc, R.release());
+  return Owned(Actions.ActOnReturnStmt(ReturnLoc, R.release()));
 }
 
 /// FuzzyParseMicrosoftAsmStatement. When -fms-extensions is enabled, this
 /// routine is called to skip/ignore tokens that comprise the MS asm statement.
-Parser::StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
+Parser::OwningStmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
   if (Tok.is(tok::l_brace)) {
     unsigned short savedBraceCount = BraceCount;
     do {
@@ -1012,7 +1015,7 @@ Parser::StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
              Tok.isNot(tok::r_brace) && Tok.isNot(tok::semi) && 
              Tok.isNot(tok::eof));
   }
-  return Actions.ActOnNullStmt(Tok.getLocation());
+  return Owned(Actions.ActOnNullStmt(Tok.getLocation()));
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.
@@ -1042,10 +1045,10 @@ Parser::StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
 ///         assembly-instruction ';'[opt]
 ///         assembly-instruction-list ';' assembly-instruction ';'[opt]
 ///
-Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
+Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
   assert(Tok.is(tok::kw_asm) && "Not an asm stmt");
   SourceLocation AsmLoc = ConsumeToken();
-  
+
   if (getLang().Microsoft && Tok.isNot(tok::l_paren) && !isTypeQualifier()) {
     msAsm = true;
     return FuzzyParseMicrosoftAsmStatement();
@@ -1053,26 +1056,26 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   DeclSpec DS;
   SourceLocation Loc = Tok.getLocation();
   ParseTypeQualifierListOpt(DS);
-  
+
   // GNU asms accept, but warn, about type-qualifiers other than volatile.
   if (DS.getTypeQualifiers() & DeclSpec::TQ_const)
     Diag(Loc, diag::w_asm_qualifier_ignored) << "const";
   if (DS.getTypeQualifiers() & DeclSpec::TQ_restrict)
     Diag(Loc, diag::w_asm_qualifier_ignored) << "restrict";
-  
+
   // Remember if this was a volatile asm.
   bool isVolatile = DS.getTypeQualifiers() & DeclSpec::TQ_volatile;
   bool isSimple = false;
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "asm";
     SkipUntil(tok::r_paren);
-    return true;
+    return StmtError();
   }
   Loc = ConsumeParen();
-  
+
   OwningExprResult AsmString(ParseAsmStringLiteral());
   if (AsmString.isInvalid())
-    return true;
+    return StmtError();
 
   llvm::SmallVector<std::string, 4> Names;
   ExprVector Constraints(Actions);
@@ -1080,23 +1083,23 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   ExprVector Clobbers(Actions);
 
   unsigned NumInputs = 0, NumOutputs = 0;
-  
+
   SourceLocation RParenLoc;
   if (Tok.is(tok::r_paren)) {
     // We have a simple asm expression
     isSimple = true;
-    
+
     RParenLoc = ConsumeParen();
   } else {
     // Parse Outputs, if present.
     if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
-        return true;
-  
+        return StmtError();
+
     NumOutputs = Names.size();
-  
+
     // Parse Inputs, if present.
     if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
-        return true;
+        return StmtError();
 
     assert(Names.size() == Constraints.size() &&
            Constraints.size() == Exprs.size() 
@@ -1125,12 +1128,12 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
   }
 
-  return Actions.ActOnAsmStmt(AsmLoc, isSimple, isVolatile,
-                              NumOutputs, NumInputs,
-                              &Names[0], Constraints.take(),
-                              Exprs.take(), AsmString.release(),
-                              Clobbers.size(), Clobbers.take(),
-                              RParenLoc);
+  return Owned(Actions.ActOnAsmStmt(AsmLoc, isSimple, isVolatile,
+                                    NumOutputs, NumInputs,
+                                    &Names[0], Constraints.take(),
+                                    Exprs.take(), AsmString.release(),
+                                    Clobbers.size(), Clobbers.take(),
+                                    RParenLoc));
 }
 
 /// ParseAsmOperands - Parse the asm-operands production as used by
