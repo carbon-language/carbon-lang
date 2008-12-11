@@ -234,7 +234,8 @@ def FMRRD  : AVConv3I<0b11000101, 0b1011,
 // FMDHR: GPR -> SPR
 // FMDLR: GPR -> SPR
 
-def FMDRR : AVConv5I<0b11000100, 0b1011, (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
+def FMDRR : AVConv5I<0b11000100, 0b1011,
+                     (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
                 "fmdrr", " $dst, $src1, $src2",
                 [(set DPR:$dst, (arm_fmdrr GPR:$src1, GPR:$src2))]>;
 
