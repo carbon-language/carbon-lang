@@ -1500,7 +1500,6 @@ void EmitOptionDefintions (const OptionDescriptions& descs,
 void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
 {
   // Generate code
-  O << "namespace {\n\n";
   O << "void PopulateLanguageMapLocal(LanguageMap& langMap) {\n";
 
   // Get the relevant field out of RecordKeeper
@@ -1526,7 +1525,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
     }
   }
 
-  O << "}\n\n}\n\n";
+  O << "}\n\n";
 }
 
 /// IncDecWeight - Helper function passed to EmitCaseConstructHandler()
@@ -1595,7 +1594,6 @@ void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
                                    const ToolDescriptions& ToolDescs,
                                    std::ostream& O)
 {
-  O << "namespace {\n\n";
   O << "void PopulateCompilationGraphLocal(CompilationGraph& G) {\n";
 
   for (ToolDescriptions::const_iterator B = ToolDescs.begin(),
@@ -1625,7 +1623,7 @@ void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
     ++i;
   }
 
-  O << "}\n\n}\n\n";
+  O << "}\n\n";
 }
 
 /// ExtractHookNames - Extract the hook names from all instances of
@@ -1692,8 +1690,7 @@ void EmitHookDeclarations(const ToolDescriptions& ToolDescs, std::ostream& O) {
 
 /// EmitRegisterPlugin - Emit code to register this plugin.
 void EmitRegisterPlugin(int Priority, std::ostream& O) {
-  O << "namespace {\n\n"
-    << "struct Plugin : public llvmc::BasePlugin {\n\n"
+  O << "struct Plugin : public llvmc::BasePlugin {\n\n"
     << Indent1 << "int Priority() const { return " << Priority << "; }\n\n"
     << Indent1 << "void PopulateLanguageMap(LanguageMap& langMap) const\n"
     << Indent1 << "{ PopulateLanguageMapLocal(langMap); }\n\n"
@@ -1702,7 +1699,7 @@ void EmitRegisterPlugin(int Priority, std::ostream& O) {
     << Indent1 << "{ PopulateCompilationGraphLocal(graph); }\n"
     << "};\n\n"
 
-    << "static llvmc::RegisterPlugin<Plugin> RP;\n\n}\n\n";
+    << "static llvmc::RegisterPlugin<Plugin> RP;\n\n";
 }
 
 /// EmitIncludes - Emit necessary #include directives and some
@@ -1811,6 +1808,8 @@ void EmitPluginCode(const PluginData& Data, std::ostream& O) {
   // Emit hook declarations.
   EmitHookDeclarations(Data.ToolDescs, O);
 
+  O << "namespace {\n\n";
+
   // Emit PopulateLanguageMap() function
   // (a language map maps from file extensions to language names).
   EmitPopulateLanguageMap(Records, O);
@@ -1829,6 +1828,7 @@ void EmitPluginCode(const PluginData& Data, std::ostream& O) {
   // Emit code for plugin registration.
   EmitRegisterPlugin(Data.Priority, O);
 
+  O << "} // End anonymous namespace.\n";
   // EOF
 }
 
