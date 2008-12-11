@@ -968,8 +968,8 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   }
 
   if (N->getNumValues() != 1)
-    // FIXME: DAG combiner cannot handle multiple return values on arithmetic
-    //        operators.
+    // FIXME: DAG combiner cannot handle arithmetic operators which produce
+    // multiple results.
     return SDValue();
   
   // fold (add x, undef) -> undef
@@ -1168,8 +1168,8 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
   }
 
   if (N->getNumValues() != 1)
-    // FIXME: DAG combiner cannot handle multiple return values on arithmetic
-    //        operators.
+    // FIXME: DAG combiner cannot handle arithmetic operators which produce
+    // multiple results.
     return SDValue();
   
   // fold (sub x, x) -> 0
@@ -1231,8 +1231,8 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
   }
   
   if (N->getNumValues() != 1)
-    // FIXME: DAG combiner cannot handle multiple return values on arithmetic
-    //        operators.
+    // FIXME: DAG combiner cannot handle arithmetic operators which produce
+    // multiple results.
     return SDValue();
     
   // fold (mul x, undef) -> 0
