@@ -339,7 +339,7 @@ namespace {
     
     // We avoid calling Type::isBlockPointerType(), since it operates on the
     // canonical type. We only care if the top-level type is a closure pointer.
-    bool isBlockPointerType(QualType T) { return isa<BlockPointerType>(T); }
+    bool isTopLevelBlockPointerType(QualType T) { return isa<BlockPointerType>(T); }
     
     // FIXME: This predicate seems like it would be useful to add to ASTContext.
     bool isObjCType(QualType T) {
@@ -373,7 +373,7 @@ void RewriteObjC::RewriteBlocksInFunctionTypeProto(QualType funcType,
   if (FunctionTypeProto *fproto = dyn_cast<FunctionTypeProto>(funcType)) {
     for (FunctionTypeProto::arg_type_iterator I = fproto->arg_type_begin(), 
          E = fproto->arg_type_end(); I && (I != E); ++I)
-      if (isBlockPointerType(*I)) {
+      if (isTopLevelBlockPointerType(*I)) {
         // All the args are checked/rewritten. Don't call twice!
         RewriteBlockPointerDecl(D);
         break;
@@ -936,7 +936,7 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
       ResultStr += PDecl->getNameAsString();
     } else {
       std::string Name = PDecl->getNameAsString();
-      if (isBlockPointerType(PDecl->getType())) {
+      if (isTopLevelBlockPointerType(PDecl->getType())) {
         // Make sure we convert "t (^)(...)" to "t (*)(...)".
         const BlockPointerType *BPT = PDecl->getType()->getAsBlockPointerType();
         Context->getPointerType(BPT->getPointeeType()).getAsStringInternal(Name);
@@ -2443,7 +2443,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                      ? Context->getObjCIdType() 
                      : mDecl->getParamDecl(i)->getType();
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
-      if (isBlockPointerType(t)) {
+      if (isTopLevelBlockPointerType(t)) {
         const BlockPointerType *BPT = t->getAsBlockPointerType();
         t = Context->getPointerType(BPT->getPointeeType());
       }
@@ -3489,7 +3489,7 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
     //     myImportedClosure(); // import and invoke the closure
     //   };
     //
-    if (isBlockPointerType((*I)->getType()))
+    if (isTopLevelBlockPointerType((*I)->getType()))
       S += "struct __block_impl *";
     else
       (*I)->getType().getAsStringInternal(Name);
@@ -3569,7 +3569,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
       //     myImportedBlock(); // import and invoke the closure
       //   };
       //
-      if (isBlockPointerType((*I)->getType())) {
+      if (isTopLevelBlockPointerType((*I)->getType())) {
         S += "struct __block_impl *";
         Constructor += ", void *" + ArgName;
       } else {
@@ -3595,7 +3595,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
       //     myImportedBlock(); // import and invoke the closure
       //   };
       //
-      if (isBlockPointerType((*I)->getType())) {
+      if (isTopLevelBlockPointerType((*I)->getType())) {
         S += "struct __block_impl *";
         Constructor += ", void *" + ArgName;
       } else {
@@ -3619,7 +3619,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
          E = BlockByCopyDecls.end(); I != E; ++I) {
       std::string Name = (*I)->getNameAsString();
       Constructor += "    ";
-      if (isBlockPointerType((*I)->getType()))
+      if (isTopLevelBlockPointerType((*I)->getType()))
         Constructor += Name + " = (struct __block_impl *)_";
       else
         Constructor += Name + " = _";
@@ -3630,7 +3630,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
          E = BlockByRefDecls.end(); I != E; ++I) {
       std::string Name = (*I)->getNameAsString();
       Constructor += "    ";
-      if (isBlockPointerType((*I)->getType()))
+      if (isTopLevelBlockPointerType((*I)->getType()))
         Constructor += Name + " = (struct __block_impl *)_";
       else
         Constructor += Name + " = _";
@@ -3779,7 +3779,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
          E = FTP->arg_type_end(); I && (I != E); ++I) {
       QualType t = *I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
-      if (isBlockPointerType(t)) {
+      if (isTopLevelBlockPointerType(t)) {
         const BlockPointerType *BPT = t->getAsBlockPointerType();
         t = Context->getPointerType(BPT->getPointeeType());
       }
@@ -3904,7 +3904,7 @@ bool RewriteObjC::PointerTypeTakesAnyBlockArguments(QualType QT) {
   if (FTP) {
     for (FunctionTypeProto::arg_type_iterator I = FTP->arg_type_begin(), 
          E = FTP->arg_type_end(); I != E; ++I)
-      if (isBlockPointerType(*I))
+      if (isTopLevelBlockPointerType(*I))
         return true;
   }
   return false;
@@ -4073,7 +4073,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
         // FIXME: Conform to ABI ([[obj retain] autorelease]).
         FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Exp = new DeclRefExpr(FD, FD->getType(), SourceLocation());
-      } else if (isBlockPointerType((*I)->getType())) {
+      } else if (isTopLevelBlockPointerType((*I)->getType())) {
         FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Arg = new DeclRefExpr(FD, FD->getType(), SourceLocation());
         Exp = new CStyleCastExpr(Context->VoidPtrTy, Arg, 
@@ -4289,13 +4289,13 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
          DI != DE; ++DI) {
       ScopedDecl *SD = *DI;
       if (ValueDecl *ND = dyn_cast<ValueDecl>(SD)) {
-        if (isBlockPointerType(ND->getType()))
+        if (isTopLevelBlockPointerType(ND->getType()))
           RewriteBlockPointerDecl(ND);
         else if (ND->getType()->isFunctionPointerType()) 
           CheckFunctionPointerDecl(ND->getType(), ND);
       }
       if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
-        if (isBlockPointerType(TD->getUnderlyingType()))
+        if (isTopLevelBlockPointerType(TD->getUnderlyingType()))
           RewriteBlockPointerDecl(TD);
         else if (TD->getUnderlyingType()->isFunctionPointerType()) 
           CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
@@ -4397,7 +4397,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     RewriteForwardClassDecl(CD);
   else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
     RewriteObjCQualifiedInterfaceTypes(VD);
-    if (isBlockPointerType(VD->getType()))
+    if (isTopLevelBlockPointerType(VD->getType()))
       RewriteBlockPointerDecl(VD);
     else if (VD->getType()->isFunctionPointerType()) {
       CheckFunctionPointerDecl(VD->getType(), VD);
@@ -4429,7 +4429,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     return;
   }
   if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-    if (isBlockPointerType(TD->getUnderlyingType()))
+    if (isTopLevelBlockPointerType(TD->getUnderlyingType()))
       RewriteBlockPointerDecl(TD);
     else if (TD->getUnderlyingType()->isFunctionPointerType()) 
       CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
@@ -4440,7 +4440,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
       for (RecordDecl::field_iterator i = RD->field_begin(), 
              e = RD->field_end(); i != e; ++i) {
         FieldDecl *FD = *i;
-        if (isBlockPointerType(FD->getType()))
+        if (isTopLevelBlockPointerType(FD->getType()))
           RewriteBlockPointerDecl(FD);
       }
     }
