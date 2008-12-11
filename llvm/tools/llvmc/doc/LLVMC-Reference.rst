@@ -158,9 +158,6 @@ Each TableGen configuration file should include the common
 definitions::
 
    include "llvm/CompilerDriver/Common.td"
-   // And optionally:
-   // include "llvm/CompilerDriver/Tools.td"
-   // which contains some useful tool definitions.
 
 Internally, LLVMC stores information about possible source
 transformations in form of a graph. Nodes in this graph represent
