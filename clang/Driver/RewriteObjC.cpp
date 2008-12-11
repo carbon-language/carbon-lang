@@ -3516,9 +3516,9 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   S += "*src) {";
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
       E = ImportedBlockDecls.end(); I != E; ++I) {
-    S += "_Block_copy_assign(&dst->";
+    S += "_Block_copy_assign((void*)&dst->";
     S += (*I)->getNameAsString();
-    S += ", src->";
+    S += ", (void*)src->";
     S += (*I)->getNameAsString();
     S += ");}";
   }
@@ -3529,7 +3529,7 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   S += "*src) {";
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
       E = ImportedBlockDecls.end(); I != E; ++I) {
-    S += "_Block_destroy(src->";
+    S += "_Block_destroy((void*)src->";
     S += (*I)->getNameAsString();
     S += ");";
   }
@@ -3993,7 +3993,7 @@ void RewriteObjC::CollectBlockDeclRefInfo(BlockExpr *Exp) {
       }
     // Find any imported blocks...they will need special attention.
     for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
-      if (isBlockPointerType(BlockDeclRefs[i]->getType())) {
+      if (BlockDeclRefs[i]->getType()->isBlockPointerType()) {
         GetBlockCallExprs(BlockDeclRefs[i]);
         ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
       }
