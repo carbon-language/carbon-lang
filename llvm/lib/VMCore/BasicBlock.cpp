@@ -172,8 +172,8 @@ BasicBlock *BasicBlock::getSinglePredecessor() {
 /// getUniquePredecessor - If this basic block has a unique predecessor block,
 /// return the block, otherwise return a null pointer.
 /// Note that unique predecessor doesn't mean single edge, there can be 
-/// multiple edges from the unique predecessor to this block (for example in
-/// case of a switch statement with multiple cases having same destination).
+/// multiple edges from the unique predecessor to this block (for example 
+/// a switch statement with multiple cases having the same destination).
 BasicBlock *BasicBlock::getUniquePredecessor() {
   pred_iterator PI = pred_begin(this), E = pred_end(this);
   if (PI == E) return 0; // No preds.
@@ -182,8 +182,8 @@ BasicBlock *BasicBlock::getUniquePredecessor() {
   for (;PI != E; ++PI) {
     if (*PI != PredBB)
       return 0;
-    // same predecessor appears multiple times in predecessor list,
-    // this is ok
+    // The same predecessor appears multiple times in the predecessor list.
+    // This is OK.
   }
   return PredBB;
 }
