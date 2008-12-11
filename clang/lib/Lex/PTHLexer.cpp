@@ -194,19 +194,24 @@ namespace {
 class VISIBILITY_HIDDEN PTHFileLookup {
 public:
   class Val {
-    uint32_t v;
+    uint32_t TokenOff;
+    uint32_t PPCondOff;
     
   public:
-    Val() : v(~0) {}
-    Val(uint32_t x) : v(x) {}
+    Val() : TokenOff(~0) {}
+    Val(uint32_t toff, uint32_t poff) : TokenOff(toff), PPCondOff(poff) {}
     
-    operator uint32_t() const {
-      assert(v != ~((uint32_t)0) && "PTHFileLookup entry initialized.");
-      return v;
+    uint32_t getTokenOffset() const {
+      assert(TokenOff != ~((uint32_t)0) && "PTHFileLookup entry initialized.");
+      return TokenOff;
     }
     
-    Val& operator=(uint32_t x) { v = x; return *this; }
-    bool isValid() const { return v != ~((uint32_t)0); }
+    uint32_t gettPPCondOffset() const {
+      assert(TokenOff != ~((uint32_t)0) && "PTHFileLookup entry initialized.");
+      return PPCondOff;
+    }
+    
+    bool isValid() const { return TokenOff != ~((uint32_t)0); }
   };
   
 private:
@@ -228,7 +233,8 @@ public:
       uint32_t len = Read32(D);
       const char* s = D;
       D += len;
-      FileMap.GetOrCreateValue(s, s+len).getValue() = Read32(D);
+      uint32_t TokenOff = Read32(D);
+      FileMap.GetOrCreateValue(s, s+len).getValue() = Val(TokenOff, Read32(D));      
     }
   }
 };
@@ -351,13 +357,13 @@ PTHLexer* PTHManager::CreateLexer(unsigned FileID, const FileEntry* FE) {
   // Lookup the FileEntry object in our file lookup data structure.  It will
   // return a variant that indicates whether or not there is an offset within
   // the PTH file that contains cached tokens.
-  PTHFileLookup::Val Off = ((PTHFileLookup*) FileLookup)->Lookup(FE);
+  PTHFileLookup::Val FileData = ((PTHFileLookup*) FileLookup)->Lookup(FE);
   
-  if (!Off.isValid()) // No tokens available.
+  if (!FileData.isValid()) // No tokens available.
     return 0;
   
   // Compute the offset of the token data within the buffer.
-  const char* data = Buf->getBufferStart() + Off;
+  const char* data = Buf->getBufferStart() + FileData.getTokenOffset();
   assert(data < Buf->getBufferEnd());
   return new PTHLexer(PP, SourceLocation::getFileLoc(FileID, 0), data, *this); 
 }

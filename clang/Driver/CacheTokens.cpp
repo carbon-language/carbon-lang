@@ -27,7 +27,7 @@ using namespace clang;
 
 typedef uint32_t Offset;
 
-typedef llvm::DenseMap<const FileEntry*,Offset> PCHMap;
+typedef llvm::DenseMap<const FileEntry*,std::pair<Offset,Offset> > PCHMap;
 typedef llvm::DenseMap<const IdentifierInfo*,uint32_t> IDMap;
 
 static void Emit32(llvm::raw_ostream& Out, uint32_t V) {
@@ -140,18 +140,25 @@ Offset EmitFileTable(llvm::raw_fd_ostream& Out, SourceManager& SM, PCHMap& PM) {
     unsigned size = strlen(Name);
     Emit32(Out, size);
     EmitBuf(Out, Name, Name+size);
-    Emit32(Out, I->second);    
+    Emit32(Out, I->second.first);
+    Emit32(Out, I->second.second);
   }
 
   return off;
 }
 
-static Offset LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
-                        uint32_t& idcount, IDMap& IM) {
+static std::pair<Offset,Offset>
+LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
+          uint32_t& idcount, IDMap& IM) {
   
   // Record the location within the token file.
   Offset off = (Offset) Out.tell();
   SourceManager& SMgr = PP.getSourceManager();
+  
+  // Keep track of matching '#if' ... '#endif'.
+  typedef std::vector<std::pair<Offset, unsigned> > PPCondTable;
+  PPCondTable PPCond;
+  std::vector<unsigned> PPStartCond;  
 
   Token Tok;
   
@@ -164,6 +171,7 @@ static Offset LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
     else if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
       // Special processing for #include.  Store the '#' token and lex
       // the next token.
+      Offset HashOff = (Offset) Out.tell();
       EmitToken(Out, Tok, SMgr, idcount, IM);
       L.LexFromRawLexer(Tok);
       
@@ -189,11 +197,52 @@ static Offset LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
         if (Tok.is(tok::identifier))
           Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
       }
+      else if (K == tok::pp_if || K == tok::pp_ifdef || K == tok::pp_ifndef) {
+        // Ad an entry for '#if' and friends.  We initially set the target index
+        // to 0.  This will get backpatched when we hit #endif.
+        PPStartCond.push_back(PPCond.size());
+        PPCond.push_back(std::make_pair((Offset) HashOff, 0U));
+      }
+      else if (K == tok::pp_endif) {
+        assert(!PPStartCond.empty());        
+        // Add an entry for '#endif'.  We set the target table index to itself.
+        unsigned index = PPCond.size();
+        PPCond.push_back(std::make_pair((Offset) HashOff, index));        
+        // Backpatch the opening '#if' entry.
+        assert(PPCond[PPStartCond.back()].second == 0);
+        PPCond[PPStartCond.back()].second = index;
+        PPStartCond.pop_back();        
+      }
+      else if (K == tok::pp_elif) {
+        assert(!PPStartCond.empty());
+        // Add an entry for '#elif'.  This serves as both a closing and
+        // opening of a conditional block.  This means that its entry
+        // will get backpatched later.
+        unsigned index = PPCond.size();
+        PPCond.push_back(std::make_pair((Offset) HashOff, 0U));
+        // Backpatch the previous '#if' entry.
+        assert(PPCond[PPStartCond.back()].second == 0);
+        PPCond[PPStartCond.back()].second = index;
+        PPStartCond.pop_back();
+        // Now add '#elif' as a new block opening.
+        PPStartCond.push_back(index);        
+      }
     }    
   }
   while (EmitToken(Out, Tok, SMgr, idcount, IM), Tok.isNot(tok::eof));
+  
+  // Next write out PPCond.
+  Offset PPCondOff = (Offset) Out.tell();
+  // Write out the size of PPCond so that clients can tell if the table is
+  // empty.
+  Emit32(Out, PPCond.size());
 
-  return off;
+  for (PPCondTable::iterator I=PPCond.begin(), E=PPCond.end(); I!=E; ++I) {
+    Emit32(Out, I->first - off);
+    Emit32(Out, I->second);
+  }
+
+  return std::make_pair(off,PPCondOff);
 }
 
 void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
@@ -243,7 +292,7 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
     
     Lexer L(SourceLocation::getFileLoc(I.getFileID(), 0), LOpts,
             B->getBufferStart(), B->getBufferEnd(), B);
-    
+
     PM[FE] = LexTokens(Out, L, PP, idcount, IM);
   }
 
