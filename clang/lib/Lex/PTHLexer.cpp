@@ -28,7 +28,8 @@ using namespace clang;
 
 PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D,
                    PTHManager& PM)
-  : PreprocessorLexer(&pp, fileloc), TokBuf(D), PTHMgr(PM), 
+  : PreprocessorLexer(&pp, fileloc), TokBuf(D), CurPtr(D), LastHashTokPtr(0),
+    PTHMgr(PM),
     NeedsFetching(true) {
     // Make sure the EofToken is completely clean.
     EofToken.startToken();
@@ -82,6 +83,8 @@ LexNextToken:
     
   if (Tok.is(tok::hash)) {    
     if (Tok.isAtStartOfLine() && !LexingRawMode) {
+      LastHashTokPtr = CurPtr;
+      
       PP->HandleDirective(Tok);
 
       if (PP->isCurrentLexer(this))
@@ -163,20 +166,20 @@ void PTHLexer::ReadToken(Token& T) {
   T.startToken();
   
   // Read the type of the token.
-  T.setKind((tok::TokenKind) Read8(TokBuf));
+  T.setKind((tok::TokenKind) Read8(CurPtr));
   
   // Set flags.  This is gross, since we are really setting multiple flags.
-  T.setFlag((Token::TokenFlags) Read8(TokBuf));
+  T.setFlag((Token::TokenFlags) Read8(CurPtr));
   
   // Set the IdentifierInfo* (if any).
-  T.setIdentifierInfo(PTHMgr.ReadIdentifierInfo(TokBuf));
+  T.setIdentifierInfo(PTHMgr.ReadIdentifierInfo(CurPtr));
   
   // Set the SourceLocation.  Since all tokens are constructed using a
   // raw lexer, they will all be offseted from the same FileID.
-  T.setLocation(SourceLocation::getFileLoc(FileID, Read32(TokBuf)));
+  T.setLocation(SourceLocation::getFileLoc(FileID, Read32(CurPtr)));
   
   // Finally, read and set the length of the token.
-  T.setLength(Read32(TokBuf));
+  T.setLength(Read32(CurPtr));
 }
 
 //===----------------------------------------------------------------------===//

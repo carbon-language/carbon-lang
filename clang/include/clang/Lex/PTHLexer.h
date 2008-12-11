@@ -24,6 +24,14 @@ class PTHManager;
 class PTHLexer : public PreprocessorLexer {
   /// TokBuf - Buffer from PTH file containing raw token data.
   const char* TokBuf;
+  
+  /// CurPtr - Pointer into current offset of the token buffer where
+  ///  the next token will be read.
+  const char* CurPtr;
+    
+  /// LastHashTokPtr - Pointer into TokBuf of the last processed '#'
+  ///  token that appears at the start of a line.
+  const char* LastHashTokPtr;
 
   PTHLexer(const PTHLexer&);  // DO NOT IMPLEMENT
   void operator=(const PTHLexer&); // DO NOT IMPLEMENT
@@ -71,6 +79,14 @@ public:
   SourceLocation getSourceLocation() { return GetToken().getLocation(); }
 
 private:
+  
+  /// SkipToToken - Skip to the token at the specified offset in TokBuf.
+  void SkipToToken(unsigned offset) {
+    const char* NewPtr = TokBuf + offset;
+    assert(NewPtr > CurPtr && "SkipToToken should not go backwards!");
+    NeedsFetching = true;
+    CurPtr = NewPtr;
+  }
   
   /// AtLastToken - Returns true if the PTHLexer is at the last token.
   bool AtLastToken() { 
