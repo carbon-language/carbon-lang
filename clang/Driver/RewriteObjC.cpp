@@ -537,10 +537,6 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "  int Size;\n";
   Preamble += "  void *FuncPtr;\n";
   Preamble += "};\n";
-  Preamble += "enum {\n";
-  Preamble += "  BLOCK_HAS_COPY_DISPOSE = (1<<25),\n";
-  Preamble += "  BLOCK_IS_GLOBAL = (1<<28)\n";
-  Preamble += "};\n";
   Preamble += "// Runtime copy/destroy helper functions\n";
   Preamble += "__OBJC_RW_STATICIMPORT void _Block_copy_assign(void *, void *);\n";
   Preamble += "__OBJC_RW_STATICIMPORT void _Block_byref_assign_copy(void *, void *);\n";
