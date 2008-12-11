@@ -1216,7 +1216,7 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   // statements can always hold declarations.
   ParseScope BodyScope(this, Scope::DeclScope);
 
-  OwningStmtResult SynchBody(Actions, ParseCompoundStatementBody());
+  OwningStmtResult SynchBody(ParseCompoundStatementBody());
 
   BodyScope.Exit();
   if (SynchBody.isInvalid())
@@ -1247,7 +1247,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   OwningStmtResult CatchStmts(Actions);
   OwningStmtResult FinallyStmt(Actions);
   ParseScope TryScope(this, Scope::DeclScope);
-  OwningStmtResult TryBody(Actions, ParseCompoundStatementBody());
+  OwningStmtResult TryBody(ParseCompoundStatementBody());
   TryScope.Exit();
   if (TryBody.isInvalid())
     TryBody = Actions.ActOnNullStmt(Tok.getLocation());
@@ -1357,9 +1357,9 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   // Tell the actions module that we have entered a method definition with the
   // specified Declarator for the method.
   Actions.ObjCActOnStartOfMethodDef(CurScope, MDecl);
-  
-  OwningStmtResult FnBody(Actions, ParseCompoundStatementBody());
-  
+
+  OwningStmtResult FnBody(ParseCompoundStatementBody());
+
   // If the function body could not be parsed, make a bogus compoundstmt.
   if (FnBody.isInvalid())
     FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc, 0, 0, false);

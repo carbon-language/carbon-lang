@@ -1038,7 +1038,7 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
   
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
-    OwningStmtResult Stmt(Actions, ParseCompoundStatement(true));
+    OwningStmtResult Stmt(ParseCompoundStatement(true));
     ExprType = CompoundStmt;
 
     // If the substmt parsed correctly, build the AST node.
@@ -1192,7 +1192,7 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
   
   OwningExprResult Result(Actions, true);
   if (Tok.is(tok::l_brace)) {
-    OwningStmtResult Stmt(Actions, ParseCompoundStatementBody());
+    OwningStmtResult Stmt(ParseCompoundStatementBody());
     if (!Stmt.isInvalid()) {
       Result = Actions.ActOnBlockStmtExpr(CaretLoc, Stmt.release(), CurScope);
     } else {

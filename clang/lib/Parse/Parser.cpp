@@ -666,7 +666,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 Parser::OwningExprResult Parser::ParseAsmStringLiteral() {
   if (!isTokenStringLiteral()) {
     Diag(Tok, diag::err_expected_string_literal);
-    return OwningExprResult(true);
+    return ExprError();
   }
 
   OwningExprResult Res(Actions, ParseStringLiteralExpression());
@@ -688,7 +688,7 @@ Parser::OwningExprResult Parser::ParseSimpleAsm() {
 
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "asm";
-    return OwningExprResult(true);
+    return ExprError();
   }
 
   ConsumeParen();

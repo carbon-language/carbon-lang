@@ -87,6 +87,18 @@ public:
   typedef Action::OwningExprResult OwningExprResult;
   typedef Action::OwningStmtResult OwningStmtResult;
 
+  /// Adorns a ExprResult with Actions to make it an OwningExprResult
+  OwningExprResult Owned(ExprResult res) {
+    return OwningExprResult(Actions, res);
+  }
+  /// Adorns a StmtResult with Actions to make it an OwningStmtResult
+  OwningStmtResult Owned(StmtResult res) {
+    return OwningStmtResult(Actions, res);
+  }
+
+  OwningExprResult ExprError() { return OwningExprResult(Actions, true); }
+  OwningStmtResult StmtError() { return OwningStmtResult(Actions, true); }
+
   // Parsing methods.
   
   /// ParseTranslationUnit - All in one method that initializes parses, and
@@ -609,18 +621,20 @@ private:
                                                          SourceLocation NameLoc,
                                                          IdentifierInfo *ReceiverName,
                                                          ExprTy *ReceiverExpr);
-    
+
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.
-  
-  StmtResult ParseStatement() { return ParseStatementOrDeclaration(true); }
-  StmtResult ParseStatementOrDeclaration(bool OnlyStatement = false);
-  StmtResult ParseLabeledStatement();
-  StmtResult ParseCaseStatement();
-  StmtResult ParseDefaultStatement();
-  StmtResult ParseCompoundStatement(bool isStmtExpr = false);
-  StmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
-  StmtResult ParseIfStatement();
+
+  OwningStmtResult ParseStatement() {
+    return ParseStatementOrDeclaration(true);
+  }
+  OwningStmtResult ParseStatementOrDeclaration(bool OnlyStatement = false);
+  OwningStmtResult ParseLabeledStatement();
+  OwningStmtResult ParseCaseStatement();
+  OwningStmtResult ParseDefaultStatement();
+  OwningStmtResult ParseCompoundStatement(bool isStmtExpr = false);
+  OwningStmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
+  OwningStmtResult ParseIfStatement();
   StmtResult ParseSwitchStatement();
   StmtResult ParseWhileStatement();
   StmtResult ParseDoStatement();

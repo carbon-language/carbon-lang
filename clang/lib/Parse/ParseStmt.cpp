@@ -72,7 +72,8 @@ using namespace clang;
 /// [OBC]   '@' 'throw' expression ';'
 /// [OBC]   '@' 'throw' ';' 
 /// 
-Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
+Parser::OwningStmtResult
+Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   const char *SemiError = 0;
   OwningStmtResult Res(Actions);
 
@@ -85,7 +86,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   case tok::at: // May be a @try or @throw statement
     {
       AtLoc = ConsumeToken();  // consume @
-      return ParseObjCAtStatement(AtLoc);
+      return Owned(ParseObjCAtStatement(AtLoc));
     }
 
   case tok::identifier:
@@ -100,10 +101,10 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       SourceLocation DeclStart = Tok.getLocation();
       DeclTy *Decl = ParseDeclaration(Declarator::BlockContext);
       // FIXME: Pass in the right location for the end of the declstmt.
-      return Actions.ActOnDeclStmt(Decl, DeclStart, DeclStart);
+      return Owned(Actions.ActOnDeclStmt(Decl, DeclStart, DeclStart));
     } else if (Tok.is(tok::r_brace)) {
       Diag(Tok, diag::err_expected_statement);
-      return true;
+      return StmtError();
     } else {
       // expression[opt] ';'
       OwningExprResult Expr(Actions, ParseExpression());
@@ -112,36 +113,36 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
         // doing this opens us up to the possibility of infinite loops if
         // ParseExpression does not consume any tokens.
         SkipUntil(tok::semi);
-        return true;
+        return StmtError();
       }
       // Otherwise, eat the semicolon.
       ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-      return Actions.ActOnExprStmt(Expr.release());
+      return Owned(Actions.ActOnExprStmt(Expr.release()));
     }
-    
+
   case tok::kw_case:                // C99 6.8.1: labeled-statement
     return ParseCaseStatement();
   case tok::kw_default:             // C99 6.8.1: labeled-statement
     return ParseDefaultStatement();
-    
+
   case tok::l_brace:                // C99 6.8.2: compound-statement
     return ParseCompoundStatement();
   case tok::semi:                   // C99 6.8.3p3: expression[opt] ';'
-    return Actions.ActOnNullStmt(ConsumeToken());
-    
+    return Owned(Actions.ActOnNullStmt(ConsumeToken()));
+
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
     return ParseIfStatement();
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
-    return ParseSwitchStatement();
-    
+    return Owned(ParseSwitchStatement());
+
   case tok::kw_while:               // C99 6.8.5.1: while-statement
-    return ParseWhileStatement();
+    return Owned(ParseWhileStatement());
   case tok::kw_do:                  // C99 6.8.5.2: do-statement
     Res = ParseDoStatement();
     SemiError = "do/while loop";
     break;
   case tok::kw_for:                 // C99 6.8.5.3: for-statement
-    return ParseForStatement();
+    return Owned(ParseForStatement());
 
   case tok::kw_goto:                // C99 6.8.6.1: goto-statement
     Res = ParseGotoStatement();
@@ -159,15 +160,15 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     Res = ParseReturnStatement();
     SemiError = "return statement";
     break;
-    
+
   case tok::kw_asm:
     bool msAsm = false;
     Res = ParseAsmStatement(msAsm);
-    if (msAsm) return Res.result();
+    if (msAsm) return move(Res);
     SemiError = "asm statement";
     break;
   }
-  
+
   // If we reached this code, the statement must end in a semicolon.
   if (Tok.is(tok::semi)) {
     ConsumeToken();
@@ -176,7 +177,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     // Skip until we see a } or ;, but don't eat it.
     SkipUntil(tok::r_brace, true, true);
   }
-  return Res.result();
+  return move(Res);
 }
 
 /// ParseLabeledStatement - We have an identifier and a ':' after it.
@@ -185,7 +186,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
 ///         identifier ':' statement
 /// [GNU]   identifier ':' attributes[opt] statement
 ///
-Parser::StmtResult Parser::ParseLabeledStatement() {
+Parser::OwningStmtResult Parser::ParseLabeledStatement() {
   assert(Tok.is(tok::identifier) && Tok.getIdentifierInfo() &&
          "Not an identifier!");
 
@@ -193,7 +194,7 @@ Parser::StmtResult Parser::ParseLabeledStatement() {
   ConsumeToken();  // eat the identifier.
 
   assert(Tok.is(tok::colon) && "Not a label!");
-  
+
   // identifier ':' statement
   SourceLocation ColonLoc = ConsumeToken();
 
@@ -203,15 +204,15 @@ Parser::StmtResult Parser::ParseLabeledStatement() {
     // TODO: save these somewhere.
     AttrList = ParseAttributes();
 
-  OwningStmtResult SubStmt(Actions, ParseStatement());
+  OwningStmtResult SubStmt(ParseStatement());
 
   // Broken substmt shouldn't prevent the label from being added to the AST.
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
 
-  return Actions.ActOnLabelStmt(IdentTok.getLocation(), 
-                                IdentTok.getIdentifierInfo(),
-                                ColonLoc, SubStmt.release());
+  return Owned(Actions.ActOnLabelStmt(IdentTok.getLocation(),
+                                      IdentTok.getIdentifierInfo(),
+                                      ColonLoc, SubStmt.release()));
 }
 
 /// ParseCaseStatement
@@ -221,14 +222,14 @@ Parser::StmtResult Parser::ParseLabeledStatement() {
 ///
 /// Note that this does not parse the 'statement' at the end.
 ///
-Parser::StmtResult Parser::ParseCaseStatement() {
+Parser::OwningStmtResult Parser::ParseCaseStatement() {
   assert(Tok.is(tok::kw_case) && "Not a case stmt!");
   SourceLocation CaseLoc = ConsumeToken();  // eat the 'case'.
 
   OwningExprResult LHS(Actions, ParseConstantExpression());
   if (LHS.isInvalid()) {
     SkipUntil(tok::colon);
-    return true;
+    return StmtError();
   }
 
   // GNU case range extension.
@@ -241,32 +242,33 @@ Parser::StmtResult Parser::ParseCaseStatement() {
     RHS = ParseConstantExpression();
     if (RHS.isInvalid()) {
       SkipUntil(tok::colon);
-      return true;
+      return StmtError();
     }
   }
 
   if (Tok.isNot(tok::colon)) {
     Diag(Tok, diag::err_expected_colon_after) << "'case'";
     SkipUntil(tok::colon);
-    return true;
+    return StmtError();
   }
-  
+
   SourceLocation ColonLoc = ConsumeToken();
-  
+
   // Diagnose the common error "switch (X) { case 4: }", which is not valid.
   if (Tok.is(tok::r_brace)) {
     Diag(Tok, diag::err_label_end_of_compound_statement);
-    return true;
+    return StmtError();
   }
-  
-  OwningStmtResult SubStmt(Actions, ParseStatement());
+
+  OwningStmtResult SubStmt(ParseStatement());
 
   // Broken substmt shouldn't prevent the case from being added to the AST.
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
-  
-  return Actions.ActOnCaseStmt(CaseLoc, LHS.release(), DotDotDotLoc,
-                               RHS.release(), ColonLoc, SubStmt.release());
+
+  return Owned(Actions.ActOnCaseStmt(CaseLoc, LHS.release(), DotDotDotLoc,
+                                     RHS.release(), ColonLoc,
+                                     SubStmt.release()));
 }
 
 /// ParseDefaultStatement
@@ -274,30 +276,30 @@ Parser::StmtResult Parser::ParseCaseStatement() {
 ///         'default' ':' statement
 /// Note that this does not parse the 'statement' at the end.
 ///
-Parser::StmtResult Parser::ParseDefaultStatement() {
+Parser::OwningStmtResult Parser::ParseDefaultStatement() {
   assert(Tok.is(tok::kw_default) && "Not a default stmt!");
   SourceLocation DefaultLoc = ConsumeToken();  // eat the 'default'.
 
   if (Tok.isNot(tok::colon)) {
     Diag(Tok, diag::err_expected_colon_after) << "'default'";
     SkipUntil(tok::colon);
-    return true;
+    return StmtError();
   }
-  
+
   SourceLocation ColonLoc = ConsumeToken();
-  
+
   // Diagnose the common error "switch (X) {... default: }", which is not valid.
   if (Tok.is(tok::r_brace)) {
     Diag(Tok, diag::err_label_end_of_compound_statement);
-    return true;
+    return StmtError();
   }
 
-  OwningStmtResult SubStmt(Actions, ParseStatement());
+  OwningStmtResult SubStmt(ParseStatement());
   if (SubStmt.isInvalid())
-    return true;
-  
-  return Actions.ActOnDefaultStmt(DefaultLoc, ColonLoc,
-                                  SubStmt.release(), CurScope);
+    return StmtError();
+
+  return Owned(Actions.ActOnDefaultStmt(DefaultLoc, ColonLoc,
+                                        SubStmt.release(), CurScope));
 }
 
 
@@ -328,16 +330,15 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
 /// [OMP]   barrier-directive
 /// [OMP]   flush-directive
 ///
-Parser::StmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
+Parser::OwningStmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
   assert(Tok.is(tok::l_brace) && "Not a compount stmt!");
-  
+
   // Enter a scope to hold everything within the compound stmt.  Compound
   // statements can always hold declarations.
   ParseScope CompoundScope(this, Scope::DeclScope);
 
   // Parse the statements in the body.
-  OwningStmtResult Body(Actions, ParseCompoundStatementBody(isStmtExpr));
-  return Body.result();
+  return ParseCompoundStatementBody(isStmtExpr);
 }
 
 
@@ -345,7 +346,7 @@ Parser::StmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
 /// ActOnCompoundStmt action.  This expects the '{' to be the current token, and
 /// consume the '}' at the end of the block.  It does not manipulate the scope
 /// stack.
-Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
+Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
 
   // TODO: "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
@@ -397,20 +398,20 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         R = Actions.ActOnExprStmt(Res.release());
       }
     }
-    
+
     if (R.isUsable())
       Stmts.push_back(R.release());
   }
-  
+
   // We broke out of the while loop because we found a '}' or EOF.
   if (Tok.isNot(tok::r_brace)) {
     Diag(Tok, diag::err_expected_rbrace);
-    return true;
+    return StmtError();
   }
-  
+
   SourceLocation RBraceLoc = ConsumeBrace();
-  return Actions.ActOnCompoundStmt(LBraceLoc, RBraceLoc,
-                                   Stmts.take(), Stmts.size(), isStmtExpr);
+  return Owned(Actions.ActOnCompoundStmt(LBraceLoc, RBraceLoc, Stmts.take(),
+                                         Stmts.size(), isStmtExpr));
 }
 
 /// ParseIfStatement
@@ -420,14 +421,14 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 /// [C++]   'if' '(' condition ')' statement
 /// [C++]   'if' '(' condition ')' statement 'else' statement
 ///
-Parser::StmtResult Parser::ParseIfStatement() {
+Parser::OwningStmtResult Parser::ParseIfStatement() {
   assert(Tok.is(tok::kw_if) && "Not an if stmt!");
   SourceLocation IfLoc = ConsumeToken();  // eat the 'if'.
 
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "if";
     SkipUntil(tok::semi);
-    return true;
+    return StmtError();
   }
 
   bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
@@ -458,7 +459,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
 
   if (CondExp.isInvalid()) {
     SkipUntil(tok::semi);
-    return true;
+    return StmtError();
   }
   
   // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
@@ -484,11 +485,11 @@ Parser::StmtResult Parser::ParseIfStatement() {
 
   // Read the 'then' stmt.
   SourceLocation ThenStmtLoc = Tok.getLocation();
-  OwningStmtResult ThenStmt(Actions, ParseStatement());
+  OwningStmtResult ThenStmt(ParseStatement());
 
   // Pop the 'if' scope if needed.
   InnerScope.Exit();
-  
+
   // If it has an else, parse it.
   SourceLocation ElseLoc;
   SourceLocation ElseStmtLoc;
@@ -496,7 +497,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
 
   if (Tok.is(tok::kw_else)) {
     ElseLoc = ConsumeToken();
-    
+
     // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
     // there is no compound stmt.  C90 does not have this clause.  We only do
     // this if the body isn't a compound statement to avoid push/pop in common
@@ -506,7 +507,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
     // The substatement in a selection-statement (each substatement, in the else
     // form of the if statement) implicitly defines a local scope.
     //
-    ParseScope InnerScope(this, Scope::DeclScope, 
+    ParseScope InnerScope(this, Scope::DeclScope,
                           C99orCXX && Tok.isNot(tok::l_brace));
 
     bool WithinElse = CurScope->isWithinElse();
@@ -518,7 +519,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
     // Pop the 'else' scope if needed.
     InnerScope.Exit();
   }
-  
+
   IfScope.Exit();
 
   // If the then or else stmt is invalid and the other is valid (and present),
@@ -528,7 +529,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
       (ThenStmt.isInvalid() && ElseStmt.get() == 0) ||
       (ThenStmt.get() == 0  && ElseStmt.isInvalid())) {
     // Both invalid, or one is invalid and other is non-present: return error.
-    return true;
+    return StmtError();
   }
 
   // Now if either are invalid, replace with a ';'.
@@ -537,8 +538,8 @@ Parser::StmtResult Parser::ParseIfStatement() {
   if (ElseStmt.isInvalid())
     ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
 
-  return Actions.ActOnIfStmt(IfLoc, CondExp.release(), ThenStmt.release(),
-                             ElseLoc, ElseStmt.release());
+  return Owned(Actions.ActOnIfStmt(IfLoc, CondExp.release(), ThenStmt.release(),
+                                   ElseLoc, ElseStmt.release()));
 }
 
 /// ParseSwitchStatement
@@ -603,9 +604,9 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   //
   ParseScope InnerScope(this, Scope::DeclScope, 
                         C99orCXX && Tok.isNot(tok::l_brace));
-  
+
   // Read the body statement.
-  OwningStmtResult Body(Actions, ParseStatement());
+  OwningStmtResult Body(ParseStatement());
 
   // Pop the body scope if needed.
   InnerScope.Exit();
@@ -616,7 +617,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   }
 
   SwitchScope.Exit();
-  
+
   return Actions.ActOnFinishSwitchStmt(SwitchLoc, Switch.release(),
                                        Body.release());
 }
@@ -683,7 +684,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
                         C99orCXX && Tok.isNot(tok::l_brace));
   
   // Read the body statement.
-  OwningStmtResult Body(Actions, ParseStatement());
+  OwningStmtResult Body(ParseStatement());
 
   // Pop the body scope if needed.
   InnerScope.Exit();
@@ -725,7 +726,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
                         Tok.isNot(tok::l_brace));
   
   // Read the body statement.
-  OwningStmtResult Body(Actions, ParseStatement());
+  OwningStmtResult Body(ParseStatement());
 
   // Pop the body scope if needed.
   InnerScope.Exit();
@@ -894,7 +895,7 @@ Parser::StmtResult Parser::ParseForStatement() {
                         C99orCXX && Tok.isNot(tok::l_brace));
 
   // Read the body statement.
-  OwningStmtResult Body(Actions, ParseStatement());
+  OwningStmtResult Body(ParseStatement());
 
   // Pop the body scope if needed.
   InnerScope.Exit();
@@ -1207,11 +1208,11 @@ Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl,
   // Do not enter a scope for the brace, as the arguments are in the same scope
   // (the function body) as the body itself.  Instead, just read the statement
   // list and put it into a CompoundStmt for safe keeping.
-  OwningStmtResult FnBody(Actions, ParseCompoundStatementBody());
-  
+  OwningStmtResult FnBody(ParseCompoundStatementBody());
+
   // If the function body could not be parsed, make a bogus compoundstmt.
   if (FnBody.isInvalid())
-    FnBody = Actions.ActOnCompoundStmt(L, R, 0, 0, false);
-  
+    FnBody = Owned(Actions.ActOnCompoundStmt(L, R, 0, 0, false));
+
   return Actions.ActOnFinishFunctionBody(Decl, FnBody.release());
 }
