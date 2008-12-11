@@ -98,3 +98,6 @@ References
 
 .. [1] TableGen Fundamentals
        http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html
+
+.. raw:: html
+   :file: footer.html

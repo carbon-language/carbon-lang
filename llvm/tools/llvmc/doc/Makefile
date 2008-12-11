@@ -7,15 +7,23 @@
 #
 ##===----------------------------------------------------------------------===##
 
-RST2HTML=rst2html --stylesheet=llvm.css --link-stylesheet
+LEVEL=../../..
+include $(LEVEL)/Makefile.config
 
-all : LLVMC-Reference.html LLVMC-Tutorial.html
+RST_CSS=llvm-rst.css
+DOC_DIR=../../../docs
+RST2HTML=rst2html --stylesheet=$(RST_CSS) --link-stylesheet
 
-LLVMC-Tutorial.html : LLVMC-Tutorial.rst llvm.css
+all : LLVMC-Reference.html LLVMC-Tutorial.html $(RST_CSS)
+	$(CP) $(RST_CSS) $(DOC_DIR)/$(RST_CSS)
+	$(CP) LLVMC-Reference.html $(DOC_DIR)/CompilerDriver.html
+	$(CP) LLVMC-Reference.html $(DOC_DIR)/CompilerDriverTutorial.html
+
+LLVMC-Tutorial.html : LLVMC-Tutorial.rst $(RST_CSS)
 	$(RST2HTML) $< $@
 
-LLVMC-Reference.html : LLVMC-Reference.rst llvm.css
+LLVMC-Reference.html : LLVMC-Reference.rst $(RST_CSS)
 	$(RST2HTML) $< $@
 
 clean :
-	rm *.html
+	$(RM) LLVMC-Tutorial.html LLVMC-Reference.html

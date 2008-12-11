@@ -597,3 +597,6 @@ References
 
 .. [3] Ghostview
        http://pages.cs.wisc.edu/~ghost/
+
+.. raw:: html
+   :file: footer.html

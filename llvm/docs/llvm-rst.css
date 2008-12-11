@@ -23,7 +23,7 @@ TABLE       { text-align: center; border: 2px solid black;
  * Documentation
  */
 /* Common for title and header */
-h1 {
+h1, h2 {
   color: black; background: url("img/lines.gif");
   font-family: "Georgia,Palatino,Times,Roman,SanSerif"; font-weight: bold;
   border-width: 1px;
@@ -32,19 +32,23 @@ h1 {
   vertical-align: middle;
   padding-left: 8pt;
   padding-top: 1px;
-  padding-bottom: 2px
+  padding-bottom: 2px;
 }
 
-.doc_title      { text-align: left;   font-size: 25pt }
-.doc_section    { text-align: center; font-size: 22pt;
-                  margin: 20pt 0pt 5pt 0pt; }
-.doc_subsection { width: 75%;
-                  text-align: left;  font-size: 12pt; padding: 4pt 4pt 4pt 4pt;
-                  margin: 1.5em 0.5em 0.5em 0.5em }
+h1 {
+  text-align: center;
+  font-size: 22pt;
+  margin: 20pt 0pt 5pt 0pt;
+}
 
-.doc_subsubsection { margin: 2.0em 0.5em 0.5em 0.5em;
-                     font-weight: bold; font-style: oblique;
-                     border-bottom: 1px solid #999999; font-size: 12pt;
+.title      { padding-top: 0; margin-top: 0; text-align: left;   font-size: 25pt }
+h2 { width: 75%;
+     text-align: left;  font-size: 12pt; padding: 4pt 4pt 4pt 4pt;
+     margin: 1.5em 0.5em 0.5em 0.5em }
+
+h3 { margin: 2.0em 0.5em 0.5em 0.5em;
+     font-weight: bold; font-style: oblique;
+     border-bottom: 1px solid #999999; font-size: 12pt;
                      width: 75%; }
 .doc_author     { text-align: left; font-weight: bold; padding-left: 20pt }
 .doc_text       { text-align: left; padding-left: 20pt; padding-right: 10pt }
@@ -83,4 +87,4 @@ TH.layout       { border: none; font-weight: bold; font-size: 105%;
 /* Left align table cell */
 .td_left        { border: 2px solid gray; text-align: left; }
 
-.toc-backref    { color: black; }
+.toc-backref    { color: black; text-decoration: none; }
