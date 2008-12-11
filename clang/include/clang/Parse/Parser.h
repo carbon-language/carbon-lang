@@ -98,6 +98,8 @@ public:
 
   OwningExprResult ExprError() { return OwningExprResult(Actions, true); }
   OwningStmtResult StmtError() { return OwningStmtResult(Actions, true); }
+  OwningExprResult ExprError(const DiagnosticBuilder &) { return ExprError(); }
+  OwningStmtResult StmtError(const DiagnosticBuilder &) { return StmtError(); }
 
   // Parsing methods.
   
@@ -479,15 +481,16 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
 
-  ExprResult ParseExpression();
-  ExprResult ParseConstantExpression();
-  ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.
-  
+  OwningExprResult ParseExpression();
+  OwningExprResult ParseConstantExpression();
+  // Expr that doesn't include commas.
+  OwningExprResult ParseAssignmentExpression();
+
   ExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
 
   ExprResult ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec);
-  ExprResult ParseCastExpression(bool isUnaryExpression);
-  ExprResult ParsePostfixExpressionSuffix(ExprResult LHS);
+  OwningExprResult ParseCastExpression(bool isUnaryExpression);
+  OwningExprResult ParsePostfixExpressionSuffix(OwningExprResult LHS);
   ExprResult ParseSizeofAlignofExpression();
   ExprResult ParseBuiltinPrimaryExpression();
 
@@ -568,7 +571,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ if/switch/while/for condition expression.
-  ExprResult ParseCXXCondition();
+  OwningExprResult ParseCXXCondition();
 
   //===--------------------------------------------------------------------===//
   // C++ types
@@ -582,7 +585,7 @@ private:
   ///         '{' ...
   ExprResult ParseInitializer() {
     if (Tok.isNot(tok::l_brace))
-      return ParseAssignmentExpression();
+      return ParseAssignmentExpression().result();
     return ParseBraceInitializer();
   }
   ExprResult ParseBraceInitializer();

@@ -150,12 +150,6 @@ namespace clang
   public:
     typedef ActionBase::ActionResult<DestroyerToUID<Destroyer>::UID> DumbResult;
 
-    // For convenience and compatibility.
-    ASTOwningResult(bool invalid = false)
-      : Actions(0), Node(0), Invalid(invalid) {}
-    // Same
-    ASTOwningResult(const DiagnosticBuilder &)
-      : Actions(0), Node(0), Invalid(true) {}
     explicit ASTOwningResult(ActionBase &actions, bool invalid = false)
       : Actions(&actions), Node(0), Invalid(invalid) {}
     ASTOwningResult(ActionBase &actions, void *node)

@@ -107,7 +107,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       return StmtError();
     } else {
       // expression[opt] ';'
-      OwningExprResult Expr(Actions, ParseExpression());
+      OwningExprResult Expr(ParseExpression());
       if (Expr.isInvalid()) {
         // If the expression is invalid, skip ahead to the next semicolon.  Not
         // doing this opens us up to the possibility of infinite loops if
@@ -226,7 +226,7 @@ Parser::OwningStmtResult Parser::ParseCaseStatement() {
   assert(Tok.is(tok::kw_case) && "Not a case stmt!");
   SourceLocation CaseLoc = ConsumeToken();  // eat the 'case'.
 
-  OwningExprResult LHS(Actions, ParseConstantExpression());
+  OwningExprResult LHS(ParseConstantExpression());
   if (LHS.isInvalid()) {
     SkipUntil(tok::colon);
     return StmtError();
@@ -379,7 +379,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       } else {
         // Otherwise this was a unary __extension__ marker.  Parse the
         // subexpression and add the __extension__ unary op. 
-        OwningExprResult Res(Actions, ParseCastExpression(false));
+        OwningExprResult Res(ParseCastExpression(false));
 
         if (Res.isInvalid()) {
           SkipUntil(tok::semi);
@@ -940,7 +940,7 @@ Parser::OwningStmtResult Parser::ParseGotoStatement() {
     // GNU indirect goto extension.
     Diag(Tok, diag::ext_gnu_indirect_goto);
     SourceLocation StarLoc = ConsumeToken();
-    OwningExprResult R(Actions, ParseExpression());
+    OwningExprResult R(ParseExpression());
     if (R.isInvalid()) {  // Skip to the semicolon, but don't consume it.
       SkipUntil(tok::semi, false, true);
       return StmtError();

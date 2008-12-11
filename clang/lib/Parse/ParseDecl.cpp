@@ -126,7 +126,7 @@ AttributeList *Parser::ParseAttributes() {
             
             // now parse the non-empty comma separated list of expressions
             while (1) {
-              OwningExprResult ArgExpr(Actions, ParseAssignmentExpression());
+              OwningExprResult ArgExpr(ParseAssignmentExpression());
               if (ArgExpr.isInvalid()) {
                 ArgExprsOk = false;
                 SkipUntil(tok::r_paren);
@@ -158,7 +158,7 @@ AttributeList *Parser::ParseAttributes() {
             
             // now parse the list of expressions
             while (1) {
-              OwningExprResult ArgExpr(Actions, ParseAssignmentExpression());
+              OwningExprResult ArgExpr(ParseAssignmentExpression());
               if (ArgExpr.isInvalid()) {
                 ArgExprsOk = false;
                 SkipUntil(tok::r_paren);
@@ -842,7 +842,7 @@ ParseStructDeclaration(DeclSpec &DS,
     
     if (Tok.is(tok::colon)) {
       ConsumeToken();
-      OwningExprResult Res(Actions, ParseConstantExpression());
+      OwningExprResult Res(ParseConstantExpression());
       if (Res.isInvalid())
         SkipUntil(tok::semi, true, true);
       else
@@ -1796,7 +1796,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
         ConsumeToken();
         
         // Parse the default argument
-        OwningExprResult DefArgResult(Actions, ParseAssignmentExpression());
+        OwningExprResult DefArgResult(ParseAssignmentExpression());
         if (DefArgResult.isInvalid()) {
           SkipUntil(tok::comma, tok::r_paren, true, true);
         } else {
@@ -1992,8 +1992,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
       return;
     }
 
-    OwningExprResult Result(Actions,
-                            ParseCastExpression(true/*isUnaryExpression*/));
+    OwningExprResult Result(ParseCastExpression(true/*isUnaryExpression*/));
     if (Result.isInvalid())
       return;
 
@@ -2025,7 +2024,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec, Ty))
       Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
   } else { // we have an expression.
-    OwningExprResult Result(Actions, ParseExpression());
+    OwningExprResult Result(ParseExpression());
 
     if (Result.isInvalid() || Tok.isNot(tok::r_paren)) {
       MatchRHSPunctuation(tok::r_paren, LParenLoc);

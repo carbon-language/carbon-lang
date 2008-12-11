@@ -143,7 +143,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     // Note that we parse this as an assignment expression, not a constant
     // expression (allowing *=, =, etc) to handle the objc case.  Sema needs
     // to validate that the expression is a constant.
-    OwningExprResult Idx(Actions, ParseAssignmentExpression());
+    OwningExprResult Idx(ParseAssignmentExpression());
     if (Idx.isInvalid()) {
       SkipUntil(tok::r_square);
       return Idx.result();
@@ -184,8 +184,8 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
       // Handle the gnu array range extension.
       Diag(Tok, diag::ext_gnu_array_range);
       ConsumeToken();
-      
-      OwningExprResult RHS(Actions, ParseConstantExpression());
+
+      OwningExprResult RHS(ParseConstantExpression());
       if (RHS.isInvalid()) {
         SkipUntil(tok::r_square);
         return RHS.result();

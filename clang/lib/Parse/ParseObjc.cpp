@@ -1199,7 +1199,7 @@ Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
     return StmtError();
   }
   ConsumeParen();  // '('
-  OwningExprResult Res(Actions, ParseExpression());
+  OwningExprResult Res(ParseExpression());
   if (Res.isInvalid()) {
     SkipUntil(tok::semi);
     return StmtError();
@@ -1397,18 +1397,22 @@ Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
   switch (Tok.getKind()) {
   case tok::string_literal:    // primary-expression: string-literal
   case tok::wide_string_literal:
-    return ParsePostfixExpressionSuffix(ParseObjCStringLiteral(AtLoc));
+    return ParsePostfixExpressionSuffix(
+      Owned(ParseObjCStringLiteral(AtLoc))).result();
   default:
     if (Tok.getIdentifierInfo() == 0)
       return Diag(AtLoc, diag::err_unexpected_at);
-      
+
     switch (Tok.getIdentifierInfo()->getObjCKeywordID()) {
     case tok::objc_encode:
-      return ParsePostfixExpressionSuffix(ParseObjCEncodeExpression(AtLoc));
+      return ParsePostfixExpressionSuffix(
+        Owned(ParseObjCEncodeExpression(AtLoc))).result();
     case tok::objc_protocol:
-      return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression(AtLoc));
+      return ParsePostfixExpressionSuffix(
+        Owned(ParseObjCProtocolExpression(AtLoc))).result();
     case tok::objc_selector:
-      return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression(AtLoc));
+      return ParsePostfixExpressionSuffix(
+        Owned(ParseObjCSelectorExpression(AtLoc))).result();
     default:
         return Diag(AtLoc, diag::err_unexpected_at);
     }
@@ -1433,7 +1437,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     return ParseObjCMessageExpressionBody(LBracLoc, NameLoc, ReceiverName, 0);
   }
 
-  OwningExprResult Res(Actions, ParseExpression());
+  OwningExprResult Res(ParseExpression());
   if (Res.isInvalid()) {
     SkipUntil(tok::r_square);
     return Res.result();
@@ -1492,7 +1496,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
       
       ConsumeToken(); // Eat the ':'.
       ///  Parse the expression after ':' 
-      OwningExprResult Res(Actions, ParseAssignmentExpression());
+      OwningExprResult Res(ParseAssignmentExpression());
       if (Res.isInvalid()) {
         // We must manually skip to a ']', otherwise the expression skipper will
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
@@ -1514,7 +1518,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
     while (Tok.is(tok::comma)) {
       ConsumeToken(); // Eat the ','.
       ///  Parse the expression after ',' 
-      OwningExprResult Res(Actions, ParseAssignmentExpression());
+      OwningExprResult Res(ParseAssignmentExpression());
       if (Res.isInvalid()) {
         // We must manually skip to a ']', otherwise the expression skipper will
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond

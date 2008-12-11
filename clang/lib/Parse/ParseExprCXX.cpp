@@ -310,7 +310,7 @@ Parser::ExprResult Parser::ParseThrowExpression() {
     return Actions.ActOnCXXThrow(ThrowLoc);
 
   default:
-    OwningExprResult Expr(Actions, ParseAssignmentExpression());
+    OwningExprResult Expr(ParseAssignmentExpression());
     if (Expr.isInvalid()) return Expr.result();
     return Actions.ActOnCXXThrow(ThrowLoc, Expr.release());
   }
@@ -372,7 +372,7 @@ Parser::ExprResult Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 /// [GNU]   type-specifier-seq declarator simple-asm-expr[opt] attributes[opt]
 ///             '=' assignment-expression
 ///
-Parser::ExprResult Parser::ParseCXXCondition() {
+Parser::OwningExprResult Parser::ParseCXXCondition() {
   if (!isCXXConditionDeclaration())
     return ParseExpression(); // expression
 
@@ -391,7 +391,7 @@ Parser::ExprResult Parser::ParseCXXCondition() {
     OwningExprResult AsmLabel(ParseSimpleAsm());
     if (AsmLabel.isInvalid()) {
       SkipUntil(tok::semi);
-      return true;
+      return ExprError();
     }
     DeclaratorInfo.setAsmLabel(AsmLabel.release());
   }
@@ -402,15 +402,15 @@ Parser::ExprResult Parser::ParseCXXCondition() {
 
   // '=' assignment-expression
   if (Tok.isNot(tok::equal))
-    return Diag(Tok, diag::err_expected_equal_after_declarator);
+    return ExprError(Diag(Tok, diag::err_expected_equal_after_declarator));
   SourceLocation EqualLoc = ConsumeToken();
-  OwningExprResult AssignExpr(Actions, ParseAssignmentExpression());
+  OwningExprResult AssignExpr(ParseAssignmentExpression());
   if (AssignExpr.isInvalid())
-    return true;
-  
-  return Actions.ActOnCXXConditionDeclarationExpr(CurScope, StartLoc,
-                                                  DeclaratorInfo, EqualLoc,
-                                                  AssignExpr.release());
+    return ExprError();
+
+  return Owned(Actions.ActOnCXXConditionDeclarationExpr(CurScope, StartLoc,
+                                                        DeclaratorInfo,EqualLoc,
+                                                        AssignExpr.release()));
 }
 
 /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
@@ -776,8 +776,8 @@ void Parser::ParseDirectNewDeclarator(Declarator &D)
   bool first = true;
   while (Tok.is(tok::l_square)) {
     SourceLocation LLoc = ConsumeBracket();
-    OwningExprResult Size(Actions, first ? ParseExpression()
-                                         : ParseConstantExpression());
+    OwningExprResult Size(first ? ParseExpression()
+                                : ParseConstantExpression());
     if (Size.isInvalid()) {
       // Recover
       SkipUntil(tok::r_square);
@@ -851,7 +851,7 @@ Parser::ExprResult Parser::ParseCXXDeleteExpression()
       return true;
   }
 
-  OwningExprResult Operand(Actions, ParseCastExpression(false));
+  OwningExprResult Operand(ParseCastExpression(false));
   if (Operand.isInvalid())
     return Operand.result();
 
