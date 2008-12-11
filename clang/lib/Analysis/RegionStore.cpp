@@ -433,13 +433,12 @@ SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
 
   llvm::ImmutableList<SVal> StructVal = getBasicVals().getEmptySValList();
 
-  for (DeclContext::reverse_decl_iterator Mem = RD->decls_rbegin();
-       Mem != RD->decls_rend(); ++Mem) {
-    FieldDecl *FD = dyn_cast<FieldDecl>(*Mem);
-    if (!FD)
-      continue;
+  std::vector<FieldDecl *> Fields(RD->field_begin(), RD->field_end());
 
-    FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
+  for (std::vector<FieldDecl *>::reverse_iterator Field = Fields.rbegin(),
+                                               FieldEnd = Fields.rend();
+       Field != FieldEnd; ++Field) {
+    FieldRegion* FR = MRMgr.getFieldRegion(*Field, R);
     RegionBindingsTy B(static_cast<const RegionBindingsTy::TreeTy*>(store));
     RegionBindingsTy::data_type* data = B.lookup(FR);
 

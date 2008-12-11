@@ -539,6 +539,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   ASTRecordLayout *NewEntry = new ASTRecordLayout();
   Entry = NewEntry;
 
+  // FIXME: Avoid linear walk through the fields, if possible.
   NewEntry->InitializeLayout(std::distance(D->field_begin(), D->field_end()));
   bool IsUnion = D->isUnion();
 

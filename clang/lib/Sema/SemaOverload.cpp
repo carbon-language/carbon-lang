@@ -1956,7 +1956,7 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   //        empty.
   if (const RecordType *T1Rec = T1->getAsRecordType()) {
     DeclContext::lookup_const_result Lookup 
-      = cast<CXXRecordType>(T1Rec)->getDecl()->lookup(Context, OpName);
+      = T1Rec->getDecl()->lookup(Context, OpName);
     NamedDecl *MemberOps = (Lookup.first == Lookup.second)? 0 : *Lookup.first;
     if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
       AddMethodCandidate(Method, Args[0], Args+1, NumArgs - 1, CandidateSet,
@@ -3119,7 +3119,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   OverloadCandidateSet CandidateSet;
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Call);
   DeclContext::lookup_const_result Lookup 
-    = cast<CXXRecordType>(Record)->getDecl()->lookup(Context, OpName);
+    = Record->getDecl()->lookup(Context, OpName);
   NamedDecl *MemberOps = (Lookup.first == Lookup.second)? 0 : *Lookup.first;
   if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
     AddMethodCandidate(Method, Object, Args, NumArgs, CandidateSet,
@@ -3314,7 +3314,7 @@ Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
   OverloadCandidateSet CandidateSet;
   const RecordType *BaseRecord = Base->getType()->getAsRecordType();
   DeclContext::lookup_const_result Lookup 
-    = cast<CXXRecordType>(BaseRecord)->getDecl()->lookup(Context, OpName);
+    = BaseRecord->getDecl()->lookup(Context, OpName);
   NamedDecl *MemberOps = (Lookup.first == Lookup.second)? 0 : *Lookup.first;
   if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
     AddMethodCandidate(Method, Base, 0, 0, CandidateSet,

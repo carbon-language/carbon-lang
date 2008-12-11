@@ -392,7 +392,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   } else if (TD->isUnion()) {
     // Just use the largest element of the union, breaking ties with the
     // highest aligned member.
-    if (RD->field_begin() != RD->field_end()) {
+    if (!RD->field_empty()) {
       RecordOrganizer RO(*this, *RD);
       
       RO.layoutUnionFields(Context.getASTRecordLayout(RD));

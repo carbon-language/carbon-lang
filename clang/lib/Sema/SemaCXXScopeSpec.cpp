@@ -15,21 +15,22 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
 
 namespace {
   Decl *LookupNestedName(DeclContext *LookupCtx, bool LookInParentCtx,
                          DeclarationName Name, bool &IdIsUndeclared,
-                        ASTContext &Context) {
+                         ASTContext &Context) {
     if (LookupCtx && !LookInParentCtx) {
       IdIsUndeclared = true;
-      for (DeclContext::lookup_const_result I = LookupCtx->lookup(Context, Name);
-          I.first != I.second; ++I.first) {
+      DeclContext::lookup_const_iterator I, E;
+      for (llvm::tie(I, E) = LookupCtx->lookup(Context, Name); I != E; ++I) {
        IdIsUndeclared = false;
-       if (((*I.first)->getIdentifierNamespace() & Decl::IDNS_Tag) &&
-           !isa<EnumDecl>(*I.first))
-         return *I.first;
+       if (((*I)->getIdentifierNamespace() & Decl::IDNS_Tag) && 
+           !isa<EnumDecl>(*I))
+         return *I;
       }
 
       return 0;

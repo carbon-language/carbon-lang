@@ -25,6 +25,8 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h" 
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/STLExtras.h"
+
 using namespace clang;
 
 Sema::TypeTy *Sema::isTypeName(IdentifierInfo &II, Scope *S,
@@ -134,14 +136,14 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
         Ovl = OverloadedFunctionDecl::Create(Context, 
                                              FD->getDeclContext(),
                                              FD->getDeclName());
-        Ovl->addOverload(dyn_cast<FunctionDecl>(Prev));
+        Ovl->addOverload(cast<FunctionDecl>(Prev));
         
-       // If there is an name binding for the existing FunctionDecl,
+       // If there is an ame binding for the existing FunctionDecl,
        // remove it.
        for (IdentifierResolver::iterator I 
               = IdResolver.begin(FD->getDeclName(), FD->getDeclContext(), 
-                                 false/*LookInParentCtx*/);
-            I != IdResolver.end(); ++I) {
+                                 false/*LookInParentCtx*/),
+              E = IdResolver.end(); I != E; ++I) {
          if (*I == Prev) {
            IdResolver.RemoveDecl(*I);
            S->RemoveDecl(*I);
@@ -175,13 +177,11 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
     }
   }
 
+  // Add scoped declarations into their context, so that they can be
+  // found later. Declarations without a context won't be inserted
+  // into any context.
   if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
     CurContext->addDecl(Context, SD);
-  else {
-    // Other kinds of declarations don't currently have a context
-    // where they need to be inserted.
-  }
-
 
   IdResolver.AddDecl(D);
 }
@@ -227,17 +227,32 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
   if (getLangOptions().CPlusPlus && (NS & Decl::IDNS_Ordinary))
     NS |= Decl::IDNS_Tag;
 
-  if (LookupCtx) {
+  if (LookupCtx == 0 && 
+      (!getLangOptions().CPlusPlus || (NS == Decl::IDNS_Label))) {
+    // Unqualified name lookup in C/Objective-C and name lookup for
+    // labels in C++ is purely lexical, so search in the
+    // declarations attached to the name.
+    assert(!LookupCtx && "Can't perform qualified name lookup here");
+    IdentifierResolver::iterator I
+      = IdResolver.begin(Name, CurContext, LookInParent);
+    
+    // Scan up the scope chain looking for a decl that matches this
+    // identifier that is in the appropriate namespace.  This search
+    // should not take long, as shadowing of names is uncommon, and
+    // deep shadowing is extremely uncommon.
+    for (; I != IdResolver.end(); ++I)
+      if ((*I)->getIdentifierNamespace() & NS)
+         return *I;
+  } else if (LookupCtx) {
     assert(getLangOptions().CPlusPlus && "No qualified name lookup in C");
 
     // Perform qualified name lookup into the LookupCtx.
     // FIXME: Will need to look into base classes and such.
-    for (DeclContext::lookup_const_result I = LookupCtx->lookup(Context, Name);
-        I.first != I.second; ++I.first)
-      if ((*I.first)->getIdentifierNamespace() & NS)
-       return *I.first;
-  } else if (getLangOptions().CPlusPlus && 
-               (NS & (Decl::IDNS_Ordinary | Decl::IDNS_Tag))) {
+    DeclContext::lookup_const_iterator I, E;
+    for (llvm::tie(I, E) = LookupCtx->lookup(Context, Name); I != E; ++I)
+      if ((*I)->getIdentifierNamespace() & NS)
+       return *I;
+  } else {
     // Name lookup for ordinary names and tag names in C++ requires
     // looking into scopes that aren't strictly lexical, and
     // therefore we walk through the context as well as walking
@@ -260,11 +275,11 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
         Ctx = Ctx->getParent();
       while (Ctx && (Ctx->isNamespace() || Ctx->isCXXRecord())) {
         // Look for declarations of this name in this scope.
-        for (DeclContext::lookup_const_result I = Ctx->lookup(Context, Name);
-             I.first != I.second; ++I.first) {
+        DeclContext::lookup_const_iterator I, E;
+        for (llvm::tie(I, E) = Ctx->lookup(Context, Name); I != E; ++I) {
           // FIXME: Cache this result in the IdResolver
-          if ((*I.first)->getIdentifierNamespace() & NS)
-            return  *I.first;
+          if ((*I)->getIdentifierNamespace() & NS)
+            return  *I;
         }
         
         Ctx = Ctx->getParent();
@@ -273,22 +288,6 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
       if (!LookInParent)
         return 0;
     }
-  } else {
-    // Unqualified name lookup for names in our lexical scope. This
-    // name lookup suffices when all of the potential names are known
-    // to have been pushed onto the IdResolver, as happens in C
-    // (always) and in C++ for names in the "label" namespace.
-    assert(!LookupCtx && "Can't perform qualified name lookup here");
-    IdentifierResolver::iterator I
-      = IdResolver.begin(Name, CurContext, LookInParent);
-    
-    // Scan up the scope chain looking for a decl that matches this
-    // identifier that is in the appropriate namespace.  This search
-    // should not take long, as shadowing of names is uncommon, and
-    // deep shadowing is extremely uncommon.
-    for (; I != IdResolver.end(); ++I)
-      if ((*I)->getIdentifierNamespace() & NS)
-         return *I;
   }
 
   // If we didn't find a use of this identifier, and if the identifier

@@ -1268,8 +1268,8 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
       // Remove the previous declaration from the scope.      
       if (DeclRegionScope->isDeclScope(OrigNS)) {
-       IdResolver.RemoveDecl(OrigNS);
-       DeclRegionScope->RemoveDecl(OrigNS);
+        IdResolver.RemoveDecl(OrigNS);
+        DeclRegionScope->RemoveDecl(OrigNS);
       }
     } else if (PrevDecl) {
       // This is an invalid name redefinition.

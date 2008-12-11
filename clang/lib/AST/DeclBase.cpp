@@ -516,7 +516,7 @@ DeclContext::lookup(ASTContext &Context, DeclarationName Name) {
   // We have a small array. Look into it.
   unsigned Size = LookupPtr.getInt();
   NamedDecl **Array = static_cast<NamedDecl**>(LookupPtr.getPointer());
-  for (unsigned Idx = 0; Idx < Size; ++Idx)
+  for (unsigned Idx = 0; Idx != Size; ++Idx)
     if (Array[Idx]->getDeclName() == Name) {
       Result.first = &Array[Idx];
       Result.second = Result.first + 1;
@@ -566,12 +566,11 @@ void DeclContext::insertImpl(NamedDecl *D) {
     // from lookup(). There will be zero, one, or two declarations of
     // the same name.
     unsigned Match;
-    for (Match = 0; Match < Size; ++Match) {
+    for (Match = 0; Match != Size; ++Match)
       if (Array[Match]->getDeclName() == D->getDeclName())
-       break;
-    }
+        break;
 
-    if (Match < Size) {
+    if (Match != Size) {
       // We found another declaration with the same name. If it's also
       // in the same identifier namespace, update the declaration in
       // place.
@@ -590,7 +589,7 @@ void DeclContext::insertImpl(NamedDecl *D) {
       // declaration for C++ name lookup to operate properly. Therefore,
       // if our match is an ordinary name and the new name is in the
       // tag namespace, we'll insert the new declaration after it. 
-      if (Match < Size && (NS == Decl::IDNS_Tag) && 
+      if (Match != Size && (NS == Decl::IDNS_Tag) && 
          (Array[Match]->getIdentifierNamespace() & Decl::IDNS_Ordinary))
        ++Match;
     }
@@ -611,7 +610,7 @@ void DeclContext::insertImpl(NamedDecl *D) {
     StoredDeclsMap *Map = new StoredDeclsMap(16);
     LookupPtr.setPointer(Map);
     LookupPtr.setInt(LookupIsMap);
-    for (unsigned Idx = 0; Idx < LookupIsMap - 1; ++Idx) 
+    for (unsigned Idx = 0; Idx != LookupIsMap - 1; ++Idx) 
       insertImpl(Array[Idx]);
     delete [] Array;
 
@@ -626,10 +625,9 @@ void DeclContext::insertImpl(NamedDecl *D) {
   if (Pos == Map->end()) {
     // Put this declaration into the appropriate slot.
     TwoNamedDecls Val;
-    Val.Decls[0] = 0;
-    Val.Decls[1] = 0;
     Val.Decls[IndexOfD] = D;
-    Pos = Map->insert(std::make_pair(D->getDeclName(),Val)).first;
+    Val.Decls[!IndexOfD] = 0;
+    Map->insert(std::make_pair(D->getDeclName(),Val)).first;
   } else {
     Pos->second.Decls[IndexOfD] = D;
   }

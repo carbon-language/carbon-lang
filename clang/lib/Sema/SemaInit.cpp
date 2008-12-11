@@ -41,7 +41,7 @@ int InitListChecker::numArrayElements(QualType DeclType) {
 
 int InitListChecker::numStructUnionElements(QualType DeclType) {
   RecordDecl *structDecl = DeclType->getAsRecordType()->getDecl();
-  int InitializableMembers 
+  const int InitializableMembers 
     = std::count_if(structDecl->field_begin(), structDecl->field_end(),
                     std::mem_fun(&FieldDecl::getDeclName));
   if (structDecl->isUnion())

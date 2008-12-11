@@ -1106,6 +1106,10 @@ public:
     return field_const_iterator(decls_end(), decls_end());
   }
 
+  // field_empty - Whether there are any fields (non-static data
+  // members) in this record.
+  bool field_empty() const { return field_begin() == field_end(); }
+
   /// completeDefinition - Notes that the definition of this type is
   /// now complete.
   void completeDefinition(ASTContext& C);
