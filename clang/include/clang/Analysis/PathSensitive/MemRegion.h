@@ -237,20 +237,21 @@ public:
 ///  parameters or pointer globals. In RegionStoreManager, we assume pointer
 ///  parameters or globals point at some anonymous region. Such regions are not
 ///  the regions associated with the pointer variables themselves.  They are
-///  identified with the VarDecl of the pointer variable. We create them lazily.
+///  identified by the MemRegion of the pointer pointing to them. We create
+///  them lazily.
 
 class AnonPointeeRegion : public TypedRegion {
   friend class MemRegionManager;
   // VD - the pointer variable that points at this region.
-  const VarDecl* Pointer;
+  const TypedRegion* Pointer;
 
-  AnonPointeeRegion(const VarDecl* d, MemRegion* sreg)
-    : TypedRegion(sreg, AnonPointeeRegionKind), Pointer(d) {}
+  AnonPointeeRegion(const TypedRegion* r, MemRegion* sreg)
+    : TypedRegion(sreg, AnonPointeeRegionKind), Pointer(r) {}
 
 public:
   QualType getType(ASTContext& C) const;
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const VarDecl* PVD,
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const TypedRegion* R,
                             const MemRegion* superRegion);
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
@@ -518,7 +519,7 @@ public:
 
   AnonTypedRegion* getAnonTypedRegion(QualType t, const MemRegion* superRegion);
 
-  AnonPointeeRegion* getAnonPointeeRegion(const VarDecl* d);
+  AnonPointeeRegion* getAnonPointeeRegion(const TypedRegion* r);
 
   bool hasStackStorage(const MemRegion* R);
 

@@ -52,7 +52,7 @@ void AnonTypedRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T,
 }
 
 QualType AnonPointeeRegion::getType(ASTContext& C) const {
-  QualType T = C.getCanonicalType(Pointer->getType());
+  QualType T = C.getCanonicalType(Pointer->getType(C));
   PointerType* PTy = cast<PointerType>(T.getTypePtr());
 
   QualType PointeeTy = C.getCanonicalType(PTy->getPointeeType());
@@ -60,10 +60,10 @@ QualType AnonPointeeRegion::getType(ASTContext& C) const {
 }
 
 void AnonPointeeRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, 
-                                      const VarDecl* VD,
+                                      const TypedRegion* R,
                                       const MemRegion* superRegion) {
   ID.AddInteger((unsigned) AnonPointeeRegionKind);
-  ID.AddPointer(VD);
+  ID.AddPointer(R);
   ID.AddPointer(superRegion);
 }
 
@@ -394,11 +394,11 @@ MemRegionManager::getAnonTypedRegion(QualType t, const MemRegion* superRegion) {
   return R;
 }
 
-AnonPointeeRegion* MemRegionManager::getAnonPointeeRegion(const VarDecl* d) {
+AnonPointeeRegion* MemRegionManager::getAnonPointeeRegion(const TypedRegion* r) {
   llvm::FoldingSetNodeID ID;
   MemRegion* superRegion = getUnknownRegion();
 
-  AnonPointeeRegion::ProfileRegion(ID, d, superRegion);
+  AnonPointeeRegion::ProfileRegion(ID, r, superRegion);
 
   void* InsertPos;
   MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
@@ -406,7 +406,7 @@ AnonPointeeRegion* MemRegionManager::getAnonPointeeRegion(const VarDecl* d) {
 
   if (!R) {
     R = (AnonPointeeRegion*) A.Allocate<AnonPointeeRegion>();
-    new (R) AnonPointeeRegion(d, superRegion);
+    new (R) AnonPointeeRegion(r, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
 
