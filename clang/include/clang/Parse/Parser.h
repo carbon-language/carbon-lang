@@ -645,10 +645,10 @@ private:
   OwningStmtResult ParseReturnStatement();
   OwningStmtResult ParseAsmStatement(bool &msAsm);
   OwningStmtResult FuzzyParseMicrosoftAsmStatement();
-  StmtResult ParseObjCAtStatement(SourceLocation atLoc);
-  StmtResult ParseObjCTryStmt(SourceLocation atLoc);
-  StmtResult ParseObjCThrowStmt(SourceLocation atLoc);
-  StmtResult ParseObjCSynchronizedStmt(SourceLocation atLoc);
+  OwningStmtResult ParseObjCAtStatement(SourceLocation atLoc);
+  OwningStmtResult ParseObjCTryStmt(SourceLocation atLoc);
+  OwningStmtResult ParseObjCThrowStmt(SourceLocation atLoc);
+  OwningStmtResult ParseObjCSynchronizedStmt(SourceLocation atLoc);
   bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
                            llvm::SmallVectorImpl<ExprTy*> &Constraints,
                            llvm::SmallVectorImpl<ExprTy*> &Exprs);

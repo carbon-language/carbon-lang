@@ -86,7 +86,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   case tok::at: // May be a @try or @throw statement
     {
       AtLoc = ConsumeToken();  // consume @
-      return Owned(ParseObjCAtStatement(AtLoc));
+      return ParseObjCAtStatement(AtLoc);
     }
 
   case tok::identifier:

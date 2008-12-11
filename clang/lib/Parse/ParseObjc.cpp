@@ -1174,43 +1174,44 @@ Parser::DeclTy *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
 ///  objc-throw-statement:
 ///    throw expression[opt];
 ///
-Parser::StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
+Parser::OwningStmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
   OwningExprResult Res(Actions);
   ConsumeToken(); // consume throw
   if (Tok.isNot(tok::semi)) {
     Res = ParseExpression();
     if (Res.isInvalid()) {
       SkipUntil(tok::semi);
-      return true;
+      return StmtError();
     }
   }
   ConsumeToken(); // consume ';'
-  return Actions.ActOnObjCAtThrowStmt(atLoc, Res.release());
+  return Owned(Actions.ActOnObjCAtThrowStmt(atLoc, Res.release()));
 }
 
 /// objc-synchronized-statement:
 ///   @synchronized '(' expression ')' compound-statement
 ///
-Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
+Parser::OwningStmtResult
+Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   ConsumeToken(); // consume synchronized
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "@synchronized";
-    return true;
+    return StmtError();
   }
   ConsumeParen();  // '('
   OwningExprResult Res(Actions, ParseExpression());
   if (Res.isInvalid()) {
     SkipUntil(tok::semi);
-    return true;
+    return StmtError();
   }
   if (Tok.isNot(tok::r_paren)) {
     Diag(Tok, diag::err_expected_lbrace);
-    return true;
+    return StmtError();
   }
   ConsumeParen();  // ')'
   if (Tok.isNot(tok::l_brace)) {
     Diag(Tok, diag::err_expected_lbrace);
-    return true;
+    return StmtError();
   }
   // Enter a scope to hold everything within the compound stmt.  Compound
   // statements can always hold declarations.
@@ -1221,8 +1222,8 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   BodyScope.Exit();
   if (SynchBody.isInvalid())
     SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
-  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.release(),
-                                             SynchBody.release());
+  return Owned(Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.release(),
+                                                   SynchBody.release()));
 }
 
 ///  objc-try-catch-statement:
@@ -1236,13 +1237,13 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
 ///     parameter-declaration
 ///     '...' [OBJC2]
 ///
-Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
+Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   bool catch_or_finally_seen = false;
-  
+
   ConsumeToken(); // consume try
   if (Tok.isNot(tok::l_brace)) {
     Diag(Tok, diag::err_expected_lbrace);
-    return true;
+    return StmtError();
   }
   OwningStmtResult CatchStmts(Actions);
   OwningStmtResult FinallyStmt(Actions);
@@ -1271,15 +1272,15 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         if (Tok.isNot(tok::ellipsis)) {
           DeclSpec DS;
           ParseDeclarationSpecifiers(DS);
-          // For some odd reason, the name of the exception variable is 
+          // For some odd reason, the name of the exception variable is
           // optional. As a result, we need to use PrototypeContext.
           Declarator DeclaratorInfo(DS, Declarator::PrototypeContext);
           ParseDeclarator(DeclaratorInfo);
           if (DeclaratorInfo.getIdentifier()) {
-            DeclTy *aBlockVarDecl = Actions.ActOnDeclarator(CurScope, 
+            DeclTy *aBlockVarDecl = Actions.ActOnDeclarator(CurScope,
                                                           DeclaratorInfo, 0);
             FirstPart =
-              Actions.ActOnDeclStmt(aBlockVarDecl, 
+              Actions.ActOnDeclStmt(aBlockVarDecl,
                                     DS.getSourceRange().getBegin(),
                                     DeclaratorInfo.getSourceRange().getEnd());
           }
@@ -1300,7 +1301,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)
           << "@catch clause";
-        return true;
+        return StmtError();
       }
       catch_or_finally_seen = true;
     } else {
@@ -1323,11 +1324,11 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   }
   if (!catch_or_finally_seen) {
     Diag(atLoc, diag::err_missing_catch_finally);
-    return true;
+    return StmtError();
   }
-  return Actions.ActOnObjCAtTryStmt(atLoc, TryBody.release(),
-                                    CatchStmts.release(),
-                                    FinallyStmt.release());
+  return Owned(Actions.ActOnObjCAtTryStmt(atLoc, TryBody.release(),
+                                          CatchStmts.release(),
+                                          FinallyStmt.release()));
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
@@ -1372,7 +1373,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   return MDecl;
 }
 
-Parser::StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
+Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   if (Tok.isObjCAtKeyword(tok::objc_try)) {
     return ParseObjCTryStmt(AtLoc);
   } else if (Tok.isObjCAtKeyword(tok::objc_throw))
@@ -1385,11 +1386,11 @@ Parser::StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
     // doing this opens us up to the possibility of infinite loops if
     // ParseExpression does not consume any tokens.
     SkipUntil(tok::semi);
-    return true;
+    return StmtError();
   }
   // Otherwise, eat the semicolon.
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-  return Actions.ActOnExprStmt(Res.release());
+  return Owned(Actions.ActOnExprStmt(Res.release()));
 }
 
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
