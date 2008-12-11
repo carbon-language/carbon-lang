@@ -28,7 +28,7 @@ using namespace clang;
 
 PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D,
                    PTHManager& PM)
-  : PreprocessorLexer(&pp, fileloc), TokBuf(D), CurTokenIdx(0), PTHMgr(PM), 
+  : PreprocessorLexer(&pp, fileloc), TokBuf(D), PTHMgr(PM), 
     NeedsFetching(true) {
     // Make sure the EofToken is completely clean.
     EofToken.startToken();

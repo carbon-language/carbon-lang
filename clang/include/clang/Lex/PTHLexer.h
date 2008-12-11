@@ -25,9 +25,6 @@ class PTHLexer : public PreprocessorLexer {
   /// TokBuf - Buffer from PTH file containing raw token data.
   const char* TokBuf;
 
-  /// CurTokenIdx - This is the index of the next token that Lex will return.
-  unsigned CurTokenIdx;
-        
   PTHLexer(const PTHLexer&);  // DO NOT IMPLEMENT
   void operator=(const PTHLexer&); // DO NOT IMPLEMENT
   
@@ -86,7 +83,7 @@ private:
   Token GetToken();
   
   /// AdvanceToken - Advances the PTHLexer to the next token.
-  void AdvanceToken() { ++CurTokenIdx; NeedsFetching = true; }
+  void AdvanceToken() { NeedsFetching = true; }
   
   bool LexEndOfFile(Token &Result);
 };
