@@ -116,8 +116,6 @@ public:
   /// addOverload - Add an overloaded function FD to this set of
   /// overloaded functions.
   void addOverload(FunctionDecl *FD) {
-    assert((!getNumFunctions() || (FD->getDeclContext() == getDeclContext())) &&
-           "Overloaded functions must all be in the same context");
     assert((FD->getDeclName() == getDeclName() ||
             isa<CXXConversionDecl>(FD) || isa<CXXConstructorDecl>(FD)) &&
            "Overloaded functions must have the same name");
@@ -171,29 +169,6 @@ protected:
   
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
   friend class CXXRecordDecl;
-};
-
-/// CXXFieldDecl - Represents an instance field of a C++ struct/union/class.
-class CXXFieldDecl : public FieldDecl {
-  CXXRecordDecl *Parent;
-  bool Mutable;
-
-  CXXFieldDecl(CXXRecordDecl *RD, SourceLocation L, IdentifierInfo *Id,
-               QualType T, bool Mut, Expr *BW = NULL)
-    : FieldDecl(CXXField, L, Id, T, BW), Parent(RD), Mutable(Mut) {}
-public:
-  static CXXFieldDecl *Create(ASTContext &C, CXXRecordDecl *RD,SourceLocation L,
-                              IdentifierInfo *Id, QualType T, bool Mut,
-                              Expr *BW = NULL);
-
-  void setAccess(AccessSpecifier AS) { Access = AS; }
-  AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
-  CXXRecordDecl *getParent() const { return Parent; }
-  bool isMutable() const { return Mutable; }
-    
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == CXXField; }
-  static bool classof(const CXXFieldDecl *D) { return true; }
 };
 
 /// CXXBaseSpecifier - A base class of a C++ class.
@@ -277,11 +252,9 @@ public:
 };
 
 /// CXXRecordDecl - Represents a C++ struct/union/class.
-/// CXXRecordDecl differs from RecordDecl in several ways. First, it
-/// is a DeclContext, because it can contain other
-/// declarations. Second, it provides additional C++ fields, including
-/// storage for base classes and constructors.
-class CXXRecordDecl : public RecordDecl, public DeclContext {
+/// FIXME: This class will disappear once we've properly taught RecordDecl
+/// to deal with C++-specific things.
+class CXXRecordDecl : public RecordDecl {
   /// UserDeclaredConstructor - True when this class has a
   /// user-declared constructor. 
   bool UserDeclaredConstructor : 1;
@@ -347,19 +320,6 @@ public:
   base_class_const_iterator bases_begin() const { return Bases; }
   base_class_iterator       bases_end()         { return Bases + NumBases; }
   base_class_const_iterator bases_end()   const { return Bases + NumBases; }
-
-  const CXXFieldDecl *getMember(unsigned i) const {
-    return cast<const CXXFieldDecl>(RecordDecl::getMember(i));
-  }
-  CXXFieldDecl *getMember(unsigned i) {
-    return cast<CXXFieldDecl>(RecordDecl::getMember(i));
-  }
-
-  /// getMember - If the member doesn't exist, or there are no members, this 
-  /// function will return 0;
-  CXXFieldDecl *getMember(IdentifierInfo *name) {
-    return cast_or_null<CXXFieldDecl>(RecordDecl::getMember(name));
-  }
 
   /// getConstructors - Retrieve the overload set containing all of
   /// the constructors of this class.
@@ -537,7 +497,7 @@ protected:
 class CXXBaseOrMemberInitializer {
   /// BaseOrMember - This points to the entity being initialized,
   /// which is either a base class (a Type) or a non-static data
-  /// member (a CXXFieldDecl). When the low bit is 1, it's a base
+  /// member. When the low bit is 1, it's a base
   /// class; when the low bit is 0, it's a member.
   uintptr_t BaseOrMember;
 
@@ -552,7 +512,7 @@ public:
 
   /// CXXBaseOrMemberInitializer - Creates a new member initializer.
   explicit 
-  CXXBaseOrMemberInitializer(CXXFieldDecl *Member, Expr **Args, unsigned NumArgs);
+  CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs);
 
   /// ~CXXBaseOrMemberInitializer - Destroy the base or member initializer.
   ~CXXBaseOrMemberInitializer();
@@ -598,9 +558,9 @@ public:
   /// getMember - If this is a member initializer, returns the
   /// declaration of the non-static data member being
   /// initialized. Otherwise, returns NULL.
-  CXXFieldDecl *getMember() { 
+  FieldDecl *getMember() { 
     if (isMemberInitializer())
-      return reinterpret_cast<CXXFieldDecl *>(BaseOrMember); 
+      return reinterpret_cast<FieldDecl *>(BaseOrMember); 
     else
       return 0;
   }
@@ -917,14 +877,14 @@ public:
     if (ScopedDecl *SD = dyn_cast<ScopedDecl>(MD)) {
       return cast<CXXRecordDecl>(SD->getDeclContext());
     }
-    return cast<CXXFieldDecl>(MD)->getParent();
+    return cast<CXXRecordDecl>(cast<FieldDecl>(MD)->getDeclContext());
   }
 
   static bool isMember(Decl *D) {
     if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
       return isa<CXXRecordDecl>(SD->getDeclContext());
     }
-    return isa<CXXFieldDecl>(D);
+    return isa<FieldDecl>(D);
   }
 };
   

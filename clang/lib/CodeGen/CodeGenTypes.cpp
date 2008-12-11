@@ -392,7 +392,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   } else if (TD->isUnion()) {
     // Just use the largest element of the union, breaking ties with the
     // highest aligned member.
-    if (RD->getNumMembers() != 0) {
+    if (RD->field_begin() != RD->field_end()) {
       RecordOrganizer RO(*this, *RD);
       
       RO.layoutUnionFields(Context.getASTRecordLayout(RD));
@@ -478,16 +478,17 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   uint64_t llvmSize = 0;
   // FIXME: Make this a SmallVector
   std::vector<const llvm::Type*> LLVMFields;
-  int NumMembers = RD.getNumMembers();
 
-  for (int curField = 0; curField < NumMembers; curField++) {
-    const FieldDecl *FD = RD.getMember(curField);
+  unsigned curField = 0;
+  for (RecordDecl::field_iterator Field = RD.field_begin(),
+                               FieldEnd = RD.field_end();
+       Field != FieldEnd; ++Field) {
     uint64_t offset = RL.getFieldOffset(curField);
-    const llvm::Type *Ty = CGT.ConvertTypeRecursive(FD->getType());
+    const llvm::Type *Ty = CGT.ConvertTypeRecursive(Field->getType());
     uint64_t size = CGT.getTargetData().getABITypeSizeInBits(Ty);
 
-    if (FD->isBitField()) {
-      Expr *BitWidth = FD->getBitWidth();
+    if (Field->isBitField()) {
+      Expr *BitWidth = Field->getBitWidth();
       llvm::APSInt FieldSize(32);
       bool isBitField =
         BitWidth->isIntegerConstantExpr(FieldSize, CGT.getContext());
@@ -498,8 +499,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
       // Bitfield field info is different from other field info;
       // it actually ignores the underlying LLVM struct because
       // there isn't any convenient mapping.
-      CGT.addFieldInfo(FD, offset / size);
-      CGT.addBitFieldInfo(FD, offset % size, BitFieldSize);
+      CGT.addFieldInfo(*Field, offset / size);
+      CGT.addBitFieldInfo(*Field, offset % size, BitFieldSize);
     } else {
       // Put the element into the struct. This would be simpler
       // if we didn't bother, but it seems a bit too strange to
@@ -510,9 +511,10 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
       }
 
       llvmSize += size;
-      CGT.addFieldInfo(FD, LLVMFields.size());
+      CGT.addFieldInfo(*Field, LLVMFields.size());
       LLVMFields.push_back(Ty);
     }
+    ++curField;
   }
 
   while (llvmSize < RL.getSize()) {
@@ -528,21 +530,24 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
 /// corresponding llvm struct type.  This should be invoked only after
 /// all fields are added.
 void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
-  for (int curField = 0; curField < RD.getNumMembers(); curField++) {
-    const FieldDecl *FD = RD.getMember(curField);
+  unsigned curField = 0;
+  for (RecordDecl::field_iterator Field = RD.field_begin(),
+                               FieldEnd = RD.field_end();
+       Field != FieldEnd; ++Field) {
     // The offset should usually be zero, but bitfields could be strange
     uint64_t offset = RL.getFieldOffset(curField);
 
-    if (FD->isBitField()) {
-      Expr *BitWidth = FD->getBitWidth();
+    if (Field->isBitField()) {
+      Expr *BitWidth = Field->getBitWidth();
       uint64_t BitFieldSize =  
         BitWidth->getIntegerConstantExprValue(CGT.getContext()).getZExtValue();
 
-      CGT.addFieldInfo(FD, 0);
-      CGT.addBitFieldInfo(FD, offset, BitFieldSize);
+      CGT.addFieldInfo(*Field, 0);
+      CGT.addBitFieldInfo(*Field, offset, BitFieldSize);
     } else {
-      CGT.addFieldInfo(FD, 0);
+      CGT.addFieldInfo(*Field, 0);
     }
+    ++curField;
   }
 
   // This looks stupid, but it is correct in the sense that

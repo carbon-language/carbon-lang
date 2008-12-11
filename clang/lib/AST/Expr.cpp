@@ -353,7 +353,7 @@ static bool DeclCanBeLvalue(const NamedDecl *Decl, ASTContext &Ctx) {
         = dyn_cast<NonTypeTemplateParmDecl>(Decl))
     return NTTParm->getType()->isReferenceType();
 
-  return isa<VarDecl>(Decl) || isa<CXXFieldDecl>(Decl) ||
+  return isa<VarDecl>(Decl) || isa<FieldDecl>(Decl) ||
     // C++ 3.10p2: An lvalue refers to an object or function.
     (Ctx.getLangOptions().CPlusPlus &&
      (isa<FunctionDecl>(Decl) || isa<OverloadedFunctionDecl>(Decl)));
@@ -1222,10 +1222,15 @@ static int64_t evaluateOffsetOf(ASTContext& C, const Expr *E)
     const ASTRecordLayout &RL = C.getASTRecordLayout(RD);
     FieldDecl *FD = ME->getMemberDecl();
     
-    // FIXME: This is linear time.
-    unsigned i = 0, e = 0;
-    for (i = 0, e = RD->getNumMembers(); i != e; i++) {
-      if (RD->getMember(i) == FD)
+    // FIXME: This is linear time. And the fact that we're indexing
+    // into the layout by position in the record means that we're
+    // either stuck numbering the fields in the AST or we have to keep
+    // the linear search (yuck and yuck).
+    unsigned i = 0;
+    for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                 FieldEnd = RD->field_end();
+         Field != FieldEnd; (void)++Field, ++i) {
+      if (*Field == FD)
         break;
     }
     

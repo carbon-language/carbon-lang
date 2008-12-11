@@ -300,10 +300,10 @@ public:
                          IdentifierInfo *Name, SourceLocation NameLoc,
                          AttributeList *Attr);  
   
-  virtual void ActOnDefs(Scope *S, SourceLocation DeclStart,
+  virtual void ActOnDefs(Scope *S, DeclTy *TagD, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,
                          llvm::SmallVectorImpl<DeclTy*> &Decls);
-  virtual DeclTy *ActOnField(Scope *S, SourceLocation DeclStart,
+  virtual DeclTy *ActOnField(Scope *S, DeclTy *TagD, SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth);
   
   virtual DeclTy *ActOnIvar(Scope *S, SourceLocation DeclStart,
@@ -326,7 +326,7 @@ public:
   DeclContext *getContainingDC(DeclContext *DC);
 
   /// Set the current declaration context until it gets popped.
-  void PushDeclContext(DeclContext *DC);
+  void PushDeclContext(Scope *S, DeclContext *DC);
   void PopDeclContext();
   
   /// getCurFunctionDecl - If inside of a function body, this returns a pointer
@@ -351,7 +351,7 @@ public:
   /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
   /// true if 'D' belongs to the given declaration context.
   bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = 0) {
-    return IdResolver.isDeclInScope(D, Ctx, S);
+    return IdResolver.isDeclInScope(D, Ctx, Context, S);
   }
 
   /// Subroutines of ActOnDeclarator().
@@ -478,7 +478,8 @@ public:
   /// More parsing and symbol table subroutines...
   Decl *LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                    const DeclContext *LookupCtx = 0,
-                   bool enableLazyBuiltinCreation = true);
+                   bool enableLazyBuiltinCreation = true,
+                  bool LookInParent = true);
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, 
                                   Scope *S);

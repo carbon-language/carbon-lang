@@ -9,7 +9,6 @@ int A; // expected-error {{redefinition of 'A' as different kind of symbol}}
 class A; // expected-error {{redefinition of 'A' as different kind of symbol}}
 
 class B {}; // expected-note {{previous definition is here}}
-namespace B {} // expected-error {{redefinition of 'B' as different kind of symbol}}
 
 void C(); // expected-note {{previous definition is here}}
 namespace C {} // expected-error {{redefinition of 'C' as different kind of symbol}}
@@ -55,3 +54,5 @@ namespace S1 {
     }
   }
 }
+
+namespace B {} // expected-error {{redefinition of 'B' as different kind of symbol}}

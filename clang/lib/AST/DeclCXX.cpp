@@ -36,16 +36,9 @@ NonTypeTemplateParmDecl::Create(ASTContext &C, DeclContext *DC,
   return new (Mem) NonTypeTemplateParmDecl(DC, L, Id, T, TypeSpecStartLoc);
 }
 
-CXXFieldDecl *CXXFieldDecl::Create(ASTContext &C, CXXRecordDecl *RD,
-                                   SourceLocation L, IdentifierInfo *Id,
-                                   QualType T, bool Mut, Expr *BW) {
-  void *Mem = C.getAllocator().Allocate<CXXFieldDecl>();
-  return new (Mem) CXXFieldDecl(RD, L, Id, T, Mut, BW);
-}
-
 CXXRecordDecl::CXXRecordDecl(TagKind TK, DeclContext *DC,
                              SourceLocation L, IdentifierInfo *Id) 
-  : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord),
+  : RecordDecl(CXXRecord, TK, DC, L, Id),
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     Aggregate(true), Polymorphic(false), Bases(0), NumBases(0),
     Constructors(DC, DeclarationName()),
@@ -73,11 +66,6 @@ void CXXRecordDecl::Destroy(ASTContext &C) {
 
   if (isDefinition())
     Destructor->Destroy(C);
-
-  for (OverloadedFunctionDecl::function_iterator func 
-         = Conversions.function_begin();
-       func != Conversions.function_end(); ++func)
-    (*func)->Destroy(C);
 
   RecordDecl::Destroy(C);
 }
@@ -176,7 +164,7 @@ CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs)
 }
 
 CXXBaseOrMemberInitializer::
-CXXBaseOrMemberInitializer(CXXFieldDecl *Member, Expr **Args, unsigned NumArgs)
+CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs)
   : Args(0), NumArgs(0) {
   BaseOrMember = reinterpret_cast<uintptr_t>(Member);
   assert((BaseOrMember & 0x01) == 0 && "Invalid member pointer");  

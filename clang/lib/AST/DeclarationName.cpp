@@ -311,3 +311,9 @@ DeclarationNameTable::getCXXOperatorName(OverloadedOperatorKind Op) {
   return DeclarationName(&CXXOperatorNames[(unsigned)Op]);
 }
 
+unsigned 
+llvm::DenseMapInfo<clang::DeclarationName>::
+getHashValue(clang::DeclarationName N) {
+  return DenseMapInfo<void*>::getHashValue(N.getAsOpaquePtr());
+}
+

@@ -15,6 +15,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 using namespace clang;
 
@@ -34,7 +35,6 @@ static unsigned nNamespaces = 0;
 static unsigned nOverFuncs = 0;
 static unsigned nTypedef = 0;
 static unsigned nFieldDecls = 0;
-static unsigned nCXXFieldDecls = 0;
 static unsigned nInterfaceDecls = 0;
 static unsigned nClassDecls = 0;
 static unsigned nMethodDecls = 0;
@@ -95,7 +95,7 @@ bool Decl::CollectingStats(bool Enable) {
 void Decl::PrintStats() {
   fprintf(stderr, "*** Decl Stats:\n");
   fprintf(stderr, "  %d decls total.\n", 
-          int(nFuncs+nVars+nParmVars+nFieldDecls+nSUC+nCXXFieldDecls+nCXXSUC+
+          int(nFuncs+nVars+nParmVars+nFieldDecls+nSUC+nCXXSUC+
               nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
               nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls+
               nAtDefsFieldDecls+nNamespaces+nOverFuncs));
@@ -122,9 +122,6 @@ void Decl::PrintStats() {
   fprintf(stderr, "    %d struct/union/class decls, %d each (%d bytes)\n", 
           nSUC, (int)sizeof(RecordDecl),
           int(nSUC*sizeof(RecordDecl)));
-  fprintf(stderr, "    %d C++ field decls, %d each (%d bytes)\n", 
-          nCXXFieldDecls, (int)sizeof(CXXFieldDecl),
-          int(nCXXFieldDecls*sizeof(CXXFieldDecl)));
   fprintf(stderr, "    %d C++ struct/union/class decls, %d each (%d bytes)\n", 
           nCXXSUC, (int)sizeof(CXXRecordDecl),
           int(nCXXSUC*sizeof(CXXRecordDecl)));
@@ -183,7 +180,7 @@ void Decl::PrintStats() {
           int(nFuncs*sizeof(FunctionDecl)+
               nVars*sizeof(VarDecl)+nParmVars*sizeof(ParmVarDecl)+
               nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
-              nCXXFieldDecls*sizeof(CXXFieldDecl)+nCXXSUC*sizeof(CXXRecordDecl)+
+              nCXXSUC*sizeof(CXXRecordDecl)+
               nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
               nTypedef*sizeof(TypedefDecl)+
               nInterfaceDecls*sizeof(ObjCInterfaceDecl)+
@@ -236,7 +233,6 @@ void Decl::addDeclKind(Kind k) {
   case ImplicitParam:
   case TranslationUnit:     break;
 
-  case CXXField:            nCXXFieldDecls++; break;
   case CXXRecord:           nCXXSUC++; break;
   // FIXME: Statistics for C++ decls.
   case TemplateTypeParm:
@@ -371,4 +367,270 @@ const DeclContext *DeclContext::getLexicalParent() const {
   if (const ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
     return SD->getLexicalDeclContext();
   return getParent();
+}
+
+/// TwoNamedDecls - Stores up to two NamedDecls. The first
+/// declaration, if any, is in the ordinary identifier namespace, and
+/// corresponds to values (functions, variables, etc.). The second
+/// declaration, if any, is in the tag identifier namespace, and
+/// corresponds to tag types (classes, enums).
+struct TwoNamedDecls {
+  NamedDecl* Decls[2];
+};
+
+// FIXME: We really want to use a DenseSet here to eliminate the
+// redundant storage of the declaration names, but (1) it doesn't give
+// us the ability to search based on DeclarationName, (2) we really
+// need something more like a DenseMultiSet, and (3) it's
+// implemented in terms of DenseMap anyway.
+typedef llvm::DenseMap<DeclarationName, TwoNamedDecls> StoredDeclsMap;
+
+DeclContext::~DeclContext() {
+  unsigned Size = LookupPtr.getInt();
+  if (Size == LookupIsMap) {
+    StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
+    delete Map;
+  } else {
+    NamedDecl **Array = static_cast<NamedDecl**>(LookupPtr.getPointer());
+    delete [] Array;
+  }
+}
+
+void DeclContext::DestroyDecls(ASTContext &C) {
+  for (decl_iterator D = Decls.begin(); D != Decls.end(); ++D) {
+    if ((*D)->getLexicalDeclContext() == this)
+      (*D)->Destroy(C);
+  }
+}
+
+DeclContext *DeclContext::getPrimaryContext(ASTContext &Context) {
+  switch (DeclKind) {
+  case Decl::Block:
+  case Decl::TranslationUnit:
+    // There is only one DeclContext for these entities.
+    return this;
+
+  case Decl::Namespace:
+    // The original namespace is our primary context.
+    return static_cast<NamespaceDecl*>(this)->getOriginalNamespace();
+
+  case Decl::Enum:
+    // The declaration associated with the enumeration type is our
+    // primary context.
+    return Context.getTypeDeclType(static_cast<EnumDecl*>(this))
+             ->getAsEnumType()->getDecl();
+
+  case Decl::Record:
+  case Decl::CXXRecord: {
+    // The declaration associated with the type is be our primary
+    // context. 
+#if 0
+    // FIXME: This is what we expect to do. However, it doesn't work
+    // because ASTContext::setTagDefinition changes the result of
+    // Context.getTypeDeclType, meaning that our "primary" declaration
+    // of a RecordDecl/CXXRecordDecl will change, and we won't be able
+    // to find any values inserted into the earlier "primary"
+    // declaration. We need better tracking of redeclarations and
+    // definitions.
+    QualType Type = Context.getTypeDeclType(static_cast<RecordDecl*>(this));
+    return Type->getAsRecordType()->getDecl();
+#else
+    // FIXME: This hack will work for now, because the declaration we
+    // create when we're defining the record is the one we'll use as
+    // the definition later.
+    return this;
+#endif
+  }
+
+  case Decl::ObjCMethod:
+    return this;
+
+  case Decl::ObjCInterface:
+    // FIXME: Can Objective-C interfaces be forward-declared?
+    return this;
+
+  default:
+    assert(DeclKind >= Decl::FunctionFirst && DeclKind <= Decl::FunctionLast &&
+          "Unknown DeclContext kind");
+    return this;
+  }
+}
+
+DeclContext *DeclContext::getNextContext() {
+  switch (DeclKind) {
+  case Decl::Block:
+  case Decl::TranslationUnit:
+  case Decl::Enum:
+  case Decl::Record:
+  case Decl::CXXRecord:
+  case Decl::ObjCMethod:
+  case Decl::ObjCInterface:
+    // There is only one DeclContext for these entities.
+    return 0;
+
+  case Decl::Namespace:
+    // Return the next namespace
+    return static_cast<NamespaceDecl*>(this)->getNextNamespace();
+
+  default:
+    assert(DeclKind >= Decl::FunctionFirst && DeclKind <= Decl::FunctionLast &&
+          "Unknown DeclContext kind");
+    return 0;
+  }
+}
+
+void DeclContext::addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup) {
+  Decls.push_back(D);
+  if (AllowLookup)
+    D->getDeclContext()->insert(Context, D);
+}
+
+DeclContext::lookup_result 
+DeclContext::lookup(ASTContext &Context, DeclarationName Name) {
+  DeclContext *PrimaryContext = getPrimaryContext(Context);
+  if (PrimaryContext != this)
+    return PrimaryContext->lookup(Context, Name);
+
+  /// If there is no lookup data structure, build one now by talking
+  /// all of the linked DeclContexts (in declaration order!) and
+  /// inserting their values.
+  if (LookupPtr.getPointer() == 0) {
+    for (DeclContext *DCtx = this; DCtx; DCtx = DCtx->getNextContext())
+      for (decl_iterator D = DCtx->decls_begin(); D != DCtx->decls_end(); ++D)
+        insertImpl(*D);
+  }
+
+  lookup_result Result(0, 0);
+  if (isLookupMap()) {
+    StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
+    StoredDeclsMap::iterator Pos = Map->find(Name);
+    if (Pos != Map->end()) {
+      Result.first = Pos->second.Decls[0]? &Pos->second.Decls[0] 
+                                        : &Pos->second.Decls[1];
+      Result.second = Pos->second.Decls[1]? &Pos->second.Decls[2]
+                                         : &Pos->second.Decls[1];
+    }
+    return Result;
+  } 
+
+  // We have a small array. Look into it.
+  unsigned Size = LookupPtr.getInt();
+  NamedDecl **Array = static_cast<NamedDecl**>(LookupPtr.getPointer());
+  for (unsigned Idx = 0; Idx < Size; ++Idx)
+    if (Array[Idx]->getDeclName() == Name) {
+      Result.first = &Array[Idx];
+      Result.second = Result.first + 1;
+      if (Idx + 1 < Size && Array[Idx + 1]->getDeclName() == Name)
+        ++Result.second;
+      break;
+    }
+
+  return Result;
+}
+
+DeclContext::lookup_const_result 
+DeclContext::lookup(ASTContext &Context, DeclarationName Name) const {
+  return const_cast<DeclContext*>(this)->lookup(Context, Name);
+}
+
+void DeclContext::insert(ASTContext &Context, NamedDecl *D) {
+  DeclContext *PrimaryContext = getPrimaryContext(Context);
+  if (PrimaryContext != this) {
+    PrimaryContext->insert(Context, D);
+    return;
+  }
+
+  // If we already have a lookup data structure, perform the insertion
+  // into it. Otherwise, be lazy and don't build that structure until
+  // someone asks for it.
+  if (LookupPtr.getPointer())
+    insertImpl(D);
+}
+
+void DeclContext::insertImpl(NamedDecl *D) {
+  if (!isLookupMap()) {
+    unsigned Size = LookupPtr.getInt();
+
+    // The lookup data is stored as an array. Search through the array
+    // to find the insertion location.
+    NamedDecl **Array;
+    if (Size == 0) {
+      Array = new NamedDecl*[LookupIsMap - 1];
+      LookupPtr.setPointer(Array);
+    } else {
+      Array = static_cast<NamedDecl **>(LookupPtr.getPointer());
+    }
+
+    // We always keep declarations of the same name next to each other
+    // in the array, so that it is easy to return multiple results
+    // from lookup(). There will be zero, one, or two declarations of
+    // the same name.
+    unsigned Match;
+    for (Match = 0; Match < Size; ++Match) {
+      if (Array[Match]->getDeclName() == D->getDeclName())
+       break;
+    }
+
+    if (Match < Size) {
+      // We found another declaration with the same name. If it's also
+      // in the same identifier namespace, update the declaration in
+      // place.
+      Decl::IdentifierNamespace NS = D->getIdentifierNamespace();
+      if (Array[Match]->getIdentifierNamespace() == NS) {
+       Array[Match] = D;
+       return;
+      }
+      if (Match + 1 < Size && Array[Match + 1]->getIdentifierNamespace() == NS) {
+       Array[Match + 1] = D;
+       return;
+      }
+
+      // If there is an existing declaration in the namespace of
+      // ordinary identifiers, then it must precede the tag
+      // declaration for C++ name lookup to operate properly. Therefore,
+      // if our match is an ordinary name and the new name is in the
+      // tag namespace, we'll insert the new declaration after it. 
+      if (Match < Size && (NS == Decl::IDNS_Tag) && 
+         (Array[Match]->getIdentifierNamespace() & Decl::IDNS_Ordinary))
+       ++Match;
+    }
+       
+    if (Size < LookupIsMap - 1) {
+      // The new declaration will fit in the array. Insert the new
+      // declaration at the position Match in the array. 
+      for (unsigned Idx = Size; Idx > Match; --Idx)
+       Array[Idx] = Array[Idx-1];
+      
+      Array[Match] = D;
+      LookupPtr.setInt(Size + 1);
+      return;
+    }
+
+    // We've reached capacity in this array. Create a map and copy in
+    // all of the declarations that were stored in the array.
+    StoredDeclsMap *Map = new StoredDeclsMap(16);
+    LookupPtr.setPointer(Map);
+    LookupPtr.setInt(LookupIsMap);
+    for (unsigned Idx = 0; Idx < LookupIsMap - 1; ++Idx) 
+      insertImpl(Array[Idx]);
+    delete [] Array;
+
+    // Fall through to perform insertion into the map.
+  } 
+
+  // Insert this declaration into the map.
+  StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
+  StoredDeclsMap::iterator Pos = Map->find(D->getDeclName());
+  unsigned IndexOfD = D->getIdentifierNamespace() & Decl::IDNS_Ordinary? 0 : 1;
+
+  if (Pos == Map->end()) {
+    // Put this declaration into the appropriate slot.
+    TwoNamedDecls Val;
+    Val.Decls[0] = 0;
+    Val.Decls[1] = 0;
+    Val.Decls[IndexOfD] = D;
+    Pos = Map->insert(std::make_pair(D->getDeclName(),Val)).first;
+  } else {
+    Pos->second.Decls[IndexOfD] = D;
+  }
 }

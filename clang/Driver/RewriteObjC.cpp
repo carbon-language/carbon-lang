@@ -2169,14 +2169,18 @@ QualType RewriteObjC::getSuperStructType() {
     FieldTypes[0] = Context->getObjCIdType();  
     // struct objc_class *super;
     FieldTypes[1] = Context->getObjCClassType();  
+
     // Create fields
-    FieldDecl *FieldDecls[2];
+    for (unsigned i = 0; i < 2; ++i) {
+      SuperStructDecl->addDecl(*Context, 
+                               FieldDecl::Create(*Context, SuperStructDecl, 
+                                                 SourceLocation(), 0, 
+                                                 FieldTypes[i], /*BitWidth=*/0,
+                                                 /*Mutable=*/false, 0),
+                               true);
+    }
   
-    for (unsigned i = 0; i < 2; ++i)
-      FieldDecls[i] = FieldDecl::Create(*Context, SourceLocation(), 0, 
-                                        FieldTypes[i]);
-  
-    SuperStructDecl->defineBody(*Context, FieldDecls, 4);
+    SuperStructDecl->completeDefinition(*Context);
   }
   return Context->getTagDeclType(SuperStructDecl);
 }
@@ -2196,14 +2200,20 @@ QualType RewriteObjC::getConstantStringStructType() {
     FieldTypes[2] = Context->getPointerType(Context->CharTy);  
     // long length;
     FieldTypes[3] = Context->LongTy;  
+
     // Create fields
-    FieldDecl *FieldDecls[4];
-  
-    for (unsigned i = 0; i < 4; ++i)
-      FieldDecls[i] = FieldDecl::Create(*Context, SourceLocation(), 0,
-                                        FieldTypes[i]);
-  
-    ConstantStringDecl->defineBody(*Context, FieldDecls, 4);
+    for (unsigned i = 0; i < 4; ++i) {
+      ConstantStringDecl->addDecl(*Context, 
+                                  FieldDecl::Create(*Context, 
+                                                    ConstantStringDecl, 
+                                                    SourceLocation(), 0,
+                                                    FieldTypes[i], 
+                                                    /*BitWidth=*/0,
+                                                    /*Mutable=*/true, 0),
+                                  true);
+    }
+
+    ConstantStringDecl->completeDefinition(*Context);
   }
   return Context->getTagDeclType(ConstantStringDecl);
 }
@@ -3788,8 +3798,9 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
   ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), BlkCast);
   //PE->dump();
   
-  FieldDecl *FD = FieldDecl::Create(*Context, SourceLocation(),
-                     &Context->Idents.get("FuncPtr"), Context->VoidPtrTy);
+  FieldDecl *FD = FieldDecl::Create(*Context, 0, SourceLocation(),
+                     &Context->Idents.get("FuncPtr"), Context->VoidPtrTy, 
+                                    /*BitWidth=*/0, /*Mutable=*/true, 0);
   MemberExpr *ME = new MemberExpr(PE, true, FD, SourceLocation(), FD->getType());
   
   CastExpr *FunkCast = new CStyleCastExpr(PtrToFuncCastType, ME, PtrToFuncCastType, SourceLocation(), SourceLocation());

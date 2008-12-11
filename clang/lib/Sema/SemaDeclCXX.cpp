@@ -382,7 +382,7 @@ void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases,
 /// definition, when on C++.
 void Sema::ActOnStartCXXClassDef(Scope *S, DeclTy *D, SourceLocation LBrace) {
   CXXRecordDecl *Dcl = cast<CXXRecordDecl>(static_cast<Decl *>(D));
-  PushDeclContext(Dcl);
+  PushDeclContext(S, Dcl);
   FieldCollector->StartClass();
 
   if (Dcl->getIdentifier()) {
@@ -486,7 +486,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   bool InvalidDecl = false;
 
   if (isInstField)
-    Member = static_cast<Decl*>(ActOnField(S, Loc, D, BitWidth));
+    Member = static_cast<Decl*>(ActOnField(S, cast<CXXRecordDecl>(CurContext), 
+                                           Loc, D, BitWidth));
   else
     Member = static_cast<Decl*>(ActOnDeclarator(S, D, LastInGroup));
 
@@ -593,7 +594,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     Member->setInvalidDecl();
 
   if (isInstField) {
-    FieldCollector->Add(cast<CXXFieldDecl>(Member));
+    FieldCollector->Add(cast<FieldDecl>(Member));
     return LastInGroup;
   }
   return Member;
@@ -632,7 +633,10 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
   //   mem-initializer-id for the hidden base class may be specified
   //   using a qualified name. ]
   // Look for a member, first.
-  CXXFieldDecl *Member = ClassDecl->getMember(MemberOrBase);
+  FieldDecl *Member = 0;
+  DeclContext::lookup_result Result = ClassDecl->lookup(Context, MemberOrBase);
+  if (Result.first != Result.second)
+    Member = dyn_cast<FieldDecl>(*Result.first);
 
   // FIXME: Handle members of an anonymous union.
 
@@ -1251,43 +1255,42 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // in that declarative region, it is treated as an original-namespace-name.
 
     Decl *PrevDecl =
-        LookupDecl(II, Decl::IDNS_Tag | Decl::IDNS_Ordinary, DeclRegionScope, 0,
-                   /*enableLazyBuiltinCreation=*/false);
+      LookupDecl(II, Decl::IDNS_Tag | Decl::IDNS_Ordinary, DeclRegionScope, 0,
+                /*enableLazyBuiltinCreation=*/false, 
+                /*LookupInParent=*/false);
+    
+    if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
+      // This is an extended namespace definition.
+      // Attach this namespace decl to the chain of extended namespace
+      // definitions.
+      OrigNS->setNextNamespace(Namespc);
+      Namespc->setOriginalNamespace(OrigNS->getOriginalNamespace());
 
-    if (PrevDecl && isDeclInScope(PrevDecl, CurContext, DeclRegionScope)) {
-      if (NamespaceDecl *OrigNS = dyn_cast<NamespaceDecl>(PrevDecl)) {
-        // This is an extended namespace definition.
-        // Attach this namespace decl to the chain of extended namespace
-        // definitions.
-        NamespaceDecl *NextNS = OrigNS;
-        while (NextNS->getNextNamespace())
-          NextNS = NextNS->getNextNamespace();
-
-        NextNS->setNextNamespace(Namespc);
-        Namespc->setOriginalNamespace(OrigNS);
-
-        // We won't add this decl to the current scope. We want the namespace
-        // name to return the original namespace decl during a name lookup.
-      } else {
-        // This is an invalid name redefinition.
-        Diag(Namespc->getLocation(), diag::err_redefinition_different_kind)
-          << Namespc->getDeclName();
-        Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-        Namespc->setInvalidDecl();
-        // Continue on to push Namespc as current DeclContext and return it.
+      // Remove the previous declaration from the scope.      
+      if (DeclRegionScope->isDeclScope(OrigNS)) {
+       IdResolver.RemoveDecl(OrigNS);
+       DeclRegionScope->RemoveDecl(OrigNS);
       }
-    } else {
-      // This namespace name is declared for the first time.
-      PushOnScopeChains(Namespc, DeclRegionScope);
-    }
-  }
-  else {
+    } else if (PrevDecl) {
+      // This is an invalid name redefinition.
+      Diag(Namespc->getLocation(), diag::err_redefinition_different_kind)
+       << Namespc->getDeclName();
+      Diag(PrevDecl->getLocation(), diag::note_previous_definition);
+      Namespc->setInvalidDecl();
+      // Continue on to push Namespc as current DeclContext and return it.
+    } 
+
+    PushOnScopeChains(Namespc, DeclRegionScope);
+  } else {
     // FIXME: Handle anonymous namespaces
   }
 
   // Although we could have an invalid decl (i.e. the namespace name is a
   // redefinition), push it as current DeclContext and try to continue parsing.
-  PushDeclContext(Namespc->getOriginalNamespace());
+  // FIXME: We should be able to push Namespc here, so that the
+  // each DeclContext for the namespace has the declarations
+  // that showed up in that particular namespace definition.
+  PushDeclContext(NamespcScope, Namespc);
   return Namespc;
 }
 

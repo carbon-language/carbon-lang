@@ -17,11 +17,14 @@
 #include "clang/AST/Attr.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/PointerIntPair.h"
+#include <vector>
 
 namespace clang {
 class DeclContext;
 class TranslationUnitDecl;
 class NamespaceDecl;
+class NamedDecl;
 class ScopedDecl;
 class FunctionDecl;
 class CXXRecordDecl;
@@ -29,6 +32,7 @@ class EnumDecl;
 class ObjCMethodDecl;
 class ObjCInterfaceDecl;
 class BlockDecl;
+class DeclarationName;
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
 /// typedef, function, struct, etc.  
@@ -44,10 +48,6 @@ public:
     // Decl
          TranslationUnit,  // [DeclContext]
     //   NamedDecl
-           Field,
-             CXXField,
-             ObjCIvar,
-             ObjCAtDefsField,
            OverloadedFunction,
            ObjCCategory,
            ObjCCategoryImpl,
@@ -56,13 +56,16 @@ public:
            ObjCProtocol,
            ObjCProperty,
     //     ScopedDecl
+             Field,
+               ObjCIvar,
+               ObjCAtDefsField,
              Namespace,  // [DeclContext]
     //       TypeDecl
                Typedef,
     //         TagDecl
                  Enum,  // [DeclContext]
-                 Record,
-                   CXXRecord,  // [DeclContext]
+                 Record, // [DeclContext]
+                   CXXRecord,  
  	       TemplateTypeParm,
     //       ValueDecl
                EnumConstant,
@@ -87,9 +90,9 @@ public:
   
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
-    NamedFirst     = Field        , NamedLast     = NonTypeTemplateParm,
+    NamedFirst     = OverloadedFunction , NamedLast     = NonTypeTemplateParm,
     FieldFirst     = Field        , FieldLast     = ObjCAtDefsField,
-    ScopedFirst    = Namespace    , ScopedLast    = NonTypeTemplateParm,
+    ScopedFirst    = Field        , ScopedLast    = NonTypeTemplateParm,
     TypeFirst      = Typedef      , TypeLast      = TemplateTypeParm,
     TagFirst       = Enum         , TagLast       = CXXRecord,
     RecordFirst    = Record       , RecordLast    = CXXRecord,
@@ -183,10 +186,10 @@ public:
     case ParmVar:
     case EnumConstant:
     case NonTypeTemplateParm:
+    case Field:
     case ObjCInterface:
     case ObjCCompatibleAlias:
     case OverloadedFunction:
-    case CXXField:
     case CXXMethod:
     case CXXConversion:
     case CXXClassVar:
@@ -247,7 +250,7 @@ protected:
 ///   TranslationUnitDecl
 ///   NamespaceDecl
 ///   FunctionDecl
-///   CXXRecordDecl
+///   RecordDecl/CXXRecordDecl
 ///   EnumDecl
 ///   ObjCMethodDecl
 ///   ObjCInterfaceDecl
@@ -257,9 +260,26 @@ class DeclContext {
   /// DeclKind - This indicates which class this is.
   Decl::Kind DeclKind   :  8;
 
-  /// DeclChain - Linked list of declarations that are defined inside this
-  /// declaration context.
-  ScopedDecl *DeclChain;
+  /// LookupPtrKind - Describes what kind of pointer LookupPtr
+  /// actually is. 
+  enum LookupPtrKind {
+    /// LookupIsMap - Indicates that LookupPtr is actually a
+    /// DenseMap<DeclarationName, TwoNamedDecls> pointer.
+    LookupIsMap = 7
+  };
+
+  /// LookupPtr - Pointer to a data structure used to lookup
+  /// declarations within this context. If the context contains fewer
+  /// than seven declarations, the number of declarations is provided
+  /// in the 3 lowest-order bits and the upper bits are treated as a
+  /// pointer to an array of NamedDecl pointers. If the context
+  /// contains seven or more declarations, the upper bits are treated
+  /// as a pointer to a DenseMap<DeclarationName, TwoNamedDecls>.
+  llvm::PointerIntPair<void*, 3> LookupPtr;
+
+  /// Decls - Contains all of the declarations that are defined inside
+  /// this declaration context. 
+  std::vector<ScopedDecl*> Decls;
 
   // Used in the CastTo template to get the DeclKind
   // from a Decl or a DeclContext. DeclContext doesn't have a getKind() method
@@ -281,6 +301,8 @@ class DeclContext {
         return static_cast<NamespaceDecl*>(const_cast<From*>(D));
       case Decl::Enum:
         return static_cast<EnumDecl*>(const_cast<From*>(D));
+      case Decl::Record:
+        return static_cast<RecordDecl*>(const_cast<From*>(D));
       case Decl::CXXRecord:
         return static_cast<CXXRecordDecl*>(const_cast<From*>(D));
       case Decl::ObjCMethod:
@@ -296,10 +318,19 @@ class DeclContext {
     }
   }
 
+  /// isLookupMap - Determine if the lookup structure is a
+  /// DenseMap. Othewise, it is an array.
+  bool isLookupMap() const { return LookupPtr.getInt() == LookupIsMap; }
+
 protected:
-  DeclContext(Decl::Kind K) : DeclKind(K), DeclChain(0) {}
+  DeclContext(Decl::Kind K) : DeclKind(K), LookupPtr() {
+  }
+
+  void DestroyDecls(ASTContext &C);
 
 public:
+  ~DeclContext();
+
   /// getParent - Returns the containing DeclContext if this is a ScopedDecl,
   /// else returns NULL.
   const DeclContext *getParent() const;
@@ -326,11 +357,12 @@ public:
   bool isFunctionOrMethod() const {
     switch (DeclKind) {
       case Decl::Block:
-      case Decl::Function:
-      case Decl::CXXMethod:
       case Decl::ObjCMethod:
         return true;
+
       default:
+       if (DeclKind >= Decl::FunctionFirst && DeclKind <= Decl::FunctionLast)
+         return true;
         return false;
     }
   }
@@ -343,6 +375,10 @@ public:
     return DeclKind == Decl::CXXRecord;
   }
 
+  bool isNamespace() const {
+    return DeclKind == Decl::Namespace;
+  }
+
   bool Encloses(DeclContext *DC) const {
     for (; DC; DC = DC->getParent())
       if (DC == this)
@@ -350,15 +386,105 @@ public:
     return false;
   }
 
-  const ScopedDecl *getDeclChain() const { return DeclChain; }
-  ScopedDecl *getDeclChain() { return DeclChain; }
-  void setDeclChain(ScopedDecl *D) { DeclChain = D; }
+  /// getPrimaryContext - There may be many different
+  /// declarations of the same entity (including forward declarations
+  /// of classes, multiple definitions of namespaces, etc.), each with
+  /// a different set of declarations. This routine returns the
+  /// "primary" DeclContext structure, which will contain the
+  /// information needed to perform name lookup into this context.
+  DeclContext *getPrimaryContext(ASTContext &Context);
+
+  /// getNextContext - If this is a DeclContext that may have other
+  /// DeclContexts that are semantically connected but syntactically
+  /// different, such as C++ namespaces, this routine retrieves the
+  /// next DeclContext in the link. Iteration through the chain of
+  /// DeclContexts should begin at the primary DeclContext and
+  /// continue until this function returns NULL. For example, given:
+  /// @code
+  /// namespace N {
+  ///   int x;
+  /// }
+  /// namespace N {
+  ///   int y;
+  /// }
+  /// @endcode
+  /// The first occurrence of namespace N will be the primary
+  /// DeclContext. Its getNextContext will return the second
+  /// occurrence of namespace N.
+  DeclContext *getNextContext();
+
+  /// decl_iterator - Iterates through the declarations stored
+  /// within this context.
+  typedef std::vector<ScopedDecl*>::const_iterator decl_iterator;
+
+  /// reverse_decl_iterator - Iterates through the declarations stored
+  /// within this context in reverse order.
+  typedef std::vector<ScopedDecl*>::const_reverse_iterator 
+    reverse_decl_iterator;
+
+  /// decls_begin/decls_end - Iterate over the declarations stored in
+  /// this context. 
+  decl_iterator decls_begin() const { return Decls.begin(); }
+  decl_iterator decls_end()   const { return Decls.end(); }
+
+  /// decls_rbegin/decls_rend - Iterate over the declarations stored
+  /// in this context in reverse order.
+  reverse_decl_iterator decls_rbegin() const { return Decls.rbegin(); }
+  reverse_decl_iterator decls_rend() const { return Decls.rend(); }
+
+  /// addDecl - Add the declaration D to this scope. Note that
+  /// declarations are added at the beginning of the declaration
+  /// chain, so reverseDeclChain() should be called after all
+  /// declarations have been added. If AllowLookup, also adds this
+  /// declaration into data structure for name lookup.
+  void addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup = true);
+
+  /// reverseDeclChain - Reverse the chain of declarations stored in
+  /// this scope. Typically called once after all declarations have
+  /// been added and the scope is closed.
+  void reverseDeclChain();
+
+  /// lookup_iterator - An iterator that provides access to the results
+  /// of looking up a name within this context.
+  typedef NamedDecl **lookup_iterator;
+
+  /// lookup_const_iterator - An iterator that provides non-mutable
+  /// access to the results of lookup up a name within this context.
+  typedef NamedDecl * const * lookup_const_iterator;
+
+  typedef std::pair<lookup_iterator, lookup_iterator> lookup_result;
+  typedef std::pair<lookup_const_iterator, lookup_const_iterator>
+    lookup_const_result;
+
+  /// lookup - Find the declarations (if any) with the given Name in
+  /// this context. Returns a range of iterators that contains all of
+  /// the declarations with this name (which may be 0, 1, or 2
+  /// declarations). If two declarations are returned, the declaration
+  /// in the "ordinary" identifier namespace will precede the
+  /// declaration in the "tag" identifier namespace (e.g., values
+  /// before types). Note that this routine will not look into parent
+  /// contexts.
+  lookup_result lookup(ASTContext &Context, DeclarationName Name);
+  lookup_const_result lookup(ASTContext &Context, DeclarationName Name) const;
+
+  /// insert - Insert the declaration D into this context. Up to two
+  /// declarations with the same name can be inserted into a single
+  /// declaration context, one in the "tag" namespace (e.g., for
+  /// classes and enums) and one in the "ordinary" namespaces (e.g.,
+  /// for variables, functions, and other values). Note that, if there
+  /// is already a declaration with the same name and identifier
+  /// namespace, D will replace it. It is up to the caller to ensure
+  /// that this replacement is semantically correct, e.g., that
+  /// declarations are only replaced by later declarations of the same
+  /// entity and not a declaration of some other kind of entity.
+  void insert(ASTContext &Context, NamedDecl *D);
 
   static bool classof(const Decl *D) {
     switch (D->getKind()) {
       case Decl::TranslationUnit:
       case Decl::Namespace:
       case Decl::Enum:
+      case Decl::Record:
       case Decl::CXXRecord:
       case Decl::ObjCMethod:
       case Decl::ObjCInterface:
@@ -375,6 +501,7 @@ public:
   static bool classof(const TranslationUnitDecl *D) { return true; }
   static bool classof(const NamespaceDecl *D) { return true; }
   static bool classof(const FunctionDecl *D) { return true; }
+  static bool classof(const RecordDecl *D) { return true; }
   static bool classof(const CXXRecordDecl *D) { return true; }
   static bool classof(const EnumDecl *D) { return true; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
@@ -382,6 +509,8 @@ public:
   static bool classof(const BlockDecl *D) { return true; }
 
 private:
+  void insertImpl(NamedDecl *D);
+
   void EmitOutRec(llvm::Serializer& S) const;
   void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
 
@@ -426,6 +555,20 @@ struct cast_convert_val< ::clang::DeclContext, FromTy, FromTy> {
 template<class FromTy>
 struct cast_convert_val< ::clang::DeclContext, FromTy*, FromTy*> {
   static ::clang::DeclContext *doit(const FromTy *Val) {
+    return FromTy::castToDeclContext(Val);
+  }
+};
+
+template<class FromTy>
+struct cast_convert_val< const ::clang::DeclContext, FromTy, FromTy> {
+  static const ::clang::DeclContext &doit(const FromTy &Val) {
+    return *FromTy::castToDeclContext(&Val);
+  }
+};
+
+template<class FromTy>
+struct cast_convert_val< const ::clang::DeclContext, FromTy*, FromTy*> {
+  static const ::clang::DeclContext *doit(const FromTy *Val) {
     return FromTy::castToDeclContext(Val);
   }
 };

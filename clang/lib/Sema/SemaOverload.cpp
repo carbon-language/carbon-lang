@@ -1955,10 +1955,9 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   //        (13.3.1.1.1); otherwise, the set of member candidates is
   //        empty.
   if (const RecordType *T1Rec = T1->getAsRecordType()) {
-    IdentifierResolver::iterator I 
-      = IdResolver.begin(OpName, cast<CXXRecordType>(T1Rec)->getDecl(), 
-                         /*LookInParentCtx=*/false);
-    NamedDecl *MemberOps = (I == IdResolver.end())? 0 : *I;
+    DeclContext::lookup_const_result Lookup 
+      = cast<CXXRecordType>(T1Rec)->getDecl()->lookup(Context, OpName);
+    NamedDecl *MemberOps = (Lookup.first == Lookup.second)? 0 : *Lookup.first;
     if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
       AddMethodCandidate(Method, Args[0], Args+1, NumArgs - 1, CandidateSet,
                          /*SuppressUserConversions=*/false);
@@ -3118,11 +3117,10 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   //  ordinary lookup of the name operator() in the context of
   //  (E).operator().
   OverloadCandidateSet CandidateSet;
-  IdentifierResolver::iterator I 
-    = IdResolver.begin(Context.DeclarationNames.getCXXOperatorName(OO_Call), 
-                       cast<CXXRecordType>(Record)->getDecl(), 
-                       /*LookInParentCtx=*/false);
-  NamedDecl *MemberOps = (I == IdResolver.end())? 0 : *I;
+  DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Call);
+  DeclContext::lookup_const_result Lookup 
+    = cast<CXXRecordType>(Record)->getDecl()->lookup(Context, OpName);
+  NamedDecl *MemberOps = (Lookup.first == Lookup.second)? 0 : *Lookup.first;
   if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
     AddMethodCandidate(Method, Object, Args, NumArgs, CandidateSet,
                        /*SuppressUserConversions=*/false);
@@ -3315,10 +3313,9 @@ Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Arrow);
   OverloadCandidateSet CandidateSet;
   const RecordType *BaseRecord = Base->getType()->getAsRecordType();
-  IdentifierResolver::iterator I
-    = IdResolver.begin(OpName, cast<CXXRecordType>(BaseRecord)->getDecl(),
-                       /*LookInParentCtx=*/false);
-  NamedDecl *MemberOps = (I == IdResolver.end())? 0 : *I;
+  DeclContext::lookup_const_result Lookup 
+    = cast<CXXRecordType>(BaseRecord)->getDecl()->lookup(Context, OpName);
+  NamedDecl *MemberOps = (Lookup.first == Lookup.second)? 0 : *Lookup.first;
   if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
     AddMethodCandidate(Method, Base, 0, 0, CandidateSet,
                        /*SuppressUserConversions=*/false);

@@ -81,10 +81,11 @@ BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
   return new (Mem) BlockDecl(DC, L);
 }
 
-FieldDecl *FieldDecl::Create(ASTContext &C, SourceLocation L,
-                             IdentifierInfo *Id, QualType T, Expr *BW) {
+FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
+                             IdentifierInfo *Id, QualType T, Expr *BW,
+                             bool Mutable, ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<FieldDecl>();
-  return new (Mem) FieldDecl(L, Id, T, BW);
+  return new (Mem) FieldDecl(Decl::Field, DC, L, Id, T, BW, Mutable, PrevDecl);
 }
 
 
@@ -118,8 +119,19 @@ EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
 }
 
 void EnumDecl::Destroy(ASTContext& C) {
-  if (getEnumConstantList()) getEnumConstantList()->Destroy(C);
+  DeclContext::DestroyDecls(C);
   Decl::Destroy(C);
+}
+
+void EnumDecl::completeDefinition(ASTContext &C, QualType NewType) {
+  assert(!isDefinition() && "Cannot redefine enums!");
+  setDefinition(true);
+
+  IntegerType = NewType;
+
+  // Let ASTContext know that this is the defining EnumDecl for this
+  // type.
+  C.setTagDefinition(this);
 }
 
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,
@@ -248,12 +260,10 @@ TagDecl* TagDecl::getDefinition(ASTContext& C) const {
 
 RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
                        IdentifierInfo *Id)
-: TagDecl(DK, TK, DC, L, Id, 0) {
+  : TagDecl(DK, TK, DC, L, Id, 0), DeclContext(DK) {
   
   HasFlexibleArrayMember = false;
   assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
-  Members = 0;
-  NumMembers = -1;  
 }
 
 RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
@@ -267,44 +277,23 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
 }
 
 RecordDecl::~RecordDecl() {
-  delete[] Members;
 }
 
 void RecordDecl::Destroy(ASTContext& C) {
-  if (isDefinition())
-    for (field_iterator I=field_begin(), E=field_end(); I!=E; ++I)
-      (*I)->Destroy(C);
-
+  DeclContext::DestroyDecls(C);
   TagDecl::Destroy(C);
 }
 
-/// defineBody - When created, RecordDecl's correspond to a forward declared
-/// record.  This method is used to mark the decl as being defined, with the
-/// specified contents.
-void RecordDecl::defineBody(ASTContext& C, FieldDecl **members,
-                            unsigned numMembers) {
+/// completeDefinition - Notes that the definition of this type is now
+/// complete.
+void RecordDecl::completeDefinition(ASTContext& C) {
   assert(!isDefinition() && "Cannot redefine record!");
+
   setDefinition(true);
-  NumMembers = numMembers;
-  if (numMembers) {
-    Members = new FieldDecl*[numMembers];
-    memcpy(Members, members, numMembers*sizeof(Decl*));
-  }
   
-  // Let ASTContext know that this is the defining RecordDecl this type.
+  // Let ASTContext know that this is the defining RecordDecl for this
+  // type.
   C.setTagDefinition(this);
-}
-
-
-FieldDecl *RecordDecl::getMember(IdentifierInfo *II) {
-  if (Members == 0 || NumMembers < 0)
-    return 0;
-  
-  // Linear search.  When C++ classes come along, will likely need to revisit.
-  for (int i = 0; i != NumMembers; ++i)
-    if (Members[i]->getIdentifier() == II)
-      return Members[i];
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//

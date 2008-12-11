@@ -2373,12 +2373,15 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
                                       SourceLocation(),
                                       &Ctx.Idents.get("_objc_super"));  
-  FieldDecl *FieldDecls[2];
-  FieldDecls[0] = FieldDecl::Create(Ctx, SourceLocation(), 0, 
-                                    Ctx.getObjCIdType());
-  FieldDecls[1] = FieldDecl::Create(Ctx, SourceLocation(), 0,
-                                    Ctx.getObjCClassType());
-  RD->defineBody(Ctx, FieldDecls, 2);
+  RD->addDecl(Ctx, 
+              FieldDecl::Create(Ctx, RD, SourceLocation(), 0, 
+                                Ctx.getObjCIdType(), 0, false, 0), 
+              true);
+  RD->addDecl(Ctx, 
+              FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+                                Ctx.getObjCClassType(), 0, false, 0), 
+              true);
+  RD->completeDefinition(Ctx);
 
   SuperCTy = Ctx.getTagDeclType(RD);
   SuperPtrCTy = Ctx.getPointerType(SuperCTy);

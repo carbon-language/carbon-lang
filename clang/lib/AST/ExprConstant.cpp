@@ -156,9 +156,11 @@ APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
   FieldDecl *FD = E->getMemberDecl();
     
   // FIXME: This is linear time.
-  unsigned i = 0, e = 0;
-  for (i = 0, e = RD->getNumMembers(); i != e; i++) {
-    if (RD->getMember(i) == FD)
+  unsigned i = 0;
+  for (RecordDecl::field_iterator Field = RD->field_begin(),
+                               FieldEnd = RD->field_end();
+       Field != FieldEnd; (void)++Field, ++i) {
+    if (*Field == FD)
       break;
   }
 

@@ -187,16 +187,17 @@ public:
     unsigned EltNo = 0;  // Element no in ILE
     int FieldNo = 0; // Field no in RecordDecl
     bool RewriteType = false;
-    while (EltNo < ILE->getNumInits() && FieldNo < RD->getNumMembers()) {
-      FieldDecl* curField = RD->getMember(FieldNo);
+    for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                 FieldEnd = RD->field_end();
+         EltNo < ILE->getNumInits() && Field != FieldEnd; ++Field) {
       FieldNo++;
-      if (!curField->getIdentifier())
+      if (!Field->getIdentifier())
         continue;
 
-      if (curField->isBitField()) {
-        InsertBitfieldIntoStruct(Elts, curField, ILE->getInit(EltNo));
+      if (Field->isBitField()) {
+        InsertBitfieldIntoStruct(Elts, *Field, ILE->getInit(EltNo));
       } else {
-        unsigned FieldNo = CGM.getTypes().getLLVMFieldNo(curField);
+        unsigned FieldNo = CGM.getTypes().getLLVMFieldNo(*Field);
         llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(EltNo), CGF);
         RewriteType |= (C->getType() != Elts[FieldNo]->getType());
         Elts[FieldNo] = C;
@@ -223,8 +224,10 @@ public:
     // Find the field decl we're initializing, if any
     int FieldNo = 0; // Field no in RecordDecl
     FieldDecl* curField = 0;
-    while (FieldNo < RD->getNumMembers()) {
-      curField = RD->getMember(FieldNo);
+    for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                 FieldEnd = RD->field_end();
+         Field != FieldEnd; ++Field) {
+      curField = *Field;
       FieldNo++;
       if (curField->getIdentifier())
         break;

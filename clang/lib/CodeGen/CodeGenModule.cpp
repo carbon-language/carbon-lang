@@ -775,21 +775,20 @@ llvm::Function *CodeGenModule::getMemSetFn() {
 
 static void appendFieldAndPadding(CodeGenModule &CGM,
                                   std::vector<llvm::Constant*>& Fields,
-                                  int FieldNo, llvm::Constant* Field,
+                                  FieldDecl *FieldD, FieldDecl *NextFieldD,
+                                  llvm::Constant* Field,
                                   RecordDecl* RD, const llvm::StructType *STy)
 {
   // Append the field.
   Fields.push_back(Field);
   
-  int StructFieldNo = 
-    CGM.getTypes().getLLVMFieldNo(RD->getMember(FieldNo));
+  int StructFieldNo = CGM.getTypes().getLLVMFieldNo(FieldD);
   
   int NextStructFieldNo;
-  if (FieldNo + 1 == RD->getNumMembers()) {
+  if (!NextFieldD) {
     NextStructFieldNo = STy->getNumElements();
   } else {
-    NextStructFieldNo = 
-      CGM.getTypes().getLLVMFieldNo(RD->getMember(FieldNo + 1));
+    NextStructFieldNo = CGM.getTypes().getLLVMFieldNo(NextFieldD);
   }
   
   // Append padding
@@ -841,29 +840,38 @@ GetAddrOfConstantCFString(const std::string &str) {
     cast<llvm::StructType>(getTypes().ConvertType(CFTy));
 
   std::vector<llvm::Constant*> Fields;
-  
-  
+  RecordDecl::field_iterator Field = CFRD->field_begin();
+
   // Class pointer.
-  appendFieldAndPadding(*this, Fields, 0, CFConstantStringClassRef, CFRD, STy);
+  FieldDecl *CurField = *Field++;
+  FieldDecl *NextField = *Field++;
+  appendFieldAndPadding(*this, Fields, CurField, NextField,
+                        CFConstantStringClassRef, CFRD, STy);
   
   // Flags.
+  CurField = NextField;
+  NextField = *Field++;
   const llvm::Type *Ty = getTypes().ConvertType(getContext().UnsignedIntTy);
-  appendFieldAndPadding(*this, Fields, 1, llvm::ConstantInt::get(Ty, 0x07C8), 
-                        CFRD, STy);
+  appendFieldAndPadding(*this, Fields, CurField, NextField,
+                        llvm::ConstantInt::get(Ty, 0x07C8), CFRD, STy);
     
   // String pointer.
+  CurField = NextField;
+  NextField = *Field++;
   llvm::Constant *C = llvm::ConstantArray::get(str);
   C = new llvm::GlobalVariable(C->getType(), true, 
                                llvm::GlobalValue::InternalLinkage,
                                C, ".str", &getModule());
-  appendFieldAndPadding(*this, Fields, 2, 
+  appendFieldAndPadding(*this, Fields, CurField, NextField,
                         llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2),
                         CFRD, STy);
   
   // String length.
+  CurField = NextField;
+  NextField = 0;
   Ty = getTypes().ConvertType(getContext().LongTy);
-  appendFieldAndPadding(*this, Fields, 3, llvm::ConstantInt::get(Ty, str.length()),
-                        CFRD, STy);
+  appendFieldAndPadding(*this, Fields, CurField, NextField,
+                        llvm::ConstantInt::get(Ty, str.length()), CFRD, STy);
   
   // The struct.
   C = llvm::ConstantStruct::get(STy, Fields);

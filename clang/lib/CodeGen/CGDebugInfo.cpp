@@ -289,10 +289,11 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   llvm::SmallVector<llvm::DIDescriptor, 32> Enumerators;
 
   // Create DIEnumerator elements for each enumerator.
-  for (EnumConstantDecl *Elt = Decl->getEnumConstantList(); Elt;
-       Elt = dyn_cast_or_null<EnumConstantDecl>(Elt->getNextDeclarator())) {
-    Enumerators.push_back(DebugFactory.CreateEnumerator(Elt->getNameAsString(),
-                                            Elt->getInitVal().getZExtValue()));
+  for (EnumDecl::enumerator_iterator Enum = Decl->enumerator_begin(),
+                                  EnumEnd = Decl->enumerator_end();
+       Enum != EnumEnd; ++Enum) {
+    Enumerators.push_back(DebugFactory.CreateEnumerator(Enum->getNameAsString(),
+                                            Enum->getInitVal().getZExtValue()));
   }
   
   // Return a CompositeType for the enum itself.

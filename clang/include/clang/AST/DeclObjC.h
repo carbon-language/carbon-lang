@@ -506,7 +506,8 @@ public:
 private:
   ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
                AccessControl ac, Expr *BW)
-    : FieldDecl(ObjCIvar, L, Id, T, BW), DeclAccess(ac) {}
+    : FieldDecl(ObjCIvar, 0, L, Id, T, BW, /*Mutable=*/false, 0), 
+      DeclAccess(ac) {}
   
 public:
   static ObjCIvarDecl *Create(ASTContext &C, SourceLocation L,
@@ -534,12 +535,13 @@ private:
 ///  @defs(...).
 class ObjCAtDefsFieldDecl : public FieldDecl {
 private:
-  ObjCAtDefsFieldDecl(SourceLocation L, IdentifierInfo *Id,
+  ObjCAtDefsFieldDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                       QualType T, Expr *BW)
-  : FieldDecl(ObjCAtDefsField, L, Id, T, BW) {}
+    : FieldDecl(ObjCAtDefsField, DC, L, Id, T, BW, /*Mutable=*/false, 0) {}
   
 public:
-  static ObjCAtDefsFieldDecl *Create(ASTContext &C, SourceLocation L,
+  static ObjCAtDefsFieldDecl *Create(ASTContext &C, DeclContext *DC,
+                                     SourceLocation L,
                                      IdentifierInfo *Id, QualType T,
                                      Expr *BW);
     

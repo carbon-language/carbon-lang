@@ -198,6 +198,10 @@ public:
   /// name as an opaque integer.
   uintptr_t getAsOpaqueInteger() const { return Ptr; }
 
+  /// getAsOpaquePtr - Get the representation of this declaration name as
+  /// an opaque pointer.
+  void *getAsOpaquePtr() const { return reinterpret_cast<void*>(Ptr); }
+
   static DeclarationName getFromOpaqueInteger(uintptr_t P) {
     DeclarationName N;
     N.Ptr = P;

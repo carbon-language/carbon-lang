@@ -74,14 +74,16 @@ DeclContext *Sema::getContainingDC(DeclContext *DC) {
   return DC->getLexicalParent();
 }
 
-void Sema::PushDeclContext(DeclContext *DC) {
+void Sema::PushDeclContext(Scope *S, DeclContext *DC) {
   assert(getContainingDC(DC) == CurContext &&
       "The next DeclContext should be lexically contained in the current one.");
   CurContext = DC;
+  S->setEntity(DC);
 }
 
 void Sema::PopDeclContext() {
   assert(CurContext && "DeclContext imbalance!");
+
   CurContext = getContainingDC(CurContext);
 }
 
@@ -97,52 +99,89 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
   //   in this case the class name or enumeration name is hidden.
   if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
     // We are pushing the name of a tag (enum or class).
-    IdentifierResolver::iterator
-        I = IdResolver.begin(TD->getIdentifier(),
-                             TD->getDeclContext(), false/*LookInParentCtx*/);
-    if (I != IdResolver.end() && isDeclInScope(*I, TD->getDeclContext(), S)) {
-      // There is already a declaration with the same name in the same
-      // scope. It must be found before we find the new declaration,
-      // so swap the order on the shadowed declaration chain.
+    if (CurContext == TD->getDeclContext()) {
+      // We're pushing the tag into the current context, which might
+      // require some reshuffling in the identifier resolver.
+      IdentifierResolver::iterator
+        I = IdResolver.begin(TD->getIdentifier(), CurContext, 
+                            false/*LookInParentCtx*/);
+      if (I != IdResolver.end()) {
+       // There is already a declaration with the same name in the same
+       // scope. It must be found before we find the new declaration,
+       // so swap the order on the shadowed declaration chain.
+       IdResolver.AddShadowedDecl(TD, *I);
 
-      IdResolver.AddShadowedDecl(TD, *I);
-      return;
+       // Add this declaration to the current context.
+       CurContext->addDecl(Context, TD);
+       
+       return;
+      }
     }
   } else if (getLangOptions().CPlusPlus && isa<FunctionDecl>(D)) {
-    FunctionDecl *FD = cast<FunctionDecl>(D);
     // We are pushing the name of a function, which might be an
     // overloaded name.
-    IdentifierResolver::iterator
-        I = IdResolver.begin(FD->getDeclName(),
-                             FD->getDeclContext(), false/*LookInParentCtx*/);
-    if (I != IdResolver.end() &&
-        IdResolver.isDeclInScope(*I, FD->getDeclContext(), S) &&
-        (isa<OverloadedFunctionDecl>(*I) || isa<FunctionDecl>(*I))) {
-      // There is already a declaration with the same name in the same
-      // scope. It must be a function or an overloaded function.
-      OverloadedFunctionDecl* Ovl = dyn_cast<OverloadedFunctionDecl>(*I);
+    FunctionDecl *FD = cast<FunctionDecl>(D);
+    Decl *Prev = LookupDecl(FD->getDeclName(), Decl::IDNS_Ordinary, S,
+                           FD->getDeclContext(), false, false);
+    if (Prev && (isa<OverloadedFunctionDecl>(Prev) || isa<FunctionDecl>(Prev))) {
+      // There is already a declaration with the same name in
+      // the same scope. It must be a function or an overloaded
+      // function.
+      OverloadedFunctionDecl* Ovl = dyn_cast<OverloadedFunctionDecl>(Prev);
       if (!Ovl) {
         // We haven't yet overloaded this function. Take the existing
         // FunctionDecl and put it into an OverloadedFunctionDecl.
         Ovl = OverloadedFunctionDecl::Create(Context, 
                                              FD->getDeclContext(),
                                              FD->getDeclName());
-        Ovl->addOverload(dyn_cast<FunctionDecl>(*I));
+        Ovl->addOverload(dyn_cast<FunctionDecl>(Prev));
         
-        // Remove the name binding to the existing FunctionDecl...
-        IdResolver.RemoveDecl(*I);
-
-        // ... and put the OverloadedFunctionDecl in its place.
+       // If there is an name binding for the existing FunctionDecl,
+       // remove it.
+       for (IdentifierResolver::iterator I 
+              = IdResolver.begin(FD->getDeclName(), FD->getDeclContext(), 
+                                 false/*LookInParentCtx*/);
+            I != IdResolver.end(); ++I) {
+         if (*I == Prev) {
+           IdResolver.RemoveDecl(*I);
+           S->RemoveDecl(*I);
+           break;
+         }
+       }
+       
+       // Add the name binding for the OverloadedFunctionDecl.
         IdResolver.AddDecl(Ovl);
+
+        // Update the context with the newly-created overloaded
+        // function set.
+        FD->getDeclContext()->insert(Context, Ovl);
+
+       S->AddDecl(Ovl);
       }
+
+      // We added this function declaration to the scope earlier, but
+      // we don't want it there because it is part of the overloaded
+      // function declaration.
+      S->RemoveDecl(FD);
 
       // We have an OverloadedFunctionDecl. Add the new FunctionDecl
       // to its list of overloads.
       Ovl->addOverload(FD);
 
-      return;
+      // Add this new function declaration to the declaration context.
+      CurContext->addDecl(Context, FD, false);
+
+      return;      
     }
   }
+
+  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
+    CurContext->addDecl(Context, SD);
+  else {
+    // Other kinds of declarations don't currently have a context
+    // where they need to be inserted.
+  }
+
 
   IdResolver.AddDecl(D);
 }
@@ -157,25 +196,13 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     Decl *TmpD = static_cast<Decl*>(*I);
     assert(TmpD && "This decl didn't get pushed??");
 
-    if (isa<CXXFieldDecl>(TmpD)) continue;
+    assert(isa<NamedDecl>(TmpD) && "Decl isn't NamedDecl?");
+    NamedDecl *D = cast<NamedDecl>(TmpD);
 
-    assert(isa<ScopedDecl>(TmpD) && "Decl isn't ScopedDecl?");
-    ScopedDecl *D = cast<ScopedDecl>(TmpD);
-    
-    IdentifierInfo *II = D->getIdentifier();
-    if (!II) continue;
-    
-    // We only want to remove the decls from the identifier decl chains for
-    // local scopes, when inside a function/method.
-    // However, we *always* remove template parameters, since they are
-    // purely lexically scoped (and can never be found by qualified
-    // name lookup).
-    if (S->getFnParent() != 0 || isa<TemplateTypeParmDecl>(D))
-      IdResolver.RemoveDecl(D);
+    if (!D->getDeclName()) continue;
 
-    // Chain this decl to the containing DeclContext.
-    D->setNext(CurContext->getDeclChain());
-    CurContext->setDeclChain(D);
+    // Remove this name from our lexical scope.
+    IdResolver.RemoveDecl(D);
   }
 }
 
@@ -193,21 +220,76 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
 /// namespace.
 Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                        const DeclContext *LookupCtx,
-                       bool enableLazyBuiltinCreation) {
+                       bool enableLazyBuiltinCreation,
+                      bool LookInParent) {
   if (!Name) return 0;
   unsigned NS = NSI;
   if (getLangOptions().CPlusPlus && (NS & Decl::IDNS_Ordinary))
     NS |= Decl::IDNS_Tag;
 
-  IdentifierResolver::iterator 
-    I = LookupCtx ? IdResolver.begin(Name, LookupCtx, false/*LookInParentCtx*/)
-                  : IdResolver.begin(Name, CurContext, true/*LookInParentCtx*/);
-  // Scan up the scope chain looking for a decl that matches this identifier
-  // that is in the appropriate namespace.  This search should not take long, as
-  // shadowing of names is uncommon, and deep shadowing is extremely uncommon.
-  for (; I != IdResolver.end(); ++I)
-    if ((*I)->getIdentifierNamespace() & NS)
-      return *I;
+  if (LookupCtx) {
+    assert(getLangOptions().CPlusPlus && "No qualified name lookup in C");
+
+    // Perform qualified name lookup into the LookupCtx.
+    // FIXME: Will need to look into base classes and such.
+    for (DeclContext::lookup_const_result I = LookupCtx->lookup(Context, Name);
+        I.first != I.second; ++I.first)
+      if ((*I.first)->getIdentifierNamespace() & NS)
+       return *I.first;
+  } else if (getLangOptions().CPlusPlus && 
+               (NS & (Decl::IDNS_Ordinary | Decl::IDNS_Tag))) {
+    // Name lookup for ordinary names and tag names in C++ requires
+    // looking into scopes that aren't strictly lexical, and
+    // therefore we walk through the context as well as walking
+    // through the scopes.
+    IdentifierResolver::iterator 
+      I = IdResolver.begin(Name, CurContext, true/*LookInParentCtx*/),
+      IEnd = IdResolver.end();
+    for (; S; S = S->getParent()) {
+      // Check whether the IdResolver has anything in this scope.
+      // FIXME: The isDeclScope check could be expensive. Can we do better?
+      for (; I != IEnd && S->isDeclScope(*I); ++I)
+        if ((*I)->getIdentifierNamespace() & NS)
+          return *I;
+      
+      // If there is an entity associated with this scope, it's a
+      // DeclContext. We might need to perform qualified lookup into
+      // it.
+      DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
+      while (Ctx && Ctx->isFunctionOrMethod())
+        Ctx = Ctx->getParent();
+      while (Ctx && (Ctx->isNamespace() || Ctx->isCXXRecord())) {
+        // Look for declarations of this name in this scope.
+        for (DeclContext::lookup_const_result I = Ctx->lookup(Context, Name);
+             I.first != I.second; ++I.first) {
+          // FIXME: Cache this result in the IdResolver
+          if ((*I.first)->getIdentifierNamespace() & NS)
+            return  *I.first;
+        }
+        
+        Ctx = Ctx->getParent();
+      }
+      
+      if (!LookInParent)
+        return 0;
+    }
+  } else {
+    // Unqualified name lookup for names in our lexical scope. This
+    // name lookup suffices when all of the potential names are known
+    // to have been pushed onto the IdResolver, as happens in C
+    // (always) and in C++ for names in the "label" namespace.
+    assert(!LookupCtx && "Can't perform qualified name lookup here");
+    IdentifierResolver::iterator I
+      = IdResolver.begin(Name, CurContext, LookInParent);
+    
+    // Scan up the scope chain looking for a decl that matches this
+    // identifier that is in the appropriate namespace.  This search
+    // should not take long, as shadowing of names is uncommon, and
+    // deep shadowing is extremely uncommon.
+    for (; I != IdResolver.end(); ++I)
+      if ((*I)->getIdentifierNamespace() & NS)
+         return *I;
+  }
 
   // If we didn't find a use of this identifier, and if the identifier
   // corresponds to a compiler builtin, create the decl object for the builtin
@@ -826,7 +908,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
   // we find one that is.
-  while ((S->getFlags() & Scope::DeclScope) == 0)
+  while ((S->getFlags() & Scope::DeclScope) == 0 ||
+        (S->getFlags() & Scope::TemplateParamScope) != 0)
     S = S->getParent();
   
   DeclContext *DC;
@@ -854,6 +937,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       // No previous declaration in the qualifying scope.
       Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
         << Name << D.getCXXScopeSpec().getRange();
+      InvalidDecl = true;
     } else if (!CurContext->Encloses(DC)) {
       // The qualifying scope doesn't enclose the original declaration.
       // Emit diagnostic based on current scope.
@@ -865,6 +949,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         Diag(L, diag::err_invalid_declarator_scope)
           << Name << cast<NamedDecl>(DC)->getDeclName() << R;
       }
+      InvalidDecl = true;
     }
   }
 
@@ -1127,23 +1212,42 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 
           if (OldDecl == PrevDecl) {
             // Remove the name binding for the previous
-            // declaration. We'll add the binding back later, but then
-            // it will refer to the new declaration (which will
-            // contain more information).
-            IdResolver.RemoveDecl(cast<NamedDecl>(PrevDecl));
+            // declaration.
+           if (S->isDeclScope(PrevDecl)) {
+             IdResolver.RemoveDecl(cast<NamedDecl>(PrevDecl));
+             S->RemoveDecl(PrevDecl);
+           }
+
+           // Introduce the new binding for this declaration.
+           IdResolver.AddDecl(NewFD);
+           if (getLangOptions().CPlusPlus && NewFD->getParent())
+             NewFD->getParent()->insert(Context, NewFD);
+
+           // Add the redeclaration to the current scope, since we'll
+           // be skipping PushOnScopeChains.
+           S->AddDecl(NewFD);
           } else {
             // We need to update the OverloadedFunctionDecl with the
             // latest declaration of this function, so that name
             // lookup will always refer to the latest declaration of
             // this function.
             *MatchedDecl = NewFD;
+         }
            
-            // Add the redeclaration to the current scope, since we'll
-            // be skipping PushOnScopeChains.
-            S->AddDecl(NewFD);
+          if (getLangOptions().CPlusPlus) {
+            // Add this declaration to the current context.
+            CurContext->addDecl(Context, NewFD, false);
 
-            return NewFD;
+            // Check default arguments now that we have merged decls.
+            CheckCXXDefaultArguments(NewFD);
           }
+
+         // Set the lexical context. If the declarator has a C++
+         // scope specifier, the lexical context will be different
+         // from the semantic context.
+         NewFD->setLexicalDeclContext(CurContext);
+
+         return NewFD;
         }
       }
     }
@@ -2071,7 +2175,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     parmDeclType = Context.getArrayDecayedType(parmDeclType);
   } else if (parmDeclType->isFunctionType())
     parmDeclType = Context.getPointerType(parmDeclType);
-  
+
   ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, 
                                          D.getIdentifierLoc(), II,
                                          parmDeclType, StorageClass, 
@@ -2079,9 +2183,11 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   
   if (D.getInvalidType())
     New->setInvalidDecl();
-    
+
+  // Add the parameter declaration into this scope.
+  S->AddDecl(New);
   if (II)
-    PushOnScopeChains(New, S);
+    IdResolver.AddDecl(New);
 
   ProcessDeclAttributes(New, D);
   return New;
@@ -2133,7 +2239,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
     Diag(Definition->getLocation(), diag::note_previous_definition);
   }
 
-  PushDeclContext(FD);
+  PushDeclContext(FnBodyScope, FD);
     
   // Check the validity of our function parameters
   CheckParmsForFunctionDef(FD);
@@ -2573,17 +2679,19 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
 
 /// Collect the instance variables declared in an Objective-C object.  Used in
 /// the creation of structures from objects using the @defs directive.
-static void CollectIvars(ObjCInterfaceDecl *Class, ASTContext& Ctx,
+static void CollectIvars(ObjCInterfaceDecl *Class, RecordDecl *Record,
+                         ASTContext& Ctx,
                          llvm::SmallVectorImpl<Sema::DeclTy*> &ivars) {
   if (Class->getSuperClass())
-    CollectIvars(Class->getSuperClass(), Ctx, ivars);
+    CollectIvars(Class->getSuperClass(), Record, Ctx, ivars);
   
   // For each ivar, create a fresh ObjCAtDefsFieldDecl.
   for (ObjCInterfaceDecl::ivar_iterator
         I=Class->ivar_begin(), E=Class->ivar_end(); I!=E; ++I) {
     
     ObjCIvarDecl* ID = *I;
-    ivars.push_back(ObjCAtDefsFieldDecl::Create(Ctx, ID->getLocation(),
+    ivars.push_back(ObjCAtDefsFieldDecl::Create(Ctx, Record,
+                                                ID->getLocation(),
                                                 ID->getIdentifier(),
                                                 ID->getType(),
                                                 ID->getBitWidth()));
@@ -2592,7 +2700,7 @@ static void CollectIvars(ObjCInterfaceDecl *Class, ASTContext& Ctx,
 
 /// Called whenever @defs(ClassName) is encountered in the source.  Inserts the
 /// instance variables of ClassName into Decls.
-void Sema::ActOnDefs(Scope *S, SourceLocation DeclStart, 
+void Sema::ActOnDefs(Scope *S, DeclTy *TagD, SourceLocation DeclStart, 
                      IdentifierInfo *ClassName,
                      llvm::SmallVectorImpl<DeclTy*> &Decls) {
   // Check that ClassName is a valid class
@@ -2602,7 +2710,17 @@ void Sema::ActOnDefs(Scope *S, SourceLocation DeclStart,
     return;
   }
   // Collect the instance variables
-  CollectIvars(Class, Context, Decls);
+  CollectIvars(Class, dyn_cast<RecordDecl>((Decl*)TagD), Context, Decls);
+
+  // Introduce all of these fields into the appropriate scope.
+  for (llvm::SmallVectorImpl<DeclTy*>::iterator D = Decls.begin();
+       D != Decls.end(); ++D) {
+    FieldDecl *FD = cast<FieldDecl>((Decl*)*D);
+    if (getLangOptions().CPlusPlus)
+      PushOnScopeChains(cast<FieldDecl>(FD), S);
+    else if (RecordDecl *Record = dyn_cast<RecordDecl>((Decl*)TagD))
+      Record->addDecl(Context, FD);
+  }
 }
 
 /// TryToFixInvalidVariablyModifiedType - Helper method to turn variable array
@@ -2657,12 +2775,13 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
 
 /// ActOnField - Each field of a struct/union/class is passed into this in order
 /// to create a FieldDecl object for it.
-Sema::DeclTy *Sema::ActOnField(Scope *S,
+Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
                                SourceLocation DeclStart, 
                                Declarator &D, ExprTy *BitfieldWidth) {
   IdentifierInfo *II = D.getIdentifier();
   Expr *BitWidth = (Expr*)BitfieldWidth;
   SourceLocation Loc = DeclStart;
+  RecordDecl *Record = (RecordDecl *)TagD;
   if (II) Loc = D.getIdentifierLoc();
   
   // FIXME: Unnamed fields can be handled in various different ways, for
@@ -2699,22 +2818,24 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
   // FIXME: Chain fielddecls together.
   FieldDecl *NewFD;
 
-  if (getLangOptions().CPlusPlus) {
-    // FIXME: Replace CXXFieldDecls with FieldDecls for simple structs.
-    NewFD = CXXFieldDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
-                                 Loc, II, T,
-                                 D.getDeclSpec().getStorageClassSpec() ==
-                                   DeclSpec::SCS_mutable, BitWidth);
-    if (II)
-      PushOnScopeChains(NewFD, S);
-  }
-  else
-    NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
-  
+  // FIXME: We don't want CurContext for C, do we? No, we'll need some
+  // other way to determine the current RecordDecl.
+  NewFD = FieldDecl::Create(Context, Record,
+                            Loc, II, T, BitWidth,
+                            D.getDeclSpec().getStorageClassSpec() ==
+                              DeclSpec::SCS_mutable,
+                            /*PrevDecl=*/0);
+
   ProcessDeclAttributes(NewFD, D);
 
   if (D.getInvalidType() || InvalidDecl)
     NewFD->setInvalidDecl();
+
+  if (II && getLangOptions().CPlusPlus)
+    PushOnScopeChains(NewFD, S);
+  else
+    Record->addDecl(Context, NewFD);
+
   return NewFD;
 }
 
@@ -2921,7 +3042,7 @@ void Sema::ActOnFields(Scope* S,
  
   // Okay, we successfully defined 'Record'.
   if (Record) {
-    Record->defineBody(Context, &RecFields[0], RecFields.size());
+    Record->completeDefinition(Context);
     // If this is a C++ record, HandleTagDeclDefinition will be invoked in
     // Sema::ActOnFinishCXXClassDef.
     if (!isa<CXXRecordDecl>(Record))
@@ -3189,7 +3310,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     ECD->setType(NewTy);
   }
   
-  Enum->defineElements(EltList, BestType);
+  Enum->completeDefinition(Context, BestType);
   Consumer.HandleTagDeclDefinition(Enum);
 }
 

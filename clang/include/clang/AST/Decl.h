@@ -115,12 +115,6 @@ class ScopedDecl : public NamedDecl {
   /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
   ScopedDecl *NextDeclarator;
   
-  /// When this decl is in scope while parsing, the Next field contains a
-  /// pointer to the shadowed decl of the same name.  When the scope is popped,
-  /// Decls are relinked onto a containing decl object.
-  ///
-  ScopedDecl *Next;
-
   /// DeclCtx - Holds either a DeclContext* or a MultipleDC*.
   /// For declarations that don't contain C++ scope specifiers, it contains
   /// the DeclContext where the ScopedDecl was declared.
@@ -150,7 +144,7 @@ class ScopedDecl : public NamedDecl {
 protected:
   ScopedDecl(Kind DK, DeclContext *DC, SourceLocation L,
              DeclarationName N, ScopedDecl *PrevDecl)
-    : NamedDecl(DK, L, N), NextDeclarator(PrevDecl), Next(0),
+    : NamedDecl(DK, L, N), NextDeclarator(PrevDecl),
       DeclCtx(reinterpret_cast<uintptr_t>(DC)) {}
 
   virtual ~ScopedDecl();
@@ -188,9 +182,6 @@ public:
 
   void setLexicalDeclContext(DeclContext *DC);
 
-  ScopedDecl *getNext() const { return Next; }
-  void setNext(ScopedDecl *N) { Next = N; }
-  
   /// getNextDeclarator - If this decl was part of a multi-declarator
   /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
   /// declarator.  Otherwise it returns null.
@@ -680,22 +671,31 @@ protected:
 
 /// FieldDecl - An instance of this class is created by Sema::ActOnField to 
 /// represent a member of a struct/union/class.
-class FieldDecl : public NamedDecl {
+class FieldDecl : public ScopedDecl {
+  bool Mutable : 1;
   QualType DeclType;  
   Expr *BitWidth;
 protected:
-  FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
-            Expr *BW = NULL)
-    : NamedDecl(DK, L, Id), DeclType(T), BitWidth(BW) {}
-  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *BW)
-    : NamedDecl(Field, L, Id), DeclType(T), BitWidth(BW) {}
+  FieldDecl(Kind DK, DeclContext *DC, SourceLocation L, 
+            IdentifierInfo *Id, QualType T, Expr *BW, bool Mutable, 
+            ScopedDecl *PrevDecl)
+    : ScopedDecl(DK, DC, L, Id, PrevDecl), Mutable(Mutable), DeclType(T), 
+      BitWidth(BW)
+      { }
+
 public:
-  static FieldDecl *Create(ASTContext &C, SourceLocation L, IdentifierInfo *Id,
-                           QualType T, Expr *BW = NULL);
+  static FieldDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L, 
+                           IdentifierInfo *Id, QualType T, Expr *BW, 
+                           bool Mutable, ScopedDecl *PrevDecl);
 
   QualType getType() const { return DeclType; }
-  
+
+  /// isMutable - Determines whether this field is mutable (C++ only).
+  bool isMutable() const { return Mutable; }
+
+  /// isBitfield - Determines whether this field is a bitfield.
   bool isBitField() const { return BitWidth != NULL; }
+
   Expr *getBitWidth() const { return BitWidth; }
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -888,9 +888,6 @@ protected:
 /// EnumDecl - Represents an enum.  As an extension, we allow forward-declared
 /// enums.
 class EnumDecl : public TagDecl, public DeclContext {
-  // EnumDecl's DeclChain points to a linked list of EnumConstantDecl's which
-  // are linked together through their getNextDeclarator pointers.
-
   /// IntegerType - This represent the integer type that the enum corresponds
   /// to for code generation purposes.  Note that the enumerator constants may
   /// have a different type than this does.
@@ -908,30 +905,46 @@ public:
   
   virtual void Destroy(ASTContext& C);
 
-  /// defineElements - When created, EnumDecl correspond to a forward declared
-  /// enum.  This method is used to mark the decl as being defined, with the
-  /// specified list of enums.
-  void defineElements(EnumConstantDecl *ListHead, QualType NewType) {
-    assert(!isDefinition() && "Cannot redefine enums!");
-    setDeclChain(ListHead);
-    setDefinition(true);
-    
-    IntegerType = NewType;
-  }
+  /// completeDefinition - When created, the EnumDecl corresponds to a
+  /// forward-declared enum. This method is used to mark the
+  /// declaration as being defined; it's enumerators have already been
+  /// added (via DeclContext::addDecl). NewType is the new underlying
+  /// type of the enumeration type.
+  void completeDefinition(ASTContext &C, QualType NewType);
   
+  // enumerator_iterator - Iterates through the enumerators of this
+  // enumeration.
+  struct enumerator_iterator : public DeclContext::decl_iterator {
+    typedef EnumConstantDecl* value_type;
+    typedef EnumConstantDecl* reference;
+    typedef EnumConstantDecl* pointer;
+
+    enumerator_iterator() : DeclContext::decl_iterator() { }
+
+    explicit enumerator_iterator(DeclContext::decl_iterator Pos)
+      : DeclContext::decl_iterator(Pos) { }
+
+    reference operator*() const { 
+      return cast<EnumConstantDecl>(DeclContext::decl_iterator::operator*());
+    }
+
+    pointer operator->() const {
+      return cast<EnumConstantDecl>(DeclContext::decl_iterator::operator*());
+    }
+  };
+
+  enumerator_iterator enumerator_begin() const { 
+    return enumerator_iterator(this->decls_begin());
+  }
+
+  enumerator_iterator enumerator_end() const { 
+    return enumerator_iterator(this->decls_end());
+  }
+
   /// getIntegerType - Return the integer type this enum decl corresponds to.
   /// This returns a null qualtype for an enum forward definition.
   QualType getIntegerType() const { return IntegerType; }
-  
-  /// getEnumConstantList - Return the first EnumConstantDecl in the enum.
-  ///
-  EnumConstantDecl *getEnumConstantList() {
-    return cast_or_null<EnumConstantDecl>(getDeclChain());
-  }
-  const EnumConstantDecl *getEnumConstantList() const {
-    return cast_or_null<const EnumConstantDecl>(getDeclChain());
-  }
-  
+    
   static bool classof(const Decl *D) { return D->getKind() == Enum; }
   static bool classof(const EnumDecl *D) { return true; }
   static DeclContext *castToDeclContext(const EnumDecl *D) {
@@ -957,16 +970,12 @@ protected:
 ///   union Y { int A, B; };     // Has body with members A and B (FieldDecls).
 /// This decl will be marked invalid if *any* members are invalid.
 ///
-class RecordDecl : public TagDecl {
+class RecordDecl : public TagDecl, public DeclContext {
   /// HasFlexibleArrayMember - This is true if this struct ends with a flexible
   /// array member (e.g. int X[]) or if this union contains a struct that does.
   /// If so, this cannot be contained in arrays or other structs as a member.
   bool HasFlexibleArrayMember : 1;
   
-  /// Members/NumMembers - This is a new[]'d array of pointers to Decls.
-  FieldDecl **Members;   // Null if not defined.
-  int NumMembers;   // -1 if not defined.
-
 protected:
   RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
              SourceLocation L, IdentifierInfo *Id);
@@ -993,42 +1002,74 @@ public:
     return cast_or_null<RecordDecl>(TagDecl::getDefinition(C));
   }
   
-  /// getNumMembers - Return the number of members, or -1 if this is a forward
-  /// definition.
-  int getNumMembers() const { return NumMembers; }
-  const FieldDecl *getMember(unsigned i) const { return Members[i]; }
-  FieldDecl *getMember(unsigned i) { return Members[i]; }
-
   // Iterator access to field members.
-  typedef FieldDecl **field_iterator;
-  typedef FieldDecl * const *field_const_iterator;
+  class field_iterator {
+    /// Current - Current position within the sequence of declarations
+    /// in this record. 
+    DeclContext::decl_iterator Current;
 
-  field_iterator field_begin() {
-    assert(isDefinition() && "Not a definition!");
-    return Members;
+    /// End - Last position in the sequence of declarations in this
+    /// record.
+    DeclContext::decl_iterator End;
+
+    /// SkipToNextField - Advances the current position up to the next
+    /// FieldDecl.
+    void SkipToNextField() {
+      while (Current != End && !isa<FieldDecl>(*Current))
+        ++Current;
+    }
+
+  public:
+    typedef FieldDecl*                value_type;
+    typedef FieldDecl*                reference;
+    typedef FieldDecl*                pointer;
+    typedef std::ptrdiff_t            difference_type;
+    typedef std::forward_iterator_tag iterator_category;
+
+    field_iterator() : Current(), End() { }
+
+    field_iterator(DeclContext::decl_iterator C, DeclContext::decl_iterator E)
+      : Current(C), End(E) {
+      SkipToNextField();
+    }
+
+    reference operator*() const { return cast<FieldDecl>(*Current); }
+
+    pointer operator->() const { return cast<FieldDecl>(*Current); }
+
+    field_iterator& operator++() {
+      ++Current;
+      SkipToNextField();
+      return *this;
+    }
+
+    field_iterator operator++(int) {
+      field_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+
+    friend bool operator==(const field_iterator& x, const field_iterator& y) {
+      return x.Current == y.Current;
+    }
+
+    friend bool operator!=(const field_iterator& x, const field_iterator& y) {
+      return x.Current != y.Current;
+    }
+  };
+
+  typedef field_iterator field_const_iterator;
+
+  field_iterator field_begin() const {
+    return field_iterator(decls_begin(), decls_end());
   }
-  field_iterator field_end() {
-    assert(isDefinition() && "Not a definition!");
-    return Members + getNumMembers();
+  field_iterator field_end() const {
+    return field_iterator(decls_end(), decls_end());
   }
 
-  field_const_iterator field_begin() const {
-    assert(isDefinition() && "Not a definition!");
-    return Members;
-  }
-  field_const_iterator field_end() const {
-    assert(isDefinition() && "Not a definition!");
-    return Members + getNumMembers();
-  }
-
-  /// defineBody - When created, RecordDecl's correspond to a forward declared
-  /// record.  This method is used to mark the decl as being defined, with the
-  /// specified contents.
-  void defineBody(ASTContext& C, FieldDecl **Members, unsigned numMembers);
-
-  /// getMember - If the member doesn't exist, or there are no members, this 
-  /// function will return 0;
-  FieldDecl *getMember(IdentifierInfo *name);
+  /// completeDefinition - Notes that the definition of this type is
+  /// now complete.
+  void completeDefinition(ASTContext& C);
 
   static bool classof(const Decl *D) {
     return D->getKind() >= RecordFirst && D->getKind() <= RecordLast;

@@ -68,7 +68,7 @@ static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name) {
 
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
-  PushDeclContext(Context.getTranslationUnitDecl());
+  PushDeclContext(S, Context.getTranslationUnitDecl());
   if (!PP.getLangOptions().ObjC1) return;
   
   // Synthesize "typedef struct objc_selector *SEL;"

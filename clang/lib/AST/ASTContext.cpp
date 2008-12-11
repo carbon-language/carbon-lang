@@ -539,7 +539,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   ASTRecordLayout *NewEntry = new ASTRecordLayout();
   Entry = NewEntry;
 
-  NewEntry->InitializeLayout(D->getNumMembers());
+  NewEntry->InitializeLayout(std::distance(D->field_begin(), D->field_end()));
   bool IsUnion = D->isUnion();
 
   unsigned StructPacking = 0;
@@ -552,10 +552,11 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
 
   // Layout each field, for now, just sequentially, respecting alignment.  In
   // the future, this will need to be tweakable by targets.
-  for (unsigned i = 0, e = D->getNumMembers(); i != e; ++i) {
-    const FieldDecl *FD = D->getMember(i);
-    NewEntry->LayoutField(FD, i, IsUnion, StructPacking, *this);
-  }
+  unsigned FieldIdx = 0;
+  for (RecordDecl::field_iterator Field = D->field_begin(),
+                               FieldEnd = D->field_end();
+       Field != FieldEnd; (void)++Field, ++FieldIdx)
+    NewEntry->LayoutField(*Field, FieldIdx, IsUnion, StructPacking, *this);
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
@@ -996,12 +997,16 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
-/// setTagDefinition - Used by RecordDecl::defineBody to inform ASTContext
-///  about which RecordDecl serves as the definition of a particular
-///  struct/union/class.  This will eventually be used by enums as well.
+/// setTagDefinition - Used by RecordDecl::completeDefinition and
+/// EnumDecl::completeDefinition to inform about which
+/// RecordDecl/EnumDecl serves as the definition of a particular
+/// struct/union/class/enum.
 void ASTContext::setTagDefinition(TagDecl* D) {
   assert (D->isDefinition());
-  cast<TagType>(D->TypeForDecl)->decl = D;  
+  if (!D->TypeForDecl)
+    getTypeDeclType(D);
+  else
+    cast<TagType>(D->TypeForDecl)->decl = D;  
 }
 
 /// getTypedefType - Return the unique reference to the type for the
@@ -1460,14 +1465,17 @@ QualType ASTContext::getCFConstantStringType() {
     FieldTypes[2] = getPointerType(CharTy.getQualifiedType(QualType::Const));  
     // long length;
     FieldTypes[3] = LongTy;  
+  
     // Create fields
-    FieldDecl *FieldDecls[4];
-  
-    for (unsigned i = 0; i < 4; ++i)
-      FieldDecls[i] = FieldDecl::Create(*this, SourceLocation(), 0,
-                                        FieldTypes[i]);
-  
-    CFConstantStringTypeDecl->defineBody(*this, FieldDecls, 4);
+    for (unsigned i = 0; i < 4; ++i) {
+      FieldDecl *Field = FieldDecl::Create(*this, CFConstantStringTypeDecl, 
+                                           SourceLocation(), 0,
+                                           FieldTypes[i], /*BitWidth=*/0, 
+                                           /*Mutable=*/false, /*PrevDecl=*/0);
+      CFConstantStringTypeDecl->addDecl(*this, Field, true);
+    }
+
+    CFConstantStringTypeDecl->completeDefinition(*this);
   }
   
   return getTagDeclType(CFConstantStringTypeDecl);
@@ -1476,6 +1484,10 @@ QualType ASTContext::getCFConstantStringType() {
 QualType ASTContext::getObjCFastEnumerationStateType()
 {
   if (!ObjCFastEnumerationStateTypeDecl) {
+    ObjCFastEnumerationStateTypeDecl =
+      RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+                         &Idents.get("__objcFastEnumerationState"));
+    
     QualType FieldTypes[] = {
       UnsignedLongTy,
       getPointerType(ObjCIdType),
@@ -1484,16 +1496,16 @@ QualType ASTContext::getObjCFastEnumerationStateType()
                            llvm::APInt(32, 5), ArrayType::Normal, 0)
     };
     
-    FieldDecl *FieldDecls[4];
-    for (size_t i = 0; i < 4; ++i)
-      FieldDecls[i] = FieldDecl::Create(*this, SourceLocation(), 0, 
-                                        FieldTypes[i]);
+    for (size_t i = 0; i < 4; ++i) {
+      FieldDecl *Field = FieldDecl::Create(*this, 
+                                           ObjCFastEnumerationStateTypeDecl, 
+                                           SourceLocation(), 0, 
+                                           FieldTypes[i], /*BitWidth=*/0, 
+                                           /*Mutable=*/false, /*PrevDecl=*/0);
+      ObjCFastEnumerationStateTypeDecl->addDecl(*this, Field, true);
+    }
     
-    ObjCFastEnumerationStateTypeDecl =
-      RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
-                         &Idents.get("__objcFastEnumerationState"));
-    
-    ObjCFastEnumerationStateTypeDecl->defineBody(*this, FieldDecls, 4);
+    ObjCFastEnumerationStateTypeDecl->completeDefinition(*this);
   }
   
   return getTagDeclType(ObjCFastEnumerationStateTypeDecl);
@@ -1745,16 +1757,17 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
     if (ExpandStructures) {
       S += '=';
-      for (int i = 0; i < RDecl->getNumMembers(); i++) {
-        FieldDecl *FD = RDecl->getMember(i);
+      for (RecordDecl::field_iterator Field = RDecl->field_begin(),
+                                   FieldEnd = RDecl->field_end();
+           Field != FieldEnd; ++Field) {
         if (NameFields) {
           S += '"';
-          S += FD->getNameAsString();
+          S += Field->getNameAsString();
           S += '"';
         }
         
         // Special case bit-fields.
-        if (const Expr *E = FD->getBitWidth()) {
+        if (const Expr *E = Field->getBitWidth()) {
           // FIXME: Fix constness.
           ASTContext *Ctx = const_cast<ASTContext*>(this);
           unsigned N = E->getIntegerConstantExprValue(*Ctx).getZExtValue();
@@ -1763,7 +1776,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
           S += 'b';
           S += llvm::utostr(N);
         } else {
-          getObjCEncodingForTypeImpl(FD->getType(), S, false, true, NameFields);
+          getObjCEncodingForTypeImpl(Field->getType(), S, false, true, 
+                                     NameFields);
         }
       }
     }

@@ -15,6 +15,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/Diagnostic.h"
+#include <algorithm> // for std::count_if
+#include <functional> // for std::mem_fun
 
 namespace clang {
 
@@ -39,10 +41,9 @@ int InitListChecker::numArrayElements(QualType DeclType) {
 
 int InitListChecker::numStructUnionElements(QualType DeclType) {
   RecordDecl *structDecl = DeclType->getAsRecordType()->getDecl();
-  int InitializableMembers = 0;
-  for (int i = 0; i < structDecl->getNumMembers(); i++)
-    if (structDecl->getMember(i)->getIdentifier())
-      ++InitializableMembers;
+  int InitializableMembers 
+    = std::count_if(structDecl->field_begin(), structDecl->field_end(),
+                    std::mem_fun(&FieldDecl::getDeclName));
   if (structDecl->isUnion())
     return std::min(InitializableMembers, 1);
   return InitializableMembers - structDecl->hasFlexibleArrayMember();
@@ -286,21 +287,28 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
   // If structDecl is a forward declaration, this loop won't do anything;
   // That's okay, because an error should get printed out elsewhere. It
   // might be worthwhile to skip over the rest of the initializer, though.
-  int numMembers = DeclType->getAsRecordType()->getDecl()->getNumMembers() -
-                   structDecl->hasFlexibleArrayMember();
-  for (int i = 0; i < numMembers; i++) {
+  RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
+  for (RecordDecl::field_iterator Field = RD->field_begin(),
+                               FieldEnd = RD->field_end();
+       Field != FieldEnd; ++Field) {
+    // If we've hit the flexible array member at the end, we're done.
+    if (Field->getType()->isIncompleteArrayType())
+      break;
+
     // Don't attempt to go past the end of the init list
     if (Index >= IList->getNumInits())
       break;
-    FieldDecl * curField = structDecl->getMember(i);
-    if (!curField->getIdentifier()) {
+
+    if (!Field->getIdentifier()) {
       // Don't initialize unnamed fields, e.g. "int : 20;"
       continue;
     }
-    CheckSubElementType(IList, curField->getType(), Index);
+
+    CheckSubElementType(IList, Field->getType(), Index);
     if (DeclType->isUnionType())
       break;
   }
+
   // FIXME: Implement flexible array initialization GCC extension (it's a 
   // really messy extension to implement, unfortunately...the necessary
   // information isn't actually even here!)

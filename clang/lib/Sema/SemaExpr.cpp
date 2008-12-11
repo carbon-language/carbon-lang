@@ -453,13 +453,13 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     }
   }
   
-  if (CXXFieldDecl *FD = dyn_cast<CXXFieldDecl>(D)) {
+  if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
       if (MD->isStatic())
         // "invalid use of member 'x' in static member function"
         return Diag(Loc, diag::err_invalid_member_use_in_static_method)
            << FD->getDeclName();
-      if (cast<CXXRecordDecl>(MD->getParent()) != FD->getParent())
+      if (MD->getParent() != FD->getDeclContext())
         // "invalid use of nonstatic data member 'x'"
         return Diag(Loc, diag::err_invalid_non_static_member_use)
           << FD->getDeclName();
@@ -1231,20 +1231,28 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       return Diag(OpLoc, diag::err_typecheck_incomplete_tag)
                << RDecl->getDeclName() << BaseExpr->getSourceRange();
     // The record definition is complete, now make sure the member is valid.
-    FieldDecl *MemberDecl = RDecl->getMember(&Member);
-    if (!MemberDecl)
+    // FIXME: Qualified name lookup for C++ is a bit more complicated
+    // than this.
+    DeclContext::lookup_result Lookup = RDecl->lookup(Context, &Member);
+    if (Lookup.first == Lookup.second) {
       return Diag(MemberLoc, diag::err_typecheck_no_member)
                << &Member << BaseExpr->getSourceRange();
+    } 
+
+    FieldDecl *MemberDecl = dyn_cast<FieldDecl>(*Lookup.first);
+    if (!MemberDecl) {
+      unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
+                          "Clang only supports references to members");
+      return Diag(MemberLoc, DiagID);
+    }
 
     // Figure out the type of the member; see C99 6.5.2.3p3
     // FIXME: Handle address space modifiers
     QualType MemberType = MemberDecl->getType();
     unsigned combinedQualifiers =
         MemberType.getCVRQualifiers() | BaseType.getCVRQualifiers();
-    if (CXXFieldDecl *CXXMember = dyn_cast<CXXFieldDecl>(MemberDecl)) {
-      if (CXXMember->isMutable())
-        combinedQualifiers &= ~QualType::Const;
-    }
+    if (MemberDecl->isMutable())
+      combinedQualifiers &= ~QualType::Const;
     MemberType = MemberType.getQualifiedType(combinedQualifiers);
 
     return new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberDecl,
@@ -3484,7 +3492,11 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
       
     // Get the decl corresponding to this.
     RecordDecl *RD = RC->getDecl();
-    FieldDecl *MemberDecl = RD->getMember(OC.U.IdentInfo);
+    FieldDecl *MemberDecl = 0;
+    DeclContext::lookup_result Lookup = RD->lookup(Context, OC.U.IdentInfo);
+    if (Lookup.first != Lookup.second)
+      MemberDecl = dyn_cast<FieldDecl>(*Lookup.first);
+
     if (!MemberDecl)
       return Diag(BuiltinLoc, diag::err_typecheck_no_member)
        << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd);
@@ -3552,7 +3564,7 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
   BSI->TheScope = BlockScope;
   
   BSI->TheDecl = BlockDecl::Create(Context, CurContext, CaretLoc);
-  PushDeclContext(BSI->TheDecl);
+  PushDeclContext(BlockScope, BSI->TheDecl);
 }
 
 void Sema::ActOnBlockArguments(Declarator &ParamInfo) {

@@ -18,15 +18,15 @@
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
-  class CXXFieldDecl;
+  class FieldDecl;
 
 /// CXXFieldCollector - Used to keep track of CXXFieldDecls during parsing of
 /// C++ classes.
 class CXXFieldCollector {
-  /// Fields - Contains all CXXFieldDecls collected during parsing of a C++
+  /// Fields - Contains all FieldDecls collected during parsing of a C++
   /// class. When a nested class is entered, its fields are appended to the
   /// fields of its parent class, when it is exited its fields are removed.
-  llvm::SmallVector<CXXFieldDecl*, 32> Fields;
+  llvm::SmallVector<FieldDecl*, 32> Fields;
 
   /// FieldCount - Each entry represents the number of fields collected during
   /// the parsing of a C++ class. When a nested class is entered, a new field
@@ -52,7 +52,7 @@ public:
   void StartClass() { FieldCount.push_back(0); }
 
   /// Add - Called by Sema::ActOnCXXMemberDeclarator.
-  void Add(CXXFieldDecl *D) {
+  void Add(FieldDecl *D) {
     Fields.push_back(D);
     ++FieldCount.back();
   }
@@ -62,7 +62,7 @@ public:
 
   /// getCurFields - Pointer to array of fields added to the currently parsed
   /// class.
-  CXXFieldDecl **getCurFields() { return &*(Fields.end() - getCurNumFields()); }
+  FieldDecl **getCurFields() { return &*(Fields.end() - getCurNumFields()); }
 
   /// FinishClass - Called by Sema::ActOnFinishCXXClassDef.
   void FinishClass() {

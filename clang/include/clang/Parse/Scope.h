@@ -112,6 +112,12 @@ private:
   typedef llvm::SmallPtrSet<Action::DeclTy*, 32> DeclSetTy;
   DeclSetTy DeclsInScope;
   
+  /// Entity - The entity with which this scope is associated. For
+  /// example, the entity of a class scope is the class itself, the
+  /// entity of a function scope is a function, etc. This field is
+  /// maintained by the Action implementation.
+  void *Entity;
+
 public:
   Scope(Scope *Parent, unsigned ScopeFlags) {
     Init(Parent, ScopeFlags);
@@ -178,11 +184,18 @@ public:
     DeclsInScope.insert(D);
   }
 
+  void RemoveDecl(Action::DeclTy *D) {
+    DeclsInScope.erase(D);
+  }
+
   /// isDeclScope - Return true if this is the scope that the specified decl is
   /// declared in.
   bool isDeclScope(Action::DeclTy *D) {
     return DeclsInScope.count(D) != 0;
   }
+
+  void* getEntity() const { return Entity; }
+  void setEntity(void *E) { Entity = E; }
 
   /// isCXXClassScope - Return true if this scope is a C++ class scope.
   bool isCXXClassScope() const {
@@ -242,6 +255,7 @@ public:
     if (Flags & BlockScope)    	    BlockParent = this;
     if (Flags & TemplateParamScope) TemplateParamParent = this;
     DeclsInScope.clear();
+    Entity = 0;
   }
 };
     

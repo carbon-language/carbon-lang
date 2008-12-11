@@ -914,7 +914,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
         FieldDeclarator &FD = FieldDeclarators[i];
         // Install the declarator into the current TagDecl.
-        DeclTy *Field = Actions.ActOnField(CurScope,
+        DeclTy *Field = Actions.ActOnField(CurScope, TagDecl,
                                            DS.getSourceRange().getBegin(),
                                            FD.D, FD.BitfieldSize);
         FieldDecls.push_back(Field);
@@ -934,8 +934,8 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
         continue;
       }
       llvm::SmallVector<DeclTy*, 16> Fields;
-      Actions.ActOnDefs(CurScope, Tok.getLocation(), Tok.getIdentifierInfo(),
-          Fields);
+      Actions.ActOnDefs(CurScope, TagDecl, Tok.getLocation(), 
+                        Tok.getIdentifierInfo(), Fields);
       FieldDecls.insert(FieldDecls.end(), Fields.begin(), Fields.end());
       ConsumeToken();
       ExpectAndConsume(tok::r_paren, diag::err_expected_rparen);

@@ -51,9 +51,6 @@ public:
 DeclContext *IdentifierResolver::LookupContext::getContext(Decl *D) {
   DeclContext *Ctx;
 
-  if (CXXFieldDecl *FD = dyn_cast<CXXFieldDecl>(D))
-    return FD->getParent();
-
   if (EnumConstantDecl *EnumD = dyn_cast<EnumConstantDecl>(D)) {
     Ctx = EnumD->getDeclContext()->getParent();
   } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
@@ -149,7 +146,7 @@ IdentifierResolver::~IdentifierResolver() {
 /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
 /// true if 'D' belongs to the given declaration context.
 bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
-                                       Scope *S) const {
+                                       ASTContext &Context, Scope *S) const {
   if (Ctx->isFunctionOrMethod()) {
     if (S->isDeclScope(D))
       return true;
@@ -169,7 +166,7 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
     return false;
   }
 
-  return LookupContext(D) == LookupContext(Ctx);
+  return LookupContext(D) == LookupContext(Ctx->getPrimaryContext(Context));
 }
 
 /// AddDecl - Link the decl to its shadowed decl chain.

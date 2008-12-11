@@ -95,10 +95,10 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
 
 
 ObjCAtDefsFieldDecl
-*ObjCAtDefsFieldDecl::Create(ASTContext &C, SourceLocation L,
+*ObjCAtDefsFieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                              IdentifierInfo *Id, QualType T, Expr *BW) {
   void *Mem = C.getAllocator().Allocate<ObjCAtDefsFieldDecl>();
-  return new (Mem) ObjCAtDefsFieldDecl(L, Id, T, BW);
+  return new (Mem) ObjCAtDefsFieldDecl(DC, L, Id, T, BW);
 }
 
 void ObjCAtDefsFieldDecl::Destroy(ASTContext& C) {

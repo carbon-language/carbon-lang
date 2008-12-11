@@ -513,10 +513,12 @@ private:
   void InitBuiltinTypes();
   void InitBuiltinType(QualType &R, BuiltinType::Kind K);
   
-  /// setRecordDefinition - Used by RecordDecl::defineBody to inform ASTContext
-  ///  about which RecordDecl serves as the definition of a particular
-  ///  struct/union/class.  This will eventually be used by enums as well.
+  /// setTagDefinition - Used by RecordDecl::completeDefinition and
+  /// EnumDecl::completeDefinition to inform 
+  /// about which RecordDecl/EnumDecl serves as the definition of a particular
+  /// struct/union/class/enum.
   void setTagDefinition(TagDecl* R);
+  friend class EnumDecl;
   friend class RecordDecl;
 
   // Return the ObjC type encoding for a given type.

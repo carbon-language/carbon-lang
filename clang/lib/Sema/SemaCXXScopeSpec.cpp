@@ -20,7 +20,25 @@ using namespace clang;
 
 namespace {
   Decl *LookupNestedName(DeclContext *LookupCtx, bool LookInParentCtx,
-                         DeclarationName Name, bool &IdIsUndeclared) {
+                         DeclarationName Name, bool &IdIsUndeclared,
+                        ASTContext &Context) {
+    if (LookupCtx && !LookInParentCtx) {
+      IdIsUndeclared = true;
+      for (DeclContext::lookup_const_result I = LookupCtx->lookup(Context, Name);
+          I.first != I.second; ++I.first) {
+       IdIsUndeclared = false;
+       if (((*I.first)->getIdentifierNamespace() & Decl::IDNS_Tag) &&
+           !isa<EnumDecl>(*I.first))
+         return *I.first;
+      }
+
+      return 0;
+    }
+
+    // FIXME: Decouple this from the IdentifierResolver so that we can
+    // deal with lookups into the semantic parent contexts that aren't
+    // lexical parent contexts.
+
     IdentifierResolver::iterator
       I = IdentifierResolver::begin(Name, LookupCtx, LookInParentCtx),
       E = IdentifierResolver::end();
@@ -73,10 +91,11 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   bool IdIsUndeclared;
 
   if (DC)
-    SD = LookupNestedName(DC, false/*LookInParentCtx*/, &II, IdIsUndeclared);
+    SD = LookupNestedName(DC, false/*LookInParentCtx*/, &II, IdIsUndeclared,
+                         Context);
   else
     SD = LookupNestedName(CurContext, true/*LookInParent*/, &II, 
-                          IdIsUndeclared);
+                          IdIsUndeclared, Context);
 
   if (SD) {
     if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {

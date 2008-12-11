@@ -412,9 +412,8 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, DeclarationName Name,
                                   DeclContext *Ctx, bool AllowMissing,
                                   FunctionDecl *&Operator)
 {
-  IdentifierResolver::iterator I =
-    IdResolver.begin(Name, Ctx, /*LookInParentCtx=*/false);
-  if (I == IdResolver.end()) {
+  DeclContext::lookup_result Lookup = Ctx->lookup(Context, Name);
+  if (Lookup.first == Lookup.second) {
     if (AllowMissing)
       return false;
     // FIXME: Bad location information.
@@ -423,7 +422,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, DeclarationName Name,
   }
 
   OverloadCandidateSet Candidates;
-  NamedDecl *Decl = *I;
+  NamedDecl *Decl = *Lookup.first;
   // Even member operator new/delete are implicitly treated as static, so don't
   // use AddMemberCandidate.
   if (FunctionDecl *Fn = dyn_cast_or_null<FunctionDecl>(Decl))

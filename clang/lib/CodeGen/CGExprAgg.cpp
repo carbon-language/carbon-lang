@@ -434,20 +434,24 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // the optimizer, especially with bitfields.
   unsigned NumInitElements = E->getNumInits();
   RecordDecl *SD = E->getType()->getAsRecordType()->getDecl();
-  unsigned NumMembers = SD->getNumMembers() - SD->hasFlexibleArrayMember();
   unsigned CurInitVal = 0;
   bool isUnion = E->getType()->isUnionType();
   
   // Here we iterate over the fields; this makes it simpler to both
   // default-initialize fields and skip over unnamed fields.
-  for (unsigned CurFieldNo = 0; CurFieldNo != NumMembers; ++CurFieldNo) {
-    FieldDecl *CurField = SD->getMember(CurFieldNo);
-    if (CurField->getIdentifier() == 0) {
+  for (RecordDecl::field_iterator Field = SD->field_begin(),
+                               FieldEnd = SD->field_end();
+       Field != FieldEnd; ++Field) {
+    // We're done once we hit the flexible array member
+    if (Field->getType()->isIncompleteArrayType())
+      break;
+
+    if (Field->getIdentifier() == 0) {
       // Initializers can't initialize unnamed fields, e.g. "int : 20;"
       continue;
     }
     // FIXME: volatility
-    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, CurField, isUnion,0);
+    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, *Field, isUnion,0);
     if (CurInitVal < NumInitElements) {
       // Store the initializer into the field
       // This will probably have to get a bit smarter when we support
@@ -455,7 +459,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       EmitInitializationToLValue(E->getInit(CurInitVal++), FieldLoc);
     } else {
       // We're out of initalizers; default-initialize to null
-      EmitNullInitializationToLValue(FieldLoc, CurField->getType());
+      EmitNullInitializationToLValue(FieldLoc, Field->getType());
     }
 
     // Unions only initialize one field.

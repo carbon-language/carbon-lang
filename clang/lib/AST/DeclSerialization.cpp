@@ -120,11 +120,29 @@ void Decl::ReadInRec(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 void DeclContext::EmitOutRec(Serializer& S) const {
-  S.EmitPtr(DeclChain);
+  S.EmitInt(Decls.size());
+  for (decl_iterator D = decls_begin(); D != decls_end(); ++D) {
+    bool Owned = ((*D)->getLexicalDeclContext() == this &&
+                  DeclKind != Decl::TranslationUnit &&
+                  !isFunctionOrMethod());
+    S.EmitBool(Owned);
+    if (Owned)
+      S.EmitOwnedPtr(*D);
+    else
+      S.EmitPtr(*D);
+  }
 }
 
 void DeclContext::ReadOutRec(Deserializer& D, ASTContext& C) {
-  D.ReadPtr(DeclChain);
+  unsigned NumDecls = D.ReadInt();
+  Decls.resize(NumDecls);
+  for (unsigned Idx = 0; Idx < NumDecls; ++Idx) {
+    bool Owned = D.ReadBool();
+    if (Owned)
+      Decls[Idx] = cast_or_null<ScopedDecl>(D.ReadOwnedPtr<Decl>(C));
+    else
+      D.ReadPtr<ScopedDecl>(Decls[Idx]);
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -205,14 +223,12 @@ void NamedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
 
 void ScopedDecl::EmitInRec(Serializer& S) const {
   NamedDecl::EmitInRec(S);
-  S.EmitPtr(getNext());                     // From ScopedDecl.  
   S.EmitPtr(cast_or_null<Decl>(getDeclContext()));  // From ScopedDecl.
   S.EmitPtr(cast_or_null<Decl>(getLexicalDeclContext()));  // From ScopedDecl.
 }
 
 void ScopedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
   NamedDecl::ReadInRec(D, C);
-  D.ReadPtr(Next);                                  // From ScopedDecl.
 
   assert(DeclCtx == 0);
 
@@ -394,8 +410,8 @@ ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 void EnumDecl::EmitImpl(Serializer& S) const {
   ScopedDecl::EmitInRec(S);
   S.EmitBool(isDefinition());
-  S.Emit(IntegerType);  
-  S.BatchEmitOwnedPtrs(getEnumConstantList(),getNextDeclarator());
+  S.Emit(IntegerType);
+  S.EmitOwnedPtr(getNextDeclarator());
 }
 
 EnumDecl* EnumDecl::CreateImpl(Deserializer& D, ASTContext& C) {
@@ -406,12 +422,7 @@ EnumDecl* EnumDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   decl->setDefinition(D.ReadBool());
   decl->IntegerType = QualType::ReadVal(D);
   
-  Decl* next_declarator;
-  Decl* Elist;
-  
-  D.BatchReadOwnedPtrs(Elist, next_declarator, C);
-  
-  decl->setDeclChain(cast_or_null<EnumConstantDecl>(Elist));
+  Decl* next_declarator = D.ReadOwnedPtr<Decl>(C);
   decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
   
   return decl;
@@ -451,14 +462,17 @@ EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 void FieldDecl::EmitImpl(Serializer& S) const {
+  S.EmitBool(Mutable);
   S.Emit(getType());
-  NamedDecl::EmitInRec(S);
+  ScopedDecl::EmitInRec(S);
   S.EmitOwnedPtr(BitWidth);  
 }
 
 FieldDecl* FieldDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   void *Mem = C.getAllocator().Allocate<FieldDecl>();
-  FieldDecl* decl = new (Mem) FieldDecl(SourceLocation(), NULL, QualType(), 0);
+  FieldDecl* decl = new (Mem) FieldDecl(Field, 0, SourceLocation(), NULL, 
+                                        QualType(), 0, false, 0);
+  decl->Mutable = D.ReadBool();
   decl->DeclType.ReadBackpatch(D);  
   decl->ReadInRec(D, C);
   decl->BitWidth = D.ReadOwnedPtr<Expr>(C);
@@ -579,13 +593,7 @@ void RecordDecl::EmitImpl(Serializer& S) const {
   ScopedDecl::EmitInRec(S);
   S.EmitBool(isDefinition());
   S.EmitBool(hasFlexibleArrayMember());
-  S.EmitSInt(getNumMembers());
-  if (getNumMembers() > 0) {
-    assert (Members);
-    S.BatchEmitOwnedPtrs((unsigned) getNumMembers(), (Decl**) &Members[0]);
-  }
-  else
-    ScopedDecl::EmitOutRec(S);
+  ScopedDecl::EmitOutRec(S);
 }
 
 RecordDecl* RecordDecl::CreateImpl(Deserializer& D, ASTContext& C) {
@@ -597,17 +605,8 @@ RecordDecl* RecordDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   decl->ScopedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());
   decl->setHasFlexibleArrayMember(D.ReadBool());
-  decl->NumMembers = D.ReadSInt();
-  
-  if (decl->getNumMembers() > 0) {
-    decl->Members = new FieldDecl*[(unsigned) decl->getNumMembers()];
-                              
-    D.BatchReadOwnedPtrs((unsigned) decl->getNumMembers(),
-                         (Decl**) &decl->Members[0], C);
-  }
-  else
-    decl->ScopedDecl::ReadOutRec(D, C);
-  
+  decl->ScopedDecl::ReadOutRec(D, C);
+    
   return decl;
 }
 
