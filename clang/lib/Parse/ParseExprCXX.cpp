@@ -221,7 +221,7 @@ Parser::ExprResult Parser::ParseCXXCasts() {
   if (Tok.isNot(tok::l_paren))
     return Diag(Tok, diag::err_expected_lparen_after) << CastName;
 
-  OwningExprResult Result(Actions, ParseSimpleParenExpression(RParenLoc));
+  OwningExprResult Result(ParseSimpleParenExpression(RParenLoc));
 
   if (!Result.isInvalid())
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,

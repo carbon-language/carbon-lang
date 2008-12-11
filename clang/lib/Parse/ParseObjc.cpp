@@ -1380,7 +1380,7 @@ Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
     return ParseObjCThrowStmt(AtLoc);
   else if (Tok.isObjCAtKeyword(tok::objc_synchronized))
     return ParseObjCSynchronizedStmt(AtLoc);
-  OwningExprResult Res(Actions, ParseExpressionWithLeadingAt(AtLoc));
+  OwningExprResult Res(ParseExpressionWithLeadingAt(AtLoc));
   if (Res.isInvalid()) {
     // If the expression is invalid, skip ahead to the next semicolon. Not
     // doing this opens us up to the possibility of infinite loops if

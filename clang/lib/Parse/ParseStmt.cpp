@@ -749,7 +749,7 @@ Parser::OwningStmtResult Parser::ParseDoStatement() {
   }
 
   // Parse the condition.
-  OwningExprResult Cond(Actions, ParseSimpleParenExpression());
+  OwningExprResult Cond(ParseSimpleParenExpression());
   DoScope.Exit();
 
   if (Cond.isInvalid() || Body.isInvalid())
@@ -1192,7 +1192,7 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
     }
 
     // Read the parenthesized expression.
-    OwningExprResult Res(Actions, ParseSimpleParenExpression());
+    OwningExprResult Res(ParseSimpleParenExpression());
     if (Res.isInvalid()) {
       SkipUntil(tok::r_paren);
       return true;

@@ -486,13 +486,14 @@ private:
   // Expr that doesn't include commas.
   OwningExprResult ParseAssignmentExpression();
 
-  ExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
+  OwningExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
 
-  ExprResult ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec);
+  OwningExprResult ParseRHSOfBinaryExpression(OwningExprResult LHS,
+                                              unsigned MinPrec);
   OwningExprResult ParseCastExpression(bool isUnaryExpression);
   OwningExprResult ParsePostfixExpressionSuffix(OwningExprResult LHS);
-  ExprResult ParseSizeofAlignofExpression();
-  ExprResult ParseBuiltinPrimaryExpression();
+  OwningExprResult ParseSizeofAlignofExpression();
+  OwningExprResult ParseBuiltinPrimaryExpression();
 
   static const unsigned ExprListSize = 12;
   typedef llvm::SmallVector<ExprTy*, ExprListSize> ExprListTy;
@@ -500,7 +501,7 @@ private:
 
   /// ParseExpressionList - Used for C/C++ (argument-)expression-list.
   bool ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs);
-  
+
   /// ParenParseOption - Control what ParseParenExpression will parse.
   enum ParenParseOption {
     SimpleExpr,      // Only parse '(' expression ')'
@@ -508,14 +509,15 @@ private:
     CompoundLiteral, // Also allow '(' type-name ')' '{' ... '}'
     CastExpr         // Also allow '(' type-name ')' <anything>
   };
-  ExprResult ParseParenExpression(ParenParseOption &ExprType, TypeTy *&CastTy,
-                                  SourceLocation &RParenLoc);
-  
-  ExprResult ParseSimpleParenExpression() {  // Parse SimpleExpr only.
+  OwningExprResult ParseParenExpression(ParenParseOption &ExprType,
+                                        TypeTy *&CastTy,
+                                        SourceLocation &RParenLoc);
+
+  OwningExprResult ParseSimpleParenExpression() {  // Parse SimpleExpr only.
     SourceLocation RParenLoc;
     return ParseSimpleParenExpression(RParenLoc);
   }
-  ExprResult ParseSimpleParenExpression(SourceLocation &RParenLoc) {
+  OwningExprResult ParseSimpleParenExpression(SourceLocation &RParenLoc) {
     ParenParseOption Op = SimpleExpr;
     TypeTy *CastTy;
     return ParseParenExpression(Op, CastTy, RParenLoc);
