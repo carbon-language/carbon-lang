@@ -43,7 +43,9 @@ def OptList : OptionList<[
  (prefix_list_option "l",
     (help "Search a library when linking")),
  (prefix_list_option "Wl,",
-    (help "Pass options to linker"))
+    (help "Pass options to linker")),
+ (prefix_list_option "Wo,",
+    (help "Pass options to opt"))
 ]>;
 
 // Tools
@@ -86,6 +88,7 @@ def opt : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
+ (actions (case (not_empty "Wo,"), (unpack_values "Wo,"))),
  (cmd_line "opt -f $INFILE -o $OUTFILE")
 ]>;
 
