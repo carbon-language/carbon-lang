@@ -135,7 +135,7 @@ bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS) {
 /// That way Sema can handle and report similar errors for namespaces and the
 /// global scope.
 ///
-Parser::ExprResult Parser::ParseCXXIdExpression() {
+Parser::OwningExprResult Parser::ParseCXXIdExpression() {
   // qualified-id:
   //   '::'[opt] nested-name-specifier 'template'[opt] unqualified-id
   //   '::' unqualified-id
@@ -152,30 +152,29 @@ Parser::ExprResult Parser::ParseCXXIdExpression() {
   //
   switch (Tok.getKind()) {
   default:
-    return Diag(Tok, diag::err_expected_unqualified_id);
+    return ExprError(Diag(Tok, diag::err_expected_unqualified_id));
 
   case tok::identifier: {
     // Consume the identifier so that we can see if it is followed by a '('.
     IdentifierInfo &II = *Tok.getIdentifierInfo();
     SourceLocation L = ConsumeToken();
-    return Actions.ActOnIdentifierExpr(CurScope, L, II,
-                                       Tok.is(tok::l_paren), &SS);
+    return Owned(Actions.ActOnIdentifierExpr(CurScope, L, II,
+                                             Tok.is(tok::l_paren), &SS));
   }
 
   case tok::kw_operator: {
     SourceLocation OperatorLoc = Tok.getLocation();
     if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
-      return Actions.ActOnCXXOperatorFunctionIdExpr(CurScope, OperatorLoc, Op, 
-                                                    Tok.is(tok::l_paren), SS);
+      return Owned(Actions.ActOnCXXOperatorFunctionIdExpr(
+                         CurScope, OperatorLoc, Op, Tok.is(tok::l_paren), SS));
     } else if (TypeTy *Type = ParseConversionFunctionId()) {
-      return Actions.ActOnCXXConversionFunctionExpr(CurScope, OperatorLoc,
-                                                    Type, Tok.is(tok::l_paren), 
-                                                    SS);
+      return Owned(Actions.ActOnCXXConversionFunctionExpr(
+                         CurScope, OperatorLoc, Type, Tok.is(tok::l_paren),SS));
     }
-     
+
     // We already complained about a bad conversion-function-id,
     // above.
-    return true;
+    return ExprError();
   }
 
   } // switch.
@@ -192,7 +191,7 @@ Parser::ExprResult Parser::ParseCXXIdExpression() {
 ///         'reinterpret_cast' '<' type-name '>' '(' expression ')'
 ///         'const_cast' '<' type-name '>' '(' expression ')'
 ///
-Parser::ExprResult Parser::ParseCXXCasts() {
+Parser::OwningExprResult Parser::ParseCXXCasts() {
   tok::TokenKind Kind = Tok.getKind();
   const char *CastName = 0;     // For error messages
 
@@ -208,18 +207,18 @@ Parser::ExprResult Parser::ParseCXXCasts() {
   SourceLocation LAngleBracketLoc = Tok.getLocation();
 
   if (ExpectAndConsume(tok::less, diag::err_expected_less_after, CastName))
-    return ExprResult(true);
+    return ExprError();
 
   TypeTy *CastTy = ParseTypeName();
   SourceLocation RAngleBracketLoc = Tok.getLocation();
 
   if (ExpectAndConsume(tok::greater, diag::err_expected_greater))
-    return Diag(LAngleBracketLoc, diag::note_matching) << "<";
+    return ExprError(Diag(LAngleBracketLoc, diag::note_matching) << "<");
 
   SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
 
   if (Tok.isNot(tok::l_paren))
-    return Diag(Tok, diag::err_expected_lparen_after) << CastName;
+    return ExprError(Diag(Tok, diag::err_expected_lparen_after) << CastName);
 
   OwningExprResult Result(ParseSimpleParenExpression(RParenLoc));
 
@@ -228,7 +227,7 @@ Parser::ExprResult Parser::ParseCXXCasts() {
                                        LAngleBracketLoc, CastTy, RAngleBracketLoc,
                                        LParenLoc, Result.release(), RParenLoc);
 
-  return Result.result();
+  return move(Result);
 }
 
 /// ParseCXXTypeid - This handles the C++ typeid expression.
@@ -237,7 +236,7 @@ Parser::ExprResult Parser::ParseCXXCasts() {
 ///         'typeid' '(' expression ')'
 ///         'typeid' '(' type-id ')'
 ///
-Parser::ExprResult Parser::ParseCXXTypeid() {
+Parser::OwningExprResult Parser::ParseCXXTypeid() {
   assert(Tok.is(tok::kw_typeid) && "Not 'typeid'!");
 
   SourceLocation OpLoc = ConsumeToken();
@@ -247,7 +246,7 @@ Parser::ExprResult Parser::ParseCXXTypeid() {
   // typeid expressions are always parenthesized.
   if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
       "typeid"))
-    return ExprResult(true);
+    return ExprError();
 
   OwningExprResult Result(Actions);
 
@@ -258,7 +257,7 @@ Parser::ExprResult Parser::ParseCXXTypeid() {
     MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
     if (!Ty)
-      return ExprResult(true);
+      return ExprError();
 
     Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/true,
                                     Ty, RParenLoc);
@@ -276,7 +275,7 @@ Parser::ExprResult Parser::ParseCXXTypeid() {
     }
   }
 
-  return Result.result();
+  return move(Result);
 }
 
 /// ParseCXXBoolLiteral - This handles the C++ Boolean literals.
@@ -284,19 +283,19 @@ Parser::ExprResult Parser::ParseCXXTypeid() {
 ///       boolean-literal: [C++ 2.13.5]
 ///         'true'
 ///         'false'
-Parser::ExprResult Parser::ParseCXXBoolLiteral() {
+Parser::OwningExprResult Parser::ParseCXXBoolLiteral() {
   tok::TokenKind Kind = Tok.getKind();
-  return Actions.ActOnCXXBoolLiteral(ConsumeToken(), Kind);
+  return Owned(Actions.ActOnCXXBoolLiteral(ConsumeToken(), Kind));
 }
 
 /// ParseThrowExpression - This handles the C++ throw expression.
 ///
 ///       throw-expression: [C++ 15]
 ///         'throw' assignment-expression[opt]
-Parser::ExprResult Parser::ParseThrowExpression() {
+Parser::OwningExprResult Parser::ParseThrowExpression() {
   assert(Tok.is(tok::kw_throw) && "Not throw!");
   SourceLocation ThrowLoc = ConsumeToken();           // Eat the throw token.
-  
+
   // If the current token isn't the start of an assignment-expression,
   // then the expression is not present.  This handles things like:
   //   "C ? throw : (void)42", which is crazy but legal.
@@ -307,12 +306,12 @@ Parser::ExprResult Parser::ParseThrowExpression() {
   case tok::r_brace:
   case tok::colon:
   case tok::comma:
-    return Actions.ActOnCXXThrow(ThrowLoc);
+    return Owned(Actions.ActOnCXXThrow(ThrowLoc));
 
   default:
     OwningExprResult Expr(ParseAssignmentExpression());
-    if (Expr.isInvalid()) return Expr.result();
-    return Actions.ActOnCXXThrow(ThrowLoc, Expr.release());
+    if (Expr.isInvalid()) return move(Expr);
+    return Owned(Actions.ActOnCXXThrow(ThrowLoc, Expr.release()));
   }
 }
 
@@ -321,10 +320,10 @@ Parser::ExprResult Parser::ParseThrowExpression() {
 /// C++ 9.3.2: In the body of a non-static member function, the keyword this is
 /// a non-lvalue expression whose value is the address of the object for which
 /// the function is called.
-Parser::ExprResult Parser::ParseCXXThis() {
+Parser::OwningExprResult Parser::ParseCXXThis() {
   assert(Tok.is(tok::kw_this) && "Not 'this'!");
   SourceLocation ThisLoc = ConsumeToken();
-  return Actions.ActOnCXXThis(ThisLoc);
+  return Owned(Actions.ActOnCXXThis(ThisLoc));
 }
 
 /// ParseCXXTypeConstructExpression - Parse construction of a specified type.
@@ -336,7 +335,8 @@ Parser::ExprResult Parser::ParseCXXThis() {
 ///         simple-type-specifier '(' expression-list[opt] ')'      [C++ 5.2.3]
 ///         typename-specifier '(' expression-list[opt] ')'         [TODO]
 ///
-Parser::ExprResult Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
+Parser::OwningExprResult
+Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   TypeTy *TypeRep = Actions.ActOnTypeName(CurScope, DeclaratorInfo).Val;
 
@@ -349,7 +349,7 @@ Parser::ExprResult Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
   if (Tok.isNot(tok::r_paren)) {
     if (ParseExpressionList(Exprs, CommaLocs)) {
       SkipUntil(tok::r_paren);
-      return ExprResult(true);
+      return ExprError();
     }
   }
 
@@ -358,10 +358,10 @@ Parser::ExprResult Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 
   assert((Exprs.size() == 0 || Exprs.size()-1 == CommaLocs.size())&&
          "Unexpected number of commas!");
-  return Actions.ActOnCXXTypeConstructExpr(DS.getSourceRange(), TypeRep,
-                                           LParenLoc,
-                                           Exprs.take(), Exprs.size(),
-                                           &CommaLocs[0], RParenLoc);
+  return Owned(Actions.ActOnCXXTypeConstructExpr(DS.getSourceRange(), TypeRep,
+                                                 LParenLoc,
+                                                 Exprs.take(), Exprs.size(),
+                                                 &CommaLocs[0], RParenLoc));
 }
 
 /// ParseCXXCondition - if/switch/while/for condition expression.
@@ -662,7 +662,7 @@ Parser::TypeTy *Parser::ParseConversionFunctionId() {
 ///                   '(' expression-list[opt] ')'
 /// [C++0x]           braced-init-list                                   [TODO]
 ///
-Parser::ExprResult Parser::ParseCXXNewExpression()
+Parser::OwningExprResult Parser::ParseCXXNewExpression()
 {
   assert((Tok.is(tok::coloncolon) || Tok.is(tok::kw_new)) &&
          "Expected :: or 'new' keyword");
@@ -692,13 +692,13 @@ Parser::ExprResult Parser::ParseCXXNewExpression()
     PlacementLParen = ConsumeParen();
     if (ParseExpressionListOrTypeId(PlacementArgs, DeclaratorInfo)) {
       SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
-      return true;
+      return ExprError();
     }
 
     PlacementRParen = MatchRHSPunctuation(tok::r_paren, PlacementLParen);
     if (PlacementRParen.isInvalid()) {
       SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
-      return true;
+      return ExprError();
     }
 
     if (PlacementArgs.empty()) {
@@ -734,7 +734,7 @@ Parser::ExprResult Parser::ParseCXXNewExpression()
   }
   if (DeclaratorInfo.getInvalidType()) {
     SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
-    return true;
+    return ExprError();
   }
 
   ExprVector ConstructorArgs(Actions);
@@ -746,21 +746,21 @@ Parser::ExprResult Parser::ParseCXXNewExpression()
       CommaLocsTy CommaLocs;
       if (ParseExpressionList(ConstructorArgs, CommaLocs)) {
         SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
-        return true;
+        return ExprError();
       }
     }
     ConstructorRParen = MatchRHSPunctuation(tok::r_paren, ConstructorLParen);
     if (ConstructorRParen.isInvalid()) {
       SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
-      return true;
+      return ExprError();
     }
   }
 
-  return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
-                             PlacementArgs.take(), PlacementArgs.size(),
-                             PlacementRParen, ParenTypeId, DeclaratorInfo,
-                             ConstructorLParen, ConstructorArgs.take(),
-                             ConstructorArgs.size(), ConstructorRParen);
+  return Owned(Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
+                                   PlacementArgs.take(), PlacementArgs.size(),
+                                   PlacementRParen, ParenTypeId, DeclaratorInfo,
+                                   ConstructorLParen, ConstructorArgs.take(),
+                                   ConstructorArgs.size(), ConstructorRParen));
 }
 
 /// ParseDirectNewDeclarator - Parses a direct-new-declarator. Intended to be
@@ -825,7 +825,7 @@ bool Parser::ParseExpressionListOrTypeId(ExprListTy &PlacementArgs,
 ///        delete-expression:
 ///                   '::'[opt] 'delete' cast-expression
 ///                   '::'[opt] 'delete' '[' ']' cast-expression
-Parser::ExprResult Parser::ParseCXXDeleteExpression()
+Parser::OwningExprResult Parser::ParseCXXDeleteExpression()
 {
   assert((Tok.is(tok::coloncolon) || Tok.is(tok::kw_delete)) &&
          "Expected :: or 'delete' keyword");
@@ -848,13 +848,13 @@ Parser::ExprResult Parser::ParseCXXDeleteExpression()
     SourceLocation LHS = ConsumeBracket();
     SourceLocation RHS = MatchRHSPunctuation(tok::r_square, LHS);
     if (RHS.isInvalid())
-      return true;
+      return ExprError();
   }
 
   OwningExprResult Operand(ParseCastExpression(false));
   if (Operand.isInvalid())
-    return Operand.result();
+    return move(Operand);
 
-  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete,
-                                Operand.release());
+  return Owned(Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete,
+                                      Operand.release()));
 }

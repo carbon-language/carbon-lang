@@ -57,10 +57,10 @@ static bool MayBeDesignationStart(tok::TokenKind K, Preprocessor &PP) {
 /// initializer (because it is an expression).  We need to consider this case
 /// when parsing array designators.
 ///
-Parser::ExprResult Parser::
+Parser::OwningExprResult Parser::
 ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
                                         unsigned InitNum) {
-  
+
   // If this is the old-style GNU extension:
   //   designation ::= identifier ':'
   // Handle it as a field designator.  Otherwise, this must be the start of a
@@ -94,7 +94,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
       
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok.getLocation(), diag::err_expected_field_designator);
-        return ExprResult(true);
+        return ExprError();
       }
       
       Desig->AddDesignator(Designator::getField(Tok.getIdentifierInfo()));
@@ -136,8 +136,8 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
       
       IdentifierInfo *Name = Tok.getIdentifierInfo();
       SourceLocation NameLoc = ConsumeToken();
-      return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, NameLoc,
-                                                         Name, 0);
+      return Owned(ParseAssignmentExprWithObjCMessageExprStart(
+                       StartLoc, NameLoc, Name, 0));
     }
     
     // Note that we parse this as an assignment expression, not a constant
@@ -146,7 +146,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     OwningExprResult Idx(ParseAssignmentExpression());
     if (Idx.isInvalid()) {
       SkipUntil(tok::r_square);
-      return Idx.result();
+      return move(Idx);
     }
     
     // Given an expression, we could either have a designator (if the next
@@ -167,10 +167,10 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
         else
           Diag(Tok, diag::err_expected_equal_designator);
       }
-      
-      return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
-                                                         SourceLocation(), 
-                                                         0, Idx.release());
+
+      return Owned(ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
+                                                               SourceLocation(),
+                                                             0, Idx.release()));
     }
 
     // Create designation if we haven't already.
@@ -188,7 +188,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
       OwningExprResult RHS(ParseConstantExpression());
       if (RHS.isInvalid()) {
         SkipUntil(tok::r_square);
-        return RHS.result();
+        return move(RHS);
       }
       Desig->AddDesignator(Designator::getArrayRange(Idx.release(),
                                                      RHS.release()));
@@ -202,13 +202,13 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
   // without a designator is when we have an objc message send.  That case is
   // handled and returned from above.
   assert(Desig && "Designator didn't get created?");
-  
+
   // Handle a normal designator sequence end, which is an equal.
   if (Tok.is(tok::equal)) {
     ConsumeToken();
     return ParseInitializer();
   }
-  
+
   // We read some number of designators and found something that isn't an = or
   // an initializer.  If we have exactly one array designator, this
   // is the GNU 'designation: array-designator' extension.  Otherwise, it is a
@@ -219,9 +219,9 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     Diag(Tok, diag::ext_gnu_missing_equal_designator);
     return ParseInitializer();
   }
-  
+
   Diag(Tok, diag::err_expected_equal_designator);
-  return true;
+  return ExprError();
 }
 
 
@@ -237,7 +237,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
 ///         designation[opt] initializer
 ///         initializer-list ',' designation[opt] initializer
 ///
-Parser::ExprResult Parser::ParseBraceInitializer() {
+Parser::OwningExprResult Parser::ParseBraceInitializer() {
   SourceLocation LBraceLoc = ConsumeBrace();
 
   /// InitExprs - This is the actual list of expressions contained in the
@@ -253,15 +253,15 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
   if (Tok.is(tok::r_brace)) {
     Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
     // Match the '}'.
-    return Actions.ActOnInitList(LBraceLoc, 0, 0, InitExprDesignations,
-                                 ConsumeBrace());
+    return Owned(Actions.ActOnInitList(LBraceLoc, 0, 0, InitExprDesignations,
+                                       ConsumeBrace()));
   }
-  
+
   bool InitExprsOk = true;
-  
+
   while (1) {
     // Parse: designation[opt] initializer
-    
+
     // If we know that this cannot be a designation, just parse the nested
     // initializer directly.
     OwningExprResult SubElt(Actions);
@@ -301,19 +301,20 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
 
     // If we don't have a comma continued list, we're done.
     if (Tok.isNot(tok::comma)) break;
-    
+
     // TODO: save comma locations if some client cares.
     ConsumeToken();
-    
+
     // Handle trailing comma.
     if (Tok.is(tok::r_brace)) break;
   }
   if (InitExprsOk && Tok.is(tok::r_brace))
-    return Actions.ActOnInitList(LBraceLoc, InitExprs.take(), InitExprs.size(),
-                                 InitExprDesignations, ConsumeBrace());
-  
+    return Owned(Actions.ActOnInitList(LBraceLoc, InitExprs.take(),
+                                       InitExprs.size(),
+                                       InitExprDesignations, ConsumeBrace()));
+
   // Match the '}'.
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
-  return ExprResult(true); // an error occurred.
+  return ExprError(); // an error occurred.
 }
 

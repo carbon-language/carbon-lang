@@ -289,7 +289,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     // Parse declarator '=' initializer.
     if (Tok.is(tok::equal)) {
       ConsumeToken();
-      OwningExprResult Init(Actions, ParseInitializer());
+      OwningExprResult Init(ParseInitializer());
       if (Init.isInvalid()) {
         SkipUntil(tok::semi);
         return 0;

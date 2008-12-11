@@ -1567,7 +1567,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
-  OwningExprResult Res(Actions, ParseStringLiteralExpression());
+  OwningExprResult Res(ParseStringLiteralExpression());
   if (Res.isInvalid()) return Res.result();
   
   // @"foo" @"bar" is a valid concatenated string.  Eat any subsequent string

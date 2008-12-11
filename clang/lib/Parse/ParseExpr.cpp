@@ -171,7 +171,7 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
 ///
 Parser::OwningExprResult Parser::ParseExpression() {
   if (Tok.is(tok::kw_throw))
-    return Owned(ParseThrowExpression());
+    return ParseThrowExpression();
 
   OwningExprResult LHS(ParseCastExpression(false));
   if (LHS.isInvalid()) return move(LHS);
@@ -196,7 +196,7 @@ Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
 ///
 Parser::OwningExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::kw_throw))
-    return Owned(ParseThrowExpression());
+    return ParseThrowExpression();
 
   OwningExprResult LHS(ParseCastExpression(false));
   if (LHS.isInvalid()) return move(LHS);
@@ -481,7 +481,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
 
   case tok::kw_true:
   case tok::kw_false:
-    return Owned(ParseCXXBoolLiteral());
+    return ParseCXXBoolLiteral();
 
   case tok::identifier: {      // primary-expression: identifier
                                // unqualified-id: identifier
@@ -630,15 +630,15 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // If the next token is neither 'new' nor 'delete', the :: would have been
     // parsed as a scope specifier already.
     if (NextToken().is(tok::kw_new))
-      return Owned(ParseCXXNewExpression());
+      return ParseCXXNewExpression();
     else
-      return Owned(ParseCXXDeleteExpression());
+      return ParseCXXDeleteExpression();
 
   case tok::kw_new: // [C++] new-expression
-    return Owned(ParseCXXNewExpression());
+    return ParseCXXNewExpression();
 
   case tok::kw_delete: // [C++] delete-expression
-    return Owned(ParseCXXDeleteExpression());
+    return ParseCXXDeleteExpression();
 
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();
@@ -1100,20 +1100,20 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
 ///
 ///       primary-expression: [C99 6.5.1]
 ///         string-literal
-Parser::ExprResult Parser::ParseStringLiteralExpression() {
+Parser::OwningExprResult Parser::ParseStringLiteralExpression() {
   assert(isTokenStringLiteral() && "Not a string literal!");
-  
+
   // String concat.  Note that keywords like __func__ and __FUNCTION__ are not
   // considered to be strings for concatenation purposes.
   llvm::SmallVector<Token, 4> StringToks;
-  
+
   do {
     StringToks.push_back(Tok);
     ConsumeStringToken();
   } while (isTokenStringLiteral());
 
   // Pass the set of string tokens, ready for concatenation, to the actions.
-  return Actions.ActOnStringLiteral(&StringToks[0], StringToks.size());
+  return Owned(Actions.ActOnStringLiteral(&StringToks[0], StringToks.size()));
 }
 
 /// ParseExpressionList - Used for C/C++ (argument-)expression-list.

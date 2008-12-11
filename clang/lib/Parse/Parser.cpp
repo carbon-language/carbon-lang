@@ -669,7 +669,7 @@ Parser::OwningExprResult Parser::ParseAsmStringLiteral() {
     return ExprError();
   }
 
-  OwningExprResult Res(Actions, ParseStringLiteralExpression());
+  OwningExprResult Res(ParseStringLiteralExpression());
   if (Res.isInvalid()) return move(Res);
 
   // TODO: Diagnose: wide string literal in 'asm'

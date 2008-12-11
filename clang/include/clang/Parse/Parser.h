@@ -522,11 +522,11 @@ private:
     TypeTy *CastTy;
     return ParseParenExpression(Op, CastTy, RParenLoc);
   }
-  ExprResult ParseStringLiteralExpression();
+  OwningExprResult ParseStringLiteralExpression();
 
   //===--------------------------------------------------------------------===//
   // C++ Expressions
-  ExprResult ParseCXXIdExpression();
+  OwningExprResult ParseCXXIdExpression();
 
   /// MaybeParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
   /// Returns true if a nested-name-specifier was parsed from the token stream.
@@ -534,28 +534,28 @@ private:
   
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts
-  ExprResult ParseCXXCasts();
+  OwningExprResult ParseCXXCasts();
 
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Type Identification
-  ExprResult ParseCXXTypeid();
+  OwningExprResult ParseCXXTypeid();
 
   //===--------------------------------------------------------------------===//
   // C++ 9.3.2: C++ 'this' pointer
-  ExprResult ParseCXXThis();
+  OwningExprResult ParseCXXThis();
 
   //===--------------------------------------------------------------------===//
   // C++ 15: C++ Throw Expression
-  ExprResult ParseThrowExpression();
+  OwningExprResult ParseThrowExpression();
   bool ParseExceptionSpecification();
 
   //===--------------------------------------------------------------------===//
   // C++ 2.13.5: C++ Boolean Literals
-  ExprResult ParseCXXBoolLiteral();
+  OwningExprResult ParseCXXBoolLiteral();
 
   //===--------------------------------------------------------------------===//
   // C++ 5.2.3: Explicit type conversion (functional notation)
-  ExprResult ParseCXXTypeConstructExpression(const DeclSpec &DS);
+  OwningExprResult ParseCXXTypeConstructExpression(const DeclSpec &DS);
 
   /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
   /// This should only be called when the current token is known to be part of
@@ -566,10 +566,10 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 5.3.4 and 5.3.5: C++ new and delete
-  ExprResult ParseCXXNewExpression();
+  OwningExprResult ParseCXXNewExpression();
   bool ParseExpressionListOrTypeId(ExprListTy &Exprs, Declarator &D);
   void ParseDirectNewDeclarator(Declarator &D);
-  ExprResult ParseCXXDeleteExpression();
+  OwningExprResult ParseCXXDeleteExpression();
 
   //===--------------------------------------------------------------------===//
   // C++ if/switch/while/for condition expression.
@@ -585,14 +585,14 @@ private:
   ///       initializer: [C99 6.7.8]
   ///         assignment-expression
   ///         '{' ...
-  ExprResult ParseInitializer() {
+  OwningExprResult ParseInitializer() {
     if (Tok.isNot(tok::l_brace))
-      return ParseAssignmentExpression().result();
+      return ParseAssignmentExpression();
     return ParseBraceInitializer();
   }
-  ExprResult ParseBraceInitializer();
-  ExprResult ParseInitializerWithPotentialDesignator(InitListDesignations &D,
-                                                     unsigned InitNum);
+  OwningExprResult ParseBraceInitializer();
+  OwningExprResult ParseInitializerWithPotentialDesignator(
+                       InitListDesignations &D, unsigned InitNum);
   
   //===--------------------------------------------------------------------===//
   // clang Expressions
