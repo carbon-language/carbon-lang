@@ -237,25 +237,28 @@ public:
 ///  parameters or pointer globals. In RegionStoreManager, we assume pointer
 ///  parameters or globals point at some anonymous region. Such regions are not
 ///  the regions associated with the pointer variables themselves.  They are
-///  identified by the MemRegion of the pointer pointing to them. We create
-///  them lazily.
+///  identified by the symbols that are concretized. We create them lazily.
 
 class AnonPointeeRegion : public TypedRegion {
   friend class MemRegionManager;
-  // VD - the pointer variable that points at this region.
-  const TypedRegion* Pointer;
 
-  AnonPointeeRegion(const TypedRegion* r, MemRegion* sreg)
-    : TypedRegion(sreg, AnonPointeeRegionKind), Pointer(r) {}
+  // Sym - the symbol that is concretized.
+  SymbolRef Sym;
+
+  // Ty - the type of the region.
+  QualType T;
+
+  AnonPointeeRegion(SymbolRef sym, QualType t, MemRegion* sreg)
+    : TypedRegion(sreg, AnonPointeeRegionKind), Sym(sym), T(t) {}
 
 public:
   QualType getType(ASTContext& C) const;
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const TypedRegion* R,
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef Sym,
                             const MemRegion* superRegion);
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    ProfileRegion(ID, Pointer, superRegion);
+    ProfileRegion(ID, Sym, superRegion);
   }
 
   static bool classof(const MemRegion* R) {
@@ -519,7 +522,7 @@ public:
 
   AnonTypedRegion* getAnonTypedRegion(QualType t, const MemRegion* superRegion);
 
-  AnonPointeeRegion* getAnonPointeeRegion(const TypedRegion* r);
+  AnonPointeeRegion* getAnonPointeeRegion(SymbolRef Sym, QualType T);
 
   bool hasStackStorage(const MemRegion* R);
 
