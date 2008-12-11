@@ -4884,14 +4884,16 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   if (isa<ConstantSDNode>(EltNo)) {
     unsigned Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
     bool NewLoad = false;
+    bool BCNumEltsChanged = false;
     MVT VT = InVec.getValueType();
     MVT EVT = VT.getVectorElementType();
     MVT LVT = EVT;
     if (InVec.getOpcode() == ISD::BIT_CONVERT) {
       MVT BCVT = InVec.getOperand(0).getValueType();
-      if (!BCVT.isVector() || EVT.bitsGT(BCVT.getVectorElementType()) ||
-          VT.getVectorNumElements() != BCVT.getVectorNumElements())
+      if (!BCVT.isVector() || EVT.bitsGT(BCVT.getVectorElementType()))
         return SDValue();
+      if (VT.getVectorNumElements() != BCVT.getVectorNumElements())
+        BCNumEltsChanged = true;
       InVec = InVec.getOperand(0);
       EVT = BCVT.getVectorElementType();
       NewLoad = true;
@@ -4908,6 +4910,11 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       // (vextract (vector_shuffle (load $addr), v2, <1, u, u, u>), 1)
       // =>
       // (load $addr+1*size)
+      
+      // If the bit convert changed the number of elements, it is unsafe
+      // to examine the mask.
+      if (BCNumEltsChanged)
+        return SDValue();
       unsigned Idx = cast<ConstantSDNode>(InVec.getOperand(2).
                                           getOperand(Elt))->getZExtValue();
       unsigned NumElems = InVec.getOperand(2).getNumOperands();
