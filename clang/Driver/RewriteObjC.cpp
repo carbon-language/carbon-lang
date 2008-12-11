@@ -720,7 +720,7 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
   // attributes (copy, retain, nonatomic). 
   // See objc-act.c:objc_synthesize_new_setter() for details.
   Setr += getIvarAccessString(ClassDecl, OID) + " = ";
-  Setr += OID->getNameAsCString();
+  Setr += PD->getNameAsCString();
   Setr += "; }";
   InsertText(onePastSemiLoc, Setr.c_str(), Setr.size());
 
@@ -861,16 +861,19 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
   ResultStr += "\nstatic ";
   if (OMD->getResultType()->isObjCQualifiedIdType())
     ResultStr += "id";
-  else if (OMD->getResultType()->isFunctionPointerType()) {
+  else if (OMD->getResultType()->isFunctionPointerType() ||
+           OMD->getResultType()->isBlockPointerType()) {
     // needs special handling, since pointer-to-functions have special
     // syntax (where a decaration models use).
     QualType retType = OMD->getResultType();
-    if (const PointerType* PT = retType->getAsPointerType()) {
-      QualType PointeeTy = PT->getPointeeType();
-      if ((FPRetType = PointeeTy->getAsFunctionType())) {
-        ResultStr += FPRetType->getResultType().getAsString();
-        ResultStr += "(*";
-      }
+    QualType PointeeTy;
+    if (const PointerType* PT = retType->getAsPointerType())
+      PointeeTy = PT->getPointeeType();
+    else if (const BlockPointerType *BPT = retType->getAsBlockPointerType())
+      PointeeTy = BPT->getPointeeType();
+    if ((FPRetType = PointeeTy->getAsFunctionType())) {
+      ResultStr += FPRetType->getResultType().getAsString();
+      ResultStr += "(*";
     }
   } else
     ResultStr += OMD->getResultType().getAsString();
