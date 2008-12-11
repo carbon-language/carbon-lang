@@ -1140,6 +1140,10 @@ SDValue SelectionDAG::getCondCode(ISD::CondCode Cond) {
 SDValue SelectionDAG::getConvertRndSat(MVT VT, SDValue Val, SDValue DTy,
                                        SDValue STy, SDValue Rnd, SDValue Sat,
                                        ISD::CvtCode Code) {
+  // If the src and dest types are the same, no conversion is necessary.
+  if (DTy == STy)
+    return Val;
+
   FoldingSetNodeID ID;
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
