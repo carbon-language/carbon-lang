@@ -3928,15 +3928,15 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
       default: assert(0 && "Unknown TRUNCATE legalization operation action!");
       case TargetLowering::Custom:
-	isCustom = true;
-	// FALLTHROUGH
+        isCustom = true;
+        // FALLTHROUGH
       case TargetLowering::Legal:
-	Result = DAG.UpdateNodeOperands(Result, Tmp1);
-	if (isCustom) {
-	  Tmp1 = TLI.LowerOperation(Result, DAG);
-	  if (Tmp1.getNode()) Result = Tmp1;
-	}
-	break;
+        Result = DAG.UpdateNodeOperands(Result, Tmp1);
+        if (isCustom) {
+          Tmp1 = TLI.LowerOperation(Result, DAG);
+          if (Tmp1.getNode()) Result = Tmp1;
+        }
+        break;
       }
       break;
     case Expand:
