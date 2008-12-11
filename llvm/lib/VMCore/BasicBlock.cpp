@@ -169,6 +169,25 @@ BasicBlock *BasicBlock::getSinglePredecessor() {
   return (PI == E) ? ThePred : 0 /*multiple preds*/;
 }
 
+/// getUniquePredecessor - If this basic block has a unique predecessor block,
+/// return the block, otherwise return a null pointer.
+/// Note that unique predecessor doesn't mean single edge, there can be 
+/// multiple edges from the unique predecessor to this block (for example in
+/// case of a switch statement with multiple cases having same destination).
+BasicBlock *BasicBlock::getUniquePredecessor() {
+  pred_iterator PI = pred_begin(this), E = pred_end(this);
+  if (PI == E) return 0; // No preds.
+  BasicBlock *PredBB = *PI;
+  ++PI;
+  for (;PI != E; ++PI) {
+    if (*PI != PredBB)
+      return 0;
+    // same predecessor appears multiple times in predecessor list,
+    // this is ok
+  }
+  return PredBB;
+}
+
 /// removePredecessor - This method is used to notify a BasicBlock that the
 /// specified Predecessor of the block is no longer able to reach it.  This is
 /// actually not used to update the Predecessor list, but is actually used to

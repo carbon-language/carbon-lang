@@ -134,6 +134,16 @@ public:
     return const_cast<BasicBlock*>(this)->getSinglePredecessor();
   }
 
+  /// getUniquePredecessor - If this basic block has a unique predecessor block,
+  /// return the block, otherwise return a null pointer.
+  /// Note that unique predecessor doesn't mean single edge, there can be 
+  /// multiple edges from the unique predecessor to this block (for example in
+  /// case of a switch statement with multiple cases having same destination).
+  BasicBlock *getUniquePredecessor();
+  const BasicBlock *getUniquePredecessor() const {
+    return const_cast<BasicBlock*>(this)->getUniquePredecessor();
+  }
+
   //===--------------------------------------------------------------------===//
   /// Instruction iterator methods
   ///
