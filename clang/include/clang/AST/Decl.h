@@ -1002,8 +1002,11 @@ public:
     return cast_or_null<RecordDecl>(TagDecl::getDefinition(C));
   }
   
-  // Iterator access to field members.
-  class field_iterator {
+  // Iterator access to field members. The field iterator only visits
+  // the non-static data members of this class, ignoring any static
+  // data members, functions, constructors, destructors, etc.
+  class field_const_iterator {
+  protected:
     /// Current - Current position within the sequence of declarations
     /// in this record. 
     DeclContext::decl_iterator Current;
@@ -1020,18 +1023,57 @@ public:
     }
 
   public:
-    typedef FieldDecl*                value_type;
-    typedef FieldDecl*                reference;
-    typedef FieldDecl*                pointer;
+    typedef FieldDecl const *         value_type;
+    typedef FieldDecl const *         reference;
+    typedef FieldDecl const *         pointer;
     typedef std::ptrdiff_t            difference_type;
     typedef std::forward_iterator_tag iterator_category;
 
-    field_iterator() : Current(), End() { }
+    field_const_iterator() : Current(), End() { }
 
-    field_iterator(DeclContext::decl_iterator C, DeclContext::decl_iterator E)
+    field_const_iterator(DeclContext::decl_iterator C, 
+                         DeclContext::decl_iterator E)
       : Current(C), End(E) {
       SkipToNextField();
     }
+
+    reference operator*() const { return cast<FieldDecl>(*Current); }
+
+    pointer operator->() const { return cast<FieldDecl>(*Current); }
+
+    field_const_iterator& operator++() {
+      ++Current;
+      SkipToNextField();
+      return *this;
+    }
+
+    field_const_iterator operator++(int) {
+      field_const_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+
+    friend bool
+    operator==(const field_const_iterator& x, const field_const_iterator& y) {
+      return x.Current == y.Current;
+    }
+
+    friend bool 
+    operator!=(const field_const_iterator& x, const field_const_iterator& y) {
+      return x.Current != y.Current;
+    }
+  };
+
+  class field_iterator : public field_const_iterator {
+  public:
+    typedef FieldDecl*           value_type;
+    typedef FieldDecl*           reference;
+    typedef FieldDecl*           pointer;
+
+    field_iterator() : field_const_iterator() { }
+
+    field_iterator(DeclContext::decl_iterator C, DeclContext::decl_iterator E)
+      : field_const_iterator(C, E) { }    
 
     reference operator*() const { return cast<FieldDecl>(*Current); }
 
@@ -1048,23 +1090,20 @@ public:
       ++(*this);
       return tmp;
     }
-
-    friend bool operator==(const field_iterator& x, const field_iterator& y) {
-      return x.Current == y.Current;
-    }
-
-    friend bool operator!=(const field_iterator& x, const field_iterator& y) {
-      return x.Current != y.Current;
-    }
   };
 
-  typedef field_iterator field_const_iterator;
-
-  field_iterator field_begin() const {
+  field_iterator field_begin() {
     return field_iterator(decls_begin(), decls_end());
   }
-  field_iterator field_end() const {
+  field_iterator field_end() {
     return field_iterator(decls_end(), decls_end());
+  }
+
+  field_const_iterator field_begin() const {
+    return field_const_iterator(decls_begin(), decls_end());
+  }
+  field_const_iterator field_end() const {
+    return field_const_iterator(decls_end(), decls_end());
   }
 
   /// completeDefinition - Notes that the definition of this type is

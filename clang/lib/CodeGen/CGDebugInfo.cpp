@@ -191,7 +191,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
 /// getOrCreateRecordType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
                                      llvm::DICompileUnit Unit) {
-  const RecordDecl *Decl = Ty->getDecl();
+  RecordDecl *Decl = Ty->getDecl();
   
   unsigned Tag;
   if (Decl->isStruct())
@@ -236,8 +236,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   const ASTRecordLayout &RL = M->getContext().getASTRecordLayout(Decl);
 
   unsigned FieldNo = 0;
-  for (RecordDecl::field_const_iterator I = Decl->field_begin(),
-       E = Decl->field_end(); I != E; ++I, ++FieldNo) {
+  for (RecordDecl::field_iterator I = Decl->field_begin(),
+                                  E = Decl->field_end(); 
+       I != E; ++I, ++FieldNo) {
     FieldDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 

@@ -1134,7 +1134,7 @@ void RewriteBlocks::HandleDeclInMainFile(Decl *D) {
   }
   if (RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
     if (RD->isDefinition()) {
-      for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+      for (RecordDecl::field_iterator i = RD->field_begin(), 
              e = RD->field_end(); i != e; ++i) {
         FieldDecl *FD = *i;
         if (isBlockPointerType(FD->getType()))
