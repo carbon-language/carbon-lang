@@ -28,3 +28,11 @@ next comment ends with a trigraph escaped newline: */
 
 foo /* expected-error {{expected '=', ',', ';', 'asm', or '__attribute__' after declarator}} */
 
+
+// rdar://6060752 - We should not get warnings about trigraphs in comments:
+// '????'
+/* ???? */
+
+
+
+

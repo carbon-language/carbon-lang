@@ -777,9 +777,14 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
       break;  // Found the newline? Break out!
     
     // Otherwise, this is a hard case.  Fall back on getAndAdvanceChar to
-    // properly decode the character.
+    // properly decode the character.  Read it in raw mode to avoid emitting
+    // diagnostics about things like trigraphs.  If we see an escaped newline,
+    // we'll handle it below.
     const char *OldPtr = CurPtr;
+    bool OldRawMode = isLexingRawMode();
+    LexingRawMode = true;
     C = getAndAdvanceChar(CurPtr, Result);
+    LexingRawMode = OldRawMode;
     
     // If we read multiple characters, and one of those characters was a \r or
     // \n, then we had an escaped newline within the comment.  Emit diagnostic
