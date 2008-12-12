@@ -522,6 +522,7 @@ private:
     TypeTy *CastTy;
     return ParseParenExpression(Op, CastTy, RParenLoc);
   }
+  
   OwningExprResult ParseStringLiteralExpression();
 
   //===--------------------------------------------------------------------===//
@@ -639,6 +640,7 @@ private:
   OwningStmtResult ParseDefaultStatement();
   OwningStmtResult ParseCompoundStatement(bool isStmtExpr = false);
   OwningStmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
+  bool ParseParenExprOrCondition(OwningExprResult &CondExp);
   OwningStmtResult ParseIfStatement();
   OwningStmtResult ParseSwitchStatement();
   OwningStmtResult ParseWhileStatement();
