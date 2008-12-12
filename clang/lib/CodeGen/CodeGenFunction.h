@@ -166,6 +166,11 @@ private:
   /// statement range in current switch instruction.
   llvm::BasicBlock *CaseRangeBlock;
 
+  // VLASizeMap - This keeps track of the associated size for each VLA type
+  // FIXME: Maybe this could be a stack of maps that is pushed/popped as
+  // we enter/leave scopes.
+  llvm::DenseMap<const VariableArrayType*, llvm::Value*> VLASizeMap;
+  
   /// StackSaveValues - A stack(!) of stack save values. When a new scope is
   /// entered, a null is pushed on this stack. If a VLA is emitted, then 
   /// the return value of llvm.stacksave() is stored at the top of this stack.
@@ -344,6 +349,10 @@ public:
   // instruction in LLVM instead once it works well enough.  
   llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty);
   
+  // GetVLASize - Returns an LLVM value that corresponds to the size in bytes
+  // of a variable length array type.
+  llvm::Value *GetVLASize(const VariableArrayType *);
+
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//

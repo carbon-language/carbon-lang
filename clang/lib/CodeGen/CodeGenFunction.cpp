@@ -401,3 +401,30 @@ llvm::Value *CodeGenFunction::EmitVAArg(llvm::Value *VAListAddr, QualType Ty)
   return AddrTyped;
 }
 
+llvm::Value *CodeGenFunction::GetVLASize(const VariableArrayType *VAT)
+{
+  llvm::Value *&SizeEntry = VLASizeMap[VAT];
+
+  if (!SizeEntry) {
+    // Get the element size;
+    llvm::Value *ElemSize;
+  
+    QualType ElemTy = VAT->getElementType();
+
+    if (const VariableArrayType *ElemVAT = 
+        getContext().getAsVariableArrayType(ElemTy))
+      ElemSize = GetVLASize(ElemVAT);
+    else {
+      // FIXME: We use Int32Ty here because the alloca instruction takes a
+      // 32-bit integer. What should we do about overflow?
+      ElemSize = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                                        getContext().getTypeSize(ElemTy) / 8);
+    }
+
+    llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
+
+    SizeEntry = Builder.CreateMul(ElemSize, NumElements);
+  }
+
+  return SizeEntry;
+}
