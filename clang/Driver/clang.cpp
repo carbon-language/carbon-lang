@@ -790,13 +790,20 @@ static std::string CreateTargetTriple() {
   if (Triple.empty()) {
     Triple = LLVM_HOSTTRIPLE;
 
+    // Force i<N>86 to i386 when using LLVM_HOSTTRIPLE.
+    if (Triple[0] == 'i' && isdigit(Triple[1]) && 
+        Triple[2] == '8' && Triple[3] == '6')
+      Triple[1] = '3';
+
     // On darwin, we want to update the version to match that of the
     // host.    
     std::string::size_type DarwinDashIdx = Triple.find("-darwin");
     if (DarwinDashIdx != std::string::npos) {
       Triple.resize(DarwinDashIdx + strlen("-darwin"));
 
-      Triple += llvm::sys::osVersion();
+      // Only add the major part of the os version.
+      std::string Version = llvm::sys::osVersion();
+      Triple += Version.substr(0, Version.find('.'));
     }
   }
   
