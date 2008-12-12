@@ -347,12 +347,37 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
         RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Val));
       }
       break;
-    case MVT::f64:
+    case MVT::f64: {
       ObjSize = 8;
-      // Otherwise, convert this to a FP value in int regs.
-      Val = DAG.getNode(ISD::BIT_CONVERT, MVT::i64, Val);
-      // FALL THROUGH
-    case MVT::i64:
+      if (RegsToPass.size() >= 6) {
+        ValToStore = Val;    // Whole thing is passed in memory.
+        break;
+      }
+
+      // Break into top and bottom parts by storing to the stack and loading
+      // out the parts as integers.  Top part goes in a reg.
+      SDValue StackPtr = DAG.CreateStackTemporary(MVT::f64, MVT::i32);
+      SDValue Store = DAG.getStore(DAG.getEntryNode(), Val, StackPtr, NULL, 0);
+      // Sparc is big-endian, so the high part comes first.
+      SDValue Hi = DAG.getLoad(MVT::i32, Store, StackPtr, NULL, 0, 0);
+      // Increment the pointer to the other half.
+      StackPtr = DAG.getNode(ISD::ADD, StackPtr.getValueType(), StackPtr,
+                             DAG.getIntPtrConstant(4));
+      // Load the low part.
+      SDValue Lo = DAG.getLoad(MVT::i32, Store, StackPtr, NULL, 0, 0);
+
+      RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Hi));
+
+      if (RegsToPass.size() >= 6) {
+        ValToStore = Lo;
+        ArgOffset += 4;
+        ObjSize = 4;
+      } else {
+        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Lo));
+      }
+      break;
+    }
+    case MVT::i64: {
       ObjSize = 8;
       if (RegsToPass.size() >= 6) {
         ValToStore = Val;    // Whole thing is passed in memory.
@@ -374,6 +399,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
         RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Lo));
       }
       break;
+    }
     }
 
     if (ValToStore.getNode()) {
