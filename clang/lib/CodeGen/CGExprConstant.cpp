@@ -612,6 +612,16 @@ public:
       }
       break;
     }
+        
+    case Expr::PredefinedExprClass: {
+      // __func__/__FUNCTION__ -> "".  __PRETTY_FUNCTION__ -> "top level".
+      std::string Str;
+      if (cast<PredefinedExpr>(E)->getIdentType() == 
+          PredefinedExpr::PrettyFunction)
+        Str = "top level";
+      
+      return CGM.GetAddrOfConstantCString(Str, ".tmp");
+    }
     }
     CGM.ErrorUnsupported(E, "constant l-value expression");
     llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
