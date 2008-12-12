@@ -2748,26 +2748,25 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
 }
 
 bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName, 
-                          QualType FieldTy, const Expr *BitWidth)
-{
+                          QualType FieldTy, const Expr *BitWidth) {
   // FIXME: 6.7.2.1p4 - verify the field type.
   
   llvm::APSInt Value;
   if (VerifyIntegerConstantExpression(BitWidth, &Value))
     return true;
 
-  if (Value.isNegative()) {
-    Diag(FieldLoc, diag::err_bitfield_has_negative_width) << FieldName;
-    return true;
-  }
+  // Zero-width bitfield is ok for anonymous field.
+  if (Value == 0 && FieldName)
+    return Diag(FieldLoc, diag::err_bitfield_has_zero_width) << FieldName;
+  
+  if (Value.isNegative())
+    return Diag(FieldLoc, diag::err_bitfield_has_negative_width) << FieldName;
 
   uint64_t TypeSize = Context.getTypeSize(FieldTy);
   // FIXME: We won't need the 0 size once we check that the field type is valid.
-  if (TypeSize && Value.getZExtValue() > TypeSize) {
-    Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_size) << 
-         FieldName << (unsigned)TypeSize;
-    return true;
-  }
+  if (TypeSize && Value.getZExtValue() > TypeSize)
+    return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_size)
+       << FieldName << (unsigned)TypeSize;
 
   return false;
 }

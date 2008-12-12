@@ -8,4 +8,7 @@ struct a {
 
   int c : (1 + 0.25); // expected-error{{expression is not an integer constant expression}}
   int d : (int)(1 + 0.25); 
+
+  // rdar://6138816
+  int e : 0;  // expected-error {{bit-field 'e' has zero width}}
 };
