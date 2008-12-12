@@ -420,9 +420,9 @@ class ElementRegion : public TypedRegion {
 
   ElementRegion(SVal Idx, const MemRegion* sReg)
     : TypedRegion(sReg, ElementRegionKind), Index(Idx) {
-    // The index must be signed.
-    if (nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&Idx))
-      assert(CI->getValue().isSigned());
+    assert(isa<nonloc::ConcreteInt>(&Idx) &&
+           cast<nonloc::ConcreteInt>(&Idx)->getValue().isSigned() &&
+           "The index must be signed");
   }
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, SVal Idx, 
