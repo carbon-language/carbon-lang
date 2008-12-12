@@ -1062,34 +1062,37 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
       if (!Result.isInvalid())
         return Owned(Actions.ActOnCompoundLiteral(OpenLoc, Ty, RParenLoc,
                                                   Result.release()));
-    } else if (ExprType == CastExpr) {
+      return move(Result);
+    }
+    
+    if (ExprType == CastExpr) {
       // Note that this doesn't parse the subsequence cast-expression, it just
       // returns the parsed type to the callee.
       ExprType = CastExpr;
       CastTy = Ty;
       return OwningExprResult(Actions);
-    } else {
-      Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
-      return ExprError();
     }
-    return move(Result);
+    
+    Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
+    return ExprError();
   } else {
     Result = ParseExpression();
     ExprType = SimpleExpr;
     if (!Result.isInvalid() && Tok.is(tok::r_paren))
-      Result = Actions.ActOnParenExpr(
-        OpenLoc, Tok.getLocation(), Result.release());
+      Result = Actions.ActOnParenExpr(OpenLoc, Tok.getLocation(),
+                                      Result.release());
   }
 
   // Match the ')'.
-  if (Result.isInvalid())
+  if (Result.isInvalid()) {
     SkipUntil(tok::r_paren);
-  else {
-    if (Tok.is(tok::r_paren))
-      RParenLoc = ConsumeParen();
-    else
-      MatchRHSPunctuation(tok::r_paren, OpenLoc);
+    return ExprError();
   }
+  
+  if (Tok.is(tok::r_paren))
+    RParenLoc = ConsumeParen();
+  else
+    MatchRHSPunctuation(tok::r_paren, OpenLoc);
 
   return move(Result);
 }
