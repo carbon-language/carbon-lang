@@ -448,20 +448,28 @@ Parser::OwningStmtResult Parser::ParseIfStatement() {
   ParseScope IfScope(this, Scope::DeclScope | Scope::ControlScope, C99orCXX);
 
   // Parse the condition.
+  SourceLocation LParenLoc = ConsumeParen();
+  
   OwningExprResult CondExp(Actions);
-  if (getLang().CPlusPlus) {
-    SourceLocation LParenLoc = ConsumeParen();
+  if (getLang().CPlusPlus)
     CondExp = ParseCXXCondition();
-    MatchRHSPunctuation(tok::r_paren, LParenLoc);
-  } else {
-    CondExp = ParseSimpleParenExpression();
-  }
-
-  if (CondExp.isInvalid()) {
+  else
+    CondExp = ParseExpression();
+  
+  // If the parser was confused by the condition and we don't have a ')', try to
+  // recover by skipping ahead to a semi and bailing out.  If condexp is
+  // semantically invalid but we have well formed code, keep going.
+  if (CondExp.isInvalid() && Tok.isNot(tok::r_paren)) {
     SkipUntil(tok::semi);
-    return StmtError();
+    // Skipping may have stopped if it found the containing ')'.  If so, we can
+    // continue parsing the if statement.
+    if (Tok.isNot(tok::r_paren))
+      return StmtError();
   }
   
+  // Otherwise the condition is valid or the rparen is present.
+  MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
   // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
@@ -521,6 +529,11 @@ Parser::OwningStmtResult Parser::ParseIfStatement() {
   }
 
   IfScope.Exit();
+  
+  // If the condition was invalid, discard the if statement.  We could recover
+  // better by replacing it with a valid expr, but don't do that yet.
+  if (CondExp.isInvalid())
+    return StmtError();
 
   // If the then or else stmt is invalid and the other is valid (and present),
   // make turn the invalid one into a null stmt to avoid dropping the other 

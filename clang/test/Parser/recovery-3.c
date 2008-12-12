@@ -1,5 +1,12 @@
 // RUN: clang -fsyntax-only -verify -pedantic %s
 
+// PR2241
+float test2241[] = { 
+  1e,            // expected-error {{exponent}}
+  1ee0           // expected-error {{exponent}}
+};
+
+
 // Testcase derived from PR2692
 static char *f (char * (*g) (char **, int), char **p, ...) {
     char *s;
@@ -11,4 +18,29 @@ static char *f (char * (*g) (char **, int), char **p, ...) {
 // PR3172
 } // expected-error {{expected external declaration}}
 
+
+// rdar://6094870
+int test(int) {
+  struct { int i; } x;
+  
+  if (x.hello)   // expected-error {{no member named 'hello'}}
+    test(0);
+  else
+    ;
+  
+  if (x.hello == 0)   // expected-error {{no member named 'hello'}}
+    test(0);
+  else
+    ;
+  
+  if ((x.hello == 0))   // expected-error {{no member named 'hello'}}
+    test(0);
+  else
+    ;
+  
+  if (x.i == 0))   // expected-error {{expected expression}}
+    test(0);
+  else
+    ;
+}
 
