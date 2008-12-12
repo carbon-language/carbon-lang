@@ -1805,7 +1805,8 @@ private:
     AddString(Die, DW_AT_producer,  DW_FORM_string, UnitDesc->getProducer());
     AddUInt  (Die, DW_AT_language,  DW_FORM_data1,  UnitDesc->getLanguage());
     AddString(Die, DW_AT_name,      DW_FORM_string, UnitDesc->getFileName());
-    AddString(Die, DW_AT_comp_dir,  DW_FORM_string, UnitDesc->getDirectory());
+    if (!UnitDesc->getDirectory().empty())
+      AddString(Die, DW_AT_comp_dir,  DW_FORM_string, UnitDesc->getDirectory());
 
     // Construct compile unit.
     CompileUnit *Unit = new CompileUnit(UnitDesc, ID, Die);
