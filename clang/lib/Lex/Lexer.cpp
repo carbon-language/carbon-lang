@@ -860,7 +860,7 @@ bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
 
 /// isBlockCommentEndOfEscapedNewLine - Return true if the specified newline
 /// character (either \n or \r) is part of an escaped newline sequence.  Issue a
-/// diagnostic if so.  We know that the is inside of a block comment.
+/// diagnostic if so.  We know that the newline is inside of a block comment.
 static bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr, 
                                                   Lexer *L) {
   assert(CurPtr[0] == '\n' || CurPtr[0] == '\r');
