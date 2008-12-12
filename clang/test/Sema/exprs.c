@@ -42,6 +42,6 @@ void test7(int *P, _Complex float Gamma) {
 // rdar://6095061
 int test8(void) {
   int i;
-  __builtin_choose_expr (0, 42, i) = 10;
+  __builtin_choose_expr (0, 42, i) = 10;  // expected-warning {{extension used}}
   return i;
 }
