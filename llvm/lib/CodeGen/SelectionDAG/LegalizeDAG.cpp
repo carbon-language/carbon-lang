@@ -1951,23 +1951,15 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       unsigned EntrySize = MF.getJumpTableInfo()->getEntrySize();
       Index= DAG.getNode(ISD::MUL, PTy, Index, DAG.getConstant(EntrySize, PTy));
       SDValue Addr = DAG.getNode(ISD::ADD, PTy, Index, Table);
-      
-      SDValue LD;
-      switch (EntrySize) {
-      default: assert(0 && "Size of jump table not supported yet."); break;
-      case 4: LD = DAG.getLoad(MVT::i32, Chain, Addr,
-                               PseudoSourceValue::getJumpTable(), 0); break;
-      case 8: LD = DAG.getLoad(MVT::i64, Chain, Addr,
-                               PseudoSourceValue::getJumpTable(), 0); break;
-      }
 
+      MVT MemVT = MVT::getIntegerVT(EntrySize * 8);
+      SDValue LD = DAG.getExtLoad(ISD::SEXTLOAD, PTy, Chain, Addr,
+                                  PseudoSourceValue::getJumpTable(), 0, MemVT);
       Addr = LD;
       if (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_) {
         // For PIC, the sequence is:
         // BRIND(load(Jumptable + index) + RelocBase)
         // RelocBase can be JumpTable, GOT or some sort of global base.
-        if (PTy != MVT::i32)
-          Addr = DAG.getNode(ISD::SIGN_EXTEND, PTy, Addr);
         Addr = DAG.getNode(ISD::ADD, PTy, Addr,
                            TLI.getPICJumpTableRelocBase(Table, DAG));
       }
