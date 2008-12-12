@@ -27,9 +27,11 @@ def SDTX86Cmov    : SDTypeProfile<1, 4,
                                   [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
                                    SDTCisVT<3, i8>, SDTCisVT<4, i32>]>;
 
-def SDTArithOvf : SDTypeProfile<1, 2,
-                                [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
-                                 SDTCisInt<0>]>;
+def SDTUnaryArithOvf  : SDTypeProfile<1, 1,
+                                      [SDTCisInt<0>]>;
+def SDTBinaryArithOvf : SDTypeProfile<1, 2,
+                                      [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
+                                       SDTCisInt<0>]>;
 
 def SDTX86BrCond  : SDTypeProfile<0, 3,
                                   [SDTCisVT<0, OtherVT>,
@@ -144,9 +146,10 @@ def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
 def X86tcret : SDNode<"X86ISD::TC_RETURN", SDT_X86TCRET, 
                         [SDNPHasChain,  SDNPOptInFlag]>;
 
-def X86add_ovf : SDNode<"X86ISD::ADD", SDTArithOvf>;
-def X86sub_ovf : SDNode<"X86ISD::SUB", SDTArithOvf>;
-def X86mul_ovf : SDNode<"X86ISD::MUL", SDTArithOvf>;
+def X86add_ovf  : SDNode<"X86ISD::ADD",  SDTBinaryArithOvf>;
+def X86sub_ovf  : SDNode<"X86ISD::SUB",  SDTBinaryArithOvf>;
+def X86smul_ovf : SDNode<"X86ISD::SMUL", SDTBinaryArithOvf>;
+def X86umul_ovf : SDNode<"X86ISD::UMUL", SDTUnaryArithOvf>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -717,27 +720,38 @@ def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
                // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
-               [(set AL, (mul AL, GR8:$src))]>;     // AL,AH = AL*GR8
+               [(set AL, (mul AL, GR8:$src)),
+                (implicit EFLAGS)]>;     // AL,AH = AL*GR8
+
 let Defs = [AX,DX,EFLAGS], Uses = [AX], neverHasSideEffects = 1 in
-def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src), "mul{w}\t$src", 
-             []>, OpSize;    // AX,DX = AX*GR16
+def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src),
+               "mul{w}\t$src", 
+               []>, OpSize;    // AX,DX = AX*GR16
+
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX], neverHasSideEffects = 1 in
-def MUL32r : I<0xF7, MRM4r, (outs),  (ins GR32:$src), "mul{l}\t$src", []>;
-                       // EAX,EDX = EAX*GR32
+def MUL32r : I<0xF7, MRM4r, (outs),  (ins GR32:$src),
+               "mul{l}\t$src",
+               []>; // EAX,EDX = EAX*GR32
+
 let Defs = [AL,AH,EFLAGS], Uses = [AL] in
 def MUL8m  : I<0xF6, MRM4m, (outs), (ins i8mem :$src),
                "mul{b}\t$src",
                // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
-               [(set AL, (mul AL, (loadi8 addr:$src)))]>;   // AL,AH = AL*[mem8]
+               [(set AL, (mul AL, (loadi8 addr:$src))),
+                (implicit EFLAGS)]>;   // AL,AH = AL*[mem8]
+
 let mayLoad = 1, neverHasSideEffects = 1 in {
 let Defs = [AX,DX,EFLAGS], Uses = [AX] in
 def MUL16m : I<0xF7, MRM4m, (outs), (ins i16mem:$src),
-               "mul{w}\t$src", []>, OpSize; // AX,DX = AX*[mem16]
+               "mul{w}\t$src",
+               []>, OpSize; // AX,DX = AX*[mem16]
+
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def MUL32m : I<0xF7, MRM4m, (outs), (ins i32mem:$src),
-              "mul{l}\t$src", []>;          // EAX,EDX = EAX*[mem32]
+              "mul{l}\t$src",
+              []>;          // EAX,EDX = EAX*[mem32]
 }
 
 let neverHasSideEffects = 1 in {
@@ -1935,13 +1949,7 @@ let isCommutable = 1 in {   // X = ADD Y, Z   --> X = ADD Z, Y
 def ADD8rr    : I<0x00, MRMDestReg, (outs GR8 :$dst),
                                     (ins GR8 :$src1, GR8 :$src2),
                   "add{b}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR8:$dst, (add GR8:$src1, GR8:$src2))]>;
-
-// Register-Register Addition with Overflow
-def ADDOvf8rr : I<0x00, MRMDestReg, (outs GR8 :$dst),
-                                    (ins GR8 :$src1, GR8 :$src2),
-                  "add{b}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR8:$dst, (X86add_ovf GR8:$src1, GR8:$src2)),
+                  [(set GR8:$dst, (add GR8:$src1, GR8:$src2)),
                    (implicit EFLAGS)]>;
 
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
@@ -1949,23 +1957,13 @@ let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 def ADD16rr  : I<0x01, MRMDestReg, (outs GR16:$dst),
                                    (ins GR16:$src1, GR16:$src2),
                  "add{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (add GR16:$src1, GR16:$src2))]>, OpSize;
+                 [(set GR16:$dst, (add GR16:$src1, GR16:$src2)),
+                  (implicit EFLAGS)]>, OpSize;
 def ADD32rr  : I<0x01, MRMDestReg, (outs GR32:$dst),
                                    (ins GR32:$src1, GR32:$src2),
                  "add{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (add GR32:$src1, GR32:$src2))]>;
-
-// Register-Register Addition with Overflow
-def ADDOvf16rr : I<0x01, MRMDestReg, (outs GR16:$dst),
-                                     (ins GR16:$src1, GR16:$src2),
-                   "add{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (X86add_ovf GR16:$src1, GR16:$src2)),
-                    (implicit EFLAGS)]>, OpSize;
-def ADDOvf32rr : I<0x01, MRMDestReg, (outs GR32:$dst),
-                                     (ins GR32:$src1, GR32:$src2),
-                   "add{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (X86add_ovf GR32:$src1, GR32:$src2)),
-                    (implicit EFLAGS)]>;
+                 [(set GR32:$dst, (add GR32:$src1, GR32:$src2)),
+                  (implicit EFLAGS)]>;
 } // end isConvertibleToThreeAddress
 } // end isCommutable
 
@@ -1973,160 +1971,85 @@ def ADDOvf32rr : I<0x01, MRMDestReg, (outs GR32:$dst),
 def ADD8rm   : I<0x02, MRMSrcMem, (outs GR8 :$dst),
                                   (ins GR8 :$src1, i8mem :$src2),
                  "add{b}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR8:$dst, (add GR8:$src1, (load addr:$src2)))]>;
+                 [(set GR8:$dst, (add GR8:$src1, (load addr:$src2))),
+                  (implicit EFLAGS)]>;
 def ADD16rm  : I<0x03, MRMSrcMem, (outs GR16:$dst),
                                   (ins GR16:$src1, i16mem:$src2),
                  "add{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (add GR16:$src1, (load addr:$src2)))]>,OpSize;
+                 [(set GR16:$dst, (add GR16:$src1, (load addr:$src2))),
+                  (implicit EFLAGS)]>, OpSize;
 def ADD32rm  : I<0x03, MRMSrcMem, (outs GR32:$dst),
                                   (ins GR32:$src1, i32mem:$src2),
                  "add{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (add GR32:$src1, (load addr:$src2)))]>;
-
-// Register-Memory Addition with Overflow
-def ADDOvf8rm  : I<0x02, MRMSrcMem, (outs GR8 :$dst),
-                                    (ins GR8 :$src1, i8mem :$src2),
-                   "add{b}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR8:$dst, (X86add_ovf GR8:$src1, (load addr:$src2))),
-                    (implicit EFLAGS)]>;
-def ADDOvf16rm : I<0x03, MRMSrcMem, (outs GR16:$dst),
-                                    (ins GR16:$src1, i16mem:$src2),
-                   "add{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (X86add_ovf GR16:$src1, (load addr:$src2))),
-                    (implicit EFLAGS)]>, OpSize;
-def ADDOvf32rm : I<0x03, MRMSrcMem, (outs GR32:$dst),
-                                    (ins GR32:$src1, i32mem:$src2),
-                   "add{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (X86add_ovf GR32:$src1, (load addr:$src2))),
-                    (implicit EFLAGS)]>;
+                 [(set GR32:$dst, (add GR32:$src1, (load addr:$src2))),
+                  (implicit EFLAGS)]>;
 
 // Register-Integer Addition
 def ADD8ri    : Ii8<0x80, MRM0r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                     "add{b}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR8:$dst, (add GR8:$src1, imm:$src2))]>;
-
-// Register-Integer Addition with Overflow
-def ADDOvf8ri  : Ii8<0x80, MRM0r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
-                     "add{b}\t{$src2, $dst|$dst, $src2}",
-                     [(set GR8:$dst, (X86add_ovf GR8:$src1, imm:$src2)),
-                      (implicit EFLAGS)]>;
+                    [(set GR8:$dst, (add GR8:$src1, imm:$src2)),
+                     (implicit EFLAGS)]>;
 
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 // Register-Integer Addition
 def ADD16ri  : Ii16<0x81, MRM0r, (outs GR16:$dst),
                                  (ins GR16:$src1, i16imm:$src2),
                     "add{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (add GR16:$src1, imm:$src2))]>, OpSize;
+                    [(set GR16:$dst, (add GR16:$src1, imm:$src2)),
+                     (implicit EFLAGS)]>, OpSize;
 def ADD32ri  : Ii32<0x81, MRM0r, (outs GR32:$dst),
                                  (ins GR32:$src1, i32imm:$src2),
                     "add{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (add GR32:$src1, imm:$src2))]>;
+                    [(set GR32:$dst, (add GR32:$src1, imm:$src2)),
+                     (implicit EFLAGS)]>;
 def ADD16ri8 : Ii8<0x83, MRM0r, (outs GR16:$dst),
                                 (ins GR16:$src1, i16i8imm:$src2),
                    "add{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, (add GR16:$src1, i16immSExt8:$src2))]>, OpSize;
+                   [(set GR16:$dst, (add GR16:$src1, i16immSExt8:$src2)),
+                    (implicit EFLAGS)]>, OpSize;
 def ADD32ri8 : Ii8<0x83, MRM0r, (outs GR32:$dst),
                                 (ins GR32:$src1, i32i8imm:$src2),
                    "add{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, (add GR32:$src1, i32immSExt8:$src2))]>;
-
-// Register-Integer Addition with Overflow
-def ADDOvf16ri  : Ii16<0x81, MRM0r, (outs GR16:$dst),
-                                    (ins GR16:$src1, i16imm:$src2),
-                       "add{w}\t{$src2, $dst|$dst, $src2}",
-                       [(set GR16:$dst, (X86add_ovf GR16:$src1, imm:$src2)),
-                        (implicit EFLAGS)]>, OpSize;
-def ADDOvf32ri  : Ii32<0x81, MRM0r, (outs GR32:$dst),
-                                    (ins GR32:$src1, i32imm:$src2),
-                       "add{l}\t{$src2, $dst|$dst, $src2}",
-                       [(set GR32:$dst, (X86add_ovf GR32:$src1, imm:$src2)),
-                        (implicit EFLAGS)]>;
-def ADDOvf16ri8 : Ii8<0x83, MRM0r, (outs GR16:$dst),
-                                   (ins GR16:$src1, i16i8imm:$src2),
-                      "add{w}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR16:$dst, (X86add_ovf GR16:$src1,
-                                                   i16immSExt8:$src2)),
-                       (implicit EFLAGS)]>, OpSize;
-def ADDOvf32ri8 : Ii8<0x83, MRM0r, (outs GR32:$dst),
-                                   (ins GR32:$src1, i32i8imm:$src2),
-                      "add{l}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR32:$dst, (X86add_ovf GR32:$src1,
-                                        i32immSExt8:$src2)),
-                       (implicit EFLAGS)]>;
+                   [(set GR32:$dst, (add GR32:$src1, i32immSExt8:$src2)),
+                    (implicit EFLAGS)]>;
 }
 
 let isTwoAddress = 0 in {
   // Memory-Register Addition
-  def ADD8mr   : I<0x00, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src2),
+  def ADD8mr   : I<0x00, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
                    "add{b}\t{$src2, $dst|$dst, $src2}",
-                   [(store (add (load addr:$dst), GR8:$src2), addr:$dst)]>;
+                   [(store (add (load addr:$dst), GR8:$src2), addr:$dst),
+                    (implicit EFLAGS)]>;
   def ADD16mr  : I<0x01, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
                    "add{w}\t{$src2, $dst|$dst, $src2}",
-                   [(store (add (load addr:$dst), GR16:$src2), addr:$dst)]>,
-                   OpSize;
+                   [(store (add (load addr:$dst), GR16:$src2), addr:$dst),
+                    (implicit EFLAGS)]>, OpSize;
   def ADD32mr  : I<0x01, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                    "add{l}\t{$src2, $dst|$dst, $src2}",
-                   [(store (add (load addr:$dst), GR32:$src2), addr:$dst)]>;
+                   [(store (add (load addr:$dst), GR32:$src2), addr:$dst),
+                    (implicit EFLAGS)]>;
   def ADD8mi   : Ii8<0x80, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src2),
                      "add{b}\t{$src2, $dst|$dst, $src2}",
-                   [(store (add (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
+                   [(store (add (loadi8 addr:$dst), imm:$src2), addr:$dst),
+                    (implicit EFLAGS)]>;
   def ADD16mi  : Ii16<0x81, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src2),
                       "add{w}\t{$src2, $dst|$dst, $src2}",
-                  [(store (add (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
-                  OpSize;
+                  [(store (add (loadi16 addr:$dst), imm:$src2), addr:$dst),
+                   (implicit EFLAGS)]>, OpSize;
   def ADD32mi  : Ii32<0x81, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src2),
                       "add{l}\t{$src2, $dst|$dst, $src2}",
-                  [(store (add (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
+                      [(store (add (loadi32 addr:$dst), imm:$src2), addr:$dst),
+                       (implicit EFLAGS)]>;
   def ADD16mi8 : Ii8<0x83, MRM0m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
                      "add{w}\t{$src2, $dst|$dst, $src2}",
-                  [(store (add (load addr:$dst), i16immSExt8:$src2),
-                               addr:$dst)]>, OpSize;
+                     [(store (add (load addr:$dst), i16immSExt8:$src2),
+                                  addr:$dst),
+                      (implicit EFLAGS)]>, OpSize;
   def ADD32mi8 : Ii8<0x83, MRM0m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
                      "add{l}\t{$src2, $dst|$dst, $src2}",
                   [(store (add (load addr:$dst), i32immSExt8:$src2),
-                               addr:$dst)]>;
-
-  // Memory-Register Addition with Overflow
-  def ADDOvf8mr   : I<0x00, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src2),
-                      "add{b}\t{$src2, $dst|$dst, $src2}",
-                      [(store (X86add_ovf (load addr:$dst), GR8:$src2),
-                                          addr:$dst),
-                       (implicit EFLAGS)]>;
-  def ADDOvf16mr  : I<0x01, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
-                      "add{w}\t{$src2, $dst|$dst, $src2}",
-                      [(store (X86add_ovf (load addr:$dst), GR16:$src2),
-                                          addr:$dst),
-                       (implicit EFLAGS)]>, OpSize;
-  def ADDOvf32mr  : I<0x01, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
-                      "add{l}\t{$src2, $dst|$dst, $src2}",
-                      [(store (X86add_ovf (load addr:$dst), GR32:$src2),
-                                          addr:$dst),
-                       (implicit EFLAGS)]>;
-  def ADDOvf8mi   : Ii8<0x80, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src2),
-                        "add{b}\t{$src2, $dst|$dst, $src2}",
-                        [(store (X86add_ovf (loadi8 addr:$dst), imm:$src2),
-                                            addr:$dst),
-                        (implicit EFLAGS)]>;
-  def ADDOvf16mi  : Ii16<0x81, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src2),
-                         "add{w}\t{$src2, $dst|$dst, $src2}",
-                         [(store (X86add_ovf (loadi16 addr:$dst), imm:$src2),
-                                             addr:$dst),
-                          (implicit EFLAGS)]>, OpSize;
-  def ADDOvf32mi  : Ii32<0x81, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src2),
-                         "add{l}\t{$src2, $dst|$dst, $src2}",
-                         [(store (X86add_ovf (loadi32 addr:$dst), imm:$src2),
-                                             addr:$dst),
-                          (implicit EFLAGS)]>;
-  def ADDOvf16mi8 : Ii8<0x83, MRM0m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
-                        "add{w}\t{$src2, $dst|$dst, $src2}",
-                        [(store (X86add_ovf (load addr:$dst),i16immSExt8:$src2),
-                                            addr:$dst),
-                         (implicit EFLAGS)]>, OpSize;
-  def ADDOvf32mi8 : Ii8<0x83, MRM0m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
-                        "add{l}\t{$src2, $dst|$dst, $src2}",
-                        [(store (X86add_ovf (load addr:$dst),i32immSExt8:$src2),
-                                            addr:$dst),
-                         (implicit EFLAGS)]>;
+                               addr:$dst),
+                   (implicit EFLAGS)]>;
 }
 
 let Uses = [EFLAGS] in {
@@ -2161,190 +2084,99 @@ let isTwoAddress = 0 in {
 // Register-Register Subtraction
 def SUB8rr  : I<0x28, MRMDestReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                 "sub{b}\t{$src2, $dst|$dst, $src2}",
-                [(set GR8:$dst, (sub GR8:$src1, GR8:$src2))]>;
+                [(set GR8:$dst, (sub GR8:$src1, GR8:$src2)),
+                 (implicit EFLAGS)]>;
 def SUB16rr : I<0x29, MRMDestReg, (outs GR16:$dst), (ins GR16:$src1,GR16:$src2),
                 "sub{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, (sub GR16:$src1, GR16:$src2))]>, OpSize;
+                [(set GR16:$dst, (sub GR16:$src1, GR16:$src2)),
+                 (implicit EFLAGS)]>, OpSize;
 def SUB32rr : I<0x29, MRMDestReg, (outs GR32:$dst), (ins GR32:$src1,GR32:$src2),
                 "sub{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, (sub GR32:$src1, GR32:$src2))]>;
-
-// Register-Register Subtraction with Overflow
-def SUBOvf8rr  : I<0x28, MRMDestReg, (outs GR8:$dst),
-                                     (ins GR8:$src1, GR8:$src2),
-                   "sub{b}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR8:$dst, (X86sub_ovf GR8:$src1, GR8:$src2)),
-                    (implicit EFLAGS)]>;
-def SUBOvf16rr : I<0x29, MRMDestReg, (outs GR16:$dst),
-                                     (ins GR16:$src1, GR16:$src2),
-                   "sub{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (X86sub_ovf GR16:$src1, GR16:$src2)),
-                    (implicit EFLAGS)]>, OpSize;
-def SUBOvf32rr : I<0x29, MRMDestReg, (outs GR32:$dst),
-                                     (ins GR32:$src1, GR32:$src2),
-                   "sub{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (X86sub_ovf GR32:$src1, GR32:$src2)),
-                    (implicit EFLAGS)]>;
+                [(set GR32:$dst, (sub GR32:$src1, GR32:$src2)),
+                 (implicit EFLAGS)]>;
 
 // Register-Memory Subtraction
 def SUB8rm  : I<0x2A, MRMSrcMem, (outs GR8 :$dst),
                                  (ins GR8 :$src1, i8mem :$src2),
                 "sub{b}\t{$src2, $dst|$dst, $src2}",
-                [(set GR8:$dst, (sub GR8:$src1, (load addr:$src2)))]>;
+                [(set GR8:$dst, (sub GR8:$src1, (load addr:$src2))),
+                 (implicit EFLAGS)]>;
 def SUB16rm : I<0x2B, MRMSrcMem, (outs GR16:$dst),
                                  (ins GR16:$src1, i16mem:$src2),
                 "sub{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, (sub GR16:$src1, (load addr:$src2)))]>, OpSize;
+                [(set GR16:$dst, (sub GR16:$src1, (load addr:$src2))),
+                 (implicit EFLAGS)]>, OpSize;
 def SUB32rm : I<0x2B, MRMSrcMem, (outs GR32:$dst),
                                  (ins GR32:$src1, i32mem:$src2),
                 "sub{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, (sub GR32:$src1, (load addr:$src2)))]>;
-
-// Register-Memory Subtraction with Overflow
-def SUBOvf8rm  : I<0x2A, MRMSrcMem, (outs GR8:$dst),
-                                    (ins GR8:$src1, i8mem:$src2),
-                    "sub{b}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR8:$dst, (X86sub_ovf GR8:$src1, (load addr:$src2))),
-                     (implicit EFLAGS)]>;
-def SUBOvf16rm : I<0x2B, MRMSrcMem, (outs GR16:$dst),
-                                    (ins GR16:$src1, i16mem:$src2),
-                   "sub{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (X86sub_ovf GR16:$src1, (load addr:$src2))),
-                    (implicit EFLAGS)]>, OpSize;
-def SUBOvf32rm : I<0x2B, MRMSrcMem, (outs GR32:$dst),
-                                    (ins GR32:$src1, i32mem:$src2),
-                   "sub{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (X86sub_ovf GR32:$src1, (load addr:$src2))),
-                    (implicit EFLAGS)]>;
+                [(set GR32:$dst, (sub GR32:$src1, (load addr:$src2))),
+                 (implicit EFLAGS)]>;
 
 // Register-Integer Subtraction
 def SUB8ri   : Ii8 <0x80, MRM5r, (outs GR8:$dst),
                                  (ins GR8:$src1, i8imm:$src2),
                     "sub{b}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR8:$dst, (sub GR8:$src1, imm:$src2))]>;
+                    [(set GR8:$dst, (sub GR8:$src1, imm:$src2)),
+                     (implicit EFLAGS)]>;
 def SUB16ri  : Ii16<0x81, MRM5r, (outs GR16:$dst),
                                  (ins GR16:$src1, i16imm:$src2),
                     "sub{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (sub GR16:$src1, imm:$src2))]>, OpSize;
+                    [(set GR16:$dst, (sub GR16:$src1, imm:$src2)),
+                     (implicit EFLAGS)]>, OpSize;
 def SUB32ri  : Ii32<0x81, MRM5r, (outs GR32:$dst),
                                  (ins GR32:$src1, i32imm:$src2),
                     "sub{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (sub GR32:$src1, imm:$src2))]>;
+                    [(set GR32:$dst, (sub GR32:$src1, imm:$src2)),
+                     (implicit EFLAGS)]>;
 def SUB16ri8 : Ii8<0x83, MRM5r, (outs GR16:$dst),
                                 (ins GR16:$src1, i16i8imm:$src2),
                    "sub{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (sub GR16:$src1, i16immSExt8:$src2))]>,
-                   OpSize;
+                   [(set GR16:$dst, (sub GR16:$src1, i16immSExt8:$src2)),
+                    (implicit EFLAGS)]>, OpSize;
 def SUB32ri8 : Ii8<0x83, MRM5r, (outs GR32:$dst),
                                 (ins GR32:$src1, i32i8imm:$src2),
                    "sub{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (sub GR32:$src1, i32immSExt8:$src2))]>;
-
-// Register-Integer Subtraction with Overflow
-def SUBOvf8ri   : Ii8 <0x80, MRM5r, (outs GR8:$dst),
-                                    (ins GR8:$src1, i8imm:$src2),
-                       "sub{b}\t{$src2, $dst|$dst, $src2}",
-                       [(set GR8:$dst, (X86sub_ovf GR8:$src1, imm:$src2)),
-                        (implicit EFLAGS)]>;
-def SUBOvf16ri  : Ii16<0x81, MRM5r, (outs GR16:$dst),
-                                    (ins GR16:$src1, i16imm:$src2),
-                       "sub{w}\t{$src2, $dst|$dst, $src2}",
-                       [(set GR16:$dst, (X86sub_ovf GR16:$src1, imm:$src2)),
-                        (implicit EFLAGS)]>, OpSize;
-def SUBOvf32ri  : Ii32<0x81, MRM5r, (outs GR32:$dst),
-                                    (ins GR32:$src1, i32imm:$src2),
-                       "sub{l}\t{$src2, $dst|$dst, $src2}",
-                       [(set GR32:$dst, (X86sub_ovf GR32:$src1, imm:$src2)),
-                        (implicit EFLAGS)]>;
-def SUBOvf16ri8 : Ii8<0x83, MRM5r, (outs GR16:$dst),
-                                   (ins GR16:$src1, i16i8imm:$src2),
-                      "sub{w}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR16:$dst, (X86sub_ovf GR16:$src1,
-                                                   i16immSExt8:$src2)),
-                       (implicit EFLAGS)]>, OpSize;
-def SUBOvf32ri8 : Ii8<0x83, MRM5r, (outs GR32:$dst),
-                                   (ins GR32:$src1, i32i8imm:$src2),
-                      "sub{l}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR32:$dst, (X86sub_ovf GR32:$src1,
-                                                   i32immSExt8:$src2)),
-                       (implicit EFLAGS)]>;
+                   [(set GR32:$dst, (sub GR32:$src1, i32immSExt8:$src2)),
+                    (implicit EFLAGS)]>;
 
 let isTwoAddress = 0 in {
   // Memory-Register Subtraction
   def SUB8mr   : I<0x28, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src2),
                    "sub{b}\t{$src2, $dst|$dst, $src2}",
-                   [(store (sub (load addr:$dst), GR8:$src2), addr:$dst)]>;
+                   [(store (sub (load addr:$dst), GR8:$src2), addr:$dst),
+                    (implicit EFLAGS)]>;
   def SUB16mr  : I<0x29, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
                    "sub{w}\t{$src2, $dst|$dst, $src2}",
-                   [(store (sub (load addr:$dst), GR16:$src2), addr:$dst)]>,
-                   OpSize;
+                   [(store (sub (load addr:$dst), GR16:$src2), addr:$dst),
+                    (implicit EFLAGS)]>, OpSize;
   def SUB32mr  : I<0x29, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
                    "sub{l}\t{$src2, $dst|$dst, $src2}",
-                   [(store (sub (load addr:$dst), GR32:$src2), addr:$dst)]>;
-
-  // Memory-Register Subtraction with Overflow
-  def SUBOvf8mr  : I<0x28, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src2),
-                     "sub{b}\t{$src2, $dst|$dst, $src2}",
-                     [(store (X86sub_ovf (load addr:$dst), GR8:$src2),
-                                         addr:$dst),
-                      (implicit EFLAGS)]>;
-  def SUBOvf16mr : I<0x29, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
-                     "sub{w}\t{$src2, $dst|$dst, $src2}",
-                     [(store (X86sub_ovf (load addr:$dst), GR16:$src2),
-                                         addr:$dst),
-                      (implicit EFLAGS)]>, OpSize;
-  def SUBOvf32mr : I<0x29, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
-                     "sub{l}\t{$src2, $dst|$dst, $src2}",
-                     [(store (X86sub_ovf (load addr:$dst), GR32:$src2),
-                                         addr:$dst),
-                      (implicit EFLAGS)]>;
+                   [(store (sub (load addr:$dst), GR32:$src2), addr:$dst),
+                    (implicit EFLAGS)]>;
 
   // Memory-Integer Subtraction
   def SUB8mi   : Ii8<0x80, MRM5m, (outs), (ins i8mem :$dst, i8imm:$src2), 
                      "sub{b}\t{$src2, $dst|$dst, $src2}",
-                     [(store (sub (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
+                     [(store (sub (loadi8 addr:$dst), imm:$src2), addr:$dst),
+                      (implicit EFLAGS)]>;
   def SUB16mi  : Ii16<0x81, MRM5m, (outs), (ins i16mem:$dst, i16imm:$src2), 
                       "sub{w}\t{$src2, $dst|$dst, $src2}",
-                      [(store (sub (loadi16 addr:$dst), imm:$src2),addr:$dst)]>,
-                      OpSize;
+                      [(store (sub (loadi16 addr:$dst), imm:$src2),addr:$dst),
+                       (implicit EFLAGS)]>, OpSize;
   def SUB32mi  : Ii32<0x81, MRM5m, (outs), (ins i32mem:$dst, i32imm:$src2), 
                       "sub{l}\t{$src2, $dst|$dst, $src2}",
-                      [(store (sub (loadi32 addr:$dst), imm:$src2),addr:$dst)]>;
+                      [(store (sub (loadi32 addr:$dst), imm:$src2),addr:$dst),
+                       (implicit EFLAGS)]>;
   def SUB16mi8 : Ii8<0x83, MRM5m, (outs), (ins i16mem:$dst, i16i8imm :$src2), 
                      "sub{w}\t{$src2, $dst|$dst, $src2}",
                      [(store (sub (load addr:$dst), i16immSExt8:$src2),
-                             addr:$dst)]>, OpSize;
+                             addr:$dst),
+                      (implicit EFLAGS)]>, OpSize;
   def SUB32mi8 : Ii8<0x83, MRM5m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
                      "sub{l}\t{$src2, $dst|$dst, $src2}",
                      [(store (sub (load addr:$dst), i32immSExt8:$src2),
-                             addr:$dst)]>;
-
-  // Memory-Integer Subtraction with Overflow
-  def SUBOvf8mi   : Ii8<0x80, MRM5m, (outs), (ins i8mem :$dst, i8imm:$src2), 
-                        "sub{b}\t{$src2, $dst|$dst, $src2}",
-                        [(store (X86sub_ovf (loadi8 addr:$dst), imm:$src2),
-                                addr:$dst),
-                         (implicit EFLAGS)]>;
-  def SUBOvf16mi  : Ii16<0x81, MRM5m, (outs), (ins i16mem:$dst, i16imm:$src2), 
-                         "sub{w}\t{$src2, $dst|$dst, $src2}",
-                         [(store (X86sub_ovf (loadi16 addr:$dst), imm:$src2),
-                                 addr:$dst),
-                          (implicit EFLAGS)]>, OpSize;
-  def SUBOvf32mi  : Ii32<0x81, MRM5m, (outs), (ins i32mem:$dst, i32imm:$src2), 
-                         "sub{l}\t{$src2, $dst|$dst, $src2}",
-                         [(store (X86sub_ovf (loadi32 addr:$dst), imm:$src2),
-                                             addr:$dst),
-                          (implicit EFLAGS)]>;
-  def SUBOvf16mi8 : Ii8<0x83, MRM5m, (outs), (ins i16mem:$dst, i16i8imm :$src2), 
-                        "sub{w}\t{$src2, $dst|$dst, $src2}",
-                        [(store (X86sub_ovf (load addr:$dst),i16immSExt8:$src2),
-                                            addr:$dst),
-                         (implicit EFLAGS)]>, OpSize;
-  def SUBOvf32mi8 : Ii8<0x83, MRM5m, (outs), (ins i32mem:$dst, i32i8imm :$src2), 
-                        "sub{l}\t{$src2, $dst|$dst, $src2}",
-                        [(store (X86sub_ovf (load addr:$dst),i32immSExt8:$src2),
-                                            addr:$dst),
-                         (implicit EFLAGS)]>;
+                             addr:$dst),
+                      (implicit EFLAGS)]>;
 }
 
 let Uses = [EFLAGS] in {
@@ -2380,143 +2212,77 @@ def SBB32ri8 : Ii8<0x83, MRM3r, (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src
 
 let Defs = [EFLAGS] in {
 let isCommutable = 1 in {  // X = IMUL Y, Z --> X = IMUL Z, Y
-// Register-Register Integer Multiply
+// Register-Register Signed Integer Multiply
 def IMUL16rr : I<0xAF, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src1,GR16:$src2),
                  "imul{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (mul GR16:$src1, GR16:$src2))]>, TB, OpSize;
+                 [(set GR16:$dst, (mul GR16:$src1, GR16:$src2)),
+                  (implicit EFLAGS)]>, TB, OpSize;
 def IMUL32rr : I<0xAF, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src1,GR32:$src2),
                  "imul{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (mul GR32:$src1, GR32:$src2))]>, TB;
-
-// Register-Register Integer Multiply
-def IMULOvf16rr : I<0xAF, MRMSrcReg, (outs GR16:$dst),
-                                     (ins GR16:$src1, GR16:$src2),
-                    "imul{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (X86mul_ovf GR16:$src1, GR16:$src2)),
-                     (implicit EFLAGS)]>, TB, OpSize;
-def IMULOvf32rr : I<0xAF, MRMSrcReg, (outs GR32:$dst),
-                                     (ins GR32:$src1, GR32:$src2),
-                    "imul{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (X86mul_ovf GR32:$src1, GR32:$src2)),
-                     (implicit EFLAGS)]>, TB;
+                 [(set GR32:$dst, (mul GR32:$src1, GR32:$src2)),
+                  (implicit EFLAGS)]>, TB;
 }
 
-// Register-Memory Integer Multiply
+// Register-Memory Signed Integer Multiply
 def IMUL16rm : I<0xAF, MRMSrcMem, (outs GR16:$dst),
                                   (ins GR16:$src1, i16mem:$src2),
                  "imul{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (mul GR16:$src1, (load addr:$src2)))]>,
-                 TB, OpSize;
+                 [(set GR16:$dst, (mul GR16:$src1, (load addr:$src2))),
+                  (implicit EFLAGS)]>, TB, OpSize;
 def IMUL32rm : I<0xAF, MRMSrcMem, (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                  "imul{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (mul GR32:$src1, (load addr:$src2)))]>, TB;
-
-// Register-Memory Integer Multiply with Overflow
-def IMULOvf16rm : I<0xAF, MRMSrcMem, (outs GR16:$dst),
-                                     (ins GR16:$src1, i16mem:$src2),
-                    "imul{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (X86mul_ovf GR16:$src1,(load addr:$src2))),
-                     (implicit EFLAGS)]>,
-                    TB, OpSize;
-def IMULOvf32rm : I<0xAF, MRMSrcMem, (outs GR32:$dst),
-                                     (ins GR32:$src1, i32mem:$src2),
-                    "imul{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (X86mul_ovf GR32:$src1,(load addr:$src2))),
-                     (implicit EFLAGS)]>, TB;
+                 [(set GR32:$dst, (mul GR32:$src1, (load addr:$src2))),
+                  (implicit EFLAGS)]>, TB;
 } // Defs = [EFLAGS]
 } // end Two Address instructions
 
 // Suprisingly enough, these are not two address instructions!
 let Defs = [EFLAGS] in {
-// Register-Integer Integer Multiply
+// Register-Integer Signed Integer Multiply
 def IMUL16rri  : Ii16<0x69, MRMSrcReg,                      // GR16 = GR16*I16
                       (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
                       "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR16:$dst, (mul GR16:$src1, imm:$src2))]>, OpSize;
+                      [(set GR16:$dst, (mul GR16:$src1, imm:$src2)),
+                       (implicit EFLAGS)]>, OpSize;
 def IMUL32rri  : Ii32<0x69, MRMSrcReg,                      // GR32 = GR32*I32
                       (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
                       "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR32:$dst, (mul GR32:$src1, imm:$src2))]>;
+                      [(set GR32:$dst, (mul GR32:$src1, imm:$src2)),
+                       (implicit EFLAGS)]>;
 def IMUL16rri8 : Ii8<0x6B, MRMSrcReg,                       // GR16 = GR16*I8
                      (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
                      "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set GR16:$dst, (mul GR16:$src1, i16immSExt8:$src2))]>,
-                     OpSize;
+                     [(set GR16:$dst, (mul GR16:$src1, i16immSExt8:$src2)),
+                      (implicit EFLAGS)]>, OpSize;
 def IMUL32rri8 : Ii8<0x6B, MRMSrcReg,                       // GR32 = GR32*I8
                      (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
                      "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set GR32:$dst, (mul GR32:$src1, i32immSExt8:$src2))]>;
+                     [(set GR32:$dst, (mul GR32:$src1, i32immSExt8:$src2)),
+                      (implicit EFLAGS)]>;
 
-// Register-Integer Integer Multiply with Overflow
-def IMULOvf16rri  : Ii16<0x69, MRMSrcReg,                   // GR16 = GR16*I16
-                        (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
-                        "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set GR16:$dst, (X86mul_ovf GR16:$src1, imm:$src2)),
-                         (implicit EFLAGS)]>, OpSize;
-def IMULOvf32rri  : Ii32<0x69, MRMSrcReg,                   // GR32 = GR32*I32
-                        (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
-                        "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set GR32:$dst, (X86mul_ovf GR32:$src1, imm:$src2)),
-                         (implicit EFLAGS)]>;
-def IMULOvf16rri8 : Ii8<0x6B, MRMSrcReg,                    // GR16 = GR16*I8
-                       (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
-                       "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       [(set GR16:$dst, (X86mul_ovf GR16:$src1,
-                                         i16immSExt8:$src2)),
-                        (implicit EFLAGS)]>, OpSize;
-def IMULOvf32rri8 : Ii8<0x6B, MRMSrcReg,                    // GR32 = GR32*I8
-                       (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
-                       "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       [(set GR32:$dst, (X86mul_ovf GR32:$src1,
-                                         i32immSExt8:$src2)),
-                        (implicit EFLAGS)]>;
-
-// Memory-Integer Integer Multiply
+// Memory-Integer Signed Integer Multiply
 def IMUL16rmi  : Ii16<0x69, MRMSrcMem,                      // GR16 = [mem16]*I16
                       (outs GR16:$dst), (ins i16mem:$src1, i16imm:$src2),
                       "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR16:$dst, (mul (load addr:$src1), imm:$src2))]>,
-                      OpSize;
+                      [(set GR16:$dst, (mul (load addr:$src1), imm:$src2)),
+                       (implicit EFLAGS)]>, OpSize;
 def IMUL32rmi  : Ii32<0x69, MRMSrcMem,                      // GR32 = [mem32]*I32
                       (outs GR32:$dst), (ins i32mem:$src1, i32imm:$src2),
                       "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR32:$dst, (mul (load addr:$src1), imm:$src2))]>;
+                      [(set GR32:$dst, (mul (load addr:$src1), imm:$src2)),
+                       (implicit EFLAGS)]>;
 def IMUL16rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR16 = [mem16]*I8
                      (outs GR16:$dst), (ins i16mem:$src1, i16i8imm :$src2),
                      "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                      [(set GR16:$dst, (mul (load addr:$src1),
-                                       i16immSExt8:$src2))]>, OpSize;
+                                       i16immSExt8:$src2)),
+                      (implicit EFLAGS)]>, OpSize;
 def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR32 = [mem32]*I8
                      (outs GR32:$dst), (ins i32mem:$src1, i32i8imm: $src2),
                      "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                      [(set GR32:$dst, (mul (load addr:$src1),
-                                           i32immSExt8:$src2))]>;
-
-// Memory-Integer Integer Multiply with Overflow
-def IMULOvf16rmi  : Ii16<0x69, MRMSrcMem,                   // GR16 = [mem16]*I16
-                        (outs GR16:$dst), (ins i16mem:$src1, i16imm:$src2),
-                        "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set GR16:$dst, (X86mul_ovf (load addr:$src1),
-                                                     imm:$src2)),
-                         (implicit EFLAGS)]>, OpSize;
-def IMULOvf32rmi  : Ii32<0x69, MRMSrcMem,                   // GR32 = [mem32]*I32
-                        (outs GR32:$dst), (ins i32mem:$src1, i32imm:$src2),
-                        "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set GR32:$dst, (X86mul_ovf (load addr:$src1),
-                                                     imm:$src2)),
-                         (implicit EFLAGS)]>;
-def IMULOvf16rmi8 : Ii8<0x6B, MRMSrcMem,                    // GR16 = [mem16]*I8
-                        (outs GR16:$dst), (ins i16mem:$src1, i16i8imm :$src2),
-                        "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set GR16:$dst, (X86mul_ovf (load addr:$src1),
-                                                     i16immSExt8:$src2)),
-                         (implicit EFLAGS)]>, OpSize;
-def IMULOvf32rmi8 : Ii8<0x6B, MRMSrcMem,                    // GR32 = [mem32]*I8
-                        (outs GR32:$dst), (ins i32mem:$src1, i32i8imm: $src2),
-                        "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set GR32:$dst, (X86mul_ovf (load addr:$src1),
-                                                     i32immSExt8:$src2)),
-                         (implicit EFLAGS)]>;
+                                           i32immSExt8:$src2)),
+                      (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
@@ -3492,6 +3258,207 @@ def : Pat<(shld GR16:$src1, (i8 imm:$amt1), GR16:$src2, (i8 imm:$amt2)),
 def : Pat<(store (shld (loadi16 addr:$dst), (i8 imm:$amt1),
                        GR16:$src2, (i8 imm:$amt2)), addr:$dst),
           (SHLD16mri8 addr:$dst, GR16:$src2, (i8 imm:$amt1))>;
+
+//===----------------------------------------------------------------------===//
+// Overflow Patterns
+//===----------------------------------------------------------------------===//
+
+// Register-Register Addition with Overflow
+def : Pat<(parallel (X86add_ovf GR8:$src1, GR8:$src2),
+                    (implicit EFLAGS)),
+          (ADD8rr GR8:$src1, GR8:$src2)>;
+
+// Register-Register Addition with Overflow
+def : Pat<(parallel (X86add_ovf GR16:$src1, GR16:$src2),
+                    (implicit EFLAGS)),
+          (ADD16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(parallel (X86add_ovf GR32:$src1, GR32:$src2),
+                    (implicit EFLAGS)),
+          (ADD32rr GR32:$src1, GR32:$src2)>;
+
+// Register-Memory Addition with Overflow
+def : Pat<(parallel (X86add_ovf GR8:$src1, (load addr:$src2)),
+                    (implicit EFLAGS)),
+          (ADD8rm GR8:$src1, addr:$src2)>;
+def : Pat<(parallel (X86add_ovf GR16:$src1, (load addr:$src2)),
+                    (implicit EFLAGS)),
+          (ADD16rm GR16:$src1, addr:$src2)>;
+def : Pat<(parallel (X86add_ovf GR32:$src1, (load addr:$src2)),
+                    (implicit EFLAGS)),
+          (ADD32rm GR32:$src1, addr:$src2)>;
+
+// Register-Integer Addition with Overflow
+def : Pat<(parallel (X86add_ovf GR8:$src1, imm:$src2),
+                    (implicit EFLAGS)),
+          (ADD8ri GR8:$src1, imm:$src2)>;
+
+// Register-Integer Addition with Overflow
+def : Pat<(parallel (X86add_ovf GR16:$src1, imm:$src2),
+                    (implicit EFLAGS)),
+          (ADD16ri GR16:$src1, imm:$src2)>;
+def : Pat<(parallel (X86add_ovf GR32:$src1, imm:$src2),
+                    (implicit EFLAGS)),
+          (ADD32ri GR32:$src1, imm:$src2)>;
+def : Pat<(parallel (X86add_ovf GR16:$src1, i16immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (ADD16ri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(parallel (X86add_ovf GR32:$src1, i32immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
+
+// Memory-Register Addition with Overflow
+def : Pat<(parallel (store (X86add_ovf (load addr:$dst), GR8:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (ADD8mr addr:$dst, GR8:$src2)>;
+def : Pat<(parallel (store (X86add_ovf (load addr:$dst), GR16:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (ADD16mr addr:$dst, GR16:$src2)>;
+def : Pat<(parallel (store (X86add_ovf (load addr:$dst), GR32:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (ADD32mr addr:$dst, GR32:$src2)>;
+def : Pat<(parallel (store (X86add_ovf (loadi8 addr:$dst), imm:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (ADD8mi addr:$dst, imm:$src2)>;
+def : Pat<(parallel (store (X86add_ovf (loadi16 addr:$dst), imm:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (ADD16mi addr:$dst, imm:$src2)>;
+def : Pat<(parallel (store (X86add_ovf (loadi32 addr:$dst), imm:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (ADD32mi addr:$dst, imm:$src2)>;
+def : Pat<(parallel (store (X86add_ovf (load addr:$dst), i16immSExt8:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (ADD16mi8 addr:$dst, i16immSExt8:$src2)>;
+def : Pat<(parallel (store (X86add_ovf (load addr:$dst), i32immSExt8:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (ADD32mi8 addr:$dst, i32immSExt8:$src2)>;
+
+// Register-Register Subtraction with Overflow
+def : Pat<(parallel (X86sub_ovf GR8:$src1, GR8:$src2),
+                    (implicit EFLAGS)),
+          (SUB8rr GR8:$src1, GR8:$src2)>;
+def : Pat<(parallel (X86sub_ovf GR16:$src1, GR16:$src2),
+                    (implicit EFLAGS)),
+          (SUB16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(parallel (X86sub_ovf GR32:$src1, GR32:$src2),
+                    (implicit EFLAGS)),
+          (SUB32rr GR32:$src1, GR32:$src2)>;
+
+// Register-Memory Subtraction with Overflow
+def : Pat<(parallel (X86sub_ovf GR8:$src1, (load addr:$src2)),
+                    (implicit EFLAGS)),
+          (SUB8rm GR8:$src1, addr:$src2)>;
+def : Pat<(parallel (X86sub_ovf GR16:$src1, (load addr:$src2)),
+                    (implicit EFLAGS)),
+          (SUB16rm GR16:$src1, addr:$src2)>;
+def : Pat<(parallel (X86sub_ovf GR32:$src1, (load addr:$src2)),
+                    (implicit EFLAGS)),
+          (SUB32rm GR32:$src1, addr:$src2)>;
+
+// Register-Integer Subtraction with Overflow
+def : Pat<(parallel (X86sub_ovf GR8:$src1, imm:$src2),
+                    (implicit EFLAGS)),
+          (SUB8ri GR8:$src1, imm:$src2)>;
+def : Pat<(parallel (X86sub_ovf GR16:$src1, imm:$src2),
+                    (implicit EFLAGS)),
+          (SUB16ri GR16:$src1, imm:$src2)>;
+def : Pat<(parallel (X86sub_ovf GR32:$src1, imm:$src2),
+                    (implicit EFLAGS)),
+          (SUB32ri GR32:$src1, imm:$src2)>;
+def : Pat<(parallel (X86sub_ovf GR16:$src1, i16immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (SUB16ri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(parallel (X86sub_ovf GR32:$src1, i32immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (SUB32ri8 GR32:$src1, i32immSExt8:$src2)>;
+
+// Memory-Register Subtraction with Overflow
+def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), GR8:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (SUB8mr addr:$dst, GR8:$src2)>;
+def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), GR16:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (SUB16mr addr:$dst, GR16:$src2)>;
+def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), GR32:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (SUB32mr addr:$dst, GR32:$src2)>;
+
+// Memory-Integer Subtraction with Overflow
+def : Pat<(parallel (store (X86sub_ovf (loadi8 addr:$dst), imm:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (SUB8mi addr:$dst, imm:$src2)>;
+def : Pat<(parallel (store (X86sub_ovf (loadi16 addr:$dst), imm:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (SUB16mi addr:$dst, imm:$src2)>;
+def : Pat<(parallel (store (X86sub_ovf (loadi32 addr:$dst), imm:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (SUB32mi addr:$dst, imm:$src2)>;
+def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), i16immSExt8:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (SUB16mi8 addr:$dst, i16immSExt8:$src2)>;
+def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), i32immSExt8:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (SUB32mi8 addr:$dst, i32immSExt8:$src2)>;
+
+
+// Register-Register Signed Integer Multiply with Overflow
+def : Pat<(parallel (X86smul_ovf GR16:$src1, GR16:$src2),
+                    (implicit EFLAGS)),
+          (IMUL16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(parallel (X86smul_ovf GR32:$src1, GR32:$src2),
+                    (implicit EFLAGS)),
+          (IMUL32rr GR32:$src1, GR32:$src2)>;
+
+// Register-Memory Signed Integer Multiply with Overflow
+def : Pat<(parallel (X86smul_ovf GR16:$src1, (load addr:$src2)),
+                    (implicit EFLAGS)),
+          (IMUL16rm GR16:$src1, addr:$src2)>;
+def : Pat<(parallel (X86smul_ovf GR32:$src1, (load addr:$src2)),
+                    (implicit EFLAGS)),
+          (IMUL32rm GR32:$src1, addr:$src2)>;
+
+// Register-Integer Signed Integer Multiply with Overflow
+def : Pat<(parallel (X86smul_ovf GR16:$src1, imm:$src2),
+                    (implicit EFLAGS)),
+          (IMUL16rri GR16:$src1, imm:$src2)>;
+def : Pat<(parallel (X86smul_ovf GR32:$src1, imm:$src2),
+                    (implicit EFLAGS)),
+          (IMUL32rri GR32:$src1, imm:$src2)>;
+def : Pat<(parallel (X86smul_ovf GR16:$src1, i16immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (IMUL16rri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(parallel (X86smul_ovf GR32:$src1, i32immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (IMUL32rri8 GR32:$src1, i32immSExt8:$src2)>;
+
+// Memory-Integer Signed Integer Multiply with Overflow
+def : Pat<(parallel (X86smul_ovf (load addr:$src1), imm:$src2),
+                    (implicit EFLAGS)),
+          (IMUL16rmi addr:$src1, imm:$src2)>;
+def : Pat<(parallel (X86smul_ovf (load addr:$src1), imm:$src2),
+                    (implicit EFLAGS)),
+          (IMUL32rmi addr:$src1, imm:$src2)>;
+def : Pat<(parallel (X86smul_ovf (load addr:$src1), i16immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (IMUL16rmi8 addr:$src1, i16immSExt8:$src2)>;
+def : Pat<(parallel (X86smul_ovf (load addr:$src1), i32immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (IMUL32rmi8 addr:$src1, i32immSExt8:$src2)>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Stack Support

@@ -5217,9 +5217,10 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
 
   if (Cond.getOpcode() == ISD::SETCC)
     Cond = LowerSETCC(Cond, DAG);
-  else if (Cond.getOpcode() == X86ISD::ADD ||
-           Cond.getOpcode() == X86ISD::SUB ||
-           Cond.getOpcode() == X86ISD::MUL)
+  else if (Cond.getOpcode() == X86ISD::ADD  ||
+           Cond.getOpcode() == X86ISD::SUB  ||
+           Cond.getOpcode() == X86ISD::SMUL ||
+           Cond.getOpcode() == X86ISD::UMUL)
     Cond = LowerXALUO(Cond, DAG);
 
   // If condition flag is set by a X86ISD::CMP, then use it as the condition
@@ -6165,11 +6166,11 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) {
     Cond = X86::COND_C;
     break;
   case ISD::SMULO:
-    BaseOp = X86ISD::MUL;
+    BaseOp = X86ISD::SMUL;
     Cond = X86::COND_O;
     break;
   case ISD::UMULO:
-    BaseOp = X86ISD::MUL;
+    BaseOp = X86ISD::UMUL;
     Cond = X86::COND_C;
     break;
   }
@@ -6497,7 +6498,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PCMPGTQ:            return "X86ISD::PCMPGTQ";
   case X86ISD::ADD:                return "X86ISD::ADD";
   case X86ISD::SUB:                return "X86ISD::SUB";
-  case X86ISD::MUL:                return "X86ISD::MUL";
+  case X86ISD::SMUL:               return "X86ISD::SMUL";
+  case X86ISD::UMUL:               return "X86ISD::UMUL";
   }
 }
 

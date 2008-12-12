@@ -229,9 +229,9 @@ namespace llvm {
       PCMPEQB, PCMPEQW, PCMPEQD, PCMPEQQ,
       PCMPGTB, PCMPGTW, PCMPGTD, PCMPGTQ,
 
-      // ADD, SUB, MUL - Arithmetic operations with overflow/carry
+      // ADD, SUB, SMUL, UMUL - Arithmetic operations with overflow/carry
       // intrinsics.
-      ADD, SUB, MUL
+      ADD, SUB, SMUL, UMUL
     };
   }
 
