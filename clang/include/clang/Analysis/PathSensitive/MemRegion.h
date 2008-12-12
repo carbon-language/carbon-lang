@@ -420,8 +420,8 @@ class ElementRegion : public TypedRegion {
 
   ElementRegion(SVal Idx, const MemRegion* sReg)
     : TypedRegion(sReg, ElementRegionKind), Index(Idx) {
-    assert(isa<nonloc::ConcreteInt>(&Idx) &&
-           cast<nonloc::ConcreteInt>(&Idx)->getValue().isSigned() &&
+    assert((!isa<nonloc::ConcreteInt>(&Idx) ||
+           cast<nonloc::ConcreteInt>(&Idx)->getValue().isSigned()) &&
            "The index must be signed");
   }
 
