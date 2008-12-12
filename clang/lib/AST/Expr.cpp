@@ -1017,12 +1017,21 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   case ConditionalOperatorClass: {
     const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
     
-    if (!Exp->getCond()->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
+    const Expr *Cond = Exp->getCond();
+    
+    if (!Cond->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
       return false;
     
     const Expr *TrueExp  = Exp->getLHS();
     const Expr *FalseExp = Exp->getRHS();
     if (Result == 0) std::swap(TrueExp, FalseExp);
+    
+    // If the condition (ignoring parens) is a __builtin_constant_p call, 
+    // then only the true side is actually considered in an integer constant
+    // expression.  This is an important GNU extension.
+    if (const CallExpr *CallCE = dyn_cast<CallExpr>(Cond->IgnoreParenCasts()))
+      if (CallCE->isBuiltinCall() == Builtin::BI__builtin_constant_p)
+        FalseExp = 0;
     
     // Evaluate the false one first, discard the result.
     if (FalseExp && !FalseExp->isIntegerConstantExpr(Result, Ctx, Loc, false))
