@@ -20,6 +20,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Type.h"
 using namespace clang;
 using namespace CodeGen;
@@ -160,13 +161,37 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       DeclPtr = GenerateStaticBlockVarDecl(D, true, Class);
     }
   } else {
-    CGM.ErrorUnsupported(&D, "variable-length array");
+    const VariableArrayType *VAT = getContext().getAsVariableArrayType(Ty);
 
-    // FIXME: VLA: Add VLA support. For now just make up enough to let
-    // the compile go through.
-    const llvm::Type *LTy = ConvertType(Ty);
+    if (!StackSaveValues.back()) {
+      // Save the stack.
+      const llvm::Type *LTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+      llvm::Value *Stack = CreateTempAlloca(LTy, "saved_stack");
+      
+      llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stacksave);
+      llvm::Value *V = Builder.CreateCall(F);
+      
+      Builder.CreateStore(V, Stack);
+      
+      StackSaveValues.back() = Stack;
+    }
+    // Get the element type.
+    const llvm::Type *LElemTy = ConvertType(Ty);    
+    const llvm::Type *LElemPtrTy =
+      llvm::PointerType::get(LElemTy, D.getType().getAddressSpace());
+
+    llvm::Value *VLASize = GetVLASize(VAT);
+
+    // Allocate memory for the array.
+    llvm::Value *VLA = Builder.CreateAlloca(llvm::Type::Int8Ty, VLASize, "vla");
+    VLA = Builder.CreateBitCast(VLA, LElemPtrTy, "tmp");
+
     llvm::AllocaInst *Alloc = 
-      CreateTempAlloca(LTy, D.getIdentifier()->getName());
+      CreateTempAlloca(LElemPtrTy, D.getIdentifier()->getName());
+    
+    // FIXME: Volatile?
+    Builder.CreateStore(VLA, Alloc);
+    
     DeclPtr = Alloc;
   }
   

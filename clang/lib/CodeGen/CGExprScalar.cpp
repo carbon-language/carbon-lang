@@ -663,7 +663,14 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   if (TypeToSize->isVoidType() || TypeToSize->isFunctionType())
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, 1));
   
-  /// FIXME: This doesn't handle VLAs yet!
+  if (const VariableArrayType *VAT = 
+        CGF.getContext().getAsVariableArrayType(TypeToSize)) {
+    if (E->isSizeOf())
+      return CGF.GetVLASize(VAT);
+    else
+      assert(0 && "alignof VLAs not implemented yet");
+  }
+  
   std::pair<uint64_t, unsigned> Info = CGF.getContext().getTypeInfo(TypeToSize);
   
   uint64_t Val = E->isSizeOf() ? Info.first : Info.second;
