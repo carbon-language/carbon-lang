@@ -163,17 +163,45 @@ bool PTHLexer::SkipBlock() {
   assert(CurPPCondPtr && "No cached PP conditional information.");
   assert(LastHashTokPtr && "No known '#' token.");
   
-  const char* Next = 0;
+  const char* HashEntryI = 0;
   uint32_t Offset; 
   uint32_t TableIdx;
   
   do {
+    // Read the token offset from the side-table.
     Offset = Read32(CurPPCondPtr);
+    
+    // Read the target table index from the side-table.    
     TableIdx = Read32(CurPPCondPtr);
-    Next = TokBuf + Offset;
+    
+    // Compute the actual memory address of the '#' token data for this entry.
+    HashEntryI = TokBuf + Offset;
+
+    // Optmization: "Sibling jumping".  #if...#else...#endif blocks can
+    //  contain nested blocks.  In the side-table we can jump over these
+    //  nested blocks instead of doing a linear search if the next "sibling"
+    //  entry is not at a location greater than LastHashTokPtr.
+    if (HashEntryI < LastHashTokPtr && TableIdx) {
+      // In the side-table we are still at an entry for a '#' token that
+      // is earlier than the last one we saw.  Check if the location we would
+      // stride gets us closer.
+      const char* NextPPCondPtr = PPCond + TableIdx*(sizeof(uint32_t)*2);
+      assert(NextPPCondPtr >= CurPPCondPtr);
+      // Read where we should jump to.
+      uint32_t TmpOffset = Read32(NextPPCondPtr);
+      const char* HashEntryJ = TokBuf + TmpOffset;
+      
+      if (HashEntryJ <= LastHashTokPtr) {
+        // Jump directly to the next entry in the side table.
+        HashEntryI = HashEntryJ;
+        Offset = TmpOffset;
+        TableIdx = Read32(NextPPCondPtr);
+        CurPPCondPtr = NextPPCondPtr;
+      }
+    }
   }
-  while (Next < LastHashTokPtr);  
-  assert(Next == LastHashTokPtr && "No PP-cond entry found for '#'");
+  while (HashEntryI < LastHashTokPtr);  
+  assert(HashEntryI == LastHashTokPtr && "No PP-cond entry found for '#'");
   assert(TableIdx && "No jumping from #endifs.");
   
   // Update our side-table iterator.
@@ -182,7 +210,7 @@ bool PTHLexer::SkipBlock() {
   CurPPCondPtr = NextPPCondPtr;
   
   // Read where we should jump to.
-  Next = TokBuf + Read32(NextPPCondPtr);
+  HashEntryI = TokBuf + Read32(NextPPCondPtr);
   uint32_t NextIdx = Read32(NextPPCondPtr);
   
   // By construction NextIdx will be zero if this is a #endif.  This is useful
@@ -199,19 +227,19 @@ bool PTHLexer::SkipBlock() {
   // If we are skipping the first #if block it will be the case that CurPtr
   // already points 'elif'.  Just return.
   
-  if (CurPtr > Next) {
-    assert(CurPtr == Next + DISK_TOKEN_SIZE);
+  if (CurPtr > HashEntryI) {
+    assert(CurPtr == HashEntryI + DISK_TOKEN_SIZE);
     // Did we reach a #endif?  If so, go ahead and consume that token as well.
     if (isEndif)
       CurPtr += DISK_TOKEN_SIZE;
     else
-      LastHashTokPtr = Next;
+      LastHashTokPtr = HashEntryI;
     
     return isEndif;
   }
 
   // Otherwise, we need to advance.  Update CurPtr to point to the '#' token.
-  CurPtr = Next;
+  CurPtr = HashEntryI;
   
   // Update the location of the last observed '#'.  This is useful if we
   // are skipping multiple blocks.
