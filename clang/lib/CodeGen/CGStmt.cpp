@@ -16,8 +16,9 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/TargetInfo.h"
-#include "llvm/InlineAsm.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/InlineAsm.h"
+#include "llvm/Intrinsics.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -129,6 +130,9 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     DI->EmitRegionStart(CurFn, Builder);
   }
 
+  // Push a null stack save value.
+  StackSaveValues.push_back(0);
+  
   for (CompoundStmt::const_body_iterator I = S.body_begin(),
        E = S.body_end()-GetLast; I != E; ++I)
     EmitStmt(*I);
@@ -139,22 +143,33 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     DI->EmitRegionEnd(CurFn, Builder);
   }
 
-  if (!GetLast)
-    return RValue::get(0);
+  RValue RV;
+  if (!GetLast) 
+    RV = RValue::get(0);
+  else {
+    // We have to special case labels here.  They are statements, but when put 
+    // at the end of a statement expression, they yield the value of their
+    // subexpression.  Handle this by walking through all labels we encounter,
+    // emitting them before we evaluate the subexpr.
+    const Stmt *LastStmt = S.body_back();
+    while (const LabelStmt *LS = dyn_cast<LabelStmt>(LastStmt)) {
+      EmitLabel(*LS);
+      LastStmt = LS->getSubStmt();
+    }
   
-  // We have to special case labels here.  They are statements, but when put at
-  // the end of a statement expression, they yield the value of their
-  // subexpression.  Handle this by walking through all labels we encounter,
-  // emitting them before we evaluate the subexpr.
-  const Stmt *LastStmt = S.body_back();
-  while (const LabelStmt *LS = dyn_cast<LabelStmt>(LastStmt)) {
-    EmitLabel(*LS);
-    LastStmt = LS->getSubStmt();
+    EnsureInsertPoint();
+    
+    RV = EmitAnyExpr(cast<Expr>(LastStmt), AggLoc);
+  }
+
+  if (llvm::Value *V = StackSaveValues.pop_back_val()) {
+    V = Builder.CreateLoad(V, "tmp");
+    
+    llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
+    Builder.CreateCall(F, V);
   }
   
-  EnsureInsertPoint();
-
-  return EmitAnyExpr(cast<Expr>(LastStmt), AggLoc);
+  return RV;
 }
 
 void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {

@@ -166,6 +166,11 @@ private:
   /// statement range in current switch instruction.
   llvm::BasicBlock *CaseRangeBlock;
 
+  /// StackSaveValues - A stack(!) of stack save values. When a new scope is
+  /// entered, a null is pushed on this stack. If a VLA is emitted, then 
+  /// the return value of llvm.stacksave() is stored at the top of this stack.
+  llvm::SmallVector<llvm::Value*, 8> StackSaveValues;
+  
 public:
   CodeGenFunction(CodeGenModule &cgm);
   
