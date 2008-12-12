@@ -597,17 +597,19 @@ Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
   case tok::kw___PRETTY_FUNCTION__: IT = PredefinedExpr::PrettyFunction; break;
   }
 
-  // Verify that this is in a function context.
-  if (getCurFunctionOrMethodDecl() == 0)
-    return Diag(Loc, diag::err_predef_outside_function);
-  
   // Pre-defined identifiers are of type char[x], where x is the length of the
   // string.
   unsigned Length;
   if (FunctionDecl *FD = getCurFunctionDecl())
     Length = FD->getIdentifier()->getLength();
-  else
-    Length = getCurMethodDecl()->getSynthesizedMethodSize();
+  else if (ObjCMethodDecl *MD = getCurMethodDecl())
+    Length = MD->getSynthesizedMethodSize();
+  else {
+    Diag(Loc, diag::ext_predef_outside_function);
+    // __PRETTY_FUNCTION__ -> "top level", the others produce an empty string.
+    Length = IT == PredefinedExpr::PrettyFunction ? strlen("top level") : 0;
+  }
+  
   
   llvm::APInt LengthI(32, Length + 1);
   QualType ResTy = Context.CharTy.getQualifiedType(QualType::Const);

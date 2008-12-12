@@ -676,7 +676,7 @@ DIAG(warn_octal_escape_too_large, WARNING,
 DIAG(err_hex_escape_no_digits, ERROR,
      "\\x used with no following hex digits")
      
-DIAG(err_predef_outside_function, ERROR,
+DIAG(ext_predef_outside_function, WARNING,
      "predefined identifier is only valid inside function")
 
 // Declarations.
