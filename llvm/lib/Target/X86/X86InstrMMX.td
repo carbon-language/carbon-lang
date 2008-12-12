@@ -681,3 +681,14 @@ def : Pat<(v8i8 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
                                                   (iPTR 0))))),
           (v8i8 (MMX_MOVDQ2Qrr VR128:$src))>;
 
+// CMOV* - Used to implement the SELECT DAG operation.  Expanded by the
+// scheduler into a branch sequence.
+// These are expanded by the scheduler.
+let Uses = [EFLAGS], usesCustomDAGSchedInserter = 1 in {
+  def CMOV_V1I64 : I<0, Pseudo,
+                    (outs VR64:$dst), (ins VR64:$t, VR64:$f, i8imm:$cond),
+                    "#CMOV_V1I64 PSEUDO!",
+                    [(set VR64:$dst,
+                      (v1i64 (X86cmov VR64:$t, VR64:$f, imm:$cond,
+                                          EFLAGS)))]>;
+}

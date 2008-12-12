@@ -3937,6 +3937,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           if (Tmp1.getNode()) Result = Tmp1;
         }
         break;
+      case TargetLowering::Expand:
+        assert(Result.getValueType().isVector() && "must be vector type");
+        // Unroll the truncate.  We should do better.
+        Result = LegalizeOp(UnrollVectorOp(Result));
       }
       break;
     case Expand:

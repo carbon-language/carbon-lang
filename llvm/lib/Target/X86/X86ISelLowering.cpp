@@ -650,6 +650,13 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v1i64, Custom);
 
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i16, Custom);
+
+    setTruncStoreAction(MVT::v8i16, MVT::v8i8, Expand);
+    setOperationAction(ISD::TRUNCATE,           MVT::v8i8, Expand);
+    setOperationAction(ISD::SELECT,             MVT::v8i8, Promote);
+    setOperationAction(ISD::SELECT,             MVT::v4i16, Promote);
+    setOperationAction(ISD::SELECT,             MVT::v2i32, Promote);
+    setOperationAction(ISD::SELECT,             MVT::v1i64, Custom);
   }
 
   if (Subtarget->hasSSE1()) {
@@ -6960,6 +6967,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
+  case X86::CMOV_V1I64:
   case X86::CMOV_FR32:
   case X86::CMOV_FR64:
   case X86::CMOV_V4F32:
