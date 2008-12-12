@@ -2924,12 +2924,8 @@ bool ScalarEvolutionsImpl::potentialInfiniteLoop(SCEV *Stride, SCEV *RHS,
   if (!R)
     return true;
 
-  if (isSigned) {
-    if (SC->getValue()->isOne())
-      return R->getValue()->isMaxValue(true);
-
+  if (isSigned)
     return true;  // XXX: because we don't have an sdiv scev.
-  }
 
   // If negative, it wraps around every iteration, but we don't care about that.
   APInt S = SC->getValue()->getValue().abs();
@@ -2975,6 +2971,14 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
     // run (m-n)/s times.
     SCEVHandle End = RHS;
 
+    if (!executesAtLeastOnce(L, isSigned, trueWhenEqual,
+                             SE.getMinusSCEV(Start, One), RHS)) {
+      // If not, we get the value of the LHS in the first iteration in which
+      // the above condition doesn't hold.  This equals to max(m,n).
+      End = isSigned ? SE.getSMaxExpr(RHS, Start)
+                     : SE.getUMaxExpr(RHS, Start);
+    }
+
     // If the expression is less-than-or-equal to, we need to extend the
     // loop by one iteration.
     //
@@ -2983,16 +2987,12 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
     // division would equal one, but the loop runs twice putting the
     // induction variable at 12.
 
-    if (trueWhenEqual)
-      End = SE.getAddExpr(End, One);
-
-    if (!executesAtLeastOnce(L, isSigned, trueWhenEqual,
-                             SE.getMinusSCEV(Start, One), RHS)) {
-      // If not, we get the value of the LHS in the first iteration in which
-      // the above condition doesn't hold.  This equals to max(m,n).
-      End = isSigned ? SE.getSMaxExpr(End, Start)
-                     : SE.getUMaxExpr(End, Start);
-    }
+    if (!trueWhenEqual)
+      // (Stride - 1) is correct only because we know it's unsigned.
+      // What we really want is to decrease the magnitude of Stride by one.
+      Start = SE.getMinusSCEV(Start, SE.getMinusSCEV(Stride, One));
+    else
+      Start = SE.getMinusSCEV(Start, Stride);
 
     // Finally, we subtract these two values to get the number of times the
     // backedge is executed: max(m,n)-n.
