@@ -85,6 +85,10 @@ that define the following options:
 
 Use Clang instead of llvm-gcc.
 
+=item B<-opt>
+
+Enable optimization with B<opt>.
+
 =item B<-I> I<directory>
 
 Add a directory to the header file search path.  This option can be
@@ -113,6 +117,10 @@ Pass options to assembler.
 =item B<-Wl>
 
 Pass options to linker.
+
+=item B<-Wo>
+
+Pass options to opt.
 
 =back
 
