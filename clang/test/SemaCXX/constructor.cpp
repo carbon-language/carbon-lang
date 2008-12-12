@@ -18,3 +18,6 @@ class Foo {
 
   int Foo(int, int); // expected-error{{constructor cannot have a return type}}
 };
+
+Foo::Foo(const Foo&) { }
+

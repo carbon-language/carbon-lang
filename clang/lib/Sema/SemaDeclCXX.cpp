@@ -1104,16 +1104,16 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
   // Check default arguments on the constructor
   CheckCXXDefaultArguments(ConDecl);
 
-  CXXRecordDecl *ClassDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext);
-  if (!ClassDecl) {
-    ConDecl->setInvalidDecl();
-    return ConDecl;
-  }
+  // Set the lexical context of this constructor
+  ConDecl->setLexicalDeclContext(CurContext);
+
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(ConDecl->getDeclContext());
 
   // Make sure this constructor is an overload of the existing
   // constructors.
   OverloadedFunctionDecl::function_iterator MatchedDecl;
-  if (!IsOverload(ConDecl, ClassDecl->getConstructors(), MatchedDecl)) {
+  if (!IsOverload(ConDecl, ClassDecl->getConstructors(), MatchedDecl) &&
+      CurContext == (*MatchedDecl)->getLexicalDeclContext()) {
     Diag(ConDecl->getLocation(), diag::err_constructor_redeclared)
       << SourceRange(ConDecl->getLocation());
     Diag((*MatchedDecl)->getLocation(), diag::note_previous_declaration)
@@ -1121,7 +1121,6 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
     ConDecl->setInvalidDecl();
     return ConDecl;
   }
-
 
   // C++ [class.copy]p3:
   //   A declaration of a constructor for a class X is ill-formed if
@@ -1155,16 +1154,23 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
 Sema::DeclTy *Sema::ActOnDestructorDeclarator(CXXDestructorDecl *Destructor) {
   assert(Destructor && "Expected to receive a destructor declaration");
 
-  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CurContext);
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Destructor->getDeclContext());
+
+  // Set the lexical context of this destructor
+  Destructor->setLexicalDeclContext(CurContext);
 
   // Make sure we aren't redeclaring the destructor.
   if (CXXDestructorDecl *PrevDestructor = ClassDecl->getDestructor()) {
-    Diag(Destructor->getLocation(), diag::err_destructor_redeclared);
-    Diag(PrevDestructor->getLocation(),
-         PrevDestructor->isThisDeclarationADefinition() ?
-             diag::note_previous_definition
-           : diag::note_previous_declaration);
-    Destructor->setInvalidDecl();
+    if (CurContext == PrevDestructor->getLexicalDeclContext()) {
+      Diag(Destructor->getLocation(), diag::err_destructor_redeclared);
+      Diag(PrevDestructor->getLocation(),
+           PrevDestructor->isThisDeclarationADefinition() ?
+               diag::note_previous_definition
+             : diag::note_previous_declaration);
+      Destructor->setInvalidDecl();
+    }
+
+    // FIXME: Just drop the definition (for now).
     return Destructor;
   }
 
@@ -1179,7 +1185,10 @@ Sema::DeclTy *Sema::ActOnDestructorDeclarator(CXXDestructorDecl *Destructor) {
 Sema::DeclTy *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
   assert(Conversion && "Expected to receive a conversion function declaration");
 
-  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CurContext);
+  // Set the lexical context of this conversion function
+  Conversion->setLexicalDeclContext(CurContext);
+
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Conversion->getDeclContext());
 
   // Make sure we aren't redeclaring the conversion function.
   QualType ConvType = Context.getCanonicalType(Conversion->getConversionType());

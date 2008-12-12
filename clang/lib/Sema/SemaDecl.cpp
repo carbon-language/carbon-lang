@@ -246,6 +246,24 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
   } else if (LookupCtx) {
     assert(getLangOptions().CPlusPlus && "No qualified name lookup in C");
 
+    switch (Name.getNameKind()) {
+    case DeclarationName::CXXConstructorName:
+      if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(LookupCtx))
+        return const_cast<CXXRecordDecl *>(Record)->getConstructors();
+      else
+        return 0;
+
+    case DeclarationName::CXXDestructorName:
+      if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(LookupCtx))
+        return Record->getDestructor();
+      else
+        return 0;
+
+    default:
+      // Normal name lookup.
+      break;
+    }
+
     // Perform qualified name lookup into the LookupCtx.
     // FIXME: Will need to look into base classes and such.
     DeclContext::lookup_const_iterator I, E;
@@ -932,6 +950,15 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // after the point of declaration in a namespace that encloses the
     // declarations namespace.
     //
+    // FIXME: We need to perform this check later, once we know that
+    // we've actually found a redeclaration. Otherwise, just the fact
+    // that there is some entity with the same name will suppress this
+    // diagnostic, e.g., we fail to diagnose:
+    //   class X {
+    //     void f();
+    //   };
+    //
+    //   void X::f(int) { } // ill-formed, but we don't complain.
     if (PrevDecl == 0) {
       // No previous declaration in the qualifying scope.
       Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)

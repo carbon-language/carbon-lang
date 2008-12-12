@@ -38,3 +38,10 @@ struct F {
 ~; // expected-error {{expected class name}}
 ~undef(); // expected-error {{expected class name}}
 ~F(){} // expected-error {{destructor must be a non-static member function}}
+
+struct G {
+  ~G();
+};
+
+G::~G() { }
+

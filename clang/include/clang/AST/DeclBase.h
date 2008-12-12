@@ -178,10 +178,12 @@ public:
   
   IdentifierNamespace getIdentifierNamespace() const {
     switch (DeclKind) {
-    default: assert(0 && "Unknown decl kind!");
+    default: 
+      if (DeclKind >= FunctionFirst && DeclKind <= FunctionLast)
+        return IDNS_Ordinary;
+      assert(0 && "Unknown decl kind!");
     case ImplicitParam:
     case Typedef:
-    case Function:
     case Var:
     case ParmVar:
     case EnumConstant:
