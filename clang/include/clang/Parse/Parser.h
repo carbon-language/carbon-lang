@@ -640,7 +640,8 @@ private:
   OwningStmtResult ParseDefaultStatement();
   OwningStmtResult ParseCompoundStatement(bool isStmtExpr = false);
   OwningStmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
-  bool ParseParenExprOrCondition(OwningExprResult &CondExp);
+  bool ParseParenExprOrCondition(OwningExprResult &CondExp,
+                                 bool OnlyAllowCondition = false);
   OwningStmtResult ParseIfStatement();
   OwningStmtResult ParseSwitchStatement();
   OwningStmtResult ParseWhileStatement();

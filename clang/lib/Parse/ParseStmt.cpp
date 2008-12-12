@@ -416,7 +416,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 
 /// ParseParenExprOrCondition:
 /// [C  ]     '(' expression ')'
-/// [C++]     '(' condition ')'
+/// [C++]     '(' condition ')'       [not allowed if OnlyAllowCondition=true]
 ///
 /// This function parses and performs error recovery on the specified condition
 /// or expression (depending on whether we're in C++ or C mode).  This function
@@ -425,7 +425,8 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 /// should try to recover harder.  It returns false if the condition is
 /// successfully parsed.  Note that a successful parse can still have semantic
 /// errors in the condition.
-bool Parser::ParseParenExprOrCondition(OwningExprResult &CondExp) {
+bool Parser::ParseParenExprOrCondition(OwningExprResult &CondExp,
+                                       bool OnlyAllowCondition) {
   SourceLocation LParenLoc = ConsumeParen();
   
   if (getLang().CPlusPlus)
@@ -769,8 +770,10 @@ Parser::OwningStmtResult Parser::ParseDoStatement() {
     return StmtError();
   }
 
-  // Parse the condition.
-  OwningExprResult Cond(ParseSimpleParenExpression());
+  // Parse the parenthesized condition.
+  OwningExprResult Cond(Actions);
+  ParseParenExprOrCondition(Cond, true);
+  
   DoScope.Exit();
 
   if (Cond.isInvalid() || Body.isInvalid())
