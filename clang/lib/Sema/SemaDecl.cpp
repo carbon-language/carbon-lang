@@ -3176,6 +3176,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   // Keep track of whether all elements have type int.
   bool AllElementsInt = true;
   
+  QualType EnumType = Context.getTypeDeclType(Enum);
   EnumConstantDecl *EltList = 0;
   for (unsigned i = 0; i != NumElements; ++i) {
     EnumConstantDecl *ECD =
@@ -3269,6 +3270,12 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
       llvm::APSInt IV = ECD->getInitVal();
       IV.setIsSigned(true);
       ECD->setInitVal(IV);
+
+      if (getLangOptions().CPlusPlus)
+        // C++ [dcl.enum]p4: Following the closing brace of an
+        // enum-specifier, each enumerator has the type of its
+        // enumeration. 
+        ECD->setType(EnumType);
       continue;  // Already int type.
     }
 
@@ -3291,6 +3298,11 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
       NewSign = true;
     } else if (ECD->getType() == BestType) {
       // Already the right type!
+      if (getLangOptions().CPlusPlus)
+        // C++ [dcl.enum]p4: Following the closing brace of an
+        // enum-specifier, each enumerator has the type of its
+        // enumeration. 
+        ECD->setType(EnumType);
       continue;
     } else {
       NewTy = BestType;
@@ -3306,7 +3318,13 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     // Adjust the Expr initializer and type.
     ECD->setInitExpr(new ImplicitCastExpr(NewTy, ECD->getInitExpr(), 
                                           /*isLvalue=*/false));
-    ECD->setType(NewTy);
+    if (getLangOptions().CPlusPlus)
+      // C++ [dcl.enum]p4: Following the closing brace of an
+      // enum-specifier, each enumerator has the type of its
+      // enumeration. 
+      ECD->setType(EnumType);
+    else
+      ECD->setType(NewTy);
   }
   
   Enum->completeDefinition(Context, BestType);

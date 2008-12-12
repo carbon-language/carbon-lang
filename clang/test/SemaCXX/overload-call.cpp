@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -pedantic -verify %s 
+// RUN: clang -fsyntax-only -pedantic -verify %s
 int* f(int) { return 0; }
 float* f(float) { return 0; }
 void f();
@@ -88,11 +88,11 @@ void test_n(E* e) {
 }
 
 enum PromotesToInt {
-  PromotesToIntValue = 1
+  PromotesToIntValue = -1
 };
 
 enum PromotesToUnsignedInt {
-  PromotesToUnsignedIntValue = (unsigned int)-1
+  PromotesToUnsignedIntValue = 1u
 };
 
 int* o(int);

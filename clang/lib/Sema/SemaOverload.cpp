@@ -634,11 +634,12 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
 
     // The types we'll try to promote to, in the appropriate
     // order. Try each of these types.
-    QualType PromoteTypes[4] = { 
+    QualType PromoteTypes[6] = { 
       Context.IntTy, Context.UnsignedIntTy, 
-      Context.LongTy, Context.UnsignedLongTy 
+      Context.LongTy, Context.UnsignedLongTy ,
+      Context.LongLongTy, Context.UnsignedLongLongTy
     };
-    for (int Idx = 0; Idx < 4; ++Idx) {
+    for (int Idx = 0; Idx < 6; ++Idx) {
       uint64_t ToSize = Context.getTypeSize(PromoteTypes[Idx]);
       if (FromSize < ToSize ||
           (FromSize == ToSize && 
@@ -2034,6 +2035,7 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
   Candidate.Function = 0;
+  Candidate.IsSurrogate = false;
   Candidate.BuiltinTypes.ResultTy = ResultTy;
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
     Candidate.BuiltinTypes.ParamTypes[ArgIdx] = ParamTys[ArgIdx];
