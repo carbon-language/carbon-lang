@@ -158,7 +158,7 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
   // Keep track of matching '#if' ... '#endif'.
   typedef std::vector<std::pair<Offset, unsigned> > PPCondTable;
   PPCondTable PPCond;
-  std::vector<unsigned> PPStartCond;  
+  std::vector<unsigned> PPStartCond;
 
   Token Tok;
   
@@ -173,6 +173,8 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
       // the next token.
       Offset HashOff = (Offset) Out.tell();
       EmitToken(Out, Tok, SMgr, idcount, IM);
+
+      // Get the next token.
       L.LexFromRawLexer(Tok);
       
       // Did we see 'include'/'import'/'include_next'?
@@ -201,45 +203,56 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
         // Ad an entry for '#if' and friends.  We initially set the target index
         // to 0.  This will get backpatched when we hit #endif.
         PPStartCond.push_back(PPCond.size());
-        PPCond.push_back(std::make_pair((Offset) HashOff, 0U));
+        PPCond.push_back(std::make_pair(HashOff, 0U));
       }
       else if (K == tok::pp_endif) {
-        assert(!PPStartCond.empty());        
         // Add an entry for '#endif'.  We set the target table index to itself.
+        // This will later be set to zero when emitting to the PTH file.  We
+        // use 0 for uninitialized indices because that is easier to debug.
         unsigned index = PPCond.size();
-        PPCond.push_back(std::make_pair((Offset) HashOff, index));        
         // Backpatch the opening '#if' entry.
+        assert(!PPStartCond.empty());
+        assert(PPCond.size() > PPStartCond.back());
         assert(PPCond[PPStartCond.back()].second == 0);
         PPCond[PPStartCond.back()].second = index;
         PPStartCond.pop_back();        
+        // Add the new entry to PPCond.      
+        PPCond.push_back(std::make_pair(HashOff, index));
       }
-      else if (K == tok::pp_elif) {
-        assert(!PPStartCond.empty());
-        // Add an entry for '#elif'.  This serves as both a closing and
-        // opening of a conditional block.  This means that its entry
-        // will get backpatched later.
+      else if (K == tok::pp_elif || K == tok::pp_else) {
+        // Add an entry for '#elif' or '#else.
+        // This serves as both a closing and opening of a conditional block.
+        // This means that its entry will get backpatched later.
         unsigned index = PPCond.size();
-        PPCond.push_back(std::make_pair((Offset) HashOff, 0U));
         // Backpatch the previous '#if' entry.
+        assert(!PPStartCond.empty());
+        assert(PPCond.size() > PPStartCond.back());
         assert(PPCond[PPStartCond.back()].second == 0);
         PPCond[PPStartCond.back()].second = index;
         PPStartCond.pop_back();
         // Now add '#elif' as a new block opening.
-        PPStartCond.push_back(index);        
+        PPCond.push_back(std::make_pair(HashOff, 0U));
+        PPStartCond.push_back(index);
       }
     }    
   }
   while (EmitToken(Out, Tok, SMgr, idcount, IM), Tok.isNot(tok::eof));
   
+  assert(PPStartCond.empty() && "Error: imblanced preprocessor conditionals.");
+  
   // Next write out PPCond.
   Offset PPCondOff = (Offset) Out.tell();
-  // Write out the size of PPCond so that clients can tell if the table is
-  // empty.
+
+  // Write out the size of PPCond so that clients can identifer empty tables.
   Emit32(Out, PPCond.size());
 
-  for (PPCondTable::iterator I=PPCond.begin(), E=PPCond.end(); I!=E; ++I) {
-    Emit32(Out, I->first - off);
-    Emit32(Out, I->second);
+  for (unsigned i = 0, e = PPCond.size(); i!=e; ++i) {
+    Emit32(Out, PPCond[i].first - off);
+    uint32_t x = PPCond[i].second;
+    assert(x != 0 && "PPCond entry not backpatched.");
+    // Emit zero for #endifs.  This allows us to do checking when
+    // we read the PTH file back in.
+    Emit32(Out, x == i ? 0 : x);
   }
 
   return std::make_pair(off,PPCondOff);
