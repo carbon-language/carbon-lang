@@ -1155,7 +1155,8 @@ interacts with constant evaluation:</p>
     constant expression) if the operand is any evaluatable constant.  As a
     special case, if <tt>__builtin_constant_p</tt> is the (potentially
     parenthesized) condition of a conditional operator expression ("?:"), only
-    the true side of the conditional operator is considered.</li>
+    the true side of the conditional operator is considered, and it is evaluated
+    with full constant folding.</li>
 <li><b><tt>__builtin_choose_expr</tt></b>: The condition is required to be an
     integer constant expression, but we accept any constant as an "extension of
     an extension".  This only evaluates one operand depending on which way the

@@ -7,6 +7,19 @@ int expr;
 char w[__builtin_constant_p(expr) ? expr : 1];
 
 
+// __builtin_constant_p as the condition of ?: allows arbitrary foldable
+// constants to be transmogrified into i-c-e's.
+char b[__builtin_constant_p((int)(1.0+2.0)) ? (int)(1.0+2.0) : -1];
+
+struct c {
+  int a : (  // expected-error {{expression is not an integer constant expression}}
+           __builtin_constant_p((int)(1.0+2.0)) ? (int)(1.0+
+     expr  // expected-note {{subexpression not valid in an integer constant expression}}
+           ) : -1);
+};
+
+
+
 
 void test1(int n, int* p) { *(n ? p : (void *)(7-7)) = 1; }
 void test2(int n, int* p) { *(n ? p : (void *)0) = 1; }
