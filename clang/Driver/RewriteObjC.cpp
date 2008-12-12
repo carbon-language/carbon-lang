@@ -540,7 +540,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "// Runtime copy/destroy helper functions\n";
   Preamble += "__OBJC_RW_STATICIMPORT void _Block_copy_assign(void *, void *);\n";
   Preamble += "__OBJC_RW_STATICIMPORT void _Block_byref_assign_copy(void *, void *);\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void _Block_destroy(void *);\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void _Block_release(void *);\n";
   Preamble += "__OBJC_RW_STATICIMPORT void _Block_byref_release(void *);\n";
   Preamble += "__OBJC_RW_STATICIMPORT void *_NSConcreteGlobalBlock;\n";
   Preamble += "__OBJC_RW_STATICIMPORT void *_NSConcreteStackBlock;\n";
@@ -3529,7 +3529,7 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   S += "*src) {";
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
       E = ImportedBlockDecls.end(); I != E; ++I) {
-    S += "_Block_destroy((void*)src->";
+    S += "_Block_release((void*)src->";
     S += (*I)->getNameAsString();
     S += ");";
   }
