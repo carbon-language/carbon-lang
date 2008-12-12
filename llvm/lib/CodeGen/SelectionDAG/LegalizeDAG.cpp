@@ -630,21 +630,64 @@ SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
   int SVOffset = ST->getSrcValueOffset();
   if (ST->getMemoryVT().isFloatingPoint() ||
       ST->getMemoryVT().isVector()) {
-    // Expand to a bitconvert of the value to the integer type of the 
-    // same size, then a (misaligned) int store.
-    MVT intVT;
-    if (VT.is128BitVector() || VT == MVT::ppcf128 || VT == MVT::f128)
-      intVT = MVT::i128;
-    else if (VT.is64BitVector() || VT==MVT::f64)
-      intVT = MVT::i64;
-    else if (VT==MVT::f32)
-      intVT = MVT::i32;
-    else
-      assert(0 && "Unaligned store of unsupported type");
+    MVT intVT = MVT::getIntegerVT(VT.getSizeInBits());
+    if (TLI.isTypeLegal(intVT)) {
+      // Expand to a bitconvert of the value to the integer type of the
+      // same size, then a (misaligned) int store.
+      // FIXME: Does not handle truncating floating point stores!
+      SDValue Result = DAG.getNode(ISD::BIT_CONVERT, intVT, Val);
+      return DAG.getStore(Chain, Result, Ptr, ST->getSrcValue(),
+                          SVOffset, ST->isVolatile(), Alignment);
+    } else {
+      // Do a (aligned) store to a stack slot, then copy from the stack slot
+      // to the final destination using (unaligned) integer loads and stores.
+      MVT StoredVT = ST->getMemoryVT();
+      MVT RegVT =
+        TLI.getRegisterType(MVT::getIntegerVT(StoredVT.getSizeInBits()));
+      unsigned StoredBytes = StoredVT.getSizeInBits() / 8;
+      unsigned RegBytes = RegVT.getSizeInBits() / 8;
+      unsigned NumRegs = (StoredBytes + RegBytes - 1) / RegBytes;
 
-    SDValue Result = DAG.getNode(ISD::BIT_CONVERT, intVT, Val);
-    return DAG.getStore(Chain, Result, Ptr, ST->getSrcValue(),
-                        SVOffset, ST->isVolatile(), Alignment);
+      // Make sure the stack slot is wide enough that we can do NumRegs full
+      // width loads from it.
+      SDValue StackPtr = DAG.CreateStackTemporary(StoredVT,
+                                     MVT::getIntegerVT(NumRegs * RegBytes * 8));
+      // Perform the original store only redirected to the stack slot.
+      SDValue Store = DAG.getTruncStore(Chain, Val, StackPtr, NULL, 0,StoredVT);
+      SDValue Increment = DAG.getConstant(RegBytes, TLI.getPointerTy());
+      SmallVector<SDValue, 8> Stores;
+      unsigned Offset = 0;
+
+      // Do all but one copies using the full register width.
+      for (unsigned i = 1; i < NumRegs; i++) {
+        // Load one integer register's worth from the stack slot.
+        SDValue Load = DAG.getLoad(RegVT, Store, StackPtr, NULL, 0);
+        // Store it to the final location.  Remember the store.
+        Stores.push_back(DAG.getStore(Load.getValue(1), Load, Ptr,
+                                      ST->getSrcValue(), SVOffset + Offset,
+                                      ST->isVolatile(),
+                                      MinAlign(ST->getAlignment(), Offset)));
+        // Increment the pointers.
+        Offset += RegBytes;
+        StackPtr = DAG.getNode(ISD::ADD, StackPtr.getValueType(), StackPtr,
+                               Increment);
+        Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr, Increment);
+      }
+
+      // Load one integer register's worth from the stack slot.
+      SDValue Load = DAG.getLoad(RegVT, Store, StackPtr, NULL, 0);
+
+      // The last store may be partial.  Do a truncating store.
+      unsigned BytesLeft = StoredBytes - Offset;
+      Stores.push_back(DAG.getTruncStore(Load.getValue(1), Load, Ptr,
+                                         ST->getSrcValue(), SVOffset + Offset,
+                                         MVT::getIntegerVT(BytesLeft * 8),
+                                         ST->isVolatile(),
+                                         MinAlign(ST->getAlignment(), Offset)));
+      // The order of the stores doesn't matter - say it with a TokenFactor.
+      return DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0],
+                         Stores.size());
+    }
   }
   assert(ST->getMemoryVT().isInteger() &&
          !ST->getMemoryVT().isVector() &&
@@ -685,28 +728,74 @@ SDValue ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
   MVT VT = LD->getValueType(0);
   MVT LoadedVT = LD->getMemoryVT();
   if (VT.isFloatingPoint() || VT.isVector()) {
-    // Expand to a (misaligned) integer load of the same size,
-    // then bitconvert to floating point or vector.
-    MVT intVT;
-    if (LoadedVT.is128BitVector() ||
-         LoadedVT == MVT::ppcf128 || LoadedVT == MVT::f128)
-      intVT = MVT::i128;
-    else if (LoadedVT.is64BitVector() || LoadedVT == MVT::f64)
-      intVT = MVT::i64;
-    else if (LoadedVT == MVT::f32)
-      intVT = MVT::i32;
-    else
-      assert(0 && "Unaligned load of unsupported type");
-
-    SDValue newLoad = DAG.getLoad(intVT, Chain, Ptr, LD->getSrcValue(),
-                                    SVOffset, LD->isVolatile(), 
+    MVT intVT = MVT::getIntegerVT(LoadedVT.getSizeInBits());
+    if (TLI.isTypeLegal(intVT)) {
+      // Expand to a (misaligned) integer load of the same size,
+      // then bitconvert to floating point or vector.
+      SDValue newLoad = DAG.getLoad(intVT, Chain, Ptr, LD->getSrcValue(),
+                                    SVOffset, LD->isVolatile(),
                                     LD->getAlignment());
-    SDValue Result = DAG.getNode(ISD::BIT_CONVERT, LoadedVT, newLoad);
-    if (VT.isFloatingPoint() && LoadedVT != VT)
-      Result = DAG.getNode(ISD::FP_EXTEND, VT, Result);
+      SDValue Result = DAG.getNode(ISD::BIT_CONVERT, LoadedVT, newLoad);
+      if (VT.isFloatingPoint() && LoadedVT != VT)
+        Result = DAG.getNode(ISD::FP_EXTEND, VT, Result);
 
-    SDValue Ops[] = { Result, Chain };
-    return DAG.getMergeValues(Ops, 2);
+      SDValue Ops[] = { Result, Chain };
+      return DAG.getMergeValues(Ops, 2);
+    } else {
+      // Copy the value to a (aligned) stack slot using (unaligned) integer
+      // loads and stores, then do a (aligned) load from the stack slot.
+      MVT RegVT = TLI.getRegisterType(intVT);
+      unsigned LoadedBytes = LoadedVT.getSizeInBits() / 8;
+      unsigned RegBytes = RegVT.getSizeInBits() / 8;
+      unsigned NumRegs = (LoadedBytes + RegBytes - 1) / RegBytes;
+
+      // Make sure the stack slot wide enough that we can do NumRegs full width
+      // stores to it.
+      SDValue StackBase = DAG.CreateStackTemporary(LoadedVT,
+                                     MVT::getIntegerVT(NumRegs * RegBytes * 8));
+      SDValue Increment = DAG.getConstant(RegBytes, TLI.getPointerTy());
+      SmallVector<SDValue, 8> Stores;
+      SDValue StackPtr = StackBase;
+      unsigned Offset = 0;
+
+      // Do all but one copies using the full register width.
+      for (unsigned i = 1; i < NumRegs; i++) {
+        // Load one integer register's worth from the original location.
+        SDValue Load = DAG.getLoad(RegVT, Chain, Ptr, LD->getSrcValue(),
+                                   SVOffset + Offset, LD->isVolatile(),
+                                   MinAlign(LD->getAlignment(), Offset));
+        // Follow the load with a store to the stack slot.  Remember the store.
+        Stores.push_back(DAG.getStore(Load.getValue(1), Load, StackPtr,
+                                      NULL, 0));
+        // Increment the pointers.
+        Offset += RegBytes;
+        Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr, Increment);
+        StackPtr = DAG.getNode(ISD::ADD, StackPtr.getValueType(), StackPtr,
+                               Increment);
+      }
+
+      // The last copy may be partial.  Do an extending load.
+      unsigned BytesLeft = LoadedBytes - Offset;
+      SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, RegVT, Chain, Ptr,
+                                    LD->getSrcValue(), SVOffset + Offset,
+                                    MVT::getIntegerVT(BytesLeft * 8),
+                                    LD->isVolatile(),
+                                    MinAlign(LD->getAlignment(), Offset));
+      // Follow the load with a store to the stack slot.  Remember the store.
+      Stores.push_back(DAG.getStore(Load.getValue(1), Load, StackPtr, NULL, 0));
+
+      // The order of the stores doesn't matter - say it with a TokenFactor.
+      SDValue TF = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0],
+                               Stores.size());
+
+      // Finally, perform the original load only redirected to the stack slot.
+      Load = DAG.getExtLoad(LD->getExtensionType(), VT, TF, StackBase,
+                            NULL, 0, LoadedVT);
+
+      // Callers expect a MERGE_VALUES node.
+      SDValue Ops[] = { Load, TF };
+      return DAG.getMergeValues(Ops, 2);
+    }
   }
   assert(LoadedVT.isInteger() && !LoadedVT.isVector() &&
          "Unaligned load of unsupported type.");
