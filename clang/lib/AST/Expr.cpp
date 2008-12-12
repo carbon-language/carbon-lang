@@ -467,6 +467,13 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   }
   case CompoundLiteralExprClass: // C99 6.5.2.5p5
     return LV_Valid;
+  case ChooseExprClass:
+    // __builtin_choose_expr is an lvalue if the selected operand is.
+    if (cast<ChooseExpr>(this)->isConditionTrue(Ctx))
+      return cast<ChooseExpr>(this)->getLHS()->isLvalue(Ctx);
+    else
+      return cast<ChooseExpr>(this)->getRHS()->isLvalue(Ctx);
+
   case ExtVectorElementExprClass:
     if (cast<ExtVectorElementExpr>(this)->containsDuplicateElements())
       return LV_DuplicateVectorComponents;
@@ -476,7 +483,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   case ObjCPropertyRefExprClass: // FIXME: check if read-only property.
     return LV_Valid;
   case ObjCKVCRefExprClass: // FIXME: check if read-only property.
-      return LV_Valid;
+    return LV_Valid;
   case PredefinedExprClass:
     return LV_Valid;
   case VAArgExprClass:
@@ -1213,8 +1220,7 @@ bool ChooseExpr::isConditionTrue(ASTContext &C) const {
   return getCond()->getIntegerConstantExprValue(C) != 0;
 }
 
-static int64_t evaluateOffsetOf(ASTContext& C, const Expr *E)
-{
+static int64_t evaluateOffsetOf(ASTContext& C, const Expr *E) {
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
     QualType Ty = ME->getBase()->getType();
     

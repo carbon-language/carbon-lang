@@ -38,3 +38,10 @@ void test7(int *P, _Complex float Gamma) {
    P = (P-42) + Gamma*4;  // expected-error {{invalid operands to binary expression ('int *' and '_Complex float')}}
 }
 
+
+// rdar://6095061
+int test8(void) {
+  int i;
+  __builtin_choose_expr (0, 42, i) = 10;
+  return i;
+}
