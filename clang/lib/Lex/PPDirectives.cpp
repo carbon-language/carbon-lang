@@ -122,6 +122,11 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   CurPPLexer->pushConditionalLevel(IfTokenLoc, /*isSkipping*/false,
                                  FoundNonSkipPortion, FoundElse);
   
+  if (CurPTHLexer) {
+    PTHSkipExcludedConditionalBlock();
+    return;
+  }
+  
   // Enter raw mode to disable identifier lookup (and thus macro expansion),
   // disabling warnings, etc.
   CurPPLexer->LexingRawMode = true;
@@ -289,6 +294,79 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   // of the file, just stop skipping and return to lexing whatever came after
   // the #if block.
   CurPPLexer->LexingRawMode = false;
+}
+
+void Preprocessor::PTHSkipExcludedConditionalBlock() {
+  
+  while(1) {
+    assert(CurPTHLexer);
+    assert(CurPTHLexer->LexingRawMode == false);
+           
+    // Skip to the next '#else', '#elif', or #endif.
+    if (CurPTHLexer->SkipBlock()) {
+      // We have reached an #endif.  Both the '#' and 'endif' tokens
+      // have been consumed by the PTHLexer.  Just pop off the condition level.
+      PPConditionalInfo CondInfo;
+      bool InCond = CurPTHLexer->popConditionalLevel(CondInfo);
+      InCond = InCond;  // Silence warning in no-asserts mode.
+      assert(!InCond && "Can't be skipping if not in a conditional!");
+      break;
+    }
+      
+    // We have reached a '#else' or '#elif'.  Lex the next token to get
+    // the directive flavor.
+    Token Tok;
+    LexUnexpandedToken(Tok);
+                      
+    // We can actually look up the IdentifierInfo here since we aren't in
+    // raw mode.
+    tok::PPKeywordKind K = Tok.getIdentifierInfo()->getPPKeywordID();
+
+    if (K == tok::pp_else) {
+      // #else: Enter the else condition.  We aren't in a nested condition
+      //  since we skip those. We're always in the one matching the last
+      //  blocked we skipped.
+      PPConditionalInfo &CondInfo = CurPTHLexer->peekConditionalLevel();
+      // Note that we've seen a #else in this conditional.
+      CondInfo.FoundElse = true;
+      
+      // If the #if block wasn't entered then enter the #else block now.
+      if (!CondInfo.FoundNonSkip) {
+        CondInfo.FoundNonSkip = true;
+        break;
+      }
+      
+      // Otherwise skip this block.
+      continue;
+    }
+    
+    assert(K == tok::pp_elif);
+    PPConditionalInfo &CondInfo = CurPTHLexer->peekConditionalLevel();
+
+    // If this is a #elif with a #else before it, report the error.
+    if (CondInfo.FoundElse)
+      Diag(Tok, diag::pp_err_elif_after_else);
+    
+    // If this is in a skipping block or if we're already handled this #if
+    // block, don't bother parsing the condition.  We just skip this block.    
+    if (CondInfo.FoundNonSkip)
+      continue;
+
+    // Evaluate the condition of the #elif.
+    IdentifierInfo *IfNDefMacro = 0;
+    CurPTHLexer->ParsingPreprocessorDirective = true;
+    bool ShouldEnter = EvaluateDirectiveExpression(IfNDefMacro);
+    CurPTHLexer->ParsingPreprocessorDirective = false;
+
+    // If this condition is true, enter it!
+    if (ShouldEnter) {
+      CondInfo.FoundNonSkip = true;
+      break;
+    }
+
+    // Otherwise, skip this block and go to the next one.
+    continue;
+  }
 }
 
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,

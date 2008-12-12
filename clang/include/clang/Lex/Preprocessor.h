@@ -560,6 +560,10 @@ private:
   void SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
                                     bool FoundNonSkipPortion, bool FoundElse);
   
+  /// PTHSkipExcludedConditionalBlock - A fast PTH version of
+  ///  SkipExcludedConditionalBlock.
+  void PTHSkipExcludedConditionalBlock();
+  
   /// EvaluateDirectiveExpression - Evaluate an integer constant expression that
   /// may occur after a #if or #elif directive and return it as a bool.  If the
   /// expression is equivalent to "!defined(X)" return X in IfNDefMacro.

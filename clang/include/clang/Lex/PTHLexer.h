@@ -32,6 +32,15 @@ class PTHLexer : public PreprocessorLexer {
   /// LastHashTokPtr - Pointer into TokBuf of the last processed '#'
   ///  token that appears at the start of a line.
   const char* LastHashTokPtr;
+  
+  /// PPCond - Pointer to a side table in the PTH file that provides a
+  ///  a consise summary of the preproccessor conditional block structure.
+  ///  This is used to perform quick skipping of conditional blocks.
+  const char* PPCond;
+  
+  /// CurPPCondPtr - Pointer inside PPCond that refers to the next entry
+  ///  to process when doing quick skipping of preprocessor blocks.
+  const char* CurPPCondPtr;
 
   PTHLexer(const PTHLexer&);  // DO NOT IMPLEMENT
   void operator=(const PTHLexer&); // DO NOT IMPLEMENT
@@ -50,7 +59,7 @@ public:
 
   /// Create a PTHLexer for the specified token stream.
   PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D, 
-           PTHManager& PM);
+           const char* ppcond, PTHManager& PM);
   
   ~PTHLexer() {}
     
@@ -77,17 +86,11 @@ public:
   /// getSourceLocation - Return a source location for the token in
   /// the current file.
   SourceLocation getSourceLocation() { return GetToken().getLocation(); }
+  
+  /// SkipBlock - Used by Preprocessor to skip the current conditional block.
+  bool SkipBlock();
 
-private:
-  
-  /// SkipToToken - Skip to the token at the specified offset in TokBuf.
-  void SkipToToken(unsigned offset) {
-    const char* NewPtr = TokBuf + offset;
-    assert(NewPtr > CurPtr && "SkipToToken should not go backwards!");
-    NeedsFetching = true;
-    CurPtr = NewPtr;
-  }
-  
+private:  
   /// AtLastToken - Returns true if the PTHLexer is at the last token.
   bool AtLastToken() { 
     Token T = GetToken();

@@ -26,11 +26,12 @@
 
 using namespace clang;
 
+#define DISK_TOKEN_SIZE (2+3*4)
+
 PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D,
-                   PTHManager& PM)
+                   const char* ppcond, PTHManager& PM)
   : PreprocessorLexer(&pp, fileloc), TokBuf(D), CurPtr(D), LastHashTokPtr(0),
-    PTHMgr(PM),
-    NeedsFetching(true) {
+    PPCond(ppcond), CurPPCondPtr(ppcond), PTHMgr(PM), NeedsFetching(true) {
     // Make sure the EofToken is completely clean.
     EofToken.startToken();
   }
@@ -82,15 +83,16 @@ LexNextToken:
   AdvanceToken();
     
   if (Tok.is(tok::hash)) {    
-    if (Tok.isAtStartOfLine() && !LexingRawMode) {
-      LastHashTokPtr = CurPtr;
-      
-      PP->HandleDirective(Tok);
+    if (Tok.isAtStartOfLine()) {
+      LastHashTokPtr = CurPtr - DISK_TOKEN_SIZE;
+      if (!LexingRawMode) {
+        PP->HandleDirective(Tok);
 
-      if (PP->isCurrentLexer(this))
-        goto LexNextToken;
-
-      return PP->Lex(Tok);
+        if (PP->isCurrentLexer(this))
+          goto LexNextToken;
+        
+        return PP->Lex(Tok);
+      }
     }
   }
 
@@ -156,6 +158,82 @@ static inline uint32_t Read32(const char*& data) {
   return V;
 }
 
+/// SkipBlock - Used by Preprocessor to skip the current conditional block.
+bool PTHLexer::SkipBlock() {
+  assert(CurPPCondPtr && "No cached PP conditional information.");
+  assert(LastHashTokPtr && "No known '#' token.");
+  
+  const char* Next = 0;
+  uint32_t Offset; 
+  uint32_t TableIdx;
+  
+  do {
+    Offset = Read32(CurPPCondPtr);
+    TableIdx = Read32(CurPPCondPtr);
+    Next = TokBuf + Offset;
+  }
+  while (Next < LastHashTokPtr);  
+  assert(Next == LastHashTokPtr && "No PP-cond entry found for '#'");
+  assert(TableIdx && "No jumping from #endifs.");
+  
+  // Update our side-table iterator.
+  const char* NextPPCondPtr = PPCond + TableIdx*(sizeof(uint32_t)*2);
+  assert(NextPPCondPtr >= CurPPCondPtr);
+  CurPPCondPtr = NextPPCondPtr;
+  
+  // Read where we should jump to.
+  Next = TokBuf + Read32(NextPPCondPtr);
+  uint32_t NextIdx = Read32(NextPPCondPtr);
+  
+  // By construction NextIdx will be zero if this is a #endif.  This is useful
+  // to know to obviate lexing another token.
+  bool isEndif = NextIdx == 0;
+  NeedsFetching = true;
+  
+  // This case can occur when we see something like this:
+  //
+  //  #if ...
+  //   /* a comment or nothing */
+  //  #elif
+  //
+  // If we are skipping the first #if block it will be the case that CurPtr
+  // already points 'elif'.  Just return.
+  
+  if (CurPtr > Next) {
+    assert(CurPtr == Next + DISK_TOKEN_SIZE);
+    // Did we reach a #endif?  If so, go ahead and consume that token as well.
+    if (isEndif)
+      CurPtr += DISK_TOKEN_SIZE;
+    else
+      LastHashTokPtr = Next;
+    
+    return isEndif;
+  }
+
+  // Otherwise, we need to advance.  Update CurPtr to point to the '#' token.
+  CurPtr = Next;
+  
+  // Update the location of the last observed '#'.  This is useful if we
+  // are skipping multiple blocks.
+  LastHashTokPtr = CurPtr;
+  
+#ifndef DEBUG
+  // In a debug build we should verify that the token is really a '#' that
+  // appears at the start of the line.
+  Token Tok;
+  ReadToken(Tok);
+  assert(Tok.isAtStartOfLine() && Tok.is(tok::hash));
+#else
+  // In a full release build we can just skip the token entirely.
+  CurPtr += DISK_TOKEN_SIZE;
+#endif
+
+  // Did we reach a #endif?  If so, go ahead and consume that token as well.
+  if (isEndif) { CurPtr += DISK_TOKEN_SIZE; }
+
+  return isEndif;
+}
+
 //===----------------------------------------------------------------------===//
 // Token reconstruction from the PTH file.
 //===----------------------------------------------------------------------===//
@@ -179,7 +257,7 @@ void PTHLexer::ReadToken(Token& T) {
   T.setLocation(SourceLocation::getFileLoc(FileID, Read32(CurPtr)));
   
   // Finally, read and set the length of the token.
-  T.setLength(Read32(CurPtr));
+  T.setLength(Read32(CurPtr));  
 }
 
 //===----------------------------------------------------------------------===//
@@ -364,6 +442,13 @@ PTHLexer* PTHManager::CreateLexer(unsigned FileID, const FileEntry* FE) {
   
   // Compute the offset of the token data within the buffer.
   const char* data = Buf->getBufferStart() + FileData.getTokenOffset();
+
+  // Get the location of pp-conditional table.
+  const char* ppcond = Buf->getBufferStart() + FileData.gettPPCondOffset();
+  uint32_t len = Read32(ppcond);  
+  if (len == 0) ppcond = 0;
+  
   assert(data < Buf->getBufferEnd());
-  return new PTHLexer(PP, SourceLocation::getFileLoc(FileID, 0), data, *this); 
+  return new PTHLexer(PP, SourceLocation::getFileLoc(FileID, 0), data, ppcond,
+                      *this); 
 }
