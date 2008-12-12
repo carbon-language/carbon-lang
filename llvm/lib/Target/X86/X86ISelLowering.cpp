@@ -5210,9 +5210,9 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
 
   if (Cond.getOpcode() == ISD::SETCC)
     Cond = LowerSETCC(Cond, DAG);
-  else if (Cond.getOpcode() == ISD::SADDO || Cond.getOpcode() == ISD::UADDO ||
-           Cond.getOpcode() == ISD::SSUBO || Cond.getOpcode() == ISD::USUBO ||
-           Cond.getOpcode() == ISD::SMULO || Cond.getOpcode() == ISD::UMULO)
+  else if (Cond.getOpcode() == X86ISD::ADD ||
+           Cond.getOpcode() == X86ISD::SUB ||
+           Cond.getOpcode() == X86ISD::MUL)
     Cond = LowerXALUO(Cond, DAG);
 
   // If condition flag is set by a X86ISD::CMP, then use it as the condition
@@ -6142,27 +6142,27 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Unknown ovf instruction!");
   case ISD::SADDO:
-    BaseOp = ISD::ADD;
+    BaseOp = X86ISD::ADD;
     Cond = X86::COND_O;
     break;
   case ISD::UADDO:
-    BaseOp = ISD::ADD;
+    BaseOp = X86ISD::ADD;
     Cond = X86::COND_C;
     break;
   case ISD::SSUBO:
-    BaseOp = ISD::SUB;
+    BaseOp = X86ISD::SUB;
     Cond = X86::COND_O;
     break;
   case ISD::USUBO:
-    BaseOp = ISD::SUB;
+    BaseOp = X86ISD::SUB;
     Cond = X86::COND_C;
     break;
   case ISD::SMULO:
-    BaseOp = ISD::MUL;
+    BaseOp = X86ISD::MUL;
     Cond = X86::COND_O;
     break;
   case ISD::UMULO:
-    BaseOp = ISD::MUL;
+    BaseOp = X86ISD::MUL;
     Cond = X86::COND_C;
     break;
   }
@@ -6488,6 +6488,9 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PCMPGTW:            return "X86ISD::PCMPGTW";
   case X86ISD::PCMPGTD:            return "X86ISD::PCMPGTD";
   case X86ISD::PCMPGTQ:            return "X86ISD::PCMPGTQ";
+  case X86ISD::ADD:                return "X86ISD::ADD";
+  case X86ISD::SUB:                return "X86ISD::SUB";
+  case X86ISD::MUL:                return "X86ISD::MUL";
   }
 }
 
