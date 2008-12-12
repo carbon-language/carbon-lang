@@ -1029,6 +1029,10 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     // If the condition (ignoring parens) is a __builtin_constant_p call, 
     // then only the true side is actually considered in an integer constant
     // expression.  This is an important GNU extension.
+    //
+    // FIXME: ?: with a conditional expr should arguably be an i-c-e if the true
+    // side can be folded in any way to a constant.  See GCC PR38377 for
+    // discussion.
     if (const CallExpr *CallCE = dyn_cast<CallExpr>(Cond->IgnoreParenCasts()))
       if (CallCE->isBuiltinCall() == Builtin::BI__builtin_constant_p)
         FalseExp = 0;
