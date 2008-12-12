@@ -6862,7 +6862,6 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     SDValue LHSL, LHSH, RHSL, RHSH;
     ExpandOp(Node->getOperand(0), LHSL, LHSH);
     ExpandOp(Node->getOperand(1), RHSL, RHSH);
-    SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
     SDValue LoOps[2], HiOps[3];
     LoOps[0] = LHSL;
     LoOps[1] = RHSL;
@@ -6881,6 +6880,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     }
 
     if(hasCarry) {
+      SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
       if (Node->getOpcode() == ISD::ADD) {
         Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
         HiOps[2] = Lo.getValue(1);
@@ -6893,8 +6893,8 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
       break;
     } else {
       if (Node->getOpcode() == ISD::ADD) {
-        Lo = DAG.getNode(ISD::ADD, VTList, LoOps, 2);
-        Hi = DAG.getNode(ISD::ADD, VTList, HiOps, 2);
+        Lo = DAG.getNode(ISD::ADD, NVT, LoOps, 2);
+        Hi = DAG.getNode(ISD::ADD, NVT, HiOps, 2);
         SDValue Cmp1 = DAG.getSetCC(TLI.getSetCCResultType(Lo),
                                     Lo, LoOps[0], ISD::SETULT);
         SDValue Carry1 = DAG.getNode(ISD::SELECT, NVT, Cmp1,
@@ -6907,8 +6907,8 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
                                     Carry1);
         Hi = DAG.getNode(ISD::ADD, NVT, Hi, Carry2);
       } else {
-        Lo = DAG.getNode(ISD::SUB, VTList, LoOps, 2);
-        Hi = DAG.getNode(ISD::SUB, VTList, HiOps, 2);
+        Lo = DAG.getNode(ISD::SUB, NVT, LoOps, 2);
+        Hi = DAG.getNode(ISD::SUB, NVT, HiOps, 2);
         SDValue Cmp = DAG.getSetCC(NVT, LoOps[0], LoOps[1], ISD::SETULT);
         SDValue Borrow = DAG.getNode(ISD::SELECT, NVT, Cmp,
                                      DAG.getConstant(1, NVT), 
