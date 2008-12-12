@@ -644,16 +644,16 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation AtLoc = ConsumeToken();
     return Owned(ParseObjCAtExpression(AtLoc));
   }
-  case tok::l_square:
-    // These can be followed by postfix-expr pieces.
-    if (getLang().ObjC1)
-      return ParsePostfixExpressionSuffix(Owned(ParseObjCMessageExpression()));
-    // FALL THROUGH.
   case tok::caret:
     if (getLang().Blocks)
       return ParsePostfixExpressionSuffix(Owned(ParseBlockLiteralExpression()));
     Diag(Tok, diag::err_expected_expression);
     return ExprError();
+  case tok::l_square:
+    // These can be followed by postfix-expr pieces.
+    if (getLang().ObjC1)
+      return ParsePostfixExpressionSuffix(Owned(ParseObjCMessageExpression()));
+    // FALL THROUGH.
   default:
   UnhandledToken:
     Diag(Tok, diag::err_expected_expression);

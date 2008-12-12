@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -pedantic %s
+// RUN: clang -fsyntax-only -verify -pedantic -fblocks %s
 
 // PR2241
 float test2241[] = { 
@@ -59,3 +59,9 @@ struct S { void *X, *Y; };
 struct S A = {
 &BADIDENT, 0     /* expected-error {{use of undeclared identifier}} */
 };
+
+// rdar://6248081
+int test6248081() { 
+  [10]  // expected-error {{expected expression}}
+}
+
