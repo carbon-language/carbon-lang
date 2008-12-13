@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep {DEAD = phi i32 }
+; RUN: llvm-as < %s | opt -gvn | llvm-dis | not grep {DEAD =}
 
 define i32 @main(i32* %p) {
 block1:

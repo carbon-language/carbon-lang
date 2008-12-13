@@ -1034,7 +1034,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     // Perform PHI construction.
     Value* v = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
     LI->replaceAllUsesWith(v);
-    v->takeName(LI);
     if (isa<PointerType>(v->getType()))
       MD->invalidateCachedPointerInfo(v);
     toErase.push_back(LI);
