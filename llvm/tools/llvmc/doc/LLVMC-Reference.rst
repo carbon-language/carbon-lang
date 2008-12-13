@@ -1,7 +1,17 @@
 ===================================
 Customizing LLVMC: Reference Manual
 ===================================
-:Author: Mikhail Glushenkov <foldr@codedegers.com>
+
+.. contents::
+
+.. raw:: html
+
+   <div class="doc_author">
+   <p>Written by <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a></p>
+   </div>
+
+Introduction
+============
 
 LLVMC is a generic compiler driver, designed to be customizable and
 extensible. It plays the same role for LLVM as the ``gcc`` program
@@ -16,11 +26,10 @@ by plugins, which can be either statically or dynamically linked. This
 makes it possible to easily adapt LLVMC for other purposes - for
 example, as a build tool for game resources.
 
-Because LLVMC employs TableGen [1]_ as its configuration language, you
+Because LLVMC employs TableGen_ as its configuration language, you
 need to be familiar with it to customize LLVMC.
 
-
-.. contents::
+.. _TableGen: http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html
 
 
 Compiling with LLVMC
@@ -580,23 +589,27 @@ Debugging
 
 When writing LLVMC plugins, it can be useful to get a visual view of
 the resulting compilation graph. This can be achieved via the command
-line option ``--view-graph``. This command assumes that Graphviz [2]_ and
-Ghostview [3]_ are installed. There is also a ``--dump-graph`` option that
-creates a Graphviz source file(``compilation-graph.dot``) in the
+line option ``--view-graph``. This command assumes that Graphviz_ and
+Ghostview_ are installed. There is also a ``--dump-graph`` option that
+creates a Graphviz source file (``compilation-graph.dot``) in the
 current directory.
 
-
-References
-==========
-
-.. [1] TableGen Fundamentals
-       http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html
-
-.. [2] Graphviz
-       http://www.graphviz.org/
-
-.. [3] Ghostview
-       http://pages.cs.wisc.edu/~ghost/
+.. _Graphviz: http://www.graphviz.org/
+.. _Ghostview: http://pages.cs.wisc.edu/~ghost/
 
 .. raw:: html
-   :file: footer.html
+
+   <hr />
+   <address>
+   <a href="http://jigsaw.w3.org/css-validator/check/referer">
+   <img src="http://jigsaw.w3.org/css-validator/images/vcss-blue"
+      alt="Valid CSS" /></a>
+   <a href="http://validator.w3.org/check?uri=referer">
+   <img src="http://www.w3.org/Icons/valid-xhtml10-blue"
+      alt="Valid XHTML 1.0 Transitional"/></a>
+
+   <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a><br />
+   <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br />
+
+   Last modified: $Date: 2008-12-11 11:34:48 -0600 (Thu, 11 Dec 2008) $
+   </address>

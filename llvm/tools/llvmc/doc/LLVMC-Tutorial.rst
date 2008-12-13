@@ -1,7 +1,17 @@
 ======================
 Tutorial - Using LLVMC
 ======================
-:Author: Mikhail Glushenkov <foldr@codedegers.com>
+
+.. contents::
+
+.. raw:: html
+
+   <div class="doc_author">
+   <p>Written by <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a></p>
+   </div>
+
+Introduction
+============
 
 LLVMC is a generic compiler driver, which plays the same role for LLVM
 as the ``gcc`` program does for GCC - the difference being that LLVMC
@@ -9,9 +19,6 @@ is designed to be more adaptable and easier to customize. Most of
 LLVMC functionality is implemented via plugins, which can be loaded
 dynamically or compiled in. This tutorial describes the basic usage
 and configuration of LLVMC.
-
-
-.. contents::
 
 
 Compiling with LLVMC
@@ -32,8 +39,10 @@ command-line LLVMC usage, refer to the ``llvmc --help`` output.
 Using LLVMC to generate toolchain drivers
 =========================================
 
-LLVMC plugins are written mostly using TableGen [1]_, so you need to
+LLVMC plugins are written mostly using TableGen_, so you need to
 be familiar with it to get anything done.
+
+.. _TableGen: http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html
 
 Start by compiling ``plugins/Simple/Simple.td``, which is a primitive
 wrapper for ``gcc``::
@@ -93,11 +102,19 @@ file.
 To learn more about LLVMC customization, refer to the reference
 manual and plugin source code in the ``plugins`` directory.
 
-References
-==========
-
-.. [1] TableGen Fundamentals
-       http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html
-
 .. raw:: html
-   :file: footer.html
+
+   <hr />
+   <address>
+   <a href="http://jigsaw.w3.org/css-validator/check/referer">
+   <img src="http://jigsaw.w3.org/css-validator/images/vcss-blue"
+      alt="Valid CSS" /></a>
+   <a href="http://validator.w3.org/check?uri=referer">
+   <img src="http://www.w3.org/Icons/valid-xhtml10-blue"
+      alt="Valid XHTML 1.0 Transitional"/></a>
+
+   <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a><br />
+   <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br />
+
+   Last modified: $Date: 2008-12-11 11:34:48 -0600 (Thu, 11 Dec 2008) $
+   </address>
