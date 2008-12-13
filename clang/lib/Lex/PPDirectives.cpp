@@ -31,13 +31,6 @@ void Preprocessor::DiscardUntilEndOfDirective() {
   } while (Tmp.isNot(tok::eom));
 }
 
-/// isCXXNamedOperator - Returns "true" if the token is a named operator in C++.
-static bool isCXXNamedOperator(const std::string &Spelling) {
-  return Spelling == "and" || Spelling == "bitand" || Spelling == "bitor" ||
-    Spelling == "compl" || Spelling == "not" || Spelling == "not_eq" ||
-    Spelling == "or" || Spelling == "xor";
-}
-
 /// ReadMacroName - Lex and validate a macro name, which occurs after a
 /// #define or #undef.  This sets the token kind to eom and discards the rest
 /// of the macro line if the macro name is invalid.  isDefineUndef is 1 if
@@ -56,7 +49,8 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
   IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
   if (II == 0) {
     std::string Spelling = getSpelling(MacroNameTok);
-    if (isCXXNamedOperator(Spelling))
+    const IdentifierInfo &Info = Identifiers.get(Spelling);
+    if (Info.isCPlusPlusOperatorKeyword())
       // C++ 2.5p2: Alternative tokens behave the same as its primary token
       // except for their spellings.
       Diag(MacroNameTok, diag::err_pp_operator_used_as_macro_name) << Spelling;
