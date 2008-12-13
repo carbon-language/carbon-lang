@@ -1364,12 +1364,12 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   // If the function body could not be parsed, make a bogus compoundstmt.
   if (FnBody.isInvalid())
     FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc, 0, 0, false);
-  
+
   // Leave the function body scope.
   BodyScope.Exit();
-  
+
   // TODO: Pass argument information.
-  Actions.ActOnFinishFunctionBody(MDecl, FnBody.release());
+  Actions.ActOnFinishFunctionBody(MDecl, move_convert(FnBody));
   return MDecl;
 }
 

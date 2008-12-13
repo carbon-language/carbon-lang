@@ -108,7 +108,7 @@ namespace {
     /// This allows ActOnDeclarator to register "xx" prior to parsing the
     /// initializer. The declaration above should still result in a warning, 
     /// since the reference to "xx" is uninitialized.
-    virtual void AddInitializerToDecl(DeclTy *Dcl, ExprTy *Init) {
+    virtual void AddInitializerToDecl(DeclTy *Dcl, ExprArg Init) {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
@@ -140,12 +140,12 @@ namespace {
   
     /// ActOnFunctionDefBody - This is called when a function body has completed
     /// parsing.  Decl is the DeclTy returned by ParseStartOfFunctionDef.
-    virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtTy *Body) {
+    virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body) {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }
 
-    virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprTy *AsmString) {
+    virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg AsmString) {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }

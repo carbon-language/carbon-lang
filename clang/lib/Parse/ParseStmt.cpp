@@ -1240,5 +1240,5 @@ Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl,
   if (FnBody.isInvalid())
     FnBody = Owned(Actions.ActOnCompoundStmt(L, R, 0, 0, false));
 
-  return Actions.ActOnFinishFunctionBody(Decl, FnBody.release());
+  return Actions.ActOnFinishFunctionBody(Decl, move_convert(FnBody));
 }

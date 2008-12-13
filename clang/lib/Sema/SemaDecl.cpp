@@ -1884,9 +1884,9 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   return true;
 }
 
-void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
+void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init) {
   Decl *RealDecl = static_cast<Decl *>(dcl);
-  Expr *Init = static_cast<Expr *>(init);
+  Expr *Init = static_cast<Expr *>(init.release());
   assert(Init && "missing initializer");
   
   // If there is no declaration, there was an error parsing it.  Just ignore
@@ -2281,10 +2281,11 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   return FD;
 }
 
-Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
+Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
   Decl *dcl = static_cast<Decl *>(D);
+  Stmt *Body = static_cast<Stmt*>(BodyArg.release());
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
-    FD->setBody((Stmt*)Body);
+    FD->setBody(Body);
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     MD->setBody((Stmt*)Body);
@@ -2309,7 +2310,7 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
       // formed.
       if (Body) {
         L->setSubStmt(new NullStmt(L->getIdentLoc()));
-        cast<CompoundStmt>((Stmt*)Body)->push_back(L);
+        cast<CompoundStmt>(Body)->push_back(L);
       } else {
         // The whole function wasn't parsed correctly, just delete this.
         delete L;
@@ -3358,9 +3359,9 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
 }
 
 Sema::DeclTy *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
-                                          ExprTy *expr) {
-  StringLiteral *AsmString = cast<StringLiteral>((Expr*)expr);
-  
+                                          ExprArg expr) {
+  StringLiteral *AsmString = cast<StringLiteral>((Expr*)expr.release());
+
   return FileScopeAsmDecl::Create(Context, Loc, AsmString);
 }
 

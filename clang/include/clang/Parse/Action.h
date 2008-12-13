@@ -87,6 +87,17 @@ public:
   typedef ASTMultiPtr<&ActionBase::DeleteExpr> MultiExprArg;
   typedef ASTMultiPtr<&ActionBase::DeleteStmt> MultiStmtArg;
 
+
+  // Utilities for Action implementations to return smart results.
+
+  OwningExprResult ExprError() { return OwningExprResult(*this, true); }
+  OwningStmtResult StmtError() { return OwningStmtResult(*this, true); }
+  OwningExprResult ExprError(const DiagnosticBuilder&) { return ExprError(); }
+  OwningStmtResult StmtError(const DiagnosticBuilder&) { return StmtError(); }
+
+  OwningExprResult ExprEmpty() { return OwningExprResult(*this, false); }
+  OwningStmtResult StmtEmpty() { return OwningStmtResult(*this, false); }
+
   /// Statistics.
   virtual void PrintStats() const {}
   //===--------------------------------------------------------------------===//
@@ -170,7 +181,7 @@ public:
   /// This allows ActOnDeclarator to register "xx" prior to parsing the
   /// initializer. The declaration above should still result in a warning, 
   /// since the reference to "xx" is uninitialized.
-  virtual void AddInitializerToDecl(DeclTy *Dcl, ExprTy *Init) {
+  virtual void AddInitializerToDecl(DeclTy *Dcl, ExprArg Init) {
     return;
   }
 
@@ -204,14 +215,14 @@ public:
   virtual void ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     return;
   }
-  
+
   /// ActOnFunctionDefBody - This is called when a function body has completed
   /// parsing.  Decl is the DeclTy returned by ParseStartOfFunctionDef.
-  virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtTy *Body) {
+  virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body) {
     return Decl;
   }
 
-  virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprTy *AsmString) {
+  virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg AsmString) {
     return 0;
   }
   

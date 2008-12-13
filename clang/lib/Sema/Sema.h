@@ -39,6 +39,7 @@ namespace clang {
   class DeclSpec;
   class NamedDecl;
   class ScopedDecl;
+  class Stmt;
   class Expr;
   class InitListExpr;
   class CallExpr;
@@ -242,6 +243,9 @@ public:
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);
 
+  OwningExprResult Owned(Expr* E) { return OwningExprResult(*this, E); }
+  OwningStmtResult Owned(Stmt* S) { return OwningStmtResult(*this, S); }
+
   virtual void ActOnEndOfTranslationUnit();
   
   //===--------------------------------------------------------------------===//
@@ -268,7 +272,7 @@ public:
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
                                          SourceLocation EqualLoc,
                                          ExprTy *defarg);
-  void AddInitializerToDecl(DeclTy *dcl, ExprTy *init);
+  void AddInitializerToDecl(DeclTy *dcl, ExprArg init);
   void ActOnUninitializedDecl(DeclTy *dcl);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
@@ -276,11 +280,11 @@ public:
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, DeclTy *D);
   virtual void ObjCActOnStartOfMethodDef(Scope *S, DeclTy *D);
   
-  virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtTy *Body);
+  virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body);
   virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
                                    SourceLocation RBrace, const char *Lang,
                                    unsigned StrSize, DeclTy *D);
-  virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprTy *expr);
+  virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);
 
   /// Scope actions.
   virtual void ActOnPopScope(SourceLocation Loc, Scope *S);

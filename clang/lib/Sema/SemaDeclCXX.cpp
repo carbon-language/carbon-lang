@@ -1391,7 +1391,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
 
   assert(NumExprs == 1 && "Expected 1 expression");
   // Set the init expression, handles conversions.
-  AddInitializerToDecl(Dcl, ExprTys[0]);
+  AddInitializerToDecl(Dcl, ExprArg(*this, ExprTys[0]));
 }
 
 /// PerformInitializationByConstructor - Perform initialization by
