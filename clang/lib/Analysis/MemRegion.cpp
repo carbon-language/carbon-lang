@@ -107,14 +107,13 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 }
 
 QualType ElementRegion::getType(ASTContext& C) const {
-  QualType T = cast<TypedRegion>(superRegion)->getType(C);
+  QualType T = getArrayRegion()->getType(C);
 
   if (isa<ArrayType>(T.getTypePtr())) {
     ArrayType* AT = cast<ArrayType>(T.getTypePtr());
     return AT->getElementType();
   }
   else {
-    assert (isa<AnonTypedRegion>(superRegion));
     PointerType* PtrT = cast<PointerType>(T.getTypePtr());
     QualType PTy = PtrT->getPointeeType();
     return C.getCanonicalType(PTy);
@@ -278,8 +277,9 @@ MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr* CL) {
   return R;
 }
 
-ElementRegion* MemRegionManager::getElementRegion(SVal Idx,
-                                                  const MemRegion* superRegion){
+ElementRegion*
+MemRegionManager::getElementRegion(SVal Idx, const TypedRegion* superRegion){
+
   llvm::FoldingSetNodeID ID;
   ElementRegion::ProfileRegion(ID, Idx, superRegion);
 

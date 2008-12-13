@@ -287,7 +287,7 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
 
     SVal NewIdx = CI1->EvalBinOp(getBasicVals(), BinaryOperator::Add, *CI2);
     return loc::MemRegionVal(MRMgr.getElementRegion(NewIdx, 
-                                                    ElemR->getSuperRegion()));
+                                                    ElemR->getArrayRegion()));
   }
 
   return UnknownVal();
@@ -360,8 +360,18 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
 // Cast 'pointer to array' to 'pointer to the first element of array'.
 
 SVal RegionStoreManager::ArrayToPointer(SVal Array) {
-  const MemRegion* ArrayR = cast<loc::MemRegionVal>(&Array)->getRegion();
-
+  if (Array.isUnknownOrUndef())
+    return Array;
+  
+  if (!isa<loc::MemRegionVal>(Array))
+    return UnknownVal();
+  
+  const MemRegion* R = cast<loc::MemRegionVal>(&Array)->getRegion();
+  const TypedRegion* ArrayR = dyn_cast<TypedRegion>(R);
+  
+  if (ArrayR)
+    return UnknownVal();
+  
   nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
   ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
   

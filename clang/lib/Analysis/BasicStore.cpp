@@ -171,7 +171,7 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
     return Base;
   
   Loc BaseL = cast<Loc>(Base);  
-  const MemRegion* BaseR = 0;
+  const TypedRegion* BaseR = 0;
   
   switch(BaseL.getSubKind()) {
     case loc::SymbolValKind: {
@@ -194,9 +194,19 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
       // Technically we can get here if people do funny things with casts.
       return UndefinedVal();
       
-    case loc::MemRegionKind:
-      BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
+    case loc::MemRegionKind: {
+      const MemRegion *R = cast<loc::MemRegionVal>(BaseL).getRegion();
+      if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
+        BaseR = TR;
+        break;
+      }
+      
+      // FIXME: Handle SymbolRegions?  Shouldn't be possible in 
+      // BasicStoreManager.
+      assert(!isa<SymbolicRegion>(R));
+      
       break;
+    }
       
     case loc::ConcreteIntKind:
       // While these seem funny, this can happen through casts.
@@ -210,9 +220,10 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
       return Base;
   }
   
-  // We return an "unknown" index because we aren't reasoning about indices
-  // at all.
-  return loc::MemRegionVal(MRMgr.getElementRegion(UnknownVal(), BaseR));
+  if (BaseR)  
+    return loc::MemRegionVal(MRMgr.getElementRegion(UnknownVal(), BaseR));
+  else
+    return UnknownVal();
 }
 
 SVal BasicStoreManager::Retrieve(const GRState* state, Loc LV, QualType T) {

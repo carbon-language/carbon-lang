@@ -424,7 +424,7 @@ class ElementRegion : public TypedRegion {
            cast<nonloc::ConcreteInt>(&Idx)->getValue().isSigned()) &&
            "The index must be signed");
   }
-
+  
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, SVal Idx, 
                             const MemRegion* superRegion);
 
@@ -434,6 +434,13 @@ public:
 
   QualType getType(ASTContext&) const;
 
+  /// getArrayRegion - Return the region of the enclosing array.  This is
+  ///  the same as getSuperRegion() except that this returns a TypedRegion*
+  ///  instead of a MemRegion*.
+  const TypedRegion* getArrayRegion() const {
+    return cast<TypedRegion>(getSuperRegion());
+  }
+  
   void print(llvm::raw_ostream& os) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
@@ -500,13 +507,14 @@ public:
   ///  a specified VarDecl.
   VarRegion* getVarRegion(const VarDecl* vd);
   
-  ElementRegion* getElementRegion(SVal Idx, const MemRegion* superRegion);
+  ElementRegion* getElementRegion(SVal Idx, const TypedRegion* superRegion);
 
   /// getFieldRegion - Retrieve or create the memory region associated with
   ///  a specified FieldDecl.  'superRegion' corresponds to the containing
   ///  memory region (which typically represents the memory representing
   ///  a structure or class).
-  FieldRegion* getFieldRegion(const FieldDecl* fd, const MemRegion* superRegion);
+  FieldRegion* getFieldRegion(const FieldDecl* fd,
+                              const MemRegion* superRegion);
   
   /// getObjCObjectRegion - Retrieve or create the memory region associated with
   ///  the instance of a specified Objective-C class.
