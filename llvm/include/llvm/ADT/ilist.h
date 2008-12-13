@@ -265,16 +265,16 @@ class iplist : public Traits {
   // circularly linked list where we snip the 'next' link from the sentinel node
   // back to the first node in the list (to preserve assertions about going off
   // the end of the list).
-  NodeTy *getTail() { return getPrev(Head); }
-  const NodeTy *getTail() const { return getPrev(Head); }
-  void setTail(NodeTy *N) const { setPrev(Head, N); }
+  NodeTy *getTail() { return this->getPrev(Head); }
+  const NodeTy *getTail() const { return this->getPrev(Head); }
+  void setTail(NodeTy *N) const { this->setPrev(Head, N); }
   
   /// CreateLazySentinal - This method verifies whether the sentinal for the
   /// list has been created and lazily makes it if not.
   void CreateLazySentinal() const {
     if (Head != 0) return;
     Head = Traits::createSentinel();
-    setNext(Head, 0);
+    this->setNext(Head, 0);
     setTail(Head);
   }
 
@@ -346,11 +346,11 @@ public:
   }
   reference back() {
     assert(!empty() && "Called back() on empty list!");
-    return *getPrev(getTail());
+    return *this->getPrev(getTail());
   }
   const_reference back() const {
     assert(!empty() && "Called back() on empty list!");
-    return *getPrev(getTail());
+    return *this->getPrev(getTail());
   }
 
   void swap(iplist &RHS) {
@@ -359,31 +359,31 @@ public:
   }
 
   iterator insert(iterator where, NodeTy *New) {
-    NodeTy *CurNode = where.getNodePtrUnchecked(), *PrevNode = getPrev(CurNode);
-    setNext(New, CurNode);
-    setPrev(New, PrevNode);
+    NodeTy *CurNode = where.getNodePtrUnchecked(), *PrevNode = this->getPrev(CurNode);
+    this->setNext(New, CurNode);
+    this->setPrev(New, PrevNode);
 
     if (CurNode != Head)  // Is PrevNode off the beginning of the list?
-      setNext(PrevNode, New);
+      this->setNext(PrevNode, New);
     else
       Head = New;
-    setPrev(CurNode, New);
+    this->setPrev(CurNode, New);
 
-    addNodeToList(New);  // Notify traits that we added a node...
+    this->addNodeToList(New);  // Notify traits that we added a node...
     return New;
   }
 
   NodeTy *remove(iterator &IT) {
     assert(IT != end() && "Cannot remove end of list!");
     NodeTy *Node = &*IT;
-    NodeTy *NextNode = getNext(Node);
-    NodeTy *PrevNode = getPrev(Node);
+    NodeTy *NextNode = this->getNext(Node);
+    NodeTy *PrevNode = this->getPrev(Node);
 
     if (Node != Head)  // Is PrevNode off the beginning of the list?
-      setNext(PrevNode, NextNode);
+      this->setNext(PrevNode, NextNode);
     else
       Head = NextNode;
-    setPrev(NextNode, PrevNode);
+    this->setPrev(NextNode, PrevNode);
     IT = NextNode;
     removeNodeFromList(Node);  // Notify traits that we removed a node...
     
@@ -392,8 +392,8 @@ public:
     // an ilist (and potentially deleted) with iterators still pointing at it.
     // When those iterators are incremented or decremented, they will assert on
     // the null next/prev pointer instead of "usually working".
-    setNext(Node, 0);
-    setPrev(Node, 0);
+    this->setNext(Node, 0);
+    this->setPrev(Node, 0);
     return Node;
   }
 
@@ -428,10 +428,10 @@ private:
       NodeTy *First = &*first, *Prev = getPrev(First);
       NodeTy *Next = last.getNodePtrUnchecked(), *Last = getPrev(Next);
       if (Prev)
-        setNext(Prev, Next);
+        this->setNext(Prev, Next);
       else
         L2.Head = Next;
-      setPrev(Next, Prev);
+      this->setPrev(Next, Prev);
 
       // Splice [first, last) into its new position.
       NodeTy *PosNext = position.getNodePtrUnchecked();
@@ -439,14 +439,14 @@ private:
 
       // Fix head of list...
       if (PosPrev)
-        setNext(PosPrev, First);
+        this->setNext(PosPrev, First);
       else
         Head = First;
-      setPrev(First, PosPrev);
+      this->setPrev(First, PosPrev);
 
       // Fix end of list...
-      setNext(Last, PosNext);
-      setPrev(PosNext, Last);
+      this->setNext(Last, PosNext);
+      this->setPrev(PosNext, Last);
 
       transferNodesFromList(L2, First, PosNext);
 

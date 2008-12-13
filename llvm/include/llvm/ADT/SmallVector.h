@@ -566,17 +566,17 @@ public:
     : SmallVectorImpl<T>(NumTsAvailable) {
     this->reserve(Size);
     while (Size--)
-      push_back(Value);
+      this->push_back(Value);
   }
   
   template<typename ItTy>
   SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(NumTsAvailable) {
-    append(S, E);
+    this->append(S, E);
   }
   
   SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(NumTsAvailable) {
     if (!RHS.empty())
-      operator=(RHS);
+      SmallVectorImpl<T>::operator=(RHS);
   }
 
   const SmallVector &operator=(const SmallVector &RHS) {
