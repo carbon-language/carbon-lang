@@ -322,7 +322,8 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
     Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
   
   // Store the blocks to use for break and continue.
-  BreakContinueStack.push_back(BreakContinue(ExitBlock, LoopHeader));
+  BreakContinueStack.push_back(BreakContinue(ExitBlock, LoopHeader, 
+                                             ObjCEHStack.size()));
   
   // Emit the loop body.
   EmitBlock(LoopBody);
@@ -355,7 +356,8 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
   llvm::BasicBlock *DoCond = createBasicBlock("do.cond");
   
   // Store the blocks to use for break and continue.
-  BreakContinueStack.push_back(BreakContinue(AfterDo, DoCond));
+  BreakContinueStack.push_back(BreakContinue(AfterDo, DoCond, 
+                                             ObjCEHStack.size()));
   
   // Emit the body of the loop into the block.
   EmitStmt(S.getBody());
@@ -433,7 +435,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     ContinueBlock = CondBlock;  
   
   // Store the blocks to use for break and continue.
-  BreakContinueStack.push_back(BreakContinue(AfterFor, ContinueBlock));
+  BreakContinueStack.push_back(BreakContinue(AfterFor, ContinueBlock,
+                                             ObjCEHStack.size()));
   
   // If the condition is true, execute the body of the for stmt.
   EmitStmt(S.getBody());
@@ -510,7 +513,7 @@ void CodeGenFunction::EmitBreakStmt(const BreakStmt &S) {
   assert(!BreakContinueStack.empty() && "break stmt not in a loop or switch!");
 
   // FIXME: Implement break in @try or @catch blocks.
-  if (!ObjCEHStack.empty()) {
+  if (ObjCEHStack.size() != BreakContinueStack.back().EHStackSize) {
     CGM.ErrorUnsupported(&S, "continue inside an Obj-C exception block");
     return;
   }
@@ -528,7 +531,7 @@ void CodeGenFunction::EmitContinueStmt(const ContinueStmt &S) {
   assert(!BreakContinueStack.empty() && "continue stmt not in a loop!");
 
   // FIXME: Implement continue in @try or @catch blocks.
-  if (!ObjCEHStack.empty()) {
+  if (ObjCEHStack.size() != BreakContinueStack.back().EHStackSize) {
     CGM.ErrorUnsupported(&S, "continue inside an Obj-C exception block");
     return;
   }
@@ -646,7 +649,8 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   llvm::BasicBlock *ContinueBlock = NULL;
   if (!BreakContinueStack.empty())
     ContinueBlock = BreakContinueStack.back().ContinueBlock;
-  BreakContinueStack.push_back(BreakContinue(NextBlock, ContinueBlock));
+  BreakContinueStack.push_back(BreakContinue(NextBlock, ContinueBlock,
+                                             ObjCEHStack.size()));
 
   // Emit switch body.
   EmitStmt(S.getBody());

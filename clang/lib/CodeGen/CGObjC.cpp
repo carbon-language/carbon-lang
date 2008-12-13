@@ -492,7 +492,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::BasicBlock *LoopEnd = createBasicBlock("loopend");
   llvm::BasicBlock *AfterBody = createBasicBlock("afterbody");
   
-  BreakContinueStack.push_back(BreakContinue(LoopEnd, AfterBody));
+  BreakContinueStack.push_back(BreakContinue(LoopEnd, AfterBody, 
+                                             ObjCEHStack.size()));
 
   EmitStmt(S.getBody());
   

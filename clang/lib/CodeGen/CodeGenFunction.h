@@ -148,13 +148,14 @@ private:
   llvm::DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
   
   // BreakContinueStack - This keeps track of where break and continue 
-  // statements should jump to.
+  // statements should jump to, as well as the size of the eh stack.
   struct BreakContinue {
-    BreakContinue(llvm::BasicBlock *bb, llvm::BasicBlock *cb)
-      : BreakBlock(bb), ContinueBlock(cb) {}
+    BreakContinue(llvm::BasicBlock *bb, llvm::BasicBlock *cb, size_t ehss)
+      : BreakBlock(bb), ContinueBlock(cb), EHStackSize(ehss) {}
       
     llvm::BasicBlock *BreakBlock;
     llvm::BasicBlock *ContinueBlock;
+    size_t EHStackSize;
   }; 
   llvm::SmallVector<BreakContinue, 8> BreakContinueStack;
 
