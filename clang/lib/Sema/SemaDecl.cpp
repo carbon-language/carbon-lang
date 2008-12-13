@@ -3075,8 +3075,10 @@ void Sema::ActOnFields(Scope* S,
       Consumer.HandleTagDeclDefinition(Record);
   } else {
     ObjCIvarDecl **ClsFields = reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
-    if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl))
+    if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl)) {
       ID->addInstanceVariablesToClass(ClsFields, RecFields.size(), RBrac);
+      ID->addLayoutToClass(Context);
+    }
     else if (ObjCImplementationDecl *IMPDecl = 
                dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
       assert(IMPDecl && "ActOnFields - missing ObjCImplementationDecl");

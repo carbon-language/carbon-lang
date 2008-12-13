@@ -588,6 +588,7 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
   /// Add implementations's ivar to the synthesize class's ivar list.
   if (IDecl->ImplicitInterfaceDecl()) {
     IDecl->addInstanceVariablesToClass(ivars, numIvars, RBrace);
+    IDecl->addLayoutToClass(Context);
     return;
   }
   // If implementation has empty ivar list, just return.

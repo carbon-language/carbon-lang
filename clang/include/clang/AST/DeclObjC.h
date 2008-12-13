@@ -23,6 +23,7 @@ class Expr;
 class Stmt;
 class FunctionDecl;
 class AttributeList;
+class RecordDecl;
 class ObjCIvarDecl;
 class ObjCMethodDecl;
 class ObjCProtocolDecl;
@@ -276,6 +277,8 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
   Type *TypeForDecl;
   friend class ASTContext;
   
+  RecordDecl *RecordForDecl;
+  
   /// Class's super class.
   ObjCInterfaceDecl *SuperClass;
   
@@ -312,7 +315,7 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
   ObjCInterfaceDecl(SourceLocation atLoc, IdentifierInfo *Id,
                     SourceLocation CLoc, bool FD, bool isInternal)
     : NamedDecl(ObjCInterface, atLoc, Id), DeclContext(ObjCInterface),
-      TypeForDecl(0), SuperClass(0),
+      TypeForDecl(0), RecordForDecl(0), SuperClass(0),
       Ivars(0), NumIvars(0),
       InstanceMethods(0), NumInstanceMethods(0), 
       ClassMethods(0), NumClassMethods(0),
@@ -347,6 +350,10 @@ public:
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
   
+  void CollectObjCIvars(std::vector<FieldDecl*> &Fields);
+  void setRecordForDecl(RecordDecl *Decl) { RecordForDecl = Decl; }
+  RecordDecl *getRecordForDecl() const { return RecordForDecl; }
+  
   typedef ObjCIvarDecl * const *ivar_iterator;
   ivar_iterator ivar_begin() const { return Ivars; }
   ivar_iterator ivar_end() const { return Ivars + ivar_size();}
@@ -376,6 +383,8 @@ public:
    
   void addInstanceVariablesToClass(ObjCIvarDecl **ivars, unsigned numIvars,
                                    SourceLocation RBracLoc);
+  
+  void addLayoutToClass(ASTContext &Context);
 
   void addMethods(ObjCMethodDecl **insMethods, unsigned numInsMembers,
                   ObjCMethodDecl **clsMethods, unsigned numClsMembers,

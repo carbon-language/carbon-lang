@@ -338,6 +338,17 @@ ObjCIvarDecl *
   return 0;
 }
 
+void ObjCInterfaceDecl::CollectObjCIvars(std::vector<FieldDecl*> &Fields) {
+  ObjCInterfaceDecl *SuperClass = getSuperClass();
+  if (SuperClass)
+    SuperClass->CollectObjCIvars(Fields);
+  for (ObjCInterfaceDecl::ivar_iterator I = ivar_begin(),
+       E = ivar_end(); I != E; ++I) {
+    ObjCIvarDecl *IVDecl = (*I);
+    Fields.push_back(cast<FieldDecl>(IVDecl));
+  }
+}
+  
 /// ObjCAddInstanceVariablesToClass - Inserts instance variables
 /// into ObjCInterfaceDecl's fields.
 ///
@@ -350,6 +361,28 @@ void ObjCInterfaceDecl::addInstanceVariablesToClass(ObjCIvarDecl **ivars,
     memcpy(Ivars, ivars, numIvars*sizeof(ObjCIvarDecl*));
   }
   setLocEnd(RBrac);
+}
+
+/// addInstanceVariablesToClass - produces layout info. for the class for its
+/// ivars and all those inherited.
+///
+void ObjCInterfaceDecl::addLayoutToClass(ASTContext &Context)
+{
+  std::vector<FieldDecl*> RecFields;
+  CollectObjCIvars(RecFields);
+  RecordDecl *RD = RecordDecl::Create(Context, TagDecl::TK_struct, 0,
+                                      getLocation(),
+                                      getIdentifier());
+  /// FIXME! Can do collection of ivars and adding to the record while
+  /// doing it.
+  for (unsigned int i = 0; i != RecFields.size(); i++) {
+    FieldDecl *Field =  FieldDecl::Create(Context, RD, SourceLocation(), 
+                                          RecFields[i]->getIdentifier(),
+                                          RecFields[i]->getType(), 0, false, 0);
+    RD->addDecl(Context, Field);
+  }
+  RD->completeDefinition(Context);
+  setRecordForDecl(RD);  
 }
 
 /// ObjCAddInstanceVariablesToClassImpl - Checks for correctness of Instance 
