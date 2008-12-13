@@ -620,9 +620,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Legalization", GroupName);
-    CurDAG->Legalize(DisableLegalizeTypes);
+    CurDAG->Legalize();
   } else {
-    CurDAG->Legalize(DisableLegalizeTypes);
+    CurDAG->Legalize();
   }
   
   DOUT << "Legalized selection DAG:\n";

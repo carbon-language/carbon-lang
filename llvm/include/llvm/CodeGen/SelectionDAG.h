@@ -212,7 +212,7 @@ public:
   ///
   /// Note that this is an involved process that may invalidate pointers into
   /// the graph.
-  void Legalize(bool TypesNeedLegalizing);
+  void Legalize();
 
   /// RemoveDeadNodes - This method deletes all unreachable nodes in the
   /// SelectionDAG.
