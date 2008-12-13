@@ -3126,6 +3126,25 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Tmp1 = TLI.LowerOperation(Result, DAG);
       if (Tmp1.getNode()) Result = Tmp1;
       break;
+    case TargetLowering::Expand: {
+      // Unroll into a nasty set of scalar code for now.
+      MVT VT = Node->getValueType(0);
+      unsigned NumElems = VT.getVectorNumElements();
+      MVT EltVT = VT.getVectorElementType();
+      MVT TmpEltVT = Tmp1.getValueType().getVectorElementType();
+      SmallVector<SDValue, 8> Ops(NumElems);
+      for (unsigned i = 0; i < NumElems; ++i) {
+        SDValue In1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, TmpEltVT,
+                                  Tmp1, DAG.getIntPtrConstant(i));
+        Ops[i] = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(In1), In1,
+                              DAG.getNode(ISD::EXTRACT_VECTOR_ELT, TmpEltVT,
+                                          Tmp2, DAG.getIntPtrConstant(i)),
+                              CC);
+        Ops[i] = DAG.getNode(ISD::SIGN_EXTEND, EltVT, Ops[i]);
+      }
+      Result = DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], NumElems);
+      break;
+    }
     }
     break;
   }
@@ -3204,7 +3223,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
          Node->getOpcode() == ISD::SRA) &&
         !Node->getValueType(0).isVector()) {
       Tmp2 = LegalizeShiftAmount(Tmp2);
-     }
+    }
 
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
 
@@ -8002,7 +8021,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
         NewOps.push_back(PermOp.getOperand(i));
       } else {
         unsigned Idx =
-        cast<ConstantSDNode>(PermOp.getOperand(i))->getZExtValue();
+          cast<ConstantSDNode>(PermOp.getOperand(i))->getZExtValue();
         if (Idx < NumElts) {
           NewOps.push_back(PermOp.getOperand(i));
         }
