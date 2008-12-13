@@ -33,7 +33,7 @@
 using namespace llvm;
 
 // Provide a command-line option to aggregate function arguments into a struct
-// for functions produced by the code extrator. This is useful when converting
+// for functions produced by the code extractor. This is useful when converting
 // extracted functions to pthread-based code, as only one argument (void*) can
 // be passed in to pthread_create().
 static cl::opt<bool>
