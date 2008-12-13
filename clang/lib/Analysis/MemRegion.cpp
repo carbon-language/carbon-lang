@@ -51,18 +51,6 @@ void AnonTypedRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T,
   ID.AddPointer(superRegion);
 }
 
-QualType AnonPointeeRegion::getType(ASTContext& C) const {
-  return C.getCanonicalType(T);
-}
-
-void AnonPointeeRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, 
-                                      SymbolRef Sym,
-                                      const MemRegion* superRegion) {
-  ID.AddInteger((unsigned) AnonPointeeRegionKind);
-  Sym.Profile(ID);
-  ID.AddPointer(superRegion);
-}
-
 void CompoundLiteralRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   CompoundLiteralRegion::ProfileRegion(ID, CL, superRegion);
 }
@@ -106,9 +94,9 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ElementRegion::ProfileRegion(ID, Index, superRegion);
 }
 
-QualType ElementRegion::getType(ASTContext& C) const {
-  QualType T = getArrayRegion()->getType(C);
-
+QualType ElementRegion::getRValueType(ASTContext& C) const {
+  QualType T = getArrayRegion()->getLValueType(C);
+  // FIXME: Should ArrayType be considered an LValue or RValue type?
   if (isa<ArrayType>(T.getTypePtr())) {
     ArrayType* AT = cast<ArrayType>(T.getTypePtr());
     return AT->getElementType();
@@ -118,6 +106,14 @@ QualType ElementRegion::getType(ASTContext& C) const {
     QualType PTy = PtrT->getPointeeType();
     return C.getCanonicalType(PTy);
   }
+}
+
+//===----------------------------------------------------------------------===//
+// getLValueType() and getRValueType()
+//===----------------------------------------------------------------------===//
+
+QualType StringRegion::getRValueType(ASTContext& C) const {
+  return Str->getType();
 }
 
 //===----------------------------------------------------------------------===//
@@ -384,26 +380,6 @@ MemRegionManager::getAnonTypedRegion(QualType t, const MemRegion* superRegion) {
   if (!R) {
     R = (AnonTypedRegion*) A.Allocate<AnonTypedRegion>();
     new (R) AnonTypedRegion(t, superRegion);
-    Regions.InsertNode(R, InsertPos);
-  }
-
-  return R;
-}
-
-AnonPointeeRegion* MemRegionManager::getAnonPointeeRegion(SymbolRef Sym,
-                                                          QualType T) {
-  llvm::FoldingSetNodeID ID;
-  MemRegion* superRegion = getUnknownRegion();
-
-  AnonPointeeRegion::ProfileRegion(ID, Sym, superRegion);
-
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  AnonPointeeRegion* R = cast_or_null<AnonPointeeRegion>(data);
-
-  if (!R) {
-    R = (AnonPointeeRegion*) A.Allocate<AnonPointeeRegion>();
-    new (R) AnonPointeeRegion(Sym, T, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
 

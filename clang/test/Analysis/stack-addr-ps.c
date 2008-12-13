@@ -1,4 +1,3 @@
-// XFAIL
 // RUN: clang -checker-simple -verify %s
 
 #include <stdlib.h>

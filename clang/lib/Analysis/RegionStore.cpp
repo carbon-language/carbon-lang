@@ -101,8 +101,11 @@ public:
 
   SVal ArrayToPointer(SVal Array);
 
-  std::pair<const GRState*, SVal>
-  CastRegion(const GRState* St, SVal VoidPtr, QualType CastToTy, Stmt* CastE);
+  /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
+  ///  a MemRegion* to a specific location type.  'R' is the region being
+  ///  casted and 'CastToTy' the result type of the cast.  
+  CastResult CastRegion(const GRState* state, const MemRegion* R,
+                        QualType CastToTy);
 
   SVal Retrieve(const GRState* state, Loc L, QualType T = QualType());
 
@@ -297,7 +300,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
                                            const MemRegion* R) {
   if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
     // Get the type of the variable.
-    QualType T = VR->getType(getContext());
+    QualType T = VR->getRValueType(getContext());
 
     // It must be of array type. 
     const ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
@@ -326,8 +329,8 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
     llvm::APSInt SSize = cast<nonloc::ConcreteInt>(*T).getValue();
 
     // Get the size of the element in bits.
-    QualType ElemTy = cast<PointerType>(ATR->getType(getContext()).getTypePtr())
-                      ->getPointeeType();
+    QualType LvT = ATR->getLValueType(getContext());
+    QualType ElemTy = cast<PointerType>(LvT.getTypePtr())->getPointeeType();
 
     uint64_t X = getContext().getTypeSize(ElemTy);
 
@@ -378,25 +381,22 @@ SVal RegionStoreManager::ArrayToPointer(SVal Array) {
   return loc::MemRegionVal(ER);                    
 }
 
-std::pair<const GRState*, SVal>
-RegionStoreManager::CastRegion(const GRState* St, SVal VoidPtr, 
-                               QualType CastToTy, Stmt* CastE) {
-  if (const AllocaRegion* AR =
-      dyn_cast<AllocaRegion>(cast<loc::MemRegionVal>(VoidPtr).getRegion())) {
-
-    // Create a new region to attach type information to it.
-    const AnonTypedRegion* TR = MRMgr.getAnonTypedRegion(CastToTy, AR);
-
-    // Get the pointer to the first element.
-    nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
-    const ElementRegion* ER = MRMgr.getElementRegion(Idx, TR);
-
-    // Add a RegionView to base region.
-    return std::make_pair(AddRegionView(St, TR, AR), loc::MemRegionVal(ER));
+StoreManager::CastResult
+RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
+                               QualType CastToTy) {
+  
+  // Return the same region if the region types are compatible.
+  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
+    ASTContext& Ctx = StateMgr.getContext();
+    QualType Ta = Ctx.getCanonicalType(TR->getLValueType(Ctx));
+    QualType Tb = Ctx.getCanonicalType(CastToTy);
+    
+    if (Ta == Tb)
+      return CastResult(state, R);
   }
-
-  // Default case.
-  return std::make_pair(St, UnknownVal());
+  
+  const MemRegion* ViewR = MRMgr.getAnonTypedRegion(CastToTy, R);  
+  return CastResult(AddRegionView(state, ViewR, R), ViewR);
 }
 
 SVal RegionStoreManager::Retrieve(const GRState* state, Loc L, QualType T) {
@@ -410,7 +410,7 @@ SVal RegionStoreManager::Retrieve(const GRState* state, Loc L, QualType T) {
     assert(R && "bad region");
 
     if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
-      if (TR->getType(getContext())->isStructureType())
+      if (TR->getRValueType(getContext())->isStructureType())
         return RetrieveStruct(S, TR);
 
     RegionBindingsTy B(static_cast<const RegionBindingsTy::TreeTy*>(S));
@@ -434,7 +434,8 @@ SVal RegionStoreManager::Retrieve(const GRState* state, Loc L, QualType T) {
 }
 
 SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
-  QualType T = R->getType(getContext());
+  // FIXME: Verify we want getRValueType instead of getLValueType.
+  QualType T = R->getRValueType(getContext());
   assert(T->isStructureType());
 
   const RecordType* RT = cast<RecordType>(T.getTypePtr());
@@ -471,7 +472,8 @@ Store RegionStoreManager::Bind(Store store, Loc LV, SVal V) {
   assert(R);
 
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
-    if (TR->getType(getContext())->isStructureType())
+    // FIXME: Verify we want getRValueType().
+    if (TR->getRValueType(getContext())->isStructureType())
       return BindStruct(store, TR, V);
 
   RegionBindingsTy B = GetRegionBindings(store);
@@ -481,7 +483,8 @@ Store RegionStoreManager::Bind(Store store, Loc LV, SVal V) {
 }
 
 Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R, SVal V){
-  QualType T = R->getType(getContext());
+  // Verify we want getRValueType.
+  QualType T = R->getRValueType(getContext());
   assert(T->isStructureType());
 
   const RecordType* RT = cast<RecordType>(T.getTypePtr());
@@ -774,7 +777,9 @@ void RegionStoreManager::print(Store store, std::ostream& Out,
 
 Store RegionStoreManager::InitializeArray(Store store, const TypedRegion* R, 
                                           SVal Init) {
-  QualType T = R->getType(getContext());
+  
+  // FIXME: Verify we should use getLValueType or getRValueType.
+  QualType T = R->getLValueType(getContext());
   assert(T->isArrayType());
 
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
@@ -829,7 +834,9 @@ Store RegionStoreManager::InitializeArray(Store store, const TypedRegion* R,
 // Bind all elements of the array to some value.
 Store RegionStoreManager::BindArrayToVal(Store store, const TypedRegion* BaseR,
                                          SVal V){
-  QualType T = BaseR->getType(getContext());
+  
+  // FIXME: Verify we want getRValueType.
+  QualType T = BaseR->getRValueType(getContext());
   assert(T->isArrayType());
 
   // Only handle constant size array for now.
@@ -855,7 +862,9 @@ Store RegionStoreManager::BindArrayToVal(Store store, const TypedRegion* BaseR,
 
 Store RegionStoreManager::BindArrayToSymVal(Store store, 
                                             const TypedRegion* BaseR) {
-  QualType T = BaseR->getType(getContext());
+  
+  // FIXME: Verify we want getRValueType.
+  QualType T = BaseR->getRValueType(getContext());
   assert(T->isArrayType());
 
   if (ConstantArrayType* CAT = dyn_cast<ConstantArrayType>(T.getTypePtr())) {
@@ -882,7 +891,9 @@ Store RegionStoreManager::BindArrayToSymVal(Store store,
 
 Store RegionStoreManager::InitializeStruct(Store store, const TypedRegion* R, 
                                            SVal Init) {
-  QualType T = R->getType(getContext());
+  
+  // FIXME: Verify that we should use getRValueType or getLValueType.
+  QualType T = R->getRValueType(getContext());
   assert(T->isStructureType());
 
   RecordType* RT = cast<RecordType>(T.getTypePtr());
@@ -925,7 +936,9 @@ Store RegionStoreManager::InitializeStruct(Store store, const TypedRegion* R,
 // Bind all fields of the struct to some value.
 Store RegionStoreManager::BindStructToVal(Store store, const TypedRegion* BaseR,
                                           SVal V) {
-  QualType T = BaseR->getType(getContext());
+  
+  // FIXME: Verify that we should use getLValueType or getRValueType.
+  QualType T = BaseR->getRValueType(getContext());
   assert(T->isStructureType());
 
   const RecordType* RT = cast<RecordType>(T.getTypePtr());
@@ -955,7 +968,9 @@ Store RegionStoreManager::BindStructToVal(Store store, const TypedRegion* BaseR,
 
 Store RegionStoreManager::BindStructToSymVal(Store store, 
                                              const TypedRegion* BaseR) {
-  QualType T = BaseR->getType(getContext());
+  
+  // FIXME: Verify that we should use getLValueType or getRValueType
+  QualType T = BaseR->getRValueType(getContext());
   assert(T->isStructureType());
 
   const RecordType* RT = cast<RecordType>(T.getTypePtr());

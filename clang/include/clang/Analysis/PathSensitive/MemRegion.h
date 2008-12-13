@@ -165,8 +165,13 @@ protected:
   TypedRegion(const MemRegion* sReg, Kind k) : SubRegion(sReg, k) {}
   
 public:
-  virtual QualType getType(ASTContext&) const = 0;
-    
+  virtual QualType getRValueType(ASTContext &C) const = 0;
+  
+  virtual QualType getLValueType(ASTContext& C) const {
+    // FIXME: We can possibly optimize this later to cache this value.
+    return C.getPointerType(getRValueType(C));
+  }
+
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
     return k > BEG_TYPED_REGIONS && k < END_TYPED_REGIONS;
@@ -176,9 +181,7 @@ public:
 /// StringRegion - Region associated with a StringLiteral.
 class StringRegion : public TypedRegion {
   friend class MemRegionManager;
-
   const StringLiteral* Str;
-
 protected:
 
   StringRegion(const StringLiteral* str, MemRegion* sreg)
@@ -191,10 +194,8 @@ protected:
 public:
 
   const StringLiteral* getStringLiteral() const { return Str; }
-
-  QualType getType(ASTContext& C) const {
-    return C.getCanonicalType(Str->getType());
-  }
+    
+  QualType getRValueType(ASTContext& C) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ProfileRegion(ID, Str, superRegion);
@@ -220,7 +221,7 @@ class AnonTypedRegion : public TypedRegion {
 
 public:
 
-  QualType getType(ASTContext& C) const {
+  QualType getRValueType(ASTContext&) const {
     return T;
   }
 
@@ -232,39 +233,7 @@ public:
     return R->getKind() == AnonTypedRegionKind;
   }
 };
-
-/// AnonPointeeRegion - anonymous regions pointed-to by pointer function
-///  parameters or pointer globals. In RegionStoreManager, we assume pointer
-///  parameters or globals point at some anonymous region. Such regions are not
-///  the regions associated with the pointer variables themselves.  They are
-///  identified by the symbols that are concretized. We create them lazily.
-
-class AnonPointeeRegion : public TypedRegion {
-  friend class MemRegionManager;
-
-  // Sym - the symbol that is concretized.
-  SymbolRef Sym;
-
-  // Ty - the type of the region.
-  QualType T;
-
-  AnonPointeeRegion(SymbolRef sym, QualType t, MemRegion* sreg)
-    : TypedRegion(sreg, AnonPointeeRegionKind), Sym(sym), T(t) {}
-
-public:
-  QualType getType(ASTContext& C) const;
-
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef Sym,
-                            const MemRegion* superRegion);
-
-  void Profile(llvm::FoldingSetNodeID& ID) const {
-    ProfileRegion(ID, Sym, superRegion);
-  }
-
-  static bool classof(const MemRegion* R) {
-    return R->getKind() == AnonPointeeRegionKind;
-  }
-};
+  
 
 /// CompoundLiteralRegion - A memory region representing a compound literal.
 ///   Compound literals are essentially temporaries that are stack allocated
@@ -281,10 +250,10 @@ private:
                             const CompoundLiteralExpr* CL,
                             const MemRegion* superRegion);
 public:
-  QualType getType(ASTContext& C) const {
+  QualType getRValueType(ASTContext& C) const {
     return C.getCanonicalType(CL->getType());
   }
-
+  
   void Profile(llvm::FoldingSetNodeID& ID) const;
   
   void print(llvm::raw_ostream& os) const;
@@ -309,7 +278,9 @@ protected:
 public:
   const Decl* getDecl() const { return D; }
   void Profile(llvm::FoldingSetNodeID& ID) const;
-
+      
+  QualType getRValueType(ASTContext& C) const = 0;
+  
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
     return k > BEG_DECL_REGIONS && k < END_DECL_REGIONS;
@@ -328,11 +299,13 @@ class VarRegion : public DeclRegion {
   }
   
 public:  
-  const VarDecl* getDecl() const { return cast<VarDecl>(D); }
-  QualType getType(ASTContext& C) const { 
-    return C.getCanonicalType(getDecl()->getType());
-  }
+  const VarDecl* getDecl() const { return cast<VarDecl>(D); }  
   
+  QualType getRValueType(ASTContext& C) const { 
+    // FIXME: We can cache this if needed.
+    return C.getCanonicalType(getDecl()->getType());
+  }    
+    
   void print(llvm::raw_ostream& os) const;
   
   static bool classof(const MemRegion* R) {
@@ -351,9 +324,11 @@ public:
   void print(llvm::raw_ostream& os) const;
   
   const FieldDecl* getDecl() const { return cast<FieldDecl>(D); }
-  QualType getType(ASTContext& C) const {
+    
+  QualType getRValueType(ASTContext& C) const { 
+    // FIXME: We can cache this if needed.
     return C.getCanonicalType(getDecl()->getType());
-  }
+  }    
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, FieldDecl* FD,
                       const MemRegion* superRegion) {
@@ -382,7 +357,7 @@ public:
     return cast<ObjCInterfaceDecl>(D);
   }
   
-  QualType getType(ASTContext& C) const {
+  QualType getRValueType(ASTContext& C) const {
     ObjCInterfaceDecl* ID = const_cast<ObjCInterfaceDecl*>(getInterface());
     return C.getObjCInterfaceType(ID);
   }
@@ -406,7 +381,7 @@ class ObjCIvarRegion : public DeclRegion {
   
 public:
   const ObjCIvarDecl* getDecl() const { return cast<ObjCIvarDecl>(D); }
-  QualType getType(ASTContext&) const { return getDecl()->getType(); }
+  QualType getRValueType(ASTContext&) const { return getDecl()->getType(); }
   
   static bool classof(const MemRegion* R) {
     return R->getKind() == ObjCIvarRegionKind;
@@ -432,7 +407,7 @@ public:
 
   SVal getIndex() const { return Index; }
 
-  QualType getType(ASTContext&) const;
+  QualType getRValueType(ASTContext&) const;
 
   /// getArrayRegion - Return the region of the enclosing array.  This is
   ///  the same as getSuperRegion() except that this returns a TypedRegion*
@@ -529,8 +504,6 @@ public:
                                     const MemRegion* superRegion);
 
   AnonTypedRegion* getAnonTypedRegion(QualType t, const MemRegion* superRegion);
-
-  AnonPointeeRegion* getAnonPointeeRegion(SymbolRef Sym, QualType T);
 
   bool hasStackStorage(const MemRegion* R);
 

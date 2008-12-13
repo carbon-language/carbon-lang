@@ -504,11 +504,14 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
     return false;
   
   const TypedRegion* R = dyn_cast<TypedRegion>(LV->getRegion());
-  if (!R)
-    return false;
+  if (!R) return false;
   
+  while (const AnonTypedRegion* ATR = dyn_cast<AnonTypedRegion>(R)) {
+    R = dyn_cast<TypedRegion>(ATR->getSuperRegion());
+    if (!R) return false;
+  }
   
-  QualType T = Ctx.getCanonicalType(R->getType(Ctx));
+  QualType T = Ctx.getCanonicalType(R->getRValueType(Ctx));
   
   // FIXME: If the pointee isn't an integer type, should we flag a warning?
   //  People can do weird stuff with pointers.

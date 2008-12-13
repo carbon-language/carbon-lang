@@ -86,8 +86,21 @@ public:
   ///  conversions between arrays and pointers.
   virtual SVal ArrayToPointer(SVal Array) = 0;
 
-  virtual std::pair<const GRState*, SVal> 
-  CastRegion(const GRState* St, SVal VoidPtr, QualType CastToTy, Stmt* CastE)=0;
+  
+  class CastResult {
+    const GRState* State;
+    const MemRegion* R;
+  public:
+    const GRState* getState() const { return State; }
+    const MemRegion* getRegion() const { return R; }
+    CastResult(const GRState* s, const MemRegion* r = 0) : State(s), R(r) {}
+  };
+  
+  /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
+  ///  a MemRegion* to a specific location type.  'R' is the region being
+  ///  casted and 'CastToTy' the result type of the cast.
+  virtual CastResult CastRegion(const GRState* state, const MemRegion* R,
+                                QualType CastToTy) = 0;
   
   /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
   ///  'this' object (C++).  When used when analyzing a normal function this

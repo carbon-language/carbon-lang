@@ -1465,7 +1465,7 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
       // FIXME: The proper thing to do is to really iterate over the
       //  container.  We will do this with dispatch logic to the store.
       //  For now, just 'conjure' up a symbolic value.
-      QualType T = R->getType(getContext());
+      QualType T = R->getRValueType(getContext());
       assert (Loc::IsLocType(T));
       unsigned Count = Builder->getCurrentBlockCount();
       loc::SymbolVal SymV(SymMgr.getConjuredSymbol(elem, T, Count));
@@ -1731,16 +1731,25 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       continue;
     }
 
-    // Check for casts from a pointer to a region to typed pointer.
-    if (isa<loc::MemRegionVal>(V)) {
+    // Check for casts from a region to a specific type.
+    if (loc::MemRegionVal *RV = dyn_cast<loc::MemRegionVal>(&V)) {
       assert(Loc::IsLocType(T));
       assert(Loc::IsLocType(ExTy));
 
-      // Delegate to store manager.
-      std::pair<const GRState*, SVal> Res =  
-        getStoreManager().CastRegion(St, V, T, CastE);
-
-      MakeNode(Dst, CastE, N, BindExpr(Res.first, CastE, Res.second));
+      const MemRegion* R = RV->getRegion();
+      StoreManager& StoreMgr = getStoreManager();
+      
+      // Delegate to store manager to get the result of casting a region
+      // to a different type.
+      const StoreManager::CastResult& Res = StoreMgr.CastRegion(St, R, T);
+      
+      // Inspect the result.  If the MemRegion* returned is NULL, this
+      // expression evaluates to UnknownVal.
+      R = Res.getRegion();
+      if (R) { V = loc::MemRegionVal(R); } else { V = UnknownVal(); }
+      
+      // Generate the new node in the ExplodedGraph.
+      MakeNode(Dst, CastE, N, BindExpr(Res.getState(), CastE, V));
       continue;
     }
 

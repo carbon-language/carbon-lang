@@ -66,11 +66,11 @@ public:
   ///  conversions between arrays and pointers.
   SVal ArrayToPointer(SVal Array) { return Array; }
 
-  std::pair<const GRState*, SVal> 
-  CastRegion(const GRState* St, SVal VoidPtr, QualType CastToTy, Stmt* CastE) {
-    return std::make_pair(St, UnknownVal());
-  }
-
+  /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
+  ///  a MemRegion* to a specific location type.  'R' is the region being
+  ///  casted and 'CastToTy' the result type of the cast.
+  CastResult CastRegion(const GRState* state, const MemRegion* R,
+                        QualType CastToTy);
   
   /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
   ///  'this' object (C++).  When used when analyzing a normal function this
@@ -124,6 +124,25 @@ SVal BasicStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
   return UnknownVal();
 }
   
+/// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
+///  a MemRegion* to a specific location type.  'R' is the region being
+///  casted and 'CastToTy' the result type of the cast.
+StoreManager::CastResult
+BasicStoreManager::CastRegion(const GRState* state, const MemRegion* R,
+                              QualType CastToTy) {
+
+  // Return the same region if the region types are compatible.
+  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
+    ASTContext& Ctx = StateMgr.getContext();
+    QualType Ta = Ctx.getCanonicalType(TR->getLValueType(Ctx));
+    QualType Tb = Ctx.getCanonicalType(CastToTy);
+    
+    if (Ta == Tb)
+      return CastResult(state, R);
+  }
+
+  return CastResult(state, MRMgr.getAnonTypedRegion(CastToTy, R));
+}
   
 SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
                                        const FieldDecl* D) {

@@ -1602,7 +1602,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         if (R) {
           // Set the value of the variable to be a conjured symbol.
           unsigned Count = Builder.getCurrentBlockCount();
-          QualType T = R->getType(Ctx);
+          QualType T = R->getRValueType(Ctx);
           
           // FIXME: handle structs.
           if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {

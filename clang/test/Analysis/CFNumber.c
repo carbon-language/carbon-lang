@@ -1,4 +1,3 @@
-// XFAIL
 // RUN: clang -checker-cfref -verify -triple x86_64-apple-darwin9 %s
 
 typedef signed long CFIndex;
