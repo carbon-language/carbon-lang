@@ -969,8 +969,6 @@ SDValue DAGTypeLegalizer::PromoteIntOp_STORE(StoreSDNode *N, unsigned OpNo){
 
   SDValue Val = GetPromotedInteger(N->getValue());  // Get promoted value.
 
-  assert(!N->isTruncatingStore() && "Cannot promote this store operand!");
-
   // Truncate the value and store the result.
   return DAG.getTruncStore(Ch, Val, Ptr, N->getSrcValue(),
                            SVOffset, N->getMemoryVT(),
