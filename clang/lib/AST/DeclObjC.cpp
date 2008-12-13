@@ -363,7 +363,21 @@ void ObjCInterfaceDecl::addInstanceVariablesToClass(ObjCIvarDecl **ivars,
   setLocEnd(RBrac);
 }
 
-/// addInstanceVariablesToClass - produces layout info. for the class for its
+/// lookupFieldDeclForIvar - looks up a field decl' in the laid out
+/// storage which matches this 'ivar'.
+///
+FieldDecl *ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context, 
+                                                     ObjCIvarDecl *ivar) {
+  assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
+  DeclarationName Member = ivar->getDeclName();
+  DeclContext::lookup_result Lookup = RecordForDecl->lookup(Context, Member);
+  assert((Lookup.first != Lookup.second) && "field decl not found");
+  FieldDecl *MemberDecl = dyn_cast<FieldDecl>(*Lookup.first);
+  assert(MemberDecl && "field decl not found");
+  return MemberDecl;
+}
+
+/// addLayoutToClass - produces layout info. for the class for its
 /// ivars and all those inherited.
 ///
 void ObjCInterfaceDecl::addLayoutToClass(ASTContext &Context)

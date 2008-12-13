@@ -353,6 +353,7 @@ public:
   void CollectObjCIvars(std::vector<FieldDecl*> &Fields);
   void setRecordForDecl(RecordDecl *Decl) { RecordForDecl = Decl; }
   RecordDecl *getRecordForDecl() const { return RecordForDecl; }
+  RecordDecl *getRecordForDecl() { return RecordForDecl; }
   
   typedef ObjCIvarDecl * const *ivar_iterator;
   ivar_iterator ivar_begin() const { return Ivars; }
@@ -383,7 +384,7 @@ public:
    
   void addInstanceVariablesToClass(ObjCIvarDecl **ivars, unsigned numIvars,
                                    SourceLocation RBracLoc);
-  
+  FieldDecl *lookupFieldDeclForIvar(ASTContext &Context, ObjCIvarDecl *ivar);
   void addLayoutToClass(ASTContext &Context);
 
   void addMethods(ObjCMethodDecl **insMethods, unsigned numInsMembers,

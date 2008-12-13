@@ -272,7 +272,9 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     DeclRefExpr Base(Self, Self->getType(), Loc);
     ParmVarDecl *ArgDecl = OMD->getParamDecl(0);
     DeclRefExpr Arg(ArgDecl, ArgDecl->getType(), Loc);
-    ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base,
+    ObjCInterfaceDecl *OI = IMP->getClassInterface();
+    FieldDecl *FD = OI->lookupFieldDeclForIvar(getContext(), Ivar);
+    ObjCIvarRefExpr IvarRef(Ivar, FD, Ivar->getType(), Loc, &Base,
                             true, true);
     BinaryOperator Assign(&IvarRef, &Arg, BinaryOperator::Assign,
                           Ivar->getType(), Loc);
