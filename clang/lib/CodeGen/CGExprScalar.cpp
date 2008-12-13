@@ -667,8 +667,8 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
         CGF.getContext().getAsVariableArrayType(TypeToSize)) {
     if (E->isSizeOf())
       return CGF.GetVLASize(VAT);
-    else
-      assert(0 && "alignof VLAs not implemented yet");
+    // FIXME: This should be an UNSUPPORTED error.
+    assert(0 && "alignof VLAs not implemented yet");
   }
   
   std::pair<uint64_t, unsigned> Info = CGF.getContext().getTypeInfo(TypeToSize);
