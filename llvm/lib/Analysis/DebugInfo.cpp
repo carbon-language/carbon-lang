@@ -100,6 +100,14 @@ DIGlobalVariable::DIGlobalVariable(GlobalVariable *GV)
   : DIGlobal(GV, dwarf::DW_TAG_variable) {}
 DIBlock::DIBlock(GlobalVariable *GV)
   : DIDescriptor(GV, dwarf::DW_TAG_lexical_block) {}
+// needed by DIVariable::getType()
+DIType::DIType(GlobalVariable *GV) : DIDescriptor(GV) {
+  if (!GV) return;
+  unsigned tag = getTag();
+  if (tag != dwarf::DW_TAG_base_type && !DIDerivedType::isDerivedType(tag) &&
+      !DICompositeType::isCompositeType(tag))
+    GV = 0;
+}
 
 /// isDerivedType - Return true if the specified tag is legal for
 /// DIDerivedType.

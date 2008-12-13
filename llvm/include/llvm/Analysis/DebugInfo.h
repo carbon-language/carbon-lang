@@ -60,7 +60,7 @@ namespace llvm {
     
     template <typename DescTy>
     DescTy getFieldAs(unsigned Elt) const {
-      return DescTy(getDescriptorField(6).getGV());
+      return DescTy(getDescriptorField(Elt).getGV());
     }
   
     GlobalVariable *getGlobalVariableField(unsigned Elt) const;
