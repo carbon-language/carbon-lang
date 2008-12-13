@@ -44,7 +44,6 @@ h1 {
 .title      { padding-top: 0; margin-top: 0; text-align: left;
               font-size: 25pt }
 
-#contents { font-weight: bold; }
 h2 { width: 75%;
      text-align: left;  font-size: 12pt; padding: 4pt 4pt 4pt 4pt;
      margin: 1.5em 0.5em 0.5em 0.5em }
@@ -53,6 +52,10 @@ h3 { margin: 2.0em 0.5em 0.5em 0.5em;
      font-weight: bold; font-style: oblique;
      border-bottom: 1px solid #999999; font-size: 12pt;
                      width: 75%; }
+
+#contents { display: none; }
+ul  { list-style-type: decimal }
+
 .doc_author     { text-align: left; font-weight: bold; padding-left: 20pt }
 .doc_text       { text-align: left; padding-left: 20pt; padding-right: 10pt }
 
