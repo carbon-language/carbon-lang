@@ -1393,28 +1393,24 @@ Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   return Owned(Actions.ActOnExprStmt(Res.release()));
 }
 
-Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
+Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
   switch (Tok.getKind()) {
   case tok::string_literal:    // primary-expression: string-literal
   case tok::wide_string_literal:
-    return ParsePostfixExpressionSuffix(
-      Owned(ParseObjCStringLiteral(AtLoc))).result();
+    return ParsePostfixExpressionSuffix(ParseObjCStringLiteral(AtLoc));
   default:
     if (Tok.getIdentifierInfo() == 0)
-      return Diag(AtLoc, diag::err_unexpected_at);
+      return ExprError(Diag(AtLoc, diag::err_unexpected_at));
 
     switch (Tok.getIdentifierInfo()->getObjCKeywordID()) {
     case tok::objc_encode:
-      return ParsePostfixExpressionSuffix(
-        Owned(ParseObjCEncodeExpression(AtLoc))).result();
+      return ParsePostfixExpressionSuffix(ParseObjCEncodeExpression(AtLoc));
     case tok::objc_protocol:
-      return ParsePostfixExpressionSuffix(
-        Owned(ParseObjCProtocolExpression(AtLoc))).result();
+      return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression(AtLoc));
     case tok::objc_selector:
-      return ParsePostfixExpressionSuffix(
-        Owned(ParseObjCSelectorExpression(AtLoc))).result();
+      return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression(AtLoc));
     default:
-        return Diag(AtLoc, diag::err_unexpected_at);
+      return ExprError(Diag(AtLoc, diag::err_unexpected_at));
     }
   }
 }
@@ -1426,7 +1422,7 @@ Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 ///     expression
 ///     class-name
 ///     type-name
-Parser::ExprResult Parser::ParseObjCMessageExpression() {
+Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
   assert(Tok.is(tok::l_square) && "'[' expected");
   SourceLocation LBracLoc = ConsumeBracket(); // consume '['
 
@@ -1434,22 +1430,23 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   if (isTokObjCMessageIdentifierReceiver()) {
     IdentifierInfo *ReceiverName = Tok.getIdentifierInfo();
     SourceLocation NameLoc = ConsumeToken();
-    return ParseObjCMessageExpressionBody(LBracLoc, NameLoc, ReceiverName, 0);
+    return ParseObjCMessageExpressionBody(LBracLoc, NameLoc, ReceiverName,
+                                          ExprArg(Actions));
   }
 
   OwningExprResult Res(ParseExpression());
   if (Res.isInvalid()) {
     SkipUntil(tok::r_square);
-    return Res.result();
+    return move(Res);
   }
-  
+
   return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
-                                        0, Res.release());
+                                        0, move_convert(Res));
 }
-  
+
 /// ParseObjCMessageExpressionBody - Having parsed "'[' objc-receiver", parse
 /// the rest of a message expression.
-///  
+/// 
 ///   objc-message-args:
 ///     objc-selector
 ///     objc-keywordarg-list
@@ -1467,12 +1464,12 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
 ///   nonempty-expr-list:
 ///     assignment-expression
 ///     nonempty-expr-list , assignment-expression
-///   
-Parser::ExprResult
+///
+Parser::OwningExprResult
 Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                        SourceLocation NameLoc,
                                        IdentifierInfo *ReceiverName,
-                                       ExprTy *ReceiverExpr) {
+                                       ExprArg ReceiverExpr) {
   // Parse objc-selector
   SourceLocation Loc;
   IdentifierInfo *selIdent = ParseObjCSelector(Loc);
@@ -1491,9 +1488,9 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
         SkipUntil(tok::r_square);
-        return true;
+        return ExprError();
       }
-      
+
       ConsumeToken(); // Eat the ':'.
       ///  Parse the expression after ':' 
       OwningExprResult Res(ParseAssignmentExpression());
@@ -1502,12 +1499,12 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
         SkipUntil(tok::r_square);
-        return Res.result();
+        return move(Res);
       }
-      
+
       // We have a valid expression.
       KeyExprs.push_back(Res.release());
-      
+
       // Check for another keyword selector.
       selIdent = ParseObjCSelector(Loc);
       if (!selIdent && Tok.isNot(tok::colon))
@@ -1524,7 +1521,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
         SkipUntil(tok::r_square);
-        return Res.result();
+        return move(Res);
       }
 
       // We have a valid expression.
@@ -1532,44 +1529,44 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
     }
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected_ident); // missing selector name.
-    
+
     // We must manually skip to a ']', otherwise the expression skipper will
     // stop at the ']' when it skips to the ';'.  We want it to skip beyond
     // the enclosing expression.
     SkipUntil(tok::r_square);
-    return true;
+    return ExprError();
   }
-  
+
   if (Tok.isNot(tok::r_square)) {
     Diag(Tok, diag::err_expected_rsquare);
     // We must manually skip to a ']', otherwise the expression skipper will
     // stop at the ']' when it skips to the ';'.  We want it to skip beyond
     // the enclosing expression.
     SkipUntil(tok::r_square);
-    return true;
+    return ExprError();
   }
-  
+
   SourceLocation RBracLoc = ConsumeBracket(); // consume ']'
-  
+
   unsigned nKeys = KeyIdents.size();
   if (nKeys == 0)
     KeyIdents.push_back(selIdent);
   Selector Sel = PP.getSelectorTable().getSelector(nKeys, &KeyIdents[0]);
-  
+
   // We've just parsed a keyword message.
-  if (ReceiverName) 
-    return Actions.ActOnClassMessage(CurScope,
-                                     ReceiverName, Sel, 
-                                     LBracLoc, NameLoc, RBracLoc,
-                                     KeyExprs.take(), KeyExprs.size());
-  return Actions.ActOnInstanceMessage(ReceiverExpr, Sel, LBracLoc, RBracLoc,
-                                      KeyExprs.take(), KeyExprs.size());
+  if (ReceiverName)
+    return Owned(Actions.ActOnClassMessage(CurScope, ReceiverName, Sel,
+                                           LBracLoc, NameLoc, RBracLoc,
+                                           KeyExprs.take(), KeyExprs.size()));
+  return Owned(Actions.ActOnInstanceMessage(ReceiverExpr.release(), Sel,
+                                            LBracLoc, RBracLoc,
+                                            KeyExprs.take(), KeyExprs.size()));
 }
 
-Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
+Parser::OwningExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
   OwningExprResult Res(ParseStringLiteralExpression());
-  if (Res.isInvalid()) return Res.result();
-  
+  if (Res.isInvalid()) return move(Res);
+
   // @"foo" @"bar" is a valid concatenated string.  Eat any subsequent string
   // expressions.  At this point, we know that the only valid thing that starts
   // with '@' is an @"".
@@ -1589,79 +1586,82 @@ Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
       Diag(Tok, diag::err_objc_concat_string);
 
     if (Lit.isInvalid())
-      return Lit.result();
+      return move(Lit);
 
     AtStrings.push_back(Lit.release());
   }
-  
-  return Actions.ParseObjCStringLiteral(&AtLocs[0], AtStrings.take(),
-                                        AtStrings.size());
+
+  return Owned(Actions.ParseObjCStringLiteral(&AtLocs[0], AtStrings.take(),
+                                              AtStrings.size()));
 }
 
 ///    objc-encode-expression:
 ///      @encode ( type-name )
-Parser::ExprResult Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
+Parser::OwningExprResult
+Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_encode) && "Not an @encode expression!");
-  
+
   SourceLocation EncLoc = ConsumeToken();
-  
+
   if (Tok.isNot(tok::l_paren))
-    return Diag(Tok, diag::err_expected_lparen_after) << "@encode";
-   
+    return ExprError(Diag(Tok, diag::err_expected_lparen_after) << "@encode");
+
   SourceLocation LParenLoc = ConsumeParen();
-  
+
   TypeTy *Ty = ParseTypeName();
-  
+
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-   
-  return Actions.ParseObjCEncodeExpression(AtLoc, EncLoc, LParenLoc, Ty, 
-                                           RParenLoc);
+
+  return Owned(Actions.ParseObjCEncodeExpression(AtLoc, EncLoc, LParenLoc, Ty,
+                                                 RParenLoc));
 }
 
 ///     objc-protocol-expression
 ///       @protocol ( protocol-name )
-Parser::ExprResult Parser::ParseObjCProtocolExpression(SourceLocation AtLoc) {
+Parser::OwningExprResult
+Parser::ParseObjCProtocolExpression(SourceLocation AtLoc) {
   SourceLocation ProtoLoc = ConsumeToken();
-  
+
   if (Tok.isNot(tok::l_paren))
-    return Diag(Tok, diag::err_expected_lparen_after) << "@protocol";
-  
+    return ExprError(Diag(Tok, diag::err_expected_lparen_after) << "@protocol");
+
   SourceLocation LParenLoc = ConsumeParen();
-  
+
   if (Tok.isNot(tok::identifier))
-    return Diag(Tok, diag::err_expected_ident);
-  
+    return ExprError(Diag(Tok, diag::err_expected_ident));
+
   IdentifierInfo *protocolId = Tok.getIdentifierInfo();
   ConsumeToken();
-  
+
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-  return Actions.ParseObjCProtocolExpression(protocolId, AtLoc, ProtoLoc, 
-                                             LParenLoc, RParenLoc);
+  return Owned(Actions.ParseObjCProtocolExpression(protocolId, AtLoc, ProtoLoc,
+                                                   LParenLoc, RParenLoc));
 }
 
 ///     objc-selector-expression
 ///       @selector '(' objc-keyword-selector ')'
-Parser::ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
+Parser::OwningExprResult
+Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
   SourceLocation SelectorLoc = ConsumeToken();
-  
+
   if (Tok.isNot(tok::l_paren))
-    return Diag(Tok, diag::err_expected_lparen_after) << "@selector";
-  
+    return ExprError(Diag(Tok, diag::err_expected_lparen_after) << "@selector");
+
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   SourceLocation LParenLoc = ConsumeParen();
   SourceLocation sLoc;
   IdentifierInfo *SelIdent = ParseObjCSelector(sLoc);
-  if (!SelIdent && Tok.isNot(tok::colon))
-    return Diag(Tok, diag::err_expected_ident); // missing selector name.
-  
+  if (!SelIdent && Tok.isNot(tok::colon)) // missing selector name.
+    return ExprError(Diag(Tok, diag::err_expected_ident));
+
   KeyIdents.push_back(SelIdent);
   unsigned nColons = 0;
   if (Tok.isNot(tok::r_paren)) {
     while (1) {
       if (Tok.isNot(tok::colon))
-        return Diag(Tok, diag::err_expected_colon);
-      
+        return ExprError(Diag(Tok, diag::err_expected_colon));
+
       nColons++;
       ConsumeToken(); // Eat the ':'.
       if (Tok.is(tok::r_paren))
@@ -1676,6 +1676,6 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
   }
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
   Selector Sel = PP.getSelectorTable().getSelector(nColons, &KeyIdents[0]);
-  return Actions.ParseObjCSelectorExpression(Sel, AtLoc, SelectorLoc, LParenLoc, 
-                                             RParenLoc);
+  return Owned(Actions.ParseObjCSelectorExpression(Sel, AtLoc, SelectorLoc,
+                                                   LParenLoc, RParenLoc));
  }

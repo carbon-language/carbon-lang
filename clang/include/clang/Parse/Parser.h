@@ -87,6 +87,8 @@ public:
   typedef Action::OwningExprResult OwningExprResult;
   typedef Action::OwningStmtResult OwningStmtResult;
 
+  typedef Action::ExprArg ExprArg;
+
   /// Adorns a ExprResult with Actions to make it an OwningExprResult
   OwningExprResult Owned(ExprResult res) {
     return OwningExprResult(Actions, res);
@@ -594,11 +596,11 @@ private:
   OwningExprResult ParseBraceInitializer();
   OwningExprResult ParseInitializerWithPotentialDesignator(
                        InitListDesignations &D, unsigned InitNum);
-  
+
   //===--------------------------------------------------------------------===//
   // clang Expressions
-  
-  ExprResult ParseBlockLiteralExpression();  // ^{...}
+
+  OwningExprResult ParseBlockLiteralExpression();  // ^{...}
 
   //===--------------------------------------------------------------------===//
   // Objective-C Expressions
@@ -612,21 +614,20 @@ private:
     
     return Tok.getIdentifierInfo() == Ident_super;
   }
-  
-  ExprResult ParseObjCAtExpression(SourceLocation AtLocation);
-  ExprResult ParseObjCStringLiteral(SourceLocation AtLoc);
-  ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc);
-  ExprResult ParseObjCSelectorExpression(SourceLocation AtLoc);
-  ExprResult ParseObjCProtocolExpression(SourceLocation AtLoc);
-  ExprResult ParseObjCMessageExpression();
-  ExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
-                                            SourceLocation NameLoc,
-                                            IdentifierInfo *ReceiverName,
-                                            ExprTy *ReceiverExpr);
-  ExprResult ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracloc,
-                                                         SourceLocation NameLoc,
-                                                         IdentifierInfo *ReceiverName,
-                                                         ExprTy *ReceiverExpr);
+
+  OwningExprResult ParseObjCAtExpression(SourceLocation AtLocation);
+  OwningExprResult ParseObjCStringLiteral(SourceLocation AtLoc);
+  OwningExprResult ParseObjCEncodeExpression(SourceLocation AtLoc);
+  OwningExprResult ParseObjCSelectorExpression(SourceLocation AtLoc);
+  OwningExprResult ParseObjCProtocolExpression(SourceLocation AtLoc);
+  OwningExprResult ParseObjCMessageExpression();
+  OwningExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
+                                                  SourceLocation NameLoc,
+                                                  IdentifierInfo *ReceiverName,
+                                                  ExprArg ReceiverExpr);
+  OwningExprResult ParseAssignmentExprWithObjCMessageExprStart(
+      SourceLocation LBracloc, SourceLocation NameLoc,
+      IdentifierInfo *ReceiverName, ExprArg ReceiverExpr);
 
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.

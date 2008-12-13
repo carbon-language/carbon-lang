@@ -186,7 +186,7 @@ Parser::OwningExprResult Parser::ParseExpression() {
 ///
 Parser::OwningExprResult
 Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
-  OwningExprResult LHS(Actions, ParseObjCAtExpression(AtLoc));
+  OwningExprResult LHS(ParseObjCAtExpression(AtLoc));
   if (LHS.isInvalid()) return move(LHS);
 
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
@@ -212,18 +212,18 @@ Parser::OwningExprResult Parser::ParseAssignmentExpression() {
 ///
 /// Since this handles full assignment-expression's, it handles postfix
 /// expressions and other binary operators for these expressions as well.
-Parser::ExprResult
+Parser::OwningExprResult
 Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
                                                     SourceLocation NameLoc,
                                                    IdentifierInfo *ReceiverName,
-                                                    ExprTy *ReceiverExpr) {
-  OwningExprResult R(Actions, ParseObjCMessageExpressionBody(LBracLoc, NameLoc,
-                                                             ReceiverName,
-                                                             ReceiverExpr));
-  if (R.isInvalid()) return R.result();
+                                                    ExprArg ReceiverExpr) {
+  OwningExprResult R(ParseObjCMessageExpressionBody(LBracLoc, NameLoc,
+                                                    ReceiverName,
+                                                    move(ReceiverExpr)));
+  if (R.isInvalid()) return move(R);
   R = ParsePostfixExpressionSuffix(move(R));
-  if (R.isInvalid()) return R.result();
-  return ParseRHSOfBinaryExpression(move(R), prec::Assignment).result();
+  if (R.isInvalid()) return move(R);
+  return ParseRHSOfBinaryExpression(move(R), prec::Assignment);
 }
 
 
@@ -642,17 +642,17 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
 
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();
-    return Owned(ParseObjCAtExpression(AtLoc));
+    return ParseObjCAtExpression(AtLoc);
   }
   case tok::caret:
     if (getLang().Blocks)
-      return ParsePostfixExpressionSuffix(Owned(ParseBlockLiteralExpression()));
+      return ParsePostfixExpressionSuffix(ParseBlockLiteralExpression());
     Diag(Tok, diag::err_expected_expression);
     return ExprError();
   case tok::l_square:
     // These can be followed by postfix-expr pieces.
     if (getLang().ObjC1)
-      return ParsePostfixExpressionSuffix(Owned(ParseObjCMessageExpression()));
+      return ParsePostfixExpressionSuffix(ParseObjCMessageExpression());
     // FALL THROUGH.
   default:
   UnhandledToken:
@@ -1152,10 +1152,10 @@ bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs) {
 /// [clang] block-args:
 /// [clang]   '(' parameter-list ')'
 ///
-Parser::ExprResult Parser::ParseBlockLiteralExpression() {
+Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
   assert(Tok.is(tok::caret) && "block literal starts with ^");
   SourceLocation CaretLoc = ConsumeToken();
-  
+
   // Enter a scope to hold everything within the block.  This includes the 
   // argument decls, decls within the compound expression, etc.  This also
   // allows determining whether a variable reference inside the block is
@@ -1165,11 +1165,11 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
 
   // Inform sema that we are starting a block.
   Actions.ActOnBlockStart(CaretLoc, CurScope);
-  
+
   // Parse the return type if present.
   DeclSpec DS;
   Declarator ParamInfo(DS, Declarator::PrototypeContext);
-  
+
   // If this block has arguments, parse them.  There is no ambiguity here with
   // the expression case, because the expression case requires a parameter list.
   if (Tok.is(tok::l_paren)) {
@@ -1180,7 +1180,7 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
       // If there was an error parsing the arguments, they may have tried to use
       // ^(x+y) which requires an argument list.  Just skip the whole block
       // literal.
-      return true;
+      return ExprError();
     }
   } else {
     // Otherwise, pretend we saw (void).
@@ -1190,7 +1190,7 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
 
   // Inform sema that we are starting a block.
   Actions.ActOnBlockArguments(ParamInfo);
-  
+
   OwningExprResult Result(Actions, true);
   if (Tok.is(tok::l_brace)) {
     OwningStmtResult Stmt(ParseCompoundStatementBody());
@@ -1200,6 +1200,6 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
       Actions.ActOnBlockError(CaretLoc, CurScope);
     }
   }
-  return Result.result();
+  return move(Result);
 }
 

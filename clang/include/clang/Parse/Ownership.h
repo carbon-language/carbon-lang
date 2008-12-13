@@ -400,6 +400,18 @@ namespace clang
   ASTMultiPtr<Destroyer> move(ASTMultiPtr<Destroyer> &ptr) {
     return ASTMultiPtr<Destroyer>(moving::ASTMultiMover<Destroyer>(ptr));
   }
+
+  // A shortcoming of the move emulation is that Ptr = move(Result) doesn't work
+
+  template <ASTDestroyer Destroyer> inline
+  ASTOwningResult<Destroyer> move_convert(ASTOwningPtr<Destroyer> &ptr) {
+    return ASTOwningResult<Destroyer>(moving::ASTPtrMover<Destroyer>(ptr));
+  }
+
+  template <ASTDestroyer Destroyer> inline
+  ASTOwningPtr<Destroyer> move_convert(ASTOwningResult<Destroyer> &ptr) {
+    return ASTOwningPtr<Destroyer>(moving::ASTResultMover<Destroyer>(ptr));
+  }
 }
 
 #endif

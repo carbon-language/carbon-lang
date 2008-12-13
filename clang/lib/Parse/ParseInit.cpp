@@ -133,13 +133,13 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
         else
           Diag(Tok, diag::err_expected_equal_designator);
       }
-      
+
       IdentifierInfo *Name = Tok.getIdentifierInfo();
       SourceLocation NameLoc = ConsumeToken();
-      return Owned(ParseAssignmentExprWithObjCMessageExprStart(
-                       StartLoc, NameLoc, Name, 0));
+      return ParseAssignmentExprWithObjCMessageExprStart(
+                       StartLoc, NameLoc, Name, ExprArg(Actions));
     }
-    
+
     // Note that we parse this as an assignment expression, not a constant
     // expression (allowing *=, =, etc) to handle the objc case.  Sema needs
     // to validate that the expression is a constant.
@@ -168,9 +168,9 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
           Diag(Tok, diag::err_expected_equal_designator);
       }
 
-      return Owned(ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
-                                                               SourceLocation(),
-                                                             0, Idx.release()));
+      return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
+                                                         SourceLocation(),
+                                                         0, move_convert(Idx));
     }
 
     // Create designation if we haven't already.
