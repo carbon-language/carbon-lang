@@ -779,7 +779,7 @@ Store RegionStoreManager::InitializeArray(Store store, const TypedRegion* R,
                                           SVal Init) {
   
   // FIXME: Verify we should use getLValueType or getRValueType.
-  QualType T = R->getLValueType(getContext());
+  QualType T = R->getRValueType(getContext());
   assert(T->isArrayType());
 
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
