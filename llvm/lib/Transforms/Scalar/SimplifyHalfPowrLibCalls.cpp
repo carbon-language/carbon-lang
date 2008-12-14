@@ -96,7 +96,7 @@ SimplifyHalfPowrLibCalls::InlineHalfPowrs(const std::vector<Instruction *> &Half
     NewBlock = SplitBlock(NextInst->getParent(), NextInst, this);
 
     bool B = InlineFunction(Call, 0, TD);
-    assert(B && "half_powr didn't inline?");
+    assert(B && "half_powr didn't inline?"); B=B;
 
     BasicBlock *NewBody = NewBlock->getSinglePredecessor();
     assert(NewBody);
