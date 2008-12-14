@@ -218,12 +218,12 @@ Select(SDValue N)
     case ISD::SUBE: 
     case ISD::ADDE: {
       SDValue InFlag = Node->getOperand(2), CmpLHS;
-      unsigned Opc = InFlag.getOpcode(), MOp;
-
+      unsigned Opc = InFlag.getOpcode(); Opc=Opc;
       assert(((Opc == ISD::ADDC || Opc == ISD::ADDE) || 
               (Opc == ISD::SUBC || Opc == ISD::SUBE)) &&  
              "(ADD|SUB)E flag operand must come from (ADD|SUB)C/E insn");
 
+      unsigned MOp;
       if (Opcode == ISD::ADDE) {
         CmpLHS = InFlag.getValue(0);
         MOp = Mips::ADDu;
