@@ -261,10 +261,11 @@ DeclarationNameTable::DeclarationNameTable() {
 DeclarationNameTable::~DeclarationNameTable() {
   llvm::FoldingSet<CXXSpecialName> *set =
     static_cast<llvm::FoldingSet<CXXSpecialName>*>(CXXSpecialNamesImpl);
-  llvm::FoldingSetIterator<CXXSpecialName> it = set->begin();
+  llvm::FoldingSetIterator<CXXSpecialName> I = set->begin(), E = set->end();
 
-  while (it != set->end()) {
-    delete &*it++;
+  while (I != E) {
+    CXXSpecialName *n = &*I++;
+    delete n;
   }
 
   delete set;
