@@ -728,7 +728,7 @@ namespace {
     bool processNonLocalLoad(LoadInst* L,
                              SmallVectorImpl<Instruction*> &toErase);
     bool processBlock(DomTreeNode* DTN);
-    Value *GetValueForBlock(BasicBlock *BB, LoadInst* orig,
+    Value *GetValueForBlock(BasicBlock *BB, Instruction* orig,
                             DenseMap<BasicBlock*, Value*> &Phis,
                             bool top_level = false);
     void dump(DenseMap<uint32_t, Value*>& d);
@@ -789,7 +789,7 @@ bool GVN::isSafeReplacement(PHINode* p, Instruction* inst) {
 
 /// GetValueForBlock - Get the value to use within the specified basic block.
 /// available values are in Phis.
-Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
+Value *GVN::GetValueForBlock(BasicBlock *BB, Instruction* orig,
                              DenseMap<BasicBlock*, Value*> &Phis,
                              bool top_level) { 
                                  
@@ -837,7 +837,11 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   Value* v = CollapsePhi(PN);
   if (!v) {
     // Cache our phi construction results
-    phiMap[orig->getPointerOperand()].insert(PN);
+    if (LoadInst* L = dyn_cast<LoadInst>(orig))
+      phiMap[L->getPointerOperand()].insert(PN);
+    else
+      phiMap[orig].insert(PN);
+    
     return PN;
   }
     
