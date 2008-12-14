@@ -6,20 +6,19 @@
 .body { color: black; background: white; margin: 0 0 0 0 }
 
 /* No borders on image links */
-a:link img, a:visited img {border-style: none}
+a:link img, a:visited img { border-style: none }
 
 address img { float: right; width: 88px; height: 31px; }
 address     { clear: right; }
 
-TR, TD      { border: 2px solid gray; padding: 4pt 4pt 2pt 2pt; }
-TH          { border: 2px solid gray; font-weight: bold; font-size: 105%;
-              background: url("img/lines.gif");
-              font-family: "Georgia,Palatino,Times,Roman,SanSerif";
-              text-align:center;
-              vertical-align: middle; }
-TABLE       { text-align: center; border: 2px solid black;
+table       { text-align: center; border: 2px solid black;
               border-collapse: collapse; margin-top: 1em; margin-left: 1em;
               margin-right: 1em; margin-bottom: 1em; }
+tr, td      { border: 2px solid gray; padding: 4pt 4pt 2pt 2pt; }
+th          { border: 2px solid gray; font-weight: bold; font-size: 105%;
+              background: url("img/lines.gif");
+              font-family: "Georgia,Palatino,Times,Roman,SanSerif";
+              text-align: center; vertical-align: middle; }
 /*
  * Documentation
  */
@@ -61,39 +60,33 @@ h3, .doc_subsubsection { margin: 2.0em 0.5em 0.5em 0.5em;
 .doc_table      { text-align: center; width: 90%;
                   padding: 1px 1px 1px 1px; border: 1px; }
 
-.doc_table_nw   { text-align: center; border: 1px;
-    		  padding: 1px 1px 1px 1px; }
-
 .doc_warning    { color: red; font-weight: bold }
 
 .doc_code, .literal-block
                 { border: solid 1px gray; background: #eeeeee;
                   margin: 0 1em 0 1em;
                   padding: 0 1em 0 1em;
-                  display:table;
+                  display: table;
                 }
 
 .doc_notes      { background: #fafafa; border: 1px solid #cecece;
                   padding: 0.1em }
 
-TABLE.layout    { text-align: left; border: none; border-collapse: collapse;
+table.layout    { text-align: left; border: none; border-collapse: collapse;
                   padding: 4px 4px 4px 4px; }
-TR.layout       { border: none; padding: 4pt 4pt 2pt 2pt; }
-TD.layout       { border: none; padding: 4pt 4pt 2pt 2pt;
-                  vertical-align: top;}
-TD.left         { border: none; padding: 4pt 4pt 2pt 2pt; text-align: left;
-                  vertical-align: top;}
-TD.right        { border: none; padding: 4pt 4pt 2pt 2pt; text-align: right;
-                  vertical-align: top;}
-TH.layout       { border: none; font-weight: bold; font-size: 105%;
-                  text-align:center; vertical-align: middle; }
+tr.layout, td.layout, td.left, td.right
+                { border: none; padding: 4pt 4pt 2pt 2pt; vertical-align: top; }
+td.left         { text-align: left }
+td.right        { text-align: right }
+th.layout       { border: none; font-weight: bold; font-size: 105%;
+                  text-align: center; vertical-align: middle; }
 
 /* Left align table cell */
 .td_left        { border: 2px solid gray; text-align: left; }
 
 /* ReST-specific */
-.title { margin-top: 0}
-#contents { display: none; }
+.title { margin-top: 0 }
+#contents { display: none }
 div.contents ul { list-style-type: decimal }
 .literal-block { padding: 1em 2em 1em 1em }
 .toc-backref    { color: black; text-decoration: none; }
