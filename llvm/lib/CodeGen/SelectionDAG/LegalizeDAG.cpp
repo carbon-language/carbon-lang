@@ -51,6 +51,7 @@ namespace {
 class VISIBILITY_HIDDEN SelectionDAGLegalize {
   TargetLowering &TLI;
   SelectionDAG &DAG;
+  bool TypesNeedLegalizing;
 
   // Libcall insertion helpers.
   
@@ -127,7 +128,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   }
 
 public:
-  explicit SelectionDAGLegalize(SelectionDAG &DAG);
+  explicit SelectionDAGLegalize(SelectionDAG &DAG, bool TypesNeedLegalizing);
 
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal or we need to expand it into multiple registers of
@@ -348,8 +349,8 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT VT, SDValue Mask) const {
   return TLI.isShuffleMaskLegal(Mask, VT) ? Mask.getNode() : 0;
 }
 
-SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
-  : TLI(dag.getTargetLoweringInfo()), DAG(dag),
+SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag, bool types)
+  : TLI(dag.getTargetLoweringInfo()), DAG(dag), TypesNeedLegalizing(types),
     ValueTypeActions(TLI.getValueTypeActions()) {
   assert(MVT::LAST_VALUETYPE <= 32 &&
          "Too many value types for ValueTypeActions to hold!");
@@ -488,6 +489,12 @@ bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
 /// appropriate for its type.
 void SelectionDAGLegalize::HandleOp(SDValue Op) {
   MVT VT = Op.getValueType();
+  // If the type legalizer was run then we should never see any illegal result
+  // types here except for target constants (the type legalizer does not touch
+  // those).
+  assert((TypesNeedLegalizing || getTypeAction(VT) == Legal ||
+          Op.getOpcode() == ISD::TargetConstant) &&
+         "Illegal type introduced after type legalization?");
   switch (getTypeAction(VT)) {
   default: assert(0 && "Bad type action!");
   case Legal:   (void)LegalizeOp(Op); break;
@@ -8602,9 +8609,9 @@ SDValue SelectionDAGLegalize::StoreWidenVectorOp(StoreSDNode *ST,
 
 // SelectionDAG::Legalize - This is the entry point for the file.
 //
-void SelectionDAG::Legalize() {
+void SelectionDAG::Legalize(bool TypesNeedLegalizing) {
   /// run - This is the main entry point to this class.
   ///
-  SelectionDAGLegalize(*this).LegalizeDAG();
+  SelectionDAGLegalize(*this, TypesNeedLegalizing).LegalizeDAG();
 }
 
