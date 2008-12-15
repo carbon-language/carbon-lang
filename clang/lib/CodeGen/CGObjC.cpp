@@ -190,7 +190,9 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                            Types.ConvertType(PD->getType())));
     EmitReturnOfRValue(RV, PD->getType());
   } else {
-    LValue LV = EmitLValueForIvar(LoadObjCSelf(), Ivar, 0);
+    FieldDecl *Field = 
+      IMP->getClassInterface()->lookupFieldDeclForIvar(getContext(), Ivar);
+    LValue LV = EmitLValueForIvar(LoadObjCSelf(), Ivar, Field, 0);
     if (hasAggregateLLVMType(Ivar->getType())) {
       EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
     }

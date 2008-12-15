@@ -788,36 +788,41 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   return MemExpLV;
 }
 
+LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
+                                              FieldDecl* Field,
+                                              unsigned CVRQualifiers,
+                                              unsigned idx) {
+  // FIXME: CodeGenTypes should expose a method to get the appropriate
+  // type for FieldTy (the appropriate type is ABI-dependent).
+  const llvm::Type *FieldTy = CGM.getTypes().ConvertTypeForMem(Field->getType());
+  const llvm::PointerType *BaseTy =
+  cast<llvm::PointerType>(BaseValue->getType());
+  unsigned AS = BaseTy->getAddressSpace();
+  BaseValue = Builder.CreateBitCast(BaseValue,
+                                    llvm::PointerType::get(FieldTy, AS),
+                                    "tmp");
+  llvm::Value *V = Builder.CreateGEP(BaseValue,
+                              llvm::ConstantInt::get(llvm::Type::Int32Ty, idx),
+                              "tmp");
+  
+  CodeGenTypes::BitFieldInfo bitFieldInfo = 
+    CGM.getTypes().getBitFieldInfo(Field);
+  return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
+                              Field->getType()->isSignedIntegerType(),
+                            Field->getType().getCVRQualifiers()|CVRQualifiers);
+}
+
 LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
                                            FieldDecl* Field,
                                            bool isUnion,
                                            unsigned CVRQualifiers)
 {
-  llvm::Value *V;
   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
 
-  if (Field->isBitField()) {
-    // FIXME: CodeGenTypes should expose a method to get the appropriate
-    // type for FieldTy (the appropriate type is ABI-dependent).
-    const llvm::Type *FieldTy = CGM.getTypes().ConvertTypeForMem(Field->getType());
-    const llvm::PointerType *BaseTy =
-      cast<llvm::PointerType>(BaseValue->getType());
-    unsigned AS = BaseTy->getAddressSpace();
-    BaseValue = Builder.CreateBitCast(BaseValue,
-                                      llvm::PointerType::get(FieldTy, AS),
-                                      "tmp");
-    V = Builder.CreateGEP(BaseValue,
-                          llvm::ConstantInt::get(llvm::Type::Int32Ty, idx),
-                          "tmp");
-
-    CodeGenTypes::BitFieldInfo bitFieldInfo =
-      CGM.getTypes().getBitFieldInfo(Field);
-    return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
-                                Field->getType()->isSignedIntegerType(),
-                            Field->getType().getCVRQualifiers()|CVRQualifiers);
-  }
+  if (Field->isBitField())
+    return EmitLValueForBitfield(BaseValue, Field, CVRQualifiers, idx);
   
-  V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
+  llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
 
   // Match union field type.
   if (isUnion) {
@@ -944,8 +949,9 @@ llvm::Value *CodeGenFunction::EmitIvarOffset(ObjCInterfaceDecl *Interface,
     CGM.getTypes().ConvertType(getContext().getObjCInterfaceType(Interface));
   const llvm::StructLayout *Layout =
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceLTy));
+  FieldDecl *Field = Interface->lookupFieldDeclForIvar(getContext(), Ivar);
   uint64_t Offset = 
-    Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Ivar));
+    Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
   
   return llvm::ConstantInt::get(CGM.getTypes().ConvertType(getContext().LongTy),
                                 Offset);                                                             
@@ -953,17 +959,18 @@ llvm::Value *CodeGenFunction::EmitIvarOffset(ObjCInterfaceDecl *Interface,
 
 LValue CodeGenFunction::EmitLValueForIvar(llvm::Value *BaseValue,
                                           const ObjCIvarDecl *Ivar,
+                                          const FieldDecl *Field,
                                           unsigned CVRQualifiers) {
   // See comment in EmitIvarOffset.
   if (CGM.getObjCRuntime().LateBoundIVars())
     assert(0 && "late-bound ivars are unsupported");
-
-  if (Ivar->isBitField())
-    assert(0 && "ivar bitfields are unsupported");
-  
   // TODO:  Add a special case for isa (index 0)
-  unsigned Index = CGM.getTypes().getLLVMFieldNo(Ivar);
+  unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
   
+  if (Ivar->isBitField()) {
+    return EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field), 
+                                 CVRQualifiers, Index);
+  }
   llvm::Value *V = Builder.CreateStructGEP(BaseValue, Index, "tmp");
   LValue LV = LValue::MakeAddr(V, Ivar->getType().getCVRQualifiers()|CVRQualifiers);
   SetVarDeclObjCAttribute(getContext(), Ivar, Ivar->getType(), LV);
@@ -988,7 +995,8 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
     CVRQualifiers = BaseExpr->getType().getCVRQualifiers();
   }
 
-  return EmitLValueForIvar(BaseValue, E->getDecl(), CVRQualifiers);
+  return EmitLValueForIvar(BaseValue, E->getDecl(), E->getFieldDecl(), 
+                           CVRQualifiers);
 }
 
 LValue 

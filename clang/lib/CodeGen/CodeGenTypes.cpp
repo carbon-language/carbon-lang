@@ -155,21 +155,6 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   cast<llvm::OpaqueType>(OpaqueHolder.get())->refineAbstractTypeTo(NT);
 }
 
-/// Produces a vector containing the all of the instance variables in an
-/// Objective-C object, in the order that they appear.  Used to create LLVM
-/// structures corresponding to Objective-C objects.
-void CodeGenTypes::CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
-                                    std::vector<const llvm::Type*> &IvarTypes) {
-  ObjCInterfaceDecl *SuperClass = ObjCClass->getSuperClass();
-  if (SuperClass)
-    CollectObjCIvarTypes(SuperClass, IvarTypes);
-  for (ObjCInterfaceDecl::ivar_iterator I = ObjCClass->ivar_begin(),
-       E = ObjCClass->ivar_end(); I != E; ++I) {
-    IvarTypes.push_back(ConvertType((*I)->getType()));
-    ObjCIvarInfo[*I] = IvarTypes.size() - 1;
-  }
-}
-
 static const llvm::Type* getTypeForFormat(const llvm::fltSemantics &format) {
   if (&format == &llvm::APFloat::IEEEsingle)
     return llvm::Type::FloatTy;
@@ -280,21 +265,22 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       ConvertTypeRecursive(QualType(cast<ASQualType>(Ty).getBaseType(), 0));
 
   case Type::ObjCInterface: {
-    // FIXME: This comment is broken. Either the code should check for
-    // the flag it is referring to or it should do the right thing in
-    // the presence of it.
-    
     // Warning: Use of this is strongly discouraged.  Late binding of instance
     // variables is supported on some runtimes and so using static binding can
     // break code when libraries are updated.  Only use this if you have
     // previously checked that the ObjCRuntime subclass in use does not support
     // late-bound ivars.
+    // We are issuing warnings elsewhere!
     ObjCInterfaceType OIT = cast<ObjCInterfaceType>(Ty);
-    std::vector<const llvm::Type*> IvarTypes;
-    CollectObjCIvarTypes(OIT.getDecl(), IvarTypes);
-    llvm::Type *T = llvm::StructType::get(IvarTypes);
-    TheModule.addTypeName("struct." + OIT.getDecl()->getNameAsString(), T);
-    return T;
+    ObjCInterfaceDecl *ID = OIT.getDecl();
+    RecordDecl *RD = ID->getRecordForDecl();
+    if(!RD) {
+      // Sometimes, class type is being directly generated in code gen for
+      // built-in class types.
+      ID->addLayoutToClass(Context);
+      RD = ID->getRecordForDecl();
+    }
+    return ConvertTagDeclType(cast<TagDecl>(RD));
   }
       
   case Type::ObjCQualifiedInterface: {
@@ -424,13 +410,6 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
 unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
   llvm::DenseMap<const FieldDecl*, unsigned>::iterator I = FieldInfo.find(FD);
   assert (I != FieldInfo.end()  && "Unable to find field info");
-  return I->second;
-}
-
-unsigned CodeGenTypes::getLLVMFieldNo(const ObjCIvarDecl *OID) {
-  llvm::DenseMap<const ObjCIvarDecl*, unsigned>::iterator
-    I = ObjCIvarInfo.find(OID);
-  assert(I != ObjCIvarInfo.end() && "Unable to find field info");
   return I->second;
 }
 

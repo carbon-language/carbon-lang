@@ -720,8 +720,9 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       Context.getObjCEncodingForType((*iter)->getType(), TypeStr);
       IvarTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
       // Get the offset
+      FieldDecl *Field = ClassDecl->lookupFieldDeclForIvar(Context, (*iter));
       int offset =
-        (int)Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(*iter));
+        (int)Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
       IvarOffsets.push_back(
           llvm::ConstantInt::get(llvm::Type::Int32Ty, offset));
   }

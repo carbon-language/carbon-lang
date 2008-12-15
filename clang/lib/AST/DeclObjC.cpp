@@ -367,7 +367,7 @@ void ObjCInterfaceDecl::addInstanceVariablesToClass(ObjCIvarDecl **ivars,
 /// storage which matches this 'ivar'.
 ///
 FieldDecl *ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context, 
-                                                     ObjCIvarDecl *ivar) {
+                                                     const ObjCIvarDecl *ivar) {
   assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
   DeclarationName Member = ivar->getDeclName();
   DeclContext::lookup_result Lookup = RecordForDecl->lookup(Context, Member);
@@ -392,7 +392,8 @@ void ObjCInterfaceDecl::addLayoutToClass(ASTContext &Context)
   for (unsigned int i = 0; i != RecFields.size(); i++) {
     FieldDecl *Field =  FieldDecl::Create(Context, RD, SourceLocation(), 
                                           RecFields[i]->getIdentifier(),
-                                          RecFields[i]->getType(), 0, false, 0);
+                                          RecFields[i]->getType(), 
+                                          RecFields[i]->getBitWidth(), false, 0);
     RD->addDecl(Context, Field);
   }
   RD->completeDefinition(Context);

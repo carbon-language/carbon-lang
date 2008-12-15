@@ -497,7 +497,11 @@ public:
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
                             bool isUnion, unsigned CVRQualifiers);
   LValue EmitLValueForIvar(llvm::Value* Base, const ObjCIvarDecl *Ivar,
+                           const FieldDecl *Field,
                            unsigned CVRQualifiers);
+
+  LValue EmitLValueForBitfield(llvm::Value* Base, FieldDecl* Field,
+                                unsigned CVRQualifiers, unsigned idx);
 
   LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
 

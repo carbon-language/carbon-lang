@@ -1328,9 +1328,12 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   for (ObjCInterfaceDecl::ivar_iterator 
          i = ID->getClassInterface()->ivar_begin(),
          e = ID->getClassInterface()->ivar_end(); i != e; ++i) {
-    ObjCIvarDecl *V = *i;
+    const ObjCIvarDecl *V = *i;
+    ObjCInterfaceDecl *OID = 
+      const_cast<ObjCInterfaceDecl *>(ID->getClassInterface());
+    FieldDecl *Field = OID->lookupFieldDeclForIvar(CGM.getContext(), V);
     unsigned Offset = 
-      Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(V));
+      Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
     std::string TypeStr;
     Ivar[0] = GetMethodVarName(V->getIdentifier());
     CGM.getContext().getObjCEncodingForType(V->getType(), TypeStr, true);

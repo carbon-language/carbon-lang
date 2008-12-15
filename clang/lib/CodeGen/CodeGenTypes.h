@@ -99,7 +99,6 @@ class CodeGenTypes {
   /// FieldInfo - This maps struct field with corresponding llvm struct type
   /// field no. This info is populated by record organizer.
   llvm::DenseMap<const FieldDecl *, unsigned> FieldInfo;
-  llvm::DenseMap<const ObjCIvarDecl *, unsigned> ObjCIvarInfo;
 
 public:
   class BitFieldInfo {
@@ -158,9 +157,6 @@ public:
                                             ArgTypeIterator end,
                                             bool IsVariadic);
   
-  void CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
-                            std::vector<const llvm::Type*> &IvarTypes);
-  
   const CGRecordLayout *getCGRecordLayout(const TagDecl*) const;
   /// Returns a StructType representing an Objective-C object
   const llvm::Type *ConvertObjCInterfaceToStruct(const ObjCInterfaceDecl *OID);
@@ -168,8 +164,6 @@ public:
   /// getLLVMFieldNo - Return llvm::StructType element number
   /// that corresponds to the field FD.
   unsigned getLLVMFieldNo(const FieldDecl *FD);
-  unsigned getLLVMFieldNo(const ObjCIvarDecl *OID);
-    
   
   /// UpdateCompletedType - When we find the full definition for a TagDecl,
   /// replace the 'opaque' type we previously made for it if applicable.
