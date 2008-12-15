@@ -2574,6 +2574,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
 
 /// Collect the instance variables declared in an Objective-C object.  Used in
 /// the creation of structures from objects using the @defs directive.
+/// FIXME: This should be consolidated with CollectObjCIvars as it is also
+/// part of the AST generation logic of @defs.
 static void CollectIvars(ObjCInterfaceDecl *Class, RecordDecl *Record,
                          ASTContext& Ctx,
                          llvm::SmallVectorImpl<Sema::DeclTy*> &ivars) {

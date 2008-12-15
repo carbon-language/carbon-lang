@@ -396,7 +396,7 @@ void ObjCInterfaceDecl::addLayoutToClass(ASTContext &Context)
     RD->addDecl(Context, Field);
   }
   RD->completeDefinition(Context);
-  setRecordForDecl(RD);  
+  RecordForDecl = RD;
 }
 
 /// ObjCAddInstanceVariablesToClassImpl - Checks for correctness of Instance 
