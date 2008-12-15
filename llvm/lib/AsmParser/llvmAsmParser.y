@@ -1136,8 +1136,8 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token <OtherOpVal> EXTRACTVALUE INSERTVALUE
 
 // Function Attributes
-%token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS BYVAL NEST
-%token READNONE READONLY GC OPTSIZE NOINLINE ALWAYSINLINE SSP SSPREQ
+%token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS NOCAPTURE BYVAL
+%token READNONE READONLY GC OPTSIZE NOINLINE ALWAYSINLINE SSP SSPREQ NEST
 
 // Visibility Styles
 %token DEFAULT HIDDEN PROTECTED
@@ -1265,15 +1265,16 @@ OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                   CHECK_FOR_ERROR
                  };
 
-Attribute     : ZEROEXT { $$ = Attribute::ZExt;      }
-              | ZEXT    { $$ = Attribute::ZExt;      }
-              | SIGNEXT { $$ = Attribute::SExt;      }
-              | SEXT    { $$ = Attribute::SExt;      }
-              | INREG   { $$ = Attribute::InReg;     }
-              | SRET    { $$ = Attribute::StructRet; }
-              | NOALIAS { $$ = Attribute::NoAlias;   }
-              | BYVAL   { $$ = Attribute::ByVal;     }
-              | NEST    { $$ = Attribute::Nest;      }
+Attribute     : ZEROEXT   { $$ = Attribute::ZExt;      }
+              | ZEXT      { $$ = Attribute::ZExt;      }
+              | SIGNEXT   { $$ = Attribute::SExt;      }
+              | SEXT      { $$ = Attribute::SExt;      }
+              | INREG     { $$ = Attribute::InReg;     }
+              | SRET      { $$ = Attribute::StructRet; }
+              | NOALIAS   { $$ = Attribute::NoAlias;   }
+              | NOCAPTURE { $$ = Attribute::NoCapture; }
+              | BYVAL     { $$ = Attribute::ByVal;     }
+              | NEST      { $$ = Attribute::Nest;      }
               | ALIGN EUINT64VAL { $$ =
                           Attribute::constructAlignmentFromInt($2);    }
               ;

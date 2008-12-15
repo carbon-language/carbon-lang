@@ -491,6 +491,7 @@ int LLLexer::LexIdentifier() {
   KEYWORD("nounwind", NOUNWIND);
   KEYWORD("noreturn", NORETURN);
   KEYWORD("noalias", NOALIAS);
+  KEYWORD("nocapture", NOCAPTURE);
   KEYWORD("byval", BYVAL);
   KEYWORD("nest", NEST);
   KEYWORD("readnone", READNONE);
