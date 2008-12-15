@@ -160,14 +160,23 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
                      (*(TheCall->arg_end()-1))->getLocEnd());
     return true;
   }
-  
+
+  if (TheCall->getNumArgs() < 2) {
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
+      << 0 /*function call*/;
+  }
+
   // Determine whether the current function is variadic or not.
   bool isVariadic;
-  if (getCurFunctionDecl())
-    isVariadic =
-      cast<FunctionTypeProto>(getCurFunctionDecl()->getType())->isVariadic();
-  else
+  if (getCurFunctionDecl()) {
+    if (FunctionTypeProto* FTP =
+            dyn_cast<FunctionTypeProto>(getCurFunctionDecl()->getType()))
+      isVariadic = FTP->isVariadic();
+    else
+      isVariadic = false;
+  } else {
     isVariadic = getCurMethodDecl()->isVariadic();
+  }
   
   if (!isVariadic) {
     Diag(Fn->getLocStart(), diag::err_va_start_used_in_non_variadic_function);

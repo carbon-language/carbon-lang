@@ -34,3 +34,12 @@ void f4(const char *msg, ...) {
  __builtin_va_end (ap);
 }
 
+void f5() {
+  __builtin_va_list ap;
+  __builtin_va_start(ap,ap); // expected-error {{'va_start' used in function with fixed args}}
+}
+
+void f6(int a, ...) {
+  __builtin_va_list ap;
+  __builtin_va_start(ap); // expected-error {{too few arguments to function}}
+}
