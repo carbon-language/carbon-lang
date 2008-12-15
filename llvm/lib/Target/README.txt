@@ -1323,7 +1323,12 @@ for () {
 }
 *P = tmp;
 
+We now hoist the reload after the call (Transforms/GVN/lpre-call-wrap.ll), but
+we don't sink the store.  We need partially dead store sinking.
+
 //===---------------------------------------------------------------------===//
+
+[PHI TRANSLATE GEPs]
 
 GCC PR37166: Sinking of loads prevents SROA'ing the "g" struct on the stack
 leading to excess stack traffic. This could be handled by GVN with some crazy
@@ -1350,10 +1355,11 @@ There are many load PRE testcases in testsuite/gcc.dg/tree-ssa/loadpre* in the
 GCC testsuite.  There are many pre testcases as ssa-pre-*.c
 
 Other simple load PRE cases:
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=35287
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34677 (licm does this)
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=29789 (SPEC2K6)
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=23455
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=35287 [LPRE crit edge splitting]
+
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34677 (licm does this, LPRE crit edge)
+  llvm-gcc t2.c -S -o - -O0 -emit-llvm | llvm-as | opt -mem2reg -simplifycfg -gvn | llvm-dis
+
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=14705
 
 //===---------------------------------------------------------------------===//

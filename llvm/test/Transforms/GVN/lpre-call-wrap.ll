@@ -5,7 +5,7 @@
 ; Make sure the load in bb3.backedge is removed and moved into bb1 after the 
 ; call.  This makes the non-call case faster. 
 ;
-; This test is derived from this C++ code:
+; This test is derived from this C++ code (GCC PR 37810):
 ; void g();
 ; struct A { 
 ;   int n; int m;
