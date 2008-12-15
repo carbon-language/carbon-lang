@@ -58,3 +58,9 @@ enum e0 { // expected-note {{previous definition is here}}
 
 // PR3173
 enum { PR3173A, PR3173B = PR3173A+50 };
+
+// PR2753
+void foo() {
+  enum xpto; // expected-warning{{ISO C forbids forward references to 'enum' types}}
+  enum xpto; // expected-warning{{ISO C forbids forward references to 'enum' types}}
+}

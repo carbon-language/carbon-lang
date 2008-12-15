@@ -299,11 +299,6 @@ public:
                            IdentifierInfo *Name, SourceLocation NameLoc,
                            AttributeList *Attr);
   
-  DeclTy* ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
-                         SourceLocation KWLoc, const CXXScopeSpec &SS,
-                         IdentifierInfo *Name, SourceLocation NameLoc,
-                         AttributeList *Attr);  
-  
   virtual void ActOnDefs(Scope *S, DeclTy *TagD, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,
                          llvm::SmallVectorImpl<DeclTy*> &Decls);

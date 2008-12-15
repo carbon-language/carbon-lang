@@ -990,7 +990,8 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
                                  : new RecordType(Record);
   }
   else if (EnumDecl *Enum = dyn_cast<EnumDecl>(Decl))
-    Decl->TypeForDecl = new EnumType(Enum);
+    Decl->TypeForDecl = PrevDecl ? PrevDecl->TypeForDecl
+                                 : new EnumType(Enum);
   else
     assert(false && "TypeDecl without a type?");
 
@@ -998,16 +999,9 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
-/// setTagDefinition - Used by RecordDecl::completeDefinition and
-/// EnumDecl::completeDefinition to inform about which
-/// RecordDecl/EnumDecl serves as the definition of a particular
-/// struct/union/class/enum.
 void ASTContext::setTagDefinition(TagDecl* D) {
   assert (D->isDefinition());
-  if (!D->TypeForDecl)
-    getTypeDeclType(D);
-  else
-    cast<TagType>(D->TypeForDecl)->decl = D;  
+  cast<TagType>(D->TypeForDecl)->decl = D;  
 }
 
 /// getTypedefType - Return the unique reference to the type for the

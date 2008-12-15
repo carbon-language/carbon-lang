@@ -901,7 +901,7 @@ class EnumDecl : public TagDecl, public DeclContext {
 public:
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
                           SourceLocation L, IdentifierInfo *Id,
-                          ScopedDecl *PrevDecl);
+                          EnumDecl *PrevDecl);
   
   virtual void Destroy(ASTContext& C);
 

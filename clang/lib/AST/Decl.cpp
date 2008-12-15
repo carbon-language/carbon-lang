@@ -113,9 +113,11 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
 
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                            IdentifierInfo *Id,
-                           ScopedDecl *PrevDecl) {
+                           EnumDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<EnumDecl>();
-  return new (Mem) EnumDecl(DC, L, Id, PrevDecl);
+  EnumDecl *Enum = new (Mem) EnumDecl(DC, L, Id, 0);
+  C.getTypeDeclType(Enum, PrevDecl);
+  return Enum;
 }
 
 void EnumDecl::Destroy(ASTContext& C) {
