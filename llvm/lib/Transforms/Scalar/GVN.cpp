@@ -25,6 +25,7 @@
 #include "llvm/Value.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -727,7 +728,7 @@ namespace {
                             SmallVectorImpl<Instruction*> &toErase);
     bool processNonLocalLoad(LoadInst* L,
                              SmallVectorImpl<Instruction*> &toErase);
-    bool processBlock(DomTreeNode* DTN);
+    bool processBlock(BasicBlock* BB);
     Value *GetValueForBlock(BasicBlock *BB, Instruction* orig,
                             DenseMap<BasicBlock*, Value*> &Phis,
                             bool top_level = false);
@@ -738,6 +739,7 @@ namespace {
     bool performPRE(Function& F);
     Value* lookupNumber(BasicBlock* BB, uint32_t num);
     bool mergeBlockIntoPredecessor(BasicBlock* BB);
+    Value* AttemptRedundancyElimination(Instruction* orig, unsigned valno);
     void cleanupGlobalSets();
   };
   
@@ -1222,6 +1224,60 @@ Value* GVN::lookupNumber(BasicBlock* BB, uint32_t num) {
   return 0;
 }
 
+/// AttemptRedundancyElimination - If the "fast path" of redundancy elimination
+/// by inheritance from the dominator fails, see if we can perform phi 
+/// construction to eliminate the redundancy.
+Value* GVN::AttemptRedundancyElimination(Instruction* orig, unsigned valno) {
+  BasicBlock* BaseBlock = orig->getParent();
+  
+  SmallPtrSet<BasicBlock*, 4> Visited;
+  SmallVector<BasicBlock*, 8> Stack;
+  Stack.push_back(BaseBlock);
+  
+  DenseMap<BasicBlock*, Value*> Results;
+  
+  // Walk backwards through our predecessors, looking for instances of the
+  // value number we're looking for.  Instances are recorded in the Results
+  // map, which is then used to perform phi construction.
+  while (!Stack.empty()) {
+    BasicBlock* Current = Stack.back();
+    Stack.pop_back();
+    
+    // If we've walked all the way to a proper dominator, then give up. Cases
+    // where the instance is in the dominator will have been caught by the fast
+    // path, and any cases that require phi construction further than this are
+    // probably not worth it anyways.  Note that this is a SIGNIFICANT compile
+    // time improvement.
+    if (DT->properlyDominates(Current, orig->getParent())) return 0;
+    
+    DenseMap<BasicBlock*, ValueNumberScope*>::iterator LA =
+                                                       localAvail.find(Current);
+    if (LA == localAvail.end()) return 0;
+    DenseMap<unsigned, Value*>::iterator V = LA->second->table.find(valno);
+    
+    if (V != LA->second->table.end()) {
+      // Found an instance, record it.
+      Results.insert(std::make_pair(Current, V->second));
+      continue;
+    }
+    
+    // If we reach the beginning of the function, then give up.
+    if (pred_begin(Current) == pred_end(Current))
+      return 0;
+    
+    for (pred_iterator PI = pred_begin(Current), PE = pred_end(Current);
+         PI != PE; ++PI)
+      if (Visited.insert(*PI))
+        Stack.push_back(*PI);
+  }
+  
+  // If we didn't find instances, give up.  Otherwise, perform phi construction.
+  if (Results.size() == 0)
+    return 0;
+  else
+    return GetValueForBlock(BaseBlock, orig, Results, true);
+}
+
 /// processInstruction - When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
 bool GVN::processInstruction(Instruction *I,
@@ -1270,7 +1326,8 @@ bool GVN::processInstruction(Instruction *I,
   } else if (num == nextNum) {
     localAvail[I->getParent()]->table.insert(std::make_pair(num, I));
     
-  // Perform value-number based elimination
+  // Perform fast-path value-number based elimination of values inherited from
+  // dominators.
   } else if (Value* repl = lookupNumber(I->getParent(), num)) {
     // Remove it!
     VN.erase(I);
@@ -1279,6 +1336,18 @@ bool GVN::processInstruction(Instruction *I,
       MD->invalidateCachedPointerInfo(repl);
     toErase.push_back(I);
     return true;
+
+#if 0
+  // Perform slow-pathvalue-number based elimination with phi construction.
+  } else if (Value* repl = AttemptRedundancyElimination(I, num)) {
+    // Remove it!
+    VN.erase(I);
+    I->replaceAllUsesWith(repl);
+    if (isa<PointerType>(repl->getType()))
+      MD->invalidateCachedPointerInfo(repl);
+    toErase.push_back(I);
+    return true;
+#endif
   } else {
     localAvail[I->getParent()]->table.insert(std::make_pair(num, I));
   }
@@ -1337,8 +1406,8 @@ bool GVN::runOnFunction(Function& F) {
 }
 
 
-bool GVN::processBlock(DomTreeNode* DTN) {
-  BasicBlock* BB = DTN->getBlock();
+bool GVN::processBlock(BasicBlock* BB) {
+  DomTreeNode* DTN = DT->getNode(BB);
   // FIXME: Kill off toErase by doing erasing eagerly in a helper function (and
   // incrementing BI before processing an instruction).
   SmallVector<Instruction*, 8> toErase;
@@ -1538,9 +1607,10 @@ bool GVN::iterateOnFunction(Function &F) {
 
   // Top-down walk of the dominator tree
   bool changed = false;
-  for (df_iterator<DomTreeNode*> DI = df_begin(DT->getRootNode()),
-       DE = df_end(DT->getRootNode()); DI != DE; ++DI)
-    changed |= processBlock(*DI);
+  ReversePostOrderTraversal<Function*> RPOT(&F);
+  for (ReversePostOrderTraversal<Function*>::rpo_iterator RI = RPOT.begin(),
+       RE = RPOT.end(); RI != RE; ++RI)
+    changed |= processBlock(*RI);
   
   return changed;
 }
