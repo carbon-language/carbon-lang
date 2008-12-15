@@ -494,6 +494,7 @@ getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
   if (!getNonLocalPointerDepFromBB(Pointer, PointeeSize, isLoad, FromBB,
                                    Result, Visited, true))
     return;
+  Result.clear();
   Result.push_back(std::make_pair(FromBB,
                                   MemDepResult::getClobber(FromBB->begin())));
 }
