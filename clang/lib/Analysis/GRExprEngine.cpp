@@ -1973,22 +1973,24 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
   uint64_t amt;  
   
   if (Ex->isSizeOf()) {
-
-    // FIXME: Add support for VLAs.
-    if (!T.getTypePtr()->isConstantSizeType())
+    if (T == getContext().VoidTy) {          
+      // sizeof(void) == 1 byte.
+      amt = 1;
+    }
+    else if (!T.getTypePtr()->isConstantSizeType()) {
+      // FIXME: Add support for VLAs.
       return;
-    
-    // Some code tries to take the sizeof an ObjCInterfaceType, relying that
-    // the compiler has laid out its representation.  Just report Unknown
-    // for these.
-    if (T->isObjCInterfaceType())
+    }
+    else if (T->isObjCInterfaceType()) {
+      // Some code tries to take the sizeof an ObjCInterfaceType, relying that
+      // the compiler has laid out its representation.  Just report Unknown
+      // for these.      
       return;
-    
-    amt = 1;  // Handle sizeof(void)
-    
-    if (T != getContext().VoidTy)
+    }
+    else {
+      // All other cases.
       amt = getContext().getTypeSize(T) / 8;
-    
+    }    
   }
   else  // Get alignment of the type.
     amt = getContext().getTypeAlign(T) / 8;

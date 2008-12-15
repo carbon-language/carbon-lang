@@ -87,3 +87,28 @@ void check_uninit_sized_VLA() {
   int vla[x]; // expected-warning{{The expression used to specify the number of elements in the VLA 'vla' evaluates to an undefined or garbage value.}}
 }
 
+// sizeof(void)
+// - Tests a regression reported in PR 3211: http://llvm.org/bugs/show_bug.cgi?id=3211
+void handle_sizeof_void(unsigned flag) {
+  int* p = 0;
+
+  if (flag) {
+    if (sizeof(void) == 1)
+      return;
+    // Infeasible.
+    *p = 1; // no-warning
+  }
+  
+  void* q;
+  
+  if (!flag) {
+    if (sizeof(*q) == 1)
+      return;
+    // Infeasibe.
+    *p = 1; // no-warning
+  }
+    
+  // Infeasible.
+  *p = 1; // no-warning
+}
+
