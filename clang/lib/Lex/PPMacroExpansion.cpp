@@ -42,7 +42,7 @@ IdentifierInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
   IdentifierInfo *Id = getIdentifierInfo(Name);
   
   // Mark it as being a macro that is builtin.
-  MacroInfo *MI = new MacroInfo(SourceLocation());
+  MacroInfo *MI = AllocateMacroInfo(SourceLocation());
   MI->setIsBuiltinMacro();
   setMacroInfo(Id, MI);
   return Id;

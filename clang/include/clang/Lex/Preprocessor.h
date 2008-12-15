@@ -24,6 +24,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/Allocator.h"
 
 namespace clang {
   
@@ -55,6 +56,10 @@ class Preprocessor {
   /// PTH - An optional PTHManager object used for getting tokens from
   ///  a token cache rather than lexing the original source file.
   llvm::OwningPtr<PTHManager> PTH;
+  
+  /// BP - A BumpPtrAllocator object used to quickly allocate and release
+  ///  objects internal to the Preprocessor.
+  llvm::BumpPtrAllocator BP;
     
   /// Identifiers for builtin macros and other builtins.
   IdentifierInfo *Ident__LINE__, *Ident__FILE__;   // __LINE__, __FILE__
@@ -144,6 +149,10 @@ class Preprocessor {
   /// Macros - For each IdentifierInfo with 'HasMacro' set, we keep a mapping
   /// to the actual definition of the macro.
   llvm::DenseMap<IdentifierInfo*, MacroInfo*> Macros;
+  
+  /// MICache - A "freelist" of MacroInfo objects that can be reused for quick
+  ///  allocation.
+  std::vector<MacroInfo*> MICache;
   
   // Various statistics we track for performance analysis.
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
@@ -528,6 +537,16 @@ private:
     CurTokenLexer.reset(IncludeMacroStack.back().TheTokenLexer);
     CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
     IncludeMacroStack.pop_back();
+  }
+  
+  /// AllocateMacroInfo - Allocate a new MacroInfo object with the provide
+  ///  SourceLocation.
+  MacroInfo* AllocateMacroInfo(SourceLocation L);
+  
+  /// ReleaseMacroInfo - Release the specified MacroInfo.  This memory will
+  ///  be reused for allocating new MacroInfo objects.
+  void ReleaseMacroInfo(MacroInfo* MI) {
+    MICache.push_back(MI);
   }
   
   /// isInPrimaryFile - Return true if we're in the top-level file, not in a

@@ -95,9 +95,9 @@ Preprocessor::~Preprocessor() {
   // Free any macro definitions.
   for (llvm::DenseMap<IdentifierInfo*, MacroInfo*>::iterator I =
        Macros.begin(), E = Macros.end(); I != E; ++I) {
-    // Free the macro definition.
-    delete I->second;
-    I->second = 0;
+    // We don't need to free the MacroInfo objects directly.  These
+    // will be released when the BumpPtrAllocator 'BP' object gets
+    // destroyed.
     I->first->setHasMacroDefinition(false);
   }
   

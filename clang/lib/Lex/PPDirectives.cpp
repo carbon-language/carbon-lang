@@ -22,6 +22,18 @@ using namespace clang;
 // Utility Methods for Preprocessor Directive Handling.
 //===----------------------------------------------------------------------===//
 
+MacroInfo* Preprocessor::AllocateMacroInfo(SourceLocation L) {
+  MacroInfo *MI;
+  
+  if (!MICache.empty()) {
+    MI = MICache.back();
+    MICache.pop_back();
+  }
+  else MI = (MacroInfo*) BP.Allocate<MacroInfo>();
+  new (MI) MacroInfo(L);
+  return MI;
+}
+
 /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
 /// current line until the tok::eom token is found.
 void Preprocessor::DiscardUntilEndOfDirective() {
@@ -920,7 +932,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   if (CurLexer) CurLexer->SetCommentRetentionState(KeepMacroComments);
   
   // Create the new macro.
-  MacroInfo *MI = new MacroInfo(MacroNameTok.getLocation());
+  MacroInfo *MI = AllocateMacroInfo(MacroNameTok.getLocation());
   
   Token Tok;
   LexUnexpandedToken(Tok);
@@ -935,7 +947,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     MI->setIsFunctionLike();
     if (ReadMacroDefinitionArgList(MI)) {
       // Forget about MI.
-      delete MI;
+      ReleaseMacroInfo(MI);
       // Throw away the rest of the line.
       if (CurPPLexer->ParsingPreprocessorDirective)
         DiscardUntilEndOfDirective();
@@ -998,7 +1010,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
       if (!Tok.getIdentifierInfo() ||
           MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) {
         Diag(Tok, diag::err_pp_stringize_not_parameter);
-        delete MI;
+        ReleaseMacroInfo(MI);
         
         // Disable __VA_ARGS__ again.
         Ident__VA_ARGS__->setIsPoisoned(true);
@@ -1023,12 +1035,12 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   if (NumTokens != 0) {
     if (MI->getReplacementToken(0).is(tok::hashhash)) {
       Diag(MI->getReplacementToken(0), diag::err_paste_at_start);
-      delete MI;
+      ReleaseMacroInfo(MI);
       return;
     }
     if (MI->getReplacementToken(NumTokens-1).is(tok::hashhash)) {
       Diag(MI->getReplacementToken(NumTokens-1), diag::err_paste_at_end);
-      delete MI;
+      ReleaseMacroInfo(MI);
       return;
     }
   }
@@ -1051,7 +1063,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
         << MacroNameTok.getIdentifierInfo();
       Diag(OtherMI->getDefinitionLoc(), diag::note_previous_definition);
     }
-    delete OtherMI;
+    ReleaseMacroInfo(OtherMI);
   }
   
   setMacroInfo(MacroNameTok.getIdentifierInfo(), MI);
@@ -1082,7 +1094,7 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
     Diag(MI->getDefinitionLoc(), diag::pp_macro_not_used);
   
   // Free macro definition.
-  delete MI;
+  ReleaseMacroInfo(MI);
   setMacroInfo(MacroNameTok.getIdentifierInfo(), 0);
 }
 
