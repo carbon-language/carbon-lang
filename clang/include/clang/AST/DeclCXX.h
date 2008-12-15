@@ -260,8 +260,12 @@ class CXXRecordDecl : public RecordDecl {
   bool UserDeclaredConstructor : 1;
 
   /// UserDeclaredCopyConstructor - True when this class has a
-  /// user-defined copy constructor.
+  /// user-declared copy constructor.
   bool UserDeclaredCopyConstructor : 1;
+
+  /// UserDeclaredDestructor - True when this class has a
+  /// user-declared destructor.
+  bool UserDeclaredDestructor : 1;
 
   /// Aggregate - True when this class is an aggregate.
   bool Aggregate : 1;
@@ -276,14 +280,6 @@ class CXXRecordDecl : public RecordDecl {
 
   /// NumBases - The number of base class specifiers in Bases.
   unsigned NumBases;
-
-  /// Constructors - Overload set containing the constructors of this
-  /// C++ class. Each of the entries in this overload set is a
-  /// CXXConstructorDecl.
-  OverloadedFunctionDecl Constructors;
-
-  // Destructor - The destructor of this C++ class.
-  CXXDestructorDecl *Destructor;
 
   /// Conversions - Overload set containing the conversion functions
   /// of this C++ class (but not its inherited conversion
@@ -321,20 +317,14 @@ public:
   base_class_iterator       bases_end()         { return Bases + NumBases; }
   base_class_const_iterator bases_end()   const { return Bases + NumBases; }
 
-  /// getConstructors - Retrieve the overload set containing all of
-  /// the constructors of this class.
-  OverloadedFunctionDecl       *getConstructors()       { return &Constructors; }
-
-  /// getConstructors - Retrieve the overload set containing all of
-  /// the constructors of this class.
-  const OverloadedFunctionDecl *getConstructors() const { return &Constructors; }
-
   /// hasConstCopyConstructor - Determines whether this class has a
   /// copy constructor that accepts a const-qualified argument.
   bool hasConstCopyConstructor(ASTContext &Context) const;
 
-  /// addConstructor - Add another constructor to the list of constructors.
-  void addConstructor(ASTContext &Context, CXXConstructorDecl *ConDecl);
+  /// addedConstructor - Notify the class that another constructor has
+  /// been added. This routine helps maintain information about the
+  /// class based on which constructors have been added.
+  void addedConstructor(ASTContext &Context, CXXConstructorDecl *ConDecl);
 
   /// hasUserDeclaredConstructor - Whether this class has any
   /// user-declared constructors. When true, a default constructor
@@ -348,13 +338,16 @@ public:
     return UserDeclaredCopyConstructor;
   }
 
-  /// getDestructor - Retrieve the destructor for this class. 
-  CXXDestructorDecl *getDestructor() const { return Destructor; }
+  /// hasUserDeclaredDestructor - Whether this class has a
+  /// user-declared destructor. When false, a destructor will be
+  /// implicitly declared.
+  bool hasUserDeclaredDestructor() const { return UserDeclaredDestructor; }
 
-  /// setDestructor - Set the destructor for this class.
-  void setDestructor(CXXDestructorDecl *Destructor) {
-    assert(!this->Destructor && "Already have a destructor!");
-    this->Destructor = Destructor;
+  /// setUserDeclaredDestructor - Set whether this class has a
+  /// user-declared destructor. If not set by the time the class is
+  /// fully defined, a destructor will be implicitly declared.
+  void setUserDeclaredDestructor(bool UCD = true) { 
+    UserDeclaredDestructor = UCD; 
   }
 
   /// getConversions - Retrieve the overload set containing all of the
@@ -401,8 +394,6 @@ public:
   static CXXRecordDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<CXXRecordDecl *>(const_cast<DeclContext*>(DC));
   }
-
-  virtual void Destroy(ASTContext& C);
 
 protected:
   /// EmitImpl - Serialize this CXXRecordDecl.  Called by Decl::Emit.

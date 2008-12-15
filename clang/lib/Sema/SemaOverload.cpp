@@ -953,11 +953,25 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
     //   that class. The argument list is the expression-list within
     //   the parentheses of the initializer.
     CXXRecordDecl *ToRecordDecl = ToRecordType->getDecl();
-    const OverloadedFunctionDecl *Constructors = ToRecordDecl->getConstructors();
-    for (OverloadedFunctionDecl::function_const_iterator func 
-           = Constructors->function_begin();
-         func != Constructors->function_end(); ++func) {
-      CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*func);
+    DeclarationName ConstructorName 
+      = Context.DeclarationNames.getCXXConstructorName(
+                                             Context.getCanonicalType(ToType));
+    DeclContext::lookup_result Lookup 
+      = ToRecordDecl->lookup(Context, ConstructorName);
+    if (Lookup.first == Lookup.second)
+      /* No constructors. FIXME: Implicit copy constructor? */;
+    else if (OverloadedFunctionDecl *Constructors 
+               = dyn_cast<OverloadedFunctionDecl>(*Lookup.first)) {
+      for (OverloadedFunctionDecl::function_const_iterator func 
+             = Constructors->function_begin();
+           func != Constructors->function_end(); ++func) {
+        CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*func);
+        if (Constructor->isConvertingConstructor())
+          AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
+                               /*SuppressUserConversions=*/true);
+      }
+    } else if (CXXConstructorDecl *Constructor 
+                 = dyn_cast<CXXConstructorDecl>(*Lookup.first)) {
       if (Constructor->isConvertingConstructor())
         AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
                              /*SuppressUserConversions=*/true);

@@ -138,20 +138,20 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
                                              FD->getDeclName());
         Ovl->addOverload(cast<FunctionDecl>(Prev));
         
-       // If there is an ame binding for the existing FunctionDecl,
-       // remove it.
-       for (IdentifierResolver::iterator I 
-              = IdResolver.begin(FD->getDeclName(), FD->getDeclContext(), 
-                                 false/*LookInParentCtx*/),
-              E = IdResolver.end(); I != E; ++I) {
-         if (*I == Prev) {
-           IdResolver.RemoveDecl(*I);
-           S->RemoveDecl(*I);
-           break;
-         }
-       }
+        // If there is a name binding for the existing FunctionDecl,
+        // remove it.
+        for (IdentifierResolver::iterator I 
+               = IdResolver.begin(FD->getDeclName(), FD->getDeclContext(), 
+                                  false/*LookInParentCtx*/),
+               E = IdResolver.end(); I != E; ++I) {
+          if (*I == Prev) {
+            IdResolver.RemoveDecl(*I);
+            S->RemoveDecl(*I);
+            break;
+          }
+        }
        
-       // Add the name binding for the OverloadedFunctionDecl.
+        // Add the name binding for the OverloadedFunctionDecl.
         IdResolver.AddDecl(Ovl);
 
         // Update the context with the newly-created overloaded
@@ -245,24 +245,6 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
          return *I;
   } else if (LookupCtx) {
     assert(getLangOptions().CPlusPlus && "No qualified name lookup in C");
-
-    switch (Name.getNameKind()) {
-    case DeclarationName::CXXConstructorName:
-      if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(LookupCtx))
-        return const_cast<CXXRecordDecl *>(Record)->getConstructors();
-      else
-        return 0;
-
-    case DeclarationName::CXXDestructorName:
-      if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(LookupCtx))
-        return Record->getDestructor();
-      else
-        return 0;
-
-    default:
-      // Normal name lookup.
-      break;
-    }
 
     // Perform qualified name lookup into the LookupCtx.
     // FIXME: Will need to look into base classes and such.
@@ -564,6 +546,26 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
         Diag(New->getLocation(), diag::err_ovl_static_nonstatic_member);
         Diag(Old->getLocation(), PrevDiag);
         return New;
+      }
+
+      // C++ [class.mem]p1:
+      //   [...] A member shall not be declared twice in the
+      //   member-specification, except that a nested class or member
+      //   class template can be declared and then later defined.
+      if (OldMethod->getLexicalDeclContext() == 
+            NewMethod->getLexicalDeclContext()) {
+        unsigned NewDiag;
+        if (isa<CXXConstructorDecl>(OldMethod))
+          NewDiag = diag::err_constructor_redeclared;
+        else if (isa<CXXDestructorDecl>(NewMethod))
+          NewDiag = diag::err_destructor_redeclared;
+        else if (isa<CXXConversionDecl>(NewMethod))
+          NewDiag = diag::err_conv_function_redeclared;
+        else
+          NewDiag = diag::err_member_redeclared;
+
+        Diag(New->getLocation(), NewDiag);
+        Diag(Old->getLocation(), PrevDiag);
       }
     }
 
@@ -1117,6 +1119,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Handle attributes.
     ProcessDeclAttributes(NewFD, D);
 
+    // Set the lexical context. If the declarator has a C++
+    // scope specifier, the lexical context will be different
+    // from the semantic context.
+    NewFD->setLexicalDeclContext(CurContext);
+
     // Handle GNU asm-label extension (encoded as an attribute).
     if (Expr *E = (Expr*) D.getAsmLabel()) {
       // The parser guarantees this is a string.
@@ -1189,18 +1196,33 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       }
     }
 
-    // C++ constructors and destructors are handled by separate
-    // routines, since they don't require any declaration merging (C++
-    // [class.mfct]p2) and they aren't ever pushed into scope, because
-    // they can't be found by name lookup anyway (C++ [class.ctor]p2).
-    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD))
-      return ActOnConstructorDeclarator(Constructor);
-    else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(NewFD))
-      return ActOnDestructorDeclarator(Destructor);
-    
-    // Extra checking for conversion functions, including recording
-    // the conversion function in its class.
-    if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(NewFD))
+    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD)) {
+      CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(DC);
+
+      // C++ [class.copy]p3:
+      //   A declaration of a constructor for a class X is ill-formed if
+      //   its first parameter is of type (optionally cv-qualified) X and
+      //   either there are no other parameters or else all other
+      //   parameters have default arguments.
+      if ((Constructor->getNumParams() == 1) || 
+          (Constructor->getNumParams() > 1 && 
+           Constructor->getParamDecl(1)->getDefaultArg() != 0)) {
+        QualType ParamType = Constructor->getParamDecl(0)->getType();
+        QualType ClassTy = Context.getTagDeclType(ClassDecl);
+        if (Context.getCanonicalType(ParamType).getUnqualifiedType() 
+              == ClassTy) {
+          Diag(Constructor->getLocation(), diag::err_constructor_byvalue_arg)
+            << SourceRange(Constructor->getParamDecl(0)->getLocation());
+          Constructor->setInvalidDecl();
+        }
+      }
+
+      // Notify the class that we've added a constructor.
+      ClassDecl->addedConstructor(Context, Constructor);
+    }
+    else if (isa<CXXDestructorDecl>(NewFD))
+      cast<CXXRecordDecl>(NewFD->getParent())->setUserDeclaredDestructor(true);
+    else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(NewFD))
       ActOnConversionDeclarator(Conversion);
 
     // Extra checking for C++ overloaded operators (C++ [over.oper]).
@@ -1267,11 +1289,6 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
             // Check default arguments now that we have merged decls.
             CheckCXXDefaultArguments(NewFD);
           }
-
-         // Set the lexical context. If the declarator has a C++
-         // scope specifier, the lexical context will be different
-         // from the semantic context.
-         NewFD->setLexicalDeclContext(CurContext);
 
          return NewFD;
         }
@@ -1965,7 +1982,9 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
     //   function return type, in the declaration of a class member
     //   within its class declaration (9.2), and where the extern
     //   specifier is explicitly used.
-    if (Type->isReferenceType() && Var->getStorageClass() != VarDecl::Extern) {
+    if (Type->isReferenceType() && 
+        Var->getStorageClass() != VarDecl::Extern &&
+        Var->getStorageClass() != VarDecl::PrivateExtern) {
       Diag(Var->getLocation(), diag::err_reference_var_requires_init)
         << Var->getDeclName()
         << SourceRange(Var->getLocation(), Var->getLocation());
@@ -1984,7 +2003,9 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
       QualType InitType = Type;
       if (const ArrayType *Array = Context.getAsArrayType(Type))
         InitType = Array->getElementType();
-      if (InitType->isRecordType()) {
+      if (Var->getStorageClass() != VarDecl::Extern &&
+          Var->getStorageClass() != VarDecl::PrivateExtern &&
+          InitType->isRecordType()) {
         const CXXConstructorDecl *Constructor
           = PerformInitializationByConstructor(InitType, 0, 0, 
                                                Var->getLocation(),

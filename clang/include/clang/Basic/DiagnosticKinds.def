@@ -1169,6 +1169,7 @@ DIAG(err_typecheck_incomplete_tag, ERROR,
      "incomplete definition of type %0")
 DIAG(err_typecheck_no_member, ERROR,
      "no member named %0")
+DIAG(err_member_redeclared, ERROR, "class member cannot be redeclared")
 DIAG(err_typecheck_ivar_variable_size, ERROR,
      "instance variables must have a constant size")
 // FIXME: Improve with %select

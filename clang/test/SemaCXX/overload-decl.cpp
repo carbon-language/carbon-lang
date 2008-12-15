@@ -13,10 +13,14 @@ int f(int, Float); // expected-error {{functions that differ only in their retur
 void g(void); // expected-note {{previous declaration is here}}
 int g(); // expected-error {{functions that differ only in their return type cannot be overloaded}}
 
+typedef int INT;
+
 class X {
   void f();
-  void f(int);
+  void f(int); // expected-note {{previous declaration is here}}
   void f() const;
+
+  void f(INT); // expected-error{{cannot be redeclared}}
 
   void g(int); // expected-note {{previous declaration is here}}
   void g(int, float); // expected-note {{previous declaration is here}}

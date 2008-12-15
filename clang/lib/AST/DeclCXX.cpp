@@ -40,9 +40,8 @@ CXXRecordDecl::CXXRecordDecl(TagKind TK, DeclContext *DC,
                              SourceLocation L, IdentifierInfo *Id) 
   : RecordDecl(CXXRecord, TK, DC, L, Id),
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
-    Aggregate(true), Polymorphic(false), Bases(0), NumBases(0),
-    Constructors(DC, DeclarationName()),
-    Destructor(0), 
+    UserDeclaredDestructor(false), Aggregate(true), Polymorphic(false), 
+    Bases(0), NumBases(0),
     Conversions(DC, DeclarationName()) { }
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
@@ -56,18 +55,6 @@ CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
 
 CXXRecordDecl::~CXXRecordDecl() {
   delete [] Bases;
-}
-
-void CXXRecordDecl::Destroy(ASTContext &C) {
-  for (OverloadedFunctionDecl::function_iterator func 
-         = Constructors.function_begin();
-       func != Constructors.function_end(); ++func)
-    (*func)->Destroy(C);
-
-  if (isDefinition())
-    Destructor->Destroy(C);
-
-  RecordDecl::Destroy(C);
 }
 
 void 
@@ -88,20 +75,35 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
 }
 
 bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
-  for (OverloadedFunctionDecl::function_const_iterator Con 
-         = Constructors.function_begin();
-       Con != Constructors.function_end(); ++Con) {
-    unsigned TypeQuals;
+  QualType ClassType = Context.getTypeDeclType(const_cast<CXXRecordDecl*>(this));
+  DeclarationName ConstructorName 
+    = Context.DeclarationNames.getCXXConstructorName(
+                                           Context.getCanonicalType(ClassType));
+  unsigned TypeQuals;
+  DeclContext::lookup_const_result Lookup 
+    = this->lookup(Context, ConstructorName);
+  if (Lookup.first == Lookup.second)
+    return false;
+  else if (OverloadedFunctionDecl *Constructors             
+             = dyn_cast<OverloadedFunctionDecl>(*Lookup.first)) {
+    for (OverloadedFunctionDecl::function_const_iterator Con 
+           = Constructors->function_begin();
+         Con != Constructors->function_end(); ++Con) {
     if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context, TypeQuals) &&
         (TypeQuals & QualType::Const != 0))
       return true;
+    }
+  } else if (CXXConstructorDecl *Constructor 
+               = dyn_cast<CXXConstructorDecl>(*Lookup.first)) {
+    return Constructor->isCopyConstructor(Context, TypeQuals) &&
+           (TypeQuals & QualType::Const != 0);
   }
   return false;
 }
 
 void 
-CXXRecordDecl::addConstructor(ASTContext &Context, 
-                              CXXConstructorDecl *ConDecl) {
+CXXRecordDecl::addedConstructor(ASTContext &Context, 
+                                CXXConstructorDecl *ConDecl) {
   if (!ConDecl->isImplicitlyDeclared()) {
     // Note that we have a user-declared constructor.
     UserDeclaredConstructor = true;
@@ -116,8 +118,6 @@ CXXRecordDecl::addConstructor(ASTContext &Context,
     if (ConDecl->isCopyConstructor(Context))
       UserDeclaredCopyConstructor = true;
   }
-
-  Constructors.addOverload(ConDecl);
 }
 
 void CXXRecordDecl::addConversionFunction(ASTContext &Context, 

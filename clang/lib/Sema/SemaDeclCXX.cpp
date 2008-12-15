@@ -744,7 +744,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                  /*isInline=*/true,
                                  /*isImplicitlyDeclared=*/true);
     DefaultCon->setAccess(AS_public);
-    ClassDecl->addConstructor(Context, DefaultCon);
+    ClassDecl->addDecl(Context, DefaultCon);
+
+    // Notify the class that we've added a constructor.
+    ClassDecl->addedConstructor(Context, DefaultCon);
   }
 
   if (!ClassDecl->hasUserDeclaredCopyConstructor()) {
@@ -820,10 +823,27 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                                  ArgType, VarDecl::None, 0, 0);
     CopyConstructor->setParams(&FromParam, 1);
 
-    ClassDecl->addConstructor(Context, CopyConstructor);
+    ClassDecl->addedConstructor(Context, CopyConstructor);
+    DeclContext::lookup_result Lookup = ClassDecl->lookup(Context, Name);
+    if (Lookup.first == Lookup.second 
+        || (!isa<CXXConstructorDecl>(*Lookup.first) &&
+            !isa<OverloadedFunctionDecl>(*Lookup.first)))
+      ClassDecl->addDecl(Context, CopyConstructor);
+    else {
+      OverloadedFunctionDecl *Ovl 
+        = dyn_cast<OverloadedFunctionDecl>(*Lookup.first);
+      if (!Ovl) {
+        Ovl = OverloadedFunctionDecl::Create(Context, ClassDecl, Name);
+        Ovl->addOverload(cast<CXXConstructorDecl>(*Lookup.first));
+        ClassDecl->insert(Context, Ovl);
+      }
+
+      Ovl->addOverload(CopyConstructor);
+      ClassDecl->addDecl(Context, CopyConstructor, false);
+    }
   }
 
-  if (!ClassDecl->getDestructor()) {
+  if (!ClassDecl->hasUserDeclaredDestructor()) {
     // C++ [class.dtor]p2:
     //   If a class has no user-declared destructor, a destructor is
     //   declared implicitly. An implicitly-declared destructor is an
@@ -838,7 +858,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                   /*isInline=*/true,
                                   /*isImplicitlyDeclared=*/true);
     Destructor->setAccess(AS_public);
-    ClassDecl->setDestructor(Destructor);
+    ClassDecl->addDecl(Context, Destructor);
   }
 
   // FIXME: Implicit copy assignment operator
@@ -1085,101 +1105,6 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
                               R->getAsFunctionTypeProto()->getTypeQuals());
 
   return isInvalid;
-}
-
-/// ActOnConstructorDeclarator - Called by ActOnDeclarator to complete
-/// the declaration of the given C++ constructor ConDecl that was
-/// built from declarator D. This routine is responsible for checking
-/// that the newly-created constructor declaration is well-formed and
-/// for recording it in the C++ class. Example:
-///
-/// @code 
-/// class X {
-///   X(); // X::X() will be the ConDecl.
-/// };
-/// @endcode
-Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
-  assert(ConDecl && "Expected to receive a constructor declaration");
-
-  // Check default arguments on the constructor
-  CheckCXXDefaultArguments(ConDecl);
-
-  // Set the lexical context of this constructor
-  ConDecl->setLexicalDeclContext(CurContext);
-
-  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(ConDecl->getDeclContext());
-
-  // Make sure this constructor is an overload of the existing
-  // constructors.
-  OverloadedFunctionDecl::function_iterator MatchedDecl;
-  if (!IsOverload(ConDecl, ClassDecl->getConstructors(), MatchedDecl)) {
-    if (CurContext == (*MatchedDecl)->getLexicalDeclContext()) {
-      Diag(ConDecl->getLocation(), diag::err_constructor_redeclared)
-        << SourceRange(ConDecl->getLocation());
-      Diag((*MatchedDecl)->getLocation(), diag::note_previous_declaration)
-        << SourceRange((*MatchedDecl)->getLocation());
-      ConDecl->setInvalidDecl();
-      return 0;
-    }
-
-    // FIXME: Just drop the definition (for now).
-    return ConDecl;
-  }
-
-  // C++ [class.copy]p3:
-  //   A declaration of a constructor for a class X is ill-formed if
-  //   its first parameter is of type (optionally cv-qualified) X and
-  //   either there are no other parameters or else all other
-  //   parameters have default arguments.
-  if ((ConDecl->getNumParams() == 1) || 
-      (ConDecl->getNumParams() > 1 && 
-       ConDecl->getParamDecl(1)->getDefaultArg() != 0)) {
-    QualType ParamType = ConDecl->getParamDecl(0)->getType();
-    QualType ClassTy = Context.getTagDeclType(
-                         const_cast<CXXRecordDecl*>(ConDecl->getParent()));
-    if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
-      Diag(ConDecl->getLocation(), diag::err_constructor_byvalue_arg)
-        << SourceRange(ConDecl->getParamDecl(0)->getLocation());
-      ConDecl->setInvalidDecl();
-      return ConDecl;
-    }
-  }
-      
-  // Add this constructor to the set of constructors of the current
-  // class. 
-  ClassDecl->addConstructor(Context, ConDecl);
-  return (DeclTy *)ConDecl;
-}
-
-/// ActOnDestructorDeclarator - Called by ActOnDeclarator to complete
-/// the declaration of the given C++ @p Destructor. This routine is
-/// responsible for recording the destructor in the C++ class, if
-/// possible.
-Sema::DeclTy *Sema::ActOnDestructorDeclarator(CXXDestructorDecl *Destructor) {
-  assert(Destructor && "Expected to receive a destructor declaration");
-
-  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Destructor->getDeclContext());
-
-  // Set the lexical context of this destructor
-  Destructor->setLexicalDeclContext(CurContext);
-
-  // Make sure we aren't redeclaring the destructor.
-  if (CXXDestructorDecl *PrevDestructor = ClassDecl->getDestructor()) {
-    if (CurContext == PrevDestructor->getLexicalDeclContext()) {
-      Diag(Destructor->getLocation(), diag::err_destructor_redeclared);
-      Diag(PrevDestructor->getLocation(),
-           PrevDestructor->isThisDeclarationADefinition() ?
-               diag::note_previous_definition
-             : diag::note_previous_declaration);
-      Destructor->setInvalidDecl();
-    }
-
-    // FIXME: Just drop the definition (for now).
-    return Destructor;
-  }
-
-  ClassDecl->setDestructor(Destructor);
-  return (DeclTy *)Destructor;
 }
 
 /// ActOnConversionDeclarator - Called by ActOnDeclarator to complete
@@ -1437,17 +1362,34 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
   OverloadCandidateSet CandidateSet;
 
   // Add constructors to the overload set.
-  OverloadedFunctionDecl *Constructors 
-    = const_cast<OverloadedFunctionDecl *>(ClassDecl->getConstructors());
-  for (OverloadedFunctionDecl::function_iterator Con 
-         = Constructors->function_begin();
-       Con != Constructors->function_end(); ++Con) {
-    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+  DeclarationName ConstructorName 
+    = Context.DeclarationNames.getCXXConstructorName(
+                       Context.getCanonicalType(ClassType.getUnqualifiedType()));
+  DeclContext::lookup_const_result Lookup 
+    = ClassDecl->lookup(Context, ConstructorName);
+  if (Lookup.first == Lookup.second)
+    /* No constructors */;
+  else if (OverloadedFunctionDecl *Constructors 
+             = dyn_cast<OverloadedFunctionDecl>(*Lookup.first)) {
+    for (OverloadedFunctionDecl::function_iterator Con 
+           = Constructors->function_begin();
+         Con != Constructors->function_end(); ++Con) {
+      CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+      if ((Kind == IK_Direct) ||
+          (Kind == IK_Copy && Constructor->isConvertingConstructor()) ||
+          (Kind == IK_Default && Constructor->isDefaultConstructor()))
+        AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
+    }
+  } else if (CXXConstructorDecl *Constructor 
+               = dyn_cast<CXXConstructorDecl>(*Lookup.first)) {
     if ((Kind == IK_Direct) ||
         (Kind == IK_Copy && Constructor->isConvertingConstructor()) ||
         (Kind == IK_Default && Constructor->isDefaultConstructor()))
       AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
   }
+
+  // FIXME: When we decide not to synthesize the implicitly-declared
+  // constructors, we'll need to make them appear here.
 
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Best)) {

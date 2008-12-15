@@ -963,8 +963,6 @@ public:
                                  FunctionDecl::StorageClass& SC);
   bool CheckConversionDeclarator(Declarator &D, QualType &R,
                                  FunctionDecl::StorageClass& SC);
-  DeclTy *ActOnConstructorDeclarator(CXXConstructorDecl *Constructor);
-  DeclTy *ActOnDestructorDeclarator(CXXDestructorDecl *Destructor);
   DeclTy *ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
   //===--------------------------------------------------------------------===//

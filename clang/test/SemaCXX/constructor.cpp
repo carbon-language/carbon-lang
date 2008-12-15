@@ -21,3 +21,9 @@ class Foo {
 
 Foo::Foo(const Foo&) { }
 
+typedef struct {
+  int version;
+} Anon;
+extern const Anon anon;
+extern "C" const Anon anon2;
+
