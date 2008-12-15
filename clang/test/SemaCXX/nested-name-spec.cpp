@@ -12,9 +12,18 @@ A:: ; // expected-error {{expected unqualified-id}}
 A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}} expected-error {{expected '=', ',', ';', 'asm', or '__attribute__' after declarator}}
 
 class C2 {
-  void m();
+  void m(); // expected-note{{member declaration nearly matches}}
+
+  void f(const int& parm); // expected-note{{member declaration nearly matches}}
+  void f(int) const; // expected-note{{member declaration nearly matches}}
+  void f(float);
+
   int x;
 };
+
+void C2::m() const { } // expected-error{{out-of-line definition does not match any declaration in 'C2'}}
+
+void C2::f(int) { } // expected-error{{out-of-line definition does not match any declaration in 'C2'}}
 
 void C2::m() {
   x = 0;
@@ -25,7 +34,7 @@ namespace B {
 }
 
 void f1() {
-  void A::Af(); // expected-error {{definition or redeclaration of 'Af' not allowed inside a function}}  
+  void A::Af(); // expected-error {{definition or redeclaration of 'Af' not allowed inside a function}}
 }
 
 void f2() {
@@ -73,3 +82,11 @@ void f3() {
 
 // make sure the following doesn't hit any asserts
 void f4(undef::C); // expected-error {{use of undeclared identifier 'undef'}} // expected-error {{expected ')'}} expected-note {{to match this '('}} // expected-error {{variable has incomplete type 'void'}}
+
+typedef void C2::f5(int); // expected-error{{typedef declarator cannot be qualified}}
+
+void f6(int A2::RC::x); // expected-error{{parameter declarator cannot be qualified}}
+
+int A2::RC::x; // expected-error{{non-static data member defined out-of-line}}
+
+void A2::CC::NC::m(); // expected-error{{out-of-line declaration of a member must be a definition}}

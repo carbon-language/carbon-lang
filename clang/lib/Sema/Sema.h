@@ -267,7 +267,11 @@ public:
   //
   virtual TypeTy *isTypeName(IdentifierInfo &II, Scope *S,
                              const CXXScopeSpec *SS);
-  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
+  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
+    return ActOnDeclarator(S, D, LastInGroup, false);
+  }
+  DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup,
+                          bool IsFunctionDefinition);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
                                          SourceLocation EqualLoc,

@@ -910,8 +910,32 @@ DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
   return DeclarationName();
 }
 
+/// isNearlyMatchingMemberFunction - Determine whether the C++ member
+/// functions Declaration and Definition are "nearly" matching. This
+/// heuristic is used to improve diagnostics in the case where an
+/// out-of-line member function definition doesn't match any
+/// declaration within the class.
+static bool isNearlyMatchingMemberFunction(ASTContext &Context,
+                                           FunctionDecl *Declaration,
+                                           FunctionDecl *Definition) {
+  if (Declaration->param_size() != Definition->param_size())
+    return false;
+  for (unsigned Idx = 0; Idx < Declaration->param_size(); ++Idx) {
+    QualType DeclParamTy = Declaration->getParamDecl(Idx)->getType();
+    QualType DefParamTy = Definition->getParamDecl(Idx)->getType();
+
+    DeclParamTy = Context.getCanonicalType(DeclParamTy.getNonReferenceType());
+    DefParamTy = Context.getCanonicalType(DefParamTy.getNonReferenceType());
+    if (DeclParamTy.getUnqualifiedType() != DefParamTy.getUnqualifiedType())
+      return false;
+  }
+
+  return true;
+}
+
 Sema::DeclTy *
-Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
+Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
+                      bool IsFunctionDefinition) {
   ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
   DeclarationName Name = GetNameForDeclarator(D);
 
@@ -952,21 +976,21 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // after the point of declaration in a namespace that encloses the
     // declarations namespace.
     //
-    // FIXME: We need to perform this check later, once we know that
-    // we've actually found a redeclaration. Otherwise, just the fact
-    // that there is some entity with the same name will suppress this
-    // diagnostic, e.g., we fail to diagnose:
+    // Note that we only check the context at this point. We don't yet
+    // have enough information to make sure that PrevDecl is actually
+    // the declaration we want to match. For example, given:
+    //
     //   class X {
     //     void f();
+    //     void f(float);
     //   };
     //
-    //   void X::f(int) { } // ill-formed, but we don't complain.
-    if (PrevDecl == 0) {
-      // No previous declaration in the qualifying scope.
-      Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
-        << Name << D.getCXXScopeSpec().getRange();
-      InvalidDecl = true;
-    } else if (!CurContext->Encloses(DC)) {
+    //   void X::f(int) { } // ill-formed
+    //
+    // In this case, PrevDecl will point to the overload set
+    // containing the two f's declared in X, but neither of them
+    // matches. 
+    if (!CurContext->Encloses(DC)) {
       // The qualifying scope doesn't enclose the original declaration.
       // Emit diagnostic based on current scope.
       SourceLocation L = D.getIdentifierLoc();
@@ -999,6 +1023,15 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
 
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
+    // Typedef declarators cannot be qualified (C++ [dcl.meaning]p1).
+    if (D.getCXXScopeSpec().isSet()) {
+      Diag(D.getIdentifierLoc(), diag::err_qualified_typedef_declarator)
+        << D.getCXXScopeSpec().getRange();
+      InvalidDecl = true;
+      // Pretend we didn't see the scope specifier.
+      DC = 0;
+    }
+
     // Check that there are no default arguments (C++ only).
     if (getLangOptions().CPlusPlus)
       CheckExtraCXXDefaultArguments(D);
@@ -1116,6 +1149,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
                                    // FIXME: Move to DeclGroup...
                                    D.getDeclSpec().getSourceRange().getBegin());
     }
+
     // Handle attributes.
     ProcessDeclAttributes(NewFD, D);
 
@@ -1288,17 +1322,83 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 
             // Check default arguments now that we have merged decls.
             CheckCXXDefaultArguments(NewFD);
+
+            // An out-of-line member function declaration must also be a
+            // definition (C++ [dcl.meaning]p1).
+            if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
+                !InvalidDecl) {
+              Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
+                << D.getCXXScopeSpec().getRange();
+              NewFD->setInvalidDecl();
+            }
           }
 
          return NewFD;
         }
       }
+
+      if (!Redeclaration && D.getCXXScopeSpec().isSet()) {
+        // The user tried to provide an out-of-line definition for a
+        // member function, but there was no such member function
+        // declared (C++ [class.mfct]p2). For example:
+        // 
+        // class X {
+        //   void f() const;
+        // }; 
+        //
+        // void X::f() { } // ill-formed
+        //
+        // Complain about this problem, and attempt to suggest close
+        // matches (e.g., those that differ only in cv-qualifiers and
+        // whether the parameter types are references).
+        Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
+          << cast<CXXRecordDecl>(DC)->getDeclName() 
+          << D.getCXXScopeSpec().getRange();
+        InvalidDecl = true;
+        
+        PrevDecl = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
+        if (!PrevDecl) {
+          // Nothing to suggest.
+        } else if (OverloadedFunctionDecl *Ovl 
+                   = dyn_cast<OverloadedFunctionDecl>(PrevDecl)) {
+          for (OverloadedFunctionDecl::function_iterator 
+                 Func = Ovl->function_begin(),
+                 FuncEnd = Ovl->function_end();
+               Func != FuncEnd; ++Func) {
+            if (isNearlyMatchingMemberFunction(Context, *Func, NewFD))
+              Diag((*Func)->getLocation(), diag::note_member_def_close_match);
+            
+          }
+        } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(PrevDecl)) {
+          // Suggest this no matter how mismatched it is; it's the only
+          // thing we have.
+          unsigned diag;
+          if (isNearlyMatchingMemberFunction(Context, Method, NewFD))
+            diag = diag::note_member_def_close_match;
+          else if (Method->getBody())
+            diag = diag::note_previous_definition;
+          else
+            diag = diag::note_previous_declaration;
+          Diag(Method->getLocation(), diag);
+        }
+        
+        PrevDecl = 0;
+      }
     }
     New = NewFD;
 
-    // In C++, check default arguments now that we have merged decls.
-    if (getLangOptions().CPlusPlus)
+    if (getLangOptions().CPlusPlus) {
+      // In C++, check default arguments now that we have merged decls.
       CheckCXXDefaultArguments(NewFD);
+
+      // An out-of-line member function declaration must also be a
+      // definition (C++ [dcl.meaning]p1).
+      if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet()) {
+        Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
+          << D.getCXXScopeSpec().getRange();
+        InvalidDecl = true;
+      }
+    }
   } else {
     // Check that there are no default arguments (C++ only).
     if (getLangOptions().CPlusPlus)
@@ -1337,7 +1437,6 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
 
     if (DC->isCXXRecord()) {
-      assert(SC == VarDecl::Static && "Invalid storage class for member!");
       // This is a static data member for a C++ class.
       NewVD = CXXClassVarDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                       D.getIdentifierLoc(), II,
@@ -1380,8 +1479,24 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Merge the decl with the existing one if appropriate. If the decl is
     // in an outer scope, it isn't the same thing.
     if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
+      if (isa<FieldDecl>(PrevDecl) && D.getCXXScopeSpec().isSet()) {
+        // The user tried to define a non-static data member
+        // out-of-line (C++ [dcl.meaning]p1).
+        Diag(NewVD->getLocation(), diag::err_nonstatic_member_out_of_line)
+          << D.getCXXScopeSpec().getRange();
+        NewVD->Destroy(Context);
+        return 0;
+      }
+
       NewVD = MergeVarDecl(NewVD, PrevDecl);
       if (NewVD == 0) return 0;
+
+      if (D.getCXXScopeSpec().isSet()) {
+        // No previous declaration in the qualifying scope.
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
+          << Name << D.getCXXScopeSpec().getRange();
+        InvalidDecl = true;
+      }
     }
     New = NewVD;
   }
@@ -2151,9 +2266,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
 /// to introduce parameters into function prototype scope.
 Sema::DeclTy *
 Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
-  // FIXME: disallow CXXScopeSpec for param declarators.
   const DeclSpec &DS = D.getDeclSpec();
-  
+
   // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
   VarDecl::StorageClass StorageClass = VarDecl::None;
   if (DS.getStorageClassSpec() == DeclSpec::SCS_register) {
@@ -2231,6 +2345,13 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (D.getInvalidType())
     New->setInvalidDecl();
 
+  // Parameter declarators cannot be qualified (C++ [dcl.meaning]p1).
+  if (D.getCXXScopeSpec().isSet()) {
+    Diag(D.getIdentifierLoc(), diag::err_qualified_param_declarator)
+      << D.getCXXScopeSpec().getRange();
+    New->setInvalidDecl();
+  }
+
   // Add the parameter declaration into this scope.
   S->AddDecl(New);
   if (II)
@@ -2269,10 +2390,11 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     // FIXME: Diagnose arguments without names in C. 
   }
   
-  Scope *GlobalScope = FnBodyScope->getParent();
+  Scope *ParentScope = FnBodyScope->getParent();
 
   return ActOnStartOfFunctionDef(FnBodyScope,
-                                 ActOnDeclarator(GlobalScope, D, 0));
+                                 ActOnDeclarator(ParentScope, D, 0, 
+                                                 /*IsFunctionDefinition=*/true));
 }
 
 Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {

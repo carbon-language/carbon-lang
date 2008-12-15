@@ -533,9 +533,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
     // declaration.
     if (FnTy->getTypeQuals() != 0 &&
         D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
-        (D.getContext() != Declarator::MemberContext ||
+        ((D.getContext() != Declarator::MemberContext &&
+          (!D.getCXXScopeSpec().isSet() ||
+           !static_cast<DeclContext*>(D.getCXXScopeSpec().getScopeRep())
+             ->isCXXRecord())) ||
          D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static)) {
-
       if (D.isFunctionDeclarator())
         Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_function_type);
       else
