@@ -156,12 +156,18 @@ namespace llvm {
     /// ValueIsLoadPair - This is a pair<Value*, bool> where the bool is true if
     /// the dependence is a read only dependence, false if read/write.
     typedef PointerIntPair<Value*, 1, bool> ValueIsLoadPair;
-    
+
+    /// BBSkipFirstBlockPair - This pair is used when caching information for a
+    /// block.  If the pointer is null, the cache value is not a full query that
+    /// starts at the specified block.  If non-null, the bool indicates whether
+    /// or not the contents of the block was skipped.
+    typedef PointerIntPair<BasicBlock*, 1, bool> BBSkipFirstBlockPair;
+
     /// CachedNonLocalPointerInfo - This map stores the cached results of doing
     /// a pointer lookup at the bottom of a block.  The key of this map is the
     /// pointer+isload bit, the value is a list of <bb->result> mappings.
-    typedef DenseMap<ValueIsLoadPair,
-      std::pair<BasicBlock*, NonLocalDepInfo> > CachedNonLocalPointerInfo;
+    typedef DenseMap<ValueIsLoadPair, std::pair<BBSkipFirstBlockPair, 
+                  NonLocalDepInfo> > CachedNonLocalPointerInfo;
     CachedNonLocalPointerInfo NonLocalPointerDeps;
 
     // A map from instructions to their non-local pointer dependencies.
@@ -259,10 +265,11 @@ namespace llvm {
     MemDepResult getCallSiteDependencyFrom(CallSite C, bool isReadOnlyCall,
                                            BasicBlock::iterator ScanIt,
                                            BasicBlock *BB);
-    void getNonLocalPointerDepFromBB(Value *Pointer, uint64_t Size,
+    bool getNonLocalPointerDepFromBB(Value *Pointer, uint64_t Size,
                                      bool isLoad, BasicBlock *BB,
                                      SmallVectorImpl<NonLocalDepEntry> &Result,
-                                     SmallPtrSet<BasicBlock*, 64> &Visited);
+                                     DenseMap<BasicBlock*, Value*> &Visited,
+                                     bool SkipFirstBlock = false);
     MemDepResult GetNonLocalInfoForBlock(Value *Pointer, uint64_t PointeeSize,
                                          bool isLoad, BasicBlock *BB,
                                          NonLocalDepInfo *Cache,

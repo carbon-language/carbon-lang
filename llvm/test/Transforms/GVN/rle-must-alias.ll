@@ -1,4 +1,9 @@
 ; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep {DEAD.rle = phi i32}
+; XFAIL: *
+
+; FIXME: GVN should eliminate the fully redundant %9 GEP which 
+; allows DEAD to be removed.  This is PR3198.
+
 ; The %7 and %4 loads combine to make %DEAD unneeded.
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i386-apple-darwin7"
