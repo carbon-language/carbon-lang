@@ -1611,11 +1611,18 @@ bool GVN::iterateOnFunction(Function &F) {
 
   // Top-down walk of the dominator tree
   bool changed = false;
+#if 0
+  // Needed for value numbering with phi construction to work.
   ReversePostOrderTraversal<Function*> RPOT(&F);
   for (ReversePostOrderTraversal<Function*>::rpo_iterator RI = RPOT.begin(),
        RE = RPOT.end(); RI != RE; ++RI)
     changed |= processBlock(*RI);
-  
+#else
+  for (df_iterator<DomTreeNode*> DI = df_begin(DT->getRootNode()),
+       DE = df_end(DT->getRootNode()); DI != DE; ++DI)
+    changed |= processBlock(DI->getBlock());
+#endif
+
   return changed;
 }
 
