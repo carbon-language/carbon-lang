@@ -1358,13 +1358,8 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
                                      Module::global_iterator &GVI,
                                      TargetData &TD) {
-  if (BitCastInst *CI = dyn_cast<BitCastInst>(StoredOnceVal))
-    StoredOnceVal = CI->getOperand(0);
-  else if (GetElementPtrInst *GEPI =dyn_cast<GetElementPtrInst>(StoredOnceVal)){
-    // "getelementptr Ptr, 0, 0, 0" is really just a cast.
-    if (GEPI->hasAllZeroIndices())
-      StoredOnceVal = GEPI->getOperand(0);
-  }
+  // Ignore no-op GEPs and bitcasts.
+  StoredOnceVal = StoredOnceVal->stripPointerCasts();
 
   // If we are dealing with a pointer global that is initialized to null and
   // only has one (non-null) value stored into it, then we can optimize any
