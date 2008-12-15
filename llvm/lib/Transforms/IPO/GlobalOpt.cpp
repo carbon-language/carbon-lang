@@ -988,8 +988,25 @@ static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
       // PHI.
       unsigned PredNo = Alloc->use_begin().getOperandNo()/2;
       InsertPt = PN->getIncomingBlock(PredNo)->getTerminator();
+    } else if (isa<BitCastInst>(U)) {
+      // Must be bitcast between the malloc and store to initialize the global.
+      ReplaceUsesOfMallocWithGlobal(U, GV);
+      U->eraseFromParent();
+      continue;
+    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
+      // If this is a "GEP bitcast" and the user is a store to the global, then
+      // just process it as a bitcast.
+      if (GEPI->hasAllZeroIndices() && GEPI->hasOneUse())
+        if (StoreInst *SI = dyn_cast<StoreInst>(GEPI->use_back()))
+          if (SI->getOperand(1) == GV) {
+            // Must be bitcast GEP between the malloc and store to initialize
+            // the global.
+            ReplaceUsesOfMallocWithGlobal(GEPI, GV);
+            GEPI->eraseFromParent();
+            continue;
+          }
     }
-    
+      
     // Insert a load from the global, and use it instead of the malloc.
     Value *NL = new LoadInst(GV, GV->getName()+".val", InsertPt);
     U->replaceUsesOfWith(Alloc, NL);
@@ -1339,12 +1356,34 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
   // If the allocation is an array of structures, consider transforming this
   // into multiple malloc'd arrays, one for each field.  This is basically
   // SRoA for malloc'd memory.
-  if (const StructType *AllocTy = 
-      dyn_cast<StructType>(MI->getAllocatedType())) {
+  const Type *AllocTy = MI->getAllocatedType();
+  
+  // If this is an allocation of a fixed size array of structs, analyze as a
+  // variable size array.  malloc [100 x struct],1 -> malloc struct, 100
+  if (!MI->isArrayAllocation())
+    if (const ArrayType *AT = dyn_cast<ArrayType>(AllocTy))
+      AllocTy = AT->getElementType();
+  
+  if (const StructType *AllocSTy = dyn_cast<StructType>(AllocTy)) {
     // This the structure has an unreasonable number of fields, leave it
     // alone.
-    if (AllocTy->getNumElements() <= 16 && AllocTy->getNumElements() > 0 &&
+    if (AllocSTy->getNumElements() <= 16 && AllocSTy->getNumElements() != 0 &&
         GlobalLoadUsesSimpleEnoughForHeapSRA(GV, MI)) {
+      
+      // If this is a fixed size array, transform the Malloc to be an alloc of
+      // structs.  malloc [100 x struct],1 -> malloc struct, 100
+      if (const ArrayType *AT = dyn_cast<ArrayType>(MI->getAllocatedType())) {
+        MallocInst *NewMI = 
+          new MallocInst(AllocSTy, 
+                         ConstantInt::get(Type::Int32Ty, AT->getNumElements()),
+                         "", MI);
+        NewMI->takeName(MI);
+        Value *Cast = new BitCastInst(NewMI, MI->getType(), "tmp", MI);
+        MI->replaceAllUsesWith(Cast);
+        MI->eraseFromParent();
+        MI = NewMI;
+      }
+      
       GVI = PerformHeapAllocSRoA(GV, MI);
       return true;
     }
