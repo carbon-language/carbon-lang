@@ -61,7 +61,7 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "sspreq ";
   if (Attrs & Attribute::Alignment) {
     Result += "align ";
-    Result += utostr(1ull << ((Attrs & Attribute::Alignment)>>16));
+    Result += utostr(1ull << (((Attrs & Attribute::Alignment)>>16) - 1));
     Result += " ";
   }
   // Trim the trailing space.

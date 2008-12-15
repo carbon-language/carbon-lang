@@ -1332,6 +1332,8 @@ OptAlign : /*empty*/        { $$ = 0; } |
   $$ = $2;
   if ($$ != 0 && !isPowerOf2_32($$))
     GEN_ERROR("Alignment must be a power of two");
+  if ($$ > 0x40000000)
+    GEN_ERROR("Alignment too large");
   CHECK_FOR_ERROR
 };
 OptCAlign : /*empty*/            { $$ = 0; } |
@@ -1339,6 +1341,8 @@ OptCAlign : /*empty*/            { $$ = 0; } |
   $$ = $3;
   if ($$ != 0 && !isPowerOf2_32($$))
     GEN_ERROR("Alignment must be a power of two");
+  if ($$ > 0x40000000)
+    GEN_ERROR("Alignment too large");
   CHECK_FOR_ERROR
 };
 
@@ -1368,6 +1372,8 @@ GlobalVarAttribute : SectionString {
   | ALIGN EUINT64VAL {
     if ($2 != 0 && !isPowerOf2_32($2))
       GEN_ERROR("Alignment must be a power of two");
+    if ($2 > 0x40000000)
+      GEN_ERROR("Alignment too large");
     CurGV->setAlignment($2);
     CHECK_FOR_ERROR
   };

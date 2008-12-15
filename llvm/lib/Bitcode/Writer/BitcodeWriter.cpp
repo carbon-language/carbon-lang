@@ -128,7 +128,8 @@ static void WriteAttributeTable(const ValueEnumerator &VE,
       // 5-bit log2 encoded value. Shift the bits above the alignment up by
       // 11 bits.
       uint64_t FauxAttr = PAWI.Attrs & 0xffff;
-      FauxAttr |= (1ull<<16)<<((PAWI.Attrs & Attribute::Alignment) >> 16);
+      if (PAWI.Attrs & Attribute::Alignment)
+        FauxAttr |= (1ull<<16)<<(((PAWI.Attrs & Attribute::Alignment)-1) >> 16);
       FauxAttr |= (PAWI.Attrs & (0x3FFull << 21)) << 11;
 
       Record.push_back(FauxAttr);

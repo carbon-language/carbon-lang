@@ -51,7 +51,8 @@ const Attributes OptimizeForSize = 1<<13; ///< opt_size
 const Attributes StackProtect    = 1<<14; ///< Stack protection.
 const Attributes StackProtectReq = 1<<15; ///< Stack protection required.
 const Attributes Alignment = 31<<16; ///< Alignment of parameter (5 bits)
-                                     // stored as log2 of alignment.
+                                     // stored as log2 of alignment with +1 bias
+                                     // 0 means unaligned different from align 1
 const Attributes NoCapture = 1<<21; ///< Function creates no aliases of pointer
 
 /// @brief Attributes that only apply to function parameters.
@@ -79,7 +80,8 @@ Attributes typeIncompatible(const Type *Ty);
 /// form used internally in Attributes.
 inline Attributes constructAlignmentFromInt(unsigned i) {
   assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
-  return Log2_32(i) << 16;
+  assert(i <= 0x40000000 && "Alignment too large.");
+  return (Log2_32(i)+1) << 16;
 }
 
 /// The set of Attributes set in Attributes is converted to a
@@ -178,7 +180,7 @@ public:
   /// getParamAlignment - Return the alignment for the specified function
   /// parameter.
   unsigned getParamAlignment(unsigned Idx) const {
-    return (getAttributes(Idx) & Attribute::Alignment) >> 16;
+    return 1ull << (((getAttributes(Idx) & Attribute::Alignment) >> 16) - 1);
   }
   
   /// hasAttrSomewhere - Return true if the specified attribute is set for at
