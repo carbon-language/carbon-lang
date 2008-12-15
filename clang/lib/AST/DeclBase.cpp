@@ -321,7 +321,6 @@ void Decl::swapAttrs(Decl *RHS) {
 
 
 void Decl::Destroy(ASTContext& C) {
-
   if (ScopedDecl* SD = dyn_cast<ScopedDecl>(this)) {    
 
     // Observe the unrolled recursion.  By setting N->NextDeclarator = 0x0

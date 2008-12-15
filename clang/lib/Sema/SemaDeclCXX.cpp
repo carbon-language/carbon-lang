@@ -1112,13 +1112,17 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
   // Make sure this constructor is an overload of the existing
   // constructors.
   OverloadedFunctionDecl::function_iterator MatchedDecl;
-  if (!IsOverload(ConDecl, ClassDecl->getConstructors(), MatchedDecl) &&
-      CurContext == (*MatchedDecl)->getLexicalDeclContext()) {
-    Diag(ConDecl->getLocation(), diag::err_constructor_redeclared)
-      << SourceRange(ConDecl->getLocation());
-    Diag((*MatchedDecl)->getLocation(), diag::note_previous_declaration)
-      << SourceRange((*MatchedDecl)->getLocation());
-    ConDecl->setInvalidDecl();
+  if (!IsOverload(ConDecl, ClassDecl->getConstructors(), MatchedDecl)) {
+    if (CurContext == (*MatchedDecl)->getLexicalDeclContext()) {
+      Diag(ConDecl->getLocation(), diag::err_constructor_redeclared)
+        << SourceRange(ConDecl->getLocation());
+      Diag((*MatchedDecl)->getLocation(), diag::note_previous_declaration)
+        << SourceRange((*MatchedDecl)->getLocation());
+      ConDecl->setInvalidDecl();
+      return 0;
+    }
+
+    // FIXME: Just drop the definition (for now).
     return ConDecl;
   }
 
@@ -1142,7 +1146,7 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
   }
       
   // Add this constructor to the set of constructors of the current
-  // class.
+  // class. 
   ClassDecl->addConstructor(Context, ConDecl);
   return (DeclTy *)ConDecl;
 }
