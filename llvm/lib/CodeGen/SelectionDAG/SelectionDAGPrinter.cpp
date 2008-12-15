@@ -202,12 +202,10 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     Op += '<';
     if (!V) {
       Op += "(unknown)";
-    } else if (isa<PseudoSourceValue>(V)) {
+    } else if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {
       // PseudoSourceValues don't have names, so use their print method.
-      {
-        raw_string_ostream OSS(Op);
-        OSS << *M->MO.getValue();
-      }
+      raw_string_ostream OSS(Op);
+      PSV->print(OSS);
     } else {
       Op += V->getName();
     }
