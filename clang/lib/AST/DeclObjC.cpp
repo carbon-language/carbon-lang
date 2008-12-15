@@ -377,10 +377,10 @@ FieldDecl *ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context,
   return MemberDecl;
 }
 
-/// addLayoutToClass - produces layout info. for the class for its
+/// addRecordToClass - produces record info. for the class for its
 /// ivars and all those inherited.
 ///
-void ObjCInterfaceDecl::addLayoutToClass(ASTContext &Context)
+void ObjCInterfaceDecl::addRecordToClass(ASTContext &Context)
 {
   std::vector<FieldDecl*> RecFields;
   CollectObjCIvars(RecFields);

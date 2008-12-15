@@ -2968,7 +2968,7 @@ void Sema::ActOnFields(Scope* S,
     ObjCIvarDecl **ClsFields = reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
     if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl)) {
       ID->addInstanceVariablesToClass(ClsFields, RecFields.size(), RBrac);
-      ID->addLayoutToClass(Context);
+      ID->addRecordToClass(Context);
     }
     else if (ObjCImplementationDecl *IMPDecl = 
                dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {

@@ -277,7 +277,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     if(!RD) {
       // Sometimes, class type is being directly generated in code gen for
       // built-in class types.
-      ID->addLayoutToClass(Context);
+      ID->addRecordToClass(Context);
       RD = ID->getRecordForDecl();
     }
     return ConvertTagDeclType(cast<TagDecl>(RD));

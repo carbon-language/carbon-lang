@@ -386,7 +386,7 @@ public:
                                    SourceLocation RBracLoc);
   FieldDecl *lookupFieldDeclForIvar(ASTContext &Context, 
                                     const ObjCIvarDecl *ivar);
-  void addLayoutToClass(ASTContext &Context);
+  void addRecordToClass(ASTContext &Context);
 
   void addMethods(ObjCMethodDecl **insMethods, unsigned numInsMembers,
                   ObjCMethodDecl **clsMethods, unsigned numClsMembers,
