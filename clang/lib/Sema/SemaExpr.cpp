@@ -963,10 +963,10 @@ ActOnArraySubscriptExpr(Scope *S, ExprTy *Base, SourceLocation LLoc,
   Expr *LHSExp = static_cast<Expr*>(Base), *RHSExp = static_cast<Expr*>(Idx);
 
   if (getLangOptions().CPlusPlus &&
-      LHSExp->getType()->isRecordType() || 
-      LHSExp->getType()->isEnumeralType() ||
-      RHSExp->getType()->isRecordType() ||
-      RHSExp->getType()->isEnumeralType()) {
+      (LHSExp->getType()->isRecordType() || 
+       LHSExp->getType()->isEnumeralType() ||
+       RHSExp->getType()->isRecordType() ||
+       RHSExp->getType()->isEnumeralType())) {
     // Add the appropriate overloaded operators (C++ [over.match.oper]) 
     // to the candidate set.
     OverloadCandidateSet CandidateSet;
