@@ -87,7 +87,7 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
 
 
 /// SymbolicallyEvaluateBinop - One of Op0/Op1 is a constant expression.
-/// Attempt to symbolically evaluate the result of  a binary operator merging
+/// Attempt to symbolically evaluate the result of a binary operator merging
 /// these together.  If target data info is available, it is provided as TD, 
 /// otherwise TD is null.
 static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
@@ -113,7 +113,6 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
       }
   }
     
-  // TODO: Fold icmp setne/seteq as well.
   return 0;
 }
 
