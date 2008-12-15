@@ -1272,6 +1272,69 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
   return FieldGlobals[0];
 }
 
+/// TryToOptimizeStoreOfMallocToGlobal - This function is called when we see a
+/// pointer global variable with a single value stored it that is a malloc or
+/// cast of malloc.
+static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
+                                               MallocInst *MI,
+                                               Module::global_iterator &GVI,
+                                               TargetData &TD) {
+  // If this is a malloc of an abstract type, don't touch it.
+  if (!MI->getAllocatedType()->isSized())
+    return false;
+  
+  // We can't optimize this global unless all uses of it are *known* to be
+  // of the malloc value, not of the null initializer value (consider a use
+  // that compares the global's value against zero to see if the malloc has
+  // been reached).  To do this, we check to see if all uses of the global
+  // would trap if the global were null: this proves that they must all
+  // happen after the malloc.
+  if (!AllUsesOfLoadedValueWillTrapIfNull(GV))
+    return false;
+  
+  // We can't optimize this if the malloc itself is used in a complex way,
+  // for example, being stored into multiple globals.  This allows the
+  // malloc to be stored into the specified global, loaded setcc'd, and
+  // GEP'd.  These are all things we could transform to using the global
+  // for.
+  {
+    SmallPtrSet<PHINode*, 8> PHIs;
+    if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(MI, GV, PHIs))
+      return false;
+  }
+  
+  
+  // If we have a global that is only initialized with a fixed size malloc,
+  // transform the program to use global memory instead of malloc'd memory.
+  // This eliminates dynamic allocation, avoids an indirection accessing the
+  // data, and exposes the resultant global to further GlobalOpt.
+  if (ConstantInt *NElements = dyn_cast<ConstantInt>(MI->getArraySize())) {
+    // Restrict this transformation to only working on small allocations
+    // (2048 bytes currently), as we don't want to introduce a 16M global or
+    // something.
+    if (NElements->getZExtValue()*
+        TD.getABITypeSize(MI->getAllocatedType()) < 2048) {
+      GVI = OptimizeGlobalAddressOfMalloc(GV, MI);
+      return true;
+    }
+  }
+  
+  // If the allocation is an array of structures, consider transforming this
+  // into multiple malloc'd arrays, one for each field.  This is basically
+  // SRoA for malloc'd memory.
+  if (const StructType *AllocTy = 
+      dyn_cast<StructType>(MI->getAllocatedType())) {
+    // This the structure has an unreasonable number of fields, leave it
+    // alone.
+    if (AllocTy->getNumElements() <= 16 && AllocTy->getNumElements() > 0 &&
+        GlobalLoadUsesSimpleEnoughForHeapSRA(GV, MI)) {
+      GVI = PerformHeapAllocSRoA(GV, MI);
+      return true;
+    }
+  }
+  
+  return false;
+}  
 
 // OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
 // that only one value (besides its initializer) is ever stored to the global.
@@ -1282,15 +1345,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
     StoredOnceVal = CI->getOperand(0);
   else if (GetElementPtrInst *GEPI =dyn_cast<GetElementPtrInst>(StoredOnceVal)){
     // "getelementptr Ptr, 0, 0, 0" is really just a cast.
-    bool IsJustACast = true;
-    for (User::op_iterator i = GEPI->op_begin() + 1, e = GEPI->op_end();
-         i != e; ++i)
-      if (!isa<Constant>(*i) ||
-          !cast<Constant>(*i)->isNullValue()) {
-        IsJustACast = false;
-        break;
-      }
-    if (IsJustACast)
+    if (GEPI->hasAllZeroIndices())
       StoredOnceVal = GEPI->getOperand(0);
   }
 
@@ -1308,59 +1363,8 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
       if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC))
         return true;
     } else if (MallocInst *MI = dyn_cast<MallocInst>(StoredOnceVal)) {
-      // If this is a malloc of an abstract type, don't touch it.
-      if (!MI->getAllocatedType()->isSized())
-        return false;
-      
-      // We can't optimize this global unless all uses of it are *known* to be
-      // of the malloc value, not of the null initializer value (consider a use
-      // that compares the global's value against zero to see if the malloc has
-      // been reached).  To do this, we check to see if all uses of the global
-      // would trap if the global were null: this proves that they must all
-      // happen after the malloc.
-      if (!AllUsesOfLoadedValueWillTrapIfNull(GV))
-        return false;
-
-      // We can't optimize this if the malloc itself is used in a complex way,
-      // for example, being stored into multiple globals.  This allows the
-      // malloc to be stored into the specified global, loaded setcc'd, and
-      // GEP'd.  These are all things we could transform to using the global
-      // for.
-      {
-        SmallPtrSet<PHINode*, 8> PHIs;
-        if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(MI, GV, PHIs))
-          return false;
-      }
-
-      
-      // If we have a global that is only initialized with a fixed size malloc,
-      // transform the program to use global memory instead of malloc'd memory.
-      // This eliminates dynamic allocation, avoids an indirection accessing the
-      // data, and exposes the resultant global to further GlobalOpt.
-      if (ConstantInt *NElements = dyn_cast<ConstantInt>(MI->getArraySize())) {
-        // Restrict this transformation to only working on small allocations
-        // (2048 bytes currently), as we don't want to introduce a 16M global or
-        // something.
-        if (NElements->getZExtValue()*
-                     TD.getABITypeSize(MI->getAllocatedType()) < 2048) {
-          GVI = OptimizeGlobalAddressOfMalloc(GV, MI);
-          return true;
-        }
-      }
-
-      // If the allocation is an array of structures, consider transforming this
-      // into multiple malloc'd arrays, one for each field.  This is basically
-      // SRoA for malloc'd memory.
-      if (const StructType *AllocTy = 
-                  dyn_cast<StructType>(MI->getAllocatedType())) {
-        // This the structure has an unreasonable number of fields, leave it
-        // alone.
-        if (AllocTy->getNumElements() <= 16 && AllocTy->getNumElements() > 0 &&
-            GlobalLoadUsesSimpleEnoughForHeapSRA(GV, MI)) {
-          GVI = PerformHeapAllocSRoA(GV, MI);
-          return true;
-        }
-      }
+      if (TryToOptimizeStoreOfMallocToGlobal(GV, MI, GVI, TD))
+        return true;
     }
   }
 
