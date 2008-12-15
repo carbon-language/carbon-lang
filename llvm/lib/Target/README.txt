@@ -1354,12 +1354,58 @@ GCC PR33344 is a similar case.
 There are many load PRE testcases in testsuite/gcc.dg/tree-ssa/loadpre* in the
 GCC testsuite.  There are many pre testcases as ssa-pre-*.c
 
+//===---------------------------------------------------------------------===//
+
+There are some interesting cases in testsuite/gcc.dg/tree-ssa/pred-comm* in the
+GCC testsuite.  For example, predcom-1.c is:
+
+ for (i = 2; i < 1000; i++)
+    fib[i] = (fib[i-1] + fib[i - 2]) & 0xffff;
+
+which compiles into:
+
+bb1:		; preds = %bb1, %bb1.thread
+	%indvar = phi i32 [ 0, %bb1.thread ], [ %0, %bb1 ]	
+	%i.0.reg2mem.0 = add i32 %indvar, 2		
+	%0 = add i32 %indvar, 1		; <i32> [#uses=3]
+	%1 = getelementptr [1000 x i32]* @fib, i32 0, i32 %0		
+	%2 = load i32* %1, align 4		; <i32> [#uses=1]
+	%3 = getelementptr [1000 x i32]* @fib, i32 0, i32 %indvar	
+	%4 = load i32* %3, align 4		; <i32> [#uses=1]
+	%5 = add i32 %4, %2		; <i32> [#uses=1]
+	%6 = and i32 %5, 65535		; <i32> [#uses=1]
+	%7 = getelementptr [1000 x i32]* @fib, i32 0, i32 %i.0.reg2mem.0
+	store i32 %6, i32* %7, align 4
+	%exitcond = icmp eq i32 %0, 998		; <i1> [#uses=1]
+	br i1 %exitcond, label %return, label %bb1
+
+This is basically:
+  LOAD fib[i+1]
+  LOAD fib[i]
+  STORE fib[i+2]
+
+instead of handling this as a loop or other xform, all we'd need to do is teach
+load PRE to phi translate the %0 add (i+1) into the predecessor as (i'+1+1) =
+(i'+2) (where i' is the previous iteration of i).  This would find the store
+which feeds it.
+
+predcom-2.c is apparently the same as predcom-1.c
+predcom-3.c is very similar but needs loads feeding each other instead of
+store->load.
+predcom-4.c seems the same as the rest.
+
+
+//===---------------------------------------------------------------------===//
+
 Other simple load PRE cases:
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=35287 [LPRE crit edge splitting]
 
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34677 (licm does this, LPRE crit edge)
   llvm-gcc t2.c -S -o - -O0 -emit-llvm | llvm-as | opt -mem2reg -simplifycfg -gvn | llvm-dis
 
+//===---------------------------------------------------------------------===//
+
+Type based alias analysis:
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=14705
 
 //===---------------------------------------------------------------------===//
@@ -1380,7 +1426,7 @@ int foo(int C, int *P, float X) {
 
 
 One example (that requires crazy phi translation) is:
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16799
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16799 [BITCAST PHI TRANS]
 
 //===---------------------------------------------------------------------===//
 
@@ -1388,9 +1434,14 @@ A/B get pinned to the stack because we turn an if/then into a select instead
 of PRE'ing the load/store.  This may be fixable in instcombine:
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37892
 
+
+
 Interesting missed case because of control flow flattening (should be 2 loads):
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=26629
-
+With: llvm-gcc t2.c -S -o - -O0 -emit-llvm | llvm-as | 
+             opt -mem2reg -gvn -instcombine | llvm-dis
+we miss it because we need 1) GEP PHI TRAN, 2) CRIT EDGE 3) MULTIPLE DIFFERENT
+VALS PRODUCED BY ONE BLOCK OVER DIFFERENT PATHS
 
 //===---------------------------------------------------------------------===//
 
