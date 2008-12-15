@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -gvn | llvm-dis | not grep {tmp17625 =}
-; RUN: llvm-as < %s | opt -gvn | llvm-dis | not grep {tmp17631 =}
+; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep {tmp17625 = phi i32. }
+; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep {tmp17631.* = phi i32. }
 
 @last = external global [65 x i32*]		; <[65 x i32*]*> [#uses=1]
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep tmp51.rle
+; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep {tmp47 = phi i32 }
 
 	%struct.anon = type { i32 (i32, i32, i32)*, i32, i32, [3 x i32], i8*, i8*, i8* }
 @debug = external constant i32		; <i32*> [#uses=0]

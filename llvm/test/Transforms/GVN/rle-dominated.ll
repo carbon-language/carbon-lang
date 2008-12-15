@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn | llvm-dis | not grep DEAD
+; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep load | count 2
 
 define i32 @main(i32** %p) {
 block1:
@@ -14,7 +14,7 @@ block3:
   br label %block4
 
 block4:
-  %DEAD = load i32** %p
-  %c = load i32* %DEAD
-  ret i32 %c
+  %c = load i32** %p
+  %d = load i32* %c
+  ret i32 %d
 }
