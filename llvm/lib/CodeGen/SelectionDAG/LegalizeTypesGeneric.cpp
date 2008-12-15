@@ -280,6 +280,49 @@ SDValue DAGTypeLegalizer::ExpandOp_EXTRACT_ELEMENT(SDNode *N) {
   return cast<ConstantSDNode>(N->getOperand(1))->getZExtValue() ? Hi : Lo;
 }
 
+SDValue DAGTypeLegalizer::ExpandOp_INSERT_VECTOR_ELT(SDNode *N) {
+  // The vector type is legal but the element type needs expansion.
+  MVT VecVT = N->getValueType(0);
+  unsigned NumElts = VecVT.getVectorNumElements();
+
+  SDValue Val = N->getOperand(1);
+  MVT OldEVT = Val.getValueType();
+  MVT NewEVT = TLI.getTypeToTransformTo(OldEVT);
+
+  assert(OldEVT == VecVT.getVectorElementType() &&
+         "Inserted element type doesn't match vector element type!");
+
+  // Bitconvert to a vector of twice the length with elements of the expanded
+  // type, insert the expanded vector elements, and then convert back.
+  MVT NewVecVT = MVT::getVectorVT(NewEVT, NumElts*2);
+  SDValue NewVec = DAG.getNode(ISD::BIT_CONVERT, NewVecVT, N->getOperand(0));
+
+  SDValue Lo, Hi;
+  GetExpandedOp(Val, Lo, Hi);
+  if (TLI.isBigEndian())
+    std::swap(Lo, Hi);
+
+  SDValue Idx = N->getOperand(2);
+  Idx = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, Idx);
+  NewVec = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVecVT, NewVec, Lo, Idx);
+  Idx = DAG.getNode(ISD::ADD,Idx.getValueType(), Idx, DAG.getIntPtrConstant(1));
+  NewVec =  DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVecVT, NewVec, Hi, Idx);
+
+  // Convert the new vector to the old vector type.
+  return DAG.getNode(ISD::BIT_CONVERT, VecVT, NewVec);
+}
+
+SDValue DAGTypeLegalizer::ExpandOp_SCALAR_TO_VECTOR(SDNode *N) {
+  MVT VT = N->getValueType(0);
+  unsigned NumElts = VT.getVectorNumElements();
+  SmallVector<SDValue, 16> Ops(NumElts);
+  Ops[0] = N->getOperand(0);
+  SDValue UndefVal = DAG.getNode(ISD::UNDEF, Ops[0].getValueType());
+  for (unsigned i = 1; i < NumElts; ++i)
+    Ops[i] = UndefVal;
+  return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], NumElts);
+}
+
 SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
   assert(ISD::isNormalStore(N) && "This routine only for normal stores!");
   assert(OpNo == 1 && "Can only expand the stored value so far");

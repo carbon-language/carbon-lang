@@ -613,11 +613,12 @@ private:
   void ExpandRes_VAARG             (SDNode *N, SDValue &Lo, SDValue &Hi);
 
   // Generic Operand Expansion.
-  SDValue ExpandOp_BIT_CONVERT    (SDNode *N);
-  SDValue ExpandOp_BUILD_VECTOR   (SDNode *N);
-  SDValue ExpandOp_EXTRACT_ELEMENT(SDNode *N);
-  SDValue ExpandOp_NormalStore    (SDNode *N, unsigned OpNo);
-
+  SDValue ExpandOp_BIT_CONVERT      (SDNode *N);
+  SDValue ExpandOp_BUILD_VECTOR     (SDNode *N);
+  SDValue ExpandOp_EXTRACT_ELEMENT  (SDNode *N);
+  SDValue ExpandOp_INSERT_VECTOR_ELT(SDNode *N);
+  SDValue ExpandOp_SCALAR_TO_VECTOR (SDNode *N);
+  SDValue ExpandOp_NormalStore      (SDNode *N, unsigned OpNo);
 };
 
 } // end namespace llvm.

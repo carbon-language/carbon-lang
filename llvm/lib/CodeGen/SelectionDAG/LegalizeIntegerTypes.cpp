@@ -359,8 +359,10 @@ SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_VECTOR_ELT(SDNode *N) {
   if (TLI.isBigEndian())
     std::swap(Lo, Hi);
 
+  // Signed extend to the promoted type.
   SDValue Odd = DAG.getNode(ISD::TRUNCATE, MVT::i1, OldIdx);
-  return DAG.getNode(ISD::SELECT, NewVT, Odd, Hi, Lo);
+  SDValue Res = DAG.getNode(ISD::SELECT, NewVT, Odd, Hi, Lo);
+  return DAG.getNode(ISD::ANY_EXTEND, TLI.getTypeToTransformTo(OldVT), Res);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_FP_TO_XINT(SDNode *N) {
@@ -1938,9 +1940,11 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
       assert(0 && "Do not know how to expand this operator's operand!");
       abort();
 
-    case ISD::BUILD_VECTOR:    Res = ExpandOp_BUILD_VECTOR(N); break;
-    case ISD::BIT_CONVERT:     Res = ExpandOp_BIT_CONVERT(N); break;
-    case ISD::EXTRACT_ELEMENT: Res = ExpandOp_EXTRACT_ELEMENT(N); break;
+    case ISD::BUILD_VECTOR:      Res = ExpandOp_BUILD_VECTOR(N); break;
+    case ISD::BIT_CONVERT:       Res = ExpandOp_BIT_CONVERT(N); break;
+    case ISD::EXTRACT_ELEMENT:   Res = ExpandOp_EXTRACT_ELEMENT(N); break;
+    case ISD::INSERT_VECTOR_ELT: Res = ExpandOp_INSERT_VECTOR_ELT(N); break;
+    case ISD::SCALAR_TO_VECTOR:  Res = ExpandOp_SCALAR_TO_VECTOR(N); break;
 
     case ISD::BR_CC:      Res = ExpandIntOp_BR_CC(N); break;
     case ISD::SELECT_CC:  Res = ExpandIntOp_SELECT_CC(N); break;
