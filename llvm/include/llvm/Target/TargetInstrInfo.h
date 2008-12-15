@@ -340,7 +340,7 @@ protected:
   }
 
 public:
-  /// canFoldMemoryOperand - Returns true if the specified load / store is
+  /// canFoldMemoryOperand - Returns true for the specified load / store if
   /// folding is possible.
   virtual
   bool canFoldMemoryOperand(const MachineInstr *MI,
