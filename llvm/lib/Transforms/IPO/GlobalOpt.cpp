@@ -927,26 +927,43 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
                                                       GlobalVariable *GV,
                                               SmallPtrSet<PHINode*, 8> &PHIs) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
-    if (isa<LoadInst>(*UI) || isa<CmpInst>(*UI)) {
-      // Fine, ignore.
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    Instruction *Inst = dyn_cast<Instruction>(*UI);
+    if (Inst == 0) return false;
+    
+    if (isa<LoadInst>(Inst) || isa<CmpInst>(Inst)) {
+      continue; // Fine, ignore.
+    }
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       if (SI->getOperand(0) == V && SI->getOperand(1) != GV)
         return false;  // Storing the pointer itself... bad.
-      // Otherwise, storing through it, or storing into GV... fine.
-    } else if (isa<GetElementPtrInst>(*UI)) {
-      if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(cast<Instruction>(*UI),
-                                                     GV, PHIs))
+      continue; // Otherwise, storing through it, or storing into GV... fine.
+    }
+    
+    if (isa<GetElementPtrInst>(Inst)) {
+      if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Inst, GV, PHIs))
         return false;
-    } else if (PHINode *PN = dyn_cast<PHINode>(*UI)) {
+      continue;
+    }
+    
+    if (PHINode *PN = dyn_cast<PHINode>(Inst)) {
       // PHIs are ok if all uses are ok.  Don't infinitely recurse through PHI
       // cycles.
       if (PHIs.insert(PN))
         if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(PN, GV, PHIs))
           return false;
-    } else {
-      return false;
+      continue;
     }
+    
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(Inst)) {
+      if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(BCI, GV, PHIs))
+        return false;
+      continue;
+    }
+    
+    return false;
+  }
   return true;
 }
 
@@ -1341,7 +1358,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
                                      Module::global_iterator &GVI,
                                      TargetData &TD) {
-  if (CastInst *CI = dyn_cast<CastInst>(StoredOnceVal))
+  if (BitCastInst *CI = dyn_cast<BitCastInst>(StoredOnceVal))
     StoredOnceVal = CI->getOperand(0);
   else if (GetElementPtrInst *GEPI =dyn_cast<GetElementPtrInst>(StoredOnceVal)){
     // "getelementptr Ptr, 0, 0, 0" is really just a cast.
