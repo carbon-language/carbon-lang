@@ -5048,20 +5048,21 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     SDISelAsmOperandInfo &OpInfo = ConstraintOperands[i];
     
     // If this is an output operand with a matching input operand, look up the
-    // matching input.  It might have a different type (e.g. the output might be
-    // i32 and the input i64) and we need to pick the larger width to ensure we
-    // reserve the right number of registers.  
+    // matching input. If their types mismatch, e.g. one is an integer, the
+    // other is floating point, or their sizes are different, flag it as an
+    // error.
     if (OpInfo.hasMatchingInput()) {
       SDISelAsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
       if (OpInfo.ConstraintVT != Input.ConstraintVT) {
-        assert(OpInfo.ConstraintVT.isInteger() &&
-               Input.ConstraintVT.isInteger() &&
-               "Asm constraints must be the same or different sized integers");
-        if (OpInfo.ConstraintVT.getSizeInBits() < 
-            Input.ConstraintVT.getSizeInBits())
-          OpInfo.ConstraintVT = Input.ConstraintVT;
-        else
-          Input.ConstraintVT = OpInfo.ConstraintVT;
+        if ((OpInfo.ConstraintVT.isInteger() !=
+             Input.ConstraintVT.isInteger()) ||
+            (OpInfo.ConstraintVT.getSizeInBits() !=
+             Input.ConstraintVT.getSizeInBits())) {
+          cerr << "Unsupported asm: input constraint with a matching output "
+               << "constraint of incompatible type!\n";
+          exit(1);
+        }
+        Input.ConstraintVT = OpInfo.ConstraintVT;
       }
     }
     
