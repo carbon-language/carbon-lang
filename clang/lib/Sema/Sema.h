@@ -903,7 +903,7 @@ public:
   /// CXXScopeSpec that was passed to ActOnCXXEnterDeclaratorScope as well.
   /// Used to indicate that names should revert to being looked up in the
   /// defining scope.
-  virtual void ActOnCXXExitDeclaratorScope(const CXXScopeSpec &SS);
+  virtual void ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS);
 
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs, 

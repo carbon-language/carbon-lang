@@ -221,7 +221,7 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
 Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                        const DeclContext *LookupCtx,
                        bool enableLazyBuiltinCreation,
-                      bool LookInParent) {
+                       bool LookInParent) {
   if (!Name) return 0;
   unsigned NS = NSI;
   if (getLangOptions().CPlusPlus && (NS & Decl::IDNS_Ordinary))

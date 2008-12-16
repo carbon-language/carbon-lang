@@ -152,7 +152,7 @@ public:
   /// CXXScopeSpec that was passed to ActOnCXXEnterDeclaratorScope as well.
   /// Used to indicate that names should revert to being looked up in the
   /// defining scope.
-  virtual void ActOnCXXExitDeclaratorScope(const CXXScopeSpec &SS) {
+  virtual void ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   }
 
   /// ActOnDeclarator - This callback is invoked when a declarator is parsed and

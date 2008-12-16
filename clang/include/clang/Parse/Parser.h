@@ -819,7 +819,7 @@ private:
 
     ~DeclaratorScopeObj() {
       if (SS.isSet())
-        P.Actions.ActOnCXXExitDeclaratorScope(SS);
+        P.Actions.ActOnCXXExitDeclaratorScope(P.CurScope, SS);
     }
   };
   

@@ -134,8 +134,8 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
   assert(PreDeclaratorDC == 0 && "Previous declarator context not popped?");
-  PreDeclaratorDC = CurContext;
-  CurContext = static_cast<DeclContext*>(SS.getScopeRep());
+  PreDeclaratorDC = static_cast<DeclContext*>(S->getEntity());
+  S->setEntity(static_cast<DeclContext*>(SS.getScopeRep()));
 }
 
 /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
@@ -143,10 +143,9 @@ void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
 /// CXXScopeSpec that was passed to ActOnCXXEnterDeclaratorScope as well.
 /// Used to indicate that names should revert to being looked up in the
 /// defining scope.
-void Sema::ActOnCXXExitDeclaratorScope(const CXXScopeSpec &SS) {
+void Sema::ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
-  assert(CurContext == static_cast<DeclContext*>(SS.getScopeRep()) &&
-         "Context imbalance!");
-  CurContext = PreDeclaratorDC;
+  assert(S->getEntity() == SS.getScopeRep() && "Context imbalance!");
+  S->setEntity(PreDeclaratorDC);
   PreDeclaratorDC = 0;
 }

@@ -68,5 +68,12 @@ class Y {
   int mem1(int i = a); // expected-error{{invalid use of nonstatic data member 'a'}}
   // FIXME: The code below is well-formed.
   //  int mem2(int i = b); // OK; use X::b 
+  int mem3(int i);
+  int mem4(int i);
   static int b; 
 }; 
+
+int Y::mem3(int i = b) { return i; } // OK; use X::b
+
+int Y::mem4(int i = a) // expected-error{{invalid use of nonstatic data member 'a'}}
+{ return i; }
