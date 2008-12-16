@@ -22,16 +22,16 @@ using namespace clang;
 
 TemplateTypeParmDecl *
 TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
-			     SourceLocation L, IdentifierInfo *Id,
-			     bool Typename) {
+                             SourceLocation L, IdentifierInfo *Id,
+                             bool Typename) {
   void *Mem = C.getAllocator().Allocate<TemplateTypeParmDecl>();
   return new (Mem) TemplateTypeParmDecl(DC, L, Id, Typename);
 }
 
 NonTypeTemplateParmDecl *
 NonTypeTemplateParmDecl::Create(ASTContext &C, DeclContext *DC, 
-				SourceLocation L, IdentifierInfo *Id,
-				QualType T, SourceLocation TypeSpecStartLoc) {
+                                SourceLocation L, IdentifierInfo *Id,
+                                QualType T, SourceLocation TypeSpecStartLoc) {
   void *Mem = C.getAllocator().Allocate<NonTypeTemplateParmDecl>();
   return new (Mem) NonTypeTemplateParmDecl(DC, L, Id, T, TypeSpecStartLoc);
 }

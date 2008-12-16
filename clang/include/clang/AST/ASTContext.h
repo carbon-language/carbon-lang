@@ -191,8 +191,8 @@ public:
   /// type. FIXME: We will need these to be uniqued, or at least
   /// comparable, at some point.
   QualType getDependentSizedArrayType(QualType EltTy, Expr *NumElts,
-				      ArrayType::ArraySizeModifier ASM,
-				      unsigned EltTypeQuals);
+                                      ArrayType::ArraySizeModifier ASM,
+                                      unsigned EltTypeQuals);
 
   /// getIncompleteArrayType - Returns a unique reference to the type for a
   /// incomplete array of the specified element type.

@@ -144,7 +144,7 @@ public:
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                              const ObjCAtThrowStmt &S) = 0;
   virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
-					 llvm::Value *AddrWeakObj) = 0;
+                                         llvm::Value *AddrWeakObj) = 0;
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                   llvm::Value *src, llvm::Value *dest) = 0;
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,

@@ -1212,5 +1212,5 @@ protected:
 };
 
 }  // end namespace clang
-	
+
 #endif

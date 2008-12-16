@@ -35,13 +35,13 @@ class TemplateTypeParmDecl : public TypeDecl {
   bool Typename : 1;
 
   TemplateTypeParmDecl(DeclContext *DC, SourceLocation L,
-		       IdentifierInfo *Id, bool Typename)
+                       IdentifierInfo *Id, bool Typename)
     : TypeDecl(TemplateTypeParm, DC, L, Id, 0), Typename(Typename) { }
 
 public:
   static TemplateTypeParmDecl *Create(ASTContext &C, DeclContext *DC,
-				      SourceLocation L, IdentifierInfo *Id,
-				      bool Typename);
+                                      SourceLocation L, IdentifierInfo *Id,
+                                      bool Typename);
 
   /// wasDeclarationWithTypename - Whether this template type
   /// parameter was declared with the 'typename' keyword. If not, it
@@ -71,14 +71,14 @@ protected:
 /// @endcode
 class NonTypeTemplateParmDecl : public VarDecl {
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, 
-			  IdentifierInfo *Id, QualType T,
-			  SourceLocation TSSL = SourceLocation())
+                          IdentifierInfo *Id, QualType T,
+                          SourceLocation TSSL = SourceLocation())
     : VarDecl(NonTypeTemplateParm, DC, L, Id, T, VarDecl::None, 0, TSSL) { }
-			  
+
 public:
   static NonTypeTemplateParmDecl *
   Create(ASTContext &C, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-	 QualType T, SourceLocation TypeSpecStartLoc = SourceLocation());
+         QualType T, SourceLocation TypeSpecStartLoc = SourceLocation());
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

@@ -248,11 +248,11 @@ public:
     }
     
     // If this scope is a function or contains breaks/continues, remember it.
-    if (Flags & FnScope)       	    FnParent = this;
-    if (Flags & BreakScope)    	    BreakParent = this;
-    if (Flags & ContinueScope) 	    ContinueParent = this;
+    if (Flags & FnScope)            FnParent = this;
+    if (Flags & BreakScope)         BreakParent = this;
+    if (Flags & ContinueScope)      ContinueParent = this;
     if (Flags & ControlScope)       ControlParent = this;
-    if (Flags & BlockScope)    	    BlockParent = this;
+    if (Flags & BlockScope)         BlockParent = this;
     if (Flags & TemplateParamScope) TemplateParamParent = this;
     DeclsInScope.clear();
     Entity = 0;

@@ -111,9 +111,9 @@ class LValue {
   } LVType;
 
   enum ObjCType {
-    None = 0,	// object with no gc attribute.
-    Weak,	// __weak object expression
-    Strong      // __strong object expression
+    None = 0,     // object with no gc attribute.
+    Weak,         // __weak object expression
+    Strong        // __strong object expression
   };
   
   llvm::Value *V;
