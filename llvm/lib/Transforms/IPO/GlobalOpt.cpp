@@ -29,13 +29,12 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
-#include <map>
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumMarked    , "Number of globals marked constant");
@@ -155,7 +154,7 @@ static bool ConstantIsDead(Constant *C) {
 /// can't do anything with it.
 ///
 static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
-                          std::set<PHINode*> &PHIUsers) {
+                          SmallPtrSet<PHINode*, 16> &PHIUsers) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
       GS.HasNonInstructionUser = true;
@@ -213,7 +212,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
       } else if (PHINode *PN = dyn_cast<PHINode>(I)) {
         // PHI nodes we can check just like select or GEP instructions, but we
         // have to be careful about infinite recursion.
-        if (PHIUsers.insert(PN).second)  // Not already visited.
+        if (PHIUsers.insert(PN))  // Not already visited.
           if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
         GS.HasPHIUser = true;
       } else if (isa<CmpInst>(I)) {
@@ -1515,7 +1514,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
 /// it if possible.  If we make a change, return true.
 bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
                                       Module::global_iterator &GVI) {
-  std::set<PHINode*> PHIUsers;
+  SmallPtrSet<PHINode*, 16> PHIUsers;
   GlobalStatus GS;
   GV->removeDeadConstantUsers();
 
@@ -1868,7 +1867,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
 }
 
 
-static Constant *getVal(std::map<Value*, Constant*> &ComputedValues,
+static Constant *getVal(DenseMap<Value*, Constant*> &ComputedValues,
                         Value *V) {
   if (Constant *CV = dyn_cast<Constant>(V)) return CV;
   Constant *R = ComputedValues[V];
@@ -1984,10 +1983,10 @@ static void CommitValueTo(Constant *Val, Constant *Addr) {
 /// P after the stores reflected by 'memory' have been performed.  If we can't
 /// decide, return null.
 static Constant *ComputeLoadResult(Constant *P,
-                                const std::map<Constant*, Constant*> &Memory) {
+                                const DenseMap<Constant*, Constant*> &Memory) {
   // If this memory location has been recently stored, use the stored value: it
   // is the most up-to-date.
-  std::map<Constant*, Constant*>::const_iterator I = Memory.find(P);
+  DenseMap<Constant*, Constant*>::const_iterator I = Memory.find(P);
   if (I != Memory.end()) return I->second;
  
   // Access it.
@@ -2015,7 +2014,7 @@ static Constant *ComputeLoadResult(Constant *P,
 static bool EvaluateFunction(Function *F, Constant *&RetVal,
                              const std::vector<Constant*> &ActualArgs,
                              std::vector<Function*> &CallStack,
-                             std::map<Constant*, Constant*> &MutatedMemory,
+                             DenseMap<Constant*, Constant*> &MutatedMemory,
                              std::vector<GlobalVariable*> &AllocaTmps) {
   // Check to see if this function is already executing (recursion).  If so,
   // bail out.  TODO: we might want to accept limited recursion.
@@ -2025,7 +2024,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
   CallStack.push_back(F);
   
   /// Values - As we compute SSA register values, we store their contents here.
-  std::map<Value*, Constant*> Values;
+  DenseMap<Value*, Constant*> Values;
   
   // Initialize arguments to the incoming values specified.
   unsigned ArgNo = 0;
@@ -2036,7 +2035,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
   /// ExecutedBlocks - We only handle non-looping, non-recursive code.  As such,
   /// we can only evaluate any one basic block at most once.  This set keeps
   /// track of what we have executed so we can detect recursive cases etc.
-  std::set<BasicBlock*> ExecutedBlocks;
+  SmallPtrSet<BasicBlock*, 32> ExecutedBlocks;
   
   // CurInst - The current instruction we're evaluating.
   BasicBlock::iterator CurInst = F->begin()->begin();
@@ -2153,7 +2152,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       // Okay, we succeeded in evaluating this control flow.  See if we have
       // executed the new block before.  If so, we have a looping function,
       // which we cannot evaluate in reasonable time.
-      if (!ExecutedBlocks.insert(NewBB).second)
+      if (!ExecutedBlocks.insert(NewBB))
         return false;  // looped!
       
       // Okay, we have never been in this block before.  Check to see if there
@@ -2186,7 +2185,7 @@ static bool EvaluateStaticConstructor(Function *F) {
   /// MutatedMemory - For each store we execute, we update this map.  Loads
   /// check this to get the most up-to-date value.  If evaluation is successful,
   /// this state is committed to the process.
-  std::map<Constant*, Constant*> MutatedMemory;
+  DenseMap<Constant*, Constant*> MutatedMemory;
 
   /// AllocaTmps - To 'execute' an alloca, we create a temporary global variable
   /// to represent its body.  This vector is needed so we can delete the
@@ -2207,7 +2206,7 @@ static bool EvaluateStaticConstructor(Function *F) {
     DOUT << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
          << F->getName() << "' to " << MutatedMemory.size()
          << " stores.\n";
-    for (std::map<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
+    for (DenseMap<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
          E = MutatedMemory.end(); I != E; ++I)
       CommitValueTo(I->second, I->first);
   }
