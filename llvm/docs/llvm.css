@@ -62,12 +62,21 @@ h3, .doc_subsubsection { margin: 2.0em 0.5em 0.5em 0.5em;
 
 .doc_warning    { color: red; font-weight: bold }
 
+/* <div class="doc_code"> would use this class, and <div> adds more padding */
 .doc_code, .literal-block
                 { border: solid 1px gray; background: #eeeeee;
                   margin: 0 1em 0 1em;
                   padding: 0 1em 0 1em;
                   display: table;
                 }
+
+/* It is preferrable to use <pre class="doc_code"> everywhere instead of the
+ * <div class="doc_code"><pre>...</ptr></div> construct.
+ * 
+ * Once all docs use <pre> for code regions, this style can  be merged with the
+ * one above, and we can drop the [pre] qualifier.
+ */
+pre.doc_code, .literal-block { padding: 1em 2em 1em 1em }
 
 .doc_notes      { background: #fafafa; border: 1px solid #cecece;
                   padding: 0.1em }
@@ -88,5 +97,4 @@ th.layout       { border: none; font-weight: bold; font-size: 105%;
 .title { margin-top: 0 }
 #contents { display: none }
 div.contents ul { list-style-type: decimal }
-.literal-block { padding: 1em 2em 1em 1em }
 .toc-backref    { color: black; text-decoration: none; }
