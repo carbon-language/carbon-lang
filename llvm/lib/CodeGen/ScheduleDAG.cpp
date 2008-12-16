@@ -163,6 +163,67 @@ void ScheduleDAG::Run() {
   DOUT << "\n";
 }
 
+/// addPred - This adds the specified edge as a pred of the current node if
+/// not already.  It also adds the current node as a successor of the
+/// specified node.
+void SUnit::addPred(const SDep &D) {
+  // If this node already has this depenence, don't add a redundant one.
+  for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
+    if (Preds[i] == D)
+      return;
+  // Add a pred to this SUnit.
+  Preds.push_back(D);
+  // Now add a corresponding succ to N.
+  SDep P = D;
+  P.setSUnit(this);
+  SUnit *N = D.getSUnit();
+  N->Succs.push_back(P);
+  // Update the bookkeeping.
+  if (D.getKind() == SDep::Data) {
+    ++NumPreds;
+    ++N->NumSuccs;
+  }
+  if (!N->isScheduled)
+    ++NumPredsLeft;
+  if (!isScheduled)
+    ++N->NumSuccsLeft;
+}
+
+/// removePred - This removes the specified edge as a pred of the current
+/// node if it exists.  It also removes the current node as a successor of
+/// the specified node.
+void SUnit::removePred(const SDep &D) {
+  // Find the matching predecessor.
+  for (SmallVector<SDep, 4>::iterator I = Preds.begin(), E = Preds.end();
+       I != E; ++I)
+    if (*I == D) {
+      bool FoundSucc = false;
+      // Find the corresponding successor in N.
+      SDep P = D;
+      P.setSUnit(this);
+      SUnit *N = D.getSUnit();
+      for (SmallVector<SDep, 4>::iterator II = N->Succs.begin(),
+             EE = N->Succs.end(); II != EE; ++II)
+        if (*II == P) {
+          FoundSucc = true;
+          N->Succs.erase(II);
+          break;
+        }
+      assert(FoundSucc && "Mismatching preds / succs lists!");
+      Preds.erase(I);
+      // Update the bookkeeping;
+      if (D.getKind() == SDep::Data) {
+        --NumPreds;
+        --N->NumSuccs;
+      }
+      if (!N->isScheduled)
+        --NumPredsLeft;
+      if (!isScheduled)
+        --N->NumSuccsLeft;
+      return;
+    }
+}
+
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
 /// a group of nodes flagged together.
 void SUnit::dump(const ScheduleDAG *G) const {
