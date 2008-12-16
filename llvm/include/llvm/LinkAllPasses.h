@@ -126,6 +126,7 @@ namespace {
       (void) llvm::createMergeFunctionsPass();
       (void) llvm::createPrintModulePass(0);
       (void) llvm::createPrintFunctionPass("", 0);
+      (void) llvm::createDbgInfoPrinterPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();

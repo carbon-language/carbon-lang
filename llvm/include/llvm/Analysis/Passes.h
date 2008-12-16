@@ -114,6 +114,9 @@ namespace llvm {
   // Minor pass prototypes, allowing us to expose them through bugpoint and
   // analyze.
   FunctionPass *createInstCountPass();
+
+  // print debug info intrinsics in human readable form
+  FunctionPass *createDbgInfoPrinterPass();
 }
 
 #endif
