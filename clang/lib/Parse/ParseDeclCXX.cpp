@@ -533,6 +533,40 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
                                                        Init.release(),
                                                        LastDeclInGroup);
 
+    if (DeclaratorInfo.isFunctionDeclarator() &&
+        DeclaratorInfo.getDeclSpec().getStorageClassSpec() 
+          != DeclSpec::SCS_typedef) {
+      // We just declared a member function. If this member function
+      // has any default arguments, we'll need to parse them later.
+      LateParsedMethodDeclaration *LateMethod = 0;
+      DeclaratorChunk::FunctionTypeInfo &FTI 
+        = DeclaratorInfo.getTypeObject(0).Fun;
+      for (unsigned ParamIdx = 0; ParamIdx < FTI.NumArgs; ++ParamIdx) {
+        if (LateMethod || FTI.ArgInfo[ParamIdx].DefaultArgTokens) {
+          if (!LateMethod) {
+            // Push this method onto the stack of late-parsed method
+            // declarations.
+            getCurTopClassStack().MethodDecls.push_back(
+                                   LateParsedMethodDeclaration(LastDeclInGroup));
+            LateMethod = &getCurTopClassStack().MethodDecls.back();
+
+            // Add all of the parameters prior to this one (they don't
+            // have default arguments).
+            LateMethod->DefaultArgs.reserve(FTI.NumArgs);
+            for (unsigned I = 0; I < ParamIdx; ++I)
+              LateMethod->DefaultArgs.push_back(
+                        LateParsedDefaultArgument(FTI.ArgInfo[ParamIdx].Param));
+          }
+
+          // Add this parameter to the list of parameters (it or may
+          // not have a default argument).
+          LateMethod->DefaultArgs.push_back(
+            LateParsedDefaultArgument(FTI.ArgInfo[ParamIdx].Param,
+                                      FTI.ArgInfo[ParamIdx].DefaultArgTokens));
+        }
+      }
+    }
+
     // If we don't have a comma, it is either the end of the list (a ';')
     // or an error, bail out.
     if (Tok.isNot(tok::comma))
@@ -642,10 +676,13 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   // exception-specifications, and constructor ctor-initializers (including
   // such things in nested classes).
   //
-  // FIXME: Only function bodies are parsed correctly, fix the rest.
+  // FIXME: Only function bodies and constructor ctor-initializers are
+  // parsed correctly, fix the rest.
   if (!CurScope->getParent()->isCXXClassScope()) {
     // We are not inside a nested class. This class and its nested classes
-    // are complete and we can parse the lexed inline method definitions.
+    // are complete and we can parse the delayed portions of method
+    // declarations and the lexed inline method definitions.
+    ParseLexedMethodDeclarations();
     ParseLexedMethodDefs();
 
     // For a local class of inline method, pop the LexedMethodsForTopClass that

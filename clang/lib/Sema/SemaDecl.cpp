@@ -1230,30 +1230,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
       }
     }
 
-    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD)) {
-      CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(DC);
-
-      // C++ [class.copy]p3:
-      //   A declaration of a constructor for a class X is ill-formed if
-      //   its first parameter is of type (optionally cv-qualified) X and
-      //   either there are no other parameters or else all other
-      //   parameters have default arguments.
-      if ((Constructor->getNumParams() == 1) || 
-          (Constructor->getNumParams() > 1 && 
-           Constructor->getParamDecl(1)->getDefaultArg() != 0)) {
-        QualType ParamType = Constructor->getParamDecl(0)->getType();
-        QualType ClassTy = Context.getTagDeclType(ClassDecl);
-        if (Context.getCanonicalType(ParamType).getUnqualifiedType() 
-              == ClassTy) {
-          Diag(Constructor->getLocation(), diag::err_constructor_byvalue_arg)
-            << SourceRange(Constructor->getParamDecl(0)->getLocation());
-          Constructor->setInvalidDecl();
-        }
-      }
-
-      // Notify the class that we've added a constructor.
-      ClassDecl->addedConstructor(Context, Constructor);
-    }
+    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD))
+      InvalidDecl = InvalidDecl || CheckConstructor(Constructor);
     else if (isa<CXXDestructorDecl>(NewFD))
       cast<CXXRecordDecl>(NewFD->getParent())->setUserDeclaredDestructor(true);
     else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(NewFD))
@@ -2864,6 +2842,9 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
                             D.getDeclSpec().getStorageClassSpec() ==
                               DeclSpec::SCS_mutable,
                             /*PrevDecl=*/0);
+
+  if (getLangOptions().CPlusPlus)
+    CheckExtraCXXDefaultArguments(D);
 
   ProcessDeclAttributes(NewFD, D);
 

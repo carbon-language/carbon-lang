@@ -394,38 +394,98 @@ private:
   //===--------------------------------------------------------------------===//
   // Lexing and parsing of C++ inline methods.
 
-  typedef llvm::SmallVector<Token, 32> TokensTy;
   struct LexedMethod {
     Action::DeclTy *D;
-    TokensTy Toks;
+    CachedTokens Toks;
     explicit LexedMethod(Action::DeclTy *MD) : D(MD) {}
   };
+
+  /// LateParsedDefaultArgument - Keeps track of a parameter that may
+  /// have a default argument that cannot be parsed yet because it
+  /// occurs within a member function declaration inside the class
+  /// (C++ [class.mem]p2).
+  struct LateParsedDefaultArgument {
+    explicit LateParsedDefaultArgument(Action::DeclTy *P, 
+                                       CachedTokens *Toks = 0)
+      : Param(P), Toks(Toks) { }
+
+    /// Param - The parameter declaration for this parameter.
+    Action::DeclTy *Param;
+
+    /// Toks - The sequence of tokens that comprises the default
+    /// argument expression, not including the '=' or the terminating
+    /// ')' or ','. This will be NULL for parameters that have no
+    /// default argument.
+    CachedTokens *Toks;
+  };
+  
+  /// LateParsedMethodDeclaration - A method declaration inside a class that
+  /// contains at least one entity whose parsing needs to be delayed
+  /// until the class itself is completely-defined, such as a default
+  /// argument (C++ [class.mem]p2).
+  struct LateParsedMethodDeclaration {
+    explicit LateParsedMethodDeclaration(Action::DeclTy *M) : Method(M) { }
+
+    /// Method - The method declaration.
+    Action::DeclTy *Method;
+
+    /// DefaultArgs - Contains the parameters of the function and
+    /// their default arguments. At least one of the parameters will
+    /// have a default argument, but all of the parameters of the
+    /// method will be stored so that they can be reintroduced into
+    /// scope at the appropriate times. 
+    llvm::SmallVector<LateParsedDefaultArgument, 8> DefaultArgs;
+  };
+
+  /// LateParsedMethodDecls - During parsing of a top (non-nested) C++
+  /// class, its method declarations that contain parts that won't be
+  /// parsed until after the definiton is completed (C++ [class.mem]p2),
+  /// the method declarations will be stored here with the tokens that
+  /// will be parsed to create those entities.
+  typedef std::list<LateParsedMethodDeclaration> LateParsedMethodDecls;
 
   /// LexedMethodsForTopClass - During parsing of a top (non-nested) C++ class,
   /// its inline method definitions and the inline method definitions of its
   /// nested classes are lexed and stored here.
-  typedef std::stack<LexedMethod> LexedMethodsForTopClass;
+  typedef std::list<LexedMethod> LexedMethodsForTopClass;
 
-  /// TopClassStacks - This is initialized with one LexedMethodsForTopClass used
+
+  /// TopClass - Contains information about parts of the top
+  /// (non-nested) C++ class that will need to be parsed after the
+  /// class is fully defined.
+  struct TopClass {
+    /// MethodDecls - Method declarations that contain pieces whose
+    /// parsing will be delayed until the class is fully defined.
+    LateParsedMethodDecls MethodDecls;
+
+    /// MethodDefs - Methods whose definitions will be parsed once the
+    /// class has been fully defined.
+    LexedMethodsForTopClass MethodDefs;
+  };
+
+  /// TopClassStacks - This is initialized with one TopClass used
   /// for lexing all top classes, until a local class in an inline method is
-  /// encountered, at which point a new LexedMethodsForTopClass is pushed here
+  /// encountered, at which point a new TopClass is pushed here
   /// and used until the parsing of that local class is finished.
-  std::stack<LexedMethodsForTopClass> TopClassStacks;
+  std::stack<TopClass> TopClassStacks;
 
-  LexedMethodsForTopClass &getCurTopClassStack() {
+  TopClass &getCurTopClassStack() {
     assert(!TopClassStacks.empty() && "No lexed method stacks!");
     return TopClassStacks.top();
   }
 
   void PushTopClassStack() {
-    TopClassStacks.push(LexedMethodsForTopClass());
+    TopClassStacks.push(TopClass());
   }
   void PopTopClassStack() { TopClassStacks.pop(); }
 
   DeclTy *ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D);
+  void ParseLexedMethodDeclarations();
   void ParseLexedMethodDefs();
-  bool ConsumeAndStoreUntil(tok::TokenKind T, TokensTy &Toks,
-                            tok::TokenKind EarlyAbortIf = tok::unknown);
+  bool ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2, 
+                            CachedTokens &Toks,
+                            tok::TokenKind EarlyAbortIf = tok::unknown,
+                            bool ConsumeFinalToken = true);
 
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.

@@ -1771,6 +1771,10 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     // Remember this parsed parameter in ParamInfo.
     IdentifierInfo *ParmII = ParmDecl.getIdentifier();
     
+    // DefArgToks is used when the parsing of default arguments needs
+    // to be delayed.
+    CachedTokens *DefArgToks = 0;
+
     // If no parameter was specified, verify that *something* was specified,
     // otherwise we have a missing type and identifier.
     if (DS.getParsedSpecifiers() == DeclSpec::PQ_None && 
@@ -1790,24 +1794,39 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       // ActOnParamDefaultArgument will reject the default argument in
       // C.
       if (Tok.is(tok::equal)) {
-        SourceLocation EqualLoc = Tok.getLocation();
-        
-        // Consume the '='.
-        ConsumeToken();
-        
         // Parse the default argument
-        OwningExprResult DefArgResult(ParseAssignmentExpression());
-        if (DefArgResult.isInvalid()) {
-          SkipUntil(tok::comma, tok::r_paren, true, true);
+        if (D.getContext() == Declarator::MemberContext) {
+          // If we're inside a class definition, cache the tokens
+          // corresponding to the default argument. We'll actually parse
+          // them when we see the end of the class definition.
+          // FIXME: Templates will require something similar.
+          // FIXME: Can we use a smart pointer for Toks?
+          DefArgToks = new CachedTokens;
+
+          if (!ConsumeAndStoreUntil(tok::comma, tok::r_paren, *DefArgToks, 
+                                    tok::semi, false)) {
+            delete DefArgToks;
+            DefArgToks = 0;
+          } 
         } else {
-          // Inform the actions module about the default argument
-          Actions.ActOnParamDefaultArgument(Param, EqualLoc,
-                                            DefArgResult.release());
+          // Consume the '='.
+          SourceLocation EqualLoc = ConsumeToken();
+        
+          OwningExprResult DefArgResult(ParseAssignmentExpression());
+          if (DefArgResult.isInvalid()) {
+            Actions.ActOnParamDefaultArgumentError(Param);
+            SkipUntil(tok::comma, tok::r_paren, true, true);
+          } else {
+            // Inform the actions module about the default argument
+            Actions.ActOnParamDefaultArgument(Param, EqualLoc,
+                                              DefArgResult.release());
+          }
         }
       }
       
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
-                             ParmDecl.getIdentifierLoc(), Param));
+                                          ParmDecl.getIdentifierLoc(), Param, 
+                                          DefArgToks));
     }
 
     // If the next token is a comma, consume it and keep reading arguments.

@@ -114,6 +114,7 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
   if (!getLangOptions().CPlusPlus) {
     Diag(EqualLoc, diag::err_param_default_argument)
       << DefaultArg->getSourceRange();
+    Param->setInvalidDecl();
     return;
   }
 
@@ -136,11 +137,19 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
 
   // Check that the default argument is well-formed
   CheckDefaultArgumentVisitor DefaultArgChecker(DefaultArg.get(), this);
-  if (DefaultArgChecker.Visit(DefaultArg.get()))
+  if (DefaultArgChecker.Visit(DefaultArg.get())) {
+    Param->setInvalidDecl();
     return;
+  }
 
   // Okay: add the default argument to the parameter
   Param->setDefaultArg(DefaultArg.take());
+}
+
+/// ActOnParamDefaultArgumentError - Parsing or semantic analysis of
+/// the default argument for the parameter param failed.
+void Sema::ActOnParamDefaultArgumentError(DeclTy *param) {
+  ((ParmVarDecl*)param)->setInvalidDecl();
 }
 
 /// CheckExtraCXXDefaultArguments - Check for any extra default
@@ -165,6 +174,12 @@ void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
           Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc)
             << Param->getDefaultArg()->getSourceRange();
           Param->setDefaultArg(0);
+        } else if (CachedTokens *Toks 
+                     = chunk.Fun.ArgInfo[argIdx].DefaultArgTokens) {
+          Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc)
+            << SourceRange((*Toks)[1].getLocation(), Toks->back().getLocation());
+          delete Toks;
+          chunk.Fun.ArgInfo[argIdx].DefaultArgTokens = 0;
         }
       }
     }
@@ -231,7 +246,9 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
   for(; p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
     if (!Param->getDefaultArg()) {
-      if (Param->getIdentifier())
+      if (Param->isInvalidDecl())
+        /* We already complained about this parameter. */;
+      else if (Param->getIdentifier())
         Diag(Param->getLocation(), 
              diag::err_param_default_argument_missing_name)
           << Param->getIdentifier();
@@ -401,6 +418,7 @@ void Sema::ActOnStartCXXClassDef(Scope *S, DeclTy *D, SourceLocation LBrace) {
 /// any. 'LastInGroup' is non-null for cases where one declspec has multiple
 /// declarators on it.
 ///
+/// FIXME: The note below is out-of-date.
 /// NOTE: Because of CXXFieldDecl's inability to be chained like ScopedDecls, if
 /// an instance field is declared, a new CXXFieldDecl is created but the method
 /// does *not* return it; it returns LastInGroup instead. The other C++ members
@@ -875,8 +893,60 @@ void Sema::ActOnFinishCXXClassDef(DeclTy *D) {
   Consumer.HandleTagDeclDefinition(Rec);
 }
 
+/// ActOnStartDelayedCXXMethodDeclaration - We have completed
+/// parsing a top-level (non-nested) C++ class, and we are now
+/// parsing those parts of the given Method declaration that could
+/// not be parsed earlier (C++ [class.mem]p2), such as default
+/// arguments. This action should enter the scope of the given
+/// Method declaration as if we had just parsed the qualified method
+/// name. However, it should not bring the parameters into scope;
+/// that will be performed by ActOnDelayedCXXMethodParameter.
+void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method) {
+  CXXScopeSpec SS;
+  SS.setScopeRep(((FunctionDecl*)Method)->getDeclContext());
+  ActOnCXXEnterDeclaratorScope(S, SS);
+}
+
+/// ActOnDelayedCXXMethodParameter - We've already started a delayed
+/// C++ method declaration. We're (re-)introducing the given
+/// function parameter into scope for use in parsing later parts of
+/// the method declaration. For example, we could see an
+/// ActOnParamDefaultArgument event for this parameter.
+void Sema::ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *ParamD) {
+  ParmVarDecl *Param = (ParmVarDecl*)ParamD;
+  S->AddDecl(Param);
+  if (Param->getDeclName())
+    IdResolver.AddDecl(Param);
+}
+
+/// ActOnFinishDelayedCXXMethodDeclaration - We have finished
+/// processing the delayed method declaration for Method. The method
+/// declaration is now considered finished. There may be a separate
+/// ActOnStartOfFunctionDef action later (not necessarily
+/// immediately!) for this method, if it was also defined inside the
+/// class body.
+void Sema::ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *MethodD) {
+  FunctionDecl *Method = (FunctionDecl*)MethodD;
+  CXXScopeSpec SS;
+  SS.setScopeRep(Method->getDeclContext());
+  ActOnCXXExitDeclaratorScope(S, SS);
+
+  // Now that we have our default arguments, check the constructor
+  // again. It could produce additional diagnostics or affect whether
+  // the class has implicitly-declared destructors, among other
+  // things.
+  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Method)) {
+    if (CheckConstructor(Constructor))
+      Constructor->setInvalidDecl();
+  }
+
+  // Check the default arguments, which we may have added.
+  if (!Method->isInvalidDecl())
+    CheckCXXDefaultArguments(Method);
+}
+
 /// CheckConstructorDeclarator - Called by ActOnDeclarator to check
-/// the well-formednes of the constructor declarator @p D with type @p
+/// the well-formedness of the constructor declarator @p D with type @p
 /// R. If there are any errors in the declarator, this routine will
 /// emit diagnostics and return true. Otherwise, it will return
 /// false. Either way, the type @p R will be updated to reflect a
@@ -942,6 +1012,39 @@ bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
                               0);
 
   return isInvalid;
+}
+
+/// CheckConstructor - Checks a fully-formed constructor for
+/// well-formedness, issuing any diagnostics required. Returns true if
+/// the constructor declarator is invalid.
+bool Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
+  if (Constructor->isInvalidDecl())
+    return true;
+
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Constructor->getDeclContext());
+  bool Invalid = false;
+
+  // C++ [class.copy]p3:
+  //   A declaration of a constructor for a class X is ill-formed if
+  //   its first parameter is of type (optionally cv-qualified) X and
+  //   either there are no other parameters or else all other
+  //   parameters have default arguments.
+  if ((Constructor->getNumParams() == 1) || 
+      (Constructor->getNumParams() > 1 && 
+       Constructor->getParamDecl(1)->getDefaultArg() != 0)) {
+    QualType ParamType = Constructor->getParamDecl(0)->getType();
+    QualType ClassTy = Context.getTagDeclType(ClassDecl);
+    if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
+      Diag(Constructor->getLocation(), diag::err_constructor_byvalue_arg)
+        << SourceRange(Constructor->getParamDecl(0)->getLocation());
+      Invalid = true;
+    }
+  }
+  
+  // Notify the class that we've added a constructor.
+  ClassDecl->addedConstructor(Context, Constructor);
+
+  return Invalid;
 }
 
 /// CheckDestructorDeclarator - Called by ActOnDeclarator to check

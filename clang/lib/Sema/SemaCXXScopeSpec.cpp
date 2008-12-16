@@ -134,7 +134,8 @@ void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
   assert(PreDeclaratorDC == 0 && "Previous declarator context not popped?");
   PreDeclaratorDC = static_cast<DeclContext*>(S->getEntity());
-  S->setEntity(static_cast<DeclContext*>(SS.getScopeRep()));
+  CurContext = static_cast<DeclContext*>(SS.getScopeRep());
+  S->setEntity(CurContext);
 }
 
 /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
@@ -147,4 +148,9 @@ void Sema::ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(S->getEntity() == SS.getScopeRep() && "Context imbalance!");
   S->setEntity(PreDeclaratorDC);
   PreDeclaratorDC = 0;
+
+  // Reset CurContext to the nearest enclosing context.
+  while (!S->getEntity() && S->getParent())
+    S = S->getParent();
+  CurContext = static_cast<DeclContext*>(S->getEntity());
 }

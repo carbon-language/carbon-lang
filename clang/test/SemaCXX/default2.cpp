@@ -63,17 +63,48 @@ void C::h() {
 }
 
 // C++ [dcl.fct.default]p9
-class Y { 
+struct Y { 
   int a; 
   int mem1(int i = a); // expected-error{{invalid use of nonstatic data member 'a'}}
-  // FIXME: The code below is well-formed.
-  //  int mem2(int i = b); // OK; use X::b 
+  int mem2(int i = b); // OK; use Y::b 
   int mem3(int i);
   int mem4(int i);
+
+  struct Nested {
+    int mem5(int i = b, // OK; use Y::b
+             int j = c, // OK; use Y::Nested::c
+             int k = j, // expected-error{{default argument references parameter 'j'}}
+             int l = a,  // expected-error{{invalid use of nonstatic data member 'a'}}
+             Nested* self = this, // expected-error{{invalid use of 'this' outside of a nonstatic member function}}
+             int m); // expected-error{{missing default argument on parameter 'm'}}
+    static int c;
+  };
+
   static int b; 
+
+  int (*f)(int = 17); // expected-error{{default arguments can only be specified for parameters in a function declaration}}
+
+  void mem8(int (*fp)(int) = (int (*)(int = 17))0); // expected-error{{default arguments can only be specified for parameters in a function declaration}}
 }; 
 
 int Y::mem3(int i = b) { return i; } // OK; use X::b
 
 int Y::mem4(int i = a) // expected-error{{invalid use of nonstatic data member 'a'}}
 { return i; }
+
+
+// Try to verify that default arguments interact properly with copy
+// constructors.
+class Z {
+public:
+  Z(Z&, int i = 17); // expected-note{{candidate function}}
+
+  void f(Z& z) { 
+    Z z2;    // expected-error{{no matching constructor for initialization}}
+    Z z3(z);
+  }
+};
+
+void test_Z(const Z& z) {
+  Z z2(z); // expected-error{{no matching constructor for initialization of 'z2'}}
+}

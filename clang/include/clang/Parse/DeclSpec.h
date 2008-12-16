@@ -16,6 +16,7 @@
 
 #include "clang/Parse/Action.h"
 #include "clang/Parse/AttributeList.h"
+#include "clang/Lex/Token.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
@@ -414,6 +415,10 @@ public:
   }
 };
   
+/// CachedTokens - A set of tokens that has been cached for later
+/// parsing.
+typedef llvm::SmallVector<Token, 4> CachedTokens;
+
 /// DeclaratorChunk - One instance of this struct is used for each type in a
 /// declarator that is parsed.
 ///
@@ -471,9 +476,19 @@ struct DeclaratorChunk {
     IdentifierInfo *Ident;
     SourceLocation IdentLoc;
     Action::DeclTy *Param;
+
+    /// DefaultArgTokens - When the parameter's default argument
+    /// cannot be parsed immediately (because it occurs within the
+    /// declaration of a member function), it will be stored here as a
+    /// sequence of tokens to be parsed once the class definition is
+    /// complete. Non-NULL indicates that there is a default argument.
+    CachedTokens   *DefaultArgTokens;
+
     ParamInfo() {}
-    ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::DeclTy *param)
-      : Ident(ident), IdentLoc(iloc), Param(param) {}
+    ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::DeclTy *param,
+              CachedTokens *DefArgTokens = 0)
+      : Ident(ident), IdentLoc(iloc), Param(param), 
+        DefaultArgTokens(DefArgTokens) {}
   };
   
   struct FunctionTypeInfo {
@@ -604,7 +619,6 @@ struct DeclaratorChunk {
     return I;
   }
 };
-
 
 /// Declarator - Information about one declarator, including the parsed type
 /// information and the identifier.  When the declarator is fully formed, this

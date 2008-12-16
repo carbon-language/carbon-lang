@@ -276,6 +276,7 @@ public:
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
                                          SourceLocation EqualLoc,
                                          ExprTy *defarg);
+  virtual void ActOnParamDefaultArgumentError(DeclTy *param);
   void AddInitializerToDecl(DeclTy *dcl, ExprArg init);
   void ActOnUninitializedDecl(DeclTy *dcl);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
@@ -960,9 +961,13 @@ public:
 
   virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl);
   
-  
+  virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method);
+  virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *Param);
+  virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method);
+
   bool CheckConstructorDeclarator(Declarator &D, QualType &R,
                                   FunctionDecl::StorageClass& SC);
+  bool CheckConstructor(CXXConstructorDecl *Constructor);
   bool CheckDestructorDeclarator(Declarator &D, QualType &R,
                                  FunctionDecl::StorageClass& SC);
   bool CheckConversionDeclarator(Declarator &D, QualType &R,

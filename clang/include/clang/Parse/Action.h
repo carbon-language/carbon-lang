@@ -216,7 +216,7 @@ public:
     return;
   }
 
-  /// ActOnFunctionDefBody - This is called when a function body has completed
+  /// ActOnFinishFunctionBody - This is called when a function body has completed
   /// parsing.  Decl is the DeclTy returned by ParseStartOfFunctionDef.
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body) {
     return Decl;
@@ -681,6 +681,10 @@ public:
                                          ExprTy *defarg) {
   }
 
+  /// ActOnParamDefaultArgumentError - Parsing or semantic analysis of
+  /// the default argument for the parameter param failed.
+  virtual void ActOnParamDefaultArgumentError(DeclTy *param) { }
+
   /// AddCXXDirectInitializerToDecl - This action is called immediately after 
   /// ActOnDeclarator, when a C++ direct initializer is present.
   /// e.g: "int x(1);"
@@ -692,6 +696,34 @@ public:
     return;
   }
   
+  /// ActOnStartDelayedCXXMethodDeclaration - We have completed
+  /// parsing a top-level (non-nested) C++ class, and we are now
+  /// parsing those parts of the given Method declaration that could
+  /// not be parsed earlier (C++ [class.mem]p2), such as default
+  /// arguments. This action should enter the scope of the given
+  /// Method declaration as if we had just parsed the qualified method
+  /// name. However, it should not bring the parameters into scope;
+  /// that will be performed by ActOnDelayedCXXMethodParameter.
+  virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method) {
+  }
+
+  /// ActOnDelayedCXXMethodParameter - We've already started a delayed
+  /// C++ method declaration. We're (re-)introducing the given
+  /// function parameter into scope for use in parsing later parts of
+  /// the method declaration. For example, we could see an
+  /// ActOnParamDefaultArgument event for this parameter.
+  virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *Param) {
+  }
+
+  /// ActOnFinishDelayedCXXMethodDeclaration - We have finished
+  /// processing the delayed method declaration for Method. The method
+  /// declaration is now considered finished. There may be a separate
+  /// ActOnStartOfFunctionDef action later (not necessarily
+  /// immediately!) for this method, if it was also defined inside the
+  /// class body.
+  virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method) {
+  }
+
   //===------------------------- C++ Expressions --------------------------===//
   
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
