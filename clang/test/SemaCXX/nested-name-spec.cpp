@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s 
+// RUN: clang -fsyntax-only -verify -std=c++98 %s 
 namespace A {
   struct C {
     static int cx;
@@ -72,10 +72,8 @@ void f3() {
   int N;
   N::x = 0; // expected-error {{expected a class or namespace}}
   { int A;           A::ax = 0; }
-  { enum A {};       A::ax = 0; }
-  { enum A { A };    A::ax = 0; }
-  { typedef int A;   A::ax = 0; }
-  { typedef int A(); A::ax = 0; }
+  { typedef int A;   A::ax = 0; } // expected-error{{expected a class or namespace}}
+  { int A(); A::ax = 0; }
   { typedef A::C A;  A::ax = 0; } // expected-error {{no member named 'ax'}}
   { typedef A::C A;  A::cx = 0; }
 }
@@ -90,3 +88,18 @@ void f6(int A2::RC::x); // expected-error{{parameter declarator cannot be qualif
 int A2::RC::x; // expected-error{{non-static data member defined out-of-line}}
 
 void A2::CC::NC::m(); // expected-error{{out-of-line declaration of a member must be a definition}}
+
+
+namespace E {
+  int X = 5;
+  
+  namespace Nested {
+    enum E {
+      X = 0
+    };
+
+    void f() {
+      return E::X; // expected-error{{expected a class or namespace}}
+    }
+  }
+}

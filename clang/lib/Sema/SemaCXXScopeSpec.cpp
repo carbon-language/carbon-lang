@@ -28,8 +28,8 @@ namespace {
       DeclContext::lookup_const_iterator I, E;
       for (llvm::tie(I, E) = LookupCtx->lookup(Context, Name); I != E; ++I) {
        IdIsUndeclared = false;
-       if (((*I)->getIdentifierNamespace() & Decl::IDNS_Tag) && 
-           !isa<EnumDecl>(*I))
+       if (((*I)->getIdentifierNamespace() & Decl::IDNS_Tag) || 
+           isa<TypedefDecl>(*I))
          return *I;
       }
 
@@ -56,12 +56,10 @@ namespace {
     // not a class-name or namespace-name, the program is ill-formed.
 
     for (; I != E; ++I) {
-      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(*I)) {
-        if (TD->getUnderlyingType()->isRecordType())
-          break;
-        continue;
+      if (isa<TypedefDecl>(*I)) {
+        break;
       }
-      if (((*I)->getIdentifierNamespace()&Decl::IDNS_Tag) && !isa<EnumDecl>(*I))
+      if (((*I)->getIdentifierNamespace() & Decl::IDNS_Tag))
         break;    
     }
 
@@ -100,13 +98,14 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 
   if (SD) {
     if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
-      assert(TD->getUnderlyingType()->isRecordType() &&"Invalid Scope Decl!");
-      SD = TD->getUnderlyingType()->getAsRecordType()->getDecl();
+      if (const RecordType* Record = TD->getUnderlyingType()->getAsRecordType())
+        return cast<DeclContext>(Record->getDecl());
+    } else if (isa<NamespaceDecl>(SD) || isa<RecordDecl>(SD)) {
+      return cast<DeclContext>(SD);
     }
 
-    assert((isa<NamespaceDecl>(SD) || isa<RecordDecl>(SD)) &&
-           "Invalid Scope Decl!");
-    return cast<DeclContext>(SD);
+    // Fall through to produce an error: we found something that isn't
+    // a class or a namespace.
   }
 
   unsigned DiagID;
