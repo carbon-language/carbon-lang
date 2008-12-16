@@ -43,7 +43,7 @@ STATISTIC(NumStalls, "Number of pipeline stalls");
 static cl::opt<bool>
 EnableAntiDepBreaking("break-anti-dependencies",
                       cl::desc("Break scheduling anti-dependencies"),
-                      cl::init(false));
+                      cl::init(true));
 
 namespace {
   class VISIBILITY_HIDDEN PostRAScheduler : public MachineFunctionPass {
