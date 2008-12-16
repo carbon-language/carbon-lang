@@ -42,8 +42,8 @@ STATISTIC(NumStalls, "Number of pipeline stalls");
 
 static cl::opt<bool>
 EnableAntiDepBreaking("break-anti-dependencies",
-                      cl::desc("Break scheduling anti-dependencies"),
-                      cl::init(true));
+                      cl::desc("Break post-RA scheduling anti-dependencies"),
+                      cl::init(true), cl::Hidden);
 
 namespace {
   class VISIBILITY_HIDDEN PostRAScheduler : public MachineFunctionPass {
@@ -198,50 +198,14 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   DOUT << "Critical path has total latency "
        << (Max ? Max->getDepth() + Max->Latency : 0) << "\n";
 
-  // Walk the critical path from the bottom up. Collect all anti-dependence
-  // edges on the critical path. Skip anti-dependencies between SUnits that
-  // are connected with other edges, since such units won't be able to be
-  // scheduled past each other anyway.
-  //
-  // The heuristic is that edges on the critical path are more important to
-  // break than other edges. And since there are a limited number of
-  // registers, we don't want to waste them breaking edges that aren't
-  // important.
-  // 
-  // TODO: Instructions with multiple defs could have multiple
-  // anti-dependencies. The current code here only knows how to break one
-  // edge per instruction. Note that we'd have to be able to break all of
-  // the anti-dependencies in an instruction in order to be effective.
-  BitVector AllocatableSet = TRI->getAllocatableSet(*MF);
-  DenseMap<MachineInstr *, unsigned> CriticalAntiDeps;
-  SUnit *SU = Max;
-  for (SDep *Edge = CriticalPathStep(SU); Edge;
-       Edge = CriticalPathStep(SU = Edge->getSUnit())) {
-    SUnit *NextSU = Edge->getSUnit();
-    // Only consider anti-dependence edges.
-    if (Edge->getKind() != SDep::Anti)
-      continue;
-    unsigned AntiDepReg = Edge->getReg();
-    assert(AntiDepReg != 0 && "Anti-dependence on reg0?");
-    // Don't break anti-dependencies on non-allocatable registers.
-    if (!AllocatableSet.test(AntiDepReg))
-      continue;
-    // If the SUnit has other dependencies on the SUnit that it
-    // anti-depends on, don't bother breaking the anti-dependency.
-    // Also, if there are dependencies on other SUnits with the
-    // same register as the anti-dependency, don't attempt to
-    // break it.
-    for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
-         P != PE; ++P)
-      if (P->getSUnit() == NextSU ?
-            (P->getKind() != SDep::Anti || P->getReg() != AntiDepReg) :
-            (P->getKind() == SDep::Data && P->getReg() == AntiDepReg)) {
-        AntiDepReg = 0;
-        break;
-      }
-    if (AntiDepReg != 0)
-      CriticalAntiDeps[SU->getInstr()] = AntiDepReg;
-  }
+  // We'll be ignoring anti-dependencies on non-allocatable registers, because
+  // they may not be safe to break.
+  const BitVector AllocatableSet = TRI->getAllocatableSet(*MF);
+
+  // Track progress along the critical path through the SUnit graph as we walk
+  // the instructions.
+  SUnit *CriticalPathSU = Max;
+  MachineInstr *CriticalPathMI = CriticalPathSU->getInstr();
 
   // For live regs that are only used in one register class in a live range,
   // the register class. If the register is not live, the corresponding value
@@ -257,13 +221,13 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   // the register is not live.
   unsigned KillIndices[TargetRegisterInfo::FirstVirtualRegister];
   std::fill(KillIndices, array_endof(KillIndices), -1);
-  // The index of the most recent def (proceding bottom up), or -1 if
+  // The index of the most recent complete def (proceding bottom up), or -1 if
   // the register is live.
   unsigned DefIndices[TargetRegisterInfo::FirstVirtualRegister];
   std::fill(DefIndices, array_endof(DefIndices), BB->size());
 
   // Determine the live-out physregs for this block.
-  if (!BB->empty() && BB->back().getDesc().isReturn())
+  if (BB->back().getDesc().isReturn())
     // In a return block, examine the function live-out regs.
     for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
          E = MRI.liveout_end(); I != E; ++I) {
@@ -305,7 +269,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   // TODO: If the callee saves and restores these, then we can potentially
   // use them between the save and the restore. To do that, we could scan
   // the exit blocks to see which of these registers are defined.
-  // Alternatively, calle-saved registers that aren't saved and restored
+  // Alternatively, callee-saved registers that aren't saved and restored
   // could be marked live-in in every block.
   for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
     unsigned Reg = *I;
@@ -380,11 +344,56 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
       continue;
 
-    // Check if this instruction has an anti-dependence that we're
-    // interested in.
-    DenseMap<MachineInstr *, unsigned>::iterator C = CriticalAntiDeps.find(MI);
-    unsigned AntiDepReg = C != CriticalAntiDeps.end() ?
-      C->second : 0;
+    // Check if this instruction has a dependence on the critical path that
+    // is an anti-dependence that we may be able to break. If it is, set
+    // AntiDepReg to the non-zero register associated with the anti-dependence.
+    //
+    // We limit our attention to the critical path as a heuristic to avoid
+    // breaking anti-dependence edges that aren't going to significantly
+    // impact the overall schedule. There are a limited number of registers
+    // and we want to save them for the important edges.
+    // 
+    // TODO: Instructions with multiple defs could have multiple
+    // anti-dependencies. The current code here only knows how to break one
+    // edge per instruction. Note that we'd have to be able to break all of
+    // the anti-dependencies in an instruction in order to be effective.
+    unsigned AntiDepReg = 0;
+    if (MI == CriticalPathMI) {
+      if (SDep *Edge = CriticalPathStep(CriticalPathSU)) {
+        SUnit *NextSU = Edge->getSUnit();
+
+        // Only consider anti-dependence edges.
+        if (Edge->getKind() == SDep::Anti) {
+          AntiDepReg = Edge->getReg();
+          assert(AntiDepReg != 0 && "Anti-dependence on reg0?");
+          // Don't break anti-dependencies on non-allocatable registers.
+          if (AllocatableSet.test(AntiDepReg)) {
+            // If the SUnit has other dependencies on the SUnit that it
+            // anti-depends on, don't bother breaking the anti-dependency
+            // since those edges would prevent such units from being
+            // scheduled past each other regardless.
+            //
+            // Also, if there are dependencies on other SUnits with the
+            // same register as the anti-dependency, don't attempt to
+            // break it.
+            for (SUnit::pred_iterator P = CriticalPathSU->Preds.begin(),
+                 PE = CriticalPathSU->Preds.end(); P != PE; ++P)
+              if (P->getSUnit() == NextSU ?
+                    (P->getKind() != SDep::Anti || P->getReg() != AntiDepReg) :
+                    (P->getKind() == SDep::Data && P->getReg() == AntiDepReg)) {
+                AntiDepReg = 0;
+                break;
+              }
+          }
+        }
+        CriticalPathSU = NextSU;
+        CriticalPathMI = CriticalPathSU->getInstr();
+      } else {
+        // We've reached the end of the critical path.
+        CriticalPathSU = 0;
+        CriticalPathMI = 0;
+      }
+    }
 
     // Scan the register operands for this instruction and update
     // Classes and RegRefs.
@@ -514,6 +523,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         Classes[SubregReg] = 0;
         RegRefs.erase(SubregReg);
       }
+      // Conservatively mark super-registers as unusable.
       for (const unsigned *Super = TRI->getSuperRegisters(Reg);
            *Super; ++Super) {
         unsigned SuperReg = *Super;
