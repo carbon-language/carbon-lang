@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %S
+// RUN: clang -fsyntax-only -verify %s
 // PR clang/3175
 
 void bar(int*);
@@ -29,3 +29,7 @@ template<int N>
 void test2() {
   (void)&N; // expected-error{{address expression must be an lvalue or a function designator}}
 }
+
+// PR clang/3222
+void xpto();
+void (*xyz)(void) = &xpto;

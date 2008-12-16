@@ -2889,7 +2889,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   }
   NamedDecl *dcl = getPrimaryDecl(op);
   Expr::isLvalueResult lval = op->isLvalue(Context);
-  
+  printf("oleee\n");
   if (lval != Expr::LV_Valid) { // C99 6.5.3.2p1
     if (!dcl || !isa<FunctionDecl>(dcl)) {// allow function designators
       // FIXME: emit more specific diag...
@@ -2922,8 +2922,10 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
       return Context.OverloadTy;
     } else if (isa<FieldDecl>(dcl)) {
       // Okay: we can take the address of a field.
+    } else if (isa<FunctionDecl>(dcl)) {
+      // Okay: we can take the address of a function.
     }
-    else 
+    else
       assert(0 && "Unknown/unexpected decl type");
   }
   
