@@ -549,10 +549,13 @@ namespace llvm {
     const SUnit *getNode() const { return Node; }
     /// isCtrlDep - Test if this is not an SDep::Data dependence.
     bool isCtrlDep() const {
-      return Node->Preds[Operand].isCtrl();
+      return getSDep().isCtrl();
     }
     bool isArtificialDep() const {
-      return Node->Preds[Operand].isArtificial();
+      return getSDep().isArtificial();
+    }
+    const SDep &getSDep() const {
+      return Node->Preds[Operand];
     }
   };
 
