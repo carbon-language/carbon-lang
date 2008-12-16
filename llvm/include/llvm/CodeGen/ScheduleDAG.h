@@ -166,17 +166,17 @@ namespace llvm {
       return getKind() != Data;
     }
 
-    /// isArtificial - Test if this is an Order dependence that is marked
-    /// as "artificial", meaning it isn't necessary for correctness.
-    bool isArtificial() const {
-      return getKind() == Order && Contents.Order.isArtificial;
-    }
-
     /// isMustAlias - Test if this is an Order dependence that is marked
     /// as "must alias", meaning that the SUnits at either end of the edge
     /// have a memory dependence on a known memory location.
     bool isMustAlias() const {
       return getKind() == Order && Contents.Order.isMustAlias;
+    }
+
+    /// isArtificial - Test if this is an Order dependence that is marked
+    /// as "artificial", meaning it isn't necessary for correctness.
+    bool isArtificial() const {
+      return getKind() == Order && Contents.Order.isArtificial;
     }
 
     /// isAssignedRegDep - Test if this is a Data dependence that is
