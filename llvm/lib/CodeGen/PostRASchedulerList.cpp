@@ -454,6 +454,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         assert(((KillIndices[NewReg] == -1u) != (DefIndices[NewReg] == -1u)) &&
                "Kill and Def maps aren't consistent for NewReg!");
         if (KillIndices[NewReg] == -1u &&
+            Classes[NewReg] != reinterpret_cast<TargetRegisterClass *>(-1) &&
             KillIndices[AntiDepReg] <= DefIndices[NewReg]) {
           DOUT << "Breaking anti-dependence edge on "
                << TRI->getName(AntiDepReg)
