@@ -894,18 +894,46 @@ public:
 private:
   /// Language - The language for this linkage specification.
   LanguageIDs Language;
-  /// D - This is the Decl of the linkage specification.
-  Decl *D;
-  
+
+  /// HadBraces - Whether this linkage specification had curly braces or not.
+  bool HadBraces : 1;
+
+  /// Decls - The declarations that were parsed as part of this
+  /// linkage specification. If HadBraces is false, this is a
+  /// Decl*. Otherwise, it's a Decl**.
+  void *Decls;
+
+  /// NumDecls - The number of declarations stored in this linkage
+  /// specification. 
+  unsigned NumDecls : 31;
+
   LinkageSpecDecl(SourceLocation L, LanguageIDs lang, Decl *d)
-  : Decl(LinkageSpec, L), Language(lang), D(d) {}
+    : Decl(LinkageSpec, L), Language(lang), HadBraces(false), 
+      Decls(d), NumDecls(1) {}
+
+  LinkageSpecDecl(SourceLocation L, LanguageIDs lang, 
+                  Decl **InDecls, unsigned InNumDecls);
+
 public:
+  ~LinkageSpecDecl();
+
   static LinkageSpecDecl *Create(ASTContext &C, SourceLocation L,
                                  LanguageIDs Lang, Decl *D);
+
+  static LinkageSpecDecl *Create(ASTContext &C, SourceLocation L,
+                                 LanguageIDs Lang, 
+                                 Decl **Decls, unsigned NumDecls);
   
   LanguageIDs getLanguage() const { return Language; }
-  const Decl *getDecl() const { return D; }
-  Decl *getDecl() { return D; }
+
+  /// hasBraces - Determines whether this linkage specification had
+  /// braces in its syntactic form.
+  bool hasBraces() const { return HadBraces; }
+
+  typedef Decl** decl_iterator;
+  typedef Decl** decl_const_iterator;
+  decl_const_iterator decls_begin() const;
+  decl_const_iterator decls_end() const;
   
   static bool classof(const Decl *D) {
     return D->getKind() == LinkageSpec;

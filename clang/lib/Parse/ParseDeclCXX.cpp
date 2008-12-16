@@ -108,24 +108,26 @@ Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
 
   SourceLocation Loc = ConsumeStringToken();
   DeclTy *D = 0;
-  SourceLocation LBrace, RBrace;
   
   if (Tok.isNot(tok::l_brace)) {
     D = ParseDeclarationOrFunctionDefinition();
-  } else {
-    LBrace = ConsumeBrace();
-    while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
-      // FIXME capture the decls.
-      D = ParseExternalDeclaration();
-    }
+    if (D)
+      return Actions.ActOnLinkageSpec(Loc, LangBufPtr, StrSize, D);
 
-    RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
+    return 0;
+  } 
+
+  SourceLocation LBrace = ConsumeBrace();
+  llvm::SmallVector<DeclTy *, 8> InnerDecls;
+  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
+    D = ParseExternalDeclaration();
+    if (D)
+      InnerDecls.push_back(D);
   }
 
-  if (!D)
-    return 0;
-
-  return Actions.ActOnLinkageSpec(Loc, LBrace, RBrace, LangBufPtr, StrSize, D);
+  SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
+  return Actions.ActOnLinkageSpec(Loc, LBrace, RBrace, LangBufPtr, StrSize,
+                                  &InnerDecls.front(), InnerDecls.size());
 }
 
 /// ParseClassName - Parse a C++ class-name, which names a class. Note

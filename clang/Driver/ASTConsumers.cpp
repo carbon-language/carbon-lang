@@ -185,9 +185,19 @@ void DeclPrinter::PrintLinkageSpec(LinkageSpecDecl *LS) {
            "unknown language in linkage specification");
     l = "C++";
   }
-  Out << "extern \"" << l << "\" { ";
-  PrintDecl(LS->getDecl());
-  Out << "}\n";
+
+  Out << "extern \"" << l << "\" ";
+  if (LS->hasBraces()) 
+    Out << "{\n";
+
+  for (LinkageSpecDecl::decl_const_iterator D = LS->decls_begin(), 
+                                         DEnd = LS->decls_end();
+       D != DEnd; ++D)
+    PrintDecl(*D);
+
+  if (LS->hasBraces())
+    Out << "}";
+  Out << "\n";
 }
 
 void DeclPrinter::PrintObjCMethodDecl(ObjCMethodDecl *OMD) {

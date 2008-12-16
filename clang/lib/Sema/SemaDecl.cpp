@@ -3382,11 +3382,34 @@ Sema::DeclTy *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
   return FileScopeAsmDecl::Create(Context, Loc, AsmString);
 }
 
+  /// ActOnLinkageSpec - Parsed a C++ linkage-specification that
+  /// contained braces. Lang/StrSize contains the language string that
+  /// was parsed at location Loc. Decls/NumDecls provides the
+  /// declarations parsed inside the linkage specification.
 Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
                                      SourceLocation LBrace,
                                      SourceLocation RBrace,
                                      const char *Lang,
                                      unsigned StrSize,
+                                     DeclTy **Decls, unsigned NumDecls) {
+  LinkageSpecDecl::LanguageIDs Language;
+  if (strncmp(Lang, "\"C\"", StrSize) == 0)
+    Language = LinkageSpecDecl::lang_c;
+  else if (strncmp(Lang, "\"C++\"", StrSize) == 0)
+    Language = LinkageSpecDecl::lang_cxx;
+  else {
+    Diag(Loc, diag::err_bad_language);
+    return 0;
+  }
+
+  // FIXME: Add all the various semantics of linkage specifications
+
+  return LinkageSpecDecl::Create(Context, Loc, Language, 
+                                 (Decl **)Decls, NumDecls);
+}
+
+Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
+                                     const char *Lang, unsigned StrSize,
                                      DeclTy *D) {
   LinkageSpecDecl::LanguageIDs Language;
   Decl *dcl = static_cast<Decl *>(D);

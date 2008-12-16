@@ -288,6 +288,9 @@ public:
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body);
   virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
                                    SourceLocation RBrace, const char *Lang,
+                                   unsigned StrSize, 
+                                   DeclTy **Decls, unsigned NumDecls);
+  virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, const char *Lang,
                                    unsigned StrSize, DeclTy *D);
   virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);
 

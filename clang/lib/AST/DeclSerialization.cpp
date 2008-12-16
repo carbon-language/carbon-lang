@@ -660,13 +660,30 @@ TemplateTypeParmDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 void LinkageSpecDecl::EmitInRec(Serializer& S) const {
   Decl::EmitInRec(S);
   S.EmitInt(getLanguage());
-  S.EmitPtr(D);
+  S.EmitBool(HadBraces);
+  if (HadBraces) {
+    S.EmitInt(NumDecls);
+    for (decl_const_iterator D = decls_begin(), DEnd = decls_end(); 
+         D != DEnd; ++D)
+      S.EmitPtr(*D);
+  } else {
+    S.EmitPtr((Decl*)Decls);
+  }
 }
 
 void LinkageSpecDecl::ReadInRec(Deserializer& D, ASTContext& C) {
   Decl::ReadInRec(D, C);
   Language = static_cast<LanguageIDs>(D.ReadInt());
-  D.ReadPtr(this->D);
+  HadBraces = D.ReadBool();
+  if (HadBraces) {
+    NumDecls = D.ReadInt();
+    Decl **NewDecls = new Decl*[NumDecls];
+    Decls = NewDecls;
+    for (unsigned I = 0; I < NumDecls; ++I)
+      D.ReadPtr(NewDecls[I]);
+  } else {
+    D.ReadPtr(this->Decls);
+  }
 }
 
 //===----------------------------------------------------------------------===//
