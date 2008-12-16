@@ -613,7 +613,8 @@ public:
   /// Construct a GRCoreEngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
   GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx, SubEngineTy& subengine)
-    : GRCoreEngineImpl(new GraphTy(cfg, cd, ctx), GRWorkList::MakeDFS()),
+    : GRCoreEngineImpl(new GraphTy(cfg, cd, ctx),
+                       GRWorkList::MakeBFSBlockDFSContents()),
       SubEngine(subengine) {}
   
   /// Construct a GRCoreEngine object to analyze the provided CFG and to

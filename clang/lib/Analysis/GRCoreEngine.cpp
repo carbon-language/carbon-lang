@@ -18,10 +18,15 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/DenseMap.h"
 #include <vector>
+#include <queue>
 
 using llvm::cast;
 using llvm::isa;
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Worklist classes for exploration of reachable states.
+//===----------------------------------------------------------------------===//
 
 namespace {
   class VISIBILITY_HIDDEN DFS : public GRWorkList {
@@ -49,6 +54,48 @@ public:
 GRWorkList::~GRWorkList() {}
 
 GRWorkList* GRWorkList::MakeDFS() { return new DFS(); }
+
+namespace {
+  class VISIBILITY_HIDDEN BFSBlockDFSContents : public GRWorkList {
+    std::queue<GRWorkListUnit> Queue;
+    llvm::SmallVector<GRWorkListUnit,20> Stack;
+  public:
+    virtual bool hasWork() const {
+      return !Queue.empty() || !Stack.empty();
+    }
+    
+    virtual void Enqueue(const GRWorkListUnit& U) {
+      if (isa<BlockEntrance>(U.getNode()->getLocation()))
+        Queue.push(U);
+      else
+        Stack.push_back(U);
+    }
+    
+    virtual GRWorkListUnit Dequeue() {
+      // Process all basic blocks to completion.
+      if (!Stack.empty()) {
+        const GRWorkListUnit& U = Stack.back();
+        Stack.pop_back(); // This technically "invalidates" U, but we are fine.
+        return U;
+      }
+      
+      assert(!Queue.empty());
+      // Don't use const reference.  The subsequent pop_back() might make it
+      // unsafe.
+      GRWorkListUnit U = Queue.front(); 
+      Queue.pop();
+      return U;      
+    }
+  };
+} // end anonymous namespace
+
+GRWorkList* GRWorkList::MakeBFSBlockDFSContents() {
+  return new BFSBlockDFSContents();
+}
+
+//===----------------------------------------------------------------------===//
+// Core analysis engine.
+//===----------------------------------------------------------------------===//
 
 /// ExecuteWorkList - Run the worklist algorithm for a maximum number of steps.
 bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
@@ -90,8 +137,7 @@ bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
     
     // Dispatch on the location type.
     switch (Node->getLocation().getKind()) {
-      default:
-        assert (isa<BlockEdge>(Node->getLocation()));
+      case ProgramPoint::BlockEdgeKind:
         HandleBlockEdge(cast<BlockEdge>(Node->getLocation()), Node);
         break;
         
@@ -102,9 +148,9 @@ bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
       case ProgramPoint::BlockExitKind:
         assert (false && "BlockExit location never occur in forward analysis.");
         break;
-      
-      case ProgramPoint::PostLoadKind:
-      case ProgramPoint::PostStmtKind:
+
+      default:
+        assert(isa<PostStmt>(Node->getLocation()));
         HandlePostStmt(cast<PostStmt>(Node->getLocation()), WU.getBlock(),
                        WU.getIndex(), Node);
         break;        
@@ -332,6 +378,18 @@ static inline ProgramPoint GetPostLoc(Stmt* S, ProgramPoint::Kind K) {
       
     case ProgramPoint::PostLoadKind:
       return PostLoad(S);
+
+    case ProgramPoint::PostUndefLocationCheckFailedKind:
+      return PostUndefLocationCheckFailed(S);
+
+    case ProgramPoint::PostLocationChecksSucceedKind:
+      return PostLocationChecksSucceed(S);
+      
+    case ProgramPoint::PostOutOfBoundsCheckFailedKind:
+      return PostOutOfBoundsCheckFailed(S);
+      
+    case ProgramPoint::PostNullCheckFailedKind:
+      return PostNullCheckFailed(S);
       
     case ProgramPoint::PostStoreKind:
       return PostStore(S);
