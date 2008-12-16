@@ -27,7 +27,12 @@ class ProgramPoint {
 public:
   enum Kind { BlockEdgeKind=0, BlockEntranceKind, BlockExitKind, 
               // Keep the following four together and in this order.
-              PostStmtKind, PostLoadKind, PostStoreKind,
+              PostStmtKind,
+              PostLocationChecksSucceedKind,
+              PostOutOfBoundsCheckFailedKind,
+              PostNullCheckFailedKind,
+              PostUndefLocationCheckFailedKind,
+              PostLoadKind, PostStoreKind,
               PostPurgeDeadSymbolsKind };
 
 private:
@@ -144,6 +149,46 @@ public:
     return k >= PostStmtKind && k <= PostPurgeDeadSymbolsKind;
   }
 };
+
+class PostLocationChecksSucceed : public PostStmt {
+public:
+  PostLocationChecksSucceed(const Stmt* S)
+    : PostStmt(S, PostLocationChecksSucceedKind) {}
+  
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == PostLocationChecksSucceedKind;
+  }
+};
+  
+class PostOutOfBoundsCheckFailed : public PostStmt {
+public:
+  PostOutOfBoundsCheckFailed(const Stmt* S)
+  : PostStmt(S, PostOutOfBoundsCheckFailedKind) {}
+  
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == PostOutOfBoundsCheckFailedKind;
+  }
+};
+
+class PostUndefLocationCheckFailed : public PostStmt {
+public:
+  PostUndefLocationCheckFailed(const Stmt* S)
+  : PostStmt(S, PostUndefLocationCheckFailedKind) {}
+  
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == PostUndefLocationCheckFailedKind;
+  }
+};
+  
+class PostNullCheckFailed : public PostStmt {
+public:
+  PostNullCheckFailed(const Stmt* S)
+  : PostStmt(S, PostNullCheckFailedKind) {}
+  
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == PostNullCheckFailedKind;
+  }
+};
   
 class PostLoad : public PostStmt {
 public:
@@ -156,7 +201,7 @@ public:
   
 class PostStore : public PostStmt {
 public:
-  PostStore(const Stmt* S) : PostStmt(S, PostLoadKind) {}
+  PostStore(const Stmt* S) : PostStmt(S, PostStoreKind) {}
   
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostStoreKind;

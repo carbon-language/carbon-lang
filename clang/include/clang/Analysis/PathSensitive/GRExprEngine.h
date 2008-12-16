@@ -686,9 +686,8 @@ protected:
   void EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
                 const GRState* St, SVal location, bool CheckOnly = false);
   
-  const GRState* EvalLocation(Stmt* Ex, NodeTy* Pred,
-                              const GRState* St, SVal location,
-                              bool isLoad = false);
+  NodeTy* EvalLocation(Stmt* Ex, NodeTy* Pred,
+                       const GRState* St, SVal location);
   
   void EvalReturn(NodeSet& Dst, ReturnStmt* s, NodeTy* Pred);
   

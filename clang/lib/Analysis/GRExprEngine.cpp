@@ -950,10 +950,12 @@ void GRExprEngine::EvalStore(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
   assert (Builder && "GRStmtNodeBuilder must be defined.");
   
   // Evaluate the location (checks for bad dereferences).
-  St = EvalLocation(Ex, Pred, St, location);
+  Pred = EvalLocation(Ex, Pred, St, location);
   
-  if (!St)
+  if (!Pred)
     return;
+  
+  St = GetState(Pred);
   
   // Proceed with the store.
   
@@ -980,12 +982,13 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
                             const GRState* St, SVal location,
                             bool CheckOnly) {
 
-  // Evaluate the location (checks for bad dereferences).
+  // Evaluate the location (checks for bad dereferences).  
+  Pred = EvalLocation(Ex, Pred, St, location);
   
-  St = EvalLocation(Ex, Pred, St, location, true);
-  
-  if (!St)
+  if (!Pred)
     return;
+  
+  St = GetState(Pred);
   
   // Proceed with the load.
   ProgramPoint::Kind K = ProgramPoint::PostLoadKind;
@@ -997,9 +1000,12 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
   //  loads aren't fully implemented.  Eventually this option will go away.
   assert(!CheckOnly);
 
-  if (CheckOnly)
-    MakeNode(Dst, Ex, Pred, St, K);
-  else if (location.isUnknown()) {
+  if (CheckOnly) {
+    Dst.Add(Pred);
+    return;
+  }
+
+  if (location.isUnknown()) {
     // This is important.  We must nuke the old binding.
     MakeNode(Dst, Ex, Pred, BindExpr(St, Ex, UnknownVal()), K);
   }
@@ -1019,26 +1025,27 @@ void GRExprEngine::EvalStore(NodeSet& Dst, Expr* Ex, Expr* StoreE, NodeTy* Pred,
     MakeNode(Dst, Ex, *I, (*I)->getState());
 }
 
-const GRState* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
-                                          const GRState* St,
-                                          SVal location, bool isLoad) {
+GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
+                                                 const GRState* St,
+                                                 SVal location) {
   
   // Check for loads/stores from/to undefined values.  
   if (location.isUndef()) {
-    ProgramPoint::Kind K =
-      isLoad ? ProgramPoint::PostLoadKind : ProgramPoint::PostStmtKind;
+    NodeTy* N =
+      Builder->generateNode(Ex, St, Pred,
+                            ProgramPoint::PostUndefLocationCheckFailedKind);
     
-    if (NodeTy* Succ = Builder->generateNode(Ex, St, Pred, K)) {
-      Succ->markAsSink();
-      UndefDeref.insert(Succ);
+    if (N) {
+      N->markAsSink();
+      UndefDeref.insert(N);
     }
     
-    return NULL;
+    return 0;
   }
   
   // Check for loads/stores from/to unknown locations.  Treat as No-Ops.
   if (location.isUnknown())
-    return St;
+    return Pred;
   
   // During a load, one of two possible situations arise:
   //  (1) A crash, because the location (pointer) was NULL.
@@ -1067,12 +1074,10 @@ const GRState* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
     
     // We don't use "MakeNode" here because the node will be a sink
     // and we have no intention of processing it later.
-    
-    ProgramPoint::Kind K =
-      isLoad ? ProgramPoint::PostLoadKind : ProgramPoint::PostStmtKind;
+    NodeTy* NullNode =
+      Builder->generateNode(Ex, StNull, Pred, 
+                            ProgramPoint::PostNullCheckFailedKind);
 
-    NodeTy* NullNode = Builder->generateNode(Ex, StNull, Pred, K);
-    
     if (NullNode) {
       
       NullNode->markAsSink();
@@ -1081,9 +1086,12 @@ const GRState* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
       else ExplicitNullDeref.insert(NullNode);
     }
   }
+  
+  if (!isFeasibleNotNull)
+    return 0;
 
   // Check for out-of-bound array access.
-  if (isFeasibleNotNull && isa<loc::MemRegionVal>(LV)) {
+  if (isa<loc::MemRegionVal>(LV)) {
     const MemRegion* R = cast<loc::MemRegionVal>(LV).getRegion();
     if (const ElementRegion* ER = dyn_cast<ElementRegion>(R)) {
       // Get the index of the accessed element.
@@ -1101,13 +1109,10 @@ const GRState* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
                                                 false, isFeasibleOutBound);
 
       if (isFeasibleOutBound) {
-        // Report warning.
-
-        // Make sink node manually.
-        ProgramPoint::Kind K = isLoad ? ProgramPoint::PostLoadKind
-                                      : ProgramPoint::PostStoreKind;
-
-        NodeTy* OOBNode = Builder->generateNode(Ex, StOutBound, Pred, K);
+        // Report warning.  Make sink node manually.
+        NodeTy* OOBNode =
+          Builder->generateNode(Ex, StOutBound, Pred,
+                                ProgramPoint::PostOutOfBoundsCheckFailedKind);
 
         if (OOBNode) {
           OOBNode->markAsSink();
@@ -1119,11 +1124,16 @@ const GRState* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
         }
       }
 
-      return isFeasibleInBound ? StInBound : NULL;
+      if (!isFeasibleInBound)
+        return 0;
+      
+      StNotNull = StInBound;
     }
   }
   
-  return isFeasibleNotNull ? StNotNull : NULL;
+  // Generate a new node indicating the checks succeed.
+  return Builder->generateNode(Ex, StNotNull, Pred,
+                               ProgramPoint::PostLocationChecksSucceedKind);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1444,12 +1454,12 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
   // Get the current state.  Use 'EvalLocation' to determine if it is a null
   // pointer, etc.
   Stmt* elem = S->getElement();
-  GRStateRef state = GRStateRef(EvalLocation(elem, Pred, GetState(Pred),
-                                             ElementV, false),
-                                getStateManager());
   
-  if (!state)
+  Pred = EvalLocation(elem, Pred, GetState(Pred), ElementV);
+  if (!Pred)
     return;
+    
+  GRStateRef state = GRStateRef(GetState(Pred), getStateManager());
 
   // Handle the case where the container still has elements.
   QualType IntTy = getContext().IntTy;
@@ -2710,49 +2720,47 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         assert (false);
         break;
         
-      case ProgramPoint::PostLoadKind:
-      case ProgramPoint::PostPurgeDeadSymbolsKind:
-      case ProgramPoint::PostStmtKind: {
-        const PostStmt& L = cast<PostStmt>(Loc);        
-        Stmt* S = L.getStmt();
-        SourceLocation SLoc = S->getLocStart();
-
-        Out << S->getStmtClassName() << ' ' << (void*) S << ' ';        
-        llvm::raw_os_ostream OutS(Out);
-        S->printPretty(OutS);
-        OutS.flush();
-        
-        if (SLoc.isFileID()) {        
-          Out << "\\lline="
-            << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
-            << GraphPrintSourceManager->getColumnNumber(SLoc) << "\\l";
-        }
-        
-        if (GraphPrintCheckerState->isImplicitNullDeref(N))
-          Out << "\\|Implicit-Null Dereference.\\l";
-        else if (GraphPrintCheckerState->isExplicitNullDeref(N))
-          Out << "\\|Explicit-Null Dereference.\\l";
-        else if (GraphPrintCheckerState->isUndefDeref(N))
-          Out << "\\|Dereference of undefialied value.\\l";
-        else if (GraphPrintCheckerState->isUndefStore(N))
-          Out << "\\|Store to Undefined Loc.";
-        else if (GraphPrintCheckerState->isExplicitBadDivide(N))
-          Out << "\\|Explicit divide-by zero or undefined value.";
-        else if (GraphPrintCheckerState->isImplicitBadDivide(N))
-          Out << "\\|Implicit divide-by zero or undefined value.";
-        else if (GraphPrintCheckerState->isUndefResult(N))
-          Out << "\\|Result of operation is undefined.";
-        else if (GraphPrintCheckerState->isNoReturnCall(N))
-          Out << "\\|Call to function marked \"noreturn\".";
-        else if (GraphPrintCheckerState->isBadCall(N))
-          Out << "\\|Call to NULL/Undefined.";
-        else if (GraphPrintCheckerState->isUndefArg(N))
-          Out << "\\|Argument in call is undefined";
-        
-        break;
-      }
-    
       default: {
+        if (isa<PostStmt>(Loc)) {
+          const PostStmt& L = cast<PostStmt>(Loc);        
+          Stmt* S = L.getStmt();
+          SourceLocation SLoc = S->getLocStart();
+
+          Out << S->getStmtClassName() << ' ' << (void*) S << ' ';        
+          llvm::raw_os_ostream OutS(Out);
+          S->printPretty(OutS);
+          OutS.flush();
+          
+          if (SLoc.isFileID()) {        
+            Out << "\\lline="
+              << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
+              << GraphPrintSourceManager->getColumnNumber(SLoc) << "\\l";
+          }
+          
+          if (GraphPrintCheckerState->isImplicitNullDeref(N))
+            Out << "\\|Implicit-Null Dereference.\\l";
+          else if (GraphPrintCheckerState->isExplicitNullDeref(N))
+            Out << "\\|Explicit-Null Dereference.\\l";
+          else if (GraphPrintCheckerState->isUndefDeref(N))
+            Out << "\\|Dereference of undefialied value.\\l";
+          else if (GraphPrintCheckerState->isUndefStore(N))
+            Out << "\\|Store to Undefined Loc.";
+          else if (GraphPrintCheckerState->isExplicitBadDivide(N))
+            Out << "\\|Explicit divide-by zero or undefined value.";
+          else if (GraphPrintCheckerState->isImplicitBadDivide(N))
+            Out << "\\|Implicit divide-by zero or undefined value.";
+          else if (GraphPrintCheckerState->isUndefResult(N))
+            Out << "\\|Result of operation is undefined.";
+          else if (GraphPrintCheckerState->isNoReturnCall(N))
+            Out << "\\|Call to function marked \"noreturn\".";
+          else if (GraphPrintCheckerState->isBadCall(N))
+            Out << "\\|Call to NULL/Undefined.";
+          else if (GraphPrintCheckerState->isUndefArg(N))
+            Out << "\\|Argument in call is undefined";
+          
+          break;
+        }
+
         const BlockEdge& E = cast<BlockEdge>(Loc);
         Out << "Edge: (B" << E.getSrc()->getBlockID() << ", B"
             << E.getDst()->getBlockID()  << ')';
