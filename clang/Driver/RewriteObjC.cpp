@@ -537,13 +537,11 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "  int Size;\n";
   Preamble += "  void *FuncPtr;\n";
   Preamble += "};\n";
-  Preamble += "// Runtime copy/destroy helper functions\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void _Block_copy_assign(void *, void *);\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void _Block_byref_assign_copy(void *, void *);\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void _Block_release(void *);\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void _Block_byref_release(void *);\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void *_NSConcreteGlobalBlock;\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void *_NSConcreteStackBlock;\n";
+  Preamble += "// Runtime copy/destroy helper functions (from Block_private.h)\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void _Block_object_assign(void *, const void *, const int);\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void _Block_object_dispose(const void *, const int);\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void *_NSConcreteGlobalBlock[32];\n";
+  Preamble += "__OBJC_RW_STATICIMPORT void *_NSConcreteStackBlock[32];\n";
   Preamble += "#endif\n";
   if (LangOpts.Microsoft) {
     Preamble += "#undef __OBJC_RW_DLLIMPORT\n";
@@ -3516,11 +3514,11 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   S += "*src) {";
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
       E = ImportedBlockDecls.end(); I != E; ++I) {
-    S += "_Block_copy_assign((void*)&dst->";
+    S += "_Block_object_assign((void*)&dst->";
     S += (*I)->getNameAsString();
     S += ", (void*)src->";
     S += (*I)->getNameAsString();
-    S += ");}";
+    S += ", 3/*BLOCK_FIELD_IS_OBJECT*/);}";
   }
   S += "\nstatic void __";
   S += funcName;
@@ -3529,9 +3527,9 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   S += "*src) {";
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
       E = ImportedBlockDecls.end(); I != E; ++I) {
-    S += "_Block_release((void*)src->";
+    S += "_Block_object_dispose((void*)src->";
     S += (*I)->getNameAsString();
-    S += ");";
+    S += ", 3/*BLOCK_FIELD_IS_OBJECT*/);";
   }
   S += "}\n";  
   return S;
