@@ -538,7 +538,7 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       for (; RHSProtoI != RHSProtoE; ++RHSProtoI) {
         ObjCProtocolDecl *rhsProto = *RHSProtoI;
         if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
-            compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
+            (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
           match = true;
           break;
         }
@@ -583,7 +583,7 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
         ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
         if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
-            compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
+            (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
           match = true;
           break;
         }

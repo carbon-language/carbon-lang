@@ -1052,8 +1052,8 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
       const ObjCMethodDecl *&PrevMethod = InsMap[Method->getSelector()];
       bool match = PrevMethod ? MatchTwoMethodDeclarations(Method, PrevMethod) 
                               : false;
-      if (isInterfaceDeclKind && PrevMethod && !match 
-          || checkIdenticalMethods && match) {
+      if ((isInterfaceDeclKind && PrevMethod && !match) 
+          || (checkIdenticalMethods && match)) {
           Diag(Method->getLocation(), diag::err_duplicate_method_decl)
             << Method->getDeclName();
           Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
@@ -1069,8 +1069,8 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
       const ObjCMethodDecl *&PrevMethod = ClsMap[Method->getSelector()];
       bool match = PrevMethod ? MatchTwoMethodDeclarations(Method, PrevMethod) 
                               : false;
-      if (isInterfaceDeclKind && PrevMethod && !match 
-          || checkIdenticalMethods && match) {
+      if ((isInterfaceDeclKind && PrevMethod && !match) 
+          || (checkIdenticalMethods && match)) {
         Diag(Method->getLocation(), diag::err_duplicate_method_decl)
           << Method->getDeclName();
         Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
