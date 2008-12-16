@@ -101,8 +101,8 @@ DIGlobalVariable::DIGlobalVariable(GlobalVariable *GV)
 DIBlock::DIBlock(GlobalVariable *GV)
   : DIDescriptor(GV, dwarf::DW_TAG_lexical_block) {}
 // needed by DIVariable::getType()
-DIType::DIType(GlobalVariable *GV) : DIDescriptor(GV) {
-  if (!GV) return;
+DIType::DIType(GlobalVariable *gv) : DIDescriptor(gv) {
+  if (!gv) return;
   unsigned tag = getTag();
   if (tag != dwarf::DW_TAG_base_type && !DIDerivedType::isDerivedType(tag) &&
       !DICompositeType::isCompositeType(tag))
