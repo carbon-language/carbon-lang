@@ -1240,7 +1240,7 @@ ObjCMessageExpr* ObjCMessageExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   
   // Now read in the arguments.
   
-  if (flags & Flags == IsInstMeth)
+  if ((flags & Flags) == IsInstMeth)
     D.BatchReadOwnedPtrs(NumArgs+1, SubExprs, C);
   else {
     // Read the pointer for Cls/ClassName.  The Deserializer will handle the

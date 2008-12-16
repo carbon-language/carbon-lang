@@ -28,7 +28,7 @@ using namespace CodeGen;
 static void mangleDeclContextInternal(const DeclContext *D, std::string &S)
 {
   // FIXME: Should ObjcMethodDecl have the TranslationUnitDecl as its parent?
-  assert(!D->getParent() || isa<TranslationUnitDecl>(D->getParent()) && 
+  assert((!D->getParent() || isa<TranslationUnitDecl>(D->getParent())) && 
          "Only one level of decl context mangling is currently supported!");
   
   if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {

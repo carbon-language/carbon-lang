@@ -90,13 +90,13 @@ bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
            = Constructors->function_begin();
          Con != Constructors->function_end(); ++Con) {
     if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context, TypeQuals) &&
-        (TypeQuals & QualType::Const != 0))
+        (TypeQuals & QualType::Const) != 0)
       return true;
     }
   } else if (CXXConstructorDecl *Constructor 
                = dyn_cast<CXXConstructorDecl>(*Lookup.first)) {
     return Constructor->isCopyConstructor(Context, TypeQuals) &&
-           (TypeQuals & QualType::Const != 0);
+           (TypeQuals & QualType::Const) != 0;
   }
   return false;
 }
