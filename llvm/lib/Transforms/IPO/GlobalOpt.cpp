@@ -1012,56 +1012,77 @@ static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
   }
 }
 
-/// GlobalLoadUsesSimpleEnoughForHeapSRA - If all users of values loaded from
-/// GV are simple enough to perform HeapSRA, return true.
-static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
-                                                 MallocInst *MI) {
-  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E; 
-       ++UI)
-    if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
-      // We permit two users of the load: setcc comparing against the null
-      // pointer, and a getelementptr of a specific form.
-      for (Value::use_iterator UI = LI->use_begin(), E = LI->use_end();
-           UI != E; ++UI) {
-        // Comparison against null is ok.
-        if (ICmpInst *ICI = dyn_cast<ICmpInst>(*UI)) {
-          if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
-            return false;
-          continue;
-        }
+/// LoadUsesSimpleEnoughForHeapSRA - Verify that all uses of V (a load, or a phi
+/// of a load) are simple enough to perform heap SRA on.  This permits GEP's
+/// that index through the array and struct field, icmps of null, and PHIs.
+static bool LoadUsesSimpleEnoughForHeapSRA(Value *V, MallocInst *MI,
+                             SmallPtrSet<PHINode*, 32> &AnalyzedLoadUsingPHIs) {
+  // We permit two users of the load: setcc comparing against the null
+  // pointer, and a getelementptr of a specific form.
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    Instruction *User = cast<Instruction>(*UI);
+    
+    // Comparison against null is ok.
+    if (ICmpInst *ICI = dyn_cast<ICmpInst>(User)) {
+      if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
+        return false;
+      continue;
+    }
+    
+    // getelementptr is also ok, but only a simple form.
+    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
+      // Must index into the array and into the struct.
+      if (GEPI->getNumOperands() < 3)
+        return false;
+      
+      // Otherwise the GEP is ok.
+      continue;
+    }
+    
+    if (PHINode *PN = dyn_cast<PHINode>(User)) {
+      // If we have already recursively analyzed this PHI, then it is safe.
+      if (AnalyzedLoadUsingPHIs.insert(PN))
+        continue;
+      
+      // We have a phi of a load from the global.  We can only handle this
+      // if the other PHI'd values are actually the same.  In this case,
+      // the rewriter will just drop the phi entirely.
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+        Value *IV = PN->getIncomingValue(i);
+        if (IV == V) continue;  // Trivial the same.
         
-        // getelementptr is also ok, but only a simple form.
-        if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI)) {
-          // Must index into the array and into the struct.
-          if (GEPI->getNumOperands() < 3)
-            return false;
-          
-          // Otherwise the GEP is ok.
-          continue;
-        }
+        // If the phi'd value is from the malloc that initializes the value,
+        // we can xform it.
+        if (IV == MI) continue;
         
-        if (PHINode *PN = dyn_cast<PHINode>(*UI)) {
-          // We have a phi of a load from the global.  We can only handle this
-          // if the other PHI'd values are actually the same.  In this case,
-          // the rewriter will just drop the phi entirely.
-          for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-            Value *IV = PN->getIncomingValue(i);
-            if (IV == LI) continue;  // Trivial the same.
-            
-            // If the phi'd value is from the malloc that initializes the value,
-            // we can xform it.
-            if (IV == MI) continue;
-            
-            // Otherwise, we don't know what it is.
-            return false;
-          }
-          continue;
-        }
-        
-        // Otherwise we don't know what this is, not ok.
+        // Otherwise, we don't know what it is.
         return false;
       }
+      
+      if (!LoadUsesSimpleEnoughForHeapSRA(PN, MI, AnalyzedLoadUsingPHIs))
+        return false;
+      
+      continue;
     }
+    
+    // Otherwise we don't know what this is, not ok.
+    return false;
+  }
+  
+  return true;
+}
+
+
+/// AllGlobalLoadUsesSimpleEnoughForHeapSRA - If all users of values loaded from
+/// GV are simple enough to perform HeapSRA, return true.
+static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
+                                                    MallocInst *MI) {
+  SmallPtrSet<PHINode*, 32> AnalyzedLoadUsingPHIs;
+  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E; 
+       ++UI)
+    if (LoadInst *LI = dyn_cast<LoadInst>(*UI))
+      if (!LoadUsesSimpleEnoughForHeapSRA(LI, MI, AnalyzedLoadUsingPHIs))
+        return false;
   return true;
 }
 
@@ -1166,7 +1187,7 @@ static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser,
 /// RewriteUsesOfLoadForHeapSRoA - We are performing Heap SRoA on a global.  Ptr
 /// is a value loaded from the global.  Eliminate all uses of Ptr, making them
 /// use FieldGlobals instead.  All uses of loaded values satisfy
-/// GlobalLoadUsesSimpleEnoughForHeapSRA.
+/// AllGlobalLoadUsesSimpleEnoughForHeapSRA.
 static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load, 
                              const std::vector<GlobalVariable*> &FieldGlobals) {
   std::vector<Value *> InsertedLoadsForPtr;
@@ -1367,7 +1388,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
     // This the structure has an unreasonable number of fields, leave it
     // alone.
     if (AllocSTy->getNumElements() <= 16 && AllocSTy->getNumElements() != 0 &&
-        GlobalLoadUsesSimpleEnoughForHeapSRA(GV, MI)) {
+        AllGlobalLoadUsesSimpleEnoughForHeapSRA(GV, MI)) {
       
       // If this is a fixed size array, transform the Malloc to be an alloc of
       // structs.  malloc [100 x struct],1 -> malloc struct, 100
