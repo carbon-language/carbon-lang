@@ -48,8 +48,8 @@ namespace llvm {
     
     /// If you want to override the dot attributes printed for a particular
     /// edge, override this method.
-    template<typename EdgeIter>
-    static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
+    static std::string getEdgeAttributes(const SUnit *Node,
+                                         SUnitIterator EI) {
       if (EI.isArtificialDep())
         return "color=cyan,style=dashed";
       if (EI.isCtrlDep())
