@@ -101,17 +101,17 @@ public:
   /// AddPred - adds a predecessor edge to SUnit SU.
   /// This returns true if this is a new predecessor.
   /// Updates the topological ordering if required.
-  bool AddPred(SUnit *SU, const SDep &D) {
+  void AddPred(SUnit *SU, const SDep &D) {
     Topo.AddPred(SU, D.getSUnit());
-    return SU->addPred(D);
+    SU->addPred(D);
   }
 
   /// RemovePred - removes a predecessor edge from SUnit SU.
   /// This returns true if an edge was removed.
   /// Updates the topological ordering if required.
-  bool RemovePred(SUnit *SU, const SDep &D) {
+  void RemovePred(SUnit *SU, const SDep &D) {
     Topo.RemovePred(SU, D.getSUnit());
-    return SU->removePred(D);
+    SU->removePred(D);
   }
 
 private:

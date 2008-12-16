@@ -79,14 +79,14 @@ public:
 
   /// AddPred - adds a predecessor edge to SUnit SU.
   /// This returns true if this is a new predecessor.
-  bool AddPred(SUnit *SU, const SDep &D) {
-    return SU->addPred(D);
+  void AddPred(SUnit *SU, const SDep &D) {
+    SU->addPred(D);
   }
 
   /// RemovePred - removes a predecessor edge from SUnit SU.
   /// This returns true if an edge was removed.
-  bool RemovePred(SUnit *SU, const SDep &D) {
-    return SU->removePred(D);
+  void RemovePred(SUnit *SU, const SDep &D) {
+    SU->removePred(D);
   }
 
 private:

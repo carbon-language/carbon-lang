@@ -299,12 +299,12 @@ namespace llvm {
 
     /// addPred - This adds the specified edge as a pred of the current node if
     /// not already.  It also adds the current node as a successor of the
-    /// specified node.  This returns true if this is a new pred.
-    bool addPred(const SDep &D) {
+    /// specified node.
+    void addPred(const SDep &D) {
       // If this node already has this depenence, don't add a redundant one.
       for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
         if (Preds[i] == D)
-          return false;
+          return;
       // Add a pred to this SUnit.
       Preds.push_back(D);
       // Now add a corresponding succ to N.
@@ -321,14 +321,12 @@ namespace llvm {
         ++NumPredsLeft;
       if (!isScheduled)
         ++N->NumSuccsLeft;
-      return true;
     }
 
     /// removePred - This removes the specified edge as a pred of the current
     /// node if it exists.  It also removes the current node as a successor of
-    /// the specified node.  This returns true if the edge existed and was
-    /// removed.
-    bool removePred(const SDep &D) {
+    /// the specified node.
+    void removePred(const SDep &D) {
       // Find the matching predecessor.
       for (SmallVector<SDep, 4>::iterator I = Preds.begin(), E = Preds.end();
            I != E; ++I)
@@ -356,9 +354,8 @@ namespace llvm {
             --NumPredsLeft;
           if (!isScheduled)
             --N->NumSuccsLeft;
-          return true;
+          return;
         }
-      return false;
     }
 
     bool isPred(SUnit *N) {
