@@ -1437,6 +1437,10 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       }
     }
 
+  Type *t = T.getTypePtr();
+  if (t->isArrayType() || t->isFunctionType())
+    Diag(AtLoc, diag::err_property_type) << T;
+  
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc, 
                                                      FD.D.getIdentifier(), T);
   // Regardless of setter/getter attribute, we save the default getter/setter
