@@ -44,3 +44,29 @@ class X {
     int f(X* x = this); // expected-error{{default argument references 'this'}}
   }
 };
+
+// C++ [dcl.fct.default]p6
+class C { 
+  static int x;
+  void f(int i = 3); // expected-note{{previous definition is here}}
+  void g(int i, int j = x); 
+
+  void h();
+}; 
+void C::f(int i = 3) // expected-error{{redefinition of default argument}}
+{ } 
+
+void C::g(int i = 88, int j) {}
+
+void C::h() {
+  g(); // okay
+}
+
+// C++ [dcl.fct.default]p9
+class Y { 
+  int a; 
+  int mem1(int i = a); // expected-error{{invalid use of nonstatic data member 'a'}}
+  // FIXME: The code below is well-formed.
+  //  int mem2(int i = b); // OK; use X::b 
+  static int b; 
+}; 
