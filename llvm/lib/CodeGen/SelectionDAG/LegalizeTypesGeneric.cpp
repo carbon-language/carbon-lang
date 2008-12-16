@@ -19,6 +19,7 @@
 
 #include "LegalizeTypes.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -83,12 +84,14 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
   unsigned Alignment =
     TLI.getTargetData()->getPrefTypeAlignment(NOutVT.getTypeForMVT());
   SDValue StackPtr = DAG.CreateStackTemporary(InVT, Alignment);
+  int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
+  const Value *SV = PseudoSourceValue::getFixedStack(SPFI);
 
   // Emit a store to the stack slot.
-  SDValue Store = DAG.getStore(DAG.getEntryNode(), InOp, StackPtr, NULL, 0);
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), InOp, StackPtr, SV, 0);
 
   // Load the first half from the stack slot.
-  Lo = DAG.getLoad(NOutVT, Store, StackPtr, NULL, 0);
+  Lo = DAG.getLoad(NOutVT, Store, StackPtr, SV, 0);
 
   // Increment the pointer to the other half.
   unsigned IncrementSize = NOutVT.getSizeInBits() / 8;
@@ -96,7 +99,7 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
                          DAG.getIntPtrConstant(IncrementSize));
 
   // Load the second half from the stack slot.
-  Hi = DAG.getLoad(NOutVT, Store, StackPtr, NULL, 0, false,
+  Hi = DAG.getLoad(NOutVT, Store, StackPtr, SV, IncrementSize, false,
                    MinAlign(Alignment, IncrementSize));
 
   // Handle endianness of the load.
