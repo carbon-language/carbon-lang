@@ -80,6 +80,9 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
        E = DAG->allnodes_end(); NI != E; ++NI)
     NI->setNodeId(-1);
 
+  // Check to see if the scheduler cares about latencies.
+  bool UnitLatencies = ForceUnitLatencies();
+
   for (SelectionDAG::allnodes_iterator NI = DAG->allnodes_begin(),
        E = DAG->allnodes_end(); NI != E; ++NI) {
     if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
@@ -133,7 +136,10 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     N->setNodeId(NodeSUnit->NodeNum);
 
     // Assign the Latency field of NodeSUnit using target-provided information.
-    ComputeLatency(NodeSUnit);
+    if (UnitLatencies)
+      NodeSUnit->Latency = 1;
+    else
+      ComputeLatency(NodeSUnit);
   }
   
   // Pass 2: add the preds, succs, etc.

@@ -41,47 +41,6 @@ bool latency_sort::operator()(const SUnit *LHS, const SUnit *RHS) const {
 }
 
 
-/// CalcNodePriority - Calculate the maximal path from the node to the exit.
-///
-void LatencyPriorityQueue::CalcLatency(const SUnit &SU) {
-  int &Latency = Latencies[SU.NodeNum];
-  if (Latency != -1)
-    return;
-
-  std::vector<const SUnit*> WorkList;
-  WorkList.push_back(&SU);
-  while (!WorkList.empty()) {
-    const SUnit *Cur = WorkList.back();
-    bool AllDone = true;
-    unsigned MaxSuccLatency = 0;
-    for (SUnit::const_succ_iterator I = Cur->Succs.begin(),E = Cur->Succs.end();
-         I != E; ++I) {
-      int SuccLatency = Latencies[I->getSUnit()->NodeNum];
-      if (SuccLatency == -1) {
-        AllDone = false;
-        WorkList.push_back(I->getSUnit());
-      } else {
-        unsigned NewLatency = SuccLatency + I->getLatency();
-        MaxSuccLatency = std::max(MaxSuccLatency, NewLatency);
-      }
-    }
-    if (AllDone) {
-      Latencies[Cur->NodeNum] = MaxSuccLatency;
-      WorkList.pop_back();
-    }
-  }
-}
-
-/// CalculatePriorities - Calculate priorities of all scheduling units.
-void LatencyPriorityQueue::CalculatePriorities() {
-  Latencies.assign(SUnits->size(), -1);
-  NumNodesSolelyBlocking.assign(SUnits->size(), 0);
-
-  // For each node, calculate the maximal path from the node to the exit.
-  for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-    CalcLatency((*SUnits)[i]);
-}
-
 /// getSingleUnscheduledPred - If there is exactly one unscheduled predecessor
 /// of SU, return it, otherwise return null.
 SUnit *LatencyPriorityQueue::getSingleUnscheduledPred(SUnit *SU) {

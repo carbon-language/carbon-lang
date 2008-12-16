@@ -120,10 +120,7 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SU, const SDep &D) {
   }
 #endif
   
-  // Compute the cycle when this SUnit actually becomes available.  This
-  // is the max of the start time of all predecessors plus their latencies.
-  unsigned PredDoneCycle = SU->Cycle + SU->Latency;
-  SuccSU->CycleBound = std::max(SuccSU->CycleBound, PredDoneCycle);
+  SuccSU->setDepthToAtLeast(SU->getDepth() + D.getLatency());
   
   if (SuccSU->NumPredsLeft == 0) {
     PendingQueue.push_back(SuccSU);
@@ -138,7 +135,8 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   DEBUG(SU->dump(this));
   
   Sequence.push_back(SU);
-  SU->Cycle = CurCycle;
+  assert(CurCycle >= SU->getDepth() && "Node scheduled above its depth!");
+  SU->setDepthToAtLeast(CurCycle);
 
   // Top down: release successors.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
@@ -171,14 +169,14 @@ void ScheduleDAGList::ListScheduleTopDown() {
     // Check to see if any of the pending instructions are ready to issue.  If
     // so, add them to the available queue.
     for (unsigned i = 0, e = PendingQueue.size(); i != e; ++i) {
-      if (PendingQueue[i]->CycleBound == CurCycle) {
+      if (PendingQueue[i]->getDepth() == CurCycle) {
         AvailableQueue->push(PendingQueue[i]);
         PendingQueue[i]->isAvailable = true;
         PendingQueue[i] = PendingQueue.back();
         PendingQueue.pop_back();
         --i; --e;
       } else {
-        assert(PendingQueue[i]->CycleBound > CurCycle && "Negative latency?");
+        assert(PendingQueue[i]->getDepth() > CurCycle && "Negative latency?");
       }
     }
     

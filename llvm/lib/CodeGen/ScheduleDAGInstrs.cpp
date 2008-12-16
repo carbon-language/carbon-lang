@@ -13,19 +13,27 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched-instrs"
+#include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SmallSet.h"
 #include <map>
 using namespace llvm;
 
 ScheduleDAGInstrs::ScheduleDAGInstrs(MachineBasicBlock *bb,
-                                     const TargetMachine &tm)
-  : ScheduleDAG(0, bb, tm) {}
+                                     const TargetMachine &tm,
+                                     const MachineLoopInfo &mli,
+                                     const MachineDominatorTree &mdt)
+  : ScheduleDAG(0, bb, tm), MLI(mli), MDT(mdt) {}
 
 void ScheduleDAGInstrs::BuildSchedUnits() {
   SUnits.clear();
@@ -35,7 +43,7 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
   // to top.
 
   // Remember where defs and uses of each physical register are as we procede.
-  SUnit *Defs[TargetRegisterInfo::FirstVirtualRegister] = {};
+  std::vector<SUnit *> Defs[TargetRegisterInfo::FirstVirtualRegister] = {};
   std::vector<SUnit *> Uses[TargetRegisterInfo::FirstVirtualRegister] = {};
 
   // Remember where unknown loads are after the most recent unknown store
@@ -57,13 +65,20 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
   // all the work of the block is done before the terminator.
   SUnit *Terminator = 0;
 
+  // Check to see if the scheduler cares about latencies.
+  bool UnitLatencies = ForceUnitLatencies();
+
   for (MachineBasicBlock::iterator MII = BB->end(), MIE = BB->begin();
        MII != MIE; --MII) {
     MachineInstr *MI = prior(MII);
+    const TargetInstrDesc &TID = MI->getDesc();
     SUnit *SU = NewSUnit(MI);
 
     // Assign the Latency field of SU using target-provided information.
-    ComputeLatency(SU);
+    if (UnitLatencies)
+      SU->Latency = 1;
+    else
+      ComputeLatency(SU);
 
     // Add register-based dependencies (data, anti, and output).
     for (unsigned j = 0, n = MI->getNumOperands(); j != n; ++j) {
@@ -74,33 +89,51 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
 
       assert(TRI->isPhysicalRegister(Reg) && "Virtual register encountered!");
       std::vector<SUnit *> &UseList = Uses[Reg];
-      SUnit *&Def = Defs[Reg];
+      std::vector<SUnit *> &DefList = Defs[Reg];
       // Optionally add output and anti dependencies.
       // TODO: Using a latency of 1 here assumes there's no cost for
       //       reusing registers.
       SDep::Kind Kind = MO.isUse() ? SDep::Anti : SDep::Output;
-      if (Def && Def != SU)
-        Def->addPred(SDep(SU, Kind, /*Latency=*/1, /*Reg=*/Reg));
+      for (unsigned i = 0, e = DefList.size(); i != e; ++i) {
+        SUnit *DefSU = DefList[i];
+        if (DefSU != SU &&
+            (Kind != SDep::Output || !MO.isDead() ||
+             !DefSU->getInstr()->registerDefIsDead(Reg)))
+          DefSU->addPred(SDep(SU, Kind, /*Latency=*/1, /*Reg=*/Reg));
+      }
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-        SUnit *&Def = Defs[*Alias];
-        if (Def && Def != SU)
-          Def->addPred(SDep(SU, Kind, /*Latency=*/1, /*Reg=*/ *Alias));
+        std::vector<SUnit *> &DefList = Defs[*Alias];
+        for (unsigned i = 0, e = DefList.size(); i != e; ++i) {
+          SUnit *DefSU = DefList[i];
+          if (DefSU != SU &&
+              (Kind != SDep::Output || !MO.isDead() ||
+               !DefSU->getInstr()->registerDefIsDead(Reg)))
+            DefSU->addPred(SDep(SU, Kind, /*Latency=*/1, /*Reg=*/ *Alias));
+        }
       }
 
       if (MO.isDef()) {
         // Add any data dependencies.
-        for (unsigned i = 0, e = UseList.size(); i != e; ++i)
-          if (UseList[i] != SU)
-            UseList[i]->addPred(SDep(SU, SDep::Data, SU->Latency, Reg));
+        unsigned DataLatency = SU->Latency;
+        for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
+          SUnit *UseSU = UseList[i];
+          if (UseSU != SU) {
+            UseSU->addPred(SDep(SU, SDep::Data, DataLatency, Reg));
+          }
+        }
         for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
           std::vector<SUnit *> &UseList = Uses[*Alias];
-          for (unsigned i = 0, e = UseList.size(); i != e; ++i)
-            if (UseList[i] != SU)
-              UseList[i]->addPred(SDep(SU, SDep::Data, SU->Latency, *Alias));
+          for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
+            SUnit *UseSU = UseList[i];
+            if (UseSU != SU)
+              UseSU->addPred(SDep(SU, SDep::Data, DataLatency, *Alias));
+          }
         }
 
         UseList.clear();
-        Def = SU;
+        if (!MO.isDead())
+          DefList.clear();
+        DefList.push_back(SU);
       } else {
         UseList.push_back(SU);
       }
@@ -111,7 +144,6 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
     // after stack slots are lowered to actual addresses.
     // TODO: Use an AliasAnalysis and do real alias-analysis queries, and
     // produce more precise dependence information.
-    const TargetInstrDesc &TID = MI->getDesc();
     if (TID.isCall() || TID.isReturn() || TID.isBranch() ||
         TID.hasUnmodeledSideEffects()) {
     new_chain:

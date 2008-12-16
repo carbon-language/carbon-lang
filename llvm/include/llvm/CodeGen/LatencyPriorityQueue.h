@@ -34,10 +34,6 @@ namespace llvm {
     // SUnits - The SUnits for the current graph.
     std::vector<SUnit> *SUnits;
     
-    // Latencies - The latency (max of latency from this node to the bb exit)
-    // for each node.
-    std::vector<int> Latencies;
-
     /// NumNodesSolelyBlocking - This vector contains, for every node in the
     /// Queue, the number of nodes that the node is the sole unscheduled
     /// predecessor for.  This is used as a tie-breaker heuristic for better
@@ -51,29 +47,23 @@ public:
     
     void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
-      // Calculate node priorities.
-      CalculatePriorities();
+      NumNodesSolelyBlocking.resize(SUnits->size(), 0);
     }
 
     void addNode(const SUnit *SU) {
-      Latencies.resize(SUnits->size(), -1);
       NumNodesSolelyBlocking.resize(SUnits->size(), 0);
-      CalcLatency(*SU);
     }
 
     void updateNode(const SUnit *SU) {
-      Latencies[SU->NodeNum] = -1;
-      CalcLatency(*SU);
     }
 
     void releaseState() {
       SUnits = 0;
-      Latencies.clear();
     }
     
     unsigned getLatency(unsigned NodeNum) const {
-      assert(NodeNum < Latencies.size());
-      return Latencies[NodeNum];
+      assert(NodeNum < (*SUnits).size());
+      return (*SUnits)[NodeNum].getHeight();
     }
     
     unsigned getNumSolelyBlockNodes(unsigned NodeNum) const {
@@ -114,8 +104,6 @@ public:
     void ScheduledNode(SUnit *Node);
 
 private:
-    void CalculatePriorities();
-    void CalcLatency(const SUnit &SU);
     void AdjustPriorityOfUnscheduledPreds(SUnit *SU);
     SUnit *getSingleUnscheduledPred(SUnit *SU);
   };

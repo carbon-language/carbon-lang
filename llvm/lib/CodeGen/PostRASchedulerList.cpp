@@ -23,7 +23,9 @@
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -49,6 +51,14 @@ namespace {
     static char ID;
     PostRAScheduler() : MachineFunctionPass(&ID) {}
 
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<MachineDominatorTree>();
+      AU.addPreserved<MachineDominatorTree>();
+      AU.addRequired<MachineLoopInfo>();
+      AU.addPreserved<MachineLoopInfo>();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
+
     const char *getPassName() const {
       return "Post RA top-down list latency scheduler";
     }
@@ -72,8 +82,10 @@ namespace {
     ScheduleDAGTopologicalSort Topo;
 
   public:
-    SchedulePostRATDList(MachineBasicBlock *mbb, const TargetMachine &tm)
-      : ScheduleDAGInstrs(mbb, tm), Topo(SUnits) {}
+    SchedulePostRATDList(MachineBasicBlock *mbb, const TargetMachine &tm,
+                         const MachineLoopInfo &MLI,
+                         const MachineDominatorTree &MDT)
+      : ScheduleDAGInstrs(mbb, tm, MLI, MDT), Topo(SUnits) {}
 
     void Schedule();
 
@@ -88,11 +100,14 @@ namespace {
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   DOUT << "PostRAScheduler\n";
 
+  const MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
+  const MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
+
   // Loop over all of the basic blocks
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB) {
 
-    SchedulePostRATDList Scheduler(MBB, Fn.getTarget());
+    SchedulePostRATDList Scheduler(MBB, Fn.getTarget(), MLI, MDT);
 
     Scheduler.Run();
 
@@ -142,6 +157,28 @@ getInstrOperandRegClass(const TargetRegisterInfo *TRI,
   return TRI->getRegClass(II.OpInfo[Op].RegClass);
 }
 
+/// CriticalPathStep - Return the next SUnit after SU on the bottom-up
+/// critical path.
+static SDep *CriticalPathStep(SUnit *SU) {
+  SDep *Next = 0;
+  unsigned NextDepth = 0;
+  // Find the predecessor edge with the greatest depth.
+  for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
+       P != PE; ++P) {
+    SUnit *PredSU = P->getSUnit();
+    unsigned PredLatency = P->getLatency();
+    unsigned PredTotalLatency = PredSU->getDepth() + PredLatency;
+    // In the case of a latency tie, prefer an anti-dependency edge over
+    // other types of edges.
+    if (NextDepth < PredTotalLatency ||
+        (NextDepth == PredTotalLatency && P->getKind() == SDep::Anti)) {
+      NextDepth = PredTotalLatency;
+      Next = &*P;
+    }
+  }
+  return Next;
+}
+
 /// BreakAntiDependencies - Identifiy anti-dependencies along the critical path
 /// of the ScheduleDAG and break them by renaming registers.
 ///
@@ -150,34 +187,16 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   // so just duck out immediately if the block is empty.
   if (BB->empty()) return false;
 
-  Topo.InitDAGTopologicalSorting();
-
-  // Compute a critical path for the DAG.
+  // Find the node at the bottom of the critical path.
   SUnit *Max = 0;
-  std::vector<SDep *> CriticalPath(SUnits.size());
-  for (ScheduleDAGTopologicalSort::const_iterator I = Topo.begin(),
-       E = Topo.end(); I != E; ++I) {
-    SUnit *SU = &SUnits[*I];
-    for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
-         P != PE; ++P) {
-      SUnit *PredSU = P->getSUnit();
-      // This assumes that there's no delay for reusing registers.
-      unsigned PredLatency = P->getLatency();
-      unsigned PredTotalLatency = PredSU->CycleBound + PredLatency;
-      if (SU->CycleBound < PredTotalLatency ||
-          (SU->CycleBound == PredTotalLatency &&
-           P->getKind() == SDep::Anti)) {
-        SU->CycleBound = PredTotalLatency;
-        CriticalPath[*I] = &*P;
-      }
-    }
-    // Keep track of the node at the end of the critical path.
-    if (!Max || SU->CycleBound + SU->Latency > Max->CycleBound + Max->Latency)
+  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
+    SUnit *SU = &SUnits[i];
+    if (!Max || SU->getDepth() + SU->Latency > Max->getDepth() + Max->Latency)
       Max = SU;
   }
 
   DOUT << "Critical path has total latency "
-       << (Max ? Max->CycleBound + Max->Latency : 0) << "\n";
+       << (Max ? Max->getDepth() + Max->Latency : 0) << "\n";
 
   // Walk the critical path from the bottom up. Collect all anti-dependence
   // edges on the critical path. Skip anti-dependencies between SUnits that
@@ -195,9 +214,9 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   // the anti-dependencies in an instruction in order to be effective.
   BitVector AllocatableSet = TRI->getAllocatableSet(*MF);
   DenseMap<MachineInstr *, unsigned> CriticalAntiDeps;
-  for (SUnit *SU = Max; CriticalPath[SU->NodeNum];
-       SU = CriticalPath[SU->NodeNum]->getSUnit()) {
-    SDep *Edge = CriticalPath[SU->NodeNum];
+  SUnit *SU = Max;
+  for (SDep *Edge = CriticalPathStep(SU); Edge;
+       Edge = CriticalPathStep(SU = Edge->getSUnit())) {
     SUnit *NextSU = Edge->getSUnit();
     // Only consider anti-dependence edges.
     if (Edge->getKind() != SDep::Anti)
@@ -494,6 +513,11 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         Classes[SubregReg] = 0;
         RegRefs.erase(SubregReg);
       }
+      for (const unsigned *Super = TRI->getSuperRegisters(Reg);
+           *Super; ++Super) {
+        unsigned SuperReg = *Super;
+        Classes[SuperReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      }
     }
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
@@ -556,8 +580,7 @@ void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
   // Compute how many cycles it will be before this actually becomes
   // available.  This is the max of the start time of all predecessors plus
   // their latencies.
-  unsigned PredDoneCycle = SU->Cycle + SuccEdge->getLatency();
-  SuccSU->CycleBound = std::max(SuccSU->CycleBound, PredDoneCycle);
+  SuccSU->setDepthToAtLeast(SU->getDepth() + SuccEdge->getLatency());
   
   if (SuccSU->NumPredsLeft == 0) {
     PendingQueue.push_back(SuccSU);
@@ -572,7 +595,8 @@ void SchedulePostRATDList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   DEBUG(SU->dump(this));
   
   Sequence.push_back(SU);
-  SU->Cycle = CurCycle;
+  assert(CurCycle >= SU->getDepth() && "Node scheduled above its depth!");
+  SU->setDepthToAtLeast(CurCycle);
 
   // Top down: release successors.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
@@ -603,21 +627,21 @@ void SchedulePostRATDList::ListScheduleTopDown() {
   while (!AvailableQueue.empty() || !PendingQueue.empty()) {
     // Check to see if any of the pending instructions are ready to issue.  If
     // so, add them to the available queue.
+    unsigned MinDepth = ~0u;
     for (unsigned i = 0, e = PendingQueue.size(); i != e; ++i) {
-      if (PendingQueue[i]->CycleBound == CurCycle) {
+      if (PendingQueue[i]->getDepth() <= CurCycle) {
         AvailableQueue.push(PendingQueue[i]);
         PendingQueue[i]->isAvailable = true;
         PendingQueue[i] = PendingQueue.back();
         PendingQueue.pop_back();
         --i; --e;
-      } else {
-        assert(PendingQueue[i]->CycleBound > CurCycle && "Non-positive latency?");
-      }
+      } else if (PendingQueue[i]->getDepth() < MinDepth)
+        MinDepth = PendingQueue[i]->getDepth();
     }
     
     // If there are no instructions available, don't try to issue anything.
     if (AvailableQueue.empty()) {
-      ++CurCycle;
+      CurCycle = MinDepth != ~0u ? MinDepth : CurCycle + 1;
       continue;
     }
 

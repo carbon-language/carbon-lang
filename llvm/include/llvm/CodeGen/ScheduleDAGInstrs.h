@@ -18,10 +18,18 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 
 namespace llvm {
+  class MachineLoopInfo;
+  class MachineDominatorTree;
+
   class ScheduleDAGInstrs : public ScheduleDAG {
+    const MachineLoopInfo &MLI;
+    const MachineDominatorTree &MDT;
+
   public:
     ScheduleDAGInstrs(MachineBasicBlock *bb,
-                      const TargetMachine &tm);
+                      const TargetMachine &tm,
+                      const MachineLoopInfo &mli,
+                      const MachineDominatorTree &mdt);
 
     virtual ~ScheduleDAGInstrs() {}
 

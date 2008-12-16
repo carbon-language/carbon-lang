@@ -154,6 +154,10 @@ private:
       Topo.InitDAGTopologicalSorting();
     return NewNode;
   }
+
+  /// ForceUnitLatencies - Return true, since register-pressure-reducing
+  /// scheduling doesn't need actual latency information.
+  bool ForceUnitLatencies() const { return true; }
 };
 }  // end anonymous namespace
 
@@ -171,8 +175,6 @@ void ScheduleDAGRRList::Schedule() {
 
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
-  CalculateDepths();
-  CalculateHeights();
   Topo.InitDAGTopologicalSorting();
 
   AvailableQueue->initNodes(SUnits);
@@ -272,7 +274,8 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
   DEBUG(SU->dump(this));
 
-  SU->Cycle = CurCycle;
+  assert(CurCycle >= SU->getHeight() && "Node scheduled below its height!");
+  SU->setHeightToAtLeast(CurCycle);
   Sequence.push_back(SU);
 
   // Bottom up: release predecessors
@@ -296,7 +299,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->isAssignedRegDep()) {
-      if (LiveRegCycles[I->getReg()] == I->getSUnit()->Cycle) {
+      if (LiveRegCycles[I->getReg()] == I->getSUnit()->getHeight()) {
         assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
         assert(LiveRegDefs[I->getReg()] == SU &&
                "Physical register dependency violated?");
@@ -328,7 +331,7 @@ void ScheduleDAGRRList::CapturePred(SDep *PredEdge) {
 /// UnscheduleNodeBottomUp - Remove the node from the schedule, update its and
 /// its predecessor states to reflect the change.
 void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
-  DOUT << "*** Unscheduling [" << SU->Cycle << "]: ";
+  DOUT << "*** Unscheduling [" << SU->getHeight() << "]: ";
   DEBUG(SU->dump(this));
 
   AvailableQueue->UnscheduledNode(SU);
@@ -336,7 +339,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     CapturePred(&*I);
-    if (I->isAssignedRegDep() && SU->Cycle == LiveRegCycles[I->getReg()]) {
+    if (I->isAssignedRegDep() && SU->getHeight() == LiveRegCycles[I->getReg()]) {
       assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
       assert(LiveRegDefs[I->getReg()] == I->getSUnit() &&
              "Physical register dependency violated?");
@@ -353,12 +356,12 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
         LiveRegDefs[I->getReg()] = SU;
         ++NumLiveRegs;
       }
-      if (I->getSUnit()->Cycle < LiveRegCycles[I->getReg()])
-        LiveRegCycles[I->getReg()] = I->getSUnit()->Cycle;
+      if (I->getSUnit()->getHeight() < LiveRegCycles[I->getReg()])
+        LiveRegCycles[I->getReg()] = I->getSUnit()->getHeight();
     }
   }
 
-  SU->Cycle = 0;
+  SU->setHeightDirty();
   SU->isScheduled = false;
   SU->isAvailable = true;
   AvailableQueue->push(SU);
@@ -443,9 +446,6 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     } else {
       LoadSU = CreateNewSUnit(LoadNode);
       LoadNode->setNodeId(LoadSU->NodeNum);
-
-      LoadSU->Depth = SU->Depth;
-      LoadSU->Height = SU->Height;
       ComputeLatency(LoadSU);
     }
 
@@ -462,9 +462,6 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     }
     if (TID.isCommutable())
       NewSU->isCommutable = true;
-    // FIXME: Calculate height / depth and propagate the changes?
-    NewSU->Depth = SU->Depth;
-    NewSU->Height = SU->Height;
     ComputeLatency(NewSU);
 
     SDep ChainPred;
@@ -548,10 +545,8 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   // New SUnit has the exact same predecessors.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I)
-    if (!I->isArtificial()) {
+    if (!I->isArtificial())
       AddPred(NewSU, *I);
-      NewSU->Depth = std::max(NewSU->Depth, I->getSUnit()->Depth+1);
-    }
 
   // Only copy scheduled successors. Cut them from old node's successor
   // list and move them over.
@@ -562,7 +557,6 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
       continue;
     SUnit *SuccSU = I->getSUnit();
     if (SuccSU->isScheduled) {
-      NewSU->Height = std::max(NewSU->Height, SuccSU->Height+1);
       SDep D = *I;
       D.setSUnit(NewSU);
       AddPred(SuccSU, D);
@@ -570,9 +564,8 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
       DelDeps.push_back(std::make_pair(SuccSU, D));
     }
   }
-  for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
+  for (unsigned i = 0, e = DelDeps.size(); i != e; ++i)
     RemovePred(DelDeps[i].first, DelDeps[i].second);
-  }
 
   AvailableQueue->updateNode(SU);
   AvailableQueue->addNode(NewSU);
@@ -590,8 +583,6 @@ void ScheduleDAGRRList::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
   SUnit *CopyFromSU = CreateNewSUnit(NULL);
   CopyFromSU->CopySrcRC = SrcRC;
   CopyFromSU->CopyDstRC = DestRC;
-  CopyFromSU->Depth = SU->Depth;
-  CopyFromSU->Height = SU->Height;
 
   SUnit *CopyToSU = CreateNewSUnit(NULL);
   CopyToSU->CopySrcRC = DestRC;
@@ -870,7 +861,8 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
   DEBUG(SU->dump(this));
 
-  SU->Cycle = CurCycle;
+  assert(CurCycle >= SU->getDepth() && "Node scheduled above its depth!");
+  SU->setDepthToAtLeast(CurCycle);
   Sequence.push_back(SU);
 
   // Top down: release successors
@@ -1107,19 +1099,19 @@ namespace {
 /// closestSucc - Returns the scheduled cycle of the successor which is
 /// closet to the current cycle.
 static unsigned closestSucc(const SUnit *SU) {
-  unsigned MaxCycle = 0;
+  unsigned MaxHeight = 0;
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    unsigned Cycle = I->getSUnit()->Cycle;
+    unsigned Height = I->getSUnit()->getHeight();
     // If there are bunch of CopyToRegs stacked up, they should be considered
     // to be at the same position.
     if (I->getSUnit()->getNode() &&
         I->getSUnit()->getNode()->getOpcode() == ISD::CopyToReg)
-      Cycle = closestSucc(I->getSUnit())+1;
-    if (Cycle > MaxCycle)
-      MaxCycle = Cycle;
+      Height = closestSucc(I->getSUnit())+1;
+    if (Height > MaxHeight)
+      MaxHeight = Height;
   }
-  return MaxCycle;
+  return MaxHeight;
 }
 
 /// calcMaxScratches - Returns an cost estimate of the worse case requirement
@@ -1182,11 +1174,11 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (LScratch != RScratch)
     return LScratch > RScratch;
 
-  if (left->Height != right->Height)
-    return left->Height > right->Height;
+  if (left->getHeight() != right->getHeight())
+    return left->getHeight() > right->getHeight();
   
-  if (left->Depth != right->Depth)
-    return left->Depth < right->Depth;
+  if (left->getDepth() != right->getDepth())
+    return left->getDepth() < right->getDepth();
 
   assert(left->NodeQueueId && right->NodeQueueId && 
          "NodeQueueId cannot be zero");
@@ -1294,7 +1286,8 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
           continue;
         // Be conservative. Ignore if nodes aren't at roughly the same
         // depth and height.
-        if (SuccSU->Height < SU->Height && (SU->Height - SuccSU->Height) > 1)
+        if (SuccSU->getHeight() < SU->getHeight() &&
+            (SU->getHeight() - SuccSU->getHeight()) > 1)
           continue;
         if (!SuccSU->getNode() || !SuccSU->getNode()->isMachineOpcode())
           continue;
@@ -1384,8 +1377,8 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (LPriority+LBonus != RPriority+RBonus)
     return LPriority+LBonus < RPriority+RBonus;
 
-  if (left->Depth != right->Depth)
-    return left->Depth < right->Depth;
+  if (left->getDepth() != right->getDepth())
+    return left->getDepth() < right->getDepth();
 
   if (left->NumSuccsLeft != right->NumSuccsLeft)
     return left->NumSuccsLeft > right->NumSuccsLeft;

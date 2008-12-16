@@ -33,115 +33,6 @@ ScheduleDAG::ScheduleDAG(SelectionDAG *dag, MachineBasicBlock *bb,
 
 ScheduleDAG::~ScheduleDAG() {}
 
-/// CalculateDepths - compute depths using algorithms for the longest
-/// paths in the DAG
-void ScheduleDAG::CalculateDepths() {
-  unsigned DAGSize = SUnits.size();
-  std::vector<SUnit*> WorkList;
-  WorkList.reserve(DAGSize);
-
-  // Initialize the data structures
-  for (unsigned i = 0, e = DAGSize; i != e; ++i) {
-    SUnit *SU = &SUnits[i];
-    unsigned Degree = SU->Preds.size();
-    // Temporarily use the Depth field as scratch space for the degree count.
-    SU->Depth = Degree;
-
-    // Is it a node without dependencies?
-    if (Degree == 0) {
-      assert(SU->Preds.empty() && "SUnit should have no predecessors");
-      // Collect leaf nodes
-      WorkList.push_back(SU);
-    }
-  }
-
-  // Process nodes in the topological order
-  while (!WorkList.empty()) {
-    SUnit *SU = WorkList.back();
-    WorkList.pop_back();
-    unsigned SUDepth = 0;
-
-    // Use dynamic programming:
-    // When current node is being processed, all of its dependencies
-    // are already processed.
-    // So, just iterate over all predecessors and take the longest path
-    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-         I != E; ++I) {
-      unsigned PredDepth = I->getSUnit()->Depth;
-      if (PredDepth+1 > SUDepth) {
-        SUDepth = PredDepth + 1;
-      }
-    }
-
-    SU->Depth = SUDepth;
-
-    // Update degrees of all nodes depending on current SUnit
-    for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-         I != E; ++I) {
-      SUnit *SU = I->getSUnit();
-      if (!--SU->Depth)
-        // If all dependencies of the node are processed already,
-        // then the longest path for the node can be computed now
-        WorkList.push_back(SU);
-    }
-  }
-}
-
-/// CalculateHeights - compute heights using algorithms for the longest
-/// paths in the DAG
-void ScheduleDAG::CalculateHeights() {
-  unsigned DAGSize = SUnits.size();
-  std::vector<SUnit*> WorkList;
-  WorkList.reserve(DAGSize);
-
-  // Initialize the data structures
-  for (unsigned i = 0, e = DAGSize; i != e; ++i) {
-    SUnit *SU = &SUnits[i];
-    unsigned Degree = SU->Succs.size();
-    // Temporarily use the Height field as scratch space for the degree count.
-    SU->Height = Degree;
-
-    // Is it a node without dependencies?
-    if (Degree == 0) {
-      assert(SU->Succs.empty() && "Something wrong");
-      assert(WorkList.empty() && "Should be empty");
-      // Collect leaf nodes
-      WorkList.push_back(SU);
-    }
-  }
-
-  // Process nodes in the topological order
-  while (!WorkList.empty()) {
-    SUnit *SU = WorkList.back();
-    WorkList.pop_back();
-    unsigned SUHeight = 0;
-
-    // Use dynamic programming:
-    // When current node is being processed, all of its dependencies
-    // are already processed.
-    // So, just iterate over all successors and take the longest path
-    for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-         I != E; ++I) {
-      unsigned SuccHeight = I->getSUnit()->Height;
-      if (SuccHeight+1 > SUHeight) {
-        SUHeight = SuccHeight + 1;
-      }
-    }
-
-    SU->Height = SUHeight;
-
-    // Update degrees of all nodes depending on current SUnit
-    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-         I != E; ++I) {
-      SUnit *SU = I->getSUnit();
-      if (!--SU->Height)
-        // If all dependencies of the node are processed already,
-        // then the longest path for the node can be computed now
-        WorkList.push_back(SU);
-    }
-  }
-}
-
 /// dump - dump the schedule.
 void ScheduleDAG::dumpSchedule() const {
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
@@ -171,13 +62,10 @@ void SUnit::addPred(const SDep &D) {
   for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
     if (Preds[i] == D)
       return;
-  // Add a pred to this SUnit.
-  Preds.push_back(D);
   // Now add a corresponding succ to N.
   SDep P = D;
   P.setSUnit(this);
   SUnit *N = D.getSUnit();
-  N->Succs.push_back(P);
   // Update the bookkeeping.
   if (D.getKind() == SDep::Data) {
     ++NumPreds;
@@ -187,6 +75,10 @@ void SUnit::addPred(const SDep &D) {
     ++NumPredsLeft;
   if (!isScheduled)
     ++N->NumSuccsLeft;
+  N->Succs.push_back(P);
+  Preds.push_back(D);
+  this->setDepthDirty();
+  N->setHeightDirty();
 }
 
 /// removePred - This removes the specified edge as a pred of the current
@@ -220,8 +112,126 @@ void SUnit::removePred(const SDep &D) {
         --NumPredsLeft;
       if (!isScheduled)
         --N->NumSuccsLeft;
+      this->setDepthDirty();
+      N->setHeightDirty();
       return;
     }
+}
+
+void SUnit::setDepthDirty() {
+  SmallVector<SUnit*, 8> WorkList;
+  WorkList.push_back(this);
+  while (!WorkList.empty()) {
+    SUnit *SU = WorkList.back();
+    WorkList.pop_back();
+    if (!SU->isDepthCurrent) continue;
+    SU->isDepthCurrent = false;
+    for (SUnit::const_succ_iterator I = Succs.begin(),
+         E = Succs.end(); I != E; ++I)
+      WorkList.push_back(I->getSUnit());
+  }
+}
+
+void SUnit::setHeightDirty() {
+  SmallVector<SUnit*, 8> WorkList;
+  WorkList.push_back(this);
+  while (!WorkList.empty()) {
+    SUnit *SU = WorkList.back();
+    WorkList.pop_back();
+    if (!SU->isHeightCurrent) continue;
+    SU->isHeightCurrent = false;
+    for (SUnit::const_pred_iterator I = Preds.begin(),
+         E = Preds.end(); I != E; ++I)
+      WorkList.push_back(I->getSUnit());
+  }
+}
+
+/// setDepthToAtLeast - Update this node's successors to reflect the
+/// fact that this node's depth just increased.
+///
+void SUnit::setDepthToAtLeast(unsigned NewDepth) {
+  if (NewDepth <= Depth)
+    return;
+  setDepthDirty();
+  Depth = NewDepth;
+  isDepthCurrent = true;
+}
+
+/// setHeightToAtLeast - Update this node's predecessors to reflect the
+/// fact that this node's height just increased.
+///
+void SUnit::setHeightToAtLeast(unsigned NewHeight) {
+  if (NewHeight <= Height)
+    return;
+  setHeightDirty();
+  Height = NewHeight;
+  isHeightCurrent = true;
+}
+
+/// ComputeDepth - Calculate the maximal path from the node to the exit.
+///
+void SUnit::ComputeDepth() {
+  SmallVector<SUnit*, 8> WorkList;
+  WorkList.push_back(this);
+  while (!WorkList.empty()) {
+    SUnit *Cur = WorkList.back();
+
+    bool Done = true;
+    unsigned MaxPredDepth = 0;
+    for (SUnit::const_pred_iterator I = Cur->Preds.begin(),
+         E = Cur->Preds.end(); I != E; ++I) {
+      SUnit *PredSU = I->getSUnit();
+      if (PredSU->isDepthCurrent)
+        MaxPredDepth = std::max(MaxPredDepth,
+                                PredSU->Depth + I->getLatency());
+      else {
+        Done = false;
+        WorkList.push_back(PredSU);
+      }
+    }
+
+    if (Done) {
+      WorkList.pop_back();
+      if (MaxPredDepth != Cur->Depth) {
+        Cur->setDepthDirty();
+        Cur->Depth = MaxPredDepth;
+      }
+      Cur->isDepthCurrent = true;
+    }
+  }
+}
+
+/// ComputeHeight - Calculate the maximal path from the node to the entry.
+///
+void SUnit::ComputeHeight() {
+  SmallVector<SUnit*, 8> WorkList;
+  WorkList.push_back(this);
+  while (!WorkList.empty()) {
+    SUnit *Cur = WorkList.back();
+
+    bool Done = true;
+    unsigned MaxSuccHeight = 0;
+    for (SUnit::const_succ_iterator I = Cur->Succs.begin(),
+         E = Cur->Succs.end(); I != E; ++I) {
+      SUnit *SuccSU = I->getSUnit();
+      if (SuccSU->isHeightCurrent)
+        MaxSuccHeight = std::max(MaxSuccHeight,
+                                 SuccSU->Height + I->getLatency());
+      else {
+        Done = false;
+        WorkList.push_back(SuccSU);
+      }
+    }
+
+    if (Done) {
+      WorkList.pop_back();
+      if (MaxSuccHeight != Cur->Height) {
+        Cur->setHeightDirty();
+        Cur->Height = MaxSuccHeight;
+      }
+      Cur->isHeightCurrent = true;
+    }
+  }
 }
 
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
@@ -299,11 +309,14 @@ void ScheduleDAG::VerifySchedule(bool isBottomUp) {
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
-    if (SUnits[i].isScheduled && SUnits[i].Cycle > (unsigned)INT_MAX) {
+    if (SUnits[i].isScheduled &&
+        (isBottomUp ? SUnits[i].getHeight() : SUnits[i].getHeight()) >
+          unsigned(INT_MAX)) {
       if (!AnyNotSched)
         cerr << "*** Scheduling failed! ***\n";
       SUnits[i].dump(this);
-      cerr << "has an unexpected Cycle value!\n";
+      cerr << "has an unexpected "
+           << (isBottomUp ? "Height" : "Depth") << " value!\n";
       AnyNotSched = true;
     }
     if (isBottomUp) {

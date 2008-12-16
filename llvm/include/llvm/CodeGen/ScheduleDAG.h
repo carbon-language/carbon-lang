@@ -242,10 +242,12 @@ namespace llvm {
     bool isPending        : 1;          // True once pending.
     bool isAvailable      : 1;          // True once available.
     bool isScheduled      : 1;          // True once scheduled.
-    unsigned CycleBound;                // Upper/lower cycle to be scheduled at.
-    unsigned Cycle;                     // Once scheduled, the cycle of the op.
-    unsigned Depth;                     // Node depth;
-    unsigned Height;                    // Node height;
+  private:
+    bool isDepthCurrent   : 1;          // True if Depth is current.
+    bool isHeightCurrent  : 1;          // True if Height is current.
+    unsigned Depth;                     // Node depth.
+    unsigned Height;                    // Node height.
+  public:
     const TargetRegisterClass *CopyDstRC; // Is a special copy node if not null.
     const TargetRegisterClass *CopySrcRC;
     
@@ -256,7 +258,8 @@ namespace llvm {
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        CycleBound(0), Cycle(~0u), Depth(0), Height(0),
+        isDepthCurrent(false), isHeightCurrent(false),
+        Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
     /// SUnit - Construct an SUnit for post-regalloc scheduling to represent
@@ -266,7 +269,8 @@ namespace llvm {
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        CycleBound(0), Cycle(~0u), Depth(0), Height(0),
+        isDepthCurrent(false), isHeightCurrent(false),
+        Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
     /// setNode - Assign the representative SDNode for this SUnit.
@@ -307,6 +311,41 @@ namespace llvm {
     /// the specified node.
     void removePred(const SDep &D);
 
+    /// getHeight - Return the height of this node, which is the length of the
+    /// maximum path down to any node with has no successors.
+    unsigned getDepth() const {
+      if (!isDepthCurrent) const_cast<SUnit *>(this)->ComputeDepth();
+      return Depth;
+    }
+
+    /// getHeight - Return the height of this node, which is the length of the
+    /// maximum path up to any node with has no predecessors.
+    unsigned getHeight() const {
+      if (!isHeightCurrent) const_cast<SUnit *>(this)->ComputeHeight();
+      return Height;
+    }
+
+    /// setDepthToAtLeast - If NewDepth is greater than this node's depth
+    /// value, set it to be the new depth value. This also recursively
+    /// marks successor nodes dirty.
+    void setDepthToAtLeast(unsigned NewDepth);
+
+    /// setDepthToAtLeast - If NewDepth is greater than this node's depth
+    /// value, set it to be the new height value. This also recursively
+    /// marks predecessor nodes dirty.
+    void setHeightToAtLeast(unsigned NewHeight);
+
+    /// setDepthDirty - Set a flag in this node to indicate that its
+    /// stored Depth value will require recomputation the next time
+    /// getDepth() is called.
+    void setDepthDirty();
+
+    /// setHeightDirty - Set a flag in this node to indicate that its
+    /// stored Height value will require recomputation the next time
+    /// getHeight() is called.
+    void setHeightDirty();
+
+    /// isPred - Test if node N is a predecessor of this node.
     bool isPred(SUnit *N) {
       for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
         if (Preds[i].getSUnit() == N)
@@ -314,6 +353,7 @@ namespace llvm {
       return false;
     }
     
+    /// isSucc - Test if node N is a successor of this node.
     bool isSucc(SUnit *N) {
       for (unsigned i = 0, e = (unsigned)Succs.size(); i != e; ++i)
         if (Succs[i].getSUnit() == N)
@@ -324,6 +364,10 @@ namespace llvm {
     void dump(const ScheduleDAG *G) const;
     void dumpAll(const ScheduleDAG *G) const;
     void print(raw_ostream &O, const ScheduleDAG *G) const;
+
+  private:
+    void ComputeDepth();
+    void ComputeHeight();
   };
 
   //===--------------------------------------------------------------------===//
@@ -397,12 +441,7 @@ namespace llvm {
 
     /// ComputeLatency - Compute node latency.
     ///
-    virtual void ComputeLatency(SUnit *SU) { SU->Latency = 1; }
-
-    /// CalculateDepths, CalculateHeights - Calculate node depth / height.
-    ///
-    void CalculateDepths();
-    void CalculateHeights();
+    virtual void ComputeLatency(SUnit *SU) = 0;
 
   protected:
     /// EmitNoop - Emit a noop instruction.
@@ -439,6 +478,11 @@ namespace llvm {
     void AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO);
 
     void EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
+
+    /// ForceUnitLatencies - Return true if all scheduling edges should be given a
+    /// latency value of one.  The default is to return false; schedulers may
+    /// override this as needed.
+    virtual bool ForceUnitLatencies() const { return false; }
 
   private:
     /// EmitLiveInCopy - Emit a copy for a live in physical register. If the

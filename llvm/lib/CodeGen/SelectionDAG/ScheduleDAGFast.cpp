@@ -99,6 +99,9 @@ private:
                                   SmallVector<SUnit*, 2>&);
   bool DelayForLiveRegsBottomUp(SUnit*, SmallVector<unsigned, 4>&);
   void ListScheduleBottomUp();
+
+  /// ForceUnitLatencies - The fast scheduler doesn't care about real latencies.
+  bool ForceUnitLatencies() const { return true; }
 };
 }  // end anonymous namespace
 
@@ -153,7 +156,8 @@ void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   DOUT << "*** Scheduling [" << CurCycle << "]: ";
   DEBUG(SU->dump(this));
 
-  SU->Cycle = CurCycle;
+  assert(CurCycle >= SU->getHeight() && "Node scheduled below its height!");
+  SU->setHeightToAtLeast(CurCycle);
   Sequence.push_back(SU);
 
   // Bottom up: release predecessors
@@ -177,7 +181,7 @@ void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->isAssignedRegDep()) {
-      if (LiveRegCycles[I->getReg()] == I->getSUnit()->Cycle) {
+      if (LiveRegCycles[I->getReg()] == I->getSUnit()->getHeight()) {
         assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
         assert(LiveRegDefs[I->getReg()] == SU &&
                "Physical register dependency violated?");
@@ -247,9 +251,6 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     }
     if (TID.isCommutable())
       NewSU->isCommutable = true;
-    // FIXME: Calculate height / depth and propagate the changes?
-    NewSU->Depth = SU->Depth;
-    NewSU->Height = SU->Height;
 
     // LoadNode may already exist. This can happen when there is another
     // load from the same location and producing the same type of value
@@ -262,9 +263,6 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     } else {
       LoadSU = NewSUnit(LoadNode);
       LoadNode->setNodeId(LoadSU->NodeNum);
-
-      LoadSU->Depth = SU->Depth;
-      LoadSU->Height = SU->Height;
     }
 
     SDep ChainPred;
@@ -344,10 +342,8 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   // New SUnit has the exact same predecessors.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I)
-    if (!I->isArtificial()) {
+    if (!I->isArtificial())
       AddPred(NewSU, *I);
-      NewSU->Depth = std::max(NewSU->Depth, I->getSUnit()->Depth+1);
-    }
 
   // Only copy scheduled successors. Cut them from old node's successor
   // list and move them over.
@@ -358,7 +354,6 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
       continue;
     SUnit *SuccSU = I->getSUnit();
     if (SuccSU->isScheduled) {
-      NewSU->Height = std::max(NewSU->Height, SuccSU->Height+1);
       SDep D = *I;
       D.setSUnit(NewSU);
       AddPred(SuccSU, D);
