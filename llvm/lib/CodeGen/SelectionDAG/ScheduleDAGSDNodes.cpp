@@ -196,12 +196,6 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
   
   // Compute the latency for the node.  We use the sum of the latencies for
   // all nodes flagged together into this SUnit.
-  if (InstrItins.isEmpty()) {
-    // No latency information.
-    SU->Latency = 1;
-    return;
-  }
-
   SU->Latency = 0;
   bool SawMachineOpcode = false;
   for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
@@ -210,10 +204,6 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
       SU->Latency +=
         InstrItins.getLatency(TII->get(N->getMachineOpcode()).getSchedClass());
     }
-
-  // Ensure that CopyToReg and similar nodes have a non-zero latency.
-  if (!SawMachineOpcode)
-    SU->Latency = 1;
 }
 
 /// CountResults - The results of target nodes have register or immediate
