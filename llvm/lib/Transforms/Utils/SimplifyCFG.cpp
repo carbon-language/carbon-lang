@@ -386,6 +386,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
         // We can hoist loads that are non-volatile and obviously cannot trap.
         if (cast<LoadInst>(I)->isVolatile())
           return false;
+        // FIXME: A computation of a constant can trap!
         if (!isa<AllocaInst>(I->getOperand(0)) &&
             !isa<Constant>(I->getOperand(0)))
           return false;
@@ -492,6 +493,19 @@ static bool GatherValueComparisons(Instruction *Cond, Value *&CompVal,
     return false;
   }
   return false;
+}
+
+static void EraseTerminatorInstAndDCECond(TerminatorInst *TI) {
+  Instruction* Cond = 0;
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+    Cond = dyn_cast<Instruction>(SI->getCondition());
+  } else if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+    if (BI->isConditional())
+      Cond = dyn_cast<Instruction>(BI->getCondition());
+  }
+
+  TI->eraseFromParent();
+  if (Cond) RecursivelyDeleteTriviallyDeadInstructions(Cond);
 }
 
 /// isValueEqualityComparison - Return true if the specified terminator checks
@@ -617,11 +631,10 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
     // PredCases.  If there are any cases in ThisCases that are in PredCases, we
     // can simplify TI.
     if (ValuesOverlap(PredCases, ThisCases)) {
-      if (BranchInst *BTI = dyn_cast<BranchInst>(TI)) {
+      if (isa<BranchInst>(TI)) {
         // Okay, one of the successors of this condbr is dead.  Convert it to a
         // uncond br.
         assert(ThisCases.size() == 1 && "Branch can only have one case!");
-        Value *Cond = BTI->getCondition();
         // Insert the new branch.
         Instruction *NI = BranchInst::Create(ThisDef, TI);
 
@@ -631,10 +644,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
         DOUT << "Threading pred instr: " << *Pred->getTerminator()
              << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n";
 
-        TI->eraseFromParent();   // Nuke the old one.
-        // If condition is now dead, nuke it.
-        if (Instruction *CondI = dyn_cast<Instruction>(Cond))
-          RecursivelyDeleteTriviallyDeadInstructions(CondI);
+        EraseTerminatorInstAndDCECond(TI);
         return true;
 
       } else {
@@ -697,12 +707,8 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
 
     DOUT << "Threading pred instr: " << *Pred->getTerminator()
          << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n";
-    Instruction *Cond = 0;
-    if (BranchInst *BI = dyn_cast<BranchInst>(TI))
-      Cond = dyn_cast<Instruction>(BI->getCondition());
-    TI->eraseFromParent();   // Nuke the old one.
 
-    if (Cond) RecursivelyDeleteTriviallyDeadInstructions(Cond);
+    EraseTerminatorInstAndDCECond(TI);
     return true;
   }
   return false;
@@ -811,14 +817,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
       for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
         NewSI->addCase(PredCases[i].first, PredCases[i].second);
 
-      Instruction *DeadCond = 0;
-      if (BranchInst *BI = dyn_cast<BranchInst>(PTI))
-        // If PTI is a branch, remember the condition.
-        DeadCond = dyn_cast<Instruction>(BI->getCondition());
-      Pred->getInstList().erase(PTI);
-
-      // If the condition is dead now, remove the instruction tree.
-      if (DeadCond) RecursivelyDeleteTriviallyDeadInstructions(DeadCond);
+      EraseTerminatorInstAndDCECond(PTI);
 
       // Okay, last check.  If BB is still a successor of PSI, then we must
       // have an infinite loop case.  If so, add an infinitely looping block
@@ -921,7 +920,7 @@ HoistTerminator:
   for (succ_iterator SI = succ_begin(BB1), E = succ_end(BB1); SI != E; ++SI)
     AddPredecessorToBlock(*SI, BIParent, BB1);
 
-  BI->eraseFromParent();
+  EraseTerminatorInstAndDCECond(BI);
   return true;
 }
 
@@ -1331,7 +1330,7 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
     TrueSucc->removePredecessor(BI->getParent());
     FalseSucc->removePredecessor(BI->getParent());
     ReturnInst::Create(0, BI);
-    BI->eraseFromParent();
+    EraseTerminatorInstAndDCECond(BI);
     return true;
   }
     
@@ -1386,10 +1385,8 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
        << "\n  " << *BI << "NewRet = " << *RI
        << "TRUEBLOCK: " << *TrueSucc << "FALSEBLOCK: "<< *FalseSucc;
       
-  BI->eraseFromParent();
-  
-  if (Instruction *BrCondI = dyn_cast<Instruction>(BrCond))
-    RecursivelyDeleteTriviallyDeadInstructions(BrCondI);
+  EraseTerminatorInstAndDCECond(BI);
+
   return true;
 }
 
@@ -1910,10 +1907,10 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           } else {
             if (BI->getSuccessor(0) == BB) {
               BranchInst::Create(BI->getSuccessor(1), BI);
-              BI->eraseFromParent();
+              EraseTerminatorInstAndDCECond(BI);
             } else if (BI->getSuccessor(1) == BB) {
               BranchInst::Create(BI->getSuccessor(0), BI);
-              BI->eraseFromParent();
+              EraseTerminatorInstAndDCECond(BI);
               Changed = true;
             }
           }
@@ -2086,11 +2083,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           }
 
           // Erase the old branch instruction.
-          (*PI)->getInstList().erase(BI);
-
-          // Erase the potentially condition tree that was used to computed the
-          // branch condition.
-          RecursivelyDeleteTriviallyDeadInstructions(Cond);
+          EraseTerminatorInstAndDCECond(BI);
           return true;
         }
       }
