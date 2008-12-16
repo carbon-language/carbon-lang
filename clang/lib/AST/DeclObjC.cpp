@@ -345,7 +345,8 @@ void ObjCInterfaceDecl::CollectObjCIvars(std::vector<FieldDecl*> &Fields) {
   for (ObjCInterfaceDecl::ivar_iterator I = ivar_begin(),
        E = ivar_end(); I != E; ++I) {
     ObjCIvarDecl *IVDecl = (*I);
-    Fields.push_back(cast<FieldDecl>(IVDecl));
+    if (!IVDecl->isInvalidDecl())
+      Fields.push_back(cast<FieldDecl>(IVDecl));
   }
 }
   
@@ -390,7 +391,8 @@ void ObjCInterfaceDecl::addRecordToClass(ASTContext &Context)
   /// FIXME! Can do collection of ivars and adding to the record while
   /// doing it.
   for (unsigned int i = 0; i != RecFields.size(); i++) {
-    FieldDecl *Field =  FieldDecl::Create(Context, RD, SourceLocation(), 
+    FieldDecl *Field =  FieldDecl::Create(Context, RD, 
+                                          RecFields[i]->getLocation(), 
                                           RecFields[i]->getIdentifier(),
                                           RecFields[i]->getType(), 
                                           RecFields[i]->getBitWidth(), false, 0);
