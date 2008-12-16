@@ -225,6 +225,12 @@ void ScheduleDAGInstrs::ComputeLatency(SUnit *SU) {
   // all nodes flagged together into this SUnit.
   SU->Latency =
     InstrItins.getLatency(SU->getInstr()->getDesc().getSchedClass());
+
+  // Simplistic target-independent heuristic: assume that loads take
+  // extra time.
+  if (InstrItins.isEmpty())
+    if (SU->getInstr()->getDesc().mayLoad())
+      SU->Latency += 2;
 }
 
 void ScheduleDAGInstrs::dumpNode(const SUnit *SU) const {
