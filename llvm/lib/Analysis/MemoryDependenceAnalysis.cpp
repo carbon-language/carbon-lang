@@ -601,10 +601,30 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
   // If we have valid cached information for exactly the block we are
   // investigating, just return it with no recomputation.
   if (CacheInfo->first == BBSkipFirstBlockPair(StartBB, SkipFirstBlock)) {
+    // We have a fully cached result for this query then we can just return the
+    // cached results and populate the visited set.  However, we have to verify
+    // that we don't already have conflicting results for these blocks.  Check
+    // to ensure that if a block in the results set is in the visited set that
+    // it was for the same pointer query.
+    if (!Visited.empty()) {
+      for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end();
+           I != E; ++I) {
+        DenseMap<BasicBlock*, Value*>::iterator VI = Visited.find(I->first);
+        if (VI == Visited.end() || VI->second == Pointer) continue;
+        
+        // We have a pointer mismatch in a block.  Just return clobber, saying
+        // that something was clobbered in this result.  We could also do a
+        // non-fully cached query, but there is little point in doing this.
+        return true;
+      }
+    }
+    
     for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end();
-         I != E; ++I)
+         I != E; ++I) {
+      Visited.insert(std::make_pair(I->first, Pointer));
       if (!I->second.isNonLocal())
         Result.push_back(*I);
+    }
     ++NumCacheCompleteNonLocalPtr;
     return false;
   }
