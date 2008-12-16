@@ -169,6 +169,7 @@ namespace {
                             MachineBasicBlock* MBB,
                             int& SS,
                             SmallPtrSet<MachineInstr*, 4>& RefsInMBB);
+    void RenumberValno(VNInfo* VN);
   };
 } // end anonymous namespace
 
@@ -699,6 +700,10 @@ void PreAllocSplitting::RepairLiveInterval(LiveInterval* CurrLI,
   ShrinkWrapLiveInterval(ValNo, BarrierMBB, NULL, DefMI->getParent(), Visited,
                          Uses, UseMIs, UseMBBs);
 
+#if 0
+  if (!ValNo->hasPHIKill)
+    RenumberValno();
+#endif
   // FIXME: If ValNo->hasPHIKill is false, then renumber the val# by
   // the restore.
 
@@ -707,6 +712,49 @@ void PreAllocSplitting::RepairLiveInterval(LiveInterval* CurrLI,
   UpdateRegisterInterval(ValNo, LIs->getUseIndex(BarrierIdx)+1,
                          LIs->getDefIndex(RestoreIdx));
 }
+
+/// RenumberValno - Split the given valno out into a new vreg, allowing it to
+/// be allocated to a different register.  This function creates a new vreg,
+/// copies the valno and its live ranges over to the new vreg's interval,
+/// removes them from the old interval, and rewrites all uses and defs of
+/// the original reg to the new vreg within those ranges.
+void PreAllocSplitting::RenumberValno(VNInfo* VN) {
+  // Create the new vreg
+  unsigned NewVReg = MRI->createVirtualRegister(MRI->getRegClass(CurrLI->reg));
+  
+  // Copy over the valno and ranges
+  LiveInterval& NewLI = LIs->getOrCreateInterval(NewVReg);
+  VNInfo* NewVN = NewLI.getNextValue(VN->def, VN->copy, 
+                                     LIs->getVNInfoAllocator());
+  NewLI.copyValNumInfo(NewVN, VN);
+  NewLI.MergeValueInAsValue(*CurrLI, VN, NewVN);
+  
+  // Remove the valno from the old interval
+  CurrLI->removeValNo(VN);
+  
+  // Rewrite defs and uses.  This is done in two stages to avoid invalidating
+  // the reg_iterator.
+  SmallVector<std::pair<MachineInstr*, unsigned>, 8> OpsToChange;
+  
+  for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(CurrLI->reg),
+         E = MRI->reg_end(); I != E; ++I) {
+    MachineOperand& MO = I.getOperand();
+    unsigned InstrIdx = LIs->getInstructionIndex(&*I);
+    
+    if ((MO.isUse() && NewLI.liveAt(LiveIntervals::getUseIndex(InstrIdx))) ||
+        (MO.isDef() && NewLI.liveAt(LiveIntervals::getDefIndex(InstrIdx))))
+      OpsToChange.push_back(std::make_pair(&*I, I.getOperandNo()));
+  }
+  
+  for (SmallVector<std::pair<MachineInstr*, unsigned>, 8>::iterator I =
+       OpsToChange.begin(), E = OpsToChange.end(); I != E; ++I) {
+    MachineInstr* Inst = I->first;
+    unsigned OpIdx = I->second;
+    MachineOperand& MO = Inst->getOperand(OpIdx);
+    MO.setReg(NewVReg);
+  }
+}
+
 bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
                                       MachineInstr* DefMI,
                                       MachineBasicBlock::iterator RestorePt,
