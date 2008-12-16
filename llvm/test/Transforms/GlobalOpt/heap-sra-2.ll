@@ -6,7 +6,7 @@ target triple = "i386-apple-darwin7"
 	%struct.foo = type { i32, i32 }
 @X = internal global %struct.foo* null		; <%struct.foo**> [#uses=2]
 
-define internal fastcc void @bar(i32 %Size) nounwind noinline {
+define void @bar(i32 %Size) nounwind noinline {
 entry:
 	%0 = malloc [1000000 x %struct.foo]
         ;%.sub = bitcast [1000000 x %struct.foo]* %0 to %struct.foo*
@@ -15,7 +15,7 @@ entry:
 	ret void
 }
 
-define internal fastcc i32 @baz() nounwind readonly noinline {
+define i32 @baz() nounwind readonly noinline {
 bb1.thread:
 	%0 = load %struct.foo** @X, align 4		; <%struct.foo*> [#uses=1]
 	br label %bb1
@@ -34,9 +34,3 @@ bb2:		; preds = %bb1
 	ret i32 %3
 }
 
-define i32 @main(i32 %argc, i8** %argv) nounwind {
-entry:
-	tail call fastcc void @bar(i32 %argc) nounwind noinline
-	%0 = tail call fastcc i32 @baz() nounwind		; <i32> [#uses=1]
-	ret i32 %0
-}

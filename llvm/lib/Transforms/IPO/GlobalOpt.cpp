@@ -1055,7 +1055,7 @@ static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
             // Otherwise, we don't know what it is.
             return false;
           }
-          return true;
+          continue;
         }
         
         // Otherwise we don't know what this is, not ok.
