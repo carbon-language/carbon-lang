@@ -191,7 +191,7 @@ private:
     bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse,
                            const SCEVHandle *&CondStride);
     bool RequiresTypeConversion(const Type *Ty, const Type *NewTy);
-    unsigned CheckForIVReuse(bool, bool, const SCEVHandle&,
+    int64_t CheckForIVReuse(bool, bool, bool, const SCEVHandle&,
                              IVExpr&, const Type*,
                              const std::vector<BasedUser>& UsersToProcess);
     bool ValidStride(bool, int64_t,
@@ -200,6 +200,7 @@ private:
                               IVUsersOfOneStride &Uses,
                               Loop *L,
                               bool &AllUsesAreAddresses,
+                              bool &AllUsesAreOutsideLoop,
                               std::vector<BasedUser> &UsersToProcess);
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
@@ -522,7 +523,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
 
     if (AddUserToIVUsers) {
       IVUsersOfOneStride &StrideUses = IVUsesByStride[Stride];
-      if (StrideUses.Users.empty())     // First occurance of this stride?
+      if (StrideUses.Users.empty())     // First occurrence of this stride?
         StrideOrder.push_back(Stride);
       
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
@@ -1060,7 +1061,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
         UseTy = SI->getOperand(0)->getType();
       if (!fitsInAddressMode(FreeResult, UseTy, TLI, Result!=Zero)) {
         // FIXME:  could split up FreeResult into pieces here, some hoisted
-        // and some not.  Doesn't seem worth it for now.
+        // and some not.  There is no obvious advantage to this.
         Result = SE->getAddExpr(Result, FreeResult);
         FreeResult = Zero;
         break;
@@ -1166,9 +1167,10 @@ bool LoopStrengthReduce::RequiresTypeConversion(const Type *Ty1,
 /// of a previous stride and it is a legal value for the target addressing
 /// mode scale component and optional base reg. This allows the users of
 /// this stride to be rewritten as prev iv * factor. It returns 0 if no
-/// reuse is possible.
-unsigned LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
+/// reuse is possible.  Factors can be negative on same targets, e.g. ARM.
+int64_t LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                                 bool AllUsesAreAddresses,
+                                bool AllUsesAreOutsideLoop,
                                 const SCEVHandle &Stride, 
                                 IVExpr &IV, const Type *Ty,
                                 const std::vector<BasedUser>& UsersToProcess) {
@@ -1236,6 +1238,7 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
                                               IVUsersOfOneStride &Uses,
                                               Loop *L,
                                               bool &AllUsesAreAddresses,
+                                              bool &AllUsesAreOutsideLoop,
                                        std::vector<BasedUser> &UsersToProcess) {
   UsersToProcess.reserve(Uses.Users.size());
   for (unsigned i = 0, e = Uses.Users.size(); i != e; ++i) {
@@ -1275,7 +1278,7 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
       UsersToProcess[i].Base = 
         SE->getIntegerSCEV(0, UsersToProcess[i].Base->getType());
     } else {
-      
+
       // Addressing modes can be folded into loads and stores.  Be careful that
       // the store is through the expression, not of the expression though.
       bool isPHI = false;
@@ -1286,6 +1289,9 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
         ++NumPHI;
       }
 
+      // Not all uses are outside the loop.
+      AllUsesAreOutsideLoop = false; 
+     
       // If this use isn't an address, then not all uses are addresses.
       if (!isAddress && !isPHI)
         AllUsesAreAddresses = false;
@@ -1320,6 +1326,11 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // smaller-stride IV.
   bool AllUsesAreAddresses = true;
 
+  // Keep track if every use of a single stride is outside the loop.  If so,
+  // we want to be more aggressive about reusing a smaller-stride IV; a
+  // multiply outside the loop is better than another IV inside.  Well, usually.
+  bool AllUsesAreOutsideLoop = true;
+
   // Transform our list of users and offsets to a bit more complex table.  In
   // this new vector, each 'BasedUser' contains 'Base' the base of the
   // strided accessas well as the old information from Uses.  We progressively
@@ -1327,6 +1338,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // have the full access expression to rewrite the use.
   std::vector<BasedUser> UsersToProcess;
   SCEVHandle CommonExprs = CollectIVUsers(Stride, Uses, L, AllUsesAreAddresses,
+                                          AllUsesAreOutsideLoop,
                                           UsersToProcess);
 
   // If we managed to find some expressions in common, we'll need to carry
@@ -1345,8 +1357,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
                    SE->getIntegerSCEV(0, Type::Int32Ty),
                    0, 0);
-  unsigned RewriteFactor = 0;
+  int64_t RewriteFactor = 0;
   RewriteFactor = CheckForIVReuse(HaveCommonExprs, AllUsesAreAddresses,
+                                  AllUsesAreOutsideLoop,
                                   Stride, ReuseIV, CommonExprs->getType(),
                                   UsersToProcess);
   if (RewriteFactor != 0) {
@@ -1445,7 +1458,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // Get a base value.
     SCEVHandle Base = UsersToProcess[i].Base;
     
-    // Compact everything with this base to be consequtive with this one.
+    // Compact everything with this base to be consecutive with this one.
     for (unsigned j = i+1; j != e; ++j) {
       if (UsersToProcess[j].Base == Base) {
         std::swap(UsersToProcess[i+1], UsersToProcess[j]);
@@ -1508,7 +1521,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
       SCEVHandle RewriteExpr = SE->getUnknown(RewriteOp);
 
-      // If we had to insert new instrutions for RewriteOp, we have to
+      // If we had to insert new instructions for RewriteOp, we have to
       // consider that they may not have been able to end up immediately
       // next to RewriteOp, because non-PHI instructions may never precede
       // PHI instructions in a block. In this case, remember where the last
@@ -1535,7 +1548,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         if (!isa<ConstantInt>(CommonBaseV) ||
             !cast<ConstantInt>(CommonBaseV)->isZero())
           RewriteExpr = SE->getAddExpr(RewriteExpr,
-                                      SE->getUnknown(CommonBaseV));
+                                       SE->getUnknown(CommonBaseV));
       }
 
       // Now that we know what we need to do, insert code before User for the
@@ -1729,9 +1742,11 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       }
 
       bool AllUsesAreAddresses = true;
+      bool AllUsesAreOutsideLoop = true;
       std::vector<BasedUser> UsersToProcess;
       SCEVHandle CommonExprs = CollectIVUsers(SI->first, SI->second, L,
                                               AllUsesAreAddresses,
+                                              AllUsesAreOutsideLoop,
                                               UsersToProcess);
       // Avoid rewriting the compare instruction with an iv of new stride
       // if it's likely the new stride uses will be rewritten using the
@@ -2103,7 +2118,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   UIntPtrTy = TD->getIntPtrType();
   Changed = false;
 
-  // Find all uses of induction variables in this loop, and catagorize
+  // Find all uses of induction variables in this loop, and categorize
   // them by stride.  Start by finding all of the PHI nodes in the header for
   // this loop.  If they are induction variables, inspect their uses.
   SmallPtrSet<Instruction*,16> Processed;   // Don't reprocess instructions.
