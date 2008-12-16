@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | opt -analyze -scalar-evolution | grep {0 smax}
-; XFAIL: *
 
 define i32 @f(i32 %c.idx.val) {
 

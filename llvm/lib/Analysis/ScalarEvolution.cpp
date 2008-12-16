@@ -2924,15 +2924,16 @@ bool ScalarEvolutionsImpl::potentialInfiniteLoop(SCEV *Stride, SCEV *RHS,
   if (!R)
     return true;
 
-  if (isSigned)
-    return true;  // XXX: because we don't have an sdiv scev.
-
   // If negative, it wraps around every iteration, but we don't care about that.
   APInt S = SC->getValue()->getValue().abs();
 
-  APInt Dist = APInt::getMaxValue(R->getValue()->getBitWidth()) -
-               R->getValue()->getValue();
+  uint32_t Width = R->getValue()->getBitWidth();
+  APInt Dist = (isSigned ? APInt::getSignedMaxValue(Width)
+                         : APInt::getMaxValue(Width))
+               - R->getValue()->getValue();
 
+  // Because we're looking at distance, we perform an unsigned comparison,
+  // regardless of the sign of the computation.
   if (trueWhenEqual)
     return !S.ult(Dist);
   else
@@ -2961,23 +2962,14 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
     // m.  So, we count the number of iterations in which {n,+,s} < m is true.
     // Note that we cannot simply return max(m-n,0)/s because it's not safe to
     // treat m-n as signed nor unsigned due to overflow possibility.
+    //
+    // Assuming that the loop will run at least once, we know that it will
+    // run (m-n)/s times.
 
     // First, we get the value of the LHS in the first iteration: n
     SCEVHandle Start = AddRec->getOperand(0);
 
     SCEVHandle One = SE.getIntegerSCEV(1, RHS->getType());
-
-    // Assuming that the loop will run at least once, we know that it will
-    // run (m-n)/s times.
-    SCEVHandle End = RHS;
-
-    if (!executesAtLeastOnce(L, isSigned, trueWhenEqual,
-                             SE.getMinusSCEV(Start, One), RHS)) {
-      // If not, we get the value of the LHS in the first iteration in which
-      // the above condition doesn't hold.  This equals to max(m,n).
-      End = isSigned ? SE.getSMaxExpr(RHS, Start)
-                     : SE.getUMaxExpr(RHS, Start);
-    }
 
     // If the expression is less-than-or-equal to, we need to extend the
     // loop by one iteration.
@@ -2986,16 +2978,23 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
     // might not divide cleanly. For example, if you have {2,+,5} u< 10 the
     // division would equal one, but the loop runs twice putting the
     // induction variable at 12.
-
+    SCEVHandle End = SE.getAddExpr(RHS, Stride);
     if (!trueWhenEqual)
-      // (Stride - 1) is correct only because we know it's unsigned.
-      // What we really want is to decrease the magnitude of Stride by one.
-      Start = SE.getMinusSCEV(Start, SE.getMinusSCEV(Stride, One));
-    else
-      Start = SE.getMinusSCEV(Start, Stride);
+      End = SE.getMinusSCEV(End, One);
+
+    if (!executesAtLeastOnce(L, isSigned, trueWhenEqual,
+                             SE.getMinusSCEV(Start, One), RHS)) {
+      // If not, we get the value of the LHS in the first iteration in which
+      // the above condition doesn't hold.  This equals to max(m,n).
+      End = isSigned ? SE.getSMaxExpr(End, Start)
+                     : SE.getUMaxExpr(End, Start);
+    }
 
     // Finally, we subtract these two values to get the number of times the
-    // backedge is executed: max(m,n)-n.
+    // backedge is executed: (max(m,n)-n)/s.
+    //
+    // Note that a trip count is always positive. Using SDiv here produces
+    // wrong answers when Start < End.
     return SE.getUDivExpr(SE.getMinusSCEV(End, Start), Stride);
   }
 
