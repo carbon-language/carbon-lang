@@ -208,9 +208,9 @@ elimination and inlining), but you might lose the ability to modify the program
 and call functions where were optimized out of the program, or inlined away
 completely.</p>
 
-<p> <a href=http://llvm.org/docs/TestingGuide.html#quicktestsuite> 
-LLVM test suite </a> provides a framework to test optimizer's handling of
-debugging information. It can be run like this:</p>
+<p><a href="TestingGuide.html#quicktestsuite">LLVM test suite</a> provides a
+framework to test optimizer's handling of debugging information. It can be run
+like this:</p>
 
 <div class="doc_code">
 <pre>
@@ -222,8 +222,8 @@ debugging information. It can be run like this:</p>
 <p>
 This will test impact of debugging information on optimization passes. If
 debugging information influences optimization passes then it will be reported
-as a failure. See <a href=//llvm.org/docs/TestingGuide.html> TestingGuide</a>
-for more information on LLVM test infratsture and how to run various tests.
+as a failure. See <a href="TestingGuide.html">TestingGuide</a>
+for more information on LLVM test infrastructure and how to run various tests.
 </p>
 
 </div>
@@ -503,7 +503,7 @@ offset if embedded in a <a href="#format_composite_type">composite
 type</a>.</p>
 
 <p>The type encoding provides the details of the type.  The values are typically
-one of the following;</p>
+one of the following:</p>
 
 <pre>
   DW_ATE_address = 1
@@ -540,7 +540,7 @@ one of the following;</p>
 
 <p>These descriptors are used to define types derived from other types.  The
 value of the tag varies depending on the meaning.  The following are possible
-tag values;</p>
+tag values:</p>
 
 <pre>
   DW_TAG_formal_parameter = 5
@@ -604,7 +604,7 @@ NULL derived type.</p>
 
 <p>These descriptors are used to define types that are composed of 0 or more
 elements.  The value of the tag varies depending on the meaning.  The following
-are possible tag values;</p>
+are possible tag values:</p>
 
 <pre>
   DW_TAG_array_type = 1
@@ -721,7 +721,7 @@ value.</p>
 </pre>
 
 <p>These descriptors are used to define variables local to a sub program.  The
-value of the tag depends on the usage of the variable;</p>
+value of the tag depends on the usage of the variable:</p>
 
 <pre>
   DW_TAG_auto_variable = 256
@@ -1054,7 +1054,7 @@ debug information that would best describe those constructs.</p>
 <div class="doc_text">
 
 <p>Given the source files "MySource.cpp" and "MyHeader.h" located in the
-directory "/Users/mine/sources", the following code;</p>
+directory "/Users/mine/sources", the following code:</p>
 
 <pre>
 #include "MyHeader.h"
@@ -1064,7 +1064,7 @@ int main(int argc, char *argv[]) {
 }
 </pre>
 
-<p>a C/C++ front-end would generate the following descriptors;</p>
+<p>a C/C++ front-end would generate the following descriptors:</p>
 
 <pre>
 ...
@@ -1125,13 +1125,13 @@ int main(int argc, char *argv[]) {
 
 <div class="doc_text">
 
-<p>Given an integer global variable declared as follows;</p>
+<p>Given an integer global variable declared as follows:</p>
 
 <pre>
 int MyGlobal = 100;
 </pre>
 
-<p>a C/C++ front-end would generate the following descriptors;</p>
+<p>a C/C++ front-end would generate the following descriptors:</p>
 
 <pre>
 ;;
@@ -1205,7 +1205,7 @@ int MyGlobal = 100;
 
 <div class="doc_text">
 
-<p>Given a function declared as follows;</p>
+<p>Given a function declared as follows:</p>
 
 <pre>
 int main(int argc, char *argv[]) {
@@ -1213,7 +1213,7 @@ int main(int argc, char *argv[]) {
 }
 </pre>
 
-<p>a C/C++ front-end would generate the following descriptors;</p>
+<p>a C/C++ front-end would generate the following descriptors:</p>
 
 <pre>
 ;;
@@ -1270,7 +1270,7 @@ int %main(int %argc, sbyte** %argv) {
 
 <div class="doc_text">
 
-<p>The following are the basic type descriptors for C/C++ core types;</p>
+<p>The following are the basic type descriptors for C/C++ core types:</p>
 
 </div>
 
@@ -1534,13 +1534,13 @@ int %main(int %argc, sbyte** %argv) {
 
 <div class="doc_text">
 
-<p>Given the following as an example of C/C++ derived type;</p>
+<p>Given the following as an example of C/C++ derived type:</p>
 
 <pre>
 typedef const int *IntPtr;
 </pre>
 
-<p>a C/C++ front-end would generate the following descriptors;</p>
+<p>a C/C++ front-end would generate the following descriptors:</p>
 
 <pre>
 ;;
@@ -1611,7 +1611,7 @@ typedef const int *IntPtr;
 
 <div class="doc_text">
 
-<p>Given the following as an example of C/C++ struct type;</p>
+<p>Given the following as an example of C/C++ struct type:</p>
 
 <pre>
 struct Color {
@@ -1621,7 +1621,7 @@ struct Color {
 };
 </pre>
 
-<p>a C/C++ front-end would generate the following descriptors;</p>
+<p>a C/C++ front-end would generate the following descriptors:</p>
 
 <pre>
 ;;
@@ -1718,7 +1718,7 @@ struct Color {
 
 <div class="doc_text">
 
-<p>Given the following as an example of C/C++ enumeration type;</p>
+<p>Given the following as an example of C/C++ enumeration type:</p>
 
 <pre>
 enum Trees {
@@ -1728,7 +1728,7 @@ enum Trees {
 };
 </pre>
 
-<p>a C/C++ front-end would generate the following descriptors;</p>
+<p>a C/C++ front-end would generate the following descriptors:</p>
 
 <pre>
 ;;
