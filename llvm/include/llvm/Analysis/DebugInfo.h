@@ -26,6 +26,9 @@ namespace llvm {
   class Module;
   class Type;
   class Value;
+  class DbgStopPointInst;
+  class DbgDeclareInst;
+  class Instruction;
   
   class DIDescriptor {
   public:
@@ -388,7 +391,17 @@ namespace llvm {
     Constant *getCastToEmpty(DIDescriptor D);
   };
   
-  
+  /// Finds the stoppoint coressponding to this instruction, that is the
+  /// stoppoint that dominates this instruction 
+  const DbgStopPointInst *findStopPoint(const Instruction *Inst);
+
+  /// Finds the stoppoint corresponding to first real (non-debug intrinsic) 
+  /// instruction in this Basic Block, and returns the stoppoint for it.
+  const DbgStopPointInst *findBBStopPoint(const BasicBlock *BB);
+
+  /// Finds the dbg.declare intrinsic corresponding to this value if any.
+  /// It looks through pointer casts too.
+  const DbgDeclareInst *findDbgDeclare(const Value *V, bool stripCasts = true);
 } // end namespace llvm
 
 #endif

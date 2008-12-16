@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -669,3 +670,75 @@ void DIFactory::InsertDeclare(llvm::Value *Storage, DIVariable D,
   Value *Args[] = { Storage, getCastToEmpty(D) };
   CallInst::Create(DeclareFn, Args, Args+2, "", BB);
 }
+
+namespace llvm {
+  /// Finds the stoppoint coressponding to this instruction, that is the
+  /// stoppoint that dominates this instruction 
+  const DbgStopPointInst *findStopPoint(const Instruction *Inst)
+  {
+    if (const DbgStopPointInst *DSI = dyn_cast<DbgStopPointInst>(Inst))
+      return DSI;
+
+    const BasicBlock *BB = Inst->getParent();
+    BasicBlock::const_iterator I = Inst, B;
+    do {
+      B = BB->begin();
+      // A BB consisting only of a terminator can't have a stoppoint.
+      if (I != B) {
+        do {
+          --I;
+          if (const DbgStopPointInst *DSI = dyn_cast<DbgStopPointInst>(I))
+            return DSI;
+        } while (I != B);
+      }
+      // This BB didn't have a stoppoint: if there is only one
+      // predecessor, look for a stoppoint there.
+      // We could use getIDom(), but that would require dominator info.
+      BB = I->getParent()->getUniquePredecessor();
+      if (BB)
+        I = BB->getTerminator();
+    } while (BB != 0);
+    return 0;
+  }
+
+  /// Finds the stoppoint corresponding to first real (non-debug intrinsic) 
+  /// instruction in this Basic Block, and returns the stoppoint for it.
+  const DbgStopPointInst *findBBStopPoint(const BasicBlock *BB)
+  {
+    for(BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+      if (const DbgStopPointInst *DSI = dyn_cast<DbgStopPointInst>(I))
+        return DSI;
+    }
+    // Fallback to looking for stoppoint of unique predecessor.
+    // Useful if this BB contains no stoppoints, but unique predecessor does.
+    BB = BB->getUniquePredecessor();
+    if (BB)
+      return findStopPoint(BB->getTerminator());
+    return 0;
+  }
+
+  /// Finds the dbg.declare intrinsic corresponding to this value if any.
+  /// It looks through pointer casts too.
+  const DbgDeclareInst *findDbgDeclare(const Value *V, bool stripCasts)
+  {
+    if (stripCasts) {
+      V = V->stripPointerCasts();
+      // Look for the bitcast.
+      for (Value::use_const_iterator I = V->use_begin(), E =V->use_end();
+            I != E; ++I) {
+        if (isa<BitCastInst>(I))
+          return findDbgDeclare(*I, false);
+      }
+      return 0;
+    }
+
+    // Find dbg.declare among uses of the instruction.
+    for (Value::use_const_iterator I = V->use_begin(), E =V->use_end();
+          I != E; ++I) {
+      if (const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I))
+        return DDI;
+    }
+    return 0;
+  }
+}
+
