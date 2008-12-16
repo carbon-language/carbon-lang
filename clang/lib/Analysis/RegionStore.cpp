@@ -111,10 +111,7 @@ public:
 
   Store Bind(Store St, Loc LV, SVal V);
 
-  Store Remove(Store store, Loc LV) {
-    // FIXME: Implement.
-    return store;
-  }
+  Store Remove(Store store, Loc LV);
 
   Store getInitialStore();
   
@@ -141,7 +138,7 @@ public:
   const GRState* setExtent(const GRState* St, const MemRegion* R, SVal Extent);
 
   static inline RegionBindingsTy GetRegionBindings(Store store) {
-    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
+   return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
   }
 
   void print(Store store, std::ostream& Out, const char* nl, const char *sep);
@@ -482,6 +479,15 @@ Store RegionStoreManager::Bind(Store store, Loc LV, SVal V) {
          : RBFactory.Add(B, R, V).getRoot();
 }
 
+Store RegionStoreManager::Remove(Store store, Loc L) {
+  RegionBindingsTy B = GetRegionBindings(store);
+
+  const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion();
+  assert(R);
+
+  return RBFactory.Remove(B, R).getRoot();
+}
+
 Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R, SVal V){
   // Verify we want getRValueType.
   QualType T = R->getRValueType(getContext());
@@ -747,7 +753,7 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
       continue;
     
     // Remove this dead region from the store.
-    store = Remove(store, loc::MemRegionVal(R));
+    store = Remove(store, Loc::MakeVal(R));
 
     // Mark all non-live symbols that this region references as dead.
     if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R)) {
