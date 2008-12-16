@@ -490,8 +490,9 @@ namespace {
         Out << "Read objc implementation decl\n";
       } else if (isa<ObjCCategoryImplDecl>(D)) {
         Out << "Read objc category implementation decl\n";
-      }
-      else {
+      } else if (isa<LinkageSpecDecl>(D)) {
+        Out << "Read linkage spec decl\n";
+      } else {
         assert(0 && "Unknown decl type!");
       }
     }
