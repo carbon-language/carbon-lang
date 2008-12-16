@@ -15,7 +15,6 @@
 #ifndef LLVM_ATTRIBUTES_H
 #define LLVM_ATTRIBUTES_H
 
-#include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <string>
 
@@ -24,7 +23,7 @@ class Type;
 
 /// Attributes - A bitset of attributes.
 typedef unsigned Attributes;
-
+  
 namespace Attribute {
 
 /// Function parameters and results can have attributes to indicate how they 
@@ -45,18 +44,16 @@ const Attributes ByVal     = 1<<7;  ///< Pass structure by value
 const Attributes Nest      = 1<<8;  ///< Nested function static chain
 const Attributes ReadNone  = 1<<9;  ///< Function does not access memory
 const Attributes ReadOnly  = 1<<10; ///< Function only reads from memory
-const Attributes NoInline        = 1<<11; ///< inline=never 
-const Attributes AlwaysInline    = 1<<12; ///< inline=always
-const Attributes OptimizeForSize = 1<<13; ///< opt_size
-const Attributes StackProtect    = 1<<14; ///< Stack protection.
-const Attributes StackProtectReq = 1<<15; ///< Stack protection required.
-const Attributes Alignment = 31<<16; ///< Alignment of parameter (5 bits)
-                                     // stored as log2 of alignment with +1 bias
-                                     // 0 means unaligned different from align 1
-const Attributes NoCapture = 1<<21; ///< Function creates no aliases of pointer
-
+const Attributes NoInline        = 1<<11; // inline=never 
+const Attributes AlwaysInline    = 1<<12; // inline=always
+const Attributes OptimizeForSize = 1<<13; // opt_size
+const Attributes StackProtect    = 1<<14; // Stack protection.
+const Attributes StackProtectReq = 1<<15; // Stack protection required.
+const Attributes Alignment = 0xffff<<16; ///< Alignment of parameter (16 bits)
+                                    // 0 = unknown, else in clear (not log)
+                                    
 /// @brief Attributes that only apply to function parameters.
-const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
+const Attributes ParameterOnly = ByVal | Nest | StructRet;
 
 /// @brief Attributes that only apply to function.
 const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly | 
@@ -67,7 +64,7 @@ const Attributes VarArgsIncompatible = StructRet;
 
 /// @brief Attributes that are mutually incompatible.
 const Attributes MutuallyIncompatible[4] = {
-  ByVal | InReg | Nest | StructRet,
+  ByVal | InReg | Nest  | StructRet,
   ZExt  | SExt,
   ReadNone | ReadOnly,
   NoInline | AlwaysInline
@@ -79,9 +76,7 @@ Attributes typeIncompatible(const Type *Ty);
 /// This turns an int alignment (a power of 2, normally) into the
 /// form used internally in Attributes.
 inline Attributes constructAlignmentFromInt(unsigned i) {
-  assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
-  assert(i <= 0x40000000 && "Alignment too large.");
-  return (Log2_32(i)+1) << 16;
+  return (i << 16);
 }
 
 /// The set of Attributes set in Attributes is converted to a
@@ -180,7 +175,7 @@ public:
   /// getParamAlignment - Return the alignment for the specified function
   /// parameter.
   unsigned getParamAlignment(unsigned Idx) const {
-    return 1ull << (((getAttributes(Idx) & Attribute::Alignment) >> 16) - 1);
+    return (getAttributes(Idx) & Attribute::Alignment) >> 16;
   }
   
   /// hasAttrSomewhere - Return true if the specified attribute is set for at
