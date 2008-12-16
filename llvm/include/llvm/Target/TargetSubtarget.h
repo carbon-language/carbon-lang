@@ -29,6 +29,12 @@ protected: // Can only create subclasses...
   TargetSubtarget();
 public:
   virtual ~TargetSubtarget();
+
+  /// getSpecialAddressLatency - For targets where it is beneficial to
+  /// backschedule instructions that compute addresses, return a value
+  /// indicating the number of scheduling cycles of backscheduling that
+  /// should be attempted.
+  virtual unsigned getSpecialAddressLatency() const { return 0; }
 };
 
 } // End llvm namespace

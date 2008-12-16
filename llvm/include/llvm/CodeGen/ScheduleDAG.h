@@ -242,6 +242,7 @@ namespace llvm {
     bool isPending        : 1;          // True once pending.
     bool isAvailable      : 1;          // True once available.
     bool isScheduled      : 1;          // True once scheduled.
+    bool isScheduleHigh   : 1;          // True if preferable to schedule high.
   private:
     bool isDepthCurrent   : 1;          // True if Depth is current.
     bool isHeightCurrent  : 1;          // True if Height is current.
@@ -258,7 +259,7 @@ namespace llvm {
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        isDepthCurrent(false), isHeightCurrent(false),
+        isScheduleHigh(false), isDepthCurrent(false), isHeightCurrent(false),
         Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
@@ -269,7 +270,7 @@ namespace llvm {
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        isDepthCurrent(false), isHeightCurrent(false),
+        isScheduleHigh(false), isDepthCurrent(false), isHeightCurrent(false),
         Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 

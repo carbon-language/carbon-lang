@@ -93,6 +93,17 @@ const char *X86Subtarget::getBZeroEntry() const {
   return 0;
 }
 
+/// getSpecialAddressLatency - For targets where it is beneficial to
+/// backschedule instructions that compute addresses, return a value
+/// indicating the number of scheduling cycles of backscheduling that
+/// should be attempted.
+unsigned X86Subtarget::getSpecialAddressLatency() const {
+  // For x86 out-of-order targets, back-schedule address computations so
+  // that loads and stores aren't blocked.
+  // This value was chosen arbitrarily.
+  return 200;
+}
+
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
 bool X86::GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,

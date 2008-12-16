@@ -19,6 +19,14 @@
 using namespace llvm;
 
 bool latency_sort::operator()(const SUnit *LHS, const SUnit *RHS) const {
+  // The isScheduleHigh flag allows nodes with wraparound dependencies that
+  // cannot easily be modeled as edges with latencies to be scheduled as
+  // soon as possible in a top-down schedule.
+  if (LHS->isScheduleHigh && !RHS->isScheduleHigh)
+    return false;
+  if (!LHS->isScheduleHigh && RHS->isScheduleHigh)
+    return true;
+
   unsigned LHSNum = LHS->NodeNum;
   unsigned RHSNum = RHS->NodeNum;
 
