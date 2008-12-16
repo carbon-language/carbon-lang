@@ -118,7 +118,7 @@ namespace llvm {
     }
 
     bool operator==(const SDep &Other) const {
-      if (Dep != Other.Dep) return false;
+      if (Dep != Other.Dep || Latency != Other.Latency) return false;
       switch (Dep.getInt()) {
       case Data:
       case Anti:
