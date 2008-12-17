@@ -1211,6 +1211,8 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
     }
   }
 
+#if 0
+  // FIXME: This code is broken for shifts with a zero amount!
   // If we know that all of the high bits of the shift amount are zero, then we
   // can do this as a couple of simple shifts.
   if ((KnownZero & HighBitMask) == HighBitMask) {
@@ -1232,6 +1234,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
                      DAG.getNode(Op2, NVT, InL, Amt2));
     return true;
   }
+#endif
 
   return false;
 }
