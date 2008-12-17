@@ -273,13 +273,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     // We are issuing warnings elsewhere!
     ObjCInterfaceType OIT = cast<ObjCInterfaceType>(Ty);
     ObjCInterfaceDecl *ID = OIT.getDecl();
-    RecordDecl *RD = ID->getRecordForDecl();
-    if(!RD) {
-      // Sometimes, class type is being directly generated in code gen for
-      // built-in class types.
-      ID->addRecordToClass(Context);
-      RD = ID->getRecordForDecl();
-    }
+    const RecordDecl *RD = Context.addRecordToClass(ID);
     return ConvertTagDeclType(cast<TagDecl>(RD));
   }
       

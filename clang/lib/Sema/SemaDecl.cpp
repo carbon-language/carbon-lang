@@ -3029,7 +3029,7 @@ void Sema::ActOnFields(Scope* S,
     ObjCIvarDecl **ClsFields = reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
     if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl)) {
       ID->addInstanceVariablesToClass(ClsFields, RecFields.size(), RBrac);
-      ID->addRecordToClass(Context);
+#if 0
       // Must enforce the rule that ivars in the base classes may not be
       // duplicates.
       FieldIDs.clear();
@@ -3049,6 +3049,7 @@ void Sema::ActOnFields(Scope* S,
               }
           }
       }
+#endif
     }
     else if (ObjCImplementationDecl *IMPDecl = 
                dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {

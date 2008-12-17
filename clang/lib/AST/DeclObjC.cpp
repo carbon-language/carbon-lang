@@ -338,18 +338,6 @@ ObjCIvarDecl *
   return 0;
 }
 
-void ObjCInterfaceDecl::CollectObjCIvars(std::vector<FieldDecl*> &Fields) {
-  ObjCInterfaceDecl *SuperClass = getSuperClass();
-  if (SuperClass)
-    SuperClass->CollectObjCIvars(Fields);
-  for (ObjCInterfaceDecl::ivar_iterator I = ivar_begin(),
-       E = ivar_end(); I != E; ++I) {
-    ObjCIvarDecl *IVDecl = (*I);
-    if (!IVDecl->isInvalidDecl())
-      Fields.push_back(cast<FieldDecl>(IVDecl));
-  }
-}
-  
 /// ObjCAddInstanceVariablesToClass - Inserts instance variables
 /// into ObjCInterfaceDecl's fields.
 ///
@@ -369,42 +357,15 @@ void ObjCInterfaceDecl::addInstanceVariablesToClass(ObjCIvarDecl **ivars,
 ///
 FieldDecl *ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context, 
                                                      const ObjCIvarDecl *ivar) {
-  /* When a super class's ivar is referenced in the subclass method with no ivar 
-     of its own, record for the sub-class is not built yet. Build it lazily
-     here. */
-  if (!RecordForDecl)
-    addRecordToClass(Context);
+  const RecordDecl *RecordForDecl = Context.addRecordToClass(this);
   assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
   DeclarationName Member = ivar->getDeclName();
-  DeclContext::lookup_result Lookup = RecordForDecl->lookup(Context, Member);
+  DeclContext::lookup_result Lookup = (const_cast< RecordDecl *>(RecordForDecl))
+                                        ->lookup(Context, Member);
   assert((Lookup.first != Lookup.second) && "field decl not found");
   FieldDecl *MemberDecl = dyn_cast<FieldDecl>(*Lookup.first);
   assert(MemberDecl && "field decl not found");
   return MemberDecl;
-}
-
-/// addRecordToClass - produces record info. for the class for its
-/// ivars and all those inherited.
-///
-void ObjCInterfaceDecl::addRecordToClass(ASTContext &Context)
-{
-  std::vector<FieldDecl*> RecFields;
-  CollectObjCIvars(RecFields);
-  RecordDecl *RD = RecordDecl::Create(Context, TagDecl::TK_struct, 0,
-                                      getLocation(),
-                                      getIdentifier());
-  /// FIXME! Can do collection of ivars and adding to the record while
-  /// doing it.
-  for (unsigned int i = 0; i != RecFields.size(); i++) {
-    FieldDecl *Field =  FieldDecl::Create(Context, RD, 
-                                          RecFields[i]->getLocation(), 
-                                          RecFields[i]->getIdentifier(),
-                                          RecFields[i]->getType(), 
-                                          RecFields[i]->getBitWidth(), false, 0);
-    RD->addDecl(Context, Field);
-  }
-  RD->completeDefinition(Context);
-  RecordForDecl = RD;
 }
 
 /// ObjCAddInstanceVariablesToClassImpl - Checks for correctness of Instance 

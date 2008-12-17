@@ -72,6 +72,9 @@ class ASTContext {
   llvm::DenseMap<const ObjCInterfaceDecl*, 
                  const ASTRecordLayout*> ASTObjCInterfaces;
   
+  llvm::DenseMap<const ObjCInterfaceDecl*,
+                 const RecordDecl*> ASTRecordForInterface;
+  
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
   /// a builtin that takes a valist is encountered.
@@ -387,6 +390,7 @@ public:
   const ASTRecordLayout &getASTRecordLayout(const RecordDecl *D);
   
   const ASTRecordLayout &getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D);
+  const RecordDecl *addRecordToClass(const ObjCInterfaceDecl *D);
   //===--------------------------------------------------------------------===//
   //                            Type Operators
   //===--------------------------------------------------------------------===//

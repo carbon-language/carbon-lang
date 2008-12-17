@@ -472,6 +472,46 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
   Alignment = std::max(Alignment, FieldAlign);
 }
 
+static void CollectObjCIvars(const ObjCInterfaceDecl *OI,
+                             std::vector<FieldDecl*> &Fields) {
+  const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
+  if (SuperClass)
+    CollectObjCIvars(SuperClass, Fields);
+  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
+       E = OI->ivar_end(); I != E; ++I) {
+    ObjCIvarDecl *IVDecl = (*I);
+    if (!IVDecl->isInvalidDecl())
+      Fields.push_back(cast<FieldDecl>(IVDecl));
+  }
+}
+
+/// addRecordToClass - produces record info. for the class for its
+/// ivars and all those inherited.
+///
+const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D)
+{
+  const RecordDecl *&RD = ASTRecordForInterface[D];
+  if (RD)
+    return RD;
+  std::vector<FieldDecl*> RecFields;
+  CollectObjCIvars(D, RecFields);
+  RecordDecl *NewRD = RecordDecl::Create(*this, TagDecl::TK_struct, 0,
+                                         D->getLocation(),
+                                         D->getIdentifier());
+  /// FIXME! Can do collection of ivars and adding to the record while
+  /// doing it.
+  for (unsigned int i = 0; i != RecFields.size(); i++) {
+    FieldDecl *Field =  FieldDecl::Create(*this, NewRD, 
+                                          RecFields[i]->getLocation(), 
+                                          RecFields[i]->getIdentifier(),
+                                          RecFields[i]->getType(), 
+                                          RecFields[i]->getBitWidth(), false, 0);
+    NewRD->addDecl(*this, Field);
+  }
+  NewRD->completeDefinition(*this);
+  RD = NewRD;
+  return RD;
+}
 
 /// getASTObjcInterfaceLayout - Get or compute information about the layout of
 /// the specified Objective C, which indicates its size and ivar
