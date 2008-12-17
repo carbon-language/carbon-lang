@@ -419,20 +419,10 @@ public:
   /// within this context.
   typedef std::vector<ScopedDecl*>::const_iterator decl_iterator;
 
-  /// reverse_decl_iterator - Iterates through the declarations stored
-  /// within this context in reverse order.
-  typedef std::vector<ScopedDecl*>::const_reverse_iterator 
-    reverse_decl_iterator;
-
   /// decls_begin/decls_end - Iterate over the declarations stored in
   /// this context. 
   decl_iterator decls_begin() const { return Decls.begin(); }
   decl_iterator decls_end()   const { return Decls.end(); }
-
-  /// decls_rbegin/decls_rend - Iterate over the declarations stored
-  /// in this context in reverse order.
-  reverse_decl_iterator decls_rbegin() const { return Decls.rbegin(); }
-  reverse_decl_iterator decls_rend() const { return Decls.rend(); }
 
   /// addDecl - Add the declaration D to this scope. Note that
   /// declarations are added at the beginning of the declaration
