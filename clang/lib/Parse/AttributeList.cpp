@@ -94,6 +94,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 11:
     if (!memcmp(Str, "vector_size", 11)) return AT_vector_size;
     if (!memcmp(Str, "constructor", 11)) return AT_constructor;
+    if (!memcmp(Str, "unavailable", 11)) return AT_unavailable;
     break;
   case 13:
     if (!memcmp(Str, "address_space", 13)) return AT_address_space;

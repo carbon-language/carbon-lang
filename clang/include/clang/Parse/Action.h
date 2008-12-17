@@ -1072,7 +1072,8 @@ public:
   virtual DeclTy *ActOnForwardProtocolDeclaration(
     SourceLocation AtProtocolLoc,
     const IdentifierLocPair*IdentList,
-    unsigned NumElts) {
+    unsigned NumElts,
+    AttributeList *AttrList) {
     return 0;
   }
   

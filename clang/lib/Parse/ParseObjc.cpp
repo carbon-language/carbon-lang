@@ -936,7 +936,8 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
   if (Tok.is(tok::semi)) { // forward declaration of one protocol.
     IdentifierLocPair ProtoInfo(protocolName, nameLoc);
     ConsumeToken();
-    return Actions.ActOnForwardProtocolDeclaration(AtLoc, &ProtoInfo, 1);
+    return Actions.ActOnForwardProtocolDeclaration(AtLoc, &ProtoInfo, 1, 
+                                                   attrList);
   }
   
   if (Tok.is(tok::comma)) { // list of forward declarations.
@@ -964,7 +965,8 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
     
     return Actions.ActOnForwardProtocolDeclaration(AtLoc,
                                                    &ProtocolRefs[0], 
-                                                   ProtocolRefs.size());
+                                                   ProtocolRefs.size(),
+                                                   attrList);
   }
   
   // Last, and definitely not least, parse a protocol declaration.

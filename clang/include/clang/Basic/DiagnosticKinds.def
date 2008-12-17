@@ -974,6 +974,8 @@ DIAG(err_undeclared_use, ERROR,
      "use of undeclared '%0'")
 DIAG(warn_deprecated, WARNING,
      "%0 is deprecated")
+DIAG(warn_unavailable, WARNING,
+     "%0 is unavailable")
 DIAG(err_redefinition, ERROR,
      "redefinition of %0")
 DIAG(err_static_non_static, ERROR,

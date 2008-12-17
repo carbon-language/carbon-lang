@@ -66,6 +66,7 @@ public:
     AT_pure,
     AT_stdcall,
     AT_transparent_union,
+    AT_unavailable,
     AT_unused,
     AT_vector_size,
     AT_visibility,

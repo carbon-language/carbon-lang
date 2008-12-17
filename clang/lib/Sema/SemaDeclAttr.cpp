@@ -501,6 +501,16 @@ static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new DeprecatedAttr());
 }
 
+static void HandleUnavailableAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+  
+  d->addAttr(new UnavailableAttr());
+}
+
 static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
@@ -1126,6 +1136,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
   case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
   case AttributeList::AT_stdcall:     HandleStdCallAttr   (D, Attr, S); break;
+  case AttributeList::AT_unavailable: HandleUnavailableAttr(D, Attr, S); break;
   case AttributeList::AT_unused:      HandleUnusedAttr    (D, Attr, S); break;
   case AttributeList::AT_vector_size: HandleVectorSizeAttr(D, Attr, S); break;
   case AttributeList::AT_visibility:  HandleVisibilityAttr(D, Attr, S); break;

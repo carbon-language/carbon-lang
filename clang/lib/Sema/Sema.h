@@ -1063,7 +1063,8 @@ public:
   
   virtual DeclTy *ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                             const IdentifierLocPair *IdentList,
-                                                  unsigned NumElts);
+                                                  unsigned NumElts,
+                                                  AttributeList *attrList);
   
   virtual void FindProtocolDeclaration(bool WarnOnDeclarations,
                                        const IdentifierLocPair *ProtocolId,

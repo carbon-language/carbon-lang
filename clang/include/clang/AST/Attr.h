@@ -45,6 +45,7 @@ public:
     Packed,
     StdCall,
     TransparentUnion,
+    Unavailable,
     Unused,    
     Visibility,
     Weak,
@@ -65,6 +66,10 @@ public:
   }
 
   Kind getKind() const { return AttrKind; }
+  
+  bool hasKind(Kind kind) const {
+    return AttrKind == kind;
+  }
 
   Attr *getNext() { return Next; }
   const Attr *getNext() const { return Next; }
@@ -217,6 +222,16 @@ public:
 
   static bool classof(const Attr *A) { return A->getKind() == Deprecated; }
   static bool classof(const DeprecatedAttr *A) { return true; }
+};
+
+class UnavailableAttr : public Attr {
+public:
+  UnavailableAttr() : Attr(Unavailable) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == Unavailable; }
+  static bool classof(const UnavailableAttr *A) { return true; }
 };
 
 class UnusedAttr : public Attr {

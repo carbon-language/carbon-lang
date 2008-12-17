@@ -207,7 +207,8 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     PDecl->setForwardDecl(false);
     ObjCProtocols[ProtocolName] = PDecl;
   }
-  
+  if (AttrList)
+    ProcessDeclAttributeList(PDecl, AttrList);
   if (NumProtoRefs) {
     /// Check then save referenced protocols.
     PDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
@@ -232,6 +233,14 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
       Diag(ProtocolId[i].second, diag::err_undeclared_protocol)
         << ProtocolId[i].first;
       continue;
+    }
+    for (const Attr *attr = PDecl->getAttrs(); attr; attr = attr->getNext()) {
+      if (attr->hasKind(Attr::Unavailable))
+        Diag(ProtocolId[i].second, diag::warn_unavailable) << 
+          PDecl->getDeclName();
+      if (attr->hasKind(Attr::Deprecated))
+        Diag(ProtocolId[i].second, diag::warn_deprecated) << 
+          PDecl->getDeclName();
     }
 
     // If this is a forward declaration and we are supposed to warn in this
@@ -417,7 +426,8 @@ Sema::MergeProtocolPropertiesIntoClass(Decl *CDecl,
 Action::DeclTy *
 Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                       const IdentifierLocPair *IdentList,
-                                      unsigned NumElts) {
+                                      unsigned NumElts,
+                                      AttributeList *attrList) {
   llvm::SmallVector<ObjCProtocolDecl*, 32> Protocols;
   
   for (unsigned i = 0; i != NumElts; ++i) {
@@ -425,7 +435,8 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     ObjCProtocolDecl *&PDecl = ObjCProtocols[Ident];
     if (PDecl == 0) // Not already seen?
       PDecl = ObjCProtocolDecl::Create(Context, IdentList[i].second, Ident);
-    
+    if (attrList)
+      ProcessDeclAttributeList(PDecl, attrList);
     Protocols.push_back(PDecl);
   }
   
