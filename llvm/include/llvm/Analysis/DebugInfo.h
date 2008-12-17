@@ -33,7 +33,8 @@ namespace llvm {
   class DIDescriptor {
   public:
     enum {
-      Version6    = 6 << 16,     // Current version of debug information.
+      Version7    = 7 << 16,     // Current version of debug information.
+      Version6    = 6 << 16,     // Constant for version 6.
       Version5    = 5 << 16,     // Constant for version 5.
       Version4    = 4 << 16,     // Constant for version 4.
       VersionMask = 0xffff0000   // Mask for version number.
@@ -156,6 +157,8 @@ namespace llvm {
     explicit DIBasicType(GlobalVariable *GV);
     
     unsigned getEncoding() const { return getUnsignedField(9); }
+    std::string getFileName() const { return getStringField(10); }
+    std::string getDirectory() const { return getStringField(11); }
   };
   
   /// DIDerivedType - A simple derived type, like a const qualified type,
@@ -168,7 +171,9 @@ namespace llvm {
     explicit DIDerivedType(GlobalVariable *GV);
     
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
-    
+    std::string getFileName() const { return getStringField(10); }
+    std::string getDirectory() const { return getStringField(11); }
+
     /// isDerivedType - Return true if the specified tag is legal for
     /// DIDerivedType.
     static bool isDerivedType(unsigned TAG);
@@ -183,6 +188,8 @@ namespace llvm {
     explicit DICompositeType(GlobalVariable *GV);
     
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
+    std::string getFileName() const { return getStringField(11); }
+    std::string getDirectory() const { return getStringField(12); }
     
     /// isCompositeType - Return true if the specified tag is legal for
     /// DICompositeType.
@@ -216,7 +223,8 @@ namespace llvm {
   class DISubprogram : public DIGlobal {
   public:
     explicit DISubprogram(GlobalVariable *GV = 0);
-
+    std::string getFilename() const { return getStringField(11); }
+    std::string getDirectory() const { return getStringField(12); }
   };
   
   /// DIGlobalVariable - This is a wrapper for a global variable.
@@ -225,6 +233,8 @@ namespace llvm {
     explicit DIGlobalVariable(GlobalVariable *GV = 0);
     
     GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
+    std::string getFilename() const { return getStringField(12); }
+    std::string getDirectory() const { return getStringField(13); }
   };
   
   
@@ -240,6 +250,8 @@ namespace llvm {
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     DIType getType() const              { return getFieldAs<DIType>(5); }
+    std::string getFilename() const { return getStringField(6); }
+    std::string getDirectory() const { return getStringField(7); }
     
     /// isVariable - Return true if the specified tag is legal for DIVariable.
     static bool isVariable(unsigned Tag);
@@ -310,7 +322,9 @@ namespace llvm {
                                 DICompileUnit CompileUnit, unsigned LineNumber,
                                 uint64_t SizeInBits, uint64_t AlignInBits,
                                 uint64_t OffsetInBits, unsigned Flags,
-                                unsigned Encoding);
+                                unsigned Encoding,
+                                const std::string *FileName = 0,
+                                const std::string *Directory = 0);
  
     /// CreateDerivedType - Create a derived type like const qualified type,
     /// pointer, typedef, etc.
@@ -320,7 +334,9 @@ namespace llvm {
                                     unsigned LineNumber,
                                     uint64_t SizeInBits, uint64_t AlignInBits,
                                     uint64_t OffsetInBits, unsigned Flags,
-                                    DIType DerivedFrom);
+                                    DIType DerivedFrom,
+                                    const std::string *FileName = 0,
+                                    const std::string *Directory = 0);
 
     /// CreateCompositeType - Create a composite type like array, struct, etc.
     DICompositeType CreateCompositeType(unsigned Tag, DIDescriptor Context,
@@ -331,7 +347,9 @@ namespace llvm {
                                         uint64_t AlignInBits,
                                         uint64_t OffsetInBits, unsigned Flags,
                                         DIType DerivedFrom,
-                                        DIArray Elements);
+                                        DIArray Elements,
+                                        const std::string *FileName = 0,
+                                        const std::string *Directory = 0);
     
     /// CreateSubprogram - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.
@@ -340,7 +358,9 @@ namespace llvm {
                                   const std::string &LinkageName,
                                   DICompileUnit CompileUnit, unsigned LineNo,
                                   DIType Type, bool isLocalToUnit,
-                                  bool isDefinition);
+                                  bool isDefinition,
+                                  const std::string *FileName = 0,
+                                  const std::string *Directory = 0);
 
     /// CreateGlobalVariable - Create a new descriptor for the specified global.
     DIGlobalVariable
@@ -349,14 +369,18 @@ namespace llvm {
                          const std::string &LinkageName, 
                          DICompileUnit CompileUnit,
                          unsigned LineNo, DIType Type, bool isLocalToUnit,
-                         bool isDefinition, llvm::GlobalVariable *GV);
+                         bool isDefinition, llvm::GlobalVariable *GV,
+                         const std::string *FileName = 0,
+                         const std::string *Directory = 0);
     
     
     /// CreateVariable - Create a new descriptor for the specified variable.
     DIVariable CreateVariable(unsigned Tag, DIDescriptor Context,
                               const std::string &Name,
                               DICompileUnit CompileUnit, unsigned LineNo,
-                              DIType Type);
+                              DIType Type,
+                              const std::string *FileName = 0,
+                              const std::string *Directory = 0);
     
     /// CreateBlock - This creates a descriptor for a lexical block with the
     /// specified parent context.

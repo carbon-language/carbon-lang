@@ -195,7 +195,7 @@ Constant *DIFactory::getCastToEmpty(DIDescriptor D) {
 Constant *DIFactory::GetTagConstant(unsigned TAG) {
   assert((TAG & DIDescriptor::VersionMask) == 0 &&
          "Tag too large for debug encoding!");
-  return ConstantInt::get(Type::Int32Ty, TAG | DIDescriptor::Version6);
+  return ConstantInt::get(Type::Int32Ty, TAG | DIDescriptor::Version7);
 }
 
 Constant *DIFactory::GetStringConstant(const std::string &String) {
@@ -389,7 +389,9 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
                                        uint64_t SizeInBits,
                                        uint64_t AlignInBits,
                                        uint64_t OffsetInBits, unsigned Flags,
-                                       unsigned Encoding) {
+                                       unsigned Encoding,
+                                       const std::string *FileName,
+                                       const std::string *Directory) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_base_type),
     getCastToEmpty(Context),
@@ -400,7 +402,9 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
     ConstantInt::get(Type::Int64Ty, AlignInBits),
     ConstantInt::get(Type::Int64Ty, OffsetInBits),
     ConstantInt::get(Type::Int32Ty, Flags),
-    ConstantInt::get(Type::Int32Ty, Encoding)
+    ConstantInt::get(Type::Int32Ty, Encoding),
+    GetStringConstant(FileName ? FileName->c_str() : ""),
+    GetStringConstant(Directory ? Directory->c_str() : "")
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
@@ -424,7 +428,9 @@ DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
                                            uint64_t AlignInBits,
                                            uint64_t OffsetInBits,
                                            unsigned Flags,
-                                           DIType DerivedFrom) {
+                                           DIType DerivedFrom,
+                                           const std::string *FileName,
+                                           const std::string *Directory) {
   Constant *Elts[] = {
     GetTagConstant(Tag),
     getCastToEmpty(Context),
@@ -435,7 +441,9 @@ DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
     ConstantInt::get(Type::Int64Ty, AlignInBits),
     ConstantInt::get(Type::Int64Ty, OffsetInBits),
     ConstantInt::get(Type::Int32Ty, Flags),
-    getCastToEmpty(DerivedFrom)
+    getCastToEmpty(DerivedFrom),
+    GetStringConstant(FileName ? FileName->c_str() : ""),
+    GetStringConstant(Directory ? Directory->c_str() : "")
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
@@ -459,7 +467,10 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
                                                uint64_t OffsetInBits,
                                                unsigned Flags,
                                                DIType DerivedFrom,
-                                               DIArray Elements) {
+                                               DIArray Elements,
+                                               const std::string *FileName,
+                                               const std::string *Directory) {
+
   Constant *Elts[] = {
     GetTagConstant(Tag),
     getCastToEmpty(Context),
@@ -471,7 +482,9 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
     ConstantInt::get(Type::Int64Ty, OffsetInBits),
     ConstantInt::get(Type::Int32Ty, Flags),
     getCastToEmpty(DerivedFrom),
-    getCastToEmpty(Elements)
+    getCastToEmpty(Elements),
+    GetStringConstant(FileName ? FileName->c_str() : ""),
+    GetStringConstant(Directory ? Directory->c_str() : "")
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
@@ -495,7 +508,10 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
                                          DICompileUnit CompileUnit,
                                          unsigned LineNo, DIType Type,
                                          bool isLocalToUnit,
-                                         bool isDefinition) {
+                                         bool isDefinition,
+                                         const std::string *FileName,
+                                         const std::string *Directory) {
+
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
     getCastToEmpty(GetOrCreateSubprogramAnchor()),
@@ -507,7 +523,9 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
     ConstantInt::get(Type::Int32Ty, LineNo),
     getCastToEmpty(Type),
     ConstantInt::get(Type::Int1Ty, isLocalToUnit),
-    ConstantInt::get(Type::Int1Ty, isDefinition)
+    ConstantInt::get(Type::Int1Ty, isDefinition),
+    GetStringConstant(FileName ? FileName->c_str() : ""),
+    GetStringConstant(Directory ? Directory->c_str() : "")
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
@@ -527,8 +545,9 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
                                 const std::string &LinkageName,
                                 DICompileUnit CompileUnit,
                                 unsigned LineNo, DIType Type,bool isLocalToUnit,
-                                bool isDefinition, llvm::GlobalVariable *Val) {
-  
+                                bool isDefinition, llvm::GlobalVariable *Val,
+                                const std::string *FileName,
+                                const std::string *Directory) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_variable),
     getCastToEmpty(GetOrCreateGlobalVariableAnchor()),
@@ -541,7 +560,9 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
     getCastToEmpty(Type),
     ConstantInt::get(Type::Int1Ty, isLocalToUnit),
     ConstantInt::get(Type::Int1Ty, isDefinition),
-    ConstantExpr::getBitCast(Val, EmptyStructPtr)
+    ConstantExpr::getBitCast(Val, EmptyStructPtr),
+    GetStringConstant(FileName ? FileName->c_str() : ""),
+    GetStringConstant(Directory ? Directory->c_str() : "")
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
@@ -559,7 +580,10 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
 DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
                                      const std::string &Name,
                                      DICompileUnit CompileUnit, unsigned LineNo,
-                                     DIType Type) {
+                                     DIType Type,
+                                     const std::string *FileName,
+                                     const std::string *Directory) {
+
   
   Constant *Elts[] = {
     GetTagConstant(Tag),
@@ -568,6 +592,8 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::Int32Ty, LineNo),
     getCastToEmpty(Type),
+    GetStringConstant(FileName ? FileName->c_str() : ""),
+    GetStringConstant(Directory ? Directory->c_str() : "")
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
