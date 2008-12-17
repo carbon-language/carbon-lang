@@ -369,6 +369,9 @@ void ObjCInterfaceDecl::addInstanceVariablesToClass(ObjCIvarDecl **ivars,
 ///
 FieldDecl *ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context, 
                                                      const ObjCIvarDecl *ivar) {
+  /* When a super class's ivar is referenced in the subclass method with no ivar 
+     of its own, record for the sub-class is not built yet. Build it lazily
+     here. */
   if (!RecordForDecl)
     addRecordToClass(Context);
   assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
