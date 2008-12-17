@@ -555,7 +555,10 @@ private:
 public:  
 
   UnaryOperator(Expr *input, Opcode opc, QualType type, SourceLocation l)
-    : Expr(UnaryOperatorClass, type), Val(input), Opc(opc), Loc(l) {}
+    : Expr(UnaryOperatorClass, type,
+           input->isTypeDependent() && opc != OffsetOf,
+           input->isValueDependent()), 
+      Val(input), Opc(opc), Loc(l) {}
 
   Opcode getOpcode() const { return Opc; }
   Expr *getSubExpr() const { return cast<Expr>(Val); }

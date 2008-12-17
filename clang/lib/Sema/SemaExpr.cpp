@@ -2876,6 +2876,9 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
 /// In C++, the operand might be an overloaded function name, in which case 
 /// we allow the '&' but retain the overloaded-function type.
 QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
+  if (op->isTypeDependent())
+    return Context.DependentTy;
+
   if (getLangOptions().C99) {
     // Implement C99-only parts of addressof rules.
     if (UnaryOperator* uOp = dyn_cast<UnaryOperator>(op)) {

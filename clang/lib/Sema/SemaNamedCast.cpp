@@ -65,26 +65,34 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
   SourceRange OpRange(OpLoc, RParenLoc);
   SourceRange DestRange(LAngleBracketLoc, RAngleBracketLoc);
 
+  // If the type is dependent, we won't do the semantic analysis now.
+  // FIXME: should we check this in a more fine-grained manner?
+  bool TypeDependent = DestType->isDependentType() || Ex->isTypeDependent();
+
   switch (Kind) {
   default: assert(0 && "Unknown C++ cast!");
 
   case tok::kw_const_cast:
-    CheckConstCast(*this, Ex, DestType, OpRange, DestRange);
+    if (!TypeDependent)
+      CheckConstCast(*this, Ex, DestType, OpRange, DestRange);
     return new CXXConstCastExpr(DestType.getNonReferenceType(), Ex, 
                                 DestType, OpLoc);
 
   case tok::kw_dynamic_cast:
-    CheckDynamicCast(*this, Ex, DestType, OpRange, DestRange);
+    if (!TypeDependent)
+      CheckDynamicCast(*this, Ex, DestType, OpRange, DestRange);
     return new CXXDynamicCastExpr(DestType.getNonReferenceType(), Ex, 
                                   DestType, OpLoc);
 
   case tok::kw_reinterpret_cast:
-    CheckReinterpretCast(*this, Ex, DestType, OpRange, DestRange);
+    if (!TypeDependent)
+      CheckReinterpretCast(*this, Ex, DestType, OpRange, DestRange);
     return new CXXReinterpretCastExpr(DestType.getNonReferenceType(), Ex, 
                                       DestType, OpLoc);
 
   case tok::kw_static_cast:
-    CheckStaticCast(*this, Ex, DestType, OpRange);
+    if (!TypeDependent)
+      CheckStaticCast(*this, Ex, DestType, OpRange);
     return new CXXStaticCastExpr(DestType.getNonReferenceType(), Ex, 
                                  DestType, OpLoc);
   }
