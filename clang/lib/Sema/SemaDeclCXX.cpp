@@ -408,7 +408,9 @@ void Sema::ActOnStartCXXClassDef(Scope *S, DeclTy *D, SourceLocation LBrace) {
     //   class itself; this is known as the injected-class-name. For
     //   purposes of access checking, the injected-class-name is treated
     //   as if it were a public member name.
-    PushOnScopeChains(Dcl, S);
+    PushOnScopeChains(CXXRecordDecl::Create(Context, Dcl->getTagKind(),
+                                            CurContext, Dcl->getLocation(),
+                                            Dcl->getIdentifier(), Dcl), S);
   }
 }
 
