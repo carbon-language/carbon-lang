@@ -17,3 +17,15 @@
 }
 @end
 
+
+typedef int T[2];
+typedef void (F)(void);
+
+@interface C
+@property(assign) T p2;  // expected-error {{property cannot have array or function type 'T'}}
+
+@property(assign) F f2; // expected-error {{property cannot have array or function type 'F'}}
+
+@end
+
+

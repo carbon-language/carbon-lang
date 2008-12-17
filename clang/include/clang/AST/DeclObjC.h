@@ -277,6 +277,8 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
   Type *TypeForDecl;
   friend class ASTContext;
   
+  // FIXME: We should be able to get away with this slot by saving the
+  // record decl. build lazily in a map.
   RecordDecl *RecordForDecl;
   
   /// Class's super class.
