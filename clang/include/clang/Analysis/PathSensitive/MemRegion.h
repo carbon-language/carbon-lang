@@ -221,6 +221,8 @@ class AnonTypedRegion : public TypedRegion {
 
 public:
 
+  void print(llvm::raw_ostream& os) const;
+  
   QualType getRValueType(ASTContext&) const {
     return T;
   }

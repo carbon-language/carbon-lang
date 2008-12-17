@@ -135,6 +135,12 @@ void AllocaRegion::print(llvm::raw_ostream& os) const {
   os << "alloca{" << (void*) Ex << ',' << Cnt << '}';
 }
 
+void AnonTypedRegion::print(llvm::raw_ostream& os) const {
+  os << "anon_type{" << T.getAsString() << ',';
+  getSuperRegion()->print(os);
+  os << '}';
+}
+
 void VarRegion::print(llvm::raw_ostream& os) const {
   os << cast<VarDecl>(D)->getNameAsString();
 }
