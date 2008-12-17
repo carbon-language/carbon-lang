@@ -611,9 +611,10 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement() {
   OwningExprResult Cond(Actions);
   if (ParseParenExprOrCondition(Cond))
     return StmtError();
-  
-  OwningStmtResult Switch(Actions,
-                          Actions.ActOnStartOfSwitchStmt(Cond.release()));
+
+  OwningStmtResult Switch(Actions);
+  if (!Cond.isInvalid())
+    Switch = Actions.ActOnStartOfSwitchStmt(Cond.release());
 
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this

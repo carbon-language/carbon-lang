@@ -65,3 +65,6 @@ int test6248081() {
   [10]  // expected-error {{expected expression}}
 }
 
+struct forward;
+void x(struct forward* x) {switch(x->a) {}}
+
