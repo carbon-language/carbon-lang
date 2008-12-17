@@ -34,6 +34,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -1015,8 +1016,8 @@ static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
 /// LoadUsesSimpleEnoughForHeapSRA - Verify that all uses of V (a load, or a phi
 /// of a load) are simple enough to perform heap SRA on.  This permits GEP's
 /// that index through the array and struct field, icmps of null, and PHIs.
-static bool LoadUsesSimpleEnoughForHeapSRA(Value *V, MallocInst *MI,
-                             SmallPtrSet<PHINode*, 32> &AnalyzedLoadUsingPHIs) {
+static bool LoadUsesSimpleEnoughForHeapSRA(Value *V,
+                                     SmallPtrSet<PHINode*, 32> &LoadUsingPHIs) {
   // We permit two users of the load: setcc comparing against the null
   // pointer, and a getelementptr of a specific form.
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
@@ -1041,25 +1042,11 @@ static bool LoadUsesSimpleEnoughForHeapSRA(Value *V, MallocInst *MI,
     
     if (PHINode *PN = dyn_cast<PHINode>(User)) {
       // If we have already recursively analyzed this PHI, then it is safe.
-      if (AnalyzedLoadUsingPHIs.insert(PN))
+      if (LoadUsingPHIs.insert(PN))
         continue;
       
-      // We have a phi of a load from the global.  We can only handle this
-      // if the other PHI'd values are actually the same.  In this case,
-      // the rewriter will just drop the phi entirely.
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-        Value *IV = PN->getIncomingValue(i);
-        if (IV == V) continue;  // Trivial the same.
-        
-        // If the phi'd value is from the malloc that initializes the value,
-        // we can xform it.
-        if (IV == MI) continue;
-        
-        // Otherwise, we don't know what it is.
-        return false;
-      }
-      
-      if (!LoadUsesSimpleEnoughForHeapSRA(PN, MI, AnalyzedLoadUsingPHIs))
+      // Make sure all uses of the PHI are simple enough to transform.
+      if (!LoadUsesSimpleEnoughForHeapSRA(PN, LoadUsingPHIs))
         return false;
       
       continue;
@@ -1077,45 +1064,100 @@ static bool LoadUsesSimpleEnoughForHeapSRA(Value *V, MallocInst *MI,
 /// GV are simple enough to perform HeapSRA, return true.
 static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
                                                     MallocInst *MI) {
-  SmallPtrSet<PHINode*, 32> AnalyzedLoadUsingPHIs;
+  SmallPtrSet<PHINode*, 32> LoadUsingPHIs;
   for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E; 
        ++UI)
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI))
-      if (!LoadUsesSimpleEnoughForHeapSRA(LI, MI, AnalyzedLoadUsingPHIs))
+      if (!LoadUsesSimpleEnoughForHeapSRA(LI, LoadUsingPHIs))
         return false;
+  
+  // If we reach here, we know that all uses of the loads and transitive uses
+  // (through PHI nodes) are simple enough to transform.  However, we don't know
+  // that all inputs the to the PHI nodes are in the same equivalence sets. 
+  // Check to verify that all operands of the PHIs are either PHIS that can be
+  // transformed, loads from GV, or MI itself.
+  for (SmallPtrSet<PHINode*, 32>::iterator I = LoadUsingPHIs.begin(),
+       E = LoadUsingPHIs.end(); I != E; ++I) {
+    PHINode *PN = *I;
+    for (unsigned op = 0, e = PN->getNumIncomingValues(); op != e; ++op) {
+      Value *InVal = PN->getIncomingValue(op);
+      
+      // PHI of the stored value itself is ok.
+      if (InVal == MI) continue;
+      
+      if (PHINode *InPN = dyn_cast<PHINode>(InVal)) {
+        // One of the PHIs in our set is (optimistically) ok.
+        if (LoadUsingPHIs.count(InPN))
+          continue;
+        return false;
+      }
+      
+      // Load from GV is ok.
+      if (LoadInst *LI = dyn_cast<LoadInst>(InVal))
+        if (LI->getOperand(0) == GV)
+          continue;
+      
+      // UNDEF? NULL?
+      
+      // Anything else is rejected.
+      return false;
+    }
+  }
+  
   return true;
 }
 
-/// GetHeapSROALoad - Return the load for the specified field of the HeapSROA'd
-/// value, lazily creating it on demand.
-static Value *GetHeapSROALoad(Instruction *Load, unsigned FieldNo,
-                              const std::vector<GlobalVariable*> &FieldGlobals,
-                              std::vector<Value *> &InsertedLoadsForPtr) {
-  if (InsertedLoadsForPtr.size() <= FieldNo)
-    InsertedLoadsForPtr.resize(FieldNo+1);
-  if (InsertedLoadsForPtr[FieldNo] == 0)
-    InsertedLoadsForPtr[FieldNo] = new LoadInst(FieldGlobals[FieldNo],
-                                                Load->getName()+".f" + 
-                                                utostr(FieldNo), Load);
-  return InsertedLoadsForPtr[FieldNo];
+static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
+               DenseMap<Value*, std::vector<Value*> > &InsertedScalarizedValues,
+                   std::vector<std::pair<PHINode*, unsigned> > &PHIsToRewrite) {
+  std::vector<Value*> &FieldVals = InsertedScalarizedValues[V];
+  
+  if (FieldNo >= FieldVals.size())
+    FieldVals.resize(FieldNo+1);
+  
+  // If we already have this value, just reuse the previously scalarized
+  // version.
+  if (Value *FieldVal = FieldVals[FieldNo])
+    return FieldVal;
+  
+  // Depending on what instruction this is, we have several cases.
+  Value *Result;
+  if (LoadInst *LI = dyn_cast<LoadInst>(V)) {
+    // This is a scalarized version of the load from the global.  Just create
+    // a new Load of the scalarized global.
+    Result = new LoadInst(GetHeapSROAValue(LI->getOperand(0), FieldNo,
+                                           InsertedScalarizedValues,
+                                           PHIsToRewrite),
+                          LI->getName()+".f" + utostr(FieldNo), LI);
+  } else if (PHINode *PN = dyn_cast<PHINode>(V)) {
+    // PN's type is pointer to struct.  Make a new PHI of pointer to struct
+    // field.
+    const StructType *ST = 
+      cast<StructType>(cast<PointerType>(PN->getType())->getElementType());
+    
+    Result =PHINode::Create(PointerType::getUnqual(ST->getElementType(FieldNo)),
+                            PN->getName()+".f"+utostr(FieldNo), PN);
+    PHIsToRewrite.push_back(std::make_pair(PN, FieldNo));
+  } else {
+    assert(0 && "Unknown usable value");
+    Result = 0;
+  }
+  
+  return FieldVals[FieldNo] = Result;
 }
 
 /// RewriteHeapSROALoadUser - Given a load instruction and a value derived from
 /// the load, rewrite the derived value to use the HeapSRoA'd load.
-static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser, 
-                               const std::vector<GlobalVariable*> &FieldGlobals,
-                                    std::vector<Value *> &InsertedLoadsForPtr) {
+static void RewriteHeapSROALoadUser(Instruction *LoadUser, 
+             DenseMap<Value*, std::vector<Value*> > &InsertedScalarizedValues,
+                   std::vector<std::pair<PHINode*, unsigned> > &PHIsToRewrite) {
   // If this is a comparison against null, handle it.
   if (ICmpInst *SCI = dyn_cast<ICmpInst>(LoadUser)) {
     assert(isa<ConstantPointerNull>(SCI->getOperand(1)));
     // If we have a setcc of the loaded pointer, we can use a setcc of any
     // field.
-    Value *NPtr;
-    if (InsertedLoadsForPtr.empty()) {
-      NPtr = GetHeapSROALoad(Load, 0, FieldGlobals, InsertedLoadsForPtr);
-    } else {
-      NPtr = InsertedLoadsForPtr.back();
-    }
+    Value *NPtr = GetHeapSROAValue(SCI->getOperand(0), 0,
+                                   InsertedScalarizedValues, PHIsToRewrite);
     
     Value *New = new ICmpInst(SCI->getPredicate(), NPtr,
                               Constant::getNullValue(NPtr->getType()),
@@ -1125,15 +1167,15 @@ static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser,
     return;
   }
   
-  // Handle 'getelementptr Ptr, Idx, uint FieldNo ...'
+  // Handle 'getelementptr Ptr, Idx, i32 FieldNo ...'
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(LoadUser)) {
     assert(GEPI->getNumOperands() >= 3 && isa<ConstantInt>(GEPI->getOperand(2))
            && "Unexpected GEPI!");
   
     // Load the pointer for this field.
     unsigned FieldNo = cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
-    Value *NewPtr = GetHeapSROALoad(Load, FieldNo,
-                                    FieldGlobals, InsertedLoadsForPtr);
+    Value *NewPtr = GetHeapSROAValue(GEPI->getOperand(0), FieldNo,
+                                     InsertedScalarizedValues, PHIsToRewrite);
     
     // Create the new GEP idx vector.
     SmallVector<Value*, 8> GEPIdx;
@@ -1147,41 +1189,26 @@ static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser,
     GEPI->eraseFromParent();
     return;
   }
-  
-  // Handle PHI nodes.  PHI nodes must be merging in the same values, plus
-  // potentially the original malloc.  Insert phi nodes for each field, then
-  // process uses of the PHI.
-  PHINode *PN = cast<PHINode>(LoadUser);
-  std::vector<Value *> PHIsForField;
-  PHIsForField.resize(FieldGlobals.size());
-  for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
-    Value *LoadV = GetHeapSROALoad(Load, i, FieldGlobals, InsertedLoadsForPtr);
 
-    PHINode *FieldPN = PHINode::Create(LoadV->getType(),
-                                       PN->getName()+"."+utostr(i), PN);
-    // Fill in the predecessor values.
-    for (unsigned pred = 0, e = PN->getNumIncomingValues(); pred != e; ++pred) {
-      // Each predecessor either uses the load or the original malloc.
-      Value *InVal = PN->getIncomingValue(pred);
-      BasicBlock *BB = PN->getIncomingBlock(pred);
-      Value *NewVal;
-      if (isa<MallocInst>(InVal)) {
-        // Insert a reload from the global in the predecessor.
-        NewVal = GetHeapSROALoad(BB->getTerminator(), i, FieldGlobals,
-                                 PHIsForField);
-      } else {
-        NewVal = InsertedLoadsForPtr[i];
-      }
-      FieldPN->addIncoming(NewVal, BB);
-    }
-    PHIsForField[i] = FieldPN;
-  }
+  // Recursively transform the users of PHI nodes.  This will lazily create the
+  // PHIs that are needed for individual elements.  Keep track of what PHIs we
+  // see in InsertedScalarizedValues so that we don't get infinite loops (very
+  // antisocial).  If the PHI is already in InsertedScalarizedValues, it has
+  // already been seen first by another load, so its uses have already been
+  // processed.
+  PHINode *PN = cast<PHINode>(LoadUser);
+  bool Inserted;
+  DenseMap<Value*, std::vector<Value*> >::iterator InsertPos;
+  tie(InsertPos, Inserted) =
+    InsertedScalarizedValues.insert(std::make_pair(PN, std::vector<Value*>()));
+  if (!Inserted) return;
   
-  // Since PHIsForField specifies a phi for every input value, the lazy inserter
-  // will never insert a load.
-  while (!PN->use_empty())
-    RewriteHeapSROALoadUser(Load, PN->use_back(), FieldGlobals, PHIsForField);
-  PN->eraseFromParent();
+  // If this is the first time we've seen this PHI, recursively process all
+  // users.
+  for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end(); UI != E;
+       ++UI)
+    RewriteHeapSROALoadUser(cast<Instruction>(*UI), InsertedScalarizedValues,
+                            PHIsToRewrite);
 }
 
 /// RewriteUsesOfLoadForHeapSRoA - We are performing Heap SRoA on a global.  Ptr
@@ -1189,12 +1216,17 @@ static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser,
 /// use FieldGlobals instead.  All uses of loaded values satisfy
 /// AllGlobalLoadUsesSimpleEnoughForHeapSRA.
 static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load, 
-                             const std::vector<GlobalVariable*> &FieldGlobals) {
-  std::vector<Value *> InsertedLoadsForPtr;
-  //InsertedLoadsForPtr.resize(FieldGlobals.size());
-  while (!Load->use_empty())
-    RewriteHeapSROALoadUser(Load, Load->use_back(), 
-                            FieldGlobals, InsertedLoadsForPtr);
+               DenseMap<Value*, std::vector<Value*> > &InsertedScalarizedValues,
+                   std::vector<std::pair<PHINode*, unsigned> > &PHIsToRewrite) {
+  for (Value::use_iterator UI = Load->use_begin(), E = Load->use_end();
+       UI != E; )
+    RewriteHeapSROALoadUser(cast<Instruction>(*UI++), InsertedScalarizedValues,
+                            PHIsToRewrite);
+  
+  if (Load->use_empty()) {
+    Load->eraseFromParent();
+    InsertedScalarizedValues.erase(Load);
+  }
 }
 
 /// PerformHeapAllocSRoA - MI is an allocation of an array of structures.  Break
@@ -1211,7 +1243,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
   
   // Okay, at this point, there are no users of the malloc.  Insert N
   // new mallocs at the same place as MI, and N globals.
-  std::vector<GlobalVariable*> FieldGlobals;
+  std::vector<Value*> FieldGlobals;
   std::vector<MallocInst*> FieldMallocs;
   
   for (unsigned FieldNo = 0, e = STy->getNumElements(); FieldNo != e;++FieldNo){
@@ -1293,37 +1325,82 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
   // MI is no longer needed, remove it.
   MI->eraseFromParent();
 
+  /// InsertedScalarizedLoads - As we process loads, if we can't immediately
+  /// update all uses of the load, keep track of what scalarized loads are
+  /// inserted for a given load.
+  DenseMap<Value*, std::vector<Value*> > InsertedScalarizedValues;
+  InsertedScalarizedValues[GV] = FieldGlobals;
+  
+  std::vector<std::pair<PHINode*, unsigned> > PHIsToRewrite;
   
   // Okay, the malloc site is completely handled.  All of the uses of GV are now
   // loads, and all uses of those loads are simple.  Rewrite them to use loads
   // of the per-field globals instead.
-  while (!GV->use_empty()) {
-    if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
-      RewriteUsesOfLoadForHeapSRoA(LI, FieldGlobals);
-      LI->eraseFromParent();
-    } else {
-      // Must be a store of null.
-      StoreInst *SI = cast<StoreInst>(GV->use_back());
-      assert(isa<Constant>(SI->getOperand(0)) &&
-             cast<Constant>(SI->getOperand(0))->isNullValue() &&
-             "Unexpected heap-sra user!");
-      
-      // Insert a store of null into each global.
-      for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
-        Constant *Null = 
-          Constant::getNullValue(FieldGlobals[i]->getType()->getElementType());
-        new StoreInst(Null, FieldGlobals[i], SI);
-      }
-      // Erase the original store.
-      SI->eraseFromParent();
+  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E;) {
+    Instruction *User = cast<Instruction>(*UI++);
+    
+    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      RewriteUsesOfLoadForHeapSRoA(LI, InsertedScalarizedValues, PHIsToRewrite);
+      continue;
     }
+    
+    // Must be a store of null.
+    StoreInst *SI = cast<StoreInst>(User);
+    assert(isa<ConstantPointerNull>(SI->getOperand(0)) &&
+           "Unexpected heap-sra user!");
+    
+    // Insert a store of null into each global.
+    for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
+      const PointerType *PT = cast<PointerType>(FieldGlobals[i]->getType());
+      Constant *Null = Constant::getNullValue(PT->getElementType());
+      new StoreInst(Null, FieldGlobals[i], SI);
+    }
+    // Erase the original store.
+    SI->eraseFromParent();
   }
 
+  // While we have PHIs that are interesting to rewrite, do it.
+  while (!PHIsToRewrite.empty()) {
+    PHINode *PN = PHIsToRewrite.back().first;
+    unsigned FieldNo = PHIsToRewrite.back().second;
+    PHIsToRewrite.pop_back();
+    PHINode *FieldPN = cast<PHINode>(InsertedScalarizedValues[PN][FieldNo]);
+    assert(FieldPN->getNumIncomingValues() == 0 &&"Already processed this phi");
+
+    // Add all the incoming values.  This can materialize more phis.
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      Value *InVal = PN->getIncomingValue(i);
+      InVal = GetHeapSROAValue(InVal, FieldNo, InsertedScalarizedValues,
+                               PHIsToRewrite);
+      FieldPN->addIncoming(InVal, PN->getIncomingBlock(i));
+    }
+  }
+  
+  // Drop all inter-phi links and any loads that made it this far.
+  for (DenseMap<Value*, std::vector<Value*> >::iterator
+       I = InsertedScalarizedValues.begin(), E = InsertedScalarizedValues.end();
+       I != E; ++I) {
+    if (PHINode *PN = dyn_cast<PHINode>(I->first))
+      PN->dropAllReferences();
+    else if (LoadInst *LI = dyn_cast<LoadInst>(I->first))
+      LI->dropAllReferences();
+  }
+  
+  // Delete all the phis and loads now that inter-references are dead.
+  for (DenseMap<Value*, std::vector<Value*> >::iterator
+       I = InsertedScalarizedValues.begin(), E = InsertedScalarizedValues.end();
+       I != E; ++I) {
+    if (PHINode *PN = dyn_cast<PHINode>(I->first))
+      PN->eraseFromParent();
+    else if (LoadInst *LI = dyn_cast<LoadInst>(I->first))
+      LI->eraseFromParent();
+  }
+  
   // The old global is now dead, remove it.
   GV->eraseFromParent();
 
   ++NumHeapSRA;
-  return FieldGlobals[0];
+  return cast<GlobalVariable>(FieldGlobals[0]);
 }
 
 /// TryToOptimizeStoreOfMallocToGlobal - This function is called when we see a
