@@ -262,6 +262,21 @@ bool PTHLexer::SkipBlock() {
   return isEndif;
 }
 
+SourceLocation PTHLexer::getSourceLocation() {
+  // getLocation is not on the hot path.  It is used to get the location of
+  // the next token when transitioning back to this lexer when done
+  // handling a #included file.  Just read the necessary data from the token
+  // data buffer to construct the SourceLocation object.
+  // NOTE: This is a virtual function; hence it is defined out-of-line.
+  const char* p = CurPtr + (1 + 1 + 4);
+  uint32_t offset = 
+       ((uint32_t) ((uint8_t) p[0]))
+    | (((uint32_t) ((uint8_t) p[1])) << 8)
+    | (((uint32_t) ((uint8_t) p[2])) << 16)
+    | (((uint32_t) ((uint8_t) p[3])) << 24);
+  return SourceLocation::getFileLoc(FileID, offset);
+}
+
 //===----------------------------------------------------------------------===//
 // Token reconstruction from the PTH file.
 //===----------------------------------------------------------------------===//

@@ -90,8 +90,8 @@ public:
   
   /// getSourceLocation - Return a source location for the token in
   /// the current file.
-  SourceLocation getSourceLocation() { return GetToken().getLocation(); }
-  
+  SourceLocation getSourceLocation();
+
   /// SkipBlock - Used by Preprocessor to skip the current conditional block.
   bool SkipBlock();
 
