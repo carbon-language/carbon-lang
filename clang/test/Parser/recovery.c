@@ -20,7 +20,7 @@ static char *f (char * (*g) (char **, int), char **p, ...) {
 
 
 // rdar://6094870
-int test(int) {
+int test(int a) {
   struct { int i; } x;
   
   if (x.hello)   // expected-error {{no member named 'hello'}}

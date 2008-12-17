@@ -10,5 +10,5 @@ int y() {
   return f(1.);
 }
 
-int x(int) {
+int x(int a) {
 }

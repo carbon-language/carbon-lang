@@ -484,8 +484,9 @@ public:
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(objcDeclQualifier);
   }
-  void setObjCDeclQualifier(ObjCDeclQualifier QTVal) 
-  { objcDeclQualifier = QTVal; }
+  void setObjCDeclQualifier(ObjCDeclQualifier QTVal) {
+    objcDeclQualifier = QTVal;
+  }
     
   const Expr *getDefaultArg() const { return DefaultArg; }
   Expr *getDefaultArg() { return DefaultArg; }

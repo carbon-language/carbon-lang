@@ -720,6 +720,11 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
       Param->setInvalidDecl();
       HasInvalidParm = true;
     }
+    
+    // C99 6.9.1p5: If the declarator includes a parameter type list, the
+    // declaration of each parameter shall include an identifier.
+    if (Param->getIdentifier() == 0 && !getLangOptions().CPlusPlus)
+      Diag(Param->getLocation(), diag::err_parameter_name_omitted);
   }
 
   return HasInvalidParm;

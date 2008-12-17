@@ -720,6 +720,8 @@ DIAG(err_missing_param, ERROR,
      "expected parameter declarator")
 DIAG(err_bad_variable_name, ERROR,
      "'%0' cannot be the name of a variable or data member")
+DIAG(err_parameter_name_omitted, ERROR,
+     "parameter name omitted")
 
 DIAG(err_declarator_need_ident, ERROR,
      "declarator requires an identifier")

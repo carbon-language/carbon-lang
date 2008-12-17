@@ -29,3 +29,6 @@ int t9(int a, );  // expected-error {{expected parameter declarator}}
 void t10(){}
 void t11(){t10(1);}
 
+// PR3208
+void t12(int) {}  // expected-error{{parameter name omitted}}
+
