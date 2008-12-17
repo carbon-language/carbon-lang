@@ -67,6 +67,7 @@ def forward;
 def forward_as;
 def stop_compilation;
 def unpack_values;
+def error;
 
 // Increase/decrease the edge weight.
 def inc_weight;

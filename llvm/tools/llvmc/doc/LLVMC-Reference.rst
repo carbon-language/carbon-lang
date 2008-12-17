@@ -387,6 +387,9 @@ use TableGen inheritance instead.
     user.
     Example: ``(not_empty "o")``.
 
+  - ``empty`` - The opposite of ``not_empty``. Equivalent to ``(not (not_empty
+    X))``. Provided for convenience.
+
   - ``default`` - Always evaluates to true. Should always be the last
     test in the ``case`` expression.
 
@@ -487,7 +490,11 @@ The list of all possible actions follows.
 
    - ``append_cmd`` - append a string to the tool invocation
      command.
-     Example: ``(case (switch_on "pthread"), (append_cmd "-lpthread"))``
+     Example: ``(case (switch_on "pthread"), (append_cmd
+     "-lpthread"))``
+
+   - ``error` - exit with error.
+     Example: ``(error "Mixing -c and -S is not allowed!")``.
 
    - ``forward`` - forward an option unchanged.
      Example: ``(forward "Wall")``.

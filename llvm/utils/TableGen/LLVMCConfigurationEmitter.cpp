@@ -798,7 +798,7 @@ class ExtractOptionNames {
     if (ActionName == "forward" || ActionName == "forward_as" ||
         ActionName == "unpack_values" || ActionName == "switch_on" ||
         ActionName == "parameter_equals" || ActionName == "element_in_list" ||
-        ActionName == "not_empty") {
+        ActionName == "not_empty" || ActionName == "empty") {
       checkNumberOfArguments(&Stmt, 1);
       const std::string& Name = InitPtrToString(Stmt.getArg(0));
       OptionNames_.insert(Name);
@@ -877,6 +877,7 @@ bool EmitCaseTest1Arg(const std::string& TestName,
                       std::ostream& O) {
   checkNumberOfArguments(&d, 1);
   const std::string& OptName = InitPtrToString(d.getArg(0));
+
   if (TestName == "switch_on") {
     const OptionDescription& OptDesc = OptDescs.FindOption(OptName);
     if (!OptionType::IsSwitch(OptDesc.Type))
@@ -893,9 +894,11 @@ bool EmitCaseTest1Arg(const std::string& TestName,
     // TODO: make this work with Edge::Weight (if possible).
     O << "LangMap.GetLanguage(inFile) == \"" << OptName << '\"';
     return true;
-  } else if (TestName == "not_empty") {
+  } else if (TestName == "not_empty" || TestName == "empty") {
+    const char* Test = (TestName == "empty") ? "" : "!";
+
     if (OptName == "o") {
-      O << "!OutputFilename.empty()";
+      O << Test << "OutputFilename.empty()";
       return true;
     }
     else {
@@ -903,7 +906,7 @@ bool EmitCaseTest1Arg(const std::string& TestName,
       if (OptionType::IsSwitch(OptDesc.Type))
         throw OptName
           + ": incorrect option type - should be a list or parameter!";
-      O << '!' << OptDesc.GenVariableName() << ".empty()";
+      O << Test << OptDesc.GenVariableName() << ".empty()";
       return true;
     }
   }
@@ -1195,6 +1198,12 @@ class EmitActionHandler {
       checkNumberOfArguments(&Dag, 1);
       const std::string& Cmd = InitPtrToString(Dag.getArg(0));
       O << IndentLevel << "vec.push_back(\"" << Cmd << "\");\n";
+    }
+    else if (ActionName == "error") {
+      O << IndentLevel << "throw std::runtime_error(\"" <<
+        (Dag.getNumArgs() >= 1 ? InitPtrToString(Dag.getArg(0))
+         : "Unknown error!")
+        << "\");\n";
     }
     else if (ActionName == "forward") {
       checkNumberOfArguments(&Dag, 1);
@@ -1535,12 +1544,23 @@ void IncDecWeight (const Init* i, const char* IndentLevel,
   const DagInit& d = InitPtrToDag(i);
   const std::string& OpName = d.getOperator()->getAsString();
 
-  if (OpName == "inc_weight")
+  if (OpName == "inc_weight") {
     O << IndentLevel << "ret += ";
-  else if (OpName == "dec_weight")
+  }
+  else if (OpName == "dec_weight") {
     O << IndentLevel << "ret -= ";
+  }
+  else if (OpName == "error") {
+    O << IndentLevel << "throw std::runtime_error(\"" <<
+        (d.getNumArgs() >= 1 ? InitPtrToString(d.getArg(0))
+         : "Unknown error!")
+      << "\");\n";
+    return;
+  }
+
   else
-    throw "Unknown operator in edge properties list: " + OpName + '!';
+    throw "Unknown operator in edge properties list: " + OpName + '!' +
+      "Only 'inc_weight', 'dec_weight' and 'error' are allowed.";
 
   if (d.getNumArgs() > 0)
     O << InitPtrToInt(d.getArg(0)) << ";\n";
