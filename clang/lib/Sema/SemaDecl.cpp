@@ -3414,24 +3414,6 @@ Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
                                  (Decl **)Decls, NumDecls);
 }
 
-Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
-                                     const char *Lang, unsigned StrSize,
-                                     DeclTy *D) {
-  LinkageSpecDecl::LanguageIDs Language;
-  Decl *dcl = static_cast<Decl *>(D);
-  if (strncmp(Lang, "\"C\"", StrSize) == 0)
-    Language = LinkageSpecDecl::lang_c;
-  else if (strncmp(Lang, "\"C++\"", StrSize) == 0)
-    Language = LinkageSpecDecl::lang_cxx;
-  else {
-    Diag(Loc, diag::err_bad_language);
-    return 0;
-  }
-
-  // FIXME: Add all the various semantics of linkage specifications
-  return LinkageSpecDecl::Create(Context, Loc, Language, dcl);
-}
-
 void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name, 
                            ExprTy *alignment, SourceLocation PragmaLoc, 
                            SourceLocation LParenLoc, SourceLocation RParenLoc) {
