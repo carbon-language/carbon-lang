@@ -7,10 +7,10 @@ void f() {
   r = 1;
   int *p = &r;
   int &rr = r;
-  int (&rg)(int) = g; // expected-warning{{statement was disambiguated as declaration}}
+  int (&rg)(int) = g;
   rg(i);
   int a[3];
-  int (&ra)[3] = a;  // expected-warning{{statement was disambiguated as declaration}}
+  int (&ra)[3] = a;
   ra[1] = i;
   int *Q;
   int *& P = Q;
@@ -24,7 +24,7 @@ void test2() {
 
 
     int c[3];
-    int (&rc)[3] = c; // expected-warning{{statement was disambiguated as declaration}}
+    int (&rc)[3] = c;
 }
 
 // C++ [dcl.init.ref]p5b1

@@ -597,8 +597,6 @@ DIAG(err_expected_lparen_after_type, ERROR,
      "expected '(' for function-style cast or type construction")
 DIAG(err_expected_equal_after_declarator, ERROR,
      "expected '=' after declarator")
-DIAG(warn_statement_disambiguation, WARNING,
-     "statement was disambiguated as %0")
 DIAG(warn_parens_disambiguated_as_function_decl, WARNING,
      "parentheses were disambiguated as a function declarator")
 DIAG(err_expected_member_or_base_name, ERROR,

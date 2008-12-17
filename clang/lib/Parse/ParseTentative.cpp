@@ -126,18 +126,6 @@ bool Parser::isCXXSimpleDeclaration() {
     TPR = TPResult::True();
 
   assert(TPR == TPResult::True() || TPR == TPResult::False());
-  if (TPR == TPResult::True() && Tok.isNot(tok::kw_void)) {
-    // We have a declaration that looks like a functional cast; there's a high
-    // chance that the author intended the statement to be an expression.
-    // Emit a warning.
-    Diag(Tok, diag::warn_statement_disambiguation)
-      << "declaration" << SourceRange(Tok.getLocation(), TentativeParseLoc);
-  } else if (TPR == TPResult::False() && Tok.is(tok::kw_void)) {
-    // A functional cast to 'void' expression ? Warning..
-    Diag(Tok, diag::warn_statement_disambiguation)
-      << "expression" << SourceRange(Tok.getLocation(), TentativeParseLoc);
-  }
-
   return TPR == TPResult::True();
 }
 

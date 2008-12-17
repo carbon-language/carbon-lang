@@ -10,7 +10,7 @@ void f() {
   int(a)++; // expected-error {{expression is not assignable}}
   __extension__ int(a)++; // expected-error {{expression is not assignable}}
   typeof(int)(a,5)<<a; // expected-error {{function-style cast to a builtin type can only take one argument}}
-  void(a), ++a; // expected-warning {{statement was disambiguated as expression}} expected-warning {{expression result unused}}
+  void(a), ++a; // expected-warning {{expression result unused}}
   if (int(a)+1) {}
   for (int(a)+1;;) {}
   a = sizeof(int()+1);
@@ -23,13 +23,13 @@ void f() {
 
   // Declarations.
   int fd(T(a)); // expected-warning {{parentheses were disambiguated as a function declarator}}
-  T(*d)(int(p)); // expected-warning {{parentheses were disambiguated as a function declarator}} expected-warning {{statement was disambiguated as declaration}} expected-note {{previous definition is here}}
-  T(d)[5]; // expected-warning {{statement was disambiguated as declaration}} expected-error {{redefinition of 'd'}}
-  typeof(int[])(f) = { 1, 2 }; // expected-warning {{statement was disambiguated as declaration}}
+  T(*d)(int(p)); // expected-warning {{parentheses were disambiguated as a function declarator}} expected-note {{previous definition is here}}
+  T(d)[5]; // expected-error {{redefinition of 'd'}}
+  typeof(int[])(f) = { 1, 2 }; 
   void(b)(int);
-  int(d2) __attribute__(()); // expected-warning {{statement was disambiguated as declaration}}
+  int(d2) __attribute__(()); 
   if (int(a)=1) {}
-  int(d3(int())); // expected-warning {{statement was disambiguated as declaration}}
+  int(d3(int()));
 }
 
 class C { };
