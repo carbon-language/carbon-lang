@@ -107,6 +107,13 @@ void DeclPrinter:: PrintDecl(Decl *D) {
       Out << D->getNameAsString();
     }
     Out << ";\n";
+  } else if (EnumDecl *ED = dyn_cast<EnumDecl>(D)) {
+    Out << "enum " << ED->getNameAsString() << " {\n";
+    for (EnumDecl::enumerator_iterator E = ED->enumerator_begin(),
+                                    EEnd = ED->enumerator_end();
+         E != EEnd; ++E)
+      Out << "  " << (*E)->getNameAsString() << ",\n";
+    Out << "};\n";
   } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
     Out << "Read top-level tag decl: '" << TD->getNameAsString() << "'\n";
   } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {

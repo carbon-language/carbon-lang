@@ -121,7 +121,6 @@ EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
 }
 
 void EnumDecl::Destroy(ASTContext& C) {
-  DeclContext::DestroyDecls(C);
   Decl::Destroy(C);
 }
 
