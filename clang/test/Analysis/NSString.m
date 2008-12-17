@@ -15,6 +15,7 @@ typedef const struct __CFAllocator * CFAllocatorRef;
 extern const CFAllocatorRef kCFAllocatorDefault;
 extern CFTypeRef CFRetain(CFTypeRef cf);
 typedef const struct __CFDictionary * CFDictionaryRef;
+const void *CFDictionaryGetValue(CFDictionaryRef theDict, const void *key);
 extern CFStringRef CFStringCreateWithFormat(CFAllocatorRef alloc, CFDictionaryRef formatOptions, CFStringRef format, ...);
 typedef signed char BOOL;
 typedef int NSInteger;
@@ -27,6 +28,7 @@ typedef struct _NSZone NSZone;
 @protocol NSObject
 - (BOOL)isEqual:(id)object;
 - (oneway void)release;
+- (id)retain;
 @end
 @protocol NSCopying
 - (id)copyWithZone:(NSZone *)zone;
@@ -132,12 +134,20 @@ void f9() {
 }
 
 NSString* f10() {
-  
   static NSString* s = 0;
-  
   if (!s) s = [[NSString alloc] init];
-    
   return s; // no-warning
+}
+
+// Test case for regression reported in <rdar://problem/6452745>.
+// Essentially 's' should not be considered allocated on the false branch.
+// This exercises the 'EvalAssume' logic in GRTransferFuncs (CFRefCount.cpp).
+NSString* f11(CFDictionaryRef dict, const char* key) {
+  NSString* s = (NSString*) CFDictionaryGetValue(dict, key);
+  [s retain];
+  if (s) {
+    [s release];
+  }
 }
 
 @interface C1 : NSObject {}

@@ -325,6 +325,7 @@ public:
         
   ASTContext& getContext() { return BasicVals.getContext(); }
   const Decl& getCodeDecl() { return codedecl; }
+  GRTransferFuncs& getTransferFuncs() { return *TF; }
   BasicValueFactory& getBasicVals() { return BasicVals; }
   const BasicValueFactory& getBasicVals() const { return BasicVals; }
   SymbolManager& getSymbolManager() { return SymMgr; }

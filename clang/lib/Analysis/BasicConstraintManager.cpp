@@ -15,6 +15,7 @@
 #include "clang/Analysis/PathSensitive/ConstraintManager.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
+#include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -115,8 +116,15 @@ const GRState* BasicConstraintManager::Assume(const GRState* St, SVal Cond,
 const GRState* BasicConstraintManager::Assume(const GRState* St, Loc Cond,
                                             bool Assumption, bool& isFeasible) {
   St = AssumeAux(St, Cond, Assumption, isFeasible);
-  // TF->EvalAssume(*this, St, Cond, Assumption, isFeasible)
-  return St;
+  
+  if (!isFeasible)
+    return St;
+  
+  // EvalAssume is used to call into the GRTransferFunction object to perform
+  // any checker-specific update of the state based on this assumption being
+  // true or false.
+  return StateMgr.getTransferFuncs().EvalAssume(StateMgr, St, Cond, Assumption,
+                                                isFeasible);
 }
 
 const GRState* BasicConstraintManager::AssumeAux(const GRState* St, Loc Cond,
@@ -173,8 +181,15 @@ const GRState*
 BasicConstraintManager::Assume(const GRState* St, NonLoc Cond, bool Assumption,
                                bool& isFeasible) {
   St = AssumeAux(St, Cond, Assumption, isFeasible);
-  // TF->EvalAssume() does nothing now.
-  return St;
+  
+  if (!isFeasible)
+    return St;
+  
+  // EvalAssume is used to call into the GRTransferFunction object to perform
+  // any checker-specific update of the state based on this assumption being
+  // true or false.
+  return StateMgr.getTransferFuncs().EvalAssume(StateMgr, St, Cond, Assumption,
+                                                  isFeasible);
 }
 
 const GRState*
