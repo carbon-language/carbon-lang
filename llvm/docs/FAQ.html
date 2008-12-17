@@ -234,11 +234,9 @@ it:</p>
   <li><p>Run <tt>configure</tt> with an alternative <tt>PATH</tt> that is
       correct. In a Borne compatible shell, the syntax would be:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 % PATH=[the path without the bad program] ./configure ...
 </pre>
-</div>
 
       <p>This is still somewhat inconvenient, but it allows <tt>configure</tt>
          to do its work without having to adjust your <tt>PATH</tt>
@@ -278,9 +276,9 @@ old version.  What do I do?</p>
 can just run the following command in the top level directory of your object
 tree:</p>
 
-<div class="doc_code">
-<pre>% ./config.status &lt;relative path to Makefile&gt;</pre>
-</div>
+<pre class="doc_code">
+% ./config.status &lt;relative path to Makefile&gt;
+</pre>
 
 <p>If the Makefile is new, you will have to modify the configure script to copy
 it over.</p>
@@ -315,18 +313,16 @@ clean</tt> and then <tt>make</tt> in the directory that fails to build.</p>
 
 <p>For example, if you built LLVM with the command:</p>
 
-<div class="doc_code">
-<pre>% gmake ENABLE_PROFILING=1</pre>
-</div>
+<pre class="doc_code">
+% gmake ENABLE_PROFILING=1
+</pre>
 
 <p>...then you must run the tests with the following commands:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 % cd llvm/test
 % gmake ENABLE_PROFILING=1
 </pre>
-</div>
 
 </div>
 
@@ -365,25 +361,21 @@ target".</p>
 <div class="answer">
 <p>If the error is of the form:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 gmake[2]: *** No rule to make target `/path/to/somefile', needed by
 `/path/to/another/file.d'.<br>
 Stop.
 </pre>
-</div>
 
 <p>This may occur anytime files are moved within the Subversion repository or 
 removed entirely.  In this case, the best solution is to erase all 
 <tt>.d</tt> files, which list dependencies for source files, and rebuild:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 % cd $LLVM_OBJ_DIR
 % rm -f `find . -name \*\.d` 
 % gmake 
 </pre>
-</div>
 
 <p>In other cases, it may be necessary to run <tt>make clean</tt> before
 rebuilding.</p>
@@ -540,12 +532,10 @@ find libcrtend.a.
 The only way this can happen is if you haven't installed the runtime library. To
 correct this, do:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 % cd llvm/runtime
 % make clean ; make install-bytecode
 </pre>
-</div>
 </div>
 
 <div class="question">
@@ -583,21 +573,17 @@ C++ support for a processor that does not otherwise have a C++ compiler.
 <ol>
   <li><p>Compile your program as normal with llvm-g++:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 % llvm-g++ x.cpp -o program
 </pre>
-</div>
 
   <p>or:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 % llvm-g++ a.cpp -c
 % llvm-g++ b.cpp -c
 % llvm-g++ a.o b.o -o program
 </pre>
-</div>
 
       <p>With llvm-gcc3, this will generate program and program.bc.  The .bc
          file is the LLVM version of the program all linked together.</p></li>
@@ -605,19 +591,15 @@ C++ support for a processor that does not otherwise have a C++ compiler.
   <li><p>Convert the LLVM code to C code, using the LLC tool with the C
       backend:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 % llc -march=c program.bc -o program.c
-</pre>
-</div></li>
+</pre></li>
 
 <li><p>Finally, compile the C file:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 % cc x.c
-</pre>
-</div></li>
+</pre></li>
 
 </ol>
 
@@ -708,11 +690,9 @@ you can read from and assign to <tt>volatile</tt> global variables.
 a value that is not defined.  You can get these if you do not initialize a 
 variable before you use it.  For example, the C function:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 int X() { int i; return i; }
 </pre>
-</div>
 
 <p>Is compiled to "<tt>ret i32 undef</tt>" because "<tt>i</tt>" never has
 a value specified for it.</p>
