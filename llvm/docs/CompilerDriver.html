@@ -371,6 +371,8 @@ Example: <tt class="docutils literal"><span class="pre">(in_language</span> <spa
 either a parameter or a parameter list) is set by the
 user.
 Example: <tt class="docutils literal"><span class="pre">(not_empty</span> <span class="pre">&quot;o&quot;)</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">empty</span></tt> - The opposite of <tt class="docutils literal"><span class="pre">not_empty</span></tt>. Equivalent to <tt class="docutils literal"><span class="pre">(not</span> <span class="pre">(not_empty</span>
+<span class="pre">X))</span></tt>. Provided for convenience.</li>
 <li><tt class="docutils literal"><span class="pre">default</span></tt> - Always evaluates to true. Should always be the last
 test in the <tt class="docutils literal"><span class="pre">case</span></tt> expression.</li>
 <li><tt class="docutils literal"><span class="pre">and</span></tt> - A standard logical combinator that returns true iff all
@@ -462,7 +464,10 @@ like a linker.</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">append_cmd</span></tt> - append a string to the tool invocation
 command.
-Example: <tt class="docutils literal"><span class="pre">(case</span> <span class="pre">(switch_on</span> <span class="pre">&quot;pthread&quot;),</span> <span class="pre">(append_cmd</span> <span class="pre">&quot;-lpthread&quot;))</span></tt></li>
+Example: <tt class="docutils literal"><span class="pre">(case</span> <span class="pre">(switch_on</span> <span class="pre">&quot;pthread&quot;),</span> <span class="pre">(append_cmd</span>
+<span class="pre">&quot;-lpthread&quot;))</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">error`</span> <span class="pre">-</span> <span class="pre">exit</span> <span class="pre">with</span> <span class="pre">error.</span>
+<span class="pre">Example:</span> <span class="pre">``(error</span> <span class="pre">&quot;Mixing</span> <span class="pre">-c</span> <span class="pre">and</span> <span class="pre">-S</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">allowed!&quot;)</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">forward</span></tt> - forward an option unchanged.
 Example: <tt class="docutils literal"><span class="pre">(forward</span> <span class="pre">&quot;Wall&quot;)</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">forward_as</span></tt> - Change the name of an option, but forward the
