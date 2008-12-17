@@ -271,21 +271,27 @@ void PTHLexer::ReadToken(Token& T) {
   // FIXME: Setting the flags directly should obviate this step.
   T.startToken();
   
+  // Shadow CurPtr into an automatic variable so that Read8 doesn't load and
+  // store back into the instance variable.
+  const char *CurPtrShadow = CurPtr;
+  
   // Read the type of the token.
-  T.setKind((tok::TokenKind) Read8(CurPtr));
+  T.setKind((tok::TokenKind) Read8(CurPtrShadow));
   
   // Set flags.  This is gross, since we are really setting multiple flags.
-  T.setFlag((Token::TokenFlags) Read8(CurPtr));
+  T.setFlag((Token::TokenFlags) Read8(CurPtrShadow));
   
   // Set the IdentifierInfo* (if any).
-  T.setIdentifierInfo(PTHMgr.ReadIdentifierInfo(CurPtr));
+  T.setIdentifierInfo(PTHMgr.ReadIdentifierInfo(CurPtrShadow));
   
   // Set the SourceLocation.  Since all tokens are constructed using a
-  // raw lexer, they will all be offseted from the same FileID.
-  T.setLocation(SourceLocation::getFileLoc(FileID, Read32(CurPtr)));
+  // raw, they will all be offseted from the same FileID.
+  T.setLocation(SourceLocation::getFileLoc(FileID, Read32(CurPtrShadow)));
   
   // Finally, read and set the length of the token.
-  T.setLength(Read32(CurPtr));  
+  T.setLength(Read32(CurPtrShadow));
+  
+  CurPtr = CurPtrShadow;
 }
 
 //===----------------------------------------------------------------------===//
