@@ -3029,27 +3029,20 @@ void Sema::ActOnFields(Scope* S,
     ObjCIvarDecl **ClsFields = reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
     if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl)) {
       ID->addInstanceVariablesToClass(ClsFields, RecFields.size(), RBrac);
-#if 0
       // Must enforce the rule that ivars in the base classes may not be
       // duplicates.
-      FieldIDs.clear();
-      RecordDecl *RD = ID->getRecordForDecl();
-      for (RecordDecl::field_iterator i = RD->field_begin(),
-           e = RD->field_end(); i != e; ++i) {
-        FieldDecl *FD = *i;
-        if (IdentifierInfo *II = FD->getIdentifier())
-          if (!FieldIDs.insert(II)) {
-            Diag(FD->getLocation(), diag::err_duplicate_member) << II;
-            FD->setInvalidDecl();
-            for (RecordDecl::field_iterator j = RD->field_begin(),
-                 e1 = RD->field_end(); j != e1; ++j)
-              if (II == (*j)->getIdentifier()) {
-                Diag((*j)->getLocation(), diag::note_previous_definition);
-                break;
-              }
+      if (ID->getSuperClass()) {
+        for (ObjCInterfaceDecl::ivar_iterator IVI = ID->ivar_begin(), 
+             IVE = ID->ivar_end(); IVI != IVE; ++IVI) {
+          ObjCIvarDecl* Ivar = (*IVI);
+          IdentifierInfo *II = Ivar->getIdentifier();
+          ObjCIvarDecl* prevIvar = ID->getSuperClass()->FindIvarDeclaration(II);
+          if (prevIvar) {
+            Diag(Ivar->getLocation(), diag::err_duplicate_member) << II;
+            Diag(prevIvar->getLocation(), diag::note_previous_definition);
           }
+        }
       }
-#endif
     }
     else if (ObjCImplementationDecl *IMPDecl = 
                dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
