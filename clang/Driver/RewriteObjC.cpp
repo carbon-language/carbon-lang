@@ -1398,14 +1398,14 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   SynthCountByEnumWithState(buf);
   buf += ");\n\t";
   buf += elementName;
-  buf += " = nil;\n\t";
+  buf += " = ((id)0);\n\t";
   buf += "__break_label_";
   buf += utostr(ObjCBcLabelNo.back());
   buf += ": ;\n\t";
   buf += "}\n\t";
   buf += "else\n\t\t";
   buf += elementName;
-  buf += " = nil;\n";
+  buf += " = ((id)0);\n";
   buf += "}\n";
   
   // Insert all these *after* the statement body.
