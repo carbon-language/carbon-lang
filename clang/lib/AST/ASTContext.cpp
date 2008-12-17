@@ -48,6 +48,33 @@ ASTContext::~ASTContext() {
     Types.pop_back();
   }
 
+  {
+    llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*>::iterator
+      I = ASTRecordLayouts.begin(), E = ASTRecordLayouts.end();
+    while (I != E) {
+      ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second);
+      delete R;
+    }
+  }
+
+  {
+    llvm::DenseMap<const ObjCInterfaceDecl*, const ASTRecordLayout*>::iterator
+      I = ASTObjCInterfaces.begin(), E = ASTObjCInterfaces.end();
+    while (I != E) {
+      ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second);
+      delete R;
+    }
+  }
+
+  {
+    llvm::DenseMap<const ObjCInterfaceDecl*, const RecordDecl*>::iterator
+      I = ASTRecordForInterface.begin(), E = ASTRecordForInterface.end();
+    while (I != E) {
+      RecordDecl *R = const_cast<RecordDecl*>((I++)->second);
+      R->Destroy(*this);
+    }
+  }
+
   TUDecl->Destroy(*this);
 }
 
