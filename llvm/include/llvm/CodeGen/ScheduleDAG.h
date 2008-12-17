@@ -312,15 +312,15 @@ namespace llvm {
     /// the specified node.
     void removePred(const SDep &D);
 
-    /// getHeight - Return the height of this node, which is the length of the
-    /// maximum path down to any node with has no successors.
+    /// getDepth - Return the depth of this node, which is the length of the
+    /// maximum path up to any node with has no predecessors.
     unsigned getDepth() const {
       if (!isDepthCurrent) const_cast<SUnit *>(this)->ComputeDepth();
       return Depth;
     }
 
     /// getHeight - Return the height of this node, which is the length of the
-    /// maximum path up to any node with has no predecessors.
+    /// maximum path down to any node with has no successors.
     unsigned getHeight() const {
       if (!isHeightCurrent) const_cast<SUnit *>(this)->ComputeHeight();
       return Height;
