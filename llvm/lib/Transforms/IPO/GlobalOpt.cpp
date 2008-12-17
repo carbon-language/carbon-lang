@@ -1205,10 +1205,10 @@ static void RewriteHeapSROALoadUser(Instruction *LoadUser,
   
   // If this is the first time we've seen this PHI, recursively process all
   // users.
-  for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end(); UI != E;
-       ++UI)
-    RewriteHeapSROALoadUser(cast<Instruction>(*UI), InsertedScalarizedValues,
-                            PHIsToRewrite);
+  for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end(); UI != E; ) {
+    Instruction *User = cast<Instruction>(*UI++);
+    RewriteHeapSROALoadUser(User, InsertedScalarizedValues, PHIsToRewrite);
+  }
 }
 
 /// RewriteUsesOfLoadForHeapSRoA - We are performing Heap SRoA on a global.  Ptr
@@ -1219,9 +1219,10 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load,
                DenseMap<Value*, std::vector<Value*> > &InsertedScalarizedValues,
                    std::vector<std::pair<PHINode*, unsigned> > &PHIsToRewrite) {
   for (Value::use_iterator UI = Load->use_begin(), E = Load->use_end();
-       UI != E; )
-    RewriteHeapSROALoadUser(cast<Instruction>(*UI++), InsertedScalarizedValues,
-                            PHIsToRewrite);
+       UI != E; ) {
+    Instruction *User = cast<Instruction>(*UI++);
+    RewriteHeapSROALoadUser(User, InsertedScalarizedValues, PHIsToRewrite);
+  }
   
   if (Load->use_empty()) {
     Load->eraseFromParent();
