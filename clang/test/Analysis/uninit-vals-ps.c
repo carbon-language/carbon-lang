@@ -1,5 +1,5 @@
-// RUN: clang -checker-simple -verify %s &&
-// RUN: clang -checker-simple -analyzer-store-region -verify %s
+// RUN: clang -checker-cfref -verify %s &&
+// RUN: clang -checker-cfref -analyzer-store-region -verify %s
 
 struct FPRec {
   void (*my_func)(int * x);  
@@ -49,4 +49,22 @@ int ret_uninit() {
   return *p;  // expected-warning{{Uninitialized or undefined return value returned to caller.}}
 }
 
+// <rdar://problem/6451816>
+typedef unsigned char Boolean;
+typedef const struct __CFNumber * CFNumberRef;
+typedef signed long CFIndex;
+typedef CFIndex CFNumberType;
+typedef unsigned long UInt32;
+typedef UInt32 CFStringEncoding;
+typedef const struct __CFString * CFStringRef;
+extern Boolean CFNumberGetValue(CFNumberRef number, CFNumberType theType, void *valuePtr);
+extern CFStringRef CFStringConvertEncodingToIANACharSetName(CFStringEncoding encoding);
+
+CFStringRef rdar_6451816(CFNumberRef nr) {
+  CFStringEncoding encoding;
+  // &encoding is casted to void*.  This test case tests whether or not
+  // we properly invalidate the value of 'encoding'.
+  CFNumberGetValue(nr, 9, &encoding);
+  return CFStringConvertEncodingToIANACharSetName(encoding); // no-warning
+}
 

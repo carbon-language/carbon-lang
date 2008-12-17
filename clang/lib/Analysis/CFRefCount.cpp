@@ -1599,6 +1599,14 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         }
         
         const TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
+        
+        // Blast through AnonTypedRegions to get the original region type.
+        while (R) {
+          const AnonTypedRegion* ATR = dyn_cast<AnonTypedRegion>(R);
+          if (!ATR) break;
+          R = dyn_cast<TypedRegion>(ATR->getSuperRegion());
+        }
+        
         if (R) {
           // Set the value of the variable to be a conjured symbol.
           unsigned Count = Builder.getCurrentBlockCount();
@@ -1609,7 +1617,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
             SymbolRef NewSym =
               Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
             
-            state = state.BindLoc(*MR,
+            state = state.BindLoc(Loc::MakeVal(R),
                                   Loc::IsLocType(T)
                                   ? cast<SVal>(loc::SymbolVal(NewSym))
                                   : cast<SVal>(nonloc::SymbolVal(NewSym)));
