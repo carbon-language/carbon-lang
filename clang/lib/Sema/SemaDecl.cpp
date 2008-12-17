@@ -2624,7 +2624,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     }
   }
 
-  CreateNewDecl:
+CreateNewDecl:
   
   // If there is an identifier, use the location of the identifier as the
   // location of the decl, otherwise use the location of the struct/union
@@ -2693,53 +2693,6 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   return New;
 }
 
-/// Collect the instance variables declared in an Objective-C object.  Used in
-/// the creation of structures from objects using the @defs directive.
-/// FIXME: This should be consolidated with CollectObjCIvars as it is also
-/// part of the AST generation logic of @defs.
-static void CollectIvars(ObjCInterfaceDecl *Class, RecordDecl *Record,
-                         ASTContext& Ctx,
-                         llvm::SmallVectorImpl<Sema::DeclTy*> &ivars) {
-  if (Class->getSuperClass())
-    CollectIvars(Class->getSuperClass(), Record, Ctx, ivars);
-  
-  // For each ivar, create a fresh ObjCAtDefsFieldDecl.
-  for (ObjCInterfaceDecl::ivar_iterator
-        I=Class->ivar_begin(), E=Class->ivar_end(); I!=E; ++I) {
-    
-    ObjCIvarDecl* ID = *I;
-    ivars.push_back(ObjCAtDefsFieldDecl::Create(Ctx, Record,
-                                                ID->getLocation(),
-                                                ID->getIdentifier(),
-                                                ID->getType(),
-                                                ID->getBitWidth()));
-  }
-}
-
-/// Called whenever @defs(ClassName) is encountered in the source.  Inserts the
-/// instance variables of ClassName into Decls.
-void Sema::ActOnDefs(Scope *S, DeclTy *TagD, SourceLocation DeclStart, 
-                     IdentifierInfo *ClassName,
-                     llvm::SmallVectorImpl<DeclTy*> &Decls) {
-  // Check that ClassName is a valid class
-  ObjCInterfaceDecl *Class = getObjCInterfaceDecl(ClassName);
-  if (!Class) {
-    Diag(DeclStart, diag::err_undef_interface) << ClassName;
-    return;
-  }
-  // Collect the instance variables
-  CollectIvars(Class, dyn_cast<RecordDecl>((Decl*)TagD), Context, Decls);
-
-  // Introduce all of these fields into the appropriate scope.
-  for (llvm::SmallVectorImpl<DeclTy*>::iterator D = Decls.begin();
-       D != Decls.end(); ++D) {
-    FieldDecl *FD = cast<FieldDecl>((Decl*)*D);
-    if (getLangOptions().CPlusPlus)
-      PushOnScopeChains(cast<FieldDecl>(FD), S);
-    else if (RecordDecl *Record = dyn_cast<RecordDecl>((Decl*)TagD))
-      Record->addDecl(Context, FD);
-  }
-}
 
 /// TryToFixInvalidVariablyModifiedType - Helper method to turn variable array
 /// types into constant array types in certain situations which would otherwise
@@ -3388,31 +3341,6 @@ Sema::DeclTy *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
   return FileScopeAsmDecl::Create(Context, Loc, AsmString);
 }
 
-  /// ActOnLinkageSpec - Parsed a C++ linkage-specification that
-  /// contained braces. Lang/StrSize contains the language string that
-  /// was parsed at location Loc. Decls/NumDecls provides the
-  /// declarations parsed inside the linkage specification.
-Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
-                                     SourceLocation LBrace,
-                                     SourceLocation RBrace,
-                                     const char *Lang,
-                                     unsigned StrSize,
-                                     DeclTy **Decls, unsigned NumDecls) {
-  LinkageSpecDecl::LanguageIDs Language;
-  if (strncmp(Lang, "\"C\"", StrSize) == 0)
-    Language = LinkageSpecDecl::lang_c;
-  else if (strncmp(Lang, "\"C++\"", StrSize) == 0)
-    Language = LinkageSpecDecl::lang_cxx;
-  else {
-    Diag(Loc, diag::err_bad_language);
-    return 0;
-  }
-
-  // FIXME: Add all the various semantics of linkage specifications
-
-  return LinkageSpecDecl::Create(Context, Loc, Language, 
-                                 (Decl **)Decls, NumDecls);
-}
 
 void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name, 
                            ExprTy *alignment, SourceLocation PragmaLoc, 

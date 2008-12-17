@@ -1630,8 +1630,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
   return PIDecl;
 }
 
-bool Sema::CheckObjCDeclScope(Decl *D)
-{
+bool Sema::CheckObjCDeclScope(Decl *D) {
   if (isa<TranslationUnitDecl>(CurContext))
     return false;
   
@@ -1640,3 +1639,52 @@ bool Sema::CheckObjCDeclScope(Decl *D)
   
   return true;
 }
+
+/// Collect the instance variables declared in an Objective-C object.  Used in
+/// the creation of structures from objects using the @defs directive.
+/// FIXME: This should be consolidated with CollectObjCIvars as it is also
+/// part of the AST generation logic of @defs.
+static void CollectIvars(ObjCInterfaceDecl *Class, RecordDecl *Record,
+                         ASTContext& Ctx,
+                         llvm::SmallVectorImpl<Sema::DeclTy*> &ivars) {
+  if (Class->getSuperClass())
+    CollectIvars(Class->getSuperClass(), Record, Ctx, ivars);
+  
+  // For each ivar, create a fresh ObjCAtDefsFieldDecl.
+  for (ObjCInterfaceDecl::ivar_iterator
+       I=Class->ivar_begin(), E=Class->ivar_end(); I!=E; ++I) {
+    
+    ObjCIvarDecl* ID = *I;
+    ivars.push_back(ObjCAtDefsFieldDecl::Create(Ctx, Record,
+                                                ID->getLocation(),
+                                                ID->getIdentifier(),
+                                                ID->getType(),
+                                                ID->getBitWidth()));
+  }
+}
+
+/// Called whenever @defs(ClassName) is encountered in the source.  Inserts the
+/// instance variables of ClassName into Decls.
+void Sema::ActOnDefs(Scope *S, DeclTy *TagD, SourceLocation DeclStart, 
+                     IdentifierInfo *ClassName,
+                     llvm::SmallVectorImpl<DeclTy*> &Decls) {
+  // Check that ClassName is a valid class
+  ObjCInterfaceDecl *Class = getObjCInterfaceDecl(ClassName);
+  if (!Class) {
+    Diag(DeclStart, diag::err_undef_interface) << ClassName;
+    return;
+  }
+  // Collect the instance variables
+  CollectIvars(Class, dyn_cast<RecordDecl>((Decl*)TagD), Context, Decls);
+  
+  // Introduce all of these fields into the appropriate scope.
+  for (llvm::SmallVectorImpl<DeclTy*>::iterator D = Decls.begin();
+       D != Decls.end(); ++D) {
+    FieldDecl *FD = cast<FieldDecl>((Decl*)*D);
+    if (getLangOptions().CPlusPlus)
+      PushOnScopeChains(cast<FieldDecl>(FD), S);
+    else if (RecordDecl *Record = dyn_cast<RecordDecl>((Decl*)TagD))
+      Record->addDecl(Context, FD);
+  }
+}
+
