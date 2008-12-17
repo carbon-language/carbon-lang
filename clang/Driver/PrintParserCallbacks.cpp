@@ -156,14 +156,27 @@ namespace {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }
-
+    
+    /// ActOnLinkageSpec - Parsed a C++ linkage-specification that
+    /// contained braces. Lang/StrSize contains the language string that
+    /// was parsed at location Loc. Decls/NumDecls provides the
+    /// declarations parsed inside the linkage specification.
     virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
                                      SourceLocation RBrace, const char *Lang,
-                                     unsigned StrSize, DeclTy *D) {
+                                     unsigned StrSize, 
+                                     DeclTy **Decls, unsigned NumDecls) {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }
-  
+    
+    /// ActOnLinkageSpec - Parsed a C++ linkage-specification without
+    /// braces. Lang/StrSize contains the language string that was
+    /// parsed at location Loc. D is the declaration parsed.
+    virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, const char *Lang,
+                                     unsigned StrSize, DeclTy *D) {
+      return 0;
+    }
+    
     //===--------------------------------------------------------------------===//
     // Type Parsing Callbacks.
     //===--------------------------------------------------------------------===//
