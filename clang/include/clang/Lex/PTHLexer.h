@@ -76,8 +76,13 @@ public:
   /// tok::l_paren token, 0 if it is something else and 2 if there are no more
   /// tokens controlled by this lexer.
   unsigned isNextPPTokenLParen() {
-    return AtLastToken() ? 2 : GetToken().is(tok::l_paren);
-  }
+    // isNextPPTokenLParen is not on the hot path, and all we care about is
+    // whether or not we are at a token with kind tok::eof or tok::l_paren.
+    // Just read the first byte from the current token pointer to determine
+    // its kind.
+    tok::TokenKind x = (tok::TokenKind) (uint8_t) *CurPtr;
+    return x == tok::eof ? 2 : x == tok::l_paren;
+  }    
 
   /// IndirectLex - An indirect call to 'Lex' that can be invoked via
   ///  the PreprocessorLexer interface.
