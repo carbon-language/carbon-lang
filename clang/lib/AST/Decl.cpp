@@ -14,6 +14,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Stmt.h"
+#include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
 
 using namespace clang;
@@ -46,15 +47,6 @@ ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
     SourceLocation L, IdentifierInfo *Id, QualType T, ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<ImplicitParamDecl>();
   return new (Mem) ImplicitParamDecl(ImplicitParam, DC, L, Id, T, PrevDecl);
-}
-
-VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
-                         SourceLocation L,
-                         IdentifierInfo *Id, QualType T,
-                         StorageClass S, ScopedDecl *PrevDecl,
-                         SourceLocation TypeSpecStartLoc) {
-  void *Mem = C.getAllocator().Allocate<VarDecl>();
-  return new (Mem) VarDecl(Var, DC, L, Id, T, S, PrevDecl, TypeSpecStartLoc);
 }
 
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
@@ -163,6 +155,28 @@ void ScopedDecl::setLexicalDeclContext(DeclContext *DC) {
 ScopedDecl::~ScopedDecl() {
   if (isOutOfSemaDC())
     delete getMultipleDC();
+}
+
+//===----------------------------------------------------------------------===//
+// VarDecl Implementation
+//===----------------------------------------------------------------------===//
+
+VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
+                         SourceLocation L,
+                         IdentifierInfo *Id, QualType T,
+                         StorageClass S, ScopedDecl *PrevDecl,
+                         SourceLocation TypeSpecStartLoc) {
+  void *Mem = C.getAllocator().Allocate<VarDecl>();
+  return new (Mem) VarDecl(Var, DC, L, Id, T, S, PrevDecl, TypeSpecStartLoc);
+}
+
+void VarDecl::Destroy(ASTContext& C) {
+  this->~VarDecl();
+  C.getAllocator().Deallocate((void *)this);
+}
+
+VarDecl::~VarDecl() {
+  delete getInit();
 }
 
 //===----------------------------------------------------------------------===//

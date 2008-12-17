@@ -344,7 +344,10 @@ public:
                          SourceLocation L, IdentifierInfo *Id,
                          QualType T, StorageClass S, ScopedDecl *PrevDecl,
                          SourceLocation TypeSpecStartLoc = SourceLocation());
-  
+
+  virtual ~VarDecl();
+  virtual void Destroy(ASTContext& C);
+
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
 
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
