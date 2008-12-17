@@ -150,7 +150,7 @@ void SUnit::setHeightDirty() {
 /// fact that this node's depth just increased.
 ///
 void SUnit::setDepthToAtLeast(unsigned NewDepth) {
-  if (NewDepth <= Depth)
+  if (NewDepth <= getDepth())
     return;
   setDepthDirty();
   Depth = NewDepth;
@@ -161,7 +161,7 @@ void SUnit::setDepthToAtLeast(unsigned NewDepth) {
 /// fact that this node's height just increased.
 ///
 void SUnit::setHeightToAtLeast(unsigned NewHeight) {
-  if (NewHeight <= Height)
+  if (NewHeight <= getHeight())
     return;
   setHeightDirty();
   Height = NewHeight;
