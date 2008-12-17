@@ -131,15 +131,24 @@ void PTHLexer::DiscardToEndOfLine() {
   assert(ParsingPreprocessorDirective && ParsingFilename == false &&
          "Must be in a preprocessing directive!");
 
-  // Already at end-of-file?
-  if (AtLastToken())
-    return;
+  // Skip tokens by only peeking at their token kind and the flags.
+  // We don't need to actually reconstruct full tokens from the token buffer.
+  // This saves some copies and it also reduces IdentifierInfo* lookup.
+  const char* p = CurPtr;
+  while (1) {
+    // Read the token kind.  Are we at the end of the file?
+    tok::TokenKind x = (tok::TokenKind) (uint8_t) *p;
+    if (x == tok::eof) break;
 
-  // Find the first token that is not the start of the *current* line.
-  Token T;
-  for (Lex(T); !AtLastToken(); Lex(T))
-    if (GetToken().isAtStartOfLine())
-      return;
+    // Read the token flags.  Are we at the start of the next line?
+    Token::TokenFlags y = (Token::TokenFlags) (uint8_t) p[1];
+    if (y == Token::StartOfLine) break;
+
+    // Skip to the next token.
+    p += DISK_TOKEN_SIZE;
+  }
+  
+  CurPtr = p;
 }
 
 //===----------------------------------------------------------------------===//
