@@ -1136,8 +1136,8 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token <OtherOpVal> EXTRACTVALUE INSERTVALUE
 
 // Function Attributes
-%token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS NOCAPTURE BYVAL
-%token READNONE READONLY GC OPTSIZE NOINLINE ALWAYSINLINE SSP SSPREQ NEST
+%token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS BYVAL NEST
+%token READNONE READONLY GC OPTSIZE NOINLINE ALWAYSINLINE SSP SSPREQ
 
 // Visibility Styles
 %token DEFAULT HIDDEN PROTECTED
@@ -1265,16 +1265,15 @@ OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                   CHECK_FOR_ERROR
                  };
 
-Attribute     : ZEROEXT   { $$ = Attribute::ZExt;      }
-              | ZEXT      { $$ = Attribute::ZExt;      }
-              | SIGNEXT   { $$ = Attribute::SExt;      }
-              | SEXT      { $$ = Attribute::SExt;      }
-              | INREG     { $$ = Attribute::InReg;     }
-              | SRET      { $$ = Attribute::StructRet; }
-              | NOALIAS   { $$ = Attribute::NoAlias;   }
-              | NOCAPTURE { $$ = Attribute::NoCapture; }
-              | BYVAL     { $$ = Attribute::ByVal;     }
-              | NEST      { $$ = Attribute::Nest;      }
+Attribute     : ZEROEXT { $$ = Attribute::ZExt;      }
+              | ZEXT    { $$ = Attribute::ZExt;      }
+              | SIGNEXT { $$ = Attribute::SExt;      }
+              | SEXT    { $$ = Attribute::SExt;      }
+              | INREG   { $$ = Attribute::InReg;     }
+              | SRET    { $$ = Attribute::StructRet; }
+              | NOALIAS { $$ = Attribute::NoAlias;   }
+              | BYVAL   { $$ = Attribute::ByVal;     }
+              | NEST    { $$ = Attribute::Nest;      }
               | ALIGN EUINT64VAL { $$ =
                           Attribute::constructAlignmentFromInt($2);    }
               ;
@@ -1285,10 +1284,9 @@ OptAttributes : /* empty */  { $$ = Attribute::None; }
               }
               ;
 
-RetAttr       : INREG    { $$ = Attribute::InReg;    }
+RetAttr       : INREG    { $$ = Attribute::InReg;     }
               | ZEROEXT  { $$ = Attribute::ZExt;     }
               | SIGNEXT  { $$ = Attribute::SExt;     }
-              | NOALIAS  { $$ = Attribute::NoAlias;  }
               ;
 
 OptRetAttrs  : /* empty */ { $$ = Attribute::None; }
@@ -1332,8 +1330,6 @@ OptAlign : /*empty*/        { $$ = 0; } |
   $$ = $2;
   if ($$ != 0 && !isPowerOf2_32($$))
     GEN_ERROR("Alignment must be a power of two");
-  if ($$ > 0x40000000)
-    GEN_ERROR("Alignment too large");
   CHECK_FOR_ERROR
 };
 OptCAlign : /*empty*/            { $$ = 0; } |
@@ -1341,8 +1337,6 @@ OptCAlign : /*empty*/            { $$ = 0; } |
   $$ = $3;
   if ($$ != 0 && !isPowerOf2_32($$))
     GEN_ERROR("Alignment must be a power of two");
-  if ($$ > 0x40000000)
-    GEN_ERROR("Alignment too large");
   CHECK_FOR_ERROR
 };
 
@@ -1372,8 +1366,6 @@ GlobalVarAttribute : SectionString {
   | ALIGN EUINT64VAL {
     if ($2 != 0 && !isPowerOf2_32($2))
       GEN_ERROR("Alignment must be a power of two");
-    if ($2 > 0x40000000)
-      GEN_ERROR("Alignment too large");
     CurGV->setAlignment($2);
     CHECK_FOR_ERROR
   };

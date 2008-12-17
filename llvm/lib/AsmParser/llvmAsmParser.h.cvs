@@ -184,8 +184,8 @@
      SRET = 400,
      NOUNWIND = 401,
      NOALIAS = 402,
-     NOCAPTURE = 403,
-     BYVAL = 404,
+     BYVAL = 403,
+     NEST = 404,
      READNONE = 405,
      READONLY = 406,
      GC = 407,
@@ -194,10 +194,9 @@
      ALWAYSINLINE = 410,
      SSP = 411,
      SSPREQ = 412,
-     NEST = 413,
-     DEFAULT = 414,
-     HIDDEN = 415,
-     PROTECTED = 416
+     DEFAULT = 413,
+     HIDDEN = 414,
+     PROTECTED = 415
    };
 #endif
 /* Tokens.  */
@@ -346,8 +345,8 @@
 #define SRET 400
 #define NOUNWIND 401
 #define NOALIAS 402
-#define NOCAPTURE 403
-#define BYVAL 404
+#define BYVAL 403
+#define NEST 404
 #define READNONE 405
 #define READONLY 406
 #define GC 407
@@ -356,17 +355,16 @@
 #define ALWAYSINLINE 410
 #define SSP 411
 #define SSPREQ 412
-#define NEST 413
-#define DEFAULT 414
-#define HIDDEN 415
-#define PROTECTED 416
+#define DEFAULT 413
+#define HIDDEN 414
+#define PROTECTED 415
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 986 "/home/nicholas/llvm-commit/lib/AsmParser/llvmAsmParser.y"
+#line 986 "/Volumes/Gir/devel/llvm/llvm.src/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -414,8 +412,8 @@ typedef union YYSTYPE
   llvm::ICmpInst::Predicate         IPredicate;
   llvm::FCmpInst::Predicate         FPredicate;
 }
-/* Line 1489 of yacc.c.  */
-#line 419 "llvmAsmParser.tab.h"
+/* Line 1529 of yacc.c.  */
+#line 417 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
