@@ -71,7 +71,9 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
   // Reserve entries in the vector for each of the SUnits we are creating.  This
   // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
   // invalidated.
-  SUnits.reserve(DAG->allnodes_size());
+  // FIXME: Multiply by 2 because we may clone nodes during scheduling.
+  // This is a temporary workaround.
+  SUnits.reserve(DAG->allnodes_size() * 2);
   
   // During scheduling, the NodeId field of SDNode is used to map SDNodes
   // to their associated SUnits by holding SUnits table indices. A value
