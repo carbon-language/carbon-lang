@@ -4349,7 +4349,18 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 /// HandleDeclInMainFile - This is called for each top-level decl defined in the
 /// main file of the input.
 void RewriteObjC::HandleDeclInMainFile(Decl *D) {
+  // Required when rewriting in objective-c++ mode...
+  if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
+    for (LinkageSpecDecl::decl_iterator i = LSD->decls_begin(), 
+                                        e = LSD->decls_end(); i != e; ++i) {
+      HandleDeclInMainFile(*i);
+    }
+    return;
+  }
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (FD->isOverloadedOperator())
+      return;
+      
     // Since function prototypes don't have ParmDecl's, we check the function
     // prototype. This enables us to rewrite function declarations and
     // definitions using the same code.
