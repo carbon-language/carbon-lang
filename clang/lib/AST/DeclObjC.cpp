@@ -369,6 +369,8 @@ void ObjCInterfaceDecl::addInstanceVariablesToClass(ObjCIvarDecl **ivars,
 ///
 FieldDecl *ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context, 
                                                      const ObjCIvarDecl *ivar) {
+  if (!RecordForDecl)
+    addRecordToClass(Context);
   assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
   DeclarationName Member = ivar->getDeclName();
   DeclContext::lookup_result Lookup = RecordForDecl->lookup(Context, Member);
