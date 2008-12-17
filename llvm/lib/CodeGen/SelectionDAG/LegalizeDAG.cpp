@@ -3144,10 +3144,12 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         SDValue In1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, TmpEltVT,
                                   Tmp1, DAG.getIntPtrConstant(i));
         Ops[i] = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(In1), In1,
-                              DAG.getNode(ISD::EXTRACT_VECTOR_ELT, TmpEltVT,
-                                          Tmp2, DAG.getIntPtrConstant(i)),
-                              CC);
-        Ops[i] = DAG.getNode(ISD::SIGN_EXTEND, EltVT, Ops[i]);
+                             DAG.getNode(ISD::EXTRACT_VECTOR_ELT, TmpEltVT,
+                                         Tmp2, DAG.getIntPtrConstant(i)),
+                             CC);
+        Ops[i] = DAG.getNode(ISD::SELECT, EltVT, Ops[i],
+                             DAG.getConstant(EltVT.getIntegerVTBitMask(),EltVT),
+                             DAG.getConstant(0, EltVT));
       }
       Result = DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], NumElems);
       break;
