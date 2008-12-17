@@ -376,6 +376,9 @@ LLVMValueRef LLVMConstExtractValue(LLVMValueRef AggConstant, unsigned *IdxList,
 LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant,
                                   LLVMValueRef ElementValueConstant,
                                   unsigned *IdxList, unsigned NumIdx);
+LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, 
+                                const char *AsmString, const char *Constraints,
+                                int HasSideEffects);
 
 /* Operations on global variables, functions, and aliases (globals) */
 LLVMModuleRef LLVMGetGlobalParent(LLVMValueRef Global);
@@ -403,6 +406,10 @@ int LLVMIsThreadLocal(LLVMValueRef GlobalVar);
 void LLVMSetThreadLocal(LLVMValueRef GlobalVar, int IsThreadLocal);
 int LLVMIsGlobalConstant(LLVMValueRef GlobalVar);
 void LLVMSetGlobalConstant(LLVMValueRef GlobalVar, int IsConstant);
+
+/* Operations on aliases */
+LLVMValueRef LLVMAddAlias(LLVMModuleRef M, LLVMTypeRef Ty, LLVMValueRef Aliasee,
+                          const char *Name);
 
 /* Operations on functions */
 LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const char *Name,
@@ -488,6 +495,8 @@ void LLVMPositionBuilder(LLVMBuilderRef Builder, LLVMBasicBlockRef Block,
 void LLVMPositionBuilderBefore(LLVMBuilderRef Builder, LLVMValueRef Instr);
 void LLVMPositionBuilderAtEnd(LLVMBuilderRef Builder, LLVMBasicBlockRef Block);
 LLVMBasicBlockRef LLVMGetInsertBlock(LLVMBuilderRef Builder);
+void LLVMClearInsertionPosition(LLVMBuilderRef Builder);
+void LLVMInsertIntoBuilder(LLVMBuilderRef Builder, LLVMValueRef Instr);
 void LLVMDisposeBuilder(LLVMBuilderRef Builder);
 
 /* Terminators */

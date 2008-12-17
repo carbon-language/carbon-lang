@@ -17,8 +17,10 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/CallSite.h"
 #include <cassert>
@@ -555,6 +557,12 @@ LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant,
                                            IdxList, NumIdx));
 }
 
+LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, const char *AsmString, 
+                                const char *Constraints, int HasSideEffects) {
+  return wrap(InlineAsm::get(dyn_cast<FunctionType>(unwrap(Ty)), AsmString, 
+                             Constraints, HasSideEffects));
+}
+
 /*--.. Operations on global variables, functions, and aliases (globals) ....--*/
 
 LLVMModuleRef LLVMGetGlobalParent(LLVMValueRef Global) {
@@ -671,6 +679,14 @@ int LLVMIsGlobalConstant(LLVMValueRef GlobalVar) {
 
 void LLVMSetGlobalConstant(LLVMValueRef GlobalVar, int IsConstant) {
   unwrap<GlobalVariable>(GlobalVar)->setConstant(IsConstant != 0);
+}
+
+/*--.. Operations on aliases ......................................--*/
+
+LLVMValueRef LLVMAddAlias(LLVMModuleRef M, LLVMTypeRef Ty, LLVMValueRef Aliasee,
+                          const char *Name) {
+  return wrap(new GlobalAlias(unwrap(Ty), GlobalValue::ExternalLinkage, Name,
+                              unwrap<Constant>(Aliasee), unwrap (M)));
 }
 
 /*--.. Operations on functions .............................................--*/
@@ -1036,6 +1052,14 @@ void LLVMPositionBuilderAtEnd(LLVMBuilderRef Builder, LLVMBasicBlockRef Block) {
 
 LLVMBasicBlockRef LLVMGetInsertBlock(LLVMBuilderRef Builder) {
    return wrap(unwrap(Builder)->GetInsertBlock());
+}
+
+void LLVMClearInsertionPosition(LLVMBuilderRef Builder) {
+  unwrap(Builder)->ClearInsertionPoint ();
+}
+
+void LLVMInsertIntoBuilder(LLVMBuilderRef Builder, LLVMValueRef Instr) {
+  unwrap(Builder)->Insert(unwrap<Instruction>(Instr));
 }
 
 void LLVMDisposeBuilder(LLVMBuilderRef Builder) {
