@@ -285,7 +285,7 @@ void PTHLexer::ReadToken(Token& T) {
   T.setIdentifierInfo(PTHMgr.ReadIdentifierInfo(CurPtrShadow));
   
   // Set the SourceLocation.  Since all tokens are constructed using a
-  // raw, they will all be offseted from the same FileID.
+  // raw lexer, they will all be offseted from the same FileID.
   T.setLocation(SourceLocation::getFileLoc(FileID, Read32(CurPtrShadow)));
   
   // Finally, read and set the length of the token.
