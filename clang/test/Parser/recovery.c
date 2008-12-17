@@ -66,5 +66,5 @@ int test6248081() {
 }
 
 struct forward;
-void x(struct forward* x) {switch(x->a) {}}
+void x(struct forward* x) {switch(x->a) {}} // expected-error {{incomplete definition of type}}
 
