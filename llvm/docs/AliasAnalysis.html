@@ -192,11 +192,11 @@ and returns MustAlias, MayAlias, or NoAlias as appropriate.
 
 <div class="doc_text">
 <p>The NoAlias response is used when the two pointers refer to distinct objects,
-even regardless of whether the pointers compare equal.  For example, freed
-pointers don't alias any pointers that were allocated afterwards.  As a
-degenerate case, pointers returned by malloc(0) have no bytes for an object,
-and are considered NoAlias even when malloc returns the same pointer.  The same
-rule applies to NULL pointers.</p>
+regardless of whether the pointers compare equal.  For example, freed pointers
+don't alias any pointers that were allocated afterwards.  As a degenerate case,
+pointers returned by malloc(0) have no bytes for an object, and are considered
+NoAlias even when malloc returns the same pointer.  The same rule applies to
+NULL pointers.</p>
 
 <p>The MayAlias response is used whenever the two pointers might refer to the
 same object.  If the two memory objects overlap, but do not start at the same
