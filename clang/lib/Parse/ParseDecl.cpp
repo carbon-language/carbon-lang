@@ -1251,22 +1251,17 @@ bool Parser::isDeclarationSpecifier() {
 /// ParseTypeQualifierListOpt
 ///       type-qualifier-list: [C99 6.7.5]
 ///         type-qualifier
-/// [GNU]   attributes
+/// [GNU]   attributes                        [ only if AttributesAllowed=true ]
 ///         type-qualifier-list type-qualifier
-/// [GNU]   type-qualifier-list attributes
+/// [GNU]   type-qualifier-list attributes    [ only if AttributesAllowed=true ]
 ///
-void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
+void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool AttributesAllowed) {
   while (1) {
     int isInvalid = false;
     const char *PrevSpec = 0;
     SourceLocation Loc = Tok.getLocation();
 
     switch (Tok.getKind()) {
-    default:
-      // If this is not a type-qualifier token, we're done reading type
-      // qualifiers.  First verify that DeclSpec's are consistent.
-      DS.Finish(Diags, PP.getSourceManager(), getLang());
-      return;
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec,
                                  getLang())*2;
@@ -1280,8 +1275,16 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
                                  getLang())*2;
       break;
     case tok::kw___attribute:
-      DS.AddAttributes(ParseAttributes());
-      continue; // do *not* consume the next token!
+      if (AttributesAllowed) {
+        DS.AddAttributes(ParseAttributes());
+        continue; // do *not* consume the next token!
+      }
+      // otherwise, FALL THROUGH!
+    default:
+      // If this is not a type-qualifier token, we're done reading type
+      // qualifiers.  First verify that DeclSpec's are consistent.
+      DS.Finish(Diags, PP.getSourceManager(), getLang());
+      return;
     }
 
     // If the specifier combination wasn't legal, issue a diagnostic.
@@ -1688,7 +1691,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     // cv-qualifier-seq[opt].
     DeclSpec DS;
     if (getLang().CPlusPlus) {
-      ParseTypeQualifierListOpt(DS);
+      ParseTypeQualifierListOpt(DS, false /*no attributes*/);
 
       // Parse exception-specification[opt].
       if (Tok.is(tok::kw_throw))
@@ -1845,7 +1848,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   DeclSpec DS;
   if (getLang().CPlusPlus) {
     // Parse cv-qualifier-seq[opt].
-    ParseTypeQualifierListOpt(DS);
+    ParseTypeQualifierListOpt(DS, false /*no attributes*/);
 
     // Parse exception-specification[opt].
     if (Tok.is(tok::kw_throw))
@@ -1945,7 +1948,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // If there is a type-qualifier-list, read it now.
   // Type qualifiers in an array subscript are a C99 feature.
   DeclSpec DS;
-  ParseTypeQualifierListOpt(DS);
+  ParseTypeQualifierListOpt(DS, false /*no attributes*/);
   
   // If we haven't already read 'static', check to see if there is one after the
   // type-qualifier-list.

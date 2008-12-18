@@ -889,7 +889,7 @@ private:
   typedef void (Parser::*DirectDeclParseFunction)(Declarator&);
   void ParseDeclaratorInternal(Declarator &D,
                                DirectDeclParseFunction DirectDeclParser);
-  void ParseTypeQualifierListOpt(DeclSpec &DS);
+  void ParseTypeQualifierListOpt(DeclSpec &DS, bool AllowAttributes = true);
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
   void ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
