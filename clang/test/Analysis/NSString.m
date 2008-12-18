@@ -150,6 +150,15 @@ NSString* f11(CFDictionaryRef dict, const char* key) {
   }
 }
 
+// Test case for passing a tracked object by-reference to a function we
+// don't undersand.
+void unknown_function_f12(NSString** s);
+void f12() {
+  NSString *string = [[NSString alloc] init];
+  unknown_function_f12(&string); // no-warning
+}
+
+
 @interface C1 : NSObject {}
 - (NSString*) getShared;
 + (C1*) sharedInstance;
