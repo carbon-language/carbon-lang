@@ -1,4 +1,16 @@
 // RUN: clang -fsyntax-only -verify %s
+@interface Foo
+@end
+
+@implementation Foo
+
+void func(id);
+
++ zone {
+ func(self);
+ return self;
+}
+
 @protocol P0
 @end
 

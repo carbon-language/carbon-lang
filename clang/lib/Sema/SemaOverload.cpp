@@ -846,6 +846,16 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return true;
   } 
 
+  // Objective C++: Allow conversions between the Objective-C "id" and
+  // "Class", in either direction.
+  if ((Context.isObjCIdType(FromPointeeType) && 
+       Context.isObjCClassType(ToPointeeType)) ||
+      (Context.isObjCClassType(FromPointeeType) &&
+       Context.isObjCIdType(ToPointeeType))) {
+    ConvertedType = ToType;
+    return true;
+  }
+
   return false;
 }
 
@@ -864,6 +874,16 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
                       /*DetectVirtual=*/false);
       QualType FromPointeeType = FromPtrType->getPointeeType(),
                ToPointeeType   = ToPtrType->getPointeeType();
+
+      // Objective-C++ conversions are always okay.
+      // FIXME: We should have a different class of conversions for
+      // the Objective-C++ implicit conversions.
+      if (Context.isObjCIdType(FromPointeeType) || 
+          Context.isObjCIdType(ToPointeeType) ||
+          Context.isObjCClassType(FromPointeeType) ||
+          Context.isObjCClassType(ToPointeeType))
+        return false;
+
       if (FromPointeeType->isRecordType() &&
           ToPointeeType->isRecordType()) {
         // We must have a derived-to-base conversion. Check an
