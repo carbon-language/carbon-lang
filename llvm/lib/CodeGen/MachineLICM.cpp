@@ -49,6 +49,8 @@ namespace {
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
+    const char *getPassName() const { return "Machine Instruction LICM"; }
+
     // FIXME: Loop preheaders?
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
