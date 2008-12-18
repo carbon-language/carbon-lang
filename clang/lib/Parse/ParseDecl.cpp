@@ -1940,6 +1940,32 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
 void Parser::ParseBracketDeclarator(Declarator &D) {
   SourceLocation StartLoc = ConsumeBracket();
   
+  // C array syntax has many features, but by-far the most common is [] and [4].
+  // This code does a fast path to handle some of the most obvious cases.
+  if (Tok.getKind() == tok::r_square) {
+    MatchRHSPunctuation(tok::r_square, StartLoc);
+    // Remember that we parsed the empty array type.
+    OwningExprResult NumElements(Actions);
+    D.AddTypeInfo(DeclaratorChunk::getArray(0, false, false, 0, StartLoc));
+    return;
+  } else if (Tok.getKind() == tok::numeric_constant &&
+             GetLookAheadToken(1).is(tok::r_square)) {
+    // [4] is very common.  Parse the numeric constant expression.
+    OwningExprResult ExprRes(Actions, Actions.ActOnNumericConstant(Tok));
+    ConsumeToken();
+
+    MatchRHSPunctuation(tok::r_square, StartLoc);
+
+    // If there was an error parsing the assignment-expression, recover.
+    if (ExprRes.isInvalid())
+      ExprRes.release();  // Deallocate expr, just use [].
+    
+    // Remember that we parsed a array type, and remember its features.
+    D.AddTypeInfo(DeclaratorChunk::getArray(0, false, 0,
+                                            ExprRes.release(), StartLoc));
+    return;
+  }
+  
   // If valid, this location is the position where we read the 'static' keyword.
   SourceLocation StaticLoc;
   if (Tok.is(tok::kw_static))
@@ -1972,6 +1998,11 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     }
     isStar = true;
   } else if (Tok.isNot(tok::r_square)) {
+    // Note, in C89, this production uses the constant-expr production instead
+    // of assignment-expr.  The only difference is that assignment-expr allows
+    // things like '=' and '*='.  Sema rejects these in C89 mode because they
+    // are not i-c-e's, so we don't need to distinguish between the two here.
+    
     // Parse the assignment-expression now.
     NumElements = ParseAssignmentExpression();
   }
@@ -1985,7 +2016,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   
   MatchRHSPunctuation(tok::r_square, StartLoc);
     
-  // Remember that we parsed a pointer type, and remember the type-quals.
+  // Remember that we parsed a array type, and remember its features.
   D.AddTypeInfo(DeclaratorChunk::getArray(DS.getTypeQualifiers(),
                                           StaticLoc.isValid(), isStar,
                                           NumElements.release(), StartLoc));
