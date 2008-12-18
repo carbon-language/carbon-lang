@@ -283,6 +283,10 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
                                            GlobalValue::InternalLinkage,
                                            oldFunction->getName() + "_" +
                                            header->getName(), M);
+  // If the old function is no-throw, so is the new one.
+  if (oldFunction->doesNotThrow())
+    newFunction->setDoesNotThrow(true);
+  
   newFunction->getBasicBlockList().push_back(newRootNode);
 
   // Create an iterator to name all of the arguments we inserted.
