@@ -3089,6 +3089,29 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
     }
   }
 
+  // If it's a constant vector, flip any negative values positive.
+  if (isa<VectorType>(I.getType())) {
+    if (ConstantVector *RHSV = dyn_cast<ConstantVector>(Op1)) {
+      unsigned VWidth = RHSV->getNumOperands();
+      std::vector<Constant *> Elts(VWidth);
+
+      for (unsigned i = 0; i != VWidth; ++i) {
+        if (ConstantInt *RHS = dyn_cast<ConstantInt>(RHSV->getOperand(i))) {
+          if (RHS->getValue().isNegative())
+            Elts[i] = cast<ConstantInt>(ConstantExpr::getNeg(RHS));
+          else
+            Elts[i] = RHS;
+        }
+      }
+
+      Constant *NewRHSV = ConstantVector::get(Elts);
+      if (NewRHSV != RHSV) {
+        I.setOperand(1, NewRHSV);
+        return &I;
+      }
+    }
+  }
+
   return 0;
 }
 
