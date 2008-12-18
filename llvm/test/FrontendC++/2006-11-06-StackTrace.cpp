@@ -10,7 +10,7 @@
 // RUN:   grep {#7  0x.* in main.*(argc=\[12\],.*argv=.*)}
 
 // Only works on ppc, x86 and x86_64.  Should generalize?
-// XFAIL: alpha|ia64|arm
+// XFAIL: alpha|ia64|arm|linux
 
 #include <stdlib.h>
 
