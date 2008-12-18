@@ -858,7 +858,7 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupInstanceMethod(Selector Sel) {
     return MethodDecl;
     
   for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
-    if ((MethodDecl = (*I)->getInstanceMethod(Sel)))
+    if ((MethodDecl = (*I)->lookupInstanceMethod(Sel)))
       return MethodDecl;
   return NULL;
 }
@@ -872,7 +872,7 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupClassMethod(Selector Sel) {
     return MethodDecl;
     
   for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
-    if ((MethodDecl = (*I)->getClassMethod(Sel)))
+    if ((MethodDecl = (*I)->lookupClassMethod(Sel)))
       return MethodDecl;
   return NULL;
 }
