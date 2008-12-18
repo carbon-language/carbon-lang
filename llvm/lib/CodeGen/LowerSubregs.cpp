@@ -59,42 +59,42 @@ FunctionPass *llvm::createLowerSubregsPass() {
 }
 
 bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
-   MachineBasicBlock *MBB = MI->getParent();
-   MachineFunction &MF = *MBB->getParent();
-   const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo();
-   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
-   
-   assert(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
-          MI->getOperand(1).isReg() && MI->getOperand(1).isUse() &&
-          MI->getOperand(2).isImm() && "Malformed extract_subreg");
+  MachineBasicBlock *MBB = MI->getParent();
+  MachineFunction &MF = *MBB->getParent();
+  const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  
+  assert(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
+         MI->getOperand(1).isReg() && MI->getOperand(1).isUse() &&
+         MI->getOperand(2).isImm() && "Malformed extract_subreg");
 
-   unsigned DstReg   = MI->getOperand(0).getReg();
-   unsigned SuperReg = MI->getOperand(1).getReg();
-   unsigned SubIdx   = MI->getOperand(2).getImm();
-   unsigned SrcReg   = TRI.getSubReg(SuperReg, SubIdx);
+  unsigned DstReg   = MI->getOperand(0).getReg();
+  unsigned SuperReg = MI->getOperand(1).getReg();
+  unsigned SubIdx   = MI->getOperand(2).getImm();
+  unsigned SrcReg   = TRI.getSubReg(SuperReg, SubIdx);
 
-   assert(TargetRegisterInfo::isPhysicalRegister(SuperReg) &&
-          "Extract supperg source must be a physical register");
-   assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
-          "Insert destination must be in a physical register");
-          
-   DOUT << "subreg: CONVERTING: " << *MI;
+  assert(TargetRegisterInfo::isPhysicalRegister(SuperReg) &&
+         "Extract supperg source must be a physical register");
+  assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
+         "Insert destination must be in a physical register");
+         
+  DOUT << "subreg: CONVERTING: " << *MI;
 
-   if (SrcReg != DstReg) {
-     const TargetRegisterClass *TRC = TRI.getPhysicalRegisterRegClass(DstReg);
-     assert(TRC == TRI.getPhysicalRegisterRegClass(SrcReg) &&
-             "Extract subreg and Dst must be of same register class");
-     TII.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC, TRC);
-     
+  if (SrcReg != DstReg) {
+    const TargetRegisterClass *TRC = TRI.getPhysicalRegisterRegClass(DstReg);
+    assert(TRC == TRI.getPhysicalRegisterRegClass(SrcReg) &&
+            "Extract subreg and Dst must be of same register class");
+    TII.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC, TRC);
+    
 #ifndef NDEBUG
-     MachineBasicBlock::iterator dMI = MI;
-     DOUT << "subreg: " << *(--dMI);
+    MachineBasicBlock::iterator dMI = MI;
+    DOUT << "subreg: " << *(--dMI);
 #endif
-   }
+  }
 
-   DOUT << "\n";
-   MBB->erase(MI);
-   return true;
+  DOUT << "\n";
+  MBB->erase(MI);
+  return true;
 }
 
 bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
