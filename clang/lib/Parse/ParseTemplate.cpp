@@ -46,8 +46,19 @@ Parser::DeclTy *Parser::ParseTemplateDeclaration(unsigned Context) {
   // Try to parse the template parameters, and the declaration if
   // successful.
   DeclTy *TemplateDecl = 0;
-  if(ParseTemplateParameters(0))
+  if (Tok.is(tok::less) && NextToken().is(tok::greater)) {
+    // This is a template specialization. Just consume the angle
+    // brackets and parse the declaration or function definition that
+    // follows.
+    // FIXME: Record somehow that we're in an explicit specialization.
+    ConsumeToken();
+    ConsumeToken();
+    TemplateParmScope.Exit();
     TemplateDecl = ParseDeclarationOrFunctionDefinition();
+  } else {
+    if(ParseTemplateParameters(0))
+      TemplateDecl = ParseDeclarationOrFunctionDefinition();
+  }
 
   return TemplateDecl;
 }
@@ -243,7 +254,7 @@ Parser::DeclTy* Parser::ParseTemplateTemplateParameter() {
 
 /// ParseNonTypeTemplateParameter - Handle the parsing of non-type
 /// template parameters (e.g., in "template<int Size> class array;"). 
-
+///
 ///       template-parameter:
 ///         ...
 ///         parameter-declaration
@@ -289,3 +300,96 @@ Parser::DeclTy* Parser::ParseNonTypeTemplateParameter() {
   
   return Param;
 }
+
+/// AnnotateTemplateIdToken - The current token is an identifier that
+/// refers to the template declaration Template, and is followed by a
+/// '<'. Turn this template-id into a template-id annotation token.
+void Parser::AnnotateTemplateIdToken(DeclTy *Template, const CXXScopeSpec *SS) {
+  assert(getLang().CPlusPlus && "Can only annotate template-ids in C++");
+  assert(Template && Tok.is(tok::identifier) && NextToken().is(tok::less) &&
+         "Parser isn't at the beginning of a template-id");
+
+  // Consume the template-name.
+  SourceLocation TemplateNameLoc = ConsumeToken();
+
+  // Consume the '<'.
+  SourceLocation LAngleLoc = ConsumeToken();
+
+  // Parse the optional template-argument-list.
+  TemplateArgList TemplateArgs;
+  if (Tok.isNot(tok::greater) && ParseTemplateArgumentList(TemplateArgs)) {
+    // Try to find the closing '>'.
+    SkipUntil(tok::greater, true, true);
+
+    // FIXME: What's our recovery strategy for failed template-argument-lists?
+    return;
+  }
+
+  if (Tok.isNot(tok::greater))
+    return;
+
+  // Determine the location of the '>'. We won't actually consume this
+  // token, because we'll be replacing it with the template-id.
+  SourceLocation RAngleLoc = Tok.getLocation();
+  
+  Tok.setKind(tok::annot_template_id);
+  Tok.setAnnotationEndLoc(RAngleLoc);
+  Tok.setLocation(TemplateNameLoc);
+  if (SS && SS->isNotEmpty())
+    Tok.setLocation(SS->getBeginLoc());
+
+  TemplateIdAnnotation *TemplateId 
+    = (TemplateIdAnnotation *)malloc(sizeof(TemplateIdAnnotation) + 
+                                  sizeof(TemplateArgTy*) * TemplateArgs.size());
+  TemplateId->TemplateNameLoc = TemplateNameLoc;
+  TemplateId->Template = Template;
+  TemplateId->LAngleLoc = LAngleLoc;
+  TemplateId->NumArgs = TemplateArgs.size();
+  TemplateArgTy **Args = (TemplateArgTy**)(TemplateId + 1);
+  for (unsigned Arg = 0, ArgEnd = TemplateArgs.size(); Arg != ArgEnd; ++Arg)
+    Args[Arg] = TemplateArgs[Arg];
+  Tok.setAnnotationValue(TemplateId);
+
+  // In case the tokens were cached, have Preprocessor replace them with the
+  // annotation token.
+  PP.AnnotateCachedTokens(Tok);
+}
+
+/// ParseTemplateArgument - Parse a C++ template argument (C++ [temp.names]).
+///
+///       template-argument: [C++ 14.2]
+///         assignment-expression
+///         type-id
+///         id-expression
+Parser::OwningTemplateArgResult Parser::ParseTemplateArgument() {
+  // FIXME: Implement this!
+  return TemplateArgError();
+}
+
+/// ParseTemplateArgumentList - Parse a C++ template-argument-list
+/// (C++ [temp.names]). Returns true if there was an error.
+///
+///       template-argument-list: [C++ 14.2]
+///         template-argument
+///         template-argument-list ',' template-argument
+bool Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs) {
+  while (true) {
+    OwningTemplateArgResult Arg = ParseTemplateArgument();
+    if (Arg.isInvalid()) {
+      SkipUntil(tok::comma, tok::greater, true, true);
+      return true;
+    }
+    else
+      TemplateArgs.push_back(Arg.release());
+    
+    // If the next token is a comma, consume it and keep reading
+    // arguments.
+    if (Tok.isNot(tok::comma)) break;
+
+    // Consume the comma.
+    ConsumeToken();
+  }
+
+  return Tok.isNot(tok::greater);
+}
+

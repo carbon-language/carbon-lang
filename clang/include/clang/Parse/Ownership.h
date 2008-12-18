@@ -30,6 +30,7 @@ namespace clang
     // what types are required to be identical for the actions.
     typedef void ExprTy;
     typedef void StmtTy;
+    typedef void TemplateArgTy;
 
     /// ActionResult - This structure is used while parsing/acting on
     /// expressions, stmts, etc.  It encapsulates both the object returned by
@@ -57,6 +58,7 @@ namespace clang
     /// pointers need access to them.
     virtual void DeleteExpr(ExprTy *E) {}
     virtual void DeleteStmt(StmtTy *E) {}
+    virtual void DeleteTemplateArg(TemplateArgTy *E) {}
   };
 
   /// ASTDestroyer - The type of an AST node destruction function pointer.
@@ -69,6 +71,9 @@ namespace clang
     static const unsigned UID = 0;
   };
   template <> struct DestroyerToUID<&ActionBase::DeleteStmt> {
+    static const unsigned UID = 1;
+  };
+  template <> struct DestroyerToUID<&ActionBase::DeleteTemplateArg> {
     static const unsigned UID = 1;
   };
 

@@ -73,6 +73,16 @@ bool MinimalAction::isCurrentClassName(const IdentifierInfo &, Scope *,
   return false;
 }
 
+  /// isTemplateName - Determines whether the identifier II is a
+  /// template name in the current scope, and returns the template
+  /// declaration if II names a template. An optional CXXScope can be
+  /// passed to indicate the C++ scope in which the identifier will be
+  /// found. 
+Action::DeclTy *MinimalAction::isTemplateName(IdentifierInfo &II, Scope *S,
+                                              const CXXScopeSpec *SS ) {
+  return 0;
+}
+
 /// ActOnDeclarator - If this is a typedef declarator, we modify the
 /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
 /// popped.

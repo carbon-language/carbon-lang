@@ -722,6 +722,7 @@ Parser::OwningExprResult Parser::ParseSimpleAsm() {
 /// specifier, and another one to get the actual type inside
 /// ParseDeclarationSpecifiers).
 void Parser::TryAnnotateTypeOrScopeToken() {
+  // FIXME: what about template-ids?
   if (Tok.is(tok::annot_qualtypename) || Tok.is(tok::annot_cxxscope))
     return;
 
@@ -730,22 +731,38 @@ void Parser::TryAnnotateTypeOrScopeToken() {
     MaybeParseCXXScopeSpecifier(SS);
 
   if (Tok.is(tok::identifier)) {
-    TypeTy *Ty = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope, &SS);
-    if (Ty) {
-      // This is a typename. Replace the current token in-place with an
-      // annotation type token.
-      Tok.setKind(tok::annot_qualtypename);
-      Tok.setAnnotationValue(Ty);
-      Tok.setAnnotationEndLoc(Tok.getLocation());
-      if (SS.isNotEmpty()) // it was a C++ qualified type name.
-        Tok.setLocation(SS.getBeginLoc());
-
-      // In case the tokens were cached, have Preprocessor replace them with the
-      // annotation token.
-      PP.AnnotateCachedTokens(Tok);
-      return;
+    DeclTy *Template = 0;
+    // If this is a template-id, annotate the template-id token.
+    if (getLang().CPlusPlus && NextToken().is(tok::less) &&
+        (Template = Actions.isTemplateName(*Tok.getIdentifierInfo(), CurScope, 
+                                           &SS)))
+      AnnotateTemplateIdToken(Template, &SS);
+    else {
+      // Determine whether the identifier is a type name.
+      TypeTy *Ty = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope, &SS);
+      if (Ty) {
+        // This is a typename. Replace the current token in-place with an
+        // annotation type token.
+        Tok.setKind(tok::annot_qualtypename);
+        Tok.setAnnotationValue(Ty);
+        Tok.setAnnotationEndLoc(Tok.getLocation());
+        if (SS.isNotEmpty()) // it was a C++ qualified type name.
+          Tok.setLocation(SS.getBeginLoc());
+        
+        // In case the tokens were cached, have Preprocessor replace
+        // them with the annotation token.
+        PP.AnnotateCachedTokens(Tok);
+        return;
+      }
     }
+
+    // We either have an identifier that is not a type name or we have
+    // just created a template-id that might be a type name. Both
+    // cases will be handled below.
   }
+
+  // FIXME: check for a template-id token here, and look it up if it
+  // names a type.
 
   if (SS.isNotEmpty()) {
     // A C++ scope specifier that isn't followed by a typename.

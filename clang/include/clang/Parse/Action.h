@@ -63,6 +63,7 @@ public:
   typedef void BaseTy;
   typedef void MemInitTy;
   typedef void CXXScopeTy;
+  typedef void TemplateArgTy;
 
   /// Expr/Stmt/Type/BaseResult - Provide a unique type to wrap
   /// ExprTy/StmtTy/TypeTy/BaseTy, providing strong typing and
@@ -76,27 +77,40 @@ public:
   /// Same, but with ownership.
   typedef ASTOwningResult<&ActionBase::DeleteExpr> OwningExprResult;
   typedef ASTOwningResult<&ActionBase::DeleteStmt> OwningStmtResult;
+  typedef ASTOwningResult<&ActionBase::DeleteTemplateArg> 
+    OwningTemplateArgResult;
   // Note that these will replace ExprResult and StmtResult when the transition
   // is complete.
 
   /// Single expressions or statements as arguments.
   typedef ASTOwningPtr<&ActionBase::DeleteExpr> ExprArg;
   typedef ASTOwningPtr<&ActionBase::DeleteStmt> StmtArg;
+  typedef ASTOwningPtr<&ActionBase::DeleteTemplateArg> TemplateArgArg;
 
   /// Multiple expressions or statements as arguments.
   typedef ASTMultiPtr<&ActionBase::DeleteExpr> MultiExprArg;
   typedef ASTMultiPtr<&ActionBase::DeleteStmt> MultiStmtArg;
-
+  typedef ASTMultiPtr<&ActionBase::DeleteTemplateArg> MultiTemplateArgArg;
 
   // Utilities for Action implementations to return smart results.
 
   OwningExprResult ExprError() { return OwningExprResult(*this, true); }
   OwningStmtResult StmtError() { return OwningStmtResult(*this, true); }
+  OwningTemplateArgResult TemplateArgError() { 
+    return OwningTemplateArgResult(*this, true); 
+  }
+
   OwningExprResult ExprError(const DiagnosticBuilder&) { return ExprError(); }
   OwningStmtResult StmtError(const DiagnosticBuilder&) { return StmtError(); }
+  OwningTemplateArgResult TemplateArgError(const DiagnosticBuilder&) {
+    return TemplateArgError();
+  }
 
   OwningExprResult ExprEmpty() { return OwningExprResult(*this, false); }
   OwningStmtResult StmtEmpty() { return OwningStmtResult(*this, false); }
+  OwningTemplateArgResult TemplateArgEmpty() { 
+    return OwningTemplateArgResult(*this, false); 
+  }
 
   /// Statistics.
   virtual void PrintStats() const {}
@@ -116,6 +130,14 @@ public:
   /// name of the innermost C++ class type currently being defined.
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
                                   const CXXScopeSpec *SS = 0) = 0;
+
+  /// isTemplateName - Determines whether the identifier II is a
+  /// template name in the current scope, and returns the template
+  /// declaration if II names a template. An optional CXXScope can be
+  /// passed to indicate the C++ scope in which the identifier will be
+  /// found. 
+  virtual DeclTy *isTemplateName(IdentifierInfo &II, Scope *S,
+                                 const CXXScopeSpec *SS = 0) = 0;
 
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
   /// global scope ('::').
@@ -918,6 +940,8 @@ public:
     return 0;
   }
 
+  
+
   //===----------------------- Obj-C Declarations -------------------------===//
   
   // ActOnStartClassInterface - this action is called immediately after parsing
@@ -1163,6 +1187,14 @@ public:
   /// does not support C++ classes with constructors.
   virtual bool isCurrentClassName(const IdentifierInfo& II, Scope *S,
                                   const CXXScopeSpec *SS);
+
+  /// isTemplateName - Determines whether the identifier II is a
+  /// template name in the current scope, and returns the template
+  /// declaration if II names a template. An optional CXXScope can be
+  /// passed to indicate the C++ scope in which the identifier will be
+  /// found. 
+  virtual DeclTy *isTemplateName(IdentifierInfo &II, Scope *S,
+                                 const CXXScopeSpec *SS = 0);
 
   /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is

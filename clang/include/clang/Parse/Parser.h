@@ -78,14 +78,16 @@ public:
   typedef Action::BaseTy BaseTy;
   typedef Action::MemInitTy MemInitTy;
   typedef Action::CXXScopeTy CXXScopeTy;
+  typedef Action::TemplateArgTy TemplateArgTy;
 
-  typedef Action::ExprResult    ExprResult;
-  typedef Action::StmtResult    StmtResult;
-  typedef Action::BaseResult    BaseResult;
-  typedef Action::MemInitResult MemInitResult;
+  typedef Action::ExprResult        ExprResult;
+  typedef Action::StmtResult        StmtResult;
+  typedef Action::BaseResult        BaseResult;
+  typedef Action::MemInitResult     MemInitResult;
 
   typedef Action::OwningExprResult OwningExprResult;
   typedef Action::OwningStmtResult OwningStmtResult;
+  typedef Action::OwningTemplateArgResult OwningTemplateArgResult;
 
   typedef Action::ExprArg ExprArg;
 
@@ -100,8 +102,15 @@ public:
 
   OwningExprResult ExprError() { return OwningExprResult(Actions, true); }
   OwningStmtResult StmtError() { return OwningStmtResult(Actions, true); }
+  OwningTemplateArgResult TemplateArgError() { 
+    return OwningTemplateArgResult(Actions, true); 
+  }
+
   OwningExprResult ExprError(const DiagnosticBuilder &) { return ExprError(); }
   OwningStmtResult StmtError(const DiagnosticBuilder &) { return StmtError(); }
+  OwningTemplateArgResult TemplateArgError(const DiagnosticBuilder &) {
+    return TemplateArgError();
+  }
 
   // Parsing methods.
   
@@ -936,6 +945,12 @@ private:
   DeclTy *ParseTypeParameter();
   DeclTy *ParseTemplateTemplateParameter();
   DeclTy *ParseNonTypeTemplateParameter();
+  // C++ 14.3: Template arguments [temp.arg]
+  typedef llvm::SmallVector<TemplateArgTy*, 8> TemplateArgList;
+  void AnnotateTemplateIdToken(DeclTy *Template, const CXXScopeSpec *SS = 0);
+  bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs);
+  OwningTemplateArgResult ParseTemplateArgument();
+  
 };
 
 }  // end namespace clang

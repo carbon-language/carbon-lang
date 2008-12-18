@@ -1,4 +1,4 @@
-// RUN clang -fsyntax-only -verify %s
+// RUN: clang -fsyntax-only -verify %s
 @protocol P0
 @end
 

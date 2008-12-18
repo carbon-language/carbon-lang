@@ -18,6 +18,42 @@
 
 using namespace clang;
 
+/// isTemplateName - Determines whether the identifier II is a
+/// template name in the current scope, and returns the template
+/// declaration if II names a template. An optional CXXScope can be
+/// passed to indicate the C++ scope in which the identifier will be
+/// found. 
+Sema::DeclTy *Sema::isTemplateName(IdentifierInfo &II, Scope *S,
+                                   const CXXScopeSpec *SS) {
+  DeclContext *DC = 0;
+  if (SS) {
+    if (SS->isInvalid())
+      return 0;
+    DC = static_cast<DeclContext*>(SS->getScopeRep());
+  }
+  Decl *IIDecl = LookupDecl(&II, Decl::IDNS_Ordinary, S, DC, false);
+
+  if (IIDecl) {
+    // FIXME: We need to represent templates via some kind of
+    // TemplateDecl, because what follows is a hack that only works in
+    // one specific case.
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(IIDecl)) {
+      if (FD->getType()->isDependentType())
+        return FD;
+    } else if (OverloadedFunctionDecl *Ovl 
+                 = dyn_cast<OverloadedFunctionDecl>(IIDecl)) {
+      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                  FEnd = Ovl->function_end();
+           F != FEnd; ++F) {
+        if ((*F)->getType()->isDependentType())
+          return Ovl;
+      }
+    }
+    return 0;
+  }
+  return 0;
+}
+
 /// DiagnoseTemplateParameterShadow - Produce a diagnostic complaining
 /// that the template parameter 'PrevDecl' is being shadowed by a new
 /// declaration at location Loc. Returns true to indicate that this is

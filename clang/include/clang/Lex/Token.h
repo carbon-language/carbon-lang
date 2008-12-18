@@ -78,7 +78,9 @@ public:
   bool isNot(tok::TokenKind K) const { return Kind != (unsigned) K; }
 
   bool isAnnotationToken() const { 
-    return is(tok::annot_qualtypename) || is(tok::annot_cxxscope);
+    return is(tok::annot_qualtypename) || 
+           is(tok::annot_cxxscope) ||
+           is(tok::annot_template_id);
   }
 
   /// getLocation - Return a source location identifier for the specified
@@ -209,6 +211,28 @@ struct PPConditionalInfo {
   /// FoundElse - True if we've seen a #else in this block.  If so,
   /// #elif/#else directives are not allowed.
   bool FoundElse;
+};
+
+/// TemplateIdAnnotation - Information about a template-id annotation
+/// token, which contains the template declaration, template
+/// arguments, and the source locations for important tokens.
+struct TemplateIdAnnotation {
+  /// TemplateNameLoc - The location of the template name within the
+  /// source.
+  SourceLocation TemplateNameLoc;
+
+  /// Template - The declaration of the template corresponding to the
+  /// template-name. This is an Action::DeclTy*.
+  void *Template; 
+
+  /// LAngleLoc - The location of the '<' before the template argument
+  /// list. 
+  SourceLocation LAngleLoc;
+
+  /// NumArgs - The number of template arguments. The arguments
+  /// themselves are Action::TemplateArgTy pointers allocated directly
+  /// following the TemplateIdAnnotation structure.
+  unsigned NumArgs; 
 };
 
 }  // end namespace clang

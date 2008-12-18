@@ -1005,6 +1005,8 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Templates [C++ 14]
   //
+  virtual DeclTy *isTemplateName(IdentifierInfo &II, Scope *S,
+                                 const CXXScopeSpec *SS = 0);
   bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
   virtual DeclTy *ActOnTypeParameter(Scope *S, bool Typename, 
 				     SourceLocation KeyLoc,

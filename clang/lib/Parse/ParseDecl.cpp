@@ -1452,13 +1452,27 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
       if (Tok.is(tok::identifier)) {
         assert(Tok.getIdentifierInfo() && "Not an identifier?");
-        // Determine whether this identifier is a C++ constructor name or
-        // a normal identifier.
-        if (Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope)) {
+
+        // If this identifier is followed by a '<', we may have a template-id.
+        DeclTy *Template;
+        if (getLang().CPlusPlus && NextToken().is(tok::less) &&
+            (Template = Actions.isTemplateName(*Tok.getIdentifierInfo(), 
+                                               CurScope))) {
+          IdentifierInfo *II = Tok.getIdentifierInfo();
+          AnnotateTemplateIdToken(Template, 0);
+          // FIXME: Set the declarator to a template-id. How? I don't
+          // know... for now, just use the identifier.
+          D.SetIdentifier(II, Tok.getLocation());
+        }
+        // If this identifier is the name of the current class, it's a
+        // constructor name. 
+        else if (getLang().CPlusPlus &&
+                 Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope))
           D.setConstructor(Actions.isTypeName(*Tok.getIdentifierInfo(),
                                               CurScope),
                            Tok.getLocation());
-        } else
+        // This is a normal identifier.
+        else
           D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
         ConsumeToken();
         goto PastIdentifier;
