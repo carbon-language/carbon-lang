@@ -1589,14 +1589,6 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         //  to identify conjured symbols by an expression pair: the enclosing
         //  expression (the context) and the expression itself.  This should
         //  disambiguate conjured symbols. 
-
-        // Is the invalidated variable something that we were tracking?
-        SVal X = state.GetSVal(*MR);
-        
-        if (isa<loc::SymbolVal>(X)) {
-          SymbolRef Sym = cast<loc::SymbolVal>(X).getSymbol();
-          state = state.remove<RefBindings>(Sym);
-        }
         
         const TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
         
@@ -1608,6 +1600,15 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         }
         
         if (R) {
+          
+          // Is the invalidated variable something that we were tracking?
+          SVal X = state.GetSVal(Loc::MakeVal(R));
+          
+          if (isa<loc::SymbolVal>(X)) {
+            SymbolRef Sym = cast<loc::SymbolVal>(X).getSymbol();
+            state = state.remove<RefBindings>(Sym);
+          }
+          
           // Set the value of the variable to be a conjured symbol.
           unsigned Count = Builder.getCurrentBlockCount();
           QualType T = R->getRValueType(Ctx);
