@@ -49,6 +49,11 @@ namespace {
     bool LowerExtract(MachineInstr *MI);
     bool LowerInsert(MachineInstr *MI);
     bool LowerSubregToReg(MachineInstr *MI);
+
+    void TransferDeadFlag(MachineInstr *MI, unsigned DstReg,
+                          const TargetRegisterInfo &TRI);
+    void TransferKillFlag(MachineInstr *MI, unsigned SrcReg,
+                          const TargetRegisterInfo &TRI);
   };
 
   char LowerSubregsInstructionPass::ID = 0;
@@ -56,6 +61,38 @@ namespace {
 
 FunctionPass *llvm::createLowerSubregsPass() { 
   return new LowerSubregsInstructionPass(); 
+}
+
+/// TransferDeadFlag - MI is a pseudo-instruction with DstReg dead,
+/// and the lowered replacement instructions immediately precede it.
+/// Mark the replacement instructions with the dead flag.
+void
+LowerSubregsInstructionPass::TransferDeadFlag(MachineInstr *MI,
+                                              unsigned DstReg,
+                                              const TargetRegisterInfo &TRI) {
+  for (MachineBasicBlock::iterator MII =
+        prior(MachineBasicBlock::iterator(MI)); ; --MII) {
+    if (MII->addRegisterDead(DstReg, &TRI))
+      break;
+    assert(MII != MI->getParent()->begin() &&
+           "copyRegToReg output doesn't reference destination register!");
+  }
+}
+
+/// TransferKillFlag - MI is a pseudo-instruction with SrcReg killed,
+/// and the lowered replacement instructions immediately precede it.
+/// Mark the replacement instructions with the kill flag.
+void
+LowerSubregsInstructionPass::TransferKillFlag(MachineInstr *MI,
+                                              unsigned SrcReg,
+                                              const TargetRegisterInfo &TRI) {
+  for (MachineBasicBlock::iterator MII =
+        prior(MachineBasicBlock::iterator(MI)); ; --MII) {
+    if (MII->addRegisterKilled(SrcReg, &TRI))
+      break;
+    assert(MII != MI->getParent()->begin() &&
+           "copyRegToReg output doesn't reference source register!");
+  }
 }
 
 bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
@@ -83,13 +120,28 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
   if (SrcReg == DstReg) {
     // No need to insert an identify copy instruction.
     DOUT << "subreg: eliminated!";
+    // Find the kill of the destination register's live range, and insert
+    // a kill of the source register at that point.
+    if (MI->getOperand(1).isKill() && !MI->getOperand(0).isDead())
+      for (MachineBasicBlock::iterator MII =
+             next(MachineBasicBlock::iterator(MI));
+           MII != MBB->end(); ++MII)
+        if (MII->killsRegister(DstReg, &TRI)) {
+          MII->addRegisterKilled(SuperReg, &TRI, /*AddIfNotFound=*/true);
+          break;
+        }
   } else {
     // Insert copy
     const TargetRegisterClass *TRC = TRI.getPhysicalRegisterRegClass(DstReg);
     assert(TRC == TRI.getPhysicalRegisterRegClass(SrcReg) &&
             "Extract subreg and Dst must be of same register class");
     TII.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC, TRC);
-    
+    // Transfer the kill/dead flags, if needed.
+    if (MI->getOperand(0).isDead())
+      TransferDeadFlag(MI, DstReg, TRI);
+    if (MI->getOperand(1).isKill())
+      TransferKillFlag(MI, SrcReg, TRI);
+
 #ifndef NDEBUG
     MachineBasicBlock::iterator dMI = MI;
     DOUT << "subreg: " << *(--dMI);
@@ -133,6 +185,11 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
     const TargetRegisterClass *TRC0= TRI.getPhysicalRegisterRegClass(DstSubReg);
     const TargetRegisterClass *TRC1= TRI.getPhysicalRegisterRegClass(InsReg);
     TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+    // Transfer the kill/dead flags, if needed.
+    if (MI->getOperand(0).isDead())
+      TransferDeadFlag(MI, DstSubReg, TRI);
+    if (MI->getOperand(2).isKill())
+      TransferKillFlag(MI, InsReg, TRI);
 
 #ifndef NDEBUG
     MachineBasicBlock::iterator dMI = MI;
@@ -181,6 +238,11 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     const TargetRegisterClass *TRC0= TRI.getPhysicalRegisterRegClass(DstSubReg);
     const TargetRegisterClass *TRC1= TRI.getPhysicalRegisterRegClass(InsReg);
     TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+    // Transfer the kill/dead flags, if needed.
+    if (MI->getOperand(0).isDead())
+      TransferDeadFlag(MI, DstSubReg, TRI);
+    if (MI->getOperand(1).isKill())
+      TransferKillFlag(MI, InsReg, TRI);
 
 #ifndef NDEBUG
     MachineBasicBlock::iterator dMI = MI;
