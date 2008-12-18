@@ -787,6 +787,9 @@ StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
                                  SourceLocation InitLoc,
                                  DeclarationName InitEntity) {
+  if (DeclType->isDependentType() || Init->isTypeDependent())
+    return false;
+
   // C++ [dcl.init.ref]p1:
   //   A variable declared to be a T&, that is "reference to type T"
   //   (8.3.2), shall be initialized by an object, or function, of
