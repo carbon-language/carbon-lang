@@ -687,6 +687,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::ADD,                MVT::v8i16, Legal);
     setOperationAction(ISD::ADD,                MVT::v4i32, Legal);
     setOperationAction(ISD::ADD,                MVT::v2i64, Legal);
+    setOperationAction(ISD::MUL,                MVT::v2i64, Custom);
     setOperationAction(ISD::SUB,                MVT::v16i8, Legal);
     setOperationAction(ISD::SUB,                MVT::v8i16, Legal);
     setOperationAction(ISD::SUB,                MVT::v4i32, Legal);
@@ -758,7 +759,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->hasSSE41()) {
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
-    setOperationAction(ISD::MUL,                MVT::v2i64, Legal);
 
     // i8 and i16 vectors are custom , because the source register and source
     // source memory operand types are not the same width.  f32 vectors are
@@ -6136,6 +6136,50 @@ SDValue X86TargetLowering::LowerCTTZ(SDValue Op, SelectionDAG &DAG) {
   return Op;
 }
 
+SDValue X86TargetLowering::LowerMUL_V2I64(SDValue Op, SelectionDAG &DAG) {
+  MVT VT = Op.getValueType();
+  assert(VT == MVT::v2i64 && "Only know how to lower V2I64 multiply");
+  
+  //  ulong2 Ahi = __builtin_ia32_psrlqi128( a, 32);
+  //  ulong2 Bhi = __builtin_ia32_psrlqi128( b, 32);
+  //  ulong2 AloBlo = __builtin_ia32_pmuludq128( a, b );
+  //  ulong2 AloBhi = __builtin_ia32_pmuludq128( a, Bhi );
+  //  ulong2 AhiBlo = __builtin_ia32_pmuludq128( Ahi, b );
+  //
+  //  AloBhi = __builtin_ia32_psllqi128( AloBhi, 32 );
+  //  AhiBlo = __builtin_ia32_psllqi128( AhiBlo, 32 );
+  //  return AloBlo + AloBhi + AhiBlo;
+
+  SDValue A = Op.getOperand(0);
+  SDValue B = Op.getOperand(1);
+  
+  SDValue Ahi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+                       DAG.getConstant(Intrinsic::x86_sse2_psrli_q, MVT::i32),
+                       A, DAG.getConstant(32, MVT::i32));
+  SDValue Bhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+                       DAG.getConstant(Intrinsic::x86_sse2_psrli_q, MVT::i32),
+                       B, DAG.getConstant(32, MVT::i32));
+  SDValue AloBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+                       DAG.getConstant(Intrinsic::x86_sse2_pmulu_dq, MVT::i32),
+                       A, B);
+  SDValue AloBhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+                       DAG.getConstant(Intrinsic::x86_sse2_pmulu_dq, MVT::i32),
+                       A, Bhi);
+  SDValue AhiBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+                       DAG.getConstant(Intrinsic::x86_sse2_pmulu_dq, MVT::i32),
+                       Ahi, B);
+  AloBhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+                       DAG.getConstant(Intrinsic::x86_sse2_pslli_q, MVT::i32),
+                       AloBhi, DAG.getConstant(32, MVT::i32));
+  AhiBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+                       DAG.getConstant(Intrinsic::x86_sse2_pslli_q, MVT::i32),
+                       AhiBlo, DAG.getConstant(32, MVT::i32));
+  SDValue Res = DAG.getNode(ISD::ADD, VT, AloBlo, AloBhi);
+  Res = DAG.getNode(ISD::ADD, VT, Res, AhiBlo);
+  return Res;
+}
+
+
 SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) {
   // Lower the "add/sub/mul with overflow" instruction into a regular ins plus
   // a "setcc" instruction that checks the overflow flag. The "brcond" lowering
@@ -6305,6 +6349,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
   case ISD::CTLZ:               return LowerCTLZ(Op, DAG);
   case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
+  case ISD::MUL:                return LowerMUL_V2I64(Op, DAG);
   case ISD::SADDO:
   case ISD::UADDO:
   case ISD::SSUBO:

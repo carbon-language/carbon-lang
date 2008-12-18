@@ -3313,11 +3313,12 @@ defm PMAXUD       : SS41I_binop_rm_int<0x3F, "pmaxud",
 defm PMAXUW       : SS41I_binop_rm_int<0x3E, "pmaxuw",
                                        int_x86_sse41_pmaxuw, 1>;
 
+defm PMULDQ       : SS41I_binop_rm_int<0x28, "pmuldq", int_x86_sse41_pmuldq, 1>;
+
 def : Pat<(v2i64 (X86pcmpeqq VR128:$src1, VR128:$src2)),
           (PCMPEQQrr VR128:$src1, VR128:$src2)>;
 def : Pat<(v2i64 (X86pcmpeqq VR128:$src1, (memop addr:$src2))),
           (PCMPEQQrm VR128:$src1, addr:$src2)>;
-
 
 /// SS41I_binop_rm_int - Simple SSE 4.1 binary operator
 let Constraints = "$src1 = $dst" in {
@@ -3353,9 +3354,6 @@ let Constraints = "$src1 = $dst" in {
 }
 defm PMULLD       : SS41I_binop_patint<0x40, "pmulld", v4i32, mul,
                                        int_x86_sse41_pmulld, 1>;
-defm PMULDQ       : SS41I_binop_patint<0x28, "pmuldq", v2i64, mul,
-                                       int_x86_sse41_pmuldq, 1>;
-
 
 /// SS41I_binop_rmi_int - SSE 4.1 binary operator with 8-bit immediate
 let Constraints = "$src1 = $dst" in {

@@ -597,6 +597,7 @@ namespace llvm {
     SDValue LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCTLZ(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCTTZ(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerMUL_V2I64(SDValue Op, SelectionDAG &DAG);
     SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG);
 
     SDValue LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG);
