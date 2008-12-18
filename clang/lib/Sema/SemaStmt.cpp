@@ -762,11 +762,15 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
       unsigned D = diag::ext_return_has_expr;
       if (RetValExp->getType()->isVoidType())
         D = diag::ext_return_has_void_expr;
-      NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
       
-      Diag(ReturnLoc, D)
-        << CurDecl->getDeclName() << isa<ObjCMethodDecl>(CurDecl)
-        << RetValExp->getSourceRange();
+      // return (some void expression); is legal in C++.
+      if (D != diag::ext_return_has_void_expr ||
+          !getLangOptions().CPlusPlus) {
+        NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
+        Diag(ReturnLoc, D)
+          << CurDecl->getDeclName() << isa<ObjCMethodDecl>(CurDecl)
+          << RetValExp->getSourceRange();
+      }
     }
     return new ReturnStmt(ReturnLoc, RetValExp);
   }
