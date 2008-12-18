@@ -508,14 +508,22 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
     if (isa<PHINode>(User) && Processed.count(User))
       continue;
 
-    // If this is an instruction defined in a nested loop, or outside this loop,
-    // don't recurse into it.
+    // Descend recursively, but not into PHI nodes outside the current loop.
+    // It's important to see the entire expression outside the loop to get
+    // choices that depend on addressing mode use right, although we won't
+    // consider references ouside the loop in all cases.
+    // If User is already in Processed, we don't want to recurse into it again,
+    // but do want to record a second reference in the same instruction.
     bool AddUserToIVUsers = false;
     if (LI->getLoopFor(User->getParent()) != L) {
-      DOUT << "FOUND USER in other loop: " << *User
-           << "   OF SCEV: " << *ISE << "\n";
-      AddUserToIVUsers = true;
-    } else if (!AddUsersIfInteresting(User, L, Processed)) {
+      if (isa<PHINode>(User) || Processed.count(User) ||
+          !AddUsersIfInteresting(User, L, Processed)) {
+        DOUT << "FOUND USER in other loop: " << *User
+             << "   OF SCEV: " << *ISE << "\n";
+        AddUserToIVUsers = true;
+      }
+    } else if (Processed.count(User) || 
+               !AddUsersIfInteresting(User, L, Processed)) {
       DOUT << "FOUND USER: " << *User
            << "   OF SCEV: " << *ISE << "\n";
       AddUserToIVUsers = true;
@@ -704,34 +712,45 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
   PHINode *PN = cast<PHINode>(Inst);
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     if (PN->getIncomingValue(i) == OperandValToReplace) {
-      // If this is a critical edge, split the edge so that we do not insert the
-      // code on all predecessor/successor paths.  We do this unless this is the
-      // canonical backedge for this loop, as this can make some inserted code
-      // be in an illegal position.
-      BasicBlock *PHIPred = PN->getIncomingBlock(i);
-      if (e != 1 && PHIPred->getTerminator()->getNumSuccessors() > 1 &&
-          (PN->getParent() != L->getHeader() || !L->contains(PHIPred))) {
-        
-        // First step, split the critical edge.
-        SplitCriticalEdge(PHIPred, PN->getParent(), P, false);
-            
-        // Next step: move the basic block.  In particular, if the PHI node
-        // is outside of the loop, and PredTI is in the loop, we want to
-        // move the block to be immediately before the PHI block, not
-        // immediately after PredTI.
-        if (L->contains(PHIPred) && !L->contains(PN->getParent())) {
-          BasicBlock *NewBB = PN->getIncomingBlock(i);
-          NewBB->moveBefore(PN->getParent());
-        }
-        
-        // Splitting the edge can reduce the number of PHI entries we have.
-        e = PN->getNumIncomingValues();
-      }
+      // If the original expression is outside the loop, put the replacement
+      // code in the same place as the original expression,
+      // which need not be an immediate predecessor of this PHI.  This way we 
+      // need only one copy of it even if it is referenced multiple times in
+      // the PHI.  We don't do this when the original expression is inside the
+      // loop because multiple copies sometimes do useful sinking of code in that
+      // case(?).
+      Instruction *OldLoc = dyn_cast<Instruction>(OperandValToReplace);
+      if (L->contains(OldLoc->getParent())) {
+        // If this is a critical edge, split the edge so that we do not insert the
+        // code on all predecessor/successor paths.  We do this unless this is the
+        // canonical backedge for this loop, as this can make some inserted code
+        // be in an illegal position.
+        BasicBlock *PHIPred = PN->getIncomingBlock(i);
+        if (e != 1 && PHIPred->getTerminator()->getNumSuccessors() > 1 &&
+            (PN->getParent() != L->getHeader() || !L->contains(PHIPred))) {
 
+          // First step, split the critical edge.
+          SplitCriticalEdge(PHIPred, PN->getParent(), P, false);
+
+          // Next step: move the basic block.  In particular, if the PHI node
+          // is outside of the loop, and PredTI is in the loop, we want to
+          // move the block to be immediately before the PHI block, not
+          // immediately after PredTI.
+          if (L->contains(PHIPred) && !L->contains(PN->getParent())) {
+            BasicBlock *NewBB = PN->getIncomingBlock(i);
+            NewBB->moveBefore(PN->getParent());
+          }
+
+          // Splitting the edge can reduce the number of PHI entries we have.
+          e = PN->getNumIncomingValues();
+        }
+      }
       Value *&Code = InsertedCode[PN->getIncomingBlock(i)];
       if (!Code) {
         // Insert the code into the end of the predecessor block.
-        Instruction *InsertPt = PN->getIncomingBlock(i)->getTerminator();
+        Instruction *InsertPt = (L->contains(OldLoc->getParent())) ?
+                                PN->getIncomingBlock(i)->getTerminator() :
+                                OldLoc->getParent()->getTerminator();
         Code = InsertCodeForBaseAtPosition(NewBase, Rewriter, InsertPt, L);
 
         // Adjust the type back to match the PHI. Note that we can't use
@@ -1168,6 +1187,10 @@ bool LoopStrengthReduce::RequiresTypeConversion(const Type *Ty1,
 /// mode scale component and optional base reg. This allows the users of
 /// this stride to be rewritten as prev iv * factor. It returns 0 if no
 /// reuse is possible.  Factors can be negative on same targets, e.g. ARM.
+///
+/// If all uses are outside the loop, we don't require that all multiplies
+/// be folded into the addressing mode; a multiply (executed once) outside
+/// the loop is better than another IV within.  Well, usually.
 int64_t LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                                 bool AllUsesAreAddresses,
                                 bool AllUsesAreOutsideLoop,
@@ -1204,6 +1227,30 @@ int64_t LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
             IV = *II;
             return Scale;
           }
+    }
+  } else if (AllUsesAreOutsideLoop) {
+    // Accept nonconstant strides here; it is really really right to substitute
+    // an existing IV if we can.
+    // Special case, old IV is -1*x and this one is x.  Can treat this one as
+    // -1*old.
+    for (unsigned NewStride = 0, e = StrideOrder.size(); NewStride != e;
+         ++NewStride) {
+      std::map<SCEVHandle, IVsOfOneStride>::iterator SI = 
+                IVsByStride.find(StrideOrder[NewStride]);
+      if (SI == IVsByStride.end()) 
+        continue;
+      if (SCEVMulExpr *ME = dyn_cast<SCEVMulExpr>(SI->first))
+        if (SCEVConstant *SC = dyn_cast<SCEVConstant>(ME->getOperand(0)))
+          if (Stride == ME->getOperand(1) &&
+              SC->getValue()->getSExtValue() == -1LL)
+            for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
+                   IE = SI->second.IVs.end(); II != IE; ++II)
+              // Accept nonzero base here.
+              // Only reuse previous IV if it would not require a type conversion.
+              if (!RequiresTypeConversion(II->Base->getType(), Ty)) {
+                IV = *II;
+                return -1;
+              }
     }
   }
   return 0;
@@ -1549,6 +1596,18 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
             !cast<ConstantInt>(CommonBaseV)->isZero())
           RewriteExpr = SE->getAddExpr(RewriteExpr,
                                        SE->getUnknown(CommonBaseV));
+        // If we're reusing an IV with a nonzero base (currently this happens
+        // only when all reuses are outside the loop) subtract out that base here
+        // This is the reverse of the above; the base HAS been used to initialize
+        // the PHI node but we don't want it here.
+        // (If the RewriteFactor is negative, we're effectively negating the
+        // old IV in this use, so we add the base instead of subtract.)
+        if (!ReuseIV.Base->isZero()) {
+          if (RewriteFactor < 0)
+            RewriteExpr = SE->getAddExpr(RewriteExpr, ReuseIV.Base);
+          else
+            RewriteExpr = SE->getMinusSCEV(RewriteExpr, ReuseIV.Base);
+        }
       }
 
       // Now that we know what we need to do, insert code before User for the
