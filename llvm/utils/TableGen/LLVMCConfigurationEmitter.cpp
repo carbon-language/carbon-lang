@@ -1560,7 +1560,7 @@ void IncDecWeight (const Init* i, const char* IndentLevel,
 
   else
     throw "Unknown operator in edge properties list: " + OpName + '!' +
-      "Only 'inc_weight', 'dec_weight' and 'error' are allowed.";
+      "\nOnly 'inc_weight', 'dec_weight' and 'error' are allowed.";
 
   if (d.getNumArgs() > 0)
     O << InitPtrToInt(d.getArg(0)) << ";\n";
