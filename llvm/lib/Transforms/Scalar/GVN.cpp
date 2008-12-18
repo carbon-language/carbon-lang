@@ -48,7 +48,7 @@ STATISTIC(NumPRELoad, "Number of loads PRE'd");
 
 static cl::opt<bool> EnablePRE("enable-pre",
                                cl::init(true), cl::Hidden);
-cl::opt<bool> EnableLoadPRE("enable-load-pre"/*, cl::init(true)*/);
+cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
