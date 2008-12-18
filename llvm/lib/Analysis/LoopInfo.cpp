@@ -35,9 +35,6 @@ X("loops", "Natural Loop Construction", true, true);
 // Loop implementation
 //
 
-/// getNumBackEdges - Calculate the number of back edges to the loop header.
-///
-
 //===----------------------------------------------------------------------===//
 // LoopInfo implementation
 //
