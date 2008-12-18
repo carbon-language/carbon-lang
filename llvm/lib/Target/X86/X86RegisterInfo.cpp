@@ -403,6 +403,9 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         }
       }
 
+      // The EFLAGS implicit def is dead.
+      New->getOperand(3).setIsDead();
+
       // Replace the pseudo instruction with a new instruction...
       if (New) MBB.insert(I, New);
     }
@@ -416,6 +419,9 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
       MachineInstr *New =
         BuildMI(MF, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(CalleeAmt);
+      // The EFLAGS implicit def is dead.
+      New->getOperand(3).setIsDead();
+
       MBB.insert(I, New);
     }
   }
@@ -517,7 +523,10 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
 
   while (Offset) {
     uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
-    BuildMI(MBB, MBBI, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(ThisVal);
+    MachineInstr *MI =
+      BuildMI(MBB, MBBI, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(ThisVal);
+    // The EFLAGS implicit def is dead.
+    MI->getOperand(3).setIsDead();
     Offset -= ThisVal;
   }
 }
@@ -713,8 +722,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // applies to tail call optimized functions where the callee argument stack
   // size is bigger than the callers.
   if (TailCallReturnAddrDelta < 0) {
-    BuildMI(MBB, MBBI, TII.get(Is64Bit? X86::SUB64ri32 : X86::SUB32ri),
-            StackPtr).addReg(StackPtr).addImm(-TailCallReturnAddrDelta);
+    MachineInstr *MI =
+      BuildMI(MBB, MBBI, TII.get(Is64Bit? X86::SUB64ri32 : X86::SUB32ri),
+              StackPtr).addReg(StackPtr).addImm(-TailCallReturnAddrDelta);
+    // The EFLAGS implicit def is dead.
+    MI->getOperand(3).setIsDead();
   }
 
   uint64_t NumBytes = 0;
@@ -751,10 +763,14 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       I->addLiveIn(FramePtr);
 
     // Realign stack
-    if (needsStackRealignment(MF))
-      BuildMI(MBB, MBBI,
-              TII.get(Is64Bit ? X86::AND64ri32 : X86::AND32ri),
-              StackPtr).addReg(StackPtr).addImm(-MaxAlign);
+    if (needsStackRealignment(MF)) {
+      MachineInstr *MI =
+        BuildMI(MBB, MBBI,
+                TII.get(Is64Bit ? X86::AND64ri32 : X86::AND32ri),
+                StackPtr).addReg(StackPtr).addImm(-MaxAlign);
+      // The EFLAGS implicit def is dead.
+      MI->getOperand(3).setIsDead();
+    }
   } else
     NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
 
