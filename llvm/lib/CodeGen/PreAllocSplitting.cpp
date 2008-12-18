@@ -41,6 +41,7 @@ static cl::opt<int> PreSplitLimit("pre-split-limit", cl::init(-1), cl::Hidden);
 STATISTIC(NumSplits, "Number of intervals split");
 STATISTIC(NumRemats, "Number of intervals split by rematerialization");
 STATISTIC(NumFolds, "Number of intervals split with spill folding");
+STATISTIC(NumRenumbers, "Number of intervals renumbered into new registers");
 
 namespace {
   class VISIBILITY_HIDDEN PreAllocSplitting : public MachineFunctionPass {
@@ -137,7 +138,7 @@ namespace {
 
     void UpdateSpillSlotInterval(VNInfo*, unsigned, unsigned);
 
-    void UpdateRegisterInterval(VNInfo*, unsigned, unsigned);
+    VNInfo* UpdateRegisterInterval(VNInfo*, unsigned, unsigned);
 
     bool ShrinkWrapToLastUse(MachineBasicBlock*, VNInfo*,
                              SmallVector<MachineOperand*, 4>&,
@@ -409,7 +410,7 @@ PreAllocSplitting::UpdateSpillSlotInterval(VNInfo *ValNo, unsigned SpillIndex,
 /// UpdateRegisterInterval - Given the specified val# of the current live
 /// interval is being split, and the spill and restore indices, update the live
 /// interval accordingly.
-void
+VNInfo*
 PreAllocSplitting::UpdateRegisterInterval(VNInfo *ValNo, unsigned SpillIndex,
                                           unsigned RestoreIndex) {
   assert(LIs->getMBBFromIndex(RestoreIndex) == BarrierMBB &&
@@ -512,6 +513,8 @@ PreAllocSplitting::UpdateRegisterInterval(VNInfo *ValNo, unsigned SpillIndex,
     unsigned End   = After[i].second;
     CurrLI->addRange(LiveRange(Start, End, AValNo));
   }
+  
+  return AValNo;
 }
 
 /// ShrinkWrapToLastUse - There are uses of the current live interval in the
@@ -700,17 +703,14 @@ void PreAllocSplitting::RepairLiveInterval(LiveInterval* CurrLI,
   ShrinkWrapLiveInterval(ValNo, BarrierMBB, NULL, DefMI->getParent(), Visited,
                          Uses, UseMIs, UseMBBs);
 
-#if 0
-  if (!ValNo->hasPHIKill)
-    RenumberValno();
-#endif
-  // FIXME: If ValNo->hasPHIKill is false, then renumber the val# by
-  // the restore.
-
   // Remove live range from barrier to the restore. FIXME: Find a better
   // point to re-start the live interval.
-  UpdateRegisterInterval(ValNo, LIs->getUseIndex(BarrierIdx)+1,
-                         LIs->getDefIndex(RestoreIdx));
+  VNInfo* AfterValNo = UpdateRegisterInterval(ValNo,
+                                              LIs->getUseIndex(BarrierIdx)+1,
+                                              LIs->getDefIndex(RestoreIdx));
+  
+  // Attempt to renumber the new valno into a new vreg.
+  RenumberValno(AfterValNo);
 }
 
 /// RenumberValno - Split the given valno out into a new vreg, allowing it to
@@ -719,18 +719,59 @@ void PreAllocSplitting::RepairLiveInterval(LiveInterval* CurrLI,
 /// removes them from the old interval, and rewrites all uses and defs of
 /// the original reg to the new vreg within those ranges.
 void PreAllocSplitting::RenumberValno(VNInfo* VN) {
+  SmallVector<VNInfo*, 4> Stack;
+  SmallVector<VNInfo*, 4> VNsToCopy;
+  Stack.push_back(VN);
+
+  // Walk through and copy the valno we care about, and any other valnos
+  // that are two-address redefinitions of the one we care about.  These
+  // will need to be rewritten as well.  We also check for safety of the 
+  // renumbering here, by making sure that none of the valno involved has
+  // phi kills.
+  while (!Stack.empty()) {
+    VNInfo* OldVN = Stack.back();
+    Stack.pop_back();
+    
+    // Bail out if we ever encounter a valno that has a PHI kill.  We can't
+    // renumber these.
+    if (OldVN->hasPHIKill) return;
+    
+    VNsToCopy.push_back(OldVN);
+    
+    // Locate two-address redefinitions
+    for (SmallVector<unsigned, 4>::iterator KI = OldVN->kills.begin(),
+         KE = OldVN->kills.end(); KI != KE; ++KI) {
+      MachineInstr* MI = LIs->getInstructionFromIndex(*KI);
+      //if (!MI) continue;
+      unsigned DefIdx = MI->findRegisterDefOperandIdx(CurrLI->reg);
+      if (DefIdx == ~0U) continue;
+      if (MI->isRegReDefinedByTwoAddr(DefIdx)) {
+        VNInfo* NextVN =
+                     CurrLI->findDefinedVNInfo(LiveIntervals::getDefIndex(*KI));
+        Stack.push_back(NextVN);
+      }
+    }
+  }
+  
   // Create the new vreg
   unsigned NewVReg = MRI->createVirtualRegister(MRI->getRegClass(CurrLI->reg));
   
-  // Copy over the valno and ranges
+  // Create the new live interval
   LiveInterval& NewLI = LIs->getOrCreateInterval(NewVReg);
-  VNInfo* NewVN = NewLI.getNextValue(VN->def, VN->copy, 
-                                     LIs->getVNInfoAllocator());
-  NewLI.copyValNumInfo(NewVN, VN);
-  NewLI.MergeValueInAsValue(*CurrLI, VN, NewVN);
   
-  // Remove the valno from the old interval
-  CurrLI->removeValNo(VN);
+  for (SmallVector<VNInfo*, 4>::iterator OI = VNsToCopy.begin(), OE = 
+       VNsToCopy.end(); OI != OE; ++OI) {
+    VNInfo* OldVN = *OI;
+    
+    // Copy the valno over
+    VNInfo* NewVN = NewLI.getNextValue(OldVN->def, OldVN->copy, 
+                                       LIs->getVNInfoAllocator());
+    NewLI.copyValNumInfo(NewVN, OldVN);
+    NewLI.MergeValueInAsValue(*CurrLI, OldVN, NewVN);
+
+    // Remove the valno from the old interval
+    CurrLI->removeValNo(OldVN);
+  }
   
   // Rewrite defs and uses.  This is done in two stages to avoid invalidating
   // the reg_iterator.
@@ -753,6 +794,8 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
     MachineOperand& MO = Inst->getOperand(OpIdx);
     MO.setReg(NewVReg);
   }
+  
+  NumRenumbers++;
 }
 
 bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
@@ -1097,8 +1140,6 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   // Make sure blocks are numbered in order.
   MF.RenumberBlocks();
 
-#if 1
-  // FIXME: Go top down.
   MachineBasicBlock *Entry = MF.begin();
   SmallPtrSet<MachineBasicBlock*,16> Visited;
 
@@ -1117,22 +1158,6 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
       MadeChange |= SplitRegLiveIntervals(BarrierRCs);
     }
   }
-#else
-  for (MachineFunction::reverse_iterator I = MF.rbegin(), E = MF.rend();
-       I != E; ++I) {
-    BarrierMBB = &*I;
-    for (MachineBasicBlock::reverse_iterator II = BarrierMBB->rbegin(),
-           EE = BarrierMBB->rend(); II != EE; ++II) {
-      Barrier = &*II;
-      const TargetRegisterClass **BarrierRCs =
-        Barrier->getDesc().getRegClassBarriers();
-      if (!BarrierRCs)
-        continue;
-      BarrierIdx = LIs->getInstructionIndex(Barrier);
-      MadeChange |= SplitRegLiveIntervals(BarrierRCs);
-    }
-  }
-#endif
 
   return MadeChange;
 }
