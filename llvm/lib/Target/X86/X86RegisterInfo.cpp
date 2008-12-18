@@ -745,6 +745,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr)
       .addReg(StackPtr);
 
+    // Mark the FramePtr as live-in in every block except the entry.
+    for (MachineFunction::iterator I = next(MF.begin()), E = MF.end();
+         I != E; ++I)
+      I->addLiveIn(FramePtr);
+
     // Realign stack
     if (needsStackRealignment(MF))
       BuildMI(MBB, MBBI,
