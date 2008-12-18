@@ -76,7 +76,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
   assert(TargetRegisterInfo::isPhysicalRegister(SuperReg) &&
          "Extract supperg source must be a physical register");
   assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
-         "Insert destination must be in a physical register");
+         "Extract destination must be in a physical register");
          
   DOUT << "subreg: CONVERTING: " << *MI;
 
