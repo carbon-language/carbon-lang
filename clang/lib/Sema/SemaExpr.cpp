@@ -418,13 +418,14 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     if (SD == 0 || SD->isDefinedOutsideFunctionOrMethod()) {
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
       if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II)) {
-        FieldDecl *FD = IFace->lookupFieldDeclForIvar(Context, IV);
         // FIXME: This should use a new expr for a direct reference, don't turn
         // this into Self->ivar, just return a BareIVarExpr or something.
         IdentifierInfo &II = Context.Idents.get("self");
         ExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
-        return new ObjCIvarRefExpr(IV, FD, IV->getType(), Loc, 
-                                 static_cast<Expr*>(SelfExpr.Val), true, true);
+        ObjCIvarRefExpr *MRef=  new ObjCIvarRefExpr(IV, IV->getType(), Loc, 
+                                  static_cast<Expr*>(SelfExpr.Val), true, true);
+        Context.setFieldDecl(IFace, IV, MRef);
+        return MRef;
       }
     }
     // Needed to implement property "super.method" notation.
@@ -1266,9 +1267,11 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
   // (*Obj).ivar.
   if (const ObjCInterfaceType *IFTy = BaseType->getAsObjCInterfaceType()) {
     if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member)) {
-      FieldDecl *FD = IFTy->getDecl()->lookupFieldDeclForIvar(Context, IV);
-      return new ObjCIvarRefExpr(IV, FD, IV->getType(), MemberLoc, BaseExpr, 
-                                 OpKind == tok::arrow);
+      ObjCIvarRefExpr *MRef= new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, 
+                                                 BaseExpr, 
+                                                 OpKind == tok::arrow);
+      Context.setFieldDecl(IFTy->getDecl(), IV, MRef);
+      return MRef;
     }
     return Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
              << IFTy->getDecl()->getDeclName() << &Member

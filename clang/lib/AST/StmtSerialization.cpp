@@ -1162,7 +1162,7 @@ void ObjCIvarRefExpr::EmitImpl(Serializer& S) const {
 ObjCIvarRefExpr* ObjCIvarRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType T = QualType::ReadVal(D);
-  ObjCIvarRefExpr* dr = new ObjCIvarRefExpr(NULL,NULL,T,Loc);
+  ObjCIvarRefExpr* dr = new ObjCIvarRefExpr(NULL,T,Loc);
   D.ReadPtr(dr->D,false);  
   return dr;
 }

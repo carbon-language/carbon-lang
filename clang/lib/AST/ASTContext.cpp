@@ -540,6 +540,16 @@ const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D)
   return RD;
 }
 
+/// setFieldDecl - maps a field for the given Ivar reference node.
+//
+void ASTContext::setFieldDecl(const ObjCInterfaceDecl *OI,
+                              const ObjCIvarDecl *Ivar,
+                              const ObjCIvarRefExpr *MRef) {
+  FieldDecl *FD = (const_cast<ObjCInterfaceDecl *>(OI))->
+                    lookupFieldDeclForIvar(*this, Ivar);
+  ASTFieldForIvarRef[MRef] = FD;
+}
+
 /// getASTObjcInterfaceLayout - Get or compute information about the layout of
 /// the specified Objective C, which indicates its size and ivar
 /// position information.

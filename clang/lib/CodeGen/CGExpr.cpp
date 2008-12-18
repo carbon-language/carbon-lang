@@ -995,8 +995,8 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
     CVRQualifiers = BaseExpr->getType().getCVRQualifiers();
   }
 
-  return EmitLValueForIvar(BaseValue, E->getDecl(), E->getFieldDecl(), 
-                           CVRQualifiers);
+  return EmitLValueForIvar(BaseValue, E->getDecl(), 
+                           getContext().getFieldDecl(E), CVRQualifiers);
 }
 
 LValue 

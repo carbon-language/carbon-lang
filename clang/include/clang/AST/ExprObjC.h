@@ -156,23 +156,20 @@ public:
 /// ObjCIvarRefExpr - A reference to an ObjC instance variable.
 class ObjCIvarRefExpr : public Expr {
   class ObjCIvarDecl *D;
-  FieldDecl *FD;
   SourceLocation Loc;
   Stmt *Base;
   bool IsArrow:1;      // True if this is "X->F", false if this is "X.F".
   bool IsFreeIvar:1;   // True if ivar reference has no base (self assumed).
   
 public:
-  ObjCIvarRefExpr(ObjCIvarDecl *d, FieldDecl *fd,
+  ObjCIvarRefExpr(ObjCIvarDecl *d,
                   QualType t, SourceLocation l, Expr *base=0, 
                   bool arrow = false, bool freeIvar = false) : 
-    Expr(ObjCIvarRefExprClass, t), D(d), FD(fd),
+    Expr(ObjCIvarRefExprClass, t), D(d),
     Loc(l), Base(base), IsArrow(arrow),
     IsFreeIvar(freeIvar) {}
   
   ObjCIvarDecl *getDecl() { return D; }
-  FieldDecl *getFieldDecl() { return FD; }
-  const FieldDecl *getFieldDecl() const { return FD; }
   const ObjCIvarDecl *getDecl() const { return D; }
   virtual SourceRange getSourceRange() const { 
     return isFreeIvar() ? SourceRange(Loc)

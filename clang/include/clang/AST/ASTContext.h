@@ -47,7 +47,10 @@ namespace clang {
   class TypeDecl;
   class TypedefDecl;
   class TemplateTypeParmDecl;
-
+  class FieldDecl;
+  class ObjCIvarRefExpr;
+  class ObjCIvarDecl;
+  
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {  
@@ -74,6 +77,7 @@ class ASTContext {
   
   llvm::DenseMap<const ObjCInterfaceDecl*,
                  const RecordDecl*> ASTRecordForInterface;
+  llvm::DenseMap<const ObjCIvarRefExpr*, const FieldDecl*> ASTFieldForIvarRef;
   
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
@@ -391,6 +395,15 @@ public:
   
   const ASTRecordLayout &getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D);
   const RecordDecl *addRecordToClass(const ObjCInterfaceDecl *D);
+  const FieldDecl *getFieldDecl(const ObjCIvarRefExpr *MRef) {
+    llvm::DenseMap<const ObjCIvarRefExpr *, const FieldDecl*>::iterator I 
+      = ASTFieldForIvarRef.find(MRef);
+    assert (I != ASTFieldForIvarRef.end()  && "Unable to find field_decl");
+    return I->second;
+  }
+  void setFieldDecl(const ObjCInterfaceDecl *OI,
+                    const ObjCIvarDecl *Ivar,
+                    const ObjCIvarRefExpr *MRef);
   //===--------------------------------------------------------------------===//
   //                            Type Operators
   //===--------------------------------------------------------------------===//
