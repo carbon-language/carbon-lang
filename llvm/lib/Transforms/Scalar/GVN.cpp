@@ -956,6 +956,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // it will be too expensive.
   if (Deps.size() > 100)
     return false;
+
+  // If we had a phi translation failure, we'll have a single entry which is a
+  // clobber in the current block.  Reject this early.
+  if (Deps.size() == 1 && Deps[0].second.isClobber())
+    return false;
   
   // Filter out useless results (non-locals, etc).  Keep track of the blocks
   // where we have a value available in repl, also keep track of whether we see
