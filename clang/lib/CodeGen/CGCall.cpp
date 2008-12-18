@@ -102,7 +102,10 @@ class ABIArgInfo {
 public:
   enum Kind {
     Default,
-    StructRet, /// Only valid for aggregate return types.
+    StructRet, /// Only valid for return values. The return value
+               /// should be passed through a pointer to a caller
+               /// allocated location passed as an implicit first
+               /// argument to the function.
 
     Coerce,    /// Only valid for aggregate return types, the argument
                /// should be accessed by coercion to a provided type.
@@ -751,12 +754,16 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
     
     switch (RetAI.getKind()) {
     case ABIArgInfo::StructRet:
-        if (RetTy->isAnyComplexType()) {
-          // FIXME: Volatile
-          ComplexPairTy RT = LoadComplexFromAddr(ReturnValue, false);
-          StoreComplexToAddr(RT, CurFn->arg_begin(), false);
-        } else
-          EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
+      if (RetTy->isAnyComplexType()) {
+        // FIXME: Volatile
+        ComplexPairTy RT = LoadComplexFromAddr(ReturnValue, false);
+        StoreComplexToAddr(RT, CurFn->arg_begin(), false);
+      } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+        EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
+      } else {
+        Builder.CreateStore(Builder.CreateLoad(ReturnValue), 
+                            CurFn->arg_begin());
+      }
       break;
 
     case ABIArgInfo::Default:
@@ -856,9 +863,10 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   case ABIArgInfo::StructRet:
     if (RetTy->isAnyComplexType())
       return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
-    else 
-      // Struct return.
+    else if (CodeGenFunction::hasAggregateLLVMType(RetTy))
       return RValue::getAggregate(Args[0]);
+    else 
+      return RValue::get(Builder.CreateLoad(Args[0]));
 
   case ABIArgInfo::Default:
     return RValue::get(RetTy->isVoidType() ? 0 : CI);
