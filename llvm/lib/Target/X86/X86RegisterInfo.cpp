@@ -263,16 +263,30 @@ X86RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
 
 BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
+  // Set the stack-pointer register and its aliases as reserved.
   Reserved.set(X86::RSP);
   Reserved.set(X86::ESP);
   Reserved.set(X86::SP);
   Reserved.set(X86::SPL);
+  // Set the frame-pointer register and its aliases as reserved if needed.
   if (hasFP(MF)) {
     Reserved.set(X86::RBP);
     Reserved.set(X86::EBP);
     Reserved.set(X86::BP);
     Reserved.set(X86::BPL);
   }
+  // Mark the x87 stack registers as reserved, since they don't
+  // behave normally with respect to liveness. We don't fully
+  // model the effects of x87 stack pushes and pops after
+  // stackification.
+  Reserved.set(X86::ST0);
+  Reserved.set(X86::ST1);
+  Reserved.set(X86::ST2);
+  Reserved.set(X86::ST3);
+  Reserved.set(X86::ST4);
+  Reserved.set(X86::ST5);
+  Reserved.set(X86::ST6);
+  Reserved.set(X86::ST7);
   return Reserved;
 }
 
