@@ -217,7 +217,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
     // Convert the element to an integer and promote it by hand.
     return DAG.getNode(ISD::ANY_EXTEND, NOutVT,
                        BitConvertToInteger(GetScalarizedVector(InOp)));
-  case SplitVector:
+  case SplitVector: {
     // For example, i32 = BIT_CONVERT v2i16 on alpha.  Convert the split
     // pieces of the input into integers and reassemble in the final type.
     SDValue Lo, Hi;
@@ -233,9 +233,13 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
                        JoinIntegers(Lo, Hi));
     return DAG.getNode(ISD::BIT_CONVERT, NOutVT, InOp);
   }
+  case WidenVector:
+    if (OutVT.bitsEq(NInVT))
+      // The input is widened to the same size.  Convert to the widened value.
+      return DAG.getNode(ISD::BIT_CONVERT, OutVT, GetWidenedVector(InOp));
+  }
 
   // Otherwise, lower the bit-convert to a store/load from the stack.
-
   // Create the stack frame object.  Make sure it is aligned for both
   // the source and destination types.
   SDValue FIPtr = DAG.CreateStackTemporary(InVT, OutVT);

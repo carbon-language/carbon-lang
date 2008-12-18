@@ -108,6 +108,8 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
         Mapped |= 32;
       if (SplitVectors.find(Res) != SplitVectors.end())
         Mapped |= 64;
+      if (WidenedVectors.find(Res) != WidenedVectors.end())
+        Mapped |= 128;
 
       if (I->getNodeId() != Processed) {
         if (Mapped != 0) {
@@ -115,7 +117,10 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
           Failed = true;
         }
       } else if (isTypeLegal(Res.getValueType()) || IgnoreNodeResults(I)) {
-        if (Mapped > 1) {
+        // FIXME: Because of PR2957, the build vector can be placed on this
+        // list but if the associated vector shuffle is split, the build vector
+        // can also be split so we allow this to go through for now.
+        if (Mapped > 1 && Res.getOpcode() != ISD::BUILD_VECTOR) {
           cerr << "Value with legal type was transformed!";
           Failed = true;
         }
@@ -144,6 +149,8 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
           cerr << " ExpandedFloats";
         if (Mapped & 64)
           cerr << " SplitVectors";
+        if (Mapped & 128)
+          cerr << " WidenedVectors";
         cerr << "\n";
         abort();
       }
@@ -241,6 +248,10 @@ bool DAGTypeLegalizer::run() {
         SplitVectorResult(N, i);
         Changed = true;
         goto NodeDone;
+      case WidenVector:
+        WidenVectorResult(N, i);
+        Changed = true;
+        goto NodeDone;
       }
     }
 
@@ -254,6 +265,13 @@ ScanOperands:
     for (i = 0; i != NumOperands; ++i) {
       if (IgnoreNodeResults(N->getOperand(i).getNode()))
         continue;
+
+      if (N->getOpcode() == ISD::VECTOR_SHUFFLE && i == 2) {
+        // The shuffle mask doesn't need to be a legal vector type.
+        // FIXME: We can remove this once we fix PR2957.
+        SetIgnoredNodeResult(N->getOperand(2).getNode());
+        continue;
+      }
 
       MVT OpVT = N->getOperand(i).getValueType();
       switch (getTypeAction(OpVT)) {
@@ -286,6 +304,10 @@ ScanOperands:
         break;
       case SplitVector:
         NeedsReanalyzing = SplitVectorOperand(N, i);
+        Changed = true;
+        break;
+      case WidenVector:
+        NeedsReanalyzing = WidenVectorOperand(N, i);
         Changed = true;
         break;
       }
@@ -791,6 +813,18 @@ void DAGTypeLegalizer::SetSplitVector(SDValue Op, SDValue Lo,
   Entry.second = Hi;
 }
 
+void DAGTypeLegalizer::SetWidenedVector(SDValue Op, SDValue Result) {
+  AnalyzeNewValue(Result);
+
+  SDValue &OpEntry = WidenedVectors[Op];
+  assert(OpEntry.getNode() == 0 && "Node is already promoted!");
+  OpEntry = Result;
+}
+
+// Set to ignore result
+void DAGTypeLegalizer::SetIgnoredNodeResult(SDNode* N) {
+  IgnoredNodesResultsSet.insert(N);
+}
 
 //===----------------------------------------------------------------------===//
 // Utilities.

@@ -491,9 +491,11 @@ void SelectionDAGLegalize::HandleOp(SDValue Op) {
   MVT VT = Op.getValueType();
   // If the type legalizer was run then we should never see any illegal result
   // types here except for target constants (the type legalizer does not touch
-  // those).
+  // those) or for build vector used as a mask for a vector shuffle.
+  // FIXME: We can removed the BUILD_VECTOR case when we fix PR2957.
   assert((TypesNeedLegalizing || getTypeAction(VT) == Legal ||
-          Op.getOpcode() == ISD::TargetConstant) &&
+          Op.getOpcode() == ISD::TargetConstant ||
+          Op.getOpcode() == ISD::BUILD_VECTOR) &&
          "Illegal type introduced after type legalization?");
   switch (getTypeAction(VT)) {
   default: assert(0 && "Bad type action!");
@@ -3299,7 +3301,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                          0);
         break;
       }
-      
+
       // Check to see if we have a libcall for this operator.
       RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
       bool isSigned = false;
@@ -7646,7 +7648,10 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
   case ISD::XOR:
   case ISD::UREM:
   case ISD::SREM:
-  case ISD::FREM: {
+  case ISD::FREM:
+  case ISD::SHL:
+  case ISD::SRA:
+  case ISD::SRL: {
     SDValue LL, LH, RL, RH;
     SplitVectorOp(Node->getOperand(0), LL, LH);
     SplitVectorOp(Node->getOperand(1), RL, RH);
@@ -8067,30 +8072,33 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
     SDValue Tmp1 = Node->getOperand(0);
     // Converts between two different types so we need to determine
     // the correct widen type for the input operand.
-    MVT TVT = Tmp1.getValueType();
-    assert(TVT.isVector() && "can not widen non vector type");
-    MVT TEVT = TVT.getVectorElementType();
-    assert(WidenVT.getSizeInBits() % EVT.getSizeInBits() == 0 &&
-         "can not widen bit bit convert that are not multiple of element type");
-    MVT TWidenVT =  MVT::getVectorVT(TEVT,
-                                   WidenVT.getSizeInBits()/EVT.getSizeInBits());
-    Tmp1 = WidenVectorOp(Tmp1, TWidenVT);
-    assert(Tmp1.getValueType().getSizeInBits() == WidenVT.getSizeInBits());
-    Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1);
+    MVT InVT = Tmp1.getValueType();
+    unsigned WidenSize = WidenVT.getSizeInBits();    
+    if (InVT.isVector()) {
+      MVT InEltVT = InVT.getVectorElementType();
+      unsigned InEltSize = InEltVT.getSizeInBits();
+      assert(WidenSize % InEltSize == 0 &&
+             "can not widen bit convert that are not multiple of element type");
+      MVT NewInWidenVT = MVT::getVectorVT(InEltVT, WidenSize / InEltSize);
+      Tmp1 = WidenVectorOp(Tmp1, NewInWidenVT);
+      assert(Tmp1.getValueType().getSizeInBits() == WidenVT.getSizeInBits());
+      Result = DAG.getNode(ISD::BIT_CONVERT, WidenVT, Tmp1);
+    } else {
+      // If the result size is a multiple of the input size, widen the input
+      // and then convert.
+      unsigned InSize = InVT.getSizeInBits();
+      assert(WidenSize % InSize == 0 &&
+             "can not widen bit convert that are not multiple of element type");
+      unsigned NewNumElts = WidenSize / InSize;
+      SmallVector<SDValue, 16> Ops(NewNumElts);
+      SDValue UndefVal = DAG.getNode(ISD::UNDEF, InVT);
+      Ops[0] = Tmp1;
+      for (unsigned i = 1; i < NewNumElts; ++i)
+        Ops[i] = UndefVal;
 
-    TargetLowering::LegalizeAction action =
-      TLI.getOperationAction(Node->getOpcode(), WidenVT);
-    switch (action)  {
-    default: assert(0 && "action not supported");
-    case TargetLowering::Legal:
-        break;
-    case TargetLowering::Promote:
-        // We defer the promotion to when we legalize the op
-      break;
-    case TargetLowering::Expand:
-      // Expand the operation into a bunch of nasty scalar code.
-      Result = LegalizeOp(UnrollVectorOp(Result));
-      break;
+      MVT NewInVT = MVT::getVectorVT(InVT, NewNumElts);
+      Result = DAG.getNode(ISD::BUILD_VECTOR, NewInVT, &Ops[0], NewNumElts);
+      Result = DAG.getNode(ISD::BIT_CONVERT, WidenVT, Result);
     }
     break;
   }
@@ -8098,7 +8106,8 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:
   case ISD::FP_TO_SINT:
-  case ISD::FP_TO_UINT: {
+  case ISD::FP_TO_UINT:
+  case ISD::FP_ROUND: {
     SDValue Tmp1 = Node->getOperand(0);
     // Converts between two different types so we need to determine
     // the correct widen type for the input operand.
@@ -8118,7 +8127,6 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND:
-  case ISD::FP_ROUND:
   case ISD::SIGN_EXTEND_INREG:
   case ISD::FABS:
   case ISD::FNEG:
@@ -8129,7 +8137,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   case ISD::CTTZ:
   case ISD::CTLZ: {
     // Unary op widening
-    SDValue Tmp1;    
+    SDValue Tmp1;
     Tmp1 = WidenVectorOp(Node->getOperand(0), WidenVT);
     assert(Tmp1.getValueType() == WidenVT);
     Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1);
@@ -8306,7 +8314,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
     MVT TmpWidenVT =  MVT::getVectorVT(TmpEVT, NewNumElts);
     Tmp1 = WidenVectorOp(Tmp1, TmpWidenVT);
     SDValue Tmp2 = WidenVectorOp(Node->getOperand(1), TmpWidenVT);
-    Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1, Tmp2, 
+    Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1, Tmp2,
                          Node->getOperand(2));
     break;
   }

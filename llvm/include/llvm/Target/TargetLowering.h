@@ -168,8 +168,7 @@ public:
     LegalizeAction getTypeAction(MVT VT) const {
       if (VT.isExtended()) {
         if (VT.isVector()) {
-          // First try vector widening
-          return Promote;
+          return VT.isPow2VectorType() ? Expand : Promote;
         }
         if (VT.isInteger())
           // First promote to a power-of-two size, then expand if necessary.
@@ -216,9 +215,15 @@ public:
     }
 
     if (VT.isVector()) {
-      unsigned NumElts = VT.getVectorNumElements();
-      MVT EltVT = VT.getVectorElementType();
-      return (NumElts == 1) ? EltVT : MVT::getVectorVT(EltVT, NumElts / 2);
+      MVT NVT = VT.getPow2VectorType();
+      if (NVT == VT) {
+        // Vector length is a power of 2 - split to half the size.
+        unsigned NumElts = VT.getVectorNumElements();
+        MVT EltVT = VT.getVectorElementType();
+        return (NumElts == 1) ? EltVT : MVT::getVectorVT(EltVT, NumElts / 2);
+      }
+      // Promote to a power of two size, avoiding multi-step promotion.
+      return getTypeAction(NVT) == Promote ? getTypeToTransformTo(NVT) : NVT;
     } else if (VT.isInteger()) {
       MVT NVT = VT.getRoundIntegerType();
       if (NVT == VT)

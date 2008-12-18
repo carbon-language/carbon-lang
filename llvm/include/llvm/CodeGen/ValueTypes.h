@@ -49,25 +49,28 @@ namespace llvm {
 
       isVoid         =  13,   // This has no value
 
-      v8i8           =  14,   //  8 x i8
-      v4i16          =  15,   //  4 x i16
-      v2i32          =  16,   //  2 x i32
-      v1i64          =  17,   //  1 x i64
-      v16i8          =  18,   // 16 x i8
-      v8i16          =  19,   //  8 x i16
-      v3i32          =  20,   //  3 x i32
-      v4i32          =  21,   //  4 x i32
-      v2i64          =  22,   //  2 x i64
+      v2i8           =  14,   //  2 x i8
+      v4i8           =  15,   //  4 x i8
+      v2i16          =  16,   //  2 x i16
+      v8i8           =  17,   //  8 x i8
+      v4i16          =  18,   //  4 x i16
+      v2i32          =  19,   //  2 x i32
+      v1i64          =  20,   //  1 x i64
+      v16i8          =  21,   // 16 x i8
+      v8i16          =  22,   //  8 x i16
+      v3i32          =  23,   //  3 x i32
+      v4i32          =  24,   //  4 x i32
+      v2i64          =  25,   //  2 x i64
 
-      v2f32          =  23,   //  2 x f32
-      v3f32          =  24,   //  3 x f32
-      v4f32          =  25,   //  4 x f32
-      v2f64          =  26,   //  2 x f64
+      v2f32          =  26,   //  2 x f32
+      v3f32          =  27,   //  3 x f32
+      v4f32          =  28,   //  4 x f32
+      v2f64          =  29,   //  2 x f64
 
-      FIRST_VECTOR_VALUETYPE = v8i8,
+      FIRST_VECTOR_VALUETYPE = v2i8,
       LAST_VECTOR_VALUETYPE  = v2f64,
 
-      LAST_VALUETYPE =  27,   // This always remains at the end of the list.
+      LAST_VALUETYPE =  30,   // This always remains at the end of the list.
 
       // iPTRAny - An int value the size of the pointer of the current
       // target to any address space. This must only be used internal to
@@ -166,10 +169,13 @@ namespace llvm {
       default:
         break;
       case i8:
+        if (NumElements == 2)  return v2i8;
+        if (NumElements == 4)  return v4i8;
         if (NumElements == 8)  return v8i8;
         if (NumElements == 16) return v16i8;
         break;
       case i16:
+        if (NumElements == 2)  return v2i16;
         if (NumElements == 4)  return v4i16;
         if (NumElements == 8)  return v8i16;
         break;
@@ -233,7 +239,7 @@ namespace llvm {
       return isSimple() ?
              ((SimpleTy >= FIRST_INTEGER_VALUETYPE &&
                SimpleTy <= LAST_INTEGER_VALUETYPE) ||
-              (SimpleTy >= v8i8 && SimpleTy <= v2i64)) :
+              (SimpleTy >= v2i8 && SimpleTy <= v2i64)) :
              isExtendedInteger();
     }
 
@@ -312,8 +318,11 @@ namespace llvm {
       switch (V) {
       default:
         return getExtendedVectorElementType();
+      case v2i8 :
+      case v4i8 :
       case v8i8 :
       case v16i8: return i8;
+      case v2i16:
       case v4i16:
       case v8i16: return i16;
       case v2i32:
@@ -338,11 +347,14 @@ namespace llvm {
       case v16i8: return 16;
       case v8i8 :
       case v8i16: return 8;
+      case v4i8:
       case v4i16:
       case v4i32:
       case v4f32: return 4;
       case v3i32:
       case v3f32: return 3;
+      case v2i8:
+      case v2i16:
       case v2i32:
       case v2i64:
       case v2f32:
@@ -364,9 +376,12 @@ namespace llvm {
         return getExtendedSizeInBits();
       case i1  :  return 1;
       case i8  :  return 8;
-      case i16 :  return 16;
+      case i16 :
+      case v2i8:  return 16;
       case f32 :
-      case i32 :  return 32;
+      case i32 :
+      case v4i8:
+      case v2i16: return 32;
       case f64 :
       case i64 :
       case v8i8:
@@ -406,6 +421,25 @@ namespace llvm {
       else
         return getIntegerVT(1 << Log2_32_Ceil(BitWidth));
     }
+
+    /// isPow2VectorType - Retuns true if the given vector is a power of 2.
+    bool isPow2VectorType() const {
+      unsigned NElts = getVectorNumElements();
+      return !(NElts & (NElts - 1));
+    }
+
+    /// getPow2VectorType - Widens the length of the given vector MVT up to
+    /// the nearest power of 2 and returns that type.
+    MVT getPow2VectorType() const {
+      if (!isPow2VectorType()) {
+        unsigned NElts = getVectorNumElements();
+        unsigned Pow2NElts = 1 <<  Log2_32_Ceil(NElts);
+        return MVT::getVectorVT(getVectorElementType(), Pow2NElts);
+      }
+      else {
+        return *this;
+      }
+   }
 
     /// getIntegerVTBitMask - Return an integer with 1's every place there are
     /// bits in the specified integer value type. FIXME: Should return an apint.

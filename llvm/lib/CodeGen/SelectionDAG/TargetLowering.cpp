@@ -572,8 +572,32 @@ void TargetLowering::computeRegisterProperties() {
                                IntermediateVT, NumIntermediates,
                                RegisterVT);
       RegisterTypeForVT[i] = RegisterVT;
-      TransformToType[i] = MVT::Other; // this isn't actually used
-      ValueTypeActions.setTypeAction(VT, Promote);
+      
+      // Determine if there is a legal wider type.
+      bool IsLegalWiderType = false;
+      MVT EltVT = VT.getVectorElementType();
+      unsigned NElts = VT.getVectorNumElements();
+      for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
+        MVT SVT = (MVT::SimpleValueType)nVT;
+        if (isTypeLegal(SVT) && SVT.getVectorElementType() == EltVT &&
+            SVT.getVectorNumElements() > NElts) {
+          TransformToType[i] = SVT;
+          ValueTypeActions.setTypeAction(VT, Promote);
+          IsLegalWiderType = true;
+          break;
+        }
+      }
+      if (!IsLegalWiderType) {
+        MVT NVT = VT.getPow2VectorType();
+        if (NVT == VT) {
+          // Type is already a power of 2.  The default action is to split.
+          TransformToType[i] = MVT::Other;
+          ValueTypeActions.setTypeAction(VT, Expand);
+        } else {
+          TransformToType[i] = NVT;
+          ValueTypeActions.setTypeAction(VT, Promote);
+        }
+      }
     }
   }
 }

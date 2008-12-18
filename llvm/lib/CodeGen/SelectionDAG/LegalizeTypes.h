@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 
@@ -63,7 +64,8 @@ private:
     SoftenFloat,     // Convert this float type to a same size integer type.
     ExpandFloat,     // Split this float type into two of half the size.
     ScalarizeVector, // Replace this one-element vector with its element type.
-    SplitVector      // This vector type should be split into smaller vectors.
+    SplitVector,     // This vector type should be split into smaller vectors.
+    WidenVector      // This vector type should be widened into larger vectors.
   };
 
   /// ValueTypeActions - This is a bitvector that contains two bits for each
@@ -88,11 +90,8 @@ private:
       //   2) For vectors, use a wider vector type (e.g. v3i32 -> v4i32).
       if (!VT.isVector())
         return PromoteInteger;
-      else if (VT.getVectorNumElements() == 1)
-        return ScalarizeVector;
       else
-        // TODO: move widen code to LegalizeTypes.
-        return SplitVector;
+        return WidenVector;
     case TargetLowering::Expand:
       // Expand can mean
       // 1) split scalar in half, 2) convert a float to an integer,
@@ -120,8 +119,12 @@ private:
 
   /// IgnoreNodeResults - Pretend all of this node's results are legal.
   bool IgnoreNodeResults(SDNode *N) const {
-    return N->getOpcode() == ISD::TargetConstant;
+    return N->getOpcode() == ISD::TargetConstant ||
+           IgnoredNodesResultsSet.count(N);
   }
+
+  /// IgnoredNode - Set of nodes whose result don't need to be legal.
+  DenseSet<SDNode*> IgnoredNodesResultsSet;
 
   /// PromotedIntegers - For integer nodes that are below legal width, this map
   /// indicates what promoted value to use.
@@ -146,6 +149,10 @@ private:
   /// SplitVectors - For nodes that need to be split this map indicates
   /// which operands are the expanded version of the input.
   DenseMap<SDValue, std::pair<SDValue, SDValue> > SplitVectors;
+
+  /// WidenVectors - For vector nodes that need to be widened, indicates
+  /// the widen value to use.
+  DenseMap<SDValue, SDValue> WidenedVectors;
 
   /// ReplacedValues - For values that have been replaced with another,
   /// indicates the replacement value to use.
@@ -200,6 +207,8 @@ private:
                     SDValue &Lo, SDValue &Hi);
 
   SDValue GetVectorElementPointer(SDValue VecPtr, MVT EltVT, SDValue Index);
+
+  void SetIgnoredNodeResult(SDNode* N);
 
   //===--------------------------------------------------------------------===//
   // Integer Promotion Support: LegalizeIntegerTypes.cpp
@@ -561,6 +570,91 @@ private:
   SDValue SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
   SDValue SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo);
   SDValue SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo);
+
+  //===--------------------------------------------------------------------===//
+  // Vector Widening Support: LegalizeVectorTypes.cpp
+  //===--------------------------------------------------------------------===//
+  SDValue GetWidenedVector(SDValue Op) {
+    SDValue &WidenedOp = WidenedVectors[Op];
+    RemapValue(WidenedOp);
+    assert(WidenedOp.getNode() && "Operand wasn't widened?");
+    return WidenedOp;
+  }
+  void SetWidenedVector(SDValue Op, SDValue Result);
+
+  // Widen Vector Result Promotion.
+  void WidenVectorResult(SDNode *N, unsigned ResNo);
+  SDValue WidenVecRes_BIT_CONVERT(SDNode* N);
+  SDValue WidenVecRes_BUILD_VECTOR(SDNode* N);
+  SDValue WidenVecRes_CONCAT_VECTORS(SDNode* N);
+  SDValue WidenVecRes_CONVERT_RNDSAT(SDNode* N);
+  SDValue WidenVecRes_EXTRACT_SUBVECTOR(SDNode* N);
+  SDValue WidenVecRes_INSERT_VECTOR_ELT(SDNode* N);
+  SDValue WidenVecRes_LOAD(SDNode* N);
+  SDValue WidenVecRes_SCALAR_TO_VECTOR(SDNode* N);
+  SDValue WidenVecRes_SELECT(SDNode* N);
+  SDValue WidenVecRes_SELECT_CC(SDNode* N);
+  SDValue WidenVecRes_UNDEF(SDNode *N);
+  SDValue WidenVecRes_VECTOR_SHUFFLE(SDNode *N);
+  SDValue WidenVecRes_VSETCC(SDNode* N);
+
+  SDValue WidenVecRes_Binary(SDNode *N);
+  SDValue WidenVecRes_Convert(SDNode *N);
+  SDValue WidenVecRes_Shift(SDNode *N);
+  SDValue WidenVecRes_Unary(SDNode *N);
+
+  // Widen Vector Operand.
+  bool WidenVectorOperand(SDNode *N, unsigned ResNo);
+  SDValue WidenVecOp_CONCAT_VECTORS(SDNode *N);
+  SDValue WidenVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
+  SDValue WidenVecOp_STORE(SDNode* N);
+
+  SDValue WidenVecOp_Convert(SDNode *N);
+
+  //===--------------------------------------------------------------------===//
+  // Vector Widening Utilities Support: LegalizeVectorTypes.cpp
+  //===--------------------------------------------------------------------===//
+
+  /// Helper genWidenVectorLoads - Helper function to generate a set of
+  /// loads to load a vector with a resulting wider type. It takes
+  ///   ExtType: Extension type
+  ///   LdChain: list of chains for the load we have generated.
+  ///   Chain:   incoming chain for the ld vector.
+  ///   BasePtr: base pointer to load from.
+  ///   SV:         memory disambiguation source value.
+  ///   SVOffset:   memory disambiugation offset.
+  ///   Alignment:  alignment of the memory.
+  ///   isVolatile: volatile load.
+  ///   LdWidth:    width of memory that we want to load. 
+  ///   ResType:    the wider result result type for the resulting vector.
+  SDValue GenWidenVectorLoads(SmallVector<SDValue, 16>& LdChain, SDValue Chain,
+                              SDValue BasePtr, const Value *SV,
+                              int SVOffset, unsigned Alignment,
+                              bool isVolatile, unsigned LdWidth,
+                              MVT ResType);
+
+  /// Helper genWidenVectorStores - Helper function to generate a set of
+  /// stores to store a widen vector into non widen memory
+  /// It takes
+  ///   StChain: list of chains for the stores we have generated
+  ///   Chain:   incoming chain for the ld vector
+  ///   BasePtr: base pointer to load from
+  ///   SV:      memory disambiguation source value
+  ///   SVOffset:   memory disambiugation offset
+  ///   Alignment:  alignment of the memory
+  ///   isVolatile: volatile lod
+  ///   ValOp:   value to store  
+  ///   StWidth: width of memory that we want to store 
+  void GenWidenVectorStores(SmallVector<SDValue, 16>& StChain, SDValue Chain,
+                            SDValue BasePtr, const Value *SV,
+                            int SVOffset, unsigned Alignment,
+                            bool isVolatile, SDValue ValOp,
+                            unsigned StWidth);
+
+  /// Modifies a vector input (widen or narrows) to a vector of NVT.  The
+  /// input vector must have the same element type as NVT.
+  SDValue ModifyToType(SDValue InOp, MVT WidenVT);
+
 
   //===--------------------------------------------------------------------===//
   // Generic Splitting: LegalizeTypesGeneric.cpp

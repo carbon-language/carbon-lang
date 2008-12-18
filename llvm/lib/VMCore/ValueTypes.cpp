@@ -99,6 +99,9 @@ std::string MVT::getMVTString() const {
   case MVT::isVoid:  return "isVoid";
   case MVT::Other:   return "ch";
   case MVT::Flag:    return "flag";
+  case MVT::v2i8:    return "v2i8";
+  case MVT::v4i8:    return "v4i8";
+  case MVT::v2i16:   return "v2i16";
   case MVT::v8i8:    return "v8i8";
   case MVT::v4i16:   return "v4i16";
   case MVT::v2i32:   return "v2i32";
@@ -135,6 +138,9 @@ const Type *MVT::getTypeForMVT() const {
   case MVT::f80:     return Type::X86_FP80Ty;
   case MVT::f128:    return Type::FP128Ty;
   case MVT::ppcf128: return Type::PPC_FP128Ty;
+  case MVT::v2i8:    return VectorType::get(Type::Int8Ty, 2);
+  case MVT::v4i8:    return VectorType::get(Type::Int8Ty, 4);
+  case MVT::v2i16:    return VectorType::get(Type::Int16Ty, 2);
   case MVT::v8i8:    return VectorType::get(Type::Int8Ty, 8);
   case MVT::v4i16:   return VectorType::get(Type::Int16Ty, 4);
   case MVT::v2i32:   return VectorType::get(Type::Int32Ty, 2);
