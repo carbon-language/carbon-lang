@@ -3106,6 +3106,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
 
       Constant *NewRHSV = ConstantVector::get(Elts);
       if (NewRHSV != RHSV) {
+        AddUsesToWorkList(I);
         I.setOperand(1, NewRHSV);
         return &I;
       }
