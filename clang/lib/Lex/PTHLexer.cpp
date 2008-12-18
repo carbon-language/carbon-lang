@@ -142,7 +142,7 @@ void PTHLexer::DiscardToEndOfLine() {
 
     // Read the token flags.  Are we at the start of the next line?
     Token::TokenFlags y = (Token::TokenFlags) (uint8_t) p[1];
-    if (y == Token::StartOfLine) break;
+    if (y & Token::StartOfLine) break;
 
     // Skip to the next token.
     p += DISK_TOKEN_SIZE;
