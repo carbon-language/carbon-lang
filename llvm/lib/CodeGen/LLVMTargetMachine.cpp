@@ -225,13 +225,6 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  // Branch folding must be run after regalloc and prolog/epilog insertion.
-  if (!Fast)
-    PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
-
   // Second pass scheduler.
   if (!Fast && !DisablePostRAScheduler) {
     PM.add(createPostRAScheduler());
@@ -239,6 +232,13 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
     if (PrintMachineCode)
       PM.add(createMachineFunctionPrinterPass(cerr));
   }
+
+  // Branch folding must be run after regalloc and prolog/epilog insertion.
+  if (!Fast)
+    PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
+
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(cerr));
 
   PM.add(createGCMachineCodeAnalysisPass());
 
