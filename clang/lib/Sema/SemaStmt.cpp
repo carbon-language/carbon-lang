@@ -759,13 +759,14 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
 
   if (FnRetType->isVoidType()) {
     if (RetValExp) {// C99 6.8.6.4p1 (ext_ since GCC warns)
-      if (FunctionDecl *FD = getCurFunctionDecl())
-        Diag(ReturnLoc, diag::ext_return_has_expr)
-          << FD->getIdentifier() << 0/*function*/<< RetValExp->getSourceRange();
-      else 
-        Diag(ReturnLoc, diag::ext_return_has_expr)
-          << getCurMethodDecl()->getDeclName() << 1 /*method*/
-          << RetValExp->getSourceRange();
+      unsigned D = diag::ext_return_has_expr;
+      if (RetValExp->getType()->isVoidType())
+        D = diag::ext_return_has_void_expr;
+      NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
+      
+      Diag(ReturnLoc, D)
+        << CurDecl->getDeclName() << isa<ObjCMethodDecl>(CurDecl)
+        << RetValExp->getSourceRange();
     }
     return new ReturnStmt(ReturnLoc, RetValExp);
   }

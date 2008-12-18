@@ -60,6 +60,6 @@ void noTwoTokenLookAheadRequiresABitOfFancyFootworkInTheParser() {
     @try {
         // Do something
     } @catch (...) {}
-    return 0;
+    return;
 }
 

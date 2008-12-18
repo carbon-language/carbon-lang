@@ -1597,8 +1597,10 @@ DIAG(warn_return_missing_expr, WARNING,
      "non-void %select{function|method}1 %0 should return a value")
 DIAG(ext_return_missing_expr, EXTENSION,
      "non-void %select{function|method}1 %0 should return a value")
-DIAG(ext_return_has_expr, EXTENSION,
+DIAG(ext_return_has_expr, EXTWARN,
      "void %select{function|method}1 %0 should not return a value")
+DIAG(ext_return_has_void_expr, EXTENSION,
+     "void %select{function|method}1 %0 should not return void expression")
 
 DIAG(err_shufflevector_non_vector, ERROR,
      "first two arguments to __builtin_shufflevector must be vectors")

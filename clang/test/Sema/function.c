@@ -32,3 +32,10 @@ void t11(){t10(1);}
 // PR3208
 void t12(int) {}  // expected-error{{parameter name omitted}}
 
+// PR2790
+void t13() {
+  return 0; // expected-warning {{void function 't13' should not return a value}}
+}
+int t14() {
+  return; // expected-warning {{non-void function 't14' should return a value}}
+}
