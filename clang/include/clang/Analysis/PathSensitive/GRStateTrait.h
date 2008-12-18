@@ -83,7 +83,11 @@ namespace clang {
 
     static inline void* MakeVoidPtr(data_type B) {
       return B.getRoot();
-    }  
+    }
+
+    static data_type Add(data_type B, key_type K, context_type F) {
+      return F.Add(B, K);
+    }
     
     static data_type Remove(data_type B, key_type K, context_type F) {
       return F.Remove(B, K);
