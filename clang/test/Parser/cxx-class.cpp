@@ -27,3 +27,12 @@ void glo()
 {
   struct local {};
 }
+
+// PR3177
+typedef union {
+  __extension__ union {
+    int a;
+    float b;
+  } y;
+} bug3177;
+

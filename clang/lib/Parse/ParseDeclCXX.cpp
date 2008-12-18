@@ -16,6 +16,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "AstGuard.h"
+#include "ExtensionRAIIObject.h"
 using namespace clang;
 
 /// ParseNamespace - We know that the current token is a namespace keyword. This
@@ -408,6 +409,7 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const
 ///         using-declaration                                            [TODO]
 /// [C++0x] static_assert-declaration                                    [TODO]
 ///         template-declaration                                         [TODO]
+/// [GNU]   '__extension__' member-declaration
 ///
 ///       member-declarator-list:
 ///         member-declarator
@@ -425,6 +427,14 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const
 ///         '=' constant-expression
 ///
 Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
+  // Handle:  member-declaration ::= '__extension__' member-declaration
+  if (Tok.is(tok::kw___extension__)) {
+    // __extension__ silences extension warnings in the subexpression.
+    ExtensionRAIIObject O(Diags);  // Use RAII to do this.
+    ConsumeToken();
+    return ParseCXXClassMemberDeclaration(AS);
+  }
+  
   SourceLocation DSStart = Tok.getLocation();
   // decl-specifier-seq:
   // Parse the common declaration-specifiers piece.
