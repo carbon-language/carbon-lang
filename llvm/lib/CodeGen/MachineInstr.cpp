@@ -187,7 +187,11 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
       else
         OS << "%mreg" << getReg();
     }
-      
+
+    if (getSubReg() != 0) {
+      OS << ":" << getSubReg();
+    }
+
     if (isDef() || isKill() || isDead() || isImplicit() || isEarlyClobber()) {
       OS << "<";
       bool NeedComma = false;
