@@ -60,3 +60,10 @@ void foo(T); /* typedef for void is allowed */
 
 void foo(void) {}
 
+/* PR2759 */
+void test10 (int x[*]); /* expected-warning {{use of C99-specific array features}} */
+void test11 (int x[static 4]); /* expected-warning {{use of C99-specific array features}} */
+
+void test12 (int x[const 4]) { /* expected-warning {{use of C99-specific array features}} */
+  int Y[x[1]]; /* expected-warning {{variable length arrays are a C99 feature, accepted as an extension}} */
+}

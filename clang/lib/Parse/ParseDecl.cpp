@@ -1283,7 +1283,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
       DS.AddAttributes(ParseAttributes());
       continue; // do *not* consume the next token!
     }
-    
+
     // If the specifier combination wasn't legal, issue a diagnostic.
     if (isInvalid) {
       assert(PrevSpec && "Method did not return previous specifier!");
@@ -1943,6 +1943,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     StaticLoc = ConsumeToken();
   
   // If there is a type-qualifier-list, read it now.
+  // Type qualifiers in an array subscript are a C99 feature.
   DeclSpec DS;
   ParseTypeQualifierListOpt(DS);
   
@@ -1962,9 +1963,10 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   if (Tok.is(tok::star) && GetLookAheadToken(1).is(tok::r_square)) {
     ConsumeToken();  // Eat the '*'.
 
-    if (StaticLoc.isValid())
+    if (StaticLoc.isValid()) {
       Diag(StaticLoc, diag::err_unspecified_vla_size_with_static);
-    StaticLoc = SourceLocation();  // Drop the static.
+      StaticLoc = SourceLocation();  // Drop the static.
+    }
     isStar = true;
   } else if (Tok.isNot(tok::r_square)) {
     // Parse the assignment-expression now.
@@ -1980,15 +1982,6 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   
   MatchRHSPunctuation(tok::r_square, StartLoc);
     
-  // If C99 isn't enabled, emit an ext-warn if the arg list wasn't empty and if
-  // it was not a constant expression.
-  if (!getLang().C99) {
-    // TODO: check C90 array constant exprness.
-    if (isStar || StaticLoc.isValid() ||
-        0/*TODO: NumElts is not a C90 constantexpr */)
-      Diag(StartLoc, diag::ext_c99_array_usage);
-  }
-
   // Remember that we parsed a pointer type, and remember the type-quals.
   D.AddTypeInfo(DeclaratorChunk::getArray(DS.getTypeQualifiers(),
                                           StaticLoc.isValid(), isStar,

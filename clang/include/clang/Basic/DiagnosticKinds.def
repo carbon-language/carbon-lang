@@ -310,7 +310,7 @@ DIAG(warn_enum_value_overflow, WARNING,
 DIAG(ext_ident_list_in_param, EXTENSION,
      "type-less parameter names in function declaration")
 DIAG(ext_c99_array_usage, EXTENSION,
-     "use of C99-specific array features")
+     "use of C99-specific array features, accepted as an extension")
 DIAG(ext_c99_variable_decl_in_for_loop, EXTENSION,
      "variable declaration in for loop is a C99-specific feature")
 DIAG(ext_c99_compound_literal, EXTENSION,

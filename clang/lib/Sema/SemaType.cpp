@@ -416,11 +416,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         T = Context.getConstantArrayType(T, ConstVal, ASM, ATI.TypeQuals);
       }
       // If this is not C99, extwarn about VLA's and C99 array size modifiers.
-      if (!getLangOptions().C99 &&
-          (ASM != ArrayType::Normal ||
-           (ArraySize && !ArraySize->isValueDependent() && 
-            !ArraySize->isIntegerConstantExpr(Context))))
-        Diag(D.getIdentifierLoc(), diag::ext_vla);
+      if (!getLangOptions().C99) {
+        if (ArraySize && !ArraySize->isValueDependent() && 
+            !ArraySize->isIntegerConstantExpr(Context))
+          Diag(D.getIdentifierLoc(), diag::ext_vla);
+        else if (ASM != ArrayType::Normal || ATI.TypeQuals != 0)
+          Diag(D.getIdentifierLoc(), diag::ext_c99_array_usage);
+      }
       break;
     }
     case DeclaratorChunk::Function:
