@@ -35,10 +35,14 @@ namespace {
         if (!AI->hasName() && AI->getType() != Type::VoidTy)
           AI->setName("tmp");
 
-       for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+      for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+        if (!BB->hasName())
+          BB->setName("BB");
+        
         for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
           if (!I->hasName() && I->getType() != Type::VoidTy)
             I->setName("tmp");
+      }
       return true;
     }
   };
