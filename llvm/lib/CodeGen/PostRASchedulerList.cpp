@@ -217,11 +217,11 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   // Map registers to all their references within a live range.
   std::multimap<unsigned, MachineOperand *> RegRefs;
 
-  // The index of the most recent kill (proceding bottom-up), or -1 if
+  // The index of the most recent kill (proceding bottom-up), or ~0u if
   // the register is not live.
   unsigned KillIndices[TargetRegisterInfo::FirstVirtualRegister];
-  std::fill(KillIndices, array_endof(KillIndices), -1);
-  // The index of the most recent complete def (proceding bottom up), or -1 if
+  std::fill(KillIndices, array_endof(KillIndices), ~0u);
+  // The index of the most recent complete def (proceding bottom up), or ~0u if
   // the register is live.
   unsigned DefIndices[TargetRegisterInfo::FirstVirtualRegister];
   std::fill(DefIndices, array_endof(DefIndices), BB->size());
@@ -234,13 +234,13 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
       unsigned Reg = *I;
       Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
       KillIndices[Reg] = BB->size();
-      DefIndices[Reg] = -1;
+      DefIndices[Reg] = ~0u;
       // Repeat, for all aliases.
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         unsigned AliasReg = *Alias;
         Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
         KillIndices[AliasReg] = BB->size();
-        DefIndices[AliasReg] = -1;
+        DefIndices[AliasReg] = ~0u;
       }
     }
   else
@@ -252,13 +252,13 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         unsigned Reg = *I;
         Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
         KillIndices[Reg] = BB->size();
-        DefIndices[Reg] = -1;
+        DefIndices[Reg] = ~0u;
         // Repeat, for all aliases.
         for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
           unsigned AliasReg = *Alias;
           Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
           KillIndices[AliasReg] = BB->size();
-          DefIndices[AliasReg] = -1;
+          DefIndices[AliasReg] = ~0u;
         }
       }
 
@@ -275,13 +275,13 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     unsigned Reg = *I;
     Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
     KillIndices[Reg] = BB->size();
-    DefIndices[Reg] = -1;
+    DefIndices[Reg] = ~0u;
     // Repeat, for all aliases.
     for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
       unsigned AliasReg = *Alias;
       Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
       KillIndices[AliasReg] = BB->size();
-      DefIndices[AliasReg] = -1;
+      DefIndices[AliasReg] = ~0u;
     }
   }
 
@@ -458,11 +458,11 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         if (NewReg == LastNewReg[AntiDepReg]) continue;
         // If NewReg is dead and NewReg's most recent def is not before
         // AntiDepReg's kill, it's safe to replace AntiDepReg with NewReg.
-        assert(((KillIndices[AntiDepReg] == -1u) != (DefIndices[AntiDepReg] == -1u)) &&
+        assert(((KillIndices[AntiDepReg] == ~0u) != (DefIndices[AntiDepReg] == ~0u)) &&
                "Kill and Def maps aren't consistent for AntiDepReg!");
-        assert(((KillIndices[NewReg] == -1u) != (DefIndices[NewReg] == -1u)) &&
+        assert(((KillIndices[NewReg] == ~0u) != (DefIndices[NewReg] == ~0u)) &&
                "Kill and Def maps aren't consistent for NewReg!");
-        if (KillIndices[NewReg] == -1u &&
+        if (KillIndices[NewReg] == ~0u &&
             Classes[NewReg] != reinterpret_cast<TargetRegisterClass *>(-1) &&
             KillIndices[AntiDepReg] <= DefIndices[NewReg]) {
           DOUT << "Breaking anti-dependence edge on "
@@ -488,7 +488,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
 
           Classes[AntiDepReg] = 0;
           DefIndices[AntiDepReg] = KillIndices[AntiDepReg];
-          KillIndices[AntiDepReg] = -1;
+          KillIndices[AntiDepReg] = ~0u;
 
           RegRefs.erase(AntiDepReg);
           Changed = true;
@@ -511,7 +511,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
       if (MI->isRegReDefinedByTwoAddr(i)) continue;
 
       DefIndices[Reg] = Count;
-      KillIndices[Reg] = -1;
+      KillIndices[Reg] = ~0u;
       Classes[Reg] = 0;
       RegRefs.erase(Reg);
       // Repeat, for all subregs.
@@ -519,7 +519,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
            *Subreg; ++Subreg) {
         unsigned SubregReg = *Subreg;
         DefIndices[SubregReg] = Count;
-        KillIndices[SubregReg] = -1;
+        KillIndices[SubregReg] = ~0u;
         Classes[SubregReg] = 0;
         RegRefs.erase(SubregReg);
       }
@@ -550,21 +550,21 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
       RegRefs.insert(std::make_pair(Reg, &MO));
 
       // It wasn't previously live but now it is, this is a kill.
-      if (KillIndices[Reg] == -1u) {
+      if (KillIndices[Reg] == ~0u) {
         KillIndices[Reg] = Count;
-        DefIndices[Reg] = -1u;
+        DefIndices[Reg] = ~0u;
       }
       // Repeat, for all aliases.
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         unsigned AliasReg = *Alias;
-        if (KillIndices[AliasReg] == -1u) {
+        if (KillIndices[AliasReg] == ~0u) {
           KillIndices[AliasReg] = Count;
-          DefIndices[AliasReg] = -1u;
+          DefIndices[AliasReg] = ~0u;
         }
       }
     }
   }
-  assert(Count == -1u && "Count mismatch!");
+  assert(Count == ~0u && "Count mismatch!");
 
   return Changed;
 }
