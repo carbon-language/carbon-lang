@@ -1355,7 +1355,23 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
   BitstreamWriter Stream(Buffer);
   
   Buffer.reserve(256*1024);
+
+  WriteBitcodeToStream( M, Stream );
   
+  // If writing to stdout, set binary mode.
+  if (&llvm::outs() == &Out)
+    sys::Program::ChangeStdoutToBinary();
+
+  // Write the generated bitstream to "Out".
+  Out.write((char*)&Buffer.front(), Buffer.size());
+  
+  // Make sure it hits disk now.
+  Out.flush();
+}
+
+/// WriteBitcodeToStream - Write the specified module to the specified output
+/// stream.
+void llvm::WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream) {
   // If this is darwin, emit a file header and trailer if needed.
   bool isDarwin = M->getTargetTriple().find("-darwin") != std::string::npos;
   if (isDarwin)
@@ -1373,16 +1389,5 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
   WriteModule(M, Stream);
 
   if (isDarwin)
-    EmitDarwinBCTrailer(Stream, Buffer.size());
-
-  
-  // If writing to stdout, set binary mode.
-  if (&llvm::outs() == &Out)
-    sys::Program::ChangeStdoutToBinary();
-
-  // Write the generated bitstream to "Out".
-  Out.write((char*)&Buffer.front(), Buffer.size());
-  
-  // Make sure it hits disk now.
-  Out.flush();
+    EmitDarwinBCTrailer(Stream, Stream.getBuffer().size());
 }

@@ -22,6 +22,7 @@ namespace llvm {
   class ModuleProvider;
   class MemoryBuffer;
   class ModulePass;
+  class BitstreamWriter;
   class raw_ostream;
   
   /// getBitcodeModuleProvider - Read the header of the specified bitcode buffer
@@ -44,6 +45,10 @@ namespace llvm {
   /// WriteBitcodeToFile - Write the specified module to the specified
   /// raw output stream.
   void WriteBitcodeToFile(const Module *M, raw_ostream &Out);
+
+  /// WriteBitcodeToStream - Write the specified module to the specified
+  /// raw output stream.
+  void WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream);
 
   /// CreateBitcodeWriterPass - Create and return a pass that writes the module
   /// to the specified ostream.

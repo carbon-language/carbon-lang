@@ -76,6 +76,9 @@ public:
       BlockInfoRecords.pop_back();
     }
   }
+
+  std::vector<unsigned char> &getBuffer() { return Out; }
+
   //===--------------------------------------------------------------------===//
   // Basic Primitives for emitting bits to the stream.
   //===--------------------------------------------------------------------===//
