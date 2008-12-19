@@ -382,7 +382,7 @@ public:
   bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);
   bool IsFloatingPointPromotion(QualType FromType, QualType ToType);
   bool IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
-                           QualType& ConvertedType);
+                           QualType& ConvertedType, bool &IncompatibleObjC);
   bool CheckPointerConversion(Expr *From, QualType ToType);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
   bool IsUserDefinedConversion(Expr *From, QualType ToType, 
@@ -1260,9 +1260,11 @@ public:
 
   bool IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType);
 
-  bool PerformImplicitConversion(Expr *&From, QualType ToType);
+  bool PerformImplicitConversion(Expr *&From, QualType ToType, 
+                                 const char *Flavor);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
-                                 const StandardConversionSequence& SCS);
+                                 const StandardConversionSequence& SCS,
+                                 const char *Flavor);
   
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

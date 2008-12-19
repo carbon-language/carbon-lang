@@ -708,14 +708,16 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
 /// PerformImplicitConversion - Perform an implicit conversion of the
 /// expression From to the type ToType. Returns true if there was an
 /// error, false otherwise. The expression From is replaced with the
-/// converted expression.
+/// converted expression. Flavor is the kind of conversion we're
+/// performing, used in the error message.
 bool 
-Sema::PerformImplicitConversion(Expr *&From, QualType ToType)
+Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
+                                const char *Flavor)
 {
   ImplicitConversionSequence ICS = TryImplicitConversion(From, ToType);
   switch (ICS.ConversionKind) {
   case ImplicitConversionSequence::StandardConversion:
-    if (PerformImplicitConversion(From, ToType, ICS.Standard))
+    if (PerformImplicitConversion(From, ToType, ICS.Standard, Flavor))
       return true;
     break;
 
@@ -742,10 +744,12 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType)
 /// expression From to the type ToType by following the standard
 /// conversion sequence SCS. Returns true if there was an error, false
 /// otherwise. The expression From is replaced with the converted
-/// expression.
+/// expression. Flavor is the context in which we're performing this
+/// conversion, for use in error messages.
 bool 
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
-                                const StandardConversionSequence& SCS)
+                                const StandardConversionSequence& SCS,
+                                const char *Flavor)
 {
   // Overall FIXME: we are recomputing too many types here and doing
   // far too much extra work. What this means is that we need to keep
@@ -808,6 +812,14 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Pointer_Conversion:
+    if (SCS.IncompatibleObjC) {
+      // Diagnose incompatible Objective-C conversions
+      Diag(From->getSourceRange().getBegin(), 
+           diag::ext_typecheck_convert_incompatible_pointer)
+        << From->getType() << ToType << Flavor
+        << From->getSourceRange();
+    }
+
     if (CheckPointerConversion(From, ToType))
       return true;
     ImpCastExprToType(From, ToType);

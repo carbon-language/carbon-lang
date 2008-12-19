@@ -419,6 +419,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   // Standard conversions (C++ [conv])
   SCS.setAsIdentityConversion();
   SCS.Deprecated = false;
+  SCS.IncompatibleObjC = false;
   SCS.FromTypePtr = FromType.getAsOpaquePtr();
   SCS.CopyConstructor = 0;
 
@@ -494,6 +495,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   // point promotion, integral conversion, floating point conversion,
   // floating-integral conversion, pointer conversion,
   // pointer-to-member conversion, or boolean conversion (C++ 4p1).
+  bool IncompatibleObjC = false;
   if (Context.getCanonicalType(FromType).getUnqualifiedType() ==
       Context.getCanonicalType(ToType).getUnqualifiedType()) {
     // The unqualified versions of the types are the same: there's no
@@ -533,8 +535,10 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     FromType = ToType.getUnqualifiedType();
   }
   // Pointer conversions (C++ 4.10).
-  else if (IsPointerConversion(From, FromType, ToType, FromType)) {
+  else if (IsPointerConversion(From, FromType, ToType, FromType, 
+                               IncompatibleObjC)) {
     SCS.Second = ICK_Pointer_Conversion;
+    SCS.IncompatibleObjC = IncompatibleObjC;
   }
   // FIXME: Pointer to member conversions (4.11).
   // Boolean conversions (C++ 4.12).
@@ -751,10 +755,15 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
 /// appropriate overloading rules for Objective-C, we may want to
 /// split the Objective-C checks into a different routine; however,
 /// GCC seems to consider all of these conversions to be pointer
-/// conversions, so for now they live here.
+/// conversions, so for now they live here. IncompatibleObjC will be
+/// set if the conversion is an allowed Objective-C conversion that
+/// should result in a warning.
 bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
-                               QualType& ConvertedType)
+                               QualType& ConvertedType,
+                               bool &IncompatibleObjC)
 {
+  IncompatibleObjC = false;
+
   // Blocks: Block pointers can be converted to void*.
   if (FromType->isBlockPointerType() && ToType->isPointerType() &&
       ToType->getAsPointerType()->getPointeeType()->isVoidType()) {
@@ -830,6 +839,18 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   const ObjCInterfaceType* ToIface = ToPointeeType->getAsObjCInterfaceType();
   if (FromIface && ToIface && 
       Context.canAssignObjCInterfaces(ToIface, FromIface)) {
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
+                                                       ToPointeeType,
+                                                       ToType, Context);
+    return true;
+  }
+
+  if (FromIface && ToIface && 
+      Context.canAssignObjCInterfaces(FromIface, ToIface)) {
+    // Okay: this is some kind of implicit downcast of Objective-C
+    // interfaces, which is permitted. However, we're going to
+    // complain about it.
+    IncompatibleObjC = true;
     ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
                                                        ToPointeeType,
                                                        ToType, Context);
@@ -1533,7 +1554,7 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
   if (ToType->isReferenceType())
     return CheckReferenceInit(From, ToType);
 
-  if (!PerformImplicitConversion(From, ToType))
+  if (!PerformImplicitConversion(From, ToType, Flavor))
     return false;
   
   return Diag(From->getSourceRange().getBegin(),

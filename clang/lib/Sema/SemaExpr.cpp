@@ -2138,7 +2138,8 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
       // C++ 5.17p3: If the left operand is not of class type, the
       // expression is implicitly converted (C++ 4) to the
       // cv-unqualified type of the left operand.
-      if (PerformImplicitConversion(rExpr, lhsType.getUnqualifiedType()))
+      if (PerformImplicitConversion(rExpr, lhsType.getUnqualifiedType(),
+                                    "assigning"))
         return Incompatible;
       else
         return Compatible;

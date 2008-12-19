@@ -45,6 +45,11 @@ void test(A* a, B* b, id val) {
   //  int& i3 = h(b); FIXME: we match GCC here, but shouldn't this work?
 }
 
+void downcast_test(A* a) {
+  B* b = a; // expected-warning{{incompatible pointer types initializing 'B *', expected 'A *'}}
+  b = a;  // expected-warning{{incompatible pointer types assigning 'B *', expected 'A *'}}
+}
+
 int& cv(A*);
 float& cv(const A*);
 int& cv2(void*);

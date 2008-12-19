@@ -744,7 +744,10 @@ bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType) {
   // Get the type before calling CheckSingleAssignmentConstraints(), since
   // it can promote the expression.
   QualType InitType = Init->getType(); 
-  
+
+  if (getLangOptions().CPlusPlus)
+    return PerformCopyInitialization(Init, DeclType, "initializing");
+
   AssignConvertType ConvTy = CheckSingleAssignmentConstraints(DeclType, Init);
   return DiagnoseAssignmentResult(ConvTy, Init->getLocStart(), DeclType,
                                   InitType, Init, "initializing");
@@ -843,7 +846,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       //      destination type.
       // FIXME: We're pretending to do copy elision here; return to
       // this when we have ASTs for such things.
-      if (!PerformImplicitConversion(Init, DeclType))
+      if (!PerformImplicitConversion(Init, DeclType, "initializing"))
         return false;
       
       return Diag(InitLoc, diag::err_typecheck_convert_incompatible)

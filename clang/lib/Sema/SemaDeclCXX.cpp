@@ -1838,7 +1838,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
     *ICS = TryImplicitConversion(Init, T1, SuppressUserConversions);
     return ICS->ConversionKind == ImplicitConversionSequence::BadConversion;
   } else {
-    return PerformImplicitConversion(Init, T1);
+    return PerformImplicitConversion(Init, T1, "initializing");
   }
 }
 

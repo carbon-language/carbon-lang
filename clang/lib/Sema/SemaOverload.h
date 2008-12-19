@@ -98,6 +98,10 @@ namespace clang {
     /// (C++ 4.2p2).
     bool Deprecated : 1;
 
+    /// IncompatibleObjC - Whether this is an Objective-C conversion
+    /// that we should warn about (if we actually use it).
+    bool IncompatibleObjC : 1;
+
     /// ReferenceBinding - True when this is a reference binding 
     /// (C++ [over.ics.ref]).
     bool ReferenceBinding : 1;
