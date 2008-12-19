@@ -1194,19 +1194,6 @@ bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
   return true;
 }
 
-bool Expr::Evaluate(APValue &Result, ASTContext &Ctx, bool *isEvaluated) const {
-  EvalResult EvalResult;
-  
-  if (!Evaluate(EvalResult, Ctx))
-    return false;
-  
-  Result = EvalResult.Val;
-  if (isEvaluated)
-    *isEvaluated = !EvalResult.HasSideEffects;
-  
-  return true;
-}
-
 /// isEvaluatable - Call Evaluate to see if this expression can be constant
 /// folded, but discard the result.
 bool Expr::isEvaluatable(ASTContext &Ctx) const {
@@ -1215,10 +1202,10 @@ bool Expr::isEvaluatable(ASTContext &Ctx) const {
 }
 
 APSInt Expr::EvaluateAsInt(ASTContext &Ctx) const {
-  APValue V;
-  bool Result = Evaluate(V, Ctx);
+  EvalResult EvalResult;
+  bool Result = Evaluate(EvalResult, Ctx);
   assert(Result && "Could not evaluate expression");
-  assert(V.isInt() && "Expression did not evaluate to integer");
+  assert(EvalResult.Val.isInt() && "Expression did not evaluate to integer");
 
-  return V.getInt();
+  return EvalResult.Val.getInt();
 }

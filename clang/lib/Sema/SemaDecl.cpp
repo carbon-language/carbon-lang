@@ -1888,8 +1888,9 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     // should always be able to do in theory).  If so, we only require the
     // specified arm of the conditional to be a constant.  This is a horrible
     // hack, but is require by real world code that uses __builtin_constant_p.
-    APValue Val;
-    if (!Exp->getCond()->Evaluate(Val, Context)) {
+    Expr::EvalResult EvalResult;
+    if (!Exp->getCond()->Evaluate(EvalResult, Context) || 
+        EvalResult.HasSideEffects) {
       // If Evaluate couldn't fold it, CheckArithmeticConstantExpression
       // won't be able to either.  Use it to emit the diagnostic though.
       bool Res = CheckArithmeticConstantExpression(Exp->getCond());
@@ -1899,7 +1900,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     
     // Verify that the side following the condition is also a constant.
     const Expr *TrueSide = Exp->getLHS(), *FalseSide = Exp->getRHS();
-    if (Val.getInt() == 0) 
+    if (EvalResult.Val.getInt() == 0) 
       std::swap(TrueSide, FalseSide);
     
     if (TrueSide && CheckArithmeticConstantExpression(TrueSide))
@@ -2717,13 +2718,13 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
   const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T);
   if (!VLATy) return QualType();
   
-  APValue Result;
+  Expr::EvalResult EvalResult;
   if (!VLATy->getSizeExpr() ||
-      !VLATy->getSizeExpr()->Evaluate(Result, Context))
+      !VLATy->getSizeExpr()->Evaluate(EvalResult, Context))
     return QualType();
     
-  assert(Result.isInt() && "Size expressions must be integers!");
-  llvm::APSInt &Res = Result.getInt();
+  assert(EvalResult.Val.isInt() && "Size expressions must be integers!");
+  llvm::APSInt &Res = EvalResult.Val.getInt();
   if (Res > llvm::APSInt(Res.getBitWidth(), Res.isUnsigned()))
     return Context.getConstantArrayType(VLATy->getElementType(),
                                         Res, ArrayType::Normal, 0);

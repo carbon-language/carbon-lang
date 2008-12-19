@@ -208,9 +208,6 @@ public:
   /// in Result.
   bool Evaluate(EvalResult &Result, ASTContext &Ctx) const;
 
-  // FIXME: We should come up with a better API for the isEvaluated case.
-  bool Evaluate(APValue& Result, ASTContext &Ctx, bool *isEvaluated = 0) const;
-
   /// isEvaluatable - Call Evaluate to see if this expression can be constant
   /// folded, but discard the result.
   bool isEvaluatable(ASTContext &Ctx) const;

@@ -763,9 +763,11 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     // If this is a call to a builtin function, constant fold it otherwise
     // reject it.
     if (CE->isBuiltinCall()) {
-      APValue ResultAP;
-      if (CE->Evaluate(ResultAP, Ctx)) {
-        Result = ResultAP.getInt();
+      EvalResult EvalResult;
+      if (CE->Evaluate(EvalResult, Ctx)) {
+        assert(!EvalResult.HasSideEffects && 
+               "Foldable builtin call should not have side effects!");
+        Result = EvalResult.Val.getInt();
         break;  // It is a constant, expand it.
       }
     }
