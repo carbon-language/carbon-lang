@@ -63,12 +63,23 @@ static bool AddressMightEscape(const Value *V) {
       // callees could modify it.
       break; // next use
     case Instruction::Call:
-      // If the call is to a few known safe intrinsics, we know that it does
-      // not escape.
-      // TODO: Eventually just check the 'nocapture' attribute.
-      if (!isa<MemIntrinsic>(I))
-        return true;
-      break;  // next use
+      // If the argument to the call has the nocapture attribute, then the call
+      // may store or load to the pointer, but it cannot escape.
+      if (cast<CallInst>(I)->paramHasAttr(UI.getOperandNo(), 
+                                          Attribute::NoCapture))
+        continue;
+
+      // FIXME: MemIntrinsics should have their operands marked nocapture!
+      if (isa<MemIntrinsic>(I))
+        continue;  // next use
+      return true;
+    case Instruction::Invoke:
+      // If the argument to the call has the nocapture attribute, then the call
+      // may store or load to the pointer, but it cannot escape.
+      if (cast<InvokeInst>(I)->paramHasAttr(UI.getOperandNo()-2,
+                                            Attribute::NoCapture))
+        continue;
+      return true;
     default:
       return true;
     }
