@@ -2,6 +2,7 @@
 ; RUN: %prcontext {function name: Bar::bar return type: int at line 12} 1 < %t1 | grep {(tst.cpp:14)}
 ; RUN: %prcontext {%%tmp1} 1 < %t1 | grep -E {variable tmp.+at line 23}
 ; RUN: %prcontext {; tst.cpp:24} 2 < %t1 | grep {%%6}
+; XFAIL: alpha|ia64|arm|linux
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, { }*, i8*, { }*, i32, i64, i64, i64, i32, i32 }
 	%llvm.dbg.compile_unit.type = type { i32, { }*, i32, i8*, i8*, i8* }
