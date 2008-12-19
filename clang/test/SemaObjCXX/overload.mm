@@ -10,6 +10,7 @@ void func(id);
  func(self);
  return self;
 }
+@end
 
 @protocol P0
 @end
