@@ -2283,11 +2283,13 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   // Join (coalesce) intervals if requested.
   if (EnableJoining) {
     joinIntervals();
-    DOUT << "********** INTERVALS POST JOINING **********\n";
-    for (LiveIntervals::iterator I = li_->begin(), E = li_->end(); I != E; ++I){
-      I->second->print(DOUT, tri_);
-      DOUT << "\n";
-    }
+    DEBUG({
+        DOUT << "********** INTERVALS POST JOINING **********\n";
+        for (LiveIntervals::iterator I = li_->begin(), E = li_->end(); I != E; ++I){
+          I->second->print(DOUT, tri_);
+          DOUT << "\n";
+        }
+      });
   }
 
   // Perform a final pass over the instructions and compute spill weights
