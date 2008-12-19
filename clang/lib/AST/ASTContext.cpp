@@ -1779,8 +1779,16 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
-    if (isObjCIdType(PointeeTy) || PointeeTy->isObjCInterfaceType()) {
+    if (isObjCIdType(PointeeTy)) {
       S += '@';
+      return;
+    }
+    else if (PointeeTy->isObjCInterfaceType()) {
+      S += '@';
+      ObjCInterfaceDecl *OI = PointeeTy->getAsObjCInterfaceType()->getDecl();
+      S += '"';
+      S += OI->getNameAsCString();
+      S += '"';
       return;
     } else if (isObjCClassType(PointeeTy)) {
       S += '#';
@@ -1802,7 +1810,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     S += '^';
     getObjCEncodingForTypeImpl(PT->getPointeeType(), S, 
                                false, ExpandPointedToStructures, 
-                               NameFields);
+                               false);
   } else if (const ArrayType *AT =
                // Ignore type qualifiers etc.
                dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
