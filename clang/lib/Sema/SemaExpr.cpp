@@ -1348,6 +1348,9 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       return new ObjCKVCRefExpr(Getter, Getter->getResultType(), Setter,
                                 MemberLoc, BaseExpr);
     }
+    
+    return Diag(MemberLoc, diag::err_property_not_found) <<
+      &Member << BaseType;
   }
   // Handle properties on qualified "id" protocols.
   const ObjCQualifiedIdType *QIdTy;
@@ -1364,6 +1367,9 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                                    OpLoc, MemberLoc, NULL, 0);
       }
     }
+    
+    return Diag(MemberLoc, diag::err_property_not_found) <<
+      &Member << BaseType;
   }  
   // Handle 'field access' to vectors, such as 'V.xx'.
   if (BaseType->isExtVectorType() && OpKind == tok::period) {
