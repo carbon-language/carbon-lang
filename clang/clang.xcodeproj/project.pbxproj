@@ -52,6 +52,7 @@
 		358CFBB80E65AB04002A8E19 /* BasicConstraintManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 358CFBB70E65AB04002A8E19 /* BasicConstraintManager.cpp */; };
 		358D230B0E8BEB9D0003DDCC /* DeclGroup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 358D230A0E8BEB9D0003DDCC /* DeclGroup.cpp */; };
 		358F51520E529AA4007F2102 /* GRState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 358F51510E529AA4007F2102 /* GRState.cpp */; };
+		3591853F0EFB1088000039AF /* SemaTemplate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3591853E0EFB1088000039AF /* SemaTemplate.cpp */; };
 		3593790A0DA48ABA0043B19C /* BugReporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359379090DA48ABA0043B19C /* BugReporter.cpp */; };
 		3595AFB80E1C8D62004CDF09 /* CheckObjCDealloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */; };
 		359603460E49496E00C6282B /* TextDiagnosticBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359603430E49496E00C6282B /* TextDiagnosticBuffer.cpp */; };
@@ -361,6 +362,7 @@
 		358D230A0E8BEB9D0003DDCC /* DeclGroup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = DeclGroup.cpp; path = lib/AST/DeclGroup.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		358F514F0E529A87007F2102 /* GRState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRState.h; path = clang/Analysis/PathSensitive/GRState.h; sourceTree = "<group>"; };
 		358F51510E529AA4007F2102 /* GRState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRState.cpp; path = lib/Analysis/GRState.cpp; sourceTree = "<group>"; };
+		3591853E0EFB1088000039AF /* SemaTemplate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplate.cpp; path = lib/Sema/SemaTemplate.cpp; sourceTree = "<group>"; };
 		359378FF0DA486490043B19C /* BugReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BugReporter.h; path = clang/Analysis/PathSensitive/BugReporter.h; sourceTree = "<group>"; };
 		359379090DA48ABA0043B19C /* BugReporter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BugReporter.cpp; path = lib/Analysis/BugReporter.cpp; sourceTree = "<group>"; };
 		3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCDealloc.cpp; path = lib/Analysis/CheckObjCDealloc.cpp; sourceTree = "<group>"; };
@@ -879,6 +881,7 @@
 				35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */,
 				35585DBF0EAFBC4500D0A97A /* SemaOverload.h */,
 				DE67E70C0C020ECA00F66BC5 /* SemaStmt.cpp */,
+				3591853E0EFB1088000039AF /* SemaTemplate.cpp */,
 				DE67E70A0C020EC500F66BC5 /* SemaType.cpp */,
 				35A2B8610CF8FFA300E6C317 /* SemaUtil.h */,
 			);
@@ -1355,6 +1358,7 @@
 				3538FDB80ED24A4E005EC283 /* DeclarationName.cpp in Sources */,
 				353141E70EE5AAE100FBCFCA /* ManagerRegistry.cpp in Sources */,
 				353959D50EE5F88A00E82461 /* ParseTemplate.cpp in Sources */,
+				3591853F0EFB1088000039AF /* SemaTemplate.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1364,7 +1368,7 @@
 		1DEB923208733DC60010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = i386;
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				COPY_PHASE_STRIP = NO;
 				GCC_CW_ASM_SYNTAX = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -1373,12 +1377,14 @@
 				GCC_ENABLE_PASCAL_STRINGS = NO;
 				GCC_ENABLE_SYMBOL_SEPARATION = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
 					"__STDC_LIMIT_MACROS=1",
 				);
 				GCC_STRICT_ALIASING = YES;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_THREADSAFE_STATICS = NO;
 				GCC_USE_GCC3_PFE_SUPPORT = NO;
 				INSTALL_PATH = "$(HOME)/bin";
@@ -1406,18 +1412,20 @@
 		1DEB923308733DC60010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = i386;
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				GCC_CW_ASM_SYNTAX = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_PASCAL_STRINGS = NO;
 				GCC_ENABLE_SYMBOL_SEPARATION = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
 					"__STDC_LIMIT_MACROS=1",
 				);
 				GCC_STRICT_ALIASING = YES;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_THREADSAFE_STATICS = NO;
 				GCC_USE_GCC3_PFE_SUPPORT = NO;
 				INSTALL_PATH = "$(HOME)/bin";
