@@ -60,7 +60,7 @@ Value *DbgInfoIntrinsic::StripCast(Value *C) {
 
 Value *DbgStopPointInst::getFileName() const {
   // Once the operand indices are verified, update this assert
-  assert(LLVMDebugVersion == (6 << 16) && "Verify operand indices");
+  assert(LLVMDebugVersion == (7 << 16) && "Verify operand indices");
   GlobalVariable *GV = cast<GlobalVariable>(getContext());
   if (!GV->hasInitializer()) return NULL;
   ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
@@ -69,7 +69,7 @@ Value *DbgStopPointInst::getFileName() const {
 
 Value *DbgStopPointInst::getDirectory() const {
   // Once the operand indices are verified, update this assert
-  assert(LLVMDebugVersion == (6 << 16) && "Verify operand indices");
+  assert(LLVMDebugVersion == (7 << 16) && "Verify operand indices");
   GlobalVariable *GV = cast<GlobalVariable>(getContext());
   if (!GV->hasInitializer()) return NULL;
   ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
