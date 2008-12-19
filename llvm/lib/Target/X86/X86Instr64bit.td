@@ -43,6 +43,12 @@ def lea64addr : ComplexPattern<i64, 4, "SelectLEAAddr",
 // Pattern fragments.
 //
 
+def i64immSExt8  : PatLeaf<(i64 imm), [{
+  // i64immSExt8 predicate - True if the 64-bit immediate fits in a 8-bit
+  // sign extended field.
+  return (int64_t)N->getZExtValue() == (int8_t)N->getZExtValue();
+}]>;
+
 def i64immSExt32  : PatLeaf<(i64 imm), [{
   // i64immSExt32 predicate - True if the 64-bit immediate fits in a 32-bit
   // sign extended field.
@@ -53,12 +59,6 @@ def i64immZExt32  : PatLeaf<(i64 imm), [{
   // i64immZExt32 predicate - True if the 64-bit immediate fits in a 32-bit
   // unsignedsign extended field.
   return (uint64_t)N->getZExtValue() == (uint32_t)N->getZExtValue();
-}]>;
-
-def i64immSExt8  : PatLeaf<(i64 imm), [{
-  // i64immSExt8 predicate - True if the 64-bit immediate fits in a 8-bit
-  // sign extended field.
-  return (int64_t)N->getZExtValue() == (int8_t)N->getZExtValue();
 }]>;
 
 def sextloadi64i8  : PatFrag<(ops node:$ptr), (i64 (sextloadi8 node:$ptr))>;
@@ -319,14 +319,14 @@ def ADD64rr    : RI<0x01, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$s
                      (implicit EFLAGS)]>;
 
 // Register-Integer Addition
-def ADD64ri32 : RIi32<0x81, MRM0r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
-                      "add{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst, (add GR64:$src1, i64immSExt32:$src2)),
-                       (implicit EFLAGS)]>;
 def ADD64ri8  : RIi8<0x83, MRM0r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                      "add{q}\t{$src2, $dst|$dst, $src2}",
                      [(set GR64:$dst, (add GR64:$src1, i64immSExt8:$src2)),
                       (implicit EFLAGS)]>;
+def ADD64ri32 : RIi32<0x81, MRM0r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+                      "add{q}\t{$src2, $dst|$dst, $src2}",
+                      [(set GR64:$dst, (add GR64:$src1, i64immSExt32:$src2)),
+                       (implicit EFLAGS)]>;
 } // isConvertibleToThreeAddress
 
 // Register-Memory Addition
@@ -341,14 +341,14 @@ def ADD64mr  : RI<0x01, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                   "add{q}\t{$src2, $dst|$dst, $src2}",
                   [(store (add (load addr:$dst), GR64:$src2), addr:$dst),
                    (implicit EFLAGS)]>;
-def ADD64mi32 : RIi32<0x81, MRM0m, (outs), (ins i64mem:$dst, i64i32imm :$src2),
-                      "add{q}\t{$src2, $dst|$dst, $src2}",
-               [(store (add (load addr:$dst), i64immSExt32:$src2), addr:$dst),
-                (implicit EFLAGS)]>;
 def ADD64mi8 : RIi8<0x83, MRM0m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
                     "add{q}\t{$src2, $dst|$dst, $src2}",
                 [(store (add (load addr:$dst), i64immSExt8:$src2), addr:$dst),
                  (implicit EFLAGS)]>;
+def ADD64mi32 : RIi32<0x81, MRM0m, (outs), (ins i64mem:$dst, i64i32imm :$src2),
+                      "add{q}\t{$src2, $dst|$dst, $src2}",
+               [(store (add (load addr:$dst), i64immSExt32:$src2), addr:$dst),
+                (implicit EFLAGS)]>;
 
 let Uses = [EFLAGS] in {
 let isTwoAddress = 1 in {
@@ -361,22 +361,22 @@ def ADC64rm  : RI<0x13, MRMSrcMem , (outs GR64:$dst), (ins GR64:$src1, i64mem:$s
                   "adc{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, (adde GR64:$src1, (load addr:$src2)))]>;
 
-def ADC64ri32 : RIi32<0x81, MRM2r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
-                      "adc{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst, (adde GR64:$src1, i64immSExt32:$src2))]>;
 def ADC64ri8 : RIi8<0x83, MRM2r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                     "adc{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (adde GR64:$src1, i64immSExt8:$src2))]>;
+def ADC64ri32 : RIi32<0x81, MRM2r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+                      "adc{q}\t{$src2, $dst|$dst, $src2}",
+                      [(set GR64:$dst, (adde GR64:$src1, i64immSExt32:$src2))]>;
 } // isTwoAddress
 
 def ADC64mr  : RI<0x11, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                   "adc{q}\t{$src2, $dst|$dst, $src2}",
                   [(store (adde (load addr:$dst), GR64:$src2), addr:$dst)]>;
-def ADC64mi32 : RIi32<0x81, MRM2m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
-                      "adc{q}\t{$src2, $dst|$dst, $src2}",
-                 [(store (adde (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
 def ADC64mi8 : RIi8<0x83, MRM2m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
                     "adc{q}\t{$src2, $dst|$dst, $src2}",
+                 [(store (adde (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
+def ADC64mi32 : RIi32<0x81, MRM2m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
+                      "adc{q}\t{$src2, $dst|$dst, $src2}",
                  [(store (adde (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
 } // Uses = [EFLAGS]
 
@@ -394,16 +394,16 @@ def SUB64rm  : RI<0x2B, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$sr
                    (implicit EFLAGS)]>;
 
 // Register-Integer Subtraction
-def SUB64ri32 : RIi32<0x81, MRM5r, (outs GR64:$dst),
-                                   (ins GR64:$src1, i64i32imm:$src2),
-                      "sub{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst, (sub GR64:$src1, i64immSExt32:$src2)),
-                       (implicit EFLAGS)]>;
 def SUB64ri8 : RIi8<0x83, MRM5r, (outs GR64:$dst),
                                  (ins GR64:$src1, i64i8imm:$src2),
                     "sub{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (sub GR64:$src1, i64immSExt8:$src2)),
                      (implicit EFLAGS)]>;
+def SUB64ri32 : RIi32<0x81, MRM5r, (outs GR64:$dst),
+                                   (ins GR64:$src1, i64i32imm:$src2),
+                      "sub{q}\t{$src2, $dst|$dst, $src2}",
+                      [(set GR64:$dst, (sub GR64:$src1, i64immSExt32:$src2)),
+                       (implicit EFLAGS)]>;
 } // isTwoAddress
 
 // Memory-Register Subtraction
@@ -413,16 +413,16 @@ def SUB64mr  : RI<0x29, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                    (implicit EFLAGS)]>;
 
 // Memory-Integer Subtraction
-def SUB64mi32 : RIi32<0x81, MRM5m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
-                      "sub{q}\t{$src2, $dst|$dst, $src2}",
-                      [(store (sub (load addr:$dst), i64immSExt32:$src2),
-                              addr:$dst),
-                       (implicit EFLAGS)]>;
 def SUB64mi8 : RIi8<0x83, MRM5m, (outs), (ins i64mem:$dst, i64i8imm :$src2), 
                     "sub{q}\t{$src2, $dst|$dst, $src2}",
                     [(store (sub (load addr:$dst), i64immSExt8:$src2),
                             addr:$dst),
                      (implicit EFLAGS)]>;
+def SUB64mi32 : RIi32<0x81, MRM5m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
+                      "sub{q}\t{$src2, $dst|$dst, $src2}",
+                      [(store (sub (load addr:$dst), i64immSExt32:$src2),
+                              addr:$dst),
+                       (implicit EFLAGS)]>;
 
 let Uses = [EFLAGS] in {
 let isTwoAddress = 1 in {
@@ -434,23 +434,23 @@ def SBB64rm  : RI<0x1B, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$sr
                   "sbb{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, (sube GR64:$src1, (load addr:$src2)))]>;
 
-def SBB64ri32 : RIi32<0x81, MRM3r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
-                      "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst, (sube GR64:$src1, i64immSExt32:$src2))]>;
 def SBB64ri8 : RIi8<0x83, MRM3r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                     "sbb{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (sube GR64:$src1, i64immSExt8:$src2))]>;
+def SBB64ri32 : RIi32<0x81, MRM3r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+                      "sbb{q}\t{$src2, $dst|$dst, $src2}",
+                      [(set GR64:$dst, (sube GR64:$src1, i64immSExt32:$src2))]>;
 } // isTwoAddress
 
 def SBB64mr  : RI<0x19, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
                   "sbb{q}\t{$src2, $dst|$dst, $src2}",
                   [(store (sube (load addr:$dst), GR64:$src2), addr:$dst)]>;
-def SBB64mi32 : RIi32<0x81, MRM3m, (outs), (ins i64mem:$dst, i64i32imm:$src2), 
-                      "sbb{q}\t{$src2, $dst|$dst, $src2}",
-              [(store (sube (load addr:$dst), i64immSExt32:$src2), addr:$dst)]>;
 def SBB64mi8 : RIi8<0x83, MRM3m, (outs), (ins i64mem:$dst, i64i8imm :$src2), 
                     "sbb{q}\t{$src2, $dst|$dst, $src2}",
                [(store (sube (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
+def SBB64mi32 : RIi32<0x81, MRM3m, (outs), (ins i64mem:$dst, i64i32imm:$src2), 
+                      "sbb{q}\t{$src2, $dst|$dst, $src2}",
+              [(store (sube (load addr:$dst), i64immSExt32:$src2), addr:$dst)]>;
 } // Uses = [EFLAGS]
 } // Defs = [EFLAGS]
 
@@ -491,30 +491,30 @@ def IMUL64rm : RI<0xAF, MRMSrcMem, (outs GR64:$dst),
 // Suprisingly enough, these are not two address instructions!
 
 // Register-Integer Signed Integer Multiplication
-def IMUL64rri32 : RIi32<0x69, MRMSrcReg,                    // GR64 = GR64*I32
-                        (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
-                        "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       [(set GR64:$dst, (mul GR64:$src1, i64immSExt32:$src2)),
-                        (implicit EFLAGS)]>;
 def IMUL64rri8 : RIi8<0x6B, MRMSrcReg,                      // GR64 = GR64*I8
                       (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                       "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                       [(set GR64:$dst, (mul GR64:$src1, i64immSExt8:$src2)),
                        (implicit EFLAGS)]>;
+def IMUL64rri32 : RIi32<0x69, MRMSrcReg,                    // GR64 = GR64*I32
+                        (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+                        "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                       [(set GR64:$dst, (mul GR64:$src1, i64immSExt32:$src2)),
+                        (implicit EFLAGS)]>;
 
 // Memory-Integer Signed Integer Multiplication
-def IMUL64rmi32 : RIi32<0x69, MRMSrcMem,                   // GR64 = [mem64]*I32
-                        (outs GR64:$dst), (ins i64mem:$src1, i64i32imm:$src2),
-                        "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set GR64:$dst, (mul (load addr:$src1),
-                                              i64immSExt32:$src2)),
-                         (implicit EFLAGS)]>;
 def IMUL64rmi8 : RIi8<0x6B, MRMSrcMem,                      // GR64 = [mem64]*I8
                       (outs GR64:$dst), (ins i64mem:$src1, i64i8imm: $src2),
                       "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                       [(set GR64:$dst, (mul (load addr:$src1),
                                             i64immSExt8:$src2)),
                        (implicit EFLAGS)]>;
+def IMUL64rmi32 : RIi32<0x69, MRMSrcMem,                   // GR64 = [mem64]*I32
+                        (outs GR64:$dst), (ins i64mem:$src1, i64i32imm:$src2),
+                        "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                        [(set GR64:$dst, (mul (load addr:$src1),
+                                              i64immSExt32:$src2)),
+                         (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
 // Unsigned division / remainder
@@ -783,28 +783,28 @@ def AND64rm  : RI<0x23, MRMSrcMem,
                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                   "and{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, (and GR64:$src1, (load addr:$src2)))]>;
-def AND64ri32  : RIi32<0x81, MRM4r, 
-                       (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
-                       "and{q}\t{$src2, $dst|$dst, $src2}",
-                       [(set GR64:$dst, (and GR64:$src1, i64immSExt32:$src2))]>;
 def AND64ri8 : RIi8<0x83, MRM4r, 
                     (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                     "and{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (and GR64:$src1, i64immSExt8:$src2))]>;
+def AND64ri32  : RIi32<0x81, MRM4r, 
+                       (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+                       "and{q}\t{$src2, $dst|$dst, $src2}",
+                       [(set GR64:$dst, (and GR64:$src1, i64immSExt32:$src2))]>;
 } // isTwoAddress
 
 def AND64mr  : RI<0x21, MRMDestMem,
                   (outs), (ins i64mem:$dst, GR64:$src),
                   "and{q}\t{$src, $dst|$dst, $src}",
                   [(store (and (load addr:$dst), GR64:$src), addr:$dst)]>;
-def AND64mi32  : RIi32<0x81, MRM4m,
-                       (outs), (ins i64mem:$dst, i64i32imm:$src),
-                       "and{q}\t{$src, $dst|$dst, $src}",
-             [(store (and (loadi64 addr:$dst), i64immSExt32:$src), addr:$dst)]>;
 def AND64mi8 : RIi8<0x83, MRM4m,
                     (outs), (ins i64mem:$dst, i64i8imm :$src),
                     "and{q}\t{$src, $dst|$dst, $src}",
                  [(store (and (load addr:$dst), i64immSExt8:$src), addr:$dst)]>;
+def AND64mi32  : RIi32<0x81, MRM4m,
+                       (outs), (ins i64mem:$dst, i64i32imm:$src),
+                       "and{q}\t{$src, $dst|$dst, $src}",
+             [(store (and (loadi64 addr:$dst), i64immSExt32:$src), addr:$dst)]>;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
@@ -814,23 +814,23 @@ def OR64rr   : RI<0x09, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src
 def OR64rm   : RI<0x0B, MRMSrcMem , (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                   "or{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, (or GR64:$src1, (load addr:$src2)))]>;
-def OR64ri32 : RIi32<0x81, MRM1r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
-                     "or{q}\t{$src2, $dst|$dst, $src2}",
-                     [(set GR64:$dst, (or GR64:$src1, i64immSExt32:$src2))]>;
 def OR64ri8  : RIi8<0x83, MRM1r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                     "or{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (or GR64:$src1, i64immSExt8:$src2))]>;
+def OR64ri32 : RIi32<0x81, MRM1r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+                     "or{q}\t{$src2, $dst|$dst, $src2}",
+                     [(set GR64:$dst, (or GR64:$src1, i64immSExt32:$src2))]>;
 } // isTwoAddress
 
 def OR64mr : RI<0x09, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                 "or{q}\t{$src, $dst|$dst, $src}",
                 [(store (or (load addr:$dst), GR64:$src), addr:$dst)]>;
-def OR64mi32 : RIi32<0x81, MRM1m, (outs), (ins i64mem:$dst, i64i32imm:$src),
-                     "or{q}\t{$src, $dst|$dst, $src}",
-              [(store (or (loadi64 addr:$dst), i64immSExt32:$src), addr:$dst)]>;
 def OR64mi8  : RIi8<0x83, MRM1m, (outs), (ins i64mem:$dst, i64i8imm:$src),
                     "or{q}\t{$src, $dst|$dst, $src}",
                   [(store (or (load addr:$dst), i64immSExt8:$src), addr:$dst)]>;
+def OR64mi32 : RIi32<0x81, MRM1m, (outs), (ins i64mem:$dst, i64i32imm:$src),
+                     "or{q}\t{$src, $dst|$dst, $src}",
+              [(store (or (loadi64 addr:$dst), i64immSExt32:$src), addr:$dst)]>;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
@@ -840,24 +840,24 @@ def XOR64rr  : RI<0x31, MRMDestReg,  (outs GR64:$dst), (ins GR64:$src1, GR64:$sr
 def XOR64rm  : RI<0x33, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2), 
                   "xor{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, (xor GR64:$src1, (load addr:$src2)))]>;
+def XOR64ri8 : RIi8<0x83, MRM6r,  (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
+                    "xor{q}\t{$src2, $dst|$dst, $src2}",
+                    [(set GR64:$dst, (xor GR64:$src1, i64immSExt8:$src2))]>;
 def XOR64ri32 : RIi32<0x81, MRM6r, 
                       (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2), 
                       "xor{q}\t{$src2, $dst|$dst, $src2}",
                       [(set GR64:$dst, (xor GR64:$src1, i64immSExt32:$src2))]>;
-def XOR64ri8 : RIi8<0x83, MRM6r,  (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
-                    "xor{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst, (xor GR64:$src1, i64immSExt8:$src2))]>;
 } // isTwoAddress
 
 def XOR64mr  : RI<0x31, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                   "xor{q}\t{$src, $dst|$dst, $src}",
                   [(store (xor (load addr:$dst), GR64:$src), addr:$dst)]>;
-def XOR64mi32 : RIi32<0x81, MRM6m, (outs), (ins i64mem:$dst, i64i32imm:$src),
-                      "xor{q}\t{$src, $dst|$dst, $src}",
-             [(store (xor (loadi64 addr:$dst), i64immSExt32:$src), addr:$dst)]>;
 def XOR64mi8 : RIi8<0x83, MRM6m, (outs), (ins i64mem:$dst, i64i8imm :$src),
                     "xor{q}\t{$src, $dst|$dst, $src}",
                  [(store (xor (load addr:$dst), i64immSExt8:$src), addr:$dst)]>;
+def XOR64mi32 : RIi32<0x81, MRM6m, (outs), (ins i64mem:$dst, i64i32imm:$src),
+                      "xor{q}\t{$src, $dst|$dst, $src}",
+             [(store (xor (loadi64 addr:$dst), i64immSExt32:$src), addr:$dst)]>;
 } // Defs = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
@@ -898,23 +898,23 @@ def CMP64rm : RI<0x3B, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
                  "cmp{q}\t{$src2, $src1|$src1, $src2}",
                  [(X86cmp GR64:$src1, (loadi64 addr:$src2)),
                   (implicit EFLAGS)]>;
+def CMP64ri8 : RIi8<0x83, MRM7r, (outs), (ins GR64:$src1, i64i8imm:$src2),
+                    "cmp{q}\t{$src2, $src1|$src1, $src2}",
+                    [(X86cmp GR64:$src1, i64immSExt8:$src2),
+                     (implicit EFLAGS)]>;
 def CMP64ri32 : RIi32<0x81, MRM7r, (outs), (ins GR64:$src1, i64i32imm:$src2),
                       "cmp{q}\t{$src2, $src1|$src1, $src2}",
                       [(X86cmp GR64:$src1, i64immSExt32:$src2),
-                       (implicit EFLAGS)]>;
-def CMP64mi32 : RIi32<0x81, MRM7m, (outs),
-                                       (ins i64mem:$src1, i64i32imm:$src2),
-                      "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                      [(X86cmp (loadi64 addr:$src1), i64immSExt32:$src2),
                        (implicit EFLAGS)]>;
 def CMP64mi8 : RIi8<0x83, MRM7m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
                     "cmp{q}\t{$src2, $src1|$src1, $src2}",
                     [(X86cmp (loadi64 addr:$src1), i64immSExt8:$src2),
                      (implicit EFLAGS)]>;
-def CMP64ri8 : RIi8<0x83, MRM7r, (outs), (ins GR64:$src1, i64i8imm:$src2),
-                    "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp GR64:$src1, i64immSExt8:$src2),
-                     (implicit EFLAGS)]>;
+def CMP64mi32 : RIi32<0x81, MRM7m, (outs),
+                                       (ins i64mem:$src1, i64i32imm:$src2),
+                      "cmp{q}\t{$src2, $src1|$src1, $src2}",
+                      [(X86cmp (loadi64 addr:$src1), i64immSExt32:$src2),
+                       (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
 // Conditional moves
@@ -1492,19 +1492,19 @@ def : Pat<(addc GR64:$src1, GR64:$src2),
           (ADD64rr GR64:$src1, GR64:$src2)>;
 def : Pat<(addc GR64:$src1, (load addr:$src2)),
           (ADD64rm GR64:$src1, addr:$src2)>;
-def : Pat<(addc GR64:$src1, i64immSExt32:$src2),
-          (ADD64ri32 GR64:$src1, imm:$src2)>;
 def : Pat<(addc GR64:$src1, i64immSExt8:$src2),
           (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(addc GR64:$src1, i64immSExt32:$src2),
+          (ADD64ri32 GR64:$src1, imm:$src2)>;
 
 def : Pat<(subc GR64:$src1, GR64:$src2),
           (SUB64rr GR64:$src1, GR64:$src2)>;
 def : Pat<(subc GR64:$src1, (load addr:$src2)),
           (SUB64rm GR64:$src1, addr:$src2)>;
-def : Pat<(subc GR64:$src1, imm:$src2),
-          (SUB64ri32 GR64:$src1, i64immSExt32:$src2)>;
 def : Pat<(subc GR64:$src1, i64immSExt8:$src2),
           (SUB64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(subc GR64:$src1, imm:$src2),
+          (SUB64ri32 GR64:$src1, i64immSExt32:$src2)>;
 
 //===----------------------------------------------------------------------===//
 // Overflow Patterns
@@ -1516,12 +1516,12 @@ def : Pat<(parallel (X86add_ovf GR64:$src1, GR64:$src2),
           (ADD64rr GR64:$src1, GR64:$src2)>;
 
 // Register-Integer Addition with Overflow
-def : Pat<(parallel (X86add_ovf GR64:$src1, i64immSExt32:$src2),
-                    (implicit EFLAGS)),
-          (ADD64ri32 GR64:$src1, i64immSExt32:$src2)>;
 def : Pat<(parallel (X86add_ovf GR64:$src1, i64immSExt8:$src2),
                     (implicit EFLAGS)),
           (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(parallel (X86add_ovf GR64:$src1, i64immSExt32:$src2),
+                    (implicit EFLAGS)),
+          (ADD64ri32 GR64:$src1, i64immSExt32:$src2)>;
 
 // Register-Memory Addition with Overflow
 def : Pat<(parallel (X86add_ovf GR64:$src1, (load addr:$src2)),
@@ -1533,14 +1533,14 @@ def : Pat<(parallel (store (X86add_ovf (load addr:$dst), GR64:$src2),
                            addr:$dst),
                     (implicit EFLAGS)),
           (ADD64mr addr:$dst, GR64:$src2)>;
-def : Pat<(parallel (store (X86add_ovf (load addr:$dst), i64immSExt32:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (ADD64mi32 addr:$dst, i64immSExt32:$src2)>;
 def : Pat<(parallel (store (X86add_ovf (load addr:$dst), i64immSExt8:$src2),
                            addr:$dst),
                     (implicit EFLAGS)),
           (ADD64mi8 addr:$dst, i64immSExt8:$src2)>;
+def : Pat<(parallel (store (X86add_ovf (load addr:$dst), i64immSExt32:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (ADD64mi32 addr:$dst, i64immSExt32:$src2)>;
 
 // Register-Register Subtraction with Overflow
 def : Pat<(parallel (X86sub_ovf GR64:$src1, GR64:$src2),
@@ -1553,12 +1553,12 @@ def : Pat<(parallel (X86sub_ovf GR64:$src1, (load addr:$src2)),
           (SUB64rm GR64:$src1, addr:$src2)>;
 
 // Register-Integer Subtraction with Overflow
-def : Pat<(parallel (X86sub_ovf GR64:$src1, i64immSExt32:$src2),
-                    (implicit EFLAGS)),
-          (SUB64ri32 GR64:$src1, i64immSExt32:$src2)>;
 def : Pat<(parallel (X86sub_ovf GR64:$src1, i64immSExt8:$src2),
                     (implicit EFLAGS)),
           (SUB64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(parallel (X86sub_ovf GR64:$src1, i64immSExt32:$src2),
+                    (implicit EFLAGS)),
+          (SUB64ri32 GR64:$src1, i64immSExt32:$src2)>;
 
 // Memory-Register Subtraction with Overflow
 def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), GR64:$src2),
@@ -1567,14 +1567,14 @@ def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), GR64:$src2),
           (SUB64mr addr:$dst, GR64:$src2)>;
 
 // Memory-Integer Subtraction with Overflow
-def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), i64immSExt32:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (SUB64mi32 addr:$dst, i64immSExt32:$src2)>;
 def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), i64immSExt8:$src2),
                            addr:$dst),
                     (implicit EFLAGS)),
           (SUB64mi8 addr:$dst, i64immSExt8:$src2)>;
+def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), i64immSExt32:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (SUB64mi32 addr:$dst, i64immSExt32:$src2)>;
 
 // Register-Register Signed Integer Multiplication with Overflow
 def : Pat<(parallel (X86smul_ovf GR64:$src1, GR64:$src2),
@@ -1587,20 +1587,20 @@ def : Pat<(parallel (X86smul_ovf GR64:$src1, (load addr:$src2)),
           (IMUL64rm GR64:$src1, addr:$src2)>;
 
 // Register-Integer Signed Integer Multiplication with Overflow
-def : Pat<(parallel (X86smul_ovf GR64:$src1, i64immSExt32:$src2),
-                    (implicit EFLAGS)),
-          (IMUL64rri32 GR64:$src1, i64immSExt32:$src2)>;
 def : Pat<(parallel (X86smul_ovf GR64:$src1, i64immSExt8:$src2),
                     (implicit EFLAGS)),
           (IMUL64rri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(parallel (X86smul_ovf GR64:$src1, i64immSExt32:$src2),
+                    (implicit EFLAGS)),
+          (IMUL64rri32 GR64:$src1, i64immSExt32:$src2)>;
 
 // Memory-Integer Signed Integer Multiplication with Overflow
-def : Pat<(parallel (X86smul_ovf (load addr:$src1), i64immSExt32:$src2),
-                    (implicit EFLAGS)),
-          (IMUL64rmi32 addr:$src1, i64immSExt32:$src2)>;
 def : Pat<(parallel (X86smul_ovf (load addr:$src1), i64immSExt8:$src2),
                     (implicit EFLAGS)),
           (IMUL64rmi8 addr:$src1, i64immSExt8:$src2)>;
+def : Pat<(parallel (X86smul_ovf (load addr:$src1), i64immSExt32:$src2),
+                    (implicit EFLAGS)),
+          (IMUL64rmi32 addr:$src1, i64immSExt32:$src2)>;
 
 //===----------------------------------------------------------------------===//
 // X86-64 SSE Instructions
