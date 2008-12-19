@@ -112,6 +112,7 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   ScavengeRestore = NULL;
   CurrDist = 0;
   DistanceMap.clear();
+  ImplicitDefed.reset();
 
   // All registers started out unused.
   RegsAvailable.set();
