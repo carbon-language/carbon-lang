@@ -264,8 +264,8 @@ void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
   if (CP.empty()) return;
 
   // FIXME: handle PIC codegen
-  bool isPIC = TM.getRelocationModel() == Reloc::PIC_;
-  assert(!isPIC && "PIC codegen not yet handled for mach-o jump tables!");
+  assert(TM.getRelocationModel() != Reloc::PIC_ &&
+         "PIC codegen not yet handled for mach-o jump tables!");
 
   // Although there is no strict necessity that I am aware of, we will do what
   // gcc for OS X does and put each constant pool entry in a section of constant
@@ -305,8 +305,8 @@ void MachOCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
   if (JT.empty()) return;
 
   // FIXME: handle PIC codegen
-  bool isPIC = TM.getRelocationModel() == Reloc::PIC_;
-  assert(!isPIC && "PIC codegen not yet handled for mach-o jump tables!");
+  assert(TM.getRelocationModel() != Reloc::PIC_ &&
+         "PIC codegen not yet handled for mach-o jump tables!");
 
   MachOWriter::MachOSection *Sec = MOW.getJumpTableSection();
   unsigned TextSecIndex = MOW.getTextSection()->Index;
