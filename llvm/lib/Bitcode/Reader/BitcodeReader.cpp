@@ -362,6 +362,20 @@ bool BitcodeReader::ParseAttributeBlock() {
       Attributes RetAttribute = Attribute::None;
       Attributes FnAttribute = Attribute::None;
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
+        // FIXME: remove in LLVM 3.0
+        // The alignment is stored as a 16-bit raw value from bits 31--16.
+        // We shift the bits above 31 down by 11 bits.
+
+        unsigned Alignment = (Record[i+1] & (0xffffull << 16)) >> 16;
+        if (Alignment && !isPowerOf2_32(Alignment))
+          return Error("Alignment is not a power of two.");
+
+        Attributes ReconstitutedAttr = Record[i+1] & 0xffff;
+        if (Alignment)
+          ReconstitutedAttr |= Attribute::constructAlignmentFromInt(Alignment);
+        ReconstitutedAttr |= (Record[i+1] & (0xffffull << 32)) >> 11;
+        Record[i+1] = ReconstitutedAttr;
+
         if (Record[i] == 0)
           RetAttribute = Record[i+1];
         else if (Record[i] == ~0U)

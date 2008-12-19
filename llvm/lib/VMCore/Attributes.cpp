@@ -37,6 +37,8 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "inreg ";
   if (Attrs & Attribute::NoAlias)
     Result += "noalias ";
+  if (Attrs & Attribute::NoCapture)
+    Result += "nocapture ";
   if (Attrs & Attribute::StructRet)
     Result += "sret ";  
   if (Attrs & Attribute::ByVal)
@@ -59,10 +61,11 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "sspreq ";
   if (Attrs & Attribute::Alignment) {
     Result += "align ";
-    Result += utostr((Attrs & Attribute::Alignment) >> 16);
+    Result += utostr(1ull << (((Attrs & Attribute::Alignment)>>16) - 1));
     Result += " ";
   }
   // Trim the trailing space.
+  assert(!Result.empty() && "Unknown attribute!");
   Result.erase(Result.end()-1);
   return Result;
 }
@@ -76,7 +79,7 @@ Attributes Attribute::typeIncompatible(const Type *Ty) {
   
   if (!isa<PointerType>(Ty))
     // Attributes that only apply to pointers.
-    Incompatible |= ByVal | Nest | NoAlias | StructRet;
+    Incompatible |= ByVal | Nest | NoAlias | StructRet | NoCapture;
   
   return Incompatible;
 }
