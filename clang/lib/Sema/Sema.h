@@ -383,6 +383,8 @@ public:
   bool IsFloatingPointPromotion(QualType FromType, QualType ToType);
   bool IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
                            QualType& ConvertedType, bool &IncompatibleObjC);
+  bool isObjCPointerConversion(QualType FromType, QualType ToType,
+                               QualType& ConvertedType, bool &IncompatibleObjC);
   bool CheckPointerConversion(Expr *From, QualType ToType);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
   bool IsUserDefinedConversion(Expr *From, QualType ToType, 

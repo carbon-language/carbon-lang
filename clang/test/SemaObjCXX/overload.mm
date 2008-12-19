@@ -45,9 +45,12 @@ void test(A* a, B* b, id val) {
   //  int& i3 = h(b); FIXME: we match GCC here, but shouldn't this work?
 }
 
-void downcast_test(A* a) {
+void downcast_test(A* a, A** ap) {
   B* b = a; // expected-warning{{incompatible pointer types initializing 'B *', expected 'A *'}}
   b = a;  // expected-warning{{incompatible pointer types assigning 'B *', expected 'A *'}}
+
+  B** bp = ap; // expected-warning{{incompatible pointer types initializing 'B **', expected 'A **'}}
+  bp = ap; // expected-warning{{incompatible pointer types assigning 'B **', expected 'A **'}}
 }
 
 int& cv(A*);
@@ -72,4 +75,16 @@ void qualid_test(A *a, B *b, C *c) {
   int& i1 = qualid(a);
   int& i2 = qualid(b);
   float& f1 = qualid(c);
+}
+
+
+@class NSException;
+typedef struct {
+    void (*throw_exc)(id);
+}
+objc_exception_functions_t;
+
+void (*_NSExceptionRaiser(void))(NSException *) {
+    objc_exception_functions_t exc_funcs;
+    return exc_funcs.throw_exc; // expected-warning{{incompatible pointer types returning 'void (*)(NSException *)', expected 'void (*)(id)'}}
 }

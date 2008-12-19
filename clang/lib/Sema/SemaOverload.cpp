@@ -763,6 +763,8 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
                                bool &IncompatibleObjC)
 {
   IncompatibleObjC = false;
+  if (isObjCPointerConversion(FromType, ToType, ConvertedType, IncompatibleObjC))
+    return true;
 
   // Blocks: Block pointers can be converted to void*.
   if (FromType->isBlockPointerType() && ToType->isPointerType() &&
@@ -773,13 +775,6 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // Blocks: A null pointer constant can be converted to a block
   // pointer type.
   if (ToType->isBlockPointerType() && From->isNullPointerConstant(Context)) {
-    ConvertedType = ToType;
-    return true;
-  }
-
-  // Conversions with Objective-C's id<...>.
-  if ((FromType->isObjCQualifiedIdType() || ToType->isObjCQualifiedIdType()) &&
-      ObjCQualifiedIdTypesAreCompatible(ToType, FromType, /*compare=*/false)) {
     ConvertedType = ToType;
     return true;
   }
@@ -805,7 +800,8 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // An rvalue of type "pointer to cv T," where T is an object type,
   // can be converted to an rvalue of type "pointer to cv void" (C++
   // 4.10p2).
-  if (FromPointeeType->isIncompleteOrObjectType() && ToPointeeType->isVoidType()) {
+  if (FromPointeeType->isIncompleteOrObjectType() && 
+      ToPointeeType->isVoidType()) {
     ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
                                                        ToPointeeType,
                                                        ToType, Context);
@@ -832,6 +828,37 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
                                                        ToType, Context);
     return true;
   }
+
+  return false;
+}
+
+/// isObjCPointerConversion - Determines whether this is an
+/// Objective-C pointer conversion. Subroutine of IsPointerConversion,
+/// with the same arguments and return values.
+bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType, 
+                                   QualType& ConvertedType,
+                                   bool &IncompatibleObjC) {
+  if (!getLangOptions().ObjC1)
+    return false;
+
+  // Conversions with Objective-C's id<...>.
+  if ((FromType->isObjCQualifiedIdType() || ToType->isObjCQualifiedIdType()) &&
+      ObjCQualifiedIdTypesAreCompatible(ToType, FromType, /*compare=*/false)) {
+    ConvertedType = ToType;
+    return true;
+  }
+
+  const PointerType* ToTypePtr = ToType->getAsPointerType();
+  if (!ToTypePtr)
+    return false;
+
+  // Beyond this point, both types need to be pointers.
+  const PointerType *FromTypePtr = FromType->getAsPointerType();
+  if (!FromTypePtr)
+    return false;
+
+  QualType FromPointeeType = FromTypePtr->getPointeeType();
+  QualType ToPointeeType = ToTypePtr->getPointeeType();
 
   // Objective C++: We're able to convert from a pointer to an
   // interface to a pointer to a different interface.
@@ -877,7 +904,81 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return true;
   }
 
-  return false;
+  // If we have pointers to pointers, recursively check whether this
+  // is an Objective-C conversion.
+  if (FromPointeeType->isPointerType() && ToPointeeType->isPointerType() &&
+      isObjCPointerConversion(FromPointeeType, ToPointeeType, ConvertedType,
+                              IncompatibleObjC)) {
+    // We always complain about this conversion.
+    IncompatibleObjC = true;
+    ConvertedType = ToType;
+    return true;
+  }
+
+  // If we have pointers to functions, check whether the only
+  // differences in the argument and result types are in Objective-C
+  // pointer conversions. If so, we permit the conversion (but
+  // complain about it).
+  const FunctionTypeProto *FromFunctionType 
+    = FromPointeeType->getAsFunctionTypeProto();
+  const FunctionTypeProto *ToFunctionType
+    = ToPointeeType->getAsFunctionTypeProto();
+  if (FromFunctionType && ToFunctionType) {
+    // If the function types are exactly the same, this isn't an
+    // Objective-C pointer conversion.
+    if (Context.getCanonicalType(FromPointeeType)
+          == Context.getCanonicalType(ToPointeeType))
+      return false;
+
+    // Perform the quick checks that will tell us whether these
+    // function types are obviously different.
+    if (FromFunctionType->getNumArgs() != ToFunctionType->getNumArgs() ||
+        FromFunctionType->isVariadic() != ToFunctionType->isVariadic() ||
+        FromFunctionType->getTypeQuals() != ToFunctionType->getTypeQuals())
+      return false;
+
+    bool HasObjCConversion = false;
+    if (Context.getCanonicalType(FromFunctionType->getResultType())
+          == Context.getCanonicalType(ToFunctionType->getResultType())) {
+      // Okay, the types match exactly. Nothing to do.
+    } else if (isObjCPointerConversion(FromFunctionType->getResultType(),
+                                       ToFunctionType->getResultType(),
+                                       ConvertedType, IncompatibleObjC)) {
+      // Okay, we have an Objective-C pointer conversion.
+      HasObjCConversion = true;
+    } else {
+      // Function types are too different. Abort.
+      return false;
+    }
+     
+    // Check argument types.
+    for (unsigned ArgIdx = 0, NumArgs = FromFunctionType->getNumArgs();
+         ArgIdx != NumArgs; ++ArgIdx) {
+      QualType FromArgType = FromFunctionType->getArgType(ArgIdx);
+      QualType ToArgType = ToFunctionType->getArgType(ArgIdx);
+      if (Context.getCanonicalType(FromArgType)
+            == Context.getCanonicalType(ToArgType)) {
+        // Okay, the types match exactly. Nothing to do.
+      } else if (isObjCPointerConversion(FromArgType, ToArgType,
+                                         ConvertedType, IncompatibleObjC)) {
+        // Okay, we have an Objective-C pointer conversion.
+        HasObjCConversion = true;
+      } else {
+        // Argument types are too different. Abort.
+        return false;
+      }
+    }
+
+    if (HasObjCConversion) {
+      // We had an Objective-C conversion. Allow this pointer
+      // conversion, but complain about it.
+      ConvertedType = ToType;
+      IncompatibleObjC = true;
+      return true;
+    }
+  }
+
+  return false;  
 }
 
 /// CheckPointerConversion - Check the pointer conversion from the
