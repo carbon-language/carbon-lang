@@ -98,6 +98,7 @@ public:
   /// forward / backward - Move the internal MBB iterator and update register
   /// states until it has processed the specific iterator.
   void forward(MachineBasicBlock::iterator I) {
+    if (!Tracking && MBB->begin() != I) forward();
     while (MBBI != I) forward();
   }
   void backward(MachineBasicBlock::iterator I) {
