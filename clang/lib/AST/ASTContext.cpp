@@ -1734,48 +1734,58 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
 }
 
 void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
-                                        bool NameFields) const {
+                                        FieldDecl *Field) const {
   // We follow the behavior of gcc, expanding structures which are
   // directly pointed to, and expanding embedded structures. Note that
   // these rules are sufficient to prevent recursive encoding of the
   // same type.
-  getObjCEncodingForTypeImpl(T, S, true, true, NameFields);
+  getObjCEncodingForTypeImpl(T, S, true, true, Field);
 }
 
 void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool ExpandPointedToStructures,
                                             bool ExpandStructures,
-                                            bool NameFields) const {
+                                            FieldDecl *FD) const {
   if (const BuiltinType *BT = T->getAsBuiltinType()) {
-    char encoding;
-    switch (BT->getKind()) {
-    default: assert(0 && "Unhandled builtin type kind");          
-    case BuiltinType::Void:       encoding = 'v'; break;
-    case BuiltinType::Bool:       encoding = 'B'; break;
-    case BuiltinType::Char_U:
-    case BuiltinType::UChar:      encoding = 'C'; break;
-    case BuiltinType::UShort:     encoding = 'S'; break;
-    case BuiltinType::UInt:       encoding = 'I'; break;
-    case BuiltinType::ULong:      encoding = 'L'; break;
-    case BuiltinType::ULongLong:  encoding = 'Q'; break;
-    case BuiltinType::Char_S:
-    case BuiltinType::SChar:      encoding = 'c'; break;
-    case BuiltinType::Short:      encoding = 's'; break;
-    case BuiltinType::Int:        encoding = 'i'; break;
-    case BuiltinType::Long:       encoding = 'l'; break;
-    case BuiltinType::LongLong:   encoding = 'q'; break;
-    case BuiltinType::Float:      encoding = 'f'; break;
-    case BuiltinType::Double:     encoding = 'd'; break;
-    case BuiltinType::LongDouble: encoding = 'd'; break;
+    if (FD && FD->isBitField()) {
+      const Expr *E = FD->getBitWidth();
+      assert(E && "bitfield width not there - getObjCEncodingForTypeImpl");
+      ASTContext *Ctx = const_cast<ASTContext*>(this);
+      unsigned N = E->getIntegerConstantExprValue(*Ctx).getZExtValue();
+      S += 'b';
+      S += llvm::utostr(N);
     }
+    else {
+      char encoding;
+      switch (BT->getKind()) {
+      default: assert(0 && "Unhandled builtin type kind");          
+      case BuiltinType::Void:       encoding = 'v'; break;
+      case BuiltinType::Bool:       encoding = 'B'; break;
+      case BuiltinType::Char_U:
+      case BuiltinType::UChar:      encoding = 'C'; break;
+      case BuiltinType::UShort:     encoding = 'S'; break;
+      case BuiltinType::UInt:       encoding = 'I'; break;
+      case BuiltinType::ULong:      encoding = 'L'; break;
+      case BuiltinType::ULongLong:  encoding = 'Q'; break;
+      case BuiltinType::Char_S:
+      case BuiltinType::SChar:      encoding = 'c'; break;
+      case BuiltinType::Short:      encoding = 's'; break;
+      case BuiltinType::Int:        encoding = 'i'; break;
+      case BuiltinType::Long:       encoding = 'l'; break;
+      case BuiltinType::LongLong:   encoding = 'q'; break;
+      case BuiltinType::Float:      encoding = 'f'; break;
+      case BuiltinType::Double:     encoding = 'd'; break;
+      case BuiltinType::LongDouble: encoding = 'd'; break;
+      }
     
-    S += encoding;
+      S += encoding;
+    }
   }
   else if (T->isObjCQualifiedIdType()) {
     // Treat id<P...> same as 'id' for encoding purposes.
     return getObjCEncodingForTypeImpl(getObjCIdType(), S, 
                                       ExpandPointedToStructures,
-                                      ExpandStructures, NameFields);    
+                                      ExpandStructures, FD);    
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
@@ -1810,7 +1820,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     S += '^';
     getObjCEncodingForTypeImpl(PT->getPointeeType(), S, 
                                false, ExpandPointedToStructures, 
-                               false);
+                               NULL);
   } else if (const ArrayType *AT =
                // Ignore type qualifiers etc.
                dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
@@ -1822,7 +1832,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       assert(0 && "Unhandled array type!");
     
     getObjCEncodingForTypeImpl(AT->getElementType(), S, 
-                               false, ExpandStructures, NameFields);
+                               false, ExpandStructures, FD);
     S += ']';
   } else if (T->getAsFunctionType()) {
     S += '?';
@@ -1840,24 +1850,19 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       for (RecordDecl::field_iterator Field = RDecl->field_begin(),
                                    FieldEnd = RDecl->field_end();
            Field != FieldEnd; ++Field) {
-        if (NameFields) {
+        if (FD) {
           S += '"';
           S += Field->getNameAsString();
           S += '"';
         }
         
         // Special case bit-fields.
-        if (const Expr *E = Field->getBitWidth()) {
-          // FIXME: Fix constness.
-          ASTContext *Ctx = const_cast<ASTContext*>(this);
-          unsigned N = E->getIntegerConstantExprValue(*Ctx).getZExtValue();
-          // FIXME: Obj-C is losing information about the type size
-          // here. Investigate if this is a problem.
-          S += 'b';
-          S += llvm::utostr(N);
+        if (Field->isBitField()) {
+          getObjCEncodingForTypeImpl(Field->getType(), S, false, true, 
+                                     (*Field));
         } else {
           getObjCEncodingForTypeImpl(Field->getType(), S, false, true, 
-                                     NameFields);
+                                     FD);
         }
       }
     }
@@ -1866,7 +1871,26 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     S += 'i';
   } else if (T->isBlockPointerType()) {
     S += '^'; // This type string is the same as general pointers.
-  } else
+  } else if (T->isObjCInterfaceType()) {
+    // @encode(class_name)
+    ObjCInterfaceDecl *OI = T->getAsObjCInterfaceType()->getDecl();
+    S += '{';
+    const IdentifierInfo *II = OI->getIdentifier();
+    S += II->getName();
+    S += '=';
+    std::vector<FieldDecl*> RecFields;
+    CollectObjCIvars(OI, RecFields);
+    for (unsigned int i = 0; i != RecFields.size(); i++) {
+      if (RecFields[i]->isBitField())
+        getObjCEncodingForTypeImpl(RecFields[i]->getType(), S, false, true, 
+                                   RecFields[i]);
+      else
+        getObjCEncodingForTypeImpl(RecFields[i]->getType(), S, false, true, 
+                                   FD);
+    }
+    S += '}';
+  }
+  else
     assert(0 && "@encode for type not implemented!");
 }
 

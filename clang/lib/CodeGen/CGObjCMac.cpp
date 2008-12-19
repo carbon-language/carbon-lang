@@ -1336,7 +1336,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
       Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
     std::string TypeStr;
     Ivar[0] = GetMethodVarName(V->getIdentifier());
-    CGM.getContext().getObjCEncodingForType(V->getType(), TypeStr, true);
+    CGM.getContext().getObjCEncodingForType(V->getType(), TypeStr, Field);
     Ivar[1] = GetMethodVarType(TypeStr);
     Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, Offset);
     Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarTy, Ivar));

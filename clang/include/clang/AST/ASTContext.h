@@ -299,7 +299,7 @@ public:
   /// given type into \arg S. If \arg NameFields is specified then
   /// record field names are also encoded.
   void getObjCEncodingForType(QualType t, std::string &S, 
-                              bool NameFields=false) const;
+                              FieldDecl *Field=NULL) const;
   
   // Put the string version of type qualifiers into S.
   void getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT, 
@@ -542,7 +542,7 @@ private:
   void getObjCEncodingForTypeImpl(QualType t, std::string &S, 
                                   bool ExpandPointedToStructures,
                                   bool ExpandStructures,
-                                  bool NameFields) const;
+                                  FieldDecl *Field) const;
   
 };
   
