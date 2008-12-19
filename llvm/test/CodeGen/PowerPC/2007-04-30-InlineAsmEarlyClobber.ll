@@ -17,7 +17,7 @@ target triple = "powerpc-apple-darwin8.8.0"
 ;  return ((long long)Y << 32) | X;
 ;}
 
-define i64 @test(i32 %A, i32 %B, i32 %C) {
+define i64 @test(i32 %A, i32 %B, i32 %C) nounwind {
 entry:
 	%Y = alloca i32, align 4		; <i32*> [#uses=2]
 	%tmp4 = call i32 asm "subf${3:I}c $1,$4,$3\0A\09subfze $0,$2", "=r,=*&r,r,rI,r"( i32* %Y, i32 %A, i32 %B, i32 %C )		; <i32> [#uses=1]

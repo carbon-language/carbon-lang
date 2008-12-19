@@ -38,16 +38,19 @@ namespace llvm {
   ///         - or reg # of the definition if it's a stack slot liveinterval.
   ///   copy  - Copy iff val# is defined by a copy; zero otherwise.
   ///   hasPHIKill - One or more of the kills are PHI nodes.
+  ///   redefByEC - Re-defined by early clobber somewhere during the live range.
   ///   kills - Instruction # of the kills.
   struct VNInfo {
     unsigned id;
     unsigned def;
     MachineInstr *copy;
-    bool hasPHIKill;
+    bool hasPHIKill : 1;
+    bool redefByEC : 1;
     SmallVector<unsigned, 4> kills;
-    VNInfo() : id(~1U), def(~1U), copy(0), hasPHIKill(false) {}
+    VNInfo()
+      : id(~1U), def(~1U), copy(0), hasPHIKill(false), redefByEC(false) {}
     VNInfo(unsigned i, unsigned d, MachineInstr *c)
-      : id(i), def(d), copy(c), hasPHIKill(false) {}
+      : id(i), def(d), copy(c), hasPHIKill(false), redefByEC(false) {}
   };
 
   /// LiveRange structure - This represents a simple register range in the
@@ -177,6 +180,7 @@ namespace llvm {
       DstValNo->def = SrcValNo->def;
       DstValNo->copy = SrcValNo->copy;
       DstValNo->hasPHIKill = SrcValNo->hasPHIKill;
+      DstValNo->redefByEC = SrcValNo->redefByEC;
       DstValNo->kills = SrcValNo->kills;
     }
 

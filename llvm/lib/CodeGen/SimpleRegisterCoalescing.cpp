@@ -119,6 +119,26 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   if (ALR == IntA.end()) // Should never happen!
     return false;
   VNInfo *AValNo = ALR->valno;
+  // If it's re-defined by an early clobber somewhere in the live range, then
+  // it's not safe to eliminate the copy. FIXME: This is a temporary workaround.
+  // See PR3149:
+  // 172     %ECX<def> = MOV32rr %reg1039<kill>
+  // 180     INLINEASM <es:subl $5,$1
+  //         sbbl $3,$0>, 10, %EAX<def>, 14, %ECX<earlyclobber,def>, 9, %EAX<kill>,
+  // 36, <fi#0>, 1, %reg0, 0, 9, %ECX<kill>, 36, <fi#1>, 1, %reg0, 0
+  // 188     %EAX<def> = MOV32rr %EAX<kill>
+  // 196     %ECX<def> = MOV32rr %ECX<kill>
+  // 204     %ECX<def> = MOV32rr %ECX<kill>
+  // 212     %EAX<def> = MOV32rr %EAX<kill>
+  // 220     %EAX<def> = MOV32rr %EAX
+  // 228     %reg1039<def> = MOV32rr %ECX<kill>
+  // The early clobber operand ties ECX input to the ECX def.
+  //
+  // The live interval of ECX is represented as this:
+  // %reg20,inf = [46,47:1)[174,230:0)  0@174-(230) 1@46-(47)
+  // The coalescer has no idea there was a def in the middle of [174,230].
+  if (AValNo->redefByEC)
+    return false;
   
   // If AValNo is defined as a copy from IntB, we can potentially process this.  
   // Get the instruction that defines this value number.

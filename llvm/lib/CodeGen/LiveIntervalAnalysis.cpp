@@ -360,6 +360,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         mi->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
         tii_->isMoveInstr(*mi, SrcReg, DstReg))
       CopyMI = mi;
+    // Earlyclobbers move back one.
     ValNo = interval.getNextValue(defIndex, CopyMI, VNInfoAllocator);
 
     assert(ValNo->id == 0 && "First value in interval is not 0?");
@@ -435,9 +436,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       assert(interval.containsOneValue());
       unsigned DefIndex = getDefIndex(interval.getValNumInfo(0)->def);
       unsigned RedefIndex = getDefIndex(MIIdx);
-      // Earlyclobbers move back one.
-      if (MO.isEarlyClobber())
-        RedefIndex = getUseIndex(MIIdx);
+      // It cannot be an early clobber MO.
+      assert(!MO.isEarlyClobber() && "Unexpected early clobber!");
 
       const LiveRange *OldLR = interval.getLiveRangeContaining(RedefIndex-1);
       VNInfo *OldValNo = OldLR->valno;
@@ -505,9 +505,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // live until the end of the block.  We've already taken care of the
       // rest of the live range.
       unsigned defIndex = getDefIndex(MIIdx);
-      // Earlyclobbers move back one.
-      if (MO.isEarlyClobber())
-        defIndex = getUseIndex(MIIdx);
+      // It cannot be an early clobber MO.
+      assert(!MO.isEarlyClobber() && "Unexpected early clobber!");
       
       VNInfo *ValNo;
       MachineInstr *CopyMI = NULL;
@@ -592,8 +591,11 @@ exit:
 
   // Already exists? Extend old live interval.
   LiveInterval::iterator OldLR = interval.FindLiveRangeContaining(start);
-  VNInfo *ValNo = (OldLR != interval.end())
+  bool Extend = OldLR != interval.end();
+  VNInfo *ValNo = Extend
     ? OldLR->valno : interval.getNextValue(start, CopyMI, VNInfoAllocator);
+  if (MO.isEarlyClobber() && Extend)
+    ValNo->redefByEC = true;
   LiveRange LR(start, end, ValNo);
   interval.addRange(LR);
   interval.addKill(LR.valno, end);
