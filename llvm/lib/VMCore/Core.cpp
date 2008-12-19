@@ -21,6 +21,7 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/InlineAsm.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/CallSite.h"
 #include <cassert>
@@ -251,6 +252,17 @@ void LLVMSetValueName(LLVMValueRef Val, const char *Name) {
 void LLVMDumpValue(LLVMValueRef Val) {
   unwrap(Val)->dump();
 }
+
+
+/*--.. Conversion functions ................................................--*/
+
+#define LLVM_DEFINE_VALUE_CAST(name)                                       \
+  LLVMValueRef LLVMIsA##name(LLVMValueRef Val) {                           \
+    return wrap(static_cast<Value*>(dyn_cast_or_null<name>(unwrap(Val)))); \
+  }
+
+LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DEFINE_VALUE_CAST)
+
 
 /*--.. Operations on constants of any type .................................--*/
 

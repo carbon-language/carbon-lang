@@ -282,23 +282,78 @@ void LLVMDisposeTypeHandle(LLVMTypeHandleRef TypeHandle);
 
 /* The bulk of LLVM's object model consists of values, which comprise a very
  * rich type hierarchy.
- * 
- *   values:
- *     constants:
- *       scalar constants
- *       composite contants
- *       globals:
- *         global variable
- *         function
- *         alias
- *       basic blocks
  */
+
+#define LLVM_FOR_EACH_VALUE_SUBCLASS(macro) \
+  macro(Argument)                           \
+  macro(BasicBlock)                         \
+  macro(InlineAsm)                          \
+  macro(User)                               \
+    macro(Constant)                         \
+      macro(ConstantAggregateZero)          \
+      macro(ConstantArray)                  \
+      macro(ConstantExpr)                   \
+      macro(ConstantFP)                     \
+      macro(ConstantInt)                    \
+      macro(ConstantPointerNull)            \
+      macro(ConstantStruct)                 \
+      macro(ConstantVector)                 \
+      macro(GlobalValue)                    \
+        macro(Function)                     \
+        macro(GlobalAlias)                  \
+        macro(GlobalVariable)               \
+      macro(UndefValue)                     \
+    macro(Instruction)                      \
+      macro(BinaryOperator)                 \
+      macro(CallInst)                       \
+        macro(IntrinsicInst)                \
+          macro(DbgInfoIntrinsic)           \
+            macro(DbgDeclareInst)           \
+            macro(DbgFuncStartInst)         \
+            macro(DbgRegionEndInst)         \
+            macro(DbgRegionStartInst)       \
+            macro(DbgStopPointInst)         \
+          macro(EHSelectorInst)             \
+          macro(MemIntrinsic)               \
+            macro(MemCpyInst)               \
+            macro(MemMoveInst)              \
+            macro(MemSetInst)               \
+      macro(CmpInst)                        \
+      macro(FCmpInst)                       \
+      macro(ICmpInst)                       \
+      macro(VFCmpInst)                      \
+      macro(VICmpInst)                      \
+      macro(ExtractElementInst)             \
+      macro(GetElementPtrInst)              \
+      macro(InsertElementInst)              \
+      macro(InsertValueInst)                \
+      macro(PHINode)                        \
+      macro(SelectInst)                     \
+      macro(ShuffleVectorInst)              \
+      macro(StoreInst)                      \
+      macro(TerminatorInst)                 \
+        macro(BranchInst)                   \
+        macro(InvokeInst)                   \
+        macro(ReturnInst)                   \
+        macro(SwitchInst)                   \
+        macro(UnreachableInst)              \
+        macro(UnwindInst)                   \
+    macro(UnaryInstruction)                 \
+      macro(AllocationInst)                 \
+      macro(CastInst)                       \
+      macro(ExtractValueInst)
 
 /* Operations on all values */
 LLVMTypeRef LLVMTypeOf(LLVMValueRef Val);
 const char *LLVMGetValueName(LLVMValueRef Val);
 void LLVMSetValueName(LLVMValueRef Val, const char *Name);
 void LLVMDumpValue(LLVMValueRef Val);
+
+/* Conversion functions. Return the input value if it is an instance of the
+   specified class, otherwise NULL. See llvm::dyn_cast_or_null<>. */
+#define LLVM_DECLARE_VALUE_CAST(name) \
+  LLVMValueRef LLVMIsA##name(LLVMValueRef Val);
+LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DECLARE_VALUE_CAST)
 
 /* Operations on constants of any type */
 LLVMValueRef LLVMConstNull(LLVMTypeRef Ty); /* all zeroes */
