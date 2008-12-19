@@ -80,7 +80,7 @@ public:
     // whether or not we are at a token with kind tok::eof or tok::l_paren.
     // Just read the first byte from the current token pointer to determine
     // its kind.
-    tok::TokenKind x = (tok::TokenKind) (uint8_t) *CurPtr;
+    tok::TokenKind x = (tok::TokenKind) (unsigned char) *CurPtr;
     return x == tok::eof ? 2 : x == tok::l_paren;
   }    
 
