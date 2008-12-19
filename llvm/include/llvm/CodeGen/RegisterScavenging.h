@@ -86,10 +86,6 @@ public:
     : MBB(NULL), NumPhysRegs(0), Tracking(false),
       ScavengingFrameIndex(-1), ScavengedReg(0), ScavengedRC(NULL) {}
 
-  explicit RegScavenger(MachineBasicBlock *mbb)
-    : MBB(mbb), NumPhysRegs(0), Tracking(false),
-      ScavengingFrameIndex(-1), ScavengedReg(0), ScavengedRC(NULL) {}
-
   /// enterBasicBlock - Start tracking liveness from the begin of the specific
   /// basic block.
   void enterBasicBlock(MachineBasicBlock *mbb);
