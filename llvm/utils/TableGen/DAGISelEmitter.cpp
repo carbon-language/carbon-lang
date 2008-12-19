@@ -583,11 +583,14 @@ public:
           emitInit("SDValue " + RootName + "1" + " = " +
                    RootName + ".getOperand(" + utostr(1) + ");");
 
-          emitCheck("isa<ConstantSDNode>(" + RootName + "1)");
+          unsigned NTmp = TmpNo++;
+          emitCode("ConstantSDNode *Tmp" + utostr(NTmp) +
+                   " = dyn_cast<ConstantSDNode>(" + RootName + "1);");
+          emitCheck("Tmp" + utostr(NTmp));
           const char *MaskPredicate = N->getOperator()->getName() == "or"
             ? "CheckOrMask(" : "CheckAndMask(";
-          emitCheck(MaskPredicate + RootName + "0, cast<ConstantSDNode>(" +
-                    RootName + "1), INT64_C(" + itostr(II->getValue()) + "))");
+          emitCheck(MaskPredicate + RootName + "0, Tmp" + utostr(NTmp) +
+                    ", INT64_C(" + itostr(II->getValue()) + "))");
           
           EmitChildMatchCode(N->getChild(0), N, RootName + utostr(0), RootName,
                              ChainSuffix + utostr(0), FoundChain);
@@ -738,11 +741,14 @@ public:
                     ".getNode())");
       } else if (IntInit *II =
                  dynamic_cast<IntInit*>(Child->getLeafValue())) {
-        emitCheck("isa<ConstantSDNode>(" + RootName + ")");
+        unsigned NTmp = TmpNo++;
+        emitCode("ConstantSDNode *Tmp"+ utostr(NTmp) +
+                 " = dyn_cast<ConstantSDNode>("+
+                 RootName + ");");
+        emitCheck("Tmp" + utostr(NTmp));
         unsigned CTmp = TmpNo++;
-        emitCode("int64_t CN"+utostr(CTmp)+" = cast<ConstantSDNode>("+
-                 RootName + ")->getSExtValue();");
-        
+        emitCode("int64_t CN"+ utostr(CTmp) +
+                 " = Tmp" + utostr(NTmp) + "->getSExtValue();");
         emitCheck("CN" + utostr(CTmp) + " == "
                   "INT64_C(" +itostr(II->getValue()) + ")");
       } else {
