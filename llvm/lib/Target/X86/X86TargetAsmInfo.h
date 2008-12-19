@@ -48,6 +48,7 @@ namespace llvm {
     explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
+    virtual const char *getEHGlobalPrefix() const;
   };
 
   struct X86ELFTargetAsmInfo : public X86TargetAsmInfo<ELFTargetAsmInfo> {
@@ -72,4 +73,3 @@ namespace llvm {
 } // namespace llvm
 
 #endif
-

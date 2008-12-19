@@ -646,6 +646,12 @@ namespace llvm {
     const char *getPrivateGlobalPrefix() const {
       return PrivateGlobalPrefix;
     }
+    /// EHGlobalPrefix - Prefix for EH_frame and the .eh symbols.
+    /// This is normally PrivateGlobalPrefix, but some targets want
+    /// these symbols to be visible.
+    virtual const char *getEHGlobalPrefix() const {
+      return PrivateGlobalPrefix;
+    }
     const char *getLessPrivateGlobalPrefix() const {
       return LessPrivateGlobalPrefix;
     }

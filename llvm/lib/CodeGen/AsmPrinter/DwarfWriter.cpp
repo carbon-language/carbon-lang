@@ -2962,7 +2962,7 @@ private:
 
     // Begin eh frame section.
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
-    O << "EH_frame" << Index << ":\n";
+    O << TAI->getEHGlobalPrefix() << "EH_frame" << Index << ":\n";
     EmitLabel("section_eh_frame", Index);
 
     // Define base labels.

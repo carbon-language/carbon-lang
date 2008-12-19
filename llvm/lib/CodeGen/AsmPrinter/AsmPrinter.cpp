@@ -239,7 +239,8 @@ std::string AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) {
   std::string Name = MF->getFunction()->getName();
   if (Name.empty())
     Name = Mang->getValueName(MF->getFunction());
-  return Mang->makeNameProper(Name + ".eh", TAI->getGlobalPrefix());
+  return Mang->makeNameProper(TAI->getEHGlobalPrefix() +
+                              Name + ".eh", TAI->getGlobalPrefix());
 }
 
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {

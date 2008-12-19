@@ -89,12 +89,21 @@ PPCDarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
     return DW_EH_PE_absptr;
 }
 
+const char *
+PPCDarwinTargetAsmInfo::getEHGlobalPrefix() const
+{
+  const PPCSubtarget* Subtarget = &TM.getSubtarget<PPCSubtarget>();
+  if (Subtarget->getDarwinVers() > 9)
+    return PrivateGlobalPrefix;
+  else
+    return "";
+}
 
 PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   PPCTargetAsmInfo<ELFTargetAsmInfo>(TM) {
   CommentString = "#";
   GlobalPrefix = "";
-  PrivateGlobalPrefix = "";
+  PrivateGlobalPrefix = ".L";
   ConstantPoolSection = "\t.section .rodata.cst4\t";
   JumpTableDataSection = ".section .rodata.cst4";
   CStringSection = ".rodata.str";

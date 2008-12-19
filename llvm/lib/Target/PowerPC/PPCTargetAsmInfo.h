@@ -48,6 +48,7 @@ namespace llvm {
     explicit PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
+    virtual const char *getEHGlobalPrefix() const;
   };
 
   struct PPCLinuxTargetAsmInfo : public PPCTargetAsmInfo<ELFTargetAsmInfo> {

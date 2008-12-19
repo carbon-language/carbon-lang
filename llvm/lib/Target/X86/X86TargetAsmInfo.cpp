@@ -138,6 +138,16 @@ X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
     return DW_EH_PE_absptr;
 }
 
+const char *
+X86DarwinTargetAsmInfo::getEHGlobalPrefix() const
+{
+  const X86Subtarget* Subtarget = &TM.getSubtarget<X86Subtarget>();
+  if (Subtarget->getDarwinVers() > 9)
+    return PrivateGlobalPrefix;
+  else
+    return "";
+}
+
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo<ELFTargetAsmInfo>(TM) {
 

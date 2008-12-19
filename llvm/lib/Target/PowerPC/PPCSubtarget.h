@@ -141,6 +141,9 @@ public:
   /// isDarwin - True if this is darwin9 (leopard, 10.5) or above.
   bool isDarwin9() const { return DarwinVers >= 9; }
 
+  /// getDarwinVers - Return the darwin version number, 8 = tiger, 9 = leopard.
+  unsigned getDarwinVers() const { return DarwinVers; }
+
   bool isMachoABI() const { return isDarwin() || IsPPC64; }
   bool isELF32_ABI() const { return !isDarwin() && !IsPPC64; }
 
