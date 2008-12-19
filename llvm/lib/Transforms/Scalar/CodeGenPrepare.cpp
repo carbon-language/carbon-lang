@@ -30,6 +30,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -37,11 +38,18 @@
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
+static cl::opt<bool> FactorCommonPreds("split-critical-paths-tweak",
+                                       cl::init(false), cl::Hidden);
+
 namespace {
   class VISIBILITY_HIDDEN CodeGenPrepare : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
     const TargetLowering *TLI;
+
+    /// BackEdges - Keep a set of all the loop back edges.
+    ///
+    SmallSet<std::pair<BasicBlock*,BasicBlock*>, 8> BackEdges;
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit CodeGenPrepare(const TargetLowering *tli = 0)
@@ -58,6 +66,7 @@ namespace {
     bool OptimizeInlineAsmInst(Instruction *I, CallSite CS,
                                DenseMap<Value*,Value*> &SunkAddrs);
     bool OptimizeExtUses(Instruction *I);
+    void findLoopBackEdges(Function &F);
   };
 }
 
@@ -69,9 +78,54 @@ FunctionPass *llvm::createCodeGenPreparePass(const TargetLowering *TLI) {
   return new CodeGenPrepare(TLI);
 }
 
+/// findLoopBackEdges - Do a DFS walk to find loop back edges.
+///
+void CodeGenPrepare::findLoopBackEdges(Function &F) {
+  SmallPtrSet<BasicBlock*, 8> Visited;
+  SmallVector<std::pair<BasicBlock*, succ_iterator>, 8> VisitStack;
+  SmallPtrSet<BasicBlock*, 8> InStack;
+
+  BasicBlock *BB = &F.getEntryBlock();
+  if (succ_begin(BB) == succ_end(BB))
+    return;
+  Visited.insert(BB);
+  VisitStack.push_back(std::make_pair(BB, succ_begin(BB)));
+  InStack.insert(BB);
+  do {
+    std::pair<BasicBlock*, succ_iterator> &Top = VisitStack.back();
+    BasicBlock *ParentBB = Top.first;
+    succ_iterator &I = Top.second;
+
+    bool FoundNew = false;
+    while (I != succ_end(ParentBB)) {
+      BB = *I++;
+      if (Visited.insert(BB)) {
+        FoundNew = true;
+        break;
+      }
+      // Successor is in VisitStack, it's a back edge.
+      if (InStack.count(BB))
+        BackEdges.insert(std::make_pair(ParentBB, BB));
+    }
+
+    if (FoundNew) {
+      // Go down one level if there is a unvisited successor.
+      InStack.insert(BB);
+      VisitStack.push_back(std::make_pair(BB, succ_begin(BB)));
+    } else {
+      // Go up one level.
+      std::pair<BasicBlock*, succ_iterator> &Pop = VisitStack.back();
+      InStack.erase(Pop.first);
+      VisitStack.pop_back();
+    }
+  } while (!VisitStack.empty());
+}
+
 
 bool CodeGenPrepare::runOnFunction(Function &F) {
   bool EverMadeChange = false;
+
+  findLoopBackEdges(F);
 
   // First pass, eliminate blocks that contain only PHI nodes and an
   // unconditional branch.
@@ -262,7 +316,9 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
 /// phi nodes (otherwise critical edges are ok).  If there is already another
 /// predecessor of the succ that is empty (and thus has no phi nodes), use it
 /// instead of introducing a new block.
-static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
+static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
+                     SmallSet<std::pair<BasicBlock*,BasicBlock*>, 8> &BackEdges,
+                             Pass *P) {
   BasicBlock *TIBB = TI->getParent();
   BasicBlock *Dest = TI->getSuccessor(SuccNum);
   assert(isa<PHINode>(Dest->begin()) &&
@@ -271,54 +327,89 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   // As a hack, never split backedges of loops.  Even though the copy for any
   // PHIs inserted on the backedge would be dead for exits from the loop, we
   // assume that the cost of *splitting* the backedge would be too high.
-  if (Dest == TIBB)
+  if (BackEdges.count(std::make_pair(TIBB, Dest)))
     return;
 
-  /// TIPHIValues - This array is lazily computed to determine the values of
-  /// PHIs in Dest that TI would provide.
-  SmallVector<Value*, 32> TIPHIValues;
+  if (!FactorCommonPreds) {
+    /// TIPHIValues - This array is lazily computed to determine the values of
+    /// PHIs in Dest that TI would provide.
+    SmallVector<Value*, 32> TIPHIValues;
 
-  // Check to see if Dest has any blocks that can be used as a split edge for
-  // this terminator.
-  for (pred_iterator PI = pred_begin(Dest), E = pred_end(Dest); PI != E; ++PI) {
-    BasicBlock *Pred = *PI;
-    // To be usable, the pred has to end with an uncond branch to the dest.
-    BranchInst *PredBr = dyn_cast<BranchInst>(Pred->getTerminator());
-    if (!PredBr || !PredBr->isUnconditional() ||
-        // Must be empty other than the branch.
-        &Pred->front() != PredBr ||
-        // Cannot be the entry block; its label does not get emitted.
-        Pred == &(Dest->getParent()->getEntryBlock()))
-      continue;
+    // Check to see if Dest has any blocks that can be used as a split edge for
+    // this terminator.
+    for (pred_iterator PI = pred_begin(Dest), E = pred_end(Dest); PI != E; ++PI) {
+      BasicBlock *Pred = *PI;
+      // To be usable, the pred has to end with an uncond branch to the dest.
+      BranchInst *PredBr = dyn_cast<BranchInst>(Pred->getTerminator());
+      if (!PredBr || !PredBr->isUnconditional() ||
+          // Must be empty other than the branch.
+          &Pred->front() != PredBr ||
+          // Cannot be the entry block; its label does not get emitted.
+          Pred == &(Dest->getParent()->getEntryBlock()))
+        continue;
 
-    // Finally, since we know that Dest has phi nodes in it, we have to make
-    // sure that jumping to Pred will have the same affect as going to Dest in
-    // terms of PHI values.
-    PHINode *PN;
-    unsigned PHINo = 0;
-    bool FoundMatch = true;
-    for (BasicBlock::iterator I = Dest->begin();
-         (PN = dyn_cast<PHINode>(I)); ++I, ++PHINo) {
-      if (PHINo == TIPHIValues.size())
-        TIPHIValues.push_back(PN->getIncomingValueForBlock(TIBB));
+      // Finally, since we know that Dest has phi nodes in it, we have to make
+      // sure that jumping to Pred will have the same affect as going to Dest in
+      // terms of PHI values.
+      PHINode *PN;
+      unsigned PHINo = 0;
+      bool FoundMatch = true;
+      for (BasicBlock::iterator I = Dest->begin();
+           (PN = dyn_cast<PHINode>(I)); ++I, ++PHINo) {
+        if (PHINo == TIPHIValues.size())
+          TIPHIValues.push_back(PN->getIncomingValueForBlock(TIBB));
 
-      // If the PHI entry doesn't work, we can't use this pred.
-      if (TIPHIValues[PHINo] != PN->getIncomingValueForBlock(Pred)) {
-        FoundMatch = false;
-        break;
+        // If the PHI entry doesn't work, we can't use this pred.
+        if (TIPHIValues[PHINo] != PN->getIncomingValueForBlock(Pred)) {
+          FoundMatch = false;
+          break;
+        }
+      }
+
+      // If we found a workable predecessor, change TI to branch to Succ.
+      if (FoundMatch) {
+        Dest->removePredecessor(TIBB);
+        TI->setSuccessor(SuccNum, Pred);
+        return;
       }
     }
 
-    // If we found a workable predecessor, change TI to branch to Succ.
-    if (FoundMatch) {
-      Dest->removePredecessor(TIBB);
-      TI->setSuccessor(SuccNum, Pred);
-      return;
+    SplitCriticalEdge(TI, SuccNum, P, true);
+    return;
+  }
+
+  PHINode *PN;
+  SmallVector<Value*, 8> TIPHIValues;
+  for (BasicBlock::iterator I = Dest->begin();
+       (PN = dyn_cast<PHINode>(I)); ++I)
+    TIPHIValues.push_back(PN->getIncomingValueForBlock(TIBB));
+
+  SmallVector<BasicBlock*, 8> IdenticalPreds;
+  for (pred_iterator PI = pred_begin(Dest), E = pred_end(Dest); PI != E; ++PI) {
+    BasicBlock *Pred = *PI;
+    if (BackEdges.count(std::make_pair(Pred, Dest)))
+      continue;
+    if (PI == TIBB)
+      IdenticalPreds.push_back(Pred);
+    else {
+      bool Identical = true;
+      unsigned PHINo = 0;
+      for (BasicBlock::iterator I = Dest->begin();
+           (PN = dyn_cast<PHINode>(I)); ++I, ++PHINo)
+        if (TIPHIValues[PHINo] != PN->getIncomingValueForBlock(Pred)) {
+          Identical = false;
+          break;
+        }
+      if (Identical)
+        IdenticalPreds.push_back(Pred);
     }
   }
 
-  SplitCriticalEdge(TI, SuccNum, P, true);
+  assert(!IdenticalPreds.empty());
+  SplitBlockPredecessors(Dest, &IdenticalPreds[0], IdenticalPreds.size(),
+                         ".critedge", P);
 }
+
 
 /// OptimizeNoopCopyExpression - If the specified cast instruction is a noop
 /// copy (e.g. it's casting from one pointer type to another, int->uint, or
@@ -1350,16 +1441,15 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
 bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
   bool MadeChange = false;
 
-  // Split all critical edges where the dest block has a PHI and where the phi
-  // has shared immediate operands.
+  // Split all critical edges where the dest block has a PHI.
   TerminatorInst *BBTI = BB.getTerminator();
   if (BBTI->getNumSuccessors() > 1) {
-    for (unsigned i = 0, e = BBTI->getNumSuccessors(); i != e; ++i)
-      if (isa<PHINode>(BBTI->getSuccessor(i)->begin()) &&
-          isCriticalEdge(BBTI, i, true))
-        SplitEdgeNicely(BBTI, i, this);
+    for (unsigned i = 0, e = BBTI->getNumSuccessors(); i != e; ++i) {
+      BasicBlock *SuccBB = BBTI->getSuccessor(i);
+      if (isa<PHINode>(SuccBB->begin()) && isCriticalEdge(BBTI, i, true))
+        SplitEdgeNicely(BBTI, i, BackEdges, this);
+    }
   }
-
 
   // Keep track of non-local addresses that have been sunk into this block.
   // This allows us to avoid inserting duplicate code for blocks with multiple
