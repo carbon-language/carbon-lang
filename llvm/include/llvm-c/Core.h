@@ -340,8 +340,25 @@ void LLVMDisposeTypeHandle(LLVMTypeHandleRef TypeHandle);
         macro(UnwindInst)                   \
     macro(UnaryInstruction)                 \
       macro(AllocationInst)                 \
+        macro(AllocaInst)                   \
+        macro(MallocInst)                   \
       macro(CastInst)                       \
-      macro(ExtractValueInst)
+        macro(BitCastInst)                  \
+        macro(FPExtInst)                    \
+        macro(FPToSIInst)                   \
+        macro(FPToUIInst)                   \
+        macro(FPTruncInst)                  \
+        macro(IntToPtrInst)                 \
+        macro(PtrToIntInst)                 \
+        macro(SExtInst)                     \
+        macro(SIToFPInst)                   \
+        macro(TruncInst)                    \
+        macro(UIToFPInst)                   \
+        macro(ZExtInst)                     \
+      macro(ExtractValueInst)               \
+      macro(FreeInst)                       \
+      macro(LoadInst)                       \
+      macro(VAArgInst)
 
 /* Operations on all values */
 LLVMTypeRef LLVMTypeOf(LLVMValueRef Val);
