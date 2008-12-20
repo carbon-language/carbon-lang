@@ -893,7 +893,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
     unsigned ResultReg = createResultReg(RC);
     BuildMI(MBB, TII.get(OpImm), 
-            ResultReg).addReg(Op0Reg).addImm(CI->getZExtValue());
+            ResultReg).addReg(Op0Reg).addImm(CI->getZExtValue() & 0xff);
     UpdateValueMap(I, ResultReg);
     return true;
   }
