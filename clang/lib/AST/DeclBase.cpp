@@ -27,6 +27,7 @@ using namespace clang;
 static unsigned nFuncs = 0;
 static unsigned nVars = 0;
 static unsigned nParmVars = 0;
+static unsigned nOriginalParmVars = 0;
 static unsigned nSUC = 0;
 static unsigned nCXXSUC = 0;
 static unsigned nEnumConst = 0;
@@ -69,6 +70,7 @@ const char *Decl::getDeclKindName() const {
   case Function:            return "Function";
   case Var:                 return "Var";
   case ParmVar:             return "ParmVar";
+  case OriginalParmVar:     return "OriginalParmVar";
   case EnumConstant:        return "EnumConstant";
   case ObjCIvar:            return "ObjCIvar";
   case ObjCInterface:       return "ObjCInterface";
@@ -95,7 +97,7 @@ bool Decl::CollectingStats(bool Enable) {
 void Decl::PrintStats() {
   fprintf(stderr, "*** Decl Stats:\n");
   fprintf(stderr, "  %d decls total.\n", 
-          int(nFuncs+nVars+nParmVars+nFieldDecls+nSUC+nCXXSUC+
+          int(nFuncs+nVars+nParmVars+nOriginalParmVars+nFieldDecls+nSUC+nCXXSUC+
               nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
               nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls+
               nAtDefsFieldDecls+nNamespaces+nOverFuncs));
@@ -113,6 +115,9 @@ void Decl::PrintStats() {
   fprintf(stderr, "    %d parameter variable decls, %d each (%d bytes)\n", 
           nParmVars, (int)sizeof(ParmVarDecl),
           int(nParmVars*sizeof(ParmVarDecl)));
+  fprintf(stderr, "    %d original parameter variable decls, %d each (%d bytes)\n", 
+          nOriginalParmVars, (int)sizeof(ParmVarWithOriginalTypeDecl),
+          int(nOriginalParmVars*sizeof(ParmVarWithOriginalTypeDecl)));
   fprintf(stderr, "    %d field decls, %d each (%d bytes)\n", 
           nFieldDecls, (int)sizeof(FieldDecl),
           int(nFieldDecls*sizeof(FieldDecl)));
@@ -179,6 +184,7 @@ void Decl::PrintStats() {
   fprintf(stderr, "Total bytes = %d\n", 
           int(nFuncs*sizeof(FunctionDecl)+
               nVars*sizeof(VarDecl)+nParmVars*sizeof(ParmVarDecl)+
+              nOriginalParmVars*sizeof(ParmVarWithOriginalTypeDecl)+
               nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
               nCXXSUC*sizeof(CXXRecordDecl)+
               nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
@@ -210,6 +216,7 @@ void Decl::addDeclKind(Kind k) {
   case Function:            nFuncs++; break;
   case Var:                 nVars++; break;
   case ParmVar:             nParmVars++; break;
+  case OriginalParmVar:     nOriginalParmVars++; break;
   case EnumConstant:        nEnumConst++; break;
   case Field:               nFieldDecls++; break;
   case Record:              nSUC++; break;
