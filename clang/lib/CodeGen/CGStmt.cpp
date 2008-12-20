@@ -220,9 +220,11 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
     return;
   }
 
-  if (StackSaveValues.back()) {
-    CGM.ErrorUnsupported(&S, "goto inside scope with VLA");
-    return;
+  for (int i = 0; i < StackSaveValues.size(); i++) {
+    if (StackSaveValues[i]) {
+      CGM.ErrorUnsupported(&S, "goto inside scope with VLA");
+      return;
+    }
   }
   
   // If this code is reachable then emit a stop point (if generating
@@ -476,9 +478,11 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
 /// if the function returns void, or may be missing one if the function returns
 /// non-void.  Fun stuff :).
 void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
-  if (StackSaveValues.back()) {
-    CGM.ErrorUnsupported(&S, "return inside scope with VLA");
-    return;
+  for (int i = 0; i < StackSaveValues.size(); i++) {
+    if (StackSaveValues[i]) {
+      CGM.ErrorUnsupported(&S, "return inside scope with VLA");
+      return;
+    }
   }
   
   // Emit the result value, even if unused, to evalute the side effects.
