@@ -220,6 +220,11 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
     return;
   }
 
+  if (StackSaveValues.back()) {
+    CGM.ErrorUnsupported(&S, "goto inside scope with VLA");
+    return;
+  }
+  
   // If this code is reachable then emit a stop point (if generating
   // debug info). We have to do this ourselves because we are on the
   // "simple" statement path.
@@ -471,6 +476,11 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
 /// if the function returns void, or may be missing one if the function returns
 /// non-void.  Fun stuff :).
 void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
+  if (StackSaveValues.back()) {
+    CGM.ErrorUnsupported(&S, "return inside scope with VLA");
+    return;
+  }
+  
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
   
@@ -514,10 +524,15 @@ void CodeGenFunction::EmitBreakStmt(const BreakStmt &S) {
 
   // FIXME: Implement break in @try or @catch blocks.
   if (ObjCEHStack.size() != BreakContinueStack.back().EHStackSize) {
-    CGM.ErrorUnsupported(&S, "continue inside an Obj-C exception block");
+    CGM.ErrorUnsupported(&S, "break inside an Obj-C exception block");
     return;
   }
 
+  if (StackSaveValues.back()) {
+    CGM.ErrorUnsupported(&S, "break inside scope with VLA");
+    return;
+  }
+  
   // If this code is reachable then emit a stop point (if generating
   // debug info). We have to do this ourselves because we are on the
   // "simple" statement path.
@@ -536,6 +551,11 @@ void CodeGenFunction::EmitContinueStmt(const ContinueStmt &S) {
     return;
   }
 
+  if (StackSaveValues.back()) {
+    CGM.ErrorUnsupported(&S, "continue inside scope with VLA");
+    return;
+  }
+  
   // If this code is reachable then emit a stop point (if generating
   // debug info). We have to do this ourselves because we are on the
   // "simple" statement path.

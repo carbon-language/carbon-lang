@@ -160,15 +160,6 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         D.getStorageClass() == VarDecl::Register ? ".reg." : ".auto.";
       DeclPtr = GenerateStaticBlockVarDecl(D, true, Class);
     }
-  } else if (1) {
-    // FIXME: The code below is disabled because is causes a regression in the
-    // testsuite.
-    CGM.ErrorUnsupported(&D, "variable-length array"); 
-    
-    const llvm::Type *LTy = ConvertType(Ty);
-    llvm::AllocaInst *Alloc = 
-      CreateTempAlloca(LTy, D.getIdentifier()->getName());
-    DeclPtr = Alloc;
   } else {
     const VariableArrayType *VAT = getContext().getAsVariableArrayType(Ty);
 
