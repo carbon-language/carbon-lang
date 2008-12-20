@@ -471,7 +471,7 @@ class ParmVarDecl : public VarDecl {
   
   /// Default argument, if any.  [C++ Only]
   Expr *DefaultArg;
-
+protected:
   ParmVarDecl(DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, QualType T, StorageClass S,
               Expr *DefArg, ScopedDecl *PrevDecl)
@@ -509,6 +509,44 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// ParmVarWithOriginalTypeDecl - Represent a parameter to a function, when
+/// the type of the parameter has been promoted. This node represents the
+/// parameter to the function with its original type.
+///
+class ParmVarWithOriginalTypeDecl : public ParmVarDecl {
+private:
+  QualType OriginalType;
+
+  ParmVarWithOriginalTypeDecl(DeclContext *DC, SourceLocation L,
+                              IdentifierInfo *Id, QualType T, 
+                              QualType OT, StorageClass S,
+                              Expr *DefArg, ScopedDecl *PrevDecl)
+  : ParmVarDecl(DC, L, Id, T, S, DefArg, PrevDecl), OriginalType(OT) {}
+public:
+    static ParmVarWithOriginalTypeDecl *Create(ASTContext &C, DeclContext *DC,
+                               SourceLocation L,IdentifierInfo *Id,
+                               QualType T, QualType OT,
+                               StorageClass S, Expr *DefArg,
+                               ScopedDecl *PrevDecl);
+  QualType getQualType() const { return OriginalType; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == OriginalParmVar; }
+  static bool classof(const ParmVarWithOriginalTypeDecl *D) { return true; }
+    
+protected:
+  /// EmitImpl - Serialize this ParmVarWithOriginalTypeDecl. 
+  /// Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+    
+  /// CreateImpl - Deserialize a ParmVarWithOriginalTypeDecl.  
+  /// Called by Decl::Create.
+  static ParmVarWithOriginalTypeDecl* CreateImpl(llvm::Deserializer& D, 
+                                                 ASTContext& C);
+    
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+};
+  
 /// FunctionDecl - An instance of this class is created to represent a
 /// function declaration or definition. 
 ///

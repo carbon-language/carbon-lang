@@ -78,6 +78,7 @@ public:
                  ImplicitParam,
                  CXXClassVar,
                  ParmVar,
+                   OriginalParmVar,
   	         NonTypeTemplateParm,
            ObjCInterface,  // [DeclContext]
            ObjCCompatibleAlias,
@@ -186,6 +187,7 @@ public:
     case Typedef:
     case Var:
     case ParmVar:
+    case OriginalParmVar:
     case EnumConstant:
     case NonTypeTemplateParm:
     case Field:

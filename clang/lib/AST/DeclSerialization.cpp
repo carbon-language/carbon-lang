@@ -72,6 +72,10 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
       Dcl = ParmVarDecl::CreateImpl(D, C);
       break;
       
+    case OriginalParmVar:
+      Dcl = ParmVarWithOriginalTypeDecl::CreateImpl(D, C);
+      break;
+      
     case Function:
       Dcl = FunctionDecl::CreateImpl(D, C);
       break;
@@ -403,6 +407,26 @@ ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   return decl;
 }
 
+//===----------------------------------------------------------------------===//
+//      ParmVarWithOriginalTypeDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+void ParmVarWithOriginalTypeDecl::EmitImpl(llvm::Serializer& S) const {
+  ParmVarDecl::EmitImpl(S);
+  S.Emit(OriginalType);
+}
+
+ParmVarWithOriginalTypeDecl* ParmVarWithOriginalTypeDecl::CreateImpl(
+                                              Deserializer& D, ASTContext& C) {
+  void *Mem = C.getAllocator().Allocate<ParmVarWithOriginalTypeDecl>();
+  ParmVarWithOriginalTypeDecl* decl = new (Mem)
+    ParmVarWithOriginalTypeDecl(0, SourceLocation(), NULL, QualType(), 
+                                QualType(), None, NULL, NULL);
+  
+  decl->ParmVarDecl::ReadImpl(D, C);
+  decl->OriginalType = QualType::ReadVal(D);
+  return decl;
+}
 //===----------------------------------------------------------------------===//
 //      EnumDecl Serialization.
 //===----------------------------------------------------------------------===//

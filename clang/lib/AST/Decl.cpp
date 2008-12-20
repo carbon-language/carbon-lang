@@ -57,6 +57,16 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
   return new (Mem) ParmVarDecl(DC, L, Id, T, S, DefArg, PrevDecl);
 }
 
+ParmVarWithOriginalTypeDecl *ParmVarWithOriginalTypeDecl::Create(
+                                 ASTContext &C, DeclContext *DC,
+                                 SourceLocation L, IdentifierInfo *Id,
+                                 QualType T, QualType OT, StorageClass S,
+                                 Expr *DefArg, ScopedDecl *PrevDecl) {
+  void *Mem = C.getAllocator().Allocate<ParmVarWithOriginalTypeDecl>();
+  return new (Mem) ParmVarWithOriginalTypeDecl(DC, L, Id, T, OT, S, 
+                                               DefArg, PrevDecl);
+}
+
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, 
                                    DeclarationName N, QualType T, 
