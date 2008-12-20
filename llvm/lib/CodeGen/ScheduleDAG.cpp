@@ -122,8 +122,7 @@ void SUnit::setDepthDirty() {
   SmallVector<SUnit*, 8> WorkList;
   WorkList.push_back(this);
   while (!WorkList.empty()) {
-    SUnit *SU = WorkList.back();
-    WorkList.pop_back();
+    SUnit *SU = WorkList.pop_back_val();
     if (!SU->isDepthCurrent) continue;
     SU->isDepthCurrent = false;
     for (SUnit::const_succ_iterator I = SU->Succs.begin(),
@@ -136,8 +135,7 @@ void SUnit::setHeightDirty() {
   SmallVector<SUnit*, 8> WorkList;
   WorkList.push_back(this);
   while (!WorkList.empty()) {
-    SUnit *SU = WorkList.back();
-    WorkList.pop_back();
+    SUnit *SU = WorkList.pop_back_val();
     if (!SU->isHeightCurrent) continue;
     SU->isHeightCurrent = false;
     for (SUnit::const_pred_iterator I = SU->Preds.begin(),
