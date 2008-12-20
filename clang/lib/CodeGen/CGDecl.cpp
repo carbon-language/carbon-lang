@@ -31,7 +31,6 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   default: assert(0 && "Unknown decl kind!");
   case Decl::ParmVar:
     assert(0 && "Parmdecls should not be in declstmts!");
-  case Decl::Typedef:   // typedef int X;
   case Decl::Function:  // void X();
   case Decl::Record:    // struct/union/class X;
   case Decl::Enum:      // enum X;
@@ -45,6 +44,14 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
     assert(VD.isBlockVarDecl() && 
            "Should not see file-scope variables inside a function!");
     return EmitBlockVarDecl(VD);
+  }
+        
+  case Decl::Typedef: {   // typedef int X;
+    const TypedefDecl &TD = cast<TypedefDecl>(D);
+    QualType Ty = TD.getUnderlyingType();
+    
+    if (Ty->isVariablyModifiedType())
+      EmitVLASize(Ty);
   }
   }
 }

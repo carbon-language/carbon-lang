@@ -2184,8 +2184,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     QualType T = IDecl->getType();
     
     if (T->isVariableArrayType()) {
-      const VariableArrayType *VAT = 
-        cast<VariableArrayType>(T.getUnqualifiedType());
+      const VariableArrayType *VAT = Context.getAsVariableArrayType(T);
       
       // FIXME: This won't give the correct result for 
       // int a[10][n];      

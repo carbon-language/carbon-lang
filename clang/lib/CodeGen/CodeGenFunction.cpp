@@ -428,25 +428,25 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty)
   if (const VariableArrayType *VAT = getContext().getAsVariableArrayType(Ty)) {
     llvm::Value *&SizeEntry = VLASizeMap[VAT];
     
-    assert(!SizeEntry && "Must not emit the same VLA size more than once!");
+    if (!SizeEntry) {
+      // Get the element size;
+      llvm::Value *ElemSize;
     
-    // Get the element size;
-    llvm::Value *ElemSize;
+      QualType ElemTy = VAT->getElementType();
     
-    QualType ElemTy = VAT->getElementType();
+      if (ElemTy->isVariableArrayType())
+        ElemSize = EmitVLASize(ElemTy);
+      else {
+        // FIXME: We use Int32Ty here because the alloca instruction takes a
+        // 32-bit integer. What should we do about overflow?
+        ElemSize = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                                          getContext().getTypeSize(ElemTy) / 8);
+      }
     
-    if (ElemTy->isVariableArrayType())
-      ElemSize = EmitVLASize(ElemTy);
-    else {
-      // FIXME: We use Int32Ty here because the alloca instruction takes a
-      // 32-bit integer. What should we do about overflow?
-      ElemSize = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
-                                        getContext().getTypeSize(ElemTy) / 8);
+      llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
+    
+      SizeEntry = Builder.CreateMul(ElemSize, NumElements);
     }
-    
-    llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
-    
-    SizeEntry = Builder.CreateMul(ElemSize, NumElements);
     
     return SizeEntry;
   } else if (const PointerType *PT = Ty->getAsPointerType())
