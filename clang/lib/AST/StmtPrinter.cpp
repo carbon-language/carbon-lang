@@ -702,10 +702,7 @@ void StmtPrinter::VisitCallExpr(CallExpr *Call) {
 void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   PrintExpr(Node->getBase());
   OS << (Node->isArrow() ? "->" : ".");
-  
-  FieldDecl *Field = Node->getMemberDecl();
-  assert(Field && "MemberExpr should alway reference a field!");
-  OS << Field->getNameAsString();
+  OS << Node->getMemberDecl()->getNameAsString();
 }
 void StmtPrinter::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
   PrintExpr(Node->getBase());

@@ -153,7 +153,10 @@ APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
 
   RecordDecl *RD = Ty->getAsRecordType()->getDecl();
   const ASTRecordLayout &RL = Info.Ctx.getASTRecordLayout(RD);
-  FieldDecl *FD = E->getMemberDecl();
+
+  FieldDecl *FD = dyn_cast<FieldDecl>(E->getMemberDecl());
+  if (!FD) // FIXME: deal with other kinds of member expressions
+    return APValue();
     
   // FIXME: This is linear time.
   unsigned i = 0;

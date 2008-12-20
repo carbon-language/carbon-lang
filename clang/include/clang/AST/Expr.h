@@ -126,7 +126,8 @@ public:
     LV_NotObjectType,
     LV_IncompleteVoidType,
     LV_DuplicateVectorComponents,
-    LV_InvalidExpression
+    LV_InvalidExpression,
+    LV_MemberFunction
   };
   isLvalueResult isLvalue(ASTContext &Ctx) const;
   
@@ -147,7 +148,8 @@ public:
     MLV_ArrayType,
     MLV_NotBlockQualified,
     MLV_ReadonlyProperty,
-    MLV_NoSetterProperty
+    MLV_NoSetterProperty,
+    MLV_MemberFunction
   };
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx) const;
   
@@ -830,17 +832,17 @@ public:
 ///
 class MemberExpr : public Expr {
   Stmt *Base;
-  FieldDecl *MemberDecl;
+  NamedDecl *MemberDecl;
   SourceLocation MemberLoc;
   bool IsArrow;      // True if this is "X->F", false if this is "X.F".
 public:
-  MemberExpr(Expr *base, bool isarrow, FieldDecl *memberdecl, SourceLocation l,
+  MemberExpr(Expr *base, bool isarrow, NamedDecl *memberdecl, SourceLocation l,
              QualType ty) 
     : Expr(MemberExprClass, ty),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow) {}
 
   Expr *getBase() const { return cast<Expr>(Base); }
-  FieldDecl *getMemberDecl() const { return MemberDecl; }
+  NamedDecl *getMemberDecl() const { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
 
   virtual SourceRange getSourceRange() const {

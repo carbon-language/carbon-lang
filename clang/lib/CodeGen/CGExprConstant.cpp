@@ -564,7 +564,10 @@ public:
       else
         Base = EmitLValue(ME->getBase());
 
-      unsigned FieldNumber = CGM.getTypes().getLLVMFieldNo(ME->getMemberDecl());
+      FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl());
+      // FIXME: Handle other kinds of member expressions.
+      assert(Field && "No code generation for non-field member expressions");
+      unsigned FieldNumber = CGM.getTypes().getLLVMFieldNo(Field);
       llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
       llvm::Constant *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                                    FieldNumber);

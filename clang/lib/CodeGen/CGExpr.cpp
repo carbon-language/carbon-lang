@@ -782,7 +782,9 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     CVRQualifiers = BaseExpr->getType().getCVRQualifiers();
   }
 
-  FieldDecl *Field = E->getMemberDecl();
+  FieldDecl *Field = dyn_cast<FieldDecl>(E->getMemberDecl());
+  // FIXME: Handle non-field member expressions
+  assert(Field && "No code generation for non-field member references");
   LValue MemExpLV =  EmitLValueForField(BaseValue, Field, isUnion, CVRQualifiers);
   LValue::SetObjCIvar(MemExpLV, isIvar);
   return MemExpLV;

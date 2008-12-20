@@ -1244,24 +1244,44 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                << &Member << BaseExpr->getSourceRange();
     } 
 
-    FieldDecl *MemberDecl = dyn_cast<FieldDecl>(*Lookup.first);
-    if (!MemberDecl) {
-      unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
-                          "Clang only supports references to members");
-      return Diag(MemberLoc, DiagID);
-    }
+    if (FieldDecl *MemberDecl = dyn_cast<FieldDecl>(*Lookup.first)) {
+      // Figure out the type of the member; see C99 6.5.2.3p3, C++ [expr.ref]
+      // FIXME: Handle address space modifiers
+      QualType MemberType = MemberDecl->getType();
+      if (const ReferenceType *Ref = MemberType->getAsReferenceType())
+        MemberType = Ref->getPointeeType();
+      else {
+        unsigned combinedQualifiers =
+          MemberType.getCVRQualifiers() | BaseType.getCVRQualifiers();
+        if (MemberDecl->isMutable())
+          combinedQualifiers &= ~QualType::Const;
+        MemberType = MemberType.getQualifiedType(combinedQualifiers);
+      }
 
-    // Figure out the type of the member; see C99 6.5.2.3p3
-    // FIXME: Handle address space modifiers
-    QualType MemberType = MemberDecl->getType();
-    unsigned combinedQualifiers =
-        MemberType.getCVRQualifiers() | BaseType.getCVRQualifiers();
-    if (MemberDecl->isMutable())
-      combinedQualifiers &= ~QualType::Const;
-    MemberType = MemberType.getQualifiedType(combinedQualifiers);
+      return new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberDecl,
+                            MemberLoc, MemberType);
+    } else if (CXXClassVarDecl *Var = dyn_cast<CXXClassVarDecl>(*Lookup.first))
+      return new MemberExpr(BaseExpr, OpKind == tok::arrow, Var, MemberLoc,
+                            Var->getType().getNonReferenceType());
+    else if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(*Lookup.first))
+      return new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberFn, MemberLoc,
+                            MemberFn->getType());
+    else if (OverloadedFunctionDecl *Ovl 
+             = dyn_cast<OverloadedFunctionDecl>(*Lookup.first))
+      return new MemberExpr(BaseExpr, OpKind == tok::arrow, Ovl, MemberLoc,
+                            Context.OverloadTy);
+    else if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(*Lookup.first))
+      return new MemberExpr(BaseExpr, OpKind == tok::arrow, Enum, MemberLoc,
+                            Enum->getType());
+    else if (isa<TypeDecl>(*Lookup.first))
+      return Diag(MemberLoc, diag::err_typecheck_member_reference_type)
+        << DeclarationName(&Member) << int(OpKind == tok::arrow);
 
-    return new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberDecl,
-                          MemberLoc, MemberType);
+    // We found a declaration kind that we didn't expect. This is a
+    // generic error message that tells the user that she can't refer
+    // to this member with '.' or '->'.
+    return Diag(MemberLoc, diag::err_typecheck_member_reference_unknown)
+      << DeclarationName(&Member) << int(OpKind == tok::arrow);
   }
   
   // Handle access to Objective-C instance variables, such as "Obj->ivar" and
@@ -2920,10 +2940,12 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
       return QualType();
     }
   } else if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(op)) { // C99 6.5.3.2p1
-    if (MemExpr->getMemberDecl()->isBitField()) {
-      Diag(OpLoc, diag::err_typecheck_address_of)
-        << "bit-field" << op->getSourceRange();
-      return QualType();
+    if (FieldDecl *Field = dyn_cast<FieldDecl>(MemExpr->getMemberDecl())) {
+      if (Field->isBitField()) {
+        Diag(OpLoc, diag::err_typecheck_address_of)
+          << "bit-field" << op->getSourceRange();
+        return QualType();
+      }
     }
   // Check for Apple extension for accessing vector components.
   } else if (isa<ArraySubscriptExpr>(op) &&

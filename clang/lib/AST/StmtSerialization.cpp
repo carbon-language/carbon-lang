@@ -761,7 +761,7 @@ void MemberExpr::EmitImpl(Serializer& S) const {
 
 MemberExpr* MemberExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation L = SourceLocation::ReadVal(D);
-  FieldDecl* MemberDecl = cast<FieldDecl>(D.ReadPtr<Decl>());
+  NamedDecl* MemberDecl = cast<NamedDecl>(D.ReadPtr<Decl>());
   bool IsArrow = D.ReadBool();
   QualType T = QualType::ReadVal(D);
   Expr* base = D.ReadOwnedPtr<Expr>(C);

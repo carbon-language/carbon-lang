@@ -666,26 +666,27 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
   // other value of that type for promotion purposes (C++ 4.5p3).
   if (MemberExpr *MemRef = dyn_cast<MemberExpr>(From)) {
     using llvm::APSInt;
-    FieldDecl *MemberDecl = MemRef->getMemberDecl();
-    APSInt BitWidth;
-    if (MemberDecl->isBitField() &&
-        FromType->isIntegralType() && !FromType->isEnumeralType() &&
-        From->isIntegerConstantExpr(BitWidth, Context)) {
-      APSInt ToSize(Context.getTypeSize(ToType));
-
-      // Are we promoting to an int from a bitfield that fits in an int?
-      if (BitWidth < ToSize ||
-          (FromType->isSignedIntegerType() && BitWidth <= ToSize)) {
-        return To->getKind() == BuiltinType::Int;
+    if (FieldDecl *MemberDecl = dyn_cast<FieldDecl>(MemRef->getMemberDecl())) {
+      APSInt BitWidth;
+      if (MemberDecl->isBitField() &&
+          FromType->isIntegralType() && !FromType->isEnumeralType() &&
+          From->isIntegerConstantExpr(BitWidth, Context)) {
+        APSInt ToSize(Context.getTypeSize(ToType));
+        
+        // Are we promoting to an int from a bitfield that fits in an int?
+        if (BitWidth < ToSize ||
+            (FromType->isSignedIntegerType() && BitWidth <= ToSize)) {
+          return To->getKind() == BuiltinType::Int;
+        }
+        
+        // Are we promoting to an unsigned int from an unsigned bitfield
+        // that fits into an unsigned int?
+        if (FromType->isUnsignedIntegerType() && BitWidth <= ToSize) {
+          return To->getKind() == BuiltinType::UInt;
+        }
+        
+        return false;
       }
-
-      // Are we promoting to an unsigned int from an unsigned bitfield
-      // that fits into an unsigned int?
-      if (FromType->isUnsignedIntegerType() && BitWidth <= ToSize) {
-        return To->getKind() == BuiltinType::UInt;
-      }
-
-      return false;
     }
   }
 

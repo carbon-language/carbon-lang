@@ -407,8 +407,43 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
       return LV_Valid;
     break;
   }
-  case MemberExprClass: { // C99 6.5.2.3p4
+  case MemberExprClass: { 
     const MemberExpr *m = cast<MemberExpr>(this);
+    if (Ctx.getLangOptions().CPlusPlus) { // C++ [expr.ref]p4:
+      NamedDecl *Member = m->getMemberDecl();
+      // C++ [expr.ref]p4:
+      //   If E2 is declared to have type "reference to T", then E1.E2
+      //   is an lvalue.
+      if (ValueDecl *Value = dyn_cast<ValueDecl>(Member))
+        if (Value->getType()->isReferenceType())
+          return LV_Valid;
+
+      //   -- If E2 is a static data member [...] then E1.E2 is an lvalue.
+      if (isa<CXXClassVarDecl>(Member))
+        return LV_Valid;
+
+      //   -- If E2 is a non-static data member [...]. If E1 is an
+      //      lvalue, then E1.E2 is an lvalue.
+      if (isa<FieldDecl>(Member))
+        return m->isArrow() ? LV_Valid : m->getBase()->isLvalue(Ctx);
+
+      //   -- If it refers to a static member function [...], then
+      //      E1.E2 is an lvalue.
+      //   -- Otherwise, if E1.E2 refers to a non-static member
+      //      function [...], then E1.E2 is not an lvalue.
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Member))
+        return Method->isStatic()? LV_Valid : LV_MemberFunction;
+
+      //   -- If E2 is a member enumerator [...], the expression E1.E2
+      //      is not an lvalue.
+      if (isa<EnumConstantDecl>(Member))
+        return LV_InvalidExpression;
+
+        // Not an lvalue.
+      return LV_InvalidExpression;
+    } 
+
+    // C99 6.5.2.3p4
     return m->isArrow() ? LV_Valid : m->getBase()->isLvalue(Ctx);
   }
   case UnaryOperatorClass:
@@ -542,6 +577,7 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
       if (CE->getSubExpr()->isLvalue(Ctx) == LV_Valid)
         return MLV_LValueCast;
     return MLV_InvalidExpression;
+  case LV_MemberFunction: return MLV_MemberFunction;
   }
   
   QualType CT = Ctx.getCanonicalType(getType());
@@ -1113,7 +1149,8 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const
 bool Expr::isBitField() {
   Expr *E = this->IgnoreParenCasts();
   if (MemberExpr *MemRef = dyn_cast<MemberExpr>(E))
-    return MemRef->getMemberDecl()->isBitField();
+    if (FieldDecl *Field = dyn_cast<FieldDecl>(MemRef->getMemberDecl()))
+        return Field->isBitField();
   return false;
 }
 
@@ -1245,21 +1282,21 @@ static int64_t evaluateOffsetOf(ASTContext& C, const Expr *E) {
     
     RecordDecl *RD = Ty->getAsRecordType()->getDecl();
     const ASTRecordLayout &RL = C.getASTRecordLayout(RD);
-    FieldDecl *FD = ME->getMemberDecl();
-    
-    // FIXME: This is linear time. And the fact that we're indexing
-    // into the layout by position in the record means that we're
-    // either stuck numbering the fields in the AST or we have to keep
-    // the linear search (yuck and yuck).
-    unsigned i = 0;
-    for (RecordDecl::field_iterator Field = RD->field_begin(),
-                                 FieldEnd = RD->field_end();
-         Field != FieldEnd; (void)++Field, ++i) {
-      if (*Field == FD)
-        break;
+    if (FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
+      // FIXME: This is linear time. And the fact that we're indexing
+      // into the layout by position in the record means that we're
+      // either stuck numbering the fields in the AST or we have to keep
+      // the linear search (yuck and yuck).
+      unsigned i = 0;
+      for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                   FieldEnd = RD->field_end();
+           Field != FieldEnd; (void)++Field, ++i) {
+        if (*Field == FD)
+          break;
+      }
+      
+      return RL.getFieldOffset(i) + evaluateOffsetOf(C, ME->getBase());
     }
-    
-    return RL.getFieldOffset(i) + evaluateOffsetOf(C, ME->getBase());
   } else if (const ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(E)) {
     const Expr *Base = ASE->getBase();
     
