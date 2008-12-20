@@ -126,8 +126,8 @@ void SUnit::setDepthDirty() {
     WorkList.pop_back();
     if (!SU->isDepthCurrent) continue;
     SU->isDepthCurrent = false;
-    for (SUnit::const_succ_iterator I = Succs.begin(),
-         E = Succs.end(); I != E; ++I)
+    for (SUnit::const_succ_iterator I = SU->Succs.begin(),
+         E = SU->Succs.end(); I != E; ++I)
       WorkList.push_back(I->getSUnit());
   }
 }
@@ -140,8 +140,8 @@ void SUnit::setHeightDirty() {
     WorkList.pop_back();
     if (!SU->isHeightCurrent) continue;
     SU->isHeightCurrent = false;
-    for (SUnit::const_pred_iterator I = Preds.begin(),
-         E = Preds.end(); I != E; ++I)
+    for (SUnit::const_pred_iterator I = SU->Preds.begin(),
+         E = SU->Preds.end(); I != E; ++I)
       WorkList.push_back(I->getSUnit());
   }
 }
