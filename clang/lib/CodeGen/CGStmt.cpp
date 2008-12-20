@@ -220,7 +220,7 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
     return;
   }
 
-  for (int i = 0; i < StackSaveValues.size(); i++) {
+  for (unsigned i = 0; i < StackSaveValues.size(); i++) {
     if (StackSaveValues[i]) {
       CGM.ErrorUnsupported(&S, "goto inside scope with VLA");
       return;
@@ -478,7 +478,7 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
 /// if the function returns void, or may be missing one if the function returns
 /// non-void.  Fun stuff :).
 void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
-  for (int i = 0; i < StackSaveValues.size(); i++) {
+  for (unsigned i = 0; i < StackSaveValues.size(); i++) {
     if (StackSaveValues[i]) {
       CGM.ErrorUnsupported(&S, "return inside scope with VLA");
       return;
@@ -532,9 +532,11 @@ void CodeGenFunction::EmitBreakStmt(const BreakStmt &S) {
     return;
   }
 
-  if (StackSaveValues.back()) {
-    CGM.ErrorUnsupported(&S, "break inside scope with VLA");
-    return;
+  for (unsigned i = 0; i < StackSaveValues.size(); i++) {
+    if (StackSaveValues[i]) {
+      CGM.ErrorUnsupported(&S, "break inside scope with VLA");
+      return;
+    }
   }
   
   // If this code is reachable then emit a stop point (if generating
@@ -555,9 +557,11 @@ void CodeGenFunction::EmitContinueStmt(const ContinueStmt &S) {
     return;
   }
 
-  if (StackSaveValues.back()) {
-    CGM.ErrorUnsupported(&S, "continue inside scope with VLA");
-    return;
+  for (unsigned i = 0; i < StackSaveValues.size(); i++) {
+    if (StackSaveValues[i]) {
+      CGM.ErrorUnsupported(&S, "continue inside scope with VLA");
+      return;
+    }
   }
   
   // If this code is reachable then emit a stop point (if generating
