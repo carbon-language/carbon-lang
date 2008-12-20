@@ -399,7 +399,8 @@ void ParmVarDecl::EmitImpl(llvm::Serializer& S) const {
 ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
   ParmVarDecl* decl = new (Mem)
-    ParmVarDecl(0, SourceLocation(), NULL, QualType(), None, NULL, NULL);
+    ParmVarDecl(ParmVar,
+                0, SourceLocation(), NULL, QualType(), None, NULL, NULL);
   
   decl->VarDecl::ReadImpl(D, C);
   decl->objcDeclQualifier = static_cast<ObjCDeclQualifier>(D.ReadInt());

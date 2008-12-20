@@ -1638,11 +1638,17 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
   // Argument types.
   ParmOffset = 2 * PtrSize;
   for (int i = 0; i < NumOfParams; i++) {
-    QualType PType = Decl->getParamDecl(i)->getType();
+    ParmVarDecl *PVDecl = Decl->getParamDecl(i);
+    QualType PType = PVDecl->getOriginalType(); 
+    if (const ArrayType *AT =
+          dyn_cast<ArrayType>(PType->getCanonicalTypeInternal())) 
+        // Use array's original type only if it has known number of
+        // elements.
+        if (!dyn_cast<ConstantArrayType>(AT))
+          PType = PVDecl->getType();
     // Process argument qualifiers for user supplied arguments; such as,
     // 'in', 'inout', etc.
-    getObjCEncodingForTypeQualifier(
-      Decl->getParamDecl(i)->getObjCDeclQualifier(), S);
+    getObjCEncodingForTypeQualifier(PVDecl->getObjCDeclQualifier(), S);
     getObjCEncodingForType(PType, S);
     S += llvm::utostr(ParmOffset);
     ParmOffset += getObjCEncodingTypeSize(PType);

@@ -472,10 +472,10 @@ class ParmVarDecl : public VarDecl {
   /// Default argument, if any.  [C++ Only]
   Expr *DefaultArg;
 protected:
-  ParmVarDecl(DeclContext *DC, SourceLocation L,
+  ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, QualType T, StorageClass S,
               Expr *DefArg, ScopedDecl *PrevDecl)
-    : VarDecl(ParmVar, DC, L, Id, T, S, PrevDecl), 
+    : VarDecl(DK, DC, L, Id, T, S, PrevDecl), 
       objcDeclQualifier(OBJC_TQ_None), DefaultArg(DefArg) {}
 
 public:
@@ -495,8 +495,13 @@ public:
   Expr *getDefaultArg() { return DefaultArg; }
   void setDefaultArg(Expr *defarg) { DefaultArg = defarg; }
 
+  QualType getOriginalType() const;
+  
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == ParmVar; }
+  static bool classof(const Decl *D) { 
+    return (D->getKind() == ParmVar ||
+            D->getKind() == OriginalParmVar); 
+  }
   static bool classof(const ParmVarDecl *D) { return true; }
   
 protected:
@@ -514,22 +519,23 @@ protected:
 /// parameter to the function with its original type.
 ///
 class ParmVarWithOriginalTypeDecl : public ParmVarDecl {
-private:
+  friend class ParmVarDecl;
+protected:
   QualType OriginalType;
-
+private:
   ParmVarWithOriginalTypeDecl(DeclContext *DC, SourceLocation L,
                               IdentifierInfo *Id, QualType T, 
                               QualType OT, StorageClass S,
                               Expr *DefArg, ScopedDecl *PrevDecl)
-  : ParmVarDecl(DC, L, Id, T, S, DefArg, PrevDecl), OriginalType(OT) {}
+  : ParmVarDecl(OriginalParmVar,
+                DC, L, Id, T, S, DefArg, PrevDecl), OriginalType(OT) {}
 public:
     static ParmVarWithOriginalTypeDecl *Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L,IdentifierInfo *Id,
                                QualType T, QualType OT,
                                StorageClass S, Expr *DefArg,
                                ScopedDecl *PrevDecl);
-  QualType getQualType() const { return OriginalType; }
-  
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == OriginalParmVar; }
   static bool classof(const ParmVarWithOriginalTypeDecl *D) { return true; }

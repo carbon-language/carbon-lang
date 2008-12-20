@@ -1236,21 +1236,31 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   
   for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
     // FIXME: arg->AttrList must be stored too!
-    QualType argType;
+    QualType argType, originalArgType;
     
     if (ArgTypes[i]) {
       argType = QualType::getFromOpaquePtr(ArgTypes[i]);
       // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
-      if (argType->isArrayType()) // (char *[]) -> (char **)
+      if (argType->isArrayType())  { // (char *[]) -> (char **)
+        originalArgType = argType;
         argType = Context.getArrayDecayedType(argType);
+      }
       else if (argType->isFunctionType())
         argType = Context.getPointerType(argType);
     } else
       argType = Context.getObjCIdType();
-    ParmVarDecl* Param = ParmVarDecl::Create(Context, ObjCMethod,
-                                             SourceLocation(/*FIXME*/),
-                                             ArgNames[i], argType,
-                                             VarDecl::None, 0, 0);
+    ParmVarDecl* Param;
+    if (originalArgType.isNull())
+      Param = ParmVarDecl::Create(Context, ObjCMethod,
+                                  SourceLocation(/*FIXME*/),
+                                  ArgNames[i], argType,
+                                  VarDecl::None, 0, 0);
+    else
+      Param = ParmVarWithOriginalTypeDecl::Create(Context, ObjCMethod,
+                                  SourceLocation(/*FIXME*/),
+                                  ArgNames[i], argType, originalArgType,
+                                  VarDecl::None, 0, 0);
+    
     Param->setObjCDeclQualifier(
       CvtQTToAstBitMask(ArgQT[i].getObjCDeclQualifier()));
     Params.push_back(Param);

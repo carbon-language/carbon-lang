@@ -54,7 +54,14 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  QualType T, StorageClass S,
                                  Expr *DefArg, ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
-  return new (Mem) ParmVarDecl(DC, L, Id, T, S, DefArg, PrevDecl);
+  return new (Mem) ParmVarDecl(ParmVar, DC, L, Id, T, S, DefArg, PrevDecl);
+}
+
+QualType ParmVarDecl::getOriginalType() const {
+  if (const ParmVarWithOriginalTypeDecl *PVD = 
+      dyn_cast<ParmVarWithOriginalTypeDecl>(this))
+    return PVD->OriginalType;
+  return getType();
 }
 
 ParmVarWithOriginalTypeDecl *ParmVarWithOriginalTypeDecl::Create(
