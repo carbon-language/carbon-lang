@@ -131,6 +131,16 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   }
 
   EmitFunctionProlog(CurFn, FnRetTy, Args);
+  
+  // If any of the arguments have a variably modified type, make sure to
+  // emit the type size.
+  for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
+       i != e; ++i) {
+    QualType Ty = i->second;
+
+    if (Ty->isVariablyModifiedType())
+      EmitVLASize(Ty);
+  }
 }
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
