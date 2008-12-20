@@ -549,12 +549,14 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           if (Stmt* S = Dst->getLabel())
             switch (S->getStmtClass()) {
                 
-            default:
-              assert(false && "Not a valid switch label.");
-              continue;
+            default: {
+              os << "No cases match in the switch statement. "
+                    "Control jumps to line "
+                 << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
+                break;
+            }
                 
-            case Stmt::DefaultStmtClass: {              
-              
+            case Stmt::DefaultStmtClass: {                            
               os << "Control jumps to the 'default' case at line "
                  << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
               
