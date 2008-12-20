@@ -1306,7 +1306,8 @@ public:
   
   /// type checking unary operators (subroutines of ActOnUnaryOp).
   /// C99 6.5.3.1, 6.5.3.2, 6.5.3.4
-  QualType CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc);   
+  QualType CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
+                                          bool isInc);
   QualType CheckAddressOfOperand(Expr *op, SourceLocation OpLoc);
   QualType CheckIndirectionOperand(Expr *op, SourceLocation OpLoc);
   QualType CheckRealImagOperand(Expr *&Op, SourceLocation OpLoc);

@@ -1298,6 +1298,10 @@ DIAG(err_delete_operand, ERROR,
      "cannot delete expression of type %0")
 DIAG(warn_delete_incomplete, WARNING,
      "deleting pointer to incomplete type %0 may cause undefined behaviour")
+DIAG(err_decrement_bool, ERROR,
+     "cannot decrement expression of type bool")
+DIAG(warn_increment_bool, WARNING,
+     "incrementing expression of type bool is deprecated")
 
 DIAG(err_invalid_use_of_function_type, ERROR,
      "a function type is not allowed here")

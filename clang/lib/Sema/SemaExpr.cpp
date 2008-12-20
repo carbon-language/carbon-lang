@@ -952,7 +952,8 @@ Action::ExprResult Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
     // build a built-in operation.
   }
 
-  QualType result = CheckIncrementDecrementOperand(Arg, OpLoc);
+  QualType result = CheckIncrementDecrementOperand(Arg, OpLoc,
+                                                 Opc == UnaryOperator::PostInc);
   if (result.isNull())
     return true;
   return new UnaryOperator(Arg, Opc, result, OpLoc);
@@ -2762,12 +2763,20 @@ QualType Sema::CheckCommaOperands(Expr *LHS, Expr *&RHS, SourceLocation Loc) {
 
 /// CheckIncrementDecrementOperand - unlike most "Check" methods, this routine
 /// doesn't need to call UsualUnaryConversions or UsualArithmeticConversions.
-QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc) {
+QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
+                                              bool isInc) {
   QualType ResType = Op->getType();
   assert(!ResType.isNull() && "no type for increment/decrement expression");
 
-  // C99 6.5.2.4p1: We allow complex as a GCC extension.
-  if (ResType->isRealType()) {
+  if (getLangOptions().CPlusPlus && ResType->isBooleanType()) {
+    // Decrement of bool is not allowed.
+    if (!isInc) {
+      Diag(OpLoc, diag::err_decrement_bool) << Op->getSourceRange();
+      return QualType();
+    }
+    // Increment of bool sets it to true, but is deprecated.
+    Diag(OpLoc, diag::warn_increment_bool) << Op->getSourceRange();
+  } else if (ResType->isRealType()) {
     // OK!
   } else if (const PointerType *PT = ResType->getAsPointerType()) {
     // C99 6.5.2.4p2, 6.5.6p2
@@ -3350,7 +3359,8 @@ Action::ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
     assert(0 && "Unimplemented unary expr!");
   case UnaryOperator::PreInc:
   case UnaryOperator::PreDec:
-    resultType = CheckIncrementDecrementOperand(Input, OpLoc);
+    resultType = CheckIncrementDecrementOperand(Input, OpLoc,
+                                                Opc == UnaryOperator::PreInc);
     break;
   case UnaryOperator::AddrOf: 
     resultType = CheckAddressOfOperand(Input, OpLoc);
