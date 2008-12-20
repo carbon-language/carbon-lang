@@ -39,7 +39,14 @@ public:
   ~BasicStoreManager() {}
 
   SVal Retrieve(const GRState *state, Loc LV, QualType T);  
-  Store Bind(Store St, Loc LV, SVal V);  
+
+  const GRState* Bind(const GRState* St, Loc L, SVal V) {
+    Store store = St->getStore();
+    store = BindInternal(store, L, V);
+    return StateMgr.MakeStateWithStore(St, store);
+  }
+
+  Store BindInternal(Store St, Loc LV, SVal V);  
   Store Remove(Store St, Loc LV);
   Store getInitialStore();
   MemRegionManager& getRegionManager() { return MRMgr; }
@@ -49,9 +56,10 @@ public:
     return loc::MemRegionVal(MRMgr.getVarRegion(VD));
   }
   
-  Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL,
-                            SVal V) {
-    return store;
+  const GRState* BindCompoundLiteral(const GRState* St, 
+                                     const CompoundLiteralExpr* CL,
+                                     SVal V) {
+    return St;
   }
   
   SVal getLValueVar(const GRState* St, const VarDecl* VD);
@@ -89,7 +97,25 @@ public:
 
   void iterBindings(Store store, BindingsHandler& f);
 
-  Store BindDecl(Store store, const VarDecl* VD, SVal* InitVal, unsigned Count);
+  const GRState* BindDecl(const GRState* St, const VarDecl* VD, SVal InitVal) {
+    Store store = St->getStore();
+    store = BindDeclInternal(store, VD, &InitVal);
+    return StateMgr.MakeStateWithStore(St, store);
+  }
+
+  const GRState* BindDeclWithNoInit(const GRState* St, const VarDecl* VD) {
+    Store store = St->getStore();
+    store = BindDeclInternal(store, VD, 0);
+    return StateMgr.MakeStateWithStore(St, store);
+  }
+
+  const GRState* BindDecl(const GRState* St, const VarDecl* VD) {
+    Store store = St->getStore();
+    store = BindDeclInternal(store, VD, 0);
+    return StateMgr.MakeStateWithStore(St, store);
+  }
+
+  Store BindDeclInternal(Store store, const VarDecl* VD, SVal* InitVal);
 
   static inline VarBindingsTy GetVarBindings(Store store) {
     return VarBindingsTy(static_cast<const VarBindingsTy::TreeTy*>(store));
@@ -286,7 +312,7 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc LV, QualType T) {
   return UnknownVal();
 }
   
-Store BasicStoreManager::Bind(Store store, Loc LV, SVal V) {    
+Store BasicStoreManager::BindInternal(Store store, Loc LV, SVal V) {    
   switch (LV.getSubKind()) {      
     case loc::MemRegionKind: {
       const VarRegion* R =
@@ -421,8 +447,8 @@ Store BasicStoreManager::getInitialStore() {
           SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
                                                  MRMgr.getHeapRegion());
           
-          St = Bind(St, loc::MemRegionVal(MRMgr.getVarRegion(PD)),
-                        loc::MemRegionVal(SelfRegion));
+          St = BindInternal(St, loc::MemRegionVal(MRMgr.getVarRegion(PD)),
+                            loc::MemRegionVal(SelfRegion));
         }
       }
     }
@@ -441,15 +467,15 @@ Store BasicStoreManager::getInitialStore() {
                  ? SVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
                  : UndefinedVal();
 
-        St = Bind(St, loc::MemRegionVal(MRMgr.getVarRegion(VD)), X);
+        St = BindInternal(St, loc::MemRegionVal(MRMgr.getVarRegion(VD)), X);
       }
     }
   }
   return St;
 }
 
-Store BasicStoreManager::BindDecl(Store store, const VarDecl* VD,
-                                  SVal* InitVal, unsigned Count) {
+Store BasicStoreManager::BindDeclInternal(Store store, const VarDecl* VD,
+                                          SVal* InitVal) {
                  
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
                  
@@ -479,16 +505,16 @@ Store BasicStoreManager::BindDecl(Store store, const VarDecl* VD,
       if (!InitVal) {
         QualType T = VD->getType();
         if (Loc::IsLocType(T))
-          store = Bind(store, getLoc(VD),
+          store = BindInternal(store, getLoc(VD),
                        loc::ConcreteInt(BasicVals.getValue(0, T)));
         else if (T->isIntegerType())
-          store = Bind(store, getLoc(VD),
+          store = BindInternal(store, getLoc(VD),
                        nonloc::ConcreteInt(BasicVals.getValue(0, T)));
         else {
           // assert(0 && "ignore other types of variables");
         }
       } else {
-        store = Bind(store, getLoc(VD), *InitVal);
+        store = BindInternal(store, getLoc(VD), *InitVal);
       }
     }
   } else {
@@ -496,7 +522,7 @@ Store BasicStoreManager::BindDecl(Store store, const VarDecl* VD,
     QualType T = VD->getType();
     if (Loc::IsLocType(T) || T->isIntegerType()) {
       SVal V = InitVal ? *InitVal : UndefinedVal();
-      store = Bind(store, getLoc(VD), V);
+      store = BindInternal(store, getLoc(VD), V);
     }
   }
 

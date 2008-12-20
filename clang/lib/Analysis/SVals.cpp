@@ -242,6 +242,11 @@ NonLoc Loc::NE(BasicValueFactory& BasicVals, const Loc& R) const {
 //===----------------------------------------------------------------------===//
 // Utility methods for constructing Non-Locs.
 //===----------------------------------------------------------------------===//
+
+NonLoc NonLoc::MakeVal(SymbolRef sym) {
+  return nonloc::SymbolVal(sym);
+}
+
 NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, unsigned X, 
                        bool isUnsigned) {
   return nonloc::ConcreteInt(BasicVals.getValue(X, sizeof(unsigned)*8, 
@@ -279,6 +284,14 @@ NonLoc NonLoc::MakeIntTruthVal(BasicValueFactory& BasicVals, bool b) {
 NonLoc NonLoc::MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
                                BasicValueFactory& BasicVals) {
   return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
+}
+
+SVal SVal::MakeSymbolValue(SymbolManager& SymMgr, const MemRegion* R, 
+                           QualType T) {
+  if (Loc::IsLocType(T))
+    return Loc::MakeVal(SymMgr.getSymbol(R));
+  else
+    return NonLoc::MakeVal(SymMgr.getSymbol(R));
 }
 
 SVal SVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
@@ -319,6 +332,8 @@ nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,
 Loc Loc::MakeVal(const MemRegion* R) { return loc::MemRegionVal(R); }
 
 Loc Loc::MakeVal(AddrLabelExpr* E) { return loc::GotoLabel(E->getLabel()); }
+
+Loc Loc::MakeVal(SymbolRef sym) { return loc::SymbolVal(sym); }
 
 //===----------------------------------------------------------------------===//
 // Pretty-Printing.

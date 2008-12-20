@@ -215,6 +215,20 @@ MemSpaceRegion* MemRegionManager::getUnknownRegion() {
   return LazyAllocate(unknown);
 }
 
+bool MemRegionManager::onStack(const MemRegion* R) {
+  while (const SubRegion* SR = dyn_cast<SubRegion>(R))
+    R = SR->getSuperRegion();
+
+  return (R != 0) && (R == stack);
+}
+
+bool MemRegionManager::onHeap(const MemRegion* R) {
+  while (const SubRegion* SR = dyn_cast<SubRegion>(R))
+    R = SR->getSuperRegion();
+
+  return (R != 0) && (R == heap); 
+}
+
 StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str) {
   llvm::FoldingSetNodeID ID;
   MemSpaceRegion* GlobalsR = getGlobalsRegion();

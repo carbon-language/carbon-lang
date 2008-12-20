@@ -1,4 +1,4 @@
-// RUN: clang -checker-simple -analyzer-store-region -verify %s
+// DISABLE: clang -checker-simple -analyzer-store-region -verify %s
 
 struct s {
   int data;

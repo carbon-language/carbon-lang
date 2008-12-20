@@ -71,7 +71,13 @@ public:
   inline bool operator!=(const SVal& R) const {
     return !(*this == R);
   }
-  
+
+  /// MakeSymbolValue - make a unique symbol value for the region R according to
+  /// its kind. R should be a scalar region. The symbol value T has the same
+  /// type as R's rvalue type.
+  static SVal MakeSymbolValue(SymbolManager& SymMgr, const MemRegion* R, 
+                              QualType T);
+
   static SVal GetSymbolValue(SymbolManager& SymMgr, VarDecl *D);
   static SVal getSymbolValue(SymbolManager& SymMgr, const MemRegion* R,
                              const llvm::APSInt* Idx, QualType T);
@@ -171,6 +177,8 @@ public:
   
   // Utility methods to create NonLocs.
 
+  static NonLoc MakeVal(SymbolRef sym);
+
   static NonLoc MakeVal(BasicValueFactory& BasicVals, unsigned X, 
                         bool isUnsigned);
 
@@ -212,6 +220,8 @@ public:
   static Loc MakeVal(const MemRegion* R);
     
   static Loc MakeVal(AddrLabelExpr* E);
+
+  static Loc MakeVal(SymbolRef sym);
   
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {

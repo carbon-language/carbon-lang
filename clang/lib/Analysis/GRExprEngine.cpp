@@ -1811,7 +1811,8 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
   for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
     const GRState* St = GetState(*I);
     unsigned Count = Builder->getCurrentBlockCount();
-        
+
+    // Decls without InitExpr are not initialized explicitly.
     if (InitEx) {
       SVal InitVal = GetSVal(St, InitEx);
       QualType T = VD->getType();
@@ -1829,11 +1830,9 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
         }
       }        
       
-      St = StateMgr.BindDecl(St, VD, &InitVal, Count);
-    }
-    else
-      St = StateMgr.BindDecl(St, VD, 0, Count);
-    
+      St = StateMgr.BindDecl(St, VD, InitVal);
+    } else
+      St = StateMgr.BindDeclWithNoInit(St, VD);
     
     // Check if 'VD' is a VLA and if so check if has a non-zero size.
     QualType T = getContext().getCanonicalType(VD->getType());

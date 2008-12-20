@@ -99,7 +99,7 @@ public:
   const MemRegion* getSuperRegion() const {
     return superRegion;
   }
-  
+
   static bool classof(const MemRegion* R) {
     return R->getKind() > SymbolicRegionKind;
   }
@@ -466,6 +466,12 @@ public:
     assert(R);
     return R == globals; 
   }
+
+  /// onStack - check if the region is allocated on the stack.
+  bool onStack(const MemRegion* R);
+
+  /// onHeap - check if the region is allocated on the heap, usually by malloc.
+  bool onHeap(const MemRegion* R);
   
   /// getAllocaRegion - Retrieve a region associated with a call to alloca().
   AllocaRegion* getAllocaRegion(const Expr* Ex, unsigned Cnt);

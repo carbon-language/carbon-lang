@@ -49,16 +49,19 @@ public:
   SVal GetRegionSVal(const GRState* state, const MemRegion* R) {
     return Retrieve(state, loc::MemRegionVal(R));
   }
-  
-  virtual Store Bind(Store St, Loc LV, SVal V) = 0;
-  virtual Store Remove(Store St, Loc LV) = 0;
+
+  /// Bind value V to location L.
+  virtual const GRState* Bind(const GRState* St, Loc L, SVal V) = 0;
+
+  virtual Store Remove(Store St, Loc L) = 0;
   
   /// BindCompoundLiteral - Return the store that has the bindings currently
   ///  in 'store' plus the bindings for the CompoundLiteral.  'R' is the region
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
-  virtual Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL,
-                                    SVal V) = 0;
+  virtual const GRState* BindCompoundLiteral(const GRState* St, 
+                                             const CompoundLiteralExpr* CL,
+                                             SVal V) = 0;
   
   virtual Store getInitialStore() = 0;
   virtual MemRegionManager& getRegionManager() = 0;
@@ -112,8 +115,11 @@ public:
                      llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                      LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) = 0;
 
-  virtual Store BindDecl(Store store, const VarDecl* VD, SVal* InitVal,
-                         unsigned Count) = 0;
+  virtual const GRState* BindDecl(const GRState* St, const VarDecl* VD, 
+                                  SVal InitVal) = 0;
+
+  virtual const GRState* BindDeclWithNoInit(const GRState* St, 
+                                            const VarDecl* VD) = 0;
 
   virtual const GRState* setExtent(const GRState* St,
                                    const MemRegion* R, SVal Extent) {

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
+#include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -21,14 +22,35 @@ void SymbolRef::print(llvm::raw_ostream& os) const {
   os << getNumber();
 }
 
-SymbolRef SymbolManager::getSymbol(VarDecl* D) {
+SymbolRef SymbolManager::getSymbol(const MemRegion* R) {
+  switch (R->getKind()) {
+  case MemRegion::VarRegionKind:
+    return getSymbol(cast<VarRegion>(R)->getDecl());
+  
+  case MemRegion::ElementRegionKind: {
+    const ElementRegion* ER = cast<ElementRegion>(R);
+    const llvm::APSInt& Idx = 
+      cast<nonloc::ConcreteInt>(ER->getIndex()).getValue();
+    return getElementSymbol(ER->getSuperRegion(), &Idx);
+  }
+
+  case MemRegion::FieldRegionKind: {
+    const FieldRegion* FR = cast<FieldRegion>(R);
+    return getFieldSymbol(FR->getSuperRegion(), FR->getDecl());
+  }
+  default:
+    assert(0 && "unprocessed region");
+  }
+}
+
+SymbolRef SymbolManager::getSymbol(const VarDecl* D) {
 
   assert (isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D) || 
           D->hasGlobalStorage());
   
   llvm::FoldingSetNodeID profile;
   
-  ParmVarDecl* PD = dyn_cast<ParmVarDecl>(D);
+  const ParmVarDecl* PD = dyn_cast<ParmVarDecl>(D);
   
   if (PD)
     SymbolDataParmVar::Profile(profile, PD);

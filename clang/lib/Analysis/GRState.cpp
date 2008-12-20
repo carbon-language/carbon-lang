@@ -59,51 +59,6 @@ GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
                                            LSymbols, DSymbols);
 }
 
-const GRState* GRStateManager::BindLoc(const GRState* St, Loc LV, SVal V) {
-  
-  Store OldStore = St->getStore();
-  Store NewStore = StoreMgr->Bind(OldStore, LV, V);
-  
-  if (NewStore == OldStore)
-    return St;
-  
-  GRState NewSt = *St;
-  NewSt.St = NewStore;
-  return getPersistentState(NewSt);    
-}
-
-const GRState* GRStateManager::BindDecl(const GRState* St, const VarDecl* VD, 
-                                        SVal* InitVal, unsigned Count) {
-  Store OldStore = St->getStore();
-  Store NewStore = StoreMgr->BindDecl(OldStore, VD, InitVal, Count);
-
-  if (NewStore == OldStore)
-    return St;
-  
-  GRState NewSt = *St;
-  NewSt.St = NewStore;
-  return getPersistentState(NewSt);
-}
-
-/// BindCompoundLiteral - Return the store that has the bindings currently
-///  in 'store' plus the bindings for the CompoundLiteral.  'R' is the region
-///  for the compound literal and 'BegInit' and 'EndInit' represent an
-///  array of initializer values.
-const GRState*
-GRStateManager::BindCompoundLiteral(const GRState* state,
-                                    const CompoundLiteralExpr* CL, SVal ILV) {
-
-  Store oldStore = state->getStore();
-  Store newStore = StoreMgr->BindCompoundLiteral(oldStore, CL, ILV);
-  
-  if (newStore == oldStore)
-    return state;
-  
-  GRState newState = *state;
-  newState.St = newStore;
-  return getPersistentState(newState);
-}
-
 const GRState* GRStateManager::Unbind(const GRState* St, Loc LV) {
   Store OldStore = St->getStore();
   Store NewStore = StoreMgr->Remove(OldStore, LV);
@@ -138,6 +93,13 @@ const GRState* GRStateManager::getPersistentState(GRState& State) {
   new (I) GRState(State);  
   StateSet.InsertNode(I, InsertPos);
   return I;
+}
+
+const GRState* GRStateManager::MakeStateWithStore(const GRState* St, 
+                                                  Store store) {
+  GRState NewSt = *St;
+  NewSt.St = store;
+  return getPersistentState(NewSt);
 }
 
 

@@ -336,15 +336,24 @@ public:
 
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
 
-  const GRState* BindDecl(const GRState* St, const VarDecl* VD, SVal* IVal,
-                          unsigned Count);
+  const GRState* BindDecl(const GRState* St, const VarDecl* VD, SVal IVal) {
+    // Store manager should return a persistent state.
+    return StoreMgr->BindDecl(St, VD, IVal);
+  }
+
+  const GRState* BindDeclWithNoInit(const GRState* St, const VarDecl* VD) {
+    // Store manager should return a persistent state.
+    return StoreMgr->BindDeclWithNoInit(St, VD);
+  }
   
   /// BindCompoundLiteral - Return the state that has the bindings currently
   ///  in 'state' plus the bindings for the CompoundLiteral.  'R' is the region
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
-  const GRState* BindCompoundLiteral(const GRState* state,
-                                     const CompoundLiteralExpr* CL, SVal V);
+  const GRState* BindCompoundLiteral(const GRState* St,
+                                     const CompoundLiteralExpr* CL, SVal V) {
+    return StoreMgr->BindCompoundLiteral(St, CL, V);
+  }
 
   const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
                                     const LiveVariables& Liveness,
@@ -468,11 +477,9 @@ public:
     return StoreMgr->GetRegionSVal(state, R);
   }  
   
-  void BindLoc(GRState& St, Loc LV, SVal V) {
-    St.St = StoreMgr->Bind(St.St, LV, V);
+  const GRState* BindLoc(const GRState* St, Loc LV, SVal V) {
+    return StoreMgr->Bind(St, LV, V);
   }
-  
-  const GRState* BindLoc(const GRState* St, Loc LV, SVal V);  
 
   void Unbind(GRState& St, Loc LV) {
     St.St = StoreMgr->Remove(St.St, LV);
@@ -481,6 +488,9 @@ public:
   const GRState* Unbind(const GRState* St, Loc LV);
   
   const GRState* getPersistentState(GRState& Impl);
+
+  // MakeStateWithStore - get a persistent state with the new store.
+  const GRState* MakeStateWithStore(const GRState* St, Store store);
   
   bool isEqual(const GRState* state, Expr* Ex, const llvm::APSInt& V);
   bool isEqual(const GRState* state, Expr* Ex, uint64_t);
@@ -501,7 +511,15 @@ public:
     return addGDM(st, GRStateTrait<T>::GDMIndex(), 
      GRStateTrait<T>::MakeVoidPtr(GRStateTrait<T>::Set(st->get<T>(), K, V, C)));
   }
-  
+
+  template <typename T>
+  const GRState* add(const GRState* st,
+                     typename GRStateTrait<T>::key_type K,
+                     typename GRStateTrait<T>::context_type C) {
+    return addGDM(st, GRStateTrait<T>::GDMIndex(),
+        GRStateTrait<T>::MakeVoidPtr(GRStateTrait<T>::Add(st->get<T>(), K, C)));
+  }
+
   template <typename T>
   const GRState* remove(const GRState* st,
                         typename GRStateTrait<T>::key_type K,
@@ -587,14 +605,12 @@ public:
     return GRStateRef(Mgr->BindExpr(St, Ex, V, Invalidate), *Mgr);
   }
     
-  GRStateRef BindDecl(const VarDecl* VD, SVal* InitVal, unsigned Count) {
-    return GRStateRef(Mgr->BindDecl(St, VD, InitVal, Count), *Mgr);
+  GRStateRef BindDecl(const VarDecl* VD, SVal InitVal) {
+    return GRStateRef(Mgr->BindDecl(St, VD, InitVal), *Mgr);
   }
   
   GRStateRef BindLoc(Loc LV, SVal V) {
-    GRState StImpl = *St;
-    Mgr->BindLoc(StImpl, LV, V);    
-    return GRStateRef(Mgr->getPersistentState(StImpl), *Mgr);
+    return GRStateRef(Mgr->BindLoc(St, LV, V), *Mgr);
   }
   
   GRStateRef BindLoc(SVal LV, SVal V) {
@@ -644,7 +660,12 @@ public:
                  typename GRStateTrait<T>::value_type E) {
     return GRStateRef(Mgr->set<T>(St, K, E, get_context<T>()), *Mgr);
   }  
-  
+
+  template<typename T>
+  GRStateRef add(typename GRStateTrait<T>::key_type K) {
+    return GRStateRef(Mgr->add<T>(St, K, get_context<T>()), *Mgr);
+  }
+
   template<typename T>
   GRStateRef remove(typename GRStateTrait<T>::key_type K,
                     typename GRStateTrait<T>::context_type C) {
@@ -658,7 +679,7 @@ public:
   
   template<typename T>
   bool contains(typename GRStateTrait<T>::key_type key) const {
-    return St->contains(key);
+    return St->contains<T>(key);
   }
   
   // Lvalue methods.

@@ -104,15 +104,15 @@ public:
 };
 
 class SymbolDataParmVar : public SymbolData {
-  ParmVarDecl *VD;
+  const ParmVarDecl *VD;
 
 public:  
-  SymbolDataParmVar(SymbolRef MySym, ParmVarDecl* vd)
+  SymbolDataParmVar(SymbolRef MySym, const ParmVarDecl* vd)
     : SymbolData(ParmKind, MySym), VD(vd) {}
   
-  ParmVarDecl* getDecl() const { return VD; }  
+  const ParmVarDecl* getDecl() const { return VD; }  
   
-  static void Profile(llvm::FoldingSetNodeID& profile, ParmVarDecl* VD) {
+  static void Profile(llvm::FoldingSetNodeID& profile, const ParmVarDecl* VD) {
     profile.AddInteger((unsigned) ParmKind);
     profile.AddPointer(VD);
   }
@@ -128,15 +128,15 @@ public:
 };
   
 class SymbolDataGlobalVar : public SymbolData {
-  VarDecl *VD;
+  const VarDecl *VD;
 
 public:
-  SymbolDataGlobalVar(SymbolRef MySym, VarDecl* vd) :
+  SymbolDataGlobalVar(SymbolRef MySym, const VarDecl* vd) :
     SymbolData(GlobalKind, MySym), VD(vd) {}
   
-  VarDecl* getDecl() const { return VD; }
+  const VarDecl* getDecl() const { return VD; }
   
-  static void Profile(llvm::FoldingSetNodeID& profile, VarDecl* VD) {
+  static void Profile(llvm::FoldingSetNodeID& profile, const VarDecl* VD) {
     profile.AddInteger((unsigned) GlobalKind);
     profile.AddPointer(VD);
   }
@@ -275,8 +275,10 @@ public:
     : SymbolCounter(0), BPAlloc(bpalloc) {}
   
   ~SymbolManager();
-  
-  SymbolRef getSymbol(VarDecl* D);
+
+  /// Make a unique symbol for MemRegion R according to its kind.
+  SymbolRef getSymbol(const MemRegion* R);
+  SymbolRef getSymbol(const VarDecl* D);
   SymbolRef getElementSymbol(const MemRegion* R, const llvm::APSInt* Idx);
   SymbolRef getFieldSymbol(const MemRegion* R, const FieldDecl* D);
   SymbolRef getConjuredSymbol(Stmt* E, QualType T, unsigned VisitCount);
