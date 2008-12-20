@@ -192,17 +192,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
     // Allocate memory for the array.
     llvm::Value *VLA = Builder.CreateAlloca(llvm::Type::Int8Ty, VLASize, "vla");
-    VLA = Builder.CreateBitCast(VLA, LElemPtrTy, "tmp");
-
-    llvm::AllocaInst *Alloc = 
-      CreateTempAlloca(LElemPtrTy, D.getIdentifier()->getName());
-    
-    // FIXME: Volatile?
-    Builder.CreateStore(VLA, Alloc);
-    
-    DeclPtr = Alloc;
+    DeclPtr = Builder.CreateBitCast(VLA, LElemPtrTy, "tmp");
   }
-  
+
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
   DMEntry = DeclPtr;

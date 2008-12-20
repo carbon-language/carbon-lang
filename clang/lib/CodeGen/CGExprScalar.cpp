@@ -513,16 +513,14 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
     // FIXME: For now we assume that all source arrays map to LLVM arrays.  This
     // will not true when we add support for VLAs.
     Value *V = EmitLValue(Op).getAddress();  // Bitfields can't be arrays.
-    
-    if (!(isa<llvm::PointerType>(V->getType()) &&
-          isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
-                               ->getElementType()))) {
-      CGF.ErrorUnsupported(E, "variable-length array cast", true);
-      if (E->getType()->isVoidType())
-        return 0;
-      return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
+
+    if (!Op->getType()->isVariableArrayType()) {
+      assert(isa<llvm::PointerType>(V->getType()) && "Expected pointer");
+      assert(isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
+                                 ->getElementType()) &&
+             "Expected pointer to array");
+      V = Builder.CreateStructGEP(V, 0, "arraydecay");
     }
-    V = Builder.CreateStructGEP(V, 0, "arraydecay");
     
     // The resultant pointer type can be implicitly casted to other pointer
     // types as well (e.g. void*) and can be implicitly converted to integer.
