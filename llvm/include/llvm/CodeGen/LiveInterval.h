@@ -244,7 +244,7 @@ namespace llvm {
 
     /// removeKills - Remove all the kills in specified range
     /// [Start, End] of the specified val#.
-    void removeKills(VNInfo *VNI, unsigned Start, unsigned End) {
+    static void removeKills(VNInfo *VNI, unsigned Start, unsigned End) {
       SmallVector<unsigned, 4> &kills = VNI->kills;
       SmallVector<unsigned, 4>::iterator
         I = std::lower_bound(kills.begin(), kills.end(), Start);
@@ -255,7 +255,7 @@ namespace llvm {
 
     /// isKill - Return true if the specified index is a kill of the
     /// specified val#.
-    bool isKill(const VNInfo *VNI, unsigned KillIdx) const {
+    static bool isKill(const VNInfo *VNI, unsigned KillIdx) {
       const SmallVector<unsigned, 4> &kills = VNI->kills;
       SmallVector<unsigned, 4>::const_iterator
         I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
