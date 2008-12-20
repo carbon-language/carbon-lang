@@ -350,9 +350,10 @@ public:
   // instruction in LLVM instead once it works well enough.  
   llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty);
 
-  // EmitVLASize - Generate code for the VLA type. Returns an
-  // lLVM value that corresponds to the size in bytes of the 
-  llvm::Value *EmitVLASize(const VariableArrayType *);
+  // EmitVLASize - Generate code for any VLA size expressions that might occur
+  // in a variably modified type. If Ty is a VLA, will return the value that
+  // corresponds to the size in bytes of the VLA type. Will return 0 otherwise.
+  llvm::Value *EmitVLASize(QualType Ty);
                            
   // GetVLASize - Returns an LLVM value that corresponds to the size in bytes
   // of a variable length array type.

@@ -410,29 +410,40 @@ llvm::Value *CodeGenFunction::GetVLASize(const VariableArrayType *VAT)
   return SizeEntry;
 }
 
-llvm::Value *CodeGenFunction::EmitVLASize(const VariableArrayType *VAT)
+llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty)
 {
-  llvm::Value *&SizeEntry = VLASizeMap[VAT];
-
-  assert(!SizeEntry && "Must not emit the same VLA size more than once!");
-  // Get the element size;
-  llvm::Value *ElemSize;
+  assert(Ty->isVariablyModifiedType() &&
+         "Must pass variably modified type to EmitVLASizes!");
   
-  QualType ElemTy = VAT->getElementType();
-
-  if (const VariableArrayType *ElemVAT = 
-      getContext().getAsVariableArrayType(ElemTy))
-    ElemSize = EmitVLASize(ElemVAT);
+  if (const VariableArrayType *VAT = getContext().getAsVariableArrayType(Ty)) {
+    llvm::Value *&SizeEntry = VLASizeMap[VAT];
+    
+    assert(!SizeEntry && "Must not emit the same VLA size more than once!");
+    
+    // Get the element size;
+    llvm::Value *ElemSize;
+    
+    QualType ElemTy = VAT->getElementType();
+    
+    if (ElemTy->isVariableArrayType())
+      ElemSize = EmitVLASize(ElemTy);
+    else {
+      // FIXME: We use Int32Ty here because the alloca instruction takes a
+      // 32-bit integer. What should we do about overflow?
+      ElemSize = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                                        getContext().getTypeSize(ElemTy) / 8);
+    }
+    
+    llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
+    
+    SizeEntry = Builder.CreateMul(ElemSize, NumElements);
+    
+    return SizeEntry;
+  } else if (const PointerType *PT = Ty->getAsPointerType())
+    EmitVLASize(PT->getPointeeType());
   else {
-    // FIXME: We use Int32Ty here because the alloca instruction takes a
-    // 32-bit integer. What should we do about overflow?
-    ElemSize = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
-                                      getContext().getTypeSize(ElemTy) / 8);
+    assert(0 && "unknown VM type!");
   }
-
-  llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
-
-  SizeEntry = Builder.CreateMul(ElemSize, NumElements);
-
-  return SizeEntry;
+  
+  return 0;
 }

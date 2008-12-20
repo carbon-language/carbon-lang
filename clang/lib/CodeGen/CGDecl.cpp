@@ -160,9 +160,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         D.getStorageClass() == VarDecl::Register ? ".reg." : ".auto.";
       DeclPtr = GenerateStaticBlockVarDecl(D, true, Class);
     }
+    
+    if (Ty->isVariablyModifiedType())
+      EmitVLASize(Ty);
   } else {
-    const VariableArrayType *VAT = getContext().getAsVariableArrayType(Ty);
-
     if (!StackSaveValues.back()) {
       // Save the stack.
       const llvm::Type *LTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
@@ -180,7 +181,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     const llvm::Type *LElemPtrTy =
       llvm::PointerType::get(LElemTy, D.getType().getAddressSpace());
 
-    llvm::Value *VLASize = EmitVLASize(VAT);
+    llvm::Value *VLASize = EmitVLASize(Ty);
 
     // Allocate memory for the array.
     llvm::Value *VLA = Builder.CreateAlloca(llvm::Type::Int8Ty, VLASize, "vla");
