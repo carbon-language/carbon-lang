@@ -1,6 +1,7 @@
 // RUN: clang -fnext-runtime -emit-llvm -o %t %s &&
 // RUN: grep -e "\^{Innermost=CC}" %t | count 1 &&
-// RUN: grep -e "{Derived=#ib32b8b3b8sb16b8b8b2b8ccb6}" %t | count 1
+// RUN: grep -e "{Derived=#ib32b8b3b8sb16b8b8b2b8ccb6}" %t | count 1 &&
+// RUN: grep -e "{B1=#@c}" %t | count 1
 
 @class Int1;
 
@@ -48,8 +49,20 @@ struct Innermost {
 @implementation Derived
 @end
 
+@interface B1 
+{
+    struct objc_class *isa;
+    Int1 *sBase;
+    char c;
+}
+@end
+
+@implementation B1
+@end
+
 int main()
 {
 	const char *en = @encode(Derived);
+	const char *eb = @encode(B1);
 }
 

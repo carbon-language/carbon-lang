@@ -1795,10 +1795,12 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
     else if (PointeeTy->isObjCInterfaceType()) {
       S += '@';
-      ObjCInterfaceDecl *OI = PointeeTy->getAsObjCInterfaceType()->getDecl();
-      S += '"';
-      S += OI->getNameAsCString();
-      S += '"';
+      if (FD) {
+        ObjCInterfaceDecl *OI = PointeeTy->getAsObjCInterfaceType()->getDecl();
+        S += '"';
+        S += OI->getNameAsCString();
+        S += '"';
+      }
       return;
     } else if (isObjCClassType(PointeeTy)) {
       S += '#';
