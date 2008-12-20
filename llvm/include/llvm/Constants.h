@@ -195,9 +195,11 @@ public:
     return Val.getActiveBits() > 64 || Val.getZExtValue() >= Num;
   }
 
-  /// @returns the 64-bit value of this constant if its active bits number is 
-  /// not greater than 64, otherwise, just return the given uint64_t number.
-  /// @brief Get the constant's value if possible.
+  /// getLimitedValue - If the value is smaller than the specified limit,
+  /// return it, otherwise return the limit value.  This causes the value
+  /// to saturate to the limit.
+  /// @returns the min of the value of the constant and the specified value
+  /// @brief Get the constant's value with a saturation limit
   uint64_t getLimitedValue(uint64_t Limit = ~0ULL) const {
     return Val.getLimitedValue(Limit);
   }
