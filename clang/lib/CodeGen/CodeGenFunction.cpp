@@ -401,30 +401,38 @@ llvm::Value *CodeGenFunction::EmitVAArg(llvm::Value *VAListAddr, QualType Ty)
   return AddrTyped;
 }
 
+
 llvm::Value *CodeGenFunction::GetVLASize(const VariableArrayType *VAT)
 {
   llvm::Value *&SizeEntry = VLASizeMap[VAT];
-
-  if (!SizeEntry) {
-    // Get the element size;
-    llvm::Value *ElemSize;
   
-    QualType ElemTy = VAT->getElementType();
+  assert(SizeEntry && "Did not emit size for type");
+  return SizeEntry;
+}
 
-    if (const VariableArrayType *ElemVAT = 
-        getContext().getAsVariableArrayType(ElemTy))
-      ElemSize = GetVLASize(ElemVAT);
-    else {
-      // FIXME: We use Int32Ty here because the alloca instruction takes a
-      // 32-bit integer. What should we do about overflow?
-      ElemSize = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
-                                        getContext().getTypeSize(ElemTy) / 8);
-    }
+llvm::Value *CodeGenFunction::EmitVLASize(const VariableArrayType *VAT)
+{
+  llvm::Value *&SizeEntry = VLASizeMap[VAT];
 
-    llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
+  assert(!SizeEntry && "Must not emit the same VLA size more than once!");
+  // Get the element size;
+  llvm::Value *ElemSize;
+  
+  QualType ElemTy = VAT->getElementType();
 
-    SizeEntry = Builder.CreateMul(ElemSize, NumElements);
+  if (const VariableArrayType *ElemVAT = 
+      getContext().getAsVariableArrayType(ElemTy))
+    ElemSize = EmitVLASize(ElemVAT);
+  else {
+    // FIXME: We use Int32Ty here because the alloca instruction takes a
+    // 32-bit integer. What should we do about overflow?
+    ElemSize = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                                      getContext().getTypeSize(ElemTy) / 8);
   }
+
+  llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
+
+  SizeEntry = Builder.CreateMul(ElemSize, NumElements);
 
   return SizeEntry;
 }

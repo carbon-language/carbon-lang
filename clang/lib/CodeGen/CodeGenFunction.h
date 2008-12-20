@@ -349,7 +349,11 @@ public:
   // FIXME: We should be able to get rid of this method and use the va_arg
   // instruction in LLVM instead once it works well enough.  
   llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty);
-  
+
+  // EmitVLASize - Generate code for the VLA type. Returns an
+  // lLVM value that corresponds to the size in bytes of the 
+  llvm::Value *EmitVLASize(const VariableArrayType *);
+                           
   // GetVLASize - Returns an LLVM value that corresponds to the size in bytes
   // of a variable length array type.
   llvm::Value *GetVLASize(const VariableArrayType *);

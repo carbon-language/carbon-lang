@@ -180,7 +180,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     const llvm::Type *LElemPtrTy =
       llvm::PointerType::get(LElemTy, D.getType().getAddressSpace());
 
-    llvm::Value *VLASize = GetVLASize(VAT);
+    llvm::Value *VLASize = EmitVLASize(VAT);
 
     // Allocate memory for the array.
     llvm::Value *VLA = Builder.CreateAlloca(llvm::Type::Int8Ty, VLASize, "vla");
