@@ -706,8 +706,25 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 
   // We know that the pointer points to a type of the correct size, unless the
   // size is a VLA.
-  if (!E->getType()->isConstantSizeType())
-    return EmitUnsupportedLValue(E, "VLA index");
+  if (const VariableArrayType *VAT = 
+        getContext().getAsVariableArrayType(E->getType())) {
+    llvm::Value *VLASize = VLASizeMap[VAT];
+    
+    Idx = Builder.CreateMul(Idx, VLASize);
+    
+    QualType BaseType = VAT->getElementType();
+    
+    // Divide by the element size.
+    while (const VariableArrayType *AT = 
+           getContext().getAsVariableArrayType(BaseType))
+      BaseType = AT->getElementType();
+  
+    uint64_t BaseTypeSize = getContext().getTypeSize(BaseType) / 8;
+    Idx = Builder.CreateUDiv(Idx,
+                             llvm::ConstantInt::get(Idx->getType(), 
+                                                    BaseTypeSize));
+  }
+  
   QualType ExprTy = getContext().getCanonicalType(E->getBase()->getType());
 
   return LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"),
