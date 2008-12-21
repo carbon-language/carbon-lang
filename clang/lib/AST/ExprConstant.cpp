@@ -416,6 +416,12 @@ public:
     return true;
   }
   
+  bool VisitGNUNullExpr(const GNUNullExpr *E) {
+    Result = APSInt::getNullValue(getIntTypeSizeInBits(E->getType()));
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    return true;
+  }
+    
   bool VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
     Result = APSInt::getNullValue(getIntTypeSizeInBits(E->getType()));
     Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());

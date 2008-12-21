@@ -113,6 +113,9 @@ public:
   Value *VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
+  Value *VisitGNUNullExpr(const GNUNullExpr *E) {
+    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+  }
   Value *VisitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()),
                                   CGF.getContext().typesAreCompatible(
