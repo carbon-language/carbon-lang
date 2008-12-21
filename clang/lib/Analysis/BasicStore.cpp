@@ -53,7 +53,7 @@ public:
 
   // FIXME: Investigate what is using this. This method should be removed.
   virtual Loc getLoc(const VarDecl* VD) {
-    return loc::MemRegionVal(MRMgr.getVarRegion(VD));
+    return Loc::MakeVal(MRMgr.getVarRegion(VD));
   }
   
   const GRState* BindCompoundLiteral(const GRState* St, 
@@ -126,17 +126,17 @@ StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
 }
 
 SVal BasicStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
-  return loc::MemRegionVal(MRMgr.getVarRegion(VD));
+  return Loc::MakeVal(MRMgr.getVarRegion(VD));
 }
 
 SVal BasicStoreManager::getLValueString(const GRState* St, 
                                         const StringLiteral* S) {
-  return loc::MemRegionVal(MRMgr.getStringRegion(S));
+  return Loc::MakeVal(MRMgr.getStringRegion(S));
 }
 
 SVal BasicStoreManager::getLValueCompoundLiteral(const GRState* St,
                                                  const CompoundLiteralExpr* CL){
-  return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL));
+  return Loc::MakeVal(MRMgr.getCompoundLiteralRegion(CL));
 }
 
 SVal BasicStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
@@ -199,7 +199,7 @@ SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
       return Base;
   }
   
-  return loc::MemRegionVal(MRMgr.getFieldRegion(D, BaseR));
+  return Loc::MakeVal(MRMgr.getFieldRegion(D, BaseR));
 }
 
 SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
@@ -260,7 +260,7 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
   }
   
   if (BaseR)  
-    return loc::MemRegionVal(MRMgr.getElementRegion(UnknownVal(), BaseR));
+    return Loc::MakeVal(MRMgr.getElementRegion(UnknownVal(), BaseR));
   else
     return UnknownVal();
 }
@@ -406,7 +406,7 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
     const VarRegion* R = cast<VarRegion>(MRMgr.getVarRegion(I.getKey()));
     
     if (!Marked.count(R)) {
-      store = Remove(store, loc::MemRegionVal(R));
+      store = Remove(store, Loc::MakeVal(R));
       SVal X = I.getData();
       
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
@@ -441,8 +441,8 @@ Store BasicStoreManager::getInitialStore() {
           SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
                                                  MRMgr.getHeapRegion());
           
-          St = BindInternal(St, loc::MemRegionVal(MRMgr.getVarRegion(PD)),
-                            loc::MemRegionVal(SelfRegion));
+          St = BindInternal(St, Loc::MakeVal(MRMgr.getVarRegion(PD)),
+                            Loc::MakeVal(SelfRegion));
         }
       }
     }
@@ -461,7 +461,7 @@ Store BasicStoreManager::getInitialStore() {
                  ? SVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
                  : UndefinedVal();
 
-        St = BindInternal(St, loc::MemRegionVal(MRMgr.getVarRegion(VD)), X);
+        St = BindInternal(St, Loc::MakeVal(MRMgr.getVarRegion(VD)), X);
       }
     }
   }
