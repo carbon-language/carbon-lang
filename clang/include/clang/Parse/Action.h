@@ -342,25 +342,25 @@ public:
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks.
   //===--------------------------------------------------------------------===//
-  
-  virtual StmtResult ActOnNullStmt(SourceLocation SemiLoc) {
-    return 0;
+
+  virtual OwningStmtResult ActOnNullStmt(SourceLocation SemiLoc) {
+    return StmtEmpty();
   }
-  
-  virtual StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
-                                       StmtTy **Elts, unsigned NumElts,
-                                       bool isStmtExpr) {
-    return 0;
+
+  virtual OwningStmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
+                                             MultiStmtArg Elts,
+                                             bool isStmtExpr) {
+    return StmtEmpty();
   }
-  virtual StmtResult ActOnDeclStmt(DeclTy *Decl, SourceLocation StartLoc,
+  virtual OwningStmtResult ActOnDeclStmt(DeclTy *Decl, SourceLocation StartLoc,
                                    SourceLocation EndLoc) {
-    return 0;
+    return StmtEmpty();
   }
-  
-  virtual StmtResult ActOnExprStmt(ExprTy *Expr) {
-    return StmtResult(Expr);
+
+  virtual OwningStmtResult ActOnExprStmt(ExprArg Expr) {
+    return OwningStmtResult(*this, Expr.release());
   }
-  
+
   /// ActOnCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
   /// which can specify an RHS value.
   virtual StmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,

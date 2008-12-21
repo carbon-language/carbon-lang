@@ -552,14 +552,14 @@ public:
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:
-  virtual StmtResult ActOnExprStmt(ExprTy *Expr);
-  
-  virtual StmtResult ActOnNullStmt(SourceLocation SemiLoc);
-  virtual StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
-                                       StmtTy **Elts, unsigned NumElts,
-                                       bool isStmtExpr);
-  virtual StmtResult ActOnDeclStmt(DeclTy *Decl, SourceLocation StartLoc,
-                                   SourceLocation EndLoc);
+  virtual OwningStmtResult ActOnExprStmt(ExprArg Expr);
+
+  virtual OwningStmtResult ActOnNullStmt(SourceLocation SemiLoc);
+  virtual OwningStmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
+                                             MultiStmtArg Elts,
+                                             bool isStmtExpr);
+  virtual OwningStmtResult ActOnDeclStmt(DeclTy *Decl, SourceLocation StartLoc,
+                                         SourceLocation EndLoc);
   virtual StmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
                                    SourceLocation DotDotDotLoc, ExprTy *RHSVal,
                                    SourceLocation ColonLoc, StmtTy *SubStmt);

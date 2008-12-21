@@ -1365,7 +1365,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
 
   // If the function body could not be parsed, make a bogus compoundstmt.
   if (FnBody.isInvalid())
-    FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc, 0, 0, false);
+    FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc,
+                                       MultiStmtArg(Actions), false);
 
   // Leave the function body scope.
   BodyScope.Exit();
@@ -1392,7 +1393,7 @@ Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   }
   // Otherwise, eat the semicolon.
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-  return Owned(Actions.ActOnExprStmt(Res.release()));
+  return Actions.ActOnExprStmt(move_convert(Res));
 }
 
 Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {

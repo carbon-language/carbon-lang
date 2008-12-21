@@ -241,27 +241,29 @@ namespace {
     //===--------------------------------------------------------------------===//
     // Statement Parsing Callbacks.
     //===--------------------------------------------------------------------===//
-  
-    virtual StmtResult ActOnNullStmt(SourceLocation SemiLoc) {
+
+    virtual OwningStmtResult ActOnNullStmt(SourceLocation SemiLoc) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
+    }
+
+    virtual OwningStmtResult ActOnCompoundStmt(SourceLocation L,
+                                               SourceLocation R,
+                                               MultiStmtArg Elts,
+                                               bool isStmtExpr) {
+      llvm::cout << __FUNCTION__ << "\n";
+      return StmtEmpty();
+    }
+    virtual OwningStmtResult ActOnDeclStmt(DeclTy *Decl,
+                                           SourceLocation StartLoc,
+                                           SourceLocation EndLoc) {
+      llvm::cout << __FUNCTION__ << "\n";
+      return StmtEmpty();
     }
   
-    virtual StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
-                                         StmtTy **Elts, unsigned NumElts,
-                                         bool isStmtExpr) {
+    virtual OwningStmtResult ActOnExprStmt(ExprArg Expr) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
-    }
-    virtual StmtResult ActOnDeclStmt(DeclTy *Decl, SourceLocation StartLoc,
-                                     SourceLocation EndLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
-      return 0;
-    }
-  
-    virtual StmtResult ActOnExprStmt(ExprTy *Expr) {
-      llvm::cout << __FUNCTION__ << "\n";
-      return StmtResult(Expr);
+      return OwningStmtResult(*this, Expr.release());
     }
   
     /// ActOnCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,

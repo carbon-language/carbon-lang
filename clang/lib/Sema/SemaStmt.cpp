@@ -20,31 +20,31 @@
 #include "clang/Basic/Diagnostic.h"
 using namespace clang;
 
-Sema::StmtResult Sema::ActOnExprStmt(ExprTy *expr) {
-  Expr *E = static_cast<Expr*>(expr);
+Sema::OwningStmtResult Sema::ActOnExprStmt(ExprArg expr) {
+  Expr *E = static_cast<Expr*>(expr.release());
   assert(E && "ActOnExprStmt(): missing expression");
-  
+
   // C99 6.8.3p2: The expression in an expression statement is evaluated as a
   // void expression for its side effects.  Conversion to void allows any
   // operand, even incomplete types.
-  
+
   // Same thing in for stmt first clause (when expr) and third clause.
-  return E;
+  return Owned(static_cast<Stmt*>(E));
 }
 
 
-Sema::StmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc) {
-  return new NullStmt(SemiLoc);
+Sema::OwningStmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc) {
+  return Owned(new NullStmt(SemiLoc));
 }
 
-Sema::StmtResult Sema::ActOnDeclStmt(DeclTy *decl, SourceLocation StartLoc,
-                                     SourceLocation EndLoc) {
+Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclTy *decl,
+                                           SourceLocation StartLoc,
+                                           SourceLocation EndLoc) {
   if (decl == 0)
-    return true;
-  
+    return StmtError();
+
   ScopedDecl *SD = cast<ScopedDecl>(static_cast<Decl *>(decl));
-  
-  
+
   // This is a temporary hack until we are always passing around
   // DeclGroupRefs.
   llvm::SmallVector<Decl*, 10> decls;
@@ -56,21 +56,22 @@ Sema::StmtResult Sema::ActOnDeclStmt(DeclTy *decl, SourceLocation StartLoc,
   }
 
   assert (!decls.empty());
-    
+
   if (decls.size() == 1) {
     DeclGroupOwningRef DG(*decls.begin());                      
-    return new DeclStmt(DG, StartLoc, EndLoc);
+    return Owned(new DeclStmt(DG, StartLoc, EndLoc));
   }
   else {
     DeclGroupOwningRef DG(DeclGroup::Create(Context, decls.size(), &decls[0]));
-    return new DeclStmt(DG, StartLoc, EndLoc);
+    return Owned(new DeclStmt(DG, StartLoc, EndLoc));
   }
 }
 
-Action::StmtResult 
+Action::OwningStmtResult
 Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
-                        StmtTy **elts, unsigned NumElts, bool isStmtExpr) {
-  Stmt **Elts = reinterpret_cast<Stmt**>(elts);
+                        MultiStmtArg elts, bool isStmtExpr) {
+  unsigned NumElts = elts.size();
+  Stmt **Elts = reinterpret_cast<Stmt**>(elts.release());
   // If we're in C89 mode, check that we don't have any decls after stmts.  If
   // so, emit an extension diagnostic.
   if (!getLangOptions().C99 && !getLangOptions().CPlusPlus) {
@@ -111,11 +112,11 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
     else if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E))
       Diag(UO->getOperatorLoc(), diag::warn_unused_expr)
         << UO->getSubExpr()->getSourceRange();
-    else 
+    else
       Diag(E->getExprLoc(), diag::warn_unused_expr) << E->getSourceRange();
   }
-  
-  return new CompoundStmt(Elts, NumElts, L, R);
+
+  return Owned(new CompoundStmt(Elts, NumElts, L, R));
 }
 
 Action::StmtResult

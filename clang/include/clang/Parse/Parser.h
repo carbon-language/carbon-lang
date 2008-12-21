@@ -90,6 +90,7 @@ public:
   typedef Action::OwningTemplateArgResult OwningTemplateArgResult;
 
   typedef Action::ExprArg ExprArg;
+  typedef Action::MultiStmtArg MultiStmtArg;
 
   /// Adorns a ExprResult with Actions to make it an OwningExprResult
   OwningExprResult Owned(ExprResult res) {

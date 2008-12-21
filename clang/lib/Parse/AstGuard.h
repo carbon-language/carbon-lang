@@ -23,7 +23,7 @@ namespace clang
   /// automatically freeing them on destruction unless it's been disowned.
   /// Instantiated for statements and expressions (Action::DeleteStmt and
   /// Action::DeleteExpr).
-  template <void (ActionBase::*Destroyer)(void*), unsigned N>
+  template <ASTDestroyer Destroyer, unsigned N>
   class ASTVector : public llvm::SmallVector<void*, N> {
   private:
     Action &Actions;
@@ -50,6 +50,8 @@ namespace clang
       Owns = false;
       return &(*this)[0];
     }
+
+    Action &getActions() const { return Actions; }
   };
 
   /// A SmallVector of statements, with stack size 32 (as that is the only one
@@ -57,6 +59,11 @@ namespace clang
   typedef ASTVector<&Action::DeleteStmt, 32> StmtVector;
   /// A SmallVector of expressions, with stack size 12 (the maximum used.)
   typedef ASTVector<&Action::DeleteExpr, 12> ExprVector;
+
+  template <ASTDestroyer Destroyer, unsigned N> inline
+  ASTMultiPtr<Destroyer> move_convert(ASTVector<Destroyer, N> &vec) {
+    return ASTMultiPtr<Destroyer>(vec.getActions(), vec.take(), vec.size());
+  }
 }
 
 #endif

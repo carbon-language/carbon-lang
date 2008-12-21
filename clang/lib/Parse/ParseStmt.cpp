@@ -101,7 +101,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       SourceLocation DeclStart = Tok.getLocation();
       DeclTy *Decl = ParseDeclaration(Declarator::BlockContext);
       // FIXME: Pass in the right location for the end of the declstmt.
-      return Owned(Actions.ActOnDeclStmt(Decl, DeclStart, DeclStart));
+      return Actions.ActOnDeclStmt(Decl, DeclStart, DeclStart);
     } else if (Tok.is(tok::r_brace)) {
       Diag(Tok, diag::err_expected_statement);
       return StmtError();
@@ -117,7 +117,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       }
       // Otherwise, eat the semicolon.
       ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-      return Owned(Actions.ActOnExprStmt(Expr.release()));
+      return Actions.ActOnExprStmt(move_convert(Expr));
     }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
@@ -128,7 +128,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   case tok::l_brace:                // C99 6.8.2: compound-statement
     return ParseCompoundStatement();
   case tok::semi:                   // C99 6.8.3p3: expression[opt] ';'
-    return Owned(Actions.ActOnNullStmt(ConsumeToken()));
+    return Actions.ActOnNullStmt(ConsumeToken());
 
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
     return ParseIfStatement();
@@ -395,7 +395,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         // Eat the semicolon at the end of stmt and convert the expr into a
         // statement.
         ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-        R = Actions.ActOnExprStmt(Res.release());
+        R = Actions.ActOnExprStmt(move_convert(Res));
       }
     }
 
@@ -410,8 +410,8 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   }
 
   SourceLocation RBraceLoc = ConsumeBrace();
-  return Owned(Actions.ActOnCompoundStmt(LBraceLoc, RBraceLoc, Stmts.take(),
-                                         Stmts.size(), isStmtExpr));
+  return Actions.ActOnCompoundStmt(LBraceLoc, RBraceLoc, move_convert(Stmts),
+                                   isStmtExpr);
 }
 
 /// ParseParenExprOrCondition:
@@ -863,7 +863,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
 
     // Turn the expression into a stmt.
     if (!Value.isInvalid())
-      FirstPart = Actions.ActOnExprStmt(Value.release());
+      FirstPart = Actions.ActOnExprStmt(move_convert(Value));
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();
@@ -900,7 +900,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
       Value = ParseExpression();
       if (!Value.isInvalid()) {
         // Turn the expression into a stmt.
-        ThirdPart = Actions.ActOnExprStmt(Value.release());
+        ThirdPart = Actions.ActOnExprStmt(move_convert(Value));
       }
     }
   }
@@ -1039,7 +1039,7 @@ Parser::OwningStmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
              Tok.isNot(tok::r_brace) && Tok.isNot(tok::semi) && 
              Tok.isNot(tok::eof));
   }
-  return Owned(Actions.ActOnNullStmt(Tok.getLocation()));
+  return Actions.ActOnNullStmt(Tok.getLocation());
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.
@@ -1239,7 +1239,7 @@ Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl,
 
   // If the function body could not be parsed, make a bogus compoundstmt.
   if (FnBody.isInvalid())
-    FnBody = Owned(Actions.ActOnCompoundStmt(L, R, 0, 0, false));
+    FnBody = Actions.ActOnCompoundStmt(L, R, MultiStmtArg(Actions), false);
 
   return Actions.ActOnFinishFunctionBody(Decl, move_convert(FnBody));
 }
