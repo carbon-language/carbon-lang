@@ -80,7 +80,10 @@ public:
   /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
   /// a pointer, Val is an i32 value, and Len is an 'intptr_t' value.
   Value *EmitMemChr(Value *Ptr, Value *Val, Value *Len, IRBuilder<> &B);
-    
+
+  /// EmitMemCmp - Emit a call to the memcmp function.
+  Value *EmitMemCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilder<> &B);
+
   /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name' (e.g.
   /// 'floor').  This function is known to take a single of type matching 'Op'
   /// and returns one value with the same type.  If 'Op' is a long double, 'l'
@@ -106,7 +109,7 @@ public:
   /// EmitFWrite - Emit a call to the fwrite function.  This assumes that Ptr is
   /// a pointer, Size is an 'intptr_t', and File is a pointer to FILE.
   void EmitFWrite(Value *Ptr, Value *Size, Value *File, IRBuilder<> &B);
-    
+  
 };
 } // End anonymous namespace.
 
@@ -149,6 +152,19 @@ Value *LibCallOptimization::EmitMemChr(Value *Ptr, Value *Val,
                                          Type::Int32Ty, TD->getIntPtrType(),
                                          NULL);
   return B.CreateCall3(MemChr, CastToCStr(Ptr, B), Val, Len, "memchr");
+}
+
+/// EmitMemCmp - Emit a call to the memcmp function.
+Value *LibCallOptimization::EmitMemCmp(Value *Ptr1, Value *Ptr2,
+                                       Value *Len, IRBuilder<> &B) {
+  Module *M = Caller->getParent();
+  Value *MemCmp = M->getOrInsertFunction("memcmp",
+                                         Type::Int32Ty,
+                                         PointerType::getUnqual(Type::Int8Ty),
+                                         PointerType::getUnqual(Type::Int8Ty),
+                                         TD->getIntPtrType(), NULL);
+  return B.CreateCall3(MemCmp, CastToCStr(Ptr1, B), CastToCStr(Ptr2, B),
+                       Len, "memcmp");
 }
 
 /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name' (e.g.
@@ -537,6 +553,18 @@ struct VISIBILITY_HIDDEN StrCmpOpt : public LibCallOptimization {
     // strcmp(x, y)  -> cnst  (if both x and y are constant strings)
     if (HasStr1 && HasStr2)
       return ConstantInt::get(CI->getType(), strcmp(Str1.c_str(),Str2.c_str()));
+
+    // strcmp(P, "x") -> memcmp(P, "x", 2)
+    uint64_t Len1 = GetStringLength(Str1P);
+    uint64_t Len2 = GetStringLength(Str2P);
+    if (Len1 || Len2) {
+      // Choose the smallest Len excluding 0 which means 'unknown'.
+      if (!Len1 || (Len2 && Len2 < Len1))
+        Len1 = Len2;
+      return EmitMemCmp(Str1P, Str2P,
+                        ConstantInt::get(TD->getIntPtrType(), Len1), B);
+    }
+
     return 0;
   }
 };
