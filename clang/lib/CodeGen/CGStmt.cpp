@@ -1004,10 +1004,11 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   }
   
   // Add machine specific clobbers
-  if (const char *C = Target.getClobbers()) {
+  std::string MachineClobbers = Target.getClobbers();
+  if (!MachineClobbers.empty()) {
     if (!Constraints.empty())
       Constraints += ',';
-    Constraints += C;
+    Constraints += MachineClobbers;
   }
     
   const llvm::FunctionType *FTy = 
