@@ -215,7 +215,7 @@ void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
   // Emit ASTContext.
   Sezr.EnterBlock(ASTContextBlock);  
   Sezr.EmitOwnedPtr(Context);  
-  Sezr.ExitBlock();    
+  Sezr.ExitBlock();      // exit "ASTContextBlock"
   
   Sezr.EnterBlock(BasicMetadataBlock);
   
@@ -230,7 +230,7 @@ void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
   Sezr.EmitPtr(&Context->Target);
   Sezr.EmitCStr(Context->Target.getTargetTriple());
   
-  Sezr.ExitBlock(); // exit "BasicMetadataBlock"
+  Sezr.ExitBlock(); // exit "SourceManager and Target Block"
   
   // Emit the Selectors.
   Sezr.Emit(Context->Selectors);
@@ -238,7 +238,7 @@ void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
   // Emit the Identifier Table.
   Sezr.Emit(Context->Idents);
   
-  Sezr.ExitBlock();  // exit "ASTContextBlock"
+  Sezr.ExitBlock(); // exit "BasicMetadataBlock"
 }
 
 TranslationUnit*
