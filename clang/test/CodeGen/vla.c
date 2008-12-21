@@ -9,7 +9,7 @@ void a(int x) {
   b(arry);
 }
 
-void b(int n)
+int c(int n)
 {
-  sizeof(int[n]);
+  return sizeof(int[n]);
 }
