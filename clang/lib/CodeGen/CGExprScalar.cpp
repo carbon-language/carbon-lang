@@ -670,8 +670,13 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
       }
       return CGF.GetVLASize(VAT);
     }
-    // FIXME: This should be an UNSUPPORTED error.
-    assert(0 && "alignof VLAs not implemented yet");
+    
+    // alignof
+    QualType BaseType = CGF.getContext().getBaseElementType(VAT);
+    uint64_t Align = CGF.getContext().getTypeAlign(BaseType);
+
+    Align /= 8;  // Return alignment in bytes, not bits.
+    return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Align));
   }
   
   std::pair<uint64_t, unsigned> Info = CGF.getContext().getTypeInfo(TypeToSize);
