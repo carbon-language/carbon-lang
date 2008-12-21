@@ -631,7 +631,15 @@ public:
   virtual StmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, 
                                                  ExprTy *SynchExpr, 
                                                  StmtTy *SynchBody);
-  
+
+  //virtual DeclTy *ActOnExceptionDeclarator(Scope *S, Declarator &D);
+  //virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
+  //                                            DeclTy *ExceptionDecl,
+  //                                            StmtArg HandlerBlock);
+  //virtual OwningStmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
+  //                                          StmtArg TryBlock,
+  //                                          MultiStmtArg Handlers);
+
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 

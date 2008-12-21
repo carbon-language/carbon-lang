@@ -404,7 +404,27 @@ namespace {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }
-  
+
+    // C++ Statements
+    virtual DeclTy *ActOnExceptionDeclarator(Scope *S, Declarator &D) {
+      llvm::cout << __FUNCTION__ << "\n";
+      return 0;
+    }
+
+    virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
+                                                DeclTy *ExceptionDecl,
+                                                StmtArg HandlerBlock) {
+      llvm::cout << __FUNCTION__ << "\n";
+      return StmtEmpty();
+    }
+
+    virtual OwningStmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
+                                              StmtArg TryBlock,
+                                              MultiStmtArg Handlers) {
+      llvm::cout << __FUNCTION__ << "\n";
+      return StmtEmpty();
+    }
+
     //===--------------------------------------------------------------------===//
     // Expression Parsing Callbacks.
     //===--------------------------------------------------------------------===//

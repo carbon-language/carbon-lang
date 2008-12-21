@@ -478,7 +478,24 @@ public:
                                         StmtTy *SynchBody) {
     return 0;
   }
-  
+
+  // C++ Statements
+  virtual DeclTy *ActOnExceptionDeclarator(Scope *S, Declarator &D) {
+    return 0;
+  }
+
+  virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
+                                              DeclTy *ExceptionDecl,
+                                              StmtArg HandlerBlock) {
+    return StmtEmpty();
+  }
+
+  virtual OwningStmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
+                                            StmtArg TryBlock,
+                                            MultiStmtArg Handlers) {
+    return StmtEmpty();
+  }
+
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
   //===--------------------------------------------------------------------===//

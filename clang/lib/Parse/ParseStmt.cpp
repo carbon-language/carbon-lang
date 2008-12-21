@@ -38,6 +38,7 @@ using namespace clang;
 ///         iteration-statement
 ///         jump-statement
 /// [C++]   declaration-statement
+/// [C++]   try-block
 /// [OBC]   objc-throw-statement
 /// [OBC]   objc-try-catch-statement
 /// [OBC]   objc-synchronized-statement
@@ -161,12 +162,16 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     SemiError = "return statement";
     break;
 
-  case tok::kw_asm:
+  case tok::kw_asm: {
     bool msAsm = false;
     Res = ParseAsmStatement(msAsm);
     if (msAsm) return move(Res);
     SemiError = "asm statement";
     break;
+  }
+
+  case tok::kw_try:                 // C++ 15: try-block
+    return ParseCXXTryBlock();
   }
 
   // If we reached this code, the statement must end in a semicolon.
@@ -1242,4 +1247,90 @@ Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl,
     FnBody = Actions.ActOnCompoundStmt(L, R, MultiStmtArg(Actions), false);
 
   return Actions.ActOnFinishFunctionBody(Decl, move_convert(FnBody));
+}
+
+/// ParseCXXTryBlock - Parse a C++ try-block.
+///
+///       try-block:
+///         'try' compound-statement handler-seq
+///
+///       handler-seq:
+///         handler handler-seq[opt]
+///
+Parser::OwningStmtResult Parser::ParseCXXTryBlock() {
+  assert(Tok.is(tok::kw_try) && "Expected 'try'");
+
+  SourceLocation TryLoc = ConsumeToken();
+  if (Tok.isNot(tok::l_brace))
+    return StmtError(Diag(Tok, diag::err_expected_lbrace));
+  OwningStmtResult TryBlock(ParseCompoundStatement());
+  if (TryBlock.isInvalid())
+    return move(TryBlock);
+
+  StmtVector Handlers(Actions);
+  if (Tok.isNot(tok::kw_catch))
+    return StmtError(Diag(Tok, diag::err_expected_catch));
+  while (Tok.is(tok::kw_catch)) {
+    OwningStmtResult Handler(ParseCXXCatchBlock());
+    if (!Handler.isInvalid())
+      Handlers.push_back(Handler.release());
+  }
+  // Don't bother creating the full statement if we don't have any usable
+  // handlers.
+  if (Handlers.empty())
+    return StmtError();
+
+  return Actions.ActOnCXXTryBlock(TryLoc, move_convert(TryBlock),
+                                  move_convert(Handlers));
+}
+
+/// ParseCXXCatchBlock - Parse a C++ catch block, called handler in the standard
+///
+///       handler:
+///         'catch' '(' exception-declaration ')' compound-statement
+///
+///       exception-declaration:
+///         type-specifier-seq declarator
+///         type-specifier-seq abstract-declarator
+///         type-specifier-seq
+///         '...'
+///
+Parser::OwningStmtResult Parser::ParseCXXCatchBlock() {
+  assert(Tok.is(tok::kw_catch) && "Expected 'catch'");
+
+  SourceLocation CatchLoc = ConsumeToken();
+
+  SourceLocation LParenLoc = Tok.getLocation();
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen))
+    return StmtError();
+
+  // C++ 3.3.2p3:
+  // The name in a catch exception-declaration is local to the handler and
+  // shall not be redeclared in the outermost block of the handler.
+  ParseScope CatchScope(this, Scope::DeclScope | Scope::ControlScope);
+
+  // exception-declaration is equivalent to '...' or a parameter-declaration
+  // without default arguments.
+  DeclTy *ExceptionDecl = 0;
+  if (Tok.isNot(tok::ellipsis)) {
+    DeclSpec DS;
+    ParseDeclarationSpecifiers(DS);
+    Declarator ExDecl(DS, Declarator::CXXCatchContext);
+    ParseDeclarator(ExDecl);
+    ExceptionDecl = Actions.ActOnExceptionDeclarator(CurScope, ExDecl);
+  } else
+    ConsumeToken();
+
+  if (MatchRHSPunctuation(tok::r_paren, LParenLoc).isInvalid())
+    return StmtError();
+
+  if (Tok.isNot(tok::l_brace))
+    return StmtError(Diag(Tok, diag::err_expected_lbrace));
+
+  OwningStmtResult Block(ParseCompoundStatement());
+  if (Block.isInvalid())
+    return move(Block);
+
+  return Actions.ActOnCXXCatchBlock(CatchLoc, ExceptionDecl,
+                                    move_convert(Block));
 }

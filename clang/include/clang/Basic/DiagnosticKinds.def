@@ -605,6 +605,8 @@ DIAG(err_expected_member_or_base_name, ERROR,
      "expected class member or base class name")
 DIAG(ext_ellipsis_exception_spec, EXTENSION,
      "exception specification of '...' is a Microsoft extension")
+DIAG(err_expected_catch, ERROR,
+     "expected catch")
 
 /// C++ Templates
 DIAG(err_expected_template, ERROR,

@@ -646,7 +646,8 @@ public:
     BlockContext,        // Declaration within a block in a function.
     ForContext,          // Declaration within first part of a for loop.
     ConditionContext,    // Condition declaration in a C++ if/switch/while/for.
-    TemplateParamContext // Within a template parameter list.
+    TemplateParamContext,// Within a template parameter list.
+    CXXCatchContext      // C++ catch exception-declaration
   };
 
   /// DeclaratorKind - The kind of declarator this represents.
@@ -762,7 +763,7 @@ public:
   /// parameter lists.
   bool mayOmitIdentifier() const {
     return Context == TypeNameContext || Context == PrototypeContext ||
-           Context == TemplateParamContext;
+           Context == TemplateParamContext || Context == CXXCatchContext;
   }
 
   /// mayHaveIdentifier - Return true if the identifier is either optional or

@@ -724,13 +724,23 @@ private:
   OwningStmtResult ParseReturnStatement();
   OwningStmtResult ParseAsmStatement(bool &msAsm);
   OwningStmtResult FuzzyParseMicrosoftAsmStatement();
+  bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
+                           llvm::SmallVectorImpl<ExprTy*> &Constraints,
+                           llvm::SmallVectorImpl<ExprTy*> &Exprs);
+
+  //===--------------------------------------------------------------------===//
+  // C++ 6: Statements and Blocks
+
+  OwningStmtResult ParseCXXTryBlock();
+  OwningStmtResult ParseCXXCatchBlock();
+
+  //===--------------------------------------------------------------------===//
+  // Objective-C Statements
+
   OwningStmtResult ParseObjCAtStatement(SourceLocation atLoc);
   OwningStmtResult ParseObjCTryStmt(SourceLocation atLoc);
   OwningStmtResult ParseObjCThrowStmt(SourceLocation atLoc);
   OwningStmtResult ParseObjCSynchronizedStmt(SourceLocation atLoc);
-  bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
-                           llvm::SmallVectorImpl<ExprTy*> &Constraints,
-                           llvm::SmallVectorImpl<ExprTy*> &Exprs);
 
 
   //===--------------------------------------------------------------------===//
