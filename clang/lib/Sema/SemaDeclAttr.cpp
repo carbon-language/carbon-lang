@@ -1106,7 +1106,7 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
 
-/// HandleDeclAttribute - Apply the specific attribute to the specified decl if
+/// ProcessDeclAttribute - Apply the specific attribute to the specified decl if
 /// the attribute applies to decls.  If the attribute is a type attribute, just
 /// silently ignore it.
 static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
