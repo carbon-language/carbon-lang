@@ -115,7 +115,7 @@ TranslationUnit::~TranslationUnit() {
   }  
 }
 
-bool clang::EmitASTBitcodeFile(const TranslationUnit* TU,                                
+bool clang::EmitASTBitcodeFile(const TranslationUnit* TU,                   
                                const llvm::sys::Path& Filename) {
 
   return TU ? EmitASTBitcodeFile(*TU, Filename) : false;
