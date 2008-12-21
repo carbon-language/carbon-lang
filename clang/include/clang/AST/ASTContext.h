@@ -433,6 +433,10 @@ public:
   const IncompleteArrayType *getAsIncompleteArrayType(QualType T) {
     return dyn_cast_or_null<IncompleteArrayType>(getAsArrayType(T));
   }
+
+  /// getBaseElementType - Returns the innermost element type of a variable
+  /// length array type. For example, will return "int" for int[m][n]
+  QualType getBaseElementType(const VariableArrayType *VAT);
   
   /// getArrayDecayedType - Return the properly qualified result of decaying the
   /// specified array type to a pointer.  This operation is non-trivial when

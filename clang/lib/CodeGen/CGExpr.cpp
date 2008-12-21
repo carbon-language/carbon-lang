@@ -712,12 +712,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     
     Idx = Builder.CreateMul(Idx, VLASize);
     
-    QualType BaseType = VAT->getElementType();
-    
-    // Divide by the element size.
-    while (const VariableArrayType *AT = 
-           getContext().getAsVariableArrayType(BaseType))
-      BaseType = AT->getElementType();
+    QualType BaseType = getContext().getBaseElementType(VAT);
   
     uint64_t BaseTypeSize = getContext().getTypeSize(BaseType) / 8;
     Idx = Builder.CreateUDiv(Idx,

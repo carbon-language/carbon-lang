@@ -1394,6 +1394,16 @@ QualType ASTContext::getArrayDecayedType(QualType Ty) {
   return PtrTy.getQualifiedType(PrettyArrayType->getIndexTypeQualifier());
 }
 
+QualType ASTContext::getBaseElementType(const VariableArrayType *VAT)
+{
+  QualType ElemTy = VAT->getElementType();
+  
+  if (const VariableArrayType *VAT = getAsVariableArrayType(ElemTy))
+    return getBaseElementType(VAT);
+  
+  return ElemTy;
+}
+
 /// getFloatingRank - Return a relative rank for floating point types.
 /// This routine will assert if passed a built-in type that isn't a float.
 static FloatingRank getFloatingRank(QualType T) {
