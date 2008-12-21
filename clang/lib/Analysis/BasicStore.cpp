@@ -109,12 +109,6 @@ public:
     return StateMgr.MakeStateWithStore(St, store);
   }
 
-  const GRState* BindDecl(const GRState* St, const VarDecl* VD) {
-    Store store = St->getStore();
-    store = BindDeclInternal(store, VD, 0);
-    return StateMgr.MakeStateWithStore(St, store);
-  }
-
   Store BindDeclInternal(Store store, const VarDecl* VD, SVal* InitVal);
 
   static inline VarBindingsTy GetVarBindings(Store store) {
