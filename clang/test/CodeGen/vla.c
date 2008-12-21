@@ -8,3 +8,8 @@ void a(int x) {
   arry[0] = 10;
   b(arry);
 }
+
+void b(int n)
+{
+  sizeof(int[n]);
+}

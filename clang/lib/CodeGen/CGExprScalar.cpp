@@ -663,8 +663,13 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   
   if (const VariableArrayType *VAT = 
         CGF.getContext().getAsVariableArrayType(TypeToSize)) {
-    if (E->isSizeOf())
+    if (E->isSizeOf()) {
+      if (E->isArgumentType()) {
+        // sizeof(type) - make sure to emit the VLA size.
+        CGF.EmitVLASize(TypeToSize);
+      }
       return CGF.GetVLASize(VAT);
+    }
     // FIXME: This should be an UNSUPPORTED error.
     assert(0 && "alignof VLAs not implemented yet");
   }
