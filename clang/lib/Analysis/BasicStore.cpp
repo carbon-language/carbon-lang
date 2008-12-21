@@ -282,7 +282,7 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc LV, QualType T) {
         return UnknownVal();
       
       Store store = state->getStore();
-      VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(store));
+      VarBindingsTy B = GetVarBindings(store);
       VarBindingsTy::data_type* T = B.lookup(R->getDecl());      
       return T ? *T : UnknownVal();
     }
