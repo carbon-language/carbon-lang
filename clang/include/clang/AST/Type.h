@@ -826,10 +826,6 @@ public:
     assert (0 && "Cannnot unique VariableArrayTypes.");
   }
   
-  /// Returns the innermost element type of a VAT - for example
-  /// will return "int" for int[n][m].
-  QualType getBaseType() const;
-  
 protected:  
   virtual void EmitImpl(llvm::Serializer& S) const;
   static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
