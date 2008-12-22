@@ -166,6 +166,13 @@ namespace llvm {
       return getKind() != Data;
     }
 
+    /// isNormalMemory - Test if this is an Order dependence between two
+    /// memory accesses where both sides of the dependence access memory
+    /// in non-volatile and fully modeled ways.
+    bool isNormalMemory() const {
+      return getKind() == Order && Contents.Order.isNormalMemory;
+    }
+
     /// isMustAlias - Test if this is an Order dependence that is marked
     /// as "must alias", meaning that the SUnits at either end of the edge
     /// have a memory dependence on a known memory location.
