@@ -371,52 +371,9 @@ static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi32_ps(__m128 a,
   return __builtin_ia32_cvtpi2ps(a, (__v2si)b);
 }
 
-static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi16_ps(__m64 a)
-{
-  /* FIXME: Implement */
-  return (__m128){ 0, 0, 0, 0 };
-}
-
-static inline __m128 __attribute__((__always_inline__)) _mm_cvtpu16_ps(__m64 a)
-{
-  /* FIXME: Implement */
-  return (__m128){ 0, 0, 0, 0 };  
-}
-
-static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi8_ps(__m64 a)
-{
-  /* FIXME: Implement */
-  return (__m128){ 0, 0, 0, 0 };  
-}
-
-static inline __m128 __attribute__((__always_inline__)) _mm_cvtpu8_ps(__m64 a)
-{
-  /* FIXME: Implement */
-  return (__m128){ 0, 0, 0, 0 };  
-}
-
-static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi32x2_ps(__m64 a, __m64 b)
-{
-  /* FIXME: Implement */
-  return (__m128){ 0, 0, 0, 0 };  
-}
-
-static inline __m64 __attribute__((__always_inline__)) _mm_cvtps_pi16(__m128 a)
-{
-  /* FIXME: Implement */
-  return _mm_setzero_si64();
-}
-
-static inline __m64 __attribute__((__always_inline__)) _mm_cvtps_pi8(__m128 a)
-{
-  /* FIXME: Implement */
-  return _mm_setzero_si64();
-}
-
 static inline float __attribute__((__always_inline__)) _mm_cvtss_f32(__m128 a)
 {
-  /* FIXME: Implement */
-  return 0;
+  return a[0];
 }
 
 static inline __m128 __attribute__((__always_inline__)) _mm_loadh_pi(__m128 a, __m64 const *p)
@@ -649,6 +606,92 @@ static inline __m128 __attribute__((__always_inline__)) _mm_movehl_ps(__m128 a, 
 static inline __m128 __attribute__((__always_inline__)) _mm_movelh_ps(__m128 a, __m128 b)
 {
   return __builtin_shufflevector(a, b, 0, 1, 4, 5);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi16_ps(__m64 a)
+{
+  __m64 b, c;
+  __m128 r;
+
+  b = _mm_setzero_si64();
+  b = _mm_cmpgt_pi16(b, a);
+  c = _mm_unpackhi_pi16(a, b);  
+  r = _mm_setzero_ps();
+  r = _mm_cvtpi32_ps(r, c);
+  r = _mm_movelh_ps(r, r);
+  c = _mm_unpacklo_pi16(a, b);  
+  r = _mm_cvtpi32_ps(r, c);
+
+  return r;
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpu16_ps(__m64 a)
+{
+  __m64 b, c;
+  __m128 r;
+
+  b = _mm_setzero_si64();
+  c = _mm_unpackhi_pi16(a, b);  
+  r = _mm_setzero_ps();
+  r = _mm_cvtpi32_ps(r, c);
+  r = _mm_movelh_ps(r, r);
+  c = _mm_unpacklo_pi16(a, b);  
+  r = _mm_cvtpi32_ps(r, c);
+
+  return r;
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi8_ps(__m64 a)
+{
+  __m64 b;
+  
+  b = _mm_setzero_si64();
+  b = _mm_cmpgt_pi8(b, a);
+  b = _mm_unpacklo_pi8(a, b);
+
+  return _mm_cvtpi16_ps(b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpu8_ps(__m64 a)
+{
+  __m64 b;
+  
+  b = _mm_setzero_si64();
+  b = _mm_unpacklo_pi8(a, b);
+
+  return _mm_cvtpi16_ps(b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi32x2_ps(__m64 a, __m64 b)
+{
+  __m128 c;
+  
+  c = _mm_setzero_ps();  
+  c = _mm_cvtpi32_ps(c, b);
+  c = _mm_movelh_ps(c, c);
+
+  return _mm_cvtpi32_ps(c, a);
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_cvtps_pi16(__m128 a)
+{
+  __m64 b, c;
+  
+  b = _mm_cvtps_pi32(a);
+  a = _mm_movehl_ps(a, a);
+  c = _mm_cvtps_pi32(a);
+  
+  return _mm_packs_pi16(b, c);
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_cvtps_pi8(__m128 a)
+{
+  __m64 b, c;
+  
+  b = _mm_cvtps_pi16(a);
+  c = _mm_setzero_si64();
+  
+  return _mm_packs_pi16(b, c);
 }
 
 static inline int __attribute__((__always_inline__)) _mm_movemask_ps(__m128 a)
