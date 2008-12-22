@@ -1727,6 +1727,8 @@ Stmt *RewriteObjC::RewriteAtEncode(ObjCEncodeExpr *Exp) {
 }
 
 Stmt *RewriteObjC::RewriteAtSelector(ObjCSelectorExpr *Exp) {
+  if (!SelGetUidFunctionDecl)
+    SynthSelGetUidFunctionDecl();
   assert(SelGetUidFunctionDecl && "Can't find sel_registerName() decl");
   // Create a call to sel_registerName("selName").
   llvm::SmallVector<Expr*, 8> SelExprs;
