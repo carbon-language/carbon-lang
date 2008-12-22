@@ -18,4 +18,14 @@
 @end
 
 
+@interface A 
+@property(assign) int categoryProperty;
+@end
+
+// Don't issue warning on unimplemented setter/getter
+// because property is @dynamic.
+@implementation A 
+@dynamic categoryProperty;
+@end
+
 

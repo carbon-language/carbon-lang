@@ -737,13 +737,16 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl,
        E = IDecl->instmeth_end(); I != E; ++I)
     if (!(*I)->isSynthesized() && !InsMap.count((*I)->getSelector()))
       WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
-    else if (!(*I)->isSynthesized()){
+    else {
       ObjCMethodDecl *ImpMethodDecl = 
         IMPDecl->getInstanceMethod((*I)->getSelector());
       ObjCMethodDecl *IntfMethodDecl = 
         IDecl->getInstanceMethod((*I)->getSelector());
-      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
-      
+      assert(IntfMethodDecl && 
+             "IntfMethodDecl is null in ImplMethodsVsClassMethods");
+      // ImpMethodDecl may be null as in a @dynamic property.
+      if (ImpMethodDecl)
+        WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
     }
       
   llvm::DenseSet<Selector> ClsMap;
@@ -790,14 +793,18 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
   bool IncompleteImpl = false;
   for (ObjCCategoryDecl::instmeth_iterator I = CatClassDecl->instmeth_begin(),
        E = CatClassDecl->instmeth_end(); I != E; ++I)
-    if (!InsMap.count((*I)->getSelector()))
+    if (!(*I)->isSynthesized() && !InsMap.count((*I)->getSelector()))
       WarnUndefinedMethod(CatImplDecl->getLocation(), *I, IncompleteImpl);
     else {
       ObjCMethodDecl *ImpMethodDecl = 
         CatImplDecl->getInstanceMethod((*I)->getSelector());
       ObjCMethodDecl *IntfMethodDecl = 
         CatClassDecl->getInstanceMethod((*I)->getSelector());
-      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+      assert(IntfMethodDecl && 
+             "IntfMethodDecl is null in ImplCategoryMethodsVsIntfMethods");
+      // ImpMethodDecl may be null as in a @dynamic property.
+      if (ImpMethodDecl)        
+        WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
     }
 
   llvm::DenseSet<Selector> ClsMap;
