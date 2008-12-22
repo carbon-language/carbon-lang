@@ -624,6 +624,38 @@ static inline void __attribute__((__always_inline__)) _mm_setcsr(unsigned int i)
   __builtin_ia32_ldmxcsr(i);
 }
 
+#define _mm_shuffle_ps(a, b, mask) (__builtin_ia32_shufps(a, b, mask))
+
+static inline __m128 __attribute__((__always_inline__)) _mm_unpackhi_ps(__m128 a, __m128 b)
+{
+  return __builtin_shufflevector(a, b, 2, 6, 3, 7);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_unpacklo_ps(__m128 a, __m128 b)
+{
+  return __builtin_shufflevector(a, b, 0, 4, 1, 5);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_move_ss(__m128 a, __m128 b)
+{
+  return __builtin_shufflevector(a, b, 4, 1, 2, 3);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_movehl_ps(__m128 a, __m128 b)
+{
+  return __builtin_shufflevector(a, b, 6, 7, 2, 3);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_movelh_ps(__m128 a, __m128 b)
+{
+  return __builtin_shufflevector(a, b, 0, 1, 4, 5);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_movemask_ps(__m128 a)
+{
+  return __builtin_ia32_movmskps(a);
+}
+
 #endif /* __SSE__ */
 
 #endif /* __XMMINTRIN_H */
