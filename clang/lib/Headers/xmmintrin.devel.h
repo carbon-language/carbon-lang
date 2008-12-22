@@ -419,6 +419,42 @@ static inline float __attribute__((__always_inline__)) _mm_cvtss_f32(__m128 a)
   return 0;
 }
 
+static inline __m128 __attribute__((__always_inline__)) _mm_loadh_pi(__m128 a, __m64 const *p)
+{
+  return __builtin_ia32_loadhps(a, (__v2si *)p);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_loadl_pi(__m128 a, __m64 const *p)
+{
+  return __builtin_ia32_loadlps(a, (__v2si *)p);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_load_ss(float *p)
+{
+  return (__m128){ *p, 0, 0, 0 };
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_load1_ps(float *p)
+{
+  return (__m128){ *p, *p, *p, *p };
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_load_ps(float *p)
+{
+  return *(__m128*)p;
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_loadu_ps(float *p)
+{
+  return __builtin_ia32_loadups(p);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_loadr_ps(float *p)
+{
+  __m128 a = _mm_load_ps(p);
+  return __builtin_shufflevector(a, a, 3, 2, 1, 0);
+}
+
 #endif /* __SSE__ */
 
 #endif /* __XMMINTRIN_H */
