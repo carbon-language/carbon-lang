@@ -546,7 +546,8 @@ private:
   void getObjCEncodingForTypeImpl(QualType t, std::string &S, 
                                   bool ExpandPointedToStructures,
                                   bool ExpandStructures,
-                                  FieldDecl *Field) const;
+                                  FieldDecl *Field,
+                                  bool OutermostType = false) const;
   
 };
   

@@ -1755,13 +1755,15 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
   // directly pointed to, and expanding embedded structures. Note that
   // these rules are sufficient to prevent recursive encoding of the
   // same type.
-  getObjCEncodingForTypeImpl(T, S, true, true, Field);
+  getObjCEncodingForTypeImpl(T, S, true, true, Field, 
+                             true /* outermost type */);
 }
 
 void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool ExpandPointedToStructures,
                                             bool ExpandStructures,
-                                            FieldDecl *FD) const {
+                                            FieldDecl *FD,
+                                            bool OutermostType) const {
   if (const BuiltinType *BT = T->getAsBuiltinType()) {
     if (FD && FD->isBitField()) {
       const Expr *E = FD->getBitWidth();
@@ -1805,6 +1807,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
+    if (OutermostType && PointeeTy.isConstQualified())
+      S += 'r';
     if (isObjCIdType(PointeeTy)) {
       S += '@';
       return;
@@ -1879,6 +1883,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
           getObjCEncodingForTypeImpl(Field->getType(), S, false, true, 
                                      (*Field));
         } else {
+          // FIXME! Another legacy kludge: 32-bit longs are encoded as 
+          // 'l' or 'L', but not always.  For typedefs, we need to use 
+          // 'i' or 'I' instead if encoding a struct field, or a pointer! 
           getObjCEncodingForTypeImpl(Field->getType(), S, false, true, 
                                      FD);
         }
