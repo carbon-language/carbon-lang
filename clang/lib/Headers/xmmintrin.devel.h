@@ -455,6 +455,31 @@ static inline __m128 __attribute__((__always_inline__)) _mm_loadr_ps(float *p)
   return __builtin_shufflevector(a, a, 3, 2, 1, 0);
 }
 
+static inline __m128 __attribute__((__always_inline__)) _mm_set_ss(float w)
+{
+  return (__m128){ w, 0, 0, 0 };
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_set1_ps(float w)
+{
+  return (__m128){ w, w, w, w };
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_set_ps(float z, float y, float x, float w)
+{
+  return (__m128){ w, x, y, z };
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_setr_ps(float z, float y, float x, float w)
+{
+  return (__m128){ z, y, x, w };
+}
+
+static inline __m128 __attribute__((__always__inline__)) _mm_setzero_ps(void)
+{
+  return (__m128){ 0, 0, 0, 0 };
+}
+
 #endif /* __SSE__ */
 
 #endif /* __XMMINTRIN_H */
