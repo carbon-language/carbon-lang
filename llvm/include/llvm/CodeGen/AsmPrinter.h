@@ -25,6 +25,9 @@ namespace llvm {
   class GCStrategy;
   class Constant;
   class ConstantArray;
+  class ConstantInt;
+  class ConstantStruct;
+  class ConstantVector;
   class GCMetadataPrinter;
   class GlobalVariable;
   class GlobalAlias;
@@ -369,6 +372,11 @@ namespace llvm {
     const GlobalValue *findGlobalValue(const Constant* CV);
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
+    void EmitGlobalConstantStruct(const ConstantStruct* CVS);
+    void EmitGlobalConstantArray(const ConstantArray* CVA);
+    void EmitGlobalConstantVector(const ConstantVector* CP);
+    void EmitGlobalConstantFP(const ConstantFP* CFP);
+    void EmitGlobalConstantLargeInt(const ConstantInt* CI);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };
 }

@@ -939,206 +939,231 @@ void AsmPrinter::EmitString(const ConstantArray *CVA) const {
   O << '\n';
 }
 
+void AsmPrinter::EmitGlobalConstantArray(const ConstantArray *CVA) {
+  if (CVA->isString()) {
+    EmitString(CVA);
+  } else { // Not a string.  Print the values in successive locations
+    for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
+      EmitGlobalConstant(CVA->getOperand(i));
+  }
+}
+
+void AsmPrinter::EmitGlobalConstantVector(const ConstantVector *CP) {
+  const VectorType *PTy = CP->getType();
+  
+  for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
+    EmitGlobalConstant(CP->getOperand(I));
+}
+
+void AsmPrinter::EmitGlobalConstantStruct(const ConstantStruct *CVS) {
+  // Print the fields in successive locations. Pad to align if needed!
+  const TargetData *TD = TM.getTargetData();
+  unsigned Size = TD->getABITypeSize(CVS->getType());
+  const StructLayout *cvsLayout = TD->getStructLayout(CVS->getType());
+  uint64_t sizeSoFar = 0;
+  for (unsigned i = 0, e = CVS->getNumOperands(); i != e; ++i) {
+    const Constant* field = CVS->getOperand(i);
+
+    // Check if padding is needed and insert one or more 0s.
+    uint64_t fieldSize = TD->getABITypeSize(field->getType());
+    uint64_t padSize = ((i == e-1 ? Size : cvsLayout->getElementOffset(i+1))
+                        - cvsLayout->getElementOffset(i)) - fieldSize;
+    sizeSoFar += fieldSize + padSize;
+
+    // Now print the actual field value.
+    EmitGlobalConstant(field);
+
+    // Insert padding - this may include padding to increase the size of the
+    // current field up to the ABI size (if the struct is not packed) as well
+    // as padding to ensure that the next field starts at the right offset.
+    EmitZeros(padSize);
+  }
+  assert(sizeSoFar == cvsLayout->getSizeInBytes() &&
+         "Layout of constant struct may be incorrect!");
+}
+
+void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP) {
+  // FP Constants are printed as integer constants to avoid losing
+  // precision...
+  const TargetData *TD = TM.getTargetData();
+  if (CFP->getType() == Type::DoubleTy) {
+    double Val = CFP->getValueAPF().convertToDouble();  // for comment only
+    uint64_t i = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
+    if (TAI->getData64bitsDirective())
+      O << TAI->getData64bitsDirective() << i << '\t'
+        << TAI->getCommentString() << " double value: " << Val << '\n';
+    else if (TD->isBigEndian()) {
+      O << TAI->getData32bitsDirective() << unsigned(i >> 32)
+        << '\t' << TAI->getCommentString()
+        << " double most significant word " << Val << '\n';
+      O << TAI->getData32bitsDirective() << unsigned(i)
+        << '\t' << TAI->getCommentString()
+        << " double least significant word " << Val << '\n';
+    } else {
+      O << TAI->getData32bitsDirective() << unsigned(i)
+        << '\t' << TAI->getCommentString()
+        << " double least significant word " << Val << '\n';
+      O << TAI->getData32bitsDirective() << unsigned(i >> 32)
+        << '\t' << TAI->getCommentString()
+        << " double most significant word " << Val << '\n';
+    }
+    return;
+  } else if (CFP->getType() == Type::FloatTy) {
+    float Val = CFP->getValueAPF().convertToFloat();  // for comment only
+    O << TAI->getData32bitsDirective()
+      << CFP->getValueAPF().bitcastToAPInt().getZExtValue()
+      << '\t' << TAI->getCommentString() << " float " << Val << '\n';
+    return;
+  } else if (CFP->getType() == Type::X86_FP80Ty) {
+    // all long double variants are printed as hex
+    // api needed to prevent premature destruction
+    APInt api = CFP->getValueAPF().bitcastToAPInt();
+    const uint64_t *p = api.getRawData();
+    // Convert to double so we can print the approximate val as a comment.
+    APFloat DoubleVal = CFP->getValueAPF();
+    bool ignored;
+    DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
+                      &ignored);
+    if (TD->isBigEndian()) {
+      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
+        << '\t' << TAI->getCommentString()
+        << " long double most significant halfword of ~"
+        << DoubleVal.convertToDouble() << '\n';
+      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 32)
+        << '\t' << TAI->getCommentString()
+        << " long double next halfword\n";
+      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 16)
+        << '\t' << TAI->getCommentString()
+        << " long double next halfword\n";
+      O << TAI->getData16bitsDirective() << uint16_t(p[0])
+        << '\t' << TAI->getCommentString()
+        << " long double next halfword\n";
+      O << TAI->getData16bitsDirective() << uint16_t(p[1])
+        << '\t' << TAI->getCommentString()
+        << " long double least significant halfword\n";
+     } else {
+      O << TAI->getData16bitsDirective() << uint16_t(p[1])
+        << '\t' << TAI->getCommentString()
+        << " long double least significant halfword of ~"
+        << DoubleVal.convertToDouble() << '\n';
+      O << TAI->getData16bitsDirective() << uint16_t(p[0])
+        << '\t' << TAI->getCommentString()
+        << " long double next halfword\n";
+      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 16)
+        << '\t' << TAI->getCommentString()
+        << " long double next halfword\n";
+      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 32)
+        << '\t' << TAI->getCommentString()
+        << " long double next halfword\n";
+      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
+        << '\t' << TAI->getCommentString()
+        << " long double most significant halfword\n";
+    }
+    EmitZeros(TD->getABITypeSize(Type::X86_FP80Ty) -
+              TD->getTypeStoreSize(Type::X86_FP80Ty));
+    return;
+  } else if (CFP->getType() == Type::PPC_FP128Ty) {
+    // all long double variants are printed as hex
+    // api needed to prevent premature destruction
+    APInt api = CFP->getValueAPF().bitcastToAPInt();
+    const uint64_t *p = api.getRawData();
+    if (TD->isBigEndian()) {
+      O << TAI->getData32bitsDirective() << uint32_t(p[0] >> 32)
+        << '\t' << TAI->getCommentString()
+        << " long double most significant word\n";
+      O << TAI->getData32bitsDirective() << uint32_t(p[0])
+        << '\t' << TAI->getCommentString()
+        << " long double next word\n";
+      O << TAI->getData32bitsDirective() << uint32_t(p[1] >> 32)
+        << '\t' << TAI->getCommentString()
+        << " long double next word\n";
+      O << TAI->getData32bitsDirective() << uint32_t(p[1])
+        << '\t' << TAI->getCommentString()
+        << " long double least significant word\n";
+     } else {
+      O << TAI->getData32bitsDirective() << uint32_t(p[1])
+        << '\t' << TAI->getCommentString()
+        << " long double least significant word\n";
+      O << TAI->getData32bitsDirective() << uint32_t(p[1] >> 32)
+        << '\t' << TAI->getCommentString()
+        << " long double next word\n";
+      O << TAI->getData32bitsDirective() << uint32_t(p[0])
+        << '\t' << TAI->getCommentString()
+        << " long double next word\n";
+      O << TAI->getData32bitsDirective() << uint32_t(p[0] >> 32)
+        << '\t' << TAI->getCommentString()
+        << " long double most significant word\n";
+    }
+    return;
+  } else assert(0 && "Floating point constant type not handled");
+}
+
+void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI) {
+  const TargetData *TD = TM.getTargetData();
+  unsigned BitWidth = CI->getBitWidth();
+  assert(isPowerOf2_32(BitWidth) &&
+         "Non-power-of-2-sized integers not handled!");
+
+  // We don't expect assemblers to support integer data directives
+  // for more than 64 bits, so we emit the data in at most 64-bit
+  // quantities at a time.
+  const uint64_t *RawData = CI->getValue().getRawData();
+  for (unsigned i = 0, e = BitWidth / 64; i != e; ++i) {
+    uint64_t Val;
+    if (TD->isBigEndian())
+      Val = RawData[e - i - 1];
+    else
+      Val = RawData[i];
+
+    if (TAI->getData64bitsDirective())
+      O << TAI->getData64bitsDirective() << Val << '\n';
+    else if (TD->isBigEndian()) {
+      O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
+        << '\t' << TAI->getCommentString()
+        << " Double-word most significant word " << Val << '\n';
+      O << TAI->getData32bitsDirective() << unsigned(Val)
+        << '\t' << TAI->getCommentString()
+        << " Double-word least significant word " << Val << '\n';
+    } else {
+      O << TAI->getData32bitsDirective() << unsigned(Val)
+        << '\t' << TAI->getCommentString()
+        << " Double-word least significant word " << Val << '\n';
+      O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
+        << '\t' << TAI->getCommentString()
+        << " Double-word most significant word " << Val << '\n';
+    }
+  }
+}
+
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
 void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
   const TargetData *TD = TM.getTargetData();
-  unsigned Size = TD->getABITypeSize(CV->getType());
+  const Type *type = CV->getType();
+  unsigned Size = TD->getABITypeSize(type);
 
   if (CV->isNullValue() || isa<UndefValue>(CV)) {
     EmitZeros(Size);
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
-    if (CVA->isString()) {
-      EmitString(CVA);
-    } else { // Not a string.  Print the values in successive locations
-      for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
-        EmitGlobalConstant(CVA->getOperand(i));
-    }
+    EmitGlobalConstantArray(CVA);
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
-    // Print the fields in successive locations. Pad to align if needed!
-    const StructLayout *cvsLayout = TD->getStructLayout(CVS->getType());
-    uint64_t sizeSoFar = 0;
-    for (unsigned i = 0, e = CVS->getNumOperands(); i != e; ++i) {
-      const Constant* field = CVS->getOperand(i);
-
-      // Check if padding is needed and insert one or more 0s.
-      uint64_t fieldSize = TD->getABITypeSize(field->getType());
-      uint64_t padSize = ((i == e-1 ? Size : cvsLayout->getElementOffset(i+1))
-                          - cvsLayout->getElementOffset(i)) - fieldSize;
-      sizeSoFar += fieldSize + padSize;
-
-      // Now print the actual field value.
-      EmitGlobalConstant(field);
-
-      // Insert padding - this may include padding to increase the size of the
-      // current field up to the ABI size (if the struct is not packed) as well
-      // as padding to ensure that the next field starts at the right offset.
-      EmitZeros(padSize);
-    }
-    assert(sizeSoFar == cvsLayout->getSizeInBytes() &&
-           "Layout of constant struct may be incorrect!");
+    EmitGlobalConstantStruct(CVS);
     return;
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
-    // FP Constants are printed as integer constants to avoid losing
-    // precision...
-    if (CFP->getType() == Type::DoubleTy) {
-      double Val = CFP->getValueAPF().convertToDouble();  // for comment only
-      uint64_t i = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
-      if (TAI->getData64bitsDirective())
-        O << TAI->getData64bitsDirective() << i << '\t'
-          << TAI->getCommentString() << " double value: " << Val << '\n';
-      else if (TD->isBigEndian()) {
-        O << TAI->getData32bitsDirective() << unsigned(i >> 32)
-          << '\t' << TAI->getCommentString()
-          << " double most significant word " << Val << '\n';
-        O << TAI->getData32bitsDirective() << unsigned(i)
-          << '\t' << TAI->getCommentString()
-          << " double least significant word " << Val << '\n';
-      } else {
-        O << TAI->getData32bitsDirective() << unsigned(i)
-          << '\t' << TAI->getCommentString()
-          << " double least significant word " << Val << '\n';
-        O << TAI->getData32bitsDirective() << unsigned(i >> 32)
-          << '\t' << TAI->getCommentString()
-          << " double most significant word " << Val << '\n';
-      }
-      return;
-    } else if (CFP->getType() == Type::FloatTy) {
-      float Val = CFP->getValueAPF().convertToFloat();  // for comment only
-      O << TAI->getData32bitsDirective()
-        << CFP->getValueAPF().bitcastToAPInt().getZExtValue()
-        << '\t' << TAI->getCommentString() << " float " << Val << '\n';
-      return;
-    } else if (CFP->getType() == Type::X86_FP80Ty) {
-      // all long double variants are printed as hex
-      // api needed to prevent premature destruction
-      APInt api = CFP->getValueAPF().bitcastToAPInt();
-      const uint64_t *p = api.getRawData();
-      // Convert to double so we can print the approximate val as a comment.
-      APFloat DoubleVal = CFP->getValueAPF();
-      bool ignored;
-      DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
-                        &ignored);
-      if (TD->isBigEndian()) {
-        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
-          << '\t' << TAI->getCommentString()
-          << " long double most significant halfword of ~"
-          << DoubleVal.convertToDouble() << '\n';
-        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 32)
-          << '\t' << TAI->getCommentString()
-          << " long double next halfword\n";
-        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 16)
-          << '\t' << TAI->getCommentString()
-          << " long double next halfword\n";
-        O << TAI->getData16bitsDirective() << uint16_t(p[0])
-          << '\t' << TAI->getCommentString()
-          << " long double next halfword\n";
-        O << TAI->getData16bitsDirective() << uint16_t(p[1])
-          << '\t' << TAI->getCommentString()
-          << " long double least significant halfword\n";
-       } else {
-        O << TAI->getData16bitsDirective() << uint16_t(p[1])
-          << '\t' << TAI->getCommentString()
-          << " long double least significant halfword of ~"
-          << DoubleVal.convertToDouble() << '\n';
-        O << TAI->getData16bitsDirective() << uint16_t(p[0])
-          << '\t' << TAI->getCommentString()
-          << " long double next halfword\n";
-        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 16)
-          << '\t' << TAI->getCommentString()
-          << " long double next halfword\n";
-        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 32)
-          << '\t' << TAI->getCommentString()
-          << " long double next halfword\n";
-        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
-          << '\t' << TAI->getCommentString()
-          << " long double most significant halfword\n";
-      }
-      EmitZeros(Size - TD->getTypeStoreSize(Type::X86_FP80Ty));
-      return;
-    } else if (CFP->getType() == Type::PPC_FP128Ty) {
-      // all long double variants are printed as hex
-      // api needed to prevent premature destruction
-      APInt api = CFP->getValueAPF().bitcastToAPInt();
-      const uint64_t *p = api.getRawData();
-      if (TD->isBigEndian()) {
-        O << TAI->getData32bitsDirective() << uint32_t(p[0] >> 32)
-          << '\t' << TAI->getCommentString()
-          << " long double most significant word\n";
-        O << TAI->getData32bitsDirective() << uint32_t(p[0])
-          << '\t' << TAI->getCommentString()
-          << " long double next word\n";
-        O << TAI->getData32bitsDirective() << uint32_t(p[1] >> 32)
-          << '\t' << TAI->getCommentString()
-          << " long double next word\n";
-        O << TAI->getData32bitsDirective() << uint32_t(p[1])
-          << '\t' << TAI->getCommentString()
-          << " long double least significant word\n";
-       } else {
-        O << TAI->getData32bitsDirective() << uint32_t(p[1])
-          << '\t' << TAI->getCommentString()
-          << " long double least significant word\n";
-        O << TAI->getData32bitsDirective() << uint32_t(p[1] >> 32)
-          << '\t' << TAI->getCommentString()
-          << " long double next word\n";
-        O << TAI->getData32bitsDirective() << uint32_t(p[0])
-          << '\t' << TAI->getCommentString()
-          << " long double next word\n";
-        O << TAI->getData32bitsDirective() << uint32_t(p[0] >> 32)
-          << '\t' << TAI->getCommentString()
-          << " long double most significant word\n";
-      }
-      return;
-    } else assert(0 && "Floating point constant type not handled");
-  } else if (CV->getType()->isInteger() &&
-             cast<IntegerType>(CV->getType())->getBitWidth() >= 64) {
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-      unsigned BitWidth = CI->getBitWidth();
-      assert(isPowerOf2_32(BitWidth) &&
-             "Non-power-of-2-sized integers not handled!");
-
-      // We don't expect assemblers to support integer data directives
-      // for more than 64 bits, so we emit the data in at most 64-bit
-      // quantities at a time.
-      const uint64_t *RawData = CI->getValue().getRawData();
-      for (unsigned i = 0, e = BitWidth / 64; i != e; ++i) {
-        uint64_t Val;
-        if (TD->isBigEndian())
-          Val = RawData[e - i - 1];
-        else
-          Val = RawData[i];
-
-        if (TAI->getData64bitsDirective())
-          O << TAI->getData64bitsDirective() << Val << '\n';
-        else if (TD->isBigEndian()) {
-          O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
-            << '\t' << TAI->getCommentString()
-            << " Double-word most significant word " << Val << '\n';
-          O << TAI->getData32bitsDirective() << unsigned(Val)
-            << '\t' << TAI->getCommentString()
-            << " Double-word least significant word " << Val << '\n';
-        } else {
-          O << TAI->getData32bitsDirective() << unsigned(Val)
-            << '\t' << TAI->getCommentString()
-            << " Double-word least significant word " << Val << '\n';
-          O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
-            << '\t' << TAI->getCommentString()
-            << " Double-word most significant word " << Val << '\n';
-        }
-      }
+    EmitGlobalConstantFP(CFP);
+    return;
+  } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    // Small integers are handled below; large integers are handled here.
+    if (Size > 4) {
+      EmitGlobalConstantLargeInt(CI);
       return;
     }
   } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
-    const VectorType *PTy = CP->getType();
-    
-    for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
-      EmitGlobalConstant(CP->getOperand(I));
-    
+    EmitGlobalConstantVector(CP);
     return;
   }
 
-  const Type *type = CV->getType();
   printDataDirective(type);
   EmitConstantValueOnly(CV);
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
