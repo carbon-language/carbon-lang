@@ -656,6 +656,36 @@ static inline int __attribute__((__always_inline__)) _mm_movemask_ps(__m128 a)
   return __builtin_ia32_movmskps(a);
 }
 
+#define _MM_SHUFFLE(z, y, x, w) (((z) << 6) | ((y) << 4) | ((x) << 2) | (w))
+
+#define _MM_MASK_MASK (0x1f80)
+#define _MM_EXCEPT_MASK (0x003f)
+#define _MM_FLUSH_MASK (0x8000)
+#define _MM_ROUND_MASK (0x6000)
+
+#define _MM_GET_EXCEPTION_MASK() (_mm_getcsr() & _MM_MASK_MASK)
+#define _MM_GET_EXCEPTION_STATE() (_mm_getcsr() & _MM_EXCEPT_MASK)
+#define _MM_GET_FLUSH_ZERO_MODE() (_mm_getcsr() & _MM_FLUSH_MASK)
+#define _MM_GET_ROUNDING_MODE() (_mm_getcsr() & _MM_ROUND_MASK)
+
+#define _MM_SET_EXCEPTION_MASK(x) (_mm_setcsr((_mm_getcsr() & ~_MM_FLUSH_MASK) | (x)))
+#define _MM_SET_EXCEPTION_STATE(x) (_mm_setcsr((_mm_getcsr() & ~_MM_EXCEPT_MASK) | (x)))
+#define _MM_SET_FLUSH_ZERO_MODE(x) (_mm_setcsr((_mm_getcsr() & ~_MM_FLUSH_MASK) | (x)))
+#define _MM_SET_ROUNDING_MODE(x) (_mm_setcsr((_mm_getcsr() & ~_MM_ROUND_MASK) | (x)))
+
+#define _MM_TRANSPOSE4_PS(row0, row1, row2, row3) \
+do { \
+  __m128 tmp3, tmp2, tmp1, tmp0; \
+  tmp0 = _mm_unpacklo_ps((row0), (row1)); \
+  tmp2 = _mm_unpacklo_ps((row2), (row3)); \
+  tmp1 = _mm_unpackhi_ps((row0), (row1)); \
+  tmp3 = _mm_unpackhi_ps((row2), (row3)); \
+  (row0) = _mm_movelh_ps(tmp0, tmp2); \
+  (row1) = _mm_movehl_ps(tmp2, tmp0); \
+  (row2) = _mm_movelh_ps(tmp1, tmp3); \
+  (row3) = _mm_movelh_ps(tmp3, tmp1); \
+} while (0)
+
 #endif /* __SSE__ */
 
 #endif /* __XMMINTRIN_H */
