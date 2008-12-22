@@ -666,7 +666,7 @@ void ValueTable::verifyRemoved(const Value *V) const {
 }
 
 //===----------------------------------------------------------------------===//
-//                         GVN Pass
+//                                GVN Pass
 //===----------------------------------------------------------------------===//
 
 namespace {
@@ -1353,9 +1353,7 @@ bool GVN::processInstruction(Instruction *I,
   return false;
 }
 
-// GVN::runOnFunction - This is the main transformation entry point for a
-// function.
-//
+/// runOnFunction - This is the main transformation entry point for a function.
 bool GVN::runOnFunction(Function& F) {
   MD = &getAnalysis<MemoryDependenceAnalysis>();
   DT = &getAnalysis<DominatorTree>();
@@ -1602,7 +1600,7 @@ bool GVN::performPRE(Function& F) {
   return Changed || toSplit.size();
 }
 
-// iterateOnFunction - Executes one iteration of GVN
+/// iterateOnFunction - Executes one iteration of GVN
 bool GVN::iterateOnFunction(Function &F) {
   cleanupGlobalSets();
 
