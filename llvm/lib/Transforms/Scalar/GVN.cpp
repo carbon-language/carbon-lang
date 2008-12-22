@@ -110,30 +110,7 @@ namespace {
     }
   
     bool operator!=(const Expression &other) const {
-      if (opcode != other.opcode)
-        return true;
-      else if (opcode == EMPTY || opcode == TOMBSTONE)
-        return false;
-      else if (type != other.type)
-        return true;
-      else if (function != other.function)
-        return true;
-      else if (firstVN != other.firstVN)
-        return true;
-      else if (secondVN != other.secondVN)
-        return true;
-      else if (thirdVN != other.thirdVN)
-        return true;
-      else {
-        if (varargs.size() != other.varargs.size())
-          return true;
-      
-        for (size_t i = 0; i < varargs.size(); ++i)
-          if (varargs[i] != other.varargs[i])
-            return true;
-    
-          return false;
-      }
+      return !(*this == other);
     }
   };
   
