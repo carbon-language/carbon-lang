@@ -1540,3 +1540,19 @@ CXXCatchStmt::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
   Stmt *HandlerBlock = D.ReadOwnedPtr<Stmt>(C);
   return new CXXCatchStmt(CatchLoc, ExDecl, HandlerBlock);
 }
+
+void CXXTryStmt::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(TryLoc);
+  S.EmitInt(Stmts.size());
+  S.BatchEmitOwnedPtrs(Stmts.size(), &Stmts[0]);
+}
+
+CXXTryStmt *
+CXXTryStmt::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  SourceLocation TryLoc = SourceLocation::ReadVal(D);
+  unsigned size = D.ReadInt();
+  llvm::SmallVector<Stmt*, 4> Stmts(size);
+  D.BatchReadOwnedPtrs<Stmt>(size, &Stmts[0], C);
+
+  return new CXXTryStmt(TryLoc, Stmts[0], &Stmts[1], size - 1);
+}

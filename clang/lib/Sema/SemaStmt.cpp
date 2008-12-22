@@ -961,3 +961,31 @@ Sema::ActOnCXXCatchBlock(SourceLocation CatchLoc, DeclTy *ExDecl,
   return Owned(new CXXCatchStmt(CatchLoc, static_cast<VarDecl*>(ExDecl),
                                 static_cast<Stmt*>(HandlerBlock.release())));
 }
+
+/// ActOnCXXTryBlock - Takes a try compound-statement and a number of
+/// handlers and creates a try statement from them.
+Action::OwningStmtResult
+Sema::ActOnCXXTryBlock(SourceLocation TryLoc, StmtArg TryBlock,
+                       MultiStmtArg RawHandlers) {
+  unsigned NumHandlers = RawHandlers.size();
+  assert(NumHandlers > 0 &&
+         "The parser shouldn't call this if there are no handlers.");
+  Stmt **Handlers = reinterpret_cast<Stmt**>(RawHandlers.get());
+
+  for(unsigned i = 0; i < NumHandlers - 1; ++i) {
+    CXXCatchStmt *Handler = llvm::cast<CXXCatchStmt>(Handlers[i]);
+    if (!Handler->getExceptionDecl())
+      return StmtError(Diag(Handler->getLocStart(), diag::err_early_catch_all));
+  }
+  // FIXME: We should detect handlers for the same type as an earlier one.
+  // This one is rather easy.
+  // FIXME: We should detect handlers that cannot catch anything because an
+  // earlier handler catches a superclass. Need to find a method that is not
+  // quadratic for this.
+  // Neither of these are explicitly forbidden, but every compiler detects them
+  // and warns.
+
+  RawHandlers.release();
+  return Owned(new CXXTryStmt(TryLoc, static_cast<Stmt*>(TryBlock.release()),
+                              Handlers, NumHandlers));
+}

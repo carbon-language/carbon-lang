@@ -350,6 +350,18 @@ QualType CXXCatchStmt::getCaughtType() {
 }
 
 void CXXCatchStmt::Destroy(ASTContext& C) {
-  ExceptionDecl->Destroy(C);
+  if (ExceptionDecl)
+    ExceptionDecl->Destroy(C);
   Stmt::Destroy(C);
+}
+
+// CXXTryStmt
+Stmt::child_iterator CXXTryStmt::child_begin() { return &Stmts[0]; }
+Stmt::child_iterator CXXTryStmt::child_end() { return &Stmts[0]+Stmts.size(); }
+
+CXXTryStmt::CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock,
+                       Stmt **handlers, unsigned numHandlers)
+  : Stmt(CXXTryStmtClass), TryLoc(tryLoc) {
+  Stmts.push_back(tryBlock);
+  Stmts.insert(Stmts.end(), handlers, handlers + numHandlers);
 }

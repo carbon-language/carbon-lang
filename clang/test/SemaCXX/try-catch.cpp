@@ -16,4 +16,9 @@ void f()
   } catch(...) {
     int j = i; // expected-error {{use of undeclared identifier 'i'}}
   }
+
+  try {
+  } catch(...) { // expected-error {{catch-all handler must come last}}
+  } catch(int) {
+  }
 }

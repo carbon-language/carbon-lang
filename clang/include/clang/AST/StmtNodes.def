@@ -55,8 +55,9 @@ STMT(ObjCForCollectionStmt, Stmt)
 
 // C++ statements
 STMT(CXXCatchStmt, Stmt)
+STMT(CXXTryStmt  , Stmt)
 
-LAST_STMT(CXXCatchStmt)
+LAST_STMT(CXXTryStmt)
 
 // Expressions.
 STMT(Expr                  , Stmt)

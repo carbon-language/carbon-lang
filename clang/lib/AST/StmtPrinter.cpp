@@ -52,6 +52,7 @@ namespace  {
     void PrintRawDecl(Decl *D);
     void PrintRawDeclStmt(DeclStmt *S);
     void PrintRawIfStmt(IfStmt *If);
+    void PrintRawCXXCatchStmt(CXXCatchStmt *Catch);
     
     void PrintExpr(Expr *E) {
       if (E)
@@ -474,14 +475,29 @@ void StmtPrinter::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *Node) {
   OS << "\n";
 }
 
-void StmtPrinter::VisitCXXCatchStmt(CXXCatchStmt *Node) {
-  Indent() << "catch (";
+void StmtPrinter::PrintRawCXXCatchStmt(CXXCatchStmt *Node) {
+  OS << "catch (";
   if (Decl *ExDecl = Node->getExceptionDecl())
     PrintRawDecl(ExDecl);
   else
     OS << "...";
   OS << ") ";
   PrintRawCompoundStmt(cast<CompoundStmt>(Node->getHandlerBlock()));
+}
+
+void StmtPrinter::VisitCXXCatchStmt(CXXCatchStmt *Node) {
+  Indent();
+  PrintRawCXXCatchStmt(Node);
+  OS << "\n";
+}
+
+void StmtPrinter::VisitCXXTryStmt(CXXTryStmt *Node) {
+  Indent() << "try ";
+  PrintRawCompoundStmt(Node->getTryBlock());
+  for(unsigned i = 0, e = Node->getNumHandlers(); i < e; ++i) {
+    OS << " ";
+    PrintRawCXXCatchStmt(Node->getHandler(i));
+  }
   OS << "\n";
 }
 

@@ -1238,6 +1238,46 @@ public:
   static CXXCatchStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// CXXTryStmt - A C++ try block, including all handlers.
+class CXXTryStmt : public Stmt {
+  SourceLocation TryLoc;
+  // First place is the guarded CompoundStatement. Subsequent are the handlers.
+  // More than three handlers should be rare.
+  llvm::SmallVector<Stmt*, 4> Stmts;
+
+public:
+  CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock,
+             Stmt **handlers, unsigned numHandlers);
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(TryLoc, Stmts.back()->getLocEnd());
+  }
+
+  CompoundStmt *getTryBlock() { return llvm::cast<CompoundStmt>(Stmts[0]); }
+  const CompoundStmt *getTryBlock() const {
+    return llvm::cast<CompoundStmt>(Stmts[0]);
+  }
+
+  unsigned getNumHandlers() const { return Stmts.size() - 1; }
+  CXXCatchStmt *getHandler(unsigned i) {
+    return llvm::cast<CXXCatchStmt>(Stmts[i + 1]);
+  }
+  const CXXCatchStmt *getHandler(unsigned i) const {
+    return llvm::cast<CXXCatchStmt>(Stmts[i + 1]);
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXTryStmtClass;
+  }
+  static bool classof(const CXXTryStmt *) { return true; }
+
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXTryStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
 }  // end namespace clang
 
 #endif

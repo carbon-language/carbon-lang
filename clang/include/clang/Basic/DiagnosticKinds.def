@@ -1319,6 +1319,8 @@ DIAG(err_catch_incomplete, ERROR,
      "cannot catch%select{| pointer to| reference to}1 incomplete type %0")
 DIAG(err_qualified_catch_declarator, ERROR,
      "exception declarator cannot be qualified")
+DIAG(err_early_catch_all, ERROR,
+     "catch-all handler must come last")
 
 DIAG(err_invalid_use_of_function_type, ERROR,
      "a function type is not allowed here")

@@ -640,9 +640,9 @@ public:
   virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
                                               DeclTy *ExDecl,
                                               StmtArg HandlerBlock);
-  //virtual OwningStmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
-  //                                          StmtArg TryBlock,
-  //                                          MultiStmtArg Handlers);
+  virtual OwningStmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
+                                            StmtArg TryBlock,
+                                            MultiStmtArg Handlers);
 
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.

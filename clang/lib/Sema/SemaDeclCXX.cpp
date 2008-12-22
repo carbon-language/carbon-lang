@@ -2058,6 +2058,10 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
     Diag(Begin, diag::err_catch_incomplete) << BaseType << Mode;
   }
 
+  // FIXME: Need to test for ability to copy-construct and destroy the
+  // exception variable.
+  // FIXME: Need to check for abstract classes.
+
   IdentifierInfo *II = D.getIdentifier();
   if (Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S)) {
     // The scope should be freshly made just for us. There is just no way
