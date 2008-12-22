@@ -480,6 +480,43 @@ static inline __m128 __attribute__((__always__inline__)) _mm_setzero_ps(void)
   return (__m128){ 0, 0, 0, 0 };
 }
 
+static inline void __attribute__((__always__inline__)) _mm_storeh_pi(__m64 *p, __m128 a)
+{
+  __builtin_ia32_storehps((__v2si *)p, a);
+}
+
+static inline void __attribute__((__always__inline__)) _mm_storel_pi(__m64 *p, __m128 a)
+{
+  __builtin_ia32_storelps((__v2si *)p, a);
+}
+
+static inline void __attribute__((__always__inline__)) _mm_store_ss(float *p, __m128 a)
+{
+  *p = a[0];
+}
+
+static inline void __attribute__((__always_inline__)) _mm_storeu_ps(float *p, __m128 a)
+{
+  __builtin_ia32_storeups(p, a);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_store1_ps(float *p, __m128 a)
+{
+  a = __builtin_shufflevector(a, a, 0, 0, 0, 0);
+  _mm_storeu_ps(p, a);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_store_ps(float *p, __m128 a)
+{
+  *(__m128 *)p = a;
+}
+
+static inline void __attribute__((__always_inline__)) _mm_storer_ps(float *p, __m128 a)
+{
+  a = __builtin_shufflevector(a, a, 3, 2, 1, 0);
+  _mm_store_ps(p, a);
+}
+
 #endif /* __SSE__ */
 
 #endif /* __XMMINTRIN_H */
