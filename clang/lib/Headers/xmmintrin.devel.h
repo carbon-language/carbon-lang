@@ -28,6 +28,8 @@
 #error "MMX instruction set not enabled"
 #else
 
+#include <mmintrin.h>
+
 typedef float __m128 __attribute__((__vector_size__(16)));
 
 static inline __m128 __attribute__((__always_inline__)) _mm_add_ss(__m128 a, __m128 b)
@@ -318,6 +320,51 @@ static inline int __attribute__((__always_inline__)) _mm_ucomige_ss(__m128 a, __
 static inline int __attribute__((__always_inline__)) _mm_ucomineq_ss(__m128 a, __m128 b)
 {
   return __builtin_ia32_ucomineq(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_cvtss_si32(__m128 a)
+{
+  return __builtin_ia32_cvtss2si(a);
+}
+
+static inline long long __attribute__((__always_inline__)) _mm_cvtss_si64(__m128 a)
+{
+  return __builtin_ia32_cvtss2si64(a);
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_cvtps_pi32(__m128 a)
+{
+  return (__m64)__builtin_ia32_cvtps2pi(a);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_cvttss_si32(__m128 a)
+{
+  return __builtin_ia32_cvttss2si(a);
+}
+
+static inline long long __attribute__((__always_inline__)) _mm_cvttss_si64(__m128 a)
+{
+  return __builtin_ia32_cvttss2si64(a);
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_cvttps_pi32(__m128 a)
+{
+  return (__m64)__builtin_ia32_cvttps2pi(a);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtsi32_ss(__m128 a, int b)
+{
+  return __builtin_ia32_cvtsi2ss(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtsi64_ss(__m128 a, long long b)
+{
+  return __builtin_ia32_cvtsi642ss(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi32_ps(__m128 a, __m64 b)
+{
+  return __builtin_ia32_cvtpi2ps(a, (__v2si)b);
 }
 
 #endif /* __SSE__ */
