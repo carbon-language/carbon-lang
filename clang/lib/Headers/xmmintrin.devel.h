@@ -140,6 +140,186 @@ static inline __m128 __attribute__((__always_inline__)) _mm_xor_ps(__m128 a, __m
   return __builtin_ia32_xorps(a, b);
 }
 
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpeq_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpeqss(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpeq_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpeqps(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmplt_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpltss(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmplt_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpltps(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmple_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpless(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmple_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpleps(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpgt_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpltss(b, a);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpgt_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpltps(b, a);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpge_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpless(b, a);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpge_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpleps(b, a);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpneq_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpneqss(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpneq_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpneqps(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpnlt_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpnltss(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpnlt_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpnltps(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpnle_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpnless(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpnle_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpnleps(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpngt_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpnltss(b, a);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpngt_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpnltps(b, a);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpnge_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpnless(b, a);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpnge_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpnleps(b, a);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpord_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpordss(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpord_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpordps(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpunord_ss(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpunordss(a, b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cmpunord_ps(__m128 a, __m128 b)
+{
+  return (__m128)__builtin_ia32_cmpunordps(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_comieq_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_comieq(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_comilt_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_comilt(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_comile_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_comile(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_comigt_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_comigt(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_comige_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_comige(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_comineq_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_comineq(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_ucomieq_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_ucomieq(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_ucomilt_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_ucomilt(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_ucomile_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_ucomile(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_ucomigt_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_ucomigt(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_ucomige_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_ucomige(a, b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_ucomineq_ss(__m128 a, __m128 b)
+{
+  return __builtin_ia32_ucomineq(a, b);
+}
+
 #endif /* __SSE__ */
 
 #endif /* __XMMINTRIN_H */
