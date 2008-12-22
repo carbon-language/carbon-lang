@@ -468,7 +468,11 @@ addPropertyMethods(Decl *D,
                              property->getGetterName(), 
                              property->getType(),
                              D,
-                             true, false, true, ObjCMethodDecl::Required);
+                             true, false, true, 
+                             (property->getPropertyImplementation() == 
+                              ObjCPropertyDecl::Optional) ? 
+                             ObjCMethodDecl::Optional : 
+                             ObjCMethodDecl::Required);
     insMethods.push_back(GetterDecl);
     InsMap[property->getGetterName()] = GetterDecl;
   }
@@ -493,7 +497,11 @@ addPropertyMethods(Decl *D,
                              property->getSetterName(), 
                              Context.VoidTy,
                              D,
-                             true, false, true, ObjCMethodDecl::Required);
+                             true, false, true,
+                             (property->getPropertyImplementation() == 
+                              ObjCPropertyDecl::Optional) ? 
+                             ObjCMethodDecl::Optional : 
+                             ObjCMethodDecl::Required);
     insMethods.push_back(SetterDecl);
     InsMap[property->getSetterName()] = SetterDecl;
     // Invent the arguments for the setter. We don't bother making a
