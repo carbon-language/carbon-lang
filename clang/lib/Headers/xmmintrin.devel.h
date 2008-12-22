@@ -517,6 +517,31 @@ static inline void __attribute__((__always_inline__)) _mm_storer_ps(float *p, __
   _mm_store_ps(p, a);
 }
 
+#define _MM_HINT_T0 1
+#define _MM_HINT_T1 2
+#define _MM_HINT_T2 3
+#define _MM_HINT_NTA 0
+
+// FIXME: We have to #define this because "sel" must be a constant integer, and 
+// Sema doesn't do any form of constant propagation yet.
+
+#define _mm_prefetch(a, sel) (__builtin_prefetch((void *)a, 0, sel))
+
+static inline void __attribute__((__always_inline__)) _mm_stream_pi(__m64 *p, __m64 a)
+{
+  __builtin_ia32_movntq(p, a);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_stream_ps(float *p, __m128 a)
+{
+  __builtin_ia32_movntps(p, a);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_sfence(void)
+{
+  __builtin_ia32_sfence();
+}
+
 #endif /* __SSE__ */
 
 #endif /* __XMMINTRIN_H */
