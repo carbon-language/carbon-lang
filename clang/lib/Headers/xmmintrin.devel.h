@@ -511,13 +511,15 @@ static inline int __attribute__((__always_inline__)) _mm_extract_pi16(__m64 a, i
   return b[(n == 0) ? 0 : (n == 1 ? 1 : (n == 2 ? 2 : 3))];
 }
 
+/* FIXME: Implement this. We could add a __builtin_insertelement function that's similar to
+   the already existing __builtin_shufflevector.
+*/
+/*
 static inline __m64 __attribute__((__always_inline__)) _mm_insert_pi16(__m64 a, int d, int n)
 {
-  /* FIXME: Implement this. We could add a __builtin_insertelement function that's similar to
-     the already existing __builtin_shufflevector.
-    */
    return (__m64){ 0LL };
 }
+*/
 
 static inline __m64 __attribute__((__always_inline__)) _mm_max_pi16(__m64 a, __m64 b)
 {
