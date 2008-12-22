@@ -373,49 +373,49 @@ static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi32_ps(__m128 a,
 
 static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi16_ps(__m64 a)
 {
-  // FIXME: Implement
+  /* FIXME: Implement */
   return (__m128){ 0, 0, 0, 0 };
 }
 
 static inline __m128 __attribute__((__always_inline__)) _mm_cvtpu16_ps(__m64 a)
 {
-  // FIXME: Implement
+  /* FIXME: Implement */
   return (__m128){ 0, 0, 0, 0 };  
 }
 
 static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi8_ps(__m64 a)
 {
-  // FIXME: Implement
+  /* FIXME: Implement */
   return (__m128){ 0, 0, 0, 0 };  
 }
 
 static inline __m128 __attribute__((__always_inline__)) _mm_cvtpu8_ps(__m64 a)
 {
-  // FIXME: Implement
+  /* FIXME: Implement */
   return (__m128){ 0, 0, 0, 0 };  
 }
 
 static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi32x2_ps(__m64 a, __m64 b)
 {
-  // FIXME: Implement
+  /* FIXME: Implement */
   return (__m128){ 0, 0, 0, 0 };  
 }
 
 static inline __m64 __attribute__((__always_inline__)) _mm_cvtps_pi16(__m128 a)
 {
-  // FIXME: Implement
+  /* FIXME: Implement */
   return _mm_setzero_si64();
 }
 
 static inline __m64 __attribute__((__always_inline__)) _mm_cvtps_pi8(__m128 a)
 {
-  // FIXME: Implement
+  /* FIXME: Implement */
   return _mm_setzero_si64();
 }
 
 static inline float __attribute__((__always_inline__)) _mm_cvtss_f32(__m128 a)
 {
-  // FIXME: Implement
+  /* FIXME: Implement */
   return 0;
 }
 
@@ -522,8 +522,8 @@ static inline void __attribute__((__always_inline__)) _mm_storer_ps(float *p, __
 #define _MM_HINT_T2 3
 #define _MM_HINT_NTA 0
 
-// FIXME: We have to #define this because "sel" must be a constant integer, and 
-// Sema doesn't do any form of constant propagation yet.
+/* FIXME: We have to #define this because "sel" must be a constant integer, and 
+   Sema doesn't do any form of constant propagation yet. */
 
 #define _mm_prefetch(a, sel) (__builtin_prefetch((void *)a, 0, sel))
 
@@ -542,6 +542,77 @@ static inline void __attribute__((__always_inline__)) _mm_sfence(void)
   __builtin_ia32_sfence();
 }
 
+static inline int __attribute__((__always_inline__)) _mm_extract_pi16(__m64 a, int n)
+{
+  /* FIXME: 
+   * This should force n to be an immediate.
+   * This does not use the PEXTRW instruction. From looking at the LLVM source, the
+     instruction doesn't seem to be hooked up. 
+   * The code could probably be made better :)
+   */
+  __v4hi b = (__v4hi)a;
+  return b[(n == 0) ? 0 : (n == 1 ? 1 : (n == 2 ? 2 : 3))];
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_insert_pi16(__m64 a, int d, int n)
+{
+  /* FIXME: Implement this. We could add a __builtin_insertelement function that's similar to
+     the already existing __builtin_shufflevector.
+    */
+   return (__m64){ 0LL };
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_max_pi16(__m64 a, __m64 b)
+{
+  return (__m64)__builtin_ia32_pmaxsw((__v4hi)a, (__v4hi)b);
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_max_pu8(__m64 a, __m64 b)
+{
+  return (__m64)__builtin_ia32_pmaxub((__v8qi)a, (__v8qi)b);
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_min_pi16(__m64 a, __m64 b)
+{
+  return (__m64)__builtin_ia32_pminsw((__v4hi)a, (__v4hi)b);
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_min_pu8(__m64 a, __m64 b)
+{
+  return (__m64)__builtin_ia32_pminub((__v8qi)a, (__v8qi)b);
+}
+
+static inline int __attribute__((__always_inline__)) _mm_movemask_pi8(__m64 a)
+{
+  return __builtin_ia32_pmovmskb((__v8qi)a);
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_mulhi_pu16(__m64 a, __m64 b)
+{
+  return (__m64)__builtin_ia32_pmulhuw((__v4hi)a, (__v4hi)b);  
+}
+
+#define _mm_shuffle_pi16(a, n) ((__m64)__builtin_ia32_pshufw((__v4hi)a, n))
+
+static inline void __attribute__((__always_inline__)) _mm_maskmove_si64(__m64 d, __m64 n, char *p)
+{
+  __builtin_ia32_maskmovq((__v8qi)d, (__v8qi)n, p);
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_avg_pu8(__m64 a, __m64 b)
+{
+  return (__m64)__builtin_ia32_pavgb((__v8qi)a, (__v8qi)b);
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_avg_pu16(__m64 a, __m64 b)
+{
+  return (__m64)__builtin_ia32_pavgw((__v4hi)a, (__v4hi)b);
+}
+
+static inline __m64 __attribute__((__always_inline___)) _mm_sad_pu8(__m64 a, __m64 b)
+{
+  return (__m64)__builtin_ia32_psadbw((__v8qi)a, (__v8qi)b);
+}
 #endif /* __SSE__ */
 
 #endif /* __XMMINTRIN_H */
