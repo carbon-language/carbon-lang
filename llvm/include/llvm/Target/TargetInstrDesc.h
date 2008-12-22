@@ -159,7 +159,8 @@ public:
   
   /// getNumDefs - Return the number of MachineOperands that are register
   /// definitions.  Register definitions always occur at the start of the 
-  /// machine operand list.  This is the number of "outs" in the .td file.
+  /// machine operand list.  This is the number of "outs" in the .td file,
+  /// and does not include implicit defs.
   unsigned getNumDefs() const {
     return NumDefs;
   }
