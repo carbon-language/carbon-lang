@@ -119,29 +119,35 @@ void SUnit::removePred(const SDep &D) {
 }
 
 void SUnit::setDepthDirty() {
+  if (!isDepthCurrent) return;
   SmallVector<SUnit*, 8> WorkList;
   WorkList.push_back(this);
-  while (!WorkList.empty()) {
+  do {
     SUnit *SU = WorkList.pop_back_val();
-    if (!SU->isDepthCurrent) continue;
     SU->isDepthCurrent = false;
     for (SUnit::const_succ_iterator I = SU->Succs.begin(),
-         E = SU->Succs.end(); I != E; ++I)
-      WorkList.push_back(I->getSUnit());
-  }
+         E = SU->Succs.end(); I != E; ++I) {
+      SUnit *SuccSU = I->getSUnit();
+      if (SuccSU->isDepthCurrent)
+        WorkList.push_back(SuccSU);
+    }
+  } while (!WorkList.empty());
 }
 
 void SUnit::setHeightDirty() {
+  if (!isHeightCurrent) return;
   SmallVector<SUnit*, 8> WorkList;
   WorkList.push_back(this);
-  while (!WorkList.empty()) {
+  do {
     SUnit *SU = WorkList.pop_back_val();
-    if (!SU->isHeightCurrent) continue;
     SU->isHeightCurrent = false;
     for (SUnit::const_pred_iterator I = SU->Preds.begin(),
-         E = SU->Preds.end(); I != E; ++I)
-      WorkList.push_back(I->getSUnit());
-  }
+         E = SU->Preds.end(); I != E; ++I) {
+      SUnit *PredSU = I->getSUnit();
+      if (PredSU->isHeightCurrent)
+        WorkList.push_back(PredSU);
+    }
+  } while (!WorkList.empty());
 }
 
 /// setDepthToAtLeast - Update this node's successors to reflect the
