@@ -173,6 +173,7 @@ namespace {
       void setMemDep(MemoryDependenceAnalysis* M) { MD = M; }
       void setDomTree(DominatorTree* D) { DT = D; }
       uint32_t getNextUnusedValueNumber() { return nextValueNumber; }
+      void verifyRemoved(const Value *) const;
   };
 }
 
@@ -678,6 +679,15 @@ void ValueTable::erase(Value* V) {
   valueNumbering.erase(V);
 }
 
+/// verifyRemoved - Verify that the value is removed from all internal data
+/// structures.
+void ValueTable::verifyRemoved(const Value *V) const {
+  for (DenseMap<Value*, uint32_t>::iterator
+         I = valueNumbering.begin(), E = valueNumbering.end(); I != E; ++I) {
+    assert(I->first != V && "Inst still occurs in value numbering map!");
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //                         GVN Pass
 //===----------------------------------------------------------------------===//
@@ -741,6 +751,7 @@ namespace {
     bool mergeBlockIntoPredecessor(BasicBlock* BB);
     Value* AttemptRedundancyElimination(Instruction* orig, unsigned valno);
     void cleanupGlobalSets();
+    void verifyRemoved(const Instruction *I) const;
   };
   
   char GVN::ID = 0;
@@ -859,6 +870,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, Instruction* orig,
   DEBUG(cerr << "GVN removed: " << *PN);
   MD->removeInstruction(PN);
   PN->eraseFromParent();
+  DEBUG(verifyRemoved(PN));
 
   Phis[BB] = v;
   return v;
@@ -1639,4 +1651,10 @@ void GVN::cleanupGlobalSets() {
        I = localAvail.begin(), E = localAvail.end(); I != E; ++I)
     delete I->second;
   localAvail.clear();
+}
+
+/// verifyRemoved - Verify that the specified instruction does not occur in our
+/// internal data structures.
+void GVN::verifyRemoved(const Instruction *I) const {
+  VN.verifyRemoved(I);
 }
