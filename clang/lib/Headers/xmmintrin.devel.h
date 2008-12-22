@@ -357,14 +357,66 @@ static inline __m128 __attribute__((__always_inline__)) _mm_cvtsi32_ss(__m128 a,
   return __builtin_ia32_cvtsi2ss(a, b);
 }
 
+#ifdef __x86_64__
+
 static inline __m128 __attribute__((__always_inline__)) _mm_cvtsi64_ss(__m128 a, long long b)
 {
   return __builtin_ia32_cvtsi642ss(a, b);
 }
 
+#endif
+
 static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi32_ps(__m128 a, __m64 b)
 {
   return __builtin_ia32_cvtpi2ps(a, (__v2si)b);
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi16_ps(__m64 a)
+{
+  // FIXME: Implement
+  return (__m128){ 0, 0, 0, 0 };
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpu16_ps(__m64 a)
+{
+  // FIXME: Implement
+  return (__m128){ 0, 0, 0, 0 };  
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi8_ps(__m64 a)
+{
+  // FIXME: Implement
+  return (__m128){ 0, 0, 0, 0 };  
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpu8_ps(__m64 a)
+{
+  // FIXME: Implement
+  return (__m128){ 0, 0, 0, 0 };  
+}
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtpi32x2_ps(__m64 a, __m64 b)
+{
+  // FIXME: Implement
+  return (__m128){ 0, 0, 0, 0 };  
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_cvtps_pi16(__m128 a)
+{
+  // FIXME: Implement
+  return _mm_setzero_si64();
+}
+
+static inline __m64 __attribute__((__always_inline__)) _mm_cvtps_pi8(__m128 a)
+{
+  // FIXME: Implement
+  return _mm_setzero_si64();
+}
+
+static inline float __attribute__((__always_inline__)) _mm_cvtss_f32(__m128 a)
+{
+  // FIXME: Implement
+  return 0;
 }
 
 #endif /* __SSE__ */
