@@ -59,6 +59,20 @@ namespace llvm {
     virtual void EmitNoop() {}
   };
 
+  /// ScheduleDAGSDNodes - A ScheduleDAG for scheduling SDNode-based DAGs.
+  /// 
+  /// Edges between SUnits are initially based on edges in the SelectionDAG,
+  /// and additional edges can be added by the schedulers as heuristics.
+  /// SDNodes such as Constants, Registers, and a few others that are not
+  /// interesting to schedulers are not allocated SUnits.
+  ///
+  /// SDNodes with MVT::Flag operands are grouped along with the flagged
+  /// nodes into a single SUnit so that they are scheduled together.
+  ///
+  /// SDNode-based scheduling graphs do not use SDep::Anti or SDep::Output
+  /// edges.  Physical register dependence information is not carried in
+  /// the DAG and must be handled explicitly by schedulers.
+  ///
   class ScheduleDAGSDNodes : public ScheduleDAG {
   public:
     SmallSet<SDNode*, 16> CommuteSet;     // Nodes that should be commuted.
@@ -88,7 +102,11 @@ namespace llvm {
     /// NewSUnit - Creates a new SUnit and return a ptr to it.
     ///
     SUnit *NewSUnit(SDNode *N) {
+#ifndef NDEBUG
+      const SUnit *Addr = &SUnits[0];
+#endif
       SUnits.push_back(SUnit(N, (unsigned)SUnits.size()));
+      assert(Addr == &SUnits[0] && "SUnits std::vector reallocated on the fly!");
       SUnits.back().OrigNode = &SUnits.back();
       return &SUnits.back();
     }
