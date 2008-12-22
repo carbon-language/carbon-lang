@@ -1635,18 +1635,34 @@ void GVN::cleanupGlobalSets() {
 
 /// verifyRemoved - Verify that the specified instruction does not occur in our
 /// internal data structures.
-void GVN::verifyRemoved(const Instruction *I) const {
-  VN.verifyRemoved(I);
+void GVN::verifyRemoved(const Instruction *Inst) const {
+  VN.verifyRemoved(Inst);
 
   // Walk through the PHI map to make sure the instruction isn't hiding in there
   // somewhere.
   for (PhiMapType::iterator
-         II = phiMap.begin(), IE = phiMap.end(); II != IE; ++II) {
-    assert(II->first != I && "Inst is still a key in PHI map!");
+         I = phiMap.begin(), E = phiMap.end(); I != E; ++I) {
+    assert(I->first != Inst && "Inst is still a key in PHI map!");
 
     for (SmallPtrSet<Instruction*, 4>::iterator
-           SI = II->second.begin(), SE = II->second.end(); SI != SE; ++SI) {
-      assert(*SI != I && "Inst is still a value in PHI map!");
+           II = I->second.begin(), IE = I->second.end(); II != IE; ++II) {
+      assert(*II != Inst && "Inst is still a value in PHI map!");
+    }
+  }
+
+  // Walk through the value number scope to make sure the instruction isn't
+  // ferreted away in it.
+  for (DenseMap<BasicBlock*, ValueNumberScope*>::iterator
+         I = localAvail.begin(), E = localAvail.end(); I != E; ++I) {
+    const ValueNumberScope *VNS = I->second;
+
+    while (VNS) {
+      for (DenseMap<uint32_t, Value*>::iterator
+             II = VNS->table.begin(), IE = VNS->table.end(); II != IE; ++II) {
+        assert(II->second != Inst && "Inst still in value numbering scope!");
+      }
+
+      VNS = VNS->parent;
     }
   }
 }
