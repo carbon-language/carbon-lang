@@ -54,6 +54,31 @@ public:
   static bool classof(const CXXOperatorCallExpr *) { return true; }
 };
 
+/// CXXMemberCallExpr - Represents a call to a member function that
+/// may be written either with member call syntax (e.g., "obj.func()"
+/// or "objptr->func()") or with normal function-call syntax
+/// ("func()") within a member function that ends up calling a member
+/// function. The callee in either case is a MemberExpr that contains
+/// both the object argument and the member function, while the
+/// arguments are the arguments within the parentheses (not including
+/// the object argument).
+class CXXMemberCallExpr : public CallExpr {
+public:
+  CXXMemberCallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
+                      SourceLocation rparenloc)
+    : CallExpr(CXXMemberCallExprClass, fn, args, numargs, t, rparenloc) { }
+
+  /// getImplicitObjectArgument - Retrieves the implicit object
+  /// argument for the member call. For example, in "x.f(5)", this
+  /// operation would return "x".
+  Expr *getImplicitObjectArgument();
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXMemberCallExprClass;
+  }
+  static bool classof(const CXXMemberCallExpr *) { return true; }
+};
+
 /// CXXNamedCastExpr - Abstract class common to all of the C++ "named"
 /// casts, @c static_cast, @c dynamic_cast, @c reinterpret_cast, or @c
 /// const_cast.

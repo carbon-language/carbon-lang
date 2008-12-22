@@ -487,16 +487,17 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     return LV_InvalidExpression;
   }
   case CallExprClass: 
-  case CXXOperatorCallExprClass: {
+  case CXXOperatorCallExprClass:
+  case CXXMemberCallExprClass: {
     // C++ [expr.call]p10:
     //   A function call is an lvalue if and only if the result type
     //   is a reference.
     QualType CalleeType = cast<CallExpr>(this)->getCallee()->getType();
     if (const PointerType *FnTypePtr = CalleeType->getAsPointerType())
-      if (const FunctionType *FnType
-            = FnTypePtr->getPointeeType()->getAsFunctionType())
-        if (FnType->getResultType()->isReferenceType())
-          return LV_Valid;
+      CalleeType = FnTypePtr->getPointeeType();
+    if (const FunctionType *FnType = CalleeType->getAsFunctionType())
+      if (FnType->getResultType()->isReferenceType())
+        return LV_Valid;
     
     break;
   }

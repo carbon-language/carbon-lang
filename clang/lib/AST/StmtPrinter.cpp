@@ -864,6 +864,10 @@ void StmtPrinter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node) {
   }
 }
 
+void StmtPrinter::VisitCXXMemberCallExpr(CXXMemberCallExpr *Node) {
+  VisitCallExpr(cast<CallExpr>(Node));
+}
+
 void StmtPrinter::VisitCXXNamedCastExpr(CXXNamedCastExpr *Node) {
   OS << Node->getCastName() << '<';
   OS << Node->getTypeAsWritten().getAsString() << ">(";

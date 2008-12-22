@@ -455,28 +455,78 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     }
   }
   
+  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
+    if (!MD->isStatic()) {
+      // C++ [class.mfct.nonstatic]p2: 
+      //   [...] if name lookup (3.4.1) resolves the name in the
+      //   id-expression to a nonstatic nontype member of class X or of
+      //   a base class of X, the id-expression is transformed into a
+      //   class member access expression (5.2.5) using (*this) (9.3.2)
+      //   as the postfix-expression to the left of the '.' operator.
+      DeclContext *Ctx = 0;
+      QualType MemberType;
+      if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
+        Ctx = FD->getDeclContext();
+        MemberType = FD->getType();
+
+        if (const ReferenceType *RefType = MemberType->getAsReferenceType())
+          MemberType = RefType->getPointeeType();
+        else if (!FD->isMutable()) {
+          unsigned combinedQualifiers 
+            = MemberType.getCVRQualifiers() | MD->getTypeQualifiers();
+          MemberType = MemberType.getQualifiedType(combinedQualifiers);
+        }
+      } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+        if (!Method->isStatic()) {
+          Ctx = Method->getParent();
+          MemberType = Method->getType();
+        }
+      } else if (OverloadedFunctionDecl *Ovl 
+                   = dyn_cast<OverloadedFunctionDecl>(D)) {
+        for (OverloadedFunctionDecl::function_iterator 
+               Func = Ovl->function_begin(),
+               FuncEnd = Ovl->function_end();
+             Func != FuncEnd; ++Func) {
+          if (CXXMethodDecl *DMethod = dyn_cast<CXXMethodDecl>(*Func))
+            if (!DMethod->isStatic()) {
+              Ctx = Ovl->getDeclContext();
+              MemberType = Context.OverloadTy;
+              break;
+            }
+        }
+      }
+      
+      if (Ctx && Ctx->isCXXRecord()) {
+        QualType CtxType = Context.getTagDeclType(cast<CXXRecordDecl>(Ctx));
+        QualType ThisType = Context.getTagDeclType(MD->getParent());
+        if ((Context.getCanonicalType(CtxType) 
+               == Context.getCanonicalType(ThisType)) ||
+            IsDerivedFrom(ThisType, CtxType)) {
+          // Build the implicit member access expression.
+          Expr *This = new CXXThisExpr(SourceLocation(),
+                                       MD->getThisType(Context));
+          return new MemberExpr(This, true, cast<NamedDecl>(D), 
+                                SourceLocation(), MemberType);
+        }
+      }
+    }
+  }
+
   if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
       if (MD->isStatic())
         // "invalid use of member 'x' in static member function"
         return Diag(Loc, diag::err_invalid_member_use_in_static_method)
-           << FD->getDeclName();
-      if (MD->getParent() != FD->getDeclContext())
-        // "invalid use of nonstatic data member 'x'"
-        return Diag(Loc, diag::err_invalid_non_static_member_use)
           << FD->getDeclName();
-
-      if (FD->isInvalidDecl())
-        return true;
-
-      // FIXME: Handle 'mutable'.
-      return new DeclRefExpr(FD,
-        FD->getType().getWithAdditionalQualifiers(MD->getTypeQualifiers()),Loc);
     }
 
+    // Any other ways we could have found the field in a well-formed
+    // program would have been turned into implicit member expressions
+    // above.
     return Diag(Loc, diag::err_invalid_non_static_member_use)
       << FD->getDeclName();
   }
+
   if (isa<TypedefDecl>(D))
     return Diag(Loc, diag::err_unexpected_typedef) << Name;
   if (isa<ObjCInterfaceDecl>(D))
@@ -1409,13 +1459,87 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
           << BaseType << BaseExpr->getSourceRange();
 }
 
+/// ConvertArgumentsForCall - Converts the arguments specified in
+/// Args/NumArgs to the parameter types of the function FDecl with
+/// function prototype Proto. Call is the call expression itself, and
+/// Fn is the function expression. For a C++ member function, this
+/// routine does not attempt to convert the object argument. Returns
+/// true if the call is ill-formed.
+bool 
+Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn, 
+                              FunctionDecl *FDecl,
+                              const FunctionTypeProto *Proto,
+                              Expr **Args, unsigned NumArgs,
+                              SourceLocation RParenLoc) {
+  // C99 6.5.2.2p7 - the arguments are implicitly converted, as if by 
+  // assignment, to the types of the corresponding parameter, ...
+  unsigned NumArgsInProto = Proto->getNumArgs();
+  unsigned NumArgsToCheck = NumArgs;
+  
+  // If too few arguments are available (and we don't have default
+  // arguments for the remaining parameters), don't make the call.
+  if (NumArgs < NumArgsInProto) {
+    if (!FDecl || NumArgs < FDecl->getMinRequiredArguments())
+      return Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
+        << Fn->getType()->isBlockPointerType() << Fn->getSourceRange();
+    // Use default arguments for missing arguments
+    NumArgsToCheck = NumArgsInProto;
+    Call->setNumArgs(NumArgsInProto);
+  }
+
+  // If too many are passed and not variadic, error on the extras and drop
+  // them.
+  if (NumArgs > NumArgsInProto) {
+    if (!Proto->isVariadic()) {
+      Diag(Args[NumArgsInProto]->getLocStart(),
+           diag::err_typecheck_call_too_many_args)
+        << Fn->getType()->isBlockPointerType() << Fn->getSourceRange()
+        << SourceRange(Args[NumArgsInProto]->getLocStart(),
+                       Args[NumArgs-1]->getLocEnd());
+      // This deletes the extra arguments.
+      Call->setNumArgs(NumArgsInProto);
+    }
+    NumArgsToCheck = NumArgsInProto;
+  }
+  
+  // Continue to check argument types (even if we have too few/many args).
+  for (unsigned i = 0; i != NumArgsToCheck; i++) {
+    QualType ProtoArgType = Proto->getArgType(i);
+    
+    Expr *Arg;
+    if (i < NumArgs) 
+      Arg = Args[i];
+    else 
+      Arg = new CXXDefaultArgExpr(FDecl->getParamDecl(i));
+    QualType ArgType = Arg->getType();
+    
+    // Pass the argument.
+    if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
+      return true;
+    
+    Call->setArg(i, Arg);
+  }
+  
+  // If this is a variadic call, handle args passed through "...".
+  if (Proto->isVariadic()) {
+    // Promote the arguments (C99 6.5.2.2p7).
+    for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
+      Expr *Arg = Args[i];
+      DefaultArgumentPromotion(Arg);
+      Call->setArg(i, Arg);
+    }
+  }
+
+  return false;
+}
+
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
 /// This provides the location of the left/right parens and a list of comma
 /// locations.
-Action::ExprResult Sema::
-ActOnCallExpr(Scope *S, ExprTy *fn, SourceLocation LParenLoc,
-              ExprTy **args, unsigned NumArgs,
-              SourceLocation *CommaLocs, SourceLocation RParenLoc) {
+Action::ExprResult 
+Sema::ActOnCallExpr(Scope *S, ExprTy *fn, SourceLocation LParenLoc,
+                    ExprTy **args, unsigned NumArgs,
+                    SourceLocation *CommaLocs, SourceLocation RParenLoc) {
   Expr *Fn = static_cast<Expr *>(fn);
   Expr **Args = reinterpret_cast<Expr**>(args);
   assert(Fn && "no function call expression");
@@ -1454,6 +1578,20 @@ ActOnCallExpr(Scope *S, ExprTy *fn, SourceLocation LParenLoc,
   if (Dependent)
     return new CallExpr(Fn, Args, NumArgs, Context.DependentTy, RParenLoc);
 
+  // Determine whether this is a call to an object (C++ [over.call.object]).
+  if (getLangOptions().CPlusPlus && Fn->getType()->isRecordType())
+    return BuildCallToObjectOfClassType(S, Fn, LParenLoc, Args, NumArgs,
+                                        CommaLocs, RParenLoc);
+
+  // Determine whether this is a call to a member function.
+  if (getLangOptions().CPlusPlus) {
+    if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(Fn->IgnoreParens()))
+      if (isa<OverloadedFunctionDecl>(MemExpr->getMemberDecl()) ||
+          isa<CXXMethodDecl>(MemExpr->getMemberDecl()))
+        return BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs, 
+                                         CommaLocs, RParenLoc);
+  }
+
   // If we're directly calling a function or a set of overloaded
   // functions, get the appropriate declaration.
   {
@@ -1481,10 +1619,6 @@ ActOnCallExpr(Scope *S, ExprTy *fn, SourceLocation LParenLoc,
     Fn->Destroy(Context);
     Fn = NewFn;
   }
-
-  if (getLangOptions().CPlusPlus && Fn->getType()->isRecordType())
-    return BuildCallToObjectOfClassType(S, Fn, LParenLoc, Args, NumArgs,
-                                        CommaLocs, RParenLoc);
 
   // Promote the function operand.
   UsualUnaryConversions(Fn);
@@ -1515,64 +1649,9 @@ ActOnCallExpr(Scope *S, ExprTy *fn, SourceLocation LParenLoc,
   TheCall->setType(FuncT->getResultType().getNonReferenceType());
     
   if (const FunctionTypeProto *Proto = dyn_cast<FunctionTypeProto>(FuncT)) {
-    // C99 6.5.2.2p7 - the arguments are implicitly converted, as if by 
-    // assignment, to the types of the corresponding parameter, ...
-    unsigned NumArgsInProto = Proto->getNumArgs();
-    unsigned NumArgsToCheck = NumArgs;
-    
-    // If too few arguments are available (and we don't have default
-    // arguments for the remaining parameters), don't make the call.
-    if (NumArgs < NumArgsInProto) {
-      if (!FDecl || NumArgs < FDecl->getMinRequiredArguments())
-        return Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
-          << Fn->getType()->isBlockPointerType() << Fn->getSourceRange();
-      // Use default arguments for missing arguments
-      NumArgsToCheck = NumArgsInProto;
-      TheCall->setNumArgs(NumArgsInProto);
-    }
-
-    // If too many are passed and not variadic, error on the extras and drop
-    // them.
-    if (NumArgs > NumArgsInProto) {
-      if (!Proto->isVariadic()) {
-        Diag(Args[NumArgsInProto]->getLocStart(),
-             diag::err_typecheck_call_too_many_args)
-          << Fn->getType()->isBlockPointerType() << Fn->getSourceRange()
-          << SourceRange(Args[NumArgsInProto]->getLocStart(),
-                         Args[NumArgs-1]->getLocEnd());
-        // This deletes the extra arguments.
-        TheCall->setNumArgs(NumArgsInProto);
-      }
-      NumArgsToCheck = NumArgsInProto;
-    }
-    
-    // Continue to check argument types (even if we have too few/many args).
-    for (unsigned i = 0; i != NumArgsToCheck; i++) {
-      QualType ProtoArgType = Proto->getArgType(i);
-
-      Expr *Arg;
-      if (i < NumArgs) 
-        Arg = Args[i];
-      else 
-        Arg = new CXXDefaultArgExpr(FDecl->getParamDecl(i));
-      QualType ArgType = Arg->getType();
-
-      // Pass the argument.
-      if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
-        return true;
-
-      TheCall->setArg(i, Arg);
-    }
-    
-    // If this is a variadic call, handle args passed through "...".
-    if (Proto->isVariadic()) {
-      // Promote the arguments (C99 6.5.2.2p7).
-      for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
-        Expr *Arg = Args[i];
-        DefaultArgumentPromotion(Arg);
-        TheCall->setArg(i, Arg);
-      }
-    }
+    if (ConvertArgumentsForCall(&*TheCall, Fn, FDecl, Proto, Args, NumArgs, 
+                                RParenLoc))
+      return true;
   } else {
     assert(isa<FunctionTypeNoProto>(FuncT) && "Unknown FunctionType!");
     
@@ -1583,6 +1662,11 @@ ActOnCallExpr(Scope *S, ExprTy *fn, SourceLocation LParenLoc,
       TheCall->setArg(i, Arg);
     }
   }
+
+  if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(FDecl))
+    if (!Method->isStatic())
+      return Diag(LParenLoc, diag::err_member_call_without_object)
+        << Fn->getSourceRange();
 
   // Do special checking on direct calls to functions.
   if (FDecl)

@@ -937,8 +937,13 @@ DIAG(err_ovl_static_nonstatic_member, ERROR,
 DIAG(err_ovl_no_viable_function_in_call, ERROR,
      "no matching function for call to %0"
      "%plural{0:|1:; candidate is|:; candidates are:}1")
+DIAG(err_ovl_no_viable_member_function_in_call, ERROR,
+     "no matching member function for call to %0"
+     "%plural{0:|1:; candidate is|:; candidates are:}1")
 DIAG(err_ovl_ambiguous_call, ERROR,
      "call to %0 is ambiguous; candidates are:")
+DIAG(err_ovl_ambiguous_member_call, ERROR,
+     "call to member function %0 is ambiguous; candidates are:")
 DIAG(err_ovl_candidate, NOTE,
      "candidate function")
 DIAG(err_ovl_builtin_candidate, NOTE,
@@ -959,6 +964,8 @@ DIAG(err_ovl_ambiguous_object_call, ERROR,
      "call to object of type %0 is ambiguous; candidates are:")
 DIAG(err_ovl_surrogate_cand, NOTE,
      "conversion candidate of type %0")
+DIAG(err_member_call_without_object, ERROR,
+     "call to non-static member function without an object argument")
 
 /// C++ Templates Semantic Analysis
 DIAG(err_template_param_shadow, ERROR,

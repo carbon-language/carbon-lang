@@ -431,7 +431,7 @@ public:
   void AddMethodCandidate(CXXMethodDecl *Method,
                           Expr *Object, Expr **Args, unsigned NumArgs,
                           OverloadCandidateSet& CandidateSet,
-                          bool SuppressUserConversions = true);
+                          bool SuppressUserConversions = false);
   void AddConversionCandidate(CXXConversionDecl *Conversion,
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet);
@@ -468,7 +468,11 @@ public:
                                         Expr **Args, unsigned NumArgs,
                                         SourceLocation *CommaLocs, 
                                         SourceLocation RParenLoc);
-
+  ExprResult
+  BuildCallToMemberFunction(Scope *S, Expr *MemExpr,
+                            SourceLocation LParenLoc, Expr **Args, 
+                            unsigned NumArgs, SourceLocation *CommaLocs,
+                            SourceLocation RParenLoc);
   ExprResult 
   BuildCallToObjectOfClassType(Scope *S, Expr *Object, SourceLocation LParenLoc,
                                Expr **Args, unsigned NumArgs,
@@ -696,6 +700,11 @@ public:
                                               tok::TokenKind OpKind,
                                               SourceLocation MemberLoc,
                                               IdentifierInfo &Member);
+  bool ConvertArgumentsForCall(CallExpr *Call, Expr *Fn, 
+                               FunctionDecl *FDecl,
+                               const FunctionTypeProto *Proto,
+                               Expr **Args, unsigned NumArgs,
+                               SourceLocation RParenLoc);
   
   /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma

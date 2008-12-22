@@ -166,6 +166,14 @@ SourceRange CXXOperatorCallExpr::getSourceRange() const {
   }
 }
 
+Expr *CXXMemberCallExpr::getImplicitObjectArgument() {
+  if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(getCallee()->IgnoreParens()))
+    return MemExpr->getBase();
+
+  // FIXME: Will eventually need to cope with member pointers.
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 //  Named casts
 //===----------------------------------------------------------------------===//

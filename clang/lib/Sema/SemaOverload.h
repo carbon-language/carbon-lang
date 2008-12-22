@@ -231,6 +231,15 @@ namespace clang {
     /// (C++ [over.call.object]).
     bool IsSurrogate;
 
+    /// IgnoreObjectArgument - True to indicate that the first
+    /// argument's conversion, which for this function represents the
+    /// implicit object argument, should be ignored. This will be true
+    /// when the candidate is a static member function (where the
+    /// implicit object argument is just a placeholder) or a
+    /// non-static member function when the call doesn't have an
+    /// object argument.
+    bool IgnoreObjectArgument;
+
     /// FinalConversion - For a conversion function (where Function is
     /// a CXXConversionDecl), the standard conversion that occurs
     /// after the call to the overload candidate to convert the result

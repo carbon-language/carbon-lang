@@ -1759,11 +1759,26 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   assert(!isa<CXXConversionDecl>(Function) && 
          "Use AddConversionCandidate for conversion functions");
 
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Function)) {
+    // If we get here, it's because we're calling a member function
+    // that is named without a member access expression (e.g.,
+    // "this->f") that was either written explicitly or created
+    // implicitly. This can happen with a qualified call to a member
+    // function, e.g., X::f(). We use a NULL object as the implied
+    // object argument (C++ [over.call.func]p3).
+    AddMethodCandidate(Method, 0, Args, NumArgs, CandidateSet, 
+                       SuppressUserConversions);
+    return;
+  }
+
+
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
   Candidate.Function = Function;
+  Candidate.Viable = true;
   Candidate.IsSurrogate = false;
+  Candidate.IgnoreObjectArgument = false;
 
   unsigned NumArgsInProto = Proto->getNumArgs();
 
@@ -1789,7 +1804,6 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
 
   // Determine the implicit conversion sequences for each of the
   // arguments.
-  Candidate.Viable = true;
   Candidate.Conversions.resize(NumArgs);
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
     if (ArgIdx < NumArgsInProto) {
@@ -1840,6 +1854,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
   OverloadCandidate& Candidate = CandidateSet.back();
   Candidate.Function = Method;
   Candidate.IsSurrogate = false;
+  Candidate.IgnoreObjectArgument = false;
 
   unsigned NumArgsInProto = Proto->getNumArgs();
 
@@ -1866,13 +1881,18 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
   Candidate.Viable = true;
   Candidate.Conversions.resize(NumArgs + 1);
 
-  // Determine the implicit conversion sequence for the object
-  // parameter.
-  Candidate.Conversions[0] = TryObjectArgumentInitialization(Object, Method);
-  if (Candidate.Conversions[0].ConversionKind 
-        == ImplicitConversionSequence::BadConversion) {
-    Candidate.Viable = false;
-    return;
+  if (Method->isStatic() || !Object)
+    // The implicit object argument is ignored.
+    Candidate.IgnoreObjectArgument = true;
+  else {
+    // Determine the implicit conversion sequence for the object
+    // parameter.
+    Candidate.Conversions[0] = TryObjectArgumentInitialization(Object, Method);
+    if (Candidate.Conversions[0].ConversionKind 
+          == ImplicitConversionSequence::BadConversion) {
+      Candidate.Viable = false;
+      return;
+    }
   }
 
   // Determine the implicit conversion sequences for each of the
@@ -1917,6 +1937,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   OverloadCandidate& Candidate = CandidateSet.back();
   Candidate.Function = Conversion;
   Candidate.IsSurrogate = false;
+  Candidate.IgnoreObjectArgument = false;
   Candidate.FinalConversion.setAsIdentityConversion();
   Candidate.FinalConversion.FromTypePtr 
     = Conversion->getConversionType().getAsOpaquePtr();
@@ -1980,6 +2001,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   Candidate.Surrogate = Conversion;
   Candidate.Viable = true;
   Candidate.IsSurrogate = true;
+  Candidate.IgnoreObjectArgument = false;
   Candidate.Conversions.resize(NumArgs + 1);
 
   // Determine the implicit conversion sequence for the implicit
@@ -2193,6 +2215,7 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
   OverloadCandidate& Candidate = CandidateSet.back();
   Candidate.Function = 0;
   Candidate.IsSurrogate = false;
+  Candidate.IgnoreObjectArgument = false;
   Candidate.BuiltinTypes.ResultTy = ResultTy;
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
     Candidate.BuiltinTypes.ParamTypes[ArgIdx] = ParamTys[ArgIdx];
@@ -2983,8 +3006,15 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
   else if (!Cand1.Viable)
     return false;
 
-  // FIXME: Deal with the implicit object parameter for static member
-  // functions. (C++ 13.3.3p1).
+  // C++ [over.match.best]p1:
+  //
+  //   -- if F is a static member function, ICS1(F) is defined such
+  //      that ICS1(F) is neither better nor worse than ICS1(G) for
+  //      any function G, and, symmetrically, ICS1(G) is neither
+  //      better nor worse than ICS1(F).
+  unsigned StartArg = 0;
+  if (Cand1.IgnoreObjectArgument || Cand2.IgnoreObjectArgument)
+    StartArg = 1;
 
   // (C++ 13.3.3p1): a viable function F1 is defined to be a better
   // function than another viable function F2 if for all arguments i,
@@ -2993,7 +3023,7 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
   unsigned NumArgs = Cand1.Conversions.size();
   assert(Cand2.Conversions.size() == NumArgs && "Overload candidate mismatch");
   bool HasBetterConversion = false;
-  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+  for (unsigned ArgIdx = StartArg; ArgIdx < NumArgs; ++ArgIdx) {
     switch (CompareImplicitConversionSequences(Cand1.Conversions[ArgIdx],
                                                Cand2.Conversions[ArgIdx])) {
     case ImplicitConversionSequence::Better:
@@ -3255,11 +3285,102 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, OverloadedFunctionDecl *Ov
   return 0;
 }
 
+/// BuildCallToMemberFunction - Build a call to a member
+/// function. MemExpr is the expression that refers to the member
+/// function (and includes the object parameter), Args/NumArgs are the
+/// arguments to the function call (not including the object
+/// parameter). The caller needs to validate that the member
+/// expression refers to a member function or an overloaded member
+/// function.
+Sema::ExprResult
+Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE, 
+                                SourceLocation LParenLoc, Expr **Args, 
+                                unsigned NumArgs, SourceLocation *CommaLocs,
+                                SourceLocation RParenLoc) {
+  // Dig out the member expression. This holds both the object
+  // argument and the member function we're referring to.
+  MemberExpr *MemExpr = 0;
+  if (ParenExpr *ParenE = dyn_cast<ParenExpr>(MemExprE))
+    MemExpr = dyn_cast<MemberExpr>(ParenE->getSubExpr());
+  else
+    MemExpr = dyn_cast<MemberExpr>(MemExprE);
+  assert(MemExpr && "Building member call without member expression");
+
+  // Extract the object argument.
+  Expr *ObjectArg = MemExpr->getBase();
+  if (MemExpr->isArrow())
+    ObjectArg = new UnaryOperator(ObjectArg, UnaryOperator::Deref,
+                      ObjectArg->getType()->getAsPointerType()->getPointeeType(),
+                      SourceLocation());
+  CXXMethodDecl *Method = 0;
+  if (OverloadedFunctionDecl *Ovl 
+        = dyn_cast<OverloadedFunctionDecl>(MemExpr->getMemberDecl())) {
+    // Add overload candidates
+    OverloadCandidateSet CandidateSet;
+    for (OverloadedFunctionDecl::function_iterator Func = Ovl->function_begin(),
+                                                FuncEnd = Ovl->function_end();
+         Func != FuncEnd; ++Func) {
+      assert(isa<CXXMethodDecl>(*Func) && "Function is not a method");
+      Method = cast<CXXMethodDecl>(*Func);
+      AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet, 
+                         /*SuppressUserConversions=*/false);
+    }
+
+    OverloadCandidateSet::iterator Best;
+    switch (BestViableFunction(CandidateSet, Best)) {
+    case OR_Success:
+      Method = cast<CXXMethodDecl>(Best->Function);
+      break;
+
+    case OR_No_Viable_Function:
+      Diag(MemExpr->getSourceRange().getBegin(), 
+           diag::err_ovl_no_viable_member_function_in_call)
+        << Ovl->getDeclName() << (unsigned)CandidateSet.size()
+        << MemExprE->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+      // FIXME: Leaking incoming expressions!
+      return true;
+
+    case OR_Ambiguous:
+      Diag(MemExpr->getSourceRange().getBegin(), 
+           diag::err_ovl_ambiguous_member_call)
+        << Ovl->getDeclName() << MemExprE->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+      // FIXME: Leaking incoming expressions!
+      return true;
+    }
+
+    FixOverloadedFunctionReference(MemExpr, Method);
+  } else {
+    Method = dyn_cast<CXXMethodDecl>(MemExpr->getMemberDecl());
+  }
+
+  assert(Method && "Member call to something that isn't a method?");
+  llvm::OwningPtr<CXXMemberCallExpr> 
+    TheCall(new CXXMemberCallExpr(MemExpr, Args, NumArgs, 
+                                  Method->getResultType().getNonReferenceType(),
+                                  RParenLoc));
+
+  // Convert the object argument (for a non-static member function call).
+  if (!Method->isStatic() && 
+      PerformObjectArgumentInitialization(ObjectArg, Method))
+    return true;
+  MemExpr->setBase(ObjectArg);
+
+  // Convert the rest of the arguments
+  const FunctionTypeProto *Proto = cast<FunctionTypeProto>(Method->getType());
+  if (ConvertArgumentsForCall(&*TheCall, MemExpr, Method, Proto, Args, NumArgs, 
+                              RParenLoc))
+    return true;
+
+  return CheckFunctionCall(Method, TheCall.take());
+}
+
 /// BuildCallToObjectOfClassType - Build a call to an object of class
 /// type (C++ [over.call.object]), which can end up invoking an
 /// overloaded function call operator (@c operator()) or performing a
 /// user-defined conversion on the object argument.
-Action::ExprResult 
+Sema::ExprResult 
 Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object, 
                                    SourceLocation LParenLoc,
                                    Expr **Args, unsigned NumArgs,
@@ -3551,6 +3672,9 @@ void Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     assert(isa<OverloadedFunctionDecl>(DR->getDecl()) && 
            "Expected overloaded function");
     DR->setDecl(Fn);
+    E->setType(Fn->getType());
+  } else if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(E)) {
+    MemExpr->setMemberDecl(Fn);
     E->setType(Fn->getType());
   } else {
     assert(false && "Invalid reference to overloaded function");

@@ -92,6 +92,7 @@ STMT(GNUNullExpr          , Expr)
 
 // C++ Expressions.
 STMT(CXXOperatorCallExpr    , CallExpr)
+STMT(CXXMemberCallExpr      , CallExpr)
 STMT(CXXNamedCastExpr       , ExplicitCastExpr)
 STMT(CXXStaticCastExpr      , CXXNamedCastExpr)
 STMT(CXXDynamicCastExpr     , CXXNamedCastExpr)
