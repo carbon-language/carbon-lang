@@ -31,6 +31,7 @@
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
@@ -40,6 +41,13 @@
 using namespace clang;
 
 static ExplodedNodeImpl::Auditor* CreateUbiViz();
+
+// Analyzer options.
+static llvm::cl::opt<bool>
+PurgeDead("analyzer-purge-dead",
+          llvm::cl::init(true),
+          llvm::cl::desc("Remove dead symbols, bindings, and constraints before"
+                         " processing a statement."));
   
 //===----------------------------------------------------------------------===//
 // Basic type definitions.
@@ -85,7 +93,7 @@ namespace {
                      const std::string& fname,
                      const std::string& htmldir,
                      AnalysisStores sm, AnalysisDiagClients dc,
-                     bool visgraphviz, bool visubi, bool trim, bool analyzeAll) 
+                     bool visgraphviz, bool visubi, bool trim, bool analyzeAll)
       : VisGraphviz(visgraphviz), VisUbigraph(visubi), TrimGraph(trim),
         LOpts(lopts), Diags(diags),
         Ctx(0), PP(pp), PPF(ppf),
@@ -136,12 +144,12 @@ namespace {
 
   public:
     AnalysisManager(AnalysisConsumer& c, Decl* d, Stmt* b) 
-    : D(d), Body(b), TU(0), AScope(ScopeDecl), C(c), DisplayedFunction(false) {
+      : D(d), Body(b), TU(0), AScope(ScopeDecl), C(c), DisplayedFunction(false){
       setManagerCreators();
     }
     
     AnalysisManager(AnalysisConsumer& c, TranslationUnit* tu) 
-    : D(0), Body(0), TU(tu), AScope(ScopeTU), C(c), DisplayedFunction(false) {
+      : D(0), Body(0), TU(tu), AScope(ScopeTU), C(c), DisplayedFunction(false) {
       setManagerCreators();
     }
     
@@ -403,6 +411,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   if (!L) return;
 
   GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L,
+                   PurgeDead,
                    mgr.getStoreManagerCreator(), 
                    mgr.getConstraintManagerCreator());
 

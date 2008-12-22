@@ -115,12 +115,13 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 
 
 GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
-                           LiveVariables& L,
+                           LiveVariables& L, bool purgeDead,
                            StoreManagerCreator SMC,
                            ConstraintManagerCreator CMC)
   : CoreEngine(cfg, CD, Ctx, *this), 
     G(CoreEngine.getGraph()),
     Liveness(L),
+    PurgeDead(purgeDead),
     Builder(NULL),
     StateMgr(G.getContext(), SMC, CMC, G.getAllocator(), cfg, CD, L),
     SymMgr(StateMgr.getSymbolManager()),
@@ -211,8 +212,12 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
     Builder->setAuditor(BatchAuditor.get());
   
   // Create the cleaned state.  
-  CleanedState = StateMgr.RemoveDeadBindings(EntryNode->getState(), CurrentStmt,
-                                             Liveness, DeadSymbols);
+  if (PurgeDead)
+    CleanedState = StateMgr.RemoveDeadBindings(EntryNode->getState(), 
+                                               CurrentStmt,
+                                               Liveness, DeadSymbols);
+  else
+    CleanedState = EntryNode->getState();
   
   // Process any special transfer function for dead symbols.
   NodeSet Tmp;

@@ -92,6 +92,9 @@ protected:
   Selector RaiseSel;
   
   llvm::OwningPtr<GRSimpleAPICheck> BatchAuditor;
+
+  /// PurgeDead - Remove dead bindings before processing a statement.
+  bool PurgeDead;
   
 public:
   typedef llvm::SmallPtrSet<NodeTy*,2> ErrorNodes;  
@@ -178,6 +181,7 @@ public:
   
 public:
   GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L,
+               bool purgeDead,
                StoreManagerCreator SMC = CreateBasicStoreManager,
                ConstraintManagerCreator CMC = CreateBasicConstraintManager);
   
