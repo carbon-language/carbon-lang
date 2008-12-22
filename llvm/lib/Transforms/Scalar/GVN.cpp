@@ -1461,6 +1461,7 @@ bool GVN::processBlock(BasicBlock* BB) {
       DEBUG(cerr << "GVN removed: " << **I);
       MD->removeInstruction(*I);
       (*I)->eraseFromParent();
+      DEBUG(verifyRemoved(*I));
     }
     toErase.clear();
 
@@ -1611,6 +1612,7 @@ bool GVN::performPRE(Function& F) {
       DEBUG(cerr << "GVN PRE removed: " << *CurInst);
       MD->removeInstruction(CurInst);
       CurInst->eraseFromParent();
+      DEBUG(verifyRemoved(CurInst));
       Changed = true;
     }
   }
