@@ -76,6 +76,9 @@ void qualid_test(A *a, B *b, C *c) {
   int& i1 = qualid(a);
   int& i2 = qualid(b);
   float& f1 = qualid(c);
+
+  id<P0> p1 = 0;
+  p1 = 0;
 }
 
 

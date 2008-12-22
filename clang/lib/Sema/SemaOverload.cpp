@@ -767,6 +767,13 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   if (isObjCPointerConversion(FromType, ToType, ConvertedType, IncompatibleObjC))
     return true;
 
+  // Conversion from a null pointer constant to any Objective-C pointer type. 
+  if (Context.isObjCObjectPointerType(ToType) && 
+      From->isNullPointerConstant(Context)) {
+    ConvertedType = ToType;
+    return true;
+  }
+
   // Blocks: Block pointers can be converted to void*.
   if (FromType->isBlockPointerType() && ToType->isPointerType() &&
       ToType->getAsPointerType()->getPointeeType()->isVoidType()) {
