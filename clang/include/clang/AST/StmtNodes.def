@@ -53,7 +53,10 @@ STMT(ObjCAtSynchronizedStmt , Stmt)
 // Obj-C2 statements
 STMT(ObjCForCollectionStmt, Stmt)
 
-LAST_STMT(ObjCForCollectionStmt)
+// C++ statements
+STMT(CXXCatchStmt, Stmt)
+
+LAST_STMT(CXXCatchStmt)
 
 // Expressions.
 STMT(Expr                  , Stmt)

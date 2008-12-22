@@ -2026,3 +2026,66 @@ Sema::DeclTy *Sema::ActOnLinkageSpec(SourceLocation Loc,
   return LinkageSpecDecl::Create(Context, Loc, Language, dcl);
 }
 
+/// ActOnExceptionDeclarator - Parsed the exception-declarator in a C++ catch
+/// handler.
+Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
+{
+  QualType ExDeclType = GetTypeForDeclarator(D, S);
+  SourceLocation Begin = D.getDeclSpec().getSourceRange().getBegin();
+
+  bool Invalid = false;
+
+  // Arrays and functions decay.
+  if (ExDeclType->isArrayType())
+    ExDeclType = Context.getArrayDecayedType(ExDeclType);
+  else if (ExDeclType->isFunctionType())
+    ExDeclType = Context.getPointerType(ExDeclType);
+
+  // C++ 15.3p1: The exception-declaration shall not denote an incomplete type.
+  // The exception-declaration shall not denote a pointer or reference to an
+  // incomplete type, other than [cv] void*.
+  QualType BaseType = ExDeclType;
+  int Mode = 0; // 0 for direct type, 1 for pointer, 2 for reference
+  if (const PointerType *Ptr = BaseType->getAsPointerType()) {
+    BaseType = Ptr->getPointeeType();
+    Mode = 1;
+  } else if(const ReferenceType *Ref = BaseType->getAsReferenceType()) {
+    BaseType = Ref->getPointeeType();
+    Mode = 2;
+  }
+  if ((Mode == 0 || !BaseType->isVoidType()) && BaseType->isIncompleteType()) {
+    Invalid = true;
+    Diag(Begin, diag::err_catch_incomplete) << BaseType << Mode;
+  }
+
+  IdentifierInfo *II = D.getIdentifier();
+  if (Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S)) {
+    // The scope should be freshly made just for us. There is just no way
+    // it contains any previous declaration.
+    assert(!S->isDeclScope(PrevDecl));
+    if (PrevDecl->isTemplateParameter()) {
+      // Maybe we will complain about the shadowed template parameter.
+      DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
+
+    }
+  }
+
+  VarDecl *ExDecl = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
+                                    II, ExDeclType, VarDecl::None, 0, Begin);
+  if (D.getInvalidType() || Invalid)
+    ExDecl->setInvalidDecl();
+
+  if (D.getCXXScopeSpec().isSet()) {
+    Diag(D.getIdentifierLoc(), diag::err_qualified_catch_declarator)
+      << D.getCXXScopeSpec().getRange();
+    ExDecl->setInvalidDecl();
+  }
+
+  // Add the exception declaration into this scope.
+  S->AddDecl(ExDecl);
+  if (II)
+    IdResolver.AddDecl(ExDecl);
+
+  ProcessDeclAttributes(ExDecl, D);
+  return ExDecl;
+}

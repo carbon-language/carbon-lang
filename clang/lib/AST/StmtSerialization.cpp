@@ -242,6 +242,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
 
     case CXXDependentNameExprClass:
       return CXXDependentNameExpr::CreateImpl(D, C);
+
+    case CXXCatchStmtClass:
+      return CXXCatchStmt::CreateImpl(D, C);
   }
 }
 
@@ -1522,4 +1525,18 @@ CXXDependentNameExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
   IdentifierInfo *N = D.ReadPtr<IdentifierInfo>();
   SourceLocation L = SourceLocation::ReadVal(D);
   return new CXXDependentNameExpr(N, Ty, L);
+}
+
+void CXXCatchStmt::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(CatchLoc);
+  S.EmitOwnedPtr(ExceptionDecl);
+  S.EmitOwnedPtr(HandlerBlock);
+}
+
+CXXCatchStmt *
+CXXCatchStmt::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  SourceLocation CatchLoc = SourceLocation::ReadVal(D);
+  Decl *ExDecl = D.ReadOwnedPtr<Decl>(C);
+  Stmt *HandlerBlock = D.ReadOwnedPtr<Stmt>(C);
+  return new CXXCatchStmt(CatchLoc, ExDecl, HandlerBlock);
 }

@@ -951,3 +951,13 @@ Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprTy *SynchExpr,
     static_cast<Stmt*>(SynchExpr), static_cast<Stmt*>(SynchBody));
   return SS;
 }
+
+/// ActOnCXXCatchBlock - Takes an exception declaration and a handler block
+/// and creates a proper catch handler from them.
+Action::OwningStmtResult
+Sema::ActOnCXXCatchBlock(SourceLocation CatchLoc, DeclTy *ExDecl,
+                         StmtArg HandlerBlock) {
+  // There's nothing to test that ActOnExceptionDecl didn't already test.
+  return Owned(new CXXCatchStmt(CatchLoc, static_cast<VarDecl*>(ExDecl),
+                                static_cast<Stmt*>(HandlerBlock.release())));
+}

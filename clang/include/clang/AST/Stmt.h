@@ -31,6 +31,7 @@ namespace clang {
   class Expr;
   class Decl;
   class ScopedDecl;
+  class QualType;
   class IdentifierInfo;
   class SourceManager;
   class StringLiteral;
@@ -1200,6 +1201,41 @@ public:
   
   virtual void EmitImpl(llvm::Serializer& S) const;
   static ObjCAtThrowStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// CXXCatchStmt - This represents a C++ catch block.
+class CXXCatchStmt : public Stmt {
+  SourceLocation CatchLoc;
+  /// The exception-declaration of the type.
+  Decl *ExceptionDecl;
+  /// The handler block.
+  Stmt *HandlerBlock;
+
+public:
+  CXXCatchStmt(SourceLocation catchLoc, Decl *exDecl, Stmt *handlerBlock)
+  : Stmt(CXXCatchStmtClass), CatchLoc(catchLoc), ExceptionDecl(exDecl),
+    HandlerBlock(handlerBlock) {}
+
+  virtual void Destroy(ASTContext& Ctx);
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(CatchLoc, HandlerBlock->getLocEnd());
+  }
+
+  Decl *getExceptionDecl() { return ExceptionDecl; }
+  QualType getCaughtType();
+  Stmt *getHandlerBlock() { return HandlerBlock; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXCatchStmtClass;
+  }
+  static bool classof(const CXXCatchStmt *) { return true; }
+
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXCatchStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 }  // end namespace clang

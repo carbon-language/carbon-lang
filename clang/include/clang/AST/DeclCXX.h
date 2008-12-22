@@ -945,8 +945,6 @@ protected:
   void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
-  
-
 } // end namespace clang
 
 #endif

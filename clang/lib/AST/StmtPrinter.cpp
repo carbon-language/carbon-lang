@@ -474,6 +474,17 @@ void StmtPrinter::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *Node) {
   OS << "\n";
 }
 
+void StmtPrinter::VisitCXXCatchStmt(CXXCatchStmt *Node) {
+  Indent() << "catch (";
+  if (Decl *ExDecl = Node->getExceptionDecl())
+    PrintRawDecl(ExDecl);
+  else
+    OS << "...";
+  OS << ") ";
+  PrintRawCompoundStmt(cast<CompoundStmt>(Node->getHandlerBlock()));
+  OS << "\n";
+}
+
 //===----------------------------------------------------------------------===//
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//

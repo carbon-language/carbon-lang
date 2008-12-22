@@ -636,10 +636,10 @@ public:
                                                  ExprTy *SynchExpr, 
                                                  StmtTy *SynchBody);
 
-  //virtual DeclTy *ActOnExceptionDeclarator(Scope *S, Declarator &D);
-  //virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
-  //                                            DeclTy *ExceptionDecl,
-  //                                            StmtArg HandlerBlock);
+  virtual DeclTy *ActOnExceptionDeclarator(Scope *S, Declarator &D);
+  virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
+                                              DeclTy *ExDecl,
+                                              StmtArg HandlerBlock);
   //virtual OwningStmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
   //                                          StmtArg TryBlock,
   //                                          MultiStmtArg Handlers);

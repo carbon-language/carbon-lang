@@ -14,6 +14,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/Type.h"
 using namespace clang;
 
 static struct StmtClassNameTable {
@@ -333,3 +334,22 @@ Stmt::child_iterator ObjCAtSynchronizedStmt::child_end() {
   return &SubStmts[0]+END_EXPR;
 }
 
+// CXXCatchStmt
+Stmt::child_iterator CXXCatchStmt::child_begin() {
+  return &HandlerBlock;
+}
+
+Stmt::child_iterator CXXCatchStmt::child_end() {
+  return &HandlerBlock + 1;
+}
+
+QualType CXXCatchStmt::getCaughtType() {
+  if (ExceptionDecl)
+    return llvm::cast<VarDecl>(ExceptionDecl)->getType();
+  return QualType();
+}
+
+void CXXCatchStmt::Destroy(ASTContext& C) {
+  ExceptionDecl->Destroy(C);
+  Stmt::Destroy(C);
+}

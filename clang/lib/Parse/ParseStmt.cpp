@@ -1314,7 +1314,8 @@ Parser::OwningStmtResult Parser::ParseCXXCatchBlock() {
   DeclTy *ExceptionDecl = 0;
   if (Tok.isNot(tok::ellipsis)) {
     DeclSpec DS;
-    ParseDeclarationSpecifiers(DS);
+    if (ParseCXXTypeSpecifierSeq(DS))
+      return StmtError();
     Declarator ExDecl(DS, Declarator::CXXCatchContext);
     ParseDeclarator(ExDecl);
     ExceptionDecl = Actions.ActOnExceptionDeclarator(CurScope, ExDecl);
