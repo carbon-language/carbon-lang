@@ -36,7 +36,11 @@ namespace llvm {
     /// NewSUnit - Creates a new SUnit and return a ptr to it.
     ///
     SUnit *NewSUnit(MachineInstr *MI) {
+#ifndef NDEBUG
+      const SUnit *Addr = &SUnits[0];
+#endif
       SUnits.push_back(SUnit(MI, (unsigned)SUnits.size()));
+      assert(Addr == &SUnits[0] && "SUnits std::vector reallocated on the fly!");
       SUnits.back().OrigNode = &SUnits.back();
       return &SUnits.back();
     }
