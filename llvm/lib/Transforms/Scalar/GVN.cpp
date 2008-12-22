@@ -40,11 +40,11 @@
 #include <cstdio>
 using namespace llvm;
 
-STATISTIC(NumGVNInstr, "Number of instructions deleted");
-STATISTIC(NumGVNLoad, "Number of loads deleted");
-STATISTIC(NumGVNPRE, "Number of instructions PRE'd");
+STATISTIC(NumGVNInstr,  "Number of instructions deleted");
+STATISTIC(NumGVNLoad,   "Number of loads deleted");
+STATISTIC(NumGVNPRE,    "Number of instructions PRE'd");
 STATISTIC(NumGVNBlocks, "Number of blocks merged");
-STATISTIC(NumPRELoad, "Number of loads PRE'd");
+STATISTIC(NumPRELoad,   "Number of loads PRE'd");
 
 static cl::opt<bool> EnablePRE("enable-pre",
                                cl::init(true), cl::Hidden);
@@ -1581,6 +1581,7 @@ bool GVN::performPRE(Function& F) {
       // are not value numbered precisely.
       if (!success) {
         delete PREInstr;
+        DEBUG(verifyRemoved(PREInstr));
         continue;
       }
       
@@ -1659,4 +1660,16 @@ void GVN::cleanupGlobalSets() {
 /// internal data structures.
 void GVN::verifyRemoved(const Instruction *I) const {
   VN.verifyRemoved(I);
+
+  // Walk through the PHI map to make sure the instruction isn't hiding in there
+  // somewhere.
+  for (PhiMapType::iterator
+         II = phiMap.begin(), IE = phiMap.end(); II != IE; ++II) {
+    assert(II->first != I && "Inst is still a key in PHI map!");
+
+    for (SmallPtrSet<Instruction*, 4>::iterator
+           SI = II->second.begin(), SE = II->second.end(); SI != SE; ++SI) {
+      assert(*SI != I && "Inst is still a value in PHI map!");
+    }
+  }
 }
