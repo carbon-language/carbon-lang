@@ -613,6 +613,17 @@ static inline __m64 __attribute__((__always_inline___)) _mm_sad_pu8(__m64 a, __m
 {
   return (__m64)__builtin_ia32_psadbw((__v8qi)a, (__v8qi)b);
 }
+
+static inline unsigned int __attribute__((__always_inline___)) _mm_getcsr(void)
+{
+  return __builtin_ia32_stmxcsr();
+}
+
+static inline void __attribute__((__always_inline__)) _mm_setcsr(unsigned int i)
+{
+  __builtin_ia32_ldmxcsr(i);
+}
+
 #endif /* __SSE__ */
 
 #endif /* __XMMINTRIN_H */
