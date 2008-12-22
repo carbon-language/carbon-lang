@@ -121,13 +121,13 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
   : CoreEngine(cfg, CD, Ctx, *this), 
     G(CoreEngine.getGraph()),
     Liveness(L),
-    PurgeDead(purgeDead),
     Builder(NULL),
     StateMgr(G.getContext(), SMC, CMC, G.getAllocator(), cfg, CD, L),
     SymMgr(StateMgr.getSymbolManager()),
     CurrentStmt(NULL),
-  NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
-  RaiseSel(GetNullarySelector("raise", G.getContext())) {}
+    NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
+    RaiseSel(GetNullarySelector("raise", G.getContext())), 
+    PurgeDead(purgeDead){}
 
 GRExprEngine::~GRExprEngine() {    
   for (BugTypeSet::iterator I = BugTypes.begin(), E = BugTypes.end(); I!=E; ++I)
