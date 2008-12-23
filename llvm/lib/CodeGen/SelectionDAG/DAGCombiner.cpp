@@ -1025,7 +1025,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     return DAG.getNode(ISD::SUB, VT, N1.getOperand(0),
                        N1.getOperand(1).getOperand(0));
   }
-  // fold (A+((B-A)+-C)) to (B+-C)
+  // fold (A+((B-A)+or-C)) to (B+or-C)
   if ((N1.getOpcode() == ISD::SUB || N1.getOpcode() == ISD::ADD) &&
       N1.getOperand(0).getOpcode() == ISD::SUB &&
       N0 == N1.getOperand(0).getOperand(1)) {
@@ -1178,7 +1178,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
   // fold (A+B)-B -> A
   if (N0.getOpcode() == ISD::ADD && N0.getOperand(1) == N1)
     return N0.getOperand(0); 
-  // fold ((A+(B+-C))-B) -> A+-C
+  // fold ((A+(B+or-C))-B) -> A+or-C
   if (N0.getOpcode() == ISD::ADD &&
       (N0.getOperand(1).getOpcode() == ISD::SUB ||
        N0.getOperand(1).getOpcode() == ISD::ADD) &&
