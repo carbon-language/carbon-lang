@@ -2029,7 +2029,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   
   // No fusion 
   if (PrintFailedFusing)
-    cerr << "We failed to fuse operand " << i << *MI;
+    cerr << "We failed to fuse operand " << i << " in " << *MI;
   return NULL;
 }
 
