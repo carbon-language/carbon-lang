@@ -68,20 +68,23 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
 /// This SUnit graph is similar to the SelectionDAG, but represents flagged
 /// together nodes with a single SUnit.
 void ScheduleDAGSDNodes::BuildSchedUnits() {
+  // During scheduling, the NodeId field of SDNode is used to map SDNodes
+  // to their associated SUnits by holding SUnits table indices. A value
+  // of -1 means the SDNode does not yet have an associated SUnit.
+  unsigned NumNodes = 0;
+  for (SelectionDAG::allnodes_iterator NI = DAG->allnodes_begin(),
+       E = DAG->allnodes_end(); NI != E; ++NI) {
+    NI->setNodeId(-1);
+    ++NumNodes;
+  }
+
   // Reserve entries in the vector for each of the SUnits we are creating.  This
   // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
   // invalidated.
   // FIXME: Multiply by 2 because we may clone nodes during scheduling.
   // This is a temporary workaround.
-  SUnits.reserve(DAG->allnodes_size() * 2);
+  SUnits.reserve(NumNodes * 2);
   
-  // During scheduling, the NodeId field of SDNode is used to map SDNodes
-  // to their associated SUnits by holding SUnits table indices. A value
-  // of -1 means the SDNode does not yet have an associated SUnit.
-  for (SelectionDAG::allnodes_iterator NI = DAG->allnodes_begin(),
-       E = DAG->allnodes_end(); NI != E; ++NI)
-    NI->setNodeId(-1);
-
   // Check to see if the scheduler cares about latencies.
   bool UnitLatencies = ForceUnitLatencies();
 
