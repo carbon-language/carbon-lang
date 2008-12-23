@@ -1343,19 +1343,19 @@ void SelectionDAGLowering::visitJumpTable(JumpTable &JT) {
 /// in the JumpTable from switch case.
 void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
                                                 JumpTableHeader &JTH) {
-  // Subtract the lowest switch case value from the value being switched on
-  // and conditional branch to default mbb if the result is greater than the
+  // Subtract the lowest switch case value from the value being switched on and
+  // conditional branch to default mbb if the result is greater than the
   // difference between smallest and largest cases.
   SDValue SwitchOp = getValue(JTH.SValue);
   MVT VT = SwitchOp.getValueType();
   SDValue SUB = DAG.getNode(ISD::SUB, VT, SwitchOp,
-                              DAG.getConstant(JTH.First, VT));
+                            DAG.getConstant(JTH.First, VT));
 
-  // The SDNode we just created, which holds the value being switched on
-  // minus the the smallest case value, needs to be copied to a virtual
-  // register so it can be used as an index into the jump table in a 
-  // subsequent basic block.  This value may be smaller or larger than the
-  // target's pointer type, and therefore require extension or truncating.
+  // The SDNode we just created, which holds the value being switched on minus
+  // the the smallest case value, needs to be copied to a virtual register so it
+  // can be used as an index into the jump table in a subsequent basic block.
+  // This value may be smaller or larger than the target's pointer type, and
+  // therefore require extension or truncating.
   if (VT.bitsGT(TLI.getPointerTy()))
     SwitchOp = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), SUB);
   else
@@ -1365,12 +1365,12 @@ void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
   SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), JumpTableReg, SwitchOp);
   JT.Reg = JumpTableReg;
 
-  // Emit the range check for the jump table, and branch to the default
-  // block for the switch statement if the value being switched on exceeds
-  // the largest case in the switch.
+  // Emit the range check for the jump table, and branch to the default block
+  // for the switch statement if the value being switched on exceeds the largest
+  // case in the switch.
   SDValue CMP = DAG.getSetCC(TLI.getSetCCResultType(SUB), SUB,
-                               DAG.getConstant(JTH.Last-JTH.First,VT),
-                               ISD::SETUGT);
+                             DAG.getConstant(JTH.Last-JTH.First,VT),
+                             ISD::SETUGT);
 
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
@@ -1380,12 +1380,12 @@ void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
     NextBlock = BBI;
 
   SDValue BrCond = DAG.getNode(ISD::BRCOND, MVT::Other, CopyTo, CMP,
-                                 DAG.getBasicBlock(JT.Default));
+                               DAG.getBasicBlock(JT.Default));
 
   if (JT.MBB == NextBlock)
     DAG.setRoot(BrCond);
   else
-    DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond, 
+    DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond,
                             DAG.getBasicBlock(JT.MBB)));
 
   return;
@@ -1398,12 +1398,12 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
   SDValue SwitchOp = getValue(B.SValue);
   MVT VT = SwitchOp.getValueType();
   SDValue SUB = DAG.getNode(ISD::SUB, VT, SwitchOp,
-                              DAG.getConstant(B.First, VT));
+                            DAG.getConstant(B.First, VT));
 
   // Check range
   SDValue RangeCmp = DAG.getSetCC(TLI.getSetCCResultType(SUB), SUB,
-                                    DAG.getConstant(B.Range, VT),
-                                    ISD::SETUGT);
+                                  DAG.getConstant(B.Range, VT),
+                                  ISD::SETUGT);
 
   SDValue ShiftOp;
   if (VT.bitsGT(TLI.getShiftAmountTy()))
@@ -1413,8 +1413,8 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
 
   // Make desired shift
   SDValue SwitchVal = DAG.getNode(ISD::SHL, TLI.getPointerTy(),
-                                    DAG.getConstant(1, TLI.getPointerTy()),
-                                    ShiftOp);
+                                  DAG.getConstant(1, TLI.getPointerTy()),
+                                  ShiftOp);
 
   unsigned SwitchReg = FuncInfo.MakeReg(TLI.getPointerTy());
   SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), SwitchReg, SwitchVal);
@@ -1433,7 +1433,7 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
   CurMBB->addSuccessor(MBB);
 
   SDValue BrRange = DAG.getNode(ISD::BRCOND, MVT::Other, CopyTo, RangeCmp,
-                                  DAG.getBasicBlock(B.Default));
+                                DAG.getBasicBlock(B.Default));
 
   if (MBB == NextBlock)
     DAG.setRoot(BrRange);
@@ -1453,16 +1453,16 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
                                            TLI.getPointerTy());
 
   SDValue AndOp = DAG.getNode(ISD::AND, TLI.getPointerTy(), SwitchVal,
-                                DAG.getConstant(B.Mask, TLI.getPointerTy()));
+                              DAG.getConstant(B.Mask, TLI.getPointerTy()));
   SDValue AndCmp = DAG.getSetCC(TLI.getSetCCResultType(AndOp), AndOp,
-                                  DAG.getConstant(0, TLI.getPointerTy()),
-                                  ISD::SETNE);
+                                DAG.getConstant(0, TLI.getPointerTy()),
+                                ISD::SETNE);
 
   CurMBB->addSuccessor(B.TargetBB);
   CurMBB->addSuccessor(NextMBB);
 
   SDValue BrAnd = DAG.getNode(ISD::BRCOND, MVT::Other, getControlRoot(),
-                                AndCmp, DAG.getBasicBlock(B.TargetBB));
+                              AndCmp, DAG.getBasicBlock(B.TargetBB));
 
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
