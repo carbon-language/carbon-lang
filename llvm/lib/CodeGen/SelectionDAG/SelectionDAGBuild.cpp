@@ -47,6 +47,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -1629,10 +1630,10 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
   if (Density < 0.4)
     return false;
 
-  /*DOUT << "Lowering jump table\n"
-       << "First entry: " << First.getSExtValue() << ". Last entry: " << Last.getSExtValue() << "\n"
-       << "Range: " << Range.getSExtValue()
-       << "Size: " << TSize << ". Density: " << Density << "\n\n";*/
+  DEBUG(errs() << "Lowering jump table\n"
+               << "First entry: " << First << ". Last entry: " << Last << '\n'
+               << "Range: " << Range
+               << "Size: " << TSize << ". Density: " << Density << "\n\n");
 
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
@@ -1739,9 +1740,9 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
 
   size_t LSize = FrontCase.size();
   size_t RSize = TSize-LSize;
-  /*DOUT << "Selecting best pivot: \n"
-       << "First: " << First.getSExtValue() << ", Last: " << Last.getSExtValue() <<"\n"
-       << "LSize: " << LSize << ", RSize: " << RSize << "\n";*/
+  DEBUG(errs() << "Selecting best pivot: \n"
+               << "First: " << First << ", Last: " << Last <<'\n'
+               << "LSize: " << LSize << ", RSize: " << RSize << '\n');
   for (CaseItr I = CR.Range.first, J=I+1, E = CR.Range.second;
        J!=E; ++I, ++J) {
     const APInt& LEnd = cast<ConstantInt>(I->High)->getValue();
@@ -1753,14 +1754,15 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
     double RDensity = (double)RSize / (Last - RBegin + 1ULL).roundToDouble();
     double Metric = Range.logBase2()*(LDensity+RDensity);
     // Should always split in some non-trivial place
-    /*DOUT <<"=>Step\n"
-         << "LEnd: " << LEnd.getSExtValue() << ", RBegin: " << RBegin.getSExtValue() << "\n"
-         << "LDensity: " << LDensity << ", RDensity: " << RDensity << "\n"
-         << "Metric: " << Metric << "\n";*/
+    DEBUG(errs() <<"=>Step\n"
+                 << "LEnd: " << LEnd << ", RBegin: " << RBegin << '\n'
+                 << "LDensity: " << LDensity
+                 << ", RDensity: " << RDensity << '\n'
+                 << "Metric: " << Metric << '\n');
     if (FMetric < Metric) {
       Pivot = J;
       FMetric = Metric;
-      DOUT << "Current metric set to: " << FMetric << "\n";
+      DEBUG(errs() << "Current metric set to: " << FMetric << '\n');
     }
 
     LSize += J->size();
@@ -1853,17 +1855,17 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
       // Don't bother the code below, if there are too much unique destinations
       return false;
   }
-  DOUT << "Total number of unique destinations: " << Dests.size() << "\n"
-       << "Total number of comparisons: " << numCmps << "\n";
+  DEBUG(errs() << "Total number of unique destinations: " << Dests.size() << '\n'
+               << "Total number of comparisons: " << numCmps << '\n');
 
   // Compute span of values.
   const APInt& minValue = cast<ConstantInt>(FrontCase.Low)->getValue();
   const APInt& maxValue = cast<ConstantInt>(BackCase.High)->getValue();
   APInt cmpRange = maxValue - minValue;
 
-  /*DOUT << "Compare range: " << Range.getSExtValue() << "\n"
-       << "Low bound: " << cast<ConstantInt>(minValue)->getValue() << "\n"
-       << "High bound: " << cast<ConstantInt>(maxValue)->getValue() << "\n";*/
+  DEBUG(errs() << "Compare range: " << cmpRange << '\n'
+               << "Low bound: " << minValue << '\n'
+               << "High bound: " << maxValue << '\n');
 
   if (cmpRange.uge(APInt(cmpRange.getBitWidth(), IntPtrBits)) ||
       (!(Dests.size() == 1 && numCmps >= 3) &&
@@ -1871,7 +1873,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
        !(Dests.size() >= 3 && numCmps >= 6)))
     return false;
 
-  DOUT << "Emitting bit tests\n";
+  DEBUG(errs() << "Emitting bit tests\n");
   APInt lowBound = APInt::getNullValue(cmpRange.getBitWidth());
 
   // Optimize the case where all the case values fit in a
@@ -1921,10 +1923,11 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
 
   const BasicBlock *LLVMBB = CR.CaseBB->getBasicBlock();
 
-  DOUT << "Cases:\n";
+  DEBUG(errs() << "Cases:\n");
   for (unsigned i = 0, e = CasesBits.size(); i!=e; ++i) {
-    DOUT << "Mask: " << CasesBits[i].Mask << ", Bits: " << CasesBits[i].Bits
-         << ", BB: " << CasesBits[i].BB << "\n";
+    DEBUG(errs() << "Mask: " << CasesBits[i].Mask
+                 << ", Bits: " << CasesBits[i].Bits
+                 << ", BB: " << CasesBits[i].BB << '\n');
 
     MachineBasicBlock *CaseBB = CurMF->CreateMachineBasicBlock(LLVMBB);
     CurMF->insert(BBI, CaseBB);
@@ -2014,8 +2017,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
   // create a binary search tree from them.
   CaseVector Cases;
   size_t numCmps = Clusterify(Cases, SI);
-  DOUT << "Clusterify finished. Total clusters: " << Cases.size()
-       << ". Total compares: " << numCmps << "\n";
+  DEBUG(errs() << "Clusterify finished. Total clusters: " << Cases.size()
+               << ". Total compares: " << numCmps << '\n');
 
   // Get the Value to be switched on and default basic blocks, which will be
   // inserted into CaseBlock records, representing basic blocks in the binary
