@@ -87,7 +87,8 @@ LexNextToken:
   
   Tok.startToken();
   Tok.setKind(k);
-  Tok.setFlag(flags);     
+  Tok.setFlag(flags);
+  assert(!LexingRawMode);
   Tok.setIdentifierInfo(perID ? PTHMgr.GetIdentifierInfo(perID-1) : 0);
   Tok.setLocation(SourceLocation::getFileLoc(FileID, FileOffset));
   Tok.setLength(Len);
@@ -96,80 +97,51 @@ LexNextToken:
   // Process the token.
   //===--------------------------------------==//
 
-  if (Tok.is(tok::eof)) {
+  if (k == tok::identifier) {
+    MIOpt.ReadToken();
+    return PP->HandleIdentifier(Tok);
+  }
+  
+  if (k == tok::eof) {
     // Save the end-of-file token.
     EofToken = Tok;
     
     Preprocessor *PPCache = PP;
-
-    if (LexEndOfFile(Tok))
+    
+    assert(!ParsingPreprocessorDirective);
+    assert(!LexingRawMode);
+    
+    // FIXME: Issue diagnostics similar to Lexer.
+    if (PP->HandleEndOfFile(Tok, false))
       return;
-
+    
     assert(PPCache && "Raw buffer::LexEndOfFile should return a token");
     return PPCache->Lex(Tok);
   }
-
-  MIOpt.ReadToken();
   
-  if (Tok.is(tok::eom)) {
+  if (k == tok::hash && Tok.isAtStartOfLine()) {
+    LastHashTokPtr = CurPtr - DISK_TOKEN_SIZE;
+    assert(!LexingRawMode);
+    PP->HandleDirective(Tok);
+    
+    if (PP->isCurrentLexer(this))
+      goto LexNextToken;
+    
+    return PP->Lex(Tok);
+  }
+  
+  if (k == tok::eom) {
+    assert(ParsingPreprocessorDirective);
     ParsingPreprocessorDirective = false;
     return;
   }
-  
-#if 0
-  SourceManager& SM = PP->getSourceManager();
-  SourceLocation L = Tok.getLocation();
-  
-  static const char* last = 0;
-  const char* next = SM.getContentCacheForLoc(L)->Entry->getName();
-  if (next != last) {
-    last = next;
-    llvm::cerr << next << '\n';
-  }
 
-  llvm::cerr << "line " << SM.getLogicalLineNumber(L) << " col " <<
-  SM.getLogicalColumnNumber(L) << '\n';
-#endif
-    
-  if (Tok.is(tok::hash)) {    
-    if (Tok.isAtStartOfLine()) {
-      LastHashTokPtr = CurPtr - DISK_TOKEN_SIZE;
-      if (!LexingRawMode) {
-        PP->HandleDirective(Tok);
-
-        if (PP->isCurrentLexer(this))
-          goto LexNextToken;
-        
-        return PP->Lex(Tok);
-      }
-    }
-  }
-  
-  if (Tok.is(tok::identifier)) {
-    if (LexingRawMode) {
-      Tok.setIdentifierInfo(0);
-      return;
-    }
-    
-    return PP->HandleIdentifier(Tok);
-  }
-
-  
-  assert(!Tok.is(tok::eom) || ParsingPreprocessorDirective);
-}
-
-// FIXME: This method can just be inlined into Lex().
-bool PTHLexer::LexEndOfFile(Token &Tok) {
-  assert(!ParsingPreprocessorDirective);
-  assert(!LexingRawMode);
-  
-  // FIXME: Issue diagnostics similar to Lexer.
-  return PP->HandleEndOfFile(Tok, false);
+  MIOpt.ReadToken();
 }
 
 // FIXME: We can just grab the last token instead of storing a copy
 // into EofToken.
-void PTHLexer::setEOF(Token& Tok) {
+void PTHLexer::getEOF(Token& Tok) {
   assert(!EofToken.is(tok::eof));
   Tok = EofToken;
 }
@@ -304,7 +276,7 @@ SourceLocation PTHLexer::getSourceLocation() {
   // handling a #included file.  Just read the necessary data from the token
   // data buffer to construct the SourceLocation object.
   // NOTE: This is a virtual function; hence it is defined out-of-line.
-  const char* p = CurPtr + (1 + 1 + 4);
+  const char* p = CurPtr + (1 + 1 + 3);
   uint32_t offset = 
        ((uint32_t) ((uint8_t) p[0]))
     | (((uint32_t) ((uint8_t) p[1])) << 8)

@@ -308,7 +308,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     CurLexer.reset();
   }
   else {
-    CurPTHLexer->setEOF(Result);
+    CurPTHLexer->getEOF(Result);
     CurPTHLexer.reset();
   }
   

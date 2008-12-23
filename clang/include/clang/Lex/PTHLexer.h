@@ -64,7 +64,7 @@ public:
   /// Lex - Return the next token.
   void Lex(Token &Tok);
   
-  void setEOF(Token &Tok);
+  void getEOF(Token &Tok);
   
   /// DiscardToEndOfLine - Read the rest of the current preprocessor line as an
   /// uninterpreted string.  This switches the lexer out of directive mode.
@@ -92,9 +92,6 @@ public:
 
   /// SkipBlock - Used by Preprocessor to skip the current conditional block.
   bool SkipBlock();
-
-private:
-  bool LexEndOfFile(Token &Result);
 };
 
 }  // end namespace clang
