@@ -1,5 +1,8 @@
 // RUN: clang -rewrite-objc %s -o - | grep objc_msgSendSuper | grep MainMethod
 
+typedef struct objc_selector    *SEL;
+typedef struct objc_object *id;
+
 @interface SUPER
 - (int) MainMethod;
 @end

@@ -461,17 +461,14 @@ void RewriteObjC::Initialize(ASTContext &context) {
   if (IsHeader)
     Preamble = "#pragma once\n";
   Preamble += "struct objc_selector; struct objc_class;\n";
-  Preamble += "#ifndef OBJC_SUPER\n";
-  Preamble += "struct objc_super { struct objc_object *object; ";
+  Preamble += "struct __rw_objc_super { struct objc_object *object; ";
   Preamble += "struct objc_object *superClass; ";
   if (LangOpts.Microsoft) {
     // Add a constructor for creating temporary objects.
-    Preamble += "objc_super(struct objc_object *o, struct objc_object *s) : ";
+    Preamble += "__rw_objc_super(struct objc_object *o, struct objc_object *s) : ";
     Preamble += "object(o), superClass(s) {} ";
   }
   Preamble += "};\n";
-  Preamble += "#define OBJC_SUPER\n";
-  Preamble += "#endif\n";
   Preamble += "#ifndef _REWRITER_typedef_Protocol\n";
   Preamble += "typedef struct objc_object Protocol;\n";
   Preamble += "#define _REWRITER_typedef_Protocol\n";
@@ -1951,7 +1948,7 @@ void RewriteObjC::RewriteFunctionDecl(FunctionDecl *FD) {
 void RewriteObjC::SynthSuperContructorFunctionDecl() {
   if (SuperContructorFunctionDecl)
     return;
-  IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_super");
+  IdentifierInfo *msgSendIdent = &Context->Idents.get("__rw_objc_super");
   llvm::SmallVector<QualType, 16> ArgTys;
   QualType argT = Context->getObjCIdType();
   assert(!argT.isNull() && "Can't find 'id' type");
@@ -2296,6 +2293,18 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                            superType, SourceLocation());
         SuperRep = new CallExpr(DRE, &InitExprs[0], InitExprs.size(), 
                                 superType, SourceLocation());
+        // The code for super is a little tricky to prevent collision with
+        // the structure definition in the header. The rewriter has it's own
+        // internal definition (__rw_objc_super) that is uses. This is why
+        // we need the cast below. For example:
+        // (struct objc_super *)&__rw_objc_super((id)self, (id)objc_getClass("SUPER"))
+        //
+        SuperRep = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
+                                 Context->getPointerType(SuperRep->getType()), 
+                                 SourceLocation());
+        SuperRep = new CStyleCastExpr(Context->getPointerType(superType), 
+                                 SuperRep, Context->getPointerType(superType),
+                                 SourceLocation(), SourceLocation()); 
       } else {      
         // (struct objc_super) { <exprs from above> }
         InitListExpr *ILE = new InitListExpr(SourceLocation(), 
@@ -2303,12 +2312,12 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                              SourceLocation(), false);
         SuperRep = new CompoundLiteralExpr(SourceLocation(), superType, ILE,
                                            false);
+        // struct objc_super *
+        SuperRep = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
+                                 Context->getPointerType(SuperRep->getType()), 
+                                 SourceLocation());
       }
-      // struct objc_super *
-      Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
-                               Context->getPointerType(SuperRep->getType()), 
-                               SourceLocation());
-      MsgExprs.push_back(Unop);
+      MsgExprs.push_back(SuperRep);
     } else {
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
@@ -2365,6 +2374,18 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                            superType, SourceLocation());
         SuperRep = new CallExpr(DRE, &InitExprs[0], InitExprs.size(), 
                                 superType, SourceLocation());
+        // The code for super is a little tricky to prevent collision with
+        // the structure definition in the header. The rewriter has it's own
+        // internal definition (__rw_objc_super) that is uses. This is why
+        // we need the cast below. For example:
+        // (struct objc_super *)&__rw_objc_super((id)self, (id)objc_getClass("SUPER"))
+        //
+        SuperRep = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
+                                 Context->getPointerType(SuperRep->getType()), 
+                                 SourceLocation());
+        SuperRep = new CStyleCastExpr(Context->getPointerType(superType), 
+                                 SuperRep, Context->getPointerType(superType),
+                                 SourceLocation(), SourceLocation()); 
       } else {
         // (struct objc_super) { <exprs from above> }
         InitListExpr *ILE = new InitListExpr(SourceLocation(), 
@@ -2372,11 +2393,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                              SourceLocation(), false);
         SuperRep = new CompoundLiteralExpr(SourceLocation(), superType, ILE, false);
       }
-      // struct objc_super *
-      Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
-                               Context->getPointerType(SuperRep->getType()), 
-                               SourceLocation());
-      MsgExprs.push_back(Unop);
+      MsgExprs.push_back(SuperRep);
     } else {
       // Remove all type-casts because it may contain objc-style types; e.g.
       // Foo<Proto> *.
