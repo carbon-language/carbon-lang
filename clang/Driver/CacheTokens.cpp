@@ -47,6 +47,13 @@ static void Emit16(llvm::raw_ostream& Out, uint32_t V) {
   assert((V >> 16) == 0);
 }
 
+static void Emit24(llvm::raw_ostream& Out, uint32_t V) {
+  Out << (unsigned char)(V);
+  Out << (unsigned char)(V >>  8);
+  Out << (unsigned char)(V >> 16);
+  assert((V >> 24) == 0);
+}
+
 static void EmitBuf(llvm::raw_ostream& Out, const char* I, const char* E) {
   for ( ; I != E ; ++I) Out << *I;
 }
@@ -73,7 +80,7 @@ static void EmitToken(llvm::raw_ostream& Out, const Token& T,
   
   Emit8(Out, T.getKind());
   Emit8(Out, T.getFlags());
-  Emit32(Out, ResolveID(IM, idcount, T.getIdentifierInfo()));
+  Emit24(Out, ResolveID(IM, idcount, T.getIdentifierInfo()));
   Emit32(Out, SMgr.getFullFilePos(T.getLocation()));
   Emit16(Out, T.getLength());
 }

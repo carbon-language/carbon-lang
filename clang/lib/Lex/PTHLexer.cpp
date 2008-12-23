@@ -26,7 +26,7 @@
 
 using namespace clang;
 
-#define DISK_TOKEN_SIZE (2+4+4+2)
+#define DISK_TOKEN_SIZE (1+1+3+4+2)
 
 //===----------------------------------------------------------------------===//
 // Utility methods for reading from the mmap'ed PTH file.
@@ -69,16 +69,15 @@ LexNextToken:
     
   uint32_t perID = ((uint32_t) CurPtrShadow[2])
       | (((uint32_t) CurPtrShadow[3]) << 8)
-      | (((uint32_t) CurPtrShadow[4]) << 16)
-      | (((uint32_t) CurPtrShadow[5]) << 24);
+      | (((uint32_t) CurPtrShadow[4]) << 16);
   
-  uint32_t FileOffset = ((uint32_t) CurPtrShadow[6])
-      | (((uint32_t) CurPtrShadow[7]) << 8)
-      | (((uint32_t) CurPtrShadow[8]) << 16)
-      | (((uint32_t) CurPtrShadow[9]) << 24);
+  uint32_t FileOffset = ((uint32_t) CurPtrShadow[5])
+      | (((uint32_t) CurPtrShadow[6]) << 8)
+      | (((uint32_t) CurPtrShadow[7]) << 16)
+      | (((uint32_t) CurPtrShadow[8]) << 24);
   
-  uint32_t Len = ((uint32_t) CurPtrShadow[10])
-      | (((uint32_t) CurPtrShadow[11]) << 8);
+  uint32_t Len = ((uint32_t) CurPtrShadow[9])
+      | (((uint32_t) CurPtrShadow[10]) << 8);
   
   CurPtr = (const char*) (CurPtrShadow + DISK_TOKEN_SIZE);
   
