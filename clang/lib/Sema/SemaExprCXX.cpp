@@ -516,7 +516,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
 
   // Check if this function is already declared.
   {
-    DeclContext::decl_iterator Alloc, AllocEnd;
+    DeclContext::lookup_iterator Alloc, AllocEnd;
     for (llvm::tie(Alloc, AllocEnd) = GlobalCtx->lookup(Context, Name);
          Alloc != AllocEnd; ++Alloc) {
       // FIXME: Do we need to check for default arguments here?
