@@ -413,6 +413,7 @@ MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
   while (!BB->empty())
     BB->remove(BB->begin());
 
+  // Then re-insert them according to the given schedule.
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     SUnit *SU = Sequence[i];
     if (!SU) {

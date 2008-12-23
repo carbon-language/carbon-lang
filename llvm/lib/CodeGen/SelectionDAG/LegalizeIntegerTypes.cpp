@@ -98,56 +98,20 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::SMULO:
   case ISD::UMULO:       Result = PromoteIntRes_XMULO(N, ResNo); break;
 
-  case ISD::ATOMIC_LOAD_ADD_8:
-  case ISD::ATOMIC_LOAD_SUB_8:
-  case ISD::ATOMIC_LOAD_AND_8:
-  case ISD::ATOMIC_LOAD_OR_8:
-  case ISD::ATOMIC_LOAD_XOR_8:
-  case ISD::ATOMIC_LOAD_NAND_8:
-  case ISD::ATOMIC_LOAD_MIN_8:
-  case ISD::ATOMIC_LOAD_MAX_8:
-  case ISD::ATOMIC_LOAD_UMIN_8:
-  case ISD::ATOMIC_LOAD_UMAX_8:
-  case ISD::ATOMIC_SWAP_8:
-  case ISD::ATOMIC_LOAD_ADD_16:
-  case ISD::ATOMIC_LOAD_SUB_16:
-  case ISD::ATOMIC_LOAD_AND_16:
-  case ISD::ATOMIC_LOAD_OR_16:
-  case ISD::ATOMIC_LOAD_XOR_16:
-  case ISD::ATOMIC_LOAD_NAND_16:
-  case ISD::ATOMIC_LOAD_MIN_16:
-  case ISD::ATOMIC_LOAD_MAX_16:
-  case ISD::ATOMIC_LOAD_UMIN_16:
-  case ISD::ATOMIC_LOAD_UMAX_16:
-  case ISD::ATOMIC_SWAP_16:
-  case ISD::ATOMIC_LOAD_ADD_32:
-  case ISD::ATOMIC_LOAD_SUB_32:
-  case ISD::ATOMIC_LOAD_AND_32:
-  case ISD::ATOMIC_LOAD_OR_32:
-  case ISD::ATOMIC_LOAD_XOR_32:
-  case ISD::ATOMIC_LOAD_NAND_32:
-  case ISD::ATOMIC_LOAD_MIN_32:
-  case ISD::ATOMIC_LOAD_MAX_32:
-  case ISD::ATOMIC_LOAD_UMIN_32:
-  case ISD::ATOMIC_LOAD_UMAX_32:
-  case ISD::ATOMIC_SWAP_32:
-  case ISD::ATOMIC_LOAD_ADD_64:
-  case ISD::ATOMIC_LOAD_SUB_64:
-  case ISD::ATOMIC_LOAD_AND_64:
-  case ISD::ATOMIC_LOAD_OR_64:
-  case ISD::ATOMIC_LOAD_XOR_64:
-  case ISD::ATOMIC_LOAD_NAND_64:
-  case ISD::ATOMIC_LOAD_MIN_64:
-  case ISD::ATOMIC_LOAD_MAX_64:
-  case ISD::ATOMIC_LOAD_UMIN_64:
-  case ISD::ATOMIC_LOAD_UMAX_64:
-  case ISD::ATOMIC_SWAP_64:
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_SUB:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_OR:
+  case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_NAND:
+  case ISD::ATOMIC_LOAD_MIN:
+  case ISD::ATOMIC_LOAD_MAX:
+  case ISD::ATOMIC_LOAD_UMIN:
+  case ISD::ATOMIC_LOAD_UMAX:
+  case ISD::ATOMIC_SWAP:
     Result = PromoteIntRes_Atomic1(cast<AtomicSDNode>(N)); break;
 
-  case ISD::ATOMIC_CMP_SWAP_8:
-  case ISD::ATOMIC_CMP_SWAP_16:
-  case ISD::ATOMIC_CMP_SWAP_32:
-  case ISD::ATOMIC_CMP_SWAP_64:
+  case ISD::ATOMIC_CMP_SWAP:
     Result = PromoteIntRes_Atomic2(cast<AtomicSDNode>(N)); break;
   }
 
@@ -170,7 +134,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_AssertZext(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntRes_Atomic1(AtomicSDNode *N) {
   SDValue Op2 = GetPromotedInteger(N->getOperand(2));
-  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getChain(), N->getBasePtr(),
+  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getMemoryVT(),
+                              N->getChain(), N->getBasePtr(),
                               Op2, N->getSrcValue(), N->getAlignment());
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
@@ -181,7 +146,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Atomic1(AtomicSDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_Atomic2(AtomicSDNode *N) {
   SDValue Op2 = GetPromotedInteger(N->getOperand(2));
   SDValue Op3 = GetPromotedInteger(N->getOperand(3));
-  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getChain(), N->getBasePtr(),
+  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getMemoryVT(),
+                              N->getChain(), N->getBasePtr(),
                               Op2, Op3, N->getSrcValue(), N->getAlignment());
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.

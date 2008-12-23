@@ -464,13 +464,13 @@ public:
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain and 
   /// takes 3 operands
-  SDValue getAtomic(unsigned Opcode, SDValue Chain, SDValue Ptr, 
+  SDValue getAtomic(unsigned Opcode, MVT MemVT, SDValue Chain, SDValue Ptr, 
                     SDValue Cmp, SDValue Swp, const Value* PtrVal,
                     unsigned Alignment=0);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain and
   /// takes 2 operands.
-  SDValue getAtomic(unsigned Opcode, SDValue Chain, SDValue Ptr, 
+  SDValue getAtomic(unsigned Opcode, MVT MemVT, SDValue Chain, SDValue Ptr, 
                     SDValue Val, const Value* PtrVal,
                     unsigned Alignment = 0);
 

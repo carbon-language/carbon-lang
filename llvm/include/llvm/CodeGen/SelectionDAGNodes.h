@@ -628,64 +628,28 @@ namespace ISD {
     // this corresponds to the atomic.lcs intrinsic.
     // cmp is compared to *ptr, and if equal, swap is stored in *ptr.
     // the return is always the original value in *ptr
-    ATOMIC_CMP_SWAP_8,
-    ATOMIC_CMP_SWAP_16,
-    ATOMIC_CMP_SWAP_32,
-    ATOMIC_CMP_SWAP_64,
+    ATOMIC_CMP_SWAP,
 
     // Val, OUTCHAIN = ATOMIC_SWAP(INCHAIN, ptr, amt)
     // this corresponds to the atomic.swap intrinsic.
     // amt is stored to *ptr atomically.
     // the return is always the original value in *ptr
-    ATOMIC_SWAP_8,
-    ATOMIC_SWAP_16,
-    ATOMIC_SWAP_32,
-    ATOMIC_SWAP_64,
+    ATOMIC_SWAP,
 
     // Val, OUTCHAIN = ATOMIC_L[OpName]S(INCHAIN, ptr, amt)
     // this corresponds to the atomic.[OpName] intrinsic.
     // op(*ptr, amt) is stored to *ptr atomically.
     // the return is always the original value in *ptr
-    ATOMIC_LOAD_ADD_8,
-    ATOMIC_LOAD_SUB_8,
-    ATOMIC_LOAD_AND_8,
-    ATOMIC_LOAD_OR_8,
-    ATOMIC_LOAD_XOR_8,
-    ATOMIC_LOAD_NAND_8,
-    ATOMIC_LOAD_MIN_8,
-    ATOMIC_LOAD_MAX_8,
-    ATOMIC_LOAD_UMIN_8,
-    ATOMIC_LOAD_UMAX_8,
-    ATOMIC_LOAD_ADD_16,
-    ATOMIC_LOAD_SUB_16,
-    ATOMIC_LOAD_AND_16,
-    ATOMIC_LOAD_OR_16,
-    ATOMIC_LOAD_XOR_16,
-    ATOMIC_LOAD_NAND_16,
-    ATOMIC_LOAD_MIN_16,
-    ATOMIC_LOAD_MAX_16,
-    ATOMIC_LOAD_UMIN_16,
-    ATOMIC_LOAD_UMAX_16,
-    ATOMIC_LOAD_ADD_32,
-    ATOMIC_LOAD_SUB_32,
-    ATOMIC_LOAD_AND_32,
-    ATOMIC_LOAD_OR_32,
-    ATOMIC_LOAD_XOR_32,
-    ATOMIC_LOAD_NAND_32,
-    ATOMIC_LOAD_MIN_32,
-    ATOMIC_LOAD_MAX_32,
-    ATOMIC_LOAD_UMIN_32,
-    ATOMIC_LOAD_UMAX_32,
-    ATOMIC_LOAD_ADD_64,
-    ATOMIC_LOAD_SUB_64,
-    ATOMIC_LOAD_AND_64,
-    ATOMIC_LOAD_OR_64,
-    ATOMIC_LOAD_XOR_64,
-    ATOMIC_LOAD_NAND_64,
-    ATOMIC_LOAD_MIN_64,
-    ATOMIC_LOAD_MAX_64,
-    ATOMIC_LOAD_UMIN_64,
-    ATOMIC_LOAD_UMAX_64,
+    ATOMIC_LOAD_ADD,
+    ATOMIC_LOAD_SUB,
+    ATOMIC_LOAD_AND,
+    ATOMIC_LOAD_OR,
+    ATOMIC_LOAD_XOR,
+    ATOMIC_LOAD_NAND,
+    ATOMIC_LOAD_MIN,
+    ATOMIC_LOAD_MAX,
+    ATOMIC_LOAD_UMIN,
+    ATOMIC_LOAD_UMAX,
     
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END
@@ -1615,58 +1579,18 @@ public:
     // with either an intrinsic or a target opcode.
     return N->getOpcode() == ISD::LOAD                ||
            N->getOpcode() == ISD::STORE               ||
-           N->getOpcode() == ISD::ATOMIC_CMP_SWAP_8   ||
-           N->getOpcode() == ISD::ATOMIC_SWAP_8       ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_ADD_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_SUB_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_AND_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_OR_8    ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_XOR_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_NAND_8  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MIN_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MAX_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMIN_8  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_8  ||
-
-           N->getOpcode() == ISD::ATOMIC_CMP_SWAP_16  ||
-           N->getOpcode() == ISD::ATOMIC_SWAP_16      ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_ADD_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_SUB_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_AND_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_OR_16   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_XOR_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_NAND_16 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MIN_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MAX_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMIN_16 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_16 ||
-
-           N->getOpcode() == ISD::ATOMIC_CMP_SWAP_32  ||
-           N->getOpcode() == ISD::ATOMIC_SWAP_32      ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_ADD_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_SUB_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_AND_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_OR_32   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_XOR_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_NAND_32 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MIN_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MAX_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMIN_32 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_32 ||
-
-           N->getOpcode() == ISD::ATOMIC_CMP_SWAP_64  ||
-           N->getOpcode() == ISD::ATOMIC_SWAP_64      ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_ADD_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_SUB_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_AND_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_OR_64   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_XOR_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_NAND_64 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MIN_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MAX_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMIN_64 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_64 ||
-           
+           N->getOpcode() == ISD::ATOMIC_CMP_SWAP     ||
+           N->getOpcode() == ISD::ATOMIC_SWAP         ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_ADD     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_SUB     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_AND     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_OR      ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_XOR     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_NAND    ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_MIN     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_MAX     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_UMIN    ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX    ||
            N->getOpcode() == ISD::INTRINSIC_W_CHAIN   ||
            N->getOpcode() == ISD::INTRINSIC_VOID      ||
            N->isTargetOpcode();
@@ -1688,10 +1612,11 @@ class AtomicSDNode : public MemSDNode {
   // Swp:    swap value
   // SrcVal: address to update as a Value (used for MemOperand)
   // Align:  alignment of memory
-  AtomicSDNode(unsigned Opc, SDVTList VTL, SDValue Chain, SDValue Ptr, 
+  AtomicSDNode(unsigned Opc, SDVTList VTL, MVT MemVT,
+               SDValue Chain, SDValue Ptr,
                SDValue Cmp, SDValue Swp, const Value* SrcVal,
                unsigned Align=0)
-    : MemSDNode(Opc, VTL, Cmp.getValueType(), SrcVal, /*SVOffset=*/0,
+    : MemSDNode(Opc, VTL, MemVT, SrcVal, /*SVOffset=*/0,
                 Align, /*isVolatile=*/true) {
     Ops[0] = Chain;
     Ops[1] = Ptr;
@@ -1699,9 +1624,10 @@ class AtomicSDNode : public MemSDNode {
     Ops[3] = Swp;
     InitOperands(Ops, 4);
   }
-  AtomicSDNode(unsigned Opc, SDVTList VTL, SDValue Chain, SDValue Ptr, 
+  AtomicSDNode(unsigned Opc, SDVTList VTL, MVT MemVT,
+               SDValue Chain, SDValue Ptr, 
                SDValue Val, const Value* SrcVal, unsigned Align=0)
-    : MemSDNode(Opc, VTL, Val.getValueType(), SrcVal, /*SVOffset=*/0,
+    : MemSDNode(Opc, VTL, MemVT, SrcVal, /*SVOffset=*/0,
                 Align, /*isVolatile=*/true) {
     Ops[0] = Chain;
     Ops[1] = Ptr;
@@ -1714,63 +1640,24 @@ class AtomicSDNode : public MemSDNode {
 
   bool isCompareAndSwap() const { 
     unsigned Op = getOpcode(); 
-    return Op == ISD::ATOMIC_CMP_SWAP_8 ||
-           Op == ISD::ATOMIC_CMP_SWAP_16 ||
-           Op == ISD::ATOMIC_CMP_SWAP_32 ||
-           Op == ISD::ATOMIC_CMP_SWAP_64;
+    return Op == ISD::ATOMIC_CMP_SWAP;
   }
 
   // Methods to support isa and dyn_cast
   static bool classof(const AtomicSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::ATOMIC_CMP_SWAP_8   ||
-           N->getOpcode() == ISD::ATOMIC_SWAP_8       ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_ADD_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_SUB_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_AND_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_OR_8    ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_XOR_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_NAND_8  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MIN_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MAX_8   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMIN_8  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_8  ||
-           N->getOpcode() == ISD::ATOMIC_CMP_SWAP_16  ||
-           N->getOpcode() == ISD::ATOMIC_SWAP_16      ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_ADD_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_SUB_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_AND_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_OR_16   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_XOR_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_NAND_16 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MIN_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MAX_16  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMIN_16 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_16 ||
-           N->getOpcode() == ISD::ATOMIC_CMP_SWAP_32  ||
-           N->getOpcode() == ISD::ATOMIC_SWAP_32      ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_ADD_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_SUB_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_AND_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_OR_32   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_XOR_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_NAND_32 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MIN_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MAX_32  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMIN_32 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_32 ||
-           N->getOpcode() == ISD::ATOMIC_CMP_SWAP_64  ||
-           N->getOpcode() == ISD::ATOMIC_SWAP_64      ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_ADD_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_SUB_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_AND_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_OR_64   ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_XOR_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_NAND_64 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MIN_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_MAX_64  ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMIN_64 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_64;
+    return N->getOpcode() == ISD::ATOMIC_CMP_SWAP     ||
+           N->getOpcode() == ISD::ATOMIC_SWAP         ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_ADD     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_SUB     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_AND     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_OR      ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_XOR     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_NAND    ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_MIN     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_MAX     ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_UMIN    ||
+           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX;
   }
 };
 

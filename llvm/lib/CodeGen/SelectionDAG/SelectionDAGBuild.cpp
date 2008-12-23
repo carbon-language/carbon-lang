@@ -2959,10 +2959,12 @@ getF32Constant(SelectionDAG &DAG, unsigned Flt) {
 const char *
 SelectionDAGLowering::implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op) {
   SDValue Root = getRoot();   
-  SDValue L = DAG.getAtomic(Op, Root, 
-                            getValue(I.getOperand(1)), 
-                            getValue(I.getOperand(2)),
-                            I.getOperand(1));
+  SDValue L =
+    DAG.getAtomic(Op, getValue(I.getOperand(2)).getValueType().getSimpleVT(),
+                  Root,
+                  getValue(I.getOperand(1)), 
+                  getValue(I.getOperand(2)),
+                  I.getOperand(1));
   setValue(&I, L);
   DAG.setRoot(L.getValue(1));
   return 0;
@@ -4145,198 +4147,40 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::atomic_cmp_swap: {
     SDValue Root = getRoot();   
-    SDValue L;
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        L = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP_8, Root, 
-                          getValue(I.getOperand(1)), 
-                          getValue(I.getOperand(2)),
-                          getValue(I.getOperand(3)),
-                          I.getOperand(1));
-        break;
-      case MVT::i16:
-        L = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP_16, Root, 
-                          getValue(I.getOperand(1)), 
-                          getValue(I.getOperand(2)),
-                          getValue(I.getOperand(3)),
-                          I.getOperand(1));
-        break;
-      case MVT::i32:
-        L = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP_32, Root, 
-                          getValue(I.getOperand(1)), 
-                          getValue(I.getOperand(2)),
-                          getValue(I.getOperand(3)),
-                          I.getOperand(1));
-        break;
-      case MVT::i64:
-        L = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP_64, Root, 
-                          getValue(I.getOperand(1)), 
-                          getValue(I.getOperand(2)),
-                          getValue(I.getOperand(3)),
-                          I.getOperand(1));
-        break;
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    SDValue L =
+      DAG.getAtomic(ISD::ATOMIC_CMP_SWAP,
+                    getValue(I.getOperand(2)).getValueType().getSimpleVT(),
+                    Root,
+                    getValue(I.getOperand(1)), 
+                    getValue(I.getOperand(2)),
+                    getValue(I.getOperand(3)),
+                    I.getOperand(1));
     setValue(&I, L);
     DAG.setRoot(L.getValue(1));
     return 0;
   }
   case Intrinsic::atomic_load_add:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_ADD_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_ADD_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_ADD_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_ADD_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_ADD);
   case Intrinsic::atomic_load_sub:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_SUB_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_SUB_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_SUB_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_SUB_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_SUB);
   case Intrinsic::atomic_load_or:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_OR_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_OR_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_OR_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_OR_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_OR);
   case Intrinsic::atomic_load_xor:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_XOR_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_XOR_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_XOR_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_XOR_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_XOR);
   case Intrinsic::atomic_load_and:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_AND_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_AND_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_AND_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_AND_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_AND);
   case Intrinsic::atomic_load_nand:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_NAND_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_NAND_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_NAND_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_NAND_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_NAND);
   case Intrinsic::atomic_load_max:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MAX_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MAX_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MAX_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MAX_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MAX);
   case Intrinsic::atomic_load_min:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MIN_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MIN_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MIN_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MIN_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MIN);
   case Intrinsic::atomic_load_umin:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMIN_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMIN_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMIN_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMIN_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMIN);
   case Intrinsic::atomic_load_umax:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMAX_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMAX_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMAX_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMAX_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMAX);
   case Intrinsic::atomic_swap:
-    switch (getValue(I.getOperand(2)).getValueType().getSimpleVT()) {
-      case MVT::i8:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_SWAP_8);
-      case MVT::i16:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_SWAP_16);
-      case MVT::i32:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_SWAP_32);
-      case MVT::i64:
-        return implVisitBinaryAtomic(I, ISD::ATOMIC_SWAP_64);
-      default:
-       assert(0 && "Invalid atomic type");
-       abort();
-    }
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_SWAP);
   }
 }
 
