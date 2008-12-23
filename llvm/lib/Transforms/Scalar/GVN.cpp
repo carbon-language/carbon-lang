@@ -1313,6 +1313,8 @@ bool GVN::processInstruction(Instruction *I,
       p->replaceAllUsesWith(constVal);
       if (isa<PointerType>(constVal->getType()))
         MD->invalidateCachedPointerInfo(constVal);
+      VN.erase(p);
+      
       toErase.push_back(p);
     } else {
       localAvail[I->getParent()]->table.insert(std::make_pair(num, I));
