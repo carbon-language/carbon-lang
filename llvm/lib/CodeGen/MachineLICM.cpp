@@ -205,7 +205,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   const TargetInstrDesc &TID = I.getDesc();
   
   // Ignore stuff that we obviously can't hoist.
-  if (TID.mayStore() || TID.isCall() || TID.isReturn() || TID.isBranch() ||
+  if (TID.mayStore() || TID.isCall() || TID.isTerminator() ||
       TID.hasUnmodeledSideEffects())
     return false;
   

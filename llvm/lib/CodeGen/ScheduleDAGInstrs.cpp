@@ -275,8 +275,7 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
     // after stack slots are lowered to actual addresses.
     // TODO: Use an AliasAnalysis and do real alias-analysis queries, and
     // produce more precise dependence information.
-    if (TID.isCall() || TID.isReturn() || TID.isBranch() ||
-        TID.hasUnmodeledSideEffects()) {
+    if (TID.isCall() || TID.isTerminator() || TID.hasUnmodeledSideEffects()) {
     new_chain:
       // This is the conservative case. Add dependencies on all memory
       // references.
@@ -300,7 +299,7 @@ void ScheduleDAGInstrs::BuildSchedUnits() {
       // See if it is known to just have a single memory reference.
       MachineInstr *ChainMI = Chain->getInstr();
       const TargetInstrDesc &ChainTID = ChainMI->getDesc();
-      if (!ChainTID.isCall() && !ChainTID.isReturn() && !ChainTID.isBranch() &&
+      if (!ChainTID.isCall() && !ChainTID.isTerminator() &&
           !ChainTID.hasUnmodeledSideEffects() &&
           ChainMI->hasOneMemOperand() &&
           !ChainMI->memoperands_begin()->isVolatile() &&
