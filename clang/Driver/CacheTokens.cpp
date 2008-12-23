@@ -30,6 +30,10 @@ typedef uint32_t Offset;
 typedef llvm::DenseMap<const FileEntry*,std::pair<Offset,Offset> > PCHMap;
 typedef llvm::DenseMap<const IdentifierInfo*,uint32_t> IDMap;
 
+static void Emit8(llvm::raw_ostream& Out, uint32_t V) {
+  Out << (unsigned char)(V);
+}
+
 static void Emit32(llvm::raw_ostream& Out, uint32_t V) {
   Out << (unsigned char)(V);
   Out << (unsigned char)(V >>  8);
@@ -37,8 +41,10 @@ static void Emit32(llvm::raw_ostream& Out, uint32_t V) {
   Out << (unsigned char)(V >> 24);
 }
 
-static void Emit8(llvm::raw_ostream& Out, uint32_t V) {
+static void Emit16(llvm::raw_ostream& Out, uint32_t V) {
   Out << (unsigned char)(V);
+  Out << (unsigned char)(V >>  8);
+  assert((V >> 16) == 0);
 }
 
 static void EmitBuf(llvm::raw_ostream& Out, const char* I, const char* E) {
@@ -69,7 +75,7 @@ static void EmitToken(llvm::raw_ostream& Out, const Token& T,
   Emit8(Out, T.getFlags());
   Emit32(Out, ResolveID(IM, idcount, T.getIdentifierInfo()));
   Emit32(Out, SMgr.getFullFilePos(T.getLocation()));
-  Emit32(Out, T.getLength());
+  Emit16(Out, T.getLength());
 }
 
 struct IDData {
