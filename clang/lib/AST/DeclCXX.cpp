@@ -14,6 +14,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -80,24 +81,14 @@ bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
     = Context.DeclarationNames.getCXXConstructorName(
                                            Context.getCanonicalType(ClassType));
   unsigned TypeQuals;
-  DeclContext::lookup_const_result Lookup 
-    = this->lookup(Context, ConstructorName);
-  if (Lookup.first == Lookup.second)
-    return false;
-  else if (OverloadedFunctionDecl *Constructors             
-             = dyn_cast<OverloadedFunctionDecl>(*Lookup.first)) {
-    for (OverloadedFunctionDecl::function_const_iterator Con 
-           = Constructors->function_begin();
-         Con != Constructors->function_end(); ++Con) {
+  DeclContext::lookup_const_iterator Con, ConEnd;
+  for (llvm::tie(Con, ConEnd) = this->lookup(Context, ConstructorName);
+       Con != ConEnd; ++Con) {
     if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context, TypeQuals) &&
         (TypeQuals & QualType::Const) != 0)
       return true;
-    }
-  } else if (CXXConstructorDecl *Constructor 
-               = dyn_cast<CXXConstructorDecl>(*Lookup.first)) {
-    return Constructor->isCopyConstructor(Context, TypeQuals) &&
-           (TypeQuals & QualType::Const) != 0;
   }
+
   return false;
 }
 
