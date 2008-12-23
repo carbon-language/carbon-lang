@@ -1095,6 +1095,7 @@ public:
         cout << " with assertions";
 #endif
         cout << ".\n";
+        cout << "  Built " << __DATE__ << "(" << __TIME__ << ").\n";
   }
   void operator=(bool OptionWasSpecified) {
     if (OptionWasSpecified) {
