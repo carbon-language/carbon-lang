@@ -74,7 +74,6 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   if (MaxIncludeStackDepth < IncludeMacroStack.size())
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
-#if 1
   if (PTH) {
     PTHLexer* PL =
       PTH->CreateLexer(FileID, getSourceManager().getFileEntryForID(FileID));
@@ -87,76 +86,6 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   
   Lexer *TheLexer = new Lexer(SourceLocation::getFileLoc(FileID, 0), *this);
   EnterSourceFileWithLexer(TheLexer, CurDir);
-#else
-  if (CurPPLexer || CurTokenLexer)
-    PushIncludeMacroStack();
-  
-  CurDirLookup = CurDir;
-  SourceLocation Loc = SourceLocation::getFileLoc(FileID, 0);
-  CurPTHLexer.reset(new PTHLexer(*this, Loc));
-  CurPPLexer = CurPTHLexer.get();
-
-  // Generate the tokens.
-  
-  const llvm::MemoryBuffer* B = getSourceManager().getBuffer(FileID);
-  
-  // Create a raw lexer.
-  Lexer L(SourceLocation::getFileLoc(FileID, 0), getLangOptions(),
-          B->getBufferStart(), B->getBufferEnd(), B);
-  
-  // Ignore whitespace.
-  L.SetKeepWhitespaceMode(false);
-  L.SetCommentRetentionState(false);
-  
-  // Lex the file, populating our data structures.
-  std::vector<Token>& Tokens = CurPTHLexer->getTokens();
-  Token Tok;
-  
-  do {
-    L.LexFromRawLexer(Tok);
-    
-    if (Tok.is(tok::identifier)) {
-      Tok.setIdentifierInfo(LookUpIdentifierInfo(Tok));
-    }
-    else if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
-      // Special processing for #include.  Store the '#' token and lex
-      // the next token.
-      Tokens.push_back(Tok);
-      L.LexFromRawLexer(Tok);
-      
-      // Did we see 'include'/'import'/'include_next'?
-      if (!Tok.is(tok::identifier))
-        continue;
-
-      IdentifierInfo* II = LookUpIdentifierInfo(Tok);
-      Tok.setIdentifierInfo(II);
-      tok::PPKeywordKind K = II->getPPKeywordID();
-      
-      if (K == tok::pp_include || K == tok::pp_import || 
-          K == tok::pp_include_next) {
-        
-        // Save the 'include' token.
-        Tokens.push_back(Tok);
-        
-        // Lex the next token as an include string.
-        L.ParsingPreprocessorDirective = true;
-        L.LexIncludeFilename(Tok); 
-        L.ParsingPreprocessorDirective = false;
-        
-        if (Tok.is(tok::identifier))
-          Tok.setIdentifierInfo(LookUpIdentifierInfo(Tok));
-      }
-    }    
-  }
-  while (Tokens.push_back(Tok), Tok.isNot(tok::eof));
-  
-  // Notify the client, if desired, that we are in a new source file.
-  if (Callbacks) {
-    SrcMgr::CharacteristicKind FileType =
-    SourceMgr.getFileCharacteristic(CurPPLexer->getFileID());    
-    Callbacks->FileChanged(Loc, PPCallbacks::EnterFile, FileType);
-  }
-#endif
 }  
 
 /// EnterSourceFileWithLexer - Add a source file to the top of the include stack
