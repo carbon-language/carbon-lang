@@ -246,8 +246,8 @@ class SelectionDAGLowering {
     }
   };
 
-  unsigned Clusterify(CaseVector& Cases, const SwitchInst &SI);
-  
+  size_t Clusterify(CaseVector& Cases, const SwitchInst &SI);
+
   /// CaseBlock - This structure is used to communicate between SDLowering and
   /// SDISel for the code generation of additional basic blocks needed by multi-
   /// case switch statements.
@@ -284,11 +284,11 @@ class SelectionDAGLowering {
     MachineBasicBlock *Default;
   };
   struct JumpTableHeader {
-    JumpTableHeader(uint64_t F, uint64_t L, Value* SV, MachineBasicBlock* H,
+    JumpTableHeader(APInt F, APInt L, Value* SV, MachineBasicBlock* H,
                     bool E = false):
       First(F), Last(L), SValue(SV), HeaderBB(H), Emitted(E) {}
-    uint64_t First;
-    uint64_t Last;
+    APInt First;
+    APInt Last;
     Value *SValue;
     MachineBasicBlock *HeaderBB;
     bool Emitted;
@@ -306,14 +306,14 @@ class SelectionDAGLowering {
   typedef SmallVector<BitTestCase, 3> BitTestInfo;
 
   struct BitTestBlock {
-    BitTestBlock(uint64_t F, uint64_t R, Value* SV,
+    BitTestBlock(APInt F, APInt R, Value* SV,
                  unsigned Rg, bool E,
                  MachineBasicBlock* P, MachineBasicBlock* D,
                  const BitTestInfo& C):
       First(F), Range(R), SValue(SV), Reg(Rg), Emitted(E),
       Parent(P), Default(D), Cases(C) { }
-    uint64_t First;
-    uint64_t Range;
+    APInt First;
+    APInt Range;
     Value  *SValue;
     unsigned Reg;
     bool Emitted;

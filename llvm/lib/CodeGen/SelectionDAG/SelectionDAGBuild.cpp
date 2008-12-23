@@ -1259,8 +1259,8 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
 void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
   SDValue Cond;
   SDValue CondLHS = getValue(CB.CmpLHS);
-  
-  // Build the setcc now. 
+
+  // Build the setcc now.
   if (CB.CmpMHS == NULL) {
     // Fold "(X == true)" to X and "(X == false)" to !X to
     // handle common cases produced by branch lowering.
@@ -1274,8 +1274,8 @@ void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
   } else {
     assert(CB.CC == ISD::SETLE && "Can handle only LE ranges now");
 
-    uint64_t Low = cast<ConstantInt>(CB.CmpLHS)->getSExtValue();
-    uint64_t High  = cast<ConstantInt>(CB.CmpRHS)->getSExtValue();
+    const APInt& Low = cast<ConstantInt>(CB.CmpLHS)->getValue();
+    const APInt& High  = cast<ConstantInt>(CB.CmpRHS)->getValue();
 
     SDValue CmpOp = getValue(CB.CmpMHS);
     MVT VT = CmpOp.getValueType();
@@ -1288,18 +1288,18 @@ void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
                           DAG.getConstant(High-Low, VT), ISD::SETULE);
     }
   }
-  
+
   // Update successor info
   CurMBB->addSuccessor(CB.TrueBB);
   CurMBB->addSuccessor(CB.FalseBB);
-  
+
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CurMBB;
   if (++BBI != CurMBB->getParent()->end())
     NextBlock = BBI;
-  
+
   // If the lhs block is the next block, invert the condition so that we can
   // fall through to the lhs instead of the rhs block.
   if (CB.TrueBB == NextBlock) {
@@ -1309,20 +1309,20 @@ void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
   }
   SDValue BrCond = DAG.getNode(ISD::BRCOND, MVT::Other, getControlRoot(), Cond,
                                  DAG.getBasicBlock(CB.TrueBB));
-  
+
   // If the branch was constant folded, fix up the CFG.
   if (BrCond.getOpcode() == ISD::BR) {
     CurMBB->removeSuccessor(CB.FalseBB);
     DAG.setRoot(BrCond);
   } else {
     // Otherwise, go ahead and insert the false branch.
-    if (BrCond == getControlRoot()) 
+    if (BrCond == getControlRoot())
       CurMBB->removeSuccessor(CB.TrueBB);
-    
+
     if (CB.FalseBB == NextBlock)
       DAG.setRoot(BrCond);
     else
-      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond, 
+      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond,
                               DAG.getBasicBlock(CB.FalseBB)));
   }
 }
@@ -1350,7 +1350,7 @@ void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
   MVT VT = SwitchOp.getValueType();
   SDValue SUB = DAG.getNode(ISD::SUB, VT, SwitchOp,
                               DAG.getConstant(JTH.First, VT));
-  
+
   // The SDNode we just created, which holds the value being switched on
   // minus the the smallest case value, needs to be copied to a virtual
   // register so it can be used as an index into the jump table in a 
@@ -1360,7 +1360,7 @@ void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
     SwitchOp = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), SUB);
   else
     SwitchOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), SUB);
-  
+
   unsigned JumpTableReg = FuncInfo.MakeReg(TLI.getPointerTy());
   SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), JumpTableReg, SwitchOp);
   JT.Reg = JumpTableReg;
@@ -1434,7 +1434,7 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
 
   SDValue BrRange = DAG.getNode(ISD::BRCOND, MVT::Other, CopyTo, RangeCmp,
                                   DAG.getBasicBlock(B.Default));
-  
+
   if (MBB == NextBlock)
     DAG.setRoot(BrRange);
   else
@@ -1449,9 +1449,9 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
                                             unsigned Reg,
                                             BitTestCase &B) {
   // Emit bit tests and jumps
-  SDValue SwitchVal = DAG.getCopyFromReg(getControlRoot(), Reg, 
+  SDValue SwitchVal = DAG.getCopyFromReg(getControlRoot(), Reg,
                                            TLI.getPointerTy());
-  
+
   SDValue AndOp = DAG.getNode(ISD::AND, TLI.getPointerTy(), SwitchVal,
                                 DAG.getConstant(B.Mask, TLI.getPointerTy()));
   SDValue AndCmp = DAG.getSetCC(TLI.getSetCCResultType(AndOp), AndOp,
@@ -1460,7 +1460,7 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
 
   CurMBB->addSuccessor(B.TargetBB);
   CurMBB->addSuccessor(NextMBB);
-  
+
   SDValue BrAnd = DAG.getNode(ISD::BRCOND, MVT::Other, getControlRoot(),
                                 AndCmp, DAG.getBasicBlock(B.TargetBB));
 
@@ -1517,15 +1517,15 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
                                                   Value* SV,
                                                   MachineBasicBlock* Default) {
   Case& BackCase  = *(CR.Range.second-1);
-  
+
   // Size is the number of Cases represented by this range.
-  unsigned Size = CR.Range.second - CR.Range.first;
+  size_t Size = CR.Range.second - CR.Range.first;
   if (Size > 3)
-    return false;  
-  
+    return false;
+
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
-  MachineFunction *CurMF = CurMBB->getParent();  
+  MachineFunction *CurMF = CurMBB->getParent();
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
@@ -1538,7 +1538,7 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
   // is the same as the other, but has one bit unset that the other has set,
   // use bit manipulation to do two compares at once.  For example:
   // "if (X == 6 || X == 4)" -> "if ((X|2) == 6)"
-    
+
   // Rearrange the case blocks so that the last one falls through if possible.
   if (NextBlock && Default != NextBlock && BackCase.BB != NextBlock) {
     // The last case block won't fall through into 'NextBlock' if we emit the
@@ -1550,7 +1550,7 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
       }
     }
   }
-  
+
   // Create a CaseBlock record representing a conditional branch to
   // the Case's target mbb if the value being switched on SV is equal
   // to C.
@@ -1576,7 +1576,7 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
       LHS = I->Low; MHS = SV; RHS = I->High;
     }
     CaseBlock CB(CC, LHS, RHS, MHS, I->BB, FallThrough, CurBlock);
-    
+
     // If emitting the first comparison, just call visitSwitchCase to emit the
     // code into the current block.  Otherwise, push the CaseBlock onto the
     // vector to be later processed by SDISel, and insert the node's MBB
@@ -1585,7 +1585,7 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
       visitSwitchCase(CB);
     else
       SwitchCases.push_back(CB);
-    
+
     CurBlock = FallThrough;
   }
 
@@ -1597,7 +1597,7 @@ static inline bool areJTsAllowed(const TargetLowering &TLI) {
           (TLI.isOperationLegal(ISD::BR_JT, MVT::Other) ||
            TLI.isOperationLegal(ISD::BRIND, MVT::Other));
 }
-  
+
 /// handleJTSwitchCase - Emit jumptable for current switch case range
 bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
                                               CaseRecVector& WorkList,
@@ -1606,24 +1606,25 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
   Case& FrontCase = *CR.Range.first;
   Case& BackCase  = *(CR.Range.second-1);
 
-  int64_t First = cast<ConstantInt>(FrontCase.Low)->getSExtValue();
-  int64_t Last  = cast<ConstantInt>(BackCase.High)->getSExtValue();
+  const APInt& First = cast<ConstantInt>(FrontCase.Low)->getValue();
+  const APInt& Last  = cast<ConstantInt>(BackCase.High)->getValue();
 
-  uint64_t TSize = 0;
+  size_t TSize = 0;
   for (CaseItr I = CR.Range.first, E = CR.Range.second;
        I!=E; ++I)
     TSize += I->size();
 
   if (!areJTsAllowed(TLI) || TSize <= 3)
     return false;
-  
-  double Density = (double)TSize / (double)((Last - First) + 1ULL);  
+
+  APInt Range = Last - First + 1ULL;
+  double Density = (double)TSize / Range.roundToDouble();
   if (Density < 0.4)
     return false;
 
-  DOUT << "Lowering jump table\n"
+  /*DOUT << "Lowering jump table\n"
        << "First entry: " << First << ". Last entry: " << Last << "\n"
-       << "Size: " << TSize << ". Density: " << Density << "\n\n";
+       << "Size: " << TSize << ". Density: " << Density << "\n\n";*/
 
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
@@ -1646,18 +1647,18 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
   CurMF->insert(BBI, JumpTableBB);
   CR.CaseBB->addSuccessor(Default);
   CR.CaseBB->addSuccessor(JumpTableBB);
-                
+
   // Build a vector of destination BBs, corresponding to each target
   // of the jump table. If the value of the jump table slot corresponds to
   // a case statement, push the case's BB onto the vector, otherwise, push
   // the default BB.
   std::vector<MachineBasicBlock*> DestBBs;
-  int64_t TEI = First;
+  APInt TEI = First;
   for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++TEI) {
-    int64_t Low = cast<ConstantInt>(I->Low)->getSExtValue();
-    int64_t High = cast<ConstantInt>(I->High)->getSExtValue();
-    
-    if ((Low <= TEI) && (TEI <= High)) {
+    const APInt& Low = cast<ConstantInt>(I->Low)->getValue();
+    const APInt& High = cast<ConstantInt>(I->High)->getValue();
+
+    if (Low.sle(TEI) && TEI.sle(High)) {
       DestBBs.push_back(I->BB);
       if (TEI==High)
         ++I;
@@ -1665,28 +1666,28 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
       DestBBs.push_back(Default);
     }
   }
-  
+
   // Update successor info. Add one edge to each unique successor.
-  BitVector SuccsHandled(CR.CaseBB->getParent()->getNumBlockIDs());  
-  for (std::vector<MachineBasicBlock*>::iterator I = DestBBs.begin(), 
+  BitVector SuccsHandled(CR.CaseBB->getParent()->getNumBlockIDs());
+  for (std::vector<MachineBasicBlock*>::iterator I = DestBBs.begin(),
          E = DestBBs.end(); I != E; ++I) {
     if (!SuccsHandled[(*I)->getNumber()]) {
       SuccsHandled[(*I)->getNumber()] = true;
       JumpTableBB->addSuccessor(*I);
     }
   }
-      
+
   // Create a jump table index for this jump table, or return an existing
   // one.
   unsigned JTI = CurMF->getJumpTableInfo()->getJumpTableIndex(DestBBs);
-  
+
   // Set the jump table information so that we can codegen it as a second
   // MachineBasicBlock
   JumpTable JT(-1U, JTI, JumpTableBB, Default);
   JumpTableHeader JTH(First, Last, SV, CR.CaseBB, (CR.CaseBB == CurMBB));
   if (CR.CaseBB == CurMBB)
     visitJumpTableHeader(JT, JTH);
-        
+
   JTCases.push_back(JumpTableBlock(JTH, JT));
 
   return true;
@@ -1700,7 +1701,7 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
                                                    MachineBasicBlock* Default) {
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
-  MachineFunction *CurMF = CurMBB->getParent();  
+  MachineFunction *CurMF = CurMBB->getParent();
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
@@ -1716,36 +1717,36 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
   // Size is the number of Cases represented by this range.
   unsigned Size = CR.Range.second - CR.Range.first;
 
-  int64_t First = cast<ConstantInt>(FrontCase.Low)->getSExtValue();
-  int64_t Last  = cast<ConstantInt>(BackCase.High)->getSExtValue();
+  const APInt& First = cast<ConstantInt>(FrontCase.Low)->getValue();
+  const APInt& Last  = cast<ConstantInt>(BackCase.High)->getValue();
   double FMetric = 0;
   CaseItr Pivot = CR.Range.first + Size/2;
 
   // Select optimal pivot, maximizing sum density of LHS and RHS. This will
   // (heuristically) allow us to emit JumpTable's later.
-  uint64_t TSize = 0;
+  size_t TSize = 0;
   for (CaseItr I = CR.Range.first, E = CR.Range.second;
        I!=E; ++I)
     TSize += I->size();
 
-  uint64_t LSize = FrontCase.size();
-  uint64_t RSize = TSize-LSize;
-  DOUT << "Selecting best pivot: \n"
+  size_t LSize = FrontCase.size();
+  size_t RSize = TSize-LSize;
+  /*DOUT << "Selecting best pivot: \n"
        << "First: " << First << ", Last: " << Last <<"\n"
-       << "LSize: " << LSize << ", RSize: " << RSize << "\n";
+       << "LSize: " << LSize << ", RSize: " << RSize << "\n";*/
   for (CaseItr I = CR.Range.first, J=I+1, E = CR.Range.second;
        J!=E; ++I, ++J) {
-    int64_t LEnd = cast<ConstantInt>(I->High)->getSExtValue();
-    int64_t RBegin = cast<ConstantInt>(J->Low)->getSExtValue();
-    assert((RBegin-LEnd>=1) && "Invalid case distance");
-    double LDensity = (double)LSize / (double)((LEnd - First) + 1ULL);
-    double RDensity = (double)RSize / (double)((Last - RBegin) + 1ULL);
-    double Metric = Log2_64(RBegin-LEnd)*(LDensity+RDensity);
+    const APInt& LEnd = cast<ConstantInt>(I->High)->getValue();
+    const APInt& RBegin = cast<ConstantInt>(J->Low)->getValue();
+    assert((RBegin - LEnd - 1).isNonNegative() && "Invalid case distance");
+    double LDensity = (double)LSize / (LEnd - First + 1ULL).roundToDouble();
+    double RDensity = (double)RSize / (Last - RBegin + 1ULL).roundToDouble();
+    double Metric = (RBegin-LEnd).logBase2()*(LDensity+RDensity);
     // Should always split in some non-trivial place
-    DOUT <<"=>Step\n"
+    /*DOUT <<"=>Step\n"
          << "LEnd: " << LEnd << ", RBegin: " << RBegin << "\n"
          << "LDensity: " << LDensity << ", RDensity: " << RDensity << "\n"
-         << "Metric: " << Metric << "\n"; 
+         << "Metric: " << Metric << "\n";*/
     if (FMetric < Metric) {
       Pivot = J;
       FMetric = Metric;
@@ -1761,12 +1762,12 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
   } else {
     Pivot = CR.Range.first + Size/2;
   }
-  
+
   CaseRange LHSR(CR.Range.first, Pivot);
   CaseRange RHSR(Pivot, CR.Range.second);
   Constant *C = Pivot->Low;
   MachineBasicBlock *FalseBB = 0, *TrueBB = 0;
-      
+
   // We know that we branch to the LHS if the Value being switched on is
   // less than the Pivot value, C.  We use this to optimize our binary 
   // tree a bit, by recognizing that if SV is greater than or equal to the
@@ -1775,22 +1776,22 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
   // rather than creating a leaf node for it.
   if ((LHSR.second - LHSR.first) == 1 &&
       LHSR.first->High == CR.GE &&
-      cast<ConstantInt>(C)->getSExtValue() ==
-      (cast<ConstantInt>(CR.GE)->getSExtValue() + 1LL)) {
+      cast<ConstantInt>(C)->getValue() ==
+      (cast<ConstantInt>(CR.GE)->getValue() + 1LL)) {
     TrueBB = LHSR.first->BB;
   } else {
     TrueBB = CurMF->CreateMachineBasicBlock(LLVMBB);
     CurMF->insert(BBI, TrueBB);
     WorkList.push_back(CaseRec(TrueBB, C, CR.GE, LHSR));
   }
-  
+
   // Similar to the optimization above, if the Value being switched on is
   // known to be less than the Constant CR.LT, and the current Case Value
   // is CR.LT - 1, then we can branch directly to the target block for
   // the current Case Value, rather than emitting a RHS leaf node for it.
   if ((RHSR.second - RHSR.first) == 1 && CR.LT &&
-      cast<ConstantInt>(RHSR.first->Low)->getSExtValue() ==
-      (cast<ConstantInt>(CR.LT)->getSExtValue() - 1LL)) {
+      cast<ConstantInt>(RHSR.first->Low)->getValue() ==
+      (cast<ConstantInt>(CR.LT)->getValue() - 1LL)) {
     FalseBB = RHSR.first->BB;
   } else {
     FalseBB = CurMF->CreateMachineBasicBlock(LLVMBB);
@@ -1825,18 +1826,15 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
 
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
-  MachineFunction *CurMF = CurMBB->getParent();  
+  MachineFunction *CurMF = CurMBB->getParent();
 
-  unsigned numCmps = 0;
+  size_t numCmps = 0;
   for (CaseItr I = CR.Range.first, E = CR.Range.second;
        I!=E; ++I) {
     // Single case counts one, case range - two.
-    if (I->Low == I->High)
-      numCmps +=1;
-    else
-      numCmps +=2;
+    numCmps += (I->Low == I->High ? 1 : 2);
   }
-    
+
   // Count unique destinations
   SmallSet<MachineBasicBlock*, 4> Dests;
   for (CaseItr I = CR.Range.first, E = CR.Range.second; I!=E; ++I) {
@@ -1847,35 +1845,34 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
   }
   DOUT << "Total number of unique destinations: " << Dests.size() << "\n"
        << "Total number of comparisons: " << numCmps << "\n";
-  
+
   // Compute span of values.
-  Constant* minValue = FrontCase.Low;
-  Constant* maxValue = BackCase.High;
-  uint64_t range = cast<ConstantInt>(maxValue)->getSExtValue() -
-                   cast<ConstantInt>(minValue)->getSExtValue();
-  DOUT << "Compare range: " << range << "\n"
-       << "Low bound: " << cast<ConstantInt>(minValue)->getSExtValue() << "\n"
-       << "High bound: " << cast<ConstantInt>(maxValue)->getSExtValue() << "\n";
-  
-  if (range>=IntPtrBits ||
+  const APInt& minValue = cast<ConstantInt>(FrontCase.Low)->getValue();
+  const APInt& maxValue = cast<ConstantInt>(BackCase.High)->getValue();
+  APInt cmpRange = maxValue -  minValue;
+  /*DOUT << "Compare range: " << Range << "\n"
+       << "Low bound: " << cast<ConstantInt>(minValue)->getValue() << "\n"
+       << "High bound: " << cast<ConstantInt>(maxValue)->getValue() << "\n";*/
+
+  if (cmpRange.uge(APInt(cmpRange.getBitWidth(), IntPtrBits)) ||
       (!(Dests.size() == 1 && numCmps >= 3) &&
        !(Dests.size() == 2 && numCmps >= 5) &&
        !(Dests.size() >= 3 && numCmps >= 6)))
     return false;
-  
+
   DOUT << "Emitting bit tests\n";
-  int64_t lowBound = 0;
-    
+  APInt lowBound = APInt::getNullValue(cmpRange.getBitWidth());
+
   // Optimize the case where all the case values fit in a
   // word without having to subtract minValue. In this case,
   // we can optimize away the subtraction.
-  if (cast<ConstantInt>(minValue)->getSExtValue() >= 0 &&
-      cast<ConstantInt>(maxValue)->getSExtValue() <  IntPtrBits) {
-    range = cast<ConstantInt>(maxValue)->getSExtValue();
+  if (minValue.isNonNegative() &&
+      maxValue.slt(APInt(maxValue.getBitWidth(), IntPtrBits))) {
+    cmpRange = maxValue;
   } else {
-    lowBound = cast<ConstantInt>(minValue)->getSExtValue();
+    lowBound = minValue;
   }
-    
+
   CaseBitsVector CasesBits;
   unsigned i, count = 0;
 
@@ -1884,24 +1881,27 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
     for (i = 0; i < count; ++i)
       if (Dest == CasesBits[i].BB)
         break;
-    
+
     if (i == count) {
       assert((count < 3) && "Too much destinations to test!");
       CasesBits.push_back(CaseBits(0, Dest, 0));
       count++;
     }
-    
-    uint64_t lo = cast<ConstantInt>(I->Low)->getSExtValue() - lowBound;
-    uint64_t hi = cast<ConstantInt>(I->High)->getSExtValue() - lowBound;
-    
+
+    const APInt& lowValue = cast<ConstantInt>(I->Low)->getValue();
+    const APInt& highValue = cast<ConstantInt>(I->High)->getValue();
+
+    uint64_t lo = (lowValue - lowBound).getZExtValue();
+    uint64_t hi = (highValue - lowBound).getZExtValue();
+
     for (uint64_t j = lo; j <= hi; j++) {
       CasesBits[i].Mask |=  1ULL << j;
       CasesBits[i].Bits++;
     }
-      
+
   }
   std::sort(CasesBits.begin(), CasesBits.end(), CaseBitsCmp());
-  
+
   BitTestInfo BTC;
 
   // Figure out which block is immediately after the current one.
@@ -1921,14 +1921,14 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
                               CaseBB,
                               CasesBits[i].BB));
   }
-  
-  BitTestBlock BTB(lowBound, range, SV,
+
+  BitTestBlock BTB(lowBound, cmpRange, SV,
                    -1U, (CR.CaseBB == CurMBB),
                    CR.CaseBB, Default, BTC);
 
   if (CR.CaseBB == CurMBB)
     visitBitTestHeader(BTB);
-  
+
   BitTestCases.push_back(BTB);
 
   return true;
@@ -1936,12 +1936,12 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
 
 
 /// Clusterify - Transform simple list of Cases into list of CaseRange's
-unsigned SelectionDAGLowering::Clusterify(CaseVector& Cases,
+size_t SelectionDAGLowering::Clusterify(CaseVector& Cases,
                                           const SwitchInst& SI) {
-  unsigned numCmps = 0;
+  size_t numCmps = 0;
 
   // Start with "simple" cases
-  for (unsigned i = 1; i < SI.getNumSuccessors(); ++i) {
+  for (size_t i = 1; i < SI.getNumSuccessors(); ++i) {
     MachineBasicBlock *SMBB = FuncInfo.MBBMap[SI.getSuccessor(i)];
     Cases.push_back(Case(SI.getSuccessorValue(i),
                          SI.getSuccessorValue(i),
@@ -1950,18 +1950,18 @@ unsigned SelectionDAGLowering::Clusterify(CaseVector& Cases,
   std::sort(Cases.begin(), Cases.end(), CaseCmp());
 
   // Merge case into clusters
-  if (Cases.size()>=2)
+  if (Cases.size() >= 2)
     // Must recompute end() each iteration because it may be
     // invalidated by erase if we hold on to it
-    for (CaseItr I=Cases.begin(), J=++(Cases.begin()); J!=Cases.end(); ) {
-      int64_t nextValue = cast<ConstantInt>(J->Low)->getSExtValue();
-      int64_t currentValue = cast<ConstantInt>(I->High)->getSExtValue();
+    for (CaseItr I = Cases.begin(), J = ++(Cases.begin()); J != Cases.end(); ) {
+      const APInt& nextValue = cast<ConstantInt>(J->Low)->getValue();
+      const APInt& currentValue = cast<ConstantInt>(I->High)->getValue();
       MachineBasicBlock* nextBB = J->BB;
       MachineBasicBlock* currentBB = I->BB;
 
       // If the two neighboring cases go to the same destination, merge them
       // into a single case.
-      if ((nextValue-currentValue==1) && (currentBB == nextBB)) {
+      if ((nextValue - currentValue == 1) && (currentBB == nextBB)) {
         I->High = J->High;
         J = Cases.erase(J);
       } else {
@@ -1978,7 +1978,7 @@ unsigned SelectionDAGLowering::Clusterify(CaseVector& Cases,
   return numCmps;
 }
 
-void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {  
+void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CurMBB;
@@ -1995,15 +1995,14 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
     if (Default != NextBlock)
       DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getControlRoot(),
                               DAG.getBasicBlock(Default)));
-    
     return;
   }
-  
+
   // If there are any non-default case statements, create a vector of Cases
   // representing each one, and sort the vector so that we can efficiently
   // create a binary search tree from them.
   CaseVector Cases;
-  unsigned numCmps = Clusterify(Cases, SI);
+  size_t numCmps = Clusterify(Cases, SI);
   DOUT << "Clusterify finished. Total clusters: " << Cases.size()
        << ". Total compares: " << numCmps << "\n";
 
@@ -2023,18 +2022,18 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
 
     if (handleBitTestsSwitchCase(CR, WorkList, SV, Default))
       continue;
-    
+
     // If the range has few cases (two or less) emit a series of specific
     // tests.
     if (handleSmallSwitchRange(CR, WorkList, SV, Default))
       continue;
-    
+
     // If the switch has more than 5 blocks, and at least 40% dense, and the 
     // target supports indirect branches, then emit a jump table rather than 
     // lowering the switch to a binary tree of conditional branches.
     if (handleJTSwitchCase(CR, WorkList, SV, Default))
       continue;
-          
+
     // Emit binary tree. We need to pick a pivot, and push left and right ranges
     // onto the worklist. Leafs are handled via handleSmallSwitchRange() call.
     handleBTSplitSwitchCase(CR, WorkList, SV, Default);
