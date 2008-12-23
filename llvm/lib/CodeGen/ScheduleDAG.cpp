@@ -177,7 +177,7 @@ void SUnit::setHeightToAtLeast(unsigned NewHeight) {
 void SUnit::ComputeDepth() {
   SmallVector<SUnit*, 8> WorkList;
   WorkList.push_back(this);
-  while (!WorkList.empty()) {
+  do {
     SUnit *Cur = WorkList.back();
 
     bool Done = true;
@@ -202,7 +202,7 @@ void SUnit::ComputeDepth() {
       }
       Cur->isDepthCurrent = true;
     }
-  }
+  } while (!WorkList.empty());
 }
 
 /// ComputeHeight - Calculate the maximal path from the node to the entry.
@@ -210,7 +210,7 @@ void SUnit::ComputeDepth() {
 void SUnit::ComputeHeight() {
   SmallVector<SUnit*, 8> WorkList;
   WorkList.push_back(this);
-  while (!WorkList.empty()) {
+  do {
     SUnit *Cur = WorkList.back();
 
     bool Done = true;
@@ -235,7 +235,7 @@ void SUnit::ComputeHeight() {
       }
       Cur->isHeightCurrent = true;
     }
-  }
+  } while (!WorkList.empty());
 }
 
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
@@ -467,7 +467,7 @@ void ScheduleDAGTopologicalSort::DFS(const SUnit *SU, int UpperBound,
   WorkList.reserve(SUnits.size()); 
 
   WorkList.push_back(SU);
-  while (!WorkList.empty()) {
+  do {
     SU = WorkList.back();
     WorkList.pop_back();
     Visited.set(SU->NodeNum);
@@ -482,7 +482,7 @@ void ScheduleDAGTopologicalSort::DFS(const SUnit *SU, int UpperBound,
         WorkList.push_back(SU->Succs[I].getSUnit());
       } 
     } 
-  }
+  } while (!WorkList.empty());
 }
 
 /// Shift - Renumber the nodes so that the topological ordering is 
