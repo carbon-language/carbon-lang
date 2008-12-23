@@ -1598,6 +1598,13 @@ static inline bool areJTsAllowed(const TargetLowering &TLI) {
            TLI.isOperationLegal(ISD::BRIND, MVT::Other));
 }
 
+static APInt ComputeRange(const APInt &First, const APInt &Last) {
+  APInt LastExt(Last), FirstExt(First);
+  uint32_t BitWidth = std::max(Last.getBitWidth(), First.getBitWidth()) + 1;
+  LastExt.sext(BitWidth); FirstExt.sext(BitWidth);
+  return (LastExt - FirstExt + 1ULL);
+}
+
 /// handleJTSwitchCase - Emit jumptable for current switch case range
 bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
                                               CaseRecVector& WorkList,
@@ -1617,13 +1624,14 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
   if (!areJTsAllowed(TLI) || TSize <= 3)
     return false;
 
-  APInt Range = Last - First + 1ULL;
+  APInt Range = ComputeRange(First, Last);
   double Density = (double)TSize / Range.roundToDouble();
   if (Density < 0.4)
     return false;
 
   /*DOUT << "Lowering jump table\n"
-       << "First entry: " << First << ". Last entry: " << Last << "\n"
+       << "First entry: " << First.getSExtValue() << ". Last entry: " << Last.getSExtValue() << "\n"
+       << "Range: " << Range.getSExtValue()
        << "Size: " << TSize << ". Density: " << Density << "\n\n";*/
 
   // Get the MachineFunction which holds the current MBB.  This is used when
@@ -1732,19 +1740,21 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
   size_t LSize = FrontCase.size();
   size_t RSize = TSize-LSize;
   /*DOUT << "Selecting best pivot: \n"
-       << "First: " << First << ", Last: " << Last <<"\n"
+       << "First: " << First.getSExtValue() << ", Last: " << Last.getSExtValue() <<"\n"
        << "LSize: " << LSize << ", RSize: " << RSize << "\n";*/
   for (CaseItr I = CR.Range.first, J=I+1, E = CR.Range.second;
        J!=E; ++I, ++J) {
     const APInt& LEnd = cast<ConstantInt>(I->High)->getValue();
     const APInt& RBegin = cast<ConstantInt>(J->Low)->getValue();
-    assert((RBegin - LEnd - 1).isNonNegative() && "Invalid case distance");
+    APInt Range = ComputeRange(LEnd, RBegin);
+    assert((Range - 2ULL).isNonNegative() &&
+           "Invalid case distance");
     double LDensity = (double)LSize / (LEnd - First + 1ULL).roundToDouble();
     double RDensity = (double)RSize / (Last - RBegin + 1ULL).roundToDouble();
-    double Metric = (RBegin-LEnd).logBase2()*(LDensity+RDensity);
+    double Metric = Range.logBase2()*(LDensity+RDensity);
     // Should always split in some non-trivial place
     /*DOUT <<"=>Step\n"
-         << "LEnd: " << LEnd << ", RBegin: " << RBegin << "\n"
+         << "LEnd: " << LEnd.getSExtValue() << ", RBegin: " << RBegin.getSExtValue() << "\n"
          << "LDensity: " << LDensity << ", RDensity: " << RDensity << "\n"
          << "Metric: " << Metric << "\n";*/
     if (FMetric < Metric) {
@@ -1849,8 +1859,9 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
   // Compute span of values.
   const APInt& minValue = cast<ConstantInt>(FrontCase.Low)->getValue();
   const APInt& maxValue = cast<ConstantInt>(BackCase.High)->getValue();
-  APInt cmpRange = maxValue -  minValue;
-  /*DOUT << "Compare range: " << Range << "\n"
+  APInt cmpRange = maxValue - minValue;
+
+  /*DOUT << "Compare range: " << Range.getSExtValue() << "\n"
        << "Low bound: " << cast<ConstantInt>(minValue)->getValue() << "\n"
        << "High bound: " << cast<ConstantInt>(maxValue)->getValue() << "\n";*/
 
@@ -2028,8 +2039,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
     if (handleSmallSwitchRange(CR, WorkList, SV, Default))
       continue;
 
-    // If the switch has more than 5 blocks, and at least 40% dense, and the 
-    // target supports indirect branches, then emit a jump table rather than 
+    // If the switch has more than 5 blocks, and at least 40% dense, and the
+    // target supports indirect branches, then emit a jump table rather than
     // lowering the switch to a binary tree of conditional branches.
     if (handleJTSwitchCase(CR, WorkList, SV, Default))
       continue;
