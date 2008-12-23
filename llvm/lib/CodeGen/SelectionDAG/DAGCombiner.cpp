@@ -1177,13 +1177,20 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     return N0.getOperand(1);
   // fold (A+B)-B -> A
   if (N0.getOpcode() == ISD::ADD && N0.getOperand(1) == N1)
-    return N0.getOperand(0);
-  // fold ((A+(B-C))-B) -> A-C
+    return N0.getOperand(0); 
+  // fold ((A+(B+-C))-B) -> A+-C
   if (N0.getOpcode() == ISD::ADD &&
-      N0.getOperand(1).getOpcode() == ISD::SUB &&
+      (N0.getOperand(1).getOpcode() == ISD::SUB ||
+       N0.getOperand(1).getOpcode() == ISD::ADD) &&
       N0.getOperand(1).getOperand(0) == N1)
-    return DAG.getNode(ISD::SUB, VT, N0.getOperand(0), 
+    return DAG.getNode(N0.getOperand(1).getOpcode(), VT, N0.getOperand(0), 
                                      N0.getOperand(1).getOperand(1));
+  // fold ((A+(C+B))-B) -> A+C
+  if (N0.getOpcode() == ISD::ADD &&
+      N0.getOperand(1).getOpcode() == ISD::ADD &&
+      N0.getOperand(1).getOperand(1) == N1)
+    return DAG.getNode(ISD::ADD, VT, N0.getOperand(0), 
+                                     N0.getOperand(1).getOperand(0));
   // fold ((A-(B-C))-C) -> A-B
   if (N0.getOpcode() == ISD::SUB &&
       N0.getOperand(1).getOpcode() == ISD::SUB &&
