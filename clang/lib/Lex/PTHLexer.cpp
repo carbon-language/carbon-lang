@@ -67,11 +67,10 @@ LexNextToken:
   tok::TokenKind k = (tok::TokenKind) CurPtrShadow[0];
   Token::TokenFlags flags = (Token::TokenFlags) CurPtrShadow[1];
     
-  uint32_t persistentID = ((uint32_t) CurPtrShadow[2])
+  uint32_t perID = ((uint32_t) CurPtrShadow[2])
       | (((uint32_t) CurPtrShadow[3]) << 8)
       | (((uint32_t) CurPtrShadow[4]) << 16)
       | (((uint32_t) CurPtrShadow[5]) << 24);
-  
   
   uint32_t FileOffset = ((uint32_t) CurPtrShadow[6])
       | (((uint32_t) CurPtrShadow[7]) << 8)
@@ -90,8 +89,7 @@ LexNextToken:
   Tok.startToken();
   Tok.setKind(k);
   Tok.setFlag(flags);     
-  Tok.setIdentifierInfo(persistentID ? PTHMgr.GetIdentifierInfo(persistentID-1) 
-                                     : 0);
+  Tok.setIdentifierInfo(perID ? PTHMgr.GetIdentifierInfo(perID-1) : 0);
   Tok.setLocation(SourceLocation::getFileLoc(FileID, FileOffset));
   Tok.setLength(Len);
 
