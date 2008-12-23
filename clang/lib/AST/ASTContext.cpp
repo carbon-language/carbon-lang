@@ -1749,6 +1749,22 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
   // FIXME: OBJCGC: weak & strong
 }
 
+/// getLegacyIntegralTypeEncoding -
+/// Another legacy compatibility encoding: 32-bit longs are encoded as 
+/// 'l' or 'L', but not always.  For typedefs, we need to use 
+/// 'i' or 'I' instead if encoding a struct field, or a pointer!
+///
+void ASTContext::getLegacyIntegralTypeEncoding (QualType &PointeeTy) const {
+  if (dyn_cast<TypedefType>(PointeeTy.getTypePtr())) {
+    if (const BuiltinType *BT = PointeeTy->getAsBuiltinType()) {
+      if (BT->getKind() == BuiltinType::ULong)
+        PointeeTy = UnsignedIntTy;
+        else if (BT->getKind() == BuiltinType::Long)
+          PointeeTy = IntTy;
+    }
+  }
+}
+
 void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
                                         FieldDecl *Field) const {
   // We follow the behavior of gcc, expanding structures which are
@@ -1807,8 +1823,37 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
-    if (OutermostType && PointeeTy.isConstQualified())
-      S += 'r';
+    bool isReadOnly = false;
+    // For historical/compatibility reasons, the read-only qualifier of the
+    // pointee gets emitted _before_ the '^'.  The read-only qualifier of
+    // the pointer itself gets ignored, _unless_ we are looking at a typedef!
+    // Also, do not emit the 'r' for anything but the outermost type! 
+    if (dyn_cast<TypedefType>(T.getTypePtr())) {
+      if (OutermostType && T.isConstQualified()) {
+        isReadOnly = true;
+        S += 'r';
+      }
+    }
+    else if (OutermostType) {
+      QualType P = PointeeTy;
+      while (P->getAsPointerType())
+        P = P->getAsPointerType()->getPointeeType();
+      if (P.isConstQualified()) {
+        isReadOnly = true;
+        S += 'r';
+      }
+    }
+    if (isReadOnly) {
+      // Another legacy compatibility encoding. Some ObjC qualifier and type
+      // combinations need to be rearranged.
+      // Rewrite "in const" from "nr" to "rn"
+      const char * s = S.c_str();
+      int len = S.length();
+      if (len >= 2 && s[len-2] == 'n' && s[len-1] == 'r') {
+        std::string replace = "rn";
+        S.replace(S.end()-2, S.end(), replace);
+      }
+    }
     if (isObjCIdType(PointeeTy)) {
       S += '@';
       return;
@@ -1840,7 +1885,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
     
     S += '^';
-    getObjCEncodingForTypeImpl(PT->getPointeeType(), S, 
+    getLegacyIntegralTypeEncoding(PointeeTy);
+
+    getObjCEncodingForTypeImpl(PointeeTy, S, 
                                false, ExpandPointedToStructures, 
                                NULL);
   } else if (const ArrayType *AT =
@@ -1883,10 +1930,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
           getObjCEncodingForTypeImpl(Field->getType(), S, false, true, 
                                      (*Field));
         } else {
-          // FIXME! Another legacy kludge: 32-bit longs are encoded as 
-          // 'l' or 'L', but not always.  For typedefs, we need to use 
-          // 'i' or 'I' instead if encoding a struct field, or a pointer! 
-          getObjCEncodingForTypeImpl(Field->getType(), S, false, true, 
+          QualType qt = Field->getType();
+          getLegacyIntegralTypeEncoding(qt);
+          getObjCEncodingForTypeImpl(qt, S, false, true, 
                                      FD);
         }
       }

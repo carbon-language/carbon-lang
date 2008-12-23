@@ -300,6 +300,8 @@ public:
   /// record field names are also encoded.
   void getObjCEncodingForType(QualType t, std::string &S, 
                               FieldDecl *Field=NULL) const;
+
+  void getLegacyIntegralTypeEncoding(QualType &t) const;
   
   // Put the string version of type qualifiers into S.
   void getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT, 
