@@ -27,3 +27,13 @@ typedef struct {
 extern const Anon anon;
 extern "C" const Anon anon2;
 
+// PR3188: The extern declaration complained about not having an appropriate
+// constructor.
+struct x;
+extern x a;
+
+// A similar case.
+struct y {
+  y(int);
+};
+extern y b;
