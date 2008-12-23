@@ -2554,6 +2554,23 @@ static bool isSplatMask(SDNode *N) {
   return cast<ConstantSDNode>(ElementBase)->getZExtValue() < NumElems;
 }
 
+/// getSplatMaskEltNo - Given a splat mask, return the index to the element
+/// we want to splat.
+static SDValue getSplatMaskEltNo(SDNode *N) {
+  assert(isSplatMask(N) && "Not a splat mask");
+  unsigned NumElems = N->getNumOperands();
+  SDValue ElementBase;
+  unsigned i = 0;
+  for (; i != NumElems; ++i) {
+    SDValue Elt = N->getOperand(i);
+    if (isa<ConstantSDNode>(Elt))
+      return Elt;
+  }
+  assert(0 && " No splat value found!");
+  return SDValue();
+}
+
+
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
 /// a splat of a single element and it's a 2 or 4 element mask.
 bool X86::isSplatMask(SDNode *N) {
@@ -3000,15 +3017,26 @@ static SDValue PromoteSplat(SDValue Op, SelectionDAG &DAG, bool HasSSE2) {
     return Op;
   SDValue V1 = Op.getOperand(0);
   SDValue Mask = Op.getOperand(2);
-  unsigned NumElems = Mask.getNumOperands();
+  unsigned MaskNumElems = Mask.getNumOperands();
+  unsigned NumElems = MaskNumElems;
   // Special handling of v4f32 -> v4i32.
   if (VT != MVT::v4f32) {
-    Mask = getUnpacklMask(NumElems, DAG);
+    // Find which element we want to splat.
+    SDNode* EltNoNode = getSplatMaskEltNo(Mask.getNode()).getNode();
+    unsigned EltNo = cast<ConstantSDNode>(EltNoNode)->getZExtValue();
+    // unpack elements to the correct location
     while (NumElems > 4) {
+      if (EltNo < NumElems/2) {
+        Mask = getUnpacklMask(MaskNumElems, DAG);
+      } else {
+        Mask = getUnpackhMask(MaskNumElems, DAG);
+        EltNo -= NumElems/2;
+      }
       V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1, Mask);
       NumElems >>= 1;
     }
-    Mask = getZeroVector(MVT::v4i32, true, DAG);
+    SDValue Cst = DAG.getConstant(EltNo, MVT::i32);
+    Mask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, Cst, Cst, Cst, Cst);
   }
 
   V1 = DAG.getNode(ISD::BIT_CONVERT, PVT, V1);
@@ -3661,8 +3689,10 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
       ++V2InOrder;
     } else if (EltIdx < 8) {
       V1Elts.push_back(Elt);
+      V2Elts.push_back(DAG.getConstant(i+8, MaskEVT));
       ++V1FromV1;
     } else {
+      V1Elts.push_back(Elt);
       V2Elts.push_back(DAG.getConstant(EltIdx-8, MaskEVT));
       ++V2FromV2;
     }
