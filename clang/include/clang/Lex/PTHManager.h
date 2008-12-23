@@ -66,9 +66,9 @@ class PTHManager {
   PTHManager();
   void operator=(const PTHManager&);
   
-  /// ReadIdentifierInfo - Used by PTHManager to reconstruct IdentifierInfo
+  /// GetIdentifierInfo - Used by PTHManager to reconstruct IdentifierInfo
   ///  objects from the PTH file.
-  IdentifierInfo* ReadIdentifierInfo(const char*& D);
+  IdentifierInfo* GetIdentifierInfo(unsigned);
 
 public:
   

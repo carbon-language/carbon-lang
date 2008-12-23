@@ -55,32 +55,51 @@ PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D,
 
 void PTHLexer::Lex(Token& Tok) {
 LexNextToken:
-  
-  // Read the token.
-  // FIXME: Setting the flags directly should obviate this step.
-  Tok.startToken();
-  
-  // Shadow CurPtr into an automatic variable so that Read8 doesn't load and
-  // store back into the instance variable.
-  const char *CurPtrShadow = CurPtr;
-  
-  // Read the type of the token.
-  Tok.setKind((tok::TokenKind) Read8(CurPtrShadow));
-  
-  // Set flags.  This is gross, since we are really setting multiple flags.
-  Tok.setFlag((Token::TokenFlags) Read8(CurPtrShadow));
-  
-  // Set the IdentifierInfo* (if any).
-  Tok.setIdentifierInfo(PTHMgr.ReadIdentifierInfo(CurPtrShadow));
-  
-  // Set the SourceLocation.  Since all tokens are constructed using a
-  // raw lexer, they will all be offseted from the same FileID.
-  Tok.setLocation(SourceLocation::getFileLoc(FileID, Read32(CurPtrShadow)));
-  
-  // Finally, read and set the length of the token.
-  Tok.setLength(Read32(CurPtrShadow));
 
-  CurPtr = CurPtrShadow;
+  //===--------------------------------------==//
+  // Read the raw token data.
+  //===--------------------------------------==//
+  
+  // Shadow CurPtr into an automatic variable.
+  const unsigned char *CurPtrShadow = (const unsigned char*) CurPtr;  
+
+  // Read in the data for the token.  14 bytes in total.
+  tok::TokenKind k = (tok::TokenKind) CurPtrShadow[0];
+  Token::TokenFlags flags = (Token::TokenFlags) CurPtrShadow[1];
+    
+  uint32_t persistentID = ((uint32_t) CurPtrShadow[2])
+      | (((uint32_t) CurPtrShadow[3]) << 8)
+      | (((uint32_t) CurPtrShadow[4]) << 16)
+      | (((uint32_t) CurPtrShadow[5]) << 24);
+  
+  
+  uint32_t FileOffset = ((uint32_t) CurPtrShadow[6])
+      | (((uint32_t) CurPtrShadow[7]) << 8)
+      | (((uint32_t) CurPtrShadow[8]) << 16)
+      | (((uint32_t) CurPtrShadow[9]) << 24);
+  
+  uint32_t Len = ((uint32_t) CurPtrShadow[10])
+      | (((uint32_t) CurPtrShadow[11]) << 8)
+      | (((uint32_t) CurPtrShadow[12]) << 16)
+      | (((uint32_t) CurPtrShadow[13]) << 24);
+  
+  CurPtr = (const char*) (CurPtrShadow + DISK_TOKEN_SIZE);
+  
+  //===--------------------------------------==//
+  // Construct the token itself.
+  //===--------------------------------------==//
+  
+  Tok.startToken();
+  Tok.setKind(k);
+  Tok.setFlag(flags);     
+  Tok.setIdentifierInfo(persistentID ? PTHMgr.GetIdentifierInfo(persistentID-1) 
+                                     : 0);
+  Tok.setLocation(SourceLocation::getFileLoc(FileID, FileOffset));
+  Tok.setLength(Len);
+
+  //===--------------------------------------==//
+  // Process the token.
+  //===--------------------------------------==//
 
   if (Tok.is(tok::eof)) {
     // Save the end-of-file token.
@@ -437,18 +456,8 @@ PTHManager* PTHManager::Create(const std::string& file, Preprocessor& PP) {
   return new PTHManager(File.take(), FL.take(), IData, PerIDCache, PP);
 }
 
-IdentifierInfo* PTHManager::ReadIdentifierInfo(const char*& D) {
-  // Read the persistent ID from the PTH file.
-  uint32_t persistentID = Read32(D);
-  
-  // A persistent ID of '0' always maps to NULL.
-  if (!persistentID)
-    return 0;
-  
-  // Adjust the persistent ID by subtracting '1' so that it can be used
-  // as an index within a table in the PTH file.
-  --persistentID;
-  
+IdentifierInfo* PTHManager::GetIdentifierInfo(unsigned persistentID) {
+    
   // Check if the IdentifierInfo has already been resolved.
   IdentifierInfo*& II = PerIDCache[persistentID];
   if (II) return II;
