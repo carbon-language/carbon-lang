@@ -1,16 +1,13 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-as < %s | llc -march=x86-64 > %t
+; RUN: grep BB1_5 %t | count 131
+; RUN: grep 119 %t
+; RUN: grep 128 %t
 ; PR1197
 
 
-define void @exp_attr__expand_n_attribute_reference() {
-entry:
-	br i1 false, label %cond_next954, label %cond_true924
-
-cond_true924:		; preds = %entry
-	ret void
-
+define void @exp_attr__expand_n_attribute_reference(i8 %in) {
 cond_next954:		; preds = %entry
-	switch i8 0, label %cleanup7419 [
+	switch i8 %in, label %cleanup7419 [
 		 i8 1, label %bb956
 		 i8 2, label %bb1069
 		 i8 4, label %bb7328
@@ -90,12 +87,11 @@ cond_next954:		; preds = %entry
 		 i8 126, label %bb6955
 		 i8 127, label %bb6990
 		 i8 -128, label %bb7027
-		 i8 -127, label %bb3879
-		 i8 -126, label %bb4700
-		 i8 -125, label %bb7076
-		 i8 -124, label %bb2366
-		 i8 -123, label %bb2366
-		 i8 -122, label %bb5490
+		 i8 -127, label %bb7027
+		 i8 -126, label %bb7027
+		 i8 -124, label %bb7027
+		 i8 -123, label %bb7027
+		 i8 -122, label %bb7027
 	]
 
 bb956:		; preds = %cond_next954
