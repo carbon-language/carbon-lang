@@ -93,6 +93,7 @@ public:
     : Value(const_cast<Type*>(Ptr), Quals) {}
 
   unsigned getCVRQualifiers() const { return Value.getInt(); }
+  void setCVRQualifiers(unsigned Quals) { Value.setInt(Quals); }
   Type *getTypePtr() const { return Value.getPointer(); }
   
   void *getAsOpaquePtr() const { return Value.getOpaqueValue(); }
