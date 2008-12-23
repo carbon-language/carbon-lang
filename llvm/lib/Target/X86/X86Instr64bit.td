@@ -917,6 +917,20 @@ def CMP64mi32 : RIi32<0x81, MRM7m, (outs),
                        (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
+// Bit tests.
+// TODO: BT with immediate operands.
+// TODO: BTC, BTR, and BTS
+let Defs = [EFLAGS] in {
+def BT64rr : RI<0xA3, MRMSrcReg, (outs), (ins GR64:$src1, GR64:$src2),
+               "bt{q}\t{$src2, $src1|$src1, $src2}",
+               [(X86bt GR64:$src1, GR64:$src2),
+                (implicit EFLAGS)]>;
+def BT64mr : RI<0xA3, MRMSrcMem, (outs), (ins i64mem:$src1, GR64:$src2),
+               "bt{q}\t{$src2, $src1|$src1, $src2}",
+               [(X86bt addr:$src1, GR64:$src2),
+                (implicit EFLAGS)]>;
+} // Defs = [EFLAGS]
+
 // Conditional moves
 let Uses = [EFLAGS], isTwoAddress = 1 in {
 let isCommutable = 1 in {

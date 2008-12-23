@@ -115,6 +115,9 @@ namespace llvm {
       /// X86 compare and logical compare instructions.
       CMP, COMI, UCOMI,
 
+      /// X86 bit-test instructions.
+      BT,
+
       /// X86 SetCC. Operand 1 is condition code, and operand 2 is the flag
       /// operand produced by a CMP instruction.
       SETCC,

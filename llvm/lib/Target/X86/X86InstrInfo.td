@@ -76,6 +76,8 @@ def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
 def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest>;
 
+def X86bt      : SDNode<"X86ISD::BT",       SDTX86CmpTest>;
+
 def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov>;
 def X86brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,
                         [SDNPHasChain]>;
@@ -2647,6 +2649,28 @@ def CMP32ri8 : Ii8<0x83, MRM7r,
                    "cmp{l}\t{$src2, $src1|$src1, $src2}",
                    [(X86cmp GR32:$src1, i32immSExt8:$src2),
                     (implicit EFLAGS)]>;
+} // Defs = [EFLAGS]
+
+// Bit tests.
+// TODO: BT with immediate operands
+// TODO: BTC, BTR, and BTS
+let Defs = [EFLAGS] in {
+def BT16rr : I<0xA3, MRMSrcReg, (outs), (ins GR16:$src1, GR16:$src2),
+               "bt{w}\t{$src2, $src1|$src1, $src2}",
+               [(X86bt GR16:$src1, GR16:$src2),
+                (implicit EFLAGS)]>, OpSize;
+def BT32rr : I<0xA3, MRMSrcReg, (outs), (ins GR32:$src1, GR32:$src2),
+               "bt{l}\t{$src2, $src1|$src1, $src2}",
+               [(X86bt GR32:$src1, GR32:$src2),
+                (implicit EFLAGS)]>;
+def BT16mr : I<0xA3, MRMSrcMem, (outs), (ins i16mem:$src1, GR16:$src2),
+               "bt{w}\t{$src2, $src1|$src1, $src2}",
+               [(X86bt addr:$src1, GR16:$src2),
+                (implicit EFLAGS)]>, OpSize;
+def BT32mr : I<0xA3, MRMSrcMem, (outs), (ins i32mem:$src1, GR32:$src2),
+               "bt{l}\t{$src2, $src1|$src1, $src2}",
+               [(X86bt addr:$src1, GR32:$src2),
+                (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
 // Sign/Zero extenders
