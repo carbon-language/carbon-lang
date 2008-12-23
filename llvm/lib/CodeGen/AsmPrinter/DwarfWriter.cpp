@@ -1616,7 +1616,7 @@ private:
             while (FromTy) {
               if (FromTy->getTag() != DW_TAG_typedef) {
                 FieldSize = FromTy->getSize();
-                FieldAlign = FromTy->getSize();
+                FieldAlign = FromTy->getAlign();
                 break;
               }
 
@@ -2776,6 +2776,7 @@ public:
           sys::Path FullPath(Directories[SourceFiles[i].getDirectoryID()]);
           bool AppendOk = FullPath.appendComponent(SourceFiles[i].getName());
           assert(AppendOk && "Could not append filename to directory!");
+          AppendOk = false;
           Asm->EmitFile(i, FullPath.toString());
           Asm->EOL();
         }
