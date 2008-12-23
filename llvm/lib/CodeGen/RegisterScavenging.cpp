@@ -139,6 +139,7 @@ void RegScavenger::restoreScavengedReg() {
   ScavengedRC = NULL;
 }
 
+#ifndef NDEBUG
 /// isLiveInButUnusedBefore - Return true if register is livein the MBB not
 /// not used before it reaches the MI that defines register.
 static bool isLiveInButUnusedBefore(unsigned Reg, MachineInstr *MI,
@@ -172,6 +173,7 @@ static bool isLiveInButUnusedBefore(unsigned Reg, MachineInstr *MI,
       return false;
   return true;
 }
+#endif
 
 void RegScavenger::forward() {
   // Move ptr forward.

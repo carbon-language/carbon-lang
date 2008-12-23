@@ -122,7 +122,9 @@ int RegAllocSimple::getStackSpaceFor(unsigned VirtReg,
 unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
   const TargetRegisterClass* RC = MF->getRegInfo().getRegClass(virtualReg);
   TargetRegisterClass::iterator RI = RC->allocation_order_begin(*MF);
+#ifndef NDEBUG
   TargetRegisterClass::iterator RE = RC->allocation_order_end(*MF);
+#endif
 
   while (1) {
     unsigned regIdx = RegClassIdx[RC]++;
