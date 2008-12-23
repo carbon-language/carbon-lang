@@ -1627,10 +1627,17 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // The common base is emitted in the loop preheader. But since we
         // are reusing an IV, it has not been used to initialize the PHI node.
         // Add it to the expression used to rewrite the uses.
+        // When this use is outside the loop, we earlier subtracted the
+        // common base, and are adding it back here.  Use the same expression
+        // as before, rather than CommonBaseV, so DAGCombiner will zap it.
         if (!isa<ConstantInt>(CommonBaseV) ||
-            !cast<ConstantInt>(CommonBaseV)->isZero())
-          RewriteExpr = SE->getAddExpr(RewriteExpr,
+            !cast<ConstantInt>(CommonBaseV)->isZero()) {
+          if (L->contains(User.Inst->getParent()))
+            RewriteExpr = SE->getAddExpr(RewriteExpr,
                                        SE->getUnknown(CommonBaseV));
+          else
+            RewriteExpr = SE->getAddExpr(RewriteExpr, CommonExprs);
+        }
       }
 
       // Now that we know what we need to do, insert code before User for the
