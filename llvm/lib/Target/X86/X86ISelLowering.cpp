@@ -1988,7 +1988,7 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
     }
 
     switch (SetCCOpcode) {
-    default: break;
+    default: assert(0 && "Invalid integer condition!");
     case ISD::SETEQ:  X86CC = X86::COND_E;  break;
     case ISD::SETGT:  X86CC = X86::COND_G;  break;
     case ISD::SETGE:  X86CC = X86::COND_GE; break;
@@ -2000,72 +2000,55 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
     case ISD::SETULE: X86CC = X86::COND_BE; break;
     case ISD::SETUGE: X86CC = X86::COND_AE; break;
     }
-  } else {
-    // First determine if it is required or is profitable to flip the operands.
+    return true;
+  }
+  
+  // First determine if it is required or is profitable to flip the operands.
 
-    // If LHS is a foldable load, but RHS is not, flip the condition.
-    if ((ISD::isNON_EXTLoad(LHS.getNode()) && LHS.hasOneUse()) &&
-        !(ISD::isNON_EXTLoad(RHS.getNode()) && RHS.hasOneUse())) {
-      SetCCOpcode = getSetCCSwappedOperands(SetCCOpcode);
-      std::swap(LHS, RHS);
-    }
-
-    switch (SetCCOpcode) {
-    default: break;
-    case ISD::SETOLT:
-    case ISD::SETOLE:
-    case ISD::SETUGT:
-    case ISD::SETUGE:
-      std::swap(LHS, RHS);
-      break;
-    }
-
-    // On a floating point condition, the flags are set as follows:
-    // ZF  PF  CF   op
-    //  0 | 0 | 0 | X > Y
-    //  0 | 0 | 1 | X < Y
-    //  1 | 0 | 0 | X == Y
-    //  1 | 1 | 1 | unordered
-    switch (SetCCOpcode) {
-    default: break;
-    case ISD::SETUEQ:
-    case ISD::SETEQ:
-      X86CC = X86::COND_E;
-      break;
-    case ISD::SETOLT:              // flipped
-    case ISD::SETOGT:
-    case ISD::SETGT:
-      X86CC = X86::COND_A;
-      break;
-    case ISD::SETOLE:              // flipped
-    case ISD::SETOGE:
-    case ISD::SETGE:
-      X86CC = X86::COND_AE;
-      break;
-    case ISD::SETUGT:              // flipped
-    case ISD::SETULT:
-    case ISD::SETLT:
-      X86CC = X86::COND_B;
-      break;
-    case ISD::SETUGE:              // flipped
-    case ISD::SETULE:
-    case ISD::SETLE:
-      X86CC = X86::COND_BE;
-      break;
-    case ISD::SETONE:
-    case ISD::SETNE:
-      X86CC = X86::COND_NE;
-      break;
-    case ISD::SETUO:
-      X86CC = X86::COND_P;
-      break;
-    case ISD::SETO:
-      X86CC = X86::COND_NP;
-      break;
-    }
+  // If LHS is a foldable load, but RHS is not, flip the condition.
+  if ((ISD::isNON_EXTLoad(LHS.getNode()) && LHS.hasOneUse()) &&
+      !(ISD::isNON_EXTLoad(RHS.getNode()) && RHS.hasOneUse())) {
+    SetCCOpcode = getSetCCSwappedOperands(SetCCOpcode);
+    std::swap(LHS, RHS);
   }
 
-  return X86CC != X86::COND_INVALID;
+  switch (SetCCOpcode) {
+  default: break;
+  case ISD::SETOLT:
+  case ISD::SETOLE:
+  case ISD::SETUGT:
+  case ISD::SETUGE:
+    std::swap(LHS, RHS);
+    break;
+  }
+
+  // On a floating point condition, the flags are set as follows:
+  // ZF  PF  CF   op
+  //  0 | 0 | 0 | X > Y
+  //  0 | 0 | 1 | X < Y
+  //  1 | 0 | 0 | X == Y
+  //  1 | 1 | 1 | unordered
+  switch (SetCCOpcode) {
+  default: return false;
+  case ISD::SETUEQ:
+  case ISD::SETEQ:   X86CC = X86::COND_E; return true;
+  case ISD::SETOLT:              // flipped
+  case ISD::SETOGT:
+  case ISD::SETGT:   X86CC = X86::COND_A; return true;
+  case ISD::SETOLE:              // flipped
+  case ISD::SETOGE:
+  case ISD::SETGE:   X86CC = X86::COND_AE; return true;
+  case ISD::SETUGT:              // flipped
+  case ISD::SETULT:
+  case ISD::SETLT:   X86CC = X86::COND_B;  return true;
+  case ISD::SETUGE:              // flipped
+  case ISD::SETULE:
+  case ISD::SETLE:   X86CC = X86::COND_BE; return true;
+  case ISD::SETONE:
+  case ISD::SETNE:   X86CC = X86::COND_NE; return true;
+  case ISD::SETUO:   X86CC = X86::COND_P;  return true;
+  case ISD::SETO:    X86CC = X86::COND_NP; return true;
+  }
 }
 
 /// hasFPCMov - is there a floating point cmov for the specific X86 condition
