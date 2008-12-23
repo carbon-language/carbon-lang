@@ -200,6 +200,15 @@ public:
       return true;
   }
 
+  /// declarationReplaces - Determine whether this declaration, if
+  /// known to be well-formed within its context, will replace the
+  /// declaration OldD if introduced into scope. A declaration will
+  /// replace another declaration if, for example, it is a
+  /// redeclaration of the same variable or function, but not if it is
+  /// a declaration of a different kind (function vs. class) or an
+  /// overloaded function.
+  bool declarationReplaces(NamedDecl *OldD) const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= ScopedFirst && D->getKind() <= ScopedLast;

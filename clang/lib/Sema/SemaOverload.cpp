@@ -2160,10 +2160,10 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   //        of type T2 or “reference to (possibly cv-qualified) T2”,
   //        when T2 is an enumeration type, are candidate functions.
   {
-    NamedDecl *NonMemberOps = 0;
-    for (IdentifierResolver::iterator I 
-           = IdResolver.begin(OpName, CurContext, true/*LookInParentCtx*/);
-         I != IdResolver.end(); ++I) {
+    IdentifierResolver::iterator
+      I = IdResolver.begin(OpName, CurContext, true/*LookInParentCtx*/),
+      IEnd = IdResolver.end();
+    for (; I != IEnd; ++I) {
       // We don't need to check the identifier namespace, because
       // operator names can only be ordinary identifiers.
 
@@ -2174,22 +2174,20 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
       } 
 
       // We found something with this name. We're done.
-      NonMemberOps = *I;
       break;
     }
 
-    if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(NonMemberOps)) {
-      if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
-        AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
-                             /*SuppressUserConversions=*/false);
-    } else if (OverloadedFunctionDecl *Ovl
-                 = dyn_cast_or_null<OverloadedFunctionDecl>(NonMemberOps)) {
-      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                                  FEnd = Ovl->function_end();
-           F != FEnd; ++F) {
-        if (IsAcceptableNonMemberOperatorCandidate(*F, T1, T2, Context)) 
-          AddOverloadCandidate(*F, Args, NumArgs, CandidateSet, 
-                               /*SuppressUserConversions=*/false);
+    if (I != IEnd && isa<ScopedDecl>(*I)) {
+      ScopedDecl *FirstDecl = cast<ScopedDecl>(*I);
+      for (; I != IEnd; ++I) {
+        ScopedDecl *SD = cast<ScopedDecl>(*I);
+        if (FirstDecl->getDeclContext() != SD->getDeclContext())
+          break;
+
+        if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*I))
+          if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
+            AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
+                                 /*SuppressUserConversions=*/false);
       }
     }
   }

@@ -17,6 +17,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
+#include <algorithm>
+#include <functional>
 #include <vector>
 using namespace clang;
 
@@ -543,19 +545,6 @@ void DeclContext::insert(ASTContext &Context, ScopedDecl *D) {
     insertImpl(D);
 }
 
-static bool isRedeclarationOf(ScopedDecl *D, ScopedDecl *OldD) {
-  assert(D->getDeclName() == OldD->getDeclName() && "Declaration name mismatch");
-
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    // For function declarations, we keep track of redeclarations.
-    return FD->getPreviousDeclaration() == OldD;
-
-  // For non-function declarations, if the declarations are of the
-  // same kind then this must be a redeclaration, or semantic analysis
-  // would not have given us the new declaration.
-  return D->getKind() == OldD->getKind();
-}
-
 void DeclContext::insertImpl(ScopedDecl *D) {
   bool MayBeRedeclaration = true;
 
@@ -591,7 +580,7 @@ void DeclContext::insertImpl(ScopedDecl *D) {
         if (Array[LastMatch]->getDeclName() != D->getDeclName())
           break;
 
-        if (isRedeclarationOf(D, Array[LastMatch])) {
+        if (D->declarationReplaces(Array[LastMatch])) {
           // D is a redeclaration of an existing element in the
           // array. Replace that element with D.
           Array[LastMatch] = D;
@@ -640,15 +629,13 @@ void DeclContext::insertImpl(ScopedDecl *D) {
   if (Pos != Map->end()) {
     if (MayBeRedeclaration) {
       // Determine if this declaration is actually a redeclaration.
-      for (std::vector<ScopedDecl *>::iterator I = Pos->second.begin(),
-                                            IEnd = Pos->second.end();
-           I != IEnd; ++I) {
-        if (isRedeclarationOf(D, *I)) {
-          // D is a redeclaration of *I. Replace *I with D and we're
-          // done.
-          *I = D;
-          return;
-        }
+      std::vector<ScopedDecl *>::iterator Redecl
+        = std::find_if(Pos->second.begin(), Pos->second.end(),
+                     std::bind1st(std::mem_fun(&ScopedDecl::declarationReplaces),
+                                  D));
+      if (Redecl != Pos->second.end()) {
+        *Redecl = D;
+        return;
       }
     }
 

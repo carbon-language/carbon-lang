@@ -515,26 +515,15 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   DeclContext *GlobalCtx = Context.getTranslationUnitDecl();
 
   // Check if this function is already declared.
-  IdentifierResolver::iterator I = IdResolver.begin(Name, GlobalCtx,
-                                                    /*CheckParent=*/false);
-
-  if (I != IdResolver.end()) {
-    NamedDecl *Decl = *I;
-    if (FunctionDecl *Fn = dyn_cast<FunctionDecl>(Decl)) {
-      // The return type fits. This is checked when the function is declared.
-      if (Fn->getNumParams() == 1 &&
-          Context.getCanonicalType(Fn->getParamDecl(0)->getType()) == Argument)
+  {
+    DeclContext::decl_iterator Alloc, AllocEnd;
+    for (llvm::tie(Alloc, AllocEnd) = GlobalCtx->lookup(Context, Name);
+         Alloc != AllocEnd; ++Alloc) {
+      // FIXME: Do we need to check for default arguments here?
+      FunctionDecl *Func = cast<FunctionDecl>(*Alloc);
+      if (Func->getNumParams() == 1 &&
+          Context.getCanonicalType(Func->getParamDecl(0)->getType()) == Argument)
         return;
-    } else if(OverloadedFunctionDecl *Ovl =
-                  dyn_cast<OverloadedFunctionDecl>(Decl)) {
-      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                                     FEnd = Ovl->function_end();
-               F != FEnd; ++F) {
-        if ((*F)->getNumParams() == 1 &&
-            Context.getCanonicalType((*F)->getParamDecl(0)->getType())
-                == Argument)
-          return;
-      }
     }
   }
 
@@ -548,6 +537,9 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
                                            0, Argument, VarDecl::None, 0, 0);
   Alloc->setParams(&Param, 1);
 
+  // FIXME: Also add this declaration to the IdentifierResolver, but
+  // make sure it is at the end of the chain to coincide with the
+  // global scope.
   ((DeclContext *)TUScope->getEntity())->addDecl(Context, Alloc);
 }
 

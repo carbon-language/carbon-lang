@@ -26,6 +26,8 @@
 #include "clang/Lex/HeaderSearch.h" 
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include <algorithm>
+#include <functional>
 
 using namespace clang;
 
@@ -93,6 +95,12 @@ void Sema::PopDeclContext() {
 void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
   S->AddDecl(D);
 
+  // Add scoped declarations into their context, so that they can be
+  // found later. Declarations without a context won't be inserted
+  // into any context.
+  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
+    CurContext->addDecl(Context, SD);
+
   // C++ [basic.scope]p4:
   //   -- exactly one declaration shall declare a class name or
   //   enumeration name that is not a typedef name and the other
@@ -105,73 +113,55 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
       // We're pushing the tag into the current context, which might
       // require some reshuffling in the identifier resolver.
       IdentifierResolver::iterator
-        I = IdResolver.begin(TD->getIdentifier(), CurContext, 
-                             false/*LookInParentCtx*/);
-      if (I != IdResolver.end()) {
-       // There is already a declaration with the same name in the same
-       // scope. It must be found before we find the new declaration,
-       // so swap the order on the shadowed declaration chain.
-       IdResolver.AddShadowedDecl(TD, *I);
+        I = IdResolver.begin(TD->getDeclName(), CurContext, 
+                             false/*LookInParentCtx*/),
+        IEnd = IdResolver.end();
+      if (I != IEnd && isDeclInScope(*I, CurContext, S)) {
+        NamedDecl *PrevDecl = *I;
+        for (; I != IEnd && isDeclInScope(*I, CurContext, S); 
+             PrevDecl = *I, ++I) {
+          if (TD->declarationReplaces(*I)) {
+            // This is a redeclaration. Remove it from the chain and
+            // break out, so that we'll add in the shadowed
+            // declaration.
+            S->RemoveDecl(*I);
+            if (PrevDecl == *I) {
+              IdResolver.RemoveDecl(*I);
+              IdResolver.AddDecl(TD);
+              return;
+            } else {
+              IdResolver.RemoveDecl(*I);
+              break;
+            }
+          }
+        }
 
-       // Add this declaration to the current context.
-       CurContext->addDecl(Context, TD);
-       
-       return;
+        // There is already a declaration with the same name in the same
+        // scope, which is not a tag declaration. It must be found
+        // before we find the new declaration, so insert the new
+        // declaration at the end of the chain.
+        IdResolver.AddShadowedDecl(TD, PrevDecl);
+        
+        return;
       }
     }
   } else if (getLangOptions().CPlusPlus && isa<FunctionDecl>(D)) {
     // We are pushing the name of a function, which might be an
     // overloaded name.
     FunctionDecl *FD = cast<FunctionDecl>(D);
-    if (CurContext == FD->getDeclContext()) {
-      IdentifierResolver::iterator
-        I = IdResolver.begin(FD->getDeclName(), CurContext, 
-                             false/*LookInParentCtx*/);
-      if (I != IdResolver.end() &&
-          (isa<OverloadedFunctionDecl>(*I) || isa<FunctionDecl>(*I))) {
-        // There is already a declaration with the same name in
-        // the same scope. It must be a function or an overloaded
-        // function.
-        OverloadedFunctionDecl* Ovl = dyn_cast<OverloadedFunctionDecl>(*I);
-        if (!Ovl) {
-          // We haven't yet overloaded this function. Take the existing
-          // FunctionDecl and put it into an OverloadedFunctionDecl.
-          Ovl = OverloadedFunctionDecl::Create(Context, 
-                                               FD->getDeclContext(),
-                                               FD->getDeclName());
-          Ovl->addOverload(cast<FunctionDecl>(*I));
-          
-          IdResolver.RemoveDecl(*I);
-          S->RemoveDecl(*I);
-        
-          // Add the name binding for the OverloadedFunctionDecl.
-          IdResolver.AddDecl(Ovl);
-          
-          S->AddDecl(Ovl);
-        }
-
-        // We added this function declaration to the scope earlier, but
-        // we don't want it there because it is part of the overloaded
-        // function declaration.
-        S->RemoveDecl(FD);
-        
-        // We have an OverloadedFunctionDecl. Add the new FunctionDecl
-        // to its list of overloads.
-        Ovl->addOverload(FD);
-        
-        // Add this new function declaration to the declaration context.
-        CurContext->addDecl(Context, FD);
-        
-        return;      
-      }
+    IdentifierResolver::iterator Redecl
+      = std::find_if(IdResolver.begin(FD->getDeclName(), CurContext, 
+                                      false/*LookInParentCtx*/),
+                     IdResolver.end(),
+                     std::bind1st(std::mem_fun(&ScopedDecl::declarationReplaces),
+                                  FD));
+    if (Redecl != IdResolver.end()) {
+      // There is already a declaration of a function on our
+      // IdResolver chain. Replace it with this declaration.
+      S->RemoveDecl(*Redecl);
+      IdResolver.RemoveDecl(*Redecl);
     }
   }
-
-  // Add scoped declarations into their context, so that they can be
-  // found later. Declarations without a context won't be inserted
-  // into any context.
-  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
-    CurContext->addDecl(Context, SD);
 
   IdResolver.AddDecl(D);
 }
@@ -217,10 +207,10 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
 /// probably be able to return multiple results, to deal with cases of
 /// ambiguity and overloaded functions without needing to create a
 /// Decl node.
+template<typename DeclIterator>
 static Decl *
-MaybeConstructOverloadSet(ASTContext &Context, const DeclContext *DC,
-                          DeclContext::lookup_const_iterator I,
-                          DeclContext::lookup_const_iterator IEnd) {
+MaybeConstructOverloadSet(ASTContext &Context, 
+                          DeclIterator I, DeclIterator IEnd) {
   assert(I != IEnd && "Iterator range cannot be empty");
   assert(!isa<OverloadedFunctionDecl>(*I) && 
          "Cannot have an overloaded function");
@@ -228,7 +218,7 @@ MaybeConstructOverloadSet(ASTContext &Context, const DeclContext *DC,
   if (isa<FunctionDecl>(*I)) {
     // If we found a function, there might be more functions. If
     // so, collect them into an overload set.
-    DeclContext::lookup_const_iterator Last = I;
+    DeclIterator Last = I;
     OverloadedFunctionDecl *Ovl = 0;
     for (++Last; Last != IEnd && isa<FunctionDecl>(*Last); ++Last) {
       if (!Ovl) {
@@ -236,7 +226,7 @@ MaybeConstructOverloadSet(ASTContext &Context, const DeclContext *DC,
         // stop building the declarations for these overload sets, so
         // there will be nothing to leak.
         Ovl = OverloadedFunctionDecl::Create(Context, 
-                                             const_cast<DeclContext *>(DC), 
+                                         cast<ScopedDecl>(*I)->getDeclContext(),
                                              (*I)->getDeclName());
         Ovl->addOverload(cast<FunctionDecl>(*I));
       }
@@ -285,7 +275,7 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
     DeclContext::lookup_const_iterator I, E;
     for (llvm::tie(I, E) = LookupCtx->lookup(Context, Name); I != E; ++I)
       if ((*I)->getIdentifierNamespace() & NS)
-        return MaybeConstructOverloadSet(Context, LookupCtx, I, E);
+        return MaybeConstructOverloadSet(Context, I, E);
   } else {
     // Name lookup for ordinary names and tag names in C++ requires
     // looking into scopes that aren't strictly lexical, and
@@ -297,9 +287,21 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
     for (; S; S = S->getParent()) {
       // Check whether the IdResolver has anything in this scope.
       // FIXME: The isDeclScope check could be expensive. Can we do better?
-      for (; I != IEnd && S->isDeclScope(*I); ++I)
-        if ((*I)->getIdentifierNamespace() & NS)
-          return *I;
+      for (; I != IEnd && S->isDeclScope(*I); ++I) {
+        if ((*I)->getIdentifierNamespace() & NS) {
+          // We found something. Look for anything else in our scope
+          // with this same name and in an acceptable identifier
+          // namespace, so that we can construct an overload set if we
+          // need to.
+          IdentifierResolver::iterator LastI = I;
+          for (++LastI; LastI != IEnd; ++LastI) {
+            if (((*LastI)->getIdentifierNamespace() & NS) == 0 ||
+                !S->isDeclScope(*LastI))
+              break;
+          }
+          return MaybeConstructOverloadSet(Context, I, LastI);
+        }
+      }
       
       // If there is an entity associated with this scope, it's a
       // DeclContext. We might need to perform qualified lookup into
@@ -313,7 +315,7 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
         for (llvm::tie(I, E) = Ctx->lookup(Context, Name); I != E; ++I) {
           // FIXME: Cache this result in the IdResolver
           if ((*I)->getIdentifierNamespace() & NS)
-            return MaybeConstructOverloadSet(Context, LookupCtx, I, E);
+            return MaybeConstructOverloadSet(Context, I, E);
         }
         
         Ctx = Ctx->getParent();
@@ -652,6 +654,8 @@ void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
   bool VDIsTentative = isTentativeDefinition(VD);
   bool VDIsIncompleteArray = VD->getType()->isIncompleteArrayType();
   
+  // FIXME: I don't this will actually see all of the
+  // redefinitions. Can't we check this property on-the-fly?
   for (IdentifierResolver::iterator
        I = IdResolver.begin(VD->getIdentifier(), 
                             VD->getDeclContext(), false/*LookInParentCtx*/), 
@@ -1132,7 +1136,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
       assert(DC->isCXXRecord() &&
              "Constructors can only be declared in a member context");
 
-      bool isInvalidDecl = CheckConstructorDeclarator(D, R, SC);
+      InvalidDecl = InvalidDecl || CheckConstructorDeclarator(D, R, SC);
 
       // Create the new declaration
       NewFD = CXXConstructorDecl::Create(Context, 
@@ -1141,12 +1145,12 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
                                          isExplicit, isInline,
                                          /*isImplicitlyDeclared=*/false);
 
-      if (isInvalidDecl)
+      if (InvalidDecl)
         NewFD->setInvalidDecl();
     } else if (D.getKind() == Declarator::DK_Destructor) {
       // This is a C++ destructor declaration.
       if (DC->isCXXRecord()) {
-        bool isInvalidDecl = CheckDestructorDeclarator(D, R, SC);
+        InvalidDecl = InvalidDecl || CheckDestructorDeclarator(D, R, SC);
 
         NewFD = CXXDestructorDecl::Create(Context,
                                           cast<CXXRecordDecl>(DC),
@@ -1154,16 +1158,18 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
                                           isInline,
                                           /*isImplicitlyDeclared=*/false);
 
-        if (isInvalidDecl)
+        if (InvalidDecl)
           NewFD->setInvalidDecl();
       } else {
         Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
+
         // Create a FunctionDecl to satisfy the function definition parsing
         // code path.
         NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
                                      Name, R, SC, isInline, LastDeclarator,
                                      // FIXME: Move to DeclGroup...
                                    D.getDeclSpec().getSourceRange().getBegin());
+        InvalidDecl = true;
         NewFD->setInvalidDecl();
       }
     } else if (D.getKind() == Declarator::DK_Conversion) {
@@ -1172,14 +1178,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
              diag::err_conv_function_not_member);
         return 0;
       } else {
-        bool isInvalidDecl = CheckConversionDeclarator(D, R, SC);
+        InvalidDecl = InvalidDecl || CheckConversionDeclarator(D, R, SC);
 
         NewFD = CXXConversionDecl::Create(Context, 
                                           cast<CXXRecordDecl>(DC),
                                           D.getIdentifierLoc(), Name, R,
                                           isInline, isExplicit);
         
-        if (isInvalidDecl)
+        if (InvalidDecl)
           NewFD->setInvalidDecl();
       }
     } else if (DC->isCXXRecord()) {
@@ -1316,48 +1322,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
         if (Redeclaration) {
           NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
 
-          if (OldDecl == PrevDecl) {
-            // Remove the name binding for the previous
-            // declaration.
-           if (S->isDeclScope(PrevDecl)) {
-             IdResolver.RemoveDecl(cast<NamedDecl>(PrevDecl));
-             S->RemoveDecl(PrevDecl);
-           }
-
-           // Introduce the new binding for this declaration.
-           IdResolver.AddDecl(NewFD);
-           if (getLangOptions().CPlusPlus && NewFD->getParent())
-             NewFD->getParent()->insert(Context, NewFD);
-
-           // Add the redeclaration to the current scope, since we'll
-           // be skipping PushOnScopeChains.
-           S->AddDecl(NewFD);
-          } else {
-            // We need to update the OverloadedFunctionDecl with the
-            // latest declaration of this function, so that name
-            // lookup will always refer to the latest declaration of
-            // this function.
-            *MatchedDecl = NewFD;
-         }
-           
-          if (getLangOptions().CPlusPlus) {
-            // Add this declaration to the current context.
-            CurContext->addDecl(Context, NewFD, false);
-
-            // Check default arguments now that we have merged decls.
-            CheckCXXDefaultArguments(NewFD);
-
-            // An out-of-line member function declaration must also be a
-            // definition (C++ [dcl.meaning]p1).
-            if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
-                !InvalidDecl) {
-              Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
-                << D.getCXXScopeSpec().getRange();
-              NewFD->setInvalidDecl();
-            }
+          // An out-of-line member function declaration must also be a
+          // definition (C++ [dcl.meaning]p1).
+          if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
+              !InvalidDecl) {
+            Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
+              << D.getCXXScopeSpec().getRange();
+            NewFD->setInvalidDecl();
           }
-
-         return NewFD;
         }
       }
 
@@ -1417,7 +1389,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
 
       // An out-of-line member function declaration must also be a
       // definition (C++ [dcl.meaning]p1).
-      if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet()) {
+      if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() && !InvalidDecl) {
         Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
           << D.getCXXScopeSpec().getRange();
         InvalidDecl = true;

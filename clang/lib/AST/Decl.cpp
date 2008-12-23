@@ -174,6 +174,19 @@ ScopedDecl::~ScopedDecl() {
     delete getMultipleDC();
 }
 
+bool ScopedDecl::declarationReplaces(NamedDecl *OldD) const {
+  assert(getDeclName() == OldD->getDeclName() && "Declaration name mismatch");
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this))
+    // For function declarations, we keep track of redeclarations.
+    return FD->getPreviousDeclaration() == OldD;
+
+  // For non-function declarations, if the declarations are of the
+  // same kind then this must be a redeclaration, or semantic analysis
+  // would not have given us the new declaration.
+  return this->getKind() == OldD->getKind();
+}
+
 //===----------------------------------------------------------------------===//
 // VarDecl Implementation
 //===----------------------------------------------------------------------===//

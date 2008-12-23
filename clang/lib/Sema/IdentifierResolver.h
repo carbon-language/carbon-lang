@@ -128,6 +128,13 @@ public:
   /// It will walk or not the parent declaration contexts depending on how
   /// it was instantiated.
   class iterator {
+  public:
+    typedef NamedDecl *             value_type;
+    typedef NamedDecl *             reference;
+    typedef NamedDecl *             pointer;
+    typedef std::input_iterator_tag iterator_category;
+    typedef std::ptrdiff_t          difference_type;
+
     /// Ptr - There are 3 forms that 'Ptr' represents:
     /// 1) A single NamedDecl. (Ptr & 0x1 == 0)
     /// 2) A IdDeclInfo::DeclsTy::iterator that traverses only the decls of the
