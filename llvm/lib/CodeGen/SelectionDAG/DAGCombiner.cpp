@@ -1184,6 +1184,12 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
       N0.getOperand(1).getOperand(0) == N1)
     return DAG.getNode(ISD::SUB, VT, N0.getOperand(0), 
                                      N0.getOperand(1).getOperand(1));
+  // fold ((A-(B-C))-C) -> A-B
+  if (N0.getOpcode() == ISD::SUB &&
+      N0.getOperand(1).getOpcode() == ISD::SUB &&
+      N0.getOperand(1).getOperand(1) == N1)
+    return DAG.getNode(ISD::SUB, VT, N0.getOperand(0), 
+                                     N0.getOperand(1).getOperand(0));
   // fold (sub x, (select cc, 0, c)) -> (select cc, x, (sub, x, c))
   if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
     SDValue Result = combineSelectAndUse(N, N1, N0, DAG, TLI, LegalOperations);
