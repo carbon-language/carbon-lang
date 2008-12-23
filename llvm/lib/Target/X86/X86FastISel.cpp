@@ -1220,6 +1220,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       bool Emitted = X86FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
                                        Arg, ArgVT, Arg);
       assert(Emitted && "Failed to emit a sext!"); Emitted=Emitted;
+      Emitted = true;
       ArgVT = VA.getLocVT();
       break;
     }
@@ -1227,6 +1228,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       bool Emitted = X86FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
                                        Arg, ArgVT, Arg);
       assert(Emitted && "Failed to emit a zext!"); Emitted=Emitted;
+      Emitted = true;
       ArgVT = VA.getLocVT();
       break;
     }
@@ -1251,6 +1253,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), VA.getLocReg(),
                                       Arg, RC, RC);
       assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
+      Emitted = true;
       RegArgs.push_back(VA.getLocReg());
     } else {
       unsigned LocMemOffset = VA.getLocMemOffset();
@@ -1278,6 +1281,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     unsigned Base = getInstrInfo()->getGlobalBaseReg(&MF);
     bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), X86::EBX, Base, RC, RC);
     assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
+    Emitted = true;
   }
 
   // Issue the call.
@@ -1329,6 +1333,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
                                     RVLocs[0].getLocReg(), DstRC, SrcRC);
     assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
+    Emitted = true;
     if (CopyVT != RVLocs[0].getValVT()) {
       // Round the F80 the right size, which also moves to the appropriate xmm
       // register. This is accomplished by storing the F80 value in memory and

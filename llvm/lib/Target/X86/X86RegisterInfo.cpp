@@ -349,6 +349,7 @@ X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
     else {
       unsigned Align = MF.getFrameInfo()->getObjectAlignment(FI);
       assert( (-(Offset + StackSize)) % Align == 0);
+      Align = 0;
       return Offset + StackSize;
     }
 
@@ -501,6 +502,7 @@ X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF) const{
                                                        TailCallReturnAddrDelta);
     assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
            "Slot for EBP register must be last in order to be found!");
+    FrameIdx = 0;
   }
 }
 
