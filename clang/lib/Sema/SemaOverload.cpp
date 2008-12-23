@@ -135,7 +135,7 @@ bool StandardConversionSequence::isPointerConversionToBool() const
   // check for their presence as well as checking whether FromType is
   // a pointer.
   if (ToType->isBooleanType() &&
-      (FromType->isPointerType() ||
+      (FromType->isPointerType() || FromType->isBlockPointerType() ||
        First == ICK_Array_To_Pointer || First == ICK_Function_To_Pointer))
     return true;
 
@@ -547,7 +547,8 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   else if (ToType->isBooleanType() &&
            (FromType->isArithmeticType() ||
             FromType->isEnumeralType() ||
-            FromType->isPointerType())) {
+            FromType->isPointerType() ||
+            FromType->isBlockPointerType())) {
     SCS.Second = ICK_Boolean_Conversion;
     FromType = Context.BoolTy;
   } else {
@@ -857,17 +858,25 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     return true;
   }
 
+  // Beyond this point, both types need to be pointers or block pointers.
+  QualType ToPointeeType;
   const PointerType* ToTypePtr = ToType->getAsPointerType();
-  if (!ToTypePtr)
+  if (ToTypePtr)
+    ToPointeeType = ToTypePtr->getPointeeType();
+  else if (const BlockPointerType *ToBlockPtr = ToType->getAsBlockPointerType())
+    ToPointeeType = ToBlockPtr->getPointeeType();
+  else
     return false;
 
-  // Beyond this point, both types need to be pointers.
+  QualType FromPointeeType;
   const PointerType *FromTypePtr = FromType->getAsPointerType();
-  if (!FromTypePtr)
+  if (FromTypePtr)
+    FromPointeeType = FromTypePtr->getPointeeType();
+  else if (const BlockPointerType *FromBlockPtr 
+             = FromType->getAsBlockPointerType())
+    FromPointeeType = FromBlockPtr->getPointeeType();
+  else
     return false;
-
-  QualType FromPointeeType = FromTypePtr->getPointeeType();
-  QualType ToPointeeType = ToTypePtr->getPointeeType();
 
   // Objective C++: We're able to convert from a pointer to an
   // interface to a pointer to a different interface.
@@ -875,7 +884,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
   const ObjCInterfaceType* ToIface = ToPointeeType->getAsObjCInterfaceType();
   if (FromIface && ToIface && 
       Context.canAssignObjCInterfaces(ToIface, FromIface)) {
-    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr,
                                                        ToPointeeType,
                                                        ToType, Context);
     return true;
@@ -887,7 +896,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     // interfaces, which is permitted. However, we're going to
     // complain about it.
     IncompatibleObjC = true;
-    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr,
                                                        ToPointeeType,
                                                        ToType, Context);
     return true;
@@ -924,7 +933,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     return true;
   }
 
-  // If we have pointers to functions, check whether the only
+  // If we have pointers to functions or blocks, check whether the only
   // differences in the argument and result types are in Objective-C
   // pointer conversions. If so, we permit the conversion (but
   // complain about it).

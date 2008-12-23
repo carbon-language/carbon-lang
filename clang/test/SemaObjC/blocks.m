@@ -20,3 +20,7 @@ void bar4(id(^)());
 void foo4(id (^objectCreationBlock)(int)) {
     return bar4(objectCreationBlock); // expected-warning{{incompatible block pointer types passing 'id (^)(int)', expected 'id (^)()'}}
 }
+
+void foo5(id (^x)(int)) {
+  if (x) { }
+}
