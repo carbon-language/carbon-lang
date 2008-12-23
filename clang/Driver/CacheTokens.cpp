@@ -159,23 +159,43 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
   typedef std::vector<std::pair<Offset, unsigned> > PPCondTable;
   PPCondTable PPCond;
   std::vector<unsigned> PPStartCond;
+  bool ParsingPreprocessorDirective = false;
 
   Token Tok;
   
   do {
     L.LexFromRawLexer(Tok);
     
+    if ((Tok.isAtStartOfLine() || Tok.is(tok::eof)) &&
+        ParsingPreprocessorDirective) {
+      // Insert an eom token into the token cache.  It has the same
+      // position as the next token that is not on the same line as the
+      // preprocessor directive.  Observe that we continue processing
+      // 'Tok' when we exit this branch.
+      Token Tmp = Tok;
+      Tmp.setKind(tok::eom);
+      Tmp.clearFlag(Token::StartOfLine);
+      Tmp.setIdentifierInfo(0);
+      EmitToken(Out, Tmp, SMgr, idcount, IM);
+      ParsingPreprocessorDirective = false;
+    }
+    
     if (Tok.is(tok::identifier)) {
       Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+      continue;
     }
-    else if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
+
+    if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
       // Special processing for #include.  Store the '#' token and lex
       // the next token.
+      assert(!ParsingPreprocessorDirective);
       Offset HashOff = (Offset) Out.tell();
       EmitToken(Out, Tok, SMgr, idcount, IM);
 
       // Get the next token.
       L.LexFromRawLexer(Tok);
+            
+      assert(!Tok.isAtStartOfLine());
       
       // Did we see 'include'/'import'/'include_next'?
       if (!Tok.is(tok::identifier))
@@ -185,27 +205,37 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
       Tok.setIdentifierInfo(II);
       tok::PPKeywordKind K = II->getPPKeywordID();
       
-      if (K == tok::pp_include || K == tok::pp_import || 
-          K == tok::pp_include_next) {
-        
+      assert(K != tok::pp_not_keyword);
+      ParsingPreprocessorDirective = true;
+      
+      switch (K) {
+      default:
+        break;
+      case tok::pp_include:
+      case tok::pp_import:
+      case tok::pp_include_next: {        
         // Save the 'include' token.
         EmitToken(Out, Tok, SMgr, idcount, IM);
-        
         // Lex the next token as an include string.
         L.setParsingPreprocessorDirective(true);
         L.LexIncludeFilename(Tok); 
         L.setParsingPreprocessorDirective(false);
-        
+        assert(!Tok.isAtStartOfLine());
         if (Tok.is(tok::identifier))
           Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+        
+        break;
       }
-      else if (K == tok::pp_if || K == tok::pp_ifdef || K == tok::pp_ifndef) {
+      case tok::pp_if:
+      case tok::pp_ifdef:
+      case tok::pp_ifndef: {
         // Ad an entry for '#if' and friends.  We initially set the target index
         // to 0.  This will get backpatched when we hit #endif.
         PPStartCond.push_back(PPCond.size());
         PPCond.push_back(std::make_pair(HashOff, 0U));
+        break;
       }
-      else if (K == tok::pp_endif) {
+      case tok::pp_endif: {
         // Add an entry for '#endif'.  We set the target table index to itself.
         // This will later be set to zero when emitting to the PTH file.  We
         // use 0 for uninitialized indices because that is easier to debug.
@@ -218,9 +248,11 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
         PPStartCond.pop_back();        
         // Add the new entry to PPCond.      
         PPCond.push_back(std::make_pair(HashOff, index));
+        break;
       }
-      else if (K == tok::pp_elif || K == tok::pp_else) {
-        // Add an entry for '#elif' or '#else.
+      case tok::pp_elif:
+      case tok::pp_else: {
+        // Add an entry for #elif or #else.
         // This serves as both a closing and opening of a conditional block.
         // This means that its entry will get backpatched later.
         unsigned index = PPCond.size();
@@ -233,6 +265,8 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
         // Now add '#elif' as a new block opening.
         PPCond.push_back(std::make_pair(HashOff, 0U));
         PPStartCond.push_back(index);
+        break;
+      }
       }
     }    
   }

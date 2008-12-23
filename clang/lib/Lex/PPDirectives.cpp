@@ -339,6 +339,13 @@ void Preprocessor::PTHSkipExcludedConditionalBlock() {
       // If the #if block wasn't entered then enter the #else block now.
       if (!CondInfo.FoundNonSkip) {
         CondInfo.FoundNonSkip = true;
+        
+        // Consume the eom token.
+        CurPTHLexer->ParsingPreprocessorDirective = true;
+        LexUnexpandedToken(Tok);
+        assert(Tok.is(tok::eom));
+        CurPTHLexer->ParsingPreprocessorDirective = false;
+        
         break;
       }
       

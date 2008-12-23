@@ -28,129 +28,6 @@ using namespace clang;
 
 #define DISK_TOKEN_SIZE (2+3*4)
 
-PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D,
-                   const char* ppcond, PTHManager& PM)
-  : PreprocessorLexer(&pp, fileloc), TokBuf(D), CurPtr(D), LastHashTokPtr(0),
-    PPCond(ppcond), CurPPCondPtr(ppcond), PTHMgr(PM), NeedsFetching(true) {
-    // Make sure the EofToken is completely clean.
-    EofToken.startToken();
-  }
-
-Token PTHLexer::GetToken() {
-  // Read the next token, or if we haven't advanced yet, get the last
-  // token read.
-  if (NeedsFetching) {
-    NeedsFetching = false;
-    ReadToken(LastFetched);
-  }
-  
-  Token Tok = LastFetched;
-  
-  // If we are in raw mode, zero out identifier pointers.  This is
-  // needed for 'pragma poison'.  Note that this requires that the Preprocessor
-  // can go back to the original source when it calls getSpelling().
-  if (LexingRawMode && Tok.is(tok::identifier))
-    Tok.setIdentifierInfo(0);
-
-  return Tok;
-}
-
-void PTHLexer::Lex(Token& Tok) {
-LexNextToken:
-  Tok = GetToken();
-  
-  if (AtLastToken()) {
-    Preprocessor *PPCache = PP;
-
-    if (LexEndOfFile(Tok))
-      return;
-
-    assert(PPCache && "Raw buffer::LexEndOfFile should return a token");
-    return PPCache->Lex(Tok);
-  }
-  
-  // Don't advance to the next token yet.  Check if we are at the
-  // start of a new line and we're processing a directive.  If so, we
-  // consume this token twice, once as an tok::eom.
-  if (Tok.isAtStartOfLine() && ParsingPreprocessorDirective) {
-    ParsingPreprocessorDirective = false;
-    Tok.setKind(tok::eom);
-    MIOpt.ReadToken();
-    return;
-  }
-  
-  // Advance to the next token.
-  AdvanceToken();
-    
-  if (Tok.is(tok::hash)) {    
-    if (Tok.isAtStartOfLine()) {
-      LastHashTokPtr = CurPtr - DISK_TOKEN_SIZE;
-      if (!LexingRawMode) {
-        PP->HandleDirective(Tok);
-
-        if (PP->isCurrentLexer(this))
-          goto LexNextToken;
-        
-        return PP->Lex(Tok);
-      }
-    }
-  }
-
-  MIOpt.ReadToken();
-  
-  if (Tok.is(tok::identifier)) {
-    if (LexingRawMode) return;
-    return PP->HandleIdentifier(Tok);
-  }  
-}
-
-bool PTHLexer::LexEndOfFile(Token &Tok) {
-  
-  if (ParsingPreprocessorDirective) {
-    ParsingPreprocessorDirective = false;
-    Tok.setKind(tok::eom);
-    MIOpt.ReadToken();
-    return true; // Have a token.
-  }
-  
-  if (LexingRawMode) {
-    MIOpt.ReadToken();
-    return true;  // Have an eof token.
-  }
-  
-  // FIXME: Issue diagnostics similar to Lexer.
-  return PP->HandleEndOfFile(Tok, false);
-}
-
-void PTHLexer::setEOF(Token& Tok) {
-  assert(!EofToken.is(tok::eof));
-  Tok = EofToken;
-}
-
-void PTHLexer::DiscardToEndOfLine() {
-  assert(ParsingPreprocessorDirective && ParsingFilename == false &&
-         "Must be in a preprocessing directive!");
-
-  // Skip tokens by only peeking at their token kind and the flags.
-  // We don't need to actually reconstruct full tokens from the token buffer.
-  // This saves some copies and it also reduces IdentifierInfo* lookup.
-  const char* p = CurPtr;
-  while (1) {
-    // Read the token kind.  Are we at the end of the file?
-    tok::TokenKind x = (tok::TokenKind) (uint8_t) *p;
-    if (x == tok::eof) break;
-
-    // Read the token flags.  Are we at the start of the next line?
-    Token::TokenFlags y = (Token::TokenFlags) (uint8_t) p[1];
-    if (y & Token::StartOfLine) break;
-
-    // Skip to the next token.
-    p += DISK_TOKEN_SIZE;
-  }
-  
-  CurPtr = p;
-}
-
 //===----------------------------------------------------------------------===//
 // Utility methods for reading from the mmap'ed PTH file.
 //===----------------------------------------------------------------------===//
@@ -165,6 +42,150 @@ static inline uint32_t Read32(const char*& data) {
   V |= (((uint32_t) Read8(data)) << 16);
   V |= (((uint32_t) Read8(data)) << 24);
   return V;
+}
+
+//===----------------------------------------------------------------------===//
+// PTHLexer methods.
+//===----------------------------------------------------------------------===//
+
+PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D,
+                   const char* ppcond, PTHManager& PM)
+  : PreprocessorLexer(&pp, fileloc), TokBuf(D), CurPtr(D), LastHashTokPtr(0),
+    PPCond(ppcond), CurPPCondPtr(ppcond), PTHMgr(PM) {}
+
+void PTHLexer::Lex(Token& Tok) {
+LexNextToken:
+  
+  // Read the token.
+  // FIXME: Setting the flags directly should obviate this step.
+  Tok.startToken();
+  
+  // Shadow CurPtr into an automatic variable so that Read8 doesn't load and
+  // store back into the instance variable.
+  const char *CurPtrShadow = CurPtr;
+  
+  // Read the type of the token.
+  Tok.setKind((tok::TokenKind) Read8(CurPtrShadow));
+  
+  // Set flags.  This is gross, since we are really setting multiple flags.
+  Tok.setFlag((Token::TokenFlags) Read8(CurPtrShadow));
+  
+  // Set the IdentifierInfo* (if any).
+  Tok.setIdentifierInfo(PTHMgr.ReadIdentifierInfo(CurPtrShadow));
+  
+  // Set the SourceLocation.  Since all tokens are constructed using a
+  // raw lexer, they will all be offseted from the same FileID.
+  Tok.setLocation(SourceLocation::getFileLoc(FileID, Read32(CurPtrShadow)));
+  
+  // Finally, read and set the length of the token.
+  Tok.setLength(Read32(CurPtrShadow));
+
+  CurPtr = CurPtrShadow;
+
+  if (Tok.is(tok::eof)) {
+    // Save the end-of-file token.
+    EofToken = Tok;
+    
+    Preprocessor *PPCache = PP;
+
+    if (LexEndOfFile(Tok))
+      return;
+
+    assert(PPCache && "Raw buffer::LexEndOfFile should return a token");
+    return PPCache->Lex(Tok);
+  }
+
+  MIOpt.ReadToken();
+  
+  if (Tok.is(tok::eom)) {
+    ParsingPreprocessorDirective = false;
+    return;
+  }
+  
+#if 0
+  SourceManager& SM = PP->getSourceManager();
+  SourceLocation L = Tok.getLocation();
+  
+  static const char* last = 0;
+  const char* next = SM.getContentCacheForLoc(L)->Entry->getName();
+  if (next != last) {
+    last = next;
+    llvm::cerr << next << '\n';
+  }
+
+  llvm::cerr << "line " << SM.getLogicalLineNumber(L) << " col " <<
+  SM.getLogicalColumnNumber(L) << '\n';
+#endif
+    
+  if (Tok.is(tok::hash)) {    
+    if (Tok.isAtStartOfLine()) {
+      LastHashTokPtr = CurPtr - DISK_TOKEN_SIZE;
+      if (!LexingRawMode) {
+        PP->HandleDirective(Tok);
+
+        if (PP->isCurrentLexer(this))
+          goto LexNextToken;
+        
+        return PP->Lex(Tok);
+      }
+    }
+  }
+  
+  if (Tok.is(tok::identifier)) {
+    if (LexingRawMode) {
+      Tok.setIdentifierInfo(0);
+      return;
+    }
+    
+    return PP->HandleIdentifier(Tok);
+  }
+
+  
+  assert(!Tok.is(tok::eom) || ParsingPreprocessorDirective);
+}
+
+// FIXME: This method can just be inlined into Lex().
+bool PTHLexer::LexEndOfFile(Token &Tok) {
+  assert(!ParsingPreprocessorDirective);
+  assert(!LexingRawMode);
+  
+  // FIXME: Issue diagnostics similar to Lexer.
+  return PP->HandleEndOfFile(Tok, false);
+}
+
+// FIXME: We can just grab the last token instead of storing a copy
+// into EofToken.
+void PTHLexer::setEOF(Token& Tok) {
+  assert(!EofToken.is(tok::eof));
+  Tok = EofToken;
+}
+
+void PTHLexer::DiscardToEndOfLine() {
+  assert(ParsingPreprocessorDirective && ParsingFilename == false &&
+         "Must be in a preprocessing directive!");
+
+  // We assume that if the preprocessor wishes to discard to the end of
+  // the line that it also means to end the current preprocessor directive.
+  ParsingPreprocessorDirective = false;
+  
+  // Skip tokens by only peeking at their token kind and the flags.
+  // We don't need to actually reconstruct full tokens from the token buffer.
+  // This saves some copies and it also reduces IdentifierInfo* lookup.
+  const char* p = CurPtr;
+  while (1) {
+    // Read the token kind.  Are we at the end of the file?
+    tok::TokenKind x = (tok::TokenKind) (uint8_t) *p;
+    if (x == tok::eof) break;
+    
+    // Read the token flags.  Are we at the start of the next line?
+    Token::TokenFlags y = (Token::TokenFlags) (uint8_t) p[1];
+    if (y & Token::StartOfLine) break;
+
+    // Skip to the next token.
+    p += DISK_TOKEN_SIZE;
+  }
+  
+  CurPtr = p;
 }
 
 /// SkipBlock - Used by Preprocessor to skip the current conditional block.
@@ -225,7 +246,6 @@ bool PTHLexer::SkipBlock() {
   // By construction NextIdx will be zero if this is a #endif.  This is useful
   // to know to obviate lexing another token.
   bool isEndif = NextIdx == 0;
-  NeedsFetching = true;
   
   // This case can occur when we see something like this:
   //
@@ -240,7 +260,7 @@ bool PTHLexer::SkipBlock() {
     assert(CurPtr == HashEntryI + DISK_TOKEN_SIZE);
     // Did we reach a #endif?  If so, go ahead and consume that token as well.
     if (isEndif)
-      CurPtr += DISK_TOKEN_SIZE;
+      CurPtr += DISK_TOKEN_SIZE*2;
     else
       LastHashTokPtr = HashEntryI;
     
@@ -253,20 +273,13 @@ bool PTHLexer::SkipBlock() {
   // Update the location of the last observed '#'.  This is useful if we
   // are skipping multiple blocks.
   LastHashTokPtr = CurPtr;
-  
-#ifndef DEBUG
-  // In a debug build we should verify that the token is really a '#' that
-  // appears at the start of the line.
-  Token Tok;
-  ReadToken(Tok);
-  assert(Tok.isAtStartOfLine() && Tok.is(tok::hash));
-#else
-  // In a full release build we can just skip the token entirely.
-  CurPtr += DISK_TOKEN_SIZE;
-#endif
 
+  // Skip the '#' token.
+  assert(((tok::TokenKind) (unsigned char) *CurPtr) == tok::hash);
+  CurPtr += DISK_TOKEN_SIZE;
+  
   // Did we reach a #endif?  If so, go ahead and consume that token as well.
-  if (isEndif) { CurPtr += DISK_TOKEN_SIZE; }
+  if (isEndif) { CurPtr += DISK_TOKEN_SIZE*2; }
 
   return isEndif;
 }
@@ -284,38 +297,6 @@ SourceLocation PTHLexer::getSourceLocation() {
     | (((uint32_t) ((uint8_t) p[2])) << 16)
     | (((uint32_t) ((uint8_t) p[3])) << 24);
   return SourceLocation::getFileLoc(FileID, offset);
-}
-
-//===----------------------------------------------------------------------===//
-// Token reconstruction from the PTH file.
-//===----------------------------------------------------------------------===//
-
-void PTHLexer::ReadToken(Token& T) {
-  // Clear the token.
-  // FIXME: Setting the flags directly should obviate this step.
-  T.startToken();
-  
-  // Shadow CurPtr into an automatic variable so that Read8 doesn't load and
-  // store back into the instance variable.
-  const char *CurPtrShadow = CurPtr;
-  
-  // Read the type of the token.
-  T.setKind((tok::TokenKind) Read8(CurPtrShadow));
-  
-  // Set flags.  This is gross, since we are really setting multiple flags.
-  T.setFlag((Token::TokenFlags) Read8(CurPtrShadow));
-  
-  // Set the IdentifierInfo* (if any).
-  T.setIdentifierInfo(PTHMgr.ReadIdentifierInfo(CurPtrShadow));
-  
-  // Set the SourceLocation.  Since all tokens are constructed using a
-  // raw lexer, they will all be offseted from the same FileID.
-  T.setLocation(SourceLocation::getFileLoc(FileID, Read32(CurPtrShadow)));
-  
-  // Finally, read and set the length of the token.
-  T.setLength(Read32(CurPtrShadow));
-  
-  CurPtr = CurPtrShadow;
 }
 
 //===----------------------------------------------------------------------===//

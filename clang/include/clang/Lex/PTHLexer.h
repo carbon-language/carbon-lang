@@ -51,9 +51,7 @@ class PTHLexer : public PreprocessorLexer {
   /// PTHMgr - The PTHManager object that created this PTHLexer.
   PTHManager& PTHMgr;
   
-  Token LastFetched;
   Token EofToken;
-  bool NeedsFetching;
   
 public:  
 
@@ -95,20 +93,7 @@ public:
   /// SkipBlock - Used by Preprocessor to skip the current conditional block.
   bool SkipBlock();
 
-private:  
-  /// AtLastToken - Returns true if the PTHLexer is at the last token.
-  bool AtLastToken() { 
-    Token T = GetToken();
-    return T.is(tok::eof) ? EofToken = T, true : false;
-  }
-  
-  /// GetToken - Returns the next token.  This method does not advance the
-  ///  PTHLexer to the next token.
-  Token GetToken();
-  
-  /// AdvanceToken - Advances the PTHLexer to the next token.
-  void AdvanceToken() { NeedsFetching = true; }
-  
+private:
   bool LexEndOfFile(Token &Result);
 };
 
