@@ -191,6 +191,8 @@ public:
     case EnumConstant:
     case NonTypeTemplateParm:
     case Field:
+    case ObjCAtDefsField:
+    case ObjCIvar:
     case ObjCInterface:
     case ObjCCompatibleAlias:
     case OverloadedFunction:
@@ -267,8 +269,7 @@ class DeclContext {
   /// LookupPtrKind - Describes what kind of pointer LookupPtr
   /// actually is. 
   enum LookupPtrKind {
-    /// LookupIsMap - Indicates that LookupPtr is actually a
-    /// DenseMap<DeclarationName, TwoNamedDecls> pointer.
+    /// LookupIsMap - Indicates that LookupPtr is actually a map.
     LookupIsMap = 7
   };
 
@@ -276,9 +277,10 @@ class DeclContext {
   /// declarations within this context. If the context contains fewer
   /// than seven declarations, the number of declarations is provided
   /// in the 3 lowest-order bits and the upper bits are treated as a
-  /// pointer to an array of NamedDecl pointers. If the context
+  /// pointer to an array of ScopedDecl pointers. If the context
   /// contains seven or more declarations, the upper bits are treated
-  /// as a pointer to a DenseMap<DeclarationName, TwoNamedDecls>.
+  /// as a pointer to a DenseMap<DeclarationName, std::vector<ScopedDecl>>.
+  /// FIXME: We need a better data structure for this.
   llvm::PointerIntPair<void*, 3> LookupPtr;
 
   /// Decls - Contains all of the declarations that are defined inside
@@ -440,11 +442,11 @@ public:
 
   /// lookup_iterator - An iterator that provides access to the results
   /// of looking up a name within this context.
-  typedef NamedDecl **lookup_iterator;
+  typedef ScopedDecl **lookup_iterator;
 
   /// lookup_const_iterator - An iterator that provides non-mutable
   /// access to the results of lookup up a name within this context.
-  typedef NamedDecl * const * lookup_const_iterator;
+  typedef ScopedDecl * const * lookup_const_iterator;
 
   typedef std::pair<lookup_iterator, lookup_iterator> lookup_result;
   typedef std::pair<lookup_const_iterator, lookup_const_iterator>
@@ -471,7 +473,7 @@ public:
   /// that this replacement is semantically correct, e.g., that
   /// declarations are only replaced by later declarations of the same
   /// entity and not a declaration of some other kind of entity.
-  void insert(ASTContext &Context, NamedDecl *D);
+  void insert(ASTContext &Context, ScopedDecl *D);
 
   static bool classof(const Decl *D) {
     switch (D->getKind()) {
@@ -503,7 +505,7 @@ public:
   static bool classof(const BlockDecl *D) { return true; }
 
 private:
-  void insertImpl(NamedDecl *D);
+  void insertImpl(ScopedDecl *D);
 
   void EmitOutRec(llvm::Serializer& S) const;
   void ReadOutRec(llvm::Deserializer& D, ASTContext& C);

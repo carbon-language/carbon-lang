@@ -20,6 +20,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeOrdering.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
 
@@ -1106,22 +1107,10 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
     DeclarationName ConstructorName 
       = Context.DeclarationNames.getCXXConstructorName(
                                              Context.getCanonicalType(ToType));
-    DeclContext::lookup_result Lookup 
-      = ToRecordDecl->lookup(Context, ConstructorName);
-    if (Lookup.first == Lookup.second)
-      /* No constructors. FIXME: Implicit copy constructor? */;
-    else if (OverloadedFunctionDecl *Constructors 
-               = dyn_cast<OverloadedFunctionDecl>(*Lookup.first)) {
-      for (OverloadedFunctionDecl::function_const_iterator func 
-             = Constructors->function_begin();
-           func != Constructors->function_end(); ++func) {
-        CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*func);
-        if (Constructor->isConvertingConstructor())
-          AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
-                               /*SuppressUserConversions=*/true);
-      }
-    } else if (CXXConstructorDecl *Constructor 
-                 = dyn_cast<CXXConstructorDecl>(*Lookup.first)) {
+    DeclContext::lookup_iterator Con, ConEnd;
+    for (llvm::tie(Con, ConEnd) = ToRecordDecl->lookup(Context, ConstructorName);
+         Con != ConEnd; ++Con) {
+      CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
       if (Constructor->isConvertingConstructor())
         AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
                              /*SuppressUserConversions=*/true);
@@ -2142,22 +2131,12 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   //        (13.3.1.1.1); otherwise, the set of member candidates is
   //        empty.
   if (const RecordType *T1Rec = T1->getAsRecordType()) {
-    DeclContext::lookup_const_result Lookup 
-      = T1Rec->getDecl()->lookup(Context, OpName);
-    NamedDecl *MemberOps = (Lookup.first == Lookup.second)? 0 : *Lookup.first;
-    if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
-      AddMethodCandidate(Method, Args[0], Args+1, NumArgs - 1, CandidateSet,
+    DeclContext::lookup_const_iterator Oper, OperEnd;
+    for (llvm::tie(Oper, OperEnd) = T1Rec->getDecl()->lookup(Context, OpName);
+         Oper != OperEnd; ++Oper)
+      AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Args[0], 
+                         Args+1, NumArgs - 1, CandidateSet,
                          /*SuppressUserConversions=*/false);
-    else if (OverloadedFunctionDecl *Ovl 
-               = dyn_cast_or_null<OverloadedFunctionDecl>(MemberOps)) {
-      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                                  FEnd = Ovl->function_end();
-           F != FEnd; ++F) {
-        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*F))
-          AddMethodCandidate(Method, Args[0], Args+1, NumArgs - 1, CandidateSet,
-                             /*SuppressUserConversions=*/false);
-      }
-    }
   }
 
   //     -- The set of non-member candidates is the result of the
@@ -3405,22 +3384,11 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   //  (E).operator().
   OverloadCandidateSet CandidateSet;
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Call);
-  DeclContext::lookup_const_result Lookup 
-    = Record->getDecl()->lookup(Context, OpName);
-  NamedDecl *MemberOps = (Lookup.first == Lookup.second)? 0 : *Lookup.first;
-  if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
-    AddMethodCandidate(Method, Object, Args, NumArgs, CandidateSet,
-                       /*SuppressUserConversions=*/false);
-  else if (OverloadedFunctionDecl *Ovl 
-           = dyn_cast_or_null<OverloadedFunctionDecl>(MemberOps)) {
-    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-           FEnd = Ovl->function_end();
-         F != FEnd; ++F) {
-      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*F))
-        AddMethodCandidate(Method, Object, Args, NumArgs, CandidateSet,
-                           /*SuppressUserConversions=*/false);
-    }
-  }
+  DeclContext::lookup_const_iterator Oper, OperEnd;
+  for (llvm::tie(Oper, OperEnd) = Record->getDecl()->lookup(Context, OpName);
+       Oper != OperEnd; ++Oper)
+    AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Object, Args, NumArgs, 
+                       CandidateSet, /*SuppressUserConversions=*/false);
 
   // C++ [over.call.object]p2:
   //   In addition, for each conversion function declared in T of the
@@ -3585,7 +3553,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 ///  (if one exists), where @c Base is an expression of class type and 
 /// @c Member is the name of the member we're trying to find.
 Action::ExprResult 
-Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
+Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
                                SourceLocation MemberLoc,
                                IdentifierInfo &Member) {
   assert(Base->getType()->isRecordType() && "left-hand side must have class type");
@@ -3600,22 +3568,12 @@ Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Arrow);
   OverloadCandidateSet CandidateSet;
   const RecordType *BaseRecord = Base->getType()->getAsRecordType();
-  DeclContext::lookup_const_result Lookup 
-    = BaseRecord->getDecl()->lookup(Context, OpName);
-  NamedDecl *MemberOps = (Lookup.first == Lookup.second)? 0 : *Lookup.first;
-  if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(MemberOps))
-    AddMethodCandidate(Method, Base, 0, 0, CandidateSet,
+  
+  DeclContext::lookup_const_iterator Oper, OperEnd;
+  for (llvm::tie(Oper, OperEnd) = BaseRecord->getDecl()->lookup(Context, OpName);
+       Oper != OperEnd; ++Oper)
+    AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Base, 0, 0, CandidateSet,
                        /*SuppressUserConversions=*/false);
-  else if (OverloadedFunctionDecl *Ovl 
-             = dyn_cast_or_null<OverloadedFunctionDecl>(MemberOps)) {
-    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-           FEnd = Ovl->function_end();
-         F != FEnd; ++F) {
-      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*F))
-        AddMethodCandidate(Method, Base, 0, 0, CandidateSet,
-                           /*SuppressUserConversions=*/false);
-    }
-  }
 
   llvm::OwningPtr<Expr> BasePtr(Base);
 
@@ -3658,7 +3616,7 @@ Sema::BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
   Base = new CXXOperatorCallExpr(FnExpr, &Base, 1, 
                                  Method->getResultType().getNonReferenceType(),
                                  OpLoc);
-  return ActOnMemberReferenceExpr(Base, OpLoc, tok::arrow, MemberLoc, Member);
+  return ActOnMemberReferenceExpr(S, Base, OpLoc, tok::arrow, MemberLoc, Member);
 }
 
 /// FixOverloadedFunctionReference - E is an expression that refers to

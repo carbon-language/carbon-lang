@@ -20,6 +20,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm> // for std::equal
 #include <map>
@@ -844,23 +845,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     CopyConstructor->setParams(&FromParam, 1);
 
     ClassDecl->addedConstructor(Context, CopyConstructor);
-    DeclContext::lookup_result Lookup = ClassDecl->lookup(Context, Name);
-    if (Lookup.first == Lookup.second 
-        || (!isa<CXXConstructorDecl>(*Lookup.first) &&
-            !isa<OverloadedFunctionDecl>(*Lookup.first)))
-      ClassDecl->addDecl(Context, CopyConstructor);
-    else {
-      OverloadedFunctionDecl *Ovl 
-        = dyn_cast<OverloadedFunctionDecl>(*Lookup.first);
-      if (!Ovl) {
-        Ovl = OverloadedFunctionDecl::Create(Context, ClassDecl, Name);
-        Ovl->addOverload(cast<CXXConstructorDecl>(*Lookup.first));
-        ClassDecl->insert(Context, Ovl);
-      }
-
-      Ovl->addOverload(CopyConstructor);
-      ClassDecl->addDecl(Context, CopyConstructor, false);
-    }
+    ClassDecl->addDecl(Context, CopyConstructor);
   }
 
   if (!ClassDecl->hasUserDeclaredDestructor()) {
@@ -1470,23 +1455,10 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
   DeclarationName ConstructorName 
     = Context.DeclarationNames.getCXXConstructorName(
                        Context.getCanonicalType(ClassType.getUnqualifiedType()));
-  DeclContext::lookup_const_result Lookup 
-    = ClassDecl->lookup(Context, ConstructorName);
-  if (Lookup.first == Lookup.second)
-    /* No constructors */;
-  else if (OverloadedFunctionDecl *Constructors 
-             = dyn_cast<OverloadedFunctionDecl>(*Lookup.first)) {
-    for (OverloadedFunctionDecl::function_iterator Con 
-           = Constructors->function_begin();
-         Con != Constructors->function_end(); ++Con) {
-      CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
-      if ((Kind == IK_Direct) ||
-          (Kind == IK_Copy && Constructor->isConvertingConstructor()) ||
-          (Kind == IK_Default && Constructor->isDefaultConstructor()))
-        AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
-    }
-  } else if (CXXConstructorDecl *Constructor 
-               = dyn_cast<CXXConstructorDecl>(*Lookup.first)) {
+  DeclContext::lookup_const_iterator Con, ConEnd;
+  for (llvm::tie(Con, ConEnd) = ClassDecl->lookup(Context, ConstructorName);
+       Con != ConEnd; ++Con) {
+    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
     if ((Kind == IK_Direct) ||
         (Kind == IK_Copy && Constructor->isConvertingConstructor()) ||
         (Kind == IK_Default && Constructor->isDefaultConstructor()))

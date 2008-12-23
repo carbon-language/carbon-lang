@@ -745,8 +745,8 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       }
 
       if (!LHS.isInvalid()) {
-        LHS = Actions.ActOnMemberReferenceExpr(LHS.release(), OpLoc, OpKind,
-                                               Tok.getLocation(),
+        LHS = Actions.ActOnMemberReferenceExpr(CurScope, LHS.release(), OpLoc,
+                                               OpKind, Tok.getLocation(),
                                                *Tok.getIdentifierInfo());
       }
       ConsumeToken();
@@ -920,8 +920,9 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
         Comps.back().LocEnd =
           MatchRHSPunctuation(tok::r_square, Comps.back().LocStart);
       } else if (Tok.is(tok::r_paren)) {
-        Res = Actions.ActOnBuiltinOffsetOf(StartLoc, TypeLoc, Ty, &Comps[0],
-                                           Comps.size(), ConsumeParen());
+        Res = Actions.ActOnBuiltinOffsetOf(CurScope, StartLoc, TypeLoc, Ty, 
+                                           &Comps[0], Comps.size(), 
+                                           ConsumeParen());
         break;
       } else {
         // Error occurred.

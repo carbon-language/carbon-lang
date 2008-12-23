@@ -106,7 +106,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
       // require some reshuffling in the identifier resolver.
       IdentifierResolver::iterator
         I = IdResolver.begin(TD->getIdentifier(), CurContext, 
-                            false/*LookInParentCtx*/);
+                             false/*LookInParentCtx*/);
       if (I != IdResolver.end()) {
        // There is already a declaration with the same name in the same
        // scope. It must be found before we find the new declaration,
@@ -123,57 +123,47 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
     // We are pushing the name of a function, which might be an
     // overloaded name.
     FunctionDecl *FD = cast<FunctionDecl>(D);
-    Decl *Prev = LookupDecl(FD->getDeclName(), Decl::IDNS_Ordinary, S,
-                           FD->getDeclContext(), false, false);
-    if (Prev && (isa<OverloadedFunctionDecl>(Prev) || isa<FunctionDecl>(Prev))) {
-      // There is already a declaration with the same name in
-      // the same scope. It must be a function or an overloaded
-      // function.
-      OverloadedFunctionDecl* Ovl = dyn_cast<OverloadedFunctionDecl>(Prev);
-      if (!Ovl) {
-        // We haven't yet overloaded this function. Take the existing
-        // FunctionDecl and put it into an OverloadedFunctionDecl.
-        Ovl = OverloadedFunctionDecl::Create(Context, 
-                                             FD->getDeclContext(),
-                                             FD->getDeclName());
-        Ovl->addOverload(cast<FunctionDecl>(Prev));
+    if (CurContext == FD->getDeclContext()) {
+      IdentifierResolver::iterator
+        I = IdResolver.begin(FD->getDeclName(), CurContext, 
+                             false/*LookInParentCtx*/);
+      if (I != IdResolver.end() &&
+          (isa<OverloadedFunctionDecl>(*I) || isa<FunctionDecl>(*I))) {
+        // There is already a declaration with the same name in
+        // the same scope. It must be a function or an overloaded
+        // function.
+        OverloadedFunctionDecl* Ovl = dyn_cast<OverloadedFunctionDecl>(*I);
+        if (!Ovl) {
+          // We haven't yet overloaded this function. Take the existing
+          // FunctionDecl and put it into an OverloadedFunctionDecl.
+          Ovl = OverloadedFunctionDecl::Create(Context, 
+                                               FD->getDeclContext(),
+                                               FD->getDeclName());
+          Ovl->addOverload(cast<FunctionDecl>(*I));
+          
+          IdResolver.RemoveDecl(*I);
+          S->RemoveDecl(*I);
         
-        // If there is a name binding for the existing FunctionDecl,
-        // remove it.
-        for (IdentifierResolver::iterator I 
-               = IdResolver.begin(FD->getDeclName(), FD->getDeclContext(), 
-                                  false/*LookInParentCtx*/),
-               E = IdResolver.end(); I != E; ++I) {
-          if (*I == Prev) {
-            IdResolver.RemoveDecl(*I);
-            S->RemoveDecl(*I);
-            break;
-          }
+          // Add the name binding for the OverloadedFunctionDecl.
+          IdResolver.AddDecl(Ovl);
+          
+          S->AddDecl(Ovl);
         }
-       
-        // Add the name binding for the OverloadedFunctionDecl.
-        IdResolver.AddDecl(Ovl);
 
-        // Update the context with the newly-created overloaded
-        // function set.
-        FD->getDeclContext()->insert(Context, Ovl);
-
-       S->AddDecl(Ovl);
+        // We added this function declaration to the scope earlier, but
+        // we don't want it there because it is part of the overloaded
+        // function declaration.
+        S->RemoveDecl(FD);
+        
+        // We have an OverloadedFunctionDecl. Add the new FunctionDecl
+        // to its list of overloads.
+        Ovl->addOverload(FD);
+        
+        // Add this new function declaration to the declaration context.
+        CurContext->addDecl(Context, FD);
+        
+        return;      
       }
-
-      // We added this function declaration to the scope earlier, but
-      // we don't want it there because it is part of the overloaded
-      // function declaration.
-      S->RemoveDecl(FD);
-
-      // We have an OverloadedFunctionDecl. Add the new FunctionDecl
-      // to its list of overloads.
-      Ovl->addOverload(FD);
-
-      // Add this new function declaration to the declaration context.
-      CurContext->addDecl(Context, FD, false);
-
-      return;      
     }
   }
 
@@ -216,6 +206,52 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
   return dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
 }
 
+/// MaybeConstructOverloadSet - Name lookup has determined that the
+/// elements in [I, IEnd) have the name that we are looking for, and
+/// *I is a match for the namespace. This routine returns an
+/// appropriate Decl for name lookup, which may either be *I or an
+/// OverloadeFunctionDecl that represents the overloaded functions in
+/// [I, IEnd). 
+///
+/// The existance of this routine is temporary; LookupDecl should
+/// probably be able to return multiple results, to deal with cases of
+/// ambiguity and overloaded functions without needing to create a
+/// Decl node.
+static Decl *
+MaybeConstructOverloadSet(ASTContext &Context, const DeclContext *DC,
+                          DeclContext::lookup_const_iterator I,
+                          DeclContext::lookup_const_iterator IEnd) {
+  assert(I != IEnd && "Iterator range cannot be empty");
+  assert(!isa<OverloadedFunctionDecl>(*I) && 
+         "Cannot have an overloaded function");
+
+  if (isa<FunctionDecl>(*I)) {
+    // If we found a function, there might be more functions. If
+    // so, collect them into an overload set.
+    DeclContext::lookup_const_iterator Last = I;
+    OverloadedFunctionDecl *Ovl = 0;
+    for (++Last; Last != IEnd && isa<FunctionDecl>(*Last); ++Last) {
+      if (!Ovl) {
+        // FIXME: We leak this overload set. Eventually, we want to
+        // stop building the declarations for these overload sets, so
+        // there will be nothing to leak.
+        Ovl = OverloadedFunctionDecl::Create(Context, 
+                                             const_cast<DeclContext *>(DC), 
+                                             (*I)->getDeclName());
+        Ovl->addOverload(cast<FunctionDecl>(*I));
+      }
+      Ovl->addOverload(cast<FunctionDecl>(*Last));
+    }
+    
+    // If we had more than one function, we built an overload
+    // set. Return it.
+    if (Ovl)
+      return Ovl;
+  }
+  
+  return *I;
+}
+
 /// LookupDecl - Look up the inner-most declaration in the specified
 /// namespace.
 Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
@@ -244,14 +280,12 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
       if ((*I)->getIdentifierNamespace() & NS)
          return *I;
   } else if (LookupCtx) {
-    assert(getLangOptions().CPlusPlus && "No qualified name lookup in C");
-
     // Perform qualified name lookup into the LookupCtx.
     // FIXME: Will need to look into base classes and such.
     DeclContext::lookup_const_iterator I, E;
     for (llvm::tie(I, E) = LookupCtx->lookup(Context, Name); I != E; ++I)
       if ((*I)->getIdentifierNamespace() & NS)
-       return *I;
+        return MaybeConstructOverloadSet(Context, LookupCtx, I, E);
   } else {
     // Name lookup for ordinary names and tag names in C++ requires
     // looking into scopes that aren't strictly lexical, and
@@ -279,7 +313,7 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
         for (llvm::tie(I, E) = Ctx->lookup(Context, Name); I != E; ++I) {
           // FIXME: Cache this result in the IdResolver
           if ((*I)->getIdentifierNamespace() & NS)
-            return  *I;
+            return MaybeConstructOverloadSet(Context, LookupCtx, I, E);
         }
         
         Ctx = Ctx->getParent();
@@ -533,6 +567,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
     if (OldReturnType != NewReturnType) {
       Diag(New->getLocation(), diag::err_ovl_diff_return_type);
       Diag(Old->getLocation(), PrevDiag);
+      Redeclaration = true;
       return New;
     }
 

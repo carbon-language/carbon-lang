@@ -18,6 +18,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
 /// ActOnCXXConversionFunctionExpr - Parse a C++ conversion function
@@ -412,8 +413,9 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, DeclarationName Name,
                                   DeclContext *Ctx, bool AllowMissing,
                                   FunctionDecl *&Operator)
 {
-  DeclContext::lookup_result Lookup = Ctx->lookup(Context, Name);
-  if (Lookup.first == Lookup.second) {
+  DeclContext::lookup_iterator Alloc, AllocEnd;
+  llvm::tie(Alloc, AllocEnd) = Ctx->lookup(Context, Name);
+  if (Alloc == AllocEnd) {
     if (AllowMissing)
       return false;
     // FIXME: Bad location information.
@@ -422,21 +424,12 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, DeclarationName Name,
   }
 
   OverloadCandidateSet Candidates;
-  NamedDecl *Decl = *Lookup.first;
-  // Even member operator new/delete are implicitly treated as static, so don't
-  // use AddMemberCandidate.
-  if (FunctionDecl *Fn = dyn_cast_or_null<FunctionDecl>(Decl))
-    AddOverloadCandidate(Fn, Args, NumArgs, Candidates,
-                         /*SuppressUserConversions=*/false);
-  else if (OverloadedFunctionDecl *Ovl
-             = dyn_cast_or_null<OverloadedFunctionDecl>(Decl)) {
-    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                                   FEnd = Ovl->function_end();
-       F != FEnd; ++F) {
-      if (FunctionDecl *Fn = *F)
-        AddOverloadCandidate(Fn, Args, NumArgs, Candidates,
-                             /*SuppressUserConversions=*/false);
-    }
+  for (; Alloc != AllocEnd; ++Alloc) {
+    // Even member operator new/delete are implicitly treated as
+    // static, so don't use AddMemberCandidate.
+    if (FunctionDecl *Fn = dyn_cast<FunctionDecl>(*Alloc))
+      AddOverloadCandidate(Fn, Args, NumArgs, Candidates,
+                           /*SuppressUserConversions=*/false);
   }
 
   // Do the resolution.
@@ -555,7 +548,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
                                            0, Argument, VarDecl::None, 0, 0);
   Alloc->setParams(&Param, 1);
 
-  PushOnScopeChains(Alloc, TUScope);
+  ((DeclContext *)TUScope->getEntity())->addDecl(Context, Alloc);
 }
 
 /// ActOnCXXDelete - Parsed a C++ 'delete' expression (C++ 5.3.5), as in:

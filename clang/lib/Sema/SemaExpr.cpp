@@ -1254,7 +1254,7 @@ static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
 }
 
 Action::ExprResult Sema::
-ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
+ActOnMemberReferenceExpr(Scope *S, ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
                          IdentifierInfo &Member) {
   Expr *BaseExpr = static_cast<Expr *>(Base);
@@ -1272,7 +1272,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     if (const PointerType *PT = BaseType->getAsPointerType())
       BaseType = PT->getPointeeType();
     else if (getLangOptions().CPlusPlus && BaseType->isRecordType())
-      return BuildOverloadedArrowExpr(BaseExpr, OpLoc, MemberLoc, Member);
+      return BuildOverloadedArrowExpr(S, BaseExpr, OpLoc, MemberLoc, Member);
     else
       return Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
         << BaseType << BaseExpr->getSourceRange();
@@ -1288,42 +1288,42 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     // The record definition is complete, now make sure the member is valid.
     // FIXME: Qualified name lookup for C++ is a bit more complicated
     // than this.
-    DeclContext::lookup_result Lookup = RDecl->lookup(Context, &Member);
-    if (Lookup.first == Lookup.second) {
+    Decl *MemberDecl = LookupDecl(DeclarationName(&Member), Decl::IDNS_Ordinary,
+                                  S, RDecl, false, false);
+    if (!MemberDecl)
       return Diag(MemberLoc, diag::err_typecheck_no_member)
                << &Member << BaseExpr->getSourceRange();
-    } 
 
-    if (FieldDecl *MemberDecl = dyn_cast<FieldDecl>(*Lookup.first)) {
+    if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl)) {
       // Figure out the type of the member; see C99 6.5.2.3p3, C++ [expr.ref]
       // FIXME: Handle address space modifiers
-      QualType MemberType = MemberDecl->getType();
+      QualType MemberType = FD->getType();
       if (const ReferenceType *Ref = MemberType->getAsReferenceType())
         MemberType = Ref->getPointeeType();
       else {
         unsigned combinedQualifiers =
           MemberType.getCVRQualifiers() | BaseType.getCVRQualifiers();
-        if (MemberDecl->isMutable())
+        if (FD->isMutable())
           combinedQualifiers &= ~QualType::Const;
         MemberType = MemberType.getQualifiedType(combinedQualifiers);
       }
 
-      return new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberDecl,
+      return new MemberExpr(BaseExpr, OpKind == tok::arrow, FD,
                             MemberLoc, MemberType);
-    } else if (CXXClassVarDecl *Var = dyn_cast<CXXClassVarDecl>(*Lookup.first))
+    } else if (CXXClassVarDecl *Var = dyn_cast<CXXClassVarDecl>(MemberDecl))
       return new MemberExpr(BaseExpr, OpKind == tok::arrow, Var, MemberLoc,
                             Var->getType().getNonReferenceType());
-    else if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(*Lookup.first))
+    else if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(MemberDecl))
       return new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberFn, MemberLoc,
                             MemberFn->getType());
     else if (OverloadedFunctionDecl *Ovl 
-             = dyn_cast<OverloadedFunctionDecl>(*Lookup.first))
+             = dyn_cast<OverloadedFunctionDecl>(MemberDecl))
       return new MemberExpr(BaseExpr, OpKind == tok::arrow, Ovl, MemberLoc,
                             Context.OverloadTy);
-    else if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(*Lookup.first))
+    else if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl))
       return new MemberExpr(BaseExpr, OpKind == tok::arrow, Enum, MemberLoc,
                             Enum->getType());
-    else if (isa<TypeDecl>(*Lookup.first))
+    else if (isa<TypeDecl>(MemberDecl))
       return Diag(MemberLoc, diag::err_typecheck_member_reference_type)
         << DeclarationName(&Member) << int(OpKind == tok::arrow);
 
@@ -3573,7 +3573,8 @@ Sema::ExprResult Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
   return new StmtExpr(Compound, Ty, LPLoc, RPLoc);
 }
 
-Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
+Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
+                                            SourceLocation BuiltinLoc,
                                             SourceLocation TypeLoc,
                                             TypeTy *argty,
                                             OffsetOfComponent *CompPtr,
@@ -3628,11 +3629,10 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
       
     // Get the decl corresponding to this.
     RecordDecl *RD = RC->getDecl();
-    FieldDecl *MemberDecl = 0;
-    DeclContext::lookup_result Lookup = RD->lookup(Context, OC.U.IdentInfo);
-    if (Lookup.first != Lookup.second)
-      MemberDecl = dyn_cast<FieldDecl>(*Lookup.first);
-
+    FieldDecl *MemberDecl 
+      = dyn_cast_or_null<FieldDecl>(LookupDecl(OC.U.IdentInfo, 
+                                               Decl::IDNS_Ordinary,
+                                               S, RD, false, false));
     if (!MemberDecl)
       return Diag(BuiltinLoc, diag::err_typecheck_no_member)
        << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd);

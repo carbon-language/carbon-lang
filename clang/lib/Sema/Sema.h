@@ -479,7 +479,7 @@ public:
                                SourceLocation *CommaLocs, 
                                SourceLocation RParenLoc);
 
-  ExprResult BuildOverloadedArrowExpr(Expr *Base, SourceLocation OpLoc,
+  ExprResult BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
                                       SourceLocation MemberLoc,
                                       IdentifierInfo &Member);
                                            
@@ -696,7 +696,8 @@ public:
   virtual ExprResult ActOnArraySubscriptExpr(Scope *S, ExprTy *Base, 
                                              SourceLocation LLoc, ExprTy *Idx,
                                              SourceLocation RLoc);
-  virtual ExprResult ActOnMemberReferenceExpr(ExprTy *Base,SourceLocation OpLoc,
+  virtual ExprResult ActOnMemberReferenceExpr(Scope *S, ExprTy *Base,
+                                              SourceLocation OpLoc,
                                               tok::TokenKind OpKind,
                                               SourceLocation MemberLoc,
                                               IdentifierInfo &Member);
@@ -747,7 +748,8 @@ public:
                                    SourceLocation RPLoc); // "({..})"
 
   /// __builtin_offsetof(type, a.b[123][456].c)
-  virtual ExprResult ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
+  virtual ExprResult ActOnBuiltinOffsetOf(Scope *S,
+                                          SourceLocation BuiltinLoc,
                                           SourceLocation TypeLoc, TypeTy *Arg1,
                                           OffsetOfComponent *CompPtr,
                                           unsigned NumComponents,

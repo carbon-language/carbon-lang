@@ -17,6 +17,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
+#include <vector>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -375,21 +376,15 @@ const DeclContext *DeclContext::getLexicalParent() const {
   return getParent();
 }
 
-/// TwoNamedDecls - Stores up to two NamedDecls. The first
-/// declaration, if any, is in the ordinary identifier namespace, and
-/// corresponds to values (functions, variables, etc.). The second
-/// declaration, if any, is in the tag identifier namespace, and
-/// corresponds to tag types (classes, enums).
-struct TwoNamedDecls {
-  NamedDecl* Decls[2];
-};
-
 // FIXME: We really want to use a DenseSet here to eliminate the
 // redundant storage of the declaration names, but (1) it doesn't give
 // us the ability to search based on DeclarationName, (2) we really
 // need something more like a DenseMultiSet, and (3) it's
-// implemented in terms of DenseMap anyway.
-typedef llvm::DenseMap<DeclarationName, TwoNamedDecls> StoredDeclsMap;
+// implemented in terms of DenseMap anyway. However, this data
+// structure is really space-inefficient, so we'll have to do
+// something.
+typedef llvm::DenseMap<DeclarationName, std::vector<ScopedDecl*> >
+  StoredDeclsMap;
 
 DeclContext::~DeclContext() {
   unsigned Size = LookupPtr.getInt();
@@ -397,7 +392,7 @@ DeclContext::~DeclContext() {
     StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
     delete Map;
   } else {
-    NamedDecl **Array = static_cast<NamedDecl**>(LookupPtr.getPointer());
+    ScopedDecl **Array = static_cast<ScopedDecl**>(LookupPtr.getPointer());
     delete [] Array;
   }
 }
@@ -497,7 +492,7 @@ DeclContext::lookup(ASTContext &Context, DeclarationName Name) {
   if (PrimaryContext != this)
     return PrimaryContext->lookup(Context, Name);
 
-  /// If there is no lookup data structure, build one now by talking
+  /// If there is no lookup data structure, build one now by walking
   /// all of the linked DeclContexts (in declaration order!) and
   /// inserting their values.
   if (LookupPtr.getPointer() == 0) {
@@ -506,32 +501,27 @@ DeclContext::lookup(ASTContext &Context, DeclarationName Name) {
         insertImpl(*D);
   }
 
-  lookup_result Result(0, 0);
   if (isLookupMap()) {
     StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
     StoredDeclsMap::iterator Pos = Map->find(Name);
-    if (Pos != Map->end()) {
-      Result.first = Pos->second.Decls[0]? &Pos->second.Decls[0] 
-                                        : &Pos->second.Decls[1];
-      Result.second = Pos->second.Decls[1]? &Pos->second.Decls[2]
-                                         : &Pos->second.Decls[1];
-    }
-    return Result;
+    if (Pos != Map->end())
+      return lookup_result(&Pos->second.front(), 
+                           &Pos->second.front() + Pos->second.size());
+    return lookup_result(0, 0);
   } 
 
   // We have a small array. Look into it.
   unsigned Size = LookupPtr.getInt();
-  NamedDecl **Array = static_cast<NamedDecl**>(LookupPtr.getPointer());
+  ScopedDecl **Array = static_cast<ScopedDecl**>(LookupPtr.getPointer());
   for (unsigned Idx = 0; Idx != Size; ++Idx)
     if (Array[Idx]->getDeclName() == Name) {
-      Result.first = &Array[Idx];
-      Result.second = Result.first + 1;
-      if (Idx + 1 < Size && Array[Idx + 1]->getDeclName() == Name)
-        ++Result.second;
-      break;
+      unsigned Last = Idx + 1;
+      while (Last != Size && Array[Last]->getDeclName() == Name)
+        ++Last;
+      return lookup_result(&Array[Idx], &Array[Last]);
     }
 
-  return Result;
+  return lookup_result(0, 0);
 }
 
 DeclContext::lookup_const_result 
@@ -539,7 +529,7 @@ DeclContext::lookup(ASTContext &Context, DeclarationName Name) const {
   return const_cast<DeclContext*>(this)->lookup(Context, Name);
 }
 
-void DeclContext::insert(ASTContext &Context, NamedDecl *D) {
+void DeclContext::insert(ASTContext &Context, ScopedDecl *D) {
   DeclContext *PrimaryContext = getPrimaryContext(Context);
   if (PrimaryContext != this) {
     PrimaryContext->insert(Context, D);
@@ -553,60 +543,80 @@ void DeclContext::insert(ASTContext &Context, NamedDecl *D) {
     insertImpl(D);
 }
 
-void DeclContext::insertImpl(NamedDecl *D) {
+static bool isRedeclarationOf(ScopedDecl *D, ScopedDecl *OldD) {
+  assert(D->getDeclName() == OldD->getDeclName() && "Declaration name mismatch");
+
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    // For function declarations, we keep track of redeclarations.
+    return FD->getPreviousDeclaration() == OldD;
+
+  // For non-function declarations, if the declarations are of the
+  // same kind then this must be a redeclaration, or semantic analysis
+  // would not have given us the new declaration.
+  return D->getKind() == OldD->getKind();
+}
+
+void DeclContext::insertImpl(ScopedDecl *D) {
+  bool MayBeRedeclaration = true;
+
   if (!isLookupMap()) {
     unsigned Size = LookupPtr.getInt();
 
     // The lookup data is stored as an array. Search through the array
     // to find the insertion location.
-    NamedDecl **Array;
+    ScopedDecl **Array;
     if (Size == 0) {
-      Array = new NamedDecl*[LookupIsMap - 1];
+      Array = new ScopedDecl*[LookupIsMap - 1];
       LookupPtr.setPointer(Array);
     } else {
-      Array = static_cast<NamedDecl **>(LookupPtr.getPointer());
+      Array = static_cast<ScopedDecl **>(LookupPtr.getPointer());
     }
 
     // We always keep declarations of the same name next to each other
     // in the array, so that it is easy to return multiple results
-    // from lookup(). There will be zero, one, or two declarations of
-    // the same name.
-    unsigned Match;
-    for (Match = 0; Match != Size; ++Match)
-      if (Array[Match]->getDeclName() == D->getDeclName())
+    // from lookup(). 
+    unsigned FirstMatch;
+    for (FirstMatch = 0; FirstMatch != Size; ++FirstMatch)
+      if (Array[FirstMatch]->getDeclName() == D->getDeclName())
         break;
 
-    if (Match != Size) {
-      // We found another declaration with the same name. If it's also
-      // in the same identifier namespace, update the declaration in
-      // place.
-      Decl::IdentifierNamespace NS = D->getIdentifierNamespace();
-      if (Array[Match]->getIdentifierNamespace() == NS) {
-       Array[Match] = D;
-       return;
-      }
-      if (Match + 1 < Size && Array[Match + 1]->getIdentifierNamespace() == NS) {
-       Array[Match + 1] = D;
-       return;
+    unsigned InsertPos = FirstMatch;
+    if (FirstMatch != Size) {
+      // We found another declaration with the same name. First
+      // determine whether this is a redeclaration of an existing
+      // declaration in this scope, in which case we will replace the
+      // existing declaration.
+      unsigned LastMatch = FirstMatch;
+      for (; LastMatch != Size; ++LastMatch) {
+        if (Array[LastMatch]->getDeclName() != D->getDeclName())
+          break;
+
+        if (isRedeclarationOf(D, Array[LastMatch])) {
+          // D is a redeclaration of an existing element in the
+          // array. Replace that element with D.
+          Array[LastMatch] = D;
+          return;
+        }
       }
 
-      // If there is an existing declaration in the namespace of
-      // ordinary identifiers, then it must precede the tag
-      // declaration for C++ name lookup to operate properly. Therefore,
-      // if our match is an ordinary name and the new name is in the
-      // tag namespace, we'll insert the new declaration after it. 
-      if (Match != Size && (NS == Decl::IDNS_Tag) && 
-         (Array[Match]->getIdentifierNamespace() & Decl::IDNS_Ordinary))
-       ++Match;
+      // [FirstMatch, LastMatch) contains the set of declarations that
+      // have the same name as this declaration. Determine where the
+      // declaration D will be inserted into this range. 
+      if (D->getIdentifierNamespace() == Decl::IDNS_Tag)
+        InsertPos = LastMatch;
+      else if (Array[LastMatch-1]->getIdentifierNamespace() == Decl::IDNS_Tag)
+        InsertPos = LastMatch - 1;
+      else
+        InsertPos = LastMatch;
     }
        
     if (Size < LookupIsMap - 1) {
       // The new declaration will fit in the array. Insert the new
       // declaration at the position Match in the array. 
-      for (unsigned Idx = Size; Idx > Match; --Idx)
+      for (unsigned Idx = Size; Idx > InsertPos; --Idx)
        Array[Idx] = Array[Idx-1];
       
-      Array[Match] = D;
+      Array[InsertPos] = D;
       LookupPtr.setInt(Size + 1);
       return;
     }
@@ -621,20 +631,37 @@ void DeclContext::insertImpl(NamedDecl *D) {
     delete [] Array;
 
     // Fall through to perform insertion into the map.
-  } 
+    MayBeRedeclaration = false;
+  }
 
   // Insert this declaration into the map.
   StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
   StoredDeclsMap::iterator Pos = Map->find(D->getDeclName());
-  unsigned IndexOfD = D->getIdentifierNamespace() & Decl::IDNS_Ordinary? 0 : 1;
+  if (Pos != Map->end()) {
+    if (MayBeRedeclaration) {
+      // Determine if this declaration is actually a redeclaration.
+      for (std::vector<ScopedDecl *>::iterator I = Pos->second.begin(),
+                                            IEnd = Pos->second.end();
+           I != IEnd; ++I) {
+        if (isRedeclarationOf(D, *I)) {
+          // D is a redeclaration of *I. Replace *I with D and we're
+          // done.
+          *I = D;
+          return;
+        }
+      }
+    }
 
-  if (Pos == Map->end()) {
     // Put this declaration into the appropriate slot.
-    TwoNamedDecls Val;
-    Val.Decls[IndexOfD] = D;
-    Val.Decls[!IndexOfD] = 0;
-    Map->insert(std::make_pair(D->getDeclName(),Val)).first;
+    if (D->getIdentifierNamespace() == Decl::IDNS_Tag || Pos->second.empty())
+      Pos->second.push_back(D);
+    else if (Pos->second.back()->getIdentifierNamespace() == Decl::IDNS_Tag) {
+      ScopedDecl *TagD = Pos->second.back();
+      Pos->second.back() = D;
+      Pos->second.push_back(TagD);
+    } else
+      Pos->second.push_back(D);
   } else {
-    Pos->second.Decls[IndexOfD] = D;
+    (*Map)[D->getDeclName()].push_back(D);
   }
 }

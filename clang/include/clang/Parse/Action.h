@@ -569,7 +569,8 @@ public:
                                              ExprTy *Idx, SourceLocation RLoc) {
     return 0;
   }
-  virtual ExprResult ActOnMemberReferenceExpr(ExprTy *Base,SourceLocation OpLoc,
+  virtual ExprResult ActOnMemberReferenceExpr(Scope *S, ExprTy *Base,
+                                              SourceLocation OpLoc,
                                               tok::TokenKind OpKind,
                                               SourceLocation MemberLoc,
                                               IdentifierInfo &Member) {
@@ -650,7 +651,7 @@ public:
     } U;
   };
   
-  virtual ExprResult ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
+  virtual ExprResult ActOnBuiltinOffsetOf(Scope *S, SourceLocation BuiltinLoc,
                                           SourceLocation TypeLoc, TypeTy *Arg1,
                                           OffsetOfComponent *CompPtr,
                                           unsigned NumComponents,

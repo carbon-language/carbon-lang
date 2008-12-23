@@ -483,7 +483,8 @@ namespace {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }
-    virtual ExprResult ActOnMemberReferenceExpr(ExprTy *Base,SourceLocation OpLoc,
+    virtual ExprResult ActOnMemberReferenceExpr(Scope *S, ExprTy *Base,
+                                                SourceLocation OpLoc,
                                                 tok::TokenKind OpKind,
                                                 SourceLocation MemberLoc,
                                                 IdentifierInfo &Member) {
@@ -565,7 +566,7 @@ namespace {
       return 0;
     }
   
-    virtual ExprResult ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
+    virtual ExprResult ActOnBuiltinOffsetOf(Scope *S, SourceLocation BuiltinLoc,
                                             SourceLocation TypeLoc, TypeTy *Arg1,
                                             OffsetOfComponent *CompPtr,
                                             unsigned NumComponents,
