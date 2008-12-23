@@ -684,7 +684,7 @@ static void HandleDLLImportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
-  
+
   d->addAttr(new DLLImportAttr());
 }
 
@@ -694,27 +694,54 @@ static void HandleDLLExportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
-  
+
   d->addAttr(new DLLExportAttr());
 }
 
 static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // check the attribute arguments.
+  // Attribute has no arguments.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
-  
+
+  // Attribute can be applied only to functions.
+  if (!isa<FunctionDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "stdcall" << "function";
+    return;
+  }
+
+  // stdcall and fastcall attributes are mutually incompatible.
+  if (d->getAttr<FastCallAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
+      << "stdcall" << "fastcall";
+    return;
+  }
+
   d->addAttr(new StdCallAttr());
 }
 
 static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // check the attribute arguments.
+  // Attribute has no arguments.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
-  
+
+  if (!isa<FunctionDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "fastcall" << "function";
+    return;
+  }
+
+  // stdcall and fastcall attributes are mutually incompatible.
+  if (d->getAttr<StdCallAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
+      << "fastcall" << "stdcall";
+    return;
+  }
+
   d->addAttr(new FastCallAttr());
 }
 

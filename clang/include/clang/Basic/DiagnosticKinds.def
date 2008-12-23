@@ -803,6 +803,8 @@ DIAG(err_objc_decls_may_only_appear_in_global_scope, ERROR,
      "Objective-C declarations may only appear in global scope")
 
 // Attributes
+DIAG(err_attributes_are_not_compatible, ERROR,
+     "%0 and %1 attributes are not compatible")
 DIAG(err_attribute_wrong_number_arguments, ERROR,
      "attribute requires %0 argument(s)")
 DIAG(err_attribute_missing_parameter_name, ERROR,
@@ -851,6 +853,8 @@ DIAG(err_as_qualified_auto_decl, ERROR,
      "automatic variable qualified with an address space")
 DIAG(err_attribute_annotate_no_string, ERROR,
      "argument to annotate attribute was not a string literal")
+DIAG(warn_redeclaration_without_attribute_prev_attribute_ignored, WARNING,
+  "'%0' redeclared without %1 attribute: previous %1 ignored")
 DIAG(warn_attribute_ignored, WARNING,
      "%0 attribute ignored")
 DIAG(warn_attribute_weak_on_field, WARNING,
