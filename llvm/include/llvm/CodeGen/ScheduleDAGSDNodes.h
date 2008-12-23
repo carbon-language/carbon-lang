@@ -118,10 +118,11 @@ namespace llvm {
     
     virtual SelectionDAG *getDAG() { return DAG; }
 
-    /// BuildSchedUnits - Build SUnits from the selection dag that we are input.
-    /// This SUnit graph is similar to the SelectionDAG, but represents flagged
-    /// together nodes with a single SUnit.
-    virtual void BuildSchedUnits();
+    /// BuildSchedGraph - Build the SUnit graph from the selection dag that we
+    /// are input.  This SUnit graph is similar to the SelectionDAG, but
+    /// excludes nodes that aren't interesting to scheduling, and represents
+    /// flagged together nodes with a single SUnit.
+    virtual void BuildSchedGraph();
 
     /// ComputeLatency - Compute node latency.
     ///
@@ -189,6 +190,10 @@ namespace llvm {
     void CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                 const TargetInstrDesc &II,
                                 DenseMap<SDValue, unsigned> &VRBaseMap);
+
+    /// BuildSchedUnits, AddSchedEdges - Helper functions for BuildSchedGraph.
+    void BuildSchedUnits();
+    void AddSchedEdges();
   };
 }
 

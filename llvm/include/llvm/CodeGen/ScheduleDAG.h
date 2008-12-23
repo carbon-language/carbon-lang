@@ -442,10 +442,10 @@ namespace llvm {
     ///
     void Run();
 
-    /// BuildSchedUnits - Build SUnits and set up their Preds and Succs
+    /// BuildSchedGraph - Build SUnits and set up their Preds and Succs
     /// to form the scheduling dependency graph.
     ///
-    virtual void BuildSchedUnits() = 0;
+    virtual void BuildSchedGraph() = 0;
 
     /// ComputeLatency - Compute node latency.
     ///

@@ -170,8 +170,8 @@ void ScheduleDAGRRList::Schedule() {
   LiveRegDefs.resize(TRI->getNumRegs(), NULL);  
   LiveRegCycles.resize(TRI->getNumRegs(), 0);
 
-  // Build scheduling units.
-  BuildSchedUnits();
+  // Build the scheduling graph.
+  BuildSchedGraph();
 
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));

@@ -91,8 +91,8 @@ HazardRecognizer::~HazardRecognizer() {}
 void ScheduleDAGList::Schedule() {
   DOUT << "********** List Scheduling **********\n";
   
-  // Build scheduling units.
-  BuildSchedUnits();
+  // Build the scheduling graph.
+  BuildSchedGraph();
 
   AvailableQueue->initNodes(SUnits);
   

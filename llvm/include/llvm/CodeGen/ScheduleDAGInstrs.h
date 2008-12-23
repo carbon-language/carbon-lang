@@ -45,9 +45,9 @@ namespace llvm {
       return &SUnits.back();
     }
 
-    /// BuildSchedUnits - Build SUnits from the MachineBasicBlock that we are
+    /// BuildSchedGraph - Build SUnits from the MachineBasicBlock that we are
     /// input.
-    virtual void BuildSchedUnits();
+    virtual void BuildSchedGraph();
 
     /// ComputeLatency - Compute node latency.
     ///

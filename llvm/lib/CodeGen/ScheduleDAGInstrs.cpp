@@ -89,7 +89,7 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineBasicBlock *bb,
                                      const MachineDominatorTree &mdt)
   : ScheduleDAG(0, bb, tm), MLI(mli), MDT(mdt) {}
 
-void ScheduleDAGInstrs::BuildSchedUnits() {
+void ScheduleDAGInstrs::BuildSchedGraph() {
   SUnits.clear();
   SUnits.reserve(BB->size());
 

@@ -64,9 +64,6 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
   }
 }
 
-/// BuildSchedUnits - Build SUnits from the selection dag that we are input.
-/// This SUnit graph is similar to the SelectionDAG, but represents flagged
-/// together nodes with a single SUnit.
 void ScheduleDAGSDNodes::BuildSchedUnits() {
   // During scheduling, the NodeId field of SDNode is used to map SDNodes
   // to their associated SUnits by holding SUnits table indices. A value
@@ -146,7 +143,9 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     else
       ComputeLatency(NodeSUnit);
   }
-  
+}
+
+void ScheduleDAGSDNodes::AddSchedEdges() {
   // Pass 2: add the preds, succs, etc.
   for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
     SUnit *SU = &SUnits[su];
@@ -194,6 +193,17 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
       }
     }
   }
+}
+
+/// BuildSchedGraph - Build the SUnit graph from the selection dag that we
+/// are input.  This SUnit graph is similar to the SelectionDAG, but
+/// excludes nodes that aren't interesting to scheduling, and represents
+/// flagged together nodes with a single SUnit.
+void ScheduleDAGSDNodes::BuildSchedGraph() {
+  // Populate the SUnits array.
+  BuildSchedUnits();
+  // Compute all the scheduling dependencies between nodes.
+  AddSchedEdges();
 }
 
 void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {

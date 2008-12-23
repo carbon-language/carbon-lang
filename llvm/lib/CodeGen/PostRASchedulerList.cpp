@@ -121,8 +121,8 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 void SchedulePostRATDList::Schedule() {
   DOUT << "********** List Scheduling **********\n";
   
-  // Build scheduling units.
-  BuildSchedUnits();
+  // Build the scheduling graph.
+  BuildSchedGraph();
 
   if (EnableAntiDepBreaking) {
     if (BreakAntiDependencies()) {
@@ -133,7 +133,7 @@ void SchedulePostRATDList::Schedule() {
       // that register, and add new anti-dependence and output-dependence
       // edges based on the next live range of the register.
       SUnits.clear();
-      BuildSchedUnits();
+      BuildSchedGraph();
     }
   }
 
