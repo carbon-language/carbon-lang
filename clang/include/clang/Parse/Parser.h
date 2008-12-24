@@ -887,6 +887,7 @@ private:
 
   TypeTy *ParseTypeName();
   AttributeList *ParseAttributes();
+  void FuzzyParseMicrosoftDeclSpec();
   void ParseTypeofSpecifier(DeclSpec &DS);
 
   /// DeclaratorScopeObj - RAII object used in Parser::ParseDirectDeclarator to

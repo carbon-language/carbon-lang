@@ -192,6 +192,20 @@ AttributeList *Parser::ParseAttributes() {
   return CurrAttr;
 }
 
+/// FuzzyParseMicrosoftDeclSpec. When -fms-extensions is enabled, this
+/// routine is called to skip/ignore tokens that comprise the MS declspec.
+void Parser::FuzzyParseMicrosoftDeclSpec() {
+  assert(Tok.is(tok::kw___declspec) && "Not a declspec!");
+  ConsumeToken();
+  if (Tok.is(tok::l_paren)) {
+    unsigned short savedParenCount = ParenCount;
+    do {
+      ConsumeAnyToken();
+    } while (ParenCount > savedParenCount && Tok.isNot(tok::eof));
+  } 
+  return;
+}
+
 /// ParseDeclaration - Parse a full 'declaration', which consists of
 /// declaration-specifiers, some number of declarators, and a semicolon.
 /// 'Context' should be a Declarator::TheContext value.
@@ -537,6 +551,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     // GNU attributes support.
     case tok::kw___attribute:
       DS.AddAttributes(ParseAttributes());
+      continue;
+
+    // Microsoft declspec support.
+    case tok::kw___declspec:
+      if (!PP.getLangOptions().Microsoft)
+        goto DoneWithDeclSpec;
+      FuzzyParseMicrosoftDeclSpec();
       continue;
       
     // storage-class-specifier
