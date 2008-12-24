@@ -1960,47 +1960,40 @@ SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
 }
 
 
-/// translateX86CC - do a one to one translation of a ISD::CondCode to the X86
-/// specific condition code. It returns a false if it cannot do a direct
-/// translation. X86CC is the translated CondCode.  LHS/RHS are modified as
-/// needed.
-static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
-                           unsigned &X86CC, SDValue &LHS, SDValue &RHS,
-                           SelectionDAG &DAG) {
-  X86CC = X86::COND_INVALID;
+/// TranslateX86CC - do a one to one translation of a ISD::CondCode to the X86
+/// specific condition code, returning the condition code and the LHS/RHS of the
+/// comparison to make.
+static unsigned TranslateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
+                               SDValue &LHS, SDValue &RHS, SelectionDAG &DAG) {
   if (!isFP) {
     if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS)) {
       if (SetCCOpcode == ISD::SETGT && RHSC->isAllOnesValue()) {
         // X > -1   -> X == 0, jump !sign.
         RHS = DAG.getConstant(0, RHS.getValueType());
-        X86CC = X86::COND_NS;
-        return true;
+        return X86::COND_NS;
       } else if (SetCCOpcode == ISD::SETLT && RHSC->isNullValue()) {
         // X < 0   -> X == 0, jump on sign.
-        X86CC = X86::COND_S;
-        return true;
+        return X86::COND_S;
       } else if (SetCCOpcode == ISD::SETLT && RHSC->getZExtValue() == 1) {
         // X < 1   -> X <= 0
         RHS = DAG.getConstant(0, RHS.getValueType());
-        X86CC = X86::COND_LE;
-        return true;
+        return X86::COND_LE;
       }
     }
 
     switch (SetCCOpcode) {
     default: assert(0 && "Invalid integer condition!");
-    case ISD::SETEQ:  X86CC = X86::COND_E;  break;
-    case ISD::SETGT:  X86CC = X86::COND_G;  break;
-    case ISD::SETGE:  X86CC = X86::COND_GE; break;
-    case ISD::SETLT:  X86CC = X86::COND_L;  break;
-    case ISD::SETLE:  X86CC = X86::COND_LE; break;
-    case ISD::SETNE:  X86CC = X86::COND_NE; break;
-    case ISD::SETULT: X86CC = X86::COND_B;  break;
-    case ISD::SETUGT: X86CC = X86::COND_A;  break;
-    case ISD::SETULE: X86CC = X86::COND_BE; break;
-    case ISD::SETUGE: X86CC = X86::COND_AE; break;
+    case ISD::SETEQ:  return X86::COND_E;
+    case ISD::SETGT:  return X86::COND_G;
+    case ISD::SETGE:  return X86::COND_GE;
+    case ISD::SETLT:  return X86::COND_L;
+    case ISD::SETLE:  return X86::COND_LE;
+    case ISD::SETNE:  return X86::COND_NE;
+    case ISD::SETULT: return X86::COND_B;
+    case ISD::SETUGT: return X86::COND_A;
+    case ISD::SETULE: return X86::COND_BE;
+    case ISD::SETUGE: return X86::COND_AE;
     }
-    return true;
   }
   
   // First determine if it is required or is profitable to flip the operands.
@@ -2029,25 +2022,25 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
   //  1 | 0 | 0 | X == Y
   //  1 | 1 | 1 | unordered
   switch (SetCCOpcode) {
-  default: return false;
+  default: assert(0 && "Condcode should be pre-legalized away");
   case ISD::SETUEQ:
-  case ISD::SETEQ:   X86CC = X86::COND_E; return true;
+  case ISD::SETEQ:   return X86::COND_E;
   case ISD::SETOLT:              // flipped
   case ISD::SETOGT:
-  case ISD::SETGT:   X86CC = X86::COND_A; return true;
+  case ISD::SETGT:   return X86::COND_A;
   case ISD::SETOLE:              // flipped
   case ISD::SETOGE:
-  case ISD::SETGE:   X86CC = X86::COND_AE; return true;
+  case ISD::SETGE:   return X86::COND_AE;
   case ISD::SETUGT:              // flipped
   case ISD::SETULT:
-  case ISD::SETLT:   X86CC = X86::COND_B;  return true;
+  case ISD::SETLT:   return X86::COND_B;
   case ISD::SETUGE:              // flipped
   case ISD::SETULE:
-  case ISD::SETLE:   X86CC = X86::COND_BE; return true;
+  case ISD::SETLE:   return X86::COND_BE;
   case ISD::SETONE:
-  case ISD::SETNE:   X86CC = X86::COND_NE; return true;
-  case ISD::SETUO:   X86CC = X86::COND_P;  return true;
-  case ISD::SETO:    X86CC = X86::COND_NP; return true;
+  case ISD::SETNE:   return X86::COND_NE;
+  case ISD::SETUO:   return X86::COND_P;
+  case ISD::SETO:    return X86::COND_NP;
   }
 }
 
@@ -5029,12 +5022,9 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   SDValue Op1 = Op.getOperand(1);
   SDValue CC = Op.getOperand(2);
   bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
-  unsigned X86CC;
 
-  if (!translateX86CC(cast<CondCodeSDNode>(CC)->get(), isFP, X86CC,
-                     Op0, Op1, DAG))
-    assert(0 && "Illegal SetCC!");
-    
+  unsigned X86CC = TranslateX86CC(cast<CondCodeSDNode>(CC)->get(), isFP,
+                                  Op0, Op1, DAG);
     
   Cond = DAG.getNode(X86ISD::CMP, MVT::i32, Op0, Op1);
   return DAG.getNode(X86ISD::SETCC, MVT::i8,
@@ -5746,11 +5736,9 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
       break;
     }
 
-    unsigned X86CC;
     SDValue LHS = Op.getOperand(1);
     SDValue RHS = Op.getOperand(2);
-    translateX86CC(CC, true, X86CC, LHS, RHS, DAG);
-
+    unsigned X86CC = TranslateX86CC(CC, true, LHS, RHS, DAG);
     SDValue Cond = DAG.getNode(Opc, MVT::i32, LHS, RHS);
     SDValue SetCC = DAG.getNode(X86ISD::SETCC, MVT::i8,
                                 DAG.getConstant(X86CC, MVT::i8), Cond);
