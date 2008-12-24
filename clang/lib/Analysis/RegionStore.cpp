@@ -29,55 +29,83 @@ using namespace clang;
 // Actual Store type.
 typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionBindingsTy;
 
-// RegionView GDM stuff.
-typedef llvm::ImmutableList<const MemRegion*> RegionViewTy;
-typedef llvm::ImmutableMap<const MemRegion*, RegionViewTy> RegionViewMapTy;
-static int RegionViewMapTyIndex = 0;
+//===----------------------------------------------------------------------===//
+// Region "Views"
+//===----------------------------------------------------------------------===//
+//
+//  MemRegions can be layered on top of each other.  This GDM entry tracks
+//  what are the MemRegions that layer a given MemRegion.
+//
+typedef llvm::ImmutableList<const MemRegion*> RegionViews;
+namespace { class VISIBILITY_HIDDEN RegionViewMap {}; }
+static int RegionViewMapIndex = 0;
 namespace clang {
-template<> struct GRStateTrait<RegionViewMapTy> 
-  : public GRStatePartialTrait<RegionViewMapTy> {
-  static void* GDMIndex() { return &RegionViewMapTyIndex; }
-};
+  template<> struct GRStateTrait<RegionViewMap> 
+    : public GRStatePartialTrait<llvm::ImmutableMap<const MemRegion*,
+                                                    RegionViews> > {
+                                                      
+    static void* GDMIndex() { return &RegionViewMapIndex; }
+  };
 }
 
-// RegionExtents GDM stuff.
-// Currently RegionExtents are in bytes. We can change this representation when
-// there are real requirements.
-typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionExtentsTy;
-static int RegionExtentsTyIndex = 0;
+//===----------------------------------------------------------------------===//
+// Region "Extents"
+//===----------------------------------------------------------------------===//
+//
+//  MemRegions represent chunks of memory with a size (their "extent").  This
+//  GDM entry tracks the extents for regions.  Extents are in bytes.
+namespace { class VISIBILITY_HIDDEN RegionExtents {}; }
+static int RegionExtentsIndex = 0;
 namespace clang {
-template<> struct GRStateTrait<RegionExtentsTy>
-  : public GRStatePartialTrait<RegionExtentsTy> {
-  static void* GDMIndex() { return &RegionExtentsTyIndex; }
-};
+  template<> struct GRStateTrait<RegionExtents>
+    : public GRStatePartialTrait<llvm::ImmutableMap<const MemRegion*, SVal> > {
+    static void* GDMIndex() { return &RegionExtentsIndex; }
+  };
 }
 
-// KillSet GDM stuff.
-typedef llvm::ImmutableSet<const MemRegion*> RegionKills;
+//===----------------------------------------------------------------------===//
+// Region "killsets".
+//===----------------------------------------------------------------------===//
+//
+// RegionStore lazily adds value bindings to regions when the analyzer
+//  handles assignment statements.  Killsets track which default values have
+//  been killed, thus distinguishing between "unknown" values and default
+//  values.
+//
+namespace { class VISIBILITY_HIDDEN RegionKills {}; }
 static int RegionKillsIndex = 0;
 namespace clang {
   template<> struct GRStateTrait<RegionKills>
-  : public GRStatePartialTrait<RegionKills> {
+  : public GRStatePartialTrait< llvm::ImmutableSet<const MemRegion*> > {
     static void* GDMIndex() { return &RegionKillsIndex; }
   };
 }
 
-// Regions that have default value zero.
-// FIXME: redefinition!
-// typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionDefaultValue;
-// static int RegionDefaultValueIndex = 0;
-// namespace clang {
-//   template<> struct GRStateTrait<RegionDefaultValue>
-//     : public GRStatePartialTrait<RegionDefaultValue> {
-//     static void* GDMIndex() { return &RegionDefaultValueIndex; }
-//   };
-// }
+//===----------------------------------------------------------------------===//
+// Regions with default values of '0'.
+//===----------------------------------------------------------------------===//
+//
+// This GDM entry tracks what regions have a default value of 0 if they
+// have no bound value and have not been killed.
+//
+namespace { class VISIBILITY_HIDDEN RegionDefaultValue {}; }
+static int RegionDefaultValueIndex = 0;
+namespace clang {
+ template<> struct GRStateTrait<RegionDefaultValue>
+   : public GRStatePartialTrait<llvm::ImmutableMap<const MemRegion*, SVal> > {
+   static void* GDMIndex() { return &RegionDefaultValueIndex; }
+ };
+}
+
+//===----------------------------------------------------------------------===//
+// Main RegionStore logic.
+//===----------------------------------------------------------------------===//
 
 namespace {
 
 class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   RegionBindingsTy::Factory RBFactory;
-  RegionViewTy::Factory RVFactory;
+  RegionViews::Factory RVFactory;
 
   GRStateManager& StateMgr;
   MemRegionManager MRMgr;
@@ -337,13 +365,11 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
     GRStateRef state(St, StateMgr);
 
     // Get the size of the super region in bytes.
-    RegionExtentsTy::data_type* T 
-      = state.get<RegionExtentsTy>(ATR->getSuperRegion());
-
-    assert(T && "region extent not exist");
+    const SVal* Extent = state.get<RegionExtents>(ATR->getSuperRegion());
+    assert(Extent && "region extent not exist");
 
     // Assume it's ConcreteInt for now.
-    llvm::APSInt SSize = cast<nonloc::ConcreteInt>(*T).getValue();
+    llvm::APSInt SSize = cast<nonloc::ConcreteInt>(*Extent).getValue();
 
     // Get the size of the element in bits.
     QualType LvT = ATR->getLValueType(getContext());
@@ -586,7 +612,7 @@ RegionStoreManager::BindCompoundLiteral(const GRState* St,
 const GRState* RegionStoreManager::setExtent(const GRState* St,
                                              const MemRegion* R, SVal Extent) {
   GRStateRef state(St, StateMgr);
-  return state.set<RegionExtentsTy>(R, Extent);
+  return state.set<RegionExtents>(R, Extent);
 }
 
 
@@ -843,12 +869,12 @@ const GRState* RegionStoreManager::AddRegionView(const GRState* St,
   GRStateRef state(St, StateMgr);
 
   // First, retrieve the region view of the base region.
-  RegionViewMapTy::data_type* d = state.get<RegionViewMapTy>(Base);
-  RegionViewTy L = d ? *d : RVFactory.GetEmptyList();
+  const RegionViews* d = state.get<RegionViewMap>(Base);
+  RegionViews L = d ? *d : RVFactory.GetEmptyList();
 
   // Now add View to the region view.
   L = RVFactory.Add(View, L);
 
   // Create a new state with the new region view.
-  return state.set<RegionViewMapTy>(Base, L);
+  return state.set<RegionViewMap>(Base, L);
 }
