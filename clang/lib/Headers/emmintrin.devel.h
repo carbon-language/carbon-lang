@@ -34,6 +34,7 @@ typedef double __m128d __attribute__((__vector_size__(16)));
 typedef long long __m128i __attribute__((__vector_size__(16)));
 
 typedef int __v4si __attribute__((__vector_size__(16)));
+typedef char __v16qi __attribute__((__vector_size__(16)));
 
 static inline __m128d __attribute__((__always_inline__)) _mm_add_sd(__m128d a, __m128d b)
 {
@@ -364,6 +365,108 @@ static inline __m128d __attribute__((__always_inline__)) _mm_cvtpi32_pd(__m64 a)
 static inline double __attribute__((__always_inline__)) _mm_cvtsd_f64(__m128d a)
 {
   return a[0];
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_load_pd(double const *dp)
+{
+  return *(__m128d*)dp;
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_load1_pd(double const *dp)
+{
+  return (__m128d){ dp[0], dp[0] };
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_loadr_pd(double const *dp)
+{
+  return (__m128d){ dp[1], dp[0] };
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_loadu_pd(double const *dp)
+{
+  return __builtin_ia32_loadupd(dp);
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_load_sd(double const *dp)
+{
+  return (__m128d){ *dp, 0.0 };
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_loadh_pd(__m128d a, double const *dp)
+{
+  return __builtin_shufflevector(a, *(__m128d *)dp, 0, 2);
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_loadl_pd(__m128d a, double const *dp)
+{
+  return __builtin_shufflevector(a, *(__m128d *)dp, 2, 1);
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_set_sd(double w)
+{
+  return (__m128d){ w, 0 };
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_set1_pd(double w)
+{
+  return (__m128d){ w, w };
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_set_pd(double w, double x)
+{
+  return (__m128d){ w, x };
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_setr_pd(double w, double x)
+{
+  return (__m128d){ x, w };
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_setzero_pd(void)
+{
+  return (__m128d){ 0, 0 };
+}
+
+static inline __m128d __attribute__((__always_inline__)) _mm_move_sd(__m128d a, __m128d b)
+{
+  return (__m128d){ b[0], a[1] };
+}
+
+static inline void __attribute__((__always_inline__)) _mm_store_sd(double *dp, __m128d a)
+{
+  dp[0] = a[0];
+}
+
+static inline void __attribute__((__always_inline__)) _mm_store1_pd(double *dp, __m128d a)
+{
+  dp[0] = a[0];
+  dp[1] = a[0];
+}
+
+static inline void __attribute__((__always_inline__)) _mm_store_pd(double *dp, __m128d a)
+{
+  *(__m128d *)dp = a;
+}
+
+static inline void __attribute__((__always_inline__)) _mm_storeu_pd(double *dp, __m128d a)
+{
+  __builtin_ia32_storeupd(dp, a);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_storer_pd(double *dp, __m128d a)
+{
+  dp[0] = a[1];
+  dp[1] = a[0];
+}
+
+static inline void __attribute__((__always_inline__)) _mm_storeh_pd(double *dp, __m128d a)
+{
+  dp[0] = a[1];
+}
+
+static inline void __attribute__((__always_inline__)) _mm_storel_pd(double *dp, __m128d a)
+{
+  dp[0] = a[0];
 }
 
 #endif /* __SSE2__ */
