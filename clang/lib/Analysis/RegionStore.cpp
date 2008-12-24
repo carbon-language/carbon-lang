@@ -765,8 +765,8 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
 
   // When we are binding the whole array, it always has default value 0.
   GRStateRef state(St, StateMgr);
-  //  St = state.set<RegionDefaultValue>(R, NonLoc::MakeVal(getBasicVals(), 0, 
-  //                                                        false));
+  St = state.set<RegionDefaultValue>(R, NonLoc::MakeVal(getBasicVals(), 0, 
+                                                        false));
 
   Store store = St->getStore();
 
@@ -841,9 +841,9 @@ RegionStoreManager::BindStruct(const GRState* St, const TypedRegion* R, SVal V){
     // There may be fewer values than fields only when we are initializing a
     // struct decl. In this case, mark the region as having default value.
     if (VI == VE) {
-      // GRStateRef state(St, StateMgr);
-    //St = state.set<RegionDefaultValue>(R, NonLoc::MakeVal(getBasicVals(), 0, 
-      //                                                   false));
+      GRStateRef state(St, StateMgr);
+      St = state.set<RegionDefaultValue>(R, NonLoc::MakeVal(getBasicVals(), 0, 
+                                                            false));
       break;
     }
 
