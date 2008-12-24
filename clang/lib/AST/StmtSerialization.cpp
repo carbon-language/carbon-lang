@@ -245,6 +245,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
 
     case CXXCatchStmtClass:
       return CXXCatchStmt::CreateImpl(D, C);
+
+    case CXXTryStmtClass:
+      return CXXTryStmt::CreateImpl(D, C);
   }
 }
 
