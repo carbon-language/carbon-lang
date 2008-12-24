@@ -1183,6 +1183,11 @@ public:
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOfTyp; }
   static bool classof(const TypeOfType *) { return true; }
+
+protected:
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
+  friend class Type;
 };
 
 class TagType : public Type {

@@ -113,7 +113,11 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
     case Type::TypeOfExp:
       D.RegisterPtr(PtrID, TypeOfExpr::CreateImpl(Context, D));
       break;
-      
+
+    case Type::TypeOfTyp:
+      D.RegisterPtr(PtrID, TypeOfType::CreateImpl(Context, D));
+      break;
+
     case Type::TemplateTypeParm:
       D.RegisterPtr(PtrID,TemplateTypeParmType::CreateImpl(Context, D));
       break;
@@ -282,6 +286,7 @@ Type* TypedefType::CreateImpl(ASTContext& Context, Deserializer& D) {
 //===----------------------------------------------------------------------===//
 // TypeOfExpr
 //===----------------------------------------------------------------------===//
+
 void TypeOfExpr::EmitImpl(llvm::Serializer& S) const {
   S.EmitOwnedPtr(TOExpr);
 }
@@ -293,6 +298,26 @@ Type* TypeOfExpr::CreateImpl(ASTContext& Context, Deserializer& D) {
     const_cast<std::vector<Type*>&>(Context.getTypes());
 
   TypeOfExpr* T = new TypeOfExpr(E, Context.getCanonicalType(E->getType()));
+  Types.push_back(T);
+
+  return T;
+}
+
+//===----------------------------------------------------------------------===//
+// TypeOfType
+//===----------------------------------------------------------------------===//
+
+void TypeOfType::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(TOType);
+}
+
+Type* TypeOfType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  QualType TOType = QualType::ReadVal(D);
+
+  std::vector<Type*>& Types = 
+    const_cast<std::vector<Type*>&>(Context.getTypes());
+
+  TypeOfType* T = new TypeOfType(TOType, Context.getCanonicalType(TOType));
   Types.push_back(T);
 
   return T;
