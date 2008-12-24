@@ -99,6 +99,7 @@ void TargetAsmInfo::fillDefaultValues() {
   SupportsDebugInformation = false;
   SupportsExceptionHandling = false;
   DwarfRequiresFrameSection = true;
+  FDEEncodingRequiresSData4 = true;
   GlobalEHDirective = 0;
   SupportsWeakOmittedEHFrame = true;
   DwarfSectionOffsetDirective = 0;

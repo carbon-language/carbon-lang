@@ -448,6 +448,11 @@ namespace llvm {
     ///
     bool DwarfRequiresFrameSection; // Defaults to true.
 
+    /// FDEEncodingRequiresSData4 - If set, the FDE Encoding in the EH section
+    /// includes DW_EH_PE_sdata4.
+    /// 
+    bool FDEEncodingRequiresSData4;         // Defaults to true
+
     /// GlobalEHDirective - This is the directive used to make exception frame
     /// tables globally visible.
     ///
@@ -813,6 +818,9 @@ namespace llvm {
     }
     bool doesDwarfRequireFrameSection() const {
       return DwarfRequiresFrameSection;
+    }
+    bool doesFDEEncodingRequireSData4() const {
+      return FDEEncodingRequiresSData4;
     }
     const char *getGlobalEHDirective() const {
       return GlobalEHDirective;

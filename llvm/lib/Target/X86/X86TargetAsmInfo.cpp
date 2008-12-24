@@ -70,6 +70,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   COMMDirectiveTakesAlignment = (Subtarget->getDarwinVers() >= 9);
   HasDotTypeDotSizeDirective = false;
   HasSingleParameterDotFile = false;
+  FDEEncodingRequiresSData4 = false;
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorsSection = ".constructor";
     StaticDtorsSection = ".destructor";

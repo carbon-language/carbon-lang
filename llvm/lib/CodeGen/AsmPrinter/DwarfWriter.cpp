@@ -3017,13 +3017,25 @@ private:
 
       Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
       Asm->EOL("LSDA Encoding (pcrel sdata4)");
-      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
-      Asm->EOL("FDE Encoding (pcrel sdata4)");
+
+      if (TAI->doesFDEEncodingRequireSData4()) {
+        Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
+        Asm->EOL("FDE Encoding (pcrel sdata4)");
+      } else {
+        Asm->EmitInt8(DW_EH_PE_pcrel);
+        Asm->EOL("FDE Encoding (pcrel)");
+      }
    } else {
       Asm->EmitULEB128Bytes(1);
       Asm->EOL("Augmentation Size");
-      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
-      Asm->EOL("FDE Encoding (pcrel sdata4)");
+
+      if (TAI->doesFDEEncodingRequireSData4()) {
+        Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
+        Asm->EOL("FDE Encoding (pcrel sdata4)");
+      } else {
+        Asm->EmitInt8(DW_EH_PE_pcrel);
+        Asm->EOL("FDE Encoding (pcrel)");
+      }
     }
 
     // Indicate locations of general callee saved registers in frame.
