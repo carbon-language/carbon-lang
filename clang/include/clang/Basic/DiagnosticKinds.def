@@ -1352,6 +1352,10 @@ DIAG(warn_value_always_false, WARNING,
 // FIXME: %2 is an english string here.
 DIAG(err_typecheck_convert_incompatible, ERROR,
      "incompatible type %2 %1, expected %0")
+DIAG(err_cannot_initialize_decl_noname, ERROR,
+     "cannot initialize a value of type %0 with an %select{rvalue|lvalue}1 of type %2")
+DIAG(err_cannot_initialize_decl, ERROR,
+     "cannot initialize %0 with an %select{rvalue|lvalue}1 of type %2")
 DIAG(warn_incompatible_qualified_id, WARNING,
      "incompatible type %2 %1, expected %0")
 DIAG(warn_incompatible_qualified_id_operands, WARNING,

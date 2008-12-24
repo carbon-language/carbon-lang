@@ -103,8 +103,20 @@ public:
     Z z2;    // expected-error{{no matching constructor for initialization}}
     Z z3(z);
   }
+
+  void test_Z(const Z& z) {
+    Z z2(z); // expected-error{{no matching constructor for initialization of 'z2'}}
+  }
 };
 
 void test_Z(const Z& z) {
   Z z2(z); // expected-error{{no matching constructor for initialization of 'z2'}}
 }
+
+struct ZZ {
+  void f(ZZ z = g()); // expected-error{{no matching constructor for initialization}}
+
+  static ZZ g(int = 17);
+
+  ZZ(ZZ&, int = 17); // expected-note{{candidate function}}
+};

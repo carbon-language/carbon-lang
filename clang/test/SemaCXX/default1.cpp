@@ -26,4 +26,6 @@ struct Y {
   explicit Y(int);
 };
 
-void k(Y y = 17); // expected-error{{incompatible type in default argument}}
+void k(Y y = 17); // expected-error{{cannot initialize 'y' with an rvalue of type 'int'}}
+
+void kk(Y = 17); // expected-error{{cannot initialize a value of type 'struct Y' with an rvalue of type 'int'}}

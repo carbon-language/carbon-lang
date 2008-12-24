@@ -16,8 +16,8 @@ void test() {
   for (;s;) ; // expected-error {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
   switch (s) {} // expected-error {{statement requires expression of integer type ('struct S' invalid)}}
 
-  while (struct S {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{incompatible type}} expected-error {{expression must have bool type}}
-  while (struct {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{incompatible type}} expected-error {{expression must have bool type}}
+  while (struct S {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{cannot initialize 'x' with an rvalue of type 'int'}} expected-error {{expression must have bool type}}
+  while (struct {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{cannot initialize 'x' with an rvalue of type 'int'}} expected-error {{expression must have bool type}}
   switch (enum {E} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{incompatible type}}
 
   if (int x=0) { // expected-note {{previous definition is here}}

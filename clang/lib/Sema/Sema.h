@@ -276,6 +276,8 @@ public:
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
                                          SourceLocation EqualLoc,
                                          ExprTy *defarg);
+  virtual void ActOnParamUnparsedDefaultArgument(DeclTy *param, 
+                                                 SourceLocation EqualLoc);
   virtual void ActOnParamDefaultArgumentError(DeclTy *param);
   void AddInitializerToDecl(DeclTy *dcl, ExprArg init);
   void ActOnUninitializedDecl(DeclTy *dcl);

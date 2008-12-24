@@ -1507,16 +1507,17 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
     QualType ProtoArgType = Proto->getArgType(i);
     
     Expr *Arg;
-    if (i < NumArgs) 
+    if (i < NumArgs) {
       Arg = Args[i];
-    else 
+
+      // Pass the argument.
+      if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
+        return true;
+    } else 
+      // We already type-checked the argument, so we know it works.
       Arg = new CXXDefaultArgExpr(FDecl->getParamDecl(i));
     QualType ArgType = Arg->getType();
-    
-    // Pass the argument.
-    if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
-      return true;
-    
+        
     Call->setArg(i, Arg);
   }
   

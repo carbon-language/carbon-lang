@@ -841,7 +841,7 @@ static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
 
 void QualType::getAsStringInternal(std::string &S) const {
   if (isNull()) {
-    S += "NULL TYPE\n";
+    S += "NULL TYPE";
     return;
   }
   

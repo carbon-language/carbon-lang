@@ -504,6 +504,27 @@ public:
   Expr *getDefaultArg() { return DefaultArg; }
   void setDefaultArg(Expr *defarg) { DefaultArg = defarg; }
 
+  /// hasUnparsedDefaultArg - Determines whether this parameter has a
+  /// default argument that has not yet been parsed. This will occur
+  /// during the processing of a C++ class whose member functions have
+  /// default arguments, e.g.,
+  /// @code
+  ///   class X {
+  ///   public:
+  ///     void f(int x = 17); // x has an unparsed default argument now
+  ///   }; // x has a regular default argument now
+  /// @endcode
+  bool hasUnparsedDefaultArg() const {
+    return DefaultArg == reinterpret_cast<Expr *>(-1);
+  }
+
+  /// setUnparsedDefaultArg - Specify that this parameter has an
+  /// unparsed default argument. The argument will be replaced with a
+  /// real default argument via setDefaultArg when the class
+  /// definition enclosing the function declaration that owns this
+  /// default argument is completed.
+  void setUnparsedDefaultArg() { DefaultArg = reinterpret_cast<Expr *>(-1); }
+
   QualType getOriginalType() const;
   
   // Implement isa/cast/dyncast/etc.

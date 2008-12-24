@@ -126,8 +126,9 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
   //   a declaration of a variable of the parameter type, using the
   //   copy-initialization semantics (8.5).
   Expr *DefaultArgPtr = DefaultArg.get();
-  bool DefaultInitFailed = PerformCopyInitialization(DefaultArgPtr, ParamType,
-                                                     "in default argument");
+  bool DefaultInitFailed = CheckInitializerTypes(DefaultArgPtr, ParamType,
+                                                 EqualLoc,
+                                                 Param->getDeclName());
   if (DefaultArgPtr != DefaultArg.get()) {
     DefaultArg.take();
     DefaultArg.reset(DefaultArgPtr);
@@ -145,6 +146,17 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
 
   // Okay: add the default argument to the parameter
   Param->setDefaultArg(DefaultArg.take());
+}
+
+/// ActOnParamUnparsedDefaultArgument - We've seen a default
+/// argument for a function parameter, but we can't parse it yet
+/// because we're inside a class definition. Note that this default
+/// argument will be parsed later.
+void Sema::ActOnParamUnparsedDefaultArgument(DeclTy *param, 
+                                             SourceLocation EqualLoc) {
+  ParmVarDecl *Param = (ParmVarDecl*)param;
+  if (Param)
+    Param->setUnparsedDefaultArg();
 }
 
 /// ActOnParamDefaultArgumentError - Parsing or semantic analysis of
@@ -171,16 +183,16 @@ void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
     if (chunk.Kind == DeclaratorChunk::Function) {
       for (unsigned argIdx = 0; argIdx < chunk.Fun.NumArgs; ++argIdx) {
         ParmVarDecl *Param = (ParmVarDecl *)chunk.Fun.ArgInfo[argIdx].Param;
-        if (Param->getDefaultArg()) {
-          Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc)
-            << Param->getDefaultArg()->getSourceRange();
-          Param->setDefaultArg(0);
-        } else if (CachedTokens *Toks 
-                     = chunk.Fun.ArgInfo[argIdx].DefaultArgTokens) {
+        if (Param->hasUnparsedDefaultArg()) {
+          CachedTokens *Toks = chunk.Fun.ArgInfo[argIdx].DefaultArgTokens;
           Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc)
             << SourceRange((*Toks)[1].getLocation(), Toks->back().getLocation());
           delete Toks;
           chunk.Fun.ArgInfo[argIdx].DefaultArgTokens = 0;
+        } else if (Param->getDefaultArg()) {
+          Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc)
+            << Param->getDefaultArg()->getSourceRange();
+          Param->setDefaultArg(0);
         }
       }
     }
@@ -269,7 +281,8 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
     for (p = 0; p <= LastMissingDefaultArg; ++p) {
       ParmVarDecl *Param = FD->getParamDecl(p);
       if (Param->getDefaultArg()) {
-        delete Param->getDefaultArg();
+        if (!Param->hasUnparsedDefaultArg())
+          Param->getDefaultArg()->Destroy(Context);
         Param->setDefaultArg(0);
       }
     }
@@ -736,6 +749,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
   ActOnFields(S, RLoc, TagDecl,
               (DeclTy**)FieldCollector->getCurFields(),
               FieldCollector->getCurNumFields(), LBrac, RBrac, 0);
+  AddImplicitlyDeclaredMembersToClass(cast<CXXRecordDecl>((Decl*)TagDecl));
 }
 
 /// AddImplicitlyDeclaredMembersToClass - Adds any implicitly-declared
@@ -872,7 +886,6 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
 void Sema::ActOnFinishCXXClassDef(DeclTy *D) {
   CXXRecordDecl *Rec = cast<CXXRecordDecl>(static_cast<Decl *>(D));
   FieldCollector->FinishClass();
-  AddImplicitlyDeclaredMembersToClass(Rec);
   PopDeclContext();
 
   // Everything, including inline method definitions, have been parsed.
@@ -901,6 +914,12 @@ void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method) {
 /// ActOnParamDefaultArgument event for this parameter.
 void Sema::ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *ParamD) {
   ParmVarDecl *Param = (ParmVarDecl*)ParamD;
+
+  // If this parameter has an unparsed default argument, clear it out
+  // to make way for the parsed default argument.
+  if (Param->hasUnparsedDefaultArg())
+    Param->setDefaultArg(0);
+
   S->AddDecl(Param);
   if (Param->getDeclName())
     IdResolver.AddDecl(Param);
@@ -1871,7 +1890,11 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   if (Op != OO_Call) {
     for (FunctionDecl::param_iterator Param = FnDecl->param_begin();
          Param != FnDecl->param_end(); ++Param) {
-      if (Expr *DefArg = (*Param)->getDefaultArg())
+      if ((*Param)->hasUnparsedDefaultArg())
+        return Diag((*Param)->getLocation(), 
+                    diag::err_operator_overload_default_arg)
+          << FnDecl->getDeclName();
+      else if (Expr *DefArg = (*Param)->getDefaultArg())
         return Diag((*Param)->getLocation(),
                     diag::err_operator_overload_default_arg)
           << FnDecl->getDeclName() << DefArg->getSourceRange();

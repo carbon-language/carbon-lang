@@ -1,5 +1,4 @@
 // RUN: clang -fsyntax-only -verify %s 
-
 typedef int INT;
 
 class Foo {
@@ -37,3 +36,7 @@ struct y {
   y(int);
 };
 extern y b;
+
+struct Length {
+  Length l() const { return *this; }
+};

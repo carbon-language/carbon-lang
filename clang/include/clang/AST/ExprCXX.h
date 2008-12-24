@@ -335,7 +335,9 @@ public:
   // Param is the parameter whose default argument is used by this
   // expression.
   explicit CXXDefaultArgExpr(ParmVarDecl *param) 
-    : Expr(CXXDefaultArgExprClass, param->getDefaultArg()->getType()),
+    : Expr(CXXDefaultArgExprClass, 
+           param->hasUnparsedDefaultArg()? param->getType().getNonReferenceType()
+                                         : param->getDefaultArg()->getType()),
       Param(param) { }
 
   // Retrieve the parameter that the argument was created from.

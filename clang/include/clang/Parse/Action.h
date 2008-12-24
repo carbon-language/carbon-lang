@@ -734,6 +734,13 @@ public:
                                          ExprTy *defarg) {
   }
 
+  /// ActOnParamUnparsedDefaultArgument - We've seen a default
+  /// argument for a function parameter, but we can't parse it yet
+  /// because we're inside a class definition. Note that this default
+  /// argument will be parsed later.
+  virtual void ActOnParamUnparsedDefaultArgument(DeclTy *param, 
+                                                 SourceLocation EqualLoc) { }
+
   /// ActOnParamDefaultArgumentError - Parsing or semantic analysis of
   /// the default argument for the parameter param failed.
   virtual void ActOnParamDefaultArgumentError(DeclTy *param) { }

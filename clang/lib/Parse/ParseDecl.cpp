@@ -1811,6 +1811,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       // ActOnParamDefaultArgument will reject the default argument in
       // C.
       if (Tok.is(tok::equal)) {
+        SourceLocation EqualLoc = Tok.getLocation();
+
         // Parse the default argument
         if (D.getContext() == Declarator::MemberContext) {
           // If we're inside a class definition, cache the tokens
@@ -1824,10 +1826,12 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                     tok::semi, false)) {
             delete DefArgToks;
             DefArgToks = 0;
-          } 
+            Actions.ActOnParamDefaultArgumentError(Param);
+          } else
+            Actions.ActOnParamUnparsedDefaultArgument(Param, EqualLoc);
         } else {
           // Consume the '='.
-          SourceLocation EqualLoc = ConsumeToken();
+          ConsumeToken();
         
           OwningExprResult DefArgResult(ParseAssignmentExpression());
           if (DefArgResult.isInvalid()) {

@@ -13,5 +13,5 @@ void f(Y y, int *ip, float *fp) {
   X x1 = y; // expected-error{{no matching constructor for initialization of 'x1'; candidate is:}}
   X x2 = 0;
   X x3 = ip;
-  X x4 = fp; // expected-error{{incompatible type initializing 'x4', expected 'class X'}}
+  X x4 = fp; // expected-error{{cannot initialize 'x4' with an lvalue of type 'float *'}}
 }

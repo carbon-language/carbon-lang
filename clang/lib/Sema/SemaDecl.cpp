@@ -888,9 +888,14 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       if (!PerformImplicitConversion(Init, DeclType, "initializing"))
         return false;
       
-      return Diag(InitLoc, diag::err_typecheck_convert_incompatible)
-        << DeclType << InitEntity << "initializing"
-        << Init->getSourceRange();
+      if (InitEntity)
+        return Diag(InitLoc, diag::err_cannot_initialize_decl)
+          << InitEntity << (int)(Init->isLvalue(Context) == Expr::LV_Valid)
+          << Init->getType() << Init->getSourceRange();
+      else
+        return Diag(InitLoc, diag::err_cannot_initialize_decl_noname)
+          << DeclType << (int)(Init->isLvalue(Context) == Expr::LV_Valid)
+          << Init->getType() << Init->getSourceRange();
     }
 
     // C99 6.7.8p16.
