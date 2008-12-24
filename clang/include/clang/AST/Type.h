@@ -1161,6 +1161,11 @@ public:
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOfExp; }
   static bool classof(const TypeOfExpr *) { return true; }
+
+protected:
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
+  friend class Type;
 };
 
 /// TypeOfType (GCC extension).

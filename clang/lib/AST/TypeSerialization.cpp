@@ -109,6 +109,10 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
     case Type::TypeName:
       D.RegisterPtr(PtrID,TypedefType::CreateImpl(Context,D));
       break;
+
+    case Type::TypeOfExp:
+      D.RegisterPtr(PtrID, TypeOfExpr::CreateImpl(Context, D));
+      break;
       
     case Type::TemplateTypeParm:
       D.RegisterPtr(PtrID,TemplateTypeParmType::CreateImpl(Context, D));
@@ -272,6 +276,25 @@ Type* TypedefType::CreateImpl(ASTContext& Context, Deserializer& D) {
   Types.push_back(T);
   
   D.ReadPtr(T->Decl); // May be backpatched.
+  return T;
+}
+
+//===----------------------------------------------------------------------===//
+// TypeOfExpr
+//===----------------------------------------------------------------------===//
+void TypeOfExpr::EmitImpl(llvm::Serializer& S) const {
+  S.EmitOwnedPtr(TOExpr);
+}
+
+Type* TypeOfExpr::CreateImpl(ASTContext& Context, Deserializer& D) {
+  Expr* E = D.ReadOwnedPtr<Expr>(Context);
+  
+  std::vector<Type*>& Types = 
+    const_cast<std::vector<Type*>&>(Context.getTypes());
+
+  TypeOfExpr* T = new TypeOfExpr(E, Context.getCanonicalType(E->getType()));
+  Types.push_back(T);
+
   return T;
 }
   
