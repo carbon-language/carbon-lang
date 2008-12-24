@@ -5031,15 +5031,14 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
   unsigned X86CC;
 
-  if (translateX86CC(cast<CondCodeSDNode>(CC)->get(), isFP, X86CC,
-                     Op0, Op1, DAG)) {
-    Cond = DAG.getNode(X86ISD::CMP, MVT::i32, Op0, Op1);
-    return DAG.getNode(X86ISD::SETCC, MVT::i8,
-                       DAG.getConstant(X86CC, MVT::i8), Cond);
-  }
-
-  assert(0 && "Illegal SetCC!");
-  return SDValue();
+  if (!translateX86CC(cast<CondCodeSDNode>(CC)->get(), isFP, X86CC,
+                     Op0, Op1, DAG))
+    assert(0 && "Illegal SetCC!");
+    
+    
+  Cond = DAG.getNode(X86ISD::CMP, MVT::i32, Op0, Op1);
+  return DAG.getNode(X86ISD::SETCC, MVT::i8,
+                     DAG.getConstant(X86CC, MVT::i8), Cond);
 }
 
 SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
