@@ -124,10 +124,21 @@ public:
   const GRState* BindCompoundLiteral(const GRState* St, 
                                      const CompoundLiteralExpr* CL, SVal V);
 
+  /// getLValueString - Returns an SVal representing the lvalue of a
+  ///  StringLiteral.  Within RegionStore a StringLiteral has an
+  ///  associated StringRegion, and the lvalue of a StringLiteral is
+  ///  the lvalue of that region.
   SVal getLValueString(const GRState* St, const StringLiteral* S);
 
+  /// getLValueCompoundLiteral - Returns an SVal representing the
+  ///   lvalue of a compound literal.  Within RegionStore a compound
+  ///   literal has an associated region, and the lvalue of the
+  ///   compound literal is the lvalue of that region.
   SVal getLValueCompoundLiteral(const GRState* St, const CompoundLiteralExpr*);
 
+  /// getLValueVar - Returns an SVal that represents the lvalue of a
+  ///  variable.  Within RegionStore a variable has an associated
+  ///  VarRegion, and the lvalue of the variable is the lvalue of that region.
   SVal getLValueVar(const GRState* St, const VarDecl* VD);
   
   SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
@@ -138,6 +149,12 @@ public:
 
   SVal getSizeInElements(const GRState* St, const MemRegion* R);
 
+  /// ArrayToPointer - Emulates the "decay" of an array to a pointer
+  ///  type.  'Array' represents the lvalue of the array being decayed
+  ///  to a pointer, and the returned SVal represents the decayed
+  ///  version of that lvalue (i.e., a pointer to the first element of
+  ///  the array).  This is called by GRExprEngine when evaluating
+  ///  casts from arrays to pointers.
   SVal ArrayToPointer(SVal Array);
 
   /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
@@ -232,17 +249,30 @@ StoreManager* clang::CreateRegionStoreManager(GRStateManager& StMgr) {
   return new RegionStoreManager(StMgr);
 }
 
+
+/// getLValueString - Returns an SVal representing the lvalue of a
+///  StringLiteral.  Within RegionStore a StringLiteral has an
+///  associated StringRegion, and the lvalue of a StringLiteral is the
+///  lvalue of that region.
 SVal RegionStoreManager::getLValueString(const GRState* St, 
                                          const StringLiteral* S) {
   return loc::MemRegionVal(MRMgr.getStringRegion(S));
 }
 
+/// getLValueVar - Returns an SVal that represents the lvalue of a
+///  variable.  Within RegionStore a variable has an associated
+///  VarRegion, and the lvalue of the variable is the lvalue of that region.
 SVal RegionStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
   return loc::MemRegionVal(MRMgr.getVarRegion(VD));
 }
 
-SVal RegionStoreManager::getLValueCompoundLiteral(const GRState* St,
-                                                const CompoundLiteralExpr* CL) {
+/// getLValueCompoundLiteral - Returns an SVal representing the lvalue
+///   of a compound literal.  Within RegionStore a compound literal
+///   has an associated region, and the lvalue of the compound literal
+///   is the lvalue of that region.
+SVal
+RegionStoreManager::getLValueCompoundLiteral(const GRState* St,
+					     const CompoundLiteralExpr* CL) {
   return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL));
 }
 
@@ -403,9 +433,15 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
   assert(0 && "Other regions are not supported yet.");
 }
 
-// Cast 'pointer to array' to 'pointer to the first element of array'.
-
+/// ArrayToPointer - Emulates the "decay" of an array to a pointer
+///  type.  'Array' represents the lvalue of the array being decayed
+///  to a pointer, and the returned SVal represents the decayed
+///  version of that lvalue (i.e., a pointer to the first element of
+///  the array).  This is called by GRExprEngine when evaluating casts
+///  from arrays to pointers.
 SVal RegionStoreManager::ArrayToPointer(SVal Array) {
+  // FIXME: This should be factored into GRExprEngine.  This allows
+  // us to pass a "loc" instead of an "SVal" for "Array".
   if (Array.isUnknownOrUndef())
     return Array;
   
@@ -437,7 +473,14 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
     if (Ta == Tb)
       return CastResult(state, R);
   }
-  
+
+  // FIXME: We should handle the case when we are casting *back* to a
+  // previous type. For example:
+  //
+  //      void* x = ...;
+  //      char* y = (char*) x;
+  //      void* z = (void*) y; // <-- we should get the same region that is 
+  //                                  bound to 'x'
   const MemRegion* ViewR = MRMgr.getAnonTypedRegion(CastToTy, R);  
   return CastResult(AddRegionView(state, ViewR, R), ViewR);
 }
@@ -446,17 +489,36 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   assert(!isa<UnknownVal>(L) && "location unknown");
   assert(!isa<UndefinedVal>(L) && "location undefined");
 
+  // FIXME: What does loc::SymbolVal represent?  It represents the value
+  //  of a location but that value is not known.  In the future we should
+  //  handle potential aliasing relationships; e.g. a loc::SymbolVal could
+  //  be an alias for a particular region.
   if (isa<loc::SymbolVal>(L))
     return UnknownVal();
 
+  // FIXME: Is this even possible?  Shouldn't this be treated as a null
+  //  dereference at a higher level?
   if (isa<loc::ConcreteInt>(L))
     return UndefinedVal();
 
+  // FIXME: Should this be refactored into GRExprEngine or GRStateManager?
+  //  It seems that all StoreManagers would do the same thing here.
   if (isa<loc::FuncVal>(L))
     return L;
 
+  // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
+  //  instead of 'Loc', and have the other Loc cases handled at a higher level.
   const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion();
   assert(R && "bad region");
+
+  // FIXME: We should eventually handle funny addressing.  e.g.:
+  //
+  //   int x = ...;
+  //   int *p = &x;
+  //   char *q = (char*) p;
+  //   char c = *q;  // returns the first byte of 'x'.
+  //
+  // Such funny addressing will occur due to layering of regions.
 
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
     if (TR->getRValueType(getContext())->isStructureType())
@@ -468,25 +530,40 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   // Check if the region has a binding.
   if (V)
     return *V;
-  
-  // Check if the region is in killset.
+
   GRStateRef state(St, StateMgr);
+  
+  // FIXME: Do we even need a killset?  If 'Unknown' is explicitly
+  //  bound to to a region won't this be enough?  (that's basically
+  //  what a killset is).  RemoveDeadBindings should only remove
+  //  bindings that are no longer accessible, which means that won't
+  //  ever be read.
+
+  // Check if the region is in killset.
   if (state.contains<RegionKills>(R))
     return UnknownVal();
 
-  // The location is not initialized.
-  
-  // We treat parameters as symbolic values.
+  // The location does not have a bound value.  This means that it has
+  // the value it had upon its creation and/or entry to the analyzed
+  // function/method.  These are either symbolic values or 'undefined'.
+
+  // We treat function parameters as symbolic values.
   if (const VarRegion* VR = dyn_cast<VarRegion>(R))
     if (isa<ParmVarDecl>(VR->getDecl()))
       return SVal::MakeSymbolValue(getSymbolManager(), VR,
                                    VR->getRValueType(getContext()));
   
-  if (MRMgr.onStack(R) || MRMgr.onHeap(R))
+  if (MRMgr.onStack(R) || MRMgr.onHeap(R)) {
+    // All stack variables are considered to have undefined values
+    // upon creation.  All heap allocated blocks are considered to
+    // have undefined values as well unless they are explicitly bound
+    // to specific values.
     return UndefinedVal();
-  else
-    return SVal::MakeSymbolValue(getSymbolManager(), R, 
-                             cast<TypedRegion>(R)->getRValueType(getContext()));
+  }
+
+  // All other values are symbolic.
+  return SVal::MakeSymbolValue(getSymbolManager(), R, 
+			  cast<TypedRegion>(R)->getRValueType(getContext()));
 
   // FIXME: consider default values for elements and fields.
 }
