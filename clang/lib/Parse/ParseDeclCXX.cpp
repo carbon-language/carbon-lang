@@ -202,7 +202,8 @@ Parser::TypeTy *Parser::ParseClassName(const CXXScopeSpec *SS) {
 ///       struct-or-union:
 ///         'struct'
 ///         'union'
-void Parser::ParseClassSpecifier(DeclSpec &DS) {
+void Parser::ParseClassSpecifier(DeclSpec &DS,
+                                 TemplateParameterLists *TemplateParams) {
   assert((Tok.is(tok::kw_class) || 
           Tok.is(tok::kw_struct) || 
           Tok.is(tok::kw_union)) &&
@@ -258,8 +259,13 @@ void Parser::ParseClassSpecifier(DeclSpec &DS) {
   }
 
   // Parse the tag portion of this.
-  DeclTy *TagDecl = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
-                                     NameLoc, Attr);
+  DeclTy *TagDecl 
+    = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
+                       NameLoc, Attr,
+                       Action::MultiTemplateParamsArg(
+                         Actions,
+                         TemplateParams? &(*TemplateParams)[0] : 0,
+                         TemplateParams? TemplateParams->size() : 0));
 
   // Parse the optional base clause (C++ only).
   if (getLang().CPlusPlus && Tok.is(tok::colon)) {

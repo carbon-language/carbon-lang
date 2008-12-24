@@ -3,7 +3,8 @@
 // Errors
 export class foo { };   // expected-error {{expected template}}
 template  x;            // expected-error {{expected '<' after 'template'}}
-export template x;      // expected-error {{expected '<' after 'template'}}
+export template x;      // expected-error {{expected '<' after 'template'}} \
+                        // expected-note {{exported templates are unsupported}}
 template < ;            // expected-error {{parse error}}
 template <template X> ; // expected-error {{expected '<' after 'template'}}
 template <template <typename> > ;       // expected-error {{expected 'class' before '>'}}

@@ -2527,7 +2527,8 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
 Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
-                             AttributeList *Attr) {
+                             AttributeList *Attr,
+                             MultiTemplateParamsArg TemplateParameterLists) {
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TK == TK_Definition) &&
          "Nameless record must be a definition!");

@@ -63,6 +63,7 @@ public:
   typedef void BaseTy;
   typedef void MemInitTy;
   typedef void CXXScopeTy;
+  typedef void TemplateParamsTy;
   typedef void TemplateArgTy;
 
   /// Expr/Stmt/Type/BaseResult - Provide a unique type to wrap
@@ -90,6 +91,7 @@ public:
   /// Multiple expressions or statements as arguments.
   typedef ASTMultiPtr<&ActionBase::DeleteExpr> MultiExprArg;
   typedef ASTMultiPtr<&ActionBase::DeleteStmt> MultiStmtArg;
+  typedef ASTMultiPtr<&ActionBase::DeleteTemplateParams> MultiTemplateParamsArg;
   typedef ASTMultiPtr<&ActionBase::DeleteTemplateArg> MultiTemplateArgArg;
 
   // Utilities for Action implementations to return smart results.
@@ -303,7 +305,8 @@ public:
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, const CXXScopeSpec &SS,
                            IdentifierInfo *Name, SourceLocation NameLoc,
-                           AttributeList *Attr) {
+                           AttributeList *Attr,
+                           MultiTemplateParamsArg TemplateParameterLists) {
     // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
     // is (struct/union/enum/class).
     return 0;
@@ -944,11 +947,15 @@ public:
   /// parameter (NULL indicates an unnamed template parameter) and
   /// ParamName is the location of the parameter name (if any). 
   /// If the type parameter has a default argument, it will be added
-  /// later via ActOnTypeParameterDefault.
+  /// later via ActOnTypeParameterDefault. Depth and Position provide
+  /// the number of enclosing templates (see
+  /// ActOnTemplateParameterList) and the number of previous
+  /// parameters within this template parameter list.
   virtual DeclTy *ActOnTypeParameter(Scope *S, bool Typename, 
 				     SourceLocation KeyLoc,
 				     IdentifierInfo *ParamName,
-				     SourceLocation ParamNameLoc) {
+				     SourceLocation ParamNameLoc,
+                                     unsigned Depth, unsigned Position) {
     return 0;
   }
 
@@ -960,12 +967,54 @@ public:
   /// ActOnNonTypeTemplateParameter - Called when a C++ non-type
   /// template parameter (e.g., "int Size" in "template<int Size>
   /// class Array") has been parsed. S is the current scope and D is
-  /// the parsed declarator.
-  virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D) {
+  /// the parsed declarator. Depth and Position provide           
+  /// the number of enclosing templates (see
+  /// ActOnTemplateParameterList) and the number of previous
+  /// parameters within this template parameter list.
+  virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
+                                                unsigned Depth, 
+                                                unsigned Position) {
     return 0;
   }
 
-  
+  /// ActOnTemplateParameterList - Called when a complete template
+  /// parameter list has been parsed, e.g.,
+  ///
+  /// @code
+  /// export template<typename T, T Size>
+  /// @endcode
+  ///
+  /// Depth is the number of enclosing template parameter lists. This
+  /// value does not include templates from outer scopes. For example:
+  ///
+  /// @code
+  /// template<typename T> // depth = 0
+  ///   class A {
+  ///     template<typename U> // depth = 0
+  ///       class B;
+  ///   };
+  ///
+  /// template<typename T> // depth = 0
+  ///   template<typename U> // depth = 1
+  ///     class A<T>::B { ... };
+  /// @endcode
+  ///
+  /// ExportLoc, if valid, is the position of the "export"
+  /// keyword. Otherwise, "export" was not specified. 
+  /// TemplateLoc is the position of the template keyword, LAngleLoc
+  /// is the position of the left angle bracket, and RAngleLoc is the
+  /// position of the corresponding right angle bracket.
+  /// Params/NumParams provides the template parameters that were
+  /// parsed as part of the template-parameter-list.
+  virtual TemplateParamsTy *
+  ActOnTemplateParameterList(unsigned Depth,
+                             SourceLocation ExportLoc,
+                             SourceLocation TemplateLoc, 
+                             SourceLocation LAngleLoc,
+                             DeclTy **Params, unsigned NumParams,
+                             SourceLocation RAngleLoc) {
+    return 0;
+  }
 
   //===----------------------- Obj-C Declarations -------------------------===//
   

@@ -945,6 +945,34 @@ protected:
   void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// TemplateParameterList - Stores a list of template parameters. 
+class TemplateParameterList {
+  /// NumParams - The number of template parameters in this template
+  /// parameter list. 
+  unsigned NumParams;
+
+  TemplateParameterList(Decl **Params, unsigned NumParams);
+
+public:
+  static TemplateParameterList *Create(ASTContext &C, Decl **Params, 
+                                       unsigned NumParams);
+
+  /// iterator - Iterates through the template parameters in this list.
+  typedef Decl** iterator;
+
+  /// const_iterator - Iterates through the template parameters in this list.
+  typedef Decl* const* const_iterator;
+
+  iterator begin() { return reinterpret_cast<Decl **>(this + 1); }
+  const_iterator begin() const { 
+    return reinterpret_cast<Decl * const *>(this + 1); 
+  }
+  iterator end() { return begin() + NumParams; }
+  const_iterator end() const { return begin() + NumParams; }
+
+  unsigned size() const { return NumParams; }
+};
+
 } // end namespace clang
 
 #endif

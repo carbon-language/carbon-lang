@@ -78,7 +78,10 @@ public:
   typedef Action::BaseTy BaseTy;
   typedef Action::MemInitTy MemInitTy;
   typedef Action::CXXScopeTy CXXScopeTy;
+  typedef Action::TemplateParamsTy TemplateParamsTy;
   typedef Action::TemplateArgTy TemplateArgTy;
+
+  typedef llvm::SmallVector<TemplateParamsTy *, 4> TemplateParameterLists;
 
   typedef Action::ExprResult        ExprResult;
   typedef Action::StmtResult        StmtResult;
@@ -500,7 +503,8 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
   DeclTy *ParseExternalDeclaration();
-  DeclTy *ParseDeclarationOrFunctionDefinition();
+  DeclTy *ParseDeclarationOrFunctionDefinition(
+            TemplateParameterLists *TemplateParams = 0);
   DeclTy *ParseFunctionDefinition(Declarator &D);
   void ParseKNRParamDeclarations(Declarator &D);
   OwningExprResult ParseSimpleAsm();
@@ -751,9 +755,11 @@ private:
   DeclTy *ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclTy *ParseFunctionStatementBody(DeclTy *Decl, 
                                      SourceLocation L, SourceLocation R);
-  void ParseDeclarationSpecifiers(DeclSpec &DS);
+  void ParseDeclarationSpecifiers(DeclSpec &DS, 
+                                  TemplateParameterLists *TemplateParams = 0);
   bool MaybeParseTypeSpecifier(DeclSpec &DS, int &isInvalid, 
-                               const char *&PrevSpec);
+                               const char *&PrevSpec,
+                               TemplateParameterLists *TemplateParams = 0);
   void ParseSpecifierQualifierList(DeclSpec &DS);
   
   void ParseObjCTypeQualifierList(ObjCDeclSpec &DS);
@@ -928,7 +934,8 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
   TypeTy *ParseClassName(const CXXScopeSpec *SS = 0);
-  void ParseClassSpecifier(DeclSpec &DS);
+  void ParseClassSpecifier(DeclSpec &DS, 
+                           TemplateParameterLists *TemplateParams = 0);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    DeclTy *TagDecl);
   DeclTy *ParseCXXClassMemberDeclaration(AccessSpecifier AS);
@@ -948,14 +955,20 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 14: Templates [temp]
+  typedef llvm::SmallVector<DeclTy *, 4> TemplateParameterList;
+
   // C++ 14.1: Template Parameters [temp.param]
   DeclTy *ParseTemplateDeclaration(unsigned Context);
-  bool ParseTemplateParameters(DeclTy* TempDecl);
-  bool ParseTemplateParameterList(DeclTy *TmpDecl);
-  DeclTy *ParseTemplateParameter();
-  DeclTy *ParseTypeParameter();
-  DeclTy *ParseTemplateTemplateParameter();
-  DeclTy *ParseNonTypeTemplateParameter();
+  bool ParseTemplateParameters(unsigned Depth, 
+                               TemplateParameterList &TemplateParams,
+                               SourceLocation &LAngleLoc, 
+                               SourceLocation &RAngleLoc);
+  bool ParseTemplateParameterList(unsigned Depth,
+                                  TemplateParameterList &TemplateParams);
+  DeclTy *ParseTemplateParameter(unsigned Depth, unsigned Position);
+  DeclTy *ParseTypeParameter(unsigned Depth, unsigned Position);
+  DeclTy *ParseTemplateTemplateParameter(unsigned Depth, unsigned Position);
+  DeclTy *ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position);
   // C++ 14.3: Template arguments [temp.arg]
   typedef llvm::SmallVector<TemplateArgTy*, 8> TemplateArgList;
   void AnnotateTemplateIdToken(DeclTy *Template, const CXXScopeSpec *SS = 0);

@@ -86,7 +86,8 @@ bool Sema::DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl) {
 Sema::DeclTy *Sema::ActOnTypeParameter(Scope *S, bool Typename, 
 				       SourceLocation KeyLoc,
 				       IdentifierInfo *ParamName,
-				       SourceLocation ParamNameLoc) {
+				       SourceLocation ParamNameLoc,
+                                       unsigned Depth, unsigned Position) {
   assert(S->isTemplateParamScope() && 
 	 "Template type parameter not in template parameter scope!");
   bool Invalid = false;
@@ -117,7 +118,9 @@ Sema::DeclTy *Sema::ActOnTypeParameter(Scope *S, bool Typename,
 /// template parameter (e.g., "int Size" in "template<int Size>
 /// class Array") has been parsed. S is the current scope and D is
 /// the parsed declarator.
-Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D) {
+Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
+                                                  unsigned Depth, 
+                                                  unsigned Position) {
   QualType T = GetTypeForDeclarator(D, S);
 
   assert(S->isTemplateParamScope() && 
@@ -144,4 +147,19 @@ Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D) {
     IdResolver.AddDecl(Param);
   }
   return Param;
+}
+
+/// ActOnTemplateParameterList - Builds a TemplateParameterList that
+/// contains the template parameters in Params/NumParams.
+Sema::TemplateParamsTy *
+Sema::ActOnTemplateParameterList(unsigned Depth,
+                                 SourceLocation ExportLoc,
+                                 SourceLocation TemplateLoc, 
+                                 SourceLocation LAngleLoc,
+                                 DeclTy **Params, unsigned NumParams,
+                                 SourceLocation RAngleLoc) {
+  if (ExportLoc.isValid())
+    Diag(ExportLoc, diag::note_template_export_unsupported);
+
+  return TemplateParameterList::Create(Context, (Decl**)Params, NumParams);
 }

@@ -118,6 +118,7 @@ namespace clang
     // what types are required to be identical for the actions.
     typedef void ExprTy;
     typedef void StmtTy;
+    typedef void TemplateParamsTy;
     typedef void TemplateArgTy;
 
     /// ActionResult - This structure is used while parsing/acting on
@@ -146,6 +147,7 @@ namespace clang
     /// pointers need access to them.
     virtual void DeleteExpr(ExprTy *E) {}
     virtual void DeleteStmt(StmtTy *E) {}
+    virtual void DeleteTemplateParams(TemplateParamsTy *E) {}
     virtual void DeleteTemplateArg(TemplateArgTy *E) {}
   };
 

@@ -976,6 +976,8 @@ DIAG(err_template_param_shadow, ERROR,
      "declaration of %0 shadows template parameter")
 DIAG(note_template_param_here, NOTE,
      "template parameter is declared here")
+DIAG(note_template_export_unsupported, NOTE, 
+     "exported templates are unsupported")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name %0: expected expression")

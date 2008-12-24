@@ -373,7 +373,9 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
 
 /// ParseDeclarationOrFunctionDefinition - Parse either a function-definition or
 /// a declaration.  We can't tell which we have until we read up to the
-/// compound-statement in function-definition.
+/// compound-statement in function-definition. TemplateParams, if
+/// non-NULL, provides the template parameters when we're parsing a
+/// C++ template-declaration. 
 ///
 ///       function-definition: [C99 6.9.1]
 ///         decl-specs      declarator declaration-list[opt] compound-statement
@@ -385,10 +387,12 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
 /// [!C99]  init-declarator-list ';'                   [TODO: warn in c99 mode]
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
-Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
+Parser::DeclTy *
+Parser::ParseDeclarationOrFunctionDefinition(
+                                  TemplateParameterLists *TemplateParams) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
-  ParseDeclarationSpecifiers(DS);
+  ParseDeclarationSpecifiers(DS, TemplateParams);
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'

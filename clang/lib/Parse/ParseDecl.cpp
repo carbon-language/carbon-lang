@@ -419,7 +419,8 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [C++]   'virtual'
 /// [C++]   'explicit'
 ///
-void Parser::ParseDeclarationSpecifiers(DeclSpec &DS)
+void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
+                                        TemplateParameterLists *TemplateParams)
 {
   DS.SetRangeStart(Tok.getLocation());
   while (1) {
@@ -436,7 +437,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS)
     default: 
       // Try to parse a type-specifier; if we found one, continue. If it's not
       // a type, this falls through.
-      if (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec)) {
+      if (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec, TemplateParams)) {
         continue;
       }
 
@@ -661,7 +662,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS)
 /// [OBJC]  class-name objc-protocol-refs[opt]    [TODO]
 /// [OBJC]  typedef-name objc-protocol-refs[opt]  [TODO]
 bool Parser::MaybeParseTypeSpecifier(DeclSpec &DS, int& isInvalid,
-                                     const char *&PrevSpec) {
+                                     const char *&PrevSpec,
+                                     TemplateParameterLists *TemplateParams) {
   // Annotate typenames and C++ scope specifiers.
   TryAnnotateTypeOrScopeToken();
 
@@ -748,7 +750,7 @@ bool Parser::MaybeParseTypeSpecifier(DeclSpec &DS, int& isInvalid,
   case tok::kw_class:
   case tok::kw_struct:
   case tok::kw_union:
-    ParseClassSpecifier(DS);
+    ParseClassSpecifier(DS, TemplateParams);
     return true;
 
   // enum-specifier:
@@ -1036,7 +1038,8 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   else
     TK = Action::TK_Reference;
   DeclTy *TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TK, StartLoc,
-                                     SS, Name, NameLoc, Attr);
+                                     SS, Name, NameLoc, Attr, 
+                                     Action::MultiTemplateParamsArg(Actions));
   
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);

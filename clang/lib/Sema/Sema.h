@@ -307,7 +307,8 @@ public:
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, const CXXScopeSpec &SS,
                            IdentifierInfo *Name, SourceLocation NameLoc,
-                           AttributeList *Attr);
+                           AttributeList *Attr,
+                           MultiTemplateParamsArg TemplateParameterLists);
   
   virtual void ActOnDefs(Scope *S, DeclTy *TagD, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,
@@ -1034,9 +1035,19 @@ public:
   virtual DeclTy *ActOnTypeParameter(Scope *S, bool Typename, 
 				     SourceLocation KeyLoc,
 				     IdentifierInfo *ParamName,
-				     SourceLocation ParamNameLoc);
-  virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D);
-
+				     SourceLocation ParamNameLoc,
+                                     unsigned Depth, unsigned Position);
+  virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
+                                                unsigned Depth, 
+                                                unsigned Position);
+  virtual TemplateParamsTy *
+  ActOnTemplateParameterList(unsigned Depth,
+                             SourceLocation ExportLoc,
+                             SourceLocation TemplateLoc, 
+                             SourceLocation LAngleLoc,
+                             DeclTy **Params, unsigned NumParams,
+                             SourceLocation RAngleLoc);
+  
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                            IdentifierInfo *ClassName,

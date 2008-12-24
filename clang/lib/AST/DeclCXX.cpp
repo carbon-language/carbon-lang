@@ -37,6 +37,21 @@ NonTypeTemplateParmDecl::Create(ASTContext &C, DeclContext *DC,
   return new (Mem) NonTypeTemplateParmDecl(DC, L, Id, T, TypeSpecStartLoc);
 }
 
+TemplateParameterList::TemplateParameterList(Decl **Params, unsigned NumParams)
+  : NumParams(NumParams) {
+  for (unsigned Idx = 0; Idx < NumParams; ++Idx)
+    begin()[Idx] = Params[Idx];
+}
+
+TemplateParameterList *
+TemplateParameterList::Create(ASTContext &C, Decl **Params, 
+                              unsigned NumParams) {
+  unsigned Size = sizeof(TemplateParameterList) + sizeof(Decl *) * NumParams;
+  unsigned Align = llvm::AlignOf<TemplateParameterList>::Alignment;
+  void *Mem = C.getAllocator().Allocate(Size, Align);
+  return new (Mem) TemplateParameterList(Params, NumParams);
+}
+
 CXXRecordDecl::CXXRecordDecl(TagKind TK, DeclContext *DC,
                              SourceLocation L, IdentifierInfo *Id) 
   : RecordDecl(CXXRecord, TK, DC, L, Id),

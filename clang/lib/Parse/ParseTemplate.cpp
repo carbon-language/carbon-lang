@@ -27,59 +27,94 @@ Parser::DeclTy *Parser::ParseTemplateDeclaration(unsigned Context) {
   assert((Tok.is(tok::kw_export) || Tok.is(tok::kw_template)) && 
 	 "Token does not start a template declaration.");
   
-  // Consume the optional export token, if it exists, followed by the
-  // namespace token.
-  bool isExported = false;
-  if(Tok.is(tok::kw_export)) {
-    SourceLocation ExportLoc = ConsumeToken();
-    if(!Tok.is(tok::kw_template)) {
-      Diag(Tok.getLocation(), diag::err_expected_template);
-      return 0;
-    }
-    isExported = true;
-  }
-  SourceLocation TemplateLoc = ConsumeToken();
-  
   // Enter template-parameter scope.
   ParseScope TemplateParmScope(this, Scope::TemplateParamScope);
 
-  // Try to parse the template parameters, and the declaration if
-  // successful.
-  DeclTy *TemplateDecl = 0;
-  if (Tok.is(tok::less) && NextToken().is(tok::greater)) {
-    // This is a template specialization. Just consume the angle
-    // brackets and parse the declaration or function definition that
-    // follows.
-    // FIXME: Record somehow that we're in an explicit specialization.
-    ConsumeToken();
-    ConsumeToken();
-    TemplateParmScope.Exit();
-    TemplateDecl = ParseDeclarationOrFunctionDefinition();
-  } else {
-    if(ParseTemplateParameters(0))
-      TemplateDecl = ParseDeclarationOrFunctionDefinition();
-  }
+  // Parse multiple levels of template headers within this template
+  // parameter scope, e.g.,
+  //
+  //   template<typename T>
+  //     template<typename U>
+  //       class A<T>::B { ... };
+  //
+  // We parse multiple levels non-recursively so that we can build a
+  // single data structure containing all of the template parameter
+  // lists, and easily differentiate between the case above and:
+  //
+  //   template<typename T>
+  //   class A {
+  //     template<typename U> class B;
+  //   };
+  //
+  // In the first case, the action for declaring A<T>::B receives
+  // both template parameter lists. In the second case, the action for
+  // defining A<T>::B receives just the inner template parameter list
+  // (and retrieves the outer template parameter list from its
+  // context).
+  TemplateParameterLists ParamLists;
+  do {
+    // Consume the 'export', if any.
+    SourceLocation ExportLoc;
+    if (Tok.is(tok::kw_export)) {
+      ExportLoc = ConsumeToken();
+    }
+
+    // Consume the 'template', which should be here.
+    SourceLocation TemplateLoc;
+    if (Tok.is(tok::kw_template)) {
+      TemplateLoc = ConsumeToken();
+    } else {
+      Diag(Tok.getLocation(), diag::err_expected_template);
+      return 0;
+    }
+  
+    // Parse the '<' template-parameter-list '>'
+    SourceLocation LAngleLoc, RAngleLoc;
+    TemplateParameterList TemplateParams;
+    ParseTemplateParameters(ParamLists.size(), TemplateParams, LAngleLoc, 
+                            RAngleLoc);
+
+    ParamLists.push_back(
+      Actions.ActOnTemplateParameterList(ParamLists.size(), ExportLoc, 
+                                         TemplateLoc, LAngleLoc, 
+                                         &TemplateParams[0],
+                                         TemplateParams.size(), RAngleLoc));
+  } while (Tok.is(tok::kw_export) || Tok.is(tok::kw_template));
+
+  // Parse the actual template declaration.
+  DeclTy *TemplateDecl = ParseDeclarationOrFunctionDefinition(&ParamLists);
 
   return TemplateDecl;
 }
 
 /// ParseTemplateParameters - Parses a template-parameter-list enclosed in
-/// angle brackets.
-bool Parser::ParseTemplateParameters(DeclTy* TmpDecl) {
+/// angle brackets. Depth is the depth of this
+/// template-parameter-list, which is the number of template headers
+/// directly enclosing this template header. TemplateParams is the
+/// current list of template parameters we're building. The template
+/// parameter we parse will be added to this list. LAngleLoc and
+/// RAngleLoc will receive the positions of the '<' and '>',
+/// respectively, that enclose this template parameter list.
+bool Parser::ParseTemplateParameters(unsigned Depth,
+                                     TemplateParameterList &TemplateParams,
+                                     SourceLocation &LAngleLoc,
+                                     SourceLocation &RAngleLoc) {
   // Get the template parameter list.
   if(!Tok.is(tok::less)) {
     Diag(Tok.getLocation(), diag::err_expected_less_after) << "template";
     return false;
   }
-  ConsumeToken();
+  LAngleLoc = ConsumeToken();
   
   // Try to parse the template parameter list.
-  if(ParseTemplateParameterList(0)) {
+  if (Tok.is(tok::greater))
+    RAngleLoc = ConsumeToken();
+  else if(ParseTemplateParameterList(Depth, TemplateParams)) {
     if(!Tok.is(tok::greater)) {
       Diag(Tok.getLocation(), diag::err_expected_greater);
       return false;
     }
-    ConsumeToken();
+    RAngleLoc = ConsumeToken();
   }
   return true;
 }
@@ -92,13 +127,14 @@ bool Parser::ParseTemplateParameters(DeclTy* TmpDecl) {
 ///       template-parameter-list:    [C++ temp]
 ///         template-parameter
 ///         template-parameter-list ',' template-parameter
-bool Parser::ParseTemplateParameterList(DeclTy* TmpDecl) {
-  // FIXME: For now, this is just going to consume the template parameters.
-  // Eventually, we should pass the template decl AST node as a parameter and
-  // apply template parameters as we find them.
+bool 
+Parser::ParseTemplateParameterList(unsigned Depth,
+                                   TemplateParameterList &TemplateParams) {
   while(1) {
-    DeclTy* TmpParam = ParseTemplateParameter();
-    if(!TmpParam) {
+    if (DeclTy* TmpParam 
+          = ParseTemplateParameter(Depth, TemplateParams.size())) {
+      TemplateParams.push_back(TmpParam);
+    } else {
       // If we failed to parse a template parameter, skip until we find
       // a comma or closing brace.
       SkipUntil(tok::comma, tok::greater, true, true);
@@ -137,20 +173,21 @@ bool Parser::ParseTemplateParameterList(DeclTy* TmpDecl) {
 ///         'typename' identifier[opt] '=' type-id
 ///         'template' '<' template-parameter-list '>' 'class' identifier[opt]
 ///         'template' '<' template-parameter-list '>' 'class' identifier[opt] = id-expression
-Parser::DeclTy *Parser::ParseTemplateParameter() {
+Parser::DeclTy *
+Parser::ParseTemplateParameter(unsigned Depth, unsigned Position) {
   TryAnnotateCXXScopeToken();
 
   if(Tok.is(tok::kw_class) 
      || (Tok.is(tok::kw_typename) && 
 	 NextToken().isNot(tok::annot_qualtypename))) {
-    return ParseTypeParameter();
+    return ParseTypeParameter(Depth, Position);
   } else if(Tok.is(tok::kw_template)) {
-    return ParseTemplateTemplateParameter();
+    return ParseTemplateTemplateParameter(Depth, Position);
   } else {
     // If it's none of the above, then it must be a parameter declaration.
     // NOTE: This will pick up errors in the closure of the template parameter
     // list (e.g., template < ; Check here to implement >> style closures.
-    return ParseNonTypeTemplateParameter();
+    return ParseNonTypeTemplateParameter(Depth, Position);
   }
   return 0;
 }
@@ -164,7 +201,7 @@ Parser::DeclTy *Parser::ParseTemplateParameter() {
 ///         'class' identifier[opt] '=' type-id
 ///         'typename' identifier[opt]
 ///         'typename' identifier[opt] '=' type-id
-Parser::DeclTy *Parser::ParseTypeParameter() {
+Parser::DeclTy *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
   assert((Tok.is(tok::kw_class) || Tok.is(tok::kw_typename)) &&
 	 "A type-parameter starts with 'class' or 'typename'");
 
@@ -188,13 +225,13 @@ Parser::DeclTy *Parser::ParseTypeParameter() {
   }
   
   DeclTy *TypeParam = Actions.ActOnTypeParameter(CurScope, TypenameKeyword, 
-						 KeyLoc, ParamName, NameLoc);
+						 KeyLoc, ParamName, NameLoc,
+                                                 Depth, Position);
 
   // Grab a default type id (if given).
   if(Tok.is(tok::equal)) {
     SourceLocation EqualLoc = ConsumeToken();
-    TypeTy *DefaultType = ParseTypeName();
-    if(DefaultType)
+    if (TypeTy *DefaultType = ParseTypeName())
       Actions.ActOnTypeParameterDefault(TypeParam, DefaultType);
   }
   
@@ -207,12 +244,16 @@ Parser::DeclTy *Parser::ParseTypeParameter() {
 ///       type-parameter:    [C++ temp.param]
 ///         'template' '<' template-parameter-list '>' 'class' identifier[opt]
 ///         'template' '<' template-parameter-list '>' 'class' identifier[opt] = id-expression
-Parser::DeclTy* Parser::ParseTemplateTemplateParameter() {
+Parser::DeclTy * 
+Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   assert(Tok.is(tok::kw_template) && "Expected 'template' keyword");
 
   // Handle the template <...> part.
   SourceLocation TemplateLoc = ConsumeToken();
-  if(!ParseTemplateParameters(0)) {
+  TemplateParameterList TemplateParams; 
+  SourceLocation LParenLoc, RParenLoc;
+  if(!ParseTemplateParameters(Depth+1, TemplateParams, LParenLoc,
+                              RParenLoc)) {
     return 0;
   }
 
@@ -265,7 +306,8 @@ Parser::DeclTy* Parser::ParseTemplateTemplateParameter() {
 /// parameters.
 /// FIXME: We need to make a ParseParameterDeclaration that works for
 /// non-type template parameters and normal function parameters.
-Parser::DeclTy* Parser::ParseNonTypeTemplateParameter() {
+Parser::DeclTy * 
+Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   SourceLocation StartLoc = Tok.getLocation();
 
   // Parse the declaration-specifiers (i.e., the type).
@@ -288,7 +330,8 @@ Parser::DeclTy* Parser::ParseNonTypeTemplateParameter() {
   }
 
   // Create the parameter. 
-  DeclTy *Param = Actions.ActOnNonTypeTemplateParameter(CurScope, ParamDecl);
+  DeclTy *Param = Actions.ActOnNonTypeTemplateParameter(CurScope, ParamDecl,
+                                                        Depth, Position);
 
   // Is there a default value? Parsing this can be fairly annoying because
   // we have to stop on the first non-nested (paren'd) '>' as the closure
