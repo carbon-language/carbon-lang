@@ -2963,7 +2963,10 @@ private:
 
     // Begin eh frame section.
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
-    O << TAI->getEHGlobalPrefix() << "EH_frame" << Index << ":\n";
+
+    if (!TAI->doesRequireNonLocalEHFrameLabel())
+      O << TAI->getEHGlobalPrefix();
+    O << "EH_frame" << Index << ":\n";
     EmitLabel("section_eh_frame", Index);
 
     // Define base labels.
@@ -3102,9 +3105,18 @@ private:
 
       EmitLabel("eh_frame_begin", EHFrameInfo.Number);
 
-      EmitSectionOffset("eh_frame_begin", "eh_frame_common",
-                        EHFrameInfo.Number, EHFrameInfo.PersonalityIndex,
-                        true, true, false);
+      if (TAI->doesRequireNonLocalEHFrameLabel()) {
+        PrintRelDirective(true, true);
+        PrintLabelName("eh_frame_begin", EHFrameInfo.Number);
+
+        if (!TAI->isAbsoluteEHSectionOffsets())
+          O << "-EH_frame" << EHFrameInfo.PersonalityIndex;
+      } else {
+        EmitSectionOffset("eh_frame_begin", "eh_frame_common",
+                          EHFrameInfo.Number, EHFrameInfo.PersonalityIndex,
+                          true, true, false);
+      }
+
       Asm->EOL("FDE CIE offset");
 
       EmitReference("eh_func_begin", EHFrameInfo.Number, true, true);

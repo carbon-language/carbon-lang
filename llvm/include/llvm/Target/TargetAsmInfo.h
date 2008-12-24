@@ -453,6 +453,10 @@ namespace llvm {
     /// 
     bool FDEEncodingRequiresSData4;         // Defaults to true
 
+    /// NonLocalEHFrameLabel - If set, the EH_frame label needs to be non-local.
+    /// 
+    bool NonLocalEHFrameLabel;              // Defaults to false.
+
     /// GlobalEHDirective - This is the directive used to make exception frame
     /// tables globally visible.
     ///
@@ -821,6 +825,9 @@ namespace llvm {
     }
     bool doesFDEEncodingRequireSData4() const {
       return FDEEncodingRequiresSData4;
+    }
+    bool doesRequireNonLocalEHFrameLabel() const {
+      return NonLocalEHFrameLabel;
     }
     const char *getGlobalEHDirective() const {
       return GlobalEHDirective;

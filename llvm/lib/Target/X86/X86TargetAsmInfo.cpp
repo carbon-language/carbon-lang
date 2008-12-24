@@ -71,6 +71,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   HasDotTypeDotSizeDirective = false;
   HasSingleParameterDotFile = false;
   FDEEncodingRequiresSData4 = false;
+  NonLocalEHFrameLabel = true;
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorsSection = ".constructor";
     StaticDtorsSection = ".destructor";
