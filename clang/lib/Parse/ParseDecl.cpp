@@ -561,6 +561,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       continue;
       
     // Microsoft single token adornments.
+    case tok::kw___forceinline:
+    case tok::kw___w64:
     case tok::kw___cdecl:
     case tok::kw___stdcall:
     case tok::kw___fastcall:
@@ -1322,6 +1324,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool AttributesAllowed) {
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
                                  getLang())*2;
       break;
+    case tok::kw___ptr64:
     case tok::kw___cdecl:
     case tok::kw___stdcall:
     case tok::kw___fastcall:

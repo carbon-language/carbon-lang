@@ -312,6 +312,9 @@ KEYWORD(__declspec                  , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 KEYWORD(__cdecl                     , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 KEYWORD(__stdcall                   , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 KEYWORD(__fastcall                  , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
+KEYWORD(__ptr64                     , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
+KEYWORD(__w64                       , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
+KEYWORD(__forceinline               , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 
 // Alternate spelling for various tokens.  There are GCC extensions in all
 // languages, but should not be disabled in strict conformance mode.

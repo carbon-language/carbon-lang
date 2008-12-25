@@ -484,9 +484,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   // mode. 
   if (PP.getLangOptions().Microsoft) {
     DefineBuiltinMacro(Buf, "_cdecl=__cdecl");
-    DefineBuiltinMacro(Buf, "__ptr64=");
-    DefineBuiltinMacro(Buf, "__w64=");
-    DefineBuiltinMacro(Buf, "__forceinline=");
     DefineBuiltinMacro(Buf, "__int8=char");
     DefineBuiltinMacro(Buf, "__int16=short");
     DefineBuiltinMacro(Buf, "__int32=int");
