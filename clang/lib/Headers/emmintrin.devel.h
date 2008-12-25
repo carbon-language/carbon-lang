@@ -565,7 +565,7 @@ static inline __m128i __attribute__((__always_inline__)) _mm_mullo_epi16(__m128i
   return (__m128i)__builtin_ia32_pmullw128((__v8hi)a, (__v8hi)b);
 }
 
-__m64 _mm_mul_su32(__m64 a, __m64 b)
+static inline __m64 __attribute__((__always_inline__)) _mm_mul_su32(__m64 a, __m64 b)
 {
   return __builtin_ia32_pmuludq((__v2si)a, (__v2si)b);
 }
@@ -595,7 +595,7 @@ static inline __m128i __attribute__((__always_inline__)) _mm_sub_epi32(__m128i a
   return (__m128i)((__v4si)a - (__v4si)b);
 }
 
-__m64 _mm_sub_si64(__m64 a, __m64 b)
+static inline __m64 __attribute__((__always_inline__)) _mm_sub_si64(__m64 a, __m64 b)
 {
   return a - b;
 }
@@ -623,6 +623,348 @@ static inline __m128i __attribute__((__always_inline__)) _mm_subs_epu8(__m128i a
 static inline __m128i __attribute__((__always_inline__)) _mm_subs_epu16(__m128i a, __m128i b)
 {
   return (__m128i)__builtin_ia32_psubusw128((__v8hi)a, (__v8hi)b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_and_si128(__m128i a, __m128i b)
+{
+  return __builtin_ia32_pand128(a, b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_andnot_si128(__m128i a, __m128i b)
+{
+  return __builtin_ia32_pandn128(a, b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_or_si128(__m128i a, __m128i b)
+{
+  return __builtin_ia32_por128(a, b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_xor_si128(__m128i a, __m128i b)
+{
+  return __builtin_ia32_pxor128(a, b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_slli_si128(__m128i a, int imm)
+{
+  return __builtin_ia32_pslldqi128(a, imm * 8);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_slli_epi16(__m128i a, int count)
+{
+  return (__m128i)__builtin_ia32_psllwi128((__v8hi)a, count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_sll_epi16(__m128i a, __m128i count)
+{
+  return (__m128i)__builtin_ia32_psllw128((__v8hi)a, (__v8hi)count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_slli_epi32(__m128i a, int count)
+{
+  return (__m128i)__builtin_ia32_pslldi128((__v4si)a, count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_sll_epi32(__m128i a, __m128i count)
+{
+  return (__m128i)__builtin_ia32_pslld128((__v4si)a, (__v4si)count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_slli_epi64(__m128i a, int count)
+{
+  return __builtin_ia32_psllqi128(a, count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_sll_epi64(__m128i a, __m128i count)
+{
+  return __builtin_ia32_psllq128(a, count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_srai_epi16(__m128i a, int count)
+{
+  return (__m128i)__builtin_ia32_psrawi128((__v8hi)a, count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_sra_epi16(__m128i a, __m128i count)
+{
+  return (__m128i)__builtin_ia32_psraw128((__v8hi)a, (__v8hi)count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_srai_epi32(__m128i a, int count)
+{
+  return (__m128i)__builtin_ia32_psradi128((__v4si)a, count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_sra_epi32(__m128i a, __m128i count)
+{
+  return (__m128i)__builtin_ia32_psrad128((__v4si)a, (__v4si)count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_srli_si128(__m128i a, int imm)
+{
+  return __builtin_ia32_psrldqi128(a, imm * 8);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_srli_epi16(__m128i a, int count)
+{
+  return (__m128i)__builtin_ia32_psrlwi128((__v8hi)a, count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_srl_epi16(__m128i a, __m128i count)
+{
+  return (__m128i)__builtin_ia32_psrlw128((__v8hi)a, (__v8hi)count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_srli_epi32(__m128i a, int count)
+{
+  return (__m128i)__builtin_ia32_psrldi128((__v4si)a, count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_srl_epi32(__m128i a, __m128i count)
+{
+  return (__m128i)__builtin_ia32_psrld128((__v4si)a, (__v4si)count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_srli_epi64(__m128i a, int count)
+{
+  return __builtin_ia32_psrlqi128(a, count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_srl_epi64(__m128i a, __m128i count)
+{
+  return __builtin_ia32_psrlq128(a, count);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cmpeq_epi8(__m128i a, __m128i b)
+{
+  return (__m128i)__builtin_ia32_pcmpeqb128((__v16qi)a, (__v16qi)b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cmpeq_epi16(__m128i a, __m128i b)
+{
+  return (__m128i)__builtin_ia32_pcmpeqw128((__v8hi)a, (__v8hi)b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cmpeq_epi32(__m128i a, __m128i b)
+{
+  return (__m128i)__builtin_ia32_pcmpeqd128((__v4si)a, (__v4si)b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cmpgt_epi8(__m128i a, __m128i b)
+{
+  return (__m128i)__builtin_ia32_pcmpgtb128((__v16qi)a, (__v16qi)b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cmpgt_epi16(__m128i a, __m128i b)
+{
+  return (__m128i)__builtin_ia32_pcmpgtw128((__v8hi)a, (__v8hi)b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cmpgt_epi32(__m128i a, __m128i b)
+{
+  return (__m128i)__builtin_ia32_pcmpgtd128((__v4si)a, (__v4si)b);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cmplt_epi8(__m128i a, __m128i b)
+{
+  return (__m128i)__builtin_ia32_pcmpgtb128((__v16qi)b, (__v16qi)a);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cmplt_epi16(__m128i a, __m128i b)
+{
+  return (__m128i)__builtin_ia32_pcmpgtw128((__v8hi)b, (__v8hi)a);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cmplt_epi32(__m128i a, __m128i b)
+{
+  return (__m128i)__builtin_ia32_pcmpgtd128((__v4si)b, (__v4si)a);
+}
+
+#ifdef __x86_64__
+static inline __m128d __attribute__((__always_inline__)) _mm_cvtsi64_sd(__m128d a, long long b)
+{
+  return __builtin_ia32_cvtsi642sd(a, b);
+}
+
+static inline long long __attribute__((__always_inline__)) _mm_cvtsd_si64(__m128d a)
+{
+  return __builtin_ia32_cvtsd2si64(a);
+}
+
+static inline long long __attribute__((__always_inline__)) _mm_cvttsd_si64(__m128d a)
+{
+  return __builtin_ia32_cvttsd2si64(a);
+}
+#endif
+
+static inline __m128 __attribute__((__always_inline__)) _mm_cvtepi32_ps(__m128i a)
+{
+  return __builtin_ia32_cvtdq2ps((__v4si)a);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cvtps_epi32(__m128 a)
+{
+  return (__m128i)__builtin_ia32_cvtps2dq(a);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cvttps_epi32(__m128 a)
+{
+  return (__m128i)__builtin_ia32_cvttps2dq(a);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_cvtsi32_si128(int a)
+{
+  return (__m128i)(__v4si){ a, 0, 0, 0 };
+}
+
+#ifdef __x86_64__
+static inline __m128i __attribute__((__always_inline__)) _mm_cvtsi64_si128(long long a)
+{
+  return (__m128i){ a, 0 };
+}
+#endif
+
+static inline int __attribute__((__always_inline__)) _mm_cvtsi128_si32(__m128i a)
+{
+  __v4si b = (__v4si)a;
+  return b[0];
+}
+
+#ifdef __x86_64__
+static inline long long __attribute__((__always_inline__)) _mm_cvtsi128_si64(__m128i a)
+{
+  return a[0];
+}
+#endif
+
+static inline __m128i __attribute__((__always_inline__)) _mm_load_si128(__m128i const *p)
+{
+  return *p;
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_loadu_si128(__m128i const *p)
+{
+  return (__m128i)__builtin_ia32_loaddqu((char const *)p);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_loadl_epi64(__m128i const *p)
+{
+  return (__m128i)__builtin_ia32_loadlv4si((__v2si *)p);
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_set_epi64(__m64 q1, __m64 q0)
+{
+  return (__m128i){ (long long)q0, (long long)q1 };
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_set_epi32(int i3, int i2, int i1, int i0)
+{
+  return (__m128i)(__v4si){ i0, i1, i2, i3};
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_set_epi16(short w7, short w6, short w5, short w4, short w3, short w2, short w1, short w0)
+{
+  return (__m128i)(__v8hi){ w0, w1, w2, w3, w4, w5, w6, w7 };
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_set_epi8(char b15, char b14, char b13, char b12, char b11, char b10, char b9, char b8, char b7, char b6, char b5, char b4, char b3, char b2, char b1, char b0)
+{
+  return (__m128i)(__v16qi){ b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15 };
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_set1_epi64(__m64 q)
+{
+  return (__m128i){ (long long)q, (long long)q };
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_set1_epi32(int i)
+{
+  return (__m128i)(__v4si){ i, i, i, i };
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_set1_epi16(short w)
+{
+  return (__m128i)(__v8hi){ w, w, w, w, w, w, w, w };
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_set1_epi8(char b)
+{
+  return (__m128i)(__v16qi){ b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b };
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_setr_epi64(__m64 q0, __m64 q1)
+{
+  return (__m128i){ (long long)q0, (long long)q1 };
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_setr_epi32(int i0, int i1, int i2, int i3)
+{
+  return (__m128i)(__v4si){ i0, i1, i2, i3};
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_setr_epi16(short w0, short w1, short w2, short w3, short w4, short w5, short w6, short w7)
+{
+  return (__m128i)(__v8hi){ w0, w1, w2, w3, w4, w5, w6, w7 };
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_setr_epi8(char b0, char b1, char b2, char b3, char b4, char b5, char b6, char b7, char b8, char b9, char b10, char b11, char b12, char b13, char b14, char b15)
+{
+  return (__m128i)(__v16qi){ b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15 };
+}
+
+static inline __m128i __attribute__((__always_inline__)) _mm_setzero_si128(void)
+{
+  return (__m128i){ 0LL, 0LL };
+}
+
+static inline void __attribute__((__always_inline__)) _mm_store_si128(__m128i *p, __m128i b)
+{
+  *p = b;
+}
+
+static inline void __attribute__((__always_inline__)) _mm_storeu_si128(__m128i *p, __m128i b)
+{
+  __builtin_ia32_storedqu((char *)p, (__v16qi)b);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_maskmoveu_si128(__m128i d, __m128i n, char *p)
+{
+  __builtin_ia32_maskmovdqu((__v16qi)d, (__v16qi)n, p);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_storel_epi64(__m128i *p, __m128i a)
+{
+  __builtin_ia32_storelv4si((__v2si *)p, a);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_stream_pd(double *p, __m128d a)
+{
+  __builtin_ia32_movntpd(p, a);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_stream_si128(__m128i *p, __m128i a)
+{
+  __builtin_ia32_movntdq(p, a);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_stream_si32(int *p, int a)
+{
+  __builtin_ia32_movnti(p, a);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_clflush(void const *p)
+{
+  __builtin_ia32_clflush(p);
+}
+
+static inline void __attribute__((__always_inline__)) _mm_lfence(void)
+{
+  __builtin_ia32_lfence();
+}
+
+static inline void __attribute__((__always_inline__)) _mm_mfence(void)
+{
+  __builtin_ia32_mfence();
 }
 
 #endif /* __SSE2__ */
