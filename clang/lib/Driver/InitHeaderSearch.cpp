@@ -147,6 +147,12 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
         false);
     AddPath("/usr/include/c++/4.3.0/backward", System, true, false, false);
 
+    // Fedora 10
+    AddPath("/usr/include/c++/4.3.2", System, true, false, false);
+    AddPath("/usr/include/c++/4.3.2/i386-redhat-linux", System, true, false,
+        false);
+    AddPath("/usr/include/c++/4.3.2/backward", System, true, false, false);
+
     // Arch Linux 2008-06-24
     AddPath("/usr/include/c++/4.3.1", System, true, false, false);
     AddPath("/usr/include/c++/4.3.1/i686-pc-linux-gnu", System, true, false,
@@ -203,6 +209,10 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
 
   // Fedora 9
   AddPath("/usr/lib/gcc/i386-redhat-linux/4.3.0/include", System,
+      false, false, false);
+
+  // Fedora 10
+  AddPath("/usr/lib/gcc/i386-redhat-linux/4.3.2/include", System,
       false, false, false);
 
   //Debian testing/lenny x86
