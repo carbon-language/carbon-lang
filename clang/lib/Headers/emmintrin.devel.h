@@ -485,7 +485,7 @@ static inline __m128i __attribute__((__always_inline__)) _mm_add_epi32(__m128i a
   return (__m128i)((__v4si)a + (__v4si)b);
 }
 
-__m64 _mm_add_si64(__m64 a, __m64 b)
+static inline __m64 __attribute__((__always_inline__)) _mm_add_si64(__m64 a, __m64 b)
 {
   return a + b;
 }
