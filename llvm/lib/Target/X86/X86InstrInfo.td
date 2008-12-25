@@ -2658,19 +2658,19 @@ let Defs = [EFLAGS] in {
 def BT16rr : I<0xA3, MRMSrcReg, (outs), (ins GR16:$src1, GR16:$src2),
                "bt{w}\t{$src2, $src1|$src1, $src2}",
                [(X86bt GR16:$src1, GR16:$src2),
-                (implicit EFLAGS)]>, OpSize;
+                (implicit EFLAGS)]>, OpSize, TB;
 def BT32rr : I<0xA3, MRMSrcReg, (outs), (ins GR32:$src1, GR32:$src2),
                "bt{l}\t{$src2, $src1|$src1, $src2}",
                [(X86bt GR32:$src1, GR32:$src2),
-                (implicit EFLAGS)]>;
-def BT16mr : I<0xA3, MRMSrcMem, (outs), (ins i16mem:$src1, GR16:$src2),
+                (implicit EFLAGS)]>, TB;
+def BT16mr : I<0xA3, MRMDestMem, (outs), (ins i16mem:$src1, GR16:$src2),
                "bt{w}\t{$src2, $src1|$src1, $src2}",
                [(X86bt (loadi16 addr:$src1), GR16:$src2),
-                (implicit EFLAGS)]>, OpSize;
-def BT32mr : I<0xA3, MRMSrcMem, (outs), (ins i32mem:$src1, GR32:$src2),
+                (implicit EFLAGS)]>, OpSize, TB;
+def BT32mr : I<0xA3, MRMDestMem, (outs), (ins i32mem:$src1, GR32:$src2),
                "bt{l}\t{$src2, $src1|$src1, $src2}",
                [(X86bt (loadi32 addr:$src1), GR32:$src2),
-                (implicit EFLAGS)]>;
+                (implicit EFLAGS)]>, TB;
 } // Defs = [EFLAGS]
 
 // Sign/Zero extenders
