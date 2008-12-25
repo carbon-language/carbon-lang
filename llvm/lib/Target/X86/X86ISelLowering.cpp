@@ -5017,16 +5017,48 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
 
 SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
-  SDValue Cond;
   SDValue Op0 = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
-  SDValue CC = Op.getOperand(2);
-  bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  
+  // Lower (X & (1 << N)) == 0 to BT.
+  // Lower ((X >>u N) & 1) != 0 to BT.
+  // Lower ((X >>s N) & 1) != 0 to BT.
+  // FIXME: Is i386 or later or available only on some chips?
+  if (Op0.getOpcode() == ISD::AND && Op1.getOpcode() == ISD::Constant &&
+      Op0.getOperand(1).getOpcode() == ISD::Constant &&
+      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+    ConstantSDNode *AndRHS = cast<ConstantSDNode>(Op0.getOperand(1));
+    ConstantSDNode *CmpRHS = cast<ConstantSDNode>(Op1);
+    SDValue AndLHS = Op0.getOperand(0);
+    if (CmpRHS->getZExtValue() == 0 && AndRHS->getZExtValue() == 1 &&
+        AndLHS.getOpcode() == ISD::SRL) {
+      SDValue LHS = AndLHS.getOperand(0);
+      SDValue RHS = AndLHS.getOperand(1);
 
-  unsigned X86CC = TranslateX86CC(cast<CondCodeSDNode>(CC)->get(), isFP,
-                                  Op0, Op1, DAG);
+      // If LHS is i8, promote it to i16 with any_extend.  There is no i8 BT
+      // instruction.  Since the shift amount is in-range-or-undefined, we know
+      // that doing a bittest on the i16 value is ok.  We extend to i32 because
+      // the encoding for the i16 version is larger than the i32 version.
+      if (LHS.getValueType() == MVT::i8)
+        LHS = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, LHS);
+
+      // If the operand types disagree, extend the shift amount to match.  Since
+      // BT ignores high bits (like shifts) we can use anyextend.
+      if (LHS.getValueType() != RHS.getValueType())
+        RHS = DAG.getNode(ISD::ANY_EXTEND, LHS.getValueType(), RHS);
+      
+      SDValue BT = DAG.getNode(X86ISD::BT, MVT::i32, LHS, RHS);
+      unsigned Cond = CC == ISD::SETEQ ? X86::COND_NC : X86::COND_C;
+      return DAG.getNode(X86ISD::SETCC, MVT::i8, 
+                         DAG.getConstant(Cond, MVT::i8), BT);
+    }
+  }
+
+  bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
+  unsigned X86CC = TranslateX86CC(CC, isFP, Op0, Op1, DAG);
     
-  Cond = DAG.getNode(X86ISD::CMP, MVT::i32, Op0, Op1);
+  SDValue Cond = DAG.getNode(X86ISD::CMP, MVT::i32, Op0, Op1);
   return DAG.getNode(X86ISD::SETCC, MVT::i8,
                      DAG.getConstant(X86CC, MVT::i8), Cond);
 }
@@ -5219,12 +5251,15 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
 
   if (Cond.getOpcode() == ISD::SETCC)
     Cond = LowerSETCC(Cond, DAG);
+#if 0
+  // FIXME: LowerXALUO doesn't handle these!!
   else if (Cond.getOpcode() == X86ISD::ADD  ||
            Cond.getOpcode() == X86ISD::SUB  ||
            Cond.getOpcode() == X86ISD::SMUL ||
            Cond.getOpcode() == X86ISD::UMUL)
     Cond = LowerXALUO(Cond, DAG);
-
+#endif
+  
   // If condition flag is set by a X86ISD::CMP, then use it as the condition
   // setting operand in place of the X86ISD::SETCC.
   if (Cond.getOpcode() == X86ISD::SETCC) {
@@ -5232,7 +5267,8 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
 
     SDValue Cmp = Cond.getOperand(1);
     unsigned Opc = Cmp.getOpcode();
-    if (isX86LogicalCmp(Opc)) {
+    // FIXME: WHY THE SPECIAL CASING OF LogicalCmp??
+    if (isX86LogicalCmp(Opc) || Opc == X86ISD::BT) {
       Cond = Cmp;
       addTest = false;
     } else {
@@ -5240,8 +5276,8 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
       default: break;
       case X86::COND_O:
       case X86::COND_C:
-        // These can only come from an arithmetic instruction with overflow, e.g.
-        // SADDO, UADDO.
+        // These can only come from an arithmetic instruction with overflow,
+        // e.g. SADDO, UADDO.
         Cond = Cond.getNode()->getOperand(1);
         addTest = false;
         break;
