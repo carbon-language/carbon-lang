@@ -309,6 +309,9 @@ KEYWORD(__private_extern__          , EXTC90|EXTC99|NOTCPP)
 
 // Microsoft Extension.
 KEYWORD(__declspec                  , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
+KEYWORD(__cdecl                     , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
+KEYWORD(__stdcall                   , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
+KEYWORD(__fastcall                  , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 
 // Alternate spelling for various tokens.  There are GCC extensions in all
 // languages, but should not be disabled in strict conformance mode.

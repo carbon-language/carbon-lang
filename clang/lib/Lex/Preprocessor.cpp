@@ -483,9 +483,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   // Filter out some microsoft extensions when trying to parse in ms-compat
   // mode. 
   if (PP.getLangOptions().Microsoft) {
-    DefineBuiltinMacro(Buf, "__stdcall=");
-    DefineBuiltinMacro(Buf, "__cdecl=");
-    DefineBuiltinMacro(Buf, "_cdecl=");
+    DefineBuiltinMacro(Buf, "_cdecl=__cdecl");
     DefineBuiltinMacro(Buf, "__ptr64=");
     DefineBuiltinMacro(Buf, "__w64=");
     DefineBuiltinMacro(Buf, "__forceinline=");

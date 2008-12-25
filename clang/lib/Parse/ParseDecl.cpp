@@ -560,6 +560,15 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       FuzzyParseMicrosoftDeclSpec();
       continue;
       
+    // Microsoft single token adornments.
+    case tok::kw___cdecl:
+    case tok::kw___stdcall:
+    case tok::kw___fastcall:
+      if (!PP.getLangOptions().Microsoft)
+        goto DoneWithDeclSpec;
+      // Just ignore it.
+      break;
+      
     // storage-class-specifier
     case tok::kw_typedef:
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, Loc, PrevSpec);
@@ -797,6 +806,11 @@ bool Parser::MaybeParseTypeSpecifier(DeclSpec &DS, int& isInvalid,
   case tok::kw_typeof:
     ParseTypeofSpecifier(DS);
     return true;
+
+  case tok::kw___cdecl:
+  case tok::kw___stdcall:
+  case tok::kw___fastcall:
+    return PP.getLangOptions().Microsoft;
 
   default:
     // Not a type-specifier; do nothing.
@@ -1199,6 +1213,11 @@ bool Parser::isTypeSpecifierQualifier() {
     // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
   case tok::less:
     return getLang().ObjC1;
+  
+  case tok::kw___cdecl:
+  case tok::kw___stdcall:
+  case tok::kw___fastcall:
+    return PP.getLangOptions().Microsoft;
   }
 }
 
@@ -1268,6 +1287,11 @@ bool Parser::isDeclarationSpecifier() {
     // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
   case tok::less:
     return getLang().ObjC1;
+    
+  case tok::kw___cdecl:
+  case tok::kw___stdcall:
+  case tok::kw___fastcall:
+    return PP.getLangOptions().Microsoft;
   }
 }
 
@@ -1298,6 +1322,13 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool AttributesAllowed) {
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
                                  getLang())*2;
       break;
+    case tok::kw___cdecl:
+    case tok::kw___stdcall:
+    case tok::kw___fastcall:
+      if (!PP.getLangOptions().Microsoft)
+        goto DoneWithTypeQuals;
+      // Just ignore it.
+      break;
     case tok::kw___attribute:
       if (AttributesAllowed) {
         DS.AddAttributes(ParseAttributes());
@@ -1305,6 +1336,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool AttributesAllowed) {
       }
       // otherwise, FALL THROUGH!
     default:
+      DoneWithTypeQuals:
       // If this is not a type-qualifier token, we're done reading type
       // qualifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(Diags, PP.getSourceManager(), getLang());
@@ -1632,6 +1664,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // present even if the attribute list was empty.
     RequiresArg = true;
   }
+  // Eat any Microsoft extensions.
+  if ((Tok.is(tok::kw___cdecl) || Tok.is(tok::kw___stdcall) ||
+      (Tok.is(tok::kw___fastcall))) && PP.getLangOptions().Microsoft)
+    ConsumeToken();
   
   // If we haven't past the identifier yet (or where the identifier would be
   // stored, if this is an abstract declarator), then this is probably just
