@@ -685,6 +685,41 @@ static void HandleDLLImportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
+  // Attribute can be applied only to functions or variables.
+  if (isa<VarDecl>(d)) {
+    d->addAttr(new DLLImportAttr());
+    return;
+  }
+
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(d);
+  if (!FD) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "dllimport" << "function or variable";
+    return;
+  }
+
+  // Currently, the dllimport attribute is ignored for inlined functions.
+  // Warning is emitted.
+  if (FD->isInline()) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
+    return;
+  }
+
+  // The attribute is also overridden by a subsequent declaration as dllexport.
+  // Warning is emitted.
+  for (AttributeList *nextAttr = Attr.getNext(); nextAttr;
+       nextAttr = nextAttr->getNext()) {
+    if (nextAttr->getKind() == AttributeList::AT_dllexport) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
+      return;
+    }
+  }
+
+  if (d->getAttr<DLLExportAttr>()) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
+    return;
+  }
+
   d->addAttr(new DLLImportAttr());
 }
 
@@ -692,6 +727,27 @@ static void HandleDLLExportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  // Attribute can be applied only to functions or variables.
+  if (isa<VarDecl>(d)) {
+    d->addAttr(new DLLExportAttr());
+    return;
+  }
+
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(d);
+  if (!FD) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "dllexport" << "function or variable";
+    return;
+  }
+
+  // Currently, the dllexport attribute is ignored for inlined functions,
+  // unless the -fkeep-inline-functions flag has been used. Warning is emitted;
+  if (FD->isInline()) {
+    // FIXME: ... unless the -fkeep-inline-functions flag has been used.
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllexport";
     return;
   }
 

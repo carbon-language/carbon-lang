@@ -218,17 +218,30 @@ static void SetGlobalValueAttributes(const Decl *D,
   // approximation of what we really want.
   if (!ForDefinition) {
     // Only a few attributes are set on declarations.
-    if (D->getAttr<DLLImportAttr>())
-      GV->setLinkage(llvm::Function::DLLImportLinkage);
+    if (D->getAttr<DLLImportAttr>()) {
+      // The dllimport attribute is overridden by a subsequent declaration as
+      // dllexport.
+      if (!D->getAttr<DLLExportAttr>())
+        // dllimport attribute can be applied only to function decls, not to
+        // definitions.
+        if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+          if (!FD->getBody())
+            GV->setLinkage(llvm::Function::DLLImportLinkage);
+        } else
+          GV->setLinkage(llvm::Function::DLLImportLinkage);
+    }
   } else {
     if (IsInternal) {
       GV->setLinkage(llvm::Function::InternalLinkage);
     } else {
-      if (D->getAttr<DLLImportAttr>())
-        GV->setLinkage(llvm::Function::DLLImportLinkage);
-      else if (D->getAttr<DLLExportAttr>())
-        GV->setLinkage(llvm::Function::DLLExportLinkage);
-      else if (D->getAttr<WeakAttr>() || IsInline)
+      if (D->getAttr<DLLExportAttr>()) {
+        if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+          // The dllexport attribute is ignored for undefined symbols.
+          if (FD->getBody())
+            GV->setLinkage(llvm::Function::DLLExportLinkage);
+        } else
+          GV->setLinkage(llvm::Function::DLLExportLinkage);
+      } else if (D->getAttr<WeakAttr>() || IsInline)
         GV->setLinkage(llvm::Function::WeakLinkage);
     }
   }

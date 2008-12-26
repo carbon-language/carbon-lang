@@ -803,6 +803,8 @@ DIAG(err_objc_decls_may_only_appear_in_global_scope, ERROR,
      "Objective-C declarations may only appear in global scope")
 
 // Attributes
+DIAG(err_attribute_can_be_applied_only_to_symbol_declaration, ERROR,
+     "%0 attribute can be applied only to symbol declaration")
 DIAG(err_attributes_are_not_compatible, ERROR,
      "%0 and %1 attributes are not compatible")
 DIAG(err_attribute_wrong_number_arguments, ERROR,

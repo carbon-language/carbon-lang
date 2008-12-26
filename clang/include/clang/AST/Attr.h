@@ -57,16 +57,17 @@ public:
 private:
   Attr *Next;
   Kind AttrKind;
-  
+  bool Inherited : 1;
+
 protected:
-  Attr(Kind AK) : Next(0), AttrKind(AK) {}
+  Attr(Kind AK) : Next(0), AttrKind(AK), Inherited(false) {}
 public:
   virtual ~Attr() {
     delete Next;
   }
 
   Kind getKind() const { return AttrKind; }
-  
+
   bool hasKind(Kind kind) const {
     return AttrKind == kind;
   }
@@ -74,7 +75,10 @@ public:
   Attr *getNext() { return Next; }
   const Attr *getNext() const { return Next; }
   void setNext(Attr *next) { Next = next; }
-  
+
+  bool isInherited() const { return Inherited; }
+  void setInherited(bool value) { Inherited = value; }
+
   void addAttr(Attr *attr) {
     assert((attr != 0) && "addAttr(): attr is null");
     

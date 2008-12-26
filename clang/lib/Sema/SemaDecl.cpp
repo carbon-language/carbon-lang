@@ -509,6 +509,7 @@ static void MergeAttributes(Decl *New, Decl *Old) {
      attr = attr->getNext();
 
     if (!DeclHasAttr(New, tmp)) {
+       tmp->setInherited(true);
        New->addAttr(tmp);
     } else {
        tmp->setNext(0);
@@ -1207,9 +1208,6 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
                                    D.getDeclSpec().getSourceRange().getBegin());
     }
 
-    // Handle attributes.
-    ProcessDeclAttributes(NewFD, D);
-
     // Set the lexical context. If the declarator has a C++
     // scope specifier, the lexical context will be different
     // from the semantic context.
@@ -1386,6 +1384,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
         PrevDecl = 0;
       }
     }
+    // Handle attributes. We need to have merged decls when handling attributes
+    // (for example to check for conflicts, etc).
+    ProcessDeclAttributes(NewFD, D);
     New = NewFD;
 
     if (getLangOptions().CPlusPlus) {
@@ -2410,7 +2411,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   }
 
   PushDeclContext(FnBodyScope, FD);
-    
+
   // Check the validity of our function parameters
   CheckParmsForFunctionDef(FD);
 
@@ -2422,6 +2423,25 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
       PushOnScopeChains(Param, FnBodyScope);
   }
 
+  // Checking attributes of current function definition
+  // dllimport attribute.
+  if (FD->getAttr<DLLImportAttr>() && (!FD->getAttr<DLLExportAttr>())) {
+    // dllimport attribute cannot be applied to definition.
+    if (!(FD->getAttr<DLLImportAttr>())->isInherited()) {
+      Diag(FD->getLocation(),
+           diag::err_attribute_can_be_applied_only_to_symbol_declaration)
+        << "dllimport";
+      FD->setInvalidDecl();
+      return FD;
+    } else {
+      // If a symbol previously declared dllimport is later defined, the
+      // attribute is ignored in subsequent references, and a warning is
+      // emitted.
+      Diag(FD->getLocation(),
+           diag::warn_redeclaration_without_attribute_prev_attribute_ignored)
+        << FD->getNameAsCString() << "dllimport";
+    }
+  }
   return FD;
 }
 
