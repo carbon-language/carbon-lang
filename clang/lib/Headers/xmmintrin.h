@@ -25,7 +25,7 @@
 #define __XMMINTRIN_H
  
 #ifndef __SSE__
-#error "MMX instruction set not enabled"
+#error "SSE instruction set not enabled"
 #else
 
 #include <mmintrin.h>
@@ -34,7 +34,6 @@ typedef float __v4sf __attribute__((__vector_size__(16)));
 typedef float __m128 __attribute__((__vector_size__(16)));
 
 #include <mm_malloc.h>
-#include <emmintrin.h>
 
 static inline __m128 __attribute__((__always_inline__)) _mm_add_ss(__m128 a, __m128 b)
 {
@@ -734,6 +733,8 @@ do { \
   (row2) = _mm_movelh_ps(tmp1, tmp3); \
   (row3) = _mm_movelh_ps(tmp3, tmp1); \
 } while (0)
+
+#include <emmintrin.h>
 
 #endif /* __SSE__ */
 
