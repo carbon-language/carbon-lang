@@ -6,7 +6,5 @@ int __attribute__((fastcall)) var2; // expected-warning{{'fastcall' attribute on
 
 // Different CC qualifiers are not compatible
 void __attribute__((stdcall, fastcall)) foo3(); // expected-error{{stdcall and fastcall attributes are not compatible}}
-
-// FIXME: Something went wrong recently and diagnostics is not generated anymore
 void __attribute__((stdcall)) foo4();
-void __attribute__((fastcall)) foo4();
+void __attribute__((fastcall)) foo4(); // expected-error{{fastcall and stdcall attributes are not compatible}}
