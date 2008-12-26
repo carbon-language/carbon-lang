@@ -1104,6 +1104,13 @@ static inline __m128d __attribute__((__always_inline__)) _mm_castsi128_pd(__m128
   return (__m128d)in;
 }
 
+static inline void __attribute__((__always_inline__)) _mm_pause(void)
+{
+  asm("pause");
+}
+
+#define _MM_SHUFFLE(x, y) (((x) << 1) | (y))
+
 #endif /* __SSE2__ */
 
 #endif /* __EMMINTRIN_H */
