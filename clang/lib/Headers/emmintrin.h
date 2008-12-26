@@ -1106,7 +1106,7 @@ static inline __m128d __attribute__((__always_inline__)) _mm_castsi128_pd(__m128
 
 static inline void __attribute__((__always_inline__)) _mm_pause(void)
 {
-  asm("pause");
+  __asm__ volatile ("pause");
 }
 
 #define _MM_SHUFFLE(x, y) (((x) << 1) | (y))
