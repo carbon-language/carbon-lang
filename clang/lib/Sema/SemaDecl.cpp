@@ -1186,8 +1186,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
       } else {
         InvalidDecl = InvalidDecl || CheckConversionDeclarator(D, R, SC);
 
-        NewFD = CXXConversionDecl::Create(Context, 
-                                          cast<CXXRecordDecl>(DC),
+        NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                           D.getIdentifierLoc(), Name, R,
                                           isInline, isExplicit);
         

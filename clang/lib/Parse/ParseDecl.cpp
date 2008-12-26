@@ -1514,7 +1514,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
         // If this identifier is followed by a '<', we may have a template-id.
         DeclTy *Template;
-        if (getLang().CPlusPlus && NextToken().is(tok::less) &&
+        if (NextToken().is(tok::less) &&
             (Template = Actions.isTemplateName(*Tok.getIdentifierInfo(), 
                                                CurScope))) {
           IdentifierInfo *II = Tok.getIdentifierInfo();
@@ -1525,8 +1525,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         }
         // If this identifier is the name of the current class, it's a
         // constructor name. 
-        else if (getLang().CPlusPlus &&
-                 Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope))
+        else if (Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope))
           D.setConstructor(Actions.isTypeName(*Tok.getIdentifierInfo(),
                                               CurScope),
                            Tok.getLocation());
@@ -1535,9 +1534,21 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
           D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
         ConsumeToken();
         goto PastIdentifier;
-      }
+      } else if (Tok.is(tok::kw_operator)) {
+        SourceLocation OperatorLoc = Tok.getLocation();
 
-      if (Tok.is(tok::tilde)) {
+        // First try the name of an overloaded operator
+        if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
+          D.setOverloadedOperator(Op, OperatorLoc);
+        } else {
+          // This must be a conversion function (C++ [class.conv.fct]).
+          if (TypeTy *ConvType = ParseConversionFunctionId())
+            D.setConversionFunction(ConvType, OperatorLoc);
+          else
+            D.SetIdentifier(0, Tok.getLocation());
+        }
+        goto PastIdentifier;
+      } else if (Tok.is(tok::tilde)) {
         // This should be a C++ destructor.
         SourceLocation TildeLoc = ConsumeToken();
         if (Tok.is(tok::identifier)) {
@@ -1560,22 +1571,6 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         D.setInvalidType(true);
         goto PastIdentifier;
       }
-    }
-
-    if (Tok.is(tok::kw_operator)) {
-      SourceLocation OperatorLoc = Tok.getLocation();
-
-      // First try the name of an overloaded operator
-      if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
-        D.setOverloadedOperator(Op, OperatorLoc);
-      } else {
-        // This must be a conversion function (C++ [class.conv.fct]).
-        if (TypeTy *ConvType = ParseConversionFunctionId())
-          D.setConversionFunction(ConvType, OperatorLoc);
-        else
-          D.SetIdentifier(0, Tok.getLocation());
-      }
-      goto PastIdentifier;
     }
   }
 

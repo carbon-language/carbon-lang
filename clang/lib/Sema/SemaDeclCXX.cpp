@@ -1230,21 +1230,6 @@ Sema::DeclTy *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
 
   // Make sure we aren't redeclaring the conversion function.
   QualType ConvType = Context.getCanonicalType(Conversion->getConversionType());
-  OverloadedFunctionDecl *Conversions = ClassDecl->getConversionFunctions();
-  for (OverloadedFunctionDecl::function_iterator Func 
-         = Conversions->function_begin();
-       Func != Conversions->function_end(); ++Func) {
-    CXXConversionDecl *OtherConv = cast<CXXConversionDecl>(*Func);
-    if (ConvType == Context.getCanonicalType(OtherConv->getConversionType())) {
-      Diag(Conversion->getLocation(), diag::err_conv_function_redeclared);
-      Diag(OtherConv->getLocation(),
-           OtherConv->isThisDeclarationADefinition()?
-              diag::note_previous_definition
-            : diag::note_previous_declaration);
-      Conversion->setInvalidDecl();
-      return (DeclTy *)Conversion;      
-    }
-  }
 
   // C++ [class.conv.fct]p1:
   //   [...] A conversion function is never used to convert a
@@ -1272,7 +1257,20 @@ Sema::DeclTy *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
       << ClassType << ConvType;
   }
 
-  ClassDecl->addConversionFunction(Context, Conversion);
+  if (Conversion->getPreviousDeclaration()) {
+    OverloadedFunctionDecl *Conversions = ClassDecl->getConversionFunctions();
+    for (OverloadedFunctionDecl::function_iterator 
+           Conv = Conversions->function_begin(),
+           ConvEnd = Conversions->function_end();
+         Conv != ConvEnd; ++Conv) {
+      if (*Conv == Conversion->getPreviousDeclaration()) {
+        *Conv = Conversion;
+        return (DeclTy *)Conversion;
+      }
+    }
+    assert(Conversion->isInvalidDecl() && "Conversion should not get here.");
+  } else 
+    ClassDecl->addConversionFunction(Context, Conversion);
 
   return (DeclTy *)Conversion;
 }

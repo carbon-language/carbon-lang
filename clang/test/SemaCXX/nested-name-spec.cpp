@@ -103,3 +103,23 @@ namespace E {
     }
   }
 }
+
+
+class Operators {
+  Operators operator+(const Operators&) const; // expected-note{{member declaration nearly matches}}
+  operator bool();
+};
+
+Operators Operators::operator+(const Operators&) { // expected-error{{out-of-line definition does not match any declaration in 'Operators'}}
+  Operators ops;
+  return ops;
+}
+
+Operators Operators::operator+(const Operators&) const {
+  Operators ops;
+  return ops;
+}
+
+Operators::operator bool() {
+  return true;
+}
