@@ -945,30 +945,40 @@ bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
       F->getName() == "llvm.memmove" ||
       F->getName() == "memmove") {
 
-    // *Dest = *Src, which requires an artificial graph node to represent the
-    // constraint.  It is broken up into *Dest = temp, temp = *Src
-    unsigned FirstArg = getNode(CS.getArgument(0));
-    unsigned SecondArg = getNode(CS.getArgument(1));
-    unsigned TempArg = GraphNodes.size();
-    GraphNodes.push_back(Node());
-    Constraints.push_back(Constraint(Constraint::Store,
-                                     FirstArg, TempArg));
-    Constraints.push_back(Constraint(Constraint::Load,
-                                     TempArg, SecondArg));
-    // In addition, Dest = Src
-    Constraints.push_back(Constraint(Constraint::Copy,
-                                     FirstArg, SecondArg));
-    return true;
+    const FunctionType *FTy = F->getFunctionType();
+    if (FTy->getNumParams() > 1 && 
+        isa<PointerType>(FTy->getParamType(0)) &&
+        isa<PointerType>(FTy->getParamType(1))) {
+
+      // *Dest = *Src, which requires an artificial graph node to represent the
+      // constraint.  It is broken up into *Dest = temp, temp = *Src
+      unsigned FirstArg = getNode(CS.getArgument(0));
+      unsigned SecondArg = getNode(CS.getArgument(1));
+      unsigned TempArg = GraphNodes.size();
+      GraphNodes.push_back(Node());
+      Constraints.push_back(Constraint(Constraint::Store,
+                                       FirstArg, TempArg));
+      Constraints.push_back(Constraint(Constraint::Load,
+                                       TempArg, SecondArg));
+      // In addition, Dest = Src
+      Constraints.push_back(Constraint(Constraint::Copy,
+                                       FirstArg, SecondArg));
+      return true;
+    }
   }
 
   // Result = Arg0
   if (F->getName() == "realloc" || F->getName() == "strchr" ||
       F->getName() == "strrchr" || F->getName() == "strstr" ||
       F->getName() == "strtok") {
-    Constraints.push_back(Constraint(Constraint::Copy,
-                                     getNode(CS.getInstruction()),
-                                     getNode(CS.getArgument(0))));
-    return true;
+    const FunctionType *FTy = F->getFunctionType();
+    if (FTy->getNumParams() > 0 && 
+        isa<PointerType>(FTy->getParamType(0))) {
+      Constraints.push_back(Constraint(Constraint::Copy,
+                                       getNode(CS.getInstruction()),
+                                       getNode(CS.getArgument(0))));
+      return true;
+    }
   }
 
   return false;
