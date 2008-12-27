@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 @protocol P
   @property(readonly) int X;
 @end
@@ -27,5 +29,3 @@
 @implementation A 
 @dynamic categoryProperty;
 @end
-
-
