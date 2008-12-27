@@ -33,6 +33,7 @@ namespace llvm {
 
 class Type;
 class DerivedType;
+template<typename T> struct simplify_type;
 
 /// The AbstractTypeUser class is an interface to be implemented by classes who
 /// could possibly use an abstract type.  Abstract types are denoted by the
@@ -174,6 +175,21 @@ private:
   void dropRef();
 };
 
+// simplify_type - Allow clients to treat uses just like values when using
+// casting operators.
+template<> struct simplify_type<PATypeHolder> {
+  typedef const Type* SimpleType;
+  static SimpleType getSimplifiedValue(const PATypeHolder &Val) {
+    return static_cast<SimpleType>(Val.get());
+  }
+};
+template<> struct simplify_type<const PATypeHolder> {
+  typedef const Type* SimpleType;
+  static SimpleType getSimplifiedValue(const PATypeHolder &Val) {
+    return static_cast<SimpleType>(Val.get());
+  }
+};
+  
 } // End llvm namespace
 
 #endif
