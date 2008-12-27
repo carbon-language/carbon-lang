@@ -425,6 +425,12 @@ static inline __m128 __attribute__((__always_inline__)) _mm_set1_ps(float w)
   return (__m128){ w, w, w, w };
 }
 
+// Microsoft specific.
+static inline __m128 __attribute__((__always_inline__)) _mm_set_ps1(float w)
+{
+    return _mm_set1_ps(w);
+}
+
 static inline __m128 __attribute__((__always_inline__)) _mm_set_ps(float z, float y, float x, float w)
 {
   return (__m128){ w, x, y, z };
