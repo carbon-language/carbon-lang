@@ -403,11 +403,6 @@ SPURegisterInfo::determineFrameLayout(MachineFunction &MF) const
 void SPURegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                            RegScavenger *RS)
   const {
-#if 0
-  //  Save and clear the LR state.
-  SPUFunctionInfo *FI = MF.getInfo<SPUFunctionInfo>();
-  FI->setUsesLR(MF.getRegInfo().isPhysRegUsed(LR));
-#endif
   // Mark LR and SP unused, since the prolog spills them to stack and
   // we don't want anyone else to spill them for us.
   //

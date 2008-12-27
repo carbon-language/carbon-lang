@@ -165,24 +165,23 @@ namespace {
     MVT VT;
     unsigned ldresult_ins;      /// LDRESULT instruction (0 = undefined)
     bool ldresult_imm;          /// LDRESULT instruction requires immediate?
-    int prefslot_byte;          /// Byte offset of the "preferred" slot
+    unsigned lrinst;            /// LR instruction
   };
 
   const valtype_map_s valtype_map[] = {
-    { MVT::i1,    0,            false, 3 },
-    { MVT::i8,    SPU::ORBIr8,  true,  3 },
-    { MVT::i16,   SPU::ORHIr16, true,  2 },
-    { MVT::i32,   SPU::ORIr32,  true,  0 },
-    { MVT::i64,   SPU::ORr64,   false, 0 },
-    { MVT::f32,   SPU::ORf32,   false, 0 },
-    { MVT::f64,   SPU::ORf64,   false, 0 },
+    { MVT::i8,    SPU::ORBIr8,  true,  SPU::LRr8 },
+    { MVT::i16,   SPU::ORHIr16, true,  SPU::LRr16 },
+    { MVT::i32,   SPU::ORIr32,  true,  SPU::LRr32 },
+    { MVT::i64,   SPU::ORr64,   false, SPU::LRr64 },
+    { MVT::f32,   SPU::ORf32,   false, SPU::LRf32 },
+    { MVT::f64,   SPU::ORf64,   false, SPU::LRf64 },
     // vector types... (sigh!)
-    { MVT::v16i8, 0,            false, 0 },
-    { MVT::v8i16, 0,            false, 0 },
-    { MVT::v4i32, 0,            false, 0 },
-    { MVT::v2i64, 0,            false, 0 },
-    { MVT::v4f32, 0,            false, 0 },
-    { MVT::v2f64, 0,            false, 0 }
+    { MVT::v16i8, 0,            false, SPU::LRv16i8 },
+    { MVT::v8i16, 0,            false, SPU::LRv8i16 },
+    { MVT::v4i32, 0,            false, SPU::LRv4i32 },
+    { MVT::v2i64, 0,            false, SPU::LRv2i64 },
+    { MVT::v4f32, 0,            false, SPU::LRv4f32 },
+    { MVT::v2f64, 0,            false, SPU::LRv2f64 }
   };
 
   const size_t n_valtype_map = sizeof(valtype_map) / sizeof(valtype_map[0]);
@@ -686,31 +685,32 @@ SPUDAGToDAGISel::Select(SDValue Op) {
       Result = CurDAG->getTargetNode(Opc, VT, MVT::Other, Arg, Arg, Chain);
     }
 
-    Chain = SDValue(Result, 1);
-
     return Result;
   } else if (Opc == SPUISD::IndirectAddr) {
-    SDValue Op0 = Op.getOperand(0);
-    if (Op0.getOpcode() == SPUISD::LDRESULT) {
-        /* || Op0.getOpcode() == SPUISD::AFormAddr) */
-      // (IndirectAddr (LDRESULT, imm))
-      SDValue Op1 = Op.getOperand(1);
-      MVT VT = Op.getValueType();
+    // Look at the operands: SelectCode() will catch the cases that aren't
+    // specifically handled here.
+    //
+    // SPUInstrInfo catches the following patterns:
+    // (SPUindirect (SPUhi ...), (SPUlo ...))
+    // (SPUindirect $sp, imm)
+    MVT VT = Op.getValueType();
+    SDValue Op0 = N->getOperand(0);
+    SDValue Op1 = N->getOperand(1);
+    RegisterSDNode *RN;
 
-      DEBUG(cerr << "CellSPU: IndirectAddr(LDRESULT, imm):\nOp0 = ");
-      DEBUG(Op.getOperand(0).getNode()->dump(CurDAG));
-      DEBUG(cerr << "\nOp1 = ");
-      DEBUG(Op.getOperand(1).getNode()->dump(CurDAG));
-      DEBUG(cerr << "\n");
-
+    if ((Op0.getOpcode() != SPUISD::Hi && Op1.getOpcode() != SPUISD::Lo)
+        || (Op0.getOpcode() == ISD::Register
+            && ((RN = dyn_cast<RegisterSDNode>(Op0.getNode())) != 0
+                && RN->getReg() != SPU::R1))) {
+      NewOpc = SPU::Ar32;
       if (Op1.getOpcode() == ISD::Constant) {
         ConstantSDNode *CN = cast<ConstantSDNode>(Op1);
-        Op1 = CurDAG->getTargetConstant(CN->getZExtValue(), VT);
+        Op1 = CurDAG->getTargetConstant(CN->getSExtValue(), VT);
         NewOpc = (isI32IntS10Immediate(CN) ? SPU::AIr32 : SPU::Ar32);
-        Ops[0] = Op0;
-        Ops[1] = Op1;
-        n_ops = 2;
       }
+      Ops[0] = Op0;
+      Ops[1] = Op1;
+      n_ops = 2;
     }
   }
   

@@ -34,10 +34,14 @@ namespace {
   inline bool isCondBranch(const MachineInstr *I) {
     unsigned opc = I->getOpcode();
 
-    return (opc == SPU::BRNZ
-	    || opc == SPU::BRZ
-	    || opc == SPU::BRHNZ
-	    || opc == SPU::BRHZ);
+    return (opc == SPU::BRNZr32
+            || opc == SPU::BRNZv4i32
+	    || opc == SPU::BRZr32
+	    || opc == SPU::BRZv4i32
+	    || opc == SPU::BRHNZr16
+	    || opc == SPU::BRHNZv8i16
+	    || opc == SPU::BRHZr16
+	    || opc == SPU::BRHZv8i16);
   }
 }
 
@@ -103,6 +107,19 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
       return true;
     }
     break;
+  case SPU::LRr8:
+  case SPU::LRr16:
+  case SPU::LRr32:
+  case SPU::LRf32:
+  case SPU::LRr64:
+  case SPU::LRf64:
+  case SPU::LRr128:
+  case SPU::LRv16i8:
+  case SPU::LRv8i16:
+  case SPU::LRv4i32:
+  case SPU::LRv4f32:
+  case SPU::LRv2i64:
+  case SPU::LRv2f64:
   case SPU::ORv16i8_i8:
   case SPU::ORv8i16_i16:
   case SPU::ORv4i32_i32:
@@ -114,7 +131,18 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORi32_v4i32:
   case SPU::ORi64_v2i64:
   case SPU::ORf32_v4f32:
-  case SPU::ORf64_v2f64:
+  case SPU::ORf64_v2f64: {
+    assert(MI.getNumOperands() == 2 &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
+           "invalid SPU OR<type>_<vec> instruction!");
+    if (MI.getOperand(0).getReg() == MI.getOperand(1).getReg()) {
+      sourceReg = MI.getOperand(0).getReg();
+      destReg = MI.getOperand(0).getReg();
+      return true;
+    }
+    break;
+  }
   case SPU::ORv16i8:
   case SPU::ORv8i16:
   case SPU::ORv4i32:
@@ -198,18 +226,14 @@ SPUInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   case SPU::STQDr8: {
     const MachineOperand MOp1 = MI->getOperand(1);
     const MachineOperand MOp2 = MI->getOperand(2);
-    if (MOp1.isImm()
-	&& (MOp2.isFI()
-	    || (MOp2.isReg() && MOp2.getReg() == SPU::R1))) {
-      if (MOp2.isFI())
-	FrameIndex = MOp2.getIndex();
-      else
-	FrameIndex = MOp1.getImm() / SPUFrameInfo::stackSlotSize();
+    if (MOp1.isImm() && MOp2.isFI()) {
+      FrameIndex = MOp2.getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
   }
-  case SPU::STQXv16i8:
+#if 0
+    case SPU::STQXv16i8:
   case SPU::STQXv8i16:
   case SPU::STQXv4i32:
   case SPU::STQXv4f32:
@@ -226,6 +250,7 @@ SPUInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
       return MI->getOperand(0).getReg();
     }
     break;
+#endif
   }
   return 0;
 }
@@ -292,6 +317,8 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     opc = (isValidFrameIdx ? SPU::STQDr16 : SPU::STQXr16);
   } else if (RC == SPU::R8CRegisterClass) {
     opc = (isValidFrameIdx ? SPU::STQDr8 : SPU::STQXr8);
+  } else if (RC == SPU::VECREGRegisterClass) {
+    opc = (isValidFrameIdx) ? SPU::STQDv16i8 : SPU::STQXv16i8;
   } else {
     assert(0 && "Unknown regclass!");
     abort();
@@ -366,6 +393,8 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     opc = (isValidFrameIdx ? SPU::LQDr16 : SPU::LQXr16);
   } else if (RC == SPU::R8CRegisterClass) {
     opc = (isValidFrameIdx ? SPU::LQDr8 : SPU::LQXr8);
+  } else if (RC == SPU::VECREGRegisterClass) {
+    opc = (isValidFrameIdx) ? SPU::LQDv16i8 : SPU::LQXv16i8;
   } else {
     assert(0 && "Unknown regclass in loadRegFromStackSlot!");
     abort();

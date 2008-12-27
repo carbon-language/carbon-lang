@@ -609,15 +609,15 @@ def symbolLSA: Operand<i32> {
   let PrintMethod = "printSymbolLSA";
 }
 
-// memory s7imm(reg) operaand
-def memri7 : Operand<iPTR> {
-  let PrintMethod = "printMemRegImmS7";
+// Shuffle address memory operaand [s7imm(reg) d-format]
+def shufaddr : Operand<iPTR> {
+  let PrintMethod = "printShufAddr";
   let MIOperandInfo = (ops s7imm:$imm, ptr_rc:$reg);
 }
 
 // memory s10imm(reg) operand
-def memri10 : Operand<iPTR> {
-  let PrintMethod = "printMemRegImmS10";
+def dformaddr : Operand<iPTR> {
+  let PrintMethod = "printDFormAddr";
   let MIOperandInfo = (ops s10imm:$imm, ptr_rc:$reg);
 }
 

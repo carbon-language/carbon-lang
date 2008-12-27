@@ -117,7 +117,7 @@ namespace {
     }
  
     void
-    printMemRegImmS7(const MachineInstr *MI, unsigned OpNo)
+    printShufAddr(const MachineInstr *MI, unsigned OpNo)
     {
       char value = MI->getOperand(OpNo).getImm();
       O << (int) value;
@@ -183,16 +183,16 @@ namespace {
     }
 
     void
-    printMemRegImmS10(const MachineInstr *MI, unsigned OpNo)
+    printDFormAddr(const MachineInstr *MI, unsigned OpNo)
     {
       const MachineOperand &MO = MI->getOperand(OpNo);
       assert(MO.isImm() &&
-             "printMemRegImmS10 first operand is not immedate");
+             "printDFormAddr first operand is not immedate");
       int64_t value = int64_t(MI->getOperand(OpNo).getImm());
       int16_t value16 = int16_t(value);
       assert((value16 >= -(1 << (9+4)) && value16 <= (1 << (9+4)) - 1)
              && "Invalid dform s10 offset argument");
-      O << value16 << "(";
+      O << (value16 & ~0xf) << "(";
       printOperand(MI, OpNo+1);
       O << ")";
     }

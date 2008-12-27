@@ -120,9 +120,8 @@ class CVTIntFPForm<bits<10> opcode, dag OOL, dag IOL, string asmstr,
 }
 
 let RA = 0 in {
-  class BICondForm<bits<11> opcode, string asmstr, list<dag> pattern>
-           : RRForm<opcode, (outs), (ins R32C:$rA, R32C:$func), asmstr,
-                    BranchResolv, pattern>
+  class BICondForm<bits<11> opcode, dag OOL, dag IOL, string asmstr, list<dag> pattern>
+           : RRForm<opcode, OOL, IOL, asmstr, BranchResolv, pattern>
   { }
 
   let RT = 0 in {

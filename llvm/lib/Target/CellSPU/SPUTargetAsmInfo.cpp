@@ -26,6 +26,13 @@ SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
   PrivateGlobalPrefix = ".L";
   // This corresponds to what the gcc SPU compiler emits, for consistency.
   CStringSection = ".rodata.str";
+
+  // BSS section needs to be emitted as ".section"
+  BSSSection = "\t.section\t.bss";
+  BSSSection_ = getUnnamedSection("\t.section\t.bss",
+                                  SectionFlags::Writeable | SectionFlags::BSS,
+                                  true);
+
 }
 
 /// PreferredEHDataFormat - This hook allows the target to select data

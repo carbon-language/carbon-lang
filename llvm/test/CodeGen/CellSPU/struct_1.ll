@@ -35,7 +35,7 @@ target triple = "spu"
 ;   int           i2;   // offset 12 [ignored]
 ;   unsigned char c4;   // offset 16 [ignored]
 ;   unsigned char c5;   // offset 17 [ignored]
-;   unsigned char c6;   // offset 18 [ignored]
+;   unsigned char c6;   // offset 18 (rotate left by 14 bytes to byte 3)
 ;   unsigned char c7;   // offset 19 (no rotate, in preferred slot)
 ;   int           i3;   // offset 20 [ignored]
 ;   int           i4;   // offset 24 [ignored]

@@ -39,7 +39,7 @@ namespace llvm {
       SHUFB,                    ///< Vector shuffle (permute)
       SHUFFLE_MASK,             ///< Shuffle mask
       CNTB,                     ///< Count leading ones in bytes
-      PROMOTE_SCALAR,           ///< Promote scalar->vector
+      PREFSLOT2VEC,             ///< Promote scalar->vector
       VEC2PREFSLOT,             ///< Extract element 0
       MPY,                      ///< 16-bit Multiply (low parts of a 32-bit)
       MPYU,                     ///< Multiply Unsigned
@@ -58,6 +58,7 @@ namespace llvm {
       ROTBYTES_LEFT_BITS,       ///< Rotate bytes left by bit shift count
       SELECT_MASK,              ///< Select Mask (FSM, FSMB, FSMH, FSMBI)
       SELB,                     ///< Select bits -> (b & mask) | (a & ~mask)
+      GATHER_BITS,              ///< Gather bits from bytes/words/halfwords
       ADD_EXTENDED,             ///< Add extended, with carry
       CARRY_GENERATE,           ///< Carry generate for ADD_EXTENDED
       SUB_EXTENDED,             ///< Subtract extended, with borrow
@@ -119,6 +120,9 @@ namespace llvm {
                                                 APInt &KnownOne,
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
+
+    virtual unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
+                                                   unsigned Depth = 0) const;
 
     ConstraintType getConstraintType(const std::string &ConstraintLetter) const;
 

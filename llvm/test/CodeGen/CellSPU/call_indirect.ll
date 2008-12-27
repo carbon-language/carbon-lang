@@ -2,7 +2,7 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu -mattr=large_mem > %t2.s
 ; RUN: grep bisl    %t1.s | count 7
 ; RUN: grep ila     %t1.s | count 1
-; RUN: grep rotqbyi %t1.s | count 4
+; RUN: grep rotqby  %t1.s | count 6
 ; RUN: grep lqa     %t1.s | count 1
 ; RUN: grep lqd     %t1.s | count 12
 ; RUN: grep dispatch_tab %t1.s | count 5
