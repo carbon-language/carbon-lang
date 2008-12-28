@@ -366,15 +366,15 @@ public:
 
   /// ActOnCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
   /// which can specify an RHS value.
-  virtual StmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
-                                   SourceLocation DotDotDotLoc, ExprTy *RHSVal,
-                                   SourceLocation ColonLoc, StmtTy *SubStmt) {
-    return 0;
+  virtual OwningStmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprArg LHSVal,
+                                    SourceLocation DotDotDotLoc, ExprArg RHSVal,
+                                    SourceLocation ColonLoc, StmtArg SubStmt) {
+    return StmtEmpty();
   }
-  virtual StmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
-                                      SourceLocation ColonLoc, StmtTy *SubStmt,
-                                      Scope *CurScope){
-    return 0;
+  virtual OwningStmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
+                                            SourceLocation ColonLoc,
+                                            StmtArg SubStmt, Scope *CurScope){
+    return StmtEmpty();
   }
   
   virtual StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,

@@ -567,12 +567,12 @@ public:
                                              bool isStmtExpr);
   virtual OwningStmtResult ActOnDeclStmt(DeclTy *Decl, SourceLocation StartLoc,
                                          SourceLocation EndLoc);
-  virtual StmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
-                                   SourceLocation DotDotDotLoc, ExprTy *RHSVal,
-                                   SourceLocation ColonLoc, StmtTy *SubStmt);
-  virtual StmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
-                                      SourceLocation ColonLoc, StmtTy *SubStmt,
-                                      Scope *CurScope);
+  virtual OwningStmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprArg LHSVal,
+                                    SourceLocation DotDotDotLoc, ExprArg RHSVal,
+                                    SourceLocation ColonLoc, StmtArg SubStmt);
+  virtual OwningStmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
+                                            SourceLocation ColonLoc,
+                                            StmtArg SubStmt, Scope *CurScope);
   virtual StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                                     SourceLocation ColonLoc, StmtTy *SubStmt);
   virtual StmtResult ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,

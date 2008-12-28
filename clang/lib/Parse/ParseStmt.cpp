@@ -271,9 +271,9 @@ Parser::OwningStmtResult Parser::ParseCaseStatement() {
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
 
-  return Owned(Actions.ActOnCaseStmt(CaseLoc, LHS.release(), DotDotDotLoc,
-                                     RHS.release(), ColonLoc,
-                                     SubStmt.release()));
+  return Actions.ActOnCaseStmt(CaseLoc, move_convert(LHS), DotDotDotLoc,
+                               move_convert(RHS), ColonLoc,
+                               move_convert(SubStmt));
 }
 
 /// ParseDefaultStatement
@@ -303,8 +303,8 @@ Parser::OwningStmtResult Parser::ParseDefaultStatement() {
   if (SubStmt.isInvalid())
     return StmtError();
 
-  return Owned(Actions.ActOnDefaultStmt(DefaultLoc, ColonLoc,
-                                        SubStmt.release(), CurScope));
+  return Actions.ActOnDefaultStmt(DefaultLoc, ColonLoc,
+                                  move_convert(SubStmt), CurScope);
 }
 
 

@@ -119,49 +119,54 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
   return Owned(new CompoundStmt(Elts, NumElts, L, R));
 }
 
-Action::StmtResult
-Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
-                    SourceLocation DotDotDotLoc, ExprTy *rhsval,
-                    SourceLocation ColonLoc, StmtTy *subStmt) {
-  Stmt *SubStmt = static_cast<Stmt*>(subStmt);
-  Expr *LHSVal = ((Expr *)lhsval), *RHSVal = ((Expr *)rhsval);
-  assert((LHSVal != 0) && "missing expression in case statement");
-  
+Action::OwningStmtResult
+Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprArg lhsval,
+                    SourceLocation DotDotDotLoc, ExprArg rhsval,
+                    SourceLocation ColonLoc, StmtArg subStmt) {
+  Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
+  assert((lhsval.get() != 0) && "missing expression in case statement");
+
   // C99 6.8.4.2p3: The expression shall be an integer constant.
   // However, GCC allows any evaluatable integer expression. 
 
+  Expr *LHSVal = static_cast<Expr*>(lhsval.get());
   if (VerifyIntegerConstantExpression(LHSVal))
-    return SubStmt;
+    return Owned(SubStmt);
 
   // GCC extension: The expression shall be an integer constant.
-  
-  if (RHSVal && VerifyIntegerConstantExpression(RHSVal))
+
+  Expr *RHSVal = static_cast<Expr*>(rhsval.get());
+  if (RHSVal && VerifyIntegerConstantExpression(RHSVal)) {
     RHSVal = 0;  // Recover by just forgetting about it.
-  
+    rhsval = 0;
+  }
+
   if (SwitchStack.empty()) {
     Diag(CaseLoc, diag::err_case_not_in_switch);
-    return SubStmt;
+    return Owned(SubStmt);
   }
 
+  // Only now release the smart pointers.
+  lhsval.release();
+  rhsval.release();
   CaseStmt *CS = new CaseStmt(LHSVal, RHSVal, SubStmt, CaseLoc);
   SwitchStack.back()->addSwitchCase(CS);
-  return CS;
+  return Owned(CS);
 }
 
-Action::StmtResult
+Action::OwningStmtResult
 Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc, 
-                       StmtTy *subStmt, Scope *CurScope) {
-  Stmt *SubStmt = static_cast<Stmt*>(subStmt);
-  
+                       StmtArg subStmt, Scope *CurScope) {
+  Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
+
   if (SwitchStack.empty()) {
     Diag(DefaultLoc, diag::err_default_not_in_switch);
-    return SubStmt;
+    return Owned(SubStmt);
   }
-  
+
   DefaultStmt *DS = new DefaultStmt(DefaultLoc, SubStmt);
   SwitchStack.back()->addSwitchCase(DS);
-
-  return DS;
+  return Owned(DS);
 }
 
 Action::StmtResult
