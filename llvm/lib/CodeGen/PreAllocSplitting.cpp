@@ -171,7 +171,15 @@ namespace {
                             int& SS,
                             SmallPtrSet<MachineInstr*, 4>& RefsInMBB);
     void RenumberValno(VNInfo* VN);
-  };
+    void ReconstructLiveInterval(LiveInterval* LI);
+    VNInfo* PerformPHIConstruction(MachineBasicBlock::iterator use,
+                                   LiveInterval* LI,
+            DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Defs,
+            DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Uses,
+                                      DenseMap<MachineInstr*, VNInfo*>& NewVNs,
+                                DenseMap<MachineBasicBlock*, VNInfo*>& Visited,
+                                               bool toplevel = false);
+};
 } // end anonymous namespace
 
 char PreAllocSplitting::ID = 0;
@@ -575,6 +583,257 @@ PreAllocSplitting::ShrinkWrapToLastUse(MachineBasicBlock *MBB, VNInfo *ValNo,
 
   // Return true if the last use becomes a new kill.
   return LastMI;
+}
+
+/// PerformPHIConstruction - From properly set up use and def lists, use a PHI
+/// construction algorithm to compute the ranges and valnos for an interval.
+VNInfo* PreAllocSplitting::PerformPHIConstruction(
+                                                MachineBasicBlock::iterator use,
+                                                               LiveInterval* LI,
+             DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Defs,
+             DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Uses,
+                                       DenseMap<MachineInstr*, VNInfo*>& NewVNs,
+                                 DenseMap<MachineBasicBlock*, VNInfo*>& Visited,
+                                                        bool toplevel) {
+  // Return memoized result if it's available.
+  if (Visited.count(use->getParent()))
+    return Visited[use->getParent()];
+  
+  typedef DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> > RegMap;
+  
+  // Check if our block contains any uses or defs.
+  bool ContainsDefs = Defs.count(use->getParent());
+  bool ContainsUses = Uses.count(use->getParent());
+  
+  VNInfo* ret = 0;
+  
+  // Enumerate the cases of use/def contaning blocks.
+  if (!ContainsDefs && !ContainsUses) {
+  Fallback:
+    // NOTE: Because this is the fallback case from other cases, we do NOT
+    // assume that we are not at toplevel here.
+    
+    // If there are no uses or defs between our starting point and the beginning
+    // of the block, then recursive perform phi construction on our predecessors
+    MachineBasicBlock* MBB = use->getParent();
+    DenseMap<MachineBasicBlock*, VNInfo*> IncomingVNs;
+    for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+         PE = MBB->pred_end(); PI != PE; ++PI) {
+      VNInfo* Incoming = PerformPHIConstruction((*PI)->end(), LI, Defs, Uses,
+                                                NewVNs, Visited, false);
+      IncomingVNs[*PI] = Incoming;
+    }
+    
+    // If only one VNInfo came back from our predecessors, just use that one...
+    if (IncomingVNs.size() == 1) {
+      ret = IncomingVNs.begin()->second;
+      unsigned StartIndex = LIs->getMBBStartIdx(use->getParent());
+      unsigned EndIndex = 0;
+      if (toplevel) {
+        EndIndex = LIs->getInstructionIndex(use);
+        EndIndex = LiveIntervals::getUseIndex(EndIndex);
+      } else
+        EndIndex = LIs->getMBBEndIdx(use->getParent());
+      
+      LI->addRange(LiveRange(StartIndex, EndIndex, ret));
+    } else {
+      // Otherwise, merge the incoming VNInfos with a phi join.  Create a new
+      // VNInfo to represent the joined value.
+      for (DenseMap<MachineBasicBlock*, VNInfo*>::iterator I =
+           IncomingVNs.begin(), E = IncomingVNs.end(); I != E; ++I) {
+        I->second->hasPHIKill = true;
+        unsigned KillIndex = LIs->getMBBEndIdx(I->first);
+        LI->addKill(I->second, KillIndex);
+      }
+      
+      unsigned StartIndex = LIs->getMBBStartIdx(use->getParent());
+      unsigned EndIndex = 0;
+      if (toplevel) {
+        EndIndex = LIs->getInstructionIndex(use);
+        EndIndex = LiveIntervals::getUseIndex(EndIndex);
+      } else
+        EndIndex = LIs->getMBBEndIdx(use->getParent());
+      ret = LI->getNextValue(StartIndex, /*FIXME*/ 0,
+                             LIs->getVNInfoAllocator());
+      LI->addRange(LiveRange(StartIndex, EndIndex, ret));
+    }
+  } else if (ContainsDefs && !ContainsUses) {
+    SmallPtrSet<MachineInstr*, 2>& BlockDefs = Defs[use->getParent()];
+
+    // Search for the def in this block.  If we don't find it before the
+    // instruction we care about, go to the fallback case.  Note that that
+    // should never happen: this cannot be a toplevel block, so use should
+    // always be an end() iterator.
+    assert(use == use->getParent()->end() && "No use marked in toplevel block");
+    
+    MachineBasicBlock::iterator walker = use;
+    --walker;
+    while (walker != use->getParent()->begin())
+      if (BlockDefs.count(walker)) {
+        break;
+      } else
+        --walker;
+    
+    // Once we've found it, extend its VNInfo to our instruction.
+    unsigned DefIndex = LIs->getInstructionIndex(walker);
+    DefIndex = LiveIntervals::getDefIndex(DefIndex);
+    unsigned EndIndex = LIs->getMBBEndIdx(use->getParent());
+    
+    ret = NewVNs[walker];
+    LI->addRange(LiveRange(DefIndex, EndIndex, ret));
+  } else if (!ContainsDefs && ContainsUses) {
+    SmallPtrSet<MachineInstr*, 2>& BlockUses = Uses[use->getParent()];
+    
+    // Search for the use in this block that precedes the instruction we care 
+    // about, going to the fallback case if we don't find it.
+    
+    if (use == use->getParent()->begin())
+      goto Fallback;
+    
+    MachineBasicBlock::iterator walker = use;
+    --walker;
+    bool found = false;
+    while (walker != use->getParent()->begin())
+      if (BlockUses.count(walker)) {
+        found = true;
+        break;
+      } else
+        --walker;
+        
+    // Must check begin() too.
+    if (!found)
+      if (BlockUses.count(walker))
+        found = true;
+      else
+        goto Fallback;
+    
+    unsigned UseIndex = LIs->getInstructionIndex(walker);
+    UseIndex = LiveIntervals::getUseIndex(UseIndex);
+    unsigned EndIndex = 0;
+    if (toplevel) {
+      EndIndex = LIs->getInstructionIndex(walker);
+      EndIndex = LiveIntervals::getUseIndex(EndIndex);
+    } else
+      EndIndex = LIs->getMBBEndIdx(use->getParent());
+
+    // Now, recursively phi construct the VNInfo for the use we found,
+    // and then extend it to include the instruction we care about
+    ret = PerformPHIConstruction(walker, LI, Defs, Uses,
+                                 NewVNs, Visited, false);
+    
+    // FIXME: Need to set kills properly for inter-block stuff.
+    if (toplevel) {
+      if (LI->isKill(ret, UseIndex)) LI->removeKill(ret, UseIndex);
+      LI->addKill(ret, EndIndex);
+    }
+    
+    LI->addRange(LiveRange(UseIndex, EndIndex, ret));
+  } else if (ContainsDefs && ContainsUses){
+    SmallPtrSet<MachineInstr*, 2>& BlockDefs = Defs[use->getParent()];
+    SmallPtrSet<MachineInstr*, 2>& BlockUses = Uses[use->getParent()];
+    
+    // This case is basically a merging of the two preceding case, with the
+    // special note that checking for defs must take precedence over checking
+    // for uses, because of two-address instructions.
+    
+    if (use == use->getParent()->begin())
+      goto Fallback;
+    
+    MachineBasicBlock::iterator walker = use;
+    --walker;
+    bool foundDef = false;
+    bool foundUse = false;
+    while (walker != use->getParent()->begin())
+      if (BlockDefs.count(walker)) {
+        foundDef = true;
+        break;
+      } else if (BlockUses.count(walker)) {
+        foundUse = true;
+        break;
+      } else
+        --walker;
+        
+    // Must check begin() too.
+    if (!foundDef && !foundUse)
+      if (BlockDefs.count(walker))
+        foundDef = true;
+      else if (BlockUses.count(walker))
+        foundUse = true;
+      else
+        goto Fallback;
+      
+    unsigned StartIndex = LIs->getInstructionIndex(walker);
+    StartIndex = foundDef ? LiveIntervals::getDefIndex(StartIndex) :
+                            LiveIntervals::getUseIndex(StartIndex);
+    unsigned EndIndex = 0;
+    if (toplevel) {
+      EndIndex = LIs->getInstructionIndex(walker);
+      EndIndex = LiveIntervals::getUseIndex(EndIndex);
+    } else
+      EndIndex = LIs->getMBBEndIdx(use->getParent());
+
+    if (foundDef)
+      ret = NewVNs[walker];
+    else
+      ret = PerformPHIConstruction(walker, LI, Defs, Uses,
+                                   NewVNs, Visited, false);
+
+    // FIXME: Need to set kills properly for inter-block stuff.
+    if (toplevel) {
+      if (foundUse && LI->isKill(ret, StartIndex))
+        LI->removeKill(ret, StartIndex);
+      LI->addKill(ret, EndIndex);
+    }
+
+    LI->addRange(LiveRange(StartIndex, EndIndex, ret));
+  }
+  
+  // Memoize results so we don't have to recompute them.
+  if (!toplevel) Visited[use->getParent()] = ret;
+  
+  return ret;
+}
+
+/// ReconstructLiveInterval - Recompute a live interval from scratch.
+void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
+  BumpPtrAllocator& Alloc = LIs->getVNInfoAllocator();
+  
+  // Clear the old ranges and valnos;
+  LI->clear();
+  
+  // Cache the uses and defs of the register
+  typedef DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> > RegMap;
+  RegMap Defs, Uses;
+  
+  // Keep track of the new VNs we're creating.
+  DenseMap<MachineInstr*, VNInfo*> NewVNs;
+  SmallPtrSet<VNInfo*, 2> PhiVNs;
+  
+  // Cache defs, and create a new VNInfo for each def.
+  for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(LI->reg),
+       DE = MRI->def_end(); DI != DE; ++DI) {
+    Defs[(*DI).getParent()].insert(&*DI);
+    
+    unsigned DefIdx = LIs->getInstructionIndex(&*DI);
+    DefIdx = LiveIntervals::getDefIndex(DefIdx);
+    
+    VNInfo* NewVN = LI->getNextValue(DefIdx, /*FIXME*/ 0, Alloc);
+    NewVNs[&*DI] = NewVN;
+  }
+  
+  // Cache uses as a separate pass from actually processing them.
+  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(LI->reg),
+       UE = MRI->use_end(); UI != UE; ++UI)
+    Uses[(*UI).getParent()].insert(&*UI);
+    
+  // Now, actually process every use and use a phi construction algorithm
+  // to walk from it to its reaching definitions, building VNInfos along
+  // the way.
+  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(LI->reg),
+       UE = MRI->use_end(); UI != UE; ++UI) {
+    DenseMap<MachineBasicBlock*, VNInfo*> Visited;
+    PerformPHIConstruction(&*UI, LI, Defs, Uses, NewVNs, Visited, true); 
+  }
 }
 
 /// ShrinkWrapLiveInterval - Recursively traverse the predecessor
