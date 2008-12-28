@@ -302,7 +302,7 @@ public:
 
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.
-  virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);  
+  virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);
   
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, const CXXScopeSpec &SS,

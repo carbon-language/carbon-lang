@@ -5,10 +5,12 @@ export class foo { };   // expected-error {{expected template}}
 template  x;            // expected-error {{expected '<' after 'template'}}
 export template x;      // expected-error {{expected '<' after 'template'}} \
                         // expected-note {{exported templates are unsupported}}
-template < ;            // expected-error {{parse error}}
-template <template X> ; // expected-error {{expected '<' after 'template'}}
-template <template <typename> > ;       // expected-error {{expected 'class' before '>'}}
-template <template <typename> Foo> ;    // expected-error {{expected 'class' before 'Foo'}}
+// See Sema::ParsedFreeStandingDeclSpec about the double diagnostic. This is
+// because ParseNonTypeTemplateParameter starts parsing a DeclSpec.
+template < ;            // expected-error {{parse error}} expected-error {{declaration does not declare anything}}
+template <template X> struct Err1; // expected-error {{expected '<' after 'template'}}
+template <template <typename> > struct Err2;       // expected-error {{expected 'class' before '>'}}
+template <template <typename> Foo> struct Err3;    // expected-error {{expected 'class' before 'Foo'}}
 
 // Template function declarations
 template <typename T> void foo();

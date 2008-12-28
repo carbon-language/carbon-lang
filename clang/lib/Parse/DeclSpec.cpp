@@ -313,3 +313,11 @@ void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr,
   // 'data definition has no type or storage class'?
 }
 
+bool DeclSpec::isMissingDeclaratorOk() {
+  TST tst = getTypeSpecType();
+  return (tst == TST_union
+       || tst == TST_struct
+       || tst == TST_class
+       || tst == TST_enum
+      ) && getTypeRep() != 0;
+}

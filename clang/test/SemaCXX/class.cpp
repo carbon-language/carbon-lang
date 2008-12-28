@@ -100,4 +100,8 @@ mutable void gfn(); // expected-error {{illegal storage class on function}}
 void ogfn()
 {
   mutable int ml; // expected-error {{error: 'mutable' can only be applied to member variables}}
+
+  // PR3020: This used to crash due to double ownership of C4.
+  struct C4;
+  C4; // expected-error {{declaration does not declare anything}}
 }

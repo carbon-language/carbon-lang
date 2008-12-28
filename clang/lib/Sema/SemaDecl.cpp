@@ -773,10 +773,17 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
 /// no declarator (e.g. "struct foo;") is parsed.
 Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
-  // TODO: emit error on 'int;' or 'const enum foo;'.
-  // TODO: emit error on 'typedef int;'
-  // if (!DS.isMissingDeclaratorOk()) Diag(...);
-  
+  // FIXME: Isn't that more of a parser diagnostic than a sema diagnostic?
+  if (!DS.isMissingDeclaratorOk()) {
+    // FIXME: This diagnostic is emitted even when various previous
+    // errors occurred (see e.g. test/Sema/decl-invalid.c). However,
+    // DeclSpec has no means of communicating this information, and the
+    // responsible parser functions are quite far apart.
+    Diag(DS.getSourceRange().getBegin(), diag::err_no_declarators)
+      << DS.getSourceRange();
+    return 0;
+  }
+
   return dyn_cast_or_null<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
 }
 
