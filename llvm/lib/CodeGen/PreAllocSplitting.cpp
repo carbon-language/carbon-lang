@@ -722,10 +722,9 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
                                  NewVNs, Visited, false);
     
     // FIXME: Need to set kills properly for inter-block stuff.
-    if (toplevel) {
-      if (LI->isKill(ret, UseIndex)) LI->removeKill(ret, UseIndex);
+    if (LI->isKill(ret, UseIndex)) LI->removeKill(ret, UseIndex);
+    if (toplevel)
       LI->addKill(ret, EndIndex);
-    }
     
     LI->addRange(LiveRange(UseIndex, EndIndex, ret));
   } else if (ContainsDefs && ContainsUses){
@@ -778,10 +777,9 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
       ret = PerformPHIConstruction(walker, LI, Defs, Uses,
                                    NewVNs, Visited, false);
 
-    // FIXME: Need to set kills properly for inter-block stuff.
+    if (foundUse && LI->isKill(ret, StartIndex))
+      LI->removeKill(ret, StartIndex);
     if (toplevel) {
-      if (foundUse && LI->isKill(ret, StartIndex))
-        LI->removeKill(ret, StartIndex);
       LI->addKill(ret, EndIndex);
     }
 
@@ -833,6 +831,20 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
        UE = MRI->use_end(); UI != UE; ++UI) {
     DenseMap<MachineBasicBlock*, VNInfo*> Visited;
     PerformPHIConstruction(&*UI, LI, Defs, Uses, NewVNs, Visited, true); 
+  }
+  
+  // Add ranges for dead defs
+  for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(LI->reg),
+       DE = MRI->def_end(); DI != DE; ++DI) {
+    unsigned DefIdx = LIs->getInstructionIndex(&*DI);
+    DefIdx = LiveIntervals::getDefIndex(DefIdx);
+    unsigned UseIdx = LiveIntervals::getUseIndex(DefIdx);
+    
+    if (LI->liveAt(DefIdx)) continue;
+    
+    VNInfo* DeadVN = NewVNs[&*DI];
+    LI->addRange(LiveRange(DefIdx, UseIdx, DeadVN));
+    LI->addKill(DeadVN, DefIdx);
   }
 }
 
