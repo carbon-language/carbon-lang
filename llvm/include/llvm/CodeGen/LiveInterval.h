@@ -145,6 +145,16 @@ namespace llvm {
       while (I->end <= Pos) ++I;
       return I;
     }
+    
+    void clear() {
+      while (!valnos.empty()) {
+        VNInfo *VNI = valnos.back();
+        valnos.pop_back();
+        VNI->~VNInfo();
+      }
+      
+      ranges.clear();
+    }
 
     /// isStackSlot - Return true if this is a stack slot interval.
     ///
