@@ -701,12 +701,13 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
         --walker;
         
     // Must check begin() too.
-    if (!found)
+    if (!found) {
       if (BlockUses.count(walker))
         found = true;
       else
         goto Fallback;
-    
+    }
+
     unsigned UseIndex = LIs->getInstructionIndex(walker);
     UseIndex = LiveIntervals::getUseIndex(UseIndex);
     unsigned EndIndex = 0;
@@ -753,14 +754,15 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
         --walker;
         
     // Must check begin() too.
-    if (!foundDef && !foundUse)
+    if (!foundDef && !foundUse) {
       if (BlockDefs.count(walker))
         foundDef = true;
       else if (BlockUses.count(walker))
         foundUse = true;
       else
         goto Fallback;
-      
+    }
+
     unsigned StartIndex = LIs->getInstructionIndex(walker);
     StartIndex = foundDef ? LiveIntervals::getDefIndex(StartIndex) :
                             LiveIntervals::getUseIndex(StartIndex);
