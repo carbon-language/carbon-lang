@@ -203,10 +203,9 @@ to the type info of the exception object.</p>
 pad to the back end.</p>
 
 <p><a href="#llvm_eh_exception"><tt>llvm.eh.exception</tt></a> takes no
-arguments and returns the exception structure reference.  The backend replaces
-this intrinsic with the code that accesses the first argument of a call.  The
-LLVM C++ front end generates code to save this value in an alloca location for
-further use in the landing pad and catch code.</p>
+arguments and returns a pointer to the exception structure.  This only returns a
+sensible value if called after an invoke has branched to a landing pad.  Due to
+codegen limitations, it must currently be called in the landing pad itself.</p>
 
 <p><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> takes a minimum of
 three arguments.  The first argument is the reference to the exception
@@ -220,8 +219,9 @@ The result of the <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> is a
 positive number if the exception matched a type info, a negative number if it matched
 a filter, and zero if it matched a cleanup.  If nothing is matched, the behaviour of
 the program is <a href="#restrictions">undefined</a>.
-The LLVM C++ front end generates code to save the selector value in an alloca
-location for further use in the landing pad and catch code.
+This only returns a sensible value if called after an invoke has branched to a
+landing pad.  Due to codegen limitations, it must currently be called in the
+landing pad itself.
 If a type info matched then the selector value is the index of the type info in
 the exception table, which can be obtained using the
 <a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a> intrinsic.</p>
@@ -276,17 +276,23 @@ instead.
 
 <div class="doc_text">
 
-<p>C++ allows the specification of which exception types that can be thrown from
+<p>C++ allows the specification of which exception types can be thrown from
 a function.  To represent this a top level landing pad may exist to filter out
 invalid types.  To express this in LLVM code the landing pad will call <a
-href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>.  The arguments are the
-length of the filter expression (the number of type infos plus one), followed by
-the type infos themselves.
+href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>.  The arguments are a
+reference to the exception structure, a reference to the personality function,
+the length of the filter expression (the number of type infos plus one),
+followed by the type infos themselves.
 <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> will return a negative
 value if the exception does not match any of the type infos.  If no match is
 found then a call to <tt>__cxa_call_unexpected</tt> should be made, otherwise
-<tt>_Unwind_Resume</tt>.  Each of these functions require a reference to the
-exception structure.</p>
+<tt>_Unwind_Resume</tt>.  Each of these functions requires a reference to the
+exception structure.  Note that the most general form of an
+<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> call can contain
+any number of type infos, filter expressions and cleanups (though having more
+than one cleanup is pointless).  The LLVM C++ front-end can generate such
+<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> calls due to inlining
+creating nested exception handling scopes.</p>
 
 </div>
 
@@ -340,10 +346,7 @@ provide exception handling information at various points in generated code.</p>
   i8* %<a href="#llvm_eh_exception">llvm.eh.exception</a>( )
 </pre>
 
-<p>This intrinsic indicates that the exception structure is available at this
-point in the code.  The backend will replace this intrinsic with code to fetch
-the first argument of a call.  The effect is that the intrinsic result is the
-exception structure reference.</p>
+<p>This intrinsic returns a pointer to the exception structure.</p>
 
 </div>
 
@@ -358,10 +361,8 @@ exception structure reference.</p>
   i64 %<a href="#llvm_eh_selector">llvm.eh.selector.i64</a>(i8*, i8*, i8*, ...)
 </pre>
 
-<p>This intrinsic indicates that the exception selector is available at this
-point in the code.  The backend will replace this intrinsic with code to fetch
-the second argument of a call.  The effect is that the intrinsic result is the
-exception selector.</p>
+<p>This intrinsic is used to compare the exception with the given type infos,
+filters and cleanups.</p>
 
 <p><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> takes a minimum of
 three arguments.  The first argument is the reference to the exception
