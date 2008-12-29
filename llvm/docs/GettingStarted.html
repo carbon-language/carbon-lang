@@ -114,10 +114,10 @@ and performance.
   <li>Read the documentation.</li>
   <li>Read the documentation.</li>
   <li>Remember that you were warned twice about reading the documentation.</li>
-  <li>Install the llvm-gcc4.2 front end if you intend to compile C or C++:
+  <li>Install the llvm-gcc-4.2 front end if you intend to compile C or C++:
     <ol>
       <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt></li>
-      <li><tt>gunzip --stdout llvm-gcc.<i>platform</i>.tar.gz | tar -xvf -</tt>
+      <li><tt>gunzip --stdout llvm-gcc-4.2-<i>version</i>-<i>platform</i>.tar.gz | tar -xvf -</tt>
       </li>
       <li>Note: If the binary extension is ".bz" use bunzip2 instead of gunzip.</li>
       <li>Add llvm-gcc's "bin" directory to your PATH variable.</li>
@@ -677,12 +677,12 @@ compressed with the gzip program.
   <dt><tt>llvm-test-x.y.tar.gz</tt></dt>
   <dd>Source release for the LLVM test suite.</dd>
 
-  <dt><tt>llvm-gcc4-x.y.source.tar.gz</tt></dt>
-  <dd>Source release of the llvm-gcc4 front end.  See README.LLVM in the root
+  <dt><tt>llvm-gcc-4.2-x.y.source.tar.gz</tt></dt>
+  <dd>Source release of the llvm-gcc-4.2 front end.  See README.LLVM in the root
       directory for build instructions.<br></dd>
 
-  <dt><tt>llvm-gcc4-x.y-platform.tar.gz</tt></dt>
-  <dd>Binary release of the llvm-gcc4 front end for a specific platform.<br></dd>
+  <dt><tt>llvm-gcc-4.2-x.y-platform.tar.gz</tt></dt>
+  <dd>Binary release of the llvm-gcc-4.2 front end for a specific platform.<br></dd>
 
 </dl>
 
@@ -771,7 +771,7 @@ main LLVM repository.</p>
 
 <ol>
   <li><tt>cd <i>where-you-want-the-front-end-to-live</i></tt></li>
-  <li><tt>gunzip --stdout llvmgcc-<i>version</i>.<i>platform</i>.tar.gz | tar -xvf
+  <li><tt>gunzip --stdout llvm-gcc-4.2-<i>version</i>-<i>platform</i>.tar.gz | tar -xvf
       -</tt></li>
 </ol>
 
