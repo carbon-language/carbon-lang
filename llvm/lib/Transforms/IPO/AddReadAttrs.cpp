@@ -17,6 +17,7 @@
 #define DEBUG_TYPE "addreadattrs"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/CallGraphSCCPass.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -40,6 +41,8 @@ namespace {
       AU.setPreservesCFG();
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
+
+    bool PointsToLocalMemory(Value *V);
   };
 }
 
@@ -49,6 +52,20 @@ X("addreadattrs", "Mark functions readnone/readonly");
 
 Pass *llvm::createAddReadAttrsPass() { return new AddReadAttrs(); }
 
+
+/// PointsToLocalMemory - Returns whether the given pointer value points to
+/// memory that is local to the function.  Global constants are considered
+/// local to all functions.
+bool AddReadAttrs::PointsToLocalMemory(Value *V) {
+  V = V->getUnderlyingObject();
+  // An alloca instruction defines local memory.
+  if (isa<AllocaInst>(V))
+    return true;
+  // A global constant counts as local memory for our purposes.
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+    return GV->isConstant();
+  return false;
+}
 
 bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   SmallPtrSet<CallGraphNode *, 8> SCCNodes;
@@ -96,14 +113,12 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
         if (SCCNodes.count(CG[CS.getCalledFunction()]))
           continue;
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-        Value *Target = LI->getPointerOperand()->getUnderlyingObject();
         // Ignore loads from local memory.
-        if (isa<AllocaInst>(Target))
+        if (PointsToLocalMemory(LI->getPointerOperand()))
           continue;
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-        Value *Target = SI->getPointerOperand()->getUnderlyingObject();
         // Ignore stores to local memory.
-        if (isa<AllocaInst>(Target))
+        if (PointsToLocalMemory(SI->getPointerOperand()))
           continue;
       }
 
