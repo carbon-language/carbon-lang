@@ -64,6 +64,8 @@ bool AddReadAttrs::PointsToLocalMemory(Value *V) {
   // A global constant counts as local memory for our purposes.
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
     return GV->isConstant();
+  // Could look through phi nodes and selects here, but it doesn't seem
+  // to be useful in practice.
   return false;
 }
 
