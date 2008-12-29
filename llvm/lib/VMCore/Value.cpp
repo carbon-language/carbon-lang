@@ -324,38 +324,51 @@ void Value::replaceAllUsesWith(Value *New) {
 Value *Value::stripPointerCasts() {
   if (!isa<PointerType>(getType()))
     return this;
-
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(this)) {
-    if (CE->getOpcode() == Instruction::BitCast) {
-      return CE->getOperand(0)->stripPointerCasts();
-    } else if (CE->getOpcode() == Instruction::GetElementPtr) {
-      for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-        if (!CE->getOperand(i)->isNullValue())
-          return this;
-      return CE->getOperand(0)->stripPointerCasts();
+  Value *V = this;
+  do {
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+      if (CE->getOpcode() == Instruction::GetElementPtr) {
+        for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+          if (!CE->getOperand(i)->isNullValue())
+            return V;
+        V = CE->getOperand(0);
+      } else if (CE->getOpcode() == Instruction::BitCast) {
+        V = CE->getOperand(0);
+      } else {
+        return V;
+      }
+    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V)) {
+      if (!GEP->hasAllZeroIndices())
+        return V;
+      V = GEP->getOperand(0);
+    } else if (BitCastInst *CI = dyn_cast<BitCastInst>(V)) {
+      V = CI->getOperand(0);
+    } else {
+      return V;
     }
-  } else if (BitCastInst *CI = dyn_cast<BitCastInst>(this)) {
-    return CI->getOperand(0)->stripPointerCasts();
-  } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(this)) {
-    if (GEP->hasAllZeroIndices())
-      return GEP->getOperand(0)->stripPointerCasts();
-  }
-  return this;
+    assert(isa<PointerType>(V->getType()) && "Unexpected operand type!");
+  } while (1);
 }
 
 Value *Value::getUnderlyingObject() {
   if (!isa<PointerType>(getType()))
     return this;
-
-  if (Instruction *I = dyn_cast<Instruction>(this)) {
-    if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I))
-      return I->getOperand(0)->getUnderlyingObject();
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(this)) {
-    if (CE->getOpcode() == Instruction::BitCast ||
-        CE->getOpcode() == Instruction::GetElementPtr)
-      return CE->getOperand(0)->getUnderlyingObject();
-  }
-  return this;
+  Value *V = this;
+  do {
+    if (Instruction *I = dyn_cast<Instruction>(V)) {
+      if (!isa<BitCastInst>(I) && !isa<GetElementPtrInst>(I))
+        return V;
+      V = I->getOperand(0);
+    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+      if (CE->getOpcode() != Instruction::BitCast &&
+          CE->getOpcode() != Instruction::GetElementPtr)
+        return V;
+      V = CE->getOperand(0);
+    } else {
+      return V;
+    }
+    assert(isa<PointerType>(V->getType()) && "Unexpected operand type!");
+  } while (1);
 }
 
 /// DoPHITranslation - If this value is a PHI node with CurBB as its parent,
