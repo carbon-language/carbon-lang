@@ -2111,9 +2111,7 @@ Constant *ConstantExpr::getCompare(unsigned short pred,
 
 Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
                                     Constant *V1, Constant *V2) {
-  assert(C->getType() == Type::Int1Ty && "Select condition must be i1!");
-  assert(V1->getType() == V2->getType() && "Select value types must match!");
-  assert(V1->getType()->isFirstClassType() && "Cannot select aggregate type!");
+  assert(!SelectInst::areInvalidOperands(C, V1, V2)&&"Invalid select operands");
 
   if (ReqTy == V1->getType())
     if (Constant *SC = ConstantFoldSelectInstruction(C, V1, V2))
