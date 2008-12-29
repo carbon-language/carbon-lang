@@ -124,6 +124,10 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setLoadExtAction(ISD::ZEXTLOAD, VT, Custom);
     setLoadExtAction(ISD::SEXTLOAD, VT, Custom);
 
+    // SMUL_LOHI, UMUL_LOHI are not legal for Cell:
+    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
+    setOperationAction(ISD::UMUL_LOHI, VT, Expand);
+
     for (unsigned stype = sctype - 1; stype >= (unsigned) MVT::i8; --stype) {
       MVT StoreVT = (MVT::SimpleValueType) stype;
       setTruncStoreAction(VT, StoreVT, Expand);
@@ -207,7 +211,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   // Custom lower i8, i32 and i64 multiplications
   setOperationAction(ISD::MUL,  MVT::i8,     Custom);
-  setOperationAction(ISD::MUL,  MVT::i32,    Custom);
+  setOperationAction(ISD::MUL,  MVT::i32,    Legal);
   setOperationAction(ISD::MUL,  MVT::i64,    Expand);   // libcall
 
   // Need to custom handle (some) common i8, i64 math ops
@@ -239,8 +243,8 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   setOperationAction(ISD::SETCC, MVT::i8,    Legal);
   setOperationAction(ISD::SETCC, MVT::i16,   Legal);
-  setOperationAction(ISD::SETCC, MVT::i32,   Custom);
-  setOperationAction(ISD::SETCC, MVT::i64,   Custom);
+  setOperationAction(ISD::SETCC, MVT::i32,   Legal);
+  setOperationAction(ISD::SETCC, MVT::i64,   Legal);
 
   // Zero extension and sign extension for i64 have to be
   // custom legalized
@@ -289,9 +293,9 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
        ++sctype) {
     MVT VT = (MVT::SimpleValueType)sctype;
 
-    setOperationAction(ISD::GlobalAddress, VT, Custom);
-    setOperationAction(ISD::ConstantPool,  VT, Custom);
-    setOperationAction(ISD::JumpTable,     VT, Custom);
+    setOperationAction(ISD::GlobalAddress,  VT, Custom);
+    setOperationAction(ISD::ConstantPool,   VT, Custom);
+    setOperationAction(ISD::JumpTable,      VT, Custom);
   }
 
   // RET must be custom lowered, to meet ABI requirements
@@ -362,11 +366,14 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE, VT, Custom);
   }
 
-  setOperationAction(ISD::MUL, MVT::v16i8, Custom);
   setOperationAction(ISD::AND, MVT::v16i8, Custom);
   setOperationAction(ISD::OR,  MVT::v16i8, Custom);
   setOperationAction(ISD::XOR, MVT::v16i8, Custom);
   setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
+
+  // FIXME: This is only temporary until I put all vector multiplications in
+  // SPUInstrInfo.td:
+  setOperationAction(ISD::MUL, MVT::v4i32, Legal);
 
   setShiftAmountType(MVT::i32);
   setBooleanContents(ZeroOrNegativeOneBooleanContent);
@@ -402,7 +409,7 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::SHUFB] = "SPUISD::SHUFB";
     node_names[(unsigned) SPUISD::SHUFFLE_MASK] = "SPUISD::SHUFFLE_MASK";
     node_names[(unsigned) SPUISD::CNTB] = "SPUISD::CNTB";
-    node_names[(unsigned) SPUISD::PREFSLOT2VEC] = "SPUISD::PROMOTE_SCALAR";
+    node_names[(unsigned) SPUISD::PREFSLOT2VEC] = "SPUISD::PREFSLOT2VEC";
     node_names[(unsigned) SPUISD::VEC2PREFSLOT] = "SPUISD::VEC2PREFSLOT";
     node_names[(unsigned) SPUISD::MPY] = "SPUISD::MPY";
     node_names[(unsigned) SPUISD::MPYU] = "SPUISD::MPYU";
@@ -467,9 +474,9 @@ MVT SPUTargetLowering::getSetCCResultType(const SDValue &Op) const {
  emitted, e.g. for MVT::f32 extending load to MVT::f64:
 
 \verbatim
-%1  v16i8,ch = load 
+%1  v16i8,ch = load
 %2  v16i8,ch = rotate %1
-%3  v4f8, ch = bitconvert %2 
+%3  v4f8, ch = bitconvert %2
 %4  f32      = vec2perfslot %3
 %5  f64      = fp_extend %4
 \endverbatim
@@ -902,7 +909,7 @@ LowerConstantFP(SDValue Op, SelectionDAG &DAG) {
 
     assert((FP != 0) &&
            "LowerConstantFP: Node is not ConstantFPSDNode");
-    
+
     uint64_t dbits = DoubleToBits(FP->getValueAPF().convertToDouble());
     SDValue T = DAG.getConstant(dbits, MVT::i64);
     SDValue Tvec = DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i64, T, T);
@@ -936,7 +943,7 @@ LowerBRCOND(SDValue Op, SelectionDAG &DAG, const TargetLowering &TLI) {
     return DAG.getNode(ISD::BRCOND, Op.getValueType(),
                        Op.getOperand(0), Cond, Op.getOperand(2));
   }
-  
+
   return SDValue(); // Unchanged
 }
 
@@ -1197,9 +1204,18 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       // address pairs:
       Callee = DAG.getNode(SPUISD::IndirectAddr, PtrVT, GA, Zero);
     }
-  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
-    Callee = DAG.getExternalSymbol(S->getSymbol(), Callee.getValueType());
-  else if (SDNode *Dest = isLSAAddress(Callee, DAG)) {
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
+    MVT CalleeVT = Callee.getValueType();
+    SDValue Zero = DAG.getConstant(0, PtrVT);
+    SDValue ExtSym = DAG.getTargetExternalSymbol(S->getSymbol(),
+        Callee.getValueType());
+
+    if (!ST->usingLargeMem()) {
+      Callee = DAG.getNode(SPUISD::AFormAddr, CalleeVT, ExtSym, Zero);
+    } else {
+      Callee = DAG.getNode(SPUISD::IndirectAddr, PtrVT, ExtSym, Zero);
+    }
+  } else if (SDNode *Dest = isLSAAddress(Callee, DAG)) {
     // If this is an absolute destination address that appears to be a legal
     // local store address, use the munged value.
     Callee = SDValue(Dest, 0);
@@ -1831,7 +1847,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(SPUISD::SHUFB, V1.getValueType(), V2, V1, ShufMaskOp);
   } else if (rotate) {
     int rotamt = (MaxElts - V0Elt) * EltVT.getSizeInBits()/8;
-    
+
     return DAG.getNode(SPUISD::ROTBYTES_LEFT, V1.getValueType(),
                        V1, DAG.getConstant(rotamt, MVT::i16));
   } else {
@@ -1915,17 +1931,8 @@ static SDValue LowerVectorMUL(SDValue Op, SelectionDAG &DAG) {
     abort();
     /*NOTREACHED*/
 
-  case MVT::v4i32: {
-    SDValue rA = Op.getOperand(0);
-    SDValue rB = Op.getOperand(1);
-    SDValue HiProd1 = DAG.getNode(SPUISD::MPYH, MVT::v4i32, rA, rB);
-    SDValue HiProd2 = DAG.getNode(SPUISD::MPYH, MVT::v4i32, rB, rA);
-    SDValue LoProd = DAG.getNode(SPUISD::MPYU, MVT::v4i32, rA, rB);
-    SDValue Residual1 = DAG.getNode(ISD::ADD, MVT::v4i32, LoProd, HiProd1);
-
-    return DAG.getNode(ISD::ADD, MVT::v4i32, Residual1, HiProd2);
-    break;
-  }
+  case MVT::v4i32:
+	  break;
 
   // Multiply two v8i16 vectors (pipeline friendly version):
   // a) multiply lower halves, mask off upper 16-bit of 32-bit product
@@ -2271,7 +2278,7 @@ static SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   SDValue result =
     DAG.getNode(SPUISD::SHUFB, VT,
                 DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, ValOp),
-                VecOp, 
+                VecOp,
 		DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, ShufMask));
 
   return result;
@@ -2630,32 +2637,6 @@ LowerByteImmed(SDValue Op, SelectionDAG &DAG) {
   return Op;
 }
 
-//! Lower i32 multiplication
-static SDValue LowerMUL(SDValue Op, SelectionDAG &DAG, MVT VT,
-                          unsigned Opc) {
-  switch (VT.getSimpleVT()) {
-  default:
-    cerr << "CellSPU: Unknown LowerMUL value type, got "
-         << Op.getValueType().getMVTString()
-         << "\n";
-    abort();
-    /*NOTREACHED*/
-
-  case MVT::i32: {
-    SDValue rA = Op.getOperand(0);
-    SDValue rB = Op.getOperand(1);
-
-    return DAG.getNode(ISD::ADD, MVT::i32,
-                       DAG.getNode(ISD::ADD, MVT::i32,
-                                   DAG.getNode(SPUISD::MPYH, MVT::i32, rA, rB),
-                                   DAG.getNode(SPUISD::MPYH, MVT::i32, rB, rA)),
-                       DAG.getNode(SPUISD::MPYU, MVT::i32, rA, rB));
-  }
-  }
-
-  return SDValue();
-}
-
 //! Custom lowering for CTPOP (count population)
 /*!
   Custom lowering code that counts the number ones in the input
@@ -2951,8 +2932,6 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
       return LowerVectorMUL(Op, DAG);
     else if (VT == MVT::i8)
       return LowerI8Math(Op, DAG, Opc, *this);
-    else
-      return LowerMUL(Op, DAG, VT, Opc);
 
   case ISD::FDIV:
     if (VT == MVT::f32 || VT == MVT::v4f32)
@@ -3030,7 +3009,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
         || Op1.getOpcode() == SPUISD::IndirectAddr) {
       // Normalize the operands to reduce repeated code
       SDValue IndirectArg = Op0, AddArg = Op1;
-      
+
       if (Op1.getOpcode() == SPUISD::IndirectAddr) {
         IndirectArg = Op1;
         AddArg = Op0;
@@ -3160,9 +3139,9 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
     case ISD::ANY_EXTEND:
     case ISD::ZERO_EXTEND:
     case ISD::SIGN_EXTEND: {
-      // (SPUpromote_scalar (any|zero|sign_extend (SPUvec2prefslot <arg>))) ->
+      // (SPUprefslot2vec (any|zero|sign_extend (SPUvec2prefslot <arg>))) ->
       // <arg>
-      // but only if the SPUpromote_scalar and <arg> types match.
+      // but only if the SPUprefslot2vec and <arg> types match.
       SDValue Op00 = Op0.getOperand(0);
       if (Op00.getOpcode() == SPUISD::VEC2PREFSLOT) {
         SDValue Op000 = Op00.getOperand(0);
@@ -3173,7 +3152,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
       break;
     }
     case SPUISD::VEC2PREFSLOT: {
-      // (SPUpromote_scalar (SPUvec2prefslot <arg>)) ->
+      // (SPUprefslot2vec (SPUvec2prefslot <arg>)) ->
       // <arg>
       Result = Op0.getOperand(0);
       break;
@@ -3329,7 +3308,7 @@ SPUTargetLowering::ComputeNumSignBitsForTargetNode(SDValue Op,
   }
   }
 }
-  
+
 // LowerAsmOperandForConstraint
 void
 SPUTargetLowering::LowerAsmOperandForConstraint(SDValue Op,

@@ -35,17 +35,12 @@ def SDT_SPUshuffle   : SDTypeProfile<1, 3, [
   SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>
 ]>;
 
-// Unary, binary v16i8 operator type constraints:
-def SPUv16i8_binop: SDTypeProfile<1, 2, [
-  SDTCisVT<0, v16i8>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
+// Vector binary operator type constraints (needs a further constraint to
+// ensure that operand 0 is a vector...):
 
-// Binary v8i16 operator type constraints:
-def SPUv8i16_binop: SDTypeProfile<1, 2, [
-  SDTCisVT<0, v8i16>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
-
-// Binary v4i32 operator type constraints:
-def SPUv4i32_binop: SDTypeProfile<1, 2, [
-  SDTCisVT<0, v4i32>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
+def SPUVecBinop: SDTypeProfile<1, 2, [
+  SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>
+]>;
 
 // Trinary operators, e.g., addx, carry generate
 def SPUIntTrinaryOp : SDTypeProfile<1, 3, [
@@ -93,23 +88,22 @@ def SPUcntb : SDNode<"SPUISD::CNTB", SDTIntUnaryOp>;
 def SPUshuffle: SDNode<"SPUISD::SHUFB", SDT_SPUshuffle, []>;
 
 // SPU 16-bit multiply
-def SPUmpy_v16i8: SDNode<"SPUISD::MPY", SPUv16i8_binop, []>;
-def SPUmpy_v8i16: SDNode<"SPUISD::MPY", SPUv8i16_binop, []>;
-def SPUmpy_v4i32: SDNode<"SPUISD::MPY", SPUv4i32_binop, []>;
+def SPUmpy_vec: SDNode<"SPUISD::MPY", SPUVecBinop, []>;
 
 // SPU multiply unsigned, used in instruction lowering for v4i32
 // multiplies:
-def SPUmpyu_v4i32: SDNode<"SPUISD::MPYU", SPUv4i32_binop, []>;
-def SPUmpyu_i32: SDNode<"SPUISD::MPYU", SDTIntBinOp, []>;
+def SPUmpyu_vec: SDNode<"SPUISD::MPYU", SPUVecBinop, []>;
+def SPUmpyu_int: SDNode<"SPUISD::MPYU", SDTIntBinOp, []>;
 
 // SPU 16-bit multiply high x low, shift result 16-bits
 // Used to compute intermediate products for 32-bit multiplies
-def SPUmpyh_v4i32: SDNode<"SPUISD::MPYH", SPUv4i32_binop, []>;
-def SPUmpyh_i32: SDNode<"SPUISD::MPYH", SDTIntBinOp, []>;
+def SPUmpyh_vec: SDNode<"SPUISD::MPYH", SPUVecBinop, []>;
+def SPUmpyh_int: SDNode<"SPUISD::MPYH", SDTIntBinOp, []>;
 
 // SPU 16-bit multiply high x high, 32-bit product
 // Used to compute intermediate products for 16-bit multiplies
-def SPUmpyhh_v8i16: SDNode<"SPUISD::MPYHH", SPUv8i16_binop, []>;
+def SPUmpyhh_vec: SDNode<"SPUISD::MPYHH", SPUVecBinop, []>;
+def SPUmpyhh_int: SDNode<"SPUISD::MPYHH", SDTIntBinOp, []>;
 
 // Shift left quadword by bits and bytes
 def SPUshlquad_l_bits: SDNode<"SPUISD::SHLQUAD_L_BITS", SPUvecshift_type, []>;

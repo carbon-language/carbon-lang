@@ -585,23 +585,29 @@ def AHIr16:
     "ahi\t$rT, $rA, $val", IntegerOp,
     [(set R16C:$rT, (add R16C:$rA, v8i16SExt10Imm:$val))]>;
 
-def Avec:
-  RRForm<0b00000011000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-    "a\t$rT, $rA, $rB", IntegerOp,
-    [(set (v4i32 VECREG:$rT), (add (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+class AInst<dag OOL, dag IOL, list<dag> pattern>:
+  RRForm<0b00000011000, OOL, IOL,
+         "a\t$rT, $rA, $rB", IntegerOp,
+         pattern>;
 
-def : Pat<(add (v16i8 VECREG:$rA), (v16i8 VECREG:$rB)),
-          (Avec VECREG:$rA, VECREG:$rB)>;
+class AVecInst<ValueType vectype>:
+  AInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+        [(set (vectype VECREG:$rT), (add (vectype VECREG:$rA),
+                                         (vectype VECREG:$rB)))]>;
 
-def Ar32:
-  RRForm<0b00000011000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-    "a\t$rT, $rA, $rB", IntegerOp,
-    [(set R32C:$rT, (add R32C:$rA, R32C:$rB))]>;
+class ARegInst<RegisterClass rclass>:
+  AInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB),
+        [(set rclass:$rT, (add rclass:$rA, rclass:$rB))]>;
+        
+multiclass AddInstruction {
+  def v4i32: AVecInst<v4i32>;
+  def v16i8: AVecInst<v16i8>;
+  
+  def r32:   ARegInst<R32C>;
+  def r8:    AInst<(outs R8C:$rT), (ins R8C:$rA, R8C:$rB), [/* no pattern */]>; 
+}
 
-def Ar8:
-    RRForm<0b00000011000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
-      "a\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
+defm A : AddInstruction;
 
 def AIvec:
     RI10Form<0b00111000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
@@ -789,96 +795,109 @@ def BGXvec:
 def MPYv8i16:
   RRForm<0b00100011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
     "mpy\t$rT, $rA, $rB", IntegerMulDiv,
-    [(set (v8i16 VECREG:$rT), (SPUmpy_v8i16 (v8i16 VECREG:$rA),
-                                            (v8i16 VECREG:$rB)))]>;
+    [(set (v8i16 VECREG:$rT), (SPUmpy_vec (v8i16 VECREG:$rA),
+                                          (v8i16 VECREG:$rB)))]>;
 
 def MPYr16:
   RRForm<0b00100011110, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
     "mpy\t$rT, $rA, $rB", IntegerMulDiv,
     [(set R16C:$rT, (mul R16C:$rA, R16C:$rB))]>;
 
+// Unsigned 16-bit multiply:
+
+class MPYUInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b00110011110, OOL, IOL,
+      "mpyu\t$rT, $rA, $rB", IntegerMulDiv,
+      pattern>;
+
 def MPYUv4i32:
-  RRForm<0b00110011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-    "mpyu\t$rT, $rA, $rB", IntegerMulDiv,
-    [(set (v4i32 VECREG:$rT),
-          (SPUmpyu_v4i32 (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+  MPYUInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+           [(set (v4i32 VECREG:$rT),
+                 (SPUmpyu_vec (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
 
 def MPYUr16:
-  RRForm<0b00110011110, (outs R32C:$rT), (ins R16C:$rA, R16C:$rB),
-    "mpyu\t$rT, $rA, $rB", IntegerMulDiv,
-    [(set R32C:$rT, (mul (zext R16C:$rA),
-                         (zext R16C:$rB)))]>;
+  MPYUInst<(outs R32C:$rT), (ins R16C:$rA, R16C:$rB),
+           [(set R32C:$rT, (mul (zext R16C:$rA), (zext R16C:$rB)))]>;
 
 def MPYUr32:
-  RRForm<0b00110011110, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-    "mpyu\t$rT, $rA, $rB", IntegerMulDiv,
-    [(set R32C:$rT, (SPUmpyu_i32 R32C:$rA, R32C:$rB))]>;
+  MPYUInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+           [(set R32C:$rT, (SPUmpyu_int R32C:$rA, R32C:$rB))]>;
 
-// mpyi: multiply 16 x s10imm -> 32 result (custom lowering for 32 bit result,
-// this only produces the lower 16 bits)
-def MPYIvec:
-  RI10Form<0b00101110, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+// mpyi: multiply 16 x s10imm -> 32 result.
+
+class MPYIInst<dag OOL, dag IOL, list<dag> pattern>:
+  RI10Form<0b00101110, OOL, IOL,
     "mpyi\t$rT, $rA, $val", IntegerMulDiv,
-    [(set (v8i16 VECREG:$rT), (mul (v8i16 VECREG:$rA), v8i16SExt10Imm:$val))]>;
+    pattern>;
+
+def MPYIvec:
+  MPYIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+           [(set (v8i16 VECREG:$rT),
+                 (mul (v8i16 VECREG:$rA), v8i16SExt10Imm:$val))]>;
 
 def MPYIr16:
-  RI10Form<0b00101110, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
-    "mpyi\t$rT, $rA, $val", IntegerMulDiv,
-    [(set R16C:$rT, (mul R16C:$rA, i16ImmSExt10:$val))]>;
+  MPYIInst<(outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
+           [(set R16C:$rT, (mul R16C:$rA, i16ImmSExt10:$val))]>;
 
 // mpyui: same issues as other multiplies, plus, this doesn't match a
 // pattern... but may be used during target DAG selection or lowering
+
+class MPYUIInst<dag OOL, dag IOL, list<dag> pattern>:
+  RI10Form<0b10101110, OOL, IOL,
+           "mpyui\t$rT, $rA, $val", IntegerMulDiv,
+           pattern>;
+    
 def MPYUIvec:
-  RI10Form<0b10101110, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
-    "mpyui\t$rT, $rA, $val", IntegerMulDiv,
-    []>;
+  MPYUIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+            []>;
 
 def MPYUIr16:
-  RI10Form<0b10101110, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
-    "mpyui\t$rT, $rA, $val", IntegerMulDiv,
-    []>;
+  MPYUIInst<(outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
+            []>;
 
 // mpya: 16 x 16 + 16 -> 32 bit result
+class MPYAInst<dag OOL, dag IOL, list<dag> pattern>:
+  RRRForm<0b0011, OOL, IOL,
+          "mpya\t$rT, $rA, $rB, $rC", IntegerMulDiv,
+          pattern>;
+          
 def MPYAvec:
-  RRRForm<0b0011, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
-    "mpya\t$rT, $rA, $rB, $rC", IntegerMulDiv,
-    [(set (v4i32 VECREG:$rT), (add (v4i32 (bitconvert (mul (v8i16 VECREG:$rA),
-                                                           (v8i16 VECREG:$rB)))),
-                                   (v4i32 VECREG:$rC)))]>;
+  MPYAInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
+           [(set (v4i32 VECREG:$rT),
+                 (add (v4i32 (bitconvert (mul (v8i16 VECREG:$rA),
+                                              (v8i16 VECREG:$rB)))),
+                      (v4i32 VECREG:$rC)))]>;
 
 def MPYAr32:
-  RRRForm<0b0011, (outs R32C:$rT), (ins R16C:$rA, R16C:$rB, R32C:$rC),
-    "mpya\t$rT, $rA, $rB, $rC", IntegerMulDiv,
-    [(set R32C:$rT, (add (sext (mul R16C:$rA, R16C:$rB)),
-                         R32C:$rC))]>;
-
-def : Pat<(add (mul (sext R16C:$rA), (sext R16C:$rB)), R32C:$rC),
-          (MPYAr32 R16C:$rA, R16C:$rB, R32C:$rC)>;
+  MPYAInst<(outs R32C:$rT), (ins R16C:$rA, R16C:$rB, R32C:$rC),
+           [(set R32C:$rT, (add (sext (mul R16C:$rA, R16C:$rB)),
+                                R32C:$rC))]>;
+                                
+def MPYAr32_sext:
+  MPYAInst<(outs R32C:$rT), (ins R16C:$rA, R16C:$rB, R32C:$rC),
+           [(set R32C:$rT, (add (mul (sext R16C:$rA), (sext R16C:$rB)),
+                                R32C:$rC))]>;
 
 def MPYAr32_sextinreg:
-  RRRForm<0b0011, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB, R32C:$rC),
-    "mpya\t$rT, $rA, $rB, $rC", IntegerMulDiv,
-    [(set R32C:$rT, (add (mul (sext_inreg R32C:$rA, i16),
-                              (sext_inreg R32C:$rB, i16)),
-                         R32C:$rC))]>;
-
-//def MPYAr32:
-//  RRRForm<0b0011, (outs R32C:$rT), (ins R16C:$rA, R16C:$rB, R32C:$rC),
-//    "mpya\t$rT, $rA, $rB, $rC", IntegerMulDiv,
-//    [(set R32C:$rT, (add (sext (mul R16C:$rA, R16C:$rB)),
-//                         R32C:$rC))]>;
+  MPYAInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB, R32C:$rC),
+           [(set R32C:$rT, (add (mul (sext_inreg R32C:$rA, i16),
+                                     (sext_inreg R32C:$rB, i16)),
+                                R32C:$rC))]>;
 
 // mpyh: multiply high, used to synthesize 32-bit multiplies
+class MPYHInst<dag OOL, dag IOL, list<dag> pattern>:
+  RRForm<0b10100011110, OOL, IOL,
+         "mpyh\t$rT, $rA, $rB", IntegerMulDiv,
+         pattern>;
+         
 def MPYHv4i32:
-    RRForm<0b10100011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "mpyh\t$rT, $rA, $rB", IntegerMulDiv,
-      [(set (v4i32 VECREG:$rT),
-            (SPUmpyh_v4i32 (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+    MPYHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+             [(set (v4i32 VECREG:$rT),
+                   (SPUmpyh_vec (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
 
 def MPYHr32:
-    RRForm<0b10100011110, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-      "mpyh\t$rT, $rA, $rB", IntegerMulDiv,
-      [(set R32C:$rT, (SPUmpyh_i32 R32C:$rA, R32C:$rB))]>;
+    MPYHInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+             [(set R32C:$rT, (SPUmpyh_int R32C:$rA, R32C:$rB))]>;
 
 // mpys: multiply high and shift right (returns the top half of
 // a 16-bit multiply, sign extended to 32 bits.)
@@ -898,7 +917,7 @@ def MPYHHv8i16:
     RRForm<0b01100011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
       "mpyhh\t$rT, $rA, $rB", IntegerMulDiv,
       [(set (v8i16 VECREG:$rT),
-            (SPUmpyhh_v8i16 (v8i16 VECREG:$rA), (v8i16 VECREG:$rB)))]>;
+            (SPUmpyhh_vec (v8i16 VECREG:$rA), (v8i16 VECREG:$rB)))]>;
 
 def MPYHHr32:
     RRForm<0b01100011110, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
@@ -938,7 +957,26 @@ def MPYHHAUr32:
       "mpyhhau\t$rT, $rA, $rB", IntegerMulDiv,
       []>;
 
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// v4i32, i32 multiply instruction sequence:
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+def MPYv4i32:
+  Pat<(mul (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)),
+      (Av4i32
+        (Av4i32 (MPYHv4i32 VECREG:$rA, VECREG:$rB),
+                (MPYHv4i32 VECREG:$rB, VECREG:$rA)),
+        (MPYUv4i32 VECREG:$rA, VECREG:$rB))>;
+
+def MPYi32:
+  Pat<(mul R32C:$rA, R32C:$rB),
+      (Ar32
+        (Ar32 (MPYHr32 R32C:$rA, R32C:$rB),
+              (MPYHr32 R32C:$rB, R32C:$rA)),
+        (MPYUr32 R32C:$rA, R32C:$rB))>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // clz: Count leading zeroes
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 class CLZInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm_1<0b10100101010, OOL, IOL, "clz\t$rT, $rA",
              IntegerOp, pattern>;
@@ -1803,8 +1841,8 @@ class SELBVecCondInst<ValueType vectype>:
 class SELBRegInst<RegisterClass rclass>:
   SELBInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB, rclass:$rC),
            [(set rclass:$rT,
-                 (or (and rclass:$rA, rclass:$rC),
-                     (and rclass:$rB, (not rclass:$rC))))]>;
+                 (or (and rclass:$rB, rclass:$rC),
+                     (and rclass:$rA, (not rclass:$rC))))]>;
 
 class SELBRegCondInst<RegisterClass rcond, RegisterClass rclass>:
   SELBInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB, rcond:$rC),
@@ -3441,6 +3479,13 @@ let isCall = 1,
   def BISL:
     BIForm<0b10010101100, "bisl\t$$lr, $func", [(SPUcall R32C:$func)]>;
 }
+
+// Support calls to external symbols:      
+def : Pat<(SPUcall (SPUpcrel texternalsym:$func, 0)),
+          (BRSL texternalsym:$func)>;
+      
+def : Pat<(SPUcall (SPUaform texternalsym:$func, 0)),
+          (BRASL texternalsym:$func)>;
 
 // Unconditional branches:
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, isBarrier = 1 in {
