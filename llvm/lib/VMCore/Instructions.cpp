@@ -139,6 +139,33 @@ UnaryInstruction::~UnaryInstruction() {
 }
 
 //===----------------------------------------------------------------------===//
+//                              SelectInst Class
+//===----------------------------------------------------------------------===//
+
+/// areInvalidOperands - Return a string if the specified operands are invalid
+/// for a select operation, otherwise return null.
+const char *SelectInst::areInvalidOperands(Value *Op0, Value *Op1, Value *Op2) {
+  if (Op1->getType() != Op2->getType())
+    return "both values to select must have same type";
+  
+  if (const VectorType *VT = dyn_cast<VectorType>(Op0->getType())) {
+    // Vector select.
+    if (VT->getElementType() != Type::Int1Ty)
+      return "vector select condition element type must be i1";
+    const VectorType *ET = dyn_cast<VectorType>(Op1->getType());
+    if (ET == 0)
+      return "selected values for vector select must be vectors";
+    if (ET->getNumElements() != VT->getNumElements())
+      return "vector select requires selected vectors to have "
+                   "the same vector length as select condition";
+  } else if (Op0->getType() != Type::Int1Ty) {
+    return "select condition must be i1 or <n x i1>";
+  }
+  return 0;
+}
+
+
+//===----------------------------------------------------------------------===//
 //                               PHINode Class
 //===----------------------------------------------------------------------===//
 

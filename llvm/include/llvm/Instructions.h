@@ -1208,6 +1208,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CallInst, Value)
 ///
 class SelectInst : public Instruction {
   void init(Value *C, Value *S1, Value *S2) {
+    assert(!areInvalidOperands(C, S1, S2) && "Invalid operands for select");
     Op<0>() = C;
     Op<1>() = S1;
     Op<2>() = S2;
@@ -1246,6 +1247,10 @@ public:
   Value *getCondition() const { return Op<0>(); }
   Value *getTrueValue() const { return Op<1>(); }
   Value *getFalseValue() const { return Op<2>(); }
+  
+  /// areInvalidOperands - Return a string if the specified operands are invalid
+  /// for a select operation, otherwise return null.
+  static const char *areInvalidOperands(Value *Cond, Value *True, Value *False);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
