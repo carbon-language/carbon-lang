@@ -457,6 +457,11 @@ namespace llvm {
     /// 
     bool NonLocalEHFrameLabel;              // Defaults to false.
 
+    /// Force32BitFDEReference - Force the FDE initial location and address
+    /// range to be 32-bit sized.
+    ///
+    bool Force32BitFDEReference;            // Defaults to true.
+
     /// GlobalEHDirective - This is the directive used to make exception frame
     /// tables globally visible.
     ///
@@ -828,6 +833,9 @@ namespace llvm {
     }
     bool doesRequireNonLocalEHFrameLabel() const {
       return NonLocalEHFrameLabel;
+    }
+    bool doesRequire32BitFDEReference() const {
+      return Force32BitFDEReference;
     }
     const char *getGlobalEHDirective() const {
       return GlobalEHDirective;
