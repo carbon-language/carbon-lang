@@ -79,7 +79,7 @@ h3, .doc_subsubsection { margin: 2.0em 0.5em 0.5em 0.5em;
 pre.doc_code, .literal-block { padding: 1em 2em 1em 1em }
 
 .doc_notes      { background: #fafafa; border: 1px solid #cecece;
-                  padding: 0.1em }
+                  display: table; padding: 0 1em 0 .1em }
 
 table.layout    { text-align: left; border: none; border-collapse: collapse;
                   padding: 4px 4px 4px 4px; }
