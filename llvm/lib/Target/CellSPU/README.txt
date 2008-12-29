@@ -19,7 +19,7 @@ OUT OF OR IN CONNECTION WITH THE USE OF THE SOFTWARE INCLUDING, WITHOUT
 LIMITATION, DAMAGES RESULTING FROM LOST OR CONTAMINATED DATA, LOST PROFITS OR
 REVENUE, COMPUTER MALFUNCTION, OR FOR ANY SPECIAL, INCIDENTAL, CONSEQUENTIAL,
 OR PUNITIVE  DAMAGES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES OR
-SUCH DAMAGES ARE FORESEEABLE. 
+SUCH DAMAGES ARE FORESEEABLE.
 
 ---------------------------------------------------------------------------
 --WARNING--:
@@ -35,7 +35,7 @@ to add 'spu' to configure's --enable-targets option, e.g.:
 ---------------------------------------------------------------------------
 
 The unofficially official status page (because it's not easy to get an
-officially blessed external web page from either IBM Austin or Aerosapce):
+officially blessed external web page from either IBM Austin or Aerospace):
 
               http://sites.google.com/site/llvmcellspu/
 
