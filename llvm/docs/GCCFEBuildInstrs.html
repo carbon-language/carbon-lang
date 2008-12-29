@@ -14,6 +14,8 @@
 
 <ol>
   <li><a href="#instructions">Building llvm-gcc from Source</a></li>
+  <li><a href="#ada">Building the Ada front-end</a></li>
+  <li><a href="#fortran">Building the Fortran front-end</a></li>
   <li><a href="#license">License Information</a></li>
 </ol>
 
@@ -22,9 +24,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
-  <a name="instructions">Building llvm-gcc from Source</a>
-</div>
+<h1><a name="instructions">Building llvm-gcc from Source</a></h1>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -67,9 +67,8 @@ svn co http://llvm.org/svn/llvm-project/llvm-gcc-4.2/trunk <i>dst-directory</i>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
-  <a name="license">Building the Ada front-end</a>
-</div>
+<h1><a name="ada">Building the Ada front-end</a></h1>
+<!-- *********************************************************************** -->
 
 <div class="doc_text">
 <p>Building with support for Ada amounts to following the directions in the
@@ -220,13 +219,11 @@ make install
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
-  <a name="license">Building the Fortran front-end</a>
-</div>
+<h1><a name="fortran">Building the Fortran front-end</a></h1>
+<!-- *********************************************************************** -->
 
 <div class="doc_text">
-<p>
-To build with support for Fortran, follow the directions in the top-level
+<p>To build with support for Fortran, follow the directions in the top-level
 <tt>README.LLVM</tt> file, adding ",fortran" to EXTRALANGS, for example:</p>
 
 <pre class="doc_code">
@@ -236,9 +233,8 @@ EXTRALANGS=,fortran
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
-  <a name="license">License Information</a>
-</div>
+<h1><a name="license">License Information</a></h1>
+<!-- *********************************************************************** -->
 
 <div class="doc_text">
 <p>
