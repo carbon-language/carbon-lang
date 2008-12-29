@@ -68,10 +68,6 @@ public:
 
   Kind getKind() const { return AttrKind; }
 
-  bool hasKind(Kind kind) const {
-    return AttrKind == kind;
-  }
-
   Attr *getNext() { return Next; }
   const Attr *getNext() const { return Next; }
   void setNext(Attr *next) { Next = next; }

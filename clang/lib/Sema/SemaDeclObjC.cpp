@@ -235,10 +235,10 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
       continue;
     }
     for (const Attr *attr = PDecl->getAttrs(); attr; attr = attr->getNext()) {
-      if (attr->hasKind(Attr::Unavailable))
+      if (attr->getKind() == Attr::Unavailable)
         Diag(ProtocolId[i].second, diag::warn_unavailable) << 
           PDecl->getDeclName();
-      if (attr->hasKind(Attr::Deprecated))
+      if (attr->getKind() == Attr::Deprecated)
         Diag(ProtocolId[i].second, diag::warn_deprecated) << 
           PDecl->getDeclName();
     }
