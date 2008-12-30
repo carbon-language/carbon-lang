@@ -24,10 +24,10 @@ namespace llvm {
     enum NodeType {
       // Start the numbering where the builting ops and target ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END,
-      
+
       // Pseudo instructions:
       RET_FLAG,                 ///< Return with flag, matched by bi instruction
-      
+
       Hi,                       ///< High address component (upper 16)
       Lo,                       ///< Low address component (lower 16)
       PCRelAddr,                ///< Program counter relative address
@@ -41,10 +41,6 @@ namespace llvm {
       CNTB,                     ///< Count leading ones in bytes
       PREFSLOT2VEC,             ///< Promote scalar->vector
       VEC2PREFSLOT,             ///< Extract element 0
-      MPY,                      ///< 16-bit Multiply (low parts of a 32-bit)
-      MPYU,                     ///< Multiply Unsigned
-      MPYH,                     ///< Multiply High
-      MPYHH,                    ///< Multiply High-High
       SHLQUAD_L_BITS,           ///< Rotate quad left, by bits
       SHLQUAD_L_BYTES,          ///< Rotate quad left, by bytes
       VEC_SHL,                  ///< Vector shift left
@@ -52,8 +48,6 @@ namespace llvm {
       VEC_SRA,                  ///< Vector shift right (arithmetic)
       VEC_ROTL,                 ///< Vector rotate left
       VEC_ROTR,                 ///< Vector rotate right
-      ROTQUAD_RZ_BYTES,         ///< Rotate quad right, by bytes, zero fill
-      ROTQUAD_RZ_BITS,          ///< Rotate quad right, by bits, zero fill
       ROTBYTES_LEFT,            ///< Rotate bytes (loads -> ROTQBYI)
       ROTBYTES_LEFT_BITS,       ///< Rotate bytes left by bit shift count
       SELECT_MASK,              ///< Select Mask (FSM, FSMB, FSMH, FSMBI)
@@ -63,8 +57,6 @@ namespace llvm {
       CARRY_GENERATE,           ///< Carry generate for ADD_EXTENDED
       SUB_EXTENDED,             ///< Subtract extended, with borrow
       BORROW_GENERATE,          ///< Borrow generate for SUB_EXTENDED
-      FPInterp,                 ///< Floating point interpolate
-      FPRecipEst,               ///< Floating point reciprocal estimate
       SEXT32TO64,               ///< Sign-extended 32-bit const -> 64-bits
       LAST_SPUISD               ///< Last user-defined instruction
     };
@@ -87,7 +79,7 @@ namespace llvm {
   }
 
   class SPUTargetMachine;            // forward dec'l.
-  
+
   class SPUTargetLowering :
     public TargetLowering
   {
@@ -97,14 +89,14 @@ namespace llvm {
 
   public:
     SPUTargetLowering(SPUTargetMachine &TM);
-    
+
     /// getTargetNodeName() - This method returns the name of a target specific
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ValueType for ISD::SETCC
     virtual MVT getSetCCResultType(const SDValue &) const;
-    
+
     //! Custom lowering hooks
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
@@ -116,7 +108,7 @@ namespace llvm {
 
     virtual void computeMaskedBitsForTargetNode(const SDValue Op,
                                                 const APInt &Mask,
-                                                APInt &KnownZero, 
+                                                APInt &KnownZero,
                                                 APInt &KnownOne,
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
@@ -126,12 +118,12 @@ namespace llvm {
 
     ConstraintType getConstraintType(const std::string &ConstraintLetter) const;
 
-    std::pair<unsigned, const TargetRegisterClass*> 
+    std::pair<unsigned, const TargetRegisterClass*>
       getRegForInlineAsmConstraint(const std::string &Constraint,
                                    MVT VT) const;
 
     void LowerAsmOperandForConstraint(SDValue Op, char ConstraintLetter,
-                                      bool hasMemory, 
+                                      bool hasMemory,
                                       std::vector<SDValue> &Ops,
                                       SelectionDAG &DAG) const;
 

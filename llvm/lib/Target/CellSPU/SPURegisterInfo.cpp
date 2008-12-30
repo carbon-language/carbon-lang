@@ -238,7 +238,7 @@ SPURegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const
     SPU::R0,    /* link register */
     0 /* end */
   };
-  
+
   return SPU_CalleeSaveRegs;
 }
 
@@ -268,7 +268,7 @@ SPURegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const
     &SPU::GPRCRegClass, /* link register */
     0 /* end */
   };
- 
+
   return SPU_CalleeSaveRegClasses;
 }
 
@@ -339,10 +339,13 @@ SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   // Now add the frame object offset to the offset from r1.
   int Offset = MFI->getObjectOffset(FrameIndex);
 
-  // Most instructions, except for generated FrameIndex additions using AIr32,
-  // have the immediate in operand 1. AIr32, in this case, has the immediate
-  // in operand 2.
-  unsigned OpNo = (MI.getOpcode() != SPU::AIr32 ? 1 : 2);
+  // Most instructions, except for generated FrameIndex additions using AIr32
+  // and ILAr32, have the immediate in operand 1. AIr32 and ILAr32 have the
+  // immediate in operand 2.
+  unsigned OpNo = 1;
+  if (MI.getOpcode() == SPU::AIr32 || MI.getOpcode() == SPU::ILAr32)
+    OpNo = 2;
+
   MachineOperand &MO = MI.getOperand(OpNo);
 
   // Offset is biased by $lr's slot at the bottom.
@@ -355,7 +358,7 @@ SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   if (Offset > SPUFrameInfo::maxFrameOffset()
       || Offset < SPUFrameInfo::minFrameOffset()) {
     cerr << "Large stack adjustment ("
-         << Offset 
+         << Offset
          << ") in SPURegisterInfo::eliminateFrameIndex.";
   } else {
     MO.ChangeToImmediate(Offset);
@@ -371,7 +374,7 @@ SPURegisterInfo::determineFrameLayout(MachineFunction &MF) const
 
   // Get the number of bytes to allocate from the FrameInfo
   unsigned FrameSize = MFI->getStackSize();
-  
+
   // Get the alignments provided by the target, and the maximum alignment
   // (if any) of the fixed frame objects.
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
@@ -381,7 +384,7 @@ SPURegisterInfo::determineFrameLayout(MachineFunction &MF) const
 
   // Get the maximum call frame size of all the calls.
   unsigned maxCallFrameSize = MFI->getMaxCallFrameSize();
-    
+
   // If we have dynamic alloca then maxCallFrameSize needs to be aligned so
   // that allocations will be aligned.
   if (MFI->hasVarSizedObjects())
@@ -389,7 +392,7 @@ SPURegisterInfo::determineFrameLayout(MachineFunction &MF) const
 
   // Update maximum call frame size.
   MFI->setMaxCallFrameSize(maxCallFrameSize);
-  
+
   // Include call frame size in total.
   FrameSize += maxCallFrameSize;
 
@@ -418,18 +421,18 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-  
+
   // Prepare for debug frame info.
   bool hasDebugInfo = MMI && MMI->hasDebugInfo();
   unsigned FrameLabelId = 0;
-  
+
   // Move MBBI back to the beginning of the function.
   MBBI = MBB.begin();
-  
+
   // Work out frame sizes.
   determineFrameLayout(MF);
   int FrameSize = MFI->getStackSize();
-  
+
   assert((FrameSize & 0xf) == 0
          && "SPURegisterInfo::emitPrologue: FrameSize not aligned");
 
@@ -440,7 +443,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
       FrameLabelId = MMI->NextLabelID();
       BuildMI(MBB, MBBI, TII.get(SPU::DBG_LABEL)).addImm(FrameLabelId);
     }
-  
+
     // Adjust stack pointer, spilling $lr -> 16($sp) and $sp -> -FrameSize($sp)
     // for the ABI
     BuildMI(MBB, MBBI, TII.get(SPU::STQDr32), SPU::R0).addImm(16)
@@ -476,15 +479,15 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
       cerr << "Unhandled frame size: " << FrameSize << "\n";
       abort();
     }
- 
+
     if (hasDebugInfo) {
       std::vector<MachineMove> &Moves = MMI->getFrameMoves();
-    
+
       // Show update of SP.
       MachineLocation SPDst(MachineLocation::VirtualFP);
       MachineLocation SPSrc(MachineLocation::VirtualFP, -FrameSize);
       Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
-    
+
       // Add callee saved registers to move list.
       const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
       for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
@@ -495,11 +498,11 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
         MachineLocation CSSrc(Reg);
         Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
       }
-    
+
       // Mark effective beginning of when frame pointer is ready.
       unsigned ReadyLabelId = MMI->NextLabelID();
       BuildMI(MBB, MBBI, TII.get(SPU::DBG_LABEL)).addImm(ReadyLabelId);
-    
+
       MachineLocation FPDst(SPU::R1);
       MachineLocation FPSrc(MachineLocation::VirtualFP);
       Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));

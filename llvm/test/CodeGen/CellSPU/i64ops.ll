@@ -1,8 +1,5 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep {fsmbi.*61680}   %t1.s | count 1
-; RUN: grep rotqmbyi         %t1.s | count 1
-; RUN: grep rotmai           %t1.s | count 1
-; RUN: grep selb             %t1.s | count 1
+; RUN: grep xswd	     %t1.s | count 1
 ; RUN: grep shufb            %t1.s | count 2
 ; RUN: grep cg               %t1.s | count 1
 ; RUN: grep addx             %t1.s | count 1

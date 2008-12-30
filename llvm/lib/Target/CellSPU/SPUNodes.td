@@ -87,24 +87,6 @@ def SPUcntb : SDNode<"SPUISD::CNTB", SDTIntUnaryOp>;
 // SPUISelLowering.h):
 def SPUshuffle: SDNode<"SPUISD::SHUFB", SDT_SPUshuffle, []>;
 
-// SPU 16-bit multiply
-def SPUmpy_vec: SDNode<"SPUISD::MPY", SPUVecBinop, []>;
-
-// SPU multiply unsigned, used in instruction lowering for v4i32
-// multiplies:
-def SPUmpyu_vec: SDNode<"SPUISD::MPYU", SPUVecBinop, []>;
-def SPUmpyu_int: SDNode<"SPUISD::MPYU", SDTIntBinOp, []>;
-
-// SPU 16-bit multiply high x low, shift result 16-bits
-// Used to compute intermediate products for 32-bit multiplies
-def SPUmpyh_vec: SDNode<"SPUISD::MPYH", SPUVecBinop, []>;
-def SPUmpyh_int: SDNode<"SPUISD::MPYH", SDTIntBinOp, []>;
-
-// SPU 16-bit multiply high x high, 32-bit product
-// Used to compute intermediate products for 16-bit multiplies
-def SPUmpyhh_vec: SDNode<"SPUISD::MPYHH", SPUVecBinop, []>;
-def SPUmpyhh_int: SDNode<"SPUISD::MPYHH", SDTIntBinOp, []>;
-
 // Shift left quadword by bits and bytes
 def SPUshlquad_l_bits: SDNode<"SPUISD::SHLQUAD_L_BITS", SPUvecshift_type, []>;
 def SPUshlquad_l_bytes: SDNode<"SPUISD::SHLQUAD_L_BYTES", SPUvecshift_type, []>;
@@ -116,11 +98,6 @@ def SPUvec_sra: SDNode<"SPUISD::VEC_SRA", SPUvecshift_type, []>;
 
 def SPUvec_rotl: SDNode<"SPUISD::VEC_ROTL", SPUvecshift_type, []>;
 def SPUvec_rotr: SDNode<"SPUISD::VEC_ROTR", SPUvecshift_type, []>;
-
-def SPUrotquad_rz_bytes: SDNode<"SPUISD::ROTQUAD_RZ_BYTES",
-                                    SPUvecshift_type, []>;
-def SPUrotquad_rz_bits: SDNode<"SPUISD::ROTQUAD_RZ_BITS",
-                                    SPUvecshift_type, []>;
 
 // Vector rotate left, bits shifted out of the left are rotated in on the right
 def SPUrotbytes_left: SDNode<"SPUISD::ROTBYTES_LEFT",
@@ -140,12 +117,6 @@ def SPUselb: SDNode<"SPUISD::SELB", SPUselb_type, []>;
 
 // SPU gather bits instruction:
 def SPUgatherbits: SDNode<"SPUISD::GATHER_BITS", SPUgatherbits_type, []>;
-
-// SPU floating point interpolate
-def SPUinterpolate : SDNode<"SPUISD::FPInterp", SDTFPBinOp, []>;
-
-// SPU floating point reciprocal estimate (used for fdiv)
-def SPUreciprocalEst: SDNode<"SPUISD::FPRecipEst", SDTFPUnaryOp, []>;
 
 def SDTprefslot2vec: SDTypeProfile<1, 1, []>;
 def SPUprefslot2vec: SDNode<"SPUISD::PREFSLOT2VEC", SDTprefslot2vec, []>;

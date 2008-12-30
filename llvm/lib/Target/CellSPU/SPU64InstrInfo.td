@@ -1,8 +1,17 @@
+//====--- SPU64InstrInfo.td - Cell SPU 64-bit operations -*- tablegen -*--====//
+//
+//                     Cell SPU 64-bit operations
+//
+// Primary author: Scott Michel (scottm@aero.org)
+//===----------------------------------------------------------------------===//
+
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // 64-bit comparisons:
 //
 // 1. The instruction sequences for vector vice scalar differ by a
-//    constant.
+//    constant. In the scalar case, we're only interested in the
+//    top two 32-bit slots, whereas we're interested in an exact
+//    all-four-slot match in the vector case.
 //
 // 2. There are no "immediate" forms, since loading 64-bit constants
 //    could be a constant pool load.
@@ -10,10 +19,10 @@
 // 3. i64 setcc results are i32, which are subsequently converted to a FSM
 //    mask when used in a select pattern.
 //
-// 4. v2i64 setcc results are v4i32, which can be converted to a FSM mask
-//    (TODO)
+// 4. v2i64 setcc results are v4i32, which can be converted to a FSM mask (TODO)
+//    [Note: this may be moot, since gb produces v4i32 or r32.]
 //
-// M00$E Kan be Pretty N@sTi!!!!! (appologies to Monty!)
+// M00$E B!tes Kan be Pretty N@sTi!!!!! (appologies to Monty!)
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
 // selb instruction definition for i64. Note that the selection mask is
@@ -22,17 +31,15 @@ def SELBr64_cond:
    SELBInst<(outs R64C:$rT), (ins R64C:$rA, R64C:$rB, VECREG:$rC),
             [/* no pattern */]>;
 
-class CodeFrag<dag frag> {
-  dag Fragment = frag;
-}
-
-class I64SELECTNegCond<PatFrag cond, CodeFrag cmpare>:
+// select the negative condition:
+class I64SELECTNegCond<PatFrag cond, CodeFrag compare>:
   Pat<(select (i32 (cond R64C:$rA, R64C:$rB)), R64C:$rTrue, R64C:$rFalse),
-      (SELBr64_cond R64C:$rTrue, R64C:$rFalse, (FSMr32 cmpare.Fragment))>;
+      (SELBr64_cond R64C:$rTrue, R64C:$rFalse, (FSMr32 compare.Fragment))>;
 
-class I64SETCCNegCond<PatFrag cond, CodeFrag cmpare>:
+// setcc the negative condition:
+class I64SETCCNegCond<PatFrag cond, CodeFrag compare>:
   Pat<(cond R64C:$rA, R64C:$rB),
-      (XORIr32 cmpare.Fragment, -1)>;
+      (XORIr32 compare.Fragment, -1)>;
 
 // The i64 seteq fragment that does the scalar->vector conversion and
 // comparison:
@@ -64,14 +71,13 @@ multiclass CompareEqual64 {
 defm I64EQ: CompareEqual64;
 
 def : Pat<(seteq R64C:$rA, R64C:$rB), I64EQr64.Fragment>;
+def : Pat<(seteq (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)), I64EQv2i64.Fragment>;
 
-def : Pat<(seteq (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
-          I64EQv2i64.Fragment>;
+def : Pat<(select R32C:$rC, R64C:$rB, R64C:$rA),
+          (SELBr64_cond R64C:$rA, R64C:$rB, (FSMr32 R32C:$rC))>;
 
-def I64Select:
-    Pat<(select R32C:$rC, R64C:$rB, R64C:$rA),
-        (SELBr64_cond R64C:$rA, R64C:$rB, (FSMr32 R32C:$rC))>;
-
+// i64 setne:
 def : I64SETCCNegCond<setne, I64EQr64>;
-
 def : I64SELECTNegCond<setne, I64EQr64>;
+
+// i64 setugt:

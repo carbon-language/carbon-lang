@@ -15,6 +15,13 @@
 //
 include "llvm/Target/Target.td"
 
+// Holder of code fragments (you'd think this'd already be in
+// a td file somewhere... :-)
+
+class CodeFrag<dag frag> {
+  dag Fragment = frag;
+}
+
 //===----------------------------------------------------------------------===//
 // Register File Description
 //===----------------------------------------------------------------------===//

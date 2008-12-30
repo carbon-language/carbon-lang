@@ -204,10 +204,10 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::SRL,  MVT::i8,     Custom);
   setOperationAction(ISD::SRA,  MVT::i8,     Custom);
 
-  // SPU needs custom lowering for shift left/right for i64
-  setOperationAction(ISD::SHL,  MVT::i64,    Custom);
-  setOperationAction(ISD::SRL,  MVT::i64,    Custom);
-  setOperationAction(ISD::SRA,  MVT::i64,    Custom);
+  // Make these operations legal and handle them during instruction selection:
+  setOperationAction(ISD::SHL,  MVT::i64,    Legal);
+  setOperationAction(ISD::SRL,  MVT::i64,    Legal);
+  setOperationAction(ISD::SRA,  MVT::i64,    Legal);
 
   // Custom lower i8, i32 and i64 multiplications
   setOperationAction(ISD::MUL,  MVT::i8,     Custom);
@@ -215,6 +215,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::MUL,  MVT::i64,    Expand);   // libcall
 
   // Need to custom handle (some) common i8, i64 math ops
+  setOperationAction(ISD::ADD,  MVT::i8,     Custom);
   setOperationAction(ISD::ADD,  MVT::i64,    Custom);
   setOperationAction(ISD::SUB,  MVT::i8,     Custom);
   setOperationAction(ISD::SUB,  MVT::i64,    Custom);
@@ -249,7 +250,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Zero extension and sign extension for i64 have to be
   // custom legalized
   setOperationAction(ISD::ZERO_EXTEND, MVT::i64, Custom);
-  setOperationAction(ISD::SIGN_EXTEND, MVT::i64, Custom);
   setOperationAction(ISD::ANY_EXTEND,  MVT::i64, Custom);
 
   // Custom lower i128 -> i64 truncates
@@ -262,7 +262,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::FP_TO_UINT, MVT::i64, Custom);
 
   // FDIV on SPU requires custom lowering
-  setOperationAction(ISD::FDIV, MVT::f32, Custom);
   setOperationAction(ISD::FDIV, MVT::f64, Expand);      // libcall
 
   // SPU has [U|S]INT_TO_FP
@@ -340,7 +339,8 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setOperationAction(ISD::ADD , VT, Legal);
     setOperationAction(ISD::SUB , VT, Legal);
     // mul has to be custom lowered.
-    setOperationAction(ISD::MUL , VT, Custom);
+    // TODO: v2i64 vector multiply
+    setOperationAction(ISD::MUL , VT, Legal);
 
     setOperationAction(ISD::AND   , VT, Legal);
     setOperationAction(ISD::OR    , VT, Legal);
@@ -354,7 +354,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setOperationAction(ISD::SREM, VT, Expand);
     setOperationAction(ISD::UDIV, VT, Expand);
     setOperationAction(ISD::UREM, VT, Expand);
-    setOperationAction(ISD::FDIV, VT, Custom);
 
     // Custom lower build_vector, constant pool spills, insert and
     // extract vector elements:
@@ -371,9 +370,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::XOR, MVT::v16i8, Custom);
   setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
 
-  // FIXME: This is only temporary until I put all vector multiplications in
-  // SPUInstrInfo.td:
-  setOperationAction(ISD::MUL, MVT::v4i32, Legal);
+  setOperationAction(ISD::FDIV, MVT::v4f32, Legal);
 
   setShiftAmountType(MVT::i32);
   setBooleanContents(ZeroOrNegativeOneBooleanContent);
@@ -411,10 +408,6 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::CNTB] = "SPUISD::CNTB";
     node_names[(unsigned) SPUISD::PREFSLOT2VEC] = "SPUISD::PREFSLOT2VEC";
     node_names[(unsigned) SPUISD::VEC2PREFSLOT] = "SPUISD::VEC2PREFSLOT";
-    node_names[(unsigned) SPUISD::MPY] = "SPUISD::MPY";
-    node_names[(unsigned) SPUISD::MPYU] = "SPUISD::MPYU";
-    node_names[(unsigned) SPUISD::MPYH] = "SPUISD::MPYH";
-    node_names[(unsigned) SPUISD::MPYHH] = "SPUISD::MPYHH";
     node_names[(unsigned) SPUISD::SHLQUAD_L_BITS] = "SPUISD::SHLQUAD_L_BITS";
     node_names[(unsigned) SPUISD::SHLQUAD_L_BYTES] = "SPUISD::SHLQUAD_L_BYTES";
     node_names[(unsigned) SPUISD::VEC_SHL] = "SPUISD::VEC_SHL";
@@ -422,21 +415,12 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::VEC_SRA] = "SPUISD::VEC_SRA";
     node_names[(unsigned) SPUISD::VEC_ROTL] = "SPUISD::VEC_ROTL";
     node_names[(unsigned) SPUISD::VEC_ROTR] = "SPUISD::VEC_ROTR";
-    node_names[(unsigned) SPUISD::ROTQUAD_RZ_BYTES] =
-      "SPUISD::ROTQUAD_RZ_BYTES";
-    node_names[(unsigned) SPUISD::ROTQUAD_RZ_BITS] =
-      "SPUISD::ROTQUAD_RZ_BITS";
-    node_names[(unsigned) SPUISD::ROTBYTES_LEFT] = "SPUISD::ROTBYTES_LEFT";
-    node_names[(unsigned) SPUISD::ROTBYTES_LEFT_BITS] =
-      "SPUISD::ROTBYTES_LEFT_BITS";
     node_names[(unsigned) SPUISD::SELECT_MASK] = "SPUISD::SELECT_MASK";
     node_names[(unsigned) SPUISD::SELB] = "SPUISD::SELB";
     node_names[(unsigned) SPUISD::ADD_EXTENDED] = "SPUISD::ADD_EXTENDED";
     node_names[(unsigned) SPUISD::CARRY_GENERATE] = "SPUISD::CARRY_GENERATE";
     node_names[(unsigned) SPUISD::SUB_EXTENDED] = "SPUISD::SUB_EXTENDED";
     node_names[(unsigned) SPUISD::BORROW_GENERATE] = "SPUISD::BORROW_GENERATE";
-    node_names[(unsigned) SPUISD::FPInterp] = "SPUISD::FPInterp";
-    node_names[(unsigned) SPUISD::FPRecipEst] = "SPUISD::FPRecipEst";
     node_names[(unsigned) SPUISD::SEXT32TO64] = "SPUISD::SEXT32TO64";
   }
 
@@ -1922,182 +1906,6 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
-static SDValue LowerVectorMUL(SDValue Op, SelectionDAG &DAG) {
-  switch (Op.getValueType().getSimpleVT()) {
-  default:
-    cerr << "CellSPU: Unknown vector multiplication, got "
-         << Op.getValueType().getMVTString()
-         << "\n";
-    abort();
-    /*NOTREACHED*/
-
-  case MVT::v4i32:
-	  break;
-
-  // Multiply two v8i16 vectors (pipeline friendly version):
-  // a) multiply lower halves, mask off upper 16-bit of 32-bit product
-  // b) multiply upper halves, rotate left by 16 bits (inserts 16 lower zeroes)
-  // c) Use SELB to select upper and lower halves from the intermediate results
-  //
-  // NOTE: We really want to move the SELECT_MASK to earlier to actually get the
-  // dual-issue. This code does manage to do this, even if it's a little on
-  // the wacky side
-  case MVT::v8i16: {
-    MachineFunction &MF = DAG.getMachineFunction();
-    MachineRegisterInfo &RegInfo = MF.getRegInfo();
-    SDValue Chain = Op.getOperand(0);
-    SDValue rA = Op.getOperand(0);
-    SDValue rB = Op.getOperand(1);
-    unsigned FSMBIreg = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
-    unsigned HiProdReg = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
-
-    SDValue FSMBOp =
-      DAG.getCopyToReg(Chain, FSMBIreg,
-                       DAG.getNode(SPUISD::SELECT_MASK, MVT::v8i16,
-                                   DAG.getConstant(0xcccc, MVT::i16)));
-
-    SDValue HHProd =
-      DAG.getCopyToReg(FSMBOp, HiProdReg,
-                       DAG.getNode(SPUISD::MPYHH, MVT::v8i16, rA, rB));
-
-    SDValue HHProd_v4i32 =
-      DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32,
-                  DAG.getCopyFromReg(HHProd, HiProdReg, MVT::v4i32));
-
-    return DAG.getNode(SPUISD::SELB, MVT::v8i16,
-                       DAG.getNode(SPUISD::MPY, MVT::v8i16, rA, rB),
-                       DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(),
-                                   DAG.getNode(SPUISD::VEC_SHL, MVT::v4i32,
-                                               HHProd_v4i32,
-                                               DAG.getConstant(16, MVT::i16))),
-                       DAG.getCopyFromReg(FSMBOp, FSMBIreg, MVT::v4i32));
-  }
-
-  // This M00sE is N@stI! (apologies to Monty Python)
-  //
-  // SPU doesn't know how to do any 8-bit multiplication, so the solution
-  // is to break it all apart, sign extend, and reassemble the various
-  // intermediate products.
-  case MVT::v16i8: {
-    SDValue rA = Op.getOperand(0);
-    SDValue rB = Op.getOperand(1);
-    SDValue c8 = DAG.getConstant(8, MVT::i32);
-    SDValue c16 = DAG.getConstant(16, MVT::i32);
-
-    SDValue LLProd =
-      DAG.getNode(SPUISD::MPY, MVT::v8i16,
-                  DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, rA),
-                  DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, rB));
-
-    SDValue rALH = DAG.getNode(SPUISD::VEC_SRA, MVT::v8i16, rA, c8);
-
-    SDValue rBLH = DAG.getNode(SPUISD::VEC_SRA, MVT::v8i16, rB, c8);
-
-    SDValue LHProd =
-      DAG.getNode(SPUISD::VEC_SHL, MVT::v8i16,
-                  DAG.getNode(SPUISD::MPY, MVT::v8i16, rALH, rBLH), c8);
-
-    SDValue FSMBmask = DAG.getNode(SPUISD::SELECT_MASK, MVT::v8i16,
-                                     DAG.getConstant(0x2222, MVT::i16));
-
-    SDValue LoProdParts =
-      DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32,
-                  DAG.getNode(SPUISD::SELB, MVT::v8i16,
-                              LLProd, LHProd, FSMBmask));
-
-    SDValue LoProdMask = DAG.getConstant(0xffff, MVT::i32);
-
-    SDValue LoProd =
-      DAG.getNode(ISD::AND, MVT::v4i32,
-                  LoProdParts,
-                  DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                              LoProdMask, LoProdMask,
-                              LoProdMask, LoProdMask));
-
-    SDValue rAH =
-      DAG.getNode(SPUISD::VEC_SRA, MVT::v4i32,
-                  DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, rA), c16);
-
-    SDValue rBH =
-      DAG.getNode(SPUISD::VEC_SRA, MVT::v4i32,
-                  DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, rB), c16);
-
-    SDValue HLProd =
-      DAG.getNode(SPUISD::MPY, MVT::v8i16,
-                  DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, rAH),
-                  DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, rBH));
-
-    SDValue HHProd_1 =
-      DAG.getNode(SPUISD::MPY, MVT::v8i16,
-                  DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16,
-                              DAG.getNode(SPUISD::VEC_SRA,
-                                          MVT::v4i32, rAH, c8)),
-                  DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16,
-                              DAG.getNode(SPUISD::VEC_SRA,
-                                          MVT::v4i32, rBH, c8)));
-
-    SDValue HHProd =
-      DAG.getNode(SPUISD::SELB, MVT::v8i16,
-                  HLProd,
-                  DAG.getNode(SPUISD::VEC_SHL, MVT::v8i16, HHProd_1, c8),
-                  FSMBmask);
-
-    SDValue HiProd =
-      DAG.getNode(SPUISD::VEC_SHL, MVT::v4i32, HHProd, c16);
-
-    return DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8,
-                       DAG.getNode(ISD::OR, MVT::v4i32,
-                                   LoProd, HiProd));
-  }
-  }
-
-  return SDValue();
-}
-
-static SDValue LowerFDIVf32(SDValue Op, SelectionDAG &DAG) {
-  MachineFunction &MF = DAG.getMachineFunction();
-  MachineRegisterInfo &RegInfo = MF.getRegInfo();
-
-  SDValue A = Op.getOperand(0);
-  SDValue B = Op.getOperand(1);
-  MVT VT = Op.getValueType();
-
-  unsigned VRegBR, VRegC;
-
-  if (VT == MVT::f32) {
-    VRegBR = RegInfo.createVirtualRegister(&SPU::R32FPRegClass);
-    VRegC = RegInfo.createVirtualRegister(&SPU::R32FPRegClass);
-  } else {
-    VRegBR = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
-    VRegC = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
-  }
-  // TODO: make sure we're feeding FPInterp the right arguments
-  // Right now: fi B, frest(B)
-
-  // Computes BRcpl =
-  // (Floating Interpolate (FP Reciprocal Estimate B))
-  SDValue BRcpl =
-      DAG.getCopyToReg(DAG.getEntryNode(), VRegBR,
-                       DAG.getNode(SPUISD::FPInterp, VT, B,
-                                DAG.getNode(SPUISD::FPRecipEst, VT, B)));
-
-  // Computes A * BRcpl and stores in a temporary register
-  SDValue AxBRcpl =
-      DAG.getCopyToReg(BRcpl, VRegC,
-                 DAG.getNode(ISD::FMUL, VT, A,
-                        DAG.getCopyFromReg(BRcpl, VRegBR, VT)));
-  // What's the Chain variable do? It's magic!
-  // TODO: set Chain = Op(0).getEntryNode()
-
-  return DAG.getNode(ISD::FADD, VT,
-                DAG.getCopyFromReg(AxBRcpl, VRegC, VT),
-                DAG.getNode(ISD::FMUL, VT,
-                        DAG.getCopyFromReg(AxBRcpl, VRegBR, VT),
-                        DAG.getNode(ISD::FSUB, VT, A,
-                            DAG.getNode(ISD::FMUL, VT, B,
-                            DAG.getCopyFromReg(AxBRcpl, VRegC, VT)))));
-}
-
 static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
   SDValue N = Op.getOperand(0);
@@ -2296,18 +2104,23 @@ static SDValue LowerI8Math(SDValue Op, SelectionDAG &DAG, unsigned Opc,
     assert(0 && "Unhandled i8 math operator");
     /*NOTREACHED*/
     break;
+  case ISD::ADD: {
+    // 8-bit addition: Promote the arguments up to 16-bits and truncate
+    // the result:
+    SDValue N1 = Op.getOperand(1);
+    N0 = DAG.getNode(ISD::SIGN_EXTEND, MVT::i16, N0);
+    N1 = DAG.getNode(ISD::SIGN_EXTEND, MVT::i16, N1);
+    return DAG.getNode(ISD::TRUNCATE, MVT::i8,
+                       DAG.getNode(Opc, MVT::i16, N0, N1));
+
+  }
+
   case ISD::SUB: {
     // 8-bit subtraction: Promote the arguments up to 16-bits and truncate
     // the result:
     SDValue N1 = Op.getOperand(1);
-    N0 = (N0.getOpcode() != ISD::Constant
-          ? DAG.getNode(ISD::SIGN_EXTEND, MVT::i16, N0)
-          : DAG.getConstant(cast<ConstantSDNode>(N0)->getSExtValue(),
-                            MVT::i16));
-    N1 = (N1.getOpcode() != ISD::Constant
-          ? DAG.getNode(ISD::SIGN_EXTEND, MVT::i16, N1)
-          : DAG.getConstant(cast<ConstantSDNode>(N1)->getSExtValue(),
-                            MVT::i16));
+    N0 = DAG.getNode(ISD::SIGN_EXTEND, MVT::i16, N0);
+    N1 = DAG.getNode(ISD::SIGN_EXTEND, MVT::i16, N1);
     return DAG.getNode(ISD::TRUNCATE, MVT::i8,
                        DAG.getNode(Opc, MVT::i16, N0, N1));
   }
@@ -2397,7 +2210,6 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
 
   switch (Opc) {
   case ISD::ZERO_EXTEND:
-  case ISD::SIGN_EXTEND:
   case ISD::ANY_EXTEND: {
     MVT Op0VT = Op0.getValueType();
     MVT Op0VecVT = MVT::getVectorVT(Op0VT, (128 / Op0VT.getSizeInBits()));
@@ -2410,39 +2222,16 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
     SDValue PromoteScalar =
             DAG.getNode(SPUISD::PREFSLOT2VEC, Op0VecVT, Op0);
 
-    if (Opc != ISD::SIGN_EXTEND) {
-      // Use a shuffle to zero extend the i32 to i64 directly:
-      SDValue shufMask =
-              DAG.getNode(ISD::BUILD_VECTOR, Op0VecVT,
-                          DAG.getConstant(0x80808080, MVT::i32),
-                          DAG.getConstant(0x00010203, MVT::i32),
-                          DAG.getConstant(0x80808080, MVT::i32),
-                          DAG.getConstant(0x08090a0b, MVT::i32));
-      SDValue zextShuffle =
-              DAG.getNode(SPUISD::SHUFB, Op0VecVT,
-                          PromoteScalar, PromoteScalar, shufMask);
+    // Use a shuffle to zero extend the i32 to i64 directly:
+    SDValue shufMask = DAG.getNode(ISD::BUILD_VECTOR, Op0VecVT,
+        DAG.getConstant(0x80808080, MVT::i32), DAG.getConstant(0x00010203,
+            MVT::i32), DAG.getConstant(0x80808080, MVT::i32), DAG.getConstant(
+            0x08090a0b, MVT::i32));
+    SDValue zextShuffle = DAG.getNode(SPUISD::SHUFB, Op0VecVT, PromoteScalar,
+        PromoteScalar, shufMask);
 
-      return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
-                         DAG.getNode(ISD::BIT_CONVERT, VecVT, zextShuffle));
-    } else {
-      // SPU has no "rotate quadword and replicate bit 0" (i.e. rotate/shift
-      // right and propagate the sign bit) instruction.
-      SDValue RotQuad =
-              DAG.getNode(SPUISD::ROTQUAD_RZ_BYTES, Op0VecVT,
-                          PromoteScalar, DAG.getConstant(4, MVT::i32));
-      SDValue SignQuad =
-              DAG.getNode(SPUISD::VEC_SRA, Op0VecVT,
-                          PromoteScalar, DAG.getConstant(32, MVT::i32));
-      SDValue SelMask =
-              DAG.getNode(SPUISD::SELECT_MASK, Op0VecVT,
-                          DAG.getConstant(0xf0f0, MVT::i16));
-      SDValue CombineQuad =
-              DAG.getNode(SPUISD::SELB, Op0VecVT,
-                          SignQuad, RotQuad, SelMask);
-
-      return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
-                         DAG.getNode(ISD::BIT_CONVERT, VecVT, CombineQuad));
-    }
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT, DAG.getNode(ISD::BIT_CONVERT,
+        VecVT, zextShuffle));
   }
 
   case ISD::ADD: {
@@ -2501,88 +2290,6 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
     return DAG.getNode(SPUISD::VEC2PREFSLOT, MVT::i64,
                        DAG.getNode(SPUISD::SUB_EXTENDED, MVT::v2i64,
                                    Op0, Op1, ShiftedBorrow));
-  }
-
-  case ISD::SHL: {
-    SDValue ShiftAmt = Op.getOperand(1);
-    MVT ShiftAmtVT = ShiftAmt.getValueType();
-    SDValue Op0Vec = DAG.getNode(SPUISD::PREFSLOT2VEC, VecVT, Op0);
-    SDValue MaskLower =
-      DAG.getNode(SPUISD::SELB, VecVT,
-                  Op0Vec,
-                  DAG.getConstant(0, VecVT),
-                  DAG.getNode(SPUISD::SELECT_MASK, VecVT,
-                              DAG.getConstant(0xff00ULL, MVT::i16)));
-    SDValue ShiftAmtBytes =
-      DAG.getNode(ISD::SRL, ShiftAmtVT,
-                  ShiftAmt,
-                  DAG.getConstant(3, ShiftAmtVT));
-    SDValue ShiftAmtBits =
-      DAG.getNode(ISD::AND, ShiftAmtVT,
-                  ShiftAmt,
-                  DAG.getConstant(7, ShiftAmtVT));
-
-    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
-                       DAG.getNode(SPUISD::SHLQUAD_L_BITS, VecVT,
-                                   DAG.getNode(SPUISD::SHLQUAD_L_BYTES, VecVT,
-                                               MaskLower, ShiftAmtBytes),
-                                   ShiftAmtBits));
-  }
-
-  case ISD::SRL: {
-    MVT VT = Op.getValueType();
-    SDValue ShiftAmt = Op.getOperand(1);
-    MVT ShiftAmtVT = ShiftAmt.getValueType();
-    SDValue ShiftAmtBytes =
-      DAG.getNode(ISD::SRL, ShiftAmtVT,
-                  ShiftAmt,
-                  DAG.getConstant(3, ShiftAmtVT));
-    SDValue ShiftAmtBits =
-      DAG.getNode(ISD::AND, ShiftAmtVT,
-                  ShiftAmt,
-                  DAG.getConstant(7, ShiftAmtVT));
-
-    return DAG.getNode(SPUISD::ROTQUAD_RZ_BITS, VT,
-                       DAG.getNode(SPUISD::ROTQUAD_RZ_BYTES, VT,
-                                   Op0, ShiftAmtBytes),
-                       ShiftAmtBits);
-  }
-
-  case ISD::SRA: {
-    // Promote Op0 to vector
-    SDValue Op0 =
-      DAG.getNode(SPUISD::PREFSLOT2VEC, MVT::v2i64, Op.getOperand(0));
-    SDValue ShiftAmt = Op.getOperand(1);
-    MVT ShiftVT = ShiftAmt.getValueType();
-
-    // Negate variable shift amounts
-    if (!isa<ConstantSDNode>(ShiftAmt)) {
-      ShiftAmt = DAG.getNode(ISD::SUB, ShiftVT,
-                             DAG.getConstant(0, ShiftVT), ShiftAmt);
-    }
-
-    SDValue UpperHalfSign =
-      DAG.getNode(SPUISD::VEC2PREFSLOT, MVT::i32,
-                  DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32,
-                              DAG.getNode(SPUISD::VEC_SRA, MVT::v2i64,
-                                          Op0, DAG.getConstant(31, MVT::i32))));
-    SDValue UpperHalfSignMask =
-      DAG.getNode(SPUISD::SELECT_MASK, MVT::v2i64, UpperHalfSign);
-    SDValue UpperLowerMask =
-      DAG.getNode(SPUISD::SELECT_MASK, MVT::v2i64,
-                  DAG.getConstant(0xff00, MVT::i16));
-    SDValue UpperLowerSelect =
-      DAG.getNode(SPUISD::SELB, MVT::v2i64,
-                  UpperHalfSignMask, Op0, UpperLowerMask);
-    SDValue RotateLeftBytes =
-      DAG.getNode(SPUISD::ROTBYTES_LEFT_BITS, MVT::v2i64,
-                  UpperLowerSelect, ShiftAmt);
-    SDValue RotateLeftBits =
-      DAG.getNode(SPUISD::ROTBYTES_LEFT, MVT::v2i64,
-                  RotateLeftBytes, ShiftAmt);
-
-    return DAG.getNode(SPUISD::VEC2PREFSLOT, MVT::i64,
-                       RotateLeftBits);
   }
   }
 
@@ -2890,10 +2597,11 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     return LowerRET(Op, DAG, getTargetMachine());
 
 
-  // i8, i64 math ops:
   case ISD::ZERO_EXTEND:
-  case ISD::SIGN_EXTEND:
   case ISD::ANY_EXTEND:
+    return LowerI64Math(Op, DAG, Opc);
+
+  // i8, i64 math ops:
   case ISD::ADD:
   case ISD::SUB:
   case ISD::ROTR:
@@ -2928,21 +2636,8 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
 
   // Vector and i8 multiply:
   case ISD::MUL:
-    if (VT.isVector())
-      return LowerVectorMUL(Op, DAG);
-    else if (VT == MVT::i8)
+    if (VT == MVT::i8)
       return LowerI8Math(Op, DAG, Opc, *this);
-
-  case ISD::FDIV:
-    if (VT == MVT::f32 || VT == MVT::v4f32)
-      return LowerFDIVf32(Op, DAG);
-#if 0
-    // This is probably a libcall
-    else if (Op.getValueType() == MVT::f64)
-      return LowerFDIVf64(Op, DAG);
-#endif
-    else
-      assert(0 && "Calling FDIV on unsupported MVT");
 
   case ISD::CTPOP:
     return LowerCTPOP(Op, DAG);
@@ -3119,8 +2814,6 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   case SPUISD::VEC_SHL:
   case SPUISD::VEC_SRL:
   case SPUISD::VEC_SRA:
-  case SPUISD::ROTQUAD_RZ_BYTES:
-  case SPUISD::ROTQUAD_RZ_BITS:
   case SPUISD::ROTBYTES_LEFT: {
     SDValue Op1 = N->getOperand(1);
 
@@ -3268,10 +2961,6 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   }
 
 #if 0
-  case MPY:
-  case MPYU:
-  case MPYH:
-  case MPYHH:
   case SPUISD::SHLQUAD_L_BITS:
   case SPUISD::SHLQUAD_L_BYTES:
   case SPUISD::VEC_SHL:
@@ -3279,18 +2968,14 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   case SPUISD::VEC_SRA:
   case SPUISD::VEC_ROTL:
   case SPUISD::VEC_ROTR:
-  case SPUISD::ROTQUAD_RZ_BYTES:
-  case SPUISD::ROTQUAD_RZ_BITS:
   case SPUISD::ROTBYTES_LEFT:
   case SPUISD::SELECT_MASK:
   case SPUISD::SELB:
-  case SPUISD::FPInterp:
-  case SPUISD::FPRecipEst:
   case SPUISD::SEXT32TO64:
 #endif
   }
 }
-  
+
 unsigned
 SPUTargetLowering::ComputeNumSignBitsForTargetNode(SDValue Op,
                                                    unsigned Depth) const {

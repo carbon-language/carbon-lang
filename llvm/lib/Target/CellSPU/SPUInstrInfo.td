@@ -583,7 +583,9 @@ def AHIvec:
 def AHIr16:
   RI10Form<0b10111000, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
     "ahi\t$rT, $rA, $val", IntegerOp,
-    [(set R16C:$rT, (add R16C:$rA, v8i16SExt10Imm:$val))]>;
+    [(set R16C:$rT, (add R16C:$rA, i16ImmSExt10:$val))]>;
+
+// v4i32, i32 add instruction:
 
 class AInst<dag OOL, dag IOL, list<dag> pattern>:
   RRForm<0b00000011000, OOL, IOL,
@@ -604,21 +606,42 @@ multiclass AddInstruction {
   def v16i8: AVecInst<v16i8>;
   
   def r32:   ARegInst<R32C>;
-  def r8:    AInst<(outs R8C:$rT), (ins R8C:$rA, R8C:$rB), [/* no pattern */]>; 
 }
 
 defm A : AddInstruction;
 
-def AIvec:
-    RI10Form<0b00111000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
-      "ai\t$rT, $rA, $val", IntegerOp,
-      [(set (v4i32 VECREG:$rT), (add (v4i32 VECREG:$rA),
-                                      v4i32SExt10Imm:$val))]>;
+class AIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI10Form<0b00111000, OOL, IOL,
+	     "ai\t$rT, $rA, $val", IntegerOp,
+	     pattern>;
 
-def AIr32:
-    RI10Form<0b00111000, (outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
-      "ai\t$rT, $rA, $val", IntegerOp,
-      [(set R32C:$rT, (add R32C:$rA, i32ImmSExt10:$val))]>;
+class AIVecInst<ValueType vectype, PatLeaf immpred>:
+    AIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+	    [(set (vectype VECREG:$rT), (add (vectype VECREG:$rA), immpred:$val))]>;
+
+class AIFPVecInst<ValueType vectype, PatLeaf immpred>:
+    AIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+	    [/* no pattern */]>;
+
+class AIRegInst<RegisterClass rclass, PatLeaf immpred>:
+    AIInst<(outs rclass:$rT), (ins rclass:$rA, s10imm_i32:$val),
+	   [(set rclass:$rT, (add rclass:$rA, immpred:$val))]>;
+
+// This is used to add epsilons to floating point numbers in the f32 fdiv code:
+class AIFPInst<RegisterClass rclass, PatLeaf immpred>:
+    AIInst<(outs rclass:$rT), (ins rclass:$rA, s10imm_i32:$val),
+	   [/* no pattern */]>;
+
+multiclass AddImmediate {
+  def v4i32: AIVecInst<v4i32, v4i32SExt10Imm>;
+
+  def r32: AIRegInst<R32C, i32ImmSExt10>;
+
+  def v4f32: AIFPVecInst<v4f32, v4i32SExt10Imm>;
+  def f32: AIFPInst<R32FP, i32ImmSExt10>;
+}
+
+defm AI : AddImmediate;
 
 def SFHvec:
     RRForm<0b00010010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
@@ -795,8 +818,7 @@ def BGXvec:
 def MPYv8i16:
   RRForm<0b00100011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
     "mpy\t$rT, $rA, $rB", IntegerMulDiv,
-    [(set (v8i16 VECREG:$rT), (SPUmpy_vec (v8i16 VECREG:$rA),
-                                          (v8i16 VECREG:$rB)))]>;
+    [/* no pattern */]>;
 
 def MPYr16:
   RRForm<0b00100011110, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
@@ -812,8 +834,7 @@ class MPYUInst<dag OOL, dag IOL, list<dag> pattern>:
 
 def MPYUv4i32:
   MPYUInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-           [(set (v4i32 VECREG:$rT),
-                 (SPUmpyu_vec (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+           [/* no pattern */]>;
 
 def MPYUr16:
   MPYUInst<(outs R32C:$rT), (ins R16C:$rA, R16C:$rB),
@@ -821,7 +842,7 @@ def MPYUr16:
 
 def MPYUr32:
   MPYUInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-           [(set R32C:$rT, (SPUmpyu_int R32C:$rA, R32C:$rB))]>;
+           [/* no pattern */]>;
 
 // mpyi: multiply 16 x s10imm -> 32 result.
 
@@ -892,87 +913,78 @@ class MPYHInst<dag OOL, dag IOL, list<dag> pattern>:
          
 def MPYHv4i32:
     MPYHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-             [(set (v4i32 VECREG:$rT),
-                   (SPUmpyh_vec (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+             [/* no pattern */]>;
 
 def MPYHr32:
     MPYHInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-             [(set R32C:$rT, (SPUmpyh_int R32C:$rA, R32C:$rB))]>;
+             [/* no pattern */]>;
 
 // mpys: multiply high and shift right (returns the top half of
 // a 16-bit multiply, sign extended to 32 bits.)
-def MPYSvec:
-    RRForm<0b11100011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "mpys\t$rT, $rA, $rB", IntegerMulDiv,
-      []>;
 
-def MPYSr16:
-    RRForm<0b11100011110, (outs R32C:$rT), (ins R16C:$rA, R16C:$rB),
+class MPYSInst<dag OOL, dag IOL>:
+    RRForm<0b11100011110, OOL, IOL, 
       "mpys\t$rT, $rA, $rB", IntegerMulDiv,
-      []>;
+      [/* no pattern */]>;
+
+def MPYSvec:
+    MPYSInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB)>;
+    
+def MPYSr16:
+    MPYSInst<(outs R32C:$rT), (ins R16C:$rA, R16C:$rB)>;
 
 // mpyhh: multiply high-high (returns the 32-bit result from multiplying
 // the top 16 bits of the $rA, $rB)
+
+class MPYHHInst<dag OOL, dag IOL>:
+  RRForm<0b01100011110, OOL, IOL,
+        "mpyhh\t$rT, $rA, $rB", IntegerMulDiv,
+        [/* no pattern */]>;
+        
 def MPYHHv8i16:
-    RRForm<0b01100011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "mpyhh\t$rT, $rA, $rB", IntegerMulDiv,
-      [(set (v8i16 VECREG:$rT),
-            (SPUmpyhh_vec (v8i16 VECREG:$rA), (v8i16 VECREG:$rB)))]>;
+    MPYHHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB)>;
 
 def MPYHHr32:
-    RRForm<0b01100011110, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-      "mpyhh\t$rT, $rA, $rB", IntegerMulDiv,
-      []>;
+    MPYHHInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB)>;
 
 // mpyhha: Multiply high-high, add to $rT:
-def MPYHHAvec:
-    RRForm<0b01100010110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "mpyhha\t$rT, $rA, $rB", IntegerMulDiv,
-      []>;
 
-def MPYHHAr32:
-    RRForm<0b01100010110, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+class MPYHHAInst<dag OOL, dag IOL>:
+    RRForm<0b01100010110, OOL, IOL,
       "mpyhha\t$rT, $rA, $rB", IntegerMulDiv,
-      []>;
+      [/* no pattern */]>;
+
+def MPYHHAvec:
+    MPYHHAInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB)>;
+    
+def MPYHHAr32:
+    MPYHHAInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB)>;
 
 // mpyhhu: Multiply high-high, unsigned
-def MPYHHUvec:
-    RRForm<0b01110011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "mpyhhu\t$rT, $rA, $rB", IntegerMulDiv,
-      []>;
 
-def MPYHHUr32:
-    RRForm<0b01110011110, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+class MPYHHUInst<dag OOL, dag IOL>:
+    RRForm<0b01110011110, OOL, IOL,
       "mpyhhu\t$rT, $rA, $rB", IntegerMulDiv,
-      []>;
+      [/* no pattern */]>;
+
+def MPYHHUvec:
+    MPYHHUInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB)>;
+    
+def MPYHHUr32:
+    MPYHHUInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB)>;
 
 // mpyhhau: Multiply high-high, unsigned
+
+class MPYHHAUInst<dag OOL, dag IOL>:
+    RRForm<0b01110010110, OOL, IOL,
+      "mpyhhau\t$rT, $rA, $rB", IntegerMulDiv,
+      [/* no pattern */]>;
+
 def MPYHHAUvec:
-    RRForm<0b01110010110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "mpyhhau\t$rT, $rA, $rB", IntegerMulDiv,
-      []>;
-
+    MPYHHAUInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB)>;
+    
 def MPYHHAUr32:
-    RRForm<0b01110010110, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-      "mpyhhau\t$rT, $rA, $rB", IntegerMulDiv,
-      []>;
-
-//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
-// v4i32, i32 multiply instruction sequence:
-//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
-def MPYv4i32:
-  Pat<(mul (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)),
-      (Av4i32
-        (Av4i32 (MPYHv4i32 VECREG:$rA, VECREG:$rB),
-                (MPYHv4i32 VECREG:$rB, VECREG:$rA)),
-        (MPYUv4i32 VECREG:$rA, VECREG:$rB))>;
-
-def MPYi32:
-  Pat<(mul R32C:$rA, R32C:$rB),
-      (Ar32
-        (Ar32 (MPYHr32 R32C:$rA, R32C:$rB),
-              (MPYHr32 R32C:$rB, R32C:$rA)),
-        (MPYUr32 R32C:$rA, R32C:$rB))>;
+    MPYHHAUInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB)>;
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // clz: Count leading zeroes
@@ -983,7 +995,7 @@ class CLZInst<dag OOL, dag IOL, list<dag> pattern>:
 
 class CLZRegInst<RegisterClass rclass>:
     CLZInst<(outs rclass:$rT), (ins rclass:$rA),
-	    [(set rclass:$rT, (ctlz rclass:$rA))]>;
+            [(set rclass:$rT, (ctlz rclass:$rA))]>;
 
 class CLZVecInst<ValueType vectype>:
     CLZInst<(outs VECREG:$rT), (ins VECREG:$rA),
@@ -1424,7 +1436,7 @@ multiclass BitwiseOr
   def f64: ORInst<(outs R64FP:$rT), (ins R64FP:$rA, R64FP:$rB),
                   [/* no pattern */]>;
 
-  // scalar->vector promotion:
+  // scalar->vector promotion, prefslot2vec:
   def v16i8_i8:  ORPromoteScalar<R8C>;
   def v8i16_i16: ORPromoteScalar<R16C>;
   def v4i32_i32: ORPromoteScalar<R32C>;
@@ -1432,7 +1444,7 @@ multiclass BitwiseOr
   def v4f32_f32: ORPromoteScalar<R32FP>;
   def v2f64_f64: ORPromoteScalar<R64FP>;
 
-  // extract element 0:
+  // vector->scalar demotion, vec2prefslot:
   def i8_v16i8:  ORExtractElt<R8C>;
   def i16_v8i16: ORExtractElt<R16C>;
   def i32_v4i32: ORExtractElt<R32C>;
@@ -1831,6 +1843,13 @@ class SELBVecInst<ValueType vectype>:
                      (and (vnot (vectype VECREG:$rC)),
                           (vectype VECREG:$rA))))]>;
 
+class SELBVecVCondInst<ValueType vectype>:
+  SELBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
+           [(set (vectype VECREG:$rT),
+                 (select (vectype VECREG:$rC),
+                         (vectype VECREG:$rB),
+                         (vectype VECREG:$rA)))]>;
+
 class SELBVecCondInst<ValueType vectype>:
   SELBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, R32C:$rC),
            [(set (vectype VECREG:$rT),
@@ -1867,8 +1886,21 @@ multiclass SelectBits
   def v4i32_cond: SELBVecCondInst<v4i32>;
   def v2i64_cond: SELBVecCondInst<v2i64>;
 
+  def v16i8_vcond: SELBVecCondInst<v16i8>;
+  def v8i16_vcond: SELBVecCondInst<v8i16>;
+  def v4i32_vcond: SELBVecCondInst<v4i32>;
+  def v2i64_vcond: SELBVecCondInst<v2i64>;
+
+  def v4f32_cond:
+	SELBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
+		 [(set (v4f32 VECREG:$rT),
+		       (select (v4i32 VECREG:$rC),
+			       (v4f32 VECREG:$rB),
+			       (v4f32 VECREG:$rA)))]>;
+
   // SELBr64_cond is defined further down, look for i64 comparisons
   def r32_cond:   SELBRegCondInst<R32C, R32C>;
+  def f32_cond:   SELBRegCondInst<R32C, R32FP>;
   def r16_cond:   SELBRegCondInst<R16C, R16C>;
   def r8_cond:    SELBRegCondInst<R8C,  R8C>;
 }
@@ -2454,11 +2486,11 @@ class ROTQBIInst<dag OOL, dag IOL, list<dag> pattern>:
            RotateShift, pattern>;
 
 class ROTQBIVecInst<ValueType vectype>:
-    ROTQBIInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+    ROTQBIInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
                [/* no pattern yet */]>;
 
 class ROTQBIRegInst<RegisterClass rclass>:
-    ROTQBIInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB),
+    ROTQBIInst<(outs rclass:$rT), (ins rclass:$rA, R32C:$rB),
                [/* no pattern yet */]>;
 
 multiclass RotateQuadByBitCount
@@ -2645,9 +2677,6 @@ def : Pat<(srl R32C:$rA, (i8 imm:$val)),
 // ROTQMBYvec: This is a vector form merely so that when used in an
 // instruction pattern, type checking will succeed. This instruction assumes
 // that the user knew to negate $rB.
-//
-// Using the SPUrotquad_rz_bytes target-specific DAG node, the patterns
-// ensure that $rB is negated.
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
 class ROTQMBYInst<dag OOL, dag IOL, list<dag> pattern>:
@@ -2660,8 +2689,7 @@ class ROTQMBYVecInst<ValueType vectype>:
 
 class ROTQMBYRegInst<RegisterClass rclass>:
     ROTQMBYInst<(outs rclass:$rT), (ins rclass:$rA, R32C:$rB),
-                [(set rclass:$rT,
-                      (SPUrotquad_rz_bytes rclass:$rA, R32C:$rB))]>;
+                [/* no pattern */]>;
 
 multiclass RotateQuadBytes
 {
@@ -2676,32 +2704,17 @@ multiclass RotateQuadBytes
 
 defm ROTQMBY : RotateQuadBytes;
 
-def : Pat<(SPUrotquad_rz_bytes (v16i8 VECREG:$rA), R32C:$rB),
-          (ROTQMBYv16i8 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-def : Pat<(SPUrotquad_rz_bytes (v8i16 VECREG:$rA), R32C:$rB),
-          (ROTQMBYv8i16 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-def : Pat<(SPUrotquad_rz_bytes (v4i32 VECREG:$rA), R32C:$rB),
-          (ROTQMBYv4i32 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-def : Pat<(SPUrotquad_rz_bytes (v2i64 VECREG:$rA), R32C:$rB),
-          (ROTQMBYv2i64 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-def : Pat<(SPUrotquad_rz_bytes GPRC:$rA, R32C:$rB),
-          (ROTQMBYr128 GPRC:$rA, (SFIr32 R32C:$rB, 0))>;
-def : Pat<(SPUrotquad_rz_bytes R64C:$rA, R32C:$rB),
-          (ROTQMBYr64 R64C:$rA, (SFIr32 R32C:$rB, 0))>;
-
 class ROTQMBYIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b10111111100, OOL, IOL, "rotqmbyi\t$rT, $rA, $val",
             RotateShift, pattern>;
 
 class ROTQMBYIVecInst<ValueType vectype>:
     ROTQMBYIInst<(outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
-                 [(set (vectype VECREG:$rT),
-                       (SPUrotquad_rz_bytes (vectype VECREG:$rA), (i32 uimm7:$val)))]>;
+                 [/* no pattern */]>;
 
 class ROTQMBYIRegInst<RegisterClass rclass, Operand optype, ValueType inttype, PatLeaf pred>:
     ROTQMBYIInst<(outs rclass:$rT), (ins rclass:$rA, optype:$val),
-                 [(set rclass:$rT,
-                       (SPUrotquad_rz_bytes rclass:$rA, (inttype pred:$val)))]>;
+                 [/* no pattern */]>;
 
 multiclass RotateQuadBytesImm
 {
@@ -2725,8 +2738,8 @@ class ROTQMBYBIInst<dag OOL, dag IOL, list<dag> pattern>:
            RotateShift, pattern>;
 
 class ROTQMBYBIVecInst<ValueType vectype>:
-    ROTQMBYBIInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-                  [/* no pattern, intrinsic? */]>;
+    ROTQMBYBIInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+                  [/* no pattern, */]>;
 
 multiclass RotateMaskQuadByBitCount
 {
@@ -2768,19 +2781,6 @@ multiclass RotateMaskQuadByBits
 
 defm ROTQMBI: RotateMaskQuadByBits;
 
-def : Pat<(SPUrotquad_rz_bits (v16i8 VECREG:$rA), R32C:$rB),
-          (ROTQMBIv16i8 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-def : Pat<(SPUrotquad_rz_bits (v8i16 VECREG:$rA), R32C:$rB),
-          (ROTQMBIv8i16 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-def : Pat<(SPUrotquad_rz_bits (v4i32 VECREG:$rA), R32C:$rB),
-          (ROTQMBIv4i32 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-def : Pat<(SPUrotquad_rz_bits (v2i64 VECREG:$rA), R32C:$rB),
-          (ROTQMBIv2i64 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-def : Pat<(SPUrotquad_rz_bits GPRC:$rA, R32C:$rB),
-          (ROTQMBIr128 GPRC:$rA, (SFIr32 R32C:$rB, 0))>;
-def : Pat<(SPUrotquad_rz_bits R64C:$rA, R32C:$rB),
-          (ROTQMBIr64 R64C:$rA, (SFIr32 R32C:$rB, 0))>;
-
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // Rotate quad and mask by bits, immediate
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
@@ -2791,13 +2791,11 @@ class ROTQMBIIInst<dag OOL, dag IOL, list<dag> pattern>:
 
 class ROTQMBIIVecInst<ValueType vectype>:
    ROTQMBIIInst<(outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
-                 [(set (vectype VECREG:$rT),
-                       (SPUrotquad_rz_bits (vectype VECREG:$rA), (i32 uimm7:$val)))]>;
+                 [/* no pattern */]>;
 
 class ROTQMBIIRegInst<RegisterClass rclass>:
    ROTQMBIIInst<(outs rclass:$rT), (ins rclass:$rA, rotNeg7imm:$val),
-                 [(set rclass:$rT,
-                       (SPUrotquad_rz_bits rclass:$rA, (i32 uimm7:$val)))]>;
+                 [/* no pattern */]>;
 
 multiclass RotateMaskQuadByBitsImm
 {
@@ -3142,6 +3140,15 @@ multiclass CmpGtrWordImm
 
   def r32: CGTIInst<(outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
                     [(set R32C:$rT, (setgt R32C:$rA, i32ImmSExt10:$val))]>;
+
+  // CGTIv4f32, CGTIf32: These are used in the f32 fdiv instruction sequence:
+  def v4f32: CGTIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+                       [(set (v4i32 VECREG:$rT),
+                             (setgt (v4i32 (bitconvert (v4f32 VECREG:$rA))),
+                                    (v4i32 v4i32SExt16Imm:$val)))]>;
+
+  def f32:   CGTIInst<(outs R32C:$rT), (ins R32FP:$rA, s10imm_i32:$val),
+  		      [/* no pattern */]>;
 }
 
 class CLGTBInst<dag OOL, dag IOL, list<dag> pattern> :
@@ -3750,62 +3757,63 @@ let isTerminator = 1, isBarrier = 1 in {
 
 class FAInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b01011000100, OOL, IOL, "fa\t$rT, $rA, $rB",
-	   SPrecFP, pattern>;
+           SPrecFP, pattern>;
 
 class FAVecInst<ValueType vectype>:
     FAInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
              [(set (vectype VECREG:$rT),
-		   (fadd (vectype VECREG:$rA), (vectype VECREG:$rB)))]>;
+                   (fadd (vectype VECREG:$rA), (vectype VECREG:$rB)))]>;
 
 multiclass SFPAdd
 {
   def v4f32: FAVecInst<v4f32>;
-  def r32:   FAInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
-		    [(set R32FP:$rT, (fadd R32FP:$rA, R32FP:$rB))]>;
+  def f32:   FAInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
+                    [(set R32FP:$rT, (fadd R32FP:$rA, R32FP:$rB))]>;
 }
 
 defm FA : SFPAdd;
 
 class FSInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b01011000100, OOL, IOL, "fs\t$rT, $rA, $rB",
-	   SPrecFP, pattern>;
+           SPrecFP, pattern>;
 
 class FSVecInst<ValueType vectype>:
     FSInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-    	   [(set (vectype VECREG:$rT),
-	         (fsub (vectype VECREG:$rA), (vectype VECREG:$rB)))]>;
+           [(set (vectype VECREG:$rT),
+                 (fsub (vectype VECREG:$rA), (vectype VECREG:$rB)))]>;
 
 multiclass SFPSub
 {
   def v4f32: FSVecInst<v4f32>;
-  def r32:   FSInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
-		    [(set R32FP:$rT, (fsub R32FP:$rA, R32FP:$rB))]>;
+  def f32:   FSInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
+                    [(set R32FP:$rT, (fsub R32FP:$rA, R32FP:$rB))]>;
 }
 
 defm FS : SFPSub;
 
 // Floating point reciprocal estimate
-def FREv4f32 :
-    RRForm_1<0b00011101100, (outs VECREG:$rT), (ins VECREG:$rA),
-      "frest\t$rT, $rA", SPrecFP,
-      [(set (v4f32 VECREG:$rT), (SPUreciprocalEst (v4f32 VECREG:$rA)))]>;
 
-def FREf32 :
-    RRForm_1<0b00011101100, (outs R32FP:$rT), (ins R32FP:$rA),
-      "frest\t$rT, $rA", SPrecFP,
-      [(set R32FP:$rT, (SPUreciprocalEst R32FP:$rA))]>;
+class FRESTInst<dag OOL, dag IOL>:
+  RRForm_1<0b00110111000, OOL, IOL,
+           "frest\t$rT, $rA", SPrecFP,
+           [/* no pattern */]>;
+
+def FRESTv4f32 :
+    FRESTInst<(outs VECREG:$rT), (ins VECREG:$rA)>;
+
+def FRESTf32 :
+    FRESTInst<(outs R32FP:$rT), (ins R32FP:$rA)>;
 
 // Floating point interpolate (used in conjunction with reciprocal estimate)
 def FIv4f32 :
     RRForm<0b00101011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
       "fi\t$rT, $rA, $rB", SPrecFP,
-      [(set (v4f32 VECREG:$rT), (SPUinterpolate (v4f32 VECREG:$rA),
-                                                (v4f32 VECREG:$rB)))]>;
+      [/* no pattern */]>;
 
 def FIf32 :
     RRForm<0b00101011110, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
       "fi\t$rT, $rA, $rB", SPrecFP,
-      [(set R32FP:$rT, (SPUinterpolate R32FP:$rA, R32FP:$rB))]>;
+      [/* no pattern */]>;
 
 //--------------------------------------------------------------------------
 // Basic single precision floating point comparisons:
@@ -4445,12 +4453,14 @@ def : Pat<(SPUindirect (SPUhi tconstpool:$in, 0),
                        (SPUlo tconstpool:$in, 0)),
           (IOHLlo (ILHUhi tconstpool:$in), tconstpool:$in)>;
 
+/*
 def : Pat<(SPUindirect R32C:$sp, i32ImmSExt10:$imm),
           (AIr32 R32C:$sp, i32ImmSExt10:$imm)>;
 
 def : Pat<(SPUindirect R32C:$sp, imm:$imm),
           (Ar32 R32C:$sp,
                 (IOHLr32 (ILHUr32 (HI16 imm:$imm)), (LO16 imm:$imm)))>;
+ */
 
 def : Pat<(add (SPUhi tglobaladdr:$in, 0), (SPUlo tglobaladdr:$in, 0)),
           (IOHLlo (ILHUhi tglobaladdr:$in), tglobaladdr:$in)>;
@@ -4466,5 +4476,7 @@ def : Pat<(add (SPUhi tconstpool:$in, 0), (SPUlo tconstpool:$in, 0)),
 
 // Instrinsics:
 include "CellSDKIntrinsics.td"
+// Various math operator instruction sequences
+include "SPUMathInstr.td"
 // 64-bit "instructions"/support
 include "SPU64InstrInfo.td"

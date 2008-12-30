@@ -1,9 +1,11 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: grep frest    %t1.s | count 2 
 ; RUN: grep -w fi    %t1.s | count 2 
-; RUN: grep fm       %t1.s | count 4 
+; RUN: grep -w fm    %t1.s | count 2
 ; RUN: grep fma      %t1.s | count 2 
-; RUN: grep fnms     %t1.s | count 2
+; RUN: grep fnms     %t1.s | count 4
+; RUN: grep cgti     %t1.s | count 2
+; RUN: grep selb     %t1.s | count 2
 ;
 ; This file includes standard floating point arithmetic instructions
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"

@@ -82,7 +82,7 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORIi8i32:
   case SPU::AHIvec:
   case SPU::AHIr16:
-  case SPU::AIvec:
+  case SPU::AIv4i32:
     assert(MI.getNumOperands() == 3 &&
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&
@@ -98,8 +98,7 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
     assert(MI.getNumOperands() == 3 &&
            "wrong number of operands to AIr32");
     if (MI.getOperand(0).isReg() &&
-        (MI.getOperand(1).isReg() ||
-         MI.getOperand(1).isFI()) &&
+        MI.getOperand(1).isReg() &&
         (MI.getOperand(2).isImm() &&
          MI.getOperand(2).getImm() == 0)) {
       sourceReg = MI.getOperand(1).getReg();
@@ -265,7 +264,7 @@ bool SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   // reg class to any other reg class containing R3.  This is required because
   // we instruction select bitconvert i64 -> f64 as a noop for example, so our
   // types have no specific meaning.
-  
+
   if (DestRC == SPU::R8CRegisterClass) {
     BuildMI(MBB, MI, get(SPU::ORBIr8), DestReg).addReg(SrcReg).addImm(0);
   } else if (DestRC == SPU::R16CRegisterClass) {
@@ -291,7 +290,7 @@ bool SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     // Attempt to copy unknown/unsupported register class!
     return false;
   }
-  
+
   return true;
 }
 
@@ -464,7 +463,7 @@ SPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
   MachineInstr *NewMI = 0;
-  
+
   if ((Opc == SPU::ORr32
        || Opc == SPU::ORv4i32)
        && MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
@@ -508,7 +507,7 @@ SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
 
   // Get the last instruction in the block.
   MachineInstr *LastInst = I;
-  
+
   // If there is only one terminator instruction, process it.
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
     if (isUncondBranch(LastInst)) {
@@ -524,7 +523,7 @@ SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
     // Otherwise, don't know what this is.
     return true;
   }
-  
+
   // Get the instruction before it if it's a terminator.
   MachineInstr *SecondLastInst = I;
 
@@ -532,7 +531,7 @@ SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
   if (SecondLastInst && I != MBB.begin() &&
       isUnpredicatedTerminator(--I))
     return true;
-  
+
   // If the block ends with a conditional and unconditional branch, handle it.
   if (isCondBranch(SecondLastInst) && isUncondBranch(LastInst)) {
     TBB =  SecondLastInst->getOperand(1).getMBB();
@@ -541,7 +540,7 @@ SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
     FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
-  
+
   // If the block ends with two unconditional branches, handle it.  The second
   // one is not executed, so remove it.
   if (isUncondBranch(SecondLastInst) && isUncondBranch(LastInst)) {
@@ -554,7 +553,7 @@ SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
   // Otherwise, can't handle this.
   return true;
 }
-    
+
 unsigned
 SPUInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator I = MBB.end();
@@ -578,16 +577,16 @@ SPUInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   I->eraseFromParent();
   return 2;
 }
-    
+
 unsigned
 SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 			   MachineBasicBlock *FBB,
 			   const SmallVectorImpl<MachineOperand> &Cond) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
-  assert((Cond.size() == 2 || Cond.size() == 0) && 
+  assert((Cond.size() == 2 || Cond.size() == 0) &&
          "SPU branch conditions have two components!");
-  
+
   // One-way branch.
   if (FBB == 0) {
     if (Cond.empty())   // Unconditional branch
@@ -600,7 +599,7 @@ SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
     }
     return 1;
   }
-  
+
   // Two-way Conditional Branch.
 #if 0
   BuildMI(&MBB, get(SPU::BRNZ))

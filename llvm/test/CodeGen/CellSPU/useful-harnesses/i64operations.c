@@ -34,19 +34,45 @@ struct pred_s preds[] = {
   { "neq", i64_neq, i64_neq_select }
 };
 
+uint64_t i64_shl_const(uint64_t a) {
+  return a << 10;
+}
+
+uint64_t i64_shl(uint64_t a, int amt) {
+  return a << amt;
+}
+
+uint64_t i64_srl_const(uint64_t a) {
+  return a >> 10;
+}
+
+uint64_t i64_srl(uint64_t a, int amt) {
+  return a >> amt;
+}
+
+int64_t i64_sra_const(int64_t a) {
+  return a >> 10;
+}
+
+int64_t i64_sra(int64_t a, int amt) {
+  return a >> amt;
+}
+
 int main(void) {
   int i;
-  int64_t a = 1234567890000LL;
-  int64_t b = 2345678901234LL;
-  int64_t c = 1234567890001LL;
-  int64_t d =         10001LL;
-  int64_t e =         10000LL;
+  int64_t a =  1234567890003LL;
+  int64_t b =  2345678901235LL;
+  int64_t c =  1234567890001LL;
+  int64_t d =          10001LL;
+  int64_t e =          10000LL;
+  int64_t f = -1068103409991LL;
 
   printf("a = %16lld (0x%016llx)\n", a, a);
   printf("b = %16lld (0x%016llx)\n", b, b);
   printf("c = %16lld (0x%016llx)\n", c, c);
   printf("d = %16lld (0x%016llx)\n", d, d);
   printf("e = %16lld (0x%016llx)\n", e, e);
+  printf("f = %16lld (0x%016llx)\n", f, f);
   printf("----------------------------------------\n");
 
   for (i = 0; i < sizeof(preds)/sizeof(preds[0]); ++i) {
@@ -63,6 +89,24 @@ int main(void) {
 
     printf("----------------------------------------\n");
   }
+
+  printf("a                = 0x%016llx\n", a);
+  printf("i64_shl_const(a) = 0x%016llx\n", i64_shl_const(a));
+  printf("i64_shl(a)       = 0x%016llx\n", i64_shl(a, 5));
+  printf("i64_srl_const(a) = 0x%016llx\n", i64_srl_const(a));
+  printf("i64_srl(a)       = 0x%016llx\n", i64_srl(a, 5));
+  printf("i64_sra_const(a) = 0x%016llx\n", i64_sra_const(a));
+  printf("i64_sra(a)       = 0x%016llx\n", i64_sra(a, 5));
+  printf("----------------------------------------\n");
+
+  printf("f                = 0x%016llx\n", f);
+  printf("i64_shl_const(f) = 0x%016llx\n", i64_shl_const(f));
+  printf("i64_shl(f)       = 0x%016llx\n", i64_shl(f, 10));
+  printf("i64_srl_const(f) = 0x%016llx\n", i64_srl_const(f));
+  printf("i64_srl(f)       = 0x%016llx\n", i64_srl(f, 10));
+  printf("i64_sra_const(f) = 0x%016llx\n", i64_sra_const(f));
+  printf("i64_sra(f)       = 0x%016llx\n", i64_sra(f, 10));
+  printf("----------------------------------------\n");
 
   return 0;
 }

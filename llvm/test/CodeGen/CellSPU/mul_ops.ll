@@ -8,7 +8,7 @@
 ; RUN: grep and     %t1.s | count 2
 ; RUN: grep selb    %t1.s | count 6
 ; RUN: grep fsmbi   %t1.s | count 4
-; RUN: grep shli    %t1.s | count 2
+; RUN: grep shli    %t1.s | count 4
 ; RUN: grep shlhi   %t1.s | count 4
 ; RUN: grep ila     %t1.s | count 2
 ; RUN: grep xsbh    %t1.s | count 4
