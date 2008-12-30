@@ -1,5 +1,5 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep -w shlh      %t1.s | count 9
+; RUN: grep -w shlh      %t1.s | count 10
 ; RUN: grep -w shlhi     %t1.s | count 3
 ; RUN: grep -w shl       %t1.s | count 9
 ; RUN: grep -w shli      %t1.s | count 3
