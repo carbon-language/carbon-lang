@@ -931,6 +931,9 @@ private:
   
   DeclTy *ParseNamespace(unsigned Context);
   DeclTy *ParseLinkage(unsigned Context);
+  DeclTy *ParseUsingDirectiveOrDeclaration(unsigned Context);
+  DeclTy *ParseUsingDirective(unsigned Context, SourceLocation UsingLoc);
+  DeclTy *ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc);
 
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.

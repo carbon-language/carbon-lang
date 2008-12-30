@@ -131,6 +131,91 @@ Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
                                   &InnerDecls.front(), InnerDecls.size());
 }
 
+/// ParseUsingDirectiveOrDeclaration - Parse C++ using using-declaration or
+/// using-directive. Assumes that current token is 'using'.
+Parser::DeclTy *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context)
+{
+  assert(Tok.is(tok::kw_using) && "Not using token");
+
+  // Eat 'using'.
+  SourceLocation UsingLoc = ConsumeToken();
+
+  if (Tok.is(tok::kw_namespace)) {
+    // Next token after 'using' is 'namespace' so it must be using-directive
+    return ParseUsingDirective(Context, UsingLoc);
+  } else {
+    // Otherwise, it must be using-declaration.
+    return ParseUsingDeclaration(Context, UsingLoc); //FIXME: It is just stub.
+  }
+}
+
+/// ParseUsingDirective - Parse C++ using-directive, assumes
+/// that current token is 'namespace' and 'using' was already parsed.
+///
+///       using-directive: [C++ 7.3.p4: namespace.udir]
+///        'using' 'namespace' ::[opt] nested-name-specifier[opt]
+///                 namespace-name ;
+/// [GNU] using-directive:
+///        'using' 'namespace' ::[opt] nested-name-specifier[opt]
+///                 namespace-name attributes[opt] ;
+///
+Parser::DeclTy *Parser::ParseUsingDirective(unsigned Context,
+                                            SourceLocation UsingLoc) {
+  assert(Tok.is(tok::kw_namespace) && "Not 'namespace' token");
+
+  // Eat 'namespace'.
+  SourceLocation NamespcLoc = ConsumeToken();
+
+  CXXScopeSpec SS;
+  // Parse (optional) nested-name-specifier.
+  MaybeParseCXXScopeSpecifier(SS);
+
+  AttributeList *AttrList = 0;
+  IdentifierInfo *NamespcName = 0;
+  SourceLocation IdentLoc = SourceLocation();
+
+  // Parse namespace-name.
+  if (!SS.isInvalid() && Tok.is(tok::identifier)) {
+    // Parse identifier.
+    NamespcName = Tok.getIdentifierInfo();
+    IdentLoc = ConsumeToken();
+    // Parse (optional) attributes (most likely GNU strong-using extension)
+    if (Tok.is(tok::kw___attribute)) {
+      AttrList = ParseAttributes();
+    }
+    // Eat ';'.
+    if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
+                     AttrList? "attributes list" : "namespace name")) {
+        SkipUntil(tok::semi);
+        return 0;
+    }
+  } else {
+    Diag(Tok, diag::err_expected_namespace_name);
+    // If there was invalid namespace name, skip to end of decl, and eat ';'.
+    SkipUntil(tok::semi);
+    // FIXME: Are there cases, when we would like to call ActOnUsingDirective?
+    return 0;
+  }
+
+  return Actions.ActOnUsingDirective(CurScope, UsingLoc, NamespcLoc, SS,
+                                      IdentLoc ,NamespcName, AttrList);
+}
+
+/// ParseUsingDeclaration - Parse C++ using-declaration. Assumes that
+/// 'using' was already seen.
+///
+///     using-declaration: [C++ 7.3.p3: namespace.udecl]
+///       'using' 'typename'[opt] ::[opt] nested-name-specifier
+///               unqualified-id [TODO]
+///       'using' :: unqualified-id [TODO]
+///
+Parser::DeclTy *Parser::ParseUsingDeclaration(unsigned Context,
+                                              SourceLocation UsingLoc) {
+  assert(false && "Not implemented");
+  // FIXME: Implement parsing.
+  return 0;
+}
+
 /// ParseClassName - Parse a C++ class-name, which names a class. Note
 /// that we only check that the result names a type; semantic analysis
 /// will need to verify that the type names a class. The result is

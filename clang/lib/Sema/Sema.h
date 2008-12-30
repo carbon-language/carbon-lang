@@ -491,11 +491,25 @@ public:
   void CheckCXXDefaultArguments(FunctionDecl *FD);
   void CheckExtraCXXDefaultArguments(Declarator &D);
 
+  // FIXME: NamespaceNameOnly parameter is added temporarily
+  // we will need a better way to specify lookup criteria for things
+  // like template specializations, explicit template instatatiation etc.
+
   /// More parsing and symbol table subroutines...
   Decl *LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                    const DeclContext *LookupCtx = 0,
                    bool enableLazyBuiltinCreation = true,
-                  bool LookInParent = true);
+                   bool LookInParent = true,
+                   bool NamespaceNameOnly = false);
+
+  Decl *LookupNamespaceName(DeclarationName Name, Scope *S,
+                            const DeclContext *LookupCtx) {
+    return LookupDecl(Name, Decl::IDNS_Tag | Decl::IDNS_Ordinary, S,
+                      LookupCtx,
+                      /* enableLazyBuiltinCreation */ false,
+                      /* LookInParent */ true,
+                      /* NamespaceNameOnly */ true);
+  }
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, 
                                   Scope *S);
@@ -806,6 +820,14 @@ public:
                                         IdentifierInfo *Ident,
                                         SourceLocation LBrace);
   virtual void ActOnFinishNamespaceDef(DeclTy *Dcl, SourceLocation RBrace);
+
+  virtual DeclTy *ActOnUsingDirective(Scope *CurScope,
+                                      SourceLocation UsingLoc,
+                                      SourceLocation NamespcLoc,
+                                      const CXXScopeSpec &SS,
+                                      SourceLocation IdentLoc,
+                                      IdentifierInfo *NamespcName,
+                                      AttributeList *AttrList);
 
   /// AddCXXDirectInitializerToDecl - This action is called immediately after 
   /// ActOnDeclarator, when a C++ direct initializer is present.

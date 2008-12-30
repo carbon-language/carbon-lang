@@ -731,6 +731,15 @@ public:
     return;
   }
 
+  /// ActOnUsingDirective - This is called when using-directive is parsed.
+  virtual DeclTy *ActOnUsingDirective(Scope *CurScope,
+                                      SourceLocation UsingLoc,
+                                      SourceLocation NamespcLoc,
+                                      const CXXScopeSpec &SS,
+                                      SourceLocation IdentLoc,
+                                      IdentifierInfo *NamespcName,
+                                      AttributeList *AttrList);
+
   /// ActOnParamDefaultArgument - Parse default argument for function parameter
   virtual void ActOnParamDefaultArgument(DeclTy *param,
                                          SourceLocation EqualLoc,

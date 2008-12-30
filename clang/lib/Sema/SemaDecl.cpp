@@ -243,11 +243,15 @@ MaybeConstructOverloadSet(ASTContext &Context,
 }
 
 /// LookupDecl - Look up the inner-most declaration in the specified
-/// namespace.
+/// namespace. NamespaceNameOnly - during lookup only namespace names
+/// are considered as required in C++ [basic.lookup.udir] 3.4.6.p1
+/// 'When looking up a namespace-name in a using-directive or
+/// namespace-alias-definition, only namespace names are considered.'
 Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                        const DeclContext *LookupCtx,
                        bool enableLazyBuiltinCreation,
-                       bool LookInParent) {
+                       bool LookInParent,
+                       bool NamespaceNameOnly) {
   if (!Name) return 0;
   unsigned NS = NSI;
   if (getLangOptions().CPlusPlus && (NS & Decl::IDNS_Ordinary))
@@ -259,6 +263,7 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
     // labels in C++ is purely lexical, so search in the
     // declarations attached to the name.
     assert(!LookupCtx && "Can't perform qualified name lookup here");
+    assert(!NamespaceNameOnly && "Can't perform namespace name lookup here");
     IdentifierResolver::iterator I
       = IdResolver.begin(Name, CurContext, LookInParent);
     
@@ -268,14 +273,19 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
     // deep shadowing is extremely uncommon.
     for (; I != IdResolver.end(); ++I)
       if ((*I)->getIdentifierNamespace() & NS)
-         return *I;
+        return *I;
   } else if (LookupCtx) {
     // Perform qualified name lookup into the LookupCtx.
     // FIXME: Will need to look into base classes and such.
     DeclContext::lookup_const_iterator I, E;
     for (llvm::tie(I, E) = LookupCtx->lookup(Context, Name); I != E; ++I)
-      if ((*I)->getIdentifierNamespace() & NS)
-        return MaybeConstructOverloadSet(Context, I, E);
+      if ((*I)->getIdentifierNamespace() & NS) {
+        if (NamespaceNameOnly && !isa<NamespaceDecl>(*I)) {
+          // Skip non-namespace name.
+        } else {
+          return MaybeConstructOverloadSet(Context, I, E);
+        }
+      }
   } else {
     // Name lookup for ordinary names and tag names in C++ requires
     // looking into scopes that aren't strictly lexical, and
@@ -289,17 +299,21 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
       // FIXME: The isDeclScope check could be expensive. Can we do better?
       for (; I != IEnd && S->isDeclScope(*I); ++I) {
         if ((*I)->getIdentifierNamespace() & NS) {
-          // We found something. Look for anything else in our scope
-          // with this same name and in an acceptable identifier
-          // namespace, so that we can construct an overload set if we
-          // need to.
-          IdentifierResolver::iterator LastI = I;
-          for (++LastI; LastI != IEnd; ++LastI) {
-            if (((*LastI)->getIdentifierNamespace() & NS) == 0 ||
-                !S->isDeclScope(*LastI))
-              break;
+          if (NamespaceNameOnly && !isa<NamespaceDecl>(*I)) {
+            // Skip non-namespace name.
+          } else {
+            // We found something. Look for anything else in our scope
+            // with this same name and in an acceptable identifier
+            // namespace, so that we can construct an overload set if we
+            // need to.
+            IdentifierResolver::iterator LastI = I;
+            for (++LastI; LastI != IEnd; ++LastI) {
+              if (((*LastI)->getIdentifierNamespace() & NS) == 0 ||
+                  !S->isDeclScope(*LastI))
+                break;
+            }
+            return MaybeConstructOverloadSet(Context, I, LastI);
           }
-          return MaybeConstructOverloadSet(Context, I, LastI);
         }
       }
       
@@ -314,8 +328,10 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
         DeclContext::lookup_const_iterator I, E;
         for (llvm::tie(I, E) = Ctx->lookup(Context, Name); I != E; ++I) {
           // FIXME: Cache this result in the IdResolver
-          if ((*I)->getIdentifierNamespace() & NS)
-            return MaybeConstructOverloadSet(Context, I, E);
+          if ((*I)->getIdentifierNamespace() & NS) {
+            if (NamespaceNameOnly && !isa<NamespaceDecl>(*I)) {}
+            else return MaybeConstructOverloadSet(Context, I, E);
+          }
         }
         
         Ctx = Ctx->getParent();

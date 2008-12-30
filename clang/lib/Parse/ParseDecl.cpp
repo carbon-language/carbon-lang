@@ -216,6 +216,8 @@ void Parser::FuzzyParseMicrosoftDeclSpec() {
 ///           others                   [FIXME]
 /// [C++]   template-declaration
 /// [C++]   namespace-definition
+/// [C++]   using-directive
+/// [C++]   using-declaration [TODO]
 ///         others... [FIXME]
 ///
 Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
@@ -225,6 +227,8 @@ Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
     return ParseTemplateDeclaration(Context);
   case tok::kw_namespace:
     return ParseNamespace(Context);
+  case tok::kw_using:
+    return ParseUsingDirectiveOrDeclaration(Context);
   default:
     return ParseSimpleDeclaration(Context);
   }

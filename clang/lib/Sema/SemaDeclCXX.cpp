@@ -1349,6 +1349,34 @@ void Sema::ActOnFinishNamespaceDef(DeclTy *D, SourceLocation RBrace) {
   PopDeclContext();
 }
 
+Sema::DeclTy *Sema::ActOnUsingDirective(Scope *S,
+                                        SourceLocation UsingLoc,
+                                        SourceLocation NamespcLoc,
+                                        const CXXScopeSpec &SS,
+                                        SourceLocation IdentLoc,
+                                        IdentifierInfo *NamespcName,
+                                        AttributeList *AttrList) {
+  assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
+  assert(NamespcName && "Invalid NamespcName.");
+  assert(IdentLoc.isValid() && "Invalid NamespceName location.");
+
+  // FIXME: This still requires lot more checks, and AST support.
+  // Lookup namespace name.
+  DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
+  Decl *NS = 0;
+
+  if ((NS = LookupNamespaceName(NamespcName, S, DC))) {
+    assert(isa<NamespaceDecl>(NS) && "expected namespace decl");
+  } else {
+    DiagnosticBuilder Builder = Diag(IdentLoc, diag::err_expected_namespace_name);
+    if (SS.isSet())
+      Builder << SS.getRange();
+  }
+
+  // FIXME: We ignore AttrList for now, and delete it to avoid leak.
+  delete AttrList;
+  return 0;
+}
 
 /// AddCXXDirectInitializerToDecl - This action is called immediately after 
 /// ActOnDeclarator, when a C++ direct initializer is present.
