@@ -225,9 +225,14 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
       continue;
     }
 
-    if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I)) {
-      // Type conversion or calculating an offset.  Does not escape if the new
-      // value doesn't.
+    if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I) ||
+        isa<PHINode>(I) || isa<SelectInst>(I)) {
+      // Type conversion, calculating an offset, or merging values.
+      // The original value does not escape via this if the new value doesn't.
+      // Note that in the case of a select instruction it is important that
+      // the value not be used as the condition, since otherwise one bit of
+      // information might escape.  It cannot be the condition because it has
+      // the wrong type.
       for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
            UI != UE; ++UI) {
         Use *U = &UI.getUse();
