@@ -291,7 +291,7 @@ void AddOptimizationPasses(PassManager &MPM, FunctionPassManager &FPM,
   MPM.add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
   if (UnitAtATime) {
     MPM.add(createPruneEHPass());               // Remove dead EH info
-    MPM.add(createAddReadAttrsPass());          // Set readonly/readnone attrs
+    MPM.add(createFunctionAttrsPass());         // Deduce function attrs
   }
   if (OptLevel > 1)
     MPM.add(createFunctionInliningPass());      // Inline small functions
@@ -363,7 +363,7 @@ void AddStandardCompilePasses(PassManager &PM) {
   addPass(PM, createCFGSimplificationPass());    // Clean up after IPCP & DAE
 
   addPass(PM, createPruneEHPass());              // Remove dead EH info
-  addPass(PM, createAddReadAttrsPass());         // Set readonly/readnone attrs
+  addPass(PM, createFunctionAttrsPass());        // Deduce function attrs
 
   if (!DisableInline)
     addPass(PM, createFunctionInliningPass());   // Inline small functions

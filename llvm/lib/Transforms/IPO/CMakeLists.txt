@@ -1,5 +1,5 @@
 add_llvm_library(LLVMipo
-  AddReadAttrs.cpp
+  FunctionAttrs.cpp
   ArgumentPromotion.cpp
   ConstantMerge.cpp
   DeadArgumentElimination.cpp

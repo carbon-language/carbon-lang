@@ -344,7 +344,7 @@
 				Name="IPO"
 				>
 				<File
-					RelativePath="..\..\lib\Transforms\IPO\AddReadAttrs.cpp"
+					RelativePath="..\..\lib\Transforms\IPO\FunctionAttrs.cpp"
 					>
 				</File>
 				<File

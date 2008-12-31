@@ -1,4 +1,4 @@
-//===- AddReadAttrs.cpp - Pass which marks functions readnone or readonly -===//
+//===- FunctionAttrs.cpp - Pass which marks functions readnone or readonly ===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,7 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "addreadattrs"
+#define DEBUG_TYPE "functionattrs"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/GlobalVariable.h"
@@ -28,14 +28,24 @@ using namespace llvm;
 
 STATISTIC(NumReadNone, "Number of functions marked readnone");
 STATISTIC(NumReadOnly, "Number of functions marked readonly");
+STATISTIC(NumNoCapture, "Number of arguments marked nocapture");
 
 namespace {
-  struct VISIBILITY_HIDDEN AddReadAttrs : public CallGraphSCCPass {
+  struct VISIBILITY_HIDDEN FunctionAttrs : public CallGraphSCCPass {
     static char ID; // Pass identification, replacement for typeid
-    AddReadAttrs() : CallGraphSCCPass(&ID) {}
+    FunctionAttrs() : CallGraphSCCPass(&ID) {}
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
     bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
+
+    // AddReadAttrs - Deduce readonly/readnone attributes for the SCC.
+    bool AddReadAttrs(const std::vector<CallGraphNode *> &SCC);
+
+    // AddNoCaptureAttrs - Deduce nocapture attributes for the SCC.
+    bool AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC);
+
+    // isCaptured - Returns whether this pointer value is captured.
+    bool isCaptured(Function &F, Value *V);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -46,17 +56,17 @@ namespace {
   };
 }
 
-char AddReadAttrs::ID = 0;
-static RegisterPass<AddReadAttrs>
-X("addreadattrs", "Mark functions readnone/readonly");
+char FunctionAttrs::ID = 0;
+static RegisterPass<FunctionAttrs>
+X("functionattrs", "Deduce function attributes");
 
-Pass *llvm::createAddReadAttrsPass() { return new AddReadAttrs(); }
+Pass *llvm::createFunctionAttrsPass() { return new FunctionAttrs(); }
 
 
 /// PointsToLocalMemory - Returns whether the given pointer value points to
 /// memory that is local to the function.  Global constants are considered
 /// local to all functions.
-bool AddReadAttrs::PointsToLocalMemory(Value *V) {
+bool FunctionAttrs::PointsToLocalMemory(Value *V) {
   V = V->getUnderlyingObject();
   // An alloca instruction defines local memory.
   if (isa<AllocaInst>(V))
@@ -69,8 +79,9 @@ bool AddReadAttrs::PointsToLocalMemory(Value *V) {
   return false;
 }
 
-bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
-  SmallPtrSet<CallGraphNode *, 8> SCCNodes;
+/// AddReadAttrs - Deduce readonly/readnone attributes for the SCC.
+bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
+  SmallPtrSet<CallGraphNode*, 8> SCCNodes;
   CallGraph &CG = getAnalysis<CallGraph>();
 
   // Fill SCCNodes with the elements of the SCC.  Used for quickly
@@ -154,7 +165,7 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
     F->removeAttribute(~0, Attribute::ReadOnly | Attribute::ReadNone);
 
     // Add in the new attribute.
-    F->addAttribute(~0, ReadsMemory ? Attribute::ReadOnly : Attribute::ReadNone);
+    F->addAttribute(~0, ReadsMemory? Attribute::ReadOnly : Attribute::ReadNone);
 
     if (ReadsMemory)
       NumReadOnly++;
@@ -163,4 +174,107 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   }
 
   return MadeChange;
+}
+
+/// isCaptured - Returns whether this pointer value is captured.
+bool FunctionAttrs::isCaptured(Function &F, Value *V) {
+  SmallVector<Use*, 16> Worklist;
+  SmallPtrSet<Use*, 16> Visited;
+
+  for (Value::use_iterator UI = V->use_begin(), UE = V->use_end(); UI != UE;
+       ++UI) {
+    Use *U = &UI.getUse();
+    Visited.insert(U);
+    Worklist.push_back(U);
+  }
+
+  while (!Worklist.empty()) {
+    Use *U = Worklist.pop_back_val();
+    Instruction *I = cast<Instruction>(U->getUser());
+    V = U->get();
+
+    if (isa<LoadInst>(I)) {
+      // Loading a pointer does not cause it to escape.
+      continue;
+    }
+
+    if (isa<StoreInst>(I)) {
+      if (V == I->getOperand(0))
+        // Stored the pointer - escapes.  TODO: improve this.
+        return true;
+      // Storing to the pointee does not cause the pointer to escape.
+      continue;
+    }
+
+    CallSite CS = CallSite::get(I);
+    if (CS.getInstruction()) {
+      // Does not escape if only passed via 'nocapture' arguments.  Note
+      // that calling a function pointer does not in itself cause that
+      // function pointer to escape.  This is a subtle point considering
+      // that (for example) the callee might return its own address.  It
+      // is analogous to saying that loading a value from a pointer does
+      // not cause the pointer to escape, even though the loaded value
+      // might be the pointer itself (think of self-referential objects).
+      CallSite::arg_iterator B = CS.arg_begin(), E = CS.arg_end();
+      for (CallSite::arg_iterator A = B; A != E; ++A)
+        if (A->get() == V && !CS.paramHasAttr(A-B+1, Attribute::NoCapture))
+          // The parameter is not marked 'nocapture' - escapes.
+          return true;
+      // Only passed via 'nocapture' arguments, or is the called function.
+      // Does not escape.
+      continue;
+    }
+
+    if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I)) {
+      // Type conversion or calculating an offset.  Does not escape if the new
+      // value doesn't.
+      for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
+           UI != UE; ++UI) {
+        Use *U = &UI.getUse();
+        if (Visited.insert(U))
+          Worklist.push_back(U);
+      }
+      continue;
+    }
+
+    // Something else - be conservative and say it escapes.
+    return true;
+  }
+
+  return false;
+}
+
+/// AddNoCaptureAttrs - Deduce nocapture attributes for the SCC.
+bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
+  bool Changed = false;
+
+  // Check each function in turn, determining which pointer arguments are not
+  // captured.
+  for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+    Function *F = SCC[i]->getFunction();
+
+    if (F == 0)
+      // External node - skip it;
+      continue;
+
+    // Definitions with weak linkage may be overridden at linktime with
+    // something that writes memory, so treat them like declarations.
+    if (F->isDeclaration() || F->mayBeOverridden())
+      continue;
+
+    for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end(); A!=E; ++A)
+      if (isa<PointerType>(A->getType()) && !isCaptured(*F, A)) {
+        A->addAttr(Attribute::NoCapture);
+        NumNoCapture++;
+        Changed = true;
+      }
+  }
+
+  return Changed;
+}
+
+bool FunctionAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
+  bool Changed = AddReadAttrs(SCC);
+  Changed |= AddNoCaptureAttrs(SCC);
+  return Changed;
 }

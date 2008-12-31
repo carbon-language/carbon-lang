@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -addreadattrs | llvm-dis | grep readnone
+; RUN: llvm-as < %s | opt -functionattrs | llvm-dis | grep readnone
 
 define i32 @a() {
 	%tmp = call i32 @b( )		; <i32> [#uses=1]

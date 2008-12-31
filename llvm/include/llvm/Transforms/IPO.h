@@ -196,10 +196,12 @@ ModulePass *createStripDeadPrototypesPass();
 ModulePass *createPartialSpecializationPass();
 
 //===----------------------------------------------------------------------===//
-/// createAddReadAttrsPass - This pass discovers functions that do not access
+/// createFunctionAttrsPass - This pass discovers functions that do not access
 /// memory, or only read memory, and gives them the readnone/readonly attribute.
+/// It also discovers function arguments that are not captured by the function
+/// and marks them with the nocapture attribute.
 ///
-Pass *createAddReadAttrsPass();
+Pass *createFunctionAttrsPass();
 
 //===----------------------------------------------------------------------===//
 /// createMergeFunctionsPass - This pass discovers identical functions and

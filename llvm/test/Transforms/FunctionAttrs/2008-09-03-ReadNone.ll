@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -addreadattrs | llvm-dis | grep readnone | count 4
+; RUN: llvm-as < %s | opt -functionattrs | llvm-dis | grep readnone | count 4
 @x = global i32 0
 
 declare i32 @e() readnone

@@ -122,7 +122,7 @@ namespace {
       (void) llvm::createPostDomFrontier();
       (void) llvm::createInstructionNamerPass();
       (void) llvm::createPartialSpecializationPass();
-      (void) llvm::createAddReadAttrsPass();
+      (void) llvm::createFunctionAttrsPass();
       (void) llvm::createMergeFunctionsPass();
       (void) llvm::createPrintModulePass(0);
       (void) llvm::createPrintFunctionPass("", 0);
