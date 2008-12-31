@@ -79,9 +79,9 @@ cl::opt<TargetMachine::CodeGenFileType>
 FileType("filetype", cl::init(TargetMachine::AssemblyFile),
   cl::desc("Choose a file type (not all types are supported by all targets):"),
   cl::values(
-       clEnumValN(TargetMachine::AssemblyFile,    "asm",
+       clEnumValN(TargetMachine::AssemblyFile, "asm",
                   "Emit an assembly ('.s') file"),
-       clEnumValN(TargetMachine::ObjectFile,    "obj",
+       clEnumValN(TargetMachine::ObjectFile, "obj",
                   "Emit a native object ('.o') file [experimental]"),
        clEnumValN(TargetMachine::DynamicLibrary, "dynlib",
                   "Emit a native dynamic library ('.so') file"
