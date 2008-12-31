@@ -15,13 +15,17 @@
   <li><a href="#quickstart">Quick start</a></li>
   <li><a href="#usage">Basic CMake usage</a>
   <li><a href="#options">Options and variables</a>
-  <ul>
+    <ul>
     <li><a href="#freccmake">Frequently-used CMake variables</a></li>
     <li><a href="#llvmvars">LLVM-specific variables</a></li>
   </ul></li>
   <li><a href="#testing">Executing the test suite</a>
   <li><a href="#cross">Cross compiling</a>
   <li><a href="#embedding">Embedding LLVM in your project</a>
+  <li><a href="#specifics">Compiler/Platform specific topics</a>
+    <ul>
+    <li><a href="#msvc">Microsoft Visual C++</a></li>
+  </ul></li>
 </ul>
 
 <div class="doc_author">
@@ -199,7 +203,7 @@
 <p>Here are listed some of the CMake variables that are used often,
   along with a brief explanation and LLVM-specific notes. For full
   documentation, check the CMake docs or execute <i>cmake
-  --help-variable VARIABLE_NAME</i>.
+  --help-variable VARIABLE_NAME</i>.</p>
 
 <dl>
   <dt><b>CMAKE_BUILD_TYPE</b>:STRING</dt>
@@ -306,6 +310,40 @@
 
 <!-- *********************************************************************** -->
 
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="specifics">Compiler/Platform specific topics</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Notes for specific compilers and/or platforms.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="msvc">Microsoft Visual C++</a>
+</div>
+
+<div class="doc_text">
+
+  <p>For linking the JIT into your executable, add</p>
+
+  <div class="doc_code">
+    <p><tt>/INCLUDE:_X86TargetMachineModule</tt></p>
+  </div>
+
+  <p>to your linker options. This is required for adding the relevant
+    LLVM object code to the executable. Not doing this will result on
+    some methods returning NULL (<i>ExecutionEngine::create</i>, for
+    instance).</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+
 <hr>
 <address>
   <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
@@ -315,7 +353,7 @@
 
   <a href="mailto:ofv@wanadoo.es">Oscar Fuentes</a><br>
   <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br>
-  Last modified: $Date: 2008-10-27 00:59:36 +0100 (Mon, 27 Oct 2008) $
+  Last modified: $Date: 2008-12-31 03:59:36 +0100 (Wed, 31 Dec 2008) $
 </address>
 
 </body>
