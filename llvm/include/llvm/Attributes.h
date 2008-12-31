@@ -88,6 +88,16 @@ inline Attributes constructAlignmentFromInt(unsigned i) {
   return (Log2_32(i)+1) << 16;
 }
 
+/// This returns the alignment field of an attribute as a byte alignment value.
+inline unsigned getAlignmentFromAttrs(Attributes A) {
+  Attributes Align = A & Attribute::Alignment;
+  if (Align == 0)
+    return 0;
+  
+  return 1U << ((Align >> 16) - 1);
+}
+  
+  
 /// The set of Attributes set in Attributes is converted to a
 /// string of equivalent mnemonics. This is, presumably, for writing out
 /// the mnemonics for the assembly writer. 
@@ -184,11 +194,7 @@ public:
   /// getParamAlignment - Return the alignment for the specified function
   /// parameter.
   unsigned getParamAlignment(unsigned Idx) const {
-    Attributes Align = getAttributes(Idx) & Attribute::Alignment;
-    if (Align == 0)
-      return 0;
-
-    return 1ull << ((Align >> 16) - 1);
+    return Attribute::getAlignmentFromAttrs(getAttributes(Idx));
   }
   
   /// hasAttrSomewhere - Return true if the specified attribute is set for at
