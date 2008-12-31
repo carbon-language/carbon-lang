@@ -892,6 +892,9 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
         << InputExpr->getType() << InputConstraint
         << InputExpr->getSubExpr()->getSourceRange();
     }
+    
+    if (info & TargetInfo::CI_AllowsRegister)
+      DefaultFunctionArrayConversion(Exprs[i]);
   }
   
   // Check that the clobbers are valid.
