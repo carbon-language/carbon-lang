@@ -21,9 +21,8 @@ namespace llvm {
 class Module;
 class ParseError;
 
-
-/// This function is the main interface to the LLVM Assembly Parse. It parses 
-/// an ascii file that (presumably) contains LLVM Assembly code. It returns a
+/// This function is the main interface to the LLVM Assembly Parser. It parses
+/// an ASCII file that (presumably) contains LLVM Assembly code. It returns a
 /// Module (intermediate representation) with the corresponding features. Note
 /// that this does not verify that the generated Module is valid, so you should
 /// run the verifier after parsing the file to check that it is okay.
@@ -33,8 +32,8 @@ Module *ParseAssemblyFile(
   ParseError* Error = 0        ///< If not null, an object to return errors in.
 );
 
-/// The function is a secondary interface to the LLVM Assembly Parse. It parses 
-/// an ascii string that (presumably) contains LLVM Assembly code. It returns a
+/// The function is a secondary interface to the LLVM Assembly Parser. It parses
+/// an ASCII string that (presumably) contains LLVM Assembly code. It returns a
 /// Module (intermediate representation) with the corresponding features. Note
 /// that this does not verify that the generated Module is valid, so you should
 /// run the verifier after parsing the file to check that it is okay.
