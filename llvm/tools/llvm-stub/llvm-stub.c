@@ -1,4 +1,4 @@
-/*===- llvm-stub.c - Stub executable to run llvm bitcode files -----------===//
+/*===- llvm-stub.c - Stub executable to run llvm bitcode files ------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
