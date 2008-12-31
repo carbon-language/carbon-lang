@@ -7,8 +7,8 @@
 # 
 #===------------------------------------------------------------------------===#
 
-LEVEL  = ..
-DIRS   = 
+LEVEL = ..
+DIRS  = 
 
 #
 # Make Dejagnu the default for testing
