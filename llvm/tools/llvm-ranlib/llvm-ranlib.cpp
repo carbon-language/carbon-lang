@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
     if (Verbose)
       printSymbolTable(TheArchive);
 
-  } catch (const char*msg) {
+  } catch (const char* msg) {
     std::cerr << argv[0] << ": " << msg << "\n\n";
     exitCode = 1;
   } catch (const std::string& msg) {
