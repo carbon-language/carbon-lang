@@ -257,7 +257,7 @@ void BackendConsumer::CreatePasses() {
     PM->add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
     if (CompileOpts.UnitAtATime) {
       PM->add(createPruneEHPass());               // Remove dead EH info
-      PM->add(createAddReadAttrsPass());          // Set readonly/readnone attrs
+      PM->add(createFunctionAttrsPass());         // Set readonly/readnone attrs
     }
     if (CompileOpts.InlineFunctions)
       PM->add(createFunctionInliningPass());      // Inline small functions
