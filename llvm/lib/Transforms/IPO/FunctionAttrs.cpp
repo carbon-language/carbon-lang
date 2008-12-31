@@ -263,7 +263,8 @@ bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
       continue;
 
     for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end(); A!=E; ++A)
-      if (isa<PointerType>(A->getType()) && !isCaptured(*F, A)) {
+      if (isa<PointerType>(A->getType()) && !A->hasNoCaptureAttr() &&
+          !isCaptured(*F, A)) {
         A->addAttr(Attribute::NoCapture);
         NumNoCapture++;
         Changed = true;

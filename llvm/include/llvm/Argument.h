@@ -56,6 +56,10 @@ public:
   /// it in its containing function.
   bool hasNoAliasAttr() const;
   
+  /// hasNoCaptureAttr - Return true if this argument has the nocapture
+  /// attribute on it in its containing function.
+  bool hasNoCaptureAttr() const;
+  
   /// hasSRetAttr - Return true if this argument has the sret attribute on it in
   /// its containing function.
   bool hasStructRetAttr() const;

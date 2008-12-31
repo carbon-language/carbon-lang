@@ -102,6 +102,13 @@ bool Argument::hasNoAliasAttr() const {
   return getParent()->paramHasAttr(getArgNo()+1, Attribute::NoAlias);
 }
 
+/// hasNoCaptureAttr - Return true if this argument has the nocapture attribute
+/// on it in its containing function.
+bool Argument::hasNoCaptureAttr() const {
+  if (!isa<PointerType>(getType())) return false;
+  return getParent()->paramHasAttr(getArgNo()+1, Attribute::NoCapture);
+}
+
 /// hasSRetAttr - Return true if this argument has the sret attribute on
 /// it in its containing function.
 bool Argument::hasStructRetAttr() const {
