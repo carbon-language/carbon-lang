@@ -1486,3 +1486,12 @@ codegen.
 456.hmmer apparently uses strcspn and strspn a lot.  471.omnetpp uses strspn.
 
 //===---------------------------------------------------------------------===//
+
+"gas" uses this idiom:
+  else if (strchr ("+-/*%|&^:[]()~", *intel_parser.op_string))
+..
+  else if (strchr ("<>", *intel_parser.op_string)
+
+Those should be turned into a switch.
+
+//===---------------------------------------------------------------------===//
