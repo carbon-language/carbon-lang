@@ -7,8 +7,8 @@ the actual source code, to minimize the addition to the LLVM distribution.
 Cleaned up as follows:
 $ rm -f aclocal* configure* Makefile* CHANGES CONTRIBUTORS README
 $ rm -rf build-aux m4 make msvc samples scons scripts test xcode
-
-# Clean up source files used for generating headers
 $ rm -f `find . -name \*\.pump`
+$ mv src/* .
+$ rmdir src
 
 For the license, see the file COPYING in this directory.
