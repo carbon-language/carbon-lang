@@ -24,7 +24,7 @@ svn diff -x -u  >> "$NAME".patch.raw 2>&1 \
   autoconf docs utils include lib/System lib/Support lib/VMCore lib/AsmParser \
   lib/Bitcode lib/Analysis lib/Transforms lib/CodeGen lib/Target \
   lib/ExecutionEngine lib/Debugger lib/Linker \
-  tools test runtime projects examples win32 Xcode
+  tools test unittests runtime projects examples win32 Xcode
 
 echo "mkpatch: Removing cruft from the patch file"
 sed -e '/^[?] .*/d' -e '/^cvs diff: Diffing/d' "$NAME".patch.raw | awk '\

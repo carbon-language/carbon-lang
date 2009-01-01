@@ -28,7 +28,7 @@ else
   OPTIONAL_DIRS := examples projects bindings
 endif
 
-EXTRA_DIST := test llvm.spec include win32 Xcode
+EXTRA_DIST := test unittests llvm.spec include win32 Xcode
 
 include $(LEVEL)/Makefile.config 
 
@@ -51,6 +51,11 @@ endif
 
 ifeq ($(MAKECMDGOALS),tools-only)
   DIRS := $(filter-out runtime docs, $(DIRS))
+  OPTIONAL_DIRS :=
+endif
+
+ifeq ($(MAKECMDGOALS),unittests)
+  DIRS := $(filter-out tools runtime docs, $(DIRS)) utils unittests
   OPTIONAL_DIRS :=
 endif
 
@@ -111,6 +116,7 @@ dist-hook::
 tools-only: all
 libs-only: all
 install-libs: install
+unittests: all
 
 #------------------------------------------------------------------------
 # Make sure the generated headers are up-to-date. This must be kept in
