@@ -4889,7 +4889,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       //   Let C = (or A, B)
       //   C true implies that either A, B, or both are true.
       //
-      //   (xor C, true) is true only if C is false. We can the apply de
+      //   (xor C, true) is true only if C is false. We can then apply de
       //   Morgan's law. QED.
       BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0);
       if (Op0I) {
