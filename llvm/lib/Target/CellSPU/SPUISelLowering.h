@@ -95,7 +95,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ValueType for ISD::SETCC
-    virtual MVT getSetCCResultType(const SDValue &) const;
+    virtual MVT getSetCCResultType(MVT VT) const;
 
     //! Custom lowering hooks
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);

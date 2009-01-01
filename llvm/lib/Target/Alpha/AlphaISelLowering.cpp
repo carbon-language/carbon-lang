@@ -159,7 +159,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   computeRegisterProperties();
 }
 
-MVT AlphaTargetLowering::getSetCCResultType(const SDValue &) const {
+MVT AlphaTargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i64;
 }
 

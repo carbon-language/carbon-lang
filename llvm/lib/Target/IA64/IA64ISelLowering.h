@@ -49,7 +49,7 @@ namespace llvm {
     const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType: return ISD::SETCC's result type.
-    virtual MVT getSetCCResultType(const SDValue &) const;
+    virtual MVT getSetCCResultType(MVT VT) const;
       
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.

@@ -819,7 +819,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 }
 
 
-MVT X86TargetLowering::getSetCCResultType(const SDValue &) const {
+MVT X86TargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i8;
 }
 

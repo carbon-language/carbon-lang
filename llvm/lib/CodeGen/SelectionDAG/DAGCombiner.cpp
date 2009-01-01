@@ -2799,7 +2799,8 @@ SDValue DAGCombiner::visitSELECT_CC(SDNode *N) {
     return N2;
   
   // Determine if the condition we're dealing with is constant
-  SDValue SCC = SimplifySetCC(TLI.getSetCCResultType(N0), N0, N1, CC, false);
+  SDValue SCC = SimplifySetCC(TLI.getSetCCResultType(N0.getValueType()),
+                              N0, N1, CC, false);
   if (SCC.getNode()) AddToWorkList(SCC.getNode());
 
   if (ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.getNode())) {
@@ -4242,7 +4243,7 @@ SDValue DAGCombiner::visitBR_CC(SDNode *N) {
   SDValue CondLHS = N->getOperand(2), CondRHS = N->getOperand(3);
   
   // Use SimplifySetCC to simplify SETCC's.
-  SDValue Simp = SimplifySetCC(TLI.getSetCCResultType(CondLHS),
+  SDValue Simp = SimplifySetCC(TLI.getSetCCResultType(CondLHS.getValueType()),
                                CondLHS, CondRHS, CC->get(), false);
   if (Simp.getNode()) AddToWorkList(Simp.getNode());
 
@@ -5437,7 +5438,8 @@ SDValue DAGCombiner::SimplifySelectCC(SDValue N0, SDValue N1,
   ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.getNode());
 
   // Determine if the condition we're dealing with is constant
-  SDValue SCC = SimplifySetCC(TLI.getSetCCResultType(N0), N0, N1, CC, false);
+  SDValue SCC = SimplifySetCC(TLI.getSetCCResultType(N0.getValueType()),
+                              N0, N1, CC, false);
   if (SCC.getNode()) AddToWorkList(SCC.getNode());
   ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.getNode());
 
@@ -5517,7 +5519,8 @@ SDValue DAGCombiner::SimplifySelectCC(SDValue N0, SDValue N1,
     SDValue Temp, SCC;
     // cast from setcc result type to select result type
     if (LegalTypes) {
-      SCC  = DAG.getSetCC(TLI.getSetCCResultType(N0), N0, N1, CC);
+      SCC  = DAG.getSetCC(TLI.getSetCCResultType(N0.getValueType()),
+                          N0, N1, CC);
       if (N2.getValueType().bitsLT(SCC.getValueType()))
         Temp = DAG.getZeroExtendInReg(SCC, N2.getValueType());
       else
@@ -5543,8 +5546,8 @@ SDValue DAGCombiner::SimplifySelectCC(SDValue N0, SDValue N1,
   if (0 && N3C && N3C->isNullValue() && N2C && (N2C->getAPIntValue() == 1ULL)) {
     MVT XType = N0.getValueType();
     if (!LegalOperations ||
-        TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultType(N0))) {
-      SDValue Res = DAG.getSetCC(TLI.getSetCCResultType(N0), N0, N1, CC);
+        TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultType(XType))) {
+      SDValue Res = DAG.getSetCC(TLI.getSetCCResultType(XType), N0, N1, CC);
       if (Res.getValueType() != VT)
         Res = DAG.getNode(ISD::ZERO_EXTEND, VT, Res);
       return Res;

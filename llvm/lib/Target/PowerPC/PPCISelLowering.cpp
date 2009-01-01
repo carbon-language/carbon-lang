@@ -432,7 +432,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
 
 
-MVT PPCTargetLowering::getSetCCResultType(const SDValue &) const {
+MVT PPCTargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i32;
 }
 

@@ -464,7 +464,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SELECT_CC(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
-  MVT SVT = TLI.getSetCCResultType(N->getOperand(0));
+  MVT SVT = TLI.getSetCCResultType(N->getOperand(0).getValueType());
   assert(isTypeLegal(SVT) && "Illegal SetCC type!");
 
   // Get the SETCC result using the canonical SETCC type.
@@ -728,25 +728,42 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo) {
   assert(OpNo == 1 && "only know how to promote condition");
   SDValue Cond = GetPromotedInteger(N->getOperand(1));  // Promote condition.
 
-  // Make sure the extra bits coming from type promotion conform to
-  // getBooleanContents.
+  // Promote all the way up to SVT, the canonical SetCC type.
+  MVT SVT = TLI.getSetCCResultType(MVT::Other);
+  assert(isTypeLegal(SVT) && "Illegal SetCC type!");
+  assert(Cond.getValueType().bitsLE(SVT) && "Unexpected SetCC type!");
+
+  // Make sure the extra bits conform to getBooleanContents.  There are
+  // two sets of extra bits: those in Cond, which come from type promotion,
+  // and those we need to add to have the final type be SVT (for most targets
+  // this last set of bits is empty).
   unsigned CondBits = Cond.getValueSizeInBits();
+  ISD::NodeType ExtendCode;
   switch (TLI.getBooleanContents()) {
   default:
     assert(false && "Unknown BooleanContent!");
   case TargetLowering::UndefinedBooleanContent:
-    // The promoted value, which may contain rubbish in the upper bits, is fine.
+    // Extend to SVT by adding rubbish.
+    ExtendCode = ISD::ANY_EXTEND;
     break;
   case TargetLowering::ZeroOrOneBooleanContent:
+    ExtendCode = ISD::ZERO_EXTEND;
     if (!DAG.MaskedValueIsZero(Cond,APInt::getHighBitsSet(CondBits,CondBits-1)))
-      Cond = DAG.getZeroExtendInReg(Cond, MVT::i1);
+      // All extra bits need to be cleared.  Do this by zero extending the
+      // original condition value all the way to SVT.
+      Cond = N->getOperand(1);
     break;
-  case TargetLowering::ZeroOrNegativeOneBooleanContent:
-    if (DAG.ComputeNumSignBits(Cond) != CondBits)
-      Cond = DAG.getNode(ISD::SIGN_EXTEND_INREG, Cond.getValueType(), Cond,
-                         DAG.getValueType(MVT::i1));
+  case TargetLowering::ZeroOrNegativeOneBooleanContent: {
+    ExtendCode = ISD::SIGN_EXTEND;
+    unsigned SignBits = DAG.ComputeNumSignBits(Cond);
+    if (SignBits != CondBits)
+      // All extra bits need to be sign extended.  Do this by sign extending the
+      // original condition value all the way to SVT.
+      Cond = N->getOperand(1);
     break;
   }
+  }
+  Cond = DAG.getNode(ExtendCode, SVT, Cond);
 
   // The chain (Op#0) and basic block destination (Op#2) are always legal types.
   return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0), Cond,
@@ -851,13 +868,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
   SDValue Cond = GetPromotedInteger(N->getOperand(0));
 
   // Promote all the way up to SVT, the canonical SetCC type.
-  // FIXME: Not clear what value to pass to getSetCCResultType.
-  // [This only matters for CellSPU since all other targets
-  // ignore the argument.]  We used to pass Cond, resulting in
-  // SVT = MVT::i8, but CellSPU has no select patterns for i8,
-  // causing an abort later.  Passing the result type works
-  // around the problem.
-  MVT SVT = TLI.getSetCCResultType(N->getOperand(1));
+  MVT SVT = TLI.getSetCCResultType(N->getOperand(1).getValueType());
   assert(isTypeLegal(SVT) && "Illegal SetCC type!");
   assert(Cond.getValueType().bitsLE(SVT) && "Unexpected SetCC type!");
 
@@ -1244,12 +1255,12 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
     if (N->getOpcode() == ISD::ADD) {
       Lo = DAG.getNode(ISD::ADD, NVT, LoOps, 2);
       Hi = DAG.getNode(ISD::ADD, NVT, HiOps, 2);
-      SDValue Cmp1 = DAG.getSetCC(TLI.getSetCCResultType(Lo), Lo, LoOps[0],
+      SDValue Cmp1 = DAG.getSetCC(TLI.getSetCCResultType(NVT), Lo, LoOps[0],
                                   ISD::SETULT);
       SDValue Carry1 = DAG.getNode(ISD::SELECT, NVT, Cmp1,
                                    DAG.getConstant(1, NVT),
                                    DAG.getConstant(0, NVT));
-      SDValue Cmp2 = DAG.getSetCC(TLI.getSetCCResultType(Lo), Lo, LoOps[1],
+      SDValue Cmp2 = DAG.getSetCC(TLI.getSetCCResultType(NVT), Lo, LoOps[1],
                                   ISD::SETULT);
       SDValue Carry2 = DAG.getNode(ISD::SELECT, NVT, Cmp2,
                                    DAG.getConstant(1, NVT), Carry1);
@@ -1257,8 +1268,9 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
     } else {
       Lo = DAG.getNode(ISD::SUB, NVT, LoOps, 2);
       Hi = DAG.getNode(ISD::SUB, NVT, HiOps, 2);
-      SDValue Cmp = DAG.getSetCC(TLI.getSetCCResultType(LoOps[0]),
-                                 LoOps[0], LoOps[1], ISD::SETULT);
+      SDValue Cmp =
+        DAG.getSetCC(TLI.getSetCCResultType(LoOps[0].getValueType()),
+                     LoOps[0], LoOps[1], ISD::SETULT);
       SDValue Borrow = DAG.getNode(ISD::SELECT, NVT, Cmp,
                                    DAG.getConstant(1, NVT),
                                    DAG.getConstant(0, NVT));
@@ -1391,7 +1403,7 @@ void DAGTypeLegalizer::ExpandIntRes_CTLZ(SDNode *N,
   GetExpandedInteger(N->getOperand(0), Lo, Hi);
   MVT NVT = Lo.getValueType();
 
-  SDValue HiNotZero = DAG.getSetCC(TLI.getSetCCResultType(Hi), Hi,
+  SDValue HiNotZero = DAG.getSetCC(TLI.getSetCCResultType(NVT), Hi,
                                    DAG.getConstant(0, NVT), ISD::SETNE);
 
   SDValue LoLZ = DAG.getNode(ISD::CTLZ, NVT, Lo);
@@ -1419,7 +1431,7 @@ void DAGTypeLegalizer::ExpandIntRes_CTTZ(SDNode *N,
   GetExpandedInteger(N->getOperand(0), Lo, Hi);
   MVT NVT = Lo.getValueType();
 
-  SDValue LoNotZero = DAG.getSetCC(TLI.getSetCCResultType(Lo), Lo,
+  SDValue LoNotZero = DAG.getSetCC(TLI.getSetCCResultType(NVT), Lo,
                                    DAG.getConstant(0, NVT), ISD::SETNE);
 
   SDValue LoLZ = DAG.getNode(ISD::CTTZ, NVT, Lo);
@@ -2007,15 +2019,16 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
   // this identity: (B1 ? B2 : B3) --> (B1 & B2)|(!B1&B3)
   TargetLowering::DAGCombinerInfo DagCombineInfo(DAG, false, true, NULL);
   SDValue Tmp1, Tmp2;
-  Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, LowCC,
-                           false, DagCombineInfo);
+  Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSLo.getValueType()),
+                           LHSLo, RHSLo, LowCC, false, DagCombineInfo);
   if (!Tmp1.getNode())
-    Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, LowCC);
-  Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
-                           CCCode, false, DagCombineInfo);
+    Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo.getValueType()),
+                        LHSLo, RHSLo, LowCC);
+  Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi.getValueType()),
+                           LHSHi, RHSHi, CCCode, false, DagCombineInfo);
   if (!Tmp2.getNode())
-    Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
-                       DAG.getCondCode(CCCode));
+    Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHSHi.getValueType()),
+                       LHSHi, RHSHi, DAG.getCondCode(CCCode));
 
   ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.getNode());
   ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.getNode());
@@ -2034,11 +2047,11 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
     return;
   }
 
-  NewLHS = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
-                             ISD::SETEQ, false, DagCombineInfo);
+  NewLHS = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi.getValueType()),
+                             LHSHi, RHSHi, ISD::SETEQ, false, DagCombineInfo);
   if (!NewLHS.getNode())
-    NewLHS = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
-                          ISD::SETEQ);
+    NewLHS = DAG.getSetCC(TLI.getSetCCResultType(LHSHi.getValueType()),
+                          LHSHi, RHSHi, ISD::SETEQ);
   NewLHS = DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
                        NewLHS, Tmp1, Tmp2);
   NewRHS = SDValue();
@@ -2223,8 +2236,8 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     // Check whether the sign bit is set.
     SDValue Lo, Hi;
     GetExpandedInteger(Op, Lo, Hi);
-    SDValue SignSet = DAG.getSetCC(TLI.getSetCCResultType(Hi), Hi,
-                                   DAG.getConstant(0, Hi.getValueType()),
+    SDValue SignSet = DAG.getSetCC(TLI.getSetCCResultType(Hi.getValueType()),
+                                   Hi, DAG.getConstant(0, Hi.getValueType()),
                                    ISD::SETLT);
 
     // Build a 64 bit pair (0, FF) in the constant pool, with FF in the lo bits.

@@ -1369,7 +1369,7 @@ void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
   // Emit the range check for the jump table, and branch to the default block
   // for the switch statement if the value being switched on exceeds the largest
   // case in the switch.
-  SDValue CMP = DAG.getSetCC(TLI.getSetCCResultType(SUB), SUB,
+  SDValue CMP = DAG.getSetCC(TLI.getSetCCResultType(SUB.getValueType()), SUB,
                              DAG.getConstant(JTH.Last-JTH.First,VT),
                              ISD::SETUGT);
 
@@ -1402,7 +1402,7 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
                             DAG.getConstant(B.First, VT));
 
   // Check range
-  SDValue RangeCmp = DAG.getSetCC(TLI.getSetCCResultType(SUB), SUB,
+  SDValue RangeCmp = DAG.getSetCC(TLI.getSetCCResultType(SUB.getValueType()), SUB,
                                   DAG.getConstant(B.Range, VT),
                                   ISD::SETUGT);
 
@@ -1455,8 +1455,8 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
 
   SDValue AndOp = DAG.getNode(ISD::AND, TLI.getPointerTy(), SwitchVal,
                               DAG.getConstant(B.Mask, TLI.getPointerTy()));
-  SDValue AndCmp = DAG.getSetCC(TLI.getSetCCResultType(AndOp), AndOp,
-                                DAG.getConstant(0, TLI.getPointerTy()),
+  SDValue AndCmp = DAG.getSetCC(TLI.getSetCCResultType(AndOp.getValueType()),
+                                AndOp, DAG.getConstant(0, TLI.getPointerTy()),
                                 ISD::SETNE);
 
   CurMBB->addSuccessor(B.TargetBB);

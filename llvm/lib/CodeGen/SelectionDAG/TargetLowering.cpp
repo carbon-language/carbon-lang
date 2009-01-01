@@ -607,7 +607,7 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
 
 
-MVT TargetLowering::getSetCCResultType(const SDValue &) const {
+MVT TargetLowering::getSetCCResultType(MVT VT) const {
   return getValueType(TD->getIntPtrType());
 }
 

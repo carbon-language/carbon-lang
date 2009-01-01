@@ -152,7 +152,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
 }
 
 
-MVT MipsTargetLowering::getSetCCResultType(const SDValue &) const {
+MVT MipsTargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i32;
 }
 

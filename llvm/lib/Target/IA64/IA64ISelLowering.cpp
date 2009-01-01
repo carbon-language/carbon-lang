@@ -140,7 +140,7 @@ const char *IA64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
   
-MVT IA64TargetLowering::getSetCCResultType(const SDValue &) const {
+MVT IA64TargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i1;
 }
 

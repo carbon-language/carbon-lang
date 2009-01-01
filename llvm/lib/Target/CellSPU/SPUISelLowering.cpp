@@ -433,8 +433,7 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
 // Return the Cell SPU's SETCC result type
 //===----------------------------------------------------------------------===//
 
-MVT SPUTargetLowering::getSetCCResultType(const SDValue &Op) const {
-  MVT VT = Op.getValueType();
+MVT SPUTargetLowering::getSetCCResultType(MVT VT) const {
   // i16 and i32 are valid SETCC result types
   return ((VT == MVT::i8 || VT == MVT::i16 || VT == MVT::i32) ? VT : MVT::i32);
 }
@@ -2510,7 +2509,8 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
   // legalizer insists on combining SETCC/SELECT into SELECT_CC, so we end up
   // with another "cannot select select_cc" assert:
 
-  SDValue compare = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(Op),
+  SDValue compare = DAG.getNode(ISD::SETCC,
+                                TLI.getSetCCResultType(Op.getValueType()),
                                 lhs, rhs, condition);
   return DAG.getNode(SPUISD::SELB, VT, falseval, trueval, compare);
 }

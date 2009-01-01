@@ -216,7 +216,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
   SDValue LHS = GetScalarizedVector(N->getOperand(0));
   SDValue RHS = GetScalarizedVector(N->getOperand(1));
   MVT NVT = N->getValueType(0).getVectorElementType();
-  MVT SVT = TLI.getSetCCResultType(LHS);
+  MVT SVT = TLI.getSetCCResultType(LHS.getValueType());
 
   // Turn it into a scalar SETCC.
   SDValue Res = DAG.getNode(ISD::SETCC, SVT, LHS, RHS, N->getOperand(2));

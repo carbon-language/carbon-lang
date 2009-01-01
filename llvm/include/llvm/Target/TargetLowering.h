@@ -119,7 +119,7 @@ public:
 
   /// getSetCCResultType - Return the ValueType of the result of setcc
   /// operations.
-  virtual MVT getSetCCResultType(const SDValue &) const;
+  virtual MVT getSetCCResultType(MVT VT) const;
 
   /// getBooleanContents - For targets without i1 registers, this gives the
   /// nature of the high-bits of boolean values held in types wider than i1.

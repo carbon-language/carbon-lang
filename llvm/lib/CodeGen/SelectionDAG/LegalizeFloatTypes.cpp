@@ -594,10 +594,10 @@ void DAGTypeLegalizer::SoftenSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
   NewRHS = DAG.getConstant(0, RetVT);
   CCCode = TLI.getCmpLibcallCC(LC1);
   if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
-    SDValue Tmp = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(NewLHS),
+    SDValue Tmp = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(RetVT),
                                 NewLHS, NewRHS, DAG.getCondCode(CCCode));
     NewLHS = MakeLibCall(LC2, RetVT, Ops, 2, false/*sign irrelevant*/);
-    NewLHS = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(NewLHS), NewLHS,
+    NewLHS = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(RetVT), NewLHS,
                          NewRHS, DAG.getCondCode(TLI.getCmpLibcallCC(LC2)));
     NewLHS = DAG.getNode(ISD::OR, Tmp.getValueType(), Tmp, NewLHS);
     NewRHS = SDValue();
@@ -1216,11 +1216,15 @@ void DAGTypeLegalizer::FloatExpandSetCCOperands(SDValue &NewLHS,
   //         FCMPU crN, lo1, lo2
   // The following can be improved, but not that much.
   SDValue Tmp1, Tmp2, Tmp3;
-  Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETOEQ);
-  Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, CCCode);
+  Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi.getValueType()),
+                      LHSHi, RHSHi, ISD::SETOEQ);
+  Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo.getValueType()),
+                      LHSLo, RHSLo, CCCode);
   Tmp3 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
-  Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETUNE);
-  Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, CCCode);
+  Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi.getValueType()),
+                      LHSHi, RHSHi, ISD::SETUNE);
+  Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi.getValueType()),
+                      LHSHi, RHSHi, CCCode);
   Tmp1 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
   NewLHS = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp3);
   NewRHS = SDValue();   // LHS is the result, not a compare.
