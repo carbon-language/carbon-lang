@@ -9,8 +9,10 @@
 //
 // This file implements a simple interprocedural pass which walks the
 // call-graph, looking for functions which do not access or only read
-// non-local memory, and marking them readnone/readonly.  It implements
-// this as a bottom-up traversal of the call-graph.
+// non-local memory, and marking them readnone/readonly.  It addition,
+// it deduces which function arguments (of pointer type) do not escape,
+// and marks them nocapture.  It implements this as a bottom-up traversal
+// of the call-graph.
 //
 //===----------------------------------------------------------------------===//
 
@@ -44,7 +46,7 @@ namespace {
     // AddNoCaptureAttrs - Deduce nocapture attributes for the SCC.
     bool AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC);
 
-    // isCaptured - Returns whether this pointer value is captured.
+    // isCaptured - Returns true if this pointer value escapes.
     bool isCaptured(Function &F, Value *V);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
