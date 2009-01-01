@@ -55,7 +55,7 @@ check-local:: site.exp
 	  $(RUNTEST) $(RUNTESTFLAGS) )
 else
 check-local:: site.exp
-	@echo "*** dejagnu not found.  Make sure runtest is in your PATH, then reconfigure llvm."
+	@echo "*** dejagnu not found.  Make sure 'runtest' is in your PATH, then reconfigure LLVM."
 endif
 
 ifdef TESTONE
