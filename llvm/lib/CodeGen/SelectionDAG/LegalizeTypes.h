@@ -625,7 +625,7 @@ private:
   ///   SVOffset:   memory disambiugation offset.
   ///   Alignment:  alignment of the memory.
   ///   isVolatile: volatile load.
-  ///   LdWidth:    width of memory that we want to load. 
+  ///   LdWidth:    width of memory that we want to load.
   ///   ResType:    the wider result result type for the resulting vector.
   SDValue GenWidenVectorLoads(SmallVector<SDValue, 16>& LdChain, SDValue Chain,
                               SDValue BasePtr, const Value *SV,
@@ -643,8 +643,8 @@ private:
   ///   SVOffset:   memory disambiugation offset
   ///   Alignment:  alignment of the memory
   ///   isVolatile: volatile lod
-  ///   ValOp:   value to store  
-  ///   StWidth: width of memory that we want to store 
+  ///   ValOp:   value to store
+  ///   StWidth: width of memory that we want to store
   void GenWidenVectorStores(SmallVector<SDValue, 16>& StChain, SDValue Chain,
                             SDValue BasePtr, const Value *SV,
                             int SVOffset, unsigned Alignment,
