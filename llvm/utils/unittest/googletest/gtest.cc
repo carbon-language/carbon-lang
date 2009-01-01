@@ -117,7 +117,7 @@
 // prevent a user from accidentally including gtest-internal-inl.h in
 // his code.
 #define GTEST_IMPLEMENTATION
-#include "src/gtest-internal-inl.h"
+#include "gtest/internal/gtest-internal-inl.h"
 #undef GTEST_IMPLEMENTATION
 
 #ifdef GTEST_OS_WINDOWS

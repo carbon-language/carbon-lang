@@ -12,8 +12,6 @@ include $(LEVEL)/Makefile.config
 
 LIBRARYNAME = GoogleTest
 BUILD_ARCHIVE = 1
-SOURCES = gtest-all.cc
-CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/
 CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include/
 CPP.Flags += -Wno-missing-field-initializers -Wno-variadic-macros
 
