@@ -103,10 +103,13 @@ namespace llvm {
     ///
     SUnit *NewSUnit(SDNode *N) {
 #ifndef NDEBUG
-      const SUnit *Addr = &SUnits[0];
+      const SUnit *Addr = 0;
+      if (SUnits.size() > 0)
+        Addr = &SUnits[0];
 #endif
       SUnits.push_back(SUnit(N, (unsigned)SUnits.size()));
-      assert(Addr == &SUnits[0] && "SUnits std::vector reallocated on the fly!");
+      assert((Addr == 0 || Addr == &SUnits[0]) &&
+             "SUnits std::vector reallocated on the fly!");
       SUnits.back().OrigNode = &SUnits.back();
       return &SUnits.back();
     }
