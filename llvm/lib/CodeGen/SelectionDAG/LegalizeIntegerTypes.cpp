@@ -726,44 +726,10 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BR_CC(SDNode *N, unsigned OpNo) {
 
 SDValue DAGTypeLegalizer::PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo) {
   assert(OpNo == 1 && "only know how to promote condition");
-  SDValue Cond = GetPromotedInteger(N->getOperand(1));  // Promote condition.
 
-  // Promote all the way up to SVT, the canonical SetCC type.
+  // Promote all the way up to the canonical SetCC type.
   MVT SVT = TLI.getSetCCResultType(MVT::Other);
-  assert(isTypeLegal(SVT) && "Illegal SetCC type!");
-  assert(Cond.getValueType().bitsLE(SVT) && "Unexpected SetCC type!");
-
-  // Make sure the extra bits conform to getBooleanContents.  There are
-  // two sets of extra bits: those in Cond, which come from type promotion,
-  // and those we need to add to have the final type be SVT (for most targets
-  // this last set of bits is empty).
-  unsigned CondBits = Cond.getValueSizeInBits();
-  ISD::NodeType ExtendCode;
-  switch (TLI.getBooleanContents()) {
-  default:
-    assert(false && "Unknown BooleanContent!");
-  case TargetLowering::UndefinedBooleanContent:
-    // Extend to SVT by adding rubbish.
-    ExtendCode = ISD::ANY_EXTEND;
-    break;
-  case TargetLowering::ZeroOrOneBooleanContent:
-    ExtendCode = ISD::ZERO_EXTEND;
-    if (!DAG.MaskedValueIsZero(Cond,APInt::getHighBitsSet(CondBits,CondBits-1)))
-      // All extra bits need to be cleared.  Do this by zero extending the
-      // original condition value all the way to SVT.
-      Cond = N->getOperand(1);
-    break;
-  case TargetLowering::ZeroOrNegativeOneBooleanContent: {
-    ExtendCode = ISD::SIGN_EXTEND;
-    unsigned SignBits = DAG.ComputeNumSignBits(Cond);
-    if (SignBits != CondBits)
-      // All extra bits need to be sign extended.  Do this by sign extending the
-      // original condition value all the way to SVT.
-      Cond = N->getOperand(1);
-    break;
-  }
-  }
-  Cond = DAG.getNode(ExtendCode, SVT, Cond);
+  SDValue Cond = PromoteTargetBoolean(N->getOperand(1), SVT);
 
   // The chain (Op#0) and basic block destination (Op#2) are always legal types.
   return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0), Cond,
@@ -865,44 +831,10 @@ SDValue DAGTypeLegalizer::PromoteIntOp_MEMBARRIER(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
   assert(OpNo == 0 && "Only know how to promote condition");
-  SDValue Cond = GetPromotedInteger(N->getOperand(0));
 
-  // Promote all the way up to SVT, the canonical SetCC type.
+  // Promote all the way up to the canonical SetCC type.
   MVT SVT = TLI.getSetCCResultType(N->getOperand(1).getValueType());
-  assert(isTypeLegal(SVT) && "Illegal SetCC type!");
-  assert(Cond.getValueType().bitsLE(SVT) && "Unexpected SetCC type!");
-
-  // Make sure the extra bits conform to getBooleanContents.  There are
-  // two sets of extra bits: those in Cond, which come from type promotion,
-  // and those we need to add to have the final type be SVT (for most targets
-  // this last set of bits is empty).
-  unsigned CondBits = Cond.getValueSizeInBits();
-  ISD::NodeType ExtendCode;
-  switch (TLI.getBooleanContents()) {
-  default:
-    assert(false && "Unknown BooleanContent!");
-  case TargetLowering::UndefinedBooleanContent:
-    // Extend to SVT by adding rubbish.
-    ExtendCode = ISD::ANY_EXTEND;
-    break;
-  case TargetLowering::ZeroOrOneBooleanContent:
-    ExtendCode = ISD::ZERO_EXTEND;
-    if (!DAG.MaskedValueIsZero(Cond,APInt::getHighBitsSet(CondBits,CondBits-1)))
-      // All extra bits need to be cleared.  Do this by zero extending the
-      // original condition value all the way to SVT.
-      Cond = N->getOperand(0);
-    break;
-  case TargetLowering::ZeroOrNegativeOneBooleanContent: {
-    ExtendCode = ISD::SIGN_EXTEND;
-    unsigned SignBits = DAG.ComputeNumSignBits(Cond);
-    if (SignBits != CondBits)
-      // All extra bits need to be sign extended.  Do this by sign extending the
-      // original condition value all the way to SVT.
-      Cond = N->getOperand(0);
-    break;
-  }
-  }
-  Cond = DAG.getNode(ExtendCode, SVT, Cond);
+  SDValue Cond = PromoteTargetBoolean(N->getOperand(0), SVT);
 
   return DAG.UpdateNodeOperands(SDValue(N, 0), Cond,
                                 N->getOperand(1), N->getOperand(2));

@@ -191,24 +191,20 @@ private:
   void RemapValue(SDValue &N);
 
   // Common routines.
-  void ReplaceValueWith(SDValue From, SDValue To);
-
-  bool CustomLowerResults(SDNode *N, unsigned ResNo);
-
+  SDValue BitConvertToInteger(SDValue Op);
   SDValue CreateStackStoreLoad(SDValue Op, MVT DestVT);
+  bool CustomLowerResults(SDNode *N, unsigned ResNo);
+  SDValue GetVectorElementPointer(SDValue VecPtr, MVT EltVT, SDValue Index);
+  SDValue JoinIntegers(SDValue Lo, SDValue Hi);
+  SDValue LibCallify(RTLIB::Libcall LC, SDNode *N, bool isSigned);
   SDValue MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
                       const SDValue *Ops, unsigned NumOps, bool isSigned);
-  SDValue LibCallify(RTLIB::Libcall LC, SDNode *N, bool isSigned);
-
-  SDValue BitConvertToInteger(SDValue Op);
-  SDValue JoinIntegers(SDValue Lo, SDValue Hi);
+  SDValue PromoteTargetBoolean(SDValue Bool, MVT VT);
+  void ReplaceValueWith(SDValue From, SDValue To);
+  void SetIgnoredNodeResult(SDNode* N);
   void SplitInteger(SDValue Op, SDValue &Lo, SDValue &Hi);
   void SplitInteger(SDValue Op, MVT LoVT, MVT HiVT,
                     SDValue &Lo, SDValue &Hi);
-
-  SDValue GetVectorElementPointer(SDValue VecPtr, MVT EltVT, SDValue Index);
-
-  void SetIgnoredNodeResult(SDNode* N);
 
   //===--------------------------------------------------------------------===//
   // Integer Promotion Support: LegalizeIntegerTypes.cpp
