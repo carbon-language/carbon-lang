@@ -18,3 +18,6 @@ CPP.Flags += -Wno-variadic-macros
 PARALLEL_DIRS = ADT
 
 include $(LEVEL)/Makefile.common
+
+clean::
+	$(RM) -f *Tests
