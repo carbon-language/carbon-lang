@@ -1592,7 +1592,7 @@ bool LLParser::ParseValID(ValID &ID) {
     ArrayType *ATy = ArrayType::get(Elts[0]->getType(), Elts.size());
     
     // Verify all elements are correct type!
-    for (unsigned i = i, e = Elts.size() ; i != e; ++i) {
+    for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
       if (Elts[i]->getType() != Elts[0]->getType())
         return Error(FirstEltLoc,
                      "array element #" + utostr(i) +
