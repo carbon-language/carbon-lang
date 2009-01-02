@@ -24,7 +24,8 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstIterator.h"
@@ -182,30 +183,51 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
 
 /// isCaptured - Return true if this pointer value may be captured.
 bool FunctionAttrs::isCaptured(Function &F, Value *V) {
-  SmallVector<Use*, 16> Worklist;
-  SmallPtrSet<Use*, 16> Visited;
+  typedef PointerIntPair<Use*, 2> UseWithDepth;
+  SmallVector<UseWithDepth, 16> Worklist;
+  SmallSet<UseWithDepth, 16> Visited;
 
   for (Value::use_iterator UI = V->use_begin(), UE = V->use_end(); UI != UE;
        ++UI) {
-    Use *U = &UI.getUse();
-    Visited.insert(U);
-    Worklist.push_back(U);
+    UseWithDepth UD(&UI.getUse(), 0);
+    Visited.insert(UD);
+    Worklist.push_back(UD);
   }
 
   while (!Worklist.empty()) {
-    Use *U = Worklist.pop_back_val();
+    UseWithDepth UD = Worklist.pop_back_val();
+    Use *U = UD.getPointer();
     Instruction *I = cast<Instruction>(U->getUser());
     V = U->get();
+    // The depth represents the number of loads that need to be performed to
+    // get back the original pointer (or a bitcast etc of it).  For example,
+    // if the pointer is stored to an alloca, then all uses of the alloca get
+    // depth 1: if the alloca is loaded then you get the original pointer back.
+    // If a load of the alloca is returned then the pointer has been captured.
+    // The depth is needed in order to know which loads dereference the original
+    // pointer (these do not capture), and which return a value which needs to
+    // be tracked because if it is captured then so is the original pointer.
+    unsigned Depth = UD.getInt();
 
-    if (isa<LoadInst>(I)) {
-      // Loading a pointer does not cause it to be captured.  Note that the
-      // loaded value might be the pointer itself (think of self-referential
-      // objects), but that's ok as long as it's not this function that stored
-      // the pointer there.
-    } else if (isa<StoreInst>(I)) {
-      if (V == I->getOperand(0))
-        // Stored the pointer - it is captured.  TODO: improve this.
-        return true;
+    if (isa<StoreInst>(I)) {
+      if (V == I->getOperand(0)) {
+        // Stored the pointer - it may be captured.  If it is stored to a local
+        // object (alloca) then track that object.  Otherwise give up.
+        Value *Target = I->getOperand(1)->getUnderlyingObject();
+        if (!isa<AllocaInst>(Target))
+          // Didn't store to an obviously local object - captured.
+          return true;
+        if (Depth >= 3)
+          // Alloca recursion too deep - give up.
+          return true;
+        // Analyze all uses of the alloca.
+        for (Value::use_iterator UI = Target->use_begin(),
+             UE = Target->use_end(); UI != UE; ++UI) {
+          UseWithDepth NUD(&UI.getUse(), Depth + 1);
+          if (Visited.insert(NUD))
+            Worklist.push_back(NUD);
+        }
+      }
       // Storing to the pointee does not cause the pointer to be captured.
     } else if (isa<FreeInst>(I)) {
       // Freeing a pointer does not cause it to be captured.
@@ -230,14 +252,31 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
           return true;
       // Only passed via 'nocapture' arguments, or is the called function - not
       // captured.
-    } else if (isa<BitCastInst>(I) || isa<PHINode>(I) ||
+    } else if (isa<BitCastInst>(I) || isa<LoadInst>(I) || isa<PHINode>(I) ||
                isa<GetElementPtrInst>(I) || isa<SelectInst>(I)) {
+
+      // Usually loads can be ignored because they dereference the original
+      // pointer.  However the loaded value needs to be tracked if loading
+      // from an object that the original pointer was stored to.
+      if (isa<LoadInst>(I)) {
+        if (Depth == 0)
+          // Loading the original pointer or a variation of it.  This does not
+          // cause the pointer to be captured.  Note that the loaded value might
+          // be the pointer itself (think of self-referential objects), but that
+          // is fine as long as it's not this function that stored it there.
+          continue;
+        // Loading a pointer to (a pointer to...) the original pointer or a
+        // variation of it.  Track uses of the loaded value, noting that one
+        // dereference was performed.
+        --Depth;
+      }
+
       // The original value is not captured via this if the instruction isn't.
       for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
            UI != UE; ++UI) {
-        Use *U = &UI.getUse();
-        if (Visited.insert(U))
-          Worklist.push_back(U);
+        UseWithDepth UD(&UI.getUse(), Depth);
+        if (Visited.insert(UD))
+          Worklist.push_back(UD);
       }
     } else {
       // Something else - be conservative and say it is captured.
