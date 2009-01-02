@@ -16,6 +16,29 @@ define void @c3(i32* %q) {
 	ret void
 }
 
+define i1 @c4(i32* %q, i32 %bitno) {
+	%tmp = ptrtoint i32* %q to i32
+	%tmp2 = lshr i32 %tmp, %bitno
+	%bit = trunc i32 %tmp2 to i1
+	br i1 %bit, label %l1, label %l0
+l0:
+	ret i1 0 ; escaping value not caught by def-use chaining.
+l1:
+	ret i1 1 ; escaping value not caught by def-use chaining.
+}
+
+@lookup_table = global [2 x i1] [ i1 0, i1 1 ]
+
+define i1 @c5(i32* %q, i32 %bitno) {
+	%tmp = ptrtoint i32* %q to i32
+	%tmp2 = lshr i32 %tmp, %bitno
+	%bit = and i32 %tmp2, 1
+        ; subtle escape mechanism follows
+	%lookup = getelementptr [2 x i1]* @lookup_table, i32 0, i32 %bit
+	%val = load i1* %lookup
+	ret i1 %val
+}
+
 define i32 @nc1(i32* %q, i32* %p, i1 %b) {
 e:
 	br label %l
