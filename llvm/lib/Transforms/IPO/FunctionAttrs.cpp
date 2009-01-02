@@ -198,6 +198,7 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
     UseWithDepth UD = Worklist.pop_back_val();
     Use *U = UD.getPointer();
     Instruction *I = cast<Instruction>(U->getUser());
+    // The value V may have any type if it comes from tracking a load.
     V = U->get();
     // The depth represents the number of loads that need to be performed to
     // get back the original pointer (or a bitcast etc of it).  For example,
@@ -253,7 +254,10 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
       // Only passed via 'nocapture' arguments, or is the called function - not
       // captured.
     } else if (isa<BitCastInst>(I) || isa<LoadInst>(I) || isa<PHINode>(I) ||
-               isa<GetElementPtrInst>(I) || isa<SelectInst>(I)) {
+               // Play safe and exclude GEP indices.
+               (isa<GetElementPtrInst>(I) && V == I->getOperand(0)) ||
+               // Play safe and exclude the select condition.
+               (isa<SelectInst>(I) && V != I->getOperand(0))) {
 
       // Usually loads can be ignored because they dereference the original
       // pointer.  However the loaded value needs to be tracked if loading
@@ -267,7 +271,9 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
           continue;
         // Loading a pointer to (a pointer to...) the original pointer or a
         // variation of it.  Track uses of the loaded value, noting that one
-        // dereference was performed.
+        // dereference was performed.  Note that the loaded value need not be
+        // of pointer type.  For example, an alloca may have been bitcast to
+        // a pointer to another type, which was then loaded.
         --Depth;
       }
 
