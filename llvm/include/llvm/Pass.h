@@ -31,10 +31,10 @@
 
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
-#include <vector>
-#include <utility>
-#include <iosfwd>
 #include <cassert>
+#include <iosfwd>
+#include <utility>
+#include <vector>
 
 namespace llvm {
 

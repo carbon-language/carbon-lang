@@ -15,8 +15,8 @@
 #define LLVM_LINKER_H
 
 #include "llvm/System/Path.h"
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace llvm {
 

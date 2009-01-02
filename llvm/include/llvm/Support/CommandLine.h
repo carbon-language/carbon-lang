@@ -24,11 +24,11 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallVector.h"
-#include <string>
-#include <vector>
-#include <utility>
-#include <cstdarg>
 #include <cassert>
+#include <cstdarg>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace llvm {
 

@@ -513,13 +513,11 @@ struct brc_match {
 };
 
 template<typename Cond_t>
-inline brc_match<Cond_t> m_Br(const Cond_t &C, BasicBlock *&T, BasicBlock *&F){
+inline brc_match<Cond_t> m_Br(const Cond_t &C, BasicBlock *&T, BasicBlock *&F) {
   return brc_match<Cond_t>(C, T, F);
 }
 
-
-}} // end llvm::match
-
+} // end namespace PatternMatch
+} // end namespace llvm
 
 #endif
-
