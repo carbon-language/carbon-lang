@@ -9,10 +9,12 @@
 //
 // This file implements a simple interprocedural pass which walks the
 // call-graph, looking for functions which do not access or only read
-// non-local memory, and marking them readnone/readonly.  It addition,
-// it deduces which function arguments (of pointer type) do not escape,
-// and marks them nocapture.  It implements this as a bottom-up traversal
-// of the call-graph.
+// non-local memory, and marking them readnone/readonly.  In addition,
+// it marks function arguments (of pointer type) 'nocapture' if a call
+// to the function does not create any copies of the pointer value that
+// outlive the call.  This more or less means that the pointer is only
+// dereferenced, and not returned from the function or stored in a global.
+// This pass is implemented as a bottom-up traversal of the call-graph.
 //
 //===----------------------------------------------------------------------===//
 
@@ -46,7 +48,7 @@ namespace {
     // AddNoCaptureAttrs - Deduce nocapture attributes for the SCC.
     bool AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC);
 
-    // isCaptured - Returns true if this pointer value escapes.
+    // isCaptured - Return true if this pointer value may be captured.
     bool isCaptured(Function &F, Value *V);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -170,15 +172,15 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
     F->addAttribute(~0, ReadsMemory? Attribute::ReadOnly : Attribute::ReadNone);
 
     if (ReadsMemory)
-      NumReadOnly++;
+      ++NumReadOnly;
     else
-      NumReadNone++;
+      ++NumReadNone;
   }
 
   return MadeChange;
 }
 
-/// isCaptured - Returns whether this pointer value is captured.
+/// isCaptured - Return true if this pointer value may be captured.
 bool FunctionAttrs::isCaptured(Function &F, Value *V) {
   SmallVector<Use*, 16> Worklist;
   SmallPtrSet<Use*, 16> Visited;
@@ -196,68 +198,54 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
     V = U->get();
 
     if (isa<LoadInst>(I)) {
-      // Loading a pointer does not cause it to escape.
-      continue;
-    }
-
-    if (isa<StoreInst>(I)) {
+      // Loading a pointer does not cause it to be captured.  Note that the
+      // loaded value might be the pointer itself (think of self-referential
+      // objects), but that's ok as long as it's not this function that stored
+      // the pointer there.
+    } else if (isa<StoreInst>(I)) {
       if (V == I->getOperand(0))
-        // Stored the pointer - escapes.  TODO: improve this.
+        // Stored the pointer - it is captured.  TODO: improve this.
         return true;
-      // Storing to the pointee does not cause the pointer to escape.
-      continue;
-    }
-
-    if (isa<FreeInst>(I)) {
-      // Freeing a pointer does not cause it to escape.
-      continue;
-    }
-
-    CallSite CS = CallSite::get(I);
-    if (CS.getInstruction()) {
-      // Does not escape if the callee is readonly and doesn't return a
-      // copy through its own return value.
+      // Storing to the pointee does not cause the pointer to be captured.
+    } else if (isa<FreeInst>(I)) {
+      // Freeing a pointer does not cause it to be captured.
+    } else if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
+      CallSite CS = CallSite::get(I);
+      // Not captured if the callee is readonly and doesn't return a copy
+      // through its return value.
       if (CS.onlyReadsMemory() && I->getType() == Type::VoidTy)
         continue;
 
-      // Does not escape if passed via 'nocapture' arguments.  Note that
-      // calling a function pointer does not in itself cause that
-      // function pointer to escape.  This is a subtle point considering
-      // that (for example) the callee might return its own address.  It
-      // is analogous to saying that loading a value from a pointer does
-      // not cause the pointer to escape, even though the loaded value
-      // might be the pointer itself (think of self-referential objects).
+      // Not captured if only passed via 'nocapture' arguments.  Note that
+      // calling a function pointer does not in itself cause the pointer to
+      // be captured.  This is a subtle point considering that (for example)
+      // the callee might return its own address.  It is analogous to saying
+      // that loading a value from a pointer does not cause the pointer to be
+      // captured, even though the loaded value might be the pointer itself
+      // (think of self-referential objects).
       CallSite::arg_iterator B = CS.arg_begin(), E = CS.arg_end();
       for (CallSite::arg_iterator A = B; A != E; ++A)
-        if (A->get() == V && !CS.paramHasAttr(A-B+1, Attribute::NoCapture))
-          // The parameter is not marked 'nocapture' - escapes.
+        if (A->get() == V && !CS.paramHasAttr(A - B + 1, Attribute::NoCapture))
+          // The parameter is not marked 'nocapture' - captured.
           return true;
-      // Only passed via 'nocapture' arguments, or is the called function.
-      // Does not escape.
-      continue;
-    }
-
-    if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I) ||
-        isa<PHINode>(I) || isa<SelectInst>(I)) {
-      // Type conversion, calculating an offset, or merging values.
-      // The original value does not escape via this if the new value doesn't.
-      // Note that in the case of a select instruction it is important that
-      // the value not be used as the condition, since otherwise one bit of
-      // information might escape.  It cannot be the condition because it has
-      // the wrong type.
+      // Only passed via 'nocapture' arguments, or is the called function - not
+      // captured.
+    } else if (isa<BitCastInst>(I) || isa<PHINode>(I) ||
+               isa<GetElementPtrInst>(I) || isa<SelectInst>(I)) {
+      // The original value is not captured via this if the instruction isn't.
       for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
            UI != UE; ++UI) {
         Use *U = &UI.getUse();
         if (Visited.insert(U))
           Worklist.push_back(U);
       }
-      continue;
+    } else {
+      // Something else - be conservative and say it is captured.
+      return true;
     }
-
-    // Something else - be conservative and say it escapes.
-    return true;
   }
 
+  // All uses examined - not captured.
   return false;
 }
 
@@ -274,9 +262,9 @@ bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
       // External node - skip it;
       continue;
 
-    // If the function is readonly and doesn't return any value, we 
-    // know that the pointer value can't escape. Mark all of its pointer 
-    // arguments nocapture.
+    // If the function is readonly and doesn't return any value, we know that
+    // the pointer value is not captured.  Mark all of its pointer arguments
+    // nocapture.
     if (F->onlyReadsMemory() && F->getReturnType() == Type::VoidTy) {
       for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end();
            A != E; ++A)
