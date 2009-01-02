@@ -23,6 +23,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>
@@ -59,9 +60,9 @@ int main(int argc, char **argv) {
   try {
     // Parse the file now...
     ParseError Err;
-    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename,&Err));
+    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename, Err));
     if (M.get() == 0) {
-      cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
+      Err.PrintError(argv[0], errs());
       return 1;
     }
 

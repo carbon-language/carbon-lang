@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s |& grep {Reference to an undefined type}
+; RUN: not llvm-as < %s |& grep {use of undefined type named 'InvalidType'}
 
 define void @test() {
         malloc %InvalidType

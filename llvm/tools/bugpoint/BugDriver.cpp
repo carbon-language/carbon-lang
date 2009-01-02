@@ -23,6 +23,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include <iostream>
 #include <memory>
 using namespace llvm;
@@ -80,8 +81,8 @@ Module *llvm::ParseInputFile(const std::string &Filename) {
     Result = ParseBitcodeFile(Buffer.get());
   
   ParseError Err;
-  if (!Result && !(Result = ParseAssemblyFile(Filename, &Err))) {
-    std::cerr << "bugpoint: " << Err.getMessage() << "\n"; 
+  if (!Result && !(Result = ParseAssemblyFile(Filename, Err))) {
+    Err.PrintError("bugpoint", errs()); 
     Result = 0;
   }
   

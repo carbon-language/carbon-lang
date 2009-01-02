@@ -5,9 +5,9 @@
 ; RUN: llvm-as < %s | llvm-dis | grep {addrspace(22)} | count 5
 
 	%struct.mystruct = type { i32, i32 addrspace(33)*, i32, i32 addrspace(33)* }
-@input = weak global %struct.mystruct zeroinitializer addrspace(42) 		; <%struct.mystruct addrspace(42)*> [#uses=1]
-@output = global %struct.mystruct zeroinitializer addrspace(66) 		; <%struct.mystruct addrspace(66)*> [#uses=1]
-@y = external global i32 addrspace(11)* addrspace(22)* addrspace(33) 		; <i32 addrspace(11)* addrspace(22)* addrspace(33)*> [#uses=1]
+@input = weak addrspace(42) global %struct.mystruct zeroinitializer  		; <%struct.mystruct addrspace(42)*> [#uses=1]
+@output = addrspace(66) global %struct.mystruct zeroinitializer 		; <%struct.mystruct addrspace(66)*> [#uses=1]
+@y = external addrspace(33) global i32 addrspace(11)* addrspace(22)* 		; <i32 addrspace(11)* addrspace(22)* addrspace(33)*> [#uses=1]
 
 define void @foo() {
 entry:

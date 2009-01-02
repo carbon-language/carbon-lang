@@ -1188,6 +1188,8 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   PrintVisibility(GV->getVisibility(), Out);
 
   if (GV->isThreadLocal()) Out << "thread_local ";
+  if (unsigned AddressSpace = GV->getType()->getAddressSpace())
+    Out << "addrspace(" << AddressSpace << ") ";
   Out << (GV->isConstant() ? "constant " : "global ");
   printType(GV->getType()->getElementType());
 
@@ -1195,9 +1197,6 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     Out << ' ';
     writeOperand(GV->getInitializer(), false);
   }
-
-  if (unsigned AddressSpace = GV->getType()->getAddressSpace())
-    Out << " addrspace(" << AddressSpace << ") ";
     
   if (GV->hasSection())
     Out << ", section \"" << GV->getSection() << '"';

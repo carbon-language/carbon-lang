@@ -1,3 +1,3 @@
-; RUN: not llvm-as %s |& grep error
+; RUN: not llvm-as %s |& grep {found end of file when expecting more instructions}
 
-void %foo() {
+define void @foo() {

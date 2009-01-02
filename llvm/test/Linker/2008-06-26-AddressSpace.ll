@@ -6,4 +6,4 @@
 ; RUN: llvm-link %t.foo1.bc %t.foo2.bc | llvm-dis | grep {addrspace(2)}
 ; rdar://6038021
 
-@G = global i32 256 addrspace(2)
+@G = addrspace(2) global i32 256 

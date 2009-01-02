@@ -7,7 +7,6 @@
 ; 
 
 %SQ1 = type { i32 }
-%ITy = type opaque
 %SQ2 = type { %ITy }
 %ITy = type i32
 
@@ -22,7 +21,6 @@ type %BBB
 %Composite = type { %0, %1 }
 
 ; Test simple opaque type resolution...
-%intty = type opaque
 %intty = type i32
 
 ; Perform a simple forward reference...

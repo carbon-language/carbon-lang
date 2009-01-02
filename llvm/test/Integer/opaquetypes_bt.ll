@@ -7,7 +7,6 @@
 ; 
 
 %SQ1 = type { i31 }
-%ITy = type opaque
 %SQ2 = type { %ITy }
 %ITy = type i31
 
@@ -22,7 +21,6 @@ type %BBB
 %Composite = type { %0, %1 }
 
 ; Test simple opaque type resolution...
-%i31ty = type opaque
 %i31ty = type i31
 
 ; Perform a simple forward reference...

@@ -1,5 +1,4 @@
-; RUN: not llvm-as < %s > /dev/null |& \
-; RUN:    grep {Cannot form a pointer to a basic block}
+; RUN: not llvm-as < %s > /dev/null |& grep {basic block pointers are invalid}
 
 define i32 @main() {
          %foo  = call i8* %llvm.stacksave()

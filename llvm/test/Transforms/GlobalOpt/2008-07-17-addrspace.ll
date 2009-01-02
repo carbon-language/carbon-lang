@@ -6,8 +6,8 @@
 ; Check that the new global values still have their address space
 ; RUN: cat %t | grep global.*addrspace
 
-@struct = internal global { i32, i32 } zeroinitializer addrspace(1)
-@array = internal global [ 2 x i32 ] zeroinitializer addrspace(1)
+@struct = internal addrspace(1) global { i32, i32 } zeroinitializer
+@array = internal addrspace(1) global [ 2 x i32 ] zeroinitializer 
 
 define i32 @foo() {
   %A = load i32 addrspace(1) * getelementptr ({ i32, i32 } addrspace(1) * @struct, i32 0, i32 0)

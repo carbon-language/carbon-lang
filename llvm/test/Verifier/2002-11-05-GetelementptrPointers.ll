@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s |& grep {Invalid getelementptr indices}
+; RUN: not llvm-as < %s |& grep {invalid getelementptr indices}
 
 ; This testcase is invalid because we are indexing into a pointer that is 
 ; contained WITHIN a structure.

@@ -1,4 +1,4 @@
-; RUN: not llvm-as %s -o /dev/null -f |& grep {Undefined type remains}
+; RUN: not llvm-as %s -o /dev/null -f |& grep {use of undefined type named 'struct.D_Scope'}
 ; END.
 
 @d_reduction_0_dparser_gram = global { 

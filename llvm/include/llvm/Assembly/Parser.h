@@ -20,6 +20,7 @@ namespace llvm {
 
 class Module;
 class ParseError;
+class raw_ostream;
 
 /// This function is the main interface to the LLVM Assembly Parser. It parses
 /// an ASCII file that (presumably) contains LLVM Assembly code. It returns a
@@ -29,7 +30,7 @@ class ParseError;
 /// @brief Parse LLVM Assembly from a file
 Module *ParseAssemblyFile(
   const std::string &Filename, ///< The name of the file to parse
-  ParseError* Error = 0        ///< If not null, an object to return errors in.
+  ParseError &Error            ///< If not null, an object to return errors in.
 );
 
 /// The function is a secondary interface to the LLVM Assembly Parser. It parses
@@ -39,9 +40,9 @@ Module *ParseAssemblyFile(
 /// run the verifier after parsing the file to check that it is okay.
 /// @brief Parse LLVM Assembly from a string
 Module *ParseAssemblyString(
-  const char * AsmString, ///< The string containing assembly
-  Module * M,             ///< A module to add the assembly too.
-  ParseError* Error = 0   ///< If not null, an object to return errors in.
+  const char *AsmString, ///< The string containing assembly
+  Module *M,             ///< A module to add the assembly too.
+  ParseError &Error      ///< If not null, an object to return errors in.
 );
 
 //===------------------------------------------------------------------------===
@@ -58,6 +59,8 @@ public:
   ParseError() : Filename("unknown"), Message("none"), LineNo(0), ColumnNo(0) {}
   ParseError(const ParseError &E);
 
+  void setFilename(const std::string &F) { Filename = F; }
+  
   // getMessage - Return the message passed in at construction time plus extra
   // information extracted from the options used to parse with...
   //
@@ -71,8 +74,12 @@ public:
     return Filename;
   }
 
-  void setError(const std::string &filename, const std::string &message,
-                 int LineNo = -1, int ColNo = -1);
+  void setError(const std::string &message, int lineNo = -1, int ColNo = -1,
+                const std::string &FileContents = "") {
+    Message = message;
+    LineNo = lineNo; ColumnNo = ColNo;
+    LineContents = FileContents;
+  }
 
   // getErrorLocation - Return the line and column number of the error in the
   // input source file.  The source filename can be derived from the
@@ -82,13 +89,16 @@ public:
   inline void getErrorLocation(int &Line, int &Column) const {
     Line = LineNo; Column = ColumnNo;
   }
+  
+  void PrintError(const char *ProgName, raw_ostream &S);
 
 private :
   std::string Filename;
   std::string Message;
   int LineNo, ColumnNo;                               // -1 if not relevant
+  std::string LineContents;
 
-  ParseError &operator=(const ParseError &E); // objects by reference
+  void operator=(const ParseError &E); // DO NOT IMPLEMENT
 };
 
 } // End llvm namespace
