@@ -172,9 +172,11 @@ TEST_F(ImmutableSetTest, Callback2CharSetTest) {
 
   ASSERT_EQ(obj.counter, 6);
 
+  ptr = buffer;
   S2.foreach<MyIter>(obj);
   ASSERT_EQ(obj.counter, 6+3);
 
+  ptr = buffer;
   S.foreach<MyIter>(obj);
   ASSERT_EQ(obj.counter, 6+3+0);
 }
