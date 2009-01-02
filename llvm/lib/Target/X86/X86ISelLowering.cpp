@@ -4215,6 +4215,14 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op,
                                     DAG.getValueType(VT));
     return DAG.getNode(ISD::TRUNCATE, VT, Assert);
   } else if (VT.getSizeInBits() == 16) {
+    unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+    // If Idx is 0, it's cheaper to do a move instead of a pextrw.
+    if (Idx == 0)
+      return DAG.getNode(ISD::TRUNCATE, MVT::i16,
+                         DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32,
+                                     DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32,
+                                                 Op.getOperand(0)),
+                                     Op.getOperand(1)));
     SDValue Extract = DAG.getNode(X86ISD::PEXTRW, MVT::i32,
                                     Op.getOperand(0), Op.getOperand(1));
     SDValue Assert  = DAG.getNode(ISD::AssertZext, MVT::i32, Extract,

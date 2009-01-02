@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse42 -disable-mmx -o %t -f
 ; RUN: grep paddb  %t | count 1
 ; RUN: grep pextrb %t | count 1
-; RUN: grep pextrw %t | count 1
+; RUN: not grep pextrw %t
 
 ; Widen a v3i8 to v16i8 to use a vector add
 

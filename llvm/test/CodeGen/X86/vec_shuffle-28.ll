@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -o %t -f
 ; RUN: grep punpcklwd %t | count 1
-; RUN: grep pextrw %t | count 8
+; RUN: grep pextrw %t | count 6
 ; RUN: grep pinsrw %t | count 8
 
 
