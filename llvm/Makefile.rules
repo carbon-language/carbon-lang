@@ -1000,7 +1000,7 @@ $(LibName.A): $(ObjectsO) $(LibDir)/.dir
 	$(Echo) Building $(BuildMode) Archive Library $(notdir $@)
 	-$(Verb) $(RM) -f $@
 	$(Verb) $(Archive) $@ $(ObjectsO)
-	$(Verb) $(Ranlib) $@
+	-$(Verb) $(Ranlib) $@
 
 clean-local::
 ifneq ($(strip $(LibName.A)),)
