@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -functionattrs | llvm-dis | not grep {nocapture *%%q}
-; RUN: llvm-as < %s | opt -functionattrs | llvm-dis | grep {nocapture *%%p} | count 8
+; RUN: llvm-as < %s | opt -functionattrs | llvm-dis | grep {nocapture *%%p} | count 6
 @g = global i32* null		; <i32**> [#uses=1]
 
 define i32* @c1(i32* %q) {
@@ -72,15 +72,5 @@ define void @nc4(i8* %p) {
 define void @nc5(void (i8*)* %f, i8* %p) {
 	call void %f(i8* %p) readonly
 	call void %f(i8* nocapture %p)
-	ret void
-}
-
-define void @nc6(i8* %p) {
-	call void @nc7(i8* %p)
-	ret void
-}
-
-define void @nc7(i8* %p) {
-	call void @nc6(i8* %p)
 	ret void
 }
