@@ -26,7 +26,7 @@ namespace llvm {
   class MemoryBuffer;
   class Type;
   class ParseError;
-  
+
   class LLLexer {
     const char *CurPtr;
     MemoryBuffer *CurBuf;
@@ -40,7 +40,7 @@ namespace llvm {
     const Type *TyVal;
     APFloat APFloatVal;
     APSInt  APSIntVal;
-    
+
     std::string TheError;
   public:
     explicit LLLexer(MemoryBuffer *StartBuf, ParseError &);
@@ -59,11 +59,11 @@ namespace llvm {
     const APSInt &getAPSIntVal() const { return APSIntVal; }
     const APFloat &getAPFloatVal() const { return APFloatVal; }
 
-    
+
     bool Error(LocTy L, const std::string &Msg) const;
     bool Error(const std::string &Msg) const { return Error(CurPtr, Msg); }
     std::string getFilename() const;
-        
+
   private:
     lltok::Kind LexToken();
 
@@ -76,7 +76,7 @@ namespace llvm {
     lltok::Kind LexPercent();
     lltok::Kind LexQuote();
     lltok::Kind Lex0x();
-    
+
     uint64_t atoull(const char *Buffer, const char *End);
     uint64_t HexIntToVal(const char *Buffer, const char *End);
     void HexToIntPair(const char *Buffer, const char *End, uint64_t Pair[2]);

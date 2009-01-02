@@ -25,20 +25,20 @@ using namespace llvm;
 bool LLLexer::Error(LocTy ErrorLoc, const std::string &Msg) const {
   // Scan backward to find the start of the line.
   const char *LineStart = ErrorLoc;
-  while (LineStart != CurBuf->getBufferStart() && 
+  while (LineStart != CurBuf->getBufferStart() &&
          LineStart[-1] != '\n' && LineStart[-1] != '\r')
     --LineStart;
   // Get the end of the line.
   const char *LineEnd = ErrorLoc;
-  while (LineEnd != CurBuf->getBufferEnd() && 
+  while (LineEnd != CurBuf->getBufferEnd() &&
          LineEnd[0] != '\n' && LineEnd[0] != '\r')
     ++LineEnd;
-  
+
   unsigned LineNo = 1;
   for (const char *FP = CurBuf->getBufferStart(); FP != ErrorLoc; ++FP)
     if (*FP == '\n') ++LineNo;
 
-  std::string LineContents(LineStart, LineEnd); 
+  std::string LineContents(LineStart, LineEnd);
   ErrorInfo.setError(Msg, LineNo, ErrorLoc-LineStart, LineContents);
   return true;
 }
@@ -519,7 +519,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(sge); KEYWORD(ult); KEYWORD(ugt); KEYWORD(ule); KEYWORD(uge);
   KEYWORD(oeq); KEYWORD(one); KEYWORD(olt); KEYWORD(ogt); KEYWORD(ole);
   KEYWORD(oge); KEYWORD(ord); KEYWORD(uno); KEYWORD(ueq); KEYWORD(une);
-  
+
   KEYWORD(x);
 #undef KEYWORD
 
