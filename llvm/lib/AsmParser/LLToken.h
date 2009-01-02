@@ -118,7 +118,7 @@ namespace lltok {
     Type, 
     
     APFloat,  // APFloatVal
-    APSInt, // APSInt
+    APSInt // APSInt
   };
 } // end namespace lltok
 } // end namespace llvm
