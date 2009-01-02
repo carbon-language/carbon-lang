@@ -8,7 +8,7 @@ use Socket;
 #
 # Synopsis: Perform a series of tests which are designed to be run nightly.
 #           This is used to keep track of the status of the LLVM tree, tracking
-#           regressions and performance changes. Submits this information 
+#           regressions and performance changes. Submits this information
 #           to llvm.org where it is placed into the nightlytestresults database.
 #
 # Modified heavily by Patrick Jenkins, July 2006
@@ -67,12 +67,12 @@ use Socket;
 #                   or SPEC are not installed)
 #  -with-externals  Specify a directory where the external tests are located.
 #  -submit-server   Specifies a server to submit the test results too. If this
-#                   option is not specified it defaults to 
-#                   llvm.org. This is basically just the address of the 
+#                   option is not specified it defaults to
+#                   llvm.org. This is basically just the address of the
 #                   webserver
 #  -submit-script   Specifies which script to call on the submit server. If
 #                   this option is not specified it defaults to
-#                   /nightlytest/NightlyTestAccept.php. This is basically 
+#                   /nightlytest/NightlyTestAccept.php. This is basically
 #                   everything after the www.yourserver.org.
 #  -nosubmit        Do not report the test results back to a submit server.
 #
@@ -145,13 +145,13 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release"; next;}
   if (/^-release-asserts$/){ $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
                              "DISABLE_ASSERTIONS=1 ".
-                             "OPTIMIZE_OPTION=-O2"; 
+                             "OPTIMIZE_OPTION=-O2";
                              $BUILDTYPE="release-asserts"; next;}
   if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
   if (/^-enable-lli$/)     { $PROGTESTOPTS .= " ENABLE_LLI=1";
-                             $CONFIGUREARGS .= " --enable-lli"; next; } 
+                             $CONFIGUREARGS .= " --enable-lli"; next; }
   if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
-                             $CONFIGUREARGS .= " --disable-llc_diffs"; next; } 
+                             $CONFIGUREARGS .= " --disable-llc_diffs"; next; }
   if (/^-disable-jit$/)    { $PROGTESTOPTS .= " DISABLE_JIT=1";
                              $CONFIGUREARGS .= " --disable-jit"; next; }
   if (/^-disable-cbe$/)    { $PROGTESTOPTS .= " DISABLE_CBE=1"; next; }
@@ -160,32 +160,32 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-verbose$/)        { $VERBOSE = 1; next; }
   if (/^-debug$/)          { $DEBUG = 1; next; }
   if (/^-nice$/)           { $NICE = "nice "; next; }
-  if (/^-f2c$/)            { $CONFIGUREARGS .= " --with-f2c=$ARGV[0]"; 
+  if (/^-f2c$/)            { $CONFIGUREARGS .= " --with-f2c=$ARGV[0]";
                              shift; next; }
-  if (/^-with-externals$/) { $CONFIGUREARGS .= " --with-externals=$ARGV[0]"; 
+  if (/^-with-externals$/) { $CONFIGUREARGS .= " --with-externals=$ARGV[0]";
                              shift; next; }
   if (/^-submit-server/)   { $SUBMITSERVER = "$ARGV[0]"; shift; next; }
   if (/^-submit-script/)   { $SUBMITSCRIPT = "$ARGV[0]"; shift; next; }
   if (/^-nosubmit$/)       { $SUBMIT = 0; next; }
-  if (/^-nickname$/)       { $nickname = "$ARGV[0]"; shift; next; } 
-  if (/^-gccpath/)         { $CONFIGUREARGS .= 
-                             " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; 
+  if (/^-nickname$/)       { $nickname = "$ARGV[0]"; shift; next; }
+  if (/^-gccpath/)         { $CONFIGUREARGS .=
+                             " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++";
                              $GCCPATH=$ARGV[0]; shift;  next; }
   else                     { $GCCPATH=""; }
-  if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; } 
+  if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; }
   else                     { $CVSCOOPT="";}
   if (/^-usecvs/)          { $USESVN = 0; }
-  if (/^-target/)          { $CONFIGUREARGS .= " --target=$ARGV[0]"; 
+  if (/^-target/)          { $CONFIGUREARGS .= " --target=$ARGV[0]";
                              shift; next; }
-  if (/^-cflags/)          { $MAKEOPTS = "$MAKEOPTS C.Flags=\'$ARGV[0]\'"; 
+  if (/^-cflags/)          { $MAKEOPTS = "$MAKEOPTS C.Flags=\'$ARGV[0]\'";
                              shift; next; }
-  if (/^-cxxflags/)        { $MAKEOPTS = "$MAKEOPTS CXX.Flags=\'$ARGV[0]\'"; 
+  if (/^-cxxflags/)        { $MAKEOPTS = "$MAKEOPTS CXX.Flags=\'$ARGV[0]\'";
                              shift; next; }
-  if (/^-ldflags/)         { $MAKEOPTS = "$MAKEOPTS LD.Flags=\'$ARGV[0]\'"; 
+  if (/^-ldflags/)         { $MAKEOPTS = "$MAKEOPTS LD.Flags=\'$ARGV[0]\'";
                              shift; next; }
   if (/^-compileflags/)    { $MAKEOPTS = "$MAKEOPTS $ARGV[0]"; shift; next; }
   if (/^-use-gmake/)       { $MAKECMD = "gmake"; shift; next; }
-  if (/^-extraflags/)      { $CONFIGUREARGS .= 
+  if (/^-extraflags/)      { $CONFIGUREARGS .=
                              " --with-extra-options=\'$ARGV[0]\'"; shift; next;}
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
   if (/^-nodejagnu$/)      { $NODEJAGNU = 1; next; }
@@ -224,9 +224,9 @@ if ($CVSRootDir eq "" or
   die("please specify a cvs root directory, a build directory, and a ".
        "web directory");
  }
- 
+
 if ($nickname eq "") {
-  die ("Please invoke NewNightlyTest.pl with command line option " . 
+  die ("Please invoke NewNightlyTest.pl with command line option " .
        "\"-nickname <nickname>\"");
 }
 
@@ -309,7 +309,7 @@ sub DiffFiles {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub GetRegex {   # (Regex with ()'s, value)
   $_[1] =~ /$_[0]/m;
-  return $1 
+  return $1
     if (defined($1));
   return "0";
 }
@@ -330,7 +330,7 @@ sub ChangeDir { # directory, logical name
   if ( $VERBOSE ) { print "Changing To: $name ($dir)\n"; }
   $result = chdir($dir);
   if (!$result) {
-    print "ERROR!!! Cannot change directory to: $name ($dir) because $!"; 
+    print "ERROR!!! Cannot change directory to: $name ($dir) because $!";
     return false;
   }
   return true;
@@ -396,7 +396,7 @@ sub FormatTime {
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# This function is meant to read in the dejagnu sum file and 
+# This function is meant to read in the dejagnu sum file and
 # return a string with only the results (i.e. PASS/FAIL/XPASS/
 # XFAIL).
 #
@@ -440,7 +440,7 @@ sub SendData{
 
     $port=80;
     $socketaddr= sockaddr_in $port, inet_aton $host or die "Bad hostname\n";
-    socket SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp') or 
+    socket SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp') or
       die "Bad socket\n";
     connect SOCK, $socketaddr or die "Bad connection\n";
     select((select(SOCK), $| = 1)[0]);
@@ -474,7 +474,7 @@ sub SendData{
         $sentdata.= "$x  => $value\n";
     }
     WriteFile "$Prefix-sentdata.txt", $sentdata;
-    
+
 
     return $result;
 }
@@ -513,7 +513,7 @@ ChangeDir( $BuildDir, "checkout directory" );
 
 ##############################################################
 #
-# Check out the llvm tree, using either SVN or CVS 
+# Check out the llvm tree, using either SVN or CVS
 #
 ##############################################################
 if (!$NOCHECKOUT) {
@@ -659,7 +659,7 @@ if (!$NOCVSSTATS) {
             next;
         }
         # print "$File\nTy = $Type Date = '$Date' UID=$UID Rev=$Rev File = '$Filename'\n";
-        
+
         if ($Filename =~ /^llvm/) {
             if ($Type eq 'M') {        # Modified
                 $ModifiedFiles{$Filename} = 1;
@@ -695,12 +695,12 @@ if (!$NOCHECKOUT && !$NOBUILD) {
   my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
   if ( $VERBOSE ) {
     print "CONFIGURE STAGE:\n";
-    print "(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) " . 
+    print "(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) " .
           "> $BuildLog 2>&1\n";
   }
-  system "(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) " . 
+  system "(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) " .
          "> $BuildLog 2>&1";
-  if ( $VERBOSE ) { 
+  if ( $VERBOSE ) {
     print "BUILD STAGE:\n";
     print "(time -p $NICE $MAKECMD $MAKEOPTS) >> $BuildLog 2>&1\n";
   }
@@ -755,7 +755,7 @@ if ($BuildError) { $NODEJAGNU=1; }
 my $a_file_sizes="";
 my $o_file_sizes="";
 if (!$BuildError) {
-  print "Organizing size of .o and .a files\n" 
+  print "Organizing size of .o and .a files\n"
     if ( $VERBOSE );
   ChangeDir( "$BuildDir/llvm", "Build Directory" );
   $afiles.= `find utils/ -iname '*.a' -ls`;
@@ -768,7 +768,7 @@ if (!$BuildError) {
   } else {
    $afiles.= `find Debug/ -iname '*.a' -ls`;
   }
-  
+
   $ofiles.= `find utils/ -iname '*.o' -ls`;
   $ofiles.= `find lib/ -iname '*.o' -ls`;
   $ofiles.= `find tools/ -iname '*.o' -ls`;
@@ -779,7 +779,7 @@ if (!$BuildError) {
   } else {
     $ofiles.= `find Debug/ -iname '*.o' -ls`;
   }
-  
+
   @AFILES = split "\n", $afiles;
   $a_file_sizes="";
   foreach $x (@AFILES){
@@ -805,15 +805,15 @@ if (!$BuildError) {
 my $DejangnuTestResults=""; # String containing the results of the dejagnu
 my $dejagnu_output = "$DejagnuTestsLog";
 if (!$NODEJAGNU) {
-  if($VERBOSE) { 
-    print "DEJAGNU FEATURE/REGRESSION TEST STAGE:\n"; 
+  if($VERBOSE) {
+    print "DEJAGNU FEATURE/REGRESSION TEST STAGE:\n";
     print "(time -p $MAKECMD $MAKEOPTS check) > $dejagnu_output 2>&1\n";
   }
 
   #Run the feature and regression tests, results are put into testrun.sum
   #Full log in testrun.log
   system "(time -p $MAKECMD $MAKEOPTS check) > $dejagnu_output 2>&1";
-  
+
   #Copy the testrun.log and testrun.sum to our webdir
   CopyFile("test/testrun.log", $DejagnuLog);
   CopyFile("test/testrun.sum", $DejagnuSum);
@@ -826,8 +826,8 @@ if (!$NODEJAGNU) {
 my $DejagnuTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$dejagnu_output";
 my $DejagnuTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$dejagnu_output";
 $DejagnuTime  = $DejagnuTimeU+$DejagnuTimeS;  # DejagnuTime = User+System
-$DejagnuWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$dejagnu_output"; 
-$DejagnuTestResults = 
+$DejagnuWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$dejagnu_output";
+$DejagnuTestResults =
   "Dejagnu skipped by user choice." unless $DejagnuTestResults;
 $DejagnuTime     = "0.0" unless $DejagnuTime;
 $DejagnuWallTime = "0.0" unless $DejagnuWallTime;
@@ -872,27 +872,27 @@ if (!$NODEJAGNU) {
 #
 # If we built the tree successfully, run the nightly programs tests...
 #
-# A set of tests to run is passed in (i.e. "SingleSource" "MultiSource" 
+# A set of tests to run is passed in (i.e. "SingleSource" "MultiSource"
 # "External")
 #
 ##############################################################
 sub TestDirectory {
-  my $SubDir = shift;  
-  ChangeDir( "$BuildDir/llvm/projects/llvm-test/$SubDir", 
+  my $SubDir = shift;
+  ChangeDir( "$BuildDir/llvm/projects/llvm-test/$SubDir",
              "Programs Test Subdirectory" ) || return ("", "");
-  
+
   my $ProgramTestLog = "$Prefix-$SubDir-ProgramTest.txt";
-  
+
   # Run the programs tests... creating a report.nightly.csv file
   if (!$NOTEST) {
-    if( $VERBOSE) { 
+    if( $VERBOSE) {
       print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
-            "TEST=nightly > $ProgramTestLog 2>&1\n"; 
+            "TEST=nightly > $ProgramTestLog 2>&1\n";
     }
     system "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
            "TEST=nightly > $ProgramTestLog 2>&1";
     $llcbeta_options=`$MAKECMD print-llcbeta-option`;
-  } 
+  }
 
   my $ProgramsTable;
   if (`grep '^$MAKECMD\[^:]: .*Error' $ProgramTestLog | wc -l` + 0) {
@@ -926,7 +926,7 @@ if (!$BuildError) {
   if ( $VERBOSE ) {
      print "SingleSource TEST STAGE\n";
   }
-  ($SingleSourceProgramsTable, $llcbeta_options) = 
+  ($SingleSourceProgramsTable, $llcbeta_options) =
     TestDirectory("SingleSource");
   WriteFile "$Prefix-SingleSource-Performance.txt", $SingleSourceProgramsTable;
   if ( $VERBOSE ) {
@@ -940,10 +940,10 @@ if (!$BuildError) {
     }
     ($ExternalProgramsTable, $llcbeta_options) = TestDirectory("External");
     WriteFile "$Prefix-External-Performance.txt", $ExternalProgramsTable;
-    system "cat $Prefix-SingleSource-Tests.txt " . 
+    system "cat $Prefix-SingleSource-Tests.txt " .
                "$Prefix-MultiSource-Tests.txt ".
                "$Prefix-External-Tests.txt | sort > $Prefix-Tests.txt";
-    system "cat $Prefix-SingleSource-Performance.txt " . 
+    system "cat $Prefix-SingleSource-Performance.txt " .
                "$Prefix-MultiSource-Performance.txt ".
                "$Prefix-External-Performance.txt | sort > $Prefix-Performance.txt";
   } else {
@@ -951,18 +951,18 @@ if (!$BuildError) {
     if ( $VERBOSE ) {
       print "External TEST STAGE SKIPPED\n";
     }
-    system "cat $Prefix-SingleSource-Tests.txt " . 
+    system "cat $Prefix-SingleSource-Tests.txt " .
                "$Prefix-MultiSource-Tests.txt ".
                " | sort > $Prefix-Tests.txt";
-    system "cat $Prefix-SingleSource-Performance.txt " . 
+    system "cat $Prefix-SingleSource-Performance.txt " .
                "$Prefix-MultiSource-Performance.txt ".
                " | sort > $Prefix-Performance.txt";
   }
 
   ##############################################################
   #
-  # 
-  # gathering tests added removed broken information here 
+  #
+  # gathering tests added removed broken information here
   #
   #
   ##############################################################
@@ -983,7 +983,7 @@ if (!$BuildError) {
       }
     }
   }
-  
+
 } #end if !$BuildError
 
 
@@ -1006,16 +1006,16 @@ if (!$BuildError) {
 
     # Run the nightly test in this directory, with LARGE_PROBLEM_SIZE and
     # GET_STABLE_NUMBERS enabled!
-    if( $VERBOSE ) { 
+    if( $VERBOSE ) {
       print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out " .
             "TEST=nightly  LARGE_PROBLEM_SIZE=1 GET_STABLE_NUMBERS=1 " .
-            "> /dev/null 2>&1\n"; 
+            "> /dev/null 2>&1\n";
     }
     system "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out " .
            "TEST=nightly LARGE_PROBLEM_SIZE=1 GET_STABLE_NUMBERS=1 " .
            "> /dev/null 2>&1";
     system "cp report.nightly.csv $OldenTestsLog";
-  }  
+  }
 }
 
 ##############################################################
@@ -1033,12 +1033,12 @@ $endtime = `date "+20%y-%m-%d %H:%M:%S"`;
 ##############################################################
 if ( $VERBOSE ) { print "PREPARING LOGS TO BE SENT TO SERVER\n"; }
 
-$machine_data = "uname: ".`uname -a`. 
+$machine_data = "uname: ".`uname -a`.
                 "hardware: ".`uname -m`.
                 "os: ".`uname -sr`.
                 "name: ".`uname -n`.
                 "date: ".`date \"+20%y-%m-%d\"`.
-                "time: ".`date +\"%H:%M:%S\"`; 
+                "time: ".`date +\"%H:%M:%S\"`;
 
 my @CVS_DATA;
 my $cvs_data;
@@ -1153,7 +1153,7 @@ if ($SUBMIT) {
 # Remove the cvs tree...
 #
 ##############################################################
-system ( "$NICE rm -rf $BuildDir") 
+system ( "$NICE rm -rf $BuildDir")
   if (!$NOCHECKOUT and !$NOREMOVE);
-system ( "$NICE rm -rf $WebDir") 
+system ( "$NICE rm -rf $WebDir")
   if (!$NOCHECKOUT and !$NOREMOVE and !$NOREMOVERESULTS);
