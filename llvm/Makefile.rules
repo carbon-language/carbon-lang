@@ -41,7 +41,7 @@ VPATH=$(PROJ_SRC_DIR)
 # Reset the list of suffixes we know how to build.
 #--------------------------------------------------------------------
 .SUFFIXES:
-.SUFFIXES: .c .cpp .cc .h .hpp .y .l .lo .o .a .bc .td .ps .dot .ll
+.SUFFIXES: .c .cpp .cc .h .hpp .lo .o .a .bc .td .ps .dot .ll
 .SUFFIXES: $(SHLIBEXT) $(SUFFIXES)
 
 #--------------------------------------------------------------------
@@ -535,14 +535,13 @@ endif
 
 ifndef SOURCES
   Sources := $(notdir $(wildcard $(PROJ_SRC_DIR)/*.cpp \
-             $(PROJ_SRC_DIR)/*.cc $(PROJ_SRC_DIR)/*.c $(PROJ_SRC_DIR)/*.y \
-             $(PROJ_SRC_DIR)/*.l))
+             $(PROJ_SRC_DIR)/*.cc $(PROJ_SRC_DIR)/*.c))
 else
   Sources := $(SOURCES)
 endif 
 
 ifdef BUILT_SOURCES
-Sources += $(filter %.cpp %.c %.cc %.y %.l,$(BUILT_SOURCES))
+Sources += $(filter %.cpp %.c %.cc,$(BUILT_SOURCES))
 endif
 
 BaseNameSources := $(sort $(basename $(Sources)))
@@ -1347,111 +1346,6 @@ clean-local::
 endif
 
 ###############################################################################
-# LEX AND YACC: Provide rules for generating sources with lex and yacc
-###############################################################################
-
-#---------------------------------------------------------
-# Provide rules for generating a .cpp source file from 
-# (f)lex input sources. 
-#---------------------------------------------------------
-
-LexFiles  := $(filter %.l,$(Sources))
-
-ifneq ($(LexFiles),)
-
-# Cancel built-in rules for lex
-%.c: %.l
-%.cpp: %.l
-
-all:: $(LexFiles:%.l=$(PROJ_SRC_DIR)/%.cpp.cvs)
-
-# Note the extra sed filtering here, used to cut down on the warnings emited 
-# by GCC.  The last line is a gross hack to work around flex aparently not 
-# being able to resize the buffer on a large token input.  Currently, for 
-# uninitialized string buffers in LLVM we can generate very long tokens, so 
-# this is a hack around it.
-# FIXME.  (f.e. char Buffer[10000] )
-$(PROJ_SRC_DIR)/%.cpp: $(PROJ_SRC_DIR)/%.l
-	$(Echo) Flexing $*.l
-	$(Verb) $(FLEX) -t $(PROJ_SRC_DIR)/$*.l | \
-	$(SED) 's/void yyunput/inline void yyunput/' | \
-	$(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
-	$(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
-	  > $(PROJ_SRC_DIR)/$*.cpp
-
-# IFF the .l file has changed since it was last checked into SVN, copy the .l
-# file to .l.cvs and the generated .cpp file to .cpp.cvs.  We use this mechanism
-# so that people without flex can build LLVM by copying the .cvs files to the 
-# source location and building them.
-$(LexFiles:%.l=$(PROJ_SRC_DIR)/%.cpp.cvs): \
-$(PROJ_SRC_DIR)/%.cpp.cvs: $(PROJ_SRC_DIR)/%.cpp
-	$(Verb) $(CMP) -s $(PROJ_SRC_DIR)/$*.l $(PROJ_SRC_DIR)/$*.l.cvs || \
-      ($(CP) $< $@; $(CP) $(PROJ_SRC_DIR)/$*.l $(PROJ_SRC_DIR)/$*.l.cvs)
-
-$(LexFiles:%.l=$(ObjDir)/%.o) : \
-$(ObjDir)/%.o : $(PROJ_SRC_DIR)/%.cpp
-
-clean-local::
-	-$(Verb) $(RM) -f $(LexOutput)
-
-endif
-
-#---------------------------------------------------------
-# Provide rules for generating a .cpp and .h source files 
-# from yacc (bison) input sources.
-#---------------------------------------------------------
-
-YaccFiles  := $(filter %.y,$(Sources))
-ifneq ($(YaccFiles),)
-
-.PRECIOUS: $(YaccOutput)
-
-all:: $(YaccFiles:%.y=$(PROJ_SRC_DIR)/%.cpp.cvs)
-
-# Cancel built-in rules for yacc
-%.c: %.y 
-%.cpp: %.y
-%.h: %.y
-
-# Rule for building the bison based parsers...
-ifneq ($(BISON),)
-$(PROJ_SRC_DIR)/%.cpp $(PROJ_SRC_DIR)/%.h : $(PROJ_SRC_DIR)/%.y
-	$(Echo) "Bisoning $*.y"
-	$(Verb) $(BISON) -v -d -p $(<F:%Parser.y=%) -o $*.tab.c $<
-	$(Verb) $(MV) -f $*.tab.c $(PROJ_SRC_DIR)/$*.cpp
-	$(Verb) $(MV) -f $*.tab.h $(PROJ_SRC_DIR)/$*.h
-
-# IFF the .y file has changed since it was last checked into SVN, copy the .y
-# file to .y.cvs and the generated .cpp/.h file to .cpp.cvs/.h.cvs.  We use this
-# mechanism so that people without flex can build LLVM by copying the .cvs files
-# to the source location and building them.
-$(YaccFiles:%.y=$(PROJ_SRC_DIR)/%.cpp.cvs): \
-$(PROJ_SRC_DIR)/%.cpp.cvs: $(PROJ_SRC_DIR)/%.cpp
-	$(Verb) $(CMP) -s $(PROJ_SRC_DIR)/$*.y $(PROJ_SRC_DIR)/$*.y.cvs || \
-      ($(CP) $< $@; \
-       $(CP) $(PROJ_SRC_DIR)/$*.y $(PROJ_SRC_DIR)/$*.y.cvs; \
-       $(CP) $(PROJ_SRC_DIR)/$*.h $(PROJ_SRC_DIR)/$*.h.cvs)
-
-else
-$(PROJ_SRC_DIR)/%.cpp : $(PROJ_SRC_DIR)/%.cpp.cvs
-	$(Echo) "Bison of $*.y SKIPPED, bison not found -- copying .cpp.cvs"
-	$(Verb)$(CP) $(PROJ_SRC_DIR)/$*.cpp.cvs $(PROJ_SRC_DIR)/$*.cpp
-
-$(PROJ_SRC_DIR)/%.h : $(PROJ_SRC_DIR)/%.h.cvs
-	$(Echo) "Bison of $*.y SKIPPED, bison not found -- copying .h.cvs"
-	$(Verb)$(CP) $(PROJ_SRC_DIR)/$*.h.cvs $(PROJ_SRC_DIR)/$*.h
-endif
-
-
-$(YaccFiles:%.y=$(ObjDir)/%.o): $(ObjDir)/%.o : $(PROJ_SRC_DIR)/%.cpp
-
-YaccOutput := $(YaccFiles:%.y=%.output)
-
-clean-local::
-	-$(Verb) $(RM) -f $(YaccOutput)
-endif
-
-###############################################################################
 # OTHER RULES: Other rules needed
 ###############################################################################
 
@@ -1738,7 +1632,7 @@ install-local::
 	$(Verb) $(MKDIR) $(PROJ_includedir)
 	$(Verb) if test -d "$(PROJ_SRC_ROOT)/include" ; then \
 	  cd $(PROJ_SRC_ROOT)/include && \
-	  for  hdr in `find . -type f '!' '(' -name '*~' -o -name '.cvsignore' \
+	  for  hdr in `find . -type f '!' '(' -name '*~' \
 	      -o -name '.#*' -o -name '*.in' ')' -print | grep -v CVS | \
 	      grep -v .svn` ; do \
 	    instdir=`dirname "$(PROJ_includedir)/$$hdr"` ; \
@@ -1763,7 +1657,7 @@ uninstall-local::
 	$(Verb) if [ -d "$(PROJ_SRC_ROOT)/include" ] ; then \
 	  cd $(PROJ_SRC_ROOT)/include && \
 	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f \
-	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' \
+	      '!' '(' -name '*~' -o -name '.#*' \
         -o -name '*.in' ')' -print ')' | \
         grep -v CVS | sed 's#^#$(PROJ_includedir)/#'` ; \
 	  cd $(PROJ_SRC_ROOT)/include && \
