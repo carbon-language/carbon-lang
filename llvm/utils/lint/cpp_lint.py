@@ -65,9 +65,11 @@ def VerifyIncludes(filename, lines):
 
 
 class CppLint(common_lint.BaseLint):
+  MAX_LINE_LENGTH = 80
+
   def RunOnFile(self, filename, lines):
     VerifyIncludes(filename, lines)
-    common_lint.VerifyLineLength(filename, lines)
+    common_lint.VerifyLineLength(filename, lines, CppLint.MAX_LINE_LENGTH)
     common_lint.VerifyTrailingWhitespace(filename, lines)
 
 
