@@ -208,10 +208,20 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
       continue;
     }
 
+    if (isa<FreeInst>(I)) {
+      // Freeing a pointer does not cause it to escape.
+      continue;
+    }
+
     CallSite CS = CallSite::get(I);
     if (CS.getInstruction()) {
-      // Does not escape if only passed via 'nocapture' arguments.  Note
-      // that calling a function pointer does not in itself cause that
+      // Does not escape if the callee is readonly and doesn't return a
+      // copy through its own return value.
+      if (CS.onlyReadsMemory() && I->getType() == Type::VoidTy)
+        continue;
+
+      // Does not escape if passed via 'nocapture' arguments.  Note that
+      // calling a function pointer does not in itself cause that
       // function pointer to escape.  This is a subtle point considering
       // that (for example) the callee might return its own address.  It
       // is analogous to saying that loading a value from a pointer does
@@ -264,6 +274,20 @@ bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
       // External node - skip it;
       continue;
 
+    // If the function is readonly and doesn't return any value, we 
+    // know that the pointer value can't escape. Mark all of its pointer 
+    // arguments nocapture.
+    if (F->onlyReadsMemory() && F->getReturnType() == Type::VoidTy) {
+      for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end();
+           A != E; ++A)
+        if (isa<PointerType>(A->getType()) && !A->hasNoCaptureAttr()) {
+          A->addAttr(Attribute::NoCapture);
+          ++NumNoCapture;
+          Changed = true;
+        }
+      continue;
+    }
+
     // Definitions with weak linkage may be overridden at linktime with
     // something that writes memory, so treat them like declarations.
     if (F->isDeclaration() || F->mayBeOverridden())
@@ -273,7 +297,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
       if (isa<PointerType>(A->getType()) && !A->hasNoCaptureAttr() &&
           !isCaptured(*F, A)) {
         A->addAttr(Attribute::NoCapture);
-        NumNoCapture++;
+        ++NumNoCapture;
         Changed = true;
       }
   }
