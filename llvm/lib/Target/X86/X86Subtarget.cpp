@@ -180,8 +180,16 @@ static const char *GetCurrentX86CPU() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
   if (X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
     return "generic";
-  unsigned Family  = (EAX >> 8) & 0xf; // Bits 8 - 11
-  unsigned Model   = (EAX >> 4) & 0xf; // Bits 4 - 7
+  unsigned Family = (EAX >> 8) & 0xf; // Bits 8 - 11
+  unsigned Model  = (EAX >> 4) & 0xf; // Bits 4 - 7
+  if (Family == 6 || Family == 0xf) {
+    if (Family == 0xf)
+      // Examine extended family ID if family ID is F.
+      Family += (EAX >> 20) & 0xff;    // Bits 20 - 27
+    // Examine extended model ID if family ID is 6 or F.
+    Model += ((EAX >> 16) & 0xf) << 4; // Bits 16 - 19
+  }
+
   X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
 
@@ -216,6 +224,7 @@ static const char *GetCurrentX86CPU() {
         case 13: return "pentium-m";
         case 14: return "yonah";
         case 15: return "core2";
+        case 23: return "penryn";
         default: return "i686";
         }
       case 15: {
