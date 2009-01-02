@@ -17,10 +17,9 @@
 #include "LLToken.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
-
-#include <vector>
-#include <string>
 #include <iosfwd>
+#include <string>
+#include <vector>
 
 namespace llvm {
   class MemoryBuffer;

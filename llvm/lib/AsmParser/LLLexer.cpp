@@ -18,8 +18,8 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Assembly/Parser.h"
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
 using namespace llvm;
 
 bool LLLexer::Error(LocTy ErrorLoc, const std::string &Msg) const {
