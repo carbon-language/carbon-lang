@@ -15,13 +15,12 @@ $ rm -f `find . -name \*\.pump`
 $ mv src/* .
 $ rmdir src
 
-# Move the extra header into the already-existing internal headers dir
+# Move extra headers into the already-existing internal headers dir
 $ mv *.h include/gtest/internal/
 
 # Update paths to the included files
 $ perl -pi -e 's|^#include "src/|#include "gtest/internal/|' *.cc
 
-# We have our own main() .
-$ rm -f gtest_main.cc
+$ rm -f gtest-all.cc gtest_main.cc
 
 For the license, see the file COPYING in this directory.
