@@ -222,6 +222,7 @@ def SmallCode    : Predicate<"TM.getCodeModel() == CodeModel::Small">;
 def NotSmallCode : Predicate<"TM.getCodeModel() != CodeModel::Small">;
 def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
 def OptForSpeed  : Predicate<"!OptForSize">;
+def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
@@ -2666,11 +2667,11 @@ def BT32rr : I<0xA3, MRMSrcReg, (outs), (ins GR32:$src1, GR32:$src2),
 def BT16mr : I<0xA3, MRMDestMem, (outs), (ins i16mem:$src1, GR16:$src2),
                "bt{w}\t{$src2, $src1|$src1, $src2}",
                [(X86bt (loadi16 addr:$src1), GR16:$src2),
-                (implicit EFLAGS)]>, OpSize, TB;
+                (implicit EFLAGS)]>, OpSize, TB, Requires<[FastBTMem]>;
 def BT32mr : I<0xA3, MRMDestMem, (outs), (ins i32mem:$src1, GR32:$src2),
                "bt{l}\t{$src2, $src1|$src1, $src2}",
                [(X86bt (loadi32 addr:$src1), GR32:$src2),
-                (implicit EFLAGS)]>, TB;
+                (implicit EFLAGS)]>, TB, Requires<[FastBTMem]>;
 } // Defs = [EFLAGS]
 
 // Sign/Zero extenders

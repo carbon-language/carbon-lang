@@ -149,6 +149,18 @@ bool X86::GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
   return true;
 }
 
+static void DetectFamilyModel(unsigned EAX, unsigned &Family, unsigned &Model) {
+  Family = (EAX >> 8) & 0xf; // Bits 8 - 11
+  Model  = (EAX >> 4) & 0xf; // Bits 4 - 7
+  if (Family == 6 || Family == 0xf) {
+    if (Family == 0xf)
+      // Examine extended family ID if family ID is F.
+      Family += (EAX >> 20) & 0xff;    // Bits 20 - 27
+    // Examine extended model ID if family ID is 6 or F.
+    Model += ((EAX >> 16) & 0xf) << 4; // Bits 16 - 19
+  }
+}
+
 void X86Subtarget::AutoDetectSubtargetFeatures() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
   union {
@@ -169,8 +181,15 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   if ((ECX >> 19) & 0x1) X86SSELevel = SSE41;
   if ((ECX >> 20) & 0x1) X86SSELevel = SSE42;
 
-  if (memcmp(text.c, "GenuineIntel", 12) == 0 ||
-      memcmp(text.c, "AuthenticAMD", 12) == 0) {
+  bool IsIntel = memcmp(text.c, "GenuineIntel", 12) == 0;
+  bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;
+  if (IsIntel || IsAMD) {
+    // Determine if bit test memory instructions are slow.
+    unsigned Family = 0;
+    unsigned Model  = 0;
+    DetectFamilyModel(EAX, Family, Model);
+    IsBTMemSlow = IsAMD || (Family == 6 && Model >= 13);
+
     X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
     HasX86_64 = (EDX >> 29) & 0x1;
   }
@@ -180,15 +199,9 @@ static const char *GetCurrentX86CPU() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
   if (X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
     return "generic";
-  unsigned Family = (EAX >> 8) & 0xf; // Bits 8 - 11
-  unsigned Model  = (EAX >> 4) & 0xf; // Bits 4 - 7
-  if (Family == 6 || Family == 0xf) {
-    if (Family == 0xf)
-      // Examine extended family ID if family ID is F.
-      Family += (EAX >> 20) & 0xff;    // Bits 20 - 27
-    // Examine extended model ID if family ID is 6 or F.
-    Model += ((EAX >> 16) & 0xf) << 4; // Bits 16 - 19
-  }
+  unsigned Family = 0;
+  unsigned Model  = 0;
+  DetectFamilyModel(EAX, Family, Model);
 
   X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
@@ -285,6 +298,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   , X86SSELevel(NoMMXSSE)
   , X863DNowLevel(NoThreeDNow)
   , HasX86_64(false)
+  , IsBTMemSlow(false)
   , DarwinVers(0)
   , IsLinux(false)
   , stackAlignment(8)

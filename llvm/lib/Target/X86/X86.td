@@ -48,6 +48,8 @@ def Feature3DNowA  : SubtargetFeature<"3dnowa", "X863DNowLevel", "ThreeDNowA",
 def Feature64Bit   : SubtargetFeature<"64bit", "HasX86_64", "true",
                                       "Support 64-bit instructions",
                                       [FeatureSSE2]>;
+def FeatureSlowBTMem : SubtargetFeature<"slow-bt-mem", "IsBTMemSlow", "true",
+                                       "Bit testing of memory is slow">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
@@ -66,27 +68,27 @@ def : Proc<"i686",            []>;
 def : Proc<"pentiumpro",      []>;
 def : Proc<"pentium2",        [FeatureMMX]>;
 def : Proc<"pentium3",        [FeatureSSE1]>;
-def : Proc<"pentium-m",       [FeatureSSE2]>;
+def : Proc<"pentium-m",       [FeatureSSE2, FeatureSlowBTMem]>;
 def : Proc<"pentium4",        [FeatureSSE2]>;
-def : Proc<"x86-64",          [Feature64Bit]>;
-def : Proc<"yonah",           [FeatureSSE3]>;
-def : Proc<"prescott",        [FeatureSSE3]>;
-def : Proc<"nocona",          [FeatureSSE3,   Feature64Bit]>;
-def : Proc<"core2",           [FeatureSSSE3,  Feature64Bit]>;
-def : Proc<"penryn",          [FeatureSSE41,  Feature64Bit]>;
+def : Proc<"x86-64",          [Feature64Bit, FeatureSlowBTMem]>;
+def : Proc<"yonah",           [FeatureSSE3, FeatureSlowBTMem]>;
+def : Proc<"prescott",        [FeatureSSE3, FeatureSlowBTMem]>;
+def : Proc<"nocona",          [FeatureSSE3,   Feature64Bit, FeatureSlowBTMem]>;
+def : Proc<"core2",           [FeatureSSSE3,  Feature64Bit, FeatureSlowBTMem]>;
+def : Proc<"penryn",          [FeatureSSE41,  Feature64Bit, FeatureSlowBTMem]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [FeatureMMX,    Feature3DNow]>;
 def : Proc<"k6-3",            [FeatureMMX,    Feature3DNow]>;
-def : Proc<"athlon",          [FeatureMMX,    Feature3DNowA]>;
-def : Proc<"athlon-tbird",    [FeatureMMX,    Feature3DNowA]>;
-def : Proc<"athlon-4",        [FeatureSSE1,   Feature3DNowA]>;
-def : Proc<"athlon-xp",       [FeatureSSE1,   Feature3DNowA]>;
-def : Proc<"athlon-mp",       [FeatureSSE1,   Feature3DNowA]>;
-def : Proc<"k8",              [Feature3DNowA, Feature64Bit]>;
-def : Proc<"opteron",         [Feature3DNowA, Feature64Bit]>;
-def : Proc<"athlon64",        [Feature3DNowA, Feature64Bit]>;
-def : Proc<"athlon-fx",       [Feature3DNowA, Feature64Bit]>;
+def : Proc<"athlon",          [FeatureMMX,    Feature3DNowA, FeatureSlowBTMem]>;
+def : Proc<"athlon-tbird",    [FeatureMMX,    Feature3DNowA, FeatureSlowBTMem]>;
+def : Proc<"athlon-4",        [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem]>;
+def : Proc<"athlon-xp",       [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem]>;
+def : Proc<"athlon-mp",       [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem]>;
+def : Proc<"k8",              [Feature3DNowA, Feature64Bit,  FeatureSlowBTMem]>;
+def : Proc<"opteron",         [Feature3DNowA, Feature64Bit,  FeatureSlowBTMem]>;
+def : Proc<"athlon64",        [Feature3DNowA, Feature64Bit,  FeatureSlowBTMem]>;
+def : Proc<"athlon-fx",       [Feature3DNowA, Feature64Bit,  FeatureSlowBTMem]>;
 
 def : Proc<"winchip-c6",      [FeatureMMX]>;
 def : Proc<"winchip2",        [FeatureMMX, Feature3DNow]>;

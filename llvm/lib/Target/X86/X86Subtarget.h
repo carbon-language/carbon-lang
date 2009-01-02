@@ -64,6 +64,9 @@ protected:
   /// HasX86_64 - True if the processor supports X86-64 instructions.
   ///
   bool HasX86_64;
+
+  /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
+  bool IsBTMemSlow;
   
   /// DarwinVers - Nonzero if this is a darwin platform: the numeric
   /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
@@ -126,6 +129,8 @@ public:
   bool hasSSE42() const { return X86SSELevel >= SSE42; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
+
+  bool isBTMemSlow() const { return IsBTMemSlow; }
 
   unsigned getAsmFlavor() const {
     return AsmFlavor != Unset ? unsigned(AsmFlavor) : 0;
