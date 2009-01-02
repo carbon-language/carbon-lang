@@ -25,16 +25,11 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-// ValID - Represents a reference of a definition of some sort with no type.
-// There are several cases where we have to parse the value but where the type
-// can depend on later context.  This may either
-// be a numeric reference or a symbolic (%var) reference.  This is just a
-// discriminated union.
-//
-// Note that I can't implement this class in a straight forward manner with
-// constructors and stuff because it goes in a union.
-//
 namespace llvm {
+  /// ValID - Represents a reference of a definition of some sort with no type.
+  /// There are several cases where we have to parse the value but where the
+  /// type can depend on later context.  This may either be a numeric reference
+  /// or a symbolic (%var) reference.  This is just a discriminated union.
   struct ValID {
     enum {
       t_LocalID, t_GlobalID,      // ID in UIntVal.
@@ -55,10 +50,13 @@ namespace llvm {
   };
 }
 
-/// Parse: module ::= toplevelentity*
+/// Run: module ::= toplevelentity*
 Module *LLParser::Run() {
   M = new Module(Lex.getFilename());
-  
+
+  // Prime the lexer.
+  Lex.Lex();
+
   if (ParseTopLevelEntities() ||
       ValidateEndOfModule()) {
     delete M;
@@ -102,7 +100,6 @@ bool LLParser::ValidateEndOfModule() {
 //===----------------------------------------------------------------------===//
 
 bool LLParser::ParseTopLevelEntities() {
-  Lex.Lex();
   while (1) {
     switch (Lex.getKind()) {
     default:         return TokError("expected top-level entity");
@@ -165,17 +162,15 @@ bool LLParser::ParseModuleAsm() {
   assert(Lex.getKind() == lltok::kw_module);
   Lex.Lex();
   
-  if (ParseToken(lltok::kw_asm, "expected 'module asm'")) return true;
-  
-  if (Lex.getKind() != lltok::StringConstant)
-    return TokError("expected 'module asm \"foo\"'");
+  std::string AsmStr; 
+  if (ParseToken(lltok::kw_asm, "expected 'module asm'") ||
+      ParseStringConstant(AsmStr)) return true;
   
   const std::string &AsmSoFar = M->getModuleInlineAsm();
   if (AsmSoFar.empty())
-    M->setModuleInlineAsm(Lex.getStrVal());
+    M->setModuleInlineAsm(AsmStr);
   else
-    M->setModuleInlineAsm(AsmSoFar+"\n"+Lex.getStrVal());
-  Lex.Lex();
+    M->setModuleInlineAsm(AsmSoFar+"\n"+AsmStr);
   return false;
 }
 
@@ -184,25 +179,22 @@ bool LLParser::ParseModuleAsm() {
 ///   ::= 'target' 'datalayout' '=' STRINGCONSTANT
 bool LLParser::ParseTargetDefinition() {
   assert(Lex.getKind() == lltok::kw_target);
+  std::string Str;
   switch (Lex.Lex()) {
   default: return TokError("unknown target property");
   case lltok::kw_triple:
     Lex.Lex();
-    if (ParseToken(lltok::equal, "expected '=' after target triple"))
+    if (ParseToken(lltok::equal, "expected '=' after target triple") ||
+        ParseStringConstant(Str))
       return true;
-    if (Lex.getKind() != lltok::StringConstant)
-      return TokError("expected string after target triple '='");
-    M->setTargetTriple(Lex.getStrVal());
-    Lex.Lex();
+    M->setTargetTriple(Str);
     return false;
   case lltok::kw_datalayout:
     Lex.Lex();
-    if (ParseToken(lltok::equal, "expected '=' after target datalayout"))
+    if (ParseToken(lltok::equal, "expected '=' after target datalayout") ||
+        ParseStringConstant(Str))
       return true;
-    if (Lex.getKind() != lltok::StringConstant)
-      return TokError("expected string after target datalayout '='");
-    M->setDataLayout(Lex.getStrVal());
-    Lex.Lex();
+    M->setDataLayout(Str);
     return false;
   }
 }
@@ -212,32 +204,24 @@ bool LLParser::ParseTargetDefinition() {
 ///   ::= 'deplibs' '=' '[' STRINGCONSTANT (',' STRINGCONSTANT)* ']'
 bool LLParser::ParseDepLibs() {
   assert(Lex.getKind() == lltok::kw_deplibs);
-  if (Lex.Lex() != lltok::equal)
-    return TokError("expected '=' after deplibs");
-
-  if (Lex.Lex() != lltok::lsquare)
-    return TokError("expected '=' after deplibs");
-
-  if (Lex.Lex() == lltok::rsquare) {
-    Lex.Lex();
-    return false;
-  }
-  
-  if (Lex.getKind() != lltok::StringConstant)
-    return TokError("expected string in deplib list");
-
-  M->addLibrary(Lex.getStrVal());
-
-  while (Lex.Lex() == lltok::comma) {
-    if (Lex.Lex() != lltok::StringConstant)
-      return TokError("expected string in deplibs list");
-    M->addLibrary(Lex.getStrVal());
-  }
-
-  if (Lex.getKind() != lltok::rsquare)
-    return TokError("expected ']' at end of list");
   Lex.Lex();
-  return false;
+  if (ParseToken(lltok::equal, "expected '=' after deplibs") ||
+      ParseToken(lltok::lsquare, "expected '=' after deplibs"))
+    return true;
+
+  if (EatIfPresent(lltok::rsquare))
+    return false;
+  
+  std::string Str;
+  if (ParseStringConstant(Str)) return true;
+  M->addLibrary(Str);
+
+  while (EatIfPresent(lltok::comma)) {
+    if (ParseStringConstant(Str)) return true;
+    M->addLibrary(Str);
+  }
+
+  return ParseToken(lltok::rsquare, "expected ']' at end of list");
 }
 
 /// toplevelentity
@@ -275,15 +259,14 @@ bool LLParser::ParseUnnamedType() {
 bool LLParser::ParseNamedType() {
   std::string Name = Lex.getStrVal();
   LocTy NameLoc = Lex.getLoc();
-  
-  if (Lex.Lex() != lltok::equal)
-    return TokError("expected '=' after name");
-  if (Lex.Lex() != lltok::kw_type)
-    return TokError("expected 'type' after name");
-  Lex.Lex(); // consume 'type'.
+  Lex.Lex();  // eat LocalVar.
   
   PATypeHolder Ty(Type::VoidTy);
-  if (ParseType(Ty)) return true;
+  
+  if (ParseToken(lltok::equal, "expected '=' after name") ||
+      ParseToken(lltok::kw_type, "expected 'type' after name") ||
+      ParseType(Ty))
+    return true;
   
   // We don't allow assigning names to void type
   if (Ty == Type::VoidTy)
@@ -335,11 +318,13 @@ bool LLParser::ParseDefine() {
   Lex.Lex();
   
   Function *F;
-  if (ParseFunctionHeader(F, true)) return true;
-  
-  return ParseFunctionBody(*F);
+  return ParseFunctionHeader(F, true) ||
+         ParseFunctionBody(*F);
 }
 
+/// ParseGlobalType
+///   ::= 'constant'
+///   ::= 'global'
 bool LLParser::ParseGlobalType(bool &IsConstant) {
   if (Lex.getKind() == lltok::kw_constant)
     IsConstant = true;
@@ -641,7 +626,19 @@ bool LLParser::ParseToken(lltok::Kind T, const char *ErrMsg) {
   return false;
 }
 
-bool LLParser::ParseUnsigned(unsigned &Val) {
+/// ParseStringConstant
+///   ::= StringConstant
+bool LLParser::ParseStringConstant(std::string &Result) {
+  if (Lex.getKind() != lltok::StringConstant)
+    return TokError("expected string constant");
+  Result = Lex.getStrVal();
+  Lex.Lex();
+  return false;
+}
+
+/// ParseUInt32
+///   ::= uint32
+bool LLParser::ParseUInt32(unsigned &Val) {
   if (Lex.getKind() != lltok::APSInt || Lex.getAPSIntVal().isSigned())
     return TokError("expected integer");
   uint64_t Val64 = Lex.getAPSIntVal().getLimitedValue(0xFFFFFFFFULL+1);
@@ -658,13 +655,10 @@ bool LLParser::ParseUnsigned(unsigned &Val) {
 ///   := 'addrspace' '(' uint32 ')'
 bool LLParser::ParseOptionalAddrSpace(unsigned &AddrSpace) {
   AddrSpace = 0;
-  bool HasAddrSpace;
-  ParseOptionalToken(lltok::kw_addrspace, HasAddrSpace);
-  if (!HasAddrSpace)
+  if (!EatIfPresent(lltok::kw_addrspace))
     return false;
-  
   return ParseToken(lltok::lparen, "expected '(' in address space") ||
-         ParseUnsigned(AddrSpace) ||
+         ParseUInt32(AddrSpace) ||
          ParseToken(lltok::rparen, "expected ')' in address space");
 }  
 
@@ -793,7 +787,7 @@ bool LLParser::ParseOptionalCallingConv(unsigned &CC) {
   case lltok::kw_coldcc:         CC = CallingConv::Cold; break;
   case lltok::kw_x86_stdcallcc:  CC = CallingConv::X86_StdCall; break;
   case lltok::kw_x86_fastcallcc: CC = CallingConv::X86_FastCall; break;
-  case lltok::kw_cc:             Lex.Lex(); return ParseUnsigned(CC);
+  case lltok::kw_cc:             Lex.Lex(); return ParseUInt32(CC);
   }
   Lex.Lex();
   return false;
@@ -804,10 +798,9 @@ bool LLParser::ParseOptionalCallingConv(unsigned &CC) {
 ///   ::= 'align' 4
 bool LLParser::ParseOptionalAlignment(unsigned &Alignment) {
   Alignment = 0;
-  bool HasAlignment;
-  if (ParseOptionalToken(lltok::kw_align, HasAlignment)) return true;
-  
-  return HasAlignment && ParseUnsigned(Alignment);
+  if (!EatIfPresent(lltok::kw_align))
+    return false;
+  return ParseUInt32(Alignment);
 }
 
 /// ParseOptionalCommaAlignment
@@ -815,13 +808,10 @@ bool LLParser::ParseOptionalAlignment(unsigned &Alignment) {
 ///   ::= ',' 'align' 4
 bool LLParser::ParseOptionalCommaAlignment(unsigned &Alignment) {
   Alignment = 0;
-  bool HasComma;
-  ParseOptionalToken(lltok::comma, HasComma);
-  if (!HasComma)
+  if (!EatIfPresent(lltok::comma))
     return false;
-  
   return ParseToken(lltok::kw_align, "expected 'align'") ||
-         ParseUnsigned(Alignment);
+         ParseUInt32(Alignment);
 }
 
 /// ParseIndexList
@@ -830,10 +820,9 @@ bool LLParser::ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
   if (Lex.getKind() != lltok::comma)
     return TokError("expected ',' as start of index list");
   
-  while (Lex.getKind() == lltok::comma) {
-    Lex.Lex();
+  while (EatIfPresent(lltok::comma)) {
     unsigned Idx;
-    if (ParseUnsigned(Idx)) return true;
+    if (ParseUInt32(Idx)) return true;
     Indices.push_back(Idx);
   }
   
@@ -851,7 +840,6 @@ bool LLParser::ParseType(PATypeHolder &Result) {
   // Verify no unresolved uprefs.
   if (!UpRefs.empty())
     return Error(UpRefs.back().Loc, "invalid unresolved type up reference");
-  //  GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
   
   return false;
 }
@@ -951,12 +939,11 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
     break;
   case lltok::less: // Either vector or packed struct.
     // TypeRec ::= '<' ... '>'
-    if (Lex.Lex() == lltok::lbrace) {
-      if (ParseStructType(Result, true))
+    Lex.Lex();
+    if (Lex.getKind() == lltok::lbrace) {
+      if (ParseStructType(Result, true) ||
+          ParseToken(lltok::greater, "expected '>' at end of packed struct"))
         return true;
-      if (Lex.getKind() != lltok::greater)
-        return TokError("expected '>' at end of packed struct");
-      Lex.Lex();
     } else if (ParseArrayVectorType(Result, true))
       return true;
     break;
@@ -995,9 +982,9 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
     break;
   case lltok::backslash: {
     // TypeRec ::= '\' 4
-    unsigned Val;
     Lex.Lex();
-    if (ParseUnsigned(Val)) return true;
+    unsigned Val;
+    if (ParseUInt32(Val)) return true;
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder.
     UpRefs.push_back(UpRefRecord(Lex.getLoc(), Val, OT));
     Result = OT;
@@ -1099,42 +1086,35 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
   } else {
     LocTy TypeLoc = Lex.getLoc();
     PATypeHolder ArgTy(Type::VoidTy);
-    
-    if (ParseTypeRec(ArgTy)) return true;
-    
-    if (!ArgTy->isFirstClassType() && !isa<OpaqueType>(ArgTy))
-      return Error(TypeLoc, "invalid type for function argument");
-    
     unsigned Attrs;
-    if (ParseOptionalAttrs(Attrs, 0)) return true;
-    
     std::string Name;
+    
+    if (ParseTypeRec(ArgTy) ||
+        ParseOptionalAttrs(Attrs, 0)) return true;
+    
     if (Lex.getKind() == lltok::LocalVar ||
         Lex.getKind() == lltok::StringConstant) { // FIXME: REMOVE IN LLVM 3.0
       Name = Lex.getStrVal();
       Lex.Lex();
     }
+
+    if (!ArgTy->isFirstClassType() && !isa<OpaqueType>(ArgTy))
+      return Error(TypeLoc, "invalid type for function argument");
     
     ArgList.push_back(ArgInfo(TypeLoc, ArgTy, Attrs, Name));
     
-    while (Lex.getKind() == lltok::comma) {
-      Lex.Lex(); // eat the comma.
-      
+    while (EatIfPresent(lltok::comma)) {
       // Handle ... at end of arg list.
-      if (Lex.getKind() == lltok::dotdotdot) {
+      if (EatIfPresent(lltok::dotdotdot)) {
         isVarArg = true;
-        Lex.Lex();
         break;
       }
       
       // Otherwise must be an argument type.
       TypeLoc = Lex.getLoc();
-      if (ParseTypeRec(ArgTy)) return true;
-      if (!ArgTy->isFirstClassType() && !isa<OpaqueType>(ArgTy))
-        return Error(TypeLoc, "invalid type for function argument");
-      
-      if (ParseOptionalAttrs(Attrs, 0)) return true;
-      
+      if (ParseTypeRec(ArgTy) ||
+          ParseOptionalAttrs(Attrs, 0)) return true;
+
       if (Lex.getKind() == lltok::LocalVar ||
           Lex.getKind() == lltok::StringConstant) { // FIXME: REMOVE IN LLVM 3.0
         Name = Lex.getStrVal();
@@ -1142,15 +1122,15 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
       } else {
         Name = "";
       }
+
+      if (!ArgTy->isFirstClassType() && !isa<OpaqueType>(ArgTy))
+        return Error(TypeLoc, "invalid type for function argument");
       
       ArgList.push_back(ArgInfo(TypeLoc, ArgTy, Attrs, Name));
     }
   }
   
-  if (Lex.getKind() != lltok::rparen)
-    return TokError("expected ')' at end of function argument list");
-  Lex.Lex();
-  return false;
+  return ParseToken(lltok::rparen, "expected ')' at end of argument list");
 }
   
 /// ParseFunctionType
@@ -1196,9 +1176,8 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
   assert(Lex.getKind() == lltok::lbrace);
   Lex.Lex(); // Consume the '{'
   
-  if (Lex.getKind() == lltok::rbrace) {
+  if (EatIfPresent(lltok::rbrace)) {
     Result = StructType::get(std::vector<const Type*>(), Packed);
-    Lex.Lex();
     return false;
   }
 
@@ -1206,16 +1185,13 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
   if (ParseTypeRec(Result)) return true;
   ParamsList.push_back(Result);
   
-  while (Lex.getKind() == lltok::comma) {
-    Lex.Lex(); // eat the comma.
-    
+  while (EatIfPresent(lltok::comma)) {
     if (ParseTypeRec(Result)) return true;
     ParamsList.push_back(Result);
   }
   
-  if (Lex.getKind() != lltok::rbrace)
-    return TokError("expected '}' at end of struct");
-  Lex.Lex(); // Consume the '}'
+  if (ParseToken(lltok::rbrace, "expected '}' at end of struct"))
+    return true;
   
   std::vector<const Type*> ParamsListTy;
   for (unsigned i = 0, e = ParamsList.size(); i != e; ++i)
@@ -1236,17 +1212,18 @@ bool LLParser::ParseArrayVectorType(PATypeHolder &Result, bool isVector) {
   
   LocTy SizeLoc = Lex.getLoc();
   uint64_t Size = Lex.getAPSIntVal().getZExtValue();
-  if (Lex.Lex() != lltok::kw_x)
-    return TokError("expected 'x' after element count");
-  Lex.Lex();  // eat the 'x'.
+  Lex.Lex();
+      
+  if (ParseToken(lltok::kw_x, "expected 'x' after element count"))
+      return true;
 
   LocTy TypeLoc = Lex.getLoc();
   PATypeHolder EltTy(Type::VoidTy);
   if (ParseTypeRec(EltTy)) return true;
   
-  if (Lex.getKind() != (isVector ? lltok::greater : lltok::rsquare))
-    return TokError("expected end of sequential type");
-  Lex.Lex();
+  if (ParseToken(isVector ? lltok::greater : lltok::rsquare,
+                 "expected end of sequential type"))
+    return true;
   
   if (isVector) {
     if ((unsigned)Size != Size)
@@ -1557,8 +1534,7 @@ bool LLParser::ParseValID(ValID &ID) {
     // ValID ::= '<' ConstVector '>'         --> Vector.
     // ValID ::= '<' '{' ConstVector '}' '>' --> Packed Struct.
     Lex.Lex();
-    bool isPackedStruct;
-    ParseOptionalToken(lltok::lbrace, isPackedStruct);
+    bool isPackedStruct = EatIfPresent(lltok::lbrace);
     
     SmallVector<Constant*, 16> Elts;
     LocTy FirstEltLoc = Lex.getLoc();
@@ -1639,11 +1615,8 @@ bool LLParser::ParseValID(ValID &ID) {
     bool HasSideEffect;
     Lex.Lex();
     if (ParseOptionalToken(lltok::kw_sideeffect, HasSideEffect) ||
-        ParseToken(lltok::StringConstant, "expected asm string"))
-      return true;
-    ID.StrVal = Lex.getStrVal();
-
-    if (ParseToken(lltok::comma, "expected comma in inline asm expression") ||
+        ParseStringConstant(ID.StrVal) ||
+        ParseToken(lltok::comma, "expected comma in inline asm expression") ||
         ParseToken(lltok::StringConstant, "expected constraint string"))
       return true;
     ID.StrVal2 = Lex.getStrVal();
@@ -1881,10 +1854,8 @@ bool LLParser::ParseValID(ValID &ID) {
 bool LLParser::ParseGlobalValue(const Type *Ty, Constant *&V) {
   V = 0;
   ValID ID;
-  if (ParseValID(ID) ||
-      ConvertGlobalValIDToValue(Ty, ID, V))
-    return true;
-  return false;
+  return ParseValID(ID) ||
+         ConvertGlobalValIDToValue(Ty, ID, V);
 }
 
 /// ConvertGlobalValIDToValue - Apply a type to a ValID to get a fully resolved
@@ -1955,6 +1926,9 @@ bool LLParser::ParseGlobalTypeAndValue(Constant *&V) {
          ParseGlobalValue(Type, V);
 }    
 
+/// ParseGlobalValueVector
+///   ::= /*empty*/
+///   ::= TypeAndValue (',' TypeAndValue)*
 bool LLParser::ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts) {
   // Empty list.
   if (Lex.getKind() == lltok::rbrace ||
@@ -1967,8 +1941,7 @@ bool LLParser::ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts) {
   if (ParseGlobalTypeAndValue(C)) return true;
   Elts.push_back(C);
   
-  while (Lex.getKind() == lltok::comma) {
-    Lex.Lex();
+  while (EatIfPresent(lltok::comma)) {
     if (ParseGlobalTypeAndValue(C)) return true;
     Elts.push_back(C);
   }
@@ -2008,16 +1981,14 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
 bool LLParser::ParseValue(const Type *Ty, Value *&V, PerFunctionState &PFS) {
   V = 0;
   ValID ID;
-  if (ParseValID(ID) ||
-      ConvertValIDToValue(Ty, ID, V, PFS))
-    return true;
-  return false;
+  return ParseValID(ID) ||
+         ConvertValIDToValue(Ty, ID, V, PFS);
 }
 
 bool LLParser::ParseTypeAndValue(Value *&V, PerFunctionState &PFS) {
   PATypeHolder T(Type::VoidTy);
-  if (ParseType(T)) return true;
-  return ParseValue(T, V, PFS);
+  return ParseType(T) ||
+         ParseValue(T, V, PFS);
 }
 
 /// FunctionHeader
@@ -2069,42 +2040,31 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   
   LocTy NameLoc = Lex.getLoc();
   std::string FunctionName = Lex.getStrVal();
+  Lex.Lex();
   
-  if (Lex.Lex() != lltok::lparen)
+  if (Lex.getKind() != lltok::lparen)
     return TokError("expected '(' in function argument list");
   
   std::vector<ArgInfo> ArgList;
   bool isVarArg;
-  if (ParseArgumentList(ArgList, isVarArg)) return true;
-
   unsigned FuncAttrs;
-  if (ParseOptionalAttrs(FuncAttrs, 2)) return true;
-  
-  // Section string.
   std::string Section;
-  if (Lex.getKind() == lltok::kw_section) {
-    if (Lex.Lex() != lltok::StringConstant)
-      return TokError("expected section name");
-    Section = Lex.getStrVal();
-    Lex.Lex();
-  }
-
   unsigned Alignment;
-  if (ParseOptionalAlignment(Alignment)) return true;
+  std::string GC;
+
+  if (ParseArgumentList(ArgList, isVarArg) ||
+      ParseOptionalAttrs(FuncAttrs, 2) ||
+      (EatIfPresent(lltok::kw_section) &&
+       ParseStringConstant(Section)) ||
+      ParseOptionalAlignment(Alignment) ||
+      (EatIfPresent(lltok::kw_gc) &&
+       ParseStringConstant(GC)))
+    return true;
 
   // If the alignment was parsed as an attribute, move to the alignment field.
   if (FuncAttrs & Attribute::Alignment) {
     Alignment = Attribute::getAlignmentFromAttrs(FuncAttrs);
     FuncAttrs &= ~Attribute::Alignment;
-  }
-  
-  // Optional GC setting.
-  std::string GC;
-  if (Lex.getKind() == lltok::kw_gc) {
-    if (Lex.Lex() != lltok::StringConstant)
-      return TokError("expected gc name");
-    GC = Lex.getStrVal();
-    Lex.Lex();
   }
   
   // Okay, if we got here, the function is syntactically valid.  Convert types
@@ -2354,15 +2314,12 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_load:           return ParseLoad(Inst, PFS, false);
   case lltok::kw_store:          return ParseStore(Inst, PFS, false);
   case lltok::kw_volatile:
-    if (Lex.getKind() == lltok::kw_load) {
-      Lex.Lex();
+    if (EatIfPresent(lltok::kw_load))
       return ParseLoad(Inst, PFS, true);
-    } else if (Lex.getKind() == lltok::kw_store) {
-      Lex.Lex();
+    else if (EatIfPresent(lltok::kw_store))
       return ParseStore(Inst, PFS, true);
-    } else {
+    else
       return TokError("expected 'load' or 'store'");
-    }
   case lltok::kw_getresult:     return ParseGetResult(Inst, PFS);
   case lltok::kw_getelementptr: return ParseGetElementPtr(Inst, PFS);
   case lltok::kw_extractvalue:  return ParseExtractValue(Inst, PFS);
@@ -2440,8 +2397,7 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
     SmallVector<Value*, 8> RVs;
     RVs.push_back(RV);
     
-    while (Lex.getKind() == lltok::comma) {
-      Lex.Lex(); // Eat the comma.
+    while (EatIfPresent(lltok::comma)) {
       if (ParseTypeAndValue(RV, PFS)) return true;
       RVs.push_back(RV);
     }
@@ -2482,7 +2438,6 @@ bool LLParser::ParseBr(Instruction *&Inst, PerFunctionState &PFS) {
   
   if (!isa<BasicBlock>(Op1))
     return Error(Loc, "true destination of branch must be a basic block");
-    
   if (!isa<BasicBlock>(Op2))
     return Error(Loc2, "true destination of branch must be a basic block");
     
@@ -2853,11 +2808,10 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
   while (1) {
     PHIVals.push_back(std::make_pair(Op0, cast<BasicBlock>(Op1)));
     
-    if (Lex.getKind() != lltok::comma)
+    if (!EatIfPresent(lltok::comma))
       break;
 
-    if (ParseToken(lltok::comma, 0) ||
-        ParseToken(lltok::lsquare, "expected '[' in phi value list") ||
+    if (ParseToken(lltok::lsquare, "expected '[' in phi value list") ||
         ParseValue(Ty, Op0, PFS) ||
         ParseToken(lltok::comma, "expected ',' after insertelement value") ||
         ParseValue(Type::LabelTy, Op1, PFS) ||
@@ -2994,18 +2948,14 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
   Value *Size = 0;
   LocTy SizeLoc = 0;
   unsigned Alignment = 0;
-  bool HasComma;
-  if (ParseType(Ty) ||
-      ParseOptionalToken(lltok::comma, HasComma))
-    return true;
+  if (ParseType(Ty)) return true;
 
-  if (HasComma) {
+  if (EatIfPresent(lltok::comma)) {
     if (Lex.getKind() == lltok::kw_align) {
       if (ParseOptionalAlignment(Alignment)) return true;
-    } else {
-      if (ParseTypeAndValue(Size, SizeLoc, PFS)) return true;
-      if (ParseOptionalCommaAlignment(Alignment))
-        return true;
+    } else if (ParseTypeAndValue(Size, SizeLoc, PFS) ||
+               ParseOptionalCommaAlignment(Alignment)) {
+      return true;
     }
   }
 
@@ -3079,7 +3029,7 @@ bool LLParser::ParseGetResult(Instruction *&Inst, PerFunctionState &PFS) {
   unsigned Element;
   if (ParseTypeAndValue(Val, ValLoc, PFS) ||
       ParseToken(lltok::comma, "expected ',' after getresult operand") ||
-      ParseUnsigned(Element, EltLoc))
+      ParseUInt32(Element, EltLoc))
     return true;
   
   if (!isa<StructType>(Val->getType()) && !isa<ArrayType>(Val->getType()))
@@ -3094,17 +3044,14 @@ bool LLParser::ParseGetResult(Instruction *&Inst, PerFunctionState &PFS) {
 ///   ::= 'getelementptr' TypeAndValue (',' TypeAndValue)*
 bool LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Ptr, *Val; LocTy Loc, EltLoc;
-  if (ParseTypeAndValue(Ptr, Loc, PFS))
-    return true;
+  if (ParseTypeAndValue(Ptr, Loc, PFS)) return true;
   
   if (!isa<PointerType>(Ptr->getType()))
     return Error(Loc, "base of getelementptr must be a pointer");
   
   SmallVector<Value*, 16> Indices;
-  while (Lex.getKind() == lltok::comma) {
-    Lex.Lex();
-    if (ParseTypeAndValue(Val, EltLoc, PFS))
-      return true;
+  while (EatIfPresent(lltok::comma)) {
+    if (ParseTypeAndValue(Val, EltLoc, PFS)) return true;
     if (!isa<IntegerType>(Val->getType()))
       return Error(EltLoc, "getelementptr index must be an integer");
     Indices.push_back(Val);

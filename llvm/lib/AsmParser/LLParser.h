@@ -89,6 +89,11 @@ namespace llvm {
     
     // Helper Routines.
     bool ParseToken(lltok::Kind T, const char *ErrMsg);
+    bool EatIfPresent(lltok::Kind T) {
+      if (Lex.getKind() != T) return false;
+      Lex.Lex();
+      return true;
+    }
     bool ParseOptionalToken(lltok::Kind T, bool &Present) {
       if (Lex.getKind() != T) {
         Present = false;
@@ -98,10 +103,11 @@ namespace llvm {
       }
       return false;
     }
-    bool ParseUnsigned(unsigned &Val);
-    bool ParseUnsigned(unsigned &Val, LocTy &Loc) {
+    bool ParseStringConstant(std::string &Result);
+    bool ParseUInt32(unsigned &Val);
+    bool ParseUInt32(unsigned &Val, LocTy &Loc) {
       Loc = Lex.getLoc();
-      return ParseUnsigned(Val);
+      return ParseUInt32(Val);
     }
     bool ParseOptionalAddrSpace(unsigned &AddrSpace);
     bool ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind);
