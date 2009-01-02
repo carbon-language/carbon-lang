@@ -18,6 +18,7 @@
 #include "SPUGenInstrInfo.inc"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
@@ -266,26 +267,21 @@ bool SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   // types have no specific meaning.
 
   if (DestRC == SPU::R8CRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::ORBIr8), DestReg).addReg(SrcReg).addImm(0);
+    BuildMI(MBB, MI, get(SPU::LRr8), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::R16CRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::ORHIr16), DestReg).addReg(SrcReg).addImm(0);
+    BuildMI(MBB, MI, get(SPU::LRr16), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::R32CRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::ORIr32), DestReg).addReg(SrcReg).addImm(0);
+    BuildMI(MBB, MI, get(SPU::LRr32), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::R32FPRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::ORf32), DestReg).addReg(SrcReg)
-      .addReg(SrcReg);
+    BuildMI(MBB, MI, get(SPU::LRf32), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::R64CRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::ORr64), DestReg).addReg(SrcReg)
-      .addReg(SrcReg);
+    BuildMI(MBB, MI, get(SPU::LRr64), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::R64FPRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::ORf64), DestReg).addReg(SrcReg)
-      .addReg(SrcReg);
-  } /* else if (DestRC == SPU::GPRCRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::ORgprc), DestReg).addReg(SrcReg)
-      .addReg(SrcReg);
-  } */ else if (DestRC == SPU::VECREGRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::ORv4i32), DestReg).addReg(SrcReg)
-      .addReg(SrcReg);
+    BuildMI(MBB, MI, get(SPU::LRf64), DestReg).addReg(SrcReg);
+  } else if (DestRC == SPU::GPRCRegisterClass) {
+    BuildMI(MBB, MI, get(SPU::LRr128), DestReg).addReg(SrcReg);
+  } else if (DestRC == SPU::VECREGRegisterClass) {
+    BuildMI(MBB, MI, get(SPU::LRv16i8), DestReg).addReg(SrcReg);
   } else {
     // Attempt to copy unknown/unsupported register class!
     return false;
@@ -492,7 +488,7 @@ SPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 }
 
 //! Branch analysis
-/*
+/*!
   \note This code was kiped from PPC. There may be more branch analysis for
   CellSPU than what's currently done here.
  */
@@ -516,8 +512,10 @@ SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
     } else if (isCondBranch(LastInst)) {
       // Block ends with fall-through condbranch.
       TBB = LastInst->getOperand(1).getMBB();
+      DEBUG(cerr << "Pushing LastInst:               ");
+      DEBUG(LastInst->dump());
+      Cond.push_back(MachineOperand::CreateImm(LastInst->getOpcode()));
       Cond.push_back(LastInst->getOperand(0));
-      Cond.push_back(LastInst->getOperand(1));
       return false;
     }
     // Otherwise, don't know what this is.
@@ -535,8 +533,10 @@ SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
   // If the block ends with a conditional and unconditional branch, handle it.
   if (isCondBranch(SecondLastInst) && isUncondBranch(LastInst)) {
     TBB =  SecondLastInst->getOperand(1).getMBB();
+    DEBUG(cerr << "Pushing SecondLastInst:         ");
+    DEBUG(SecondLastInst->dump());
+    Cond.push_back(MachineOperand::CreateImm(SecondLastInst->getOpcode()));
     Cond.push_back(SecondLastInst->getOperand(0));
-    Cond.push_back(SecondLastInst->getOperand(1));
     FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
@@ -564,16 +564,20 @@ SPUInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
     return 0;
 
   // Remove the first branch.
+  DEBUG(cerr << "Removing branch:                ");
+  DEBUG(I->dump());
   I->eraseFromParent();
   I = MBB.end();
   if (I == MBB.begin())
     return 1;
 
   --I;
-  if (isCondBranch(I))
+  if (!(isCondBranch(I) || isUncondBranch(I)))
     return 1;
 
   // Remove the second branch.
+  DEBUG(cerr << "Removing second branch:         ");
+  DEBUG(I->dump());
   I->eraseFromParent();
   return 2;
 }
@@ -589,28 +593,36 @@ SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
   // One-way branch.
   if (FBB == 0) {
-    if (Cond.empty())   // Unconditional branch
-      BuildMI(&MBB, get(SPU::BR)).addMBB(TBB);
-    else {              // Conditional branch
-      /* BuildMI(&MBB, get(SPU::BRNZ))
-        .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB); */
-      cerr << "SPUInstrInfo::InsertBranch conditional branch logic needed\n";
-      abort();
+    if (Cond.empty()) {
+      // Unconditional branch
+      MachineInstrBuilder MIB = BuildMI(&MBB, get(SPU::BR));
+      MIB.addMBB(TBB);
+
+      DEBUG(cerr << "Inserted one-way uncond branch: ");
+      DEBUG((*MIB).dump());
+    } else {
+      // Conditional branch
+      MachineInstrBuilder  MIB = BuildMI(&MBB, get(Cond[0].getImm()));
+      MIB.addReg(Cond[1].getReg()).addMBB(TBB);
+
+      DEBUG(cerr << "Inserted one-way cond branch:   ");
+      DEBUG((*MIB).dump());
     }
     return 1;
+  } else {
+    MachineInstrBuilder MIB = BuildMI(&MBB, get(Cond[0].getImm()));
+    MachineInstrBuilder MIB2 = BuildMI(&MBB, get(SPU::BR));
+
+    // Two-way Conditional Branch.
+    MIB.addReg(Cond[1].getReg()).addMBB(TBB);
+    MIB2.addMBB(FBB);
+
+    DEBUG(cerr << "Inserted conditional branch:    ");
+    DEBUG((*MIB).dump());
+    DEBUG(cerr << "part 2: ");
+    DEBUG((*MIB2).dump());
+   return 2;
   }
-
-  // Two-way Conditional Branch.
-#if 0
-  BuildMI(&MBB, get(SPU::BRNZ))
-    .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
-  BuildMI(&MBB, get(SPU::BR)).addMBB(FBB);
-#else
-  cerr << "SPUInstrInfo::InsertBranch conditional branch logic needed\n";
-  abort();
-#endif
-
-  return 2;
 }
 
 
