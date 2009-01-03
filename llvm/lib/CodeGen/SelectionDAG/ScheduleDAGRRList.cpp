@@ -130,7 +130,6 @@ private:
   bool DelayForLiveRegsBottomUp(SUnit*, SmallVector<unsigned, 4>&);
   void ListScheduleTopDown();
   void ListScheduleBottomUp();
-  void CommuteNodesToReducePressure();
 
 
   /// CreateNewSUnit - Creates a new SUnit and returns a pointer to it.
