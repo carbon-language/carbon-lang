@@ -17,7 +17,6 @@
 
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
   /// HazardRecognizer - This determines whether or not an instruction can be
@@ -75,8 +74,6 @@ namespace llvm {
   ///
   class ScheduleDAGSDNodes : public ScheduleDAG {
   public:
-    SmallSet<SDNode*, 16> CommuteSet;     // Nodes that should be commuted.
-
     ScheduleDAGSDNodes(SelectionDAG *dag, MachineBasicBlock *bb,
                        const TargetMachine &tm);
 

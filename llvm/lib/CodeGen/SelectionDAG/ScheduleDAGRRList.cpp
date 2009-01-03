@@ -186,60 +186,6 @@ void ScheduleDAGRRList::Schedule() {
     ListScheduleTopDown();
   
   AvailableQueue->releaseState();
-
-  CommuteNodesToReducePressure();
-}
-
-/// CommuteNodesToReducePressure - If a node is two-address and commutable, and
-/// it is not the last use of its first operand, add it to the CommuteSet if
-/// possible. It will be commuted when it is translated to a MI.
-void ScheduleDAGRRList::CommuteNodesToReducePressure() {
-  SmallPtrSet<SUnit*, 4> OperandSeen;
-  for (unsigned i = Sequence.size(); i != 0; ) {
-    --i;
-    SUnit *SU = Sequence[i];
-    if (!SU || !SU->getNode()) continue;
-    if (SU->isCommutable) {
-      unsigned Opc = SU->getNode()->getMachineOpcode();
-      const TargetInstrDesc &TID = TII->get(Opc);
-      unsigned NumRes = TID.getNumDefs();
-      unsigned NumOps = TID.getNumOperands() - NumRes;
-      for (unsigned j = 0; j != NumOps; ++j) {
-        if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) == -1)
-          continue;
-
-        SDNode *OpN = SU->getNode()->getOperand(j).getNode();
-        SUnit *OpSU = isPassiveNode(OpN) ? NULL : &SUnits[OpN->getNodeId()];
-        if (OpSU && OperandSeen.count(OpSU) == 1) {
-          // Ok, so SU is not the last use of OpSU, but SU is two-address so
-          // it will clobber OpSU. Try to commute SU if no other source operands
-          // are live below.
-          bool DoCommute = true;
-          for (unsigned k = 0; k < NumOps; ++k) {
-            if (k != j) {
-              OpN = SU->getNode()->getOperand(k).getNode();
-              OpSU = isPassiveNode(OpN) ? NULL : &SUnits[OpN->getNodeId()];
-              if (OpSU && OperandSeen.count(OpSU) == 1) {
-                DoCommute = false;
-                break;
-              }
-            }
-          }
-          if (DoCommute)
-            CommuteSet.insert(SU->getNode());
-        }
-
-        // Only look at the first use&def node for now.
-        break;
-      }
-    }
-
-    for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-         I != E; ++I) {
-      if (!I->isCtrl())
-        OperandSeen.insert(I->getSUnit()->OrigNode);
-    }
-  }
 }
 
 //===----------------------------------------------------------------------===//

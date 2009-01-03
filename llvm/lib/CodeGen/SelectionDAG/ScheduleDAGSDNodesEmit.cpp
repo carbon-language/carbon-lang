@@ -28,8 +28,6 @@
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
-STATISTIC(NumCommutes,   "Number of instructions commuted");
-
 /// getInstrOperandRegClass - Return register class of the operand of an
 /// instruction of the specified TargetInstrDesc.
 static const TargetRegisterClass*
@@ -499,21 +497,6 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone,
     // Emit all of the memory operands of this instruction
     for (unsigned i = NodeOperands; i != MemOperandsEnd; ++i)
       AddMemOperand(MI, cast<MemOperandSDNode>(Node->getOperand(i))->MO);
-
-    // Commute node if it has been determined to be profitable.
-    if (CommuteSet.count(Node)) {
-      MachineInstr *NewMI = TII->commuteInstruction(MI);
-      if (NewMI == 0)
-        DOUT << "Sched: COMMUTING FAILED!\n";
-      else {
-        DOUT << "Sched: COMMUTED TO: " << *NewMI;
-        if (MI != NewMI) {
-          MF->DeleteMachineInstr(MI);
-          MI = NewMI;
-        }
-        ++NumCommutes;
-      }
-    }
 
     if (II.usesCustomDAGSchedInsertionHook())
       // Insert this instruction into the basic block using a target
