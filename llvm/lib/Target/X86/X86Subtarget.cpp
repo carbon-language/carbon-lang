@@ -204,6 +204,7 @@ static const char *GetCurrentX86CPU() {
   unsigned Family = 0;
   unsigned Model  = 0;
   DetectFamilyModel(EAX, Family, Model);
+  bool HasSSE42 = (ECX >> 19) & 0x1;
 
   X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
@@ -254,7 +255,7 @@ static const char *GetCurrentX86CPU() {
         case 28:
           // Intel Atom, and Core i7 both have this model.
           // Atom has SSSE3, Core i7 has SSE4.2
-          return "core2";
+          return (HasSSE42) ? "corei7" : "atom";
         default:
           return (Em64T) ? "x86-64" : "pentium4";
         }
