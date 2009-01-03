@@ -18,7 +18,6 @@ include $(LEVEL)/Makefile.config
 LINK_LIBS_IN_SHARED = 1
 ifeq ($(OS),Darwin)
   SHARED_LIBRARY = 1
-  BUILD_ARCHIVE = 0
   DONT_BUILD_RELINKED = 1
 else
   BUILD_ARCHIVE = 1
@@ -49,5 +48,4 @@ ifeq ($(OS),Darwin)
                             -Wl,-install_name \
                             -Wl,"@executable_path/../lib/lib$(LIBRARYNAME)$(SHLIBEXT)"
     endif
-      
 endif
