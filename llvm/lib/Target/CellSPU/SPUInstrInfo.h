@@ -23,6 +23,19 @@ namespace llvm {
   class SPUInstrInfo : public TargetInstrInfoImpl {
     SPUTargetMachine &TM;
     const SPURegisterInfo RI;
+  protected:
+    virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+                                            MachineInstr* MI,
+                                            const SmallVectorImpl<unsigned> &Ops,
+                                            int FrameIndex) const;
+
+    virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+                                                MachineInstr* MI,
+                                                const SmallVectorImpl<unsigned> &Ops,
+                                                MachineInstr* LoadMI) const {
+      return 0;
+    }
+
   public:
     explicit SPUInstrInfo(SPUTargetMachine &tm);
 
@@ -34,7 +47,7 @@ namespace llvm {
 
     /// getPointerRegClass - Return the register class to use to hold pointers.
     /// This is used for addressing modes.
-    virtual const TargetRegisterClass *getPointerRegClass() const;  
+    virtual const TargetRegisterClass *getPointerRegClass() const;
 
     // Return true if the instruction is a register to register move and
     // leave the source and dest operands in the passed parameters.
@@ -47,13 +60,13 @@ namespace llvm {
                                  int &FrameIndex) const;
     unsigned isStoreToStackSlot(const MachineInstr *MI,
                                 int &FrameIndex) const;
-    
+
     virtual bool copyRegToReg(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MI,
                               unsigned DestReg, unsigned SrcReg,
                               const TargetRegisterClass *DestRC,
                               const TargetRegisterClass *SrcRC) const;
-    
+
     //! Store a register to a stack slot, based on its register class.
     virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MBBI,
@@ -77,27 +90,25 @@ namespace llvm {
                                                          SmallVectorImpl<MachineOperand> &Addr,
                                                          const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const;
-    
-    //! Fold spills into load/store instructions
-    virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                                MachineInstr* MI,
-                                                const SmallVectorImpl<unsigned> &Ops,
-                                                int FrameIndex) const;
 
-    //! Fold any load/store to an operand
-    virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                                MachineInstr* MI,
-                                                const SmallVectorImpl<unsigned> &Ops,
-                                                MachineInstr* LoadMI) const {
-      return 0;
-    }
+    //! Return true if the specified load or store can be folded
+    virtual
+    bool canFoldMemoryOperand(const MachineInstr *MI,
+                              const SmallVectorImpl<unsigned> &Ops) const;
+
+    //! Return true if the specified block does not fall through
+    virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
+
+    //! Reverses a branch's condition, returning false on success.
+    virtual
+    bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 
     virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
 			       MachineBasicBlock *&FBB,
 			       SmallVectorImpl<MachineOperand> &Cond) const;
-    
+
     virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
-    
+
     virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 			      MachineBasicBlock *FBB,
 			      const SmallVectorImpl<MachineOperand> &Cond) const;

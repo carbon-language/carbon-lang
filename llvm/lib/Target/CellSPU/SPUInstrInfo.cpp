@@ -32,6 +32,7 @@ namespace {
 	    || opc == SPU::BI);
   }
 
+  //! Predicate for a conditional branch instruction
   inline bool isCondBranch(const MachineInstr *I) {
     unsigned opc = I->getOpcode();
 
@@ -50,9 +51,7 @@ SPUInstrInfo::SPUInstrInfo(SPUTargetMachine &tm)
   : TargetInstrInfoImpl(SPUInsts, sizeof(SPUInsts)/sizeof(SPUInsts[0])),
     TM(tm),
     RI(*TM.getSubtargetImpl(), *this)
-{
-  /* NOP */
-}
+{ /* NOP */ }
 
 /// getPointerRegClass - Return the register class to use to hold pointers.
 /// This is used for addressing modes.
@@ -135,7 +134,7 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
     assert(MI.getNumOperands() == 2 &&
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&
-           "invalid SPU OR<type>_<vec> instruction!");
+           "invalid SPU OR<type>_<vec> or LR instruction!");
     if (MI.getOperand(0).getReg() == MI.getOperand(1).getReg()) {
       sourceReg = MI.getOperand(0).getReg();
       destReg = MI.getOperand(0).getReg();
@@ -146,6 +145,9 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORv16i8:
   case SPU::ORv8i16:
   case SPU::ORv4i32:
+  case SPU::ORv2i64:
+  case SPU::ORr8:
+  case SPU::ORr16:
   case SPU::ORr32:
   case SPU::ORr64:
   case SPU::ORf32:
@@ -182,29 +184,12 @@ SPUInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   case SPU::LQDr16: {
     const MachineOperand MOp1 = MI->getOperand(1);
     const MachineOperand MOp2 = MI->getOperand(2);
-    if (MOp1.isImm()
-	&& (MOp2.isFI()
-	    || (MOp2.isReg() && MOp2.getReg() == SPU::R1))) {
-      if (MOp2.isFI())
-	FrameIndex = MOp2.getIndex();
-      else
-	FrameIndex = MOp1.getImm() / SPUFrameInfo::stackSlotSize();
+    if (MOp1.isImm() && MOp2.isFI()) {
+      FrameIndex = MOp2.getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
   }
-  case SPU::LQXv4i32:
-  case SPU::LQXr128:
-  case SPU::LQXr64:
-  case SPU::LQXr32:
-  case SPU::LQXr16:
-    if (MI->getOperand(1).isReg() && MI->getOperand(2).isReg()
-	&& (MI->getOperand(2).getReg() == SPU::R1
-	    || MI->getOperand(1).getReg() == SPU::R1)) {
-      FrameIndex = MI->getOperand(2).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-    break;
   }
   return 0;
 }
@@ -232,25 +217,6 @@ SPUInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
     }
     break;
   }
-#if 0
-    case SPU::STQXv16i8:
-  case SPU::STQXv8i16:
-  case SPU::STQXv4i32:
-  case SPU::STQXv4f32:
-  case SPU::STQXv2f64:
-  case SPU::STQXr128:
-  case SPU::STQXr64:
-  case SPU::STQXr32:
-  case SPU::STQXr16:
-  case SPU::STQXr8:
-    if (MI->getOperand(1).isReg() && MI->getOperand(2).isReg()
-	&& (MI->getOperand(2).getReg() == SPU::R1
-	    || MI->getOperand(1).getReg() == SPU::R1)) {
-      FrameIndex = MI->getOperand(2).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-    break;
-#endif
   }
   return 0;
 }
@@ -445,6 +411,34 @@ void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   }
 }
 
+//! Return true if the specified load or store can be folded
+bool
+SPUInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
+                                   const SmallVectorImpl<unsigned> &Ops) const {
+  if (Ops.size() != 1) return false;
+
+  // Make sure this is a reg-reg copy.
+  unsigned Opc = MI->getOpcode();
+
+  switch (Opc) {
+  case SPU::ORv16i8:
+  case SPU::ORv8i16:
+  case SPU::ORv4i32:
+  case SPU::ORv2i64:
+  case SPU::ORr8:
+  case SPU::ORr16:
+  case SPU::ORr32:
+  case SPU::ORr64:
+  case SPU::ORf32:
+  case SPU::ORf64:
+    if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg())
+      return true;
+    break;
+  }
+
+  return false;
+}
+
 /// foldMemoryOperand - SPU, like PPC, can only fold spills into
 /// copy instructions, turning them into load/store instructions.
 MachineInstr *
@@ -453,38 +447,46 @@ SPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                     const SmallVectorImpl<unsigned> &Ops,
                                     int FrameIndex) const
 {
-#if SOMEDAY_SCOTT_LOOKS_AT_ME_AGAIN
-  if (Ops.size() != 1) return NULL;
+  if (Ops.size() != 1) return 0;
 
   unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
   MachineInstr *NewMI = 0;
 
-  if ((Opc == SPU::ORr32
-       || Opc == SPU::ORv4i32)
-       && MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
+  switch (Opc) {
+  case SPU::ORv16i8:
+  case SPU::ORv8i16:
+  case SPU::ORv4i32:
+  case SPU::ORv2i64:
+  case SPU::ORr8:
+  case SPU::ORr16:
+  case SPU::ORr32:
+  case SPU::ORr64:
+  case SPU::ORf32:
+  case SPU::ORf64:
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
       if (FrameIndex < SPUFrameInfo::maxFrameOffset()) {
-        NewMI = addFrameReference(BuildMI(MF, TII.get(SPU::STQDr32))
-                                  .addReg(InReg, false, false, isKill),
-                                  FrameIndex);
+        MachineInstrBuilder MIB = BuildMI(MF, get(SPU::STQDr32));
+
+        MIB.addReg(InReg, false, false, isKill);
+        NewMI = addFrameReference(MIB, FrameIndex);
       }
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
+      MachineInstrBuilder MIB = BuildMI(MF, get(Opc));
+
+      MIB.addReg(OutReg, true, false, false, isDead);
       Opc = (FrameIndex < SPUFrameInfo::maxFrameOffset())
         ? SPU::STQDr32 : SPU::STQXr32;
-      NewMI = addFrameReference(BuildMI(MF, TII.get(Opc))
-                       .addReg(OutReg, true, false, false, isDead), FrameIndex);
-    }
+      NewMI = addFrameReference(MIB, FrameIndex);
+    break;
+  }
   }
 
   return NewMI;
-#else
-  return 0;
-#endif
 }
 
 //! Branch analysis
@@ -625,4 +627,38 @@ SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   }
 }
 
+bool
+SPUInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
+  return (!MBB.empty() && isUncondBranch(&MBB.back()));
+}
+//! Reverses a branch's condition, returning false on success.
+bool
+SPUInstrInfo::ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond)
+  const {
+  // Pretty brainless way of inverting the condition, but it works, considering
+  // there are only two conditions...
+  static struct {
+    unsigned Opc;               //! The incoming opcode
+    unsigned RevCondOpc;        //! The reversed condition opcode
+  } revconds[] = {
+    { SPU::BRNZr32, SPU::BRZr32 },
+    { SPU::BRNZv4i32, SPU::BRZv4i32 },
+    { SPU::BRZr32, SPU::BRNZr32 },
+    { SPU::BRZv4i32, SPU::BRNZv4i32 },
+    { SPU::BRHNZr16, SPU::BRHZr16 },
+    { SPU::BRHNZv8i16, SPU::BRHZv8i16 },
+    { SPU::BRHZr16, SPU::BRHNZr16 },
+    { SPU::BRHZv8i16, SPU::BRHNZv8i16 }
+  };
 
+  unsigned Opc = unsigned(Cond[0].getImm());
+  // Pretty dull mapping between the two conditions that SPU can generate:
+  for (int i = sizeof(revconds)/sizeof(revconds[0]); i >= 0; --i) {
+    if (revconds[i].Opc == Opc) {
+      Cond[0].setImm(revconds[i].RevCondOpc);
+      return false;
+    }
+  }
+
+  return true;
+}

@@ -147,10 +147,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     }
   }
 
-  // Custom lower BRCOND for i8 to "promote" the result to whatever the result
-  // operand happens to be:
-  setOperationAction(ISD::BRCOND, MVT::Other, Custom);
-
   // Expand the jumptable branches
   setOperationAction(ISD::BR_JT,        MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,        MVT::Other, Expand);
@@ -901,33 +897,6 @@ LowerConstantFP(SDValue Op, SelectionDAG &DAG) {
   }
 
   return SDValue();
-}
-
-static SDValue
-LowerBRCOND(SDValue Op, SelectionDAG &DAG, const TargetLowering &TLI) {
-  SDValue Cond = Op.getOperand(1);
-  MVT CondVT = Cond.getValueType();
-  unsigned CondOpc;
-
-  if (CondVT == MVT::i8) {
-    SDValue CondOp0 = Cond.getOperand(0);
-    if (Cond.getOpcode() == ISD::TRUNCATE) {
-      // Use the truncate's value type and ANY_EXTEND the condition (DAGcombine
-      // will then remove the truncate)
-      CondVT = CondOp0.getValueType();
-      CondOpc = ISD::ANY_EXTEND;
-    } else {
-      CondVT = MVT::i32;                // default to something reasonable
-      CondOpc = ISD::ZERO_EXTEND;
-    }
-
-    Cond = DAG.getNode(CondOpc, CondVT, Op.getOperand(1));
-
-    return DAG.getNode(ISD::BRCOND, Op.getValueType(),
-                       Op.getOperand(0), Cond, Op.getOperand(2));
-  }
-
-  return SDValue(); // Unchanged
 }
 
 static SDValue
@@ -2526,9 +2495,8 @@ static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
   MVT Op0VT = Op0.getValueType();
   MVT Op0VecVT = MVT::getVectorVT(Op0VT, (128 / Op0VT.getSizeInBits()));
 
-  // Create shuffle mask
   if (Op0VT.getSimpleVT() == MVT::i128 && simpleVT == MVT::i64) {
-    // least significant doubleword of quadword
+    // Create shuffle mask, least significant doubleword of quadword
     unsigned maskHigh = 0x08090a0b;
     unsigned maskLow = 0x0c0d0e0f;
     // Use a shuffle to perform the truncation
@@ -2587,8 +2555,6 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     return LowerConstant(Op, DAG);
   case ISD::ConstantFP:
     return LowerConstantFP(Op, DAG);
-  case ISD::BRCOND:
-    return LowerBRCOND(Op, DAG, *this);
   case ISD::FORMAL_ARGUMENTS:
     return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex);
   case ISD::CALL:
