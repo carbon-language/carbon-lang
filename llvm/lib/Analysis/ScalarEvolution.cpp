@@ -2905,11 +2905,6 @@ bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
   return false;
 }
 
-static bool isNegative(SCEVHandle X) {
-  if (SCEVConstant *C = dyn_cast<SCEVConstant>(X))
-    return C->getValue()->getValue().isNegative();
-}
-
 /// potentialInfiniteLoop - Test whether the loop might jump over the exit value
 /// due to wrapping around 2^n.
 bool ScalarEvolutionsImpl::potentialInfiniteLoop(SCEV *Stride, SCEV *RHS,
@@ -2967,7 +2962,8 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
     // the stride is negative, we're not counting how many times 'less-than' is
     // true as we approach it, we're counting how far away we are from wrapping
     // around the backside.
-    if (isSigned && isNegative(Stride))
+    if (isSigned &&
+        cast<SCEVConstant>(Stride)->getValue()->getValue().isNegative())
       return UnknownValue;
 
     // We know the LHS is of the form {n,+,s} and the RHS is some loop-invariant
