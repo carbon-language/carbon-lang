@@ -998,7 +998,8 @@ all-local:: $(LibName.A)
 $(LibName.A): $(ObjectsO) $(LibDir)/.dir
 	$(Echo) Building $(BuildMode) Archive Library $(notdir $@)
 	-$(Verb) $(RM) -f $@
-	$(Verb) $(Archive) $@ $(ObjectsO) && $(Ranlib) $@
+	$(Verb) $(Archive) $@ $(ObjectsO)
+	$(Verb) $(Ranlib) $@
 
 clean-local::
 ifneq ($(strip $(LibName.A)),)
