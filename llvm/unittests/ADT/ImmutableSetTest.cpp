@@ -1,4 +1,4 @@
-// llvm/unittest/ADT/ImmutableSetTest.cpp - ImmutableSet unit tests -*- C++ -*-//
+//===----------- ImmutableSetTest.cpp - ImmutableSet unit tests ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,7 +14,24 @@ using namespace llvm;
 
 namespace {
 class ImmutableSetTest : public testing::Test {
+protected:
+  // for callback tests
+  static char buffer[10];
+
+  struct MyIter {
+    int counter;
+    char *ptr;
+
+    MyIter() : counter(0), ptr(buffer) {
+      for (unsigned i=0; i<sizeof(buffer);++i) buffer[i]='\0';
+    }
+    void operator()(char c) {
+      *ptr++ = c;
+      ++counter;
+    }
+  };
 };
+char ImmutableSetTest::buffer[10];
 
 
 TEST_F(ImmutableSetTest, EmptyIntSetTest) {
@@ -120,17 +137,6 @@ TEST_F(ImmutableSetTest, RemoveIntSetTest) {
   EXPECT_TRUE(S4.contains(5));
 }
 
-
-static char *ptr; // tmp var
-struct MyIter {
-  int counter;
-  MyIter() : counter(0) {}
-  void operator()(char c) {
-    *ptr++ = c;
-    ++counter;
-  }
-};
-
 TEST_F(ImmutableSetTest, CallbackCharSetTest) {
   ImmutableSet<char>::Factory f;
   ImmutableSet<char> S = f.GetEmptySet();
@@ -138,16 +144,9 @@ TEST_F(ImmutableSetTest, CallbackCharSetTest) {
   ImmutableSet<char> S2 = f.Add(f.Add(f.Add(S, 'a'), 'e'), 'i');
   ImmutableSet<char> S3 = f.Add(f.Add(S2, 'o'), 'u');
 
-  char buffer[6] = {0};
-  ptr = buffer;
   S3.foreach<MyIter>();
 
-  ASSERT_EQ(buffer[0], 'a');
-  ASSERT_EQ(buffer[1], 'e');
-  ASSERT_EQ(buffer[2], 'i');
-  ASSERT_EQ(buffer[3], 'o');
-  ASSERT_EQ(buffer[4], 'u');
-  ASSERT_EQ(buffer[5], 0);
+  ASSERT_STREQ("aeiou", buffer);
 }
 
 TEST_F(ImmutableSetTest, Callback2CharSetTest) {
@@ -157,28 +156,20 @@ TEST_F(ImmutableSetTest, Callback2CharSetTest) {
   ImmutableSet<char> S2 = f.Add(f.Add(f.Add(S, 'b'), 'c'), 'd');
   ImmutableSet<char> S3 = f.Add(f.Add(f.Add(S2, 'f'), 'g'), 'h');
 
-  char buffer[7] = {0};
-  ptr = buffer;
   MyIter obj;
   S3.foreach<MyIter>(obj);
+  ASSERT_STREQ("bcdfgh", buffer);
+  ASSERT_EQ(6, obj.counter);
 
-  ASSERT_EQ(buffer[0], 'b');
-  ASSERT_EQ(buffer[1], 'c');
-  ASSERT_EQ(buffer[2], 'd');
-  ASSERT_EQ(buffer[3], 'f');
-  ASSERT_EQ(buffer[4], 'g');
-  ASSERT_EQ(buffer[5], 'h');
-  ASSERT_EQ(buffer[6], 0);
+  MyIter obj2;
+  S2.foreach<MyIter>(obj2);
+  ASSERT_STREQ("bcd", buffer);
+  ASSERT_EQ(3, obj2.counter);
 
-  ASSERT_EQ(obj.counter, 6);
-
-  ptr = buffer;
-  S2.foreach<MyIter>(obj);
-  ASSERT_EQ(obj.counter, 6+3);
-
-  ptr = buffer;
+  MyIter obj3;
   S.foreach<MyIter>(obj);
-  ASSERT_EQ(obj.counter, 6+3+0);
+  ASSERT_STREQ("", buffer);
+  ASSERT_EQ(0, obj3.counter);
 }
 
 TEST_F(ImmutableSetTest, IterLongSetTest) {
@@ -190,21 +181,21 @@ TEST_F(ImmutableSetTest, IterLongSetTest) {
 
   int i = 0;
   for (ImmutableSet<long>::iterator I = S.begin(), E = S.end(); I != E; ++I) {
-    ASSERT_EQ(*I, i++);
+    ASSERT_EQ(i++, *I);
   }
-  ASSERT_EQ(i, 0);
+  ASSERT_EQ(0, i);
 
   i = 0;
   for (ImmutableSet<long>::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
-    ASSERT_EQ(*I, i++);
+    ASSERT_EQ(i++, *I);
   }
-  ASSERT_EQ(i, 3);
+  ASSERT_EQ(3, i);
 
   i = 0;
   for (ImmutableSet<long>::iterator I = S3.begin(), E = S3.end(); I != E; I++) {
-    ASSERT_EQ(*I, i++);
+    ASSERT_EQ(i++, *I);
   }
-  ASSERT_EQ(i, 6);
+  ASSERT_EQ(6, i);
 }
 
 }
