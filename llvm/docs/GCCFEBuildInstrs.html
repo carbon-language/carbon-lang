@@ -191,11 +191,13 @@ cd llvm-gcc-4.2-objects
   <li><p>Configure llvm-gcc (here it is configured to install into <tt>/usr/local</tt>).
       The <tt>--enable-checking</tt> flag turns on sanity checks inside the compiler.
       If you omit it then LLVM should be built with <tt>make ENABLE_OPTIMIZED=1</tt>.
-      Additional languages can be appended to the --enable-languages switch,
+      Additional languages can be appended to the <tt>--enable-languages</tt> switch,
       for example <tt>--enable-languages=ada,c,c++</tt>.</p>
 
 <pre class="doc_code">
-../llvm-gcc-4.2/configure --prefix=<b>/usr/local</b> --enable-languages=ada,c --enable-checking --enable-llvm=$PWD/../llvm-objects --disable-bootstrap --disable-multilib
+../llvm-gcc-4.2/configure --prefix=<b>/usr/local</b> --enable-languages=ada,c \
+                          --enable-checking --enable-llvm=$PWD/../llvm-objects \
+			  --disable-bootstrap --disable-multilib
 </pre>
 
       <p>If you have a multi-compiler setup, then you can configure like this:</p>
@@ -203,7 +205,9 @@ cd llvm-gcc-4.2-objects
 <pre class="doc_code">
 export CC=<b>PATH_TO_C_AND_ADA_COMPILER</b>
 export CXX=<b>PATH_TO_C++_COMPILER</b>
-../llvm-gcc-4.2/configure --prefix=<b>/usr/local</b> --enable-languages=ada,c --enable-checking --enable-llvm=$PWD/../llvm-objects --disable-bootstrap --disable-multilib
+../llvm-gcc-4.2/configure --prefix=<b>/usr/local</b> --enable-languages=ada,c \
+                          --enable-checking --enable-llvm=$PWD/../llvm-objects \
+			  --disable-bootstrap --disable-multilib
 </pre>
       </li>
 
