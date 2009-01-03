@@ -3277,6 +3277,8 @@ SDValue DAGCombiner::GetDemandedBits(SDValue V, const APInt &Mask) {
     if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(V.getOperand(1))) {
       // See if we can recursively simplify the LHS.
       unsigned Amt = RHSC->getZExtValue();
+      // Watch out for shift count overflow though.
+      if (Amt >= Mask.getBitWidth()) break;
       APInt NewMask = Mask << Amt;
       SDValue SimplifyLHS = GetDemandedBits(V.getOperand(0), NewMask);
       if (SimplifyLHS.getNode()) {
