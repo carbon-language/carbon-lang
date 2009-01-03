@@ -307,20 +307,6 @@ bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
       // External node - skip it;
       continue;
 
-    // If the function is readonly and doesn't return any value, we know that
-    // the pointer value is not captured.  Mark all of its pointer arguments
-    // nocapture.
-    if (F->onlyReadsMemory() && F->getReturnType() == Type::VoidTy) {
-      for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end();
-           A != E; ++A)
-        if (isa<PointerType>(A->getType()) && !A->hasNoCaptureAttr()) {
-          A->addAttr(Attribute::NoCapture);
-          ++NumNoCapture;
-          Changed = true;
-        }
-      continue;
-    }
-
     // Definitions with weak linkage may be overridden at linktime with
     // something that writes memory, so treat them like declarations.
     if (F->isDeclaration() || F->mayBeOverridden())
