@@ -11,10 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "subtarget"
 #include "X86Subtarget.h"
 #include "X86GenSubtarget.inc"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
@@ -236,15 +238,23 @@ static const char *GetCurrentX86CPU() {
         case 9:
         case 13: return "pentium-m";
         case 14: return "yonah";
-        case 15: return "core2";
-        case 23: return "penryn";
+        case 15:
+        case 22: // Celeron M 540
+          return "core2";
+        case 23: // 45nm: Penryn , Wolfdale, Yorkfield (XE)
+          return "penryn";
         default: return "i686";
         }
       case 15: {
         switch (Model) {
         case 3:  
         case 4:
+        case 6: // same as 4, but 65nm
           return (Em64T) ? "nocona" : "prescott";
+        case 28:
+          // Intel Atom, and Core i7 both have this model.
+          // Atom has SSSE3, Core i7 has SSE4.2
+          return "core2";
         default:
           return (Em64T) ? "x86-64" : "pentium4";
         }
@@ -324,6 +334,9 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     if (X86SSELevel < SSE2)
       X86SSELevel = SSE2;
   }
+  DOUT << "Subtarget features: SSELevel " << X86SSELevel
+       << ", 3DNowLevel " << X863DNowLevel
+       << ", 64bit " << HasX86_64 << "\n";
 
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
