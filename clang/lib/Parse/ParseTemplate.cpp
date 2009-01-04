@@ -175,21 +175,20 @@ Parser::ParseTemplateParameterList(unsigned Depth,
 ///         'template' '<' template-parameter-list '>' 'class' identifier[opt] = id-expression
 Parser::DeclTy *
 Parser::ParseTemplateParameter(unsigned Depth, unsigned Position) {
-  TryAnnotateCXXScopeToken();
-
-  if(Tok.is(tok::kw_class) 
-     || (Tok.is(tok::kw_typename) && 
+  if(Tok.is(tok::kw_class) ||
+     (Tok.is(tok::kw_typename) && 
+         // FIXME: Next token has not been annotated!
 	 NextToken().isNot(tok::annot_qualtypename))) {
     return ParseTypeParameter(Depth, Position);
-  } else if(Tok.is(tok::kw_template)) {
-    return ParseTemplateTemplateParameter(Depth, Position);
-  } else {
-    // If it's none of the above, then it must be a parameter declaration.
-    // NOTE: This will pick up errors in the closure of the template parameter
-    // list (e.g., template < ; Check here to implement >> style closures.
-    return ParseNonTypeTemplateParameter(Depth, Position);
   }
-  return 0;
+  
+  if(Tok.is(tok::kw_template))
+    return ParseTemplateTemplateParameter(Depth, Position);
+
+  // If it's none of the above, then it must be a parameter declaration.
+  // NOTE: This will pick up errors in the closure of the template parameter
+  // list (e.g., template < ; Check here to implement >> style closures.
+  return ParseNonTypeTemplateParameter(Depth, Position);
 }
 
 /// ParseTypeParameter - Parse a template type parameter (C++ [temp.param]).
