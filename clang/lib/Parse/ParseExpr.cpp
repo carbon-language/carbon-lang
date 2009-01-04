@@ -411,16 +411,6 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 ///                   '::'[opt] 'delete' '[' ']' cast-expression
 ///
 Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
-  if (getLang().CPlusPlus) {
-    // Annotate typenames and C++ scope specifiers.
-    // Used only in C++, where the typename can be considered as a functional
-    // style cast ("int(1)").
-    // In C we don't expect identifiers to be treated as typenames; if it's a
-    // typedef name, let it be handled as an identifier and
-    // Actions.ActOnIdentifierExpr will emit the proper diagnostic.
-    TryAnnotateTypeOrScopeToken();
-  }
-
   OwningExprResult Res(Actions);
   tok::TokenKind SavedKind = Tok.getKind();
   
@@ -486,6 +476,14 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::identifier: {      // primary-expression: identifier
                                // unqualified-id: identifier
                                // constant: enumeration-constant
+    // Turn a potentially qualified name into a annot_qualtypename or
+    // annot_cxxscope if it would be valid.  This handles things like x::y, etc.
+    TryAnnotateTypeOrScopeToken();
+    
+    // If TryAnnotateTypeOrScopeToken modified the current token, then tail
+    // recurse.
+    if (Tok.getKind() != tok::identifier)
+      return ParseCastExpression(isUnaryExpression);
 
     // Consume the identifier so that we can see if it is followed by a '('.
     // Function designators are allowed to be undeclared (C99 6.5.1p2), so we
@@ -628,16 +626,27 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     Res = ParseCXXIdExpression();
     return ParsePostfixExpressionSuffix(move(Res));
 
-  case tok::coloncolon: { // [C++] new-expression or [C++] delete-expression
+  case tok::coloncolon: {
+    // ::new -> [C++] new-expression
+    // ::delete -> [C++] delete-expression
+    // ::foo::bar -> global qualified name etc. 
     SourceLocation ScopeLoc = ConsumeToken();
     if (Tok.is(tok::kw_new))
       return ParseCXXNewExpression(true, ScopeLoc);
-    else {
-      // If the next token is neither 'new' nor 'delete', the :: would have been
-      // parsed as a scope specifier already.
-      assert(Tok.is(tok::kw_delete));
+    if (Tok.is(tok::kw_delete))
       return ParseCXXDeleteExpression(true, ScopeLoc);
+    // Turn the qualified name into a annot_qualtypename or annot_cxxscope if
+    // it would be valid.
+    TryAnnotateTypeOrScopeToken();
+      
+    // If we still have a :: as our current token, then this is not a type
+    // name or scope specifier.
+    if (Tok.getKind() == tok::coloncolon) {
+      Diag(Tok, diag::err_expected_expression);
+      return ExprError();
     }
+    // Otherwise, retry (tail recurse).
+    return ParseCastExpression(isUnaryExpression);
   }
 
   case tok::kw_new: // [C++] new-expression
