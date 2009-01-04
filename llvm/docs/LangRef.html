@@ -441,9 +441,9 @@ symbol table entries. Here is an example of the "hello world" module:</p>
 
 <i>; Definition of main function</i>
 define i32 @main() {                                                 <i>; i32()* </i>
-        <i>; Convert [13x i8 ]* to i8  *...</i>
+        <i>; Convert [13 x i8]* to i8  *...</i>
         %cast210 = <a
- href="#i_getelementptr">getelementptr</a> [13 x i8 ]* @.LC0, i64 0, i64 0 <i>; i8 *</i>
+ href="#i_getelementptr">getelementptr</a> [13 x i8]* @.LC0, i64 0, i64 0 <i>; i8 *</i>
 
         <i>; Call puts function to write out the string to stdout...</i>
         <a
@@ -1493,7 +1493,7 @@ zero.</p>
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
-    <td class="left"><tt>[4x i32]*</tt></td>
+    <td class="left"><tt>[4 x i32]*</tt></td>
     <td class="left">A <a href="#t_pointer">pointer</a> to <a
                     href="#t_array">array</a> of four <tt>i32</tt> values.</td>
   </tr>
@@ -2071,15 +2071,15 @@ branches or with a lookup table.</p>
 <pre>
  <i>; Emulate a conditional br instruction</i>
  %Val = <a href="#i_zext">zext</a> i1 %value to i32
- switch i32 %Val, label %truedest [i32 0, label %falsedest ]
+ switch i32 %Val, label %truedest [ i32 0, label %falsedest ]
 
  <i>; Emulate an unconditional br instruction</i>
  switch i32 0, label %dest [ ]
 
  <i>; Implement a jump table:</i>
- switch i32 %val, label %otherwise [ i32 0, label %onzero 
-                                      i32 1, label %onone 
-                                      i32 2, label %ontwo ]
+ switch i32 %val, label %otherwise [ i32 0, label %onzero
+                                     i32 1, label %onone
+                                     i32 2, label %ontwo ]
 </pre>
 </div>
 
@@ -3187,7 +3187,7 @@ result is null if there is insufficient memory available.</p>
 <h5>Example:</h5>
 
 <pre>
-  %array  = malloc [4 x i8 ]                    <i>; yields {[%4 x i8]*}:array</i>
+  %array  = malloc [4 x i8]                    <i>; yields {[%4 x i8]*}:array</i>
 
   %size   = <a href="#i_add">add</a> i32 2, 2                        <i>; yields {i32}:size = i32 4</i>
   %array1 = malloc i8, i32 4                    <i>; yields {i8*}:array1</i>
