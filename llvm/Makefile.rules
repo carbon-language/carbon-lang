@@ -22,9 +22,9 @@
 RecursiveTargets := all clean clean-all install uninstall install-bytecode
 LocalTargets     := all-local clean-local clean-all-local check-local \
                     install-local printvars uninstall-local \
-		    install-bytecode-local
+		    install-bytecode-local unittests
 TopLevelTargets  := check dist dist-check dist-clean dist-gzip dist-bzip2 \
-                    dist-zip
+                    dist-zip unittests
 UserTargets      := $(RecursiveTargets) $(LocalTargets) $(TopLevelTargets)
 InternalTargets  := preconditions distdir dist-hook
 
@@ -1416,6 +1416,22 @@ check::
 	fi
 
 ###############################################################################
+# UNITTESTS: Running the unittests test suite
+###############################################################################
+
+unittests::
+	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/unittests" ; then \
+	  if test -f "$(PROJ_OBJ_ROOT)/unittests/Makefile" ; then \
+	    $(EchoCmd) Running unittests test suite ; \
+	    $(MAKE) -C $(PROJ_OBJ_ROOT)/unittests ; \
+	  else \
+	    $(EchoCmd) No Makefile in unittests directory ; \
+	  fi ; \
+	else \
+	  $(EchoCmd) No unittests directory ; \
+	fi
+
+###############################################################################
 # DISTRIBUTION: Handle construction of a distribution tarball
 ###############################################################################
 
@@ -1503,6 +1519,7 @@ dist-check:: $(DistTarGZip)
 	    --srcdir=../$(DistName) $(DIST_CHECK_CONFIG_OPTIONS) && \
 	  $(MAKE) all && \
 	  $(MAKE) check && \
+	  $(MAKE) unittests && \
 	  $(MAKE) install && \
 	  $(MAKE) uninstall && \
 	  $(MAKE) dist-clean && \

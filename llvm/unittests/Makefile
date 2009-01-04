@@ -8,6 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ..
+
 include $(LEVEL)/Makefile.config
 
 LIBRARYNAME = UnitTestMain
@@ -20,4 +21,4 @@ PARALLEL_DIRS = ADT
 include $(LEVEL)/Makefile.common
 
 clean::
-	$(RM) -f *Tests
+	$(Verb) $(RM) -f *Tests

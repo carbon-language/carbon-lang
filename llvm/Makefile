@@ -116,7 +116,6 @@ dist-hook::
 tools-only: all
 libs-only: all
 install-libs: install
-unittests: all
 
 #------------------------------------------------------------------------
 # Make sure the generated headers are up-to-date. This must be kept in
@@ -185,7 +184,7 @@ update:
 	$(SVN) $(SVN-UPDATE-OPTIONS) update $(LLVM_SRC_ROOT)
 	@ $(SVN) status $(LLVM_SRC_ROOT) | $(SUB-SVN-DIRS) | xargs $(SVN) $(SVN-UPDATE-OPTIONS) update
 
-happiness: update all check
+happiness: update all check unittests
 
 .PHONY: srpm rpm update happiness
 
