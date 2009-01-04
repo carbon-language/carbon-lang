@@ -784,48 +784,49 @@ void Parser::TryAnnotateTypeOrScopeToken() {
   // FIXME: check for a template-id token here, and look it up if it
   // names a type.
 
-  if (SS.isNotEmpty()) {
-    // A C++ scope specifier that isn't followed by a typename.
-    // Push the current token back into the token stream (or revert it if it is
-    // cached) and use an annotation scope token for current token.
-    if (PP.isBacktrackEnabled())
-      PP.RevertCachedTokens(1);
-    else
-      PP.EnterToken(Tok);
-    Tok.setKind(tok::annot_cxxscope);
-    Tok.setAnnotationValue(SS.getScopeRep());
-    Tok.setAnnotationRange(SS.getRange());
+  if (SS.isEmpty())
+    return;
+  
+  // A C++ scope specifier that isn't followed by a typename.
+  // Push the current token back into the token stream (or revert it if it is
+  // cached) and use an annotation scope token for current token.
+  if (PP.isBacktrackEnabled())
+    PP.RevertCachedTokens(1);
+  else
+    PP.EnterToken(Tok);
+  Tok.setKind(tok::annot_cxxscope);
+  Tok.setAnnotationValue(SS.getScopeRep());
+  Tok.setAnnotationRange(SS.getRange());
 
-    // In case the tokens were cached, have Preprocessor replace them with the
-    // annotation token.
-    PP.AnnotateCachedTokens(Tok);
-  }
+  // In case the tokens were cached, have Preprocessor replace them with the
+  // annotation token.
+  PP.AnnotateCachedTokens(Tok);
 }
 
 /// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only
 /// annotates C++ scope specifiers.
 void Parser::TryAnnotateCXXScopeToken() {
   assert(getLang().CPlusPlus &&
-         "Call sites of this function should be guarded by checking for C++.");
+         "Call sites of this function should be guarded by checking for C++");
 
   if (Tok.is(tok::annot_cxxscope))
     return;
 
   CXXScopeSpec SS;
-  if (MaybeParseCXXScopeSpecifier(SS)) {
+  if (!MaybeParseCXXScopeSpecifier(SS))
+    return;
 
-    // Push the current token back into the token stream (or revert it if it is
-    // cached) and use an annotation scope token for current token.
-    if (PP.isBacktrackEnabled())
-      PP.RevertCachedTokens(1);
-    else
-      PP.EnterToken(Tok);
-    Tok.setKind(tok::annot_cxxscope);
-    Tok.setAnnotationValue(SS.getScopeRep());
-    Tok.setAnnotationRange(SS.getRange());
+  // Push the current token back into the token stream (or revert it if it is
+  // cached) and use an annotation scope token for current token.
+  if (PP.isBacktrackEnabled())
+    PP.RevertCachedTokens(1);
+  else
+    PP.EnterToken(Tok);
+  Tok.setKind(tok::annot_cxxscope);
+  Tok.setAnnotationValue(SS.getScopeRep());
+  Tok.setAnnotationRange(SS.getRange());
 
-    // In case the tokens were cached, have Preprocessor replace them with the
-    // annotation token.
-    PP.AnnotateCachedTokens(Tok);
-  }
+  // In case the tokens were cached, have Preprocessor replace them with the
+  // annotation token.
+  PP.AnnotateCachedTokens(Tok);
 }
