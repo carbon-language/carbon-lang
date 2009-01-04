@@ -24,8 +24,9 @@ match WhitespaceEOL /\s\+$/
 
 " Optional
 " C/C++ programming helpers
-set autoindent
-set smartindent
+set cindent
+" Don't indent switch case labels beyond the switch.
+set cinoptions=:0
 " Add and delete spaces in increments of `shiftwidth' for tabs
 set smarttab
 
