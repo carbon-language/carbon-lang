@@ -3187,7 +3187,7 @@ result is null if there is insufficient memory available.</p>
 <h5>Example:</h5>
 
 <pre>
-  %array  = malloc [4 x i8]                    <i>; yields {[%4 x i8]*}:array</i>
+  %array  = malloc [4 x i8]                     <i>; yields {[%4 x i8]*}:array</i>
 
   %size   = <a href="#i_add">add</a> i32 2, 2                        <i>; yields {i32}:size = i32 4</i>
   %array1 = malloc i8, i32 4                    <i>; yields {i8*}:array1</i>
@@ -3207,7 +3207,7 @@ result is null if there is insufficient memory available.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  free &lt;type&gt; &lt;value&gt;                              <i>; yields {void}</i>
+  free &lt;type&gt; &lt;value&gt;                           <i>; yields {void}</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -3230,7 +3230,7 @@ is a noop.</p>
 <h5>Example:</h5>
 
 <pre>
-  %array  = <a href="#i_malloc">malloc</a> [4 x i8]                    <i>; yields {[4 x i8]*}:array</i>
+  %array  = <a href="#i_malloc">malloc</a> [4 x i8]                     <i>; yields {[4 x i8]*}:array</i>
             free   [4 x i8]* %array
 </pre>
 </div>
@@ -3281,10 +3281,10 @@ is legal, but the result is undefined.</p>
 <h5>Example:</h5>
 
 <pre>
-  %ptr = alloca i32                              <i>; yields {i32*}:ptr</i>
-  %ptr = alloca i32, i32 4                       <i>; yields {i32*}:ptr</i>
-  %ptr = alloca i32, i32 4, align 1024           <i>; yields {i32*}:ptr</i>
-  %ptr = alloca i32, align 1024                  <i>; yields {i32*}:ptr</i>
+  %ptr = alloca i32                             <i>; yields {i32*}:ptr</i>
+  %ptr = alloca i32, i32 4                      <i>; yields {i32*}:ptr</i>
+  %ptr = alloca i32, i32 4, align 1024          <i>; yields {i32*}:ptr</i>
+  %ptr = alloca i32, align 1024                 <i>; yields {i32*}:ptr</i>
 </pre>
 </div>
 
