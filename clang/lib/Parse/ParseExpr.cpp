@@ -626,19 +626,23 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     Res = ParseCXXIdExpression();
     return ParsePostfixExpressionSuffix(move(Res));
 
-  case tok::coloncolon: // [C++] new-expression or [C++] delete-expression
-    // If the next token is neither 'new' nor 'delete', the :: would have been
-    // parsed as a scope specifier already.
-    if (NextToken().is(tok::kw_new))
-      return ParseCXXNewExpression();
-    else
-      return ParseCXXDeleteExpression();
+  case tok::coloncolon: { // [C++] new-expression or [C++] delete-expression
+    SourceLocation ScopeLoc = ConsumeToken();
+    if (Tok.is(tok::kw_new))
+      return ParseCXXNewExpression(true, ScopeLoc);
+    else {
+      // If the next token is neither 'new' nor 'delete', the :: would have been
+      // parsed as a scope specifier already.
+      assert(Tok.is(tok::kw_delete));
+      return ParseCXXDeleteExpression(true, ScopeLoc);
+    }
+  }
 
   case tok::kw_new: // [C++] new-expression
-    return ParseCXXNewExpression();
+    return ParseCXXNewExpression(false, Tok.getLocation());
 
   case tok::kw_delete: // [C++] delete-expression
-    return ParseCXXDeleteExpression();
+    return ParseCXXDeleteExpression(false, Tok.getLocation());
 
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();

@@ -643,10 +643,11 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 5.3.4 and 5.3.5: C++ new and delete
-  OwningExprResult ParseCXXNewExpression();
   bool ParseExpressionListOrTypeId(ExprListTy &Exprs, Declarator &D);
   void ParseDirectNewDeclarator(Declarator &D);
-  OwningExprResult ParseCXXDeleteExpression();
+  OwningExprResult ParseCXXNewExpression(bool UseGlobal, SourceLocation Start);
+  OwningExprResult ParseCXXDeleteExpression(bool UseGlobal,
+                                            SourceLocation Start);
 
   //===--------------------------------------------------------------------===//
   // C++ if/switch/while/for condition expression.

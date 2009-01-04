@@ -639,6 +639,10 @@ Parser::TypeTy *Parser::ParseConversionFunctionId() {
 
 /// ParseCXXNewExpression - Parse a C++ new-expression. New is used to allocate
 /// memory in a typesafe manner and call constructors.
+/// 
+/// This method is called to parse the new expression after the optional :: has
+/// been already parsed.  If the :: was present, "UseGlobal" is true and "Start"
+/// is its location.  Otherwise, "Start" is the location of the 'new' token.
 ///
 ///        new-expression:
 ///                   '::'[opt] 'new' new-placement[opt] new-type-id
@@ -660,21 +664,10 @@ Parser::TypeTy *Parser::ParseConversionFunctionId() {
 ///                   '(' expression-list[opt] ')'
 /// [C++0x]           braced-init-list                                   [TODO]
 ///
-Parser::OwningExprResult Parser::ParseCXXNewExpression()
-{
-  assert((Tok.is(tok::coloncolon) || Tok.is(tok::kw_new)) &&
-         "Expected :: or 'new' keyword");
-
-  SourceLocation Start = Tok.getLocation();
-  bool UseGlobal = false;
-  if (Tok.is(tok::coloncolon)) {
-    UseGlobal = true;
-    ConsumeToken();
-  }
-
-  assert(Tok.is(tok::kw_new) && "Lookahead should have ensured 'new'");
-  // Consume 'new'
-  ConsumeToken();
+Parser::OwningExprResult
+Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
+  assert(Tok.is(tok::kw_new) && "expected 'new' token");
+  ConsumeToken();   // Consume 'new'
 
   // A '(' now can be a new-placement or the '(' wrapping the type-id in the
   // second form of new-expression. It can't be a new-type-id.
@@ -768,8 +761,7 @@ Parser::OwningExprResult Parser::ParseCXXNewExpression()
 ///                   '[' expression ']'
 ///                   direct-new-declarator '[' constant-expression ']'
 ///
-void Parser::ParseDirectNewDeclarator(Declarator &D)
-{
+void Parser::ParseDirectNewDeclarator(Declarator &D) {
   // Parse the array dimensions.
   bool first = true;
   while (Tok.is(tok::l_square)) {
@@ -802,8 +794,7 @@ void Parser::ParseDirectNewDeclarator(Declarator &D)
 ///                   '(' expression-list ')'
 ///
 bool Parser::ParseExpressionListOrTypeId(ExprListTy &PlacementArgs,
-                                         Declarator &D)
-{
+                                         Declarator &D) {
   // The '(' was already consumed.
   if (isTypeIdInParens()) {
     ParseSpecifierQualifierList(D.getMutableDeclSpec());
@@ -820,24 +811,18 @@ bool Parser::ParseExpressionListOrTypeId(ExprListTy &PlacementArgs,
 /// ParseCXXDeleteExpression - Parse a C++ delete-expression. Delete is used
 /// to free memory allocated by new.
 ///
+/// This method is called to parse the 'delete' expression after the optional
+/// '::' has been already parsed.  If the '::' was present, "UseGlobal" is true
+/// and "Start" is its location.  Otherwise, "Start" is the location of the
+/// 'delete' token.
+///
 ///        delete-expression:
 ///                   '::'[opt] 'delete' cast-expression
 ///                   '::'[opt] 'delete' '[' ']' cast-expression
-Parser::OwningExprResult Parser::ParseCXXDeleteExpression()
-{
-  assert((Tok.is(tok::coloncolon) || Tok.is(tok::kw_delete)) &&
-         "Expected :: or 'delete' keyword");
-
-  SourceLocation Start = Tok.getLocation();
-  bool UseGlobal = false;
-  if (Tok.is(tok::coloncolon)) {
-    UseGlobal = true;
-    ConsumeToken();
-  }
-
-  assert(Tok.is(tok::kw_delete) && "Lookahead should have ensured 'delete'");
-  // Consume 'delete'
-  ConsumeToken();
+Parser::OwningExprResult
+Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
+  assert(Tok.is(tok::kw_delete) && "Expected 'delete' keyword");
+  ConsumeToken(); // Consume 'delete'
 
   // Array delete?
   bool ArrayDelete = false;
