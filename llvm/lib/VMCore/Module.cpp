@@ -137,7 +137,8 @@ Module::PointerSize Module::getPointerSize() const {
 // the symbol table directly for this common task.
 //
 Constant *Module::getOrInsertFunction(const std::string &Name,
-                                      const FunctionType *Ty) {
+                                      const FunctionType *Ty,
+                                      AttrListPtr AttributeList) {
   ValueSymbolTable &SymTab = getValueSymbolTable();
 
   // See if we have a definition for the specified function already.
@@ -145,6 +146,8 @@ Constant *Module::getOrInsertFunction(const std::string &Name,
   if (F == 0) {
     // Nope, add it
     Function *New = Function::Create(Ty, GlobalVariable::ExternalLinkage, Name);
+    if (!New->isIntrinsic())       // Intrinsics get attrs set on construction
+      New->setAttributes(AttributeList);
     FunctionList.push_back(New);
     return New;                    // Return the new prototype.
   }
@@ -168,11 +171,35 @@ Constant *Module::getOrInsertFunction(const std::string &Name,
   return F;  
 }
 
+Constant *Module::getOrInsertFunction(const std::string &Name,
+                                      const FunctionType *Ty) {
+  AttrListPtr AttributeList = AttrListPtr::get((AttributeWithIndex *)0, 0);
+  return getOrInsertFunction(Name, Ty, AttributeList);
+}
+
 // getOrInsertFunction - Look up the specified function in the module symbol
 // table.  If it does not exist, add a prototype for the function and return it.
 // This version of the method takes a null terminated list of function
 // arguments, which makes it easier for clients to use.
 //
+Constant *Module::getOrInsertFunction(const std::string &Name,
+                                      AttrListPtr AttributeList,
+                                      const Type *RetTy, ...) {
+  va_list Args;
+  va_start(Args, RetTy);
+
+  // Build the list of argument types...
+  std::vector<const Type*> ArgTys;
+  while (const Type *ArgTy = va_arg(Args, const Type*))
+    ArgTys.push_back(ArgTy);
+
+  va_end(Args);
+
+  // Build the function type and chain to the other getOrInsertFunction...
+  return getOrInsertFunction(Name, FunctionType::get(RetTy, ArgTys, false),
+                             AttributeList);
+}
+
 Constant *Module::getOrInsertFunction(const std::string &Name,
                                       const Type *RetTy, ...) {
   va_list Args;
@@ -186,9 +213,9 @@ Constant *Module::getOrInsertFunction(const std::string &Name,
   va_end(Args);
 
   // Build the function type and chain to the other getOrInsertFunction...
-  return getOrInsertFunction(Name, FunctionType::get(RetTy, ArgTys, false));
+  return getOrInsertFunction(Name, FunctionType::get(RetTy, ArgTys, false),
+                             AttrListPtr::get((AttributeWithIndex *)0, 0));
 }
-
 
 // getFunction - Look up the specified function in the module symbol table.
 // If it does not exist, return null.

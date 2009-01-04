@@ -194,6 +194,9 @@ public:
   ///      the existing function.
   ///   4. Finally, the function exists but has the wrong prototype: return the
   ///      function with a constantexpr cast to the right prototype.
+  Constant *getOrInsertFunction(const std::string &Name, const FunctionType *T,
+                                AttrListPtr AttributeList);
+
   Constant *getOrInsertFunction(const std::string &Name, const FunctionType *T);
 
   /// getOrInsertFunction - Look up the specified function in the module symbol
@@ -203,7 +206,11 @@ public:
   /// named function has a different type.  This version of the method takes a
   /// null terminated list of function arguments, which makes it easier for
   /// clients to use.
-  Constant *getOrInsertFunction(const std::string &Name, const Type *RetTy,...)
+  Constant *getOrInsertFunction(const std::string &Name,
+                                AttrListPtr AttributeList,
+                                const Type *RetTy, ...)  END_WITH_NULL;
+
+  Constant *getOrInsertFunction(const std::string &Name, const Type *RetTy, ...)
     END_WITH_NULL;
 
   /// getFunction - Look up the specified function in the module symbol table.
