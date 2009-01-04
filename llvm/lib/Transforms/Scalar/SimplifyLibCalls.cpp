@@ -34,6 +34,7 @@
 using namespace llvm;
 
 STATISTIC(NumSimplified, "Number of library calls simplified");
+STATISTIC(NumAnnotated, "Number of attributes added to library functions");
 
 //===----------------------------------------------------------------------===//
 // Optimizer Base Class
@@ -1288,12 +1289,21 @@ namespace {
     // Formatting and IO Optimizations
     SPrintFOpt SPrintF; PrintFOpt PrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
+
+    bool Modified;  // This is only used by doFinalization.
   public:
     static char ID; // Pass identification
     SimplifyLibCalls() : FunctionPass(&ID) {}
 
     void InitOptimizations();
     bool runOnFunction(Function &F);
+
+    void setDoesNotAccessMemory(Function &F);
+    void setOnlyReadsMemory(Function &F);
+    void setDoesNotThrow(Function &F);
+    void setDoesNotCapture(Function &F, unsigned n);
+    void setDoesNotAlias(Function &F, unsigned n);
+    bool doFinalization(Module &M);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
@@ -1440,6 +1450,439 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
   return Changed;
 }
 
+// Utility methods for doFinalization.
+
+void SimplifyLibCalls::setDoesNotAccessMemory(Function &F) {
+  if (!F.doesNotAccessMemory()) {
+    F.setDoesNotAccessMemory();
+    ++NumAnnotated;
+    Modified = true;
+  }
+}
+void SimplifyLibCalls::setOnlyReadsMemory(Function &F) {
+  if (!F.onlyReadsMemory()) {
+    F.setOnlyReadsMemory();
+    ++NumAnnotated;
+    Modified = true;
+  }
+}
+void SimplifyLibCalls::setDoesNotThrow(Function &F) {
+  if (!F.doesNotThrow()) {
+    F.setDoesNotThrow();
+    ++NumAnnotated;
+    Modified = true;
+  }
+}
+void SimplifyLibCalls::setDoesNotCapture(Function &F, unsigned n) {
+  if (!F.doesNotCapture(n)) {
+    F.setDoesNotCapture(n);
+    ++NumAnnotated;
+    Modified = true;
+  }
+}
+void SimplifyLibCalls::setDoesNotAlias(Function &F, unsigned n) {
+  if (!F.doesNotAlias(n)) {
+    F.setDoesNotAlias(n);
+    ++NumAnnotated;
+    Modified = true;
+  }
+}
+
+/// doFinalization - Add attributes to well-known functions.
+///
+bool SimplifyLibCalls::doFinalization(Module &M) {
+  Modified = false;
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    Function &F = *I;
+    if (!F.isDeclaration())
+      continue;
+
+    unsigned NameLen = F.getNameLen();
+    if (!NameLen)
+      continue;
+
+    const FunctionType *FTy = F.getFunctionType();
+
+    const char *NameStr = F.getNameStart();
+    switch (NameStr[0]) {
+      case 's':
+        if (NameLen == 6 && !strcmp(NameStr, "strlen")) {
+          if (FTy->getNumParams() != 1 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setOnlyReadsMemory(F);
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        } else if ((NameLen == 6 && !strcmp(NameStr, "strcpy")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "stpcpy")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "strcat")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strncat")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strncpy"))) {
+          if (FTy->getNumParams() < 2 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 2);
+        } else if (NameLen == 7 && !strcmp(NameStr, "strxfrm")) {
+          if (FTy->getNumParams() != 3 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 2);
+        } else if ((NameLen == 6 && !strcmp(NameStr, "strcmp")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "strspn")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "strtol")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "strtod")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "strtof")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strtoul")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strtoll")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strtold")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strncmp")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strcspn")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strcoll")) ||
+                   (NameLen == 8 && !strcmp(NameStr, "strtoull")) ||
+                   (NameLen == 10 && !strcmp(NameStr, "strcasecmp")) ||
+                   (NameLen == 11 && !strcmp(NameStr, "strncasecmp"))) {
+          if (FTy->getNumParams() < 2 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setOnlyReadsMemory(F);
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 2);
+        } else if ((NameLen == 6 && !strcmp(NameStr, "strstr")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strpbrk"))) {
+          if (FTy->getNumParams() != 2 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setOnlyReadsMemory(F);
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 2);
+        } else if ((NameLen == 6 && !strcmp(NameStr, "strtok")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strtok_r"))) {
+          if (FTy->getNumParams() < 2 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 2);
+        } else if ((NameLen == 5 && !strcmp(NameStr, "scanf")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "setbuf")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "setvbuf"))) {
+          if (FTy->getNumParams() < 1 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        } else if (NameLen == 6 && !strcmp(NameStr, "sscanf")) {
+          if (FTy->getNumParams() < 2 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 2);
+        }
+        break;
+      case 'm':
+        if (NameLen == 6 && !strcmp(NameStr, "memcmp")) {
+          if (FTy->getNumParams() != 3 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setOnlyReadsMemory(F);
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 2);
+        } else if ((NameLen == 6 && !strcmp(NameStr, "memchr")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "memrchr"))) {
+          if (FTy->getNumParams() != 3)
+            continue;
+          setOnlyReadsMemory(F);
+          setDoesNotThrow(F);
+        } else if ((NameLen == 6 && !strcmp(NameStr, "memcpy")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "memccpy")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "memmove"))) {
+          if (FTy->getNumParams() < 3 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 2);
+        }
+        break;
+      case 'r':
+        if (NameLen == 7 && !strcmp(NameStr, "realloc")) {
+          if (FTy->getNumParams() != 1 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getReturnType()))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotAlias(F, 0);
+          setDoesNotCapture(F, 1);
+        } else if (NameLen == 4 && !strcmp(NameStr, "read")) {
+          if (FTy->getNumParams() != 3 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 2);
+        } else if ((NameLen == 5 && !strcmp(NameStr, "rmdir")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "rewind")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "remove"))) {
+          if (FTy->getNumParams() != 1 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        } else if (NameLen == 6 && !strcmp(NameStr, "rename")) {
+          if (FTy->getNumParams() != 2 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 2);
+        }
+        break;
+      case 'w':
+        if (NameLen == 5 && !strcmp(NameStr, "write")) {
+          if (FTy->getNumParams() != 3 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 2);
+        }
+        break;
+      case 'b':
+        if (NameLen == 5 && !strcmp(NameStr, "bcopy")) {
+          if (FTy->getNumParams() != 3 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 2);
+        } else if (NameLen == 4 && !strcmp(NameStr, "bcmp")) {
+          if (FTy->getNumParams() != 3 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setOnlyReadsMemory(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 2);
+        } else if (NameLen == 5 && !strcmp(NameStr, "bzero")) {
+          if (FTy->getNumParams() != 2 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        }
+        break;
+      case 'c':
+        if (NameLen == 6 && !strcmp(NameStr, "calloc")) {
+          if (FTy->getNumParams() != 2 ||
+              !isa<PointerType>(FTy->getReturnType()))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotAlias(F, 0);
+        } else if ((NameLen == 5 && !strcmp(NameStr, "chown")) ||
+                   (NameLen == 8 && !strcmp(NameStr, "clearerr")) ||
+                   (NameLen == 8 && !strcmp(NameStr, "closedir"))) {
+          if (FTy->getNumParams() == 0 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        }
+        break;
+      case 'a':
+        if ((NameLen == 4 && !strcmp(NameStr, "atoi")) ||
+            (NameLen == 4 && !strcmp(NameStr, "atol")) ||
+            (NameLen == 4 && !strcmp(NameStr, "atof")) ||
+            (NameLen == 5 && !strcmp(NameStr, "atoll"))) {
+          if (FTy->getNumParams() != 1 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setOnlyReadsMemory(F);
+          setDoesNotCapture(F, 1);
+        } else if (NameLen == 6 && !strcmp(NameStr, "access")) {
+          if (FTy->getNumParams() != 2 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        }
+        break;
+      case 'f':
+        if ((NameLen == 5 && !strcmp(NameStr, "fopen")) ||
+            (NameLen == 6 && !strcmp(NameStr, "fdopen"))) {
+          if (!isa<PointerType>(FTy->getReturnType()))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotAlias(F, 0);
+        } else if ((NameLen == 4 && !strcmp(NameStr, "feof")) ||
+                   (NameLen == 4 && !strcmp(NameStr, "free")) ||
+                   (NameLen == 5 && !strcmp(NameStr, "fseek")) ||
+                   (NameLen == 5 && !strcmp(NameStr, "ftell")) ||
+                   (NameLen == 5 && !strcmp(NameStr, "fgetc")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "fseeko")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "ftello")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "ferror")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "fileno")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "fflush")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "fclose"))) {
+          if (FTy->getNumParams() == 0 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        } else if ((NameLen == 5 && !strcmp(NameStr, "fputc")) ||
+                   (NameLen == 5 && !strcmp(NameStr, "fputs"))) {
+          if (FTy->getNumParams() != 2 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 2);
+        } else if (NameLen == 5 && !strcmp(NameStr, "fgets")) {
+          if (FTy->getNumParams() != 3 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(2)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 3);
+        } else if ((NameLen == 5 && !strcmp(NameStr, "fread")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "fwrite"))) {
+          if (FTy->getNumParams() != 4 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(3)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 4);
+        } else if ((NameLen == 7 && !strcmp(NameStr, "fgetpos")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "fsetpos"))) {
+          if (FTy->getNumParams() != 2 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 2);
+        } else if (NameLen == 6 && !strcmp(NameStr, "fscanf")) {
+          if (FTy->getNumParams() < 2 ||
+              !isa<PointerType>(FTy->getParamType(0)) ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 2);
+        }
+        break;
+      case 'g':
+        if ((NameLen == 4 && !strcmp(NameStr, "getc")) ||
+            (NameLen == 10 && !strcmp(NameStr, "getlogin_r"))) {
+          if (FTy->getNumParams() == 0 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        } else if (NameLen == 6 && !strcmp(NameStr, "getenv")) {
+          if (!FTy->getNumParams() != 1 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setOnlyReadsMemory(F);
+          setDoesNotCapture(F, 0);
+        }
+        break;
+      case 'u':
+        if (NameLen == 4 && !strcmp(NameStr, "ungetc")) {
+          if (!FTy->getNumParams() != 2 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 2);
+        } else if (NameLen == 6 && !strcmp(NameStr, "unlink")) {
+          if (!FTy->getNumParams() != 1 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        }
+        break;
+      case 'p':
+        if (NameLen == 4 && !strcmp(NameStr, "putc")) {
+          if (!FTy->getNumParams() != 2 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 2);
+        } else if ((NameLen == 4 && !strcmp(NameStr, "puts")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "perror"))) {
+          if (!FTy->getNumParams() != 1 ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        }
+        break;
+      case 'v':
+        if (NameLen == 6 && !strcmp(NameStr, "vscanf")) {
+          if (!FTy->getNumParams() != 2 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+        } else if ((NameLen == 7 && !strcmp(NameStr, "vsscanf")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "vfscanf"))) {
+          if (!FTy->getNumParams() != 4 ||
+              !isa<PointerType>(FTy->getParamType(1)) ||
+              !isa<PointerType>(FTy->getParamType(2)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
+          setDoesNotCapture(F, 2);
+        }
+        break;
+      case 'o':
+        if (NameLen == 7 && !strcmp(NameStr, "opendir")) {
+          // The description of fdopendir sounds like opening the same fd
+          // twice might result in the same DIR* !
+          if (FTy->getNumParams() != 1 ||
+              !isa<PointerType>(FTy->getParamType(1)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotAlias(F, 0);
+        }
+        break;
+      case 't':
+        if (NameLen == 7 && !strcmp(NameStr, "tmpfile")) {
+          if (!isa<PointerType>(FTy->getReturnType()))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotAlias(F, 0);
+        }
+      case 'h':
+        if ((NameLen == 5 && !strcmp(NameStr, "htonl")) ||
+            (NameLen == 5 && !strcmp(NameStr, "htons"))) {
+          setDoesNotThrow(F);
+          setDoesNotAccessMemory(F);
+        }
+        break;
+      case 'n':
+        if ((NameLen == 5 && !strcmp(NameStr, "ntohl")) ||
+            (NameLen == 5 && !strcmp(NameStr, "ntohs"))) {
+          setDoesNotThrow(F);
+          setDoesNotAccessMemory(F);
+        }
+        break;
+    }
+  }
+  return Modified;
+}
 
 // TODO:
 //   Additional cases that we need to add to this file:
