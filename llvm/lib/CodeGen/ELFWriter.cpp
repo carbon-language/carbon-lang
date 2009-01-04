@@ -34,6 +34,7 @@
 #include "ELFWriter.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Type.h"          // FIXME: For PATypeHolder::get().
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
