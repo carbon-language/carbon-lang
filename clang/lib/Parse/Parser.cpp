@@ -741,14 +741,16 @@ Parser::OwningExprResult Parser::ParseSimpleAsm() {
 /// will not be called twice, once to check whether we have a declaration
 /// specifier, and another one to get the actual type inside
 /// ParseDeclarationSpecifiers).
-void Parser::TryAnnotateTypeOrScopeToken() {
+///
+/// This returns true if the token was annotated.
+bool Parser::TryAnnotateTypeOrScopeToken(const Token *GlobalQualifier) {
   // FIXME: what about template-ids?
   if (Tok.is(tok::annot_qualtypename) || Tok.is(tok::annot_cxxscope))
-    return;
+    return false;
 
   CXXScopeSpec SS;
   if (getLang().CPlusPlus)
-    MaybeParseCXXScopeSpecifier(SS);
+    MaybeParseCXXScopeSpecifier(SS, GlobalQualifier);
 
   if (Tok.is(tok::identifier)) {
     DeclTy *Template = 0;
@@ -772,7 +774,7 @@ void Parser::TryAnnotateTypeOrScopeToken() {
         // In case the tokens were cached, have Preprocessor replace
         // them with the annotation token.
         PP.AnnotateCachedTokens(Tok);
-        return;
+        return true;
       }
     }
 
@@ -785,7 +787,7 @@ void Parser::TryAnnotateTypeOrScopeToken() {
   // names a type.
 
   if (SS.isEmpty())
-    return;
+    return false;
   
   // A C++ scope specifier that isn't followed by a typename.
   // Push the current token back into the token stream (or revert it if it is
@@ -801,6 +803,7 @@ void Parser::TryAnnotateTypeOrScopeToken() {
   // In case the tokens were cached, have Preprocessor replace them with the
   // annotation token.
   PP.AnnotateCachedTokens(Tok);
+  return true;
 }
 
 /// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only

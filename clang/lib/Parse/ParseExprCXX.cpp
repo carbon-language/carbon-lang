@@ -29,37 +29,49 @@ using namespace clang;
 ///         nested-name-specifier identifier '::'
 ///         nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
 ///
-bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS) {
+bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS,
+                                         const Token *GlobalQualifier) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++.");
 
   if (Tok.is(tok::annot_cxxscope)) {
+    assert(GlobalQualifier == 0 &&
+           "Cannot have :: followed by a resolve annotation scope");
     SS.setScopeRep(Tok.getAnnotationValue());
     SS.setRange(Tok.getAnnotationRange());
     ConsumeToken();
     return true;
   }
   
-  if (Tok.isNot(tok::coloncolon) &&
+  if (GlobalQualifier == 0 &&
+      Tok.isNot(tok::coloncolon) &&
       (Tok.isNot(tok::identifier) || NextToken().isNot(tok::coloncolon)))
     return false;
 
   // ::new and ::delete aren't nested-name-specifiers, so parsing the :: as
   // a scope specifier only makes things more complicated.
-  if (Tok.is(tok::coloncolon)) {
+  if (GlobalQualifier == 0 && Tok.is(tok::coloncolon)) {
     Token Next = NextToken();
     if (Next.is(tok::kw_new) || Next.is(tok::kw_delete))
       return false;
   }
 
-  SS.setBeginLoc(Tok.getLocation());
+  if (GlobalQualifier) {
+    // Pre-parsed '::'.
+    SS.setBeginLoc(GlobalQualifier->getLocation());
+    SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, 
+                                               GlobalQualifier->getLocation()));
+    SS.setEndLoc(GlobalQualifier->getLocation());
+  } else {
+    SS.setBeginLoc(Tok.getLocation());
 
-  // '::'
-  if (Tok.is(tok::coloncolon)) {
-    // Global scope.
-    SourceLocation CCLoc = ConsumeToken();
-    SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, CCLoc));
-    SS.setEndLoc(CCLoc);
+    // '::'
+    if (Tok.is(tok::coloncolon)) {
+      // Global scope.
+      SourceLocation CCLoc = ConsumeToken();
+      SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, CCLoc));
+      SS.setEndLoc(CCLoc);
+    }
   }
 
   // nested-name-specifier:

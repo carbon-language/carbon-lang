@@ -267,7 +267,9 @@ private:
   /// (if they are typenames). For example, in C we do not expect identifiers
   /// inside expressions to be treated as typenames so it will not be called
   /// for expressions in C.
-  void TryAnnotateTypeOrScopeToken();
+  ///
+  /// This returns true if the token was annotated.
+  bool TryAnnotateTypeOrScopeToken(const Token *GlobalQualifier = 0);
 
   /// TryAnnotateCXXScopeToken - Like TryAnnotateTypeOrScopeToken but only
   /// annotates C++ scope specifiers.
@@ -607,7 +609,11 @@ private:
 
   /// MaybeParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
   /// Returns true if a nested-name-specifier was parsed from the token stream.
-  bool MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS);
+  ///
+  /// If GlobalQualifier is non-null, then it is a :: token we should use as the
+  /// global qualifier.
+  bool MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS,
+                                   const Token *GlobalQualifier = 0);
   
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts

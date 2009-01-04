@@ -478,12 +478,14 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
                                // constant: enumeration-constant
     // Turn a potentially qualified name into a annot_qualtypename or
     // annot_cxxscope if it would be valid.  This handles things like x::y, etc.
-    TryAnnotateTypeOrScopeToken();
+    if (getLang().CPlusPlus) {
+      TryAnnotateTypeOrScopeToken();
     
-    // If TryAnnotateTypeOrScopeToken modified the current token, then tail
-    // recurse.
-    if (Tok.getKind() != tok::identifier)
-      return ParseCastExpression(isUnaryExpression);
+      // If TryAnnotateTypeOrScopeToken modified the current token, then tail
+      // recurse.
+      if (Tok.getKind() != tok::identifier)
+        return ParseCastExpression(isUnaryExpression);
+    }
 
     // Consume the identifier so that we can see if it is followed by a '('.
     // Function designators are allowed to be undeclared (C99 6.5.1p2), so we
@@ -630,23 +632,22 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // ::new -> [C++] new-expression
     // ::delete -> [C++] delete-expression
     // ::foo::bar -> global qualified name etc. 
-    SourceLocation ScopeLoc = ConsumeToken();
+    Token ColonColonTok = Tok;
+    ConsumeToken();
     if (Tok.is(tok::kw_new))
-      return ParseCXXNewExpression(true, ScopeLoc);
+      return ParseCXXNewExpression(true, ColonColonTok.getLocation());
     if (Tok.is(tok::kw_delete))
-      return ParseCXXDeleteExpression(true, ScopeLoc);
+      return ParseCXXDeleteExpression(true, ColonColonTok.getLocation());
     // Turn the qualified name into a annot_qualtypename or annot_cxxscope if
     // it would be valid.
-    TryAnnotateTypeOrScopeToken();
-      
-    // If we still have a :: as our current token, then this is not a type
-    // name or scope specifier.
-    if (Tok.getKind() == tok::coloncolon) {
-      Diag(Tok, diag::err_expected_expression);
-      return ExprError();
+    if (TryAnnotateTypeOrScopeToken(&ColonColonTok)) {
+      // If so, retry (tail recurse).
+      return ParseCastExpression(isUnaryExpression);
     }
-    // Otherwise, retry (tail recurse).
-    return ParseCastExpression(isUnaryExpression);
+      
+    // This is not a type name or scope specifier, it is an invalid expression.
+    Diag(ColonColonTok, diag::err_expected_expression);
+    return ExprError();
   }
 
   case tok::kw_new: // [C++] new-expression
