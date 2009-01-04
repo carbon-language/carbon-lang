@@ -700,12 +700,28 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 bool Parser::MaybeParseTypeSpecifier(DeclSpec &DS, int& isInvalid,
                                      const char *&PrevSpec,
                                      TemplateParameterLists *TemplateParams) {
-  // Annotate typenames and C++ scope specifiers.
-  TryAnnotateTypeOrScopeToken();
-
   SourceLocation Loc = Tok.getLocation();
 
   switch (Tok.getKind()) {
+  case tok::identifier:   // foo::bar
+    // Annotate typenames and C++ scope specifiers.  If we get one, just
+    // recurse to handle whatever we get.
+    if (TryAnnotateTypeOrScopeToken())
+      return MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec, TemplateParams);
+    // Otherwise, not a type specifier.
+    return false;
+  case tok::coloncolon:   // ::foo::bar
+    if (NextToken().is(tok::kw_new) ||    // ::new
+        NextToken().is(tok::kw_delete))   // ::delete
+      return false;
+    
+    // Annotate typenames and C++ scope specifiers.  If we get one, just
+    // recurse to handle whatever we get.
+    if (TryAnnotateTypeOrScopeToken())
+      return MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec, TemplateParams);
+    // Otherwise, not a type specifier.
+    return false;
+      
   // simple-type-specifier:
   case tok::annot_qualtypename: {
     isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
@@ -1171,11 +1187,28 @@ bool Parser::isTypeQualifier() const {
 /// isTypeSpecifierQualifier - Return true if the current token could be the
 /// start of a specifier-qualifier-list.
 bool Parser::isTypeSpecifierQualifier() {
-  // Annotate typenames and C++ scope specifiers.
-  TryAnnotateTypeOrScopeToken();
-
   switch (Tok.getKind()) {
   default: return false;
+      
+  case tok::identifier:   // foo::bar
+    // Annotate typenames and C++ scope specifiers.  If we get one, just
+    // recurse to handle whatever we get.
+    if (TryAnnotateTypeOrScopeToken())
+      return isTypeSpecifierQualifier();
+    // Otherwise, not a type specifier.
+    return false;
+  case tok::coloncolon:   // ::foo::bar
+    if (NextToken().is(tok::kw_new) ||    // ::new
+        NextToken().is(tok::kw_delete))   // ::delete
+      return false;
+
+    // Annotate typenames and C++ scope specifiers.  If we get one, just
+    // recurse to handle whatever we get.
+    if (TryAnnotateTypeOrScopeToken())
+      return isTypeSpecifierQualifier();
+    // Otherwise, not a type specifier.
+    return false;
+      
     // GNU attributes support.
   case tok::kw___attribute:
     // GNU typeof support.
@@ -1230,11 +1263,28 @@ bool Parser::isTypeSpecifierQualifier() {
 /// isDeclarationSpecifier() - Return true if the current token is part of a
 /// declaration specifier.
 bool Parser::isDeclarationSpecifier() {
-  // Annotate typenames and C++ scope specifiers.
-  TryAnnotateTypeOrScopeToken();
-
   switch (Tok.getKind()) {
   default: return false;
+    
+  case tok::identifier:   // foo::bar
+    // Annotate typenames and C++ scope specifiers.  If we get one, just
+    // recurse to handle whatever we get.
+    if (TryAnnotateTypeOrScopeToken())
+      return isDeclarationSpecifier();
+    // Otherwise, not a declaration specifier.
+    return false;
+  case tok::coloncolon:   // ::foo::bar
+    if (NextToken().is(tok::kw_new) ||    // ::new
+        NextToken().is(tok::kw_delete))   // ::delete
+      return false;
+    
+    // Annotate typenames and C++ scope specifiers.  If we get one, just
+    // recurse to handle whatever we get.
+    if (TryAnnotateTypeOrScopeToken())
+      return isDeclarationSpecifier();
+    // Otherwise, not a declaration specifier.
+    return false;
+      
     // storage-class-specifier
   case tok::kw_typedef:
   case tok::kw_extern:
