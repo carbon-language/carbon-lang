@@ -479,11 +479,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // Turn a potentially qualified name into a annot_qualtypename or
     // annot_cxxscope if it would be valid.  This handles things like x::y, etc.
     if (getLang().CPlusPlus) {
-      TryAnnotateTypeOrScopeToken();
-    
-      // If TryAnnotateTypeOrScopeToken modified the current token, then tail
-      // recurse.
-      if (Tok.getKind() != tok::identifier)
+      // If TryAnnotateTypeOrScopeToken annotates the token, tail recurse.
+      if (TryAnnotateTypeOrScopeToken())
         return ParseCastExpression(isUnaryExpression);
     }
 
