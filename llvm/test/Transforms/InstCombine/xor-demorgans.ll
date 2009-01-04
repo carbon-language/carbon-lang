@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {= or}
 ; PR3266
+; XFAIL: *
 
 define i1 @foo(i32 %x, i32 %y) nounwind {
 .summary:
