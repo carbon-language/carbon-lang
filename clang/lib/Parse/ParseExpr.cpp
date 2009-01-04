@@ -602,11 +602,13 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_float:
   case tok::kw_double:
   case tok::kw_void:
-  case tok::kw_typeof: {
-    if (!getLang().CPlusPlus)
-      goto UnhandledToken;
-  case tok::annot_qualtypename:
-    assert(getLang().CPlusPlus && "Expected C++");
+  case tok::kw_typeof:
+  case tok::annot_qualtypename: {
+    if (!getLang().CPlusPlus) {
+      Diag(Tok, diag::err_expected_expression);
+      return ExprError();
+    }
+    
     // postfix-expression: simple-type-specifier '(' expression-list[opt] ')'
     //
     DeclSpec DS;
@@ -657,9 +659,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // These can be followed by postfix-expr pieces.
     if (getLang().ObjC1)
       return ParsePostfixExpressionSuffix(ParseObjCMessageExpression());
-    // FALL THROUGH.
+    // FALL THROUGH.      
   default:
-  UnhandledToken:
     Diag(Tok, diag::err_expected_expression);
     return ExprError();
   }
