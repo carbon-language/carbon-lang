@@ -34,7 +34,7 @@
 #include "ELFWriter.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Type.h"          // FIXME: For PATypeHolder::get().
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -274,9 +274,9 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
     return;
   }
 
-  const Type *GVType = (const Type*)GV->getType();
   unsigned Align = TM.getTargetData()->getPreferredAlignment(GV);
-  unsigned Size  = TM.getTargetData()->getABITypeSize(GVType);
+  unsigned Size  =
+    TM.getTargetData()->getABITypeSize(GV->getType()->getElementType());
 
   // If this global has a zero initializer, it is part of the .bss or common
   // section.
