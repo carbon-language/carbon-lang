@@ -161,6 +161,13 @@ public:
     addAttribute(~0U, N);
   }
 
+  /// removeFnAttr - Remove function attributes from this function.
+  ///
+  void removeFnAttr(Attributes N) {
+    // Function Attributes are stored at ~0 index 
+    removeAttribute(~0U, N);
+  }
+
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
   ///                             to use during code generation.
   bool hasGC() const;
@@ -186,44 +193,64 @@ public:
 
   /// @brief Determine if the function does not access memory.
   bool doesNotAccessMemory() const {
-    return paramHasAttr(~0, Attribute::ReadNone);
+    return hasFnAttr(Attribute::ReadNone);
   }
   void setDoesNotAccessMemory(bool DoesNotAccessMemory = true) {
-    if (DoesNotAccessMemory) addAttribute(~0, Attribute::ReadNone);
-    else removeAttribute(~0, Attribute::ReadNone);
+    if (DoesNotAccessMemory) addFnAttr(Attribute::ReadNone);
+    else removeFnAttr(Attribute::ReadNone);
   }
 
   /// @brief Determine if the function does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || paramHasAttr(~0, Attribute::ReadOnly);
+    return doesNotAccessMemory() || hasFnAttr(Attribute::ReadOnly);
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
-    if (OnlyReadsMemory) addAttribute(~0, Attribute::ReadOnly);
-    else removeAttribute(~0, Attribute::ReadOnly | Attribute::ReadNone);
+    if (OnlyReadsMemory) addFnAttr(Attribute::ReadOnly);
+    else removeFnAttr(Attribute::ReadOnly | Attribute::ReadNone);
   }
 
   /// @brief Determine if the function cannot return.
   bool doesNotReturn() const {
-    return paramHasAttr(~0, Attribute::NoReturn);
+    return hasFnAttr(Attribute::NoReturn);
   }
   void setDoesNotReturn(bool DoesNotReturn = true) {
-    if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
-    else removeAttribute(~0, Attribute::NoReturn);
+    if (DoesNotReturn) addFnAttr(Attribute::NoReturn);
+    else removeFnAttr(Attribute::NoReturn);
   }
 
   /// @brief Determine if the function cannot unwind.
   bool doesNotThrow() const {
-    return paramHasAttr(~0, Attribute::NoUnwind);
+    return hasFnAttr(Attribute::NoUnwind);
   }
   void setDoesNotThrow(bool DoesNotThrow = true) {
-    if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
-    else removeAttribute(~0, Attribute::NoUnwind);
+    if (DoesNotThrow) addFnAttr(Attribute::NoUnwind);
+    else removeFnAttr(Attribute::NoUnwind);
   }
 
   /// @brief Determine if the function returns a structure through first 
   /// pointer argument.
   bool hasStructRetAttr() const {
     return paramHasAttr(1, Attribute::StructRet);
+  }
+
+  /// @brief Determine if the parameter does not alias other parameters.
+  /// @param n The parameter to check. 1 is the first parameter, 0 is the return
+  bool doesNotAlias(unsigned n) const {
+    return paramHasAttr(n, Attribute::NoAlias);
+  }
+  void setDoesNotAlias(unsigned n, bool DoesNotAlias = true) {
+    if (DoesNotAlias) addAttribute(n, Attribute::NoAlias);
+    else removeAttribute(n, Attribute::NoAlias);
+  }
+
+  /// @brief Determine if the parameter can be captured.
+  /// @param n The parameter to check. 1 is the first parameter, 0 is the return
+  bool doesNotCapture(unsigned n) const {
+    return paramHasAttr(n, Attribute::NoCapture);
+  }
+  void setDoesNotCapture(unsigned n, bool DoesNotCapture = true) {
+    if (DoesNotCapture) addAttribute(n, Attribute::NoCapture);
+    else removeAttribute(n, Attribute::NoCapture);
   }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to
