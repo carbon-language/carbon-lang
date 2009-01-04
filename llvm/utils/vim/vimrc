@@ -25,8 +25,10 @@ match WhitespaceEOL /\s\+$/
 " Optional
 " C/C++ programming helpers
 set cindent
-" Don't indent switch case labels beyond the switch.
-set cinoptions=:0
+" Set a few indentation parameters. See the VIM help for cinoptions-values for
+" details.  These aren't absolute rules; they're just an approximation of
+" common style in LLVM source.
+set cinoptions=:0,g0,(0,Ws
 " Add and delete spaces in increments of `shiftwidth' for tabs
 set smarttab
 
