@@ -16,6 +16,9 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 
+#ifndef LLVM_SUPPORT_PREDITERATORCACHE_H
+#define LLVM_SUPPORT_PREDITERATORCACHE_H
+
 namespace llvm {
 
   /// PredIteratorCache - This class is an extremely trivial cache for
@@ -54,4 +57,6 @@ namespace llvm {
     }
   };
 } // end namespace llvm
+
+#endif
 
