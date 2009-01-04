@@ -33,28 +33,28 @@ bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++.");
 
-  if (Tok.isNot(tok::coloncolon)     &&
-      Tok.isNot(tok::annot_cxxscope) &&
-      (Tok.isNot(tok::identifier) || NextToken().isNot(tok::coloncolon)))
-    return false;
-
-  // ::new and ::delete aren't nested-name-specifiers, so parsing the :: as
-  // a scope specifier only makes things more complicated.
-  if (Tok.is(tok::coloncolon) && (NextToken().is(tok::kw_new) ||
-                                  NextToken().is(tok::kw_delete)))
-    return false;
-
   if (Tok.is(tok::annot_cxxscope)) {
     SS.setScopeRep(Tok.getAnnotationValue());
     SS.setRange(Tok.getAnnotationRange());
     ConsumeToken();
     return true;
   }
+  
+  if (Tok.isNot(tok::coloncolon) &&
+      (Tok.isNot(tok::identifier) || NextToken().isNot(tok::coloncolon)))
+    return false;
+
+  // ::new and ::delete aren't nested-name-specifiers, so parsing the :: as
+  // a scope specifier only makes things more complicated.
+  if (Tok.is(tok::coloncolon)) {
+    Token Next = NextToken();
+    if (Next.is(tok::kw_new) || Next.is(tok::kw_delete))
+      return false;
+  }
 
   SS.setBeginLoc(Tok.getLocation());
 
   // '::'
-
   if (Tok.is(tok::coloncolon)) {
     // Global scope.
     SourceLocation CCLoc = ConsumeToken();
@@ -67,18 +67,16 @@ bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS) {
   //   namespace-name '::'
   //   nested-name-specifier identifier '::'
   //   nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
-
   while (Tok.is(tok::identifier) && NextToken().is(tok::coloncolon)) {
     IdentifierInfo *II = Tok.getIdentifierInfo();
     SourceLocation IdLoc = ConsumeToken();
-    assert(Tok.is(tok::coloncolon) &&
-           "NextToken() not working properly!");
+    assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
     SourceLocation CCLoc = ConsumeToken();
     if (SS.isInvalid())
       continue;
 
     SS.setScopeRep(
-         Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, *II) );
+         Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, *II));
     SS.setEndLoc(CCLoc);
   }
 
