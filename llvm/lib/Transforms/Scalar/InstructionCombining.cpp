@@ -4880,37 +4880,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       if (FCmpInst *FCI = dyn_cast<FCmpInst>(Op0))
         return new FCmpInst(FCI->getInversePredicate(),
                             FCI->getOperand(0), FCI->getOperand(1));
-
-      // xor (or (cmp x,m),(cmp y,n)),true --> and (!cmp x,m),(!cmp y,n)
-      //
-      // Proof:
-      //   Let A = (cmp x,m)
-      //   Let B = (cmp y,n)
-      //   Let C = (or A, B)
-      //   C true implies that either A, B, or both are true.
-      //
-      //   (xor C, true) is true only if C is false. We can then apply de
-      //   Morgan's law. QED.
-      BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0);
-      if (Op0I) {
-        Value *A, *B;
-        if (match(Op0I, m_Or(m_Value(A), m_Value(B)))) {
-          ICmpInst *AOp = dyn_cast<ICmpInst>(A);
-          ICmpInst *BOp = dyn_cast<ICmpInst>(B);
-
-          if (AOp && BOp) {
-            ICmpInst *NewA = new ICmpInst(AOp->getInversePredicate(),
-                                          AOp->getOperand(0),
-                                          AOp->getOperand(1));
-            InsertNewInstBefore(NewA, I);
-            ICmpInst *NewB = new ICmpInst(BOp->getInversePredicate(),
-                                          BOp->getOperand(0),
-                                          BOp->getOperand(1));
-            InsertNewInstBefore(NewB, I);
-            return BinaryOperator::CreateAnd(NewA, NewB);
-          }
-        }
-      }
     }
 
     // fold (xor(zext(cmp)), 1) and (xor(sext(cmp)), -1) to ext(!cmp).
