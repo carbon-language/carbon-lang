@@ -21,6 +21,8 @@
 
 #include "CGCall.h"
 
+#include <list>
+
 namespace llvm {
   class Module;
   class Constant;
@@ -97,7 +99,7 @@ class CodeGenModule {
   /// will lazily emit definitions for only the decls that were
   /// actually used.  This should contain only Function and Var decls,
   /// and only those which actually define something.
-  std::vector<const ValueDecl*> StaticDecls;
+  std::list<const ValueDecl*> StaticDecls;
   
   /// GlobalCtors - Store the list of global constructors and their
   /// respective priorities to be emitted when the translation unit is

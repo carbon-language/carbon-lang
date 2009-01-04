@@ -361,26 +361,27 @@ void CodeGenModule::EmitStatics() {
   bool Changed;
   do {
     Changed = false;
-    for (unsigned i = 0, e = StaticDecls.size(); i != e; ++i) {
-      const ValueDecl *D = StaticDecls[i];
-
+    
+    for (std::list<const ValueDecl*>::iterator i = StaticDecls.begin(),
+         e = StaticDecls.end(); i != e; ) {
+      const ValueDecl *D = *i;
+      
       // Check if we have used a decl with the same name
       // FIXME: The AST should have some sort of aggregate decls or
       // global symbol map.
       // FIXME: This is missing some important cases. For example, we
       // need to check for uses in an alias and in a constructor.
-      if (!GlobalDeclMap.count(D->getIdentifier()))
+      if (!GlobalDeclMap.count(D->getIdentifier())) {
+        i++;
         continue;
-
+      }
+      
       // Emit the definition.
       EmitGlobalDefinition(D);
 
       // Erase the used decl from the list.
-      StaticDecls[i] = StaticDecls.back();
-      StaticDecls.pop_back();
-      --i;
-      --e;
-      
+      i = StaticDecls.erase(i);
+
       // Remember that we made a change.
       Changed = true;
     }
