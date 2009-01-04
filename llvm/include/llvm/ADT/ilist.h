@@ -107,15 +107,27 @@ public:
   typedef ilist_traits<NodeTy> Traits;
   typedef bidirectional_iterator<NodeTy, ptrdiff_t> super;
 
-  typedef size_t size_type;
+  typedef typename super::value_type value_type;
+  typedef typename super::difference_type difference_type;
   typedef typename super::pointer pointer;
   typedef typename super::reference reference;
 private:
   pointer NodePtr;
 
-  // operator[] is not defined. Compile error instead of having a runtime bug.
-  void operator[](unsigned) {}
-  void operator[](unsigned) const {}
+  // ilist_iterator is not a random-access iterator, but it has an
+  // implicit conversion to pointer-type, which is. Declare (but
+  // don't define) these functions as private to help catch
+  // accidental misuse.
+  void operator[](difference_type) const;
+  void operator+(difference_type) const;
+  void operator-(difference_type) const;
+  void operator+=(difference_type) const;
+  void operator-=(difference_type) const;
+  template<class T> void operator<(T) const;
+  template<class T> void operator<=(T) const;
+  template<class T> void operator>(T) const;
+  template<class T> void operator>=(T) const;
+  template<class T> void operator-(T) const;
 public:
 
   ilist_iterator(pointer NP) : NodePtr(NP) {}
