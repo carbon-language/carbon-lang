@@ -69,8 +69,8 @@ namespace llvm {
     std::map<unsigned, std::pair<GlobalValue*, LocTy> > ForwardRefValIDs;
     std::vector<GlobalValue*> NumberedVals;
   public:
-    LLParser(MemoryBuffer *F, ParseError &Err) : Lex(F, Err), M(0) {}
-    Module *Run();
+    LLParser(MemoryBuffer *F, ParseError &Err, Module *m) : Lex(F, Err), M(m) {}
+    bool Run();
 
   private:
 

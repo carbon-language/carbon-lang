@@ -51,19 +51,12 @@ namespace llvm {
 }
 
 /// Run: module ::= toplevelentity*
-Module *LLParser::Run() {
-  M = new Module(Lex.getFilename());
-
+bool LLParser::Run() {
   // Prime the lexer.
   Lex.Lex();
 
-  if (ParseTopLevelEntities() ||
-      ValidateEndOfModule()) {
-    delete M;
-    return 0;
-  }
-  
-  return M;
+  return ParseTopLevelEntities() ||
+         ValidateEndOfModule();
 }
 
 /// ValidateEndOfModule - Do final validity and sanity checks at the end of the
