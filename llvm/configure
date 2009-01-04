@@ -34589,6 +34589,9 @@ ac_config_commands="$ac_config_commands test/Makefile"
 ac_config_commands="$ac_config_commands test/Makefile.tests"
 
 
+ac_config_commands="$ac_config_commands unittests/Makefile"
+
+
 ac_config_commands="$ac_config_commands tools/Makefile"
 
 
@@ -35185,6 +35188,7 @@ do
     "runtime/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS runtime/Makefile" ;;
     "test/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS test/Makefile" ;;
     "test/Makefile.tests") CONFIG_COMMANDS="$CONFIG_COMMANDS test/Makefile.tests" ;;
+    "unittests/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS unittests/Makefile" ;;
     "tools/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS tools/Makefile" ;;
     "utils/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Makefile" ;;
     "projects/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Makefile" ;;
@@ -35889,6 +35893,8 @@ echo "$as_me: executing $ac_file commands" >&6;}
    ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Makefile test/Makefile ;;
     "test/Makefile.tests":C) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Makefile.tests`
    ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Makefile.tests test/Makefile.tests ;;
+    "unittests/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname unittests/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/unittests/Makefile unittests/Makefile ;;
     "tools/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/Makefile`
    ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
     "utils/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname utils/Makefile`
