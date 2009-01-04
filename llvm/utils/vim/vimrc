@@ -14,7 +14,7 @@ set nocompatible
 set textwidth=80
 
 " A tab produces a 2-space indentation
-set tabstop=2
+set softtabstop=2
 set shiftwidth=2
 set expandtab
 
