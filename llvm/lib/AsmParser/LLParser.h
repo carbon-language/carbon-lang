@@ -232,7 +232,7 @@ namespace llvm {
         : Loc(L), Type(Ty), Attrs(Attr), Name(N) {}
     };
     bool ParseArgumentList(std::vector<ArgInfo> &ArgList,
-                           bool &isVarArg);
+                           bool &isVarArg, bool inType);
     bool ParseFunctionHeader(Function *&Fn, bool isDefine);
     bool ParseFunctionBody(Function &Fn);
     bool ParseBasicBlock(PerFunctionState &PFS);

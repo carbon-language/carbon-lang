@@ -1075,15 +1075,17 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
 
 
 
-/// ParseArgumentList
+/// ParseArgumentList - Parse the argument list for a function type or function
+/// prototype.  If 'inType' is true then we are parsing a FunctionType.
 ///   ::= '(' ArgTypeListI ')'
 /// ArgTypeListI
 ///   ::= /*empty*/
 ///   ::= '...'
 ///   ::= ArgTypeList ',' '...'
 ///   ::= ArgType (',' ArgType)*
+///
 bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
-                                 bool &isVarArg) {
+                                 bool &isVarArg, bool inType) {
   isVarArg = false;
   assert(Lex.getKind() == lltok::lparen);
   Lex.Lex(); // eat the (.
@@ -1099,7 +1101,10 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
     unsigned Attrs;
     std::string Name;
     
-    if (ParseTypeRec(ArgTy) ||
+    // If we're parsing a type, use ParseTypeRec, because we allow recursive
+    // types (such as a function returning a pointer to itself).  If parsing a
+    // function prototype, we require fully resolved types.
+    if ((inType ? ParseTypeRec(ArgTy) : ParseType(ArgTy)) ||
         ParseOptionalAttrs(Attrs, 0)) return true;
     
     if (Lex.getKind() == lltok::LocalVar ||
@@ -1154,7 +1159,7 @@ bool LLParser::ParseFunctionType(PATypeHolder &Result) {
   std::vector<ArgInfo> ArgList;
   bool isVarArg;
   unsigned Attrs;
-  if (ParseArgumentList(ArgList, isVarArg) ||
+  if (ParseArgumentList(ArgList, isVarArg, true) ||
       // FIXME: Allow, but ignore attributes on function types!
       // FIXME: Remove in LLVM 3.0
       ParseOptionalAttrs(Attrs, 2))
@@ -2087,7 +2092,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   unsigned Alignment;
   std::string GC;
 
-  if (ParseArgumentList(ArgList, isVarArg) ||
+  if (ParseArgumentList(ArgList, isVarArg, false) ||
       ParseOptionalAttrs(FuncAttrs, 2) ||
       (EatIfPresent(lltok::kw_section) &&
        ParseStringConstant(Section)) ||
