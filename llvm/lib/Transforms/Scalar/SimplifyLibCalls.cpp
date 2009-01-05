@@ -123,7 +123,13 @@ Value *LibCallOptimization::CastToCStr(Value *V, IRBuilder<> &B) {
 /// specified pointer.  This always returns an integer value of size intptr_t.
 Value *LibCallOptimization::EmitStrLen(Value *Ptr, IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Constant *StrLen =M->getOrInsertFunction("strlen", TD->getIntPtrType(),
+  AttributeWithIndex AWI[2];
+  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(~0u, Attribute::ReadOnly |
+                                   Attribute::NoUnwind);
+
+  Constant *StrLen =M->getOrInsertFunction("strlen", AttrListPtr::get(AWI, 2),
+                                           TD->getIntPtrType(),
                                            PointerType::getUnqual(Type::Int8Ty),
                                            NULL);
   return B.CreateCall(StrLen, CastToCStr(Ptr, B), "strlen");
@@ -147,7 +153,10 @@ Value *LibCallOptimization::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
 Value *LibCallOptimization::EmitMemChr(Value *Ptr, Value *Val,
                                        Value *Len, IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Value *MemChr = M->getOrInsertFunction("memchr",
+  AttributeWithIndex AWI;
+  AWI = AttributeWithIndex::get(~0u, Attribute::ReadOnly | Attribute::NoUnwind);
+
+  Value *MemChr = M->getOrInsertFunction("memchr", AttrListPtr::get(&AWI, 1),
                                          PointerType::getUnqual(Type::Int8Ty),
                                          PointerType::getUnqual(Type::Int8Ty),
                                          Type::Int32Ty, TD->getIntPtrType(),
@@ -159,7 +168,13 @@ Value *LibCallOptimization::EmitMemChr(Value *Ptr, Value *Val,
 Value *LibCallOptimization::EmitMemCmp(Value *Ptr1, Value *Ptr2,
                                        Value *Len, IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Value *MemCmp = M->getOrInsertFunction("memcmp",
+  AttributeWithIndex AWI[3];
+  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(2, Attribute::NoCapture);
+  AWI[2] = AttributeWithIndex::get(~0u, Attribute::ReadOnly |
+                                   Attribute::NoUnwind);
+
+  Value *MemCmp = M->getOrInsertFunction("memcmp", AttrListPtr::get(AWI, 3),
                                          Type::Int32Ty,
                                          PointerType::getUnqual(Type::Int8Ty),
                                          PointerType::getUnqual(Type::Int8Ty),
@@ -207,7 +222,12 @@ void LibCallOptimization::EmitPutChar(Value *Char, IRBuilder<> &B) {
 /// some pointer.
 void LibCallOptimization::EmitPutS(Value *Str, IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Value *F = M->getOrInsertFunction("puts", Type::Int32Ty,
+  AttributeWithIndex AWI[2];
+  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
+
+  Value *F = M->getOrInsertFunction("puts", AttrListPtr::get(AWI, 2),
+                                    Type::Int32Ty,
                                     PointerType::getUnqual(Type::Int8Ty), NULL);
   B.CreateCall(F, CastToCStr(Str, B), "puts");
 }
@@ -216,8 +236,17 @@ void LibCallOptimization::EmitPutS(Value *Str, IRBuilder<> &B) {
 /// an integer and File is a pointer to FILE.
 void LibCallOptimization::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Constant *F = M->getOrInsertFunction("fputc", Type::Int32Ty, Type::Int32Ty,
-                                       File->getType(), NULL);
+  AttributeWithIndex AWI[2];
+  AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
+  Constant *F;
+  if (isa<PointerType>(File->getType()))
+    F = M->getOrInsertFunction("fputc", AttrListPtr::get(AWI, 2), Type::Int32Ty,
+                               Type::Int32Ty, File->getType(), NULL);
+                                         
+  else
+    F = M->getOrInsertFunction("fputc", Type::Int32Ty, Type::Int32Ty,
+                               File->getType(), NULL);
   Char = B.CreateIntCast(Char, Type::Int32Ty, "chari");
   B.CreateCall2(F, Char, File, "fputc");
 }
@@ -226,9 +255,18 @@ void LibCallOptimization::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B) {
 /// pointer and File is a pointer to FILE.
 void LibCallOptimization::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Constant *F = M->getOrInsertFunction("fputs", Type::Int32Ty,
-                                       PointerType::getUnqual(Type::Int8Ty),
-                                       File->getType(), NULL);
+  AttributeWithIndex AWI[2];
+  AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
+  Constant *F;
+  if (isa<PointerType>(File->getType()))
+    F = M->getOrInsertFunction("fputs", AttrListPtr::get(AWI, 2), Type::Int32Ty,
+                               PointerType::getUnqual(Type::Int8Ty),
+                               File->getType(), NULL);
+  else
+    F = M->getOrInsertFunction("fputs", Type::Int32Ty,
+                               PointerType::getUnqual(Type::Int8Ty),
+                               File->getType(), NULL);
   B.CreateCall2(F, CastToCStr(Str, B), File, "fputs");
 }
 
@@ -237,10 +275,22 @@ void LibCallOptimization::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B) {
 void LibCallOptimization::EmitFWrite(Value *Ptr, Value *Size, Value *File,
                                      IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Constant *F = M->getOrInsertFunction("fwrite", TD->getIntPtrType(),
-                                       PointerType::getUnqual(Type::Int8Ty),
-                                       TD->getIntPtrType(), TD->getIntPtrType(),
-                                       File->getType(), NULL);
+  AttributeWithIndex AWI[3];
+  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(4, Attribute::NoCapture);
+  AWI[2] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
+  Constant *F;
+  if (isa<PointerType>(File->getType()))
+    F = M->getOrInsertFunction("fwrite", AttrListPtr::get(AWI, 3),
+                               TD->getIntPtrType(),
+                               PointerType::getUnqual(Type::Int8Ty),
+                               TD->getIntPtrType(), TD->getIntPtrType(),
+                               File->getType(), NULL);
+  else
+    F = M->getOrInsertFunction("fwrite", TD->getIntPtrType(),
+                               PointerType::getUnqual(Type::Int8Ty),
+                               TD->getIntPtrType(), TD->getIntPtrType(),
+                               File->getType(), NULL);
   B.CreateCall4(F, CastToCStr(Ptr, B), Size, 
                 ConstantInt::get(TD->getIntPtrType(), 1), File);
 }
@@ -1290,7 +1340,7 @@ namespace {
     SPrintFOpt SPrintF; PrintFOpt PrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
 
-    bool Modified;  // This is only used by doFinalization.
+    bool Modified;  // This is only used by doInitialization.
   public:
     static char ID; // Pass identification
     SimplifyLibCalls() : FunctionPass(&ID) {}
@@ -1303,7 +1353,7 @@ namespace {
     void setDoesNotThrow(Function &F);
     void setDoesNotCapture(Function &F, unsigned n);
     void setDoesNotAlias(Function &F, unsigned n);
-    bool doFinalization(Module &M);
+    bool doInitialization(Module &M);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
@@ -1450,7 +1500,7 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
   return Changed;
 }
 
-// Utility methods for doFinalization.
+// Utility methods for doInitialization.
 
 void SimplifyLibCalls::setDoesNotAccessMemory(Function &F) {
   if (!F.doesNotAccessMemory()) {
@@ -1488,9 +1538,9 @@ void SimplifyLibCalls::setDoesNotAlias(Function &F, unsigned n) {
   }
 }
 
-/// doFinalization - Add attributes to well-known functions.
+/// doInitialization - Add attributes to well-known functions.
 ///
-bool SimplifyLibCalls::doFinalization(Module &M) {
+bool SimplifyLibCalls::doInitialization(Module &M) {
   Modified = false;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     Function &F = *I;
@@ -1584,6 +1634,15 @@ bool SimplifyLibCalls::doFinalization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
+        } else if ((NameLen == 6 && !strcmp(NameStr, "strdup")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strndup"))) {
+          if (FTy->getNumParams() < 1 ||
+              !isa<PointerType>(FTy->getReturnType()) ||
+              !isa<PointerType>(FTy->getParamType(0)))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotAlias(F, 0);
+          setDoesNotCapture(F, 1);
         }
         break;
       case 'm':
