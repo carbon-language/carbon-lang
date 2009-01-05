@@ -482,8 +482,9 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
       }
     }
   }
-  
-  if (ExtVTs[0] == EMVT::isInt && EMVT::isExtIntegerInVTs(getExtTypes())) {
+
+  if ((ExtVTs[0] == EMVT::isInt || ExtVTs[0] == MVT::iAny) &&
+      EMVT::isExtIntegerInVTs(getExtTypes())) {
     assert(hasTypeSet() && "should be handled above!");
     std::vector<unsigned char> FVTs = FilterEVTs(getExtTypes(), isInteger);
     if (getExtTypes() == FVTs)
@@ -502,7 +503,8 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
       return true;
     }
   }      
-  if (ExtVTs[0] == EMVT::isFP  && EMVT::isExtFloatingPointInVTs(getExtTypes())) {
+  if ((ExtVTs[0] == EMVT::isFP || ExtVTs[0] == MVT::fAny) &&
+      EMVT::isExtFloatingPointInVTs(getExtTypes())) {
     assert(hasTypeSet() && "should be handled above!");
     std::vector<unsigned char> FVTs =
       FilterEVTs(getExtTypes(), isFloatingPoint);
@@ -517,9 +519,9 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
   //
   // Similarly, we should probably set the type here to the intersection of
   // {isInt|isFP} and ExtVTs
-  if ((getExtTypeNum(0) == EMVT::isInt &&
+  if (((getExtTypeNum(0) == EMVT::isInt || getExtTypeNum(0) == MVT::iAny) &&
        EMVT::isExtIntegerInVTs(ExtVTs)) ||
-      (getExtTypeNum(0) == EMVT::isFP &&
+      ((getExtTypeNum(0) == EMVT::isFP || getExtTypeNum(0) == MVT::fAny) &&
        EMVT::isExtFloatingPointInVTs(ExtVTs))) {
     setTypes(ExtVTs);
     return true;
