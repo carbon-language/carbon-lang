@@ -123,7 +123,6 @@ OptCallingConv ::= + _ |
                  coldcc |
                  "x86_stdcallcc" |
                  "x86_fastcallcc" |
-                 "x86_ssecallcc" |
                  cc EUINT64VAL ;
 
 ParamAttr ::= zeroext
@@ -133,6 +132,7 @@ ParamAttr ::= zeroext
  | inreg
  | sret
  | noalias
+ | nocapture
  | byval
  | nest
  | align EUINT64VAL
@@ -140,28 +140,31 @@ ParamAttr ::= zeroext
 
 OptParamAttrs ::= + _ | OptParamAttrs ParamAttr ;
 
+RetAttr       ::= inreg
+              | zeroext
+              | signext
+              | noalias
+              ;
+
+OptRetAttrs  ::= _
+             | OptRetAttrs RetAttr
+             ;
+
 FuncAttr      ::= noreturn
  | nounwind
+ | inreg
  | zeroext
  | signext
  | readnone
  | readonly
+ | noinline
+ | alwaysinline
+ | optsize
+ | ssp
+ | sspreq
  ;
 
 OptFuncAttrs  ::= + _ | OptFuncAttrs FuncAttr ;
-
-FuncNoteList  ::= FuncNote
-              | FuncNoteList ^ "," FuncNote
-              ;
-
-FuncNote      ::= inline ^ "=" ^ never
-              | inline ^ "=" ^ always
-              | "opt_size"
-              ;
-
-OptFuncNotes  ::= _
-              | notes ^ "(" ^ FuncNoteList ^ ")"
-              ;
 
 OptGC         ::= + _ | gc STRINGCONSTANT ;
 
@@ -217,13 +220,13 @@ ConstVal::= Types "[" ^ ConstVector ^ "]"
  | Types SymbolicValueRef
  | Types ConstExpr
  | Types zeroinitializer
- | IntType ESINT64VAL
- | IntType ESAPINTVAL
- | IntType EUINT64VAL
- | IntType EUAPINTVAL
- | INTTYPE true
- | INTTYPE false
- | FPType FPVAL ;
+ | Types ESINT64VAL
+ | Types ESAPINTVAL
+ | Types EUINT64VAL
+ | Types EUAPINTVAL
+ | Types true
+ | Types false
+ | Types FPVAL ;
 
 ConstExpr::= CastOps "(" ^ ConstVal to Types ^ ")"
  | getelementptr "(" ^ ConstVal IndexList ^ ")"
@@ -284,8 +287,9 @@ ArgListH ::= ArgListH ^ "," Types OptParamAttrs OptLocalName
 
 ArgList ::= ArgListH | ArgListH ^ "," "..." | "..." | _ ;
 
-FunctionHeaderH ::= OptCallingConv ResultTypes GlobalName "(" ^ ArgList ^ ")"
-                  OptFuncAttrs OptSection OptAlign OptGC OptFuncNotes ;
+FunctionHeaderH ::= OptCallingConv OptRetAttrs ResultTypes
+                  GlobalName "(" ^ ArgList ^ ")"
+                  OptFuncAttrs OptSection OptAlign OptGC ;
 
 BEGIN ::= ( begin | "{" ) ^ "\n";
 
