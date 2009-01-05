@@ -807,17 +807,18 @@ bool Parser::TryAnnotateTypeOrScopeToken(const Token *GlobalQualifier) {
 }
 
 /// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only
-/// annotates C++ scope specifiers.
-void Parser::TryAnnotateCXXScopeToken() {
+/// annotates C++ scope specifiers.  This returns true if the token was
+/// annotated.
+bool Parser::TryAnnotateCXXScopeToken() {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
 
   if (Tok.is(tok::annot_cxxscope))
-    return;
+    return false;
 
   CXXScopeSpec SS;
   if (!MaybeParseCXXScopeSpecifier(SS))
-    return;
+    return false;
 
   // Push the current token back into the token stream (or revert it if it is
   // cached) and use an annotation scope token for current token.
@@ -832,4 +833,5 @@ void Parser::TryAnnotateCXXScopeToken() {
   // In case the tokens were cached, have Preprocessor replace them with the
   // annotation token.
   PP.AnnotateCachedTokens(Tok);
+  return true;
 }

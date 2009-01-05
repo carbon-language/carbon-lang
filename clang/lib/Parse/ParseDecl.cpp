@@ -438,32 +438,31 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [C++]   'explicit'
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
-                                        TemplateParameterLists *TemplateParams)
-{
+                                        TemplateParameterLists *TemplateParams){
   DS.SetRangeStart(Tok.getLocation());
   while (1) {
     int isInvalid = false;
     const char *PrevSpec = 0;
     SourceLocation Loc = Tok.getLocation();
 
-    // Only annotate C++ scope. Allow class-name as an identifier in case
-    // it's a constructor.
-    if (getLang().CPlusPlus)
-      TryAnnotateCXXScopeToken();
-    
     switch (Tok.getKind()) {
     default: 
       // Try to parse a type-specifier; if we found one, continue. If it's not
       // a type, this falls through.
-      if (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec, TemplateParams)) {
+      if (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec, TemplateParams))
         continue;
-      }
 
     DoneWithDeclSpec:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(Diags, PP.getSourceManager(), getLang());
       return;
+        
+    case tok::coloncolon: // ::foo::bar
+      // Annotate C++ scope specifiers.  If we get one, loop.
+      if (TryAnnotateCXXScopeToken())
+        continue;
+      goto DoneWithDeclSpec;
 
     case tok::annot_cxxscope: {
       if (DS.hasTypeSpecifier())
@@ -505,6 +504,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // typedef-name
     case tok::identifier: {
+      // In C++, check to see if this is a scope specifier like foo::bar::, if
+      // so handle it as such.  This is important for ctor parsing.
+      if (getLang().CPlusPlus &&
+        TryAnnotateCXXScopeToken())
+          continue;
+      
       // This identifier can only be a typedef name if we haven't already seen
       // a type-specifier.  Without this check we misparse:
       //  typedef int X; struct Y { short X; };  as 'short int'.

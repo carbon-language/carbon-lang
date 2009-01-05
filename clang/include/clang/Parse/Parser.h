@@ -272,8 +272,9 @@ private:
   bool TryAnnotateTypeOrScopeToken(const Token *GlobalQualifier = 0);
 
   /// TryAnnotateCXXScopeToken - Like TryAnnotateTypeOrScopeToken but only
-  /// annotates C++ scope specifiers.
-  void TryAnnotateCXXScopeToken();
+  /// annotates C++ scope specifiers.  This returns true if the token was
+  /// annotated.
+  bool TryAnnotateCXXScopeToken();
 
   /// TentativeParsingAction - An object that is used as a kind of "tentative
   /// parsing transaction". It gets instantiated to mark the token position and
