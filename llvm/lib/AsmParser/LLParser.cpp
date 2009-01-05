@@ -1999,7 +1999,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
     V = PFS.GetVal(ID.UIntVal, Ty, ID.Loc);
   else if (ID.Kind == ValID::t_LocalName)
     V = PFS.GetVal(ID.StrVal, Ty, ID.Loc);
-  else if (ID.Kind == ValID::ValID::t_InlineAsm) {
+  else if (ID.Kind == ValID::t_InlineAsm) {
     const PointerType *PTy = dyn_cast<PointerType>(Ty);
     const FunctionType *FTy =
       PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
