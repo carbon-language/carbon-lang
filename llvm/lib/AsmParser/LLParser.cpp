@@ -1911,6 +1911,11 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
                             &Ignored);
     }
     V = ConstantFP::get(ID.APFloatVal);
+      
+    if (V->getType() != Ty)
+      return Error(ID.Loc, "floating point constant does not have type '" +
+                   Ty->getDescription() + "'");
+      
     return false;
   case ValID::t_Null:
     if (!isa<PointerType>(Ty))
