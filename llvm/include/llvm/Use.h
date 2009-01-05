@@ -98,7 +98,7 @@ private:
   
   Value *Val;
   Use *Next;
-	PointerIntPair<Use**, 2, PrevPtrTag> Prev;
+  PointerIntPair<Use**, 2, PrevPtrTag> Prev;
 
   void setPrev(Use **NewPrev) {
     Prev.setPointer(NewPrev);

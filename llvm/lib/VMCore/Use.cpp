@@ -138,11 +138,11 @@ struct AugmentedUse : Use {
 
 User *Use::getUser() const {
   const Use *End = getImpliedUser();
-	PointerIntPair<User*, 1, Tag>& ref(static_cast<const AugmentedUse*>(End - 1)->ref);
+  PointerIntPair<User*, 1, Tag>& ref(static_cast<const AugmentedUse*>(End - 1)->ref);
   User *She = ref.getPointer();
   return ref.getInt()
-		? She
-		: (User*)End;
+    ? She
+    : (User*)End;
 }
 
 //===----------------------------------------------------------------------===//
@@ -154,7 +154,7 @@ Use *User::allocHungoffUses(unsigned N) const {
                                                 + sizeof(AugmentedUse)
                                                 - sizeof(Use)));
   Use *End = Begin + N;
-	PointerIntPair<User*, 1, Tag>& ref(static_cast<AugmentedUse&>(End[-1]).ref);
+  PointerIntPair<User*, 1, Tag>& ref(static_cast<AugmentedUse&>(End[-1]).ref);
   ref.setPointer(const_cast<User*>(this));
   ref.setInt(tagOne);
   return Use::initTags(Begin, End);
