@@ -18,6 +18,7 @@
 
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/iterator.h"
+#include "llvm/ADT/PointerIntPair.h"
 
 namespace llvm {
 
@@ -25,45 +26,8 @@ class Value;
 class User;
 
 
-//===----------------------------------------------------------------------===//
-//                          Generic Tagging Functions
-//===----------------------------------------------------------------------===//
-
-// We adhere to the following convention: The type of a tagged pointer
-// to T is T volatile*. This means that functions that superpose a tag
-// on a pointer will be supplied a T* (or T const*) and will return a
-// tagged one: T volatile*. Untagging functions do it the other way
-// 'round. While this scheme does not prevent dereferencing of tagged
-// pointers, proper type annotations do catch most inappropriate uses.
-
 /// Tag - generic tag type for (at least 32 bit) pointers
 enum Tag { noTag, tagOne, tagTwo, tagThree };
-
-/// addTag - insert tag bits into an (untagged) pointer
-template <typename T, typename TAG>
-inline volatile T *addTag(const T *P, TAG Tag) {
-  return reinterpret_cast<T*>(ptrdiff_t(P) | Tag);
-}
-
-/// stripTag - remove tag bits from a pointer,
-/// making it dereferencable
-template <ptrdiff_t MASK, typename T>
-inline T *stripTag(const volatile T *P) {
-  return reinterpret_cast<T*>(ptrdiff_t(P) & ~MASK);
-}
-
-/// extractTag - extract tag bits from a pointer
-template <typename TAG, TAG MASK, typename T>
-inline TAG extractTag(const volatile T *P) {
-  return TAG(ptrdiff_t(P) & MASK);
-}
-
-/// transferTag - transfer tag bits from a pointer,
-/// to an untagged pointer
-template <ptrdiff_t MASK, typename T>
-inline volatile T *transferTag(const volatile T *From, const T *To) {
-  return reinterpret_cast<T*>((ptrdiff_t(From) & MASK) | ptrdiff_t(To));
-}
 
 
 //===----------------------------------------------------------------------===//
@@ -133,10 +97,11 @@ private:
   static Use *initTags(Use *Start, Use *Stop, ptrdiff_t Done = 0);
   
   Value *Val;
-  Use *Next, *volatile*Prev;
+  Use *Next;
+	PointerIntPair<Use**, 2, PrevPtrTag> Prev;
 
   void setPrev(Use **NewPrev) {
-    Prev = transferTag<fullStopTag>(Prev, NewPrev);
+    Prev.setPointer(NewPrev);
   }
   void addToList(Use **List) {
     Next = *List;
@@ -145,7 +110,7 @@ private:
     *List = this;
   }
   void removeFromList() {
-    Use **StrippedPrev = stripTag<fullStopTag>(Prev);
+    Use **StrippedPrev = Prev.getPointer();
     *StrippedPrev = Next;
     if (Next) Next->setPrev(StrippedPrev);
   }

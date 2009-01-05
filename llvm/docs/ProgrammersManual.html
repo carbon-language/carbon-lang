@@ -2234,7 +2234,7 @@ insert entries into the symbol table.</p>
 
 <div class="doc_text">
 <p>The <tt><a href="http://llvm.org/doxygen/classllvm_1_1User.html">
-User</a></tt> class provides a base for expressing the ownership of <tt>User</tt>
+User</a></tt> class provides a basis for expressing the ownership of <tt>User</tt>
 towards other <tt><a href="http://llvm.org/doxygen/classllvm_1_1Value.html">
 Value</a></tt>s. The <tt><a href="http://llvm.org/doxygen/classllvm_1_1Use.html">
 Use</a></tt> helper class is employed to do the bookkeeping and to facilitate <i>O(1)</i>
@@ -2242,7 +2242,7 @@ addition and removal.</p>
 
 <!-- ______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="PATypeHolder">Interaction and relationship between <tt>User</tt> and <tt>Use</tt> objects</a>
+  <a name="Use2User">Interaction and relationship between <tt>User</tt> and <tt>Use</tt> objects</a>
 </div>
 
 <div class="doc_text">
@@ -2303,7 +2303,7 @@ enforce the following memory layouts:</p>
 
 <!-- ______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="PATypeHolder">The waymarking algorithm</a>
+  <a name="Waymarking">The waymarking algorithm</a>
 </div>
 
 <div class="doc_text">
@@ -2344,7 +2344,7 @@ stops, so that the <i>worst case is 20 memory accesses</i> when there are
 
 <!-- ______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="PATypeHolder">Reference implementation</a>
+  <a name="ReferenceImpl">Reference implementation</a>
 </div>
 
 <div class="doc_text">
@@ -2434,7 +2434,7 @@ OK, passed 500 tests.
 
 <!-- ______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="PATypeHolder">Tagging considerations</a>
+  <a name="Tagging">Tagging considerations</a>
 </div>
 
 <p>
@@ -2446,7 +2446,8 @@ tag bits.</p>
 For layout b) instead of the <tt>User</tt> we find a pointer (<tt>User*</tt> with LSBit set).
 Following this pointer brings us to the <tt>User</tt>. A portable trick ensures
 that the first bytes of <tt>User</tt> (if interpreted as a pointer) never has
-the LSBit set.</p>
+the LSBit set. (Portability is relying on the fact that all known compilers place the
+<tt>vptr</tt> in the first word of the instances.)</p>
 
 </div>
 
@@ -2491,7 +2492,7 @@ the <tt>lib/VMCore</tt> directory.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="m_Value">Important Public Methods</a>
+  <a name="m_Type">Important Public Methods</a>
 </div>
 
 <div class="doc_text">
@@ -2513,7 +2514,7 @@ the <tt>lib/VMCore</tt> directory.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="m_Value">Important Derived Types</a>
+  <a name="derivedtypes">Important Derived Types</a>
 </div>
 <div class="doc_text">
 <dl>

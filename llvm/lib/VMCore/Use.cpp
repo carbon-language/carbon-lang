@@ -52,7 +52,7 @@ const Use *Use::getImpliedUser() const {
   const Use *Current = this;
 
   while (true) {
-    unsigned Tag = extractTag<PrevPtrTag, fullStopTag>((Current++)->Prev);
+    unsigned Tag = (Current++)->Prev.getInt();
     switch (Tag) {
       case zeroDigitTag:
       case oneDigitTag:
@@ -62,7 +62,7 @@ const Use *Use::getImpliedUser() const {
         ++Current;
         ptrdiff_t Offset = 1;
         while (true) {
-          unsigned Tag = extractTag<PrevPtrTag, fullStopTag>(Current->Prev);
+          unsigned Tag = Current->Prev.getInt();
           switch (Tag) {
             case zeroDigitTag:
             case oneDigitTag:
@@ -91,11 +91,11 @@ Use *Use::initTags(Use * const Start, Use *Stop, ptrdiff_t Done) {
     --Stop;
     Stop->Val = 0;
     if (!Count) {
-      Stop->Prev = reinterpret_cast<Use**>(Done == 0 ? fullStopTag : stopTag);
+      Stop->Prev.setFromOpaqueValue(reinterpret_cast<Use**>(Done == 0 ? fullStopTag : stopTag));
       ++Done;
       Count = Done;
     } else {
-      Stop->Prev = reinterpret_cast<Use**>(Count & 1);
+      Stop->Prev.setFromOpaqueValue(reinterpret_cast<Use**>(Count & 1));
       Count >>= 1;
       ++Done;
     }
@@ -127,7 +127,7 @@ void Use::zap(Use *Start, const Use *Stop, bool del) {
 //===----------------------------------------------------------------------===//
 
 struct AugmentedUse : Use {
-  volatile User *ref;
+  PointerIntPair<User*, 1, Tag> ref;
   AugmentedUse(); // not implemented
 };
 
@@ -138,10 +138,11 @@ struct AugmentedUse : Use {
 
 User *Use::getUser() const {
   const Use *End = getImpliedUser();
-  volatile User *She = static_cast<const AugmentedUse*>(End - 1)->ref;
-  return extractTag<Tag, tagOne>(She)
-      ? llvm::stripTag<tagOne>(She)
-      : reinterpret_cast<User*>(const_cast<Use*>(End));
+	PointerIntPair<User*, 1, Tag>& ref(static_cast<const AugmentedUse*>(End - 1)->ref);
+  User *She = ref.getPointer();
+  return ref.getInt()
+		? She
+		: (User*)End;
 }
 
 //===----------------------------------------------------------------------===//
@@ -153,7 +154,9 @@ Use *User::allocHungoffUses(unsigned N) const {
                                                 + sizeof(AugmentedUse)
                                                 - sizeof(Use)));
   Use *End = Begin + N;
-  static_cast<AugmentedUse&>(End[-1]).ref = addTag(this, tagOne);
+	PointerIntPair<User*, 1, Tag>& ref(static_cast<AugmentedUse&>(End[-1]).ref);
+  ref.setPointer(const_cast<User*>(this));
+  ref.setInt(tagOne);
   return Use::initTags(Begin, End);
 }
 
