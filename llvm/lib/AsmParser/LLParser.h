@@ -252,7 +252,7 @@ namespace llvm {
     bool ParseCompare(Instruction *&I, PerFunctionState &PFS, unsigned Opc);
     bool ParseCast(Instruction *&I, PerFunctionState &PFS, unsigned Opc);
     bool ParseSelect(Instruction *&I, PerFunctionState &PFS);
-    bool ParseVAArg(Instruction *&I, PerFunctionState &PFS);
+    bool ParseVA_Arg(Instruction *&I, PerFunctionState &PFS);
     bool ParseExtractElement(Instruction *&I, PerFunctionState &PFS);
     bool ParseInsertElement(Instruction *&I, PerFunctionState &PFS);
     bool ParseShuffleVector(Instruction *&I, PerFunctionState &PFS);

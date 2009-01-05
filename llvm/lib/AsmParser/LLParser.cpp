@@ -2311,7 +2311,7 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_ptrtoint:       return ParseCast(Inst, PFS, Lex.getUIntVal());
   // Other.
   case lltok::kw_select:         return ParseSelect(Inst, PFS);
-  case lltok::kw_va_arg:         return ParseVAArg(Inst, PFS);
+  case lltok::kw_va_arg:         return ParseVA_Arg(Inst, PFS);
   case lltok::kw_extractelement: return ParseExtractElement(Inst, PFS);
   case lltok::kw_insertelement:  return ParseInsertElement(Inst, PFS);
   case lltok::kw_shufflevector:  return ParseShuffleVector(Inst, PFS);
@@ -2735,15 +2735,19 @@ bool LLParser::ParseSelect(Instruction *&Inst, PerFunctionState &PFS) {
   return false;
 }
 
-/// ParseVAArg
-///   ::= 'vaarg' TypeAndValue ',' Type
-bool LLParser::ParseVAArg(Instruction *&Inst, PerFunctionState &PFS) {
+/// ParseVA_Arg
+///   ::= 'va_arg' TypeAndValue ',' Type
+bool LLParser::ParseVA_Arg(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Op;
   PATypeHolder EltTy(Type::VoidTy);
+  LocTy TypeLoc;
   if (ParseTypeAndValue(Op, PFS) ||
       ParseToken(lltok::comma, "expected ',' after vaarg operand") ||
-      ParseType(EltTy))
+      ParseType(EltTy, TypeLoc))
     return true;
+  
+  if (!EltTy->isFirstClassType())
+    return Error(TypeLoc, "va_arg requires operand with first class type");
 
   Inst = new VAArgInst(Op, EltTy);
   return false;
