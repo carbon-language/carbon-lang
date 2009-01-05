@@ -45,11 +45,6 @@ bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS,
     ConsumeToken();
     return true;
   }
-  
-  if (GlobalQualifier == 0 &&
-      Tok.isNot(tok::coloncolon) &&
-      (Tok.isNot(tok::identifier) || NextToken().isNot(tok::coloncolon)))
-    return false;
 
   if (GlobalQualifier) {
     // Pre-parsed '::'.
@@ -60,27 +55,27 @@ bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS,
     
     assert(Tok.isNot(tok::kw_new) && Tok.isNot(tok::kw_delete) &&
            "Never called with preparsed :: qualifier and with new/delete");
-  } else {
-    SS.setBeginLoc(Tok.getLocation());
-
+  } else if (Tok.is(tok::coloncolon)) {
     // '::' - Global scope qualifier.
-    if (Tok.is(tok::coloncolon)) {
-      SourceLocation CCLoc = ConsumeToken();
+    SourceLocation CCLoc = ConsumeToken();
       
-      // ::new and ::delete aren't nested-name-specifiers, and 
-      // MaybeParseCXXScopeSpecifier is never called in a context where one
-      // could exist.  This means that if we see it, we have a syntax error.
-      if (Tok.is(tok::kw_new) || Tok.is(tok::kw_delete)) {
-        Diag(Tok, diag::err_invalid_qualified_new_delete)
-          << Tok.is(tok::kw_delete);
-        SS.setBeginLoc(SourceLocation());
-        return false;
-      }
-      
-      // Global scope.
-      SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, CCLoc));
-      SS.setEndLoc(CCLoc);
+    // ::new and ::delete aren't nested-name-specifiers, and 
+    // MaybeParseCXXScopeSpecifier is never called in a context where one
+    // could exist.  This means that if we see it, we have a syntax error.
+    if (Tok.is(tok::kw_new) || Tok.is(tok::kw_delete)) {
+      Diag(Tok, diag::err_invalid_qualified_new_delete)
+        << Tok.is(tok::kw_delete);
+      return false;
     }
+    
+    SS.setBeginLoc(CCLoc);
+    SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, CCLoc));
+    SS.setEndLoc(CCLoc);
+  } else if (Tok.is(tok::identifier) && NextToken().is(tok::coloncolon)) {
+    SS.setBeginLoc(Tok.getLocation());
+  } else {
+    // Not a CXXScopeSpecifier.
+    return false;
   }
 
   // nested-name-specifier:
