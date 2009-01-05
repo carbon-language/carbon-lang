@@ -1437,20 +1437,13 @@ private:
   void AddBasicType(DIE *Entity, CompileUnit *Unit,
                     const std::string &Name,
                     unsigned Encoding, unsigned Size) {
-    DIE *Die = ConstructBasicType(Unit, Name, Encoding, Size);
-    AddDIEntry(Entity, DW_AT_type, DW_FORM_ref4, Die);
-  }
 
-  /// ConstructBasicType - Construct a new basic type.
-  ///
-  DIE *ConstructBasicType(CompileUnit *Unit,
-                          const std::string &Name,
-                          unsigned Encoding, unsigned Size) {
     DIE Buffer(DW_TAG_base_type);
     AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
     AddUInt(&Buffer, DW_AT_encoding, DW_FORM_data1, Encoding);
     if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
-    return Unit->AddDie(Buffer);
+    DIE *BasicTypeDie = Unit->AddDie(Buffer);
+    AddDIEntry(Entity, DW_AT_type, DW_FORM_ref4, BasicTypeDie);
   }
 
   /// AddPointerType - Add a new pointer type attribute to the specified entity.
@@ -1555,8 +1548,10 @@ private:
         Size = 0;
 
         // Construct an anonymous type for index type.
-        DIE *IndexTy = ConstructBasicType(Unit, "", DW_ATE_signed,
-                                          sizeof(int32_t));
+        DIE Buffer(DW_TAG_base_type);
+        AddUInt(&Buffer, DW_AT_byte_size, 0, sizeof(int32_t));
+        AddUInt(&Buffer, DW_AT_encoding, DW_FORM_data1, DW_ATE_signed);
+        DIE *IndexTy = Unit->AddDie(Buffer);
 
         // Add subranges to array type.
         for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
