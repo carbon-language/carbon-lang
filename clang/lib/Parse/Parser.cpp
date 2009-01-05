@@ -756,30 +756,33 @@ bool Parser::TryAnnotateTypeOrScopeToken(const Token *GlobalQualifier) {
     MaybeParseCXXScopeSpecifier(SS, GlobalQualifier);
 
   if (Tok.is(tok::identifier)) {
-    DeclTy *Template = 0;
-    // If this is a template-id, annotate the template-id token.
-    if (getLang().CPlusPlus && NextToken().is(tok::less) &&
-        (Template = Actions.isTemplateName(*Tok.getIdentifierInfo(), CurScope, 
-                                           &SS)))
-      AnnotateTemplateIdToken(Template, &SS);
-    else {
-      // Determine whether the identifier is a type name.
-      TypeTy *Ty = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope, &SS);
-      if (Ty) {
-        // This is a typename. Replace the current token in-place with an
-        // annotation type token.
-        Tok.setKind(tok::annot_qualtypename);
-        Tok.setAnnotationValue(Ty);
-        Tok.setAnnotationEndLoc(Tok.getLocation());
-        if (SS.isNotEmpty()) // it was a C++ qualified type name.
-          Tok.setLocation(SS.getBeginLoc());
-        
-        // In case the tokens were cached, have Preprocessor replace
-        // them with the annotation token.
-        PP.AnnotateCachedTokens(Tok);
-        return true;
-      }
+    // Determine whether the identifier is a type name.
+    if (TypeTy *Ty = Actions.isTypeName(*Tok.getIdentifierInfo(), 
+                                        CurScope, &SS)) {
+      // This is a typename. Replace the current token in-place with an
+      // annotation type token.
+      Tok.setKind(tok::annot_qualtypename);
+      Tok.setAnnotationValue(Ty);
+      Tok.setAnnotationEndLoc(Tok.getLocation());
+      if (SS.isNotEmpty()) // it was a C++ qualified type name.
+        Tok.setLocation(SS.getBeginLoc());
+      
+      // In case the tokens were cached, have Preprocessor replace
+      // them with the annotation token.
+      PP.AnnotateCachedTokens(Tok);
+      return true;
+    } else if (!getLang().CPlusPlus) {
+      // If we're in C, we can't have :: tokens at all (the lexer won't return
+      // them).  If the identifier is not a type, then it can't be scope either,
+      // just early exit. 
+      return false;
     }
+    
+    // If this is a template-id, annotate the template-id token.
+    if (NextToken().is(tok::less))
+      if (DeclTy *Template =
+          Actions.isTemplateName(*Tok.getIdentifierInfo(), CurScope, &SS))
+        AnnotateTemplateIdToken(Template, &SS);
 
     // We either have an identifier that is not a type name or we have
     // just created a template-id that might be a type name. Both
