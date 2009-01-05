@@ -18,7 +18,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/Module.h"
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -58,6 +58,43 @@ static const unsigned InitValuesSetSize        = 9; // 512
 ///
 class DIE;
 class DIEValue;
+
+//===----------------------------------------------------------------------===//
+/// Utility routines.
+///
+/// getGlobalVariablesUsing - Return all of the GlobalVariables which have the            
+/// specified value in their initializer somewhere.                                       
+static void
+getGlobalVariablesUsing(Value *V, std::vector<GlobalVariable*> &Result) {
+  // Scan though value users.                                                             
+  for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I) {
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I)) {
+      // If the user is a GlobalVariable then add to result.                              
+      Result.push_back(GV);
+    } else if (Constant *C = dyn_cast<Constant>(*I)) {
+      // If the user is a constant variable then scan its users                           
+      getGlobalVariablesUsing(C, Result);
+    }
+  }
+}
+
+/// getGlobalVariablesUsing - Return all of the GlobalVariables that use the              
+/// named GlobalVariable.                                                                 
+static void
+getGlobalVariablesUsing(Module &M, const std::string &RootName,
+                        std::vector<GlobalVariable*> &Result) {
+  std::vector<const Type*> FieldTypes;
+  FieldTypes.push_back(Type::Int32Ty);
+  FieldTypes.push_back(Type::Int32Ty);
+
+  // Get the GlobalVariable root.                                                         
+  GlobalVariable *UseRoot = M.getGlobalVariable(RootName,
+                                                StructType::get(FieldTypes));
+
+  // If present and linkonce then scan for users.                                         
+  if (UseRoot && UseRoot->hasLinkOnceLinkage())
+    getGlobalVariablesUsing(UseRoot, Result);
+}
 
 //===----------------------------------------------------------------------===//
 /// DWLabel - Labels are used to track locations in the assembler file.
@@ -743,6 +780,11 @@ private:
   std::vector<DIE *> Dies;
 
 public:
+  CompileUnit(unsigned I, DIE *D)
+    : ID(I), Die(D), DescToDieMap(), GVToDieMap(), DescToDIEntryMap(),
+      GVToDIEntryMap(), Globals(), DiesSet(InitDiesSetSize), Dies()
+  {}
+
   CompileUnit(CompileUnitDesc *CUD, unsigned I, DIE *D)
   : Desc(CUD)
   , ID(I)
@@ -3072,6 +3114,33 @@ private:
     Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
 
     Asm->EOL();
+  }
+
+  /// ConstructCompileUnitDIEs - Create a compile unit DIEs.
+  void ConstructCompileUnits() {
+    std::string CUName = "llvm.dbg.compile_units";
+    std::vector<GlobalVariable*> Result;
+    getGlobalVariablesUsing(*M, CUName, Result);
+    for (std::vector<GlobalVariable *>::iterator RI = Result.begin(),
+           RE = Result.end(); RI != RE; ++RI) {
+      DICompileUnit *DIUnit = new DICompileUnit(*RI);
+      unsigned DID = Directories.insert(DIUnit->getDirectory());
+      unsigned ID = SrcFiles.insert(SrcFileInfo(DID,
+                                                DIUnit->getFilename()));
+
+      DIE *Die = new DIE(DW_TAG_compile_unit);
+      AddSectionOffset(Die, DW_AT_stmt_list, DW_FORM_data4,
+                       DWLabel("section_line", 0), DWLabel("section_line", 0),
+                       false);
+      AddString(Die, DW_AT_producer, DW_FORM_string, DIUnit->getProducer());
+      AddUInt(Die, DW_AT_language, DW_FORM_data1, DIUnit->getLanguage());
+      AddString(Die, DW_AT_name, DW_FORM_string, DIUnit->getFilename());
+      if (!DIUnit->getDirectory().empty())
+        AddString(Die, DW_AT_comp_dir, DW_FORM_string, DIUnit->getDirectory());
+
+      CompileUnit *Unit = new CompileUnit(ID, Die);
+      DW_CUs[DIUnit->getGV()] = Unit;
+    }
   }
 
   /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
