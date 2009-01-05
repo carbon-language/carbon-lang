@@ -26,6 +26,7 @@
 #include <set>
 using namespace llvm;
 
+STATISTIC(NumAliases  , "Number of aliases internalized");
 STATISTIC(NumFunctions, "Number of functions internalized");
 STATISTIC(NumGlobals  , "Number of global vars internalized");
 
@@ -156,6 +157,17 @@ bool InternalizePass::runOnModule(Module &M) {
       Changed = true;
       ++NumGlobals;
       DOUT << "Internalized gvar " << I->getName() << "\n";
+    }
+
+  // Mark all aliases that are not in the api as internal as well.
+  for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
+       I != E; ++I)
+    if (!I->isDeclaration() && !I->hasInternalLinkage() &&
+        !ExternalNames.count(I->getName())) {
+      I->setLinkage(GlobalValue::InternalLinkage);
+      Changed = true;
+      ++NumAliases;
+      DOUT << "Internalized alias " << I->getName() << "\n";
     }
 
   return Changed;
