@@ -1124,6 +1124,33 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// SrcFileInfo - This class is used to track source information.
+///
+class SrcFileInfo {
+  unsigned DirectoryID;                 // Directory ID number.
+  std::string Name;                     // File name (not including directory.)
+public:
+  SrcFileInfo(unsigned D, const std::string &N) : DirectoryID(D), Name(N) {}
+            
+  // Accessors
+  unsigned getDirectoryID()    const { return DirectoryID; }
+  const std::string &getName() const { return Name; }
+
+  /// operator== - Used by UniqueVector to locate entry.
+  ///
+  bool operator==(const SourceFileInfo &SI) const {
+    return getDirectoryID() == SI.getDirectoryID() && getName() == SI.getName();
+  }
+
+  /// operator< - Used by UniqueVector to locate entry.
+  ///
+  bool operator<(const SrcFileInfo &SI) const {
+    return getDirectoryID() < SI.getDirectoryID() ||
+          (getDirectoryID() == SI.getDirectoryID() && getName() < SI.getName());
+  }
+};
+
+//===----------------------------------------------------------------------===//
 /// DwarfDebug - Emits Dwarf debug directives.
 ///
 class DwarfDebug : public Dwarf {
@@ -1136,6 +1163,7 @@ private:
   /// CompileUnits - All the compile units involved in this build.  The index
   /// of each entry in this vector corresponds to the sources in MMI.
   std::vector<CompileUnit *> CompileUnits;
+  DenseMap<GlobalVariable *, CompileUnit *> DW_CUs;
 
   /// AbbreviationsSet - Used to uniquely define abbreviations.
   ///
@@ -1147,6 +1175,12 @@ private:
 
   /// ValuesSet - Used to uniquely define values.
   ///
+  // Directories - Uniquing vector for directories.                                       
+  UniqueVector<std::string> Directories;
+
+  // SourceFiles - Uniquing vector for source files.                                      
+  UniqueVector<SrcFileInfo> SrcFiles;
+
   FoldingSet<DIEValue> ValuesSet;
 
   /// Values - A list of all the unique values in use.
@@ -1414,6 +1448,42 @@ private:
       AddUInt(Die, DW_AT_decl_file, 0, FileID);
       AddUInt(Die, DW_AT_decl_line, 0, Line);
     }
+  }
+
+  /// AddSourceLine - Add location information to specified debug information
+  /// entry.
+  void AddSourceLine(DIE *Die, DIGlobal *G) {
+    unsigned FileID = 0;
+    unsigned Line = G->getLineNumber();
+    if (G->getVersion() < DIDescriptor::Version7) {
+      // Version6 or earlier. Use compile unit info to get file id.
+      CompileUnit *Unit = FindCompileUnit(G->getCompileUnit());
+      FileID = Unit->getID();
+    } else {
+      // Version7 or newer, use filename and directory info from DIGlobal
+      // directly.
+      unsigned DID = Directories.idFor(G->getDirectory());
+      FileID = SrcFiles.idFor(SrcFileInfo(DID, G->getFilename()));
+    }
+    AddUInt(Die, DW_AT_decl_file, 0, FileID);
+    AddUInt(Die, DW_AT_decl_line, 0, Line);
+  }
+
+  void AddSourceLine(DIE *Die, DIType *G) {
+    unsigned FileID = 0;
+    unsigned Line = G->getLineNumber();
+    if (G->getVersion() < DIDescriptor::Version7) {
+      // Version6 or earlier. Use compile unit info to get file id.
+      CompileUnit *Unit = FindCompileUnit(G->getCompileUnit());
+      FileID = Unit->getID();
+    } else {
+      // Version7 or newer, use filename and directory info from DIGlobal
+      // directly.
+      unsigned DID = Directories.idFor(G->getDirectory());
+      FileID = SrcFiles.idFor(SrcFileInfo(DID, G->getFilename()));
+    }
+    AddUInt(Die, DW_AT_decl_file, 0, FileID);
+    AddUInt(Die, DW_AT_decl_line, 0, Line);
   }
 
   /// AddAddress - Add an address attribute to a die based on the location
@@ -2142,6 +2212,14 @@ private:
     CompileUnit *Unit = DescToUnitMap[UnitDesc];
     assert(Unit && "Missing compile unit.");
     return Unit;
+  }
+
+  /// FindCompileUnit - Get the compile unit for the given descriptor.                    
+  ///                                                                                     
+  CompileUnit *FindCompileUnit(DICompileUnit Unit) {
+    CompileUnit *DW_Unit = DW_CUs[Unit.getGV()];
+    assert(DW_Unit && "Missing compile unit.");
+    return DW_Unit;
   }
 
   /// NewGlobalVariable - Add a new global variable DIE.

@@ -48,10 +48,6 @@ namespace llvm {
     /// not, the debug info is corrupt and we ignore it.
     DIDescriptor(GlobalVariable *GV, unsigned RequiredTag);
     
-    unsigned getVersion() const {
-      return getUnsignedField(0) & VersionMask;
-    }
-    
     std::string getStringField(unsigned Elt) const;
     unsigned getUnsignedField(unsigned Elt) const {
       return (unsigned)getUInt64Field(Elt);
@@ -74,6 +70,10 @@ namespace llvm {
 
     GlobalVariable *getGV() const { return GV; }
 
+    unsigned getVersion() const {
+      return getUnsignedField(0) & VersionMask;
+    }
+    
     unsigned getTag() const {
       return getUnsignedField(0) & ~VersionMask;
     }
@@ -147,7 +147,8 @@ namespace llvm {
   public:
     explicit DIType(GlobalVariable *GV);
     explicit DIType() {}
-    
+    virtual ~DIType() {}
+
     DIDescriptor getContext() const     { return getDescriptorField(1); }
     std::string getName() const         { return getStringField(2); }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
@@ -158,6 +159,16 @@ namespace llvm {
     // carry this is just plain insane.
     uint64_t getOffsetInBits() const    { return getUInt64Field(7); }
     unsigned getFlags() const           { return getUnsignedField(8); }
+
+    virtual std::string getFilename() const { 
+      assert (0 && "Invalid DIDescriptor");
+      return "";
+    }
+
+    virtual std::string getDirectory() const { 
+      assert (0 && "Invalid DIDescriptor");
+      return "";
+    }
   };
   
   /// DIBasicType - A basic type, like 'int' or 'float'.
@@ -166,7 +177,7 @@ namespace llvm {
     explicit DIBasicType(GlobalVariable *GV);
     
     unsigned getEncoding() const { return getUnsignedField(9); }
-    std::string getFileName() const { return getStringField(10); }
+    std::string getFilename() const { return getStringField(10); }
     std::string getDirectory() const { return getStringField(11); }
   };
   
@@ -180,7 +191,7 @@ namespace llvm {
     explicit DIDerivedType(GlobalVariable *GV);
     
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
-    std::string getFileName() const { return getStringField(10); }
+    std::string getFilename() const { return getStringField(10); }
     std::string getDirectory() const { return getStringField(11); }
 
     /// isDerivedType - Return true if the specified tag is legal for
@@ -202,7 +213,7 @@ namespace llvm {
     explicit DICompositeType(GlobalVariable *GV);
     
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
-    std::string getFileName() const { return getStringField(11); }
+    std::string getFilename() const { return getStringField(11); }
     std::string getDirectory() const { return getStringField(12); }
     
     /// isCompositeType - Return true if the specified tag is legal for
@@ -220,7 +231,8 @@ namespace llvm {
     explicit DIGlobal(GlobalVariable *GV, unsigned RequiredTag)
       : DIDescriptor(GV, RequiredTag) {}
   public:
-    
+    virtual ~DIGlobal() {}
+
     DIDescriptor getContext() const     { return getDescriptorField(2); }
     std::string getName() const         { return getStringField(3); }
     std::string getDisplayName() const  { return getStringField(4); }
@@ -234,6 +246,16 @@ namespace llvm {
     /// compile unit, like 'static' in C.
     unsigned isLocalToUnit() const      { return getUnsignedField(9); }
     unsigned isDefinition() const       { return getUnsignedField(10); }
+
+    virtual std::string getFilename() const { 
+      assert (0 && "Invalid DIDescriptor");
+      return "";
+    }
+
+    virtual std::string getDirectory() const { 
+      assert (0 && "Invalid DIDescriptor");
+      return "";
+    }
   };
   
   
