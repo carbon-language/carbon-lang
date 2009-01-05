@@ -414,7 +414,7 @@ public:
   /// invoked.
   void AnnotateCachedTokens(const Token &Tok) {
     assert(Tok.isAnnotationToken() && "Expected annotation token");
-    if (CachedLexPos != 0 && InCachingLexMode())
+    if (CachedLexPos != 0 && isBacktrackEnabled())
       AnnotatePreviousCachedTokens(Tok);
   }
   

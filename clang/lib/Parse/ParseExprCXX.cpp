@@ -68,8 +68,8 @@ bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS,
       SourceLocation CCLoc = ConsumeToken();
       
       // ::new and ::delete aren't nested-name-specifiers, and 
-      // MaybeParseCXXScopeSpecifier is never called in a context where one could
-      // exist.  This means that if we see it, we have a syntax error.
+      // MaybeParseCXXScopeSpecifier is never called in a context where one
+      // could exist.  This means that if we see it, we have a syntax error.
       if (Tok.is(tok::kw_new) || Tok.is(tok::kw_delete)) {
         Diag(Tok, diag::err_invalid_qualified_new_delete)
           << Tok.is(tok::kw_delete);

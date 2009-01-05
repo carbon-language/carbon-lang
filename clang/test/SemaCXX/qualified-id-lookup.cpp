@@ -53,3 +53,14 @@ void test_f1(int i) {
   int v3 = ::i1;
 }
 
+typedef int f2_type;
+namespace a {
+  typedef int f2_type(int, int);
+
+  void test_f2() {
+    ::f2_type(1, 2); // expected-error {{function-style cast to a builtin type can only take one argument}}
+  }
+}
+
+
+
