@@ -73,7 +73,7 @@ InternalizePass::InternalizePass(bool AllButMain)
     ExternalNames.insert(APIList.begin(), APIList.end());
 }
 
-InternalizePass::InternalizePass(const std::vector<const char *>&exportList) 
+InternalizePass::InternalizePass(const std::vector<const char *>&exportList)
   : ModulePass(&ID), AllButMain(false){
   for(std::vector<const char *>::const_iterator itr = exportList.begin();
         itr != exportList.end(); itr++) {
@@ -85,7 +85,7 @@ void InternalizePass::LoadFile(const char *Filename) {
   // Load the APIFile...
   std::ifstream In(Filename);
   if (!In.good()) {
-    cerr << "WARNING: Internalize couldn't load file '" << Filename 
+    cerr << "WARNING: Internalize couldn't load file '" << Filename
          << "'! Continuing as if it's empty.\n";
     return; // Just continue as if the file were empty
   }
@@ -104,7 +104,7 @@ bool InternalizePass::runOnModule(Module &M) {
   if (ExternalNames.empty()) {
     // Return if we're not in 'all but main' mode and have no external api
     if (!AllButMain)
-      return false; 
+      return false;
     // If no list or file of symbols was specified, check to see if there is a
     // "main" symbol defined in the module.  If so, use it, otherwise do not
     // internalize the module, it must be a library or something.
@@ -112,13 +112,13 @@ bool InternalizePass::runOnModule(Module &M) {
     Function *MainFunc = M.getFunction("main");
     if (MainFunc == 0 || MainFunc->isDeclaration())
       return false;  // No main found, must be a library...
-    
+
     // Preserve main, internalize all else.
     ExternalNames.insert(MainFunc->getName());
   }
-  
+
   bool Changed = false;
-  
+
   // Mark all functions not in the api as internal.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isDeclaration() &&         // Function must be defined here
@@ -131,11 +131,11 @@ bool InternalizePass::runOnModule(Module &M) {
       ++NumFunctions;
       DOUT << "Internalizing func " << I->getName() << "\n";
     }
-  
+
   // Never internalize the llvm.used symbol.  It is used to implement
   // attribute((used)).
   ExternalNames.insert("llvm.used");
-  
+
   // Never internalize anchors used by the machine module info, else the info
   // won't find them.  (see MachineModuleInfo.)
   ExternalNames.insert("llvm.dbg.compile_units");
@@ -145,7 +145,7 @@ bool InternalizePass::runOnModule(Module &M) {
   ExternalNames.insert("llvm.global_dtors");
   ExternalNames.insert("llvm.noinline");
   ExternalNames.insert("llvm.global.annotations");
-      
+
   // Mark all global variables with initializers that are not in the api as
   // internal as well.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
@@ -157,7 +157,7 @@ bool InternalizePass::runOnModule(Module &M) {
       ++NumGlobals;
       DOUT << "Internalized gvar " << I->getName() << "\n";
     }
-      
+
   return Changed;
 }
 
