@@ -221,7 +221,7 @@ static void SetGlobalValueAttributes(const Decl *D,
     if (D->getAttr<DLLImportAttr>()) {
       // The dllimport attribute is overridden by a subsequent declaration as
       // dllexport.
-      if (!D->getAttr<DLLExportAttr>())
+      if (!D->getAttr<DLLExportAttr>()) {
         // dllimport attribute can be applied only to function decls, not to
         // definitions.
         if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
@@ -229,6 +229,7 @@ static void SetGlobalValueAttributes(const Decl *D,
             GV->setLinkage(llvm::Function::DLLImportLinkage);
         } else
           GV->setLinkage(llvm::Function::DLLImportLinkage);
+      }
     }
   } else {
     if (IsInternal) {
