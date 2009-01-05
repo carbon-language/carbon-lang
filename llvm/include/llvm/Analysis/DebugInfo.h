@@ -48,9 +48,6 @@ namespace llvm {
     /// not, the debug info is corrupt and we ignore it.
     DIDescriptor(GlobalVariable *GV, unsigned RequiredTag);
     
-    unsigned getTag() const {
-      return getUnsignedField(0) & ~VersionMask;
-    }
     unsigned getVersion() const {
       return getUnsignedField(0) & VersionMask;
     }
@@ -76,6 +73,10 @@ namespace llvm {
     bool isNull() const { return GV == 0; }
 
     GlobalVariable *getGV() const { return GV; }
+
+    unsigned getTag() const {
+      return getUnsignedField(0) & ~VersionMask;
+    }
   };
   
   /// DIAnchor - A wrapper for various anchor descriptors.
