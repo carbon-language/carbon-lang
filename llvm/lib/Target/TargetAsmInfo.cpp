@@ -342,6 +342,7 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
    default:
     assert(0 && "Unknown section kind");
   }
+  return NULL;
 }
 
 const Section*

@@ -108,6 +108,7 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   }
 
   // FIXME: Do we have any extra special weird cases?
+  return NULL;
 }
 
 const Section*

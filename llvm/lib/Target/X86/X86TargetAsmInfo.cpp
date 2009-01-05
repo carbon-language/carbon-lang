@@ -319,6 +319,7 @@ X86COFFTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
    default:
     assert(0 && "Unknown section kind");
   }
+  return NULL;
 }
 
 std::string X86COFFTargetAsmInfo::printSectionFlags(unsigned flags) const {

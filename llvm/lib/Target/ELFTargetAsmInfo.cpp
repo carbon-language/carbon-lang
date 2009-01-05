@@ -86,6 +86,8 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
     }
   } else
     assert(0 && "Unsupported global");
+
+  return NULL;
 }
 
 const Section*

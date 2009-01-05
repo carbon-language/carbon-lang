@@ -1662,7 +1662,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
   // optimize for it: if there is more than one value, we merge them all into
   // the lowest numbered one, then handle the interval as if we were merging
   // with one value number.
-  VNInfo *LHSValNo;
+  VNInfo *LHSValNo = NULL;
   if (EliminatedLHSVals.size() > 1) {
     // Loop through all the equal value numbers merging them into the smallest
     // one.

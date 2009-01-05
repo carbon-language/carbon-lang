@@ -1255,7 +1255,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
     
     if (VA.isRegLoc()) {
       MVT RegVT = VA.getLocVT();
-      TargetRegisterClass *RC;
+      TargetRegisterClass *RC = NULL;
       if (RegVT == MVT::i32)
         RC = X86::GR32RegisterClass;
       else if (Is64Bit && RegVT == MVT::i64)
