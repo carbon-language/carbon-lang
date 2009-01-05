@@ -1183,16 +1183,13 @@ public:
                           ");");
       }
 
-      if (FoldedChains.size() > 0) {
-        std::string Code;
-        for (unsigned j = 0, e = FoldedChains.size(); j < e; j++) {
-          ReplaceFroms.push_back("SDValue(" +
-                                 FoldedChains[j].first + ".getNode(), " +
-                                 utostr(FoldedChains[j].second) +
-                                 ")");
-          ReplaceTos.push_back("SDValue(ResNode, " +
-                               utostr(NumResults+NumDstRegs) + ")");
-        }
+      for (unsigned j = 0, e = FoldedChains.size(); j < e; j++) {
+        ReplaceFroms.push_back("SDValue(" +
+                               FoldedChains[j].first + ".getNode(), " +
+                               utostr(FoldedChains[j].second) +
+                               ")");
+        ReplaceTos.push_back("SDValue(ResNode, " +
+                             utostr(NumResults+NumDstRegs) + ")");
       }
 
       if (NodeHasOutFlag) {
