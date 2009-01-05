@@ -35,10 +35,11 @@ using namespace llvm;
 // Useful predicates
 //===----------------------------------------------------------------------===//
 
-// Determine if an AllocationInst instruction escapes from the function it is
-// contained in. If it does not escape, there is no way for another function to
-// mod/ref it.  We do this by looking at its uses and determining if the uses
-// can escape (recursively).
+// Determine if a value escapes from the function it is contained in (being
+// returned by the function does not count as escaping here).  If a value local
+// to the function does not escape, there is no way another function can mod/ref
+// it.  We do this by looking at its uses and determining if they can escape
+// (recursively).
 static bool AddressMightEscape(const Value *V) {
   for (Value::use_const_iterator UI = V->use_begin(), E = V->use_end();
        UI != E; ++UI) {
@@ -161,12 +162,17 @@ static bool isNonEscapingLocalObject(const Value *V) {
   // If this is a local allocation, check to see if it escapes.
   if (isa<AllocationInst>(V) || isNoAliasCall(V))
     return !AddressMightEscape(V);
-      
+
   // If this is an argument that corresponds to a byval or noalias argument,
-  // it can't escape either.
+  // then it has not escaped before entering the function.  Check if it escapes
+  // inside the function.
   if (const Argument *A = dyn_cast<Argument>(V))
-    if (A->hasByValAttr() || A->hasNoAliasAttr())
+    if (A->hasByValAttr() || A->hasNoAliasAttr()) {
+      // Don't bother analyzing arguments already known not to escape.
+      if (A->hasNoCaptureAttr())
+        return true;
       return !AddressMightEscape(V);
+    }
   return false;
 }
 
