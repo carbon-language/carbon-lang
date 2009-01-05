@@ -77,8 +77,10 @@ void SUnit::addPred(const SDep &D) {
     ++N->NumSuccsLeft;
   N->Succs.push_back(P);
   Preds.push_back(D);
-  this->setDepthDirty();
-  N->setHeightDirty();
+  if (P.getLatency() != 0) {
+    this->setDepthDirty();
+    N->setHeightDirty();
+  }
 }
 
 /// removePred - This removes the specified edge as a pred of the current
@@ -112,8 +114,10 @@ void SUnit::removePred(const SDep &D) {
         --NumPredsLeft;
       if (!isScheduled)
         --N->NumSuccsLeft;
-      this->setDepthDirty();
-      N->setHeightDirty();
+      if (P.getLatency() != 0) {
+        this->setDepthDirty();
+        N->setHeightDirty();
+      }
       return;
     }
 }
