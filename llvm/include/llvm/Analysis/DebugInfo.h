@@ -86,6 +86,15 @@ namespace llvm {
     
     unsigned getAnchorTag() const { return getUnsignedField(1); }
   };
+
+  /// DISubrange - This is used to represent ranges, for array bounds.
+  class DISubrange : public DIDescriptor {
+  public:
+    explicit DISubrange(GlobalVariable *GV = 0);
+    
+    int64_t getLo() const { return (int64_t)getUInt64Field(1); }
+    int64_t getHi() const { return (int64_t)getUInt64Field(2); }
+  };
   
   /// DIArray - This descriptor holds an array of descriptors.
   class DIArray : public DIDescriptor {
@@ -93,7 +102,9 @@ namespace llvm {
     explicit DIArray(GlobalVariable *GV = 0) : DIDescriptor(GV) {}
     
     unsigned getNumElements() const;
-    DIDescriptor getElement(unsigned Idx) const;
+    DISubrange getElement(unsigned Idx) const {
+      return getFieldAs<DISubrange>(Idx); 
+    }
   };
   
   /// DICompileUnit - A wrapper for a compile unit.
@@ -116,15 +127,6 @@ namespace llvm {
     
     std::string getName() const  { return getStringField(1); }
     uint64_t getLanguage() const { return getUInt64Field(2); }
-  };
-  
-  /// DISubrange - This is used to represent ranges, for array bounds.
-  class DISubrange : public DIDescriptor {
-  public:
-    explicit DISubrange(GlobalVariable *GV = 0);
-    
-    int64_t getLo() const { return (int64_t)getUInt64Field(1); }
-    int64_t getHi() const { return (int64_t)getUInt64Field(2); }
   };
   
   /// DIType - This is a wrapper for a type.

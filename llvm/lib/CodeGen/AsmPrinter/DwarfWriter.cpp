@@ -1512,6 +1512,7 @@ private:
     AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
   }
 
+  /// ConstructType - Construct derived type die from DIDerivedType.
   void ConstructType(CompileUnit *DW_Unit, DIE &Buffer,
                      DIDerivedType *DTy) {
 
@@ -1539,6 +1540,45 @@ private:
     // FIXME - Enable this. if (!DTy->isForwardDecl())
     // FIXME - Enable this.     AddSourceLine(&Buffer, *DTy);
   }
+
+  // ConstructSubrangeDIE - Construct subrange DIE from DISubrange.
+  void ConstructSubrangeDIE (DIE &Buffer, DISubrange *SR, DIE *IndexTy) {
+    int64_t L = SR->getLo();
+    int64_t H = SR->getHi();
+    DIE *DW_Subrange = new DIE(DW_TAG_subrange_type);
+    if (L != H) {
+      AddDIEntry(DW_Subrange, DW_AT_type, DW_FORM_ref4, IndexTy);
+      if (L)
+	AddSInt(DW_Subrange, DW_AT_lower_bound, 0, L);
+        AddSInt(DW_Subrange, DW_AT_upper_bound, 0, H);
+    }
+    Buffer.AddChild(DW_Subrange);
+  }
+
+  /// ConstructArrayTypeDIE - Construct array type DIE from DICompositeType.
+  void ConstructArrayTypeDIE(CompileUnit *DW_Unit, DIE &Buffer, 
+                             DICompositeType *CTy) {
+    Buffer.setTag(DW_TAG_array_type);
+    if (CTy->getTag() == DW_TAG_vector_type)
+      AddUInt(&Buffer, DW_AT_GNU_vector, DW_FORM_flag, 1);
+    
+    DIArray Elements = CTy->getTypeArray();
+    // FIXME - Enable this. 
+    // AddType(&Buffer, CTy->getTypeDerivedFrom(), DW_Unit);
+
+    // Construct an anonymous type for index type.
+    DIE IdxBuffer(DW_TAG_base_type);
+    AddUInt(&IdxBuffer, DW_AT_byte_size, 0, sizeof(int32_t));
+    AddUInt(&IdxBuffer, DW_AT_encoding, DW_FORM_data1, DW_ATE_signed);
+    DIE *IndexTy = DW_Unit->AddDie(IdxBuffer);
+
+    // Add subranges to array type.
+    for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
+      DISubrange Element = Elements.getElement(i);
+      ConstructSubrangeDIE(Buffer, &Element, IndexTy);
+    }
+  }
+
 
   /// ConstructType - Adds all the required attributes to the type.
   ///

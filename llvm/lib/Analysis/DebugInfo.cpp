@@ -174,7 +174,12 @@ DIVariable::DIVariable(GlobalVariable *GV) : DIDescriptor(GV) {
     GV = 0;
 }
 
-
+unsigned DIArray::getNumElements() const {
+  assert (GV && "Invalid DIArray");
+  Constant *C = GV->getInitializer();
+  assert (C && "Invalid DIArray initializer");
+  return C->getNumOperands();
+}
 
 //===----------------------------------------------------------------------===//
 // DIFactory: Basic Helpers
