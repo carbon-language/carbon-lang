@@ -181,6 +181,11 @@ unsigned DIArray::getNumElements() const {
   return C->getNumOperands();
 }
 
+/// isSubrange - Return true if the specified tag is legal for DISubrange.
+bool DISubrange::isSubrange(unsigned Tag) {
+  return Tag == dwarf::DW_TAG_subrange_type;
+}
+
 //===----------------------------------------------------------------------===//
 // DIFactory: Basic Helpers
 //===----------------------------------------------------------------------===//

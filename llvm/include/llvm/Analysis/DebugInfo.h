@@ -77,6 +77,7 @@ namespace llvm {
     unsigned getTag() const {
       return getUnsignedField(0) & ~VersionMask;
     }
+    static inline bool classof(const DIDescriptor *D) { return true; }
   };
   
   /// DIAnchor - A wrapper for various anchor descriptors.
@@ -94,6 +95,11 @@ namespace llvm {
     
     int64_t getLo() const { return (int64_t)getUInt64Field(1); }
     int64_t getHi() const { return (int64_t)getUInt64Field(2); }
+    static bool isSubrange(unsigned);
+    static inline bool classof(const DISubrange *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      return isSubrange(D->getTag());
+    }
   };
   
   /// DIArray - This descriptor holds an array of descriptors.
@@ -102,8 +108,8 @@ namespace llvm {
     explicit DIArray(GlobalVariable *GV = 0) : DIDescriptor(GV) {}
     
     unsigned getNumElements() const;
-    DISubrange getElement(unsigned Idx) const {
-      return getFieldAs<DISubrange>(Idx); 
+    DIDescriptor getElement(unsigned Idx) const {
+      return getDescriptorField(Idx);
     }
   };
   
@@ -180,6 +186,11 @@ namespace llvm {
     /// isDerivedType - Return true if the specified tag is legal for
     /// DIDerivedType.
     static bool isDerivedType(unsigned TAG);
+
+    static inline bool classof(const DIDerivedType *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      return isDerivedType(D->getTag());
+    }
   };
 
   
@@ -197,6 +208,10 @@ namespace llvm {
     /// isCompositeType - Return true if the specified tag is legal for
     /// DICompositeType.
     static bool isCompositeType(unsigned TAG);
+    static inline bool classof(const DIDerivedType *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      return isCompositeType(D->getTag());
+    }
   };
   
   /// DIGlobal - This is a common class for global variables and subprograms.
