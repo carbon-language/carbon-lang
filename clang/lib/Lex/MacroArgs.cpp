@@ -145,8 +145,9 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
   const Token *ArgTokStart = ArgToks;
   
   // Stringify all the tokens.
-  std::string Result = "\"";
-  // FIXME: Optimize this loop to not use std::strings.
+  llvm::SmallString<128> Result;
+  Result += "\"";
+  
   bool isFirst = true;
   for (; ArgToks->isNot(tok::eof); ++ArgToks) {
     const Token &Tok = *ArgToks;
@@ -159,16 +160,30 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
     if (Tok.is(tok::string_literal) ||       // "foo"
         Tok.is(tok::wide_string_literal) ||  // L"foo"
         Tok.is(tok::char_constant)) {        // 'x' and L'x'.
-      Result += Lexer::Stringify(PP.getSpelling(Tok));
+      std::string Str = Lexer::Stringify(PP.getSpelling(Tok));
+      Result.append(Str.begin(), Str.end());
     } else {
-      // Otherwise, just append the token.
-      Result += PP.getSpelling(Tok);
+      // Otherwise, just append the token.  Do some gymnastics to get the token
+      // in place and avoid copies where possible.
+      unsigned CurStrLen = Result.size();
+      Result.resize(CurStrLen+Tok.getLength());
+      const char *BufPtr = &Result[CurStrLen];
+      unsigned ActualTokLen = PP.getSpelling(Tok, BufPtr);
+      
+      // If getSpelling returned a pointer to an already uniqued version of the
+      // string instead of filling in BufPtr, memcpy it onto our string.
+      if (BufPtr != &Result[CurStrLen])
+        memcpy(&Result[CurStrLen], BufPtr, ActualTokLen);
+      
+      // If the token was dirty, the spelling may be shorter than the token.
+      if (ActualTokLen != Tok.getLength())
+        Result.resize(CurStrLen+ActualTokLen);
     }
   }
   
   // If the last character of the string is a \, and if it isn't escaped, this
   // is an invalid string literal, diagnose it as specified in C99.
-  if (Result[Result.size()-1] == '\\') {
+  if (Result.back() == '\\') {
     // Count the number of consequtive \ characters.  If even, then they are
     // just escaped backslashes, otherwise it's an error.
     unsigned FirstNonSlash = Result.size()-2;
@@ -178,7 +193,7 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
     if ((Result.size()-1-FirstNonSlash) & 1) {
       // Diagnose errors for things like: #define F(X) #X   /   F(\)
       PP.Diag(ArgToks[-1], diag::pp_invalid_string_literal);
-      Result.erase(Result.end()-1);  // remove one of the \'s.
+      Result.pop_back();  // remove one of the \'s.
     }
   }
   Result += '"';
@@ -192,11 +207,10 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
     
     // Check for bogus character.
     bool isBad = false;
-    if (Result.size() == 3) {
+    if (Result.size() == 3)
       isBad = Result[1] == '\'';   // ''' is not legal. '\' already fixed above.
-    } else {
+    else
       isBad = (Result.size() != 4 || Result[1] != '\\');  // Not '\x'
-    }
     
     if (isBad) {
       PP.Diag(ArgTokStart[0], diag::err_invalid_character_to_charify);
