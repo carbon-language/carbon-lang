@@ -50,4 +50,6 @@ typedef struct N::f2 type2;
 void test_f1(int i) {
   int &v1 = N::f1();
   float &v2 = N::f1(i);
+  int v3 = ::i1;
 }
+
