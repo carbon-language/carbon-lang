@@ -23,4 +23,4 @@ $ perl -pi -e 's|^#include "src/|#include "gtest/internal/|' *.cc
 
 $ rm -f gtest-all.cc gtest_main.cc
 
-For the license, see the file COPYING in this directory.
+$ mv COPYING LICENSE.TXT
