@@ -126,7 +126,7 @@ namespace llvm {
     explicit DIEnumerator(GlobalVariable *GV = 0);
     
     std::string getName() const  { return getStringField(1); }
-    uint64_t getLanguage() const { return getUInt64Field(2); }
+    uint64_t getEnumValue() const { return getUInt64Field(2); }
   };
   
   /// DIType - This is a wrapper for a type.

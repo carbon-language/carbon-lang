@@ -1579,6 +1579,17 @@ private:
     }
   }
 
+  /// ConstructEnumTypeDIE - Construct enum type DIE from 
+  /// DIEnumerator.
+  void ConstructEnumType(CompileUnit *DW_Unit, 
+                         DIE &Buffer, DIEnumerator *ETy) {
+
+    DIE *Enumerator = new DIE(DW_TAG_enumerator);
+    AddString(Enumerator, DW_AT_name, DW_FORM_string, ETy->getName());
+    int64_t Value = ETy->getEnumValue();                             
+    AddSInt(Enumerator, DW_AT_const_value, DW_FORM_sdata, Value);
+    Buffer.AddChild(Enumerator);
+  }
 
   /// ConstructType - Adds all the required attributes to the type.
   ///
