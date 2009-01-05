@@ -2361,9 +2361,7 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
 inline QualType Sema::CheckMultiplyDivideOperands(
   Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) 
 {
-  QualType lhsType = lex->getType(), rhsType = rex->getType();
-
-  if (lhsType->isVectorType() || rhsType->isVectorType())
+  if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorOperands(Loc, lex, rex);
     
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
@@ -2376,7 +2374,8 @@ inline QualType Sema::CheckMultiplyDivideOperands(
 inline QualType Sema::CheckRemainderOperands(
   Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) 
 {
-  QualType lhsType = lex->getType(), rhsType = rex->getType();
+  if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
+    return CheckVectorOperands(Loc, lex, rex);
 
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
