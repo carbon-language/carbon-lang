@@ -228,6 +228,7 @@ namespace llvm {
     explicit DISubprogram(GlobalVariable *GV = 0);
     std::string getFilename() const { return getStringField(11); }
     std::string getDirectory() const { return getStringField(12); }
+    DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
   };
   
   /// DIGlobalVariable - This is a wrapper for a global variable.

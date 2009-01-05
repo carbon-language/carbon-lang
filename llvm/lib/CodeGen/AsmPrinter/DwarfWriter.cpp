@@ -1591,6 +1591,84 @@ private:
     Buffer.AddChild(Enumerator);
   }
 
+  /// ConstructFieldTypeDIE - Construct variable DIE for a struct field.
+  void ConstructFieldTypeDIE(CompileUnit *DW_Unit,
+                             DIE &Buffer, DIGlobalVariable *V) {
+
+    DIE *VariableDie = new DIE(DW_TAG_variable);
+    const std::string &LinkageName = V->getLinkageName();
+    if (!LinkageName.empty())
+      AddString(VariableDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
+                LinkageName);
+    // FIXME - Enable this. AddSourceLine(VariableDie, V);
+    // FIXME - Enable this. AddType(VariableDie, V->getType(), DW_Unit);
+    if (!V->isLocalToUnit())
+      AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);
+    AddUInt(VariableDie, DW_AT_declaration, DW_FORM_flag, 1);
+    Buffer.AddChild(VariableDie);
+  }
+
+  /// ConstructFieldTypeDIE - Construct subprogram DIE for a struct field.
+  void ConstructFieldTypeDIE(CompileUnit *DW_Unit,
+                             DIE &Buffer, DISubprogram *SP,
+                             bool IsConstructor = false) {
+    DIE *Method = new DIE(DW_TAG_subprogram);
+    AddString(Method, DW_AT_name, DW_FORM_string, SP->getName());
+    const std::string &LinkageName = SP->getLinkageName();
+    if (!LinkageName.empty())
+      AddString(Method, DW_AT_MIPS_linkage_name, DW_FORM_string, LinkageName);
+    // FIXME - Enable this. AddSourceLine(Method, SP);
+
+    DICompositeType MTy = SP->getType();
+    DIArray Args = MTy.getTypeArray();
+
+    // Add Return Type.
+    // FIXME - Enable this.    if (!IsConstructor)
+    // Fixme - Enable this.  AddType(Method, Args.getElement(0), DW_Unit);
+
+    // Add arguments.
+    for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
+      DIE *Arg = new DIE(DW_TAG_formal_parameter);
+      // FIXME - Enable this. AddType(Arg, Args.getElement(i), DW_Unit);
+      AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
+      Method->AddChild(Arg);
+    }
+
+    if (!SP->isLocalToUnit())
+      AddUInt(Method, DW_AT_external, DW_FORM_flag, 1);                     
+    Buffer.AddChild(Method);
+  }
+
+  /// COnstructFieldTypeDIE - Construct derived type DIE for a struct field.
+ void ConstructFieldTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
+                            DIDerivedType *DTy) {
+    unsigned Tag = DTy->getTag();
+    DIE *MemberDie = new DIE(Tag);
+    if (!DTy->getName().empty())
+      AddString(MemberDie, DW_AT_name, DW_FORM_string, DTy->getName());
+    // FIXME - Enable this. AddSourceLine(MemberDie, DTy);
+
+    DIType FromTy = DTy->getTypeDerivedFrom();
+    // FIXME - Enable this. AddType(MemberDie, FromTy, DW_Unit);
+
+    uint64_t Size = DTy->getSizeInBits();
+    uint64_t Offset = DTy->getOffsetInBits();
+
+    // FIXME Handle bitfields                                                      
+
+    // Add size.
+    AddUInt(MemberDie, DW_AT_bit_size, 0, Size);
+    // Add computation for offset.                                                        
+    DIEBlock *Block = new DIEBlock();
+    AddUInt(Block, 0, DW_FORM_data1, DW_OP_plus_uconst);
+    AddUInt(Block, 0, DW_FORM_udata, Offset >> 3);
+    AddBlock(MemberDie, DW_AT_data_member_location, 0, Block);
+
+    // FIXME Handle DW_AT_accessibility.
+
+    Buffer.AddChild(MemberDie);
+  }
+
   /// ConstructType - Adds all the required attributes to the type.
   ///
   void ConstructType(DIE &Buffer, TypeDesc *TyDesc, CompileUnit *Unit) {
