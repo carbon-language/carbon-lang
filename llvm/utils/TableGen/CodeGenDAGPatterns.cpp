@@ -807,7 +807,7 @@ TreePatternNode::isCommutativeIntrinsic(const CodeGenDAGPatterns &CDP) const {
 }
 
 
-/// ApplyTypeConstraints - Apply all of the type constraints relevent to
+/// ApplyTypeConstraints - Apply all of the type constraints relevant to
 /// this node and its children in the tree.  This returns true if it makes a
 /// change, false otherwise.  If a type contradiction is found, throw an
 /// exception.
