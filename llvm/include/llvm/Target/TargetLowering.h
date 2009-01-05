@@ -29,6 +29,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include <climits>
 #include <map>
 #include <vector>
 
