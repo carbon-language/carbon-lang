@@ -670,6 +670,42 @@ bool Type::isIncompleteType() const {
   }
 }
 
+/// isPODType - Return true if this is a plain-old-data type (C++ 3.9p10)
+bool Type::isPODType() const {
+  // The compiler shouldn't query this for incomplete types, but the user might.
+  // We return false for that case.
+  if (isIncompleteType())
+    return false;
+
+  switch (CanonicalType->getTypeClass()) {
+    // Everything not explicitly mentioned is not POD.
+  default: return false;
+  case ASQual:
+    return cast<ASQualType>(CanonicalType)->getBaseType()->isPODType();
+  case VariableArray:
+  case ConstantArray:
+    // IncompleteArray is caught by isIncompleteType() above.
+    return cast<ArrayType>(CanonicalType)->getElementType()->isPODType();
+
+  case Builtin:
+  case Complex:
+  case Pointer:
+  case Vector:
+  case ExtVector:
+    // FIXME: pointer-to-member
+    return true;
+
+  case Tagged:
+    if (isEnumeralType())
+      return true;
+    if (CXXRecordDecl *RDecl = dyn_cast<CXXRecordDecl>(
+          cast<TagType>(CanonicalType)->getDecl()))
+      return RDecl->isPOD();
+    // C struct/union is POD.
+    return true;
+  }
+}
+
 bool Type::isPromotableIntegerType() const {
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isPromotableIntegerType();

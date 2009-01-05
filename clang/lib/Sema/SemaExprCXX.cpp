@@ -842,3 +842,20 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   return false;
 }
 
+Sema::OwningExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
+                                                 SourceLocation KWLoc,
+                                                 SourceLocation LParen,
+                                                 TypeTy *Ty,
+                                                 SourceLocation RParen) {
+  // FIXME: Some of the type traits have requirements. Interestingly, only the
+  // __is_base_of requirement is explicitly stated to be diagnosed. Indeed,
+  // G++ accepts __is_pod(Incomplete) without complaints, and claims that the
+  // type is indeed a POD.
+
+  // There is no point in eagerly computing the value. The traits are designed
+  // to be used from type trait templates, so Ty will be a template parameter
+  // 99% of the time.
+  return Owned(new UnaryTypeTraitExpr(KWLoc, OTT,
+                                      QualType::getFromOpaquePtr(Ty),
+                                      RParen, Context.BoolTy));
+}

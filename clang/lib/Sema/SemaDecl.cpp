@@ -1153,7 +1153,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
     FunctionDecl::StorageClass SC = FunctionDecl::None;
     switch (D.getDeclSpec().getStorageClassSpec()) {
       default: assert(0 && "Unknown storage class!");
-      case DeclSpec::SCS_auto:        
+      case DeclSpec::SCS_auto:
       case DeclSpec::SCS_register:
       case DeclSpec::SCS_mutable:
         Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func);
@@ -1319,9 +1319,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
 
     if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD))
       InvalidDecl = InvalidDecl || CheckConstructor(Constructor);
-    else if (isa<CXXDestructorDecl>(NewFD))
-      cast<CXXRecordDecl>(NewFD->getParent())->setUserDeclaredDestructor(true);
-    else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(NewFD))
+    else if (isa<CXXDestructorDecl>(NewFD)) {
+      CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
+      Record->setUserDeclaredDestructor(true);
+      // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
+      // user-defined destructor.
+      Record->setPOD(false);
+    } else if (CXXConversionDecl *Conversion =
+               dyn_cast<CXXConversionDecl>(NewFD))
       ActOnConversionDeclarator(Conversion);
 
     // Extra checking for C++ overloaded operators (C++ [over.oper]).
@@ -2836,7 +2841,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
   QualType T = GetTypeForDeclarator(D, S);
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   bool InvalidDecl = false;
-  
+
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
   if (T->isVariablyModifiedType()) {
@@ -2872,8 +2877,11 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
                               DeclSpec::SCS_mutable,
                             /*PrevDecl=*/0);
 
-  if (getLangOptions().CPlusPlus)
+  if (getLangOptions().CPlusPlus) {
     CheckExtraCXXDefaultArguments(D);
+    if (!T->isPODType())
+      cast<CXXRecordDecl>(Record)->setPOD(false);
+  }
 
   ProcessDeclAttributes(NewFD, D);
 
@@ -3088,7 +3096,7 @@ void Sema::ActOnFields(Scope* S,
       ++NumNamedMembers;
     }
   }
- 
+
   // Okay, we successfully defined 'Record'.
   if (Record) {
     Record->completeDefinition(Context);

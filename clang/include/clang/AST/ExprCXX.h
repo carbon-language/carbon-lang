@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_EXPRCXX_H
 #define LLVM_CLANG_AST_EXPRCXX_H
 
+#include "clang/Basic/TypeTraits.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 
@@ -699,6 +700,51 @@ public:
 
   virtual void EmitImpl(llvm::Serializer& S) const;
   static CXXDependentNameExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// UnaryTypeTraitExpr - A GCC or MS unary type trait, as used in the
+/// implementation of TR1/C++0x type trait templates.
+/// Example:
+/// __is_pod(int) == true
+/// __is_enum(std::string) == false
+class UnaryTypeTraitExpr : public Expr {
+  /// UTT - The trait.
+  UnaryTypeTrait UTT;
+
+  /// Loc - The location of the type trait keyword.
+  SourceLocation Loc;
+
+  /// RParen - The location of the closing paren.
+  SourceLocation RParen;
+
+  /// QueriedType - The type we're testing.
+  QualType QueriedType;
+
+public:
+  UnaryTypeTraitExpr(SourceLocation loc, UnaryTypeTrait utt, QualType queried,
+                     SourceLocation rparen, QualType ty)
+    : Expr(UnaryTypeTraitExprClass, ty, false, queried->isDependentType()),
+      UTT(utt), Loc(loc), RParen(rparen), QueriedType(queried) { }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc, RParen);}
+
+  UnaryTypeTrait getTrait() const { return UTT; }
+
+  QualType getQueriedType() const { return QueriedType; }
+
+  bool Evaluate() const;
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == UnaryTypeTraitExprClass;
+  }
+  static bool classof(const UnaryTypeTraitExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static UnaryTypeTraitExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 }  // end namespace clang

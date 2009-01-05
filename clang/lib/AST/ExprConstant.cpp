@@ -428,6 +428,12 @@ public:
     return true;
   }
 
+  bool VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    Result = E->Evaluate();
+    return true;
+  }
+
 private:
   bool HandleCast(CastExpr* E);
 };

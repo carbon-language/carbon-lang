@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/TypeTraits.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -1528,6 +1529,24 @@ CXXDependentNameExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
   IdentifierInfo *N = D.ReadPtr<IdentifierInfo>();
   SourceLocation L = SourceLocation::ReadVal(D);
   return new CXXDependentNameExpr(N, Ty, L);
+}
+
+void UnaryTypeTraitExpr::EmitImpl(llvm::Serializer& S) const {
+  S.EmitInt(UTT);
+  S.Emit(Loc);
+  S.Emit(RParen);
+  S.Emit(QueriedType);
+  S.Emit(getType());
+}
+
+UnaryTypeTraitExpr *
+UnaryTypeTraitExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  UnaryTypeTrait UTT = static_cast<UnaryTypeTrait>(D.ReadInt());
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  SourceLocation RParen = SourceLocation::ReadVal(D);
+  QualType QueriedType = QualType::ReadVal(D);
+  QualType Ty = QualType::ReadVal(D);
+  return new UnaryTypeTraitExpr(Loc, UTT, QueriedType, RParen, Ty);
 }
 
 void CXXCatchStmt::EmitImpl(llvm::Serializer& S) const {

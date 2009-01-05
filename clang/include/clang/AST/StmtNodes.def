@@ -113,6 +113,7 @@ STMT(CXXConditionDeclExpr   , DeclRefExpr)
 STMT(CXXNewExpr             , Expr)
 STMT(CXXDeleteExpr          , Expr)
 STMT(CXXDependentNameExpr   , Expr)
+STMT(UnaryTypeTraitExpr     , Expr)
 
 // Obj-C Expressions.
 STMT(ObjCStringLiteral    , Expr)

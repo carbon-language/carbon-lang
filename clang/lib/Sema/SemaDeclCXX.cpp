@@ -317,7 +317,7 @@ Sema::BaseResult
 Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
                          TypeTy *basetype, SourceLocation BaseLoc) {
-  RecordDecl *Decl = (RecordDecl*)classdecl;
+  CXXRecordDecl *Decl = (CXXRecordDecl*)classdecl;
   QualType BaseType = Context.getTypeDeclType((TypeDecl*)basetype);
 
   // Base specifiers must be record types.
@@ -347,7 +347,12 @@ Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
   BaseDecl = BaseDecl->getDefinition(Context);
   assert(BaseDecl && "Base type is not incomplete, but has no definition");
   if (cast<CXXRecordDecl>(BaseDecl)->isPolymorphic())
-    cast<CXXRecordDecl>(Decl)->setPolymorphic(true);
+    Decl->setPolymorphic(true);
+
+  // C++ [dcl.init.aggr]p1:
+  //   An aggregate is [...] a class with [...] no base classes [...].
+  Decl->setAggregate(false);
+  Decl->setPOD(false);
 
   // Create the base specifier.
   return new CXXBaseSpecifier(SpecifierRange, Virtual, 
@@ -537,8 +542,12 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   // C++ [dcl.init.aggr]p1:
   //   An aggregate is an array or a class (clause 9) with [...] no
   //   private or protected non-static data members (clause 11).
-  if (isInstField && (AS == AS_private || AS == AS_protected))
-    cast<CXXRecordDecl>(CurContext)->setAggregate(false);
+  // A POD must be an aggregate.
+  if (isInstField && (AS == AS_private || AS == AS_protected)) {
+    CXXRecordDecl *Record = cast<CXXRecordDecl>(CurContext);
+    Record->setAggregate(false);
+    Record->setPOD(false);
+  }
 
   if (DS.isVirtualSpecified()) {
     if (!isFunc || DS.getStorageClassSpec() == DeclSpec::SCS_static) {
@@ -547,6 +556,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     } else {
       CXXRecordDecl *CurClass = cast<CXXRecordDecl>(CurContext);
       CurClass->setAggregate(false);
+      CurClass->setPOD(false);
       CurClass->setPolymorphic(true);
     }
   }
@@ -827,17 +837,17 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       }
     }
 
-    //  Otherwise, the implicitly declared copy constructor will have
-    //  the form
+    //   Otherwise, the implicitly declared copy constructor will have
+    //   the form
     //
     //       X::X(X&)
-    QualType ArgType = Context.getTypeDeclType(ClassDecl);
+    QualType ArgType = ClassType;
     if (HasConstCopyConstructor)
       ArgType = ArgType.withConst();
     ArgType = Context.getReferenceType(ArgType);
 
-    //  An implicitly-declared copy constructor is an inline public
-    //  member of its class.
+    //   An implicitly-declared copy constructor is an inline public
+    //   member of its class.
     DeclarationName Name 
       = Context.DeclarationNames.getCXXConstructorName(ClassType);
     CXXConstructorDecl *CopyConstructor
@@ -862,6 +872,83 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ClassDecl->addDecl(Context, CopyConstructor);
   }
 
+  if (!ClassDecl->hasUserDeclaredCopyAssignment()) {
+    // Note: The following rules are largely analoguous to the copy
+    // constructor rules. Note that virtual bases are not taken into account
+    // for determining the argument type of the operator. Note also that
+    // operators taking an object instead of a reference are allowed.
+    //
+    // C++ [class.copy]p10:
+    //   If the class definition does not explicitly declare a copy
+    //   assignment operator, one is declared implicitly.
+    //   The implicitly-defined copy assignment operator for a class X
+    //   will have the form
+    //
+    //       X& X::operator=(const X&)
+    //
+    //   if
+    bool HasConstCopyAssignment = true;
+
+    //       -- each direct base class B of X has a copy assignment operator
+    //          whose parameter is of type const B&, const volatile B& or B,
+    //          and
+    for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
+         HasConstCopyAssignment && Base != ClassDecl->bases_end(); ++Base) {
+      const CXXRecordDecl *BaseClassDecl
+        = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+      HasConstCopyAssignment = BaseClassDecl->hasConstCopyAssignment(Context);
+    }
+
+    //       -- for all the nonstatic data members of X that are of a class
+    //          type M (or array thereof), each such class type has a copy
+    //          assignment operator whose parameter is of type const M&,
+    //          const volatile M& or M.
+    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin();
+         HasConstCopyAssignment && Field != ClassDecl->field_end(); ++Field) {
+      QualType FieldType = (*Field)->getType();
+      if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+        FieldType = Array->getElementType();
+      if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+        const CXXRecordDecl *FieldClassDecl
+          = cast<CXXRecordDecl>(FieldClassType->getDecl());
+        HasConstCopyAssignment
+          = FieldClassDecl->hasConstCopyAssignment(Context);
+      }
+    }
+
+    //   Otherwise, the implicitly declared copy assignment operator will
+    //   have the form
+    //
+    //       X& X::operator=(X&)
+    QualType ArgType = ClassType;
+    QualType RetType = Context.getReferenceType(ArgType);
+    if (HasConstCopyAssignment)
+      ArgType = ArgType.withConst();
+    ArgType = Context.getReferenceType(ArgType);
+
+    //   An implicitly-declared copy assignment operator is an inline public
+    //   member of its class.
+    DeclarationName Name =
+      Context.DeclarationNames.getCXXOperatorName(OO_Equal);
+    CXXMethodDecl *CopyAssignment =
+      CXXMethodDecl::Create(Context, ClassDecl, ClassDecl->getLocation(), Name,
+                            Context.getFunctionType(RetType, &ArgType, 1,
+                                                    false, 0),
+                            /*isStatic=*/false, /*isInline=*/true, 0);
+    CopyAssignment->setAccess(AS_public);
+
+    // Add the parameter to the operator.
+    ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyAssignment,
+                                                 ClassDecl->getLocation(),
+                                                 /*IdentifierInfo=*/0,
+                                                 ArgType, VarDecl::None, 0, 0);
+    CopyAssignment->setParams(&FromParam, 1);
+
+    // Don't call addedAssignmentOperator. There is no way to distinguish an
+    // implicit from an explicit assignment operator.
+    ClassDecl->addDecl(Context, CopyAssignment);
+  }
+
   if (!ClassDecl->hasUserDeclaredDestructor()) {
     // C++ [class.dtor]p2:
     //   If a class has no user-declared destructor, a destructor is
@@ -879,8 +966,6 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     Destructor->setAccess(AS_public);
     ClassDecl->addDecl(Context, Destructor);
   }
-
-  // FIXME: Implicit copy assignment operator
 }
 
 void Sema::ActOnFinishCXXClassDef(DeclTy *D) {
@@ -1963,7 +2048,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
     return Diag(FnDecl->getLocation(), diag::err_operator_overload_must_be)
       << FnDecl->getDeclName() << NumParams << ErrorKind;
   }
-      
+
   // Overloaded operators other than operator() cannot be variadic.
   if (Op != OO_Call &&
       FnDecl->getType()->getAsFunctionTypeProto()->isVariadic()) {
@@ -1998,6 +2083,15 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
       return Diag(LastParam->getLocation(),
                   diag::err_operator_overload_post_incdec_must_be_int) 
         << LastParam->getType() << (Op == OO_MinusMinus);
+  }
+
+  // Notify the class if it got an assignment operator.
+  if (Op == OO_Equal) {
+    // Would have returned earlier otherwise.
+    assert(isa<CXXMethodDecl>(FnDecl) &&
+      "Overloaded = not member, but not filtered.");
+    CXXMethodDecl *Method = cast<CXXMethodDecl>(FnDecl);
+    Method->getParent()->addedAssignmentOperator(Context, Method);
   }
 
   return false;

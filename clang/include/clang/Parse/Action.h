@@ -16,6 +16,7 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/TypeTraits.h"
 #include "clang/Parse/AccessSpecifier.h"
 #include "clang/Parse/Ownership.h"
 
@@ -890,6 +891,14 @@ public:
   virtual ExprResult ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                                     bool ArrayForm, ExprTy *Operand) {
     return 0;
+  }
+
+  virtual OwningExprResult ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
+                                               SourceLocation KWLoc,
+                                               SourceLocation LParen,
+                                               TypeTy *Ty,
+                                               SourceLocation RParen) {
+    return ExprEmpty();
   }
 
   //===---------------------------- C++ Classes ---------------------------===//

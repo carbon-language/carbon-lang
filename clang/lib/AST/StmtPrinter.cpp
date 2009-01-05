@@ -1020,6 +1020,32 @@ void StmtPrinter::VisitCXXDependentNameExpr(CXXDependentNameExpr *E) {
   OS << E->getName()->getName();
 }
 
+static const char *getTypeTraitName(UnaryTypeTrait UTT) {
+  switch (UTT) {
+  default: assert(false && "Unknown type trait");
+  case UTT_HasNothrowAssign:      return "__has_nothrow_assign";
+  case UTT_HasNothrowCopy:        return "__has_nothrow_copy";
+  case UTT_HasNothrowConstructor: return "__has_nothrow_constructor";
+  case UTT_HasTrivialAssign:      return "__has_trivial_assign";
+  case UTT_HasTrivialCopy:        return "__has_trivial_copy";
+  case UTT_HasTrivialConstructor: return "__has_trivial_constructor";
+  case UTT_HasTrivialDestructor:  return "__has_trivial_destructor";
+  case UTT_HasVirtualDestructor:  return "__has_virtual_destructor";
+  case UTT_IsAbstract:            return "__is_abstract";
+  case UTT_IsClass:               return "__is_class";
+  case UTT_IsEmpty:               return "__is_empty";
+  case UTT_IsEnum:                return "__is_enum";
+  case UTT_IsPOD:                 return "__is_pod";
+  case UTT_IsPolymorphic:         return "__is_polymorphic";
+  case UTT_IsUnion:               return "__is_union";
+  }
+}
+
+void StmtPrinter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
+  OS << getTypeTraitName(E->getTrait()) << "("
+     << E->getQueriedType().getAsString() << ")";
+}
+
 // Obj-C 
 
 void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {

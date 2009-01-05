@@ -1092,6 +1092,10 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)
              ->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
+
+  case UnaryTypeTraitExprClass:
+    Result = cast<UnaryTypeTraitExpr>(this)->Evaluate();
+    return true;
   }
 
   // Cases that are valid constant exprs fall through to here.

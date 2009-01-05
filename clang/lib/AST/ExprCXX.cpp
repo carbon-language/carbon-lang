@@ -120,6 +120,35 @@ Stmt::child_iterator CXXDependentNameExpr::child_end() {
   return child_iterator();
 }
 
+// UnaryTypeTraitExpr
+Stmt::child_iterator UnaryTypeTraitExpr::child_begin() {
+  return child_iterator();
+}
+Stmt::child_iterator UnaryTypeTraitExpr::child_end() {
+  return child_iterator();
+}
+
+bool UnaryTypeTraitExpr::Evaluate() const {
+  switch(UTT) {
+  default: assert(false && "Unknown type trait or not implemented");
+  case UTT_IsPOD: return QueriedType->isPODType();
+  case UTT_IsClass: // Fallthrough
+  case UTT_IsUnion:
+    if (const RecordType *Record = QueriedType->getAsRecordType()) {
+      bool Union = Record->getDecl()->isUnion();
+      return UTT == UTT_IsUnion ? Union : !Union;
+    }
+    return false;
+  case UTT_IsEnum: return QueriedType->isEnumeralType();
+  case UTT_IsPolymorphic:
+    if (const RecordType *Record = QueriedType->getAsRecordType()) {
+      // Type traits are only parsed in C++, so we've got CXXRecords.
+      return cast<CXXRecordDecl>(Record->getDecl())->isPolymorphic();
+    }
+    return false;
+  }
+}
+
 OverloadedOperatorKind CXXOperatorCallExpr::getOperator() const {
   // All simple function calls (e.g. func()) are implicitly cast to pointer to
   // function. As a result, we try and obtain the DeclRefExpr from the 

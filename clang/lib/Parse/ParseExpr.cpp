@@ -381,6 +381,8 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 /// [C++]   'typeid' '(' expression ')'                             [C++ 5.2p1]
 /// [C++]   'typeid' '(' type-id ')'                                [C++ 5.2p1]
 /// [C++]   'this'          [C++ 9.3.2]
+/// [G++]   unary-type-trait '(' type-id ')'
+/// [G++]   binary-type-trait '(' type-id ',' type-id ')'           [TODO]
 /// [clang] '^' block-literal
 ///
 ///       constant: [C99 6.4.4]
@@ -409,6 +411,26 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 ///       delete-expression: [C++ 5.3.5]
 ///                   '::'[opt] 'delete' cast-expression
 ///                   '::'[opt] 'delete' '[' ']' cast-expression
+///
+/// [GNU] unary-type-trait:
+///                   '__has_nothrow_assign'                  [TODO]
+///                   '__has_nothrow_copy'                    [TODO]
+///                   '__has_nothrow_constructor'             [TODO]
+///                   '__has_trivial_assign'                  [TODO]
+///                   '__has_trivial_copy'                    [TODO]
+///                   '__has_trivial_constructor'             [TODO]
+///                   '__has_trivial_destructor'              [TODO]
+///                   '__has_virtual_destructor'              [TODO]
+///                   '__is_abstract'                         [TODO]
+///                   '__is_class'
+///                   '__is_empty'                            [TODO]
+///                   '__is_enum'
+///                   '__is_pod'
+///                   '__is_polymorphic'
+///                   '__is_union'
+///
+/// [GNU] binary-type-trait:
+///                   '__is_base_of'                          [TODO]
 ///
 Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   OwningExprResult Res(Actions);
@@ -649,6 +671,13 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
 
   case tok::kw_delete: // [C++] delete-expression
     return ParseCXXDeleteExpression(false, Tok.getLocation());
+
+  case tok::kw___is_pod: // [GNU] unary-type-trait
+  case tok::kw___is_class:
+  case tok::kw___is_enum:
+  case tok::kw___is_union:
+  case tok::kw___is_polymorphic:
+    return ParseUnaryTypeTrait();
 
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();

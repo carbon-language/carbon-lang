@@ -839,3 +839,51 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
   return Owned(Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete,
                                       Operand.release()));
 }
+
+static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind)
+{
+  switch(kind) {
+  default: assert(false && "Not a known unary type trait.");
+  case tok::kw___has_nothrow_assign:      return UTT_HasNothrowAssign;
+  case tok::kw___has_nothrow_copy:        return UTT_HasNothrowCopy;
+  case tok::kw___has_nothrow_constructor: return UTT_HasNothrowConstructor;
+  case tok::kw___has_trivial_assign:      return UTT_HasTrivialAssign;
+  case tok::kw___has_trivial_copy:        return UTT_HasTrivialCopy;
+  case tok::kw___has_trivial_constructor: return UTT_HasTrivialConstructor;
+  case tok::kw___has_trivial_destructor:  return UTT_HasTrivialDestructor;
+  case tok::kw___has_virtual_destructor:  return UTT_HasVirtualDestructor;
+  case tok::kw___is_abstract:             return UTT_IsAbstract;
+  case tok::kw___is_class:                return UTT_IsClass;
+  case tok::kw___is_empty:                return UTT_IsEmpty;
+  case tok::kw___is_enum:                 return UTT_IsEnum;
+  case tok::kw___is_pod:                  return UTT_IsPOD;
+  case tok::kw___is_polymorphic:          return UTT_IsPolymorphic;
+  case tok::kw___is_union:                return UTT_IsUnion;
+  }
+}
+
+/// ParseUnaryTypeTrait - Parse the built-in unary type-trait
+/// pseudo-functions that allow implementation of the TR1/C++0x type traits
+/// templates.
+///
+///       primary-expression:
+/// [GNU]             unary-type-trait '(' type-id ')'
+///
+Parser::OwningExprResult Parser::ParseUnaryTypeTrait()
+{
+  UnaryTypeTrait UTT = UnaryTypeTraitFromTokKind(Tok.getKind());
+  SourceLocation Loc = ConsumeToken();
+
+  SourceLocation LParen = Tok.getLocation();
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen))
+    return ExprError();
+
+  // FIXME: Error reporting absolutely sucks! If the this fails to parse a type
+  // there will be cryptic errors about mismatched parentheses and missing
+  // specifiers.
+  TypeTy *Ty = ParseTypeName();
+
+  SourceLocation RParen = MatchRHSPunctuation(tok::r_paren, LParen);
+
+  return Actions.ActOnUnaryTypeTrait(UTT, Loc, LParen, Ty, RParen);
+}

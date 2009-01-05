@@ -295,7 +295,10 @@ public:
   bool isIncompleteOrObjectType() const {
     return !isFunctionType();
   }
-  
+
+  /// isPODType - Return true if this is a plain-old-data type (C++ 3.9p10).
+  bool isPODType() const;
+
   /// isVariablyModifiedType (C99 6.7.5.2p2) - Return true for variable array
   /// types that have a non-constant expression. This does not include "[]".
   bool isVariablyModifiedType() const;

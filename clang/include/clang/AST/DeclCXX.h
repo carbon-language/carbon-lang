@@ -22,6 +22,7 @@ class CXXRecordDecl;
 class CXXConstructorDecl;
 class CXXDestructorDecl;
 class CXXConversionDecl;
+class CXXMethodDecl;
 
 /// TemplateTypeParmDecl - Declaration of a template type parameter,
 /// e.g., "T" in
@@ -263,12 +264,19 @@ class CXXRecordDecl : public RecordDecl {
   /// user-declared copy constructor.
   bool UserDeclaredCopyConstructor : 1;
 
+  /// UserDeclaredCopyAssignment - True when this class has a
+  /// user-declared copy assignment operator.
+  bool UserDeclaredCopyAssignment : 1;
+
   /// UserDeclaredDestructor - True when this class has a
   /// user-declared destructor.
   bool UserDeclaredDestructor : 1;
 
   /// Aggregate - True when this class is an aggregate.
   bool Aggregate : 1;
+
+  /// PlainOldData - True when this class is a POD-type.
+  bool PlainOldData : 1;
 
   /// Polymorphic - True when this class is polymorphic, i.e. has at least one
   /// virtual member or derives from a polymorphic class.
@@ -321,6 +329,10 @@ public:
   /// copy constructor that accepts a const-qualified argument.
   bool hasConstCopyConstructor(ASTContext &Context) const;
 
+  /// hasConstCopyAssignment - Determines whether this class has a
+  /// copy assignment operator that accepts a const-qualified argument.
+  bool hasConstCopyAssignment(ASTContext &Context) const;
+
   /// addedConstructor - Notify the class that another constructor has
   /// been added. This routine helps maintain information about the
   /// class based on which constructors have been added.
@@ -336,6 +348,18 @@ public:
   /// will be implicitly declared.
   bool hasUserDeclaredCopyConstructor() const {
     return UserDeclaredCopyConstructor;
+  }
+
+  /// addedAssignmentOperator - Notify the class that another assignment
+  /// operator has been added. This routine helps maintain information about the
+  /// class based on which operators have been added.
+  void addedAssignmentOperator(ASTContext &Context, CXXMethodDecl *OpDecl);
+
+  /// hasUserDeclaredCopyAssignment - Whether this class has a
+  /// user-declared copy assignment operator. When false, a copy
+  /// assigment operator will be implicitly declared.
+  bool hasUserDeclaredCopyAssignment() const {
+    return UserDeclaredCopyAssignment;
   }
 
   /// hasUserDeclaredDestructor - Whether this class has a
@@ -372,6 +396,15 @@ public:
   /// setAggregate - Set whether this class is an aggregate (C++
   /// [dcl.init.aggr]).
   void setAggregate(bool Agg) { Aggregate = Agg; }
+
+  /// isPOD - Whether this class is a POD-type (C++ [class]p4), which is a class
+  /// that is an aggregate that has no non-static non-POD data members, no
+  /// reference data members, no user-defined copy assignment operator and no
+  /// user-defined destructor.
+  bool isPOD() const { return PlainOldData; }
+
+  /// setPOD - Set whether this class is a POD-type (C++ [class]p4).
+  void setPOD(bool POD) { PlainOldData = POD; }
 
   /// isPolymorphic - Whether this class is polymorphic (C++ [class.virtual]),
   /// which means that the class contains or inherits a virtual function.

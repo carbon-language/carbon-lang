@@ -918,6 +918,14 @@ public:
                                                       SourceLocation EqualLoc,
                                                       ExprTy *AssignExprVal);
 
+  /// ActOnUnaryTypeTrait - Parsed one of the unary type trait support
+  /// pseudo-functions.
+  virtual OwningExprResult ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
+                                               SourceLocation KWLoc,
+                                               SourceLocation LParen,
+                                               TypeTy *Ty,
+                                               SourceLocation RParen);
+
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
   /// global scope ('::').
   virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,

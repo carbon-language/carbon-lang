@@ -984,7 +984,10 @@ private:
   void AnnotateTemplateIdToken(DeclTy *Template, const CXXScopeSpec *SS = 0);
   bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs);
   OwningTemplateArgResult ParseTemplateArgument();
-  
+
+  //===--------------------------------------------------------------------===//
+  // GNU G++: Type Traits [Type-Traits.html in the GCC manual]
+  OwningExprResult ParseUnaryTypeTrait();
 };
 
 }  // end namespace clang

@@ -56,9 +56,9 @@ CXXRecordDecl::CXXRecordDecl(TagKind TK, DeclContext *DC,
                              SourceLocation L, IdentifierInfo *Id) 
   : RecordDecl(CXXRecord, TK, DC, L, Id),
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
-    UserDeclaredDestructor(false), Aggregate(true), Polymorphic(false), 
-    Bases(0), NumBases(0),
-    Conversions(DC, DeclarationName()) { }
+    UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
+    Aggregate(true), PlainOldData(true), Polymorphic(false), Bases(0),
+    NumBases(0), Conversions(DC, DeclarationName()) { }
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
@@ -91,7 +91,8 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
 }
 
 bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
-  QualType ClassType = Context.getTypeDeclType(const_cast<CXXRecordDecl*>(this));
+  QualType ClassType
+    = Context.getTypeDeclType(const_cast<CXXRecordDecl*>(this));
   DeclarationName ConstructorName 
     = Context.DeclarationNames.getCXXConstructorName(
                                            Context.getCanonicalType(ClassType));
@@ -107,7 +108,49 @@ bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
   return false;
 }
 
-void 
+bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
+  QualType ClassType = Context.getCanonicalType(Context.getTypeDeclType(
+    const_cast<CXXRecordDecl*>(this)));
+  DeclarationName OpName =Context.DeclarationNames.getCXXOperatorName(OO_Equal);
+
+  DeclContext::lookup_const_iterator Op, OpEnd;
+  for (llvm::tie(Op, OpEnd) = this->lookup(Context, OpName);
+       Op != OpEnd; ++Op) {
+    // C++ [class.copy]p9:
+    //   A user-declared copy assignment operator is a non-static non-template
+    //   member function of class X with exactly one parameter of type X, X&,
+    //   const X&, volatile X& or const volatile X&.
+    const CXXMethodDecl* Method = cast<CXXMethodDecl>(*Op);
+    if (Method->isStatic())
+      continue;
+    // TODO: Skip templates? Or is this implicitly done due to parameter types?
+    const FunctionTypeProto *FnType =
+      Method->getType()->getAsFunctionTypeProto();
+    assert(FnType && "Overloaded operator has no prototype.");
+    // Don't assert on this; an invalid decl might have been left in the AST.
+    if (FnType->getNumArgs() != 1 || FnType->isVariadic())
+      continue;
+    bool AcceptsConst = true;
+    QualType ArgType = FnType->getArgType(0);
+    if (const ReferenceType *Ref = ArgType->getAsReferenceType()) {
+      ArgType = Ref->getPointeeType();
+      // Is it a non-const reference?
+      if (!ArgType.isConstQualified())
+        AcceptsConst = false;
+    }
+    if (Context.getCanonicalType(ArgType).getUnqualifiedType() != ClassType)
+      continue;
+
+    // We have a single argument of type cv X or cv X&, i.e. we've found the
+    // copy assignment operator. Return whether it accepts const arguments.
+    return AcceptsConst;
+  }
+  assert(isInvalidDecl() &&
+         "No copy assignment operator declared in valid code.");
+  return false;
+}
+
+void
 CXXRecordDecl::addedConstructor(ASTContext &Context, 
                                 CXXConstructorDecl *ConDecl) {
   if (!ConDecl->isImplicitlyDeclared()) {
@@ -119,11 +162,44 @@ CXXRecordDecl::addedConstructor(ASTContext &Context,
     //   user-declared constructors (12.1) [...].
     Aggregate = false;
 
+    // C++ [class]p4:
+    //   A POD-struct is an aggregate class [...]
+    PlainOldData = false;
+
     // Note when we have a user-declared copy constructor, which will
     // suppress the implicit declaration of a copy constructor.
     if (ConDecl->isCopyConstructor(Context))
       UserDeclaredCopyConstructor = true;
   }
+}
+
+void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
+                                            CXXMethodDecl *OpDecl) {
+  // We're interested specifically in copy assignment operators.
+  // Unlike addedConstructor, this method is not called for implicit
+  // declarations.
+  const FunctionTypeProto *FnType = OpDecl->getType()->getAsFunctionTypeProto();
+  assert(FnType && "Overloaded operator has no proto function type.");
+  assert(FnType->getNumArgs() == 1 && !FnType->isVariadic());
+  QualType ArgType = FnType->getArgType(0);
+  if (const ReferenceType *Ref = ArgType->getAsReferenceType())
+    ArgType = Ref->getPointeeType();
+
+  ArgType = ArgType.getUnqualifiedType();
+  QualType ClassType = Context.getCanonicalType(Context.getTypeDeclType(
+    const_cast<CXXRecordDecl*>(this)));
+
+  if (ClassType != Context.getCanonicalType(ArgType))
+    return;
+
+  // This is a copy assignment operator.
+  // Suppress the implicit declaration of a copy constructor.
+  UserDeclaredCopyAssignment = true;
+
+  // C++ [class]p4:
+  //   A POD-struct is an aggregate class that [...] has no user-defined copy
+  //   assignment operator [...].
+  PlainOldData = false;
 }
 
 void CXXRecordDecl::addConversionFunction(ASTContext &Context, 

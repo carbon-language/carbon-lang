@@ -304,6 +304,25 @@ KEYWORD(__label__                   , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 KEYWORD(__real                      , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 KEYWORD(__thread                    , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 
+// GNU and MS Type Traits
+KEYWORD(__has_nothrow_assign        , NOTC90|NOTC99)
+KEYWORD(__has_nothrow_copy          , NOTC90|NOTC99)
+KEYWORD(__has_nothrow_constructor   , NOTC90|NOTC99)
+KEYWORD(__has_trivial_assign        , NOTC90|NOTC99)
+KEYWORD(__has_trivial_copy          , NOTC90|NOTC99)
+KEYWORD(__has_trivial_constructor   , NOTC90|NOTC99)
+KEYWORD(__has_trivial_destructor    , NOTC90|NOTC99)
+KEYWORD(__has_virtual_destructor    , NOTC90|NOTC99)
+KEYWORD(__is_abstract               , NOTC90|NOTC99)
+KEYWORD(__is_base_of                , NOTC90|NOTC99)
+KEYWORD(__is_class                  , NOTC90|NOTC99)
+KEYWORD(__is_empty                  , NOTC90|NOTC99)
+KEYWORD(__is_enum                   , NOTC90|NOTC99)
+KEYWORD(__is_pod                    , NOTC90|NOTC99)
+KEYWORD(__is_polymorphic            , NOTC90|NOTC99)
+KEYWORD(__is_union                  , NOTC90|NOTC99)
+// FIXME: Add MS's traits, too.
+
 // Apple Extension.
 KEYWORD(__private_extern__          , EXTC90|EXTC99|NOTCPP)
 
