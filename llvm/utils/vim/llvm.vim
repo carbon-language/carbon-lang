@@ -42,7 +42,7 @@ syn keyword llvmKeyword define declare global constant
 syn keyword llvmKeyword internal external
 syn keyword llvmKeyword linkonce weak appending common extern_weak
 syn keyword llvmKeyword thread_local dllimport dllexport
-syn keyword llvmKeyword hidden protected
+syn keyword llvmKeyword hidden protected default
 syn keyword llvmKeyword except deplibs
 syn keyword llvmKeyword volatile fastcc coldcc cc ccc
 syn keyword llvmKeyword x86_stdcallcc x86_fastcallcc
