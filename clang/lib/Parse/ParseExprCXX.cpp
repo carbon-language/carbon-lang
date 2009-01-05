@@ -19,6 +19,9 @@ using namespace clang;
 
 /// MaybeParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
 /// Returns true if a nested-name-specifier was parsed from the token stream.
+/// 
+/// Note that this routine emits an error if you call it with ::new or ::delete
+/// as the current tokens, so only call it in contexts where these are invalid.
 ///
 ///       '::'[opt] nested-name-specifier
 ///       '::'
@@ -36,7 +39,7 @@ bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS,
 
   if (Tok.is(tok::annot_cxxscope)) {
     assert(GlobalQualifier == 0 &&
-           "Cannot have :: followed by a resolve annotation scope");
+           "Cannot have :: followed by a resolved annotation scope");
     SS.setScopeRep(Tok.getAnnotationValue());
     SS.setRange(Tok.getAnnotationRange());
     ConsumeToken();
@@ -48,27 +51,33 @@ bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS,
       (Tok.isNot(tok::identifier) || NextToken().isNot(tok::coloncolon)))
     return false;
 
-  // ::new and ::delete aren't nested-name-specifiers, so parsing the :: as
-  // a scope specifier only makes things more complicated.
-  if (GlobalQualifier == 0 && Tok.is(tok::coloncolon)) {
-    Token Next = NextToken();
-    if (Next.is(tok::kw_new) || Next.is(tok::kw_delete))
-      return false;
-  }
-
   if (GlobalQualifier) {
     // Pre-parsed '::'.
     SS.setBeginLoc(GlobalQualifier->getLocation());
     SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, 
                                                GlobalQualifier->getLocation()));
     SS.setEndLoc(GlobalQualifier->getLocation());
+    
+    assert(Tok.isNot(tok::kw_new) && Tok.isNot(tok::kw_delete) &&
+           "Never called with preparsed :: qualifier and with new/delete");
   } else {
     SS.setBeginLoc(Tok.getLocation());
 
-    // '::'
+    // '::' - Global scope qualifier.
     if (Tok.is(tok::coloncolon)) {
-      // Global scope.
       SourceLocation CCLoc = ConsumeToken();
+      
+      // ::new and ::delete aren't nested-name-specifiers, and 
+      // MaybeParseCXXScopeSpecifier is never called in a context where one could
+      // exist.  This means that if we see it, we have a syntax error.
+      if (Tok.is(tok::kw_new) || Tok.is(tok::kw_delete)) {
+        Diag(Tok, diag::err_invalid_qualified_new_delete)
+          << Tok.is(tok::kw_delete);
+        SS.setBeginLoc(SourceLocation());
+        return false;
+      }
+      
+      // Global scope.
       SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, CCLoc));
       SS.setEndLoc(CCLoc);
     }
@@ -450,18 +459,18 @@ Parser::OwningExprResult Parser::ParseCXXCondition() {
 ///         typedef-name
 ///
 void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
-  // Annotate typenames and C++ scope specifiers.
-  TryAnnotateTypeOrScopeToken();
-
   DS.SetRangeStart(Tok.getLocation());
   const char *PrevSpec;
   SourceLocation Loc = Tok.getLocation();
   
   switch (Tok.getKind()) {
+  case tok::identifier:   // foo::bar
+  case tok::coloncolon:   // ::foo::bar
+    assert(0 && "Annotation token should already be formed!");
   default: 
     assert(0 && "Not a simple-type-specifier token!");
     abort();
-      
+
   // type-name
   case tok::annot_qualtypename: {
     DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,

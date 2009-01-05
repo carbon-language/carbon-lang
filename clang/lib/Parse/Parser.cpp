@@ -743,6 +743,9 @@ Parser::OwningExprResult Parser::ParseSimpleAsm() {
 /// ParseDeclarationSpecifiers).
 ///
 /// This returns true if the token was annotated.
+/// 
+/// Note that this routine emits an error if you call it with ::new or ::delete
+/// as the current tokens, so only call it in contexts where these are invalid.
 bool Parser::TryAnnotateTypeOrScopeToken(const Token *GlobalQualifier) {
   // FIXME: what about template-ids?
   if (Tok.is(tok::annot_qualtypename) || Tok.is(tok::annot_cxxscope))
@@ -809,6 +812,9 @@ bool Parser::TryAnnotateTypeOrScopeToken(const Token *GlobalQualifier) {
 /// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only
 /// annotates C++ scope specifiers.  This returns true if the token was
 /// annotated.
+/// 
+/// Note that this routine emits an error if you call it with ::new or ::delete
+/// as the current tokens, so only call it in contexts where these are invalid.
 bool Parser::TryAnnotateCXXScopeToken() {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
