@@ -238,6 +238,9 @@ bool LLParser::ParseUnnamedType() {
   std::map<unsigned, std::pair<PATypeHolder, LocTy> >::iterator
     FI = ForwardRefTypeIDs.find(TypeID);
   if (FI != ForwardRefTypeIDs.end()) {
+    if (FI->second.first.get() == Ty)
+      return Error(TypeLoc, "self referential type is invalid");
+    
     cast<DerivedType>(FI->second.first.get())->refineAbstractTypeTo(Ty);
     Ty = FI->second.first.get();
     ForwardRefTypeIDs.erase(FI);
@@ -275,6 +278,9 @@ bool LLParser::ParseNamedType() {
   std::map<std::string, std::pair<PATypeHolder, LocTy> >::iterator
   FI = ForwardRefTypes.find(Name);
   if (FI != ForwardRefTypes.end()) {
+    if (FI->second.first.get() == Ty)
+      return Error(NameLoc, "self referential type is invalid");
+
     cast<DerivedType>(FI->second.first.get())->refineAbstractTypeTo(Ty);
     Ty = FI->second.first.get();
     ForwardRefTypes.erase(FI);
