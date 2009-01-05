@@ -25,6 +25,7 @@
 #include <set>
 using namespace llvm;
 
+STATISTIC(NumAliases, "Number of global aliases removed");
 STATISTIC(NumFunctions, "Number of functions removed");
 STATISTIC(NumVariables, "Number of global variables removed");
 
@@ -32,7 +33,7 @@ namespace {
   struct VISIBILITY_HIDDEN GlobalDCE : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
     GlobalDCE() : ModulePass(&ID) {}
- 
+
     // run - Do the GlobalDCE pass on the specified module, optionally updating
     // the specified callgraph to reflect the changes.
     //
@@ -41,7 +42,7 @@ namespace {
   private:
     std::set<GlobalValue*> AliveGlobals;
 
-    /// GlobalIsNeeded - the specific global value as needed, and
+    /// GlobalIsNeeded - mark the specific global value as needed, and
     /// recursively mark anything that it uses as also needed.
     void GlobalIsNeeded(GlobalValue *GV);
     void MarkUsedGlobalsAsNeeded(Constant *C);
@@ -77,11 +78,12 @@ bool GlobalDCE::runOnModule(Module &M) {
       GlobalIsNeeded(I);
   }
 
-
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E; ++I) {
-    // Aliases are always needed even if they are not used.
-    MarkUsedGlobalsAsNeeded(I->getAliasee());
+    Changed |= RemoveUnusedGlobalValue(*I);
+    // Externally visible aliases are needed.
+    if (!I->hasInternalLinkage() && !I->hasLinkOnceLinkage())
+      GlobalIsNeeded(I);
   }
 
   // Now that all globals which are needed are in the AliveGlobals set, we loop
@@ -96,7 +98,6 @@ bool GlobalDCE::runOnModule(Module &M) {
       I->setInitializer(0);
     }
 
-
   // The second pass drops the bodies of functions which are dead...
   std::vector<Function*> DeadFunctions;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
@@ -107,7 +108,7 @@ bool GlobalDCE::runOnModule(Module &M) {
     }
 
   if (!DeadFunctions.empty()) {
-    // Now that all interreferences have been dropped, delete the actual objects
+    // Now that all interferences have been dropped, delete the actual objects
     // themselves.
     for (unsigned i = 0, e = DeadFunctions.size(); i != e; ++i) {
       RemoveUnusedGlobalValue(*DeadFunctions[i]);
@@ -124,6 +125,17 @@ bool GlobalDCE::runOnModule(Module &M) {
     }
     NumVariables += DeadGlobalVars.size();
     Changed = true;
+  }
+
+  // Now delete any dead aliases.
+  for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end(); I != E;) {
+    Module::alias_iterator J = I++;
+    if (!AliveGlobals.count(J)) {
+      RemoveUnusedGlobalValue(*J);
+      M.getAliasList().erase(J);
+      ++NumAliases;
+      Changed = true;
+    }
   }
 
   // Make sure that all memory is released
@@ -147,7 +159,10 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
     // referenced by the initializer to the alive set.
     if (GV->hasInitializer())
       MarkUsedGlobalsAsNeeded(GV->getInitializer());
-  } else if (!isa<GlobalAlias>(G)) {
+  } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(G)) {
+    // The target of a global alias is needed.
+    MarkUsedGlobalsAsNeeded(GA->getAliasee());
+  } else {
     // Otherwise this must be a function object.  We have to scan the body of
     // the function looking for constants and global values which are used as
     // operands.  Any operands of these types must be processed to ensure that
