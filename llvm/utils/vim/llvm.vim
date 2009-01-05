@@ -50,12 +50,12 @@ syn keyword llvmKeyword signext zeroext inreg sret nounwind noreturn
 syn keyword llvmKeyword nocapture byval nest readnone readonly
 syn keyword llvmKeyword noinline alwaysinline optsize ssp sspreq
 syn keyword llvmKeyword module asm align tail to
-syn keyword llvmKeyword addrspace section alias sideeffect c
+syn keyword llvmKeyword addrspace section alias sideeffect c gc
 syn keyword llvmKeyword target datalayout triple
 
 " Obsolete keywords.
 syn keyword llvmError  uninitialized implementation
-syn keyword llvmError  getresult big little endian begin end gc
+syn keyword llvmError  getresult big little endian begin end
 
 " Misc syntax.
 syn match   llvmIgnore /[%@]\d\+\>/
