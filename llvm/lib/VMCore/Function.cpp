@@ -161,11 +161,9 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
                    const std::string &name, Module *ParentModule)
   : GlobalValue(PointerType::getUnqual(Ty), 
                 Value::FunctionVal, 0, 0, Linkage, name) {
+  assert(FunctionType::isValidReturnType(getReturnType()) &&
+         !isa<OpaqueType>(getReturnType()) && "invalid return type");
   SymTab = new ValueSymbolTable();
-
-  assert((getReturnType()->isFirstClassType() ||getReturnType() == Type::VoidTy
-          || isa<StructType>(getReturnType()))
-         && "LLVM functions cannot return aggregate values!");
 
   // If the function has arguments, mark them as lazily built.
   if (Ty->getNumParams())
