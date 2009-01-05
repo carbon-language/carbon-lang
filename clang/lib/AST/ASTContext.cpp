@@ -1394,8 +1394,7 @@ QualType ASTContext::getArrayDecayedType(QualType Ty) {
   return PtrTy.getQualifiedType(PrettyArrayType->getIndexTypeQualifier());
 }
 
-QualType ASTContext::getBaseElementType(const VariableArrayType *VAT)
-{
+QualType ASTContext::getBaseElementType(const VariableArrayType *VAT) {
   QualType ElemTy = VAT->getElementType();
   
   if (const VariableArrayType *VAT = getAsVariableArrayType(ElemTy))
@@ -1409,7 +1408,10 @@ QualType ASTContext::getBaseElementType(const VariableArrayType *VAT)
 static FloatingRank getFloatingRank(QualType T) {
   if (const ComplexType *CT = T->getAsComplexType())
     return getFloatingRank(CT->getElementType());
+  if (const VectorType *VT = T->getAsExtVectorType())
+    return getFloatingRank(VT->getElementType());
 
+  assert(T->getAsBuiltinType() && "getFloatingRank(): not a floating type");
   switch (T->getAsBuiltinType()->getKind()) {
   default: assert(0 && "getFloatingRank(): not a floating type");
   case BuiltinType::Float:      return FloatRank;
