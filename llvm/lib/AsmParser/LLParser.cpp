@@ -2279,13 +2279,14 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   // Binary Operators.
   case lltok::kw_add:
   case lltok::kw_sub:
-  case lltok::kw_mul:
+  case lltok::kw_mul:    return ParseArithmetic(Inst, PFS, Lex.getUIntVal(), 0);
+      
   case lltok::kw_udiv:
   case lltok::kw_sdiv:
-  case lltok::kw_fdiv:
   case lltok::kw_urem:
-  case lltok::kw_srem:
-  case lltok::kw_frem:   return ParseArithmetic(Inst, PFS, Lex.getUIntVal());
+  case lltok::kw_srem:   return ParseArithmetic(Inst, PFS, Lex.getUIntVal(), 1);
+  case lltok::kw_fdiv:
+  case lltok::kw_frem:   return ParseArithmetic(Inst, PFS, Lex.getUIntVal(), 2);
   case lltok::kw_shl:
   case lltok::kw_lshr:
   case lltok::kw_ashr:
@@ -2619,18 +2620,31 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
 //===----------------------------------------------------------------------===//
 
 /// ParseArithmetic
-///  ::= ArithmeticOps TypeAndValue ',' Value {
+///  ::= ArithmeticOps TypeAndValue ',' Value
+///
+/// If OperandType is 0, then any FP or integer operand is allowed.  If it is 1,
+/// then any integer operand is allowed, if it is 2, any fp operand is allowed.
 bool LLParser::ParseArithmetic(Instruction *&Inst, PerFunctionState &PFS,
-                               unsigned Opc) {
+                               unsigned Opc, unsigned OperandType) {
   LocTy Loc; Value *LHS, *RHS;
   if (ParseTypeAndValue(LHS, Loc, PFS) ||
       ParseToken(lltok::comma, "expected ',' in arithmetic operation") ||
       ParseValue(LHS->getType(), RHS, PFS))
     return true;
 
-  if (!isa<IntegerType>(LHS->getType()) && !LHS->getType()->isFloatingPoint() &&
-      !isa<VectorType>(LHS->getType()))
-    return Error(Loc, "instruction requires integer, fp, or vector operands");
+  bool Valid;
+  switch (OperandType) {
+  default: assert(0 && "Unknown operand type!");
+  case 0: // int or FP.
+    Valid = LHS->getType()->isIntOrIntVector() ||
+            LHS->getType()->isFPOrFPVector();
+    break;
+  case 1: Valid = LHS->getType()->isIntOrIntVector(); break;
+  case 2: Valid = LHS->getType()->isFPOrFPVector(); break;
+  }
+  
+  if (!Valid)
+    return Error(Loc, "invalid operand type for instruction");
   
   Inst = BinaryOperator::Create((Instruction::BinaryOps)Opc, LHS, RHS);
   return false;
