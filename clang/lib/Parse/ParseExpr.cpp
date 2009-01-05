@@ -626,25 +626,21 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     return ParsePostfixExpressionSuffix(move(Res));
 
   case tok::coloncolon: {
+    // ::foo::bar -> global qualified name etc.   If TryAnnotateTypeOrScopeToken
+    // annotates the token, tail recurse.
+    if (TryAnnotateTypeOrScopeToken())
+      return ParseCastExpression(isUnaryExpression);
+    
     // ::new -> [C++] new-expression
     // ::delete -> [C++] delete-expression
-    // ::foo::bar -> global qualified name etc. 
-    Token ColonColonTok = Tok;
-    ConsumeToken();
+    SourceLocation CCLoc = ConsumeToken();
     if (Tok.is(tok::kw_new))
-      return ParseCXXNewExpression(true, ColonColonTok.getLocation());
+      return ParseCXXNewExpression(true, CCLoc);
     if (Tok.is(tok::kw_delete))
-      return ParseCXXDeleteExpression(true, ColonColonTok.getLocation());
-    // Turn the qualified name into a annot_qualtypename or annot_cxxscope if
-    // it would be valid.
-    if ((Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
-        TryAnnotateTypeOrScopeToken(&ColonColonTok)) {
-      // If so, retry (tail recurse).
-      return ParseCastExpression(isUnaryExpression);
-    }
-      
+      return ParseCXXDeleteExpression(true, CCLoc);
+    
     // This is not a type name or scope specifier, it is an invalid expression.
-    Diag(ColonColonTok, diag::err_expected_expression);
+    Diag(CCLoc, diag::err_expected_expression);
     return ExprError();
   }
 

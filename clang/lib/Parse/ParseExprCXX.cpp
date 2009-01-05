@@ -20,8 +20,7 @@ using namespace clang;
 /// MaybeParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
 /// Returns true if a nested-name-specifier was parsed from the token stream.
 /// 
-/// Note that this routine emits an error if you call it with ::new or ::delete
-/// as the current tokens, so only call it in contexts where these are invalid.
+/// Note that this routine will not parse ::new or ::delete.
 ///
 ///       '::'[opt] nested-name-specifier
 ///       '::'
@@ -32,42 +31,25 @@ using namespace clang;
 ///         nested-name-specifier identifier '::'
 ///         nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
 ///
-bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS,
-                                         const Token *GlobalQualifier) {
+bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
 
   if (Tok.is(tok::annot_cxxscope)) {
-    assert(GlobalQualifier == 0 &&
-           "Cannot have :: followed by a resolved annotation scope");
     SS.setScopeRep(Tok.getAnnotationValue());
     SS.setRange(Tok.getAnnotationRange());
     ConsumeToken();
     return true;
   }
 
-  if (GlobalQualifier) {
-    // Pre-parsed '::'.
-    SS.setBeginLoc(GlobalQualifier->getLocation());
-    SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, 
-                                               GlobalQualifier->getLocation()));
-    SS.setEndLoc(GlobalQualifier->getLocation());
+  if (Tok.is(tok::coloncolon)) {
+    // ::new and ::delete aren't nested-name-specifiers.
+    tok::TokenKind NextKind = NextToken().getKind();
+    if (NextKind == tok::kw_new || NextKind == tok::kw_delete)
+      return false;
     
-    assert(Tok.isNot(tok::kw_new) && Tok.isNot(tok::kw_delete) &&
-           "Never called with preparsed :: qualifier and with new/delete");
-  } else if (Tok.is(tok::coloncolon)) {
     // '::' - Global scope qualifier.
     SourceLocation CCLoc = ConsumeToken();
-      
-    // ::new and ::delete aren't nested-name-specifiers, and 
-    // MaybeParseCXXScopeSpecifier is never called in a context where one
-    // could exist.  This means that if we see it, we have a syntax error.
-    if (Tok.is(tok::kw_new) || Tok.is(tok::kw_delete)) {
-      Diag(Tok, diag::err_invalid_qualified_new_delete)
-        << Tok.is(tok::kw_delete);
-      return false;
-    }
-    
     SS.setBeginLoc(CCLoc);
     SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, CCLoc));
     SS.setEndLoc(CCLoc);

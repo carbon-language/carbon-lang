@@ -1309,8 +1309,6 @@ DIAG(err_array_new_needs_size, ERROR,
      "array size must be specified in new expressions")
 DIAG(err_bad_new_type, ERROR,
     "cannot allocate %select{function|incomplete|reference}1 type %0 with new")
-DIAG(err_invalid_qualified_new_delete, ERROR,
-    "invalid use of ::%select{new|delete}0")
 DIAG(err_new_array_nonconst, ERROR,
      "only the first dimension of an allocated array may be non-const")
 DIAG(err_array_size_not_integral, ERROR,

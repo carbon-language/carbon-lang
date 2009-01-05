@@ -269,7 +269,7 @@ private:
   /// for expressions in C.
   ///
   /// This returns true if the token was annotated.
-  bool TryAnnotateTypeOrScopeToken(const Token *GlobalQualifier = 0);
+  bool TryAnnotateTypeOrScopeToken();
 
   /// TryAnnotateCXXScopeToken - Like TryAnnotateTypeOrScopeToken but only
   /// annotates C++ scope specifiers.  This returns true if the token was
@@ -610,11 +610,9 @@ private:
 
   /// MaybeParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
   /// Returns true if a nested-name-specifier was parsed from the token stream.
+  /// Note that this routine will not parse ::new or ::delete.
   ///
-  /// If GlobalQualifier is non-null, then it is a :: token we should use as the
-  /// global qualifier.
-  bool MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS,
-                                   const Token *GlobalQualifier = 0);
+  bool MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS);
   
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts
