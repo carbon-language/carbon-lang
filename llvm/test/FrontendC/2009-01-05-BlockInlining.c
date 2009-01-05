@@ -1,4 +1,6 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O2 -o - | grep {call i32 .*printf.*argc} | count 3
+// RUN: %llvmgcc %s -S -emit-llvm -O2 -o %t.s
+// RUN: grep {call i32 .*printf.*argc} %t.s | count 3
+// RUN: not grep __block_holder_tmp %t.s
 // rdar://5865221
 
 // All of these should be inlined equivalently into a single printf call.
