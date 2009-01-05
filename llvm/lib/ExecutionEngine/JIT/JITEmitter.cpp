@@ -177,8 +177,13 @@ void *JITResolver::getFunctionStub(Function *F) {
   // Call the lazy resolver function unless we already KNOW it is an external
   // function, in which case we just skip the lazy resolution step.
   void *Actual = (void*)(intptr_t)LazyResolverFn;
-  if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode())
+  if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode()) {
     Actual = TheJIT->getPointerToFunction(F);
+
+    // If we resolved the symbol to a null address (eg. a weak external)
+    // don't emit a stub. Return a null pointer to the application.
+    if (!Actual) return 0;
+  }
 
   // Otherwise, codegen a new stub.  For now, the stub will call the lazy
   // resolver function.
@@ -905,7 +910,8 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       void *ResultPtr = 0;
       if (!MR.letTargetResolve()) {
         if (MR.isExternalSymbol()) {
-          ResultPtr = TheJIT->getPointerToNamedFunction(MR.getExternalSymbol());
+          ResultPtr = TheJIT->getPointerToNamedFunction(MR.getExternalSymbol(),
+                                                        false);
           DOUT << "JIT: Map \'" << MR.getExternalSymbol() << "\' to ["
                << ResultPtr << "]\n";  
 

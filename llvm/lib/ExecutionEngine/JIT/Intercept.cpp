@@ -90,7 +90,8 @@ static int jit_atexit(void (*Fn)(void)) {
 /// function by using the dynamic loader interface.  As such it is only useful
 /// for resolving library symbols, not code generated symbols.
 ///
-void *JIT::getPointerToNamedFunction(const std::string &Name) {
+void *JIT::getPointerToNamedFunction(const std::string &Name,
+                                     bool AbortOnFailure) {
   if (!isSymbolSearchingDisabled()) {
     // Check to see if this is one of the functions we want to intercept.  Note,
     // we cast to intptr_t here to silence a -pedantic warning that complains
@@ -122,9 +123,9 @@ void *JIT::getPointerToNamedFunction(const std::string &Name) {
       // First try turning $LDBLStub into $LDBL128. If that fails, strip it off.
       // This mirrors logic in libSystemStubs.a.
       std::string Prefix = std::string(Name.begin(), Name.end()-9);
-      if (void *Ptr = getPointerToNamedFunction(Prefix+"$LDBL128"))
+      if (void *Ptr = getPointerToNamedFunction(Prefix+"$LDBL128"), false)
         return Ptr;
-      if (void *Ptr = getPointerToNamedFunction(Prefix))
+      if (void *Ptr = getPointerToNamedFunction(Prefix), false)
         return Ptr;
     }
 #endif
@@ -135,8 +136,10 @@ void *JIT::getPointerToNamedFunction(const std::string &Name) {
     if (void *RP = LazyFunctionCreator(Name))
       return RP;
 
-  cerr << "ERROR: Program used external function '" << Name
-       << "' which could not be resolved!\n";
-  abort();
+  if (AbortOnFailure) {
+    cerr << "ERROR: Program used external function '" << Name
+         << "' which could not be resolved!\n";
+    abort();
+  }
   return 0;
 }

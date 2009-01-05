@@ -509,16 +509,17 @@ void *JIT::getPointerToFunction(Function *F) {
            << "' from bitcode file: " << ErrorMsg << "\n";
       abort();
     }
-  }
 
-  if (void *Addr = getPointerToGlobalIfAvailable(F)) {
-    return Addr;
+    // Now retry to get the address.
+    if (void *Addr = getPointerToGlobalIfAvailable(F))
+      return Addr;
   }
 
   MutexGuard locked(lock);
 
   if (F->isDeclaration()) {
-    void *Addr = getPointerToNamedFunction(F->getName());
+    bool AbortOnFailure = F->getLinkage() != GlobalValue::ExternalWeakLinkage;
+    void *Addr = getPointerToNamedFunction(F->getName(), AbortOnFailure);
     addGlobalMapping(F, Addr);
     return Addr;
   }
