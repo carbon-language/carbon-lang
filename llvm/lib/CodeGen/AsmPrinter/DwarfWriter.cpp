@@ -3214,6 +3214,45 @@ private:
     }
   }
 
+  /// ConstructSubprograms - Create DIEs for each of the externally visible
+  /// subprograms.
+  void ConstructSubprograms() {
+
+    std::string SPName = "llvm.dbg.subprograms";
+    std::vector<GlobalVariable*> Result;
+    getGlobalVariablesUsing(*M, SPName, Result);
+    for (std::vector<GlobalVariable *>::iterator RI = Result.begin(),
+           RE = Result.end(); RI != RE; ++RI) {
+
+      DISubprogram *SP = new DISubprogram(*RI);
+      CompileUnit *Unit = FindCompileUnit(SP->getCompileUnit());
+
+      // Check for pre-existence.                                                         
+      DIE *&Slot = Unit->getDieMapSlotFor(SP->getGV());
+      if (Slot) continue;
+
+      DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
+      AddString(SubprogramDie, DW_AT_name, DW_FORM_string, SP->getName());
+      const std::string &LinkageName = SP->getLinkageName();
+      if (!LinkageName.empty())
+        AddString(SubprogramDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
+                  LinkageName);
+      DIType SPTy = SP->getType();
+      AddType(Unit, SubprogramDie, SPTy);
+      if (!SP->isLocalToUnit())
+        AddUInt(SubprogramDie, DW_AT_external, DW_FORM_flag, 1);
+      AddUInt(SubprogramDie, DW_AT_prototyped, DW_FORM_flag, 1);
+
+      AddSourceLine(SubprogramDie, SP);
+      //Add to map.
+      Slot = SubprogramDie;
+      //Add to context owner.
+      Unit->getDie()->AddChild(SubprogramDie);
+      //Expose as global.
+      Unit->AddGlobal(SP->getName(), SubprogramDie);
+    }
+  }
+
   /// ConstructSubprogramDIEs - Create DIEs for each of the externally visible
   /// subprograms.
   void ConstructSubprogramDIEs() {
