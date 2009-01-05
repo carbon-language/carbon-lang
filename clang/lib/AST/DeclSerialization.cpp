@@ -543,7 +543,7 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 
   Decl* next_declarator;
   
-  int numParams;
+  int numParams = 0;
   bool hasParamDecls = D.ReadBool();
   if (hasParamDecls)
     numParams = D.ReadInt();
