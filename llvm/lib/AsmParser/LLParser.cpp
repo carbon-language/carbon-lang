@@ -1136,6 +1136,9 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
 bool LLParser::ParseFunctionType(PATypeHolder &Result) {
   assert(Lex.getKind() == lltok::lparen);
 
+  if (!FunctionType::isValidReturnType(Result))
+    return TokError("invalid function return type");
+  
   std::vector<ArgInfo> ArgList;
   bool isVarArg;
   unsigned Attrs;
