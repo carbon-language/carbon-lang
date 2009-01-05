@@ -123,9 +123,9 @@ void *JIT::getPointerToNamedFunction(const std::string &Name,
       // First try turning $LDBLStub into $LDBL128. If that fails, strip it off.
       // This mirrors logic in libSystemStubs.a.
       std::string Prefix = std::string(Name.begin(), Name.end()-9);
-      if (void *Ptr = getPointerToNamedFunction(Prefix+"$LDBL128"), false)
+      if (void *Ptr = getPointerToNamedFunction(Prefix+"$LDBL128", false))
         return Ptr;
-      if (void *Ptr = getPointerToNamedFunction(Prefix), false)
+      if (void *Ptr = getPointerToNamedFunction(Prefix, false))
         return Ptr;
     }
 #endif
