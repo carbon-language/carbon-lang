@@ -1489,15 +1489,12 @@ private:
   /// by the system, this holds the same type (e.g. i32 -> i32).
   MVT TransformToType[MVT::LAST_VALUETYPE];
 
-  // Defines the capacity of the TargetLowering::OpActions table
-  static const int OpActionsCapacity = 184;
-
   /// OpActions - For each operation and each value type, keep a LegalizeAction
   /// that indicates how instruction selection should deal with the operation.
   /// Most operations are Legal (aka, supported natively by the target), but
   /// operations that are not should be described.  Note that operations on
   /// non-legal value types are not described here.
-  uint64_t OpActions[OpActionsCapacity];
+  uint64_t OpActions[ISD::BUILTIN_OP_END];
   
   /// LoadExtActions - For each load of load extension type and each value type,
   /// keep a LegalizeAction that indicates how instruction selection should deal
@@ -1535,7 +1532,7 @@ private:
   /// like PerformDAGCombine callbacks for by calling setTargetDAGCombine(),
   /// which sets a bit in this array.
   unsigned char
-  TargetDAGCombineArray[OpActionsCapacity/(sizeof(unsigned char)*8)];
+  TargetDAGCombineArray[(ISD::BUILTIN_OP_END+CHAR_BIT-1)/CHAR_BIT];
   
   /// PromoteToType - For operations that must be promoted to a specific type,
   /// this holds the destination type.  This map should be sparse, so don't hold

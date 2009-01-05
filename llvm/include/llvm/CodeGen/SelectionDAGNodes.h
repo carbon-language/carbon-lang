@@ -56,8 +56,6 @@ struct SDVTList {
 /// ISD namespace - This namespace contains an enum which represents all of the
 /// SelectionDAG node types and value types.
 ///
-/// If you add new elements here you should increase OpActionsCapacity in
-/// TargetLowering.h by the number of new elements.
 namespace ISD {
 
   //===--------------------------------------------------------------------===//
