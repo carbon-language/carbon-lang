@@ -91,7 +91,9 @@ Use *Use::initTags(Use * const Start, Use *Stop, ptrdiff_t Done) {
     --Stop;
     Stop->Val = 0;
     if (!Count) {
-      Stop->Prev.setFromOpaqueValue(reinterpret_cast<Use**>(Done == 0 ? fullStopTag : stopTag));
+      Stop->Prev.setFromOpaqueValue(reinterpret_cast<Use**>(Done == 0
+                                                            ? fullStopTag
+                                                            : stopTag));
       ++Done;
       Count = Done;
     } else {
@@ -138,7 +140,8 @@ struct AugmentedUse : Use {
 
 User *Use::getUser() const {
   const Use *End = getImpliedUser();
-  PointerIntPair<User*, 1, Tag>& ref(static_cast<const AugmentedUse*>(End - 1)->ref);
+  const PointerIntPair<User*, 1, Tag>& ref(
+                                static_cast<const AugmentedUse*>(End - 1)->ref);
   User *She = ref.getPointer();
   return ref.getInt()
     ? She
