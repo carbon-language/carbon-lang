@@ -3116,7 +3116,7 @@ private:
     Asm->EOL();
   }
 
-  /// ConstructCompileUnitDIEs - Create a compile unit DIEs.
+  /// ConstructCompileUnits - Create a compile unit DIEs.
   void ConstructCompileUnits() {
     std::string CUName = "llvm.dbg.compile_units";
     std::vector<GlobalVariable*> Result;
@@ -3152,6 +3152,53 @@ private:
       unsigned ID = MMI->RecordSource(CUW[i]);
       CompileUnit *Unit = NewCompileUnit(CUW[i], ID);
       CompileUnits.push_back(Unit);
+    }
+  }
+
+  /// ConstructGlobalVariableDIEs - Create DIEs for each of the externally 
+  /// visible global variables.
+  void ConstructGlobalVariableDIEs() {
+    std::string GVName = "llvm.dbg.global_variables";
+    std::vector<GlobalVariable*> Result;
+    getGlobalVariablesUsing(*M, GVName, Result);
+    for (std::vector<GlobalVariable *>::iterator GVI = Result.begin(),
+           GVE = Result.end(); GVI != GVE; ++GVI) {
+      DIGlobalVariable *DI_GV = new DIGlobalVariable(*GVI);
+      CompileUnit *DW_Unit = FindCompileUnit(DI_GV->getCompileUnit());
+
+      // Check for pre-existence.
+      DIE *&Slot = DW_Unit->getDieMapSlotFor(DI_GV->getGV());
+      if (Slot) continue;
+
+      DIE *VariableDie = new DIE(DW_TAG_variable);
+      AddString(VariableDie, DW_AT_name, DW_FORM_string, DI_GV->getName());
+      const std::string &LinkageName  = DI_GV->getLinkageName();
+      if (!LinkageName.empty())
+        AddString(VariableDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
+                  LinkageName);
+      AddType(DW_Unit, VariableDie, DI_GV->getType());
+
+      if (!DI_GV->isLocalToUnit())
+        AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);              
+
+      // Add source line info, if available.
+      AddSourceLine(VariableDie, DI_GV);
+
+      // Add address.
+      DIEBlock *Block = new DIEBlock();
+      AddUInt(Block, 0, DW_FORM_data1, DW_OP_addr);
+      AddObjectLabel(Block, 0, DW_FORM_udata,
+                     Asm->getGlobalLinkName(DI_GV->getGV()));
+      AddBlock(VariableDie, DW_AT_location, 0, Block);
+
+      //Add to map.
+      Slot = VariableDie;
+
+      //Add to context owner.
+      DW_Unit->getDie()->AddChild(VariableDie);
+
+      //Expose as global. FIXME - need to check external flag.
+      DW_Unit->AddGlobal(DI_GV->getName(), VariableDie);
     }
   }
 
