@@ -234,13 +234,7 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
   // table, which is very quick.
   if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
     Buffer = II->getName();
-    
-    // Return the length of the token.  If the token needed cleaning, don't
-    // include the size of the newlines or trigraphs in it.
-    if (!Tok.needsCleaning())
-      return Tok.getLength();
-    else
-      return strlen(Buffer);
+    return II->getLength();
   }
   
   // Otherwise, compute the start of the token in the input lexer buffer.
