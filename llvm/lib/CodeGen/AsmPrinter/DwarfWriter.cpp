@@ -1497,9 +1497,9 @@ private:
     }
   }
 
-  /// ConstructType - Construct basic type die from DIBasicType.
-  void ConstructType(CompileUnit *DW_Unit, DIE &Buffer,
-                     DIBasicType *BTy) {
+  /// ConstructTypeDIE - Construct basic type die from DIBasicType.
+  void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
+                        DIBasicType *BTy) {
     
     // Get core information.
     const std::string &Name = BTy->getName();
@@ -1512,9 +1512,9 @@ private:
     AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
   }
 
-  /// ConstructType - Construct derived type die from DIDerivedType.
-  void ConstructType(CompileUnit *DW_Unit, DIE &Buffer,
-                     DIDerivedType *DTy) {
+  /// ConstructTypeDIE - Construct derived type die from DIDerivedType.
+  void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
+                        DIDerivedType *DTy) {
 
     // Get core information.
     const std::string &Name = DTy->getName();
