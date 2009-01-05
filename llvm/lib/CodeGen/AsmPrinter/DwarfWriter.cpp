@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/CommandLine.h"
@@ -1494,6 +1495,49 @@ private:
         Entity->AddValue(DW_AT_type, DW_FORM_ref4, Slot);
       }
     }
+  }
+
+  /// ConstructType - Construct basic type die from DIBasicType.
+  void ConstructType(CompileUnit *DW_Unit, DIE &Buffer,
+                     DIBasicType *BTy) {
+    
+    // Get core information.
+    const std::string &Name = BTy->getName();
+    Buffer.setTag(DW_TAG_base_type);
+    AddUInt(&Buffer, DW_AT_encoding,  DW_FORM_data1, BTy->getEncoding());
+    // Add name if not anonymous or intermediate type.
+    if (!Name.empty())
+      AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
+    uint64_t Size = BTy->getSizeInBits() >> 3;
+    AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
+  }
+
+  void ConstructType(CompileUnit *DW_Unit, DIE &Buffer,
+                     DIDerivedType *DTy) {
+
+    // Get core information.
+    const std::string &Name = DTy->getName();
+    uint64_t Size = DTy->getSizeInBits() >> 3;
+    unsigned Tag = DTy->getTag();
+    // FIXME - Workaround for templates.
+    if (Tag == DW_TAG_inheritance) Tag = DW_TAG_reference_type;
+
+    Buffer.setTag(Tag);
+    // Map to main type, void will not have a type.
+    DIType FromTy = DTy->getTypeDerivedFrom();
+    // FIXME - Enable this. AddType(&Buffer, FromTy, DW_Unit);
+
+    // Add name if not anonymous or intermediate type.
+    if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
+
+    // Add size if non-zero (derived types might be zero-sized.)
+    if (Size)
+      AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
+
+    // Add source line info if available and TyDesc is not a forward
+    // declaration.
+    // FIXME - Enable this. if (!DTy->isForwardDecl())
+    // FIXME - Enable this.     AddSourceLine(&Buffer, *DTy);
   }
 
   /// ConstructType - Adds all the required attributes to the type.
