@@ -2677,8 +2677,12 @@ bool LLParser::ParseCompare(Instruction *&Inst, PerFunctionState &PFS,
       return Error(Loc, "icmp requires integer operands");
     Inst = new ICmpInst(CmpInst::Predicate(Pred), LHS, RHS);
   } else if (Opc == Instruction::VFCmp) {
+    if (!LHS->getType()->isFPOrFPVector() || !isa<VectorType>(LHS->getType()))
+      return Error(Loc, "vfcmp requires vector floating point operands");
     Inst = new VFCmpInst(CmpInst::Predicate(Pred), LHS, RHS);
   } else if (Opc == Instruction::VICmp) {
+    if (!LHS->getType()->isIntOrIntVector() || !isa<VectorType>(LHS->getType()))
+      return Error(Loc, "vicmp requires vector floating point operands");
     Inst = new VICmpInst(CmpInst::Predicate(Pred), LHS, RHS);
   }
   return false;
