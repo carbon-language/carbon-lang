@@ -793,7 +793,11 @@ bool LLParser::ParseOptionalAlignment(unsigned &Alignment) {
   Alignment = 0;
   if (!EatIfPresent(lltok::kw_align))
     return false;
-  return ParseUInt32(Alignment);
+  LocTy AlignLoc = Lex.getLoc();
+  if (ParseUInt32(Alignment)) return true;
+  if (!isPowerOf2_32(Alignment))
+    return Error(AlignLoc, "alignment is not a power of two");
+  return false;
 }
 
 /// ParseOptionalCommaAlignment
