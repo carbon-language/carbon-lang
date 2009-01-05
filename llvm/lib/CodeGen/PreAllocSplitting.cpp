@@ -605,11 +605,6 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
   else if (!intrablock && LiveOut.count(MBB))
     return LiveOut[MBB];
   
-  // Insert a sentinel into the map (which also acts as the DFS stack) so that
-  // we won't get stuck in infinite recursion when processing a loop.
-  if (!intrablock)
-    LiveOut[MBB] = 0;
-  
   typedef DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> > RegMap;
   
   // Check if our block contains any uses or defs.
