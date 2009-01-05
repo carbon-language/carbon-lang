@@ -1,0 +1,12 @@
+#!/usr/bin/python
+
+import sys
+from ccclib import Driver
+        
+def main():
+    d = Driver.Driver()
+    # FIXME: We should pass program name here as well.
+    d.run(sys.argv[1:])
+
+if __name__=='__main__':
+    main()
