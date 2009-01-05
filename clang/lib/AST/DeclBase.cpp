@@ -406,10 +406,24 @@ void DeclContext::DestroyDecls(ASTContext &C) {
   }
 }
 
+bool DeclContext::isTransparentContext() const {
+  if (DeclKind == Decl::Enum)
+    return true; // FIXME: Check for C++0x scoped enums
+  else if (DeclKind == Decl::LinkageSpec)
+    return true;
+  else if (DeclKind == Decl::Record || DeclKind == Decl::CXXRecord)
+    return false; // FIXME: need to know about anonymous unions/structs
+  else if (DeclKind == Decl::Namespace)
+    return false; // FIXME: Check for C++0x inline namespaces
+
+  return false;
+}
+
 DeclContext *DeclContext::getPrimaryContext(ASTContext &Context) {
   switch (DeclKind) {
-  case Decl::Block:
   case Decl::TranslationUnit:
+  case Decl::LinkageSpec:
+  case Decl::Block:    
     // There is only one DeclContext for these entities.
     return this;
 
@@ -418,10 +432,15 @@ DeclContext *DeclContext::getPrimaryContext(ASTContext &Context) {
     return static_cast<NamespaceDecl*>(this)->getOriginalNamespace();
 
   case Decl::Enum:
+#if 0
+    // FIXME: See the comment for CXXRecord, below.
     // The declaration associated with the enumeration type is our
     // primary context.
     return Context.getTypeDeclType(static_cast<EnumDecl*>(this))
              ->getAsEnumType()->getDecl();
+#else
+    return this;
+#endif
 
   case Decl::Record:
   case Decl::CXXRecord: {
@@ -461,13 +480,14 @@ DeclContext *DeclContext::getPrimaryContext(ASTContext &Context) {
 
 DeclContext *DeclContext::getNextContext() {
   switch (DeclKind) {
-  case Decl::Block:
   case Decl::TranslationUnit:
   case Decl::Enum:
   case Decl::Record:
   case Decl::CXXRecord:
   case Decl::ObjCMethod:
   case Decl::ObjCInterface:
+  case Decl::LinkageSpec:
+  case Decl::Block:
     // There is only one DeclContext for these entities.
     return 0;
 
@@ -488,6 +508,24 @@ void DeclContext::addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup) 
     D->getDeclContext()->insert(Context, D);
 }
 
+/// buildLookup - Build the lookup data structure with all of the
+/// declarations in DCtx (and any other contexts linked to it or
+/// transparent contexts nested within it).
+void DeclContext::buildLookup(ASTContext &Context, DeclContext *DCtx) {
+  for (; DCtx; DCtx = DCtx->getNextContext()) {
+    for (decl_iterator D = DCtx->decls_begin(); D != DCtx->decls_end(); ++D) {
+      // Insert this declaration into the lookup structure
+      insertImpl(*D);
+
+      // If this declaration is itself a transparent declaration context,
+      // add its members (recursively).
+      if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D))
+        if (InnerCtx->isTransparentContext())
+          buildLookup(Context, InnerCtx->getPrimaryContext(Context));
+    }
+  }
+}
+
 DeclContext::lookup_result 
 DeclContext::lookup(ASTContext &Context, DeclarationName Name) {
   DeclContext *PrimaryContext = getPrimaryContext(Context);
@@ -497,11 +535,8 @@ DeclContext::lookup(ASTContext &Context, DeclarationName Name) {
   /// If there is no lookup data structure, build one now by walking
   /// all of the linked DeclContexts (in declaration order!) and
   /// inserting their values.
-  if (LookupPtr.getPointer() == 0) {
-    for (DeclContext *DCtx = this; DCtx; DCtx = DCtx->getNextContext())
-      for (decl_iterator D = DCtx->decls_begin(); D != DCtx->decls_end(); ++D)
-        insertImpl(*D);
-  }
+  if (LookupPtr.getPointer() == 0)
+    buildLookup(Context, this);
 
   if (isLookupMap()) {
     StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
@@ -543,9 +578,19 @@ void DeclContext::insert(ASTContext &Context, ScopedDecl *D) {
   // someone asks for it.
   if (LookupPtr.getPointer())
     insertImpl(D);
+
+
+  // If we are a transparent context, insert into our parent context,
+  // too. This operation is recursive.
+  if (isTransparentContext())
+    getParent()->insert(Context, D);
 }
 
 void DeclContext::insertImpl(ScopedDecl *D) {
+  // Skip unnamed declarations.
+  if (!D->getDeclName())
+    return;
+
   bool MayBeRedeclaration = true;
 
   if (!isLookupMap()) {

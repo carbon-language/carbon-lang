@@ -2,14 +2,22 @@
 
 namespace Ns {
   int f(); // expected-note{{previous declaration is here}}
+
+  enum E {
+    Enumerator
+  };
 }
 namespace Ns {
   double f(); // expected-error{{functions that differ only in their return type cannot be overloaded}}
+
+  int x = Enumerator;
 }
 
 namespace Ns2 {
   float f();
 }
+
+int y = Ns::Enumerator;
 
 namespace Ns2 {
   float f(int); // expected-note{{previous declaration is here}}

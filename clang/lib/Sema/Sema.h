@@ -288,12 +288,6 @@ public:
   virtual void ObjCActOnStartOfMethodDef(Scope *S, DeclTy *D);
   
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body);
-  virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
-                                   SourceLocation RBrace, const char *Lang,
-                                   unsigned StrSize, 
-                                   DeclTy **Decls, unsigned NumDecls);
-  virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, const char *Lang,
-                                   unsigned StrSize, DeclTy *D);
   virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);
 
   /// Scope actions.
@@ -326,6 +320,7 @@ public:
                            DeclTy **Fields, unsigned NumFields,
                            SourceLocation LBrac, SourceLocation RBrac,
                            AttributeList *AttrList);
+  virtual void ActOnEnumStartDefinition(Scope *S, DeclTy *EnumDecl);
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
@@ -978,6 +973,20 @@ public:
                                                  SourceLocation ProtoLoc,
                                                  SourceLocation LParenLoc,
                                                  SourceLocation RParenLoc);
+
+  //===--------------------------------------------------------------------===//
+  // C++ Declarations
+  //
+  virtual DeclTy *ActOnStartLinkageSpecification(Scope *S,
+                                                 SourceLocation ExternLoc,
+                                                 SourceLocation LangLoc,
+                                                 const char *Lang,
+                                                 unsigned StrSize,
+                                                 SourceLocation LBraceLoc);
+  virtual DeclTy *ActOnFinishLinkageSpecification(Scope *S,
+                                                  DeclTy *LinkageSpec,
+                                                  SourceLocation RBraceLoc);
+
 
   //===--------------------------------------------------------------------===//
   // C++ Classes

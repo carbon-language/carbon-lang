@@ -116,14 +116,14 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     Out << "};\n";
   } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
     Out << "Read top-level tag decl: '" << TD->getNameAsString() << "'\n";
-  } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-    Out << "Read top-level variable decl: '" << SD->getNameAsString() << "'\n";
   } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
     PrintLinkageSpec(LSD);
   } else if (FileScopeAsmDecl *AD = dyn_cast<FileScopeAsmDecl>(D)) {
     Out << "asm(";
     AD->getAsmString()->printPretty(Out);
     Out << ")\n";
+  } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
+    Out << "Read top-level variable decl: '" << SD->getNameAsString() << "'\n";
   } else {
     assert(0 && "Unknown decl type!");
   }
@@ -197,8 +197,8 @@ void DeclPrinter::PrintLinkageSpec(LinkageSpecDecl *LS) {
   if (LS->hasBraces()) 
     Out << "{\n";
 
-  for (LinkageSpecDecl::decl_const_iterator D = LS->decls_begin(), 
-                                         DEnd = LS->decls_end();
+  for (LinkageSpecDecl::decl_iterator D = LS->decls_begin(), 
+                                   DEnd = LS->decls_end();
        D != DEnd; ++D)
     PrintDecl(*D);
 

@@ -1123,6 +1123,10 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
 ///         identifier
 ///
 void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
+  // Enter the scope of the enum body and start the definition.
+  ParseScope EnumScope(this, Scope::DeclScope);
+  Actions.ActOnEnumStartDefinition(CurScope, EnumDecl);
+
   SourceLocation LBraceLoc = ConsumeBrace();
   
   // C does not allow an empty enumerator-list, C++ does [dcl.enum].

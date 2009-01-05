@@ -31,6 +31,7 @@ class CXXRecordDecl;
 class EnumDecl;
 class ObjCMethodDecl;
 class ObjCInterfaceDecl;
+class LinkageSpecDecl;
 class BlockDecl;
 class DeclarationName;
 
@@ -80,12 +81,12 @@ public:
                  ParmVar,
                    OriginalParmVar,
   	         NonTypeTemplateParm,
+             LinkageSpec, // [DeclContext]
            ObjCInterface,  // [DeclContext]
            ObjCCompatibleAlias,
            ObjCClass,
            ObjCForwardProtocol,
            ObjCPropertyImpl,
-         LinkageSpec,
          FileScopeAsm,
 	     Block, // [DeclContext]
   
@@ -93,7 +94,7 @@ public:
     // of the class, to allow efficient classof.
     NamedFirst     = OverloadedFunction , NamedLast     = NonTypeTemplateParm,
     FieldFirst     = Field        , FieldLast     = ObjCAtDefsField,
-    ScopedFirst    = Field        , ScopedLast    = NonTypeTemplateParm,
+    ScopedFirst    = Field        , ScopedLast    = LinkageSpec,
     TypeFirst      = Typedef      , TypeLast      = TemplateTypeParm,
     TagFirst       = Enum         , TagLast       = CXXRecord,
     RecordFirst    = Record       , RecordLast    = CXXRecord,
@@ -260,8 +261,8 @@ protected:
 ///   EnumDecl
 ///   ObjCMethodDecl
 ///   ObjCInterfaceDecl
+///   LinkageSpecDecl
 ///   BlockDecl
-///
 class DeclContext {
   /// DeclKind - This indicates which class this is.
   Decl::Kind DeclKind   :  8;
@@ -299,8 +300,6 @@ class DeclContext {
   static To *CastTo(const From *D) {
     Decl::Kind DK = KindTrait<From>::getKind(D);
     switch(DK) {
-      case Decl::Block:
-        return static_cast<BlockDecl*>(const_cast<From*>(D));
       case Decl::TranslationUnit:
         return static_cast<TranslationUnitDecl*>(const_cast<From*>(D));
       case Decl::Namespace:
@@ -315,6 +314,10 @@ class DeclContext {
         return static_cast<ObjCMethodDecl*>(const_cast<From*>(D));
       case Decl::ObjCInterface:
         return static_cast<ObjCInterfaceDecl*>(const_cast<From*>(D));
+      case Decl::LinkageSpec:
+        return static_cast<LinkageSpecDecl*>(const_cast<From*>(D));
+      case Decl::Block:
+        return static_cast<BlockDecl*>(const_cast<From*>(D));
       default:
         if (DK >= Decl::FunctionFirst && DK <= Decl::FunctionLast)
           return static_cast<FunctionDecl*>(const_cast<From*>(D));
@@ -385,6 +388,24 @@ public:
     return DeclKind == Decl::Namespace;
   }
 
+  /// isTransparentContext - Determines whether this context is a
+  /// "transparent" context, meaning that the members declared in this
+  /// context are semantically declared in the nearest enclosing
+  /// non-transparent (opaque) context but are lexically declared in
+  /// this context. For example, consider the enumerators of an
+  /// enumeration type: 
+  /// @code
+  /// enum E {
+  ///   Val1 
+  /// };
+  /// @endcode
+  /// Here, E is a transparent context, so its enumerator (Val1) will
+  /// appear (semantically) that it is in the same context of E.
+  /// Examples of transparent contexts include: enumerations (except for
+  /// C++0x scoped enums), C++ linkage specifications, and C++0x
+  /// inline namespaces.
+  bool isTransparentContext() const;
+
   bool Encloses(DeclContext *DC) const {
     for (; DC; DC = DC->getParent())
       if (DC == this)
@@ -435,10 +456,7 @@ public:
   /// declaration into data structure for name lookup.
   void addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup = true);
 
-  /// reverseDeclChain - Reverse the chain of declarations stored in
-  /// this scope. Typically called once after all declarations have
-  /// been added and the scope is closed.
-  void reverseDeclChain();
+  void buildLookup(ASTContext &Context, DeclContext *DCtx);
 
   /// lookup_iterator - An iterator that provides access to the results
   /// of looking up a name within this context.
@@ -484,6 +502,7 @@ public:
       case Decl::CXXRecord:
       case Decl::ObjCMethod:
       case Decl::ObjCInterface:
+      case Decl::LinkageSpec:
       case Decl::Block:
         return true;
       default:
@@ -502,6 +521,7 @@ public:
   static bool classof(const EnumDecl *D) { return true; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
+  static bool classof(const LinkageSpecDecl *D) { return true; }
   static bool classof(const BlockDecl *D) { return true; }
 
 private:

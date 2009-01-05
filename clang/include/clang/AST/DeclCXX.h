@@ -882,7 +882,7 @@ public:
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
 ///   extern "C" void foo();
 ///
-class LinkageSpecDecl : public Decl {
+class LinkageSpecDecl : public ScopedDecl, public DeclContext {
 public:
   /// LanguageIDs - Used to represent the language in a linkage
   /// specification.  The values are part of the serialization abi for
@@ -898,43 +898,22 @@ private:
   /// HadBraces - Whether this linkage specification had curly braces or not.
   bool HadBraces : 1;
 
-  /// Decls - The declarations that were parsed as part of this
-  /// linkage specification. If HadBraces is false, this is a
-  /// Decl*. Otherwise, it's a Decl**.
-  void *Decls;
-
-  /// NumDecls - The number of declarations stored in this linkage
-  /// specification. 
-  unsigned NumDecls : 31;
-
-  LinkageSpecDecl(SourceLocation L, LanguageIDs lang, Decl *d)
-    : Decl(LinkageSpec, L), Language(lang), HadBraces(false), 
-      Decls(d), NumDecls(1) {}
-
-  LinkageSpecDecl(SourceLocation L, LanguageIDs lang, 
-                  Decl **InDecls, unsigned InNumDecls);
+  LinkageSpecDecl(DeclContext *DC, SourceLocation L, LanguageIDs lang, 
+                  bool Braces)
+    : ScopedDecl(LinkageSpec, DC, L, DeclarationName(), 0), 
+      DeclContext(LinkageSpec), Language(lang), HadBraces(Braces) { }
 
 public:
-  ~LinkageSpecDecl();
+  static LinkageSpecDecl *Create(ASTContext &C, DeclContext *DC, 
+                                 SourceLocation L, LanguageIDs Lang, 
+                                 bool Braces);
 
-  static LinkageSpecDecl *Create(ASTContext &C, SourceLocation L,
-                                 LanguageIDs Lang, Decl *D);
-
-  static LinkageSpecDecl *Create(ASTContext &C, SourceLocation L,
-                                 LanguageIDs Lang, 
-                                 Decl **Decls, unsigned NumDecls);
-  
   LanguageIDs getLanguage() const { return Language; }
 
   /// hasBraces - Determines whether this linkage specification had
   /// braces in its syntactic form.
   bool hasBraces() const { return HadBraces; }
 
-  typedef Decl** decl_iterator;
-  typedef Decl** decl_const_iterator;
-  decl_const_iterator decls_begin() const;
-  decl_const_iterator decls_end() const;
-  
   static bool classof(const Decl *D) {
     return D->getKind() == LinkageSpec;
   }

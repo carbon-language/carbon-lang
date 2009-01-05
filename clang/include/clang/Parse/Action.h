@@ -264,25 +264,32 @@ public:
     return 0;
   }
 
-  /// ActOnLinkageSpec - Parsed a C++ linkage-specification that
-  /// contained braces. Lang/StrSize contains the language string that
-  /// was parsed at location Loc. Decls/NumDecls provides the
-  /// declarations parsed inside the linkage specification.
-  virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
-                                   SourceLocation RBrace, const char *Lang,
-                                   unsigned StrSize, 
-                                   DeclTy **Decls, unsigned NumDecls) {
+  /// ActOnStartLinkageSpecification - Parsed the beginning of a C++
+  /// linkage specification, including the language and (if present)
+  /// the '{'. ExternLoc is the location of the 'extern', LangLoc is
+  /// the location of the language string literal, which is provided
+  /// by Lang/StrSize. LBraceLoc, if valid, provides the location of
+  /// the '{' brace. Otherwise, this linkage specification does not
+  /// have any braces.
+  virtual DeclTy *ActOnStartLinkageSpecification(Scope *S,
+                                                 SourceLocation ExternLoc,
+                                                 SourceLocation LangLoc,
+                                                 const char *Lang,
+                                                 unsigned StrSize,
+                                                 SourceLocation LBraceLoc) {
     return 0;
   }
 
-  /// ActOnLinkageSpec - Parsed a C++ linkage-specification without
-  /// braces. Lang/StrSize contains the language string that was
-  /// parsed at location Loc. D is the declaration parsed.
-  virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, const char *Lang,
-                                   unsigned StrSize, DeclTy *D) {
-    return 0;
+  /// ActOnFinishLinkageSpecification - Completely the definition of
+  /// the C++ linkage specification LinkageSpec. If RBraceLoc is
+  /// valid, it's the position of the closing '}' brace in a linkage
+  /// specification that uses braces.
+  virtual DeclTy *ActOnFinishLinkageSpecification(Scope *S,
+                                                  DeclTy *LinkageSpec,
+                                                  SourceLocation RBraceLoc) {
+    return LinkageSpec;
   }
-  
+
   /// ActOnEndOfTranslationUnit - This is called at the very end of the
   /// translation unit when EOF is reached and all but the top-level scope is
   /// popped.
@@ -333,6 +340,11 @@ public:
                            SourceLocation LBrac, SourceLocation RBrac,
                            AttributeList *AttrList) {}
   
+  /// ActOnEnumStartDefinition - Invoked when we have entered the
+  /// scope of the enumeration body and will be parsing its
+  /// enumerators.  
+  virtual void ActOnEnumStartDefinition(Scope *S, DeclTy *EnumDecl) { }
+
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,

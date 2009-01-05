@@ -2003,48 +2003,49 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   return false;
 }
 
-/// ActOnLinkageSpec - Parsed a C++ linkage-specification that
-/// contained braces. Lang/StrSize contains the language string that
-/// was parsed at location Loc. Decls/NumDecls provides the
-/// declarations parsed inside the linkage specification.
-Sema::DeclTy *Sema::ActOnLinkageSpec(SourceLocation Loc,
-                                     SourceLocation LBrace,
-                                     SourceLocation RBrace,
-                                     const char *Lang,
-                                     unsigned StrSize,
-                                     DeclTy **Decls, unsigned NumDecls) {
+/// ActOnStartLinkageSpecification - Parsed the beginning of a C++
+/// linkage specification, including the language and (if present)
+/// the '{'. ExternLoc is the location of the 'extern', LangLoc is
+/// the location of the language string literal, which is provided
+/// by Lang/StrSize. LBraceLoc, if valid, provides the location of
+/// the '{' brace. Otherwise, this linkage specification does not
+/// have any braces.
+Sema::DeclTy *Sema::ActOnStartLinkageSpecification(Scope *S,
+                                                   SourceLocation ExternLoc,
+                                                   SourceLocation LangLoc,
+                                                   const char *Lang,
+                                                   unsigned StrSize,
+                                                   SourceLocation LBraceLoc) {
   LinkageSpecDecl::LanguageIDs Language;
   if (strncmp(Lang, "\"C\"", StrSize) == 0)
     Language = LinkageSpecDecl::lang_c;
   else if (strncmp(Lang, "\"C++\"", StrSize) == 0)
     Language = LinkageSpecDecl::lang_cxx;
   else {
-    Diag(Loc, diag::err_bad_language);
+    Diag(LangLoc, diag::err_bad_language);
     return 0;
   }
   
   // FIXME: Add all the various semantics of linkage specifications
   
-  return LinkageSpecDecl::Create(Context, Loc, Language, 
-                                 (Decl **)Decls, NumDecls);
+  LinkageSpecDecl *D = LinkageSpecDecl::Create(Context, CurContext,
+                                               LangLoc, Language, 
+                                               LBraceLoc.isValid());
+  CurContext->addDecl(Context, D);
+  PushDeclContext(S, D);
+  return D;
 }
 
-Sema::DeclTy *Sema::ActOnLinkageSpec(SourceLocation Loc,
-                                     const char *Lang, unsigned StrSize,
-                                     DeclTy *D) {
-  LinkageSpecDecl::LanguageIDs Language;
-  Decl *dcl = static_cast<Decl *>(D);
-  if (strncmp(Lang, "\"C\"", StrSize) == 0)
-    Language = LinkageSpecDecl::lang_c;
-  else if (strncmp(Lang, "\"C++\"", StrSize) == 0)
-    Language = LinkageSpecDecl::lang_cxx;
-  else {
-    Diag(Loc, diag::err_bad_language);
-    return 0;
-  }
-  
-  // FIXME: Add all the various semantics of linkage specifications
-  return LinkageSpecDecl::Create(Context, Loc, Language, dcl);
+/// ActOnFinishLinkageSpecification - Completely the definition of
+/// the C++ linkage specification LinkageSpec. If RBraceLoc is
+/// valid, it's the position of the closing '}' brace in a linkage
+/// specification that uses braces.
+Sema::DeclTy *Sema::ActOnFinishLinkageSpecification(Scope *S,
+                                                    DeclTy *LinkageSpec,
+                                                    SourceLocation RBraceLoc) {
+  if (LinkageSpec)
+    PopDeclContext();
+  return LinkageSpec;
 }
 
 /// ActOnExceptionDeclarator - Parsed the exception-declarator in a C++ catch

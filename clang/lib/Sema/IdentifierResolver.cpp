@@ -60,6 +60,9 @@ DeclContext *IdentifierResolver::LookupContext::getContext(Decl *D) {
   else
     return TUCtx();
 
+  while (Ctx->isTransparentContext())
+    Ctx = Ctx->getParent();
+
   if (isa<TranslationUnitDecl>(Ctx))
     return TUCtx();
 
@@ -83,30 +86,12 @@ bool IdentifierResolver::LookupContext::isEqOrContainedBy(
 // IdDeclInfo Implementation
 //===----------------------------------------------------------------------===//
 
-/// FindContext - Returns an iterator pointing just after the decl that is
-/// in the given context or in a parent of it. The search is in reverse
-/// order, from end to begin.
-IdentifierResolver::IdDeclInfo::DeclsTy::iterator
-IdentifierResolver::IdDeclInfo::FindDeclVisibleInContext(
-                                            const LookupContext &Ctx,
-                                            const DeclsTy::iterator &Start) {
-  for (DeclsTy::iterator I = Start; I != Decls.begin(); --I) {
-    if (Ctx.isEqOrContainedBy(LookupContext(*(I-1))))
-      return I;
-  }
-
-  return Decls.begin();
-}
-
 /// AddShadowed - Add a decl by putting it directly above the 'Shadow' decl.
 /// Later lookups will find the 'Shadow' decl first. The 'Shadow' decl must
 /// be already added to the scope chain and must be in the same context as
 /// the decl that we want to add.
 void IdentifierResolver::IdDeclInfo::AddShadowed(NamedDecl *D,
                                                  NamedDecl *Shadow) {
-  assert(LookupContext(D) == LookupContext(Shadow) &&
-    "Decl and Shadow not in same context!");
-
   for (DeclsTy::iterator I = Decls.end(); I != Decls.begin(); --I) {
     if (Shadow == *(I-1)) {
       Decls.insert(I-1, D);
@@ -147,7 +132,15 @@ IdentifierResolver::~IdentifierResolver() {
 /// true if 'D' belongs to the given declaration context.
 bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
                                        ASTContext &Context, Scope *S) const {
+  while (Ctx->isTransparentContext())
+    Ctx = Ctx->getParent();
+
   if (Ctx->isFunctionOrMethod()) {
+    // Ignore the scopes associated within transparent declaration contexts.
+    while (S->getEntity() && 
+           ((DeclContext *)S->getEntity())->isTransparentContext())
+      S = S->getParent();
+
     if (S->isDeclScope(D))
       return true;
     if (LangOpt.CPlusPlus) {
@@ -201,7 +194,6 @@ void IdentifierResolver::AddDecl(NamedDecl *D) {
 /// encountered before the 'D' decl.
 void IdentifierResolver::AddShadowedDecl(NamedDecl *D, NamedDecl *Shadow) {
   assert(D->getDeclName() == Shadow->getDeclName() && "Different ids!");
-  assert(LookupContext(D) == LookupContext(Shadow) && "Different context!");
 
   DeclarationName Name = D->getDeclName();
   void *Ptr = Name.getFETokenInfo<void>();
@@ -252,30 +244,14 @@ IdentifierResolver::begin(DeclarationName Name, const DeclContext *Ctx,
   void *Ptr = Name.getFETokenInfo<void>();
   if (!Ptr) return end();
 
-  LookupContext LC(Ctx);
-
   if (isDeclPtr(Ptr)) {
     NamedDecl *D = static_cast<NamedDecl*>(Ptr);
-    LookupContext DC(D);
-
-    if (( LookInParentCtx && LC.isEqOrContainedBy(DC)) ||
-        (!LookInParentCtx && LC == DC))
-      return iterator(D);
-    else
-      return end();
+    return iterator(D);
   }
 
   IdDeclInfo *IDI = toIdDeclInfo(Ptr);
 
-  IdDeclInfo::DeclsTy::iterator I;
-  if (LookInParentCtx)
-    I = IDI->FindDeclVisibleInContext(LC);
-  else {
-    for (I = IDI->decls_end(); I != IDI->decls_begin(); --I)
-      if (LookupContext(*(I-1)) == LC)
-        break;
-  }
-
+  IdDeclInfo::DeclsTy::iterator I = IDI->decls_end();
   if (I != IDI->decls_begin())
     return iterator(I-1, LookInParentCtx);
   else // No decls found.
@@ -285,22 +261,11 @@ IdentifierResolver::begin(DeclarationName Name, const DeclContext *Ctx,
 /// PreIncIter - Do a preincrement when 'Ptr' is a BaseIter.
 void IdentifierResolver::iterator::PreIncIter() {
   NamedDecl *D = **this;
-  LookupContext Ctx(D);
   void *InfoPtr = D->getDeclName().getFETokenInfo<void>();
   assert(!isDeclPtr(InfoPtr) && "Decl with wrong id ?");
   IdDeclInfo *Info = toIdDeclInfo(InfoPtr);
 
   BaseIter I = getIterator();
-  if (LookInParentCtx())
-    I = Info->FindDeclVisibleInContext(Ctx, I);
-  else {
-    if (I != Info->decls_begin() && LookupContext(*(I-1)) != Ctx) {
-      // The next decl is in different declaration context.
-      // Skip remaining decls and set the iterator to the end.
-      I = Info->decls_begin();
-    }
-  }
-
   if (I != Info->decls_begin())
     *this = iterator(I-1, LookInParentCtx());
   else // No more decls.

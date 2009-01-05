@@ -93,6 +93,13 @@ void Sema::PopDeclContext() {
 
 /// Add this decl to the scope shadowed decl chains.
 void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
+  // Move up the scope chain until we find the nearest enclosing
+  // non-transparent context. The declaration will be introduced into this
+  // scope.
+  while (S->getEntity() && 
+         ((DeclContext *)S->getEntity())->isTransparentContext())
+    S = S->getParent();
+
   S->AddDecl(D);
 
   // Add scoped declarations into their context, so that they can be
@@ -149,8 +156,11 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
     // We are pushing the name of a function, which might be an
     // overloaded name.
     FunctionDecl *FD = cast<FunctionDecl>(D);
+    DeclContext *DC = FD->getDeclContext();                                     
+    while (DC->isTransparentContext())
+      DC = DC->getParent(); 
     IdentifierResolver::iterator Redecl
-      = std::find_if(IdResolver.begin(FD->getDeclName(), CurContext, 
+      = std::find_if(IdResolver.begin(FD->getDeclName(), DC, 
                                       false/*LookInParentCtx*/),
                      IdResolver.end(),
                      std::bind1st(std::mem_fun(&ScopedDecl::declarationReplaces),
@@ -337,7 +347,7 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
         Ctx = Ctx->getParent();
       }
       
-      if (!LookInParent)
+      if (!LookInParent && !Ctx->isTransparentContext())
         return 0;
     }
   }
@@ -3117,6 +3127,15 @@ void Sema::ActOnFields(Scope* S,
     ProcessDeclAttributeList(Record, Attr);
 }
 
+void Sema::ActOnEnumStartDefinition(Scope *S, DeclTy *EnumD) {
+  EnumDecl *Enum = cast_or_null<EnumDecl>((Decl *)EnumD);
+
+  if (Enum) {
+    // Enter the enumeration context.
+    PushDeclContext(S, Enum);
+  }
+}
+
 Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
                                       DeclTy *lastEnumConst,
                                       SourceLocation IdLoc, IdentifierInfo *Id,
@@ -3212,20 +3231,22 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
 void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
                          DeclTy **Elements, unsigned NumElements) {
   EnumDecl *Enum = cast<EnumDecl>(static_cast<Decl*>(EnumDeclX));
+  QualType EnumType = Context.getTypeDeclType(Enum);
   
-  if (Enum) {
-    if (EnumDecl *Def = cast_or_null<EnumDecl>(Enum->getDefinition(Context))) {
-      // Diagnose code like:
-      //   enum e0 {
-      //     E0 = sizeof(enum e0 { E1 })
-      //   };
-      Diag(Def->getLocation(), diag::err_nested_redefinition)
-        << Enum->getDeclName();
-      Diag(Enum->getLocation(), diag::note_previous_definition);
-      Enum->setInvalidDecl();
-      return;
-    }
+  if (EnumType->getAsEnumType()->getDecl()->isDefinition()) {
+    EnumDecl *Def = EnumType->getAsEnumType()->getDecl();
+    // Diagnose code like:
+    //   enum e0 {
+    //     E0 = sizeof(enum e0 { E1 })
+    //   };
+    Diag(Def->getLocation(), diag::err_nested_redefinition)
+      << Enum->getDeclName();
+    Diag(Enum->getLocation(), diag::note_previous_definition);
+    Enum->setInvalidDecl();
+    PopDeclContext();
+    return;
   }
+
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,
   // emit a warning.
@@ -3239,7 +3260,6 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   // Keep track of whether all elements have type int.
   bool AllElementsInt = true;
   
-  QualType EnumType = Context.getTypeDeclType(Enum);
   EnumConstantDecl *EltList = 0;
   for (unsigned i = 0; i != NumElements; ++i) {
     EnumConstantDecl *ECD =
@@ -3392,6 +3412,9 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   
   Enum->completeDefinition(Context, BestType);
   Consumer.HandleTagDeclDefinition(Enum);
+
+  // Leave the context of the enumeration.
+  PopDeclContext();
 }
 
 Sema::DeclTy *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,

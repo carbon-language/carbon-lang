@@ -44,6 +44,15 @@ td {
   <li><a href="#Type">The Type class and its subclasses</a></li>
   <li><a href="#QualType">The QualType class</a></li>
   <li><a href="#DeclarationName">Declaration names</a></li>
+  <li><a href="#DeclContext">Declaration contexts</a>
+    <ul>
+      <li><a href="#Redeclarations">Redeclarations and Overloads</a></li>
+      <li><a href="#LexicalAndSemanticContexts">Lexical and Semantic
+      Contexts</a></li>
+      <li><a href="#TransparentContexts">Transparent Declaration Contexts</a></li>
+      <li><a href="#MultiDeclContext">Multiply-Defined Declaration Contexts</a></li>
+    </ul>
+  </li>
   <li><a href="#CFG">The CFG class</a></li>
   <li><a href="#Constants">Constant Folding in the Clang AST</a></li>
   </ul>
@@ -869,6 +878,298 @@ malloc'd objects are at least 8 byte aligned.</p>
   <code>getCXXConversionFunctionName</code>, and <code>getCXXOperatorName</code>, respectively,
   return <code>DeclarationName</code> instances for the four kinds of
   C++ special function names.</p>
+
+<!-- ======================================================================= -->
+<h3 id="DeclContext">Declaration contexts</h3>
+<!-- ======================================================================= -->
+<p>Every declaration in a program exists within some <i>declaration
+    context</i>, such as a translation unit, namespace, class, or
+    function. Declaration contexts in Clang are represented by
+    the <code>DeclContext</code> class, from which the various
+  declaration-context AST nodes
+  (<code>TranslationUnitDecl</code>, <code>NamespaceDecl</code>, <code>RecordDecl</code>, <code>FunctionDecl</code>,
+  etc.) will derive. The <code>DeclContext</code> class provides
+  several facilities common to each declaration context:</p>
+<dl>
+  <dt>Source-centric vs. Semantics-centric View of Declarations</dt>
+  <dd><code>DeclContext</code> provides two views of the declarations
+  stored within a declaration context. The source-centric view
+  accurately represents the program source code as written, including
+  multiple declarations of entities where present (see the
+    section <a href="#Redeclarations">Redeclarations and
+  Overloads</a>), while the semantics-centric view represents the
+  program semantics. The two views are kept synchronized by semantic
+  analysis while the ASTs are being constructed.</dd>
+
+  <dt>Storage of declarations within that context</dt>
+  <dd>Every declaration context can contain some number of
+    declarations. For example, a C++ class (represented
+    by <code>RecordDecl</code>) contains various member functions,
+    fields, nested types, and so on. All of these declarations will be
+    stored within the <code>DeclContext</code>, and one can iterate
+    over the declarations via
+    [<code>DeclContext::decls_begin()</code>, 
+    <code>DeclContext::decls_end()</code>). This mechanism provides
+    the source-centric view of declarations in the context.</dd>
+
+  <dt>Lookup of declarations within that context</dt>
+  <dd>The <code>DeclContext</code> structure provides efficient name
+    lookup for names within that declaration context. For example,
+    if <code>N</code> is a namespace we can look for the
+    name <code>N::f</code>
+    using <code>DeclContext::lookup</code>. The lookup itself is
+    based on a lazily-constructed array (for declaration contexts
+    with a small number of declarations) or hash table (for
+    declaration contexts with more declarations). The lookup
+    operation provides the semantics-centric view of the declarations
+    in the context.</dd>
+
+  <dt>Ownership of declarations</dt>
+  <dd>The <code>DeclContext</code> owns all of the declarations that
+  were declared within its declaration context, and is responsible
+  for the management of their memory as well as their
+  (de-)serialization.</dd>
+</dl>
+
+<p>The declarations stored within each declaration context are
+  called <i>scoped declarations</i> and the AST nodes for each of
+  these declarations are 
+  derived from the <code>ScopedDecl</code> class, which provides
+  information about the context in which that declaration lives. One
+  can retrieve the <code>DeclContext</code> that contains a
+  particular <code>ScopedDecl</code>
+  using <code>ScopedDecl::getDeclContext</code>. However, see the
+  section <a href="#LexicalAndSemanticContexts">Lexical and Semantic
+  Contexts</a> for more information about how to interpret this
+  context information.</p>
+
+<h4 id="Redeclarations">Redeclarations and Overloads</h4>
+<p>Within a translation unit, it is common for an entity to be
+declared several times. For example, we might declare a function "f"
+  and then later re-declare it as part of an inlined definition:</p>
+
+<pre>
+void f(int x, int y, int z = 1);
+
+inline void f(int x, int y, int z) { /* ... */ }
+</pre>
+
+<p>The representation of "f" differs in the source-centric and
+  semantics-centric views of a declaration context. In the
+  source-centric view, all redeclarations will be present, in the
+  order they occurred in the source code, making 
+    this view suitable for clients that wish to see the structure of
+    the source code. In the semantics-centric view, only the most recent "f"
+  will be found by the lookup, since it effectively replaces the first
+  declaration of "f".</p>
+
+<p>In the semantics-centric view, overloading of functions is
+  represented explicitly. For example, given two declarations of a
+  function "g" that are overloaded, e.g.,</p>
+<pre>
+void g();
+void g(int);
+</pre>
+<p>the <code>DeclContext::lookup</code> operation will return
+  an <code>OverloadedFunctionDecl</code> that contains both
+  declarations of "g". Clients that perform semantic analysis on a
+  program that is not concerned with the actual source code will
+  primarily use this semantics-centric view.</p>
+
+<h4 id="LexicalAndSemanticContexts">Lexical and Semantic Contexts</h4>
+<p>Each scoped declaration (whose AST node derived
+  from <code>ScopedDecl</code>) has two potentially different
+  declaration contexts: a <i>lexical</i> context, which corresponds to
+  the source-centric view of the declaration context, and
+  a <i>semantic</i> context, which corresponds to the
+  semantics-centric view. The lexical context is accessible
+  via <code>ScopedDecl::getLexicalDeclContext</code> while the
+  semantic context is accessible
+  via <code>ScopedDecl::getDeclContext</code>, both of which return
+  <code>DeclContext</code> pointers. For most declarations, the two
+  contexts are identical. For example:</p>
+
+<pre>
+class X {
+public:
+  void f(int x);
+};
+</pre>
+
+<p>Here, the semantic and lexical contexts of <code>X::f</code> are
+  the <code>DeclContext</code> associated with the
+  class <code>X</code> (itself stored as a <code>RecordDecl</code> AST
+  node). However, we can now define <code>X::f</code> out-of-line:</p>
+
+<pre>
+void X::f(int x = 17) { /* ... */ }
+</pre>
+
+<p>This definition of has different lexical and semantic
+  contexts. The lexical context corresponds to the declaration
+  context in which the actual declaration occurred in the source
+  code, e.g., the translation unit containing <code>X</code>. Thus,
+  this declaration of <code>X::f</code> can be found by traversing
+  the declarations provided by
+  [<code>decls_begin()</code>, <code>decls_end()</code>) in the
+  translation unit.</p>
+
+<p>The semantic context of <code>X::f</code> corresponds to the
+  class <code>X</code>, since this member function is (semantically) a
+  member of <code>X</code>. Lookup of the name <code>f</code> into
+  the <code>DeclContext</code> associated with <code>X</code> will
+  then return the definition of <code>X::f</code> (including
+  information about the default argument).</p>
+
+<h4 id="TransparentContexts">Transparent Declaration Contexts</h4>
+<p>In C and C++, there are several contexts in which names that are
+  logically declared inside another declaration will actually "leak"
+  out into the enclosing scope from the perspective of name
+  lookup. The most obvious instance of this behavior is in
+  enumeration types, e.g.,</p>
+<pre>
+enum Color {
+  Red, 
+  Green,
+  Blue
+};
+</pre>
+
+<p>Here, <code>Color</code> is an enumeration, which is a declaration
+  context that contains the
+  enumerators <code>Red</code>, <code>Green</code>,
+  and <code>Blue</code>. Thus, traversing the list of declarations
+  contained in the enumeration <code>Color</code> will
+  yield <code>Red</code>, <code>Green</code>,
+  and <code>Blue</code>. However, outside of the scope
+  of <code>Color</code> one can name the enumerator <code>Red</code>
+  without qualifying the name, e.g.,</p>
+
+<pre>
+Color c = Red;
+</pre>
+
+<p>There are other entities in C++ that provide similar behavior. For
+  example, linkage specifications that use curly braces:</p>
+
+<pre>
+extern "C" {
+  void f(int);
+  void g(int);
+}
+// f and g are visible here
+</pre>
+
+<p>For source-level accuracy, we treat the linkage specification and
+  enumeration type as a
+  declaration context in which its enclosed declarations ("Red",
+  "Green", and "Blue"; "f" and "g")
+  are declared. However, these declarations are visible outside of the
+  scope of the declaration context.</p>
+
+<p>These language features (and several others, described below) have
+  roughly the same set of 
+  requirements: declarations are declared within a particular lexical
+  context, but the declarations are also found via name lookup in
+  scopes enclosing the declaration itself. This feature is implemented
+  via <i>transparent</i> declaration contexts
+  (see <code>DeclContext::isTransparentContext()</code>), whose
+  declarations are visible in the nearest enclosing non-transparent
+  declaration context. This means that the lexical context of the
+  declaration (e.g., an enumerator) will be the
+  transparent <code>DeclContext</code> itself, as will the semantic
+  context, but the declaration will be visible in every outer context
+  up to and including the first non-transparent declaration context (since
+  transparent declaration contexts can be nested).</p>
+
+<p>The transparent <code>DeclContexts</code> are:</p>
+<ul>
+  <li>Enumerations (but not C++0x "scoped enumerations"):
+    <pre>
+enum Color { 
+  Red, 
+  Green, 
+  Blue 
+};
+// Red, Green, and Blue are in scope
+  </pre></li>
+  <li>C++ linkage specifications:
+  <pre>
+extern "C" {
+  void f(int);
+  void g(int);
+}
+// f and g are in scope
+  </pre></li>
+  <li>Anonymous unions and structs:
+    <pre>
+struct LookupTable {
+  bool IsVector;
+  union {
+    std::vector&lt;Item&gt; *Vector;
+    std::set&lt;Item&gt; *Set;
+  };
+};
+
+LookupTable LT;
+LT.Vector = 0; // Okay: finds Vector inside the unnamed union
+    </pre>
+  </li>
+  <li>C++0x inline namespaces:
+<pre>
+namespace mylib {
+  inline namespace debug {
+    class X;
+  }
+}
+mylib::X *xp; // okay: mylib::X refers to mylib::debug::X
+</pre>
+</li>
+</ul>
+
+
+<h4 id="MultiDeclContext">Multiply-Defined Declaration Contexts</h4>
+<p>C++ namespaces have the interesting--and, so far, unique--property that 
+the namespace can be defined multiple times, and the declarations
+provided by each namespace definition are effectively merged (from
+the semantic point of view). For example, the following two code
+snippets are semantically indistinguishable:</p>
+<pre>
+// Snippet #1:
+namespace N {
+  void f();
+}
+namespace N {
+  void f(int);
+}
+
+// Snippet #2:
+namespace N {
+  void f();
+  void f(int);
+}
+</pre>
+
+<p>In Clang's representation, the source-centric view of declaration
+  contexts will actually have two separate <code>NamespaceDecl</code>
+  nodes in Snippet #1, each of which is a declaration context that
+  contains a single declaration of "f". However, the semantics-centric
+  view provided by name lookup into the namespace <code>N</code> for
+  "f" will return an <code>OverloadedFunctionDecl</code> that contains
+  both declarations of "f".</p>
+
+<p><code>DeclContext</code> manages multiply-defined declaration
+  contexts internally. The
+  function <code>DeclContext::getPrimaryContext</code> retrieves the
+  "primary" context for a given <code>DeclContext</code> instance,
+  which is the <code>DeclContext</code> responsible for maintaining
+  the lookup table used for the semantics-centric view. Given the
+  primary context, one can follow the chain
+  of <code>DeclContext</code> nodes that define additional
+  declarations via <code>DeclContext::getNextContext</code>. Note that
+  these functions are used internally within the lookup and insertion
+  methods of the <code>DeclContext</code>, so the vast majority of
+  clients can ignore them.</p>
 
 <!-- ======================================================================= -->
 <h3 id="CFG">The <tt>CFG</tt> class</h3>

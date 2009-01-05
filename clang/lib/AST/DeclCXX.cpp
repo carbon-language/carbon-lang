@@ -291,42 +291,10 @@ OverloadedFunctionDecl::Create(ASTContext &C, DeclContext *DC,
   return new (Mem) OverloadedFunctionDecl(DC, N);
 }
 
-LinkageSpecDecl::LinkageSpecDecl(SourceLocation L, LanguageIDs lang, 
-                                 Decl **InDecls, unsigned InNumDecls)
-  : Decl(LinkageSpec, L), Language(lang), HadBraces(true),
-    Decls(0), NumDecls(InNumDecls) {
-  Decl **NewDecls = new Decl*[NumDecls];
-  for (unsigned I = 0; I < NumDecls; ++I)
-    NewDecls[I] = InDecls[I];
-  Decls = NewDecls;
-}
-
-LinkageSpecDecl::~LinkageSpecDecl() {
-  if (HadBraces)
-    delete [] (Decl**)Decls;
-}
-
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
+                                         DeclContext *DC, 
                                          SourceLocation L,
-                                         LanguageIDs Lang, Decl *D) {
+                                         LanguageIDs Lang, bool Braces) {
   void *Mem = C.getAllocator().Allocate<LinkageSpecDecl>();
-  return new (Mem) LinkageSpecDecl(L, Lang, D);
-}
-
-LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
-                                         SourceLocation L,
-                                         LanguageIDs Lang, 
-                                         Decl **Decls, unsigned NumDecls) {
-  void *Mem = C.getAllocator().Allocate<LinkageSpecDecl>();
-  return new (Mem) LinkageSpecDecl(L, Lang, Decls, NumDecls);
-}
-
-LinkageSpecDecl::decl_const_iterator LinkageSpecDecl::decls_begin() const {
-  if (hasBraces()) return (Decl**)Decls;
-  else return (Decl**)&Decls;
-}
-
-LinkageSpecDecl::decl_iterator LinkageSpecDecl::decls_end() const {
-  if (hasBraces()) return (Decl**)Decls + NumDecls;
-  else return (Decl**)&Decls + 1;
+  return new (Mem) LinkageSpecDecl(DC, L, Lang, Braces);
 }

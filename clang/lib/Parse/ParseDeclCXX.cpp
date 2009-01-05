@@ -108,27 +108,28 @@ Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
   unsigned StrSize = PP.getSpelling(Tok, LangBufPtr);
 
   SourceLocation Loc = ConsumeStringToken();
-  DeclTy *D = 0;
-  
-  if (Tok.isNot(tok::l_brace)) {
-    D = ParseDeclarationOrFunctionDefinition();
-    if (D)
-      return Actions.ActOnLinkageSpec(Loc, LangBufPtr, StrSize, D);
 
-    return 0;
+  ParseScope LinkageScope(this, Scope::DeclScope);
+  DeclTy *LinkageSpec 
+    = Actions.ActOnStartLinkageSpecification(CurScope, 
+                                             /*FIXME: */SourceLocation(),
+                                             Loc, LangBufPtr, StrSize,
+                                       Tok.is(tok::l_brace)? Tok.getLocation() 
+                                                           : SourceLocation());
+
+  if (Tok.isNot(tok::l_brace)) {
+    ParseDeclarationOrFunctionDefinition();
+    return Actions.ActOnFinishLinkageSpecification(CurScope, LinkageSpec, 
+                                                   SourceLocation());
   } 
 
   SourceLocation LBrace = ConsumeBrace();
-  llvm::SmallVector<DeclTy *, 8> InnerDecls;
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
-    D = ParseExternalDeclaration();
-    if (D)
-      InnerDecls.push_back(D);
+    ParseExternalDeclaration();
   }
 
   SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
-  return Actions.ActOnLinkageSpec(Loc, LBrace, RBrace, LangBufPtr, StrSize,
-                                  &InnerDecls.front(), InnerDecls.size());
+  return Actions.ActOnFinishLinkageSpecification(CurScope, LinkageSpec, RBrace);
 }
 
 /// ParseUsingDirectiveOrDeclaration - Parse C++ using using-declaration or
