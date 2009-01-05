@@ -723,10 +723,12 @@ private:
   /// DescToDieMap - Tracks the mapping of unit level debug informaton
   /// descriptors to debug information entries.
   std::map<DebugInfoDesc *, DIE *> DescToDieMap;
+  DenseMap<GlobalVariable *, DIE *> GVToDieMap;
 
   /// DescToDIEntryMap - Tracks the mapping of unit level debug informaton
   /// descriptors to debug information entries using a DIEntry proxy.
   std::map<DebugInfoDesc *, DIEntry *> DescToDIEntryMap;
+  DenseMap<GlobalVariable *, DIEntry *> GVToDIEntryMap;
 
   /// Globals - A map of globally visible named entities for this unit.
   ///
@@ -746,7 +748,9 @@ public:
   , ID(I)
   , Die(D)
   , DescToDieMap()
+  , GVToDieMap()
   , DescToDIEntryMap()
+  , GVToDIEntryMap()
   , Globals()
   , DiesSet(InitDiesSetSize)
   , Dies()
@@ -782,11 +786,17 @@ public:
   DIE *&getDieMapSlotFor(DebugInfoDesc *DID) {
     return DescToDieMap[DID];
   }
+  DIE *&getDieMapSlotFor(GlobalVariable *GV) {
+    return GVToDieMap[GV];
+  }
 
   /// getDIEntrySlotFor - Returns the debug information entry proxy slot for the
   /// specified debug descriptor.
   DIEntry *&getDIEntrySlotFor(DebugInfoDesc *DID) {
     return DescToDIEntryMap[DID];
+  }
+  DIEntry *&getDIEntrySlotFor(GlobalVariable *GV) {
+    return GVToDIEntryMap[GV];
   }
 
   /// AddDie - Adds or interns the DIE to the compile unit.
@@ -1497,6 +1507,39 @@ private:
     }
   }
 
+  /// AddType - Add a new type attribute to the specified entity.
+  void AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
+    if (Ty.isNull()) {
+      AddBasicType(Entity, DW_Unit, "", DW_ATE_signed, sizeof(int32_t));
+      return;
+    }
+
+    // Check for pre-existence.
+    DIEntry *&Slot = DW_Unit->getDIEntrySlotFor(Ty.getGV());
+    // If it exists then use the existing value.
+    if (Slot) {
+      Entity->AddValue(DW_AT_type, DW_FORM_ref4, Slot);
+      return;
+    }
+
+    // Set up proxy. 
+    Slot = NewDIEntry();
+
+    // Construct type.
+    DIE Buffer(DW_TAG_base_type);
+    if (DIBasicType *BT = dyn_cast<DIBasicType>(&Ty))
+      ConstructTypeDIE(DW_Unit, Buffer, BT);
+    else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&Ty))
+      ConstructTypeDIE(DW_Unit, Buffer, DT);
+    else if (DICompositeType *CT = dyn_cast<DICompositeType>(&Ty))
+      ConstructTypeDIE(DW_Unit, Buffer, CT);
+
+    // Add debug information entry to entity and unit.
+    DIE *Die = DW_Unit->AddDie(Buffer);
+    SetDIEntry(Slot, Die);
+    Entity->AddValue(DW_AT_type, DW_FORM_ref4, Slot);
+  }
+
   /// ConstructTypeDIE - Construct basic type die from DIBasicType.
   void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                         DIBasicType *BTy) {
@@ -1526,7 +1569,7 @@ private:
     Buffer.setTag(Tag);
     // Map to main type, void will not have a type.
     DIType FromTy = DTy->getTypeDerivedFrom();
-    // FIXME - Enable this. AddType(&Buffer, FromTy, DW_Unit);
+    AddType(DW_Unit, &Buffer, FromTy);
 
     // Add name if not anonymous or intermediate type.
     if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
@@ -1567,11 +1610,25 @@ private:
         AddUInt(&Buffer, DW_AT_prototyped, DW_FORM_flag, 1);
         DIArray Elements = CTy->getTypeArray();
         // Add return type.
-        // FIXME - Enable this.AddType(&Buffer, Elements.getElement(0), DW_Unit);
+        DIDescriptor RTy = Elements.getElement(0);
+        if (DIBasicType *BT = dyn_cast<DIBasicType>(&RTy))
+          AddType(DW_Unit, &Buffer, *BT);
+        else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&RTy))
+          AddType(DW_Unit, &Buffer, *DT);
+        else if (DICompositeType *CT = dyn_cast<DICompositeType>(&RTy))
+          AddType(DW_Unit, &Buffer, *CT);
+
+        //AddType(DW_Unit, &Buffer, Elements.getElement(0));
         // Add arguments.
         for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
           DIE *Arg = new DIE(DW_TAG_formal_parameter);
-          // FIXME - Enable this.AddType(Arg, Elements.getElement(i), DW_Unit);
+          DIDescriptor Ty = Elements.getElement(i);
+          if (DIBasicType *BT = dyn_cast<DIBasicType>(&Ty))
+            AddType(DW_Unit, &Buffer, *BT);
+          else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&Ty))
+            AddType(DW_Unit, &Buffer, *DT);
+          else if (DICompositeType *CT = dyn_cast<DICompositeType>(&Ty))
+            AddType(DW_Unit, &Buffer, *CT);
           Buffer.AddChild(Arg);
         }
       }
@@ -1642,7 +1699,7 @@ private:
     
     DIArray Elements = CTy->getTypeArray();
     // FIXME - Enable this. 
-    // AddType(&Buffer, CTy->getTypeDerivedFrom(), DW_Unit);
+    AddType(DW_Unit, &Buffer, CTy->getTypeDerivedFrom());
 
     // Construct an anonymous type for index type.
     DIE IdxBuffer(DW_TAG_base_type);
@@ -1680,7 +1737,7 @@ private:
       AddString(VariableDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
                 LinkageName);
     // FIXME - Enable this. AddSourceLine(VariableDie, V);
-    // FIXME - Enable this. AddType(VariableDie, V->getType(), DW_Unit);
+    AddType(DW_Unit, VariableDie, V->getType());
     if (!V->isLocalToUnit())
       AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);
     AddUInt(VariableDie, DW_AT_declaration, DW_FORM_flag, 1);
@@ -1702,13 +1759,26 @@ private:
     DIArray Args = MTy.getTypeArray();
 
     // Add Return Type.
-    // FIXME - Enable this.    if (!IsConstructor)
-    // Fixme - Enable this.  AddType(Method, Args.getElement(0), DW_Unit);
+    if (!IsConstructor) {
+      DIDescriptor Ty = Args.getElement(0);
+      if (DIBasicType *BT = dyn_cast<DIBasicType>(&Ty))
+        AddType(DW_Unit, Method, *BT);
+      else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&Ty))
+        AddType(DW_Unit, Method, *DT);
+      else if (DICompositeType *CT = dyn_cast<DICompositeType>(&Ty))
+        AddType(DW_Unit, Method, *CT);
+    }
 
     // Add arguments.
     for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
       DIE *Arg = new DIE(DW_TAG_formal_parameter);
-      // FIXME - Enable this. AddType(Arg, Args.getElement(i), DW_Unit);
+      DIDescriptor Ty = Args.getElement(i);
+      if (DIBasicType *BT = dyn_cast<DIBasicType>(&Ty))
+        AddType(DW_Unit, Method, *BT);
+      else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&Ty))
+        AddType(DW_Unit, Method, *DT);
+      else if (DICompositeType *CT = dyn_cast<DICompositeType>(&Ty))
+        AddType(DW_Unit, Method, *CT);
       AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
       Method->AddChild(Arg);
     }
@@ -1728,7 +1798,7 @@ private:
     // FIXME - Enable this. AddSourceLine(MemberDie, DTy);
 
     DIType FromTy = DTy->getTypeDerivedFrom();
-    // FIXME - Enable this. AddType(MemberDie, FromTy, DW_Unit);
+    AddType(DW_Unit, MemberDie, FromTy);
 
     uint64_t Size = DTy->getSizeInBits();
     uint64_t Offset = DTy->getOffsetInBits();
