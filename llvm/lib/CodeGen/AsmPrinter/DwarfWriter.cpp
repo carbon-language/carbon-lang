@@ -1541,6 +1541,84 @@ private:
     // FIXME - Enable this.     AddSourceLine(&Buffer, *DTy);
   }
 
+  /// ConstructTypeDIE - Construct type DIE from DICompositeType.
+  void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
+                        DICompositeType *CTy) {
+
+    // Get core information.                                                              
+    const std::string &Name = CTy->getName();
+    uint64_t Size = CTy->getSizeInBits() >> 3;
+    unsigned Tag = CTy->getTag();
+    switch (Tag) {
+    case DW_TAG_vector_type:
+    case DW_TAG_array_type:
+      ConstructArrayTypeDIE(DW_Unit, Buffer, CTy);
+      break;
+    //FIXME - Enable this. 
+    // case DW_TAG_enumeration_type:
+    //  DIArray Elements = CTy->getTypeArray();
+    //  // Add enumerators to enumeration type.
+    //  for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) 
+    //   ConstructEnumTypeDIE(Buffer, &Elements.getElement(i));
+    //  break;
+    case DW_TAG_subroutine_type: 
+      {
+        // Add prototype flag.
+        AddUInt(&Buffer, DW_AT_prototyped, DW_FORM_flag, 1);
+        DIArray Elements = CTy->getTypeArray();
+        // Add return type.
+        // FIXME - Enable this.AddType(&Buffer, Elements.getElement(0), DW_Unit);
+        // Add arguments.
+        for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
+          DIE *Arg = new DIE(DW_TAG_formal_parameter);
+          // FIXME - Enable this.AddType(Arg, Elements.getElement(i), DW_Unit);
+          Buffer.AddChild(Arg);
+        }
+      }
+      break;
+    case DW_TAG_structure_type:
+    case DW_TAG_union_type: 
+      {
+        // Add elements to structure type.
+        DIArray Elements = CTy->getTypeArray();
+        // Add elements to structure type.
+        for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
+          DIDescriptor Element = Elements.getElement(i);
+          if (DISubprogram *SP = dyn_cast<DISubprogram>(&Element))
+            ConstructFieldTypeDIE(DW_Unit, Buffer, SP);
+          else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&Element))
+            ConstructFieldTypeDIE(DW_Unit, Buffer, DT);
+          else if (DIGlobalVariable *GV = dyn_cast<DIGlobalVariable>(&Element))
+            ConstructFieldTypeDIE(DW_Unit, Buffer, GV);
+        }
+      }
+      break;
+    default:
+      break;
+    }
+
+    // Add name if not anonymous or intermediate type.
+    if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
+
+    // Add size if non-zero (derived types might be zero-sized.)
+    if (Size)
+      AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
+    else {
+      // Add zero size even if it is not a forward declaration.
+      // FIXME - Enable this.
+      //      if (!CTy->isDefinition())
+      //        AddUInt(&Buffer, DW_AT_declaration, DW_FORM_flag, 1);
+      //      else
+      //        AddUInt(&Buffer, DW_AT_byte_size, 0, 0); 
+    }
+
+    // Add source line info if available and TyDesc is not a forward
+    // declaration.
+    // FIXME - Enable this.
+    // if (CTy->isForwardDecl())                                            
+    //   AddSourceLine(&Buffer, *CTy);                                    
+  }
+  
   // ConstructSubrangeDIE - Construct subrange DIE from DISubrange.
   void ConstructSubrangeDIE (DIE &Buffer, DISubrange *SR, DIE *IndexTy) {
     int64_t L = SR->getLo();
@@ -1574,15 +1652,16 @@ private:
 
     // Add subranges to array type.
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-      DISubrange Element = Elements.getElement(i);
-      ConstructSubrangeDIE(Buffer, &Element, IndexTy);
+      DIDescriptor Element = Elements.getElement(i);
+      if (DISubrange *SR = dyn_cast<DISubrange>(&Element))
+        ConstructSubrangeDIE(Buffer, SR, IndexTy);
     }
   }
 
   /// ConstructEnumTypeDIE - Construct enum type DIE from 
   /// DIEnumerator.
-  void ConstructEnumType(CompileUnit *DW_Unit, 
-                         DIE &Buffer, DIEnumerator *ETy) {
+  void ConstructEnumTypeDIE(CompileUnit *DW_Unit, 
+                            DIE &Buffer, DIEnumerator *ETy) {
 
     DIE *Enumerator = new DIE(DW_TAG_enumerator);
     AddString(Enumerator, DW_AT_name, DW_FORM_string, ETy->getName());
