@@ -1728,9 +1728,15 @@ bool LLParser::ParseValID(ValID &ID) {
       ID.ConstantVal = ConstantExpr::getICmp(Pred, Val0, Val1);
     } else if (Opc == Instruction::VFCmp) {
       // FIXME: REMOVE VFCMP Support
+      if (!Val0->getType()->isFPOrFPVector() ||
+          !isa<VectorType>(Val0->getType()))
+        return Error(ID.Loc, "vfcmp requires vector floating point operands");
       ID.ConstantVal = ConstantExpr::getVFCmp(Pred, Val0, Val1);
     } else if (Opc == Instruction::VICmp) {
-      // FIXME: REMOVE VFCMP Support
+      // FIXME: REMOVE VICMP Support
+      if (!Val0->getType()->isIntOrIntVector() ||
+          !isa<VectorType>(Val0->getType()))
+        return Error(ID.Loc, "vicmp requires vector floating point operands");
       ID.ConstantVal = ConstantExpr::getVICmp(Pred, Val0, Val1);
     }
     ID.Kind = ValID::t_Constant;
