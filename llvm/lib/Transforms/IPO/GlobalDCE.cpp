@@ -161,7 +161,8 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
       MarkUsedGlobalsAsNeeded(GV->getInitializer());
   } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(G)) {
     // The target of a global alias is needed.
-    MarkUsedGlobalsAsNeeded(GA->getAliasee());
+    if (Constant *Aliasee = GA->getAliasee())
+      MarkUsedGlobalsAsNeeded(Aliasee);
   } else {
     // Otherwise this must be a function object.  We have to scan the body of
     // the function looking for constants and global values which are used as
