@@ -2035,7 +2035,8 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
     return Error(LinkageLoc, "invalid function linkage type");
   }
   
-  if (!FunctionType::isValidReturnType(RetType))
+  if (!FunctionType::isValidReturnType(RetType) ||
+      isa<OpaqueType>(RetType))
     return Error(RetTypeLoc, "invalid function return type");
   
   if (Lex.getKind() != lltok::GlobalVar)
