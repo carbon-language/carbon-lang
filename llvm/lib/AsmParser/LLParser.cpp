@@ -36,6 +36,7 @@ namespace llvm {
       t_LocalName, t_GlobalName,  // Name in StrVal.
       t_APSInt, t_APFloat,        // Value in APSIntVal/APFloatVal.
       t_Null, t_Undef, t_Zero,    // No value.
+      t_EmptyArray,               // No value:  []
       t_Constant,                 // Value in ConstantVal.
       t_InlineAsm                 // Value in StrVal/StrVal2/UIntVal.
     } Kind;
@@ -1578,7 +1579,7 @@ bool LLParser::ParseValID(ValID &ID) {
     if (Elts.empty()) {
       // Use undef instead of an array because it's inconvenient to determine
       // the element type at this point, there being no elements to examine.
-      ID.Kind = ValID::t_Undef;
+      ID.Kind = ValID::t_EmptyArray;
       return false;
     }
     
@@ -1902,6 +1903,11 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     V = ConstantPointerNull::get(cast<PointerType>(Ty));
     return false;
   case ValID::t_Undef:
+    V = UndefValue::get(Ty);
+    return false;
+  case ValID::t_EmptyArray:
+    if (!isa<ArrayType>(Ty) || cast<ArrayType>(Ty)->getNumElements() != 0)
+      return Error(ID.Loc, "invalid empty array initializer");
     V = UndefValue::get(Ty);
     return false;
   case ValID::t_Zero:
