@@ -329,9 +329,20 @@ llvm::DIType CGDebugInfo::CreateType(const TagType *Ty,
 
 llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
                                      llvm::DICompileUnit Unit) {
-  // Size and align of the whole array, not the element type.
-  uint64_t Size = M->getContext().getTypeSize(Ty);
-  uint64_t Align = M->getContext().getTypeAlign(Ty);
+  uint64_t Size;
+  uint64_t Align;
+  
+  
+  if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(Ty)) {
+
+    Size = 0;
+    Align =
+      M->getContext().getTypeSize(M->getContext().getBaseElementType(VAT));
+  } else {
+    // Size and align of the whole array, not the element type.
+    Size = M->getContext().getTypeSize(Ty);
+    Align = M->getContext().getTypeAlign(Ty);
+  }
   
   // Add the dimensions of the array.  FIXME: This loses CV qualifiers from
   // interior arrays, do we care?  Why aren't nested arrays represented the
