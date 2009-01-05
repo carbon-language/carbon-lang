@@ -605,7 +605,7 @@ GlobalValue *LLParser::GetGlobalVal(unsigned ID, const Type *Ty, LocTy Loc) {
   if (const FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType())) {
     // Function types can return opaque but functions can't.
     if (isa<OpaqueType>(FT->getReturnType())) {
-      Error(Loc, "function may not return return opaque type");
+      Error(Loc, "function may not return opaque type");
       return 0;
     }
     FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, "", M);
