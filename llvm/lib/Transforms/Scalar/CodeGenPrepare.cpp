@@ -125,11 +125,12 @@ void CodeGenPrepare::findLoopBackEdges(Function &F) {
 bool CodeGenPrepare::runOnFunction(Function &F) {
   bool EverMadeChange = false;
 
-  findLoopBackEdges(F);
-
   // First pass, eliminate blocks that contain only PHI nodes and an
   // unconditional branch.
   EverMadeChange |= EliminateMostlyEmptyBlocks(F);
+
+  // Now find loop back edges.
+  findLoopBackEdges(F);
 
   bool MadeChange = true;
   while (MadeChange) {
