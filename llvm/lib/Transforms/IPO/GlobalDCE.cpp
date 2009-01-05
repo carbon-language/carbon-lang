@@ -25,7 +25,7 @@
 #include <set>
 using namespace llvm;
 
-STATISTIC(NumAliases, "Number of global aliases removed");
+STATISTIC(NumAliases  , "Number of global aliases removed");
 STATISTIC(NumFunctions, "Number of functions removed");
 STATISTIC(NumVariables, "Number of global variables removed");
 
