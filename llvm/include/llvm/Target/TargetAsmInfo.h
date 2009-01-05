@@ -448,19 +448,9 @@ namespace llvm {
     ///
     bool DwarfRequiresFrameSection; // Defaults to true.
 
-    /// FDEEncodingRequiresSData4 - If set, the FDE Encoding in the EH section
-    /// includes DW_EH_PE_sdata4.
-    /// 
-    bool FDEEncodingRequiresSData4;         // Defaults to true
-
     /// NonLocalEHFrameLabel - If set, the EH_frame label needs to be non-local.
     /// 
     bool NonLocalEHFrameLabel;              // Defaults to false.
-
-    /// Force32BitFDEReference - Force the FDE initial location and address
-    /// range to be 32-bit sized.
-    ///
-    bool Force32BitFDEReference;            // Defaults to true.
 
     /// GlobalEHDirective - This is the directive used to make exception frame
     /// tables globally visible.
@@ -828,14 +818,8 @@ namespace llvm {
     bool doesDwarfRequireFrameSection() const {
       return DwarfRequiresFrameSection;
     }
-    bool doesFDEEncodingRequireSData4() const {
-      return FDEEncodingRequiresSData4;
-    }
     bool doesRequireNonLocalEHFrameLabel() const {
       return NonLocalEHFrameLabel;
-    }
-    bool doesRequire32BitFDEReference() const {
-      return Force32BitFDEReference;
     }
     const char *getGlobalEHDirective() const {
       return GlobalEHDirective;

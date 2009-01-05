@@ -3410,24 +3410,14 @@ private:
       Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
       Asm->EOL("LSDA Encoding (pcrel sdata4)");
 
-      if (TAI->doesFDEEncodingRequireSData4()) {
-        Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
-        Asm->EOL("FDE Encoding (pcrel sdata4)");
-      } else {
-        Asm->EmitInt8(DW_EH_PE_pcrel);
-        Asm->EOL("FDE Encoding (pcrel)");
-      }
+      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
+      Asm->EOL("FDE Encoding (pcrel sdata4)");
    } else {
       Asm->EmitULEB128Bytes(1);
       Asm->EOL("Augmentation Size");
 
-      if (TAI->doesFDEEncodingRequireSData4()) {
-        Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
-        Asm->EOL("FDE Encoding (pcrel sdata4)");
-      } else {
-        Asm->EmitInt8(DW_EH_PE_pcrel);
-        Asm->EOL("FDE Encoding (pcrel)");
-      }
+      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
+      Asm->EOL("FDE Encoding (pcrel sdata4)");
     }
 
     // Indicate locations of general callee saved registers in frame.
@@ -3508,12 +3498,10 @@ private:
 
       Asm->EOL("FDE CIE offset");
 
-      EmitReference("eh_func_begin", EHFrameInfo.Number, true, 
-                    TAI->doesRequire32BitFDEReference());
+      EmitReference("eh_func_begin", EHFrameInfo.Number, true);
       Asm->EOL("FDE initial location");
       EmitDifference("eh_func_end", EHFrameInfo.Number,
-                     "eh_func_begin", EHFrameInfo.Number,
-                     TAI->doesRequire32BitFDEReference());
+                     "eh_func_begin", EHFrameInfo.Number);
       Asm->EOL("FDE address range");
 
       // If there is a personality and landing pads then point to the language
