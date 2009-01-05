@@ -2374,8 +2374,11 @@ inline QualType Sema::CheckMultiplyDivideOperands(
 inline QualType Sema::CheckRemainderOperands(
   Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) 
 {
-  if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
-    return CheckVectorOperands(Loc, lex, rex);
+  if (lex->getType()->isVectorType() || rex->getType()->isVectorType()) {
+    if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
+      return CheckVectorOperands(Loc, lex, rex);
+    return InvalidOperands(Loc, lex, rex);
+  }
 
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   

@@ -2,6 +2,7 @@
 
 typedef __attribute__(( ext_vector_type(4) )) float float4;
 typedef __attribute__(( ext_vector_type(2) )) float float2;
+typedef __attribute__(( ext_vector_type(4) )) int int4;
 
 float4 foo = (float4){ 1.0, 2.0, 3.0, 4.0 };
 
@@ -13,7 +14,7 @@ float2 vec2, vec2_2;
 float4 vec4, vec4_2;
 float f;
 
-static void test2() {
+void test2() {
     vec2 = vec4.rg;  // shorten
     f = vec2.x;      // extract elt
     vec4 = vec4.yyyy;  // splat
@@ -22,11 +23,11 @@ static void test2() {
     vec2.yx = vec2; // reverse
 }
 
-static void test3(float4 *out) {
+void test3(float4 *out) {
   *out = ((float4) {1.0f, 2.0f, 3.0f, 4.0f });
 }
 
-static void test4(float4 *out) {
+void test4(float4 *out) {
   float a = 1.0f;
   float b = 2.0f;
   float c = 3.0f;
@@ -34,7 +35,7 @@ static void test4(float4 *out) {
   *out = ((float4) {a,b,c,d});
 }
 
-static void test5(float4 *out) {
+void test5(float4 *out) {
   float a;
   float4 b;
   
@@ -45,4 +46,76 @@ static void test5(float4 *out) {
   b *= a;
   
   *out = b;
+}
+
+void test6(float4 *ap, float4 *bp, float c) {
+  float4 a = *ap;
+  float4 b = *bp;
+  
+  a = a + b;
+  a = a - b;
+  a = a * b;
+  a = a / b;
+  
+  a = a + c;
+  a = a - c;
+  a = a * c;
+  a = a / c;
+
+  a += b;
+  a -= b;
+  a *= b;
+  a /= b;
+  
+  a += c;
+  a -= c;
+  a *= c;
+  a /= c;
+
+  int4 cmp;
+
+  cmp = a < b;
+  cmp = a <= b;
+  cmp = a < b;
+  cmp = a >= b;
+  cmp = a == b;
+  cmp = a != b;
+}
+
+void test7(int4 *ap, int4 *bp, int c) {
+  int4 a = *ap;
+  int4 b = *bp;
+  
+  a = a + b;
+  a = a - b;
+  a = a * b;
+  a = a / b;
+  a = a % b;
+  
+  a = a + c;
+  a = a - c;
+  a = a * c;
+  a = a / c;
+  a = a % c;
+
+  a += b;
+  a -= b;
+  a *= b;
+  a /= b;
+  a %= b;
+  
+  a += c;
+  a -= c;
+  a *= c;
+  a /= c;
+  a %= c;
+
+  int4 cmp;
+
+  cmp = a < b;
+  cmp = a <= b;
+  cmp = a < b;
+  cmp = a >= b;
+  cmp = a == b;
+  cmp = a != b;
 }
