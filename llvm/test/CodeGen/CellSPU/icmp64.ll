@@ -1,10 +1,11 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep ceq                                %t1.s | count 4
+; RUN: grep ceq                                %t1.s | count 6
 ; RUN: grep cgti                               %t1.s | count 4
+; RUN: grep clgt                               %t1.s | count 2
 ; RUN: grep gb                                 %t1.s | count 4
-; RUN: grep fsm                                %t1.s | count 2
+; RUN: grep fsm                                %t1.s | count 3
 ; RUN: grep xori                               %t1.s | count 1
-; RUN: grep selb                               %t1.s | count 2
+; RUN: grep selb                               %t1.s | count 5
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
@@ -39,19 +40,19 @@ entry:
        ret i1 %A
 }
 
-;; define i64 @icmp_ugt_select_i64(i64 %arg1, i64 %arg2, i64 %val1, i64 %val2) nounwind {
-;; entry:
-;;        %A = icmp ugt i64 %arg1, %arg2
-;;        %B = select i1 %A, i64 %val1, i64 %val2
-;;        ret i64 %B
-;; }
-;; 
-;; define i1 @icmp_ugt_setcc_i64(i64 %arg1, i64 %arg2, i64 %val1, i64 %val2) nounwind {
-;; entry:
-;;        %A = icmp ugt i64 %arg1, %arg2
-;;        ret i1 %A
-;; }
-;; 
+define i64 @icmp_ugt_select_i64(i64 %arg1, i64 %arg2, i64 %val1, i64 %val2) nounwind {
+entry:
+       %A = icmp ugt i64 %arg1, %arg2
+       %B = select i1 %A, i64 %val1, i64 %val2
+       ret i64 %B
+}
+
+define i1 @icmp_ugt_setcc_i64(i64 %arg1, i64 %arg2, i64 %val1, i64 %val2) nounwind {
+entry:
+       %A = icmp ugt i64 %arg1, %arg2
+       ret i1 %A
+}
+
 ;; define i64 @icmp_uge_select_i64(i64 %arg1, i64 %arg2, i64 %val1, i64 %val2) nounwind {
 ;; entry:
 ;;        %A = icmp uge i64 %arg1, %arg2

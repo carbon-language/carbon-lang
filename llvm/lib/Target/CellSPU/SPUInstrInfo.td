@@ -1176,23 +1176,31 @@ def XSHWr16:
       "xshw\t$rDst, $rSrc", IntegerOp,
       [(set R32C:$rDst, (sext R16C:$rSrc))]>;
 
-def XSWDvec:
-    RRForm_1<0b01100101010, (outs VECREG:$rDst), (ins VECREG:$rSrc),
-      "xswd\t$rDst, $rSrc", IntegerOp,
-      [(set (v2i64 VECREG:$rDst), (sext (v4i32 VECREG:$rSrc)))]>;
+// Sign-extend words to doublewords (32->64 bits)
 
-def XSWDr64:
-    RRForm_1<0b01100101010, (outs R64C:$rDst), (ins R64C:$rSrc),
+class XSWDInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm_1<0b01100101010, OOL, IOL,
       "xswd\t$rDst, $rSrc", IntegerOp,
-      [(set R64C:$rDst, (sext_inreg R64C:$rSrc, i32))]>;
+      pattern>;
+      
+class XSWDVecInst<ValueType in_vectype, ValueType out_vectype>:
+    XSWDInst<(outs VECREG:$rDst), (ins VECREG:$rSrc),
+             [(set (out_vectype VECREG:$rDst),
+                   (sext (out_vectype VECREG:$rSrc)))]>;
+      
+class XSWDRegInst<RegisterClass in_rclass, RegisterClass out_rclass>:
+    XSWDInst<(outs out_rclass:$rDst), (ins in_rclass:$rSrc),
+             [(set out_rclass:$rDst, (sext in_rclass:$rSrc))]>;
+             
+multiclass ExtendWordToDoubleWord {
+  def v2i64: XSWDVecInst<v4i32, v2i64>;
+  def r64:   XSWDRegInst<R32C, R64C>;
+  
+  def r64_inreg: XSWDInst<(outs R64C:$rDst), (ins R64C:$rSrc),
+                          [(set R64C:$rDst, (sext_inreg R64C:$rSrc, i32))]>;
+}
 
-def XSWDr32:
-    RRForm_1<0b01100101010, (outs R64C:$rDst), (ins R32C:$rSrc),
-      "xswd\t$rDst, $rSrc", IntegerOp,
-      [(set R64C:$rDst, (SPUsext32_to_64 R32C:$rSrc))]>;
-
-def : Pat<(sext R32C:$inp),
-          (XSWDr32 R32C:$inp)>;
+defm XSWD : ExtendWordToDoubleWord;
 
 // AND operations
 
@@ -3511,7 +3519,7 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, isBarrier = 1 in {
   def BI:
     BIForm<0b00010101100, "bi\t$func", [(brind R32C:$func)]>;
 
-  // Various branches:
+  // Conditional branches:
   class BRNZInst<dag IOL, list<dag> pattern>:
     RI16Form<0b010000100, (outs), IOL, "brnz\t$rCond,$dest",
              BranchResolv, pattern>;
@@ -3651,8 +3659,8 @@ multiclass BranchCondEQ<PatFrag cond, SPUInstr brinst16, SPUInstr brinst32>
                 (brinst32 (CEQr32 R32C:$rA, R32C:$rB), bb:$dest)>;
 }
 
-defm BRCONDeq : BranchCondEQ<seteq, BRHZr16, BRZr32>;
-defm BRCONDne : BranchCondEQ<setne, BRHNZr16, BRNZr32>;
+defm BRCONDeq : BranchCondEQ<seteq, BRHNZr16, BRNZr32>;
+defm BRCONDne : BranchCondEQ<setne, BRHZr16, BRZr32>;
 
 multiclass BranchCondLGT<PatFrag cond, SPUInstr brinst16, SPUInstr brinst32>
 {

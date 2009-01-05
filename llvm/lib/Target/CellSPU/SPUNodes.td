@@ -137,16 +137,6 @@ def SPUaform : SDNode<"SPUISD::AFormAddr", SDTIntBinOp, []>;
 // Indirect [D-Form "imm($reg)" and X-Form "$reg($reg)"] addresses
 def SPUindirect : SDNode<"SPUISD::IndirectAddr", SDTIntBinOp, []>;
 
-// SPU 32-bit sign-extension to 64-bits
-def SPUsext32_to_64: SDNode<"SPUISD::SEXT32TO64", SDTIntExtendOp, []>;
-
-// Branches:
-
-def SPUbrnz : SDNode<"SPUISD::BR_NOTZERO", SDTBrcond,  [SDNPHasChain]>;
-def SPUbrz  : SDNode<"SPUISD::BR_ZERO",    SDTBrcond,  [SDNPHasChain]>;
-/* def SPUbinz : SDNode<"SPUISD::BR_NOTZERO", SDTBrind,   [SDNPHasChain]>;
-def SPUbiz  : SDNode<"SPUISD::BR_ZERO",    SPUBrind,   [SDNPHasChain]>; */
-
 //===----------------------------------------------------------------------===//
 // Constraints: (taken from PPCInstrInfo.td)
 //===----------------------------------------------------------------------===//
