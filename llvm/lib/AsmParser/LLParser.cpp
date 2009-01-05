@@ -1913,7 +1913,8 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     return false;
   case ValID::t_Undef:
     // FIXME: LabelTy should not be a first-class type.
-    if (!Ty->isFirstClassType() || Ty == Type::LabelTy)
+    if ((!Ty->isFirstClassType() || Ty == Type::LabelTy) &&
+        !isa<OpaqueType>(Ty))
       return Error(ID.Loc, "invalid type for undef constant");
     V = UndefValue::get(Ty);
     return false;
