@@ -51,10 +51,8 @@ inline leaf_ty<Value> m_Value() { return leaf_ty<Value>(); }
 /// m_ConstantInt() - Match an arbitrary ConstantInt and ignore it.
 inline leaf_ty<ConstantInt> m_ConstantInt() { return leaf_ty<ConstantInt>(); }
 
+template<int64_t Val>
 struct constantint_ty {
-  int64_t Val;
-  explicit constantint_ty(int64_t val) : Val(val) {}
-
   template<typename ITy>
   bool match(ITy *V) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
@@ -72,8 +70,9 @@ struct constantint_ty {
 
 /// m_ConstantInt(int64_t) - Match a ConstantInt with a specific value
 /// and ignore it.
-inline constantint_ty m_ConstantInt(int64_t Val) {
-  return constantint_ty(Val);
+template<int64_t Val>
+inline constantint_ty<Val> m_ConstantInt() {
+  return constantint_ty<Val>();
 }
 
 struct zero_ty {
@@ -393,12 +392,12 @@ m_Select(const Cond &C, const LHS &L, const RHS &R) {
 
 /// m_SelectCst - This matches a select of two constants, e.g.:
 ///    m_SelectCst(m_Value(V), -1, 0)
-template<typename Cond>
-inline SelectClass_match<Cond, constantint_ty, constantint_ty>
-m_SelectCst(const Cond &C, int64_t L, int64_t R) {
-  return SelectClass_match<Cond, constantint_ty, 
-                           constantint_ty>(C, m_ConstantInt(L),
-                                           m_ConstantInt(R));
+template<int64_t L, int64_t R, typename Cond>
+inline SelectClass_match<Cond, constantint_ty<L>, constantint_ty<R> >
+m_SelectCst(const Cond &C) {
+  return SelectClass_match<Cond, constantint_ty<L>, 
+                           constantint_ty<R> >(C, m_ConstantInt<L>(),
+                                           m_ConstantInt<R>());
 }
 
 

@@ -4276,18 +4276,18 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
                                          Value *C, Value *D) {
   // If A is not a select of -1/0, this cannot match.
   Value *Cond = 0;
-  if (!match(A, m_SelectCst(m_Value(Cond), -1, 0)))
+  if (!match(A, m_SelectCst<-1, 0>(m_Value(Cond))))
     return 0;
 
   // ((cond?-1:0)&C) | (B&(cond?0:-1)) -> cond ? C : B.
-  if (match(D, m_SelectCst(m_Specific(Cond), 0, -1)))
+  if (match(D, m_SelectCst<0, -1>(m_Specific(Cond))))
     return SelectInst::Create(Cond, C, B);
-  if (match(D, m_Not(m_SelectCst(m_Specific(Cond), -1, 0))))
+  if (match(D, m_Not(m_SelectCst<-1, 0>(m_Specific(Cond)))))
     return SelectInst::Create(Cond, C, B);
   // ((cond?-1:0)&C) | ((cond?0:-1)&D) -> cond ? C : D.
-  if (match(B, m_SelectCst(m_Specific(Cond), 0, -1)))
+  if (match(B, m_SelectCst<0, -1>(m_Specific(Cond))))
     return SelectInst::Create(Cond, C, D);
-  if (match(B, m_Not(m_SelectCst(m_Specific(Cond), -1, 0))))
+  if (match(B, m_Not(m_SelectCst<-1, 0>(m_Specific(Cond)))))
     return SelectInst::Create(Cond, C, D);
   return 0;
 }
@@ -8713,11 +8713,11 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
       // (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed
       // (x >s -1) ? -1 : 0 -> ashr x, 31  -> all ones if not signed
       CmpInst::Predicate Pred = CmpInst::BAD_ICMP_PREDICATE;
-      if (match(TrueVal, m_ConstantInt(-1)) &&
-          match(FalseVal, m_ConstantInt(0)))
+      if (match(TrueVal, m_ConstantInt<-1>()) &&
+          match(FalseVal, m_ConstantInt<0>()))
         Pred = ICI->getPredicate();
-      else if (match(TrueVal, m_ConstantInt(0)) &&
-               match(FalseVal, m_ConstantInt(-1)))
+      else if (match(TrueVal, m_ConstantInt<0>()) &&
+               match(FalseVal, m_ConstantInt<-1>()))
         Pred = CmpInst::getInversePredicate(ICI->getPredicate());
       
       if (Pred != CmpInst::BAD_ICMP_PREDICATE) {
