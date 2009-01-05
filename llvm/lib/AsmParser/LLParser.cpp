@@ -1906,6 +1906,9 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     V = ConstantPointerNull::get(cast<PointerType>(Ty));
     return false;
   case ValID::t_Undef:
+    // FIXME: LabelTy should not be a first-class type.
+    if (!Ty->isFirstClassType() || Ty == Type::LabelTy)
+      return Error(ID.Loc, "invalid type for undef constant");
     V = UndefValue::get(Ty);
     return false;
   case ValID::t_EmptyArray:
@@ -1914,7 +1917,8 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     V = UndefValue::get(Ty);
     return false;
   case ValID::t_Zero:
-    if (!Ty->isFirstClassType())
+    // FIXME: LabelTy should not be a first-class type.
+    if (!Ty->isFirstClassType() || Ty == Type::LabelTy)
       return Error(ID.Loc, "invalid type for null constant");
     V = Constant::getNullValue(Ty);
     return false;
