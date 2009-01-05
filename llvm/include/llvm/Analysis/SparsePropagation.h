@@ -17,7 +17,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
+#include <iosfwd>
 #include <vector>
 #include <set>
 
@@ -31,6 +31,8 @@ namespace llvm {
   class BasicBlock;
   class Function;
   class SparseSolver;
+
+  template<typename T> class SmallVectorImpl;
   
 /// AbstractLatticeFunction - This class is implemented by the dataflow instance
 /// to specify what the lattice values are and how they handle merges etc.

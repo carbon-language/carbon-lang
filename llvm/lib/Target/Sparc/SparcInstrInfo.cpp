@@ -15,6 +15,7 @@
 #include "SparcSubtarget.h"
 #include "Sparc.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "SparcGenInstrInfo.inc"
 using namespace llvm;

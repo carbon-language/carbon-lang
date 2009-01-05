@@ -16,7 +16,6 @@
 #define LLVM_TARGET_IBMCELLSPU_H
 
 #include "llvm/Support/DataTypes.h"
-#include <iosfwd>
 
 namespace llvm {
   class SPUTargetMachine;

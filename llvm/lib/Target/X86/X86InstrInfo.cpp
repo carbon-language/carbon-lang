@@ -18,6 +18,7 @@
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -1913,7 +1914,7 @@ bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 }
 
 static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
-                                     const SmallVector<MachineOperand,4> &MOs,
+                                     const SmallVectorImpl<MachineOperand> &MOs,
                                  MachineInstr *MI, const TargetInstrInfo &TII) {
   // Create the base instruction with the memory operand as the first part.
   MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode), true);
@@ -1939,7 +1940,7 @@ static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
 
 static MachineInstr *FuseInst(MachineFunction &MF,
                               unsigned Opcode, unsigned OpNo,
-                              const SmallVector<MachineOperand,4> &MOs,
+                              const SmallVectorImpl<MachineOperand> &MOs,
                               MachineInstr *MI, const TargetInstrInfo &TII) {
   MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode), true);
   MachineInstrBuilder MIB(NewMI);
@@ -1961,7 +1962,7 @@ static MachineInstr *FuseInst(MachineFunction &MF,
 }
 
 static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
-                                const SmallVector<MachineOperand,4> &MOs,
+                                const SmallVectorImpl<MachineOperand> &MOs,
                                 MachineInstr *MI) {
   MachineFunction &MF = *MI->getParent()->getParent();
   MachineInstrBuilder MIB = BuildMI(MF, TII.get(Opcode));
@@ -1977,7 +1978,7 @@ static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
 MachineInstr*
 X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                     MachineInstr *MI, unsigned i,
-                                    const SmallVector<MachineOperand,4> &MOs) const{
+                                    const SmallVectorImpl<MachineOperand> &MOs) const{
   const DenseMap<unsigned*, unsigned> *OpcodeTablePtr = NULL;
   bool isTwoAddrFold = false;
   unsigned NumOps = MI->getDesc().getNumOperands();

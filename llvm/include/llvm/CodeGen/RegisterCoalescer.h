@@ -13,22 +13,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/IncludeFile.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/LiveVariables.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/ADT/SmallPtrSet.h"
 
 #ifndef LLVM_CODEGEN_REGISTER_COALESCER_H
 #define LLVM_CODEGEN_REGISTER_COALESCER_H
 
-namespace llvm 
-{
+namespace llvm {
+
   class MachineFunction;
   class RegallocQuery;
   class AnalysisUsage;
-  class LiveIntervals;
   class MachineInstr;
-  class TargetRegisterInfo;
 
   /// An abstract interface for register coalescers.  Coalescers must
   /// implement this interface to be part of the coalescer analysis

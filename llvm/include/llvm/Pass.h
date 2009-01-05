@@ -38,7 +38,6 @@
 
 namespace llvm {
 
-class Value;
 class BasicBlock;
 class Function;
 class Module;

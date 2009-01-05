@@ -17,11 +17,11 @@
 
 #include <cassert>
 #include <cstring>
-#include <algorithm>
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/ilist.h"
+
 namespace llvm {
 
 /// SparseBitVector is an implementation of a bitvector that is sparse by only

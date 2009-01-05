@@ -15,7 +15,6 @@
 #ifndef TARGET_SPARC_H
 #define TARGET_SPARC_H
 
-#include <iosfwd>
 #include <cassert>
 
 namespace llvm {

@@ -1,4 +1,4 @@
-//===- llvm/PassManager.h - Pass Inftrastructre classes  --------*- C++ -*-===//
+//===- llvm/PassManagers.h - Pass Infrastructure classes  -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PASSMANAGERS_H
-#define PASSMANAGERS_H
+#ifndef LLVM_PASSMANAGERS_H
+#define LLVM_PASSMANAGERS_H
 
 #include "llvm/PassManager.h"
 #include "llvm/ADT/SmallVector.h"
@@ -428,4 +428,3 @@ extern void StartPassTimer(llvm::Pass *);
 extern void StopPassTimer(llvm::Pass *);
 
 #endif
-

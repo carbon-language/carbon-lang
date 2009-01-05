@@ -40,7 +40,6 @@
 
 #include "llvm/ADT/iterator.h"
 #include <cassert>
-#include <cstdlib>
 
 namespace llvm {
 
@@ -366,7 +365,7 @@ public:
   }
 
   void swap(iplist &RHS) {
-    abort();     // Swap does not use list traits callback correctly yet!
+    assert(0 && "Swap does not use list traits callback correctly yet!");
     std::swap(Head, RHS.Head);
   }
 

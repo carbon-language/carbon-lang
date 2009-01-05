@@ -20,8 +20,6 @@
 #ifndef LLVM_CODEGEN_DWARFWRITER_H
 #define LLVM_CODEGEN_DWARFWRITER_H
 
-#include <iosfwd>
-
 namespace llvm {
 
 class AsmPrinter;
@@ -48,7 +46,6 @@ private:
   DwarfException *DE;
   
 public:
-  
   DwarfWriter(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T);
   virtual ~DwarfWriter();
   

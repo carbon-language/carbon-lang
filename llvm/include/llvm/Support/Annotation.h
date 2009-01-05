@@ -22,7 +22,6 @@
 #ifndef LLVM_SUPPORT_ANNOTATION_H
 #define LLVM_SUPPORT_ANNOTATION_H
 
-#include <string>
 #include <cassert>
 
 namespace llvm {

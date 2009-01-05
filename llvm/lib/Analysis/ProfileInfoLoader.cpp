@@ -18,6 +18,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Support/Streams.h"
 #include <cstdio>
+#include <cstdlib>
 #include <map>
 using namespace llvm;
 

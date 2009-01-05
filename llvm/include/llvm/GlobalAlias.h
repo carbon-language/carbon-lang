@@ -23,7 +23,6 @@ namespace llvm {
 
 class Module;
 class Constant;
-class PointerType;
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 

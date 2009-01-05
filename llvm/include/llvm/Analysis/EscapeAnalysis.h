@@ -15,12 +15,12 @@
 #define LLVM_ANALYSIS_ESCAPEANALYSIS_H
 
 #include "llvm/Pass.h"
-#include "llvm/Instructions.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Target/TargetData.h"
 #include <set>
 
 namespace llvm {
+
+class Instruction;
+class Value;
 
 /// EscapeAnalysis - This class determines whether an allocation (a MallocInst 
 /// or an AllocaInst) can escape from the current function.  It performs some
@@ -40,11 +40,7 @@ public:
     EscapePoints.clear();
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredTransitive<TargetData>();
-    AU.addRequiredTransitive<AliasAnalysis>();
-    AU.setPreservesAll();
-  }
+  void getAnalysisUsage(AnalysisUsage &AU) const;
 
   //===---------------------------------------------------------------------
   // Client API

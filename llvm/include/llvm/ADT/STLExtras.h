@@ -19,7 +19,7 @@
 
 #include <functional>
 #include <utility> // for std::pair
-#include <cstring> // for std::size_t
+#include <cstddef> // for std::size_t
 #include "llvm/ADT/iterator.h"
 
 namespace llvm {

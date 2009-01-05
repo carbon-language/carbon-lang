@@ -20,6 +20,7 @@
 namespace llvm {
 
 class Type;
+class Value;
 
 class FindUsedTypes : public ModulePass {
   std::set<const Type *> UsedTypes;

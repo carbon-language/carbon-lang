@@ -54,8 +54,6 @@ static void RemoveFromVector(std::vector<T*> &V, T *N) {
 
 class DominatorTree;
 class LoopInfo;
-class PHINode;
-class Instruction;
 template<class N> class LoopInfoBase;
 template<class N> class LoopBase;
 

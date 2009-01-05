@@ -457,6 +457,4 @@ template<typename T> struct FoldingSetTrait<const T*> {
 
 } // End of namespace llvm.
 
-
 #endif
-

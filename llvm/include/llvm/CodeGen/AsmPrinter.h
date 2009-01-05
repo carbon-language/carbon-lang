@@ -30,7 +30,6 @@ namespace llvm {
   class ConstantVector;
   class GCMetadataPrinter;
   class GlobalVariable;
-  class GlobalAlias;
   class MachineConstantPoolEntry;
   class MachineConstantPoolValue;
   class MachineModuleInfo;

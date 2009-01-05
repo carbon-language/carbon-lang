@@ -15,8 +15,6 @@
 #ifndef LLVM_TARGET_PIC16_H
 #define LLVM_TARGET_PIC16_H
 
-#include <iosfwd>
-
 namespace llvm {
   class PIC16TargetMachine;
   class FunctionPass;

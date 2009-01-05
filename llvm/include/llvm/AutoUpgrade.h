@@ -17,7 +17,6 @@
 namespace llvm {
   class Function;
   class CallInst;
-  class BasicBlock;
 
   /// This is a more granular function that simply checks an intrinsic function 
   /// for upgrading, and returns true if it requires upgrading. It may return

@@ -20,7 +20,6 @@
 
 namespace llvm {
 
-class AsmPrinter;
 class Constant;
 class FoldingSetNodeID;
 class TargetData;

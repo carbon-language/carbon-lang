@@ -15,7 +15,6 @@
 #ifndef TARGET_ARM_H
 #define TARGET_ARM_H
 
-#include <iosfwd>
 #include <cassert>
 
 namespace llvm {

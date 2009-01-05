@@ -16,7 +16,6 @@
 
 #include "llvm/Target/TargetInstrItineraries.h"
 #include <cassert>
-#include <iosfwd>
 
 namespace llvm {
 
@@ -78,7 +77,7 @@ class TargetMachine {
   TargetMachine(const TargetMachine &);   // DO NOT IMPLEMENT
   void operator=(const TargetMachine &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
-  TargetMachine() : AsmInfo(NULL) { }
+  TargetMachine() : AsmInfo(0) { }
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
   /// a reference to that target's TargetSubtarget-derived member variable.
@@ -90,7 +89,7 @@ protected: // Can only create subclasses.
   
   /// createTargetAsmInfo - Create a new instance of target specific asm
   /// information.
-  virtual const TargetAsmInfo *createTargetAsmInfo() const { return NULL; }
+  virtual const TargetAsmInfo *createTargetAsmInfo() const { return 0; }
 
 public:
   virtual ~TargetMachine();

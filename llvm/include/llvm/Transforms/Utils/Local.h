@@ -15,15 +15,18 @@
 #ifndef LLVM_TRANSFORMS_UTILS_LOCAL_H
 #define LLVM_TRANSFORMS_UTILS_LOCAL_H
 
-#include "llvm/Function.h"
-
 namespace llvm {
 
+class BasicBlock;
+class Instruction;
+class Value;
 class Pass;
 class PHINode;
 class AllocaInst;
 class ConstantExpr;
 class TargetData;
+
+template<typename T> class SmallVectorImpl;
   
 //===----------------------------------------------------------------------===//
 //  Local constant propagation.
@@ -84,12 +87,12 @@ bool SimplifyCFG(BasicBlock *BB);
 /// the alloca inserted to create a stack slot for X.
 ///
 AllocaInst *DemoteRegToStack(Instruction &X, bool VolatileLoads = false,
-                             Instruction *AllocaPoint = NULL);
+                             Instruction *AllocaPoint = 0);
 
 /// DemotePHIToStack - This function takes a virtual register computed by a phi
 /// node and replaces it with a slot in the stack frame, allocated via alloca.
 /// The phi node is deleted and it returns the pointer to the alloca inserted. 
-AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = NULL);
+AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = 0);
 
 } // End llvm namespace
 

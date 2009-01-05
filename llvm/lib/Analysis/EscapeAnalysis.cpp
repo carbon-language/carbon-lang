@@ -14,8 +14,11 @@
 #define DEBUG_TYPE "escape-analysis"
 #include "llvm/Analysis/EscapeAnalysis.h"
 #include "llvm/Constants.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <vector>
 using namespace llvm;
@@ -24,6 +27,12 @@ char EscapeAnalysis::ID = 0;
 static RegisterPass<EscapeAnalysis> X("escape-analysis",
                                       "Pointer Escape Analysis", true, true);
 
+
+void EscapeAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequiredTransitive<TargetData>();
+  AU.addRequiredTransitive<AliasAnalysis>();
+  AU.setPreservesAll();
+}
 
 /// runOnFunction - Precomputation for escape analysis.  This collects all know
 /// "escape points" in the def-use graph of the function.  These are 

@@ -1,4 +1,4 @@
-//===--------- BreakCriticalMachineEdges.h - Break critical edges ---------===//
+//===--------- BreakCriticalMachineEdge.h - Break critical edges ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===---------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_BREAKCRITICALMACHINEEDGES_H
-#define LLVM_CODEGEN_BREAKCRITICALMACHINEEDGES_H
+#ifndef LLVM_CODEGEN_BREAKCRITICALMACHINEEDGE_H
+#define LLVM_CODEGEN_BREAKCRITICALMACHINEEDGE_H
 
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"

@@ -15,8 +15,6 @@
 #ifndef TARGET_MIPS_H
 #define TARGET_MIPS_H
 
-#include <iosfwd>
-
 namespace llvm {
   class MipsTargetMachine;
   class FunctionPass;

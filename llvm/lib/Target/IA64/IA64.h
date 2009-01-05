@@ -14,8 +14,6 @@
 #ifndef TARGET_IA64_H
 #define TARGET_IA64_H
 
-#include <iosfwd>
-
 namespace llvm {
 
 class IA64TargetMachine;

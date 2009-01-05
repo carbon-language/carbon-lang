@@ -15,8 +15,6 @@
 #ifndef LLVM_TARGET_TARGETINSTRDESC_H
 #define LLVM_TARGET_TARGETINSTRDESC_H
 
-#include <cassert>
-
 namespace llvm {
 
 class TargetRegisterClass;

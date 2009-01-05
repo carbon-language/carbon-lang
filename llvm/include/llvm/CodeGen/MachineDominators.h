@@ -16,9 +16,6 @@
 #define LLVM_CODEGEN_MACHINEDOMINATORS_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/DominatorInternals.h"
 
@@ -45,21 +42,13 @@ public:
   static char ID; // Pass ID, replacement for typeid
   DominatorTreeBase<MachineBasicBlock>* DT;
   
-  MachineDominatorTree() : MachineFunctionPass(intptr_t(&ID)) {
-    DT = new DominatorTreeBase<MachineBasicBlock>(false);
-  }
+  MachineDominatorTree();
   
-  ~MachineDominatorTree() {
-    DT->releaseMemory();
-    delete DT;
-  }
+  ~MachineDominatorTree();
   
   DominatorTreeBase<MachineBasicBlock>& getBase() { return *DT; }
   
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    MachineFunctionPass::getAnalysisUsage(AU);
-  }
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   
   /// getRoots -  Return the root blocks of the current CFG.  This may include
   /// multiple blocks if we are computing post dominators.  For forward
@@ -77,11 +66,7 @@ public:
     return DT->getRootNode();
   }
   
-  virtual bool runOnMachineFunction(MachineFunction &F) {
-    DT->recalculate(F);
-    
-    return false;
-  }
+  virtual bool runOnMachineFunction(MachineFunction &F);
   
   inline bool dominates(MachineDomTreeNode* A, MachineDomTreeNode* B) const {
     return DT->dominates(A, B);
@@ -173,9 +158,7 @@ public:
   }
   
   
-  virtual void releaseMemory() { 
-    DT->releaseMemory();
-  }
+  virtual void releaseMemory();
   
   virtual void print(std::ostream &OS, const Module* M= 0) const {
     DT->print(OS, M);

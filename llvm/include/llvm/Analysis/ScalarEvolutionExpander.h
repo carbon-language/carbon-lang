@@ -14,7 +14,7 @@
 #ifndef LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 #define LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 
-#include "llvm/Instructions.h"
+#include "llvm/Instruction.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
@@ -119,4 +119,3 @@ namespace llvm {
 }
 
 #endif
-

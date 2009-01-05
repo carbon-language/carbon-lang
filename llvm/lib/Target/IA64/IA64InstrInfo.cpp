@@ -15,6 +15,7 @@
 #include "IA64.h"
 #include "IA64InstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/ADT/SmallVector.h"
 #include "IA64GenInstrInfo.inc"
 using namespace llvm;
 

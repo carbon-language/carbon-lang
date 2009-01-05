@@ -15,11 +15,9 @@
 #define LLVM_CODEGEN_SIMPLE_REGISTER_COALESCING_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/IndexedMap.h"
 #include <queue>
 
 namespace llvm {

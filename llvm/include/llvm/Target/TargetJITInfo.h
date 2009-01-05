@@ -23,7 +23,6 @@
 namespace llvm {
   class Function;
   class GlobalValue;
-  class MachineBasicBlock;
   class MachineCodeEmitter;
   class MachineRelocation;
 

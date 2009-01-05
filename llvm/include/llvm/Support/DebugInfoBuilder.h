@@ -15,7 +15,7 @@
 #ifndef LLVM_SUPPORT_DEBUGINFOBUILDER_H
 #define LLVM_SUPPORT_DEBUGINFOBUILDER_H
 
-#include <llvm/Module.h>
+#include "llvm/Module.h"
 #include <string>
 
 namespace llvm {

@@ -18,8 +18,6 @@
 
 namespace llvm {
 
-class MachineFunction;
-
 /// Information about stack frame layout on the target.  It holds the direction
 /// of stack growth, the known stack alignment on entry to each function, and
 /// the offset to the locals area.

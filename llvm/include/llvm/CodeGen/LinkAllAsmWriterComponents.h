@@ -34,4 +34,3 @@ namespace {
 }
 
 #endif // LLVM_CODEGEN_LINKALLASMWRITERCOMPONENTS_H
-

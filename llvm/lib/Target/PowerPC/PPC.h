@@ -15,9 +15,6 @@
 #ifndef LLVM_TARGET_POWERPC_H
 #define LLVM_TARGET_POWERPC_H
 
-#include <iosfwd>
-
-
 // GCC #defines PPC on Linux but we use it as our namespace name
 #undef PPC
 

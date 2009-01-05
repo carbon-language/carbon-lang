@@ -17,7 +17,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "X86.h"
 #include "X86RegisterInfo.h"
-#include "llvm/ADT/IndexedMap.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
@@ -447,7 +447,7 @@ private:
   MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                       MachineInstr* MI,
                                       unsigned OpNum,
-                                      const SmallVector<MachineOperand,4> &MOs) const;
+                                      const SmallVectorImpl<MachineOperand> &MOs) const;
 };
 
 } // End llvm namespace

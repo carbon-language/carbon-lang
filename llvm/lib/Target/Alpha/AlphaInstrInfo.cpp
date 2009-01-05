@@ -15,6 +15,7 @@
 #include "AlphaInstrInfo.h"
 #include "AlphaGenInstrInfo.inc"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 using namespace llvm;
 

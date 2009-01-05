@@ -27,7 +27,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Support/Mangler.h"
-#include <algorithm>
 #include <ios>
 using namespace llvm;
 

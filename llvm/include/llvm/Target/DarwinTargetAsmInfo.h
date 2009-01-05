@@ -16,7 +16,6 @@
 #define LLVM_DARWIN_TARGET_ASM_INFO_H
 
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
   class GlobalValue;

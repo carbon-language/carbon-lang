@@ -18,7 +18,6 @@
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/StringPool.h"
 #include "SymbolTableListTraitsImpl.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;

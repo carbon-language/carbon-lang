@@ -17,7 +17,6 @@
 
 #include <vector>
 #include <map>
-#include <cassert>
 #include <string>
 #include "llvm/System/Mutex.h"
 #include "llvm/ADT/SmallVector.h"

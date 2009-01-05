@@ -14,8 +14,6 @@
 #ifndef LLVM_CODEGEN_FILEWRITERS_H
 #define LLVM_CODEGEN_FILEWRITERS_H
 
-#include <iosfwd>
-
 namespace llvm {
 
   class PassManagerBase;

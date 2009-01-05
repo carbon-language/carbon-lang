@@ -11,8 +11,8 @@
 #define LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
 
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
+
 //===----------------------------------------------------------------------===//
 //
 // DominatorTree construction - This pass constructs immediate dominator

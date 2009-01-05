@@ -20,7 +20,6 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/System/Path.h"
 
-#include <string>
 #include <vector>
 
 namespace llvmc {

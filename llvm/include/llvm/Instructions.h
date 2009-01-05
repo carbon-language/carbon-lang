@@ -16,19 +16,16 @@
 #ifndef LLVM_INSTRUCTIONS_H
 #define LLVM_INSTRUCTIONS_H
 
-#include <iterator>
-
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Attributes.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ADT/SmallVector.h"
+#include <iterator>
 
 namespace llvm {
 
 class ConstantInt;
-class PointerType;
-class VectorType;
 class ConstantRange;
 class APInt;
 

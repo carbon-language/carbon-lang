@@ -22,9 +22,7 @@
 #ifndef LLVM_TARGET_TARGETLOWERING_H
 #define LLVM_TARGET_TARGETLOWERING_H
 
-#include "llvm/Constants.h"
 #include "llvm/InlineAsm.h"
-#include "llvm/Instructions.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/ADT/APFloat.h"
@@ -36,6 +34,7 @@
 
 namespace llvm {
   class AllocaInst;
+  class CallInst;
   class Function;
   class FastISel;
   class MachineBasicBlock;
@@ -51,7 +50,6 @@ namespace llvm {
   class TargetRegisterClass;
   class TargetSubtarget;
   class Value;
-  class VectorType;
 
 //===----------------------------------------------------------------------===//
 /// TargetLowering - This class defines information used to lower LLVM code to

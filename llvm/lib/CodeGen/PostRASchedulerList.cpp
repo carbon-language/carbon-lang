@@ -32,10 +32,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SmallVector.h"
 #include <map>
-#include <climits>
 using namespace llvm;
 
 STATISTIC(NumStalls, "Number of pipeline stalls");

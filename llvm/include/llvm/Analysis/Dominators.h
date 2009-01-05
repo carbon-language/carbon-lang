@@ -24,7 +24,6 @@
 #include "llvm/Pass.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
-#include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/GraphTraits.h"

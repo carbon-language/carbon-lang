@@ -23,7 +23,6 @@
 
 #include "llvm/Support/DataTypes.h"
 #include <cstring>
-#include <cstdlib>
 
 namespace llvm {
 

@@ -20,7 +20,6 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 

@@ -15,7 +15,6 @@
 #define X86SUBTARGET_H
 
 #include "llvm/Target/TargetSubtarget.h"
-
 #include <string>
 
 namespace llvm {

@@ -38,7 +38,6 @@
 
 #include "llvm/CodeGen/GCMetadata.h"
 #include "llvm/Support/Registry.h"
-#include <iosfwd>
 #include <string>
 
 namespace llvm {

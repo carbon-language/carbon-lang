@@ -16,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/Target/TargetMachine.h"
 #include "PPCGenSubtarget.inc"
+#include <cstdlib>
 using namespace llvm;
 
 #if defined(__APPLE__)

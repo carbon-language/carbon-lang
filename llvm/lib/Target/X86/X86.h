@@ -15,8 +15,6 @@
 #ifndef TARGET_X86_H
 #define TARGET_X86_H
 
-#include <iosfwd>
-
 namespace llvm {
 
 class X86TargetMachine;

@@ -14,7 +14,6 @@
 #ifndef LLVM_CODEGEN_FASTISEL_H
 #define LLVM_CODEGEN_FASTISEL_H
 
-#include "llvm/BasicBlock.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"

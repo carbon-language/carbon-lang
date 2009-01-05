@@ -49,4 +49,3 @@ namespace llvm {
 } // end llvm namespace
 
 #endif // LLVM_CODEGEN_ELF_RELOCATION_H
-

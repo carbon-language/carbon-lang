@@ -16,7 +16,6 @@
 #ifndef LLVM_TARGET_TARGETREGISTERINFO_H
 #define LLVM_TARGET_TARGETREGISTERINFO_H
 
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include <cassert>
@@ -26,12 +25,8 @@ namespace llvm {
 
 class BitVector;
 class MachineFunction;
-class MachineInstr;
 class MachineMove;
 class RegScavenger;
-class SDNode;
-class SelectionDAG;
-class Type;
 
 /// TargetRegisterDesc - This record contains all of the information known about
 /// a particular register.  The AliasSet field (if not null) contains a pointer

@@ -26,3 +26,28 @@ static RegisterPass<MachineDominatorTree>
 E("machinedomtree", "MachineDominator Tree Construction", true);
 
 const PassInfo *const llvm::MachineDominatorsID = &E;
+
+void MachineDominatorTree::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  MachineFunctionPass::getAnalysisUsage(AU);
+}
+
+bool MachineDominatorTree::runOnMachineFunction(MachineFunction &F) {
+  DT->recalculate(F);
+
+  return false;
+}
+
+MachineDominatorTree::MachineDominatorTree()
+    : MachineFunctionPass(intptr_t(&ID)) {
+  DT = new DominatorTreeBase<MachineBasicBlock>(false);
+}
+
+MachineDominatorTree::~MachineDominatorTree() {
+  DT->releaseMemory();
+  delete DT;
+}
+
+void MachineDominatorTree::releaseMemory() {
+  DT->releaseMemory();
+}

@@ -18,6 +18,7 @@
 #include "llvm/Debugger/InferiorProcess.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/StringExtras.h"
+#include <cstdlib>
 #include <memory>
 using namespace llvm;
 

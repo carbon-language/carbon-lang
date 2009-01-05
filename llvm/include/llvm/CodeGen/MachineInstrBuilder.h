@@ -17,7 +17,6 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTRBUILDER_H
 #define LLVM_CODEGEN_MACHINEINSTRBUILDER_H
 
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {

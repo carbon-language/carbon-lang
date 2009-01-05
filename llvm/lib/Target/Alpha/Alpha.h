@@ -15,8 +15,6 @@
 #ifndef TARGET_ALPHA_H
 #define TARGET_ALPHA_H
 
-#include <iosfwd>
-
 namespace llvm {
 
   class AlphaTargetMachine;

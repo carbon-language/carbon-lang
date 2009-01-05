@@ -23,10 +23,6 @@ namespace llvm {
 #define HANDLE_INST(NUM, OPCODE, CLASS)   class CLASS;
 #include "llvm/Instruction.def"
 
-// Forward declare the intermediate types...
-class TerminatorInst; class BinaryOperator;
-class AllocationInst;
-
 #define DELEGATE(CLASS_TO_VISIT) \
   return static_cast<SubClass*>(this)-> \
                visit##CLASS_TO_VISIT(static_cast<CLASS_TO_VISIT&>(I))

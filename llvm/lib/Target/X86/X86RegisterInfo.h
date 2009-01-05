@@ -14,8 +14,6 @@
 #ifndef X86REGISTERINFO_H
 #define X86REGISTERINFO_H
 
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "X86GenRegisterInfo.h.inc"
 
