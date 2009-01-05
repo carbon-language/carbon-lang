@@ -36,6 +36,7 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
+#include "llvm/Config/config.h"
 #include <fstream>
 #include <memory>
 #include <cstring>
@@ -437,8 +438,23 @@ static void EmitShellScript(char **argv) {
   // on the command line, so that we don't have to do this manually!
   for (std::vector<std::string>::iterator i = Libraries.begin(),
          e = Libraries.end(); i != e; ++i) {
-    sys::Path FullLibraryPath = sys::Path::FindLibrary(*i);
-    if (!FullLibraryPath.isEmpty() && FullLibraryPath.isDynamicLibrary())
+    // try explicit -L arguments first:
+    sys::Path FullLibraryPath;
+    for (cl::list<std::string>::const_iterator P = LibPaths.begin(),
+           E = LibPaths.end(); P != E; ++P) {
+      FullLibraryPath = *P;
+      FullLibraryPath.appendComponent("lib" + *i);
+      FullLibraryPath.appendSuffix(&(LTDL_SHLIB_EXT[1]));
+      if (!FullLibraryPath.isEmpty()) {
+        if (!FullLibraryPath.isDynamicLibrary()) {
+          // Not a native shared library; mark as invalid
+          FullLibraryPath = sys::Path();
+        } else break;
+      }
+    }
+    if (FullLibraryPath.isEmpty())
+      FullLibraryPath = sys::Path::FindLibrary(*i);
+    if (!FullLibraryPath.isEmpty())
       Out2 << "    -load=" << FullLibraryPath.toString() << " \\\n";
   }
   Out2 << "    $0.bc ${1+\"$@\"}\n";
