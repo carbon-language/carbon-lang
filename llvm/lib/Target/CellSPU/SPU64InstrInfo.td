@@ -86,7 +86,7 @@ def : I64SETCCNegCond<setne, I64EQr64>;
 def : I64SELECTNegCond<setne, I64EQr64>;
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
-// i64 setugt:
+// i64 setugt/setule:
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
 def CLGTr64ugt:
@@ -130,3 +130,113 @@ def : Pat<(setugt (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
 // i64 setult:
 def : I64SETCCNegCond<setule, I64LGTr64>;
 def : I64SELECTNegCond<setule, I64LGTr64>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// i64 setuge/setult:
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+def CLGEr64compare:
+    CodeFrag<(CGTIv4i32 (GBv4i32 (ORv4i32 CLGTr64ugt.Fragment,
+                                          CLGTr64eq.Fragment)), 0xb)>;
+
+def CLGEv2i64compare:
+    CodeFrag<(CEQIv4i32 (GBv4i32 (ORv4i32 CLGTv2i64ugt.Fragment,
+                                          CLGTv2i64eq.Fragment)), 0xf)>;
+
+multiclass CompareLogicalGreaterEqual64 {
+  // Plain old comparison, converts back to i32 scalar
+  def r64: CodeFrag<(ORi32_v4i32 CLGEr64compare.Fragment)>;
+  def v2i64: CodeFrag<CLGEv2i64compare.Fragment>;
+
+  // SELB mask from FSM:
+  def r64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CLGEr64compare.Fragment))>;
+  def v2i64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CLGEv2i64compare.Fragment))>;
+}
+
+defm I64LGE: CompareLogicalGreaterEqual64;
+
+def : Pat<(setuge R64C:$rA, R64C:$rB), I64LGEr64.Fragment>;
+def : Pat<(setuge (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
+                  I64LGEv2i64.Fragment>;
+
+// i64 setult:
+def : I64SETCCNegCond<setult, I64LGEr64>;
+def : I64SELECTNegCond<setult, I64LGEr64>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// i64 setgt/setle:
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+def CGTr64sgt:
+    CodeFrag<(CGTv4i32 (ORv2i64_i64 R64C:$rA), (ORv2i64_i64 R64C:$rB))>;
+
+def CGTr64eq:
+    CodeFrag<(CEQv4i32 (ORv2i64_i64 R64C:$rA), (ORv2i64_i64 R64C:$rB))>;
+    
+def CGTr64compare:
+    CodeFrag<(SELBv2i64 CGTr64sgt.Fragment,
+                        (XSWDv2i64 CGTr64sgt.Fragment),
+                        CGTr64eq.Fragment)>;
+
+def CGTv2i64sgt:
+    CodeFrag<(CGTv4i32 VECREG:$rA, VECREG:$rB)>;
+
+def CGTv2i64eq:
+    CodeFrag<(CEQv4i32 VECREG:$rA, VECREG:$rB)>;
+    
+def CGTv2i64compare:
+    CodeFrag<(SELBv2i64 CGTv2i64sgt.Fragment,
+                        (XSWDv2i64 CGTr64sgt.Fragment),
+                        CGTv2i64eq.Fragment)>;
+
+multiclass CompareGreaterThan64 {
+  // Plain old comparison, converts back to i32 scalar
+  def r64: CodeFrag<(ORi32_v4i32 CGTr64compare.Fragment)>;
+  def v2i64: CodeFrag<CGTv2i64compare.Fragment>;
+
+  // SELB mask from FSM:
+  def r64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CGTr64compare.Fragment))>;
+  def v2i64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CGTv2i64compare.Fragment))>;
+}
+
+defm I64GT: CompareLogicalGreaterThan64;
+
+def : Pat<(setgt R64C:$rA, R64C:$rB), I64GTr64.Fragment>;
+def : Pat<(setgt (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
+                  I64GTv2i64.Fragment>;
+
+// i64 setult:
+def : I64SETCCNegCond<setle, I64GTr64>;
+def : I64SELECTNegCond<setle, I64GTr64>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// i64 setge/setlt:
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+    
+def CGEr64compare:
+    CodeFrag<(CGTIv4i32 (GBv4i32 (ORv4i32 CGTr64sgt.Fragment,
+                                          CGTr64eq.Fragment)), 0xb)>;
+
+def CGEv2i64compare:
+    CodeFrag<(CEQIv4i32 (GBv4i32 (ORv4i32 CGTv2i64sgt.Fragment,
+                                          CGTv2i64eq.Fragment)), 0xf)>;
+
+multiclass CompareGreaterEqual64 {
+  // Plain old comparison, converts back to i32 scalar
+  def r64: CodeFrag<(ORi32_v4i32 CGEr64compare.Fragment)>;
+  def v2i64: CodeFrag<CGEv2i64compare.Fragment>;
+
+  // SELB mask from FSM:
+  def r64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CGEr64compare.Fragment))>;
+  def v2i64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CGEv2i64compare.Fragment))>;
+}
+
+defm I64GE: CompareGreaterEqual64;
+
+def : Pat<(setge R64C:$rA, R64C:$rB), I64GEr64.Fragment>;
+def : Pat<(setge (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
+                  I64GEv2i64.Fragment>;
+
+// i64 setult:
+def : I64SETCCNegCond<setlt, I64GEr64>;
+def : I64SELECTNegCond<setlt, I64GEr64>;
