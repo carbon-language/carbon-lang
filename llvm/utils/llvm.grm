@@ -261,7 +261,7 @@ Definition
  | declare FunctionProto
  | - module asm AsmBlock
  | OptLocalAssign type Types
- | OptGlobalAssign GVVisibilityStyle ThreadLocal OptAddrSpace OptAddrSpace
+ | OptGlobalAssign GVVisibilityStyle ThreadLocal OptAddrSpace GlobalType
    ConstVal GlobalVarAttributes
  | OptGlobalAssign GVInternalLinkage GVVisibilityStyle ThreadLocal OptAddrSpace
    GlobalType ConstVal GlobalVarAttributes
