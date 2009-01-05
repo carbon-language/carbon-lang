@@ -318,7 +318,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   // Parse this as a typename.
   Declarator ParamDecl(DS, Declarator::TemplateParamContext);
   ParseDeclarator(ParamDecl);
-  if(DS.getTypeSpecType() == DeclSpec::TST_unspecified && !DS.getTypeRep()) {
+  if (DS.getTypeSpecType() == DeclSpec::TST_unspecified && !DS.getTypeRep()) {
     // This probably shouldn't happen - and it's more of a Sema thing, but
     // basically we didn't parse the type name because we couldn't associate
     // it with an AST node. we should just skip to the comma or greater.
@@ -335,7 +335,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   // Is there a default value? Parsing this can be fairly annoying because
   // we have to stop on the first non-nested (paren'd) '>' as the closure
   // for the template parameter list. Or a ','.
-  if(Tok.is(tok::equal)) {
+  if (Tok.is(tok::equal)) {
     // TODO: Implement default non-type values.
     SkipUntil(tok::comma, tok::greater, true, true);
   }

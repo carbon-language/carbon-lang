@@ -637,7 +637,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
       return ParseCXXDeleteExpression(true, ColonColonTok.getLocation());
     // Turn the qualified name into a annot_qualtypename or annot_cxxscope if
     // it would be valid.
-    if (TryAnnotateTypeOrScopeToken(&ColonColonTok)) {
+    if ((Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
+        TryAnnotateTypeOrScopeToken(&ColonColonTok)) {
       // If so, retry (tail recurse).
       return ParseCastExpression(isUnaryExpression);
     }

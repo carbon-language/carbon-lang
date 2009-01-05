@@ -35,7 +35,7 @@ using namespace clang;
 bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS,
                                          const Token *GlobalQualifier) {
   assert(getLang().CPlusPlus &&
-         "Call sites of this function should be guarded by checking for C++.");
+         "Call sites of this function should be guarded by checking for C++");
 
   if (Tok.is(tok::annot_cxxscope)) {
     assert(GlobalQualifier == 0 &&
@@ -183,13 +183,13 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression() {
 
   case tok::kw_operator: {
     SourceLocation OperatorLoc = Tok.getLocation();
-    if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
+    if (OverloadedOperatorKind Op = TryParseOperatorFunctionId())
       return Owned(Actions.ActOnCXXOperatorFunctionIdExpr(
                          CurScope, OperatorLoc, Op, Tok.is(tok::l_paren), SS));
-    } else if (TypeTy *Type = ParseConversionFunctionId()) {
-      return Owned(Actions.ActOnCXXConversionFunctionExpr(
-                         CurScope, OperatorLoc, Type, Tok.is(tok::l_paren),SS));
-    }
+    if (TypeTy *Type = ParseConversionFunctionId())
+      return Owned(Actions.ActOnCXXConversionFunctionExpr(CurScope, OperatorLoc,
+                                                          Type,
+                                                     Tok.is(tok::l_paren), SS));
 
     // We already complained about a bad conversion-function-id,
     // above.

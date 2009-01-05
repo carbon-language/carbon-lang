@@ -747,10 +747,10 @@ Parser::OwningExprResult Parser::ParseSimpleAsm() {
 /// Note that this routine emits an error if you call it with ::new or ::delete
 /// as the current tokens, so only call it in contexts where these are invalid.
 bool Parser::TryAnnotateTypeOrScopeToken(const Token *GlobalQualifier) {
-  // FIXME: what about template-ids?
-  if (Tok.is(tok::annot_qualtypename) || Tok.is(tok::annot_cxxscope))
-    return false;
-
+  assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
+         "Cannot be a type or scope token!");
+  
+  // FIXME: Implement template-ids
   CXXScopeSpec SS;
   if (getLang().CPlusPlus)
     MaybeParseCXXScopeSpecifier(SS, GlobalQualifier);
@@ -818,9 +818,8 @@ bool Parser::TryAnnotateTypeOrScopeToken(const Token *GlobalQualifier) {
 bool Parser::TryAnnotateCXXScopeToken() {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
-
-  if (Tok.is(tok::annot_cxxscope))
-    return false;
+  assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
+         "Cannot be a type or scope token!");
 
   CXXScopeSpec SS;
   if (!MaybeParseCXXScopeSpecifier(SS))
