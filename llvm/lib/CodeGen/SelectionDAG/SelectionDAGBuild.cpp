@@ -63,7 +63,7 @@ LimitFPPrecision("limit-float-precision",
                  cl::init(0));
 
 /// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
-/// insertvalue or extractvalue indices that identify a member, return
+/// of insertvalue or extractvalue indices that identify a member, return
 /// the linearized index of the start of the member.
 ///
 static unsigned ComputeLinearIndex(const TargetLowering &TLI, const Type *Ty,
@@ -84,6 +84,7 @@ static unsigned ComputeLinearIndex(const TargetLowering &TLI, const Type *Ty,
         return ComputeLinearIndex(TLI, *EI, Indices+1, IndicesEnd, CurIndex);
       CurIndex = ComputeLinearIndex(TLI, *EI, 0, 0, CurIndex);
     }
+    return CurIndex;
   }
   // Given an array type, recursively traverse the elements.
   else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
@@ -93,6 +94,7 @@ static unsigned ComputeLinearIndex(const TargetLowering &TLI, const Type *Ty,
         return ComputeLinearIndex(TLI, EltTy, Indices+1, IndicesEnd, CurIndex);
       CurIndex = ComputeLinearIndex(TLI, EltTy, 0, 0, CurIndex);
     }
+    return CurIndex;
   }
   // We haven't found the type we're looking for, so keep searching.
   return CurIndex + 1;
