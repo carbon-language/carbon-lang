@@ -21,3 +21,8 @@ __forceinline InterlockedBitTestAndSet (long *Base, long Bit)
     };
 }
 
+void *_alloca(int);
+
+void foo() {
+	__declspec(align(16)) int *buffer = (int *)_alloca(9);
+}

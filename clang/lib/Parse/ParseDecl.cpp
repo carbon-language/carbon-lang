@@ -1353,6 +1353,7 @@ bool Parser::isDeclarationSpecifier() {
   case tok::less:
     return getLang().ObjC1;
     
+  case tok::kw___declspec:
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:

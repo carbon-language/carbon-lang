@@ -626,6 +626,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     return TPResult::True();
     
     // Microsoft
+  case tok::kw___declspec:
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:
