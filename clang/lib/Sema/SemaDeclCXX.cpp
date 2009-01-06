@@ -1448,14 +1448,11 @@ Sema::DeclTy *Sema::ActOnUsingDirective(Scope *S,
   // FIXME: This still requires lot more checks, and AST support.
   // Lookup namespace name.
   DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
-  Decl *NS = 0;
 
-  if ((NS = LookupNamespaceName(NamespcName, S, DC))) {
+  if (Decl *NS = LookupNamespaceName(NamespcName, S, DC)) {
     assert(isa<NamespaceDecl>(NS) && "expected namespace decl");
   } else {
-    DiagnosticBuilder Builder = Diag(IdentLoc, diag::err_expected_namespace_name);
-    if (SS.isSet())
-      Builder << SS.getRange();
+    Diag(IdentLoc, diag::err_expected_namespace_name) << SS.getRange();
   }
 
   // FIXME: We ignore AttrList for now, and delete it to avoid leak.
