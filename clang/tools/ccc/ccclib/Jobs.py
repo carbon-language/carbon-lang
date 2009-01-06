@@ -22,8 +22,8 @@ class Command(Job):
     
     def render(self, args):
         argv = [self.executable]
-        for oi in self.args:
-            argv.extend(oi.render(args))
+        for arg in self.args:
+            argv.extend(arg.render(args))
         return argv
 
     def iterjobs(self):

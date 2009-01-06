@@ -209,29 +209,59 @@ class DerivedArg(ValueArg):
     def getValue(self, args):
         return self.value
 
-    def setValue(self, args):
+    def setValue(self, args, value):
         raise ValueError,"Cannot call setValue() on a DerivedArg."
     
     def render(self, args):
         return [self.value]
 
+class ArgList:
+    """ArgList - Collect an input argv along with a set of parsed Args
+    and supporting information."""
+
+    def __init__(self, argv):
+        self.argv = list(argv)
+        self.args = []
+
+    # Support use as a simple arg list.
+
+    def __iter__(self):
+        return iter(self.args)
+
+    def append(self, arg):
+        self.args.append(arg)
+
+    # Forwarding methods.
+
+    def getValue(self, arg):
+        return arg.getValue(self.argv)
+
+    def getValues(self, arg):
+        return arg.getValues(self.argv)
+
+    def getSeparateValue(self, arg):
+        return arg.getSeparateValue(self.argv)
+
+    def getJoinedValue(self, arg):
+        return arg.getJoinedValue(self.argv)
+    
 class OptionParser:
     def __init__(self):
         self.options = []
-    
+        
     def addOption(self, opt):
         self.options.append(opt)
 
-    def chunkArgs(self, argv):
+    def parseArgs(self, argv):
         """
-        chunkArgs([str]) -> [Arg]
+        parseArgs([str]) -> ArgList
 
         Parse command line into individual option instances.
         """
 
         iargs = enumerate(argv)
         it = iter(iargs)
-        args = []
+        args = ArgList(argv)
         for i,a in it:
             # FIXME: Handle '@'
             if not a: 

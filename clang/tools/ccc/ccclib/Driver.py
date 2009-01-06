@@ -27,7 +27,7 @@ class Driver(object):
     def __init__(self):
         self.parser = Arguments.createOptionParser()
 
-    def run(self, args):
+    def run(self, argv):
         # FIXME: Things to support from environment: GCC_EXEC_PREFIX,
         # COMPILER_PATH, LIBRARY_PATH, LPATH, CC_PRINT_OPTIONS,
         # QA_OVERRIDE_GCC3_OPTIONS, ...?
@@ -39,8 +39,8 @@ class Driver(object):
         cccPrintOptions = False
         cccPrintPhases = False
         cccUseDriverDriver = True
-        while args and args[0].startswith('-ccc-'):
-            opt,args = args[0][5:],args[1:]
+        while argv and argv[0].startswith('-ccc-'):
+            opt,argv = argv[0][5:],argv[1:]
 
             if opt == 'print-options':
                 cccPrintOptions = True
@@ -54,7 +54,7 @@ class Driver(object):
             else:
                 raise ValueError,"Invalid ccc option: %r" % cccPrintOptions
 
-        options = self.parser.chunkArgs(args)
+        args = self.parser.parseArgs(argv)
 
         # FIXME: Ho hum I have just realized -Xarch_ is broken. We really
         # need to reparse the Arguments after they have been expanded by
@@ -68,24 +68,24 @@ class Driver(object):
         # tied to it.
 
         if cccPrintOptions:
-            self.printOptions(args, options)
+            self.printOptions(args)
             sys.exit(0)
 
-        self.handleImmediateOptions(args, options)
+        self.handleImmediateOptions(args)
 
         if cccUseDriverDriver:
-            phases = self.buildPipeline(options, args)
+            phases = self.buildPipeline(args)
         else:
-            phases = self.buildNormalPipeline(options, args)
+            phases = self.buildNormalPipeline(args)
 
         if cccPrintPhases:
-            self.printPhases(args, phases)
+            self.printPhases(phases, args)
             sys.exit(0)
 
         if 0:
             print Util.pprint(phases)
 
-        jobs = self.bindPhases(phases, options, args)
+        jobs = self.bindPhases(phases, args)
 
         # FIXME: We should provide some basic sanity checking of the
         # pipeline as a "verification" sort of stage. For example, the
@@ -100,18 +100,18 @@ class Driver(object):
 
         # Print in -### syntax.
         hasHashHashHash = None
-        for oi in options:
-            if oi.opt and oi.opt.name == '-###':
-                hasHashHashHash = oi
+        for arg in args:
+            if arg.opt and arg.opt.name == '-###':
+                hasHashHashHash = arg
 
         if hasHashHashHash:
             self.claim(hasHashHashHash)
             for j in jobs.iterjobs():
                 if isinstance(j, Jobs.Command):
-                    print '"%s"' % '" "'.join(j.render(args))
+                    print '"%s"' % '" "'.join(j.render(argv))
                 elif isinstance(j, Jobs.PipedJob):
                     for c in j.commands:
-                        print '"%s" %c' % ('" "'.join(c.render(args)),
+                        print '"%s" %c' % ('" "'.join(c.render(argv)),
                                            "| "[c is j.commands[-1]])
                 elif not isinstance(j, JobList):
                     raise ValueError,'Encountered unknown job.'
@@ -119,7 +119,7 @@ class Driver(object):
 
         for j in jobs.iterjobs():
             if isinstance(j, Jobs.Command):
-                cmd_args = j.render(args)
+                cmd_args = j.render(argv)
                 res = os.spawnvp(os.P_WAIT, cmd_args[0], cmd_args)
                 if res:
                     sys.exit(res)
@@ -135,28 +135,28 @@ class Driver(object):
     def warning(self, message):
         print >>sys.stderr,'%s: %s' % (sys.argv[0], message)
 
-    def printOptions(self, args, options):
-        for i,oi in enumerate(options):
-            if isinstance(oi, Arguments.InputArg):
+    def printOptions(self, args):
+        for i,arg in enumerate(args):
+            if isinstance(arg, Arguments.InputArg):
                 name = "<input>"
-            elif isinstance(oi, Arguments.UnknownArg):
+            elif isinstance(arg, Arguments.UnknownArg):
                 name = "<unknown>"
             else:
-                assert oi.opt
-                name = oi.opt.name
-            if isinstance(oi, Arguments.MultipleValuesArg):
-                values = list(oi.getValues(args))
-            elif isinstance(oi, Arguments.ValueArg):
-                values = [oi.getValue(args)]
-            elif isinstance(oi, Arguments.JoinedAndSeparateValuesArg):
-                values = [oi.getJoinedValue(args), oi.getSeparateValue(args)]
+                assert arg.opt
+                name = arg.opt.name
+            if isinstance(arg, Arguments.MultipleValuesArg):
+                values = list(args.getValues(arg))
+            elif isinstance(arg, Arguments.ValueArg):
+                values = [args.getValue(arg)]
+            elif isinstance(arg, Arguments.JoinedAndSeparateValuesArg):
+                values = [args.getJoinedValue(arg), args.getSeparateValue(arg)]
             else:
                 values = []
             print 'Option %d - Name: "%s", Values: {%s}' % (i, name, 
                                                             ', '.join(['"%s"' % v 
                                                                        for v in values]))
 
-    def printPhases(self, args, phases):
+    def printPhases(self, phases, args):
         def printPhase(p, f, steps, arch=None):
             if p in steps:
                 return steps[p]
@@ -168,14 +168,14 @@ class Driver(object):
 
             if isinstance(p, Phases.InputAction):
                 phaseName = 'input'
-                inputStr = '"%s"' % p.filename.getValue(args)
+                inputStr = '"%s"' % args.getValue(p.filename)
             else:
                 phaseName = p.phase.name
                 inputs = [printPhase(i, f, steps, arch) 
                           for i in p.inputs]
                 inputStr = '{%s}' % ', '.join(map(str, inputs))
             if arch is not None:
-                phaseName += '-' + arch.getValue(args)
+                phaseName += '-' + args.getValue(arch)
             steps[p] = index = len(steps)
             print "%d: %s, %s, %s" % (index,phaseName,inputStr,p.type.name)
             return index
@@ -183,7 +183,7 @@ class Driver(object):
         for phase in phases:
             printPhase(phase, sys.stdout, steps)
 
-    def handleImmediateOptions(self, args, options):
+    def handleImmediateOptions(self, args):
         # FIXME: Some driver Arguments are consumed right off the bat,
         # like -dumpversion. Currently the gcc-dd handles these
         # poorly, so we should be ok handling them upfront instead of
@@ -199,37 +199,37 @@ class Driver(object):
         # FIXME: Do we want to report "argument unused" type errors in the
         # presence of things like -dumpmachine and -print-search-dirs?
         # Probably not.
-        for oi in options:
-            if oi.opt is not None:
-                if oi.opt.name == '-dumpmachine':
-                    print 'FIXME: %s' % oi.opt.name
+        for arg in args:
+            if arg.opt is not None:
+                if arg.opt.name == '-dumpmachine':
+                    print 'FIXME: %s' % arg.opt.name
                     sys.exit(1)
-                elif oi.opt.name == '-dumpspecs':
-                    print 'FIXME: %s' % oi.opt.name
+                elif arg.opt.name == '-dumpspecs':
+                    print 'FIXME: %s' % arg.opt.name
                     sys.exit(1)
-                elif oi.opt.name == '-dumpversion':
-                    print 'FIXME: %s' % oi.opt.name
+                elif arg.opt.name == '-dumpversion':
+                    print 'FIXME: %s' % arg.opt.name
                     sys.exit(1)
-                elif oi.opt.name == '-print-file-name=':
-                    print 'FIXME: %s' % oi.opt.name
+                elif arg.opt.name == '-print-file-name=':
+                    print 'FIXME: %s' % arg.opt.name
                     sys.exit(1)
-                elif oi.opt.name == '-print-multi-directory':
-                    print 'FIXME: %s' % oi.opt.name
+                elif arg.opt.name == '-print-multi-directory':
+                    print 'FIXME: %s' % arg.opt.name
                     sys.exit(1)
-                elif oi.opt.name == '-print-multi-lib':
-                    print 'FIXME: %s' % oi.opt.name
+                elif arg.opt.name == '-print-multi-lib':
+                    print 'FIXME: %s' % arg.opt.name
                     sys.exit(1)
-                elif oi.opt.name == '-print-prog-name=':
-                    print 'FIXME: %s' % oi.opt.name
+                elif arg.opt.name == '-print-prog-name=':
+                    print 'FIXME: %s' % arg.opt.name
                     sys.exit(1)
-                elif oi.opt.name == '-print-libgcc-file-name':
-                    print 'FIXME: %s' % oi.opt.name
+                elif arg.opt.name == '-print-libgcc-file-name':
+                    print 'FIXME: %s' % arg.opt.name
                     sys.exit(1)
-                elif oi.opt.name == '-print-search-dirs':
-                    print 'FIXME: %s' % oi.opt.name
+                elif arg.opt.name == '-print-search-dirs':
+                    print 'FIXME: %s' % arg.opt.name
                     sys.exit(1)
 
-    def buildNormalPipeline(self, args, inputArgs):
+    def buildNormalPipeline(self, args):
         hasCombine = None
         hasSyntaxOnly = None
         hasDashC = hasDashE = hasDashS = None
@@ -240,7 +240,7 @@ class Driver(object):
         for a in args:
             if isinstance(a, Arguments.InputArg):
                 if inputType is None:
-                    base,ext = os.path.splitext(a.getValue(inputArgs))
+                    base,ext = os.path.splitext(args.getValue(a))
                     if ext and ext in Types.kTypeSuffixMap:
                         klass = Types.kTypeSuffixMap[ext]
                     else:
@@ -279,7 +279,7 @@ class Driver(object):
                 elif a.opt.name == '-x':
                     self.claim(a)
                     inputTypeOpt = a
-                    value = a.getValue(inputArgs)
+                    value = args.getValue(a)
                     if value in Types.kTypeSpecifierMap:
                         inputType = Types.kTypeSpecifierMap[value]
                     else:
@@ -353,7 +353,7 @@ class Driver(object):
                 assert finalPhaseOpt and finalPhaseOpt.opt
                 # FIXME: Explain what type of input file is. Or just match
                 # gcc warning.
-                self.warning("%s: %s input file unused when %s is present" % (input.getValue(inputArgs),
+                self.warning("%s: %s input file unused when %s is present" % (args.getValue(input),
                                                                               sequence[0].name,
                                                                               finalPhaseOpt.opt.name))
             else:
@@ -407,30 +407,30 @@ class Driver(object):
 
         return actions
 
-    def buildPipeline(self, args, inputArgs):
+    def buildPipeline(self, args):
         # FIXME: We need to handle canonicalization of the specified arch.
 
         archs = []
         hasOutput = None
         hasDashM = hasSaveTemps = None
-        for o in args:
-            if o.opt is None:
+        for arg in args:
+            if arg.opt is None:
                 continue
 
-            if isinstance(o, Arguments.ValueArg):
-                if o.opt.name == '-arch':
-                    archs.append(o)
-            elif o.opt.name.startswith('-M'):
-                hasDashM = o
-            elif o.opt.name in ('-save-temps','--save-temps'):
-                hasSaveTemps = o
+            if isinstance(arg, Arguments.ValueArg):
+                if arg.opt.name == '-arch':
+                    archs.append(arg)
+            elif arg.opt.name.startswith('-M'):
+                hasDashM = arg
+            elif arg.opt.name in ('-save-temps','--save-temps'):
+                hasSaveTemps = arg
 
         if not archs:
             # FIXME: Need to infer arch so that we sub -Xarch
             # correctly.
             archs.append(Arguments.DerivedArg('i386'))
 
-        actions = self.buildNormalPipeline(args, inputArgs)
+        actions = self.buildNormalPipeline(args)
 
         # FIXME: Use custom exception for this.
         #
@@ -489,7 +489,7 @@ class Driver(object):
 
         return finalActions
 
-    def bindPhases(self, phases, args, inputArgs):
+    def bindPhases(self, phases, args):
         jobs = Jobs.JobList()
 
         finalOutput = None
@@ -553,25 +553,25 @@ class Driver(object):
             if isinstance(phase, Phases.InputAction):
                 return InputInfo(phase.filename, phase.type, phase.filename)
             elif isinstance(phase, Phases.BindArchAction):
-                archName = phase.arch.getValue(inputArgs)
+                archName = args.getValue(phase.arch)
                 filteredArgs = []
-                for oi in forwardArgs:
-                    if oi.opt is None:
-                        filteredArgs.append(oi)
-                    elif oi.opt.name == '-arch':
-                        if oi is phase.arch:
-                            filteredArgs.append(oi)
-                    elif oi.opt.name == '-Xarch_':
+                for arg in forwardArgs:
+                    if arg.opt is None:
+                        filteredArgs.append(arg)
+                    elif arg.opt.name == '-arch':
+                        if arg is phase.arch:
+                            filteredArgs.append(arg)
+                    elif arg.opt.name == '-Xarch_':
                         # FIXME: gcc-dd has another conditional for passing
                         # through, when the arch conditional array has an empty
                         # string. Why?
-                        if oi.getJoinedValue(inputArgs) == archName:
+                        if args.getJoinedValue(arg) == archName:
                             # FIXME: This is wrong, we don't want a
                             # DerivedArg we want an actual parsed version
                             # of this arg.
-                            filteredArgs.append(Arguments.DerivedArg(oi.getSeparateValue(inputArgs)))
+                            filteredArgs.append(Arguments.DerivedArg(args.getSeparateValue(arg)))
                     else:
-                        filteredArgs.append(oi)
+                        filteredArgs.append(arg)
                         
                 return createJobs(phase.inputs[0], filteredArgs,
                                   canAcceptPipe, atTopLevel, phase.arch)
@@ -631,7 +631,7 @@ class Driver(object):
                 # 
                 # FIXME: gcc has some special case in here so that it doesn't
                 # create output files if they would conflict with an input.
-                inputName = baseInput.getValue(inputArgs)
+                inputName = args.getValue(baseInput)
                 if phase.type is Types.ImageType:
                     namedOutput = "a.out"
                 else:
