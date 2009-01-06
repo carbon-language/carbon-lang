@@ -431,6 +431,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
   }
 
   assert(0 && "Other regions are not supported yet.");
+  return UnknownVal();
 }
 
 /// ArrayToPointer - Emulates the "decay" of an array to a pointer
