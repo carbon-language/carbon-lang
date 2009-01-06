@@ -24,6 +24,12 @@ using namespace clang;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
 
+// This (temporary) directive toggles between lazy and eager creation of
+// MemBuffers.  This directive is not permanent, and is here to test a few
+// potential optimizations in PTH.  Once it is clear whether eager or lazy
+// creation of MemBuffers is better this directive will get removed.
+#define LAZY
+
 ContentCache::~ContentCache() {
   delete Buffer;
   delete [] SourceLineCache;
@@ -44,7 +50,17 @@ unsigned ContentCache::getSize() const {
   return Entry ? Entry->getSize() : Buffer->getBufferSize();
 }
 
-const llvm::MemoryBuffer* ContentCache::getBuffer() const {
+const llvm::MemoryBuffer* ContentCache::getBuffer() const {  
+#ifdef LAZY
+  // Lazily create the Buffer for ContentCaches that wrap files.
+  if (!Buffer && Entry) {
+    // FIXME: Should we support a way to not have to do this check over
+    //   and over if we cannot open the file?
+    // FIXME: This const_cast is ugly.  Should we make getBuffer() non-const?
+    const_cast<ContentCache*>(this)->Buffer = 
+      MemoryBuffer::getFile(Entry->getName(), 0, Entry->getSize());
+  }
+#endif
   return Buffer;
 }
 
@@ -62,16 +78,17 @@ const ContentCache* SourceManager::getContentCache(const FileEntry *FileEnt) {
     return &*I;
   
   // Nope, get information.
+#ifndef LAZY
   const MemoryBuffer *File =
     MemoryBuffer::getFile(FileEnt->getName(), 0, FileEnt->getSize());
   if (File == 0)
     return 0;
-
+#endif
+  
   ContentCache& Entry = const_cast<ContentCache&>(*FileInfos.insert(I,FileEnt));
-
-  // FIXME: Shortly the above logic that creates a MemBuffer will be moved
-  // to ContentCache::getBuffer().  This way it can be done lazily.
+#ifndef LAZY
   Entry.setBuffer(File);
+#endif
   Entry.SourceLineCache = 0;
   Entry.NumLines = 0;
   return &Entry;
