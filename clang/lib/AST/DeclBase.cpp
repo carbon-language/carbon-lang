@@ -513,7 +513,8 @@ void DeclContext::addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup) 
 /// transparent contexts nested within it).
 void DeclContext::buildLookup(ASTContext &Context, DeclContext *DCtx) {
   for (; DCtx; DCtx = DCtx->getNextContext()) {
-    for (decl_iterator D = DCtx->decls_begin(); D != DCtx->decls_end(); ++D) {
+    for (decl_iterator D = DCtx->decls_begin(), DEnd = DCtx->decls_end(); 
+         D != DEnd; ++D) {
       // Insert this declaration into the lookup structure
       insertImpl(*D);
 

@@ -3138,12 +3138,10 @@ void Sema::ActOnFields(Scope* S,
 }
 
 void Sema::ActOnEnumStartDefinition(Scope *S, DeclTy *EnumD) {
-  EnumDecl *Enum = cast_or_null<EnumDecl>((Decl *)EnumD);
+  EnumDecl *Enum = cast<EnumDecl>((Decl *)EnumD);
 
-  if (Enum) {
-    // Enter the enumeration context.
-    PushDeclContext(S, Enum);
-  }
+  // Enter the enumeration context.
+  PushDeclContext(S, Enum);
 }
 
 Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
