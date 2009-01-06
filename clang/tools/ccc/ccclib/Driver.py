@@ -101,7 +101,7 @@ class Driver(object):
         # Print in -### syntax.
         hasHashHashHash = None
         for arg in args:
-            if arg.opt and arg.opt.name == '-###':
+            if arg.opt.name == '-###':
                 hasHashHashHash = arg
 
         if hasHashHashHash:
@@ -137,13 +137,6 @@ class Driver(object):
 
     def printOptions(self, args):
         for i,arg in enumerate(args):
-            if isinstance(arg, Arguments.InputArg):
-                name = "<input>"
-            elif isinstance(arg, Arguments.UnknownArg):
-                name = "<unknown>"
-            else:
-                assert arg.opt
-                name = arg.opt.name
             if isinstance(arg, Arguments.MultipleValuesArg):
                 values = list(args.getValues(arg))
             elif isinstance(arg, Arguments.ValueArg):
@@ -152,7 +145,7 @@ class Driver(object):
                 values = [args.getJoinedValue(arg), args.getSeparateValue(arg)]
             else:
                 values = []
-            print 'Option %d - Name: "%s", Values: {%s}' % (i, name, 
+            print 'Option %d - Name: "%s", Values: {%s}' % (i, arg.opt.name, 
                                                             ', '.join(['"%s"' % v 
                                                                        for v in values]))
 
@@ -200,34 +193,33 @@ class Driver(object):
         # presence of things like -dumpmachine and -print-search-dirs?
         # Probably not.
         for arg in args:
-            if arg.opt is not None:
-                if arg.opt.name == '-dumpmachine':
-                    print 'FIXME: %s' % arg.opt.name
-                    sys.exit(1)
-                elif arg.opt.name == '-dumpspecs':
-                    print 'FIXME: %s' % arg.opt.name
-                    sys.exit(1)
-                elif arg.opt.name == '-dumpversion':
-                    print 'FIXME: %s' % arg.opt.name
-                    sys.exit(1)
-                elif arg.opt.name == '-print-file-name=':
-                    print 'FIXME: %s' % arg.opt.name
-                    sys.exit(1)
-                elif arg.opt.name == '-print-multi-directory':
-                    print 'FIXME: %s' % arg.opt.name
-                    sys.exit(1)
-                elif arg.opt.name == '-print-multi-lib':
-                    print 'FIXME: %s' % arg.opt.name
-                    sys.exit(1)
-                elif arg.opt.name == '-print-prog-name=':
-                    print 'FIXME: %s' % arg.opt.name
-                    sys.exit(1)
-                elif arg.opt.name == '-print-libgcc-file-name':
-                    print 'FIXME: %s' % arg.opt.name
-                    sys.exit(1)
-                elif arg.opt.name == '-print-search-dirs':
-                    print 'FIXME: %s' % arg.opt.name
-                    sys.exit(1)
+            if arg.opt.name == '-dumpmachine':
+                print 'FIXME: %s' % arg.opt.name
+                sys.exit(1)
+            elif arg.opt.name == '-dumpspecs':
+                print 'FIXME: %s' % arg.opt.name
+                sys.exit(1)
+            elif arg.opt.name == '-dumpversion':
+                print 'FIXME: %s' % arg.opt.name
+                sys.exit(1)
+            elif arg.opt.name == '-print-file-name=':
+                print 'FIXME: %s' % arg.opt.name
+                sys.exit(1)
+            elif arg.opt.name == '-print-multi-directory':
+                print 'FIXME: %s' % arg.opt.name
+                sys.exit(1)
+            elif arg.opt.name == '-print-multi-lib':
+                print 'FIXME: %s' % arg.opt.name
+                sys.exit(1)
+            elif arg.opt.name == '-print-prog-name=':
+                print 'FIXME: %s' % arg.opt.name
+                sys.exit(1)
+            elif arg.opt.name == '-print-libgcc-file-name':
+                print 'FIXME: %s' % arg.opt.name
+                sys.exit(1)
+            elif arg.opt.name == '-print-search-dirs':
+                print 'FIXME: %s' % arg.opt.name
+                sys.exit(1)
 
     def buildNormalPipeline(self, args):
         hasCombine = None
@@ -238,7 +230,7 @@ class Driver(object):
         inputTypeOpt = None
         inputs = []
         for a in args:
-            if isinstance(a, Arguments.InputArg):
+            if a.opt.name == '<input>':
                 if inputType is None:
                     base,ext = os.path.splitext(args.getValue(a))
                     if ext and ext in Types.kTypeSuffixMap:
@@ -254,43 +246,40 @@ class Driver(object):
                     self.claim(inputTypeOpt)
                     klass = inputType
                 inputs.append((klass, a))
-            elif a.opt is not None:
-                # FIXME: We should warn about inconsistent and duplicate
-                # usage of these flags.
-                if a.opt.name == '-E':
-                    hasDashE = a
-                elif a.opt.name == '-S':
-                    hasDashS = a
-                elif a.opt.name == '-c':
-                    hasDashC = a
-                elif a.opt.name == '-fsyntax-only':
-                    hasSyntaxOnly = a
-                elif a.opt.name == '-combine':
-                    hasCombine = a
-                elif a.opt.name == '-filelist':
-                    # FIXME: This might not be good enough. We may
-                    # need to introduce another type of InputArg for
-                    # this case, so that other code which needs to
-                    # know the inputs handles this properly. Best not
-                    # to try and lipo this, for example.
-                    #
-                    # Treat as a linker input.
-                    inputs.append((Types.ObjectType, a))
-                elif a.opt.name == '-x':
-                    self.claim(a)
-                    inputTypeOpt = a
-                    value = args.getValue(a)
-                    if value in Types.kTypeSpecifierMap:
-                        inputType = Types.kTypeSpecifierMap[value]
-                    else:
-                        # FIXME: How are we going to handle diagnostics.
-                        self.warning("language %s not recognized" % value)
+            elif a.opt.name == '-E':
+                hasDashE = a
+            elif a.opt.name == '-S':
+                hasDashS = a
+            elif a.opt.name == '-c':
+                hasDashC = a
+            elif a.opt.name == '-fsyntax-only':
+                hasSyntaxOnly = a
+            elif a.opt.name == '-combine':
+                hasCombine = a
+            elif a.opt.name == '-filelist':
+                # Treat as a linker input.
+                #
+                # FIXME: This might not be good enough. We may
+                # need to introduce another type for this case, so
+                # that other code which needs to know the inputs
+                # handles this properly. Best not to try and lipo
+                # this, for example.
+                inputs.append((Types.ObjectType, a))
+            elif a.opt.name == '-x':
+                self.claim(a)
+                inputTypeOpt = a
+                value = args.getValue(a)
+                if value in Types.kTypeSpecifierMap:
+                    inputType = Types.kTypeSpecifierMap[value]
+                else:
+                    # FIXME: How are we going to handle diagnostics.
+                    self.warning("language %s not recognized" % value)
 
-                        # FIXME: Its not clear why we shouldn't just
-                        # revert to unknown. I think this is more likely a
-                        # bug / unintended behavior in gcc. Not very
-                        # important though.
-                        inputType = ObjectType
+                    # FIXME: Its not clear why we shouldn't just
+                    # revert to unknown. I think this is more likely a
+                    # bug / unintended behavior in gcc. Not very
+                    # important though.
+                    inputType = ObjectType
 
         # We claim things here so that options for which we silently allow
         # override only ever claim the used option.
@@ -414,12 +403,8 @@ class Driver(object):
         hasOutput = None
         hasDashM = hasSaveTemps = None
         for arg in args:
-            if arg.opt is None:
-                continue
-
-            if isinstance(arg, Arguments.ValueArg):
-                if arg.opt.name == '-arch':
-                    archs.append(arg)
+            if arg.opt.name == '-arch':
+                archs.append(arg)
             elif arg.opt.name.startswith('-M'):
                 hasDashM = arg
             elif arg.opt.name in ('-save-temps','--save-temps'):
@@ -496,23 +481,20 @@ class Driver(object):
         hasSaveTemps = hasNoIntegratedCPP = hasPipe = None
         forward = []
         for a in args:
-            if isinstance(a, Arguments.InputArg):
+            if a.opt.name == '<input>':
                 pass
-            elif a.opt is not None:
-                if a.opt.name == '-save-temps':
-                    hasSaveTemps = a
-                elif a.opt.name == '-no-integrated-cpp':
-                    hasNoIntegratedCPP = a
-                elif a.opt.name == '-o':
-                    finalOutput = a
-                elif a.opt.name == '-pipe':
-                    hasPipe = a
-                elif a.opt.name in ('-E', '-S', '-c',
-                                    '-arch', '-fsyntax-only', '-combine', '-x',
-                                    '-###'):
-                    pass
-                else:
-                    forward.append(a)
+            elif a.opt.name == '-save-temps':
+                hasSaveTemps = a
+            elif a.opt.name == '-no-integrated-cpp':
+                hasNoIntegratedCPP = a
+            elif a.opt.name == '-o':
+                finalOutput = a
+            elif a.opt.name == '-pipe':
+                hasPipe = a
+            elif a.opt.name in ('-E', '-S', '-c',
+                                '-arch', '-fsyntax-only', '-combine', '-x',
+                                '-###'):
+                pass
             else:
                 forward.append(a)
 
@@ -556,9 +538,7 @@ class Driver(object):
                 archName = args.getValue(phase.arch)
                 filteredArgs = []
                 for arg in forwardArgs:
-                    if arg.opt is None:
-                        filteredArgs.append(arg)
-                    elif arg.opt.name == '-arch':
+                    if arg.opt.name == '-arch':
                         if arg is phase.arch:
                             filteredArgs.append(arg)
                     elif arg.opt.name == '-Xarch_':

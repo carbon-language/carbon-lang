@@ -17,6 +17,24 @@ class Option(object):
         return '<%s name=%r>' % (self.__class__.__name__,
                                  self.name)
 
+# Dummy options
+
+class InputOption(Option):
+    def __init__(self):
+        super(InputOption, self).__init__('<input>')
+
+    def accept(self):
+        raise RuntimeError,"accept() should never be used on InputOption instance."
+
+class UnknownOption(Option):
+    def __init__(self):
+        super(UnknownOption, self).__init__('<unknown>')
+
+    def accept(self):
+        raise RuntimeError,"accept() should never be used on UnknownOption instance."        
+
+# Normal options
+
 class FlagOption(Option):
     """An option which takes no arguments."""
 
@@ -90,6 +108,7 @@ class JoinedAndSeparateOption(Option):
 class Arg(object):
     """Arg - Base class for actual driver arguments."""
     def __init__(self, index, opt):
+        assert opt is not None
         self.index = index
         self.opt = opt
 
@@ -115,9 +134,8 @@ class ValueArg(Arg):
     def setValue(self, args, value):
         abstract
 
-class UnknownArg(ValueArg):
-    def __init__(self, index):
-        super(UnknownArg, self).__init__(index, None)
+class PositionalArg(ValueArg):
+    """PositionalArg - A simple positional argument."""
 
     def getValue(self, args):
         return args[self.index]
@@ -129,6 +147,9 @@ class UnknownArg(ValueArg):
         return [args[self.index]]
 
 class JoinedValueArg(ValueArg):
+    """JoinedValueArg - A single value argument where the value is
+    joined (suffixed) to the option."""
+
     def getValue(self, args):
         return args[self.index][len(self.opt.name):]
 
@@ -140,6 +161,9 @@ class JoinedValueArg(ValueArg):
         return [self.opt.name + self.getValue(args)]
 
 class SeparateValueArg(ValueArg):
+    """SeparateValueArg - A single value argument where the value
+    follows the option in the argument vector."""
+
     def getValue(self, args):
         return args[self.index+1]
 
@@ -150,6 +174,11 @@ class SeparateValueArg(ValueArg):
         return [self.opt.name, self.getValue(args)]
 
 class MultipleValuesArg(Arg):
+    """MultipleValuesArg - An argument with multiple values which
+    follow the option in the argument vector."""
+
+    # FIXME: Should we unify this with SeparateValueArg?
+
     def getValues(self, args):
         return args[self.index + 1:self.index + 1 + self.opt.numArgs]
 
@@ -183,27 +212,15 @@ class JoinedAndSeparateValuesArg(Arg):
         return ([self.opt.name + self.getJoinedValue(args)] + 
                 [self.getSeparateValue(args)])
 
-class InputArg(ValueArg):
-    """InputArg - An input file (positional) argument."""
-
-    def __init__(self, index):
-        super(ValueArg, self).__init__(index, None)
-
-    def getValue(self, args):
-        return args[self.index]
-
-    def setValue(self, args, value):
-        args[self.index] = value
- 
-    def render(self, args):
-        return [self.getValue(args)]
-
 class DerivedArg(ValueArg):
     """DerivedArg - A synthesized argument which does not correspend
-    to the actual input arguments array."""
+    to an item in the argument vector."""
 
     def __init__(self, value):
-        super(ValueArg, self).__init__(-1, None)
+        # FIXME: The UnknownOption() here is a total hack so we can
+        # rely on arg.opt not being nil. Ok for now since DerivedArg
+        # is dying.
+        super(DerivedArg, self).__init__(-1, UnknownOption())
         self.value = value
 
     def getValue(self, args):
@@ -216,7 +233,7 @@ class DerivedArg(ValueArg):
         return [self.value]
 
 class ArgList:
-    """ArgList - Collect an input argv along with a set of parsed Args
+    """ArgList - Collect an input argument vector along with a set of parsed Args
     and supporting information."""
 
     def __init__(self, argv):
@@ -248,7 +265,9 @@ class ArgList:
 class OptionParser:
     def __init__(self):
         self.options = []
-        
+        self.inputOption = InputOption()
+        self.unknownOption = UnknownOption()
+
     def addOption(self, opt):
         self.options.append(opt)
 
@@ -274,15 +293,15 @@ class OptionParser:
             elif a[0] == '-' and a != '-':
                 args.append(self.lookupOptForArg(i, a, it))
             else:
-                args.append(InputArg(i))
+                args.append(PositionalArg(i, self.inputOption))
         return args
     
-    def lookupOptForArg(self, i, arg, it):
-        for op in self.options:
-            opt = op.accept(i, arg, it)
-            if opt is not None:
-                return opt
-        return UnknownArg(i)
+    def lookupOptForArg(self, i, string, it):
+        for o in self.options:
+            arg = o.accept(i, string, it)
+            if arg is not None:
+                return arg
+        return PositionalArg(i, self.unknownOption)
 
 def createOptionParser():
     op = OptionParser()
