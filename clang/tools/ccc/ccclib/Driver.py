@@ -25,7 +25,7 @@ class MissingArgumentError(ValueError):
 
 class Driver(object):
     def __init__(self):
-        self.parser = Arguments.createOptionParser()
+        self.parser = Arguments.OptionParser()
 
     def run(self, argv):
         # FIXME: Things to support from environment: GCC_EXEC_PREFIX,
@@ -99,11 +99,7 @@ class Driver(object):
         # can turn it off in Release-Asserts builds).
 
         # Print in -### syntax.
-        hasHashHashHash = None
-        for arg in args:
-            if arg.opt.name == '-###':
-                hasHashHashHash = arg
-
+        hasHashHashHash = args.getLastArg(self.parser.hashHashHashOption)
         if hasHashHashHash:
             self.claim(hasHashHashHash)
             for j in jobs.iterjobs():
@@ -192,45 +188,63 @@ class Driver(object):
         # FIXME: Do we want to report "argument unused" type errors in the
         # presence of things like -dumpmachine and -print-search-dirs?
         # Probably not.
-        for arg in args:
-            if arg.opt.name == '-dumpmachine':
-                print 'FIXME: %s' % arg.opt.name
-                sys.exit(1)
-            elif arg.opt.name == '-dumpspecs':
-                print 'FIXME: %s' % arg.opt.name
-                sys.exit(1)
-            elif arg.opt.name == '-dumpversion':
-                print 'FIXME: %s' % arg.opt.name
-                sys.exit(1)
-            elif arg.opt.name == '-print-file-name=':
-                print 'FIXME: %s' % arg.opt.name
-                sys.exit(1)
-            elif arg.opt.name == '-print-multi-directory':
-                print 'FIXME: %s' % arg.opt.name
-                sys.exit(1)
-            elif arg.opt.name == '-print-multi-lib':
-                print 'FIXME: %s' % arg.opt.name
-                sys.exit(1)
-            elif arg.opt.name == '-print-prog-name=':
-                print 'FIXME: %s' % arg.opt.name
-                sys.exit(1)
-            elif arg.opt.name == '-print-libgcc-file-name':
-                print 'FIXME: %s' % arg.opt.name
-                sys.exit(1)
-            elif arg.opt.name == '-print-search-dirs':
-                print 'FIXME: %s' % arg.opt.name
-                sys.exit(1)
+        arg = args.getLastArg(self.parser.dumpmachineOption)
+        if arg:
+            print 'FIXME: %s' % arg.opt.name
+            sys.exit(1)
+
+        arg = args.getLastArg(self.parser.dumpspecsOption)
+        if arg:
+            print 'FIXME: %s' % arg.opt.name
+            sys.exit(1)
+
+        arg = args.getLastArg(self.parser.dumpversionOption)
+        if arg:
+            print 'FIXME: %s' % arg.opt.name
+            sys.exit(1)
+
+        arg = args.getLastArg(self.parser.printFileNameOption)
+        if arg:
+            print 'FIXME: %s' % arg.opt.name
+            sys.exit(1)
+
+        arg = args.getLastArg(self.parser.printMultiDirectoryOption)
+        if arg:
+            print 'FIXME: %s' % arg.opt.name
+            sys.exit(1)
+
+        arg = args.getLastArg(self.parser.printMultiLibOption)
+        if arg:
+            print 'FIXME: %s' % arg.opt.name
+            sys.exit(1)
+
+        arg = args.getLastArg(self.parser.printProgNameOption)
+        if arg:
+            print 'FIXME: %s' % arg.opt.name
+            sys.exit(1)
+
+        arg = args.getLastArg(self.parser.printLibgccFilenameOption)
+        if arg:
+            print 'FIXME: %s' % arg.opt.name
+            sys.exit(1)
+
+        arg = args.getLastArg(self.parser.printSearchDirsOption)
+        if arg:
+            print 'FIXME: %s' % arg.opt.name
+            sys.exit(1)
 
     def buildNormalPipeline(self, args):
-        hasCombine = None
-        hasSyntaxOnly = None
-        hasDashC = hasDashE = hasDashS = None
+        hasCombine = args.getLastArg(self.parser.combineOption)
+        hasSyntaxOnly = args.getLastArg(self.parser.syntaxOnlyOption)
+        hasDashC = args.getLastArg(self.parser.cOption)
+        hasDashE = args.getLastArg(self.parser.EOption)
+        hasDashS = args.getLastArg(self.parser.SOption)
 
         inputType = None
         inputTypeOpt = None
         inputs = []
         for a in args:
-            if a.opt.name == '<input>':
+            if a.opt is self.parser.inputOption:
                 if inputType is None:
                     base,ext = os.path.splitext(args.getValue(a))
                     if ext and ext in Types.kTypeSuffixMap:
@@ -246,18 +260,9 @@ class Driver(object):
                     self.claim(inputTypeOpt)
                     klass = inputType
                 inputs.append((klass, a))
-            elif a.opt.name == '-E':
-                hasDashE = a
-            elif a.opt.name == '-S':
-                hasDashS = a
-            elif a.opt.name == '-c':
-                hasDashC = a
-            elif a.opt.name == '-fsyntax-only':
-                hasSyntaxOnly = a
-            elif a.opt.name == '-combine':
-                hasCombine = a
-            elif a.opt.name == '-filelist':
-                # Treat as a linker input.
+            elif a.opt is self.parser.filelistOption:
+                # Treat as a linker input. Investigate how gcc is
+                # handling this.
                 #
                 # FIXME: This might not be good enough. We may
                 # need to introduce another type for this case, so
@@ -265,7 +270,7 @@ class Driver(object):
                 # handles this properly. Best not to try and lipo
                 # this, for example.
                 inputs.append((Types.ObjectType, a))
-            elif a.opt.name == '-x':
+            elif a.opt is self.parser.xOption:
                 self.claim(a)
                 inputTypeOpt = a
                 value = args.getValue(a)
@@ -400,15 +405,14 @@ class Driver(object):
         # FIXME: We need to handle canonicalization of the specified arch.
 
         archs = []
-        hasOutput = None
-        hasDashM = hasSaveTemps = None
+        hasDashM = None
+        hasSaveTemps = (args.getLastArg(self.parser.saveTempsOption) or 
+                        args.getLastArg(self.parser.saveTempsOption2))
         for arg in args:
-            if arg.opt.name == '-arch':
+            if arg.opt is self.parser.archOption:
                 archs.append(arg)
             elif arg.opt.name.startswith('-M'):
                 hasDashM = arg
-            elif arg.opt.name in ('-save-temps','--save-temps'):
-                hasSaveTemps = arg
 
         if not archs:
             # FIXME: Need to infer arch so that we sub -Xarch
@@ -477,24 +481,22 @@ class Driver(object):
     def bindPhases(self, phases, args):
         jobs = Jobs.JobList()
 
-        finalOutput = None
-        hasSaveTemps = hasNoIntegratedCPP = hasPipe = None
+        finalOutput = args.getLastArg(self.parser.oOption)
+        hasSaveTemps = (args.getLastArg(self.parser.saveTempsOption) or
+                        args.getLastArg(self.parser.saveTempsOption2))
+        hasNoIntegratedCPP = args.getLastArg(self.parser.noIntegratedCPPOption)
+        hasPipe = args.getLastArg(self.parser.pipeOption)
         forward = []
         for a in args:
-            if a.opt.name == '<input>':
+            if a.opt is self.parser.inputOption:
                 pass
-            elif a.opt.name == '-save-temps':
-                hasSaveTemps = a
-            elif a.opt.name == '-no-integrated-cpp':
-                hasNoIntegratedCPP = a
-            elif a.opt.name == '-o':
-                finalOutput = a
-            elif a.opt.name == '-pipe':
-                hasPipe = a
+
+            # FIXME: Needs to be part of option.
             elif a.opt.name in ('-E', '-S', '-c',
                                 '-arch', '-fsyntax-only', '-combine', '-x',
                                 '-###'):
                 pass
+
             else:
                 forward.append(a)
 
@@ -538,10 +540,10 @@ class Driver(object):
                 archName = args.getValue(phase.arch)
                 filteredArgs = []
                 for arg in forwardArgs:
-                    if arg.opt.name == '-arch':
+                    if arg.opt is self.parser.archOption:
                         if arg is phase.arch:
                             filteredArgs.append(arg)
-                    elif arg.opt.name == '-Xarch_':
+                    elif arg.opt is self.parser.XarchOption:
                         # FIXME: gcc-dd has another conditional for passing
                         # through, when the arch conditional array has an empty
                         # string. Why?
@@ -617,7 +619,7 @@ class Driver(object):
                 else:
                     base,_ = os.path.splitext(inputName)
                     assert phase.type.tempSuffix is not None
-                    namedOutput = base + phase.type.tempSuffix
+                    namedOutput = base + '.' + phase.type.tempSuffix
 
                 # Output to user requested destination?
                 if atTopLevel and finalOutput:
@@ -627,7 +629,7 @@ class Driver(object):
                     output = Arguments.DerivedArg(namedOutput)
                 else:
                     # Output to temp file...
-                    fd,filename = tempfile.mkstemp(suffix=phase.type.tempSuffix)
+                    fd,filename = tempfile.mkstemp(suffix='.'+phase.type.tempSuffix)
                     output = Arguments.DerivedArg(filename)
 
             tool.constructJob(phase, arch, jobList, inputs, output, phase.type, forwardArgs)

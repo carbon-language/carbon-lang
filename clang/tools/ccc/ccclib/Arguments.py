@@ -111,7 +111,7 @@ class Arg(object):
         assert opt is not None
         self.index = index
         self.opt = opt
-
+        
     def __repr__(self):
         return '<%s index=%r opt=%r>' % (self.__class__.__name__,
                                          self.index,
@@ -239,6 +239,10 @@ class ArgList:
     def __init__(self, argv):
         self.argv = list(argv)
         self.args = []
+        self.lastArgs = {}
+
+    def getLastArg(self, option):
+        return self.lastArgs.get(option)
 
     # Support use as a simple arg list.
 
@@ -247,6 +251,7 @@ class ArgList:
 
     def append(self, arg):
         self.args.append(arg)
+        self.lastArgs[arg.opt] = arg
 
     # Forwarding methods.
 
@@ -268,8 +273,198 @@ class OptionParser:
         self.inputOption = InputOption()
         self.unknownOption = UnknownOption()
 
+        # Driver driver options
+        self.archOption = self.addOption(SeparateOption('-arch'))
+
+        # Misc driver options
+        self.addOption(FlagOption('-pass-exit-codes'))
+        self.addOption(FlagOption('--help'))
+        self.addOption(FlagOption('--target-help'))
+
+        self.dumpspecsOption = self.addOption(FlagOption('-dumpspecs'))
+        self.dumpversionOption = self.addOption(FlagOption('-dumpversion'))
+        self.dumpmachineOption = self.addOption(FlagOption('-dumpmachine'))
+        self.printSearchDirsOption = self.addOption(FlagOption('-print-search-dirs'))
+        self.printLibgccFilenameOption = self.addOption(FlagOption('-print-libgcc-file-name'))
+        # FIXME: Hrm, where does this come from? It isn't always true that
+        # we take both - and --. For example, gcc --S ... ends up sending
+        # -fS to cc1. Investigate.
+        #
+        # FIXME: Need to implement some form of alias support inside
+        # getLastOption to handle this.
+        self.printLibgccFileNameOption2 = self.addOption(FlagOption('--print-libgcc-file-name'))
+        self.printFileNameOption = self.addOption(JoinedOption('-print-file-name='))
+        self.printProgNameOption = self.addOption(JoinedOption('-print-prog-name='))
+        self.printProgNameOption2 = self.addOption(JoinedOption('--print-prog-name='))
+        self.printMultiDirectoryOption = self.addOption(FlagOption('-print-multi-directory'))
+        self.printMultiLibOption = self.addOption(FlagOption('-print-multi-lib'))
+        self.addOption(FlagOption('-print-multi-os-directory'))
+
+        # Hmmm, who really takes this?
+        self.addOption(FlagOption('--version'))
+
+        # Pipeline control
+        self.hashHashHashOption = self.addOption(FlagOption('-###'))
+        self.EOption = self.addOption(FlagOption('-E'))
+        self.SOption = self.addOption(FlagOption('-S'))
+        self.cOption = self.addOption(FlagOption('-c'))
+        self.combineOption = self.addOption(FlagOption('-combine'))
+        self.noIntegratedCPPOption = self.addOption(FlagOption('-no-integrated-cpp'))
+        self.pipeOption = self.addOption(FlagOption('-pipe'))
+        self.saveTempsOption = self.addOption(FlagOption('-save-temps'))
+        self.saveTempsOption2 = self.addOption(FlagOption('--save-temps'))
+        self.addOption(JoinedOption('-specs='))
+        self.addOption(FlagOption('-time'))
+        self.addOption(FlagOption('-v'))
+
+        # Input/output stuff
+        self.oOption = self.addOption(JoinedOrSeparateOption('-o'))
+        self.xOption = self.addOption(JoinedOrSeparateOption('-x'))
+
+        # FIXME: What do these actually do? The documentation is less than
+        # clear.
+        self.addOption(FlagOption('-ObjC'))
+        self.addOption(FlagOption('-ObjC++'))
+
+        # FIXME: Weird, gcc claims this here in help but I'm not sure why;
+        # perhaps interaction with preprocessor? Investigate.
+        self.addOption(JoinedOption('-std='))
+        self.addOption(JoinedOrSeparateOption('--sysroot'))
+
+        # Version control
+        self.addOption(JoinedOrSeparateOption('-B'))
+        self.addOption(JoinedOrSeparateOption('-V'))
+        self.addOption(JoinedOrSeparateOption('-b'))
+
+        # Blanket pass-through options.
+
+        self.addOption(JoinedOption('-Wa,'))
+        self.addOption(SeparateOption('-Xassembler'))
+
+        self.addOption(JoinedOption('-Wp,'))
+        self.addOption(SeparateOption('-Xpreprocessor'))
+
+        self.addOption(JoinedOption('-Wl,'))
+        self.addOption(SeparateOption('-Xlinker'))
+
+        ####
+        # Bring on the random garbage.
+
+        self.addOption(FlagOption('-MD'))
+        self.addOption(FlagOption('-MP'))
+        self.addOption(FlagOption('-MM'))
+        self.addOption(JoinedOrSeparateOption('-MF'))
+        self.addOption(JoinedOrSeparateOption('-MT'))
+        self.addOption(FlagOption('-undef'))
+
+        self.addOption(FlagOption('-w'))
+        self.addOption(JoinedOrSeparateOption('-allowable_client'))
+        self.addOption(JoinedOrSeparateOption('-client_name'))
+        self.addOption(JoinedOrSeparateOption('-compatibility_version'))
+        self.addOption(JoinedOrSeparateOption('-current_version'))
+        self.addOption(JoinedOrSeparateOption('-exported_symbols_list'))
+        self.addOption(JoinedOrSeparateOption('-idirafter'))
+        self.addOption(JoinedOrSeparateOption('-iquote'))
+        self.addOption(JoinedOrSeparateOption('-isysroot'))
+        self.addOption(JoinedOrSeparateOption('-keep_private_externs'))
+        self.addOption(JoinedOrSeparateOption('-seg1addr'))
+        self.addOption(JoinedOrSeparateOption('-segprot'))
+        self.addOption(JoinedOrSeparateOption('-sub_library'))
+        self.addOption(JoinedOrSeparateOption('-sub_umbrella'))
+        self.addOption(JoinedOrSeparateOption('-umbrella'))
+        self.addOption(JoinedOrSeparateOption('-undefined'))
+        self.addOption(JoinedOrSeparateOption('-unexported_symbols_list'))
+        self.addOption(JoinedOrSeparateOption('-weak_framework'))
+        self.addOption(JoinedOption('-headerpad_max_install_names'))
+        self.addOption(FlagOption('-twolevel_namespace'))
+        self.addOption(FlagOption('-prebind'))
+        self.addOption(FlagOption('-prebind_all_twolevel_modules'))
+        self.addOption(FlagOption('-single_module'))
+        self.addOption(FlagOption('-nomultidefs'))
+        self.addOption(FlagOption('-nostdlib'))
+        self.addOption(FlagOption('-nostdinc'))
+        self.addOption(FlagOption('-static'))
+        self.addOption(FlagOption('-shared'))
+        self.addOption(FlagOption('-C'))
+        self.addOption(FlagOption('-CC'))
+        self.addOption(FlagOption('-R'))
+        self.addOption(FlagOption('-P'))
+        self.addOption(FlagOption('-all_load'))
+        self.addOption(FlagOption('--constant-cfstrings'))
+        self.addOption(FlagOption('-traditional'))
+        self.addOption(FlagOption('--traditional'))
+        self.addOption(FlagOption('-no_dead_strip_inits_and_terms'))
+        self.addOption(MultiArgOption('-sectalign', numArgs=3))
+        self.addOption(MultiArgOption('-sectcreate', numArgs=3))
+        self.addOption(MultiArgOption('-sectorder', numArgs=3))
+
+        # I dunno why these don't end up working when joined. Maybe
+        # because of translation?
+        self.filelistOption = self.addOption(SeparateOption('-filelist'))
+        self.addOption(SeparateOption('-framework'))
+        self.addOption(SeparateOption('-install_name'))
+        self.addOption(SeparateOption('-seg_addr_table'))
+        self.addOption(SeparateOption('-seg_addr_table_filename'))
+
+        # Where are these coming from? I can't find them...
+        self.addOption(JoinedOrSeparateOption('-e')) # Gets forwarded to linker
+        self.addOption(JoinedOrSeparateOption('-r'))
+
+        # Is this actually declared anywhere? I can only find it in a
+        # spec. :(
+        self.addOption(FlagOption('-pg'))
+
+        doNotReallySupport = 1
+        if doNotReallySupport:
+            # Archaic gcc option.
+            self.addOption(FlagOption('-cpp-precomp'))
+            self.addOption(FlagOption('-no-cpp-precomp'))
+
+        # C options for testing
+
+        self.addOption(JoinedOrSeparateOption('-include'))
+        self.addOption(JoinedOrSeparateOption('-A'))
+        self.addOption(JoinedOrSeparateOption('-D'))
+        self.addOption(JoinedOrSeparateOption('-F'))
+        self.addOption(JoinedOrSeparateOption('-I'))
+        self.addOption(JoinedOrSeparateOption('-L'))
+        self.addOption(JoinedOrSeparateOption('-U'))
+        self.addOption(JoinedOrSeparateOption('-l'))
+        self.addOption(JoinedOrSeparateOption('-u'))
+
+        # FIXME: What is going on here? '-X' goes to linker, and -X ... goes nowhere?
+        self.addOption(FlagOption('-X'))
+        # Not exactly sure how to decompose this. I split out -Xarch_
+        # because we need to recognize that in the driver driver part.
+        # FIXME: Man, this is lame it needs its own option.
+        self.XarchOption = self.addOption(JoinedAndSeparateOption('-Xarch_'))
+        self.addOption(JoinedOption('-X'))
+
+        # The driver needs to know about this flag.
+        self.syntaxOnlyOption = self.addOption(FlagOption('-fsyntax-only'))
+
+        # FIXME: Wrong?
+        # FIXME: What to do about the ambiguity of options like
+        # -dumpspecs? How is this handled in gcc?
+        self.addOption(JoinedOption('-d'))
+        self.addOption(JoinedOption('-g'))
+        self.addOption(JoinedOption('-f'))
+        self.addOption(JoinedOption('-m'))
+        self.addOption(JoinedOption('-i'))
+        self.addOption(JoinedOption('-O'))
+        self.addOption(JoinedOption('-W'))
+        # FIXME: Weird. This option isn't really separate, --param=a=b
+        # works. An alias somewhere?
+        self.addOption(SeparateOption('--param'))
+
+        # FIXME: What is this? Seems to do something on Linux. I think
+        # only one is valid, but have a log that uses both.
+        self.addOption(FlagOption('-pthread'))
+        self.addOption(FlagOption('-pthreads'))
+
     def addOption(self, opt):
         self.options.append(opt)
+        return opt
 
     def parseArgs(self, argv):
         """
@@ -302,194 +497,3 @@ class OptionParser:
             if arg is not None:
                 return arg
         return PositionalArg(i, self.unknownOption)
-
-def createOptionParser():
-    op = OptionParser()
-    
-    # Driver driver options
-    op.addOption(SeparateOption('-arch'))
-
-    # Misc driver options
-    op.addOption(FlagOption('-pass-exit-codes'))
-    op.addOption(FlagOption('--help'))
-    op.addOption(FlagOption('--target-help'))
-    
-    op.addOption(FlagOption('-dumpspecs'))
-    op.addOption(FlagOption('-dumpversion'))
-    op.addOption(FlagOption('-dumpmachine'))
-    op.addOption(FlagOption('-print-search-dirs'))
-    op.addOption(FlagOption('-print-libgcc-file-name'))
-    # FIXME: Hrm, where does this come from? It isn't always true that
-    # we take both - and --. For example, gcc --S ... ends up sending
-    # -fS to cc1. Investigate.
-    op.addOption(FlagOption('--print-libgcc-file-name'))
-    op.addOption(JoinedOption('-print-file-name='))
-    op.addOption(JoinedOption('-print-prog-name='))
-    op.addOption(JoinedOption('--print-prog-name='))
-    op.addOption(FlagOption('-print-multi-directory'))
-    op.addOption(FlagOption('-print-multi-lib'))
-    op.addOption(FlagOption('-print-multi-os-directory'))
-
-    # Hmmm, who really takes this?
-    op.addOption(FlagOption('--version'))
-    
-    # Pipeline control
-    op.addOption(FlagOption('-###'))
-    op.addOption(FlagOption('-E'))
-    op.addOption(FlagOption('-S'))
-    op.addOption(FlagOption('-c'))
-    op.addOption(FlagOption('-combine'))
-    op.addOption(FlagOption('-no-integrated-cpp'))
-    op.addOption(FlagOption('-pipe'))
-    op.addOption(FlagOption('-save-temps'))
-    op.addOption(FlagOption('--save-temps'))
-    op.addOption(JoinedOption('-specs='))
-    op.addOption(FlagOption('-time'))
-    op.addOption(FlagOption('-v'))
-
-    # Input/output stuff
-    op.addOption(JoinedOrSeparateOption('-o'))
-    op.addOption(JoinedOrSeparateOption('-x'))
-
-    # FIXME: What do these actually do? The documentation is less than
-    # clear.
-    op.addOption(FlagOption('-ObjC'))
-    op.addOption(FlagOption('-ObjC++'))
-
-    # FIXME: Weird, gcc claims this here in help but I'm not sure why;
-    # perhaps interaction with preprocessor? Investigate.
-    op.addOption(JoinedOption('-std='))
-    op.addOption(JoinedOrSeparateOption('--sysroot'))
-
-    # Version control
-    op.addOption(JoinedOrSeparateOption('-B'))
-    op.addOption(JoinedOrSeparateOption('-V'))
-    op.addOption(JoinedOrSeparateOption('-b'))
-
-    # Blanket pass-through options.
-    
-    op.addOption(JoinedOption('-Wa,'))
-    op.addOption(SeparateOption('-Xassembler'))
-
-    op.addOption(JoinedOption('-Wp,'))
-    op.addOption(SeparateOption('-Xpreprocessor'))
-
-    op.addOption(JoinedOption('-Wl,'))
-    op.addOption(SeparateOption('-Xlinker'))
-
-    ####
-    # Bring on the random garbage.
-
-    op.addOption(FlagOption('-MD'))
-    op.addOption(FlagOption('-MP'))
-    op.addOption(FlagOption('-MM'))
-    op.addOption(JoinedOrSeparateOption('-MF'))
-    op.addOption(JoinedOrSeparateOption('-MT'))
-    op.addOption(FlagOption('-undef'))
-
-    op.addOption(FlagOption('-w'))
-    op.addOption(JoinedOrSeparateOption('-allowable_client'))
-    op.addOption(JoinedOrSeparateOption('-client_name'))
-    op.addOption(JoinedOrSeparateOption('-compatibility_version'))
-    op.addOption(JoinedOrSeparateOption('-current_version'))
-    op.addOption(JoinedOrSeparateOption('-exported_symbols_list'))
-    op.addOption(JoinedOrSeparateOption('-idirafter'))
-    op.addOption(JoinedOrSeparateOption('-iquote'))
-    op.addOption(JoinedOrSeparateOption('-isysroot'))
-    op.addOption(JoinedOrSeparateOption('-keep_private_externs'))
-    op.addOption(JoinedOrSeparateOption('-seg1addr'))
-    op.addOption(JoinedOrSeparateOption('-segprot'))
-    op.addOption(JoinedOrSeparateOption('-sub_library'))
-    op.addOption(JoinedOrSeparateOption('-sub_umbrella'))
-    op.addOption(JoinedOrSeparateOption('-umbrella'))
-    op.addOption(JoinedOrSeparateOption('-undefined'))
-    op.addOption(JoinedOrSeparateOption('-unexported_symbols_list'))
-    op.addOption(JoinedOrSeparateOption('-weak_framework'))
-    op.addOption(JoinedOption('-headerpad_max_install_names'))
-    op.addOption(FlagOption('-twolevel_namespace'))
-    op.addOption(FlagOption('-prebind'))
-    op.addOption(FlagOption('-prebind_all_twolevel_modules'))
-    op.addOption(FlagOption('-single_module'))
-    op.addOption(FlagOption('-nomultidefs'))
-    op.addOption(FlagOption('-nostdlib'))
-    op.addOption(FlagOption('-nostdinc'))
-    op.addOption(FlagOption('-static'))
-    op.addOption(FlagOption('-shared'))
-    op.addOption(FlagOption('-C'))
-    op.addOption(FlagOption('-CC'))
-    op.addOption(FlagOption('-R'))
-    op.addOption(FlagOption('-P'))
-    op.addOption(FlagOption('-all_load'))
-    op.addOption(FlagOption('--constant-cfstrings'))
-    op.addOption(FlagOption('-traditional'))
-    op.addOption(FlagOption('--traditional'))
-    op.addOption(FlagOption('-no_dead_strip_inits_and_terms'))
-    op.addOption(MultiArgOption('-sectalign', numArgs=3))
-    op.addOption(MultiArgOption('-sectcreate', numArgs=3))
-    op.addOption(MultiArgOption('-sectorder', numArgs=3))
-
-    # I dunno why these don't end up working when joined. Maybe
-    # because of translation?
-    op.addOption(SeparateOption('-filelist'))
-    op.addOption(SeparateOption('-framework'))
-    op.addOption(SeparateOption('-install_name'))
-    op.addOption(SeparateOption('-seg_addr_table'))
-    op.addOption(SeparateOption('-seg_addr_table_filename'))
-
-    # Where are these coming from? I can't find them...
-    op.addOption(JoinedOrSeparateOption('-e')) # Gets forwarded to linker
-    op.addOption(JoinedOrSeparateOption('-r'))
-
-    # Is this actually declared anywhere? I can only find it in a
-    # spec. :(
-    op.addOption(FlagOption('-pg'))
-
-    doNotReallySupport = 1
-    if doNotReallySupport:
-        # Archaic gcc option.
-        op.addOption(FlagOption('-cpp-precomp'))
-        op.addOption(FlagOption('-no-cpp-precomp'))
-
-    # C options for testing
-
-    op.addOption(JoinedOrSeparateOption('-include'))
-    op.addOption(JoinedOrSeparateOption('-A'))
-    op.addOption(JoinedOrSeparateOption('-D'))
-    op.addOption(JoinedOrSeparateOption('-F'))
-    op.addOption(JoinedOrSeparateOption('-I'))
-    op.addOption(JoinedOrSeparateOption('-L'))
-    op.addOption(JoinedOrSeparateOption('-U'))
-    op.addOption(JoinedOrSeparateOption('-l'))
-    op.addOption(JoinedOrSeparateOption('-u'))
-
-    # FIXME: What is going on here? '-X' goes to linker, and -X ... goes nowhere?
-    op.addOption(FlagOption('-X'))
-    # Not exactly sure how to decompose this. I split out -Xarch_
-    # because we need to recognize that in the driver driver part.
-    # FIXME: Man, this is lame it needs its own option.
-    op.addOption(JoinedAndSeparateOption('-Xarch_'))
-    op.addOption(JoinedOption('-X'))
-
-    # The driver needs to know about this flag.
-    op.addOption(FlagOption('-fsyntax-only'))
-
-    # FIXME: Wrong?
-    # FIXME: What to do about the ambiguity of options like
-    # -dumpspecs? How is this handled in gcc?
-    op.addOption(JoinedOption('-d'))
-    op.addOption(JoinedOption('-g'))
-    op.addOption(JoinedOption('-f'))
-    op.addOption(JoinedOption('-m'))
-    op.addOption(JoinedOption('-i'))
-    op.addOption(JoinedOption('-O'))
-    op.addOption(JoinedOption('-W'))
-    # FIXME: Weird. This option isn't really separate, --param=a=b
-    # works. An alias somewhere?
-    op.addOption(SeparateOption('--param'))
-
-    # FIXME: What is this? Seems to do something on Linux. I think
-    # only one is valid, but have a log that uses both.
-    op.addOption(FlagOption('-pthread'))
-    op.addOption(FlagOption('-pthreads'))
-
-    return op

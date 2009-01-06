@@ -3,7 +3,7 @@ import Jobs
 import Types
 
 class Tool(object):
-    """Tool - A concrete implementation of a phase."""
+    """Tool - A concrete implementation of an action."""
 
     eFlagsPipedInput = 1 << 0
     eFlagsPipedOutput = 1 << 1
