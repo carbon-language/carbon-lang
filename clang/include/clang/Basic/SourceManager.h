@@ -48,15 +48,16 @@ namespace SrcMgr {
   
   /// ContentCache - Once instance of this struct is kept for every file
   ///  loaded or used.  This object owns the MemoryBuffer object.
-  struct ContentCache {
+  class ContentCache {
+    /// Buffer - The actual buffer containing the characters from the input
+    /// file.  This is owned by the ContentCache object.
+    const llvm::MemoryBuffer* Buffer;
+
+  public:
     /// Reference to the file entry.  This reference does not own
     /// the FileEntry object.  It is possible for this to be NULL if
     /// the ContentCache encapsulates an imaginary text buffer.
     const FileEntry* Entry;
-    
-    /// Buffer - The actual buffer containing the characters from the input
-    /// file.  This is owned by the ContentCache object.
-    const llvm::MemoryBuffer* Buffer;
     
     /// SourceLineCache - A new[]'d array of offsets for each source line.  This
     /// is lazily computed.  This is owned by the ContentCache object.
@@ -65,9 +66,28 @@ namespace SrcMgr {
     /// NumLines - The number of lines in this ContentCache.  This is only valid
     /// if SourceLineCache is non-null.
     unsigned NumLines;
+    
+    /// getBuffer - Returns the memory buffer for the associated content.
+    const llvm::MemoryBuffer* getBuffer() const;
+    
+    /// getSize - Returns the size of the content encapsulated by this
+    ///  ContentCache. This can be the size of the source file or the size of an
+    ///  arbitrary scratch buffer.  If the ContentCache encapsulates a source
+    ///  file this size is retrieved from the file's FileEntry.
+    unsigned getSize() const;
+    
+    /// getSizeBytesMapped - Returns the number of bytes actually mapped for
+    ///  this ContentCache.  This can be 0 if the MemBuffer was not actually
+    ///  instantiated.
+    unsigned getSizeBytesMapped() const;
+    
+    void setBuffer(const llvm::MemoryBuffer* B) {
+      assert(!Buffer && "MemoryBuffer already set.");
+      Buffer = B;
+    }
         
     ContentCache(const FileEntry* e = NULL)
-    : Entry(e), Buffer(NULL), SourceLineCache(NULL), NumLines(0) {}
+      : Buffer(NULL), Entry(e), SourceLineCache(NULL), NumLines(0) {}
 
     ~ContentCache();
     
@@ -307,7 +327,7 @@ public:
   /// getBuffer - Return the buffer for the specified FileID.
   ///
   const llvm::MemoryBuffer *getBuffer(unsigned FileID) const {
-    return getContentCache(FileID)->Buffer;
+    return getContentCache(FileID)->getBuffer();
   }
   
   /// getBufferData - Return a pointer to the start and end of the character
@@ -506,7 +526,7 @@ private:
   /// getContentCache - Create or return a cached ContentCache for the specified
   ///  file.  This returns null on failure.
   const SrcMgr::ContentCache* getContentCache(const FileEntry* SourceFile);
-  
+
   /// createMemBufferContentCache - Create a new ContentCache for the specified
   ///  memory buffer.
   const SrcMgr::ContentCache* 

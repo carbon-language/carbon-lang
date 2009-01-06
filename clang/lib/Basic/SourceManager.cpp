@@ -29,6 +29,26 @@ ContentCache::~ContentCache() {
   delete [] SourceLineCache;
 }
 
+/// getSizeBytesMapped - Returns the number of bytes actually mapped for
+///  this ContentCache.  This can be 0 if the MemBuffer was not actually
+///  instantiated.
+unsigned ContentCache::getSizeBytesMapped() const {
+  return Buffer ? Buffer->getBufferSize() : 0;
+}
+
+/// getSize - Returns the size of the content encapsulated by this ContentCache.
+///  This can be the size of the source file or the size of an arbitrary
+///  scratch buffer.  If the ContentCache encapsulates a source file, that
+///  file is not lazily brought in from disk to satisfy this query.
+unsigned ContentCache::getSize() const {
+  return Entry ? Entry->getSize() : Buffer->getBufferSize();
+}
+
+const llvm::MemoryBuffer* ContentCache::getBuffer() const {
+  return Buffer;
+}
+
+
 /// getFileInfo - Create or return a cached FileInfo for the specified file.
 ///
 const ContentCache* SourceManager::getContentCache(const FileEntry *FileEnt) {
@@ -49,7 +69,9 @@ const ContentCache* SourceManager::getContentCache(const FileEntry *FileEnt) {
 
   ContentCache& Entry = const_cast<ContentCache&>(*FileInfos.insert(I,FileEnt));
 
-  Entry.Buffer = File;
+  // FIXME: Shortly the above logic that creates a MemBuffer will be moved
+  // to ContentCache::getBuffer().  This way it can be done lazily.
+  Entry.setBuffer(File);
   Entry.SourceLineCache = 0;
   Entry.NumLines = 0;
   return &Entry;
@@ -66,7 +88,7 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
   // temporary we would use in the call to "push_back".
   MemBufferInfos.push_back(ContentCache());
   ContentCache& Entry = const_cast<ContentCache&>(MemBufferInfos.back());
-  Entry.Buffer = Buffer;
+  Entry.setBuffer(Buffer);
   return &Entry;
 }
 
@@ -81,7 +103,7 @@ unsigned SourceManager::createFileID(const ContentCache *File,
   // to fit an arbitrary position in the file in the FilePos field.  To handle
   // this, we create one FileID for each chunk of the file that fits in a
   // FilePos field.
-  unsigned FileSize = File->Buffer->getBufferSize();
+  unsigned FileSize = File->getSize();
   if (FileSize+1 < (1 << SourceLocation::FilePosBits)) {
     FileIDs.push_back(FileIDInfo::get(IncludePos, 0, File, FileCharacter));
     assert(FileIDs.size() < (1 << SourceLocation::FileIDBits) &&
@@ -159,7 +181,8 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
   // heavily used by -E mode.
   SL = getPhysicalLoc(SL);
   
-  return getContentCache(SL.getFileID())->Buffer->getBufferStart() + 
+  // Note that calling 'getBuffer()' may lazily page in a source file.
+  return getContentCache(SL.getFileID())->getBuffer()->getBufferStart() + 
          getFullFilePos(SL);
 }
 
@@ -187,12 +210,17 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
 const char *SourceManager::getSourceName(SourceLocation Loc) const {
   unsigned FileID = Loc.getFileID();
   if (FileID == 0) return "";
-  return getContentCache(FileID)->Buffer->getBufferIdentifier();
+  
+  // To get the source name, first consult the FileEntry (if one exists) before
+  // the MemBuffer as this will avoid unnecessarily paging in the MemBuffer.
+  const SrcMgr::ContentCache* C = getContentCache(FileID);
+  return C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
 }
 
 static void ComputeLineNumbers(ContentCache* FI) DISABLE_INLINE;
-static void ComputeLineNumbers(ContentCache* FI) {
-  const MemoryBuffer *Buffer = FI->Buffer;
+static void ComputeLineNumbers(ContentCache* FI) {  
+  // Note that calling 'getBuffer()' may lazily page in the file.
+  const MemoryBuffer *Buffer = FI->getBuffer();
   
   // Find the file offsets of all of the *physical* source lines.  This does
   // not look at trigraphs, escaped newlines, or anything else tricky.
@@ -341,7 +369,7 @@ void SourceManager::PrintStats() const {
   for (std::set<ContentCache>::const_iterator I = 
        FileInfos.begin(), E = FileInfos.end(); I != E; ++I) {
     NumLineNumsComputed += I->SourceLineCache != 0;
-    NumFileBytesMapped  += I->Buffer->getBufferSize();
+    NumFileBytesMapped  += I->getSizeBytesMapped();
   }
   
   llvm::cerr << NumFileBytesMapped << " bytes of files mapped, "
