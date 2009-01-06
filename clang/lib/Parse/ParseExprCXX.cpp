@@ -526,7 +526,7 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
     return true;
   }
   
-  while (ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec));
+  while (ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec)) ;
 
   return false;
 }
