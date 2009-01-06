@@ -87,12 +87,15 @@ public:
   /// offset in the current file.
   SourceLocation getLocation() const { return Loc; }
   unsigned getLength() const {
-    assert(!isAnnotationToken() && "Used Length on annotation token");
+    assert(!isAnnotationToken() && "Annotation tokens have no length field");
     return UintData;
   }
 
   void setLocation(SourceLocation L) { Loc = L; }
-  void setLength(unsigned Len) { UintData = Len; }
+  void setLength(unsigned Len) {
+    assert(!isAnnotationToken() && "Annotation tokens have no length field");
+    UintData = Len;
+  }
 
   SourceLocation getAnnotationEndLoc() const {
     assert(isAnnotationToken() && "Used AnnotEndLocID on non-annotation token");
@@ -120,6 +123,7 @@ public:
   /// startToken - Reset all flags to cleared.
   ///
   void startToken() {
+    Kind = tok::unknown;
     Flags = 0;
     PtrData = 0;
     Loc = SourceLocation();
