@@ -1577,9 +1577,6 @@ int main(int argc, char **argv) {
       ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction);
       
       HeaderInfo.ClearFileInfo();      
-      
-      if (Stats)
-        SourceMgr->PrintStats();
     }
   }
 
