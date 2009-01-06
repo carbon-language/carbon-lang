@@ -729,7 +729,8 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
           DOUT << "Adding an edge from SU # " << TrySU->NodeNum
                << " to SU #" << Copies.front()->NodeNum << "\n";
           AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
-                              /*Reg=*/0, /*isMustAlias=*/false,
+                              /*Reg=*/0, /*isNormalMemory=*/false,
+                              /*isMustAlias=*/false,
                               /*isArtificial=*/true));
           NewDef = Copies.back();
         }
@@ -738,7 +739,8 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
              << " to SU #" << TrySU->NodeNum << "\n";
         LiveRegDefs[Reg] = NewDef;
         AddPred(NewDef, SDep(TrySU, SDep::Order, /*Latency=*/1,
-                             /*Reg=*/0, /*isMustAlias=*/false,
+                             /*Reg=*/0, /*isNormalMemory=*/false,
+                             /*isMustAlias=*/false,
                              /*isArtificial=*/true));
         TrySU->isAvailable = false;
         CurSU = NewDef;
@@ -1253,7 +1255,8 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
           DOUT << "Adding a pseudo-two-addr edge from SU # " << SU->NodeNum
                << " to SU #" << SuccSU->NodeNum << "\n";
           scheduleDAG->AddPred(SU, SDep(SuccSU, SDep::Order, /*Latency=*/0,
-                                        /*Reg=*/0, /*isMustAlias=*/false,
+                                        /*Reg=*/0, /*isNormalMemory=*/false,
+                                        /*isMustAlias=*/false,
                                         /*isArtificial=*/true));
         }
       }
