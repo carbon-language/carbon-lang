@@ -49,7 +49,6 @@ namespace SrcMgr {
   /// ContentCache - Once instance of this struct is kept for every file
   ///  loaded or used.  This object owns the MemoryBuffer object.
   class ContentCache {
-  public: 
     /// Buffer - The actual buffer containing the characters from the input
     /// file.  This is owned by the ContentCache object.
     const llvm::MemoryBuffer* Buffer;
