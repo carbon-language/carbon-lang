@@ -1108,7 +1108,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     switch (MIOpc) {
     default: return 0;
     case X86::INC64r:
-    case X86::INC32r: {
+    case X86::INC32r:
+    case X86::INC64_32r: {
       assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
       unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r
         : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
@@ -1126,7 +1127,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                            Src, isKill, 1);
       break;
     case X86::DEC64r:
-    case X86::DEC32r: {
+    case X86::DEC32r:
+    case X86::DEC64_32r: {
       assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
       unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r
         : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
