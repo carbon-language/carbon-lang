@@ -178,7 +178,7 @@ Parser::ParseTemplateParameter(unsigned Depth, unsigned Position) {
   if(Tok.is(tok::kw_class) ||
      (Tok.is(tok::kw_typename) && 
          // FIXME: Next token has not been annotated!
-	 NextToken().isNot(tok::annot_qualtypename))) {
+	 NextToken().isNot(tok::annot_typename))) {
     return ParseTypeParameter(Depth, Position);
   }
   

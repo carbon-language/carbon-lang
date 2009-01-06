@@ -449,7 +449,7 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
     abort();
 
   // type-name
-  case tok::annot_qualtypename: {
+  case tok::annot_typename: {
     DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
                        Tok.getAnnotationValue());
     break;
@@ -496,7 +496,7 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
     DS.Finish(Diags, PP.getSourceManager(), getLang());
     return;
   }
-  if (Tok.is(tok::annot_qualtypename))
+  if (Tok.is(tok::annot_typename))
     DS.SetRangeEnd(Tok.getAnnotationEndLoc());
   else
     DS.SetRangeEnd(Tok.getLocation());

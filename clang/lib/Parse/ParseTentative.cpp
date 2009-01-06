@@ -654,7 +654,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw_float:
   case tok::kw_double:
   case tok::kw_void:
-  case tok::annot_qualtypename:
+  case tok::annot_typename:
     if (NextToken().is(tok::l_paren))
       return TPResult::Ambiguous();
 

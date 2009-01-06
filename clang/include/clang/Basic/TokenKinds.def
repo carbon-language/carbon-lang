@@ -397,7 +397,7 @@ OBJC2_AT_KEYWORD(dynamic)
 //       bycopy/byref/in/inout/oneway/out?
 
 ANNOTATION(cxxscope)     // annotation for a C++ scope spec, e.g. "::foo::bar::"
-ANNOTATION(qualtypename) // annotation for a C typedef name, a C++ (possibly
+ANNOTATION(typename)     // annotation for a C typedef name, a C++ (possibly
                          // qualified) typename, e.g. "foo::MyClass", or
                          // template-id that names a type ("std::vector<int>")
 ANNOTATION(template_id)  // annotation for a C++ template-id that names a

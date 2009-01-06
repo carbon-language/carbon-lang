@@ -498,7 +498,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::identifier: {      // primary-expression: identifier
                                // unqualified-id: identifier
                                // constant: enumeration-constant
-    // Turn a potentially qualified name into a annot_qualtypename or
+    // Turn a potentially qualified name into a annot_typename or
     // annot_cxxscope if it would be valid.  This handles things like x::y, etc.
     if (getLang().CPlusPlus) {
       // If TryAnnotateTypeOrScopeToken annotates the token, tail recurse.
@@ -622,7 +622,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_double:
   case tok::kw_void:
   case tok::kw_typeof:
-  case tok::annot_qualtypename: {
+  case tok::annot_typename: {
     if (!getLang().CPlusPlus) {
       Diag(Tok, diag::err_expected_expression);
       return ExprError();

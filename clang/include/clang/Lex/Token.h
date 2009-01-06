@@ -78,7 +78,7 @@ public:
   bool isNot(tok::TokenKind K) const { return Kind != (unsigned) K; }
 
   bool isAnnotationToken() const { 
-    return is(tok::annot_qualtypename) || 
+    return is(tok::annot_typename) || 
            is(tok::annot_cxxscope) ||
            is(tok::annot_template_id);
   }

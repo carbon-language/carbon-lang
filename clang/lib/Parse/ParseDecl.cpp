@@ -728,7 +728,7 @@ bool Parser::MaybeParseTypeSpecifier(DeclSpec &DS, int& isInvalid,
     return false;
       
   // simple-type-specifier:
-  case tok::annot_qualtypename: {
+  case tok::annot_typename: {
     isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
                                    Tok.getAnnotationValue());
     DS.SetRangeEnd(Tok.getAnnotationEndLoc());
@@ -1255,7 +1255,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw_restrict:
 
     // typedef-name
-  case tok::annot_qualtypename:
+  case tok::annot_typename:
     return true;
       
     // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
@@ -1340,7 +1340,7 @@ bool Parser::isDeclarationSpecifier() {
   case tok::kw_explicit:
 
     // typedef-name
-  case tok::annot_qualtypename:
+  case tok::annot_typename:
 
     // GNU typeof support.
   case tok::kw_typeof:

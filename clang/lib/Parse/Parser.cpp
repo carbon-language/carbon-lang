@@ -761,7 +761,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
                                         CurScope, &SS)) {
       // This is a typename. Replace the current token in-place with an
       // annotation type token.
-      Tok.setKind(tok::annot_qualtypename);
+      Tok.setKind(tok::annot_typename);
       Tok.setAnnotationValue(Ty);
       Tok.setAnnotationEndLoc(Tok.getLocation());
       if (SS.isNotEmpty()) // it was a C++ qualified type name.
