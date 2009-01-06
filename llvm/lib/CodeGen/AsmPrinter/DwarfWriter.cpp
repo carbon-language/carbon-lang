@@ -3291,6 +3291,39 @@ public:
       delete Values[j];
   }
 
+  /// SetDebugInfo - Create global DIEs and emit initial debug info sections.
+  /// This is inovked by the target AsmPrinter.
+  void SetDebugInfo() {
+    // FIXME - Check if the module has debug info or not.
+      // Create all the compile unit DIEs.
+      ConstructCompileUnits();
+
+      // Create DIEs for each of the externally visible global variables.
+      ConstructGlobalVariableDIEs();
+
+      // Create DIEs for each of the externally visible subprograms.
+      ConstructSubprograms();
+
+      // Prime section data.
+      SectionMap.insert(TAI->getTextSection());
+
+      // Print out .file directives to specify files for .loc directives. These
+      // are printed out early so that they precede any .loc directives.
+      if (TAI->hasDotLocAndDotFile()) {
+        for (unsigned i = 1, e = SrcFiles.size(); i <= e; ++i) {
+          sys::Path FullPath(Directories[SrcFiles[i].getDirectoryID()]);
+          bool AppendOk = FullPath.appendComponent(SrcFiles[i].getName());
+          assert(AppendOk && "Could not append filename to directory!");
+          AppendOk = false;
+          Asm->EmitFile(i, FullPath.toString());
+          Asm->EOL();
+        }
+      }
+
+      // Emit initial sections
+      EmitInitial();
+  }
+
   /// SetModuleInfo - Set machine module information when it's known that pass
   /// manager has created it.  Set by the target AsmPrinter.
   void SetModuleInfo(MachineModuleInfo *mmi) {
