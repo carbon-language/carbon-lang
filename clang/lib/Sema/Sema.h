@@ -482,16 +482,16 @@ public:
                                       SourceLocation MemberLoc,
                                       IdentifierInfo &Member);
                                            
-  /// Helpers for dealing with function parameters
+  /// Helpers for dealing with function parameters.
   bool CheckParmsForFunctionDef(FunctionDecl *FD);
   void CheckCXXDefaultArguments(FunctionDecl *FD);
   void CheckExtraCXXDefaultArguments(Declarator &D);
 
   // FIXME: NamespaceNameOnly parameter is added temporarily
   // we will need a better way to specify lookup criteria for things
-  // like template specializations, explicit template instatatiation etc.
+  // like template specializations, explicit template instantiations, etc.
 
-  /// More parsing and symbol table subroutines...
+  /// More parsing and symbol table subroutines.
   Decl *LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                    const DeclContext *LookupCtx = 0,
                    bool enableLazyBuiltinCreation = true,
@@ -522,7 +522,7 @@ public:
 
   NamespaceDecl *GetStdNamespace();
                            
-  /// CheckProtocolMethodDefs - This routine checks unimpletented
+  /// CheckProtocolMethodDefs - This routine checks unimplemented
   /// methods declared in protocol, and those referenced by it.
   /// \param IDecl - Used for checking for methods which may have been
   /// inherited.

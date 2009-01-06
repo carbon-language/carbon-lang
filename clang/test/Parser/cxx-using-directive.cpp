@@ -28,5 +28,6 @@ namespace D {
 
 using namespace ! ; // expected-error{{expected namespace name}}
 using namespace A ; // expected-error{{expected namespace name}}
-using namespace ::A B ; // expected-error{{expected ';' after namespace name}}
+using namespace ::A // expected-error{{expected namespace name}}
+                    B ; // expected-error{{expected ';' after namespace name}}
 

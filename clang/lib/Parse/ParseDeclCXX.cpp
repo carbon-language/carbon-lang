@@ -174,30 +174,28 @@ Parser::DeclTy *Parser::ParseUsingDirective(unsigned Context,
   SourceLocation IdentLoc = SourceLocation();
 
   // Parse namespace-name.
-  if (!SS.isInvalid() && Tok.is(tok::identifier)) {
-    // Parse identifier.
-    NamespcName = Tok.getIdentifierInfo();
-    IdentLoc = ConsumeToken();
-    // Parse (optional) attributes (most likely GNU strong-using extension)
-    if (Tok.is(tok::kw___attribute)) {
-      AttrList = ParseAttributes();
-    }
-    // Eat ';'.
-    if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
-                     AttrList? "attributes list" : "namespace name")) {
-        SkipUntil(tok::semi);
-        return 0;
-    }
-  } else {
+  if (SS.isInvalid() || Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_namespace_name);
     // If there was invalid namespace name, skip to end of decl, and eat ';'.
     SkipUntil(tok::semi);
     // FIXME: Are there cases, when we would like to call ActOnUsingDirective?
     return 0;
   }
+  
+  // Parse identifier.
+  NamespcName = Tok.getIdentifierInfo();
+  IdentLoc = ConsumeToken();
+  
+  // Parse (optional) attributes (most likely GNU strong-using extension).
+  if (Tok.is(tok::kw___attribute))
+    AttrList = ParseAttributes();
+  
+  // Eat ';'.
+  ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
+                   AttrList ? "attributes list" : "namespace name", tok::semi);
 
   return Actions.ActOnUsingDirective(CurScope, UsingLoc, NamespcLoc, SS,
-                                      IdentLoc ,NamespcName, AttrList);
+                                      IdentLoc, NamespcName, AttrList);
 }
 
 /// ParseUsingDeclaration - Parse C++ using-declaration. Assumes that
