@@ -425,6 +425,12 @@ public:
   /// information needed to perform name lookup into this context.
   DeclContext *getPrimaryContext(ASTContext &Context);
 
+  /// getLookupContext - Retrieve the innermost non-transparent
+  /// context of this context, which corresponds to the innermost
+  /// location from which name lookup can find the entities in this
+  /// context.
+  DeclContext *getLookupContext();
+
   /// getNextContext - If this is a DeclContext that may have other
   /// DeclContexts that are semantically connected but syntactically
   /// different, such as C++ namespaces, this routine retrieves the

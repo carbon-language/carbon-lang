@@ -1647,7 +1647,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
 }
 
 bool Sema::CheckObjCDeclScope(Decl *D) {
-  if (isa<TranslationUnitDecl>(CurContext))
+  if (isa<TranslationUnitDecl>(CurContext->getLookupContext()))
     return false;
   
   Diag(D->getLocation(), diag::err_objc_decls_may_only_appear_in_global_scope);

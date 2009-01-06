@@ -60,8 +60,7 @@ DeclContext *IdentifierResolver::LookupContext::getContext(Decl *D) {
   else
     return TUCtx();
 
-  while (Ctx->isTransparentContext())
-    Ctx = Ctx->getParent();
+  Ctx = Ctx->getLookupContext();
 
   if (isa<TranslationUnitDecl>(Ctx))
     return TUCtx();
@@ -132,8 +131,7 @@ IdentifierResolver::~IdentifierResolver() {
 /// true if 'D' belongs to the given declaration context.
 bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
                                        ASTContext &Context, Scope *S) const {
-  while (Ctx->isTransparentContext())
-    Ctx = Ctx->getParent();
+  Ctx = Ctx->getLookupContext();
 
   if (Ctx->isFunctionOrMethod()) {
     // Ignore the scopes associated within transparent declaration contexts.

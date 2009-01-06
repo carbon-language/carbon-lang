@@ -567,6 +567,13 @@ DeclContext::lookup(ASTContext &Context, DeclarationName Name) const {
   return const_cast<DeclContext*>(this)->lookup(Context, Name);
 }
 
+DeclContext *DeclContext::getLookupContext() {
+  DeclContext *Ctx = this;
+  while (Ctx->isTransparentContext())
+    Ctx = Ctx->getParent();
+  return Ctx;
+}
+
 void DeclContext::insert(ASTContext &Context, ScopedDecl *D) {
   DeclContext *PrimaryContext = getPrimaryContext(Context);
   if (PrimaryContext != this) {

@@ -156,9 +156,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
     // We are pushing the name of a function, which might be an
     // overloaded name.
     FunctionDecl *FD = cast<FunctionDecl>(D);
-    DeclContext *DC = FD->getDeclContext();                                     
-    while (DC->isTransparentContext())
-      DC = DC->getParent(); 
+    DeclContext *DC = FD->getDeclContext()->getLookupContext();
     IdentifierResolver::iterator Redecl
       = std::find_if(IdResolver.begin(FD->getDeclName(), DC, 
                                       false/*LookInParentCtx*/),
