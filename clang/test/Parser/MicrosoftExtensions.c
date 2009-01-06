@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -fms-extensions %s
+// RUN: clang -fsyntax-only -verify -fms-extensions -x=objective-c++ %s
 __stdcall int func0();
 int __stdcall func();
 typedef int (__cdecl *tptr)();
