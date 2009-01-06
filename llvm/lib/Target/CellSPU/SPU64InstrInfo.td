@@ -48,8 +48,8 @@ class I64SETCCNegCond<PatFrag cond, CodeFrag compare>:
 // is in a 32-bit register that contains a select mask pattern (i.e., gather
 // bits result):
 
-def : Pat<(select R32C:$rC, R64C:$rB, R64C:$rA),
-          (SELBr64_cond R64C:$rA, R64C:$rB, (FSMr32 R32C:$rC))>;
+def : Pat<(select R32C:$rCond, R64C:$rFalse, R64C:$rTrue),
+          (SELBr64_cond R64C:$rTrue, R64C:$rFalse, (FSMr32 R32C:$rCond))>;
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // The i64 seteq fragment that does the scalar->vector conversion and

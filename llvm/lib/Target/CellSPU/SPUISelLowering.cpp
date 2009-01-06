@@ -114,7 +114,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::ConstantFP, MVT::f64, Custom);
 
   // SPU's loads and stores have to be custom lowered:
-  for (unsigned sctype = (unsigned) MVT::i8; sctype < (unsigned) MVT::f128;
+  for (unsigned sctype = (unsigned) MVT::i8; sctype < (unsigned) MVT::i128;
        ++sctype) {
     MVT VT = (MVT::SimpleValueType)sctype;
 
@@ -947,6 +947,9 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       case MVT::i64:
         ArgRegClass = &SPU::R64CRegClass;
         break;
+      case MVT::i128:
+        ArgRegClass = &SPU::GPRCRegClass;
+        break;
       case MVT::f32:
         ArgRegClass = &SPU::R32FPRegClass;
         break;
@@ -1070,6 +1073,8 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
     switch (Arg.getValueType().getSimpleVT()) {
     default: assert(0 && "Unexpected ValueType for argument!");
+    case MVT::i8:
+    case MVT::i16:
     case MVT::i32:
     case MVT::i64:
     case MVT::i128:
@@ -1217,6 +1222,11 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     break;
   case MVT::i64:
     Chain = DAG.getCopyFromReg(Chain, SPU::R3, MVT::i64, InFlag).getValue(1);
+    ResultVals[0] = Chain.getValue(0);
+    NumResults = 1;
+    break;
+  case MVT::i128:
+    Chain = DAG.getCopyFromReg(Chain, SPU::R3, MVT::i128, InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
     break;
@@ -2182,24 +2192,48 @@ static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
     MVT Op0VT = Op0.getValueType();
     MVT Op0VecVT = MVT::getVectorVT(Op0VT, (128 / Op0VT.getSizeInBits()));
 
-    assert(Op0VT == MVT::i32
-           && "CellSPU: Zero/sign extending something other than i32");
-
-    DEBUG(cerr << "CellSPU.LowerI64Math: lowering zero/sign/any extend\n");
-
     SDValue PromoteScalar =
             DAG.getNode(SPUISD::PREFSLOT2VEC, Op0VecVT, Op0);
 
     // Use a shuffle to zero extend the i32 to i64 directly:
-    SDValue shufMask = DAG.getNode(ISD::BUILD_VECTOR, Op0VecVT,
-        DAG.getConstant(0x80808080, MVT::i32), DAG.getConstant(0x00010203,
-            MVT::i32), DAG.getConstant(0x80808080, MVT::i32), DAG.getConstant(
-            0x08090a0b, MVT::i32));
-    SDValue zextShuffle = DAG.getNode(SPUISD::SHUFB, Op0VecVT, PromoteScalar,
-        PromoteScalar, shufMask);
+    SDValue shufMask;
 
-    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT, DAG.getNode(ISD::BIT_CONVERT,
-        VecVT, zextShuffle));
+    switch (Op0VT.getSimpleVT()) {
+    default:
+      cerr << "CellSPU LowerI64Math: Unhandled zero/any extend MVT\n";
+      abort();
+      /*NOTREACHED*/
+      break;
+    case MVT::i32:
+      shufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                             DAG.getConstant(0x80808080, MVT::i32),
+                             DAG.getConstant(0x00010203, MVT::i32),
+                             DAG.getConstant(0x80808080, MVT::i32),
+                             DAG.getConstant(0x08090a0b, MVT::i32));
+        break;
+
+    case MVT::i16:
+      shufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                             DAG.getConstant(0x80808080, MVT::i32),
+                             DAG.getConstant(0x80800203, MVT::i32),
+                             DAG.getConstant(0x80808080, MVT::i32),
+                             DAG.getConstant(0x80800a0b, MVT::i32));
+      break;
+
+    case MVT::i8:
+      shufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                             DAG.getConstant(0x80808080, MVT::i32),
+                             DAG.getConstant(0x80808003, MVT::i32),
+                             DAG.getConstant(0x80808080, MVT::i32),
+                             DAG.getConstant(0x8080800b, MVT::i32));
+      break;
+    }
+
+    SDValue zextShuffle = DAG.getNode(SPUISD::SHUFB, Op0VecVT,
+                                      PromoteScalar, PromoteScalar, shufMask);
+
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
+                       DAG.getNode(ISD::BIT_CONVERT, VecVT, zextShuffle));
   }
 
   case ISD::ADD: {

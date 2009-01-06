@@ -1140,48 +1140,66 @@ class XSBHVecInst<ValueType vectype>:
     XSBHInst<(outs VECREG:$rDst), (ins VECREG:$rSrc),
       [(set (v8i16 VECREG:$rDst), (sext (vectype VECREG:$rSrc)))]>;
 
-class XSBHInRegInst<RegisterClass rclass>:
+class XSBHInRegInst<RegisterClass rclass, list<dag> pattern>:
     XSBHInst<(outs rclass:$rDst), (ins rclass:$rSrc),
-      [(set rclass:$rDst, (sext_inreg rclass:$rSrc, i8))]>;
+             pattern>;
 
 multiclass ExtendByteHalfword {
-  def v16i8: XSBHVecInst<v8i16>;
-  def r16:   XSBHInRegInst<R16C>;
-  def r8:    XSBHInst<(outs R16C:$rDst), (ins R8C:$rSrc),
-                      [(set R16C:$rDst, (sext R8C:$rSrc))]>;
+  def v16i8:     XSBHVecInst<v8i16>;
+  def r8:        XSBHInst<(outs R16C:$rDst), (ins R8C:$rSrc),
+                          [(set R16C:$rDst, (sext R8C:$rSrc))]>;
+  def r16:       XSBHInRegInst<R16C,
+                               [(set R16C:$rDst, (sext_inreg R16C:$rSrc, i8))]>;
 
   // 32-bit form for XSBH: used to sign extend 8-bit quantities to 16-bit
   // quantities to 32-bit quantities via a 32-bit register (see the sext 8->32
   // pattern below). Intentionally doesn't match a pattern because we want the
   // sext 8->32 pattern to do the work for us, namely because we need the extra
   // XSHWr32.
-  def r32:   XSBHInRegInst<R32C>;
+  def r32:   XSBHInRegInst<R32C, [/* no pattern */]>;
+  
+  // Same as the 32-bit version, but for i64
+  def r64:   XSBHInRegInst<R64C, [/* no pattern */]>;
 }
 
 defm XSBH : ExtendByteHalfword;
 
 // Sign extend halfwords to words:
-def XSHWvec:
-    RRForm_1<0b01101101010, (outs VECREG:$rDest), (ins VECREG:$rSrc),
-      "xshw\t$rDest, $rSrc", IntegerOp,
-      [(set (v4i32 VECREG:$rDest), (sext (v8i16 VECREG:$rSrc)))]>;
 
-def XSHWr32:
-    RRForm_1<0b01101101010, (outs R32C:$rDst), (ins R32C:$rSrc),
-      "xshw\t$rDst, $rSrc", IntegerOp,
-      [(set R32C:$rDst, (sext_inreg R32C:$rSrc, i16))]>;
+class XSHWInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm_1<0b01101101010, OOL, IOL, "xshw\t$rDest, $rSrc",
+            IntegerOp, pattern>;
 
-def XSHWr16:
-    RRForm_1<0b01101101010, (outs R32C:$rDst), (ins R16C:$rSrc),
-      "xshw\t$rDst, $rSrc", IntegerOp,
-      [(set R32C:$rDst, (sext R16C:$rSrc))]>;
+class XSHWVecInst<ValueType in_vectype, ValueType out_vectype>:
+    XSHWInst<(outs VECREG:$rDest), (ins VECREG:$rSrc),
+             [(set (out_vectype VECREG:$rDest),
+                   (sext (in_vectype VECREG:$rSrc)))]>;
+
+class XSHWInRegInst<RegisterClass rclass, list<dag> pattern>:
+    XSHWInst<(outs rclass:$rDest), (ins rclass:$rSrc),
+             pattern>;
+             
+class XSHWRegInst<RegisterClass rclass>:
+    XSHWInst<(outs rclass:$rDest), (ins R16C:$rSrc),
+             [(set rclass:$rDest, (sext R16C:$rSrc))]>;
+
+multiclass ExtendHalfwordWord {
+  def v4i32: XSHWVecInst<v4i32, v8i16>;
+  
+  def r16:   XSHWRegInst<R32C>;
+  
+  def r32:   XSHWInRegInst<R32C,
+                          [(set R32C:$rDest, (sext_inreg R32C:$rSrc, i16))]>;
+  def r64:   XSHWInRegInst<R64C, [/* no pattern */]>;
+}
+
+defm XSHW : ExtendHalfwordWord;
 
 // Sign-extend words to doublewords (32->64 bits)
 
 class XSWDInst<dag OOL, dag IOL, list<dag> pattern>:
-    RRForm_1<0b01100101010, OOL, IOL,
-      "xswd\t$rDst, $rSrc", IntegerOp,
-      pattern>;
+    RRForm_1<0b01100101010, OOL, IOL, "xswd\t$rDst, $rSrc",
+              IntegerOp, pattern>;
       
 class XSWDVecInst<ValueType in_vectype, ValueType out_vectype>:
     XSWDInst<(outs VECREG:$rDst), (ins VECREG:$rSrc),
@@ -1411,6 +1429,18 @@ class ORCvtVecGPRC:
 
 class ORCvtGPRCReg<RegisterClass rclass>:
     ORCvtForm<(outs rclass:$rT), (ins GPRC:$rA)>;
+    
+class ORCvtFormR32Reg<RegisterClass rclass>:
+    ORCvtForm<(outs rclass:$rT), (ins R32C:$rA)>;
+    
+class ORCvtFormRegR32<RegisterClass rclass>:
+    ORCvtForm<(outs R32C:$rT), (ins rclass:$rA)>;
+
+class ORCvtFormR64Reg<RegisterClass rclass>:
+    ORCvtForm<(outs rclass:$rT), (ins R64C:$rA)>;
+    
+class ORCvtFormRegR64<RegisterClass rclass>:
+    ORCvtForm<(outs R64C:$rT), (ins rclass:$rA)>;
 
 class ORCvtGPRCVec:
     ORCvtForm<(outs VECREG:$rT), (ins GPRC:$rA)>;
@@ -1481,6 +1511,24 @@ multiclass BitwiseOr
 
   // Conversion from vector to GPRC
   def vec_i128:  ORCvtGPRCVec;
+  
+  // Conversion from register to R32C:
+  def r16_r32:   ORCvtFormRegR32<R16C>;
+  def r8_r32:    ORCvtFormRegR32<R8C>;
+  
+  // Conversion from R32C to register
+  def r32_r16:   ORCvtFormR32Reg<R16C>;
+  def r32_r8:    ORCvtFormR32Reg<R8C>;
+  
+  // Conversion from register to R64C:
+  def r32_r64:   ORCvtFormR64Reg<R32C>;
+  def r16_r64:   ORCvtFormR64Reg<R16C>;
+  def r8_r64:    ORCvtFormR64Reg<R8C>;
+  
+  // Conversion from R64C to register
+  def r64_r32:   ORCvtFormRegR64<R32C>;
+  def r64_r16:   ORCvtFormRegR64<R16C>;
+  def r64_r8:    ORCvtFormRegR64<R8C>;
 }
 
 defm OR : BitwiseOr;
@@ -2682,7 +2730,7 @@ def : Pat<(srl R32C:$rA, (i8 imm:$val)),
           (ROTMIr32 R32C:$rA, uimm7:$val)>;
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
-// ROTQMBYvec: This is a vector form merely so that when used in an
+// ROTQMBY: This is a vector form merely so that when used in an
 // instruction pattern, type checking will succeed. This instruction assumes
 // that the user knew to negate $rB.
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
@@ -2720,8 +2768,14 @@ class ROTQMBYIVecInst<ValueType vectype>:
     ROTQMBYIInst<(outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
                  [/* no pattern */]>;
 
-class ROTQMBYIRegInst<RegisterClass rclass, Operand optype, ValueType inttype, PatLeaf pred>:
+class ROTQMBYIRegInst<RegisterClass rclass, Operand optype, ValueType inttype,
+                      PatLeaf pred>:
     ROTQMBYIInst<(outs rclass:$rT), (ins rclass:$rA, optype:$val),
+                 [/* no pattern */]>;
+
+// 128-bit zero extension form:
+class ROTQMBYIZExtInst<RegisterClass rclass, Operand optype, PatLeaf pred>:
+    ROTQMBYIInst<(outs GPRC:$rT), (ins rclass:$rA, optype:$val),
                  [/* no pattern */]>;
 
 multiclass RotateQuadBytesImm
@@ -2733,6 +2787,11 @@ multiclass RotateQuadBytesImm
 
   def r128:  ROTQMBYIRegInst<GPRC, rotNeg7imm, i32, uimm7>;
   def r64:   ROTQMBYIRegInst<R64C, rotNeg7imm, i32, uimm7>;
+  
+  def r128_zext_r8:  ROTQMBYIZExtInst<R8C, rotNeg7imm, uimm7>;
+  def r128_zext_r16: ROTQMBYIZExtInst<R16C, rotNeg7imm, uimm7>;
+  def r128_zext_r32: ROTQMBYIZExtInst<R32C, rotNeg7imm, uimm7>;
+  def r128_zext_r64: ROTQMBYIZExtInst<R64C, rotNeg7imm, uimm7>;
 }
 
 defm ROTQMBYI : RotateQuadBytesImm;
@@ -4339,6 +4398,13 @@ def : Pat<(sext_inreg R32C:$rSrc, i8),
 def : Pat<(i32 (sext R8C:$rSrc)),
           (XSHWr16 (XSBHr8 R8C:$rSrc))>;
 
+// sext 8->64: Sign extend bytes to double word
+def : Pat<(sext_inreg R64C:$rSrc, i8),
+          (XSWDr64_inreg (XSHWr64 (XSBHr64 R64C:$rSrc)))>;
+          
+def : Pat<(i64 (sext R8C:$rSrc)),
+          (XSWDr64 (XSHWr16 (XSBHr8 R8C:$rSrc)))>;
+
 // zext 8->16: Zero extend bytes to halfwords
 def : Pat<(i16 (zext R8C:$rSrc)),
           (ANDHIi8i16 R8C:$rSrc, 0xff)>;
@@ -4347,13 +4413,28 @@ def : Pat<(i16 (zext R8C:$rSrc)),
 def : Pat<(i32 (zext R8C:$rSrc)),
           (ANDIi8i32 R8C:$rSrc, 0xff)>;
 
-// anyext 8->16: Extend 8->16 bits, irrespective of sign
+// zext 8->64: Zero extend bytes to double words
+def : Pat<(i64 (zext R8C:$rSrc)),
+          (ORi64_v2i64 (SELBv4i32 (ROTQMBYv4i32
+                                    (ORv4i32_i32 (ANDIi8i32 R8C:$rSrc, 0xff)),
+                                    0x4),
+                                  (ILv4i32 0x0),
+                                  (FSMBIv4i32 0x0f0f)))>;
+
+// anyext 8->16: Extend 8->16 bits, irrespective of sign, preserves high bits
 def : Pat<(i16 (anyext R8C:$rSrc)),
           (ORHIi8i16 R8C:$rSrc, 0)>;
 
-// anyext 8->32: Extend 8->32 bits, irrespective of sign
+// anyext 8->32: Extend 8->32 bits, irrespective of sign, preserves high bits
 def : Pat<(i32 (anyext R8C:$rSrc)),
           (ORIi8i32 R8C:$rSrc, 0)>;
+
+// sext 16->64: Sign extend halfword to double word
+def : Pat<(sext_inreg R64C:$rSrc, i16),
+          (XSWDr64_inreg (XSHWr64 R64C:$rSrc))>;
+          
+def : Pat<(sext R16C:$rSrc),
+          (XSWDr64 (XSHWr16 R16C:$rSrc))>;
 
 // zext 16->32: Zero extend halfwords to words
 def : Pat<(i32 (zext R16C:$rSrc)),
@@ -4461,15 +4542,6 @@ def : Pat<(SPUindirect (SPUhi tconstpool:$in, 0),
                        (SPUlo tconstpool:$in, 0)),
           (IOHLlo (ILHUhi tconstpool:$in), tconstpool:$in)>;
 
-/*
-def : Pat<(SPUindirect R32C:$sp, i32ImmSExt10:$imm),
-          (AIr32 R32C:$sp, i32ImmSExt10:$imm)>;
-
-def : Pat<(SPUindirect R32C:$sp, imm:$imm),
-          (Ar32 R32C:$sp,
-                (IOHLr32 (ILHUr32 (HI16 imm:$imm)), (LO16 imm:$imm)))>;
- */
-
 def : Pat<(add (SPUhi tglobaladdr:$in, 0), (SPUlo tglobaladdr:$in, 0)),
           (IOHLlo (ILHUhi tglobaladdr:$in), tglobaladdr:$in)>;
 
@@ -4488,3 +4560,5 @@ include "CellSDKIntrinsics.td"
 include "SPUMathInstr.td"
 // 64-bit "instructions"/support
 include "SPU64InstrInfo.td"
+// 128-bit "instructions"/support
+include "SPU128InstrInfo.td"

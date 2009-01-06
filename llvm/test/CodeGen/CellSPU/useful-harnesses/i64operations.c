@@ -1,20 +1,12 @@
 #include <stdio.h>
-
-#define TRUE_VAL (!0)
-#define FALSE_VAL 0
-#define ARR_SIZE(arr) (sizeof(arr)/sizeof(arr[0]))
-
-typedef unsigned long long int uint64_t;
-typedef long long int int64_t;
-
-/* ~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~- */
+#include "i64operations.h"
 
 int64_t         tval_a = 1234567890003LL;
 int64_t         tval_b = 2345678901235LL;
 int64_t         tval_c = 1234567890001LL;
 int64_t         tval_d = 10001LL;
 int64_t         tval_e = 10000LL;
-int64_t         tval_f = -1068103409991LL;
+uint64_t        tval_f = 0xffffff0750135eb9;
 
 /* ~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~- */
 
@@ -129,44 +121,6 @@ uint64_t
 i64_ult_select(uint64_t a, uint64_t b, uint64_t c, uint64_t d) {
   return ((a < b) ? c : d);
 }
-
-/* ~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~- */
-
-struct harness_int64_pred {
-  const char     *fmt_string;
-  int64_t        *lhs;
-  int64_t        *rhs;
-  int64_t        *select_a;
-  int64_t        *select_b;
-  int             expected;
-  int64_t        *select_expected;
-};
-
-struct harness_uint64_pred {
-  const char     *fmt_string;
-  uint64_t       *lhs;
-  uint64_t       *rhs;
-  uint64_t       *select_a;
-  uint64_t       *select_b;
-  int             expected;
-  uint64_t       *select_expected;
-};
-
-struct int64_pred_s {
-  const char     *name;
-  int             (*predfunc) (int64_t, int64_t);
-  int64_t         (*selfunc) (int64_t, int64_t, int64_t, int64_t);
-  struct harness_int64_pred *tests;
-  int             n_tests;
-};
-
-struct uint64_pred_s {
-  const char     *name;
-  int             (*predfunc) (uint64_t, uint64_t);
-  uint64_t        (*selfunc) (uint64_t, uint64_t, uint64_t, uint64_t);
-  struct harness_uint64_pred *tests;
-  int             n_tests;
-};
 
 /* ~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~- */
 
@@ -304,8 +258,9 @@ compare_expect_int64(const struct int64_pred_s * pred)
   int             j, failed = 0;
 
   for (j = 0; j < pred->n_tests; ++j) {
-    int             pred_result =
-    (*pred->predfunc) (*pred->tests[j].lhs, *pred->tests[j].rhs);
+    int             pred_result;
+
+    pred_result = (*pred->predfunc) (*pred->tests[j].lhs, *pred->tests[j].rhs);
 
     if (pred_result != pred->tests[j].expected) {
       char            str[64];
@@ -313,26 +268,38 @@ compare_expect_int64(const struct int64_pred_s * pred)
       sprintf(str, pred->tests[j].fmt_string, pred->name);
       printf("%s: returned value is %d, expecting %d\n", str,
 	     pred_result, pred->tests[j].expected);
-      printf("  lhs = %19lld (0x%016llx)\n", *pred->tests[j].lhs, *pred->tests[j].lhs);
-      printf("  rhs = %19lld (0x%016llx)\n", *pred->tests[j].rhs, *pred->tests[j].rhs);
+      printf("  lhs = %19lld (0x%016llx)\n", *pred->tests[j].lhs,
+             *pred->tests[j].lhs);
+      printf("  rhs = %19lld (0x%016llx)\n", *pred->tests[j].rhs,
+             *pred->tests[j].rhs);
       ++failed;
     } else {
-      int64_t         selresult = (pred->selfunc) (*pred->tests[j].lhs, *pred->tests[j].rhs,
-			  *pred->tests[j].select_a, *pred->tests[j].select_b);
+      int64_t         selresult;
+
+      selresult = (pred->selfunc) (*pred->tests[j].lhs, *pred->tests[j].rhs,
+                                   *pred->tests[j].select_a,
+                                   *pred->tests[j].select_b);
+
       if (selresult != *pred->tests[j].select_expected) {
 	char            str[64];
 
 	sprintf(str, pred->tests[j].fmt_string, pred->name);
 	printf("%s select: returned value is %d, expecting %d\n", str,
 	       pred_result, pred->tests[j].expected);
-	printf("  lhs   = %19lld (0x%016llx)\n", *pred->tests[j].lhs, *pred->tests[j].lhs);
-	printf("  rhs   = %19lld (0x%016llx)\n", *pred->tests[j].rhs, *pred->tests[j].rhs);
-	printf("  true  = %19lld (0x%016llx)\n", *pred->tests[j].select_a, *pred->tests[j].select_a);
-	printf("  false = %19lld (0x%016llx)\n", *pred->tests[j].select_b, *pred->tests[j].select_b);
+	printf("  lhs   = %19lld (0x%016llx)\n", *pred->tests[j].lhs,
+	       *pred->tests[j].lhs);
+	printf("  rhs   = %19lld (0x%016llx)\n", *pred->tests[j].rhs,
+	       *pred->tests[j].rhs);
+	printf("  true  = %19lld (0x%016llx)\n", *pred->tests[j].select_a,
+	       *pred->tests[j].select_a);
+	printf("  false = %19lld (0x%016llx)\n", *pred->tests[j].select_b,
+	       *pred->tests[j].select_b);
 	++failed;
       }
     }
   }
+
+  printf("  %d tests performed, should be %d.\n", j, pred->n_tests);
 
   return failed;
 }
@@ -343,75 +310,238 @@ compare_expect_uint64(const struct uint64_pred_s * pred)
   int             j, failed = 0;
 
   for (j = 0; j < pred->n_tests; ++j) {
-    int             pred_result = (*pred->predfunc) (*pred->tests[j].lhs, *pred->tests[j].rhs);
+    int             pred_result;
 
+    pred_result = (*pred->predfunc) (*pred->tests[j].lhs, *pred->tests[j].rhs);
     if (pred_result != pred->tests[j].expected) {
       char            str[64];
 
       sprintf(str, pred->tests[j].fmt_string, pred->name);
       printf("%s: returned value is %d, expecting %d\n", str,
 	     pred_result, pred->tests[j].expected);
-      printf("  lhs = %19llu (0x%016llx)\n", *pred->tests[j].lhs, *pred->tests[j].lhs);
-      printf("  rhs = %19llu (0x%016llx)\n", *pred->tests[j].rhs, *pred->tests[j].rhs);
+      printf("  lhs = %19llu (0x%016llx)\n", *pred->tests[j].lhs,
+             *pred->tests[j].lhs);
+      printf("  rhs = %19llu (0x%016llx)\n", *pred->tests[j].rhs,
+             *pred->tests[j].rhs);
       ++failed;
     } else {
-      uint64_t        selresult = (pred->selfunc) (*pred->tests[j].lhs, *pred->tests[j].rhs,
-			  *pred->tests[j].select_a, *pred->tests[j].select_b);
+      uint64_t        selresult;
+
+      selresult = (pred->selfunc) (*pred->tests[j].lhs, *pred->tests[j].rhs,
+                                   *pred->tests[j].select_a,
+                                   *pred->tests[j].select_b);
       if (selresult != *pred->tests[j].select_expected) {
 	char            str[64];
 
 	sprintf(str, pred->tests[j].fmt_string, pred->name);
 	printf("%s select: returned value is %d, expecting %d\n", str,
 	       pred_result, pred->tests[j].expected);
-	printf("  lhs   = %19llu (0x%016llx)\n", *pred->tests[j].lhs, *pred->tests[j].lhs);
-	printf("  rhs   = %19llu (0x%016llx)\n", *pred->tests[j].rhs, *pred->tests[j].rhs);
-	printf("  true  = %19llu (0x%016llx)\n", *pred->tests[j].select_a, *pred->tests[j].select_a);
-	printf("  false = %19llu (0x%016llx)\n", *pred->tests[j].select_b, *pred->tests[j].select_b);
+	printf("  lhs   = %19llu (0x%016llx)\n", *pred->tests[j].lhs,
+	       *pred->tests[j].lhs);
+	printf("  rhs   = %19llu (0x%016llx)\n", *pred->tests[j].rhs,
+	       *pred->tests[j].rhs);
+	printf("  true  = %19llu (0x%016llx)\n", *pred->tests[j].select_a,
+	       *pred->tests[j].select_a);
+	printf("  false = %19llu (0x%016llx)\n", *pred->tests[j].select_b,
+	       *pred->tests[j].select_b);
 	++failed;
       }
     }
-
   }
+
+  printf("  %d tests performed, should be %d.\n", j, pred->n_tests);
 
   return failed;
 }
 
 /* ~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~- */
 
-uint64_t
-i64_shl_const(uint64_t a)
-{
+int
+test_i64_sext_i32(int in, int64_t expected) {
+  int64_t result = (int64_t) in;
+
+  if (result != expected) {
+    char str[64];
+    sprintf(str, "i64_sext_i32(%d) returns %lld\n", in, result);
+    return 1;
+  }
+
+  return 0;
+}
+
+int
+test_i64_sext_i16(short in, int64_t expected) {
+  int64_t result = (int64_t) in;
+
+  if (result != expected) {
+    char str[64];
+    sprintf(str, "i64_sext_i16(%hd) returns %lld\n", in, result);
+    return 1;
+  }
+
+  return 0;
+}
+
+int
+test_i64_sext_i8(signed char in, int64_t expected) {
+  int64_t result = (int64_t) in;
+
+  if (result != expected) {
+    char str[64];
+    sprintf(str, "i64_sext_i8(%d) returns %lld\n", in, result);
+    return 1;
+  }
+
+  return 0;
+}
+
+int
+test_i64_zext_i32(unsigned int in, uint64_t expected) {
+  uint64_t result = (uint64_t) in;
+
+  if (result != expected) {
+    char str[64];
+    sprintf(str, "i64_zext_i32(%u) returns %llu\n", in, result);
+    return 1;
+  }
+
+  return 0;
+}
+
+int
+test_i64_zext_i16(unsigned short in, uint64_t expected) {
+  uint64_t result = (uint64_t) in;
+
+  if (result != expected) {
+    char str[64];
+    sprintf(str, "i64_zext_i16(%hu) returns %llu\n", in, result);
+    return 1;
+  }
+
+  return 0;
+}
+
+int
+test_i64_zext_i8(unsigned char in, uint64_t expected) {
+  uint64_t result = (uint64_t) in;
+
+  if (result != expected) {
+    char str[64];
+    sprintf(str, "i64_zext_i8(%u) returns %llu\n", in, result);
+    return 1;
+  }
+
+  return 0;
+}
+
+/* ~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~- */
+
+int64_t
+i64_shl_const(int64_t a) {
   return a << 10;
 }
 
-uint64_t
-i64_shl(uint64_t a, int amt)
-{
+int64_t
+i64_shl(int64_t a, int amt) {
   return a << amt;
 }
 
 uint64_t
-i64_srl_const(uint64_t a)
-{
+u64_shl_const(uint64_t a) {
+  return a << 10;
+}
+
+uint64_t
+u64_shl(uint64_t a, int amt) {
+  return a << amt;
+}
+
+int64_t
+i64_srl_const(int64_t a) {
+  return a >> 10;
+}
+
+int64_t
+i64_srl(int64_t a, int amt) {
+  return a >> amt;
+}
+
+uint64_t
+u64_srl_const(uint64_t a) {
   return a >> 10;
 }
 
 uint64_t
-i64_srl(uint64_t a, int amt)
-{
+u64_srl(uint64_t a, int amt) {
   return a >> amt;
 }
 
 int64_t
-i64_sra_const(int64_t a)
-{
+i64_sra_const(int64_t a) {
   return a >> 10;
 }
 
 int64_t
-i64_sra(int64_t a, int amt)
-{
+i64_sra(int64_t a, int amt) {
   return a >> amt;
+}
+
+uint64_t
+u64_sra_const(uint64_t a) {
+  return a >> 10;
+}
+
+uint64_t
+u64_sra(uint64_t a, int amt) {
+  return a >> amt;
+}
+
+int
+test_u64_constant_shift(const char *func_name, uint64_t (*func)(uint64_t), uint64_t a, uint64_t expected) {
+  uint64_t result = (*func)(a);
+
+  if (result != expected) {
+    printf("%s(0x%016llx) returns 0x%016llx, expected 0x%016llx\n", func_name, a, result, expected);
+    return 1;
+  }
+
+  return 0;
+}
+
+int
+test_i64_constant_shift(const char *func_name, int64_t (*func)(int64_t), int64_t a, int64_t expected) {
+  int64_t result = (*func)(a);
+
+  if (result != expected) {
+    printf("%s(0x%016llx) returns 0x%016llx, expected 0x%016llx\n", func_name, a, result, expected);
+    return 1;
+  }
+
+  return 0;
+}
+
+int
+test_u64_variable_shift(const char *func_name, uint64_t (*func)(uint64_t, int), uint64_t a, unsigned int b, uint64_t expected) {
+  uint64_t result = (*func)(a, b);
+
+  if (result != expected) {
+    printf("%s(0x%016llx, %d) returns 0x%016llx, expected 0x%016llx\n", func_name, a, b, result, expected);
+    return 1;
+  }
+
+  return 0;
+}
+
+int
+test_i64_variable_shift(const char *func_name, int64_t (*func)(int64_t, int), int64_t a, unsigned int b, int64_t expected) {
+  int64_t result = (*func)(a, b);
+
+  if (result != expected) {
+    printf("%s(0x%016llx, %d) returns 0x%016llx, expected 0x%016llx\n", func_name, a, b, result, expected);
+    return 1;
+  }
+
+  return 0;
 }
 
 /* ~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~- */
@@ -423,12 +553,12 @@ main(void)
   const char     *something_failed = "  %d tests failed.\n";
   const char     *all_tests_passed = "  All tests passed.\n";
 
-  printf("a = %16lld (0x%016llx)\n", tval_a, tval_a);
-  printf("b = %16lld (0x%016llx)\n", tval_b, tval_b);
-  printf("c = %16lld (0x%016llx)\n", tval_c, tval_c);
-  printf("d = %16lld (0x%016llx)\n", tval_d, tval_d);
-  printf("e = %16lld (0x%016llx)\n", tval_e, tval_e);
-  printf("f = %16lld (0x%016llx)\n", tval_f, tval_f);
+  printf("tval_a = %20lld (0x%020llx)\n", tval_a, tval_a);
+  printf("tval_b = %20lld (0x%020llx)\n", tval_b, tval_b);
+  printf("tval_c = %20lld (0x%020llx)\n", tval_c, tval_c);
+  printf("tval_d = %20lld (0x%020llx)\n", tval_d, tval_d);
+  printf("tval_e = %20lld (0x%020llx)\n", tval_e, tval_e);
+  printf("tval_f = %20llu (0x%020llx)\n", tval_f, tval_f);
   printf("----------------------------------------\n");
 
   for (i = 0; i < ARR_SIZE(int64_preds); ++i) {
@@ -453,22 +583,70 @@ main(void)
     printf("----------------------------------------\n");
   }
 
-  printf("a                = 0x%016llx\n", tval_a);
-  printf("i64_shl_const(a) = 0x%016llx\n", i64_shl_const(tval_a));
-  printf("i64_shl(a)       = 0x%016llx\n", i64_shl(tval_a, 10));
-  printf("i64_srl_const(a) = 0x%016llx\n", i64_srl_const(tval_a));
-  printf("i64_srl(a)       = 0x%016llx\n", i64_srl(tval_a, 10));
-  printf("i64_sra_const(a) = 0x%016llx\n", i64_sra_const(tval_a));
-  printf("i64_sra(a)       = 0x%016llx\n", i64_sra(tval_a, 10));
+  /*----------------------------------------------------------------------*/
+
+  puts("signed/zero-extend tests:");
+
+  failed = 0;
+  failed += test_i64_sext_i32(-1, -1LL);
+  failed += test_i64_sext_i32(10, 10LL);
+  failed += test_i64_sext_i32(0x7fffffff, 0x7fffffffLL);
+  failed += test_i64_sext_i16(-1, -1LL);
+  failed += test_i64_sext_i16(10, 10LL);
+  failed += test_i64_sext_i16(0x7fff, 0x7fffLL);
+  failed += test_i64_sext_i8(-1, -1LL);
+  failed += test_i64_sext_i8(10, 10LL);
+  failed += test_i64_sext_i8(0x7f, 0x7fLL);
+
+  failed += test_i64_zext_i32(0xffffffff, 0x00000000ffffffffLLU);
+  failed += test_i64_zext_i32(0x01234567, 0x0000000001234567LLU);
+  failed += test_i64_zext_i16(0xffff,     0x000000000000ffffLLU);
+  failed += test_i64_zext_i16(0x569a,     0x000000000000569aLLU);
+  failed += test_i64_zext_i8(0xff,        0x00000000000000ffLLU);
+  failed += test_i64_zext_i8(0xa0,        0x00000000000000a0LLU);
+
+  if (failed > 0) {
+    printf("  %d tests failed.\n", failed);
+  } else {
+    printf("  All tests passed.\n");
+  }
+
   printf("----------------------------------------\n");
 
-  printf("f                = 0x%016llx\n", tval_f);
-  printf("i64_shl_const(f) = 0x%016llx\n", i64_shl_const(tval_f));
-  printf("i64_shl(f)       = 0x%016llx\n", i64_shl(tval_f, 10));
-  printf("i64_srl_const(f) = 0x%016llx\n", i64_srl_const(tval_f));
-  printf("i64_srl(f)       = 0x%016llx\n", i64_srl(tval_f, 10));
-  printf("i64_sra_const(f) = 0x%016llx\n", i64_sra_const(tval_f));
-  printf("i64_sra(f)       = 0x%016llx\n", i64_sra(tval_f, 10));
+  failed = 0;
+  puts("signed left/right shift tests:");
+  failed += test_i64_constant_shift("i64_shl_const", i64_shl_const, tval_a,     0x00047dc7ec114c00LL);
+  failed += test_i64_variable_shift("i64_shl",       i64_shl,       tval_a, 10, 0x00047dc7ec114c00LL);
+  failed += test_i64_constant_shift("i64_srl_const", i64_srl_const, tval_a,     0x0000000047dc7ec1LL);
+  failed += test_i64_variable_shift("i64_srl",       i64_srl,       tval_a, 10, 0x0000000047dc7ec1LL);
+  failed += test_i64_constant_shift("i64_sra_const", i64_sra_const, tval_a,     0x0000000047dc7ec1LL);
+  failed += test_i64_variable_shift("i64_sra",       i64_sra,       tval_a, 10, 0x0000000047dc7ec1LL);
+
+  if (failed > 0) {
+    printf("  %d tests ailed.\n", failed);
+  } else {
+    printf("  All tests passed.\n");
+  }
+
+  printf("----------------------------------------\n");
+
+  failed = 0;
+  puts("unsigned left/right shift tests:");
+  failed += test_u64_constant_shift("u64_shl_const", u64_shl_const,  tval_f,     0xfffc1d404d7ae400LL);
+  failed += test_u64_variable_shift("u64_shl",       u64_shl,        tval_f, 10, 0xfffc1d404d7ae400LL);
+  failed += test_u64_constant_shift("u64_srl_const", u64_srl_const,  tval_f,     0x003fffffc1d404d7LL);
+  failed += test_u64_variable_shift("u64_srl",       u64_srl,        tval_f, 10, 0x003fffffc1d404d7LL);
+  failed += test_i64_constant_shift("i64_sra_const", i64_sra_const,  tval_f,     0xffffffffc1d404d7LL);
+  failed += test_i64_variable_shift("i64_sra",       i64_sra,        tval_f, 10, 0xffffffffc1d404d7LL);
+  failed += test_u64_constant_shift("u64_sra_const", u64_sra_const,  tval_f,     0x003fffffc1d404d7LL);
+  failed += test_u64_variable_shift("u64_sra",       u64_sra,        tval_f, 10, 0x003fffffc1d404d7LL);
+
+  if (failed > 0) {
+    printf("  %d tests ailed.\n", failed);
+  } else {
+    printf("  All tests passed.\n");
+  }
+
   printf("----------------------------------------\n");
 
   return 0;
