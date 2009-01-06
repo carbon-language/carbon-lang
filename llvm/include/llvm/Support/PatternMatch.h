@@ -57,7 +57,7 @@ struct constantint_ty {
   bool match(ITy *V) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       const APInt &CIV = CI->getValue();
-      if (Val > 0)
+      if (Val >= 0)
         return CIV == Val;
       // If Val is negative, and CI is shorter than it, truncate to the right
       // number of bits.  If it is larger, then we have to sign extend.  Just
