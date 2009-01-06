@@ -131,17 +131,11 @@ class ValueArg(Arg):
     def getValue(self, args):
         abstract
 
-    def setValue(self, args, value):
-        abstract
-
 class PositionalArg(ValueArg):
     """PositionalArg - A simple positional argument."""
 
     def getValue(self, args):
         return args[self.index]
-    
-    def setValue(self, args, value):
-        args[self.index] = value
 
     def render(self, args):
         return [args[self.index]]
@@ -153,10 +147,6 @@ class JoinedValueArg(ValueArg):
     def getValue(self, args):
         return args[self.index][len(self.opt.name):]
 
-    def setValue(self, args, value):
-        assert self.opt.name == args[self.index][:len(self.opt.name)]
-        args[self.index] = self.opt.name + value
-
     def render(self, args):
         return [self.opt.name + self.getValue(args)]
 
@@ -166,9 +156,6 @@ class SeparateValueArg(ValueArg):
 
     def getValue(self, args):
         return args[self.index+1]
-
-    def setValue(self, args, value):
-        args[self.index+1] = value
 
     def render(self, args):
         return [self.opt.name, self.getValue(args)]
@@ -181,10 +168,6 @@ class MultipleValuesArg(Arg):
 
     def getValues(self, args):
         return args[self.index + 1:self.index + 1 + self.opt.numArgs]
-
-    def setValues(self, args, value):
-        assert self.opt.numArgs == len(value)
-        args[self.index + 1:self.index + 1 + self.opt.numArgs] = value
 
     def render(self, args):
         return [self.opt.name] + self.getValues(args)
@@ -226,9 +209,6 @@ class DerivedArg(ValueArg):
     def getValue(self, args):
         return self.value
 
-    def setValue(self, args, value):
-        raise ValueError,"Cannot call setValue() on a DerivedArg."
-    
     def render(self, args):
         return [self.value]
 
@@ -266,6 +246,8 @@ class ArgList:
 
     def getJoinedValue(self, arg):
         return arg.getJoinedValue(self.argv)
+
+###
     
 class OptionParser:
     def __init__(self):
