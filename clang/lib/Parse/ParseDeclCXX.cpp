@@ -134,20 +134,18 @@ Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
 
 /// ParseUsingDirectiveOrDeclaration - Parse C++ using using-declaration or
 /// using-directive. Assumes that current token is 'using'.
-Parser::DeclTy *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context)
-{
+Parser::DeclTy *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context) {
   assert(Tok.is(tok::kw_using) && "Not using token");
 
   // Eat 'using'.
   SourceLocation UsingLoc = ConsumeToken();
 
-  if (Tok.is(tok::kw_namespace)) {
+  if (Tok.is(tok::kw_namespace))
     // Next token after 'using' is 'namespace' so it must be using-directive
     return ParseUsingDirective(Context, UsingLoc);
-  } else {
-    // Otherwise, it must be using-declaration.
-    return ParseUsingDeclaration(Context, UsingLoc); //FIXME: It is just stub.
-  }
+
+  // Otherwise, it must be using-declaration.
+  return ParseUsingDeclaration(Context, UsingLoc);
 }
 
 /// ParseUsingDirective - Parse C++ using-directive, assumes
