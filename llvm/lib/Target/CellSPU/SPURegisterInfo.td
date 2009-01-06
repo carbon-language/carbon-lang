@@ -393,7 +393,9 @@ def R8C : RegisterClass<"SPU", [i8], 128,
 }
 
 // The SPU's registers as vector registers:
-def VECREG : RegisterClass<"SPU", [v16i8,v8i16,v4i32,v4f32,v2i64,v2f64], 128,
+def VECREG : RegisterClass<"SPU",
+                           [v16i8,v8i16,v2i32,v4i32,v4f32,v2i64,v2f64],
+                           128,
  [
    /* volatile register */
    R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, 

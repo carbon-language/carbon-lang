@@ -327,6 +327,9 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   addRegisterClass(MVT::v4f32, SPU::VECREGRegisterClass);
   addRegisterClass(MVT::v2f64, SPU::VECREGRegisterClass);
 
+  // "Odd size" vector classes that we're willing to support:
+  addRegisterClass(MVT::v2i32, SPU::VECREGRegisterClass);
+
   for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
        i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
     MVT VT = (MVT::SimpleValueType)i;
@@ -417,7 +420,6 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::CARRY_GENERATE] = "SPUISD::CARRY_GENERATE";
     node_names[(unsigned) SPUISD::SUB_EXTENDED] = "SPUISD::SUB_EXTENDED";
     node_names[(unsigned) SPUISD::BORROW_GENERATE] = "SPUISD::BORROW_GENERATE";
-    node_names[(unsigned) SPUISD::SEXT32TO64] = "SPUISD::SEXT32TO64";
   }
 
   std::map<unsigned, const char *>::iterator i = node_names.find(Opcode);
@@ -1029,8 +1031,7 @@ static SDNode *isLSAAddress(SDValue Op, SelectionDAG &DAG) {
   return DAG.getConstant((int)C->getZExtValue() >> 2, MVT::i32).getNode();
 }
 
-static
-SDValue
+static SDValue
 LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
   SDValue Chain = TheCall->getChain();
@@ -1617,6 +1618,11 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     unsigned int Value = SplatBits;
     SDValue T = DAG.getConstant(Value, VT.getVectorElementType());
     return DAG.getNode(ISD::BUILD_VECTOR, VT, T, T, T, T);
+  }
+  case MVT::v2i32: {
+    unsigned int Value = SplatBits;
+    SDValue T = DAG.getConstant(Value, VT.getVectorElementType());
+    return DAG.getNode(ISD::BUILD_VECTOR, VT, T, T);
   }
   case MVT::v2i64: {
     uint64_t val = SplatBits;
@@ -2454,32 +2460,6 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
-//! Lower ISD::SETCC
-/*!
- Lower i64 condition code handling.
- */
-
-static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) {
-  MVT VT = Op.getValueType();
-  SDValue lhs = Op.getOperand(0);
-  SDValue rhs = Op.getOperand(1);
-  SDValue condition = Op.getOperand(2);
-
-  if (VT == MVT::i32 && lhs.getValueType() == MVT::i64) {
-    // Expand the i64 comparisons to what Cell can actually support,
-    // which is eq, ugt and sgt:
-#if 0
-    CondCodeSDNode *ccvalue = dyn_cast<CondCodeSDValue>(condition);
-
-    switch (ccvalue->get()) {
-      case
-    }
-#endif
-  }
-
-  return SDValue();
-}
-
 //! Lower ISD::SELECT_CC
 /*!
   ISD::SELECT_CC can (generally) be implemented directly on the SPU using the
@@ -2647,9 +2627,6 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
 
   case ISD::TRUNCATE:
     return LowerTRUNCATE(Op, DAG);
-
-  case ISD::SETCC:
-    return LowerSETCC(Op, DAG);
   }
 
   return SDValue();
@@ -2971,7 +2948,6 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   case SPUISD::ROTBYTES_LEFT:
   case SPUISD::SELECT_MASK:
   case SPUISD::SELB:
-  case SPUISD::SEXT32TO64:
 #endif
   }
 }

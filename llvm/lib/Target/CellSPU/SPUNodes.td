@@ -61,13 +61,6 @@ def SPUselb_type: SDTypeProfile<1, 3, [
 def SPUvecshift_type: SDTypeProfile<1, 2, [
   SDTCisSameAs<0, 1>, SDTCisInt<2>]>;
 
-// SPU gather bits:
-// This instruction looks at each vector (word|halfword|byte) slot's low bit
-// and forms a mask in the low order bits of the first word's preferred slot.
-def SPUgatherbits_type: SDTypeProfile<1, 1, [
-  /* no type constraints defined */
-]>;
-
 //===----------------------------------------------------------------------===//
 // Synthetic/pseudo-instructions
 //===----------------------------------------------------------------------===//
@@ -114,9 +107,6 @@ def SPUselmask: SDNode<"SPUISD::SELECT_MASK", SPUselmask_type, []>;
 
 // SPU select bits instruction
 def SPUselb: SDNode<"SPUISD::SELB", SPUselb_type, []>;
-
-// SPU gather bits instruction:
-def SPUgatherbits: SDNode<"SPUISD::GATHER_BITS", SPUgatherbits_type, []>;
 
 def SDTprefslot2vec: SDTypeProfile<1, 1, []>;
 def SPUprefslot2vec: SDNode<"SPUISD::PREFSLOT2VEC", SDTprefslot2vec, []>;

@@ -71,6 +71,8 @@ let canFoldAsLoad = 1 in {
     def v4f32: LoadDFormVec<v4f32>;
     def v2f64: LoadDFormVec<v2f64>;
 
+    def v2i32: LoadDFormVec<v2i32>;
+
     def r128:  LoadDForm<GPRC>;
     def r64:   LoadDForm<R64C>;
     def r32:   LoadDForm<R32C>;
@@ -103,6 +105,8 @@ let canFoldAsLoad = 1 in {
     def v4f32: LoadAFormVec<v4f32>;
     def v2f64: LoadAFormVec<v2f64>;
 
+    def v2i32: LoadAFormVec<v2i32>;
+
     def r128:  LoadAForm<GPRC>;
     def r64:   LoadAForm<R64C>;
     def r32:   LoadAForm<R32C>;
@@ -134,6 +138,8 @@ let canFoldAsLoad = 1 in {
     def v2i64: LoadXFormVec<v2i64>;
     def v4f32: LoadXFormVec<v4f32>;
     def v2f64: LoadXFormVec<v2f64>;
+
+    def v2i32: LoadXFormVec<v2i32>;
 
     def r128:  LoadXForm<GPRC>;
     def r64:   LoadXForm<R64C>;
@@ -183,6 +189,8 @@ multiclass StoreDForms
   def v4f32: StoreDFormVec<v4f32>;
   def v2f64: StoreDFormVec<v2f64>;
 
+  def v2i32: StoreDFormVec<v2i32>;
+
   def r128:  StoreDForm<GPRC>;
   def r64:   StoreDForm<R64C>;
   def r32:   StoreDForm<R32C>;
@@ -212,6 +220,8 @@ multiclass StoreAForms
   def v2i64: StoreAFormVec<v2i64>;
   def v4f32: StoreAFormVec<v4f32>;
   def v2f64: StoreAFormVec<v2f64>;
+
+  def v2i32: StoreAFormVec<v2i32>;
 
   def r128:  StoreAForm<GPRC>;
   def r64:   StoreAForm<R64C>;
@@ -244,6 +254,8 @@ multiclass StoreXForms
   def v2i64: StoreXFormVec<v2i64>;
   def v4f32: StoreXFormVec<v4f32>;
   def v2f64: StoreXFormVec<v2f64>;
+
+  def v2i32: StoreXFormVec<v2i32>;
 
   def r128:  StoreXForm<GPRC>;
   def r64:   StoreXForm<R64C>;
@@ -1044,11 +1056,11 @@ class GBBInst<dag OOL, dag IOL, list<dag> pattern>:
 
 class GBBRegInst<RegisterClass rclass, ValueType vectype>:
   GBBInst<(outs rclass:$rT), (ins VECREG:$rA),
-          [(set rclass:$rT, (SPUgatherbits (vectype VECREG:$rA)))]>;
+          [/* no pattern */]>;
 
 class GBBVecInst<ValueType vectype>:
   GBBInst<(outs VECREG:$rT), (ins VECREG:$rA),
-          [(set (vectype VECREG:$rT), (SPUgatherbits (vectype VECREG:$rA)))]>;
+          [/* no pattern */]>;
 
 multiclass GatherBitsFromBytes {
   def v16i8_r32: GBBRegInst<R32C, v16i8>;
@@ -1070,12 +1082,11 @@ class GBHInst<dag OOL, dag IOL, list<dag> pattern>:
 
 class GBHRegInst<RegisterClass rclass, ValueType vectype>:
     GBHInst<(outs rclass:$rT), (ins VECREG:$rA),
-            [(set rclass:$rT, (SPUgatherbits (vectype VECREG:$rA)))]>;
+            [/* no pattern */]>;
 
 class GBHVecInst<ValueType vectype>:
     GBHInst<(outs VECREG:$rT), (ins VECREG:$rA),
-            [(set (vectype VECREG:$rT),
-                  (SPUgatherbits (vectype VECREG:$rA)))]>;
+            [/* no pattern */]>;
 
 multiclass GatherBitsHalfword {
   def v8i16_r32: GBHRegInst<R32C, v8i16>;
@@ -1097,12 +1108,11 @@ class GBInst<dag OOL, dag IOL, list<dag> pattern>:
 
 class GBRegInst<RegisterClass rclass, ValueType vectype>:
     GBInst<(outs rclass:$rT), (ins VECREG:$rA),
-           [(set rclass:$rT, (SPUgatherbits (vectype VECREG:$rA)))]>;
+           [/* no pattern */]>;
 
 class GBVecInst<ValueType vectype>:
     GBInst<(outs VECREG:$rT), (ins VECREG:$rA),
-           [(set (vectype VECREG:$rT),
-                 (SPUgatherbits (vectype VECREG:$rA)))]>;
+           [/* no pattern */]>;
 
 multiclass GatherBitsWord {
   def v4i32_r32: GBRegInst<R32C, v4i32>;

@@ -52,12 +52,10 @@ namespace llvm {
       ROTBYTES_LEFT_BITS,       ///< Rotate bytes left by bit shift count
       SELECT_MASK,              ///< Select Mask (FSM, FSMB, FSMH, FSMBI)
       SELB,                     ///< Select bits -> (b & mask) | (a & ~mask)
-      GATHER_BITS,              ///< Gather bits from bytes/words/halfwords
       ADD_EXTENDED,             ///< Add extended, with carry
       CARRY_GENERATE,           ///< Carry generate for ADD_EXTENDED
       SUB_EXTENDED,             ///< Subtract extended, with borrow
       BORROW_GENERATE,          ///< Borrow generate for SUB_EXTENDED
-      SEXT32TO64,               ///< Sign-extended 32-bit const -> 64-bits
       LAST_SPUISD               ///< Last user-defined instruction
     };
   }

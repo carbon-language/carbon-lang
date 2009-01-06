@@ -21,13 +21,14 @@ class CCIfSubtarget<string F, CCAction A>
 
 // Return-value convention for Cell SPU: Everything can be passed back via $3:
 def RetCC_SPU : CallingConv<[
-  CCIfType<[i8],   CCAssignToReg<[R3]>>,
-  CCIfType<[i16],  CCAssignToReg<[R3]>>,
-  CCIfType<[i32],  CCAssignToReg<[R3]>>,
-  CCIfType<[i64],  CCAssignToReg<[R3]>>,
-  CCIfType<[i128], CCAssignToReg<[R3]>>,
+  CCIfType<[i8],       CCAssignToReg<[R3]>>,
+  CCIfType<[i16],      CCAssignToReg<[R3]>>,
+  CCIfType<[i32],      CCAssignToReg<[R3]>>,
+  CCIfType<[i64],      CCAssignToReg<[R3]>>,
+  CCIfType<[i128],     CCAssignToReg<[R3]>>,
   CCIfType<[f32, f64], CCAssignToReg<[R3]>>,
-  CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToReg<[R3]>>
+  CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToReg<[R3]>>,
+  CCIfType<[v2i32],                                    CCAssignToReg<[R3]>>
 ]>;
 
 
