@@ -3653,10 +3653,10 @@ private:
 
       Asm->EOL("FDE CIE offset");
 
-      EmitReference("eh_func_begin", EHFrameInfo.Number, true);
+      EmitReference("eh_func_begin", EHFrameInfo.Number, true, true);
       Asm->EOL("FDE initial location");
       EmitDifference("eh_func_end", EHFrameInfo.Number,
-                     "eh_func_begin", EHFrameInfo.Number);
+                     "eh_func_begin", EHFrameInfo.Number, true);
       Asm->EOL("FDE address range");
 
       // If there is a personality and landing pads then point to the language
