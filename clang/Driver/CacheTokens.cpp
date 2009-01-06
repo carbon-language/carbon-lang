@@ -347,7 +347,7 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
     PCHMap::iterator PI = PM.find(FE); // Have we already processed this file?
     if (PI != PM.end()) continue;
     
-    const llvm::MemoryBuffer* B = C->Buffer;    
+    const llvm::MemoryBuffer* B = C->getBuffer();
     if (!B) continue;
     
     Lexer L(SourceLocation::getFileLoc(I.getFileID(), 0), LOpts,
