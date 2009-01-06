@@ -34,16 +34,27 @@ to add 'spu' to configure's --enable-targets option, e.g.:
 
 ---------------------------------------------------------------------------
 
-The unofficially official status page (because it's not easy to get an
-officially blessed external web page from either IBM Austin or Aerospace):
-
-              http://sites.google.com/site/llvmcellspu/
-
 TODO:
-* Finish branch instructions, branch prediction
+* Create a machine pass for performing dual-pipeline scheduling specifically
+  for CellSPU, handle inserting branch prediction instructions.
 
-  These instructions were started, but only insofar as to get llvm-gcc-4.2's
-  crtbegin.ll working (which doesn't.)
+* i32 instructions:
+
+  * i32 division (work-in-progress)
+
+* i64 support (see i64operations.c test harness):
+
+  * shifts and comparison operators: done
+  * sign and zero extension: done
+  * addition: done
+  * subtraction: needed
+  * multiplication: work-in-progress
+
+* i128 support:
+
+  * zero extension: done
+  * sign extension: needed
+  * arithmetic operators (add, sub, mul, div): needed
 
 * Double floating point support
 
