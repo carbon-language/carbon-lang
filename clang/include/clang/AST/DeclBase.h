@@ -211,6 +211,10 @@ public:
     }
   }
   
+  bool isInIdentifierNamespace(unsigned NS) const {
+    return getIdentifierNamespace() & NS;
+  }
+  
   // getBody - If this Decl represents a declaration for a body of code,
   //  such as a function or method definition, this method returns the top-level
   //  Stmt* of that body.  Otherwise this method returns null.  
