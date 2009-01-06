@@ -31,6 +31,7 @@ td {
   <ul>
   <li><a href="#Token">The Token class</a></li>
   <li><a href="#Lexer">The Lexer class</a></li>
+  <li><a href="#AnnotationToken">Annotation Tokens</a></li>
   <li><a href="#TokenLexer">The TokenLexer class</a></li>
   <li><a href="#MultipleIncludeOpt">The MultipleIncludeOpt class</a></li>
   </ul>
@@ -488,7 +489,11 @@ front-end periodically needs to buffer tokens up for tentative parsing and
 various pieces of look-ahead.  As such, the size of a Token matter.  On a 32-bit
 system, sizeof(Token) is currently 16 bytes.</p>
 
-<p>Tokens contain the following information:</p>
+<p>Tokens occur in two forms: "<a href="#AnnotationToken">Annotation
+Tokens</a>" and normal tokens.  Normal tokens are those returned by the lexer,
+annotation tokens represent semantic information and are produced by the parser,
+replacing normal tokens in the token stream.  Normal tokens contain the
+following information:</p>
 
 <ul>
 <li><b>A SourceLocation</b> - This indicates the location of the start of the
@@ -540,14 +545,97 @@ lexer/preprocessor system on a per-token basis:
 </li>
 </ul>
 
-<p>One interesting (and somewhat unusual) aspect of tokens is that they don't
-contain any semantic information about the lexed value.  For example, if the
-token was a pp-number token, we do not represent the value of the number that
-was lexed (this is left for later pieces of code to decide).  Additionally, the
-lexer library has no notion of typedef names vs variable names: both are
+<p>One interesting (and somewhat unusual) aspect of normal tokens is that they
+don't contain any semantic information about the lexed value.  For example, if
+the token was a pp-number token, we do not represent the value of the number
+that was lexed (this is left for later pieces of code to decide).  Additionally,
+the lexer library has no notion of typedef names vs variable names: both are
 returned as identifiers, and the parser is left to decide whether a specific
 identifier is a typedef or a variable (tracking this requires scope information 
-among other things).</p>
+among other things).  The parser can do this translation by replacing tokens
+returned by the preprocessor with "Annotation Tokens".</p>
+
+<!-- ======================================================================= -->
+<h3 id="AnnotationToken">Annotation Tokens</h3>
+<!-- ======================================================================= -->
+
+<p>Annotation Tokens are tokens that are synthesized by the parser and injected
+into the preprocessor's token stream (replacing existing tokens) to record
+semantic information found by the parser.  For example, if "foo" is found to be
+a typedef, the "foo" <tt>tok::identifier</tt> token is replaced with an
+<tt>tok::annot_typename</tt>.  This is useful for a couple of reasons: 1) this
+makes it easy to handle qualified type names (e.g. "foo::bar::baz&lt;42&gt;::t")
+in C++ as a single "token" in the parser. 2) if the parser backtracks, the
+reparse does not need to redo semantic analysis to determine whether a token
+sequence is a variable, type, template, etc.</p>
+
+<p>Annotation Tokens are created by the parser and reinjected into the parser's
+token stream (when backtracking is enabled).  Because they can only exist in
+tokens that the preprocessor-proper is done with, it doesn't need to keep around
+flags like "start of line" that the preprocessor uses to do its job.
+Additionally, an annotation token may "cover" a sequence of preprocessor tokens
+(e.g. <tt>a::b::c</tt> is five preprocessor tokens).  As such, the valid fields
+of an annotation token are different than the fields for a normal token (but
+they are multiplexed into the normal Token fields):</p>
+
+<ul>
+<li><b>SourceLocation "Location"</b> - The SourceLocation for the annotation
+token indicates the first token replaced by the annotation token. In the example
+above, it would be the location of the "a" identifier.</li>
+
+<li><b>SourceLocation "AnnotationEndLoc"</b> - This holds the location of the
+last token replaced with the annotation token.  In the example above, it would
+be the location of the "c" identifier.</li>
+
+<li><b>void* "AnnotationValue"</b> - This contains an opaque object that the
+parser gets from Sema through an Actions module, it is passed around and Sema
+intepretes it, based on the type of annotation token.</li>
+
+<li><b>TokenKind "Kind"</b> - This indicates the kind of Annotation token this
+is.  See below for the different valid kinds.</li>
+</ul>
+
+<p>Annotation tokens currently come in three kinds:</p>
+
+<ol>
+<li><b>tok::annot_typename</b>: This annotation token represents a
+resolved typename token that is potentially qualified.  The AnnotationValue
+field contains a pointer returned by Action::isTypeName().  In the case of the
+Sema actions module, this is a <tt>Decl*</tt> for the type.</li>
+
+<li><b>tok::annot_cxxscope</b>: This annotation token represents a C++ scope
+specifier, such as "A::B::".  This corresponds to the grammar productions "::"
+and ":: [opt] nested-name-specifier".  The AnnotationValue pointer is returned
+by the Action::ActOnCXXGlobalScopeSpecifier and
+Action::ActOnCXXNestedNameSpecifier callbacks.  In the case of Sema, this is a
+<tt>DeclContext*</tt>.</li>
+
+<li><b>tok::annot_template_id</b>: This annotation token represents a C++
+template-id such as "foo&lt;int, 4&gt;", which may refer to a function or type
+depending on whether foo is a function template or class template.  The
+AnnotationValue pointer is a pointer to a malloc'd TemplateIdAnnotation object.
+FIXME: I don't think the parsing logic is right for this.  Shouldn't type
+templates be turned into annot_typename??</li>
+
+</ol>
+
+<p>As mentioned above, annotation tokens are not returned bye the preprocessor,
+they are formed on demand by the parser.  This means that the parser has to be
+aware of cases where an annotation could occur and form it where appropriate.
+This is somewhat similar to how the parser handles Translation Phase 6 of C99:
+String Concatenation (see C99 5.1.1.2).  In the case of string concatenation,
+the preprocessor just returns distinct tok::string_literal and
+tok::wide_string_literal tokens and the parser eats a sequence of them wherever
+the grammar indicates that a string literal can occur.</p>
+
+<p>In order to do this, whenever the parser expects a tok::identifier or
+tok::coloncolon, it should call the TryAnnotateTypeOrScopeToken or
+TryAnnotateCXXScopeToken methods to form the annotation token.  These methods
+will maximally form the specified annotation tokens and replace the current
+token with them, if applicable.  If the current tokens is not valid for an
+annotation token, it will remain an identifier or :: token.</p>
+
+
 
 <!-- ======================================================================= -->
 <h3 id="Lexer">The Lexer class</h3>
