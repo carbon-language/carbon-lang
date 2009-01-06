@@ -753,7 +753,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
   // FIXME: Implement template-ids
   CXXScopeSpec SS;
   if (getLang().CPlusPlus)
-    MaybeParseCXXScopeSpecifier(SS);
+    ParseOptionalCXXScopeSpecifier(SS);
 
   if (Tok.is(tok::identifier)) {
     // Determine whether the identifier is a type name.
@@ -825,7 +825,7 @@ bool Parser::TryAnnotateCXXScopeToken() {
          "Cannot be a type or scope token!");
 
   CXXScopeSpec SS;
-  if (!MaybeParseCXXScopeSpecifier(SS))
+  if (!ParseOptionalCXXScopeSpecifier(SS))
     return false;
 
   // Push the current token back into the token stream (or revert it if it is

@@ -449,7 +449,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     default: 
       // Try to parse a type-specifier; if we found one, continue. If it's not
       // a type, this falls through.
-      if (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec, TemplateParams))
+      if (ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, TemplateParams))
         continue;
 
     DoneWithDeclSpec:
@@ -660,7 +660,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
   }
 }
 
-/// MaybeParseTypeSpecifier - Try to parse a single type-specifier. We
+/// ParseOptionalTypeSpecifier - Try to parse a single type-specifier. We
 /// primarily follow the C++ grammar with additions for C99 and GNU,
 /// which together subsume the C grammar. Note that the C++
 /// type-specifier also includes the C type-qualifier (for const,
@@ -702,9 +702,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 /// [GNU]   typeof-specifier
 /// [OBJC]  class-name objc-protocol-refs[opt]    [TODO]
 /// [OBJC]  typedef-name objc-protocol-refs[opt]  [TODO]
-bool Parser::MaybeParseTypeSpecifier(DeclSpec &DS, int& isInvalid,
-                                     const char *&PrevSpec,
-                                     TemplateParameterLists *TemplateParams) {
+bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
+                                        const char *&PrevSpec,
+                                        TemplateParameterLists *TemplateParams){
   SourceLocation Loc = Tok.getLocation();
 
   switch (Tok.getKind()) {
@@ -712,7 +712,7 @@ bool Parser::MaybeParseTypeSpecifier(DeclSpec &DS, int& isInvalid,
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
-      return MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec, TemplateParams);
+      return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec,TemplateParams);
     // Otherwise, not a type specifier.
     return false;
   case tok::coloncolon:   // ::foo::bar
@@ -723,7 +723,7 @@ bool Parser::MaybeParseTypeSpecifier(DeclSpec &DS, int& isInvalid,
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
-      return MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec, TemplateParams);
+      return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec,TemplateParams);
     // Otherwise, not a type specifier.
     return false;
       
@@ -1055,7 +1055,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
     Attr = ParseAttributes();
 
   CXXScopeSpec SS;
-  if (getLang().CPlusPlus && MaybeParseCXXScopeSpecifier(SS)) {
+  if (getLang().CPlusPlus && ParseOptionalCXXScopeSpecifier(SS)) {
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident);
       if (Tok.isNot(tok::l_brace)) {
@@ -1565,7 +1565,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
   if (getLang().CPlusPlus) {
     if (D.mayHaveIdentifier()) {
-      bool afterCXXScope = MaybeParseCXXScopeSpecifier(D.getCXXScopeSpec());
+      bool afterCXXScope = ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec());
       if (afterCXXScope) {
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).

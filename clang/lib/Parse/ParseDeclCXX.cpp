@@ -167,7 +167,7 @@ Parser::DeclTy *Parser::ParseUsingDirective(unsigned Context,
 
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
-  MaybeParseCXXScopeSpecifier(SS);
+  ParseOptionalCXXScopeSpecifier(SS);
 
   AttributeList *AttrList = 0;
   IdentifierInfo *NamespcName = 0;
@@ -310,7 +310,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
   
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec SS;
-  if (getLang().CPlusPlus && MaybeParseCXXScopeSpecifier(SS)) {
+  if (getLang().CPlusPlus && ParseOptionalCXXScopeSpecifier(SS)) {
     if (Tok.isNot(tok::identifier))
       Diag(Tok, diag::err_expected_ident);
   }
@@ -458,7 +458,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
 
   // Parse optional '::' and optional nested-name-specifier.
   CXXScopeSpec SS;
-  MaybeParseCXXScopeSpecifier(SS);
+  ParseOptionalCXXScopeSpecifier(SS);
 
   // The location of the base class itself.
   SourceLocation BaseLoc = Tok.getLocation();

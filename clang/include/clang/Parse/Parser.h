@@ -608,11 +608,12 @@ private:
   // C++ Expressions
   OwningExprResult ParseCXXIdExpression();
 
-  /// MaybeParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
-  /// Returns true if a nested-name-specifier was parsed from the token stream.
-  /// Note that this routine will not parse ::new or ::delete.
+  /// ParseOptionalCXXScopeSpecifier - Parse global scope or
+  /// nested-name-specifier if present.  Returns true if a nested-name-specifier
+  /// was parsed from the token stream.  Note that this routine will not parse
+  /// ::new or ::delete, it will just leave them in the token stream.
   ///
-  bool MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS);
+  bool ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS);
   
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts
@@ -763,9 +764,9 @@ private:
                                      SourceLocation L, SourceLocation R);
   void ParseDeclarationSpecifiers(DeclSpec &DS, 
                                   TemplateParameterLists *TemplateParams = 0);
-  bool MaybeParseTypeSpecifier(DeclSpec &DS, int &isInvalid, 
-                               const char *&PrevSpec,
-                               TemplateParameterLists *TemplateParams = 0);
+  bool ParseOptionalTypeSpecifier(DeclSpec &DS, int &isInvalid, 
+                                  const char *&PrevSpec,
+                                  TemplateParameterLists *TemplateParams = 0);
   void ParseSpecifierQualifierList(DeclSpec &DS);
   
   void ParseObjCTypeQualifierList(ObjCDeclSpec &DS);

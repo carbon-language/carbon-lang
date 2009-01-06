@@ -17,10 +17,10 @@
 #include "AstGuard.h"
 using namespace clang;
 
-/// MaybeParseCXXScopeSpecifier - Parse global scope or nested-name-specifier.
-/// Returns true if a nested-name-specifier was parsed from the token stream.
-/// 
-/// Note that this routine will not parse ::new or ::delete.
+/// ParseOptionalCXXScopeSpecifier - Parse global scope or
+/// nested-name-specifier if present.  Returns true if a nested-name-specifier
+/// was parsed from the token stream.  Note that this routine will not parse
+/// ::new or ::delete, it will just leave them in the token stream.
 ///
 ///       '::'[opt] nested-name-specifier
 ///       '::'
@@ -31,7 +31,7 @@ using namespace clang;
 ///         nested-name-specifier identifier '::'
 ///         nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
 ///
-bool Parser::MaybeParseCXXScopeSpecifier(CXXScopeSpec &SS) {
+bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
 
@@ -137,7 +137,7 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression() {
   //   '::' unqualified-id
   //
   CXXScopeSpec SS;
-  MaybeParseCXXScopeSpecifier(SS);
+  ParseOptionalCXXScopeSpecifier(SS);
 
   // unqualified-id:
   //   identifier
@@ -521,11 +521,12 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
   int isInvalid = 0;
 
   // Parse one or more of the type specifiers.
-  if (!MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec)) {
+  if (!ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec)) {
     Diag(Tok, diag::err_operator_missing_type_specifier);
     return true;
   }
-  while (MaybeParseTypeSpecifier(DS, isInvalid, PrevSpec)) ;
+  
+  while (ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec));
 
   return false;
 }
