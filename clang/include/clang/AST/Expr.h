@@ -273,8 +273,14 @@ class DeclRefExpr : public Expr {
   SourceLocation Loc;
 
 protected:
+  // FIXME: Eventually, this constructor will go away and all subclasses
+  // will have to provide the type- and value-dependent flags.
   DeclRefExpr(StmtClass SC, NamedDecl *d, QualType t, SourceLocation l) :
     Expr(SC, t), D(d), Loc(l) {}
+
+  DeclRefExpr(StmtClass SC, NamedDecl *d, QualType t, SourceLocation l, bool TD,
+              bool VD) :
+    Expr(SC, t, TD, VD), D(d), Loc(l) {}
 
 public:
   // FIXME: Eventually, this constructor will go away and all clients
@@ -294,7 +300,8 @@ public:
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DeclRefExprClass ||
-           T->getStmtClass() == CXXConditionDeclExprClass; 
+           T->getStmtClass() == CXXConditionDeclExprClass ||
+           T->getStmtClass() == QualifiedDeclRefExprClass; 
   }
   static bool classof(const DeclRefExpr *) { return true; }
   

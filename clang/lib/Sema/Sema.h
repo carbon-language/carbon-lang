@@ -43,6 +43,7 @@ namespace clang {
   class Expr;
   class InitListExpr;
   class CallExpr;
+  class DeclRefExpr;
   class VarDecl;
   class ParmVarDecl;
   class TypedefDecl;
@@ -674,6 +675,9 @@ public:
                                                     TypeTy *Ty,
                                                     bool HasTrailingLParen,
                                                     const CXXScopeSpec &SS);
+  DeclRefExpr *BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
+                                bool TypeDependent, bool ValueDependent,
+                                const CXXScopeSpec *SS = 0);
   ExprResult ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                       DeclarationName Name,
                                       bool HasTrailingLParen,

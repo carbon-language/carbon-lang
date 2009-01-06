@@ -747,6 +747,33 @@ public:
   static UnaryTypeTraitExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// QualifiedDeclRefExpr - A reference to a declared variable,
+/// function, enum, etc., that includes a qualification, e.g.,
+/// "N::foo".
+class QualifiedDeclRefExpr : public DeclRefExpr {
+  /// NestedNameLoc - The location of the beginning of the
+  /// nested-name-specifier that qualifies this declaration.
+  SourceLocation NestedNameLoc;
+
+public:
+  QualifiedDeclRefExpr(NamedDecl *d, QualType t, SourceLocation l, bool TD, 
+                       bool VD, SourceLocation nnl)
+    : DeclRefExpr(QualifiedDeclRefExprClass, d, t, l, TD, VD), 
+      NestedNameLoc(nnl) { }
+
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(NestedNameLoc, getLocation()); 
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == QualifiedDeclRefExprClass;
+  }
+  static bool classof(const QualifiedDeclRefExpr *) { return true; }
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static QualifiedDeclRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
 }  // end namespace clang
 
 #endif

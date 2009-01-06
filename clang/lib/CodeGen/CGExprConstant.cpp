@@ -542,7 +542,8 @@ public:
                                    C, ".compoundliteral", &CGM.getModule());
       return C;
     }
-    case Expr::DeclRefExprClass: {
+    case Expr::DeclRefExprClass: 
+    case Expr::QualifiedDeclRefExprClass: {
       NamedDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
         return CGM.GetAddrOfFunction(FD);

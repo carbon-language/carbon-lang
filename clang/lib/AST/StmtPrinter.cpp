@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/StmtVisitor.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "llvm/Support/Compiler.h"
@@ -511,6 +512,35 @@ void StmtPrinter::VisitExpr(Expr *Node) {
 
 void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   OS << Node->getDecl()->getNameAsString();
+}
+
+void StmtPrinter::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *Node) {
+  // FIXME: Should we keep enough information in QualifiedDeclRefExpr
+  // to produce the same qualification that the user wrote?
+  llvm::SmallVector<DeclContext *, 4> Contexts;
+  
+  NamedDecl *D = Node->getDecl();
+
+  // Build up a stack of contexts.
+  DeclContext *Ctx = 0;
+  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
+    Ctx = SD->getDeclContext();
+  else if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
+    Ctx = Ovl->getDeclContext();
+  for (; Ctx; Ctx = Ctx->getParent())
+    if (!Ctx->isTransparentContext())
+      Contexts.push_back(Ctx);
+
+  while (!Contexts.empty()) {
+    DeclContext *Ctx = Contexts.back();
+    if (isa<TranslationUnitDecl>(Ctx))
+      OS << "::";
+    else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(Ctx))
+      OS << SD->getNameAsString() << "::";
+    Contexts.pop_back();
+  }
+
+  OS << D->getNameAsString();
 }
 
 void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {

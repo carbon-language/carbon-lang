@@ -116,7 +116,9 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CallExprClass: 
   case Expr::CXXOperatorCallExprClass:
     return EmitCallExprLValue(cast<CallExpr>(E));
-  case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
+  case Expr::DeclRefExprClass: 
+  case Expr::QualifiedDeclRefExprClass:
+    return EmitDeclRefLValue(cast<DeclRefExpr>(E));
   case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
   case Expr::PredefinedExprClass:
     return EmitPredefinedLValue(cast<PredefinedExpr>(E));

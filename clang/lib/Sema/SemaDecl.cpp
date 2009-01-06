@@ -1570,7 +1570,8 @@ bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
   }
   case Expr::CompoundLiteralExprClass:
     return cast<CompoundLiteralExpr>(Init)->isFileScope();
-  case Expr::DeclRefExprClass: {
+  case Expr::DeclRefExprClass: 
+  case Expr::QualifiedDeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(Init)->getDecl();
     if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       if (VD->hasGlobalStorage())
@@ -1829,7 +1830,8 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     InitializerElementNotConstant(Init);
     return true;
   }
-  case Expr::DeclRefExprClass: {
+  case Expr::DeclRefExprClass:
+  case Expr::QualifiedDeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(Init)->getDecl();
     if (isa<EnumConstantDecl>(D))
       return false;

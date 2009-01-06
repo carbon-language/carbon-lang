@@ -395,7 +395,8 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     if (cast<ArraySubscriptExpr>(this)->getBase()->getType()->isVectorType())
       return cast<ArraySubscriptExpr>(this)->getBase()->isLvalue(Ctx);
     return LV_Valid;
-  case DeclRefExprClass: { // C99 6.5.1p2
+  case DeclRefExprClass: 
+  case QualifiedDeclRefExprClass: { // C99 6.5.1p2
     const NamedDecl *RefdDecl = cast<DeclRefExpr>(this)->getDecl();
     if (DeclCanBeLvalue(RefdDecl, Ctx))
       return LV_Valid;
@@ -638,7 +639,8 @@ bool Expr::hasGlobalStorage() const {
     return cast<ImplicitCastExpr>(this)->getSubExpr()->hasGlobalStorage();
   case CompoundLiteralExprClass:
     return cast<CompoundLiteralExpr>(this)->isFileScope();
-  case DeclRefExprClass: {
+  case DeclRefExprClass:
+  case QualifiedDeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(this)->getDecl();
     if (const VarDecl *VD = dyn_cast<VarDecl>(D))
       return VD->hasGlobalStorage();
@@ -813,6 +815,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     return false;
   }
   case DeclRefExprClass:
+  case QualifiedDeclRefExprClass:
     if (const EnumConstantDecl *D = 
           dyn_cast<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl())) {
       Result = D->getInitVal();

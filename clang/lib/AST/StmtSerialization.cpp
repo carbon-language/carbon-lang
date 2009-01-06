@@ -249,6 +249,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
 
     case CXXTryStmtClass:
       return CXXTryStmt::CreateImpl(D, C);
+
+    case QualifiedDeclRefExprClass:
+      return QualifiedDeclRefExpr::CreateImpl(D, C);
   }
 }
 
@@ -1577,4 +1580,15 @@ CXXTryStmt::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
   D.BatchReadOwnedPtrs<Stmt>(size, &Stmts[0], C);
 
   return new CXXTryStmt(TryLoc, Stmts[0], &Stmts[1], size - 1);
+}
+
+void QualifiedDeclRefExpr::EmitImpl(llvm::Serializer& S) const {
+  DeclRefExpr::EmitImpl(S);
+  S.Emit(NestedNameLoc);
+}
+
+QualifiedDeclRefExpr* 
+QualifiedDeclRefExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  assert(false && "Cannot deserialize qualified decl references");
+  return 0;
 }

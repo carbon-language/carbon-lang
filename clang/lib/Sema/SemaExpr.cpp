@@ -358,6 +358,19 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   return ActOnDeclarationNameExpr(S, Loc, &II, HasTrailingLParen, SS);
 }
 
+/// BuildDeclRefExpr - Build either a DeclRefExpr or a
+/// QualifiedDeclRefExpr based on whether or not SS is a
+/// nested-name-specifier.
+DeclRefExpr *Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
+                                    bool TypeDependent, bool ValueDependent,
+                                    const CXXScopeSpec *SS) {
+  if (SS && !SS->isEmpty())
+    return new QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent,
+                                    SS->getRange().getBegin());
+  else
+    return new DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
+}
+
 /// ActOnDeclarationNameExpr - The parser has read some kind of name
 /// (e.g., a C++ id-expression (C++ [expr.prim]p1)). This routine
 /// performs lookup on that name and returns an expression that refers
@@ -536,7 +549,7 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
 
   // Make the DeclRefExpr or BlockDeclRefExpr for the decl.
   if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
-    return new DeclRefExpr(Ovl, Context.OverloadTy, Loc);
+    return BuildDeclRefExpr(Ovl, Context.OverloadTy, Loc, false, false, SS);
 
   ValueDecl *VD = cast<ValueDecl>(D);
   
@@ -634,8 +647,8 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     //      (FIXME!).
   }
 
-  return new DeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc,
-                         TypeDependent, ValueDependent);
+  return BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc,
+                          TypeDependent, ValueDependent, SS);
 }
 
 Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
@@ -1595,17 +1608,15 @@ Sema::ActOnCallExpr(Scope *S, ExprTy *fn, SourceLocation LParenLoc,
 
   // If we're directly calling a function or a set of overloaded
   // functions, get the appropriate declaration.
-  {
-    DeclRefExpr *DRExpr = NULL;
-    if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
-      DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr());
-    else 
-      DRExpr = dyn_cast<DeclRefExpr>(Fn);
-
-    if (DRExpr) {
-      FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
-      Ovl = dyn_cast<OverloadedFunctionDecl>(DRExpr->getDecl());
-    }
+  DeclRefExpr *DRExpr = NULL;
+  if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
+    DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr());
+  else 
+    DRExpr = dyn_cast<DeclRefExpr>(Fn);
+  
+  if (DRExpr) {
+    FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
+    Ovl = dyn_cast<OverloadedFunctionDecl>(DRExpr->getDecl());
   }
 
   if (Ovl) {
@@ -1615,8 +1626,14 @@ Sema::ActOnCallExpr(Scope *S, ExprTy *fn, SourceLocation LParenLoc,
       return true;
 
     // Update Fn to refer to the actual function selected.
-    Expr *NewFn = new DeclRefExpr(FDecl, FDecl->getType(), 
-                                  Fn->getSourceRange().getBegin());
+    Expr *NewFn = 0;
+    if (QualifiedDeclRefExpr *QDRExpr = dyn_cast<QualifiedDeclRefExpr>(DRExpr))
+      NewFn = new QualifiedDeclRefExpr(FDecl, FDecl->getType(), 
+                                       QDRExpr->getLocation(), false, false,
+                                       QDRExpr->getSourceRange().getBegin());
+    else
+      NewFn = new DeclRefExpr(FDecl, FDecl->getType(), 
+                              Fn->getSourceRange().getBegin());
     Fn->Destroy(Context);
     Fn = NewFn;
   }
@@ -2928,6 +2945,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
 static NamedDecl *getPrimaryDecl(Expr *E) {
   switch (E->getStmtClass()) {
   case Stmt::DeclRefExprClass:
+  case Stmt::QualifiedDeclRefExprClass:
     return cast<DeclRefExpr>(E)->getDecl();
   case Stmt::MemberExprClass:
     // Fields cannot be declared with a 'register' storage class.

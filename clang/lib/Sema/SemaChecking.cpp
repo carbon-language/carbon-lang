@@ -883,7 +883,8 @@ static DeclRefExpr* EvalVal(Expr *E) {
   // viewed AST node.  We then recursively traverse the AST by calling
   // EvalAddr and EvalVal appropriately.
   switch (E->getStmtClass()) {
-  case Stmt::DeclRefExprClass: {
+  case Stmt::DeclRefExprClass: 
+  case Stmt::QualifiedDeclRefExprClass: {
     // DeclRefExpr: the base case.  When we hit a DeclRefExpr we are looking
     //  at code that refers to a variable's name.  We check if it has local
     //  storage within the function, and if so, return the expression.
