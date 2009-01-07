@@ -2371,8 +2371,8 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
 bool GlobalOpt::ResolveAliases(Module &M) {
   bool Changed = false;
 
-  for (Module::alias_iterator I = M.alias_begin(),
-         E = M.alias_end(); I != E; ++I) {
+  for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
+       I != E; ++I) {
     if (I->use_empty())
       continue;
 
