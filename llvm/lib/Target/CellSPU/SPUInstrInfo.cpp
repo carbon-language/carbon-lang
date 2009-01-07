@@ -678,7 +678,7 @@ SPUInstrInfo::ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond)
 
   unsigned Opc = unsigned(Cond[0].getImm());
   // Pretty dull mapping between the two conditions that SPU can generate:
-  for (int i = sizeof(revconds)/sizeof(revconds[0]); i >= 0; --i) {
+  for (int i = sizeof(revconds)/sizeof(revconds[0]) - 1; i >= 0; --i) {
     if (revconds[i].Opc == Opc) {
       Cond[0].setImm(revconds[i].RevCondOpc);
       return false;
