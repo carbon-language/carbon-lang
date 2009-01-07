@@ -104,10 +104,10 @@ class Driver(object):
             self.claim(hasHashHashHash)
             for j in jobs.iterjobs():
                 if isinstance(j, Jobs.Command):
-                    print '"%s"' % '" "'.join(j.render(argv))
+                    print '"%s"' % '" "'.join(j.render(args))
                 elif isinstance(j, Jobs.PipedJob):
                     for c in j.commands:
-                        print '"%s" %c' % ('" "'.join(c.render(argv)),
+                        print '"%s" %c' % ('" "'.join(c.render(args)),
                                            "| "[c is j.commands[-1]])
                 elif not isinstance(j, JobList):
                     raise ValueError,'Encountered unknown job.'
@@ -115,7 +115,7 @@ class Driver(object):
 
         for j in jobs.iterjobs():
             if isinstance(j, Jobs.Command):
-                cmd_args = j.render(argv)
+                cmd_args = j.render(args)
                 res = os.spawnvp(os.P_WAIT, cmd_args[0], cmd_args)
                 if res:
                     sys.exit(res)

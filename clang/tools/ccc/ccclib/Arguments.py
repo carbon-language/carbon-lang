@@ -135,17 +135,17 @@ class PositionalArg(ValueArg):
     """PositionalArg - A simple positional argument."""
 
     def getValue(self, args):
-        return args[self.index]
+        return args.getInputString(self.index)
 
     def render(self, args):
-        return [args[self.index]]
+        return [args.getInputString(self.index)]
 
 class JoinedValueArg(ValueArg):
     """JoinedValueArg - A single value argument where the value is
     joined (suffixed) to the option."""
 
     def getValue(self, args):
-        return args[self.index][len(self.opt.name):]
+        return args.getInputString(self.index)[len(self.opt.name):]
 
     def render(self, args):
         return [self.opt.name + self.getValue(args)]
@@ -155,7 +155,7 @@ class SeparateValueArg(ValueArg):
     follows the option in the argument vector."""
 
     def getValue(self, args):
-        return args[self.index+1]
+        return args.getInputString(self.index, offset=1)
 
     def render(self, args):
         return [self.opt.name, self.getValue(args)]
@@ -167,7 +167,8 @@ class MultipleValuesArg(Arg):
     # FIXME: Should we unify this with SeparateValueArg?
 
     def getValues(self, args):
-        return args[self.index + 1:self.index + 1 + self.opt.numArgs]
+        return [args.getInputString(self.index, offset=1+i)
+                for i in range(self.opt.numArgs)]
 
     def render(self, args):
         return [self.opt.name] + self.getValues(args)
@@ -179,17 +180,10 @@ class JoinedAndSeparateValuesArg(Arg):
     separate values."""
 
     def getJoinedValue(self, args):
-        return args[self.index][len(self.opt.name):]
+        return args.getInputString(self.index)[len(self.opt.name):]
 
     def getSeparateValue(self, args):
-        return args[self.index+1]
-
-    def setJoinedValue(self, args, value):
-        assert self.opt.name == args[self.index][:len(self.opt.name)]
-        args[self.index] = self.opt.name + value
-        
-    def setSeparateValue(self, args, vaue):
-        args[self.index+1] = value
+        return args.getInputString(self.index, offset=1)
 
     def render(self, args):
         return ([self.opt.name + self.getJoinedValue(args)] + 
@@ -224,6 +218,9 @@ class ArgList:
     def getLastArg(self, option):
         return self.lastArgs.get(option)
 
+    def getInputString(self, index, offset=0):
+        return self.argv[index + offset]
+
     # Support use as a simple arg list.
 
     def __iter__(self):
@@ -234,18 +231,23 @@ class ArgList:
         self.lastArgs[arg.opt] = arg
 
     # Forwarding methods.
+    #
+    # FIXME: Clean this up once restructuring is done.
+
+    def render(self, arg):
+        return arg.render(self)
 
     def getValue(self, arg):
-        return arg.getValue(self.argv)
+        return arg.getValue(self)
 
     def getValues(self, arg):
-        return arg.getValues(self.argv)
+        return arg.getValues(self)
 
     def getSeparateValue(self, arg):
-        return arg.getSeparateValue(self.argv)
+        return arg.getSeparateValue(self)
 
     def getJoinedValue(self, arg):
-        return arg.getJoinedValue(self.argv)
+        return arg.getJoinedValue(self)
 
 ###
     

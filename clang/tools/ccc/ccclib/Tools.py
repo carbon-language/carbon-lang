@@ -139,7 +139,7 @@ class Collect2Tool(Tool):
                 if arg.opt.name in ('-framework',):
                     cmd_args.append(arg)
         for input in inputs:
-            cmd_args.append(input.source)            
+            cmd_args.append(input.source)
         if isinstance(output, Arguments.DerivedArg):
             cmd_args.extend([Arguments.DerivedArg('-o'), output])
         else:
