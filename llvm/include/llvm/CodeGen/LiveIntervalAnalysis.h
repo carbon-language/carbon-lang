@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
 #include <cmath>
@@ -255,6 +256,12 @@ namespace llvm {
     /// is defined during the duration of the specified interval.
     bool conflictsWithPhysRegDef(const LiveInterval &li, VirtRegMap &vrm,
                                  unsigned reg);
+
+    /// conflictsWithPhysRegRef - Similar to conflictsWithPhysRegRef except
+    /// it can check use as well.
+    bool conflictsWithPhysRegRef(LiveInterval &li, unsigned Reg,
+                                 bool CheckUse,
+                                 SmallPtrSet<MachineInstr*,32> &JoinedCopies);
 
     /// findLiveInMBBs - Given a live range, if the value of the range
     /// is live in any MBB returns true as well as the list of basic blocks

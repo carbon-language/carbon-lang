@@ -323,6 +323,47 @@ bool LiveIntervals::conflictsWithPhysRegDef(const LiveInterval &li,
   return false;
 }
 
+/// conflictsWithPhysRegRef - Similar to conflictsWithPhysRegRef except
+/// it can check use as well.
+bool LiveIntervals::conflictsWithPhysRegRef(LiveInterval &li,
+                                            unsigned Reg, bool CheckUse,
+                                  SmallPtrSet<MachineInstr*,32> &JoinedCopies) {
+  for (LiveInterval::Ranges::const_iterator
+         I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
+    for (unsigned index = getBaseIndex(I->start),
+           end = getBaseIndex(I->end-1) + InstrSlots::NUM; index != end;
+         index += InstrSlots::NUM) {
+      // Skip deleted instructions.
+      MachineInstr *MI = 0;
+      while (index != end) {
+        MI = getInstructionFromIndex(index);
+        if (MI)
+          break;
+        index += InstrSlots::NUM;
+      }
+      if (index == end) break;
+
+      if (JoinedCopies.count(MI))
+        continue;
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        MachineOperand& MO = MI->getOperand(i);
+        if (!MO.isReg())
+          continue;
+        if (MO.isUse() && !CheckUse)
+          continue;
+        unsigned PhysReg = MO.getReg();
+        if (PhysReg == 0 || TargetRegisterInfo::isVirtualRegister(PhysReg))
+          continue;
+        if (tri_->isSubRegister(Reg, PhysReg))
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+
 void LiveIntervals::printRegName(unsigned reg) const {
   if (TargetRegisterInfo::isPhysicalRegister(reg))
     cerr << tri_->getName(reg);
@@ -794,10 +835,15 @@ unsigned LiveIntervals::getVNInfoSourceReg(const VNInfo *VNI) const {
   if (!VNI->copy)
     return 0;
 
-  if (VNI->copy->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
-    return VNI->copy->getOperand(1).getReg();
-  if (VNI->copy->getOpcode() == TargetInstrInfo::INSERT_SUBREG)
+  if (VNI->copy->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+    // If it's extracting out of a physical register, return the sub-register.
+    unsigned Reg = VNI->copy->getOperand(1).getReg();
+    if (TargetRegisterInfo::isPhysicalRegister(Reg))
+      Reg = tri_->getSubReg(Reg, VNI->copy->getOperand(2).getImm());
+    return Reg;
+  } else if (VNI->copy->getOpcode() == TargetInstrInfo::INSERT_SUBREG)
     return VNI->copy->getOperand(2).getReg();
+
   unsigned SrcReg, DstReg;
   if (tii_->isMoveInstr(*VNI->copy, SrcReg, DstReg))
     return SrcReg;

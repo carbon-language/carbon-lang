@@ -1276,8 +1276,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       // preference.
       unsigned Length = li_->getApproximateInstructionCount(JoinVInt);
       if (Length > Threshold &&
-          (((float)std::distance(mri_->use_begin(JoinVReg),
-                              mri_->use_end()) / Length) < (1.0 / Threshold))) {
+          (((float)std::distance(mri_->use_begin(JoinVReg), mri_->use_end())
+            / Length) < (1.0 / Threshold))) {
         JoinVInt.preference = JoinPReg;
         ++numAborts;
         DOUT << "\tMay tie down a physical register, abort!\n";
@@ -1334,7 +1334,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   assert(TargetRegisterInfo::isVirtualRegister(SrcReg) &&
          "LiveInterval::join didn't work right!");
                                
-  // If we're about to merge live ranges into a physical register live range,
+  // If we're about to merge live ranges into a physical register live interval,
   // we have to update any aliased register's live ranges to indicate that they
   // have clobbered values for this range.
   if (TargetRegisterInfo::isPhysicalRegister(DstReg)) {
@@ -1712,8 +1712,9 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
 /// physreg, this method always canonicalizes LHS to be it.  The output
 /// "RHS" will not have been modified, so we can use this information
 /// below to update aliases.
-bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
-                                             LiveInterval &RHS, bool &Swapped) {
+bool
+SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
+                                        bool &Swapped) {
   // Compute the final value assignment, assuming that the live ranges can be
   // coalesced.
   SmallVector<int, 16> LHSValNoAssignments;
@@ -1721,26 +1722,43 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
   DenseMap<VNInfo*, VNInfo*> LHSValsDefinedFromRHS;
   DenseMap<VNInfo*, VNInfo*> RHSValsDefinedFromLHS;
   SmallVector<VNInfo*, 16> NewVNInfo;
-                          
+
   // If a live interval is a physical register, conservatively check if any
   // of its sub-registers is overlapping the live interval of the virtual
   // register. If so, do not coalesce.
   if (TargetRegisterInfo::isPhysicalRegister(LHS.reg) &&
       *tri_->getSubRegisters(LHS.reg)) {
-    for (const unsigned* SR = tri_->getSubRegisters(LHS.reg); *SR; ++SR)
-      if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
-        DOUT << "Interfere with sub-register ";
-        DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+    // If it's coalescing a virtual register to a physical register, estimate
+    // its live interval length. This is the *cost* of scanning an entire live
+    // interval. If the cost is low, we'll do an exhaustive check instead.
+    if (RHS.containsOneValue() &&
+        li_->getApproximateInstructionCount(RHS) <= 10) {
+      // Perform a more exhaustive check for some common cases.
+      if (li_->conflictsWithPhysRegRef(RHS, LHS.reg, true, JoinedCopies))
         return false;
-      }
+    } else {
+      for (const unsigned* SR = tri_->getSubRegisters(LHS.reg); *SR; ++SR)
+        if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
+          DOUT << "Interfere with sub-register ";
+          DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+          return false;
+        }
+    }
   } else if (TargetRegisterInfo::isPhysicalRegister(RHS.reg) &&
              *tri_->getSubRegisters(RHS.reg)) {
-    for (const unsigned* SR = tri_->getSubRegisters(RHS.reg); *SR; ++SR)
-      if (li_->hasInterval(*SR) && LHS.overlaps(li_->getInterval(*SR))) {
-        DOUT << "Interfere with sub-register ";
-        DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+    if (LHS.containsOneValue() &&
+        li_->getApproximateInstructionCount(LHS) <= 10) {
+      // Perform a more exhaustive check for some common cases.
+      if (li_->conflictsWithPhysRegRef(LHS, RHS.reg, false, JoinedCopies))
         return false;
-      }
+    } else {
+      for (const unsigned* SR = tri_->getSubRegisters(RHS.reg); *SR; ++SR)
+        if (li_->hasInterval(*SR) && LHS.overlaps(li_->getInterval(*SR))) {
+          DOUT << "Interfere with sub-register ";
+          DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+          return false;
+        }
+    }
   }
                           
   // Compute ultimate value numbers for the LHS and RHS values.
@@ -1755,7 +1773,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     VNInfo *RHSValNoInfo = NULL;
     VNInfo *RHSValNoInfo0 = RHS.getValNumInfo(0);
     unsigned RHSSrcReg = li_->getVNInfoSourceReg(RHSValNoInfo0);
-    if ((RHSSrcReg == 0 || RHSSrcReg != LHS.reg)) {
+    if (RHSSrcReg == 0 || RHSSrcReg != LHS.reg) {
       // If RHS is not defined as a copy from the LHS, we can use simpler and
       // faster checks to see if the live ranges are coalescable.  This joiner
       // can't swap the LHS/RHS intervals though.
