@@ -429,7 +429,11 @@ public:
   /// context of this context, which corresponds to the innermost
   /// location from which name lookup can find the entities in this
   /// context.
-  DeclContext *getLookupContext();
+  DeclContext *getLookupContext() {
+    return const_cast<DeclContext *>(
+             const_cast<const DeclContext *>(this)->getLookupContext());
+  }
+  const DeclContext *getLookupContext() const;
 
   /// getNextContext - If this is a DeclContext that may have other
   /// DeclContexts that are semantically connected but syntactically

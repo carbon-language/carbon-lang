@@ -15,3 +15,9 @@ void test(int x, double d) {
   int& i1 = g(x);
   double& d1 = g(d);
 }
+
+extern "C" int foo;
+extern "C" int foo;
+
+extern "C" const int bar;
+extern "C" int const bar;
