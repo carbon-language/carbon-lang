@@ -1244,7 +1244,9 @@ llvm::Constant *CGObjCMac::EmitMetaClassRef(const ObjCInterfaceDecl *ID) {
   // if know when we entered/exitted an implementation block.
 
   // Check for an existing forward reference.
-  if (llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name)) {
+  // Previously, metaclass with internal linkage may have been defined.
+  // pass 'true' as 2nd argument so it is returned.
+  if (llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name, true)) {
     assert(GV->getType()->getElementType() == ObjCTypes.ClassTy &&
            "Forward metaclass reference has incorrect type.");
     return GV;
