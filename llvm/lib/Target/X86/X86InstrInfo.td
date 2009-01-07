@@ -236,24 +236,22 @@ include "X86InstrFormats.td"
 
 // X86 specific condition code. These correspond to CondCode in
 // X86InstrInfo.h. They must be kept in synch.
-def X86_COND_A   : PatLeaf<(i8 0)>;
-def X86_COND_AE  : PatLeaf<(i8 1)>;
-def X86_COND_B   : PatLeaf<(i8 2)>;
-def X86_COND_BE  : PatLeaf<(i8 3)>;
-def X86_COND_E   : PatLeaf<(i8 4)>;
-def X86_COND_G   : PatLeaf<(i8 5)>;
-def X86_COND_GE  : PatLeaf<(i8 6)>;
-def X86_COND_L   : PatLeaf<(i8 7)>;
-def X86_COND_LE  : PatLeaf<(i8 8)>;
-def X86_COND_NE  : PatLeaf<(i8 9)>;
+def X86_COND_A   : PatLeaf<(i8 0)>;  // alt. COND_NBE
+def X86_COND_AE  : PatLeaf<(i8 1)>;  // alt. COND_NC
+def X86_COND_B   : PatLeaf<(i8 2)>;  // alt. COND_C
+def X86_COND_BE  : PatLeaf<(i8 3)>;  // alt. COND_NA
+def X86_COND_E   : PatLeaf<(i8 4)>;  // alt. COND_Z
+def X86_COND_G   : PatLeaf<(i8 5)>;  // alt. COND_NLE
+def X86_COND_GE  : PatLeaf<(i8 6)>;  // alt. COND_NL
+def X86_COND_L   : PatLeaf<(i8 7)>;  // alt. COND_NGE
+def X86_COND_LE  : PatLeaf<(i8 8)>;  // alt. COND_NG
+def X86_COND_NE  : PatLeaf<(i8 9)>;  // alt. COND_NZ
 def X86_COND_NO  : PatLeaf<(i8 10)>;
-def X86_COND_NP  : PatLeaf<(i8 11)>;
+def X86_COND_NP  : PatLeaf<(i8 11)>; // alt. COND_PO
 def X86_COND_NS  : PatLeaf<(i8 12)>;
-def X86_COND_NC  : PatLeaf<(i8 13)>;
-def X86_COND_O   : PatLeaf<(i8 14)>;
-def X86_COND_P   : PatLeaf<(i8 15)>;
-def X86_COND_S   : PatLeaf<(i8 16)>;
-def X86_COND_C   : PatLeaf<(i8 17)>;
+def X86_COND_O   : PatLeaf<(i8 13)>;
+def X86_COND_P   : PatLeaf<(i8 14)>; // alt. COND_PE
+def X86_COND_S   : PatLeaf<(i8 15)>;
 
 def i16immSExt8  : PatLeaf<(i16 imm), [{
   // i16immSExt8 predicate - True if the 16-bit immediate fits in a 8-bit
@@ -465,10 +463,6 @@ def JO  : IBr<0x80, (ins brtarget:$dst), "jo\t$dst",
               [(X86brcond bb:$dst, X86_COND_O, EFLAGS)]>, TB;
 def JNO : IBr<0x81, (ins brtarget:$dst), "jno\t$dst",
               [(X86brcond bb:$dst, X86_COND_NO, EFLAGS)]>, TB;
-def JC  : IBr<0x82, (ins brtarget:$dst), "jc\t$dst",
-              [(X86brcond bb:$dst, X86_COND_C, EFLAGS)]>, TB;
-def JNC : IBr<0x83, (ins brtarget:$dst), "jnc\t$dst",
-              [(X86brcond bb:$dst, X86_COND_NC, EFLAGS)]>, TB;
 } // Uses = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
@@ -2534,27 +2528,6 @@ def SETNOm   : I<0x91, MRM0m,
                  "setno\t$dst",
                  [(store (X86setcc X86_COND_NO, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = not overflow
-
-def SETCr    : I<0x92, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setc\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_C, EFLAGS))]>,
-               TB;                        // GR8 = carry
-def SETCm    : I<0x92, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setc\t$dst",
-                 [(store (X86setcc X86_COND_C, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = carry
-def SETNCr   : I<0x93, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setnc\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_NC, EFLAGS))]>,
-               TB;                        // GR8 = not carry
-def SETNCm   : I<0x93, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setnc\t$dst",
-                 [(store (X86setcc X86_COND_NC, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = not carry
 } // Uses = [EFLAGS]
 
 

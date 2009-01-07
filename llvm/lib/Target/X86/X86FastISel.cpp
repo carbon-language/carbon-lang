@@ -758,11 +758,11 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
     //   %obit = extractvalue { i32, i1 } %t, 1
     //   br i1 %obit, label %overflow, label %normal
     //
-    // The %sum and %obit are converted in an ADD and a SETO/SETC before
+    // The %sum and %obit are converted in an ADD and a SETO/SETB before
     // reaching the branch. Therefore, we search backwards through the MBB
-    // looking for the SETO/SETC instruction. If an instruction modifies the
-    // EFLAGS register before we reach the SETO/SETC instruction, then we can't
-    // convert the branch into a JO/JC instruction.
+    // looking for the SETO/SETB instruction. If an instruction modifies the
+    // EFLAGS register before we reach the SETO/SETB instruction, then we can't
+    // convert the branch into a JO/JB instruction.
 
     Value *Agg = EI->getAggregateOperand();
 
@@ -814,9 +814,9 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
           if (SetMI) {
             unsigned OpCode = SetMI->getOpcode();
 
-            if (OpCode == X86::SETOr || OpCode == X86::SETCr) {
+            if (OpCode == X86::SETOr || OpCode == X86::SETBr) {
               BuildMI(MBB, TII.get((OpCode == X86::SETOr) ? 
-                                   X86::JO : X86::JC)).addMBB(TrueMBB);
+                                   X86::JO : X86::JB)).addMBB(TrueMBB);
               FastEmitBranch(FalseMBB);
               MBB->addSuccessor(TrueMBB);
               return true;
@@ -1086,7 +1086,7 @@ bool X86FastISel::X86VisitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
     ResultReg = createResultReg(TLI.getRegClassFor(MVT::i8));
     BuildMI(MBB, TII.get((Intrinsic == Intrinsic::sadd_with_overflow) ?
-                         X86::SETOr : X86::SETCr), ResultReg);
+                         X86::SETOr : X86::SETBr), ResultReg);
     return true;
   }
   }

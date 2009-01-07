@@ -5057,7 +5057,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
         RHS = DAG.getNode(ISD::ANY_EXTEND, LHS.getValueType(), RHS);
       
       SDValue BT = DAG.getNode(X86ISD::BT, MVT::i32, LHS, RHS);
-      unsigned Cond = CC == ISD::SETEQ ? X86::COND_NC : X86::COND_C;
+      unsigned Cond = CC == ISD::SETEQ ? X86::COND_AE : X86::COND_B;
       return DAG.getNode(X86ISD::SETCC, MVT::i8, 
                          DAG.getConstant(Cond, MVT::i8), BT);
     }
@@ -5283,7 +5283,7 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
       switch (cast<ConstantSDNode>(CC)->getZExtValue()) {
       default: break;
       case X86::COND_O:
-      case X86::COND_C:
+      case X86::COND_B:
         // These can only come from an arithmetic instruction with overflow,
         // e.g. SADDO, UADDO.
         Cond = Cond.getNode()->getOperand(1);
@@ -6243,7 +6243,7 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) {
     break;
   case ISD::UADDO:
     BaseOp = X86ISD::ADD;
-    Cond = X86::COND_C;
+    Cond = X86::COND_B;
     break;
   case ISD::SSUBO:
     BaseOp = X86ISD::SUB;
@@ -6251,7 +6251,7 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) {
     break;
   case ISD::USUBO:
     BaseOp = X86ISD::SUB;
-    Cond = X86::COND_C;
+    Cond = X86::COND_B;
     break;
   case ISD::SMULO:
     BaseOp = X86ISD::SMUL;
@@ -6259,7 +6259,7 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) {
     break;
   case ISD::UMULO:
     BaseOp = X86ISD::UMUL;
-    Cond = X86::COND_C;
+    Cond = X86::COND_B;
     break;
   }
 

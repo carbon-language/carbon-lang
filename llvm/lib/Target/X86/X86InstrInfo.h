@@ -41,11 +41,9 @@ namespace X86 {
     COND_NO = 10,
     COND_NP = 11,
     COND_NS = 12,
-    COND_NC = 13,
-    COND_O  = 14,
-    COND_P  = 15,
-    COND_S  = 16,
-    COND_C  = 17,
+    COND_O  = 13,
+    COND_P  = 14,
+    COND_S  = 15,
 
     // Artificial condition codes. These are used by AnalyzeBranch
     // to indicate a block terminated with two conditional branches to
