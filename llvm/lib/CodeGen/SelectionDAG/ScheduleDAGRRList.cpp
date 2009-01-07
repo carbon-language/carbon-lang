@@ -971,27 +971,26 @@ namespace {
         // allocation choices. But if it is a livein then perhaps we want it
         // closer to its uses so it can be coalesced.
         return 0xffff;
-      else if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
+      if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
         // CopyToReg should be close to its uses to facilitate coalescing and
         // avoid spilling.
         return 0;
-      else if (Opc == TargetInstrInfo::EXTRACT_SUBREG ||
-               Opc == TargetInstrInfo::INSERT_SUBREG)
+      if (Opc == TargetInstrInfo::EXTRACT_SUBREG ||
+          Opc == TargetInstrInfo::INSERT_SUBREG)
         // EXTRACT_SUBREG / INSERT_SUBREG should be close to its use to
         // facilitate coalescing.
         return 0;
-      else if (SU->NumSuccs == 0)
+      if (SU->NumSuccs == 0)
         // If SU does not have a use, i.e. it doesn't produce a value that would
         // be consumed (e.g. store), then it terminates a chain of computation.
         // Give it a large SethiUllman number so it will be scheduled right
         // before its predecessors that it doesn't lengthen their live ranges.
         return 0xffff;
-      else if (SU->NumPreds == 0)
+      if (SU->NumPreds == 0)
         // If SU does not have a def, schedule it close to its uses because it
         // does not lengthen any live ranges.
         return 0;
-      else
-        return SethiUllmanNumbers[SU->NodeNum];
+      return SethiUllmanNumbers[SU->NodeNum];
     }
     
     unsigned size() const { return Queue.size(); }
