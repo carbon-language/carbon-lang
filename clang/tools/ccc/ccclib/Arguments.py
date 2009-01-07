@@ -189,23 +189,6 @@ class JoinedAndSeparateValuesArg(Arg):
         return ([self.opt.name + self.getJoinedValue(args)] + 
                 [self.getSeparateValue(args)])
 
-class DerivedArg(ValueArg):
-    """DerivedArg - A synthesized argument which does not correspend
-    to an item in the argument vector."""
-
-    def __init__(self, value):
-        # FIXME: The UnknownOption() here is a total hack so we can
-        # rely on arg.opt not being nil. Ok for now since DerivedArg
-        # is dying.
-        super(DerivedArg, self).__init__(-1, UnknownOption())
-        self.value = value
-
-    def getValue(self, args):
-        return self.value
-
-    def render(self, args):
-        return [self.value]
-
 ###
 
 class InputIndex:
@@ -220,7 +203,8 @@ class ArgList:
     """ArgList - Collect an input argument vector along with a set of parsed Args
     and supporting information."""
 
-    def __init__(self, argv):
+    def __init__(self, parser, argv):
+        self.parser = parser
         self.argv = list(argv)
         self.syntheticArgv = []
         self.lastArgs = {}
@@ -240,10 +224,26 @@ class ArgList:
 
         raise RuntimeError,'Unknown source ID for index.'
 
-    def getSyntheticIndex(self, *strings):
+    def makeIndex(self, *strings):
         pos = len(self.syntheticArgv)
         self.syntheticArgv.extend(strings)
         return InputIndex(1, pos)
+
+    def makeFlagArg(self, option):
+        return Arg(self.makeIndex(option.name),
+                   option)
+
+    def makeInputArg(self, string):
+        return PositionalArg(self.makeIndex(string),
+                             self.parser.inputOption)
+
+    def makeUnknownArg(self, string):
+        return PositionalArg(self.makeIndex(string),
+                             self.parser.unknownOption)
+
+    def makeSeparateArg(self, string, option):
+        return SeparateValueArg(self.makeIndex(option.name, string),
+                                option)
 
     # Support use as a simple arg list.
 
@@ -483,7 +483,7 @@ class OptionParser:
 
         iargs = enumerate(argv)
         it = iter(iargs)
-        args = ArgList(argv)
+        args = ArgList(self, argv)
         for pos,a in it:
             i = InputIndex(0, pos)
             # FIXME: Handle '@'

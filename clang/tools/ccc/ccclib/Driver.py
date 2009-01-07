@@ -416,7 +416,8 @@ class Driver(object):
         if not archs:
             # FIXME: Need to infer arch so that we sub -Xarch
             # correctly.
-            archs.append(Arguments.DerivedArg('i386'))
+            archs.append(args.makeSeparateArg('i386',
+                                              self.parser.archOption))
 
         actions = self.buildNormalPipeline(args)
 
@@ -548,9 +549,9 @@ class Driver(object):
                         # string. Why?
                         if args.getJoinedValue(arg) == archName:
                             # FIXME: This is wrong, we don't want a
-                            # DerivedArg we want an actual parsed version
-                            # of this arg.
-                            filteredArgs.append(Arguments.DerivedArg(args.getSeparateValue(arg)))
+                            # unknown arg we want an actual parsed
+                            # version of this arg.
+                            filteredArgs.append(args.makeUnknownArg(args.getSeparateValue(arg)))
                     else:
                         filteredArgs.append(arg)
                         
@@ -625,11 +626,13 @@ class Driver(object):
                     output = finalOutput
                 # Contruct a named destination?
                 elif atTopLevel or hasSaveTemps:
-                    output = Arguments.DerivedArg(namedOutput)
+                    output = args.makeSeparateArg(namedOutput,
+                                                  self.parser.oOption)
                 else:
                     # Output to temp file...
                     fd,filename = tempfile.mkstemp(suffix='.'+phase.type.tempSuffix)
-                    output = Arguments.DerivedArg(filename)
+                    output = args.makeSeparateArg(filename,
+                                                  self.parser.oOption)
 
             tool.constructJob(phase, arch, jobList, inputs, output, phase.type,
                               forwardArgs, args)

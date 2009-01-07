@@ -30,21 +30,13 @@ class GCC_Common_Tool(Tool):
 
         cmd_args = sum(map(arglist.render, args),[]) + extraArgs
         if arch:
-            # FIXME: Clean this up.
-            if isinstance(arch, Arguments.DerivedArg):
-                cmd_args.extend(['-arch', arglist.getValue(arch)])
-            else:
-                cmd_args.extend(arglist.render(arch))
+            cmd_args.extend(arglist.render(arch))
         if isinstance(output, Jobs.PipedJob):
             cmd_args.extend(['-o', '-'])
         elif output is None:
             cmd_args.append('-fsyntax-only')
         else:
-            # FIXME: Ditch this hack.
-            if isinstance(output, Arguments.DerivedArg):
-                cmd_args.extend(['-o', arglist.getValue(output)])
-            else:
-                cmd_args.extend(arglist.render(output))
+            cmd_args.extend(arglist.render(output))
 
         cmd_args.extend(['-x', input.type.name])
         if isinstance(input.source, Jobs.PipedJob):
@@ -105,17 +97,9 @@ class DarwinAssemblerTool(Tool):
 
         cmd_args = []
         if arch:
-            # FIXME: Clean this up.
-            if isinstance(arch, Arguments.DerivedArg):
-                cmd_args.extend(['-arch',
-                                 arglist.getValue(arch)])
-            else:
-                cmd_args.extend(arglist.render(arch))
+            cmd_args.extend(arglist.render(arch))
         cmd_args.append('-force_cpusubtype_ALL')
-        if isinstance(output, Arguments.DerivedArg):
-            cmd_args.extend(['-o', arglist.getValue(output)])
-        else:
-            cmd_args.extend(arglist.render(output))
+        cmd_args.extend(arglist.render(output))
         if isinstance(input.source, Jobs.PipedJob):
             cmd_args.append('-')
         else:
@@ -138,10 +122,7 @@ class Collect2Tool(Tool):
                     cmd_args.extend(arglist.render(arg))
         for input in inputs:
             cmd_args.append(arglist.getValue(input.source))
-        if isinstance(output, Arguments.DerivedArg):
-            cmd_args.extend(['-o', arglist.getValue(output)])
-        else:
-            cmd_args.extend(arglist.render(output))
+        cmd_args.extend(arglist.render(output))
         cmd_args.extend(['-L/usr/lib/gcc/i686-apple-darwin10/4.2.1',
                          '-lcrt1.10.5.o',
                          '-lgcc_s.10.5',
@@ -158,10 +139,7 @@ class LipoTool(Tool):
         assert outputType is Types.ImageType
 
         cmd_args = ['-create']
-        if isinstance(output, Arguments.DerivedArg):
-            cmd_args.extend(['-o', arglist.getValue(output)])
-        else:
-            cmd_args.extend(arglist.render(output))
+        cmd_args.extend(arglist.render(output))
         for input in inputs:
             cmd_args.append(arglist.getValue(input.source))
         jobs.addJob(Jobs.Command('lipo', cmd_args))
