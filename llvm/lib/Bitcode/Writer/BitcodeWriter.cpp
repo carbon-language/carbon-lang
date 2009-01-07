@@ -831,9 +831,9 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     const InvokeInst *II = cast<InvokeInst>(&I);
     Vals.push_back(VE.getAttributeID(II->getAttributes()));
     Vals.push_back(II->getCallingConv());
-    Vals.push_back(VE.getValueID(I.getOperand(1)));      // normal dest
-    Vals.push_back(VE.getValueID(I.getOperand(2)));      // unwind dest
-    PushValueAndType(I.getOperand(0), InstID, Vals, VE); // callee
+    Vals.push_back(VE.getValueID(II->getNormalDest()));
+    Vals.push_back(VE.getValueID(II->getUnwindDest()));
+    PushValueAndType(II->getCalledFunction(), InstID, Vals, VE);
     
     // Emit value #'s for the fixed parameters.
     for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
