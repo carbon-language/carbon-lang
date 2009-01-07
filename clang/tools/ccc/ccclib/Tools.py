@@ -22,37 +22,35 @@ class Tool(object):
 
 class GCC_Common_Tool(Tool):
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args,
+                     output, outputType, args, arglist,
                      extraArgs):
         assert len(inputs) == 1
 
         input = inputs[0]
 
-        cmd_args = args + extraArgs
+        cmd_args = sum(map(arglist.render, args),[]) + extraArgs
         if arch:
             # FIXME: Clean this up.
             if isinstance(arch, Arguments.DerivedArg):
-                cmd_args.extend([Arguments.DerivedArg('-arch'),
-                                 arch])
+                cmd_args.extend(['-arch', arglist.getValue(arch)])
             else:
-                cmd_args.append(arch)
+                cmd_args.extend(arglist.render(arch))
         if isinstance(output, Jobs.PipedJob):
-            cmd_args.extend([Arguments.DerivedArg('-o'), Arguments.DerivedArg('-')])
+            cmd_args.extend(['-o', '-'])
         elif output is None:
-            cmd_args.append(Arguments.DerivedArg('-fsyntax-only'))
+            cmd_args.append('-fsyntax-only')
         else:
             # FIXME: Ditch this hack.
             if isinstance(output, Arguments.DerivedArg):
-                cmd_args.extend([Arguments.DerivedArg('-o'), output])
+                cmd_args.extend(['-o', arglist.getValue(output)])
             else:
-                cmd_args.append(output)
+                cmd_args.extend(arglist.render(output))
 
-        cmd_args.extend([Arguments.DerivedArg('-x'),
-                         Arguments.DerivedArg(input.type.name)])
+        cmd_args.extend(['-x', input.type.name])
         if isinstance(input.source, Jobs.PipedJob):
-            cmd_args.append(Arguments.DerivedArg('-'))
+            cmd_args.append('-')
         else:
-            cmd_args.append(input.source)
+            cmd_args.append(arglist.getValue(input.source))
 
         jobs.addJob(Jobs.Command('gcc', cmd_args))
 
@@ -63,10 +61,10 @@ class GCC_PreprocessTool(GCC_Common_Tool):
                                                   Tool.eFlagsPipedOutput))
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args):
+                     output, outputType, args, arglist):
         return super(GCC_PreprocessTool, self).constructJob(phase, arch, jobs, inputs,
-                                                            output, outputType, args,
-                                                            [Arguments.DerivedArg('-E')])
+                                                            output, outputType, args, arglist,
+                                                            ['-E'])
 
 class GCC_CompileTool(GCC_Common_Tool):
     def __init__(self):
@@ -76,10 +74,10 @@ class GCC_CompileTool(GCC_Common_Tool):
                                                Tool.eFlagsIntegratedCPP))
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args):
+                     output, outputType, args, arglist):
         return super(GCC_CompileTool, self).constructJob(phase, arch, jobs, inputs,
-                                                         output, outputType, args,
-                                                         [Arguments.DerivedArg('-S')])
+                                                         output, outputType, args, arglist,
+                                                         ['-S'])
 
 class GCC_PrecompileTool(GCC_Common_Tool):
     def __init__(self):
@@ -88,9 +86,9 @@ class GCC_PrecompileTool(GCC_Common_Tool):
                                                   Tool.eFlagsIntegratedCPP))
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args):
+                     output, outputType, args, arglist):
         return super(GCC_PrecompileTool, self).constructJob(phase, arch, jobs, inputs,
-                                                            output, outputType, args,
+                                                            output, outputType, args, arglist,
                                                             [])
 
 class DarwinAssemblerTool(Tool):
@@ -99,7 +97,7 @@ class DarwinAssemblerTool(Tool):
                                                   Tool.eFlagsPipedInput)
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args):
+                     output, outputType, args, arglist):
         assert len(inputs) == 1
         assert outputType is Types.ObjectType
 
@@ -109,19 +107,19 @@ class DarwinAssemblerTool(Tool):
         if arch:
             # FIXME: Clean this up.
             if isinstance(arch, Arguments.DerivedArg):
-                cmd_args.extend([Arguments.DerivedArg('-arch'),
-                                 arch])
+                cmd_args.extend(['-arch',
+                                 arglist.getValue(arch)])
             else:
-                cmd_args.append(arch)
-        cmd_args.append(Arguments.DerivedArg('-force_cpusubtype_ALL'))
+                cmd_args.extend(arglist.render(arch))
+        cmd_args.append('-force_cpusubtype_ALL')
         if isinstance(output, Arguments.DerivedArg):
-            cmd_args.extend([Arguments.DerivedArg('-o'), output])
+            cmd_args.extend(['-o', arglist.getValue(output)])
         else:
-            cmd_args.append(output)
+            cmd_args.extend(arglist.render(output))
         if isinstance(input.source, Jobs.PipedJob):
-            cmd_args.append(Arguments.DerivedArg('-'))
+            cmd_args.append('-')
         else:
-            cmd_args.append(input.source)
+            cmd_args.append(arglist.getValue(input.source))
         jobs.addJob(Jobs.Command('as', cmd_args))
 
 class Collect2Tool(Tool):
@@ -130,25 +128,25 @@ class Collect2Tool(Tool):
         super(Collect2Tool, self).__init__('collect2')
 
     def constructJob(self, phase, arch, jobs, inputs,
-                     output, outputType, args):
+                     output, outputType, args, arglist):
         assert outputType is Types.ImageType
 
         cmd_args = []
         for arg in args:
             if arg.opt:
                 if arg.opt.name in ('-framework',):
-                    cmd_args.append(arg)
+                    cmd_args.extend(arglist.render(arg))
         for input in inputs:
-            cmd_args.append(input.source)
+            cmd_args.append(arglist.getValue(input.source))
         if isinstance(output, Arguments.DerivedArg):
-            cmd_args.extend([Arguments.DerivedArg('-o'), output])
+            cmd_args.extend(['-o', arglist.getValue(output)])
         else:
-            cmd_args.append(output)
-        cmd_args.extend([Arguments.DerivedArg('-L/usr/lib/gcc/i686-apple-darwin10/4.2.1'),
-                         Arguments.DerivedArg('-lcrt1.10.5.o'),
-                         Arguments.DerivedArg('-lgcc_s.10.5'),
-                         Arguments.DerivedArg('-lgcc'),
-                         Arguments.DerivedArg('-lSystem')])
+            cmd_args.extend(arglist.render(output))
+        cmd_args.extend(['-L/usr/lib/gcc/i686-apple-darwin10/4.2.1',
+                         '-lcrt1.10.5.o',
+                         '-lgcc_s.10.5',
+                         '-lgcc',
+                         '-lSystem'])
         jobs.addJob(Jobs.Command(self.kCollect2Path, cmd_args))
 
 class LipoTool(Tool):
@@ -156,14 +154,14 @@ class LipoTool(Tool):
         super(LipoTool, self).__init__('lipo')
 
     def constructJob(self, phase, arch, jobs, inputs,
-                     output, outputType, args):
+                     output, outputType, args, arglist):
         assert outputType is Types.ImageType
 
-        cmd_args = [Arguments.DerivedArg('-create')]
+        cmd_args = ['-create']
         if isinstance(output, Arguments.DerivedArg):
-            cmd_args.extend([Arguments.DerivedArg('-o'), output])
+            cmd_args.extend(['-o', arglist.getValue(output)])
         else:
-            cmd_args.append(output)
+            cmd_args.extend(arglist.render(output))
         for input in inputs:
-            cmd_args.append(input.source)
+            cmd_args.append(arglist.getValue(input.source))
         jobs.addJob(Jobs.Command('lipo', cmd_args))

@@ -9,10 +9,13 @@ class Job(object):
 
 class Command(Job):
     """Command - Represent the information needed to execute a single
-    process."""
+    process.
+    
+    This currently assumes that the executable will always be the
+    first argument."""
 
     def __init__(self, executable, args):
-        assert Util.all_true(args, lambda x: isinstance(x, Arguments.Arg))
+        assert Util.all_true(args, lambda x: isinstance(x, str))
         self.executable = executable
         self.args = args
 
@@ -20,11 +23,8 @@ class Command(Job):
         return Util.prefixAndPPrint(self.__class__.__name__,
                                     (self.executable, self.args))
     
-    def render(self, args):
-        argv = [self.executable]
-        for arg in self.args:
-            argv.extend(args.render(arg))
-        return argv
+    def getArgv(self):
+        return [self.executable] + self.args
 
     def iterjobs(self):
         yield self

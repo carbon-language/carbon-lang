@@ -104,10 +104,10 @@ class Driver(object):
             self.claim(hasHashHashHash)
             for j in jobs.iterjobs():
                 if isinstance(j, Jobs.Command):
-                    print '"%s"' % '" "'.join(j.render(args))
+                    print '"%s"' % '" "'.join(j.getArgv())
                 elif isinstance(j, Jobs.PipedJob):
                     for c in j.commands:
-                        print '"%s" %c' % ('" "'.join(c.render(args)),
+                        print '"%s" %c' % ('" "'.join(c.getArgv()),
                                            "| "[c is j.commands[-1]])
                 elif not isinstance(j, JobList):
                     raise ValueError,'Encountered unknown job.'
@@ -115,8 +115,7 @@ class Driver(object):
 
         for j in jobs.iterjobs():
             if isinstance(j, Jobs.Command):
-                cmd_args = j.render(args)
-                res = os.spawnvp(os.P_WAIT, cmd_args[0], cmd_args)
+                res = os.spawnvp(os.P_WAIT, j.executable, j.getArgv())
                 if res:
                     sys.exit(res)
             elif isinstance(j, Jobs.PipedJob):
@@ -632,7 +631,8 @@ class Driver(object):
                     fd,filename = tempfile.mkstemp(suffix='.'+phase.type.tempSuffix)
                     output = Arguments.DerivedArg(filename)
 
-            tool.constructJob(phase, arch, jobList, inputs, output, phase.type, forwardArgs)
+            tool.constructJob(phase, arch, jobList, inputs, output, phase.type,
+                              forwardArgs, args)
 
             return InputInfo(output, phase.type, baseInput)
 
