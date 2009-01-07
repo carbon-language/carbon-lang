@@ -211,30 +211,6 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
     unsigned Depth = UD.getInt();
 
     switch (I->getOpcode()) {
-    case Instruction::Store:
-      if (V == I->getOperand(0)) {
-        // Stored the pointer - it may be captured.  If it is stored to a local
-        // object (alloca) then track that object.  Otherwise give up.
-        Value *Target = I->getOperand(1)->getUnderlyingObject();
-        if (!isa<AllocaInst>(Target))
-          // Didn't store to an obviously local object - captured.
-          return true;
-        if (Depth >= 3)
-          // Alloca recursion too deep - give up.
-          return true;
-        // Analyze all uses of the alloca.
-        for (Value::use_iterator UI = Target->use_begin(),
-             UE = Target->use_end(); UI != UE; ++UI) {
-          UseWithDepth NUD(&UI.getUse(), Depth + 1);
-          if (Visited.insert(NUD))
-            Worklist.push_back(NUD);
-        }
-      }
-      // Storing to the pointee does not cause the pointer to be captured.
-      break;
-    case Instruction::Free:
-      // Freeing a pointer does not cause it to be captured.
-      break;
     case Instruction::Call:
     case Instruction::Invoke: {
       CallSite CS = CallSite::get(I);
@@ -259,6 +235,30 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
       // captured.
       break;
     }
+    case Instruction::Free:
+      // Freeing a pointer does not cause it to be captured.
+      break;
+    case Instruction::Store:
+      if (V == I->getOperand(0)) {
+        // Stored the pointer - it may be captured.  If it is stored to a local
+        // object (alloca) then track that object.  Otherwise give up.
+        Value *Target = I->getOperand(1)->getUnderlyingObject();
+        if (!isa<AllocaInst>(Target))
+          // Didn't store to an obviously local object - captured.
+          return true;
+        if (Depth >= 3)
+          // Alloca recursion too deep - give up.
+          return true;
+        // Analyze all uses of the alloca.
+        for (Value::use_iterator UI = Target->use_begin(),
+             UE = Target->use_end(); UI != UE; ++UI) {
+          UseWithDepth NUD(&UI.getUse(), Depth + 1);
+          if (Visited.insert(NUD))
+            Worklist.push_back(NUD);
+        }
+      }
+      // Storing to the pointee does not cause the pointer to be captured.
+      break;
     case Instruction::BitCast:
     case Instruction::GetElementPtr:
     case Instruction::Load:
