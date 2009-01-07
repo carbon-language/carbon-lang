@@ -3078,6 +3078,73 @@ def : Pat<(parallel (X86cmp GR16:$src1, 0), (implicit EFLAGS)),
 def : Pat<(parallel (X86cmp GR32:$src1, 0), (implicit EFLAGS)),
           (TEST32rr GR32:$src1, GR32:$src1)>;
 
+// Conditional moves with folded loads with operands swapped and conditions
+// inverted.
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_B, EFLAGS),
+          (CMOVAE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_B, EFLAGS),
+          (CMOVAE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_AE, EFLAGS),
+          (CMOVB16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_AE, EFLAGS),
+          (CMOVB32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_E, EFLAGS),
+          (CMOVNE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_E, EFLAGS),
+          (CMOVNE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_NE, EFLAGS),
+          (CMOVE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_NE, EFLAGS),
+          (CMOVE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_BE, EFLAGS),
+          (CMOVA16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_BE, EFLAGS),
+          (CMOVA32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_A, EFLAGS),
+          (CMOVBE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_A, EFLAGS),
+          (CMOVBE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_L, EFLAGS),
+          (CMOVGE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_L, EFLAGS),
+          (CMOVGE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_GE, EFLAGS),
+          (CMOVL16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_GE, EFLAGS),
+          (CMOVL32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_LE, EFLAGS),
+          (CMOVG16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_LE, EFLAGS),
+          (CMOVG32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_G, EFLAGS),
+          (CMOVLE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_G, EFLAGS),
+          (CMOVLE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_P, EFLAGS),
+          (CMOVNP16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_P, EFLAGS),
+          (CMOVNP32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_NP, EFLAGS),
+          (CMOVP16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_NP, EFLAGS),
+          (CMOVP32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_S, EFLAGS),
+          (CMOVNS16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_S, EFLAGS),
+          (CMOVNS32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_NS, EFLAGS),
+          (CMOVS16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_NS, EFLAGS),
+          (CMOVS32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_O, EFLAGS),
+          (CMOVNO16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_O, EFLAGS),
+          (CMOVNO32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_NO, EFLAGS),
+          (CMOVO16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_NO, EFLAGS),
+          (CMOVO32rm GR32:$src2, addr:$src1)>;
+
 // zextload bool -> zextload byte
 def : Pat<(zextloadi8i1  addr:$src), (MOV8rm     addr:$src)>;
 def : Pat<(zextloadi16i1 addr:$src), (MOVZX16rm8 addr:$src)>;

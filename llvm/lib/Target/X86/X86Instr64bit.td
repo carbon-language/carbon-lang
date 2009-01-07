@@ -1344,7 +1344,40 @@ def : Pat<(X86tcret (i64 texternalsym:$dst), imm:$off),
 def : Pat<(parallel (X86cmp GR64:$src1, 0), (implicit EFLAGS)),
           (TEST64rr GR64:$src1, GR64:$src1)>;
 
-
+// Conditional moves with folded loads with operands swapped and conditions
+// inverted.
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_B, EFLAGS),
+          (CMOVAE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_AE, EFLAGS),
+          (CMOVB64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_E, EFLAGS),
+          (CMOVNE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_NE, EFLAGS),
+          (CMOVE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_BE, EFLAGS),
+          (CMOVA64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_A, EFLAGS),
+          (CMOVBE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_L, EFLAGS),
+          (CMOVGE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_GE, EFLAGS),
+          (CMOVL64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_LE, EFLAGS),
+          (CMOVG64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_G, EFLAGS),
+          (CMOVLE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_P, EFLAGS),
+          (CMOVNP64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_NP, EFLAGS),
+          (CMOVP64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_S, EFLAGS),
+          (CMOVNS64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_NS, EFLAGS),
+          (CMOVS64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_O, EFLAGS),
+          (CMOVNO64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_NO, EFLAGS),
+          (CMOVO64rm GR64:$src2, addr:$src1)>;
 
 // Zero-extension
 def : Pat<(i64 (zext GR32:$src)), 
