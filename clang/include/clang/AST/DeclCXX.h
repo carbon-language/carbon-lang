@@ -463,9 +463,6 @@ public:
     return getLexicalDeclContext() != getDeclContext();
   }
 
-  void setAccess(AccessSpecifier AS) { Access = AS; }
-  AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
-
   /// getParent - Returns the parent of this method declaration, which
   /// is the class in which this method is defined.
   const CXXRecordDecl *getParent() const { 
@@ -617,16 +614,12 @@ class CXXConstructorDecl : public CXXMethodDecl {
   /// Explicit - Whether this constructor is explicit.
   bool Explicit : 1;
 
-  /// ImplicitlyDeclared - Whether this constructor was implicitly
-  /// declared. When false, the constructor was declared by the user.
-  bool ImplicitlyDeclared : 1;
-
   /// ImplicitlyDefined - Whether this constructor was implicitly
   /// defined by the compiler. When false, the constructor was defined
   /// by the user. In C++03, this flag will have the same value as
-  /// ImplicitlyDeclared. In C++0x, however, a constructor that is
+  /// Implicit. In C++0x, however, a constructor that is
   /// explicitly defaulted (i.e., defined with " = default") will have
-  /// @c !ImplicitlyDeclared && ImplicitlyDefined.
+  /// @c !Implicit && ImplicitlyDefined.
   bool ImplicitlyDefined : 1;
 
   /// FIXME: Add support for base and member initializers.
@@ -636,8 +629,9 @@ class CXXConstructorDecl : public CXXMethodDecl {
                      bool isExplicit, bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXConstructor, RD, L, N, T, false, isInline, 
                     /*PrevDecl=*/0),
-      Explicit(isExplicit), ImplicitlyDeclared(isImplicitlyDeclared),
-      ImplicitlyDefined(false) { }
+      Explicit(isExplicit), ImplicitlyDefined(false) { 
+    setImplicit(isImplicitlyDeclared);
+  }
 
 public:
   static CXXConstructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
@@ -647,11 +641,6 @@ public:
 
   /// isExplicit - Whether this constructor was marked "explicit" or not.  
   bool isExplicit() const { return Explicit; }
-
-  /// isImplicitlyDeclared - Whether this constructor was implicitly
-  /// declared. If false, then this constructor was explicitly
-  /// declared by the user.
-  bool isImplicitlyDeclared() const { return ImplicitlyDeclared; }
 
   /// isImplicitlyDefined - Whether this constructor was implicitly
   /// defined. If false, then this constructor was defined by the
@@ -728,16 +717,12 @@ public:
 /// };
 /// @endcode
 class CXXDestructorDecl : public CXXMethodDecl {
-  /// ImplicitlyDeclared - Whether this destructor was implicitly
-  /// declared. When false, the destructor was declared by the user.
-  bool ImplicitlyDeclared : 1;
-
   /// ImplicitlyDefined - Whether this destructor was implicitly
   /// defined by the compiler. When false, the destructor was defined
   /// by the user. In C++03, this flag will have the same value as
-  /// ImplicitlyDeclared. In C++0x, however, a destructor that is
+  /// Implicit. In C++0x, however, a destructor that is
   /// explicitly defaulted (i.e., defined with " = default") will have
-  /// @c !ImplicitlyDeclared && ImplicitlyDefined.
+  /// @c !Implicit && ImplicitlyDefined.
   bool ImplicitlyDefined : 1;
 
   CXXDestructorDecl(CXXRecordDecl *RD, SourceLocation L,
@@ -745,19 +730,15 @@ class CXXDestructorDecl : public CXXMethodDecl {
                     bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXDestructor, RD, L, N, T, false, isInline, 
                     /*PrevDecl=*/0),
-      ImplicitlyDeclared(isImplicitlyDeclared),
-      ImplicitlyDefined(false) { }
+      ImplicitlyDefined(false) { 
+    setImplicit(isImplicitlyDeclared);
+  }
 
 public:
   static CXXDestructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, DeclarationName N,
                                    QualType T, bool isInline, 
                                    bool isImplicitlyDeclared);
-
-  /// isImplicitlyDeclared - Whether this destructor was implicitly
-  /// declared. If false, then this destructor was explicitly
-  /// declared by the user.
-  bool isImplicitlyDeclared() const { return ImplicitlyDeclared; }
 
   /// isImplicitlyDefined - Whether this destructor was implicitly
   /// defined. If false, then this destructor was defined by the
@@ -857,9 +838,6 @@ public:
                              SourceLocation L,IdentifierInfo *Id,
                              QualType T, ScopedDecl *PrevDecl);
   
-  void setAccess(AccessSpecifier AS) { Access = AS; }
-  AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
-
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == CXXClassVar; }
   static bool classof(const CXXClassVarDecl *D) { return true; }

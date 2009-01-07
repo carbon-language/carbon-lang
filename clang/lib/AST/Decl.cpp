@@ -97,6 +97,15 @@ FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
   return new (Mem) FieldDecl(Decl::Field, DC, L, Id, T, BW, Mutable, PrevDecl);
 }
 
+bool FieldDecl::isAnonymousStructOrUnion() const {
+  if (!isImplicit() || getDeclName())
+    return false;
+  
+  if (const RecordType *Record = getType()->getAsRecordType())
+    return Record->getDecl()->isAnonymousStructOrUnion();
+
+  return false;
+}
 
 EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
                                            SourceLocation L,

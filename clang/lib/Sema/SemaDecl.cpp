@@ -924,6 +924,48 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
       DS.SetStorageClassSpec(DeclSpec::SCS_unspecified, SourceLocation(),
                              PrevSpec);
     }
+
+    // C++ [class.union]p2: 
+    //   The member-specification of an anonymous union shall only
+    //   define non-static data members. [Note: nested types and
+    //   functions cannot be declared within an anonymous union. ]
+    for (DeclContext::decl_iterator Mem = Record->decls_begin(),
+                                 MemEnd = Record->decls_end();
+         Mem != MemEnd; ++Mem) {
+      if (FieldDecl *FD = dyn_cast<FieldDecl>(*Mem)) {
+        // C++ [class.union]p3:
+        //   An anonymous union shall not have private or protected
+        //   members (clause 11).
+        if (FD->getAccess() == AS_protected || FD->getAccess() == AS_private) {
+          Diag(FD->getLocation(), diag::err_anonymous_record_nonpublic_member)
+            << (int)Record->isUnion() << (int)(FD->getAccess() == AS_protected);
+          Invalid = true;
+        }
+      } else if ((*Mem)->isImplicit()) {
+        // Any implicit members are fine.
+      } else if (RecordDecl *MemRecord = dyn_cast<RecordDecl>(*Mem)) {
+        if (!MemRecord->isAnonymousStructOrUnion() &&
+            MemRecord->getDeclName()) {
+          // This is a nested type declaration.
+          Diag(MemRecord->getLocation(), diag::err_anonymous_record_with_type)
+            << (int)Record->isUnion();
+          Invalid = true;
+        }
+      } else {
+        // We have something that isn't a non-static data
+        // member. Complain about it.
+        unsigned DK = diag::err_anonymous_record_bad_member;
+        if (isa<TypeDecl>(*Mem))
+          DK = diag::err_anonymous_record_with_type;
+        else if (isa<FunctionDecl>(*Mem))
+          DK = diag::err_anonymous_record_with_function;
+        else if (isa<VarDecl>(*Mem))
+          DK = diag::err_anonymous_record_with_static;
+        Diag((*Mem)->getLocation(), DK)
+            << (int)Record->isUnion();
+          Invalid = true;
+      }
+    }
   } else {
     // FIXME: Check GNU C semantics
   }
@@ -941,6 +983,9 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                              Context.getTypeDeclType(Record),
                              /*BitWidth=*/0, /*Mutable=*/false,
                              /*PrevDecl=*/0);
+    Anon->setAccess(AS_public);
+    if (getLangOptions().CPlusPlus)
+      FieldCollector->Add(cast<FieldDecl>(Anon));
   } else {
     VarDecl::StorageClass SC;
     switch (DS.getStorageClassSpec()) {
@@ -966,6 +1011,7 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                            SC, /*FIXME:LastDeclarator=*/0,
                            DS.getSourceRange().getBegin());
   }
+  Anon->setImplicit();
 
   // Add the anonymous struct/union object to the current
   // context. We'll be referencing this object when we refer to one of
@@ -3176,18 +3222,52 @@ void Sema::ActOnFields(Scope* S,
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
   llvm::SmallVector<FieldDecl*, 32> RecFields;
-  llvm::SmallSet<const IdentifierInfo*, 32> FieldIDs;
+
+  // FIXME: Eventually, we'd like to eliminate this in favor of
+  // checking for redeclarations on-the-fly.
+  llvm::DenseMap<const IdentifierInfo*, FieldDecl *> FieldIDs;
   
   for (unsigned i = 0; i != NumFields; ++i) {
-    
     FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
     assert(FD && "missing field decl");
     
-    // Remember all fields.
-    RecFields.push_back(FD);
-    
     // Get the type for the field.
     Type *FDTy = FD->getType().getTypePtr();
+
+    if (FD->isAnonymousStructOrUnion()) {
+      // We have found a field that represents an anonymous struct
+      // or union. Introduce all of the inner fields (recursively)
+      // into the list of fields we know about, so that we can produce
+      // an appropriate error message in cases like:
+      //
+      //   struct X {
+      //     union {
+      //       int x;
+      //       float f;
+      //     };
+      //     double x;
+      //   };
+      llvm::SmallVector<FieldDecl *, 4> AnonStructUnionFields;
+      AnonStructUnionFields.push_back(FD);
+      while (!AnonStructUnionFields.empty()) {
+        FieldDecl *AnonField = AnonStructUnionFields.back();
+        AnonStructUnionFields.pop_back();
+        
+        RecordDecl *AnonRecord 
+          = AnonField->getType()->getAsRecordType()->getDecl();
+        for (RecordDecl::field_iterator F = AnonRecord->field_begin(),
+                                     FEnd = AnonRecord->field_end();
+             F != FEnd; ++F) {
+          if ((*F)->isAnonymousStructOrUnion())
+            AnonStructUnionFields.push_back(*F);
+          else if (const IdentifierInfo *II = (*F)->getIdentifier())
+            FieldIDs[II] = *F;
+        }
+      }
+    } else {
+      // Remember all fields written by the user.
+      RecFields.push_back(FD);
+    }
       
     // C99 6.7.2.1p2 - A field may not be a function type.
     if (FDTy->isFunctionType()) {
@@ -3262,23 +3342,16 @@ void Sema::ActOnFields(Scope* S,
     // Keep track of the number of named members.
     if (IdentifierInfo *II = FD->getIdentifier()) {
       // Detect duplicate member names.
-      if (!FieldIDs.insert(II)) {
+      if (FieldIDs[II]) {
         Diag(FD->getLocation(), diag::err_duplicate_member) << II;
         // Find the previous decl.
-        SourceLocation PrevLoc;
-        for (unsigned i = 0; ; ++i) {
-          assert(i != RecFields.size() && "Didn't find previous def!");
-          if (RecFields[i]->getIdentifier() == II) {
-            PrevLoc = RecFields[i]->getLocation();
-            break;
-          }
-        }
-        Diag(PrevLoc, diag::note_previous_definition);
+        Diag(FieldIDs[II]->getLocation(), diag::note_previous_definition);
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
         continue;
       }
       ++NumNamedMembers;
+      FieldIDs[II] = FD;
     }
   }
 

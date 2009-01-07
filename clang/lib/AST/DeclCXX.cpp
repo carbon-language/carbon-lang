@@ -153,7 +153,7 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
 void
 CXXRecordDecl::addedConstructor(ASTContext &Context, 
                                 CXXConstructorDecl *ConDecl) {
-  if (!ConDecl->isImplicitlyDeclared()) {
+  if (!ConDecl->isImplicit()) {
     // Note that we have a user-declared constructor.
     UserDeclaredConstructor = true;
 

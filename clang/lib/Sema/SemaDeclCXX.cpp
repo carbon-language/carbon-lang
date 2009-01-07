@@ -427,9 +427,12 @@ void Sema::ActOnStartCXXClassDef(Scope *S, DeclTy *D, SourceLocation LBrace) {
     //   class itself; this is known as the injected-class-name. For
     //   purposes of access checking, the injected-class-name is treated
     //   as if it were a public member name.
-    PushOnScopeChains(CXXRecordDecl::Create(Context, Dcl->getTagKind(),
-                                            CurContext, Dcl->getLocation(),
-                                            Dcl->getIdentifier(), Dcl), S);
+    RecordDecl *InjectedClassName
+      = CXXRecordDecl::Create(Context, Dcl->getTagKind(),
+                              CurContext, Dcl->getLocation(),
+                              Dcl->getIdentifier(), Dcl);
+    InjectedClassName->setImplicit();
+    PushOnScopeChains(InjectedClassName, S);
   }
 }
 
@@ -789,6 +792,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                  /*isInline=*/true,
                                  /*isImplicitlyDeclared=*/true);
     DefaultCon->setAccess(AS_public);
+    DefaultCon->setImplicit();
     ClassDecl->addDecl(Context, DefaultCon);
 
     // Notify the class that we've added a constructor.
@@ -860,6 +864,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                    /*isInline=*/true,
                                    /*isImplicitlyDeclared=*/true);
     CopyConstructor->setAccess(AS_public);
+    CopyConstructor->setImplicit();
 
     // Add the parameter to the constructor.
     ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
@@ -936,6 +941,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                                     false, 0),
                             /*isStatic=*/false, /*isInline=*/true, 0);
     CopyAssignment->setAccess(AS_public);
+    CopyAssignment->setImplicit();
 
     // Add the parameter to the operator.
     ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyAssignment,
@@ -964,6 +970,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                   /*isInline=*/true,
                                   /*isImplicitlyDeclared=*/true);
     Destructor->setAccess(AS_public);
+    Destructor->setImplicit();
     ClassDecl->addDecl(Context, Destructor);
   }
 }

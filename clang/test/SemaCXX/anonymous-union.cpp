@@ -66,11 +66,11 @@ struct Redecl {
   union {
     int x; // expected-error{{member of anonymous union redeclares 'x'}}
     float y;
-    double z; // FIXME: note here
+    double z; // expected-note{{previous definition is here}}
     double zz; // expected-note{{previous definition is here}}
   };
 
-  int z; // FIXME: should complain here!
+  int z; // expected-error{{duplicate member 'z'}}
   void zz(); // expected-error{{redefinition of 'zz' as different kind of symbol}}
 };
 
@@ -92,8 +92,19 @@ void f() {
 void g() {
   union {
     int i;
-    float f;
+    float f2;
   };
   i = 0;
-  f = 0.0;
+  f2 = 0.0;
 }
+
+struct BadMembers {
+  union {
+    struct X { }; // expected-error {{types cannot be declared in an anonymous union}}
+    struct { int x; int y; } y;
+    
+    void f(); // expected-error{{functions cannot be declared in an anonymous union}}
+  private: int x1; // expected-error{{anonymous union cannot contain a private data member}}
+  protected: float x2; // expected-error{{anonymous union cannot contain a protected data member}}
+  };
+};
