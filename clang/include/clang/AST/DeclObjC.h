@@ -249,7 +249,73 @@ public:
     return static_cast<ObjCMethodDecl *>(const_cast<DeclContext*>(DC));
   }
 };
+
+/// ObjCContainerDecl - Represents a container for method declarations.
+/// Current sub-classes are ObjCInterfaceDecl, ObjCCategoryDecl, and
+/// ObjCProtocolDecl. FIXME: Use for ObjC implementation decls.
+/// STILL UNDER CONSTRUCTION...
+///
+class ObjCContainerDecl : public NamedDecl {
+  /// instance methods
+  ObjCMethodDecl **InstanceMethods;  // Null if not defined
+  unsigned NumInstanceMethods;  // 0 if none.
   
+  /// class methods
+  ObjCMethodDecl **ClassMethods;  // Null if not defined
+  unsigned NumClassMethods;  // 0 if none
+  
+  SourceLocation AtEndLoc; // marks the end of the method container.
+public:
+
+  ObjCContainerDecl(Kind DK, SourceLocation L, IdentifierInfo *Id)
+    : NamedDecl(DK, L, Id),
+      InstanceMethods(0), NumInstanceMethods(0), 
+      ClassMethods(0), NumClassMethods(0) {}
+
+  virtual ~ObjCContainerDecl();
+    
+  typedef ObjCMethodDecl * const * instmeth_iterator;
+  instmeth_iterator instmeth_begin() const { return InstanceMethods; }
+  instmeth_iterator instmeth_end() const {
+    return InstanceMethods+NumInstanceMethods;
+  }
+  
+  typedef ObjCMethodDecl * const * classmeth_iterator;
+  classmeth_iterator classmeth_begin() const { return ClassMethods; }
+  classmeth_iterator classmeth_end() const {
+    return ClassMethods+NumClassMethods;
+  }
+
+  // Get the local instance method declared in this interface.
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
+    for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
+         I != E; ++I) {
+      if ((*I)->getSelector() == Sel)
+        return *I;
+    }
+    return 0;
+  }
+  // Get the local class method declared in this interface.
+  ObjCMethodDecl *getClassMethod(Selector Sel) const {
+    for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
+         I != E; ++I) {
+      if ((*I)->getSelector() == Sel)
+        return *I;
+    }
+    return 0;
+  }
+  
+  void addMethods(ObjCMethodDecl **insMethods, unsigned numInsMembers,
+                  ObjCMethodDecl **clsMethods, unsigned numClsMembers,
+                  SourceLocation AtEndLoc);
+                  
+  unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
+  unsigned getNumClassMethods() const { return NumClassMethods; }
+  
+  // Marks the end of the container.
+  SourceLocation getAtEndLoc() const { return AtEndLoc; }
+};
+
 /// ObjCInterfaceDecl - Represents an ObjC class declaration. For example:
 ///
 ///   // MostPrimitive declares no super class (not particularly useful).
@@ -271,7 +337,7 @@ public:
 ///   Unlike C++, ObjC is a single-rooted class model. In Cocoa, classes
 ///   typically inherit from NSObject (an exception is NSProxy).
 ///
-class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
+class ObjCInterfaceDecl : public ObjCContainerDecl, public DeclContext {
   /// TypeForDecl - This indicates the Type object that represents this
   /// TypeDecl.  It is a cache maintained by ASTContext::getObjCInterfaceType
   Type *TypeForDecl;
@@ -287,14 +353,6 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
   ObjCIvarDecl **Ivars;   // Null if not defined.
   unsigned NumIvars;      // 0 if none.
   
-  /// instance methods
-  ObjCMethodDecl **InstanceMethods;  // Null if not defined
-  unsigned NumInstanceMethods;  // 0 if none.
-  
-  /// class methods
-  ObjCMethodDecl **ClassMethods;  // Null if not defined
-  unsigned NumClassMethods;  // 0 if none
-  
   /// List of categories defined for this class.
   ObjCCategoryDecl *CategoryList;
     
@@ -308,15 +366,12 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
   SourceLocation ClassLoc; // location of the class identifier.
   SourceLocation SuperClassLoc; // location of the super class identifier.
   SourceLocation EndLoc; // marks the '>', '}', or identifier.
-  SourceLocation AtEndLoc; // marks the end of the entire interface.
 
   ObjCInterfaceDecl(SourceLocation atLoc, IdentifierInfo *Id,
                     SourceLocation CLoc, bool FD, bool isInternal)
-    : NamedDecl(ObjCInterface, atLoc, Id), DeclContext(ObjCInterface),
+    : ObjCContainerDecl(ObjCInterface, atLoc, Id), DeclContext(ObjCInterface),
       TypeForDecl(0), SuperClass(0),
       Ivars(0), NumIvars(0),
-      InstanceMethods(0), NumInstanceMethods(0), 
-      ClassMethods(0), NumClassMethods(0),
       CategoryList(0), PropertyDecl(0), NumPropertyDecl(0),
       ForwardDecl(FD), InternalInterface(isInternal),
       ClassLoc(CLoc) {
@@ -353,22 +408,7 @@ public:
   ivar_iterator ivar_end() const { return Ivars + ivar_size();}
   unsigned ivar_size() const { return NumIvars; }
   bool ivar_empty() const { return NumIvars == 0; }
-  
-  unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
-  unsigned getNumClassMethods() const { return NumClassMethods; }
-  
-  typedef ObjCMethodDecl * const * instmeth_iterator;
-  instmeth_iterator instmeth_begin() const { return InstanceMethods; }
-  instmeth_iterator instmeth_end() const {
-    return InstanceMethods+NumInstanceMethods;
-  }
-  
-  typedef ObjCMethodDecl * const * classmeth_iterator;
-  classmeth_iterator classmeth_begin() const { return ClassMethods; }
-  classmeth_iterator classmeth_end() const {
-    return ClassMethods+NumClassMethods;
-  }
-
+    
   /// addReferencedProtocols - Set the list of protocols that this interface
   /// implements.
   void addReferencedProtocols(ObjCProtocolDecl *const*List, unsigned NumRPs) {
@@ -380,10 +420,6 @@ public:
   FieldDecl *lookupFieldDeclForIvar(ASTContext &Context, 
                                     const ObjCIvarDecl *ivar);
 
-  void addMethods(ObjCMethodDecl **insMethods, unsigned numInsMembers,
-                  ObjCMethodDecl **clsMethods, unsigned numClsMembers,
-                  SourceLocation AtEnd);
-  
   void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
   
   void mergeProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
@@ -429,25 +465,6 @@ public:
     return lookupInstanceVariable(IVarName, ClassDeclared);
   }
 
-                                                                           
-  // Get the local instance method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
-    for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
-         I != E; ++I) {
-      if ((*I)->getSelector() == Sel)
-        return *I;
-    }
-    return 0;
-  }
-  // Get the local class method declared in this interface.
-  ObjCMethodDecl *getClassMethod(Selector Sel) const {
-    for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
-         I != E; ++I) {
-      if ((*I)->getSelector() == Sel)
-        return *I;
-    }
-    return 0;
-  }
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
   ObjCMethodDecl *lookupInstanceMethod(Selector Sel);
@@ -461,10 +478,7 @@ public:
   SourceLocation getClassLoc() const { return ClassLoc; }
   void setSuperClassLoc(SourceLocation Loc) { SuperClassLoc = Loc; }
   SourceLocation getSuperClassLoc() const { return SuperClassLoc; }
-  
-  // We also need to record the @end location.
-  SourceLocation getAtEndLoc() const { return AtEndLoc; }
-  
+    
   unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
   
   ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
@@ -579,17 +593,9 @@ public:
 ///
 /// id <NSDraggingInfo> anyObjectThatImplementsNSDraggingInfo;
 ///
-class ObjCProtocolDecl : public NamedDecl {
+class ObjCProtocolDecl : public ObjCContainerDecl {
   /// Referenced protocols
   ObjCList<ObjCProtocolDecl> ReferencedProtocols;
-  
-  /// protocol instance methods
-  ObjCMethodDecl **InstanceMethods;  // Null if not defined
-  unsigned NumInstanceMethods;  // 0 if none
-
-  /// protocol class methods
-  ObjCMethodDecl **ClassMethods;  // Null if not defined
-  unsigned NumClassMethods;  // 0 if none
   
   /// protocol properties
   ObjCPropertyDecl **PropertyDecl;  // Null if no property
@@ -601,9 +607,7 @@ class ObjCProtocolDecl : public NamedDecl {
   SourceLocation AtEndLoc; // marks the end of the entire interface.
   
   ObjCProtocolDecl(SourceLocation L, IdentifierInfo *Id)
-    : NamedDecl(ObjCProtocol, L, Id), 
-      InstanceMethods(0), NumInstanceMethods(0), 
-      ClassMethods(0), NumClassMethods(0),
+    : ObjCContainerDecl(ObjCProtocol, L, Id), 
       PropertyDecl(0), NumPropertyDecl(0),
       isForwardProtoDecl(true) {
   }
@@ -618,10 +622,6 @@ public:
   static ObjCProtocolDecl *Create(ASTContext &C, SourceLocation L,
                                   IdentifierInfo *Id);
 
-  void addMethods(ObjCMethodDecl **insMethods, unsigned numInsMembers,
-                  ObjCMethodDecl **clsMethods, unsigned numClsMembers,
-                  SourceLocation AtEndLoc);
-  
   const ObjCList<ObjCProtocolDecl> &getReferencedProtocols() const { 
     return ReferencedProtocols;
   }
@@ -635,9 +635,6 @@ public:
     ReferencedProtocols.set(List, NumRPs);
   }
   
-  unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
-  unsigned getNumClassMethods() const { return NumClassMethods; }
-
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
   
   unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
@@ -658,37 +655,6 @@ public:
     return PropertyDecl+NumPropertyDecl;
   }
 
-  typedef ObjCMethodDecl * const * instmeth_iterator;
-  instmeth_iterator instmeth_begin() const { return InstanceMethods; }
-  instmeth_iterator instmeth_end() const {
-    return InstanceMethods+NumInstanceMethods;
-  }
-  
-  typedef ObjCMethodDecl * const * classmeth_iterator;
-  classmeth_iterator classmeth_begin() const { return ClassMethods; }
-  classmeth_iterator classmeth_end() const {
-    return ClassMethods+NumClassMethods;
-  }
-
-  // Get the local instance method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
-    for (instmeth_iterator I = instmeth_begin(), E = instmeth_end();
-         I != E; ++I) {
-      if ((*I)->getSelector() == Sel)
-        return *I;
-    }
-    return 0;
-  }
-  // Get the local class method declared in this interface.
-  ObjCMethodDecl *getClassMethod(Selector Sel) const {
-    for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
-         I != E; ++I) {
-      if ((*I)->getSelector() == Sel)
-        return *I;
-    }
-    return 0;
-  }
-  
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
   ObjCMethodDecl *lookupInstanceMethod(Selector Sel);
@@ -702,9 +668,6 @@ public:
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; };
   
-  // We also need to record the @end location.
-  SourceLocation getAtEndLoc() const { return AtEndLoc; }
-
   static bool classof(const Decl *D) { return D->getKind() == ObjCProtocol; }
   static bool classof(const ObjCProtocolDecl *D) { return true; }
 };
@@ -824,20 +787,12 @@ public:
 /// Lisp and Smalltalk.  More traditional class-based languages (C++, Java) 
 /// don't support this level of dynamism, which is both powerful and dangerous.
 ///
-class ObjCCategoryDecl : public NamedDecl {
+class ObjCCategoryDecl : public ObjCContainerDecl {
   /// Interface belonging to this category
   ObjCInterfaceDecl *ClassInterface;
   
   /// referenced protocols in this category.
   ObjCList<ObjCProtocolDecl> ReferencedProtocols;
-  
-  /// category instance methods
-  ObjCMethodDecl **InstanceMethods;  // Null if not defined
-  unsigned NumInstanceMethods;  // 0 if none
-
-  /// category class methods
-  ObjCMethodDecl **ClassMethods;  // Null if not defined
-  unsigned NumClassMethods;  // 0 if not defined
   
   /// Next category belonging to this class
   ObjCCategoryDecl *NextClassCategory;
@@ -847,13 +802,10 @@ class ObjCCategoryDecl : public NamedDecl {
   unsigned NumPropertyDecl;  // 0 if none  
   
   SourceLocation EndLoc; // marks the '>' or identifier.
-  SourceLocation AtEndLoc; // marks the end of the entire interface.
   
   ObjCCategoryDecl(SourceLocation L, IdentifierInfo *Id)
-    : NamedDecl(ObjCCategory, L, Id),
+    : ObjCContainerDecl(ObjCCategory, L, Id),
       ClassInterface(0),
-      InstanceMethods(0), NumInstanceMethods(0),
-      ClassMethods(0), NumClassMethods(0),
       NextClassCategory(0), PropertyDecl(0),  NumPropertyDecl(0) {
   }
 public:
@@ -879,10 +831,6 @@ public:
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
   
-  
-  unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
-  unsigned getNumClassMethods() const { return NumClassMethods; }
-
   unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
   
   ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
@@ -903,42 +851,7 @@ public:
   classprop_iterator classprop_end() const {
     return PropertyDecl+NumPropertyDecl;
   }
-  
-  typedef ObjCMethodDecl * const * instmeth_iterator;
-  instmeth_iterator instmeth_begin() const { return InstanceMethods; }
-  instmeth_iterator instmeth_end() const {
-    return InstanceMethods+NumInstanceMethods;
-  }
-  
-  typedef ObjCMethodDecl * const * classmeth_iterator;
-  classmeth_iterator classmeth_begin() const { return ClassMethods; }
-  classmeth_iterator classmeth_end() const {
-    return ClassMethods+NumClassMethods;
-  }
-
-  // Get the local instance method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
-    for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
-         I != E; ++I) {
-      if ((*I)->getSelector() == Sel)
-        return *I;
-    }
-    return 0;
-  }
-  // Get the local class method declared in this interface.
-  ObjCMethodDecl *getClassMethod(Selector Sel) const {
-    for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
-         I != E; ++I) {
-      if ((*I)->getSelector() == Sel)
-        return *I;
-    }
-    return 0;
-  }
-  
-  void addMethods(ObjCMethodDecl **insMethods, unsigned numInsMembers,
-                  ObjCMethodDecl **clsMethods, unsigned numClsMembers,
-                  SourceLocation AtEndLoc);
-  
+    
   ObjCCategoryDecl *getNextClassCategory() const { return NextClassCategory; }
   void insertNextClassCategory() {
     NextClassCategory = ClassInterface->getCategoryList();
@@ -948,9 +861,6 @@ public:
   SourceLocation getLocStart() const { return getLocation(); } // '@'interface
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; };
-  
-  // We also need to record the @end location.
-  SourceLocation getAtEndLoc() const { return AtEndLoc; }
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategory; }
   static bool classof(const ObjCCategoryDecl *D) { return true; }

@@ -60,10 +60,13 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                      isInternal);
 }
 
-ObjCInterfaceDecl::~ObjCInterfaceDecl() {
-  delete [] Ivars;
+ObjCContainerDecl::~ObjCContainerDecl() {
   delete [] InstanceMethods;
   delete [] ClassMethods;
+}
+
+ObjCInterfaceDecl::~ObjCInterfaceDecl() {
+  delete [] Ivars;
   delete [] PropertyDecl;
   // FIXME: CategoryList?
 }
@@ -114,8 +117,6 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C,
 }
 
 ObjCProtocolDecl::~ObjCProtocolDecl() {
-  delete [] InstanceMethods;
-  delete [] ClassMethods;
   delete [] PropertyDecl;
 }
 
@@ -384,7 +385,7 @@ void ObjCImplementationDecl::ObjCAddInstanceVariablesToClassImpl(
 /// addMethods - Insert instance and methods declarations into
 /// ObjCInterfaceDecl's InsMethods and ClsMethods fields.
 ///
-void ObjCInterfaceDecl::addMethods(ObjCMethodDecl **insMethods, 
+void ObjCContainerDecl::addMethods(ObjCMethodDecl **insMethods, 
                                    unsigned numInsMembers,
                                    ObjCMethodDecl **clsMethods,
                                    unsigned numClsMembers,
@@ -605,50 +606,6 @@ void ObjCCategoryDecl::addProperties(ObjCPropertyDecl **Properties,
   NumPropertyDecl = NumProperties;
   PropertyDecl = new ObjCPropertyDecl*[NumProperties];
   memcpy(PropertyDecl, Properties, NumProperties*sizeof(ObjCPropertyDecl*));
-}
-
-/// addMethods - Insert instance and methods declarations into
-/// ObjCProtocolDecl's ProtoInsMethods and ProtoClsMethods fields.
-///
-void ObjCProtocolDecl::addMethods(ObjCMethodDecl **insMethods, 
-                                  unsigned numInsMembers,
-                                  ObjCMethodDecl **clsMethods,
-                                  unsigned numClsMembers,
-                                  SourceLocation endLoc) {
-  NumInstanceMethods = numInsMembers;
-  if (numInsMembers) {
-    InstanceMethods = new ObjCMethodDecl*[numInsMembers];
-    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjCMethodDecl*));
-  }
-  NumClassMethods = numClsMembers;
-  if (numClsMembers) {
-    ClassMethods = new ObjCMethodDecl*[numClsMembers];
-    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjCMethodDecl*));
-  }
-  AtEndLoc = endLoc;
-}
-
-
-
-/// addMethods - Insert instance and methods declarations into
-/// ObjCCategoryDecl's CatInsMethods and CatClsMethods fields.
-///
-void ObjCCategoryDecl::addMethods(ObjCMethodDecl **insMethods, 
-                                  unsigned numInsMembers,
-                                  ObjCMethodDecl **clsMethods,
-                                  unsigned numClsMembers,
-                                  SourceLocation endLoc) {
-  NumInstanceMethods = numInsMembers;
-  if (numInsMembers) {
-    InstanceMethods = new ObjCMethodDecl*[numInsMembers];
-    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjCMethodDecl*));
-  }
-  NumClassMethods = numClsMembers;
-  if (numClsMembers) {
-    ClassMethods = new ObjCMethodDecl*[numClsMembers];
-    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjCMethodDecl*));
-  }
-  AtEndLoc = endLoc;
 }
 
 /// FindPropertyDeclaration - Finds declaration of the property given its name

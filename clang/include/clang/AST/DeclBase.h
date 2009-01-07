@@ -49,12 +49,14 @@ public:
     // Decl
          TranslationUnit,  // [DeclContext]
     //   NamedDecl
+    //     ObjCContainerDecl
+             ObjCCategory,
+             ObjCProtocol,
+             ObjCInterface,  // [DeclContext]
            OverloadedFunction,
-           ObjCCategory,
            ObjCCategoryImpl,
            ObjCImplementation,
            ObjCMethod,  // [DeclContext]
-           ObjCProtocol,
            ObjCProperty,
     //     ScopedDecl
              Field,
@@ -82,7 +84,6 @@ public:
                    OriginalParmVar,
   	         NonTypeTemplateParm,
              LinkageSpec, // [DeclContext]
-           ObjCInterface,  // [DeclContext]
            ObjCCompatibleAlias,
            ObjCClass,
            ObjCForwardProtocol,
