@@ -377,23 +377,8 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
     }
     
     // If this GEP is to the start of the aggregate, check for memcpys.
-    if (Idx == 0) {
-      bool IsStartOfAggregateGEP = true;
-      for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i) {
-        if (!isa<ConstantInt>(GEPI->getOperand(i))) {
-          IsStartOfAggregateGEP = false;
-          break;
-        }
-        if (!cast<ConstantInt>(GEPI->getOperand(i))->isZero()) {
-          IsStartOfAggregateGEP = false;
-          break;
-        }
-      }
-      
-      if (IsStartOfAggregateGEP)
-        RewriteBitCastUserOfAlloca(GEPI, AI, ElementAllocas);
-    }
-    
+    if (Idx == 0 && GEPI->hasAllZeroIndices())
+      RewriteBitCastUserOfAlloca(GEPI, AI, ElementAllocas);
 
     // Move all of the users over to the new GEP.
     GEPI->replaceAllUsesWith(RepValue);
@@ -431,15 +416,8 @@ void SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI,
           // Using pointer arithmetic to navigate the array.
           return MarkUnsafe(Info);
        
-        if (AreAllZeroIndices) {
-          for (unsigned i = 2, e = GEP->getNumOperands(); i != e; ++i) {
-            if (!isa<ConstantInt>(GEP->getOperand(i)) ||    
-                !cast<ConstantInt>(GEP->getOperand(i))->isZero()) {
-              AreAllZeroIndices = false;
-              break;
-            }
-          }
-        }
+        if (AreAllZeroIndices)
+          AreAllZeroIndices = GEP->hasAllZeroIndices();
       }
       isSafeElementUse(GEP, AreAllZeroIndices, AI, Info);
       if (Info.isUnsafe) return;
@@ -662,7 +640,7 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
       // It is likely that OtherPtr is a bitcast, if so, remove it.
       if (BitCastInst *BC = dyn_cast<BitCastInst>(OtherPtr))
         OtherPtr = BC->getOperand(0);
-      // All zero GEPs are effectively casts
+      // All zero GEPs are effectively bitcasts.
       if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(OtherPtr))
         if (GEP->hasAllZeroIndices())
           OtherPtr = GEP->getOperand(0);
@@ -1062,7 +1040,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
                  isa<ConstantInt>(GEP->getOperand(2)) &&
                  cast<ConstantInt>(GEP->getOperand(1))->isZero()) {
         // We are stepping into an element, e.g. a structure or an array:
-        // GEP Ptr, int 0, uint C
+        // GEP Ptr, i32 0, i32 Cst
         const Type *AggTy = PTy->getElementType();
         unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
         
