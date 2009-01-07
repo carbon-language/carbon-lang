@@ -1395,16 +1395,22 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
     // type.
     if ((Match & (ExtendedElementVectorType |
                   TruncatedElementVectorType)) != 0) {
-      if (!VTy) {
+      const IntegerType *IEltTy = dyn_cast<IntegerType>(EltTy);
+      if (!VTy || !IEltTy) {
         CheckFailed("Intrinsic parameter #" + utostr(ArgNo - 1) + " is not "
-                    "a vector type.", F);
+                    "an integral vector type.", F);
         return false;
       }
       // Adjust the current Ty (in the opposite direction) rather than
       // the type being matched against.
-      if ((Match & ExtendedElementVectorType) != 0)
+      if ((Match & ExtendedElementVectorType) != 0) {
+        if ((IEltTy->getBitWidth() & 1) != 0) {
+          CheckFailed("Intrinsic parameter #" + utostr(ArgNo - 1) + " vector "
+                      "element bit-width is odd.", F);
+          return false;
+        }
         Ty = VectorType::getTruncatedElementVectorType(VTy);
-      else
+      } else
         Ty = VectorType::getExtendedElementVectorType(VTy);
       Match &= ~(ExtendedElementVectorType | TruncatedElementVectorType);
     }

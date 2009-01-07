@@ -385,6 +385,8 @@ public:
   ///
   static VectorType *getTruncatedElementVectorType(const VectorType *VTy) {
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
+    assert((EltBits & 1) == 0 &&
+           "Cannot truncate vector element with odd bit-width");
     const Type *EltTy = IntegerType::get(EltBits / 2);
     return VectorType::get(EltTy, VTy->getNumElements());
   }
