@@ -210,7 +210,8 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
     // be tracked because if it is captured then so is the original pointer.
     unsigned Depth = UD.getInt();
 
-    if (isa<StoreInst>(I)) {
+    switch (I->getOpcode()) {
+    case Instruction::Store:
       if (V == I->getOperand(0)) {
         // Stored the pointer - it may be captured.  If it is stored to a local
         // object (alloca) then track that object.  Otherwise give up.
@@ -230,14 +231,17 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
         }
       }
       // Storing to the pointee does not cause the pointer to be captured.
-    } else if (isa<FreeInst>(I)) {
+      break;
+    case Instruction::Free:
       // Freeing a pointer does not cause it to be captured.
-    } else if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
+      break;
+    case Instruction::Call:
+    case Instruction::Invoke: {
       CallSite CS = CallSite::get(I);
       // Not captured if the callee is readonly and doesn't return a copy
       // through its return value.
       if (CS.onlyReadsMemory() && I->getType() == Type::VoidTy)
-        continue;
+        break;
 
       // Not captured if only passed via 'nocapture' arguments.  Note that
       // calling a function pointer does not in itself cause the pointer to
@@ -253,22 +257,33 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
           return true;
       // Only passed via 'nocapture' arguments, or is the called function - not
       // captured.
-    } else if (isa<BitCastInst>(I) || isa<LoadInst>(I) || isa<PHINode>(I) ||
-               // Play safe and exclude GEP indices.
-               (isa<GetElementPtrInst>(I) && V == I->getOperand(0)) ||
-               // Play safe and exclude the select condition.
-               (isa<SelectInst>(I) && V != I->getOperand(0))) {
-
-      // Usually loads can be ignored because they dereference the original
-      // pointer.  However the loaded value needs to be tracked if loading
-      // from an object that the original pointer was stored to.
-      if (isa<LoadInst>(I)) {
+      break;
+    }
+    case Instruction::BitCast:
+    case Instruction::GetElementPtr:
+    case Instruction::Load:
+    case Instruction::PHI:
+    case Instruction::Select:
+      // Track any uses of this instruction to see if they are captured.
+      // First handle any special cases.
+      if (isa<GetElementPtrInst>(I)) {
+        // Play safe and do not accept being used as an index.
+        if (V != I->getOperand(0))
+          return true;
+      } else if (isa<SelectInst>(I)) {
+        // Play safe and do not accept being used as the condition.
+        if (V == I->getOperand(0))
+          return true;
+      } else if (isa<LoadInst>(I)) {
+        // Usually loads can be ignored because they dereference the original
+        // pointer.  However the loaded value needs to be tracked if loading
+        // from an object that the original pointer was stored to.
         if (Depth == 0)
           // Loading the original pointer or a variation of it.  This does not
           // cause the pointer to be captured.  Note that the loaded value might
           // be the pointer itself (think of self-referential objects), but that
           // is fine as long as it's not this function that stored it there.
-          continue;
+          break;
         // Loading a pointer to (a pointer to...) the original pointer or a
         // variation of it.  Track uses of the loaded value, noting that one
         // dereference was performed.  Note that the loaded value need not be
@@ -284,7 +299,8 @@ bool FunctionAttrs::isCaptured(Function &F, Value *V) {
         if (Visited.insert(UD))
           Worklist.push_back(UD);
       }
-    } else {
+      break;
+    default:
       // Something else - be conservative and say it is captured.
       return true;
     }
