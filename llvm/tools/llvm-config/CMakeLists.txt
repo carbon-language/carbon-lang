@@ -54,7 +54,7 @@ configure_file(
 set(LIBDEPS ${CMAKE_CURRENT_BINARY_DIR}/LibDeps.txt)
 set(LIBDEPS_TMP ${CMAKE_CURRENT_BINARY_DIR}/LibDeps.txt.tmp)
 set(FINAL_LIBDEPS ${CMAKE_CURRENT_BINARY_DIR}/FinalLibDeps.txt)
-set(LLVM_CONFIG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/llvm-config)
+set(LLVM_CONFIG ${LLVM_TOOLS_BINARY_DIR}/llvm-config)
 set(LLVM_CONFIG_IN ${CMAKE_CURRENT_BINARY_DIR}/llvm-config.in)
 
 if( CMAKE_CROSSCOMPILING )
@@ -78,7 +78,7 @@ add_custom_command(OUTPUT ${LIBDEPS}
   COMMENT "Updated ${LIBDEPS} because dependencies changed")
 
 add_custom_command(OUTPUT ${FINAL_LIBDEPS}
-  COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/find-cycles.pl < ${LIBDEPS} > ${FINAL_LIBDEPS} || rm -f ${FINAL_LIBDEPS}
+  COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/find-cycles.pl < ${LIBDEPS} > ${FINAL_LIBDEPS} || ${CMAKE_COMMAND} -E remove -f ${FINAL_LIBDEPS}
   DEPENDS ${LIBDEPS}
   COMMENT "Checking for cyclic dependencies between LLVM libraries.")
 
@@ -91,10 +91,10 @@ add_custom_command(OUTPUT ${LLVM_CONFIG}
   COMMAND echo 's,@LIBS@,,' >> temp.sed                    # TODO: System libs
   COMMAND echo 's,@LLVM_BUILDMODE@,${CMAKE_BUILD_TYPE},' >> temp.sed
   COMMAND sed -f temp.sed < ${LLVM_CONFIG_IN} > ${LLVM_CONFIG}
-  COMMAND rm temp.sed
+  COMMAND ${CMAKE_COMMAND} -E remove -f temp.sed
   COMMAND cat ${FINAL_LIBDEPS} >> ${LLVM_CONFIG}
   COMMAND chmod +x ${LLVM_CONFIG}
-  COMMAND cd ${CMAKE_BINARY_DIR} && ${CMAKE_COMMAND} -U HAVE_LLVM_CONFIG ${CMAKE_SOURCE_DIR}
+  COMMAND cd ${CMAKE_BINARY_DIR} && ${CMAKE_COMMAND} -U HAVE_LLVM_CONFIG -D LLVM_BINARY_DIR="${LLVM_BINARY_DIR}" ${CMAKE_SOURCE_DIR}
   DEPENDS ${FINAL_LIBDEPS} ${LLVM_CONFIG_IN}
   COMMENT "Building llvm-config script."
   )
