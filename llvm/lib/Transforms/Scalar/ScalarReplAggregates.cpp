@@ -120,7 +120,8 @@ namespace {
     void RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
                                       AllocationInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
-
+    void RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocationInst *AI,
+                                       SmallVector<AllocaInst*, 32> &NewElts);
     
     const Type *CanConvertToScalar(Value *V, bool &IsNotTrivial);
     void ConvertToScalar(AllocationInst *AI, const Type *Ty);
@@ -586,6 +587,18 @@ void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI,
       isSafeUseOfBitCastedAllocation(BCU, AI, Info);
     } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(UI)) {
       isSafeMemIntrinsicOnAllocation(MI, AI, UI.getOperandNo(), Info);
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(UI)) {
+      // If storing the entire alloca in one chunk through a bitcasted pointer
+      // to integer, we can transform it.  This happens (for example) when you
+      // cast a {i32,i32}* to i64* and store through it.  This is similar to the
+      // memcpy case and occurs in various "byval" cases and emulated memcpys.
+      if (isa<IntegerType>(SI->getOperand(0)->getType()) &&
+          TD->getABITypeSize(SI->getOperand(0)->getType()) == 
+          TD->getABITypeSize(AI->getType()->getElementType())) {
+        Info.isMemCpyDst = true;
+        continue;
+      }
+      return MarkUnsafe(Info);
     } else {
       return MarkUnsafe(Info);
     }
@@ -603,7 +616,7 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
     Instruction *User = cast<Instruction>(*UI++);
     if (BitCastInst *BCU = dyn_cast<BitCastInst>(User)) {
       RewriteBitCastUserOfAlloca(BCU, AI, NewElts);
-      BCU->eraseFromParent();
+      if (BCU->use_empty()) BCU->eraseFromParent();
       continue;
     }
 
@@ -611,12 +624,17 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
       // This must be memcpy/memmove/memset of the entire aggregate.
       // Split into one per element.
       RewriteMemIntrinUserOfAlloca(MI, BCInst, AI, NewElts);
-      MI->eraseFromParent();
       continue;
     }
       
-    // If it's not a mem intrinsic, it must be some other user of a gep of the
-    // first pointer.  Just leave these alone.
+    if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      // This must be a store of the entire alloca from an integer.
+      RewriteStoreUserOfWholeAlloca(SI, AI, NewElts);
+      continue;
+    }
+    
+    // Otherwise it must be some other user of a gep of the first pointer.  Just
+    // leave these alone.
     continue;
   }      
 }
@@ -772,8 +790,118 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
       CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
     }
   }
+  MI->eraseFromParent();
 }
+
+/// RewriteStoreUserOfWholeAlloca - We found an store of an integer that
+/// overwrites the entire allocation.  Extract out the pieces of the stored
+/// integer and store them individually.
+void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
+                                         AllocationInst *AI,
+                                         SmallVector<AllocaInst*, 32> &NewElts){
+  // Extract each element out of the integer according to its structure offset
+  // and store the element value to the individual alloca.
+  Value *SrcVal = SI->getOperand(0);
+  const Type *AllocaEltTy = AI->getType()->getElementType();
+  uint64_t AllocaSizeBits = TD->getABITypeSizeInBits(AllocaEltTy);
   
+  // If this isn't a store of an integer to the whole alloca, it may be a store
+  // to the first element.  Just ignore the store in this case and normal SROA
+  // will handle it.
+  if (!isa<IntegerType>(SrcVal->getType()) ||
+      TD->getABITypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
+    return;
+
+  DOUT << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << *SI;
+
+  // There are two forms here: AI could be an array or struct.  Both cases
+  // have different ways to compute the element offset.
+  if (const StructType *EltSTy = dyn_cast<StructType>(AllocaEltTy)) {
+    const StructLayout *Layout = TD->getStructLayout(EltSTy);
+    
+    for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
+      // Get the number of bits to shift SrcVal to get the value.
+      const Type *FieldTy = EltSTy->getElementType(i);
+      uint64_t Shift = Layout->getElementOffsetInBits(i);
+      
+      if (TD->isBigEndian())
+        Shift = AllocaSizeBits-Shift-TD->getABITypeSizeInBits(FieldTy);
+      
+      Value *EltVal = SrcVal;
+      if (Shift) {
+        Value *ShiftVal = ConstantInt::get(EltVal->getType(), Shift);
+        EltVal = BinaryOperator::CreateLShr(EltVal, ShiftVal,
+                                            "sroa.store.elt", SI);
+      }
+      
+      // Truncate down to an integer of the right size.
+      uint64_t FieldSizeBits = TD->getTypeSizeInBits(FieldTy);
+      if (FieldSizeBits != AllocaSizeBits)
+        EltVal = new TruncInst(EltVal, IntegerType::get(FieldSizeBits), "", SI);
+      Value *DestField = NewElts[i];
+      if (EltVal->getType() == FieldTy) {
+        // Storing to an integer field of this size, just do it.
+      } else if (FieldTy->isFloatingPoint() || isa<VectorType>(FieldTy)) {
+        // Bitcast to the right element type (for fp/vector values).
+        EltVal = new BitCastInst(EltVal, FieldTy, "", SI);
+      } else {
+        // Otherwise, bitcast the dest pointer (for aggregates).
+        DestField = new BitCastInst(DestField,
+                                    PointerType::getUnqual(EltVal->getType()),
+                                    "", SI);
+      }
+      new StoreInst(EltVal, DestField, SI);
+    }
+    
+  } else {
+    const ArrayType *ATy = cast<ArrayType>(AllocaEltTy);
+    const Type *ArrayEltTy = ATy->getElementType();
+    uint64_t ElementOffset = TD->getABITypeSizeInBits(ArrayEltTy);
+    uint64_t ElementSizeBits = TD->getTypeSizeInBits(ArrayEltTy);
+
+    uint64_t Shift;
+    
+    if (TD->isBigEndian())
+      Shift = AllocaSizeBits-ElementOffset;
+    else 
+      Shift = 0;
+    
+    for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
+      
+      Value *EltVal = SrcVal;
+      if (Shift) {
+        Value *ShiftVal = ConstantInt::get(EltVal->getType(), Shift);
+        EltVal = BinaryOperator::CreateLShr(EltVal, ShiftVal,
+                                            "sroa.store.elt", SI);
+      }
+      
+      // Truncate down to an integer of the right size.
+      if (ElementSizeBits != AllocaSizeBits)
+        EltVal = new TruncInst(EltVal, IntegerType::get(ElementSizeBits),"",SI);
+      Value *DestField = NewElts[i];
+      if (EltVal->getType() == ArrayEltTy) {
+        // Storing to an integer field of this size, just do it.
+      } else if (ArrayEltTy->isFloatingPoint() || isa<VectorType>(ArrayEltTy)) {
+        // Bitcast to the right element type (for fp/vector values).
+        EltVal = new BitCastInst(EltVal, ArrayEltTy, "", SI);
+      } else {
+        // Otherwise, bitcast the dest pointer (for aggregates).
+        DestField = new BitCastInst(DestField,
+                                    PointerType::getUnqual(EltVal->getType()),
+                                    "", SI);
+      }
+      new StoreInst(EltVal, DestField, SI);
+      
+      if (TD->isBigEndian())
+        Shift -= ElementOffset;
+      else 
+        Shift += ElementOffset;
+    }
+  }
+  
+  SI->eraseFromParent();
+}
+
 
 /// HasPadding - Return true if the specified type has any structure or
 /// alignment padding, false otherwise.
