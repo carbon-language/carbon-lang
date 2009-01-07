@@ -125,7 +125,7 @@ TEST_F(DenseMapTest, InsertTest) {
 }
 
 // Test copy constructor method
-TEST_F(DenseMapTest, AssignmentTest) {
+TEST_F(DenseMapTest, CopyConstructorTest) {
   uintMap[0] = 1;
   DenseMap<uint32_t, uint32_t> copyMap(uintMap);
 
@@ -134,7 +134,7 @@ TEST_F(DenseMapTest, AssignmentTest) {
 }
 
 // Test assignment operator method
-TEST_F(DenseMapTest, CopyConstructorTest) {
+TEST_F(DenseMapTest, AssignmentTest) {
   uintMap[0] = 1;
   DenseMap<uint32_t, uint32_t> copyMap = uintMap;
 
@@ -160,7 +160,7 @@ TEST_F(DenseMapTest, IterationTest) {
 
   // Ensure every number was visited.
   for (int i = 0; i < 100; ++i) {
-    EXPECT_EQ(true, visited[i]);
+    ASSERT_TRUE(visited[i]) << "Entry #" << i << " was never visited";
   }
 }
 
