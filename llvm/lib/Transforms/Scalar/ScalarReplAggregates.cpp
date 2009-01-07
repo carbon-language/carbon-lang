@@ -998,8 +998,10 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
 
       if (MergeInType(LI->getType(), UsedType, *TD))
         return 0;
-      
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      continue;
+    }
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Storing the pointer, not into the value?
       if (SI->getOperand(0) == V) return 0;
 
@@ -1012,11 +1014,16 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
       
       if (MergeInType(SI->getOperand(0)->getType(), UsedType, *TD))
         return 0;
-    } else if (BitCastInst *CI = dyn_cast<BitCastInst>(User)) {
+      continue;
+    }
+    if (BitCastInst *CI = dyn_cast<BitCastInst>(User)) {
       IsNotTrivial = true;
       const Type *SubTy = CanConvertToScalar(CI, IsNotTrivial);
       if (!SubTy || MergeInType(SubTy, UsedType, *TD)) return 0;
-    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
+      continue;
+    }
+
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
       // Check to see if this is stepping over an element: GEP Ptr, int C
       if (GEP->getNumOperands() == 2 && isa<ConstantInt>(GEP->getOperand(1))) {
         unsigned Idx = cast<ConstantInt>(GEP->getOperand(1))->getZExtValue();
@@ -1033,10 +1040,14 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
           if (NewTy == 0 || MergeInType(NewTy, UsedType, *TD)) return 0;
           continue;
         }
-      } else if (GEP->getNumOperands() == 3 && 
-                 isa<ConstantInt>(GEP->getOperand(1)) &&
-                 isa<ConstantInt>(GEP->getOperand(2)) &&
-                 cast<ConstantInt>(GEP->getOperand(1))->isZero()) {
+        // Cannot handle this!
+        return 0;
+      }
+      
+      if (GEP->getNumOperands() == 3 && 
+          isa<ConstantInt>(GEP->getOperand(1)) &&
+          isa<ConstantInt>(GEP->getOperand(2)) &&
+          cast<ConstantInt>(GEP->getOperand(1))->isZero()) {
         // We are stepping into an element, e.g. a structure or an array:
         // GEP Ptr, i32 0, i32 Cst
         const Type *AggTy = PTy->getElementType();
@@ -1075,10 +1086,10 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         continue;    // Everything looks ok
       }
       return 0;
-    } else {
-      // Cannot handle this!
-      return 0;
     }
+    
+    // Cannot handle this!
+    return 0;
   }
   
   return UsedType;
@@ -1120,17 +1131,25 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       Value *NV = ConvertUsesOfLoadToScalar(LI, NewAI, Offset);
       LI->replaceAllUsesWith(NV);
       LI->eraseFromParent();
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      continue;
+    }
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
 
       Value *SV = ConvertUsesOfStoreToScalar(SI, NewAI, Offset);
       new StoreInst(SV, NewAI, SI);
       SI->eraseFromParent();
-      
-    } else if (BitCastInst *CI = dyn_cast<BitCastInst>(User)) {
+      continue;
+    }
+    
+    if (BitCastInst *CI = dyn_cast<BitCastInst>(User)) {
       ConvertUsesToScalar(CI, NewAI, Offset);
       CI->eraseFromParent();
-    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
+      continue;
+    }
+    
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
       const PointerType *AggPtrTy = 
         cast<PointerType>(GEP->getOperand(0)->getType());
       unsigned AggSizeInBits =
@@ -1143,34 +1162,35 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         unsigned BitOffset = Idx*AggSizeInBits;
         
         NewOffset += BitOffset;
-      } else if (GEP->getNumOperands() == 3) {
-        // We know that operand #2 is zero.
-        unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
-        const Type *AggTy = AggPtrTy->getElementType();
-        if (const SequentialType *SeqTy = dyn_cast<SequentialType>(AggTy)) {
-          unsigned ElSizeBits =
-            TD->getABITypeSizeInBits(SeqTy->getElementType());
+        ConvertUsesToScalar(GEP, NewAI, NewOffset);
+        GEP->eraseFromParent();
+        continue;
+      }
+      
+      assert(GEP->getNumOperands() == 3 && "Unsupported operation");
+      
+      // We know that operand #2 is zero.
+      unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
+      const Type *AggTy = AggPtrTy->getElementType();
+      if (const SequentialType *SeqTy = dyn_cast<SequentialType>(AggTy)) {
+        unsigned ElSizeBits =
+          TD->getABITypeSizeInBits(SeqTy->getElementType());
 
-          NewOffset += ElSizeBits*Idx;
-        } else if (const StructType *STy = dyn_cast<StructType>(AggTy)) {
-          unsigned EltBitOffset =
-            TD->getStructLayout(STy)->getElementOffsetInBits(Idx);
-          
-          NewOffset += EltBitOffset;
-        } else {
-          assert(0 && "Unsupported operation!");
-          abort();
-        }
+        NewOffset += ElSizeBits*Idx;
       } else {
-        assert(0 && "Unsupported operation!");
-        abort();
+        const StructType *STy = cast<StructType>(AggTy);
+        unsigned EltBitOffset =
+          TD->getStructLayout(STy)->getElementOffsetInBits(Idx);
+        
+        NewOffset += EltBitOffset;
       }
       ConvertUsesToScalar(GEP, NewAI, NewOffset);
       GEP->eraseFromParent();
-    } else {
-      assert(0 && "Unsupported operation!");
-      abort();
+      continue;
     }
+    
+    assert(0 && "Unsupported operation!");
+    abort();
   }
 }
 
