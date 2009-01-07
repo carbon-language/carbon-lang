@@ -81,12 +81,20 @@ public:
   }
   static reg_iterator reg_end() { return reg_iterator(0); }
 
+  /// reg_empty - Return true if there are no instructions using or defining the
+  /// specified register (it may be live-in).
+  bool reg_empty(unsigned RegNo) const { return reg_begin(RegNo) == reg_end(); }
+
   /// def_iterator/def_begin/def_end - Walk all defs of the specified register.
   typedef defusechain_iterator<false,true> def_iterator;
   def_iterator def_begin(unsigned RegNo) const {
     return def_iterator(getRegUseDefListHead(RegNo));
   }
   static def_iterator def_end() { return def_iterator(0); }
+
+  /// def_empty - Return true if there are no instructions defining the
+  /// specified register (it may be live-in).
+  bool def_empty(unsigned RegNo) const { return def_begin(RegNo) == def_end(); }
 
   /// use_iterator/use_begin/use_end - Walk all uses of the specified register.
   typedef defusechain_iterator<true,false> use_iterator;
