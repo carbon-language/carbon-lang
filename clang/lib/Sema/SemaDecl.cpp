@@ -343,11 +343,11 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
           }
         }
         
+        if (!LookInParent && !Ctx->isTransparentContext())
+          return 0;
+
         Ctx = Ctx->getParent();
       }
-      
-      if (!LookInParent && !Ctx->isTransparentContext())
-        return 0;
     }
   }
 

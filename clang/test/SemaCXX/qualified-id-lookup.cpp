@@ -1,5 +1,4 @@
 // RUN: clang -fsyntax-only -verify %s 
-
 namespace Ns {
   int f(); // expected-note{{previous declaration is here}}
 
@@ -71,5 +70,18 @@ namespace a {
   }
 }
 
+// PR clang/3291
+namespace a {  
+  namespace a {   // A1
+    namespace a { // A2
+      int i;
+    }
+  }
+}
 
+void test_a() {
+  a::a::i = 3; // expected-error{{no member named 'i'}}
+  a::a::a::i = 4;
+}
+  
 
