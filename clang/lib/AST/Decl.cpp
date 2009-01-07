@@ -290,7 +290,7 @@ OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
 }
 
 //===----------------------------------------------------------------------===//
-// TagdDecl Implementation
+// TagDecl Implementation
 //===----------------------------------------------------------------------===//
 
 TagDecl* TagDecl::getDefinition(ASTContext& C) const {
@@ -308,6 +308,7 @@ RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
   : TagDecl(DK, TK, DC, L, Id, 0), DeclContext(DK) {
   
   HasFlexibleArrayMember = false;
+  AnonymousStructOrUnion = false;
   assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
 }
 

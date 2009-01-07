@@ -330,7 +330,7 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
       DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
       while (Ctx && Ctx->isFunctionOrMethod())
         Ctx = Ctx->getParent();
-      while (Ctx && (Ctx->isNamespace() || Ctx->isCXXRecord())) {
+      while (Ctx && (Ctx->isNamespace() || Ctx->isRecord())) {
         // Look for declarations of this name in this scope.
         DeclContext::lookup_const_iterator I, E;
         for (llvm::tie(I, E) = Ctx->lookup(Context, Name); I != E; ++I) {
@@ -807,8 +807,187 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
       << DS.getSourceRange();
     return 0;
   }
+  
+  TagDecl *Tag 
+    = dyn_cast_or_null<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
+  if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
+    if (!Record->getDeclName() && Record->isDefinition() && 
+        !Record->isInvalidDecl())
+      return BuildAnonymousStructOrUnion(S, DS, Record);
+  }
 
-  return dyn_cast_or_null<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
+  return Tag;
+}
+
+/// InjectAnonymousStructOrUnionMembers - Inject the members of the
+/// anonymous struct or union AnonRecord into the owning context Owner
+/// and scope S. This routine will be invoked just after we realize
+/// that an unnamed union or struct is actually an anonymous union or
+/// struct, e.g.,
+///
+/// @code
+/// union {
+///   int i;
+///   float f;
+/// }; // InjectAnonymousStructOrUnionMembers called here to inject i and
+///    // f into the surrounding scope.x
+/// @endcode
+///
+/// This routine is recursive, injecting the names of nested anonymous
+/// structs/unions into the owning context and scope as well.
+bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
+                                               RecordDecl *AnonRecord) {
+  bool Invalid = false;
+  for (RecordDecl::field_iterator F = AnonRecord->field_begin(),
+                               FEnd = AnonRecord->field_end();
+       F != FEnd; ++F) {
+    if ((*F)->getDeclName()) {
+      Decl *PrevDecl = LookupDecl((*F)->getDeclName(), Decl::IDNS_Ordinary,
+                                  S, Owner, false, false, false);
+      if (PrevDecl && !isa<TagDecl>(PrevDecl)) {
+        // C++ [class.union]p2:
+        //   The names of the members of an anonymous union shall be
+        //   distinct from the names of any other entity in the
+        //   scope in which the anonymous union is declared.
+        unsigned diagKind 
+          = AnonRecord->isUnion()? diag::err_anonymous_union_member_redecl
+                                 : diag::err_anonymous_struct_member_redecl;
+        Diag((*F)->getLocation(), diagKind)
+          << (*F)->getDeclName();
+        Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
+        Invalid = true;
+      } else {
+        // C++ [class.union]p2:
+        //   For the purpose of name lookup, after the anonymous union
+        //   definition, the members of the anonymous union are
+        //   considered to have been defined in the scope in which the
+        //   anonymous union is declared.
+        Owner->insert(Context, *F);
+        S->AddDecl(*F);
+        IdResolver.AddDecl(*F);
+      }
+    } else if (const RecordType *InnerRecordType
+                 = (*F)->getType()->getAsRecordType()) {
+      RecordDecl *InnerRecord = InnerRecordType->getDecl();
+      if (InnerRecord->isAnonymousStructOrUnion())
+        Invalid = Invalid || 
+          InjectAnonymousStructOrUnionMembers(S, Owner, InnerRecord);
+    }
+  }
+
+  return Invalid;
+}
+
+/// ActOnAnonymousStructOrUnion - Handle the declaration of an
+/// anonymous structure or union. Anonymous unions are a C++ feature
+/// (C++ [class.union]) and a GNU C extension; anonymous structures
+/// are a GNU C and GNU C++ extension. 
+Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
+                                                RecordDecl *Record) {
+  DeclContext *Owner = Record->getDeclContext();
+
+  // Diagnose whether this anonymous struct/union is an extension.
+  if (Record->isUnion() && !getLangOptions().CPlusPlus)
+    Diag(Record->getLocation(), diag::ext_anonymous_union);
+  else if (!Record->isUnion())
+    Diag(Record->getLocation(), diag::ext_anonymous_struct);
+  
+  // C and C++ require different kinds of checks for anonymous
+  // structs/unions.
+  bool Invalid = false;
+  if (getLangOptions().CPlusPlus) {
+    const char* PrevSpec = 0;
+    // C++ [class.union]p3:
+    //   Anonymous unions declared in a named namespace or in the
+    //   global namespace shall be declared static.
+    if (DS.getStorageClassSpec() != DeclSpec::SCS_static &&
+        (isa<TranslationUnitDecl>(Owner) ||
+         (isa<NamespaceDecl>(Owner) && 
+          cast<NamespaceDecl>(Owner)->getDeclName()))) {
+      Diag(Record->getLocation(), diag::err_anonymous_union_not_static);
+      Invalid = true;
+
+      // Recover by adding 'static'.
+      DS.SetStorageClassSpec(DeclSpec::SCS_static, SourceLocation(), PrevSpec);
+    } 
+    // C++ [class.union]p3:
+    //   A storage class is not allowed in a declaration of an
+    //   anonymous union in a class scope.
+    else if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
+             isa<RecordDecl>(Owner)) {
+      Diag(DS.getStorageClassSpecLoc(), 
+           diag::err_anonymous_union_with_storage_spec);
+      Invalid = true;
+
+      // Recover by removing the storage specifier.
+      DS.SetStorageClassSpec(DeclSpec::SCS_unspecified, SourceLocation(),
+                             PrevSpec);
+    }
+  } else {
+    // FIXME: Check GNU C semantics
+  }
+
+  if (!Record->isUnion() && !Owner->isRecord()) {
+    Diag(Record->getLocation(), diag::err_anonymous_struct_not_member);
+    Invalid = true;
+  }
+
+  // Create a declaration for this anonymous struct/union. 
+  ScopedDecl *Anon = 0;
+  if (RecordDecl *OwningClass = dyn_cast<RecordDecl>(Owner)) {
+    Anon = FieldDecl::Create(Context, OwningClass, Record->getLocation(),
+                             /*IdentifierInfo=*/0, 
+                             Context.getTypeDeclType(Record),
+                             /*BitWidth=*/0, /*Mutable=*/false,
+                             /*PrevDecl=*/0);
+  } else {
+    VarDecl::StorageClass SC;
+    switch (DS.getStorageClassSpec()) {
+    default: assert(0 && "Unknown storage class!");
+    case DeclSpec::SCS_unspecified:    SC = VarDecl::None; break;
+    case DeclSpec::SCS_extern:         SC = VarDecl::Extern; break;
+    case DeclSpec::SCS_static:         SC = VarDecl::Static; break;
+    case DeclSpec::SCS_auto:           SC = VarDecl::Auto; break;
+    case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
+    case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
+    case DeclSpec::SCS_mutable:
+      // mutable can only appear on non-static class members, so it's always
+      // an error here
+      Diag(Record->getLocation(), diag::err_mutable_nonmember);
+      Invalid = true;
+      SC = VarDecl::None;
+      break;
+    }
+
+    Anon = VarDecl::Create(Context, Owner, Record->getLocation(),
+                           /*IdentifierInfo=*/0, 
+                           Context.getTypeDeclType(Record),
+                           SC, /*FIXME:LastDeclarator=*/0,
+                           DS.getSourceRange().getBegin());
+  }
+
+  // Add the anonymous struct/union object to the current
+  // context. We'll be referencing this object when we refer to one of
+  // its members.
+  Owner->addDecl(Context, Anon);
+
+  // Inject the members of the anonymous struct/union into the owning
+  // context and into the identifier resolver chain for name lookup
+  // purposes.
+  Invalid = Invalid || InjectAnonymousStructOrUnionMembers(S, Owner, Record);
+
+  // Mark this as an anonymous struct/union type. Note that we do not
+  // do this until after we have already checked and injected the
+  // members of this anonymous struct/union type, because otherwise
+  // the members could be injected twice: once by DeclContext when it
+  // builds its lookup table, and once by
+  // InjectAnonymousStructOrUnionMembers. 
+  Record->setAnonymousStructOrUnion(true);
+
+  if (Invalid)
+    Anon->setInvalidDecl();
+
+  return Anon;
 }
 
 bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType) {  
@@ -1170,7 +1349,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
     FunctionDecl *NewFD;
     if (D.getKind() == Declarator::DK_Constructor) {
       // This is a C++ constructor declaration.
-      assert(DC->isCXXRecord() &&
+      assert(DC->isRecord() &&
              "Constructors can only be declared in a member context");
 
       InvalidDecl = InvalidDecl || CheckConstructorDeclarator(D, R, SC);
@@ -1186,7 +1365,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
         NewFD->setInvalidDecl();
     } else if (D.getKind() == Declarator::DK_Destructor) {
       // This is a C++ destructor declaration.
-      if (DC->isCXXRecord()) {
+      if (DC->isRecord()) {
         InvalidDecl = InvalidDecl || CheckDestructorDeclarator(D, R, SC);
 
         NewFD = CXXDestructorDecl::Create(Context,
@@ -1210,7 +1389,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
         NewFD->setInvalidDecl();
       }
     } else if (D.getKind() == Declarator::DK_Conversion) {
-      if (!DC->isCXXRecord()) {
+      if (!DC->isRecord()) {
         Diag(D.getIdentifierLoc(),
              diag::err_conv_function_not_member);
         return 0;
@@ -1224,7 +1403,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
         if (InvalidDecl)
           NewFD->setInvalidDecl();
       }
-    } else if (DC->isCXXRecord()) {
+    } else if (DC->isRecord()) {
       // This is a C++ method declaration.
       NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                     D.getIdentifierLoc(), Name, R,
@@ -1473,7 +1652,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
       return 0;
     }
 
-    if (DC->isCXXRecord()) {
+    if (DC->isRecord()) {
       // This is a static data member for a C++ class.
       NewVD = CXXClassVarDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                       D.getIdentifierLoc(), II,
@@ -2716,6 +2895,7 @@ CreateNewDecl:
   // declaration of the same entity, the two will be linked via
   // PrevDecl.
   TagDecl *New;
+
   if (Kind == TagDecl::TK_enum) {
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // enum X { A, B, C } D;    D should chain to X.
@@ -2769,6 +2949,12 @@ CreateNewDecl:
     
     // Add it to the decl chain.
     PushOnScopeChains(New, S);
+  } else if (getLangOptions().CPlusPlus) {
+    // FIXME: We also want to do this for C, but if this tag is
+    // defined within a structure CurContext will point to the context
+    // enclosing the structure, and we would end up inserting the tag
+    // type into the wrong place.
+    CurContext->addDecl(Context, New);
   }
 
   return New;
@@ -2869,8 +3055,6 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
   // FIXME: Chain fielddecls together.
   FieldDecl *NewFD;
 
-  // FIXME: We don't want CurContext for C, do we? No, we'll need some
-  // other way to determine the current RecordDecl.
   NewFD = FieldDecl::Create(Context, Record,
                             Loc, II, T, BitWidth,
                             D.getDeclSpec().getStorageClassSpec() ==

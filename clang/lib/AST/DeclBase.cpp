@@ -412,7 +412,7 @@ bool DeclContext::isTransparentContext() const {
   else if (DeclKind == Decl::LinkageSpec)
     return true;
   else if (DeclKind == Decl::Record || DeclKind == Decl::CXXRecord)
-    return false; // FIXME: need to know about anonymous unions/structs
+    return cast<RecordDecl>(this)->isAnonymousStructOrUnion();
   else if (DeclKind == Decl::Namespace)
     return false; // FIXME: Check for C++0x inline namespaces
 

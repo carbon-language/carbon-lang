@@ -371,6 +371,143 @@ DeclRefExpr *Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Lo
     return new DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
 }
 
+/// getObjectForAnonymousRecordDecl - Retrieve the (unnamed) field or
+/// variable corresponding to the anonymous union or struct whose type
+/// is Record.
+static ScopedDecl *getObjectForAnonymousRecordDecl(RecordDecl *Record) {
+  assert(Record->isAnonymousStructOrUnion() && 
+         "Record must be an anonymous struct or union!");
+  
+  // FIXME: Once ScopedDecls are directly linked together, this will
+  // be an O(1) operation rather than a slow walk through DeclContext's
+  // vector (which itself will be eliminated). DeclGroups might make
+  // this even better.
+  DeclContext *Ctx = Record->getDeclContext();
+  for (DeclContext::decl_iterator D = Ctx->decls_begin(), 
+                               DEnd = Ctx->decls_end();
+       D != DEnd; ++D) {
+    if (*D == Record) {
+      // The object for the anonymous struct/union directly
+      // follows its type in the list of declarations.
+      ++D;
+      assert(D != DEnd && "Missing object for anonymous record");
+      assert(!cast<ScopedDecl>(*D)->getDeclName() && "Decl should be unnamed");
+      return *D;
+    }
+  }
+
+  assert(false && "Missing object for anonymous record");
+  return 0;
+}
+
+Sema::ExprResult 
+Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
+                                               FieldDecl *Field,
+                                               Expr *BaseObjectExpr,
+                                               SourceLocation OpLoc) {
+  assert(Field->getDeclContext()->isRecord() &&
+         cast<RecordDecl>(Field->getDeclContext())->isAnonymousStructOrUnion()
+         && "Field must be stored inside an anonymous struct or union");
+
+  // Construct the sequence of field member references
+  // we'll have to perform to get to the field in the anonymous
+  // union/struct. The list of members is built from the field
+  // outward, so traverse it backwards to go from an object in
+  // the current context to the field we found.
+  llvm::SmallVector<FieldDecl *, 4> AnonFields;
+  AnonFields.push_back(Field);
+  VarDecl *BaseObject = 0;
+  DeclContext *Ctx = Field->getDeclContext();
+  do {
+    RecordDecl *Record = cast<RecordDecl>(Ctx);
+    ScopedDecl *AnonObject = getObjectForAnonymousRecordDecl(Record);
+    if (FieldDecl *AnonField = dyn_cast<FieldDecl>(AnonObject))
+      AnonFields.push_back(AnonField);
+    else {
+      BaseObject = cast<VarDecl>(AnonObject);
+      break;
+    }
+    Ctx = Ctx->getParent();
+  } while (Ctx->isRecord() && 
+           cast<RecordDecl>(Ctx)->isAnonymousStructOrUnion());
+  
+  // Build the expression that refers to the base object, from
+  // which we will build a sequence of member references to each
+  // of the anonymous union objects and, eventually, the field we
+  // found via name lookup.
+  bool BaseObjectIsPointer = false;
+  unsigned ExtraQuals = 0;
+  if (BaseObject) {
+    // BaseObject is an anonymous struct/union variable (and is,
+    // therefore, not part of another non-anonymous record).
+    delete BaseObjectExpr;
+
+    BaseObjectExpr = new DeclRefExpr(BaseObject, BaseObject->getType(),
+                                     SourceLocation());
+    ExtraQuals 
+      = Context.getCanonicalType(BaseObject->getType()).getCVRQualifiers();
+  } else if (BaseObjectExpr) {
+    // The caller provided the base object expression. Determine
+    // whether its a pointer and whether it adds any qualifiers to the
+    // anonymous struct/union fields we're looking into.
+    QualType ObjectType = BaseObjectExpr->getType();
+    if (const PointerType *ObjectPtr = ObjectType->getAsPointerType()) {
+      BaseObjectIsPointer = true;
+      ObjectType = ObjectPtr->getPointeeType();
+    }
+    ExtraQuals = Context.getCanonicalType(ObjectType).getCVRQualifiers();
+  } else {
+    // We've found a member of an anonymous struct/union that is
+    // inside a non-anonymous struct/union, so in a well-formed
+    // program our base object expression is "this".
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
+      if (!MD->isStatic()) {
+        QualType AnonFieldType 
+          = Context.getTagDeclType(
+                     cast<RecordDecl>(AnonFields.back()->getDeclContext()));
+        QualType ThisType = Context.getTagDeclType(MD->getParent());
+        if ((Context.getCanonicalType(AnonFieldType) 
+               == Context.getCanonicalType(ThisType)) ||
+            IsDerivedFrom(ThisType, AnonFieldType)) {
+          // Our base object expression is "this".
+          BaseObjectExpr = new CXXThisExpr(SourceLocation(),
+                                           MD->getThisType(Context));
+          BaseObjectIsPointer = true;
+        }
+      } else {
+        return Diag(Loc, diag::err_invalid_member_use_in_static_method)
+          << Field->getDeclName();
+      }
+      ExtraQuals = MD->getTypeQualifiers();
+    }
+
+    if (!BaseObjectExpr) 
+      return Diag(Loc, diag::err_invalid_non_static_member_use)
+        << Field->getDeclName();
+  }
+
+  // Build the implicit member references to the field of the
+  // anonymous struct/union.
+  Expr *Result = BaseObjectExpr;
+  for (llvm::SmallVector<FieldDecl *, 4>::reverse_iterator
+         FI = AnonFields.rbegin(), FIEnd = AnonFields.rend();
+       FI != FIEnd; ++FI) {
+    QualType MemberType = (*FI)->getType();
+    if (!(*FI)->isMutable()) {
+      unsigned combinedQualifiers 
+        = MemberType.getCVRQualifiers() | ExtraQuals;
+      MemberType = MemberType.getQualifiedType(combinedQualifiers);
+    }
+    Result = new MemberExpr(Result, BaseObjectIsPointer, *FI,
+                            OpLoc, MemberType);
+    BaseObjectIsPointer = false;
+    ExtraQuals = Context.getCanonicalType(MemberType).getCVRQualifiers();
+    OpLoc = SourceLocation();
+  }
+
+  return Result;  
+}
+
 /// ActOnDeclarationNameExpr - The parser has read some kind of name
 /// (e.g., a C++ id-expression (C++ [expr.prim]p1)). This routine
 /// performs lookup on that name and returns an expression that refers
@@ -467,6 +604,12 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         return Diag(Loc, diag::err_undeclared_var_use) << Name;
     }
   }
+
+  // We may have found a field within an anonymous union or struct
+  // (C++ [class.union]).
+  if (FieldDecl *FD = dyn_cast<FieldDecl>(D))
+    if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion())
+      return BuildAnonymousStructUnionMemberReference(Loc, FD);
   
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
     if (!MD->isStatic()) {
@@ -508,8 +651,8 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
             }
         }
       }
-      
-      if (Ctx && Ctx->isCXXRecord()) {
+
+      if (Ctx && Ctx->isRecord()) {
         QualType CtxType = Context.getTagDeclType(cast<CXXRecordDecl>(Ctx));
         QualType ThisType = Context.getTagDeclType(MD->getParent());
         if ((Context.getCanonicalType(CtxType) 
@@ -623,7 +766,7 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       for (DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep()); 
            DC; DC = DC->getParent()) {
         // FIXME: could stop early at namespace scope.
-        if (DC->isCXXRecord()) {
+        if (DC->isRecord()) {
           CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
           if (Context.getTypeDeclType(Record)->isDependentType()) {
             TypeDependent = true;
@@ -1308,6 +1451,12 @@ ActOnMemberReferenceExpr(Scope *S, ExprTy *Base, SourceLocation OpLoc,
                << &Member << BaseExpr->getSourceRange();
 
     if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl)) {
+      // We may have found a field within an anonymous union or struct
+      // (C++ [class.union]).
+      if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion())
+        return BuildAnonymousStructUnionMemberReference(MemberLoc, FD, 
+                                                        BaseExpr, OpLoc);
+
       // Figure out the type of the member; see C99 6.5.2.3p3, C++ [expr.ref]
       // FIXME: Handle address space modifiers
       QualType MemberType = FD->getType();

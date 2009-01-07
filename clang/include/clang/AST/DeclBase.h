@@ -384,8 +384,8 @@ public:
     return DeclKind == Decl::TranslationUnit || DeclKind == Decl::Namespace;
   }
 
-  bool isCXXRecord() const {
-    return DeclKind == Decl::CXXRecord;
+  bool isRecord() const {
+    return DeclKind == Decl::Record || DeclKind == Decl::CXXRecord;
   }
 
   bool isNamespace() const {

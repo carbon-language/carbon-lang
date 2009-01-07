@@ -299,6 +299,11 @@ public:
   /// no declarator (e.g. "struct foo;") is parsed.
   virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);
   
+  bool InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
+                                           RecordDecl *AnonRecord);
+  virtual DeclTy *BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS, 
+                                              RecordDecl *Record);
+
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, const CXXScopeSpec &SS,
                            IdentifierInfo *Name, SourceLocation NameLoc,
@@ -678,6 +683,11 @@ public:
   DeclRefExpr *BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                                 bool TypeDependent, bool ValueDependent,
                                 const CXXScopeSpec *SS = 0);
+  ExprResult 
+  BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
+                                           FieldDecl *Field,
+                                           Expr *BaseObjectExpr = 0,
+                                      SourceLocation OpLoc = SourceLocation());
   ExprResult ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                       DeclarationName Name,
                                       bool HasTrailingLParen,

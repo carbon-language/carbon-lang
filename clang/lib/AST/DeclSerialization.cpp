@@ -618,6 +618,7 @@ void RecordDecl::EmitImpl(Serializer& S) const {
   ScopedDecl::EmitInRec(S);
   S.EmitBool(isDefinition());
   S.EmitBool(hasFlexibleArrayMember());
+  S.EmitBool(isAnonymousStructOrUnion());
   ScopedDecl::EmitOutRec(S);
 }
 
@@ -630,6 +631,7 @@ RecordDecl* RecordDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   decl->ScopedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());
   decl->setHasFlexibleArrayMember(D.ReadBool());
+  decl->setAnonymousStructOrUnion(D.ReadBool());
   decl->ScopedDecl::ReadOutRec(D, C);
     
   return decl;

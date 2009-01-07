@@ -2169,7 +2169,7 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
 
       // Ignore member functions. 
       if (ScopedDecl *SD = dyn_cast<ScopedDecl>(*I)) {
-        if (SD->getDeclContext()->isCXXRecord())
+        if (SD->getDeclContext()->isRecord())
           continue;
       } 
 

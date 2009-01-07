@@ -1053,7 +1053,10 @@ class RecordDecl : public TagDecl, public DeclContext {
   /// array member (e.g. int X[]) or if this union contains a struct that does.
   /// If so, this cannot be contained in arrays or other structs as a member.
   bool HasFlexibleArrayMember : 1;
-  
+
+  ///
+  bool AnonymousStructOrUnion : 1;
+
 protected:
   RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
              SourceLocation L, IdentifierInfo *Id);
@@ -1068,7 +1071,24 @@ public:
       
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
   void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }
-  
+
+  /// isAnonymousStructOrUnion - Whether this is an anonymous struct
+  /// or union. To be an anonymous struct or union, it must have been
+  /// declared without a name and there must be no objects of this
+  /// type declared, e.g.,
+  /// @code
+  ///   union { int i; float f; };
+  /// @endcode   
+  /// is an anonymous union but neither of the following are:
+  /// @code
+  ///  union X { int i; float f; };
+  ///  union { int i; float f; } obj;
+  /// @endcode
+  bool isAnonymousStructOrUnion() const { return AnonymousStructOrUnion; }
+  void setAnonymousStructOrUnion(bool Anon) {
+    AnonymousStructOrUnion = Anon;
+  }
+
   /// getDefinition - Returns the RecordDecl that actually defines this 
   ///  struct/union/class.  When determining whether or not a struct/union/class
   ///  is completely defined, one should use this method as opposed to

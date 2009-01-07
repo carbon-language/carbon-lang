@@ -1476,6 +1476,22 @@ DIAG(err_base_init_direct_and_virtual, ERROR,
      "base class initializer %0 names both a direct base class and an"
      " inherited virtual base class")
 
+// C++ anonymous unions and GNU anonymous structs
+DIAG(ext_anonymous_union, EXTENSION,
+     "anonymous unions are a GNU extension in C")
+DIAG(ext_anonymous_struct, EXTENSION,
+     "anonymous structs are a GNU extension")
+DIAG(err_anonymous_union_not_static, ERROR,
+     "anonymous unions at namespace or global scope must be declared 'static'")
+DIAG(err_anonymous_union_with_storage_spec, ERROR,
+     "anonymous union at class scope must not have a storage specifier")
+DIAG(err_anonymous_struct_not_member, ERROR,
+     "anonymous structs and classes must be class members")
+DIAG(err_anonymous_union_member_redecl, ERROR,
+     "member of anonymous union redeclares %0")
+DIAG(err_anonymous_struct_member_redecl, ERROR,
+     "member of anonymous struct redeclares %0")
+
 // Derived classes.
 DIAG(err_dup_virtual, ERROR,
      "duplicate 'virtual' in base specifier")
