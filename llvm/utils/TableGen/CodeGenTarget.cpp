@@ -483,7 +483,17 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
-    MVT::SimpleValueType VT = getValueType(TyEl->getValueAsDef("VT"));
+    MVT::SimpleValueType VT;
+    if (TyEl->isSubClassOf("LLVMMatchType")) {
+      VT = IS.RetVTs[TyEl->getValueAsInt("Number")];
+      // It only makes sense to use the extended and truncated vector element
+      // variants with iAny types; otherwise, if the intrinsic is not
+      // overloaded, all the types can be specified directly.
+      assert(((!TyEl->isSubClassOf("LLVMExtendedElementVectorType") &&
+               !TyEl->isSubClassOf("LLVMTruncatedElementVectorType")) ||
+              VT == MVT::iAny) && "Expected iAny type");
+    } else
+      VT = getValueType(TyEl->getValueAsDef("VT"));
     isOverloaded |= VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny;
     IS.RetVTs.push_back(VT);
     IS.RetTypeDefs.push_back(TyEl);
@@ -497,7 +507,21 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
-    MVT::SimpleValueType VT = getValueType(TyEl->getValueAsDef("VT"));
+    MVT::SimpleValueType VT;
+    if (TyEl->isSubClassOf("LLVMMatchType")) {
+      unsigned MatchTy = TyEl->getValueAsInt("Number");
+      if (MatchTy < IS.RetVTs.size())
+        VT = IS.RetVTs[MatchTy];
+      else
+        VT = IS.ParamVTs[MatchTy - IS.RetVTs.size()];
+      // It only makes sense to use the extended and truncated vector element
+      // variants with iAny types; otherwise, if the intrinsic is not
+      // overloaded, all the types can be specified directly.
+      assert(((!TyEl->isSubClassOf("LLVMExtendedElementVectorType") &&
+               !TyEl->isSubClassOf("LLVMTruncatedElementVectorType")) ||
+              VT == MVT::iAny) && "Expected iAny type");
+    } else
+      VT = getValueType(TyEl->getValueAsDef("VT"));
     isOverloaded |= VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny;
     IS.ParamVTs.push_back(VT);
     IS.ParamTypeDefs.push_back(TyEl);

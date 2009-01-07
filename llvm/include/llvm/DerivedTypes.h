@@ -369,6 +369,26 @@ public:
     return VectorType::get(EltTy, VTy->getNumElements());
   }
 
+  /// VectorType::getExtendedElementVectorType - This static method is like
+  /// getInteger except that the element types are twice as wide as the
+  /// elements in the input type.
+  ///
+  static VectorType *getExtendedElementVectorType(const VectorType *VTy) {
+    unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
+    const Type *EltTy = IntegerType::get(EltBits * 2);
+    return VectorType::get(EltTy, VTy->getNumElements());
+  }
+
+  /// VectorType::getTruncatedElementVectorType - This static method is like
+  /// getInteger except that the element types are half as wide as the
+  /// elements in the input type.
+  ///
+  static VectorType *getTruncatedElementVectorType(const VectorType *VTy) {
+    unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
+    const Type *EltTy = IntegerType::get(EltBits / 2);
+    return VectorType::get(EltTy, VTy->getNumElements());
+  }
+
   /// @brief Return the number of elements in the Vector type.
   inline unsigned getNumElements() const { return NumElements; }
 

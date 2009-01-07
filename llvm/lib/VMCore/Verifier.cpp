@@ -1313,6 +1313,11 @@ void Verifier::visitInstruction(Instruction &I) {
   InstsInThisBlock.insert(&I);
 }
 
+// Flags used by TableGen to mark intrinsic parameters with the
+// LLVMExtendedElementVectorType and LLVMTruncatedElementVectorType classes.
+static const unsigned ExtendedElementVectorType = 0x40000000;
+static const unsigned TruncatedElementVectorType = 0x20000000;
+
 /// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
 ///
 void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
@@ -1376,13 +1381,34 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
 
   unsigned NumElts = 0;
   const Type *EltTy = Ty;
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+  const VectorType *VTy = dyn_cast<VectorType>(Ty);
+  if (VTy) {
     EltTy = VTy->getElementType();
     NumElts = VTy->getNumElements();
   }
 
   if (VT < 0) {
     int Match = ~VT;
+
+    // Check flags that indicate a type that is an integral vector type with
+    // elements that are larger or smaller than the elements of the matched
+    // type.
+    if ((Match & (ExtendedElementVectorType |
+                  TruncatedElementVectorType)) != 0) {
+      if (!VTy) {
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo - 1) + " is not "
+                    "a vector type.", F);
+        return false;
+      }
+      // Adjust the current Ty (in the opposite direction) rather than
+      // the type being matched against.
+      if ((Match & ExtendedElementVectorType) != 0)
+        Ty = VectorType::getTruncatedElementVectorType(VTy);
+      else
+        Ty = VectorType::getExtendedElementVectorType(VTy);
+      Match &= ~(ExtendedElementVectorType | TruncatedElementVectorType);
+    }
+
     const Type *RetTy = FTy->getReturnType();
     const StructType *ST = dyn_cast<StructType>(RetTy);
     unsigned NumRets = 1;

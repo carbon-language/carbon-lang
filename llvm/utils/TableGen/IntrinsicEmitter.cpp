@@ -167,7 +167,14 @@ static void EmitTypeGenerate(std::ostream &OS, const Record *ArgType,
   if (ArgType->isSubClassOf("LLVMMatchType")) {
     unsigned Number = ArgType->getValueAsInt("Number");
     assert(Number < ArgNo && "Invalid matching number!");
-    OS << "Tys[" << Number << "]";
+    if (ArgType->isSubClassOf("LLVMExtendedElementVectorType"))
+      OS << "VectorType::getExtendedElementVectorType"
+         << "(dyn_cast<VectorType>(Tys[" << Number << "]))";
+    else if (ArgType->isSubClassOf("LLVMTruncatedElementVectorType"))
+      OS << "VectorType::getTruncatedElementVectorType"
+         << "(dyn_cast<VectorType>(Tys[" << Number << "]))";
+    else
+      OS << "Tys[" << Number << "]";
   } else if (VT == MVT::iAny || VT == MVT::fAny) {
     // NOTE: The ArgNo variable here is not the absolute argument number, it is
     // the index of the "arbitrary" type in the Tys array passed to the
@@ -281,7 +288,12 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
       if (ArgType->isSubClassOf("LLVMMatchType")) {
         unsigned Number = ArgType->getValueAsInt("Number");
         assert(Number < j && "Invalid matching number!");
-        OS << "~" << Number;
+        if (ArgType->isSubClassOf("LLVMExtendedElementVectorType"))
+          OS << "~(ExtendedElementVectorType | " << Number << ")";
+        else if (ArgType->isSubClassOf("LLVMTruncatedElementVectorType"))
+          OS << "~(TruncatedElementVectorType | " << Number << ")";
+        else
+          OS << "~" << Number;
       } else {
         MVT::SimpleValueType VT = getValueType(ArgType->getValueAsDef("VT"));
         OS << getEnumName(VT);
@@ -299,7 +311,12 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
       if (ArgType->isSubClassOf("LLVMMatchType")) {
         unsigned Number = ArgType->getValueAsInt("Number");
         assert(Number < j + RetTys.size() && "Invalid matching number!");
-        OS << "~" << Number;
+        if (ArgType->isSubClassOf("LLVMExtendedElementVectorType"))
+          OS << "~(ExtendedElementVectorType | " << Number << ")";
+        else if (ArgType->isSubClassOf("LLVMTruncatedElementVectorType"))
+          OS << "~(TruncatedElementVectorType | " << Number << ")";
+        else
+          OS << "~" << Number;
       } else {
         MVT::SimpleValueType VT = getValueType(ArgType->getValueAsDef("VT"));
         OS << getEnumName(VT);
