@@ -108,7 +108,7 @@ def compile_fallback(args):
     command = [CC,'-c']
     run(command + args)
     
-def compile(args, native, save_temps=False):
+def compile(args, native, save_temps=False, asm_opts=[]):
     if native:
         output,args = stripoutput(args)
         if not output:
@@ -124,7 +124,7 @@ def compile(args, native, save_temps=False):
             run(command + args + ['-o', bc_output])
             # FIXME: What controls relocation model?
             run([LLC, '-relocation-model=pic', '-f', '-o', s_output, bc_output])
-            run([AS, '-o', output, s_output])
+            run([AS, '-o', output, s_output] + asm_opts)
         finally:
             if not save_temps:
                 remove(bc_output)
@@ -133,20 +133,20 @@ def compile(args, native, save_temps=False):
         command = [CLANG,'-emit-llvm-bc']
         run(command + args)
 
-def checked_compile(args, native, language, save_temps):
+def checked_compile(args, native, language, save_temps, asm_opts):
     if CCC_LANGUAGES and language and language not in CCC_LANGUAGES:
         log('fallback', args)
         print >>sys.stderr, 'NOTE: ccc: Using fallback compiler for: %s'%(' '.join(map(quote, args)),)
         compile_fallback(args)
     elif CCC_FALLBACK:
         try:
-            compile(args, native, save_temps)
+            compile(args, native, save_temps, asm_opts)
         except:
             log('fallback-on-fail', args)
             print >>sys.stderr, 'WARNING: ccc: Using fallback compiler for: %s'%(' '.join(map(quote, args)),)
             compile_fallback(args)
     else:
-        compile(args, native, save_temps)
+        compile(args, native, save_temps, asm_opts)
     
 def link(args, native):
     if native:
@@ -210,6 +210,7 @@ def main(args):
 
     action = inferaction(args)
     output = ''
+    asm_opts = []
     compile_opts = []
     link_opts = []
     files = []
@@ -291,6 +292,8 @@ def main(args):
             compile_opts.append(args[i+1])
             link_opts.append(arg)
             link_opts.append(args[i+1])
+            asm_opts.append(arg)
+            asm_opts.append(args[i+1])
             i += 1
         
         # Options with three arguments that should pass through
@@ -387,7 +390,7 @@ def main(args):
             if language:
                 args.extend(['-x', language])
             args += ['-o', coutput, file] + compile_opts
-            checked_compile(args, native, language, save_temps)
+            checked_compile(args, native, language, save_temps, asm_opts)
             language = ''
 
     if action == 'link':
@@ -401,7 +404,7 @@ def main(args):
                 if language:
                     args.extend(['-x', language])
                 args = ['-o', out, file] + compile_opts
-                checked_compile(args, native, language, save_temps)
+                checked_compile(args, native, language, save_temps, asm_opts)
                 language = ''
                 files[i] = out
         if not output:
