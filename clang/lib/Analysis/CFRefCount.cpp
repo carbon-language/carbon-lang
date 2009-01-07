@@ -55,8 +55,9 @@ using llvm::CStrInCStrNoCase;
 //
 static bool followsFundamentalRule(const char* s) {
   while (*s == '_') ++s;  
-  return CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
-  CStrInCStrNoCase(s, "new") == s || CStrInCStrNoCase(s, "alloc") == s;
+  return CStrInCStrNoCase(s, "copy")
+      || CStrInCStrNoCase(s, "new") == s 
+      || CStrInCStrNoCase(s, "alloc") == s;
 }
 
 static bool followsReturnRule(const char* s) {
@@ -123,25 +124,6 @@ static bool isCGRefType(QualType T) {
     return false;
   
   if (strstr(TDName, "Ref") == 0)
-    return false;
-  
-  return true;
-}
-
-static bool isNSType(QualType T) {
-  
-  if (!T->isPointerType())
-    return false;
-  
-  ObjCInterfaceType* OT = dyn_cast<ObjCInterfaceType>(T.getTypePtr());
-  
-  if (!OT)
-    return false;
-  
-  const char* ClsName = OT->getDecl()->getIdentifier()->getName();
-  assert (ClsName);
-  
-  if (ClsName[0] != 'N' || ClsName[1] != 'S')
     return false;
   
   return true;
@@ -561,6 +543,8 @@ public:
   void InitializeClassMethodSummaries();
   void InitializeMethodSummaries();
   
+  bool isTrackedObjectType(QualType T);
+  
 private:
   
   void addClsMethSummary(IdentifierInfo* ClsII, Selector S,
@@ -625,6 +609,8 @@ public:
 };
   
 } // end anonymous namespace
+
+
 
 //===----------------------------------------------------------------------===//
 // Implementation of checker data structures.
@@ -694,6 +680,33 @@ RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
   SummarySet.InsertNode(Summ, InsertPos);
   
   return Summ;
+}
+
+//===----------------------------------------------------------------------===//
+// Predicates.
+//===----------------------------------------------------------------------===//
+
+bool RetainSummaryManager::isTrackedObjectType(QualType T) {
+  if (!Ctx.isObjCObjectPointerType(T))
+    return false;
+
+  // Does it subclass NSObject?
+  ObjCInterfaceType* OT = dyn_cast<ObjCInterfaceType>(T.getTypePtr());
+
+  // We assume that id<..>, id, and "Class" all represent tracked objects.
+  if (!OT)
+    return true;
+
+  // Does the object type subclass NSObject?
+  // FIXME: We can memoize here if this gets too expensive.  
+  IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
+  ObjCInterfaceDecl* ID = OT->getDecl();  
+
+  for ( ; ID ; ID = ID->getSuperClass())
+    if (ID->getIdentifier() == NSObjectII)
+      return true;
+  
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -953,28 +966,21 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
   
   if (I != ObjCMethodSummaries.end())
     return I->second;
-    
-  if (!ME->getType()->isPointerType())
-    return 0;
-  
-  // "initXXX": pass-through for receiver.
 
+  // "initXXX": pass-through for receiver.
   const char* s = S.getIdentifierInfoForSlot(0)->getName();
   assert (ScratchArgs.empty());
   
   if (strncmp(s, "init", 4) == 0 || strncmp(s, "_init", 5) == 0)
-    return getInitMethodSummary(ME);  
+    return getInitMethodSummary(ME);
   
-  // "copyXXX", "createXXX", "newXXX": allocators.  
-
-  if (!isNSType(ME->getReceiver()->getType()))
+  // Look for methods that return an owned object.
+  if (!isTrackedObjectType(Ctx.getCanonicalType(ME->getType())))
     return 0;
-  
-  if (followsFundamentalRule(s)) {
-    
-    RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
-                                : RetEffect::MakeOwned(true);  
 
+  if (followsFundamentalRule(s)) {    
+    RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
+                                : RetEffect::MakeOwned(true);
     RetainSummary* Summ = getPersistentSummary(E);
     ObjCMethodSummaries[ME] = Summ;
     return Summ;
@@ -2648,7 +2654,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
     ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BR.getGraph().getCodeDecl());
     os << " is returned from a method whose name ('"
        << MD.getSelector().getAsString()
-       << "') does not contain 'create' or 'copy' or otherwise starts with"
+       << "') does not contain 'copy' or otherwise starts with"
           " 'new' or 'alloc'.  This violates the naming convention rules given"
           " in the Memory Management Guide for Cocoa (object leaked).";
   }

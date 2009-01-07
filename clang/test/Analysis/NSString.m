@@ -180,7 +180,9 @@ void f12() {
 
 @interface SharedClass : NSObject
 + (id)sharedInstance;
+- (id)notShared;
 @end
+
 @implementation SharedClass
 
 - (id)_init {
@@ -188,6 +190,10 @@ void f12() {
         NSLog(@"Bar");
     }
     return self;
+}
+
+- (id)notShared {
+  return [[SharedClass alloc] _init]; // expected-warning{{This violates the naming convention rules}}
 }
 
 + (id)sharedInstance {
@@ -198,3 +204,8 @@ void f12() {
     return _sharedInstance; // no-warning
 }
 @end
+
+id testSharedClassFromFunction() {
+  return [[SharedClass alloc] _init]; // no-warning
+}
+
