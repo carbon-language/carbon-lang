@@ -37,7 +37,7 @@ public:
   
   ~BasicStoreManager() {}
 
-  SVal Retrieve(const GRState *state, Loc LV, QualType T);  
+  SVal Retrieve(const GRState *state, Loc loc, QualType T = QualType());  
 
   const GRState* Bind(const GRState* St, Loc L, SVal V) {
     Store store = St->getStore();
@@ -45,8 +45,8 @@ public:
     return StateMgr.MakeStateWithStore(St, store);
   }
 
-  Store BindInternal(Store St, Loc LV, SVal V);  
-  Store Remove(Store St, Loc LV);
+  Store BindInternal(Store St, Loc loc, SVal V);  
+  Store Remove(Store St, Loc loc);
   Store getInitialStore();
 
   // FIXME: Investigate what is using this. This method should be removed.
@@ -263,18 +263,18 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
     return UnknownVal();
 }
 
-SVal BasicStoreManager::Retrieve(const GRState* state, Loc LV, QualType T) {
+SVal BasicStoreManager::Retrieve(const GRState* state, Loc loc, QualType T) {
   
-  if (isa<UnknownVal>(LV))
+  if (isa<UnknownVal>(loc))
     return UnknownVal();
   
-  assert (!isa<UndefinedVal>(LV));
+  assert (!isa<UndefinedVal>(loc));
   
-  switch (LV.getSubKind()) {
+  switch (loc.getSubKind()) {
 
     case loc::MemRegionKind: {
       const VarRegion* R =
-        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(LV).getRegion());
+        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(loc).getRegion());
       
       if (!R)
         return UnknownVal();
@@ -294,7 +294,7 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc LV, QualType T) {
       // invalidate their bindings).  Just return Undefined.
       return UndefinedVal();            
     case loc::FuncValKind:
-      return LV;
+      return loc;
       
     default:
       assert (false && "Invalid Loc.");
@@ -304,11 +304,11 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc LV, QualType T) {
   return UnknownVal();
 }
   
-Store BasicStoreManager::BindInternal(Store store, Loc LV, SVal V) {    
-  switch (LV.getSubKind()) {      
+Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {    
+  switch (loc.getSubKind()) {      
     case loc::MemRegionKind: {
       const VarRegion* R =
-        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(LV).getRegion());
+        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(loc).getRegion());
       
       if (!R)
         return store;
@@ -324,11 +324,11 @@ Store BasicStoreManager::BindInternal(Store store, Loc LV, SVal V) {
   }
 }
 
-Store BasicStoreManager::Remove(Store store, Loc LV) {
-  switch (LV.getSubKind()) {
+Store BasicStoreManager::Remove(Store store, Loc loc) {
+  switch (loc.getSubKind()) {
     case loc::MemRegionKind: {
       const VarRegion* R =
-        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(LV).getRegion());
+        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(loc).getRegion());
       
       if (!R)
         return store;
@@ -379,7 +379,7 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
           break;
         
         Marked.insert(R);
-        SVal X = GetRegionSVal(state, R);      
+        SVal X = Retrieve(state, loc::MemRegionVal(R));
     
         // FIXME: We need to handle symbols nested in region definitions.
         for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)

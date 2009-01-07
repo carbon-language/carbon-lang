@@ -47,18 +47,29 @@ protected:
 public:  
   virtual ~StoreManager() {}
   
-  /// Retrieve - Retrieves the value bound to specified location.  The optional
-  ///  QualType information provides a hint to the store indicating the expected
-  ///  type of the returned value.
-  virtual SVal Retrieve(const GRState* state, Loc LV, QualType T=QualType()) =0;  
+  /// Return the value bound to specified location in a given state.
+  /// \param[in] state The analysis state.
+  /// \param[in] loc The symbolic memory location.
+  /// \param[in] T An optional type that provides a hint indicating the 
+  ///   expected type of the returned value.  This is used if the value is
+  ///   lazily computed.
+  /// \return The value bound to the location \c loc.
+  virtual SVal Retrieve(const GRState* state, Loc loc,
+                        QualType T = QualType()) = 0;  
 
-  /// GetRegionSVal - Retrieves  the value bound to the specified region.
-  SVal GetRegionSVal(const GRState* state, const MemRegion* R) {
-    return Retrieve(state, loc::MemRegionVal(R));
-  }
+//  /// Retrieves the value bound to the specified region.
+//  SVal GetRegionSVal(const GRState* state, const MemRegion* R) {
+//    return Retrieve(state, loc::MemRegionVal(R));
+//  }
 
-  /// Bind value V to location L.
-  virtual const GRState* Bind(const GRState* St, Loc L, SVal V) = 0;
+  /// Return a state with the specified value bound to the given location.
+  /// \param[in] state The analysis state.
+  /// \param[in] loc The symbolic memory location.
+  /// \param[in] val The value to bind to location \c loc.
+  /// \return A pointer to a GRState object that contains the same bindings as 
+  ///   \c state with the addition of having the value specified by \c val bound
+  ///   to the location given for \c loc.
+  virtual const GRState* Bind(const GRState* state, Loc loc, SVal val) = 0;
 
   virtual Store Remove(Store St, Loc L) = 0;
   

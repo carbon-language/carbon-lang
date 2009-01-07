@@ -474,7 +474,7 @@ public:
   }
   
   SVal GetSVal(const GRState* state, const MemRegion* R) {
-    return StoreMgr->GetRegionSVal(state, R);
+    return StoreMgr->Retrieve(state, loc::MemRegionVal(R));
   }  
   
   const GRState* BindLoc(const GRState* St, Loc LV, SVal V) {
