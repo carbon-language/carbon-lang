@@ -195,7 +195,7 @@ public:
   // be defined inside or outside a function etc).
   bool isDefinedOutsideFunctionOrMethod() const {
     if (getDeclContext())
-      return !getDeclContext()->isFunctionOrMethod();
+      return !getDeclContext()->getLookupContext()->isFunctionOrMethod();
     else
       return true;
   }
@@ -420,7 +420,7 @@ public:
     if (getKind() != Decl::Var)
       return false;
     if (const DeclContext *DC = getDeclContext())
-      return DC->isFunctionOrMethod();
+      return DC->getLookupContext()->isFunctionOrMethod();
     return false;
   }
   
@@ -428,9 +428,11 @@ public:
   bool isFileVarDecl() const {
     if (getKind() != Decl::Var)
       return false;
-    const DeclContext *Ctx = getDeclContext()->getLookupContext();
-    if (isa<TranslationUnitDecl>(Ctx) || isa<NamespaceDecl>(Ctx) )
-      return true;
+    if (const DeclContext *Ctx = getDeclContext()) {
+      Ctx = Ctx->getLookupContext();
+      if (isa<TranslationUnitDecl>(Ctx) || isa<NamespaceDecl>(Ctx) )
+        return true;
+    }
     return false;
   }
   

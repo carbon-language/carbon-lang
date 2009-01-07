@@ -116,7 +116,8 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
   //   in this case the class name or enumeration name is hidden.
   if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
     // We are pushing the name of a tag (enum or class).
-    if (CurContext == TD->getDeclContext()) {
+    if (CurContext->getLookupContext() 
+          == TD->getDeclContext()->getLookupContext()) {
       // We're pushing the tag into the current context, which might
       // require some reshuffling in the identifier resolver.
       IdentifierResolver::iterator
@@ -679,7 +680,7 @@ void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
   bool VDIsTentative = isTentativeDefinition(VD);
   bool VDIsIncompleteArray = VD->getType()->isIncompleteArrayType();
   
-  // FIXME: I don't this will actually see all of the
+  // FIXME: I don't think this will actually see all of the
   // redefinitions. Can't we check this property on-the-fly?
   for (IdentifierResolver::iterator
        I = IdResolver.begin(VD->getIdentifier(), 
