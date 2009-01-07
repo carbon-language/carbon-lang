@@ -206,20 +206,44 @@ class DerivedArg(ValueArg):
     def render(self, args):
         return [self.value]
 
+###
+
+class InputIndex:
+    def __init__(self, sourceId, pos):
+        self.sourceId = sourceId
+        self.pos = pos
+
+    def __repr__(self):
+        return 'InputIndex(%d, %d)' % (self.sourceId, self.pos)
+
 class ArgList:
     """ArgList - Collect an input argument vector along with a set of parsed Args
     and supporting information."""
 
     def __init__(self, argv):
         self.argv = list(argv)
-        self.args = []
+        self.syntheticArgv = []
         self.lastArgs = {}
+        self.args = []
 
     def getLastArg(self, option):
         return self.lastArgs.get(option)
 
     def getInputString(self, index, offset=0):
-        return self.argv[index + offset]
+        # Source 0 is argv.
+        if index.sourceId == 0:
+            return self.argv[index.pos + offset]
+        
+        # Source 1 is synthetic argv.
+        if index.sourceId == 1:
+            return self.syntheticArgv[index.pos + offset]
+
+        raise RuntimeError,'Unknown source ID for index.'
+
+    def getSyntheticIndex(self, *strings):
+        pos = len(self.syntheticArgv)
+        self.syntheticArgv.extend(strings)
+        return InputIndex(1, pos)
 
     # Support use as a simple arg list.
 
@@ -460,7 +484,8 @@ class OptionParser:
         iargs = enumerate(argv)
         it = iter(iargs)
         args = ArgList(argv)
-        for i,a in it:
+        for pos,a in it:
+            i = InputIndex(0, pos)
             # FIXME: Handle '@'
             if not a: 
                 # gcc's handling of empty arguments doesn't make
