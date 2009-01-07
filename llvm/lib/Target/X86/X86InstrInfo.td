@@ -838,7 +838,6 @@ def CMOVB32rr : I<0x42, MRMSrcReg,       // if <u, GR32 = GR32
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
                                    X86_COND_B, EFLAGS))]>,
                    TB;
-
 def CMOVAE16rr: I<0x43, MRMSrcReg,       // if >=u, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovae\t{$src2, $dst|$dst, $src2}",
@@ -995,14 +994,31 @@ def CMOVNP32rr : I<0x4B, MRMSrcReg,       // if !parity, GR32 = GR32
                    [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
                                     X86_COND_NP, EFLAGS))]>,
                   TB;
-} // isCommutable = 1
-
-def CMOVNP32rm : I<0x4B, MRMSrcMem,       // if !parity, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovnp\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                    X86_COND_NP, EFLAGS))]>,
+def CMOVO16rr : I<0x40, MRMSrcReg,       // if overflow, GR16 = GR16
+                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                  "cmovo\t{$src2, $dst|$dst, $src2}",
+                  [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
+                                   X86_COND_O, EFLAGS))]>,
+                  TB, OpSize;
+def CMOVO32rr : I<0x40, MRMSrcReg,       // if overflow, GR32 = GR32
+                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                  "cmovo\t{$src2, $dst|$dst, $src2}",
+                  [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
+                                   X86_COND_O, EFLAGS))]>,
                   TB;
+def CMOVNO16rr : I<0x41, MRMSrcReg,       // if !overflow, GR16 = GR16
+                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                  "cmovno\t{$src2, $dst|$dst, $src2}",
+                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
+                                    X86_COND_NO, EFLAGS))]>,
+                  TB, OpSize;
+def CMOVNO32rr : I<0x41, MRMSrcReg,       // if !overflow, GR32 = GR32
+                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                  "cmovno\t{$src2, $dst|$dst, $src2}",
+                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
+                                    X86_COND_NO, EFLAGS))]>,
+                  TB;
+} // isCommutable = 1
 
 def CMOVB16rm : I<0x42, MRMSrcMem,       // if <u, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
@@ -1166,6 +1182,36 @@ def CMOVNP16rm : I<0x4B, MRMSrcMem,       // if !parity, GR16 = [mem16]
                    [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
                                     X86_COND_NP, EFLAGS))]>,
                   TB, OpSize;
+def CMOVNP32rm : I<0x4B, MRMSrcMem,       // if !parity, GR32 = [mem32]
+                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
+                  "cmovnp\t{$src2, $dst|$dst, $src2}",
+                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
+                                    X86_COND_NP, EFLAGS))]>,
+                  TB;
+def CMOVO16rm : I<0x40, MRMSrcMem,       // if overflow, GR16 = [mem16]
+                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
+                  "cmovo\t{$src2, $dst|$dst, $src2}",
+                  [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
+                                   X86_COND_O, EFLAGS))]>,
+                  TB, OpSize;
+def CMOVO32rm : I<0x40, MRMSrcMem,       // if overflow, GR32 = [mem32]
+                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
+                  "cmovo\t{$src2, $dst|$dst, $src2}",
+                  [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
+                                   X86_COND_O, EFLAGS))]>,
+                  TB;
+def CMOVNO16rm : I<0x41, MRMSrcMem,       // if !overflow, GR16 = [mem16]
+                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
+                  "cmovno\t{$src2, $dst|$dst, $src2}",
+                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
+                                    X86_COND_NO, EFLAGS))]>,
+                  TB, OpSize;
+def CMOVNO32rm : I<0x41, MRMSrcMem,       // if !overflow, GR32 = [mem32]
+                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
+                  "cmovno\t{$src2, $dst|$dst, $src2}",
+                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
+                                    X86_COND_NO, EFLAGS))]>,
+                  TB;
 } // Uses = [EFLAGS]
 
 

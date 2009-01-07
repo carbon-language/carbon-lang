@@ -1004,6 +1004,16 @@ def CMOVNP64rr : RI<0x4B, MRMSrcReg,       // if !parity, GR64 = GR64
                    "cmovnp\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
                                      X86_COND_NP, EFLAGS))]>, TB;
+def CMOVO64rr : RI<0x40, MRMSrcReg,       // if overflow, GR64 = GR64
+                   (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                   "cmovo\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
+                                    X86_COND_O, EFLAGS))]>, TB;
+def CMOVNO64rr : RI<0x41, MRMSrcReg,       // if !overflow, GR64 = GR64
+                   (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                   "cmovno\t{$src2, $dst|$dst, $src2}",
+                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
+                                     X86_COND_NO, EFLAGS))]>, TB;
 } // isCommutable = 1
 
 def CMOVB64rm : RI<0x42, MRMSrcMem,       // if <u, GR64 = [mem64]
@@ -1076,6 +1086,16 @@ def CMOVNP64rm : RI<0x4B, MRMSrcMem,       // if !parity, GR64 = [mem64]
                    "cmovnp\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
                                      X86_COND_NP, EFLAGS))]>, TB;
+def CMOVO64rm : RI<0x40, MRMSrcMem,       // if overflow, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovo\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_O, EFLAGS))]>, TB;
+def CMOVNO64rm : RI<0x41, MRMSrcMem,       // if !overflow, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovno\t{$src2, $dst|$dst, $src2}",
+                    [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                     X86_COND_NO, EFLAGS))]>, TB;
 } // isTwoAddress
 
 //===----------------------------------------------------------------------===//

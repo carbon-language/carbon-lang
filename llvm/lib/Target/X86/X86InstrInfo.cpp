@@ -499,6 +499,9 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::CMOVNS16rr,      X86::CMOVNS16rm },
     { X86::CMOVNS32rr,      X86::CMOVNS32rm },
     { X86::CMOVNS64rr,      X86::CMOVNS64rm },
+    { X86::CMOVO16rr,       X86::CMOVO16rm },
+    { X86::CMOVO32rr,       X86::CMOVO32rm },
+    { X86::CMOVO64rr,       X86::CMOVO64rm },
     { X86::CMOVP16rr,       X86::CMOVP16rm },
     { X86::CMOVP32rr,       X86::CMOVP32rm },
     { X86::CMOVP64rr,       X86::CMOVP64rm },
@@ -1308,7 +1311,13 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
   case X86::CMOVP64rr:
   case X86::CMOVNP16rr:
   case X86::CMOVNP32rr:
-  case X86::CMOVNP64rr: {
+  case X86::CMOVNP64rr:
+  case X86::CMOVO16rr:
+  case X86::CMOVO32rr:
+  case X86::CMOVO64rr:
+  case X86::CMOVNO16rr:
+  case X86::CMOVNO32rr:
+  case X86::CMOVNO64rr: {
     unsigned Opc = 0;
     switch (MI->getOpcode()) {
     default: break;
@@ -1354,6 +1363,12 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     case X86::CMOVNP16rr: Opc = X86::CMOVP16rr; break;
     case X86::CMOVNP32rr: Opc = X86::CMOVP32rr; break;
     case X86::CMOVNP64rr: Opc = X86::CMOVP64rr; break;
+    case X86::CMOVO16rr:  Opc = X86::CMOVNO16rr; break;
+    case X86::CMOVO32rr:  Opc = X86::CMOVNO32rr; break;
+    case X86::CMOVO64rr:  Opc = X86::CMOVNO32rr; break;
+    case X86::CMOVNO16rr: Opc = X86::CMOVO16rr; break;
+    case X86::CMOVNO32rr: Opc = X86::CMOVO32rr; break;
+    case X86::CMOVNO64rr: Opc = X86::CMOVO64rr; break;
     }
     if (NewMI) {
       MachineFunction &MF = *MI->getParent()->getParent();
