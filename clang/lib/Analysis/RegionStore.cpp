@@ -54,6 +54,7 @@ namespace clang {
 //
 //  MemRegions represent chunks of memory with a size (their "extent").  This
 //  GDM entry tracks the extents for regions.  Extents are in bytes.
+//
 namespace { class VISIBILITY_HIDDEN RegionExtents {}; }
 static int RegionExtentsIndex = 0;
 namespace clang {
@@ -108,14 +109,13 @@ class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   RegionViews::Factory RVFactory;
 
   GRStateManager& StateMgr;
-  MemRegionManager MRMgr;
 
 public:
   RegionStoreManager(GRStateManager& mgr) 
-    : RBFactory(mgr.getAllocator()),
+    : StoreManager(mgr.getAllocator()),
+      RBFactory(mgr.getAllocator()),
       RVFactory(mgr.getAllocator()),
-      StateMgr(mgr), 
-      MRMgr(StateMgr.getAllocator()) {}
+      StateMgr(mgr) {}
 
   virtual ~RegionStoreManager() {}
 

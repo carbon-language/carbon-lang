@@ -37,7 +37,14 @@ class StoreManager {
 public:
   typedef llvm::SmallSet<SymbolRef, 20>      LiveSymbolsTy;
   typedef llvm::DenseSet<SymbolRef>          DeadSymbolsTy;
-  
+
+protected:
+  /// MRMgr - Manages region objects associated with this StoreManager.
+  MemRegionManager MRMgr;
+
+  StoreManager(llvm::BumpPtrAllocator& Alloc) : MRMgr(Alloc) {}
+
+public:  
   virtual ~StoreManager() {}
   
   /// Retrieve - Retrieves the value bound to specified location.  The optional
@@ -64,7 +71,7 @@ public:
                                              SVal V) = 0;
   
   virtual Store getInitialStore() = 0;
-  virtual MemRegionManager& getRegionManager() = 0;
+  MemRegionManager& getRegionManager() { return MRMgr; }
 
   virtual SVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;
 

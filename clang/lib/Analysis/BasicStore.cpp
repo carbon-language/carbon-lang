@@ -26,14 +26,13 @@ namespace {
 class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   VarBindingsTy::Factory VBFactory;
   GRStateManager& StateMgr;
-  MemRegionManager MRMgr;
   const MemRegion* SelfRegion;
   
 public:
   BasicStoreManager(GRStateManager& mgr)
-    : VBFactory(mgr.getAllocator()), 
+    : StoreManager(mgr.getAllocator()),
+      VBFactory(mgr.getAllocator()), 
       StateMgr(mgr), 
-      MRMgr(StateMgr.getAllocator()), 
       SelfRegion(0) {}
   
   ~BasicStoreManager() {}
@@ -49,7 +48,6 @@ public:
   Store BindInternal(Store St, Loc LV, SVal V);  
   Store Remove(Store St, Loc LV);
   Store getInitialStore();
-  MemRegionManager& getRegionManager() { return MRMgr; }
 
   // FIXME: Investigate what is using this. This method should be removed.
   virtual Loc getLoc(const VarDecl* VD) {
