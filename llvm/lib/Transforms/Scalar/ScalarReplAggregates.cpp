@@ -117,6 +117,11 @@ namespace {
     void RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
                                     SmallVector<AllocaInst*, 32> &NewElts);
     
+    void RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
+                                      AllocationInst *AI,
+                                      SmallVector<AllocaInst*, 32> &NewElts);
+
+    
     const Type *CanConvertToScalar(Value *V, bool &IsNotTrivial);
     void ConvertToScalar(AllocationInst *AI, const Type *Ty);
     void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset);
@@ -593,179 +598,182 @@ void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI,
 /// instead.
 void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts) {
-  Constant *Zero = Constant::getNullValue(Type::Int32Ty);
-  
   Value::use_iterator UI = BCInst->use_begin(), UE = BCInst->use_end();
   while (UI != UE) {
-    if (BitCastInst *BCU = dyn_cast<BitCastInst>(*UI)) {
+    Instruction *User = cast<Instruction>(*UI++);
+    if (BitCastInst *BCU = dyn_cast<BitCastInst>(User)) {
       RewriteBitCastUserOfAlloca(BCU, AI, NewElts);
-      ++UI;
       BCU->eraseFromParent();
       continue;
     }
 
-    // Otherwise, must be memcpy/memmove/memset of the entire aggregate.  Split
-    // into one per element.
-    MemIntrinsic *MI = dyn_cast<MemIntrinsic>(*UI);
-    
-    // If it's not a mem intrinsic, it must be some other user of a gep of the
-    // first pointer.  Just leave these alone.
-    if (!MI) {
-      ++UI;
+    if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
+      // This must be memcpy/memmove/memset of the entire aggregate.
+      // Split into one per element.
+      RewriteMemIntrinUserOfAlloca(MI, BCInst, AI, NewElts);
+      MI->eraseFromParent();
       continue;
     }
-    
-    // If this is a memcpy/memmove, construct the other pointer as the
-    // appropriate type.
-    Value *OtherPtr = 0;
-    if (MemCpyInst *MCI = dyn_cast<MemCpyInst>(MI)) {
-      if (BCInst == MCI->getRawDest())
-        OtherPtr = MCI->getRawSource();
-      else {
-        assert(BCInst == MCI->getRawSource());
-        OtherPtr = MCI->getRawDest();
-      }
-    } else if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(MI)) {
-      if (BCInst == MMI->getRawDest())
-        OtherPtr = MMI->getRawSource();
-      else {
-        assert(BCInst == MMI->getRawSource());
-        OtherPtr = MMI->getRawDest();
-      }
+      
+    // If it's not a mem intrinsic, it must be some other user of a gep of the
+    // first pointer.  Just leave these alone.
+    continue;
+  }      
+}
+
+/// RewriteMemIntrinUserOfAlloca - MI is a memcpy/memset/memmove from or to AI.
+/// Rewrite it to copy or set the elements of the scalarized memory.
+void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
+                                        AllocationInst *AI,
+                                        SmallVector<AllocaInst*, 32> &NewElts) {
+  
+  // If this is a memcpy/memmove, construct the other pointer as the
+  // appropriate type.
+  Value *OtherPtr = 0;
+  if (MemCpyInst *MCI = dyn_cast<MemCpyInst>(MI)) {
+    if (BCInst == MCI->getRawDest())
+      OtherPtr = MCI->getRawSource();
+    else {
+      assert(BCInst == MCI->getRawSource());
+      OtherPtr = MCI->getRawDest();
     }
+  } else if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(MI)) {
+    if (BCInst == MMI->getRawDest())
+      OtherPtr = MMI->getRawSource();
+    else {
+      assert(BCInst == MMI->getRawSource());
+      OtherPtr = MMI->getRawDest();
+    }
+  }
+  
+  // If there is an other pointer, we want to convert it to the same pointer
+  // type as AI has, so we can GEP through it safely.
+  if (OtherPtr) {
+    // It is likely that OtherPtr is a bitcast, if so, remove it.
+    if (BitCastInst *BC = dyn_cast<BitCastInst>(OtherPtr))
+      OtherPtr = BC->getOperand(0);
+    // All zero GEPs are effectively bitcasts.
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(OtherPtr))
+      if (GEP->hasAllZeroIndices())
+        OtherPtr = GEP->getOperand(0);
     
-    // If there is an other pointer, we want to convert it to the same pointer
-    // type as AI has, so we can GEP through it.
+    if (ConstantExpr *BCE = dyn_cast<ConstantExpr>(OtherPtr))
+      if (BCE->getOpcode() == Instruction::BitCast)
+        OtherPtr = BCE->getOperand(0);
+    
+    // If the pointer is not the right type, insert a bitcast to the right
+    // type.
+    if (OtherPtr->getType() != AI->getType())
+      OtherPtr = new BitCastInst(OtherPtr, AI->getType(), OtherPtr->getName(),
+                                 MI);
+  }
+  
+  // Process each element of the aggregate.
+  Value *TheFn = MI->getOperand(0);
+  const Type *BytePtrTy = MI->getRawDest()->getType();
+  bool SROADest = MI->getRawDest() == BCInst;
+  
+  Constant *Zero = Constant::getNullValue(Type::Int32Ty);
+
+  for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
+    // If this is a memcpy/memmove, emit a GEP of the other element address.
+    Value *OtherElt = 0;
     if (OtherPtr) {
-      // It is likely that OtherPtr is a bitcast, if so, remove it.
-      if (BitCastInst *BC = dyn_cast<BitCastInst>(OtherPtr))
-        OtherPtr = BC->getOperand(0);
-      // All zero GEPs are effectively bitcasts.
-      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(OtherPtr))
-        if (GEP->hasAllZeroIndices())
-          OtherPtr = GEP->getOperand(0);
-        
-      if (ConstantExpr *BCE = dyn_cast<ConstantExpr>(OtherPtr))
-        if (BCE->getOpcode() == Instruction::BitCast)
-          OtherPtr = BCE->getOperand(0);
-      
-      // If the pointer is not the right type, insert a bitcast to the right
-      // type.
-      if (OtherPtr->getType() != AI->getType())
-        OtherPtr = new BitCastInst(OtherPtr, AI->getType(), OtherPtr->getName(),
-                                   MI);
-    }
-
-    // Process each element of the aggregate.
-    Value *TheFn = MI->getOperand(0);
-    const Type *BytePtrTy = MI->getRawDest()->getType();
-    bool SROADest = MI->getRawDest() == BCInst;
-
-    for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
-      // If this is a memcpy/memmove, emit a GEP of the other element address.
-      Value *OtherElt = 0;
-      if (OtherPtr) {
-        Value *Idx[2] = { Zero, ConstantInt::get(Type::Int32Ty, i) };
-        OtherElt = GetElementPtrInst::Create(OtherPtr, Idx, Idx + 2,
+      Value *Idx[2] = { Zero, ConstantInt::get(Type::Int32Ty, i) };
+      OtherElt = GetElementPtrInst::Create(OtherPtr, Idx, Idx + 2,
                                            OtherPtr->getNameStr()+"."+utostr(i),
-                                             MI);
-      }
-
-      Value *EltPtr = NewElts[i];
-      const Type *EltTy =cast<PointerType>(EltPtr->getType())->getElementType();
-      
-      // If we got down to a scalar, insert a load or store as appropriate.
-      if (EltTy->isSingleValueType()) {
-        if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
-          Value *Elt = new LoadInst(SROADest ? OtherElt : EltPtr, "tmp",
-                                    MI);
-          new StoreInst(Elt, SROADest ? EltPtr : OtherElt, MI);
-          continue;
-        } else {
-          assert(isa<MemSetInst>(MI));
-
-          // If the stored element is zero (common case), just store a null
-          // constant.
-          Constant *StoreVal;
-          if (ConstantInt *CI = dyn_cast<ConstantInt>(MI->getOperand(2))) {
-            if (CI->isZero()) {
-              StoreVal = Constant::getNullValue(EltTy);  // 0.0, null, 0, <0,0>
-            } else {
-              // If EltTy is a vector type, get the element type.
-              const Type *ValTy = EltTy;
-              if (const VectorType *VTy = dyn_cast<VectorType>(ValTy))
-                ValTy = VTy->getElementType();
-
-              // Construct an integer with the right value.
-              unsigned EltSize = TD->getTypeSizeInBits(ValTy);
-              APInt OneVal(EltSize, CI->getZExtValue());
-              APInt TotalVal(OneVal);
-              // Set each byte.
-              for (unsigned i = 0; 8*i < EltSize; ++i) {
-                TotalVal = TotalVal.shl(8);
-                TotalVal |= OneVal;
-              }
-
-              // Convert the integer value to the appropriate type.
-              StoreVal = ConstantInt::get(TotalVal);
-              if (isa<PointerType>(ValTy))
-                StoreVal = ConstantExpr::getIntToPtr(StoreVal, ValTy);
-              else if (ValTy->isFloatingPoint())
-                StoreVal = ConstantExpr::getBitCast(StoreVal, ValTy);
-              assert(StoreVal->getType() == ValTy && "Type mismatch!");
-              
-              // If the requested value was a vector constant, create it.
-              if (EltTy != ValTy) {
-                unsigned NumElts = cast<VectorType>(ValTy)->getNumElements();
-                SmallVector<Constant*, 16> Elts(NumElts, StoreVal);
-                StoreVal = ConstantVector::get(&Elts[0], NumElts);
-              }
-            }
-            new StoreInst(StoreVal, EltPtr, MI);
-            continue;
-          }
-          // Otherwise, if we're storing a byte variable, use a memset call for
-          // this element.
-        }
-      }
-      
-      // Cast the element pointer to BytePtrTy.
-      if (EltPtr->getType() != BytePtrTy)
-        EltPtr = new BitCastInst(EltPtr, BytePtrTy, EltPtr->getNameStr(), MI);
-    
-      // Cast the other pointer (if we have one) to BytePtrTy. 
-      if (OtherElt && OtherElt->getType() != BytePtrTy)
-        OtherElt = new BitCastInst(OtherElt, BytePtrTy,OtherElt->getNameStr(),
-                                   MI);
-    
-      unsigned EltSize = TD->getABITypeSize(EltTy);
-
-      // Finally, insert the meminst for this element.
-      if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
-        Value *Ops[] = {
-          SROADest ? EltPtr : OtherElt,  // Dest ptr
-          SROADest ? OtherElt : EltPtr,  // Src ptr
-          ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
-          Zero  // Align
-        };
-        CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
-      } else {
-        assert(isa<MemSetInst>(MI));
-        Value *Ops[] = {
-          EltPtr, MI->getOperand(2),  // Dest, Value,
-          ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
-          Zero  // Align
-        };
-        CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
-      }
+                                           MI);
     }
-
-    // Finally, MI is now dead, as we've modified its actions to occur on all of
-    // the elements of the aggregate.
-    ++UI;
-    MI->eraseFromParent();
+    
+    Value *EltPtr = NewElts[i];
+    const Type *EltTy =cast<PointerType>(EltPtr->getType())->getElementType();
+    
+    // If we got down to a scalar, insert a load or store as appropriate.
+    if (EltTy->isSingleValueType()) {
+      if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
+        Value *Elt = new LoadInst(SROADest ? OtherElt : EltPtr, "tmp",
+                                  MI);
+        new StoreInst(Elt, SROADest ? EltPtr : OtherElt, MI);
+        continue;
+      }
+      assert(isa<MemSetInst>(MI));
+      
+      // If the stored element is zero (common case), just store a null
+      // constant.
+      Constant *StoreVal;
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(MI->getOperand(2))) {
+        if (CI->isZero()) {
+          StoreVal = Constant::getNullValue(EltTy);  // 0.0, null, 0, <0,0>
+        } else {
+          // If EltTy is a vector type, get the element type.
+          const Type *ValTy = EltTy;
+          if (const VectorType *VTy = dyn_cast<VectorType>(ValTy))
+            ValTy = VTy->getElementType();
+          
+          // Construct an integer with the right value.
+          unsigned EltSize = TD->getTypeSizeInBits(ValTy);
+          APInt OneVal(EltSize, CI->getZExtValue());
+          APInt TotalVal(OneVal);
+          // Set each byte.
+          for (unsigned i = 0; 8*i < EltSize; ++i) {
+            TotalVal = TotalVal.shl(8);
+            TotalVal |= OneVal;
+          }
+          
+          // Convert the integer value to the appropriate type.
+          StoreVal = ConstantInt::get(TotalVal);
+          if (isa<PointerType>(ValTy))
+            StoreVal = ConstantExpr::getIntToPtr(StoreVal, ValTy);
+          else if (ValTy->isFloatingPoint())
+            StoreVal = ConstantExpr::getBitCast(StoreVal, ValTy);
+          assert(StoreVal->getType() == ValTy && "Type mismatch!");
+          
+          // If the requested value was a vector constant, create it.
+          if (EltTy != ValTy) {
+            unsigned NumElts = cast<VectorType>(ValTy)->getNumElements();
+            SmallVector<Constant*, 16> Elts(NumElts, StoreVal);
+            StoreVal = ConstantVector::get(&Elts[0], NumElts);
+          }
+        }
+        new StoreInst(StoreVal, EltPtr, MI);
+        continue;
+      }
+      // Otherwise, if we're storing a byte variable, use a memset call for
+      // this element.
+    }
+    
+    // Cast the element pointer to BytePtrTy.
+    if (EltPtr->getType() != BytePtrTy)
+      EltPtr = new BitCastInst(EltPtr, BytePtrTy, EltPtr->getNameStr(), MI);
+    
+    // Cast the other pointer (if we have one) to BytePtrTy. 
+    if (OtherElt && OtherElt->getType() != BytePtrTy)
+      OtherElt = new BitCastInst(OtherElt, BytePtrTy,OtherElt->getNameStr(),
+                                 MI);
+    
+    unsigned EltSize = TD->getABITypeSize(EltTy);
+    
+    // Finally, insert the meminst for this element.
+    if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
+      Value *Ops[] = {
+        SROADest ? EltPtr : OtherElt,  // Dest ptr
+        SROADest ? OtherElt : EltPtr,  // Src ptr
+        ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
+        Zero  // Align
+      };
+      CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
+    } else {
+      assert(isa<MemSetInst>(MI));
+      Value *Ops[] = {
+        EltPtr, MI->getOperand(2),  // Dest, Value,
+        ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
+        Zero  // Align
+      };
+      CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
+    }
   }
 }
+  
 
 /// HasPadding - Return true if the specified type has any structure or
 /// alignment padding, false otherwise.
