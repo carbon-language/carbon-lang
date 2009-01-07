@@ -190,10 +190,13 @@ Sema::ExprResult Sema::ActOnClassMessage(
   if (receiverName->isStr("super")) {
     if (getCurMethodDecl()) {
       isSuper = true;
-      ClassDecl = getCurMethodDecl()->getClassInterface()->getSuperClass();
+      ObjCInterfaceDecl *OID = getCurMethodDecl()->getClassInterface();
+      if (!OID)
+        return Diag(lbrac, diag::error_no_super_class_message) 
+                      << getCurMethodDecl()->getDeclName();
+      ClassDecl = OID->getSuperClass();
       if (!ClassDecl)
-        return Diag(lbrac, diag::error_no_super_class)
-          << getCurMethodDecl()->getClassInterface()->getDeclName();
+        return Diag(lbrac, diag::error_no_super_class) << OID->getDeclName();
       if (getCurMethodDecl()->isInstance()) {
         QualType superTy = Context.getObjCInterfaceType(ClassDecl);
         superTy = Context.getPointerType(superTy);
