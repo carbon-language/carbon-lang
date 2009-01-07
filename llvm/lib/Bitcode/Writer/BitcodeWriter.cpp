@@ -833,7 +833,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Vals.push_back(II->getCallingConv());
     Vals.push_back(VE.getValueID(II->getNormalDest()));
     Vals.push_back(VE.getValueID(II->getUnwindDest()));
-    PushValueAndType(II->getCalledFunction(), InstID, Vals, VE);
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE); // callee
     
     // Emit value #'s for the fixed parameters.
     for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
