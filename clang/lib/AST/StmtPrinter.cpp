@@ -757,8 +757,10 @@ void StmtPrinter::VisitCallExpr(CallExpr *Call) {
   OS << ")";
 }
 void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
-  PrintExpr(Node->getBase());
-  OS << (Node->isArrow() ? "->" : ".");
+  if (!Node->getBase()->isImplicit()) {
+    PrintExpr(Node->getBase());
+    OS << (Node->isArrow() ? "->" : ".");
+  }
   OS << Node->getMemberDecl()->getNameAsString();
 }
 void StmtPrinter::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {

@@ -444,6 +444,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
 
     BaseObjectExpr = new DeclRefExpr(BaseObject, BaseObject->getType(),
                                      SourceLocation());
+    BaseObjectExpr->setImplicit();
     ExtraQuals 
       = Context.getCanonicalType(BaseObject->getType()).getCVRQualifiers();
   } else if (BaseObjectExpr) {
@@ -473,6 +474,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
           BaseObjectExpr = new CXXThisExpr(SourceLocation(),
                                            MD->getThisType(Context));
           BaseObjectIsPointer = true;
+          BaseObjectExpr->setImplicit();
         }
       } else {
         return Diag(Loc, diag::err_invalid_member_use_in_static_method)
@@ -500,6 +502,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     }
     Result = new MemberExpr(Result, BaseObjectIsPointer, *FI,
                             OpLoc, MemberType);
+    Result->setImplicit();
     BaseObjectIsPointer = false;
     ExtraQuals = Context.getCanonicalType(MemberType).getCVRQualifiers();
     OpLoc = SourceLocation();
@@ -661,6 +664,7 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           // Build the implicit member access expression.
           Expr *This = new CXXThisExpr(SourceLocation(),
                                        MD->getThisType(Context));
+          This->setImplicit();
           return new MemberExpr(This, true, cast<NamedDecl>(D), 
                                 SourceLocation(), MemberType);
         }

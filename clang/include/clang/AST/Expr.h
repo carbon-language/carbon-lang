@@ -49,15 +49,21 @@ class Expr : public Stmt {
   /// (C++ [temp.dep.constexpr]).
   bool ValueDependent : 1;
 
+  /// Implicit - Whether this expression was implicitly created by the
+  /// implementation, rather than written explicitly by the user.
+  bool Implicit : 1;
+
 protected:
   // FIXME: Eventually, this constructor should go away and we should
   // require every subclass to provide type/value-dependence
   // information.
   Expr(StmtClass SC, QualType T) 
-    : Stmt(SC), TypeDependent(false), ValueDependent(false) { setType(T); }
+    : Stmt(SC), TypeDependent(false), ValueDependent(false), Implicit(false) {
+    setType(T); 
+  }
 
   Expr(StmtClass SC, QualType T, bool TD, bool VD)
-    : Stmt(SC), TypeDependent(TD), ValueDependent(VD) {
+    : Stmt(SC), TypeDependent(TD), ValueDependent(VD), Implicit(false) {
     setType(T);
   }
 
@@ -98,6 +104,14 @@ public:
   /// }
   /// @endcode
   bool isTypeDependent() const { return TypeDependent; }
+
+  /// isImplicit - Determines whether this expression was implicitly
+  /// created by the implementation to express the semantics of an
+  /// implicit operation, such as an implicit conversion or implicit
+  /// reference to "this". When false, this expression was written
+  /// directly in the source code.
+  bool isImplicit() const { return Implicit; }
+  void setImplicit(bool I = true) { Implicit = I; }
 
   /// SourceLocation tokens are not useful in isolation - they are low level
   /// value objects created/interpreted by SourceManager. We assume AST
@@ -982,7 +996,9 @@ class ImplicitCastExpr : public CastExpr {
 
 public:
   ImplicitCastExpr(QualType ty, Expr *op, bool Lvalue) : 
-    CastExpr(ImplicitCastExprClass, ty, op), LvalueCast(Lvalue) {}
+    CastExpr(ImplicitCastExprClass, ty, op), LvalueCast(Lvalue) {
+    setImplicit(true);
+  }
 
   virtual SourceRange getSourceRange() const {
     return getSubExpr()->getSourceRange();
@@ -1671,9 +1687,7 @@ public:
 
   // Explicit InitListExpr's originate from source code (and have valid source
   // locations). Implicit InitListExpr's are created by the semantic analyzer.
-  bool isExplicit() {
-    return LBraceLoc.isValid() && RBraceLoc.isValid();
-  }
+  bool isExplicit() { return !isImplicit(); }
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(LBraceLoc, RBraceLoc);

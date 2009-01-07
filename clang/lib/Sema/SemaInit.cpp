@@ -90,6 +90,7 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
                                        &InitExprs[0], InitExprs.size(), 
                                        SourceLocation(),
                                        ParentIList->hadDesignators());
+  ILE->setImplicit();
   ILE->setType(T);
 
   // Modify the parent InitListExpr to point to the implicit InitListExpr.
