@@ -19,6 +19,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
@@ -28,8 +29,33 @@ using namespace clang;
 
 typedef uint32_t Offset;
 
-typedef llvm::DenseMap<const FileEntry*,std::pair<Offset,Offset> > PCHMap;
+typedef std::vector<std::pair<Offset, llvm::StringMapEntry<Offset>*> >
+  SpellMapTy;
+
+namespace {
+class VISIBILITY_HIDDEN PCHEntry {
+  Offset TokenData, PPCondData;  
+  union { Offset SpellingOff; SpellMapTy* Spellings; };
+
+public:  
+  PCHEntry() {}
+
+  PCHEntry(Offset td, Offset ppcd, SpellMapTy* sp)
+    : TokenData(td), PPCondData(ppcd), Spellings(sp) {}
+  
+  Offset getTokenOffset() const { return TokenData; }
+  Offset getPPCondTableOffset() const { return PPCondData; }
+  SpellMapTy& getSpellings() const { return *Spellings; }
+  
+  void setSpellingTableOffset(Offset off) { SpellingOff = off; }
+  Offset getSpellingTableOffset() const { return SpellingOff; }
+  
+};
+} // end anonymous namespace
+
+typedef llvm::DenseMap<const FileEntry*, PCHEntry> PCHMap;
 typedef llvm::DenseMap<const IdentifierInfo*,uint32_t> IDMap;
+typedef llvm::StringMap<Offset, llvm::BumpPtrAllocator> CachedStrsTy;
 
 namespace {
 class VISIBILITY_HIDDEN PTHWriter {
@@ -38,6 +64,9 @@ class VISIBILITY_HIDDEN PTHWriter {
   Preprocessor& PP;
   uint32_t idcount;
   PCHMap PM;
+  CachedStrsTy CachedStrs;
+  
+  SpellMapTy* CurSpellMap;
 
   //// Get the persistent id for the given IdentifierInfo*.
   uint32_t ResolveID(const IdentifierInfo* II);
@@ -75,8 +104,9 @@ class VISIBILITY_HIDDEN PTHWriter {
   
   std::pair<Offset,Offset> EmitIdentifierTable();
   Offset EmitFileTable();
-  std::pair<Offset,Offset> LexTokens(Lexer& L);
-
+  PCHEntry LexTokens(Lexer& L);
+  void EmitCachedSpellings();
+  
 public:
   PTHWriter(llvm::raw_fd_ostream& out, Preprocessor& pp) 
     : Out(out), PP(pp), idcount(0) {}
@@ -108,7 +138,6 @@ void PTHWriter::EmitToken(const Token& T) {
   Emit32(fpos);
   Emit16(T.getLength());
 
-#if 0
   // For specific tokens we cache their spelling.
   if (T.getIdentifierInfo())
     return;
@@ -120,11 +149,22 @@ void PTHWriter::EmitToken(const Token& T) {
     case tok::wide_string_literal:
     case tok::angle_string_literal:
     case tok::numeric_constant:
-    case tok::char_constant:
-      CacheSpelling(T, fpos);
+    case tok::char_constant: {
+      // FIXME: This uses the slow getSpelling().  Perhaps we do better
+      // in the future?  This only slows down PTH generation.
+      const std::string& spelling = PP.getSpelling(T);
+      const char* s = spelling.c_str();
+      
+      // Get the string entry.
+      llvm::StringMapEntry<Offset> *E =
+        &CachedStrs.GetOrCreateValue(s, s+spelling.size());
+
+      // Store the address of the string entry in our spelling map.
+      (*CurSpellMap).push_back(std::make_pair(fpos, E));
+
       break;
+    }
   }
-#endif
 }
 
 namespace {
@@ -197,14 +237,15 @@ Offset PTHWriter::EmitFileTable() {
     unsigned size = strlen(Name);
     Emit32(size);
     EmitBuf(Name, Name+size);
-    Emit32(I->second.first);
-    Emit32(I->second.second);
+    Emit32(I->second.getTokenOffset());
+    Emit32(I->second.getPPCondTableOffset());
+    Emit32(I->second.getSpellingTableOffset());
   }
 
   return off;
 }
 
-std::pair<Offset,Offset> PTHWriter::LexTokens(Lexer& L) {
+PCHEntry PTHWriter::LexTokens(Lexer& L) {
 
   // Record the location within the token file.
   Offset off = (Offset) Out.tell();
@@ -214,6 +255,10 @@ std::pair<Offset,Offset> PTHWriter::LexTokens(Lexer& L) {
   PPCondTable PPCond;
   std::vector<unsigned> PPStartCond;
   bool ParsingPreprocessorDirective = false;
+
+  // Allocate a spelling map for this source file.
+  llvm::OwningPtr<SpellMapTy> Spellings(new SpellMapTy());
+  CurSpellMap = Spellings.get();
 
   Token Tok;
   
@@ -343,7 +388,54 @@ std::pair<Offset,Offset> PTHWriter::LexTokens(Lexer& L) {
     Emit32(x == i ? 0 : x);
   }
 
-  return std::make_pair(off,PPCondOff);
+  return PCHEntry(off, PPCondOff, Spellings.take());
+}
+
+void PTHWriter::EmitCachedSpellings() {
+  // Write each cached string to the PTH file and update the
+  // the string map entry to contain the relevant offset.
+  //
+  // FIXME: We can write the strings out in order of their frequency.  This
+  //  may result in better locality.
+  //
+  for (CachedStrsTy::iterator I = CachedStrs.begin(), E = CachedStrs.end();
+       I!=E; ++I) {
+    
+    Offset off = Out.tell();
+
+    // Write out the length of the string before the string itself.
+    unsigned len = I->getKeyLength();
+    Emit16(len);
+
+    // Write out the string data.
+    const char* data = I->getKeyData();
+    EmitBuf(data, data+len);
+    
+    // Now patch the offset of the string in the PTH file into the string map.
+    I->setValue(off);
+  }
+  
+  // Now emit the spelling tables.
+  for (PCHMap::iterator I=PM.begin(), E=PM.end(); I!=E; ++I) {
+    SpellMapTy& spellings = I->second.getSpellings();
+    I->second.setSpellingTableOffset(Out.tell());
+    
+    // Write out the number of spellings.
+    unsigned n = spellings.size();
+    Emit32(n);
+    
+    for (unsigned i = 0; i < n; ++i) {
+      ++count;
+      // Write out the offset of the token within the source file.
+      Emit32(spellings[i].first);
+      
+      // Write out the offset of the spelling data within the PTH file.
+      Emit32(spellings[i].second->getValue());
+    }
+    
+    // Delete the spelling map for this source file.
+    delete &spellings;
+  }
 }
 
 void PTHWriter::GeneratePTH() {
@@ -380,6 +472,9 @@ void PTHWriter::GeneratePTH() {
 
   // Write out the identifier table.
   std::pair<Offset,Offset> IdTableOff = EmitIdentifierTable();
+  
+  // Write out the cached strings table.
+  EmitCachedSpellings();
   
   // Write out the file table.
   Offset FileTableOff = EmitFileTable();  
