@@ -412,11 +412,6 @@ public:
   // Marks the end of the container.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
   void setAtEndLoc(SourceLocation L) { AtEndLoc = L; }
-  
-  // This method synthesizes the getter/setter method for the property.
-  // FIXME: Shouldn't this be part of Sema?.
-  void getPropertyMethods(ASTContext &Context, ObjCPropertyDecl* Property,
-                          ObjCMethodDecl *& Getter, ObjCMethodDecl *&Setter);
 };
 
 /// ObjCInterfaceDecl - Represents an ObjC class declaration. For example:
