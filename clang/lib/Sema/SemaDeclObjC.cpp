@@ -1038,6 +1038,11 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
 
   // Synthesize getter/setter methods if none exist.
   // Find the default getter and if one not found, add one.
+  // FIXME: The synthesized property we set here is misleading. We
+  // almost always synthesize these methods unless the user explicitly
+  // provided prototypes (which is odd, but allowed). Sema should be
+  // typechecking that the declarations jive in that situation (which
+  // it is not currently).
   if (!GetterMethod) {
     // No instance method of same name as property getter name was found.
     // Declare a getter method and add it to the list of methods 
@@ -1097,11 +1102,6 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
   //   double bar = [foo bar];
   // }
   //
-  // FIXME: The synthesized property we set here is misleading. We
-  // almost always synthesize these methods unless the user explicitly
-  // provided prototypes (which is odd, but allowed). Sema should be
-  // typechecking that the declarations jive in that situation (which
-  // it is not currently).
   if (GetterMethod) {
     CD->addDecl(Context, GetterMethod);
     AddInstanceMethodToGlobalPool(GetterMethod);  
