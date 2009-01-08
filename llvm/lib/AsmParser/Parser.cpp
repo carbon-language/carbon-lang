@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This library implements the functionality defined in llvm/assembly/parser.h
+// This library implements the functionality defined in llvm/Assembly/Parser.h
 //
 //===----------------------------------------------------------------------===//
 
