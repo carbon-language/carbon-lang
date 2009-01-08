@@ -336,7 +336,7 @@ public:
   // clear - Empties out the StringMap
   void clear() {
     if (empty()) return;
-    
+
     // Zap all values, resetting the keys back to non-present (not tombstone),
     // which is safe because we're removing all elements.
     for (ItemBucket *I = TheTable, *E = TheTable+NumBuckets; I != E; ++I) {
@@ -345,6 +345,8 @@ public:
         I->Item = 0;
       }
     }
+
+    NumItems = 0;
   }
 
   /// GetOrCreateValue - Look up the specified key in the table.  If a value
@@ -421,7 +423,7 @@ protected:
   StringMapImpl::ItemBucket *Ptr;
 public:
   typedef StringMapEntry<ValueTy> value_type;
-  
+
   explicit StringMapConstIterator(StringMapImpl::ItemBucket *Bucket,
                                   bool NoAdvance = false)
   : Ptr(Bucket) {
