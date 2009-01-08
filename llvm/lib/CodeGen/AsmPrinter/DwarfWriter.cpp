@@ -1166,6 +1166,26 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// SourceLineInfo - This class is used to record source line correspondence.
+///
+class SrcLineInfo {
+  unsigned Line;                        // Source line number.
+  unsigned Column;                      // Source column.
+  unsigned SourceID;                    // Source ID number.
+  unsigned LabelID;                     // Label in code ID number.
+public:
+  SrcLineInfo(unsigned L, unsigned C, unsigned S, unsigned I)
+  : Line(L), Column(C), SourceID(S), LabelID(I) {}
+  
+  // Accessors
+  unsigned getLine()     const { return Line; }
+  unsigned getColumn()   const { return Column; }
+  unsigned getSourceID() const { return SourceID; }
+  unsigned getLabelID()  const { return LabelID; }
+};
+
+
+//===----------------------------------------------------------------------===//
 /// SrcFileInfo - This class is used to track source information.
 ///
 class SrcFileInfo {
@@ -1259,7 +1279,7 @@ private:
   /// CompileUnits - All the compile units involved in this build.  The index
   /// of each entry in this vector corresponds to the sources in MMI.
   std::vector<CompileUnit *> CompileUnits;
-  DenseMap<GlobalVariable *, CompileUnit *> DW_CUs;
+  DenseMap<Value *, CompileUnit *> DW_CUs;
 
   /// AbbreviationsSet - Used to uniquely define abbreviations.
   ///
@@ -1276,6 +1296,9 @@ private:
 
   // SourceFiles - Uniquing vector for source files.                                      
   UniqueVector<SrcFileInfo> SrcFiles;
+
+  // Lines - List of of source line correspondence.
+  std::vector<SrcLineInfo> Lines;
 
   FoldingSet<DIEValue> ValuesSet;
 
@@ -2539,6 +2562,23 @@ private:
     return VariableDie;
   }
 
+  unsigned RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
+    CompileUnit *Unit = DW_CUs[V];
+    assert (Unit && "Unable to find CompileUnit");
+    unsigned ID = NextLabelID();
+    Lines.push_back(SrcLineInfo(Line, Col, Unit->getID(), ID));
+    return ID;
+  }
+  
+  unsigned getRecordSourceLineCount() {
+    return Lines.size();
+  }
+                            
+  unsigned RecordSource(const std::string &Directory,
+                        const std::string &File) {
+    unsigned DID = Directories.insert(Directory);
+    return SrcFiles.insert(SrcFileInfo(DID,File));
+  }
 
   /// RecordRegionStart - Indicate the start of a region.
   ///
@@ -3447,9 +3487,8 @@ private:
     for (std::vector<GlobalVariable *>::iterator RI = Result.begin(),
            RE = Result.end(); RI != RE; ++RI) {
       DICompileUnit *DIUnit = new DICompileUnit(*RI);
-      unsigned DID = Directories.insert(DIUnit->getDirectory());
-      unsigned ID = SrcFiles.insert(SrcFileInfo(DID,
-                                                DIUnit->getFilename()));
+      unsigned ID = RecordSource(DIUnit->getDirectory(),
+                                 DIUnit->getFilename());
 
       DIE *Die = new DIE(DW_TAG_compile_unit);
       AddSectionOffset(Die, DW_AT_stmt_list, DW_FORM_data4,
