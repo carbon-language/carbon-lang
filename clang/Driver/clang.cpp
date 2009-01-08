@@ -646,6 +646,10 @@ WarnFloatEqual("Wfloat-equal",
    llvm::cl::desc("Warn about equality comparisons of floating point values"));
 
 static llvm::cl::opt<bool>
+WarnPropertyReadonlyAttrs("Wreadonly-setter-attrs",
+   llvm::cl::desc("Warn about readonly properties with writable attributes"));
+
+static llvm::cl::opt<bool>
 WarnNoFormatNonLiteral("Wno-format-nonliteral",
    llvm::cl::desc("Do not warn about non-literal format strings"));
 
@@ -680,6 +684,10 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   // Silence "floating point comparison" warnings unless requested.
   if (!WarnFloatEqual)
     Diags.setDiagnosticMapping(diag::warn_floatingpoint_eq, diag::MAP_IGNORE);
+
+  if (!WarnPropertyReadonlyAttrs)
+    Diags.setDiagnosticMapping(diag::warn_objc_property_attr_mutually_exclusive,
+      diag::MAP_IGNORE);
 
   // Silence "format string is not a string literal" warnings if requested
   if (WarnNoFormatNonLiteral)
