@@ -221,7 +221,7 @@ MachineBasicBlock::succ_iterator
 MachineBasicBlock::removeSuccessor(succ_iterator I) {
   assert(I != Successors.end() && "Not a current successor!");
   (*I)->removePredecessor(this);
-  return(Successors.erase(I));
+  return Successors.erase(I);
 }
 
 void MachineBasicBlock::addPredecessor(MachineBasicBlock *pred) {

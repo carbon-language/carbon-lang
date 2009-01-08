@@ -91,7 +91,7 @@ namespace llvm {
   ///     int getNumberOfInterferences(const LiveInterval &a) const {
   ///       IntervalSet intervals;
   ///       getInterferences(intervals, a);
-  ///       return(intervals.size());
+  ///       return intervals.size();
   ///     };
   ///   };  
   ///
@@ -114,7 +114,7 @@ namespace llvm {
     virtual bool interfere(const LiveInterval &a,
                            const LiveInterval &b) const {
       // A naive test
-      return(a.overlaps(b));
+      return a.overlaps(b);
     };
 
     /// Return the set of intervals that interfere with this one.

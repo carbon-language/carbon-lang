@@ -463,7 +463,7 @@ static bool MergeCompare(const std::pair<unsigned,MachineBasicBlock*> &p,
 #ifndef _GLIBCXX_DEBUG
       assert(0 && "Predecessor appears twice");
 #endif
-      return(false);
+      return false;
     }
 }
 
