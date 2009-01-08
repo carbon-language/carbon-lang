@@ -416,7 +416,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     unsigned Align = AI->getAlignment();
     if (Align == 0 && TD) {
       if (isa<AllocaInst>(AI))
-        Align = TD->getPrefTypeAlignment(AI->getType()->getElementType());
+        Align = TD->getABITypeAlignment(AI->getType()->getElementType());
       else if (isa<MallocInst>(AI)) {
         // Malloc returns maximally aligned memory.
         Align = TD->getABITypeAlignment(AI->getType()->getElementType());
