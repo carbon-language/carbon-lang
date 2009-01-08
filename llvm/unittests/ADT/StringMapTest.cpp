@@ -1,4 +1,4 @@
-//===- llvm/unittest/ADT/StringMapMap.cpp - StringMap unit tests -*- C++ -*-===//
+//===- llvm/unittest/ADT/StringMapMap.cpp - StringMap unit tests ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
