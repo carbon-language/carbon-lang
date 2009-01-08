@@ -73,11 +73,8 @@ void ObjCInterfaceDecl::Destroy(ASTContext& C) {
   for (ivar_iterator I=ivar_begin(), E=ivar_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
   
-  for (instmeth_iterator I=instmeth_begin(), E=instmeth_end(); I!=E; ++I)
-    if (*I) (*I)->Destroy(C);
-  
-  for (classmeth_iterator I=classmeth_begin(), E=classmeth_end(); I!=E; ++I)
-    if (*I) (*I)->Destroy(C);
+  for (method_iterator I=meth_begin(), E=meth_end(); I!=E; ++I)
+    if (*I) const_cast<ObjCMethodDecl*>((*I))->Destroy(C);
 
   // FIXME: Because there is no clear ownership
   //  role between ObjCInterfaceDecls and the ObjCPropertyDecls that they
@@ -122,11 +119,8 @@ void ObjCProtocolDecl::Destroy(ASTContext& C) {
   
   // Referenced Protocols are not owned, so don't Destroy them.
   
-  for (instmeth_iterator I=instmeth_begin(), E=instmeth_end(); I!=E; ++I)
-    if (*I) (*I)->Destroy(C);
-  
-  for (classmeth_iterator I=classmeth_begin(), E=classmeth_end(); I!=E; ++I)
-    if (*I) (*I)->Destroy(C);
+  for (method_iterator I=meth_begin(), E=meth_end(); I!=E; ++I)
+    if (*I) const_cast<ObjCMethodDecl*>((*I))->Destroy(C);
   
   // FIXME: Because there is no clear ownership
   //  role between ObjCProtocolDecls and the ObjCPropertyDecls that they
