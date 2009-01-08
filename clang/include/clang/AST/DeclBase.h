@@ -156,7 +156,7 @@ private:
   friend class CXXClassMemberWrapper;
 
   Decl(Kind DK, SourceLocation L) : Loc(L), DeclKind(DK), InvalidDecl(0),
-    HasAttrs(false) {
+    HasAttrs(false), Implicit(false) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
 
