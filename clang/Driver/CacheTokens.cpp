@@ -22,6 +22,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
+#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
@@ -30,36 +31,61 @@ typedef uint32_t Offset;
 typedef llvm::DenseMap<const FileEntry*,std::pair<Offset,Offset> > PCHMap;
 typedef llvm::DenseMap<const IdentifierInfo*,uint32_t> IDMap;
 
-static void Emit8(llvm::raw_ostream& Out, uint32_t V) {
-  Out << (unsigned char)(V);
-}
+namespace {
+class VISIBILITY_HIDDEN PTHWriter {
+  IDMap IM;
+  llvm::raw_fd_ostream& Out;
+  Preprocessor& PP;
+  uint32_t idcount;
+  PCHMap PM;
 
-static void Emit32(llvm::raw_ostream& Out, uint32_t V) {
-  Out << (unsigned char)(V);
-  Out << (unsigned char)(V >>  8);
-  Out << (unsigned char)(V >> 16);
-  Out << (unsigned char)(V >> 24);
-}
-
-static void Emit16(llvm::raw_ostream& Out, uint32_t V) {
-  Out << (unsigned char)(V);
-  Out << (unsigned char)(V >>  8);
-  assert((V >> 16) == 0);
-}
-
-static void Emit24(llvm::raw_ostream& Out, uint32_t V) {
-  Out << (unsigned char)(V);
-  Out << (unsigned char)(V >>  8);
-  Out << (unsigned char)(V >> 16);
-  assert((V >> 24) == 0);
-}
-
-static void EmitBuf(llvm::raw_ostream& Out, const char* I, const char* E) {
-  for ( ; I != E ; ++I) Out << *I;
-}
-
-static uint32_t ResolveID(IDMap& IM, uint32_t& idx, const IdentifierInfo* II) {
+  //// Get the persistent id for the given IdentifierInfo*.
+  uint32_t ResolveID(const IdentifierInfo* II);
   
+  /// Emit a token to the PTH file.
+  void EmitToken(const Token& T);
+
+  void Emit8(uint32_t V) {
+    Out << (unsigned char)(V);
+  }
+    
+  void Emit16(uint32_t V) {
+    Out << (unsigned char)(V);
+    Out << (unsigned char)(V >>  8);
+    assert((V >> 16) == 0);
+  }
+  
+  void Emit24(uint32_t V) {
+    Out << (unsigned char)(V);
+    Out << (unsigned char)(V >>  8);
+    Out << (unsigned char)(V >> 16);
+    assert((V >> 24) == 0);
+  }
+
+  void Emit32(uint32_t V) {
+    Out << (unsigned char)(V);
+    Out << (unsigned char)(V >>  8);
+    Out << (unsigned char)(V >> 16);
+    Out << (unsigned char)(V >> 24);
+  }
+  
+  void EmitBuf(const char* I, const char* E) {
+    for ( ; I != E ; ++I) Out << *I;
+  }
+  
+  std::pair<Offset,Offset> EmitIdentifierTable();
+  Offset EmitFileTable();
+  std::pair<Offset,Offset> LexTokens(Lexer& L);
+
+public:
+  PTHWriter(llvm::raw_fd_ostream& out, Preprocessor& pp) 
+    : Out(out), PP(pp), idcount(0) {}
+    
+  void GeneratePTH();
+};
+} // end anonymous namespace
+  
+uint32_t PTHWriter::ResolveID(const IdentifierInfo* II) {  
   // Null IdentifierInfo's map to the persistent ID 0.
   if (!II)
     return 0;
@@ -67,41 +93,59 @@ static uint32_t ResolveID(IDMap& IM, uint32_t& idx, const IdentifierInfo* II) {
   IDMap::iterator I = IM.find(II);
 
   if (I == IM.end()) {
-    IM[II] = ++idx; // Pre-increment since '0' is reserved for NULL.
-    return idx;
+    IM[II] = ++idcount; // Pre-increment since '0' is reserved for NULL.
+    return idcount;
   }
   
   return I->second; // We've already added 1.
 }
 
-static void EmitToken(llvm::raw_ostream& Out, const Token& T,
-                      const SourceManager& SMgr,
-                      uint32_t& idcount, IDMap& IM) {
-  
-  Emit8(Out, T.getKind());
-  Emit8(Out, T.getFlags());
-  Emit24(Out, ResolveID(IM, idcount, T.getIdentifierInfo()));
-  Emit32(Out, SMgr.getFullFilePos(T.getLocation()));
-  Emit16(Out, T.getLength());
+void PTHWriter::EmitToken(const Token& T) {
+  uint32_t fpos = PP.getSourceManager().getFullFilePos(T.getLocation());
+  Emit8(T.getKind());
+  Emit8(T.getFlags());
+  Emit24(ResolveID(T.getIdentifierInfo()));
+  Emit32(fpos);
+  Emit16(T.getLength());
+
+#if 0
+  // For specific tokens we cache their spelling.
+  if (T.getIdentifierInfo())
+    return;
+
+  switch (T.getKind()) {
+    default:
+      break;
+    case tok::string_literal:     
+    case tok::wide_string_literal:
+    case tok::angle_string_literal:
+    case tok::numeric_constant:
+    case tok::char_constant:
+      CacheSpelling(T, fpos);
+      break;
+  }
+#endif
 }
 
-struct IDData {
+namespace {
+struct VISIBILITY_HIDDEN IDData {
   const IdentifierInfo* II;
   uint32_t FileOffset;
   const IdentifierTable::const_iterator::value_type* Str;
 };
+}
 
-static std::pair<Offset,Offset>
-EmitIdentifierTable(llvm::raw_fd_ostream& Out, uint32_t max,
-                    const IdentifierTable& T, const IDMap& IM) {
+std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {
+  
+  const IdentifierTable& T = PP.getIdentifierTable();
 
   // Build an inverse map from persistent IDs -> IdentifierInfo*.
   typedef std::vector<IDData> InverseIDMap;
   InverseIDMap IIDMap;
-  IIDMap.resize(max);
+  IIDMap.resize(idcount);
   
   // Generate mapping from persistent IDs -> IdentifierInfo*.
-  for (IDMap::const_iterator I=IM.begin(), E=IM.end(); I!=E; ++I) {
+  for (IDMap::iterator I=IM.begin(), E=IM.end(); I!=E; ++I) {
     // Decrement by 1 because we are using a vector for the lookup and
     // 0 is reserved for NULL.
     assert(I->second > 0);
@@ -111,7 +155,7 @@ EmitIdentifierTable(llvm::raw_fd_ostream& Out, uint32_t max,
 
   // Get the string data associated with the IdentifierInfo.
   for (IdentifierTable::const_iterator I=T.begin(), E=T.end(); I!=E; ++I) {
-    IDMap::const_iterator IDI = IM.find(&(I->getValue()));
+    IDMap::iterator IDI = IM.find(&(I->getValue()));
     if (IDI == IM.end()) continue;
     IIDMap[IDI->second-1].Str = &(*I);
   }
@@ -123,50 +167,47 @@ EmitIdentifierTable(llvm::raw_fd_ostream& Out, uint32_t max,
     I->FileOffset = Out.tell();
     // Write out the keyword.
     unsigned len = I->Str->getKeyLength();  
-    Emit32(Out, len);
+    Emit32(len);
     const char* buf = I->Str->getKeyData();    
-    EmitBuf(Out, buf, buf+len);  
+    EmitBuf(buf, buf+len);  
   }
   
   // Now emit the table mapping from persistent IDs to PTH file offsets.  
   Offset IDOff = Out.tell();
   
   // Emit the number of identifiers.
-  Emit32(Out, max);
+  Emit32(idcount);
 
   for (InverseIDMap::iterator I=IIDMap.begin(), E=IIDMap.end(); I!=E; ++I)
-    Emit32(Out, I->FileOffset);
+    Emit32(I->FileOffset);
 
   return std::make_pair(DataOff, IDOff);
 }
 
-Offset EmitFileTable(llvm::raw_fd_ostream& Out, SourceManager& SM, PCHMap& PM) {
-  
+Offset PTHWriter::EmitFileTable() {
+  // Determine the offset where this table appears in the PTH file.
   Offset off = (Offset) Out.tell();
-  
+
   // Output the size of the table.
-  Emit32(Out, PM.size());
+  Emit32(PM.size());
 
   for (PCHMap::iterator I=PM.begin(), E=PM.end(); I!=E; ++I) {
     const FileEntry* FE = I->first;
     const char* Name = FE->getName();
     unsigned size = strlen(Name);
-    Emit32(Out, size);
-    EmitBuf(Out, Name, Name+size);
-    Emit32(Out, I->second.first);
-    Emit32(Out, I->second.second);
+    Emit32(size);
+    EmitBuf(Name, Name+size);
+    Emit32(I->second.first);
+    Emit32(I->second.second);
   }
 
   return off;
 }
 
-static std::pair<Offset,Offset>
-LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
-          uint32_t& idcount, IDMap& IM) {
-  
+std::pair<Offset,Offset> PTHWriter::LexTokens(Lexer& L) {
+
   // Record the location within the token file.
   Offset off = (Offset) Out.tell();
-  SourceManager& SMgr = PP.getSourceManager();
   
   // Keep track of matching '#if' ... '#endif'.
   typedef std::vector<std::pair<Offset, unsigned> > PPCondTable;
@@ -189,7 +230,7 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
       Tmp.setKind(tok::eom);
       Tmp.clearFlag(Token::StartOfLine);
       Tmp.setIdentifierInfo(0);
-      EmitToken(Out, Tmp, SMgr, idcount, IM);
+      EmitToken(Tmp);
       ParsingPreprocessorDirective = false;
     }
     
@@ -203,7 +244,7 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
       // the next token.
       assert(!ParsingPreprocessorDirective);
       Offset HashOff = (Offset) Out.tell();
-      EmitToken(Out, Tok, SMgr, idcount, IM);
+      EmitToken(Tok);
 
       // Get the next token.
       L.LexFromRawLexer(Tok);
@@ -228,7 +269,7 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
       case tok::pp_import:
       case tok::pp_include_next: {        
         // Save the 'include' token.
-        EmitToken(Out, Tok, SMgr, idcount, IM);
+        EmitToken(Tok);
         // Lex the next token as an include string.
         L.setParsingPreprocessorDirective(true);
         L.LexIncludeFilename(Tok); 
@@ -283,52 +324,33 @@ LexTokens(llvm::raw_fd_ostream& Out, Lexer& L, Preprocessor& PP,
       }
     }    
   }
-  while (EmitToken(Out, Tok, SMgr, idcount, IM), Tok.isNot(tok::eof));
-  
+  while (EmitToken(Tok), Tok.isNot(tok::eof));
+
   assert(PPStartCond.empty() && "Error: imblanced preprocessor conditionals.");
-  
+
   // Next write out PPCond.
   Offset PPCondOff = (Offset) Out.tell();
 
   // Write out the size of PPCond so that clients can identifer empty tables.
-  Emit32(Out, PPCond.size());
+  Emit32(PPCond.size());
 
   for (unsigned i = 0, e = PPCond.size(); i!=e; ++i) {
-    Emit32(Out, PPCond[i].first - off);
+    Emit32(PPCond[i].first - off);
     uint32_t x = PPCond[i].second;
     assert(x != 0 && "PPCond entry not backpatched.");
     // Emit zero for #endifs.  This allows us to do checking when
     // we read the PTH file back in.
-    Emit32(Out, x == i ? 0 : x);
+    Emit32(x == i ? 0 : x);
   }
 
   return std::make_pair(off,PPCondOff);
 }
 
-void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
-  // Lex through the entire file.  This will populate SourceManager with
-  // all of the header information.
-  Token Tok;
-  PP.EnterMainSourceFile();
-  do { PP.Lex(Tok); } while (Tok.isNot(tok::eof));
-  
+void PTHWriter::GeneratePTH() {
   // Iterate over all the files in SourceManager.  Create a lexer
   // for each file and cache the tokens.
   SourceManager& SM = PP.getSourceManager();
   const LangOptions& LOpts = PP.getLangOptions();
-  llvm::raw_ostream& os = llvm::errs();  
-
-  PCHMap PM;
-  IDMap  IM;
-  uint32_t idcount = 0;
-  
-  std::string ErrMsg;
-  llvm::raw_fd_ostream Out(OutFile.c_str(), true, ErrMsg);
-  
-  if (!ErrMsg.empty()) {
-    os << "PTH error: " << ErrMsg << "\n";
-    return;
-  }
   
   for (SourceManager::fileid_iterator I=SM.fileid_begin(), E=SM.fileid_end();
        I!=E; ++I) {
@@ -353,18 +375,38 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
     Lexer L(SourceLocation::getFileLoc(I.getFileID(), 0), LOpts,
             B->getBufferStart(), B->getBufferEnd(), B);
 
-    PM[FE] = LexTokens(Out, L, PP, idcount, IM);
+    PM[FE] = LexTokens(L);
   }
 
   // Write out the identifier table.
-  std::pair<Offset,Offset> IdTableOff =
-    EmitIdentifierTable(Out, idcount, PP.getIdentifierTable(), IM);
+  std::pair<Offset,Offset> IdTableOff = EmitIdentifierTable();
   
   // Write out the file table.
-  Offset FileTableOff = EmitFileTable(Out, SM, PM);  
+  Offset FileTableOff = EmitFileTable();  
   
   // Finally, write out the offset table at the end.
-  Emit32(Out, IdTableOff.first);
-  Emit32(Out, IdTableOff.second);
-  Emit32(Out, FileTableOff);
+  Emit32(IdTableOff.first);
+  Emit32(IdTableOff.second);
+  Emit32(FileTableOff);
+}
+
+void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
+  // Lex through the entire file.  This will populate SourceManager with
+  // all of the header information.
+  Token Tok;
+  PP.EnterMainSourceFile();
+  do { PP.Lex(Tok); } while (Tok.isNot(tok::eof));
+  
+  // Open up the PTH file.
+  std::string ErrMsg;
+  llvm::raw_fd_ostream Out(OutFile.c_str(), true, ErrMsg);
+  
+  if (!ErrMsg.empty()) {
+    llvm::errs() << "PTH error: " << ErrMsg << "\n";
+    return;
+  }
+  
+  // Create the PTHWriter and generate the PTH file.
+  PTHWriter PW(Out, PP);
+  PW.GeneratePTH();
 }
