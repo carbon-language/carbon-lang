@@ -68,9 +68,9 @@ public:
              Namespace,  // [DeclContext]
     //       TypeDecl
                Typedef,
-    //         TagDecl
-                 Enum,  // [DeclContext]
-                 Record, // [DeclContext]
+    //         TagDecl // [DeclContext]
+                 Enum,  
+                 Record,
                    CXXRecord,  
  	       TemplateTypeParm,
     //       ValueDecl
@@ -206,9 +206,6 @@ public:
     case OriginalParmVar:
     case EnumConstant:
     case NonTypeTemplateParm:
-    case Field:
-    case ObjCAtDefsField:
-    case ObjCIvar:
     case ObjCInterface:
     case ObjCCompatibleAlias:
     case OverloadedFunction:
@@ -216,6 +213,12 @@ public:
     case CXXConversion:
     case CXXClassVar:
       return IDNS_Ordinary;
+
+    case Field:
+    case ObjCAtDefsField:
+    case ObjCIvar:
+      return IDNS_Member;
+
     case Record:
     case CXXRecord:
     case TemplateTypeParm:

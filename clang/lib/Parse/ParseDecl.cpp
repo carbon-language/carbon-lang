@@ -948,6 +948,9 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
                                   unsigned TagType, DeclTy *TagDecl) {
   SourceLocation LBraceLoc = ConsumeBrace();
   
+  ParseScope StructScope(this, Scope::DeclScope);
+  Actions.ActOnTagStartDefinition(CurScope, TagDecl);
+
   // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
   // C++.
   if (Tok.is(tok::r_brace) && !getLang().CPlusPlus)
@@ -1027,7 +1030,9 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   Actions.ActOnFields(CurScope,
                       RecordLoc,TagDecl,&FieldDecls[0],FieldDecls.size(),
                       LBraceLoc, RBraceLoc,
-                      AttrList);  
+                      AttrList);
+  StructScope.Exit();
+  Actions.ActOnTagFinishDefinition(CurScope, TagDecl);
 }
 
 
@@ -1125,7 +1130,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
 void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
   // Enter the scope of the enum body and start the definition.
   ParseScope EnumScope(this, Scope::DeclScope);
-  Actions.ActOnEnumStartDefinition(CurScope, EnumDecl);
+  Actions.ActOnTagStartDefinition(CurScope, EnumDecl);
 
   SourceLocation LBraceLoc = ConsumeBrace();
   
@@ -1178,6 +1183,9 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
   // If attributes exist after the identifier list, parse them.
   if (Tok.is(tok::kw___attribute))
     AttrList = ParseAttributes(); // FIXME: where do they do?
+
+  EnumScope.Exit();
+  Actions.ActOnTagFinishDefinition(CurScope, EnumDecl);
 }
 
 /// isTypeSpecifierQualifier - Return true if the current token could be the

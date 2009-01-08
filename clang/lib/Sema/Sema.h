@@ -327,7 +327,16 @@ public:
                            DeclTy **Fields, unsigned NumFields,
                            SourceLocation LBrac, SourceLocation RBrac,
                            AttributeList *AttrList);
-  virtual void ActOnEnumStartDefinition(Scope *S, DeclTy *EnumDecl);
+
+  /// ActOnTagStartDefinition - Invoked when we have entered the
+  /// scope of a tag's definition (e.g., for an enumeration, class,
+  /// struct, or union).
+  virtual void ActOnTagStartDefinition(Scope *S, DeclTy *TagDecl);
+
+  /// ActOnTagFinishDefinition - Invoked once we have finished parsing
+  /// the definition of a tag (enumeration, class, struct, or union).
+  virtual void ActOnTagFinishDefinition(Scope *S, DeclTy *TagDecl);
+
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
@@ -1017,9 +1026,6 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
                                   const CXXScopeSpec *SS);
   
-  virtual void ActOnStartCXXClassDef(Scope *S, DeclTy *TagDecl,
-                                     SourceLocation LBrace);
-
   virtual DeclTy *ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
                                            Declarator &D, ExprTy *BitfieldWidth,
                                            ExprTy *Init, DeclTy *LastInGroup);
@@ -1040,8 +1046,6 @@ public:
                                                  SourceLocation LBrac,
                                                  SourceLocation RBrac);
 
-  virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl);
-  
   virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method);
   virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *Param);
   virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method);

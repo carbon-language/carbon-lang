@@ -66,7 +66,7 @@ struct Redecl {
   union {
     int x; // expected-error{{member of anonymous union redeclares 'x'}}
     float y;
-    double z; // expected-note{{previous definition is here}}
+    double z; // expected-note{{previous declaration is here}}
     double zz; // expected-note{{previous definition is here}}
   };
 

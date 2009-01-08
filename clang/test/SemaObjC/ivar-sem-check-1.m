@@ -12,7 +12,7 @@ typedef int FOO();
 	  struct T {} X;  // expected-error {{nested redefinition of 'T'}}
 	}YYY; 
 	FOO    BADFUNC;  // expected-error {{field 'BADFUNC' declared as a function}}
-	int kaka;	// expected-note {{previous definition is here}}
+	int kaka;	// expected-note {{previous declaration is here}}
 	int kaka;	// expected-error {{duplicate member 'kaka'}}
 	char ch[];	// expected-error {{field 'ch' has incomplete type}}
 }

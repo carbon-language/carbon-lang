@@ -314,8 +314,7 @@ TagDecl* TagDecl::getDefinition(ASTContext& C) const {
 
 RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
                        IdentifierInfo *Id)
-  : TagDecl(DK, TK, DC, L, Id, 0), DeclContext(DK) {
-  
+  : TagDecl(DK, TK, DC, L, Id, 0) {
   HasFlexibleArrayMember = false;
   AnonymousStructOrUnion = false;
   assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");

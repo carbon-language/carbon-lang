@@ -263,18 +263,37 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                        bool NamespaceNameOnly) {
   if (!Name) return 0;
   unsigned NS = NSI;
-  if (getLangOptions().CPlusPlus && (NS & Decl::IDNS_Ordinary))
-    NS |= Decl::IDNS_Tag;
 
-  if (LookupCtx == 0 && 
-      (!getLangOptions().CPlusPlus || (NS == Decl::IDNS_Label))) {
-    // Unqualified name lookup in C/Objective-C and name lookup for
-    // labels in C++ is purely lexical, so search in the
-    // declarations attached to the name.
+  // In C++, ordinary and member lookup will always find all
+  // kinds of names.
+  if (getLangOptions().CPlusPlus && 
+      (NS & (Decl::IDNS_Ordinary | Decl::IDNS_Member)))
+    NS |= Decl::IDNS_Tag | Decl::IDNS_Member | Decl::IDNS_Ordinary;
+
+  if (LookupCtx == 0 && !getLangOptions().CPlusPlus) {
+    // Unqualified name lookup in C/Objective-C is purely lexical, so
+    // search in the declarations attached to the name.
     assert(!LookupCtx && "Can't perform qualified name lookup here");
     assert(!NamespaceNameOnly && "Can't perform namespace name lookup here");
+
+    // For the purposes of unqualified name lookup, structs and unions
+    // don't have scopes at all. For example:
+    //
+    //   struct X {
+    //     struct T { int i; } x;
+    //   };
+    //
+    //   void f() {
+    //     struct T t; // okay: T is defined lexically within X, but
+    //                 // semantically at global scope
+    //   };
+    //
+    // FIXME: Is there a better way to deal with this?
+    DeclContext *SearchCtx = CurContext;
+    while (isa<RecordDecl>(SearchCtx) || isa<EnumDecl>(SearchCtx))
+      SearchCtx = SearchCtx->getParent();
     IdentifierResolver::iterator I
-      = IdResolver.begin(Name, CurContext, LookInParent);
+      = IdResolver.begin(Name, SearchCtx, LookInParent);
     
     // Scan up the scope chain looking for a decl that matches this
     // identifier that is in the appropriate namespace.  This search
@@ -284,6 +303,11 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
       if ((*I)->isInIdentifierNamespace(NS))
         return *I;
   } else if (LookupCtx) {
+    // If we're performing qualified name lookup (e.g., lookup into a
+    // struct), find fields as part of ordinary name lookup.
+    if (NS & Decl::IDNS_Ordinary)
+      NS |= Decl::IDNS_Member;
+
     // Perform qualified name lookup into the LookupCtx.
     // FIXME: Will need to look into base classes and such.
     DeclContext::lookup_const_iterator I, E;
@@ -2852,6 +2876,15 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     // declaration or definition.
     // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
     PrevDecl = dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S));
+
+    if (!getLangOptions().CPlusPlus && TK != TK_Reference) {
+      // FIXME: This makes sure that we ignore the contexts associated
+      // with C structs, unions, and enums when looking for a matching
+      // tag declaration or definition. See the similar lookup tweak
+      // in Sema::LookupDecl; is there a better way to deal with this?
+      while (isa<RecordDecl>(DC) || isa<EnumDecl>(DC))
+        DC = DC->getParent();
+    }
   }
 
   if (PrevDecl && PrevDecl->isTemplateParameter()) {
@@ -3007,6 +3040,43 @@ CreateNewDecl:
   return New;
 }
 
+void Sema::ActOnTagStartDefinition(Scope *S, DeclTy *TagD) {
+  TagDecl *Tag = cast<TagDecl>((Decl *)TagD);
+
+  // Enter the tag context.
+  PushDeclContext(S, Tag);
+
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Tag)) {
+    FieldCollector->StartClass();
+
+    if (Record->getIdentifier()) {
+      // C++ [class]p2: 
+      //   [...] The class-name is also inserted into the scope of the
+      //   class itself; this is known as the injected-class-name. For
+      //   purposes of access checking, the injected-class-name is treated
+      //   as if it were a public member name.
+      RecordDecl *InjectedClassName
+        = CXXRecordDecl::Create(Context, Record->getTagKind(),
+                                CurContext, Record->getLocation(),
+                                Record->getIdentifier(), Record);
+      InjectedClassName->setImplicit();
+      PushOnScopeChains(InjectedClassName, S);
+    }
+  }
+}
+
+void Sema::ActOnTagFinishDefinition(Scope *S, DeclTy *TagD) {
+  TagDecl *Tag = cast<TagDecl>((Decl *)TagD);
+
+  if (isa<CXXRecordDecl>(Tag))
+    FieldCollector->FinishClass();
+
+  // Exit this scope of this tag's definition.
+  PopDeclContext();
+
+  // Notify the consumer that we've defined a tag.
+  Consumer.HandleTagDeclDefinition(Tag);
+}
 
 /// TryToFixInvalidVariablyModifiedType - Helper method to turn variable array
 /// types into constant array types in certain situations which would otherwise
@@ -3108,6 +3178,18 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
                               DeclSpec::SCS_mutable,
                             /*PrevDecl=*/0);
 
+  if (II) {
+    Decl *PrevDecl 
+      = LookupDecl(II, Decl::IDNS_Member, S, 0, false, false, false);
+    if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
+        && !isa<TagDecl>(PrevDecl)) {
+      Diag(Loc, diag::err_duplicate_member) << II;
+      Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
+      NewFD->setInvalidDecl();
+      Record->setInvalidDecl();
+    }
+  }
+
   if (getLangOptions().CPlusPlus) {
     CheckExtraCXXDefaultArguments(D);
     if (!T->isPODType())
@@ -3119,9 +3201,9 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
   if (D.getInvalidType() || InvalidDecl)
     NewFD->setInvalidDecl();
 
-  if (II && getLangOptions().CPlusPlus)
+  if (II) {
     PushOnScopeChains(NewFD, S);
-  else
+  } else
     Record->addDecl(Context, NewFD);
 
   return NewFD;
@@ -3146,6 +3228,7 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
                               SourceLocation DeclStart, 
                               Declarator &D, ExprTy *BitfieldWidth,
                               tok::ObjCKeywordKind Visibility) {
+  
   IdentifierInfo *II = D.getIdentifier();
   Expr *BitWidth = (Expr*)BitfieldWidth;
   SourceLocation Loc = DeclStart;
@@ -3188,11 +3271,29 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
   ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context, Loc, II, T, ac,                                             
                                              (Expr *)BitfieldWidth);
   
+  if (II) {
+    Decl *PrevDecl 
+      = LookupDecl(II, Decl::IDNS_Member, S, 0, false, false, false);
+    if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
+        && !isa<TagDecl>(PrevDecl)) {
+      Diag(Loc, diag::err_duplicate_member) << II;
+      Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
+      NewID->setInvalidDecl();
+    }
+  }
+
   // Process attributes attached to the ivar.
   ProcessDeclAttributes(NewID, D);
   
   if (D.getInvalidType() || InvalidDecl)
     NewID->setInvalidDecl();
+
+  if (II) {
+    // FIXME: When interfaces are DeclContexts, we'll need to add
+    // these to the interface.
+    S->AddDecl(NewID);
+    IdResolver.AddDecl(NewID);
+  }
 
   return NewID;
 }
@@ -3206,27 +3307,26 @@ void Sema::ActOnFields(Scope* S,
   assert(EnclosingDecl && "missing record or interface decl");
   RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
   
-  if (Record)
-    if (RecordDecl* DefRecord = Record->getDefinition(Context)) {
+  if (Record) {
+    QualType RecordType = Context.getTypeDeclType(Record);
+    if (RecordType->getAsRecordType()->getDecl()->isDefinition()) {
+      RecordDecl *Def = RecordType->getAsRecordType()->getDecl();
       // Diagnose code like:
       //     struct S { struct S {} X; };
       // We discover this when we complete the outer S.  Reject and ignore the
       // outer S.
-      Diag(DefRecord->getLocation(), diag::err_nested_redefinition)
-        << DefRecord->getDeclName();
+      Diag(Def->getLocation(), diag::err_nested_redefinition)
+        << Def->getDeclName();
       Diag(RecLoc, diag::note_previous_definition);
       Record->setInvalidDecl();
       return;
     }
+  }
   
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
   llvm::SmallVector<FieldDecl*, 32> RecFields;
 
-  // FIXME: Eventually, we'd like to eliminate this in favor of
-  // checking for redeclarations on-the-fly.
-  llvm::DenseMap<const IdentifierInfo*, FieldDecl *> FieldIDs;
-  
   for (unsigned i = 0; i != NumFields; ++i) {
     FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
     assert(FD && "missing field decl");
@@ -3234,37 +3334,7 @@ void Sema::ActOnFields(Scope* S,
     // Get the type for the field.
     Type *FDTy = FD->getType().getTypePtr();
 
-    if (FD->isAnonymousStructOrUnion()) {
-      // We have found a field that represents an anonymous struct
-      // or union. Introduce all of the inner fields (recursively)
-      // into the list of fields we know about, so that we can produce
-      // an appropriate error message in cases like:
-      //
-      //   struct X {
-      //     union {
-      //       int x;
-      //       float f;
-      //     };
-      //     double x;
-      //   };
-      llvm::SmallVector<FieldDecl *, 4> AnonStructUnionFields;
-      AnonStructUnionFields.push_back(FD);
-      while (!AnonStructUnionFields.empty()) {
-        FieldDecl *AnonField = AnonStructUnionFields.back();
-        AnonStructUnionFields.pop_back();
-        
-        RecordDecl *AnonRecord 
-          = AnonField->getType()->getAsRecordType()->getDecl();
-        for (RecordDecl::field_iterator F = AnonRecord->field_begin(),
-                                     FEnd = AnonRecord->field_end();
-             F != FEnd; ++F) {
-          if ((*F)->isAnonymousStructOrUnion())
-            AnonStructUnionFields.push_back(*F);
-          else if (const IdentifierInfo *II = (*F)->getIdentifier())
-            FieldIDs[II] = *F;
-        }
-      }
-    } else {
+    if (!FD->isAnonymousStructOrUnion()) {
       // Remember all fields written by the user.
       RecFields.push_back(FD);
     }
@@ -3340,28 +3410,13 @@ void Sema::ActOnFields(Scope* S,
       continue;
     }
     // Keep track of the number of named members.
-    if (IdentifierInfo *II = FD->getIdentifier()) {
-      // Detect duplicate member names.
-      if (FieldIDs[II]) {
-        Diag(FD->getLocation(), diag::err_duplicate_member) << II;
-        // Find the previous decl.
-        Diag(FieldIDs[II]->getLocation(), diag::note_previous_definition);
-        FD->setInvalidDecl();
-        EnclosingDecl->setInvalidDecl();
-        continue;
-      }
+    if (FD->getIdentifier())
       ++NumNamedMembers;
-      FieldIDs[II] = FD;
-    }
   }
 
   // Okay, we successfully defined 'Record'.
   if (Record) {
     Record->completeDefinition(Context);
-    // If this is a C++ record, HandleTagDeclDefinition will be invoked in
-    // Sema::ActOnFinishCXXClassDef.
-    if (!isa<CXXRecordDecl>(Record))
-      Consumer.HandleTagDeclDefinition(Record);
   } else {
     ObjCIvarDecl **ClsFields = reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
     if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl)) {
@@ -3376,7 +3431,7 @@ void Sema::ActOnFields(Scope* S,
           ObjCIvarDecl* prevIvar = ID->getSuperClass()->FindIvarDeclaration(II);
           if (prevIvar) {
             Diag(Ivar->getLocation(), diag::err_duplicate_member) << II;
-            Diag(prevIvar->getLocation(), diag::note_previous_definition);
+            Diag(prevIvar->getLocation(), diag::note_previous_declaration);
           }
         }
       }
@@ -3391,13 +3446,6 @@ void Sema::ActOnFields(Scope* S,
 
   if (Attr)
     ProcessDeclAttributeList(Record, Attr);
-}
-
-void Sema::ActOnEnumStartDefinition(Scope *S, DeclTy *EnumD) {
-  EnumDecl *Enum = cast<EnumDecl>((Decl *)EnumD);
-
-  // Enter the enumeration context.
-  PushDeclContext(S, Enum);
 }
 
 Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
@@ -3507,7 +3555,6 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
       << Enum->getDeclName();
     Diag(Enum->getLocation(), diag::note_previous_definition);
     Enum->setInvalidDecl();
-    PopDeclContext();
     return;
   }
 
@@ -3675,10 +3722,6 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   }
   
   Enum->completeDefinition(Context, BestType);
-  Consumer.HandleTagDeclDefinition(Enum);
-
-  // Leave the context of the enumeration.
-  PopDeclContext();
 }
 
 Sema::DeclTy *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,

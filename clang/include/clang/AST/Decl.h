@@ -900,7 +900,7 @@ protected:
 
 
 /// TagDecl - Represents the declaration of a struct/union/class/enum.
-class TagDecl : public TypeDecl {
+class TagDecl : public TypeDecl, public DeclContext {
 public:
   enum TagKind {
     TK_struct,
@@ -919,7 +919,7 @@ private:
 protected:
   TagDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
           IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : TypeDecl(DK, DC, L, Id, PrevDecl) {
+    : TypeDecl(DK, DC, L, Id, PrevDecl), DeclContext(DK) {
     assert((DK != Enum || TK == TK_enum) &&"EnumDecl not matched with TK_enum");
     TagDeclKind = TK;
     IsDefinition = false;
@@ -970,7 +970,7 @@ protected:
 
 /// EnumDecl - Represents an enum.  As an extension, we allow forward-declared
 /// enums.
-class EnumDecl : public TagDecl, public DeclContext {
+class EnumDecl : public TagDecl {
   /// IntegerType - This represent the integer type that the enum corresponds
   /// to for code generation purposes.  Note that the enumerator constants may
   /// have a different type than this does.
@@ -978,7 +978,7 @@ class EnumDecl : public TagDecl, public DeclContext {
   
   EnumDecl(DeclContext *DC, SourceLocation L,
            IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : TagDecl(Enum, TK_enum, DC, L, Id, PrevDecl), DeclContext(Enum) {
+    : TagDecl(Enum, TK_enum, DC, L, Id, PrevDecl) {
       IntegerType = QualType();
     }
 public:
@@ -1053,7 +1053,7 @@ protected:
 ///   union Y { int A, B; };     // Has body with members A and B (FieldDecls).
 /// This decl will be marked invalid if *any* members are invalid.
 ///
-class RecordDecl : public TagDecl, public DeclContext {
+class RecordDecl : public TagDecl {
   /// HasFlexibleArrayMember - This is true if this struct ends with a flexible
   /// array member (e.g. int X[]) or if this union contains a struct that does.
   /// If so, this cannot be contained in arrays or other structs as a member.

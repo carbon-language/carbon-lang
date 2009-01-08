@@ -730,7 +730,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   // Enter a scope for the class.
   ParseScope ClassScope(this, Scope::CXXClassScope|Scope::DeclScope);
 
-  Actions.ActOnStartCXXClassDef(CurScope, TagDecl, LBraceLoc);
+  Actions.ActOnTagStartDefinition(CurScope, TagDecl);
 
   // C++ 11p3: Members of a class defined with the keyword class are private
   // by default. Members of a class defined with the keywords struct or union
@@ -802,7 +802,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   // Leave the class scope.
   ClassScope.Exit();
 
-  Actions.ActOnFinishCXXClassDef(TagDecl);
+  Actions.ActOnTagFinishDefinition(CurScope, TagDecl);
 }
 
 /// ParseConstructorInitializer - Parse a C++ constructor initializer,

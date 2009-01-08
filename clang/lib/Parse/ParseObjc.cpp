@@ -840,6 +840,8 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
   llvm::SmallVector<DeclTy*, 32> AllIvarDecls;
   llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
 
+  ParseScope ClassScope(this, Scope::DeclScope);
+
   SourceLocation LBraceLoc = ConsumeBrace(); // the "{"
   
   tok::ObjCKeywordKind visibility = tok::objc_protected;

@@ -60,6 +60,9 @@ DeclContext *IdentifierResolver::LookupContext::getContext(Decl *D) {
   else
     return TUCtx();
 
+  if (!Ctx) // FIXME: HACK! We shouldn't end up with a NULL context here.
+    return TUCtx();
+
   Ctx = Ctx->getLookupContext();
 
   if (isa<TranslationUnitDecl>(Ctx))

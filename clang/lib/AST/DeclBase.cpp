@@ -579,6 +579,7 @@ DeclContext::lookup(DeclarationName Name) const {
 
 const DeclContext *DeclContext::getLookupContext() const {
   const DeclContext *Ctx = this;
+  // Skip through transparent contexts.
   while (Ctx->isTransparentContext())
     Ctx = Ctx->getParent();
   return Ctx;

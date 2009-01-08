@@ -28,7 +28,7 @@ namespace {
       DeclContext::lookup_const_iterator I, E;
       for (llvm::tie(I, E) = LookupCtx->lookup(Name); I != E; ++I) {
        IdIsUndeclared = false;
-       if (((*I)->getIdentifierNamespace() & Decl::IDNS_Tag) || 
+       if (((*I)->isInIdentifierNamespace(Decl::IDNS_Tag)) || 
            isa<TypedefDecl>(*I))
          return *I;
       }

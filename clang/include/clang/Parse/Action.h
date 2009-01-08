@@ -341,10 +341,14 @@ public:
                            SourceLocation LBrac, SourceLocation RBrac,
                            AttributeList *AttrList) {}
   
-  /// ActOnEnumStartDefinition - Invoked when we have entered the
-  /// scope of the enumeration body and will be parsing its
-  /// enumerators.  
-  virtual void ActOnEnumStartDefinition(Scope *S, DeclTy *EnumDecl) { }
+  /// ActOnTagStartDefinition - Invoked when we have entered the
+  /// scope of a tag's definition (e.g., for an enumeration, class,
+  /// struct, or union).
+  virtual void ActOnTagStartDefinition(Scope *S, DeclTy *TagDecl) { }
+
+  /// ActOnTagFinishDefinition - Invoked once we have finished parsing
+  /// the definition of a tag (enumeration, class, struct, or union).
+  virtual void ActOnTagFinishDefinition(Scope *S, DeclTy *TagDecl) { }
 
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
@@ -915,12 +919,6 @@ public:
                                    unsigned NumBases) {
   }
                                    
-  /// ActOnStartCXXClassDef - This is called at the start of a class/struct/union
-  /// definition, when on C++.
-  virtual void ActOnStartCXXClassDef(Scope *S, DeclTy *TagDecl,
-                                     SourceLocation LBrace) {
-  }
-  
   /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
   /// declarator is parsed. 'AS' is the access specifier, 'BitfieldWidth'
   /// specifies the bitfield width if there is one and 'Init' specifies the
@@ -960,11 +958,6 @@ public:
                                                  DeclTy *TagDecl,
                                                  SourceLocation LBrac,
                                                  SourceLocation RBrac) {
-  }
-
-  /// ActOnFinishCXXClassDef - This is called when a class/struct/union has
-  /// completed parsing, when on C++.
-  virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl) {
   }
 
   //===---------------------------C++ Templates----------------------------===//

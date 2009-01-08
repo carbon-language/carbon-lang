@@ -53,7 +53,7 @@ public:
 
   typedef int A;
 
-  virtual int vi; // expected-error {{error: 'virtual' can only appear on non-static member functions}}
+  virtual int viv; // expected-error {{error: 'virtual' can only appear on non-static member functions}}
   virtual static int vsif(); // expected-error {{error: 'virtual' can only appear on non-static member functions}}
   virtual int vif();
 
@@ -105,3 +105,8 @@ void ogfn()
   struct C4;
   C4; // expected-error {{declaration does not declare anything}}
 }
+
+struct C4 {
+  void f(); // expected-note{{previous declaration is here}}
+  int f; // expected-error{{duplicate member 'f'}}
+};

@@ -414,28 +414,6 @@ void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases,
 // C++ class member Handling
 //===----------------------------------------------------------------------===//
 
-/// ActOnStartCXXClassDef - This is called at the start of a class/struct/union
-/// definition, when on C++.
-void Sema::ActOnStartCXXClassDef(Scope *S, DeclTy *D, SourceLocation LBrace) {
-  CXXRecordDecl *Dcl = cast<CXXRecordDecl>(static_cast<Decl *>(D));
-  PushDeclContext(S, Dcl);
-  FieldCollector->StartClass();
-
-  if (Dcl->getIdentifier()) {
-    // C++ [class]p2: 
-    //   [...] The class-name is also inserted into the scope of the
-    //   class itself; this is known as the injected-class-name. For
-    //   purposes of access checking, the injected-class-name is treated
-    //   as if it were a public member name.
-    RecordDecl *InjectedClassName
-      = CXXRecordDecl::Create(Context, Dcl->getTagKind(),
-                              CurContext, Dcl->getLocation(),
-                              Dcl->getIdentifier(), Dcl);
-    InjectedClassName->setImplicit();
-    PushOnScopeChains(InjectedClassName, S);
-  }
-}
-
 /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
 /// declarator is parsed. 'AS' is the access specifier, 'BW' specifies the
 /// bitfield width if there is one and 'InitExpr' specifies the initializer if
@@ -973,16 +951,6 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     Destructor->setImplicit();
     ClassDecl->addDecl(Context, Destructor);
   }
-}
-
-void Sema::ActOnFinishCXXClassDef(DeclTy *D) {
-  CXXRecordDecl *Rec = cast<CXXRecordDecl>(static_cast<Decl *>(D));
-  FieldCollector->FinishClass();
-  PopDeclContext();
-
-  // Everything, including inline method definitions, have been parsed.
-  // Let the consumer know of the new TagDecl definition.
-  Consumer.HandleTagDeclDefinition(Rec);
 }
 
 /// ActOnStartDelayedCXXMethodDeclaration - We have completed
