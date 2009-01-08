@@ -757,10 +757,11 @@ void StmtPrinter::VisitCallExpr(CallExpr *Call) {
   OS << ")";
 }
 void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
-  if (!Node->getBase()->isImplicit()) {
-    PrintExpr(Node->getBase());
-    OS << (Node->isArrow() ? "->" : ".");
-  }
+  // FIXME: Suppress printing implicit bases (like "this")
+  PrintExpr(Node->getBase());
+  OS << (Node->isArrow() ? "->" : ".");
+  // FIXME: Suppress printing references to unnamed objects
+  // representing anonymous unions/structs
   OS << Node->getMemberDecl()->getNameAsString();
 }
 void StmtPrinter::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
