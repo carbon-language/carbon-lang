@@ -265,6 +265,9 @@ public:
     
   // Iterator access to instance/class methods.
   class method_iterator {
+  public:
+    enum IterKind { IterInstanceMeths, IterClassMeths, IterAllMeths };
+    
   protected:
     /// Current - Current position within the sequence of declarations
     /// in this record. 
@@ -274,17 +277,17 @@ public:
     /// record.
     DeclContext::decl_iterator End;
 
-    /// IsInstance - If true, we are iterating through instance methods.
-    /// If false, we are iteratring through class methods.
-    bool IsInstance;
+    /// IK - Specifies the kind of methods this iterator iterates over.
+    IterKind IK;
     
     /// SkipToNextMethod - Advances the current position up to the next
     /// ObjCMethodDecl.
     void SkipToNextMethod() {
       while (Current != End) {
         ObjCMethodDecl *M = dyn_cast<ObjCMethodDecl>(*Current);
-        if (M && 
-            (IsInstance && M->isInstance() || !IsInstance && !M->isInstance()))
+        if (M && (IK == IterAllMeths ||
+                  (IK == IterInstanceMeths && M->isInstance()) ||
+                  ((IK == IterClassMeths && !M->isInstance()))))
           return;
         ++Current;
       }
@@ -297,11 +300,11 @@ public:
     typedef std::ptrdiff_t            difference_type;
     typedef std::forward_iterator_tag iterator_category;
 
-    method_iterator() : Current(), End(), IsInstance(true) { }
+    method_iterator() : Current(), End(), IK(IterAllMeths) { }
 
     method_iterator(DeclContext::decl_iterator C, 
-                    DeclContext::decl_iterator E, bool I)
-      : Current(C), End(E), IsInstance(I) {
+                    DeclContext::decl_iterator E, IterKind ik)
+      : Current(C), End(E), IK(ik) {
       SkipToNextMethod();
     }
 
@@ -331,6 +334,15 @@ public:
       return x.Current != y.Current;
     }
   };
+  
+  method_iterator meth_begin() const {
+    return method_iterator(decls_begin(), decls_end(),
+                           method_iterator::IterAllMeths);
+  }
+  method_iterator meth_end() const {
+    return method_iterator(decls_end(), decls_end(),
+                           method_iterator::IterAllMeths);
+  }
 
   class instmeth_iterator : public method_iterator {
   public:
@@ -340,8 +352,9 @@ public:
 
     instmeth_iterator() : method_iterator() { }
 
-    instmeth_iterator(DeclContext::decl_iterator C, DeclContext::decl_iterator E)
-      : method_iterator(C, E, true) { }    
+    instmeth_iterator(DeclContext::decl_iterator C,
+                      DeclContext::decl_iterator E)
+      : method_iterator(C, E, IterInstanceMeths) { }    
 
     reference operator*() const { return cast<ObjCMethodDecl>(*Current); }
 
@@ -375,8 +388,9 @@ public:
 
     classmeth_iterator() : method_iterator() { }
 
-    classmeth_iterator(DeclContext::decl_iterator C, DeclContext::decl_iterator E)
-      : method_iterator(C, E, false) { }    
+    classmeth_iterator(DeclContext::decl_iterator C,
+                       DeclContext::decl_iterator E)
+      : method_iterator(C, E, IterClassMeths) { }    
 
     reference operator*() const { return cast<ObjCMethodDecl>(*Current); }
 
