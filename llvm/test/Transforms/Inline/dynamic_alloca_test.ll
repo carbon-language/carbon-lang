@@ -1,5 +1,7 @@
 ; Test that functions with dynamic allocas get inlined in a case where
 ; naively inlining it would result in a miscompilation.
+; Functions with dynamic allocas can only be inlined into functions that
+; already have dynamic allocas.
 
 ; RUN: llvm-as < %s | opt -inline | llvm-dis | \
 ; RUN:   grep llvm.stacksave
@@ -16,6 +18,8 @@ define internal void @callee(i32 %N) {
 
 define void @foo(i32 %N) {
 ; <label>:0
+        %P = alloca i32, i32 %N         ; <i32*> [#uses=1]
+        call void @ext( i32* %P )
         br label %Loop
 
 Loop:           ; preds = %Loop, %0

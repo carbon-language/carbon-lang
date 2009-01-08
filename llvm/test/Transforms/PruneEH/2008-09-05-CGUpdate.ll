@@ -636,6 +636,9 @@ lpad:		; preds = %entry, %invcont
 
 define internal fastcc i32 @ce3806g__fxio__put__4.1215(i8* %to.0, %struct.string___XUB* %to.1, i8 signext %item) {
 entry:
+        %P0 = load i32 * @__gnat_all_others_value, align 4  ; <i32*> [#uses=1]
+        %P = alloca i32, i32 %P0	; <i32*> [#uses=1]
+        call void @ext( i32* %P )
 	%to_addr = alloca %struct.system__file_control_block__pstring		; <%struct.system__file_control_block__pstring*> [#uses=4]
 	%FRAME.358 = alloca %struct.FRAME.ce3806g__fxio__put__4		; <%struct.FRAME.ce3806g__fxio__put__4*> [#uses=65]
 	%0 = getelementptr %struct.system__file_control_block__pstring* %to_addr, i32 0, i32 0		; <i8**> [#uses=1]
@@ -1434,6 +1437,8 @@ declare %struct.ada__text_io__text_afcb* @ada__text_io__open(%struct.ada__text_i
 declare %struct.ada__text_io__text_afcb* @ada__text_io__standard_output()
 
 declare void @report__failed(i8*, %struct.string___XUB*)
+
+declare void @ext(i32*)
 
 declare %struct.ada__text_io__text_afcb* @ada__text_io__delete(%struct.ada__text_io__text_afcb*)
 

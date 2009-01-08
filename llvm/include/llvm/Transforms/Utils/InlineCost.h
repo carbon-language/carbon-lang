@@ -78,6 +78,9 @@ namespace llvm {
       /// caller.
       bool NeverInline;
       
+      /// usesDynamicAlloca - True if this function calls alloca (in the C sense).
+      bool usesDynamicAlloca;
+
       /// NumInsts, NumBlocks - Keep track of how large each function is, which
       /// is used to estimate the code size cost of inlining it.
       unsigned NumInsts, NumBlocks;
@@ -93,8 +96,8 @@ namespace llvm {
       /// entry here.
       std::vector<ArgInfo> ArgumentWeights;
       
-      FunctionInfo() : NeverInline(false), NumInsts(0), NumBlocks(0),
-                       NumVectorInsts(0) {}
+      FunctionInfo() : NeverInline(false), usesDynamicAlloca(false), NumInsts(0),
+                       NumBlocks(0), NumVectorInsts(0) {}
       
       /// analyzeFunction - Fill in the current structure with information
       /// gleaned from the specified function.

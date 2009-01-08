@@ -126,6 +126,11 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
           NumInsts += 5;
       }
       
+      if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
+        if (!isa<ConstantInt>(AI->getArraySize()))
+          this->usesDynamicAlloca = true;
+      }
+
       if (isa<ExtractElementInst>(II) || isa<VectorType>(II->getType()))
         ++NumVectorInsts; 
       
@@ -173,7 +178,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
                                SmallPtrSet<const Function *, 16> &NeverInline) {
   Instruction *TheCall = CS.getInstruction();
   Function *Callee = CS.getCalledFunction();
-  const Function *Caller = TheCall->getParent()->getParent();
+  Function *Caller = TheCall->getParent()->getParent();
 
   // Don't inline a directly recursive call.
   if (Caller == Callee ||
@@ -219,9 +224,22 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   // If we haven't calculated this information yet, do so now.
   if (CalleeFI.NumBlocks == 0)
     CalleeFI.analyzeFunction(Callee);
-  
+
   // If we should never inline this, return a huge cost.
   if (CalleeFI.NeverInline)
+    return InlineCost::getNever();
+
+  // Get infomation about the caller...
+  FunctionInfo &CallerFI = CachedFunctionInfo[Caller];
+
+  // If we haven't calculated this information yet, do so now.
+  if (CallerFI.NumBlocks == 0)
+    CallerFI.analyzeFunction(Caller);
+
+  // Don't inline a callee with dynamic alloca into a caller without them.
+  // Functions containing dynamic alloca's are inefficient in various ways;
+  // don't create more inefficiency.
+  if (CalleeFI.usesDynamicAlloca && !CallerFI.usesDynamicAlloca)
     return InlineCost::getNever();
 
   // FIXME: It would be nice to kill off CalleeFI.NeverInline. Then we
