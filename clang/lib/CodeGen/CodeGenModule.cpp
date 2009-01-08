@@ -1065,7 +1065,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
   }
   case Decl::ObjCCompatibleAlias: 
-    ErrorUnsupported(D, "Objective-C compatible alias");
+    // compatibility-alias is a directive and has no code gen.
     break;
 
   case Decl::LinkageSpec: {

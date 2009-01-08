@@ -159,6 +159,15 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   }
   // Check for class declaration
   Decl *CDeclU = LookupDecl(ClassName, Decl::IDNS_Ordinary, TUScope);
+  if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(CDeclU)) {
+    QualType T = TDecl->getUnderlyingType();
+    if (T->isObjCInterfaceType()) {
+      if (NamedDecl *IDecl = T->getAsObjCInterfaceType()->getDecl()) {
+        ClassName = IDecl->getIdentifier();
+        CDeclU = LookupDecl(ClassName, Decl::IDNS_Ordinary, TUScope);
+      }
+    }
+  }
   ObjCInterfaceDecl *CDecl = dyn_cast_or_null<ObjCInterfaceDecl>(CDeclU);
   if (CDecl == 0) {
     Diag(ClassLocation, diag::warn_undef_interface) << ClassName;
