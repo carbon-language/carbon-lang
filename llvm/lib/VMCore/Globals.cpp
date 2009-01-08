@@ -252,7 +252,7 @@ const GlobalValue *GlobalAlias::resolveAliasedGlobal(bool stopOnWeak) const {
   SmallPtrSet<const GlobalValue*, 3> Visited;
 
   // Check if we need to stop early.
-  if (stopOnWeak && hasWeakLinkage())
+  if (stopOnWeak && mayBeOverridden())
     return this;
 
   const GlobalValue *GV = getAliasedGlobal();
@@ -260,7 +260,7 @@ const GlobalValue *GlobalAlias::resolveAliasedGlobal(bool stopOnWeak) const {
 
   // Iterate over aliasing chain, stopping on weak alias if necessary.
   while (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV)) {
-    if (stopOnWeak && GA->hasWeakLinkage())
+    if (stopOnWeak && GA->mayBeOverridden())
       break;
 
     GV = GA->getAliasedGlobal();
