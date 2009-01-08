@@ -1193,6 +1193,60 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// DbgVariable - This class is used to track local variable information.
+///
+class DbgVariable {
+private:
+  DIVariable *Var;                   // Variable Descriptor.
+  unsigned FrameIndex;               // Variable frame index.
+
+public:
+  DbgVariable(DIVariable *V, unsigned I) : Var(V), FrameIndex(I)  {}
+  
+  // Accessors.
+  DIVariable *getVariable()  const { return Var; }
+  unsigned getFrameIndex() const { return FrameIndex; }
+};
+
+//===----------------------------------------------------------------------===//
+/// DbgScope - This class is used to track scope information.
+///
+class DbgScope {
+private:
+  DbgScope *Parent;                   // Parent to this scope.
+  DIDescriptor *Desc;                 // Debug info descriptor for scope.
+                                      // Either subprogram or block.
+  unsigned StartLabelID;              // Label ID of the beginning of scope.
+  unsigned EndLabelID;                // Label ID of the end of scope.
+  SmallVector<DbgScope *, 8> Scopes;     // Scopes defined in scope.
+  SmallVector<DbgVariable *, 32> Variables;// Variables declared in scope.
+  
+public:
+  DbgScope(DbgScope *P, DIDescriptor *D)
+  : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0), Scopes(), Variables()
+  {}
+  ~DbgScope();
+  
+  // Accessors.
+  DbgScope *getParent()        const { return Parent; }
+  DIDescriptor *getDesc()       const { return Desc; }
+  unsigned getStartLabelID()     const { return StartLabelID; }
+  unsigned getEndLabelID()       const { return EndLabelID; }
+  SmallVector<DbgScope *, 8> &getScopes() { return Scopes; }
+  SmallVector<DbgVariable *, 32> &getVariables() { return Variables; }
+  void setStartLabelID(unsigned S) { StartLabelID = S; }
+  void setEndLabelID(unsigned E)   { EndLabelID = E; }
+  
+  /// AddScope - Add a scope to the scope.
+  ///
+  void AddScope(DbgScope *S) { Scopes.push_back(S); }
+  
+  /// AddVariable - Add a variable to the scope.
+  ///
+  void AddVariable(DbgVariable *V) { Variables.push_back(V); }
+};
+
+//===----------------------------------------------------------------------===//
 /// DwarfDebug - Emits Dwarf debug directives.
 ///
 class DwarfDebug : public Dwarf {
@@ -1252,6 +1306,44 @@ private:
   /// shouldEmit - Flag to indicate if debug information should be emitted.
   ///
   bool shouldEmit;
+
+  // RootScope - Top level scope for the current function.
+  //
+  DbgScope *RootDbgScope;
+  
+  // DbgScopeMap - Tracks the scopes in the current function.
+  DenseMap<GlobalVariable *, DbgScope *> DbgScopeMap;
+  
+  // DbgLabelIDList - One entry per assigned label.  Normally the entry is equal to
+  // the list index(+1).  If the entry is zero then the label has been deleted.
+  // Any other value indicates the label has been deleted by is mapped to
+  // another label.
+  SmallVector<unsigned, 32> DbgLabelIDList;
+
+  /// NextLabelID - Return the next unique label id.
+  ///
+  unsigned NextLabelID() {
+    unsigned ID = (unsigned)DbgLabelIDList.size() + 1;
+    DbgLabelIDList.push_back(ID);
+    return ID;
+  }
+
+  /// RemapLabel - Indicate that a label has been merged into another.
+  ///
+  void RemapLabel(unsigned OldLabelID, unsigned NewLabelID) {
+    assert(0 < OldLabelID && OldLabelID <= DbgLabelIDList.size() &&
+          "Old label ID out of range.");
+    assert(NewLabelID <= DbgLabelIDList.size() &&
+          "New label ID out of range.");
+    DbgLabelIDList[OldLabelID - 1] = NewLabelID;
+  }
+  
+  /// MappedLabel - Find out the label's final ID.  Zero indicates deletion.
+  /// ID != Mapped ID indicates that the label was folded into another label.
+  unsigned MappedLabel(unsigned LabelID) const {
+    assert(LabelID <= DbgLabelIDList.size() && "Debug label ID out of range.");
+    return LabelID ? DbgLabelIDList[LabelID - 1] : 0;
+  }
 
   struct FunctionDebugFrameInfo {
     unsigned Number;
@@ -1490,6 +1582,25 @@ private:
       AddUInt(Die, DW_AT_decl_file, 0, FileID);
       AddUInt(Die, DW_AT_decl_line, 0, Line);
     }
+  }
+
+  /// AddSourceLine - Add location information to specified debug information
+  /// entry.
+  void AddSourceLine(DIE *Die, DIVariable *V) {
+    unsigned FileID = 0;
+    unsigned Line = V->getLineNumber();
+    if (V->getVersion() < DIDescriptor::Version7) {
+      // Version6 or earlier. Use compile unit info to get file id.
+      CompileUnit *Unit = FindCompileUnit(V->getCompileUnit());
+      FileID = Unit->getID();
+    } else {
+      // Version7 or newer, use filename and directory info from DIVariable
+      // directly.
+      unsigned DID = Directories.idFor(V->getDirectory());
+      FileID = SrcFiles.idFor(SrcFileInfo(DID, V->getFilename()));
+    }
+    AddUInt(Die, DW_AT_decl_file, 0, FileID);
+    AddUInt(Die, DW_AT_decl_line, 0, Line);
   }
 
   /// AddSourceLine - Add location information to specified debug information
@@ -2393,6 +2504,191 @@ private:
     return VariableDie;
   }
 
+  /// NewScopeVariable - Create a new scope variable.
+  ///
+  DIE *NewDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
+    // Get the descriptor.
+    DIVariable *VD = DV->getVariable();
+
+    // Translate tag to proper Dwarf tag.  The result variable is dropped for
+    // now.
+    unsigned Tag;
+    switch (VD->getTag()) {
+    case DW_TAG_return_variable:  return NULL;
+    case DW_TAG_arg_variable:     Tag = DW_TAG_formal_parameter; break;
+    case DW_TAG_auto_variable:    // fall thru
+    default:                      Tag = DW_TAG_variable; break;
+    }
+
+    // Define variable debug information entry.
+    DIE *VariableDie = new DIE(Tag);
+    AddString(VariableDie, DW_AT_name, DW_FORM_string, VD->getName());
+
+    // Add source line info if available.
+    AddSourceLine(VariableDie, VD);
+
+    // Add variable type.
+    AddType(Unit, VariableDie, VD->getType());
+
+    // Add variable address.
+    MachineLocation Location;
+    Location.set(RI->getFrameRegister(*MF),
+                 RI->getFrameIndexOffset(*MF, DV->getFrameIndex()));
+    AddAddress(VariableDie, DW_AT_location, Location);
+
+    return VariableDie;
+  }
+
+
+  /// getOrCreateScope - Returns the scope associated with the given descriptor.
+  ///
+  DbgScope *getOrCreateScope(GlobalVariable *V) {
+    DbgScope *&Slot = DbgScopeMap[V];
+    if (!Slot) {
+      // FIXME - breaks down when the context is an inlined function.
+      DIDescriptor ParentDesc;
+      DIBlock *DB = new DIBlock(V);
+      if (DIBlock *Block = dyn_cast<DIBlock>(DB)) {
+        ParentDesc = Block->getContext();
+      }
+      DbgScope *Parent = ParentDesc.isNull() ? 
+        getOrCreateScope(ParentDesc.getGV()) : NULL;
+      Slot = new DbgScope(Parent, DB);
+      if (Parent) {
+        Parent->AddScope(Slot);
+      } else if (RootDbgScope) {
+        // FIXME - Add inlined function scopes to the root so we can delete
+        // them later.  Long term, handle inlined functions properly.
+        RootDbgScope->AddScope(Slot);
+      } else {
+        // First function is top level function.
+        RootDbgScope = Slot;
+      }
+    }
+    return Slot;
+  }
+
+  /// ConstructDbgScope - Construct the components of a scope.
+  ///
+  void ConstructDbgScope(DbgScope *ParentScope,
+                         unsigned ParentStartID, unsigned ParentEndID,
+                         DIE *ParentDie, CompileUnit *Unit) {
+    // Add variables to scope.
+    SmallVector<DbgVariable *, 32> &Variables = ParentScope->getVariables();
+    for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
+      DIE *VariableDie = NewDbgScopeVariable(Variables[i], Unit);
+      if (VariableDie) ParentDie->AddChild(VariableDie);
+    }
+
+    // Add nested scopes.
+    SmallVector<DbgScope *, 8> &Scopes = ParentScope->getScopes();
+    for (unsigned j = 0, M = Scopes.size(); j < M; ++j) {
+      // Define the Scope debug information entry.
+      DbgScope *Scope = Scopes[j];
+      // FIXME - Ignore inlined functions for the time being.
+      if (!Scope->getParent()) continue;
+
+      unsigned StartID = MappedLabel(Scope->getStartLabelID());
+      unsigned EndID = MappedLabel(Scope->getEndLabelID());
+
+      // Ignore empty scopes.
+      if (StartID == EndID && StartID != 0) continue;
+      if (Scope->getScopes().empty() && Scope->getVariables().empty()) continue;
+
+      if (StartID == ParentStartID && EndID == ParentEndID) {
+        // Just add stuff to the parent scope.
+        ConstructDbgScope(Scope, ParentStartID, ParentEndID, ParentDie, Unit);
+      } else {
+        DIE *ScopeDie = new DIE(DW_TAG_lexical_block);
+
+        // Add the scope bounds.
+        if (StartID) {
+          AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
+                             DWLabel("label", StartID));
+        } else {
+          AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
+                             DWLabel("func_begin", SubprogramCount));
+        }
+        if (EndID) {
+          AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
+                             DWLabel("label", EndID));
+        } else {
+          AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
+                             DWLabel("func_end", SubprogramCount));
+        }
+
+        // Add the scope contents.
+        ConstructDbgScope(Scope, StartID, EndID, ScopeDie, Unit);
+        ParentDie->AddChild(ScopeDie);
+      }
+    }
+  }
+
+  /// ConstructRootDbgScope - Construct the scope for the subprogram.
+  ///
+  void ConstructRootDbgScope(DbgScope *RootScope) {
+    // Exit if there is no root scope.
+    if (!RootScope) return;
+
+    // Get the subprogram debug information entry.
+    DISubprogram *SPD = cast<DISubprogram>(RootScope->getDesc());
+
+    // Get the compile unit context.
+    CompileUnit *Unit = FindCompileUnit(SPD->getCompileUnit());
+
+    // Get the subprogram die.
+    DIE *SPDie = Unit->getDieMapSlotFor(SPD->getGV());
+    assert(SPDie && "Missing subprogram descriptor");
+
+    // Add the function bounds.
+    AddLabel(SPDie, DW_AT_low_pc, DW_FORM_addr,
+                    DWLabel("func_begin", SubprogramCount));
+    AddLabel(SPDie, DW_AT_high_pc, DW_FORM_addr,
+                    DWLabel("func_end", SubprogramCount));
+    MachineLocation Location(RI->getFrameRegister(*MF));
+    AddAddress(SPDie, DW_AT_frame_base, Location);
+
+    ConstructDbgScope(RootScope, 0, 0, SPDie, Unit);
+  }
+
+  /// ConstructDefaultDbgScope - Construct a default scope for the subprogram.
+  ///
+  void ConstructDefaultDbgScope(MachineFunction *MF) {
+    // Find the correct subprogram descriptor.
+    std::string SPName = "llvm.dbg.subprograms";
+    std::vector<GlobalVariable*> Result;
+    getGlobalVariablesUsing(*M, SPName, Result);
+    for (std::vector<GlobalVariable *>::iterator I = Result.begin(),
+           E = Result.end(); I != E; ++I) {
+
+      DISubprogram *SPD = new DISubprogram(*I);
+
+      if (SPD->getName() == MF->getFunction()->getName()) {
+        // Get the compile unit context.
+        CompileUnit *Unit = FindCompileUnit(SPD->getCompileUnit());
+
+        // Get the subprogram die.
+        DIE *SPDie = Unit->getDieMapSlotFor(SPD->getGV());
+        assert(SPDie && "Missing subprogram descriptor");
+
+        // Add the function bounds.
+        AddLabel(SPDie, DW_AT_low_pc, DW_FORM_addr,
+                 DWLabel("func_begin", SubprogramCount));
+        AddLabel(SPDie, DW_AT_high_pc, DW_FORM_addr,
+                 DWLabel("func_end", SubprogramCount));
+
+        MachineLocation Location(RI->getFrameRegister(*MF));
+        AddAddress(SPDie, DW_AT_frame_base, Location);
+        return;
+      }
+    }
+#if 0
+    // FIXME: This is causing an abort because C++ mangled names are compared
+    // with their unmangled counterparts. See PR2885. Don't do this assert.
+    assert(0 && "Couldn't find DIE for machine function!");
+#endif
+  }
+
   /// ConstructScope - Construct the components of a scope.
   ///
   void ConstructScope(DebugScope *ParentScope,
@@ -3282,6 +3578,7 @@ public:
   , SectionSourceLines()
   , didInitial(false)
   , shouldEmit(false)
+  , RootDbgScope(NULL)
   {
   }
   virtual ~DwarfDebug() {
