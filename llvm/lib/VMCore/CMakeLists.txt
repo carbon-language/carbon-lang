@@ -6,7 +6,6 @@ add_llvm_library(LLVMCore
   ConstantFold.cpp
   Constants.cpp
   Core.cpp
-  DebugInfoBuilder.cpp
   Dominators.cpp
   Function.cpp
   Globals.cpp
