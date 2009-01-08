@@ -227,7 +227,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Emit pre-function debug and/or EH information.
   if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
-    DW.BeginFunction(&MF);
+    DW->BeginFunction(&MF);
 
   // Print out code for the function.
   bool hasAnyRealCode = false;
@@ -260,7 +260,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Emit post-function debug information.
   if (TAI->doesSupportDebugInformation())
-    DW.EndFunction(&MF);
+    DW->EndFunction(&MF);
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
@@ -726,10 +726,6 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 /// doInitialization
 bool X86ATTAsmPrinter::doInitialization(Module &M) {
-  if (TAI->doesSupportDebugInformation()) {
-    // Emit initial debug information.
-    DW.BeginModule(&M);
-  }
 
   bool Result = AsmPrinter::doInitialization(M);
 
@@ -738,7 +734,8 @@ bool X86ATTAsmPrinter::doInitialization(Module &M) {
     // the MachineModuleInfo address on to DwarfWriter.
     // AsmPrinter::doInitialization did this analysis.
     MMI = getAnalysisToUpdate<MachineModuleInfo>();
-    DW.SetModuleInfo(MMI);
+    DW = getAnalysisToUpdate<DwarfWriter>();
+    DW->BeginModule(&M, MMI, O, this, TAI);
   }
 
   // Darwin wants symbols to be quoted if they have complex names.
@@ -973,7 +970,8 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     }
 
     // Emit final debug information.
-    DW.EndModule();
+    DwarfWriter *DW = getAnalysisToUpdate<DwarfWriter>();
+    DW->EndModule();
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
     // contain code that falls through to other global symbols (e.g. the obvious
@@ -992,10 +990,12 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     }
 
     // Emit final debug information.
-    DW.EndModule();
+    DwarfWriter *DW = getAnalysisToUpdate<DwarfWriter>();
+    DW->EndModule();
   } else if (Subtarget->isTargetELF()) {
     // Emit final debug information.
-    DW.EndModule();
+    DwarfWriter *DW = getAnalysisToUpdate<DwarfWriter>();
+    DW->EndModule();
   }
 
   return AsmPrinter::doFinalization(M);

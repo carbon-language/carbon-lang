@@ -20,6 +20,8 @@
 #ifndef LLVM_CODEGEN_DWARFWRITER_H
 #define LLVM_CODEGEN_DWARFWRITER_H
 
+#include "llvm/Pass.h"
+
 namespace llvm {
 
 class AsmPrinter;
@@ -35,7 +37,7 @@ class raw_ostream;
 // DwarfWriter - Emits Dwarf debug and exception handling directives.
 //
 
-class DwarfWriter {
+class DwarfWriter : public ImmutablePass {
 private:
   /// DD - Provides the DwarfWriter debug implementation.
   ///
@@ -46,20 +48,19 @@ private:
   DwarfException *DE;
   
 public:
-  DwarfWriter(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T);
+  static char ID; // Pass identification, replacement for typeid
+
+  DwarfWriter();
   virtual ~DwarfWriter();
   
-  /// SetModuleInfo - Set machine module info when it's known that pass manager
-  /// has created it.  Set by the target AsmPrinter.
-  void SetModuleInfo(MachineModuleInfo *MMI);
-
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
   
   /// BeginModule - Emit all Dwarf sections that should come prior to the
   /// content.
-  void BeginModule(Module *M);
+  void BeginModule(Module *M, MachineModuleInfo *MMI, raw_ostream &OS,
+                   AsmPrinter *A, const TargetAsmInfo *T);
   
   /// EndModule - Emit all Dwarf sections that should come after the content.
   ///

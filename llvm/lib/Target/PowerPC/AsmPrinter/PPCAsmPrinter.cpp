@@ -292,13 +292,12 @@ namespace {
 
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
   struct VISIBILITY_HIDDEN PPCLinuxAsmPrinter : public PPCAsmPrinter {
-
-    DwarfWriter DW;
+    DwarfWriter *DW;
     MachineModuleInfo *MMI;
 
     PPCLinuxAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
                     const TargetAsmInfo *T)
-      : PPCAsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
+      : PPCAsmPrinter(O, TM, T), DW(0), MMI(0) {
     }
 
     virtual const char *getPassName() const {
@@ -312,6 +311,7 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
+      AU.addRequired<DwarfWriter>();
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
 
@@ -322,12 +322,12 @@ namespace {
   /// OS X
   struct VISIBILITY_HIDDEN PPCDarwinAsmPrinter : public PPCAsmPrinter {
 
-    DwarfWriter DW;
+    DwarfWriter *DW;
     MachineModuleInfo *MMI;
-
+    raw_ostream &OS;
     PPCDarwinAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
                         const TargetAsmInfo *T)
-      : PPCAsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
+      : PPCAsmPrinter(O, TM, T), DW(0), MMI(0), OS(O) {
     }
 
     virtual const char *getPassName() const {
@@ -341,6 +341,7 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
+      AU.addRequired<DwarfWriter>();
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
 
@@ -602,7 +603,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << CurrentFnName << ":\n";
 
   // Emit pre-function debug information.
-  DW.BeginFunction(&MF);
+  DW->BeginFunction(&MF);
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -627,7 +628,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchToSection(TAI->SectionForGlobal(F));
 
   // Emit post-function debug information.
-  DW.EndFunction(&MF);
+  DW->EndFunction(&MF);
 
   O.flush();
 
@@ -639,12 +640,11 @@ bool PPCLinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
 
   // Emit initial debug information.
-  DW.BeginModule(&M);
-
-  // AsmPrinter::doInitialization should have done this analysis.
   MMI = getAnalysisToUpdate<MachineModuleInfo>();
   assert(MMI);
-  DW.SetModuleInfo(MMI);
+  DW = getAnalysisToUpdate<DwarfWriter>();
+  assert(DW && "DwarfWriter is not available");
+  DW->BeginModule(&M, MMI, O, this, TAI);
 
   // GNU as handles section names wrapped in quotes
   Mang->setUseQuotes(true);
@@ -753,7 +753,7 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   // TODO
 
   // Emit initial debug information.
-  DW.EndModule();
+  DW->EndModule();
 
   return AsmPrinter::doFinalization(M);
 }
@@ -792,7 +792,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << CurrentFnName << ":\n";
 
   // Emit pre-function debug information.
-  DW.BeginFunction(&MF);
+  DW->BeginFunction(&MF);
 
   // If the function is empty, then we need to emit *something*. Otherwise, the
   // function's label might be associated with something that it wasn't meant to
@@ -821,7 +821,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
   // Emit post-function debug information.
-  DW.EndFunction(&MF);
+  DW->EndFunction(&MF);
 
   // We didn't modify anything.
   return false;
@@ -854,13 +854,13 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
 
   // Emit initial debug information.
-  DW.BeginModule(&M);
-
   // We need this for Personality functions.
   // AsmPrinter::doInitialization should have done this analysis.
   MMI = getAnalysisToUpdate<MachineModuleInfo>();
   assert(MMI);
-  DW.SetModuleInfo(MMI);
+  DW = getAnalysisToUpdate<DwarfWriter>();
+  assert(DW && "DwarfWriter is not available");
+  DW->BeginModule(&M, MMI, O, this, TAI);
 
   // Darwin wants symbols to be quoted if they have complex names.
   Mang->setUseQuotes(true);
@@ -1122,7 +1122,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 
 
   // Emit initial debug information.
-  DW.EndModule();
+  DW->EndModule();
 
   // Funny Darwin hack: This flag tells the linker that no global symbols
   // contain code that falls through to other global symbols (e.g. the obvious

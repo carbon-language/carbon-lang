@@ -29,14 +29,13 @@ namespace llvm {
 struct MachineJumpTableInfo;
 
 struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
-  DwarfWriter DW;
+  DwarfWriter *DW;
   MachineModuleInfo *MMI;
-
   const X86Subtarget *Subtarget;
 
   X86ATTAsmPrinter(raw_ostream &O, X86TargetMachine &TM,
                    const TargetAsmInfo *T)
-    : AsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
+    : AsmPrinter(O, TM, T), DW(0), MMI(0) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
 
@@ -51,6 +50,7 @@ struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
         Subtarget->isTargetCygMing()) {
       AU.addRequired<MachineModuleInfo>();
     }
+    AU.addRequired<DwarfWriter>();
     AsmPrinter::getAnalysisUsage(AU);
   }
 

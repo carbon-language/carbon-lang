@@ -288,13 +288,13 @@ namespace {
   /// LinuxAsmPrinter - SPU assembly printer, customized for Linux
   struct VISIBILITY_HIDDEN LinuxAsmPrinter : public SPUAsmPrinter {
   
-    DwarfWriter DW;
+    DwarfWriter *DW;
     MachineModuleInfo *MMI;
 
     LinuxAsmPrinter(raw_ostream &O, SPUTargetMachine &TM,
                     const TargetAsmInfo *T) :
       SPUAsmPrinter(O, TM, T),
-      DW(O, this, T),
+      DW(0),
       MMI(0)
     { }
 
@@ -310,6 +310,7 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
+      AU.addRequired<DwarfWriter>();
       SPUAsmPrinter::getAnalysisUsage(AU);
     }
 
@@ -456,7 +457,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   O << CurrentFnName << ":\n";
 
   // Emit pre-function debug information.
-  DW.BeginFunction(&MF);
+  DW->BeginFunction(&MF);
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -479,7 +480,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
   
   // Emit post-function debug information.
-  DW.EndFunction(&MF);
+  DW->EndFunction(&MF);
   
   // We didn't modify anything.
   return false;
@@ -490,9 +491,10 @@ bool LinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
   SwitchToTextSection("\t.text");
   // Emit initial debug information.
-  DW.BeginModule(&M);
+  DW = getAnalysisToUpdate<DwarfWriter>();
+  assert(DW && "Dwarf Writer is not available");
   MMI = getAnalysisToUpdate<MachineModuleInfo>();
-  DW.SetModuleInfo(MMI);
+  DW->BeginModule(&M, MMI, O, this, TAI);
   return Result;
 }
 
@@ -602,7 +604,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
   // TODO
 
   // Emit initial debug information.
-  DW.EndModule();
+  DW->EndModule();
 
   return AsmPrinter::doFinalization(M);
 }

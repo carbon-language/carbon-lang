@@ -44,12 +44,12 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 namespace {
   struct VISIBILITY_HIDDEN ARMAsmPrinter : public AsmPrinter {
     ARMAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
-      : AsmPrinter(O, TM, T), DW(O, this, T), MMI(NULL), AFI(NULL), MCP(NULL),
+      : AsmPrinter(O, TM, T), DW(0), MMI(NULL), AFI(NULL), MCP(NULL),
         InCPMode(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
 
-    DwarfWriter DW;
+    DwarfWriter *DW;
     MachineModuleInfo *MMI;
 
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
@@ -172,6 +172,7 @@ namespace {
       AsmPrinter::getAnalysisUsage(AU);
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
+      AU.addRequired<DwarfWriter>();
     }
   };
 } // end of anonymous namespace
@@ -231,7 +232,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   O << CurrentFnName << ":\n";
   // Emit pre-function debug information.
-  DW.BeginFunction(&MF);
+  DW->BeginFunction(&MF);
 
   if (Subtarget->isTargetDarwin()) {
     // If the function is empty, then we need to emit *something*. Otherwise,
@@ -262,7 +263,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
   // Emit post-function debug information.
-  DW.EndFunction(&MF);
+  DW->EndFunction(&MF);
 
   O.flush();
 
@@ -776,15 +777,15 @@ void ARMAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool ARMAsmPrinter::doInitialization(Module &M) {
-  // Emit initial debug information.
-  DW.BeginModule(&M);
 
   bool Result = AsmPrinter::doInitialization(M);
 
-  // AsmPrinter::doInitialization should have done this analysis.
+  // Emit initial debug information.
   MMI = getAnalysisToUpdate<MachineModuleInfo>();
   assert(MMI);
-  DW.SetModuleInfo(MMI);
+  DW = getAnalysisToUpdate<DwarfWriter>();
+  assert(DW && "Dwarf Writer is not available");
+  DW->BeginModule(&M, MMI, O, this, TAI);
 
   // Darwin wants symbols to be quoted if they have complex names.
   if (Subtarget->isTargetDarwin())
@@ -1012,7 +1013,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 
 
     // Emit initial debug information.
-    DW.EndModule();
+    DW->EndModule();
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
     // contain code that falls through to other global symbols (e.g. the obvious
@@ -1022,7 +1023,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     O << "\t.subsections_via_symbols\n";
   } else {
     // Emit final debug information for ELF.
-    DW.EndModule();
+    DW->EndModule();
   }
 
   return AsmPrinter::doFinalization(M);

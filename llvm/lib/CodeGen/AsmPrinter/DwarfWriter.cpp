@@ -43,6 +43,10 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
+static RegisterPass<DwarfWriter>
+X("dwarfwriter", "DWARF Information Writer");
+char DwarfWriter::ID = 0;
+
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
@@ -4897,10 +4901,7 @@ void DIE::dump() {
 /// DwarfWriter Implementation
 ///
 
-DwarfWriter::DwarfWriter(raw_ostream &OS, AsmPrinter *A,
-                         const TargetAsmInfo *T) {
-  DE = new DwarfException(OS, A, T);
-  DD = new DwarfDebug(OS, A, T);
+DwarfWriter::DwarfWriter() : ImmutablePass(&ID), DD(NULL), DE(NULL) {
 }
 
 DwarfWriter::~DwarfWriter() {
@@ -4908,18 +4909,18 @@ DwarfWriter::~DwarfWriter() {
   delete DD;
 }
 
-/// SetModuleInfo - Set machine module info when it's known that pass manager
-/// has created it.  Set by the target AsmPrinter.
-void DwarfWriter::SetModuleInfo(MachineModuleInfo *MMI) {
-  DD->SetModuleInfo(MMI);
-  DE->SetModuleInfo(MMI);
-}
-
 /// BeginModule - Emit all Dwarf sections that should come prior to the
 /// content.
-void DwarfWriter::BeginModule(Module *M) {
+void DwarfWriter::BeginModule(Module *M,
+                              MachineModuleInfo *MMI,
+                              raw_ostream &OS, AsmPrinter *A,
+                              const TargetAsmInfo *T) {
+  DE = new DwarfException(OS, A, T);
+  DD = new DwarfDebug(OS, A, T);
   DE->BeginModule(M);
   DD->BeginModule(M);
+  DD->SetModuleInfo(MMI);
+  DE->SetModuleInfo(MMI);
 }
 
 /// EndModule - Emit all Dwarf sections that should come after the content.

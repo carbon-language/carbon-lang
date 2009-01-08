@@ -56,10 +56,10 @@ namespace {
   struct VISIBILITY_HIDDEN XCoreAsmPrinter : public AsmPrinter {
     XCoreAsmPrinter(raw_ostream &O, XCoreTargetMachine &TM,
                     const TargetAsmInfo *T)
-      : AsmPrinter(O, TM, T), DW(O, this, T),
+      : AsmPrinter(O, TM, T), DW(0),
         Subtarget(*TM.getSubtargetImpl()) { }
 
-    DwarfWriter DW;
+    DwarfWriter *DW;
     const XCoreSubtarget &Subtarget;
 
     virtual const char *getPassName() const {
@@ -91,6 +91,7 @@ namespace {
       AsmPrinter::getAnalysisUsage(AU);
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
+      AU.addRequired<DwarfWriter>();
     }
   };
 } // end of anonymous namespace
@@ -305,7 +306,7 @@ bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   emitFunctionStart(MF);
   
   // Emit pre-function debug information.
-  DW.BeginFunction(&MF);
+  DW->BeginFunction(&MF);
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -332,7 +333,7 @@ bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   emitFunctionEnd(MF);
   
   // Emit post-function debug information.
-  DW.EndFunction(&MF);
+  DW->EndFunction(&MF);
 
   // We didn't modify anything.
   return false;
@@ -438,9 +439,10 @@ bool XCoreAsmPrinter::doInitialization(Module &M) {
   }
 
   // Emit initial debug information.
-  DW.BeginModule(&M);
-
-  DW.SetModuleInfo(getAnalysisToUpdate<MachineModuleInfo>());
+  DW = getAnalysisToUpdate<DwarfWriter>();
+  assert(DW && "Dwarf Writer is not available");
+  DW->BeginModule(&M, getAnalysisToUpdate<MachineModuleInfo>(), 
+                  O, this, TAI);
   return Result;
 }
 
@@ -453,7 +455,7 @@ bool XCoreAsmPrinter::doFinalization(Module &M) {
   }
   
   // Emit final debug information.
-  DW.EndModule();
+  DW->EndModule();
 
   return AsmPrinter::doFinalization(M);
 }
