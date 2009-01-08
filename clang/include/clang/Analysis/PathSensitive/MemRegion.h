@@ -100,6 +100,8 @@ public:
     return superRegion;
   }
 
+  bool isSubRegionOf(const MemRegion* R) const;
+
   static bool classof(const MemRegion* R) {
     return R->getKind() > SymbolicRegionKind;
   }

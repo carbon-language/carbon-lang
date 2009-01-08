@@ -21,6 +21,19 @@ using namespace clang;
 
 MemRegion::~MemRegion() {}
 
+bool SubRegion::isSubRegionOf(const MemRegion* R) const {
+  const MemRegion* r = getSuperRegion();
+  while (r != 0) {
+    if (r == R)
+      return true;
+    if (const SubRegion* sr = dyn_cast<SubRegion>(r))
+      r = sr->getSuperRegion();
+    else
+      break;
+  }
+  return false;
+}
+
 void MemSpaceRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ID.AddInteger((unsigned)getKind());
 }
