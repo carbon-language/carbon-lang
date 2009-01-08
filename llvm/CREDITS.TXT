@@ -1,6 +1,6 @@
 This file is a partial list of people who have contributed to the LLVM
 project.  If you have contributed a patch or made some other contribution to
-LLVM, please submit a patch to this file to add yourself, and it will be 
+LLVM, please submit a patch to this file to add yourself, and it will be
 done!
 
 The list is sorted by name and formatted to allow easy grepping and
@@ -33,7 +33,7 @@ D: Sparse bitmap
 
 N: Neil Booth
 E: neil@daikokuya.co.uk
-D: APFloat implementation.  
+D: APFloat implementation.
 
 N: Misha Brukman
 E: brukman+llvm@uiuc.edu
@@ -82,7 +82,7 @@ N: Brian Gaeke
 E: gaeke@uiuc.edu
 W: http://www.students.uiuc.edu/~gaeke/
 D: Portions of X86 static and JIT compilers; initial SparcV8 backend
-D: Dynamic trace optimizer 
+D: Dynamic trace optimizer
 D: FreeBSD/X86 compatibility fixes, the llvm-nm tool
 
 N: Nicolas Geoffray
@@ -114,6 +114,10 @@ N: Gabor Greif
 E: ggreif@gmail.com
 D: Improvements for space efficiency
 
+N: Lang Hames
+E: lhames@gmail.com
+D: PBQP-based register allocator
+
 N: Gordon Henriksen
 E: gordonhenriksen@mac.com
 D: Pluggable GC support
@@ -126,7 +130,7 @@ D: JIT support for ARM
 
 N: Paolo Invernizzi
 E: arathorn@fastwebnet.it
-D: Visual C++ compatibility fixes 
+D: Visual C++ compatibility fixes
 
 N: Patrick Jenkins
 E: patjenk@wam.umd.edu
@@ -168,7 +172,7 @@ N: Jim Laskey
 E: jlaskey@apple.com
 D: Improvements to the PPC backend, instruction scheduling
 D: Debug and Dwarf implementation
-D: Auto upgrade mangler 
+D: Auto upgrade mangler
 D: llvm-gcc4 svn wrangler
 
 N: Chris Lattner
@@ -217,7 +221,7 @@ D: Added STI Cell SPU backend.
 
 N: Morten Ofstad
 E: morten@hue.no
-D: Visual C++ compatibility fixes 
+D: Visual C++ compatibility fixes
 
 N: Richard Osborne
 E: richard@xmos.com
