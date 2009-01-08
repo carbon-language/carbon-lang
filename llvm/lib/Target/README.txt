@@ -1495,3 +1495,60 @@ codegen.
 Those should be turned into a switch.
 
 //===---------------------------------------------------------------------===//
+
+252.eon contains this interesting code:
+
+        %3072 = getelementptr [100 x i8]* %tempString, i32 0, i32 0
+        %3073 = call i8* @strcpy(i8* %3072, i8* %3071) nounwind
+        %strlen = call i32 @strlen(i8* %3072)    ; uses = 1
+        %endptr = getelementptr [100 x i8]* %tempString, i32 0, i32 %strlen
+        call void @llvm.memcpy.i32(i8* %endptr, 
+          i8* getelementptr ([5 x i8]* @"\01LC42", i32 0, i32 0), i32 5, i32 1)
+        %3074 = call i32 @strlen(i8* %endptr) nounwind readonly 
+        
+This is interesting for a couple reasons.  First, in this:
+
+        %3073 = call i8* @strcpy(i8* %3072, i8* %3071) nounwind
+        %strlen = call i32 @strlen(i8* %3072)  
+
+The strlen could be replaced with: %strlen = sub %3072, %3073, because the
+strcpy call returns a pointer to the end of the string.  Based on that, the
+endptr GEP just becomes equal to 3073, which eliminates a strlen call and GEP.
+
+Second, the memcpy+strlen strlen can be replaced with:
+
+        %3074 = call i32 @strlen([5 x i8]* @"\01LC42") nounwind readonly 
+
+Because the destination was just copied into the specified memory buffer.  This,
+in turn, can be constant folded to "4".
+
+In other code, it contains:
+
+        %endptr6978 = bitcast i8* %endptr69 to i32*            
+        store i32 7107374, i32* %endptr6978, align 1
+        %3167 = call i32 @strlen(i8* %endptr69) nounwind readonly    
+
+Which could also be constant folded.  Whatever is producing this should probably
+be fixed to leave this as a memcpy from a string.
+
+Further, eon also has an interesting partially redundant strlen call:
+
+bb8:            ; preds = %_ZN18eonImageCalculatorC1Ev.exit
+        %682 = getelementptr i8** %argv, i32 6          ; <i8**> [#uses=2]
+        %683 = load i8** %682, align 4          ; <i8*> [#uses=4]
+        %684 = load i8* %683, align 1           ; <i8> [#uses=1]
+        %685 = icmp eq i8 %684, 0               ; <i1> [#uses=1]
+        br i1 %685, label %bb10, label %bb9
+
+bb9:            ; preds = %bb8
+        %686 = call i32 @strlen(i8* %683) nounwind readonly          
+        %687 = icmp ugt i32 %686, 254           ; <i1> [#uses=1]
+        br i1 %687, label %bb10, label %bb11
+
+bb10:           ; preds = %bb9, %bb8
+        %688 = call i32 @strlen(i8* %683) nounwind readonly          
+
+This could be eliminated by doing the strlen once in bb8, saving code size and
+improving perf on the bb8->9->10 path.
+
+//===---------------------------------------------------------------------===//
