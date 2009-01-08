@@ -28,7 +28,7 @@ namespace lltok {
     lbrace, rbrace,    // {  }
     less, greater,     // <  >
     lparen, rparen,    // (  )
-    backslash,         // \
+    backslash,         // \    (not /)
 
     kw_x,
     kw_begin,   kw_end,
