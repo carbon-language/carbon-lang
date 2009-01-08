@@ -114,9 +114,6 @@ private:
   /// in, inout, etc.
   unsigned objcDeclQualifier : 6;
   
-  // Context this method is declared in.
-  DeclContext *MethodContext;
-  
   // Type of this method.
   QualType MethodDeclType;
   /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
@@ -150,7 +147,6 @@ private:
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
-    MethodContext(contextDecl),
     MethodDeclType(T), 
     ParamInfo(0), NumMethodParams(0), 
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
@@ -182,9 +178,7 @@ public:
   SourceRange getSourceRange() const { 
     return SourceRange(getLocation(), EndLoc); 
   }
-  
-  DeclContext *getMethodContext() const { return MethodContext; }
-  
+    
   ObjCInterfaceDecl *getClassInterface();
   const ObjCInterfaceDecl *getClassInterface() const {
     return const_cast<ObjCMethodDecl*>(this)->getClassInterface();

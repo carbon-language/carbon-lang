@@ -882,7 +882,7 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
   NameStr += "_";
   
   if (ObjCCategoryImplDecl *CID = 
-      dyn_cast<ObjCCategoryImplDecl>(OMD->getMethodContext())) {
+      dyn_cast<ObjCCategoryImplDecl>(OMD->getDeclContext())) {
     NameStr += CID->getNameAsString();
     NameStr += "_";
   }

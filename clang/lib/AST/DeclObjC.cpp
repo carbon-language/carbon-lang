@@ -812,22 +812,23 @@ unsigned ObjCMethodDecl::getSynthesizedMethodSize() const {
   // Get length of this name.
   unsigned length = 3;  // _I_ or _C_
   length += getClassInterface()->getNameAsString().size()+1; // extra for _
-  if (ObjCCategoryImplDecl *CID = 
-      dyn_cast<ObjCCategoryImplDecl>(getMethodContext()))
+  if (const ObjCCategoryImplDecl *CID = 
+      dyn_cast<ObjCCategoryImplDecl>(getDeclContext()))
     length += CID->getNameAsString().size()+1;
   length += getSelector().getAsString().size(); // selector name
   return length; 
 }
 
 ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
-  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(MethodContext))
+  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(getDeclContext()))
     return ID;
-  if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(MethodContext))
+  if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(getDeclContext()))
     return CD->getClassInterface();
   if (ObjCImplementationDecl *IMD = 
-        dyn_cast<ObjCImplementationDecl>(MethodContext))
+        dyn_cast<ObjCImplementationDecl>(getDeclContext()))
     return IMD->getClassInterface();
-  if (ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(MethodContext))
+  if (ObjCCategoryImplDecl *CID = 
+        dyn_cast<ObjCCategoryImplDecl>(getDeclContext()))
     return CID->getClassInterface();
   assert(false && "unknown method context");
   return 0;
