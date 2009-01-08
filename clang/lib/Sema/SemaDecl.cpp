@@ -3530,11 +3530,6 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   // Register this decl in the current scope stack.
   PushOnScopeChains(New, S);
 
-  // Add this enumerator into the enum itself.
-  // FIXME: This means that the enumerator is stored in two
-  // DeclContexts. This is not a long-term solution.
-  New->setLexicalDeclContext(TheEnumDecl);
-  TheEnumDecl->addDecl(Context, New, true);
   return New;
 }
 
