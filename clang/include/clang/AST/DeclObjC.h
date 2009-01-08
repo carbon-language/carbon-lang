@@ -758,6 +758,12 @@ public:
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCProtocol; }
   static bool classof(const ObjCProtocolDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const ObjCProtocolDecl *D) {
+    return static_cast<DeclContext *>(const_cast<ObjCProtocolDecl*>(D));
+  }
+  static ObjCProtocolDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<ObjCProtocolDecl *>(const_cast<DeclContext*>(DC));
+  }
 };
   
 /// ObjCClassDecl - Specifies a list of forward class declarations. For example:
@@ -947,6 +953,12 @@ public:
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategory; }
   static bool classof(const ObjCCategoryDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const ObjCCategoryDecl *D) {
+    return static_cast<DeclContext *>(const_cast<ObjCCategoryDecl*>(D));
+  }
+  static ObjCCategoryDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<ObjCCategoryDecl *>(const_cast<DeclContext*>(DC));
+  }
 };
 
 /// ObjCCategoryImplDecl - An object of this class encapsulates a category 
@@ -1041,6 +1053,12 @@ public:
     
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategoryImpl;}
   static bool classof(const ObjCCategoryImplDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const ObjCCategoryImplDecl *D) {
+    return static_cast<DeclContext *>(const_cast<ObjCCategoryImplDecl*>(D));
+  }
+  static ObjCCategoryImplDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<ObjCCategoryImplDecl *>(const_cast<DeclContext*>(DC));
+  }
 };
 
 /// ObjCImplementationDecl - Represents a class definition - this is where
@@ -1163,6 +1181,12 @@ public:
     return D->getKind() == ObjCImplementation;
   }
   static bool classof(const ObjCImplementationDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const ObjCImplementationDecl *D) {
+    return static_cast<DeclContext *>(const_cast<ObjCImplementationDecl*>(D));
+  }
+  static ObjCImplementationDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<ObjCImplementationDecl *>(const_cast<DeclContext*>(DC));
+  }
 };
 
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is 
