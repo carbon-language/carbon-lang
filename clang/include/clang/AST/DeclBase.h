@@ -497,7 +497,7 @@ public:
 
   /// lookup - Find the declarations (if any) with the given Name in
   /// this context. Returns a range of iterators that contains all of
-  /// the declarations with this name (which may be 0, 1, or 2
+  /// the declarations with this name (which may be 0, 1, or more
   /// declarations). If two declarations are returned, the declaration
   /// in the "ordinary" identifier namespace will precede the
   /// declaration in the "tag" identifier namespace (e.g., values
