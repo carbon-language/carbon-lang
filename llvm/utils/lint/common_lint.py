@@ -15,7 +15,7 @@ def VerifyLineLength(filename, lines, max_length):
   """
   line_num = 1
   for line in lines:
-    length = len(line.rstrip())  # strip off EOL char(s)
+    length = len(line.rstrip())
     if length > max_length:
       print '%s:%d:Line exceeds %d chars (%d)' % (filename, line_num,
                                                   max_length, length)
@@ -32,7 +32,7 @@ def VerifyTrailingWhitespace(filename, lines):
   trailing_whitespace_re = re.compile(r'\s+$')
   line_num = 1
   for line in lines:
-    if trailing_whitespace_re.match(line):
+    if trailing_whitespace_re.match(line.rstrip()):
       print '%s:%d:Trailing whitespace' % (filename, line_num)
     line_num += 1
 
