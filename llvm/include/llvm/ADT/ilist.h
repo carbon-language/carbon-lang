@@ -1,10 +1,10 @@
 //==-- llvm/ADT/ilist.h - Intrusive Linked List Template ---------*- C++ -*-==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines classes to implement an intrusive doubly linked list class
@@ -101,7 +101,7 @@ struct ilist_traits<const Ty> : public ilist_traits<Ty> {};
 template<typename NodeTy>
 class ilist_iterator
   : public bidirectional_iterator<NodeTy, ptrdiff_t> {
-    
+
 public:
   typedef ilist_traits<NodeTy> Traits;
   typedef bidirectional_iterator<NodeTy, ptrdiff_t> super;
@@ -232,14 +232,14 @@ template<typename From> struct simplify_type;
 
 template<typename NodeTy> struct simplify_type<ilist_iterator<NodeTy> > {
   typedef NodeTy* SimpleType;
-  
+
   static SimpleType getSimplifiedValue(const ilist_iterator<NodeTy> &Node) {
     return &*Node;
   }
 };
 template<typename NodeTy> struct simplify_type<const ilist_iterator<NodeTy> > {
   typedef NodeTy* SimpleType;
-  
+
   static SimpleType getSimplifiedValue(const ilist_iterator<NodeTy> &Node) {
     return &*Node;
   }
@@ -257,16 +257,16 @@ template<typename NodeTy> struct simplify_type<const ilist_iterator<NodeTy> > {
 /// 1. The list may be completely unconstructed.  In this case, the head
 ///    pointer is null.  When in this form, any query for an iterator (e.g.
 ///    begin() or end()) causes the list to transparently change to state #2.
-/// 2. The list may be empty, but contain a sentinal for the end iterator. This
-///    sentinal is created by the Traits::createSentinel method and is a link
+/// 2. The list may be empty, but contain a sentinel for the end iterator. This
+///    sentinel is created by the Traits::createSentinel method and is a link
 ///    in the list.  When the list is empty, the pointer in the iplist points
-///    to the sentinal.  Once the sentinal is constructed, it
+///    to the sentinel.  Once the sentinel is constructed, it
 ///    is not destroyed until the list is.
 /// 3. The list may contain actual objects in it, which are stored as a doubly
 ///    linked list of nodes.  One invariant of the list is that the predecessor
 ///    of the first node in the list always points to the last node in the list,
-///    and the successor pointer for the sentinal (which always stays at the
-///    end of the list) is always null.  
+///    and the successor pointer for the sentinel (which always stays at the
+///    end of the list) is always null.
 ///
 template<typename NodeTy, typename Traits=ilist_traits<NodeTy> >
 class iplist : public Traits {
@@ -279,10 +279,10 @@ class iplist : public Traits {
   NodeTy *getTail() { return this->getPrev(Head); }
   const NodeTy *getTail() const { return this->getPrev(Head); }
   void setTail(NodeTy *N) const { this->setPrev(Head, N); }
-  
-  /// CreateLazySentinal - This method verifies whether the sentinal for the
+
+  /// CreateLazySentinel - This method verifies whether the sentinel for the
   /// list has been created and lazily makes it if not.
-  void CreateLazySentinal() const {
+  void CreateLazySentinel() const {
     if (Head != 0) return;
     Head = Traits::createSentinel();
     this->setNext(Head, 0);
@@ -319,19 +319,19 @@ public:
 
   // Iterator creation methods.
   iterator begin() {
-    CreateLazySentinal(); 
-    return iterator(Head); 
+    CreateLazySentinel();
+    return iterator(Head);
   }
   const_iterator begin() const {
-    CreateLazySentinal();
+    CreateLazySentinel();
     return const_iterator(Head);
   }
   iterator end() {
-    CreateLazySentinal();
+    CreateLazySentinel();
     return iterator(getTail());
   }
   const_iterator end() const {
-    CreateLazySentinal();
+    CreateLazySentinel();
     return const_iterator(getTail());
   }
 
@@ -397,7 +397,7 @@ public:
     this->setPrev(NextNode, PrevNode);
     IT = NextNode;
     removeNodeFromList(Node);  // Notify traits that we removed a node...
-    
+
     // Set the next/prev pointers of the current node to null.  This isn't
     // strictly required, but this catches errors where a node is removed from
     // an ilist (and potentially deleted) with iterators still pointing at it.
@@ -461,7 +461,7 @@ private:
 
       transferNodesFromList(L2, First, PosNext);
 
-      // Now that everything is set, restore the pointers to the list sentinals.
+      // Now that everything is set, restore the pointers to the list sentinels.
       L2.setTail(L2Sentinel);
       setTail(ThisSentinel);
     }
@@ -474,7 +474,7 @@ public:
   //
 
   size_type size() const {
-    if (Head == 0) return 0; // Don't require construction of sentinal if empty.
+    if (Head == 0) return 0; // Don't require construction of sentinel if empty.
 #if __GNUC__ == 2
     // GCC 2.95 has a broken std::distance
     size_type Result = 0;
@@ -592,7 +592,7 @@ struct ilist : public iplist<NodeTy> {
   }
   explicit ilist(size_type count) {
     insert(this->begin(), count, NodeTy());
-  } 
+  }
   ilist(size_type count, const NodeTy &val) {
     insert(this->begin(), count, val);
   }
@@ -607,7 +607,7 @@ struct ilist : public iplist<NodeTy> {
   iterator insert(iterator a, NodeTy *b){ return iplist<NodeTy>::insert(a, b); }
   void push_front(NodeTy *a) { iplist<NodeTy>::push_front(a); }
   void push_back(NodeTy *a)  { iplist<NodeTy>::push_back(a); }
-  
+
 
   // Main implementation here - Insert for a node passed by value...
   iterator insert(iterator where, const NodeTy &val) {
