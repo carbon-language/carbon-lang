@@ -285,6 +285,10 @@ SourceLocation PTHLexer::getSourceLocation() {
   return SourceLocation::getFileLoc(FileID, offset);
 }
 
+unsigned PTHLexer::getSpelling(SourceLocation sloc, const char *&Buffer) {
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 // Internal Data Structures for PTH file lookup and resolving identifiers.
 //===----------------------------------------------------------------------===//
@@ -299,19 +303,26 @@ public:
   class Val {
     uint32_t TokenOff;
     uint32_t PPCondOff;
+    uint32_t SpellingOff;
     
   public:
     Val() : TokenOff(~0) {}
-    Val(uint32_t toff, uint32_t poff) : TokenOff(toff), PPCondOff(poff) {}
+    Val(uint32_t toff, uint32_t poff, uint32_t soff)
+      : TokenOff(toff), PPCondOff(poff), SpellingOff(soff) {}
     
     uint32_t getTokenOffset() const {
       assert(TokenOff != ~((uint32_t)0) && "PTHFileLookup entry initialized.");
       return TokenOff;
     }
     
-    uint32_t gettPPCondOffset() const {
+    uint32_t getPPCondOffset() const {
       assert(TokenOff != ~((uint32_t)0) && "PTHFileLookup entry initialized.");
       return PPCondOff;
+    }
+    
+    uint32_t getSpellingOffset() const {
+      assert(TokenOff != ~((uint32_t)0) && "PTHFileLookup entry initialized.");
+      return SpellingOff;
     }
     
     bool isValid() const { return TokenOff != ~((uint32_t)0); }
@@ -336,8 +347,13 @@ public:
       uint32_t len = Read32(D);
       const char* s = D;
       D += len;
+
       uint32_t TokenOff = Read32(D);
-      FileMap.GetOrCreateValue(s, s+len).getValue() = Val(TokenOff, Read32(D));      
+      uint32_t PPCondOff = Read32(D);
+      uint32_t SpellingOff = Read32(D);
+
+      FileMap.GetOrCreateValue(s, s+len).getValue() =
+        Val(TokenOff, PPCondOff, SpellingOff);      
     }
   }
 };
@@ -459,10 +475,10 @@ PTHLexer* PTHManager::CreateLexer(unsigned FileID, const FileEntry* FE) {
   const char* data = Buf->getBufferStart() + FileData.getTokenOffset();
 
   // Get the location of pp-conditional table.
-  const char* ppcond = Buf->getBufferStart() + FileData.gettPPCondOffset();
-  uint32_t len = Read32(ppcond);  
+  const char* ppcond = Buf->getBufferStart() + FileData.getPPCondOffset();
+  uint32_t len = Read32(ppcond);
   if (len == 0) ppcond = 0;
-  
+
   assert(data < Buf->getBufferEnd());
   return new PTHLexer(PP, SourceLocation::getFileLoc(FileID, 0), data, ppcond,
                       *this); 

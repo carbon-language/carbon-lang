@@ -85,6 +85,16 @@ public:
   /// IndirectLex - An indirect call to 'Lex' that can be invoked via
   ///  the PreprocessorLexer interface.
   void IndirectLex(Token &Result) { Lex(Result); }
+
+  /// Returns the cached spelling of a token.
+  /// \param[in] sloc The SourceLocation of the token.
+  /// \param[out] Buffer If a token's spelling is found in the PTH file then
+  ///   upon exit from this method \c Buffer will be set to the address of
+  ///   the character array representing that spelling.  No characters
+  ///   are copied.
+  /// \returns The number of characters for the spelling of the token.  This
+  ///   value is 0 if the spelling could not be found in the PTH file.
+  unsigned getSpelling(SourceLocation sloc, const char *&Buffer);
   
   /// getSourceLocation - Return a source location for the token in
   /// the current file.

@@ -236,7 +236,25 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
     Buffer = II->getName();
     return II->getLength();
   }
-  
+
+  // If using PTH, try and get the spelling from the PTH file.
+  if (CurPTHLexer) {
+    // We perform the const_cast<> here because we will only have a PTHLexer 
+    // when grabbing a stream of tokens from the PTH file (and thus the
+    // Preprocessor state is allowed to change).  The PTHLexer can assume we are
+    // getting token spellings in the order of tokens, and thus can update
+    // its internal state so that it can quickly fetch spellings from the PTH
+    // file.
+    unsigned len =
+      const_cast<PTHLexer*>(CurPTHLexer.get())->getSpelling(Tok.getLocation(),
+                                                            Buffer);
+    
+    // Did we find a spelling?  If so return its length.  Otherwise fall
+    // back to the default behavior for getting the spelling by looking at
+    // at the source code.
+    if (len) return len;
+  }
+
   // Otherwise, compute the start of the token in the input lexer buffer.
   const char *TokStart = SourceMgr.getCharacterData(Tok.getLocation());
 
