@@ -633,8 +633,8 @@ namespace ISD {
     // the return is always the original value in *ptr
     ATOMIC_SWAP,
 
-    // Val, OUTCHAIN = ATOMIC_L[OpName]S(INCHAIN, ptr, amt)
-    // this corresponds to the atomic.[OpName] intrinsic.
+    // Val, OUTCHAIN = ATOMIC_LOAD_[OpName](INCHAIN, ptr, amt)
+    // this corresponds to the atomic.load.[OpName] intrinsic.
     // op(*ptr, amt) is stored to *ptr atomically.
     // the return is always the original value in *ptr
     ATOMIC_LOAD_ADD,
