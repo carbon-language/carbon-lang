@@ -1552,3 +1552,102 @@ This could be eliminated by doing the strlen once in bb8, saving code size and
 improving perf on the bb8->9->10 path.
 
 //===---------------------------------------------------------------------===//
+
+I see an interesting fully redundant call to strlen left in 186.crafty:InputMove
+which looks like:
+       %movetext11 = getelementptr [128 x i8]* %movetext, i32 0, i32 0 
+ 
+
+bb62:           ; preds = %bb55, %bb53
+        %promote.0 = phi i32 [ %169, %bb55 ], [ 0, %bb53 ]             
+        %171 = call i32 @strlen(i8* %movetext11) nounwind readonly align 1
+        %172 = add i32 %171, -1         ; <i32> [#uses=1]
+        %173 = getelementptr [128 x i8]* %movetext, i32 0, i32 %172       
+
+...  no stores ...
+       br i1 %or.cond, label %bb65, label %bb72
+
+bb65:           ; preds = %bb62
+        store i8 0, i8* %173, align 1
+        br label %bb72
+
+bb72:           ; preds = %bb65, %bb62
+        %trank.1 = phi i32 [ %176, %bb65 ], [ -1, %bb62 ]            
+        %177 = call i32 @strlen(i8* %movetext11) nounwind readonly align 1
+
+Note that on the bb62->bb72 path, that the %177 strlen call is partially
+redundant with the %171 call.  At worst, we could shove the %177 strlen call
+up into the bb65 block moving it out of the bb62->bb72 path.   However, note
+that bb65 stores to the string, zeroing out the last byte.  This means that on
+that path the value of %177 is actually just %171-1.  A sub is cheaper than a
+strlen!
+
+This pattern repeats several times, basically doing:
+
+  A = strlen(P);
+  P[A-1] = 0;
+  B = strlen(P);
+  where it is "obvious" that B = A-1.
+
+//===---------------------------------------------------------------------===//
+
+186.crafty contains this interesting pattern:
+
+%77 = call i8* @strstr(i8* getelementptr ([6 x i8]* @"\01LC5", i32 0, i32 0),
+                       i8* %30)
+%phitmp648 = icmp eq i8* %77, getelementptr ([6 x i8]* @"\01LC5", i32 0, i32 0)
+br i1 %phitmp648, label %bb70, label %bb76
+
+bb70:           ; preds = %OptionMatch.exit91, %bb69
+        %78 = call i32 @strlen(i8* %30) nounwind readonly align 1               ; <i32> [#uses=1]
+
+This is basically:
+  cststr = "abcdef";
+  if (strstr(cststr, P) == cststr) {
+     x = strlen(P);
+     ...
+
+The strstr call would be significantly cheaper written as:
+
+cststr = "abcdef";
+if (memcmp(P, str, strlen(P)))
+  x = strlen(P);
+
+This is memcmp+strlen instead of strstr.  This also makes the strlen fully
+redundant.
+
+//===---------------------------------------------------------------------===//
+
+186.crafty also contains this code:
+
+%1906 = call i32 @strlen(i8* getelementptr ([32 x i8]* @pgn_event, i32 0,i32 0))
+%1907 = getelementptr [32 x i8]* @pgn_event, i32 0, i32 %1906
+%1908 = call i8* @strcpy(i8* %1907, i8* %1905) nounwind align 1
+%1909 = call i32 @strlen(i8* getelementptr ([32 x i8]* @pgn_event, i32 0,i32 0))
+%1910 = getelementptr [32 x i8]* @pgn_event, i32 0, i32 %1909         
+
+The last strlen is computable as 1908-@pgn_event, which means 1910=1908.
+
+//===---------------------------------------------------------------------===//
+
+186.crafty has this interesting pattern with the "out.4543" variable:
+
+call void @llvm.memcpy.i32(
+        i8* getelementptr ([10 x i8]* @out.4543, i32 0, i32 0),
+       i8* getelementptr ([7 x i8]* @"\01LC28700", i32 0, i32 0), i32 7, i32 1) 
+%101 = call@printf(i8* ...   @out.4543, i32 0, i32 0)) nounwind 
+
+It is basically doing:
+
+  memcpy(globalarray, "string");
+  printf(...,  globalarray);
+  
+Anyway, by knowing that printf just reads the memory and forward substituting
+the string directly into the printf, this eliminates reads from globalarray.
+Since this pattern occurs frequently in crafty (due to the "DisplayTime" and
+other similar functions) there are many stores to "out".  Once all the printfs
+stop using "out", all that is left is the memcpy's into it.  This should allow
+globalopt to remove the "stored only" global.
+
+//===---------------------------------------------------------------------===//
+
