@@ -163,11 +163,8 @@ files_to_ignore="\
   -o -name ltmain.sh \
   -o -name aclocal.m4 \
   -o -name acinclude.m4 \
-  -o -name *VerifierIsReallySlow.llx \
   -o -name *LoopSimplifyCrash.ll \
   -o -name *AST-Remove.ll \
-  -o -name llvmAsmParser.cpp \
-  -o -name llvmAsmParser.h \
   -o -name PPCPerfectShuffle.h \
 "
 
