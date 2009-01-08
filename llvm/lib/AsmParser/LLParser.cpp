@@ -564,11 +564,18 @@ GlobalValue *LLParser::GetGlobalVal(const std::string &Name, const Type *Ty,
   
   // Otherwise, create a new forward reference for this value and remember it.
   GlobalValue *FwdVal;
-  if (const FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType()))
+  if (const FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType())) {
+    // Function types can return opaque but functions can't.
+    if (isa<OpaqueType>(FT->getReturnType())) {
+      Error(Loc, "function may not return opaque type");
+      return 0;
+    }
+    
     FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, Name, M);
-  else
+  } else {
     FwdVal = new GlobalVariable(PTy->getElementType(), false,
                                 GlobalValue::ExternalWeakLinkage, 0, Name, M);
+  }
   
   ForwardRefVals[Name] = std::make_pair(FwdVal, Loc);
   return FwdVal;
