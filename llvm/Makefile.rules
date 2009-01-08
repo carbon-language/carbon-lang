@@ -4,7 +4,7 @@
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
-# 
+#
 #===------------------------------------------------------------------------===#
 #
 # This file is included by all of the LLVM makefiles.  For details on how to use
@@ -50,7 +50,7 @@ VPATH=$(PROJ_SRC_DIR)
 .PHONY: $(UserTargets) $(InternalTargets)
 
 #--------------------------------------------------------------------
-# Make sure all the user-target rules are double colon rules and 
+# Make sure all the user-target rules are double colon rules and
 # they are defined first.
 #--------------------------------------------------------------------
 
@@ -188,7 +188,7 @@ clean:: clean-local
 clean-all:: clean-local clean-all-local
 install:: install-local
 uninstall:: uninstall-local
-install-local:: all-local 
+install-local:: all-local
 install-bytecode:: install-bytecode-local
 
 ###############################################################################
@@ -269,8 +269,8 @@ else
   CPP.Defines += -D_DEBUG
 endif
 
-# If ENABLE_EXPENSIVE_CHECKS=1 is specified (make command line or 
-# configured), then enable expensive checks by defining the 
+# If ENABLE_EXPENSIVE_CHECKS=1 is specified (make command line or
+# configured), then enable expensive checks by defining the
 # appropriate preprocessor symbols.
 ifdef ENABLE_EXPENSIVE_CHECKS
   BuildMode := $(BuildMode)+Checks
@@ -340,7 +340,7 @@ ifndef TBLGEN
     TBLGEN   := $(LLVMToolDir)/tblgen$(EXEEXT)
   endif
 endif
-LLVM_CONFIG := $(LLVMToolDir)/llvm-config 
+LLVM_CONFIG := $(LLVMToolDir)/llvm-config
 ifndef LLVMLD
 LLVMLD    := $(LLVMToolDir)/llvm-ld$(EXEEXT)
 endif
@@ -380,7 +380,7 @@ endif
 
 # Adjust LD.Flags and Libtool.Flags depending on the kind of library that is
 # to be built. Note that if LOADABLE_MODULE is specified then the resulting
-# shared library can be opened with dlopen. Also, LOADABLE_MODULE implies 
+# shared library can be opened with dlopen. Also, LOADABLE_MODULE implies
 # several other things so we force them to be defined/on.
 ifdef LOADABLE_MODULE
   SHARED_LIBRARY := 1
@@ -409,7 +409,7 @@ ifndef VERBOSE
   AR.Flags += >/dev/null 2>/dev/null
   ConfigureScriptFLAGS += >$(PROJ_OBJ_DIR)/configure.out 2>&1
 else
-  ConfigureScriptFLAGS := 
+  ConfigureScriptFLAGS :=
 endif
 
 # By default, strip symbol information from executable
@@ -470,7 +470,7 @@ ifeq ($(OS),SunOS)
 CPP.BaseFlags += -include llvm/System/Solaris.h
 endif
 
-LD.Flags      += -L$(LibDir) -L$(LLVMLibDir) 
+LD.Flags      += -L$(LibDir) -L$(LLVMLibDir)
 CPP.BaseFlags += -D_GNU_SOURCE -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 # All -I flags should go here, so that they don't confuse llvm-config.
 CPP.Flags     += $(sort -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
@@ -509,8 +509,8 @@ LTLink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(Link)
 LTRelink      = $(LIBTOOL) $(LibTool.Flags) --mode=link $(Relink)
 LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 		$(Install.Flags)
-ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
-ScriptInstall = $(INSTALL) -m 0755 
+ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755
+ScriptInstall = $(INSTALL) -m 0755
 DataInstall   = $(INSTALL) -m 0644
 
 # When compiling under Mingw/Cygwin, the tblgen tool expects Windows
@@ -529,8 +529,8 @@ Ranlib        = ranlib
 endif
 
 #----------------------------------------------------------
-# Get the list of source files and compute object file 
-# names from them. 
+# Get the list of source files and compute object file
+# names from them.
 #----------------------------------------------------------
 
 ifndef SOURCES
@@ -538,7 +538,7 @@ ifndef SOURCES
              $(PROJ_SRC_DIR)/*.cc $(PROJ_SRC_DIR)/*.c))
 else
   Sources := $(SOURCES)
-endif 
+endif
 
 ifdef BUILT_SOURCES
 Sources += $(filter %.cpp %.c %.cc,$(BUILT_SOURCES))
@@ -576,7 +576,7 @@ $(PROJ_etcdir): $(PROJ_etcdir)/.dir
 # Handle the DIRS options for sequential construction
 #---------------------------------------------------------
 
-SubDirs := 
+SubDirs :=
 ifdef DIRS
 SubDirs += $(DIRS)
 
@@ -703,8 +703,8 @@ endif
 
 #---------------------------------------------------------
 # Define various command line options pertaining to the
-# libraries needed when linking. There are "Proj" libs 
-# (defined by the user's project) and "LLVM" libs (defined 
+# libraries needed when linking. There are "Proj" libs
+# (defined by the user's project) and "LLVM" libs (defined
 # by the LLVM project).
 #---------------------------------------------------------
 
@@ -792,7 +792,7 @@ DestModule := $(ModuleDestDir)/$(MODULE_NAME).bc
 install-module:: $(DestModule)
 install-local:: $(DestModule)
 
-$(DestModule): $(ModuleDestDir) $(Module) 
+$(DestModule): $(ModuleDestDir) $(Module)
 	$(Echo) Installing $(BuildMode) Bytecode Module $(DestModule)
 	$(Verb) $(DataInstall) $(Module) $(DestModule)
 
@@ -867,7 +867,7 @@ $(DestSharedLib): $(PROJ_libdir) $(LibName.LA)
 	$(Verb) $(LTInstall) $(LibName.LA) $(DestSharedLib)
 	$(Verb) $(LIBTOOL) --finish $(PROJ_libdir)
 
-uninstall-local:: 
+uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
 	-$(Verb) $(RM) -f $(PROJ_libdir)/lib$(LIBRARYNAME).*
 endif
@@ -876,7 +876,7 @@ endif
 #---------------------------------------------------------
 # Bytecode Library Targets:
 #   If the user asked for a bytecode library to be built
-#   with the BYTECODE_LIBRARY variable, then we provide 
+#   with the BYTECODE_LIBRARY variable, then we provide
 #   targets for building them.
 #---------------------------------------------------------
 ifdef BYTECODE_LIBRARY
@@ -929,7 +929,7 @@ uninstall-local::
 else
 install-local:: $(DestBytecodeLib)
 
-$(DestBytecodeLib): $(BytecodeDestDir) $(LibName.BCA) 
+$(DestBytecodeLib): $(BytecodeDestDir) $(LibName.BCA)
 	$(Echo) Installing $(BuildMode) Bytecode Archive $(DestBytecodeLib)
 	$(Verb) $(DataInstall) $(LibName.BCA) $(DestBytecodeLib)
 
@@ -988,7 +988,7 @@ endif
 
 #---------------------------------------------------------
 # Archive Library Targets:
-#   If the user wanted a regular archive library built, 
+#   If the user wanted a regular archive library built,
 #   then we provide targets for building them.
 #---------------------------------------------------------
 ifdef BUILD_ARCHIVE
@@ -1028,7 +1028,7 @@ endif
 endif
 
 # endif LIBRARYNAME
-endif 
+endif
 
 ###############################################################################
 # Tool Build Rules: Build executable tool based on TOOLNAME option
@@ -1066,7 +1066,7 @@ $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Verb) $(LTLink) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
 	$(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB) $(LIBS)
 	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) \
-          $(StripWarnMsg) 
+          $(StripWarnMsg)
 
 ifdef NO_INSTALL
 install-local::
@@ -1089,7 +1089,7 @@ endif
 endif
 
 ###############################################################################
-# Object Build Rules: Build object files based on sources 
+# Object Build Rules: Build object files based on sources
 ###############################################################################
 
 # FIXME: This should be checking for "if not GCC or ICC", not for "if HP-UX"
@@ -1146,7 +1146,7 @@ $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
                               $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
-	$(call UPGRADE_MSG,$@) 
+	$(call UPGRADE_MSG,$@)
 	$(call UPGRADE_LL,$@)
 
 $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
@@ -1155,7 +1155,7 @@ $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
                               $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
-	$(call UPGRADE_MSG,$@) 
+	$(call UPGRADE_MSG,$@)
 	$(call UPGRADE_LL,$@)
 
 $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
@@ -1164,7 +1164,7 @@ $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
                             $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCd"; exit 1; fi
-	$(call UPGRADE_MSG,$@) 
+	$(call UPGRADE_MSG,$@)
 	$(call UPGRADE_LL,$@)
 
 # Provide alternate rule sets if dependencies are disabled
@@ -1172,32 +1172,32 @@ else
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build" $(PIC_FLAG)
-	$(MAYBE_PIC_Compile.CXX) $< -o $@ 
+	$(MAYBE_PIC_Compile.CXX) $< -o $@
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
-	$(MAYBE_PIC_Compile.CXX) $< -o $@ 
+	$(MAYBE_PIC_Compile.CXX) $< -o $@
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
-	$(MAYBE_PIC_Compile.C) $< -o $@ 
+	$(MAYBE_PIC_Compile.C) $< -o $@
 
 $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
-	$(call UPGRADE_MSG,$@) 
+	$(call UPGRADE_MSG,$@)
 	$(call UPGRADE_LL,$@)
 
 $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
-	$(call UPGRADE_MSG,$@) 
+	$(call UPGRADE_MSG,$@)
 	$(call UPGRADE_LL,$@)
 
 $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(BCCompile.C) $< -o $@ -S -emit-llvm
-	$(call UPGRADE_MSG,@) 
+	$(call UPGRADE_MSG,@)
 	$(call UPGRADE_LL,@)
 
 endif
@@ -1271,7 +1271,7 @@ INCTMPFiles := $(INCFiles:%=$(ObjDir)/%.tmp)
 # All of these files depend on tblgen and the .td files.
 $(INCTMPFiles) : $(TBLGEN) $(TDFiles)
 
-# INCFiles rule: All of the tblgen generated files are emitted to 
+# INCFiles rule: All of the tblgen generated files are emitted to
 # $(ObjDir)/%.inc.tmp, instead of emitting them directly to %.inc.  This allows
 # us to only "touch" the real file if the contents of it change.  IOW, if
 # tblgen is modified, all of the .inc.tmp files are regenerated, but no
@@ -1313,7 +1313,7 @@ $(ObjDir)/%GenAsmWriter.inc.tmp : %.td $(ObjDir)/.dir
 $(TARGET:%=$(ObjDir)/%GenAsmWriter1.inc.tmp): \
 $(ObjDir)/%GenAsmWriter1.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) assembly writer #1 with tblgen"
-	$(Verb) $(TableGen) -gen-asm-writer -asmwriternum=1 -o $(call SYSPATH, $@) $< 
+	$(Verb) $(TableGen) -gen-asm-writer -asmwriternum=1 -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenCodeEmitter.inc.tmp): \
 $(ObjDir)/%GenCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
@@ -1365,7 +1365,7 @@ endif
 %.hpp:: ;
 
 # Define clean-local to clean the current directory. Note that this uses a
-# very conservative approach ensuring that empty variables do not cause 
+# very conservative approach ensuring that empty variables do not cause
 # errors or disastrous removal.
 clean-local::
 ifneq ($(strip $(ObjRootDir)),)
@@ -1396,7 +1396,7 @@ DependFiles := $(DependFiles:%=$(PROJ_OBJ_DIR)/$(BuildMode)/%.d)
 
 endif
 
-endif 
+endif
 
 ###############################################################################
 # CHECK: Running the test suite
@@ -1499,7 +1499,7 @@ $(DistZip) : $(TopDistDir)/.makedistdir
 	$(Verb) rm -f $(DistZip)
 	$(Verb) cd $(PROJ_OBJ_ROOT) ; $(ZIP) -rq $(DistZip) $(DistName)
 
-dist :: $(DistTarGZip) $(DistTarBZ2) $(DistZip) 
+dist :: $(DistTarGZip) $(DistTarBZ2) $(DistZip)
 	$(Echo) ===== DISTRIBUTION PACKAGING SUCESSFUL =====
 
 DistCheckDir := $(PROJ_OBJ_ROOT)/_distcheckdir
@@ -1548,7 +1548,7 @@ $(DistDir)/.makedistdir: $(DistSources)
 	  $(MAKE) ENABLE_OPTIMIZED=1 all ; \
 	fi
 	$(Echo) Building Distribution Directory $(DistDir)
-	$(Verb) $(MKDIR) $(DistDir) 
+	$(Verb) $(MKDIR) $(DistDir)
 	$(Verb) srcdirstrip=`echo "$(PROJ_SRC_DIR)" | sed 's|.|.|g'`; \
 	srcrootstrip=`echo "$(PROJ_SRC_ROOT)" | sed 's|.|.|g'`; \
 	for file in $(DistFiles) ; do \

@@ -1,10 +1,10 @@
 #===- ./Makefile -------------------------------------------*- Makefile -*--===#
-# 
+#
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
-# 
+#
 #===------------------------------------------------------------------------===#
 
 LEVEL := .
@@ -30,7 +30,7 @@ endif
 
 EXTRA_DIST := test unittests llvm.spec include win32 Xcode
 
-include $(LEVEL)/Makefile.config 
+include $(LEVEL)/Makefile.config
 
 # llvm-gcc4 doesn't need runtime libs.  llvm-gcc4 is the only supported one.
 # FIXME: Remove runtime entirely once we have an understanding of where
@@ -59,7 +59,7 @@ ifeq ($(MAKECMDGOALS),unittests)
   OPTIONAL_DIRS :=
 endif
 
-# Don't install utils, examples, or projects they are only used to 
+# Don't install utils, examples, or projects they are only used to
 # build LLVM.
 ifeq ($(MAKECMDGOALS),install)
   DIRS := $(filter-out utils, $(DIRS))
@@ -130,7 +130,7 @@ FilesToConfig := \
 FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
 
 all-local:: $(FilesToConfigPATH)
-$(FilesToConfigPATH) : $(LLVM_OBJ_ROOT)/% : $(LLVM_SRC_ROOT)/%.in 
+$(FilesToConfigPATH) : $(LLVM_OBJ_ROOT)/% : $(LLVM_SRC_ROOT)/%.in
 	$(Echo) Regenerating $*
 	$(Verb) cd $(LLVM_OBJ_ROOT) && $(ConfigStatusScript) $*
 .PRECIOUS: $(FilesToConfigPATH)
@@ -138,7 +138,7 @@ $(FilesToConfigPATH) : $(LLVM_OBJ_ROOT)/% : $(LLVM_SRC_ROOT)/%.in
 # NOTE: This needs to remain as the last target definition in this file so
 # that it gets executed last.
 ifneq ($(BUILD_DIRS_ONLY),1)
-all:: 
+all::
 	$(Echo) '*****' Completed $(BuildMode)$(AssertMode) Build
 ifeq ($(BuildMode),Debug)
 	$(Echo) '*****' Note: Debug build can be 10 times slower than an
@@ -154,10 +154,10 @@ check-llvm2cpp:
 check-one:
 	$(Verb)$(MAKE) -C test check-one TESTONE=$(TESTONE)
 
-srpm: $(LLVM_OBJ_ROOT)/llvm.spec 
+srpm: $(LLVM_OBJ_ROOT)/llvm.spec
 	rpmbuild -bs $(LLVM_OBJ_ROOT)/llvm.spec
 
-rpm: $(LLVM_OBJ_ROOT)/llvm.spec 
+rpm: $(LLVM_OBJ_ROOT)/llvm.spec
 	rpmbuild -bb --target $(TARGET_TRIPLE) $(LLVM_OBJ_ROOT)/llvm.spec
 
 show-footprint:
