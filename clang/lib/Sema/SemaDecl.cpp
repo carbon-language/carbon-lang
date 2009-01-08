@@ -287,7 +287,7 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
     // Perform qualified name lookup into the LookupCtx.
     // FIXME: Will need to look into base classes and such.
     DeclContext::lookup_const_iterator I, E;
-    for (llvm::tie(I, E) = LookupCtx->lookup(Context, Name); I != E; ++I)
+    for (llvm::tie(I, E) = LookupCtx->lookup(Name); I != E; ++I)
       if ((*I)->isInIdentifierNamespace(NS)) {
         // Ignore non-namespace names if we're only looking for namespaces.
         if (NamespaceNameOnly && !isa<NamespaceDecl>(*I)) continue;
@@ -334,7 +334,7 @@ Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
       while (Ctx && (Ctx->isNamespace() || Ctx->isRecord())) {
         // Look for declarations of this name in this scope.
         DeclContext::lookup_const_iterator I, E;
-        for (llvm::tie(I, E) = Ctx->lookup(Context, Name); I != E; ++I) {
+        for (llvm::tie(I, E) = Ctx->lookup(Name); I != E; ++I) {
           // FIXME: Cache this result in the IdResolver
           if ((*I)->isInIdentifierNamespace(NS)) {
             if (NamespaceNameOnly && !isa<NamespaceDecl>(*I))

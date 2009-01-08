@@ -630,7 +630,7 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   // Collect information about instance methods
   llvm::SmallVector<Selector, 16> InstanceMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  for (ObjCCategoryDecl::instmeth_iterator iter = OCD->instmeth_begin(),
+  for (ObjCCategoryImplDecl::instmeth_iterator iter = OCD->instmeth_begin(),
       endIter = OCD->instmeth_end() ; iter != endIter ; iter++) {
     InstanceMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
@@ -641,7 +641,7 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   // Collect information about class methods
   llvm::SmallVector<Selector, 16> ClassMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
-  for (ObjCCategoryDecl::classmeth_iterator iter = OCD->classmeth_begin(),
+  for (ObjCCategoryImplDecl::classmeth_iterator iter = OCD->classmeth_begin(),
       endIter = OCD->classmeth_end() ; iter != endIter ; iter++) {
     ClassMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;

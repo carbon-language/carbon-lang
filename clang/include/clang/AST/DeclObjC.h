@@ -93,7 +93,7 @@ public:
 /// A selector represents a unique name for a method. The selector names for
 /// the above methods are setMenu:, menu, replaceSubview:with:, and defaultMenu.
 ///
-class ObjCMethodDecl : public NamedDecl, public DeclContext {
+class ObjCMethodDecl : public ScopedDecl, public DeclContext {
 public:
   enum ImplementationControl { None, Required, Optional };
 private:
@@ -115,7 +115,7 @@ private:
   unsigned objcDeclQualifier : 6;
   
   // Context this method is declared in.
-  NamedDecl *MethodContext;
+  DeclContext *MethodContext;
   
   // Type of this method.
   QualType MethodDeclType;
@@ -140,17 +140,17 @@ private:
   
   ObjCMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
                  Selector SelInfo, QualType T,
-                 Decl *contextDecl,
+                 DeclContext *contextDecl,
                  bool isInstance = true,
                  bool isVariadic = false,
                  bool isSynthesized = false,
                  ImplementationControl impControl = None)
-  : NamedDecl(ObjCMethod, beginLoc, SelInfo),
+  : ScopedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo, 0),
     DeclContext(ObjCMethod),
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
-    MethodContext(static_cast<NamedDecl*>(contextDecl)),
+    MethodContext(contextDecl),
     MethodDeclType(T), 
     ParamInfo(0), NumMethodParams(0), 
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
@@ -165,7 +165,7 @@ public:
   static ObjCMethodDecl *Create(ASTContext &C,
                                 SourceLocation beginLoc, 
                                 SourceLocation endLoc, Selector SelInfo,
-                                QualType T, Decl *contextDecl,
+                                QualType T, DeclContext *contextDecl,
                                 bool isInstance = true,
                                 bool isVariadic = false,
                                 bool isSynthesized = false,
@@ -183,7 +183,7 @@ public:
     return SourceRange(getLocation(), EndLoc); 
   }
   
-  NamedDecl *getMethodContext() const { return MethodContext; }
+  DeclContext *getMethodContext() const { return MethodContext; }
   
   ObjCInterfaceDecl *getClassInterface();
   const ObjCInterfaceDecl *getClassInterface() const {
@@ -252,68 +252,177 @@ public:
 
 /// ObjCContainerDecl - Represents a container for method declarations.
 /// Current sub-classes are ObjCInterfaceDecl, ObjCCategoryDecl, and
-/// ObjCProtocolDecl. FIXME: Use for ObjC implementation decls.
-/// STILL UNDER CONSTRUCTION...
+/// ObjCProtocolDecl. 
+/// FIXME: Use for ObjC implementation decls.
+/// FIXME: Consider properties.
+/// FIXME: It would be nice to reduce amount of "boilerplate" iterator code
+/// below. For now, the iterators are modeled after RecordDecl::field_iterator().
+/// If DeclContext ends up providing some support for creating more strongly 
+/// typed iterators, the code below should be reduced considerably.
 ///
-class ObjCContainerDecl : public NamedDecl {
-  /// instance methods
-  ObjCMethodDecl **InstanceMethods;  // Null if not defined
-  unsigned NumInstanceMethods;  // 0 if none.
-  
-  /// class methods
-  ObjCMethodDecl **ClassMethods;  // Null if not defined
-  unsigned NumClassMethods;  // 0 if none
-  
+class ObjCContainerDecl : public NamedDecl, public DeclContext {
   SourceLocation AtEndLoc; // marks the end of the method container.
 public:
 
   ObjCContainerDecl(Kind DK, SourceLocation L, IdentifierInfo *Id)
-    : NamedDecl(DK, L, Id),
-      InstanceMethods(0), NumInstanceMethods(0), 
-      ClassMethods(0), NumClassMethods(0) {}
+    : NamedDecl(DK, L, Id), DeclContext(DK) {}
 
   virtual ~ObjCContainerDecl();
     
-  typedef ObjCMethodDecl * const * instmeth_iterator;
-  instmeth_iterator instmeth_begin() const { return InstanceMethods; }
-  instmeth_iterator instmeth_end() const {
-    return InstanceMethods+NumInstanceMethods;
+  // Iterator access to instance/class methods.
+  class method_iterator {
+  protected:
+    /// Current - Current position within the sequence of declarations
+    /// in this record. 
+    DeclContext::decl_iterator Current;
+
+    /// End - Last position in the sequence of declarations in this
+    /// record.
+    DeclContext::decl_iterator End;
+
+    /// IsInstance - If true, we are iterating through instance methods.
+    /// If false, we are iteratring through class methods.
+    bool IsInstance;
+    
+    /// SkipToNextMethod - Advances the current position up to the next
+    /// ObjCMethodDecl.
+    void SkipToNextMethod() {
+      while (Current != End) {
+        ObjCMethodDecl *M = dyn_cast<ObjCMethodDecl>(*Current);
+        if (M && 
+            (IsInstance && M->isInstance() || !IsInstance && !M->isInstance()))
+          return;
+        ++Current;
+      }
+    }
+
+  public:
+    typedef ObjCMethodDecl const *    value_type;
+    typedef ObjCMethodDecl const *    reference;
+    typedef ObjCMethodDecl const *    pointer;
+    typedef std::ptrdiff_t            difference_type;
+    typedef std::forward_iterator_tag iterator_category;
+
+    method_iterator() : Current(), End(), IsInstance(true) { }
+
+    method_iterator(DeclContext::decl_iterator C, 
+                    DeclContext::decl_iterator E, bool I)
+      : Current(C), End(E), IsInstance(I) {
+      SkipToNextMethod();
+    }
+
+    reference operator*() const { return cast<ObjCMethodDecl>(*Current); }
+
+    pointer operator->() const { return cast<ObjCMethodDecl>(*Current); }
+
+    method_iterator& operator++() {
+      ++Current;
+      SkipToNextMethod();
+      return *this;
+    }
+
+    method_iterator operator++(int) {
+      method_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+
+    friend bool
+    operator==(const method_iterator& x, const method_iterator& y) {
+      return x.Current == y.Current;
+    }
+
+    friend bool 
+    operator!=(const method_iterator& x, const method_iterator& y) {
+      return x.Current != y.Current;
+    }
+  };
+
+  class instmeth_iterator : public method_iterator {
+  public:
+    typedef ObjCMethodDecl*           value_type;
+    typedef ObjCMethodDecl*           reference;
+    typedef ObjCMethodDecl*           pointer;
+
+    instmeth_iterator() : method_iterator() { }
+
+    instmeth_iterator(DeclContext::decl_iterator C, DeclContext::decl_iterator E)
+      : method_iterator(C, E, true) { }    
+
+    reference operator*() const { return cast<ObjCMethodDecl>(*Current); }
+
+    pointer operator->() const { return cast<ObjCMethodDecl>(*Current); }
+
+    instmeth_iterator& operator++() {
+      ++Current;
+      SkipToNextMethod();
+      return *this;
+    }
+
+    instmeth_iterator operator++(int) {
+      instmeth_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+  };
+
+  instmeth_iterator instmeth_begin() const {
+    return instmeth_iterator(decls_begin(), decls_end());
   }
-  
-  typedef ObjCMethodDecl * const * classmeth_iterator;
-  classmeth_iterator classmeth_begin() const { return ClassMethods; }
-  classmeth_iterator classmeth_end() const {
-    return ClassMethods+NumClassMethods;
+  instmeth_iterator instmeth_end() const {
+    return instmeth_iterator(decls_end(), decls_end());
   }
 
-  // Get the local instance method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
-    for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
-         I != E; ++I) {
-      if ((*I)->getSelector() == Sel)
-        return *I;
+  class classmeth_iterator : public method_iterator {
+  public:
+    typedef ObjCMethodDecl*           value_type;
+    typedef ObjCMethodDecl*           reference;
+    typedef ObjCMethodDecl*           pointer;
+
+    classmeth_iterator() : method_iterator() { }
+
+    classmeth_iterator(DeclContext::decl_iterator C, DeclContext::decl_iterator E)
+      : method_iterator(C, E, false) { }    
+
+    reference operator*() const { return cast<ObjCMethodDecl>(*Current); }
+
+    pointer operator->() const { return cast<ObjCMethodDecl>(*Current); }
+
+    classmeth_iterator& operator++() {
+      ++Current;
+      SkipToNextMethod();
+      return *this;
     }
-    return 0;
-  }
-  // Get the local class method declared in this interface.
-  ObjCMethodDecl *getClassMethod(Selector Sel) const {
-    for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
-         I != E; ++I) {
-      if ((*I)->getSelector() == Sel)
-        return *I;
+
+    classmeth_iterator operator++(int) {
+      classmeth_iterator tmp(*this);
+      ++(*this);
+      return tmp;
     }
-    return 0;
+  };
+  classmeth_iterator classmeth_begin() const {
+    return classmeth_iterator(decls_begin(), decls_end());
   }
+  classmeth_iterator classmeth_end() const {
+    return classmeth_iterator(decls_end(), decls_end());
+  }
+
+  // Get the local instance/class method declared in this interface.
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
+  ObjCMethodDecl *getClassMethod(Selector Sel) const;
   
-  void addMethods(ObjCMethodDecl **insMethods, unsigned numInsMembers,
-                  ObjCMethodDecl **clsMethods, unsigned numClsMembers,
-                  SourceLocation AtEndLoc);
-                  
-  unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
-  unsigned getNumClassMethods() const { return NumClassMethods; }
+  // Get the number of instance/class methods.
+  unsigned getNumInstanceMethods() const;
+  unsigned getNumClassMethods() const;
   
   // Marks the end of the container.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
+  void setAtEndLoc(SourceLocation L) { AtEndLoc = L; }
+  
+  // This method synthesizes the getter/setter method for the property.
+  // FIXME: Shouldn't this be part of Sema?.
+  void getPropertyMethods(ASTContext &Context, ObjCPropertyDecl* Property,
+                          ObjCMethodDecl *& Getter, ObjCMethodDecl *&Setter);
 };
 
 /// ObjCInterfaceDecl - Represents an ObjC class declaration. For example:
@@ -337,7 +446,7 @@ public:
 ///   Unlike C++, ObjC is a single-rooted class model. In Cocoa, classes
 ///   typically inherit from NSObject (an exception is NSProxy).
 ///
-class ObjCInterfaceDecl : public ObjCContainerDecl, public DeclContext {
+class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// TypeForDecl - This indicates the Type object that represents this
   /// TypeDecl.  It is a cache maintained by ASTContext::getObjCInterfaceType
   Type *TypeForDecl;
@@ -369,7 +478,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl, public DeclContext {
 
   ObjCInterfaceDecl(SourceLocation atLoc, IdentifierInfo *Id,
                     SourceLocation CLoc, bool FD, bool isInternal)
-    : ObjCContainerDecl(ObjCInterface, atLoc, Id), DeclContext(ObjCInterface),
+    : ObjCContainerDecl(ObjCInterface, atLoc, Id),
       TypeForDecl(0), SuperClass(0),
       Ivars(0), NumIvars(0),
       CategoryList(0), PropertyDecl(0), NumPropertyDecl(0),
@@ -423,11 +532,6 @@ public:
   void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
   
   void mergeProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
-  
-  void addPropertyMethods(ASTContext &Context,
-                          ObjCPropertyDecl* Property,
-                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
-                          llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap);
   
   typedef ObjCPropertyDecl * const * classprop_iterator;
   classprop_iterator classprop_begin() const { return PropertyDecl; }
@@ -644,11 +748,6 @@ public:
   
   void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
 
-  void addPropertyMethods(ASTContext &Context,
-                          ObjCPropertyDecl* Property,
-                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
-                          llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap);
-  
   typedef ObjCPropertyDecl * const * classprop_iterator;
   classprop_iterator classprop_begin() const { return PropertyDecl; }
   classprop_iterator classprop_end() const {
@@ -839,11 +938,6 @@ public:
 
   void mergeProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
 
-  void addPropertyMethods(ASTContext &Context,
-                          ObjCPropertyDecl* Property,
-                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
-                          llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap);
-  
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
   
   typedef ObjCPropertyDecl * const * classprop_iterator;
@@ -878,7 +972,7 @@ public:
 ///  @dynamic p1,d1;
 /// @end
 ///
-class ObjCCategoryImplDecl : public NamedDecl {
+class ObjCCategoryImplDecl : public NamedDecl, public DeclContext {
   /// Class interface for this category implementation
   ObjCInterfaceDecl *ClassInterface;
 
@@ -895,7 +989,8 @@ class ObjCCategoryImplDecl : public NamedDecl {
 
   ObjCCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
                        ObjCInterfaceDecl *classInterface)
-    : NamedDecl(ObjCCategoryImpl, L, Id), ClassInterface(classInterface) {}
+    : NamedDecl(ObjCCategoryImpl, L, Id), DeclContext(ObjCCategoryImpl),
+      ClassInterface(classInterface) {}
 public:
   static ObjCCategoryImplDecl *Create(ASTContext &C,
                                       SourceLocation L, IdentifierInfo *Id,
@@ -974,7 +1069,7 @@ public:
 /// the legacy semantics and allow developers to move private ivar declarations
 /// from the class interface to the class implementation (but I digress:-)
 ///
-class ObjCImplementationDecl : public NamedDecl {
+class ObjCImplementationDecl : public NamedDecl, public DeclContext {
   /// Class interface for this implementation
   ObjCInterfaceDecl *ClassInterface;
   
@@ -999,7 +1094,7 @@ class ObjCImplementationDecl : public NamedDecl {
   ObjCImplementationDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjCInterfaceDecl *classInterface,
                          ObjCInterfaceDecl *superDecl)
-    : NamedDecl(ObjCImplementation, L, Id),
+    : NamedDecl(ObjCImplementation, L, Id), DeclContext(ObjCImplementation),
       ClassInterface(classInterface), SuperClass(superDecl),
       Ivars(0), NumIvars(0) {}
 public:  

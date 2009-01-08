@@ -419,7 +419,7 @@ bool DeclContext::isTransparentContext() const {
   return false;
 }
 
-DeclContext *DeclContext::getPrimaryContext(ASTContext &Context) {
+DeclContext *DeclContext::getPrimaryContext() {
   switch (DeclKind) {
   case Decl::TranslationUnit:
   case Decl::LinkageSpec:
@@ -468,7 +468,13 @@ DeclContext *DeclContext::getPrimaryContext(ASTContext &Context) {
     return this;
 
   case Decl::ObjCInterface:
+  case Decl::ObjCProtocol:
+  case Decl::ObjCCategory:
     // FIXME: Can Objective-C interfaces be forward-declared?
+    return this;
+
+  case Decl::ObjCImplementation:
+  case Decl::ObjCCategoryImpl:
     return this;
 
   default:
@@ -486,6 +492,10 @@ DeclContext *DeclContext::getNextContext() {
   case Decl::CXXRecord:
   case Decl::ObjCMethod:
   case Decl::ObjCInterface:
+  case Decl::ObjCCategory:
+  case Decl::ObjCProtocol:
+  case Decl::ObjCImplementation:
+  case Decl::ObjCCategoryImpl:
   case Decl::LinkageSpec:
   case Decl::Block:
     // There is only one DeclContext for these entities.
@@ -511,7 +521,7 @@ void DeclContext::addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup) 
 /// buildLookup - Build the lookup data structure with all of the
 /// declarations in DCtx (and any other contexts linked to it or
 /// transparent contexts nested within it).
-void DeclContext::buildLookup(ASTContext &Context, DeclContext *DCtx) {
+void DeclContext::buildLookup(DeclContext *DCtx) {
   for (; DCtx; DCtx = DCtx->getNextContext()) {
     for (decl_iterator D = DCtx->decls_begin(), DEnd = DCtx->decls_end(); 
          D != DEnd; ++D) {
@@ -522,22 +532,22 @@ void DeclContext::buildLookup(ASTContext &Context, DeclContext *DCtx) {
       // add its members (recursively).
       if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D))
         if (InnerCtx->isTransparentContext())
-          buildLookup(Context, InnerCtx->getPrimaryContext(Context));
+          buildLookup(InnerCtx->getPrimaryContext());
     }
   }
 }
 
 DeclContext::lookup_result 
-DeclContext::lookup(ASTContext &Context, DeclarationName Name) {
-  DeclContext *PrimaryContext = getPrimaryContext(Context);
+DeclContext::lookup(DeclarationName Name) {
+  DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this)
-    return PrimaryContext->lookup(Context, Name);
+    return PrimaryContext->lookup(Name);
 
   /// If there is no lookup data structure, build one now by walking
   /// all of the linked DeclContexts (in declaration order!) and
   /// inserting their values.
   if (LookupPtr.getPointer() == 0)
-    buildLookup(Context, this);
+    buildLookup(this);
 
   if (isLookupMap()) {
     StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
@@ -563,8 +573,8 @@ DeclContext::lookup(ASTContext &Context, DeclarationName Name) {
 }
 
 DeclContext::lookup_const_result 
-DeclContext::lookup(ASTContext &Context, DeclarationName Name) const {
-  return const_cast<DeclContext*>(this)->lookup(Context, Name);
+DeclContext::lookup(DeclarationName Name) const {
+  return const_cast<DeclContext*>(this)->lookup(Name);
 }
 
 const DeclContext *DeclContext::getLookupContext() const {
@@ -575,7 +585,7 @@ const DeclContext *DeclContext::getLookupContext() const {
 }
 
 void DeclContext::insert(ASTContext &Context, ScopedDecl *D) {
-  DeclContext *PrimaryContext = getPrimaryContext(Context);
+  DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this) {
     PrimaryContext->insert(Context, D);
     return;

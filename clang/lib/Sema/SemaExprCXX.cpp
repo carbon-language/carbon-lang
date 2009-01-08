@@ -414,7 +414,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, DeclarationName Name,
                                   FunctionDecl *&Operator)
 {
   DeclContext::lookup_iterator Alloc, AllocEnd;
-  llvm::tie(Alloc, AllocEnd) = Ctx->lookup(Context, Name);
+  llvm::tie(Alloc, AllocEnd) = Ctx->lookup(Name);
   if (Alloc == AllocEnd) {
     if (AllowMissing)
       return false;
@@ -517,7 +517,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   // Check if this function is already declared.
   {
     DeclContext::lookup_iterator Alloc, AllocEnd;
-    for (llvm::tie(Alloc, AllocEnd) = GlobalCtx->lookup(Context, Name);
+    for (llvm::tie(Alloc, AllocEnd) = GlobalCtx->lookup(Name);
          Alloc != AllocEnd; ++Alloc) {
       // FIXME: Do we need to check for default arguments here?
       FunctionDecl *Func = cast<FunctionDecl>(*Alloc);

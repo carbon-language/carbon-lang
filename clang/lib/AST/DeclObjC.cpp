@@ -24,7 +24,7 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        SourceLocation beginLoc, 
                                        SourceLocation endLoc,
                                        Selector SelInfo, QualType T,
-                                       Decl *contextDecl,
+                                       DeclContext *contextDecl,
                                        bool isInstance,
                                        bool isVariadic,
                                        bool isSynthesized,
@@ -61,8 +61,6 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
 }
 
 ObjCContainerDecl::~ObjCContainerDecl() {
-  delete [] InstanceMethods;
-  delete [] ClassMethods;
 }
 
 ObjCInterfaceDecl::~ObjCInterfaceDecl() {
@@ -362,7 +360,7 @@ FieldDecl *ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context,
   assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
   DeclarationName Member = ivar->getDeclName();
   DeclContext::lookup_result Lookup = (const_cast< RecordDecl *>(RecordForDecl))
-                                        ->lookup(Context, Member);
+                                        ->lookup(Member);
   assert((Lookup.first != Lookup.second) && "field decl not found");
   FieldDecl *MemberDecl = dyn_cast<FieldDecl>(*Lookup.first);
   assert(MemberDecl && "field decl not found");
@@ -380,27 +378,6 @@ void ObjCImplementationDecl::ObjCAddInstanceVariablesToClassImpl(
     Ivars = new ObjCIvarDecl*[numIvars];
     memcpy(Ivars, ivars, numIvars*sizeof(ObjCIvarDecl*));
   }
-}
-
-/// addMethods - Insert instance and methods declarations into
-/// ObjCInterfaceDecl's InsMethods and ClsMethods fields.
-///
-void ObjCContainerDecl::addMethods(ObjCMethodDecl **insMethods, 
-                                   unsigned numInsMembers,
-                                   ObjCMethodDecl **clsMethods,
-                                   unsigned numClsMembers,
-                                   SourceLocation endLoc) {
-  NumInstanceMethods = numInsMembers;
-  if (numInsMembers) {
-    InstanceMethods = new ObjCMethodDecl*[numInsMembers];
-    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjCMethodDecl*));
-  }
-  NumClassMethods = numClsMembers;
-  if (numClsMembers) {
-    ClassMethods = new ObjCMethodDecl*[numClsMembers];
-    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjCMethodDecl*));
-  }
-  AtEndLoc = endLoc;
 }
 
 /// addProperties - Insert property declaration AST nodes into
@@ -440,18 +417,45 @@ void ObjCInterfaceDecl::mergeProperties(ObjCPropertyDecl **Properties,
   }
 }
 
-static void 
-addPropertyMethods(Decl *D,
-                   ASTContext &Context,
-                   ObjCPropertyDecl *property,
-                   llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
-                   llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap) {
-  ObjCMethodDecl *GetterDecl, *SetterDecl = 0;
-  
-  GetterDecl = const_cast<ObjCMethodDecl*>(InsMap[property->getGetterName()]);
-  if (!property->isReadOnly())
-    SetterDecl = const_cast<ObjCMethodDecl*>(InsMap[property->getSetterName()]);
-  
+// Get the local instance method declared in this interface.
+// FIXME: handle overloading, instance & class methods can have the same name.
+ObjCMethodDecl *ObjCContainerDecl::getInstanceMethod(Selector Sel) const {
+  lookup_const_result MethodResult = lookup(Sel);
+  if (MethodResult.first)
+    return const_cast<ObjCMethodDecl*>(
+             dyn_cast<ObjCMethodDecl>(*MethodResult.first));
+  return 0;
+}
+
+// Get the local class method declared in this interface.
+ObjCMethodDecl *ObjCContainerDecl::getClassMethod(Selector Sel) const {
+  lookup_const_result MethodResult = lookup(Sel);
+  if (MethodResult.first)
+    return const_cast<ObjCMethodDecl*>(
+             dyn_cast<ObjCMethodDecl>(*MethodResult.first));
+  return 0;
+}
+
+unsigned ObjCContainerDecl::getNumInstanceMethods() const {
+  unsigned sum = 0;
+  for (instmeth_iterator I=instmeth_begin(), E=instmeth_end(); I != E; ++I)
+    sum++;
+  return sum;
+}
+unsigned ObjCContainerDecl::getNumClassMethods() const { 
+  unsigned sum = 0;
+  for (classmeth_iterator I=classmeth_begin(), E=classmeth_end(); I != E; ++I)
+    sum++;
+  return sum;
+}
+
+/// addPropertyMethods - Goes through list of properties declared in this class
+/// and builds setter/getter method declartions depending on the setter/getter
+/// attributes of the property.
+///
+void ObjCContainerDecl::getPropertyMethods(
+       ASTContext &Context, ObjCPropertyDecl *property,
+       ObjCMethodDecl *& GetterDecl, ObjCMethodDecl *&SetterDecl) {
   // FIXME: The synthesized property we set here is misleading. We
   // almost always synthesize these methods unless the user explicitly
   // provided prototypes (which is odd, but allowed). Sema should be
@@ -467,15 +471,12 @@ addPropertyMethods(Decl *D,
       ObjCMethodDecl::Create(Context, property->getLocation(), 
                              property->getLocation(), 
                              property->getGetterName(), 
-                             property->getType(),
-                             D,
+                             property->getType(), this,
                              true, false, true, 
                              (property->getPropertyImplementation() == 
                               ObjCPropertyDecl::Optional) ? 
                              ObjCMethodDecl::Optional : 
                              ObjCMethodDecl::Required);
-    insMethods.push_back(GetterDecl);
-    InsMap[property->getGetterName()] = GetterDecl;
   }
   else
     // A user declared getter will be synthesize when @synthesize of
@@ -496,15 +497,12 @@ addPropertyMethods(Decl *D,
       ObjCMethodDecl::Create(Context, property->getLocation(), 
                              property->getLocation(), 
                              property->getSetterName(), 
-                             Context.VoidTy,
-                             D,
+                             Context.VoidTy, this,
                              true, false, true,
                              (property->getPropertyImplementation() == 
                               ObjCPropertyDecl::Optional) ? 
                              ObjCMethodDecl::Optional : 
                              ObjCMethodDecl::Required);
-    insMethods.push_back(SetterDecl);
-    InsMap[property->getSetterName()] = SetterDecl;
     // Invent the arguments for the setter. We don't bother making a
     // nice name for the argument.
     ParmVarDecl *Argument = ParmVarDecl::Create(Context, 
@@ -521,30 +519,6 @@ addPropertyMethods(Decl *D,
     // the property with the same name is seen in the @implementation
     SetterDecl->setIsSynthesized();
   property->setSetterMethodDecl(SetterDecl);
-}
-
-/// addPropertyMethods - Goes through list of properties declared in this class
-/// and builds setter/getter method declartions depending on the setter/getter
-/// attributes of the property.
-///
-void ObjCInterfaceDecl::addPropertyMethods(
-       ASTContext &Context,
-       ObjCPropertyDecl *property,
-       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
-       llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap) {
-  ::addPropertyMethods(this, Context, property, insMethods, InsMap);
-}
-
-/// addPropertyMethods - Goes through list of properties declared in this class
-/// and builds setter/getter method declartions depending on the setter/getter
-/// attributes of the property.
-///
-void ObjCCategoryDecl::addPropertyMethods(
-       ASTContext &Context,
-       ObjCPropertyDecl *property,
-       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods, 
-       llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap) {
-  ::addPropertyMethods(this, Context, property, insMethods, InsMap);
 }
 
 /// mergeProperties - Adds properties to the end of list of current properties
@@ -570,18 +544,6 @@ void ObjCCategoryDecl::mergeProperties(ObjCPropertyDecl **Properties,
   else {
     addProperties(Properties, NumNewProperties);
   }
-}
-
-/// addPropertyMethods - Goes through list of properties declared in this class
-/// and builds setter/getter method declartions depending on the setter/getter
-/// attributes of the property.
-///
-void ObjCProtocolDecl::addPropertyMethods(
-       ASTContext &Context,
-       ObjCPropertyDecl *property,
-       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods,
-       llvm::DenseMap<Selector, const ObjCMethodDecl*> &InsMap) {
-  ::addPropertyMethods(this, Context, property, insMethods, InsMap);
 }
 
 /// addProperties - Insert property declaration AST nodes into
@@ -850,9 +812,8 @@ unsigned ObjCMethodDecl::getSynthesizedMethodSize() const {
   // Get length of this name.
   unsigned length = 3;  // _I_ or _C_
   length += getClassInterface()->getNameAsString().size()+1; // extra for _
-  NamedDecl *MethodContext = getMethodContext();
   if (ObjCCategoryImplDecl *CID = 
-      dyn_cast<ObjCCategoryImplDecl>(MethodContext))
+      dyn_cast<ObjCCategoryImplDecl>(getMethodContext()))
     length += CID->getNameAsString().size()+1;
   length += getSelector().getAsString().size(); // selector name
   return length; 

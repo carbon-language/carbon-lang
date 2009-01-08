@@ -161,7 +161,7 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
     return false;
   }
 
-  return LookupContext(D) == LookupContext(Ctx->getPrimaryContext(Context));
+  return LookupContext(D) == LookupContext(Ctx->getPrimaryContext());
 }
 
 /// AddDecl - Link the decl to its shadowed decl chain.

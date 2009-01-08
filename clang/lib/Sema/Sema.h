@@ -67,6 +67,7 @@ namespace clang {
   class ObjCIvarDecl;
   class ObjCMethodDecl;
   class ObjCPropertyDecl;
+  class ObjCContainerDecl;
   struct BlockSemaInfo;
   class BasePaths;
 
@@ -1166,9 +1167,7 @@ public:
   void CheckObjCPropertyAttributes(QualType PropertyTy, 
                                    SourceLocation Loc,
                                    unsigned &Attributes);
-  void diagnosePropertySetterGetterMismatch(ObjCPropertyDecl *property,
-                                            const ObjCMethodDecl *GetterMethod,
-                                            const ObjCMethodDecl *SetterMethod);
+  void ProcessPropertyDecl(ObjCPropertyDecl *property, ObjCContainerDecl *DC);
   void DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
                                 ObjCPropertyDecl *SuperProperty,
                                 const IdentifierInfo *Name);

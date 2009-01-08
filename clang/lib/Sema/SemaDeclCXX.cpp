@@ -681,7 +681,7 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
   //   using a qualified name. ]
   // Look for a member, first.
   FieldDecl *Member = 0;
-  DeclContext::lookup_result Result = ClassDecl->lookup(Context, MemberOrBase);
+  DeclContext::lookup_result Result = ClassDecl->lookup(MemberOrBase);
   if (Result.first != Result.second)
     Member = dyn_cast<FieldDecl>(*Result.first);
 
@@ -1590,7 +1590,7 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
     = Context.DeclarationNames.getCXXConstructorName(
                        Context.getCanonicalType(ClassType.getUnqualifiedType()));
   DeclContext::lookup_const_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = ClassDecl->lookup(Context, ConstructorName);
+  for (llvm::tie(Con, ConEnd) = ClassDecl->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
     CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
     if ((Kind == IK_Direct) ||

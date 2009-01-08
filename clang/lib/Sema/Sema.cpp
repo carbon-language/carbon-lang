@@ -223,7 +223,7 @@ NamedDecl *Sema::getCurFunctionOrMethodDecl() {
   while (isa<BlockDecl>(DC))
     DC = DC->getParent();
   if (isa<ObjCMethodDecl>(DC) || isa<FunctionDecl>(DC))
-    return cast<NamedDecl>(DC);
+    return cast<ScopedDecl>(DC);
   return 0;
 }
 

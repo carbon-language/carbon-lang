@@ -31,6 +31,10 @@ class CXXRecordDecl;
 class EnumDecl;
 class ObjCMethodDecl;
 class ObjCInterfaceDecl;
+class ObjCCategoryDecl;
+class ObjCProtocolDecl;
+class ObjCImplementationDecl;
+class ObjCCategoryImplDecl;
 class LinkageSpecDecl;
 class BlockDecl;
 class DeclarationName;
@@ -49,14 +53,13 @@ public:
     // Decl
          TranslationUnit,  // [DeclContext]
     //   NamedDecl
-    //     ObjCContainerDecl
+    //     ObjCContainerDecl // [DeclContext]
              ObjCCategory,
              ObjCProtocol,
-             ObjCInterface,  // [DeclContext]
+             ObjCInterface,
            OverloadedFunction,
-           ObjCCategoryImpl,
-           ObjCImplementation,
-           ObjCMethod,  // [DeclContext]
+           ObjCCategoryImpl,  // [DeclContext]
+           ObjCImplementation, // [DeclContext]
            ObjCProperty,
     //     ScopedDecl
              Field,
@@ -84,6 +87,7 @@ public:
                    OriginalParmVar,
   	         NonTypeTemplateParm,
              LinkageSpec, // [DeclContext]
+             ObjCMethod,  // [DeclContext]
            ObjCCompatibleAlias,
            ObjCClass,
            ObjCForwardProtocol,
@@ -95,7 +99,7 @@ public:
     // of the class, to allow efficient classof.
     NamedFirst     = OverloadedFunction , NamedLast     = NonTypeTemplateParm,
     FieldFirst     = Field        , FieldLast     = ObjCAtDefsField,
-    ScopedFirst    = Field        , ScopedLast    = LinkageSpec,
+    ScopedFirst    = Field        , ScopedLast    = ObjCMethod,
     TypeFirst      = Typedef      , TypeLast      = TemplateTypeParm,
     TagFirst       = Enum         , TagLast       = CXXRecord,
     RecordFirst    = Record       , RecordLast    = CXXRecord,
@@ -329,6 +333,14 @@ class DeclContext {
         return static_cast<ObjCMethodDecl*>(const_cast<From*>(D));
       case Decl::ObjCInterface:
         return static_cast<ObjCInterfaceDecl*>(const_cast<From*>(D));
+      case Decl::ObjCCategory:
+        return static_cast<ObjCCategoryDecl*>(const_cast<From*>(D));
+      case Decl::ObjCProtocol:
+        return static_cast<ObjCProtocolDecl*>(const_cast<From*>(D));
+      case Decl::ObjCImplementation:
+        return static_cast<ObjCImplementationDecl*>(const_cast<From*>(D));
+      case Decl::ObjCCategoryImpl:
+        return static_cast<ObjCCategoryImplDecl*>(const_cast<From*>(D));
       case Decl::LinkageSpec:
         return static_cast<LinkageSpecDecl*>(const_cast<From*>(D));
       case Decl::Block:
@@ -434,7 +446,7 @@ public:
   /// a different set of declarations. This routine returns the
   /// "primary" DeclContext structure, which will contain the
   /// information needed to perform name lookup into this context.
-  DeclContext *getPrimaryContext(ASTContext &Context);
+  DeclContext *getPrimaryContext();
 
   /// getLookupContext - Retrieve the innermost non-transparent
   /// context of this context, which corresponds to the innermost
@@ -481,7 +493,7 @@ public:
   /// declaration into data structure for name lookup.
   void addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup = true);
 
-  void buildLookup(ASTContext &Context, DeclContext *DCtx);
+  void buildLookup(DeclContext *DCtx);
 
   /// lookup_iterator - An iterator that provides access to the results
   /// of looking up a name within this context.
@@ -503,8 +515,8 @@ public:
   /// declaration in the "tag" identifier namespace (e.g., values
   /// before types). Note that this routine will not look into parent
   /// contexts.
-  lookup_result lookup(ASTContext &Context, DeclarationName Name);
-  lookup_const_result lookup(ASTContext &Context, DeclarationName Name) const;
+  lookup_result lookup(DeclarationName Name);
+  lookup_const_result lookup(DeclarationName Name) const;
 
   /// insert - Insert the declaration D into this context. Up to two
   /// declarations with the same name can be inserted into a single
@@ -527,6 +539,10 @@ public:
       case Decl::CXXRecord:
       case Decl::ObjCMethod:
       case Decl::ObjCInterface:
+      case Decl::ObjCCategory:
+      case Decl::ObjCProtocol:
+      case Decl::ObjCImplementation:
+      case Decl::ObjCCategoryImpl:
       case Decl::LinkageSpec:
       case Decl::Block:
         return true;
@@ -546,6 +562,10 @@ public:
   static bool classof(const EnumDecl *D) { return true; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
+  static bool classof(const ObjCCategoryDecl *D) { return true; }
+  static bool classof(const ObjCProtocolDecl *D) { return true; }
+  static bool classof(const ObjCImplementationDecl *D) { return true; }
+  static bool classof(const ObjCCategoryImplDecl *D) { return true; }
   static bool classof(const LinkageSpecDecl *D) { return true; }
   static bool classof(const BlockDecl *D) { return true; }
 

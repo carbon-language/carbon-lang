@@ -1001,14 +1001,18 @@ void Sema::AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method) {
   }
 }
 
-/// diagnosePropertySetterGetterMismatch - Make sure that use-defined
-/// setter/getter methods have the property type and issue diagnostics
-/// if they don't.
-///
-void
-Sema::diagnosePropertySetterGetterMismatch(ObjCPropertyDecl *property,
-                                           const ObjCMethodDecl *GetterMethod,
-                                           const ObjCMethodDecl *SetterMethod) {
+/// ProcessPropertyDecl - Make sure that any user-defined setter/getter methods 
+/// have the property type and issue diagnostics if they don't.
+/// Also synthesize a getter/setter method if none exist (and update the
+/// appropriate lookup tables. FIXME: Should reconsider if adding synthesized
+/// methods is the "right" thing to do.
+void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property, 
+                               ObjCContainerDecl *CD) {
+  ObjCMethodDecl *GetterMethod, *SetterMethod;
+  
+  GetterMethod = CD->getInstanceMethod(property->getGetterName());  
+  SetterMethod = CD->getInstanceMethod(property->getSetterName());
+  
   if (GetterMethod &&
       GetterMethod->getResultType() != property->getType()) {
     Diag(property->getLocation(), 
@@ -1031,6 +1035,29 @@ Sema::diagnosePropertySetterGetterMismatch(ObjCPropertyDecl *property,
       Diag(SetterMethod->getLocation(), diag::note_declared_at);
     }
   }
+
+  // Synthesize getter/setter methods if none exist.
+  // Add any synthesized methods to the global pool. This allows us to 
+  // handle the following, which is supported by GCC (and part of the design).
+  //
+  // @interface Foo
+  // @property double bar;
+  // @end
+  //
+  // void thisIsUnfortunate() {
+  //   id foo;
+  //   double bar = [foo bar];
+  // }
+  //
+  CD->getPropertyMethods(Context, property, GetterMethod, SetterMethod);
+  if (GetterMethod) {
+    CD->addDecl(Context, GetterMethod);
+    AddInstanceMethodToGlobalPool(GetterMethod);  
+  }
+  if (SetterMethod) {
+    CD->addDecl(Context, SetterMethod);
+    AddInstanceMethodToGlobalPool(SetterMethod);     
+  }
 }
 
 // Note: For class/category implemenations, allMethods/allProperties is
@@ -1046,16 +1073,11 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
   if (!ClassDecl)
     return;
     
-  llvm::SmallVector<ObjCMethodDecl*, 32> insMethods;
-  llvm::SmallVector<ObjCMethodDecl*, 16> clsMethods;
-  
-  llvm::DenseMap<Selector, const ObjCMethodDecl*> InsMap;
-  llvm::DenseMap<Selector, const ObjCMethodDecl*> ClsMap;
-  
   bool isInterfaceDeclKind = 
         isa<ObjCInterfaceDecl>(ClassDecl) || isa<ObjCCategoryDecl>(ClassDecl)
          || isa<ObjCProtocolDecl>(ClassDecl);
   bool checkIdenticalMethods = isa<ObjCImplementationDecl>(ClassDecl);
+  
   
   if (pNum != 0) {
     if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl))
@@ -1067,7 +1089,14 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     else
       assert(false && "ActOnAtEnd - property declaration misplaced");
   }
-  
+
+  DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
+  assert(DC && "Missing DeclContext");
+
+  // FIXME: Remove these and use the ObjCContainerDecl/DeclContext.
+  llvm::DenseMap<Selector, const ObjCMethodDecl*> InsMap;
+  llvm::DenseMap<Selector, const ObjCMethodDecl*> ClsMap;
+
   for (unsigned i = 0; i < allNum; i++ ) {
     ObjCMethodDecl *Method =
       cast_or_null<ObjCMethodDecl>(static_cast<Decl*>(allMethods[i]));
@@ -1084,7 +1113,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
             << Method->getDeclName();
           Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
       } else {
-        insMethods.push_back(Method);
+        DC->addDecl(Context, Method);
         InsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "id".
         AddInstanceMethodToGlobalPool(Method);
@@ -1101,17 +1130,13 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
           << Method->getDeclName();
         Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
       } else {
-        clsMethods.push_back(Method);
+        DC->addDecl(Context, Method);
         ClsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "Class".
         AddFactoryMethodToGlobalPool(Method);
       }
     }
   }
-  // Save the size so we can detect if we've added any property methods.
-  unsigned int insMethodsSizePriorToPropAdds = insMethods.size();
-  unsigned int clsMethodsSizePriorToPropAdds = clsMethods.size();
-  
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
     // Compares properties declared in this class to those of its 
     // super class.
@@ -1119,22 +1144,15 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     MergeProtocolPropertiesIntoClass(I, I);
     for (ObjCInterfaceDecl::classprop_iterator i = I->classprop_begin(),
          e = I->classprop_end(); i != e; ++i) {
-      diagnosePropertySetterGetterMismatch((*i), InsMap[(*i)->getGetterName()],
-                                           InsMap[(*i)->getSetterName()]);
-      I->addPropertyMethods(Context, *i, insMethods, InsMap);
+      ProcessPropertyDecl((*i), I);
     }
-    I->addMethods(&insMethods[0], insMethods.size(),
-                  &clsMethods[0], clsMethods.size(), AtEndLoc);
-    
+    I->setAtEndLoc(AtEndLoc);
   } else if (ObjCProtocolDecl *P = dyn_cast<ObjCProtocolDecl>(ClassDecl)) {
     for (ObjCProtocolDecl::classprop_iterator i = P->classprop_begin(),
          e = P->classprop_end(); i != e; ++i) {
-      diagnosePropertySetterGetterMismatch((*i), InsMap[(*i)->getGetterName()],
-                                           InsMap[(*i)->getSetterName()]);
-      P->addPropertyMethods(Context, *i, insMethods, InsMap);
+      ProcessPropertyDecl((*i), P);
     }
-    P->addMethods(&insMethods[0], insMethods.size(),
-                  &clsMethods[0], clsMethods.size(), AtEndLoc);
+    P->setAtEndLoc(AtEndLoc);
   }
   else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
     // Categories are used to extend the class by declaring new methods.
@@ -1145,12 +1163,9 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     MergeProtocolPropertiesIntoClass(C, C);
     for (ObjCCategoryDecl::classprop_iterator i = C->classprop_begin(),
          e = C->classprop_end(); i != e; ++i) {
-      diagnosePropertySetterGetterMismatch((*i), InsMap[(*i)->getGetterName()],
-                                           InsMap[(*i)->getSetterName()]);
-      C->addPropertyMethods(Context, *i, insMethods, InsMap);
+      ProcessPropertyDecl((*i), C);
     }
-    C->addMethods(&insMethods[0], insMethods.size(),
-                  &clsMethods[0], clsMethods.size(), AtEndLoc);
+    C->setAtEndLoc(AtEndLoc);
   }
   else if (ObjCImplementationDecl *IC = 
                 dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
@@ -1173,24 +1188,6 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
       }
     }
   }
-  // Add any synthesized methods to the global pool. This allows us to 
-  // handle the following, which is supported by GCC (and part of the design).
-  //
-  // @interface Foo
-  // @property double bar;
-  // @end
-  //
-  // void thisIsUnfortunate() {
-  //   id foo;
-  //   double bar = [foo bar];
-  // }
-  //
-  if (insMethodsSizePriorToPropAdds < insMethods.size())
-    for (unsigned i = insMethodsSizePriorToPropAdds; i < insMethods.size(); i++)
-      AddInstanceMethodToGlobalPool(insMethods[i]);     
-  if (clsMethodsSizePriorToPropAdds < clsMethods.size())
-    for (unsigned i = clsMethodsSizePriorToPropAdds; i < clsMethods.size(); i++)
-      AddFactoryMethodToGlobalPool(clsMethods[i]);     
 }
 
 
@@ -1241,7 +1238,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   
   ObjCMethodDecl* ObjCMethod = 
     ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel, resultDeclType,
-                           ClassDecl, 
+                           dyn_cast<DeclContext>(ClassDecl), 
                            MethodType == tok::minus, isVariadic,
                            false,
                            MethodDeclKind == tok::objc_optional ? 
