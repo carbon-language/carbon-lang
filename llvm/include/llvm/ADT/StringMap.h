@@ -182,7 +182,7 @@ public:
   template<typename AllocatorTy>
   static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
                                 AllocatorTy &Allocator) {
-    return Create(KeyStart, KeyEnd, Allocator, (void*)0);
+    return Create(KeyStart, KeyEnd, Allocator, 0);
   }
 
 
@@ -195,7 +195,7 @@ public:
   }
 
   static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd) {
-    return Create(KeyStart, KeyEnd, (void*)0);
+    return Create(KeyStart, KeyEnd, 0);
   }
 
   /// GetStringMapEntryFromValue - Given a value that is known to be embedded
@@ -378,7 +378,7 @@ public:
 
   StringMapEntry<ValueTy> &GetOrCreateValue(const char *KeyStart,
                                             const char *KeyEnd) {
-    return GetOrCreateValue(KeyStart, KeyEnd, (void*)0);
+    return GetOrCreateValue(KeyStart, KeyEnd, 0);
   }
 
   /// remove - Remove the specified key/value pair from the map, but do not

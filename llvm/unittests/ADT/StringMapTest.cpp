@@ -11,6 +11,19 @@
 #include "llvm/ADT/StringMap.h"
 using namespace llvm;
 
+namespace llvm {
+
+template <>
+class StringMapEntryInitializer<uint32_t> {
+public:
+  template <typename InitTy>
+  static void Initialize(StringMapEntry<uint32_t> &T, InitTy InitVal) {
+    T.second = InitVal;
+  }
+};
+
+}
+
 namespace {
 
 // Test fixture
@@ -140,10 +153,11 @@ TEST_F(StringMapTest, InsertAndEraseTest) {
 // Test StringMapEntry::Create() method.
 // DISABLED because this fails without a StringMapEntryInitializer, and
 // I can't get it to compile with one.
-TEST_F(StringMapTest, DISABLED_StringMapEntryTest) {
+TEST_F(StringMapTest, StringMapEntryTest) {
+  MallocAllocator A;
   StringMap<uint32_t>::value_type* entry =
       StringMap<uint32_t>::value_type::Create(
-          testKeyFirst, testKeyLast, 1u);
+          testKeyFirst, testKeyLast, A, 1u);
   EXPECT_STREQ(testKey, entry->first());
   EXPECT_EQ(1u, entry->second);
 }
@@ -151,7 +165,7 @@ TEST_F(StringMapTest, DISABLED_StringMapEntryTest) {
 // Test insert() method
 // DISABLED because this fails without a StringMapEntryInitializer, and
 // I can't get it to compile with one.
-TEST_F(StringMapTest, DISABLED_InsertTest) {
+TEST_F(StringMapTest, InsertTest) {
   SCOPED_TRACE("InsertTest");
   testMap.insert(
       StringMap<uint32_t>::value_type::Create(
