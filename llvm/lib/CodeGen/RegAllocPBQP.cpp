@@ -6,17 +6,17 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file contains a Partitioned Boolean Quadratic Programming (PBQP) based
 // register allocator for LLVM. This allocator works by constructing a PBQP
 // problem representing the register allocation problem under consideration,
 // solving this using a PBQP solver, and mapping the solution back to a
 // register assignment. If any variables are selected for spilling then spill
-// code is inserted and the process repeated. 
+// code is inserted and the process repeated.
 //
 // The PBQP solver (pbqp.c) provided for this allocator uses a heuristic tuned
 // for register allocation. For more information on PBQP for register
-// allocation see the following papers: 
+// allocation see the following papers:
 //
 //   (1) Hames, L. and Scholz, B. 2006. Nearly optimal register allocation with
 //   PBQP. In Proceedings of the 7th Joint Modular Languages Conference
@@ -26,7 +26,7 @@
 //   architectures. In Proceedings of the Joint Conference on Languages,
 //   Compilers and Tools for Embedded Systems (LCTES'02), ACM Press, New York,
 //   NY, USA, 139-148.
-// 
+//
 // Author: Lang Hames
 // Email: lhames@gmail.com
 //
@@ -36,21 +36,21 @@
 
 #include "PBQP.h"
 #include "VirtRegMap.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/RegAllocRegistry.h"
-#include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegAllocRegistry.h"
+#include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/Support/Debug.h"
-#include <memory>
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include <limits>
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
-#include <limits>
 
 using namespace llvm;
 
@@ -68,7 +68,7 @@ namespace {
   public:
 
     static char ID;
-    
+
     //! Construct a PBQP register allocator.
     PBQPRegAlloc() : MachineFunctionPass((intptr_t)&ID) {}
 
@@ -119,7 +119,7 @@ namespace {
     LiveIntervalSet vregIntervalsToAlloc,
                     emptyVRegIntervals;
 
-    
+
     //! Builds a PBQP cost vector.
     template <typename RegContainer>
     PBQPVector* buildCostVector(unsigned vReg,
@@ -170,7 +170,7 @@ namespace {
 
     //! \brief Given a solved PBQP problem maps this solution back to a register
     //! assignment.
-    bool mapPBQPToRegAlloc(pbqp *problem); 
+    bool mapPBQPToRegAlloc(pbqp *problem);
 
     //! \brief Postprocessing before final spilling. Sets basic block "live in"
     //! variables.
@@ -209,9 +209,9 @@ PBQPVector* PBQPRegAlloc::buildCostVector(unsigned vReg,
     // No coalesce - on to the next preg.
     if (cmItr == coalesces.end())
       continue;
-   
-    // We have a coalesce - insert the benefit. 
-    (*v)[ai + 1] = -cmItr->second;  
+
+    // We have a coalesce - insert the benefit.
+    (*v)[ai + 1] = -cmItr->second;
   }
 
   return v;
@@ -232,7 +232,7 @@ PBQPMatrix* PBQPRegAlloc::buildInterferenceMatrix(
   // both intervals to memory safely (the cost for each individual allocation
   // to memory is accounted for by the cost vectors for each live interval).
   PBQPMatrix *m = new PBQPMatrix(allowed1.size() + 1, allowed2.size() + 1);
- 
+
   // Assume this is a zero matrix until proven otherwise.  Zero matrices occur
   // between interfering live ranges with non-overlapping register sets (e.g.
   // non-overlapping reg classes, or disjoint sets of allowed regs within the
@@ -244,9 +244,9 @@ PBQPMatrix* PBQPRegAlloc::buildInterferenceMatrix(
 
   // Row index. Starts at 1, since the 0th row is for the spill option, which
   // is always zero.
-  unsigned ri = 1; 
+  unsigned ri = 1;
 
-  // Iterate over allowed sets, insert infinities where required. 
+  // Iterate over allowed sets, insert infinities where required.
   for (RegContainerIterator a1Itr = allowed1.begin(), a1End = allowed1.end();
        a1Itr != a1End; ++a1Itr) {
 
@@ -321,7 +321,7 @@ PBQPMatrix* PBQPRegAlloc::buildCoalescingMatrix(
 
       // If the row and column represent the same register insert a beneficial
       // cost to preference this allocation - it would allow us to eliminate a
-      // move instruction.      
+      // move instruction.
       if (reg1 == *a2Itr) {
         (*m)[ri][ci] = -cBenefit;
         isZeroMatrix = false;
@@ -348,7 +348,7 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
   typedef MachineFunction::const_iterator MFIterator;
   typedef MachineBasicBlock::const_iterator MBBIterator;
   typedef LiveInterval::const_vni_iterator VNIIterator;
- 
+
   CoalesceMap coalescesFound;
 
   // To find coalesces we need to iterate over the function looking for
@@ -378,7 +378,7 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
       // If both registers are physical then we can't coalesce.
       if (srcRegIsPhysical && dstRegIsPhysical)
         continue;
-      
+
       // If it's a copy that includes a virtual register but the source and
       // destination classes differ then we can't coalesce, so continue with
       // the next instruction.
@@ -408,7 +408,7 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
       }
 
       // If we've made it here we have a copy with compatible register classes.
-      // We can probably coalesce, but we need to consider overlap. 
+      // We can probably coalesce, but we need to consider overlap.
       const LiveInterval *srcLI = &lis->getInterval(srcReg),
                          *dstLI = &lis->getInterval(dstReg);
 
@@ -421,7 +421,7 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
         bool badDef = false;
 
         // Test all defs of the source range.
-        for (VNIIterator 
+        for (VNIIterator
                vniItr = srcLI->vni_begin(), vniEnd = srcLI->vni_end();
                vniItr != vniEnd; ++vniItr) {
 
@@ -436,12 +436,12 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
         // If we have a bad def give up, continue to the next instruction.
         if (badDef)
           continue;
-         
+
         // Otherwise test definitions of the destination range.
         for (VNIIterator
                vniItr = dstLI->vni_begin(), vniEnd = dstLI->vni_end();
                vniItr != vniEnd; ++vniItr) {
-         
+
           // We want to make sure we skip the copy instruction itself.
           if ((*vniItr)->copy == instr)
             continue;
@@ -451,7 +451,7 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
             break;
           }
         }
-        
+
         // As before a bad def we give up and continue to the next instr.
         if (badDef)
           continue;
@@ -462,7 +462,7 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
       // We're good to go with the coalesce.
 
       float cBenefit = powf(10.0f, loopInfo->getLoopDepth(mbb)) / 5.0;
-      
+
       coalescesFound[RegPair(srcReg, dstReg)] = cBenefit;
       coalescesFound[RegPair(dstReg, srcReg)] = cBenefit;
     }
@@ -521,7 +521,7 @@ pbqp* PBQPRegAlloc::constructPBQPProblem() {
 
   // Iterate over vreg intervals, construct live interval <-> node number
   //  mappings.
-  for (LiveIntervalSet::const_iterator 
+  for (LiveIntervalSet::const_iterator
        itr = vregIntervalsToAlloc.begin(), end = vregIntervalsToAlloc.end();
        itr != end; ++itr) {
     const LiveInterval *li = *itr;
@@ -545,7 +545,7 @@ pbqp* PBQPRegAlloc::constructPBQPProblem() {
     // Grab pointers to the interval and its register class.
     const LiveInterval *li = node2LI[node];
     const TargetRegisterClass *liRC = mri->getRegClass(li->reg);
-    
+
     // Start by assuming all allocable registers in the class are allowed...
     RegVector liAllowed(liRC->allocation_order_begin(*mf),
                         liRC->allocation_order_end(*mf));
@@ -570,7 +570,7 @@ pbqp* PBQPRegAlloc::constructPBQPProblem() {
       // Remove the overlapping reg...
       RegVector::iterator eraseItr =
         std::find(liAllowed.begin(), liAllowed.end(), pReg);
-      
+
       if (eraseItr != liAllowed.end())
         liAllowed.erase(eraseItr);
 
@@ -581,7 +581,7 @@ pbqp* PBQPRegAlloc::constructPBQPProblem() {
         for (; *aliasItr != 0; ++aliasItr) {
           RegVector::iterator eraseItr =
             std::find(liAllowed.begin(), liAllowed.end(), *aliasItr);
-            
+
           if (eraseItr != liAllowed.end()) {
             liAllowed.erase(eraseItr);
           }
@@ -595,7 +595,7 @@ pbqp* PBQPRegAlloc::constructPBQPProblem() {
 
     // Set the spill cost to the interval weight, or epsilon if the
     // interval weight is zero
-    PBQPNum spillCost = (li->weight != 0.0) ? 
+    PBQPNum spillCost = (li->weight != 0.0) ?
         li->weight : std::numeric_limits<PBQPNum>::min();
 
     // Build a cost vector for this interval.
@@ -626,7 +626,7 @@ pbqp* PBQPRegAlloc::constructPBQPProblem() {
       else if (li->overlaps(*li2)) {
         m = buildInterferenceMatrix(allowedSets[node1], allowedSets[node2]);
       }
- 
+
       if (m != 0) {
         add_pbqp_edgecosts(solver, node1, node2, m);
         delete m;
@@ -635,13 +635,13 @@ pbqp* PBQPRegAlloc::constructPBQPProblem() {
   }
 
   // We're done, PBQP problem constructed - return it.
-  return solver; 
+  return solver;
 }
 
 void PBQPRegAlloc::addStackInterval(const LiveInterval *spilled, float &weight) {
   int stackSlot = vrm->getStackSlot(spilled->reg);
-  
-  if (stackSlot == VirtRegMap::NO_STACK_SLOT) 
+
+  if (stackSlot == VirtRegMap::NO_STACK_SLOT)
     return;
 
   LiveInterval &stackInterval = lss->getOrCreateInterval(stackSlot);
@@ -658,13 +658,13 @@ void PBQPRegAlloc::addStackInterval(const LiveInterval *spilled, float &weight) 
 }
 
 bool PBQPRegAlloc::mapPBQPToRegAlloc(pbqp *problem) {
-  
+
   // Set to true if we have any spills
   bool anotherRoundNeeded = false;
 
   // Clear the existing allocation.
   vrm->clearAllVirt();
-  
+
   // Iterate over the nodes mapping the PBQP solution to a register assignment.
   for (unsigned node = 0; node < node2LI.size(); ++node) {
     unsigned virtReg = node2LI[node]->reg,
@@ -734,18 +734,18 @@ void PBQPRegAlloc::finalizeAlloc() const {
   for (LiveIntervalSet::const_iterator
 	 itr = emptyVRegIntervals.begin(), end = emptyVRegIntervals.end();
          itr != end; ++itr) {
-    LiveInterval *li = *itr;   
+    LiveInterval *li = *itr;
 
     unsigned physReg = li->preference;
 
     if (physReg == 0) {
       const TargetRegisterClass *liRC = mri->getRegClass(li->reg);
-      physReg = *liRC->allocation_order_begin(*mf); 
+      physReg = *liRC->allocation_order_begin(*mf);
     }
-       
-    vrm->assignVirt2Phys(li->reg, physReg); 
+
+    vrm->assignVirt2Phys(li->reg, physReg);
   }
- 
+
   // Finally iterate over the basic blocks to compute and set the live-in sets.
   SmallVector<MachineBasicBlock*, 8> liveInMBBs;
   MachineBasicBlock *entryMBB = &*mf->begin();
@@ -755,7 +755,7 @@ void PBQPRegAlloc::finalizeAlloc() const {
 
     const LiveInterval *li = liItr->second;
     unsigned reg = 0;
-    
+
     // Get the physical register for this interval
     if (TargetRegisterInfo::isPhysicalRegister(li->reg)) {
       reg = li->reg;
@@ -771,7 +771,7 @@ void PBQPRegAlloc::finalizeAlloc() const {
     // Iterate over the ranges of the current interval...
     for (LRIterator lrItr = li->begin(), lrEnd = li->end();
          lrItr != lrEnd; ++lrItr) {
-      
+
       // Find the set of basic blocks which this range is live into...
       if (lis->findLiveInMBBs(lrItr->start, lrItr->end,  liveInMBBs)) {
         // And add the physreg for this interval to their live-in sets.
@@ -786,7 +786,7 @@ void PBQPRegAlloc::finalizeAlloc() const {
       }
     }
   }
- 
+
 }
 
 bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
@@ -807,17 +807,17 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
   DOUT << "PBQP Register Allocating for " << mf->getFunction()->getName() << "\n";
 
   // Allocator main loop:
-  // 
+  //
   // * Map current regalloc problem to a PBQP problem
   // * Solve the PBQP problem
   // * Map the solution back to a register allocation
   // * Spill if necessary
-  // 
+  //
   // This process is continued till no more spills are generated.
 
   // Find the vreg intervals in need of allocation.
   findVRegIntervalsToAlloc();
-  
+
   // If there aren't any then we're done here.
   if (vregIntervalsToAlloc.empty() && emptyVRegIntervals.empty())
     return true;
@@ -832,12 +832,12 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
       DOUT << "  PBQP Regalloc round " << round << ":\n";
 
       pbqp *problem = constructPBQPProblem();
-   
+
       solve_pbqp(problem);
-   
+
       pbqpAllocComplete = mapPBQPToRegAlloc(problem);
 
-      free_pbqp(problem); 
+      free_pbqp(problem);
 
       ++round;
     }
@@ -858,7 +858,7 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
   std::auto_ptr<Spiller> spiller(createSpiller());
   spiller->runOnMachineFunction(*mf, *vrm);
 
-  return true; 
+  return true;
 }
 
 FunctionPass* llvm::createPBQPRegisterAllocator() {
