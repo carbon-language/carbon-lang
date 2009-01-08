@@ -41,6 +41,13 @@ class PTHLexer : public PreprocessorLexer {
   /// CurPPCondPtr - Pointer inside PPCond that refers to the next entry
   ///  to process when doing quick skipping of preprocessor blocks.
   const char* CurPPCondPtr;
+  
+  /// Pointer to a side table containing offsets in the PTH file
+  ///  for token spellings.
+  const char* SpellingTable;
+  
+  /// Number of cached spellings left in the cached source file.
+  unsigned SpellingsLeft;
 
   PTHLexer(const PTHLexer&);  // DO NOT IMPLEMENT
   void operator=(const PTHLexer&); // DO NOT IMPLEMENT
@@ -57,7 +64,8 @@ public:
 
   /// Create a PTHLexer for the specified token stream.
   PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D, 
-           const char* ppcond, PTHManager& PM);
+           const char* ppcond, const char* spellingTable, unsigned numSpellings,
+           PTHManager& PM);
   
   ~PTHLexer() {}
     

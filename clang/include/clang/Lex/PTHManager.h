@@ -69,6 +69,10 @@ class PTHManager {
   /// GetIdentifierInfo - Used by PTHManager to reconstruct IdentifierInfo
   ///  objects from the PTH file.
   IdentifierInfo* GetIdentifierInfo(unsigned);
+  
+  /// GetSpelling - Used by PTHLexer classes to get the cached spelling
+  ///  for a token.
+  unsigned GetSpelling(unsigned PTHOffset, const char*& Buffer);
 
 public:
   
