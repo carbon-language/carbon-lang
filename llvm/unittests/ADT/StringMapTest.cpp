@@ -11,19 +11,6 @@
 #include "llvm/ADT/StringMap.h"
 using namespace llvm;
 
-namespace llvm {
-
-template <>
-class StringMapEntryInitializer<uint32_t> {
-public:
-  template <typename InitTy>
-  static void Initialize(StringMapEntry<uint32_t> &T, InitTy InitVal) {
-    T.second = InitVal;
-  }
-};
-
-}
-
 namespace {
 
 // Test fixture
@@ -83,13 +70,13 @@ const char* StringMapTest::testKeyFirst = testKey;
 const char* StringMapTest::testKeyLast = testKey + sizeof(testKey) - 1;
 const std::string StringMapTest::testKeyStr(testKey);
 
-// Empty map tests
+// Empty map tests.
 TEST_F(StringMapTest, EmptyMapTest) {
   SCOPED_TRACE("EmptyMapTest");
   assertEmptyMap();
 }
 
-// Constant map tests
+// Constant map tests.
 TEST_F(StringMapTest, ConstEmptyMapTest) {
   const StringMap<uint32_t>& constTestMap = testMap;
 
@@ -106,18 +93,18 @@ TEST_F(StringMapTest, ConstEmptyMapTest) {
   EXPECT_EQ(0u, constTestMap.count(testKeyStr));
   EXPECT_TRUE(constTestMap.find(testKey) == constTestMap.end());
   EXPECT_TRUE(constTestMap.find(testKeyFirst, testKeyLast) ==
-      constTestMap.end());
+              constTestMap.end());
   EXPECT_TRUE(constTestMap.find(testKeyStr) == constTestMap.end());
 }
 
-// A map with a single entry
+// A map with a single entry.
 TEST_F(StringMapTest, SingleEntryMapTest) {
   SCOPED_TRACE("SingleEntryMapTest");
   testMap[testKey] = testValue;
   assertSingleItemMap();
 }
 
-// Test clear() method
+// Test clear() method.
 TEST_F(StringMapTest, ClearTest) {
   SCOPED_TRACE("ClearTest");
   testMap[testKey] = testValue;
@@ -125,7 +112,7 @@ TEST_F(StringMapTest, ClearTest) {
   assertEmptyMap();
 }
 
-// Test erase(iterator) method
+// Test erase(iterator) method.
 TEST_F(StringMapTest, EraseIteratorTest) {
   SCOPED_TRACE("EraseIteratorTest");
   testMap[testKey] = testValue;
@@ -133,7 +120,7 @@ TEST_F(StringMapTest, EraseIteratorTest) {
   assertEmptyMap();
 }
 
-// Test erase(value) method
+// Test erase(value) method.
 TEST_F(StringMapTest, EraseValueTest) {
   SCOPED_TRACE("EraseValueTest");
   testMap[testKey] = testValue;
@@ -141,7 +128,7 @@ TEST_F(StringMapTest, EraseValueTest) {
   assertEmptyMap();
 }
 
-// Test inserting two values and erasing one
+// Test inserting two values and erasing one.
 TEST_F(StringMapTest, InsertAndEraseTest) {
   SCOPED_TRACE("InsertAndEraseTest");
   testMap[testKey] = testValue;
@@ -150,30 +137,7 @@ TEST_F(StringMapTest, InsertAndEraseTest) {
   assertSingleItemMap();
 }
 
-// Test StringMapEntry::Create() method.
-// DISABLED because this fails without a StringMapEntryInitializer, and
-// I can't get it to compile with one.
-TEST_F(StringMapTest, StringMapEntryTest) {
-  MallocAllocator A;
-  StringMap<uint32_t>::value_type* entry =
-      StringMap<uint32_t>::value_type::Create(
-          testKeyFirst, testKeyLast, A, 1u);
-  EXPECT_STREQ(testKey, entry->first());
-  EXPECT_EQ(1u, entry->second);
-}
-
-// Test insert() method
-// DISABLED because this fails without a StringMapEntryInitializer, and
-// I can't get it to compile with one.
-TEST_F(StringMapTest, InsertTest) {
-  SCOPED_TRACE("InsertTest");
-  testMap.insert(
-      StringMap<uint32_t>::value_type::Create(
-          testKeyFirst, testKeyLast, testMap.getAllocator(), 1u));
-  assertSingleItemMap();
-}
-
-// A more complex iteration test
+// A more complex iteration test.
 TEST_F(StringMapTest, IterationTest) {
   bool visited[100];
 
@@ -200,4 +164,39 @@ TEST_F(StringMapTest, IterationTest) {
   }
 }
 
+} // end anonymous namespace
+
+namespace llvm {
+
+template <>
+class StringMapEntryInitializer<uint32_t> {
+public:
+  template <typename InitTy>
+  static void Initialize(StringMapEntry<uint32_t> &T, InitTy InitVal) {
+    T.second = InitVal;
+  }
+};
+
+} // end llvm namespace
+
+namespace {
+
+// Test StringMapEntry::Create() method.
+TEST_F(StringMapTest, StringMapEntryTest) {
+  StringMap<uint32_t>::value_type* entry =
+      StringMap<uint32_t>::value_type::Create(
+          testKeyFirst, testKeyLast, 1u);
+  EXPECT_STREQ(testKey, entry->first());
+  EXPECT_EQ(1u, entry->second);
 }
+
+// Test insert() method.
+TEST_F(StringMapTest, InsertTest) {
+  SCOPED_TRACE("InsertTest");
+  testMap.insert(
+      StringMap<uint32_t>::value_type::Create(
+          testKeyFirst, testKeyLast, testMap.getAllocator(), 1u));
+  assertSingleItemMap();
+}
+
+} // end anonymous namespace
