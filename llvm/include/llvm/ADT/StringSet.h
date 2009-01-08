@@ -15,7 +15,6 @@
 #define LLVM_ADT_STRINGSET_H
 
 #include "llvm/ADT/StringMap.h"
-
 #include <cassert>
 
 namespace llvm {
@@ -27,7 +26,7 @@ namespace llvm {
   class StringSet : public llvm::StringMap<char, AllocatorTy> {
     typedef llvm::StringMap<char, AllocatorTy> base;
   public:
-    bool insert (const std::string& InLang) {
+    bool insert(const std::string& InLang) {
       assert(!InLang.empty());
       const char* KeyStart = &InLang[0];
       const char* KeyEnd = KeyStart + InLang.size();
