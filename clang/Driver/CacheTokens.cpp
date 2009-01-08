@@ -425,7 +425,6 @@ void PTHWriter::EmitCachedSpellings() {
     Emit32(n);
     
     for (unsigned i = 0; i < n; ++i) {
-      ++count;
       // Write out the offset of the token within the source file.
       Emit32(spellings[i].first);
       
