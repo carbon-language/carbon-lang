@@ -50,7 +50,7 @@ autocmd FileType make set noexpandtab
 " Useful macros for cleaning up code to conform to LLVM coding guidelines
 
 " Delete trailing whitespace and tabs at the end of each line
-command! DeleteTrailingWs :%s/[\ \t]\+$//
+command! DeleteTrailingWs :%s/\s\+$//
 
 " Convert all tab characters to two spaces
 command! Untab :%s/\t/  /g
