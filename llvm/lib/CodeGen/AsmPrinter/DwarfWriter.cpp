@@ -2540,6 +2540,33 @@ private:
   }
 
 
+  /// RecordRegionStart - Indicate the start of a region.
+  ///
+  unsigned RecordRegionStart(GlobalVariable *V) {
+    DbgScope *Scope = getOrCreateScope(V);
+    unsigned ID = NextLabelID();
+    if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
+    return ID;
+  }
+
+  /// RecordRegionEnd - Indicate the end of a region.
+  ///
+  unsigned RecordRegionEnd(GlobalVariable *V) {
+    DbgScope *Scope = getOrCreateScope(V);
+    unsigned ID = NextLabelID();
+    Scope->setEndLabelID(ID);
+    return ID;
+  }
+
+  /// RecordVariable - Indicate the declaration of  a local variable.
+  ///
+  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
+    DbgScope *Scope = getOrCreateScope(GV);
+    DIVariable *VD = new DIVariable(GV);
+    DbgVariable *DV = new DbgVariable(VD, FrameIndex);
+    Scope->AddVariable(DV);
+  }
+
   /// getOrCreateScope - Returns the scope associated with the given descriptor.
   ///
   DbgScope *getOrCreateScope(GlobalVariable *V) {
