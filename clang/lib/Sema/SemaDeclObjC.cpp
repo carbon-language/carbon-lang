@@ -1037,6 +1037,54 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
   }
 
   // Synthesize getter/setter methods if none exist.
+  // Find the default getter and if one not found, add one.
+  if (!GetterMethod) {
+    // No instance method of same name as property getter name was found.
+    // Declare a getter method and add it to the list of methods 
+    // for this class.
+    GetterMethod = ObjCMethodDecl::Create(Context, property->getLocation(), 
+                             property->getLocation(), property->getGetterName(), 
+                             property->getType(), CD, true, false, true, 
+                             (property->getPropertyImplementation() == 
+                              ObjCPropertyDecl::Optional) ? 
+                             ObjCMethodDecl::Optional : 
+                             ObjCMethodDecl::Required);
+  } else
+    // A user declared getter will be synthesize when @synthesize of
+    // the property with the same name is seen in the @implementation
+    GetterMethod->setIsSynthesized();
+  property->setGetterMethodDecl(GetterMethod);
+
+  // Skip setter if property is read-only.
+  if (!property->isReadOnly()) {
+    // Find the default setter and if one not found, add one.
+    if (!SetterMethod) {
+      // No instance method of same name as property setter name was found.
+      // Declare a setter method and add it to the list of methods 
+      // for this class.
+      SetterMethod = ObjCMethodDecl::Create(Context, property->getLocation(), 
+                               property->getLocation(), 
+                               property->getSetterName(), 
+                               Context.VoidTy, CD, true, false, true,
+                               (property->getPropertyImplementation() == 
+                                ObjCPropertyDecl::Optional) ? 
+                               ObjCMethodDecl::Optional : 
+                               ObjCMethodDecl::Required);
+      // Invent the arguments for the setter. We don't bother making a
+      // nice name for the argument.
+      ParmVarDecl *Argument = ParmVarDecl::Create(Context, SetterMethod,
+                                                  SourceLocation(), 
+                                                  property->getIdentifier(),
+                                                  property->getType(),
+                                                  VarDecl::None,
+                                                  0, 0);
+      SetterMethod->setMethodParams(&Argument, 1);
+    } else
+      // A user declared setter will be synthesize when @synthesize of
+      // the property with the same name is seen in the @implementation
+      SetterMethod->setIsSynthesized();
+    property->setSetterMethodDecl(SetterMethod);
+  }
   // Add any synthesized methods to the global pool. This allows us to 
   // handle the following, which is supported by GCC (and part of the design).
   //
@@ -1049,7 +1097,11 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
   //   double bar = [foo bar];
   // }
   //
-  CD->getPropertyMethods(Context, property, GetterMethod, SetterMethod);
+  // FIXME: The synthesized property we set here is misleading. We
+  // almost always synthesize these methods unless the user explicitly
+  // provided prototypes (which is odd, but allowed). Sema should be
+  // typechecking that the declarations jive in that situation (which
+  // it is not currently).
   if (GetterMethod) {
     CD->addDecl(Context, GetterMethod);
     AddInstanceMethodToGlobalPool(GetterMethod);  
