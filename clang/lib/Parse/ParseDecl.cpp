@@ -526,7 +526,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // constructor declaration. We're done with the decl-specifiers
       // and will treat this token as an identifier.
       if (getLang().CPlusPlus && 
-          CurScope->isCXXClassScope() &&
+          CurScope->isClassScope() &&
           Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope) && 
           NextToken().getKind() == tok::l_paren)
         goto DoneWithDeclSpec;
@@ -948,7 +948,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
                                   unsigned TagType, DeclTy *TagDecl) {
   SourceLocation LBraceLoc = ConsumeBrace();
   
-  ParseScope StructScope(this, Scope::DeclScope);
+  ParseScope StructScope(this, Scope::ClassScope|Scope::DeclScope);
   Actions.ActOnTagStartDefinition(CurScope, TagDecl);
 
   // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
@@ -1875,7 +1875,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
   // Enter function-declaration scope, limiting any declarators to the
   // function prototype scope, including parameter declarators.
-  ParseScope PrototypeScope(this, Scope::FnScope|Scope::DeclScope);
+  ParseScope PrototypeScope(this, Scope::FunctionPrototypeScope|Scope::DeclScope);
   
   bool IsVariadic = false;
   while (1) {

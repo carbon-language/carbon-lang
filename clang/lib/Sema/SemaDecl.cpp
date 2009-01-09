@@ -2859,6 +2859,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   }
   
   DeclContext *DC = CurContext;
+  DeclContext *LexicalContext = CurContext;
   ScopedDecl *PrevDecl = 0;
 
   if (Name && SS.isNotEmpty()) {
@@ -2971,6 +2972,35 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
         PrevDecl = 0;
       }
     }
+  } else if (TK == TK_Reference && SS.isEmpty() && Name &&
+             (Kind != TagDecl::TK_enum))  {
+    // C++ [basic.scope.pdecl]p5:
+    //   -- for an elaborated-type-specifier of the form 
+    //
+    //          class-key identifier
+    //
+    //      if the elaborated-type-specifier is used in the
+    //      decl-specifier-seq or parameter-declaration-clause of a
+    //      function defined in namespace scope, the identifier is
+    //      declared as a class-name in the namespace that contains
+    //      the declaration; otherwise, except as a friend
+    //      declaration, the identifier is declared in the smallest
+    //      non-class, non-function-prototype scope that contains the
+    //      declaration.
+    //
+    // C99 6.7.2.3p8 has a similar (but not identical!) provision for
+    // C structs and unions.
+
+    // Find the context where we'll be declaring the tag.
+    while (DC->isRecord())
+      DC = DC->getParent();
+    LexicalContext = DC;
+
+    // Find the scope where we'll be declaring the tag.
+    while (S->isClassScope() || 
+           (getLangOptions().CPlusPlus && S->isFunctionPrototypeScope()) ||
+           (S->getFlags() & Scope::DeclScope == 0))
+      S = S->getParent();
   }
 
 CreateNewDecl:
@@ -3025,9 +3055,13 @@ CreateNewDecl:
   if (Attr)
     ProcessDeclAttributeList(New, Attr);
 
+  // If we're declaring or defining 
+  if (Name && S->isFunctionPrototypeScope() && !getLangOptions().CPlusPlus)
+    Diag(Loc, diag::warn_decl_in_param_list) << Context.getTagDeclType(New);
+
   // Set the lexical context. If the tag has a C++ scope specifier, the
   // lexical context will be different from the semantic context.
-  New->setLexicalDeclContext(CurContext);
+  New->setLexicalDeclContext(LexicalContext);
   
   // If this has an identifier, add it to the scope stack.
   if (Name) {
@@ -3037,13 +3071,20 @@ CreateNewDecl:
       S = S->getParent();
     
     // Add it to the decl chain.
-    PushOnScopeChains(New, S);
+    if (LexicalContext != CurContext) {
+      // FIXME: PushOnScopeChains should not rely on CurContext!
+      DeclContext *OldContext = CurContext;
+      CurContext = LexicalContext;
+      PushOnScopeChains(New, S);
+      CurContext = OldContext;
+    } else 
+      PushOnScopeChains(New, S);
   } else if (getLangOptions().CPlusPlus) {
     // FIXME: We also want to do this for C, but if this tag is
     // defined within a structure CurContext will point to the context
     // enclosing the structure, and we would end up inserting the tag
     // type into the wrong place.
-    CurContext->addDecl(Context, New);
+    LexicalContext->addDecl(Context, New);
   }
 
   return New;

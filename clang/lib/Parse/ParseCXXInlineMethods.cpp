@@ -75,7 +75,8 @@ void Parser::ParseLexedMethodDeclarations() {
 
     // Introduce the parameters into scope and parse their default
     // arguments.
-    ParseScope PrototypeScope(this, Scope::FnScope|Scope::DeclScope);
+    ParseScope PrototypeScope(this, 
+                              Scope::FunctionPrototypeScope|Scope::DeclScope);
     for (unsigned I = 0, N = LM.DefaultArgs.size(); I != N; ++I) {
       // Introduce the parameter into scope.
       Actions.ActOnDelayedCXXMethodParameter(CurScope, LM.DefaultArgs[I].Param);

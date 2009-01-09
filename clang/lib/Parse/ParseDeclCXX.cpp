@@ -720,7 +720,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
   SourceLocation LBraceLoc = ConsumeBrace();
 
-  if (!CurScope->isCXXClassScope() && // Not about to define a nested class.
+  if (!CurScope->isClassScope() && // Not about to define a nested class.
       CurScope->isInCXXInlineMethodScope()) {
     // We will define a local class of an inline method.
     // Push a new LexedMethodsForTopClass for its inline methods.
@@ -728,7 +728,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   }
 
   // Enter a scope for the class.
-  ParseScope ClassScope(this, Scope::CXXClassScope|Scope::DeclScope);
+  ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope);
 
   Actions.ActOnTagStartDefinition(CurScope, TagDecl);
 
@@ -782,7 +782,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   //
   // FIXME: Only function bodies and constructor ctor-initializers are
   // parsed correctly, fix the rest.
-  if (!CurScope->getParent()->isCXXClassScope()) {
+  if (!CurScope->getParent()->isClassScope()) {
     // We are not inside a nested class. This class and its nested classes
     // are complete and we can parse the delayed portions of method
     // declarations and the lexed inline method definitions.

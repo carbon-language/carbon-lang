@@ -726,6 +726,8 @@ DIAG(err_bad_variable_name, ERROR,
      "'%0' cannot be the name of a variable or data member")
 DIAG(err_parameter_name_omitted, ERROR,
      "parameter name omitted")
+DIAG(warn_decl_in_param_list, WARNING,
+     "declaration of %0 will not be visible outside of this function")
 
 DIAG(err_declarator_need_ident, ERROR,
      "declarator requires an identifier")

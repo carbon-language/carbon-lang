@@ -47,8 +47,8 @@ public:
     /// ControlScope - The controlling scope in a if/switch/while/for statement.
     ControlScope = 0x10,
 
-    /// CXXClassScope - The scope of a C++ struct/union/class definition.
-    CXXClassScope = 0x20,
+    /// ClassScope - The scope of a struct/union/class definition.
+    ClassScope = 0x20,
     
     /// BlockScope - This is a scope that corresponds to a block object.
     /// Blocks serve as top-level scopes for some objects like labels, they
@@ -60,7 +60,11 @@ public:
     /// template parameters of a C++ template. Template parameter
     /// scope starts at the 'template' keyword and ends when the
     /// template declaration ends.
-    TemplateParamScope = 0x80
+    TemplateParamScope = 0x80,
+
+    /// FunctionPrototypeScope - This is a scope that corresponds to the
+    /// parameters within a function prototype.
+    FunctionPrototypeScope = 0x100
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -73,7 +77,7 @@ private:
   
   /// Flags - This contains a set of ScopeFlags, which indicates how the scope
   /// interrelates with other control flow statements.
-  unsigned Flags : 8;
+  unsigned Flags : 9;
   
   /// WithinElse - Whether this scope is part of the "else" branch in
   /// its parent ControlScope.
@@ -197,9 +201,9 @@ public:
   void* getEntity() const { return Entity; }
   void setEntity(void *E) { Entity = E; }
 
-  /// isCXXClassScope - Return true if this scope is a C++ class scope.
-  bool isCXXClassScope() const {
-    return (getFlags() & Scope::CXXClassScope);
+  /// isClassScope - Return true if this scope is a class/struct/union scope.
+  bool isClassScope() const {
+    return (getFlags() & Scope::ClassScope);
   }
 
   /// isInCXXInlineMethodScope - Return true if this scope is a C++ inline
@@ -207,7 +211,7 @@ public:
   bool isInCXXInlineMethodScope() const {
     if (const Scope *FnS = getFnParent()) {
       assert(FnS->getParent() && "TUScope not created?");
-      return FnS->getParent()->isCXXClassScope();
+      return FnS->getParent()->isClassScope();
     }
     return false;
   }
@@ -216,6 +220,12 @@ public:
   /// template parameter scope.
   bool isTemplateParamScope() const {
     return getFlags() & Scope::TemplateParamScope;
+  }
+
+  /// isFunctionPrototypeScope - Return true if this scope is a
+  /// function prototype scope.
+  bool isFunctionPrototypeScope() const {
+    return getFlags() & Scope::FunctionPrototypeScope;
   }
 
   /// isWithinElse - Whether we are within the "else" of the
