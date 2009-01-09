@@ -53,14 +53,7 @@ public:
     // Decl
          TranslationUnit,  // [DeclContext]
     //   NamedDecl
-    //     ObjCContainerDecl // [DeclContext]
-             ObjCCategory,
-             ObjCProtocol,
-             ObjCInterface,
            OverloadedFunction,
-           ObjCCategoryImpl,  // [DeclContext]
-           ObjCImplementation, // [DeclContext]
-           ObjCProperty,
     //     ScopedDecl
              Field,
                ObjCIvar,
@@ -88,18 +81,25 @@ public:
   	         NonTypeTemplateParm,
              LinkageSpec, // [DeclContext]
              ObjCMethod,  // [DeclContext]
-           ObjCCompatibleAlias,
-           ObjCClass,
-           ObjCForwardProtocol,
-           ObjCPropertyImpl,
+    //       ObjCContainerDecl // [DeclContext]
+               ObjCCategory,
+               ObjCProtocol,
+               ObjCInterface,
+             ObjCCategoryImpl,  // [DeclContext]
+             ObjCImplementation, // [DeclContext]
+             ObjCProperty,
+             ObjCCompatibleAlias,
+             ObjCClass,
+             ObjCForwardProtocol,
+             ObjCPropertyImpl,
          FileScopeAsm,
 	     Block, // [DeclContext]
   
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
-    NamedFirst     = OverloadedFunction , NamedLast     = NonTypeTemplateParm,
+    NamedFirst     = OverloadedFunction , NamedLast     = ObjCPropertyImpl,
     FieldFirst     = Field        , FieldLast     = ObjCAtDefsField,
-    ScopedFirst    = Field        , ScopedLast    = ObjCMethod,
+    ScopedFirst    = Field        , ScopedLast    = ObjCPropertyImpl,
     TypeFirst      = Typedef      , TypeLast      = TemplateTypeParm,
     TagFirst       = Enum         , TagLast       = CXXRecord,
     RecordFirst    = Record       , RecordLast    = CXXRecord,

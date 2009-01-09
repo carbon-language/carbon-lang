@@ -94,7 +94,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   Context.setObjCClassType(ClassTypedef);
   // Synthesize "@class Protocol;
   ObjCInterfaceDecl *ProtocolDecl =
-    ObjCInterfaceDecl::Create(Context, SourceLocation(),
+    ObjCInterfaceDecl::Create(Context, CurContext, SourceLocation(),
                               &Context.Idents.get("Protocol"), 
                               SourceLocation(), true);
   Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));

@@ -93,12 +93,14 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       IDecl->setForwardDecl(false);
     }
   } else {
-    IDecl = ObjCInterfaceDecl::Create(Context, AtInterfaceLoc, 
+    IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc, 
                                       ClassName, ClassLoc);
     if (AttrList)
       ProcessDeclAttributeList(IDecl, AttrList);
   
     ObjCInterfaceDecls[ClassName] = IDecl;
+    // FIXME: PushOnScopeChains
+    CurContext->addDecl(Context, IDecl);
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(IDecl);
   }
@@ -178,13 +180,15 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   
   // Everything checked out, instantiate a new alias declaration AST.
   ObjCCompatibleAliasDecl *AliasDecl = 
-    ObjCCompatibleAliasDecl::Create(Context, AtLoc, AliasName, CDecl);
+    ObjCCompatibleAliasDecl::Create(Context, CurContext, AtLoc, AliasName, CDecl);
   
   ObjCAliasDecls[AliasName] = AliasDecl;
-  
+
+  // FIXME: PushOnScopeChains?
+  CurContext->addDecl(Context, AliasDecl);
   if (!CheckObjCDeclScope(AliasDecl))
     TUScope->AddDecl(AliasDecl);
-  
+
   return AliasDecl;
 }
 
@@ -212,7 +216,10 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     PDecl->setLocation(AtProtoInterfaceLoc);
     PDecl->setForwardDecl(false);
   } else {
-    PDecl = ObjCProtocolDecl::Create(Context, AtProtoInterfaceLoc,ProtocolName);
+    PDecl = ObjCProtocolDecl::Create(Context, CurContext, 
+                                     AtProtoInterfaceLoc,ProtocolName);
+    // FIXME: PushOnScopeChains?
+    CurContext->addDecl(Context, PDecl);
     PDecl->setForwardDecl(false);
     ObjCProtocols[ProtocolName] = PDecl;
   }
@@ -442,17 +449,21 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
   for (unsigned i = 0; i != NumElts; ++i) {
     IdentifierInfo *Ident = IdentList[i].first;
     ObjCProtocolDecl *&PDecl = ObjCProtocols[Ident];
-    if (PDecl == 0) // Not already seen?
-      PDecl = ObjCProtocolDecl::Create(Context, IdentList[i].second, Ident);
+    if (PDecl == 0) { // Not already seen?
+      PDecl = ObjCProtocolDecl::Create(Context, CurContext, 
+                                       IdentList[i].second, Ident);
+      // FIXME: PushOnScopeChains?
+      CurContext->addDecl(Context, PDecl);
+    }
     if (attrList)
       ProcessDeclAttributeList(PDecl, attrList);
     Protocols.push_back(PDecl);
   }
   
   ObjCForwardProtocolDecl *PDecl = 
-    ObjCForwardProtocolDecl::Create(Context, AtProtocolLoc,
+    ObjCForwardProtocolDecl::Create(Context, CurContext, AtProtocolLoc,
                                     &Protocols[0], Protocols.size());
-  
+  CurContext->addDecl(Context, PDecl);
   CheckObjCDeclScope(PDecl);
   return PDecl;
 }
@@ -468,7 +479,9 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
   
   ObjCCategoryDecl *CDecl = 
-    ObjCCategoryDecl::Create(Context, AtInterfaceLoc, CategoryName);
+    ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc, CategoryName);
+  // FIXME: PushOnScopeChains?
+  CurContext->addDecl(Context, CDecl);
   CDecl->setClassInterface(IDecl);
   
   /// Check that class of this category is already completely declared.
@@ -508,10 +521,14 @@ Sema::DeclTy *Sema::ActOnStartCategoryImplementation(
                       IdentifierInfo *CatName, SourceLocation CatLoc) {
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
   ObjCCategoryImplDecl *CDecl = 
-    ObjCCategoryImplDecl::Create(Context, AtCatImplLoc, CatName, IDecl);
+    ObjCCategoryImplDecl::Create(Context, CurContext, AtCatImplLoc, CatName,
+                                 IDecl);
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl())
     Diag(ClassLoc, diag::err_undef_interface) << ClassName;
+
+  // FIXME: PushOnScopeChains?
+  CurContext->addDecl(Context, CDecl);
 
   /// TODO: Check that CatName, category name, is not used in another
   // implementation.
@@ -570,20 +587,25 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
 
     // FIXME: Do we support attributes on the @implementation? If so
     // we should copy them over.
-    IDecl = ObjCInterfaceDecl::Create(Context, AtClassImplLoc, ClassName, 
-                                      ClassLoc, false, true);
+    IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassImplLoc, 
+                                      ClassName, ClassLoc, false, true);
     ObjCInterfaceDecls[ClassName] = IDecl;
     IDecl->setSuperClass(SDecl);
     IDecl->setLocEnd(ClassLoc);
     
+    // FIXME: PushOnScopeChains?
+    CurContext->addDecl(Context, IDecl);
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(IDecl);
   }
   
   ObjCImplementationDecl* IMPDecl = 
-    ObjCImplementationDecl::Create(Context, AtClassImplLoc, ClassName, 
-                                   IDecl, SDecl);
+    ObjCImplementationDecl::Create(Context, CurContext, AtClassImplLoc, 
+                                   ClassName, IDecl, SDecl);
   
+  // FIXME: PushOnScopeChains?
+  CurContext->addDecl(Context, IMPDecl);
+
   if (CheckObjCDeclScope(IMPDecl))
     return IMPDecl;
   
@@ -875,10 +897,12 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     }
     ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
     if (!IDecl) {  // Not already seen?  Make a forward decl.
-      IDecl = ObjCInterfaceDecl::Create(Context, AtClassLoc, IdentList[i],
-                                        SourceLocation(), true);
+      IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc, 
+                                        IdentList[i], SourceLocation(), true);
       ObjCInterfaceDecls[IdentList[i]] = IDecl;
 
+      // FIXME: PushOnScopeChains?
+      CurContext->addDecl(Context, IDecl);
       // Remember that this needs to be removed when the scope is popped.
       TUScope->AddDecl(IDecl);
     }
@@ -886,10 +910,10 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     Interfaces.push_back(IDecl);
   }
   
-  ObjCClassDecl *CDecl = ObjCClassDecl::Create(Context, AtClassLoc,
+  ObjCClassDecl *CDecl = ObjCClassDecl::Create(Context, CurContext, AtClassLoc,
                                                &Interfaces[0],
                                                Interfaces.size());
-  
+  CurContext->addDecl(Context, CDecl);
   CheckObjCDeclScope(CDecl);
   return CDecl;  
 }
@@ -1527,8 +1551,11 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   if (t->isArrayType() || t->isFunctionType())
     Diag(AtLoc, diag::err_property_type) << T;
   
-  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc, 
+  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, CurContext, AtLoc, 
                                                      FD.D.getIdentifier(), T);
+  // FIXME: PushOnScopeChains?
+  CurContext->addDecl(Context, PDecl);
+
   // Regardless of setter/getter attribute, we save the default getter/setter
   // selector names in anticipation of declaration of setter/getter methods.
   PDecl->setGetterName(GetterSel);
@@ -1661,11 +1688,13 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
   }
   assert (property && "ActOnPropertyImplDecl - property declaration missing");
   ObjCPropertyImplDecl *PIDecl = 
-    ObjCPropertyImplDecl::Create(Context, AtLoc, PropertyLoc, property, 
+    ObjCPropertyImplDecl::Create(Context, CurContext, AtLoc, PropertyLoc, 
+                                 property, 
                                  (Synthesize ? 
                                   ObjCPropertyImplDecl::Synthesize 
                                   : ObjCPropertyImplDecl::Dynamic),
                                  Ivar);
+  CurContext->addDecl(Context, PIDecl);
   if (IC) {
     if (Synthesize)
       if (ObjCPropertyImplDecl *PPIDecl = 

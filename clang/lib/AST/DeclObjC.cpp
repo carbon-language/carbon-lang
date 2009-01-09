@@ -51,12 +51,13 @@ void ObjCMethodDecl::Destroy(ASTContext& C) {
 }
 
 ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
+                                             DeclContext *DC,
                                              SourceLocation atLoc,
                                              IdentifierInfo *Id, 
                                              SourceLocation ClassLoc,
                                              bool ForwardDecl, bool isInternal){
   void *Mem = C.getAllocator().Allocate<ObjCInterfaceDecl>();
-  return new (Mem) ObjCInterfaceDecl(atLoc, Id, ClassLoc, ForwardDecl,
+  return new (Mem) ObjCInterfaceDecl(DC, atLoc, Id, ClassLoc, ForwardDecl,
                                      isInternal);
 }
 
@@ -104,11 +105,11 @@ void ObjCAtDefsFieldDecl::Destroy(ASTContext& C) {
   C.getAllocator().Deallocate((void *)this); 
 }
 
-ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C,
+ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L, 
                                            IdentifierInfo *Id) {
   void *Mem = C.getAllocator().Allocate<ObjCProtocolDecl>();
-  return new (Mem) ObjCProtocolDecl(L, Id);
+  return new (Mem) ObjCProtocolDecl(DC, L, Id);
 }
 
 ObjCProtocolDecl::~ObjCProtocolDecl() {
@@ -130,11 +131,11 @@ void ObjCProtocolDecl::Destroy(ASTContext& C) {
 }
 
 
-ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C,
+ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation L,
                                      ObjCInterfaceDecl **Elts, unsigned nElts) {
   void *Mem = C.getAllocator().Allocate<ObjCClassDecl>();
-  return new (Mem) ObjCClassDecl(L, Elts, nElts);
+  return new (Mem) ObjCClassDecl(DC, L, Elts, nElts);
 }
 
 ObjCClassDecl::~ObjCClassDecl() {
@@ -155,58 +156,58 @@ void ObjCClassDecl::Destroy(ASTContext& C) {
 }
 
 ObjCForwardProtocolDecl *
-ObjCForwardProtocolDecl::Create(ASTContext &C,
+ObjCForwardProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                 SourceLocation L, 
                                 ObjCProtocolDecl **Elts, unsigned NumElts) {
   void *Mem = C.getAllocator().Allocate<ObjCForwardProtocolDecl>();
-  return new (Mem) ObjCForwardProtocolDecl(L, Elts, NumElts);
+  return new (Mem) ObjCForwardProtocolDecl(DC, L, Elts, NumElts);
 }
 
 ObjCForwardProtocolDecl::~ObjCForwardProtocolDecl() {
   delete [] ReferencedProtocols;
 }
 
-ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C,
+ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L,
                                            IdentifierInfo *Id) {
   void *Mem = C.getAllocator().Allocate<ObjCCategoryDecl>();
-  return new (Mem) ObjCCategoryDecl(L, Id);
+  return new (Mem) ObjCCategoryDecl(DC, L, Id);
 }
 
 ObjCCategoryImplDecl *
-ObjCCategoryImplDecl::Create(ASTContext &C,
+ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L,IdentifierInfo *Id,
                              ObjCInterfaceDecl *ClassInterface) {
   void *Mem = C.getAllocator().Allocate<ObjCCategoryImplDecl>();
-  return new (Mem) ObjCCategoryImplDecl(L, Id, ClassInterface);
+  return new (Mem) ObjCCategoryImplDecl(DC, L, Id, ClassInterface);
 }
 
 ObjCImplementationDecl *
-ObjCImplementationDecl::Create(ASTContext &C,
+ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC, 
                                SourceLocation L,
                                IdentifierInfo *Id,
                                ObjCInterfaceDecl *ClassInterface,
                                ObjCInterfaceDecl *SuperDecl) {
   void *Mem = C.getAllocator().Allocate<ObjCImplementationDecl>();
-  return new (Mem) ObjCImplementationDecl(L, Id, ClassInterface, SuperDecl);
+  return new (Mem) ObjCImplementationDecl(DC, L, Id, ClassInterface, SuperDecl);
 }
 
 ObjCCompatibleAliasDecl *
-ObjCCompatibleAliasDecl::Create(ASTContext &C,
+ObjCCompatibleAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                 SourceLocation L,
                                 IdentifierInfo *Id, 
                                 ObjCInterfaceDecl* AliasedClass) {
   void *Mem = C.getAllocator().Allocate<ObjCCompatibleAliasDecl>();
-  return new (Mem) ObjCCompatibleAliasDecl(L, Id, AliasedClass);
+  return new (Mem) ObjCCompatibleAliasDecl(DC, L, Id, AliasedClass);
 }
 
-ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C,
+ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L,
                                            IdentifierInfo *Id,
                                            QualType T,
                                            PropertyControl propControl) {
   void *Mem = C.getAllocator().Allocate<ObjCPropertyDecl>();
-  return new (Mem) ObjCPropertyDecl(L, Id, T);
+  return new (Mem) ObjCPropertyDecl(DC, L, Id, T);
 }
 
 //===----------------------------------------------------------------------===//
@@ -757,13 +758,14 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
 }
 
 ObjCPropertyImplDecl *ObjCPropertyImplDecl::Create(ASTContext &C,
+                                                   DeclContext *DC,
                                                    SourceLocation atLoc,
                                                    SourceLocation L,
                                                    ObjCPropertyDecl *property,
                                                    Kind PK,
                                                    ObjCIvarDecl *ivar) {
   void *Mem = C.getAllocator().Allocate<ObjCPropertyImplDecl>();
-  return new (Mem) ObjCPropertyImplDecl(atLoc, L, property, PK, ivar);
+  return new (Mem) ObjCPropertyImplDecl(DC, atLoc, L, property, PK, ivar);
 }
 
 

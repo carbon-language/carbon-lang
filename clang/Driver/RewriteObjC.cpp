@@ -580,6 +580,12 @@ void RewriteObjC::HandleTopLevelDecl(Decl *D) {
   } else if (ObjCForwardProtocolDecl *FP = 
              dyn_cast<ObjCForwardProtocolDecl>(D)){
     RewriteForwardProtocolDecl(FP);
+  } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
+    // Recurse into linkage specifications
+    for (DeclContext::decl_iterator DI = LSD->decls_begin(),
+                                 DIEnd = LSD->decls_end();
+         DI != DIEnd; ++DI)
+      HandleTopLevelDecl(*DI);
   }
   // If we have a decl in the main file, see if we should rewrite it.
   if (SM->isFromMainFile(Loc))
@@ -4367,14 +4373,6 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 /// HandleDeclInMainFile - This is called for each top-level decl defined in the
 /// main file of the input.
 void RewriteObjC::HandleDeclInMainFile(Decl *D) {
-  // Required when rewriting in objective-c++ mode...
-  if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
-    for (LinkageSpecDecl::decl_iterator i = LSD->decls_begin(), 
-                                        e = LSD->decls_end(); i != e; ++i) {
-      HandleDeclInMainFile(*i);
-    }
-    return;
-  }
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (FD->isOverloadedOperator())
       return;

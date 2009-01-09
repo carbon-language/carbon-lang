@@ -143,7 +143,7 @@ class ScopedDecl : public NamedDecl {
 
 protected:
   ScopedDecl(Kind DK, DeclContext *DC, SourceLocation L,
-             DeclarationName N, ScopedDecl *PrevDecl)
+             DeclarationName N, ScopedDecl *PrevDecl = 0)
     : NamedDecl(DK, L, N), NextDeclarator(PrevDecl),
       DeclCtx(reinterpret_cast<uintptr_t>(DC)) {}
 

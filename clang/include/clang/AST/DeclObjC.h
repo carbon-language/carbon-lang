@@ -254,12 +254,13 @@ public:
 /// If DeclContext ends up providing some support for creating more strongly 
 /// typed iterators, the code below should be reduced considerably.
 ///
-class ObjCContainerDecl : public NamedDecl, public DeclContext {
+class ObjCContainerDecl : public ScopedDecl, public DeclContext {
   SourceLocation AtEndLoc; // marks the end of the method container.
 public:
 
-  ObjCContainerDecl(Kind DK, SourceLocation L, IdentifierInfo *Id)
-    : NamedDecl(DK, L, Id), DeclContext(DK) {}
+  ObjCContainerDecl(Kind DK, DeclContext *DC, SourceLocation L, 
+                    IdentifierInfo *Id)
+    : ScopedDecl(DK, DC, L, Id), DeclContext(DK) {}
 
   virtual ~ObjCContainerDecl();
     
@@ -479,9 +480,9 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   SourceLocation SuperClassLoc; // location of the super class identifier.
   SourceLocation EndLoc; // marks the '>', '}', or identifier.
 
-  ObjCInterfaceDecl(SourceLocation atLoc, IdentifierInfo *Id,
+  ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
                     SourceLocation CLoc, bool FD, bool isInternal)
-    : ObjCContainerDecl(ObjCInterface, atLoc, Id),
+    : ObjCContainerDecl(ObjCInterface, DC, atLoc, Id),
       TypeForDecl(0), SuperClass(0),
       Ivars(0), NumIvars(0),
       CategoryList(0), PropertyDecl(0), NumPropertyDecl(0),
@@ -496,7 +497,7 @@ public:
   /// Destroy - Call destructors and release memory.
   virtual void Destroy(ASTContext& C);
 
-  static ObjCInterfaceDecl *Create(ASTContext &C,
+  static ObjCInterfaceDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation atLoc,
                                    IdentifierInfo *Id, 
                                    SourceLocation ClassLoc = SourceLocation(),
@@ -713,8 +714,8 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
   SourceLocation EndLoc; // marks the '>' or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
   
-  ObjCProtocolDecl(SourceLocation L, IdentifierInfo *Id)
-    : ObjCContainerDecl(ObjCProtocol, L, Id), 
+  ObjCProtocolDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
+    : ObjCContainerDecl(ObjCProtocol, DC, L, Id), 
       PropertyDecl(0), NumPropertyDecl(0),
       isForwardProtoDecl(true) {
   }
@@ -726,8 +727,8 @@ public:
   /// Destroy - Call destructors and release memory.
   virtual void Destroy(ASTContext& C);
   
-  static ObjCProtocolDecl *Create(ASTContext &C, SourceLocation L,
-                                  IdentifierInfo *Id);
+  static ObjCProtocolDecl *Create(ASTContext &C, DeclContext *DC, 
+                                  SourceLocation L, IdentifierInfo *Id);
 
   const ObjCList<ObjCProtocolDecl> &getReferencedProtocols() const { 
     return ReferencedProtocols;
@@ -784,12 +785,14 @@ public:
 ///
 /// @class NSCursor, NSImage, NSPasteboard, NSWindow;
 ///
-class ObjCClassDecl : public Decl {
+/// FIXME: This could be a transparent DeclContext (!)
+class ObjCClassDecl : public ScopedDecl {
   ObjCInterfaceDecl **ForwardDecls;
   unsigned NumForwardDecls;
   
-  ObjCClassDecl(SourceLocation L, ObjCInterfaceDecl **Elts, unsigned nElts)
-    : Decl(ObjCClass, L) { 
+  ObjCClassDecl(DeclContext *DC, SourceLocation L, 
+                ObjCInterfaceDecl **Elts, unsigned nElts)
+    : ScopedDecl(ObjCClass, DC, L, DeclarationName()) { 
     if (nElts) {
       ForwardDecls = new ObjCInterfaceDecl*[nElts];
       memcpy(ForwardDecls, Elts, nElts*sizeof(ObjCInterfaceDecl*));
@@ -806,7 +809,7 @@ public:
   /// Destroy - Call destructors and release memory.
   virtual void Destroy(ASTContext& C);
   
-  static ObjCClassDecl *Create(ASTContext &C, SourceLocation L,
+  static ObjCClassDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                                ObjCInterfaceDecl **Elts, unsigned nElts);
   
   void setInterfaceDecl(unsigned idx, ObjCInterfaceDecl *OID) {
@@ -829,13 +832,14 @@ public:
 /// 
 /// @protocol NSTextInput, NSChangeSpelling, NSDraggingInfo;
 /// 
-class ObjCForwardProtocolDecl : public Decl {
+/// FIXME: Should this be a transparent DeclContext?
+class ObjCForwardProtocolDecl : public ScopedDecl {
   ObjCProtocolDecl **ReferencedProtocols;
   unsigned NumReferencedProtocols;
   
-  ObjCForwardProtocolDecl(SourceLocation L,
+  ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
                           ObjCProtocolDecl **Elts, unsigned nElts)
-  : Decl(ObjCForwardProtocol, L) { 
+    : ScopedDecl(ObjCForwardProtocol, DC, L, DeclarationName()) { 
     NumReferencedProtocols = nElts;
     if (nElts) {
       ReferencedProtocols = new ObjCProtocolDecl*[nElts];
@@ -848,7 +852,8 @@ class ObjCForwardProtocolDecl : public Decl {
   virtual ~ObjCForwardProtocolDecl();
   
 public:
-  static ObjCForwardProtocolDecl *Create(ASTContext &C, SourceLocation L, 
+  static ObjCForwardProtocolDecl *Create(ASTContext &C, DeclContext *DC,
+                                         SourceLocation L, 
                                          ObjCProtocolDecl **Elts, unsigned Num);
 
   
@@ -911,14 +916,14 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
   
   SourceLocation EndLoc; // marks the '>' or identifier.
   
-  ObjCCategoryDecl(SourceLocation L, IdentifierInfo *Id)
-    : ObjCContainerDecl(ObjCCategory, L, Id),
+  ObjCCategoryDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
+    : ObjCContainerDecl(ObjCCategory, DC, L, Id),
       ClassInterface(0),
       NextClassCategory(0), PropertyDecl(0),  NumPropertyDecl(0) {
   }
 public:
   
-  static ObjCCategoryDecl *Create(ASTContext &C,
+  static ObjCCategoryDecl *Create(ASTContext &C, DeclContext *DC,
                                   SourceLocation L, IdentifierInfo *Id);
   
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
@@ -987,7 +992,7 @@ public:
 ///  @dynamic p1,d1;
 /// @end
 ///
-class ObjCCategoryImplDecl : public NamedDecl, public DeclContext {
+class ObjCCategoryImplDecl : public ScopedDecl, public DeclContext {
   /// Class interface for this category implementation
   ObjCInterfaceDecl *ClassInterface;
 
@@ -1002,12 +1007,12 @@ class ObjCCategoryImplDecl : public NamedDecl, public DeclContext {
 
   SourceLocation EndLoc;  
 
-  ObjCCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
+  ObjCCategoryImplDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                        ObjCInterfaceDecl *classInterface)
-    : NamedDecl(ObjCCategoryImpl, L, Id), DeclContext(ObjCCategoryImpl),
+    : ScopedDecl(ObjCCategoryImpl, DC, L, Id), DeclContext(ObjCCategoryImpl),
       ClassInterface(classInterface) {}
 public:
-  static ObjCCategoryImplDecl *Create(ASTContext &C,
+  static ObjCCategoryImplDecl *Create(ASTContext &C, DeclContext *DC,
                                       SourceLocation L, IdentifierInfo *Id,
                                       ObjCInterfaceDecl *classInterface);
         
@@ -1090,7 +1095,7 @@ public:
 /// the legacy semantics and allow developers to move private ivar declarations
 /// from the class interface to the class implementation (but I digress:-)
 ///
-class ObjCImplementationDecl : public NamedDecl, public DeclContext {
+class ObjCImplementationDecl : public ScopedDecl, public DeclContext {
   /// Class interface for this implementation
   ObjCInterfaceDecl *ClassInterface;
   
@@ -1112,14 +1117,14 @@ class ObjCImplementationDecl : public NamedDecl, public DeclContext {
   
   SourceLocation EndLoc;
 
-  ObjCImplementationDecl(SourceLocation L, IdentifierInfo *Id,
+  ObjCImplementationDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                          ObjCInterfaceDecl *classInterface,
                          ObjCInterfaceDecl *superDecl)
-    : NamedDecl(ObjCImplementation, L, Id), DeclContext(ObjCImplementation),
+    : ScopedDecl(ObjCImplementation, DC, L, Id), DeclContext(ObjCImplementation),
       ClassInterface(classInterface), SuperClass(superDecl),
       Ivars(0), NumIvars(0) {}
 public:  
-  static ObjCImplementationDecl *Create(ASTContext &C,
+  static ObjCImplementationDecl *Create(ASTContext &C, DeclContext *DC, 
                                         SourceLocation L, IdentifierInfo *Id,
                                         ObjCInterfaceDecl *classInterface,
                                         ObjCInterfaceDecl *superDecl);
@@ -1205,15 +1210,15 @@ public:
 
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is 
 /// declared as @compatibility_alias alias class.
-class ObjCCompatibleAliasDecl : public NamedDecl {
+class ObjCCompatibleAliasDecl : public ScopedDecl {
   /// Class that this is an alias of.
   ObjCInterfaceDecl *AliasedClass;
   
-  ObjCCompatibleAliasDecl(SourceLocation L, IdentifierInfo *Id,
+  ObjCCompatibleAliasDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                           ObjCInterfaceDecl* aliasedClass)
-    : NamedDecl(ObjCCompatibleAlias, L, Id), AliasedClass(aliasedClass) {}
+    : ScopedDecl(ObjCCompatibleAlias, DC, L, Id), AliasedClass(aliasedClass) {}
 public:
-  static ObjCCompatibleAliasDecl *Create(ASTContext &C,
+  static ObjCCompatibleAliasDecl *Create(ASTContext &C, DeclContext *DC,
                                          SourceLocation L, IdentifierInfo *Id,
                                          ObjCInterfaceDecl* aliasedClass);
 
@@ -1231,7 +1236,7 @@ public:
 /// For example:
 /// @property (assign, readwrite) int MyProperty;
 ///
-class ObjCPropertyDecl : public NamedDecl {
+class ObjCPropertyDecl : public ScopedDecl {
 public:
   enum PropertyAttributeKind {
     OBJC_PR_noattr    = 0x00, 
@@ -1260,14 +1265,16 @@ private:
   ObjCMethodDecl *GetterMethodDecl; // Declaration of getter instance method
   ObjCMethodDecl *SetterMethodDecl; // Declaration of setter instance method
 
-  ObjCPropertyDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
-    : NamedDecl(ObjCProperty, L, Id), DeclType(T),
+  ObjCPropertyDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id, 
+                   QualType T)
+    : ScopedDecl(ObjCProperty, DC, L, Id), DeclType(T),
       PropertyAttributes(OBJC_PR_noattr), PropertyImplementation(None),
       GetterName(Selector()), 
       SetterName(Selector()),
       GetterMethodDecl(0), SetterMethodDecl(0) {}
 public:
-  static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L, 
+  static ObjCPropertyDecl *Create(ASTContext &C, DeclContext *DC, 
+                                  SourceLocation L, 
                                   IdentifierInfo *Id, QualType T,
                                   PropertyControl propControl = None);
   QualType getType() const { return DeclType; }
@@ -1332,7 +1339,7 @@ public:
 /// in a class or category implementation block. For example:
 /// @synthesize prop1 = ivar1;
 ///
-class ObjCPropertyImplDecl : public Decl {
+class ObjCPropertyImplDecl : public ScopedDecl {
 public:
   enum Kind {
     Synthesize,
@@ -1346,18 +1353,18 @@ private:
   /// Null for @dynamic. Required for @synthesize.
   ObjCIvarDecl *PropertyIvarDecl;
 
-  ObjCPropertyImplDecl(SourceLocation atLoc, SourceLocation L,
+  ObjCPropertyImplDecl(DeclContext *DC, SourceLocation atLoc, SourceLocation L,
                        ObjCPropertyDecl *property, 
                        Kind PK, 
                        ObjCIvarDecl *ivarDecl)
-    : Decl(ObjCPropertyImpl, L), AtLoc(atLoc), PropertyDecl(property), 
-      PropertyIvarDecl(ivarDecl) {
+    : ScopedDecl(ObjCPropertyImpl, DC, L, DeclarationName()), AtLoc(atLoc), 
+      PropertyDecl(property), PropertyIvarDecl(ivarDecl) {
     assert (PK == Dynamic || PropertyIvarDecl);
   }
   
 public:
-  static ObjCPropertyImplDecl *Create(ASTContext &C, SourceLocation atLoc, 
-                                      SourceLocation L, 
+  static ObjCPropertyImplDecl *Create(ASTContext &C, DeclContext *DC,
+                                      SourceLocation atLoc, SourceLocation L, 
                                       ObjCPropertyDecl *property, 
                                       Kind PK, 
                                       ObjCIvarDecl *ivarDecl);
