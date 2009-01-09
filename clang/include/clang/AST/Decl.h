@@ -144,11 +144,15 @@ class ScopedDecl : public NamedDecl {
 protected:
   ScopedDecl(Kind DK, DeclContext *DC, SourceLocation L,
              DeclarationName N, ScopedDecl *PrevDecl = 0)
-    : NamedDecl(DK, L, N), NextDeclarator(PrevDecl),
+    : NamedDecl(DK, L, N), NextDeclarator(PrevDecl), 
       DeclCtx(reinterpret_cast<uintptr_t>(DC)) {}
 
   virtual ~ScopedDecl();
-  
+
+  /// setDeclContext - Set both the semantic and lexical DeclContext
+  /// to DC.
+  void setDeclContext(DeclContext *DC);
+
 public:
   const DeclContext *getDeclContext() const {
     if (isInSemaDC())
@@ -532,6 +536,12 @@ public:
 
   QualType getOriginalType() const;
   
+  /// setOwningFunction - Sets the function declaration that owns this
+  /// ParmVarDecl. Since ParmVarDecls are often created before the
+  /// FunctionDecls that own them, this routine is required to update
+  /// the DeclContext appropriately.
+  void setOwningFunction(DeclContext *FD) { setDeclContext(FD); }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 
     return (D->getKind() == ParmVar ||

@@ -164,6 +164,13 @@ FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,
 // ScopedDecl Implementation
 //===----------------------------------------------------------------------===//
 
+void ScopedDecl::setDeclContext(DeclContext *DC) {
+  if (isOutOfSemaDC())
+    delete getMultipleDC();
+  
+  DeclCtx = reinterpret_cast<uintptr_t>(DC);
+}
+
 void ScopedDecl::setLexicalDeclContext(DeclContext *DC) {
   if (DC == getLexicalDeclContext())
     return;

@@ -514,6 +514,7 @@ DeclContext *DeclContext::getNextContext() {
 }
 
 void DeclContext::addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup) {
+  assert(D->getLexicalDeclContext() == this && "Decl inserted into wrong lexical context");
   Decls.push_back(D);
   if (AllowLookup)
     D->getDeclContext()->insert(Context, D);
@@ -598,7 +599,6 @@ void DeclContext::insert(ASTContext &Context, ScopedDecl *D) {
   // someone asks for it.
   if (LookupPtr.getPointer())
     insertImpl(D);
-
 
   // If we are a transparent context, insert into our parent context,
   // too. This operation is recursive.

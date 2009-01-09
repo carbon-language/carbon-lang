@@ -441,7 +441,13 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   
   
   // TUScope is the translation-unit scope to insert this function into.
+  // FIXME: This is hideous. We need to teach PushOnScopeChains to
+  // relate Scopes to DeclContexts, and probably eliminate CurContext
+  // entirely, but we're not there yet.
+  DeclContext *SavedContext = CurContext;
+  CurContext = Context.getTranslationUnitDecl();
   PushOnScopeChains(New, TUScope);
+  CurContext = SavedContext;
   return New;
 }
 
@@ -2705,6 +2711,8 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   // Introduce our parameters into the function scope
   for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
+    Param->setOwningFunction(FD);
+
     // If this has an identifier, add it to the scope stack.
     if (Param->getIdentifier())
       PushOnScopeChains(Param, FnBodyScope);
