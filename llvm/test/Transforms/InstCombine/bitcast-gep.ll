@@ -17,3 +17,14 @@ define i8* @test(i8* %v) {
 	%G = load i8** %F		; <i8*> [#uses=1]
 	ret i8* %G
 }
+
+; PR3290
+%struct.Key = type { { i32, i32 } }
+%struct.anon = type <{ i8, [3 x i8], i32 }>
+
+define i32 *@test2(%struct.Key *%A) {
+	%B = bitcast %struct.Key* %A to %struct.anon*
+        %C = getelementptr %struct.anon* %B, i32 0, i32 2 
+	ret i32 *%C
+}
+

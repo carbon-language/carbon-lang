@@ -7695,6 +7695,66 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
   return 0;
 }
 
+/// FindElementAtOffset - Given a type and a constant offset, determine whether
+/// or not there is a sequence of GEP indices into the type that will land us at
+/// the specified offset.  If so, fill them into NewIndices and return true,
+/// otherwise return false.
+static bool FindElementAtOffset(const Type *Ty, int64_t Offset, 
+                                SmallVectorImpl<Value*> &NewIndices,
+                                const TargetData *TD) {
+  if (!Ty->isSized()) return false;
+  
+  // Start with the index over the outer type.  Note that the type size
+  // might be zero (even if the offset isn't zero) if the indexed type
+  // is something like [0 x {int, int}]
+  const Type *IntPtrTy = TD->getIntPtrType();
+  int64_t FirstIdx = 0;
+  if (int64_t TySize = TD->getABITypeSize(Ty)) {
+    FirstIdx = Offset/TySize;
+    Offset %= TySize;
+    
+    // Handle silly modulus not returning values values [0..TySize).
+    if (Offset < 0) {
+      --FirstIdx;
+      Offset += TySize;
+      assert(Offset >= 0);
+    }
+    assert((uint64_t)Offset < (uint64_t)TySize && "Out of range offset");
+  }
+  
+  NewIndices.push_back(ConstantInt::get(IntPtrTy, FirstIdx));
+    
+  // Index into the types.  If we fail, set OrigBase to null.
+  while (Offset) {
+    if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+      const StructLayout *SL = TD->getStructLayout(STy);
+      if (Offset >= (int64_t)SL->getSizeInBytes()) {
+        // We can't index into this, bail out.
+        return false;
+      }
+      unsigned Elt = SL->getElementContainingOffset(Offset);
+      NewIndices.push_back(ConstantInt::get(Type::Int32Ty, Elt));
+      
+      Offset -= SL->getElementOffset(Elt);
+      Ty = STy->getElementType(Elt);
+    } else if (isa<ArrayType>(Ty) || isa<VectorType>(Ty)) {
+      const SequentialType *STy = cast<SequentialType>(Ty);
+      if (uint64_t EltSize = TD->getABITypeSize(STy->getElementType())) {
+        NewIndices.push_back(ConstantInt::get(IntPtrTy,Offset/EltSize));
+        Offset %= EltSize;
+      } else {
+        NewIndices.push_back(ConstantInt::get(IntPtrTy, 0));
+      }
+      Ty = STy->getElementType();
+    } else {
+      // Otherwise, we can't index into this, bail out.
+      return false;
+    }
+  }
+  
+  return true;
+}
+
 /// @brief Implement the transforms for cast of pointer (bitcast/ptrtoint)
 Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
   Value *Src = CI.getOperand(0);
@@ -7725,74 +7785,21 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
         Value *OrigBase = cast<BitCastInst>(GEP->getOperand(0))->getOperand(0);
         const Type *GEPIdxTy =
           cast<PointerType>(OrigBase->getType())->getElementType();
-        if (GEPIdxTy->isSized()) {
-          SmallVector<Value*, 8> NewIndices;
+        SmallVector<Value*, 8> NewIndices;
+        if (FindElementAtOffset(GEPIdxTy, Offset, NewIndices, TD)) {
+          // If we were able to index down into an element, create the GEP
+          // and bitcast the result.  This eliminates one bitcast, potentially
+          // two.
+          Instruction *NGEP = GetElementPtrInst::Create(OrigBase, 
+                                                        NewIndices.begin(),
+                                                        NewIndices.end(), "");
+          InsertNewInstBefore(NGEP, CI);
+          NGEP->takeName(GEP);
           
-          // Start with the index over the outer type.  Note that the type size
-          // might be zero (even if the offset isn't zero) if the indexed type
-          // is something like [0 x {int, int}]
-          const Type *IntPtrTy = TD->getIntPtrType();
-          int64_t FirstIdx = 0;
-          if (int64_t TySize = TD->getABITypeSize(GEPIdxTy)) {
-            FirstIdx = Offset/TySize;
-            Offset %= TySize;
-          
-            // Handle silly modulus not returning values values [0..TySize).
-            if (Offset < 0) {
-              --FirstIdx;
-              Offset += TySize;
-              assert(Offset >= 0);
-            }
-            assert((uint64_t)Offset < (uint64_t)TySize &&"Out of range offset");
-          }
-          
-          NewIndices.push_back(ConstantInt::get(IntPtrTy, FirstIdx));
-
-          // Index into the types.  If we fail, set OrigBase to null.
-          while (Offset) {
-            if (const StructType *STy = dyn_cast<StructType>(GEPIdxTy)) {
-              const StructLayout *SL = TD->getStructLayout(STy);
-              if (Offset < (int64_t)SL->getSizeInBytes()) {
-                unsigned Elt = SL->getElementContainingOffset(Offset);
-                NewIndices.push_back(ConstantInt::get(Type::Int32Ty, Elt));
-              
-                Offset -= SL->getElementOffset(Elt);
-                GEPIdxTy = STy->getElementType(Elt);
-              } else {
-                // Otherwise, we can't index into this, bail out.
-                Offset = 0;
-                OrigBase = 0;
-              }
-            } else if (isa<ArrayType>(GEPIdxTy) || isa<VectorType>(GEPIdxTy)) {
-              const SequentialType *STy = cast<SequentialType>(GEPIdxTy);
-              if (uint64_t EltSize = TD->getABITypeSize(STy->getElementType())){
-                NewIndices.push_back(ConstantInt::get(IntPtrTy,Offset/EltSize));
-                Offset %= EltSize;
-              } else {
-                NewIndices.push_back(ConstantInt::get(IntPtrTy, 0));
-              }
-              GEPIdxTy = STy->getElementType();
-            } else {
-              // Otherwise, we can't index into this, bail out.
-              Offset = 0;
-              OrigBase = 0;
-            }
-          }
-          if (OrigBase) {
-            // If we were able to index down into an element, create the GEP
-            // and bitcast the result.  This eliminates one bitcast, potentially
-            // two.
-            Instruction *NGEP = GetElementPtrInst::Create(OrigBase, 
-                                                          NewIndices.begin(),
-                                                          NewIndices.end(), "");
-            InsertNewInstBefore(NGEP, CI);
-            NGEP->takeName(GEP);
-            
-            if (isa<BitCastInst>(CI))
-              return new BitCastInst(NGEP, CI.getType());
-            assert(isa<PtrToIntInst>(CI));
-            return new PtrToIntInst(NGEP, CI.getType());
-          }
+          if (isa<BitCastInst>(CI))
+            return new BitCastInst(NGEP, CI.getType());
+          assert(isa<PtrToIntInst>(CI));
+          return new PtrToIntInst(NGEP, CI.getType());
         }
       }      
     }
@@ -10675,24 +10682,52 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     }
   }
   
+  /// See if we can simplify:
+  ///   X = bitcast A to B*
+  ///   Y = gep X, <...constant indices...>
+  /// into a gep of the original struct.  This is important for SROA and alias
+  /// analysis of unions.  If "A" is also a bitcast, wait for A/X to be merged.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(PtrOp)) {
-    // If this GEP instruction doesn't move the pointer, just replace the GEP
-    // with a bitcast of the real input to the dest type.
-    if (GEP.hasAllZeroIndices()) {
-      // If the bitcast is of an allocation, and the allocation will be
-      // converted to match the type of the cast, don't touch this.
-      if (isa<AllocationInst>(BCI->getOperand(0))) {
-        // See if the bitcast simplifies, if so, don't nuke this GEP yet.
-        if (Instruction *I = visitBitCast(*BCI)) {
-          if (I != BCI) {
-            I->takeName(BCI);
-            BCI->getParent()->getInstList().insert(BCI, I);
-            ReplaceInstUsesWith(*BCI, I);
+    if (!isa<BitCastInst>(BCI->getOperand(0)) && GEP.hasAllConstantIndices()) {
+      // Determine how much the GEP moves the pointer.  We are guaranteed to get
+      // a constant back from EmitGEPOffset.
+      ConstantInt *OffsetV = cast<ConstantInt>(EmitGEPOffset(&GEP, GEP, *this));
+      int64_t Offset = OffsetV->getSExtValue();
+      
+      // If this GEP instruction doesn't move the pointer, just replace the GEP
+      // with a bitcast of the real input to the dest type.
+      if (Offset == 0) {
+        // If the bitcast is of an allocation, and the allocation will be
+        // converted to match the type of the cast, don't touch this.
+        if (isa<AllocationInst>(BCI->getOperand(0))) {
+          // See if the bitcast simplifies, if so, don't nuke this GEP yet.
+          if (Instruction *I = visitBitCast(*BCI)) {
+            if (I != BCI) {
+              I->takeName(BCI);
+              BCI->getParent()->getInstList().insert(BCI, I);
+              ReplaceInstUsesWith(*BCI, I);
+            }
+            return &GEP;
           }
-          return &GEP;
         }
+        return new BitCastInst(BCI->getOperand(0), GEP.getType());
       }
-      return new BitCastInst(BCI->getOperand(0), GEP.getType());
+      
+      // Otherwise, if the offset is non-zero, we need to find out if there is a
+      // field at Offset in 'A's type.  If so, we can pull the cast through the
+      // GEP.
+      SmallVector<Value*, 8> NewIndices;
+      const Type *InTy =
+        cast<PointerType>(BCI->getOperand(0)->getType())->getElementType();
+      if (FindElementAtOffset(InTy, Offset, NewIndices, TD)) {
+        Instruction *NGEP =
+           GetElementPtrInst::Create(BCI->getOperand(0), NewIndices.begin(),
+                                     NewIndices.end());
+        if (NGEP->getType() == GEP.getType()) return NGEP;
+        InsertNewInstBefore(NGEP, GEP);
+        NGEP->takeName(&GEP);
+        return new BitCastInst(NGEP, GEP.getType());
+      }
     }
   }    
     
