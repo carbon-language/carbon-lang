@@ -61,7 +61,7 @@ typedef union _Key {
  unsigned long long lkey;
 } Key;
 
-static /*inline __attribute__ ((always_inline))*/ void foo(const Key iospec, int* ret)
+static void foo(const Key iospec, int* ret)
 {
   *ret=0;
  if(((iospec.key_io.lod == G_B) &&
