@@ -127,3 +127,8 @@ int f16(int x) {
   return x;
 }
 
+// Self-assignments should not be flagged as dead stores.
+int f17() {
+  int x = 1;
+  x = x; // no-warning
+}

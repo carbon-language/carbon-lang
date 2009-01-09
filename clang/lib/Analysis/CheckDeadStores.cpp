@@ -128,16 +128,23 @@ public:
       
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()))
         if (VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+          Expr* RHS = B->getRHS()->IgnoreParenCasts();
+          
           // Special case: check for assigning null to a pointer.
           //  This is a common form of defensive programming.          
           if (VD->getType()->isPointerType()) {
-            if (IntegerLiteral* L =
-                  dyn_cast<IntegerLiteral>(B->getRHS()->IgnoreParenCasts()))
+            if (IntegerLiteral* L = dyn_cast<IntegerLiteral>(RHS))
               // FIXME: Probably should have an Expr::isNullPointerConstant.              
               if (L->getValue() == 0)
                 return;
           }
-
+          // Special case: self-assignments.  These are often used to shut up
+          //  "unused variable" compiler warnings.
+          if (DeclRefExpr* RhsDR = dyn_cast<DeclRefExpr>(RHS))
+            if (VD == dyn_cast<VarDecl>(RhsDR->getDecl()))
+              return;
+            
+          // Otherwise, issue a warning.
           DeadStoreKind dsk = 
             Parents.isSubExpr(B)
             ? Enclosing 
