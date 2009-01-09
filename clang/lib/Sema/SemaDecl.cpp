@@ -3616,7 +3616,6 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   // Keep track of whether all elements have type int.
   bool AllElementsInt = true;
   
-  EnumConstantDecl *EltList = 0;
   for (unsigned i = 0; i != NumElements; ++i) {
     EnumConstantDecl *ECD =
       cast_or_null<EnumConstantDecl>(static_cast<Decl*>(Elements[i]));
@@ -3646,9 +3645,6 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     // Keep track of whether every enum element has type int (very commmon).
     if (AllElementsInt)
       AllElementsInt = ECD->getType() == Context.IntTy; 
-    
-    ECD->setNextDeclarator(EltList);
-    EltList = ECD;
   }
   
   // Figure out the type that should be used for this enum.
