@@ -531,6 +531,13 @@ public:
   static unsigned getPointerOperandIndex() {
     return 0U;                      // get index for modifying correct operand
   }
+  
+  /// getPointerOperandType - Method to return the pointer operand as a
+  /// PointerType.
+  const PointerType *getPointerOperandType() const {
+    return reinterpret_cast<const PointerType*>(getPointerOperand()->getType());
+  }
+  
 
   unsigned getNumIndices() const {  // Note: always non-negative
     return getNumOperands() - 1;
