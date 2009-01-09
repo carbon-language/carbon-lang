@@ -696,9 +696,13 @@ public:
 
   void setBody(Stmt *B) { Body = B; }
 
+  /// Whether this function is virtual, either by explicit marking, or by
+  /// overriding a virtual function. Only valid on C++ member functions.
   bool isVirtual() { return IsVirtual; }
   void setVirtual() { IsVirtual = true; }
 
+  /// Whether this virtual function is pure, i.e. makes the containing class
+  /// abstract.
   bool isPure() { return IsPure; }
   void setPure() { IsPure = true; }
 

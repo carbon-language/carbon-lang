@@ -615,6 +615,9 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     } else {
       // not static member. perhaps virtual function?
       if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member)) {
+        // With declarators parsed the way they are, the parser cannot
+        // distinguish between a normal initializer and a pure-specifier.
+        // Thus this grotesque test.
         IntegerLiteral *IL;
         if ((IL = dyn_cast<IntegerLiteral>(Init)) && IL->getValue() == 0 &&
             Context.getCanonicalType(IL->getType()) == Context.IntTy) {
