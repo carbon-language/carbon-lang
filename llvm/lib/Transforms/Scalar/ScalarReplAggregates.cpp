@@ -856,6 +856,10 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       
       // Truncate down to an integer of the right size.
       uint64_t FieldSizeBits = TD->getTypeSizeInBits(FieldTy);
+      
+      // Ignore zero sized fields like {}, they obviously contain no data.
+      if (FieldSizeBits == 0) continue;
+      
       if (FieldSizeBits != AllocaSizeBits)
         EltVal = new TruncInst(EltVal, IntegerType::get(FieldSizeBits), "", SI);
       Value *DestField = NewElts[i];
@@ -887,6 +891,8 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       Shift = 0;
     
     for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
+      // Ignore zero sized fields like {}, they obviously contain no data.
+      if (ElementSizeBits == 0) continue;
       
       Value *EltVal = SrcVal;
       if (Shift) {
@@ -959,8 +965,12 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
     Value *SrcField = NewElts[i];
     const Type *FieldTy =
       cast<PointerType>(SrcField->getType())->getElementType();
-    const IntegerType *FieldIntTy = 
-      IntegerType::get(TD->getTypeSizeInBits(FieldTy));
+    uint64_t FieldSizeBits = TD->getTypeSizeInBits(FieldTy);
+    
+    // Ignore zero sized fields like {}, they obviously contain no data.
+    if (FieldSizeBits == 0) continue;
+    
+    const IntegerType *FieldIntTy = IntegerType::get(FieldSizeBits);
     if (!isa<IntegerType>(FieldTy) && !FieldTy->isFloatingPoint() &&
         !isa<VectorType>(FieldTy))
       SrcField = new BitCastInst(SrcField, PointerType::getUnqual(FieldIntTy),
