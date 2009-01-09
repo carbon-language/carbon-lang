@@ -248,22 +248,46 @@ public:
 /// Current sub-classes are ObjCInterfaceDecl, ObjCCategoryDecl, and
 /// ObjCProtocolDecl. 
 /// FIXME: Use for ObjC implementation decls.
-/// FIXME: Consider properties.
 /// FIXME: It would be nice to reduce amount of "boilerplate" iterator code
 /// below. For now, the iterators are modeled after RecordDecl::field_iterator().
 /// If DeclContext ends up providing some support for creating more strongly 
 /// typed iterators, the code below should be reduced considerably.
+/// FIXME: Convert property implementation to DeclContext::addDecl(). Holding
+/// off until we have an iterator adaptor that plays with DeclContext.
 ///
 class ObjCContainerDecl : public ScopedDecl, public DeclContext {
+  /// class properties
+  ObjCPropertyDecl **PropertyDecl;  // Null if no property
+  unsigned NumPropertyDecl;  // 0 if none.
+  
   SourceLocation AtEndLoc; // marks the end of the method container.
 public:
 
   ObjCContainerDecl(Kind DK, DeclContext *DC, SourceLocation L, 
                     IdentifierInfo *Id)
-    : ScopedDecl(DK, DC, L, Id), DeclContext(DK) {}
+    : ScopedDecl(DK, DC, L, Id), DeclContext(DK),
+      PropertyDecl(0), NumPropertyDecl(0) {}
 
   virtual ~ObjCContainerDecl();
+
+  void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
+  
+  // FIXME: Replace with appropriate lookup. Currently used by interfaces and
+  // categories.
+  void mergeProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
+  
+  typedef ObjCPropertyDecl * const * prop_iterator;
+  prop_iterator prop_begin() const { return PropertyDecl; }
+  prop_iterator prop_end() const {
+    return PropertyDecl+NumPropertyDecl;
+  }
+  
+  ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
+  ObjCPropertyDecl **getPropertyDecl() { return PropertyDecl; }
+  unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
     
+  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
+  
   // Iterator access to instance/class methods.
   class method_iterator {
   public:
@@ -420,13 +444,27 @@ public:
   ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
   ObjCMethodDecl *getClassMethod(Selector Sel) const;
   
-  // Get the number of instance/class methods.
+  // Get the number of instance/class methods. These methods are slow, O(n).
   unsigned getNumInstanceMethods() const;
   unsigned getNumClassMethods() const;
   
   // Marks the end of the container.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
   void setAtEndLoc(SourceLocation L) { AtEndLoc = L; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) {
+    return D->getKind() >= ObjCContainerFirst && 
+           D->getKind() <= ObjCContainerLast;
+  }
+  static bool classof(const ObjCContainerDecl *D) { return true; }
+
+  static DeclContext *castToDeclContext(const ObjCContainerDecl *D) {
+    return static_cast<DeclContext *>(const_cast<ObjCContainerDecl*>(D));
+  }
+  static ObjCContainerDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<ObjCContainerDecl *>(const_cast<DeclContext*>(DC));
+  }
 };
 
 /// ObjCInterfaceDecl - Represents an ObjC class declaration. For example:
@@ -469,10 +507,6 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// List of categories defined for this class.
   ObjCCategoryDecl *CategoryList;
     
-  /// class properties
-  ObjCPropertyDecl **PropertyDecl;  // Null if no property
-  unsigned NumPropertyDecl;  // 0 if none.
-  
   bool ForwardDecl:1; // declared with @class.
   bool InternalInterface:1; // true - no @interface for @implementation
   
@@ -485,7 +519,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
     : ObjCContainerDecl(ObjCInterface, DC, atLoc, Id),
       TypeForDecl(0), SuperClass(0),
       Ivars(0), NumIvars(0),
-      CategoryList(0), PropertyDecl(0), NumPropertyDecl(0),
+      CategoryList(0), 
       ForwardDecl(FD), InternalInterface(isInternal),
       ClassLoc(CLoc) {
       }
@@ -507,7 +541,6 @@ public:
     return ReferencedProtocols; 
   }
   
-  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
   ObjCCategoryDecl *FindCategoryDeclaration(IdentifierInfo *CategoryId) const;
   ObjCIvarDecl *FindIvarDeclaration(IdentifierInfo *IvarId) const;
   bool isPropertyReadonly(ObjCPropertyDecl *PropertyDecl) const;
@@ -533,16 +566,6 @@ public:
   FieldDecl *lookupFieldDeclForIvar(ASTContext &Context, 
                                     const ObjCIvarDecl *ivar);
 
-  void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
-  
-  void mergeProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
-  
-  typedef ObjCPropertyDecl * const * classprop_iterator;
-  classprop_iterator classprop_begin() const { return PropertyDecl; }
-  classprop_iterator classprop_end() const {
-    return PropertyDecl+NumPropertyDecl;
-  }
-  
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
   
@@ -587,11 +610,6 @@ public:
   void setSuperClassLoc(SourceLocation Loc) { SuperClassLoc = Loc; }
   SourceLocation getSuperClassLoc() const { return SuperClassLoc; }
     
-  unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
-  
-  ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
-  ObjCPropertyDecl **getPropertyDecl() { return PropertyDecl; }
-
   /// ImplicitInterfaceDecl - check that this is an implicitely declared
   /// ObjCInterfaceDecl node. This is for legacy objective-c @implementation
   /// declaration without an @interface declaration.
@@ -743,21 +761,6 @@ public:
     ReferencedProtocols.set(List, NumRPs);
   }
   
-  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
-  
-  unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
-  
-  ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
-  ObjCPropertyDecl **getPropertyDecl() { return PropertyDecl; }
-  
-  void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
-
-  typedef ObjCPropertyDecl * const * classprop_iterator;
-  classprop_iterator classprop_begin() const { return PropertyDecl; }
-  classprop_iterator classprop_end() const {
-    return PropertyDecl+NumPropertyDecl;
-  }
-
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
   ObjCMethodDecl *lookupInstanceMethod(Selector Sel);
@@ -944,22 +947,6 @@ public:
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
   
-  unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
-  
-  ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
-  
-  void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
-
-  void mergeProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
-
-  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
-  
-  typedef ObjCPropertyDecl * const * classprop_iterator;
-  classprop_iterator classprop_begin() const { return PropertyDecl; }
-  classprop_iterator classprop_end() const {
-    return PropertyDecl+NumPropertyDecl;
-  }
-    
   ObjCCategoryDecl *getNextClassCategory() const { return NextClassCategory; }
   void insertNextClassCategory() {
     NextClassCategory = ClassInterface->getCategoryList();

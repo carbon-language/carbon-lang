@@ -46,8 +46,8 @@ TranslationUnit::~TranslationUnit() {
       //  eventually be fixed when the ownership of ObjCPropertyDecls gets
       //  cleaned up.
       if (ObjCInterfaceDecl* IDecl = dyn_cast<ObjCInterfaceDecl>(*I))
-        for (ObjCInterfaceDecl::classprop_iterator ID=IDecl->classprop_begin(),
-             ED=IDecl->classprop_end(); ID!=ED; ++ID) {
+        for (ObjCInterfaceDecl::prop_iterator ID=IDecl->prop_begin(),
+             ED=IDecl->prop_end(); ID!=ED; ++ID) {
           if (!*ID || Killed.count(*ID)) continue;
           Killed.insert(*ID);
           (*ID)->Destroy(*Context);
@@ -59,8 +59,8 @@ TranslationUnit::~TranslationUnit() {
       //  eventually be fixed when the ownership of ObjCPropertyDecls gets
       //  cleaned up.
       if (ObjCProtocolDecl* PDecl = dyn_cast<ObjCProtocolDecl>(*I))
-        for (ObjCProtocolDecl::classprop_iterator ID=PDecl->classprop_begin(),
-             ED=PDecl->classprop_end(); ID!=ED; ++ID) {
+        for (ObjCProtocolDecl::prop_iterator ID=PDecl->prop_begin(),
+             ED=PDecl->prop_end(); ID!=ED; ++ID) {
           if (!*ID || Killed.count(*ID)) continue;
           Killed.insert(*ID);
           (*ID)->Destroy(*Context);

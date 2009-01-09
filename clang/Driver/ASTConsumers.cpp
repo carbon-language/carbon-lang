@@ -306,8 +306,8 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Out << "}\n";
   }
   
-  for (ObjCInterfaceDecl::classprop_iterator I = OID->classprop_begin(),
-       E = OID->classprop_end(); I != E; ++I)
+  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(),
+       E = OID->prop_end(); I != E; ++I)
     PrintObjCPropertyDecl(*I);
   bool eol_needed = false;
   for (ObjCInterfaceDecl::classmeth_iterator I = OID->classmeth_begin(),
@@ -325,8 +325,8 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
 void DeclPrinter::PrintObjCProtocolDecl(ObjCProtocolDecl *PID) {
   Out << "@protocol " << PID->getNameAsString() << '\n';
   
-  for (ObjCProtocolDecl::classprop_iterator I = PID->classprop_begin(),
-       E = PID->classprop_end(); I != E; ++I)
+  for (ObjCProtocolDecl::prop_iterator I = PID->prop_begin(),
+       E = PID->prop_end(); I != E; ++I)
     PrintObjCPropertyDecl(*I);
   Out << "@end\n";
   // FIXME: implement the rest...
@@ -348,8 +348,8 @@ void DeclPrinter::PrintObjCCategoryDecl(ObjCCategoryDecl *PID) {
       << PID->getClassInterface()->getNameAsString()
       << '(' << PID->getNameAsString() << ");\n";
   // Output property declarations.
-  for (ObjCCategoryDecl::classprop_iterator I = PID->classprop_begin(),
-       E = PID->classprop_end(); I != E; ++I)
+  for (ObjCCategoryDecl::prop_iterator I = PID->prop_begin(),
+       E = PID->prop_end(); I != E; ++I)
     PrintObjCPropertyDecl(*I);
   Out << "@end\n";
   

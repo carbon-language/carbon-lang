@@ -62,11 +62,11 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
 }
 
 ObjCContainerDecl::~ObjCContainerDecl() {
+  delete [] PropertyDecl;
 }
 
 ObjCInterfaceDecl::~ObjCInterfaceDecl() {
   delete [] Ivars;
-  delete [] PropertyDecl;
   // FIXME: CategoryList?
 }
 
@@ -274,37 +274,6 @@ bool ObjCInterfaceDecl::isPropertyReadonly(ObjCPropertyDecl *PDecl) const
   return true;
 }
 
-/// FindPropertyDeclaration - Finds declaration of the property given its name
-/// in 'PropertyId' and returns it. It returns 0, if not found.
-///
-ObjCPropertyDecl *
-  ObjCInterfaceDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
-  for (ObjCInterfaceDecl::classprop_iterator I = classprop_begin(),
-       E = classprop_end(); I != E; ++I) {
-    ObjCPropertyDecl *property = *I;
-    if (property->getIdentifier() == PropertyId)
-      return property;
-  }
-  // Look through categories.
-  for (ObjCCategoryDecl *Category = getCategoryList();
-       Category; Category = Category->getNextClassCategory()) {
-    ObjCPropertyDecl *property = Category->FindPropertyDeclaration(PropertyId);
-    if (property)
-      return property;
-  }
-  // Look through protocols.
-  for (ObjCInterfaceDecl::protocol_iterator I = protocol_begin(),
-       E = protocol_end(); I != E; ++I) {
-    ObjCProtocolDecl *Protocol = *I;
-    ObjCPropertyDecl *property = Protocol->FindPropertyDeclaration(PropertyId);
-    if (property)
-      return property;
-  }
-  if (getSuperClass())
-    return getSuperClass()->FindPropertyDeclaration(PropertyId);
-  return 0;
-}
-
 /// FindCategoryDeclaration - Finds category declaration in the list of
 /// categories for this class and returns it. Name of the category is passed
 /// in 'CategoryId'. If category not found, return 0;
@@ -377,43 +346,6 @@ void ObjCImplementationDecl::ObjCAddInstanceVariablesToClassImpl(
   }
 }
 
-/// addProperties - Insert property declaration AST nodes into
-/// ObjCInterfaceDecl's PropertyDecl field.
-///
-void ObjCInterfaceDecl::addProperties(ObjCPropertyDecl **Properties, 
-                                      unsigned NumProperties) {
-  if (NumProperties == 0) return;
-  
-  NumPropertyDecl = NumProperties;
-  PropertyDecl = new ObjCPropertyDecl*[NumProperties];
-  memcpy(PropertyDecl, Properties, NumProperties*sizeof(ObjCPropertyDecl*));
-}                                   
-
-/// mergeProperties - Adds properties to the end of list of current properties
-/// for this class.
-
-void ObjCInterfaceDecl::mergeProperties(ObjCPropertyDecl **Properties, 
-                                        unsigned NumNewProperties) {
-  if (NumNewProperties == 0) return;
-  
-  if (PropertyDecl) {
-    ObjCPropertyDecl **newPropertyDecl =  
-      new ObjCPropertyDecl*[NumNewProperties + NumPropertyDecl];
-    ObjCPropertyDecl **buf = newPropertyDecl;
-    // put back original properties in buffer.
-    memcpy(buf, PropertyDecl, NumPropertyDecl*sizeof(ObjCPropertyDecl*));
-    // Add new properties to this buffer.
-    memcpy(buf+NumPropertyDecl, Properties, 
-           NumNewProperties*sizeof(ObjCPropertyDecl*));
-    delete[] PropertyDecl;
-    PropertyDecl = newPropertyDecl;
-    NumPropertyDecl += NumNewProperties;
-  }
-  else {
-    addProperties(Properties, NumNewProperties);
-  }
-}
-
 // Get the local instance method declared in this interface.
 // FIXME: handle overloading, instance & class methods can have the same name.
 ObjCMethodDecl *ObjCContainerDecl::getInstanceMethod(Selector Sel) const {
@@ -447,9 +379,9 @@ unsigned ObjCContainerDecl::getNumClassMethods() const {
 }
 
 /// mergeProperties - Adds properties to the end of list of current properties
-/// for this category.
+/// for this class.
 
-void ObjCCategoryDecl::mergeProperties(ObjCPropertyDecl **Properties, 
+void ObjCContainerDecl::mergeProperties(ObjCPropertyDecl **Properties, 
                                         unsigned NumNewProperties) {
   if (NumNewProperties == 0) return;
   
@@ -472,22 +404,10 @@ void ObjCCategoryDecl::mergeProperties(ObjCPropertyDecl **Properties,
 }
 
 /// addProperties - Insert property declaration AST nodes into
-/// ObjCProtocolDecl's PropertyDecl field.
+/// ObjCContainerDecl's PropertyDecl field.
 ///
-void ObjCProtocolDecl::addProperties(ObjCPropertyDecl **Properties, 
-                                     unsigned NumProperties) {
-  if (NumProperties == 0) return;
-  
-  NumPropertyDecl = NumProperties;
-  PropertyDecl = new ObjCPropertyDecl*[NumProperties];
-  memcpy(PropertyDecl, Properties, NumProperties*sizeof(ObjCPropertyDecl*));
-}
-
-/// addProperties - Insert property declaration AST nodes into
-/// ObjCCategoryDecl's PropertyDecl field.
-///
-void ObjCCategoryDecl::addProperties(ObjCPropertyDecl **Properties, 
-                                     unsigned NumProperties) {
+void ObjCContainerDecl::addProperties(ObjCPropertyDecl **Properties, 
+                                      unsigned NumProperties) {
   if (NumProperties == 0) return;
   
   NumPropertyDecl = NumProperties;
@@ -499,26 +419,31 @@ void ObjCCategoryDecl::addProperties(ObjCPropertyDecl **Properties,
 /// in 'PropertyId' and returns it. It returns 0, if not found.
 ///
 ObjCPropertyDecl *
-ObjCCategoryDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
-  for (ObjCCategoryDecl::classprop_iterator I = classprop_begin(),
-       E = classprop_end(); I != E; ++I) {
+ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
+  for (prop_iterator I = prop_begin(), E = prop_end(); I != E; ++I) {
     ObjCPropertyDecl *property = *I;
     if (property->getIdentifier() == PropertyId)
       return property;
   }
-  return 0;
-}
-
-/// FindPropertyDeclaration - Finds declaration of the property given its name
-/// in 'PropertyId' and returns it. It returns 0, if not found.
-///
-ObjCPropertyDecl *
-ObjCProtocolDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
-  for (ObjCProtocolDecl::classprop_iterator I = classprop_begin(),
-       E = classprop_end(); I != E; ++I) {
-    ObjCPropertyDecl *property = *I;
-    if (property->getIdentifier() == PropertyId)
-      return property;
+  const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(this);
+  if (OID) {
+    // Look through categories.
+    for (ObjCCategoryDecl *Category = OID->getCategoryList();
+         Category; Category = Category->getNextClassCategory()) {
+      ObjCPropertyDecl *property = Category->FindPropertyDeclaration(PropertyId);
+      if (property)
+        return property;
+    }
+    // Look through protocols.
+    for (ObjCInterfaceDecl::protocol_iterator I = OID->protocol_begin(),
+         E = OID->protocol_end(); I != E; ++I) {
+      ObjCProtocolDecl *Protocol = *I;
+      ObjCPropertyDecl *property = Protocol->FindPropertyDeclaration(PropertyId);
+      if (property)
+        return property;
+    }
+    if (OID->getSuperClass())
+      return OID->getSuperClass()->FindPropertyDeclaration(PropertyId);
   }
   return 0;
 }

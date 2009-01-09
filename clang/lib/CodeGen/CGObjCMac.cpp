@@ -782,8 +782,8 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
   Values[3] = EmitPropertyList("\01L_OBJC_$_PROP_PROTO_LIST_" + 
                                    PD->getNameAsString(),
                                0,
-                               PD->classprop_begin(),
-                               PD->classprop_end());
+                               PD->prop_begin(),
+                               PD->prop_end());
 
   // Return null if no extension bits are used.
   if (Values[1]->isNullValue() && Values[2]->isNullValue() && 
@@ -1002,8 +1002,8 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   if (Category) {
     Values[6] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_LIST_") + ExtName,
                                  OCD,
-                                 Category->classprop_begin(),
-                                 Category->classprop_end());
+                                 Category->prop_begin(),
+                                 Category->prop_end());
   } else {
     Values[6] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
   }
@@ -1279,8 +1279,8 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   Values[1] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
   Values[2] = EmitPropertyList("\01L_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                                ID,
-                               ID->getClassInterface()->classprop_begin(),
-                               ID->getClassInterface()->classprop_end());
+                               ID->getClassInterface()->prop_begin(),
+                               ID->getClassInterface()->prop_end());
 
   // Return null if no extension bits are used.
   if (Values[1]->isNullValue() && Values[2]->isNullValue())

@@ -320,12 +320,12 @@ Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
   if (!SDecl)
     return;
   // FIXME: O(N^2)
-  for (ObjCInterfaceDecl::classprop_iterator S = SDecl->classprop_begin(),
-       E = SDecl->classprop_end(); S != E; ++S) {
+  for (ObjCInterfaceDecl::prop_iterator S = SDecl->prop_begin(),
+       E = SDecl->prop_end(); S != E; ++S) {
     ObjCPropertyDecl *SuperPDecl = (*S);
     // Does property in super class has declaration in current class?
-    for (ObjCInterfaceDecl::classprop_iterator I = IDecl->classprop_begin(),
-         E = IDecl->classprop_end(); I != E; ++I) {
+    for (ObjCInterfaceDecl::prop_iterator I = IDecl->prop_begin(),
+         E = IDecl->prop_end(); I != E; ++I) {
       ObjCPropertyDecl *PDecl = (*I);
       if (SuperPDecl->getIdentifier() == PDecl->getIdentifier())
           DiagnosePropertyMismatch(PDecl, SuperPDecl, 
@@ -346,12 +346,12 @@ Sema::MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
     // Category
     ObjCCategoryDecl *CatDecl = static_cast<ObjCCategoryDecl*>(CDecl);
     assert (CatDecl && "MergeOneProtocolPropertiesIntoClass");
-    for (ObjCProtocolDecl::classprop_iterator P = PDecl->classprop_begin(),
-         E = PDecl->classprop_end(); P != E; ++P) {
+    for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
+         E = PDecl->prop_end(); P != E; ++P) {
       ObjCPropertyDecl *Pr = (*P);
-      ObjCCategoryDecl::classprop_iterator CP, CE;
+      ObjCCategoryDecl::prop_iterator CP, CE;
       // Is this property already in  category's list of properties?
-      for (CP = CatDecl->classprop_begin(), CE = CatDecl->classprop_end(); 
+      for (CP = CatDecl->prop_begin(), CE = CatDecl->prop_end(); 
            CP != CE; ++CP)
         if ((*CP)->getIdentifier() == Pr->getIdentifier())
           break;
@@ -365,12 +365,12 @@ Sema::MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
     CatDecl->mergeProperties(&mergeProperties[0], mergeProperties.size());
     return;
   }
-  for (ObjCProtocolDecl::classprop_iterator P = PDecl->classprop_begin(),
-       E = PDecl->classprop_end(); P != E; ++P) {
+  for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
+       E = PDecl->prop_end(); P != E; ++P) {
     ObjCPropertyDecl *Pr = (*P);
-    ObjCInterfaceDecl::classprop_iterator CP, CE;
+    ObjCInterfaceDecl::prop_iterator CP, CE;
     // Is this property already in  class's list of properties?
-    for (CP = IDecl->classprop_begin(), CE = IDecl->classprop_end(); 
+    for (CP = IDecl->prop_begin(), CE = IDecl->prop_end(); 
          CP != CE; ++CP)
       if ((*CP)->getIdentifier() == Pr->getIdentifier())
         break;
@@ -1153,19 +1153,13 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
         isa<ObjCInterfaceDecl>(ClassDecl) || isa<ObjCCategoryDecl>(ClassDecl)
          || isa<ObjCProtocolDecl>(ClassDecl);
   bool checkIdenticalMethods = isa<ObjCImplementationDecl>(ClassDecl);
-  
-  
+
   if (pNum != 0) {
-    if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl))
-      IDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
-    else if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
+    if (ObjCContainerDecl *CDecl = dyn_cast<ObjCContainerDecl>(ClassDecl))
       CDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
-    else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(ClassDecl))
-      PDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
     else
       assert(false && "ActOnAtEnd - property declaration misplaced");
   }
-
   DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
   assert(DC && "Missing DeclContext");
 
@@ -1218,38 +1212,29 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     // super class.
     ComparePropertiesInBaseAndSuper(I);
     MergeProtocolPropertiesIntoClass(I, I);
-    for (ObjCInterfaceDecl::classprop_iterator i = I->classprop_begin(),
-         e = I->classprop_end(); i != e; ++i) {
-      ProcessPropertyDecl((*i), I);
-    }
-    I->setAtEndLoc(AtEndLoc);
-  } else if (ObjCProtocolDecl *P = dyn_cast<ObjCProtocolDecl>(ClassDecl)) {
-    for (ObjCProtocolDecl::classprop_iterator i = P->classprop_begin(),
-         e = P->classprop_end(); i != e; ++i) {
-      ProcessPropertyDecl((*i), P);
-    }
-    P->setAtEndLoc(AtEndLoc);
-  }
-  else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
+  } else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
     // Categories are used to extend the class by declaring new methods.
     // By the same token, they are also used to add new properties. No 
     // need to compare the added property to those in the class.
 
     // Merge protocol properties into category
     MergeProtocolPropertiesIntoClass(C, C);
-    for (ObjCCategoryDecl::classprop_iterator i = C->classprop_begin(),
-         e = C->classprop_end(); i != e; ++i) {
-      ProcessPropertyDecl((*i), C);
-    }
-    C->setAtEndLoc(AtEndLoc);
   }
-  else if (ObjCImplementationDecl *IC = 
-                dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
+  if (ObjCContainerDecl *CDecl = dyn_cast<ObjCContainerDecl>(ClassDecl)) {
+    // ProcessPropertyDecl is responsible for diagnosing conflicts with any
+    // user-defined setter/getter. It also synthesizes setter/getter methods
+    // and adds them to the DeclContext and global method pools.
+    for (ObjCContainerDecl::prop_iterator i = CDecl->prop_begin(),
+                                          e = CDecl->prop_end(); i != e; ++i)
+      ProcessPropertyDecl((*i), CDecl);
+    CDecl->setAtEndLoc(AtEndLoc);
+  }
+  if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
     IC->setLocEnd(AtEndLoc);
     if (ObjCInterfaceDecl* IDecl = getObjCInterfaceDecl(IC->getIdentifier()))
       ImplMethodsVsClassMethods(IC, IDecl);
-  } else {
-    ObjCCategoryImplDecl* CatImplClass = cast<ObjCCategoryImplDecl>(ClassDecl);
+  } else if (ObjCCategoryImplDecl* CatImplClass = 
+                                   dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
     CatImplClass->setLocEnd(AtEndLoc);
     ObjCInterfaceDecl* IDecl = CatImplClass->getClassInterface();
     // Find category interface decl and then check that all methods declared

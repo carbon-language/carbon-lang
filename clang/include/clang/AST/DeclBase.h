@@ -81,10 +81,10 @@ public:
   	         NonTypeTemplateParm,
              LinkageSpec, // [DeclContext]
              ObjCMethod,  // [DeclContext]
-    //       ObjCContainerDecl // [DeclContext]
-               ObjCCategory,
-               ObjCProtocol,
-               ObjCInterface,
+           ObjCContainer, // [DeclContext]
+             ObjCCategory,
+             ObjCProtocol,
+             ObjCInterface,
              ObjCCategoryImpl,  // [DeclContext]
              ObjCImplementation, // [DeclContext]
              ObjCProperty,
@@ -97,15 +97,16 @@ public:
   
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
-    NamedFirst     = OverloadedFunction , NamedLast     = ObjCPropertyImpl,
-    FieldFirst     = Field        , FieldLast     = ObjCAtDefsField,
-    ScopedFirst    = Field        , ScopedLast    = ObjCPropertyImpl,
-    TypeFirst      = Typedef      , TypeLast      = TemplateTypeParm,
-    TagFirst       = Enum         , TagLast       = CXXRecord,
-    RecordFirst    = Record       , RecordLast    = CXXRecord,
-    ValueFirst     = EnumConstant , ValueLast     = NonTypeTemplateParm,
-    FunctionFirst  = Function     , FunctionLast  = CXXConversion,
-    VarFirst       = Var          , VarLast       = NonTypeTemplateParm
+    NamedFirst    = OverloadedFunction, NamedLast   = NonTypeTemplateParm,
+    ObjCContainerFirst = ObjCContainer, ObjCContainerLast = ObjCInterface,
+    FieldFirst         = Field        , FieldLast     = ObjCAtDefsField,
+    ScopedFirst        = Field        , ScopedLast    = ObjCPropertyImpl,
+    TypeFirst          = Typedef      , TypeLast      = TemplateTypeParm,
+    TagFirst           = Enum         , TagLast       = CXXRecord,
+    RecordFirst        = Record       , RecordLast    = CXXRecord,
+    ValueFirst         = EnumConstant , ValueLast     = NonTypeTemplateParm,
+    FunctionFirst      = Function     , FunctionLast  = CXXConversion,
+    VarFirst           = Var          , VarLast       = NonTypeTemplateParm
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,

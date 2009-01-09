@@ -224,6 +224,7 @@ void Decl::addDeclKind(Kind k) {
   case Field:               nFieldDecls++; break;
   case Record:              nSUC++; break;
   case Enum:                nEnumDecls++; break;
+  case ObjCContainer:       break; // is abstract...no need to account for.
   case ObjCInterface:       nInterfaceDecls++; break;
   case ObjCClass:           nClassDecls++; break;
   case ObjCMethod:          nMethodDecls++; break;
