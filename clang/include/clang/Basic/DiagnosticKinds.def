@@ -753,6 +753,10 @@ DIAG(err_not_integral_type_bitfield, ERROR,
      "bit-field %0 with non-integral type")
 DIAG(err_member_initialization, ERROR,
     "%0 can only be initialized if it is a static const integral data member")
+DIAG(err_member_function_initialization, ERROR,
+    "initializer on function does not look like a pure-specifier")
+DIAG(err_non_virtual_pure, ERROR,
+    "%0 is not virtual and cannot be declared pure")
 DIAG(err_implicit_object_parameter_init, ERROR,
      "cannot initialize object parameter of type %0 with an expression of type %1")
 

@@ -535,12 +535,17 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       Diag(DS.getVirtualSpecLoc(), diag::err_virtual_non_function);
       InvalidDecl = true;
     } else {
+      cast<CXXMethodDecl>(Member)->setVirtual();
       CXXRecordDecl *CurClass = cast<CXXRecordDecl>(CurContext);
       CurClass->setAggregate(false);
       CurClass->setPOD(false);
       CurClass->setPolymorphic(true);
     }
   }
+
+  // FIXME: The above definition of virtual is not sufficient. A function is
+  // also virtual if it overrides an already virtual function. This is important
+  // to do here because it decides the validity of a pure specifier.
 
   if (BitWidth) {
     // C++ 9.6p2: Only when declaring an unnamed bit-field may the
@@ -608,10 +613,28 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       }
 
     } else {
-      // not static member.
-      Diag(Loc, diag::err_member_initialization)
-        << Name << Init->getSourceRange();
-      InvalidDecl = true;
+      // not static member. perhaps virtual function?
+      if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member)) {
+        IntegerLiteral *IL;
+        if ((IL = dyn_cast<IntegerLiteral>(Init)) && IL->getValue() == 0 &&
+            Context.getCanonicalType(IL->getType()) == Context.IntTy) {
+          if (MD->isVirtual())
+            MD->setPure();
+          else {
+            Diag(Loc, diag::err_non_virtual_pure)
+              << Name << Init->getSourceRange();
+            InvalidDecl = true;
+          }
+        } else {
+          Diag(Loc, diag::err_member_function_initialization)
+            << Name << Init->getSourceRange();
+          InvalidDecl = true;
+        }
+      } else {
+        Diag(Loc, diag::err_member_initialization)
+          << Name << Init->getSourceRange();
+        InvalidDecl = true;
+      }
     }
   }
 

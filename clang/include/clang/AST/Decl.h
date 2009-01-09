@@ -648,6 +648,8 @@ private:
   // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
   unsigned SClass : 2;
   bool IsInline : 1;
+  bool IsVirtual : 1;
+  bool IsPure : 1;
 
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
@@ -659,7 +661,8 @@ protected:
     : ValueDecl(DK, DC, L, N, T, PrevDecl), 
       DeclContext(DK),
       ParamInfo(0), Body(0), PreviousDeclaration(0),
-      SClass(S), IsInline(isInline), TypeSpecStartLoc(TSSL) {}
+      SClass(S), IsInline(isInline), IsVirtual(false), IsPure(false),
+      TypeSpecStartLoc(TSSL) {}
 
   virtual ~FunctionDecl();
   virtual void Destroy(ASTContext& C);
@@ -692,7 +695,13 @@ public:
   bool isThisDeclarationADefinition() const { return Body != 0; }
 
   void setBody(Stmt *B) { Body = B; }
-  
+
+  bool isVirtual() { return IsVirtual; }
+  void setVirtual() { IsVirtual = true; }
+
+  bool isPure() { return IsPure; }
+  void setPure() { IsPure = true; }
+
   /// getPreviousDeclaration - Return the previous declaration of this
   /// function.
   const FunctionDecl *getPreviousDeclaration() const {
