@@ -117,9 +117,8 @@ class Collect2Tool(Tool):
 
         cmd_args = []
         for arg in args:
-            if arg.opt:
-                if arg.opt.name in ('-framework',):
-                    cmd_args.extend(arglist.render(arg))
+            if arg.opt.name in ('-framework',):
+                cmd_args.extend(arglist.render(arg))
         for input in inputs:
             cmd_args.append(arglist.getValue(input.source))
         cmd_args.extend(arglist.render(output))

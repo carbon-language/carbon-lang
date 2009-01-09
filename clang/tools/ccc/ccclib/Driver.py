@@ -30,6 +30,36 @@ class Driver(object):
         self.hostInfo = None
         self.parser = Arguments.OptionParser()
 
+    # Host queries which can be forcibly over-riden by the user for
+    # testing purposes.
+    #
+    # FIXME: We should make sure these are drawn from a fixed set so
+    # that nothing downstream ever plays a guessing game.
+
+    def getHostBits(self):
+        if self.cccHostBits:
+            return self.cccHostBits
+        
+        return platform.architecture()[0].replace('bit','')
+
+    def getHostMachine(self):
+        if self.cccHostMachine:
+            return self.cccHostMachine
+
+        machine = platform.machine()
+        # Normalize names.
+        if machine == 'Power Macintosh':
+            return 'ppc'
+        return machine
+
+    def getHostSystemName(self):
+        if self.cccHostSystem:
+            return self.cccHostSystem
+        
+        return platform.system().lower()
+
+    ###
+
     def run(self, argv):
         # FIXME: Things to support from environment: GCC_EXEC_PREFIX,
         # COMPILER_PATH, LIBRARY_PATH, LPATH, CC_PRINT_OPTIONS,
@@ -41,7 +71,10 @@ class Driver(object):
         # only allowed at the beginning of the command line.
         cccPrintOptions = False
         cccPrintPhases = False
-        cccHostBits = cccHostMachine = cccHostSystem = None
+
+        # FIXME: How to handle override of host? ccc specific options?
+        # Abuse -b?
+        self.cccHostBits = self.cccHostMachine = self.cccHostSystem = None
         while argv and argv[0].startswith('-ccc-'):
             opt,argv = argv[0][5:],argv[1:]
 
@@ -50,21 +83,15 @@ class Driver(object):
             elif opt == 'print-phases':
                 cccPrintPhases = True
             elif opt == 'host-bits':
-                cccHostBits,argv = argv[0],argv[1:]
+                self.cccHostBits,argv = argv[0],argv[1:]
             elif opt == 'host-machine':
-                cccHostMachine,argv = argv[0],argv[1:]
+                self.cccHostMachine,argv = argv[0],argv[1:]
             elif opt == 'host-system':
-                cccHostSystem,argv = argv[0],argv[1:]
+                self.cccHostSystem,argv = argv[0],argv[1:]
             else:
                 raise ValueError,"Invalid ccc option: %r" % cccPrintOptions
 
-        # FIXME: How to handle override of host? ccc specific options?
-        # Abuse -b?
-        hostBits = cccHostBits or platform.architecture()[0].replace('bit','')
-        hostMachine = cccHostMachine or platform.machine()
-        hostSystem = cccHostSystem or platform.system().lower()
-        self.hostInfo = HostInfo.getHostInfo(self, 
-                                             hostSystem, hostMachine, hostBits)
+        self.hostInfo = HostInfo.getHostInfo(self)
         
         args = self.parser.parseArgs(argv)
 

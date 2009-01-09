@@ -34,7 +34,9 @@ class DarwinX86_64HostInfo(DarwinHostInfo):
     def getArchName(self):
         return 'x86_64'
 
-def getDarwinHostInfo(machine, bits):
+def getDarwinHostInfo(driver):
+    machine = driver.getHostMachine()
+    bits = driver.getHostBits()
     if machine == 'i386':
         if bits == '32':
             return DarwinX86HostInfo()
@@ -46,7 +48,7 @@ def getDarwinHostInfo(machine, bits):
         if bits == '64':
             return DarwinPPC_64HostInfo()
             
-    raise RuntimeError,'Unrecognized Darwin-i386 platform: %r:%r' % (machine, bits)
+    raise RuntimeError,'Unrecognized Darwin platform: %r:%r' % (machine, bits)
 
 # Unknown
 
@@ -57,7 +59,7 @@ class UnknownHostInfo(HostInfo):
     def useDriverDriver(self):
         return False
 
-def getUnknownHostInfo(machine, bits):
+def getUnknownHostInfo(driver):
     return UnknownHostInfo()
 
 ####
@@ -67,10 +69,11 @@ kSystems = {
     'unknown' : getUnknownHostInfo,
     }
 
-def getHostInfo(driver, system, machine, bits):
+def getHostInfo(driver):
+    system = driver.getHostSystemName()
     handler = kSystems.get(system)
     if handler:
-        return handler(machine, bits)
+        return handler(driver)
 
     driver.warning('Unknown host %r, using generic host information.' % system)
     return UnknownHostInfo()
