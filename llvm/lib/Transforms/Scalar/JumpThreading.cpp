@@ -504,6 +504,10 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     // If the value if the load is locally available within the block, just use
     // it.  This frequently occurs for reg2mem'd allocas.
     //cerr << "LOAD ELIMINATED:\n" << *BBIt << *LI << "\n";
+    
+    // If the returned value is the load itself, replace with an undef. This can
+    // only happen in dead loops.
+    if (AvailableVal == LI) AvailableVal = UndefValue::get(LI->getType());
     LI->replaceAllUsesWith(AvailableVal);
     LI->eraseFromParent();
     return true;
