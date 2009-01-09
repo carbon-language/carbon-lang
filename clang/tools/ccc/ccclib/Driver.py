@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 import tempfile
 from pprint import pprint
@@ -7,6 +8,7 @@ from pprint import pprint
 
 import Arguments
 import Jobs
+import HostInfo
 import Phases
 import Tools
 import Types
@@ -25,6 +27,7 @@ class MissingArgumentError(ValueError):
 
 class Driver(object):
     def __init__(self):
+        self.hostInfo = None
         self.parser = Arguments.OptionParser()
 
     def run(self, argv):
@@ -38,7 +41,7 @@ class Driver(object):
         # only allowed at the beginning of the command line.
         cccPrintOptions = False
         cccPrintPhases = False
-        cccUseDriverDriver = True
+        cccHostBits = cccHostMachine = cccHostSystem = None
         while argv and argv[0].startswith('-ccc-'):
             opt,argv = argv[0][5:],argv[1:]
 
@@ -46,14 +49,23 @@ class Driver(object):
                 cccPrintOptions = True
             elif opt == 'print-phases':
                 cccPrintPhases = True
-            elif opt == 'no-driver-driver':
-                # FIXME: Remove this once we have some way of being a
-                # cross compiler driver (cross driver compiler? compiler
-                # cross driver? etc.).
-                cccUseDriverDriver = False
+            elif opt == 'host-bits':
+                cccHostBits,argv = argv[0],argv[1:]
+            elif opt == 'host-machine':
+                cccHostMachine,argv = argv[0],argv[1:]
+            elif opt == 'host-system':
+                cccHostSystem,argv = argv[0],argv[1:]
             else:
                 raise ValueError,"Invalid ccc option: %r" % cccPrintOptions
 
+        # FIXME: How to handle override of host? ccc specific options?
+        # Abuse -b?
+        hostBits = cccHostBits or platform.architecture()[0].replace('bit','')
+        hostMachine = cccHostMachine or platform.machine()
+        hostSystem = cccHostSystem or platform.system().lower()
+        self.hostInfo = HostInfo.getHostInfo(self, 
+                                             hostSystem, hostMachine, hostBits)
+        
         args = self.parser.parseArgs(argv)
 
         # FIXME: Ho hum I have just realized -Xarch_ is broken. We really
@@ -73,7 +85,7 @@ class Driver(object):
 
         self.handleImmediateOptions(args)
 
-        if cccUseDriverDriver:
+        if self.hostInfo.useDriverDriver():
             phases = self.buildPipeline(args)
         else:
             phases = self.buildNormalPipeline(args)
@@ -81,7 +93,7 @@ class Driver(object):
         if cccPrintPhases:
             self.printPhases(phases, args)
             sys.exit(0)
-
+            
         if 0:
             print Util.pprint(phases)
 
@@ -414,9 +426,7 @@ class Driver(object):
                 hasDashM = arg
 
         if not archs:
-            # FIXME: Need to infer arch so that we sub -Xarch
-            # correctly.
-            archs.append(args.makeSeparateArg('i386',
+            archs.append(args.makeSeparateArg(self.hostInfo.getArchName(),
                                               self.parser.archOption))
 
         actions = self.buildNormalPipeline(args)
