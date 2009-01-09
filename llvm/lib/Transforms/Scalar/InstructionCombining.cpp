@@ -6343,6 +6343,28 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
   const APInt &RHSV = RHS->getValue();
   
   switch (LHSI->getOpcode()) {
+  case Instruction::Trunc:
+    if (ICI.isEquality() && LHSI->hasOneUse()) {
+      // Simplify icmp eq (trunc x to i8), 42 -> icmp eq x, 42|highbits if all
+      // of the high bits truncated out of x are known.
+      unsigned DstBits = LHSI->getType()->getPrimitiveSizeInBits(),
+             SrcBits = LHSI->getOperand(0)->getType()->getPrimitiveSizeInBits();
+      APInt Mask(APInt::getHighBitsSet(SrcBits, SrcBits-DstBits));
+      APInt KnownZero(SrcBits, 0), KnownOne(SrcBits, 0);
+      ComputeMaskedBits(LHSI->getOperand(0), Mask, KnownZero, KnownOne);
+      
+      // If all the high bits are known, we can do this xform.
+      if ((KnownZero|KnownOne).countLeadingOnes() >= SrcBits-DstBits) {
+        // Pull in the high bits from known-ones set.
+        APInt NewRHS(RHS->getValue());
+        NewRHS.zext(SrcBits);
+        NewRHS |= KnownOne;
+        return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0),
+                            ConstantInt::get(NewRHS));
+      }
+    }
+    break;
+      
   case Instruction::Xor:         // (icmp pred (xor X, XorCST), CI)
     if (ConstantInt *XorCST = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
       // If this is a comparison that tests the signbit (X < 0) or (x > -1),

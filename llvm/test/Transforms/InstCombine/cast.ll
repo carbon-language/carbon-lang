@@ -1,7 +1,5 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:    grep %c | notcast
-; END.
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep %c | notcast
 
 @inbuf = external global [32832 x i8]           ; <[32832 x i8]*> [#uses=1]
 
@@ -236,5 +234,23 @@ define i16 @test35(i16 %a) {
         %tmp2 = lshr i16 %c1, 8         ; <i16> [#uses=1]
         %c2 = bitcast i16 %tmp2 to i16          ; <i16> [#uses=1]
         ret i16 %c2
+}
+
+; icmp sgt i32 %a, -1
+; rdar://6480391
+define i1 @test36(i32 %a) {
+        %b = lshr i32 %a, 31
+        %c = trunc i32 %b to i8
+        %d = icmp eq i8 %c, 0
+        ret i1 %d
+}
+
+; ret i1 false
+define i1 @test37(i32 %a) {
+        %b = lshr i32 %a, 31
+        %c = or i32 %b, 512
+        %d = trunc i32 %c to i8
+        %e = icmp eq i8 %d, 11
+        ret i1 %e
 }
 
