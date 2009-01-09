@@ -23,6 +23,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/Streams.h"
 
 using namespace clang;
 
@@ -50,12 +51,14 @@ static inline uint32_t Read32(const char*& data) {
 
 PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D,
                    const char* ppcond,
-                   const char* spellingTable, unsigned NumSpellings,
+                   PTHSpellingSearch& mySpellingSrch,
                    PTHManager& PM)
   : PreprocessorLexer(&pp, fileloc), TokBuf(D), CurPtr(D), LastHashTokPtr(0),
-    PPCond(ppcond), CurPPCondPtr(ppcond), 
-    SpellingTable(spellingTable), SpellingsLeft(NumSpellings),
-    PTHMgr(PM) {}
+    PPCond(ppcond), CurPPCondPtr(ppcond), MySpellingSrch(mySpellingSrch),
+    PTHMgr(PM)
+{      
+  FileID = fileloc.getFileID();
+}
 
 void PTHLexer::Lex(Token& Tok) {
 LexNextToken:
@@ -100,6 +103,13 @@ LexNextToken:
   //===--------------------------------------==//
   // Process the token.
   //===--------------------------------------==//
+#if 0  
+  SourceManager& SM = PP->getSourceManager();
+  llvm::cerr << SM.getFileEntryForID(FileID)->getName()
+    << ':' << SM.getLogicalLineNumber(Tok.getLocation())
+    << ':' << SM.getLogicalColumnNumber(Tok.getLocation())
+    << '\n';
+#endif  
 
   if (k == tok::identifier) {
     MIOpt.ReadToken();
@@ -289,7 +299,25 @@ SourceLocation PTHLexer::getSourceLocation() {
   return SourceLocation::getFileLoc(FileID, offset);
 }
 
-unsigned PTHManager::GetSpelling(unsigned PTHOffset, const char *& Buffer) {
+//===----------------------------------------------------------------------===//
+// getSpelling() - Use cached data in PTH files for getSpelling().
+//===----------------------------------------------------------------------===//
+
+unsigned PTHManager::getSpelling(unsigned FileID, unsigned fpos,
+                                 const char *& Buffer) {
+  
+  llvm::DenseMap<unsigned,PTHSpellingSearch*>::iterator I =
+    SpellingMap.find(FileID);
+
+  if (I == SpellingMap.end())
+      return 0;
+    
+  return I->second->getSpellingBinarySearch(fpos, Buffer);  
+}
+
+unsigned PTHManager::getSpellingAtPTHOffset(unsigned PTHOffset,
+                                            const char *& Buffer) {
+
   const char* p = Buf->getBufferStart() + PTHOffset;
   assert(p < Buf->getBufferEnd());
   
@@ -302,13 +330,15 @@ unsigned PTHManager::GetSpelling(unsigned PTHOffset, const char *& Buffer) {
   return len;
 }
 
-unsigned PTHLexer::getSpelling(SourceLocation sloc, const char *&Buffer) {
-  const char* p = SpellingTable;
-  SourceManager& SM = PP->getSourceManager();
-  unsigned fpos = SM.getFullFilePos(SM.getPhysicalLoc(sloc));
+unsigned PTHSpellingSearch::getSpellingLinearSearch(unsigned fpos,
+                                                    const char *&Buffer) {
+  const char* p = LinearItr;
   unsigned len = 0;
-
-  while (SpellingsLeft) {
+  
+  if (!SpellingsLeft)
+    return getSpellingBinarySearch(fpos, Buffer);
+  
+  do {
     uint32_t TokOffset = 
       ((uint32_t) ((uint8_t) p[0]))
       | (((uint32_t) ((uint8_t) p[1])) << 8)
@@ -316,7 +346,7 @@ unsigned PTHLexer::getSpelling(SourceLocation sloc, const char *&Buffer) {
       | (((uint32_t) ((uint8_t) p[3])) << 24);
     
     if (TokOffset > fpos)
-      break;
+      return getSpellingBinarySearch(fpos, Buffer);
     
     --SpellingsLeft;
     
@@ -328,16 +358,70 @@ unsigned PTHLexer::getSpelling(SourceLocation sloc, const char *&Buffer) {
         | (((uint32_t) ((uint8_t) p[6])) << 16)
         | (((uint32_t) ((uint8_t) p[7])) << 24);
       
-      len = PTHMgr.GetSpelling(SpellingPTHOffset, Buffer);
+      len = PTHMgr.getSpellingAtPTHOffset(SpellingPTHOffset, Buffer);
       break;
     }
 
     // No match.  Keep on looking.
     p += sizeof(uint32_t)*2;
   }
+  while (SpellingsLeft);
 
-  SpellingTable = p;
+  LinearItr = p;
   return len;
+}
+
+unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
+                                                    const char *& Buffer) {
+  
+  assert ((TableEnd - TableBeg) % SpellingEntrySize == 0);
+  
+  unsigned min = 0;
+  const char* tb = TableBeg;
+  unsigned max = (TableEnd - tb) / SpellingEntrySize;
+
+  while (min != max) {
+    unsigned i = (max - min) / 2 + min;
+    const char* p = tb + (i * SpellingEntrySize);
+    
+    uint32_t TokOffset = 
+      ((uint32_t) ((uint8_t) p[0]))
+      | (((uint32_t) ((uint8_t) p[1])) << 8)
+      | (((uint32_t) ((uint8_t) p[2])) << 16)
+      | (((uint32_t) ((uint8_t) p[3])) << 24);
+    
+    if (TokOffset > fpos) {
+      max = i;
+      continue;
+    }
+    
+    if (TokOffset < fpos) {
+      min = i;
+      continue;
+    }
+    
+    uint32_t SpellingPTHOffset = 
+        ((uint32_t) ((uint8_t) p[4]))
+        | (((uint32_t) ((uint8_t) p[5])) << 8)
+        | (((uint32_t) ((uint8_t) p[6])) << 16)
+        | (((uint32_t) ((uint8_t) p[7])) << 24);
+    
+    return PTHMgr.getSpellingAtPTHOffset(SpellingPTHOffset, Buffer);
+  }
+  
+  return 0;
+}
+
+unsigned PTHLexer::getSpelling(SourceLocation sloc, const char *&Buffer) {
+  SourceManager& SM = PP->getSourceManager();
+  sloc = SM.getPhysicalLoc(sloc);
+  unsigned fid = SM.getCanonicalFileID(sloc);
+  unsigned fpos = SM.getFullFilePos(sloc);
+  
+  if (fid == FileID)
+    return MySpellingSrch.getSpellingLinearSearch(fpos, Buffer);
+
+  return PTHMgr.getSpelling(fid, fpos, Buffer);
 }
 
 //===----------------------------------------------------------------------===//
@@ -538,6 +622,11 @@ PTHLexer* PTHManager::CreateLexer(unsigned FileID, const FileEntry* FE) {
   if (len == 0) spellingTable = 0;
 
   assert(data < Buf->getBufferEnd());
+  
+  // Create the SpellingSearch object for this FileID.
+  PTHSpellingSearch* ss = new PTHSpellingSearch(*this, len, spellingTable);
+  SpellingMap[FileID] = ss;
+  
   return new PTHLexer(PP, SourceLocation::getFileLoc(FileID, 0), data, ppcond,
-                      spellingTable, len, *this); 
+                      *ss, *this); 
 }

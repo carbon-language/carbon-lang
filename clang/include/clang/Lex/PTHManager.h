@@ -16,6 +16,7 @@
 
 #include "clang/Lex/PTHLexer.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/ADT/DenseMap.h"
 #include <string>
 
 namespace llvm {
@@ -28,13 +29,40 @@ class FileEntry;
 class IdentifierInfo;
 class IdentifierTable;
 class PTHLexer;
+class PTHManager;
+
+class PTHSpellingSearch {
+  PTHManager& PTHMgr;
+  
+  const char* TableBeg;
+  const char* TableEnd;
+  
+  unsigned SpellingsLeft;
+  const char* LinearItr;
+  
+public:
+  enum { SpellingEntrySize = 4*2 };
+  
+  unsigned getSpellingBinarySearch(unsigned fpos, const char *&Buffer);
+  unsigned getSpellingLinearSearch(unsigned fpos, const char *&Buffer);
+  
+  PTHSpellingSearch(PTHManager& pm, unsigned numSpellings, const char* tableBeg)
+    : PTHMgr(pm),
+      TableBeg(tableBeg),
+      TableEnd(tableBeg + numSpellings*SpellingEntrySize),
+      SpellingsLeft(numSpellings),
+      LinearItr(tableBeg) {}
+};  
   
 class PTHManager {
-  
   friend class PTHLexer;
+  friend class PTHSpellingSearch;
   
   /// The memory mapped PTH file.
   const llvm::MemoryBuffer* Buf;
+  
+  /// A map from FileIDs to SpellingSearch objects.
+  llvm::DenseMap<unsigned,PTHSpellingSearch*> SpellingMap;
   
   /// IdMap - A lazily generated cache mapping from persistent identifiers to
   ///  IdentifierInfo*.
@@ -70,10 +98,12 @@ class PTHManager {
   ///  objects from the PTH file.
   IdentifierInfo* GetIdentifierInfo(unsigned);
   
-  /// GetSpelling - Used by PTHLexer classes to get the cached spelling
-  ///  for a token.
-  unsigned GetSpelling(unsigned PTHOffset, const char*& Buffer);
+  /// getSpellingAtPTHOffset - Used by PTHLexer classes to get the cached 
+  ///  spelling for a token.
+  unsigned getSpellingAtPTHOffset(unsigned PTHOffset, const char*& Buffer);
 
+  unsigned getSpelling(unsigned FileID, unsigned fpos, const char *& Buffer);
+  
 public:
   
   ~PTHManager();

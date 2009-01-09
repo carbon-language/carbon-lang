@@ -20,8 +20,13 @@
 namespace clang {
   
 class PTHManager;
+class PTHSpellingSearch;
   
 class PTHLexer : public PreprocessorLexer {
+private:
+  /// FileID - The SourceManager FileID for the original source file.
+  unsigned FileID;
+  
   /// TokBuf - Buffer from PTH file containing raw token data.
   const char* TokBuf;
   
@@ -41,13 +46,10 @@ class PTHLexer : public PreprocessorLexer {
   /// CurPPCondPtr - Pointer inside PPCond that refers to the next entry
   ///  to process when doing quick skipping of preprocessor blocks.
   const char* CurPPCondPtr;
-  
-  /// Pointer to a side table containing offsets in the PTH file
-  ///  for token spellings.
-  const char* SpellingTable;
-  
-  /// Number of cached spellings left in the cached source file.
-  unsigned SpellingsLeft;
+
+  /// MySpellingMgr - Reference to the spelling manager used to get spellings
+  ///  for the source file indicated by \c FileID.
+  PTHSpellingSearch& MySpellingSrch;  
 
   PTHLexer(const PTHLexer&);  // DO NOT IMPLEMENT
   void operator=(const PTHLexer&); // DO NOT IMPLEMENT
@@ -59,14 +61,17 @@ class PTHLexer : public PreprocessorLexer {
   PTHManager& PTHMgr;
   
   Token EofToken;
-  
-public:  
+
+protected:
+  friend class PTHManager;
 
   /// Create a PTHLexer for the specified token stream.
   PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D, 
-           const char* ppcond, const char* spellingTable, unsigned numSpellings,
+           const char* ppcond,
+           PTHSpellingSearch& mySpellingSrch,
            PTHManager& PM);
-  
+public:  
+
   ~PTHLexer() {}
     
   /// Lex - Return the next token.
