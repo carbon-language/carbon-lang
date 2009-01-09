@@ -7712,7 +7712,7 @@ static bool FindElementAtOffset(const Type *Ty, int64_t Offset,
     FirstIdx = Offset/TySize;
     Offset %= TySize;
     
-    // Handle silly modulus not returning values values [0..TySize).
+    // Handle silly modulus not returning values [0..TySize).
     if (Offset < 0) {
       --FirstIdx;
       Offset += TySize;
