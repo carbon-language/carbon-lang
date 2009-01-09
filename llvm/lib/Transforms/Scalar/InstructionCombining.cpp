@@ -10464,28 +10464,6 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   }
   if (MadeChange) return &GEP;
 
-  // If this GEP instruction doesn't move the pointer, and if the input operand
-  // is a bitcast of another pointer, just replace the GEP with a bitcast of the
-  // real input to the dest type.
-  if (GEP.hasAllZeroIndices()) {
-    if (BitCastInst *BCI = dyn_cast<BitCastInst>(GEP.getOperand(0))) {
-      // If the bitcast is of an allocation, and the allocation will be
-      // converted to match the type of the cast, don't touch this.
-      if (isa<AllocationInst>(BCI->getOperand(0))) {
-        // See if the bitcast simplifies, if so, don't nuke this GEP yet.
-        if (Instruction *I = visitBitCast(*BCI)) {
-          if (I != BCI) {
-            I->takeName(BCI);
-            BCI->getParent()->getInstList().insert(BCI, I);
-            ReplaceInstUsesWith(*BCI, I);
-          }
-          return &GEP;
-        }
-      }
-      return new BitCastInst(BCI->getOperand(0), GEP.getType());
-    }
-  }
-  
   // Combine Indices - If the source pointer to this getelementptr instruction
   // is a getelementptr instruction, combine the indices of the two
   // getelementptr instructions into a single instruction.
@@ -10696,7 +10674,28 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       }
     }
   }
-
+  
+  if (BitCastInst *BCI = dyn_cast<BitCastInst>(PtrOp)) {
+    // If this GEP instruction doesn't move the pointer, just replace the GEP
+    // with a bitcast of the real input to the dest type.
+    if (GEP.hasAllZeroIndices()) {
+      // If the bitcast is of an allocation, and the allocation will be
+      // converted to match the type of the cast, don't touch this.
+      if (isa<AllocationInst>(BCI->getOperand(0))) {
+        // See if the bitcast simplifies, if so, don't nuke this GEP yet.
+        if (Instruction *I = visitBitCast(*BCI)) {
+          if (I != BCI) {
+            I->takeName(BCI);
+            BCI->getParent()->getInstList().insert(BCI, I);
+            ReplaceInstUsesWith(*BCI, I);
+          }
+          return &GEP;
+        }
+      }
+      return new BitCastInst(BCI->getOperand(0), GEP.getType());
+    }
+  }    
+    
   return 0;
 }
 
