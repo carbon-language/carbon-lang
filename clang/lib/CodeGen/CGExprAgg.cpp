@@ -278,9 +278,11 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   llvm::Value *ArgValue = CGF.EmitLValue(VE->getSubExpr()).getAddress();
   llvm::Value *ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
 
-  if (!ArgPtr)
+  if (!ArgPtr) {
     CGF.ErrorUnsupported(VE, "aggregate va_arg expression");
-  
+    return;
+  }
+
   if (DestPtr)
     // FIXME: volatility
     CGF.EmitAggregateCopy(DestPtr, ArgPtr, VE->getType());
