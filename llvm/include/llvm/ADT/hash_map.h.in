@@ -1,12 +1,12 @@
 //==-- llvm/ADT/hash_map.h - "Portable" wrapper around hash_map --*- C++ -*-==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file provides a wrapper around the mysterious <hash_map> header file
 // that seems to move around between GCC releases into and out of namespaces at
 // will.  #including this header will cause hash_map to be available in the
@@ -92,7 +92,7 @@ template <typename KeyType,
           class _HashFcn = hash<KeyType>,
           class _EqualKey = equal_to<KeyType>,
           class _A = allocator <ValueType> >
-class hash_map : public rw_hashmap<KeyType, ValueType, class _HashFcn, 
+class hash_map : public rw_hashmap<KeyType, ValueType, class _HashFcn,
                                    class _EqualKey, class _A> {
 };
 
@@ -119,7 +119,7 @@ class hash_multimap : public rw_hashmultimap<KeyType, ValueType, class _HashFcn,
 // hash_map to use GCC's hash classes.
 namespace stdext {
   template<class Key> struct hash;
-  
+
   // Provide a hash function for unsigned ints...
   template<> struct hash<unsigned int> {
     inline size_t operator()(unsigned int Val) const {

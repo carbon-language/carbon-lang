@@ -26,7 +26,7 @@ class BitVector {
 
   enum { BITWORD_SIZE = (unsigned)sizeof(BitWord) * 8 };
 
-  BitWord  *Bits;        // Actual bits. 
+  BitWord  *Bits;        // Actual bits.
   unsigned Size;         // Size of bitvector in bits.
   unsigned Capacity;     // Size of allocated memory in BitWord.
 
@@ -89,7 +89,7 @@ public:
     Bits = new BitWord[Capacity];
     std::copy(RHS.Bits, &RHS.Bits[Capacity], Bits);
   }
-  
+
   ~BitVector() {
     delete[] Bits;
   }
@@ -185,13 +185,13 @@ public:
       grow(N);
       init_words(&Bits[OldCapacity], (Capacity-OldCapacity), t);
     }
-    
-    // Set any old unused bits that are now included in the BitVector. This 
-    // may set bits that are not included in the new vector, but we will clear 
+
+    // Set any old unused bits that are now included in the BitVector. This
+    // may set bits that are not included in the new vector, but we will clear
     // them back out below.
     if (N > Size)
       set_unused_bits(t);
-    
+
     // Update the size, and clear out any bits that are now unused
     unsigned OldSize = Size;
     Size = N;
@@ -250,7 +250,7 @@ public:
   }
 
   bool operator[](unsigned Idx) const {
-    assert (Idx < Size && "Out-of-bounds Bit access.");   
+    assert (Idx < Size && "Out-of-bounds Bit access.");
     BitWord Mask = 1L << (Idx % BITWORD_SIZE);
     return (Bits[Idx / BITWORD_SIZE] & Mask) != 0;
   }
@@ -267,7 +267,7 @@ public:
     for (i = 0; i != std::min(ThisWords, RHSWords); ++i)
       if (Bits[i] != RHS.Bits[i])
         return false;
-    
+
     // Verify that any extra words are all zeros.
     if (i != ThisWords) {
       for (; i != ThisWords; ++i)
@@ -292,13 +292,13 @@ public:
     unsigned i;
     for (i = 0; i != std::min(ThisWords, RHSWords); ++i)
       Bits[i] &= RHS.Bits[i];
-    
+
     // Any bits that are just in this bitvector become zero, because they aren't
     // in the RHS bit vector.  Any words only in RHS are ignored because they
     // are already zero in the LHS.
     for (; i != ThisWords; ++i)
       Bits[i] = 0;
-    
+
     return *this;
   }
 
@@ -315,7 +315,7 @@ public:
       Bits[i] ^= RHS.Bits[i];
     return *this;
   }
-  
+
   // Assignment operator.
   const BitVector &operator=(const BitVector &RHS) {
     if (this == &RHS) return *this;
@@ -327,7 +327,7 @@ public:
       clear_unused_bits();
       return *this;
     }
-  
+
     // Grow the bitvector to have enough elements.
     Capacity = RHSWords;
     BitWord *NewBits = new BitWord[Capacity];
@@ -344,14 +344,14 @@ private:
   unsigned NumBitWords(unsigned S) const {
     return (S + BITWORD_SIZE-1) / BITWORD_SIZE;
   }
-  
+
   // Set the unused bits in the high words.
   void set_unused_bits(bool t = true) {
     //  Set high words first.
     unsigned UsedWords = NumBitWords(Size);
     if (Capacity > UsedWords)
       init_words(&Bits[UsedWords], (Capacity-UsedWords), t);
-    
+
     //  Then set any stray high bits of the last used word.
     unsigned ExtraBits = Size % BITWORD_SIZE;
     if (ExtraBits) {
@@ -377,13 +377,13 @@ private:
     // Destroy the old bits.
     delete[] Bits;
     Bits = NewBits;
-    
+
     clear_unused_bits();
   }
 
   void init_words(BitWord *B, unsigned NumWords, bool t) {
     memset(B, 0 - (int)t, NumWords*sizeof(BitWord));
-  } 
+  }
 };
 
 inline BitVector operator&(const BitVector &LHS, const BitVector &RHS) {
@@ -403,6 +403,6 @@ inline BitVector operator^(const BitVector &LHS, const BitVector &RHS) {
   Result ^= RHS;
   return Result;
 }
- 
+
 } // End llvm namespace
 #endif

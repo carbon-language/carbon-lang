@@ -22,7 +22,7 @@
 namespace llvm {
 
 template <typename T> class ImmutableListFactory;
-  
+
 template <typename T>
 class ImmutableListImpl : public FoldingSetNode {
   T Head;
@@ -30,28 +30,28 @@ class ImmutableListImpl : public FoldingSetNode {
 
   ImmutableListImpl(const T& head, const ImmutableListImpl* tail = 0)
     : Head(head), Tail(tail) {}
-  
+
   friend class ImmutableListFactory<T>;
-  
+
   // Do not implement.
   void operator=(const ImmutableListImpl&);
   ImmutableListImpl(const ImmutableListImpl&);
-  
+
 public:
   const T& getHead() const { return Head; }
   const ImmutableListImpl* getTail() const { return Tail; }
-  
+
   static inline void Profile(FoldingSetNodeID& ID, const T& H,
                              const ImmutableListImpl* L){
     ID.AddPointer(L);
     ID.Add(H);
   }
-  
+
   void Profile(FoldingSetNodeID& ID) {
     Profile(ID, Head, Tail);
   }
 };
-  
+
 /// ImmutableList - This class represents an immutable (functional) list.
 ///  It is implemented as a smart pointer (wraps ImmutableListImpl), so it
 ///  it is intended to always be copied by value as if it were a pointer.
@@ -78,37 +78,37 @@ public:
   const ImmutableListImpl<T>* getInternalPointer() const {
     return X;
   }
-  
+
   class iterator {
     const ImmutableListImpl<T>* L;
   public:
     iterator() : L(0) {}
     iterator(ImmutableList l) : L(l.getInternalPointer()) {}
-    
+
     iterator& operator++() { L = L->getTail(); return *this; }
     bool operator==(const iterator& I) const { return L == I.L; }
     bool operator!=(const iterator& I) const { return L != I.L; }
-    const value_type& operator*() const { return L->getHead(); }    
-    ImmutableList getList() const { return L; }    
+    const value_type& operator*() const { return L->getHead(); }
+    ImmutableList getList() const { return L; }
   };
 
   /// begin - Returns an iterator referring to the head of the list, or
   ///  an iterator denoting the end of the list if the list is empty.
   iterator begin() const { return iterator(X); }
-    
+
   /// end - Returns an iterator denoting the end of the list.  This iterator
   ///  does not refer to a valid list element.
   iterator end() const { return iterator(); }
 
   /// isEmpty - Returns true if the list is empty.
   bool isEmpty() const { return !X; }
-  
+
   /// isEqual - Returns true if two lists are equal.  Because all lists created
   ///  from the same ImmutableListFactory are uniqued, this has O(1) complexity
   ///  because it the contents of the list do not need to be compared.  Note
   ///  that you should only compare two lists created from the same
   ///  ImmutableListFactory.
-  bool isEqual(const ImmutableList& L) const { return X == L.X; }  
+  bool isEqual(const ImmutableList& L) const { return X == L.X; }
 
   bool operator==(const ImmutableList& L) const { return isEqual(L); }
 
@@ -117,80 +117,80 @@ public:
     assert (!isEmpty() && "Cannot get the head of an empty list.");
     return X->getHead();
   }
-  
+
   /// getTail - Returns the tail of the list, which is another (possibly empty)
   ///  ImmutableList.
   ImmutableList getTail() {
     return X ? X->getTail() : 0;
-  }  
+  }
 
   void Profile(FoldingSetNodeID& ID) const {
     ID.AddPointer(X);
   }
 };
-  
+
 template <typename T>
 class ImmutableListFactory {
-  typedef ImmutableListImpl<T> ListTy;  
+  typedef ImmutableListImpl<T> ListTy;
   typedef FoldingSet<ListTy>   CacheTy;
-  
+
   CacheTy Cache;
   uintptr_t Allocator;
-  
+
   bool ownsAllocator() const {
     return Allocator & 0x1 ? false : true;
   }
-  
-  BumpPtrAllocator& getAllocator() const { 
+
+  BumpPtrAllocator& getAllocator() const {
     return *reinterpret_cast<BumpPtrAllocator*>(Allocator & ~0x1);
-  }  
+  }
 
 public:
   ImmutableListFactory()
     : Allocator(reinterpret_cast<uintptr_t>(new BumpPtrAllocator())) {}
-  
+
   ImmutableListFactory(BumpPtrAllocator& Alloc)
   : Allocator(reinterpret_cast<uintptr_t>(&Alloc) | 0x1) {}
-  
+
   ~ImmutableListFactory() {
     if (ownsAllocator()) delete &getAllocator();
   }
-  
+
   ImmutableList<T> Concat(const T& Head, ImmutableList<T> Tail) {
     // Profile the new list to see if it already exists in our cache.
     FoldingSetNodeID ID;
     void* InsertPos;
-    
+
     const ListTy* TailImpl = Tail.getInternalPointer();
     ListTy::Profile(ID, Head, TailImpl);
     ListTy* L = Cache.FindNodeOrInsertPos(ID, InsertPos);
-    
+
     if (!L) {
       // The list does not exist in our cache.  Create it.
       BumpPtrAllocator& A = getAllocator();
       L = (ListTy*) A.Allocate<ListTy>();
       new (L) ListTy(Head, TailImpl);
-    
+
       // Insert the new list into the cache.
       Cache.InsertNode(L, InsertPos);
     }
-    
+
     return L;
   }
-  
+
   ImmutableList<T> Add(const T& D, ImmutableList<T> L) {
     return Concat(D, L);
   }
-  
+
   ImmutableList<T> GetEmptyList() const {
     return ImmutableList<T>(0);
   }
-  
+
   ImmutableList<T> Create(const T& X) {
     return Concat(X, GetEmptyList());
   }
 };
-  
+
 //===----------------------------------------------------------------------===//
 // Partially-specialized Traits.
 //===----------------------------------------------------------------------===//
@@ -205,7 +205,7 @@ template<typename T> struct DenseMapInfo<ImmutableList<T> > {
   }
   static unsigned getHashValue(ImmutableList<T> X) {
     uintptr_t PtrVal = reinterpret_cast<uintptr_t>(X.getInternalPointer());
-    return (unsigned((uintptr_t)PtrVal) >> 4) ^ 
+    return (unsigned((uintptr_t)PtrVal) >> 4) ^
            (unsigned((uintptr_t)PtrVal) >> 9);
   }
   static bool isEqual(ImmutableList<T> X1, ImmutableList<T> X2) {
@@ -213,7 +213,7 @@ template<typename T> struct DenseMapInfo<ImmutableList<T> > {
   }
   static bool isPod() { return true; }
 };
-  
+
 } // end llvm namespace
 
 #endif

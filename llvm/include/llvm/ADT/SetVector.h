@@ -154,7 +154,7 @@ template <typename T, unsigned N>
 class SmallSetVector : public SetVector<T, SmallVector<T, N>, SmallSet<T, N> > {
 public:
   SmallSetVector() {}
-  
+
   /// @brief Initialize a SmallSetVector with a range of elements
   template<typename It>
   SmallSetVector(It Start, It End) {

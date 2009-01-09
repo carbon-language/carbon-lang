@@ -56,7 +56,7 @@ public:
   const Statistic &operator-=(const unsigned &V) { Value -= V; return init(); }
   const Statistic &operator*=(const unsigned &V) { Value *= V; return init(); }
   const Statistic &operator/=(const unsigned &V) { Value /= V; return init(); }
-  
+
 protected:
   Statistic &init() {
     if (!Initialized) RegisterStatistic();
@@ -64,7 +64,7 @@ protected:
   }
   void RegisterStatistic();
 };
-  
+
 // STATISTIC - A macro to make definition of statistics really simple.  This
 // automatically passes the DEBUG_TYPE of the file into the statistic.
 #define STATISTIC(VARNAME, DESC) \

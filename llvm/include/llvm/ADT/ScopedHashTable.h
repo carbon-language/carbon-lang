@@ -46,15 +46,15 @@ class ScopedHashTableVal {
   K Key;
   V Val;
 public:
-  ScopedHashTableVal(ScopedHashTableVal *nextInScope, 
+  ScopedHashTableVal(ScopedHashTableVal *nextInScope,
                      ScopedHashTableVal *nextForKey, const K &key, const V &val)
     : NextInScope(nextInScope), NextForKey(nextForKey), Key(key), Val(val) {
   }
-  
+
   const K &getKey() const { return Key; }
   const V &getValue() const { return Val; }
   V &getValue() { return Val; }
-  
+
   ScopedHashTableVal *getNextForKey() { return NextForKey; }
   const ScopedHashTableVal *getNextForKey() const { return NextForKey; }
 public:
@@ -65,7 +65,7 @@ template <typename K, typename V>
 class ScopedHashTableScope {
   /// HT - The hashtable that we are active for.
   ScopedHashTable<K, V> &HT;
-  
+
   /// PrevScope - This is the scope that we are shadowing in HT.
   ScopedHashTableScope *PrevScope;
 
@@ -77,7 +77,7 @@ class ScopedHashTableScope {
 public:
   ScopedHashTableScope(ScopedHashTable<K, V> &HT);
   ~ScopedHashTableScope();
-  
+
 private:
   friend class ScopedHashTable<K, V>;
   ScopedHashTableVal<K, V> *getLastValInScope() { return LastValInScope; }
@@ -90,7 +90,7 @@ class ScopedHashTableIterator {
   ScopedHashTableVal<K,V> *Node;
 public:
   ScopedHashTableIterator(ScopedHashTableVal<K,V> *node) : Node(node){}
-  
+
   V &operator*() const {
     assert(Node && "Dereference end()");
     return Node->getValue();
@@ -98,14 +98,14 @@ public:
   V *operator->() const {
     return &Node->getValue();
   }
-  
+
   bool operator==(const ScopedHashTableIterator &RHS) const {
     return Node == RHS.Node;
   }
   bool operator!=(const ScopedHashTableIterator &RHS) const {
     return Node != RHS.Node;
   }
-  
+
   inline ScopedHashTableIterator& operator++() {          // Preincrement
     assert(Node && "incrementing past end()");
     Node = Node->getNextForKey();
@@ -129,23 +129,23 @@ public:
   ~ScopedHashTable() {
     assert(CurScope == 0 && TopLevelMap.empty() && "Scope imbalance!");
   }
-  
+
   void insert(const K &Key, const V &Val) {
     assert(CurScope && "No scope active!");
-    
+
     ScopedHashTableVal<K,V> *&KeyEntry = TopLevelMap[Key];
-    
+
     KeyEntry = new ScopedHashTableVal<K,V>(CurScope->getLastValInScope(),
                                            KeyEntry, Key, Val);
     CurScope->setLastValInScope(KeyEntry);
   }
-  
+
   typedef ScopedHashTableIterator<K, V> iterator;
 
   iterator end() { return iterator(0); }
 
   iterator begin(const K &Key) {
-    typename DenseMap<K, ScopedHashTableVal<K,V>*>::iterator I = 
+    typename DenseMap<K, ScopedHashTableVal<K,V>*>::iterator I =
       TopLevelMap.find(Key);
     if (I == TopLevelMap.end()) return end();
     return iterator(I->second);
@@ -166,7 +166,7 @@ template <typename K, typename V>
 ScopedHashTableScope<K, V>::~ScopedHashTableScope() {
   assert(HT.CurScope == this && "Scope imbalance!");
   HT.CurScope = PrevScope;
-  
+
   // Pop and delete all values corresponding to this scope.
   while (ScopedHashTableVal<K, V> *ThisEntry = LastValInScope) {
     // Pop this value out of the TopLevelMap.
@@ -174,15 +174,15 @@ ScopedHashTableScope<K, V>::~ScopedHashTableScope() {
       assert(HT.TopLevelMap[ThisEntry->getKey()] == ThisEntry &&
              "Scope imbalance!");
       HT.TopLevelMap.erase(ThisEntry->getKey());
-    } else {      
+    } else {
       ScopedHashTableVal<K,V> *&KeyEntry = HT.TopLevelMap[ThisEntry->getKey()];
       assert(KeyEntry == ThisEntry && "Scope imbalance!");
       KeyEntry = ThisEntry->getNextForKey();
     }
-    
+
     // Pop this value out of the scope.
     LastValInScope = ThisEntry->getNextInScope();
-    
+
     // Delete this entry.
     delete ThisEntry;
   }

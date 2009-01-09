@@ -53,7 +53,7 @@ static inline char *utohex_buffer(IntTy X, char *BufferEnd) {
   }
   return BufPtr;
 }
-  
+
 static inline std::string utohexstr(uint64_t X) {
   char Buffer[40];
   return utohex_buffer(X, Buffer+40);
@@ -79,18 +79,18 @@ static inline std::string utostr_32(uint32_t X, bool isNeg = false) {
 static inline std::string utostr(uint64_t X, bool isNeg = false) {
   if (X == uint32_t(X))
     return utostr_32(uint32_t(X), isNeg);
-  
+
   char Buffer[40];
   char *BufPtr = Buffer+39;
-  
+
   *BufPtr = 0;                  // Null terminate buffer...
   if (X == 0) *--BufPtr = '0';  // Handle special case...
-  
+
   while (X) {
     *--BufPtr = '0' + char(X % 10);
     X /= 10;
   }
-  
+
   if (isNeg) *--BufPtr = '-';   // Add negative sign...
   return std::string(BufPtr);
 }
@@ -141,7 +141,7 @@ static inline std::string UppercaseString(const std::string &S) {
 
 /// StringsEqualNoCase - Return true if the two strings are equal, ignoring
 /// case.
-static inline bool StringsEqualNoCase(const std::string &LHS, 
+static inline bool StringsEqualNoCase(const std::string &LHS,
                                       const std::string &RHS) {
   if (LHS.size() != RHS.size()) return false;
   for (unsigned i = 0, e = static_cast<unsigned>(LHS.size()); i != e; ++i)
@@ -151,7 +151,7 @@ static inline bool StringsEqualNoCase(const std::string &LHS,
 
 /// StringsEqualNoCase - Return true if the two strings are equal, ignoring
 /// case.
-static inline bool StringsEqualNoCase(const std::string &LHS, 
+static inline bool StringsEqualNoCase(const std::string &LHS,
                                       const char *RHS) {
   for (unsigned i = 0, e = static_cast<unsigned>(LHS.size()); i != e; ++i) {
     if (RHS[i] == 0) return false;  // RHS too short.
@@ -159,7 +159,7 @@ static inline bool StringsEqualNoCase(const std::string &LHS,
   }
   return RHS[LHS.size()] == 0;  // Not too long?
 }
-  
+
 /// CStrInCStrNoCase - Portable version of strcasestr.  Locates the first
 ///  occurance of c-string 's2' in string 's1', ignoring case.  Returns
 ///  NULL if 's2' cannot be found.
@@ -168,12 +168,12 @@ static inline const char* CStrInCStrNoCase(const char *s1, const char *s2) {
   // Are either strings NULL or empty?
   if (!s1 || !s2 || s1[0] == '\0' || s2[0] == '\0')
     return 0;
-  
+
   if (s1 == s2)
     return s1;
-  
+
   const char *I1=s1, *I2=s2;
-  
+
   while (*I1 != '\0' && *I2 != '\0' )
     if (tolower(*I1) != tolower(*I2)) { // No match.  Start over.
       ++s1; I1 = s1; I2 = s2;

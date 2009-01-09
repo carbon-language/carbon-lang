@@ -43,7 +43,7 @@ public:
   unsigned size() const {
     return isSmall() ? Vector.size() : Set.size();
   }
-  
+
   /// count - Return true if the element is in the set.
   bool count(const T &V) const {
     if (isSmall()) {
@@ -53,12 +53,12 @@ public:
       return Set.count(V);
     }
   }
-  
+
   /// insert - Insert an element into the set if it isn't already there.
   bool insert(const T &V) {
     if (!isSmall())
       return Set.insert(V).second;
-    
+
     VIterator I = vfind(V);
     if (I != Vector.end())    // Don't reinsert if it already exists.
       return false;
@@ -75,7 +75,7 @@ public:
     Set.insert(V);
     return true;
   }
-  
+
   bool erase(const T &V) {
     if (!isSmall())
       return Set.erase(V);
@@ -86,14 +86,14 @@ public:
       }
     return false;
   }
-  
+
   void clear() {
     Vector.clear();
     Set.clear();
   }
 private:
   bool isSmall() const { return Set.empty(); }
-    
+
   VIterator vfind(const T &V) const {
     for (VIterator I = Vector.begin(), E = Vector.end(); I != E; ++I)
       if (*I == V)

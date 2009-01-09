@@ -20,7 +20,7 @@ namespace llvm {
 
 /// PriorityQueue - This class behaves like std::priority_queue and
 /// provides a few additional convenience functions.
-/// 
+///
 template<class T,
          class Sequence = std::vector<T>,
          class Compare = std::less<typename Sequence::value_type> >

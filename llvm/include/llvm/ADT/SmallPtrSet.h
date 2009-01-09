@@ -48,7 +48,7 @@ protected:
   /// Note that CurArray points to an array that has CurArraySize+1 elements in
   /// it, so that the end iterator actually points to valid memory.
   unsigned CurArraySize;
-  
+
   // If small, this is # elts allocated consequtively
   unsigned NumElements;
   unsigned NumTombstones;
@@ -68,41 +68,41 @@ public:
     clear();
   }
   ~SmallPtrSetImpl();
-  
+
   bool empty() const { return size() == 0; }
   unsigned size() const { return NumElements; }
-  
+
   static void *getTombstoneMarker() { return reinterpret_cast<void*>(-2); }
   static void *getEmptyMarker() {
     // Note that -1 is chosen to make clear() efficiently implementable with
     // memset and because it's not a valid pointer value.
     return reinterpret_cast<void*>(-1);
   }
-  
+
   void clear() {
     // If the capacity of the array is huge, and the # elements used is small,
     // shrink the array.
     if (!isSmall() && NumElements*4 < CurArraySize && CurArraySize > 32)
       return shrink_and_clear();
-    
+
     // Fill the array with empty markers.
     memset(CurArray, -1, CurArraySize*sizeof(void*));
     NumElements = 0;
     NumTombstones = 0;
   }
-  
+
 protected:
   /// insert_imp - This returns true if the pointer was new to the set, false if
   /// it was already in the set.  This is hidden from the client so that the
   /// derived class can check that the right type of pointer is passed in.
   bool insert_imp(const void * Ptr);
-  
+
   /// erase_imp - If the set contains the specified pointer, remove it and
   /// return true, otherwise return false.  This is hidden from the client so
   /// that the derived class can check that the right type of pointer is passed
   /// in.
   bool erase_imp(const void * Ptr);
-  
+
   bool count_imp(const void * Ptr) const {
     if (isSmall()) {
       // Linear search for the item.
@@ -112,11 +112,11 @@ protected:
           return true;
       return false;
     }
-    
+
     // Big set case.
     return *FindBucketFor(Ptr) == Ptr;
   }
-  
+
 private:
   bool isSmall() const { return CurArray == &SmallArray[0]; }
 
@@ -125,10 +125,10 @@ private:
   }
   const void * const *FindBucketFor(const void *Ptr) const;
   void shrink_and_clear();
-  
+
   /// Grow - Allocate a larger backing store for the buckets and move it over.
   void Grow();
-  
+
   void operator=(const SmallPtrSetImpl &RHS);  // DO NOT IMPLEMENT.
 protected:
   void CopyFrom(const SmallPtrSetImpl &RHS);
@@ -143,14 +143,14 @@ public:
   explicit SmallPtrSetIteratorImpl(const void *const *BP) : Bucket(BP) {
     AdvanceIfNotValid();
   }
-  
+
   bool operator==(const SmallPtrSetIteratorImpl &RHS) const {
     return Bucket == RHS.Bucket;
   }
   bool operator!=(const SmallPtrSetIteratorImpl &RHS) const {
     return Bucket != RHS.Bucket;
   }
-  
+
 protected:
   /// AdvanceIfNotValid - If the current bucket isn't valid, advance to a bucket
   /// that is.   This is guaranteed to stop because the end() bucket is marked
@@ -170,17 +170,17 @@ public:
     : SmallPtrSetIteratorImpl(BP) {}
 
   // Most methods provided by baseclass.
-  
+
   const PtrTy operator*() const {
     return static_cast<const PtrTy>(const_cast<void*>(*Bucket));
   }
-  
+
   inline SmallPtrSetIterator& operator++() {          // Preincrement
     ++Bucket;
     AdvanceIfNotValid();
     return *this;
   }
-  
+
   SmallPtrSetIterator operator++(int) {        // Postincrement
     SmallPtrSetIterator tmp = *this; ++*this; return tmp;
   }
@@ -224,30 +224,30 @@ class SmallPtrSet : public SmallPtrSetImpl {
 public:
   SmallPtrSet() : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {}
   SmallPtrSet(const SmallPtrSet &that) : SmallPtrSetImpl(that) {}
-  
+
   template<typename It>
   SmallPtrSet(It I, It E)
     : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {
     insert(I, E);
   }
-  
+
   /// insert - This returns true if the pointer was new to the set, false if it
   /// was already in the set.
   bool insert(PtrType Ptr) { return insert_imp(Ptr); }
-  
+
   /// erase - If the set contains the specified pointer, remove it and return
   /// true, otherwise return false.
   bool erase(PtrType Ptr) { return erase_imp(Ptr); }
-  
+
   /// count - Return true if the specified pointer is in the set.
   bool count(PtrType Ptr) const { return count_imp(Ptr); }
-  
+
   template <typename IterT>
   void insert(IterT I, IterT E) {
     for (; I != E; ++I)
       insert(*I);
   }
-  
+
   typedef SmallPtrSetIterator<PtrType> iterator;
   typedef SmallPtrSetIterator<PtrType> const_iterator;
   inline iterator begin() const {
@@ -256,7 +256,7 @@ public:
   inline iterator end() const {
     return iterator(CurArray+CurArraySize);
   }
-  
+
   // Allow assignment from any smallptrset with the same element type even if it
   // doesn't have the same smallsize.
   const SmallPtrSet<PtrType, SmallSize>&

@@ -231,11 +231,11 @@ static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
     return 1;
   return 0;
 }
-  
+
 /// get_array_pad_sort_comparator - This is an internal helper function used to
 /// get type deduction of T right.
 template<typename T>
-static int (*get_array_pad_sort_comparator(const T &X)) 
+static int (*get_array_pad_sort_comparator(const T &X))
              (const void*, const void*) {
   return array_pod_sort_comparator<T>;
 }
@@ -262,7 +262,7 @@ static inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
   qsort(&*Start, End-Start, sizeof(*Start),
         get_array_pad_sort_comparator(*Start));
 }
-  
+
 } // End llvm namespace
 
 #endif

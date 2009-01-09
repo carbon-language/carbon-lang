@@ -1,10 +1,10 @@
 //==-- llvm/ADT/hash_set.h - "Portable" wrapper around hash_set --*- C++ -*-==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 // vim:ft=cpp
 //
@@ -93,7 +93,7 @@ template <typename ValueType,
   class _HashFcn = hash<ValueType>,
   class _EqualKey = equal_to<ValueType>,
   class _A = allocator <ValueType> >
-class hash_set : 
+class hash_set :
   public rw_hashset<ValueType, class _HashFcn, class _EqualKey, class _A> {
 };
 

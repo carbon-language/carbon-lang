@@ -23,7 +23,7 @@ namespace llvm {
 /// guarantees deletion of the object pointed to, either on destruction of the
 /// OwningPtr or via an explicit reset().  Once created, ownership of the
 /// pointee object can be taken away from OwningPtr by using the take method.
-template<class T> 
+template<class T>
 class OwningPtr {
   OwningPtr(OwningPtr const &);             // DO NOT IMPLEMENT
   OwningPtr &operator=(OwningPtr const &); // DO NOT IMPLEMENT
@@ -38,7 +38,7 @@ public:
   /// reset - Change the current pointee to the specified pointer.  Note that
   /// calling this with any pointer (including a null pointer) deletes the
   /// current pointer.
-  void reset(T *P = 0) { 
+  void reset(T *P = 0) {
     if (P == Ptr) return;
     T *Tmp = Ptr;
     Ptr = P;
@@ -47,12 +47,12 @@ public:
 
   /// take - Reset the owning pointer to null and return its pointer.  This does
   /// not delete the pointer before returning it.
-  T *take() { 
+  T *take() {
     T *Tmp = Ptr;
     Ptr = 0;
     return Tmp;
   }
-  
+
   T &operator*() const {
     assert(Ptr && "Cannot dereference null pointer");
     return *Ptr;
@@ -77,7 +77,7 @@ inline void swap(OwningPtr<T> &a, OwningPtr<T> &b) {
 
 /// OwningArrayPtr smart pointer - OwningArrayPtr provides the same
 ///  functionality as OwningPtr, except that it works for array types.
-template<class T> 
+template<class T>
 class OwningArrayPtr {
   OwningArrayPtr(OwningArrayPtr const &);            // DO NOT IMPLEMENT
   OwningArrayPtr &operator=(OwningArrayPtr const &); // DO NOT IMPLEMENT
@@ -92,7 +92,7 @@ public:
   /// reset - Change the current pointee to the specified pointer.  Note that
   /// calling this with any pointer (including a null pointer) deletes the
   /// current pointer.
-  void reset(T *P = 0) { 
+  void reset(T *P = 0) {
     if (P == Ptr) return;
     T *Tmp = Ptr;
     Ptr = P;
@@ -101,17 +101,17 @@ public:
 
   /// take - Reset the owning pointer to null and return its pointer.  This does
   /// not delete the pointer before returning it.
-  T *take() { 
+  T *take() {
     T *Tmp = Ptr;
     Ptr = 0;
     return Tmp;
   }
-  
+
   T &operator[](std::ptrdiff_t i) const {
     assert(Ptr && "Cannot dereference null pointer");
     return Ptr[i];
   }
- 
+
   T *get() const { return Ptr; }
   operator bool() const { return Ptr != 0; }
   bool operator!() const { return Ptr == 0; }

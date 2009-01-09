@@ -31,11 +31,11 @@ public:
   // Initialize with a range.
   template<typename ItTy>
   SmallString(ItTy S, ItTy E) : SmallVector<char, InternalLen>(S, E) {}
-  
+
   // Copy ctor.
   SmallString(const SmallString &RHS) : SmallVector<char, InternalLen>(RHS) {}
 
-  
+
   // Extra methods.
   const char *c_str() const {
     SmallString *This = const_cast<SmallString*>(this);
@@ -44,13 +44,13 @@ public:
     This->End[0] = 0;
     return this->begin();
   }
-  
+
   // Extra operators.
   const SmallString &operator=(const char *RHS) {
     this->clear();
     return *this += RHS;
   }
-  
+
   SmallString &operator+=(const char *RHS) {
     this->append(RHS, RHS+strlen(RHS));
     return *this;
@@ -63,9 +63,9 @@ public:
   SmallString &append_uint_32(uint32_t N) {
     char Buffer[20];
     char *BufPtr = Buffer+20;
-    
+
     if (N == 0) *--BufPtr = '0';  // Handle special case.
-    
+
     while (N) {
       *--BufPtr = '0' + char(N % 10);
       N /= 10;
@@ -73,16 +73,16 @@ public:
     this->append(BufPtr, Buffer+20);
     return *this;
   }
-  
+
   SmallString &append_uint(uint64_t N) {
     if (N == uint32_t(N))
       return append_uint_32(uint32_t(N));
-    
+
     char Buffer[40];
     char *BufPtr = Buffer+40;
-    
+
     if (N == 0) *--BufPtr = '0';  // Handle special case...
-    
+
     while (N) {
       *--BufPtr = '0' + char(N % 10);
       N /= 10;
@@ -91,7 +91,7 @@ public:
     this->append(BufPtr, Buffer+40);
     return *this;
   }
-  
+
   SmallString &append_sint(int64_t N) {
     // TODO, wrong for minint64.
     if (N < 0) {
@@ -100,10 +100,10 @@ public:
     }
     return append_uint(N);
   }
-  
+
 };
-  
-  
+
+
 }
 
 #endif

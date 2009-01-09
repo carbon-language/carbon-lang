@@ -17,10 +17,10 @@
 #include <cassert>
 
 namespace llvm {
-  
+
 template<typename T>
 struct DenseMapInfo;
-  
+
 /// PointerIntPair - This class implements a pair of a pointer and small
 /// integer.  It is designed to represent this in the space required by one
 /// pointer by bitmangling the integer into the low part of the pointer.  This
@@ -40,27 +40,27 @@ public:
   PointerTy getPointer() const {
     return reinterpret_cast<PointerTy>(Value & ~((1 << IntBits)-1));
   }
-  
+
   IntType getInt() const {
     return (IntType)(Value & ((1 << IntBits)-1));
   }
-  
+
   void setPointer(PointerTy Ptr) {
     intptr_t PtrVal = reinterpret_cast<intptr_t>(Ptr);
     assert((PtrVal & ((1 << IntBits)-1)) == 0 &&
            "Pointer is not sufficiently aligned");
     Value = PtrVal | (intptr_t)getInt();
   }
-  
+
   void setInt(IntType Int) {
     intptr_t IntVal = Int;
     assert(IntVal < (1 << IntBits) && "Integer too large for field");
     Value = reinterpret_cast<intptr_t>(getPointer()) | IntVal;
   }
-  
+
   void *getOpaqueValue() const { return reinterpret_cast<void*>(Value); }
   void setFromOpaqueValue(void *Val) { Value = reinterpret_cast<intptr_t>(Val);}
-  
+
   bool operator==(const PointerIntPair &RHS) const {return Value == RHS.Value;}
   bool operator!=(const PointerIntPair &RHS) const {return Value != RHS.Value;}
   bool operator<(const PointerIntPair &RHS) const {return Value < RHS.Value;}

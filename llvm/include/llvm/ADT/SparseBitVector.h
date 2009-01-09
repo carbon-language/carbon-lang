@@ -459,11 +459,11 @@ public:
 
     CurrElementIter = Elements.begin ();
   }
-  
+
   // Assignment
   SparseBitVector& operator=(const SparseBitVector& RHS) {
     Elements.clear();
-    
+
     ElementListConstIter ElementIter = RHS.Elements.begin();
     while (ElementIter != RHS.Elements.end()) {
       Elements.push_back(SparseBitVectorElement<ElementSize>(*ElementIter));
@@ -471,7 +471,7 @@ public:
     }
 
     CurrElementIter = Elements.begin ();
-    
+
     return *this;
   }
 
