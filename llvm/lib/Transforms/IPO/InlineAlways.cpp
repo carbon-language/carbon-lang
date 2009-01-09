@@ -45,6 +45,9 @@ namespace {
     float getInlineFudgeFactor(CallSite CS) {
       return CA.getInlineFudgeFactor(CS);
     }
+    void resetCachedCostInfo(Function *Caller) {
+      return CA.resetCachedCostInfo(Caller);
+    }
     virtual bool doFinalization(CallGraph &CG) { 
       return removeDeadFunctions(CG, &NeverInline); 
     }

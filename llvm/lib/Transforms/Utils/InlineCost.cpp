@@ -127,7 +127,7 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
       }
       
       if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
-        if (!isa<ConstantInt>(AI->getArraySize()))
+        if (!AI->isStaticAlloca())
           this->usesDynamicAlloca = true;
       }
 
@@ -229,18 +229,20 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   if (CalleeFI.NeverInline)
     return InlineCost::getNever();
 
-  // Get infomation about the caller...
-  FunctionInfo &CallerFI = CachedFunctionInfo[Caller];
+  if (CalleeFI.usesDynamicAlloca) {
+    // Get infomation about the caller...
+    FunctionInfo &CallerFI = CachedFunctionInfo[Caller];
 
-  // If we haven't calculated this information yet, do so now.
-  if (CallerFI.NumBlocks == 0)
-    CallerFI.analyzeFunction(Caller);
+    // If we haven't calculated this information yet, do so now.
+    if (CallerFI.NumBlocks == 0)
+      CallerFI.analyzeFunction(Caller);
 
-  // Don't inline a callee with dynamic alloca into a caller without them.
-  // Functions containing dynamic alloca's are inefficient in various ways;
-  // don't create more inefficiency.
-  if (CalleeFI.usesDynamicAlloca && !CallerFI.usesDynamicAlloca)
-    return InlineCost::getNever();
+    // Don't inline a callee with dynamic alloca into a caller without them.
+    // Functions containing dynamic alloca's are inefficient in various ways;
+    // don't create more inefficiency.
+    if (!CallerFI.usesDynamicAlloca)
+      return InlineCost::getNever();
+  }
 
   // FIXME: It would be nice to kill off CalleeFI.NeverInline. Then we
   // could move this up and avoid computing the FunctionInfo for

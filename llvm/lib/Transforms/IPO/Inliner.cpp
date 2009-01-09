@@ -185,9 +185,14 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         // try to do so.
         CallSite CS = CallSites[CSi];
         if (shouldInline(CS)) {
+          Function *Caller = CS.getCaller();
           // Attempt to inline the function...
           if (InlineCallIfPossible(CS, CG, SCCFunctions, 
                                    getAnalysis<TargetData>())) {
+            // Remove any cached cost info for this caller, as inlining the callee
+            // has increased the size of the caller.
+            resetCachedCostInfo(Caller);
+
             // Remove this call site from the list.  If possible, use 
             // swap/pop_back for efficiency, but do not use it if doing so would
             // move a call site to a function in this SCC before the

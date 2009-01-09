@@ -61,6 +61,11 @@ struct Inliner : public CallGraphSCCPass {
   ///
   virtual float getInlineFudgeFactor(CallSite CS) = 0;
 
+  /// resetCachedCostInfo - erase any cached cost data from the derived class.
+  /// If the derived class has no such data this can be empty.
+  /// 
+  virtual void resetCachedCostInfo(Function* Caller) = 0;
+
   /// removeDeadFunctions - Remove dead functions that are not included in
   /// DNR (Do Not Remove) list.
   bool removeDeadFunctions(CallGraph &CG, 

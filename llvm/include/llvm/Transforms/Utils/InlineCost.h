@@ -128,6 +128,11 @@ namespace llvm {
     /// getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
     /// higher threshold to determine if the function call should be inlined.
     float getInlineFudgeFactor(CallSite CS);
+
+    /// resetCachedFunctionInfo - erase any cached cost info for this function.
+    void resetCachedCostInfo(Function* Caller) {
+      CachedFunctionInfo[Caller].NumBlocks = 0;
+    }
   };
 }
 
