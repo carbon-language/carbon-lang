@@ -255,7 +255,8 @@ enum LangKind {
   langkind_objc_cpp,
   langkind_objc_pch,
   langkind_objcxx,
-  langkind_objcxx_cpp
+  langkind_objcxx_cpp,
+  langkind_objcxx_pch
 };
 
 /* TODO: GCC also accepts:
@@ -283,7 +284,9 @@ BaseLang("x", llvm::cl::desc("Base language to compile"),
                     clEnumValN(langkind_c_pch,"c-header",
                                "Precompiled C header"),
                     clEnumValN(langkind_objc_pch, "objective-c-header",
-                               "Precompiled Objective C header"),
+                               "Precompiled Objective-C header"),
+                    clEnumValN(langkind_objcxx_pch, "objective-c++-header",
+                               "Precompiled Objective-C++ header"),
                     clEnumValEnd));
 
 static llvm::cl::opt<bool>
@@ -354,13 +357,27 @@ static bool InitializeLangOptions(LangOptions &Options, LangKind LK){
   // FIXME: implement -fpreprocessed mode.
   bool NoPreprocess = false;
   bool PCH = false;
+
+  // Test for 'PCH'.
+  switch (LK) {
+    default:
+      break;
+    case langkind_c_pch:
+      LK = langkind_c;
+      PCH = true;
+      break;
+    case langkind_objc_pch:
+      LK = langkind_objc;
+      PCH = true;
+      break;
+    case langkind_objcxx_pch:
+      LK = langkind_objcxx;
+      PCH = true;
+      break;
+  }
   
   switch (LK) {
   default: assert(0 && "Unknown language kind!");
-  case langkind_c_pch:
-    InitializeCOptions(Options);
-    PCH = true;
-    break;
   case langkind_asm_cpp:
     Options.AsmPreprocessor = 1;
     // FALLTHROUGH
@@ -375,10 +392,6 @@ static bool InitializeLangOptions(LangOptions &Options, LangKind LK){
     // FALLTHROUGH
   case langkind_cxx:
     Options.CPlusPlus = 1;
-    break;
-  case langkind_objc_pch:
-    InitializeObjCOptions(Options);
-    PCH = true;
     break;
   case langkind_objc_cpp:
     NoPreprocess = true;
@@ -522,6 +535,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     case langkind_cxx_cpp:
     case langkind_objcxx:
     case langkind_objcxx_cpp:
+    case langkind_objcxx_pch:
       LangStd = lang_gnucxx98;
       break;
     }
