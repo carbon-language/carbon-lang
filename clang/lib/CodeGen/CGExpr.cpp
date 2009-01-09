@@ -83,6 +83,13 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
 //                         LValue Expression Emission
 //===----------------------------------------------------------------------===//
 
+RValue CodeGenFunction::EmitUnsupportedRValue(const Expr *E,
+                                              const char *Name) {
+  ErrorUnsupported(E, Name);
+  llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
+  return RValue::get(llvm::UndefValue::get(Ty));
+}
+
 LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
                                               const char *Name) {
   ErrorUnsupported(E, Name);
@@ -903,6 +910,9 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
         if (unsigned builtinID = FDecl->getIdentifier()->getBuiltinID())
           return EmitBuiltinExpr(builtinID, E);
 
+  if (E->getCallee()->getType()->isBlockPointerType())
+    return EmitUnsupportedRValue(E->getCallee(), "block pointer reference");
+
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
   return EmitCallExpr(Callee, E->getCallee()->getType(),
                       E->arg_begin(), E->arg_end());
@@ -1034,14 +1044,20 @@ CodeGenFunction::EmitObjCSuperExpr(const ObjCSuperExpr *E) {
   return EmitUnsupportedLValue(E, "use of super");
 }
 
-RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType, 
+RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType CalleeType, 
                                      CallExpr::const_arg_iterator ArgBeg,
                                      CallExpr::const_arg_iterator ArgEnd) {
-  
-  // The callee type will always be a pointer to function type, get the function
-  // type.
-  FnType = FnType->getAsPointerType()->getPointeeType();
-  QualType ResultType = FnType->getAsFunctionType()->getResultType();
+  // Get the actual function type. The callee type will always be a
+  // pointer to function type or a block pointer type.
+  QualType ResultType;
+  if (const BlockPointerType *BPT = dyn_cast<BlockPointerType>(CalleeType)) {
+    ResultType = BPT->getPointeeType()->getAsFunctionType()->getResultType();
+  } else {
+    assert(CalleeType->isFunctionPointerType() && 
+           "Call must have function pointer type!");
+    QualType FnType = CalleeType->getAsPointerType()->getPointeeType();
+    ResultType = FnType->getAsFunctionType()->getResultType();
+  }
 
   CallArgList Args;
   for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I)

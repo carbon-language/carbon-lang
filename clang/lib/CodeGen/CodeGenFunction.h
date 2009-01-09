@@ -431,6 +431,12 @@ public:
   //                         LValue Expression Emission
   //===--------------------------------------------------------------------===//
 
+  /// EmitUnsupportedRValue - Emit a dummy r-value using the type of E
+  /// and issue an ErrorUnsupported style diagnostic (using the
+  /// provided Name).
+  RValue EmitUnsupportedRValue(const Expr *E,
+                               const char *Name);
+
   /// EmitUnsupportedLValue - Emit a dummy l-value using the type of E
   /// and issue an ErrorUnsupported style diagnostic (using the
   /// provided Name).
