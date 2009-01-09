@@ -684,6 +684,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     return 0;
   }
   
+  llvm::SmallVector<Declarator, 8> CargNames;
   if (Tok.isNot(tok::colon)) {
     // If attributes exist after the method, parse them.
     AttributeList *MethodAttrs = 0;
@@ -693,7 +694,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                           mType, IDecl, DSRet, ReturnType, Sel,
-                                          0, 0, 0, MethodAttrs, MethodImplKind);
+                                          0, 0, 0, CargNames, 
+                                          MethodAttrs, MethodImplKind);
   }
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
@@ -748,13 +750,12 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
       ConsumeToken();
       break;
     }
-    // FIXME: implement this...
-    // Parse the c-style argument declaration-specifier.
     DeclSpec DS;
     ParseDeclarationSpecifiers(DS);
     // Parse the declarator. 
     Declarator ParmDecl(DS, Declarator::PrototypeContext);
     ParseDeclarator(ParmDecl);
+    CargNames.push_back(ParmDecl);
   }
   
   // FIXME: Add support for optional parmameter list...
@@ -768,7 +769,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                         mType, IDecl, DSRet, ReturnType, Sel, 
                                         &ArgTypeQuals[0], &KeyTypes[0], 
-                                        &ArgNames[0], MethodAttrs, 
+                                        &ArgNames[0], CargNames, 
+                                        MethodAttrs,
                                         MethodImplKind, isVariadic);
 }
 

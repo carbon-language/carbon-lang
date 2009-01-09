@@ -1272,6 +1272,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
     ObjCDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
+    llvm::SmallVectorImpl<Declarator> &Cdecls,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind,
     bool isVariadic) {
   Decl *ClassDecl = static_cast<Decl*>(classDecl);

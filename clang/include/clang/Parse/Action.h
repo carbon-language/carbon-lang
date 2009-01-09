@@ -1133,6 +1133,7 @@ public:
     ObjCDeclSpec *ArgQT,       // for arguments' in inout etc.
     TypeTy **ArgTypes,         // non-zero when Sel.getNumArgs() > 0
     IdentifierInfo **ArgNames, // non-zero when Sel.getNumArgs() > 0
+    llvm::SmallVectorImpl<Declarator> &Cdecls, // c-style args
     AttributeList *AttrList,   // optional
     // tok::objc_not_keyword, tok::objc_optional, tok::objc_required    
     tok::ObjCKeywordKind impKind,

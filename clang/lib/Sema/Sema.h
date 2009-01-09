@@ -1208,6 +1208,7 @@ public:
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
     ObjCDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
+    llvm::SmallVectorImpl<Declarator> &Cdecls,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind,
     bool isVariadic = false);
 
