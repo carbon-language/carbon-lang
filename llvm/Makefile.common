@@ -1,10 +1,10 @@
 #===-- Makefile.common - Common make rules for LLVM --------*- Makefile -*--===#
-# 
+#
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
-# 
+#
 #===------------------------------------------------------------------------===#
 #
 # This file is included by all of the LLVM makefiles.  This file defines common
@@ -15,8 +15,8 @@
 # The following functionality can be set by setting incoming variables.
 # The variable $(LEVEL) *must* be set:
 #
-# 1. LEVEL - The level of the current subdirectory from the top of the 
-#    source directory.  This level should be expressed as a path, for 
+# 1. LEVEL - The level of the current subdirectory from the top of the
+#    source directory.  This level should be expressed as a path, for
 #    example, ../.. for two levels deep.
 #
 # 2. DIRS - A list of subdirectories to be built.  Fake targets are set up
@@ -29,7 +29,7 @@
 #    built, which are then built in any order.
 #
 # 4. Source - If specified, this sets the source code filenames.  If this
-#    is not set, it defaults to be all of the .cpp, .c, .y, and .l files 
+#    is not set, it defaults to be all of the .cpp, .c, .y, and .l files
 #    in the current directory.  Also, if you want to build files in addition
 #    to the local files, you can use the ExtraSource variable
 #
@@ -56,7 +56,7 @@
 
 #
 # Configuration file to set paths specific to local installation of LLVM
-# 
+#
 ifndef LLVM_OBJ_ROOT
 include $(LEVEL)/Makefile.config
 else

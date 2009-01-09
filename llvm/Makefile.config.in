@@ -4,7 +4,7 @@
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
-# 
+#
 #===------------------------------------------------------------------------===#
 #
 # This file is included by Makefile.common.  It defines paths and other
@@ -150,7 +150,7 @@ TAR        := @TAR@
 YACC       := @YACC@
 
 # Paths to miscellaneous programs we hope are present but might not be
-PERL       := @PERL@ 
+PERL       := @PERL@
 BZIP2      := @BZIP2@
 DOT        := @DOT@
 DOXYGEN    := @DOXYGEN@
@@ -207,12 +207,12 @@ OBJ_ROOT := .
 # make command line (ie, make ENABLE_PROFILING=1):
 
 # When ENABLE_OPTIMIZED is enabled, LLVM code is optimized and output is put
-# into the "Release" directories. Otherwise, LLVM code is not optimized and 
+# into the "Release" directories. Otherwise, LLVM code is not optimized and
 # output is put in the "Debug" directories.
 #ENABLE_OPTIMIZED = 1
 @ENABLE_OPTIMIZED@
 
-# When DISABLE_ASSERTIONS is enabled, builds of all of the LLVM code will 
+# When DISABLE_ASSERTIONS is enabled, builds of all of the LLVM code will
 # exclude assertion checks, otherwise they are included.
 #DISABLE_ASSERTIONS = 1
 @DISABLE_ASSERTIONS@
