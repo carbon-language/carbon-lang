@@ -1409,8 +1409,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     PP.PrintStats();
     PP.getIdentifierTable().PrintStats();
     PP.getHeaderSearchInfo().PrintStats();
-    if (ClearSourceMgr)
-      PP.getSourceManager().PrintStats();
+    PP.getSourceManager().PrintStats();
     fprintf(stderr, "\n");
   }
 
