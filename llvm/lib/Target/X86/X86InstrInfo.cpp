@@ -265,6 +265,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::MOV8rr,      X86::MOV8mr, 0 },
     { X86::MOVAPDrr,    X86::MOVAPDmr, 0 },
     { X86::MOVAPSrr,    X86::MOVAPSmr, 0 },
+    { X86::MOVDQArr,    X86::MOVDQAmr, 0 },
     { X86::MOVPDI2DIrr, X86::MOVPDI2DImr, 0 },
     { X86::MOVPQIto64rr,X86::MOVPQI2QImr, 0 },
     { X86::MOVPS2SSrr,  X86::MOVPS2SSmr, 0 },
@@ -380,6 +381,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::MOVDDUPrr,       X86::MOVDDUPrm },
     { X86::MOVDI2PDIrr,     X86::MOVDI2PDIrm },
     { X86::MOVDI2SSrr,      X86::MOVDI2SSrm },
+    { X86::MOVDQArr,        X86::MOVDQArm },
     { X86::MOVSD2PDrr,      X86::MOVSD2PDrm },
     { X86::MOVSDrr,         X86::MOVSDrm },
     { X86::MOVSHDUPrr,      X86::MOVSHDUPrm },
@@ -681,6 +683,7 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   case X86::FsMOVAPDrr:
   case X86::MOVAPSrr:
   case X86::MOVAPDrr:
+  case X86::MOVDQArr:
   case X86::MOVSS2PSrr:
   case X86::MOVSD2PDrr:
   case X86::MOVPS2SSrr:
@@ -712,6 +715,7 @@ unsigned X86InstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   case X86::MOVSDrm:
   case X86::MOVAPSrm:
   case X86::MOVAPDrm:
+  case X86::MOVDQArm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
     if (MI->getOperand(1).isFI() && MI->getOperand(2).isImm() &&
@@ -742,6 +746,7 @@ unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   case X86::MOVSDmr:
   case X86::MOVAPSmr:
   case X86::MOVAPDmr:
+  case X86::MOVDQAmr:
   case X86::MMX_MOVD64mr:
   case X86::MMX_MOVQ64mr:
   case X86::MMX_MOVNTQmr:
@@ -795,6 +800,7 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
     case X86::MOVSDrm:
     case X86::MOVAPSrm:
     case X86::MOVAPDrm:
+    case X86::MOVDQArm:
     case X86::MMX_MOVD64rm:
     case X86::MMX_MOVQ64rm: {
       // Loads from constant pools are trivially rematerializable.
