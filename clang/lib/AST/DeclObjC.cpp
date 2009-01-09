@@ -252,24 +252,26 @@ void ObjCMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
   }
 }
 
-/// isPropertyReadonly - Return true if property is a readonly, by seaching
+/// isPropertyReadonly - Return true if property is readonly, by searching
 /// for the property in the class and in its categories.
 ///
 bool ObjCInterfaceDecl::isPropertyReadonly(ObjCPropertyDecl *PDecl) const
 {
-  if (PDecl->isReadOnly()) {
-    // Main class has the property as 'readyonly'. Must search
-    // through the category list to see if the property's 
-    // attribute has been over-ridden to 'readwrite'.
-    for (ObjCCategoryDecl *Category = getCategoryList();
-         Category; Category = Category->getNextClassCategory()) {
-      PDecl= Category->FindPropertyDeclaration(PDecl->getIdentifier());
-      if (PDecl && !PDecl->isReadOnly())
-        return false;
-    }
-    return true;
+  if (!PDecl->isReadOnly())
+    return false;
+
+  // Main class has the property as 'readonly'. Must search
+  // through the category list to see if the property's 
+  // attribute has been over-ridden to 'readwrite'.
+  for (ObjCCategoryDecl *Category = getCategoryList();
+       Category; Category = Category->getNextClassCategory()) {
+    ObjCPropertyDecl *P = 
+      Category->FindPropertyDeclaration(PDecl->getIdentifier());
+    if (P && !P->isReadOnly())
+      return false;
   }
-  return false;  
+
+  return true;
 }
 
 /// FindPropertyDeclaration - Finds declaration of the property given its name

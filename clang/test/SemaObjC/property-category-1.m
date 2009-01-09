@@ -33,3 +33,20 @@ int main(int argc, char **argv) {
     return test.object - 12345 + test.Anotherobject - 200;
 }
 
+///
+
+@interface I0
+@property(readonly) int p0;
+@end 
+
+@interface I0 (Cat0)
+@end 
+
+@interface I0 (Cat1)
+@end 
+  
+@implementation I0
+- (void) foo {
+  self.p0 = 0; // expected-error {{assigning to property with 'readonly' attribute not allowed}}
+}
+@end
