@@ -157,8 +157,8 @@ unsigned ScheduleDAGSDNodes::getDstOfOnlyCopyToRegUse(SDNode *Node,
 }
 
 void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
-                                 const TargetInstrDesc &II,
-                                 DenseMap<SDValue, unsigned> &VRBaseMap) {
+                                       const TargetInstrDesc &II, bool IsClone,
+                                       DenseMap<SDValue, unsigned> &VRBaseMap) {
   assert(Node->getMachineOpcode() != TargetInstrInfo::IMPLICIT_DEF &&
          "IMPLICIT_DEF should have been handled as a special case elsewhere!");
 
@@ -192,6 +192,8 @@ void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     }
 
     SDValue Op(Node, i);
+    if (IsClone)
+      VRBaseMap.erase(Op);
     bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
     isNew = isNew; // Silence compiler warning.
     assert(isNew && "Node emitted out of order - early");
@@ -487,7 +489,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone,
     // Add result register values for things that are defined by this
     // instruction.
     if (NumResults)
-      CreateVirtualRegisters(Node, MI, II, VRBaseMap);
+      CreateVirtualRegisters(Node, MI, II, IsClone, VRBaseMap);
     
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.

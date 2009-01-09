@@ -188,7 +188,7 @@ namespace llvm {
                          DenseMap<SDValue, unsigned> &VRBaseMap);
     
     void CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
-                                const TargetInstrDesc &II,
+                                const TargetInstrDesc &II, bool IsClone,
                                 DenseMap<SDValue, unsigned> &VRBaseMap);
 
     /// BuildSchedUnits, AddSchedEdges - Helper functions for BuildSchedGraph.
