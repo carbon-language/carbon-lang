@@ -123,6 +123,9 @@ namespace llvmc {
 
   public:
 
+    typedef nodes_map_type::iterator nodes_iterator;
+    typedef nodes_map_type::const_iterator const_nodes_iterator;
+
     CompilationGraph();
 
     /// insertNode - Insert a new node into the graph. Takes
@@ -136,6 +139,11 @@ namespace llvmc {
     /// Build - Build target(s) from the input file set. Command-line
     /// options are passed implicitly as global variables.
     int Build(llvm::sys::Path const& TempDir, const LanguageMap& LangMap);
+
+    /// Check - Check the compilation graph for common errors like
+    /// cycles, input/output language mismatch and multiple default
+    /// edges. Prints error messages and in case it finds any errors.
+    int Check();
 
     /// getNode - Return a reference to the node correponding to the
     /// given tool name. Throws std::runtime_error.
@@ -171,7 +179,8 @@ namespace llvmc {
                            const llvm::sys::Path& TempDir,
                            const LanguageMap& LangMap) const;
 
-    /// FindToolChain - Find head of the toolchain corresponding to the given file.
+    /// FindToolChain - Find head of the toolchain corresponding to
+    /// the given file.
     const Node* FindToolChain(const llvm::sys::Path& In,
                               const std::string* ForceLanguage,
                               InputLanguagesSet& InLangs,
@@ -187,6 +196,18 @@ namespace llvmc {
     /// TopologicalSortFilterJoinNodes - Call TopologicalSort and
     /// filter the resulting list to include only Join nodes.
     void TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out);
+
+    // Functions used to implement Check().
+
+    /// CheckLanguageNames - Check that output/input language names
+    /// match for all nodes.
+    int CheckLanguageNames() const;
+    /// CheckMultipleDefaultEdges - check that there are no multiple
+    /// default default edges.
+    int CheckMultipleDefaultEdges() const;
+    /// CheckCycles - Check that there are no cycles in the graph.
+    int CheckCycles();
+
   };
 
   // GraphTraits support code.
@@ -194,8 +215,8 @@ namespace llvmc {
   /// NodesIterator - Auxiliary class needed to implement GraphTraits
   /// support. Can be generalised to something like value_iterator
   /// for map-like containers.
-  class NodesIterator : public llvm::StringMap<Node>::iterator {
-    typedef llvm::StringMap<Node>::iterator super;
+  class NodesIterator : public CompilationGraph::nodes_iterator {
+    typedef CompilationGraph::nodes_iterator super;
     typedef NodesIterator ThisType;
     typedef Node* pointer;
     typedef Node& reference;

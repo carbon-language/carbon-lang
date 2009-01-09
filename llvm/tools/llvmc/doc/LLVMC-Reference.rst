@@ -92,6 +92,10 @@ configuration libraries:
 
 * ``-v`` - Enable verbose mode, i.e. print out all executed commands.
 
+* ``--check-graph`` - Check the compilation for common errors like
+  mismatched output/input language names, multiple default edges and
+  cycles. Hidden option, useful for debugging.
+
 * ``--view-graph`` - Show a graphical representation of the compilation
   graph. Requires that you have ``dot`` and ``gv`` programs
   installed. Hidden option, useful for debugging.
@@ -604,6 +608,14 @@ line option ``--view-graph``. This command assumes that Graphviz_ and
 Ghostview_ are installed. There is also a ``--dump-graph`` option that
 creates a Graphviz source file (``compilation-graph.dot``) in the
 current directory.
+
+Another useful option is ``--check-graph``. It checks the compilation
+graph for common errors like mismatched output/input language names,
+multiple default edges and cycles. These checks can't be performed at
+compile-time because the plugins can load code dynamically. When
+invoked with ``--check-graph``, ``llvmc`` doesn't perform any
+compilation tasks and returns the number of encountered errors as its
+status code.
 
 .. _Graphviz: http://www.graphviz.org/
 .. _Ghostview: http://pages.cs.wisc.edu/~ghost/

@@ -42,6 +42,12 @@ S<-load $LLVM_DIR/Release/lib/LLVMCSimple.so>.
 
 Enable verbose mode, i.e. print out all executed commands.
 
+=item B<--check-graph>
+
+Check the compilation for common errors like mismatched output/input
+language names, multiple default edges and cycles. Hidden option,
+useful for debugging.
+
 =item B<--view-graph>
 
 Show a graphical representation of the compilation graph. Requires

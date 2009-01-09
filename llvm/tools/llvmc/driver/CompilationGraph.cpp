@@ -20,6 +20,8 @@
 #include "llvm/Support/GraphWriter.h"
 
 #include <algorithm>
+#include <cstring>
+#include <iostream>
 #include <iterator>
 #include <limits>
 #include <queue>
@@ -331,6 +333,135 @@ int CompilationGraph::Build (const sys::Path& TempDir,
   }
 
   return 0;
+}
+
+int CompilationGraph::CheckLanguageNames() const {
+  int ret = 0;
+  // Check that names for output and input languages on all edges do match.
+  for (const_nodes_iterator B = this->NodesMap.begin(),
+         E = this->NodesMap.end(); B != E; ++B) {
+
+    const Node & N1 = B->second;
+    if (N1.ToolPtr) {
+      for (Node::const_iterator EB = N1.EdgesBegin(), EE = N1.EdgesEnd();
+           EB != EE; ++EB) {
+        const Node& N2 = this->getNode((*EB)->ToolName());
+
+        if (!N2.ToolPtr) {
+          ++ret;
+          std::cerr << "Error: there is an edge from '" << N1.ToolPtr->Name()
+                    << "' back to the root!\n\n";
+          continue;
+        }
+
+        const char* OutLang = N1.ToolPtr->OutputLanguage();
+        const char** InLangs = N2.ToolPtr->InputLanguages();
+        bool eq = false;
+        for (;*InLangs; ++InLangs) {
+          if (std::strcmp(OutLang, *InLangs) == 0) {
+            eq = true;
+            break;
+          }
+        }
+
+        if (!eq) {
+          ++ret;
+          std::cerr << "Error: Output->input language mismatch in the edge '" <<
+            N1.ToolPtr->Name() << "' -> '" << N2.ToolPtr->Name() << "'!\n";
+
+          std::cerr << "Expected one of { ";
+
+          InLangs = N2.ToolPtr->InputLanguages();
+          for (;*InLangs; ++InLangs) {
+            std::cerr << '\'' << *InLangs << (*(InLangs+1) ? "', " : "'");
+          }
+
+          std::cerr << " }, but got '" << OutLang << "'!\n\n";
+        }
+
+      }
+    }
+  }
+
+  return ret;
+}
+
+int CompilationGraph::CheckMultipleDefaultEdges() const {
+  int ret = 0;
+  InputLanguagesSet Dummy;
+
+  for (const_nodes_iterator B = this->NodesMap.begin(),
+         E = this->NodesMap.end(); B != E; ++B) {
+    const Node& N = B->second;
+    unsigned MaxWeight = 0;
+
+    // Ignore the root node.
+    if (!N.ToolPtr)
+      continue;
+
+    for (Node::const_iterator EB = N.EdgesBegin(), EE = N.EdgesEnd();
+         EB != EE; ++EB) {
+      unsigned EdgeWeight = (*EB)->Weight(Dummy);
+      if (EdgeWeight > MaxWeight) {
+        MaxWeight = EdgeWeight;
+      }
+      else if (EdgeWeight == MaxWeight) {
+        ++ret;
+        std::cerr
+          << "Error: there are multiple maximal edges stemming from the '"
+          << N.ToolPtr->Name() << "' node!\n\n";
+        break;
+      }
+    }
+  }
+
+  return ret;
+}
+
+int CompilationGraph::CheckCycles() {
+  unsigned deleted = 0;
+  std::queue<Node*> Q;
+  Q.push(&getNode("root"));
+
+  while (!Q.empty()) {
+    Node* A = Q.front();
+    Q.pop();
+    ++deleted;
+
+    for (Node::iterator EB = A->EdgesBegin(), EE = A->EdgesEnd();
+         EB != EE; ++EB) {
+      Node* B = &getNode((*EB)->ToolName());
+      B->DecrInEdges();
+      if (B->HasNoInEdges())
+        Q.push(B);
+    }
+  }
+
+  if (deleted != NodesMap.size()) {
+    std::cerr << "Error: there are cycles in the compilation graph!\n"
+              << "Try inspecting the diagram produced by "
+      "'llvmc --view-graph'.\n\n";
+    return 1;
+  }
+
+  return 0;
+}
+
+
+int CompilationGraph::Check () {
+  // We try to catch as many errors as we can in one go.
+  int ret = 0;
+
+  // Check that output/input language names match.
+  ret += this->CheckLanguageNames();
+
+  // Check for multiple default edges.
+  ret += this->CheckMultipleDefaultEdges();
+
+  // Check for cycles.
+  ret += this->CheckCycles();
+
+  return ret;
 }
 
 // Code related to graph visualization.

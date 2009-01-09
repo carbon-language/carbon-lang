@@ -107,6 +107,9 @@ until the next -x option.</li>
 <li><tt class="docutils literal"><span class="pre">-load</span> <span class="pre">PLUGIN_NAME</span></tt> - Load the specified plugin DLL. Example:
 <tt class="docutils literal"><span class="pre">-load</span> <span class="pre">$LLVM_DIR/Release/lib/LLVMCSimple.so</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">-v</span></tt> - Enable verbose mode, i.e. print out all executed commands.</li>
+<li><tt class="docutils literal"><span class="pre">--check-graph</span></tt> - Check the compilation for common errors like
+mismatched output/input language names, multiple default edges and
+cycles. Hidden option, useful for debugging.</li>
 <li><tt class="docutils literal"><span class="pre">--view-graph</span></tt> - Show a graphical representation of the compilation
 graph. Requires that you have <tt class="docutils literal"><span class="pre">dot</span></tt> and <tt class="docutils literal"><span class="pre">gv</span></tt> programs
 installed. Hidden option, useful for debugging.</li>
@@ -566,6 +569,13 @@ line option <tt class="docutils literal"><span class="pre">--view-graph</span></
 <a class="reference" href="http://pages.cs.wisc.edu/~ghost/">Ghostview</a> are installed. There is also a <tt class="docutils literal"><span class="pre">--dump-graph</span></tt> option that
 creates a Graphviz source file (<tt class="docutils literal"><span class="pre">compilation-graph.dot</span></tt>) in the
 current directory.</p>
+<p>Another useful option is <tt class="docutils literal"><span class="pre">--check-graph</span></tt>. It checks the compilation
+graph for common errors like mismatched output/input language names,
+multiple default edges and cycles. These checks can't be performed at
+compile-time because the plugins can load code dynamically. When
+invoked with <tt class="docutils literal"><span class="pre">--check-graph</span></tt>, <tt class="docutils literal"><span class="pre">llvmc</span></tt> doesn't perform any
+compilation tasks and returns the number of encountered errors as its
+status code.</p>
 <hr />
 <address>
 <a href="http://jigsaw.w3.org/css-validator/check/referer">

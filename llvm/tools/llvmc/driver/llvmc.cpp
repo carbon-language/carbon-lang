@@ -45,6 +45,10 @@ cl::opt<bool> DryRun("dry-run",
                      cl::desc("Only pretend to run commands"));
 cl::opt<bool> VerboseMode("v",
                           cl::desc("Enable verbose mode"));
+
+cl::opt<bool> CheckGraph("check-graph",
+                         cl::desc("Check the compilation graph for errors"),
+                         cl::Hidden);
 cl::opt<bool> WriteGraph("write-graph",
                          cl::desc("Write compilation-graph.dot file"),
                          cl::Hidden);
@@ -89,14 +93,18 @@ int main(int argc, char** argv) {
     Plugins.PopulateLanguageMap(langMap);
     Plugins.PopulateCompilationGraph(graph);
 
-    if (WriteGraph) {
-      graph.writeGraph();
-      if (!ViewGraph)
-        return 0;
+    if (CheckGraph) {
+      return graph.Check();
     }
 
     if (ViewGraph) {
       graph.viewGraph();
+      if (!WriteGraph)
+        return 0;
+    }
+
+    if (WriteGraph) {
+      graph.writeGraph();
       return 0;
     }
 
