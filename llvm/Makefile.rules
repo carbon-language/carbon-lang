@@ -517,6 +517,7 @@ DataInstall   = $(INSTALL) -m 0644
 # paths. In this case, the SYSPATH function (defined in
 # Makefile.config) transforms Unix paths into Windows paths.
 TableGen      = $(TBLGEN) -I $(call SYSPATH, $(PROJ_SRC_DIR)) \
+                -I $(call SYSPATH, $(LLVM_SRC_ROOT)/include) \
                 -I $(call SYSPATH, $(PROJ_SRC_ROOT)/include) \
                 -I $(call SYSPATH, $(PROJ_SRC_ROOT)/lib/Target)
 
