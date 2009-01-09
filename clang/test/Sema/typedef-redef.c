@@ -7,7 +7,7 @@ typedef __SIZE_TYPE__ size_t;
 
 
 typedef const int x; // expected-note {{previous definition is here}}
-extern x a;
+extern x a; // expected-note {{previous definition is here}}
 typedef int x;  // expected-error {{typedef redefinition with different types}}
-extern x a;
+extern x a; // expected-error{{redefinition of 'a' with a different type}}
 

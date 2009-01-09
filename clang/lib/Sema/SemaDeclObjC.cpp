@@ -1078,6 +1078,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                               ObjCPropertyDecl::Optional) ? 
                              ObjCMethodDecl::Optional : 
                              ObjCMethodDecl::Required);
+    CD->addDecl(Context, GetterMethod);
   } else
     // A user declared getter will be synthesize when @synthesize of
     // the property with the same name is seen in the @implementation
@@ -1108,6 +1109,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   VarDecl::None,
                                                   0, 0);
       SetterMethod->setMethodParams(&Argument, 1);
+      CD->addDecl(Context, SetterMethod);
     } else
       // A user declared setter will be synthesize when @synthesize of
       // the property with the same name is seen in the @implementation
@@ -1126,14 +1128,10 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
   //   double bar = [foo bar];
   // }
   //
-  if (GetterMethod) {
-    CD->addDecl(Context, GetterMethod);
+  if (GetterMethod)
     AddInstanceMethodToGlobalPool(GetterMethod);  
-  }
-  if (SetterMethod) {
-    CD->addDecl(Context, SetterMethod);
+  if (SetterMethod)
     AddInstanceMethodToGlobalPool(SetterMethod);     
-  }
 }
 
 // Note: For class/category implemenations, allMethods/allProperties is

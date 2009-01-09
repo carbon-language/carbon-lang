@@ -18,7 +18,6 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/PointerIntPair.h"
-#include <vector>
 
 namespace clang {
 class DeclContext;
@@ -307,9 +306,15 @@ class DeclContext {
   /// FIXME: We need a better data structure for this.
   llvm::PointerIntPair<void*, 3> LookupPtr;
 
-  /// Decls - Contains all of the declarations that are defined inside
-  /// this declaration context. 
-  std::vector<ScopedDecl*> Decls;
+  /// FirstDecl - The first declaration stored within this declaration
+  /// context.
+  ScopedDecl *FirstDecl;
+
+  /// LastDecl - The last declaration stored within this declaration
+  /// context. FIXME: We could probably cache this value somewhere
+  /// outside of the DeclContext, to reduce the size of DeclContext by
+  /// another pointer.
+  ScopedDecl *LastDecl;
 
   // Used in the CastTo template to get the DeclKind
   // from a Decl or a DeclContext. DeclContext doesn't have a getKind() method
@@ -363,8 +368,8 @@ class DeclContext {
   bool isLookupMap() const { return LookupPtr.getInt() == LookupIsMap; }
 
 protected:
-  DeclContext(Decl::Kind K) : DeclKind(K), LookupPtr() {
-  }
+   DeclContext(Decl::Kind K) 
+     : DeclKind(K), LookupPtr(), FirstDecl(0), LastDecl(0) { }
 
   void DestroyDecls(ASTContext &C);
 
@@ -483,12 +488,43 @@ public:
 
   /// decl_iterator - Iterates through the declarations stored
   /// within this context.
-  typedef std::vector<ScopedDecl*>::const_iterator decl_iterator;
+  class decl_iterator {
+    /// Current - The current declaration.
+    ScopedDecl *Current;
+
+  public:
+    typedef ScopedDecl*               value_type;
+    typedef ScopedDecl*               reference;
+    typedef ScopedDecl*               pointer;
+    typedef std::forward_iterator_tag iterator_category;
+    typedef std::ptrdiff_t            difference_type;
+
+    decl_iterator() : Current(0) { }
+    explicit decl_iterator(ScopedDecl *C) : Current(C) { }
+
+    reference operator*() const { return Current; }
+    pointer operator->() const { return Current; }
+
+    decl_iterator& operator++();
+
+    decl_iterator operator++(int) {
+      decl_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+
+    friend bool operator==(decl_iterator x, decl_iterator y) { 
+      return x.Current == y.Current;
+    }
+    friend bool operator!=(decl_iterator x, decl_iterator y) { 
+      return x.Current != y.Current;
+    }
+  };
 
   /// decls_begin/decls_end - Iterate over the declarations stored in
   /// this context. 
-  decl_iterator decls_begin() const { return Decls.begin(); }
-  decl_iterator decls_end()   const { return Decls.end(); }
+  decl_iterator decls_begin() const { return decl_iterator(FirstDecl); }
+  decl_iterator decls_end()   const { return decl_iterator(); }
 
   /// specific_decl_iterator - Iterates over a subrange of
   /// declarations stored in a DeclContext, providing only those that
@@ -548,8 +584,8 @@ public:
       SkipToNextDecl();
     }
 
-    reference operator*() { return cast<SpecificDecl>(*Current); }
-    pointer operator->() { return cast<SpecificDecl>(*Current); }
+    reference operator*() const { return cast<SpecificDecl>(*Current); }
+    pointer operator->() const { return cast<SpecificDecl>(*Current); }
 
     specific_decl_iterator& operator++() {
       ++Current;

@@ -115,6 +115,17 @@ class ScopedDecl : public NamedDecl {
   /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
   ScopedDecl *NextDeclarator;
   
+  /// NextDeclInScope - The next declaration within the same lexical
+  /// DeclContext. These pointers form the linked list that is
+  /// traversed via DeclContext's decls_begin()/decls_end().
+  /// FIXME: If NextDeclarator is non-NULL, will it always be the same
+  /// as NextDeclInScope? If so, we can use a
+  /// PointerIntPair<ScopedDecl*, 1> to make ScopedDecl smaller.
+  ScopedDecl *NextDeclInScope;
+
+  friend class DeclContext;
+  friend class DeclContext::decl_iterator;
+
   /// DeclCtx - Holds either a DeclContext* or a MultipleDC*.
   /// For declarations that don't contain C++ scope specifiers, it contains
   /// the DeclContext where the ScopedDecl was declared.
@@ -144,7 +155,7 @@ class ScopedDecl : public NamedDecl {
 protected:
   ScopedDecl(Kind DK, DeclContext *DC, SourceLocation L,
              DeclarationName N, ScopedDecl *PrevDecl = 0)
-    : NamedDecl(DK, L, N), NextDeclarator(PrevDecl), 
+    : NamedDecl(DK, L, N), NextDeclarator(PrevDecl), NextDeclInScope(0),
       DeclCtx(reinterpret_cast<uintptr_t>(DC)) {}
 
   virtual ~ScopedDecl();
@@ -1214,6 +1225,11 @@ protected:
 
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
+
+inline DeclContext::decl_iterator& DeclContext::decl_iterator::operator++() {
+  Current = Current->NextDeclInScope;
+  return *this;
+}
 
 }  // end namespace clang
 

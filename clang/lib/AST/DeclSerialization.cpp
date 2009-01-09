@@ -124,6 +124,9 @@ void Decl::ReadInRec(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 void DeclContext::EmitOutRec(Serializer& S) const {
+#if 0
+  // FIXME: it would be far easier to just serialize FirstDecl and let
+  // ScopedDecl do the work of serializing NextDeclInScope.
   S.EmitInt(Decls.size());
   for (decl_iterator D = decls_begin(); D != decls_end(); ++D) {
     bool Owned = ((*D)->getLexicalDeclContext() == this &&
@@ -135,9 +138,12 @@ void DeclContext::EmitOutRec(Serializer& S) const {
     else
       S.EmitPtr(*D);
   }
+#endif
 }
 
 void DeclContext::ReadOutRec(Deserializer& D, ASTContext& C) {
+#if 0
+  // FIXME: See comment in DeclContext::EmitOutRec
   unsigned NumDecls = D.ReadInt();
   Decls.resize(NumDecls);
   for (unsigned Idx = 0; Idx < NumDecls; ++Idx) {
@@ -147,6 +153,7 @@ void DeclContext::ReadOutRec(Deserializer& D, ASTContext& C) {
     else
       D.ReadPtr<ScopedDecl>(Decls[Idx]);
   }
+#endif
 }
 
 //===----------------------------------------------------------------------===//

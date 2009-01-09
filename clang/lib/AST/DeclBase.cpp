@@ -401,7 +401,8 @@ DeclContext::~DeclContext() {
 }
 
 void DeclContext::DestroyDecls(ASTContext &C) {
-  for (decl_iterator D = Decls.begin(); D != Decls.end(); ++D) {
+  for (decl_iterator D = decls_begin(); D != decls_end(); ++D) {
+    // FIXME: assert that this condition holds.
     if ((*D)->getLexicalDeclContext() == this)
       (*D)->Destroy(C);
   }
@@ -515,7 +516,15 @@ DeclContext *DeclContext::getNextContext() {
 
 void DeclContext::addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup) {
   assert(D->getLexicalDeclContext() == this && "Decl inserted into wrong lexical context");
-  Decls.push_back(D);
+  assert(!D->NextDeclInScope && D != LastDecl && 
+         "Decl already inserted into a DeclContext");
+
+  if (FirstDecl) {
+    LastDecl->NextDeclInScope = D;
+    LastDecl = D;
+  } else {
+    FirstDecl = LastDecl = D;
+  }
   if (AllowLookup)
     D->getDeclContext()->insert(Context, D);
 }

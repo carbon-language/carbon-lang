@@ -515,7 +515,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
     Diag(New->getLocation(), diag::err_redefinition_different_typedef)
       << New->getUnderlyingType() << Old->getUnderlyingType();
     Diag(Old->getLocation(), diag::note_previous_definition);
-    return Old;
+    return New;
   }
   
   if (getLangOptions().Microsoft) return New;
@@ -768,7 +768,8 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   QualType OldCType = Context.getCanonicalType(Old->getType());
   QualType NewCType = Context.getCanonicalType(New->getType());
   if (OldCType != NewCType && !Context.typesAreCompatible(OldCType, NewCType)) {
-    Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
+    Diag(New->getLocation(), diag::err_redefinition_different_type) 
+      << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New;
   }
