@@ -146,7 +146,7 @@ LexNextToken:
 // FIXME: We can just grab the last token instead of storing a copy
 // into EofToken.
 void PTHLexer::getEOF(Token& Tok) {
-  assert(!EofToken.is(tok::eof));
+  assert(EofToken.is(tok::eof));
   Tok = EofToken;
 }
 
