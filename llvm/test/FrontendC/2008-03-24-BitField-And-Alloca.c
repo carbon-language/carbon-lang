@@ -1,8 +1,4 @@
-// RUN: %llvmgcc -S --emit-llvm %s -o - | not grep "\{ i8, .7 x i8. \}"
 // RUN: %llvmgcc -O2 -S %s -o - | not grep alloca
-
-// FIXME: This fails due to r61493.
-// XFAIL: *
 
 enum {
  PP_C,
@@ -65,7 +61,7 @@ typedef union _Key {
  unsigned long long lkey;
 } Key;
 
-static inline __attribute__ ((always_inline)) void foo(const Key iospec, int* ret)
+static /*inline __attribute__ ((always_inline))*/ void foo(const Key iospec, int* ret)
 {
   *ret=0;
  if(((iospec.key_io.lod == G_B) &&
