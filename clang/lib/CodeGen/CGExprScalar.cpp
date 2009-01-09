@@ -316,6 +316,11 @@ public:
   Value *VisitBinComma      (const BinaryOperator *E);
 
   // Other Operators.
+  Value *VisitBlockExpr(const BlockExpr *BE) {
+    CGF.ErrorUnsupported(BE, "block expression");
+    return llvm::UndefValue::get(CGF.ConvertType(BE->getType()));
+  }
+
   Value *VisitConditionalOperator(const ConditionalOperator *CO);
   Value *VisitChooseExpr(ChooseExpr *CE);
   Value *VisitOverloadExpr(OverloadExpr *OE);
