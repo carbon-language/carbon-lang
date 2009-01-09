@@ -1942,7 +1942,8 @@ void RewriteObjC::SynthGetProtocolFunctionDecl() {
 
 void RewriteObjC::RewriteFunctionDecl(FunctionDecl *FD) {
   // declared in <objc/objc.h>
-  if (strcmp(FD->getNameAsCString(), "sel_registerName") == 0) {
+  if (FD->getIdentifier() &&
+      strcmp(FD->getNameAsCString(), "sel_registerName") == 0) {
     SelGetUidFunctionDecl = FD;
     return;
   }
