@@ -255,6 +255,12 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
     
     // If we don't have an @ directive, parse it as a function definition.
     if (Tok.isNot(tok::at)) {
+      // The code below does not consume '}'s because it is afraid of eating the
+      // end of a namespace.  Because of the way this code is structured, an
+      // erroneous r_brace would cause an infinite loop if not handled here.
+      if (Tok.is(tok::r_brace))
+        break;
+      
       // FIXME: as the name implies, this rule allows function definitions.
       // We could pass a flag or check for functions during semantic analysis.
       ParseDeclarationOrFunctionDefinition();
