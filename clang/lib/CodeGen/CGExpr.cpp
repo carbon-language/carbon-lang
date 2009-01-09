@@ -86,8 +86,18 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
 RValue CodeGenFunction::EmitUnsupportedRValue(const Expr *E,
                                               const char *Name) {
   ErrorUnsupported(E, Name);
-  llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
-  return RValue::get(llvm::UndefValue::get(Ty));
+  if (const ComplexType *CTy = E->getType()->getAsComplexType()) {
+    const llvm::Type *EltTy = ConvertType(CTy->getElementType());
+    llvm::Value *U = llvm::UndefValue::get(EltTy);
+    return RValue::getComplex(std::make_pair(U, U));
+  } else if (hasAggregateLLVMType(E->getType())) {
+    const llvm::Type *Ty = 
+      llvm::PointerType::getUnqual(ConvertType(E->getType()));
+    return RValue::getAggregate(llvm::UndefValue::get(Ty));
+  } else {
+    const llvm::Type *Ty = ConvertType(E->getType());
+    return RValue::get(llvm::UndefValue::get(Ty));
+  }
 }
 
 LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
@@ -911,7 +921,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
           return EmitBuiltinExpr(builtinID, E);
 
   if (E->getCallee()->getType()->isBlockPointerType())
-    return EmitUnsupportedRValue(E->getCallee(), "block pointer reference");
+    return EmitUnsupportedRValue(E, "block pointer reference");
 
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
   return EmitCallExpr(Callee, E->getCallee()->getType(),
