@@ -43,7 +43,7 @@ static void mangleDeclContextInternal(const DeclContext *D, std::string &S)
     
     // FIXME: This should really use GetNameForMethod from CGObjCMac.
     std::string Name;
-    Name += MD->isInstance() ? '-' : '+';
+    Name += MD->isInstanceMethod() ? '-' : '+';
     Name += '[';
     Name += MD->getClassInterface()->getNameAsString();
     Name += ' ';

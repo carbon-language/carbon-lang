@@ -208,7 +208,7 @@ void DeclPrinter::PrintLinkageSpec(LinkageSpecDecl *LS) {
 }
 
 void DeclPrinter::PrintObjCMethodDecl(ObjCMethodDecl *OMD) {
-  if (OMD->isInstance())
+  if (OMD->isInstanceMethod())
     Out << "\n- ";
   else 
     Out << "\n+ ";

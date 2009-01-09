@@ -938,7 +938,7 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD) {
   std::string CategoryName = OCD ? OCD->getNameAsString() : "";
   std::string ClassName = OMD->getClassInterface()->getNameAsString();
   std::string MethodName = OMD->getSelector().getAsString();
-  bool isClassMethod = !OMD->isInstance();
+  bool isClassMethod = !OMD->isInstanceMethod();
 
   const llvm::FunctionType *MethodTy = 
     CGM.getTypes().GetFunctionType(CGFunctionInfo(OMD, CGM.getContext()));

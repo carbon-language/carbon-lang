@@ -2143,7 +2143,7 @@ llvm::Constant *CGObjCMac::GetPropertyTypeString(const ObjCPropertyDecl *PD,
 void CGObjCMac::GetNameForMethod(const ObjCMethodDecl *D, 
                                  std::string &NameOut) {
   // FIXME: Find the mangling GCC uses.
-  NameOut = (D->isInstance() ? "-" : "+");
+  NameOut = (D->isInstanceMethod() ? "-" : "+");
   NameOut += '[';
   NameOut += D->getClassInterface()->getNameAsString();
   NameOut += ' ';

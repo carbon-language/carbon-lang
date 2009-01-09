@@ -205,7 +205,7 @@ static bool isEmptyStruct(QualType T) {
   const RecordDecl *RD = RT->getDecl();
   if (RD->hasFlexibleArrayMember())
     return false;
-  for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+  for (RecordDecl::field_iterator i = RD->field_begin(), 
          e = RD->field_end(); i != e; ++i) {
     const FieldDecl *FD = *i;
     if (!isEmptyStruct(FD->getType()))
@@ -232,7 +232,7 @@ static const FieldDecl *isSingleElementStruct(QualType T) {
     return 0;
 
   const FieldDecl *Found = 0;
-  for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+  for (RecordDecl::field_iterator i = RD->field_begin(), 
          e = RD->field_end(); i != e; ++i) {
     const FieldDecl *FD = *i;
     QualType FT = FD->getType();
@@ -263,7 +263,7 @@ static bool is32Or64BitBasicType(QualType Ty, ASTContext &Context) {
 
 static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
                                            ASTContext &Context) {
-  for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+  for (RecordDecl::field_iterator i = RD->field_begin(), 
          e = RD->field_end(); i != e; ++i) {
     const FieldDecl *FD = *i;
 
@@ -441,7 +441,7 @@ void CodeGenTypes::GetExpandedTypes(QualType Ty,
   assert(!RD->hasFlexibleArrayMember() && 
          "Cannot expand structure with flexible array.");
   
-  for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+  for (RecordDecl::field_iterator i = RD->field_begin(), 
          e = RD->field_end(); i != e; ++i) {
     const FieldDecl *FD = *i;
     assert(!FD->isBitField() && 

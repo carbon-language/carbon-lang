@@ -568,7 +568,7 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
   llvm::SmallVector<QualType, 16> ArgTys;
   
   // Add the first two invisible argument types for self and _cmd.
-  if (MDecl->isInstance()) {
+  if (MDecl->isInstanceMethod()) {
     QualType selfTy = Context.getObjCInterfaceType(MDecl->getClassInterface());
     selfTy = Context.getPointerType(selfTy);
     ArgTys.push_back(selfTy);

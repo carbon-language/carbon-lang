@@ -879,7 +879,7 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
   // Unique method name
   std::string NameStr;
   
-  if (OMD->isInstance())
+  if (OMD->isInstanceMethod())
     NameStr += "_I_";
   else
     NameStr += "_C_";
@@ -909,7 +909,7 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
   ResultStr += "(";
   
   // invisible arguments
-  if (OMD->isInstance()) {
+  if (OMD->isInstanceMethod()) {
     QualType selfTy = Context->getObjCInterfaceType(OMD->getClassInterface());
     selfTy = Context->getPointerType(selfTy);
     if (!LangOpts.Microsoft) {
@@ -2148,7 +2148,7 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
 
 ObjCInterfaceDecl *RewriteObjC::isSuperReceiver(Expr *recExpr) {
   // check if we are sending a message to 'super'
-  if (!CurMethodDef || !CurMethodDef->isInstance()) return 0;
+  if (!CurMethodDef || !CurMethodDef->isInstanceMethod()) return 0;
   
   if (ObjCSuperExpr *Super = dyn_cast<ObjCSuperExpr>(recExpr)) {
       const PointerType *PT = Super->getType()->getAsPointerType();

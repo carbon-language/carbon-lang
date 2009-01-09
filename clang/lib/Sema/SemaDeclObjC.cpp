@@ -30,7 +30,7 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     return;
 
   // Allow the rest of sema to find private method decl implementations.
-  if (MDecl->isInstance())
+  if (MDecl->isInstanceMethod())
     AddInstanceMethodToGlobalPool(MDecl);
   else
     AddFactoryMethodToGlobalPool(MDecl);
@@ -1172,7 +1172,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
       cast_or_null<ObjCMethodDecl>(static_cast<Decl*>(allMethods[i]));
 
     if (!Method) continue;  // Already issued a diagnostic.
-    if (Method->isInstance()) {
+    if (Method->isInstanceMethod()) {
       /// Check for instance method of the same name with incompatible types
       const ObjCMethodDecl *&PrevMethod = InsMap[Method->getSelector()];
       bool match = PrevMethod ? MatchTwoMethodDeclarations(Method, PrevMethod) 

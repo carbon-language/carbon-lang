@@ -217,7 +217,7 @@ ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C, DeclContext *DC,
 void ObjCMethodDecl::createImplicitParams(ASTContext &Context, 
                                           const ObjCInterfaceDecl *OID) {
   QualType selfTy;
-  if (isInstance()) {
+  if (isInstanceMethod()) {
     // There may be no interface context due to error in declaration
     // of the interface (which has been reported). Recover gracefully.
     if (OID) {

@@ -455,8 +455,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   std::vector<const llvm::Type*> LLVMFields;
 
   unsigned curField = 0;
-  for (RecordDecl::field_const_iterator Field = RD.field_begin(),
-                                     FieldEnd = RD.field_end();
+  for (RecordDecl::field_iterator Field = RD.field_begin(),
+                               FieldEnd = RD.field_end();
        Field != FieldEnd; ++Field) {
     uint64_t offset = RL.getFieldOffset(curField);
     const llvm::Type *Ty = CGT.ConvertTypeRecursive(Field->getType());
@@ -506,8 +506,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
 /// all fields are added.
 void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
   unsigned curField = 0;
-  for (RecordDecl::field_const_iterator Field = RD.field_begin(),
-                                     FieldEnd = RD.field_end();
+  for (RecordDecl::field_iterator Field = RD.field_begin(),
+                               FieldEnd = RD.field_end();
        Field != FieldEnd; ++Field) {
     // The offset should usually be zero, but bitfields could be strange
     uint64_t offset = RL.getFieldOffset(curField);

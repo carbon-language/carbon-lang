@@ -197,7 +197,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
       ClassDecl = OID->getSuperClass();
       if (!ClassDecl)
         return Diag(lbrac, diag::error_no_super_class) << OID->getDeclName();
-      if (getCurMethodDecl()->isInstance()) {
+      if (getCurMethodDecl()->isInstanceMethod()) {
         QualType superTy = Context.getObjCInterfaceType(ClassDecl);
         superTy = Context.getPointerType(superTy);
         ExprResult ReceiverExpr = new ObjCSuperExpr(SourceLocation(), superTy);

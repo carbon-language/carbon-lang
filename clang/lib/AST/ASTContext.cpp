@@ -631,8 +631,8 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   // Layout each field, for now, just sequentially, respecting alignment.  In
   // the future, this will need to be tweakable by targets.
   unsigned FieldIdx = 0;
-  for (RecordDecl::field_const_iterator Field = D->field_begin(),
-                                     FieldEnd = D->field_end();
+  for (RecordDecl::field_iterator Field = D->field_begin(),
+                               FieldEnd = D->field_end();
        Field != FieldEnd; (void)++Field, ++FieldIdx)
     NewEntry->LayoutField(*Field, FieldIdx, IsUnion, StructPacking, *this);
 

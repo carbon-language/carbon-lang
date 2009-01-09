@@ -490,6 +490,90 @@ public:
   decl_iterator decls_begin() const { return Decls.begin(); }
   decl_iterator decls_end()   const { return Decls.end(); }
 
+  /// specific_decl_iterator - Iterates over a subrange of
+  /// declarations stored in a DeclContext, providing only those that
+  /// are of type SpecificDecl (or a class derived from it) and,
+  /// optionally, that meet some additional run-time criteria. This
+  /// iterator is used, for example, to provide iteration over just
+  /// the fields within a RecordDecl (with SpecificDecl = FieldDecl)
+  /// or the instance methods within an Objective-C interface (with
+  /// SpecificDecl = ObjCMethodDecl and using
+  /// ObjCMethodDecl::isInstanceMethod as the run-time criteria). 
+  template<typename SpecificDecl>
+  class specific_decl_iterator {
+    /// Current - The current, underlying declaration iterator, which
+    /// will either be the same as End or will point to a declaration of
+    /// type SpecificDecl.
+    DeclContext::decl_iterator Current;
+    
+    /// End - One past the last declaration within the DeclContext.
+    DeclContext::decl_iterator End;
+
+    /// Acceptable - If non-NULL, points to a member function that
+    /// will determine if a particular declaration of type
+    /// SpecificDecl should be visited by the iteration.
+    bool (SpecificDecl::*Acceptable)() const;
+
+    /// SkipToNextDecl - Advances the current position up to the next
+    /// declaration of type SpecificDecl that also meets the criteria
+    /// required by Acceptable.
+    void SkipToNextDecl() {
+      while (Current != End && 
+             (!isa<SpecificDecl>(*Current) ||
+              (Acceptable && !(cast<SpecificDecl>(*Current)->*Acceptable)())))
+        ++Current;
+    }
+
+  public:
+    typedef SpecificDecl* value_type;
+    typedef SpecificDecl* reference;
+    typedef SpecificDecl* pointer;
+    typedef std::iterator_traits<DeclContext::decl_iterator>::difference_type
+      difference_type;
+    typedef std::forward_iterator_tag iterator_category;
+
+    specific_decl_iterator() : Current(), End(), Acceptable(0) { }
+
+    /// specific_decl_iterator - Construct a new iterator over a
+    /// subset of the declarations in [C, E). If A is non-NULL, it is
+    /// a pointer to a member function of SpecificDecl that should
+    /// return true for all of the SpecificDecl instances that will be
+    /// in the subset of iterators. For example, if you want
+    /// Objective-C instance methods, SpecificDecl will be
+    /// ObjCMethodDecl and A will be &ObjCMethodDecl::isInstanceMethod.
+    specific_decl_iterator(DeclContext::decl_iterator C, 
+                           DeclContext::decl_iterator E,
+                           bool (SpecificDecl::*A)() const = 0)
+      : Current(C), End(E), Acceptable(A) {
+      SkipToNextDecl();
+    }
+
+    reference operator*() { return cast<SpecificDecl>(*Current); }
+    pointer operator->() { return cast<SpecificDecl>(*Current); }
+
+    specific_decl_iterator& operator++() {
+      ++Current;
+      SkipToNextDecl();
+      return *this;
+    }
+
+    specific_decl_iterator operator++(int) {
+      specific_decl_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+  
+    friend bool
+    operator==(const specific_decl_iterator& x, const specific_decl_iterator& y) {
+      return x.Current == y.Current;
+    }
+  
+    friend bool 
+    operator!=(const specific_decl_iterator& x, const specific_decl_iterator& y) {
+      return x.Current != y.Current;
+    }
+  };
+
   /// addDecl - Add the declaration D to this scope. Note that
   /// declarations are added at the beginning of the declaration
   /// chain, so reverseDeclChain() should be called after all
@@ -589,7 +673,6 @@ template<> struct DeclContext::KindTrait<DeclContext> {
 inline bool Decl::isTemplateParameter() const {
   return getKind() == TemplateTypeParm || getKind() == NonTypeTemplateParm;
 }
-
 
 } // end clang.
 

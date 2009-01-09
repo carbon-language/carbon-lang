@@ -216,9 +216,11 @@ public:
   ImplicitParamDecl * getSelfDecl() const { return SelfDecl; }
   ImplicitParamDecl * getCmdDecl() const { return CmdDecl; }
   
-  bool isInstance() const { return IsInstance; }
+  bool isInstanceMethod() const { return IsInstance; }
   bool isVariadic() const { return IsVariadic; }
   
+  bool isClassMethod() const { return !IsInstance; }
+
   bool isSynthesized() const { return IsSynthesized; }
   void setIsSynthesized() { IsSynthesized = true; }
   
@@ -248,10 +250,6 @@ public:
 /// Current sub-classes are ObjCInterfaceDecl, ObjCCategoryDecl, and
 /// ObjCProtocolDecl. 
 /// FIXME: Use for ObjC implementation decls.
-/// FIXME: It would be nice to reduce amount of "boilerplate" iterator code
-/// below. For now, the iterators are modeled after RecordDecl::field_iterator().
-/// If DeclContext ends up providing some support for creating more strongly 
-/// typed iterators, the code below should be reduced considerably.
 /// FIXME: Convert property implementation to DeclContext::addDecl(). Holding
 /// off until we have an iterator adaptor that plays with DeclContext.
 ///
@@ -289,155 +287,32 @@ public:
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
   
   // Iterator access to instance/class methods.
-  class method_iterator {
-  public:
-    enum IterKind { IterInstanceMeths, IterClassMeths, IterAllMeths };
-    
-  protected:
-    /// Current - Current position within the sequence of declarations
-    /// in this record. 
-    DeclContext::decl_iterator Current;
-
-    /// End - Last position in the sequence of declarations in this
-    /// record.
-    DeclContext::decl_iterator End;
-
-    /// IK - Specifies the kind of methods this iterator iterates over.
-    IterKind IK;
-    
-    /// SkipToNextMethod - Advances the current position up to the next
-    /// ObjCMethodDecl.
-    void SkipToNextMethod() {
-      while (Current != End) {
-        ObjCMethodDecl *M = dyn_cast<ObjCMethodDecl>(*Current);
-        if (M && (IK == IterAllMeths ||
-                  (IK == IterInstanceMeths && M->isInstance()) ||
-                  ((IK == IterClassMeths && !M->isInstance()))))
-          return;
-        ++Current;
-      }
-    }
-
-  public:
-    typedef ObjCMethodDecl const *    value_type;
-    typedef ObjCMethodDecl const *    reference;
-    typedef ObjCMethodDecl const *    pointer;
-    typedef std::ptrdiff_t            difference_type;
-    typedef std::forward_iterator_tag iterator_category;
-
-    method_iterator() : Current(), End(), IK(IterAllMeths) { }
-
-    method_iterator(DeclContext::decl_iterator C, 
-                    DeclContext::decl_iterator E, IterKind ik)
-      : Current(C), End(E), IK(ik) {
-      SkipToNextMethod();
-    }
-
-    reference operator*() const { return cast<ObjCMethodDecl>(*Current); }
-
-    pointer operator->() const { return cast<ObjCMethodDecl>(*Current); }
-
-    method_iterator& operator++() {
-      ++Current;
-      SkipToNextMethod();
-      return *this;
-    }
-
-    method_iterator operator++(int) {
-      method_iterator tmp(*this);
-      ++(*this);
-      return tmp;
-    }
-
-    friend bool
-    operator==(const method_iterator& x, const method_iterator& y) {
-      return x.Current == y.Current;
-    }
-
-    friend bool 
-    operator!=(const method_iterator& x, const method_iterator& y) {
-      return x.Current != y.Current;
-    }
-  };
-  
-  method_iterator meth_begin() const {
-    return method_iterator(decls_begin(), decls_end(),
-                           method_iterator::IterAllMeths);
+  typedef specific_decl_iterator<ObjCMethodDecl> method_iterator;
+  method_iterator meth_begin() const { 
+    return method_iterator(decls_begin(), decls_end());
   }
-  method_iterator meth_end() const {
-    return method_iterator(decls_end(), decls_end(),
-                           method_iterator::IterAllMeths);
+  method_iterator meth_end() const { 
+    return method_iterator(decls_end(), decls_end());
   }
 
-  class instmeth_iterator : public method_iterator {
-  public:
-    typedef ObjCMethodDecl*           value_type;
-    typedef ObjCMethodDecl*           reference;
-    typedef ObjCMethodDecl*           pointer;
-
-    instmeth_iterator() : method_iterator() { }
-
-    instmeth_iterator(DeclContext::decl_iterator C,
-                      DeclContext::decl_iterator E)
-      : method_iterator(C, E, IterInstanceMeths) { }    
-
-    reference operator*() const { return cast<ObjCMethodDecl>(*Current); }
-
-    pointer operator->() const { return cast<ObjCMethodDecl>(*Current); }
-
-    instmeth_iterator& operator++() {
-      ++Current;
-      SkipToNextMethod();
-      return *this;
-    }
-
-    instmeth_iterator operator++(int) {
-      instmeth_iterator tmp(*this);
-      ++(*this);
-      return tmp;
-    }
-  };
-
+  typedef method_iterator instmeth_iterator;
   instmeth_iterator instmeth_begin() const {
-    return instmeth_iterator(decls_begin(), decls_end());
+    return instmeth_iterator(decls_begin(), decls_end(), 
+                             &ObjCMethodDecl::isInstanceMethod);
   }
   instmeth_iterator instmeth_end() const {
-    return instmeth_iterator(decls_end(), decls_end());
+    return instmeth_iterator(decls_end(), decls_end(),
+                             &ObjCMethodDecl::isInstanceMethod);
   }
 
-  class classmeth_iterator : public method_iterator {
-  public:
-    typedef ObjCMethodDecl*           value_type;
-    typedef ObjCMethodDecl*           reference;
-    typedef ObjCMethodDecl*           pointer;
-
-    classmeth_iterator() : method_iterator() { }
-
-    classmeth_iterator(DeclContext::decl_iterator C,
-                       DeclContext::decl_iterator E)
-      : method_iterator(C, E, IterClassMeths) { }    
-
-    reference operator*() const { return cast<ObjCMethodDecl>(*Current); }
-
-    pointer operator->() const { return cast<ObjCMethodDecl>(*Current); }
-
-    classmeth_iterator& operator++() {
-      ++Current;
-      SkipToNextMethod();
-      return *this;
-    }
-
-    classmeth_iterator operator++(int) {
-      classmeth_iterator tmp(*this);
-      ++(*this);
-      return tmp;
-    }
-  };
+  typedef method_iterator classmeth_iterator;
   classmeth_iterator classmeth_begin() const {
-    return classmeth_iterator(decls_begin(), decls_end());
+    return classmeth_iterator(decls_begin(), decls_end(),
+                              &ObjCMethodDecl::isClassMethod);
   }
   classmeth_iterator classmeth_end() const {
-    return classmeth_iterator(decls_end(), decls_end());
+    return classmeth_iterator(decls_end(), decls_end(),
+                              &ObjCMethodDecl::isClassMethod);
   }
 
   // Get the local instance/class method declared in this interface.
