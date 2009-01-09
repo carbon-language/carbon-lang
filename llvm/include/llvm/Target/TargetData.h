@@ -213,8 +213,8 @@ public:
   ///
   const Type *getIntPtrType() const;
 
-  /// getIndexedOffset - return the offset from the beginning of the type for the
-  /// specified indices.  This is used to implement getelementptr.
+  /// getIndexedOffset - return the offset from the beginning of the type for
+  /// the specified indices.  This is used to implement getelementptr.
   ///
   uint64_t getIndexedOffset(const Type *Ty,
                             Value* const* Indices, unsigned NumIndices) const;
