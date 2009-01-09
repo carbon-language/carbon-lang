@@ -308,7 +308,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
 
   case Type::BlockPointer: {
-    assert(0 && "FIXME: Cannot get type of block pointer.");
+    const QualType FTy = cast<BlockPointerType>(Ty).getPointeeType();
+    return llvm::PointerType::get(ConvertTypeRecursive(FTy), 
+                                  FTy.getAddressSpace());
   }
   }
   
