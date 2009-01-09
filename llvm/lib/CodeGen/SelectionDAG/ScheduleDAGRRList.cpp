@@ -726,7 +726,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
           }
           SmallVector<SUnit*, 2> Copies;
           InsertCCCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
-          DOUT << "Adding an edge from SU # " << TrySU->NodeNum
+          DOUT << "Adding an edge from SU #" << TrySU->NodeNum
                << " to SU #" << Copies.front()->NodeNum << "\n";
           AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
                               /*Reg=*/0, /*isNormalMemory=*/false,
@@ -735,7 +735,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
           NewDef = Copies.back();
         }
 
-        DOUT << "Adding an edge from SU # " << NewDef->NodeNum
+        DOUT << "Adding an edge from SU #" << NewDef->NodeNum
              << " to SU #" << TrySU->NodeNum << "\n";
         LiveRegDefs[Reg] = NewDef;
         AddPred(NewDef, SDep(TrySU, SDep::Order, /*Latency=*/1,
