@@ -29,8 +29,7 @@ using namespace clang;
 
 typedef uint32_t Offset;
 
-typedef std::pair<Offset,bool> SpellingTy;
-typedef std::vector<std::pair<Offset, llvm::StringMapEntry<SpellingTy>*> >
+typedef std::vector<std::pair<Offset, llvm::StringMapEntry<Offset>*> >
   SpellMapTy;
 
 namespace {
@@ -56,7 +55,7 @@ public:
 
 typedef llvm::DenseMap<const FileEntry*, PCHEntry> PCHMap;
 typedef llvm::DenseMap<const IdentifierInfo*,uint32_t> IDMap;
-typedef llvm::StringMap< SpellingTy, llvm::BumpPtrAllocator> CachedStrsTy;
+typedef llvm::StringMap<Offset, llvm::BumpPtrAllocator> CachedStrsTy;
 
 namespace {
 class VISIBILITY_HIDDEN PTHWriter {
@@ -144,31 +143,21 @@ void PTHWriter::EmitToken(const Token& T) {
     return;
 
   switch (T.getKind()) {
-    default: return;
-    case tok::numeric_constant:
-    case tok::string_literal:
+    default:
+      break;
+    case tok::string_literal:     
     case tok::wide_string_literal:
     case tok::angle_string_literal:
+    case tok::numeric_constant:
     case tok::char_constant: {
       // FIXME: This uses the slow getSpelling().  Perhaps we do better
       // in the future?  This only slows down PTH generation.
-      std::string spelling = PP.getSpelling(T);
-      
-      // If the token is a numeric literal we add a space after the spelling.
-      // This is to handle a shortcoming in LiteralSupport.cpp where
-      // literals are assumed to have a "valid" character after them.
-      bool IsNumeric = T.getKind() == tok::numeric_constant;
-      
-      if (IsNumeric)
-        spelling.push_back(' ');
-
+      const std::string& spelling = PP.getSpelling(T);
       const char* s = spelling.c_str();
       
       // Get the string entry.
-      llvm::StringMapEntry<std::pair<Offset,bool> > *E =
-        &CachedStrs.GetOrCreateValue(s, s + spelling.size());
-      
-      E->getValue().second = IsNumeric;
+      llvm::StringMapEntry<Offset> *E =
+        &CachedStrs.GetOrCreateValue(s, s+spelling.size());
 
       // Store the address of the string entry in our spelling map.
       (*CurSpellMap).push_back(std::make_pair(fpos, E));
@@ -416,18 +405,17 @@ void PTHWriter::EmitCachedSpellings() {
 
     // Write out the length of the string before the string itself.
     unsigned len = I->getKeyLength();
-
-    // Adjust the length we write in the PTH file to accomodate for numeric
-    // literals.  We implicitly have a space after them, but only want to later
-    // read the characters that are just part of the literal itself.
-    Emit16(I->getValue().second ? len - 1 : len);
+    Emit16(len);
 
     // Write out the string data.
     const char* data = I->getKeyData();
     EmitBuf(data, data+len);
     
+    // Write out a single blank character.
+    Emit8(' ');
+    
     // Now patch the offset of the string in the PTH file into the string map.
-    I->getValue().first = off;
+    I->setValue(off);
   }
   
   // Now emit the spelling tables.
@@ -444,7 +432,7 @@ void PTHWriter::EmitCachedSpellings() {
       Emit32(spellings[i].first);
       
       // Write out the offset of the spelling data within the PTH file.
-      Emit32(spellings[i].second->getValue().first);
+      Emit32(spellings[i].second->getValue());
     }
     
     // Delete the spelling map for this source file.
