@@ -36,6 +36,7 @@
 #include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -288,6 +289,7 @@ unsigned SelectionDAGISel::MakeReg(MVT VT) {
 void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
   AU.addRequired<GCModuleInfo>();
+  AU.addRequired<DwarfWriter>();
   AU.setPreservesAll();
 }
 
@@ -316,7 +318,8 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 
   FuncInfo->set(Fn, MF, EnableFastISel);
   MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>();
-  CurDAG->init(MF, MMI);
+  DwarfWriter *DW = getAnalysisToUpdate<DwarfWriter>();
+  CurDAG->init(MF, MMI, DW);
   SDL->init(GFI, *AA);
 
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)

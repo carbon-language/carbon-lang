@@ -32,6 +32,7 @@ class AliasAnalysis;
 class TargetLowering;
 class TargetMachine;
 class MachineModuleInfo;
+class DwarfWriter;
 class MachineFunction;
 class MachineConstantPoolValue;
 class FunctionLoweringInfo;
@@ -76,6 +77,7 @@ class SelectionDAG {
   MachineFunction *MF;
   FunctionLoweringInfo &FLI;
   MachineModuleInfo *MMI;
+  DwarfWriter *DW;
 
   /// EntryNode - The starting token.
   SDNode EntryNode;
@@ -122,7 +124,7 @@ public:
   /// init - Prepare this SelectionDAG to process code in the given
   /// MachineFunction.
   ///
-  void init(MachineFunction &mf, MachineModuleInfo *mmi);
+  void init(MachineFunction &mf, MachineModuleInfo *mmi, DwarfWriter *dw);
 
   /// clear - Clear state and free memory necessary to make this
   /// SelectionDAG ready to process a new block.

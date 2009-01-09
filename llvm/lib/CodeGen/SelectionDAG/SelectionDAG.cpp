@@ -772,9 +772,11 @@ SelectionDAG::SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli)
   AllNodes.push_back(&EntryNode);
 }
 
-void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi) {
+void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi,
+                        DwarfWriter *dw) {
   MF = &mf;
   MMI = mmi;
+  DW = dw;
 }
 
 SelectionDAG::~SelectionDAG() {
