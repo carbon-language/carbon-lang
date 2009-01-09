@@ -270,10 +270,6 @@ public:
 
   void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
   
-  // FIXME: Replace with appropriate lookup. Currently used by interfaces and
-  // categories.
-  void mergeProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
-  
   typedef ObjCPropertyDecl * const * prop_iterator;
   prop_iterator prop_begin() const { return PropertyDecl; }
   prop_iterator prop_end() const {
@@ -640,7 +636,7 @@ public:
   // found, we search referenced protocols and class categories.
   ObjCMethodDecl *lookupInstanceMethod(Selector Sel);
   ObjCMethodDecl *lookupClassMethod(Selector Sel);
-  
+
   bool isForwardDecl() const { return isForwardProtoDecl; }
   void setForwardDecl(bool val) { isForwardProtoDecl = val; }
 

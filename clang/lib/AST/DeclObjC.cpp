@@ -378,31 +378,6 @@ unsigned ObjCContainerDecl::getNumClassMethods() const {
   return sum;
 }
 
-/// mergeProperties - Adds properties to the end of list of current properties
-/// for this class.
-
-void ObjCContainerDecl::mergeProperties(ObjCPropertyDecl **Properties, 
-                                        unsigned NumNewProperties) {
-  if (NumNewProperties == 0) return;
-  
-  if (PropertyDecl) {
-    ObjCPropertyDecl **newPropertyDecl =  
-      new ObjCPropertyDecl*[NumNewProperties + NumPropertyDecl];
-    ObjCPropertyDecl **buf = newPropertyDecl;
-    // put back original properties in buffer.
-    memcpy(buf, PropertyDecl, NumPropertyDecl*sizeof(ObjCPropertyDecl*));
-    // Add new properties to this buffer.
-    memcpy(buf+NumPropertyDecl, Properties, 
-           NumNewProperties*sizeof(ObjCPropertyDecl*));
-    delete[] PropertyDecl;
-    PropertyDecl = newPropertyDecl;
-    NumPropertyDecl += NumNewProperties;
-  }
-  else {
-    addProperties(Properties, NumNewProperties);
-  }
-}
-
 /// addProperties - Insert property declaration AST nodes into
 /// ObjCContainerDecl's PropertyDecl field.
 ///
@@ -425,6 +400,16 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
     if (property->getIdentifier() == PropertyId)
       return property;
   }
+  const ObjCProtocolDecl *PID = dyn_cast<ObjCProtocolDecl>(this);
+  if (PID) {
+    for (ObjCProtocolDecl::protocol_iterator P = PID->protocol_begin(), 
+         E = PID->protocol_end(); 
+         P != E; ++P)
+      if (ObjCPropertyDecl *property = 
+            (*P)->FindPropertyDeclaration(PropertyId))
+        return property;
+  }
+  
   const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(this);
   if (OID) {
     // Look through categories.

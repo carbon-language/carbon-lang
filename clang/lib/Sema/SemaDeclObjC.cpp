@@ -340,7 +340,6 @@ Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
 void
 Sema::MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
                                           ObjCProtocolDecl *PDecl) {
-  llvm::SmallVector<ObjCPropertyDecl*, 16> mergeProperties;
   ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(CDecl);
   if (!IDecl) {
     // Category
@@ -355,14 +354,10 @@ Sema::MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
            CP != CE; ++CP)
         if ((*CP)->getIdentifier() == Pr->getIdentifier())
           break;
-      if (CP == CE)
-        // Add this property to list of properties for thie class.
-        mergeProperties.push_back(Pr);
-      else
+      if (CP != CE)
         // Property protocol already exist in class. Diagnose any mismatch.
         DiagnosePropertyMismatch((*CP), Pr, PDecl->getIdentifier());
     }
-    CatDecl->mergeProperties(&mergeProperties[0], mergeProperties.size());
     return;
   }
   for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
@@ -374,14 +369,10 @@ Sema::MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
          CP != CE; ++CP)
       if ((*CP)->getIdentifier() == Pr->getIdentifier())
         break;
-    if (CP == CE)
-      // Add this property to list of properties for thie class.
-      mergeProperties.push_back(Pr);
-    else
+    if (CP != CE)
       // Property protocol already exist in class. Diagnose any mismatch.
       DiagnosePropertyMismatch((*CP), Pr, PDecl->getIdentifier());
     }
-  IDecl->mergeProperties(&mergeProperties[0], mergeProperties.size());
 }
 
 /// MergeProtocolPropertiesIntoClass - This routine merges properties
