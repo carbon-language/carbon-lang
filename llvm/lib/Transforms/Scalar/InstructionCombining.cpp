@@ -6765,29 +6765,6 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         return &ICI;
       }
     }
-  } else {  // Not a ICMP_EQ/ICMP_NE
-            // If the LHS is a cast from an integral value of the same size, 
-            // then since we know the RHS is a constant, try to simlify.
-    if (CastInst *Cast = dyn_cast<CastInst>(LHSI)) {
-      Value *CastOp = Cast->getOperand(0);
-      const Type *SrcTy = CastOp->getType();
-      uint32_t SrcTySize = SrcTy->getPrimitiveSizeInBits();
-      if (SrcTy->isInteger() && 
-          SrcTySize == Cast->getType()->getPrimitiveSizeInBits()) {
-        // If this is an unsigned comparison, try to make the comparison use
-        // smaller constant values.
-        if (ICI.getPredicate() == ICmpInst::ICMP_ULT && RHSV.isSignBit()) {
-          // X u< 128 => X s> -1
-          return new ICmpInst(ICmpInst::ICMP_SGT, CastOp, 
-                           ConstantInt::get(APInt::getAllOnesValue(SrcTySize)));
-        } else if (ICI.getPredicate() == ICmpInst::ICMP_UGT &&
-                   RHSV == APInt::getSignedMaxValue(SrcTySize)) {
-          // X u> 127 => X s< 0
-          return new ICmpInst(ICmpInst::ICMP_SLT, CastOp, 
-                              Constant::getNullValue(SrcTy));
-        }
-      }
-    }
   }
   return 0;
 }
