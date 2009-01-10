@@ -1540,7 +1540,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         N2 = N2.getOperand(1);
       if (N2.getOpcode() != X86ISD::Wrapper)
         break;
-      GlobalAddressSDNode *GVNode = dyn_cast<GlobalAddressSDNode>(N2.getOperand(0));
+      GlobalAddressSDNode *GVNode =
+        dyn_cast<GlobalAddressSDNode>(N2.getOperand(0));
       if (!GVNode)
         break;
       SDValue Tmp1 = CurDAG->getTargetFrameIndex(FINode->getIndex(),
