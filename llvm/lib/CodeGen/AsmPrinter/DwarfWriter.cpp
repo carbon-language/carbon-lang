@@ -2618,12 +2618,12 @@ private:
     if (!Slot) {
       // FIXME - breaks down when the context is an inlined function.
       DIDescriptor ParentDesc;
-      DIBlock *DB = new DIBlock(V);
+      DIDescriptor *DB = new DIBlock(V);
       if (DIBlock *Block = dyn_cast<DIBlock>(DB)) {
         ParentDesc = Block->getContext();
       }
       DbgScope *Parent = ParentDesc.isNull() ? 
-        getOrCreateScope(ParentDesc.getGV()) : NULL;
+        NULL : getOrCreateScope(ParentDesc.getGV());
       Slot = new DbgScope(Parent, DB);
       if (Parent) {
         Parent->AddScope(Slot);
