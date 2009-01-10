@@ -1735,8 +1735,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     RequiresArg = true;
   }
   // Eat any Microsoft extensions.
-  if ((Tok.is(tok::kw___cdecl) || Tok.is(tok::kw___stdcall) ||
-      (Tok.is(tok::kw___fastcall))) && PP.getLangOptions().Microsoft)
+  while ((Tok.is(tok::kw___cdecl) || Tok.is(tok::kw___stdcall) ||
+          (Tok.is(tok::kw___fastcall))) && PP.getLangOptions().Microsoft)
     ConsumeToken();
   
   // If we haven't past the identifier yet (or where the identifier would be

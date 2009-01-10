@@ -26,3 +26,5 @@ void *_alloca(int);
 void foo() {
 	__declspec(align(16)) int *buffer = (int *)_alloca(9);
 }
+
+typedef bool (__stdcall __stdcall *blarg)(int);
