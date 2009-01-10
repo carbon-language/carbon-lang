@@ -136,8 +136,8 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
 // having a GenerateFunction which takes the body Stmt.
 
 /// GenerateObjCGetter - Generate an Objective-C property getter
-/// function. The given Decl must be either an ObjCCategoryImplDecl
-/// or an ObjCImplementationDecl.
+/// function. The given Decl must be an ObjCImplementationDecl. @synthesize
+/// is illegal within a category.
 void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
   ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
@@ -206,8 +206,8 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
 }
 
 /// GenerateObjCSetter - Generate an Objective-C property setter
-/// function. The given Decl must be either an ObjCCategoryImplDecl
-/// or an ObjCImplementationDecl.
+/// function. The given Decl must be an ObjCImplementationDecl. @synthesize
+/// is illegal within a category.
 void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
   ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
