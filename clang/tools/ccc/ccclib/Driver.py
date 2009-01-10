@@ -92,6 +92,7 @@ class Driver(object):
                 raise ValueError,"Invalid ccc option: %r" % cccPrintOptions
 
         self.hostInfo = HostInfo.getHostInfo(self)
+        self.toolChain = self.hostInfo.getToolChain()
         
         args = self.parser.parseArgs(argv)
 
@@ -550,15 +551,6 @@ class Driver(object):
         if hasNoIntegratedCPP:
             self.claim(hasNoIntegratedCPP)
 
-        toolMap = {
-            Phases.PreprocessPhase : Tools.GCC_PreprocessTool(),
-            Phases.CompilePhase : Tools.GCC_CompileTool(),
-            Phases.PrecompilePhase : Tools.GCC_PrecompileTool(),
-            Phases.AssemblePhase : Tools.DarwinAssemblerTool(),
-            Phases.LinkPhase : Tools.Collect2Tool(),
-            Phases.LipoPhase : Tools.LipoTool(),
-            }
-
         class InputInfo:
             def __init__(self, source, type, baseInput):
                 self.source = source
@@ -596,7 +588,7 @@ class Driver(object):
                                   canAcceptPipe, atTopLevel, phase.arch)
 
             assert isinstance(phase, Phases.JobAction)
-            tool = toolMap[phase.phase.__class__]
+            tool = self.toolChain.selectTool(phase)
 
             # See if we should use an integrated CPP. We only use an
             # integrated cpp when we have exactly one input, since this is
