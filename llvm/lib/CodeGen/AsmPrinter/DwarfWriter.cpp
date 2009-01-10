@@ -1242,8 +1242,8 @@ private:
                                       // Either subprogram or block.
   unsigned StartLabelID;              // Label ID of the beginning of scope.
   unsigned EndLabelID;                // Label ID of the end of scope.
-  SmallVector<DbgScope *, 8> Scopes;     // Scopes defined in scope.
-  SmallVector<DbgVariable *, 32> Variables;// Variables declared in scope.
+  SmallVector<DbgScope *, 4> Scopes;     // Scopes defined in scope.
+  SmallVector<DbgVariable *, 8> Variables;// Variables declared in scope.
   
 public:
   DbgScope(DbgScope *P, DIDescriptor *D)
@@ -1256,8 +1256,8 @@ public:
   DIDescriptor *getDesc()       const { return Desc; }
   unsigned getStartLabelID()     const { return StartLabelID; }
   unsigned getEndLabelID()       const { return EndLabelID; }
-  SmallVector<DbgScope *, 8> &getScopes() { return Scopes; }
-  SmallVector<DbgVariable *, 32> &getVariables() { return Variables; }
+  SmallVector<DbgScope *, 4> &getScopes() { return Scopes; }
+  SmallVector<DbgVariable *, 8> &getVariables() { return Variables; }
   void setStartLabelID(unsigned S) { StartLabelID = S; }
   void setEndLabelID(unsigned E)   { EndLabelID = E; }
   
@@ -2645,14 +2645,14 @@ private:
                          unsigned ParentStartID, unsigned ParentEndID,
                          DIE *ParentDie, CompileUnit *Unit) {
     // Add variables to scope.
-    SmallVector<DbgVariable *, 32> &Variables = ParentScope->getVariables();
+    SmallVector<DbgVariable *, 8> &Variables = ParentScope->getVariables();
     for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
       DIE *VariableDie = NewDbgScopeVariable(Variables[i], Unit);
       if (VariableDie) ParentDie->AddChild(VariableDie);
     }
 
     // Add nested scopes.
-    SmallVector<DbgScope *, 8> &Scopes = ParentScope->getScopes();
+    SmallVector<DbgScope *, 4> &Scopes = ParentScope->getScopes();
     for (unsigned j = 0, M = Scopes.size(); j < M; ++j) {
       // Define the Scope debug information entry.
       DbgScope *Scope = Scopes[j];
