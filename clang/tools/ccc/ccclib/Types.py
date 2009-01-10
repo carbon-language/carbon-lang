@@ -3,13 +3,15 @@ class InputType(object):
     the driver recognizes and control processing."""
     
     def __init__(self, name, preprocess=None, onlyAssemble=False, 
-                 onlyPrecompile=False, tempSuffix=None):
+                 onlyPrecompile=False, tempSuffix=None, 
+                 canBeUserSpecified=False):
         assert preprocess is None or isinstance(preprocess, InputType)
         self.name = name
         self.preprocess = preprocess
         self.onlyAssemble = onlyAssemble
         self.onlyPrecompile = onlyPrecompile
         self.tempSuffix = tempSuffix
+        self.canBeUserSpecified = canBeUserSpecified
 
     def __repr__(self):
         return '%s(%r, %r, %r, %r, %r)' % (self.__class__.__name__,
@@ -17,40 +19,55 @@ class InputType(object):
                                            self.preprocess, 
                                            self.onlyAssemble,
                                            self.onlyPrecompile,
-                                           self.tempSuffix)
+                                           self.tempSuffix,
+                                           self.canBeUserSpecified)
 
 # C family source language (with and without preprocessing).
-CTypeNoPP = InputType('cpp-output', tempSuffix='i')
-CType = InputType('c', CTypeNoPP)
-ObjCTypeNoPP = InputType('objective-c-cpp-output', tempSuffix='mi')
-ObjCType = InputType('objective-c', ObjCTypeNoPP)
-CXXTypeNoPP = InputType('c++-cpp-output', tempSuffix='ii')
-CXXType = InputType('c++', CXXTypeNoPP)
-ObjCXXTypeNoPP = InputType('objective-c++-cpp-output', tempSuffix='mii')
-ObjCXXType = InputType('c++', ObjCXXTypeNoPP)
+CTypeNoPP = InputType('cpp-output', tempSuffix='i', 
+                      canBeUserSpecified=True)
+CType = InputType('c', CTypeNoPP,
+                  canBeUserSpecified=True)
+ObjCTypeNoPP = InputType('objective-c-cpp-output', tempSuffix='mi',
+                         canBeUserSpecified=True)
+ObjCType = InputType('objective-c', ObjCTypeNoPP, 
+                     canBeUserSpecified=True)
+CXXTypeNoPP = InputType('c++-cpp-output', tempSuffix='ii',
+                        canBeUserSpecified=True)
+CXXType = InputType('c++', CXXTypeNoPP,
+                    canBeUserSpecified=True)
+ObjCXXTypeNoPP = InputType('objective-c++-cpp-output', tempSuffix='mii',
+                           canBeUserSpecified=True)
+ObjCXXType = InputType('objective-c++', ObjCXXTypeNoPP,
+                       canBeUserSpecified=True)
 
 # C family input files to precompile.
 CHeaderNoPPType = InputType('c-header-cpp-output', onlyPrecompile=True, tempSuffix='pch')
-CHeaderType = InputType('c-header', CHeaderNoPPType, onlyPrecompile=True)
+CHeaderType = InputType('c-header', CHeaderNoPPType, onlyPrecompile=True,
+                        canBeUserSpecified=True)
 ObjCHeaderNoPPType = InputType('objective-c-header-cpp-output', onlyPrecompile=True, tempSuffix='pch')
-ObjCHeaderType = InputType('objective-c-header', ObjCHeaderNoPPType, onlyPrecompile=True)
+ObjCHeaderType = InputType('objective-c-header', ObjCHeaderNoPPType, onlyPrecompile=True,
+                           canBeUserSpecified=True)
 CXXHeaderNoPPType = InputType('c++-header-cpp-output', onlyPrecompile=True, tempSuffix='pch')
-CXXHeaderType = InputType('c++-header', CXXHeaderNoPPType, onlyPrecompile=True)
+CXXHeaderType = InputType('c++-header', CXXHeaderNoPPType, onlyPrecompile=True,
+                          canBeUserSpecified=True)
 ObjCXXHeaderNoPPType = InputType('objective-c++-header-cpp-output', onlyPrecompile=True, tempSuffix='pch')
-ObjCXXHeaderType = InputType('objective-c++-header', ObjCXXHeaderNoPPType, onlyPrecompile=True)
+ObjCXXHeaderType = InputType('objective-c++-header', ObjCXXHeaderNoPPType, onlyPrecompile=True,
+                             canBeUserSpecified=True)
 
 # Other languages.
-AdaType = InputType('ada')
-AsmTypeNoPP = InputType('assembler', onlyAssemble=True, tempSuffix='s')
-AsmType = InputType('assembler-with-cpp', AsmTypeNoPP, onlyAssemble=True)
-FortranTypeNoPP = InputType('fortran')
-FortranType = InputType('fortran', FortranTypeNoPP)
-JavaType = InputType('java')
+AdaType = InputType('ada', canBeUserSpecified=True)
+AsmTypeNoPP = InputType('assembler', onlyAssemble=True, tempSuffix='s',
+                        canBeUserSpecified=True)
+AsmType = InputType('assembler-with-cpp', AsmTypeNoPP, onlyAssemble=True,
+                    canBeUserSpecified=True)
+FortranTypeNoPP = InputType('f95', canBeUserSpecified=True)
+FortranType = InputType('f95-cpp-input', FortranTypeNoPP, canBeUserSpecified=True)
+JavaType = InputType('java', canBeUserSpecified=True)
 
 # Misc.
 PCHType = InputType('precompiled-header')
 ObjectType = InputType('object', tempSuffix='o')
-TreelangType = InputType('treelang')
+TreelangType = InputType('treelang', canBeUserSpecified=True)
 ImageType = InputType('image', tempSuffix='out')
 NothingType = InputType('nothing')
 
@@ -116,8 +133,13 @@ kTypeSpecifierMap = {
     'assembler' : AsmTypeNoPP,
     'assembler-with-cpp' : AsmType,
     'ada' : AdaType,
-    'f95' : FortranType, 
-    'f95-cpp-input' : FortranTypeNoPP,
+    'f95-cpp-input' : FortranType, 
+    'f95' : FortranTypeNoPP,
     'java' : JavaType,
     'treelang' : TreelangType,
 }
+
+# Check that the type specifier map at least matches what the types
+# believe to be true.
+assert not [name for name,type in kTypeSpecifierMap.items()
+            if type and (type.name != name or not type.canBeUserSpecified)]
