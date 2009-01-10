@@ -1146,7 +1146,12 @@ public:
     return D->getKind() >= RecordFirst && D->getKind() <= RecordLast;
   }
   static bool classof(const RecordDecl *D) { return true; }
-
+  static DeclContext *castToDeclContext(const RecordDecl *D) {
+    return static_cast<DeclContext *>(const_cast<RecordDecl*>(D));
+  }
+  static RecordDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<RecordDecl *>(const_cast<DeclContext*>(DC));
+  }
 protected:
   /// EmitImpl - Serialize this RecordDecl.  Called by Decl::Emit.
   virtual void EmitImpl(llvm::Serializer& S) const;
