@@ -24,10 +24,6 @@ class GCC_Common_Tool(Tool):
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, args, arglist,
                      extraArgs):
-        assert len(inputs) == 1
-
-        input = inputs[0]
-
         cmd_args = sum(map(arglist.render, args),[]) + extraArgs
         if arch:
             cmd_args.extend(arglist.render(arch))
@@ -38,17 +34,27 @@ class GCC_Common_Tool(Tool):
         else:
             cmd_args.extend(arglist.render(output))
 
-        cmd_args.extend(['-x', input.type.name])
-        if isinstance(input.source, Jobs.PipedJob):
-            cmd_args.append('-')
-        else:
-            cmd_args.append(arglist.getValue(input.source))
+        # Only pass -x if gcc will understand it; otherwise hope gcc
+        # understands the suffix correctly. The main use case this
+        # would go wrong in is for linker inputs, say if the user
+        # tried to make an executable named 'a.c'.
+        #
+        # FIXME: For the linker case specifically, can we safely
+        # convert inputs into '-Wl,' options?
+        for input in inputs:
+            if input.type.canBeUserSpecified:
+                cmd_args.extend(['-x', input.type.name])
+
+            if isinstance(input.source, Jobs.PipedJob):
+                cmd_args.append('-')
+            else:
+                cmd_args.append(arglist.getValue(input.source))
 
         jobs.addJob(Jobs.Command('gcc', cmd_args))
 
 class GCC_PreprocessTool(GCC_Common_Tool):
     def __init__(self):
-        super(GCC_PreprocessTool, self).__init__('gcc',
+        super(GCC_PreprocessTool, self).__init__('gcc (cpp)',
                                                  (Tool.eFlagsPipedInput |
                                                   Tool.eFlagsPipedOutput))
 
@@ -60,7 +66,7 @@ class GCC_PreprocessTool(GCC_Common_Tool):
 
 class GCC_CompileTool(GCC_Common_Tool):
     def __init__(self):
-        super(GCC_CompileTool, self).__init__('gcc',
+        super(GCC_CompileTool, self).__init__('gcc (cc1)',
                                               (Tool.eFlagsPipedInput |
                                                Tool.eFlagsPipedOutput |
                                                Tool.eFlagsIntegratedCPP))
@@ -73,7 +79,7 @@ class GCC_CompileTool(GCC_Common_Tool):
 
 class GCC_PrecompileTool(GCC_Common_Tool):
     def __init__(self):
-        super(GCC_PrecompileTool, self).__init__('gcc',
+        super(GCC_PrecompileTool, self).__init__('gcc (pch)',
                                                  (Tool.eFlagsPipedInput |
                                                   Tool.eFlagsIntegratedCPP))
 
@@ -83,10 +89,10 @@ class GCC_PrecompileTool(GCC_Common_Tool):
                                                             output, outputType, args, arglist,
                                                             [])
 
-class DarwinAssemblerTool(Tool):
+class DarwinAssembleTool(Tool):
     def __init__(self):
-        super(DarwinAssemblerTool, self).__init__('as',
-                                                  Tool.eFlagsPipedInput)
+        super(DarwinAssembleTool, self).__init__('as',
+                                                 Tool.eFlagsPipedInput)
 
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, args, arglist):
@@ -105,6 +111,28 @@ class DarwinAssemblerTool(Tool):
         else:
             cmd_args.append(arglist.getValue(input.source))
         jobs.addJob(Jobs.Command('as', cmd_args))
+
+class GCC_AssembleTool(GCC_Common_Tool):
+    def __init__(self):
+        # We can't generally assume the assembler can take or output
+        # on pipes.
+        super(GCC_AssembleTool, self).__init__('gcc (as)')
+
+    def constructJob(self, phase, arch, jobs, inputs, 
+                     output, outputType, args, arglist):
+        return super(GCC_AssembleTool, self).constructJob(phase, arch, jobs, inputs,
+                                                          output, outputType, args, arglist,
+                                                          ['-c'])
+
+class GCC_LinkTool(GCC_Common_Tool):
+    def __init__(self):
+        super(GCC_LinkTool, self).__init__('gcc (ld)')
+
+    def constructJob(self, phase, arch, jobs, inputs, 
+                     output, outputType, args, arglist):
+        return super(GCC_LinkTool, self).constructJob(phase, arch, jobs, inputs,
+                                                      output, outputType, args, arglist,
+                                                      [])
 
 class Collect2Tool(Tool):
     kCollect2Path = '/usr/libexec/gcc/i686-apple-darwin10/4.2.1/collect2'
