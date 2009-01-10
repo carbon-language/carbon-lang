@@ -257,7 +257,9 @@ void ObjCMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
 ///
 bool ObjCInterfaceDecl::isPropertyReadonly(ObjCPropertyDecl *PDecl) const
 {
-  if (!PDecl->isReadOnly())
+  // Even if property is ready only, if interface has a user defined setter, 
+  // it is not considered read only. 
+  if (!PDecl->isReadOnly() || getInstanceMethod(PDecl->getSetterName()))
     return false;
 
   // Main class has the property as 'readonly'. Must search
@@ -265,6 +267,10 @@ bool ObjCInterfaceDecl::isPropertyReadonly(ObjCPropertyDecl *PDecl) const
   // attribute has been over-ridden to 'readwrite'.
   for (ObjCCategoryDecl *Category = getCategoryList();
        Category; Category = Category->getNextClassCategory()) {
+    // Even if property is ready only, if a category has a user defined setter, 
+    // it is not considered read only. 
+    if (Category->getInstanceMethod(PDecl->getSetterName()))
+      return false;
     ObjCPropertyDecl *P = 
       Category->FindPropertyDeclaration(PDecl->getIdentifier());
     if (P && !P->isReadOnly())
