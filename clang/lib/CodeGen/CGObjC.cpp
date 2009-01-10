@@ -143,6 +143,8 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
+  assert (!dyn_cast<ObjCProtocolDecl>(OMD->getDeclContext()) && 
+          "GenerateObjCMethod - cannot synthesize protocol getter");
   // FIXME: This is rather murky, we create this here since they will
   // not have been created by Sema for us.
   OMD->createImplicitParams(getContext(), IMP->getClassInterface());
@@ -213,6 +215,8 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
+  assert (!dyn_cast<ObjCProtocolDecl>(OMD->getDeclContext()) && 
+          "GenerateObjCSetter - cannot synthesize protocol setter");
   // FIXME: This is rather murky, we create this here since they will
   // not have been created by Sema for us.  
   OMD->createImplicitParams(getContext(), IMP->getClassInterface());
