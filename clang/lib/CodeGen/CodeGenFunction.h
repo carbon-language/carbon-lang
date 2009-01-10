@@ -42,6 +42,7 @@ namespace clang {
   class FunctionDecl;
   class FunctionTypeProto;
   class LabelStmt;
+  class ObjCContainerDecl;
   class ObjCInterfaceDecl;
   class ObjCIvarDecl;
   class ObjCMethodDecl;
@@ -184,7 +185,8 @@ public:
 
   void GenerateObjCMethod(const ObjCMethodDecl *OMD);
 
-  void StartObjCMethod(const ObjCMethodDecl *MD);
+  void StartObjCMethod(const ObjCMethodDecl *MD, 
+                       const ObjCContainerDecl *CD);
 
   /// GenerateObjCGetter - Synthesize an Objective-C property getter
   /// function.

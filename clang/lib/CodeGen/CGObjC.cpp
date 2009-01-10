@@ -103,9 +103,10 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
 /// StartObjCMethod - Begin emission of an ObjCMethod. This generates
 /// the LLVM function and sets the other context used by
 /// CodeGenFunction.
-void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD) {
+void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
+                                      const ObjCContainerDecl *CD) {
   FunctionArgList Args;
-  llvm::Function *Fn = CGM.getObjCRuntime().GenerateMethod(OMD);
+  llvm::Function *Fn = CGM.getObjCRuntime().GenerateMethod(OMD, CD);
 
   CGM.SetMethodAttributes(OMD, Fn);
 
@@ -125,7 +126,7 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD) {
 /// Generate an Objective-C method.  An Objective-C method is a C function with
 /// its pointer, name, and types registered in the class struture.  
 void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
-  StartObjCMethod(OMD);
+  StartObjCMethod(OMD, OMD->getClassInterface());
   EmitStmt(OMD->getBody());
   FinishFunction(cast<CompoundStmt>(OMD->getBody())->getRBracLoc());
 }
@@ -143,12 +144,10 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
-  assert (!dyn_cast<ObjCProtocolDecl>(OMD->getDeclContext()) && 
-          "GenerateObjCMethod - cannot synthesize protocol getter");
   // FIXME: This is rather murky, we create this here since they will
   // not have been created by Sema for us.
   OMD->createImplicitParams(getContext(), IMP->getClassInterface());
-  StartObjCMethod(OMD);
+  StartObjCMethod(OMD, IMP->getClassInterface());
 
   // Determine if we should use an objc_getProperty call for
   // this. Non-atomic properties are directly evaluated.
@@ -215,12 +214,10 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
-  assert (!dyn_cast<ObjCProtocolDecl>(OMD->getDeclContext()) && 
-          "GenerateObjCSetter - cannot synthesize protocol setter");
   // FIXME: This is rather murky, we create this here since they will
   // not have been created by Sema for us.  
   OMD->createImplicitParams(getContext(), IMP->getClassInterface());
-  StartObjCMethod(OMD);
+  StartObjCMethod(OMD, IMP->getClassInterface());
 
   bool IsCopy = PD->getSetterKind() == ObjCPropertyDecl::Copy;
   bool IsAtomic = 

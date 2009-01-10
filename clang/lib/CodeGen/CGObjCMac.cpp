@@ -408,6 +408,7 @@ private:
   /// GetNameForMethod - Return a name for the given method.
   /// \param[out] NameOut - The return value.
   void GetNameForMethod(const ObjCMethodDecl *OMD,
+                        const ObjCContainerDecl *CD,
                         std::string &NameOut);
 
 public:
@@ -435,7 +436,8 @@ public:
 
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
   
-  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD);
+  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
+                                         const ObjCContainerDecl *CD=0);
 
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
 
@@ -1434,9 +1436,10 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
                                         ObjCTypes.MethodListPtrTy);
 }
 
-llvm::Function *CGObjCMac::GenerateMethod(const ObjCMethodDecl *OMD) { 
+llvm::Function *CGObjCMac::GenerateMethod(const ObjCMethodDecl *OMD,
+                                          const ObjCContainerDecl *CD) { 
   std::string Name;
-  GetNameForMethod(OMD, Name);
+  GetNameForMethod(OMD, CD, Name);
 
   const llvm::FunctionType *MethodTy =
     CGM.getTypes().GetFunctionType(CGFunctionInfo(OMD, CGM.getContext()));
@@ -2141,11 +2144,13 @@ llvm::Constant *CGObjCMac::GetPropertyTypeString(const ObjCPropertyDecl *PD,
 }
 
 void CGObjCMac::GetNameForMethod(const ObjCMethodDecl *D, 
+                                 const ObjCContainerDecl *CD,
                                  std::string &NameOut) {
   // FIXME: Find the mangling GCC uses.
   NameOut = (D->isInstanceMethod() ? "-" : "+");
   NameOut += '[';
-  NameOut += D->getClassInterface()->getNameAsString();
+  assert (CD && "Missing container decl in GetNameForMethod");
+  NameOut += CD->getNameAsString();
   NameOut += ' ';
   NameOut += D->getSelector().getAsString();
   NameOut += ']';

@@ -113,7 +113,8 @@ public:
                                 const ObjCInterfaceDecl *OID);
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
   
-  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD);
+  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD, 
+                                         const ObjCContainerDecl *CD);
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
   virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
   virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
@@ -932,7 +933,8 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   return LoadFunction;
 }
 
-llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD) {  
+llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD,
+                                          const ObjCContainerDecl *CD) {  
   const ObjCCategoryImplDecl *OCD = 
     dyn_cast<ObjCCategoryImplDecl>(OMD->getDeclContext());
   std::string CategoryName = OCD ? OCD->getNameAsString() : "";

@@ -39,6 +39,7 @@ namespace CodeGen {
   class ObjCAtTryStmt;
   class ObjCAtThrowStmt;
   class ObjCAtSynchronizedStmt;
+  class ObjCContainerDecl;
   class ObjCCategoryImplDecl;
   class ObjCImplementationDecl;
   class ObjCInterfaceDecl;
@@ -116,7 +117,8 @@ public:
   // really this should also be generating the loads of the
   // parameters, as the runtime should have full control over how
   // parameters are passed.
-  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD) = 0;
+  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD, 
+                                         const ObjCContainerDecl *CD) = 0;
 
   /// Return the runtime function for getting properties.
   virtual llvm::Function *GetPropertyGetFunction() = 0;
