@@ -2999,7 +2999,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     // Find the scope where we'll be declaring the tag.
     while (S->isClassScope() || 
            (getLangOptions().CPlusPlus && S->isFunctionPrototypeScope()) ||
-           (S->getFlags() & Scope::DeclScope == 0))
+           ((S->getFlags() & Scope::DeclScope) == 0))
       S = S->getParent();
   }
 
