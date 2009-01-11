@@ -31,7 +31,7 @@ class DarwinHostInfo(HostInfo):
 
     def getToolChainForArch(self, arch):
         if arch in ('i386', 'x86_64'):
-            return ToolChain.Darwin_ToolChain(self.driver)
+            return ToolChain.Darwin10_X86_ToolChain(self.driver)
 
         return ToolChain.Generic_GCC_ToolChain(self.driver)
 

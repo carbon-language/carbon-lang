@@ -14,13 +14,13 @@ class InputType(object):
         self.canBeUserSpecified = canBeUserSpecified
 
     def __repr__(self):
-        return '%s(%r, %r, %r, %r, %r)' % (self.__class__.__name__,
-                                           self.name,
-                                           self.preprocess, 
-                                           self.onlyAssemble,
-                                           self.onlyPrecompile,
-                                           self.tempSuffix,
-                                           self.canBeUserSpecified)
+        return '%s(%r, %r, %r, %r, %r, %r)' % (self.__class__.__name__,
+                                               self.name,
+                                               self.preprocess, 
+                                               self.onlyAssemble,
+                                               self.onlyPrecompile,
+                                               self.tempSuffix,
+                                               self.canBeUserSpecified)
 
 # C family source language (with and without preprocessing).
 CTypeNoPP = InputType('cpp-output', tempSuffix='i', 
@@ -41,18 +41,22 @@ ObjCXXType = InputType('objective-c++', ObjCXXTypeNoPP,
                        canBeUserSpecified=True)
 
 # C family input files to precompile.
-CHeaderNoPPType = InputType('c-header-cpp-output', onlyPrecompile=True, tempSuffix='pch')
-CHeaderType = InputType('c-header', CHeaderNoPPType, onlyPrecompile=True,
-                        canBeUserSpecified=True)
-ObjCHeaderNoPPType = InputType('objective-c-header-cpp-output', onlyPrecompile=True, tempSuffix='pch')
-ObjCHeaderType = InputType('objective-c-header', ObjCHeaderNoPPType, onlyPrecompile=True,
-                           canBeUserSpecified=True)
-CXXHeaderNoPPType = InputType('c++-header-cpp-output', onlyPrecompile=True, tempSuffix='pch')
-CXXHeaderType = InputType('c++-header', CXXHeaderNoPPType, onlyPrecompile=True,
-                          canBeUserSpecified=True)
-ObjCXXHeaderNoPPType = InputType('objective-c++-header-cpp-output', onlyPrecompile=True, tempSuffix='pch')
-ObjCXXHeaderType = InputType('objective-c++-header', ObjCXXHeaderNoPPType, onlyPrecompile=True,
-                             canBeUserSpecified=True)
+CHeaderNoPPType = InputType('c-header-cpp-output', tempSuffix='i',
+                            onlyPrecompile=True)
+CHeaderType = InputType('c-header', CHeaderNoPPType,
+                        onlyPrecompile=True, canBeUserSpecified=True)
+ObjCHeaderNoPPType = InputType('objective-c-header-cpp-output', tempSuffix='mi',
+                               onlyPrecompile=True)
+ObjCHeaderType = InputType('objective-c-header', ObjCHeaderNoPPType, 
+                           onlyPrecompile=True, canBeUserSpecified=True)
+CXXHeaderNoPPType = InputType('c++-header-cpp-output', tempSuffix='ii',
+                              onlyPrecompile=True)
+CXXHeaderType = InputType('c++-header', CXXHeaderNoPPType, 
+                          onlyPrecompile=True, canBeUserSpecified=True)
+ObjCXXHeaderNoPPType = InputType('objective-c++-header-cpp-output', tempSuffix='mii',
+                                 onlyPrecompile=True)
+ObjCXXHeaderType = InputType('objective-c++-header', ObjCXXHeaderNoPPType, 
+                             onlyPrecompile=True, canBeUserSpecified=True)
 
 # Other languages.
 AdaType = InputType('ada', canBeUserSpecified=True)
@@ -65,7 +69,7 @@ FortranType = InputType('f95-cpp-input', FortranTypeNoPP, canBeUserSpecified=Tru
 JavaType = InputType('java', canBeUserSpecified=True)
 
 # Misc.
-PCHType = InputType('precompiled-header')
+PCHType = InputType('precompiled-header', tempSuffix='gch')
 ObjectType = InputType('object', tempSuffix='o')
 TreelangType = InputType('treelang', canBeUserSpecified=True)
 ImageType = InputType('image', tempSuffix='out')
