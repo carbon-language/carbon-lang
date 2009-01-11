@@ -944,9 +944,10 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       const Expr *InputExpr = S.getOutputExpr(i);
       llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, InOutConstraints);
       
+      InOutConstraints += llvm::utostr(Args.size());
+
       InOutArgTypes.push_back(Arg->getType());
       InOutArgs.push_back(Arg);
-      InOutConstraints += OutputConstraint;
     }
   }
   
