@@ -1,4 +1,4 @@
-//===- llvm/unittest/ADT/SmallVectorMap.cpp ---------------------*- C++ -*-===//
+//===- llvm/unittest/ADT/SmallVectorTest.cpp ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
