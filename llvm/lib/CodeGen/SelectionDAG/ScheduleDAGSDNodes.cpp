@@ -39,11 +39,11 @@ SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {
 
 /// CheckForPhysRegDependency - Check if the dependency between def and use of
 /// a specified operand is a physical register dependency. If so, returns the
-/// register and the cost of copying the register.
+/// register.
 static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
                                       const TargetRegisterInfo *TRI, 
                                       const TargetInstrInfo *TII,
-                                      unsigned &PhysReg, int &Cost) {
+                                      unsigned &PhysReg) {
   if (Op != 2 || User->getOpcode() != ISD::CopyToReg)
     return;
 
@@ -55,12 +55,8 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
   if (Def->isMachineOpcode()) {
     const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
     if (ResNo >= II.getNumDefs() &&
-        II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg) {
+        II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg)
       PhysReg = Reg;
-      const TargetRegisterClass *RC =
-        TRI->getPhysicalRegisterRegClass(Reg, Def->getValueType(ResNo));
-      Cost = RC->getCopyCost();
-    }
   }
 }
 
@@ -183,9 +179,8 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         bool isChain = OpVT == MVT::Other;
 
         unsigned PhysReg = 0;
-        int Cost = 1;
         // Determine if this is a physical register dependency.
-        CheckForPhysRegDependency(OpN, N, i, TRI, TII, PhysReg, Cost);
+        CheckForPhysRegDependency(OpN, N, i, TRI, TII, PhysReg);
         assert((PhysReg == 0 || !isChain) &&
                "Chain dependence via physreg data?");
         SU->addPred(SDep(OpSU, isChain ? SDep::Order : SDep::Data,
