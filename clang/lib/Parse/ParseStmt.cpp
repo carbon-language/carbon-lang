@@ -215,9 +215,9 @@ Parser::OwningStmtResult Parser::ParseLabeledStatement() {
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
 
-  return Owned(Actions.ActOnLabelStmt(IdentTok.getLocation(),
-                                      IdentTok.getIdentifierInfo(),
-                                      ColonLoc, SubStmt.release()));
+  return Actions.ActOnLabelStmt(IdentTok.getLocation(),
+                                IdentTok.getIdentifierInfo(),
+                                ColonLoc, move_convert(SubStmt));
 }
 
 /// ParseCaseStatement
@@ -575,8 +575,9 @@ Parser::OwningStmtResult Parser::ParseIfStatement() {
   if (ElseStmt.isInvalid())
     ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
 
-  return Owned(Actions.ActOnIfStmt(IfLoc, CondExp.release(), ThenStmt.release(),
-                                   ElseLoc, ElseStmt.release()));
+  return Actions.ActOnIfStmt(IfLoc, move_convert(CondExp),
+                             move_convert(ThenStmt), ElseLoc,
+                             move_convert(ElseStmt));
 }
 
 /// ParseSwitchStatement
@@ -619,7 +620,7 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement() {
 
   OwningStmtResult Switch(Actions);
   if (!Cond.isInvalid())
-    Switch = Actions.ActOnStartOfSwitchStmt(Cond.release());
+    Switch = Actions.ActOnStartOfSwitchStmt(move_convert(Cond));
 
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -650,9 +651,9 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement() {
 
   if (Cond.isInvalid())
     return StmtError();
-  
-  return Owned(Actions.ActOnFinishSwitchStmt(SwitchLoc, Switch.release(),
-                                             Body.release()));
+
+  return Actions.ActOnFinishSwitchStmt(SwitchLoc, move_convert(Switch),
+                                       move_convert(Body));
 }
 
 /// ParseWhileStatement

@@ -284,29 +284,32 @@ namespace {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
-  
-    virtual StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
-                                      SourceLocation ColonLoc, StmtTy *SubStmt) {
+
+    virtual OwningStmtResult ActOnLabelStmt(SourceLocation IdentLoc,
+                                            IdentifierInfo *II,
+                                            SourceLocation ColonLoc,
+                                            StmtArg SubStmt) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
-  
-    virtual StmtResult ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
-                                   StmtTy *ThenVal, SourceLocation ElseLoc,
-                                   StmtTy *ElseVal) {
+
+    virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
+                                         StmtArg ThenVal,SourceLocation ElseLoc,
+                                         StmtArg ElseVal) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0; 
+      return StmtEmpty();
     }
-  
-    virtual StmtResult ActOnStartOfSwitchStmt(ExprTy *Cond) {
+
+    virtual OwningStmtResult ActOnStartOfSwitchStmt(ExprArg Cond) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
-  
-    virtual StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc, 
-                                             StmtTy *Switch, ExprTy *Body) {
+
+    virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
+                                                   StmtArg Switch,
+                                                   StmtArg Body) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
 
     virtual StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,

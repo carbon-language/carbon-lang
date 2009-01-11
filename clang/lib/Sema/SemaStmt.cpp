@@ -169,69 +169,73 @@ Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
   return Owned(DS);
 }
 
-Action::StmtResult
+Action::OwningStmtResult
 Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
-                     SourceLocation ColonLoc, StmtTy *subStmt) {
-  Stmt *SubStmt = static_cast<Stmt*>(subStmt);
+                     SourceLocation ColonLoc, StmtArg subStmt) {
+  Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = LabelMap[II];
-  
+
   // If not forward referenced or defined already, just create a new LabelStmt.
   if (LabelDecl == 0)
-    return LabelDecl = new LabelStmt(IdentLoc, II, SubStmt);
-  
+    return Owned(LabelDecl = new LabelStmt(IdentLoc, II, SubStmt));
+
   assert(LabelDecl->getID() == II && "Label mismatch!");
-  
+
   // Otherwise, this label was either forward reference or multiply defined.  If
   // multiply defined, reject it now.
   if (LabelDecl->getSubStmt()) {
     Diag(IdentLoc, diag::err_redefinition_of_label) << LabelDecl->getID();
     Diag(LabelDecl->getIdentLoc(), diag::note_previous_definition);
-    return SubStmt;
+    return Owned(SubStmt);
   }
-  
+
   // Otherwise, this label was forward declared, and we just found its real
   // definition.  Fill in the forward definition and return it.
   LabelDecl->setIdentLoc(IdentLoc);
   LabelDecl->setSubStmt(SubStmt);
-  return LabelDecl;
+  return Owned(LabelDecl);
 }
 
-Action::StmtResult 
-Sema::ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
-                  StmtTy *ThenVal, SourceLocation ElseLoc,
-                  StmtTy *ElseVal) {
-  Expr *condExpr = (Expr *)CondVal;
-  Stmt *thenStmt = (Stmt *)ThenVal;
-    
+Action::OwningStmtResult
+Sema::ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
+                  StmtArg ThenVal, SourceLocation ElseLoc,
+                  StmtArg ElseVal) {
+  Expr *condExpr = (Expr *)CondVal.release();
+
   assert(condExpr && "ActOnIfStmt(): missing expression");
-  
+
   DefaultFunctionArrayConversion(condExpr);
+  // Take ownership again until we're past the error checking.
+  CondVal = condExpr;
   QualType condType = condExpr->getType();
-  
+
   if (getLangOptions().CPlusPlus) {
     if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
-      return true;
+      return StmtError();
   } else if (!condType->isScalarType()) // C99 6.8.4.1p1
-    return Diag(IfLoc, diag::err_typecheck_statement_requires_scalar)
-      << condType << condExpr->getSourceRange();
+    return StmtError(Diag(IfLoc, diag::err_typecheck_statement_requires_scalar)
+      << condType << condExpr->getSourceRange());
+
+  Stmt *thenStmt = (Stmt *)ThenVal.release();
 
   // Warn if the if block has a null body without an else value.
   // this helps prevent bugs due to typos, such as
   // if (condition);
   //   do_stuff();
-  if (!ElseVal) { 
+  if (!ElseVal.get()) { 
     if (NullStmt* stmt = dyn_cast<NullStmt>(thenStmt))
       Diag(stmt->getSemiLoc(), diag::warn_empty_if_body);
   }
 
-  return new IfStmt(IfLoc, condExpr, thenStmt, (Stmt*)ElseVal);
+  CondVal.release();
+  return Owned(new IfStmt(IfLoc, condExpr, thenStmt, (Stmt*)ElseVal.release()));
 }
 
-Action::StmtResult
-Sema::ActOnStartOfSwitchStmt(ExprTy *cond) {
-  Expr *Cond = static_cast<Expr*>(cond);
-  
+Action::OwningStmtResult
+Sema::ActOnStartOfSwitchStmt(ExprArg cond) {
+  Expr *Cond = static_cast<Expr*>(cond.release());
+
   if (getLangOptions().CPlusPlus) {
     // C++ 6.4.2.p2:
     // The condition shall be of integral type, enumeration type, or of a class
@@ -256,10 +260,10 @@ Sema::ActOnStartOfSwitchStmt(ExprTy *cond) {
     // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
     UsualUnaryConversions(Cond);
   }
-  
+
   SwitchStmt *SS = new SwitchStmt(Cond);
   SwitchStack.push_back(SS);
-  return SS;
+  return Owned(SS);
 }
 
 /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
@@ -337,26 +341,26 @@ static bool CmpCaseVals(const std::pair<llvm::APSInt, CaseStmt*>& lhs,
   return false;
 }
 
-Action::StmtResult
-Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
-                            ExprTy *Body) {
-  Stmt *BodyStmt = (Stmt*)Body;
-  
+Action::OwningStmtResult
+Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
+                            StmtArg Body) {
+  Stmt *BodyStmt = (Stmt*)Body.release();
+
   SwitchStmt *SS = SwitchStack.back();
-  assert(SS == (SwitchStmt*)Switch && "switch stack missing push/pop!");
-    
+  assert(SS == (SwitchStmt*)Switch.get() && "switch stack missing push/pop!");
+
   SS->setBody(BodyStmt, SwitchLoc);
   SwitchStack.pop_back(); 
 
   Expr *CondExpr = SS->getCond();
   QualType CondType = CondExpr->getType();
-  
+
   if (!CondType->isIntegerType()) { // C99 6.8.4.2p1
     Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer)
       << CondType << CondExpr->getSourceRange();
-    return true;
+    return StmtError();
   }
-  
+
   // Get the bitwidth of the switched-on value before promotions.  We must
   // convert the integer case values to this width before comparison.
   unsigned CondWidth = static_cast<unsigned>(Context.getTypeSize(CondType));
@@ -382,7 +386,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
       if (TheDefaultStmt) {
         Diag(DS->getDefaultLoc(), diag::err_multiple_default_labels_defined);
         Diag(TheDefaultStmt->getDefaultLoc(), diag::note_duplicate_case_prev);
-            
+
         // FIXME: Remove the default statement from the switch block so that
         // we'll return a valid AST.  This requires recursing down the
         // AST and finding it, not something we are set up to do right now.  For
@@ -522,9 +526,10 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
   // FIXME: If the case list was broken is some way, we don't have a good system
   // to patch it up.  Instead, just return the whole substmt as broken.
   if (CaseListIsErroneous)
-    return true;
-  
-  return SS;
+    return StmtError();
+
+  Switch.release();
+  return Owned(SS);
 }
 
 Action::StmtResult

@@ -598,14 +598,16 @@ public:
   virtual OwningStmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
                                             SourceLocation ColonLoc,
                                             StmtArg SubStmt, Scope *CurScope);
-  virtual StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
-                                    SourceLocation ColonLoc, StmtTy *SubStmt);
-  virtual StmtResult ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
-                                 StmtTy *ThenVal, SourceLocation ElseLoc,
-                                 StmtTy *ElseVal);
-  virtual StmtResult ActOnStartOfSwitchStmt(ExprTy *Cond);
-  virtual StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
-                                           StmtTy *Switch, ExprTy *Body);
+  virtual OwningStmtResult ActOnLabelStmt(SourceLocation IdentLoc,
+                                          IdentifierInfo *II,
+                                          SourceLocation ColonLoc,
+                                          StmtArg SubStmt);
+  virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
+                                       StmtArg ThenVal, SourceLocation ElseLoc,
+                                       StmtArg ElseVal);
+  virtual OwningStmtResult ActOnStartOfSwitchStmt(ExprArg Cond);
+  virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
+                                                 StmtArg Switch, StmtArg Body);
   virtual StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
                                     StmtTy *Body);
   virtual StmtResult ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,

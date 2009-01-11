@@ -393,25 +393,27 @@ public:
                                             StmtArg SubStmt, Scope *CurScope){
     return StmtEmpty();
   }
-  
-  virtual StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
-                                    SourceLocation ColonLoc, StmtTy *SubStmt) {
-    return 0;
+
+  virtual OwningStmtResult ActOnLabelStmt(SourceLocation IdentLoc,
+                                          IdentifierInfo *II,
+                                          SourceLocation ColonLoc,
+                                          StmtArg SubStmt) {
+    return StmtEmpty();
   }
-  
-  virtual StmtResult ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
-                                 StmtTy *ThenVal, SourceLocation ElseLoc,
-                                 StmtTy *ElseVal) {
-    return 0; 
+
+  virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
+                                       StmtArg ThenVal, SourceLocation ElseLoc,
+                                       StmtArg ElseVal) {
+    return StmtEmpty();
   }
-  
-  virtual StmtResult ActOnStartOfSwitchStmt(ExprTy *Cond) {
-    return 0;
+
+  virtual OwningStmtResult ActOnStartOfSwitchStmt(ExprArg Cond) {
+    return StmtEmpty();
   }
-  
-  virtual StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc, 
-                                           StmtTy *Switch, ExprTy *Body) {
-    return 0;
+
+  virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
+                                                 StmtArg Switch, StmtArg Body) {
+    return StmtEmpty();
   }
 
   virtual StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
