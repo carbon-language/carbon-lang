@@ -7710,7 +7710,7 @@ static bool FindElementAtOffset(const Type *Ty, int64_t Offset,
   int64_t FirstIdx = 0;
   if (int64_t TySize = TD->getABITypeSize(Ty)) {
     FirstIdx = Offset/TySize;
-    Offset %= TySize;
+    Offset -= FirstIdx*TySize;
     
     // Handle hosts where % returns negative instead of values [0..TySize).
     if (Offset < 0) {
