@@ -17,6 +17,7 @@
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -662,6 +663,10 @@ private:
   /// \arg Args. See ABIArgInfo::Expand.
   void ExpandTypeToArgs(QualType Ty, RValue Src, 
                         llvm::SmallVector<llvm::Value*, 16> &Args);
+
+  llvm::Value* EmitAsmInput(const AsmStmt &S, TargetInfo::ConstraintInfo Info,
+                            const Expr *InputExpr, std::string &ConstraintStr);
+  
 };
 }  // end namespace CodeGen
 }  // end namespace clang
