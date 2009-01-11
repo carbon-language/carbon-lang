@@ -170,7 +170,7 @@ public:
   /// list for a call site.
   arg_iterator arg_begin() const {
     assert(getInstruction() && "Not a call or invoke instruction!");
-		// Skip non-arguments
+    // Skip non-arguments
     return getInstruction()->op_begin() + getArgumentOffset();
   }
 
