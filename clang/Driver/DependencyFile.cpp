@@ -34,7 +34,7 @@ class VISIBILITY_HIDDEN DependencyFileCallback : public PPCallbacks {
   const Preprocessor *PP;
   std::ofstream OS;
   const std::string &InputFile;
-  std::string Target;
+  std::vector<std::string> Targets;
 
 private:
   bool FileMatchesDepCriteria(const char *Filename,
@@ -45,7 +45,7 @@ public:
   DependencyFileCallback(const Preprocessor *PP, 
                          const std::string &InputFile,
                          const std::string &DepFile,
-                         const std::string &Target,
+                         const std::vector<std::string> &Targets,
                          const char  *&ErrStr);
   ~DependencyFileCallback();
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
@@ -73,8 +73,8 @@ static llvm::cl::opt<std::string>
 DependencyOutputFile("MF",
            llvm::cl::desc("Specify dependency output file"));
 
-static llvm::cl::opt<std::string>
-DependencyTarget("MT",
+static llvm::cl::list<std::string>
+DependencyTargets("MT",
          llvm::cl::desc("Specify target for dependency"));
 
 // FIXME: Implement feature
@@ -92,7 +92,7 @@ bool clang::CreateDependencyFileGen(Preprocessor *PP,
   ErrStr = NULL;
 
   if (!GenerateDependencyFile && !GenerateDependencyFileNoSysHeaders) {
-    if (!DependencyOutputFile.empty() || !DependencyTarget.empty() || 
+    if (!DependencyOutputFile.empty() || !DependencyTargets.empty() ||
         PhonyDependencyTarget)
       ErrStr = "Error: to generate dependencies you must specify -MD or -MMD\n";
     return false;
@@ -117,26 +117,26 @@ bool clang::CreateDependencyFileGen(Preprocessor *PP,
     DepFile.appendSuffix(DependencyFileExt);
   }
 
-  // Determine name of target
-  std::string Target;
-  if (!DependencyTarget.empty())
-    Target = DependencyTarget;
-  else if (!OutputFile.empty()) {
-    llvm::sys::Path TargetPath(OutputFile);
-    TargetPath.eraseSuffix();
-    TargetPath.appendSuffix(ObjectFileExt);
-    Target = TargetPath.toString();
-  }
-  else {
-    llvm::sys::Path TargetPath(InputFile);
-    TargetPath.eraseSuffix();
-    TargetPath.appendSuffix(ObjectFileExt);
-    Target = TargetPath.toString();
+  std::vector<std::string> Targets(DependencyTargets);
+
+  // Infer target name if unspecified
+  if (Targets.empty()) {
+    if (!OutputFile.empty()) {
+      llvm::sys::Path TargetPath(OutputFile);
+      TargetPath.eraseSuffix();
+      TargetPath.appendSuffix(ObjectFileExt);
+      Targets.push_back(TargetPath.toString());
+    } else {
+      llvm::sys::Path TargetPath(InputFile);
+      TargetPath.eraseSuffix();
+      TargetPath.appendSuffix(ObjectFileExt);
+      Targets.push_back(TargetPath.toString());
+    }
   }
 
   DependencyFileCallback *PPDep = 
     new DependencyFileCallback(PP, InputFile, DepFile.toString(),
-                               Target, ErrStr);
+                               Targets, ErrStr);
   if (ErrStr){
     delete PPDep;
     return false;
@@ -186,9 +186,25 @@ void DependencyFileCallback::OutputDependencyFile() {
   // dependency file as GCC (4.2), assuming the included files are the
   // same.
   const unsigned MaxColumns = 75;
-  
-  OS << Target << ":";
-  unsigned Columns = Target.length() + 1;
+  unsigned Columns = 0;
+
+  for (std::vector<std::string>::iterator
+         I = Targets.begin(), E = Targets.end(); I != E; ++I) {
+    unsigned N = I->length();
+    if (Columns == 0) {
+      Columns += N;
+      OS << *I;
+    } else if (Columns + N + 2 > MaxColumns) {
+      Columns = N + 2;
+      OS << " \\\n  " << *I;
+    } else {
+      Columns += N + 1;
+      OS << " " << *I;
+    }
+  }
+
+  OS << ":";
+  Columns += 1;
   
   // Now add each dependency in the order it was seen, but avoiding
   // duplicates.
@@ -221,9 +237,10 @@ void DependencyFileCallback::OutputDependencyFile() {
 DependencyFileCallback::DependencyFileCallback(const Preprocessor *PP,
                                                const std::string &InputFile,
                                                const std::string &DepFile,
-                                               const std::string &Target,
+                                               const std::vector<std::string>
+                                               &Targets,
                                                const char  *&ErrStr)
-  : PP(PP), InputFile(InputFile), Target(Target) {
+  : PP(PP), InputFile(InputFile), Targets(Targets) {
 
   OS.open(DepFile.c_str());
   if (OS.fail())
