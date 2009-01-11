@@ -860,6 +860,29 @@ static std::string SimplifyConstraint(const char* Constraint,
   return Result;
 }
 
+llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
+                                           TargetInfo::ConstraintInfo Info, 
+                                           const Expr *InputExpr,
+                                           std::string &ConstraintStr)
+{
+  llvm::Value *Arg;
+  if ((Info & TargetInfo::CI_AllowsRegister) ||
+      !(Info & TargetInfo::CI_AllowsMemory)) {      
+    if (ConvertType(InputExpr->getType())->isSingleValueType()) {
+      Arg = EmitScalarExpr(InputExpr);
+    } else {
+      ErrorUnsupported(&S,
+                       "asm statement passing multiple-value types as inputs");
+    }
+  } else {
+    LValue Dest = EmitLValue(InputExpr);
+    Arg = Dest.getAddress();
+    ConstraintStr += '*';
+  }
+  
+  return Arg;
+}
+
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   bool Failed;
   std::string AsmString = 
@@ -916,24 +939,10 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     }
     
     if (Info & TargetInfo::CI_ReadWrite) {
-      // FIXME: This code should be shared with the code that handles inputs.
       InOutConstraints += ',';
-      
+
       const Expr *InputExpr = S.getOutputExpr(i);
-      llvm::Value *Arg;
-      if ((Info & TargetInfo::CI_AllowsRegister) ||
-          !(Info & TargetInfo::CI_AllowsMemory)) {      
-        if (ConvertType(InputExpr->getType())->isSingleValueType()) {
-          Arg = EmitScalarExpr(InputExpr);
-        } else {
-          ErrorUnsupported(&S,
-                      "asm statement passing multiple-value types as inputs");
-        }
-      } else {
-        LValue Dest = EmitLValue(InputExpr);
-        Arg = Dest.getAddress();
-        InOutConstraints += '*';
-      }
+      llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, InOutConstraints);
       
       InOutArgTypes.push_back(Arg->getType());
       InOutArgs.push_back(Arg);
@@ -960,21 +969,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     // Simplify the input constraint.
     InputConstraint = SimplifyConstraint(InputConstraint.c_str(), Target);
 
-    llvm::Value *Arg;
-    
-    if ((Info & TargetInfo::CI_AllowsRegister) ||
-        !(Info & TargetInfo::CI_AllowsMemory)) {      
-      if (ConvertType(InputExpr->getType())->isSingleValueType()) {
-        Arg = EmitScalarExpr(InputExpr);
-      } else {
-        ErrorUnsupported(&S,
-                        "asm statement passing multiple-value types as inputs");
-      }
-    } else {
-      LValue Dest = EmitLValue(InputExpr);
-      Arg = Dest.getAddress();
-      Constraints += '*';
-    }
+    llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, Constraints);
     
     ArgTypes.push_back(Arg->getType());
     Args.push_back(Arg);
