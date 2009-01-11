@@ -144,11 +144,11 @@ class Driver(object):
             self.claim(hasHashHashHash)
             for j in jobs.iterjobs():
                 if isinstance(j, Jobs.Command):
-                    print '"%s"' % '" "'.join(j.getArgv())
+                    print >>sys.stderr, '"%s"' % '" "'.join(j.getArgv())
                 elif isinstance(j, Jobs.PipedJob):
                     for c in j.commands:
-                        print '"%s" %c' % ('" "'.join(c.getArgv()),
-                                           "| "[c is j.commands[-1]])
+                        print >>sys.stderr, '"%s" %c' % ('" "'.join(c.getArgv()),
+                                                         "| "[c is j.commands[-1]])
                 elif not isinstance(j, JobList):
                     raise ValueError,'Encountered unknown job.'
             sys.exit(0)
@@ -308,6 +308,10 @@ class Driver(object):
                 # that other code which needs to know the inputs
                 # handles this properly. Best not to try and lipo
                 # this, for example.
+                #
+                # FIXME: Actually, this is just flat out broken, the
+                # tools expect inputs to be accessible by .getValue
+                # but that of course only yields the argument.
                 inputs.append((Types.ObjectType, a))
             elif a.opt is self.parser.xOption:
                 self.claim(a)
