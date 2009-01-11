@@ -62,7 +62,6 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
 }
 
 ObjCContainerDecl::~ObjCContainerDecl() {
-  delete [] PropertyDecl;
 }
 
 ObjCInterfaceDecl::~ObjCInterfaceDecl() {
@@ -390,20 +389,9 @@ unsigned ObjCContainerDecl::getNumProperties() const {
   return sum;
 }
 
-/// addProperties - Insert property declaration AST nodes into
-/// ObjCContainerDecl's PropertyDecl field.
-///
-void ObjCContainerDecl::addProperties(ObjCPropertyDecl **Properties, 
-                                      unsigned NumProperties) {
-  if (NumProperties == 0) return;
-  
-  NumPropertyDecl = NumProperties;
-  PropertyDecl = new ObjCPropertyDecl*[NumProperties];
-  memcpy(PropertyDecl, Properties, NumProperties*sizeof(ObjCPropertyDecl*));
-}
-
 /// FindPropertyDeclaration - Finds declaration of the property given its name
 /// in 'PropertyId' and returns it. It returns 0, if not found.
+/// FIXME: Convert to DeclContext lookup...
 ///
 ObjCPropertyDecl *
 ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {

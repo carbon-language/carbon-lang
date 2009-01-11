@@ -250,33 +250,25 @@ public:
 /// Current sub-classes are ObjCInterfaceDecl, ObjCCategoryDecl, and
 /// ObjCProtocolDecl. 
 /// FIXME: Use for ObjC implementation decls.
-/// FIXME: Convert property implementation to DeclContext::addDecl(). Holding
-/// off until we have an iterator adaptor that plays with DeclContext.
 ///
 class ObjCContainerDecl : public ScopedDecl, public DeclContext {
-  /// class properties
-  ObjCPropertyDecl **PropertyDecl;  // Null if no property
-  unsigned NumPropertyDecl;  // 0 if none.
-  
   SourceLocation AtEndLoc; // marks the end of the method container.
 public:
 
   ObjCContainerDecl(Kind DK, DeclContext *DC, SourceLocation L, 
                     IdentifierInfo *Id)
-    : ScopedDecl(DK, DC, L, Id), DeclContext(DK),
-      PropertyDecl(0), NumPropertyDecl(0) {}
+    : ScopedDecl(DK, DC, L, Id), DeclContext(DK) {}
 
   virtual ~ObjCContainerDecl();
 
-  void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
-  
-  typedef ObjCPropertyDecl * const * prop_iterator;
-  prop_iterator prop_begin() const { return PropertyDecl; }
-  prop_iterator prop_end() const {
-    return PropertyDecl+NumPropertyDecl;
+  // Iterator access to properties.
+  typedef specific_decl_iterator<ObjCPropertyDecl> prop_iterator;
+  prop_iterator prop_begin() const { 
+    return prop_iterator(decls_begin(), decls_end());
   }
-  
-  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
+  prop_iterator prop_end() const { 
+    return prop_iterator(decls_end(), decls_end());
+  }
   
   // Iterator access to instance/class methods.
   typedef specific_decl_iterator<ObjCMethodDecl> method_iterator;
@@ -310,6 +302,8 @@ public:
   // Get the local instance/class method declared in this interface.
   ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
   ObjCMethodDecl *getClassMethod(Selector Sel) const;
+
+  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
 
   // Get the number of methods, properties. These methods are slow, O(n).
   unsigned getNumInstanceMethods() const;

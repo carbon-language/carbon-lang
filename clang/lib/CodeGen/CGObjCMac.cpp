@@ -341,9 +341,8 @@ private:
   /// EmitPropertyList - Emit the given property list. The return
   /// value has type PropertyListPtrTy.
   llvm::Constant *EmitPropertyList(const std::string &Name,
-                                   const Decl *Container,
-                                   ObjCPropertyDecl * const *begin,
-                                   ObjCPropertyDecl * const *end);
+                                   const Decl *Container, 
+                                   const ObjCContainerDecl *OCD);
 
   /// GetOrEmitProtocol - Get the protocol object for the given
   /// declaration, emitting it if necessary. The return value has type
@@ -783,9 +782,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
                        OptClassMethods);
   Values[3] = EmitPropertyList("\01L_OBJC_$_PROP_PROTO_LIST_" + 
                                    PD->getNameAsString(),
-                               0,
-                               PD->prop_begin(),
-                               PD->prop_end());
+                               0, PD);
 
   // Return null if no extension bits are used.
   if (Values[1]->isNullValue() && Values[2]->isNullValue() && 
@@ -863,11 +860,11 @@ CGObjCMac::EmitProtocolList(const std::string &Name,
 */
 llvm::Constant *CGObjCMac::EmitPropertyList(const std::string &Name,
                                             const Decl *Container,
-                                            ObjCPropertyDecl * const *begin,
-                                            ObjCPropertyDecl * const *end) {
+                                            const ObjCContainerDecl *OCD) {
   std::vector<llvm::Constant*> Properties, Prop(2);
-  for (; begin != end; ++begin) {
-    const ObjCPropertyDecl *PD = *begin;
+  for (ObjCContainerDecl::prop_iterator I = OCD->prop_begin(), 
+       E = OCD->prop_end(); I != E; ++I) {
+    const ObjCPropertyDecl *PD = *I;
     Prop[0] = GetPropertyName(PD->getIdentifier());
     Prop[1] = GetPropertyTypeString(PD, Container);
     Properties.push_back(llvm::ConstantStruct::get(ObjCTypes.PropertyTy,
@@ -1003,9 +1000,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   // If there is no category @interface then there can be no properties.
   if (Category) {
     Values[6] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_LIST_") + ExtName,
-                                 OCD,
-                                 Category->prop_begin(),
-                                 Category->prop_end());
+                                 OCD, Category);
   } else {
     Values[6] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
   }
@@ -1280,9 +1275,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   // FIXME: Output weak_ivar_layout string.
   Values[1] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
   Values[2] = EmitPropertyList("\01L_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
-                               ID,
-                               ID->getClassInterface()->prop_begin(),
-                               ID->getClassInterface()->prop_end());
+                               ID, ID->getClassInterface());
 
   // Return null if no extension bits are used.
   if (Values[1]->isNullValue() && Values[2]->isNullValue())

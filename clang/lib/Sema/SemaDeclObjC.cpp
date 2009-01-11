@@ -1143,14 +1143,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
          || isa<ObjCProtocolDecl>(ClassDecl);
   bool checkIdenticalMethods = isa<ObjCImplementationDecl>(ClassDecl);
 
-  if (pNum != 0) {
-    if (ObjCContainerDecl *CDecl = dyn_cast<ObjCContainerDecl>(ClassDecl))
-      CDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
-    else
-      assert(false && "ActOnAtEnd - property declaration misplaced");
-  }
   DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
-  assert(DC && "Missing DeclContext");
 
   // FIXME: Remove these and use the ObjCContainerDecl/DeclContext.
   llvm::DenseMap<Selector, const ObjCMethodDecl*> InsMap;
@@ -1525,10 +1518,11 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   if (t->isArrayType() || t->isFunctionType())
     Diag(AtLoc, diag::err_property_type) << T;
   
-  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, CurContext, AtLoc, 
+  DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
+  assert(DC && "ClassDecl is not a DeclContext");
+  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC, AtLoc, 
                                                      FD.D.getIdentifier(), T);
-  // FIXME: PushOnScopeChains?
-  CurContext->addDecl(Context, PDecl);
+  DC->addDecl(Context, PDecl);
 
   // Regardless of setter/getter attribute, we save the default getter/setter
   // selector names in anticipation of declaration of setter/getter methods.
