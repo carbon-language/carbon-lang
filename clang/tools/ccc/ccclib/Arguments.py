@@ -234,6 +234,34 @@ class ArgList:
 
         raise RuntimeError,'Unknown source ID for index.'
 
+    def addLastArg(self, output, option):
+        """addLastArgs - Extend the given output vector with the last
+        instance of a given option."""
+        arg = self.getLastArg(option)
+        if arg:
+            output.extend(self.render(arg))
+
+    def addAllArgs(self, output, option):
+        """addAllArgs - Extend the given output vector with all
+        instances of a given option."""
+        for arg in self.getArgs(option):
+            output.extend(self.render(arg))
+
+    def addAllArgsTranslated(self, output, option, translation):
+        """addAllArgsTranslated - Extend the given output vector with
+        all instances of a given option, rendered as separate
+        arguments with the actual option name translated to a user
+        specified string. For example, '-foox' will be render as
+        ['-bar', 'x'] if '-foo' was the option and '-bar' was the
+        translation.
+        
+        This routine expects that the option can only yield ValueArg
+        instances."""
+        for arg in self.getArgs(option):
+            assert isinstance(arg, ValueArg)
+            output.append(translation)
+            output.append(self.getValue(arg))
+
     def makeIndex(self, *strings):
         pos = len(self.syntheticArgv)
         self.syntheticArgv.extend(strings)
@@ -466,6 +494,7 @@ class OptionParser:
         self.Zsegs_read_only_addrOption = self.addOption(JoinedOrSeparateOption('-Zsegs_read_only_addr'))
         self.Zsegs_read_write_addrOption = self.addOption(JoinedOrSeparateOption('-Zsegs_read_write_addr'))
         self.Zsingle_moduleOption = self.addOption(FlagOption('-Zsingle_module'))
+        self.ZumbrellaOption = self.addOption(JoinedOrSeparateOption('-Zumbrella'))
         self.Zunexported_symbols_listOption = self.addOption(JoinedOrSeparateOption('-Zunexported_symbols_list'))
         self.Zweak_reference_mismatchesOption = self.addOption(JoinedOrSeparateOption('-Zweak_reference_mismatches'))
 
