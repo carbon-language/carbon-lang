@@ -25,94 +25,65 @@ using namespace llvm;
 //                            CallSite Class
 //===----------------------------------------------------------------------===//
 
+#define CALLSITE_DELEGATE_GETTER(METHOD) \
+  Instruction *II(getInstruction());     \
+  return isCall()                        \
+    ? cast<CallInst>(II)->METHOD         \
+    : cast<InvokeInst>(II)->METHOD
+
+#define CALLSITE_DELEGATE_SETTER(METHOD) \
+  Instruction *II(getInstruction());     \
+  if (isCall())                          \
+    cast<CallInst>(II)->METHOD;          \
+  else                                   \
+    cast<InvokeInst>(II)->METHOD
+
 CallSite::CallSite(Instruction *C) {
   assert((isa<CallInst>(C) || isa<InvokeInst>(C)) && "Not a call!");
-  I = C;
+  I.setPointer(C);
+  I.setInt(isa<CallInst>(C));
 }
 unsigned CallSite::getCallingConv() const {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    return CI->getCallingConv();
-  else
-    return cast<InvokeInst>(I)->getCallingConv();
+  CALLSITE_DELEGATE_GETTER(getCallingConv());
 }
 void CallSite::setCallingConv(unsigned CC) {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    CI->setCallingConv(CC);
-  else
-    cast<InvokeInst>(I)->setCallingConv(CC);
+  CALLSITE_DELEGATE_SETTER(setCallingConv(CC));
 }
 const AttrListPtr &CallSite::getAttributes() const {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    return CI->getAttributes();
-  else
-    return cast<InvokeInst>(I)->getAttributes();
+  CALLSITE_DELEGATE_GETTER(getAttributes());
 }
 void CallSite::setAttributes(const AttrListPtr &PAL) {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    CI->setAttributes(PAL);
-  else
-    cast<InvokeInst>(I)->setAttributes(PAL);
+  CALLSITE_DELEGATE_SETTER(setAttributes(PAL));
 }
 bool CallSite::paramHasAttr(uint16_t i, Attributes attr) const {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    return CI->paramHasAttr(i, attr);
-  else
-    return cast<InvokeInst>(I)->paramHasAttr(i, attr);
+  CALLSITE_DELEGATE_GETTER(paramHasAttr(i, attr));
 }
 uint16_t CallSite::getParamAlignment(uint16_t i) const {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    return CI->getParamAlignment(i);
-  else
-    return cast<InvokeInst>(I)->getParamAlignment(i);
+  CALLSITE_DELEGATE_GETTER(getParamAlignment(i));
 }
-
 bool CallSite::doesNotAccessMemory() const {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    return CI->doesNotAccessMemory();
-  else
-    return cast<InvokeInst>(I)->doesNotAccessMemory();
+  CALLSITE_DELEGATE_GETTER(doesNotAccessMemory());
 }
 void CallSite::setDoesNotAccessMemory(bool doesNotAccessMemory) {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    CI->setDoesNotAccessMemory(doesNotAccessMemory);
-  else
-    cast<InvokeInst>(I)->setDoesNotAccessMemory(doesNotAccessMemory);
+  CALLSITE_DELEGATE_SETTER(setDoesNotAccessMemory(doesNotAccessMemory));
 }
 bool CallSite::onlyReadsMemory() const {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    return CI->onlyReadsMemory();
-  else
-    return cast<InvokeInst>(I)->onlyReadsMemory();
+  CALLSITE_DELEGATE_GETTER(onlyReadsMemory());
 }
 void CallSite::setOnlyReadsMemory(bool onlyReadsMemory) {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    CI->setOnlyReadsMemory(onlyReadsMemory);
-  else
-    cast<InvokeInst>(I)->setOnlyReadsMemory(onlyReadsMemory);
+  CALLSITE_DELEGATE_SETTER(setOnlyReadsMemory(onlyReadsMemory));
 }
 bool CallSite::doesNotReturn() const {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    return CI->doesNotReturn();
-  else
-    return cast<InvokeInst>(I)->doesNotReturn();
+ CALLSITE_DELEGATE_GETTER(doesNotReturn());
 }
 void CallSite::setDoesNotReturn(bool doesNotReturn) {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    CI->setDoesNotReturn(doesNotReturn);
-  else
-    cast<InvokeInst>(I)->setDoesNotReturn(doesNotReturn);
+  CALLSITE_DELEGATE_SETTER(setDoesNotReturn(doesNotReturn));
 }
 bool CallSite::doesNotThrow() const {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    return CI->doesNotThrow();
-  else
-    return cast<InvokeInst>(I)->doesNotThrow();
+  CALLSITE_DELEGATE_GETTER(doesNotThrow());
 }
 void CallSite::setDoesNotThrow(bool doesNotThrow) {
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    CI->setDoesNotThrow(doesNotThrow);
-  else
-    cast<InvokeInst>(I)->setDoesNotThrow(doesNotThrow);
+  CALLSITE_DELEGATE_SETTER(setDoesNotThrow(doesNotThrow));
 }
 
 bool CallSite::hasArgument(const Value *Arg) const {
@@ -121,6 +92,9 @@ bool CallSite::hasArgument(const Value *Arg) const {
       return true;
   return false;
 }
+
+#undef CALLSITE_DELEGATE_GETTER
+#undef CALLSITE_DELEGATE_SETTER
 
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
@@ -1442,7 +1416,7 @@ InsertValueInst::InsertValueInst(Value *Agg,
 //===----------------------------------------------------------------------===//
 
 void ExtractValueInst::init(const unsigned *Idx, unsigned NumIdx,
-			    const std::string &Name) {
+                            const std::string &Name) {
   assert(NumOperands == 1 && "NumOperands not initialized?");
 
   Indices.insert(Indices.end(), Idx, Idx + NumIdx);

@@ -14,15 +14,19 @@
 // passed by value, not by reference; it should not be "new"ed or "delete"d. It
 // is efficiently copyable, assignable and constructable, with cost equivalent
 // to copying a pointer (notice that it has only a single data member).
+// The internal representation carries a flag which indicates which of the two
+// variants is enclosed. This allows for cheaper checks when various accessors
+// of CallSite are employed.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_SUPPORT_CALLSITE_H
 #define LLVM_SUPPORT_CALLSITE_H
 
-#include "llvm/Instruction.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Attributes.h"
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Instruction.h"
 
 namespace llvm {
 
@@ -30,17 +34,19 @@ class CallInst;
 class InvokeInst;
 
 class CallSite {
-  Instruction *I;
+  PointerIntPair<Instruction*, 1, bool> I;
 public:
-  CallSite() : I(0) {}
-  CallSite(CallInst *CI) : I(reinterpret_cast<Instruction*>(CI)) {}
-  CallSite(InvokeInst *II) : I(reinterpret_cast<Instruction*>(II)) {}
+  CallSite() : I(0, false) {}
+  CallSite(CallInst *CI) : I(reinterpret_cast<Instruction*>(CI), true) {}
+  CallSite(InvokeInst *II) : I(reinterpret_cast<Instruction*>(II), false) {}
   CallSite(Instruction *C);
   CallSite(const CallSite &CS) : I(CS.I) {}
   CallSite &operator=(const CallSite &CS) { I = CS.I; return *this; }
 
-  bool operator==(const CallSite &CS) const { return I == CS.I; }
-  bool operator!=(const CallSite &CS) const { return I != CS.I; }
+  bool operator==(const CallSite &CS) const { return getInstruction()
+                                                == CS.getInstruction(); }
+  bool operator!=(const CallSite &CS) const { return getInstruction()
+                                                != CS.getInstruction(); }
   
   /// CallSite::get - This static method is sort of like a constructor.  It will
   /// create an appropriate call site for a Call or Invoke instruction, but it
@@ -91,21 +97,31 @@ public:
 
   /// getType - Return the type of the instruction that generated this call site
   ///
-  const Type *getType() const { return I->getType(); }
+  const Type *getType() const { return getInstruction()->getType(); }
+
+  /// isCall - true if a CallInst is enclosed.
+  /// Note that !isCall() does not mean it is an InvokeInst enclosed,
+  /// it also could signify a NULL Instruction pointer.
+  bool isCall() const { return I.getInt(); }
+
+  /// isInvoke - true if a InvokeInst is enclosed.
+  ///
+  bool isInvoke() const { return getInstruction() && !I.getInt(); }
 
   /// getInstruction - Return the instruction this call site corresponds to
   ///
-  Instruction *getInstruction() const { return I; }
+  Instruction *getInstruction() const { return I.getPointer(); }
 
   /// getCaller - Return the caller function for this call site
   ///
-  Function *getCaller() const { return I->getParent()->getParent(); }
+  Function *getCaller() const { return getInstruction()
+                                  ->getParent()->getParent(); }
 
   /// getCalledValue - Return the pointer to function that is being called...
   ///
   Value *getCalledValue() const {
-    assert(I && "Not a call or invoke instruction!");
-    return I->getOperand(0);
+    assert(getInstruction() && "Not a call or invoke instruction!");
+    return getInstruction()->getOperand(0);
   }
 
   /// getCalledFunction - Return the function being called if this is a direct
@@ -118,8 +134,8 @@ public:
   /// setCalledFunction - Set the callee to the specified value...
   ///
   void setCalledFunction(Value *V) {
-    assert(I && "Not a call or invoke instruction!");
-    I->setOperand(0, V);
+    assert(getInstruction() && "Not a call or invoke instruction!");
+    getInstruction()->setOperand(0, V);
   }
 
   Value *getArgument(unsigned ArgNo) const {
@@ -128,9 +144,9 @@ public:
   }
 
   void setArgument(unsigned ArgNo, Value* newVal) {
-    assert(I && "Not a call or invoke instruction!");
+    assert(getInstruction() && "Not a call or invoke instruction!");
     assert(arg_begin() + ArgNo < arg_end() && "Argument # out of range!");
-    I->setOperand(getArgumentOffset() + ArgNo, newVal);
+    getInstruction()->setOperand(getArgumentOffset() + ArgNo, newVal);
   }
 
   /// Given an operand number, returns the argument that corresponds to it.
@@ -153,11 +169,12 @@ public:
   /// arg_begin/arg_end - Return iterators corresponding to the actual argument
   /// list for a call site.
   arg_iterator arg_begin() const {
-    assert(I && "Not a call or invoke instruction!");
-    return I->op_begin() + getArgumentOffset(); // Skip non-arguments
+    assert(getInstruction() && "Not a call or invoke instruction!");
+		// Skip non-arguments
+    return getInstruction()->op_begin() + getArgumentOffset();
   }
 
-  arg_iterator arg_end() const { return I->op_end(); }
+  arg_iterator arg_end() const { return getInstruction()->op_end(); }
   bool arg_empty() const { return arg_end() == arg_begin(); }
   unsigned arg_size() const { return unsigned(arg_end() - arg_begin()); }
 
@@ -168,7 +185,7 @@ public:
 private:
   /// Returns the operand number of the first argument
   unsigned getArgumentOffset() const {
-    if (I->getOpcode() == Instruction::Call)
+    if (isCall())
       return 1; // Skip Function
     else
       return 3; // Skip Function, BB, BB
