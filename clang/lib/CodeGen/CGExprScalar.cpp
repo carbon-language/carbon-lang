@@ -1021,9 +1021,8 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
       Result = Builder.CreateOr(ResultR, ResultI, "or.ri");
     }
   }
-  
-  // ZExt result to int.
-  return Builder.CreateZExt(Result, CGF.LLVMIntTy, "cmp.ext");
+
+  return EmitScalarConversion(Result, CGF.getContext().BoolTy, E->getType());
 }
 
 Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
