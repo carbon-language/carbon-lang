@@ -69,7 +69,7 @@ class MultiArgOption(Option):
         self.numArgs = numArgs
 
     def accept(self, index, arg, it):
-        if arg.startswith(self.name):
+        if arg == self.name:
             try:
                 values = [it.next()[1] for i in range(self.numArgs)]
             except StopIteration:
@@ -210,6 +210,16 @@ class ArgList:
         self.lastArgs = {}
         self.args = []
 
+    def getArgs(self, option):
+        # FIXME: How efficient do we want to make this. One reasonable
+        # solution would be to embed a linked list inside each arg and
+        # automatically chain them (with pointers to head and
+        # tail). This gives us efficient access to the (first, last,
+        # all) arg(s) with little overhead.
+        for arg in self.args:
+            if arg.opt is option:
+                yield arg
+
     def getLastArg(self, option):
         return self.lastArgs.get(option)
 
@@ -321,8 +331,11 @@ class OptionParser:
         self.pipeOption = self.addOption(FlagOption('-pipe'))
         self.saveTempsOption = self.addOption(FlagOption('-save-temps'))
         self.saveTempsOption2 = self.addOption(FlagOption('--save-temps'))
+        # FIXME: Error out if this is used.
         self.addOption(JoinedOption('-specs='))
+        # FIXME: Implement.
         self.addOption(FlagOption('-time'))
+        # FIXME: Implement.
         self.addOption(FlagOption('-v'))
 
         # Input/output stuff
@@ -363,36 +376,51 @@ class OptionParser:
         self.addOption(FlagOption('-MM'))
         self.addOption(JoinedOrSeparateOption('-MF'))
         self.addOption(JoinedOrSeparateOption('-MT'))
+        self.MachOption = self.addOption(FlagOption('-Mach'))
         self.addOption(FlagOption('-undef'))
 
-        self.addOption(FlagOption('-w'))
+        self.wOption = self.addOption(FlagOption('-w'))
         self.addOption(JoinedOrSeparateOption('-allowable_client'))
-        self.addOption(JoinedOrSeparateOption('-client_name'))
-        self.addOption(JoinedOrSeparateOption('-compatibility_version'))
-        self.addOption(JoinedOrSeparateOption('-current_version'))
+        self.client_nameOption = self.addOption(JoinedOrSeparateOption('-client_name'))
+        self.compatibility_versionOption = self.addOption(JoinedOrSeparateOption('-compatibility_version'))
+        self.current_versionOption = self.addOption(JoinedOrSeparateOption('-current_version'))
+        self.dylinkerOption = self.addOption(FlagOption('-dylinker'))
+        self.dylinker_install_nameOption = self.addOption(JoinedOrSeparateOption('-dylinker_install_name'))
         self.addOption(JoinedOrSeparateOption('-exported_symbols_list'))
         self.addOption(JoinedOrSeparateOption('-idirafter'))
         self.addOption(JoinedOrSeparateOption('-iquote'))
-        self.addOption(JoinedOrSeparateOption('-isysroot'))
-        self.addOption(JoinedOrSeparateOption('-keep_private_externs'))
-        self.addOption(JoinedOrSeparateOption('-seg1addr'))
-        self.addOption(JoinedOrSeparateOption('-segprot'))
-        self.addOption(JoinedOrSeparateOption('-sub_library'))
-        self.addOption(JoinedOrSeparateOption('-sub_umbrella'))
-        self.addOption(JoinedOrSeparateOption('-umbrella'))
-        self.addOption(JoinedOrSeparateOption('-undefined'))
+        self.isysrootOption = self.addOption(JoinedOrSeparateOption('-isysroot'))
+        self.keep_private_externsOption = self.addOption(JoinedOrSeparateOption('-keep_private_externs'))
+        self.private_bundleOption = self.addOption(FlagOption('-private_bundle'))
+        self.seg1addrOption = self.addOption(JoinedOrSeparateOption('-seg1addr'))
+        self.segprotOption = self.addOption(JoinedOrSeparateOption('-segprot'))
+        self.sub_libraryOption = self.addOption(JoinedOrSeparateOption('-sub_library'))
+        self.sub_umbrellaOption = self.addOption(JoinedOrSeparateOption('-sub_umbrella'))
+        self.umbrellaOption = self.addOption(JoinedOrSeparateOption('-umbrella'))
+        self.undefinedOption = self.addOption(JoinedOrSeparateOption('-undefined'))
         self.addOption(JoinedOrSeparateOption('-unexported_symbols_list'))
         self.addOption(JoinedOrSeparateOption('-weak_framework'))
-        self.addOption(JoinedOption('-headerpad_max_install_names'))
-        self.addOption(FlagOption('-twolevel_namespace'))
-        self.addOption(FlagOption('-prebind'))
-        self.addOption(FlagOption('-prebind_all_twolevel_modules'))
+        self.headerpad_max_install_namesOption = self.addOption(JoinedOption('-headerpad_max_install_names'))
+        self.twolevel_namespaceOption = self.addOption(FlagOption('-twolevel_namespace'))
+        self.twolevel_namespace_hintsOption = self.addOption(FlagOption('-twolevel_namespace_hints'))
+        self.prebindOption = self.addOption(FlagOption('-prebind'))
+        self.noprebindOption = self.addOption(FlagOption('-noprebind'))
+        self.nofixprebindingOption = self.addOption(FlagOption('-nofixprebinding'))
+        self.prebind_all_twolevel_modulesOption = self.addOption(FlagOption('-prebind_all_twolevel_modules'))
+        self.read_only_relocsOption = self.addOption(SeparateOption('-read_only_relocs'))
         self.addOption(FlagOption('-single_module'))
-        self.addOption(FlagOption('-nomultidefs'))
-        self.addOption(FlagOption('-nostdlib'))
+        self.nomultidefsOption = self.addOption(FlagOption('-nomultidefs'))
+        self.nostartfilesOption = self.addOption(FlagOption('-nostartfiles'))
+        self.nodefaultlibsOption = self.addOption(FlagOption('-nodefaultlibs'))
+        self.nostdlibOption = self.addOption(FlagOption('-nostdlib'))
         self.addOption(FlagOption('-nostdinc'))
-        self.addOption(FlagOption('-static'))
+        self.objectOption = self.addOption(FlagOption('-object'))
+        self.preloadOption = self.addOption(FlagOption('-preload'))
+        self.staticOption = self.addOption(FlagOption('-static'))
+        self.pagezero_sizeOption = self.addOption(FlagOption('-pagezero_size'))
         self.addOption(FlagOption('-shared'))
+        self.staticLibgccOption = self.addOption(FlagOption('-static-libgcc'))
+        self.sharedLibgccOption = self.addOption(FlagOption('-shared-libgcc'))
         self.addOption(FlagOption('-C'))
         self.addOption(FlagOption('-CC'))
         self.addOption(FlagOption('-R'))
@@ -402,25 +430,62 @@ class OptionParser:
         self.addOption(FlagOption('-traditional'))
         self.addOption(FlagOption('--traditional'))
         self.addOption(FlagOption('-no_dead_strip_inits_and_terms'))
-        self.addOption(MultiArgOption('-sectalign', numArgs=3))
-        self.addOption(MultiArgOption('-sectcreate', numArgs=3))
-        self.addOption(MultiArgOption('-sectorder', numArgs=3))
+        self.whyloadOption = self.addOption(FlagOption('-whyload'))
+        self.whatsloadedOption = self.addOption(FlagOption('-whatsloaded'))
+        self.sectalignOption = self.addOption(MultiArgOption('-sectalign', numArgs=3))
+        self.sectobjectsymbolsOption = self.addOption(MultiArgOption('-sectobjectsymbols', numArgs=2))
+        self.segcreateOption = self.addOption(MultiArgOption('-segcreate', numArgs=3))
+        self.segs_read_Option = self.addOption(JoinedOption('-segs_read_'))
+        self.seglinkeditOption = self.addOption(FlagOption('-seglinkedit'))
+        self.noseglinkeditOption = self.addOption(FlagOption('-noseglinkedit'))
+        self.sectcreateOption = self.addOption(MultiArgOption('-sectcreate', numArgs=3))
+        self.sectorderOption = self.addOption(MultiArgOption('-sectorder', numArgs=3))
+        self.Zall_loadOption = self.addOption(FlagOption('-Zall_load'))
+        self.Zallowable_clientOption = self.addOption(SeparateOption('-Zallowable_client'))
+        self.Zbind_at_loadOption = self.addOption(SeparateOption('-Zbind_at_load'))
+        self.ZbundleOption = self.addOption(FlagOption('-Zbundle'))
+        self.Zbundle_loaderOption = self.addOption(JoinedOrSeparateOption('-Zbundle_loader'))
+        self.Zdead_stripOption = self.addOption(FlagOption('-Zdead_strip'))
+        self.Zdylib_fileOption = self.addOption(JoinedOrSeparateOption('-Zdylib_file'))
+        self.ZdynamicOption = self.addOption(FlagOption('-Zdynamic'))
+        self.ZdynamiclibOption = self.addOption(FlagOption('-Zdynamiclib'))
+        self.Zexported_symbols_listOption = self.addOption(JoinedOrSeparateOption('-Zexported_symbols_list'))
+        self.Zflat_namespaceOption = self.addOption(FlagOption('-Zflat_namespace'))
+        self.Zfn_seg_addr_table_filenameOption = self.addOption(JoinedOrSeparateOption('-Zfn_seg_addr_table_filename'))
+        self.Zforce_cpusubtype_ALLOption = self.addOption(FlagOption('-Zforce_cpusubtype_ALL'))
+        self.Zforce_flat_namespaceOption = self.addOption(FlagOption('-Zforce_flat_namespace'))
+        self.Zimage_baseOption = self.addOption(FlagOption('-Zimage_base'))
+        self.ZinitOption = self.addOption(JoinedOrSeparateOption('-Zinit'))
+        self.Zmulti_moduleOption = self.addOption(FlagOption('-Zmulti_module'))
+        self.Zmultiply_definedOption = self.addOption(JoinedOrSeparateOption('-Zmultiply_defined'))
+        self.ZmultiplydefinedunusedOption = self.addOption(JoinedOrSeparateOption('-Zmultiplydefinedunused'))
+        self.ZmultiplydefinedunusedOption = self.addOption(JoinedOrSeparateOption('-Zmultiplydefinedunused'))
+        self.Zno_dead_strip_inits_and_termsOption = self.addOption(FlagOption('-Zno_dead_strip_inits_and_terms'))
+        self.Zseg_addr_tableOption = self.addOption(JoinedOrSeparateOption('-Zseg_addr_table'))
+        self.ZsegaddrOption = self.addOption(JoinedOrSeparateOption('-Zsegaddr'))
+        self.Zsegs_read_only_addrOption = self.addOption(JoinedOrSeparateOption('-Zsegs_read_only_addr'))
+        self.Zsegs_read_write_addrOption = self.addOption(JoinedOrSeparateOption('-Zsegs_read_write_addr'))
+        self.Zsingle_moduleOption = self.addOption(FlagOption('-Zsingle_module'))
+        self.Zunexported_symbols_listOption = self.addOption(JoinedOrSeparateOption('-Zunexported_symbols_list'))
+        self.Zweak_reference_mismatchesOption = self.addOption(JoinedOrSeparateOption('-Zweak_reference_mismatches'))
 
         # I dunno why these don't end up working when joined. Maybe
         # because of translation?
         self.filelistOption = self.addOption(SeparateOption('-filelist'))
         self.addOption(SeparateOption('-framework'))
+        # FIXME: Alias.
         self.addOption(SeparateOption('-install_name'))
+        self.Zinstall_nameOption = self.addOption(JoinedOrSeparateOption('-Zinstall_name'))
         self.addOption(SeparateOption('-seg_addr_table'))
         self.addOption(SeparateOption('-seg_addr_table_filename'))
 
         # Where are these coming from? I can't find them...
-        self.addOption(JoinedOrSeparateOption('-e')) # Gets forwarded to linker
-        self.addOption(JoinedOrSeparateOption('-r'))
+        self.eOption = self.addOption(JoinedOrSeparateOption('-e'))
+        self.rOption = self.addOption(JoinedOrSeparateOption('-r'))
 
         # Is this actually declared anywhere? I can only find it in a
         # spec. :(
-        self.addOption(FlagOption('-pg'))
+        self.pgOption = self.addOption(FlagOption('-pg'))
 
         doNotReallySupport = 1
         if doNotReallySupport:
@@ -431,17 +496,22 @@ class OptionParser:
         # C options for testing
 
         self.addOption(JoinedOrSeparateOption('-include'))
-        self.addOption(JoinedOrSeparateOption('-A'))
+        self.AOption = self.addOption(SeparateOption('-A'))
         self.addOption(JoinedOrSeparateOption('-D'))
-        self.addOption(JoinedOrSeparateOption('-F'))
+        self.FOption = self.addOption(JoinedOrSeparateOption('-F'))
         self.addOption(JoinedOrSeparateOption('-I'))
-        self.addOption(JoinedOrSeparateOption('-L'))
+        self.LOption = self.addOption(JoinedOrSeparateOption('-L'))
+        self.TOption = self.addOption(JoinedOrSeparateOption('-T'))
         self.addOption(JoinedOrSeparateOption('-U'))
+        self.ZOption = self.addOption(JoinedOrSeparateOption('-Z'))
+
         self.addOption(JoinedOrSeparateOption('-l'))
-        self.addOption(JoinedOrSeparateOption('-u'))
+        self.uOption = self.addOption(JoinedOrSeparateOption('-u'))
+        self.tOption = self.addOption(JoinedOrSeparateOption('-t'))
+        self.yOption = self.addOption(JoinedOption('-y'))
 
         # FIXME: What is going on here? '-X' goes to linker, and -X ... goes nowhere?
-        self.addOption(FlagOption('-X'))
+        self.XOption = self.addOption(FlagOption('-X'))
         # Not exactly sure how to decompose this. I split out -Xarch_
         # because we need to recognize that in the driver driver part.
         # FIXME: Man, this is lame it needs its own option.
@@ -454,10 +524,34 @@ class OptionParser:
         # FIXME: Wrong?
         # FIXME: What to do about the ambiguity of options like
         # -dumpspecs? How is this handled in gcc?
+        # FIXME: Naming convention.
+        self.dOption = self.addOption(FlagOption('-d'))
         self.addOption(JoinedOption('-d'))
         self.addOption(JoinedOption('-g'))
+
+        self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions'))
+        self.f_openmpOption = self.addOption(FlagOption('-fopenmp'))
+        self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime'))
+        self.f_nestedFunctionsOption = self.addOption(FlagOption('-fnested-functions'))
+        self.f_pieOption = self.addOption(FlagOption('-fpie'))
+        self.f_profileArcsOption = self.addOption(FlagOption('-fprofile-arcs'))
+        self.f_profileGenerateOption = self.addOption(FlagOption('-fprofile-generate'))
+        self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile'))
+        self.coverageOption = self.addOption(FlagOption('-coverage'))
+        self.coverageOption2 = self.addOption(FlagOption('--coverage'))
         self.addOption(JoinedOption('-f'))
+
+        self.m_32Option = self.addOption(FlagOption('-m32'))
+        self.m_64Option = self.addOption(FlagOption('-m64'))
+        self.m_iphoneosVersionMinOption = self.addOption(JoinedOption('-miphoneos-version-min='))
+        self.m_macosxVersionMinOption = self.addOption(JoinedOption('-mmacosx-version-min='))
+
+        # Ugh. Need to disambiguate our naming convetion. -m x goes to
+        # the linker sometimes, wheres -mxxxx is used for a variety of
+        # other things.
+        self.mOption = self.addOption(SeparateOption('-m'))
         self.addOption(JoinedOption('-m'))
+
         self.addOption(JoinedOption('-i'))
         self.addOption(JoinedOption('-O'))
         self.addOption(JoinedOption('-W'))
