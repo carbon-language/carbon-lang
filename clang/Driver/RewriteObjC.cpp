@@ -230,7 +230,7 @@ namespace {
     void RewriteProtocolDecl(ObjCProtocolDecl *Dcl);
     void RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *Dcl);
     void RewriteMethodDeclaration(ObjCMethodDecl *Method);
-    void RewriteProperties(unsigned nProperties, ObjCPropertyDecl **Properties);
+    void RewriteProperty(ObjCPropertyDecl *prop);
     void RewriteFunctionDecl(FunctionDecl *FD);
     void RewriteObjCQualifiedInterfaceTypes(Decl *Dcl);
     void RewriteObjCQualifiedInterfaceTypes(Expr *E);
@@ -774,16 +774,13 @@ void RewriteObjC::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
   }
 }
 
-void RewriteObjC::RewriteProperties(unsigned nProperties, ObjCPropertyDecl **Properties) 
+void RewriteObjC::RewriteProperty(ObjCPropertyDecl *prop) 
 {
-  for (unsigned i = 0; i < nProperties; i++) {
-    ObjCPropertyDecl *Property = Properties[i];
-    SourceLocation Loc = Property->getLocation();
-    
-    ReplaceText(Loc, 0, "// ", 3);
-    
-    // FIXME: handle properties that are declared across multiple lines.
-  }
+  SourceLocation Loc = prop->getLocation();
+  
+  ReplaceText(Loc, 0, "// ", 3);
+  
+  // FIXME: handle properties that are declared across multiple lines.
 }
 
 void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
@@ -1038,8 +1035,9 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   }
   SynthesizeObjCInternalStruct(ClassDecl, ResultStr);
     
-  RewriteProperties(ClassDecl->getNumPropertyDecl(),
-                    ClassDecl->getPropertyDecl());
+  for (ObjCInterfaceDecl::prop_iterator I = ClassDecl->prop_begin(), 
+       E = ClassDecl->prop_end(); I != E; ++I)
+    RewriteProperty(*I);
   for (ObjCInterfaceDecl::instmeth_iterator I = ClassDecl->instmeth_begin(), 
        E = ClassDecl->instmeth_end(); I != E; ++I)
     RewriteMethodDeclaration(*I);

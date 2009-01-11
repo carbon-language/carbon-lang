@@ -383,6 +383,12 @@ unsigned ObjCContainerDecl::getNumClassMethods() const {
     sum++;
   return sum;
 }
+unsigned ObjCContainerDecl::getNumProperties() const { 
+  unsigned sum = 0;
+  for (prop_iterator I=prop_begin(), E=prop_end(); I != E; ++I)
+    sum++;
+  return sum;
+}
 
 /// addProperties - Insert property declaration AST nodes into
 /// ObjCContainerDecl's PropertyDecl field.

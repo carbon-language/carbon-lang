@@ -276,10 +276,6 @@ public:
     return PropertyDecl+NumPropertyDecl;
   }
   
-  ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
-  ObjCPropertyDecl **getPropertyDecl() { return PropertyDecl; }
-  unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
-    
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
   
   // Iterator access to instance/class methods.
@@ -314,10 +310,11 @@ public:
   // Get the local instance/class method declared in this interface.
   ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
   ObjCMethodDecl *getClassMethod(Selector Sel) const;
-  
-  // Get the number of instance/class methods. These methods are slow, O(n).
+
+  // Get the number of methods, properties. These methods are slow, O(n).
   unsigned getNumInstanceMethods() const;
   unsigned getNumClassMethods() const;
+  unsigned getNumProperties() const;
   
   // Marks the end of the container.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
