@@ -565,12 +565,13 @@ class Driver(object):
                 return '%s(%r, %r, %r)' % (self.__class__.__name__,
                                            self.source, self.type, self.baseInput)
 
-        def createJobs(phase, forwardArgs,
+        def createJobs(tc, phase, forwardArgs,
                        canAcceptPipe=False, atTopLevel=False, arch=None):
             if isinstance(phase, Phases.InputAction):
                 return InputInfo(phase.filename, phase.type, phase.filename)
             elif isinstance(phase, Phases.BindArchAction):
                 archName = args.getValue(phase.arch)
+                tc = self.hostInfo.getToolChainForArch(archName)
                 filteredArgs = []
                 for arg in forwardArgs:
                     if arg.opt is self.parser.archOption:
@@ -588,11 +589,11 @@ class Driver(object):
                     else:
                         filteredArgs.append(arg)
                         
-                return createJobs(phase.inputs[0], filteredArgs,
+                return createJobs(tc, phase.inputs[0], filteredArgs,
                                   canAcceptPipe, atTopLevel, phase.arch)
 
             assert isinstance(phase, Phases.JobAction)
-            tool = self.toolChain.selectTool(phase)
+            tool = tc.selectTool(phase)
 
             # See if we should use an integrated CPP. We only use an
             # integrated cpp when we have exactly one input, since this is
@@ -609,7 +610,8 @@ class Driver(object):
 
             # Only try to use pipes when exactly one input.
             canAcceptPipe = len(inputList) == 1 and tool.acceptsPipedInput()
-            inputs = [createJobs(p, forwardArgs, canAcceptPipe, False, arch) for p in inputList]
+            inputs = [createJobs(tc, p, forwardArgs, canAcceptPipe, False, arch) 
+                      for p in inputList]
 
             # Determine if we should output to a pipe.
             canOutputToPipe = canAcceptPipe and tool.canPipeOutput()
@@ -679,6 +681,7 @@ class Driver(object):
             raise ValueError,"Cannot specify -o when generating multiple files."
 
         for phase in phases:
-            createJobs(phase, forward, canAcceptPipe=True, atTopLevel=True)
+            createJobs(self.toolChain, phase, forward, 
+                       canAcceptPipe=True, atTopLevel=True)
 
         return jobs

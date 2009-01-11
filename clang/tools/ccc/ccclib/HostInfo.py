@@ -14,6 +14,12 @@ class HostInfo(object):
     def useDriverDriver(self):
         abstract
 
+    def getToolChain(self):
+        abstract
+
+    def getToolChainForArch(self, arch):
+        raise RuntimeError,"getToolChainForArch() unsupported on this host."
+
 # Darwin
 
 class DarwinHostInfo(HostInfo):
@@ -21,7 +27,13 @@ class DarwinHostInfo(HostInfo):
         return True
 
     def getToolChain(self):
-        return ToolChain.Darwin_ToolChain(self.driver)
+        return self.getToolChainForArch(self.getArchName())
+
+    def getToolChainForArch(self, arch):
+        if arch in ('i386', 'x86_64'):
+            return ToolChain.Darwin_ToolChain(self.driver)
+
+        return ToolChain.Generic_GCC_ToolChain(self.driver)
 
 class DarwinPPCHostInfo(DarwinHostInfo):
     def getArchName(self):
