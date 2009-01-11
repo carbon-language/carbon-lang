@@ -7712,7 +7712,7 @@ static bool FindElementAtOffset(const Type *Ty, int64_t Offset,
     FirstIdx = Offset/TySize;
     Offset %= TySize;
     
-    // Handle silly modulus not returning values [0..TySize).
+    // Handle hosts where % returns negative instead of values [0..TySize).
     if (Offset < 0) {
       --FirstIdx;
       Offset += TySize;
@@ -7725,12 +7725,15 @@ static bool FindElementAtOffset(const Type *Ty, int64_t Offset,
     
   // Index into the types.  If we fail, set OrigBase to null.
   while (Offset) {
+    // Indexing into tail padding between struct/array elements.
+    if (uint64_t(Offset*8) >= TD->getTypeSizeInBits(Ty))
+      return false;
+    
     if (const StructType *STy = dyn_cast<StructType>(Ty)) {
       const StructLayout *SL = TD->getStructLayout(STy);
-      if (Offset >= (int64_t)SL->getSizeInBytes()) {
-        // We can't index into this, bail out.
-        return false;
-      }
+      assert(Offset < (int64_t)SL->getSizeInBytes() &&
+             "Offset must stay within the indexed type");
+      
       unsigned Elt = SL->getElementContainingOffset(Offset);
       NewIndices.push_back(ConstantInt::get(Type::Int32Ty, Elt));
       
@@ -7738,15 +7741,13 @@ static bool FindElementAtOffset(const Type *Ty, int64_t Offset,
       Ty = STy->getElementType(Elt);
     } else if (isa<ArrayType>(Ty) || isa<VectorType>(Ty)) {
       const SequentialType *STy = cast<SequentialType>(Ty);
-      if (uint64_t EltSize = TD->getABITypeSize(STy->getElementType())) {
-        NewIndices.push_back(ConstantInt::get(IntPtrTy,Offset/EltSize));
-        Offset %= EltSize;
-      } else {
-        NewIndices.push_back(ConstantInt::get(IntPtrTy, 0));
-      }
+      uint64_t EltSize = TD->getABITypeSize(STy->getElementType());
+      assert(EltSize && "Cannot index into a zero-sized array");
+      NewIndices.push_back(ConstantInt::get(IntPtrTy,Offset/EltSize));
+      Offset %= EltSize;
       Ty = STy->getElementType();
     } else {
-      // Otherwise, we can't index into this, bail out.
+      // Otherwise, we can't index into the middle of this atomic type, bail.
       return false;
     }
   }
