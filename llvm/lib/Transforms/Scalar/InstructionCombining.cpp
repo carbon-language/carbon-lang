@@ -7739,13 +7739,12 @@ static bool FindElementAtOffset(const Type *Ty, int64_t Offset,
       
       Offset -= SL->getElementOffset(Elt);
       Ty = STy->getElementType(Elt);
-    } else if (isa<ArrayType>(Ty) || isa<VectorType>(Ty)) {
-      const SequentialType *STy = cast<SequentialType>(Ty);
-      uint64_t EltSize = TD->getABITypeSize(STy->getElementType());
+    } else if (const ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
+      uint64_t EltSize = TD->getABITypeSize(AT->getElementType());
       assert(EltSize && "Cannot index into a zero-sized array");
       NewIndices.push_back(ConstantInt::get(IntPtrTy,Offset/EltSize));
       Offset %= EltSize;
-      Ty = STy->getElementType();
+      Ty = AT->getElementType();
     } else {
       // Otherwise, we can't index into the middle of this atomic type, bail.
       return false;
