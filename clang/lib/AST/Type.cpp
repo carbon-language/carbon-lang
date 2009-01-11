@@ -122,21 +122,18 @@ bool Type::isDerivedType() const {
 }
 
 bool Type::isClassType() const {
-  if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType))
-    if (RT->getDecl()->isClass())
-      return true;
+  if (const RecordType *RT = getAsRecordType())
+    return RT->getDecl()->isClass();
   return false;
 }
 bool Type::isStructureType() const {
-  if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType))
-    if (RT->getDecl()->isStruct())
-      return true;
+  if (const RecordType *RT = getAsRecordType())
+    return RT->getDecl()->isStruct();
   return false;
 }
 bool Type::isUnionType() const {
-  if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType))
-    if (RT->getDecl()->isUnion())
-      return true;
+  if (const RecordType *RT = getAsRecordType())
+    return RT->getDecl()->isUnion();
   return false;
 }
 
