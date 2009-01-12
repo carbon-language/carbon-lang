@@ -2952,13 +2952,16 @@ private:
   ///
   void SizeAndOffsets() {
     // Process base compile unit.
-    CompileUnit *Unit = GetBaseCompileUnit();
-    // Compute size of compile unit header
-    unsigned Offset = sizeof(int32_t) + // Length of Compilation Unit Info
-                      sizeof(int16_t) + // DWARF version number
-                      sizeof(int32_t) + // Offset Into Abbrev. Section
-                      sizeof(int8_t);   // Pointer Size (in bytes)
-    SizeAndOffsetDie(Unit->getDie(), Offset, true);
+    for (DenseMap<Value *, CompileUnit *>::iterator CI = DW_CUs.begin(),
+           CE = DW_CUs.end(); CI != CE; ++CI) {
+      CompileUnit *Unit = CI->second;
+      // Compute size of compile unit header
+      unsigned Offset = sizeof(int32_t) + // Length of Compilation Unit Info
+        sizeof(int16_t) + // DWARF version number
+        sizeof(int32_t) + // Offset Into Abbrev. Section
+        sizeof(int8_t);   // Pointer Size (in bytes)
+      SizeAndOffsetDie(Unit->getDie(), Offset, true);
+    }
   }
 
   /// EmitDebugInfo - Emit the debug info section.
@@ -2967,32 +2970,35 @@ private:
     // Start debug info section.
     Asm->SwitchToDataSection(TAI->getDwarfInfoSection());
 
-    CompileUnit *Unit = GetBaseCompileUnit();
-    DIE *Die = Unit->getDie();
-    // Emit the compile units header.
-    EmitLabel("info_begin", Unit->getID());
-    // Emit size of content not including length itself
-    unsigned ContentSize = Die->getSize() +
-                           sizeof(int16_t) + // DWARF version number
-                           sizeof(int32_t) + // Offset Into Abbrev. Section
-                           sizeof(int8_t) +  // Pointer Size (in bytes)
-                           sizeof(int32_t);  // FIXME - extra pad for gdb bug.
-
-    Asm->EmitInt32(ContentSize);  Asm->EOL("Length of Compilation Unit Info");
-    Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF version number");
-    EmitSectionOffset("abbrev_begin", "section_abbrev", 0, 0, true, false);
-    Asm->EOL("Offset Into Abbrev. Section");
-    Asm->EmitInt8(TD->getPointerSize()); Asm->EOL("Address Size (in bytes)");
-
-    EmitDIE(Die);
-    // FIXME - extra padding for gdb bug.
-    Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
-    Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
-    Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
-    Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
-    EmitLabel("info_end", Unit->getID());
-
-    Asm->EOL();
+    for (DenseMap<Value *, CompileUnit *>::iterator CI = DW_CUs.begin(),
+           CE = DW_CUs.end(); CI != CE; ++CI) {
+      CompileUnit *Unit = CI->second;
+      DIE *Die = Unit->getDie();
+      // Emit the compile units header.
+      EmitLabel("info_begin", Unit->getID());
+      // Emit size of content not including length itself
+      unsigned ContentSize = Die->getSize() +
+        sizeof(int16_t) + // DWARF version number
+        sizeof(int32_t) + // Offset Into Abbrev. Section
+        sizeof(int8_t) +  // Pointer Size (in bytes)
+        sizeof(int32_t);  // FIXME - extra pad for gdb bug.
+      
+      Asm->EmitInt32(ContentSize);  Asm->EOL("Length of Compilation Unit Info");
+      Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF version number");
+      EmitSectionOffset("abbrev_begin", "section_abbrev", 0, 0, true, false);
+      Asm->EOL("Offset Into Abbrev. Section");
+      Asm->EmitInt8(TD->getPointerSize()); Asm->EOL("Address Size (in bytes)");
+      
+      EmitDIE(Die);
+      // FIXME - extra padding for gdb bug.
+      Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
+      Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
+      Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
+      Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
+      EmitLabel("info_end", Unit->getID());
+      
+      Asm->EOL();
+    }
   }
 
   /// EmitAbbreviations - Emit the abbreviation section.
@@ -3290,39 +3296,42 @@ private:
     // Start the dwarf pubnames section.
     Asm->SwitchToDataSection(TAI->getDwarfPubNamesSection());
 
-    CompileUnit *Unit = GetBaseCompileUnit();
+    for (DenseMap<Value *, CompileUnit *>::iterator CI = DW_CUs.begin(),
+           CE = DW_CUs.end(); CI != CE; ++CI) {
+      CompileUnit *Unit = CI->second;
 
-    EmitDifference("pubnames_end", Unit->getID(),
-                   "pubnames_begin", Unit->getID(), true);
-    Asm->EOL("Length of Public Names Info");
-
-    EmitLabel("pubnames_begin", Unit->getID());
-
-    Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF Version");
-
-    EmitSectionOffset("info_begin", "section_info",
-                      Unit->getID(), 0, true, false);
-    Asm->EOL("Offset of Compilation Unit Info");
-
-    EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID(),true);
-    Asm->EOL("Compilation Unit Length");
-
-    std::map<std::string, DIE *> &Globals = Unit->getGlobals();
-
-    for (std::map<std::string, DIE *>::iterator GI = Globals.begin(),
-                                                GE = Globals.end();
-         GI != GE; ++GI) {
-      const std::string &Name = GI->first;
-      DIE * Entity = GI->second;
-
-      Asm->EmitInt32(Entity->getOffset()); Asm->EOL("DIE offset");
-      Asm->EmitString(Name); Asm->EOL("External Name");
+      EmitDifference("pubnames_end", Unit->getID(),
+                     "pubnames_begin", Unit->getID(), true);
+      Asm->EOL("Length of Public Names Info");
+      
+      EmitLabel("pubnames_begin", Unit->getID());
+      
+      Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF Version");
+      
+      EmitSectionOffset("info_begin", "section_info",
+                        Unit->getID(), 0, true, false);
+      Asm->EOL("Offset of Compilation Unit Info");
+      
+      EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID(),true);
+      Asm->EOL("Compilation Unit Length");
+      
+      std::map<std::string, DIE *> &Globals = Unit->getGlobals();
+      
+      for (std::map<std::string, DIE *>::iterator GI = Globals.begin(),
+             GE = Globals.end();
+           GI != GE; ++GI) {
+        const std::string &Name = GI->first;
+        DIE * Entity = GI->second;
+        
+        Asm->EmitInt32(Entity->getOffset()); Asm->EOL("DIE offset");
+        Asm->EmitString(Name); Asm->EOL("External Name");
+      }
+      
+      Asm->EmitInt32(0); Asm->EOL("End Mark");
+      EmitLabel("pubnames_end", Unit->getID());
+      
+      Asm->EOL();
     }
-
-    Asm->EmitInt32(0); Asm->EOL("End Mark");
-    EmitLabel("pubnames_end", Unit->getID());
-
-    Asm->EOL();
   }
 
   /// EmitDebugStr - Emit visible names into a debug str section.
