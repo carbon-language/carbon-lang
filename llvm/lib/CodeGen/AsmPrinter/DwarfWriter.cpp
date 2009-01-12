@@ -1341,37 +1341,6 @@ private:
   // DbgScopeMap - Tracks the scopes in the current function.
   DenseMap<GlobalVariable *, DbgScope *> DbgScopeMap;
   
-  // DbgLabelIDList - One entry per assigned label.  Normally the entry is equal to
-  // the list index(+1).  If the entry is zero then the label has been deleted.
-  // Any other value indicates the label has been deleted by is mapped to
-  // another label.
-  SmallVector<unsigned, 32> DbgLabelIDList;
-
-  /// NextLabelID - Return the next unique label id.
-  ///
-  unsigned NextLabelID() {
-    unsigned ID = (unsigned)DbgLabelIDList.size() + 1;
-    DbgLabelIDList.push_back(ID);
-    return ID;
-  }
-
-  /// RemapLabel - Indicate that a label has been merged into another.
-  ///
-  void RemapLabel(unsigned OldLabelID, unsigned NewLabelID) {
-    assert(0 < OldLabelID && OldLabelID <= DbgLabelIDList.size() &&
-          "Old label ID out of range.");
-    assert(NewLabelID <= DbgLabelIDList.size() &&
-          "New label ID out of range.");
-    DbgLabelIDList[OldLabelID - 1] = NewLabelID;
-  }
-  
-  /// MappedLabel - Find out the label's final ID.  Zero indicates deletion.
-  /// ID != Mapped ID indicates that the label was folded into another label.
-  unsigned MappedLabel(unsigned LabelID) const {
-    assert(LabelID <= DbgLabelIDList.size() && "Debug label ID out of range.");
-    return LabelID ? DbgLabelIDList[LabelID - 1] : 0;
-  }
-
   struct FunctionDebugFrameInfo {
     unsigned Number;
     std::vector<MachineMove> Moves;
@@ -2569,7 +2538,7 @@ private:
   unsigned RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
     CompileUnit *Unit = DW_CUs[V];
     assert (Unit && "Unable to find CompileUnit");
-    unsigned ID = NextLabelID();
+    unsigned ID = MMI->NextLabelID();
     Lines.push_back(SrcLineInfo(Line, Col, Unit->getID(), ID));
     return ID;
   }
@@ -2588,7 +2557,7 @@ private:
   ///
   unsigned RecordRegionStart(GlobalVariable *V) {
     DbgScope *Scope = getOrCreateScope(V);
-    unsigned ID = NextLabelID();
+    unsigned ID = MMI->NextLabelID();
     if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
     return ID;
   }
@@ -2597,7 +2566,7 @@ private:
   ///
   unsigned RecordRegionEnd(GlobalVariable *V) {
     DbgScope *Scope = getOrCreateScope(V);
-    unsigned ID = NextLabelID();
+    unsigned ID = MMI->NextLabelID();
     Scope->setEndLabelID(ID);
     return ID;
   }
@@ -2659,8 +2628,8 @@ private:
       // FIXME - Ignore inlined functions for the time being.
       if (!Scope->getParent()) continue;
 
-      unsigned StartID = MappedLabel(Scope->getStartLabelID());
-      unsigned EndID = MappedLabel(Scope->getEndLabelID());
+      unsigned StartID = MMI->MappedLabel(Scope->getStartLabelID());
+      unsigned EndID = MMI->MappedLabel(Scope->getEndLabelID());
 
       // Ignore empty scopes.
       if (StartID == EndID && StartID != 0) continue;
