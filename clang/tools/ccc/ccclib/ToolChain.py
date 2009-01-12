@@ -17,15 +17,27 @@ class ToolChain(object):
 class Darwin_X86_ToolChain(ToolChain):
     def __init__(self, driver, darwinVersion, gccVersion):
         super(Darwin_X86_ToolChain, self).__init__(driver)
+        assert isinstance(darwinVersion, tuple) and len(darwinVersion) == 3
+        assert isinstance(gccVersion, tuple) and len(gccVersion) == 3
+        self.darwinVersion = darwinVersion
+        self.gccVersion = gccVersion
+
         self.toolMap = {
             Phases.PreprocessPhase : Tools.GCC_PreprocessTool(),
             Phases.CompilePhase : Tools.GCC_CompileTool(),
             Phases.PrecompilePhase : Tools.GCC_PrecompileTool(),
-            Phases.AssemblePhase : Tools.DarwinAssembleTool(),
-            Phases.LinkPhase : Tools.Darwin_X86_LinkTool(darwinVersion,
-                                                         gccVersion),
+            Phases.AssemblePhase : Tools.Darwin_AssembleTool(self),
+            Phases.LinkPhase : Tools.Darwin_X86_LinkTool(self),
             Phases.LipoPhase : Tools.LipoTool(),
             }
+
+    def getToolChainDir(self):
+        return 'i686-apple-darwin%d/%s' % (self.darwinVersion[0],
+                                           '.'.join(map(str,self.gccVersion)))
+
+    def getProgramPath(self, name):
+        # FIXME: Implement proper search.
+        return '/usr/libexec/gcc/%s/%s' % (self.getToolChainDir(), name)
 
     def selectTool(self, action):
         assert isinstance(action, Phases.JobAction)

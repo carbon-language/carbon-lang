@@ -99,10 +99,11 @@ class GCC_PrecompileTool(GCC_Common_Tool):
                                                             output, outputType, args, arglist,
                                                             [])
 
-class DarwinAssembleTool(Tool):
-    def __init__(self):
-        super(DarwinAssembleTool, self).__init__('as',
-                                                 Tool.eFlagsPipedInput)
+class Darwin_AssembleTool(Tool):
+    def __init__(self, toolChain):
+        super(Darwin_AssembleTool, self).__init__('as',
+                                                  Tool.eFlagsPipedInput)
+        self.toolChain = toolChain
 
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, args, arglist):
@@ -120,7 +121,6 @@ class DarwinAssembleTool(Tool):
         if arch:
             cmd_args.extend(arglist.render(arch))
         cmd_args.append('-force_cpusubtype_ALL')
-        cmd_args.extend(arglist.render(output))
         if (arglist.getLastArg(arglist.parser.m_kernelOption) or
             arglist.getLastArg(arglist.parser.staticOption) or
             arglist.getLastArg(arglist.parser.f_appleKextOption)):
@@ -131,6 +131,7 @@ class DarwinAssembleTool(Tool):
                                     arglist.parser.XassemblerOption):
             cmd_args.extend(arglist.getValues(arg))
 
+        cmd_args.extend(arglist.render(output))
         if isinstance(input.source, Jobs.PipedJob):
             cmd_args.append('-')
         else:
@@ -138,7 +139,8 @@ class DarwinAssembleTool(Tool):
             
         # asm_final spec is empty.
 
-        jobs.addJob(Jobs.Command('as', cmd_args))
+        jobs.addJob(Jobs.Command(self.toolChain.getProgramPath('as'), 
+                                 cmd_args))
 
 class GCC_AssembleTool(GCC_Common_Tool):
     def __init__(self):
@@ -163,22 +165,12 @@ class GCC_LinkTool(GCC_Common_Tool):
                                                       [])
 
 class Darwin_X86_LinkTool(Tool):
-    def __init__(self, darwinVersion, gccVersion):
+    def __init__(self, toolChain):
         super(Darwin_X86_LinkTool, self).__init__('collect2')
-        assert isinstance(darwinVersion, tuple) and len(darwinVersion) == 3
-        assert isinstance(gccVersion, tuple) and len(gccVersion) == 3
-        self.darwinVersion = darwinVersion
-        self.gccVersion = gccVersion
-
-    def getCollect2Path(self):
-        return '/usr/libexec/gcc/%s/collect2' % self.getToolChainDir()
-        
-    def getToolChainDir(self):
-        return 'i686-apple-darwin%d/%s' % (self.darwinVersion[0],
-                                           '.'.join(map(str,self.gccVersion)))
+        self.toolChain = toolChain
 
     def getMacosxVersionMin(self):
-        major,minor,minorminor = self.darwinVersion
+        major,minor,minorminor = self.toolChain.darwinVersion
         return '%d.%d.%d' % (10, major-4, minor)
 
     def getMacosxVersionTuple(self, arglist):
@@ -191,7 +183,7 @@ class Darwin_X86_LinkTool(Tool):
             except:
                 raise ArgumentError,"invalid version number %r" % version
         else:
-            major,minor,minorminor = self.darwinVersion
+            major,minor,minorminor = self.toolChain.darwinVersion
             return (10, major-4, minor)
 
     def addDarwinArch(self, cmd_args, arch, arglist):
@@ -511,7 +503,7 @@ class Darwin_X86_LinkTool(Tool):
             cmd_args.append('-lgomp')
 
         # FIXME: Derive these correctly.
-        tcDir = self.getToolChainDir()
+        tcDir = self.toolChain.getToolChainDir()
         if arglist.getValue(arch) == 'x86_64':            
             cmd_args.extend(["-L/usr/lib/gcc/%s/x86_64" % tcDir,
                              "-L/usr/lib/gcc/%s/x86_64" % tcDir])
@@ -575,7 +567,8 @@ class Darwin_X86_LinkTool(Tool):
         arglist.addAllArgs(cmd_args, arglist.parser.TOption)
         arglist.addAllArgs(cmd_args, arglist.parser.FOption)
 
-        jobs.addJob(Jobs.Command(self.getCollect2Path(), cmd_args))
+        jobs.addJob(Jobs.Command(self.toolChain.getProgramPath('collect2'), 
+                                 cmd_args))
 
         # FIXME: We need to add a dsymutil job here in some particular
         # cases (basically whenever we have a c-family input we are
