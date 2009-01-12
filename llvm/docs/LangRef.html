@@ -2034,6 +2034,10 @@ return value.</p>
   ret void                        <i>; Return from a void function</i>
   ret { i32, i8 } { i32 4, i8 2 } <i>; Return an aggregate of values 4 and 2</i>
 </pre>
+
+<p>Note that the code generator does not yet fully support larger
+   aggregate return values.</p>
+
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_br">'<tt>br</tt>' Instruction</a> </div>
@@ -3231,6 +3235,10 @@ result is null if there is insufficient memory available.</p>
   %array3 = malloc i32, i32 4, align 1024       <i>; yields {i32*}:array3</i>
   %array4 = malloc i32, align 1024              <i>; yields {i32*}:array4</i>
 </pre>
+
+<p>Note that the code generator does not yet respect the
+   alignment value.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -4492,6 +4500,10 @@ argument.</p>
 <h5>Example:</h5>
 
 <p>See the <a href="#int_varargs">variable argument processing</a> section.</p>
+
+<p>Note that the code generator does not yet fully support va_arg
+   on many targets. Also, it does not currently support va_arg with
+   aggregate types on any target.</p>
 
 </div>
 
