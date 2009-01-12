@@ -359,19 +359,10 @@ const FunctionType *Intrinsic::getType(ID id, const Type **Tys,
   return FunctionType::get(ResultTy, ArgTys, IsVarArg); 
 }
 
-AttrListPtr Intrinsic::getAttributes(ID id) {
-  Attributes Attr = Attribute::None;
-
+/// This defines the "Intrinsic::getAttributes(ID id)" method.
 #define GET_INTRINSIC_ATTRIBUTES
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_ATTRIBUTES
-
-  // Intrinsics cannot throw exceptions.
-  Attr |= Attribute::NoUnwind;
-
-  AttributeWithIndex PAWI = AttributeWithIndex::get(~0, Attr);
-  return AttrListPtr::get(&PAWI, 1);
-}
 
 Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys, 
                                     unsigned numTys) {

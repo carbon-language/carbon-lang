@@ -387,10 +387,14 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
+/// EmitAttributes - This emits the Intrinsic::getAttributes method.
 void IntrinsicEmitter::
 EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
   OS << "// Add parameter attributes that are not common to all intrinsics.\n";
   OS << "#ifdef GET_INTRINSIC_ATTRIBUTES\n";
+  OS << "AttrListPtr Intrinsic::getAttributes(ID id) {";
+  OS << "  // No intrinsic can throw exceptions.\n";
+  OS << "  Attributes Attr = Attribute::NoUnwind;\n";
   OS << "  switch (id) {\n";
   OS << "  default: break;\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
@@ -415,6 +419,9 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
   OS << "    Attr |= Attribute::ReadOnly; // These do not write memory.\n";
   OS << "    break;\n";
   OS << "  }\n";
+  OS << "  AttributeWithIndex PAWI = AttributeWithIndex::get(~0, Attr);\n";
+  OS << "  return AttrListPtr::get(&PAWI, 1);\n";
+  OS << "}\n";
   OS << "#endif\n\n";
 }
 
