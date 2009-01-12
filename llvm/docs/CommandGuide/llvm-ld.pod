@@ -162,8 +162,7 @@ functions.
 
 =item B<-disable-opt>
 
-Completely disable optimization. The various B<-On> options will be ignored and
-no link time optimization passes will be run.
+Completely disable optimization.
 
 =item B<-disable-internalize>
 
@@ -193,14 +192,6 @@ An alias for B<-strip-debug>.
 =item B<-export-dynamic>
 
 An alias for B<-disable-internalize>
-
-=item B<-load> F<module>
-
-Load an optimization module, F<module>, which is expected to be a dynamic
-library that provides the function name C<RunOptimizations>. This function will
-be passed the PassManager, and the optimization level (values 0-5 based on the
-B<-On> option). This function may add passes to the PassManager that should be
-run. This feature allows the optimization passes of B<llvm-ld> to be extended.
 
 =item B<-post-link-opt>F<Path>
 
