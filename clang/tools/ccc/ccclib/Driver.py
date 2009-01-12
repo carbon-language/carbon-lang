@@ -535,6 +535,7 @@ class Driver(object):
         hasSaveTemps = (args.getLastArg(self.parser.saveTempsOption) or
                         args.getLastArg(self.parser.saveTempsOption2))
         hasNoIntegratedCPP = args.getLastArg(self.parser.noIntegratedCPPOption)
+        hasTraditionalCPP = args.getLastArg(self.parser.traditionalCPPOption)
         hasPipe = args.getLastArg(self.parser.pipeOption)
 
         # FIXME: forward will die, this isn't really how things are
@@ -566,8 +567,12 @@ class Driver(object):
         # about these being unused are likely to be noise anyway.
         if hasSaveTemps:
             self.claim(hasSaveTemps)
-        if hasNoIntegratedCPP:
+
+        if hasTraditionalCPP:
+            self.claim(hasTraditionalCPP)
+        elif hasNoIntegratedCPP:
             self.claim(hasNoIntegratedCPP)
+        
 
         class InputInfo:
             def __init__(self, source, type, baseInput):
@@ -615,6 +620,7 @@ class Driver(object):
             useIntegratedCPP = False
             inputList = phase.inputs
             if (not hasNoIntegratedCPP and 
+                not hasTraditionalCPP and
                 not hasSaveTemps and
                 tool.hasIntegratedCPP()):
                 if (len(phase.inputs) == 1 and 

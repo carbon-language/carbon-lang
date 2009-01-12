@@ -275,6 +275,13 @@ class ArgList:
             if arg.opt in (optionA, optionB):
                 yield arg
 
+    def getArgs3(self, optionA, optionB, optionC):
+        """getArgs3 - Iterate over all arguments for three options, in
+        the order they were specified."""
+        for arg in self.args:
+            if arg.opt in (optionA, optionB, optionC):
+                yield arg
+
     def getLastArg(self, option):
         return self.lastArgs.get(option)
 
@@ -300,6 +307,18 @@ class ArgList:
         """addAllArgs - Extend the given output vector with all
         instances of a given option."""
         for arg in self.getArgs(option):
+            output.extend(self.render(arg))
+
+    def addAllArgs2(self, output, optionA, optionB):
+        """addAllArgs2 - Extend the given output vector with all
+        instances of two given option, with relative order preserved."""
+        for arg in self.getArgs2(optionA, optionB):
+            output.extend(self.render(arg))
+
+    def addAllArgs3(self, output, optionA, optionB, optionC):
+        """addAllArgs3 - Extend the given output vector with all
+        instances of three given option, with relative order preserved."""
+        for arg in self.getArgs3(optionA, optionB, optionC):
             output.extend(self.render(arg))
 
     def addAllArgsTranslated(self, output, option, translation):
@@ -422,7 +441,7 @@ class OptionParser:
         # FIXME: Implement.
         self.addOption(FlagOption('-time'))
         # FIXME: Implement.
-        self.addOption(FlagOption('-v'))
+        self.vOption = self.addOption(FlagOption('-v'))
 
         # Input/output stuff
         self.oOption = self.addOption(JoinedOrSeparateOption('-o', noOptAsInput=True))
@@ -455,11 +474,15 @@ class OptionParser:
         ####
         # Bring on the random garbage.
 
-        self.addOption(FlagOption('-MD'))
-        self.addOption(FlagOption('-MP'))
-        self.addOption(FlagOption('-MM'))
-        self.addOption(JoinedOrSeparateOption('-MF'))
-        self.addOption(JoinedOrSeparateOption('-MT'))
+        self.MOption = self.addOption(FlagOption('-M'))
+        self.MDOption = self.addOption(FlagOption('-MD'))
+        self.MGOption = self.addOption(FlagOption('-MG'))
+        self.MMDOption = self.addOption(FlagOption('-MMD'))
+        self.MPOption = self.addOption(FlagOption('-MP'))
+        self.MMOption = self.addOption(FlagOption('-MM'))
+        self.MFOption = self.addOption(JoinedOrSeparateOption('-MF'))
+        self.MTOption = self.addOption(JoinedOrSeparateOption('-MT'))
+        self.MQOption = self.addOption(JoinedOrSeparateOption('-MQ'))
         self.MachOption = self.addOption(FlagOption('-Mach'))
         self.addOption(FlagOption('-undef'))
 
@@ -491,13 +514,14 @@ class OptionParser:
         self.noprebindOption = self.addOption(FlagOption('-noprebind'))
         self.nofixprebindingOption = self.addOption(FlagOption('-nofixprebinding'))
         self.prebind_all_twolevel_modulesOption = self.addOption(FlagOption('-prebind_all_twolevel_modules'))
+        self.remapOption = self.addOption(FlagOption('-remap'))
         self.read_only_relocsOption = self.addOption(SeparateOption('-read_only_relocs'))
         self.addOption(FlagOption('-single_module'))
         self.nomultidefsOption = self.addOption(FlagOption('-nomultidefs'))
         self.nostartfilesOption = self.addOption(FlagOption('-nostartfiles'))
         self.nodefaultlibsOption = self.addOption(FlagOption('-nodefaultlibs'))
         self.nostdlibOption = self.addOption(FlagOption('-nostdlib'))
-        self.addOption(FlagOption('-nostdinc'))
+        self.nostdincOption = self.addOption(FlagOption('-nostdinc'))
         self.objectOption = self.addOption(FlagOption('-object'))
         self.preloadOption = self.addOption(FlagOption('-preload'))
         self.staticOption = self.addOption(FlagOption('-static'))
@@ -505,13 +529,17 @@ class OptionParser:
         self.addOption(FlagOption('-shared'))
         self.staticLibgccOption = self.addOption(FlagOption('-static-libgcc'))
         self.sharedLibgccOption = self.addOption(FlagOption('-shared-libgcc'))
-        self.addOption(FlagOption('-C'))
-        self.addOption(FlagOption('-CC'))
+        self.COption = self.addOption(FlagOption('-C'))
+        self.CCOption = self.addOption(FlagOption('-CC'))
+        self.HOption = self.addOption(FlagOption('-H'))
         self.addOption(FlagOption('-R'))
-        self.addOption(FlagOption('-P'))
+        self.POption = self.addOption(FlagOption('-P'))
+        self.QOption = self.addOption(FlagOption('-Q'))
         self.addOption(FlagOption('-all_load'))
         self.addOption(FlagOption('--constant-cfstrings'))
-        self.addOption(FlagOption('-traditional'))
+        self.traditionalOption = self.addOption(FlagOption('-traditional'))
+        self.traditionalCPPOption = self.addOption(FlagOption('-traditional-cpp'))
+        # FIXME: Alias.
         self.addOption(FlagOption('--traditional'))
         self.addOption(FlagOption('-no_dead_strip_inits_and_terms'))
         self.addOption(JoinedOption('-weak-l', isLinkerInput=True))
@@ -582,13 +610,16 @@ class OptionParser:
         # C options for testing
 
         self.addOption(JoinedOrSeparateOption('-include'))
-        self.AOption = self.addOption(SeparateOption('-A'))
-        self.addOption(JoinedOrSeparateOption('-D'))
+        # FIXME: This is broken, we need -A as a single option to send
+        # stuff to cc1, but the way the ld spec is constructed it
+        # wants to see -A options but only as a separate arg.
+        self.AOption = self.addOption(JoinedOrSeparateOption('-A'))
+        self.DOption = self.addOption(JoinedOrSeparateOption('-D'))
         self.FOption = self.addOption(JoinedOrSeparateOption('-F'))
-        self.addOption(JoinedOrSeparateOption('-I'))
+        self.IOption = self.addOption(JoinedOrSeparateOption('-I'))
         self.LOption = self.addOption(JoinedOrSeparateOption('-L'))
         self.TOption = self.addOption(JoinedOrSeparateOption('-T'))
-        self.addOption(JoinedOrSeparateOption('-U'))
+        self.UOption = self.addOption(JoinedOrSeparateOption('-U'))
         self.ZOption = self.addOption(JoinedOrSeparateOption('-Z'))
 
         self.addOption(JoinedOrSeparateOption('-l', isLinkerInput=True))
@@ -616,6 +647,7 @@ class OptionParser:
 
         # Take care on extension, the Darwin assembler wants to add a
         # flag for any -g* option.
+        self.g3Option = self.addOption(JoinedOption('-g3'))
         self.gOption = self.addOption(JoinedOption('-g'))
 
         self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext'))
@@ -623,11 +655,14 @@ class OptionParser:
         self.f_objcOption = self.addOption(FlagOption('-fobjc'))
         self.f_openmpOption = self.addOption(FlagOption('-fopenmp'))
         self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime'))
+        self.f_mudflapOption = self.addOption(FlagOption('-fmudflap'))
+        self.f_mudflapthOption = self.addOption(FlagOption('-fmudflapth'))
         self.f_nestedFunctionsOption = self.addOption(FlagOption('-fnested-functions'))
         self.f_pieOption = self.addOption(FlagOption('-fpie'))
         self.f_profileArcsOption = self.addOption(FlagOption('-fprofile-arcs'))
         self.f_profileGenerateOption = self.addOption(FlagOption('-fprofile-generate'))
         self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile'))
+        self.f_traditionalOption = self.addOption(FlagOption('-ftraditional'))
         self.coverageOption = self.addOption(FlagOption('-coverage'))
         self.coverageOption2 = self.addOption(FlagOption('--coverage'))
         self.addOption(JoinedOption('-f'))

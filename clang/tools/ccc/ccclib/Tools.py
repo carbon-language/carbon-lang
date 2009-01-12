@@ -1,3 +1,4 @@
+import os
 import sys # FIXME: Shouldn't be needed.
 
 import Arguments
@@ -114,7 +115,8 @@ class Darwin_AssembleTool(Tool):
 
         cmd_args = []
         
-        if arglist.getLastArg(arglist.parser.gOption):
+        if (arglist.getLastArg(arglist.parser.gOption) or
+            arglist.getLastArg(arglist.parser.g3Option)):
             cmd_args.append('--gstabs')
 
         # Derived from asm spec.
@@ -164,6 +166,159 @@ class GCC_LinkTool(GCC_Common_Tool):
                                                       output, outputType, args, arglist,
                                                       [])
 
+class Darwin_X86_CompileTool(Tool):
+    def __init__(self, toolChain):
+        super(Darwin_X86_CompileTool, self).__init__('cc1',
+                                                     (Tool.eFlagsPipedInput |
+                                                      Tool.eFlagsPipedOutput |
+                                                      Tool.eFlagsIntegratedCPP))
+        self.toolChain = toolChain
+
+    def constructJob(self, phase, arch, jobs, inputs, 
+                     output, outputType, args, arglist):
+        inputType = inputs[0].type
+        assert not [i for i in inputs if i.type != inputType]
+
+        usePP = False
+        if inputType is Types.CType:
+            cc1Name = 'cc1'
+            usePP = True
+        elif inputType is Types.CTypeNoPP:
+            cc1Name = 'cc1'
+            usePP = False
+        elif inputType is Types.ObjCType:
+            cc1Name = 'cc1obj'
+            usePP = True
+        elif inputType is Types.ObjCTypeNoPP:
+            cc1Name = 'cc1obj'
+            usePP = False
+        elif inputType is Types.CXXType:
+            cc1Name = 'cc1plus'
+            usePP = True
+        elif inputType is Types.CXXTypeNoPP:
+            cc1Name = 'cc1plus'
+            usePP = False
+        elif inputType is Types.ObjCXXType:
+            cc1Name = 'cc1objplus'
+            usePP = True
+        elif inputType is Types.ObjCXXTypeNoPP:
+            cc1Name = 'cc1objplus'
+            usePP = False
+        else:
+            raise RuntimeError,"Unexpected input type for Darwin compile tool."
+
+        cmd_args = []
+        if (arglist.getLastArg(arglist.parser.traditionalOption) or
+            arglist.getLastArg(arglist.parser.f_traditionalOption)):
+            raise ValueError,"-traditional is not supported without -E"
+
+        if usePP:
+            # Derived from cpp_unique_options.
+
+            if (arglist.getLastArg(arglist.parser.COption) or
+                arglist.getLastArg(arglist.parser.CCOption)):
+                if not arglist.getLastArg(arglist.parser.EOption):
+                    raise ValueError,"-C or -CC is not supported without -E"
+            if not arglist.getLastArg(arglist.parser.QOption):
+                cmd_args.append('-quiet')
+            arglist.addAllArgs(cmd_args, arglist.parser.nostdincOption)
+            arglist.addLastArg(cmd_args, arglist.parser.vOption)
+            arglist.addAllArgs2(cmd_args, arglist.parser.IOption, arglist.parser.FOption)
+            arglist.addLastArg(cmd_args, arglist.parser.POption)
+
+            # FIXME: Handle %I properly.
+            if arglist.getValue(arch) == 'x86_64':
+                cmd_args.append('-imultilib')
+                cmd_args.append('x86_64')
+
+            if arglist.getLastArg(arglist.parser.MDOption):
+                cmd_args.append('-MD')
+                outputOpt = arglist.getLastArg(arglist.parser.oOption)
+                if outputOpt:
+                    base,ext = os.path.splitext(arglist.getValue(outputOpt))
+                    cmd_args.append(base+'.d')
+                else:
+                    # FIXME: Get correct basename.
+                    cmd_args.append('FIXME.d')
+            if arglist.getLastArg(arglist.parser.MMDOption):
+                cmd_args.append('-MMD')
+                outputOpt = arglist.getLastArg(arglist.parser.oOption)
+                if outputOpt:
+                    base,ext = os.path.splitext(arglist.getValue(outputOpt))
+                    cmd_args.append(base+'.d')
+                else:
+                    # FIXME: Get correct basename.
+                    cmd_args.append('FIXME.d')
+            arglist.addLastArg(cmd_args, arglist.parser.MOption)
+            arglist.addLastArg(cmd_args, arglist.parser.MMOption)
+            arglist.addAllArgs(cmd_args, arglist.parser.MFOption)
+            arglist.addLastArg(cmd_args, arglist.parser.MGOption)
+            arglist.addLastArg(cmd_args, arglist.parser.MPOption)
+            arglist.addAllArgs(cmd_args, arglist.parser.MQOption)
+            arglist.addAllArgs(cmd_args, arglist.parser.MTOption)
+            if (not arglist.getLastArg(arglist.parser.MOption) and
+                not arglist.getLastArg(arglist.parser.MMOption) and
+                (arglist.getLastArg(arglist.parser.MDOption) or
+                 arglist.getLastArg(arglist.parser.MMDOption))):
+                outputOpt = arglist.getLastArg(arglist.parser.oOption)
+                if outputOpt:
+                    cmd_args.append('-MQ')
+                    cmd_args.append(arglist.getValue(outputOpt))
+
+            arglist.addLastArg(cmd_args, arglist.parser.remapOption)
+            if arglist.getLastArg(arglist.parser.g3Option):
+                cmd_args.append('-dD')
+            arglist.addLastArg(cmd_args, arglist.parser.HOption)
+
+            # FIXME: %C
+
+            arglist.addAllArgs3(cmd_args, 
+                                arglist.parser.DOption,
+                                arglist.parser.UOption,
+                                arglist.parser.AOption)
+
+            # FIXME: Add i*
+
+            # FIXME: %Z
+
+            # FIXME: %i
+
+            if arglist.getLastArg(arglist.parser.f_mudflapOption):
+                cmd_args.append('-D_MUDFLAP')
+                cmd_args.append('-include')
+                cmd_args.append('mf-runtime.h')
+
+            if arglist.getLastArg(arglist.parser.f_mudflapthOption):
+                cmd_args.append('-D_MUDFLAP')
+                cmd_args.append('-D_MUDFLAPTH')
+                cmd_args.append('-include')
+                cmd_args.append('mf-runtime.h')
+        else:
+            cmd_args.append('-fpreprocessed')
+            # FIXME: There is a spec command to remove
+            # -fpredictive-compilation args here. Investigate.
+
+        # FIXME: cc1_options
+
+        if arch:
+            cmd_args.extend(arglist.render(arch))
+        if isinstance(output, Jobs.PipedJob):
+            cmd_args.extend(['-o', '-'])
+        elif output is None:
+            cmd_args.append('-fsyntax-only')
+        else:
+            cmd_args.extend(arglist.render(output))
+
+        for input in inputs:
+            if isinstance(input.source, Jobs.PipedJob):
+                cmd_args.append('-')
+            else:
+                cmd_args.extend(arglist.renderAsInput(input.source))
+
+        jobs.addJob(Jobs.Command(self.toolChain.getProgramPath(cc1Name), 
+                                 cmd_args))
+
+        
 class Darwin_X86_LinkTool(Tool):
     def __init__(self, toolChain):
         super(Darwin_X86_LinkTool, self).__init__('collect2')
@@ -181,7 +336,7 @@ class Darwin_X86_LinkTool(Tool):
             try:
                 return tuple(map(int, components))
             except:
-                raise ArgumentError,"invalid version number %r" % version
+                raise ValueError,"invalid version number %r" % version
         else:
             major,minor,minorminor = self.toolChain.darwinVersion
             return (10, major-4, minor)
