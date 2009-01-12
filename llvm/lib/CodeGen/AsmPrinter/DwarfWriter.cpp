@@ -1170,7 +1170,7 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// SourceLineInfo - This class is used to record source line correspondence.
+/// SrcLineInfo - This class is used to record source line correspondence.
 ///
 class SrcLineInfo {
   unsigned Line;                        // Source line number.
@@ -1327,7 +1327,7 @@ private:
 
   /// SectionSourceLines - Tracks line numbers per text section.
   ///
-  std::vector<std::vector<SourceLineInfo> > SectionSourceLines;
+  std::vector<std::vector<SrcLineInfo> > SectionSourceLines;
 
   /// didInitial - Flag to indicate if initial emission has been done.
   ///
@@ -3126,7 +3126,7 @@ private:
 
     for (unsigned j = 0; j < SecSrcLinesSize; ++j) {
       // Isolate current sections line info.
-      const std::vector<SourceLineInfo> &LineInfos = SectionSourceLines[j];
+      const std::vector<SrcLineInfo> &LineInfos = SectionSourceLines[j];
 
       if (VerboseAsm) {
         const Section* S = SectionMap[j + 1];
@@ -3140,7 +3140,7 @@ private:
 
       // Construct rows of the address, source, line, column matrix.
       for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
-        const SourceLineInfo &LineInfo = LineInfos[i];
+        const SrcLineInfo &LineInfo = LineInfos[i];
         unsigned LabelID = MMI->MappedLabel(LineInfo.getLabelID());
         if (!LabelID) continue;
 
@@ -3735,9 +3735,8 @@ public:
 
     // Emit label for the implicitly defined dbg.stoppoint at the start of
     // the function.
-    const std::vector<SourceLineInfo> &LineInfos = MMI->getSourceLines();
-    if (!LineInfos.empty()) {
-      const SourceLineInfo &LineInfo = LineInfos[0];
+    if (!Lines.empty()) {
+      const SrcLineInfo &LineInfo = Lines[0];
       Asm->printLabel(LineInfo.getLabelID());
     }
   }
@@ -3751,16 +3750,14 @@ public:
     EmitLabel("func_end", SubprogramCount);
 
     // Get function line info.
-    const std::vector<SourceLineInfo> &LineInfos = MMI->getSourceLines();
-
-    if (!LineInfos.empty()) {
+    if (!Lines.empty()) {
       // Get section line info.
       unsigned ID = SectionMap.insert(Asm->CurrentSection_);
       if (SectionSourceLines.size() < ID) SectionSourceLines.resize(ID);
-      std::vector<SourceLineInfo> &SectionLineInfos = SectionSourceLines[ID-1];
+      std::vector<SrcLineInfo> &SectionLineInfos = SectionSourceLines[ID-1];
       // Append the function info to section info.
       SectionLineInfos.insert(SectionLineInfos.end(),
-                              LineInfos.begin(), LineInfos.end());
+                              Lines.begin(), Lines.end());
     }
 
     // Construct scopes for subprogram.
