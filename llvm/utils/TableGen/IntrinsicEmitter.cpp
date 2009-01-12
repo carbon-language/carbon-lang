@@ -397,7 +397,10 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
   OS << "  Attributes Attr = Attribute::NoUnwind;\n";
   OS << "  switch (id) {\n";
   OS << "  default: break;\n";
+  unsigned MaxArgAttrs = 0;
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    MaxArgAttrs =
+      std::max(MaxArgAttrs, unsigned(Ints[i].ArgumentAttributes.size()));
     switch (Ints[i].ModRef) {
     default: break;
     case CodeGenIntrinsic::NoMem:
@@ -419,8 +422,34 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
   OS << "    Attr |= Attribute::ReadOnly; // These do not write memory.\n";
   OS << "    break;\n";
   OS << "  }\n";
-  OS << "  AttributeWithIndex PAWI = AttributeWithIndex::get(~0, Attr);\n";
-  OS << "  return AttrListPtr::get(&PAWI, 1);\n";
+  OS << "  AttributeWithIndex AWI[" << MaxArgAttrs+1 << "];\n";
+  OS << "  AWI[0] = AttributeWithIndex::get(~0, Attr);\n";
+  OS << "  unsigned NumAttrs = 1;\n";
+  OS << "  switch (id) {\n";
+  OS << "  default: break;\n";
+  
+  // Add argument attributes for any intrinsics that have them.
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    if (Ints[i].ArgumentAttributes.empty()) continue;
+    
+    OS << "  case Intrinsic::" << Ints[i].EnumName << ":\n";
+
+    std::vector<std::pair<unsigned, CodeGenIntrinsic::ArgAttribute> > ArgAttrs =
+      Ints[i].ArgumentAttributes;
+    // Sort by argument index.
+    std::sort(ArgAttrs.begin(), ArgAttrs.end());
+
+    unsigned NumArgsWithAttrs = 0;
+
+    // FIXME: EMIT ATTRS
+    
+    
+    OS << "    NumAttrs = " << NumArgsWithAttrs+1 << ";\n";
+    OS << "    break;\n";
+  }
+  
+  OS << "  }\n";
+  OS << "  return AttrListPtr::get(AWI, NumAttrs);\n";
   OS << "}\n";
   OS << "#endif\n\n";
 }
