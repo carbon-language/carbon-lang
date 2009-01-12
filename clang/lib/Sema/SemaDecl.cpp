@@ -106,7 +106,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
   // found later. Declarations without a context won't be inserted
   // into any context.
   if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
-    CurContext->addDecl(Context, SD);
+    CurContext->addDecl(SD);
 
   // C++ [basic.scope]p4:
   //   -- exactly one declaration shall declare a class name or
@@ -931,7 +931,7 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
         //   definition, the members of the anonymous union are
         //   considered to have been defined in the scope in which the
         //   anonymous union is declared.
-        Owner->insert(Context, *F);
+        Owner->insert(*F);
         S->AddDecl(*F);
         IdResolver.AddDecl(*F);
       }
@@ -1090,7 +1090,7 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   // Add the anonymous struct/union object to the current
   // context. We'll be referencing this object when we refer to one of
   // its members.
-  Owner->addDecl(Context, Anon);
+  Owner->addDecl(Anon);
 
   // Inject the members of the anonymous struct/union into the owning
   // context and into the identifier resolver chain for name lookup
@@ -3126,7 +3126,7 @@ CreateNewDecl:
     } else 
       PushOnScopeChains(New, S);
   } else {
-    LexicalContext->addDecl(Context, New);
+    LexicalContext->addDecl(New);
   }
 
   return New;
@@ -3296,7 +3296,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
   if (II) {
     PushOnScopeChains(NewFD, S);
   } else
-    Record->addDecl(Context, NewFD);
+    Record->addDecl(NewFD);
 
   return NewFD;
 }

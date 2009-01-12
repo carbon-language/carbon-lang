@@ -610,12 +610,9 @@ public:
     }
   };
 
-  /// addDecl - Add the declaration D to this scope. Note that
-  /// declarations are added at the beginning of the declaration
-  /// chain, so reverseDeclChain() should be called after all
-  /// declarations have been added. If AllowLookup, also adds this
-  /// declaration into data structure for name lookup.
-  void addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup = true);
+  /// addDecl - Add the declaration D to this scope, and into data structure
+  /// for name lookup. 
+  void addDecl(ScopedDecl *D);
 
   void buildLookup(DeclContext *DCtx);
 
@@ -652,7 +649,7 @@ public:
   /// that this replacement is semantically correct, e.g., that
   /// declarations are only replaced by later declarations of the same
   /// entity and not a declaration of some other kind of entity.
-  void insert(ASTContext &Context, ScopedDecl *D);
+  void insert(ScopedDecl *D);
 
   static bool classof(const Decl *D) {
     switch (D->getKind()) {

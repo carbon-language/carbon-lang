@@ -2172,12 +2172,10 @@ QualType RewriteObjC::getSuperStructType() {
 
     // Create fields
     for (unsigned i = 0; i < 2; ++i) {
-      SuperStructDecl->addDecl(*Context, 
-                               FieldDecl::Create(*Context, SuperStructDecl, 
+      SuperStructDecl->addDecl(FieldDecl::Create(*Context, SuperStructDecl, 
                                                  SourceLocation(), 0, 
                                                  FieldTypes[i], /*BitWidth=*/0,
-                                                 /*Mutable=*/false, 0),
-                               true);
+                                                 /*Mutable=*/false, 0));
     }
   
     SuperStructDecl->completeDefinition(*Context);
@@ -2203,14 +2201,12 @@ QualType RewriteObjC::getConstantStringStructType() {
 
     // Create fields
     for (unsigned i = 0; i < 4; ++i) {
-      ConstantStringDecl->addDecl(*Context, 
-                                  FieldDecl::Create(*Context, 
+      ConstantStringDecl->addDecl(FieldDecl::Create(*Context, 
                                                     ConstantStringDecl, 
                                                     SourceLocation(), 0,
                                                     FieldTypes[i], 
                                                     /*BitWidth=*/0,
-                                                    /*Mutable=*/true, 0),
-                                  true);
+                                                    /*Mutable=*/true, 0));
     }
 
     ConstantStringDecl->completeDefinition(*Context);

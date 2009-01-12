@@ -514,7 +514,7 @@ DeclContext *DeclContext::getNextContext() {
   }
 }
 
-void DeclContext::addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup) {
+void DeclContext::addDecl(ScopedDecl *D) {
   assert(D->getLexicalDeclContext() == this && "Decl inserted into wrong lexical context");
   assert(!D->NextDeclInScope && D != LastDecl && 
          "Decl already inserted into a DeclContext");
@@ -525,8 +525,7 @@ void DeclContext::addDecl(ASTContext &Context, ScopedDecl *D, bool AllowLookup) 
   } else {
     FirstDecl = LastDecl = D;
   }
-  if (AllowLookup)
-    D->getDeclContext()->insert(Context, D);
+  D->getDeclContext()->insert(D);
 }
 
 /// buildLookup - Build the lookup data structure with all of the
@@ -596,10 +595,10 @@ const DeclContext *DeclContext::getLookupContext() const {
   return Ctx;
 }
 
-void DeclContext::insert(ASTContext &Context, ScopedDecl *D) {
+void DeclContext::insert(ScopedDecl *D) {
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this) {
-    PrimaryContext->insert(Context, D);
+    PrimaryContext->insert(D);
     return;
   }
 
@@ -612,7 +611,7 @@ void DeclContext::insert(ASTContext &Context, ScopedDecl *D) {
   // If we are a transparent context, insert into our parent context,
   // too. This operation is recursive.
   if (isTransparentContext())
-    getParent()->insert(Context, D);
+    getParent()->insert(D);
 }
 
 void DeclContext::insertImpl(ScopedDecl *D) {

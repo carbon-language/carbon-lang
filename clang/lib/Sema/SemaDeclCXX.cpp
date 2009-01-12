@@ -797,7 +797,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                  /*isImplicitlyDeclared=*/true);
     DefaultCon->setAccess(AS_public);
     DefaultCon->setImplicit();
-    ClassDecl->addDecl(Context, DefaultCon);
+    ClassDecl->addDecl(DefaultCon);
 
     // Notify the class that we've added a constructor.
     ClassDecl->addedConstructor(Context, DefaultCon);
@@ -878,7 +878,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     CopyConstructor->setParams(&FromParam, 1);
 
     ClassDecl->addedConstructor(Context, CopyConstructor);
-    ClassDecl->addDecl(Context, CopyConstructor);
+    ClassDecl->addDecl(CopyConstructor);
   }
 
   if (!ClassDecl->hasUserDeclaredCopyAssignment()) {
@@ -956,7 +956,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
 
     // Don't call addedAssignmentOperator. There is no way to distinguish an
     // implicit from an explicit assignment operator.
-    ClassDecl->addDecl(Context, CopyAssignment);
+    ClassDecl->addDecl(CopyAssignment);
   }
 
   if (!ClassDecl->hasUserDeclaredDestructor()) {
@@ -975,7 +975,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                   /*isImplicitlyDeclared=*/true);
     Destructor->setAccess(AS_public);
     Destructor->setImplicit();
-    ClassDecl->addDecl(Context, Destructor);
+    ClassDecl->addDecl(Destructor);
   }
 }
 
@@ -2123,7 +2123,7 @@ Sema::DeclTy *Sema::ActOnStartLinkageSpecification(Scope *S,
   LinkageSpecDecl *D = LinkageSpecDecl::Create(Context, CurContext,
                                                LangLoc, Language, 
                                                LBraceLoc.isValid());
-  CurContext->addDecl(Context, D);
+  CurContext->addDecl(D);
   PushDeclContext(S, D);
   return D;
 }

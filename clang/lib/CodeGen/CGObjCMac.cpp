@@ -2376,14 +2376,10 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
                                       SourceLocation(),
                                       &Ctx.Idents.get("_objc_super"));  
-  RD->addDecl(Ctx, 
-              FieldDecl::Create(Ctx, RD, SourceLocation(), 0, 
-                                Ctx.getObjCIdType(), 0, false, 0), 
-              true);
-  RD->addDecl(Ctx, 
-              FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
-                                Ctx.getObjCClassType(), 0, false, 0), 
-              true);
+  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0, 
+                                Ctx.getObjCIdType(), 0, false, 0));
+  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+                                Ctx.getObjCClassType(), 0, false, 0));
   RD->completeDefinition(Ctx);
 
   SuperCTy = Ctx.getTagDeclType(RD);

@@ -540,7 +540,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   // FIXME: Also add this declaration to the IdentifierResolver, but
   // make sure it is at the end of the chain to coincide with the
   // global scope.
-  ((DeclContext *)TUScope->getEntity())->addDecl(Context, Alloc);
+  ((DeclContext *)TUScope->getEntity())->addDecl(Alloc);
 }
 
 /// ActOnCXXDelete - Parsed a C++ 'delete' expression (C++ 5.3.5), as in:
