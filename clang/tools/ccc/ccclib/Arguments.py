@@ -370,10 +370,8 @@ class OptionParser:
         self.oOption = self.addOption(JoinedOrSeparateOption('-o'))
         self.xOption = self.addOption(JoinedOrSeparateOption('-x'))
 
-        # FIXME: What do these actually do? The documentation is less than
-        # clear.
-        self.addOption(FlagOption('-ObjC'))
-        self.addOption(FlagOption('-ObjC++'))
+        self.ObjCOption = self.addOption(FlagOption('-ObjC'))
+        self.ObjCXXOption = self.addOption(FlagOption('-ObjC++'))
 
         # FIXME: Weird, gcc claims this here in help but I'm not sure why;
         # perhaps interaction with preprocessor? Investigate.
@@ -559,6 +557,7 @@ class OptionParser:
         self.addOption(JoinedOption('-g'))
 
         self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions'))
+        self.f_objcOption = self.addOption(FlagOption('-fobjc'))
         self.f_openmpOption = self.addOption(FlagOption('-fopenmp'))
         self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime'))
         self.f_nestedFunctionsOption = self.addOption(FlagOption('-fnested-functions'))

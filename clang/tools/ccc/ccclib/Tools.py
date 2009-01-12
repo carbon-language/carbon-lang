@@ -359,7 +359,8 @@ class Darwin10_X86_LinkTool(Tool):
         assert outputType is Types.ImageType
 
         # The logic here is derived from gcc's behavior; most of which
-        # comes from specs (link_command). Consult gcc for more information.
+        # comes from specs (starting with link_command). Consult gcc
+        # for more information.
 
         # FIXME: gcc's spec controls when this is done; certain things
         # like -filelist or -Wl, still trigger a link stage. I don't
@@ -371,9 +372,13 @@ class Darwin10_X86_LinkTool(Tool):
         # Not sure why this particular decomposition exists in gcc.
         self.addLinkArgs(cmd_args, arch, arglist)
         
-        # FIXME: Need to insert "additional linker options accumulated
-        # from compilation". What does this mean precisely? And where
-        # do -Wl, options and -Xlinker options come in?
+        # This toolchain never accumlates options in specs, the only
+        # place this gets used is to add -ObjC.
+        if (arglist.getLastArg(arglist.parser.ObjCOption) or
+            arglist.getLastArg(arglist.parser.f_objcOption)):
+            cmd_args.append('-ObjC')
+        if arglist.getLastArg(arglist.parser.ObjCXXOption):
+            cmd_args.append('-ObjC')        
 
         # FIXME: gcc has %{x} in here. How could this ever happen?
         # Cruft?
