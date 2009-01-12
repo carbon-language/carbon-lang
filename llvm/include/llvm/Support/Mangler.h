@@ -51,11 +51,6 @@ class Mangler {
   DenseMap<const Type*, unsigned> TypeMap;
   unsigned TypeCounter;
 
-  /// This keeps track of which global values have had their names
-  /// mangled in the current module.
-  ///
-  SmallPtrSet<const GlobalValue*, 16> MangledGlobals;
-  
   /// AcceptableChars - This bitfield contains a one for each character that is
   /// allowed to be part of an unmangled name.
   unsigned AcceptableChars[256/32];

@@ -145,48 +145,12 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
     unsigned TypeUniqueID = getTypeID(GV->getType());
     static unsigned GlobalID = 0;
     Name = "__unnamed_" + utostr(TypeUniqueID) + "_" + utostr(GlobalID++);
-  } else if (!MangledGlobals.count(GV)) {
-    Name = makeNameProper(GV->getName() + Suffix, Prefix);
   } else {
-    unsigned TypeUniqueID = getTypeID(GV->getType());
-    Name = "l" + utostr(TypeUniqueID) + "_" + makeNameProper(GV->getName());
+    Name = makeNameProper(GV->getName() + Suffix, Prefix);
   }
 
   return Name;
 }
-
-static void InsertName(GlobalValue *GV, StringMap<GlobalValue*> &Names,
-                       SmallPtrSet<const GlobalValue*, 16> &MangledGlobals) {
-  if (!GV->hasName())   // We must mangle unnamed globals.
-    return;
-
-  // Figure out if this is already used.
-  GlobalValue *&ExistingValue = Names[GV->getNameStart()];
-  if (!ExistingValue) {
-    ExistingValue = GV;
-    return;
-  }
-
-  // If GV is external but the existing one is static, mangle the existing one
-  if ((GV->hasExternalLinkage() || GV->hasDLLImportLinkage()) &&
-      !(ExistingValue->hasExternalLinkage()
-        || ExistingValue->hasDLLImportLinkage())) {
-    MangledGlobals.insert(ExistingValue);
-    ExistingValue = GV;
-  } else if ((GV->hasExternalLinkage() ||
-              GV->hasDLLImportLinkage()) &&
-             (ExistingValue->hasExternalLinkage() ||
-              ExistingValue->hasDLLImportLinkage()) &&
-             GV->isDeclaration() &&
-             ExistingValue->isDeclaration()) {
-    // If the two globals both have external inkage, and are both external,
-    // don't mangle either of them, we just have some silly type mismatch.
-  } else {
-    // Otherwise, mangle GV
-    MangledGlobals.insert(GV);
-  }
-}
-
 
 Mangler::Mangler(Module &M, const char *prefix)
   : Prefix(prefix), UseQuotes(false), PreserveAsmNames(false),
@@ -205,13 +169,4 @@ Mangler::Mangler(Module &M, const char *prefix)
   markCharAcceptable('_');
   markCharAcceptable('$');
   markCharAcceptable('.');
-    
-  // Calculate which global values have names that will collide when we throw
-  // away type information.
-  StringMap<GlobalValue*> Names;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    InsertName(I, Names, MangledGlobals);
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    InsertName(I, Names, MangledGlobals);
 }
