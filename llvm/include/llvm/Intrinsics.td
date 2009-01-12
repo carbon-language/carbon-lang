@@ -51,6 +51,11 @@ def IntrWriteMem : IntrinsicProperty;
 // Commutative - This intrinsic is commutative: X op Y == Y op X.
 def Commutative : IntrinsicProperty;
 
+// NoCapture - The specified argument pointer is not captured by the intrinsic.
+class NoCapture<int argNo> : IntrinsicProperty {
+  int ArgNo = argNo;
+}
+
 //===----------------------------------------------------------------------===//
 // Types used by intrinsics.
 //===----------------------------------------------------------------------===//
@@ -199,17 +204,18 @@ def int_stackprotector : Intrinsic<[llvm_void_ty],
 //===------------------- Standard C Library Intrinsics --------------------===//
 //
 
-let Properties = [IntrWriteArgMem] in {
-  def int_memcpy  : Intrinsic<[llvm_void_ty],
-                               [llvm_ptr_ty, llvm_ptr_ty,
-                                llvm_anyint_ty, llvm_i32_ty]>;
-  def int_memmove : Intrinsic<[llvm_void_ty],
-                                  [llvm_ptr_ty, llvm_ptr_ty,
-                                   llvm_anyint_ty, llvm_i32_ty]>;
-  def int_memset  : Intrinsic<[llvm_void_ty],
-                               [llvm_ptr_ty, llvm_i8_ty,
-                                llvm_anyint_ty, llvm_i32_ty]>;
-}
+def int_memcpy  : Intrinsic<[llvm_void_ty],
+                             [llvm_ptr_ty, llvm_ptr_ty, llvm_anyint_ty,
+                              llvm_i32_ty],
+                            [IntrWriteArgMem, NoCapture<0>, NoCapture<1>]>;
+def int_memmove : Intrinsic<[llvm_void_ty],
+                            [llvm_ptr_ty, llvm_ptr_ty, llvm_anyint_ty,
+                             llvm_i32_ty],
+                            [IntrWriteArgMem, NoCapture<0>, NoCapture<1>]>;
+def int_memset  : Intrinsic<[llvm_void_ty],
+                            [llvm_ptr_ty, llvm_i8_ty, llvm_anyint_ty,
+                             llvm_i32_ty],
+                            [IntrWriteArgMem, NoCapture<0>]>;
 
 // These functions do not actually read memory, but they are sensitive to the
 // rounding mode.  This needs to be modelled separately; in the meantime

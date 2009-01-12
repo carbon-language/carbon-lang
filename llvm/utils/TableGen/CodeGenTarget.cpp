@@ -546,7 +546,10 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       ModRef = WriteMem;
     else if (Property->getName() == "Commutative")
       isCommutative = true;
-    else
+    else if (Property->isSubClassOf("NoCapture")) {
+      unsigned ArgNo = Property->getValueAsInt("ArgNo");
+      ArgumentAttributes.push_back(std::make_pair(ArgNo, NoCapture));
+    } else
       assert(0 && "Unknown property!");
   }
 }

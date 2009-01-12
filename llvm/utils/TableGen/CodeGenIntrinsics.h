@@ -63,13 +63,17 @@ namespace llvm {
       NoMem, ReadArgMem, ReadMem, WriteArgMem, WriteMem
     } ModRef;
 
-    // This is set to true if the intrinsic is overloaded by its argument
-    // types.
+    /// This is set to true if the intrinsic is overloaded by its argument
+    /// types.
     bool isOverloaded;
 
-    // isCommutative - True if the intrinsic is commutative.
-    //
+    /// isCommutative - True if the intrinsic is commutative.
     bool isCommutative;
+    
+    enum ArgAttribute {
+      NoCapture
+    };
+    std::vector<std::pair<unsigned, ArgAttribute> > ArgumentAttributes;
 
     CodeGenIntrinsic(Record *R);
   };
