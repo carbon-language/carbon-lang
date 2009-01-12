@@ -108,3 +108,6 @@ struct BadMembers {
   protected: float x2; // expected-error{{anonymous union cannot contain a protected data member}}
   };
 };
+
+// <rdar://problem/6481130>
+typedef union { }; // expected-error{{declaration does not declare anything}}

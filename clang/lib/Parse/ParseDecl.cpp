@@ -888,9 +888,10 @@ ParseStructDeclaration(DeclSpec &DS,
   SourceLocation DSStart = Tok.getLocation();
   ParseSpecifierQualifierList(DS);
   
-  // If there are no declarators, issue a warning.
+  // If there are no declarators, this is a free-standing declaration
+  // specifier. Let the actions module cope with it.
   if (Tok.is(tok::semi)) {
-    Diag(DSStart, diag::w_no_declarators);
+    Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
     return;
   }
 

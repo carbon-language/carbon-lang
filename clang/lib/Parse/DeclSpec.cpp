@@ -319,5 +319,5 @@ bool DeclSpec::isMissingDeclaratorOk() {
        || tst == TST_struct
        || tst == TST_class
        || tst == TST_enum
-      ) && getTypeRep() != 0;
+          ) && getTypeRep() != 0 && StorageClassSpec != DeclSpec::SCS_typedef;
 }

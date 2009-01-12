@@ -714,9 +714,6 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
     Diags.setDiagnosticMapping(diag::warn_implicit_function_decl,
                                diag::MAP_IGNORE);
   
-  if (MSExtensions) // MS allows unnamed struct/union fields.
-    Diags.setDiagnosticMapping(diag::w_no_declarators, diag::MAP_IGNORE);
-
   // If -pedantic-errors is set, turn extensions that warn by default into
   // errors. 
   if (ErrorOnExtensions) {

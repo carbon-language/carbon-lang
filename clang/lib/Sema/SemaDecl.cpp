@@ -861,7 +861,20 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
 /// no declarator (e.g. "struct foo;") is parsed.
 Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
-  // FIXME: Isn't that more of a parser diagnostic than a sema diagnostic?
+  TagDecl *Tag 
+    = dyn_cast_or_null<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
+  if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
+    if (!Record->getDeclName() && Record->isDefinition() &&
+        DS.getStorageClassSpec() != DeclSpec::SCS_typedef)
+      return BuildAnonymousStructOrUnion(S, DS, Record);
+
+    // Microsoft allows unnamed struct/union fields. Don't complain
+    // about them.
+    // FIXME: Should we support Microsoft's extensions in this area?
+    if (Record->getDeclName() && getLangOptions().Microsoft)
+      return Tag;
+  }
+
   if (!DS.isMissingDeclaratorOk()) {
     // FIXME: This diagnostic is emitted even when various previous
     // errors occurred (see e.g. test/Sema/decl-invalid.c). However,
@@ -872,14 +885,6 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
     return 0;
   }
   
-  TagDecl *Tag 
-    = dyn_cast_or_null<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
-  if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
-    if (!Record->getDeclName() && Record->isDefinition() && 
-        !Record->isInvalidDecl())
-      return BuildAnonymousStructOrUnion(S, DS, Record);
-  }
-
   return Tag;
 }
 
@@ -1031,10 +1036,16 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     }
   } else {
     // FIXME: Check GNU C semantics
+    if (Record->isUnion() && !Owner->isRecord()) {
+      Diag(Record->getLocation(), diag::err_anonymous_union_not_member)
+        << (int)getLangOptions().CPlusPlus;
+      Invalid = true;
+    }
   }
 
   if (!Record->isUnion() && !Owner->isRecord()) {
-    Diag(Record->getLocation(), diag::err_anonymous_struct_not_member);
+    Diag(Record->getLocation(), diag::err_anonymous_struct_not_member)
+      << (int)getLangOptions().CPlusPlus;
     Invalid = true;
   }
 
@@ -1084,7 +1095,8 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   // Inject the members of the anonymous struct/union into the owning
   // context and into the identifier resolver chain for name lookup
   // purposes.
-  Invalid = Invalid || InjectAnonymousStructOrUnionMembers(S, Owner, Record);
+  if (InjectAnonymousStructOrUnionMembers(S, Owner, Record))
+    Invalid = true;
 
   // Mark this as an anonymous struct/union type. Note that we do not
   // do this until after we have already checked and injected the
@@ -2890,6 +2902,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   case DeclSpec::TST_enum:   Kind = TagDecl::TK_enum; break;
   }
   
+  DeclContext *SearchDC = CurContext;
   DeclContext *DC = CurContext;
   DeclContext *LexicalContext = CurContext;
   ScopedDecl *PrevDecl = 0;
@@ -2924,8 +2937,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       // with C structs, unions, and enums when looking for a matching
       // tag declaration or definition. See the similar lookup tweak
       // in Sema::LookupDecl; is there a better way to deal with this?
-      while (isa<RecordDecl>(DC) || isa<EnumDecl>(DC))
-        DC = DC->getParent();
+      while (isa<RecordDecl>(SearchDC) || isa<EnumDecl>(SearchDC))
+        SearchDC = SearchDC->getParent();
     }
   }
 
@@ -2943,7 +2956,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
       // rementions the tag), reuse the decl.
-      if (TK == TK_Reference || isDeclInScope(PrevDecl, DC, S)) {
+      if (TK == TK_Reference || isDeclInScope(PrevDecl, SearchDC, S)) {
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
@@ -2991,7 +3004,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       // PrevDecl. If it's NULL, we have a new definition.
     } else {
       // PrevDecl is a namespace.
-      if (isDeclInScope(PrevDecl, DC, S)) {
+      if (isDeclInScope(PrevDecl, SearchDC, S)) {
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
         Diag(NameLoc, diag::err_redefinition_different_kind) << Name;
@@ -3024,6 +3037,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     // C structs and unions.
 
     // Find the context where we'll be declaring the tag.
+    // FIXME: We would like to maintain the current DeclContext as the
+    // lexical context, 
     while (DC->isRecord())
       DC = DC->getParent();
     LexicalContext = DC;
@@ -3110,11 +3125,7 @@ CreateNewDecl:
       CurContext = OldContext;
     } else 
       PushOnScopeChains(New, S);
-  } else if (getLangOptions().CPlusPlus) {
-    // FIXME: We also want to do this for C, but if this tag is
-    // defined within a structure CurContext will point to the context
-    // enclosing the structure, and we would end up inserting the tag
-    // type into the wrong place.
+  } else {
     LexicalContext->addDecl(Context, New);
   }
 
