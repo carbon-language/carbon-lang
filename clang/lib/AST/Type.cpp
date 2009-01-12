@@ -20,7 +20,7 @@
 
 using namespace clang;
 
-bool QualType::isConstant(ASTContext& Ctx) const {
+bool QualType::isConstant(ASTContext &Ctx) const {
   if (isConstQualified())
     return true;
 
@@ -90,20 +90,23 @@ QualType Type::getDesugaredType() const {
 bool Type::isVoidType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Void;
+  if (const ASQualType *AS = dyn_cast<ASQualType>(CanonicalType))
+    return AS->getBaseType()->isVoidType();
   return false;
 }
 
 bool Type::isObjectType() const {
   if (isa<FunctionType>(CanonicalType))
     return false;
-  else if (CanonicalType->isIncompleteType())
-    return false;
-  else
-    return true;
+  if (const ASQualType *AS = dyn_cast<ASQualType>(CanonicalType))
+    return AS->getBaseType()->isObjectType();
+  return !CanonicalType->isIncompleteType();
 }
 
 bool Type::isDerivedType() const {
   switch (CanonicalType->getTypeClass()) {
+  case ASQual:
+    return cast<ASQualType>(CanonicalType)->getBaseType()->isDerivedType();
   case Pointer:
   case VariableArray:
   case ConstantArray:
@@ -112,10 +115,8 @@ bool Type::isDerivedType() const {
   case FunctionNoProto:
   case Reference:
     return true;
-  case Tagged: {
-    const TagType *TT = cast<TagType>(CanonicalType);
-    return !TT->getDecl()->isEnum();
-  }
+  case Tagged:
+    return !cast<TagType>(CanonicalType)->getDecl()->isEnum();
   default:
     return false;
   }
@@ -140,6 +141,8 @@ bool Type::isUnionType() const {
 bool Type::isComplexType() const {
   if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
     return CT->getElementType()->isFloatingType();
+  if (const ASQualType *AS = dyn_cast<ASQualType>(CanonicalType))
+    return AS->getBaseType()->isComplexType();
   return false;
 }
 
@@ -147,6 +150,8 @@ bool Type::isComplexIntegerType() const {
   // Check for GCC complex integer extension.
   if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
     return CT->getElementType()->isIntegerType();
+  if (const ASQualType *AS = dyn_cast<ASQualType>(CanonicalType))
+    return AS->getBaseType()->isComplexIntegerType();
   return false;
 }
 
@@ -155,7 +160,9 @@ const ComplexType *Type::getAsComplexIntegerType() const {
   if (const ComplexType *CTy = dyn_cast<ComplexType>(this)) {
     if (CTy->getElementType()->isIntegerType())
       return CTy;
+    return 0;
   }
+  
   // If the canonical form of this type isn't the right kind, reject it.
   const ComplexType *CTy = dyn_cast<ComplexType>(CanonicalType);
   if (!CTy || !CTy->getElementType()->isIntegerType())
