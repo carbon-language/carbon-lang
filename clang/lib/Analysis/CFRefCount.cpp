@@ -83,50 +83,45 @@ static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
 // Type querying functions.
 //===----------------------------------------------------------------------===//
 
-static bool isCFRefType(QualType T) {
+static bool hasPrefix(const char* s, const char* prefix) {
+  if (!prefix)
+    return true;
   
-  if (!T->isPointerType())
-    return false;
+  char c = *s;
+  char cP = *prefix;
   
-  // Check the typedef for the name "CF" and the substring "Ref".  
-  TypedefType* TD = dyn_cast<TypedefType>(T.getTypePtr());
+  while (c != '\0' && cP != '\0') {
+    if (c != cP) break;
+    c = *(++s);
+    cP = *(++prefix);
+  }
   
-  if (!TD)
-    return false;
-  
-  const char* TDName = TD->getDecl()->getIdentifier()->getName();
-  assert (TDName);
-  
-  if (TDName[0] != 'C' || TDName[1] != 'F')
-    return false;
-  
-  if (strstr(TDName, "Ref") == 0)
-    return false;
-  
-  return true;
+  return cP == '\0';
 }
 
-static bool isCGRefType(QualType T) {
+static bool hasSuffix(const char* s, const char* suffix) {
+  const char* loc = strstr(s, suffix);
+  return loc && strcmp(suffix, loc) == 0;
+}
+
+static bool isRefType(QualType RetTy, const char* prefix,
+                      ASTContext* Ctx = 0, const char* name = 0) {
   
-  if (!T->isPointerType())
+  if (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
+    const char* TDName = TD->getDecl()->getIdentifier()->getName();
+    return hasPrefix(TDName, prefix) && hasSuffix(TDName, "Ref");
+  }
+
+  if (!Ctx || !name)
     return false;
-  
-  // Check the typedef for the name "CG" and the substring "Ref".  
-  TypedefType* TD = dyn_cast<TypedefType>(T.getTypePtr());
-  
-  if (!TD)
+
+  // Is the type void*?
+  const PointerType* PT = RetTy->getAsPointerType();
+  if (!(PT->getPointeeType().getUnqualifiedType() == Ctx->VoidTy))
     return false;
-  
-  const char* TDName = TD->getDecl()->getIdentifier()->getName();
-  assert (TDName);
-  
-  if (TDName[0] != 'C' || TDName[1] != 'G')
-    return false;
-  
-  if (strstr(TDName, "Ref") == 0)
-    return false;
-  
-  return true;
+
+  // Does the name start with the prefix?
+  return hasPrefix(name, prefix);
 }
 
 //===----------------------------------------------------------------------===//
@@ -507,15 +502,11 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };  
   
 public:
-  RetainSummary* getUnarySummary(FunctionDecl* FD, UnaryFuncKind func);
-  
-  RetainSummary* getNSSummary(FunctionDecl* FD, const char* FName);
-  RetainSummary* getCFSummary(FunctionDecl* FD, const char* FName);
-  RetainSummary* getCGSummary(FunctionDecl* FD, const char* FName);
+  RetainSummary* getUnarySummary(FunctionType* FT, UnaryFuncKind func);
   
   RetainSummary* getCFSummaryCreateRule(FunctionDecl* FD);
   RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);  
-  RetainSummary* getCFCreateGetRuleSummary(FunctionDecl* FD, const char* FName);  
+  RetainSummary* getCFCreateGetRuleSummary(FunctionDecl* FD, const char* FName);
   
   RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
                                       ArgEffect ReceiverEff = DoNothing,
@@ -713,6 +704,16 @@ bool RetainSummaryManager::isTrackedObjectType(QualType T) {
 // Summary creation for functions (largely uses of Core Foundation).
 //===----------------------------------------------------------------------===//
 
+static bool isRetain(FunctionDecl* FD, const char* FName) {
+  const char* loc = strstr(FName, "Retain");
+  return loc && loc[sizeof("Retain")-1] == '\0';
+}
+
+static bool isRelease(FunctionDecl* FD, const char* FName) {
+  const char* loc = strstr(FName, "Release");
+  return loc && loc[sizeof("Release")-1] == '\0';
+}
+
 RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
 
   SourceLocation Loc = FD->getLocation();
@@ -727,107 +728,95 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     return I->second;
 
   // No summary.  Generate one.
-  const char* FName = FD->getIdentifier()->getName();
+  RetainSummary *S = 0;
   
-  RetainSummary *S = 0;  
-  FunctionType* FT = dyn_cast<FunctionType>(FD->getType());
-
   do {
-    if (FT) {
-      
-      QualType T = FT->getResultType();
-      
-      if (isCFRefType(T)) {
-        S = getCFSummary(FD, FName);
-        break;
-      }
-      
-      if (isCGRefType(T)) {
-        S = getCGSummary(FD, FName );
-        break;
-      }
-      
-      // FIXME: This should all be refactored into a chain of "summary lookup"
-      //  filters.
-      if (strcmp(FName, "IOServiceGetMatchingServices") == 0) {
-        // FIXES: <rdar://problem/6326900>
-        // This should be addressed using a API table.  This strcmp is also
-        // a little gross, but there is no need to super optimize here.
-        assert (ScratchArgs.empty());
-        ScratchArgs.push_back(std::make_pair(1, DecRef));
-        S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
-        break;
-      }
+    // We generate "stop" summaries for implicitly defined functions.
+    if (FD->isImplicit()) {
+      S = getPersistentStopSummary();
+      break;
     }
     
-    // Ignore the prefix '_'
-    while (*FName == '_') ++FName;
-
-    if (FName[0] == 'C') {
-      if (FName[1] == 'F')
-        S = getCFSummary(FD, FName);  
-      else if (FName[1] == 'G')
-        S = getCGSummary(FD, FName);
+    FunctionType* FT = cast<FunctionType>(FD->getType());
+    const char* FName = FD->getIdentifier()->getName();
+    
+    // Inspect the result type.
+    QualType RetTy = FT->getResultType();
+    
+    // FIXME: This should all be refactored into a chain of "summary lookup"
+    //  filters.
+    if (strcmp(FName, "IOServiceGetMatchingServices") == 0) {
+      // FIXES: <rdar://problem/6326900>
+      // This should be addressed using a API table.  This strcmp is also
+      // a little gross, but there is no need to super optimize here.
+      assert (ScratchArgs.empty());
+      ScratchArgs.push_back(std::make_pair(1, DecRef));
+      S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+      break;
     }
-    else if (FName[0] == 'N' && FName[1] == 'S')
-      S = getNSSummary(FD, FName);
+    
+    // Handle: id NSMakeCollectable(CFTypeRef)
+    if (strcmp(FName, "NSMakeCollectable") == 0) {
+      S = (RetTy == Ctx.getObjCIdType())
+          ? getUnarySummary(FT, cfmakecollectable)
+          : getPersistentStopSummary();
+        
+      break;
+    }
+
+    if (RetTy->isPointerType()) {
+      // For CoreFoundation ('CF') types.
+      if (isRefType(RetTy, "CF", &Ctx, FName)) {
+        if (isRetain(FD, FName))
+          S = getUnarySummary(FT, cfretain);
+        else if (strstr(FName, "MakeCollectable"))
+          S = getUnarySummary(FT, cfmakecollectable);
+        else 
+          S = getCFCreateGetRuleSummary(FD, FName);
+
+        break;
+      }
+
+      // For CoreGraphics ('CG') types.
+      if (isRefType(RetTy, "CG", &Ctx, FName)) {
+        if (isRetain(FD, FName))
+          S = getUnarySummary(FT, cfretain);
+        else
+          S = getCFCreateGetRuleSummary(FD, FName);
+
+        break;
+      }
+
+      // For the Disk Arbitration API (DiskArbitration/DADisk.h)
+      if (isRefType(RetTy, "DADisk") ||
+          isRefType(RetTy, "DADissenter") ||
+          isRefType(RetTy, "DASessionRef")) {
+        S = getCFCreateGetRuleSummary(FD, FName);
+        break;
+      }
+      
+      break;
+    }
+
+    // Check for release functions, the only kind of functions that we care
+    // about that don't return a pointer type.
+    if (FName[0] == 'C' && (FName[1] == 'F' || FName[1] == 'G')) {
+      if (isRelease(FD, FName+2))
+        S = getUnarySummary(FT, cfrelease);
+      else {
+        // For CoreFoundation and CoreGraphics functions we assume they
+        // follow the ownership idiom strictly and thus do not cause
+        // ownership to "escape".
+        assert (ScratchArgs.empty());  
+        S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, 
+                                 DoNothing);
+      }
+    }
   }
   while (0);
 
   FuncSummaries[FD] = S;
   return S;  
-}
-
-RetainSummary* RetainSummaryManager::getNSSummary(FunctionDecl* FD,
-                                                  const char* FName) {
-  FName += 2;
-  
-  if (strcmp(FName, "MakeCollectable") == 0)
-    return getUnarySummary(FD, cfmakecollectable);
-
-  return 0;  
-}
-
-static bool isRetain(FunctionDecl* FD, const char* FName) {
-  const char* loc = strstr(FName, "Retain");
-  return loc && loc[sizeof("Retain")-1] == '\0';
-}
-
-static bool isRelease(FunctionDecl* FD, const char* FName) {
-  const char* loc = strstr(FName, "Release");
-  return loc && loc[sizeof("Release")-1] == '\0';
-}
-
-RetainSummary* RetainSummaryManager::getCFSummary(FunctionDecl* FD,
-                                                  const char* FName) {
-  if (FName[0] == 'C' && FName[1] == 'F')
-    FName += 2;
-  
-  if (isRetain(FD, FName))
-    return getUnarySummary(FD, cfretain);
-  
-  if (isRelease(FD, FName))
-    return getUnarySummary(FD, cfrelease);
-  
-  if (strcmp(FName, "MakeCollectable") == 0)
-    return getUnarySummary(FD, cfmakecollectable);
-
-  return getCFCreateGetRuleSummary(FD, FName);
-}
-
-RetainSummary* RetainSummaryManager::getCGSummary(FunctionDecl* FD,
-                                                  const char* FName) {
-  
-  if (FName[0] == 'C' && FName[1] == 'G')
-    FName += 2;
-  
-  if (isRelease(FD, FName))
-    return getUnarySummary(FD, cfrelease);
-  
-  if (isRetain(FD, FName))
-    return getUnarySummary(FD, cfretain);
-  
-  return getCFCreateGetRuleSummary(FD, FName);
 }
 
 RetainSummary*
@@ -844,29 +833,17 @@ RetainSummaryManager::getCFCreateGetRuleSummary(FunctionDecl* FD,
 }
 
 RetainSummary*
-RetainSummaryManager::getUnarySummary(FunctionDecl* FD, UnaryFuncKind func) {
-  
-  FunctionTypeProto* FT =
-    dyn_cast<FunctionTypeProto>(FD->getType().getTypePtr());
-  
-  if (FT) {
-    
-    if (FT->getNumArgs() != 1)
-      return 0;
-  
-    TypedefType* ArgT = dyn_cast<TypedefType>(FT->getArgType(0).getTypePtr());
-  
-    if (!ArgT)
-      return 0;
-
-    if (!ArgT->isPointerType())
-      return NULL;
-  }
+RetainSummaryManager::getUnarySummary(FunctionType* FT, UnaryFuncKind func) {
+  // Sanity check that this is *really* a unary function.  This can
+  // happen if people do weird things.
+  FunctionTypeProto* FTP = dyn_cast<FunctionTypeProto>(FT);
+  if (!FTP || FTP->getNumArgs() != 1)
+    return getPersistentStopSummary();
   
   assert (ScratchArgs.empty());
   
   switch (func) {
-    case cfretain: {
+    case cfretain: {      
       ScratchArgs.push_back(std::make_pair(0, IncRef));
       return getPersistentSummary(RetEffect::MakeAlias(0),
                                   DoNothing, DoNothing);
@@ -893,17 +870,6 @@ RetainSummaryManager::getUnarySummary(FunctionDecl* FD, UnaryFuncKind func) {
 }
 
 RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
- 
-  FunctionType* FT =
-    dyn_cast<FunctionType>(FD->getType().getTypePtr());
-
-  if (FT) {
-    QualType ResTy = FT->getResultType();
-    
-    if (!isCFRefType(ResTy) && !isCGRefType(ResTy))
-      return getPersistentSummary(RetEffect::MakeNoRet());
-  }
-  
   assert (ScratchArgs.empty());
   
   if (FD->getIdentifier() == CFDictionaryCreateII) {
@@ -915,26 +881,6 @@ RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
 }
 
 RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
-  
-  FunctionType* FT =
-    dyn_cast<FunctionType>(FD->getType().getTypePtr());
-  
-  if (FT) {
-    QualType RetTy = FT->getResultType();
-  
-    // FIXME: For now we assume that all pointer types returned are referenced
-    // counted.  Since this is the "Get" rule, we assume non-ownership, which
-    // works fine for things that are not reference counted.  We do this because
-    // some generic data structures return "void*".  We need something better
-    // in the future.
-  
-    if (!isCFRefType(RetTy) && !RetTy->isPointerType())
-      return getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
-  }
-  
-  // FIXME: Add special-cases for functions that retain/release.  For now
-  //  just handle the default case.
-  
   assert (ScratchArgs.empty());  
   return getPersistentSummary(RetEffect::MakeNotOwned(), DoNothing, DoNothing);
 }

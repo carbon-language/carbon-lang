@@ -10,24 +10,28 @@
 //===----------------------------------------------------------------------===//
 
 typedef const void * CFTypeRef;
+void CFRelease(CFTypeRef cf);
+CFTypeRef CFRetain(CFTypeRef cf);
+CFTypeRef CFMakeCollectable(CFTypeRef cf);
 typedef const struct __CFAllocator * CFAllocatorRef;
 typedef double CFTimeInterval;
 typedef CFTimeInterval CFAbsoluteTime;
 typedef const struct __CFDate * CFDateRef;
 extern CFDateRef CFDateCreate(CFAllocatorRef allocator, CFAbsoluteTime at);
+extern CFAbsoluteTime CFDateGetAbsoluteTime(CFDateRef theDate);
+typedef struct objc_object {} *id;
 typedef signed char BOOL;
-typedef unsigned int NSUInteger;
-typedef struct _NSZone NSZone;
 static __inline__ __attribute__((always_inline)) id NSMakeCollectable(CFTypeRef cf) {}
-@protocol NSObject  - (BOOL)isEqual:(id)object; - (oneway void)release; @end
-extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
-CFTypeRef CFMakeCollectable(CFTypeRef cf);
+@protocol NSObject  - (BOOL)isEqual:(id)object;
+- (oneway void)release;
+@end
+@class NSArray;
 
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
 
-CFAbsoluteTime f1() {
+CFAbsoluteTime f1_use_after_release() {
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
   CFDateRef date = CFDateCreate(0, t);
   CFRetain(date);
@@ -38,7 +42,20 @@ CFAbsoluteTime f1() {
   return t;
 }
 
-CFAbsoluteTime f1b() {
+// The following two test cases verifies that CFMakeCollectable is a no-op
+// in non-GC mode and a "release" in GC mode.
+CFAbsoluteTime f2_leak() {
+  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+  CFDateRef date = CFDateCreate(0, t);
+  CFRetain(date);
+  [(id) CFMakeCollectable(date) release];
+  CFDateGetAbsoluteTime(date); // no-warning
+  CFRelease(date);
+  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released.}}
+  return t;
+}
+
+CFAbsoluteTime f2_noleak() {
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
   CFDateRef date = CFDateCreate(0, t);
   CFRetain(date);
@@ -49,4 +66,12 @@ CFAbsoluteTime f1b() {
   return t;
 }
 
-
+// The following test case verifies that we "stop tracking" a retained object
+// when it is passed as an argument to an implicitly defined function.
+CFAbsoluteTime f4() {
+  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+  CFDateRef date = CFDateCreate(0, t);
+  CFRetain(date);
+  some_implicitly_defined_function_stop_tracking(date); // no-warning
+  return t;
+}
