@@ -34,7 +34,7 @@ void check_string_literal( FILE* fp, const char* s, char *buf, ... ) {
 void check_conditional_literal(const char* s, int i) {
   printf(i == 1 ? "yes" : "no"); // no-warning
   printf(i == 0 ? (i == 1 ? "yes" : "no") : "dont know"); // no-warning
-  printf(i == 0 ? (i == 1 ? s : "no") : "dont know"); // expected-warning
+  printf(i == 0 ? (i == 1 ? s : "no") : "dont know"); // expected-warning{{format string is not a string literal}}
 }
 
 void check_writeback_specifier()
