@@ -675,7 +675,7 @@ class Driver(object):
                     output = finalOutput
                 # Contruct a named destination?
                 elif atTopLevel or hasSaveTemps:
-                    output = args.makeSeparateArg(namedOutput,
+                    output = args.makeSeparateArg(os.path.basename(namedOutput),
                                                   self.parser.oOption)
                 else:
                     # Output to temp file...
