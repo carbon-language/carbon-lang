@@ -163,11 +163,14 @@ const ComplexType *Type::getAsComplexIntegerType() const {
     return 0;
   }
   
-  // If the canonical form of this type isn't the right kind, reject it.
-  const ComplexType *CTy = dyn_cast<ComplexType>(CanonicalType);
-  if (!CTy || !CTy->getElementType()->isIntegerType())
+  // If the canonical form of this type isn't what we want, reject it.
+  if (!isa<ComplexType>(CanonicalType)) {
+    // Look through type qualifiers (e.g. ASQualType's).
+    if (isa<ComplexType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsComplexIntegerType();
     return 0;
-
+  }
+  
   // If this is a typedef for a complex type, strip the typedef off without
   // losing all typedef information.
   return getDesugaredType()->getAsComplexIntegerType();
@@ -180,7 +183,7 @@ const BuiltinType *Type::getAsBuiltinType() const {
 
   // If the canonical form of this type isn't a builtin type, reject it.
   if (!isa<BuiltinType>(CanonicalType)) {
-    // Look through type qualifiers
+    // Look through type qualifiers (e.g. ASQualType's).
     if (isa<BuiltinType>(CanonicalType.getUnqualifiedType()))
       return CanonicalType.getUnqualifiedType()->getAsBuiltinType();
     return 0;
@@ -256,8 +259,12 @@ const BlockPointerType *Type::getAsBlockPointerType() const {
     return PTy;
   
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<BlockPointerType>(CanonicalType))
+  if (!isa<BlockPointerType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<BlockPointerType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsBlockPointerType();
     return 0;
+  }
   
   // If this is a typedef for a block pointer type, strip the typedef off 
   // without losing all typedef information.
@@ -295,14 +302,14 @@ bool Type::isVariablyModifiedType() const {
     return T->isVariablyModifiedType();
 
   // A pointer can point to a variably modified type
-  if (const PointerType* PT = getAsPointerType())
+  if (const PointerType *PT = getAsPointerType())
     return PT->getPointeeType()->isVariablyModifiedType();
 
   // A function can return a variably modified type
   // This one isn't completely obvious, but it follows from the
   // definition in C99 6.7.5p3. Because of this rule, it's
   // illegal to declare a function returning a variably modified type.
-  if (const FunctionType* FT = getAsFunctionType())
+  if (const FunctionType *FT = getAsFunctionType())
     return FT->getResultType()->isVariablyModifiedType();
 
   return false;
@@ -434,14 +441,15 @@ const ExtVectorType *Type::getAsExtVectorType() const {
 
 const ObjCInterfaceType *Type::getAsObjCInterfaceType() const {
   // There is no sugar for ObjCInterfaceType's, just return the canonical
-  // type pointer if it is the right class.
+  // type pointer if it is the right class.  There is no typedef information to
+  // return and these cannot be Address-space qualified.
   return dyn_cast<ObjCInterfaceType>(CanonicalType);
 }
 
 const ObjCQualifiedInterfaceType *
 Type::getAsObjCQualifiedInterfaceType() const {
-  // There is no sugar for ObjCQualifiedInterfaceType's, just return the canonical
-  // type pointer if it is the right class.
+  // There is no sugar for ObjCQualifiedInterfaceType's, just return the
+  // canonical type pointer if it is the right class.
   return dyn_cast<ObjCQualifiedInterfaceType>(CanonicalType);
 }
 
@@ -454,6 +462,7 @@ const ObjCQualifiedIdType *Type::getAsObjCQualifiedIdType() const {
 const TemplateTypeParmType *Type::getAsTemplateTypeParmType() const {
   // There is no sugar for template type parameters, so just return
   // the canonical type pointer if it is the right class.
+  // FIXME: can these be address-space qualified?
   return dyn_cast<TemplateTypeParmType>(CanonicalType);
 }
 
@@ -711,22 +720,20 @@ bool Type::isPODType() const {
 }
 
 bool Type::isPromotableIntegerType() const {
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isPromotableIntegerType();
-  const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType);
-  if (!BT) return false;
-  switch (BT->getKind()) {
-  case BuiltinType::Bool:
-  case BuiltinType::Char_S:
-  case BuiltinType::Char_U:
-  case BuiltinType::SChar:
-  case BuiltinType::UChar:
-  case BuiltinType::Short:
-  case BuiltinType::UShort:
-    return true;
-  default: 
-    return false;
-  }
+  if (const BuiltinType *BT = getAsBuiltinType())
+    switch (BT->getKind()) {
+    case BuiltinType::Bool:
+    case BuiltinType::Char_S:
+    case BuiltinType::Char_U:
+    case BuiltinType::SChar:
+    case BuiltinType::UChar:
+    case BuiltinType::Short:
+    case BuiltinType::UShort:
+      return true;
+    default: 
+      return false;
+    }
+  return false;
 }
 
 const char *BuiltinType::getName() const {
