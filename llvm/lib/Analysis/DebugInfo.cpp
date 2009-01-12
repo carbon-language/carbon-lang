@@ -20,7 +20,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Support/Dwarf.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -112,7 +111,7 @@ DIType::DIType(GlobalVariable *gv) : DIDescriptor(gv) {
 
 /// isDerivedType - Return true if the specified tag is legal for
 /// DIDerivedType.
-bool DIDerivedType::isDerivedType(unsigned Tag) {
+bool DIType::isDerivedType(unsigned Tag) {
   switch (Tag) {
   case dwarf::DW_TAG_typedef:
   case dwarf::DW_TAG_pointer_type:
@@ -137,7 +136,7 @@ DIDerivedType::DIDerivedType(GlobalVariable *GV) : DIType(GV, true, true) {
 
 /// isCompositeType - Return true if the specified tag is legal for
 /// DICompositeType.
-bool DICompositeType::isCompositeType(unsigned TAG) {
+bool DIType::isCompositeType(unsigned TAG) {
   switch (TAG) {
   case dwarf::DW_TAG_array_type:
   case dwarf::DW_TAG_structure_type:
@@ -179,11 +178,6 @@ unsigned DIArray::getNumElements() const {
   Constant *C = GV->getInitializer();
   assert (C && "Invalid DIArray initializer");
   return C->getNumOperands();
-}
-
-/// isSubrange - Return true if the specified tag is legal for DISubrange.
-bool DISubrange::isSubrange(unsigned Tag) {
-  return Tag == dwarf::DW_TAG_subrange_type;
 }
 
 //===----------------------------------------------------------------------===//

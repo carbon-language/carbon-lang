@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Dwarf.h"
 
 namespace llvm {
   class BasicBlock;
@@ -95,10 +96,9 @@ namespace llvm {
     
     int64_t getLo() const { return (int64_t)getUInt64Field(1); }
     int64_t getHi() const { return (int64_t)getUInt64Field(2); }
-    static bool isSubrange(unsigned);
     static inline bool classof(const DISubrange *) { return true; }
     static inline bool classof(const DIDescriptor *D) {
-      return isSubrange(D->getTag());
+      return D->getTag() == dwarf::DW_TAG_subrange_type;
     }
   };
   
@@ -111,6 +111,12 @@ namespace llvm {
     DIDescriptor getElement(unsigned Idx) const {
       return getDescriptorField(Idx);
     }
+
+    static inline bool classof(const DIArray *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      return D->getTag() == dwarf::DW_TAG_array_type 
+        || D->getTag() == dwarf::DW_AT_GNU_vector;
+    }
   };
   
   /// DICompileUnit - A wrapper for a compile unit.
@@ -122,6 +128,11 @@ namespace llvm {
     std::string getFilename() const  { return getStringField(3); }
     std::string getDirectory() const { return getStringField(4); }
     std::string getProducer() const  { return getStringField(5); }
+
+    static inline bool classof(const DICompileUnit *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      return D->getTag() == dwarf::DW_TAG_compile_unit;
+    }
   };
 
   /// DIEnumerator - A wrapper for an enumerator (e.g. X and Y in 'enum {X,Y}').
@@ -133,6 +144,10 @@ namespace llvm {
     
     std::string getName() const  { return getStringField(1); }
     uint64_t getEnumValue() const { return getUInt64Field(2); }
+    static inline bool classof(const DIEnumerator *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      return D->getTag() == dwarf::DW_TAG_enumerator;
+    }
   };
   
   /// DIType - This is a wrapper for a type.
@@ -144,6 +159,21 @@ namespace llvm {
     // This ctor is used when the Tag has already been validated by a derived
     // ctor.
     DIType(GlobalVariable *GV, bool, bool) : DIDescriptor(GV) {}
+
+    /// isDerivedType - Return true if the specified tag is legal for
+    /// DIDerivedType.
+    static bool isDerivedType(unsigned TAG);
+
+    /// isCompositeType - Return true if the specified tag is legal for
+    /// DICompositeType.
+    static bool isCompositeType(unsigned TAG);
+
+    /// isBasicType - Return true if the specified tag is legal for
+    /// DIBasicType.
+    static bool isBasicType(unsigned TAG) {
+      return TAG == dwarf::DW_TAG_base_type;
+    }
+
   public:
     explicit DIType(GlobalVariable *GV);
     explicit DIType() {}
@@ -169,6 +199,13 @@ namespace llvm {
       assert (0 && "Invalid DIDescriptor");
       return "";
     }
+
+    static inline bool classof(const DIType *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      unsigned Tag = D->getTag();
+      return isBasicType(Tag) || isDerivedType(Tag) || isCompositeType(Tag);
+    }
+
   };
   
   /// DIBasicType - A basic type, like 'int' or 'float'.
@@ -194,10 +231,6 @@ namespace llvm {
     std::string getFilename() const { return getStringField(10); }
     std::string getDirectory() const { return getStringField(11); }
 
-    /// isDerivedType - Return true if the specified tag is legal for
-    /// DIDerivedType.
-    static bool isDerivedType(unsigned TAG);
-
     static inline bool classof(const DIDerivedType *) { return true; }
     static inline bool classof(const DIDescriptor *D) {
       return isDerivedType(D->getTag());
@@ -216,9 +249,6 @@ namespace llvm {
     std::string getFilename() const { return getStringField(11); }
     std::string getDirectory() const { return getStringField(12); }
     
-    /// isCompositeType - Return true if the specified tag is legal for
-    /// DICompositeType.
-    static bool isCompositeType(unsigned TAG);
     static inline bool classof(const DIDerivedType *) { return true; }
     static inline bool classof(const DIDescriptor *D) {
       return isCompositeType(D->getTag());
@@ -230,6 +260,19 @@ namespace llvm {
   protected:
     explicit DIGlobal(GlobalVariable *GV, unsigned RequiredTag)
       : DIDescriptor(GV, RequiredTag) {}
+
+    /// isSubprogram - Return true if the specified tag is legal for
+    /// DISubprogram.
+    static bool isSubprogram(unsigned TAG) {
+      return TAG == dwarf::DW_TAG_subprogram;
+    }
+
+    /// isGlobalVariable - Return true if the specified tag is legal for
+    /// DIGlobalVariable.
+    static bool isGlobalVariable(unsigned TAG) {
+      return TAG == dwarf::DW_TAG_variable;
+    }
+
   public:
     virtual ~DIGlobal() {}
 
@@ -256,6 +299,12 @@ namespace llvm {
       assert (0 && "Invalid DIDescriptor");
       return "";
     }
+
+    static inline bool classof(const DIGlobal *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      unsigned Tag = D->getTag();
+      return isSubprogram(Tag) || isGlobalVariable(Tag);
+    }
   };
   
   
@@ -266,6 +315,10 @@ namespace llvm {
     std::string getFilename() const { return getStringField(11); }
     std::string getDirectory() const { return getStringField(12); }
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
+    static inline bool classof(const DISubprogram *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      return isSubprogram(D->getTag());
+    }
   };
   
   /// DIGlobalVariable - This is a wrapper for a global variable.
@@ -276,6 +329,10 @@ namespace llvm {
     GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
     std::string getFilename() const { return getStringField(12); }
     std::string getDirectory() const { return getStringField(13); }
+    static inline bool classof(const DIGlobalVariable *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      return isGlobalVariable(D->getTag());
+    }
   };
   
   
@@ -296,6 +353,10 @@ namespace llvm {
     
     /// isVariable - Return true if the specified tag is legal for DIVariable.
     static bool isVariable(unsigned Tag);
+    static inline bool classof(const DIVariable *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      return isVariable(D->getTag());
+    }
   };
   
   
@@ -305,6 +366,10 @@ namespace llvm {
     explicit DIBlock(GlobalVariable *GV = 0);
     
     DIDescriptor getContext() const { return getDescriptorField(1); }
+    static inline bool classof(const DIBlock *) { return true; }
+    static inline bool classof(const DIDescriptor *D) {
+      return D->getTag() == dwarf::DW_TAG_lexical_block;
+    }
   };
   
   /// DIFactory - This object assists with the construction of the various
