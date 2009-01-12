@@ -17,3 +17,8 @@ void foo(_AS3 float *a) {
 
   *a = 5.0f;
 }
+
+struct _st {
+ int x, y;
+} s __attribute ((address_space(1))) = {1, 1};
+
