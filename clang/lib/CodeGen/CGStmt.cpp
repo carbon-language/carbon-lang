@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -867,12 +868,24 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
 {
   llvm::Value *Arg;
   if ((Info & TargetInfo::CI_AllowsRegister) ||
-      !(Info & TargetInfo::CI_AllowsMemory)) {      
-    if (ConvertType(InputExpr->getType())->isSingleValueType()) {
+      !(Info & TargetInfo::CI_AllowsMemory)) { 
+    const llvm::Type *Ty = ConvertType(InputExpr->getType());
+    
+    if (Ty->isSingleValueType()) {
       Arg = EmitScalarExpr(InputExpr);
     } else {
-      ErrorUnsupported(&S,
-                       "asm statement passing multiple-value types as inputs");
+      LValue Dest = EmitLValue(InputExpr);
+
+      uint64_t Size = CGM.getTargetData().getTypeSizeInBits(Ty);
+      if (Size <= 64 && llvm::isPowerOf2_64(Size)) {
+        Ty = llvm::IntegerType::get(Size);
+        Ty = llvm::PointerType::getUnqual(Ty);
+        
+        Arg = Builder.CreateLoad(Builder.CreateBitCast(Dest.getAddress(), Ty));
+      } else {
+        Arg = Dest.getAddress();
+        ConstraintStr += '*';
+      }
     }
   } else {
     LValue Dest = EmitLValue(InputExpr);
@@ -964,7 +977,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     
     TargetInfo::ConstraintInfo Info;
     bool result = Target.validateInputConstraint(InputConstraint.c_str(),
-                                                 NumConstraints,  Info);
+                                                 NumConstraints, Info);
     assert(result && "Failed to parse input constraint"); result=result;
     
     if (i != 0 || S.getNumOutputs() > 0)

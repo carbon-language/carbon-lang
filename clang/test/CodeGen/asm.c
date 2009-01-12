@@ -14,6 +14,13 @@ void t3(unsigned char *src, unsigned long long temp)
   __asm__ volatile("" : "+m"(temp), "+r"(src));
 }
 
+void t4()
+{
+  unsigned long long a;
+  struct reg { unsigned long long a, b; } b;
+
+	__asm__ volatile ("":: "m"(a), "m"(b));
+}
 
 
 
