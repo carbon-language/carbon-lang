@@ -31,8 +31,8 @@ STATISTIC(NumInlined, "Number of functions inlined");
 STATISTIC(NumDeleted, "Number of functions deleted because all callers found");
 
 static cl::opt<int>
-InlineLimit("inline-threshold", cl::Hidden, cl::init(400),
-        cl::desc("Control the amount of inlining to perform (default = 400)"));
+InlineLimit("inline-threshold", cl::Hidden, cl::init(200),
+        cl::desc("Control the amount of inlining to perform (default = 200)"));
 
 Inliner::Inliner(void *ID) 
   : CallGraphSCCPass(ID), InlineThreshold(InlineLimit) {}
@@ -168,8 +168,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
     for (unsigned CSi = 0; CSi != CallSites.size(); ++CSi)
       if (Function *Callee = CallSites[CSi].getCalledFunction()) {
         // Calls to external functions are never inlinable.
-        if (Callee->isDeclaration() ||
-            CallSites[CSi].getInstruction()->getParent()->getParent() ==Callee){
+        if (Callee->isDeclaration()) {
           if (SCC.size() == 1) {
             std::swap(CallSites[CSi], CallSites.back());
             CallSites.pop_back();
@@ -190,7 +189,8 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
           if (InlineCallIfPossible(CS, CG, SCCFunctions, 
                                    getAnalysis<TargetData>())) {
             // Remove any cached cost info for this caller, as inlining the callee
-            // has increased the size of the caller.
+            // has increased the size of the caller (which may be the same as the
+            // callee).
             resetCachedCostInfo(Caller);
 
             // Remove this call site from the list.  If possible, use 
