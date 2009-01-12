@@ -658,6 +658,7 @@ class OptionParser:
         self.fastcpOption = self.addOption(FlagOption('-fastcp'))
 
         self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext'))
+        self.f_noEliminateUnusedDebugSymbolsOption = self.addOption(FlagOption('-fno-eliminate-unused-debug-symbols'))
         self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions'))
         self.f_objcOption = self.addOption(FlagOption('-fobjc'))
         self.f_openmpOption = self.addOption(FlagOption('-fopenmp'))
@@ -676,6 +677,7 @@ class OptionParser:
 
         self.m_32Option = self.addOption(FlagOption('-m32'))
         self.m_64Option = self.addOption(FlagOption('-m64'))
+        self.m_dynamicNoPicOption = self.addOption(JoinedOption('-mdynamic-no-pic'))
         self.m_iphoneosVersionMinOption = self.addOption(JoinedOption('-miphoneos-version-min='))
         self.m_macosxVersionMinOption = self.addOption(JoinedOption('-mmacosx-version-min='))
         self.m_kernelOption = self.addOption(FlagOption('-mkernel'))
@@ -697,9 +699,9 @@ class OptionParser:
         # '='.
         self._paramOption = self.addOption(SeparateOption('--param'))
 
-        # FIXME: What is this? Seems to do something on Linux. I think
-        # only one is valid, but have a log that uses both.
-        self.addOption(FlagOption('-pthread'))
+        # FIXME: What is this? I think only one is valid, but have a
+        # log that uses both.
+        self.pthreadOption = self.addOption(FlagOption('-pthread'))
         self.addOption(FlagOption('-pthreads'))
 
     def addOption(self, opt):

@@ -174,6 +174,51 @@ class Darwin_X86_CompileTool(Tool):
                                                       Tool.eFlagsIntegratedCPP))
         self.toolChain = toolChain
 
+    def addCPPArgs(self, cmd_args, arch, arglist):
+        # Derived from cpp spec.
+
+        # FIXME: The gcc spec is broken here, it refers to dynamic but
+        # that has been translated.
+        if arglist.getLastArg(arglist.parser.staticOption):
+            if not arglist.getLastArg(arglist.parser.ZdynamicOption):
+                cmd_args.append('-D__STATIC__')
+        else:
+            cmd_args.append('-D__DYNAMIC__')
+        
+        if arglist.getLastArg(arglist.parser.pthreadOption):
+            cmd_args.append('-D_REENTRANT')
+        
+    def addCC1Args(self, cmd_args, arch, arglist):
+        # Derived from cc1 spec.
+
+        # FIXME: -fapple-kext seems to disable this too. Investigate.
+        if (not arglist.getLastArg(arglist.parser.m_kernelOption) and
+            not arglist.getLastArg(arglist.parser.staticOption) and
+            not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption)):
+            cmd_args.append('-fPIC')
+
+        # FIXME: Remove mthumb
+        # FIXME: Remove mno-thumb
+
+        # FIXME: As with ld, something else is going on. My best guess
+        # is gcc is faking an -mmacosx-version-min
+        # somewhere. Investigate.
+        if (not arglist.getLastArg(arglist.parser.m_macosxVersionMinOption) and
+            not arglist.getLastArg(arglist.parser.m_iphoneosVersionMinOption)):
+            cmd_args.append('-mmacosx-version-min=' + 
+                            self.toolChain.getMacosxVersionMin())
+
+        # FIXME: Remove faltivec
+        # FIXME: Remove mno-fused-madd
+        # FIXME: Remove mlong-branch
+        # FIXME: Remove mlongcall
+        # FIXME: Remove mcpu=G4
+        # FIXME: Remove mcpu=G5
+
+        if (arglist.getLastArg(arglist.parser.gOption) and
+            not arglist.getLastArg(arglist.parser.f_noEliminateUnusedDebugSymbolsOption)):
+            cmd_args.append('-feliminate-unused-debug-symbols')
+
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, args, arglist):
         inputType = inputs[0].type
@@ -270,7 +315,7 @@ class Darwin_X86_CompileTool(Tool):
                 cmd_args.append('-dD')
             arglist.addLastArg(cmd_args, arglist.parser.HOption)
 
-            # FIXME: %C
+            self.addCPPArgs(cmd_args, arch, arglist)
 
             arglist.addAllArgs3(cmd_args, 
                                 arglist.parser.DOption,
@@ -316,7 +361,7 @@ class Darwin_X86_CompileTool(Tool):
             arglist.getLastArg(arglist.parser.f_omitFramePointerOption)):
             raise ValueError,"-pg and -fomit-frame-pointer are incompatible"
 
-        # FIXME: cc1 spec
+        self.addCC1Args(cmd_args, arch, arglist)
 
         if not arglist.getLastArg(arglist.parser.QOption):
             cmd_args.append('-quiet')
@@ -392,10 +437,6 @@ class Darwin_X86_LinkTool(Tool):
     def __init__(self, toolChain):
         super(Darwin_X86_LinkTool, self).__init__('collect2')
         self.toolChain = toolChain
-
-    def getMacosxVersionMin(self):
-        major,minor,minorminor = self.toolChain.darwinVersion
-        return '%d.%d.%d' % (10, major-4, minor)
 
     def getMacosxVersionTuple(self, arglist):
         arg = arglist.getLastArg(arglist.parser.m_macosxVersionMinOption)
@@ -540,7 +581,7 @@ class Darwin_X86_LinkTool(Tool):
                 # following that; it must be getting over-ridden
                 # somewhere.
                 cmd_args.append('-macosx_version_min')
-                cmd_args.append(self.getMacosxVersionMin())
+                cmd_args.append(self.toolChain.getMacosxVersionMin())
         else:
             # addAll doesn't make sense here but this is what gcc
             # does.

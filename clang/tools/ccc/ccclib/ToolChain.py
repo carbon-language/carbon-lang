@@ -39,6 +39,10 @@ class Darwin_X86_ToolChain(ToolChain):
         # FIXME: Implement proper search.
         return '/usr/libexec/gcc/%s/%s' % (self.getToolChainDir(), name)
 
+    def getMacosxVersionMin(self):
+        major,minor,minorminor = self.darwinVersion
+        return '%d.%d.%d' % (10, major-4, minor)
+
     def selectTool(self, action):
         assert isinstance(action, Phases.JobAction)
         return self.toolMap[action.phase.__class__]
